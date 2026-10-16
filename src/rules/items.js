@@ -49,7 +49,7 @@
       stamina: pen(t.stamina),
       regen: pen(t.regen),
       standUp: t.standUp,
-      passThrough: cov.passThrough,
+      passThrough: cov.passThrough * ((CONFIG.passThroughByArmor && CONFIG.passThroughByArmor[a.type] != null) ? CONFIG.passThroughByArmor[a.type] : 1),
       maxDurability: armorMaxDurability(a),
     };
   }

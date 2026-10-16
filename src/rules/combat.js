@@ -147,6 +147,21 @@
     return c.status.grappledBy && c.status.grappledBy.length > 0;
   }
 
+  // Attack options as they will be once this character's declared weapon
+  // swaps (draw sidearm, pick up) have resolved.
+  function plannedAttackOptions(enc, c) {
+    const keep = { wield: c.wield, dropped: c.status.dropped };
+    for (const d of enc.decls) {
+      if (d.actor !== c.id) continue;
+      if (d.type === 'drawSidearm') c.wield = c.sidearm;
+      if (d.type === 'pickUp' && c.status.dropped) { c.wield = c.status.dropped; c.status.dropped = null; }
+    }
+    const opts = C.attackOptions(c);
+    c.wield = keep.wield;
+    c.status.dropped = keep.dropped;
+    return opts;
+  }
+
   // Everything the current actor may declare now, for the UI.
   function legalActions(enc, chars, id) {
     const c = chars[id];
@@ -155,7 +170,7 @@
     const others = enc.ids.filter((o) => o !== id && !chars[o].status.dead);
     const out = { ap, attacks: [], defenses: [], maneuvers: [], other: [], move: null };
 
-    for (const opt of C.attackOptions(c)) {
+    for (const opt of plannedAttackOptions(enc, c)) {
       out.attacks.push(Object.assign({}, opt, {
         affordable: opt.ap <= ap,
         targets: others.map((o) => ({ id: o, inReach: dist(me, posAtPass(enc, o, enc.pass)) <= opt.reach })),
@@ -192,19 +207,20 @@
     if (!c.status.prone && !grappled && !c.status.grappling) {
       const spa = C.squaresPerAP(c);
       const cost1 = C.actionCost(c, 'move', { ap: 1 });
-      out.move = { squaresPerAP: spa, maxAP: ap, stamina: cost1.stamina, from: projectedPos(enc, id) };
+      out.move = { squaresPerAP: spa, maxAP: ap, stamina: cost1.stamina, from: projectedPos(enc, id), maxSquares: Math.floor((ap * spa) / C.apScale()) };
     }
 
     const addOther = (type, extra) => {
       const cost = C.actionCost(c, type);
       out.other.push(Object.assign({ type, name: ACTIONS[type].name, ap: cost.ap, stamina: cost.stamina, affordable: cost.ap <= ap }, extra || {}));
     };
-    if (c.status.prone) addOther('standUp');
+    const declared = (type) => enc.decls.some((d) => d.actor === id && d.type === type);
+    if (c.status.prone && !declared('standUp')) addOther('standUp');
     const sidearm = c.weapons.find((w) => w.id === c.sidearm);
-    if (sidearm && c.wield !== c.sidearm && c.status.dropped !== c.sidearm) addOther('drawSidearm');
-    if (c.status.dropped) addOther('pickUp');
+    if (sidearm && c.wield !== c.sidearm && c.status.dropped !== c.sidearm && !declared('drawSidearm') && !declared('pickUp')) addOther('drawSidearm');
+    if (c.status.dropped && !declared('pickUp') && !declared('drawSidearm')) addOther('pickUp');
     if (grappled) addOther('escape');
-    if (c.status.grappling) addOther('release');
+    if (c.status.grappling && !declared('release')) addOther('release');
     if (c.inventory.bandages > 0) {
       const patients = enc.ids.filter((o) => chars[o].bleeds.length > 0 && !chars[o].status.dead && (o === id || dist(me, posAtPass(enc, o, enc.pass)) <= 1));
       if (patients.length) addOther('bandage', { targets: patients.map((o) => ({ id: o, inReach: true })) });
@@ -237,7 +253,7 @@
     const c = chars[id];
     let ap, stamina;
     if (decl.type === 'strike') {
-      const opt = C.attackOptions(c).find((o) => o.label === decl.option.label && o.weaponId === decl.option.weaponId && !!o.halfSword === !!decl.option.halfSword);
+      const opt = plannedAttackOptions(enc, c).find((o) => o.label === decl.option.label && o.weaponId === decl.option.weaponId && !!o.halfSword === !!decl.option.halfSword);
       if (!opt) return 'Attack not available';
       decl.option = opt;
       ap = opt.ap;
@@ -253,7 +269,7 @@
       const from = projectedPos(enc, id);
       const d = dist(from, decl.to);
       if (d === 0) return 'Pick a different square';
-      const need = Math.ceil(d / C.squaresPerAP(c));
+      const need = C.moveCost(c, d);
       ({ ap, stamina } = C.actionCost(c, 'move', { ap: need }));
       decl.from = from;
     } else {
@@ -328,10 +344,14 @@
       if (C.rank(attacker, 'spot_weakness')) pass += 0.25;
       if (option.halfSword || prone || grappled) pass = CONFIG.maneuver.pronePassThrough;
       pass = Math.min(1, pass);
-      res.toCON = Math.round(Pr * pass);
+      res.pierceLeft = Pr;
+      res.pass = pass;
+      // 'floor': piercing that only barely beats the armor does not reach CON.
+      // 'roll': toCON here is the expectation; applyHit rolls each point.
+      res.toCON = CONFIG.pierceMode === 'roll' && pass < 1 ? Pr * pass : Math.floor(Pr * pass);
       res.converted = Math.round(Sr * CONFIG.conversion[motion]);
       res.bluntToStamina = Br + res.converted;
-      res.durLoss = target.armor.type === 'padded' ? 0 : B + res.converted;
+      res.durLoss = target.armor.type === 'padded' ? 0 : Math.round((B + res.converted) * (CONFIG.armorWearScale == null ? 1 : CONFIG.armorWearScale));
     } else {
       res.toCON = P;
       res.slashToAttrs = S;
@@ -356,6 +376,11 @@
     }
 
     let wound = 0;
+    if (h.armored && CONFIG.pierceMode === 'roll' && h.pierceLeft > 0 && h.pass < 1) {
+      const need = Math.round(h.pass * 10);
+      const rolls = await roller({ actorId: attacker.id, sides: 10, count: h.pierceLeft, label: 'Piercing through armor', detail: `${h.pierceLeft}d10 vs ${target.name}'s armor: each ${need} or less reaches CON` });
+      h.toCON = rolls.filter((r) => r <= need).length;
+    }
     if (h.toCON > 0) {
       C.damageAttr(target, 'CON', h.toCON);
       parts.push(`${h.toCON} CON`);
@@ -405,22 +430,36 @@
   // ---- Checks ------------------------------------------------------------
   const half = (n) => Math.floor((n - 5) / 2);
 
-  async function defenseCheck(enc, chars, defender, kind, atkDecl, roller) {
+  // Bonus and target number for a defense; shared by the check and the AI's odds.
+  function defenseNumbers(defender, kind, motion) {
     const D = CONFIG.defense;
-    const motion = atkDecl.type === 'strike' ? atkDecl.option.motion : 'maneuver';
-    let bonus = 0, tn = D[kind].tn, label = '';
+    let bonus = 0, tn = D[kind].tn;
     if (kind === 'block') {
       bonus = C.rank(defender, 'shield_training');
-      label = `Block: d10 + ${bonus} ≥ ${tn}`;
+      const bySize = D.block.tnBySize;
+      if (bySize && defender.shield && bySize[defender.shield.size] != null) tn = bySize[defender.shield.size];
     } else if (kind === 'parry') {
       bonus = C.rank(defender, 'parry_training') + half(C.combatAttr(defender, 'DEX'));
       tn += D.motionPenalty[motion] || 0;
-      label = `Parry: d10 + ${bonus} ≥ ${tn}`;
     } else {
       bonus = C.rank(defender, 'dodge_training') + half(C.combatAttr(defender, 'SPD')) - C.armorInfo(defender).dex;
       tn += D.motionPenalty[motion] || 0;
-      label = `Dodge: d10 + ${bonus} ≥ ${tn}`;
     }
+    return { bonus, tn };
+  }
+
+  // Chance that d(die) + bonus ≥ tn.
+  function defenseOdds(defender, kind, motion) {
+    const { bonus, tn } = defenseNumbers(defender, kind, motion);
+    const die = CONFIG.defense.die;
+    return Math.max(0, Math.min(1, (die - (tn - bonus) + 1) / die));
+  }
+
+  async function defenseCheck(enc, chars, defender, kind, atkDecl, roller) {
+    const D = CONFIG.defense;
+    const motion = atkDecl.type === 'strike' ? atkDecl.option.motion : 'maneuver';
+    const { bonus, tn } = defenseNumbers(defender, kind, motion);
+    const label = `${ACTIONS[kind].name}: d10 + ${bonus} ≥ ${tn}`;
     const r = await rollDie(roller, defender.id, D.die, `${defender.name}: ${ACTIONS[kind].name}`, label);
     return { ok: r + bonus >= tn, roll: r, total: r + bonus, tn };
   }
@@ -434,6 +473,18 @@
   function stability(c) {
     const M = CONFIG.maneuver;
     return Math.floor(C.attr(c, 'STR') / 2) + (M.armorStability[c.armor ? c.armor.type : 'none'] || 0) + (C.rank(c, 'iron_stance') ? M.ironStanceBonus : 0);
+  }
+
+  // Chance that an opposed d10 roll wins by at least `margin`.
+  function opposedOdds(aBonus, bBonus, margin) {
+    const die = CONFIG.maneuver.die;
+    let wins = 0;
+    for (let a = 1; a <= die; a++) for (let b = 1; b <= die; b++) if (a + aBonus - (b + bBonus) >= margin) wins++;
+    return wins / (die * die);
+  }
+
+  function knockdownOdds(atk, tgt, featBonus, margin) {
+    return opposedOdds(Math.floor(C.attr(atk, 'STR') / 2) + featBonus, stability(tgt), margin);
   }
 
   async function knockdownCheck(roller, atk, tgt, featBonus, label) {
@@ -682,7 +733,7 @@
     if (d.type === 'trip') {
       const bonus = (C.rank(a, 'trip') ? M.tripFeatBonus : 0) + (hookWeapon(a) ? 2 : 0);
       const k = await knockdownCheck(roller, a, t, bonus, 'Trip');
-      if (k.margin > 0) {
+      if (k.margin >= (M.tripMargin || 1)) {
         t.status.prone = true;
         log(enc, `${a.name} trips ${t.name} — prone (${k.a} vs ${k.b}).`, 'hit');
       } else log(enc, `${a.name}'s trip fails (${k.a} vs ${k.b}).`, 'fail');
@@ -780,6 +831,6 @@
   G.Combat = {
     ATTACK_TYPES, DEFENSE_TYPES,
     createEncounter, autoPlace, startRound, currentActor, legalActions, declare, concede, describeDecl,
-    projectedPos, posAtPass, dist, computeHit, applyHit, resolveRound, endRound, cleanup, grappleStrength,
+    projectedPos, posAtPass, dist, defenseOdds, knockdownOdds, opposedOdds, defenseUnavailable, computeHit, applyHit, resolveRound, endRound, cleanup, grappleStrength,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

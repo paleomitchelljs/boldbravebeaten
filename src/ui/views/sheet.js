@@ -35,8 +35,8 @@
     const items = [
       ['Max stamina', max, '4×CON + STR + SPD + DEX'],
       ['Regen / round', (C.regen(c) >= 0 ? '+' : '') + C.regen(c), '⌊(CON+WIS)/4⌋ − armor'],
-      ['AP pool', C.apPool(c), `3 + ⌊SPD/2⌋${C.fatiguePenalty(c) ? ' − ' + C.fatiguePenalty(c) + ' fatigue' : ''}`],
-      ['Squares / AP', C.squaresPerAP(c), '1 + ⌊SPD/4⌋'],
+      ['AP pool', C.apPool(c), `(3 + ⌊SPD/2⌋${C.fatiguePenalty(c) ? ' − ' + C.fatiguePenalty(c) + ' fatigue' : ''})${C.apScale() > 1 ? ' × ' + C.apScale() : ''}`],
+      ['Movement', `${C.squaresPerAP(c)} sq`, `per ${C.apScale()} AP · 1 + ⌊SPD/4⌋`],
       ['Initiative', 'd10+' + C.combatAttr(c, 'SPD'), 'SPD in armor'],
       ['STR damage', (C.strBonus(c) >= 0 ? '+' : '') + C.strBonus(c), '⌊(STR−5)/2⌋'],
     ];

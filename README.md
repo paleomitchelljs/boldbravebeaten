@@ -73,11 +73,24 @@ costs 1 stamina; the same swing unarmored deals 7 slashing and then 7 CON of
 bleed), feat prerequisites, declaration order, Feint visibility, healing, and
 120 randomized AI-vs-AI fights.
 
+## Simulations
+
+`sim/` drives the real rules engine with the AI over thousands of fights to answer
+the questions in the Specifics simulation plan. Start with
+[`sim/FINDINGS.md`](sim/FINDINGS.md): what changed, the evidence, and the design
+questions the sims can't settle.
+
+```
+node sim/run.js            # full sweep (about a minute) → sim/results/
+node sim/compare.js        # rule variants side by side (sim/variants.json)
+```
+
 ## Placeholder rulings
 
 Where the Mechanics Outline marks a rule **Open** (defense success checks,
 knockdown chances, armor durability values, and so on), `src/rules/config.js`
-supplies a placeholder so the game can run. Each one is listed in
+supplies a placeholder so the game can run. Values marked TUNED were changed from
+the Specifics numbers on simulation evidence (see `sim/FINDINGS.md`). Each one is listed in
 `CONFIG.provisional` and on the in-app **Rules** tab. Change them there as
 playtesting and simulation settle them.
 

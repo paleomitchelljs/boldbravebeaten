@@ -14,12 +14,20 @@ function roller(seed, queue) {
   };
 }
 
+// Run fn with the numbers exactly as Specifics writes them (before simulation tuning).
+function asWritten(fn) {
+  const C0 = B.CONFIG;
+  const saved = { apScale: C0.apScale, staminaScale: C0.staminaScale, pierceMode: C0.pierceMode, passThroughByArmor: C0.passThroughByArmor };
+  Object.assign(C0, { apScale: 1, staminaScale: 1, pierceMode: 'floor', passThroughByArmor: null });
+  try { return fn(); } finally { Object.assign(C0, saved); }
+}
+
 function fighter(name, opts) {
   const c = C.newCharacter({ name, side: opts && opts.side, starterGear: false });
   return c;
 }
 
-test('derived stats for an average starting character', () => {
+test('derived stats for an average starting character', () => asWritten(() => {
   const c = fighter('Avg');
   assert.strictEqual(C.maxStamina(c), 4 * 5 + 5 + 5 + 5);
   assert.strictEqual(C.apPool(c), 3 + 2);
@@ -29,15 +37,28 @@ test('derived stats for an average starting character', () => {
   assert.strictEqual(C.combatAttr(c, 'SPD'), 2);
   assert.strictEqual(C.apPool(c), 4);
   assert.strictEqual(C.regen(c), -2, 'heavy armor regen can go negative');
+}));
+
+test('AP scale doubles pools and base costs but feats still cut a flat 1', () => {
+  const S = B.CONFIG.apScale;
+  const c = fighter('Scaled');
+  c.weapons.push(Items.makeWeapon('rapier'));
+  c.wield = c.weapons[0].id;
+  assert.strictEqual(C.apPool(c), 5 * S);
+  const thrust = () => C.attackOptions(c).find((o) => o.motion === 'thrust');
+  assert.strictEqual(thrust().ap, 2 * S);
+  c.feats.quick_thrust = 1;
+  assert.strictEqual(thrust().ap, 2 * S - 1);
 });
 
 test('fatigue lowers the AP pool', () => {
+  const S = B.CONFIG.apScale;
   const c = fighter('Tired');
   const max = C.maxStamina(c);
   c.stamina = Math.floor(max * 0.49);
-  assert.strictEqual(C.apPool(c), 4);
+  assert.strictEqual(C.apPool(c), 4 * S);
   c.stamina = Math.floor(max * 0.24);
-  assert.strictEqual(C.apPool(c), 3);
+  assert.strictEqual(C.apPool(c), 3 * S);
 });
 
 test('Specifics worked example: longsword swing vs mail = 1 stamina', () => {
@@ -83,7 +104,7 @@ test('losing an attribute lowers max and current stamina', () => {
   assert.strictEqual(c.stamina, 26);
 });
 
-test('plate stops a thrust; a half-sword thrust finds the gaps', () => {
+test('plate stops a thrust; a half-sword thrust finds the gaps', () => asWritten(() => {
   const atk = fighter('Knight');
   atk.weapons.push(Items.makeWeapon('longsword'));
   atk.wield = atk.weapons[0].id;
@@ -94,9 +115,25 @@ test('plate stops a thrust; a half-sword thrust finds the gaps', () => {
   const thrust = opts.find((o) => o.motion === 'thrust' && !o.halfSword);
   const half = opts.find((o) => o.halfSword);
   assert.strictEqual(half.ap, thrust.ap + 1);
-  assert.strictEqual(Combat.computeHit(atk, tgt, thrust).toCON, 1); // (5−4)×0.5 rounds to 1
+  assert.strictEqual(Combat.computeHit(atk, tgt, thrust).toCON, 0, '(5−4)×0.5 rounds down to 0');
   tgt.armor = Items.makeArmor('plate', 'full', 'crude'); // mitigation 3
   assert.strictEqual(Combat.computeHit(atk, tgt, half).toCON, 2);
+}));
+
+test('roll mode: each leftover piercing point has a chance to reach CON', async () => {
+  const atk = fighter('Stabber');
+  atk.weapons.push(Items.makeWeapon('rapier'));
+  atk.wield = atk.weapons[0].id;
+  const tgt = fighter('Mailed');
+  tgt.armor = Items.makeArmor('mail', 'full', 'standard'); // P mitigation 1, pass-through 0.5
+  const thrust = C.attackOptions(atk).find((o) => o.motion === 'thrust');
+  const h = Combat.computeHit(atk, tgt, thrust);
+  assert.strictEqual(h.pierceLeft, 5);
+  assert.strictEqual(h.toCON, 2.5, 'expectation used by the AI');
+  const enc = { hitThisRound: {}, fortressUsed: {} };
+  // d10s 1,5,6,9,10 → two of five are ≤ 5
+  await Combat.applyHit(enc, { [atk.id]: atk, [tgt.id]: tgt }, atk, tgt, thrust, roller(1, [1, 5, 6, 9, 10]));
+  assert.strictEqual(tgt.damage.CON, 2);
 });
 
 test('feat tiers and prerequisites', () => {
@@ -138,7 +175,7 @@ test('declaration passes follow initiative and AP', async () => {
   await Combat.startRound(enc, chars, roller(3, [5, 5]));
   assert.strictEqual(Combat.currentActor(enc), a.id);
   const thrust = C.attackOptions(a).find((o) => o.motion === 'thrust');
-  assert.strictEqual(thrust.ap, 1, 'dagger thrust is 1 AP');
+  assert.strictEqual(thrust.ap, 2 * B.CONFIG.apScale - 1, 'dagger thrust is 1 AP below a normal thrust');
   assert.strictEqual(Combat.declare(enc, chars, { actor: a.id, type: 'strike', option: thrust, target: b.id }), null);
   assert.strictEqual(Combat.currentActor(enc), b.id);
   const la = Combat.legalActions(enc, chars, b.id);

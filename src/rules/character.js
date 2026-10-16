@@ -211,7 +211,9 @@
     }
     const frac = b.maxDurability ? Math.max(0, a.durability) / b.maxDurability : 0;
     const effMit = {};
-    for (const k of ['P', 'S', 'B']) effMit[k] = Math.round(b.mit[k] * frac);
+    const fl = CONFIG.durabilityMitigationFloor || 0;
+    const scale = a.durability <= 0 ? 0 : fl + (1 - fl) * frac;
+    for (const k of ['P', 'S', 'B']) effMit[k] = Math.round(b.mit[k] * scale);
     return {
       type: a.type, mit: b.mit, effMit, spd, dex, stamina, regen: b.regen, standUp: b.standUp,
       passThrough: b.passThrough, durability: a.durability, maxDurability: b.maxDurability,
@@ -268,7 +270,16 @@
   }
 
   function apPool(c) {
-    return Math.max(0, CONFIG.apBase + Math.floor(combatAttr(c, 'SPD') / CONFIG.apSpdDivisor) - fatiguePenalty(c));
+    return Math.max(0, (CONFIG.apBase + Math.floor(combatAttr(c, 'SPD') / CONFIG.apSpdDivisor) - fatiguePenalty(c)) * apScale());
+  }
+
+  function apScale() {
+    return CONFIG.apScale || 1;
+  }
+
+  // AP to move d squares.
+  function moveCost(c, d) {
+    return Math.max(CONFIG.minActionAP, Math.ceil((d * apScale()) / squaresPerAP(c)));
   }
 
   function squaresPerAP(c) {
@@ -284,6 +295,7 @@
   // Stamina per action = base × weight factor + armor stamina penalty,
   // with STR offsetting the weight and armor parts, then feat reductions.
   function staminaCost(c, base, weight, reduction) {
+    base = base * (CONFIG.staminaScale || 1);
     const factor = weight ? CONFIG.weightFactor[weight] : 1;
     let penalty = base * (factor - 1) + armorInfo(c).stamina;
     penalty = Math.max(0, penalty - strOffset(c));
@@ -354,7 +366,7 @@
         if (def.sword && rank(c, 'half_swording') && !grappling) {
           const o = strikeOption(c, w, 'point', 'thrust');
           o.halfSword = true;
-          o.ap += 1;
+          o.ap += apScale();
           o.label = 'Half-sword thrust';
           opts.push(o);
         }
@@ -371,14 +383,14 @@
   function strikeOption(c, w, face, motion) {
     const def = WEAPONS[w.type];
     const m = MOTIONS[motion];
-    let ap = m.ap;
+    let ap = m.ap * apScale();
     if (def.weight === 'very light' && (motion === 'thrust' || motion === 'swing')) ap -= CONFIG.veryLightApDiscount;
     if (motion === 'thrust') ap -= rank(c, 'quick_thrust');
     if (motion === 'twoHanded' || motion === 'power') ap -= rank(c, 'heavy_tempo');
-    ap = Math.max(CONFIG.minActionAP, ap);
+    ap = Math.max(CONFIG.minActionAP, CONFIG.minStrikeAP || 0, ap);
     let red = 0;
     if (isLightWeapon(w) && (motion === 'thrust' || motion === 'swing')) red += rank(c, 'light_touch');
-    const stamina = staminaCost(c, m.stamina, effectiveWeight(c, w), red);
+    const stamina = Math.max(CONFIG.minStrikeStamina || 0, staminaCost(c, m.stamina, effectiveWeight(c, w), red));
     let reach = def.reach;
     if (motion === 'thrust' && rank(c, 'lunge')) reach += 1;
     return {
@@ -390,7 +402,7 @@
 
   function unarmedOption(c, kind) {
     const a = ACTIONS[kind];
-    let ap = a.ap;
+    let ap = a.ap * apScale();
     let red = 0;
     if (kind === 'punch' || kind === 'kick') {
       ap -= rank(c, 'quick_hands');
@@ -410,12 +422,13 @@
   function actionCost(c, kind, extra) {
     const st = c.status || freshStatus();
     const a = ACTIONS[kind];
-    let ap = a.ap, red = 0;
+    const S = apScale();
+    let ap = a.ap * S, red = 0;
     const grappled = st.grappledBy && st.grappledBy.length > 0;
     switch (kind) {
       case 'block': {
         const s = shieldInfo(c);
-        ap = (s ? s.blockAP : 2) - rank(c, 'quick_block');
+        ap = (s ? s.blockAP : 2) * S - rank(c, 'quick_block');
         red = rank(c, 'economical_block');
         break;
       }
@@ -428,23 +441,23 @@
         red = rank(c, 'light_on_your_feet');
         break;
       case 'standUp':
-        ap = rank(c, 'kip_up') ? 1 : a.ap + armorInfo(c).standUp;
+        ap = rank(c, 'kip_up') ? S : (a.ap + armorInfo(c).standUp) * S;
         break;
       case 'grapple':
       case 'takedown':
         red = rank(c, 'brawlers_wind');
         break;
       case 'bandage':
-        ap = rank(c, 'field_dressing') ? 1 : a.ap;
+        ap = rank(c, 'field_dressing') ? S : a.ap * S;
         break;
       case 'move':
-        ap = (extra && extra.ap) || 1;
+        ap = (extra && extra.ap) || S;
         red = rank(c, 'light_on_your_feet');
         break;
     }
     if (kind === 'block' || kind === 'parry' || kind === 'dodge') {
-      if (st.prone) ap += CONFIG.maneuver.proneDefenseExtraAP;
-      if (grappled) ap += CONFIG.maneuver.grappledDefenseExtraAP;
+      if (st.prone) ap += CONFIG.maneuver.proneDefenseExtraAP * S;
+      if (grappled) ap += CONFIG.maneuver.grappledDefenseExtraAP * S;
     }
     ap = Math.max(CONFIG.minActionAP, ap);
     return { ap, stamina: staminaCost(c, a.stamina, null, red) };
@@ -498,7 +511,7 @@
     newCharacter, normalize, freshStatus,
     rank, featCount, featBudget, treeCount, tierName, canTakeFeat, canRemoveFeat, addFeat, removeFeat, reqText, roman,
     conditioning, attr, attrMax, combatAttr, armorInfo, shieldInfo, shieldReady, wieldedWeapon,
-    maxStamina, regen, fatiguePenalty, apPool, squaresPerAP, strOffset, staminaCost, effectiveWeight, isLightWeapon,
+    maxStamina, regen, fatiguePenalty, apPool, apScale, moveCost, squaresPerAP, strOffset, staminaCost, effectiveWeight, isLightWeapon,
     strBonus, weaponDamage, mainIndex, attackOptions, actionCost,
     damageAttr, healAttr, totalDamage, updateCondition, isActive, bleedPerRound,
     TREES, ARMOR,

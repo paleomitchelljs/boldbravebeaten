@@ -1,0 +1,7 @@
+{
+  "tuned (defaults)": [],
+  "as written": ["apScale=1", "staminaScale=1", "pierceMode=\"floor\"", "passThroughByArmor=null", "armorWearScale=1", "durabilityMitigationFloor=0", "defense.block.tnBySize=null"],
+  "-staminaScale": ["staminaScale=1"],
+  "-apScale": ["apScale=1"],
+  "-roll": ["pierceMode=\"floor\"", "passThroughByArmor=null"]
+}

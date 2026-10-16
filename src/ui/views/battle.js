@@ -87,7 +87,7 @@
       }
       for (let y = 0; y < enc.grid.h; y++) for (let x = 0; x < enc.grid.w; x++) {
         const d = Combat.dist(m.from, { x, y });
-        const need = Math.ceil(d / m.squaresPerAP);
+        const need = C.moveCost(app.state.characters[actor], d);
         if (d > 0 && need <= m.maxAP && !blocked[x + ',' + y]) reach[x + ',' + y] = need;
       }
     }
@@ -227,7 +227,7 @@
       sections.push(h('div', { class: 'stack tight' }, h('span', { class: 'label' }, 'Move and maneuver'),
         h('div', { class: 'row' },
           legal.move ? h('button', { class: ui.mode === 'move' ? 'selected' : '', onclick: () => { ui.mode = 'move'; ui.pending = null; app.render(); } },
-            `Move · ${legal.move.squaresPerAP} sq/AP · ${legal.move.stamina} st`) : null,
+            `Move · up to ${legal.move.maxSquares} sq · ${legal.move.stamina} st`) : null,
           legal.maneuvers.map((m) => h('button', { disabled: !m.affordable, onclick: () => pick({ kind: 'maneuver', type: m.type, label: D.ACTIONS[m.type].name, targets: sortTargets(m.targets) }) },
             `${D.ACTIONS[m.type].name} · ${costText(m.ap, m.stamina)}`)))));
     }

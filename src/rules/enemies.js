@@ -190,5 +190,5 @@
     }
   }
 
-  G.Enemies = { TEMPLATES, generate, makeRng };
+  G.Enemies = { TEMPLATES, generate, makeRng, chooseFeats };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});
