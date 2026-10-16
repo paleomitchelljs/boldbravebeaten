@@ -1,0 +1,10 @@
+{
+  "name": "bold-brave-beaten",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Browser platform for a lethal, classless fantasy RPG: character sheets, dice entry, enemy generation, and turn-based battles.",
+  "scripts": {
+    "test": "node --test",
+    "serve": "npx serve ."
+  }
+}
