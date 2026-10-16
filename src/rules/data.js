@@ -45,56 +45,78 @@
 
   // ---- Weapons (Specifics) ------------------------------------------------
   // faces: [P, S, B]. motions: which motions the weapon allows.
-  // reach in grid squares (PROVISIONAL mapping: very short/short/medium = 1, long = 2).
+  // Range, in grid squares (PROVISIONAL scale: 1 = clinch, 2 = sword distance, 3+ = long):
+  //   reach        — farthest a swing reaches; swings work from 1 up to reach
+  //   thrust.ext   — extra reach for thrusts; thrust.min — closest a thrust works
+  //   closeOK      — no up-close penalty (daggers); otherwise attacks at range 1 are penalized
+  //   ranged       — bows: { min, max, long } (beyond `long` damage drops)
   const WEAPONS = {
     club: {
-      name: 'Club', hands: 1, weight: 'light', reach: 1, reachName: 'short',
+      name: 'Club', hands: 1, weight: 'light', reach: 2, reachName: 'short',
       faces: { head: [0, 0, 4] }, motions: ['swing', 'power'], rarity: 'common',
       notes: 'Cheapest; common starter.',
     },
     spikedMace: {
-      name: 'Spiked mace', hands: 1, weight: 'medium', reach: 1, reachName: 'short',
+      name: 'Spiked mace', hands: 1, weight: 'medium', reach: 2, reachName: 'short',
       faces: { head: [3, 0, 6] }, motions: ['swing', 'power'], rarity: 'uncommon',
       notes: 'Spikes carry piercing through armor to CON.',
     },
     flangedMace: {
-      name: 'Flanged mace', hands: 1, weight: 'medium', reach: 1, reachName: 'short',
+      name: 'Flanged mace', hands: 1, weight: 'medium', reach: 2, reachName: 'short',
       faces: { head: [0, 2, 7] }, motions: ['swing', 'power'], rarity: 'uncommon',
       bluntMitigationIgnore: 2, notes: 'Flanges concentrate force: −2 to target blunt mitigation.',
     },
     dagger: {
-      name: 'Dagger', hands: 1, weight: 'very light', reach: 1, reachName: 'very short',
+      name: 'Dagger', hands: 1, weight: 'very light', reach: 1, reachName: 'close only', closeOK: true,
       faces: { point: [5, 0, 0], edge: [0, 3, 0] }, motions: ['thrust', 'swing'], rarity: 'common',
       sidearm: true, grappleUsable: true,
-      notes: 'Lowest AP; usable while grappling; fast to draw; finisher vs. prone or grappled.',
+      notes: 'Lowest AP; works up close with no penalty but cannot reach sword distance; usable while grappling.',
     },
     rapier: {
-      name: 'Rapier', hands: 1, weight: 'light', reach: 2, reachName: 'long',
+      name: 'Rapier', hands: 1, weight: 'light', reach: 2, reachName: 'long thrust', thrust: { ext: 1, min: 1 },
       faces: { point: [6, 0, 0], edge: [0, 2, 0] }, motions: ['thrust', 'swing'], rarity: 'uncommon',
-      notes: 'Fast long-reach thrusts; weak edge.',
+      notes: 'Thrusts reach one square farther; ungainly up close; weak edge.',
     },
     longsword: {
-      name: 'Longsword', hands: 1.5, weight: 'medium', reach: 1, reachName: 'medium',
+      name: 'Longsword', hands: 1.5, weight: 'medium', reach: 2, reachName: 'medium',
       faces: { point: [5, 0, 0], edge: [0, 7, 1], hilt: [0, 0, 5] }, motions: ['thrust', 'swing', 'twoHanded'],
-      sword: true, rarity: 'uncommon', notes: 'Versatile; feats turn it against armor.',
+      sword: true, rarity: 'uncommon', notes: 'Versatile; half-sword and murder stroke work up close.',
     },
     greatsword: {
-      name: 'Greatsword', hands: 2, weight: 'heavy', reach: 2, reachName: 'long',
+      name: 'Greatsword', hands: 2, weight: 'heavy', reach: 3, reachName: 'long',
       faces: { point: [6, 0, 0], edge: [0, 9, 2], hilt: [0, 0, 6] }, motions: ['thrust', 'twoHanded', 'power'],
       sword: true, rarity: 'rare', notes: 'No shield; long reach.',
     },
     warhammer: {
-      name: 'Warhammer', hands: 1.5, weight: 'heavy', reach: 1, reachName: 'medium',
+      name: 'Warhammer', hands: 1.5, weight: 'heavy', reach: 2, reachName: 'medium',
       faces: { head: [0, 0, 8], beak: [6, 0, 1] }, motions: ['swing', 'twoHanded', 'power'], rarity: 'rare',
       hook: true, notes: 'Anti-plate: head drains stamina, beak pierces to CON.',
+    },
+    // PROVISIONAL: the spear is listed in the rarity table but not the weapon catalog.
+    spear: {
+      name: 'Spear', hands: 1, weight: 'medium', reach: 2, reachName: 'thrusts 2–4, not up close', thrust: { ext: 2, min: 2 },
+      faces: { point: [6, 0, 0], shaft: [0, 0, 3] }, motions: ['thrust', 'swing'], rarity: 'uncommon',
+      notes: 'Thrusts reach far but not up close; the shaft can club at 1–2.',
+    },
+    // PROVISIONAL: bows are not in the design docs yet.
+    shortbow: {
+      name: 'Shortbow', hands: 2, weight: 'light', reach: 0, reachName: 'range 2–12', ranged: { min: 2, max: 12, long: 8 },
+      faces: { arrow: [5, 0, 0] }, motions: ['shoot'], rarity: 'common', shootAP: 3, shootStamina: 1,
+      notes: 'Arrows can be blocked or dodged, not parried. −2 damage beyond 8 squares.',
+    },
+    longbow: {
+      name: 'Longbow', hands: 2, weight: 'medium', reach: 0, reachName: 'range 2–16', ranged: { min: 2, max: 16, long: 10 },
+      faces: { arrow: [7, 0, 0] }, motions: ['shoot'], rarity: 'uncommon', shootAP: 4, shootStamina: 2,
+      notes: 'Heavy draw. −2 damage beyond 10 squares.',
     },
   };
 
   const MOTIONS = {
     thrust: { name: 'Thrust', ap: 2, stamina: 1, faces: ['point'] },
-    swing: { name: 'Swing', ap: 3, stamina: 2, faces: ['edge', 'head', 'beak', 'hilt'] },
+    swing: { name: 'Swing', ap: 3, stamina: 2, faces: ['edge', 'head', 'beak', 'hilt', 'shaft'] },
     twoHanded: { name: 'Two-handed swing', ap: 4, stamina: 3, faces: ['edge', 'head', 'beak', 'hilt'], twoHands: true },
     power: { name: 'Power swing', ap: 5, stamina: 4, faces: ['edge', 'head', 'beak'], requiresFeat: 'power_swing' },
+    shoot: { name: 'Shoot', ap: 3, stamina: 1, faces: ['arrow'] },
   };
 
   // Other actions (Specifics: Action points table; PROVISIONAL rows noted in config)
@@ -116,6 +138,8 @@
     release: { name: 'Release grapple', ap: 1, stamina: 0 },
     bandage: { name: 'Bandage', ap: 3, stamina: 0 },
     move: { name: 'Move', ap: 1, stamina: 0 },
+    windUp: { name: 'Wind up', ap: 2, stamina: 1 }, // costs set in CONFIG.windUp
+    readyPrimary: { name: 'Ready main weapon', ap: 2, stamina: 0 },
   };
 
   const RARITY = ['common', 'uncommon', 'rare', 'very rare', 'unique'];

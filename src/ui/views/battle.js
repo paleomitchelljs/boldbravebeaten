@@ -194,7 +194,7 @@
         h('div', { class: 'row spread' }, h('b', null, `Target for ${ui.pending.label}`), h('button', { class: 'small', onclick: () => { ui.mode = null; ui.pending = null; app.render(); } }, 'Cancel')),
         h('p', { class: 'small' }, 'Click a highlighted token on the map, or choose:'),
         h('div', { class: 'row', style: { marginTop: '6px' } }, ui.pending.targets.map((t) =>
-          h('button', { class: 'small' + (t.inReach ? '' : ' ghost'), onclick: () => finishTarget(app, enc, t.id) }, chars[t.id].name + (t.inReach ? '' : ' (out of reach now)'))))));
+          h('button', { class: 'small' + (t.inReach ? '' : ' ghost'), onclick: () => finishTarget(app, enc, t.id) }, chars[t.id].name + (t.distance != null ? ` · ${t.distance} sq` : '') + (t.inReach ? '' : t.tooClose ? ' (too close now)' : ' (out of reach now)'))))));
     }
     if (ui.mode === 'move') {
       sections.push(h('div', { class: 'note row spread' }, h('span', null, 'Click a highlighted square. The number is its AP cost.'),
@@ -217,10 +217,12 @@
       h('div', { class: 'action-list' }, legal.attacks.map((o) => {
         const w = o.weaponId ? c.weapons.find((x) => x.id === o.weaponId) : null;
         const anyReach = o.targets.some((t) => t.inReach && foes.has(t.id));
-        return h('button', { class: 'action', disabled: !o.affordable, onclick: () => pick({ kind: 'strike', option: o, label: o.label, targets: sortTargets(o.targets) }) },
+        const range = (o.minRange === o.maxRange ? `range ${o.maxRange}` : `range ${o.minRange}–${o.maxRange}`) + (o.closePenalty ? ' (½ at 1)' : '');
+        const dmg = o.spell ? `${o.spell.magnitude} ${o.spell.element} · ${o.spCost} SP` : `P/S/B ${o.damage.join('/')}`;
+        return h('button', { class: 'action', disabled: !o.affordable, title: o.why || '', onclick: () => pick({ kind: 'strike', option: o, label: o.label, targets: sortTargets(o.targets) }) },
           h('span', null, o.label, w ? h('span', { class: 'muted' }, ' — ' + Items.itemName(w)) : null),
           h('span', { class: 'cost' }, costText(o.ap, o.stamina)),
-          h('span', { class: 'meta' }, `P/S/B ${o.damage.join('/')} · reach ${o.reach}${anyReach ? '' : ' · no foe in reach'}`));
+          h('span', { class: 'meta' }, `${dmg} · ${range}${o.why ? ' · ' + o.why : anyReach ? '' : ' · no foe in range'}`));
       }))));
 
     if (legal.move || legal.maneuvers.length) {
@@ -236,7 +238,8 @@
       sections.push(h('div', { class: 'stack tight' }, h('span', { class: 'label' }, 'Other'),
         h('div', { class: 'row' }, legal.other.map((o) => h('button', {
           disabled: !o.affordable,
-          onclick: () => (o.targets ? pick({ kind: 'other', type: o.type, label: o.name, targets: o.targets }) : declare(app, enc, { actor: id, type: o.type })),
+          title: o.why || '',
+          onclick: () => (o.targets ? pick({ kind: 'other', type: o.type, label: o.name, targets: o.targets }) : declare(app, enc, { actor: id, type: o.type, option: o.option })),
         }, `${o.name} · ${costText(o.ap, o.stamina)}`)))));
     }
 

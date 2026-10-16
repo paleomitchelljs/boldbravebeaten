@@ -15,6 +15,7 @@
     if (st.grappledBy && st.grappledBy.length) out.push(h('span', { class: 'chip warn' }, 'Grappled'));
     if (st.grappling) out.push(h('span', { class: 'chip' }, 'Grappling'));
     if (st.dropped) out.push(h('span', { class: 'chip warn' }, 'Disarmed'));
+    if (st.windUp) out.push(h('span', { class: 'chip warn', title: 'Cannot block or parry until the blow is released' }, 'Wound up: ' + st.windUp.label));
     if (c.bleeds.length && !st.dead) out.push(h('span', { class: 'chip bad' }, `Bleeding ${C.bleedPerRound(c).toFixed(1)}/rd`));
     return out;
   }

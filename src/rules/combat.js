@@ -155,6 +155,7 @@
       if (d.actor !== c.id) continue;
       if (d.type === 'drawSidearm') c.wield = c.sidearm;
       if (d.type === 'pickUp' && c.status.dropped) { c.wield = c.status.dropped; c.status.dropped = null; }
+      if (d.type === 'readyPrimary') c.wield = primaryWeaponId(c);
     }
     const opts = C.attackOptions(c);
     c.wield = keep.wield;
@@ -170,10 +171,17 @@
     const others = enc.ids.filter((o) => o !== id && !chars[o].status.dead);
     const out = { ap, attacks: [], defenses: [], maneuvers: [], other: [], move: null };
 
-    for (const opt of plannedAttackOptions(enc, c)) {
+    const planned = plannedAttackOptions(enc, c);
+    const spPlanned = enc.decls.filter((d) => d.actor === id && d.type === 'strike' && d.option.spell).reduce((t, d) => t + d.option.spCost, 0);
+    for (const opt of planned) {
+      const why = attackUnavailable(enc, c, opt, spPlanned);
       out.attacks.push(Object.assign({}, opt, {
-        affordable: opt.ap <= ap,
-        targets: others.map((o) => ({ id: o, inReach: dist(me, posAtPass(enc, o, enc.pass)) <= opt.reach })),
+        affordable: opt.ap <= ap && !why,
+        why,
+        targets: others.map((o) => {
+          const dd = dist(me, posAtPass(enc, o, enc.pass));
+          return { id: o, inReach: C.inRange(opt, dd), tooClose: dd < (opt.minRange || 1), distance: dd };
+        }),
       }));
     }
 
@@ -184,13 +192,13 @@
       const opts = [];
       for (const kind of DEFENSE_TYPES) {
         const cost = C.actionCost(c, kind);
-        const why = defenseUnavailable(c, kind, d, chars);
+        const why = defenseUnavailable(c, kind, d, chars, enc);
         opts.push({ type: kind, ap: cost.ap, stamina: cost.stamina, affordable: cost.ap <= ap && !why, why });
       }
       out.defenses.push({ decl: d, options: opts });
     }
 
-    const reach = 1;
+    const reach = CONFIG.range.maneuverMax;
     const grappled = isGrappled(c);
     for (const kind of ['trip', 'disarm', 'grapple', 'takedown']) {
       if (kind === 'takedown' && !C.rank(c, 'takedown')) continue;
@@ -221,6 +229,21 @@
     if (c.status.dropped && !declared('pickUp') && !declared('drawSidearm')) addOther('pickUp');
     if (grappled) addOther('escape');
     if (c.status.grappling && !declared('release')) addOther('release');
+    const primary = primaryWeaponId(c);
+    if (primary && c.wield !== primary && c.status.dropped !== primary && !declared('readyPrimary') && !declared('drawSidearm')) addOther('readyPrimary');
+    // Wind-ups for attacks that need one (power swings, Strong spells).
+    if (!c.status.windUp && !declared('windUp') && !c.status.prone && !grappled) {
+      const seen = {};
+      for (const opt of planned) {
+        if (!opt.windUp) continue;
+        const key = C.optionKey(opt);
+        if (seen[key]) continue;
+        seen[key] = true;
+        const cost = C.actionCost(c, 'windUp', { option: opt });
+        const why = opt.spell ? spellShort(c, opt, spPlanned) : null;
+        out.other.push({ type: 'windUp', option: opt, name: `Wind up: ${opt.label}`, ap: cost.ap, stamina: cost.stamina, affordable: cost.ap <= ap && !why, why });
+      }
+    }
     if (c.inventory.bandages > 0) {
       const patients = enc.ids.filter((o) => chars[o].bleeds.length > 0 && !chars[o].status.dead && (o === id || dist(me, posAtPass(enc, o, enc.pass)) <= 1));
       if (patients.length) addOther('bandage', { targets: patients.map((o) => ({ id: o, inReach: true })) });
@@ -228,14 +251,42 @@
     return out;
   }
 
+  function primaryWeaponId(c) {
+    const w = c.weapons.find((x) => x.id !== c.sidearm);
+    return w ? w.id : null;
+  }
+
+  function spellShort(c, opt, spPlanned) {
+    return G.Magic && opt.spCost > G.Magic.availableSP(c) - (spPlanned || 0) ? 'Not enough spell points' : null;
+  }
+
+  // Why an attack can't be declared right now (beyond AP), or null.
+  function attackUnavailable(enc, c, opt, spPlanned) {
+    if (opt.windUp) {
+      const w = c.status.windUp;
+      const key = C.optionKey(opt);
+      if (enc.decls.some((d) => d.actor === c.id && d.type === 'windUp' && C.optionKey(d.option) === key)) return 'Release next round';
+      if (enc.decls.some((d) => d.actor === c.id && d.type === 'strike' && d.option.windUp && C.optionKey(d.option) === key)) return 'Already released';
+      if (!w || w.key !== key) return 'Wind up first';
+      if (w.round >= enc.round) return 'Release next round';
+    }
+    if (opt.ranged && opt.weaponId && (c.inventory.arrows || 0) <= 0) return 'No arrows';
+    if (opt.spell) return spellShort(c, opt, spPlanned);
+    return null;
+  }
+
   function hookWeapon(c) {
     const w = C.wieldedWeapon(c);
     return w && WEAPONS[w.type].hook && C.rank(c, 'hook');
   }
 
-  function defenseUnavailable(c, kind, attackDecl, chars) {
+  function defenseUnavailable(c, kind, attackDecl, chars, enc) {
     const grapplers = c.status.grappledBy.map((g) => chars[g]).filter(Boolean);
     if (grapplers.some((g) => C.rank(g, 'pin'))) return 'Pinned';
+    const winding = c.status.windUp || (enc && enc.decls.some((d) => d.actor === c.id && d.type === 'windUp'));
+    if (winding && (CONFIG.windUp.exposed || []).includes(kind)) return 'Winding up';
+    const opt = attackDecl.option;
+    if (kind === 'parry' && opt && (opt.spell || (opt.ranged && !CONFIG.archery.parry))) return opt.spell ? "Can't parry a spell" : "Can't parry an arrow";
     if (kind === 'block' && !C.shieldReady(c)) return 'No ready shield';
     if (kind === 'parry') {
       if (!C.wieldedWeapon(c)) return 'No weapon';
@@ -253,8 +304,12 @@
     const c = chars[id];
     let ap, stamina;
     if (decl.type === 'strike') {
-      const opt = plannedAttackOptions(enc, c).find((o) => o.label === decl.option.label && o.weaponId === decl.option.weaponId && !!o.halfSword === !!decl.option.halfSword);
+      const key = C.optionKey(decl.option);
+      const opt = plannedAttackOptions(enc, c).find((o) => C.optionKey(o) === key);
       if (!opt) return 'Attack not available';
+      const spPlanned = enc.decls.filter((d) => d.actor === id && d.type === 'strike' && d.option.spell).reduce((t, d) => t + d.option.spCost, 0);
+      const why = attackUnavailable(enc, c, opt, spPlanned);
+      if (why) return why;
       decl.option = opt;
       ap = opt.ap;
       stamina = opt.stamina;
@@ -262,9 +317,17 @@
     } else if (DEFENSE_TYPES.includes(decl.type)) {
       const atk = enc.decls.find((d) => d.n === decl.answers);
       if (!atk || atk.target !== id) return 'Choose a strike to answer';
-      const why = defenseUnavailable(c, decl.type, atk, chars);
+      const why = defenseUnavailable(c, decl.type, atk, chars, enc);
       if (why) return why;
       ({ ap, stamina } = C.actionCost(c, decl.type));
+    } else if (decl.type === 'windUp') {
+      if (!decl.option) return 'Choose what to wind up';
+      const key = C.optionKey(decl.option);
+      const opt = plannedAttackOptions(enc, c).find((o) => C.optionKey(o) === key && o.windUp);
+      if (!opt) return 'Nothing to wind up';
+      if (c.status.windUp || enc.decls.some((d) => d.actor === id && d.type === 'windUp')) return 'Already winding up';
+      decl.option = opt;
+      ({ ap, stamina } = C.actionCost(c, 'windUp', { option: opt }));
     } else if (decl.type === 'move') {
       const from = projectedPos(enc, id);
       const d = dist(from, decl.to);
@@ -305,6 +368,7 @@
       return { text: `${a.name}: ${ACTIONS[d.type].name.toLowerCase()} vs. ${atk ? chars[atk.actor].name : '?'}'s strike [${d.ap} AP]` };
     }
     if (d.type === 'move') return { text: `${a.name}: move to (${d.to.x + 1}, ${d.to.y + 1}) [${d.ap} AP]` };
+    if (d.type === 'windUp') return { text: `${a.name}: winds up ${d.option.label} [${d.ap} AP]` };
     return { text: `${a.name}: ${ACTIONS[d.type].name.toLowerCase()}${tn ? ' ' + tn : ''} [${d.ap} AP]` };
   }
 
@@ -312,10 +376,13 @@
   // Pure: works out what a hit would do (before d4 hit-location rolls).
   function computeHit(attacker, target, option, flags) {
     flags = flags || {};
+    if (option.spell && option.spell.element === 'fire') return computeFire(attacker, target, option, flags);
     const v = option.damage.slice();
     const st = target.status;
     const prone = st.prone;
     const grappled = isGrappled(target);
+    if (flags.distance === 1 && option.closePenalty) for (let i = 0; i < 3; i++) v[i] = Math.floor(v[i] * CONFIG.range.closeMult);
+    if (option.ranged && option.longRange && flags.distance > option.longRange) v[C.mainIndex(v)] = Math.max(0, v[C.mainIndex(v)] - CONFIG.range.longRangePenalty);
     if (prone) v[C.mainIndex(v)] += CONFIG.maneuver.proneDamageBonus;
     if (flags.half) for (let i = 0; i < 3; i++) v[i] = Math.floor(v[i] / 2);
     const [P, S, B] = v;
@@ -349,7 +416,7 @@
       // 'floor': piercing that only barely beats the armor does not reach CON.
       // 'roll': toCON here is the expectation; applyHit rolls each point.
       res.toCON = CONFIG.pierceMode === 'roll' && pass < 1 ? Pr * pass : Math.floor(Pr * pass);
-      res.converted = Math.round(Sr * CONFIG.conversion[motion]);
+      res.converted = Math.round(Sr * (CONFIG.conversion[motion] || 0));
       res.bluntToStamina = Br + res.converted;
       res.durLoss = target.armor.type === 'padded' ? 0 : Math.round((B + res.converted) * (CONFIG.armorWearScale == null ? 1 : CONFIG.armorWearScale));
     } else {
@@ -361,12 +428,35 @@
     return res;
   }
 
+  // Fire (magic stub): armor stops part of it; every few points left over cost 1 CON,
+  // the rest goes to stamina. Burns don't bleed.
+  function computeFire(attacker, target, option, flags) {
+    const M = CONFIG.magic;
+    let mag = option.spell.magnitude;
+    if (flags.half) mag = Math.floor(mag / 2);
+    const res = { vec: [0, 0, 0], P: 0, S: 0, B: 0, fire: mag, armored: false, toCON: 0, slashToAttrs: 0, bluntToStamina: 0, bluntToCON: 0, converted: 0, durLoss: 0, mitigated: { P: 0, S: 0, B: 0 }, noBleed: true };
+    const unconscious = target.stamina <= 0;
+    let left = mag;
+    if (target.armor && target.armor.durability > 0) {
+      const stop = Math.round(C.armorInfo(target).effMit.B * M.fireMitigation);
+      left = Math.max(0, mag - stop);
+      res.fireStopped = mag - left;
+    }
+    if (unconscious) res.toCON = left;
+    else {
+      res.toCON = Math.floor(left / M.fireConPer);
+      res.bluntToStamina = left - res.toCON;
+    }
+    return res;
+  }
+
   // Apply a hit, rolling d4s for slashing. Returns a short description.
   async function applyHit(enc, chars, attacker, target, option, roller, flags) {
     const h = computeHit(attacker, target, option, flags);
     const parts = [];
     const st = target.status;
 
+    if (h.fire != null && h.fireStopped) parts.push(`armor stops ${h.fireStopped} fire`);
     if (h.armored && target.armor) {
       const before = target.armor.durability;
       target.armor.durability = Math.max(0, before - h.durLoss);
@@ -414,7 +504,7 @@
         parts.push(`${amt} stamina`);
       }
     }
-    if (wound > 0) {
+    if (wound > 0 && !h.noBleed) {
       target.bleeds.push({ remaining: wound, rounds: CONFIG.bleedRounds });
       parts.push('bleeding');
     }
@@ -586,18 +676,42 @@
         log(enc, `${a.name}'s ${d.type === 'strike' ? d.option.label : d.type} fizzles — ${t.name} is already down.`, 'fizzle');
         return;
       }
-      let reach = 1;
-      if (d.type === 'strike') reach = d.option.reach;
-      if (d.type === 'trip' && hookWeapon(a)) reach = WEAPONS[C.wieldedWeapon(a).type].reach;
-      if (dist(posAtStart[d.actor], posAtStart[d.target]) > reach) {
-        log(enc, `${a.name}'s ${d.type === 'strike' ? d.option.label : d.type} fizzles — ${t.name} is out of reach.`, 'fizzle');
+      let band = { minRange: 1, maxRange: CONFIG.range.maneuverMax };
+      if (d.type === 'strike') band = d.option;
+      if (d.type === 'trip' && hookWeapon(a)) band = { minRange: 1, maxRange: WEAPONS[C.wieldedWeapon(a).type].reach };
+      const distance = dist(posAtStart[d.actor], posAtStart[d.target]);
+      const label = d.type === 'strike' ? d.option.label : d.type;
+      if (distance > (band.maxRange != null ? band.maxRange : band.reach)) {
+        log(enc, `${a.name}'s ${label} fizzles — ${t.name} is out of reach.`, 'fizzle');
+        return;
+      }
+      if (distance < (band.minRange || 1)) {
+        log(enc, `${a.name}'s ${label} fizzles — ${t.name} is too close.`, 'fizzle');
         return;
       }
       if (d.type === 'strike' && d.option.weaponId && (a.wield !== d.option.weaponId || a.status.dropped === d.option.weaponId)) {
         log(enc, `${a.name} no longer holds that weapon; the strike fizzles.`, 'fizzle');
         return;
       }
+      if (d.type === 'strike' && d.option.windUp) {
+        const w = a.status.windUp;
+        if (!w || w.key !== C.optionKey(d.option)) {
+          log(enc, `${a.name} lost the wind-up; the ${label} fizzles.`, 'fizzle');
+          return;
+        }
+        a.status.windUp = null;
+      }
+      if (d.type === 'strike' && d.option.ranged && d.option.weaponId) {
+        if ((a.inventory.arrows || 0) <= 0) {
+          log(enc, `${a.name} is out of arrows.`, 'fizzle');
+          return;
+        }
+        a.inventory.arrows -= 1;
+      }
       if (!payStamina(enc, a, d.stamina)) return;
+      if (d.type === 'strike' && d.option.spell) {
+        if (!(await castSpell(enc, a, d.option, roller))) return;
+      }
 
       // Defenses that answer this attack.
       const name = d.type === 'strike' ? d.option.label : ACTIONS[d.type].name;
@@ -609,7 +723,7 @@
           if (dodge) defs.push(Object.assign({}, dodge, { untouchable: true }));
         }
         for (const def of defs) {
-          const why = defenseUnavailable(t, def.type, d, chars);
+          const why = defenseUnavailable(t, def.type, d, chars, enc);
           if (why) {
             log(enc, `${t.name} can't ${def.type} (${why.toLowerCase()}).`, 'fizzle');
             continue;
@@ -632,12 +746,21 @@
 
       if (d.type === 'strike') {
         const half = failedDodge && C.rank(t, 'roll_with_it');
-        const r = await applyHit(enc, chars, a, t, d.option, roller, { half });
-        log(enc, `${a.name}'s ${name} hits ${t.name}${half ? ' (Roll With It: half)' : ''}: ${r.text}`, 'hit');
+        const r = await applyHit(enc, chars, a, t, d.option, roller, { half, distance });
+        const note = distance === 1 && d.option.closePenalty ? ' (up close: half damage)' : d.option.ranged && d.option.longRange && distance > d.option.longRange ? ' (long range)' : '';
+        log(enc, `${a.name}'s ${name} hits ${t.name}${half ? ' (Roll With It: half)' : ''}${note}: ${r.text}`, 'hit');
+        if (d.option.spell && d.option.spell.element === 'force' && C.isActive(t) && !t.status.prone) {
+          const k = await opposed(roller, a, Math.floor(C.attr(a, 'INT') / 2), 'Force knockdown', t, stability(t), 'Keep footing');
+          if (k.margin >= CONFIG.magic.forceKnockdownMargin) {
+            knockDown(enc, t);
+            log(enc, `${t.name} is knocked prone by the force (${k.a} vs ${k.b}).`, 'hit');
+          }
+        }
+        if (!C.isActive(t)) loseWindUp(enc, t, null);
         if ((d.option.unarmed === 'kick' || d.option.unarmed === 'shieldBash') && C.isActive(t) && !t.status.prone) {
           const k = await knockdownCheck(roller, a, t, C.rank(a, 'trip') ? CONFIG.maneuver.tripFeatBonus : 0, 'Knockdown');
           if (k.margin >= CONFIG.maneuver.kickKnockdownMargin) {
-            t.status.prone = true;
+            knockDown(enc, t);
             log(enc, `${t.name} is knocked prone (${k.a} vs ${k.b}).`, 'hit');
           }
         }
@@ -652,6 +775,18 @@
       case 'standUp':
         a.status.prone = false;
         log(enc, `${a.name} stands up.`);
+        break;
+      case 'windUp':
+        if (a.status.prone || isGrappled(a) || (d.option.weaponId && C.wieldedWeapon(a) && C.wieldedWeapon(a).id !== d.option.weaponId) || (d.option.weaponId && !C.wieldedWeapon(a))) {
+          log(enc, `${a.name} can't wind up now.`, 'fizzle');
+          break;
+        }
+        a.status.windUp = { key: C.optionKey(d.option), label: d.option.label, round: enc.round };
+        log(enc, `${a.name} winds up a ${d.option.label} — exposed until it lands.`);
+        break;
+      case 'readyPrimary':
+        a.wield = primaryWeaponId(a);
+        log(enc, `${a.name} readies ${Items.itemName(a.weapons.find((w) => w.id === a.wield))}.`);
         break;
       case 'drawSidearm':
         a.wield = a.sidearm;
@@ -694,6 +829,39 @@
     }
   }
 
+  // Pay spell points and roll backlash. Returns false if the spell fails to go off.
+  async function castSpell(enc, a, opt, roller) {
+    const avail = G.Magic.availableSP(a);
+    if (opt.spCost > avail) {
+      log(enc, `${a.name} can't draw enough power for ${opt.label} (${avail} of ${opt.spCost} points).`, 'fizzle');
+      return false;
+    }
+    a.spSpent = (a.spSpent || 0) + opt.spCost;
+    const lost = await G.Magic.backlash(a, opt.spCost, roller);
+    if (lost > 0) {
+      a.stamina = Math.max(0, a.stamina - lost);
+      enc.hitThisRound[a.id] = (enc.hitThisRound[a.id] || 0) + lost;
+      C.updateCondition(a);
+      log(enc, `Backlash: ${a.name} loses ${lost} stamina.`, 'fail');
+      if (!C.isActive(a)) {
+        log(enc, `${a.name} collapses from the backlash; the spell is lost.`, 'death');
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function knockDown(enc, t) {
+    t.status.prone = true;
+    loseWindUp(enc, t, 'knocked down');
+  }
+
+  function loseWindUp(enc, c, why) {
+    if (!c.status.windUp) return;
+    c.status.windUp = null;
+    if (why) log(enc, `${c.name} loses the wind-up (${why}).`, 'fizzle');
+  }
+
   async function shieldAbsorb(enc, chars, a, t, d, roller) {
     const s = t.shield;
     const ss = Items.shieldStats(s);
@@ -734,7 +902,7 @@
       const bonus = (C.rank(a, 'trip') ? M.tripFeatBonus : 0) + (hookWeapon(a) ? 2 : 0);
       const k = await knockdownCheck(roller, a, t, bonus, 'Trip');
       if (k.margin >= (M.tripMargin || 1)) {
-        t.status.prone = true;
+        knockDown(enc, t);
         log(enc, `${a.name} trips ${t.name} — prone (${k.a} vs ${k.b}).`, 'hit');
       } else log(enc, `${a.name}'s trip fails (${k.a} vs ${k.b}).`, 'fail');
     } else if (d.type === 'disarm') {
@@ -746,6 +914,7 @@
       const o = await opposed(roller, a, aB, 'Disarm', t, bB, 'Keep grip');
       if (o.margin > 0) {
         t.status.dropped = w.id;
+        loseWindUp(enc, t, 'disarmed');
         log(enc, `${a.name} disarms ${t.name}; ${Items.itemName(w)} falls (${o.a} vs ${o.b}).`, 'hit');
       } else log(enc, `${a.name}'s disarm fails (${o.a} vs ${o.b}).`, 'fail');
     } else if (d.type === 'grapple' || d.type === 'takedown') {
@@ -755,7 +924,8 @@
       if (o.margin > 0 || t.status.unconscious) {
         if (!t.status.grappledBy.includes(a.id)) t.status.grappledBy.push(a.id);
         a.status.grappling = t.id;
-        if (d.type === 'takedown') t.status.prone = true;
+        loseWindUp(enc, t, 'grappled');
+        if (d.type === 'takedown') knockDown(enc, t);
         log(enc, `${a.name} grapples ${t.name}${d.type === 'takedown' ? ' and takes them down' : ''} (${o.a} vs ${o.b}).`, 'hit');
       } else log(enc, `${a.name}'s grapple fails (${o.a} vs ${o.b}).`, 'fail');
     }
@@ -799,7 +969,9 @@
       C.updateCondition(c);
       if (c.status.dead) log(enc, `${c.name} has died.`, 'death');
       else if (c.status.unconscious && !wasDown) log(enc, `${c.name} collapses, unconscious.`, 'death');
-      if (c.status.unconscious) releaseGrapples(chars, c);
+      if (c.status.unconscious) { releaseGrapples(chars, c); c.status.windUp = null; }
+      // A wind-up must be released the round after it is made.
+      if (c.status.windUp && c.status.windUp.round < enc.round) loseWindUp(enc, c, 'not released in time');
     }
     const sides = {};
     for (const id of enc.ids) if (C.isActive(chars[id])) sides[chars[id].side] = true;
@@ -819,6 +991,7 @@
       const c = chars[id];
       if (!c) continue;
       c.status.prone = false;
+      c.status.windUp = null;
       c.status.grappling = null;
       c.status.grappledBy = [];
       if (c.status.dropped) {

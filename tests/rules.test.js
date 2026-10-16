@@ -17,8 +17,8 @@ function roller(seed, queue) {
 // Run fn with the numbers exactly as Specifics writes them (before simulation tuning).
 function asWritten(fn) {
   const C0 = B.CONFIG;
-  const saved = { apScale: C0.apScale, staminaScale: C0.staminaScale, pierceMode: C0.pierceMode, passThroughByArmor: C0.passThroughByArmor };
-  Object.assign(C0, { apScale: 1, staminaScale: 1, pierceMode: 'floor', passThroughByArmor: null });
+  const saved = { apScale: C0.apScale, staminaScale: C0.staminaScale, pierceMode: C0.pierceMode, passThroughByArmor: C0.passThroughByArmor, moveScale: C0.moveScale };
+  Object.assign(C0, { apScale: 1, staminaScale: 1, pierceMode: 'floor', passThroughByArmor: null, moveScale: 1 });
   try { return fn(); } finally { Object.assign(C0, saved); }
 }
 
@@ -259,4 +259,154 @@ test('AI-vs-AI encounters always finish without errors', async () => {
     }
   }
   assert.ok(finished >= 110, `most fights end (finished ${finished}/120, avg ${(rounds / 120).toFixed(1)} rounds)`);
+});
+
+// ---- Range bands, wind-up, archery, magic --------------------------------
+
+function armed(name, type, opts) {
+  const c = fighter(name, opts);
+  const w = Items.makeWeapon(type);
+  c.weapons.push(w);
+  c.wield = w.id;
+  c.stamina = C.maxStamina(c);
+  return c;
+}
+
+const opt = (c, pred) => C.attackOptions(c).find(pred);
+
+test('range bands: spears reach far but not up close; daggers only up close', () => {
+  const spear = opt(armed('S', 'spear'), (o) => o.motion === 'thrust');
+  assert.deepStrictEqual([spear.minRange, spear.maxRange], [2, 4]);
+  assert.ok(!C.inRange(spear, 1) && C.inRange(spear, 4));
+  const shaft = opt(armed('S', 'spear'), (o) => o.face === 'shaft');
+  assert.deepStrictEqual([shaft.minRange, shaft.maxRange], [1, 2]);
+  const dagger = opt(armed('D', 'dagger'), (o) => o.motion === 'thrust');
+  assert.deepStrictEqual([dagger.minRange, dagger.maxRange, dagger.closePenalty], [1, 1, false]);
+  const rapier = opt(armed('R', 'rapier'), (o) => o.motion === 'thrust');
+  assert.deepStrictEqual([rapier.minRange, rapier.maxRange, rapier.closePenalty], [1, 3, true]);
+  const swing = opt(armed('L', 'longsword'), (o) => o.motion === 'swing' && o.face === 'edge');
+  assert.deepStrictEqual([swing.maxRange, swing.closePenalty], [2, true]);
+});
+
+test('attacks penalized up close do half damage at range 1', () => {
+  const a = armed('L', 'longsword');
+  const t = fighter('T');
+  const swing = opt(a, (o) => o.motion === 'swing' && o.face === 'edge');
+  assert.strictEqual(Combat.computeHit(a, t, swing, { distance: 2 }).S, 7);
+  assert.strictEqual(Combat.computeHit(a, t, swing, { distance: 1 }).S, 3);
+});
+
+async function duel(a, b, seedQueue) {
+  a.side = 'party'; b.side = 'enemy';
+  const chars = { [a.id]: a, [b.id]: b };
+  const enc = Combat.createEncounter('t', [a.id, b.id], chars, 6, 1);
+  enc.pos[a.id] = { x: 0, y: 0 };
+  enc.pos[b.id] = { x: 2, y: 0 };
+  await Combat.startRound(enc, chars, roller(1, seedQueue || [10, 1]));
+  return { enc, chars };
+}
+
+test('a power swing must be wound up the round before, and the swinger is exposed', async () => {
+  const a = armed('Heavy', 'greatsword');
+  a.feats.power_swing = 1;
+  a.base.CON = 10; // survive the foe's thrust so the wind-up isn't lost
+  a.stamina = C.maxStamina(a);
+  const b = armed('Foe', 'longsword');
+  b.shield = null;
+  const { enc, chars } = await duel(a, b);
+  assert.strictEqual(Combat.currentActor(enc), a.id);
+  let la = Combat.legalActions(enc, chars, a.id);
+  const power = la.attacks.find((o) => o.motion === 'power');
+  assert.strictEqual(power.why, 'Wind up first');
+  const wind = la.other.find((o) => o.type === 'windUp');
+  assert.ok(wind, 'wind-up offered');
+  assert.strictEqual(Combat.declare(enc, chars, { actor: a.id, type: 'windUp', option: wind.option }), null);
+  // Foe strikes; the winding heavy can't parry it.
+  const thrust = Combat.legalActions(enc, chars, b.id).attacks.find((o) => o.motion === 'thrust');
+  assert.strictEqual(Combat.declare(enc, chars, { actor: b.id, type: 'strike', option: thrust, target: a.id }), null);
+  la = Combat.legalActions(enc, chars, a.id);
+  assert.strictEqual(la.defenses[0].options.find((o) => o.type === 'parry').why, 'Winding up');
+  assert.strictEqual(la.attacks.find((o) => o.motion === 'power').why, 'Release next round');
+  Combat.concede(enc, a.id);
+  Combat.concede(enc, b.id);
+  await Combat.resolveRound(enc, chars, roller(2));
+  assert.ok(a.status.windUp, 'wound up after resolution');
+  await Combat.startRound(enc, chars, roller(3, [10, 1]));
+  la = Combat.legalActions(enc, chars, a.id);
+  const ready = la.attacks.find((o) => o.motion === 'power');
+  assert.strictEqual(ready.why, null);
+  assert.strictEqual(Combat.declare(enc, chars, { actor: a.id, type: 'strike', option: ready, target: b.id }), null);
+});
+
+test('an unreleased wind-up is lost at the end of the next round', async () => {
+  const a = armed('Heavy', 'greatsword');
+  a.feats.power_swing = 1;
+  const b = armed('Foe', 'longsword');
+  const { enc, chars } = await duel(a, b);
+  const wind = Combat.legalActions(enc, chars, a.id).other.find((o) => o.type === 'windUp');
+  Combat.declare(enc, chars, { actor: a.id, type: 'windUp', option: wind.option });
+  Combat.concede(enc, b.id);
+  Combat.concede(enc, a.id);
+  await Combat.resolveRound(enc, chars, roller(2));
+  await Combat.startRound(enc, chars, roller(3, [10, 1]));
+  Combat.concede(enc, a.id);
+  Combat.concede(enc, b.id);
+  await Combat.resolveRound(enc, chars, roller(4));
+  assert.strictEqual(a.status.windUp, null);
+});
+
+test('arrows: range 2+, use ammunition, cannot be parried', async () => {
+  const a = armed('Archer', 'shortbow');
+  a.inventory.arrows = 1;
+  const shot = opt(a, (o) => o.motion === 'shoot');
+  assert.deepStrictEqual([shot.minRange, shot.maxRange, shot.ranged], [2, 12, true]);
+  const b = armed('Foe', 'longsword');
+  const { enc, chars } = await duel(a, b);
+  const la = Combat.legalActions(enc, chars, a.id);
+  const s = la.attacks.find((o) => o.motion === 'shoot');
+  assert.strictEqual(Combat.declare(enc, chars, { actor: a.id, type: 'strike', option: s, target: b.id }), null);
+  const parry = Combat.legalActions(enc, chars, b.id).defenses[0].options.find((o) => o.type === 'parry');
+  assert.strictEqual(parry.why, "Can't parry an arrow");
+  Combat.concede(enc, b.id);
+  Combat.concede(enc, a.id);
+  await Combat.resolveRound(enc, chars, roller(2));
+  assert.strictEqual(a.inventory.arrows, 0);
+  assert.strictEqual(Combat.legalActions(enc, chars, a.id).attacks.find((o) => o.motion === 'shoot').why, 'No arrows');
+});
+
+test('magic: words make spells; spell points, fire through armor, backlash', async () => {
+  const m = fighter('Mage');
+  m.feats = { casting: 2, verb_attack: 1, verb_launch: 1, mod_strong: 1 };
+  m.nouns = ['fire'];
+  m.stamina = C.maxStamina(m);
+  assert.strictEqual(B.Magic.maxSP(m), 5 + 3 * 2);
+  const labels = C.attackOptions(m).filter((o) => o.spell).map((o) => o.label).sort();
+  assert.deepStrictEqual(labels, ['Attack + Fire', 'Attack + Fire + Strong', 'Launch + Fire', 'Launch + Fire + Strong']);
+  const bolt = opt(m, (o) => o.label === 'Launch + Fire');
+  assert.strictEqual(bolt.spCost, 4);
+  assert.strictEqual(opt(m, (o) => o.label === 'Launch + Fire + Strong').windUp, true);
+  const knight = fighter('Knight');
+  knight.armor = Items.makeArmor('plate', 'full', 'standard'); // B mitigation 3 → stops 2 fire
+  const h = Combat.computeHit(m, knight, bolt, {});
+  assert.strictEqual(h.fire, 3);
+  assert.strictEqual(h.toCON + h.bluntToStamina, 1);
+  // Tired casters draw less power.
+  m.stamina = Math.floor(C.maxStamina(m) / 2);
+  assert.strictEqual(B.Magic.availableSP(m), 5);
+  // Backlash: d10 = 1 vs cost 4 → 3 short → 6 stamina.
+  assert.strictEqual(await B.Magic.backlash(m, 4, roller(1, [1])), 6);
+  assert.strictEqual(await B.Magic.backlash(m, 4, roller(1, [7])), 0);
+});
+
+test('every feat rank can eventually be taken (no tier deadlocks)', () => {
+  const F = B.DATA.FEATS;
+  const c = fighter('Collector');
+  c.level = 999;
+  let progress = true;
+  while (progress) {
+    progress = false;
+    for (const id in F) if (C.canTakeFeat(c, id, true).ok) { C.addFeat(c, id); progress = true; }
+  }
+  const stuck = Object.keys(F).filter((id) => C.rank(c, id) < F[id].ranks.length);
+  assert.deepStrictEqual(stuck, []);
 });

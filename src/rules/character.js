@@ -34,7 +34,9 @@
       weapons: [],
       wield: null,
       sidearm: null,
-      inventory: { bandages: 2, gold: 10, items: [] },
+      inventory: { bandages: 2, gold: 10, arrows: 0, items: [] },
+      nouns: [], // magic nouns learned in the world (Fire, Force…)
+      spSpent: 0, // spell points used since the last rest
       status: freshStatus(),
     };
     if (opts.starterGear !== false) {
@@ -52,7 +54,7 @@
   }
 
   function freshStatus() {
-    return { prone: false, grappledBy: [], grappling: null, unconscious: false, dead: false, dropped: null };
+    return { prone: false, grappledBy: [], grappling: null, unconscious: false, dead: false, dropped: null, windUp: null };
   }
 
   // Bring older saves up to the current shape.
@@ -67,7 +69,9 @@
     c.feats = c.feats || {};
     c.weapons = c.weapons || [];
     c.bleeds = c.bleeds || [];
-    c.inventory = Object.assign({ bandages: 0, gold: 0, items: [] }, c.inventory || {});
+    c.inventory = Object.assign({ bandages: 0, gold: 0, arrows: 0, items: [] }, c.inventory || {});
+    c.nouns = c.nouns || [];
+    if (c.spSpent == null) c.spSpent = 0;
     if (c.level == null) c.level = 1;
     if (c.bonusFeats == null) c.bonusFeats = 0;
     return c;
@@ -91,6 +95,16 @@
   function treeCount(c, treeId) {
     let n = 0;
     for (const id in c.feats) if (FEATS[id] && FEATS[id].tree === treeId) n += c.feats[id];
+    return n;
+  }
+
+  // Feats that count toward a tree's tier (trees in the same tier group count together).
+  function tierCount(c, treeId) {
+    const groups = CONFIG.featTierGroups || {};
+    const g = groups[treeId];
+    if (!g) return treeCount(c, treeId);
+    let n = 0;
+    for (const t in groups) if (groups[t] === g) n += treeCount(c, t);
     return n;
   }
 
@@ -129,7 +143,7 @@
     if (have >= f.ranks.length) return { ok: false, reason: 'Max rank' };
     if (!ignoreBudget && featCount(c) >= featBudget(c)) return { ok: false, reason: 'No feats left' };
     const needTier = f.ranks[have];
-    const inTree = treeCount(c, f.tree);
+    const inTree = tierCount(c, f.tree);
     if (inTree < CONFIG.tierThresholds[needTier]) {
       return { ok: false, reason: `Needs ${needTier} tier (${CONFIG.tierThresholds[needTier]} feats in tree)` };
     }
@@ -285,7 +299,7 @@
   function squaresPerAP(c) {
     let s = CONFIG.moveBase + Math.floor(combatAttr(c, 'SPD') / CONFIG.moveSpdDivisor) + rank(c, 'fleet_foot');
     if (c.shield && c.shield.size === 'tower' && c.shield.durability > 0) s -= CONFIG.towerMovePenalty;
-    return Math.max(1, s);
+    return Math.max(1, s) * (CONFIG.moveScale || 1);
   }
 
   function strOffset(c) {
@@ -328,12 +342,12 @@
   function weaponDamage(c, weapon, face, motion) {
     const def = WEAPONS[weapon.type];
     const raw = def.faces[face];
-    let mult = CONFIG.motionMultiplier[motion];
-    if (def.weight === 'heavy') mult += CONFIG.heavyMultiplierAdjust[motion];
+    let mult = CONFIG.motionMultiplier[motion] || 1;
+    if (def.weight === 'heavy') mult += CONFIG.heavyMultiplierAdjust[motion] || 0;
     const v = raw.map((x) => Math.round(x * mult));
     const main = mainIndex(raw);
-    let bonus = G.DATA.QUALITY[weapon.quality].bonus + strBonus(c);
-    if (isLightWeapon(weapon)) bonus += rank(c, 'precision');
+    let bonus = G.DATA.QUALITY[weapon.quality].bonus + (motion === 'shoot' && !CONFIG.archery.strBonus ? 0 : strBonus(c));
+    if (isLightWeapon(weapon) && motion !== 'shoot') bonus += rank(c, 'precision');
     if (motion === 'twoHanded' || motion === 'power') bonus += rank(c, 'weight_of_the_blow');
     v[main] = Math.max(0, v[main] + bonus);
     return v;
@@ -353,6 +367,7 @@
         for (const motion of def.motions) {
           const m = MOTIONS[motion];
           if (m.requiresFeat && !rank(c, m.requiresFeat)) continue;
+          if (motion === 'shoot' && (grappling || st.prone)) continue;
           // Lean: no two-handed attacks while carrying a shield.
           const twoHands = m.twoHands || (motion === 'power' && def.hands > 1) || def.hands === 2;
           if (twoHands && c.shield && c.shield.durability > 0 && def.hands !== 2) continue;
@@ -364,38 +379,81 @@
           }
         }
         if (def.sword && rank(c, 'half_swording') && !grappling) {
+          // Gripping the blade shortens the sword: a close-range technique with no penalty.
           const o = strikeOption(c, w, 'point', 'thrust');
           o.halfSword = true;
           o.ap += apScale();
           o.label = 'Half-sword thrust';
+          o.minRange = 1;
+          o.maxRange = o.reach = 1;
+          o.closePenalty = false;
           opts.push(o);
         }
       }
     }
     // Unarmed: a punch needs a free hand.
-    const handsBusy = (w ? Math.ceil(WEAPONS[w.type].hands === 1.5 ? 1 : WEAPONS[w.type].hands) : 0) + (shieldReady(c) ? 1 : 0);
-    if (handsBusy < 2) opts.push(unarmedOption(c, 'punch'));
+    if (handsBusy(c) < 2) opts.push(unarmedOption(c, 'punch'));
     if (!grappling && !st.prone) opts.push(unarmedOption(c, 'kick'));
     if (shieldReady(c) && rank(c, 'shield_bash') && !grappling) opts.push(unarmedOption(c, 'shieldBash'));
+    // Spells need a free hand (see magic.js).
+    if (G.Magic && handsBusy(c) < 2 && !grappling) for (const o of G.Magic.spellOptions(c)) opts.push(o);
     return opts;
+  }
+
+  function handsBusy(c) {
+    const w = wieldedWeapon(c);
+    return (w ? Math.ceil(WEAPONS[w.type].hands === 1.5 ? 1 : WEAPONS[w.type].hands) : 0) + (shieldReady(c) ? 1 : 0);
+  }
+
+  // Is a target at grid distance d inside this attack's range band?
+  function inRange(opt, d) {
+    return d >= (opt.minRange || 1) && d <= (opt.maxRange != null ? opt.maxRange : opt.reach || 1);
+  }
+
+  // Identifies the attack a wind-up is preparing.
+  function optionKey(o) {
+    return [o.weaponId || o.spellKey || o.unarmed || '', o.motion, o.face || '', o.label].join('|');
+  }
+
+  function needsWindUp(motion) {
+    return ((CONFIG.windUp && CONFIG.windUp.motions) || []).includes(motion);
   }
 
   function strikeOption(c, w, face, motion) {
     const def = WEAPONS[w.type];
     const m = MOTIONS[motion];
-    let ap = m.ap * apScale();
+    const windUp = needsWindUp(motion);
+    const W = CONFIG.windUp || { ap: 0, stamina: 0 };
+    let baseAP = motion === 'shoot' && def.shootAP ? def.shootAP : m.ap;
+    let baseSt = motion === 'shoot' && def.shootStamina != null ? def.shootStamina : m.stamina;
+    if (windUp) { baseAP -= W.ap; baseSt -= W.stamina; }
+    let ap = baseAP * apScale();
     if (def.weight === 'very light' && (motion === 'thrust' || motion === 'swing')) ap -= CONFIG.veryLightApDiscount;
     if (motion === 'thrust') ap -= rank(c, 'quick_thrust');
     if (motion === 'twoHanded' || motion === 'power') ap -= rank(c, 'heavy_tempo');
     ap = Math.max(CONFIG.minActionAP, CONFIG.minStrikeAP || 0, ap);
     let red = 0;
     if (isLightWeapon(w) && (motion === 'thrust' || motion === 'swing')) red += rank(c, 'light_touch');
-    const stamina = Math.max(CONFIG.minStrikeStamina || 0, staminaCost(c, m.stamina, effectiveWeight(c, w), red));
-    let reach = def.reach;
-    if (motion === 'thrust' && rank(c, 'lunge')) reach += 1;
+    const stamina = Math.max(CONFIG.minStrikeStamina || 0, staminaCost(c, Math.max(0, baseSt), effectiveWeight(c, w), red));
+    // Range band.
+    let minRange = 1, maxRange = def.reach, closePenalty = !def.closeOK, ranged = false;
+    if (motion === 'thrust') {
+      maxRange = def.reach + ((def.thrust && def.thrust.ext) || 0);
+      minRange = (def.thrust && def.thrust.min) || 1;
+      if (rank(c, 'lunge')) maxRange += 1;
+    }
+    if (motion === 'shoot') {
+      minRange = def.ranged.min;
+      maxRange = def.ranged.max;
+      closePenalty = false;
+      ranged = true;
+    }
+    if (face === 'hilt') closePenalty = false; // the murder stroke is a close technique
+    if (minRange > 1) closePenalty = false;
     return {
-      kind: 'strike', weaponId: w.id, weaponType: w.type, face, motion, ap, stamina, reach,
-      damage: weaponDamage(c, w, face, motion),
+      kind: 'strike', weaponId: w.id, weaponType: w.type, face, motion, ap, stamina,
+      reach: maxRange, minRange, maxRange, closePenalty, ranged, longRange: ranged ? def.ranged.long : null,
+      windUp, damage: weaponDamage(c, w, face, motion),
       label: `${m.name} (${face})`,
     };
   }
@@ -414,7 +472,8 @@
     dmg[2] = Math.max(0, dmg[2] + strBonus(c));
     return {
       kind: 'strike', unarmed: kind, motion: kind === 'shieldBash' ? 'swing' : 'unarmed', ap,
-      stamina: staminaCost(c, a.stamina, null, red), reach: 1, damage: dmg, label: a.name,
+      stamina: staminaCost(c, a.stamina, null, red), reach: 1, minRange: 1, maxRange: CONFIG.range.maneuverMax,
+      closePenalty: false, damage: dmg, label: a.name,
     };
   }
 
@@ -454,6 +513,14 @@
         ap = (extra && extra.ap) || S;
         red = rank(c, 'light_on_your_feet');
         break;
+      case 'windUp': {
+        const W = CONFIG.windUp;
+        ap = W.ap * S;
+        const o = extra && extra.option;
+        if (o && o.spell) return { ap, stamina: 0 };
+        const wpn = o && o.weaponId ? c.weapons.find((x) => x.id === o.weaponId) : null;
+        return { ap, stamina: staminaCost(c, W.stamina, wpn ? effectiveWeight(c, wpn) : null, 0) };
+      }
     }
     if (kind === 'block' || kind === 'parry' || kind === 'dodge') {
       if (st.prone) ap += CONFIG.maneuver.proneDefenseExtraAP * S;
@@ -509,9 +576,9 @@
 
   G.Character = {
     newCharacter, normalize, freshStatus,
-    rank, featCount, featBudget, treeCount, tierName, canTakeFeat, canRemoveFeat, addFeat, removeFeat, reqText, roman,
+    rank, featCount, featBudget, treeCount, tierCount, tierName, canTakeFeat, canRemoveFeat, addFeat, removeFeat, reqText, roman,
     conditioning, attr, attrMax, combatAttr, armorInfo, shieldInfo, shieldReady, wieldedWeapon,
-    maxStamina, regen, fatiguePenalty, apPool, apScale, moveCost, squaresPerAP, strOffset, staminaCost, effectiveWeight, isLightWeapon,
+    maxStamina, regen, fatiguePenalty, apPool, apScale, moveCost, squaresPerAP, handsBusy, inRange, optionKey, needsWindUp, strOffset, staminaCost, effectiveWeight, isLightWeapon,
     strBonus, weaponDamage, mainIndex, attackOptions, actionCost,
     damageAttr, healAttr, totalDamage, updateCondition, isActive, bleedPerRound,
     TREES, ARMOR,

@@ -1,4 +1,47 @@
-# Simulation findings, round 1
+# Simulation findings
+
+## Round 2: ranges, wind-ups, archery, magic, and the arena
+
+New rules (all PROVISIONAL, listed on the in-app Rules tab and in `src/rules/config.js`):
+
+- **Range bands.** A grid square is about a pace (1 = clinch, 2 = sword distance). Swings reach
+  1 to the weapon's reach; thrusts can reach farther (rapier +1, spear +2), and spears can't
+  thrust at 1. Most attacks do half damage at 1; daggers, half-swording and murder strokes don't.
+- **Wind-up.** A power swing (and a Strong spell) is wound up one round and released the next.
+  While wound up you can't block or parry. The wind-up is lost if you're knocked down, grappled,
+  disarmed or drop, or if you don't release it the following round.
+- **Spear, shortbow, longbow, and a magic stub** (verbs Attack/Launch, nouns Fire/Force,
+  modifier Strong, spell points, backlash) so the arena could test archery and magic.
+- **Magic feat tiers count across all four magic sub-trees.** As transcribed, Casting and
+  Fire Affinity could never pass rank I. Please confirm this reading.
+
+The arena (`node sim/arena.js`, then `node sim/arena-page.js` for the results page) runs 16
+level-5 fighters (heavy/medium/light/unarmored × two-handed/sword & shield/magic/archery) in
+an open field and in close quarters, 12,000 fights in all. Full results:
+[`results/arena/report.html`](results/arena/report.html); tidy data:
+`results/arena/matchups.csv`.
+
+Main findings (details and options are on the results page):
+
+1. **A shield stops anything, and the dagger does the work.** Sword & shield is the best melee
+   style (light: 79% open, 90% close). Two-handers win only 25% / 14% against it. A block negates
+   any blow, the wind-up tells the defender which strike to block, and the up-close penalty makes
+   shield + dagger the best clinch combination.
+2. **Heavy armor protects, then exhausts.** Plate wearers almost never die but lose by collapsing
+   (0.4–0.6 per fight). Heavy armor averages 44% / 49%, light 58% / 54%. The round-one ×3 stamina
+   tuning now looks too harsh on plate. The round-one checks also fell from 87 to 81 of 101
+   passing under the new rules.
+3. **One arrow decides an open-field fight.** Archers win 63% in the open and about 50% in close
+   quarters. Arrows never miss, and a longbow hit kills an unarmored target.
+4. **Magic is weak and risky.** Casters average 32% / 25%. They get 1–2 spells a fight, backlash
+   on about 40% of casts, and a fire bolt does about 1 CON through leather.
+5. **The wind-up works, but power swings rarely land** (0.1–0.6 per fight).
+6. Working as intended: short fights, terrain that matters, fighters holding their best range,
+   unarmored fighters winning at range rather than in melee.
+
+---
+
+## Round 1
 
 First broad pass over the combat rules, driven by the questions in the Specifics
 "Simulation plan" and the targets in the Philosophy doc. Full tables:

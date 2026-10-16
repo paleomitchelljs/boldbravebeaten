@@ -1,0 +1,425 @@
+<title>Combat Arena Results</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Grenze:wght@500;700&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a field report — headline matrices first, then the full matchup grid,
+   then how fights end and what the mechanics did, then the findings to act on. */
+:root {
+  --bg: #e7e9e4; --surface: #f5f6f2; --surface-2: #eceee9; --ink: #1b2220; --muted: #59645f; --line: #c6ccc5;
+  --accent: #2b6a5c; --brass: #8d6d22;
+  /* chart roles (validated reference palette) */
+  --div-pos: #2a78d6; --div-neg: #e34948; --div-mid: #f0efec;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s-other: #a9aaa6;
+  --font-display: 'Grenze', 'Palatino Linotype', Palatino, Georgia, serif;
+  --font-body: 'Alegreya Sans', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141918; --surface: #1d2422; --surface-2: #232b29; --ink: #e2e6e1; --muted: #98a49f; --line: #33403c;
+    --accent: #5db09d; --brass: #c7a24f;
+    --div-pos: #3987e5; --div-neg: #e66767; --div-mid: #383835;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s-other: #6b6c68;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141918; --surface: #1d2422; --surface-2: #232b29; --ink: #e2e6e1; --muted: #98a49f; --line: #33403c;
+  --accent: #5db09d; --brass: #c7a24f;
+  --div-pos: #3987e5; --div-neg: #e66767; --div-mid: #383835;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s-other: #6b6c68;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 1rem; line-height: 1.5; margin: 0; }
+main { max-width: 1180px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 36px; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 700; line-height: 1.1; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(2rem, 5vw, 2.8rem); }
+h2 { font-size: 1.6rem; }
+h3 { font-size: 1.2rem; }
+p { margin: 0; max-width: 70ch; }
+.muted { color: var(--muted); }
+.small { font-size: 0.88rem; }
+.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.eyebrow { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; color: var(--brass); }
+section { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.head { display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--line); padding-bottom: 22px; }
+.facts { display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: 0.95rem; }
+.facts b { font-family: var(--font-mono); font-weight: 600; }
+.note { background: var(--surface-2); border-left: 3px solid var(--brass); padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 0.92rem; max-width: 80ch; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: 18px; align-items: start; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.scroll { overflow-x: auto; }
+table.heat { border-collapse: separate; border-spacing: 2px; font-size: 0.86rem; }
+table.heat th { font-weight: 500; color: var(--muted); padding: 4px 6px; text-align: right; white-space: nowrap; font-size: 0.82rem; }
+table.heat thead th { text-align: center; vertical-align: bottom; }
+table.heat td { width: 64px; height: 38px; text-align: center; font-family: var(--font-mono); font-variant-numeric: tabular-nums; border-radius: 3px; cursor: default; }
+table.heat td.self { background: var(--surface-2); color: var(--muted); }
+table.heat td:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+table.heat td.avg { background: none; font-weight: 600; color: var(--ink); }
+table.big td { width: 40px; height: 30px; font-size: 0.74rem; }
+table.big thead th { writing-mode: vertical-rl; transform: rotate(180deg); text-align: left; height: 150px; padding: 4px 2px; }
+.legend { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; font-size: 0.85rem; color: var(--muted); }
+.ramp { display: inline-block; width: 160px; height: 10px; border-radius: 3px; background: linear-gradient(90deg, var(--div-neg), var(--div-mid), var(--div-pos)); vertical-align: middle; }
+.sw { display: inline-block; width: 11px; height: 11px; border-radius: 2px; vertical-align: -1px; margin-right: 5px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button { font: inherit; font-size: 0.9rem; background: var(--surface); color: var(--ink); border: 0; padding: 6px 12px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--surface); }
+.seg button:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
+.tip { position: fixed; z-index: 30; pointer-events: none; background: var(--ink); color: var(--bg); padding: 7px 10px; border-radius: 6px; font-size: 0.84rem; max-width: 280px; line-height: 1.35; box-shadow: 0 4px 16px rgb(0 0 0 / 0.25); }
+svg text { fill: var(--muted); font-family: var(--font-body); font-size: 12px; }
+svg .lbl { fill: var(--ink); }
+table.data { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+table.data th, table.data td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+table.data th { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+table.data td.n, table.data th.n { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.finding { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 18px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.finding .tag { display: inline-block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 99px; background: var(--surface-2); color: var(--brass); border: 1px solid var(--line); margin-right: 6px; }
+.finding ul { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 4px; max-width: 80ch; }
+.findings { display: grid; gap: 14px; }
+.good { border-left: 4px solid var(--accent); }
+details summary { cursor: pointer; font-weight: 700; }
+</style>
+
+<main>
+  <header class="head">
+    <span class="eyebrow">Bold Brave Beaten · simulation</span>
+    <h1>Combat Arena Results</h1>
+    <p>Sixteen level-5 fighters (four armor classes × four fighting styles) fought every other fighter in an open field and in close quarters. The tables show who won, how fights ended, and what the new range, wind-up, archery and magic rules actually did.</p>
+    <div class="facts" id="facts"></div>
+    <p class="note">Every fight is played by the built-in AI. It keeps its preferred range, kites with bows and spells, winds up power swings, swaps between weapon and dagger, and defends by the odds, but it never retreats to heal, flanks, or plans across rounds. Read these as what the rules produce under competent, simple play. Bows and magic are placeholder rules written for this test.</p>
+  </header>
+
+  <section>
+    <div><span class="eyebrow">Headline</span><h2>Who wins, by style and armor</h2></div>
+    <p class="muted">Each cell is that fighter's average win rate against all fifteen others. Blue wins more than half its fights, red fewer.</p>
+    <div class="pair" id="headline"></div>
+    <div class="legend"><span>Win rate</span><span class="num">0%</span><span class="ramp" aria-hidden="true"></span><span class="num">100%</span><span>· 50% is gray</span></div>
+  </section>
+
+  <section>
+    <div><span class="eyebrow">Matchups</span><h2>Style against style</h2></div>
+    <p class="muted">Row's win rate against column, averaged over all sixteen armor pairings.</p>
+    <div class="pair" id="styles"></div>
+  </section>
+
+  <section>
+    <div><span class="eyebrow">Open field vs close quarters</span><h2>What the space changes</h2></div>
+    <p class="muted">Average win rate in each arena. A long bar means the fighter depends on the ground it fights on.</p>
+    <div class="card"><div class="legend"><span><span class="sw" style="background:var(--s1)"></span>Open field</span><span><span class="sw" style="background:var(--s2)"></span>Close quarters</span></div><div class="scroll" id="dumbbell"></div></div>
+  </section>
+
+  <section>
+    <div class="legend" style="justify-content:space-between"><div><span class="eyebrow">Every pairing</span><h2>Full matchup grid</h2></div><div class="seg" role="group" aria-label="Arena" id="seg-grid"></div></div>
+    <p class="muted">Row's win rate against column (50 fights each). Hover or focus a cell for fight length.</p>
+    <div class="card scroll" id="grid"></div>
+  </section>
+
+  <section>
+    <div><span class="eyebrow">How fights end</span><h2>Killed or collapsed</h2></div>
+    <p class="muted">Share of each fighter's fights that it won, lost by dying (CON 0), or lost by collapsing (stamina 0, mostly exhaustion), across both arenas.</p>
+    <div class="card"><div class="legend"><span><span class="sw" style="background:var(--s1)"></span>Won</span><span><span class="sw" style="background:var(--s2)"></span>Died</span><span><span class="sw" style="background:var(--s3)"></span>Collapsed</span><span><span class="sw" style="background:var(--s-other)"></span>Draw or other</span></div><div class="scroll" id="outcomes"></div></div>
+  </section>
+
+  <section>
+    <div class="legend" style="justify-content:space-between"><div><span class="eyebrow">Telemetry</span><h2>What the mechanics did</h2></div><div class="seg" role="group" aria-label="Arena" id="seg-tel"></div></div>
+    <p class="muted">Average per fight, for each fighting style (all armor classes together).</p>
+    <div class="card scroll" id="telemetry"></div>
+  </section>
+
+  <section>
+    <div><span class="eyebrow">For the designer</span><h2>Where the rules need work</h2></div>
+    <div class="findings">
+      <article class="finding">
+        <h3><span class="tag">Rules</span>A shield stops anything, and the dagger does the work</h3>
+        <p>Sword and shield is the best melee style (light: 79% open, 90% close). Two-handers win only 25% of their fights against it in the open and 14% in close quarters. Shield users block 1–3 blows a fight and draw their dagger 1.1–1.5 times a fight. Two things combine:</p>
+        <ul>
+          <li>A successful block negates the whole blow, however big. A power swing is telegraphed by its wind-up, so the shield user knows exactly which strike to block.</li>
+          <li>Most weapons do half damage at 1 square; the dagger doesn't. Shield plus dagger at clinch distance beats everything that has to stand off.</li>
+        </ul>
+        <p class="small muted">Options: let heavy blows push through a block (damage above the shield's break threshold reaches the bearer as blunt); make blocking a power swing cost more AP; soften the up-close penalty (×0.75); make drawing a sidearm slower than 4 AP.</p>
+      </article>
+      <article class="finding">
+        <h3><span class="tag">Numbers</span>Heavy armor protects, then exhausts</h3>
+        <p>Plate fighters almost never die (0–0.1 deaths per fight) but lose by collapsing (0.4–0.6 per fight). Heavy armor averages 44% in the open and 49% in close quarters; light armor 58% and 54%. "Armor is king in melee" isn't true here.</p>
+        <ul>
+          <li>In plate a thrust costs 6 stamina against 4 in leather, and plate regenerates −1 to −2 a round. Attacking into a shield burns a plate fighter out in about five rounds.</li>
+          <li>The ×3 stamina cost came from round-one tuning, before ranges and wind-ups existed. The round-one sims found ×3 fixed fatigue and armored mirrors; this arena suggests it is now too harsh on plate.</li>
+          <li>Plate Mobility II needs a second Armor-tree feat first, so level-5 plate wearers carry −2 SPD and have 8 AP to everyone else's 10.</li>
+        </ul>
+        <p class="small muted">Options: retest stamina at ×2; cut plate's per-action stamina penalty or its regeneration penalty; add a novice plate feat so Mobility II isn't a tax.</p>
+      </article>
+      <article class="finding">
+        <h3><span class="tag">Rules</span>One arrow decides an open-field fight</h3>
+        <p>Archers win 63% in the open (78% against two-handers) and about 50% in close quarters. They fire only about one arrow a fight, because a longbow shot costs 8 of 12 AP and 8–10 stamina. But arrows never miss: only a dodge or block stops them. A longbow hit puts 7 piercing into an unarmored target, which kills it.</p>
+        <ul>
+          <li>The open-versus-confined swing is what your Philosophy wants: terrain as a balancing tool.</li>
+          <li>The problem is that one unanswered shot is fatal, and DEX does nothing for an archer.</li>
+        </ul>
+        <p class="small muted">Options: an accuracy roll by range and DEX; arrows lose damage at range or against moving targets; cheaper, weaker shots. Bow numbers are all placeholders.</p>
+      </article>
+      <article class="finding">
+        <h3><span class="tag">Numbers</span>Magic is weak and risky, not "powerful"</h3>
+        <p>Casters average 32% in the open and 25% in close quarters. A level-5 mage has 14 spell points, enough for 1–2 spells a fight. Backlash hits on about 40% of casts (0.5–0.7 per fight). A Launch + Fire bolt does about 1 CON to someone in leather.</p>
+        <ul>
+          <li>Your Philosophy says magic is powerful and needs preparation or carries risk. This stub has the cost and risk without the power.</li>
+          <li>Heavy mages do best in close quarters (43%) only because their plate keeps them alive.</li>
+        </ul>
+        <p class="small muted">Options: larger word magnitudes; fire that ignores more armor; backlash only on a natural failure; a few spell points regained each round. Every magic number is a placeholder.</p>
+      </article>
+      <article class="finding">
+        <h3><span class="tag">Rules</span>The wind-up works, but power swings rarely land</h3>
+        <p>Two-handers wind up 0.3–1 times a fight but land only 0.1–0.6 power swings. Wind-ups are almost never lost; the release is simply blocked, dodged, or outpaced. Two-handers average 36% in the open and 42% in close quarters. Unarmored two-handers are the weakest fighters in the arena (18% open).</p>
+        <ul>
+          <li>The mechanism does what you described: the swinger is exposed, and the blow comes a round later.</li>
+          <li>Because every declaration is visible, though, the target always knows it's coming.</li>
+        </ul>
+        <p class="small muted">Options: let Feint hide a wind-up; make a power swing unblockable by bucklers and round shields; let power swings partially pass a block (see the first finding).</p>
+      </article>
+      <article class="finding">
+        <h3><span class="tag">Decision</span>Two magic feat trees could never advance</h3>
+        <p>As transcribed, Casting and Fire Affinity can never pass rank I. Each tree's only novice feat is rank I, and everything after it needs two feats already in that tree. Your Specifics calls magic "four interlocking sub-trees", so I now count tiers across all four. That made every feat reachable, and a test keeps it that way. Please confirm that reading.</p>
+      </article>
+      <article class="finding good">
+        <h3><span class="tag">Working</span>What looks right</h3>
+        <ul>
+          <li>Fights are short: 2–5 rounds on average for every matchup.</li>
+          <li>Ground matters. Archers drop from 63% in the open to 50% in close quarters, and shield fighters rise from 58% to 72%.</li>
+          <li>Range bands change behavior: fighters step to their weapon's best distance, and up-close penalties are dodged by swapping weapons rather than eaten.</li>
+          <li>Unarmored fighters lose in melee but win at range (unarmored archers 72% in the open). That's your "speed wins elsewhere."</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <details class="card">
+      <summary>Fighter loadouts</summary>
+      <div class="scroll" id="loadouts"></div>
+    </details>
+  </section>
+</main>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+const DATA = /*__DATA__*/null;
+const ARENAS = Object.keys(DATA.arenas);
+const STRATS = Object.keys(DATA.strategies);
+const ARMORS = Object.keys(DATA.armorClasses);
+const byKey = Object.fromEntries(DATA.combatants.map((c) => [c.key, c]));
+const pct = (x) => (x == null ? '—' : Math.round(x * 100) + '%');
+const el = (tag, attrs, ...kids) => {
+  const e = document.createElement(tag);
+  for (const k in attrs || {}) {
+    if (k === 'style') Object.assign(e.style, attrs[k]);
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), attrs[k]);
+    else e.setAttribute(k, attrs[k]);
+  }
+  for (const kid of kids.flat()) if (kid != null) e.append(kid instanceof Node ? kid : document.createTextNode(kid));
+  return e;
+};
+
+// Diverging color: red below 50%, gray at 50%, blue above.
+function heat(x) {
+  if (x == null) return { bg: 'var(--surface-2)', fg: 'var(--muted)' };
+  const t = Math.max(-1, Math.min(1, (x - 0.5) * 2));
+  const pole = t >= 0 ? 'var(--div-pos)' : 'var(--div-neg)';
+  const amt = Math.round(Math.abs(t) * 100);
+  return { bg: `color-mix(in oklab, ${pole} ${amt}%, var(--div-mid))`, fg: Math.abs(t) > 0.55 ? '#fff' : 'var(--ink)' };
+}
+
+const tip = document.getElementById('tip');
+function showTip(e, text) {
+  tip.textContent = text;
+  tip.hidden = false;
+  const r = e.target.getBoundingClientRect();
+  const x = e.clientX != null && e.type.startsWith('mouse') ? e.clientX : r.left + r.width / 2;
+  const y = e.clientY != null && e.type.startsWith('mouse') ? e.clientY : r.top;
+  tip.style.left = Math.min(window.innerWidth - tip.offsetWidth - 8, Math.max(8, x + 12)) + 'px';
+  tip.style.top = Math.max(8, y - tip.offsetHeight - 10) + 'px';
+}
+const hideTip = () => (tip.hidden = true);
+function cell(x, text, cls) {
+  const c = heat(x);
+  const td = el('td', { tabindex: '0', class: cls || '', style: { background: c.bg, color: c.fg }, 'aria-label': text }, pct(x));
+  td.addEventListener('mouseenter', (e) => showTip(e, text));
+  td.addEventListener('mousemove', (e) => showTip(e, text));
+  td.addEventListener('focus', (e) => showTip(e, text));
+  td.addEventListener('mouseleave', hideTip);
+  td.addEventListener('blur', hideTip);
+  return td;
+}
+
+// Facts
+const nFights = ARENAS.reduce((t, a) => t + Object.values(DATA.results[a]).reduce((s, r) => s + r.n, 0), 0);
+document.getElementById('facts').append(
+  el('span', null, 'Level ', el('b', null, DATA.level)),
+  el('span', null, el('b', null, DATA.combatants.length), ' fighters'),
+  el('span', null, el('b', null, nFights.toLocaleString()), ' fights'),
+  el('span', null, el('b', null, DATA.n), ' per pairing per arena'),
+  ...ARENAS.map((a) => el('span', null, DATA.arenas[a].label + ' ', el('b', null, `${DATA.arenas[a].w}×${DATA.arenas[a].h}`))),
+  el('span', { class: 'muted' }, 'run ' + DATA.generated.slice(0, 10)));
+
+// Headline: armor × strategy
+const headline = document.getElementById('headline');
+for (const a of ARENAS) {
+  const t = el('table', { class: 'heat' });
+  t.append(el('thead', null, el('tr', null, el('th', null, ''), STRATS.map((s) => el('th', null, DATA.strategies[s])), el('th', null, 'Avg'))));
+  const tb = el('tbody');
+  for (const ar of ARMORS) {
+    const vals = STRATS.map((s) => DATA.agg[a][ar + '/' + s].avgWin);
+    tb.append(el('tr', null, el('th', { scope: 'row' }, DATA.armorClasses[ar]),
+      STRATS.map((s, i) => cell(vals[i], `${DATA.armorClasses[ar]} ${DATA.strategies[s]} · ${DATA.arenas[a].label}: wins ${pct(vals[i])} of fights, ${DATA.agg[a][ar + '/' + s].meanRounds.toFixed(1)} rounds on average`)),
+      el('td', { class: 'avg num' }, pct(vals.reduce((x, y) => x + y) / vals.length))));
+  }
+  const avgRow = el('tr', null, el('th', { scope: 'row' }, 'Avg'), STRATS.map((s) => el('td', { class: 'avg num' }, pct(ARMORS.reduce((t, ar) => t + DATA.agg[a][ar + '/' + s].avgWin, 0) / ARMORS.length))), el('td', null, ''));
+  tb.append(avgRow);
+  t.append(tb);
+  headline.append(el('div', { class: 'card' }, el('h3', null, DATA.arenas[a].label), el('div', { class: 'scroll' }, t)));
+}
+
+// Style vs style
+const styles = document.getElementById('styles');
+for (const a of ARENAS) {
+  const m = DATA.rollups[a].strategy;
+  const t = el('table', { class: 'heat' });
+  t.append(el('thead', null, el('tr', null, el('th', null, 'vs →'), STRATS.map((s) => el('th', null, DATA.strategies[s])))));
+  t.append(el('tbody', null, STRATS.map((r) => el('tr', null, el('th', { scope: 'row' }, DATA.strategies[r]),
+    STRATS.map((c) => cell(m[r][c], `${DATA.strategies[r]} vs ${DATA.strategies[c]} · ${DATA.arenas[a].label}: ${pct(m[r][c])}`, r === c ? 'mirror' : ''))))));
+  styles.append(el('div', { class: 'card' }, el('h3', null, DATA.arenas[a].label), el('div', { class: 'scroll' }, t)));
+}
+
+// Dumbbell: open vs close per fighter
+(function dumbbell() {
+  const rows = DATA.combatants.map((c) => ({ c, o: DATA.agg.open[c.key].avgWin, q: DATA.agg.close[c.key].avgWin })).sort((x, y) => y.o - x.o);
+  const W = 760, L = 190, R = 40, rowH = 26, top = 26, H = top + rows.length * rowH + 10;
+  const x = (v) => L + v * (W - L - R);
+  const ns = 'http://www.w3.org/2000/svg';
+  const s = (tag, attrs, text) => { const e = document.createElementNS(ns, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; return e; };
+  const svg = s('svg', { viewBox: `0 0 ${W} ${H}`, width: '100%', role: 'img', 'aria-label': 'Win rate in the open field and in close quarters for each fighter' });
+  svg.style.minWidth = '560px';
+  svg.style.maxWidth = W + 'px';
+  for (const v of [0, 0.25, 0.5, 0.75, 1]) {
+    svg.append(s('line', { x1: x(v), x2: x(v), y1: top - 6, y2: H - 6, stroke: 'var(--line)', 'stroke-width': v === 0.5 ? 1.5 : 1, 'stroke-dasharray': v === 0.5 ? '' : '2 3' }));
+    svg.append(s('text', { x: x(v), y: 14, 'text-anchor': 'middle' }, pct(v)));
+  }
+  rows.forEach((r, i) => {
+    const y = top + i * rowH + rowH / 2;
+    svg.append(s('text', { x: L - 10, y: y + 4, 'text-anchor': 'end', class: 'lbl' }, r.c.label));
+    svg.append(s('line', { x1: x(Math.min(r.o, r.q)), x2: x(Math.max(r.o, r.q)), y1: y, y2: y, stroke: 'var(--muted)', 'stroke-width': 2 }));
+    const g = s('g', { tabindex: '0', 'aria-label': `${r.c.label}: open ${pct(r.o)}, close quarters ${pct(r.q)}` });
+    g.append(s('circle', { cx: x(r.o), cy: y, r: 6, fill: 'var(--s1)', stroke: 'var(--surface)', 'stroke-width': 2 }));
+    g.append(s('circle', { cx: x(r.q), cy: y, r: 6, fill: 'var(--s2)', stroke: 'var(--surface)', 'stroke-width': 2 }));
+    g.append(s('rect', { x: L, y: y - rowH / 2, width: W - L - R, height: rowH, fill: 'transparent' }));
+    const txt = `${r.c.label}: ${pct(r.o)} in the open, ${pct(r.q)} in close quarters`;
+    g.addEventListener('mousemove', (e) => showTip(e, txt));
+    g.addEventListener('focus', (e) => showTip(e, txt));
+    g.addEventListener('mouseleave', hideTip);
+    g.addEventListener('blur', hideTip);
+    svg.append(g);
+  });
+  document.getElementById('dumbbell').append(svg);
+})();
+
+// Full grid with arena toggle
+function segmented(id, render) {
+  const seg = document.getElementById(id);
+  let current = ARENAS[0];
+  const draw = () => {
+    seg.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.a === current)));
+    render(current);
+  };
+  for (const a of ARENAS) seg.append(el('button', { type: 'button', 'data-a': a, onclick: () => { current = a; draw(); } }, DATA.arenas[a].label));
+  draw();
+}
+const KEYS = DATA.combatants.map((c) => c.key);
+segmented('seg-grid', (a) => {
+  const host = document.getElementById('grid');
+  host.textContent = '';
+  const t = el('table', { class: 'heat big' });
+  t.append(el('thead', null, el('tr', null, el('th', null, ''), KEYS.map((k) => el('th', null, byKey[k].label)), el('th', null, 'Avg'))));
+  const tb = el('tbody');
+  for (const r of KEYS) {
+    tb.append(el('tr', null, el('th', { scope: 'row' }, byKey[r].label),
+      KEYS.map((c) => {
+        if (r === c) return el('td', { class: 'self' }, '·');
+        const pair = DATA.results[a][r + '|' + c] || DATA.results[a][c + '|' + r];
+        const v = DATA.view[a][r][c];
+        return cell(v, `${byKey[r].label} vs ${byKey[c].label} (${DATA.arenas[a].label}): ${pct(v)} · median ${pair.medRounds} rounds · ${pair.n} fights`);
+      }),
+      el('td', { class: 'avg num' }, pct(DATA.agg[a][r].avgWin))));
+  }
+  t.append(tb);
+  host.append(t);
+});
+
+// Outcomes: stacked bars (both arenas pooled)
+(function outcomes() {
+  const rows = DATA.combatants.map((c) => {
+    const w = (DATA.agg.open[c.key].avgWin + DATA.agg.close[c.key].avgWin) / 2;
+    const d = (DATA.agg.open[c.key].deathRate + DATA.agg.close[c.key].deathRate) / 2;
+    const k = (DATA.agg.open[c.key].koRate + DATA.agg.close[c.key].koRate) / 2;
+    return { c, w, d, k, o: Math.max(0, 1 - w - d - k) };
+  });
+  const W = 760, L = 190, R = 50, rowH = 24, top = 8, H = top + rows.length * rowH + 4;
+  const ns = 'http://www.w3.org/2000/svg';
+  const s = (tag, attrs, text) => { const e = document.createElementNS(ns, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; return e; };
+  const svg = s('svg', { viewBox: `0 0 ${W} ${H}`, width: '100%', role: 'img', 'aria-label': 'How each fighter\'s fights ended' });
+  svg.style.minWidth = '560px';
+  svg.style.maxWidth = W + 'px';
+  const span = W - L - R;
+  rows.forEach((r, i) => {
+    const y = top + i * rowH;
+    svg.append(s('text', { x: L - 10, y: y + rowH / 2 + 4, 'text-anchor': 'end', class: 'lbl' }, r.c.label));
+    let x0 = L;
+    const parts = [['w', 'var(--s1)', 'won'], ['d', 'var(--s2)', 'died'], ['k', 'var(--s3)', 'collapsed'], ['o', 'var(--s-other)', 'draw/other']];
+    const txt = `${r.c.label}: won ${pct(r.w)}, died ${pct(r.d)}, collapsed ${pct(r.k)}`;
+    const g = s('g', { tabindex: '0', 'aria-label': txt });
+    for (const [key, color] of parts) {
+      const wpx = Math.max(0, r[key] * span);
+      if (wpx < 0.5) continue;
+      g.append(s('rect', { x: x0, y: y + 3, width: Math.max(0, wpx - 2), height: rowH - 6, rx: 3, fill: color }));
+      x0 += wpx;
+    }
+    g.addEventListener('mousemove', (e) => showTip(e, txt));
+    g.addEventListener('focus', (e) => showTip(e, txt));
+    g.addEventListener('mouseleave', hideTip);
+    g.addEventListener('blur', hideTip);
+    svg.append(g);
+    svg.append(s('text', { x: L + span + 6, y: y + rowH / 2 + 4, class: 'lbl' }, pct(r.w)));
+  });
+  document.getElementById('outcomes').append(svg);
+})();
+
+// Telemetry table per strategy
+const TEL = [
+  ['meanRounds', 'Rounds', 1], ['windUps', 'Wind-ups', 1], ['powerHits', 'Power swings landed', 2], ['shots', 'Arrows shot', 1], ['shotHits', 'Arrows hit', 1],
+  ['spells', 'Spells cast', 1], ['backlash', 'Backlashes', 2], ['blocks', 'Blocks', 1], ['parries', 'Parries', 1], ['dodges', 'Dodges', 1],
+  ['sidearmDraws', 'Dagger drawn', 1], ['exhausted', 'Too tired to act', 2], ['deathRate', 'Deaths', 2], ['koRate', 'Collapses', 2],
+];
+segmented('seg-tel', (a) => {
+  const host = document.getElementById('telemetry');
+  host.textContent = '';
+  const val = (k, s) => {
+    const keys = ARMORS.map((ar) => ar + '/' + s);
+    const v = keys.map((key) => { const g = DATA.agg[a][key]; return k in g ? g[k] : g.perFight[k] || 0; });
+    return v.reduce((x, y) => x + y) / v.length;
+  };
+  const t = el('table', { class: 'data' });
+  t.append(el('thead', null, el('tr', null, el('th', null, 'Per fight'), STRATS.map((s) => el('th', { class: 'n' }, DATA.strategies[s])))));
+  t.append(el('tbody', null, TEL.map(([k, label, dp]) => el('tr', null, el('td', null, label), STRATS.map((s) => el('td', { class: 'n' }, val(k, s).toFixed(dp)))))));
+  host.append(t);
+});
+
+// Loadouts
+(function loadouts() {
+  const t = el('table', { class: 'data' });
+  t.append(el('thead', null, el('tr', null, el('th', null, 'Fighter'), el('th', { class: 'n' }, 'AP'), el('th', { class: 'n' }, 'Stamina'), el('th', { class: 'n' }, 'Regen'), el('th', { class: 'n' }, 'CON'), el('th', null, 'Feats'), el('th', null, 'Main attacks (AP / stamina, range)'))));
+  t.append(el('tbody', null, DATA.combatants.map((c) => el('tr', null, el('td', null, c.label), el('td', { class: 'n' }, c.ap), el('td', { class: 'n' }, c.maxStamina), el('td', { class: 'n' }, (c.regen > 0 ? '+' : '') + c.regen), el('td', { class: 'n' }, c.con),
+    el('td', { class: 'small' }, c.feats.join(', ')),
+    el('td', { class: 'small' }, c.attacks.filter((x) => !x.label.includes('+') || !x.label.includes('Force')).slice(0, 4).map((x) => `${x.label} ${x.windUp ? '(wind-up) ' : ''}${x.ap}/${x.sp ? x.sp + ' SP' : x.stamina}, ${x.range[0] === x.range[1] ? x.range[0] : x.range.join('–')}`).join('; '))))));
+  document.getElementById('loadouts').append(t);
+})();
+</script>

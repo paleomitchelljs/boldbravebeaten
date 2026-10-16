@@ -79,6 +79,7 @@
     }
 
     c.stamina = C.maxStamina(c);
+    c.spSpent = 0;
     c.status = Object.assign(C.freshStatus(), { dropped: null });
 
     const repairer = [c, tender].some((x) => x && C.rank(x, 'field_repair'));

@@ -83,6 +83,9 @@ questions the sims can't settle.
 ```
 node sim/run.js            # full sweep (about a minute) → sim/results/
 node sim/compare.js        # rule variants side by side (sim/variants.json)
+node sim/arena.js          # armor × style arena (about 3 minutes) → sim/results/arena/
+node sim/arena-page.js     # build the arena results page from arena.json
+node sim/arena-inspect.js light/shield heavy/twoHanded close 3   # one arena fight's log
 ```
 
 ## Placeholder rulings
@@ -96,6 +99,6 @@ playtesting and simulation settle them.
 
 ## Not implemented yet
 
-Magic, the social system, terrain and stealth, and feats tagged "table ruling" on
+The full magic system (only a placeholder stub of a few words exists), the social system, terrain and stealth, and feats tagged "table ruling" on
 the sheet (Cleave, Sweep, Shield Wall, Flurry, and others). These feats can still
 be recorded on the sheet, but the GM has to apply them by hand.

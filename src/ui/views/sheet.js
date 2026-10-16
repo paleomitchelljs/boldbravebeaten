@@ -139,7 +139,8 @@
     return h('div', { class: 'stack tight' },
       h('div', { class: 'row' },
         h('label', { class: 'inline', for: 'inv-band' }, h('span', { class: 'label' }, 'Bandages'), num('inv-band', c.inventory.bandages, (v) => { c.inventory.bandages = Math.max(0, Math.round(v)); app.save(); app.render(); }, { min: 0 })),
-        h('label', { class: 'inline', for: 'inv-gold' }, h('span', { class: 'label' }, 'Gold'), num('inv-gold', c.inventory.gold, (v) => { c.inventory.gold = Math.max(0, Math.round(v)); app.save(); app.render(); }, { min: 0 }))),
+        h('label', { class: 'inline', for: 'inv-gold' }, h('span', { class: 'label' }, 'Gold'), num('inv-gold', c.inventory.gold, (v) => { c.inventory.gold = Math.max(0, Math.round(v)); app.save(); app.render(); }, { min: 0 })),
+        h('label', { class: 'inline', for: 'inv-arrows' }, h('span', { class: 'label' }, 'Arrows'), num('inv-arrows', c.inventory.arrows || 0, (v) => { c.inventory.arrows = Math.max(0, Math.round(v)); app.save(); app.render(); }, { min: 0 }))),
       items.length ? h('div', { class: 'stack tight' }, h('span', { class: 'label' }, 'Pack'),
         items.map((it) => h('div', { class: 'row spread small' },
           h('span', null, Items.itemName(it), it.durability != null ? h('span', { class: 'muted num' }, ` · dur ${it.durability}`) : null, ' ', h('span', { class: 'chip' }, Items.itemRarity(it))),
@@ -154,13 +155,40 @@
     const others = ['block', 'parry', 'dodge', 'trip', 'disarm', 'grapple', 'standUp', 'drawSidearm', 'pickUp', 'bandage', 'escape'];
     return h('div', { class: 'grid-2' },
       h('div', { class: 'scroll-x' }, h('table', { class: 'data' },
-        h('thead', null, h('tr', null, h('th', null, 'Attack'), h('th', { class: 'n' }, 'AP'), h('th', { class: 'n' }, 'Stam.'), h('th', { class: 'n' }, 'P/S/B'), h('th', { class: 'n' }, 'Reach'))),
-        h('tbody', null, atks.map((o) => h('tr', null, h('td', null, o.label), h('td', { class: 'n' }, o.ap), h('td', { class: 'n' }, o.stamina), h('td', { class: 'n' }, fmt(o.damage)), h('td', { class: 'n' }, o.reach)))))),
+        h('thead', null, h('tr', null, h('th', null, 'Attack'), h('th', { class: 'n' }, 'AP'), h('th', { class: 'n' }, 'Stam.'), h('th', { class: 'n' }, 'Damage'), h('th', { class: 'n' }, 'Range'))),
+        h('tbody', null, atks.map((o) => h('tr', null,
+          h('td', null, o.label, o.windUp ? h('span', { class: 'chip warn', style: { marginLeft: '6px' }, title: 'Wind up the round before; you cannot block or parry while wound up' }, 'wind-up') : null),
+          h('td', { class: 'n' }, o.windUp ? `${C.actionCost(c, 'windUp', { option: o }).ap} + ${o.ap}` : o.ap),
+          h('td', { class: 'n' }, o.spell ? `${o.spCost} SP` : o.windUp ? `${C.actionCost(c, 'windUp', { option: o }).stamina} + ${o.stamina}` : o.stamina),
+          h('td', { class: 'n' }, o.spell ? `${o.spell.magnitude} ${o.spell.element}` : fmt(o.damage)),
+          h('td', { class: 'n' }, rangeText(o))))))),
       h('div', { class: 'scroll-x' }, h('table', { class: 'data' },
         h('thead', null, h('tr', null, h('th', null, 'Action'), h('th', { class: 'n' }, 'AP'), h('th', { class: 'n' }, 'Stam.'))),
         h('tbody', null,
           h('tr', null, h('td', null, 'Move'), h('td', { class: 'n' }, 1), h('td', { class: 'n' }, C.actionCost(c, 'move', { ap: 1 }).stamina)),
           others.map((k) => { const cost = C.actionCost(c, k); return h('tr', null, h('td', null, D.ACTIONS[k].name), h('td', { class: 'n' }, cost.ap), h('td', { class: 'n' }, cost.stamina)); })))));
+  }
+
+  function rangeText(o) {
+    const r = o.minRange === o.maxRange ? String(o.maxRange) : `${o.minRange}–${o.maxRange}`;
+    return r + (o.closePenalty ? ' (½ at 1)' : '');
+  }
+
+  function magicEditor(app, c) {
+    const M = G.Magic;
+    const words = G.CONFIG.magic.words;
+    const nouns = Object.keys(words).filter((k) => words[k].kind === 'noun');
+    const max = M.maxSP(c);
+    return h('div', { class: 'stack tight' },
+      h('div', { class: 'row' },
+        h('span', { class: 'label' }, 'Spell points'),
+        h('span', { class: 'num' }, max ? `${M.availableSP(c)} usable · ${Math.max(0, max - (c.spSpent || 0))} / ${max} left` : '— (take Casting to gain a pool)'),
+        c.spSpent ? h('button', { class: 'small', onclick: () => { c.spSpent = 0; app.save(); app.render(); } }, 'Restore') : null),
+      h('div', { class: 'row' }, h('span', { class: 'label' }, 'Nouns known'),
+        nouns.map((n) => h('label', { class: 'inline small', for: 'noun-' + n },
+          h('input', { id: 'noun-' + n, type: 'checkbox', checked: c.nouns.includes(n), onchange: (e) => { c.nouns = e.target.checked ? c.nouns.concat(n) : c.nouns.filter((x) => x !== n); app.save(); app.render(); } }),
+          words[n].name))),
+      h('p', { class: 'small muted' }, 'Verbs and modifiers come from Magic feats; nouns are found in the world. Spells and their costs appear under Actions and costs. Placeholder rules — see the Rules tab.'));
   }
 
   function featsSection(app, c) {
@@ -226,6 +254,7 @@
         h('section', { class: 'panel' }, h('h2', null, 'Pack'), inventoryEditor(app, c)),
         h('section', { class: 'panel' }, h('h2', null, 'Notes'), h('textarea', { id: 'notes', value: c.notes || '', 'aria-label': 'Notes', onchange: (e) => { c.notes = e.target.value; app.save(); } }))),
       h('section', { class: 'panel' }, h('h2', null, 'Actions and costs'), attacksTable(c)),
+      h('section', { class: 'panel' }, h('h2', null, 'Magic'), magicEditor(app, c)),
       h('section', { class: 'panel' }, h('h2', null, 'Feats'), featsSection(app, c)));
   }
 

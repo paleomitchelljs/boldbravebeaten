@@ -42,7 +42,10 @@
     apScale: 2,
     apBase: 3, // AP = 3 + floor(SPD/2)
     apSpdDivisor: 2,
-    moveBase: 1, // squares per AP = 1 + floor(SPD/4)
+    moveBase: 1, // squares per AP = (1 + floor(SPD/4)) × moveScale
+    // PROVISIONAL: squares are about a pace (1 = clinch, 2 = sword distance), so
+    // movement covers twice as many of them as the Specifics formula gives.
+    moveScale: 2,
     moveSpdDivisor: 4,
     minActionAP: 1, // costs never drop below 1 AP or 0 stamina
     minStrikeAP: 1, // floor for weapon strikes specifically (tunable separately)
@@ -93,6 +96,56 @@
     // STR offsets 1 point of armor/weight penalty per 2 STR above 5
     strOffsetPivot: 5,
     strOffsetDivisor: 2,
+
+    // ---- Range (PROVISIONAL; weapon reach data lives in data.js) ----------
+    range: {
+      closeMult: 0.5, // damage multiplier for a penalized attack at range 1 ("up close")
+      longRangePenalty: 2, // bows: −2 damage beyond their long range
+      maneuverMax: 1, // trips, disarms, grapples, kicks and punches need clinch distance
+    },
+
+    // ---- Wind-up (PROVISIONAL) --------------------------------------------
+    // Motions that must be wound up in an earlier round before they can be released.
+    // The wind-up costs part of the AP and stamina; the release costs the rest.
+    // While wound up you cannot block or parry. The wind-up is lost if you are knocked
+    // prone, grappled, disarmed or drop, or if you don't release it the next round.
+    windUp: {
+      motions: ['power'],
+      ap: 2,
+      stamina: 1,
+      exposed: ['block', 'parry'],
+      spells: true, // spells using the Strong modifier must be gathered the same way
+    },
+
+    // ---- Archery (PROVISIONAL; nothing in the design docs yet) -----------
+    archery: {
+      strBonus: false, // STR does not add to arrow damage
+      parry: false, // arrows can be blocked or dodged, not parried
+    },
+
+    // ---- Magic (PROVISIONAL stub so casters can be tested) ---------------
+    // Spells are an unordered verb + noun (+ modifier); cost = sum of word costs.
+    magic: {
+      words: {
+        attack: { kind: 'verb', cost: 2, magnitude: 4, range: [1, 2], feat: 'verb_attack', name: 'Attack' },
+        launch: { kind: 'verb', cost: 3, magnitude: 3, range: [2, 12], feat: 'verb_launch', name: 'Launch' },
+        fire: { kind: 'noun', cost: 1, element: 'fire', name: 'Fire' },
+        force: { kind: 'noun', cost: 1, element: 'force', name: 'Force' },
+        strong: { kind: 'mod', cost: 2, magnitude: 3, feat: 'mod_strong', name: 'Strong', windUp: true },
+      },
+      castAP: 3, // base, × apScale
+      poolPerCasting: 3, // spell points = INT + 3 × Casting rank
+      // A tired caster can't draw as much power: usable points scale with stamina.
+      staminaLimitsPoints: true,
+      // Fire: armor stops half its blunt mitigation; every 2 points left over cost 1 CON,
+      // the rest goes to stamina.
+      fireMitigation: 0.5,
+      fireConPer: 2,
+      // Force: blunt, mitigated normally, with a knockdown check (INT/2 vs footing).
+      forceKnockdownMargin: 2,
+      // Backlash: d10 + Control rank; if below the spell's cost, lose 2 stamina per point short.
+      backlashPerPoint: 2,
+    },
 
     // ---- Defense checks: all PROVISIONAL (Outline: "success checks Open") --
     // Success when d10 + bonuses ≥ target number.
@@ -162,6 +215,10 @@
     startingFeats: 3,
     featsPerLevel: 1,
     tierThresholds: { novice: 0, apprentice: 2, adept: 4, expert: 6, master: 8 },
+    // PROVISIONAL reading: the four magic sub-trees "interlock", so tier counts feats across
+    // all of them. Counted per sub-tree, Casting and each Affinity line can never pass rank I
+    // (their only novice feat is rank I, and everything after needs 2 feats in the tree).
+    featTierGroups: { magicCasting: 'magic', magicWords: 'magic', magicAffinity: 'magic', magicRitual: 'magic' },
   };
 
   // Every PROVISIONAL choice, shown on the Rules tab so nothing is hidden.
@@ -171,6 +228,12 @@
     'Piercing through armor: each leftover point rolls a d10 and reaches CON on ≤ pass-through × 10 (plate 2, other full armor 5). Chosen by simulation over rounding.',
     'Armor wear per hit is a third of (blunt + converted slashing); armor keeps at least 75% of its mitigation until destroyed.',
     'Block target numbers by shield: buckler 5, round 4, heater 3, tower 2 (d10 + Shield Training).',
+    'Range: a square is about a pace (1 = clinch, 2 = sword distance). Swings reach 1 to the weapon\'s reach; thrusts reach farther on some weapons (rapier +1, spear +2) and spears cannot thrust at 1. Most attacks do half damage at 1; daggers, half-swording and murder strokes do not. Movement covers twice the Specifics squares.',
+    'Wind-up: a power swing (and a Strong spell) is wound up in one round (2 AP) and released the next (the rest of the cost). While wound up you cannot block or parry; the wind-up is lost if you are knocked down, grappled, disarmed or drop, or if you don\'t release it the next round.',
+    'Spear (not in the catalog): point 6/0/0 thrusting 2–4, shaft 0/0/3 swinging 1–2, one hand.',
+    'Bows (not in the design docs): shortbow arrow 5 P, range 2–12, 3 AP; longbow 7 P, range 2–16, 4 AP; −2 damage at long range; arrows can be blocked or dodged, not parried; no STR bonus; one arrow per shot.',
+    'Magic (stub): verbs Attack (range 1–2, magnitude 4, cost 2) and Launch (2–12, 3, 3); nouns Fire and Force (cost 1); modifier Strong (+3, cost 2, must be wound up). Spell points = INT + 3 × Casting rank, limited by stamina. Fire: armor stops half its blunt mitigation, every 2 points left cost 1 CON, the rest stamina. Force: blunt with a knockdown check. Backlash: d10 + Control below the cost loses 2 stamina per point short.',
+    'Magic feat tiers count feats across all four magic sub-trees (otherwise Casting and Fire Affinity can never pass rank I).',
     'Initiative: d10 + effective SPD.',
     'Defense checks: d10 + bonuses vs. target number. Parry TN 6 (+Parry Training, +⌊(DEX−5)/2⌋), dodge TN 6 (+Dodge Training, +⌊(SPD−5)/2⌋, −armor DEX penalty). Two-handed swings +1 TN, power swings +2.',
     'A successful parry or dodge negates the strike completely.',

@@ -3,27 +3,49 @@
  * simulator. It only uses information the character could see: a strike hidden
  * by Feint is judged by what the attacker might be doing, not what they are doing.
  *
+ * Each declaration, in order:
+ *   1. stand up; 2. release a wind-up if the target is in range; 3. defend;
+ *   4. escape, bandage, re-arm; 5. switch weapons when another fits the distance
+ *   better; 6. occasional trip/grapple; 7. keep a ranged weapon out of melee;
+ *   8. attack, or wind up when the delayed blow is worth more; 9. move toward the
+ *   distance its weapons like best; 10. end the round.
+ *
  * policy (all optional):
  *   maneuverRate  chance per declaration to try a trip/grapple when one is in reach (default 0.15)
- *   kickBias      multiplier on the value of kicks (default 1; the kick-spam test uses a large value)
+ *   kickBias      multiplier on the value of kicks (default 1)
  *   defendFloor   minimum expected value before spending AP on a defense (default 1.5)
- *   cautious      keep 2 AP spare during pass 1 to answer strikes (default true)
+ *   cautious      keep some AP spare during pass 1 to answer strikes (default true)
+ *   windUp        willingness to wind up (multiplier on its value; 0 = never; default 1)
+ *   kite          ranged characters back away from melee (default true)
  */
 (function (G) {
   'use strict';
   const C = G.Character;
   const Combat = G.Combat;
 
-  const DEFAULTS = { maneuverRate: 0.15, kickBias: 1, defendFloor: 1.5, cautious: true };
+  const DEFAULTS = { maneuverRate: 0.15, kickBias: 1, defendFloor: 1.5, cautious: true, windUp: 1, kite: true };
 
   // How much a hit is worth to the attacker, in stamina-equivalent points.
   // Attribute damage costs max stamina and bleeds; a hit that drops the target is worth most.
-  function hitValue(attacker, target, option) {
-    const h = Combat.computeHit(attacker, target, option);
+  function hitValue(attacker, target, option, distance) {
+    const h = Combat.computeHit(attacker, target, option, { distance: distance || (option.minRange || 1) + (option.closePenalty ? 1 : 0) });
     const attrDmg = h.toCON + h.slashToAttrs + h.bluntToCON;
-    let v = attrDmg * 8 + h.bluntToStamina;
+    let v = attrDmg * (h.noBleed ? 5 : 8) + h.bluntToStamina;
     if (h.toCON + h.bluntToCON >= C.attr(target, 'CON')) v += 60;
     else if (h.bluntToStamina >= target.stamina && target.stamina > 0) v += 40;
+    return v;
+  }
+
+  // Value per (scaled) AP of an attack against a target at a distance.
+  function rate(c, target, opt, d) {
+    if (!C.inRange(opt, d)) return 0;
+    if (opt.stamina && opt.stamina >= c.stamina) return 0; // can't pay for it
+    let v = (hitValue(c, target, opt, d) * C.apScale()) / Math.max(1, opt.ap);
+    if (opt.unarmed === 'kick' || opt.unarmed === 'shieldBash') {
+      const pDown = target.status.prone ? 0 : Combat.knockdownOdds(c, target, C.rank(c, 'trip') ? G.CONFIG.maneuver.tripFeatBonus : 0, G.CONFIG.maneuver.kickKnockdownMargin);
+      v += (pDown * 10 * C.apScale()) / Math.max(1, opt.ap);
+    }
+    if (opt.spell) v *= 0.85; // spell points are finite and backlash is a risk
     return v;
   }
 
@@ -35,10 +57,11 @@
     const me = chars[viewerId];
     if (decl.type !== 'strike') return { threat: MANEUVER_THREAT[decl.type] || 6, motion: 'maneuver' };
     const hidden = Combat.describeDecl(enc, chars, decl, viewerId).hidden;
-    if (!hidden) return { threat: hitValue(atk, me, decl.option), motion: decl.option.motion };
+    const d = Combat.dist(Combat.posAtPass(enc, atk.id, decl.pass), Combat.posAtPass(enc, viewerId, decl.pass));
+    if (!hidden) return { threat: hitValue(atk, me, decl.option, d), motion: decl.option.motion };
     const opts = C.attackOptions(atk);
     if (!opts.length) return { threat: 4, motion: 'swing' };
-    const mean = opts.reduce((t, o) => t + hitValue(atk, me, o), 0) / opts.length;
+    const mean = opts.reduce((t, o) => t + hitValue(atk, me, o, d), 0) / opts.length;
     return { threat: mean, motion: 'swing' };
   }
 
@@ -55,7 +78,7 @@
       const { threat, motion } = perceivedThreat(enc, chars, d, id);
       for (const o of inc.options) {
         if (!o.affordable) continue;
-        let p = Combat.defenseOdds(c, o.type, motion);
+        const p = Combat.defenseOdds(c, o.type, motion);
         let value = p * threat;
         if (o.type === 'dodge' && C.rank(c, 'roll_with_it')) value += (1 - p) * 0.5 * threat;
         value -= (0.6 * o.ap) / C.apScale() + 0.3 * o.stamina;
@@ -65,48 +88,174 @@
     return best;
   }
 
+  // Attack options with a different weapon in hand (for weighing a switch).
+  function optionsWith(c, wieldId) {
+    const keep = c.wield;
+    c.wield = wieldId;
+    const opts = C.attackOptions(c).filter((o) => !o.unarmed && !o.windUp);
+    c.wield = keep;
+    return opts;
+  }
+
+  function bestRate(c, target, opts, d) {
+    let best = 0;
+    for (const o of opts) {
+      if (o.why) continue;
+      best = Math.max(best, rate(c, target, o, d));
+    }
+    return best;
+  }
+
+  // What a foe could do to me at a distance (their best rate), as I can see it.
+  function foeRate(foe, me, d) {
+    let best = 0;
+    for (const o of C.attackOptions(foe)) {
+      if (o.windUp && !(foe.status.windUp && foe.status.windUp.key === C.optionKey(o))) continue;
+      if (o.ranged && o.weaponId && (foe.inventory.arrows || 0) <= 0) continue;
+      if (o.spell && G.Magic && o.spCost > G.Magic.availableSP(foe)) continue;
+      best = Math.max(best, rate(foe, me, o, d));
+    }
+    return best;
+  }
+
+  const RISK = 0.8; // how much the foe's threat at a distance counts against my own
+
+  // The distance this loadout likes best against a target: the best of
+  // (my rate − RISK × their rate), and among near-equal choices the farthest.
+  // If nothing scores above zero, fall back to my best raw rate (someone has to fight).
+  function preferredDistance(c, target, opts) {
+    const myMax = Math.max(1, ...opts.map((o) => o.maxRange || 1));
+    const theirMax = Math.max(1, ...C.attackOptions(target).map((o) => o.maxRange || 1));
+    const top = Math.min(16, Math.max(myMax, theirMax + 1));
+    let best = null, bestRaw = null;
+    for (let d = 1; d <= top; d++) {
+      const mine = bestRate(c, target, opts, d);
+      if (mine <= 0) continue;
+      const net = mine - RISK * foeRate(target, c, d);
+      if (!best || net > best.net + 0.01 || (Math.abs(net - best.net) <= 0.01 && d > best.d)) best = { d, rate: mine, net };
+      if (!bestRaw || mine > bestRaw.rate) bestRaw = { d, rate: mine, net };
+    }
+    if (!best) return { d: 1, rate: 0, net: 0 };
+    const ranged = opts.some((o) => o.ranged);
+    const pick = best.net > 0 || ranged ? best : bestRaw;
+    if (ranged && pick.d > 8 && bestRate(c, target, opts, 8) >= pick.rate * 0.9) return { d: 8, rate: bestRate(c, target, opts, 8), net: pick.net };
+    return pick;
+  }
+
+  // Farthest any foe can strike from.
+  function threatReach(chars, foes) {
+    let r = 1;
+    for (const f of foes) for (const o of C.attackOptions(chars[f])) if (!o.ranged) r = Math.max(r, o.maxRange || 1);
+    return r;
+  }
+
+  function nearestFoe(enc, chars, id, foes, posFn) {
+    const me = posFn(id);
+    let best = null, bd = Infinity;
+    for (const f of foes) {
+      const d = Combat.dist(me, posFn(f));
+      if (d < bd) { bd = d; best = f; }
+    }
+    return { id: best, d: bd };
+  }
+
+  // Best square within the move budget for a goal distance to the target.
+  function planMove(enc, chars, id, la, targetId, goal, foes, avoid) {
+    if (!la.move) return null;
+    const c = chars[id];
+    const from = la.move.from;
+    const tp = Combat.projectedPos(enc, targetId);
+    const cur = Combat.dist(from, tp);
+    const step = la.move.maxSquares;
+    const taken = new Set();
+    for (const o of enc.ids) if (o !== id && C.isActive(chars[o])) { const q = Combat.projectedPos(enc, o); taken.add(q.x + ',' + q.y); }
+    const foePos = foes.map((f) => Combat.projectedPos(enc, f));
+    let best = null;
+    const x0 = Math.max(0, from.x - step), x1 = Math.min(enc.grid.w - 1, from.x + step);
+    const y0 = Math.max(0, from.y - step), y1 = Math.min(enc.grid.h - 1, from.y + step);
+    for (let x = x0; x <= x1; x++) {
+      for (let y = y0; y <= y1; y++) {
+        const dx = x - from.x, dy = y - from.y;
+        if ((!dx && !dy) || taken.has(x + ',' + y)) continue;
+        const need = C.moveCost(c, Math.max(Math.abs(dx), Math.abs(dy)));
+        if (need > la.ap) continue;
+        const dd = Combat.dist({ x, y }, tp);
+        let score = Math.abs(dd - goal) * 10 + need / C.apScale();
+        if (avoid) {
+          // Stay out of every foe's reach if possible.
+          for (const fp of foePos) if (Combat.dist({ x, y }, fp) <= avoid) score += 25;
+        }
+        if (!best || score < best.score) best = { x, y, dd, need, score };
+      }
+    }
+    if (!best) return null;
+    if (avoid) {
+      // A retreat must actually gain distance from the nearest threat.
+      const near = (p) => Math.min(...foePos.map((fp) => Combat.dist(p, fp)));
+      if (near({ x: best.x, y: best.y }) <= near(from) && Math.abs(best.dd - goal) >= Math.abs(cur - goal)) return null;
+    } else if (Math.abs(best.dd - goal) >= Math.abs(cur - goal)) return null;
+    return { actor: id, type: 'move', to: { x: best.x, y: best.y } };
+  }
+
   function choose(enc, chars, id, rng, policy) {
     rng = rng || Math.random;
     const P = Object.assign({}, DEFAULTS, policy || {});
     const c = chars[id];
     const la = Combat.legalActions(enc, chars, id);
     const ap = la.ap;
+    const S = C.apScale();
+    const foes = enemiesOf(enc, chars, id);
+    const at = (x) => Combat.posAtPass(enc, x, enc.pass);
 
     // 1. Get up.
     const stand = la.other.find((o) => o.type === 'standUp' && o.affordable);
     if (stand) return { actor: id, type: 'standUp' };
 
-    // 2. Defend against the most valuable-to-stop incoming attack.
+    // 2. Release a wound-up blow at whoever is in range.
+    for (const atk of la.attacks) {
+      if (!atk.windUp || !atk.affordable) continue;
+      const t = atk.targets.filter((x) => x.inReach && foes.includes(x.id)).sort((x, y) => hitValue(c, chars[y.id], atk, y.distance) - hitValue(c, chars[x.id], atk, x.distance))[0];
+      if (t) return { actor: id, type: 'strike', option: atk, target: t.id };
+    }
+
+    // 3. Defend against the most valuable-to-stop incoming attack.
     const def = chooseDefense(enc, chars, id, la, P);
     if (def) return def.decl;
 
-    // 3. Escape a grapple.
+    // 4. Escape, bandage, re-arm.
     const esc = la.other.find((o) => o.type === 'escape' && o.affordable);
     if (esc) return { actor: id, type: 'escape' };
-
-    // 4. Stop own bleeding if it is serious.
     const band = la.other.find((o) => o.type === 'bandage' && o.affordable);
     if (band && C.bleedPerRound(c) >= 1.5 && band.targets.some((t) => t.id === id)) return { actor: id, type: 'bandage', target: id };
-
-    // 5. Pick up or draw a weapon if disarmed.
     if (!C.wieldedWeapon(c)) {
       const draw = la.other.find((o) => (o.type === 'drawSidearm' || o.type === 'pickUp') && o.affordable);
       if (draw) return { actor: id, type: draw.type };
     }
+    if (!foes.length) return { actor: id, type: 'concede' };
 
-    const foes = enemiesOf(enc, chars, id);
+    const near = nearestFoe(enc, chars, id, foes, at);
+    const target = chars[near.id];
 
-    // 5b. Switch to the sidearm when it would hurt the nearest foe much more.
-    const draw = la.other.find((o) => o.type === 'drawSidearm' && o.affordable);
-    if (draw && foes.length && enc.pass === 1) {
-      const near = foes.slice().sort((x, y) => Combat.dist(Combat.posAtPass(enc, id, enc.pass), Combat.posAtPass(enc, x, enc.pass)) - Combat.dist(Combat.posAtPass(enc, id, enc.pass), Combat.posAtPass(enc, y, enc.pass)))[0];
-      const bestWith = () => Math.max(0, ...C.attackOptions(c).filter((o) => !o.unarmed).map((o) => hitValue(c, chars[near], o) / o.ap));
-      const now = bestWith();
-      const keep = c.wield;
-      c.wield = c.sidearm;
-      const alt = bestWith();
-      c.wield = keep;
-      if (alt > now * 1.5 + 0.5) return { actor: id, type: 'drawSidearm' };
+    // 5. Switch weapons when another fits the current distance much better.
+    const swap = la.other.find((o) => (o.type === 'drawSidearm' || o.type === 'readyPrimary') && o.affordable);
+    const winding = c.status.windUp || enc.decls.some((d) => d.actor === id && d.type === 'windUp');
+    if (swap && !winding) {
+      const nowOpts = la.attacks.filter((o) => !o.unarmed && !o.windUp);
+      const altId = swap.type === 'drawSidearm' ? c.sidearm : c.weapons.find((w) => w.id !== c.sidearm).id;
+      const alt = optionsWith(c, altId).filter((o) => !(o.ranged && (c.inventory.arrows || 0) <= 0));
+      const threatHere = RISK * foeRate(target, c, near.d);
+      const nowR = bestRate(c, target, nowOpts, near.d) - threatHere;
+      const altR = bestRate(c, target, alt, near.d) - threatHere;
+      const nowPref = preferredDistance(c, target, nowOpts);
+      const altPref = preferredDistance(c, target, alt);
+      // Swap if the other weapon is much better right here, or its best distance is
+      // much better than this weapon's best distance (and reachable).
+      const canReach = la.move && Math.abs(altPref.d - near.d) <= la.move.maxSquares;
+      const hereBetter = bestRate(c, target, alt, near.d) > 0 && altR > Math.max(nowR, 0) * 1.5 + 0.5;
+      const thereBetter = canReach && altPref.net > Math.max(nowPref.net, nowR) * 1.5 + 0.5;
+      if (hereBetter || thereBetter) {
+        return { actor: id, type: swap.type };
+      }
     }
 
     // 6. Occasionally trip or grapple a standing foe in reach.
@@ -119,58 +268,64 @@
       }
     }
 
-    // 7. Attack: best value per AP among foes in reach.
+    const usable = la.attacks.filter((o) => !o.windUp && !o.why);
+    const rangedLoadout = usable.some((o) => o.ranged && !o.unarmed);
+    // A kiting loadout plans its distance around its ranged options only.
+    const planOpts = rangedLoadout && P.kite ? usable.filter((o) => o.ranged) : usable.filter((o) => !o.unarmed).length ? usable.filter((o) => !o.unarmed) : usable;
+    const pref = preferredDistance(c, target, planOpts);
+
+    // 7. Ranged characters step out of melee reach before shooting.
+    if (P.kite && rangedLoadout && la.move) {
+      const reach = threatReach(chars, foes);
+      if (near.d <= reach + 1 && ap >= C.moveCost(c, 2) + S) {
+        const mv = planMove(enc, chars, id, la, near.id, Math.max(pref.d, reach + 2), foes, reach);
+        if (mv && Combat.dist(mv.to, Combat.projectedPos(enc, near.id)) > near.d) return mv;
+      }
+    }
+
+    // 8. Attack now, or wind up for a bigger blow next round.
     let best = null;
-    for (const atk of la.attacks) {
+    for (const atk of usable) {
       if (!atk.affordable) continue;
       for (const t of atk.targets) {
         if (!t.inReach || !foes.includes(t.id)) continue;
-        let v = (hitValue(c, chars[t.id], atk) * C.apScale()) / Math.max(1, atk.ap);
-        if (atk.unarmed === 'kick' || atk.unarmed === 'shieldBash') {
-          // A knockdown is worth a lot: the target loses AP standing up and defends poorly.
-          const tgt = chars[t.id];
-          const pDown = tgt.status.prone ? 0 : Combat.knockdownOdds(c, tgt, C.rank(c, 'trip') ? G.CONFIG.maneuver.tripFeatBonus : 0, G.CONFIG.maneuver.kickKnockdownMargin);
-          v = (v + (pDown * 10 * C.apScale()) / Math.max(1, atk.ap)) * P.kickBias;
-        }
-        if (P.cautious && enc.pass === 1 && ap - atk.ap < 2 * C.apScale() && la.ap > 3 * C.apScale()) v *= 0.75;
+        let v = rate(c, chars[t.id], atk, t.distance) * P.kickBias ** (atk.unarmed === 'kick' ? 1 : 0);
+        if (P.cautious && enc.pass === 1 && ap - atk.ap < 2 * S && la.ap > 3 * S) v *= 0.75;
         if (!best || v > best.v) best = { v, decl: { actor: id, type: 'strike', option: atk, target: t.id } };
       }
     }
+    const winds = la.other.filter((o) => o.type === 'windUp' && o.affordable);
+    if (winds.length && P.windUp > 0 && enc.pass <= 2) {
+      let bestW = null;
+      for (const w of winds) {
+        const release = la.attacks.find((o) => C.optionKey(o) === C.optionKey(w.option)) || w.option;
+        // Don't wind up a close-range blow you intend to kite away from.
+        if (rangedLoadout && P.kite && !release.ranged && near.d > (release.maxRange || 1)) continue;
+        const d = C.inRange(release, near.d) ? near.d : Math.min(Math.max(near.d, release.minRange || 1), release.maxRange);
+        const dmg = hitValue(c, target, release, d);
+        // Spread over both rounds' AP, discounted for the risk of losing it.
+        const v = ((dmg * S) / (w.ap + release.ap)) * 0.8 * P.windUp;
+        // Close enough that the blow can land next round (the foe may be walking in now).
+        const soon = Math.min(near.d, Combat.dist(Combat.projectedPos(enc, id), Combat.projectedPos(enc, near.id)));
+        const reachable = soon <= release.maxRange + Math.floor(la.move ? la.move.maxSquares / 2 : 0);
+        if (reachable && (!bestW || v > bestW.v)) bestW = { v, decl: { actor: id, type: 'windUp', option: w.option } };
+      }
+      if (bestW && bestW.v > (best ? best.v : 0) * 1.15) return bestW.decl;
+    }
+    // Step to a better distance when it is clearly better than fighting from here.
+    const hereNet = (best ? best.v : 0) - RISK * foeRate(target, c, near.d);
+    if (la.move && !rangedLoadout && pref.d !== near.d && pref.net > hereNet + Math.max(1, Math.abs(hereNet)) && ap >= C.moveCost(c, Math.abs(pref.d - near.d)) + S * 2) {
+      const mv = planMove(enc, chars, id, la, near.id, pref.d, foes, 0);
+      if (mv) return mv;
+    }
     if (best && best.v > 0.2) return best.decl;
 
-    // 8. Close the distance to the nearest foe.
-    if (la.move && foes.length) {
-      const from = la.move.from;
-      let target = null, td = Infinity;
-      for (const f of foes) {
-        const d = Combat.dist(from, Combat.projectedPos(enc, f));
-        if (d < td) { td = d; target = f; }
-      }
-      const myReach = Math.max(1, ...la.attacks.map((a) => a.reach));
-      if (td > myReach) {
-        const tp = Combat.projectedPos(enc, target);
-        const step = Math.min(td - 1, la.move.maxSquares);
-        const occupied = (x, y) => enc.ids.some((o) => o !== id && C.isActive(chars[o]) && Combat.projectedPos(enc, o).x === x && Combat.projectedPos(enc, o).y === y);
-        let best2 = null;
-        for (let dx = -step; dx <= step; dx++) {
-          for (let dy = -step; dy <= step; dy++) {
-            const x = from.x + dx, y = from.y + dy;
-            if (x < 0 || y < 0 || x >= enc.grid.w || y >= enc.grid.h) continue;
-            if (occupied(x, y)) continue;
-            const moved = Math.max(Math.abs(dx), Math.abs(dy));
-            const need = C.moveCost(c, moved);
-            if (need > ap || need === 0) continue;
-            const dd = Combat.dist({ x, y }, tp);
-            // Stop at our own reach; prefer the cheapest move that gets there.
-            const score = Math.max(dd, myReach) * 10 + need;
-            if (!best2 || score < best2.score) best2 = { x, y, dd, need, score };
-          }
-        }
-        if (best2 && best2.dd < td) return { actor: id, type: 'move', to: { x: best2.x, y: best2.y } };
-      }
-    }
+    // 9. Move toward the distance this loadout likes best.
+    const goal = pref.rate > 0 ? pref.d : 1;
+    const mv = planMove(enc, chars, id, la, near.id, goal, foes, rangedLoadout && P.kite ? threatReach(chars, foes) : 0);
+    if (mv) return mv;
     return { actor: id, type: 'concede' };
   }
 
-  G.AI = { choose, hitValue, perceivedThreat, DEFAULTS };
+  G.AI = { choose, hitValue, perceivedThreat, preferredDistance, DEFAULTS };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});
