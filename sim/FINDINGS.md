@@ -31,6 +31,12 @@ them less than a point.
 Unarmored duels (all style pairings, 2,000 fights): both die 2% → 0%; at least one dead counting
 untended bleeding 95% → 87%.
 
+Parties against groups got much harder (veterans, open / room): skeleton squad 95/90% → 50/35%,
+zombie horde 85/78% → 30/20%, wolf pack 100/100% → 90/50%, kobold band 90/90% → 60/53%. Two
+causes. Party blows are weaker: swords cut 6 rather than 7, greatsword cuts are lower, and the
+grappler's dagger does 3. And monsters' natural weapons are still on the old table with full STR.
+They haven't been given physical descriptions yet.
+
 The AI still steps inside a sword's reach with a dagger. At range 2 its rate is 40 but the foe's
 threat is just as high; at range 1 the foe's sword is a half-force blunt jab, and the dagger's
 rate is 20 against a threat of 3. That's a reach and positioning rule question, not damage.
