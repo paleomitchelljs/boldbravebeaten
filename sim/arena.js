@@ -103,9 +103,9 @@ const EVENTS = {
   shots: /^'s Shoot \(arrow\) /, shotHits: /^'s Shoot \(arrow\) hits /,
   spells: /^'s (Attack|Launch) \+ /, spellHits: /^'s (Attack|Launch) \+ .* hits /,
   noPower: /^ can't draw enough power/,
-  closeHits: /^'s .*\(up close: half damage\)/, tooClose: /^'s .* is too close\./, outOfReach: /^'s .* is out of reach\./,
+  closeHits: /^'s .*\((up close|cramped)/, tooClose: /^'s .* is too close\./, outOfReach: /^'s .* is out of reach\./,
   exhausted: /^ is too exhausted /, blocks: /^ blocks /, parries: /^ parries /, dodges: /^ dodges /,
-  hits: /^'s .* hits /, sidearmDraws: /^ draws Dagger/, readiesMain: /^ readies /,
+  hits: /^'s .* hits /, sidearmDraws: /^ (drops .* and )?draws Dagger/, readiesMain: /^ (drops .* and )?(readies|picks up) /, drops: /^ drops [^.]*\.$/,
   shieldsBroken: /^ blocks .*(BREAKS it|SHATTERS|is destroyed)/, shoves: /^ shoves /, shoveFails: /^'s shove fails/,
 };
 
