@@ -91,7 +91,7 @@ details summary { cursor: pointer; font-weight: 700; }
   <header class="head">
     <span class="eyebrow">Bold Brave Beaten · simulation</span>
     <h1>Combat Arena Results</h1>
-    <p>Sixteen level-5 fighters (four armor classes × four fighting styles: two-handed, sword &amp; shield, archery, and the new grappler; magic users are left out for now) fought every other fighter in an open field and in close quarters. This round adds the grappling ladder (clinch → hold → pin, with throws and breaks), each step a directly opposed roll; plate is easy to grab but hard to throw.</p>
+    <p>Sixteen level-5 fighters (four armor classes × two-handed, sword &amp; shield, grappler and archery; magic users are left out for now) fought every other fighter in an open field and in close quarters. This round changes arrows against armor: armor (textile most) stops arrows better than a thrust, and archers carry broadheads (big bleeding wounds, poor against metal) and bodkins (armor-piercing, smaller wounds).</p>
     <div class="facts" id="facts"></div>
     <p class="note">Every fight is played by the built-in AI. It keeps its preferred range, kites with bows, winds up and draws, shoves to regain distance, swaps between weapon and dagger, and defends by the odds, but it never retreats to heal, flanks, or plans across rounds. Read these as what the rules produce under competent, simple play. Bows and magic are placeholder rules.</p>
   </header>
@@ -144,13 +144,12 @@ details summary { cursor: pointer; font-weight: 700; }
     <div><span class="eyebrow">For the designer</span><h2>Where the rules need work</h2></div>
     <div class="findings">
       <article class="finding">
-        <h3><span class="tag">This round</span>Grapplers: strong in close quarters, held off in the open</h3>
+        <h3><span class="tag">This round</span>Arrowheads: archers gain a little, mostly through bleeding</h3>
         <ul>
-          <li><b>Grapplers average 45% in the open and 61% in close quarters.</b> In close quarters they beat two-handers 69% and archers 80%, but only 43% against sword &amp; shield.</li>
-          <li><b>By opponent armor</b> (close / open): plate 48 / 33, mail 70 / 45, leather 63 / 45, unarmored 74 / 53. Plate's handles help, but plate fighters hit hard enough to win the race.</li>
-          <li><b>The ladder in use</b> (per fight with a grappler): 0.43 clinches, 0.49 straight to a hold on a big win, 0.34 pins, 1.3 dagger stabs, 0.30 successful breaks. The upkeep bites: 0.23 times a fight a holder is too spent to keep the hold.</li>
-          <li><b>Throws never happen:</b> the AI pins and stabs instead, so a throw into plate's whole-round stand-up is untested.</li>
-          <li><b>The other styles barely moved</b> (within 2 points) against the opponents they already had.</li>
+          <li><b>Archers average 49% in the open (was 46) and 36% in close quarters (was 31).</b> Other styles moved 2 points or less.</li>
+          <li><b>Against plate wearers</b> archers win 15% in the open (was 9): bodkins find the gaps a little more often. Plate is still close to arrow-proof.</li>
+          <li><b>Against mail</b>: no change. A bodkin against mail does what a plain arrow used to.</li>
+          <li><b>Against leather</b>: archers gained most (close quarters 20% → 36%), almost all from the broadhead's 1.5× bleeding. Leather two-handers are hit hardest. If that's too much, the bleed multiplier is the knob.</li>
         </ul>
       </article>
       <article class="finding">

@@ -172,6 +172,8 @@ dropped). Style averages (open / close): two-handed 45 / 39, sword and shield 59
 - Grappling: the clinch → hold → pin ladder, directly opposed rolls, very stamina-hungry; plate easy
   to grab, hard to throw.
 - Guards replace the defense step.
+- Arrows: armor stops arrows better than thrusts (padded +2, leather/mail/scale +1); broadhead
+  (bleed ×1.5, poor vs metal) and bodkin (−1 damage, −2 metal protection) arrowheads.
 
 ## Done in round 4
 

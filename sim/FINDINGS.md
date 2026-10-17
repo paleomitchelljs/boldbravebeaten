@@ -1,5 +1,22 @@
 # Simulation findings
 
+## Round 9: arrows and armor (history), broadheads and bodkins
+
+Changes (PROVISIONAL; the user agreed after a look at the historical record: good plate was close
+to arrow-proof, mail over padding was penetrable but wounds were shallow, padded textile was
+surprisingly good, arrowheads were specialized):
+
+- Extra piercing protection against arrows only: padded +2, leather / mail / scale +1, plate 0.
+- Broadheads: bleed ×1.5, +1 protection for metal armor. Bodkins: −1 damage, −2 protection for
+  metal armor. Arena archers carry 20 broadheads and 10 bodkins; the AI picks per target.
+
+Results (against `results/arena-r8/`):
+
+- Archers 46 → 49 (open), 31 → 36 (close); other styles within 2 points.
+- Archers vs plate wearers 9 → 15 (open); vs mail unchanged; vs leather 20 → 36 in close quarters,
+  almost all from broadhead bleeding (leather two-handers hit hardest). The bleed multiplier is
+  the knob if that's too strong.
+
 ## Round 8: the grappling ladder, and a grappler style in the arena
 
 Changes (PROVISIONAL, designed with the user): free → clinch (mutual) → hold → pin, plus throw and
