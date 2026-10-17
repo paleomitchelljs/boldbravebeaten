@@ -148,28 +148,30 @@ Every value is in `src/rules/config.js`. The evidence is in `sim/FINDINGS.md`.
 - Feat tiers are pooled across the four magic sub-trees (`featTierGroups`).
   That fixed a deadlock, but the user hasn't confirmed it yet.
 
-## Arena results (round 6)
+## Arena results (round 8)
 
-Magic users are dropped from the arena (twelve fighters). See `sim/FINDINGS.md` and the arena page.
-Style averages (open / close): two-handed 40 / 43, sword and shield 60 / 64, archery 44 / 38
-(spread 20 / 26, the most even yet). Heavy armor 81 / 76, unarmored 25 / 22: armor now dominates.
-Baselines: `sim/results/arena-r3/`, `arena-r4/`, `arena-r5/` (round 5 includes mages).
+Sixteen fighters: four armor classes × two-handed, sword and shield, archery, grappler (magic users
+dropped). Style averages (open / close): two-handed 45 / 39, sword and shield 59 / 62, archery
+46 / 31, grappler 45 / 61. Plate is dominant and that's accepted (rarity is its balance). See
+`sim/FINDINGS.md`. Baselines: `sim/results/arena-r3/` through `arena-r7/`.
 
 ## Open questions awaiting the user
 
-1. **How a reach weapon keeps a shorter one out.** Pass-by-pass resolution didn't solve it.
-   Options: a set or stop-thrust; extra AP to step inside an enemy's reach; a shove that also
-   costs the target AP; no dagger in the shield hand.
-2. **The AP cap.** On trial at 4 AP per pass. With guards, 6 is the most even option. Keep 4, move
-   to 6, or adjust two-handed costs (or `spanLands: 'now'`)?
-3. **Item materials, maker tags and keywords.** A proposal went to the user (see below); nothing
-   is built yet.
-4. **Grappling rules.** Proposal (a clinch → hold → pin ladder) sent to the user, with three
-   questions: is the clinch the first step, should armor matter, should grappling cost lots of
-   stamina?
-5. **Is plate too strong** after round 6?
-6. On hold at the user's request: the group-fight arena, the magic overhaul, the magic feat tiers.
+1. **The AP cap.** On trial at 4 AP per pass; 6 balanced better with guards.
+2. **Item materials, maker tags and keywords.** Proposal below; build only after approval.
+3. **Throws** never happen in the arena (the AI pins and stabs). Teach the AI to throw plate
+   wearers into their whole-round stand-up?
+4. On hold at the user's request: the group-fight arena, the magic overhaul, the magic feat tiers.
    Magic users are out of the arena.
+
+## Decided
+
+- Plate dominating is fine: its rarity is the balance.
+- Inside reach: half force, all blunt. Daggers stab normally until their user is held.
+- Drop is free, drawing costs 1 AP. Getting up from prone costs far more in heavy armor.
+- Grappling: the clinch → hold → pin ladder, directly opposed rolls, very stamina-hungry; plate easy
+  to grab, hard to throw.
+- Guards replace the defense step.
 
 ## Done in round 4
 

@@ -91,7 +91,7 @@ details summary { cursor: pointer; font-weight: 700; }
   <header class="head">
     <span class="eyebrow">Bold Brave Beaten · simulation</span>
     <h1>Combat Arena Results</h1>
-    <p>Twelve level-5 fighters (four armor classes × three fighting styles; magic users are left out for now) fought every other fighter in an open field and in close quarters. This round brings back partial damage inside a long weapon's reach, now landing as blunt at half force; makes drawing a weapon cheap and dropping one free; and makes anyone held in a grapple fight cramped, dagger included.</p>
+    <p>Sixteen level-5 fighters (four armor classes × four fighting styles: two-handed, sword &amp; shield, archery, and the new grappler; magic users are left out for now) fought every other fighter in an open field and in close quarters. This round adds the grappling ladder (clinch → hold → pin, with throws and breaks), each step a directly opposed roll; plate is easy to grab but hard to throw.</p>
     <div class="facts" id="facts"></div>
     <p class="note">Every fight is played by the built-in AI. It keeps its preferred range, kites with bows, winds up and draws, shoves to regain distance, swaps between weapon and dagger, and defends by the odds, but it never retreats to heal, flanks, or plans across rounds. Read these as what the rules produce under competent, simple play. Bows and magic are placeholder rules.</p>
   </header>
@@ -144,28 +144,18 @@ details summary { cursor: pointer; font-weight: 700; }
     <div><span class="eyebrow">For the designer</span><h2>Where the rules need work</h2></div>
     <div class="findings">
       <article class="finding">
-        <h3><span class="tag">This round</span>Weapon styles evened out; armor took over</h3>
-        <p>Average win rates, round 5 → this run, over the same twelve fighters (open field / close quarters).</p>
-        <div class="scroll"><table class="data">
-          <thead><tr><th></th><th>Open field</th><th>Close quarters</th></tr></thead>
-          <tbody>
-            <tr><td>Two-handed</td><td>32 → 40</td><td>38 → 43</td></tr>
-            <tr><td>Sword &amp; shield</td><td>64 → 60</td><td>73 → 64</td></tr>
-            <tr><td>Archery</td><td>50 → 44</td><td>33 → 38</td></tr>
-            <tr><td>Best − worst style</td><td>32 → 20 pts</td><td>40 → 26 pts</td></tr>
-            <tr><td>Heavy armor</td><td>74 → 81</td><td>71 → 76</td></tr>
-            <tr><td>Unarmored</td><td>27 → 25</td><td>29 → 22</td></tr>
-          </tbody></table></div>
+        <h3><span class="tag">This round</span>Grapplers: strong in close quarters, held off in the open</h3>
         <ul>
-          <li><b>Sword &amp; shield lost its edge</b> where it used to step inside reach with a dagger: light sword &amp; shield fell from 86% to 74% in close quarters, unarmored from 62% to 35%. Two-handers gained in both arenas.</li>
-          <li><b>Cramped blows are rare</b> (about 0.1 a fight). The AI still prefers to drop its long weapon and draw the dagger (0.3–0.95 times a fight), now that drawing costs 1 AP.</li>
-          <li><b>Armor now decides more than style.</b> Every plate fighter wins 64–87%; every unarmored one wins 11–35% and dies 64–89% of the time.</li>
-          <li>Fights last about 3.3 rounds in the open and 3.1 in close quarters.</li>
+          <li><b>Grapplers average 45% in the open and 61% in close quarters.</b> In close quarters they beat two-handers 69% and archers 80%, but only 43% against sword &amp; shield.</li>
+          <li><b>By opponent armor</b> (close / open): plate 48 / 33, mail 70 / 45, leather 63 / 45, unarmored 74 / 53. Plate's handles help, but plate fighters hit hard enough to win the race.</li>
+          <li><b>The ladder in use</b> (per fight with a grappler): 0.43 clinches, 0.49 straight to a hold on a big win, 0.34 pins, 1.3 dagger stabs, 0.30 successful breaks. The upkeep bites: 0.23 times a fight a holder is too spent to keep the hold.</li>
+          <li><b>Throws never happen:</b> the AI pins and stabs instead, so a throw into plate's whole-round stand-up is untested.</li>
+          <li><b>The other styles barely moved</b> (within 2 points) against the opponents they already had.</li>
         </ul>
       </article>
       <article class="finding">
-        <h3><span class="tag">Decision</span>Is plate too strong now?</h3>
-        <p>If heavy armor should be strong but not around 80%, the levers are: how much force a cramped blow keeps (now half), whether a cramped blow keeps some of its piercing instead of becoming all blunt, plate's blunt mitigation, and the plate retune from round 3. Grappling rules, still being designed, are the other natural counter to plate.</p>
+        <h3><span class="tag">Decided</span>Plate is meant to dominate</h3>
+        <p>Heavy armor wins 76% in the open and 71% in close quarters against the old field. That's accepted: plate's rarity is its balance.</p>
       </article>
       <article class="finding">
         <h3><span class="tag">Context</span>One-on-one is only part of the picture</h3>

@@ -38,7 +38,7 @@ the arena results and the queued work.
 Characters take part in as many passes as their AP and action choices allow.
 Characters who spend early sit out the last passes.
 
-## Current state (round 6)
+## Current state (round 8)
 
 - Each pass resolves at its end. Defenses are guards readied on your own turn (the next attack,
   or the next from a named foe), lasting until used or the pass ends. No defense step: the user
@@ -47,15 +47,16 @@ Characters who spend early sit out the last passes.
 - Inside a long weapon's reach, blows land at half force, all blunt (`closeRule: 'blunt'`).
   Drop weapon is free; drawing costs 1 AP on the sheet. Held in a grapple, any weapon (dagger
   included) fights cramped.
-- Grappling rules are being designed with the user (control-ladder proposal: clinch, hold, pin).
+- Grappling ladder built: clinch → hold → pin (+ throw, break), directly opposed rolls, costly in
+  stamina; plate easy to grab (+2) but hard to throw. Plate dominating is accepted (rarity).
 - The mobile battle UI has been redesigned.
 
 ## Waiting on the user
 
-1. **Reach-keeping rule.** Pass-by-pass resolution didn't fix it.
-2. **The cap.** Keep it at 4, change it to 6, or adjust two-handed costs?
-3. **Item materials, maker tags and keywords.** The proposal is in HANDOFF.md; build only after
+1. **The cap.** Keep it at 4, change it to 6, or adjust two-handed costs?
+2. **Item materials, maker tags and keywords.** The proposal is in HANDOFF.md; build only after
    the user approves.
+3. **Throws:** teach the AI to throw plate wearers?
 
 On hold at the user's request: group fights, the magic overhaul, the magic feat tiers. Magic users
 are dropped from the arena entirely for now (`node sim/arena.js --with-magic` brings them back).

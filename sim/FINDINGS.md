@@ -1,5 +1,24 @@
 # Simulation findings
 
+## Round 8: the grappling ladder, and a grappler style in the arena
+
+Changes (PROVISIONAL, designed with the user): free → clinch (mutual) → hold → pin, plus throw and
+break; every step a directly opposed d10 roll (⌊STR/2⌋ + Grappler; breaking may use DEX + Escape
+Artist); win by 5+ for two steps, lose by 5+ to reverse. Clinch: no two-handed swings or bows, no
+stepping away. Hold: the held fighter is cramped (dagger too) and can't move; the holder keeps a
+dagger hand and can drag. Pin: only breaking; piercing and Coup de Grâce go through armor (a mere
+hold no longer opens armor). Armor option 4: plate +2 to be grappled or pinned (mail and scale +1),
+footing against throws. Guards never meet grapples. Arena: a Grappler style (padded through plate,
+dagger, Grappler ×2, Brawler's Wind, Trip, Toughness, Strength at level 5).
+
+- Grapplers average 45% open / 61% close. Close quarters: 69% vs two-handers, 80% vs archers,
+  43% vs sword & shield.
+- By opponent armor, close / open: plate 48 / 33, mail 70 / 45, leather 63 / 45, unarmored 74 / 53.
+- Ladder use per fight with a grappler: clinch 0.43, hold on a big win 0.49, pin 0.34, dagger
+  stabs 1.3, successful breaks 0.30, holder too spent to keep the hold 0.23. No throws: the AI pins
+  and stabs.
+- The other styles moved at most 2 points against the opponents they already had.
+
 ## Round 7: steep stand-up cost by armor; exhausting grapples
 
 Changes (PROVISIONAL, the user's calls): getting up from prone costs base AP / stamina 1/1
