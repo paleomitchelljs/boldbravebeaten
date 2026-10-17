@@ -1,5 +1,17 @@
 # Simulation findings
 
+## Round 7: steep stand-up cost by armor; exhausting grapples
+
+Changes (PROVISIONAL, the user's calls): getting up from prone costs base AP / stamina 1/1
+(none to leather), 2/2 (mail), 3/3 (scale), 4/5 (plate), capped at the AP pool; on the sheet a
+plate fighter spends the whole round (8 AP) and about 16 stamina. Grapple 5, takedown 6, escape 3
+base stamina, plus 2 base stamina upkeep per round of holding.
+
+Result: **no measurable change** (every style and armor average within 1 point of round 6). The
+arena barely exercises these rules: in a 528-fight sample there were 0.011 knockdowns and no
+grapples per fight (kicks 0.12 a fight, rarely winning by the 3 needed). Testing them needs a
+grappler/tripper fighting style and an AI that goes for knockdowns against plate.
+
 ## Round 6: blunt blows inside reach, cheap draws, cramped grapples; magic users dropped
 
 Changes (PROVISIONAL, the user's calls):
