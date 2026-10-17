@@ -16,6 +16,10 @@
     fur: { name: 'Thick fur', mit: { P: 1, S: 1, B: 2 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, rarity: 'common', natural: true },
     chitin: { name: 'Chitin', mit: { P: 2, S: 3, B: 1 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, rarity: 'common', natural: true },
     trollHide: { name: 'Troll hide', mit: { P: 1, S: 2, B: 3 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, rarity: 'common', natural: true },
+    scaleHide: { name: 'Scaly hide', mit: { P: 1, S: 1, B: 0 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, rarity: 'common', natural: true },
+    frogSkin: { name: 'Slick skin', mit: { P: 0, S: 1, B: 1 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, rarity: 'common', natural: true },
+    sarnakScales: { name: 'Sarnak scales', mit: { P: 2, S: 3, B: 2 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, rarity: 'common', natural: true },
+    golemStone: { name: 'Stone body', mit: { P: 4, S: 5, B: 1 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, rarity: 'common', natural: true },
   };
 
   // ---- Shields (Specifics) ------------------------------------------------
@@ -154,6 +158,18 @@
     beak: {
       name: 'Beak', hands: 1, weight: 'medium', reach: 1, reachName: 'close', closeOK: true, natural: true, grappleUsable: true,
       faces: { point: [4, 0, 2] }, motions: ['thrust'], rarity: 'common', material: 'bone',
+    },
+    zombieBite: {
+      name: 'Bite', hands: 1, weight: 'light', reach: 1, reachName: 'close', closeOK: true, natural: true, grappleUsable: true,
+      faces: { point: [3, 1, 1] }, motions: ['thrust'], rarity: 'common',
+    },
+    tail: {
+      name: 'Tail sweep', hands: 1, weight: 'medium', reach: 2, reachName: 'reach 2', closeOK: true, natural: true,
+      faces: { head: [0, 0, 4] }, motions: ['swing'], rarity: 'common', trait: { knockdown: { bonus: 2, margin: 3 } },
+    },
+    golemFists: {
+      name: 'Stone fists', hands: 2, weight: 'heavy', reach: 2, reachName: 'reach 2', closeOK: true, natural: true,
+      faces: { head: [0, 0, 8] }, motions: ['swing'], rarity: 'common', material: 'stone', trait: { knockdown: { bonus: 3, margin: 3 }, shieldCrush: true },
     },
     trollFists: {
       name: 'Fists', hands: 2, weight: 'heavy', reach: 2, reachName: 'reach 2', closeOK: true, natural: true,

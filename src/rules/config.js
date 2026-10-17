@@ -194,7 +194,7 @@
       // PROVISIONAL (history, the user's call): armor stops arrows better than it stops a thrust
       // at arm's length. Layered textile catches a shaft (padded most); mail is worn over padding.
       // Extra piercing mitigation against arrows only, by armor type.
-      vsArrows: { padded: 2, leather: 1, mail: 1, scale: 1, plate: 0, fur: 1, chitin: 1, trollHide: 1 },
+      vsArrows: { padded: 2, leather: 1, mail: 1, scale: 1, plate: 0, fur: 1, chitin: 1, trollHide: 1, scaleHide: 1, sarnakScales: 1, golemStone: 0 },
       // Arrowheads. Broadheads cut terrible wounds (bleed × bleed) but a broad blade is stopped by
       // metal armor (+metalMit); bodkins are narrow armor-piercers that make a smaller wound
       // (damage on the main type) but slip through mail and plate (metalMit < 0).
@@ -264,7 +264,7 @@
 
     // ---- Armor ------------------------------------------------------------
     // PROVISIONAL: base durability per armor type (Outline: durability like HP; numbers Open)
-    armorDurability: { padded: 20, leather: 25, mail: 40, scale: 45, plate: 60, fur: 30, chitin: 40, trollHide: 40 },
+    armorDurability: { padded: 20, leather: 25, mail: 40, scale: 45, plate: 60, fur: 30, chitin: 40, trollHide: 40, scaleHide: 25, frogSkin: 20, sarnakScales: 45, golemStone: 80 },
     // PROVISIONAL: armor coverage keyword
     coverage: {
       full: { mitigation: 0, penalty: 0, passThrough: 0.5 },

@@ -270,15 +270,24 @@
   function maxStamina(c) {
     let s = 0;
     for (const a in CONFIG.staminaWeights) s += CONFIG.staminaWeights[a] * attr(c, a);
+    if (tireless(c)) return Math.max(1, s); // nominal: tireless creatures never spend or lose it
     // Monster trait: a big creature (a boss) has more to give.
     return Math.round(s * ((c.traits && c.traits.staminaMult) || 1));
   }
 
   function regen(c) {
+    if (tireless(c)) return 0;
     return Math.floor((attr(c, 'CON') + attr(c, 'WIS')) / CONFIG.regenDivisor) - armorInfo(c).regen;
   }
 
+  // Tireless (undead, constructs): no stamina at all. Damage goes straight to attributes,
+  // actions cost no stamina, and only AP limits them.
+  function tireless(c) {
+    return !!(c.traits && c.traits.tireless);
+  }
+
   function fatiguePenalty(c) {
+    if (tireless(c)) return 0;
     const max = maxStamina(c);
     if (max <= 0) return 0;
     const frac = c.stamina / max;
@@ -304,7 +313,8 @@
   function squaresPerAP(c) {
     let s = CONFIG.moveBase + Math.floor(combatAttr(c, 'SPD') / CONFIG.moveSpdDivisor) + rank(c, 'fleet_foot');
     if (c.shield && c.shield.size === 'tower' && c.shield.durability > 0) s -= CONFIG.towerMovePenalty;
-    return Math.max(1, s) * (CONFIG.moveScale || 1);
+    // Monster trait: leapers (frogloks) cover more ground per AP.
+    return Math.round(Math.max(1, s) * (CONFIG.moveScale || 1) * ((c.traits && c.traits.moveMult) || 1));
   }
 
   function strOffset(c) {
@@ -314,6 +324,7 @@
   // Stamina per action = base × weight factor + armor stamina penalty,
   // with STR offsetting the weight and armor parts, then feat reductions.
   function staminaCost(c, base, weight, reduction) {
+    if (tireless(c)) return 0;
     base = base * (CONFIG.staminaScale || 1);
     const factor = weight ? CONFIG.weightFactor[weight] : 1;
     let penalty = base * (factor - 1) + armorInfo(c).stamina;
@@ -622,6 +633,12 @@
 
   function updateCondition(c) {
     const st = c.status;
+    if (tireless(c)) {
+      // No stamina to run out of: a tireless creature fights until its body is destroyed.
+      c.stamina = maxStamina(c);
+      if (attr(c, 'CON') <= 0) { st.dead = true; st.unconscious = true; }
+      return st;
+    }
     if (attr(c, 'CON') <= 0) {
       st.dead = true;
       st.unconscious = true;
@@ -646,7 +663,7 @@
     rank, featCount, featBudget, treeCount, tierCount, tierName, canTakeFeat, canRemoveFeat, addFeat, removeFeat, reqText, roman,
     conditioning, attr, attrMax, combatAttr, armorInfo, shieldInfo, shieldReady, wieldedWeapon,
     maxStamina, regen, fatiguePenalty, apPool, apScale, moveCost, squaresPerAP, handsBusy, inRange, optionKey, needsWindUp, strOffset, staminaCost, effectiveWeight, isLightWeapon,
-    strBonus, weaponDamage, mainIndex, attackOptions, actionCost, ammoLeft,
+    strBonus, weaponDamage, mainIndex, attackOptions, actionCost, ammoLeft, tireless,
     damageAttr, healAttr, totalDamage, updateCondition, isActive, bleedPerRound,
     TREES, ARMOR,
   };

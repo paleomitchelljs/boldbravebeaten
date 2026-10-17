@@ -202,6 +202,25 @@
     return { id: best, d: bd };
   }
 
+  // Which foe to go after. Teamwork: a foe an ally is already fighting, or one that's already
+  // hurt, is worth walking a little farther for, so a party focuses its blows.
+  function pickTarget(enc, chars, id, foes, posFn) {
+    const me = posFn(id);
+    const allies = enc.ids.filter((o) => o !== id && chars[o].side === chars[id].side && C.isActive(chars[o]));
+    let best = null;
+    for (const f of foes) {
+      const foe = chars[f];
+      const d = Combat.dist(me, posFn(f));
+      const engaged = allies.filter((a) => Combat.dist(posFn(a), posFn(f)) <= 2).length;
+      const conLeft = C.attr(foe, 'CON') / Math.max(1, C.attrMax(foe, 'CON'));
+      const stLeft = C.tireless(foe) ? 1 : foe.stamina / Math.max(1, C.maxStamina(foe));
+      const hurt = 1 - conLeft * stLeft;
+      const score = d - 2 * Math.min(engaged, 2) - 4 * hurt;
+      if (!best || score < best.score) best = { id: f, d, score };
+    }
+    return best || { id: null, d: Infinity };
+  }
+
   // Best square within the move budget for a goal distance to the target.
   function planMove(enc, chars, id, la, targetId, goal, foes, avoid) {
     if (!la.move) return null;
@@ -315,7 +334,7 @@
     }
     if (!foes.length) return { actor: id, type: 'concede' };
 
-    const near = nearestFoe(enc, chars, id, foes, at);
+    const near = pickTarget(enc, chars, id, foes, at);
     const target = chars[near.id];
     // Everything this loadout can do, counting wind-up attacks at their full cost.
     const planBase = la.attacks.filter((o) => !o.why || (o.windUp && WIND_REASONS.includes(o.why))).map((o) => forPlanning(c, o));

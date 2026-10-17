@@ -580,6 +580,10 @@
     if (prone) v[C.mainIndex(v)] += CONFIG.maneuver.proneDamageBonus;
     if (flags.pack) v[C.mainIndex(v)] += flags.pack; // pack hunters: allies at the target's side
     if (flags.half) for (let i = 0; i < 3; i++) v[i] = Math.floor(v[i] / 2);
+    // Resistances (monster trait): multipliers on piercing, slashing and blunt, e.g. a skeleton
+    // takes no piercing and half slashing; only blunt breaks bones cleanly.
+    const resist = target.traits && target.traits.resist;
+    if (resist) ['P', 'S', 'B'].forEach((k, i) => { if (resist[k] != null) v[i] = Math.floor(v[i] * resist[k]); });
     const [P, S, B] = v;
     const motion = option.motion === 'unarmed' ? 'swing' : option.motion;
     const res = { vec: v, P, S, B, armored: false, toCON: 0, slashToAttrs: 0, bluntToStamina: 0, bluntToCON: 0, converted: 0, durLoss: 0, mitigated: { P: 0, S: 0, B: 0 } };
@@ -628,6 +632,13 @@
       if (unconscious) res.bluntToCON = B;
       else res.bluntToStamina = B;
     }
+    // Tireless creatures have no stamina to absorb a blow: blunt goes to the body (CON), and
+    // they neither bleed nor take venom.
+    if (C.tireless(target)) {
+      res.bluntToCON += res.bluntToStamina;
+      res.bluntToStamina = 0;
+      res.noBleed = true;
+    } else if (target.traits && target.traits.noBleed) res.noBleed = true;
     return res;
   }
 
@@ -707,7 +718,7 @@
         parts.push(`${amt} stamina`);
       }
     }
-    if (option.venom && wound > 0) {
+    if (option.venom && wound > 0 && !h.noBleed) {
       // The deeper the bite, the more venom: up to `con` a round, never more than the wound.
       const per = Math.min(option.venom.con, wound);
       target.bleeds.push({ remaining: per * option.venom.rounds, rounds: option.venom.rounds, poison: true });
@@ -744,7 +755,7 @@
       bonus = C.rank(defender, 'parry_training') + half(C.combatAttr(defender, 'DEX'));
       tn += D.motionPenalty[motion] || 0;
     } else {
-      bonus = C.rank(defender, 'dodge_training') + half(C.combatAttr(defender, 'SPD')) - C.armorInfo(defender).dex;
+      bonus = C.rank(defender, 'dodge_training') + half(C.combatAttr(defender, 'SPD')) - C.armorInfo(defender).dex + ((defender.traits && defender.traits.nimble) || 0);
       tn += D.motionPenalty[motion] || 0;
     }
     return { bonus, tn };
@@ -846,7 +857,12 @@
 
   // d10 + this for breaking a clinch, hold or pin.
   function breakScore(c) {
-    return Math.floor(Math.max(C.attr(c, 'STR'), C.combatAttr(c, 'DEX')) / 2) + (C.rank(c, 'escape_artist') ? CONFIG.maneuver.escapeArtistBonus : 0);
+    return Math.floor(Math.max(C.attr(c, 'STR'), C.combatAttr(c, 'DEX')) / 2) + (C.rank(c, 'escape_artist') ? CONFIG.maneuver.escapeArtistBonus : 0) + slippery(c);
+  }
+
+  // Monster trait: slick-skinned creatures (frogloks) are hard to get a grip on.
+  function slippery(c) {
+    return (c.traits && c.traits.slippery) || 0;
   }
 
   // Allies next to the target add to the attacker's grapple rolls.
@@ -880,7 +896,7 @@
     const show = (o) => `(${o.a} vs ${o.b})`;
     if (d.type === 'clinch') {
       if (L || linkOf(t)) return fizzle('someone is already tangled up');
-      const o = await opposed(roller, a, grappleScore(a) + dogpileBonus(enc, chars, a, t), 'Clinch', t, grappleScore(t), 'Keep clear');
+      const o = await opposed(roller, a, grappleScore(a) + dogpileBonus(enc, chars, a, t), 'Clinch', t, grappleScore(t) + slippery(t), 'Keep clear');
       if (o.margin >= big) { setGrapple(chars, a, t, 'hold'); loseWindUp(enc, t, 'grappled'); return log(enc, `${a.name} closes and seizes ${t.name} in a hold ${show(o)}.`, 'hit'); }
       if (o.margin > 0) { setGrapple(chars, a, t, 'clinch'); loseWindUp(enc, t, 'clinched'); loseWindUp(enc, a, null); return log(enc, `${a.name} clinches with ${t.name} ${show(o)}.`, 'hit'); }
       return log(enc, `${t.name} keeps ${a.name} off ${show(o)}.`, 'fail');
@@ -888,7 +904,7 @@
     if (!withT) return fizzle(`not grappling ${t.name}`);
     if (d.type === 'grapple') {
       if (L.level !== 'clinch') return fizzle('not in a clinch');
-      const o = await opposed(roller, a, grappleScore(a) + handles(t) + dogpileBonus(enc, chars, a, t), 'Grapple', t, grappleScore(t), 'Resist');
+      const o = await opposed(roller, a, grappleScore(a) + handles(t) + dogpileBonus(enc, chars, a, t), 'Grapple', t, grappleScore(t) + slippery(t), 'Resist');
       if (o.margin >= big) { setGrapple(chars, a, t, 'pin'); return log(enc, `${a.name} drives ${t.name} down into a pin ${show(o)}.`, 'hit'); }
       if (o.margin > 0) { setGrapple(chars, a, t, 'hold'); return log(enc, `${a.name} takes hold of ${t.name} ${show(o)}.`, 'hit'); }
       if (o.margin <= -big) { setGrapple(chars, t, a, 'hold'); loseWindUp(enc, a, 'grappled'); return log(enc, `${t.name} reverses and holds ${a.name} ${show(o)}.`, 'hit'); }
@@ -1028,7 +1044,7 @@
   }
 
   function payStamina(enc, c, cost) {
-    if (!cost) return true;
+    if (!cost || C.tireless(c)) return true;
     const ok = CONFIG.exertionCanKnockOut ? c.stamina >= cost : c.stamina > cost;
     if (!ok) {
       log(enc, `${c.name} is too exhausted (needs ${cost} stamina, has ${c.stamina}); the action fails.`, 'fizzle');

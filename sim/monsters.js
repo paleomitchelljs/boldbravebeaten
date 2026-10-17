@@ -38,6 +38,13 @@ const INTENT = {
   owlbear: 'two-handers',
   caveTroll: 'sword and shield',
   trollChieftain: 'a whole party (a boss; one-on-one it should crush anyone)',
+  skeleton: 'archers and thrusting weapons (immune to piercing; only blunt goes through clean)',
+  zombie: 'anyone who can\'t finish it (tireless; piercing halved)',
+  stoneGolem: 'anyone without a blunt weapon (stone shrugs off blades)',
+  kobold: 'nobody alone: a pack creature',
+  goblin: 'nobody alone: a band creature',
+  froglok: 'grapplers (slippery)',
+  sarnak: 'lightly armored fighters (heavy blows, tail sweeps)',
 };
 
 // Small parties for the party test (three arena fighters).

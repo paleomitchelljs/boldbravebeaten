@@ -804,3 +804,25 @@ test('monster fights finish without errors', async () => {
     }
   }
 });
+
+test('tireless undead: no stamina, damage to the body, no bleeding; skeletons shrug off piercing', () => {
+  const [sk] = Enemies.makeMonster('skeleton');
+  assert.ok(C.tireless(sk));
+  assert.strictEqual(C.actionCost(sk, 'parry').stamina, 0, 'actions cost no stamina');
+  assert.strictEqual(C.fatiguePenalty(sk), 0);
+  const a = armed('Hero', 'longsword');
+  const thrust = C.attackOptions(a).find((o) => o.motion === 'thrust');
+  const swing = C.attackOptions(a).find((o) => o.motion === 'swing' && o.face === 'edge');
+  const mace = C.attackOptions(armed('M', 'flangedMace')).find((o) => o.motion === 'swing');
+  const hT = Combat.computeHit(a, sk, thrust, { distance: 2 });
+  assert.deepStrictEqual([hT.P, hT.toCON], [0, 0], 'a thrust passes between the ribs');
+  const hS = Combat.computeHit(a, sk, swing, { distance: 2 });
+  assert.ok(hS.S < Combat.computeHit(a, fighter('Living'), swing, { distance: 2 }).S, 'slashing is reduced');
+  const hB = Combat.computeHit(armed('M', 'flangedMace'), sk, mace, { distance: 2 });
+  assert.ok(hB.bluntToCON > 0 && hB.bluntToStamina === 0, 'blunt goes straight to the bones');
+  assert.ok(hB.noBleed);
+  // It never passes out: only destroying its body stops it.
+  sk.stamina = 0;
+  C.updateCondition(sk);
+  assert.ok(!sk.status.unconscious);
+});

@@ -63,6 +63,9 @@ table.heat { border-collapse: separate; border-spacing: 2px; font-size: 0.8rem; 
 table.heat th { font-weight: 500; color: var(--muted); padding: 3px 5px; text-align: right; white-space: nowrap; font-size: 0.76rem; }
 table.heat thead th { text-align: center; vertical-align: bottom; }
 table.heat td { min-width: 44px; height: 32px; text-align: center; font-family: var(--font-mono); font-variant-numeric: tabular-nums; border-radius: 3px; }
+table.party-grid td { min-width: 76px; height: 40px; line-height: 1.15; }
+table.party-grid td small { display: block; font-size: 0.68rem; opacity: 0.85; }
+table.party-grid th[scope="row"] { text-align: left; color: var(--ink); font-weight: 600; }
 table.heat td.target { outline: 2px solid var(--ink); outline-offset: -2px; font-weight: 600; }
 table.heat th.sep, table.heat td.sep { width: 8px; min-width: 8px; padding: 0; background: none; }
 .legend { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; font-size: 0.85rem; color: var(--muted); }
@@ -91,6 +94,13 @@ table.heat th.sep, table.heat td.sep { width: 8px; min-width: 8px; padding: 0; b
     <div><span class="eyebrow">Bestiary</span><h2>Each monster, matchup by matchup</h2></div>
     <div class="legend"><span>Monster's win rate</span><span class="num">0%</span><span class="ramp" aria-hidden="true"></span><span class="num">100%</span><span>· the outlined cells are what it was built to beat</span></div>
     <div class="entries" id="entries"></div>
+  </section>
+
+  <section id="party-section" hidden>
+    <div><span class="eyebrow">Party arena</span><h2>Parties against encounters</h2></div>
+    <p class="muted" id="party-sub"></p>
+    <div class="legend"><span>Party's win rate</span><span class="num">0%</span><span class="ramp" aria-hidden="true"></span><span class="num">100%</span><span>· the small number is party deaths per fight</span></div>
+    <div class="scroll"><table class="heat party-grid" id="party"></table></div>
   </section>
 
   <section>
@@ -186,6 +196,26 @@ document.getElementById('facts').textContent = `${DATA.n} fights per pairing per
       el('td', { class: 'n' }, edgeCell),
       el('td', null, verdict),
       el('td', { class: 'n' }, `${pct(Math.max(...party))} / ${pct(Math.min(...party))}`)));
+  }
+  t.append(tb);
+})();
+
+// Party arena
+(function party() {
+  const P = DATA.party;
+  if (!P) return;
+  document.getElementById('party-section').hidden = false;
+  document.getElementById('party-sub').textContent = `${P.n} fights per cell. Parties: ` + Object.values(P.parties).map((p) => p.label).join('; ') + '. Both sides choose targets as a team: a foe an ally is already fighting, or one already hurt, is worth walking farther for.';
+  const t = document.getElementById('party');
+  const cols = [];
+  for (const pk of Object.keys(P.parties)) for (const ak of Object.keys(P.arenas)) cols.push([pk, ak]);
+  t.append(el('thead', null,
+    el('tr', null, el('th', null, ''), Object.keys(P.parties).map((pk) => el('th', { colspan: Object.keys(P.arenas).length }, P.parties[pk].label.split(':')[0]))),
+    el('tr', null, el('th', null, 'Encounter'), cols.map(([, ak]) => el('th', null, P.arenas[ak].label)))));
+  const tb = el('tbody');
+  for (const e of Object.values(P.encounters)) {
+    tb.append(el('tr', null, el('th', { scope: 'row', title: e.blurb }, e.name + (e.size > 1 ? ` ×${e.size}` : '')),
+      cols.map(([pk, ak]) => { const r = e.results[pk][ak]; const v = r.partyWin; return el('td', { style: `background:${heatBg(v)};color:${heatInk(v)}`, title: `${e.name} vs ${P.parties[pk].label.split(':')[0]}, ${P.arenas[ak].label}: party wins ${pct(v)}, ${r.partyDeaths.toFixed(2)} deaths, ${r.rounds.toFixed(1)} rounds` }, pct(v), el('small', null, r.partyDeaths.toFixed(1) + ' dead')); })));
   }
   t.append(tb);
 })();

@@ -200,7 +200,12 @@
   //   traits   — pack (+1 damage per packmate beside the target, up to N), displacement
   //              (chance an attack strikes an illusion: ranged / melee), regen (CON and stamina
   //              back each round unless burned; a downed troll can get back up), apMult and
-  //              staminaMult (a boss: more AP, a bigger per-pass allowance, more stamina)
+  //              staminaMult (a boss: more AP, a bigger per-pass allowance, more stamina),
+  //              tireless (undead and constructs: no stamina; damage goes to attributes, never
+  //              tires, no bleeding or venom), resist ({P, S, B} damage multipliers),
+  //              nimble (+dodge), slippery (+ against being grappled and to break free),
+  //              moveMult (leapers cover more ground)
+  //   weapons, shield, sidearm, quality, arrows — carried gear, for monsters that use it
   //   policy   — AI policy (grappler, kite…)
   //   group    — several creatures (a pack)
   const MONSTERS = {
@@ -245,6 +250,56 @@
       attrs: { STR: 10, CON: 15, DEX: 4, SPD: 4, INT: 3, WIS: 4, CHA: 3 },
       natural: ['trollFists', 'claws'], armor: 'trollHide', traits: { regen: { con: 1, stamina: 6 }, apMult: 2.5, staminaMult: 2.5 }, feats: { power_swing: 1, shield_breaker: 1, toughness: 1 },
     },
+    displacerPair: { name: 'Displacer pair', blurb: 'Two displacer beasts: arrows mostly strike illusions, so the archers have to close while the beasts maul the front line.', group: ['displacer', 'displacer'] },
+    // ---- Undead and constructs: tireless ----
+    skeleton: {
+      name: 'Skeleton', blurb: 'Bones and a rusty sword. Arrows and thrusts pass between the ribs; slashing chips; a mace breaks it. Never tires.',
+      attrs: { STR: 5, CON: 10, DEX: 5, SPD: 5, INT: 1, WIS: 1, CHA: 1 },
+      natural: [], weapons: ['longsword'], shield: ['round', 'wood'], quality: 'crude',
+      traits: { tireless: true, resist: { P: 0, S: 0.5 } }, feats: { shield_training: 1 }, keepUnarmed: true,
+    },
+    skeletonSquad: { name: 'Skeleton squad', blurb: 'Three skeletons with swords and shields.', group: ['skeleton', 'skeleton', 'skeleton'] },
+    zombie: {
+      name: 'Zombie', blurb: 'Slow, grabbing, biting. Piercing does half as much; no stamina to run down. Never tires.',
+      attrs: { STR: 7, CON: 12, DEX: 3, SPD: 3, INT: 1, WIS: 1, CHA: 1 },
+      natural: ['claws', 'zombieBite'], traits: { tireless: true, resist: { P: 0.5 } }, feats: { grappler: 1 }, policy: { grappler: true },
+    },
+    zombieHorde: { name: 'Zombie horde', blurb: 'Four zombies.', group: ['zombie', 'zombie', 'zombie', 'zombie'] },
+    stoneGolem: {
+      name: 'Stone golem', blurb: 'A construct of stone: blades skate off, hammers crack it. Slow, tireless, and its fists crush shields.',
+      attrs: { STR: 10, CON: 14, DEX: 3, SPD: 3, INT: 1, WIS: 1, CHA: 1 },
+      natural: ['golemFists'], armor: 'golemStone', traits: { tireless: true }, feats: {},
+    },
+    // ---- Humanoids with natural armor ----
+    kobold: {
+      name: 'Kobold', blurb: 'Small, quick, scaly, cowardly alone and vicious in a pack. Spear.',
+      attrs: { STR: 3, CON: 4, DEX: 6, SPD: 7, INT: 4, WIS: 4, CHA: 3 },
+      natural: [], armor: 'scaleHide', weapons: ['spear'], quality: 'crude', traits: { pack: 1, nimble: 1 }, feats: {}, keepUnarmed: true,
+    },
+    koboldBand: { name: 'Kobold band', blurb: 'Four kobolds with spears.', group: ['kobold', 'kobold', 'kobold', 'kobold'] },
+    goblin: {
+      name: 'Goblin', blurb: 'Nimble and nasty: crude leather, a club, and a knife.',
+      attrs: { STR: 4, CON: 4, DEX: 7, SPD: 7, INT: 4, WIS: 3, CHA: 3 },
+      natural: [], armorItem: ['leather', 'half'], weapons: ['club'], sidearm: 'dagger', quality: 'crude', traits: { nimble: 2 }, feats: {}, keepUnarmed: true,
+    },
+    goblinArcher: {
+      name: 'Goblin archer', blurb: 'A goblin with a shortbow, keeping its distance.',
+      attrs: { STR: 4, CON: 4, DEX: 7, SPD: 7, INT: 4, WIS: 3, CHA: 3 },
+      natural: [], armorItem: ['leather', 'half'], weapons: ['shortbow'], sidearm: 'dagger', quality: 'crude', arrows: 15, traits: { nimble: 2 }, feats: {}, keepUnarmed: true,
+    },
+    goblinBand: { name: 'Goblin band', blurb: 'Two goblins and an archer.', group: ['goblin', 'goblin', 'goblinArcher'] },
+    froglok: {
+      name: 'Froglok', blurb: 'Frog-folk with spear and shield: they leap into the fight and slip out of any grip.',
+      attrs: { STR: 5, CON: 5, DEX: 6, SPD: 6, INT: 4, WIS: 5, CHA: 4 },
+      natural: [], armor: 'frogSkin', weapons: ['spear'], shield: ['round', 'wood'], traits: { slippery: 2, moveMult: 1.5 }, feats: { shield_training: 1 }, keepUnarmed: true,
+    },
+    frogPatrol: { name: 'Froglok patrol', blurb: 'Three frogloks.', group: ['froglok', 'froglok', 'froglok'] },
+    sarnak: {
+      name: 'Sarnak', blurb: 'A big scaled reptilian warrior with a warhammer and a tail that sweeps legs.',
+      attrs: { STR: 8, CON: 7, DEX: 5, SPD: 5, INT: 4, WIS: 4, CHA: 3 },
+      natural: ['tail'], armor: 'sarnakScales', weapons: ['warhammer'], traits: {}, feats: { heavy_weapon_training: 1, toughness: 1 }, keepUnarmed: true,
+    },
+    sarnakPair: { name: 'Sarnak pair', blurb: 'Two sarnak warriors.', group: ['sarnak', 'sarnak'] },
   };
 
   // Make a monster (or, for a group, all its members). Returns an array of characters.
@@ -256,12 +311,21 @@
     c.level = opts.level || 5;
     c.monster = key;
     c.natural = M.natural.slice();
-    c.noUnarmed = true;
+    c.noUnarmed = !M.keepUnarmed;
     c.traits = JSON.parse(JSON.stringify(M.traits || {}));
     c.feats = Object.assign({}, M.feats || {});
     if (M.armor) c.armor = Items.makeArmor(M.armor, 'full', 'standard');
+    if (M.armorItem) c.armor = Items.makeArmor(M.armorItem[0], M.armorItem[1] || 'full', M.quality || 'standard');
+    const q = M.quality || 'standard';
+    for (const [i, type] of (M.weapons || []).entries()) {
+      const w = Items.makeWeapon(type, q);
+      c.weapons.push(w);
+      if (i === 0) c.wield = w.id;
+    }
+    if (M.sidearm) { const s = Items.makeWeapon(M.sidearm, q); c.weapons.push(s); c.sidearm = s.id; }
+    if (M.shield) c.shield = Items.makeShield(M.shield[0], M.shield[1], q);
     c.policy = Object.assign({}, M.policy || {});
-    c.inventory = { bandages: 0, gold: 0, arrows: 0, bodkins: 0, items: [] };
+    c.inventory = { bandages: 0, gold: 0, arrows: M.arrows || 0, bodkins: 0, items: [] };
     c.stamina = C.maxStamina(c);
     return [c];
   }
