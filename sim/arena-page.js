@@ -22,6 +22,22 @@ if (BASE) {
     data.baseline.agg[ar] = {};
     for (const [k, v] of Object.entries(b.agg[ar])) data.baseline.agg[ar][k] = { avgWin: v.avgWin, meanRounds: v.meanRounds, deathRate: v.deathRate, koRate: v.koRate };
   }
+  // If the earlier run had fighters this one doesn't (magic users), recompute its averages
+  // over the fighters both runs share, so the comparison is like for like.
+  const keys = Object.keys(data.agg[Object.keys(data.agg)[0]]);
+  const extra = Object.keys(b.agg[Object.keys(b.agg)[0]]).filter((k) => !keys.includes(k));
+  if (extra.length) {
+    for (const ar of Object.keys(b.agg)) {
+      for (const k of keys) {
+        const others = keys.filter((o) => o !== k);
+        const pair = (o) => b.results[ar][k + '|' + o] || b.results[ar][o + '|' + k];
+        data.baseline.agg[ar][k].avgWin = others.reduce((t, o) => t + b.view[ar][k][o], 0) / others.length;
+        data.baseline.agg[ar][k].meanRounds = others.reduce((t, o) => t + pair(o).meanRounds, 0) / others.length;
+      }
+      for (const k of extra) delete data.baseline.agg[ar][k];
+    }
+    data.baseline.label += ' (without ' + extra.map((k) => k.split('/')[1]).filter((v, i, a) => a.indexOf(v) === i).join(', ') + ')';
+  }
 }
 // Keep the page light: drop per-pair event detail the page doesn't use.
 for (const ar of Object.keys(data.results)) for (const r of Object.values(data.results[ar])) { delete r.evA; delete r.evB; }

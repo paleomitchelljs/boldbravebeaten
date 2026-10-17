@@ -38,12 +38,16 @@ the arena results and the queued work.
 Characters take part in as many passes as their AP and action choices allow.
 Characters who spend early sit out the last passes.
 
-## Current state (round 4 done)
+## Current state (round 6)
 
 - Each pass resolves at its end. Defenses are guards readied on your own turn (the next attack,
   or the next from a named foe), lasting until used or the pass ends. No defense step: the user
   found it arbitrary.
 - The AP-per-pass cap is on trial (4 AP on the sheet).
+- Inside a long weapon's reach, blows land at half force, all blunt (`closeRule: 'blunt'`).
+  Drop weapon is free; drawing costs 1 AP on the sheet. Held in a grapple, any weapon (dagger
+  included) fights cramped.
+- Grappling rules are being designed with the user (control-ladder proposal: clinch, hold, pin).
 - The mobile battle UI has been redesigned.
 
 ## Waiting on the user
@@ -53,4 +57,5 @@ Characters who spend early sit out the last passes.
 3. **Item materials, maker tags and keywords.** The proposal is in HANDOFF.md; build only after
    the user approves.
 
-On hold at the user's request: group fights, the magic overhaul, the magic feat tiers.
+On hold at the user's request: group fights, the magic overhaul, the magic feat tiers. Magic users
+are dropped from the arena entirely for now (`node sim/arena.js --with-magic` brings them back).

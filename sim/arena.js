@@ -89,6 +89,10 @@ function makeCombatant(armorKey, stratKey, side) {
   return c;
 }
 
+// Magic users are left out for now (the user's call): the magic rules are a placeholder stub.
+// Pass --with-magic to include them.
+if (!argv.includes('--with-magic')) delete STRATEGY.magic;
+
 const KEYS = [];
 for (const a of Object.keys(ARMOR)) for (const s of Object.keys(STRATEGY)) KEYS.push(a + '/' + s);
 

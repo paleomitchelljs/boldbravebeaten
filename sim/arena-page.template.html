@@ -98,7 +98,7 @@ details summary { cursor: pointer; font-weight: 700; }
 
   <section>
     <div><span class="eyebrow">Headline</span><h2>Who wins, by style and armor</h2></div>
-    <p class="muted">Each cell is that fighter's average win rate against all fifteen others. Blue wins more than half its fights, red fewer.</p>
+    <p class="muted">Each cell is that fighter's average win rate against all the others. Blue wins more than half its fights, red fewer.</p>
     <div class="pair" id="headline"></div>
     <div class="legend"><span>Win rate</span><span class="num">0%</span><span class="ramp" aria-hidden="true"></span><span class="num">100%</span><span>· 50% is gray</span></div>
   </section>
@@ -293,7 +293,7 @@ for (const a of ARENAS) {
     spread.append(el('div', { class: 'card' }, el('h3', null, DATA.arenas[a].label),
       el('div', { class: 'facts' },
         el('span', { class: 'stat' }, el('span', { class: 'muted small' }, 'Best − worst style'), el('b', null, Math.round(after * 100) + ' pts'), el('span', { class: 'delta muted small' }, `was ${Math.round(before * 100)}`)),
-        el('span', { class: 'stat' }, el('span', { class: 'muted small' }, 'Same, leaving out magic'), el('b', null, Math.round(afterNM * 100) + ' pts'), el('span', { class: 'delta muted small' }, `was ${Math.round(beforeNM * 100)}`)),
+        STRATS.includes('magic') ? el('span', { class: 'stat' }, el('span', { class: 'muted small' }, 'Same, leaving out magic'), el('b', null, Math.round(afterNM * 100) + ' pts'), el('span', { class: 'delta muted small' }, `was ${Math.round(beforeNM * 100)}`)) : null,
         el('span', { class: 'stat' }, el('span', { class: 'muted small' }, 'Top fighter'), el('b', null, pct(Math.max(...fighters))), el('span', { class: 'delta muted small' }, `was ${pct(Math.max(...fBefore))}`)),
         el('span', { class: 'stat' }, el('span', { class: 'muted small' }, 'Bottom fighter'), el('b', null, pct(Math.min(...fighters))), el('span', { class: 'delta muted small' }, `was ${pct(Math.min(...fBefore))}`)))));
   }
