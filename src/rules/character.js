@@ -54,7 +54,7 @@
   }
 
   function freshStatus() {
-    return { prone: false, grappledBy: [], grappling: null, clinch: null, pinned: false, unconscious: false, dead: false, dropped: [], windUp: null };
+    return { prone: false, grappledBy: [], grappling: null, clinch: null, pinned: false, webbed: 0, unconscious: false, dead: false, dropped: [], windUp: null };
   }
 
   // Bring older saves up to the current shape.
@@ -429,13 +429,16 @@
         for (const face of m.faces) if (def.faces[face]) opts.push(strikeOption(c, pseudo, face, motion));
       }
     }
-    if (c.noUnarmed) return opts;
-    // Unarmed: a punch needs a free hand.
-    if (handsBusy(c) < 2) opts.push(unarmedOption(c, 'punch'));
-    if (!grappling && !st.prone) opts.push(unarmedOption(c, 'kick'));
-    if (shieldReady(c) && rank(c, 'shield_bash') && !grappling) opts.push(unarmedOption(c, 'shieldBash'));
-    // Spells need a free hand (see magic.js).
-    if (G.Magic && handsBusy(c) < 2 && !grappling) for (const o of G.Magic.spellOptions(c)) opts.push(o);
+    if (!c.noUnarmed) {
+      // Unarmed: a punch needs a free hand.
+      if (handsBusy(c) < 2) opts.push(unarmedOption(c, 'punch'));
+      if (!grappling && !st.prone) opts.push(unarmedOption(c, 'kick'));
+      if (shieldReady(c) && rank(c, 'shield_bash') && !grappling) opts.push(unarmedOption(c, 'shieldBash'));
+      // Spells need a free hand (see magic.js).
+      if (G.Magic && handsBusy(c) < 2 && !grappling) for (const o of G.Magic.spellOptions(c)) opts.push(o);
+    }
+    const t = webTax(c);
+    if (t.ap || t.stamina) for (const o of opts) { o.ap += t.ap; o.stamina += t.stamina; }
     return opts;
   }
 
@@ -499,9 +502,10 @@
       closePenalty = false;
     }
     const trait = def.trait || {};
+    if (def.natural && motion === 'shoot') { minRange = def.ranged.min; maxRange = def.ranged.max; ranged = true; closePenalty = false; }
     return {
       kind: 'strike', weaponId: w.id, weaponType: w.type, face, motion, ap, stamina,
-      natural: !!def.natural, knockdown: trait.knockdown || null, venom: trait.venom || null, rust: trait.rust || null, shieldCrush: !!trait.shieldCrush,
+      natural: !!def.natural, knockdown: trait.knockdown || null, venom: trait.venom || null, rust: trait.rust || null, shieldCrush: !!trait.shieldCrush, web: trait.web || null,
       reach: maxRange, minRange, maxRange, closePenalty, ranged, longRange: ranged ? def.ranged.long : null,
       windUp, damage: weaponDamage(c, w, face, motion),
       label: def.natural ? `${def.name}${motion === 'power' ? ' (power)' : ''}` : `${m.name} (${face})`,
@@ -543,8 +547,8 @@
     };
   }
 
-  // AP and stamina for non-attack actions.
-  function actionCost(c, kind, extra) {
+  // AP and stamina for non-attack actions (before webs).
+  function baseActionCost(c, kind, extra) {
     const st = c.status || freshStatus();
     const a = ACTIONS[kind];
     const S = apScale();
@@ -608,6 +612,21 @@
     return { ap, stamina: staminaCost(c, a.stamina, null, red) };
   }
 
+  // Webs (monster ability): each layer makes every action cost more AP and stamina.
+  function webTax(c) {
+    const n = (c.status && c.status.webbed) || 0;
+    if (!n) return { ap: 0, stamina: 0 };
+    const W = CONFIG.web || { ap: 1, stamina: 1 };
+    return { ap: n * W.ap * apScale(), stamina: tireless(c) ? 0 : n * W.stamina * (CONFIG.staminaScale || 1) };
+  }
+
+  function actionCost(c, kind, extra) {
+    const cost = baseActionCost(c, kind, extra);
+    if (kind === 'dropWeapon') return cost;
+    const t = webTax(c);
+    return { ap: cost.ap + t.ap, stamina: cost.stamina + t.stamina };
+  }
+
   // ---- Health ------------------------------------------------------------
   // Apply attribute damage, lowering current stamina by the drop in max stamina.
   function damageAttr(c, a, n) {
@@ -663,7 +682,7 @@
     rank, featCount, featBudget, treeCount, tierCount, tierName, canTakeFeat, canRemoveFeat, addFeat, removeFeat, reqText, roman,
     conditioning, attr, attrMax, combatAttr, armorInfo, shieldInfo, shieldReady, wieldedWeapon,
     maxStamina, regen, fatiguePenalty, apPool, apScale, moveCost, squaresPerAP, handsBusy, inRange, optionKey, needsWindUp, strOffset, staminaCost, effectiveWeight, isLightWeapon,
-    strBonus, weaponDamage, mainIndex, attackOptions, actionCost, ammoLeft, tireless,
+    strBonus, weaponDamage, mainIndex, attackOptions, actionCost, ammoLeft, tireless, webTax,
     damageAttr, healAttr, totalDamage, updateCondition, isActive, bleedPerRound,
     TREES, ARMOR,
   };

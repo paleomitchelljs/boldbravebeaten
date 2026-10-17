@@ -12,6 +12,7 @@
     if (st.dead) out.push(h('span', { class: 'chip bad' }, 'Dead'));
     else if (st.unconscious) out.push(h('span', { class: 'chip bad' }, 'Unconscious'));
     if (st.prone) out.push(h('span', { class: 'chip warn' }, 'Prone'));
+    if (st.webbed) out.push(h('span', { class: 'chip warn', title: 'Every action costs more AP and stamina' }, `Webbed ×${st.webbed}`));
     if (st.clinch) out.push(h('span', { class: 'chip warn' }, 'Clinched'));
     if (st.grappledBy && st.grappledBy.length) out.push(h('span', { class: 'chip warn' }, st.pinned ? 'Pinned' : 'Held'));
     if (st.grappling) out.push(h('span', { class: 'chip' }, st.grapplingPin ? 'Pinning' : 'Holding'));

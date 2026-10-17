@@ -33,6 +33,8 @@
   // Attribute damage costs max stamina and bleeds; a hit that drops the target is worth most.
   function hitValue(attacker, target, option, distance) {
     // Rust: worth the armor it eats, if there's metal to eat.
+    // Web: worth what it costs the target over the next actions.
+    if (option.web) return (target.status.webbed || 0) >= (G.CONFIG.web.maxLayers || 2) ? 0 : (target.status.webbed ? 5 : 10);
     if (option.rust) {
       const metal = target.armor && (G.CONFIG.archery.metalArmor || []).includes(target.armor.type) && target.armor.durability > 0;
       return metal ? Math.min(option.rust, target.armor.durability) * 1.0 : 0;
@@ -281,9 +283,11 @@
     const foes = enemiesOf(enc, chars, id);
     const at = (x) => Combat.posAtPass(enc, x, enc.pass);
 
-    // 1. Get up.
+    // 1. Get up; tear free of webs.
     const stand = la.other.find((o) => o.type === 'standUp' && o.affordable);
     if (stand) return { actor: id, type: 'standUp' };
+    const tear = la.other.find((o) => o.type === 'tearFree' && o.affordable);
+    if (tear && rng() < 0.7) return { actor: id, type: 'tearFree' };
 
     // 2. Release a wound-up blow at whoever is in range.
     for (const atk of la.attacks) {

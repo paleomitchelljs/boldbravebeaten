@@ -826,3 +826,16 @@ test('tireless undead: no stamina, damage to the body, no bleeding; skeletons sh
   C.updateCondition(sk);
   assert.ok(!sk.status.unconscious);
 });
+
+test('sticky webs: every action costs more until torn free', async () => {
+  const [spider] = Enemies.makeMonster('giantSpider');
+  const spit = C.attackOptions(spider).find((o) => o.web);
+  assert.ok(spit && spit.ranged && spit.minRange === 2);
+  const t = armed('Hero', 'longsword', { side: 'party' });
+  const before = { thrust: C.attackOptions(t).find((o) => o.motion === 'thrust').ap, parry: C.actionCost(t, 'parry') };
+  t.status.webbed = 1;
+  const after = { thrust: C.attackOptions(t).find((o) => o.motion === 'thrust').ap, parry: C.actionCost(t, 'parry') };
+  assert.strictEqual(after.thrust, before.thrust + B.CONFIG.web.ap * B.CONFIG.apScale);
+  assert.strictEqual(after.parry.stamina, before.parry.stamina + B.CONFIG.web.stamina * B.CONFIG.staminaScale);
+  assert.strictEqual(C.actionCost(t, 'dropWeapon').ap, 0, 'dropping is still free');
+});

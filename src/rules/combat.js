@@ -393,6 +393,7 @@
     if (hands.dropped.length && !declared('pickUp')) addOther('pickUp', dropNote);
     if (hands.wield) addOther('dropWeapon', { note: Items.itemName(heldW) });
     if (c.status.grappling && !declared('release')) addOther('release');
+    if (c.status.webbed && !declared('tearFree')) addOther('tearFree', { note: `${c.status.webbed} layer${c.status.webbed > 1 ? 's' : ''}` });
     // Wind-ups for attacks that need one (power swings, Strong spells).
     if (canWindUp(enc, c) && !c.status.prone && !grappled) {
       const seen = {};
@@ -442,7 +443,7 @@
       if (!w || w.key !== key) return 'Wind up first';
       if (w.round >= enc.round) return 'Release next round';
     }
-    if (opt.ranged && opt.weaponId && C.ammoLeft(c, opt) <= 0) return opt.arrowHead ? `No ${opt.arrowHead}s` : 'No arrows';
+    if (opt.ranged && opt.weaponId && !opt.natural && C.ammoLeft(c, opt) <= 0) return opt.arrowHead ? `No ${opt.arrowHead}s` : 'No arrows';
     if (opt.spell) return spellShort(c, opt, spPlanned);
     return null;
   }
@@ -724,7 +725,10 @@
       target.bleeds.push({ remaining: per * option.venom.rounds, rounds: option.venom.rounds, poison: true });
       parts.push('poisoned');
     }
-    if (option.spell && option.spell.element === 'fire') (enc.burned || (enc.burned = {}))[target.id] = true;
+    if (option.spell && option.spell.element === 'fire') {
+      (enc.burned || (enc.burned = {}))[target.id] = true;
+      if (target.status.webbed) { target.status.webbed = 0; parts.push('the webs burn away'); }
+    }
     if (wound > 0 && !h.noBleed) {
       // A broadhead's wide cut bleeds worse.
       const hd = option.arrowHead && CONFIG.archery.heads[option.arrowHead];
@@ -1090,7 +1094,7 @@
         }
         a.status.windUp = null;
       }
-      if (d.type === 'strike' && d.option.ranged && d.option.weaponId) {
+      if (d.type === 'strike' && d.option.ranged && d.option.weaponId && !d.option.natural) {
         if (C.ammoLeft(a, d.option) <= 0) {
           log(enc, `${a.name} is out of ${d.option.arrowHead ? d.option.arrowHead + 's' : 'arrows'}.`, 'fizzle');
           return;
@@ -1144,6 +1148,11 @@
       }
 
       if (d.type === 'strike' && d.option.rust) return rustTouch(enc, a, t, d.option.rust);
+      if (d.type === 'strike' && d.option.web) {
+        const W = CONFIG.web;
+        t.status.webbed = Math.min(W.maxLayers, (t.status.webbed || 0) + d.option.web);
+        return log(enc, `${a.name}'s web sticks to ${t.name} (${t.status.webbed} layer${t.status.webbed > 1 ? 's' : ''}: every action costs more).`, 'hit');
+      }
       if (d.type === 'strike') {
         const half = failedDodge && C.rank(t, 'roll_with_it');
         const pack = a.traits && a.traits.pack
@@ -1209,6 +1218,14 @@
       case 'dropWeapon': {
         const w = dropHeld(a);
         if (w) log(enc, `${a.name} drops ${Items.itemName(w)}.`);
+        break;
+      }
+      case 'tearFree': {
+        const W = CONFIG.web;
+        const bonus = Math.floor(C.attr(a, 'STR') / 2);
+        const r = await rollDie(roller, a.id, 10, `${a.name}: Tear free`, `d10 + ${bonus} ≥ ${W.tearTN}`);
+        if (r + bonus >= W.tearTN) { a.status.webbed = 0; log(enc, `${a.name} tears free of the webs (${r + bonus}).`, 'defend'); }
+        else log(enc, `${a.name} strains against the webs (${r + bonus} vs ${W.tearTN}).`, 'fail');
         break;
       }
       case 'release':
@@ -1465,6 +1482,7 @@
       c.status.clinch = null;
       c.status.pinned = false;
       c.status.grapplingPin = false;
+      c.status.webbed = 0;
       // Weapons on the ground are gathered up after the fight.
       if (c.status.dropped.length || c.wield == null) {
         c.status.dropped = [];

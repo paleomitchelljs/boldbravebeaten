@@ -129,6 +129,7 @@
     //                for `rounds` rounds; a bandage doesn't stop it
     //   rust       — no damage; corrodes metal armor (or a blocking metal shield) by `rust` durability
     //   shieldCrush — every blow caught on a shield counts as a power blow (can break it, drives through)
+    //   web        — no damage; sticks a layer of web on the target (CONFIG.web): every action costs more
     wolfBite: {
       name: 'Bite', hands: 1, weight: 'light', reach: 1, reachName: 'close', closeOK: true, natural: true, grappleUsable: true,
       faces: { point: [4, 0, 1] }, motions: ['thrust'], rarity: 'common', trait: { knockdown: { bonus: 2, margin: 3 } },
@@ -140,6 +141,10 @@
     spiderBite: {
       name: 'Venomous bite', hands: 1, weight: 'very light', reach: 1, reachName: 'close', closeOK: true, natural: true, grappleUsable: true,
       faces: { point: [3, 0, 0] }, motions: ['thrust'], rarity: 'common', trait: { venom: { con: 2, rounds: 3 } },
+    },
+    webSpinner: {
+      name: 'Spit web', hands: 1, weight: 'very light', reach: 0, reachName: 'range 2–5', natural: true, ranged: { min: 2, max: 5, long: 5 },
+      faces: { arrow: [0, 0, 0] }, motions: ['shoot'], rarity: 'common', shootAP: 2, shootStamina: 1, trait: { web: 1 },
     },
     antennae: {
       name: 'Rusting antennae', hands: 1, weight: 'very light', reach: 2, reachName: 'reach 2', closeOK: true, natural: true,
@@ -211,6 +216,7 @@
     throw: { name: 'Throw', ap: 3, stamina: 5 },
     break: { name: 'Break grapple', ap: 2, stamina: 3 },
     release: { name: 'Release hold', ap: 1, stamina: 0 },
+    tearFree: { name: 'Tear free of webs', ap: 2, stamina: 1 },
     bandage: { name: 'Bandage', ap: 3, stamina: 0 },
     move: { name: 'Move', ap: 1, stamina: 0 },
     windUp: { name: 'Wind up', ap: 2, stamina: 1 }, // costs set in CONFIG.windUp
