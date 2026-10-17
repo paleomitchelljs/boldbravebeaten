@@ -191,6 +191,18 @@
     archery: {
       strBonus: false, // STR does not add to arrow damage
       parry: false, // arrows can be blocked or dodged, not parried
+      // PROVISIONAL (history, the user's call): armor stops arrows better than it stops a thrust
+      // at arm's length. Layered textile catches a shaft (padded most); mail is worn over padding.
+      // Extra piercing mitigation against arrows only, by armor type.
+      vsArrows: { padded: 2, leather: 1, mail: 1, scale: 1, plate: 0 },
+      // Arrowheads. Broadheads cut terrible wounds (bleed × bleed) but a broad blade is stopped by
+      // metal armor (+metalMit); bodkins are narrow armor-piercers that make a smaller wound
+      // (damage on the main type) but slip through mail and plate (metalMit < 0).
+      heads: {
+        broadhead: { name: 'broadhead', ammo: 'arrows', damage: 0, metalMit: 1, bleed: 1.5 },
+        bodkin: { name: 'bodkin', ammo: 'bodkins', damage: -1, metalMit: -2, bleed: 1 },
+      },
+      metalArmor: ['mail', 'scale', 'plate'],
     },
 
     // ---- Magic (PROVISIONAL stub so casters can be tested) ---------------
@@ -323,6 +335,7 @@
     'Shields vs power attacks: a blocked power swing breaks the shield outright if the weapon is at least as hard as the shield (wood < iron < steel) unless the shield is masterwork, and force above the shield\'s break threshold drives through as blunt damage. Every block wears a shield twice as fast as before.',
     'Spear (not in the catalog): point 6/0/0, thrusting 2–4, one hand.',
     'Bows (not in the design docs): shortbow arrow 5 P, range 2–12, 3 AP, single action; longbow 7 P, range 2–16, drawn one round and loosed the next; −2 damage at long range; arrows can be blocked or dodged, not parried; no STR bonus; one arrow per shot.',
+    'Arrows and armor (history): armor catches arrows better than a thrust. Extra piercing protection against arrows: padded +2, leather, mail and scale +1, plate 0. Two arrowheads: broadheads cut terrible wounds (bleed ×1.5) but metal armor (mail, scale, plate) stops them better (+1); bodkins do 1 less damage but slip through metal armor (−2 to its protection). A longbow hit, expected CON (broadhead / bodkin): unarmored 7 / 6, padded 2 / 1.5, mail 2 / 3, scale 1.5 / 2.5, plate 0.4 / 0.8.',
     'Magic (stub): verbs Attack (range 1–2, magnitude 4, cost 2) and Launch (2–12, 3, 3); nouns Fire and Force (cost 1); modifier Strong (+3, cost 2, must be wound up). Spell points = INT + 3 × Casting rank, limited by stamina. Fire: armor stops half its blunt mitigation, every 2 points left cost 1 CON, the rest stamina. Force: blunt with a knockdown check. Backlash: d10 + Control below the cost loses 2 stamina per point short.',
     'Magic feat tiers count feats across all four magic sub-trees (otherwise Casting and Fire Affinity can never pass rank I).',
     'Plate: +1 stamina per action and −3 regeneration (Specifics: +2 and −4), tuned in the arena.',

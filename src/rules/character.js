@@ -34,7 +34,7 @@
       weapons: [],
       wield: null,
       sidearm: null,
-      inventory: { bandages: 2, gold: 10, arrows: 0, items: [] },
+      inventory: { bandages: 2, gold: 10, arrows: 0, bodkins: 0, items: [] },
       nouns: [], // magic nouns learned in the world (Fire, Force…)
       spSpent: 0, // spell points used since the last rest
       status: freshStatus(),
@@ -72,7 +72,7 @@
     c.feats = c.feats || {};
     c.weapons = c.weapons || [];
     c.bleeds = c.bleeds || [];
-    c.inventory = Object.assign({ bandages: 0, gold: 0, arrows: 0, items: [] }, c.inventory || {});
+    c.inventory = Object.assign({ bandages: 0, gold: 0, arrows: 0, bodkins: 0, items: [] }, c.inventory || {});
     c.nouns = c.nouns || [];
     if (c.spSpent == null) c.spSpent = 0;
     if (c.level == null) c.level = 1;
@@ -383,7 +383,12 @@
           for (const face of m.faces) {
             if (!def.faces[face]) continue;
             if (face === 'hilt' && !(def.sword && rank(c, 'murder_stroke'))) continue;
-            opts.push(strikeOption(c, w, face, motion));
+            if (motion === 'shoot') {
+              // One option per arrowhead carried (broadheads if none at all).
+              const heads = Object.values(CONFIG.archery.heads);
+              const carried = heads.filter((hd) => (c.inventory && c.inventory[hd.ammo]) > 0);
+              for (const hd of carried.length ? carried : heads.slice(0, 1)) opts.push(arrowOption(c, strikeOption(c, w, face, motion), hd));
+            } else opts.push(strikeOption(c, w, face, motion));
           }
         }
         if (def.sword && rank(c, 'half_swording') && !grappling) {
@@ -473,6 +478,22 @@
       windUp, damage: weaponDamage(c, w, face, motion),
       label: `${m.name} (${face})`,
     };
+  }
+
+  // A shot with a particular arrowhead.
+  function arrowOption(c, o, hd) {
+    o.arrowHead = hd.name;
+    o.ammo = hd.ammo;
+    o.damage = o.damage.slice();
+    const i = mainIndex(o.damage);
+    o.damage[i] = Math.max(0, o.damage[i] + hd.damage);
+    o.label = `Shoot (${hd.name})`;
+    return o;
+  }
+
+  // Arrows left for this option (broadheads are 'arrows', bodkins 'bodkins').
+  function ammoLeft(c, o) {
+    return (c.inventory && c.inventory[o.ammo || 'arrows']) || 0;
   }
 
   function unarmedOption(c, kind) {
@@ -607,7 +628,7 @@
     rank, featCount, featBudget, treeCount, tierCount, tierName, canTakeFeat, canRemoveFeat, addFeat, removeFeat, reqText, roman,
     conditioning, attr, attrMax, combatAttr, armorInfo, shieldInfo, shieldReady, wieldedWeapon,
     maxStamina, regen, fatiguePenalty, apPool, apScale, moveCost, squaresPerAP, handsBusy, inRange, optionKey, needsWindUp, strOffset, staminaCost, effectiveWeight, isLightWeapon,
-    strBonus, weaponDamage, mainIndex, attackOptions, actionCost,
+    strBonus, weaponDamage, mainIndex, attackOptions, actionCost, ammoLeft,
     damageAttr, healAttr, totalDamage, updateCondition, isActive, bleedPerRound,
     TREES, ARMOR,
   };

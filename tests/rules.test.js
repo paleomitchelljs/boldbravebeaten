@@ -491,7 +491,7 @@ test('arrows: range 2+, use ammunition, cannot be parried', async () => {
   assert.ok(enc.log.some((l) => /hits Foe/.test(l.text)), 'the arrow lands');
   assert.ok(!enc.decls.find((d) => d.type === 'parry').used, 'the parry was not spent on it');
   assert.strictEqual(a.inventory.arrows, 0);
-  assert.strictEqual(Combat.legalActions(enc, chars, a.id).attacks.find((o) => o.motion === 'shoot').why, 'No arrows');
+  assert.strictEqual(Combat.legalActions(enc, chars, a.id).attacks.find((o) => o.motion === 'shoot').why, 'No broadheads');
 });
 
 test('magic: words make spells; spell points, fire through armor, backlash', async () => {
@@ -732,4 +732,25 @@ test('grappling: guards never meet a grapple; pinned armor is pierced', async ()
   const held = Combat.computeHit(g.a, g.t, stab, { distance: 1 });
   assert.ok(pinned.pass > held.pass, 'a pin opens the armor');
   assert.ok(Combat.legalActions(g.enc, g.chars, g.t.id).defenses.length > 0);
+});
+
+test('arrows and armor: textile catches arrows; bodkins for metal, broadheads for flesh', () => {
+  const a = armed('Archer', 'longbow');
+  a.inventory.arrows = 3; a.inventory.bodkins = 3;
+  const shots = C.attackOptions(a).filter((o) => o.motion === 'shoot');
+  const broad = shots.find((o) => o.arrowHead === 'broadhead');
+  const bodkin = shots.find((o) => o.arrowHead === 'bodkin');
+  assert.ok(broad && bodkin, 'one shot per arrowhead carried');
+  const target = (armor) => { const t = fighter('T'); if (armor) t.armor = Items.makeArmor(armor, 'full', 'standard'); return t; };
+  const con = (o, armor) => Combat.computeHit(a, target(armor), o, { distance: 4 }).toCON;
+  assert.ok(con(broad, null) > con(bodkin, null), 'broadheads hit flesh harder');
+  assert.ok(con(bodkin, 'mail') > con(broad, 'mail'), 'bodkins go through mail better');
+  assert.ok(con(bodkin, 'plate') > con(broad, 'plate'));
+  // Padded stops an arrow better than the same piercing from a thrust.
+  const spear = opt(armed('S', 'spear'), (o) => o.motion === 'thrust');
+  const pad = target('padded');
+  assert.ok(Combat.computeHit(a, pad, broad, { distance: 4 }).mitigated.P > Combat.computeHit(a, pad, spear, { distance: 2 }).mitigated.P);
+  // Out of bodkins: only broadheads are offered.
+  a.inventory.bodkins = 0;
+  assert.deepStrictEqual(C.attackOptions(a).filter((o) => o.motion === 'shoot').map((o) => o.arrowHead), ['broadhead']);
 });

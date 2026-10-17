@@ -6,7 +6,9 @@ the arena results and the queued work.
 ## Working rules
 
 - **Rules source.** The rules come from three Claude Docs: Philosophy, Mechanics
-  Outline and Specifics (links are in HANDOFF.md). Departures from them go in
+  Outline and Specifics (links are in HANDOFF.md). The Specifics doc (written in an earlier
+  session) is fully open to pushback, revision and review, including on historical grounds; the
+  Philosophy and Mechanics Outline are open too, but less so. Departures from them go in
   `src/rules/config.js`:
   - mark each one TUNED or PROVISIONAL;
   - list it in `CONFIG.provisional`;

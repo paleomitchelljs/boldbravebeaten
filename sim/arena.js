@@ -65,7 +65,7 @@ const STRATEGY = {
   },
   archery: {
     label: 'Archery', attrs: { STR: 5, CON: 5, DEX: 7, SPD: 6, INT: 4, WIS: 4, CHA: 4 },
-    weapon: 'longbow', shield: null, arrows: 30,
+    weapon: 'longbow', shield: null, arrows: 20, bodkins: 10,
     // There are no archery feats in the design docs; archers take mobility and evasion.
     feats: ['fleet_foot', 'dodge_training', 'light_on_your_feet', 'fleet_foot', 'quickness', 'dodge_training', 'toughness'],
   },
@@ -87,6 +87,7 @@ function makeCombatant(armorKey, stratKey, side) {
   c.sidearm = d.id;
   if (!S.weapon) c.wield = d.id;
   c.inventory.arrows = S.arrows || 0;
+  c.inventory.bodkins = S.bodkins || 0;
   c.inventory.bandages = 1;
   c.nouns = (S.nouns || []).slice();
   L.Enemies.chooseFeats(c, A.feats.concat(S.feats), L.Enemies.makeRng(1));

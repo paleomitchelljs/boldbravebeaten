@@ -94,7 +94,7 @@
       for (const o of C.attackOptions(foe)) {
         if (!C.inRange(o, d) || o.ap > Combat.passLeft(enc, f) + Combat.passCap()) continue;
         if (o.windUp && !(foe.status.windUp && foe.status.windUp.key === C.optionKey(o))) continue;
-        if (o.ranged && o.weaponId && (foe.inventory.arrows || 0) <= 0) continue;
+        if (o.ranged && o.weaponId && C.ammoLeft(foe, o) <= 0) continue;
         best = Math.max(best, hitValue(foe, c, o, d));
       }
       if (best > 0) threats.push({ threat: best, motion: 'swing', prob: 0.6, against: null });
@@ -146,7 +146,7 @@
     let best = 0;
     for (const o of C.attackOptions(foe)) {
       if (o.windUp && !(foe.status.windUp && foe.status.windUp.key === C.optionKey(o))) continue;
-      if (o.ranged && o.weaponId && (foe.inventory.arrows || 0) <= 0) continue;
+      if (o.ranged && o.weaponId && C.ammoLeft(foe, o) <= 0) continue;
       if (o.spell && G.Magic && o.spCost > G.Magic.availableSP(foe)) continue;
       best = Math.max(best, rate(foe, me, o, d));
     }
@@ -319,7 +319,7 @@
     if (swap && !winding) {
       const nowOpts = planBase.filter((o) => !o.unarmed);
       const altId = swap.type === 'drawSidearm' ? c.sidearm : c.weapons.find((w) => w.id !== c.sidearm).id;
-      const alt = optionsWith(c, altId).filter((o) => !(o.ranged && (c.inventory.arrows || 0) <= 0));
+      const alt = optionsWith(c, altId).filter((o) => !(o.ranged && C.ammoLeft(c, o) <= 0));
       const threatHere = RISK * foeRate(target, c, near.d);
       const nowR = bestRate(c, target, nowOpts, near.d) - threatHere;
       const altR = bestRate(c, target, alt, near.d) - threatHere;

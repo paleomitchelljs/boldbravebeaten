@@ -430,7 +430,7 @@
         c.weapons.length > 1 ? h('div', null, h('b', null, 'Also carrying: '), c.weapons.filter((x) => x !== w).map(Items.itemName).join(', ')) : null,
         h('div', null, h('b', null, 'Armor: '), c.armor ? `${Items.itemName(c.armor)} · durability ${ai.durability}/${ai.maxDurability}` : 'none'),
         c.shield ? h('div', null, h('b', null, 'Shield: '), `${Items.itemName(c.shield)} · durability ${c.shield.durability}`) : null,
-        c.inventory.arrows ? h('div', null, h('b', null, 'Arrows: '), c.inventory.arrows) : null,
+        c.inventory.arrows || c.inventory.bodkins ? h('div', null, h('b', null, 'Arrows: '), `${c.inventory.arrows || 0} broadhead, ${c.inventory.bodkins || 0} bodkin`) : null,
         h('div', null, h('b', null, 'Bandages: '), c.inventory.bandages)),
       feats.length ? h('details', { class: 'feat-tree' }, h('summary', null, h('span', null, 'Feats'), h('span', { class: 'muted' }, feats.length)), h('p', { class: 'small', style: { padding: '8px 12px' } }, feats.join(', '))) : null,
       h('div', { class: 'row spread' },

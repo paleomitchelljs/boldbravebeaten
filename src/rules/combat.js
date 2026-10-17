@@ -437,7 +437,7 @@
       if (!w || w.key !== key) return 'Wind up first';
       if (w.round >= enc.round) return 'Release next round';
     }
-    if (opt.ranged && opt.weaponId && (c.inventory.arrows || 0) <= 0) return 'No arrows';
+    if (opt.ranged && opt.weaponId && C.ammoLeft(c, opt) <= 0) return opt.arrowHead ? `No ${opt.arrowHead}s` : 'No arrows';
     if (opt.spell) return spellShort(c, opt, spPlanned);
     return null;
   }
@@ -587,6 +587,14 @@
     if (armored) {
       res.armored = true;
       const mit = Object.assign({}, ai.effMit);
+      // Arrows: armor (textile most) catches a shaft better than a thrust; broadheads are stopped
+      // by metal, bodkins slip through it.
+      if (option.arrowHead) {
+        const A = CONFIG.archery;
+        const hd = A.heads[option.arrowHead];
+        const type = ai.type;
+        mit.P = Math.max(0, mit.P + ((A.vsArrows || {})[type] || 0) + ((A.metalArmor || []).includes(type) ? hd.metalMit : 0));
+      }
       let ignoreB = 0;
       if (weapon && weapon.bluntMitigationIgnore) ignoreB += weapon.bluntMitigationIgnore;
       if (C.rank(attacker, 'crushing_blow')) ignoreB += 2;
@@ -694,7 +702,9 @@
       }
     }
     if (wound > 0 && !h.noBleed) {
-      target.bleeds.push({ remaining: wound, rounds: CONFIG.bleedRounds });
+      // A broadhead's wide cut bleeds worse.
+      const hd = option.arrowHead && CONFIG.archery.heads[option.arrowHead];
+      target.bleeds.push({ remaining: Math.round(wound * (hd ? hd.bleed : 1)), rounds: CONFIG.bleedRounds });
       parts.push('bleeding');
     }
     if (!parts.length) parts.push('no effect');
@@ -1052,11 +1062,11 @@
         a.status.windUp = null;
       }
       if (d.type === 'strike' && d.option.ranged && d.option.weaponId) {
-        if ((a.inventory.arrows || 0) <= 0) {
-          log(enc, `${a.name} is out of arrows.`, 'fizzle');
+        if (C.ammoLeft(a, d.option) <= 0) {
+          log(enc, `${a.name} is out of ${d.option.arrowHead ? d.option.arrowHead + 's' : 'arrows'}.`, 'fizzle');
           return;
         }
-        a.inventory.arrows -= 1;
+        a.inventory[d.option.ammo || 'arrows'] -= 1;
       }
       if (!payStamina(enc, a, d.stamina)) return;
       // Grappling is a directly opposed roll; guards never meet it.
