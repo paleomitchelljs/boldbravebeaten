@@ -102,6 +102,7 @@ const EVENTS = {
   closeHits: /^'s .*\(up close: half damage\)/, tooClose: /^'s .* is too close\./, outOfReach: /^'s .* is out of reach\./,
   exhausted: /^ is too exhausted /, blocks: /^ blocks /, parries: /^ parries /, dodges: /^ dodges /,
   hits: /^'s .* hits /, sidearmDraws: /^ draws Dagger/, readiesMain: /^ readies /,
+  shieldsBroken: /^ blocks .*(BREAKS it|SHATTERS|is destroyed)/, shoves: /^ shoves /, shoveFails: /^'s shove fails/,
 };
 
 function countEvents(log, nameA, nameB) {

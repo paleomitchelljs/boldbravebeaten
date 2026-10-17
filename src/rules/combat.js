@@ -19,7 +19,7 @@
   const C = G.Character;
   const Items = G.Items;
 
-  const ATTACK_TYPES = ['strike', 'trip', 'disarm', 'grapple', 'takedown'];
+  const ATTACK_TYPES = ['strike', 'trip', 'disarm', 'grapple', 'takedown', 'shove'];
   const DEFENSE_TYPES = ['block', 'parry', 'dodge'];
 
   // ---- Encounter setup ---------------------------------------------------
@@ -200,7 +200,7 @@
 
     const reach = CONFIG.range.maneuverMax;
     const grappled = isGrappled(c);
-    for (const kind of ['trip', 'disarm', 'grapple', 'takedown']) {
+    for (const kind of ['shove', 'trip', 'disarm', 'grapple', 'takedown']) {
       if (kind === 'takedown' && !C.rank(c, 'takedown')) continue;
       if (c.status.prone || c.status.grappling) continue;
       const cost = C.actionCost(c, kind);
@@ -232,7 +232,7 @@
     const primary = primaryWeaponId(c);
     if (primary && c.wield !== primary && c.status.dropped !== primary && !declared('readyPrimary') && !declared('drawSidearm')) addOther('readyPrimary');
     // Wind-ups for attacks that need one (power swings, Strong spells).
-    if (!c.status.windUp && !declared('windUp') && !c.status.prone && !grappled) {
+    if (canWindUp(enc, c) && !c.status.prone && !grappled) {
       const seen = {};
       for (const opt of planned) {
         if (!opt.windUp) continue;
@@ -249,6 +249,16 @@
       if (patients.length) addOther('bandage', { targets: patients.map((o) => ({ id: o, inReach: true })) });
     }
     return out;
+  }
+
+  // A new wind-up needs no wind-up held, or (with rewindAfterRelease) the held one
+  // already released this round. Only one wind-up may be declared per round.
+  function canWindUp(enc, c) {
+    if (enc.decls.some((d) => d.actor === c.id && d.type === 'windUp')) return false;
+    if (!c.status.windUp) return true;
+    if (!CONFIG.windUp.rewindAfterRelease) return false;
+    const key = c.status.windUp.key;
+    return enc.decls.some((d) => d.actor === c.id && d.type === 'strike' && d.option.windUp && C.optionKey(d.option) === key);
   }
 
   function primaryWeaponId(c) {
@@ -325,7 +335,7 @@
       const key = C.optionKey(decl.option);
       const opt = plannedAttackOptions(enc, c).find((o) => C.optionKey(o) === key && o.windUp);
       if (!opt) return 'Nothing to wind up';
-      if (c.status.windUp || enc.decls.some((d) => d.actor === id && d.type === 'windUp')) return 'Already winding up';
+      if (!canWindUp(enc, c)) return 'Already winding up';
       decl.option = opt;
       ({ ap, stamina } = C.actionCost(c, 'windUp', { option: opt }));
     } else if (decl.type === 'move') {
@@ -338,7 +348,7 @@
     } else {
       if (!ACTIONS[decl.type]) return 'Unknown action';
       ({ ap, stamina } = C.actionCost(c, decl.type));
-      if (['trip', 'disarm', 'grapple', 'takedown', 'bandage'].includes(decl.type) && !decl.target) return 'Choose a target';
+      if (['trip', 'disarm', 'grapple', 'takedown', 'shove', 'bandage'].includes(decl.type) && !decl.target) return 'Choose a target';
     }
     if (ap > enc.ap[id]) return 'Not enough AP';
     decl.ap = ap;
@@ -575,6 +585,12 @@
 
   function knockdownOdds(atk, tgt, featBonus, margin) {
     return opposedOdds(Math.floor(C.attr(atk, 'STR') / 2) + featBonus, stability(tgt), margin);
+  }
+
+  function shoveOdds(a, t) {
+    const w = C.wieldedWeapon(a);
+    const aB = Math.floor(C.attr(a, 'STR') / 2) + (w && WEAPONS[w.type].hands === 2 ? CONFIG.shove.twoHandBonus : 0);
+    return opposedOdds(aB, stability(t), 1);
   }
 
   async function knockdownCheck(roller, atk, tgt, featBonus, label) {
@@ -867,21 +883,39 @@
     const ss = Items.shieldStats(s);
     const v = d.type === 'strike' ? d.option.damage : [0, 0, 0];
     const W = CONFIG.shieldWear;
-    const wear = Math.round(v[0] * W.P + v[1] * W.S + v[2] * W.B);
+    const wear = Math.round((v[0] * W.P + v[1] * W.S + v[2] * W.B) * (CONFIG.shieldWearScale || 1));
     s.durability = Math.max(0, s.durability - wear);
-    let msg = `${t.name} blocks ${a.name}'s ${d.type === 'strike' ? d.option.label : d.type} with the shield (durability −${wear})`;
+    const label = d.type === 'strike' ? d.option.label : d.type;
+    let msg = `${t.name} blocks ${a.name}'s ${label} with the shield (durability −${wear})`;
     let force = v[0] + v[1] + v[2];
     if (C.rank(a, 'shield_breaker')) force *= 2;
-    if (force > ss.threshold) {
+    const power = d.type === 'strike' && (CONFIG.powerMotions || []).includes(d.option.motion);
+    const weapon = d.type === 'strike' && d.option.weaponType ? WEAPONS[d.option.weaponType] : null;
+    const H = CONFIG.materialHardness || {};
+    const powerful = (CONFIG.powerfulShieldQualities || []).includes(s.quality);
+    let broken = false;
+    if (power && weapon && weapon.material && !powerful && (H[weapon.material] || 0) >= (H[s.material] || 0)) {
+      s.durability = 0;
+      broken = true;
+      msg += ' — the power blow BREAKS it';
+    } else if (force > ss.threshold) {
       const chance = Math.min(100, (force - ss.threshold) * CONFIG.shieldBreakPerPoint);
       const r = await rollDie(roller, a.id, 100, `${a.name}: Shield break`, `d100 ≤ ${chance} breaks it (force ${force} vs threshold ${ss.threshold})`);
       if (r <= chance) {
         s.durability = 0;
+        broken = true;
         msg += ' — the shield SHATTERS';
       }
     }
-    if (s.durability <= 0 && !msg.includes('SHATTERS')) msg += ' — the shield is destroyed';
+    if (s.durability <= 0 && !broken) msg += ' — the shield is destroyed';
     log(enc, msg + '.', 'defend');
+    // A blocked power blow still drives through: force above the threshold lands as blunt.
+    if (power && CONFIG.powerPushThrough && force > ss.threshold && C.isActive(t)) {
+      const excess = Math.round((force - ss.threshold) / (C.rank(a, 'shield_breaker') ? 2 : 1));
+      const push = { kind: 'strike', motion: 'swing', weaponType: d.option.weaponType, damage: [0, 0, excess], label: 'push-through' };
+      const r = await applyHit(enc, chars, a, t, push, roller, {});
+      log(enc, `The blow drives through the shield into ${t.name}: ${r.text}`, 'hit');
+    }
   }
 
   async function riposte(enc, chars, t, a, roller, posAtStart) {
@@ -898,6 +932,30 @@
     const a = chars[d.actor];
     const t = chars[d.target];
     const M = CONFIG.maneuver;
+    if (d.type === 'shove') {
+      const S = CONFIG.shove;
+      const w = C.wieldedWeapon(a);
+      const aB = Math.floor(C.attr(a, 'STR') / 2) + (w && WEAPONS[w.type].hands === 2 ? S.twoHandBonus : 0);
+      const o = await opposed(roller, a, aB, 'Shove', t, stability(t), 'Hold ground');
+      if (o.margin <= 0) return log(enc, `${a.name}'s shove fails (${o.a} vs ${o.b}).`, 'fail');
+      const from = enc.pos[a.id], at = enc.pos[t.id];
+      const dx = Math.sign(at.x - from.x), dy = Math.sign(at.y - from.y);
+      const want = o.margin >= S.farMargin ? 2 : 1;
+      let moved = 0;
+      for (let k = 0; k < want; k++) {
+        const nx = enc.pos[t.id].x + dx, ny = enc.pos[t.id].y + dy;
+        const free = nx >= 0 && ny >= 0 && nx < enc.grid.w && ny < enc.grid.h && !enc.ids.some((id) => id !== t.id && C.isActive(chars[id]) && enc.pos[id].x === nx && enc.pos[id].y === ny);
+        if (!free) break;
+        enc.pos[t.id] = { x: nx, y: ny };
+        moved++;
+      }
+      if (moved) log(enc, `${a.name} shoves ${t.name} back ${moved} square${moved > 1 ? 's' : ''} (${o.a} vs ${o.b}).`, 'hit');
+      else if (o.margin >= S.farMargin) {
+        knockDown(enc, t);
+        log(enc, `${a.name} shoves ${t.name} against the obstacle and down (${o.a} vs ${o.b}).`, 'hit');
+      } else log(enc, `${a.name} shoves ${t.name}, but there's nowhere to go (${o.a} vs ${o.b}).`, 'fail');
+      return;
+    }
     if (d.type === 'trip') {
       const bonus = (C.rank(a, 'trip') ? M.tripFeatBonus : 0) + (hookWeapon(a) ? 2 : 0);
       const k = await knockdownCheck(roller, a, t, bonus, 'Trip');
@@ -1004,6 +1062,6 @@
   G.Combat = {
     ATTACK_TYPES, DEFENSE_TYPES,
     createEncounter, autoPlace, startRound, currentActor, legalActions, declare, concede, describeDecl,
-    projectedPos, posAtPass, dist, defenseOdds, knockdownOdds, opposedOdds, defenseUnavailable, computeHit, applyHit, resolveRound, endRound, cleanup, grappleStrength,
+    projectedPos, posAtPass, dist, defenseOdds, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolveRound, endRound, cleanup, grappleStrength,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

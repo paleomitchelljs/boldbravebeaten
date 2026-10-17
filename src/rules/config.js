@@ -99,10 +99,20 @@
 
     // ---- Range (PROVISIONAL; weapon reach data lives in data.js) ----------
     range: {
-      closeMult: 0.5, // damage multiplier for a penalized attack at range 1 ("up close")
+      // Attacks with weapons that aren't closeOK, at range 1 ("inside the weapon's reach"):
+      //   'cannot' — the attack can't be made; shove, grapple, draw a dagger or use a close technique
+      //   'half'   — the attack does half damage (round-2 rule)
+      closeRule: 'cannot',
+      closeMult: 0.5,
       longRangePenalty: 2, // bows: −2 damage beyond their long range
-      maneuverMax: 1, // trips, disarms, grapples, kicks and punches need clinch distance
+      maneuverMax: 1, // trips, disarms, grapples, shoves, kicks and punches need clinch distance
     },
+
+    // ---- Shove (PROVISIONAL) ----------------------------------------------
+    // Opposed d10 + ⌊STR/2⌋ (+2 two-handed weapon) vs d10 + footing. A win pushes the
+    // target straight back (1 square, 2 on a margin of 5+); a blocked push on a margin of
+    // 5+ knocks them down instead.
+    shove: { twoHandBonus: 2, farMargin: 5 },
 
     // ---- Wind-up (PROVISIONAL) --------------------------------------------
     // Motions that must be wound up in an earlier round before they can be released.
@@ -115,6 +125,9 @@
       stamina: 1,
       exposed: ['block', 'parry'],
       spells: true, // spells using the Strong modifier must be gathered the same way
+      // After releasing in a round you may wind up again that round (a steady archer looses
+      // and redraws; a swinger chains blows). Either way you stay exposed.
+      rewindAfterRelease: true,
     },
 
     // ---- Archery (PROVISIONAL; nothing in the design docs yet) -----------
@@ -163,6 +176,16 @@
     },
 
     // ---- Shields ----------------------------------------------------------
+    // PROVISIONAL: wear per block is multiplied by this (fewer hits before a shield fails).
+    shieldWearScale: 2,
+    // PROVISIONAL: a blocked power attack pushes through: force above the shield's break
+    // threshold reaches the bearer as blunt damage.
+    powerMotions: ['power'],
+    powerPushThrough: true,
+    // PROVISIONAL: a blocked power attack breaks the shield outright when the weapon is at
+    // least as hard as the shield, unless the shield is of a powerful quality.
+    materialHardness: { wood: 1, hide: 1, iron: 2, steel: 3 },
+    powerfulShieldQualities: ['masterwork'],
     // Specifics: 10% break chance per point over threshold
     shieldBreakPerPoint: 10,
     // PROVISIONAL: shield wear from a blocked hit = 0.5×P + 0.5×S + 1×B ("blunt wears it most")
@@ -184,6 +207,11 @@
     // keeping at least durabilityMitigationFloor of its value until the armor is destroyed.
     // TUNED (sim): full wear let three harmless kicks strip a point of plate mitigation.
     armorWearScale: 0.33,
+    // Per-armor overrides of the Specifics armor table, e.g. { plate: { stamina: 1, regen: 3 } }.
+    // TUNED (arena, round 3): plate +1 stamina per action (was +2) and −3 regen (was −4).
+    // Plate fighters were losing by exhaustion (0.6 collapses a fight); this brings heavy
+    // armor from worst to about par in the open and best in close quarters.
+    armorAdjust: { plate: { stamina: 1, regen: 3 } },
     durabilityMitigationFloor: 0.75,
 
     // ---- Maneuvers: all PROVISIONAL (Outline: chances Open) ---------------
@@ -228,12 +256,15 @@
     'Piercing through armor: each leftover point rolls a d10 and reaches CON on ≤ pass-through × 10 (plate 2, other full armor 5). Chosen by simulation over rounding.',
     'Armor wear per hit is a third of (blunt + converted slashing); armor keeps at least 75% of its mitigation until destroyed.',
     'Block target numbers by shield: buckler 5, round 4, heater 3, tower 2 (d10 + Shield Training).',
-    'Range: a square is about a pace (1 = clinch, 2 = sword distance). Swings reach 1 to the weapon\'s reach; thrusts reach farther on some weapons (rapier +1, spear +2) and spears cannot thrust at 1. Most attacks do half damage at 1; daggers, half-swording and murder strokes do not. Movement covers twice the Specifics squares.',
-    'Wind-up: a power swing (and a Strong spell) is wound up in one round (2 AP) and released the next (the rest of the cost). While wound up you cannot block or parry; the wind-up is lost if you are knocked down, grappled, disarmed or drop, or if you don\'t release it the next round.',
-    'Spear (not in the catalog): point 6/0/0 thrusting 2–4, shaft 0/0/3 swinging 1–2, one hand.',
-    'Bows (not in the design docs): shortbow arrow 5 P, range 2–12, 3 AP; longbow 7 P, range 2–16, 4 AP; −2 damage at long range; arrows can be blocked or dodged, not parried; no STR bonus; one arrow per shot.',
+    'Range: a square is about a pace (1 = clinch, 2 = sword distance). Swings reach 1 to the weapon\'s reach; thrusts reach farther on some weapons (rapier +1, spear +2). Inside a long weapon\'s reach (range 1) its attacks can\'t be made at all: shove, grapple, draw a dagger, or use half-swording or the murder stroke. Daggers, clubs, maces and hammers work at 1. Movement covers twice the Specifics squares.',
+    'Shove (2 AP, range 1): opposed d10 + ⌊STR/2⌋ (+2 with a two-handed weapon) vs d10 + footing. A win pushes the target back 1 square, 2 on a margin of 5+; if they can\'t move, a margin of 5+ knocks them down.',
+    'Wind-up: a power swing, a longbow shot and a Strong spell are wound up (drawn) in one round (2 AP) and released the next for the rest of the cost. After releasing you may wind up again in the same round. While wound up you cannot block or parry; the wind-up is lost if you are knocked down, grappled, disarmed or drop, or if you don\'t release it the next round.',
+    'Shields vs power attacks: a blocked power swing breaks the shield outright if the weapon is at least as hard as the shield (wood < iron < steel) unless the shield is masterwork, and force above the shield\'s break threshold drives through as blunt damage. Every block wears a shield twice as fast as before.',
+    'Spear (not in the catalog): point 6/0/0, thrusting 2–4, one hand.',
+    'Bows (not in the design docs): shortbow arrow 5 P, range 2–12, 3 AP, single action; longbow 7 P, range 2–16, drawn one round and loosed the next; −2 damage at long range; arrows can be blocked or dodged, not parried; no STR bonus; one arrow per shot.',
     'Magic (stub): verbs Attack (range 1–2, magnitude 4, cost 2) and Launch (2–12, 3, 3); nouns Fire and Force (cost 1); modifier Strong (+3, cost 2, must be wound up). Spell points = INT + 3 × Casting rank, limited by stamina. Fire: armor stops half its blunt mitigation, every 2 points left cost 1 CON, the rest stamina. Force: blunt with a knockdown check. Backlash: d10 + Control below the cost loses 2 stamina per point short.',
     'Magic feat tiers count feats across all four magic sub-trees (otherwise Casting and Fire Affinity can never pass rank I).',
+    'Plate: +1 stamina per action and −3 regeneration (Specifics: +2 and −4), tuned in the arena.',
     'Initiative: d10 + effective SPD.',
     'Defense checks: d10 + bonuses vs. target number. Parry TN 6 (+Parry Training, +⌊(DEX−5)/2⌋), dodge TN 6 (+Dodge Training, +⌊(SPD−5)/2⌋, −armor DEX penalty). Two-handed swings +1 TN, power swings +2.',
     'A successful parry or dodge negates the strike completely.',

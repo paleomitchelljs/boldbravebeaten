@@ -17,8 +17,8 @@ function roller(seed, queue) {
 // Run fn with the numbers exactly as Specifics writes them (before simulation tuning).
 function asWritten(fn) {
   const C0 = B.CONFIG;
-  const saved = { apScale: C0.apScale, staminaScale: C0.staminaScale, pierceMode: C0.pierceMode, passThroughByArmor: C0.passThroughByArmor, moveScale: C0.moveScale };
-  Object.assign(C0, { apScale: 1, staminaScale: 1, pierceMode: 'floor', passThroughByArmor: null, moveScale: 1 });
+  const saved = { apScale: C0.apScale, staminaScale: C0.staminaScale, pierceMode: C0.pierceMode, passThroughByArmor: C0.passThroughByArmor, moveScale: C0.moveScale, armorAdjust: C0.armorAdjust };
+  Object.assign(C0, { apScale: 1, staminaScale: 1, pierceMode: 'floor', passThroughByArmor: null, moveScale: 1, armorAdjust: {} });
   try { return fn(); } finally { Object.assign(C0, saved); }
 }
 
@@ -274,26 +274,36 @@ function armed(name, type, opts) {
 
 const opt = (c, pred) => C.attackOptions(c).find(pred);
 
-test('range bands: spears reach far but not up close; daggers only up close', () => {
+test('range bands: inside a weapon\'s reach it cannot attack; short weapons and daggers can', () => {
   const spear = opt(armed('S', 'spear'), (o) => o.motion === 'thrust');
   assert.deepStrictEqual([spear.minRange, spear.maxRange], [2, 4]);
   assert.ok(!C.inRange(spear, 1) && C.inRange(spear, 4));
-  const shaft = opt(armed('S', 'spear'), (o) => o.face === 'shaft');
-  assert.deepStrictEqual([shaft.minRange, shaft.maxRange], [1, 2]);
   const dagger = opt(armed('D', 'dagger'), (o) => o.motion === 'thrust');
-  assert.deepStrictEqual([dagger.minRange, dagger.maxRange, dagger.closePenalty], [1, 1, false]);
+  assert.deepStrictEqual([dagger.minRange, dagger.maxRange], [1, 1]);
   const rapier = opt(armed('R', 'rapier'), (o) => o.motion === 'thrust');
-  assert.deepStrictEqual([rapier.minRange, rapier.maxRange, rapier.closePenalty], [1, 3, true]);
+  assert.deepStrictEqual([rapier.minRange, rapier.maxRange], [2, 3]);
   const swing = opt(armed('L', 'longsword'), (o) => o.motion === 'swing' && o.face === 'edge');
-  assert.deepStrictEqual([swing.maxRange, swing.closePenalty], [2, true]);
+  assert.deepStrictEqual([swing.minRange, swing.maxRange], [2, 2]);
+  const mace = opt(armed('M', 'flangedMace'), (o) => o.motion === 'swing');
+  assert.deepStrictEqual([mace.minRange, mace.maxRange], [1, 2], 'short hafted weapons work up close');
+  const half = armed('H', 'longsword');
+  half.feats.half_swording = 1;
+  assert.deepStrictEqual([opt(half, (o) => o.halfSword).minRange, opt(half, (o) => o.halfSword).maxRange], [1, 1]);
 });
 
-test('attacks penalized up close do half damage at range 1', () => {
-  const a = armed('L', 'longsword');
-  const t = fighter('T');
-  const swing = opt(a, (o) => o.motion === 'swing' && o.face === 'edge');
-  assert.strictEqual(Combat.computeHit(a, t, swing, { distance: 2 }).S, 7);
-  assert.strictEqual(Combat.computeHit(a, t, swing, { distance: 1 }).S, 3);
+test('the older half-damage-up-close rule is still available as an option', () => {
+  const saved = B.CONFIG.range.closeRule;
+  B.CONFIG.range.closeRule = 'half';
+  try {
+    const a = armed('L', 'longsword');
+    const t = fighter('T');
+    const swing = opt(a, (o) => o.motion === 'swing' && o.face === 'edge');
+    assert.strictEqual(swing.minRange, 1);
+    assert.strictEqual(Combat.computeHit(a, t, swing, { distance: 2 }).S, 7);
+    assert.strictEqual(Combat.computeHit(a, t, swing, { distance: 1 }).S, 3);
+  } finally {
+    B.CONFIG.range.closeRule = saved;
+  }
 });
 
 async function duel(a, b, seedQueue) {
@@ -409,4 +419,74 @@ test('every feat rank can eventually be taken (no tier deadlocks)', () => {
   }
   const stuck = Object.keys(F).filter((id) => C.rank(c, id) < F[id].ranks.length);
   assert.deepStrictEqual(stuck, []);
+});
+
+test('shove pushes an enemy back out to range', async () => {
+  const a = armed('Spearman', 'spear');
+  a.base.STR = 8;
+  const b = armed('Rusher', 'dagger');
+  const { enc, chars } = await duel(a, b);
+  enc.pos[b.id] = { x: 1, y: 0 };
+  const sh = Combat.legalActions(enc, chars, a.id).maneuvers.find((m) => m.type === 'shove');
+  assert.ok(sh.targets.find((t) => t.id === b.id).inReach);
+  assert.strictEqual(Combat.declare(enc, chars, { actor: a.id, type: 'shove', target: b.id }), null);
+  Combat.concede(enc, b.id);
+  Combat.concede(enc, a.id);
+  await Combat.resolveRound(enc, chars, roller(2, [9, 1])); // 13 vs 3: a margin of 5+ pushes 2 squares
+  assert.strictEqual(enc.pos[b.id].x, 3);
+});
+
+test('a longbow must be drawn a round ahead; an archer can redraw after loosing', async () => {
+  const a = armed('Archer', 'longbow');
+  a.inventory.arrows = 5;
+  const shot = opt(a, (o) => o.motion === 'shoot');
+  assert.strictEqual(shot.windUp, true);
+  assert.strictEqual(opt(armed('S', 'shortbow'), (o) => o.motion === 'shoot').windUp, false);
+  const b = armed('Foe', 'longsword');
+  b.base.CON = 12;
+  b.stamina = C.maxStamina(b);
+  const { enc, chars } = await duel(a, b);
+  enc.pos[b.id] = { x: 5, y: 0 };
+  let la = Combat.legalActions(enc, chars, a.id);
+  assert.strictEqual(la.attacks.find((o) => o.motion === 'shoot').why, 'Wind up first');
+  Combat.declare(enc, chars, { actor: a.id, type: 'windUp', option: la.other.find((o) => o.type === 'windUp').option });
+  Combat.concede(enc, b.id);
+  Combat.concede(enc, a.id);
+  await Combat.resolveRound(enc, chars, roller(2));
+  await Combat.startRound(enc, chars, roller(3, [10, 1]));
+  la = Combat.legalActions(enc, chars, a.id);
+  const loose = la.attacks.find((o) => o.motion === 'shoot');
+  assert.strictEqual(loose.why, null);
+  assert.strictEqual(Combat.declare(enc, chars, { actor: a.id, type: 'strike', option: loose, target: b.id }), null);
+  Combat.concede(enc, b.id);
+  la = Combat.legalActions(enc, chars, a.id);
+  assert.ok(la.other.find((o) => o.type === 'windUp'), 'can redraw after loosing');
+});
+
+test('a blocked power swing breaks a shield of equal or softer material and drives through', async () => {
+  const run = async (material, quality) => {
+    const a = armed('Heavy', 'greatsword');
+    a.feats.power_swing = 1;
+    a.status.windUp = null;
+    const b = armed('Shield', 'longsword');
+    b.base.CON = 12;
+    b.shield = Items.makeShield('round', material, quality);
+    b.stamina = C.maxStamina(b);
+    const { enc, chars } = await duel(a, b);
+    const power = C.attackOptions(a).find((o) => o.motion === 'power');
+    a.status.windUp = { key: C.optionKey(power), label: power.label, round: 0 };
+    assert.strictEqual(Combat.declare(enc, chars, { actor: a.id, type: 'strike', option: power, target: b.id }), null);
+    Combat.declare(enc, chars, { actor: b.id, type: 'block', answers: enc.decls[0].n });
+    Combat.concede(enc, a.id);
+    Combat.concede(enc, b.id);
+    const staminaBefore = b.stamina;
+    await Combat.resolveRound(enc, chars, roller(2, [10]));
+    return { shield: b.shield.durability, lost: staminaBefore - b.stamina, log: enc.log.map((l) => l.text).join('\n') };
+  };
+  const wood = await run('wood', 'standard');
+  assert.strictEqual(wood.shield, 0);
+  assert.match(wood.log, /BREAKS it/);
+  assert.match(wood.log, /drives through the shield/);
+  const master = await run('steel', 'masterwork');
+  assert.ok(master.shield > 0, 'a masterwork steel shield survives');
 });

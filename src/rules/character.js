@@ -422,7 +422,7 @@
   function strikeOption(c, w, face, motion) {
     const def = WEAPONS[w.type];
     const m = MOTIONS[motion];
-    const windUp = needsWindUp(motion);
+    const windUp = needsWindUp(motion) || (motion === 'shoot' && !!def.drawWindUp);
     const W = CONFIG.windUp || { ap: 0, stamina: 0 };
     let baseAP = motion === 'shoot' && def.shootAP ? def.shootAP : m.ap;
     let baseSt = motion === 'shoot' && def.shootStamina != null ? def.shootStamina : m.stamina;
@@ -450,6 +450,11 @@
     }
     if (face === 'hilt') closePenalty = false; // the murder stroke is a close technique
     if (minRange > 1) closePenalty = false;
+    // Inside the weapon's reach: either the attack can't be made at all, or it is penalized.
+    if (closePenalty && CONFIG.range.closeRule === 'cannot') {
+      minRange = 2;
+      closePenalty = false;
+    }
     return {
       kind: 'strike', weaponId: w.id, weaponType: w.type, face, motion, ap, stamina,
       reach: maxRange, minRange, maxRange, closePenalty, ranged, longRange: ranged ? def.ranged.long : null,

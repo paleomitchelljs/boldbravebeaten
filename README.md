@@ -84,7 +84,7 @@ questions the sims can't settle.
 node sim/run.js            # full sweep (about a minute) → sim/results/
 node sim/compare.js        # rule variants side by side (sim/variants.json)
 node sim/arena.js          # armor × style arena (about 3 minutes) → sim/results/arena/
-node sim/arena-page.js     # build the arena results page from arena.json
+node sim/arena-page.js --baseline sim/results/arena-r2/arena.json --baseline-label "round 2"   # results page
 node sim/arena-inspect.js light/shield heavy/twoHanded close 3   # one arena fight's log
 ```
 

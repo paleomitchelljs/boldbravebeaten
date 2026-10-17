@@ -36,7 +36,7 @@
 
   // Mitigation and penalties before feats and before durability scaling.
   function armorBase(a) {
-    const t = ARMOR[a.type];
+    const t = Object.assign({}, ARMOR[a.type], (CONFIG.armorAdjust || {})[a.type] || {});
     const cov = CONFIG.coverage[a.coverage];
     const q = QUALITY[a.quality].bonus;
     const mit = {};

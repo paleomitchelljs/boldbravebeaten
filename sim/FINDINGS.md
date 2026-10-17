@@ -1,5 +1,48 @@
 # Simulation findings
 
+## Round 3: longbow draw, inside-reach rule, shove, shields vs power, plate retune
+
+Changes (PROVISIONAL; see the Rules tab and `src/rules/config.js`):
+
+- **Longbow draw:** a longbow shot is a wind-up, drawn one round and loosed the next; an archer
+  may redraw after loosing. The shortbow stays a single action.
+- **Inside a weapon's reach** (range 1), long weapons (rapier, longsword, greatsword, spear)
+  can't attack at all; daggers, clubs, maces, hammers, half-swording and the murder stroke can.
+  This replaces "half damage up close" (still available as `range.closeRule: 'half'`).
+  The spear's shaft strike is gone.
+- **Shove** (2 AP, range 1): opposed STR check; pushes the target back 1 square (2 on a big win).
+- **Shields vs power attacks:** a blocked power swing breaks the shield if the weapon is at least
+  as hard (wood < iron < steel) and the shield isn't masterwork; force above the break threshold
+  drives through as blunt. Shields wear twice as fast.
+- **Plate retune:** +1 stamina per action (was +2), −3 regen (was −4), chosen from five arena variants.
+
+Results (`results/arena/report.html`, compared against `results/arena-r2/`):
+
+| | Open field | Close quarters |
+|---|---|---|
+| Heavy armor | 44% → 52% | 49% → 62% |
+| Two-handed | 36% → 41% | 42% → 60% |
+| Sword & shield | 58% → 68% | 72% → 70% |
+| Archery | 63% → 59% | 50% → 44% |
+| Magic (deferred) | 32% → 23% | 25% → 17% |
+| Best − worst style, leaving out magic | 27 → 26 pts | 30 → 27 pts |
+| Average fight length | 3.7 → 5.8 rounds | 2.9 → 4.2 rounds |
+
+- Matchups moved a lot, but overall dominance didn't shrink. **Sword & shield still leads.** Its
+  fighters step inside a longer weapon's reach and fight with dagger plus shield. Shove can't
+  hold the distance: it is used about 0.04 times a fight, because re-closing costs 1 AP per square.
+- Tested: halving movement (Specifics rate) cuts sword & shield to 55% in the open but lifts
+  archers to 65%, with no change in close quarters. Faster shield wear changes nothing; fights
+  end before shields wear out.
+- **Decision needed:** how should a reach weapon keep a shorter one out without attacks of
+  opportunity? Options: a set/stop-thrust; extra AP to step into an enemy's reach; a shove that
+  also costs the target AP; no dagger in a shield hand.
+- Fights got longer, mostly mages and kiting archers in the open.
+- Next test worth running: group fights (many-v-1, monster vs heroes), where styles that are weak
+  in duels may shine.
+
+---
+
 ## Round 2: ranges, wind-ups, archery, magic, and the arena
 
 New rules (all PROVISIONAL, listed on the in-app Rules tab and in `src/rules/config.js`):

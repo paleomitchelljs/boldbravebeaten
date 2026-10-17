@@ -88,11 +88,18 @@
     return best;
   }
 
+  // For planning, an attack that needs a wind-up counts at its full two-round AP cost.
+  function forPlanning(c, o) {
+    return o.windUp ? Object.assign({}, o, { why: null, ap: o.ap + C.actionCost(c, 'windUp', { option: o }).ap }) : o;
+  }
+
+  const WIND_REASONS = ['Wind up first', 'Release next round', 'Already released'];
+
   // Attack options with a different weapon in hand (for weighing a switch).
   function optionsWith(c, wieldId) {
     const keep = c.wield;
     c.wield = wieldId;
-    const opts = C.attackOptions(c).filter((o) => !o.unarmed && !o.windUp);
+    const opts = C.attackOptions(c).filter((o) => !o.unarmed).map((o) => forPlanning(c, o));
     c.wield = keep;
     return opts;
   }
@@ -235,12 +242,14 @@
 
     const near = nearestFoe(enc, chars, id, foes, at);
     const target = chars[near.id];
+    // Everything this loadout can do, counting wind-up attacks at their full cost.
+    const planBase = la.attacks.filter((o) => !o.why || (o.windUp && WIND_REASONS.includes(o.why))).map((o) => forPlanning(c, o));
 
     // 5. Switch weapons when another fits the current distance much better.
     const swap = la.other.find((o) => (o.type === 'drawSidearm' || o.type === 'readyPrimary') && o.affordable);
     const winding = c.status.windUp || enc.decls.some((d) => d.actor === id && d.type === 'windUp');
     if (swap && !winding) {
-      const nowOpts = la.attacks.filter((o) => !o.unarmed && !o.windUp);
+      const nowOpts = planBase.filter((o) => !o.unarmed);
       const altId = swap.type === 'drawSidearm' ? c.sidearm : c.weapons.find((w) => w.id !== c.sidearm).id;
       const alt = optionsWith(c, altId).filter((o) => !(o.ranged && (c.inventory.arrows || 0) <= 0));
       const threatHere = RISK * foeRate(target, c, near.d);
@@ -258,6 +267,14 @@
       }
     }
 
+    // 5b. Inside my reach with nothing that works there: shove them back out (or step away).
+    const shove = la.maneuvers.find((m) => m.type === 'shove' && m.affordable);
+    const armed = planBase.filter((o) => !o.unarmed);
+    if (shove && near.d === 1 && armed.length && bestRate(c, target, armed, 1) === 0 && !winding) {
+      const t = shove.targets.find((x) => x.id === near.id && x.inReach);
+      if (t && Combat.shoveOdds(c, target) >= 0.4) return { actor: id, type: 'shove', target: near.id };
+    }
+
     // 6. Occasionally trip or grapple a standing foe in reach.
     if (rng() < P.maneuverRate) {
       for (const m of la.maneuvers) {
@@ -269,9 +286,9 @@
     }
 
     const usable = la.attacks.filter((o) => !o.windUp && !o.why);
-    const rangedLoadout = usable.some((o) => o.ranged && !o.unarmed);
+    const rangedLoadout = planBase.some((o) => o.ranged && !o.unarmed);
     // A kiting loadout plans its distance around its ranged options only.
-    const planOpts = rangedLoadout && P.kite ? usable.filter((o) => o.ranged) : usable.filter((o) => !o.unarmed).length ? usable.filter((o) => !o.unarmed) : usable;
+    const planOpts = rangedLoadout && P.kite ? planBase.filter((o) => o.ranged) : planBase.filter((o) => !o.unarmed).length ? planBase.filter((o) => !o.unarmed) : planBase;
     const pref = preferredDistance(c, target, planOpts);
 
     // 7. Ranged characters step out of melee reach before shooting.
@@ -314,7 +331,7 @@
     }
     // Step to a better distance when it is clearly better than fighting from here.
     const hereNet = (best ? best.v : 0) - RISK * foeRate(target, c, near.d);
-    if (la.move && !rangedLoadout && pref.d !== near.d && pref.net > hereNet + Math.max(1, Math.abs(hereNet)) && ap >= C.moveCost(c, Math.abs(pref.d - near.d)) + S * 2) {
+    if (la.move && !rangedLoadout && pref.d !== near.d && pref.net > hereNet + Math.max(1, Math.abs(hereNet)) && ap >= C.moveCost(c, Math.abs(pref.d - near.d)) + S) {
       const mv = planMove(enc, chars, id, la, near.id, pref.d, foes, 0);
       if (mv) return mv;
     }
