@@ -92,12 +92,16 @@
       }
       if (!s.encounter.spent) {
         // Saved before passes resolved one at a time: pick up at the next round.
-        Object.assign(s.encounter, { spent: {}, turnDone: {}, defendDone: {}, step: 'turns' });
+        Object.assign(s.encounter, { spent: {}, turnDone: {} });
         if (['declare', 'resolve', 'resolving'].includes(s.encounter.phase)) {
           s.encounter.phase = s.encounter.round ? 'roundEnd' : 'setup';
           s.encounter.decls = [];
           s.encounter.log.push({ round: s.encounter.round, text: 'The round rules changed since this battle was saved; continue with the next round.', cls: 'fizzle' });
         }
+      }
+      // Saved with defenses tied to one strike (before guards): drop them.
+      if (s.encounter.decls && s.encounter.decls.some((d) => d.answers != null)) {
+        s.encounter.decls = s.encounter.decls.filter((d) => d.answers == null);
       }
       if (s.encounter.phase === 'resolving') {
         s.encounter.phase = 'roundEnd';

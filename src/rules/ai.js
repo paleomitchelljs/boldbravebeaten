@@ -4,11 +4,10 @@
  * by Feint is judged by what the attacker might be doing, not what they are doing.
  *
  * choose() is called again and again during a character's turn until it returns
- * 'endTurn' (done for this pass) or 'concede' (done for the round). In the defense
- * step at the end of a pass it only answers attacks landing this pass.
+ * 'endTurn' (done for this pass) or 'concede' (done for the round).
  *
  * Each turn decision, in order:
- *   1. stand up; 2. release a wind-up if the target is in range; 3. defend;
+ *   1. stand up; 2. release a wind-up if the target is in range; 3. ready a guard;
  *   4. escape, bandage, re-arm; 5. switch weapons when another fits the distance
  *   better; 6. occasional trip/grapple; 7. keep a ranged weapon out of melee;
  *   8. attack, or wind up when the delayed blow is worth more; 9. move toward the
@@ -73,23 +72,47 @@
     return enc.ids.filter((o) => chars[o].side !== chars[id].side && C.isActive(chars[o]));
   }
 
-  function chooseDefense(enc, chars, id, la, P) {
+  // Ready a guard? Weighs attacks already declared at me that land this pass (aimed at
+  // that attacker) and foes still to take their turn this pass who could reach me (a
+  // general guard), against the guards already up.
+  function chooseGuard(enc, chars, id, la, P) {
     const c = chars[id];
-    let best = null;
-    for (const inc of la.defenses) {
-      const d = inc.decl;
+    const threats = [];
+    for (const d of la.incoming) {
       if (!C.isActive(chars[d.actor])) continue;
       const { threat, motion } = perceivedThreat(enc, chars, d, id);
-      for (const o of inc.options) {
+      threats.push({ threat, motion, prob: 1, against: d.actor, decl: d });
+    }
+    const myTurn = enc.order.indexOf(id);
+    const me = Combat.posAtPass(enc, id, enc.pass);
+    for (const f of enemiesOf(enc, chars, id)) {
+      if (enc.order.indexOf(f) < myTurn || enc.turnDone[f] || Combat.passLeft(enc, f) <= 0) continue;
+      const foe = chars[f];
+      const d = Combat.dist(me, Combat.posAtPass(enc, f, enc.pass));
+      let best = 0;
+      for (const o of C.attackOptions(foe)) {
+        if (!C.inRange(o, d) || o.ap > Combat.passLeft(enc, f) + Combat.passCap()) continue;
+        if (o.windUp && !(foe.status.windUp && foe.status.windUp.key === C.optionKey(o))) continue;
+        if (o.ranged && o.weaponId && (foe.inventory.arrows || 0) <= 0) continue;
+        best = Math.max(best, hitValue(foe, c, o, d));
+      }
+      if (best > 0) threats.push({ threat: best, motion: 'swing', prob: 0.6, against: null });
+    }
+    threats.sort((x, y) => y.threat * y.prob - x.threat * x.prob);
+    const open = threats.slice(la.guards.length); // the guards already up cover the worst ones
+    let pick = null;
+    for (const th of open.slice(0, 1)) {
+      for (const o of la.defenses) {
         if (!o.affordable) continue;
-        const p = Combat.defenseOdds(c, o.type, motion);
-        let value = p * threat;
-        if (o.type === 'dodge' && C.rank(c, 'roll_with_it')) value += (1 - p) * 0.5 * threat;
+        if (th.decl && Combat.defenseUnavailable(c, o.type, th.decl, chars, enc)) continue;
+        const p = Combat.defenseOdds(c, o.type, th.motion);
+        let value = p * th.threat * th.prob;
+        if (o.type === 'dodge' && C.rank(c, 'roll_with_it')) value += (1 - p) * 0.5 * th.threat * th.prob;
         value -= (0.6 * o.ap) / C.apScale() + 0.3 * o.stamina;
-        if (value >= P.defendFloor && (!best || value > best.value)) best = { value, decl: { actor: id, type: o.type, answers: d.n } };
+        if (value >= P.defendFloor && (!pick || value > pick.value)) pick = { value, decl: { actor: id, type: o.type, against: th.against } };
       }
     }
-    return best;
+    return pick;
   }
 
   // For planning, an attack that needs a wind-up counts at its full two-round AP cost.
@@ -216,10 +239,6 @@
     const la = Combat.legalActions(enc, chars, id);
     const ap = la.ap;
     const endTurn = { actor: id, type: 'endTurn' };
-    if (la.step === 'defend') {
-      const def = chooseDefense(enc, chars, id, la, P);
-      return def ? def.decl : endTurn;
-    }
     // One move per pass: it lands at the end of the pass, so a second one would plan from a
     // square the character hasn't reached yet.
     const movedThisPass = enc.decls.some((d) => d.actor === id && d.type === 'move' && d.declaredPass === enc.pass);
@@ -244,8 +263,8 @@
       if (t) return { actor: id, type: 'strike', option: atk, target: t.id };
     }
 
-    // 3. Defend against the most valuable-to-stop incoming attack.
-    const def = chooseDefense(enc, chars, id, la, P);
+    // 3. Ready a guard against the attack most worth stopping.
+    const def = chooseGuard(enc, chars, id, la, P);
     if (def) return def.decl;
 
     // 4. Escape, bandage, re-arm.

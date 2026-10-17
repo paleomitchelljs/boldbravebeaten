@@ -185,9 +185,9 @@ test('a pass: turns in initiative order, the per-pass cap, then resolution', asy
   Combat.endTurn(enc, a.id);
   assert.strictEqual(Combat.currentActor(enc), b.id);
   const la = Combat.legalActions(enc, chars, b.id);
-  assert.strictEqual(la.defenses.length, 1);
-  assert.strictEqual(Combat.declare(enc, chars, { actor: b.id, type: 'parry', answers: enc.decls[0].n }), null);
-  assert.strictEqual(enc.phase, 'resolve', 'B spent the pass; nobody else has anything to answer');
+  assert.strictEqual(la.incoming.length, 1, 'B sees the thrust coming');
+  assert.strictEqual(Combat.declare(enc, chars, { actor: b.id, type: 'parry' }), null);
+  assert.strictEqual(enc.phase, 'resolve', 'B spent the pass; it resolves');
   await Combat.resolvePass(enc, chars, roller(3, [10]));
   assert.ok(enc.log.some((l) => /parries/.test(l.text)));
   assert.strictEqual(enc.pass, 2, 'both still have AP, so a second pass begins');
@@ -219,7 +219,7 @@ test('an action costing more than the pass allows lands in a later pass and can 
   assert.strictEqual(d.pass, 2, 'a 6-AP swing under a 4-AP cap lands in pass 2');
   assert.notStrictEqual(Combat.currentActor(enc), a.id, 'the swing used all of pass 1');
   let la = Combat.legalActions(enc, chars, b.id);
-  assert.strictEqual(la.defenses.length, 0, 'nothing to answer yet');
+  assert.strictEqual(la.incoming.length, 0, 'nothing lands this pass');
   assert.strictEqual(la.incomingLater.length, 1, 'but the swing is visible');
   Combat.endTurn(enc, b.id);
   await Combat.resolvePass(enc, chars, roller(3));
@@ -227,7 +227,32 @@ test('an action costing more than the pass allows lands in a later pass and can 
   assert.strictEqual(Combat.passLeft(enc, a.id), 2 * Combat.passCap() - swing.ap);
   Combat.endTurn(enc, a.id);
   la = Combat.legalActions(enc, chars, b.id);
-  assert.strictEqual(la.defenses.length, 1, 'answerable in the pass it lands');
+  assert.strictEqual(la.incoming.length, 1, 'it lands this pass, so a guard now meets it');
+});
+
+test('guards: a general guard meets the next attack, a named one only that attacker', async () => {
+  const a = armed('A', 'dagger', { side: 'party' });
+  const b = armed('B', 'dagger', { side: 'party' });
+  const t = armed('T', 'longsword', { side: 'enemy' });
+  a.base.SPD = 9; b.base.SPD = 8; t.base.SPD = 1;
+  t.base.CON = 12;
+  for (const c of [a, b, t]) c.stamina = C.maxStamina(c);
+  const chars = { [a.id]: a, [b.id]: b, [t.id]: t };
+  const enc = Combat.createEncounter('t', [a.id, b.id, t.id], chars, 4, 3);
+  enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[b.id] = { x: 0, y: 2 }; enc.pos[t.id] = { x: 1, y: 1 };
+  await Combat.startRound(enc, chars, roller(3, [5, 5, 5]));
+  for (const x of [a, b]) {
+    const th = Combat.legalActions(enc, chars, x.id).attacks.find((o) => o.motion === 'thrust');
+    assert.strictEqual(Combat.declare(enc, chars, { actor: x.id, type: 'strike', option: th, target: t.id }), null);
+    Combat.endTurn(enc, x.id);
+  }
+  assert.strictEqual(Combat.currentActor(enc), t.id);
+  // A guard aimed at B: A's thrust (first to land) gets through, B's meets the parry.
+  assert.strictEqual(Combat.declare(enc, chars, { actor: t.id, type: 'parry', against: b.id }), null);
+  await Combat.resolvePass(enc, chars, roller(4, [10]));
+  const text = enc.log.map((l) => l.text).join('\n');
+  assert.match(text, /A's Thrust \(point\) hits T/);
+  assert.match(text, /T parries B's Thrust/);
 });
 
 test('Feint hides an attack from a defender without Read Attack', async () => {
@@ -375,7 +400,7 @@ test('a power swing must be wound up the round before, and the swinger is expose
   const thrust = Combat.legalActions(enc, chars, b.id).attacks.find((o) => o.motion === 'thrust');
   assert.strictEqual(Combat.declare(enc, chars, { actor: b.id, type: 'strike', option: thrust, target: a.id }), null);
   la = Combat.legalActions(enc, chars, a.id);
-  assert.strictEqual(la.defenses[0].options.find((o) => o.type === 'parry').why, 'Winding up');
+  assert.strictEqual(la.defenses.find((o) => o.type === 'parry').why, 'Winding up');
   Combat.concede(enc, a.id);
   Combat.concede(enc, b.id);
   await Combat.resolveRound(enc, chars, roller(2));
@@ -420,11 +445,13 @@ test('arrows: range 2+, use ammunition, cannot be parried', async () => {
     if (enc.phase === 'resolve') await Combat.resolvePass(enc, chars, roller(2));
   }
   if (Combat.currentActor(enc) === a.id) Combat.endTurn(enc, a.id);
-  const parry = Combat.legalActions(enc, chars, b.id).defenses[0].options.find((o) => o.type === 'parry');
-  assert.strictEqual(parry.why, "Can't parry an arrow");
+  // A parry guard can't meet the arrow; it stays up and the arrow lands.
+  assert.strictEqual(Combat.declare(enc, chars, { actor: b.id, type: 'parry' }), null);
   Combat.concede(enc, b.id);
   Combat.concede(enc, a.id);
   await Combat.resolveRound(enc, chars, roller(2));
+  assert.ok(enc.log.some((l) => /hits Foe/.test(l.text)), 'the arrow lands');
+  assert.ok(!enc.decls.find((d) => d.type === 'parry').used, 'the parry was not spent on it');
   assert.strictEqual(a.inventory.arrows, 0);
   assert.strictEqual(Combat.legalActions(enc, chars, a.id).attacks.find((o) => o.motion === 'shoot').why, 'No arrows');
 });
@@ -529,7 +556,7 @@ test('a blocked power swing breaks a shield of equal or softer material and driv
       if (enc.phase === 'resolve') await Combat.resolvePass(enc, chars, roller(2));
     }
     Combat.concede(enc, a.id);
-    assert.strictEqual(Combat.declare(enc, chars, { actor: b.id, type: 'block', answers: enc.decls[0].n }), null);
+    assert.strictEqual(Combat.declare(enc, chars, { actor: b.id, type: 'block' }), null);
     Combat.concede(enc, b.id);
     const staminaBefore = b.stamina;
     await Combat.resolveRound(enc, chars, roller(2, [10]));

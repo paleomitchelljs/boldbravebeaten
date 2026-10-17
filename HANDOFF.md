@@ -64,10 +64,13 @@ sim/                     lib, run, compare, targets, inspect, arena, arena-inspe
 2. **Turns** go in initiative order. A turn can hold several actions, up to `apPerPass`
    (2 base AP, 4 on the sheet). An action costing more pays from the next passes' allowance and
    lands at the end of the pass in which it is fully paid.
-3. After the turns comes a **defense step**: anyone with an unanswered attack landing on them this
-   pass may block, parry or dodge. A defense can also be declared during the defender's own turn.
-4. The **pass** resolves (`Combat.resolvePass`): its actions land together, positions are taken
-   from the start of the pass, and moves land last.
+3. Defenses are **guards**, readied on your own turn: a block, parry or dodge that meets the next
+   attack landing on you this pass, or the next from a named foe (`against`). A guard lapses at the
+   end of the pass (`guardLasts: 'pass'`). A guard that can't meet an attack (a parry against an
+   arrow) stays up. There is no separate defense step: the user found one arbitrary, and saving AP
+   for unanswerable late actions is meant to be the big advantage.
+4. The **pass** resolves (`Combat.resolvePass`): its actions land together, in initiative order;
+   positions are taken from the start of the pass, and moves land last.
 5. Passes repeat while anything is pending or anyone can act; a pass in which nobody starts or
    lands anything ends the round. At the end of the round: bleed, regeneration, wind-up expiry.
 
@@ -169,10 +172,10 @@ Fights last 5.6 / 3.8 rounds. The round 3 baseline is in `sim/results/arena-r3/`
 ## Done in round 4
 
 - Terms standardized across the engine, UI, Rules tab, README and FINDINGS: round → initiative →
-  turns → pass (→ defense step → resolution).
+  turns → pass → resolution. (A defense step was tried, then replaced by guards in round 5.)
 - The mobile battle UI was redesigned. The screen holds a strip of names (a sidebar on wide
-  screens), the map, and the current character's panel with collapsible groups (answer a strike,
-  attack, move and maneuver, other). Tapping a name or token opens a pop-up sheet. The
+  screens), the map, and the current character's panel with collapsible groups (attack, guard,
+  move and maneuver, other). Tapping a name or token opens a pop-up sheet. The
   declarations and the log fold away. It was tested at 390px and 1280px with Playwright.
 - Saved battles from before round 4 resume at the next round.
 

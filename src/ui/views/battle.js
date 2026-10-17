@@ -193,10 +193,9 @@
     const ui = bui(app);
     const id = Combat.currentActor(enc);
     const c = chars[id];
-    const defending = legal.step === 'defend';
     const head = h('div', { class: 'cmd-head' },
       h('div', { class: 'stack tight' },
-        h('span', { class: 'label' }, `Round ${enc.round} · pass ${enc.pass} · ${defending ? 'defense step' : 'turn'}`),
+        h('span', { class: 'label' }, `Round ${enc.round} · pass ${enc.pass} · turn`),
         h('button', { class: 'who linkish', onclick: () => openSheet(app, enc, id), title: 'Open character sheet' }, c.name)),
       h('div', { class: 'stack tight', style: { alignItems: 'flex-end' } },
         h('div', { class: 'ap-line' }, apMeter(legal.passCap, legal.passLeft, legal.ap), h('span', { class: 'small num', title: 'AP left this pass / this round' }, `${legal.passLeft}/${legal.ap} AP`)),
@@ -229,15 +228,7 @@
     }
 
     const groups = [];
-    if (legal.defenses.length) {
-      groups.push(['defend', 'Answer a strike', legal.defenses.length, legal.defenses.map((inc) => h('div', { class: 'stack tight' },
-        h('div', { class: 'small' }, Combat.describeDecl(enc, chars, inc.decl, id).text),
-        h('div', { class: 'row' }, inc.options.map((o) => h('button', {
-          class: 'small', disabled: !o.affordable, title: o.why || '',
-          onclick: () => declare(app, enc, { actor: id, type: o.type, answers: inc.decl.n }),
-        }, `${D.ACTIONS[o.type].name} · ${costText(o.ap, o.stamina)}${o.why ? ' — ' + o.why : o.spans ? ' · borrows next pass' : ''}`)))))]);
-    }
-    if (!defending) {
+    {
       const foes = new Set(enc.ids.filter((o) => chars[o].side !== c.side));
       const sortTargets = (ts) => ts.slice().sort((a, b) => (foes.has(b.id) - foes.has(a.id)) || (b.inReach - a.inReach));
       const attacks = legal.attacks.filter((o) => o.affordable || ui.showAll);
@@ -254,6 +245,19 @@
         })),
         legal.attacks.length > attacks.length || ui.showAll ? h('button', { class: 'small ghost', onclick: () => { ui.showAll = !ui.showAll; app.render(); } },
           ui.showAll ? 'Hide unavailable attacks' : `Show ${legal.attacks.length - attacks.length} unavailable`) : null]]);
+      // Guards: ready a defense for the next attack, or the next from one foe.
+      const vs = legal.guardAgainst.includes(ui.guardAgainst) ? ui.guardAgainst : '';
+      groups.push(['guard', 'Guard', legal.guards.length ? `${legal.guards.length} up` : null, [
+        legal.incoming.length ? h('div', { class: 'small' }, h('b', null, 'Landing on you this pass: '),
+          legal.incoming.map((d) => Combat.describeDecl(enc, chars, d, id).text).join('; ')) : null,
+        legal.guards.length ? h('div', { class: 'small' }, h('b', null, 'Up: '), legal.guards.map((g) => Combat.describeDecl(enc, chars, g, id).text.replace(c.name + ': ', '')).join('; ')) : null,
+        h('label', { class: 'inline small', for: 'guard-vs' }, h('span', { class: 'label' }, 'Against'),
+          UI.select('guard-vs', vs, [['', 'the next attack']].concat(legal.guardAgainst.map((o) => [o, chars[o].name])), (v) => { ui.guardAgainst = v; app.render(); })),
+        h('div', { class: 'row' }, legal.defenses.map((o) => h('button', {
+          disabled: !o.affordable, title: o.why || '',
+          onclick: () => declare(app, enc, { actor: id, type: o.type, against: vs || null }),
+        }, `${D.ACTIONS[o.type].name} · ${costText(o.ap, o.stamina)}${o.why ? ' — ' + o.why : o.spans ? ' · borrows next pass' : ''}`))),
+        h('p', { class: 'small muted' }, 'A guard lasts until it meets an attack or the pass ends. A parry can\'t meet an arrow or spell; it waits for the next blow.')]]);
       if (legal.move || legal.maneuvers.length) {
         groups.push(['move', 'Move and maneuver', null, h('div', { class: 'row' },
           legal.move ? h('button', { class: ui.mode === 'move' ? 'selected' : '', onclick: () => { ui.mode = 'move'; ui.pending = null; app.render(); } },
@@ -269,16 +273,16 @@
         }, `${o.name} · ${costText(o.ap, o.stamina)}${lateNote(o)}`)))]);
       }
     }
+    if (legal.incoming.length && ui.guardHint !== enc.pass + ':' + id) { ui.open = 'guard'; ui.guardHint = enc.pass + ':' + id; }
     if (!ui.open || !groups.some((g) => g[0] === ui.open) && ui.open !== 'none') ui.open = groups[0] ? groups[0][0] : null;
 
     return h('section', { class: 'panel cmd' },
       head,
       notes,
-      defending ? h('p', { class: 'small muted' }, 'These attacks land at the end of this pass. Answer them now or let them through.') : null,
       groups.map((g) => section(ui, g[0], g[1], g[2], g[3])),
       h('div', { class: 'cmd-foot' },
-        h('button', { class: 'primary', onclick: () => finishTurn(app, enc, id, false) }, defending ? 'Done defending' : 'End turn'),
-        !defending ? h('button', { class: 'small ghost', title: 'Spend nothing more this round, including defenses', onclick: () => finishTurn(app, enc, id, true) }, 'Done for the round') : null),
+        h('button', { class: 'primary', onclick: () => finishTurn(app, enc, id, false) }, 'End turn'),
+        h('button', { class: 'small ghost', title: 'Spend nothing more this round, including guards', onclick: () => finishTurn(app, enc, id, true) }, 'Done for the round')),
       h('p', { class: 'small muted' }, 'AP left over at the end of the round is lost. Other players can\'t see your AP; pass the device only after ending your turn.'));
   }
 
@@ -496,7 +500,7 @@
     const chars = app.state.characters;
     const legal = enc.phase === 'declare' ? Combat.legalActions(enc, chars, Combat.currentActor(enc)) : null;
     scheduleAI(app, enc);
-    const status = enc.phase === 'declare' ? `Pass ${enc.pass} · ${enc.step === 'defend' ? 'defense step' : 'turns'}` : enc.phase === 'over' ? 'The fight is over' : enc.phase === 'resolve' || enc.phase === 'resolving' ? `Pass ${enc.pass} · resolving` : '';
+    const status = enc.phase === 'declare' ? `Pass ${enc.pass} · turns` : enc.phase === 'over' ? 'The fight is over' : enc.phase === 'resolve' || enc.phase === 'resolving' ? `Pass ${enc.pass} · resolving` : '';
     return h('div', { class: 'battle-view' },
       h('div', { class: 'battle-head' },
         h('h1', null, enc.round ? `Round ${enc.round}` : 'Battle'),

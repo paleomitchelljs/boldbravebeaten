@@ -6,13 +6,16 @@
  *          ends when everyone is out of actions; then bleed, regeneration, fatigue.
  *   Turn   one character's actions in a pass, taken in initiative order. A turn may
  *          hold several actions, up to the per-pass AP cap (CONFIG.apPerPass).
- *   Pass   one set of everyone's turns, then a defense step in which anyone attacked
- *          this pass may answer, then every action of the pass resolves together.
+ *   Pass   one set of everyone's turns; then every action of the pass resolves together.
+ *
+ * Defenses are guards: on your turn you ready a block, parry or dodge for the next attack
+ * that lands on you (or the next one from a named attacker). A guard lasts until it is used
+ * or the pass ends (CONFIG.guardLasts).
  *
  * An action costing more than the AP left in this pass keeps paying from the next
  * passes' allowance; a strike, maneuver or move lands at the end of the pass in
- * which it is fully paid, a defense takes effect at once. Unspent AP is lost at the
- * end of the round.
+ * which it is fully paid; a guard is up at once. Unspent AP is lost at the end of the
+ * round.
  *
  * Every die roll goes through an async `roller(request)` so the UI can ask the
  * player to type in their physical roll, or roll automatically.
@@ -33,7 +36,7 @@
       id: Items.uid('enc'), name: name || 'Encounter', round: 0, phase: 'setup',
       ids: ids.slice(), grid: { w: w || 10, h: h || 8 }, pos: {},
       initiative: {}, order: [], ap: {}, apStart: {}, conceded: {}, pass: 1, turn: 0, step: 'turns',
-      spent: {}, turnDone: {}, defendDone: {},
+      spent: {}, turnDone: {},
       decls: [], seq: 0, log: [], hitThisRound: {}, fortressUsed: {}, startedAt: Date.now(),
     };
     autoPlace(enc, chars);
@@ -135,24 +138,25 @@
     return p;
   }
 
-  // Attacks aimed at this character that land this pass and that it hasn't answered.
-  function unansweredIncoming(enc, id) {
-    return enc.decls.filter((d) => ATTACK_TYPES.includes(d.type) && d.target === id && d.pass === enc.pass && !d.done &&
-      !enc.decls.some((x) => x.actor === id && x.answers === d.n));
+  // Attacks aimed at this character that are on their way (not yet landed).
+  function incomingAttacks(enc, id) {
+    return enc.decls.filter((d) => ATTACK_TYPES.includes(d.type) && d.target === id && !d.done);
+  }
+
+  // Guards this character has up that could still be used by an attack landing in `pass`.
+  function guardsUp(enc, id, pass) {
+    return enc.decls.filter((x) => x.actor === id && DEFENSE_TYPES.includes(x.type) && !x.used &&
+      (CONFIG.guardLasts === 'round' ? x.pass <= pass : x.pass === pass));
   }
 
   function eligible(enc, id) {
-    if (id == null || enc.conceded[id] || passLeft(enc, id) < CONFIG.minActionAP) return false;
-    if (enc.step === 'turns') return !enc.turnDone[id];
-    return !enc.defendDone[id] && unansweredIncoming(enc, id).length > 0;
+    return id != null && !enc.conceded[id] && passLeft(enc, id) >= CONFIG.minActionAP && !enc.turnDone[id];
   }
 
   function startPass(enc, chars) {
     enc.pass += 1;
-    enc.step = 'turns';
     enc.turn = -1;
     enc.turnDone = {};
-    enc.defendDone = {};
     enc.phase = 'declare';
     for (const id of enc.order) if (!C.isActive(chars[id])) enc.conceded[id] = true;
     advance(enc);
@@ -162,17 +166,12 @@
     return enc.phase === 'declare' ? enc.order[enc.turn] : null;
   }
 
-  // Next character to act: turns in initiative order, then the defense step, then resolve.
+  // Next character to take a turn in initiative order; after the last, the pass resolves.
   function advance(enc) {
     const n = enc.order.length;
     for (;;) {
       enc.turn += 1;
       if (enc.turn >= n) {
-        if (enc.step === 'turns') {
-          enc.step = 'defend';
-          enc.turn = -1;
-          continue;
-        }
         enc.phase = 'resolve';
         return;
       }
@@ -180,15 +179,14 @@
     }
   }
 
-  // Finish this turn (or defense step) for the pass; any AP left stays for later passes.
+  // Finish this turn for the pass; any AP left stays for later passes.
   function endTurn(enc, id) {
     if (currentActor(enc) !== id) return;
-    if (enc.step === 'turns') enc.turnDone[id] = true;
-    else enc.defendDone[id] = true;
+    enc.turnDone[id] = true;
     advance(enc);
   }
 
-  // Done for the whole round: no more actions or defenses until the next round.
+  // Done for the whole round: no more actions or guards until the next round.
   function concede(enc, id) {
     enc.conceded[id] = true;
     if (currentActor(enc) === id) advance(enc);
@@ -248,21 +246,19 @@
     const can = (cost) => cost <= ap && left >= CONFIG.minActionAP;
     const me = posAtPass(enc, id, enc.pass);
     const others = enc.ids.filter((o) => o !== id && !chars[o].status.dead);
-    const out = { ap, passLeft: left, passCap: passCap(), step: enc.step, pass: enc.pass, attacks: [], defenses: [], maneuvers: [], other: [], move: null, incomingLater: [] };
+    const out = { ap, passLeft: left, passCap: passCap(), pass: enc.pass, attacks: [], defenses: [], guards: [], maneuvers: [], other: [], move: null, incoming: [], incomingLater: [] };
 
-    // Defenses against attacks aimed at me that land this pass and that I have not answered.
-    for (const d of unansweredIncoming(enc, id)) {
-      const opts = [];
-      for (const kind of DEFENSE_TYPES) {
-        const cost = C.actionCost(c, kind);
-        const why = defenseUnavailable(c, kind, d, chars, enc);
-        opts.push({ type: kind, ap: cost.ap, stamina: cost.stamina, affordable: can(cost.ap) && !why, spans: cost.ap > left, why });
-      }
-      out.defenses.push({ decl: d, options: opts });
+    // Guards: ready a block, parry or dodge for the next attack, or the next from one attacker.
+    for (const kind of DEFENSE_TYPES) {
+      const cost = C.actionCost(c, kind);
+      const why = defenseUnavailable(c, kind, null, chars, enc);
+      out.defenses.push({ type: kind, ap: cost.ap, stamina: cost.stamina, affordable: can(cost.ap) && !why, spans: cost.ap > left, why });
     }
-    // Slow attacks already on their way that land in a later pass.
-    out.incomingLater = enc.decls.filter((d) => ATTACK_TYPES.includes(d.type) && d.target === id && d.pass > enc.pass && !d.done);
-    if (enc.phase === 'declare' && enc.step === 'defend') return out;
+    out.guardAgainst = others.filter((o) => chars[o].side !== c.side && C.isActive(chars[o]));
+    out.guards = guardsUp(enc, id, enc.pass);
+    // Attacks already declared at me: landing this pass, and slow ones landing later.
+    out.incoming = incomingAttacks(enc, id).filter((d) => d.pass === enc.pass);
+    out.incomingLater = incomingAttacks(enc, id).filter((d) => d.pass > enc.pass);
 
     const planned = plannedAttackOptions(enc, c);
     const spPlanned = enc.decls.filter((d) => d.actor === id && d.type === 'strike' && d.option.spell).reduce((t, d) => t + d.option.spCost, 0);
@@ -380,13 +376,13 @@
     if (grapplers.some((g) => C.rank(g, 'pin'))) return 'Pinned';
     const winding = c.status.windUp || (enc && enc.decls.some((d) => d.actor === c.id && d.type === 'windUp'));
     if (winding && (CONFIG.windUp.exposed || []).includes(kind)) return 'Winding up';
-    const opt = attackDecl.option;
+    const opt = attackDecl ? attackDecl.option : null;
     if (kind === 'parry' && opt && (opt.spell || (opt.ranged && !CONFIG.archery.parry))) return opt.spell ? "Can't parry a spell" : "Can't parry an arrow";
     if (kind === 'block' && !C.shieldReady(c)) return 'No ready shield';
     if (kind === 'parry') {
       if (!C.wieldedWeapon(c)) return 'No weapon';
-      const atk = chars[attackDecl.actor];
-      if (attackDecl.option && attackDecl.option.motion === 'power' && atk && C.rank(atk, 'juggernaut')) return 'Juggernaut';
+      const atk = attackDecl ? chars[attackDecl.actor] : null;
+      if (opt && opt.motion === 'power' && atk && C.rank(atk, 'juggernaut')) return 'Juggernaut';
     }
     if (kind === 'dodge' && c.status.prone) return 'Prone';
     return null;
@@ -399,7 +395,6 @@
     const c = chars[id];
     let ap, stamina;
     const defense = DEFENSE_TYPES.includes(decl.type);
-    if (enc.step === 'defend' && !defense) return 'Only defenses now';
     if (decl.type === 'strike') {
       const key = C.optionKey(decl.option);
       const opt = plannedAttackOptions(enc, c).find((o) => C.optionKey(o) === key);
@@ -412,9 +407,8 @@
       stamina = opt.stamina;
       if (!decl.target) return 'Choose a target';
     } else if (defense) {
-      const atk = unansweredIncoming(enc, id).find((d) => d.n === decl.answers);
-      if (!atk) return 'Choose a strike landing this pass to answer';
-      const why = defenseUnavailable(c, decl.type, atk, chars, enc);
+      if (decl.against && (!chars[decl.against] || chars[decl.against].side === c.side)) return 'Guard against a foe';
+      const why = defenseUnavailable(c, decl.type, null, chars, enc);
       if (why) return why;
       ({ ap, stamina } = C.actionCost(c, decl.type));
     } else if (decl.type === 'windUp') {
@@ -443,7 +437,7 @@
     decl.stamina = stamina;
     decl.declaredPass = enc.pass;
     const lands = payAP(enc, id, ap);
-    // Defenses act at once (any AP over the cap is owed from later passes); everything
+    // A guard is up at once (any AP over the cap is owed from later passes); everything
     // else lands when fully paid, unless CONFIG.spanLands says it lands now.
     decl.pass = defense || CONFIG.spanLands === 'now' ? enc.pass : lands;
     decl.n = ++enc.seq;
@@ -471,8 +465,8 @@
       return { text: `${a.name}: ${d.option.label}${w ? ' — ' + Items.itemName(w) : ''} at ${tn} [${d.ap} AP]` };
     }
     if (DEFENSE_TYPES.includes(d.type)) {
-      const atk = enc.decls.find((x) => x.n === d.answers);
-      return { text: `${a.name}: ${ACTIONS[d.type].name.toLowerCase()} vs. ${atk ? chars[atk.actor].name : '?'}'s strike [${d.ap} AP]` };
+      const vs = d.against && chars[d.against] ? `${chars[d.against].name}'s next attack` : 'the next attack';
+      return { text: `${a.name}: ready to ${d.type} ${vs} [${d.ap} AP]` };
     }
     if (d.type === 'move') return { text: `${a.name}: move to (${d.to.x + 1}, ${d.to.y + 1}) [${d.ap} AP]` };
     if (d.type === 'windUp') return { text: `${a.name}: winds up ${d.option.label} [${d.ap} AP]` };
@@ -845,21 +839,22 @@
         if (!(await castSpell(enc, a, d.option, roller))) return;
       }
 
-      // Defenses that answer this attack.
+      // The target's guard meets it: one aimed at this attacker first, then a general one.
+      // A guard that can't meet this attack (a parry against an arrow) stays up for the next.
       const name = d.type === 'strike' ? d.option.label : ACTIONS[d.type].name;
-      const defs = enc.decls.filter((x) => x.actor === d.target && x.answers === d.n);
       let failedDodge = false;
       if (C.isActive(t)) {
-        if (C.rank(t, 'untouchable') && !defs.some((x) => x.type === 'dodge')) {
-          const dodge = enc.decls.find((x) => x.actor === t.id && x.type === 'dodge' && x.pass === d.pass);
-          if (dodge) defs.push(Object.assign({}, dodge, { untouchable: true }));
+        const guard = guardsUp(enc, t.id, d.pass)
+          .filter((x) => (!x.against || x.against === d.actor) && !defenseUnavailable(t, x.type, d, chars, enc))
+          .sort((x, y) => (y.against === d.actor) - (x.against === d.actor) || x.n - y.n)[0];
+        const defs = [];
+        if (guard) {
+          const untouchable = guard.type === 'dodge' && C.rank(t, 'untouchable');
+          if (!untouchable) guard.used = true; // Untouchable: one dodge meets every attack that pass
+          defs.push(Object.assign({}, guard, { untouchable: untouchable && guard.paid }));
+          guard.paid = true;
         }
         for (const def of defs) {
-          const why = defenseUnavailable(t, def.type, d, chars, enc);
-          if (why) {
-            log(enc, `${t.name} can't ${def.type} (${why.toLowerCase()}).`, 'fizzle');
-            continue;
-          }
           if (!def.untouchable && !payStamina(enc, t, def.stamina)) continue;
           const chk = await defenseCheck(enc, chars, t, def.type, d, roller);
           if (chk.ok) {

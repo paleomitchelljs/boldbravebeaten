@@ -33,9 +33,9 @@ be loaded on another device.
    - **turns** go in initiative order. On a turn a character can take several actions (strikes,
      moves, trips, disarms, grapples, shoves, bandaging, and so on), up to 4 AP per pass. Remaining
      AP is hidden; Feint hides strikes from anyone whose Read Attack rank is lower;
-   - after everyone's turn comes a **defense step**: anyone with an attack landing on them may
-     block, parry or dodge it;
-   - the **pass** then resolves, and the platform asks each player for the rolls it needs
+   - a **guard** is a block, parry or dodge readied on your own turn. It meets the next attack
+     that lands on you that pass, or the next from a foe you name;
+   - when everyone has had a turn, the **pass** resolves, and the platform asks each player for the rolls it needs
      (defense checks, slashing d4s, opposed checks). An action costing more than the pass allows
      lands in a later pass;
    - passes repeat until no one has actions left; then bleed and regeneration are applied

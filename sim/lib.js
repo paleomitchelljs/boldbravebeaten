@@ -161,7 +161,7 @@ async function fight(spec) {
   };
 }
 
-// Drive one round with the AI: turns, defense steps and pass resolution.
+// Drive one round with the AI: turns and pass resolution.
 async function playRound(enc, chars, roller, rng) {
   let guard = 1000;
   while ((enc.phase === 'declare' || enc.phase === 'resolve') && guard-- > 0) {

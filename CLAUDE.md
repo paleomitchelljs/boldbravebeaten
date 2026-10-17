@@ -40,7 +40,9 @@ Characters who spend early sit out the last passes.
 
 ## Current state (round 4 done)
 
-- Each pass resolves at its end, with a defense step before it.
+- Each pass resolves at its end. Defenses are guards readied on your own turn (the next attack,
+  or the next from a named foe), lasting until used or the pass ends. No defense step: the user
+  found it arbitrary.
 - The AP-per-pass cap is on trial (4 AP on the sheet).
 - The mobile battle UI has been redesigned.
 

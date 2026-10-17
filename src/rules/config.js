@@ -54,8 +54,14 @@
     // When an action spills past this pass's allowance it lands:
     //   'late' — at the end of the pass in which it is fully paid (slow actions are telegraphed)
     //   'now'  — this pass, and the overspend is owed from the next passes (recovery time)
-    // Defenses always act at once.
+    // Guards always go up at once.
     spanLands: 'late',
+    // PROVISIONAL: a guard (a readied block, parry or dodge) meets the next attack that lands on
+    // you, or the next from the attacker you name. It lasts until used or:
+    //   'pass'  — the end of the pass it was readied in (so AP saved for the last passes buys
+    //             attacks the spent can't answer)
+    //   'round' — the end of the round
+    guardLasts: 'pass',
     minActionAP: 1, // costs never drop below 1 AP or 0 stamina
     minStrikeAP: 1, // floor for weapon strikes specifically (tunable separately)
     minStrikeStamina: 0, // floor for weapon strikes' stamina
@@ -261,8 +267,9 @@
   // Every PROVISIONAL choice, shown on the Rules tab so nothing is hidden.
   CONFIG.provisional = [
     'AP scale ×2: every base AP cost and the AP pool are doubled (pool 8–12); feats still cut a flat 1 AP. Chosen by simulation.',
-    'Rounds, turns and passes: a round starts with initiative; characters take turns in initiative order; one set of everyone\'s turns is a pass, followed by a defense step, and the pass resolves at its end. Passes repeat until no one has actions left.',
-    'AP per pass (trial): at most 2 base AP (4 on the sheet) per pass. A turn may hold several actions up to that. An action costing more keeps paying from the next passes and lands at the end of the pass in which it is fully paid (a 6-AP swing lands a pass later). Defenses act at once and borrow any overspend from the next pass. A pass in which no one starts or lands anything ends the round.',
+    'Rounds, turns and passes: a round starts with initiative; characters take turns in initiative order; one set of everyone\'s turns is a pass, and the pass resolves at its end. Passes repeat until no one has actions left.',
+    'Guards: on your turn you ready a block, parry or dodge. It meets the next attack that lands on you this pass, or the next one from a foe you name; it lasts until used or the end of the pass. A guard that can\'t meet an attack (a parry against an arrow) stays up for the next one. Within a pass, attacks land in initiative order, so the fastest attacker meets a general guard first.',
+    'AP per pass (trial): at most 2 base AP (4 on the sheet) per pass. A turn may hold several actions up to that. An action costing more keeps paying from the next passes and lands at the end of the pass in which it is fully paid (a 6-AP swing lands a pass later). Guards go up at once and borrow any overspend from the next pass. A pass in which no one starts or lands anything ends the round.',
     'Stamina scale ×3: every base stamina cost is tripled. Chosen by simulation so the stamina curve matches the Outline.',
     'Piercing through armor: each leftover point rolls a d10 and reaches CON on ≤ pass-through × 10 (plate 2, other full armor 5). Chosen by simulation over rounding.',
     'Armor wear per hit is a third of (blunt + converted slashing); armor keeps at least 75% of its mitigation until destroyed.',
@@ -279,7 +286,6 @@
     'Initiative: d10 + effective SPD.',
     'Defense checks: d10 + bonuses vs. target number. Parry TN 6 (+Parry Training, +⌊(DEX−5)/2⌋), dodge TN 6 (+Dodge Training, +⌊(SPD−5)/2⌋, −armor DEX penalty). Two-handed swings +1 TN, power swings +2.',
     'A successful parry or dodge negates the strike completely.',
-    'A defense answers one strike landing on you this pass, declared during your turn or in the defense step.',
     'Within a pass, reach is checked against positions at the start of that pass; moves take effect afterwards.',
     'Actions cannot be paid if they would drop your own stamina to 0.',
     'Unconscious characters do not regenerate in combat. Heavy-armor negative regen always applies.',
