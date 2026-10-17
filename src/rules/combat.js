@@ -84,6 +84,7 @@
     enc.decls = [];
     enc.conceded = {};
     enc.hitThisRound = {};
+    enc.burned = {};
     enc.fortressUsed = {};
     enc.pass = 0;
     enc.spent = {};
@@ -100,7 +101,9 @@
       if (d) return d;
       return C.combatAttr(chars[b], 'SPD') - C.combatAttr(chars[a], 'SPD');
     });
+    enc.capMult = {};
     for (const id of enc.order) {
+      enc.capMult[id] = (chars[id].traits && chars[id].traits.apMult) || 1;
       enc.ap[id] = C.apPool(chars[id]);
       enc.apStart[id] = enc.ap[id];
     }
@@ -111,8 +114,10 @@
 
   // ---- Passes and turns --------------------------------------------------
   // Most AP a character may spend in one pass (Infinity when there is no cap).
-  function passCap() {
-    return CONFIG.apPerPass ? CONFIG.apPerPass * C.apScale() : Infinity;
+  // Monster trait apMult also raises a boss's per-pass allowance (enc.capMult, set each round).
+  function passCap(enc, id) {
+    const m = (enc && enc.capMult && enc.capMult[id]) || 1;
+    return CONFIG.apPerPass ? CONFIG.apPerPass * C.apScale() * m : Infinity;
   }
 
   function spentIn(enc, id, pass) {
@@ -121,13 +126,13 @@
 
   // AP this character can still put in this pass.
   function passLeft(enc, id) {
-    return Math.max(0, Math.min(enc.ap[id] || 0, passCap() - spentIn(enc, id, enc.pass)));
+    return Math.max(0, Math.min(enc.ap[id] || 0, passCap(enc, id) - spentIn(enc, id, enc.pass)));
   }
 
   // Pay an action's AP from this pass's allowance, then the next passes'. Returns the
   // pass in which the last of it is paid.
   function payAP(enc, id, ap) {
-    const cap = passCap();
+    const cap = passCap(enc, id);
     const s = enc.spent[id] || (enc.spent[id] = {});
     let p = enc.pass, left = ap;
     while (left > 0) {
@@ -292,7 +297,7 @@
     const can = (cost) => cost <= ap && left >= CONFIG.minActionAP;
     const me = posAtPass(enc, id, enc.pass);
     const others = enc.ids.filter((o) => o !== id && !chars[o].status.dead);
-    const out = { ap, passLeft: left, passCap: passCap(), pass: enc.pass, attacks: [], defenses: [], guards: [], maneuvers: [], other: [], move: null, incoming: [], incomingLater: [] };
+    const out = { ap, passLeft: left, passCap: passCap(enc, id), pass: enc.pass, attacks: [], defenses: [], guards: [], maneuvers: [], other: [], move: null, incoming: [], incomingLater: [] };
 
     // Guards: ready a block, parry or dodge for the next attack, or the next from one attacker.
     for (const kind of DEFENSE_TYPES) {
@@ -573,6 +578,7 @@
     }
     if (option.ranged && option.longRange && flags.distance > option.longRange) v[C.mainIndex(v)] = Math.max(0, v[C.mainIndex(v)] - CONFIG.range.longRangePenalty);
     if (prone) v[C.mainIndex(v)] += CONFIG.maneuver.proneDamageBonus;
+    if (flags.pack) v[C.mainIndex(v)] += flags.pack; // pack hunters: allies at the target's side
     if (flags.half) for (let i = 0; i < 3; i++) v[i] = Math.floor(v[i] / 2);
     const [P, S, B] = v;
     const motion = option.motion === 'unarmed' ? 'swing' : option.motion;
@@ -701,6 +707,13 @@
         parts.push(`${amt} stamina`);
       }
     }
+    if (option.venom && wound > 0) {
+      // The deeper the bite, the more venom: up to `con` a round, never more than the wound.
+      const per = Math.min(option.venom.con, wound);
+      target.bleeds.push({ remaining: per * option.venom.rounds, rounds: option.venom.rounds, poison: true });
+      parts.push('poisoned');
+    }
+    if (option.spell && option.spell.element === 'fire') (enc.burned || (enc.burned = {}))[target.id] = true;
     if (wound > 0 && !h.noBleed) {
       // A broadhead's wide cut bleeds worse.
       const hd = option.arrowHead && CONFIG.archery.heads[option.arrowHead];
@@ -1049,7 +1062,7 @@
         log(enc, `${a.name}'s ${label} fizzles — ${t.name} is too close.`, 'fizzle');
         return;
       }
-      if (d.type === 'strike' && d.option.weaponId && (a.wield !== d.option.weaponId || a.status.dropped.includes(d.option.weaponId))) {
+      if (d.type === 'strike' && d.option.weaponId && !d.option.natural && (a.wield !== d.option.weaponId || a.status.dropped.includes(d.option.weaponId))) {
         log(enc, `${a.name} no longer holds that weapon; the strike fizzles.`, 'fizzle');
         return;
       }
@@ -1078,6 +1091,13 @@
       // The target's guard meets it: one aimed at this attacker first, then a general one.
       // A guard that can't meet this attack (a parry against an arrow) stays up for the next.
       const name = d.type === 'strike' ? d.option.label : ACTIONS[d.type].name;
+      // Displacement (monster trait): the target isn't quite where it appears to be.
+      const disp = d.type === 'strike' && t.traits && t.traits.displacement;
+      if (disp) {
+        const chance = d.option.ranged || d.option.spell ? disp.ranged : disp.melee;
+        const r = await rollDie(roller, a.id, 10, `${a.name}: Find the real ${t.name}`, `d10: ${Math.round(chance * 10)} or less strikes only an illusion`);
+        if (r <= Math.round(chance * 10)) return log(enc, `${a.name}'s ${name} passes through an illusion of ${t.name}.`, 'defend');
+      }
       let failedDodge = false;
       if (C.isActive(t)) {
         const guard = guardsUp(enc, t.id, d.pass)
@@ -1107,12 +1127,16 @@
         }
       }
 
+      if (d.type === 'strike' && d.option.rust) return rustTouch(enc, a, t, d.option.rust);
       if (d.type === 'strike') {
         const half = failedDodge && C.rank(t, 'roll_with_it');
-        const r = await applyHit(enc, chars, a, t, d.option, roller, { half, distance });
+        const pack = a.traits && a.traits.pack
+          ? Math.min(a.traits.pack, enc.ids.filter((o) => o !== a.id && o !== t.id && chars[o].side === a.side && C.isActive(chars[o]) && dist(posAtStart[o], posAtStart[t.id]) <= 1).length)
+          : 0;
+        const r = await applyHit(enc, chars, a, t, d.option, roller, { half, distance, pack });
         const note = (distance === 1 && d.option.closePenalty) || (CONFIG.grappledWeaponsCramped && d.option.weaponId && !d.option.ranged && isGrappled(a))
           ? (CONFIG.range.closeRule === 'blunt' ? ' (cramped: blunt, half force)' : ' (cramped: half damage)') : d.option.ranged && d.option.longRange && distance > d.option.longRange ? ' (long range)' : '';
-        log(enc, `${a.name}'s ${name} hits ${t.name}${half ? ' (Roll With It: half)' : ''}${note}: ${r.text}`, 'hit');
+        log(enc, `${a.name}'s ${name} hits ${t.name}${half ? ' (Roll With It: half)' : ''}${pack ? ` (pack +${pack})` : ''}${note}: ${r.text}`, 'hit');
         if (d.option.spell && d.option.spell.element === 'force' && C.isActive(t) && !t.status.prone) {
           const k = await opposed(roller, a, Math.floor(C.attr(a, 'INT') / 2), 'Force knockdown', t, stability(t), 'Keep footing');
           if (k.margin >= CONFIG.magic.forceKnockdownMargin) {
@@ -1121,9 +1145,10 @@
           }
         }
         if (!C.isActive(t)) loseWindUp(enc, t, null);
-        if ((d.option.unarmed === 'kick' || d.option.unarmed === 'shieldBash') && C.isActive(t) && !t.status.prone) {
-          const k = await knockdownCheck(roller, a, t, C.rank(a, 'trip') ? CONFIG.maneuver.tripFeatBonus : 0, 'Knockdown');
-          if (k.margin >= CONFIG.maneuver.kickKnockdownMargin) {
+        if ((d.option.unarmed === 'kick' || d.option.unarmed === 'shieldBash' || d.option.knockdown) && C.isActive(t) && !t.status.prone) {
+          const kd = d.option.knockdown;
+          const k = await knockdownCheck(roller, a, t, (C.rank(a, 'trip') ? CONFIG.maneuver.tripFeatBonus : 0) + (kd ? kd.bonus : 0), 'Knockdown');
+          if (k.margin >= (kd ? kd.margin : CONFIG.maneuver.kickKnockdownMargin)) {
             knockDown(enc, t);
             log(enc, `${t.name} is knocked prone (${k.a} vs ${k.b}).`, 'hit');
           }
@@ -1141,7 +1166,8 @@
         log(enc, `${a.name} stands up.`);
         break;
       case 'windUp':
-        if (a.status.prone || isGrappled(a) || (d.option.weaponId && C.wieldedWeapon(a) && C.wieldedWeapon(a).id !== d.option.weaponId) || (d.option.weaponId && !C.wieldedWeapon(a))) {
+        const armed = !d.option.weaponId || d.option.natural || (C.wieldedWeapon(a) && C.wieldedWeapon(a).id === d.option.weaponId);
+        if (a.status.prone || isGrappled(a) || !armed) {
           log(enc, `${a.name} can't wind up now.`, 'fizzle');
           break;
         }
@@ -1172,7 +1198,7 @@
       case 'bandage':
         if (t && a.inventory.bandages > 0) {
           a.inventory.bandages -= 1;
-          t.bleeds = [];
+          t.bleeds = t.bleeds.filter((b) => b.poison); // a bandage doesn't draw out venom
           log(enc, `${a.name} bandages ${t === a ? 'themself' : t.name}; the bleeding stops.`, 'defend');
         }
         break;
@@ -1212,6 +1238,14 @@
     if (why) log(enc, `${c.name} loses the wind-up (${why}).`, 'fizzle');
   }
 
+  // Rust (monster trait): no wound, but metal armor corrodes.
+  function rustTouch(enc, a, t, amount) {
+    const metal = t.armor && (CONFIG.archery.metalArmor || []).includes(t.armor.type) && t.armor.durability > 0;
+    if (!metal) return log(enc, `${a.name}'s antennae brush ${t.name}, finding no metal.`, 'fizzle');
+    t.armor.durability = Math.max(0, t.armor.durability - amount);
+    log(enc, `${a.name}'s antennae touch ${t.name}'s armor: it flakes with rust (durability −${amount}${t.armor.durability ? '' : ', destroyed'}).`, 'hit');
+  }
+
   async function shieldAbsorb(enc, chars, a, t, d, roller) {
     const s = t.shield;
     const ss = Items.shieldStats(s);
@@ -1219,11 +1253,15 @@
     const W = CONFIG.shieldWear;
     const wear = Math.round((v[0] * W.P + v[1] * W.S + v[2] * W.B) * (CONFIG.shieldWearScale || 1));
     s.durability = Math.max(0, s.durability - wear);
+    if (d.type === 'strike' && d.option.rust && ['iron', 'steel'].includes(s.material)) {
+      s.durability = Math.max(0, s.durability - d.option.rust);
+      log(enc, `The rusting antennae eat into ${t.name}'s ${s.material}-bound shield (durability −${d.option.rust}).`, 'hit');
+    }
     const label = d.type === 'strike' ? d.option.label : d.type;
     let msg = `${t.name} blocks ${a.name}'s ${label} with the shield (durability −${wear})`;
     let force = v[0] + v[1] + v[2];
     if (C.rank(a, 'shield_breaker')) force *= 2;
-    const power = d.type === 'strike' && (CONFIG.powerMotions || []).includes(d.option.motion);
+    const power = d.type === 'strike' && ((CONFIG.powerMotions || []).includes(d.option.motion) || d.option.shieldCrush);
     const weapon = d.type === 'strike' && d.option.weaponType ? WEAPONS[d.option.weaponType] : null;
     const H = CONFIG.materialHardness || {};
     const powerful = (CONFIG.powerfulShieldQualities || []).includes(s.quality);
@@ -1319,17 +1357,32 @@
       const c = chars[id];
       if (c.status.dead) continue;
       // Bleed: each wound bleeds its damage again over its remaining rounds.
-      let bleed = 0;
+      let bleed = 0, poison = 0;
       for (const b of c.bleeds) {
         const loss = Math.round(b.remaining / b.rounds);
         b.remaining -= loss;
         b.rounds -= 1;
-        bleed += loss;
+        if (b.poison) poison += loss; else bleed += loss;
       }
       c.bleeds = c.bleeds.filter((b) => b.rounds > 0 && b.remaining > 0);
       if (bleed > 0) {
         C.damageAttr(c, 'CON', bleed);
         log(enc, `${c.name} bleeds ${bleed} CON.`, 'bleed');
+      }
+      if (poison > 0) {
+        C.damageAttr(c, 'CON', poison);
+        log(enc, `Venom costs ${c.name} ${poison} CON.`, 'bleed');
+      }
+      // Regeneration (monster trait): wounds close and strength returns, unless burned this round.
+      const R = c.traits && c.traits.regen;
+      if (R && !(enc.burned || {})[id] && C.attr(c, 'CON') > 0) {
+        const healed = Math.min(R.con, c.damage.CON || 0);
+        if (healed) C.healAttr(c, 'CON', healed);
+        c.bleeds = c.bleeds.filter((b) => b.poison);
+        const before = c.stamina;
+        c.stamina = Math.min(C.maxStamina(c), c.stamina + R.stamina);
+        if (c.status.unconscious && c.stamina > 0) { c.status.unconscious = false; log(enc, `${c.name} heaves itself back up.`, 'death'); }
+        if (healed || c.stamina > before) log(enc, `${c.name} regenerates${healed ? ` ${healed} CON` : ''}${c.stamina > before ? `${healed ? ' and' : ''} ${c.stamina - before} stamina` : ''}.`);
       }
       // Regeneration.
       const r = C.regen(c);

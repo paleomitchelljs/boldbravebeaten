@@ -192,5 +192,79 @@
     }
   }
 
-  G.Enemies = { TEMPLATES, generate, makeRng, chooseFeats };
+  // ---- Monsters (PROVISIONAL draft) --------------------------------------------------
+  // Fixed builds rather than rolled ones. Each is meant to be strong against one kind of
+  // fighter; the arena (sim/monsters.js) tests whether it is.
+  //   natural  — natural weapons (data.js), always ready
+  //   armor    — natural armor type
+  //   traits   — pack (+1 damage per packmate beside the target, up to N), displacement
+  //              (chance an attack strikes an illusion: ranged / melee), regen (CON and stamina
+  //              back each round unless burned; a downed troll can get back up), apMult and
+  //              staminaMult (a boss: more AP, a bigger per-pass allowance, more stamina)
+  //   policy   — AI policy (grappler, kite…)
+  //   group    — several creatures (a pack)
+  const MONSTERS = {
+    wolf: {
+      name: 'Wolf', blurb: 'Fast; its bite drags you down. Dangerous in numbers.',
+      attrs: { STR: 5, CON: 5, DEX: 7, SPD: 8, INT: 2, WIS: 6, CHA: 2 },
+      natural: ['wolfBite'], armor: 'fur', traits: { pack: 2 }, feats: { dodge_training: 1 },
+    },
+    alphaWolf: {
+      name: 'Alpha wolf', blurb: 'The pack leader: bigger, harder bite.',
+      attrs: { STR: 6, CON: 6, DEX: 7, SPD: 8, INT: 3, WIS: 6, CHA: 3 },
+      natural: ['alphaBite'], armor: 'fur', traits: { pack: 2 }, feats: { dodge_training: 1, toughness: 1 },
+    },
+    wolfPack: { name: 'Wolf pack', blurb: 'An alpha and two wolves. Surround, drag down, tear.', group: ['alphaWolf', 'wolf', 'wolf'] },
+    rustBeetle: {
+      name: 'Rust beetle', blurb: 'Its antennae turn metal armor to flaking rust. Meant to beat plate; harmless-looking to the unarmored.',
+      attrs: { STR: 6, CON: 8, DEX: 5, SPD: 6, INT: 1, WIS: 5, CHA: 1 },
+      natural: ['antennae', 'mandibles'], armor: 'chitin', traits: {}, feats: { toughness: 1 },
+    },
+    displacer: {
+      name: 'Displacer beast', blurb: 'Seen where it isn\'t: arrows mostly strike an illusion. Fast, with reach-2 tentacles. Meant to beat archers.',
+      attrs: { STR: 7, CON: 7, DEX: 7, SPD: 8, INT: 3, WIS: 6, CHA: 3 },
+      natural: ['tentacles'], armor: 'fur', traits: { displacement: { ranged: 0.5, melee: 0.25 } }, feats: {},
+    },
+    giantSpider: {
+      name: 'Giant spider', blurb: 'Quick venomous bites. Armor keeps the fangs out; bare skin doesn\'t. Meant to beat the unarmored.',
+      attrs: { STR: 5, CON: 5, DEX: 8, SPD: 7, INT: 1, WIS: 5, CHA: 1 },
+      natural: ['spiderBite'], armor: 'chitin', traits: {}, feats: {},
+    },
+    owlbear: {
+      name: 'Owlbear', blurb: 'Hugs and won\'t let go: no room for a greatsword or a bow. Meant to beat two-handers.',
+      attrs: { STR: 10, CON: 9, DEX: 5, SPD: 5, INT: 2, WIS: 5, CHA: 2 },
+      natural: ['claws', 'beak'], armor: 'fur', traits: {}, feats: { grappler: 2, pin: 1 }, policy: { grappler: true },
+    },
+    caveTroll: {
+      name: 'Cave troll', blurb: 'Regenerates unless burned; wound-up slams break shields and knock you flat. Meant to beat sword and shield.',
+      attrs: { STR: 10, CON: 10, DEX: 4, SPD: 4, INT: 2, WIS: 4, CHA: 2 },
+      natural: ['trollFists', 'claws'], armor: 'trollHide', traits: { regen: { con: 1, stamina: 6 } }, feats: { power_swing: 1, shield_breaker: 1 },
+    },
+    trollChieftain: {
+      name: 'Troll chieftain', blurb: 'A boss for a whole party: acts like two and a half fighters (AP, per-pass allowance and stamina ×2.5) on a CON-15 body.',
+      attrs: { STR: 10, CON: 15, DEX: 4, SPD: 4, INT: 3, WIS: 4, CHA: 3 },
+      natural: ['trollFists', 'claws'], armor: 'trollHide', traits: { regen: { con: 1, stamina: 6 }, apMult: 2.5, staminaMult: 2.5 }, feats: { power_swing: 1, shield_breaker: 1, toughness: 1 },
+    },
+  };
+
+  // Make a monster (or, for a group, all its members). Returns an array of characters.
+  function makeMonster(key, opts) {
+    opts = opts || {};
+    const M = MONSTERS[key];
+    if (M.group) return M.group.map((k, i) => makeMonster(k, Object.assign({}, opts, { n: i }))[0]);
+    const c = C.newCharacter({ name: opts.name || M.name + (opts.n ? ' ' + (opts.n + 1) : ''), side: opts.side || 'enemy', base: Object.assign({}, M.attrs), starterGear: false });
+    c.level = opts.level || 5;
+    c.monster = key;
+    c.natural = M.natural.slice();
+    c.noUnarmed = true;
+    c.traits = JSON.parse(JSON.stringify(M.traits || {}));
+    c.feats = Object.assign({}, M.feats || {});
+    if (M.armor) c.armor = Items.makeArmor(M.armor, 'full', 'standard');
+    c.policy = Object.assign({}, M.policy || {});
+    c.inventory = { bandages: 0, gold: 0, arrows: 0, bodkins: 0, items: [] };
+    c.stamina = C.maxStamina(c);
+    return [c];
+  }
+
+  G.Enemies = { TEMPLATES, generate, makeRng, chooseFeats, MONSTERS, makeMonster };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

@@ -23,7 +23,8 @@
 
   function gearLine(c) {
     const w = C.wieldedWeapon(c);
-    return [Items.itemName(c.armor), c.shield ? Items.itemName(c.shield) + (c.shield.durability <= 0 ? ' (broken)' : '') : null, w ? Items.itemName(w) : 'Unarmed']
+    const nat = (c.natural || []).map((t) => G.DATA.WEAPONS[t].name.toLowerCase());
+    return [Items.itemName(c.armor), c.shield ? Items.itemName(c.shield) + (c.shield.durability <= 0 ? ' (broken)' : '') : null, nat.length ? nat.join(', ') : w ? Items.itemName(w) : 'Unarmed']
       .filter(Boolean).join(' · ');
   }
 

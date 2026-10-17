@@ -754,3 +754,53 @@ test('arrows and armor: textile catches arrows; bodkins for metal, broadheads fo
   a.inventory.bodkins = 0;
   assert.deepStrictEqual(C.attackOptions(a).filter((o) => o.motion === 'shoot').map((o) => o.arrowHead), ['broadhead']);
 });
+
+test('monsters: natural weapons are always ready; traits work', async () => {
+  const [wolf] = Enemies.makeMonster('wolf');
+  assert.ok(C.attackOptions(wolf).some((o) => o.natural && o.knockdown), 'a wolf bites, and the bite can drag you down');
+  assert.ok(!C.attackOptions(wolf).some((o) => o.unarmed), 'no punching wolves');
+  assert.strictEqual(Enemies.makeMonster('wolfPack').length, 3);
+  // Venom: a bite that wounds poisons, and a bandage doesn't draw it out.
+  const [spider] = Enemies.makeMonster('giantSpider');
+  const bite = C.attackOptions(spider).find((o) => o.venom);
+  const t = fighter('Victim');
+  t.stamina = C.maxStamina(t);
+  const chars = { [spider.id]: spider, [t.id]: t };
+  const enc = Combat.createEncounter('t', [spider.id, t.id], chars, 4, 1);
+  await Combat.applyHit(enc, chars, spider, t, bite, roller(1), {});
+  assert.ok(t.bleeds.some((b) => b.poison), 'poisoned');
+  // Rust: corrodes metal armor and does nothing else.
+  const [beetle] = Enemies.makeMonster('rustBeetle');
+  const touch = C.attackOptions(beetle).find((o) => o.rust);
+  assert.ok(touch && touch.rust > 0);
+  // Bosses: more AP and stamina than their attributes alone give.
+  const [boss] = Enemies.makeMonster('trollChieftain');
+  const [troll] = Enemies.makeMonster('caveTroll');
+  assert.ok(C.apPool(boss) > C.apPool(troll) * 2);
+  assert.ok(C.maxStamina(boss) > C.maxStamina(troll) * 2);
+});
+
+test('monster fights finish without errors', async () => {
+  for (const mk of Object.keys(Enemies.MONSTERS)) {
+    const foe = armed('Hero', 'longsword', { side: 'party' });
+    foe.armor = Items.makeArmor('mail', 'full', 'standard');
+    foe.shield = Items.makeShield('round', 'iron');
+    foe.stamina = C.maxStamina(foe);
+    const mons = Enemies.makeMonster(mk);
+    const chars = { [foe.id]: foe };
+    for (const m of mons) chars[m.id] = m;
+    const enc = Combat.createEncounter('t', Object.keys(chars), chars, 8, 4);
+    const roll = roller(9);
+    const rng = Enemies.makeRng(3);
+    while (enc.phase !== 'over' && enc.round < 30) {
+      await Combat.startRound(enc, chars, roll);
+      let guard = 2000;
+      while ((enc.phase === 'declare' || enc.phase === 'resolve') && guard-- > 0) {
+        if (enc.phase === 'resolve') { await Combat.resolvePass(enc, chars, roll); continue; }
+        const id = Combat.currentActor(enc);
+        Combat.submit(enc, chars, AI.choose(enc, chars, id, rng, chars[id].policy));
+      }
+      assert.ok(guard > 0, mk + ': round loop terminates');
+    }
+  }
+});

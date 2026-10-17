@@ -341,7 +341,7 @@
     };
     const rows = [];
     for (const f of fallen) {
-      const items = [f.armor, f.shield].concat(f.weapons).filter(Boolean);
+      const items = [f.armor, f.shield].concat(f.weapons).filter((it) => it && !(G.DATA.ARMOR[it.type] && G.DATA.ARMOR[it.type].natural));
       rows.push(h('div', { class: 'stack tight' },
         h('div', { class: 'row spread' }, h('b', null, f.name), h('span', { class: 'chip bad' }, f.status.dead ? 'Dead' : 'Unconscious')),
         items.map((it) => h('div', { class: 'row spread small' },

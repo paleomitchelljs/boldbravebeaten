@@ -12,6 +12,10 @@
     mail: { name: 'Mail', mit: { P: 1, S: 4, B: 1 }, spd: 1, dex: 1, stamina: 1, regen: 2, standUp: 1, rarity: 'uncommon' },
     scale: { name: 'Scale', mit: { P: 2, S: 4, B: 2 }, spd: 2, dex: 2, stamina: 1, regen: 3, standUp: 1, rarity: 'rare' },
     plate: { name: 'Plate', mit: { P: 4, S: 6, B: 3 }, spd: 3, dex: 2, stamina: 2, regen: 4, standUp: 2, rarity: 'very rare' },
+    // PROVISIONAL (monster draft): natural armor. No penalties; it can't be taken off or looted.
+    fur: { name: 'Thick fur', mit: { P: 1, S: 1, B: 2 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, rarity: 'common', natural: true },
+    chitin: { name: 'Chitin', mit: { P: 2, S: 3, B: 1 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, rarity: 'common', natural: true },
+    trollHide: { name: 'Troll hide', mit: { P: 1, S: 2, B: 3 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, rarity: 'common', natural: true },
   };
 
   // ---- Shields (Specifics) ------------------------------------------------
@@ -110,6 +114,50 @@
       name: 'Longbow', hands: 2, weight: 'medium', reach: 0, reachName: 'range 2–16', ranged: { min: 2, max: 16, long: 10 },
       faces: { arrow: [7, 0, 0] }, motions: ['shoot'], rarity: 'uncommon', shootAP: 4, shootStamina: 2, material: 'steel', drawWindUp: true,
       notes: 'Heavy draw: drawn one round, loosed the next. −2 damage beyond 10 squares.',
+    },
+
+    // ---- Natural weapons (PROVISIONAL, monster draft) ------------------------------
+    // Always ready, can't be dropped or disarmed. `trait` adds a special effect to the blow:
+    //   knockdown  — opposed STR check after a hit; wins by `margin` → prone (wolves drag prey down)
+    //   venom      — a bite that draws blood poisons: up to con CON a round (no more than the wound)
+    //                for `rounds` rounds; a bandage doesn't stop it
+    //   rust       — no damage; corrodes metal armor (or a blocking metal shield) by `rust` durability
+    //   shieldCrush — every blow caught on a shield counts as a power blow (can break it, drives through)
+    wolfBite: {
+      name: 'Bite', hands: 1, weight: 'light', reach: 1, reachName: 'close', closeOK: true, natural: true, grappleUsable: true,
+      faces: { point: [4, 0, 1] }, motions: ['thrust'], rarity: 'common', trait: { knockdown: { bonus: 2, margin: 3 } },
+    },
+    alphaBite: {
+      name: 'Bite', hands: 1, weight: 'light', reach: 1, reachName: 'close', closeOK: true, natural: true, grappleUsable: true,
+      faces: { point: [5, 0, 1] }, motions: ['thrust'], rarity: 'common', trait: { knockdown: { bonus: 3, margin: 3 } },
+    },
+    spiderBite: {
+      name: 'Venomous bite', hands: 1, weight: 'very light', reach: 1, reachName: 'close', closeOK: true, natural: true, grappleUsable: true,
+      faces: { point: [3, 0, 0] }, motions: ['thrust'], rarity: 'common', trait: { venom: { con: 2, rounds: 3 } },
+    },
+    antennae: {
+      name: 'Rusting antennae', hands: 1, weight: 'very light', reach: 2, reachName: 'reach 2', closeOK: true, natural: true,
+      faces: { head: [0, 0, 0] }, motions: ['swing'], rarity: 'common', trait: { rust: 25 },
+    },
+    mandibles: {
+      name: 'Mandibles', hands: 1, weight: 'light', reach: 1, reachName: 'close', closeOK: true, natural: true, grappleUsable: true,
+      faces: { point: [2, 1, 0] }, motions: ['thrust'], rarity: 'common',
+    },
+    tentacles: {
+      name: 'Spiked tentacles', hands: 1, weight: 'light', reach: 2, reachName: 'reach 2', closeOK: true, natural: true,
+      faces: { head: [3, 2, 3] }, motions: ['swing'], rarity: 'common', material: 'bone',
+    },
+    claws: {
+      name: 'Claws', hands: 1, weight: 'medium', reach: 1, reachName: 'close', closeOK: true, natural: true, grappleUsable: true,
+      faces: { edge: [0, 5, 1] }, motions: ['swing'], rarity: 'common', material: 'bone',
+    },
+    beak: {
+      name: 'Beak', hands: 1, weight: 'medium', reach: 1, reachName: 'close', closeOK: true, natural: true, grappleUsable: true,
+      faces: { point: [4, 0, 2] }, motions: ['thrust'], rarity: 'common', material: 'bone',
+    },
+    trollFists: {
+      name: 'Fists', hands: 2, weight: 'heavy', reach: 2, reachName: 'reach 2', closeOK: true, natural: true,
+      faces: { head: [0, 0, 7] }, motions: ['swing', 'power'], rarity: 'common', material: 'stone', trait: { knockdown: { bonus: 2, margin: 3 }, shieldCrush: true },
     },
   };
 

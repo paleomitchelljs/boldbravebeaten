@@ -1,5 +1,35 @@
 # Simulation findings
 
+## Monster draft (`sim/monsters.js`, `sim/monster-party.js`, page `results/monsters/report.html`)
+
+Seven monsters and a boss, each built to beat one kind of fighter, against all 16 level-5 arena
+fighters (30 fights per pairing per arena) and two parties of three (40 per arena). "Edge" =
+(win rate vs target − own average) − the same for the other single monsters, so fighters' own
+strength by armor doesn't mislead.
+
+| Monster | Built to beat | 1v1 open / close | Edge | Vs a party |
+|---|---|---|---|---|
+| Wolf | (baseline animal) | 38 / 50 | — | 0% |
+| Wolf pack (alpha + 2) | anyone alone | 97 / 99 | — | 3–30% |
+| Rust beetle | plate | 48 / 55 | +20 / +26 | 0% |
+| Displacer beast | archers | 54 / 57 | +7 / −6 | 0% |
+| Giant spider | the unarmored | 55 / 56 | +13 / +10 | 0–3% |
+| Owlbear | two-handers | 44 / 66 | +15 / +2 | 0% |
+| Cave troll | sword and shield | 78 / 87 | +9 / +10 | 0% |
+| Troll chieftain (boss) | a whole party | 100 / 100 | — | 30–60% |
+
+- **Action economy dominates.** A lone monster loses to a party of three almost every time, even
+  the troll that wins 78–87% one-on-one. A boss needed AP, per-pass allowance and stamina ×2.5 and
+  CON 15 to win 23–60% against a party (×2: 0–43%; ×3 with CON 15: 65–83%).
+- Rust beetle and giant spider work as counters. Owlbear works in the open; in close quarters it
+  beats nearly everyone. Displacer misses: arena archers drop the bow for a dagger as soon as
+  anything fast closes, so displacement against arrows rarely matters. The troll beats everyone,
+  so it reads as a boss, not a shield counter.
+- Engine additions: natural weapons and armor; traits knockdown, pack, venom, rust, displacement,
+  shieldCrush, regen, and boss multipliers (apMult raises the pool and per-pass allowance,
+  staminaMult). Fixed along the way: natural attacks couldn't be wound up (the wind-up check
+  wanted a weapon in hand).
+
 ## Round 9: arrows and armor (history), broadheads and bodkins
 
 Changes (PROVISIONAL; the user agreed after a look at the historical record: good plate was close

@@ -32,9 +32,15 @@
   // How much a hit is worth to the attacker, in stamina-equivalent points.
   // Attribute damage costs max stamina and bleeds; a hit that drops the target is worth most.
   function hitValue(attacker, target, option, distance) {
+    // Rust: worth the armor it eats, if there's metal to eat.
+    if (option.rust) {
+      const metal = target.armor && (G.CONFIG.archery.metalArmor || []).includes(target.armor.type) && target.armor.durability > 0;
+      return metal ? Math.min(option.rust, target.armor.durability) * 1.0 : 0;
+    }
     const h = Combat.computeHit(attacker, target, option, { distance: distance || (option.minRange || 1) + (option.closePenalty ? 1 : 0) });
     const attrDmg = h.toCON + h.slashToAttrs + h.bluntToCON;
     let v = attrDmg * (h.noBleed ? 5 : 8) + h.bluntToStamina;
+    if (option.venom && h.toCON + h.slashToAttrs > 0) v += Math.min(option.venom.con, h.toCON + h.slashToAttrs) * option.venom.rounds * 6;
     if (h.toCON + h.bluntToCON >= C.attr(target, 'CON')) v += 60;
     else if (h.bluntToStamina >= target.stamina && target.stamina > 0) v += 40;
     return v;
@@ -50,6 +56,8 @@
       v += (pDown * 10 * C.apScale()) / Math.max(1, opt.ap);
     }
     if (opt.spell) v *= 0.85; // spell points are finite and backlash is a risk
+    const disp = target.traits && target.traits.displacement;
+    if (disp) v *= 1 - (opt.ranged || opt.spell ? disp.ranged : disp.melee);
     return v;
   }
 
@@ -92,7 +100,7 @@
       const d = Combat.dist(me, Combat.posAtPass(enc, f, enc.pass));
       let best = 0;
       for (const o of C.attackOptions(foe)) {
-        if (!C.inRange(o, d) || o.ap > Combat.passLeft(enc, f) + Combat.passCap()) continue;
+        if (!C.inRange(o, d) || o.ap > Combat.passLeft(enc, f) + Combat.passCap(enc, f)) continue;
         if (o.windUp && !(foe.status.windUp && foe.status.windUp.key === C.optionKey(o))) continue;
         if (o.ranged && o.weaponId && C.ammoLeft(foe, o) <= 0) continue;
         best = Math.max(best, hitValue(foe, c, o, d));

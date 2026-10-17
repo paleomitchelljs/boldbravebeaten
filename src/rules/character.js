@@ -270,7 +270,8 @@
   function maxStamina(c) {
     let s = 0;
     for (const a in CONFIG.staminaWeights) s += CONFIG.staminaWeights[a] * attr(c, a);
-    return s;
+    // Monster trait: a big creature (a boss) has more to give.
+    return Math.round(s * ((c.traits && c.traits.staminaMult) || 1));
   }
 
   function regen(c) {
@@ -287,7 +288,8 @@
   }
 
   function apPool(c) {
-    return Math.max(0, (CONFIG.apBase + Math.floor(combatAttr(c, 'SPD') / CONFIG.apSpdDivisor) - fatiguePenalty(c)) * apScale());
+    const mult = (c.traits && c.traits.apMult) || 1; // monster trait: a boss acts like several fighters
+    return Math.max(0, Math.round((CONFIG.apBase + Math.floor(combatAttr(c, 'SPD') / CONFIG.apSpdDivisor) - fatiguePenalty(c)) * apScale() * mult));
   }
 
   function apScale() {
@@ -404,6 +406,19 @@
         }
       }
     }
+    // Natural weapons (monsters): always ready; a held monster keeps only its grapple-usable ones.
+    for (const type of c.natural || []) {
+      const def = WEAPONS[type];
+      if (!def || (grappling && !def.grappleUsable)) continue;
+      const pseudo = { id: 'nat-' + type, type, quality: 'standard', natural: true };
+      for (const motion of def.motions) {
+        const m = MOTIONS[motion];
+        if (m.requiresFeat && !rank(c, m.requiresFeat)) continue;
+        if (tangled && (m.twoHands || motion === 'power')) continue;
+        for (const face of m.faces) if (def.faces[face]) opts.push(strikeOption(c, pseudo, face, motion));
+      }
+    }
+    if (c.noUnarmed) return opts;
     // Unarmed: a punch needs a free hand.
     if (handsBusy(c) < 2) opts.push(unarmedOption(c, 'punch'));
     if (!grappling && !st.prone) opts.push(unarmedOption(c, 'kick'));
@@ -472,11 +487,13 @@
       minRange = 2;
       closePenalty = false;
     }
+    const trait = def.trait || {};
     return {
       kind: 'strike', weaponId: w.id, weaponType: w.type, face, motion, ap, stamina,
+      natural: !!def.natural, knockdown: trait.knockdown || null, venom: trait.venom || null, rust: trait.rust || null, shieldCrush: !!trait.shieldCrush,
       reach: maxRange, minRange, maxRange, closePenalty, ranged, longRange: ranged ? def.ranged.long : null,
       windUp, damage: weaponDamage(c, w, face, motion),
-      label: `${m.name} (${face})`,
+      label: def.natural ? `${def.name}${motion === 'power' ? ' (power)' : ''}` : `${m.name} (${face})`,
     };
   }
 
@@ -540,9 +557,10 @@
       case 'standUp': {
         const curve = CONFIG.standUp;
         const type = armorInfo(c).type;
-        ap = rank(c, 'kip_up') ? S : curve ? curve.ap[type] * S : (a.ap + armorInfo(c).standUp) * S;
+        const k = curve && curve.ap[type] != null ? type : 'none';
+        ap = rank(c, 'kip_up') ? S : curve ? curve.ap[k] * S : (a.ap + armorInfo(c).standUp) * S;
         ap = Math.min(ap, Math.max(CONFIG.minActionAP, apPool(c)));
-        if (curve) return { ap, stamina: staminaCost(c, curve.stamina[type], null, 0) };
+        if (curve) return { ap, stamina: staminaCost(c, curve.stamina[k], null, 0) };
         break;
       }
       case 'clinch':

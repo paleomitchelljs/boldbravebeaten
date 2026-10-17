@@ -1,0 +1,220 @@
+<title>Monster Arena Trials</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Grenze:wght@500;700&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a bestiary trial log. A verdict table first (did each monster beat what it was
+   built to beat?), then one entry per monster with its matchup rows, then the findings.
+   Same tokens as the combat arena page, so the two read as a set. */
+:root {
+  --bg: #e7e9e4; --surface: #f5f6f2; --surface-2: #eceee9; --ink: #1b2220; --muted: #59645f; --line: #c6ccc5;
+  --accent: #2b6a5c; --brass: #8d6d22;
+  --div-pos: #2a78d6; --div-neg: #e34948; --div-mid: #f0efec;
+  --good: #2f7a3c; --warn: #9a6512; --bad: #b0352f;
+  --font-display: 'Grenze', 'Palatino Linotype', Palatino, Georgia, serif;
+  --font-body: 'Alegreya Sans', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141918; --surface: #1d2422; --surface-2: #232b29; --ink: #e2e6e1; --muted: #98a49f; --line: #33403c;
+    --accent: #5db09d; --brass: #c7a24f;
+    --div-pos: #3987e5; --div-neg: #e66767; --div-mid: #383835;
+    --good: #74b97c; --warn: #d9a043; --bad: #e57a72;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141918; --surface: #1d2422; --surface-2: #232b29; --ink: #e2e6e1; --muted: #98a49f; --line: #33403c;
+  --accent: #5db09d; --brass: #c7a24f;
+  --div-pos: #3987e5; --div-neg: #e66767; --div-mid: #383835;
+  --good: #74b97c; --warn: #d9a043; --bad: #e57a72;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 1rem; line-height: 1.5; margin: 0; }
+main { max-width: 1120px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 34px; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 700; line-height: 1.1; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(2rem, 5vw, 2.7rem); }
+h2 { font-size: 1.55rem; }
+h3 { font-size: 1.3rem; }
+p { margin: 0; max-width: 72ch; }
+.muted { color: var(--muted); }
+.small { font-size: 0.88rem; }
+.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.eyebrow { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; color: var(--brass); }
+section { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.head { display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--line); padding-bottom: 22px; }
+.note { background: var(--surface-2); border-left: 3px solid var(--brass); padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 0.92rem; max-width: 80ch; }
+.scroll { overflow-x: auto; }
+table.data { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+table.data th, table.data td { padding: 7px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+table.data th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 700; }
+table.data td.n, table.data th.n { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.chip { display: inline-block; font-size: 0.74rem; font-weight: 700; letter-spacing: 0.04em; padding: 2px 9px; border-radius: 99px; border: 1px solid currentColor; white-space: nowrap; }
+.chip.good { color: var(--good); } .chip.warn { color: var(--warn); } .chip.bad { color: var(--bad); } .chip.info { color: var(--accent); }
+.entries { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 500px), 1fr)); gap: 18px; align-items: start; }
+.entry { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 18px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.entry .top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 12px; }
+.stats { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 0.86rem; color: var(--muted); }
+.stats b { font-family: var(--font-mono); font-weight: 600; color: var(--ink); }
+table.heat { border-collapse: separate; border-spacing: 2px; font-size: 0.8rem; }
+table.heat th { font-weight: 500; color: var(--muted); padding: 3px 5px; text-align: right; white-space: nowrap; font-size: 0.76rem; }
+table.heat thead th { text-align: center; vertical-align: bottom; }
+table.heat td { min-width: 44px; height: 32px; text-align: center; font-family: var(--font-mono); font-variant-numeric: tabular-nums; border-radius: 3px; }
+table.heat td.target { outline: 2px solid var(--ink); outline-offset: -2px; font-weight: 600; }
+table.heat th.sep, table.heat td.sep { width: 8px; min-width: 8px; padding: 0; background: none; }
+.legend { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; font-size: 0.85rem; color: var(--muted); }
+.ramp { display: inline-block; width: 150px; height: 10px; border-radius: 3px; background: linear-gradient(90deg, var(--div-neg), var(--div-mid), var(--div-pos)); vertical-align: middle; }
+.finding { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 18px; display: flex; flex-direction: column; gap: 8px; }
+.finding .tag { display: inline-block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 99px; background: var(--surface-2); color: var(--brass); border: 1px solid var(--line); margin-right: 6px; }
+.finding ul { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 4px; max-width: 80ch; }
+.party { font-size: 0.88rem; display: flex; flex-direction: column; gap: 2px; }
+</style>
+
+<main>
+  <header class="head">
+    <span class="eyebrow">Bold Brave Beaten · monster draft</span>
+    <h1>Monster Arena Trials</h1>
+    <p>Seven monsters and a boss, each built to beat one kind of fighter, fought every level-5 arena fighter (four armor classes × two-handed, sword &amp; shield, grappler, archery) one-on-one in an open field and in close quarters, then fought two parties of three.</p>
+    <p class="small muted" id="facts"></p>
+  </header>
+
+  <section>
+    <div><span class="eyebrow">Verdicts</span><h2>Did each monster beat what it was built to beat?</h2></div>
+    <p class="muted">Fighters differ a lot on their own (plate wins about 70% against people, the unarmored about 34%), so raw win rates mislead. The <b>edge</b> is how much better the monster does against its target than its own average, compared with how much better the other monsters do against the same target. Positive means the design works.</p>
+    <div class="scroll"><table class="data" id="verdicts"></table></div>
+  </section>
+
+  <section>
+    <div><span class="eyebrow">Bestiary</span><h2>Each monster, matchup by matchup</h2></div>
+    <div class="legend"><span>Monster's win rate</span><span class="num">0%</span><span class="ramp" aria-hidden="true"></span><span class="num">100%</span><span>· the outlined cells are what it was built to beat</span></div>
+    <div class="entries" id="entries"></div>
+  </section>
+
+  <section>
+    <div><span class="eyebrow">For the designer</span><h2>What the trials say</h2></div>
+    <article class="finding">
+      <h3><span class="tag">Biggest finding</span>Numbers beat any single monster</h3>
+      <p>A lone monster against three level-5 fighters loses almost every time, even the cave troll that wins 78–87% one-on-one: three times the actions lands three times the wounds. Only a group (the wolf pack) or a boss with its actions multiplied competes with a party. A troll needed about 2.5× AP, per-pass allowance and stamina, plus CON 15, to win 23–50% against a party.</p>
+    </article>
+    <article class="finding">
+      <h3><span class="tag">Working</span>Counters that do their job</h3>
+      <ul>
+        <li><b>Rust beetle</b> is the clearest success (edge +20 / +26): two or three touches turn plate to scrap, then the mandibles work. Against leather it is weak, as intended.</li>
+        <li><b>Giant spider</b> nearly hits its target (+13 / +10): venom only flows when a bite draws blood, and how much depends on how deep it went, so it beats bare skin and bounces off plate.</li>
+        <li><b>Owlbear</b> works in the open (+15) but in close quarters it beats nearly everyone (82% against two-handers, 83% against archers), so its edge there shrinks to +2. Sword &amp; shield handles it in both arenas.</li>
+      </ul>
+    </article>
+    <article class="finding">
+      <h3><span class="tag">Needs work</span>Counters that don't stand out yet</h3>
+      <ul>
+        <li><b>Displacer beast</b> is a fair fight overall but only mildly anti-archer: arena archers drop the bow for a dagger the moment anything fast closes in, so the displacement against arrows rarely matters. It needs a reason for archers to keep shooting, or archers that kite better.</li>
+        <li><b>Cave troll</b> breaks shields as designed, but it beats everyone, so it isn't specifically a shield-breaker. Its natural place is a boss (see the chieftain), or it should lose something (regeneration, reach) to be a mid-tier counter.</li>
+        <li><b>Lone wolf</b> wins 38–50%: about right for an animal against a trained fighter, maybe a little strong in close quarters.</li>
+      </ul>
+    </article>
+    <article class="finding">
+      <h3><span class="tag">New rules</span>What the monsters added to the engine</h3>
+      <ul>
+        <li>Natural weapons (always ready, can't be dropped or disarmed) and natural armor (fur, chitin, troll hide; not lootable).</li>
+        <li>Traits: knockdown bites, pack bonus (+1 damage per packmate beside the target, up to 2), venom (poison a bandage can't stop), rust (corrodes metal armor and shields), displacement (attacks may hit an illusion), shield-crushing blows, regeneration (unless burned; a downed troll can get back up), and boss multipliers for AP, per-pass allowance and stamina.</li>
+      </ul>
+    </article>
+  </section>
+</main>
+
+<script>
+const DATA = /*__DATA__*/null;
+const ARENAS = { open: 'Open field', close: 'Close quarters' };
+const ARMORS = ['heavy', 'medium', 'light', 'unarmored'];
+const STYLES = ['twoHanded', 'shield', 'grappler', 'archery'];
+const LABEL = { heavy: 'Heavy', medium: 'Medium', light: 'Light', unarmored: 'Unarm.', twoHanded: 'Two-hand', shield: 'Shield', grappler: 'Grappler', archery: 'Archery' };
+const pct = (x) => Math.round(100 * x) + '%';
+const el = (tag, attrs, ...kids) => {
+  const e = document.createElement(tag);
+  for (const k in attrs || {}) { if (k === 'class') e.className = attrs[k]; else if (k === 'style') e.setAttribute('style', attrs[k]); else e.setAttribute(k, attrs[k]); }
+  for (const c of kids.flat(Infinity)) if (c != null) e.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  return e;
+};
+function mix(a, b, t) { return `color-mix(in oklab, var(${a}) ${Math.round((1 - t) * 100)}%, var(${b}))`; }
+function heatBg(v) { return v >= 0.5 ? mix('--div-mid', '--div-pos', (v - 0.5) * 2) : mix('--div-mid', '--div-neg', (0.5 - v) * 2); }
+function heatInk(v) { return Math.abs(v - 0.5) > 0.32 ? 'var(--bg)' : 'var(--ink)'; }
+
+// Win rate of a monster against a group (armor index 0, style index 1) in one arena.
+function rate(m, ar, idx, key) {
+  let n = 0, w = 0;
+  for (const [k, a] of Object.entries(DATA.monsters[m].byArena[ar])) if (k.split('/')[idx] === key) { n += a.n; w += a.monsterWins; }
+  return n ? w / n : NaN;
+}
+function overall(m, ar) {
+  let n = 0, w = 0;
+  for (const a of Object.values(DATA.monsters[m].byArena[ar])) { n += a.n; w += a.monsterWins; }
+  return w / n;
+}
+const SOLO = Object.keys(DATA.monsters).filter((m) => !DATA.meta[m].group && !DATA.meta[m].boss);
+// Edge: (rate vs target − own average) minus the same for the other single monsters.
+function edge(m, ar, idx, key) {
+  const own = rate(m, ar, idx, key) - overall(m, ar);
+  const others = SOLO.filter((o) => o !== m).map((o) => rate(o, ar, idx, key) - overall(o, ar));
+  return own - others.reduce((t, x) => t + x, 0) / others.length;
+}
+
+document.getElementById('facts').textContent = `${DATA.n} fights per pairing per arena; ${DATA.partyN || 40} per party matchup; ${DATA.seconds} s of simulation. Every fight is played by the built-in AI on both sides.`;
+
+// Verdict table
+(function verdicts() {
+  const t = document.getElementById('verdicts');
+  t.append(el('thead', null, el('tr', null, el('th', null, 'Monster'), el('th', null, 'Built to beat'), el('th', { class: 'n' }, 'One-on-one, open / close'), el('th', { class: 'n' }, 'Edge vs target, open / close'), el('th', null, 'Verdict'), el('th', { class: 'n' }, 'Vs a party (best / worst)'))));
+  const tb = el('tbody');
+  for (const m of Object.keys(DATA.monsters)) {
+    const meta = DATA.meta[m];
+    const tgt = meta.target;
+    let edgeCell = '—', verdict = el('span', { class: 'chip info' }, meta.boss ? 'Boss' : meta.group ? 'Group' : 'Baseline');
+    if (tgt) {
+      const e = ['open', 'close'].map((ar) => edge(m, ar, tgt[0], tgt[1]));
+      edgeCell = e.map((x) => (x >= 0 ? '+' : '−') + Math.abs(Math.round(x * 100))).join(' / ');
+      const lo = Math.min(...e), hi = Math.max(...e);
+      verdict = lo >= 0.1 ? el('span', { class: 'chip good' }, 'On target') : hi >= 0.08 ? el('span', { class: 'chip warn' }, 'Partly') : el('span', { class: 'chip bad' }, 'Missed');
+    }
+    const party = Object.values(DATA.monsters[m].party).flatMap((p) => ['open', 'close'].map((ar) => p[ar].monsterWin));
+    tb.append(el('tr', null,
+      el('td', null, el('b', null, meta.name)),
+      el('td', { class: 'small' }, DATA.monsters[m].intent),
+      el('td', { class: 'n' }, `${pct(overall(m, 'open'))} / ${pct(overall(m, 'close'))}`),
+      el('td', { class: 'n' }, edgeCell),
+      el('td', null, verdict),
+      el('td', { class: 'n' }, `${pct(Math.max(...party))} / ${pct(Math.min(...party))}`)));
+  }
+  t.append(tb);
+})();
+
+// One entry per monster
+(function entries() {
+  const box = document.getElementById('entries');
+  for (const m of Object.keys(DATA.monsters)) {
+    const meta = DATA.meta[m];
+    const M = DATA.monsters[m];
+    const tgt = meta.target;
+    const head = el('tr', null, el('th', null, ''), ARMORS.map((a) => el('th', null, LABEL[a])), el('th', { class: 'sep' }), STYLES.map((s) => el('th', null, LABEL[s])));
+    const rows = Object.keys(ARENAS).map((ar) => el('tr', null, el('th', { scope: 'row' }, ARENAS[ar]),
+      ARMORS.map((a) => { const v = rate(m, ar, 0, a); return el('td', { class: tgt && tgt[0] === 0 && tgt[1] === a ? 'target' : '', style: `background:${heatBg(v)};color:${heatInk(v)}`, title: `${meta.name} vs ${a} armor, ${ARENAS[ar]}: ${pct(v)}` }, pct(v)); }),
+      el('td', { class: 'sep' }),
+      STYLES.map((s) => { const v = rate(m, ar, 1, s); return el('td', { class: tgt && tgt[0] === 1 && tgt[1] === s ? 'target' : '', style: `background:${heatBg(v)};color:${heatInk(v)}`, title: `${meta.name} vs ${s}, ${ARENAS[ar]}: ${pct(v)}` }, pct(v)); })));
+    const evs = {};
+    let fights = 0;
+    for (const ar of Object.keys(ARENAS)) for (const a of Object.values(M.byArena[ar])) { fights += a.n; for (const [k, v] of Object.entries(a.ev)) evs[k] = (evs[k] || 0) + v; }
+    const EV = { rust: 'rusting touches', illusion: 'attacks on an illusion', venom: 'envenomed bites', regen: 'regenerations', getsUp: 'times back on its feet', knockdown: 'knockdowns', clinch: 'clinches', pin: 'pins', shieldBroken: 'shields broken', pack: 'pack-bonus bites' };
+    const evText = Object.entries(EV).filter(([k]) => (evs[k] || 0) / fights >= 0.05).map(([k, l]) => `${((evs[k] || 0) / fights).toFixed(2)} ${l}`).join(' · ');
+    box.append(el('article', { class: 'entry' },
+      el('div', { class: 'top' }, el('h3', null, meta.name), el('span', { class: 'small muted' }, 'Built to beat: ' + M.intent)),
+      el('p', { class: 'small' }, meta.blurb),
+      el('div', { class: 'stats' }, meta.stats.map(([k, v]) => el('span', null, k + ' ', el('b', null, v)))),
+      el('div', { class: 'scroll' }, el('table', { class: 'heat' }, el('thead', null, head), el('tbody', null, rows))),
+      evText ? el('p', { class: 'small muted' }, 'Per fight: ' + evText) : null,
+      el('div', { class: 'party' }, el('span', { class: 'eyebrow' }, 'Against a party of three'),
+        Object.values(M.party).map((p) => el('span', null, `${p.label}: `, el('b', { class: 'num' }, `${pct(p.open.monsterWin)} / ${pct(p.close.monsterWin)}`), el('span', { class: 'muted' }, ` (open / close), ${(((p.open.partyDeaths + p.close.partyDeaths) / 2)).toFixed(2)} party deaths a fight`))))));
+  }
+})();
+</script>

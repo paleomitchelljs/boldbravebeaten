@@ -54,6 +54,19 @@
             const names = (list, cat) => list[i].map(([, v]) => (v ? (cat[v] ? cat[v].name : v) : 'none')).join(' / ');
             return h('tr', null, h('td', { class: 'num' }, band), h('td', null, names(T.armor, D.ARMOR)), h('td', null, names(T.weapons, D.WEAPONS)), h('td', null, names(T.shield, D.SHIELDS)));
           }))))),
+      h('section', { class: 'panel' },
+        h('div', { class: 'panel-head' }, h('h2', null, 'Monsters'), h('span', { class: 'small muted' }, 'Draft: fixed builds, tested in sim/monsters.js')),
+        h('div', { class: 'row', style: { alignItems: 'end', gap: '14px' } },
+          h('label', { class: 'field', for: 'gen-monster' }, h('span', { class: 'label' }, 'Monster'),
+            select('gen-monster', ui.monster || 'wolf', Object.keys(E.MONSTERS).map((k) => [k, E.MONSTERS[k].name]), (v) => { ui.monster = v; app.render(); })),
+          h('button', { class: 'primary', onclick: () => {
+            const made = E.makeMonster(ui.monster || 'wolf');
+            for (const c of made) app.addCharacter(c, true);
+            ui.last = made.map((c) => c.id);
+            app.save(); app.render();
+            toast(`${E.MONSTERS[ui.monster || 'wolf'].name} added`);
+          } }, 'Add')),
+        h('p', { class: 'small muted' }, E.MONSTERS[ui.monster || 'wolf'].blurb)),
       last.length ? h('section', { class: 'stack' },
         h('div', { class: 'section-title' }, h('h2', null, 'Just generated'),
           h('button', { onclick: () => { app.ui.battleSetup = { picked: Object.fromEntries(s.order.filter((id) => s.characters[id].side === 'party' && !s.characters[id].status.dead).concat(ui.last).map((id) => [id, true])) }; app.go('battle'); } }, 'Fight them')),

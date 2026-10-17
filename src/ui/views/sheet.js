@@ -8,7 +8,8 @@
   const D = G.DATA;
   const CONFIG = G.CONFIG;
 
-  const opts = (obj) => Object.keys(obj).map((k) => [k, obj[k].name]);
+  // Natural (monster) items stay out of the lists, except the one already chosen.
+  const opts = (obj, keep) => Object.keys(obj).filter((k) => !obj[k].natural || k === keep).map((k) => [k, obj[k].name]);
 
   function attrTable(app, c) {
     const change = () => { c.stamina = Math.min(c.stamina, C.maxStamina(c)); app.save(); app.render(); };
@@ -68,7 +69,7 @@
     return h('div', { class: 'stack tight' },
       h('div', { class: 'row' },
         h('span', { class: 'label', style: { minWidth: '4.5em' } }, 'Armor'),
-        select('armor-type', a ? a.type : '', [['', 'None']].concat(opts(D.ARMOR)), (v) => set(v, a ? a.coverage : 'full', a ? a.quality : 'standard'), { 'aria-label': 'Armor type' }),
+        select('armor-type', a ? a.type : '', [['', 'None']].concat(opts(D.ARMOR, a && a.type)), (v) => set(v, a ? a.coverage : 'full', a ? a.quality : 'standard'), { 'aria-label': 'Armor type' }),
         a ? select('armor-cov', a.coverage, opts(D.COVERAGE), (v) => set(a.type, v, a.quality), { 'aria-label': 'Coverage' }) : null,
         a ? select('armor-q', a.quality, opts(D.QUALITY), (v) => set(a.type, a.coverage, v), { 'aria-label': 'Armor quality' }) : null),
       a ? h('div', { class: 'row small' },

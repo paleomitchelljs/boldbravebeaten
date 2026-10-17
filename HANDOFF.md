@@ -155,6 +155,16 @@ dropped). Style averages (open / close): two-handed 45 / 39, sword and shield 59
 46 / 31, grappler 45 / 61. Plate is dominant and that's accepted (rarity is its balance). See
 `sim/FINDINGS.md`. Baselines: `sim/results/arena-r3/` through `arena-r7/`.
 
+## Monsters (draft)
+
+`src/rules/enemies.js` MONSTERS + `makeMonster(key)`: wolf, alpha wolf, wolf pack, rust beetle,
+displacer beast, giant spider, owlbear, cave troll, troll chieftain (boss). Natural weapons live in
+`data.js` WEAPONS with `natural: true` (and `trait`), natural armor in ARMOR (fur, chitin, troll
+hide). Character traits: `c.natural`, `c.traits` (pack, displacement, regen, apMult, staminaMult),
+`c.noUnarmed`. The Enemies tab can add monsters. Trials: `node sim/monsters.js` (16 fighters ×
+2 arenas + two parties) and `node sim/monsters-page.js` builds `sim/results/monsters/report.html`;
+`node sim/monster-party.js` for party fights only. Results are in FINDINGS.
+
 ## Open questions awaiting the user
 
 1. **The AP cap.** On trial at 4 AP per pass; 6 balanced better with guards.
