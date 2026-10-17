@@ -32,26 +32,23 @@ the arena results and the queued work.
 | Term | Meaning |
 |---|---|
 | Round | Starts with everyone rolling initiative. Ends when everyone is out of actions. |
-| Turn | One character's single action, taken in initiative order. |
+| Turn | One character's go in initiative order; it may hold several actions up to the per-pass AP cap. |
 | Pass | One set of everyone's turns. All of a pass's actions resolve at the end of that pass, then the next pass begins. |
 
 Characters take part in as many passes as their AP and action choices allow.
 Characters who spend early sit out the last passes.
 
-## Queued work (not started)
+## Current state (round 4 done)
 
-1. **Terminology.** Includes the engine change to resolve each pass at its end.
-2. **Mobile battle UI.** The main view is the map, the current character's name
-   and a compact action panel with dropdowns. Names go in a sidebar, and
-   clicking one opens that character's sheet.
-3. **Items.** Materials (bronze, iron, steel, bone, leather, cloth, plus rare
-   ebony- or Daedric-like ones), maker tags (dwarven-forged, elven-forged) and
-   keywords (silvered, runic, magic). Propose mechanics to the user first.
-4. **AP spend cap.** Undecided. I recommended a defense cap over a blanket cap.
+- Each pass resolves at its end, with a defense step before it.
+- The AP-per-pass cap is on trial (4 AP on the sheet).
+- The mobile battle UI has been redesigned.
 
-Also open:
+## Waiting on the user
 
-- the reach-keeping rule;
-- a group-fight arena;
-- the magic overhaul (deferred);
-- confirming the pooled magic feat tiers.
+1. **Reach-keeping rule.** Pass-by-pass resolution didn't fix it.
+2. **The cap.** Keep it at 4, change it to 6, or adjust two-handed costs?
+3. **Item materials, maker tags and keywords.** The proposal is in HANDOFF.md; build only after
+   the user approves.
+
+On hold at the user's request: group fights, the magic overhaul, the magic feat tiers.

@@ -12,7 +12,7 @@
         if (v == null || v === false) continue;
         if (k.startsWith('on') && typeof v === 'function') el.addEventListener(k.slice(2), v);
         else if (k === 'class') el.className = v;
-        else if (k === 'style' && typeof v === 'object') Object.assign(el.style, v);
+        else if (k === 'style' && typeof v === 'object') for (const sk in v) { if (sk.startsWith('--')) el.style.setProperty(sk, v[sk]); else el.style[sk] = v[sk]; }
         else if (k === 'value') el.value = v;
         else if (k === 'checked' || k === 'selected' || k === 'disabled' || k === 'open') el[k] = !!v;
         else if (v === true) el.setAttribute(k, '');

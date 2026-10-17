@@ -90,9 +90,18 @@
         s.encounter.round -= 1;
         s.encounter.phase = s.encounter.round ? 'roundEnd' : 'setup';
       }
+      if (!s.encounter.spent) {
+        // Saved before passes resolved one at a time: pick up at the next round.
+        Object.assign(s.encounter, { spent: {}, turnDone: {}, defendDone: {}, step: 'turns' });
+        if (['declare', 'resolve', 'resolving'].includes(s.encounter.phase)) {
+          s.encounter.phase = s.encounter.round ? 'roundEnd' : 'setup';
+          s.encounter.decls = [];
+          s.encounter.log.push({ round: s.encounter.round, text: 'The round rules changed since this battle was saved; continue with the next round.', cls: 'fizzle' });
+        }
+      }
       if (s.encounter.phase === 'resolving') {
         s.encounter.phase = 'roundEnd';
-        s.encounter.log.push({ round: s.encounter.round, text: 'The page was closed mid-resolution; continue with the next round.', cls: 'fizzle' });
+        s.encounter.log.push({ round: s.encounter.round, text: 'The page was closed while a pass was resolving; continue with the next round.', cls: 'fizzle' });
       }
     }
     return s;

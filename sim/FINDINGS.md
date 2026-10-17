@@ -1,5 +1,47 @@
 # Simulation findings
 
+## Round 4: passes resolve one at a time, and a per-pass AP cap (trial)
+
+Changes (PROVISIONAL; see the Rules tab and `src/rules/config.js`):
+
+- **Terms.** A round starts with initiative. Characters take **turns** in initiative order; one
+  set of everyone's turns is a **pass**. After the turns comes a defense step, in which anyone
+  with an attack landing on them may answer it. Then every action of the pass resolves. Passes
+  repeat until no one has actions left (or a pass goes by in which nobody does anything).
+  Before this, every pass was declared first and the whole round resolved at the end.
+- **AP per pass** (`apPerPass: 2` base AP, 4 on the sheet). A turn may hold several actions up to
+  the cap, so cheap, feat-reduced actions fit two to a pass. An action costing more keeps paying
+  from the next passes' allowance and lands when fully paid (`spanLands: 'late'`); a 6-AP swing
+  lands a pass later, where the target can see it coming. Defenses act at once and borrow the
+  overspend from the next pass. Moving and drawing a longbow can no longer share a pass.
+
+Results (40 fights per pairing; `results/arena/report.html`, compared against `results/arena-r3/`).
+Style averages, open field / close quarters:
+
+| Rules | Two-handed | Sword & shield | Archery | Heavy armor | Rounds |
+|---|---|---|---|---|---|
+| Round 3 | 41 / 60 | 68 / 70 | 59 / 44 | 52 / 62 | 5.8 / 4.2 |
+| Passes resolve, no cap | 44 / 52 | 63 / 74 | 53 / 45 | 51 / 68 | 5.2 / 3.5 |
+| **Cap 4 AP (default)** | 35 / 53 | 63 / 72 | 55 / 43 | 54 / 70 | 5.6 / 3.8 |
+| Cap 4, overflow lands at once | 37 / 57 | 61 / 71 | 57 / 42 | 58 / 70 | 5.5 / 3.6 |
+| Cap 6 AP | 44 / 54 | 61 / 72 | 54 / 44 | 52 / 69 | 5.4 / 3.7 |
+
+What it means:
+
+- Resolving each pass on its own barely moves the balance. In particular it **does not keep a
+  shorter weapon out**: the step in and the dagger thrust still happen with no reaction from the
+  reach weapon. Shove use stays near 0.05 a fight. The reach question still needs a rule
+  (stop-thrust, extra AP to step into reach, shove costs the target AP, no dagger with a shield).
+- The 4-AP cap costs **two-handers** most (−9 points in the open against no cap): their 7–8 AP
+  swings span two passes and are telegraphed. Sidearm (dagger) draws rose by about half, because
+  dagger thrusts fit inside the cap. If the cap stays, two-handed and power swing costs probably
+  need a look (for example, let a heavy swing land in the pass it starts but cost the next pass's
+  allowance, as with `spanLands: 'now'`, which recovered 2–4 points).
+- A 6-AP cap balanced the open field best (17 points between weapon styles, against 28 at 4 AP),
+  but close quarters is unchanged.
+- Noise: each style figure averages about 2,400 fights, but they share opponents; treat
+  differences under about 3 points as noise.
+
 ## Round 3: longbow draw, inside-reach rule, shove, shields vs power, plate retune
 
 Changes (PROVISIONAL; see the Rules tab and `src/rules/config.js`):

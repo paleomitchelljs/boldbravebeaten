@@ -30,13 +30,19 @@ be loaded on another device.
    rarity, so plate only appears on high-level foes.
 3. **Battle**: choose combatants and a grid size, place tokens, then for each round:
    - roll initiative (players enter a d10);
-   - declare in initiative order, one action per pass: strikes, block/parry/dodge
-     answering a specific declared strike, moves, trips, disarms, grapples,
-     bandaging, and so on. Remaining AP is hidden; Feint hides strikes from anyone
-     whose Read Attack rank is lower;
-   - resolve: the platform replays the declarations pass by pass and asks each
-     player for the rolls it needs (defense checks, slashing d4s, opposed checks);
-   - end of round: bleed and regeneration are applied automatically.
+   - **turns** go in initiative order. On a turn a character can take several actions (strikes,
+     moves, trips, disarms, grapples, shoves, bandaging, and so on), up to 4 AP per pass. Remaining
+     AP is hidden; Feint hides strikes from anyone whose Read Attack rank is lower;
+   - after everyone's turn comes a **defense step**: anyone with an attack landing on them may
+     block, parry or dodge it;
+   - the **pass** then resolves, and the platform asks each player for the rolls it needs
+     (defense checks, slashing d4s, opposed checks). An action costing more than the pass allows
+     lands in a later pass;
+   - passes repeat until no one has actions left; then bleed and regeneration are applied
+     automatically and the next round rolls initiative again.
+
+   On a phone the battle screen shows a strip of names, the map and the current character's
+   actions in collapsible groups. Tap a name or a token to see that character's sheet.
 4. After a battle, take loot from the fallen. Then use **Long rest** on the Company
    tab for daily heal rolls, with an optional tender and town bonus.
 
@@ -70,7 +76,7 @@ npm test   # or: node --test
 
 The tests check the Specifics worked examples (a longsword swing against mail
 costs 1 stamina; the same swing unarmored deals 7 slashing and then 7 CON of
-bleed), feat prerequisites, declaration order, Feint visibility, healing, and
+bleed), feat prerequisites, turn and pass order, the per-pass AP cap, Feint visibility, healing, and
 120 randomized AI-vs-AI fights.
 
 ## Simulations

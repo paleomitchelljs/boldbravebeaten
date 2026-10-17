@@ -3,7 +3,11 @@
  * simulator. It only uses information the character could see: a strike hidden
  * by Feint is judged by what the attacker might be doing, not what they are doing.
  *
- * Each declaration, in order:
+ * choose() is called again and again during a character's turn until it returns
+ * 'endTurn' (done for this pass) or 'concede' (done for the round). In the defense
+ * step at the end of a pass it only answers attacks landing this pass.
+ *
+ * Each turn decision, in order:
  *   1. stand up; 2. release a wind-up if the target is in range; 3. defend;
  *   4. escape, bandage, re-arm; 5. switch weapons when another fits the distance
  *   better; 6. occasional trip/grapple; 7. keep a ranged weapon out of melee;
@@ -14,7 +18,7 @@
  *   maneuverRate  chance per declaration to try a trip/grapple when one is in reach (default 0.15)
  *   kickBias      multiplier on the value of kicks (default 1)
  *   defendFloor   minimum expected value before spending AP on a defense (default 1.5)
- *   cautious      keep some AP spare during pass 1 to answer strikes (default true)
+ *   cautious      think twice about spending the whole pass when a foe still to act can reach (default true)
  *   windUp        willingness to wind up (multiplier on its value; 0 = never; default 1)
  *   kite          ranged characters back away from melee (default true)
  */
@@ -188,6 +192,7 @@
         if (need > la.ap) continue;
         const dd = Combat.dist({ x, y }, tp);
         let score = Math.abs(dd - goal) * 10 + need / C.apScale();
+        if (need > la.passLeft) score += 4; // lands a pass later
         if (avoid) {
           // Stay out of every foe's reach if possible.
           for (const fp of foePos) if (Combat.dist({ x, y }, fp) <= avoid) score += 25;
@@ -210,6 +215,20 @@
     const c = chars[id];
     const la = Combat.legalActions(enc, chars, id);
     const ap = la.ap;
+    const endTurn = { actor: id, type: 'endTurn' };
+    if (la.step === 'defend') {
+      const def = chooseDefense(enc, chars, id, la, P);
+      return def ? def.decl : endTurn;
+    }
+    // One move per pass: it lands at the end of the pass, so a second one would plan from a
+    // square the character hasn't reached yet.
+    const movedThisPass = enc.decls.some((d) => d.actor === id && d.type === 'move' && d.declaredPass === enc.pass);
+    if (movedThisPass) la.move = null;
+    // Foes who still take a turn this pass and can reach me.
+    const myTurn = enc.order.indexOf(id);
+    const threatened = enemiesOf(enc, chars, id).some((f) => enc.order.indexOf(f) > myTurn && !enc.turnDone[f] && Combat.passLeft(enc, f) > 0 &&
+      foeRate(chars[f], c, Combat.dist(Combat.posAtPass(enc, id, enc.pass), Combat.posAtPass(enc, f, enc.pass))) > 0);
+    const minDefense = Math.min(...['block', 'parry', 'dodge'].map((k) => C.actionCost(c, k).ap));
     const S = C.apScale();
     const foes = enemiesOf(enc, chars, id);
     const at = (x) => Combat.posAtPass(enc, x, enc.pass);
@@ -307,7 +326,7 @@
       for (const t of atk.targets) {
         if (!t.inReach || !foes.includes(t.id)) continue;
         let v = rate(c, chars[t.id], atk, t.distance) * P.kickBias ** (atk.unarmed === 'kick' ? 1 : 0);
-        if (P.cautious && enc.pass === 1 && ap - atk.ap < 2 * S && la.ap > 3 * S) v *= 0.75;
+        if (P.cautious && threatened && la.passLeft - atk.ap < minDefense) v *= 0.85;
         if (!best || v > best.v) best = { v, decl: { actor: id, type: 'strike', option: atk, target: t.id } };
       }
     }
@@ -341,7 +360,7 @@
     const goal = pref.rate > 0 ? pref.d : 1;
     const mv = planMove(enc, chars, id, la, near.id, goal, foes, rangedLoadout && P.kite ? threatReach(chars, foes) : 0);
     if (mv) return mv;
-    return { actor: id, type: 'concede' };
+    return endTurn;
   }
 
   G.AI = { choose, hitValue, perceivedThreat, preferredDistance, DEFAULTS };

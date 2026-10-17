@@ -1,13 +1,18 @@
 /*
  * Combat engine: round structure, declarations, resolution, damage.
  *
- * Round (Mechanics Outline):
- *   1. Roll initiative; AP pool = f(SPD) − fatigue.
- *   2. Declaration passes in initiative order, one action per pass, until every
- *      character has spent all AP or conceded. No holding.
- *   3. Resolution: replay pass by pass. Actions within a pass are simultaneous;
- *      passes resolve in sequence.
- *   4. End of round: bleed, regeneration, fatigue.
+ * Terms:
+ *   Round  starts with everyone rolling initiative (AP pool = f(SPD) − fatigue) and
+ *          ends when everyone is out of actions; then bleed, regeneration, fatigue.
+ *   Turn   one character's actions in a pass, taken in initiative order. A turn may
+ *          hold several actions, up to the per-pass AP cap (CONFIG.apPerPass).
+ *   Pass   one set of everyone's turns, then a defense step in which anyone attacked
+ *          this pass may answer, then every action of the pass resolves together.
+ *
+ * An action costing more than the AP left in this pass keeps paying from the next
+ * passes' allowance; a strike, maneuver or move lands at the end of the pass in
+ * which it is fully paid, a defense takes effect at once. Unspent AP is lost at the
+ * end of the round.
  *
  * Every die roll goes through an async `roller(request)` so the UI can ask the
  * player to type in their physical roll, or roll automatically.
@@ -27,7 +32,8 @@
     const enc = {
       id: Items.uid('enc'), name: name || 'Encounter', round: 0, phase: 'setup',
       ids: ids.slice(), grid: { w: w || 10, h: h || 8 }, pos: {},
-      initiative: {}, order: [], ap: {}, apStart: {}, conceded: {}, pass: 1, turn: 0,
+      initiative: {}, order: [], ap: {}, apStart: {}, conceded: {}, pass: 1, turn: 0, step: 'turns',
+      spent: {}, turnDone: {}, defendDone: {},
       decls: [], seq: 0, log: [], hitThisRound: {}, fortressUsed: {}, startedAt: Date.now(),
     };
     autoPlace(enc, chars);
@@ -75,8 +81,8 @@
     enc.conceded = {};
     enc.hitThisRound = {};
     enc.fortressUsed = {};
-    enc.pass = 1;
-    enc.turn = 0;
+    enc.pass = 0;
+    enc.spent = {};
     enc.initiative = {};
     const active = enc.ids.filter((id) => C.isActive(chars[id]));
     for (const id of active) {
@@ -95,51 +101,121 @@
       enc.apStart[id] = enc.ap[id];
     }
     log(enc, `Round ${enc.round} — initiative: ` + enc.order.map((id) => `${chars[id].name} ${enc.initiative[id]}`).join(', '), 'round');
-    enc.phase = 'declare';
-    if (!canDeclare(enc, enc.order[0])) advance(enc);
+    startPass(enc, chars);
     return enc;
   }
 
-  // ---- Declarations ------------------------------------------------------
-  function canDeclare(enc, id) {
-    return id != null && !enc.conceded[id] && (enc.ap[id] || 0) >= CONFIG.minActionAP;
+  // ---- Passes and turns --------------------------------------------------
+  // Most AP a character may spend in one pass (Infinity when there is no cap).
+  function passCap() {
+    return CONFIG.apPerPass ? CONFIG.apPerPass * C.apScale() : Infinity;
+  }
+
+  function spentIn(enc, id, pass) {
+    return (enc.spent[id] && enc.spent[id][pass]) || 0;
+  }
+
+  // AP this character can still put in this pass.
+  function passLeft(enc, id) {
+    return Math.max(0, Math.min(enc.ap[id] || 0, passCap() - spentIn(enc, id, enc.pass)));
+  }
+
+  // Pay an action's AP from this pass's allowance, then the next passes'. Returns the
+  // pass in which the last of it is paid.
+  function payAP(enc, id, ap) {
+    const cap = passCap();
+    const s = enc.spent[id] || (enc.spent[id] = {});
+    let p = enc.pass, left = ap;
+    while (left > 0) {
+      const put = Math.min(left, cap - (s[p] || 0));
+      if (put > 0) { s[p] = (s[p] || 0) + put; left -= put; }
+      if (left > 0) p += 1;
+    }
+    enc.ap[id] -= ap;
+    return p;
+  }
+
+  // Attacks aimed at this character that land this pass and that it hasn't answered.
+  function unansweredIncoming(enc, id) {
+    return enc.decls.filter((d) => ATTACK_TYPES.includes(d.type) && d.target === id && d.pass === enc.pass && !d.done &&
+      !enc.decls.some((x) => x.actor === id && x.answers === d.n));
+  }
+
+  function eligible(enc, id) {
+    if (id == null || enc.conceded[id] || passLeft(enc, id) < CONFIG.minActionAP) return false;
+    if (enc.step === 'turns') return !enc.turnDone[id];
+    return !enc.defendDone[id] && unansweredIncoming(enc, id).length > 0;
+  }
+
+  function startPass(enc, chars) {
+    enc.pass += 1;
+    enc.step = 'turns';
+    enc.turn = -1;
+    enc.turnDone = {};
+    enc.defendDone = {};
+    enc.phase = 'declare';
+    for (const id of enc.order) if (!C.isActive(chars[id])) enc.conceded[id] = true;
+    advance(enc);
   }
 
   function currentActor(enc) {
     return enc.phase === 'declare' ? enc.order[enc.turn] : null;
   }
 
+  // Next character to act: turns in initiative order, then the defense step, then resolve.
   function advance(enc) {
     const n = enc.order.length;
-    for (let step = 0; step < n * 2 + 1; step++) {
+    for (;;) {
       enc.turn += 1;
       if (enc.turn >= n) {
-        enc.turn = 0;
-        if (!enc.order.some((id) => canDeclare(enc, id))) break;
-        enc.pass += 1;
+        if (enc.step === 'turns') {
+          enc.step = 'defend';
+          enc.turn = -1;
+          continue;
+        }
+        enc.phase = 'resolve';
+        return;
       }
-      if (canDeclare(enc, enc.order[enc.turn])) return;
+      if (eligible(enc, enc.order[enc.turn])) return;
     }
-    enc.phase = 'resolve';
   }
 
+  // Finish this turn (or defense step) for the pass; any AP left stays for later passes.
+  function endTurn(enc, id) {
+    if (currentActor(enc) !== id) return;
+    if (enc.step === 'turns') enc.turnDone[id] = true;
+    else enc.defendDone[id] = true;
+    advance(enc);
+  }
+
+  // Done for the whole round: no more actions or defenses until the next round.
   function concede(enc, id) {
     enc.conceded[id] = true;
-    advance(enc);
+    if (currentActor(enc) === id) advance(enc);
+  }
+
+  // One entry point for a decision: a declaration, 'endTurn' or 'concede'.
+  // A declaration that can't be made ends the turn and returns the reason.
+  function submit(enc, chars, d) {
+    if (d.type === 'concede') return concede(enc, d.actor), null;
+    if (d.type === 'endTurn') return endTurn(enc, d.actor), null;
+    const err = declare(enc, chars, d);
+    if (err) endTurn(enc, d.actor);
+    return err;
   }
 
   // Where a character will be after its own declared moves.
   function projectedPos(enc, id) {
     let p = enc.pos[id];
-    for (const d of enc.decls) if (d.actor === id && d.type === 'move') p = d.to;
+    for (const d of enc.decls) if (d.actor === id && d.type === 'move' && !d.done) p = d.to;
     return p;
   }
 
   // Where a character will stand when actions of the given pass resolve
-  // (moves take effect at the end of their own pass).
+  // (moves take effect at the end of the pass in which they land).
   function posAtPass(enc, id, pass) {
     let p = enc.pos[id];
-    for (const d of enc.decls) if (d.actor === id && d.type === 'move' && d.pass < pass) p = d.to;
+    for (const d of enc.decls) if (d.actor === id && d.type === 'move' && !d.done && d.pass < pass) p = d.to;
     return p;
   }
 
@@ -167,35 +243,40 @@
   function legalActions(enc, chars, id) {
     const c = chars[id];
     const ap = enc.ap[id] || 0;
+    const left = passLeft(enc, id);
+    // An action can be started with any AP left this pass; the rest comes out of later passes.
+    const can = (cost) => cost <= ap && left >= CONFIG.minActionAP;
     const me = posAtPass(enc, id, enc.pass);
     const others = enc.ids.filter((o) => o !== id && !chars[o].status.dead);
-    const out = { ap, attacks: [], defenses: [], maneuvers: [], other: [], move: null };
+    const out = { ap, passLeft: left, passCap: passCap(), step: enc.step, pass: enc.pass, attacks: [], defenses: [], maneuvers: [], other: [], move: null, incomingLater: [] };
+
+    // Defenses against attacks aimed at me that land this pass and that I have not answered.
+    for (const d of unansweredIncoming(enc, id)) {
+      const opts = [];
+      for (const kind of DEFENSE_TYPES) {
+        const cost = C.actionCost(c, kind);
+        const why = defenseUnavailable(c, kind, d, chars, enc);
+        opts.push({ type: kind, ap: cost.ap, stamina: cost.stamina, affordable: can(cost.ap) && !why, spans: cost.ap > left, why });
+      }
+      out.defenses.push({ decl: d, options: opts });
+    }
+    // Slow attacks already on their way that land in a later pass.
+    out.incomingLater = enc.decls.filter((d) => ATTACK_TYPES.includes(d.type) && d.target === id && d.pass > enc.pass && !d.done);
+    if (enc.phase === 'declare' && enc.step === 'defend') return out;
 
     const planned = plannedAttackOptions(enc, c);
     const spPlanned = enc.decls.filter((d) => d.actor === id && d.type === 'strike' && d.option.spell).reduce((t, d) => t + d.option.spCost, 0);
     for (const opt of planned) {
       const why = attackUnavailable(enc, c, opt, spPlanned);
       out.attacks.push(Object.assign({}, opt, {
-        affordable: opt.ap <= ap && !why,
+        affordable: can(opt.ap) && !why,
+        spans: opt.ap > left,
         why,
         targets: others.map((o) => {
           const dd = dist(me, posAtPass(enc, o, enc.pass));
           return { id: o, inReach: C.inRange(opt, dd), tooClose: dd < (opt.minRange || 1), distance: dd };
         }),
       }));
-    }
-
-    // Defenses against declared attacks aimed at me that I have not answered yet.
-    const incoming = enc.decls.filter((d) => ATTACK_TYPES.includes(d.type) && d.target === id);
-    for (const d of incoming) {
-      if (enc.decls.some((x) => x.actor === id && x.answers === d.n)) continue;
-      const opts = [];
-      for (const kind of DEFENSE_TYPES) {
-        const cost = C.actionCost(c, kind);
-        const why = defenseUnavailable(c, kind, d, chars, enc);
-        opts.push({ type: kind, ap: cost.ap, stamina: cost.stamina, affordable: cost.ap <= ap && !why, why });
-      }
-      out.defenses.push({ decl: d, options: opts });
     }
 
     const reach = CONFIG.range.maneuverMax;
@@ -207,20 +288,24 @@
       let r = reach;
       if (kind === 'trip' && hookWeapon(c)) r = WEAPONS[C.wieldedWeapon(c).type].reach;
       out.maneuvers.push({
-        type: kind, ap: cost.ap, stamina: cost.stamina, affordable: cost.ap <= ap && !(grappled && kind !== 'grapple'),
+        type: kind, ap: cost.ap, stamina: cost.stamina, affordable: can(cost.ap) && !(grappled && kind !== 'grapple'), spans: cost.ap > left,
         targets: others.filter((o) => !chars[o].status.unconscious).map((o) => ({ id: o, inReach: dist(me, posAtPass(enc, o, enc.pass)) <= r })),
       });
     }
 
-    if (!c.status.prone && !grappled && !c.status.grappling) {
+    if (!c.status.prone && !grappled && !c.status.grappling && can(1)) {
       const spa = C.squaresPerAP(c);
       const cost1 = C.actionCost(c, 'move', { ap: 1 });
-      out.move = { squaresPerAP: spa, maxAP: ap, stamina: cost1.stamina, from: projectedPos(enc, id), maxSquares: Math.floor((ap * spa) / C.apScale()) };
+      out.move = {
+        squaresPerAP: spa, maxAP: ap, stamina: cost1.stamina, from: projectedPos(enc, id),
+        maxSquares: Math.floor((ap * spa) / C.apScale()),
+        passSquares: Math.floor((left * spa) / C.apScale()), // as far as it can go and still land this pass
+      };
     }
 
     const addOther = (type, extra) => {
       const cost = C.actionCost(c, type);
-      out.other.push(Object.assign({ type, name: ACTIONS[type].name, ap: cost.ap, stamina: cost.stamina, affordable: cost.ap <= ap }, extra || {}));
+      out.other.push(Object.assign({ type, name: ACTIONS[type].name, ap: cost.ap, stamina: cost.stamina, affordable: can(cost.ap), spans: cost.ap > left }, extra || {}));
     };
     const declared = (type) => enc.decls.some((d) => d.actor === id && d.type === type);
     if (c.status.prone && !declared('standUp')) addOther('standUp');
@@ -241,7 +326,7 @@
         seen[key] = true;
         const cost = C.actionCost(c, 'windUp', { option: opt });
         const why = opt.spell ? spellShort(c, opt, spPlanned) : null;
-        out.other.push({ type: 'windUp', option: opt, name: `Wind up: ${opt.label}`, ap: cost.ap, stamina: cost.stamina, affordable: cost.ap <= ap && !why, why });
+        out.other.push({ type: 'windUp', option: opt, name: `Wind up: ${opt.label}`, ap: cost.ap, stamina: cost.stamina, affordable: can(cost.ap) && !why, spans: cost.ap > left, why });
       }
     }
     if (c.inventory.bandages > 0) {
@@ -313,6 +398,8 @@
     if (decl.actor !== id) return 'Not your turn';
     const c = chars[id];
     let ap, stamina;
+    const defense = DEFENSE_TYPES.includes(decl.type);
+    if (enc.step === 'defend' && !defense) return 'Only defenses now';
     if (decl.type === 'strike') {
       const key = C.optionKey(decl.option);
       const opt = plannedAttackOptions(enc, c).find((o) => C.optionKey(o) === key);
@@ -324,9 +411,9 @@
       ap = opt.ap;
       stamina = opt.stamina;
       if (!decl.target) return 'Choose a target';
-    } else if (DEFENSE_TYPES.includes(decl.type)) {
-      const atk = enc.decls.find((d) => d.n === decl.answers);
-      if (!atk || atk.target !== id) return 'Choose a strike to answer';
+    } else if (defense) {
+      const atk = unansweredIncoming(enc, id).find((d) => d.n === decl.answers);
+      if (!atk) return 'Choose a strike landing this pass to answer';
       const why = defenseUnavailable(c, decl.type, atk, chars, enc);
       if (why) return why;
       ({ ap, stamina } = C.actionCost(c, decl.type));
@@ -351,19 +438,29 @@
       if (['trip', 'disarm', 'grapple', 'takedown', 'shove', 'bandage'].includes(decl.type) && !decl.target) return 'Choose a target';
     }
     if (ap > enc.ap[id]) return 'Not enough AP';
+    if (passLeft(enc, id) < CONFIG.minActionAP) return 'No AP left this pass';
     decl.ap = ap;
     decl.stamina = stamina;
-    decl.pass = enc.pass;
+    decl.declaredPass = enc.pass;
+    const lands = payAP(enc, id, ap);
+    // Defenses act at once (any AP over the cap is owed from later passes); everything
+    // else lands when fully paid, unless CONFIG.spanLands says it lands now.
+    decl.pass = defense || CONFIG.spanLands === 'now' ? enc.pass : lands;
     decl.n = ++enc.seq;
     if (decl.target) decl.targetWasDown = !C.isActive(chars[decl.target]);
     enc.decls.push(decl);
-    enc.ap[id] -= ap;
-    advance(enc);
+    if (passLeft(enc, id) < CONFIG.minActionAP) advance(enc);
     return null;
   }
 
   // How a declaration looks to a given viewer (Feint vs Read Attack).
   function describeDecl(enc, chars, d, viewerId) {
+    const r = describeBare(enc, chars, d, viewerId);
+    if (d.declaredPass != null && d.pass > d.declaredPass) r.text += ` — lands pass ${d.pass}`;
+    return r;
+  }
+
+  function describeBare(enc, chars, d, viewerId) {
     const a = chars[d.actor];
     const t = d.target ? chars[d.target] : null;
     const tn = t ? t.name : '';
@@ -623,12 +720,15 @@
   }
 
   // ---- Resolution --------------------------------------------------------
-  async function resolveRound(enc, chars, roller) {
+  // Resolve everything that lands this pass, then start the next pass or end the round.
+  async function resolvePass(enc, chars, roller) {
     enc.phase = 'resolving';
-    const passes = Math.max(0, ...enc.decls.map((d) => d.pass));
-    for (let p = 1; p <= passes; p++) {
-      const actsThisPass = enc.decls.filter((d) => d.pass === p && !DEFENSE_TYPES.includes(d.type));
-      if (!actsThisPass.length) continue;
+    const p = enc.pass;
+    const rank = (id) => enc.order.indexOf(id);
+    const actsThisPass = enc.decls
+      .filter((d) => d.pass === p && !d.done && !DEFENSE_TYPES.includes(d.type))
+      .sort((x, y) => rank(x.actor) - rank(y.actor) || x.n - y.n);
+    if (actsThisPass.length) {
       log(enc, `Pass ${p}`, 'pass');
       const activeAtStart = {};
       enc.ids.forEach((id) => (activeAtStart[id] = C.isActive(chars[id])));
@@ -667,7 +767,23 @@
         log(enc, `${a.name} moves to (${d.to.x + 1}, ${d.to.y + 1}).`);
       }
     }
-    endRound(enc, chars);
+    for (const d of enc.decls) if (d.pass === p) d.done = true;
+
+    // Another pass while anything is still on its way or anyone can still act. A pass in
+    // which nobody started or landed anything (everyone waited) ends the round.
+    const pending = enc.decls.some((d) => !d.done);
+    const started = enc.decls.some((d) => d.declaredPass === p && !DEFENSE_TYPES.includes(d.type));
+    const sides = {};
+    for (const id of enc.ids) if (C.isActive(chars[id])) sides[chars[id].side] = true;
+    for (const id of enc.order) if (!C.isActive(chars[id])) enc.conceded[id] = true;
+    const canAct = enc.order.some((id) => !enc.conceded[id] && (enc.ap[id] || 0) >= CONFIG.minActionAP);
+    if (Object.keys(sides).length > 1 && (pending || (canAct && (started || actsThisPass.length)))) startPass(enc, chars);
+    else endRound(enc, chars);
+  }
+
+  // Resolve passes until someone has to decide something (or the round ends).
+  async function resolveRound(enc, chars, roller) {
+    while (enc.phase === 'resolve') await resolvePass(enc, chars, roller);
   }
 
   function payStamina(enc, c, cost) {
@@ -1061,7 +1177,7 @@
 
   G.Combat = {
     ATTACK_TYPES, DEFENSE_TYPES,
-    createEncounter, autoPlace, startRound, currentActor, legalActions, declare, concede, describeDecl,
-    projectedPos, posAtPass, dist, defenseOdds, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolveRound, endRound, cleanup, grappleStrength,
+    createEncounter, autoPlace, startRound, currentActor, legalActions, declare, concede, endTurn, submit, describeDecl, passCap, passLeft,
+    projectedPos, posAtPass, dist, defenseOdds, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolvePass, resolveRound, endRound, cleanup, grappleStrength,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

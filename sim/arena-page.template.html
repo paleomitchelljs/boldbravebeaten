@@ -91,7 +91,7 @@ details summary { cursor: pointer; font-weight: 700; }
   <header class="head">
     <span class="eyebrow">Bold Brave Beaten · simulation</span>
     <h1>Combat Arena Results</h1>
-    <p>Sixteen level-5 fighters (four armor classes × four fighting styles) fought every other fighter in an open field and in close quarters. This round adds a longbow draw, no attacks inside a weapon's reach (with a Shove action), power swings that break and push through shields, and a lighter plate penalty.</p>
+    <p>Sixteen level-5 fighters (four armor classes × four fighting styles) fought every other fighter in an open field and in close quarters. This round changes how a round runs: each pass now resolves at its end, and a character may spend at most 4 AP per pass (2 base AP) as a trial. Anything costing more lands in a later pass.</p>
     <div class="facts" id="facts"></div>
     <p class="note">Every fight is played by the built-in AI. It keeps its preferred range, kites with bows and spells, winds up and draws, shoves to regain distance, swaps between weapon and dagger, and defends by the odds, but it never retreats to heal, flanks, or plans across rounds. Read these as what the rules produce under competent, simple play. Bows and magic are placeholder rules.</p>
   </header>
@@ -144,31 +144,32 @@ details summary { cursor: pointer; font-weight: 700; }
     <div><span class="eyebrow">For the designer</span><h2>Where the rules need work</h2></div>
     <div class="findings">
       <article class="finding">
-        <h3><span class="tag">This round</span>What the changes did</h3>
+        <h3><span class="tag">This round</span>What passes and the AP cap did</h3>
+        <p>I ran four versions. The table is each style's average win rate (open field / close quarters); round 3 is last round's rules.</p>
+        <div class="scroll"><table class="data">
+          <thead><tr><th>Rules</th><th>Two-handed</th><th>Sword &amp; shield</th><th>Archery</th><th>Heavy armor</th><th>Fight length (rounds)</th></tr></thead>
+          <tbody>
+            <tr><td>Round 3</td><td>41 / 60</td><td>68 / 70</td><td>59 / 44</td><td>52 / 62</td><td>5.8 / 4.2</td></tr>
+            <tr><td>Each pass resolves, no cap</td><td>44 / 52</td><td>63 / 74</td><td>53 / 45</td><td>51 / 68</td><td>5.2 / 3.5</td></tr>
+            <tr><td><b>Cap 4 AP per pass (now the default)</b></td><td>35 / 53</td><td>63 / 72</td><td>55 / 43</td><td>54 / 70</td><td>5.6 / 3.8</td></tr>
+            <tr><td>Cap 4, overflow lands at once</td><td>37 / 57</td><td>61 / 71</td><td>57 / 42</td><td>58 / 70</td><td>5.5 / 3.6</td></tr>
+            <tr><td>Cap 6 AP per pass</td><td>44 / 54</td><td>61 / 72</td><td>54 / 44</td><td>52 / 69</td><td>5.4 / 3.7</td></tr>
+          </tbody></table></div>
         <ul>
-          <li><b>Plate retune</b> (+1 stamina per action instead of +2, −3 regeneration instead of −4): heavy armor went from 44% to 52% in the open and 49% to 62% in close quarters. Collapses fell from 0.51 to 0.41 a fight in the open and 0.48 to 0.33 in close quarters. Heavy armor is now best where your Philosophy says it should be, confined melee.</li>
-          <li><b>No attacks inside reach, plus Shove:</b> two-handers in close quarters rose from 42% to 60%; heavy two-handers from 43% to 80%. A greatsword now holds its 2–3 band instead of doing half damage at 1.</li>
-          <li><b>Power swings vs shields:</b> in close quarters, two-handers against sword & shield rose from 14% to 31%. Blocked power blows break about 0.1–0.13 shields a fight and drive excess force through.</li>
-          <li><b>Longbow draw:</b> archers fell from 63% to 59% in the open and from 50% to 44% in close quarters. Against two-handers in close quarters they dropped from 48% to 20%.</li>
-          <li><b>Faster shield wear</b> changes nothing measurable. Fights end before shields wear out; the material-break rule is what matters.</li>
+          <li><b>Resolving each pass</b> on its own changes little. It doesn't stop sword &amp; shield; in close quarters it gains a few points.</li>
+          <li><b>The 4-AP cap mostly hurts two-handers</b> (−9 in the open against no cap): a 7–8 AP two-handed swing now spans two passes and lands late, where the foe can see it coming. Drawing a sidearm went up by half, because cheap dagger thrusts fit inside the cap.</li>
+          <li><b>Moving and drawing a bow</b> can no longer share a pass (the draw alone uses 4 AP). Archers lost 3–4 points in the open.</li>
+          <li><b>A 6-AP cap</b> gives the tightest spread in the open (17 points across the three weapon styles), but close quarters doesn't change.</li>
         </ul>
       </article>
       <article class="finding">
-        <h3><span class="tag">Decision</span>Sword & shield still dominates, because nothing keeps a dagger out</h3>
-        <p>Sword & shield averages 68% in the open and 70% in close quarters. Its fighters step inside a longer weapon's reach and draw a dagger (about 0.9 times a fight), where the shield blocks and the dagger works. Shove can't hold the distance: it is used only about 0.04 times a fight, because re-closing costs the shoved fighter 1 AP for a square.</p>
-        <ul>
-          <li>Halving movement (back to the Specifics rate) cuts sword & shield to 55% in the open, but archers rise to 65%. Close quarters doesn't change.</li>
-          <li>So the open question is a rule, not a number: how should a reach weapon keep a shorter one out, given there are no attacks of opportunity?</li>
-        </ul>
-        <p class="small muted">Options: a "set" or stop-thrust (a reach weapon held ready gets one strike at anyone entering its band, a narrow attack of opportunity); stepping into an enemy's reach costs extra AP; a successful shove also costs the target AP (off balance); a dagger in the off hand can't be used with a shield.</p>
+        <h3><span class="tag">Decision</span>Sword &amp; shield still dominates; resolving each pass didn't keep the dagger out</h3>
+        <p>Sword &amp; shield is at 63% in the open and 72% in close quarters under the cap. Shove is still used about 0.05 times a fight. Resolving each pass doesn't give a reach weapon a way to stop someone walking in: the step and the attack still happen in the same pass, and nobody reacts to it. Keeping someone at range needs a rule that reacts to the approach.</p>
+        <p class="small muted">Options, unchanged: a set or stop-thrust (a ready reach weapon strikes once at anyone entering its band); extra AP to step inside an enemy's reach; a shove that also costs the target AP; no dagger with a shield.</p>
       </article>
       <article class="finding">
-        <h3><span class="tag">Numbers</span>Fights got longer</h3>
-        <p>Average fight length rose from 3.7 to 5.8 rounds in the open and from 2.9 to 4.2 in close quarters. Mages run longest (about 8 rounds in the open): they kite and cast little. Melee-only fights went from 3.6 to 5.0 rounds, because plate now lasts longer. "Fights end quickly at every level" is strained in the open, though group fights may differ.</p>
-      </article>
-      <article class="finding">
-        <h3><span class="tag">Deferred</span>Magic is weaker still</h3>
-        <p>Casters average 23% in the open and 17% in close quarters, down from 32% and 25%. Opponents now survive longer (plate) and close the distance better, and the magic stub is unchanged. Left for a dedicated pass, as agreed. Its role may be clearer in group and monster fights.</p>
+        <h3><span class="tag">Deferred</span>Magic is still weak</h3>
+        <p>Casters average 33% in the open and 24% in close quarters, up from 23% and 17% because foes' swings now land later. The magic stub is unchanged and set aside, as agreed.</p>
       </article>
       <article class="finding">
         <h3><span class="tag">Context</span>One-on-one is only part of the picture</h3>
@@ -179,7 +180,8 @@ details summary { cursor: pointer; font-weight: 700; }
         <ul>
           <li>Ground matters: two-handers and heavy armor are strongest in close quarters; archers and the unarmored are strongest in the open.</li>
           <li>The wind-up and draw read as intended: exposed, telegraphed, and decisive when they land.</li>
-          <li>Armor ordering in melee is closer to your design: heavy armor leads in close quarters.</li>
+          <li>Armor ordering in melee is closer to your design: heavy armor leads in close quarters (70% under the cap).</li>
+          <li>Fights are a little shorter than round 3 (5.6 and 3.8 rounds).</li>
         </ul>
       </article>
     </div>

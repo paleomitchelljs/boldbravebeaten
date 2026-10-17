@@ -159,7 +159,7 @@ test('two-handed swings are unavailable while carrying a shield', () => {
   assert.ok(!C.attackOptions(c).some((o) => o.motion === 'twoHanded'));
 });
 
-test('declaration passes follow initiative and AP', async () => {
+test('a pass: turns in initiative order, the per-pass cap, then resolution', async () => {
   const a = fighter('A', { side: 'party' });
   const b = fighter('B', { side: 'enemy' });
   a.base.SPD = 8;
@@ -173,19 +173,61 @@ test('declaration passes follow initiative and AP', async () => {
   enc.pos[a.id] = { x: 1, y: 1 };
   enc.pos[b.id] = { x: 2, y: 1 };
   await Combat.startRound(enc, chars, roller(3, [5, 5]));
+  assert.strictEqual(enc.pass, 1);
   assert.strictEqual(Combat.currentActor(enc), a.id);
+  assert.strictEqual(Combat.passCap(), B.CONFIG.apPerPass * B.CONFIG.apScale);
   const thrust = C.attackOptions(a).find((o) => o.motion === 'thrust');
   assert.strictEqual(thrust.ap, 2 * B.CONFIG.apScale - 1, 'dagger thrust is 1 AP below a normal thrust');
   assert.strictEqual(Combat.declare(enc, chars, { actor: a.id, type: 'strike', option: thrust, target: b.id }), null);
+  // 1 AP is left in this pass, so it is still A's turn until A ends it.
+  assert.strictEqual(Combat.currentActor(enc), a.id);
+  assert.strictEqual(Combat.passLeft(enc, a.id), Combat.passCap() - thrust.ap);
+  Combat.endTurn(enc, a.id);
   assert.strictEqual(Combat.currentActor(enc), b.id);
   const la = Combat.legalActions(enc, chars, b.id);
   assert.strictEqual(la.defenses.length, 1);
   assert.strictEqual(Combat.declare(enc, chars, { actor: b.id, type: 'parry', answers: enc.decls[0].n }), null);
+  assert.strictEqual(enc.phase, 'resolve', 'B spent the pass; nobody else has anything to answer');
+  await Combat.resolvePass(enc, chars, roller(3, [10]));
+  assert.ok(enc.log.some((l) => /parries/.test(l.text)));
+  assert.strictEqual(enc.pass, 2, 'both still have AP, so a second pass begins');
+  assert.strictEqual(enc.phase, 'declare');
   Combat.concede(enc, a.id);
   Combat.concede(enc, b.id);
-  assert.strictEqual(enc.phase, 'resolve');
-  await Combat.resolveRound(enc, chars, roller(3, [10]));
-  assert.ok(enc.log.some((l) => /parries/.test(l.text)));
+  await Combat.resolveRound(enc, chars, roller(3));
+  assert.strictEqual(enc.phase, 'roundEnd');
+});
+
+test('an action costing more than the pass allows lands in a later pass and can be answered then', async () => {
+  const a = fighter('A', { side: 'party' });
+  const b = fighter('B', { side: 'enemy' });
+  a.base.SPD = 8;
+  a.weapons.push(Items.makeWeapon('longsword'));
+  a.wield = a.weapons[0].id;
+  b.weapons.push(Items.makeWeapon('longsword'));
+  b.wield = b.weapons[0].id;
+  for (const c of [a, b]) c.stamina = C.maxStamina(c);
+  const chars = { [a.id]: a, [b.id]: b };
+  const enc = Combat.createEncounter('t', [a.id, b.id], chars, 6, 1);
+  enc.pos[a.id] = { x: 0, y: 0 };
+  enc.pos[b.id] = { x: 2, y: 0 };
+  await Combat.startRound(enc, chars, roller(3, [5, 5]));
+  const swing = Combat.legalActions(enc, chars, a.id).attacks.find((o) => o.motion === 'swing');
+  assert.ok(swing.ap > Combat.passCap() && swing.spans);
+  assert.strictEqual(Combat.declare(enc, chars, { actor: a.id, type: 'strike', option: swing, target: b.id }), null);
+  const d = enc.decls[0];
+  assert.strictEqual(d.pass, 2, 'a 6-AP swing under a 4-AP cap lands in pass 2');
+  assert.notStrictEqual(Combat.currentActor(enc), a.id, 'the swing used all of pass 1');
+  let la = Combat.legalActions(enc, chars, b.id);
+  assert.strictEqual(la.defenses.length, 0, 'nothing to answer yet');
+  assert.strictEqual(la.incomingLater.length, 1, 'but the swing is visible');
+  Combat.endTurn(enc, b.id);
+  await Combat.resolvePass(enc, chars, roller(3));
+  assert.strictEqual(enc.pass, 2);
+  assert.strictEqual(Combat.passLeft(enc, a.id), 2 * Combat.passCap() - swing.ap);
+  Combat.endTurn(enc, a.id);
+  la = Combat.legalActions(enc, chars, b.id);
+  assert.strictEqual(la.defenses.length, 1, 'answerable in the pass it lands');
 });
 
 test('Feint hides an attack from a defender without Read Attack', async () => {
@@ -238,18 +280,13 @@ test('AI-vs-AI encounters always finish without errors', async () => {
     const roll = roller(i + 5);
     while (enc.phase !== 'over' && enc.round < 60) {
       await Combat.startRound(enc, chars, roll);
-      let guard = 500;
-      while (enc.phase === 'declare' && guard-- > 0) {
+      let guard = 1000;
+      while ((enc.phase === 'declare' || enc.phase === 'resolve') && guard-- > 0) {
+        if (enc.phase === 'resolve') { await Combat.resolvePass(enc, chars, roll); continue; }
         const id = Combat.currentActor(enc);
-        const d = AI.choose(enc, chars, id, rng);
-        if (d.type === 'concede') Combat.concede(enc, id);
-        else {
-          const err = Combat.declare(enc, chars, d);
-          if (err) Combat.concede(enc, id);
-        }
+        Combat.submit(enc, chars, AI.choose(enc, chars, id, rng));
       }
-      assert.ok(guard > 0, 'declaration loop terminates');
-      await Combat.resolveRound(enc, chars, roll);
+      assert.ok(guard > 0, 'round loop terminates');
     }
     rounds += enc.round;
     if (enc.phase === 'over') finished++;
@@ -331,12 +368,14 @@ test('a power swing must be wound up the round before, and the swinger is expose
   const wind = la.other.find((o) => o.type === 'windUp');
   assert.ok(wind, 'wind-up offered');
   assert.strictEqual(Combat.declare(enc, chars, { actor: a.id, type: 'windUp', option: wind.option }), null);
+  la = Combat.legalActions(enc, chars, a.id);
+  assert.strictEqual(la.attacks.find((o) => o.motion === 'power').why, 'Release next round');
   // Foe strikes; the winding heavy can't parry it.
+  assert.strictEqual(Combat.currentActor(enc), b.id);
   const thrust = Combat.legalActions(enc, chars, b.id).attacks.find((o) => o.motion === 'thrust');
   assert.strictEqual(Combat.declare(enc, chars, { actor: b.id, type: 'strike', option: thrust, target: a.id }), null);
   la = Combat.legalActions(enc, chars, a.id);
   assert.strictEqual(la.defenses[0].options.find((o) => o.type === 'parry').why, 'Winding up');
-  assert.strictEqual(la.attacks.find((o) => o.motion === 'power').why, 'Release next round');
   Combat.concede(enc, a.id);
   Combat.concede(enc, b.id);
   await Combat.resolveRound(enc, chars, roller(2));
@@ -375,6 +414,12 @@ test('arrows: range 2+, use ammunition, cannot be parried', async () => {
   const la = Combat.legalActions(enc, chars, a.id);
   const s = la.attacks.find((o) => o.motion === 'shoot');
   assert.strictEqual(Combat.declare(enc, chars, { actor: a.id, type: 'strike', option: s, target: b.id }), null);
+  const lands = enc.decls[0].pass;
+  while (enc.pass < lands) {
+    Combat.endTurn(enc, Combat.currentActor(enc));
+    if (enc.phase === 'resolve') await Combat.resolvePass(enc, chars, roller(2));
+  }
+  if (Combat.currentActor(enc) === a.id) Combat.endTurn(enc, a.id);
   const parry = Combat.legalActions(enc, chars, b.id).defenses[0].options.find((o) => o.type === 'parry');
   assert.strictEqual(parry.why, "Can't parry an arrow");
   Combat.concede(enc, b.id);
@@ -459,6 +504,8 @@ test('a longbow must be drawn a round ahead; an archer can redraw after loosing'
   assert.strictEqual(loose.why, null);
   assert.strictEqual(Combat.declare(enc, chars, { actor: a.id, type: 'strike', option: loose, target: b.id }), null);
   Combat.concede(enc, b.id);
+  await Combat.resolveRound(enc, chars, roller(2));
+  assert.strictEqual(Combat.currentActor(enc), a.id, 'a second pass for the archer');
   la = Combat.legalActions(enc, chars, a.id);
   assert.ok(la.other.find((o) => o.type === 'windUp'), 'can redraw after loosing');
 });
@@ -476,8 +523,13 @@ test('a blocked power swing breaks a shield of equal or softer material and driv
     const power = C.attackOptions(a).find((o) => o.motion === 'power');
     a.status.windUp = { key: C.optionKey(power), label: power.label, round: 0 };
     assert.strictEqual(Combat.declare(enc, chars, { actor: a.id, type: 'strike', option: power, target: b.id }), null);
-    Combat.declare(enc, chars, { actor: b.id, type: 'block', answers: enc.decls[0].n });
+    const lands = enc.decls[0].pass;
+    while (enc.pass < lands) {
+      Combat.endTurn(enc, Combat.currentActor(enc));
+      if (enc.phase === 'resolve') await Combat.resolvePass(enc, chars, roller(2));
+    }
     Combat.concede(enc, a.id);
+    assert.strictEqual(Combat.declare(enc, chars, { actor: b.id, type: 'block', answers: enc.decls[0].n }), null);
     Combat.concede(enc, b.id);
     const staminaBefore = b.stamina;
     await Combat.resolveRound(enc, chars, roller(2, [10]));

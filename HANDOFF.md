@@ -1,6 +1,6 @@
 # Handoff: Bold Brave Beaten
 
-Where the project stands after round 3 of tuning, and what comes next. Read this
+Where the project stands after round 4 (pass-by-pass resolution and the per-pass AP cap), and what comes next. Read this
 together with `CLAUDE.md` (the short rules for working here) and
 `sim/FINDINGS.md` (the evidence behind each tuned number).
 
@@ -26,8 +26,7 @@ Published artifacts:
 - Game: https://claude.ai/artifact/WiZZp7VyJYCf7c7hZwVAQd (version 4).
 - Arena results: https://claude.ai/artifact/8wLMyG578Csqdvxi9XErP7 (version 2).
 
-The branch is `claude/game-platform`. The last commit before this handoff is
-`140b7dc`.
+The branch is `claude/game-platform`.
 
 ## Architecture
 
@@ -61,15 +60,22 @@ sim/                     lib, run, compare, targets, inspect, arena, arena-inspe
 
 ## How a round works now
 
-> This is the old structure. Change it under idea 1 below.
-
 1. Initiative is d10 + SPD, rolled in armor.
-2. Declarations go in passes, in initiative order: one action per pass, and AP
-   can't be held.
-3. Resolution then replays the passes in order. Actions within a pass are
-   simultaneous: positions are snapshotted at the start of the pass, and moves
-   resolve at the end of it.
-4. At the end of the round, bleed, regeneration and wind-up expiry are applied.
+2. **Turns** go in initiative order. A turn can hold several actions, up to `apPerPass`
+   (2 base AP, 4 on the sheet). An action costing more pays from the next passes' allowance and
+   lands at the end of the pass in which it is fully paid.
+3. After the turns comes a **defense step**: anyone with an unanswered attack landing on them this
+   pass may block, parry or dodge. A defense can also be declared during the defender's own turn.
+4. The **pass** resolves (`Combat.resolvePass`): its actions land together, positions are taken
+   from the start of the pass, and moves land last.
+5. Passes repeat while anything is pending or anyone can act; a pass in which nobody starts or
+   lands anything ends the round. At the end of the round: bleed, regeneration, wind-up expiry.
+
+Engine API: `startRound`, `currentActor`, `legalActions` (with `passLeft`, `step`,
+`incomingLater`), `declare`, `endTurn`, `concede` (done for the round), `submit` (one entry
+point for AI decisions), `resolvePass`, and `resolveRound` (resolves passes until someone has to
+decide something). Drivers: `sim/lib.js` `playRound`, the AI-vs-AI test, and `scheduleAI` in
+`src/ui/views/battle.js`.
 
 ## Tuned values and why
 
@@ -77,6 +83,7 @@ Every value is in `src/rules/config.js`. The evidence is in `sim/FINDINGS.md`.
 
 **Action economy**
 
+- `apPerPass: 2` (trial; the user asked for it) and `spanLands: 'late'`. See round 4 in FINDINGS.
 - `apScale: 2`: AP pools and base costs are doubled, while a feat still cuts a
   flat 1. That makes feats a 1-in-4 saving instead of 1-in-2.
 - `staminaScale: 3`, so a fight lasts more than one exchange.
@@ -138,121 +145,67 @@ Every value is in `src/rules/config.js`. The evidence is in `sim/FINDINGS.md`.
 - Feat tiers are pooled across the four magic sub-trees (`featTierGroups`).
   That fixed a deadlock, but the user hasn't confirmed it yet.
 
-## Round 3 arena results
+## Arena results (round 4)
 
-The arena is level 5, with 16 combatants (4 armor classes × 4 styles) in two
-arenas: open field (20×12) and close quarters (6×2).
+See `sim/FINDINGS.md` and the arena page. With the 4-AP cap, style averages (open / close):
+two-handed 35 / 53, sword and shield 63 / 72, archery 55 / 43, magic 33 / 24, heavy armor 54 / 70.
+Fights last 5.6 / 3.8 rounds. The round 3 baseline is in `sim/results/arena-r3/`.
 
-| | Open | Close |
-|---|---|---|
-| Heavy armor | 52% | 62% |
-| Two-handed | 41% | 60% |
-| Sword and shield | 68% | 70% |
-| Archery | 59% | 44% |
-| Magic (deferred) | 23% | 17% |
-| Average fight length | 5.8 rounds | 4.2 rounds |
-
-- **Sword and shield still dominates.** Its fighters step inside the longer
-  weapon's reach and fight with dagger and shield.
-- **Shove is almost never used**, about 0.04 per fight, because the target
-  re-closes for 1 AP.
-- **Halving movement** cut sword and shield to 55% in the open, but lifted
-  archery to 65%.
+- Resolving each pass did not keep a dagger out of reach; sword and shield still leads.
+- The cap hurts two-handers most (slow swings land a pass later).
+- A 6-AP cap balanced the open field best.
 
 ## Open questions awaiting the user
 
-1. **How a reach weapon keeps a shorter one out.** Options:
-   - a set or stop-thrust;
-   - extra AP to step inside an enemy's reach;
-   - a shove that also costs the target AP;
-   - no dagger in the shield hand.
-2. **AP spend cap.** I recommended against a blanket cap: the pool is already
-   the cap, and a lower cap only hurts fast or high-level characters. I
-   suggested a defense cap instead (e.g. 2 blocks or parries per round) and
-   offered to test it. No decision yet.
-3. **A group-fight arena** (many-v-1, monster v heroes). The user noted that real
-   scenarios are rarely 1v1.
-4. **Magic overhaul.** Deferred by the user.
-5. **Pooled magic feat tiers.** Needs confirmation.
+1. **How a reach weapon keeps a shorter one out.** Pass-by-pass resolution didn't solve it.
+   Options: a set or stop-thrust; extra AP to step inside an enemy's reach; a shove that also
+   costs the target AP; no dagger in the shield hand.
+2. **The AP cap.** On trial at 4 AP per pass. Does it stay, at 4 or 6? Do two-handed costs need
+   adjusting (or `spanLands: 'now'`)?
+3. **Item materials, maker tags and keywords.** A proposal went to the user (see below); nothing
+   is built yet.
+4. On hold at the user's request: the group-fight arena, the magic overhaul, the magic feat tiers.
 
-## Next work: the user's four requests (not started)
+## Done in round 4
 
-### 1. Standardize terms
+- Terms standardized across the engine, UI, Rules tab, README and FINDINGS: round → initiative →
+  turns → pass (→ defense step → resolution).
+- The mobile battle UI was redesigned. The screen holds a strip of names (a sidebar on wide
+  screens), the map, and the current character's panel with collapsible groups (answer a strike,
+  attack, move and maneuver, other). Tapping a name or token opens a pop-up sheet. The
+  declarations and the log fold away. It was tested at 390px and 1280px with Playwright.
+- Saved battles from before round 4 resume at the next round.
 
-The user's definitions, verbatim:
+## Item system proposal (for the user to approve)
 
-> At the top of a round, everyone rolls initiative. Players then take their turns
-> in order. One set of all players taking turns is a pass. All actions resolve at
-> the end of the pass. Players begin taking their turns again for the second pass.
-> Players get to participate in as many passes as their action points & action
-> choices allow. Players that burn actions early may end up not participating in
-> some of the final passes. Once everyone is out of actions, initiative is rerolled
-> and a new round begins.
-
-The glossary is **round → initiative → turn → pass**.
-
-- **Engine change:** this is more than a rename. The engine currently declares
-  every pass first and then resolves them all. The new definition resolves each
-  pass at its end, before the next pass is declared.
-- **What it touches:** `combat.js` (phases, `resolveRound`), the AI (it can now
-  react to the results of the previous pass), the battle UI, the tests, the log
-  text, the README, the Rules tab and FINDINGS.
-- **Open sub-questions:**
-  - Do defenses still answer a specific declared strike in the same pass?
-    Probably yes, since a pass resolves simultaneously.
-  - Does a wind-up that spans rounds still work as it does now?
-  - Re-run the arena afterwards, because tempo changes.
-
-### 2. Mobile battle UI
-
-The user called it "unusable" on a phone: the actions sit at the bottom, below
-a wall of combatant cards.
-
-- The main view shows only the map, the current character's name, and the
-  action panel.
-- The action panel uses dropdowns or collapsible submenus (for example Attack ▸
-  weapon ▸ motion ▸ target, then Defend, Move, Maneuver, Other) so it stays
-  compact.
-- Combatants move into a sidebar or drawer of names. Clicking a name opens that
-  character's sheet as a pop-up or modal.
-- The log and the declarations go into collapsible sections.
-- Test at phone width (about 390px) with Playwright. Chromium is at
-  `/opt/pw-browsers/chromium-1194/chrome-linux/chrome`.
-
-### 3. Item materials, maker tags and keywords
-
-These add to the existing quality + size + type.
-
-- **Materials:** bronze, iron, steel, bone, leather, cloth, plus rare ones
-  inspired by ebony or Daedric. The rarest tiers are undecided.
-- **Maker tags:** dwarven-forged, elven-forged, and so on.
-- **Keywords:** silvered, runic, magic, and so on.
-
-The user is open to suggestions for the mechanics. Starting proposals, to put to
-the user before building:
-
-- Material sets hardness (already used for shield breaks), the durability
-  multiplier, the weight/stamina modifier and the damage-vector tweak.
-- Maker tags are a small trade-off: dwarven means more durability and more
-  weight; elven means lighter, better edge retention and less durability.
-- Keywords are hooks that mostly do nothing until monsters or magic need them.
-  Silvered matters against certain creatures; runic carries a bound spell
-  noun; magic is a generic enchantment slot.
-- Fold SHIELD_MATERIALS into the general material table.
-
-### 4. AP spend cap
-
-This is optional. See open question 2.
+- Material table, replacing SHIELD_MATERIALS. Each material has hardness (used for shield breaks
+  and edge damage), a durability multiplier, a weight step, and a small damage tweak:
+  - cloth and leather for armor;
+  - bone and bronze, softer and cheaper;
+  - iron as the baseline;
+  - steel, harder and more durable;
+  - rare: an ebony-like material (hard and light) and a daedric-like one (hardest and heavy,
+    with a corrupting keyword).
+- Maker tags, each a trade-off:
+  - dwarven: +durability, +weight;
+  - elven: −weight, +edge (slashing), −durability;
+  - orcish: +blunt, crude finish.
+- Keywords as hooks:
+  - silvered: extra damage against creatures tagged as vulnerable;
+  - runic: carries one spell noun;
+  - magic: one enchantment slot, effect TBD.
+  Each keyword does nothing until a monster or spell asks for it.
 
 ## How to run things
 
 ```
-node --test                                    # 25 tests
+node --test                                    # 26 tests
 node sim/run.js [--set key=value]              # design-target sweep → sim/results/
 node sim/compare.js                            # variants in sim/variants.json
 node sim/arena.js                              # arena, ~3 min → sim/results/arena/
-cp -r sim/results/arena sim/results/arena-r3   # keep a baseline before re-running
-node sim/arena-page.js --baseline sim/results/arena-r3/arena.json --baseline-label "round 3"
+cp -r sim/results/arena sim/results/arena-r4   # keep a baseline before re-running
+node sim/arena.js --out /tmp/x --set apPerPass=3  # a variant
+node sim/arena-page.js --baseline sim/results/arena-r4/arena.json --baseline-label "round 4"
 node sim/arena-inspect.js light/shield heavy/twoHanded close 3
 ```
 

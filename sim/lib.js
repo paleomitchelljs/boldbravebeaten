@@ -142,14 +142,8 @@ async function fight(spec) {
   const stats = { hitsA: 0, hitsB: 0, firstBloodRound: null, collapses: 0 };
   while (enc.phase !== 'over' && enc.round < maxRounds) {
     await Combat.startRound(enc, chars, roller);
-    let guard = 400;
-    while (enc.phase === 'declare' && guard-- > 0) {
-      const id = Combat.currentActor(enc);
-      const d = AI.choose(enc, chars, id, rng, chars[id].policy);
-      if (d.type === 'concede' || Combat.declare(enc, chars, d)) Combat.concede(enc, id);
-    }
     const before = enc.log.length;
-    await Combat.resolveRound(enc, chars, roller);
+    await playRound(enc, chars, roller, rng);
     for (let i = before; i < enc.log.length; i++) {
       const t = enc.log[i].text || '';
       if (/ hits /.test(t)) {
@@ -165,6 +159,17 @@ async function fight(spec) {
     winner, rounds: enc.round, downA: down(A), downB: down(Bs), deadA: dead(A), deadB: dead(Bs),
     hitsA: stats.hitsA, hitsB: stats.hitsB, log: spec.keepLog ? enc.log : null,
   };
+}
+
+// Drive one round with the AI: turns, defense steps and pass resolution.
+async function playRound(enc, chars, roller, rng) {
+  let guard = 1000;
+  while ((enc.phase === 'declare' || enc.phase === 'resolve') && guard-- > 0) {
+    if (enc.phase === 'resolve') { await Combat.resolvePass(enc, chars, roller); continue; }
+    const id = Combat.currentActor(enc);
+    Combat.submit(enc, chars, AI.choose(enc, chars, id, rng, chars[id].policy));
+  }
+  if (guard <= 0) throw new Error('round did not finish');
 }
 
 // Run n fights of a matchup; factories make fresh characters each time.
@@ -200,4 +205,4 @@ function summarize(results) {
 
 const pct = (x) => (100 * x).toFixed(0) + '%';
 
-module.exports = { B, C, Combat, Items, Enemies, AI, CONFIG, ARCHETYPES, build, fight, series, summarize, makeRoller, pct };
+module.exports = { B, C, Combat, Items, Enemies, AI, CONFIG, ARCHETYPES, build, fight, playRound, series, summarize, makeRoller, pct };
