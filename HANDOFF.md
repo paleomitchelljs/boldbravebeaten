@@ -163,7 +163,8 @@ displacer beast, giant spider, owlbear, cave troll, troll chieftain (boss). Natu
 hide). Character traits: `c.natural`, `c.traits` (pack, displacement, regen, apMult, staminaMult),
 `c.noUnarmed`. The Enemies tab can add monsters. Trials: `node sim/monsters.js` (16 fighters ×
 2 arenas + two parties) and `node sim/monsters-page.js` builds `sim/results/monsters/report.html`;
-`node sim/monster-party.js` for party fights only. Results are in FINDINGS.
+`node sim/monster-party.js` for party fights only. Results are in FINDINGS and on the monster page:
+https://claude.ai/artifact/X9pz4WNNAECwXTibC9FrJx (republish `sim/results/monsters/report.html`).
 
 ## Open questions awaiting the user
 
