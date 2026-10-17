@@ -773,11 +773,15 @@ test('monsters: natural weapons are always ready; traits work', async () => {
   const [beetle] = Enemies.makeMonster('rustBeetle');
   const touch = C.attackOptions(beetle).find((o) => o.rust);
   assert.ok(touch && touch.rust > 0);
-  // Bosses: more AP and stamina than their attributes alone give.
+  // Bosses: more AP than their attributes alone give.
   const [boss] = Enemies.makeMonster('trollChieftain');
   const [troll] = Enemies.makeMonster('caveTroll');
-  assert.ok(C.apPool(boss) > C.apPool(troll) * 2);
-  assert.ok(C.maxStamina(boss) > C.maxStamina(troll) * 2);
+  assert.ok(C.apPool(boss) >= C.apPool(troll) * 2);
+  assert.ok(C.maxStamina(boss) > C.maxStamina(troll));
+  // Big monsters are stronger and tougher than any human can be (10 base + 3 Conditioning).
+  const human = B.CONFIG.attrMax + B.CONFIG.conditioningCap;
+  assert.ok(C.attr(troll, 'STR') > human && C.attr(troll, 'CON') > human);
+  assert.ok(C.strBonus(troll) > Math.floor((human - B.CONFIG.strBonusPivot) / B.CONFIG.strBonusDivisor));
 });
 
 test('monster fights finish without errors', async () => {

@@ -15,6 +15,11 @@
     attrMin: 1,
     attrMax: 10, // Specifics: attributes run 1–10
     conditioningCap: 3, // Specifics: feats raise each attribute by at most +3
+    // PROVISIONAL (monster draft): the 1–10 range (13 with Conditioning) is the human range.
+    // Beasts and monsters can go past it: a bear or a troll is stronger and tougher than any
+    // human can be. Every formula (damage bonus, grappling, stamina, death at CON 0) runs on
+    // the raw number, so a STR-20 troll hits for +7 and grapples at +10.
+    monsterAttrMax: 30,
 
     // ---- Stamina (Specifics) ---------------------------------------------
     // Max stamina = 4×CON + STR + SPD + DEX
@@ -342,6 +347,7 @@
     'Spear (not in the catalog): point 6/0/0, thrusting 2–4, one hand.',
     'Bows (not in the design docs): shortbow arrow 5 P, range 2–12, 3 AP, single action; longbow 7 P, range 2–16, drawn one round and loosed the next; −2 damage at long range; arrows can be blocked or dodged, not parried; no STR bonus; one arrow per shot.',
     'Arrows and armor (history): armor catches arrows better than a thrust. Extra piercing protection against arrows: padded +2, leather, mail and scale +1, plate 0. Two arrowheads: broadheads cut terrible wounds (bleed ×1.5) but metal armor (mail, scale, plate) stops them better (+1); bodkins do 1 less damage but slip through metal armor (−2 to its protection). A longbow hit, expected CON (broadhead / bodkin): unarmored 7 / 6, padded 2 / 1.5, mail 2 / 3, scale 1.5 / 2.5, plate 0.4 / 0.8.',
+    'Monster attributes go past the human range (1–10, 13 with Conditioning feats), up to 30: bears and trolls STR 16–20, a stone golem 22, a troll chieftain 24. The usual formulas apply to the raw number (damage bonus ⌊(STR−5)/2⌋, grappling ⌊STR/2⌋, stamina, death at CON 0).',
     'Monsters (draft): natural weapons are always ready and can\'t be dropped; natural armor can\'t be looted. Traits: knockdown bites, pack bonus (+1 damage per packmate beside the target), venom (poison up to 2 CON a round for 3 rounds, no more than the wound; bandages don\'t stop it), rust (corrodes metal armor and shields), displacement (each attack first rolls a d10 to find the real creature: arrows miss on 1–5, blows on 1–2), springy chitin (a blow that lands costs the attacker 3 stamina), sticky webs (each layer adds 2 AP and 3 stamina to every action, up to two layers; one layer comes loose each round; tear free with d10 + ⌊STR/2⌋ ≥ 8, or burn them), shield-crushing blows, regeneration (unless burned), tireless (undead and constructs: no stamina, damage to attributes, no bleeding or venom), resistances (skeletons: no piercing, half slashing), nimble, slippery, leaping, and boss multipliers on AP, per-pass allowance and stamina.',
     'Magic (stub): verbs Attack (range 1–2, magnitude 4, cost 2) and Launch (2–12, 3, 3); nouns Fire and Force (cost 1); modifier Strong (+3, cost 2, must be wound up). Spell points = INT + 3 × Casting rank, limited by stamina. Fire: armor stops half its blunt mitigation, every 2 points left cost 1 CON, the rest stamina. Force: blunt with a knockdown check. Backlash: d10 + Control below the cost loses 2 stamina per point short.',
     'Magic feat tiers count feats across all four magic sub-trees (otherwise Casting and Fire Affinity can never pass rank I).',

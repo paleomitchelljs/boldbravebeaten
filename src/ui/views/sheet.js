@@ -17,7 +17,7 @@
       h('thead', null, h('tr', null, h('th', null, 'Attribute'), h('th', { class: 'n' }, 'Base'), h('th', { class: 'n' }, 'Cond.'), h('th', { class: 'n' }, 'Damage'), h('th', { class: 'n' }, 'Current'), h('th', { class: 'n' }, 'In armor'))),
       h('tbody', null, CONFIG.attributes.map((a) => h('tr', null,
         h('th', { scope: 'row' }, a),
-        h('td', { class: 'n' }, num('base-' + a, c.base[a], (v) => { c.base[a] = Math.max(CONFIG.attrMin, Math.min(CONFIG.attrMax, Math.round(v))); change(); }, { min: CONFIG.attrMin, max: CONFIG.attrMax, 'aria-label': a + ' base' })),
+        h('td', { class: 'n' }, num('base-' + a, c.base[a], (v) => { c.base[a] = Math.max(CONFIG.attrMin, Math.min(c.monster ? CONFIG.monsterAttrMax : CONFIG.attrMax, Math.round(v))); change(); }, { min: CONFIG.attrMin, max: c.monster ? CONFIG.monsterAttrMax : CONFIG.attrMax, 'aria-label': a + ' base' })),
         h('td', { class: 'n' }, C.conditioning(c, a) ? '+' + C.conditioning(c, a) : '—'),
         h('td', { class: 'n' }, num('dmg-' + a, c.damage[a], (v) => {
           const before = C.maxStamina(c);

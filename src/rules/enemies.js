@@ -222,33 +222,33 @@
     wolfPack: { name: 'Wolf pack', blurb: 'An alpha and two wolves. Surround, drag down, tear.', group: ['alphaWolf', 'wolf', 'wolf'] },
     rustBeetle: {
       name: 'Rust beetle', blurb: 'Its antennae turn metal armor to flaking rust. Meant to beat plate; harmless-looking to the unarmored.',
-      attrs: { STR: 6, CON: 8, DEX: 5, SPD: 6, INT: 1, WIS: 5, CHA: 1 },
+      attrs: { STR: 10, CON: 12, DEX: 5, SPD: 6, INT: 1, WIS: 5, CHA: 1 },
       natural: ['antennae', 'mandibles'], armor: 'chitin', traits: {}, feats: { toughness: 1 },
     },
     displacer: {
       name: 'Displacer beast', blurb: 'Seen where it isn\'t: arrows mostly strike an illusion. Fast, with reach-2 tentacles. Meant to beat archers.',
-      attrs: { STR: 7, CON: 7, DEX: 7, SPD: 8, INT: 3, WIS: 6, CHA: 3 },
+      attrs: { STR: 12, CON: 11, DEX: 7, SPD: 8, INT: 3, WIS: 6, CHA: 3 },
       natural: ['tentacles'], armor: 'fur', traits: { displacement: { ranged: 0.5, melee: 0.25 } }, feats: {},
     },
     giantSpider: {
       name: 'Giant spider', blurb: 'Spits sticky webs that make every action cost more, then closes for venomous bites. Armor keeps the fangs out; bare skin doesn\'t. Meant to beat the unarmored.',
-      attrs: { STR: 5, CON: 5, DEX: 8, SPD: 7, INT: 1, WIS: 5, CHA: 1 },
+      attrs: { STR: 8, CON: 6, DEX: 8, SPD: 7, INT: 1, WIS: 5, CHA: 1 },
       natural: ['spiderBite', 'webSpinner'], armor: 'chitin', traits: {}, feats: {}, policy: { kite: false },
     },
     owlbear: {
       name: 'Owlbear', blurb: 'Hugs and won\'t let go: no room for a greatsword or a bow. Meant to beat two-handers.',
-      attrs: { STR: 10, CON: 9, DEX: 5, SPD: 5, INT: 2, WIS: 5, CHA: 2 },
+      attrs: { STR: 18, CON: 16, DEX: 5, SPD: 5, INT: 2, WIS: 5, CHA: 2 },
       natural: ['claws', 'beak'], armor: 'fur', traits: {}, feats: { grappler: 2, pin: 1 }, policy: { grappler: true },
     },
     caveTroll: {
       name: 'Cave troll', blurb: 'Regenerates unless burned; wound-up slams break shields and knock you flat. Meant to beat sword and shield.',
-      attrs: { STR: 10, CON: 10, DEX: 4, SPD: 4, INT: 2, WIS: 4, CHA: 2 },
+      attrs: { STR: 20, CON: 18, DEX: 4, SPD: 4, INT: 2, WIS: 4, CHA: 2 },
       natural: ['trollFists', 'claws'], armor: 'trollHide', traits: { regen: { con: 1, stamina: 6 } }, feats: { power_swing: 1, shield_breaker: 1 },
     },
     trollChieftain: {
-      name: 'Troll chieftain', blurb: 'A boss for a whole party: acts like two and a half fighters (AP, per-pass allowance and stamina ×2.5) on a CON-15 body.',
-      attrs: { STR: 10, CON: 15, DEX: 4, SPD: 4, INT: 3, WIS: 4, CHA: 3 },
-      natural: ['trollFists', 'claws'], armor: 'trollHide', traits: { regen: { con: 1, stamina: 6 }, apMult: 2.5, staminaMult: 2.5 }, feats: { power_swing: 1, shield_breaker: 1, toughness: 1 },
+      name: 'Troll chieftain', blurb: 'A boss for a whole party: acts like two fighters (AP and per-pass allowance ×2) on a STR-24, CON-24 body.',
+      attrs: { STR: 24, CON: 24, DEX: 4, SPD: 4, INT: 3, WIS: 4, CHA: 3 },
+      natural: ['trollFists', 'claws'], armor: 'trollHide', traits: { regen: { con: 1, stamina: 6 }, apMult: 2 }, feats: { power_swing: 1, shield_breaker: 1, toughness: 1 },
     },
     displacerPair: { name: 'Displacer pair', blurb: 'Two displacer beasts: arrows mostly strike illusions, so the archers have to close while the beasts maul the front line.', group: ['displacer', 'displacer'] },
     // ---- Undead and constructs: tireless ----
@@ -261,13 +261,13 @@
     skeletonSquad: { name: 'Skeleton squad', blurb: 'Three skeletons with swords and shields.', group: ['skeleton', 'skeleton', 'skeleton'] },
     zombie: {
       name: 'Zombie', blurb: 'Slow, grabbing, biting. Piercing does half as much; no stamina to run down. Never tires.',
-      attrs: { STR: 7, CON: 12, DEX: 3, SPD: 3, INT: 1, WIS: 1, CHA: 1 },
+      attrs: { STR: 9, CON: 12, DEX: 3, SPD: 3, INT: 1, WIS: 1, CHA: 1 },
       natural: ['claws', 'zombieBite'], traits: { tireless: true, resist: { P: 0.5 } }, feats: { grappler: 1 }, policy: { grappler: true },
     },
     zombieHorde: { name: 'Zombie horde', blurb: 'Four zombies.', group: ['zombie', 'zombie', 'zombie', 'zombie'] },
     stoneGolem: {
       name: 'Stone golem', blurb: 'A construct of stone: blades skate off, hammers crack it. Slow, tireless, and its fists crush shields.',
-      attrs: { STR: 10, CON: 14, DEX: 3, SPD: 3, INT: 1, WIS: 1, CHA: 1 },
+      attrs: { STR: 22, CON: 22, DEX: 3, SPD: 3, INT: 1, WIS: 1, CHA: 1 },
       natural: ['golemFists'], armor: 'golemStone', traits: { tireless: true }, feats: {},
     },
     // ---- Humanoids with natural armor ----
@@ -296,7 +296,7 @@
     frogPatrol: { name: 'Froglok patrol', blurb: 'Three frogloks.', group: ['froglok', 'froglok', 'froglok'] },
     sarnak: {
       name: 'Sarnak', blurb: 'A big scaled reptilian warrior with a warhammer and a tail that sweeps legs.',
-      attrs: { STR: 8, CON: 7, DEX: 5, SPD: 5, INT: 4, WIS: 4, CHA: 3 },
+      attrs: { STR: 12, CON: 11, DEX: 5, SPD: 5, INT: 4, WIS: 4, CHA: 3 },
       natural: ['tail'], armor: 'sarnakScales', weapons: ['warhammer'], traits: {}, feats: { heavy_weapon_training: 1, toughness: 1 }, keepUnarmed: true,
     },
     sarnakPair: { name: 'Sarnak pair', blurb: 'Two sarnak warriors.', group: ['sarnak', 'sarnak'] },
