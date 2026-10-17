@@ -148,23 +148,24 @@ Every value is in `src/rules/config.js`. The evidence is in `sim/FINDINGS.md`.
 - Feat tiers are pooled across the four magic sub-trees (`featTierGroups`).
   That fixed a deadlock, but the user hasn't confirmed it yet.
 
-## Arena results (round 4)
+## Arena results (round 5, guards)
 
-See `sim/FINDINGS.md` and the arena page. With the 4-AP cap, style averages (open / close):
-two-handed 35 / 53, sword and shield 63 / 72, archery 55 / 43, magic 33 / 24, heavy armor 54 / 70.
-Fights last 5.6 / 3.8 rounds. The round 3 baseline is in `sim/results/arena-r3/`.
+See `sim/FINDINGS.md` and the arena page. With guards and the 4-AP cap, style averages
+(open / close): two-handed 35 / 50, sword and shield 68 / 78, archery 52 / 41, magic 31 / 23,
+heavy armor 53 / 64. Fights last 5.9 / 4.3 rounds. Baselines: `sim/results/arena-r3/`, `arena-r4/`.
 
-- Resolving each pass did not keep a dagger out of reach; sword and shield still leads.
-- The cap hurts two-handers most (slow swings land a pass later).
-- A 6-AP cap balanced the open field best.
+- Guards favor sword and shield (a cheap block can be readied blind and still leave room to attack).
+- Guard duration (pass vs round) made no difference with this AI.
+- Guards plus a 6-AP cap are the most even version so far (spread 19 / 23 points).
+- Actions per turn: mean 0.82, variance 0.30; only sword and shield often fits two in a turn.
 
 ## Open questions awaiting the user
 
 1. **How a reach weapon keeps a shorter one out.** Pass-by-pass resolution didn't solve it.
    Options: a set or stop-thrust; extra AP to step inside an enemy's reach; a shove that also
    costs the target AP; no dagger in the shield hand.
-2. **The AP cap.** On trial at 4 AP per pass. Does it stay, at 4 or 6? Do two-handed costs need
-   adjusting (or `spanLands: 'now'`)?
+2. **The AP cap.** On trial at 4 AP per pass. With guards, 6 is the most even option. Keep 4, move
+   to 6, or adjust two-handed costs (or `spanLands: 'now'`)?
 3. **Item materials, maker tags and keywords.** A proposal went to the user (see below); nothing
    is built yet.
 4. On hold at the user's request: the group-fight arena, the magic overhaul, the magic feat tiers.

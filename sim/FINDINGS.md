@@ -1,5 +1,29 @@
 # Simulation findings
 
+## Round 5: guards instead of a defense step
+
+Change (PROVISIONAL): defenses are **guards** readied on your own turn: a block, parry or dodge
+that meets the next attack landing on you this pass, or the next from a foe you name. A guard
+lapses at the end of the pass (`guardLasts: 'pass'`). A guard that can't meet an attack (a parry
+against an arrow) stays up. There is no longer a defense step; the user found one arbitrary,
+and wants saved AP (late actions the spent can't answer) to be the main edge.
+
+Results (40 fights per pairing; compared against `results/arena-r4/`), open / close:
+
+| Rules | Two-handed | Sword & shield | Archery | Heavy armor | Spread | Rounds |
+|---|---|---|---|---|---|---|
+| Round 4 (defense step, cap 4) | 35 / 53 | 63 / 72 | 55 / 43 | 54 / 70 | 28 / 29 | 5.6 / 3.8 |
+| **Guards, end of pass (default)** | 35 / 50 | 68 / 78 | 52 / 41 | 53 / 64 | 33 / 37 | 5.9 / 4.3 |
+| Guards last the round | 35 / 48 | 69 / 78 | 51 / 41 | 53 / 63 | 34 / 37 | 5.9 / 4.2 |
+| Guards, cap 6 | 46 / 51 | 65 / 73 | 57 / 50 | 52 / 64 | 19 / 23 | 5.5 / 4.2 |
+
+- Guards favor sword & shield: a 2–4 AP block can be readied blind and still leave room to attack.
+  Defenses rose about 40%, hits fell about 10%, fights got slightly longer.
+- Guard duration doesn't matter with this AI (it guards against attacks due this pass).
+- Guards with a 6-AP cap are the most even version so far (spread 19 / 23).
+- Actions per turn (separate measure, 4 fights per pairing, cap 4): mean 0.82, variance 0.30;
+  26% of turns are empty, 66% one action, 8% two. Only sword & shield regularly fits two (17%).
+
 ## Round 4: passes resolve one at a time, and a per-pass AP cap (trial)
 
 Changes (PROVISIONAL; see the Rules tab and `src/rules/config.js`):
