@@ -59,6 +59,9 @@ Characters who spend early sit out the last passes.
   point/edge/head give damage, AP, STR scaling and wounds; a d10 wound roll can be vital; armor
   guards the vitals. Go through `Items.weaponStats(item)`, never the catalog's numbers directly.
 - Ready a thrust (stop-thrust), fend off at range 2, and shoves that spoil a move are built.
+- Parry and dodge are opposed rolls (defender DEX/SPD vs attacker STR/SPD); no parry vs power
+  blows. Parrying dagger in the off hand (`c.offhand`, `offParry` meets thrusts only). Natural
+  weapons have physical stats too.
 - Don't tune individual monsters; experiments are about fundamentals for now.
 
 ## Waiting on the user

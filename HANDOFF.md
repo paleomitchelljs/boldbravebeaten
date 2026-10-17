@@ -194,6 +194,14 @@ and vital odds. Tests that check old weapon numbers use `tableWeapons()`. Before
 move of a foe shoved back (reset each pass). AI: `readyChoice` (only against a declared move),
 `approach` (guard before walking onto a visible point), `entryCost` in `preferredDistance`.
 
+## Defenses, off hand, natural weapons (round 9)
+
+Parry/dodge: `CONFIG.defense.opposed` (defenseNumbers returns {bonus, attack, opposed}); 
+`noParryVsPower`; `offhandBonus`. Off hand: `c.offhand` (weapon id; `WEAPONS[].offhand`),
+`C.offhandWeapon(c)`, guard type `offParry` (thrusts only), off-hand thrust option (`o.offhand`).
+Sheet has an Off hand column. Natural weapons have `phys` (STR ×1, catalog weight class). Arena
+style `duelist` (rapier + parrying dagger). Baselines: `results/arena-r9b`, `results/monsters-r9b`.
+
 ## Open questions awaiting the user
 
 1. **The AP cap.** On trial at 4 AP per pass; 6 balanced better with guards.

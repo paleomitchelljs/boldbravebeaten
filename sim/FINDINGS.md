@@ -1,5 +1,32 @@
 # Simulation findings
 
+## Opposed parries and dodges, parrying dagger, natural weapons from physics
+
+- **Parry and dodge are opposed rolls.** Defender d10 + Training + ⌊(DEX + SPD)/4⌋ (armor-reduced)
+  against attacker d10 + ⌊(STR + SPD)/4⌋ + motion penalty. A parry also faces +1 per weight class
+  the attacking weapon has over the parrying one. Ties go to the defender, so equal fighters parry
+  about 55–65% of the time. A STR-20 troll is much harder to dodge. **A power blow can't be
+  parried**, only dodged or blocked. Block keeps its target number.
+- **Parrying dagger** (main-gauche, 0.45 kg): held in the off hand (no shield, no two-handed
+  weapon). It stabs (off-hand thrust, 2 AP), and its Off-hand parry (2 AP on the sheet, +1)
+  meets thrusts only. New arena style **Rapier & dagger** (DEX 7, SPD 7; Parry Training II,
+  Riposte, Quick Thrust, Quick Parry, Lunge, Precision).
+- **Natural weapons come from physics:** jaw or limb mass and length, teeth depth and width,
+  claw edge, fist mass. STR counts in full, since the body drives the blow; the weight class stays
+  the catalog's. Bites got lighter (wolf 4 → 3, zombie 3 → 1); fists heavier (troll 7 → 10,
+  golem 8 → 11, tail 4 → 6); the displacer's tentacles hit for 2/2/6 rather than 3/2/3.
+
+Arena (now five styles, so averages move with the field), open field / close quarters:
+two-handed 52 / 59%; sword and shield 59 / 53%; grappler 35 / 39%; rapier and dagger 47 / 60%;
+archery 45 / 29%. Rapier and dagger beats sword and shield 76% in close quarters (its off-hand
+parry catches thrusts, and the shield fighter's AI mostly thrusts) but loses 40% in the open.
+Successful off-hand parries: 0.15–0.19 per fight for the duelist. Parries with the main weapon
+are rare for every style (the AI seldom picks them).
+
+Parties against groups (veterans, open / room), before → after: zombie horde 33/35 → 65/40%
+(zombie bites now do 1); displacer pair 75/83 → 83/85%. Light party against the cave troll
+85/78 → 73/70% (fists 10 + STR).
+
 ## Ready a thrust, fend off, shoves spoil a move
 
 The user asked for a way to hold a foe off. **Ready a thrust:** on your turn you hold a long
