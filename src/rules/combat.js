@@ -30,6 +30,8 @@
   const GRAPPLE_STEPS = ['clinch', 'grapple', 'pin', 'throw', 'break'];
   const ATTACK_TYPES = ['strike', 'trip', 'disarm', 'shove'].concat(GRAPPLE_STEPS);
   const DEFENSE_TYPES = ['block', 'parry', 'dodge'];
+  // Held through the pass like guards (not resolved at its end): guards and readied thrusts.
+  const HELD_TYPES = DEFENSE_TYPES.concat(['readyStrike']);
 
   // ---- Encounter setup ---------------------------------------------------
   function createEncounter(name, ids, chars, w, h) {
@@ -155,12 +157,61 @@
       (CONFIG.guardLasts === 'round' ? x.pass <= pass : x.pass === pass));
   }
 
+  // Thrusts held ready this pass.
+  function readiesUp(enc, id, pass) {
+    return enc.decls.filter((x) => x.actor === id && x.type === 'readyStrike' && !x.used && x.pass === pass);
+  }
+
+  // What can be held ready: a melee thrust that reaches past arm's length (a spear, a sword, a
+  // rapier), not one that has to be wound up.
+  function readyable(opt) {
+    return opt.kind === 'strike' && opt.motion === 'thrust' && !opt.ranged && !opt.windUp && !opt.halfSword && (opt.maxRange || 1) >= 2;
+  }
+
+  // Shoving reaches clinch distance; a long weapon fends off at range 2 (haft, crossguard, point).
+  function shoveReach(c) {
+    const w = C.wieldedWeapon(c);
+    const f = CONFIG.shove.fendReach;
+    return f && w && !WEAPONS[w.type].ranged && (WEAPONS[w.type].reach || 1) >= 2 ? Math.max(CONFIG.range.maneuverMax, f) : CONFIG.range.maneuverMax;
+  }
+
+  // A mover stepping to `to`: every foe with a thrust ready, whom the step brings closer and
+  // into the thrust's reach, thrusts first (initiative order), where the mover enters its reach.
+  // Returns true if the advance is stopped (a hit, or the mover goes down).
+  async function stopThrusts(enc, chars, m, to, roller) {
+    const from = enc.pos[m.id];
+    const holders = enc.decls
+      .filter((x) => x.type === 'readyStrike' && !x.used && x.pass === enc.pass && chars[x.actor].side !== m.side && (!x.against || x.against === m.id))
+      .sort((x, y) => enc.order.indexOf(x.actor) - enc.order.indexOf(y.actor));
+    for (const r of holders) {
+      const h = chars[r.actor];
+      if (!C.isActive(h) || h.status.prone || isGrappled(h) || h.status.clinch) continue;
+      const hp = enc.pos[h.id];
+      const d0 = dist(from, hp), d1 = dist(to, hp);
+      if (!(d1 < d0 && d1 <= r.option.maxRange)) continue;
+      r.used = true;
+      const at = Math.max(1, Math.min(d0, r.option.maxRange));
+      const virtual = Object.assign({}, enc.pos, { [m.id]: { x: hp.x + at, y: hp.y } });
+      const before = { stamina: m.stamina, dmg: C.totalDamage(m), active: C.isActive(m), bleeds: m.bleeds.length };
+      log(enc, `${m.name} steps into ${h.name}'s readied point.`, 'pass');
+      const sd = { actor: h.id, type: 'strike', option: r.option, target: m.id, pass: enc.pass, stamina: r.stamina, n: ++enc.seq, ready: true };
+      await resolveAction(enc, chars, sd, roller, virtual);
+      const hit = m.stamina < before.stamina || C.totalDamage(m) > before.dmg || m.bleeds.length > before.bleeds || !C.isActive(m);
+      if (hit) {
+        if (C.isActive(m)) log(enc, `${h.name}'s point stops ${m.name}'s advance.`, 'hit');
+        return true;
+      }
+    }
+    return false;
+  }
+
   function eligible(enc, id) {
     return id != null && !enc.conceded[id] && passLeft(enc, id) >= CONFIG.minActionAP && !enc.turnDone[id];
   }
 
   function startPass(enc, chars) {
     enc.pass += 1;
+    enc.disrupted = {};
     enc.turn = -1;
     enc.turnDone = {};
     enc.phase = 'declare';
@@ -306,6 +357,7 @@
       out.defenses.push({ type: kind, ap: cost.ap, stamina: cost.stamina, affordable: can(cost.ap) && !why, spans: cost.ap > left, why });
     }
     out.guardAgainst = others.filter((o) => chars[o].side !== c.side && C.isActive(chars[o]));
+    out.readied = readiesUp(enc, id, enc.pass);
     out.guards = guardsUp(enc, id, enc.pass);
     // Attacks already declared at me: landing this pass, and slow ones landing later.
     out.incoming = incomingAttacks(enc, id).filter((d) => d.pass === enc.pass);
@@ -326,6 +378,16 @@
       }));
     }
 
+    // Ready a thrust: hold the point; whoever steps closer into its reach this pass meets it.
+    out.readies = [];
+    if (CONFIG.readyStrike && !c.status.prone && !isGrappled(c) && !c.status.clinch) {
+      for (const opt of planned) {
+        if (!readyable(opt)) continue;
+        const why = attackUnavailable(enc, c, opt, spPlanned);
+        out.readies.push({ type: 'readyStrike', option: opt, name: `Ready ${opt.label.toLowerCase()}`, ap: opt.ap, stamina: opt.stamina, affordable: can(opt.ap) && !why, spans: opt.ap > left, why });
+      }
+    }
+
     const reach = CONFIG.range.maneuverMax;
     const grappled = isGrappled(c);
     const link = linkOf(c);
@@ -341,6 +403,7 @@
         if (kind === 'shove' && link) continue;
         let r = reach;
         if (kind === 'trip' && hookWeapon(c)) r = WEAPONS[C.wieldedWeapon(c).type].reach;
+        if (kind === 'shove') r = shoveReach(c);
         pushManeuver(kind, others.filter((o) => !chars[o].status.unconscious).map((o) => ({ id: o, inReach: dist(me, posAtPass(enc, o, enc.pass)) <= r })));
       }
     }
@@ -492,6 +555,18 @@
       const why = defenseUnavailable(c, decl.type, null, chars, enc);
       if (why) return why;
       ({ ap, stamina } = C.actionCost(c, decl.type));
+    } else if (decl.type === 'readyStrike') {
+      if (!CONFIG.readyStrike) return 'Unknown action';
+      if (!decl.option) return 'Choose a thrust to ready';
+      if (decl.against && (!chars[decl.against] || chars[decl.against].side === c.side)) return 'Ready it against a foe';
+      const key = C.optionKey(decl.option);
+      const opt = plannedAttackOptions(enc, c).find((o) => C.optionKey(o) === key && readyable(o));
+      if (!opt) return 'Nothing to ready';
+      if (c.status.prone || isGrappled(c) || c.status.clinch) return 'Not from here';
+      decl.option = opt;
+      // AP now; the stamina only if the thrust is made.
+      ap = opt.ap;
+      stamina = opt.stamina;
     } else if (decl.type === 'windUp') {
       if (!decl.option) return 'Choose what to wind up';
       const key = C.optionKey(decl.option);
@@ -524,7 +599,7 @@
     const lands = payAP(enc, id, ap);
     // A guard is up at once (any AP over the cap is owed from later passes); everything
     // else lands when fully paid, unless CONFIG.spanLands says it lands now.
-    decl.pass = defense || CONFIG.spanLands === 'now' ? enc.pass : lands;
+    decl.pass = defense || decl.type === 'readyStrike' || CONFIG.spanLands === 'now' ? enc.pass : lands;
     decl.n = ++enc.seq;
     if (decl.target) decl.targetWasDown = !C.isActive(chars[decl.target]);
     enc.decls.push(decl);
@@ -552,6 +627,10 @@
     if (DEFENSE_TYPES.includes(d.type)) {
       const vs = d.against && chars[d.against] ? `${chars[d.against].name}'s next attack` : 'the next attack';
       return { text: `${a.name}: ready to ${d.type} ${vs} [${d.ap} AP]` };
+    }
+    if (d.type === 'readyStrike') {
+      const vs = d.against && chars[d.against] ? chars[d.against].name : 'anyone';
+      return { text: `${a.name}: holds a ${d.option.label.toLowerCase()} ready for ${vs} who comes closer [${d.ap} AP]` };
     }
     if (d.type === 'move') return { text: `${a.name}: move to (${d.to.x + 1}, ${d.to.y + 1}) [${d.ap} AP]` };
     if (d.type === 'windUp') return { text: `${a.name}: winds up ${d.option.label} [${d.ap} AP]` };
@@ -1028,7 +1107,7 @@
     const p = enc.pass;
     const rank = (id) => enc.order.indexOf(id);
     const actsThisPass = enc.decls
-      .filter((d) => d.pass === p && !d.done && !DEFENSE_TYPES.includes(d.type))
+      .filter((d) => d.pass === p && !d.done && !HELD_TYPES.includes(d.type))
       .sort((x, y) => rank(x.actor) - rank(y.actor) || x.n - y.n);
     if (actsThisPass.length) {
       log(enc, `Pass ${p}`, 'pass');
@@ -1069,7 +1148,14 @@
           log(enc, `${a.name}'s move is blocked.`, 'fizzle');
           continue;
         }
+        if (!C.isActive(a)) continue;
+        if ((enc.disrupted || {})[a.id]) {
+          log(enc, `${a.name} is driven back and can't press on.`, 'fizzle');
+          continue;
+        }
         if (!payStamina(enc, a, d.stamina)) continue;
+        // Readied points: stepping closer into one meets it first; a hit stops the advance.
+        if (await stopThrusts(enc, chars, a, d.to, roller)) continue;
         claimed[key] = d.actor;
         const left = enc.pos[d.actor];
         enc.pos[d.actor] = { x: d.to.x, y: d.to.y };
@@ -1085,7 +1171,7 @@
     // Another pass while anything is still on its way or anyone can still act. A pass in
     // which nobody started or landed anything (everyone waited) ends the round.
     const pending = enc.decls.some((d) => !d.done);
-    const started = enc.decls.some((d) => d.declaredPass === p && !DEFENSE_TYPES.includes(d.type));
+    const started = enc.decls.some((d) => d.declaredPass === p && !HELD_TYPES.includes(d.type));
     const sides = {};
     for (const id of enc.ids) if (C.isActive(chars[id])) sides[chars[id].side] = true;
     for (const id of enc.order) if (!C.isActive(chars[id])) enc.conceded[id] = true;
@@ -1123,6 +1209,7 @@
       }
       let band = { minRange: 1, maxRange: CONFIG.range.maneuverMax };
       if (d.type === 'strike') band = d.option;
+      if (d.type === 'shove') band = { minRange: 1, maxRange: shoveReach(a) };
       if (d.type === 'trip' && hookWeapon(a)) band = { minRange: 1, maxRange: WEAPONS[C.wieldedWeapon(a).type].reach };
       const distance = dist(posAtStart[d.actor], posAtStart[d.target]);
       const label = d.type === 'strike' ? d.option.label : d.type;
@@ -1398,8 +1485,8 @@
     if (d.type === 'shove') {
       const S = CONFIG.shove;
       const w = C.wieldedWeapon(a);
-      const aB = Math.floor(C.attr(a, 'STR') / 2) + (w && WEAPONS[w.type].hands === 2 ? S.twoHandBonus : 0);
-      const o = await opposed(roller, a, aB, 'Shove', t, stability(t), 'Hold ground');
+      const aB = Math.floor(C.attr(a, 'STR') / 2) + (w && WEAPONS[w.type].hands === 2 ? S.twoHandBonus : 0) + (C.shieldReady(a) ? S.shieldBonus || 0 : 0);
+      const o = await opposed(roller, a, aB, dist(enc.pos[a.id], enc.pos[t.id]) > 1 ? 'Fend off' : 'Shove', t, stability(t), 'Hold ground');
       if (o.margin <= 0) return log(enc, `${a.name}'s shove fails (${o.a} vs ${o.b}).`, 'fail');
       const from = enc.pos[a.id], at = enc.pos[t.id];
       const dx = Math.sign(at.x - from.x), dy = Math.sign(at.y - from.y);
@@ -1412,6 +1499,8 @@
         enc.pos[t.id] = { x: nx, y: ny };
         moved++;
       }
+      // Driven back: whatever advance they had in mind this pass is spoiled.
+      if (moved || o.margin >= S.farMargin) (enc.disrupted || (enc.disrupted = {}))[t.id] = true;
       if (moved) log(enc, `${a.name} shoves ${t.name} back ${moved} square${moved > 1 ? 's' : ''} (${o.a} vs ${o.b}).`, 'hit');
       else if (o.margin >= S.farMargin) {
         knockDown(enc, t);
@@ -1546,7 +1635,7 @@
   }
 
   G.Combat = {
-    ATTACK_TYPES, DEFENSE_TYPES,
+    ATTACK_TYPES, DEFENSE_TYPES, HELD_TYPES, readiesUp, readyable, shoveReach,
     createEncounter, autoPlace, startRound, currentActor, legalActions, declare, concede, endTurn, submit, describeDecl, passCap, passLeft,
     vitalNeed, projectedPos, posAtPass, dist, defenseOdds, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolvePass, resolveRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
   };

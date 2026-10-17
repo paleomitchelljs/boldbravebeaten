@@ -174,7 +174,19 @@
   // The distance this loadout likes best against a target: the best of
   // (my rate − RISK × their rate), and among near-equal choices the farthest.
   // If nothing scores above zero, fall back to my best raw rate (someone has to fight).
-  function preferredDistance(c, target, opts) {
+  // The cost of getting from distance `from` in to `d` past a foe who can hold a long thrust
+  // ready: you may have to take it on the way in (counted at half, once).
+  function entryCost(c, target, d, from) {
+    if (!G.CONFIG.readyStrike || from == null || d >= from) return 0;
+    let worst = 0;
+    for (const o of C.attackOptions(target)) {
+      if (!Combat.readyable(o) || o.maxRange < d || o.maxRange < 2) continue;
+      worst = Math.max(worst, rate(target, c, o, Math.min(from, o.maxRange)));
+    }
+    return worst * 0.5;
+  }
+
+  function preferredDistance(c, target, opts, from) {
     const myMax = Math.max(1, ...opts.map((o) => o.maxRange || 1));
     const theirMax = Math.max(1, ...C.attackOptions(target).map((o) => o.maxRange || 1));
     const top = Math.min(16, Math.max(myMax, theirMax + 1));
@@ -182,7 +194,7 @@
     for (let d = 1; d <= top; d++) {
       const mine = bestRate(c, target, opts, d);
       if (mine <= 0) continue;
-      const net = mine - RISK * foeRate(target, c, d);
+      const net = mine - RISK * foeRate(target, c, d) - entryCost(c, target, d, from);
       if (!best || net > best.net + 0.01 || (Math.abs(net - best.net) <= 0.01 && d > best.d)) best = { d, rate: mine, net };
       if (!bestRaw || mine > bestRaw.rate) bestRaw = { d, rate: mine, net };
     }
@@ -230,6 +242,58 @@
   }
 
   // Best square within the move budget for a goal distance to the target.
+  // Readied points (visible) that a step to `to` would walk into: foes holding a thrust whose
+  // reach the step enters, coming closer.
+  function pointsInTheWay(enc, chars, id, from, to) {
+    const me = chars[id];
+    return enc.decls.filter((d) => {
+      if (d.type !== 'readyStrike' || d.used || d.pass !== enc.pass || chars[d.actor].side === me.side) return false;
+      if (d.against && d.against !== id) return false;
+      if (!C.isActive(chars[d.actor])) return false;
+      const hp = Combat.projectedPos(enc, d.actor);
+      const d0 = Combat.dist(from, hp), d1 = Combat.dist(to, hp);
+      return d1 < d0 && d1 <= d.option.maxRange;
+    });
+  }
+
+  // Before walking onto a readied point: put a guard up against its holder first, or don't go.
+  function approach(enc, chars, id, la, mv) {
+    if (!mv || mv.type !== 'move') return mv;
+    const points = pointsInTheWay(enc, chars, id, la.move.from, mv.to);
+    if (!points.length) return mv;
+    const c = chars[id];
+    const holder = points[0].actor;
+    const covered = la.guards.some((g) => !g.against || g.against === holder);
+    if (covered) return mv;
+    let pick = null;
+    for (const o of la.defenses) {
+      if (!o.affordable) continue;
+      const p = Combat.defenseOdds(c, o.type, 'thrust');
+      if (p > 0.25 && (!pick || p > pick.p)) pick = { p, decl: { actor: id, type: o.type, against: holder } };
+    }
+    return pick ? pick.decl : null;
+  }
+
+  // Should I hold my point ready for a foe who has declared a step closer this pass?
+  function readyChoice(enc, chars, id, la) {
+    if (!la.readies || la.readied.length) return null;
+    const c = chars[id];
+    const hp = Combat.projectedPos(enc, id);
+    // Only against a move already declared: anyone still to act would see the point and wait.
+    let best = null;
+    for (const f of enemiesOf(enc, chars, id)) {
+      const mv = enc.decls.find((d) => d.actor === f && d.type === 'move' && d.pass === enc.pass && !d.done);
+      if (!mv) continue;
+      const d0 = Combat.dist(mv.from, hp), d1 = Combat.dist(mv.to, hp);
+      for (const r of la.readies) {
+        if (!r.affordable || !(d1 < d0 && d1 <= r.option.maxRange)) continue;
+        const v = hitValue(c, chars[f], r.option, Math.min(d0, r.option.maxRange));
+        if (!best || v > best.v) best = { v, decl: { actor: id, type: 'readyStrike', option: r.option, against: f } };
+      }
+    }
+    return best ? best.decl : null;
+  }
+
   function planMove(enc, chars, id, la, targetId, goal, foes, avoid) {
     if (!la.move) return null;
     const c = chars[id];
@@ -360,8 +424,8 @@
       const threatHere = RISK * foeRate(target, c, near.d);
       const nowR = bestRate(c, target, nowOpts, near.d) - threatHere;
       const altR = bestRate(c, target, alt, near.d) - threatHere;
-      const nowPref = preferredDistance(c, target, nowOpts);
-      const altPref = preferredDistance(c, target, alt);
+      const nowPref = preferredDistance(c, target, nowOpts, near.d);
+      const altPref = preferredDistance(c, target, alt, near.d);
       // Swap if the other weapon is much better right here, or its best distance is
       // much better than this weapon's best distance (and reachable).
       const canReach = la.move && Math.abs(altPref.d - near.d) <= la.move.maxSquares;
@@ -394,16 +458,20 @@
     const rangedLoadout = planBase.some((o) => o.ranged && !o.unarmed);
     // A kiting loadout plans its distance around its ranged options only.
     const planOpts = rangedLoadout && P.kite ? planBase.filter((o) => o.ranged) : planBase.filter((o) => !o.unarmed).length ? planBase.filter((o) => !o.unarmed) : planBase;
-    const pref = preferredDistance(c, target, planOpts);
+    const pref = preferredDistance(c, target, planOpts, near.d);
 
     // 7. Ranged characters step out of melee reach before shooting.
     if (P.kite && rangedLoadout && la.move) {
       const reach = threatReach(chars, foes);
       if (near.d <= reach + 1 && ap >= C.moveCost(c, 2) + S) {
         const mv = planMove(enc, chars, id, la, near.id, Math.max(pref.d, reach + 2), foes, reach);
-        if (mv && Combat.dist(mv.to, Combat.projectedPos(enc, near.id)) > near.d) return mv;
+        if (mv && Combat.dist(mv.to, Combat.projectedPos(enc, near.id)) > near.d) return approach(enc, chars, id, la, mv) || endTurn;
       }
     }
+
+    // 7b. Hold the point for a foe who is about to step in.
+    const ready = readyChoice(enc, chars, id, la);
+    if (ready) return ready;
 
     // 8. Attack now, or wind up for a bigger blow next round.
     let best = null;
@@ -437,14 +505,14 @@
     // Step to a better distance when it is clearly better than fighting from here.
     const hereNet = (best ? best.v : 0) - RISK * foeRate(target, c, near.d);
     if (la.move && !rangedLoadout && pref.d !== near.d && pref.net > hereNet + Math.max(1, Math.abs(hereNet)) && ap >= C.moveCost(c, Math.abs(pref.d - near.d)) + S) {
-      const mv = planMove(enc, chars, id, la, near.id, pref.d, foes, 0);
+      const mv = approach(enc, chars, id, la, planMove(enc, chars, id, la, near.id, pref.d, foes, 0));
       if (mv) return mv;
     }
     if (best && best.v > 0.2) return best.decl;
 
     // 9. Move toward the distance this loadout likes best.
     const goal = pref.rate > 0 ? pref.d : 1;
-    const mv = planMove(enc, chars, id, la, near.id, goal, foes, rangedLoadout && P.kite ? threatReach(chars, foes) : 0);
+    const mv = approach(enc, chars, id, la, planMove(enc, chars, id, la, near.id, goal, foes, rangedLoadout && P.kite ? threatReach(chars, foes) : 0));
     if (mv) return mv;
     return endTurn;
   }

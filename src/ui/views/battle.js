@@ -257,7 +257,12 @@
           disabled: !o.affordable, title: o.why || '',
           onclick: () => declare(app, enc, { actor: id, type: o.type, against: vs || null }),
         }, `${D.ACTIONS[o.type].name} · ${costText(o.ap, o.stamina)}${o.why ? ' — ' + o.why : o.spans ? ' · borrows next pass' : ''}`))),
-        h('p', { class: 'small muted' }, 'A guard lasts until it meets an attack or the pass ends. A parry can\'t meet an arrow or spell; it waits for the next blow.')]]);
+        (legal.readies || []).length ? h('div', { class: 'row' }, legal.readies.map((o) => h('button', {
+          disabled: !o.affordable, title: o.why || '',
+          onclick: () => declare(app, enc, { actor: id, type: 'readyStrike', option: o.option, against: vs || null }),
+        }, `${o.name} · ${costText(o.ap, o.stamina)}${o.why ? ' — ' + o.why : o.spans ? ' · borrows next pass' : ''}`))) : null,
+        (legal.readied || []).length ? h('div', { class: 'small' }, h('b', null, 'Point ready: '), legal.readied.map((g) => Combat.describeDecl(enc, chars, g, id).text.replace(c.name + ': ', '')).join('; ')) : null,
+        h('p', { class: 'small muted' }, 'A guard lasts until it meets an attack or the pass ends. A parry can\'t meet an arrow or spell; it waits for the next blow. A readied thrust meets the first foe (or the named one) who steps closer into its reach this pass; a hit stops them. Stamina is paid only if it\'s made.')]]);
       if (legal.move || legal.maneuvers.length) {
         groups.push(['move', 'Move and maneuver', null, h('div', { class: 'row' },
           legal.move ? h('button', { class: ui.mode === 'move' ? 'selected' : '', onclick: () => { ui.mode = 'move'; ui.pending = null; app.render(); } },

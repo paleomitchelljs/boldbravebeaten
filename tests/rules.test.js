@@ -898,3 +898,48 @@ test('wound roll: armor guards the vitals; a vital stab triples its CON damage',
   await Combat.applyHit(enc, { [a.id]: a, [u.id]: u }, a, u, thrust, roller(1, [10]));
   assert.strictEqual(u.damage.CON, thrust.damage[0]);
 });
+
+test('ready a thrust: stepping closer into a readied point meets it first and is stopped', async () => {
+  const s = armed('S', 'longsword', { side: 'party' });
+  const d = armed('D', 'dagger', { side: 'enemy' });
+  s.base.SPD = 9; d.base.SPD = 1; d.base.CON = 12;
+  for (const c of [s, d]) c.stamina = C.maxStamina(c);
+  const chars = { [s.id]: s, [d.id]: d };
+  const enc = Combat.createEncounter('t', [s.id, d.id], chars, 8, 1);
+  enc.pos[s.id] = { x: 0, y: 0 }; enc.pos[d.id] = { x: 3, y: 0 };
+  await Combat.startRound(enc, chars, roller(3, [5, 5]));
+  const ready = Combat.legalActions(enc, chars, s.id).readies.find((o) => o.option.motion === 'thrust');
+  assert.ok(ready && ready.affordable);
+  assert.strictEqual(Combat.declare(enc, chars, { actor: s.id, type: 'readyStrike', option: ready.option }), null);
+  Combat.endTurn(enc, s.id);
+  assert.strictEqual(Combat.declare(enc, chars, { actor: d.id, type: 'move', to: { x: 1, y: 0 } }), null);
+  Combat.endTurn(enc, d.id);
+  await Combat.resolvePass(enc, chars, roller(4, [10]));
+  const text = enc.log.map((l) => l.text).join('\n');
+  assert.match(text, /steps into S's readied point/);
+  assert.match(text, /S's Thrust \(point\) hits D/);
+  assert.deepStrictEqual(enc.pos[d.id], { x: 3, y: 0 }, 'the advance is stopped');
+  assert.ok(C.totalDamage(d) > 0);
+});
+
+test('fend off: a long weapon shoves at range 2, and a foe driven back loses that move', async () => {
+  const s = armed('S', 'spear', { side: 'party' });
+  const d = armed('D', 'dagger', { side: 'enemy' });
+  s.base.SPD = 9; d.base.SPD = 1; s.base.STR = 9;
+  for (const c of [s, d]) c.stamina = C.maxStamina(c);
+  const chars = { [s.id]: s, [d.id]: d };
+  const enc = Combat.createEncounter('t', [s.id, d.id], chars, 8, 1);
+  enc.pos[s.id] = { x: 0, y: 0 }; enc.pos[d.id] = { x: 2, y: 0 };
+  await Combat.startRound(enc, chars, roller(3, [5, 5]));
+  const shove = Combat.legalActions(enc, chars, s.id).maneuvers.find((m) => m.type === 'shove');
+  assert.ok(shove.targets.find((t) => t.id === d.id).inReach, 'the spear reaches 2 squares');
+  assert.strictEqual(Combat.declare(enc, chars, { actor: s.id, type: 'shove', target: d.id }), null);
+  Combat.endTurn(enc, s.id);
+  assert.strictEqual(Combat.declare(enc, chars, { actor: d.id, type: 'move', to: { x: 1, y: 0 } }), null);
+  Combat.endTurn(enc, d.id);
+  await Combat.resolvePass(enc, chars, roller(4, [5, 5]));
+  const text = enc.log.map((l) => l.text).join('\n');
+  assert.match(text, /S shoves D back 1 square/);
+  assert.match(text, /D is driven back and can't press on/);
+  assert.deepStrictEqual(enc.pos[d.id], { x: 3, y: 0 });
+});
