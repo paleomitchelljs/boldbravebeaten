@@ -54,12 +54,15 @@
   }
 
   function freshStatus() {
-    return { prone: false, grappledBy: [], grappling: null, unconscious: false, dead: false, dropped: null, windUp: null };
+    return { prone: false, grappledBy: [], grappling: null, unconscious: false, dead: false, dropped: [], windUp: null };
   }
 
   // Bring older saves up to the current shape.
   function normalize(c) {
     c.status = Object.assign(freshStatus(), c.status || {});
+    // Weapons on the ground used to be a single id (and the wield pointer stayed on it).
+    if (!Array.isArray(c.status.dropped)) c.status.dropped = c.status.dropped ? [c.status.dropped] : [];
+    if (c.wield != null && c.status.dropped.includes(c.wield)) c.wield = null;
     c.damage = c.damage || {};
     c.base = c.base || {};
     ATTRS.forEach((a) => {
@@ -236,7 +239,7 @@
 
   function wieldedWeapon(c) {
     if (c.wield == null) return null;
-    if (c.status && c.status.dropped === c.wield) return null;
+    if (c.status && Array.isArray(c.status.dropped) && c.status.dropped.includes(c.wield)) return null;
     return c.weapons.find((w) => w.id === c.wield) || null;
   }
 
@@ -449,7 +452,11 @@
       ranged = true;
     }
     if (face === 'hilt') closePenalty = false; // the murder stroke is a close technique
-    if (minRange > 1) closePenalty = false;
+    if (minRange > 1 && !ranged) {
+      // A weapon that can't normally be used up close (a spear's point): under the 'blunt'
+      // rule it can still be jabbed with the shaft at range 1.
+      if (CONFIG.range.closeRule === 'blunt') { minRange = 1; closePenalty = true; } else closePenalty = false;
+    }
     // Inside the weapon's reach: either the attack can't be made at all, or it is penalized.
     if (closePenalty && CONFIG.range.closeRule === 'cannot') {
       minRange = 2;
@@ -531,7 +538,7 @@
       if (st.prone) ap += CONFIG.maneuver.proneDefenseExtraAP * S;
       if (grappled) ap += CONFIG.maneuver.grappledDefenseExtraAP * S;
     }
-    ap = Math.max(CONFIG.minActionAP, ap);
+    ap = kind === 'dropWeapon' ? 0 : Math.max(CONFIG.minActionAP, Math.round(ap));
     return { ap, stamina: staminaCost(c, a.stamina, null, red) };
   }
 

@@ -115,13 +115,19 @@
     // ---- Range (PROVISIONAL; weapon reach data lives in data.js) ----------
     range: {
       // Attacks with weapons that aren't closeOK, at range 1 ("inside the weapon's reach"):
+      //   'blunt'  — the blow lands with closeMult of its total force, all as blunt (pommel, haft,
+      //              guard); a spear can be jabbed with the shaft (round-6 rule, the user's call)
       //   'cannot' — the attack can't be made; shove, grapple, draw a dagger or use a close technique
       //   'half'   — the attack does half damage (round-2 rule)
-      closeRule: 'cannot',
+      closeRule: 'blunt',
       closeMult: 0.5,
       longRangePenalty: 2, // bows: −2 damage beyond their long range
       maneuverMax: 1, // trips, disarms, grapples, shoves, kicks and punches need clinch distance
     },
+
+    // PROVISIONAL: a character held in a grapple fights cramped with any weapon, dagger included
+    // (the grapple is "inside" even a dagger's reach): the same penalty as range.closeRule.
+    grappledWeaponsCramped: true,
 
     // ---- Shove (PROVISIONAL) ----------------------------------------------
     // Opposed d10 + ⌊STR/2⌋ (+2 two-handed weapon) vs d10 + footing. A win pushes the
@@ -274,7 +280,8 @@
     'Piercing through armor: each leftover point rolls a d10 and reaches CON on ≤ pass-through × 10 (plate 2, other full armor 5). Chosen by simulation over rounding.',
     'Armor wear per hit is a third of (blunt + converted slashing); armor keeps at least 75% of its mitigation until destroyed.',
     'Block target numbers by shield: buckler 5, round 4, heater 3, tower 2 (d10 + Shield Training).',
-    'Range: a square is about a pace (1 = clinch, 2 = sword distance). Swings reach 1 to the weapon\'s reach; thrusts reach farther on some weapons (rapier +1, spear +2). Inside a long weapon\'s reach (range 1) its attacks can\'t be made at all: shove, grapple, draw a dagger, or use half-swording or the murder stroke. Daggers, clubs, maces and hammers work at 1. Movement covers twice the Specifics squares.',
+    'Range: a square is about a pace (1 = clinch, 2 = sword distance). Swings reach 1 to the weapon\'s reach; thrusts reach farther on some weapons (rapier +1, spear +2). Inside a long weapon\'s reach (range 1) its blows land with half their force, all as blunt (pommel, haft, guard). Daggers, clubs, maces and hammers work fully at 1, as do half-swording and the murder stroke. Movement covers twice the Specifics squares.',
+    'Weapons in hand: drawing a weapon costs 1 AP on the sheet; dropping one costs nothing; picking one up costs 4. Drawing while holding a weapon drops it (a dagger is sheathed instead). A character held in a grapple fights cramped with any weapon, dagger included: half force, all blunt.',
     'Shove (2 AP, range 1): opposed d10 + ⌊STR/2⌋ (+2 with a two-handed weapon) vs d10 + footing. A win pushes the target back 1 square, 2 on a margin of 5+; if they can\'t move, a margin of 5+ knocks them down.',
     'Wind-up: a power swing, a longbow shot and a Strong spell are wound up (drawn) in one round (2 AP) and released the next for the rest of the cost. After releasing you may wind up again in the same round. While wound up you cannot block or parry; the wind-up is lost if you are knocked down, grappled, disarmed or drop, or if you don\'t release it the next round.',
     'Shields vs power attacks: a blocked power swing breaks the shield outright if the weapon is at least as hard as the shield (wood < iron < steel) unless the shield is masterwork, and force above the shield\'s break threshold drives through as blunt damage. Every block wears a shield twice as fast as before.',

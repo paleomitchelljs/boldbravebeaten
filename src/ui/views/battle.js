@@ -236,7 +236,7 @@
         h('div', { class: 'action-list' }, attacks.map((o) => {
           const w = o.weaponId ? c.weapons.find((x) => x.id === o.weaponId) : null;
           const anyReach = o.targets.some((t) => t.inReach && foes.has(t.id));
-          const range = (o.minRange === o.maxRange ? `range ${o.maxRange}` : `range ${o.minRange}–${o.maxRange}`) + (o.closePenalty ? ' (½ at 1)' : '');
+          const range = (o.minRange === o.maxRange ? `range ${o.maxRange}` : `range ${o.minRange}–${o.maxRange}`) + (o.closePenalty ? (G.CONFIG.range.closeRule === 'blunt' ? ' (½ blunt at 1)' : ' (½ at 1)') : '');
           const dmg = o.spell ? `${o.spell.magnitude} ${o.spell.element} · ${o.spCost} SP` : `P/S/B ${o.damage.join('/')}`;
           return h('button', { class: 'action', disabled: !o.affordable, title: o.why || '', onclick: () => pick({ kind: 'strike', option: o, label: o.label, targets: sortTargets(o.targets) }) },
             h('span', null, o.label, w ? h('span', { class: 'muted' }, ' — ' + Items.itemName(w)) : null),
@@ -270,7 +270,7 @@
           disabled: !o.affordable,
           title: o.why || '',
           onclick: () => (o.targets ? pick({ kind: 'other', type: o.type, label: o.name, targets: o.targets }) : declare(app, enc, { actor: id, type: o.type, option: o.option })),
-        }, `${o.name} · ${costText(o.ap, o.stamina)}${lateNote(o)}`)))]);
+        }, `${o.name}${o.note ? ` (${o.note})` : ''} · ${costText(o.ap, o.stamina)}${lateNote(o)}`)))]);
       }
     }
     if (legal.incoming.length && ui.guardHint !== enc.pass + ':' + id) { ui.open = 'guard'; ui.guardHint = enc.pass + ':' + id; }
@@ -335,7 +335,7 @@
         from.weapons = from.weapons.filter((w) => w !== item);
         if (from.wield === item.id) from.wield = null;
         if (from.sidearm === item.id) from.sidearm = null;
-        if (from.status.dropped === item.id) from.status.dropped = null;
+        from.status.dropped = from.status.dropped.filter((x) => x !== item.id);
       }
       to.inventory.items.push(item);
     };

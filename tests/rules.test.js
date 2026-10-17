@@ -336,21 +336,59 @@ function armed(name, type, opts) {
 
 const opt = (c, pred) => C.attackOptions(c).find(pred);
 
-test('range bands: inside a weapon\'s reach it cannot attack; short weapons and daggers can', () => {
+test('range bands: inside a long weapon\'s reach its blows land half as hard, all blunt', () => {
   const spear = opt(armed('S', 'spear'), (o) => o.motion === 'thrust');
-  assert.deepStrictEqual([spear.minRange, spear.maxRange], [2, 4]);
-  assert.ok(!C.inRange(spear, 1) && C.inRange(spear, 4));
+  assert.deepStrictEqual([spear.minRange, spear.maxRange, spear.closePenalty], [1, 4, true], 'a spear can jab with the shaft');
   const dagger = opt(armed('D', 'dagger'), (o) => o.motion === 'thrust');
-  assert.deepStrictEqual([dagger.minRange, dagger.maxRange], [1, 1]);
+  assert.deepStrictEqual([dagger.minRange, dagger.maxRange, dagger.closePenalty], [1, 1, false]);
   const rapier = opt(armed('R', 'rapier'), (o) => o.motion === 'thrust');
-  assert.deepStrictEqual([rapier.minRange, rapier.maxRange], [2, 3]);
-  const swing = opt(armed('L', 'longsword'), (o) => o.motion === 'swing' && o.face === 'edge');
-  assert.deepStrictEqual([swing.minRange, swing.maxRange], [2, 2]);
+  assert.deepStrictEqual([rapier.minRange, rapier.maxRange], [1, 3]);
   const mace = opt(armed('M', 'flangedMace'), (o) => o.motion === 'swing');
-  assert.deepStrictEqual([mace.minRange, mace.maxRange], [1, 2], 'short hafted weapons work up close');
-  const half = armed('H', 'longsword');
-  half.feats.half_swording = 1;
-  assert.deepStrictEqual([opt(half, (o) => o.halfSword).minRange, opt(half, (o) => o.halfSword).maxRange], [1, 1]);
+  assert.strictEqual(mace.closePenalty, false, 'short hafted weapons work fully up close');
+  const a = armed('L', 'longsword');
+  const t = fighter('T');
+  const swing = opt(a, (o) => o.motion === 'swing' && o.face === 'edge');
+  assert.deepStrictEqual(Combat.computeHit(a, t, swing, { distance: 2 }).vec, [0, 7, 1]);
+  assert.deepStrictEqual(Combat.computeHit(a, t, swing, { distance: 1 }).vec, [0, 0, 4], '8 force → 4 blunt');
+  const bow = opt(armed('B', 'shortbow'), (o) => o.motion === 'shoot');
+  assert.strictEqual(bow.minRange, 2, 'bows still need range 2');
+});
+
+test('weapons in hand: drop is free, a draw is cheap and drops what you hold', async () => {
+  const a = armed('A', 'longsword', { side: 'party' });
+  const d = Items.makeWeapon('dagger');
+  a.weapons.push(d);
+  a.sidearm = d.id;
+  const b = armed('B', 'longsword', { side: 'enemy' });
+  const chars = { [a.id]: a, [b.id]: b };
+  const enc = Combat.createEncounter('t', [a.id, b.id], chars, 6, 1);
+  enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[b.id] = { x: 3, y: 0 };
+  a.base.SPD = 9;
+  await Combat.startRound(enc, chars, roller(1, [10, 1]));
+  const la = Combat.legalActions(enc, chars, a.id);
+  assert.strictEqual(la.other.find((o) => o.type === 'dropWeapon').ap, 0);
+  const draw = la.other.find((o) => o.type === 'drawSidearm');
+  assert.strictEqual(draw.ap, Math.max(1, Math.round(0.5 * B.CONFIG.apScale)));
+  assert.match(draw.note, /drops/);
+  assert.strictEqual(Combat.declare(enc, chars, { actor: a.id, type: 'drawSidearm' }), null);
+  assert.ok(Combat.legalActions(enc, chars, a.id).attacks.some((o) => o.weaponType === 'dagger'), 'plans with the dagger');
+  Combat.concede(enc, a.id); Combat.concede(enc, b.id);
+  await Combat.resolveRound(enc, chars, roller(2));
+  assert.strictEqual(C.wieldedWeapon(a).type, 'dagger');
+  assert.deepStrictEqual(a.status.dropped, [a.weapons[0].id], 'the longsword is on the ground');
+  Combat.cleanup(enc, chars);
+  assert.deepStrictEqual(a.status.dropped, []);
+});
+
+test('held in a grapple, even a dagger fights cramped', () => {
+  const a = armed('A', 'dagger');
+  const t = fighter('T');
+  const th = opt(a, (o) => o.motion === 'thrust');
+  const free = Combat.computeHit(a, t, th, { distance: 1 }).vec;
+  a.status.grappledBy = [t.id];
+  const held = Combat.computeHit(a, t, th, { distance: 1 }).vec;
+  assert.ok(free[0] > 0);
+  assert.deepStrictEqual(held, [0, 0, Math.floor(free[0] / 2)]);
 });
 
 test('the older half-damage-up-close rule is still available as an option', () => {

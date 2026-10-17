@@ -284,7 +284,8 @@
     const planBase = la.attacks.filter((o) => !o.why || (o.windUp && WIND_REASONS.includes(o.why))).map((o) => forPlanning(c, o));
 
     // 5. Switch weapons when another fits the current distance much better.
-    const swap = la.other.find((o) => (o.type === 'drawSidearm' || o.type === 'readyPrimary') && o.affordable);
+    const primaryOnGround = c.status.dropped.includes((c.weapons.find((w) => w.id !== c.sidearm) || {}).id);
+    const swap = la.other.find((o) => (o.type === 'drawSidearm' || o.type === 'readyPrimary' || (o.type === 'pickUp' && primaryOnGround)) && o.affordable);
     const winding = c.status.windUp || enc.decls.some((d) => d.actor === id && d.type === 'windUp');
     if (swap && !winding) {
       const nowOpts = planBase.filter((o) => !o.unarmed);

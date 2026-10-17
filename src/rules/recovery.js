@@ -80,7 +80,7 @@
 
     c.stamina = C.maxStamina(c);
     c.spSpent = 0;
-    c.status = Object.assign(C.freshStatus(), { dropped: null });
+    c.status = C.freshStatus();
 
     const repairer = [c, tender].some((x) => x && C.rank(x, 'field_repair'));
     const frac = CONFIG.restRepairFraction * (repairer || opts.town ? 2 : 1);

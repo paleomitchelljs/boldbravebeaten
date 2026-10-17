@@ -171,7 +171,7 @@
 
   function rangeText(o) {
     const r = o.minRange === o.maxRange ? String(o.maxRange) : `${o.minRange}–${o.maxRange}`;
-    return r + (o.closePenalty ? ' (½ at 1)' : '');
+    return r + (o.closePenalty ? (G.CONFIG.range.closeRule === 'blunt' ? ' (½ blunt at 1)' : ' (½ at 1)') : '');
   }
 
   function magicEditor(app, c) {

@@ -221,20 +221,65 @@
     return c.status.grappledBy && c.status.grappledBy.length > 0;
   }
 
-  // Attack options as they will be once this character's declared weapon
-  // swaps (draw sidearm, pick up) have resolved.
-  function plannedAttackOptions(enc, c) {
-    const keep = { wield: c.wield, dropped: c.status.dropped };
-    for (const d of enc.decls) {
-      if (d.actor !== c.id) continue;
-      if (d.type === 'drawSidearm') c.wield = c.sidearm;
-      if (d.type === 'pickUp' && c.status.dropped) { c.wield = c.status.dropped; c.status.dropped = null; }
-      if (d.type === 'readyPrimary') c.wield = primaryWeaponId(c);
+  // Put a weapon in hand. Whatever was in hand is dropped, unless it is very light (a dagger
+  // is sheathed instead).
+  function takeInHand(c, wid) {
+    const held = C.wieldedWeapon(c);
+    let dropped = null;
+    if (held && held.id !== wid && WEAPONS[held.type].weight !== 'very light') {
+      c.status.dropped.push(held.id);
+      dropped = held;
     }
+    c.status.dropped = c.status.dropped.filter((x) => x !== wid);
+    c.wield = wid;
+    return dropped;
+  }
+
+  function dropHeld(c) {
+    const held = C.wieldedWeapon(c);
+    if (!held) return null;
+    c.status.dropped.push(held.id);
+    c.wield = null;
+    return held;
+  }
+
+  // Which weapon a pick-up takes: the main weapon if it is on the ground, else the last dropped.
+  function pickUpTarget(c) {
+    const g = c.status.dropped;
+    if (!g.length) return null;
+    const primary = primaryWeaponId(c);
+    return g.includes(primary) ? primary : g[g.length - 1];
+  }
+
+  // Apply a weapon-handling declaration to a character (shared by planning and resolution).
+  function handle(c, type) {
+    if (type === 'drawSidearm') return takeInHand(c, c.sidearm);
+    if (type === 'readyPrimary') return takeInHand(c, primaryWeaponId(c));
+    if (type === 'pickUp') { const w = pickUpTarget(c); return w ? takeInHand(c, w) : null; }
+    if (type === 'dropWeapon') return dropHeld(c);
+    return null;
+  }
+  const HANDLING = ['drawSidearm', 'readyPrimary', 'pickUp', 'dropWeapon'];
+
+  // Attack options as they will be once this character's declared weapon handling
+  // (draw, drop, pick up) has resolved.
+  function plannedAttackOptions(enc, c) {
+    const keep = { wield: c.wield, dropped: c.status.dropped.slice() };
+    for (const d of enc.decls) if (d.actor === c.id && !d.done && HANDLING.includes(d.type)) handle(c, d.type);
     const opts = C.attackOptions(c);
     c.wield = keep.wield;
     c.status.dropped = keep.dropped;
     return opts;
+  }
+
+  // The weapon state after declared handling, for deciding what can be declared next.
+  function plannedHands(enc, c) {
+    const keep = { wield: c.wield, dropped: c.status.dropped.slice() };
+    for (const d of enc.decls) if (d.actor === c.id && !d.done && HANDLING.includes(d.type)) handle(c, d.type);
+    const out = { wield: C.wieldedWeapon(c) ? c.wield : null, dropped: c.status.dropped.slice() };
+    c.wield = keep.wield;
+    c.status.dropped = keep.dropped;
+    return out;
   }
 
   // Everything the current actor may declare now, for the UI.
@@ -305,13 +350,17 @@
     };
     const declared = (type) => enc.decls.some((d) => d.actor === id && d.type === type);
     if (c.status.prone && !declared('standUp')) addOther('standUp');
+    const hands = plannedHands(enc, c);
     const sidearm = c.weapons.find((w) => w.id === c.sidearm);
-    if (sidearm && c.wield !== c.sidearm && c.status.dropped !== c.sidearm && !declared('drawSidearm') && !declared('pickUp')) addOther('drawSidearm');
-    if (c.status.dropped && !declared('pickUp') && !declared('drawSidearm')) addOther('pickUp');
+    const primary = primaryWeaponId(c);
+    const heldW = hands.wield ? c.weapons.find((w) => w.id === hands.wield) : null;
+    const dropNote = heldW && WEAPONS[heldW.type].weight !== 'very light' ? { note: `drops ${Items.itemName(heldW)}` } : {};
+    if (sidearm && hands.wield !== c.sidearm && !hands.dropped.includes(c.sidearm)) addOther('drawSidearm', dropNote);
+    if (primary && hands.wield !== primary && !hands.dropped.includes(primary)) addOther('readyPrimary', dropNote);
+    if (hands.dropped.length && !declared('pickUp')) addOther('pickUp', dropNote);
+    if (hands.wield) addOther('dropWeapon', { note: Items.itemName(heldW) });
     if (grappled) addOther('escape');
     if (c.status.grappling && !declared('release')) addOther('release');
-    const primary = primaryWeaponId(c);
-    if (primary && c.wield !== primary && c.status.dropped !== primary && !declared('readyPrimary') && !declared('drawSidearm')) addOther('readyPrimary');
     // Wind-ups for attacks that need one (power swings, Strong spells).
     if (canWindUp(enc, c) && !c.status.prone && !grappled) {
       const seen = {};
@@ -482,7 +531,16 @@
     const st = target.status;
     const prone = st.prone;
     const grappled = isGrappled(target);
-    if (flags.distance === 1 && option.closePenalty) for (let i = 0; i < 3; i++) v[i] = Math.floor(v[i] * CONFIG.range.closeMult);
+    // Cramped: inside the weapon's reach, or wielding a weapon while held in a grapple. Under the
+    // 'blunt' rule the blow lands as a fraction of its force, all blunt (pommel, haft, guard).
+    const cramped = (flags.distance === 1 && option.closePenalty) ||
+      (CONFIG.grappledWeaponsCramped && option.weaponId && !option.ranged && isGrappled(attacker));
+    if (cramped) {
+      if (CONFIG.range.closeRule === 'blunt') {
+        const total = v[0] + v[1] + v[2];
+        v[0] = 0; v[1] = 0; v[2] = Math.floor(total * CONFIG.range.closeMult);
+      } else for (let i = 0; i < 3; i++) v[i] = Math.floor(v[i] * CONFIG.range.closeMult);
+    }
     if (option.ranged && option.longRange && flags.distance > option.longRange) v[C.mainIndex(v)] = Math.max(0, v[C.mainIndex(v)] - CONFIG.range.longRangePenalty);
     if (prone) v[C.mainIndex(v)] += CONFIG.maneuver.proneDamageBonus;
     if (flags.half) for (let i = 0; i < 3; i++) v[i] = Math.floor(v[i] / 2);
@@ -815,7 +873,7 @@
         log(enc, `${a.name}'s ${label} fizzles — ${t.name} is too close.`, 'fizzle');
         return;
       }
-      if (d.type === 'strike' && d.option.weaponId && (a.wield !== d.option.weaponId || a.status.dropped === d.option.weaponId)) {
+      if (d.type === 'strike' && d.option.weaponId && (a.wield !== d.option.weaponId || a.status.dropped.includes(d.option.weaponId))) {
         log(enc, `${a.name} no longer holds that weapon; the strike fizzles.`, 'fizzle');
         return;
       }
@@ -874,7 +932,8 @@
       if (d.type === 'strike') {
         const half = failedDodge && C.rank(t, 'roll_with_it');
         const r = await applyHit(enc, chars, a, t, d.option, roller, { half, distance });
-        const note = distance === 1 && d.option.closePenalty ? ' (up close: half damage)' : d.option.ranged && d.option.longRange && distance > d.option.longRange ? ' (long range)' : '';
+        const note = (distance === 1 && d.option.closePenalty) || (CONFIG.grappledWeaponsCramped && d.option.weaponId && !d.option.ranged && isGrappled(a))
+          ? (CONFIG.range.closeRule === 'blunt' ? ' (cramped: blunt, half force)' : ' (cramped: half damage)') : d.option.ranged && d.option.longRange && distance > d.option.longRange ? ' (long range)' : '';
         log(enc, `${a.name}'s ${name} hits ${t.name}${half ? ' (Roll With It: half)' : ''}${note}: ${r.text}`, 'hit');
         if (d.option.spell && d.option.spell.element === 'force' && C.isActive(t) && !t.status.prone) {
           const k = await opposed(roller, a, Math.floor(C.attr(a, 'INT') / 2), 'Force knockdown', t, stability(t), 'Keep footing');
@@ -912,20 +971,20 @@
         log(enc, `${a.name} winds up a ${d.option.label} — exposed until it lands.`);
         break;
       case 'readyPrimary':
-        a.wield = primaryWeaponId(a);
-        log(enc, `${a.name} readies ${Items.itemName(a.weapons.find((w) => w.id === a.wield))}.`);
-        break;
       case 'drawSidearm':
-        a.wield = a.sidearm;
-        log(enc, `${a.name} draws ${Items.itemName(a.weapons.find((w) => w.id === a.sidearm))}.`);
+      case 'pickUp': {
+        const want = d.type === 'pickUp' ? pickUpTarget(a) : d.type === 'drawSidearm' ? a.sidearm : primaryWeaponId(a);
+        if (!want || (d.type !== 'pickUp' && a.status.dropped.includes(want))) { log(enc, `${a.name} has nothing to take up.`, 'fizzle'); break; }
+        const fell = takeInHand(a, want);
+        const w = a.weapons.find((x) => x.id === want);
+        log(enc, `${a.name} ${fell ? `drops ${Items.itemName(fell)} and ` : ''}${d.type === 'pickUp' ? 'picks up' : d.type === 'drawSidearm' ? 'draws' : 'readies'} ${Items.itemName(w)}.`);
         break;
-      case 'pickUp':
-        if (a.status.dropped) {
-          a.wield = a.status.dropped;
-          a.status.dropped = null;
-          log(enc, `${a.name} picks up their weapon.`);
-        }
+      }
+      case 'dropWeapon': {
+        const w = dropHeld(a);
+        if (w) log(enc, `${a.name} drops ${Items.itemName(w)}.`);
         break;
+      }
       case 'escape': {
         const str = grappleStrength(chars, a);
         const bonus = Math.floor(Math.max(C.attr(a, 'STR'), C.combatAttr(a, 'DEX')) / 2) + (C.rank(a, 'escape_artist') ? CONFIG.maneuver.escapeArtistBonus : 0);
@@ -1082,7 +1141,7 @@
       const bB = Math.floor(C.combatAttr(t, 'DEX') / 2) + grip + (C.rank(t, 'iron_stance') ? M.ironStanceBonus : 0);
       const o = await opposed(roller, a, aB, 'Disarm', t, bB, 'Keep grip');
       if (o.margin > 0) {
-        t.status.dropped = w.id;
+        dropHeld(t);
         loseWindUp(enc, t, 'disarmed');
         log(enc, `${a.name} disarms ${t.name}; ${Items.itemName(w)} falls (${o.a} vs ${o.b}).`, 'hit');
       } else log(enc, `${a.name}'s disarm fails (${o.a} vs ${o.b}).`, 'fail');
@@ -1163,9 +1222,10 @@
       c.status.windUp = null;
       c.status.grappling = null;
       c.status.grappledBy = [];
-      if (c.status.dropped) {
-        c.wield = c.status.dropped;
-        c.status.dropped = null;
+      // Weapons on the ground are gathered up after the fight.
+      if (c.status.dropped.length || c.wield == null) {
+        c.status.dropped = [];
+        if (c.wield == null) c.wield = primaryWeaponId(c) || (c.weapons[0] ? c.weapons[0].id : null);
       }
     }
   }

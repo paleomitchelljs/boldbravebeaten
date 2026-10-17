@@ -130,8 +130,11 @@
     dodge: { name: 'Dodge', ap: 2, stamina: 2 },
     block: { name: 'Block', ap: null, stamina: 1 }, // AP by shield size
     standUp: { name: 'Stand up', ap: 2, stamina: 1 },
-    drawSidearm: { name: 'Draw sidearm', ap: 2, stamina: 0 },
-    pickUp: { name: 'Pick up weapon', ap: 4, stamina: 1 },
+    // PROVISIONAL: drawing is quick; dropping is free. Drawing while holding a weapon drops it
+    // (a dagger is sheathed instead).
+    drawSidearm: { name: 'Draw sidearm', ap: 0.5, stamina: 0 },
+    dropWeapon: { name: 'Drop weapon', ap: 0, stamina: 0 },
+    pickUp: { name: 'Pick up weapon', ap: 2, stamina: 1 },
     trip: { name: 'Trip', ap: 3, stamina: 2 },
     disarm: { name: 'Disarm', ap: 3, stamina: 2 },
     shove: { name: 'Shove', ap: 2, stamina: 1 },
@@ -142,7 +145,7 @@
     bandage: { name: 'Bandage', ap: 3, stamina: 0 },
     move: { name: 'Move', ap: 1, stamina: 0 },
     windUp: { name: 'Wind up', ap: 2, stamina: 1 }, // costs set in CONFIG.windUp
-    readyPrimary: { name: 'Ready main weapon', ap: 2, stamina: 0 },
+    readyPrimary: { name: 'Draw main weapon', ap: 0.5, stamina: 0 },
   };
 
   const RARITY = ['common', 'uncommon', 'rare', 'very rare', 'unique'];

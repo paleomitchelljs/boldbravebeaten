@@ -29,6 +29,7 @@
       weapons: [[[2, 'club'], [1, 'spikedMace']], [[1, 'spikedMace'], [1, 'club']], [[1, 'spikedMace'], [1, 'flangedMace']]],
       shield: [[[1, 'round']], [[1, 'round']], [[1, 'round'], [1, 'heater']]],
       feats: ['shield_training', 'quick_block', 'economical_block', 'toughness', 'light_armor_training', 'heavy_weapon_training', 'strength'],
+      sidearm: 'dagger',
     },
     sellsword: {
       name: 'Sellsword', primary: ['STR', 'CON'], weak: ['CHA'],
@@ -46,6 +47,7 @@
       weapons: [[[2, 'club'], [1, 'warhammer']], [[1, 'warhammer'], [1, 'greatsword']], [[1, 'warhammer'], [1, 'greatsword']]],
       shield: [[[1, null]], [[1, null]], [[1, null]]],
       feats: ['power_swing', 'heavy_weapon_training', 'weight_of_the_blow', 'strength', 'heavy_tempo', 'crushing_blow', 'shield_breaker', 'toughness'],
+      sidearm: 'dagger',
     },
     duelist: {
       name: 'Duelist', primary: ['DEX', 'SPD'], weak: ['STR'],
