@@ -943,3 +943,50 @@ test('fend off: a long weapon shoves at range 2, and a foe driven back loses tha
   assert.match(text, /D is driven back and can't press on/);
   assert.deepStrictEqual(enc.pos[d.id], { x: 3, y: 0 });
 });
+
+test('parries and dodges are opposed rolls; a power blow cannot be parried', () => {
+  const d = armed('D', 'longsword');
+  const human = armed('H', 'longsword');
+  const [troll] = Enemies.makeMonster('caveTroll');
+  // Harder to dodge a STR-20 troll than a man.
+  assert.ok(Combat.defenseOdds(d, 'dodge', 'swing', troll) < Combat.defenseOdds(d, 'dodge', 'swing', human));
+  // Equal fighters: the defender wins ties.
+  const even = Combat.defenseOdds(d, 'parry', 'thrust', human, opt(human, (o) => o.motion === 'thrust'));
+  assert.ok(even > 0.5 && even < 0.75, String(even));
+  // A heavier attacking weapon is harder to parry.
+  const g = armed('G', 'greatsword');
+  const gs = opt(g, (o) => o.motion === 'thrust');
+  assert.ok(Combat.defenseOdds(d, 'parry', 'thrust', g, gs) < Combat.defenseOdds(d, 'parry', 'thrust', human, opt(human, (o) => o.motion === 'thrust')));
+  // No parrying a power blow.
+  const power = { type: 'strike', actor: g.id, option: Object.assign({}, gs, { motion: 'power' }) };
+  assert.strictEqual(Combat.defenseUnavailable(d, 'parry', power, { [g.id]: g }, null), "Can't parry a power blow");
+  assert.strictEqual(Combat.defenseUnavailable(d, 'dodge', power, { [g.id]: g }, null), null);
+});
+
+test('parrying dagger: off-hand thrust, and an off-hand parry that meets only thrusts', () => {
+  const c = armed('R', 'rapier');
+  const pd = Items.makeWeapon('parryingDagger');
+  c.weapons.push(pd);
+  c.offhand = pd.id;
+  assert.ok(C.offhandWeapon(c));
+  assert.ok(C.attackOptions(c).some((o) => o.offhand && o.motion === 'thrust'));
+  const foe = armed('F', 'longsword');
+  const thrust = { type: 'strike', actor: foe.id, option: opt(foe, (o) => o.motion === 'thrust') };
+  const swing = { type: 'strike', actor: foe.id, option: opt(foe, (o) => o.motion === 'swing') };
+  assert.strictEqual(Combat.defenseUnavailable(c, 'offParry', thrust, { [foe.id]: foe }, null), null);
+  assert.strictEqual(Combat.defenseUnavailable(c, 'offParry', swing, { [foe.id]: foe }, null), 'Only meets thrusts');
+  // The off-hand parry gets its bonus.
+  assert.ok(Combat.defenseOdds(c, 'offParry', 'thrust', foe) > Combat.defenseOdds(c, 'parry', 'thrust', foe));
+  // A shield on the arm takes the off hand.
+  c.shield = Items.makeShield('buckler', 'wood', 'standard');
+  assert.strictEqual(C.offhandWeapon(c), null);
+});
+
+test('natural weapons come from physics too, with STR in full', () => {
+  const S = Items.weaponStats('trollFists');
+  assert.strictEqual(S.model, 'physical');
+  assert.ok(S.strMult.swing === 1);
+  const [troll] = Enemies.makeMonster('caveTroll');
+  const fist = C.attackOptions(troll).find((o) => o.weaponType === 'trollFists' && o.motion === 'swing');
+  assert.strictEqual(fist.damage[2], S.faces.head[2] + C.strBonus(troll));
+});

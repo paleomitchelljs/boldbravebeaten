@@ -34,6 +34,7 @@
       weapons: [],
       wield: null,
       sidearm: null,
+      offhand: null, // a parrying dagger held in the off hand
       inventory: { bandages: 2, gold: 10, arrows: 0, bodkins: 0, items: [] },
       nouns: [], // magic nouns learned in the world (Fire, Force…)
       spSpent: 0, // spell points used since the last rest
@@ -72,6 +73,7 @@
     c.feats = c.feats || {};
     c.weapons = c.weapons || [];
     c.bleeds = c.bleeds || [];
+    if (c.offhand === undefined) c.offhand = null;
     c.inventory = Object.assign({ bandages: 0, gold: 0, arrows: 0, bodkins: 0, items: [] }, c.inventory || {});
     c.nouns = c.nouns || [];
     if (c.spSpent == null) c.spSpent = 0;
@@ -241,6 +243,19 @@
     if (c.wield == null) return null;
     if (c.status && Array.isArray(c.status.dropped) && c.status.dropped.includes(c.wield)) return null;
     return c.weapons.find((w) => w.id === c.wield) || null;
+  }
+
+  // The parrying dagger in the off hand: needs the hand free (no shield on the arm, no two-handed
+  // weapon) and a weapon made for it.
+  function offhandWeapon(c) {
+    if (c.offhand == null || c.offhand === c.wield) return null;
+    if (c.status && Array.isArray(c.status.dropped) && c.status.dropped.includes(c.offhand)) return null;
+    const w = c.weapons.find((x) => x.id === c.offhand);
+    if (!w || !WEAPONS[w.type].offhand) return null;
+    if (c.shield && c.shield.durability > 0) return null;
+    const main = wieldedWeapon(c);
+    if (main && WEAPONS[main.type].hands === 2) return null;
+    return w;
   }
 
   // A shield can block only when it isn't broken and no two-handed weapon is held.
@@ -421,6 +436,14 @@
         }
       }
     }
+    // The off-hand parrying dagger stabs too.
+    const off = offhandWeapon(c);
+    if (off && !st.prone) {
+      const o = strikeOption(c, off, 'point', 'thrust');
+      o.offhand = true;
+      o.label = 'Off-hand thrust';
+      opts.push(o);
+    }
     // Natural weapons (monsters): always ready; a held monster keeps only its grapple-usable ones.
     for (const type of c.natural || []) {
       const def = WEAPONS[type] && Items.weaponStats(type);
@@ -448,7 +471,7 @@
 
   function handsBusy(c) {
     const w = wieldedWeapon(c);
-    return (w ? Math.ceil(WEAPONS[w.type].hands === 1.5 ? 1 : WEAPONS[w.type].hands) : 0) + (shieldReady(c) ? 1 : 0);
+    return (w ? Math.ceil(WEAPONS[w.type].hands === 1.5 ? 1 : WEAPONS[w.type].hands) : 0) + (shieldReady(c) || offhandWeapon(c) ? 1 : 0);
   }
 
   // Is a target at grid distance d inside this attack's range band?
@@ -569,6 +592,7 @@
         break;
       }
       case 'parry':
+      case 'offParry':
         ap -= rank(c, 'quick_parry');
         red = rank(c, 'economical_parry');
         break;
@@ -687,7 +711,7 @@
   G.Character = {
     newCharacter, normalize, freshStatus,
     rank, featCount, featBudget, treeCount, tierCount, tierName, canTakeFeat, canRemoveFeat, addFeat, removeFeat, reqText, roman,
-    conditioning, attr, attrMax, combatAttr, armorInfo, shieldInfo, shieldReady, wieldedWeapon,
+    conditioning, attr, attrMax, combatAttr, armorInfo, shieldInfo, shieldReady, wieldedWeapon, offhandWeapon,
     maxStamina, regen, fatiguePenalty, apPool, apScale, moveCost, squaresPerAP, handsBusy, inRange, optionKey, needsWindUp, strOffset, staminaCost, effectiveWeight, isLightWeapon,
     strBonus, weaponDamage, mainIndex, attackOptions, actionCost, ammoLeft, tireless, webTax,
     damageAttr, healAttr, totalDamage, updateCondition, isActive, bleedPerRound,

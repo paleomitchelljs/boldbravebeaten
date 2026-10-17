@@ -197,7 +197,10 @@
       power: swingMult(X.grip),
       shoot: 0,
     };
-    return { faces, weight, speed, strMult, wound, model: 'physical' };
+    // Natural weapons are the body itself: STR counts in full, and the effort is the creature's
+    // (the catalog's weight class), not a carried mass.
+    if (def.natural) for (const m of Object.keys(strMult)) if (m !== 'shoot') strMult[m] = 1;
+    return { faces, weight: def.natural ? def.weight : weight, speed, strMult, wound, model: 'physical' };
   }
 
   G.Items = { weaponStats, uid, makeArmor, makeShield, makeWeapon, armorBase, armorMaxDurability, shieldStats, itemName, itemRarity };

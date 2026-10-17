@@ -29,7 +29,7 @@
 
   const GRAPPLE_STEPS = ['clinch', 'grapple', 'pin', 'throw', 'break'];
   const ATTACK_TYPES = ['strike', 'trip', 'disarm', 'shove'].concat(GRAPPLE_STEPS);
-  const DEFENSE_TYPES = ['block', 'parry', 'dodge'];
+  const DEFENSE_TYPES = ['block', 'parry', 'dodge', 'offParry'];
   // Held through the pass like guards (not resolved at its end): guards and readied thrusts.
   const HELD_TYPES = DEFENSE_TYPES.concat(['readyStrike']);
 
@@ -352,6 +352,7 @@
 
     // Guards: ready a block, parry or dodge for the next attack, or the next from one attacker.
     for (const kind of DEFENSE_TYPES) {
+      if (kind === 'offParry' && !C.offhandWeapon(c)) continue;
       const cost = C.actionCost(c, kind);
       const why = defenseUnavailable(c, kind, null, chars, enc);
       out.defenses.push({ type: kind, ap: cost.ap, stamina: cost.stamina, affordable: can(cost.ap) && !why, spans: cost.ap > left, why });
@@ -521,8 +522,14 @@
     const winding = c.status.windUp || (enc && enc.decls.some((d) => d.actor === c.id && d.type === 'windUp'));
     if (winding && (CONFIG.windUp.exposed || []).includes(kind)) return 'Winding up';
     const opt = attackDecl ? attackDecl.option : null;
-    if (kind === 'parry' && opt && (opt.spell || (opt.ranged && !CONFIG.archery.parry))) return opt.spell ? "Can't parry a spell" : "Can't parry an arrow";
+    const parry = kind === 'parry' || kind === 'offParry';
+    if (parry && opt && (opt.spell || (opt.ranged && !CONFIG.archery.parry))) return opt.spell ? "Can't parry a spell" : "Can't parry an arrow";
+    if (parry && opt && opt.motion === 'power' && CONFIG.defense.noParryVsPower) return "Can't parry a power blow";
     if (kind === 'block' && !C.shieldReady(c)) return 'No ready shield';
+    if (kind === 'offParry') {
+      if (!C.offhandWeapon(c)) return 'No off-hand dagger';
+      if (attackDecl && !(attackDecl.type === 'strike' && opt.motion === 'thrust')) return 'Only meets thrusts';
+    }
     if (kind === 'parry') {
       if (!C.wieldedWeapon(c)) return 'No weapon';
       const atk = attackDecl ? chars[attackDecl.actor] : null;
@@ -878,15 +885,38 @@
   // ---- Checks ------------------------------------------------------------
   const half = (n) => Math.floor((n - 5) / 2);
 
-  // Bonus and target number for a defense; shared by the check and the AI's odds.
-  function defenseNumbers(defender, kind, motion) {
+  // Numbers for a defense; shared by the check and the AI's odds.
+  //   block: d10 + Shield Training ≥ the shield's target number.
+  //   parry, dodge (CONFIG.defense.opposed): directly opposed. Defender d10 + Training +
+  //   ⌊(DEX + SPD)/4⌋ (armor-reduced) against attacker d10 + ⌊(STR + SPD)/4⌋ + the motion's
+  //   penalty (+ for a parry, how much heavier the attacking weapon is). Ties go to the defender.
+  //   Off-hand parry: a parry with the off-hand dagger (+offhandBonus), against thrusts only.
+  function defenseNumbers(defender, kind, motion, attacker, atkOption) {
     const D = CONFIG.defense;
-    let bonus = 0, tn = D[kind].tn;
     if (kind === 'block') {
-      bonus = C.rank(defender, 'shield_training');
+      let tn = D.block.tn;
       const bySize = D.block.tnBySize;
       if (bySize && defender.shield && bySize[defender.shield.size] != null) tn = bySize[defender.shield.size];
-    } else if (kind === 'parry') {
+      return { bonus: C.rank(defender, 'shield_training'), tn };
+    }
+    const parry = kind === 'parry' || kind === 'offParry';
+    if (D.opposed) {
+      const agile = Math.floor((C.combatAttr(defender, 'DEX') + C.combatAttr(defender, 'SPD')) / 4);
+      let bonus = agile + (parry ? C.rank(defender, 'parry_training') : C.rank(defender, 'dodge_training') + ((defender.traits && defender.traits.nimble) || 0));
+      if (kind === 'offParry') bonus += D.offhandBonus || 0;
+      let atk = D.motionPenalty[motion] || 0;
+      atk += attacker ? Math.floor((C.attr(attacker, 'STR') + C.combatAttr(attacker, 'SPD')) / 4) : D.typicalAttacker;
+      if (parry && atkOption && atkOption.weaponType) {
+        const order = CONFIG.weightOrder;
+        const theirs = order.indexOf(Items.weaponStats(atkOption.weaponType).weight);
+        const mine = parryingWeapon(defender, kind);
+        const gap = theirs - (mine ? order.indexOf(Items.weaponStats(mine).weight) : 0);
+        atk += Math.max(0, gap);
+      }
+      return { bonus, attack: atk, opposed: true };
+    }
+    let bonus = 0, tn = D[parry ? 'parry' : kind].tn;
+    if (parry) {
       bonus = C.rank(defender, 'parry_training') + half(C.combatAttr(defender, 'DEX'));
       tn += D.motionPenalty[motion] || 0;
     } else {
@@ -896,20 +926,32 @@
     return { bonus, tn };
   }
 
-  // Chance that d(die) + bonus ≥ tn.
-  function defenseOdds(defender, kind, motion) {
-    const { bonus, tn } = defenseNumbers(defender, kind, motion);
+  // The weapon a parry is made with.
+  function parryingWeapon(c, kind) {
+    return kind === 'offParry' ? C.offhandWeapon(c) : C.wieldedWeapon(c);
+  }
+
+  // Chance a defense succeeds (the attacker's numbers when known).
+  function defenseOdds(defender, kind, motion, attacker, atkOption) {
+    const n = defenseNumbers(defender, kind, motion, attacker, atkOption);
+    if (n.opposed) return opposedOdds(n.bonus, n.attack, 0);
     const die = CONFIG.defense.die;
-    return Math.max(0, Math.min(1, (die - (tn - bonus) + 1) / die));
+    return Math.max(0, Math.min(1, (die - (n.tn - n.bonus) + 1) / die));
   }
 
   async function defenseCheck(enc, chars, defender, kind, atkDecl, roller) {
     const D = CONFIG.defense;
     const motion = atkDecl.type === 'strike' ? atkDecl.option.motion : 'maneuver';
-    const { bonus, tn } = defenseNumbers(defender, kind, motion);
-    const label = `${ACTIONS[kind].name}: d10 + ${bonus} ≥ ${tn}`;
-    const r = await rollDie(roller, defender.id, D.die, `${defender.name}: ${ACTIONS[kind].name}`, label);
-    return { ok: r + bonus >= tn, roll: r, total: r + bonus, tn };
+    const attacker = chars[atkDecl.actor];
+    const n = defenseNumbers(defender, kind, motion, attacker, atkDecl.type === 'strike' ? atkDecl.option : null);
+    const name = ACTIONS[kind].name;
+    if (n.opposed) {
+      const o = await opposed(roller, defender, n.bonus, name, attacker, n.attack, 'Press the attack');
+      return { ok: o.margin >= 0, roll: o.a - n.bonus, total: o.a, tn: o.b };
+    }
+    const label = `${name}: d10 + ${n.bonus} ≥ ${n.tn}`;
+    const r = await rollDie(roller, defender.id, D.die, `${defender.name}: ${name}`, label);
+    return { ok: r + n.bonus >= n.tn, roll: r, total: r + n.bonus, tn: n.tn };
   }
 
   async function opposed(roller, a, aBonus, aLabel, b, bBonus, bLabel) {
@@ -1221,7 +1263,8 @@
         log(enc, `${a.name}'s ${label} fizzles — ${t.name} is too close.`, 'fizzle');
         return;
       }
-      if (d.type === 'strike' && d.option.weaponId && !d.option.natural && (a.wield !== d.option.weaponId || a.status.dropped.includes(d.option.weaponId))) {
+      const inHand = d.option && (d.option.offhand ? (C.offhandWeapon(a) || {}).id === d.option.weaponId : a.wield === d.option.weaponId);
+      if (d.type === 'strike' && d.option.weaponId && !d.option.natural && (!inHand || a.status.dropped.includes(d.option.weaponId))) {
         log(enc, `${a.name} no longer holds that weapon; the strike fizzles.`, 'fizzle');
         return;
       }
@@ -1276,12 +1319,13 @@
             if (def.type === 'block') {
               await shieldAbsorb(enc, chars, a, t, d, roller);
             } else {
-              log(enc, `${t.name} ${def.type === 'parry' ? 'parries' : 'dodges'} ${a.name}'s ${name} (${chk.total} vs ${chk.tn}).`, 'defend');
-              if (def.type === 'parry' && C.rank(t, 'riposte')) await riposte(enc, chars, t, a, roller, posAtStart);
+              const verb = { parry: 'parries', offParry: 'catches on the parrying dagger', dodge: 'dodges' }[def.type];
+              log(enc, `${t.name} ${verb} ${a.name}'s ${name} (${chk.total} vs ${chk.tn}).`, 'defend');
+              if ((def.type === 'parry' || def.type === 'offParry') && C.rank(t, 'riposte')) await riposte(enc, chars, t, a, roller, posAtStart);
             }
             return;
           }
-          log(enc, `${t.name}'s ${def.type} fails (${chk.total} vs ${chk.tn}).`, 'fail');
+          log(enc, `${t.name}'s ${ACTIONS[def.type].name.toLowerCase()} fails (${chk.total} vs ${chk.tn}).`, 'fail');
           if (def.type === 'dodge') failedDodge = true;
         }
       }

@@ -63,6 +63,12 @@ const STRATEGY = {
     // Works the clinch → hold → pin ladder with a dagger in the free hand.
     feats: ['grappler', 'pin', 'coup_de_grace', 'grappler', 'escape_artist', 'brawlers_wind', 'trip', 'takedown', 'toughness', 'strength'],
   },
+  duelist: {
+    label: 'Rapier & dagger', attrs: { STR: 5, CON: 5, DEX: 7, SPD: 7, INT: 3, WIS: 4, CHA: 4 },
+    weapon: 'rapier', shield: null, offhand: 'parryingDagger',
+    // A rapier with a parrying dagger in the off hand: thrusts, parries, ripostes.
+    feats: ['parry_training', 'quick_thrust', 'parry_training', 'riposte', 'quick_parry', 'lunge', 'precision', 'economical_parry', 'toughness'],
+  },
   archery: {
     label: 'Archery', attrs: { STR: 5, CON: 5, DEX: 7, SPD: 6, INT: 4, WIS: 4, CHA: 4 },
     weapon: 'longbow', shield: null, arrows: 20, bodkins: 10,
@@ -81,6 +87,11 @@ function makeCombatant(armorKey, stratKey, side) {
     const w = Items.makeWeapon(S.weapon, 'standard');
     c.weapons.push(w);
     c.wield = w.id;
+  }
+  if (S.offhand) {
+    const off = Items.makeWeapon(S.offhand, 'standard');
+    c.weapons.push(off);
+    c.offhand = off.id;
   }
   const d = Items.makeWeapon('dagger', 'standard');
   c.weapons.push(d);
@@ -111,7 +122,7 @@ const EVENTS = {
   spells: /^'s (Attack|Launch) \+ /, spellHits: /^'s (Attack|Launch) \+ .* hits /,
   noPower: /^ can't draw enough power/,
   closeHits: /^'s .*\((up close|cramped)/, tooClose: /^'s .* is too close\./, outOfReach: /^'s .* is out of reach\./,
-  exhausted: /^ is too exhausted /, blocks: /^ blocks /, parries: /^ parries /, dodges: /^ dodges /,
+  exhausted: /^ is too exhausted /, blocks: /^ blocks /, parries: /^ parries /, offParries: /^ catches on the parrying dagger /, dodges: /^ dodges /,
   hits: /^'s .* hits /, sidearmDraws: /^ (drops .* and )?draws Dagger/, readiesMain: /^ (drops .* and )?(readies|picks up) /, drops: /^ drops [^.]*\.$/,
   shieldsBroken: /^ blocks .*(BREAKS it|SHATTERS|is destroyed)/, shoves: /^ shoves /, shoveFails: /^'s shove fails/,
 };

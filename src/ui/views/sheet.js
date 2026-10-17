@@ -102,21 +102,24 @@
       h('td', null, select('wq-' + w.id, w.quality, opts(D.QUALITY), (v) => { w.quality = v; app.save(); app.render(); }, { 'aria-label': 'Weapon quality' })),
       h('td', null, h('input', { type: 'radio', name: 'wield', id: 'wield-' + w.id, checked: c.wield === w.id, 'aria-label': 'In hand', onchange: () => { c.wield = w.id; c.status.dropped = null; app.save(); app.render(); } })),
       h('td', null, h('input', { type: 'radio', name: 'sidearm', id: 'side-' + w.id, checked: c.sidearm === w.id, 'aria-label': 'Sidearm', onchange: () => { c.sidearm = w.id; app.save(); app.render(); } })),
+      h('td', null, D.WEAPONS[w.type].offhand ? h('input', { type: 'radio', name: 'offhand', id: 'off-' + w.id, checked: c.offhand === w.id, 'aria-label': 'Off hand', title: 'Held in the off hand (no shield, no two-handed weapon)', onchange: () => { c.offhand = w.id; app.save(); app.render(); } }) : null),
       h('td', { class: 'small muted' }, `${D.WEAPONS[w.type].hands === 1.5 ? '1½' : D.WEAPONS[w.type].hands}H · ${G.Items.weaponStats(w).weight} · ${D.WEAPONS[w.type].reachName}`),
       h('td', null, h('button', { class: 'small ghost', 'aria-label': 'Move to pack', title: 'Move to pack', onclick: () => {
         c.weapons = c.weapons.filter((x) => x !== w);
         if (c.wield === w.id) c.wield = null;
         if (c.sidearm === w.id) c.sidearm = null;
+        if (c.offhand === w.id) c.offhand = null;
         c.inventory.items.push(w);
         app.save(); app.render();
       } }, 'To pack'))));
     return h('div', { class: 'stack tight' },
       h('div', { class: 'scroll-x' }, h('table', { class: 'data' },
-        h('thead', null, h('tr', null, h('th', null, 'Weapon'), h('th', null, 'Quality'), h('th', null, 'In hand'), h('th', null, 'Sidearm'), h('th', null, ''), h('th', null, ''))),
+        h('thead', null, h('tr', null, h('th', null, 'Weapon'), h('th', null, 'Quality'), h('th', null, 'In hand'), h('th', null, 'Sidearm'), h('th', null, 'Off hand'), h('th', null, ''), h('th', null, ''))),
         h('tbody', null, rows,
           h('tr', null, h('td', { colspan: 2, class: 'muted' }, 'Unarmed'),
             h('td', null, h('input', { type: 'radio', name: 'wield', id: 'wield-none', checked: c.wield == null, 'aria-label': 'Fight unarmed', onchange: () => { c.wield = null; app.save(); app.render(); } })),
             h('td', null, h('input', { type: 'radio', name: 'sidearm', id: 'side-none', checked: c.sidearm == null, 'aria-label': 'No sidearm', onchange: () => { c.sidearm = null; app.save(); app.render(); } })),
+            h('td', null, h('input', { type: 'radio', name: 'offhand', id: 'off-none', checked: c.offhand == null, 'aria-label': 'Nothing in the off hand', onchange: () => { c.offhand = null; app.save(); app.render(); } })),
             h('td', { colspan: 2 }))))),
       h('div', { class: 'row' },
         select('add-weapon', '', [['', 'Add a weapon…']].concat(opts(D.WEAPONS)), (v) => {
@@ -154,7 +157,7 @@
   function attacksTable(c) {
     const atks = C.attackOptions(c);
     const fmt = (v) => v.join('/');
-    const others = ['block', 'parry', 'dodge', 'trip', 'disarm', 'grapple', 'standUp', 'drawSidearm', 'pickUp', 'bandage', 'escape'];
+    const others = ['block', 'parry', 'offParry', 'dodge', 'trip', 'disarm', 'grapple', 'standUp', 'drawSidearm', 'pickUp', 'bandage', 'escape'];
     return h('div', { class: 'grid-2' },
       h('div', { class: 'scroll-x' }, h('table', { class: 'data' },
         h('thead', null, h('tr', null, h('th', null, 'Attack'), h('th', { class: 'n' }, 'AP'), h('th', { class: 'n' }, 'Stam.'), h('th', { class: 'n' }, 'Damage'), h('th', { class: 'n' }, 'Range'))),

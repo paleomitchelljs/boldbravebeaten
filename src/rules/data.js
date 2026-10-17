@@ -95,6 +95,15 @@
       sidearm: true, grappleUsable: true,
       notes: 'Lowest AP; works up close with no penalty but cannot reach sword distance; usable while grappling.',
     },
+    // PROVISIONAL (the user asked for one): a parrying dagger (main-gauche), carried in the off
+    // hand. It stabs like a dagger and guards against thrusts (Off-hand parry), nothing else.
+    parryingDagger: {
+      phys: { mass: 0.45, length: 0.5, point: { depth: 12, width: 2 }, edge: 0.3 },
+      name: 'Parrying dagger', hands: 1, weight: 'very light', reach: 1, reachName: 'close only', closeOK: true, material: 'steel',
+      faces: { point: [5, 0, 0], edge: [0, 2, 0] }, motions: ['thrust'], rarity: 'uncommon',
+      sidearm: true, grappleUsable: true, offhand: true,
+      notes: 'Held in the off hand: stabs, and parries thrusts (Off-hand parry, +1). Lighter than a buckler.',
+    },
     rapier: {
       phys: { mass: 1.1, length: 1.15, point: { depth: 25, width: 1.2 }, edge: 0.3 },
       name: 'Rapier', hands: 1, weight: 'light', reach: 2, reachName: 'long thrust', thrust: { ext: 1, min: 1 }, material: 'steel',
@@ -141,6 +150,8 @@
     },
 
     // ---- Natural weapons (PROVISIONAL, monster draft) ------------------------------
+    // `phys` here: mass and length are the limb or jaw that strikes; the point, edge or head
+    // the teeth, claws or fist. The body drives the blow, so STR counts in full.
     // Always ready, can't be dropped or disarmed. `trait` adds a special effect to the blow:
     //   knockdown  — opposed STR check after a hit; wins by `margin` → prone (wolves drag prey down)
     //   venom      — a bite that draws blood poisons: up to con CON a round (no more than the wound)
@@ -149,14 +160,17 @@
     //   shieldCrush — every blow caught on a shield counts as a power blow (can break it, drives through)
     //   web        — no damage; sticks a layer of web on the target (CONFIG.web): every action costs more
     wolfBite: {
+      phys: { mass: 0.6, length: 0.3, point: { depth: 10, width: 4 } },
       name: 'Bite', hands: 1, weight: 'light', reach: 1, reachName: 'close', closeOK: true, natural: true, grappleUsable: true,
       faces: { point: [4, 0, 1] }, motions: ['thrust'], rarity: 'common', trait: { knockdown: { bonus: 2, margin: 3 } },
     },
     alphaBite: {
+      phys: { mass: 0.8, length: 0.35, point: { depth: 14, width: 4.5 } },
       name: 'Bite', hands: 1, weight: 'light', reach: 1, reachName: 'close', closeOK: true, natural: true, grappleUsable: true,
       faces: { point: [5, 0, 1] }, motions: ['thrust'], rarity: 'common', trait: { knockdown: { bonus: 3, margin: 3 } },
     },
     spiderBite: {
+      phys: { mass: 0.3, length: 0.2, point: { depth: 10, width: 1 } },
       name: 'Venomous bite', hands: 1, weight: 'very light', reach: 1, reachName: 'close', closeOK: true, natural: true, grappleUsable: true,
       faces: { point: [3, 0, 0] }, motions: ['thrust'], rarity: 'common', trait: { venom: { con: 2, rounds: 3 } },
     },
@@ -169,34 +183,42 @@
       faces: { head: [0, 0, 0] }, motions: ['swing'], rarity: 'common', trait: { rust: 25 },
     },
     mandibles: {
+      phys: { mass: 0.5, length: 0.3, point: { depth: 8, width: 3 } },
       name: 'Mandibles', hands: 1, weight: 'light', reach: 1, reachName: 'close', closeOK: true, natural: true, grappleUsable: true,
       faces: { point: [2, 1, 0] }, motions: ['thrust'], rarity: 'common',
     },
     tentacles: {
+      phys: { mass: 2, length: 1.2, head: { mass: 0.6, spikes: { depth: 6, width: 1.5 }, cut: 2 } },
       name: 'Spiked tentacles', hands: 1, weight: 'light', reach: 2, reachName: 'reach 2', closeOK: true, natural: true,
       faces: { head: [3, 2, 3] }, motions: ['swing'], rarity: 'common', material: 'bone',
     },
     claws: {
+      phys: { mass: 3, length: 0.8, edge: 0.8 },
       name: 'Claws', hands: 1, weight: 'medium', reach: 1, reachName: 'close', closeOK: true, natural: true, grappleUsable: true,
       faces: { edge: [0, 5, 1] }, motions: ['swing'], rarity: 'common', material: 'bone',
     },
     beak: {
+      phys: { mass: 2, length: 0.4, point: { depth: 15, width: 3 } },
       name: 'Beak', hands: 1, weight: 'medium', reach: 1, reachName: 'close', closeOK: true, natural: true, grappleUsable: true,
       faces: { point: [4, 0, 2] }, motions: ['thrust'], rarity: 'common', material: 'bone',
     },
     zombieBite: {
+      phys: { mass: 0.5, length: 0.25, point: { depth: 5, width: 4 } },
       name: 'Bite', hands: 1, weight: 'light', reach: 1, reachName: 'close', closeOK: true, natural: true, grappleUsable: true,
       faces: { point: [3, 1, 1] }, motions: ['thrust'], rarity: 'common',
     },
     tail: {
+      phys: { mass: 3, length: 1.5, head: { mass: 0.5 } },
       name: 'Tail sweep', hands: 1, weight: 'medium', reach: 2, reachName: 'reach 2', closeOK: true, natural: true,
       faces: { head: [0, 0, 4] }, motions: ['swing'], rarity: 'common', trait: { knockdown: { bonus: 2, margin: 3 } },
     },
     golemFists: {
+      phys: { mass: 6, length: 1.0, head: { mass: 2 } },
       name: 'Stone fists', hands: 2, weight: 'heavy', reach: 2, reachName: 'reach 2', closeOK: true, natural: true,
       faces: { head: [0, 0, 8] }, motions: ['swing'], rarity: 'common', material: 'stone', trait: { knockdown: { bonus: 3, margin: 3 }, shieldCrush: true },
     },
     trollFists: {
+      phys: { mass: 4, length: 1.0, head: { mass: 1.5 } },
       name: 'Fists', hands: 2, weight: 'heavy', reach: 2, reachName: 'reach 2', closeOK: true, natural: true,
       faces: { head: [0, 0, 7] }, motions: ['swing', 'power'], rarity: 'common', material: 'stone', trait: { knockdown: { bonus: 2, margin: 3 }, shieldCrush: true },
     },
@@ -216,6 +238,8 @@
     kick: { name: 'Kick', ap: 2, stamina: 1, damage: [0, 0, 2] },
     shieldBash: { name: 'Shield bash', ap: 2, stamina: 1, damage: [0, 0, 3] },
     parry: { name: 'Parry', ap: 2, stamina: 1 },
+    // PROVISIONAL: a parry with the off-hand parrying dagger; meets thrusts only.
+    offParry: { name: 'Off-hand parry', ap: 1, stamina: 1 },
     dodge: { name: 'Dodge', ap: 2, stamina: 2 },
     block: { name: 'Block', ap: null, stamina: 1 }, // AP by shield size
     standUp: { name: 'Stand up', ap: 2, stamina: 1 },

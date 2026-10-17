@@ -98,7 +98,8 @@
     for (const d of la.incoming) {
       if (!C.isActive(chars[d.actor]) || Combat.GRAPPLE_STEPS.includes(d.type)) continue; // guards don't meet grapples
       const { threat, motion } = perceivedThreat(enc, chars, d, id);
-      threats.push({ threat, motion, prob: 1, against: d.actor, decl: d });
+      const seen = !Combat.describeDecl(enc, chars, d, id).hidden;
+      threats.push({ threat, motion, prob: 1, against: d.actor, decl: seen ? d : null, attacker: chars[d.actor], option: seen && d.type === 'strike' ? d.option : null });
     }
     const myTurn = enc.order.indexOf(id);
     const me = Combat.posAtPass(enc, id, enc.pass);
@@ -106,14 +107,15 @@
       if (enc.order.indexOf(f) < myTurn || enc.turnDone[f] || Combat.passLeft(enc, f) <= 0) continue;
       const foe = chars[f];
       const d = Combat.dist(me, Combat.posAtPass(enc, f, enc.pass));
-      let best = 0;
+      let best = 0, bestOpt = null;
       for (const o of C.attackOptions(foe)) {
         if (!C.inRange(o, d) || o.ap > Combat.passLeft(enc, f) + Combat.passCap(enc, f)) continue;
         if (o.windUp && !(foe.status.windUp && foe.status.windUp.key === C.optionKey(o))) continue;
         if (o.ranged && o.weaponId && C.ammoLeft(foe, o) <= 0) continue;
-        best = Math.max(best, hitValue(foe, c, o, d));
+        const v = hitValue(foe, c, o, d);
+        if (v > best) { best = v; bestOpt = o; }
       }
-      if (best > 0) threats.push({ threat: best, motion: 'swing', prob: 0.6, against: null });
+      if (best > 0) threats.push({ threat: best, motion: bestOpt.motion, prob: 0.6, against: null, attacker: foe, option: bestOpt, decl: { type: 'strike', actor: f, option: bestOpt } });
     }
     threats.sort((x, y) => y.threat * y.prob - x.threat * x.prob);
     const open = threats.slice(la.guards.length); // the guards already up cover the worst ones
@@ -122,7 +124,8 @@
       for (const o of la.defenses) {
         if (!o.affordable) continue;
         if (th.decl && Combat.defenseUnavailable(c, o.type, th.decl, chars, enc)) continue;
-        const p = Combat.defenseOdds(c, o.type, th.motion);
+        if (o.type === 'offParry' && th.motion !== 'thrust') continue;
+        const p = Combat.defenseOdds(c, o.type, th.motion, th.attacker, th.option);
         let value = p * th.threat * th.prob;
         if (o.type === 'dodge' && C.rank(c, 'roll_with_it')) value += (1 - p) * 0.5 * th.threat * th.prob;
         value -= (0.6 * o.ap) / C.apScale() + 0.3 * o.stamina;
@@ -268,7 +271,7 @@
     let pick = null;
     for (const o of la.defenses) {
       if (!o.affordable) continue;
-      const p = Combat.defenseOdds(c, o.type, 'thrust');
+      const p = Combat.defenseOdds(c, o.type, 'thrust', chars[holder], points[0].option);
       if (p > 0.25 && (!pick || p > pick.p)) pick = { p, decl: { actor: id, type: o.type, against: holder } };
     }
     return pick ? pick.decl : null;

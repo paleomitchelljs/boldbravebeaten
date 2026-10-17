@@ -303,8 +303,16 @@
       die: 10,
       // + Shield Training rank. PROVISIONAL: smaller shields cover less.
       block: { tn: 3, tnBySize: { buckler: 5, round: 4, heater: 3, tower: 2 } },
-      parry: { tn: 6 }, // + Parry Training rank + floor((DEX−5)/2)
-      dodge: { tn: 6 }, // + Dodge Training rank + floor((SPD−5)/2) − armor DEX penalty
+      parry: { tn: 6 }, // (opposed: false) + Parry Training rank + floor((DEX−5)/2)
+      dodge: { tn: 6 }, // (opposed: false) + Dodge Training rank + floor((SPD−5)/2) − armor DEX penalty
+      // PROVISIONAL (the user's call): parries and dodges are opposed rolls. Defender d10 +
+      // Training + ⌊(DEX + SPD)/4⌋ vs attacker d10 + ⌊(STR + SPD)/4⌋ + motion penalty (+ for a
+      // parry, the attacking weapon's weight classes above the parrying one). Ties: defender.
+      opposed: true,
+      typicalAttacker: 2, // the AI's guess when it can't see who will attack
+      offhandBonus: 1, // a parrying dagger is made to catch a blade
+      // PROVISIONAL (the user's call): a power blow can't be parried, only dodged or blocked.
+      noParryVsPower: true,
       // Heavier motions are harder to parry/dodge
       motionPenalty: { thrust: 0, swing: 0, twoHanded: 1, power: 2, unarmed: 0, maneuver: 0 },
       // PROVISIONAL: a successful parry or dodge negates the strike fully
@@ -414,7 +422,8 @@
     'Magic feat tiers count feats across all four magic sub-trees (otherwise Casting and Fire Affinity can never pass rank I).',
     'Plate: +1 stamina per action and −3 regeneration (Specifics: +2 and −4), tuned in the arena.',
     'Initiative: d10 + effective SPD.',
-    'Defense checks: d10 + bonuses vs. target number. Parry TN 6 (+Parry Training, +⌊(DEX−5)/2⌋), dodge TN 6 (+Dodge Training, +⌊(SPD−5)/2⌋, −armor DEX penalty). Two-handed swings +1 TN, power swings +2.',
+    'Defense checks: block is d10 + Shield Training against the shield\'s number. Parry and dodge are opposed rolls: defender d10 + Training + ⌊(DEX + SPD)/4⌋ (armor lowers both) against attacker d10 + ⌊(STR + SPD)/4⌋, +1 for a two-handed swing, +2 for a power swing; a parry also faces +1 per weight class the attacking weapon has over the parrying one. Ties go to the defender. A power blow can\'t be parried, only dodged or blocked.',
+    'Parrying dagger: held in the off hand (no shield, no two-handed weapon). It stabs (off-hand thrust) and gives an Off-hand parry (1 AP on the sheet ×2, +1 to the roll) that meets thrusts only.',
     'A successful parry or dodge negates the strike completely.',
     'Within a pass, reach is checked against positions at the start of that pass; moves take effect afterwards.',
     'Actions cannot be paid if they would drop your own stamina to 0.',
