@@ -172,12 +172,18 @@ venom), resistances (`traits.resist` {P, S, B}), nimble, slippery, moveMult, spr
 (`ARMOR.recoil`), sticky webs (`status.webbed`, `CONFIG.web`, Tear free action). The AI picks
 targets as a team (`pickTarget` in ai.js).
 
+Monster attributes go past the human range (1–10, 13 with Conditioning; `CONFIG.monsterAttrMax`
+30): troll 20/18 STR/CON, owlbear 18/16, golem 22/22, chieftain 24/24 (boss ×2 AP only),
+sarnak 12/11, displacer 12/11. Formulas run on the raw number. Pre-change results: `sim/results/monsters-r8`.
+
 ## Open questions awaiting the user
 
 1. **The AP cap.** On trial at 4 AP per pass; 6 balanced better with guards.
 2. **Item materials, maker tags and keywords.** Proposal below; build only after approval.
-3. **Pass system revision**: proposals sent (time-tick initiative, faster-first resolution
-   within a pass, roll initiative once). Not built.
+3. **Pass system revision.** The user likes the timeline and faster-first ideas but wants
+   simultaneous kills kept, and rejected a single initiative roll per fight. Proposed: 4 beats
+   per pass; an action lands on the beat where its AP runs out; same beat is simultaneous;
+   behind a switch `landOrder: 'beat'`. Waiting for a go.
 4. **Throws** never happen in the arena (the AI pins and stabs). Teach the AI to throw plate
    wearers into their whole-round stand-up?
 4. On hold at the user's request: the group-fight arena, the magic overhaul, the magic feat tiers.

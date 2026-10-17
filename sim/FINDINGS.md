@@ -1,5 +1,30 @@
 # Simulation findings
 
+## Monster attributes past the human range
+
+Humans run 1–10, 13 with Conditioning feats. Big creatures now go past that (CONFIG.monsterAttrMax 30,
+PROVISIONAL): cave troll STR 20 / CON 18, owlbear 18/16, stone golem 22/22, troll chieftain 24/24,
+sarnak 12/11, displacer 12/11, rust beetle 10/12, giant spider 8/6, zombie STR 9. Wolves and the small
+humanoids stay in the human range. No formula changed: STR 20 gives +7 damage and +10 to grapple.
+The chieftain's boss multiplier fell from ×2.5 AP and stamina to ×2 AP only, since CON 24 already
+gives it the stamina. Baseline: `results/monsters-r8`.
+
+One-on-one, monster wins (before → after): rust beetle 56 → 89%, displacer 56 → 83%, owlbear
+55 → 86%, cave troll 82 → 99%, stone golem 78 → 90%, sarnak 66 → 90%, zombie 51 → 62%, spider
+61 → 65%. A troll now beats any lone level-5 human, as it should.
+
+Against parties (party win rate, before → after):
+
+- Veterans still beat every single monster except the chieftain. The chieftain was 95–100% for
+  the veterans and is now 40–53%; the light party went from 63–68% to 5–10%. Its multiplier
+  variants (veterans open / room): ×2.5 AP ×1.5 stamina 18/18%; ×2 AP 70/50% at n = 40; ×1.5 AP
+  70/78%.
+- The cave troll drops to 83–90% against the light party (was 100%), and the sarnak to 88–95%.
+- Sarnak pair against the light party: 83% → 10–13%. Displacer pair: 90–100% → 38–75%.
+- Stone golem against the light party: 100% → 15–18%. That party carries no blunt weapon, and
+  they're beaten unconscious over about 14 rounds.
+- The zombie horde against the veterans: 78–85% → 50–68%.
+
 ## Party arena, tireless undead, scaled humanoids, odd properties
 
 Runs: `node sim/monsters.js` (one-on-one, 30 per pairing per arena), `node sim/party-arena.js`
