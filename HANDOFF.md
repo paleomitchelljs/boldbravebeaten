@@ -163,14 +163,22 @@ displacer beast, giant spider, owlbear, cave troll, troll chieftain (boss). Natu
 hide). Character traits: `c.natural`, `c.traits` (pack, displacement, regen, apMult, staminaMult),
 `c.noUnarmed`. The Enemies tab can add monsters. Trials: `node sim/monsters.js` (16 fighters ×
 2 arenas + two parties) and `node sim/monsters-page.js` builds `sim/results/monsters/report.html`;
-`node sim/monster-party.js` for party fights only. Results are in FINDINGS and on the monster page:
+`node sim/party-arena.js` runs parties against singles and groups (party.json, shown on the same
+page); `node sim/monster-party.js` for a quick party check. Results are in FINDINGS and on the monster page:
 https://claude.ai/artifact/X9pz4WNNAECwXTibC9FrJx (republish `sim/results/monsters/report.html`).
+
+Creature systems: tireless (`traits.tireless`: no stamina, damage to attributes, no bleed or
+venom), resistances (`traits.resist` {P, S, B}), nimble, slippery, moveMult, springy armor
+(`ARMOR.recoil`), sticky webs (`status.webbed`, `CONFIG.web`, Tear free action). The AI picks
+targets as a team (`pickTarget` in ai.js).
 
 ## Open questions awaiting the user
 
 1. **The AP cap.** On trial at 4 AP per pass; 6 balanced better with guards.
 2. **Item materials, maker tags and keywords.** Proposal below; build only after approval.
-3. **Throws** never happen in the arena (the AI pins and stabs). Teach the AI to throw plate
+3. **Pass system revision**: proposals sent (time-tick initiative, faster-first resolution
+   within a pass, roll initiative once). Not built.
+4. **Throws** never happen in the arena (the AI pins and stabs). Teach the AI to throw plate
    wearers into their whole-round stand-up?
 4. On hold at the user's request: the group-fight arena, the magic overhaul, the magic feat tiers.
    Magic users are out of the arena.

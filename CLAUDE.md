@@ -52,6 +52,8 @@ Characters who spend early sit out the last passes.
 - Grappling ladder built: clinch → hold → pin (+ throw, break), directly opposed rolls, costly in
   stamina; plate easy to grab (+2) but hard to throw. Plate dominating is accepted (rarity).
 - The mobile battle UI has been redesigned.
+- Monsters drafted (animals, counters, tireless undead and constructs, scaled humanoids, a boss)
+  with traits; a party arena runs cooperating parties against singles and groups.
 
 ## Waiting on the user
 
@@ -59,6 +61,7 @@ Characters who spend early sit out the last passes.
 2. **Item materials, maker tags and keywords.** The proposal is in HANDOFF.md; build only after
    the user approves.
 3. **Throws:** teach the AI to throw plate wearers?
+4. **Pass system revision:** proposals sent (see HANDOFF.md); not built.
 
 On hold at the user's request: group fights, the magic overhaul, the magic feat tiers. Magic users
 are dropped from the arena entirely for now (`node sim/arena.js --with-magic` brings them back).

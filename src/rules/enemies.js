@@ -233,7 +233,7 @@
     giantSpider: {
       name: 'Giant spider', blurb: 'Spits sticky webs that make every action cost more, then closes for venomous bites. Armor keeps the fangs out; bare skin doesn\'t. Meant to beat the unarmored.',
       attrs: { STR: 5, CON: 5, DEX: 8, SPD: 7, INT: 1, WIS: 5, CHA: 1 },
-      natural: ['spiderBite', 'webSpinner'], armor: 'chitin', traits: {}, feats: {},
+      natural: ['spiderBite', 'webSpinner'], armor: 'chitin', traits: {}, feats: {}, policy: { kite: false },
     },
     owlbear: {
       name: 'Owlbear', blurb: 'Hugs and won\'t let go: no room for a greatsword or a bow. Meant to beat two-handers.',

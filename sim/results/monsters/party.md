@@ -1,6 +1,6 @@
 # Party arena
 
-40 fights per party per arena per encounter, 105 s. Cells: party win rate (party deaths per fight).
+40 fights per party per arena per encounter, 112 s. Cells: party win rate (party deaths per fight).
 
 | Encounter | Veterans (4), open field | Veterans (4), cramped room | Light party (3), open field | Light party (3), cramped room |
 |---|---|---|---|---|
@@ -16,7 +16,7 @@
 | Zombie | 100% (0.00) | 100% (0.00) | 100% (0.00) | 100% (0.00) |
 | Zombie horde | 85% (0.17) | 78% (0.35) | 0% (1.90) | 0% (1.98) |
 | Stone golem | 100% (0.00) | 100% (0.00) | 100% (0.00) | 100% (0.00) |
-| Giant spider | 100% (0.03) | 100% (0.03) | 100% (0.10) | 100% (0.13) |
+| Giant spider | 100% (0.03) | 100% (0.05) | 100% (0.03) | 100% (0.28) |
 | Rust beetle | 100% (0.00) | 100% (0.00) | 100% (0.00) | 100% (0.00) |
 | Displacer beast | 100% (0.00) | 100% (0.00) | 100% (0.07) | 100% (0.03) |
 | Displacer pair | 100% (0.07) | 100% (0.07) | 90% (0.93) | 100% (0.33) |

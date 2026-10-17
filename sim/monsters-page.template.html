@@ -80,7 +80,7 @@ table.heat th.sep, table.heat td.sep { width: 8px; min-width: 8px; padding: 0; b
   <header class="head">
     <span class="eyebrow">Bold Brave Beaten · monster draft</span>
     <h1>Monster Arena Trials</h1>
-    <p>Seven monsters and a boss, each built to beat one kind of fighter, fought every level-5 arena fighter (four armor classes × two-handed, sword &amp; shield, grappler, archery) one-on-one in an open field and in close quarters, then fought two parties of three.</p>
+    <p>Draft creatures (animals, monsters built to beat one kind of fighter, tireless undead and constructs, scaled and slippery humanoids, and a boss) fought every level-5 arena fighter one-on-one in an open field and in close quarters, then fought parties of cooperating adventurers alone and in groups.</p>
     <p class="small muted" id="facts"></p>
   </header>
 
@@ -88,12 +88,6 @@ table.heat th.sep, table.heat td.sep { width: 8px; min-width: 8px; padding: 0; b
     <div><span class="eyebrow">Verdicts</span><h2>Did each monster beat what it was built to beat?</h2></div>
     <p class="muted">Fighters differ a lot on their own (plate wins about 70% against people, the unarmored about 34%), so raw win rates mislead. The <b>edge</b> is how much better the monster does against its target than its own average, compared with how much better the other monsters do against the same target. Positive means the design works.</p>
     <div class="scroll"><table class="data" id="verdicts"></table></div>
-  </section>
-
-  <section>
-    <div><span class="eyebrow">Bestiary</span><h2>Each monster, matchup by matchup</h2></div>
-    <div class="legend"><span>Monster's win rate</span><span class="num">0%</span><span class="ramp" aria-hidden="true"></span><span class="num">100%</span><span>· the outlined cells are what it was built to beat</span></div>
-    <div class="entries" id="entries"></div>
   </section>
 
   <section id="party-section" hidden>
@@ -104,32 +98,47 @@ table.heat th.sep, table.heat td.sep { width: 8px; min-width: 8px; padding: 0; b
   </section>
 
   <section>
+    <div><span class="eyebrow">Bestiary</span><h2>Each monster, matchup by matchup</h2></div>
+    <div class="legend"><span>Monster's win rate</span><span class="num">0%</span><span class="ramp" aria-hidden="true"></span><span class="num">100%</span><span>· the outlined cells are what it was built to beat</span></div>
+    <div class="entries" id="entries"></div>
+  </section>
+
+
+  <section>
     <div><span class="eyebrow">For the designer</span><h2>What the trials say</h2></div>
     <article class="finding">
-      <h3><span class="tag">Biggest finding</span>Numbers beat any single monster</h3>
-      <p>A lone monster against three level-5 fighters loses almost every time, even the cave troll that wins 78–87% one-on-one: three times the actions lands three times the wounds. Only a group (the wolf pack) or a boss with its actions multiplied competes with a party. A troll needed about 2.5× AP, per-pass allowance and stamina, plus CON 15, to win 23–50% against a party.</p>
+      <h3><span class="tag">Biggest finding</span>Groups, not single monsters, threaten a party</h3>
+      <p>Every single creature loses to a party of cooperating adventurers, even ones that win 70–87% one-on-one. Groups are another story. Against the light party of three, a kobold band (four spears) wins 87–90% of fights, a zombie horde 100%, a froglok patrol 72–90%, a skeleton squad 72–85%. The four veterans beat every group, but the froglok patrol in the open still wins 55% against them and the kobolds kill a veteran a fight. A boss needs its actions multiplied (the troll chieftain at ×2.5) to matter alone.</p>
     </article>
     <article class="finding">
-      <h3><span class="tag">Working</span>Counters that do their job</h3>
+      <h3><span class="tag">Undead and constructs</span>Tireless creatures play differently</h3>
       <ul>
-        <li><b>Rust beetle</b> is the clearest success (edge +20 / +26): two or three touches turn plate to scrap, then the mandibles work. Against leather it is weak, as intended.</li>
-        <li><b>Giant spider</b> nearly hits its target (+13 / +10): venom only flows when a bite draws blood, and how much depends on how deep it went, so it beats bare skin and bounces off plate.</li>
-        <li><b>Owlbear</b> works in the open (+15) but in close quarters it beats nearly everyone (82% against two-handers, 83% against archers), so its edge there shrinks to +2. Sword &amp; shield handles it in both arenas.</li>
+        <li><b>Skeletons</b> take no piercing and half slashing, so archers (7–12% win against one) and dagger-wielding grapplers (0%) are helpless. Two-handers, whose greatswords hit hard enough to break bones, win 65–95%. A squad of three beats the light party.</li>
+        <li><b>Stone golem</b> loses only to the two-handers (76–90% win against it); stone shrugs off everything else.</li>
+        <li><b>Zombies</b> are slow but never tire; archers lose 68–95% against one because piercing is halved. A horde of four overwhelms a light party.</li>
+        <li>With no stamina, these creatures act on every AP every round and only stop when their body is destroyed. Blunt damage goes straight to the body.</li>
       </ul>
     </article>
     <article class="finding">
-      <h3><span class="tag">Needs work</span>Counters that don't stand out yet</h3>
+      <h3><span class="tag">Humanoids</span>Scales, slick skin, packs</h3>
       <ul>
-        <li><b>Displacer beast</b> is a fair fight overall but only mildly anti-archer: arena archers drop the bow for a dagger the moment anything fast closes in, so the displacement against arrows rarely matters. It needs a reason for archers to keep shooting, or archers that kite better.</li>
-        <li><b>Cave troll</b> breaks shields as designed, but it beats everyone, so it isn't specifically a shield-breaker. Its natural place is a boss (see the chieftain), or it should lose something (regeneration, reach) to be a mid-tier counter.</li>
-        <li><b>Lone wolf</b> wins 38–50%: about right for an animal against a trained fighter, maybe a little strong in close quarters.</li>
+        <li><b>Kobolds and goblins</b> are weak alone (8–19% one-on-one) and dangerous in bands, kobolds especially: four spears at reach 2–4 with a pack bonus.</li>
+        <li><b>Frogloks</b> are the strongest of the small humanoids: spear and shield, leaping into the fight, and slippery (+2 against being grappled; grapplers win 37–43% against one).</li>
+        <li><b>Sarnak</b>: scaled, warhammer and tail sweep; 63–70% one-on-one, hardest on the lightly armored.</li>
       </ul>
     </article>
     <article class="finding">
-      <h3><span class="tag">New rules</span>What the monsters added to the engine</h3>
+      <h3><span class="tag">Odd properties</span>Chitin, webs, and the displacer</h3>
       <ul>
-        <li>Natural weapons (always ready, can't be dropped or disarmed) and natural armor (fur, chitin, troll hide; not lootable).</li>
-        <li>Traits: knockdown bites, pack bonus (+1 damage per packmate beside the target, up to 2), venom (poison a bandage can't stop), rust (corrodes metal armor and shields), displacement (attacks may hit an illusion), shield-crushing blows, regeneration (unless burned; a downed troll can get back up), and boss multipliers for AP, per-pass allowance and stamina.</li>
+        <li><b>Springy chitin</b> (spider, rust beetle): each blow that lands costs the attacker 3 stamina.</li>
+        <li><b>Sticky webs</b> made the spider much stronger (61–62% one-on-one, and 35% even against plate, where it had 7%). Each layer adds 2 AP and 3 stamina to every action; one layer wears off each round. Before the wear-off it won 68–82%.</li>
+        <li><b>Displacer beast</b> rolls to be found: arrows hit only an illusion on 1–5 of a d10, blows on 1–2. Even a pair rarely threatens a party, because the party's front line handles them while the archer is mostly wasted.</li>
+      </ul>
+    </article>
+    <article class="finding">
+      <h3><span class="tag">Earlier counters</span>Still standing</h3>
+      <ul>
+        <li><b>Rust beetle</b> still beats plate best of all the monsters; <b>owlbear</b> still wrecks two-handers and archers in close quarters; the <b>cave troll</b> beats everyone and reads as a boss.</li>
       </ul>
     </article>
   </section>

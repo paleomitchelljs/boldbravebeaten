@@ -1443,6 +1443,8 @@
       if (c.status.dead) log(enc, `${c.name} has died.`, 'death');
       else if (c.status.unconscious && !wasDown) log(enc, `${c.name} collapses, unconscious.`, 'death');
       if (c.status.unconscious) { releaseGrapples(chars, c); c.status.windUp = null; }
+      // Webs loosen as you struggle: a layer comes off each round.
+      if (c.status.webbed && CONFIG.web && CONFIG.web.wearOff) c.status.webbed = Math.max(0, c.status.webbed - CONFIG.web.wearOff);
       // Holding someone is exhausting: pay the upkeep or let go.
       const G2 = CONFIG.grappling;
       if (c.status.grappling && G2 && G2.holdUpkeep && !c.status.unconscious) {

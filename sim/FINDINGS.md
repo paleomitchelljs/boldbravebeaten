@@ -1,5 +1,29 @@
 # Simulation findings
 
+## Party arena, tireless undead, scaled humanoids, odd properties
+
+Runs: `node sim/monsters.js` (one-on-one, 30 per pairing per arena), `node sim/party-arena.js`
+(40 per cell): two parties (veterans: plate knight with shield, mail two-hander, archer,
+grappler; light: leather shield, archer, unarmored grappler) against 19 encounters in an open
+field and a cramped 8×4 room. Both sides now pick targets as a team (engaged or hurt foes first).
+
+- **Groups, not single monsters, threaten a party.** Every single creature loses to both parties.
+  Against the light party: kobold band 87–90% win, zombie horde 100%, froglok patrol 72–90%,
+  skeleton squad 72–85%, wolf pack 25%. Veterans beat every group but lose 55% to frogloks in the
+  open and about one person a fight to kobolds.
+- **Tireless** (undead, constructs): no stamina, damage to attributes (blunt to CON), no bleeding
+  or venom, act on every AP. Skeletons (no piercing, half slashing) beat archers 88–93% and
+  dagger grapplers 100%; two-handers beat them. The stone golem loses only to two-handers. Zombies
+  (piercing halved) beat archers 68–95%.
+- **Humanoids:** kobolds and goblins are weak alone (8–19%) and strong in bands; frogloks
+  (leaping, slippery) are the strongest small humanoids; sarnak 63–70% one-on-one.
+- **Odd properties:** springy chitin (each landed blow costs the attacker 3 stamina); sticky webs
+  (each layer +2 AP and +3 stamina on every action; one layer wears off per round). Webs took the
+  spider from 55% to 68–82% one-on-one (and to 60%+ against plate) before the wear-off; with it,
+  61–62% (35% against plate). The spider had to stop kiting: with a ranged web the AI treated it
+  as an archer and fights ran to timeouts.
+- The displacer (attacks roll to find it) and the displacer pair still don't threaten a party.
+
 ## Monster draft (`sim/monsters.js`, `sim/monster-party.js`, page `results/monsters/report.html`)
 
 Seven monsters and a boss, each built to beat one kind of fighter, against all 16 level-5 arena
