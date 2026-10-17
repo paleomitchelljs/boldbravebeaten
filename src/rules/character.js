@@ -511,13 +511,22 @@
         ap -= rank(c, 'quick_dodge');
         red = rank(c, 'light_on_your_feet');
         break;
-      case 'standUp':
-        ap = rank(c, 'kip_up') ? S : (a.ap + armorInfo(c).standUp) * S;
+      case 'standUp': {
+        const curve = CONFIG.standUp;
+        const type = armorInfo(c).type;
+        ap = rank(c, 'kip_up') ? S : curve ? curve.ap[type] * S : (a.ap + armorInfo(c).standUp) * S;
+        ap = Math.min(ap, Math.max(CONFIG.minActionAP, apPool(c)));
+        if (curve) return { ap, stamina: staminaCost(c, curve.stamina[type], null, 0) };
         break;
+      }
       case 'grapple':
       case 'takedown':
-        red = rank(c, 'brawlers_wind');
+      case 'escape': {
+        if (kind !== 'escape') red = rank(c, 'brawlers_wind');
+        const g = CONFIG.grappling;
+        if (g) return { ap: Math.max(CONFIG.minActionAP, ap), stamina: staminaCost(c, g.stamina[kind], null, red) };
         break;
+      }
       case 'bandage':
         ap = rank(c, 'field_dressing') ? S : a.ap * S;
         break;

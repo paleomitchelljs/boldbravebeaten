@@ -1198,6 +1198,20 @@
       if (c.status.dead) log(enc, `${c.name} has died.`, 'death');
       else if (c.status.unconscious && !wasDown) log(enc, `${c.name} collapses, unconscious.`, 'death');
       if (c.status.unconscious) { releaseGrapples(chars, c); c.status.windUp = null; }
+      // Holding someone is exhausting: pay the upkeep or let go.
+      const G2 = CONFIG.grappling;
+      if (c.status.grappling && G2 && G2.holdUpkeep && !c.status.unconscious) {
+        const cost = G2.holdUpkeep * (CONFIG.staminaScale || 1);
+        if (c.stamina > cost) {
+          c.stamina -= cost;
+          log(enc, `${c.name} spends ${cost} stamina holding ${chars[c.status.grappling] ? chars[c.status.grappling].name : 'their foe'}.`);
+        } else {
+          const t2 = chars[c.status.grappling];
+          if (t2) t2.status.grappledBy = t2.status.grappledBy.filter((g) => g !== c.id);
+          c.status.grappling = null;
+          log(enc, `${c.name} is too spent to keep the hold and lets go.`, 'fizzle');
+        }
+      }
       // A wind-up must be released the round after it is made.
       if (c.status.windUp && c.status.windUp.round < enc.round) loseWindUp(enc, c, 'not released in time');
     }

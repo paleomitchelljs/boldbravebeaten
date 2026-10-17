@@ -129,6 +129,22 @@
     // (the grapple is "inside" even a dagger's reach): the same penalty as range.closeRule.
     grappledWeaponsCramped: true,
 
+    // ---- Getting up (PROVISIONAL, the user's call) ------------------------
+    // Standing from prone gets steeply harder in heavier armor. Base AP and stamina by armor
+    // (× apScale and × staminaScale; plus the armor's usual stamina penalty). Specifics: 2 AP
+    // + 0/0/1/1/2 for padded/leather/mail/scale/plate. The AP is capped at the character's
+    // pool, so getting up is always possible, if it takes the whole round. Kip-Up: 1 base AP.
+    standUp: {
+      ap: { none: 1, padded: 1, leather: 1, mail: 2, scale: 3, plate: 4 },
+      stamina: { none: 1, padded: 1, leather: 1, mail: 2, scale: 3, plate: 5 },
+    },
+
+    // ---- Grappling stamina (PROVISIONAL, the user's call) ------------------
+    // Grappling is exhausting. Base stamina (× staminaScale) for grapple, takedown and escape,
+    // and an upkeep paid at the end of every round you hold someone; a grappler who can't pay
+    // it lets go. Specifics: grapple 2, escape 1, no upkeep.
+    grappling: { stamina: { grapple: 5, takedown: 6, escape: 3 }, holdUpkeep: 2 },
+
     // ---- Shove (PROVISIONAL) ----------------------------------------------
     // Opposed d10 + ⌊STR/2⌋ (+2 two-handed weapon) vs d10 + footing. A win pushes the
     // target straight back (1 square, 2 on a margin of 5+); a blocked push on a margin of
@@ -304,7 +320,8 @@
     'Kick: opposed d10 + ⌊STR/2⌋; a kick knocks down only on a win by 3 or more. Trip wins on any margin.',
     'Disarm: d10 + ⌊DEX/2⌋ opposed (+2 for a two-handed grip). Grapple: d10 + ⌊STR/2⌋ + Grappler rank vs. d10 + ⌊max(STR,DEX)/2⌋.',
     'Prone: +1 damage to attacks against you, +1 AP on your defenses, no dodging. Grappled: +1 AP on defenses, no movement.',
-    'Trip, disarm and grapple each cost 3 AP and 2 stamina; escape costs 2 AP and 1 stamina.',
+    'Trip and disarm each cost 3 AP and 2 stamina (base). Grappling is exhausting: grapple 3 AP and 5 stamina, takedown 6 stamina, escape 2 AP and 3 stamina, and holding someone costs 2 stamina at the end of every round (base; let go if you can\'t pay).',
+    'Getting up from prone, base AP / stamina by armor: none, padded or leather 1 / 1; mail 2 / 2; scale 3 / 3; plate 4 / 5 (on the sheet: plate is 8 AP and about 15 stamina). Never more AP than your pool. Kip-Up: 1 AP.',
     'Movement costs only the armor stamina penalty, once per move action.',
     'Bandage: 3 AP (1 AP with Field Dressing) and uses one bandage.',
     'Long rest repairs 25% of max armor and shield durability (+25% with Field Repair).',

@@ -17,8 +17,8 @@ function roller(seed, queue) {
 // Run fn with the numbers exactly as Specifics writes them (before simulation tuning).
 function asWritten(fn) {
   const C0 = B.CONFIG;
-  const saved = { apScale: C0.apScale, staminaScale: C0.staminaScale, pierceMode: C0.pierceMode, passThroughByArmor: C0.passThroughByArmor, moveScale: C0.moveScale, armorAdjust: C0.armorAdjust };
-  Object.assign(C0, { apScale: 1, staminaScale: 1, pierceMode: 'floor', passThroughByArmor: null, moveScale: 1, armorAdjust: {} });
+  const saved = { apScale: C0.apScale, staminaScale: C0.staminaScale, pierceMode: C0.pierceMode, passThroughByArmor: C0.passThroughByArmor, moveScale: C0.moveScale, armorAdjust: C0.armorAdjust, standUp: C0.standUp, grappling: C0.grappling };
+  Object.assign(C0, { apScale: 1, staminaScale: 1, pierceMode: 'floor', passThroughByArmor: null, moveScale: 1, armorAdjust: {}, standUp: null, grappling: null });
   try { return fn(); } finally { Object.assign(C0, saved); }
 }
 
@@ -606,4 +606,38 @@ test('a blocked power swing breaks a shield of equal or softer material and driv
   assert.match(wood.log, /drives through the shield/);
   const master = await run('steel', 'masterwork');
   assert.ok(master.shield > 0, 'a masterwork steel shield survives');
+});
+
+test('getting up gets steeply harder in heavier armor', () => {
+  const c = fighter('Down');
+  c.base.SPD = 6;
+  const cost = (armor) => { c.armor = armor ? Items.makeArmor(armor, 'full', 'standard') : null; return C.actionCost(c, 'standUp'); };
+  const none = cost(null), mail = cost('mail'), plate = cost('plate');
+  assert.ok(none.ap < mail.ap && mail.ap < plate.ap, 'AP climbs with armor');
+  assert.ok(plate.stamina >= 4 * none.stamina, 'plate stamina is several times unarmored');
+  assert.ok(plate.ap <= C.apPool(c), 'never more than the pool');
+  const spec = asWritten(() => cost('plate'));
+  assert.strictEqual(spec.ap, 2 + 2, 'Specifics: 2 AP + 2 for plate');
+});
+
+test('grappling is exhausting: costly to start and to keep', async () => {
+  const a = armed('A', 'dagger', { side: 'party' });
+  const t = armed('T', 'dagger', { side: 'enemy' });
+  const g = C.actionCost(a, 'grapple');
+  assert.ok(g.stamina >= 5 * B.CONFIG.staminaScale, 'grapple costs a lot of stamina');
+  const chars = { [a.id]: a, [t.id]: t };
+  const enc = Combat.createEncounter('t', [a.id, t.id], chars, 4, 1);
+  enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[t.id] = { x: 1, y: 0 };
+  await Combat.startRound(enc, chars, roller(1, [10, 1]));
+  a.status.grappling = t.id; t.status.grappledBy = [a.id];
+  const before = a.stamina;
+  Combat.concede(enc, a.id); Combat.concede(enc, t.id);
+  await Combat.resolveRound(enc, chars, roller(2));
+  assert.ok(a.stamina < before, 'holding costs stamina at the end of the round');
+  a.stamina = 1;
+  await Combat.startRound(enc, chars, roller(3, [10, 1]));
+  Combat.concede(enc, a.id); Combat.concede(enc, t.id);
+  await Combat.resolveRound(enc, chars, roller(4));
+  assert.strictEqual(a.status.grappling, null, 'too spent to keep the hold');
+  assert.deepStrictEqual(t.status.grappledBy, []);
 });

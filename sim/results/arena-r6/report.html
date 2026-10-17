@@ -1,0 +1,453 @@
+<title>Combat Arena Results</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Grenze:wght@500;700&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a field report — headline matrices first, then the full matchup grid,
+   then how fights end and what the mechanics did, then the findings to act on. */
+:root {
+  --bg: #e7e9e4; --surface: #f5f6f2; --surface-2: #eceee9; --ink: #1b2220; --muted: #59645f; --line: #c6ccc5;
+  --accent: #2b6a5c; --brass: #8d6d22;
+  /* chart roles (validated reference palette) */
+  --div-pos: #2a78d6; --div-neg: #e34948; --div-mid: #f0efec;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s-other: #a9aaa6;
+  --font-display: 'Grenze', 'Palatino Linotype', Palatino, Georgia, serif;
+  --font-body: 'Alegreya Sans', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141918; --surface: #1d2422; --surface-2: #232b29; --ink: #e2e6e1; --muted: #98a49f; --line: #33403c;
+    --accent: #5db09d; --brass: #c7a24f;
+    --div-pos: #3987e5; --div-neg: #e66767; --div-mid: #383835;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s-other: #6b6c68;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141918; --surface: #1d2422; --surface-2: #232b29; --ink: #e2e6e1; --muted: #98a49f; --line: #33403c;
+  --accent: #5db09d; --brass: #c7a24f;
+  --div-pos: #3987e5; --div-neg: #e66767; --div-mid: #383835;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s-other: #6b6c68;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 1rem; line-height: 1.5; margin: 0; }
+main { max-width: 1180px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 36px; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 700; line-height: 1.1; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(2rem, 5vw, 2.8rem); }
+h2 { font-size: 1.6rem; }
+h3 { font-size: 1.2rem; }
+p { margin: 0; max-width: 70ch; }
+.muted { color: var(--muted); }
+.small { font-size: 0.88rem; }
+.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.eyebrow { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; color: var(--brass); }
+section { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.head { display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--line); padding-bottom: 22px; }
+.facts { display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: 0.95rem; }
+.facts b { font-family: var(--font-mono); font-weight: 600; }
+.note { background: var(--surface-2); border-left: 3px solid var(--brass); padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 0.92rem; max-width: 80ch; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: 18px; align-items: start; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.scroll { overflow-x: auto; }
+table.heat { border-collapse: separate; border-spacing: 2px; font-size: 0.86rem; }
+table.heat th { font-weight: 500; color: var(--muted); padding: 4px 6px; text-align: right; white-space: nowrap; font-size: 0.82rem; }
+table.heat thead th { text-align: center; vertical-align: bottom; }
+table.heat td { width: 64px; height: 38px; text-align: center; font-family: var(--font-mono); font-variant-numeric: tabular-nums; border-radius: 3px; cursor: default; }
+table.heat td.self { background: var(--surface-2); color: var(--muted); }
+table.heat td:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+table.heat td.avg { background: none; font-weight: 600; color: var(--ink); }
+table.big td { width: 40px; height: 30px; font-size: 0.74rem; }
+table.big thead th { writing-mode: vertical-rl; transform: rotate(180deg); text-align: left; height: 150px; padding: 4px 2px; }
+.legend { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; font-size: 0.85rem; color: var(--muted); }
+.ramp { display: inline-block; width: 160px; height: 10px; border-radius: 3px; background: linear-gradient(90deg, var(--div-neg), var(--div-mid), var(--div-pos)); vertical-align: middle; }
+.sw { display: inline-block; width: 11px; height: 11px; border-radius: 2px; vertical-align: -1px; margin-right: 5px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button { font: inherit; font-size: 0.9rem; background: var(--surface); color: var(--ink); border: 0; padding: 6px 12px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--surface); }
+.seg button:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
+.tip { position: fixed; z-index: 30; pointer-events: none; background: var(--ink); color: var(--bg); padding: 7px 10px; border-radius: 6px; font-size: 0.84rem; max-width: 280px; line-height: 1.35; box-shadow: 0 4px 16px rgb(0 0 0 / 0.25); }
+svg text { fill: var(--muted); font-family: var(--font-body); font-size: 12px; }
+svg .lbl { fill: var(--ink); }
+table.data { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+table.data th, table.data td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+table.data th { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+table.data td.n, table.data th.n { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.finding { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 18px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.finding .tag { display: inline-block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 8px; border-radius: 99px; background: var(--surface-2); color: var(--brass); border: 1px solid var(--line); margin-right: 6px; }
+.finding ul { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 4px; max-width: 80ch; }
+.findings { display: grid; gap: 14px; }
+.good { border-left: 4px solid var(--accent); }
+details summary { cursor: pointer; font-weight: 700; }
+.stat { display: flex; flex-direction: column; gap: 2px; }
+.stat b { font-family: var(--font-mono); font-size: 1.7rem; font-weight: 600; }
+.delta { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bar-mini { display: inline-block; height: 8px; border-radius: 2px; vertical-align: middle; background: var(--s1); }
+</style>
+
+<main>
+  <header class="head">
+    <span class="eyebrow">Bold Brave Beaten · simulation</span>
+    <h1>Combat Arena Results</h1>
+    <p>Twelve level-5 fighters (four armor classes × three fighting styles; magic users are left out for now) fought every other fighter in an open field and in close quarters. This round brings back partial damage inside a long weapon's reach, now landing as blunt at half force; makes drawing a weapon cheap and dropping one free; and makes anyone held in a grapple fight cramped, dagger included.</p>
+    <div class="facts" id="facts"></div>
+    <p class="note">Every fight is played by the built-in AI. It keeps its preferred range, kites with bows, winds up and draws, shoves to regain distance, swaps between weapon and dagger, and defends by the odds, but it never retreats to heal, flanks, or plans across rounds. Read these as what the rules produce under competent, simple play. Bows and magic are placeholder rules.</p>
+  </header>
+
+  <section>
+    <div><span class="eyebrow">Headline</span><h2>Who wins, by style and armor</h2></div>
+    <p class="muted">Each cell is that fighter's average win rate against all the others. Blue wins more than half its fights, red fewer.</p>
+    <div class="pair" id="headline"></div>
+    <div class="legend"><span>Win rate</span><span class="num">0%</span><span class="ramp" aria-hidden="true"></span><span class="num">100%</span><span>· 50% is gray</span></div>
+  </section>
+
+  <section id="compare-section" hidden>
+    <div><span class="eyebrow">Since the last run</span><h2 id="compare-title">What changed</h2></div>
+    <p class="muted" id="compare-sub"></p>
+    <div class="pair" id="spread"></div>
+    <div class="card scroll" id="compare"></div>
+  </section>
+
+  <section>
+    <div><span class="eyebrow">Matchups</span><h2>Style against style</h2></div>
+    <p class="muted">Row's win rate against column, averaged over all sixteen armor pairings.</p>
+    <div class="pair" id="styles"></div>
+  </section>
+
+  <section>
+    <div><span class="eyebrow">Open field vs close quarters</span><h2>What the space changes</h2></div>
+    <p class="muted">Average win rate in each arena. A long bar means the fighter depends on the ground it fights on.</p>
+    <div class="card"><div class="legend"><span><span class="sw" style="background:var(--s1)"></span>Open field</span><span><span class="sw" style="background:var(--s2)"></span>Close quarters</span></div><div class="scroll" id="dumbbell"></div></div>
+  </section>
+
+  <section>
+    <div class="legend" style="justify-content:space-between"><div><span class="eyebrow">Every pairing</span><h2>Full matchup grid</h2></div><div class="seg" role="group" aria-label="Arena" id="seg-grid"></div></div>
+    <p class="muted">Row's win rate against column (50 fights each). Hover or focus a cell for fight length.</p>
+    <div class="card scroll" id="grid"></div>
+  </section>
+
+  <section>
+    <div><span class="eyebrow">How fights end</span><h2>Killed or collapsed</h2></div>
+    <p class="muted">Share of each fighter's fights that it won, lost by dying (CON 0), or lost by collapsing (stamina 0, mostly exhaustion), across both arenas.</p>
+    <div class="card"><div class="legend"><span><span class="sw" style="background:var(--s1)"></span>Won</span><span><span class="sw" style="background:var(--s2)"></span>Died</span><span><span class="sw" style="background:var(--s3)"></span>Collapsed</span><span><span class="sw" style="background:var(--s-other)"></span>Draw or other</span></div><div class="scroll" id="outcomes"></div></div>
+  </section>
+
+  <section>
+    <div class="legend" style="justify-content:space-between"><div><span class="eyebrow">Telemetry</span><h2>What the mechanics did</h2></div><div class="seg" role="group" aria-label="Arena" id="seg-tel"></div></div>
+    <p class="muted">Average per fight, for each fighting style (all armor classes together).</p>
+    <div class="card scroll" id="telemetry"></div>
+  </section>
+
+  <section>
+    <div><span class="eyebrow">For the designer</span><h2>Where the rules need work</h2></div>
+    <div class="findings">
+      <article class="finding">
+        <h3><span class="tag">This round</span>Weapon styles evened out; armor took over</h3>
+        <p>Average win rates, round 5 → this run, over the same twelve fighters (open field / close quarters).</p>
+        <div class="scroll"><table class="data">
+          <thead><tr><th></th><th>Open field</th><th>Close quarters</th></tr></thead>
+          <tbody>
+            <tr><td>Two-handed</td><td>32 → 40</td><td>38 → 43</td></tr>
+            <tr><td>Sword &amp; shield</td><td>64 → 60</td><td>73 → 64</td></tr>
+            <tr><td>Archery</td><td>50 → 44</td><td>33 → 38</td></tr>
+            <tr><td>Best − worst style</td><td>32 → 20 pts</td><td>40 → 26 pts</td></tr>
+            <tr><td>Heavy armor</td><td>74 → 81</td><td>71 → 76</td></tr>
+            <tr><td>Unarmored</td><td>27 → 25</td><td>29 → 22</td></tr>
+          </tbody></table></div>
+        <ul>
+          <li><b>Sword &amp; shield lost its edge</b> where it used to step inside reach with a dagger: light sword &amp; shield fell from 86% to 74% in close quarters, unarmored from 62% to 35%. Two-handers gained in both arenas.</li>
+          <li><b>Cramped blows are rare</b> (about 0.1 a fight). The AI still prefers to drop its long weapon and draw the dagger (0.3–0.95 times a fight), now that drawing costs 1 AP.</li>
+          <li><b>Armor now decides more than style.</b> Every plate fighter wins 64–87%; every unarmored one wins 11–35% and dies 64–89% of the time.</li>
+          <li>Fights last about 3.3 rounds in the open and 3.1 in close quarters.</li>
+        </ul>
+      </article>
+      <article class="finding">
+        <h3><span class="tag">Decision</span>Is plate too strong now?</h3>
+        <p>If heavy armor should be strong but not around 80%, the levers are: how much force a cramped blow keeps (now half), whether a cramped blow keeps some of its piercing instead of becoming all blunt, plate's blunt mitigation, and the plate retune from round 3. Grappling rules, still being designed, are the other natural counter to plate.</p>
+      </article>
+      <article class="finding">
+        <h3><span class="tag">Context</span>One-on-one is only part of the picture</h3>
+        <p>These are duels. Group fights (many against one, a monster against heroes, mixed parties) may favor styles that look weak here: archers behind a shield line, mages with time to prepare, two-handers hitting whatever a shield wall holds. A group arena is the natural next test.</p>
+      </article>
+      <article class="finding good">
+        <h3><span class="tag">Working</span>What looks right</h3>
+        <ul>
+          <li>Ground matters: two-handers and heavy armor are strongest in close quarters; archers and the unarmored are strongest in the open.</li>
+          <li>The wind-up and draw read as intended: exposed, telegraphed, and decisive when they land.</li>
+          <li>Heavy armor still leads in close quarters (64%).</li>
+          <li>Fights last 5.9 rounds in the open and 4.3 in close quarters.</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <details class="card">
+      <summary>Fighter loadouts</summary>
+      <div class="scroll" id="loadouts"></div>
+    </details>
+  </section>
+</main>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+const DATA = {"generated":"2026-10-17T12:21:55.138Z","n":40,"level":5,"seconds":69,"arenas":{"open":{"label":"Open field","w":20,"h":12},"close":{"label":"Close quarters","w":6,"h":2}},"armorClasses":{"heavy":"Heavy","medium":"Medium","light":"Light","unarmored":"Unarmored"},"strategies":{"twoHanded":"Two-handed","shield":"Sword & shield","archery":"Archery"},"combatants":[{"key":"heavy/twoHanded","armor":"heavy","strategy":"twoHanded","label":"Heavy Two-handed","maxStamina":41,"ap":8,"con":6,"regen":-1,"sp":0,"feats":["Plate Mobility","Power Swing","Heavy Weapon Training 2","Weight of the Blow 2","Heavy Tempo"],"attacks":[{"label":"Thrust (point)","ap":4,"stamina":3,"range":[1,3],"damage":[6,0,0],"windUp":false,"sp":0},{"label":"Two-handed swing (edge)","ap":7,"stamina":9,"range":[1,3],"damage":[0,17,3],"windUp":false,"sp":0},{"label":"Power swing (edge)","ap":5,"stamina":9,"range":[1,3],"damage":[0,19,4],"windUp":true,"sp":0}]},{"key":"heavy/shield","armor":"heavy","strategy":"shield","label":"Heavy Sword & shield","maxStamina":44,"ap":8,"con":7,"regen":0,"sp":0,"feats":["Plate Mobility","Shield Training 2","Parry Training","Quick Block","Economical Block","Toughness"],"attacks":[{"label":"Thrust (point)","ap":4,"stamina":5,"range":[1,2],"damage":[5,0,0],"windUp":false,"sp":0},{"label":"Swing (edge)","ap":6,"stamina":9,"range":[1,2],"damage":[0,7,1],"windUp":false,"sp":0}]},{"key":"heavy/archery","armor":"heavy","strategy":"archery","label":"Heavy Archery","maxStamina":39,"ap":10,"con":5,"regen":-1,"sp":0,"feats":["Plate Mobility","Fleet Foot 2","Dodge Training 2","Light on Your Feet","Quickness"],"attacks":[{"label":"Shoot (arrow)","ap":4,"stamina":5,"range":[2,16],"damage":[7,0,0],"windUp":true,"sp":0}]},{"key":"medium/twoHanded","armor":"medium","strategy":"twoHanded","label":"Medium Two-handed","maxStamina":41,"ap":10,"con":6,"regen":0,"sp":0,"feats":["Mail Mobility","Power Swing","Heavy Weapon Training 2","Weight of the Blow 2","Heavy Tempo"],"attacks":[{"label":"Thrust (point)","ap":4,"stamina":3,"range":[1,3],"damage":[6,0,0],"windUp":false,"sp":0},{"label":"Two-handed swing (edge)","ap":7,"stamina":9,"range":[1,3],"damage":[0,17,3],"windUp":false,"sp":0},{"label":"Power swing (edge)","ap":5,"stamina":9,"range":[1,3],"damage":[0,19,4],"windUp":true,"sp":0}]},{"key":"medium/shield","armor":"medium","strategy":"shield","label":"Medium Sword & shield","maxStamina":44,"ap":10,"con":7,"regen":1,"sp":0,"feats":["Mail Mobility","Shield Training 2","Parry Training","Quick Block","Economical Block","Toughness"],"attacks":[{"label":"Thrust (point)","ap":4,"stamina":5,"range":[1,2],"damage":[5,0,0],"windUp":false,"sp":0},{"label":"Swing (edge)","ap":6,"stamina":9,"range":[1,2],"damage":[0,7,1],"windUp":false,"sp":0}]},{"key":"medium/archery","armor":"medium","strategy":"archery","label":"Medium Archery","maxStamina":39,"ap":12,"con":5,"regen":0,"sp":0,"feats":["Mail Mobility","Fleet Foot 2","Dodge Training 2","Light on Your Feet","Quickness"],"attacks":[{"label":"Shoot (arrow)","ap":4,"stamina":5,"range":[2,16],"damage":[7,0,0],"windUp":true,"sp":0}]},{"key":"light/twoHanded","armor":"light","strategy":"twoHanded","label":"Light Two-handed","maxStamina":41,"ap":10,"con":6,"regen":1,"sp":0,"feats":["Padded/Leather Training","Power Swing","Heavy Weapon Training 2","Weight of the Blow 2","Heavy Tempo"],"attacks":[{"label":"Thrust (point)","ap":4,"stamina":3,"range":[1,3],"damage":[6,0,0],"windUp":false,"sp":0},{"label":"Two-handed swing (edge)","ap":7,"stamina":9,"range":[1,3],"damage":[0,17,3],"windUp":false,"sp":0},{"label":"Power swing (edge)","ap":5,"stamina":9,"range":[1,3],"damage":[0,19,4],"windUp":true,"sp":0}]},{"key":"light/shield","armor":"light","strategy":"shield","label":"Light Sword & shield","maxStamina":44,"ap":10,"con":7,"regen":2,"sp":0,"feats":["Padded/Leather Training","Shield Training 2","Parry Training","Quick Block","Economical Block","Toughness"],"attacks":[{"label":"Thrust (point)","ap":4,"stamina":4,"range":[1,2],"damage":[5,0,0],"windUp":false,"sp":0},{"label":"Swing (edge)","ap":6,"stamina":8,"range":[1,2],"damage":[0,7,1],"windUp":false,"sp":0}]},{"key":"light/archery","armor":"light","strategy":"archery","label":"Light Archery","maxStamina":39,"ap":12,"con":5,"regen":1,"sp":0,"feats":["Padded/Leather Training","Fleet Foot 2","Dodge Training 2","Light on Your Feet","Quickness"],"attacks":[{"label":"Shoot (arrow)","ap":4,"stamina":4,"range":[2,16],"damage":[7,0,0],"windUp":true,"sp":0}]},{"key":"unarmored/twoHanded","armor":"unarmored","strategy":"twoHanded","label":"Unarmored Two-handed","maxStamina":42,"ap":10,"con":6,"regen":2,"sp":0,"feats":["Power Swing","Heavy Weapon Training 2","Weight of the Blow 2","Heavy Tempo","Strength"],"attacks":[{"label":"Thrust (point)","ap":4,"stamina":3,"range":[1,3],"damage":[6,0,0],"windUp":false,"sp":0},{"label":"Two-handed swing (edge)","ap":7,"stamina":9,"range":[1,3],"damage":[0,17,3],"windUp":false,"sp":0},{"label":"Power swing (edge)","ap":5,"stamina":9,"range":[1,3],"damage":[0,19,4],"windUp":true,"sp":0}]},{"key":"unarmored/shield","armor":"unarmored","strategy":"shield","label":"Unarmored Sword & shield","maxStamina":54,"ap":10,"con":9,"regen":3,"sp":0,"feats":["Shield Training","Parry Training","Toughness 3","Strength 2"],"attacks":[{"label":"Thrust (point)","ap":4,"stamina":3,"range":[1,2],"damage":[6,0,0],"windUp":false,"sp":0},{"label":"Swing (edge)","ap":6,"stamina":7,"range":[1,2],"damage":[0,8,1],"windUp":false,"sp":0}]},{"key":"unarmored/archery","armor":"unarmored","strategy":"archery","label":"Unarmored Archery","maxStamina":43,"ap":12,"con":6,"regen":2,"sp":0,"feats":["Fleet Foot 2","Dodge Training 2","Light on Your Feet","Quickness","Toughness"],"attacks":[{"label":"Shoot (arrow)","ap":4,"stamina":4,"range":[2,16],"damage":[7,0,0],"windUp":true,"sp":0}]}],"view":{"open":{"heavy/twoHanded":{"heavy/shield":0.175,"heavy/archery":0.9,"medium/twoHanded":0.975,"medium/shield":0.95,"medium/archery":0.875,"light/twoHanded":0.9,"light/shield":0.85,"light/archery":0.8,"unarmored/twoHanded":1,"unarmored/shield":0.9,"unarmored/archery":1},"heavy/shield":{"heavy/twoHanded":0.725,"heavy/archery":1,"medium/twoHanded":1,"medium/shield":0.9,"medium/archery":0.975,"light/twoHanded":0.875,"light/shield":0.775,"light/archery":0.775,"unarmored/twoHanded":1,"unarmored/shield":0.975,"unarmored/archery":0.6},"heavy/archery":{"heavy/twoHanded":0.025,"heavy/shield":0,"medium/twoHanded":0.85,"medium/shield":0.825,"medium/archery":0.975,"light/twoHanded":0.875,"light/shield":0.425,"light/archery":0.85,"unarmored/twoHanded":0.975,"unarmored/shield":0.9,"unarmored/archery":1},"medium/twoHanded":{"heavy/twoHanded":0,"heavy/shield":0,"heavy/archery":0.1,"medium/shield":0.325,"medium/archery":0.3,"light/twoHanded":0.45,"light/shield":0.225,"light/archery":0.175,"unarmored/twoHanded":0.45,"unarmored/shield":0.5,"unarmored/archery":0.125},"medium/shield":{"heavy/twoHanded":0.025,"heavy/shield":0.075,"heavy/archery":0.125,"medium/twoHanded":0.65,"medium/archery":0.925,"light/twoHanded":0.675,"light/shield":0.6,"light/archery":0.95,"unarmored/twoHanded":0.775,"unarmored/shield":1,"unarmored/archery":0.95},"medium/archery":{"heavy/twoHanded":0.1,"heavy/shield":0,"heavy/archery":0,"medium/twoHanded":0.7,"medium/shield":0.075,"light/twoHanded":0.6,"light/shield":0.05,"light/archery":0.3,"unarmored/twoHanded":0.9,"unarmored/shield":0.45,"unarmored/archery":0.775},"light/twoHanded":{"heavy/twoHanded":0.075,"heavy/shield":0.125,"heavy/archery":0.125,"medium/twoHanded":0.55,"medium/shield":0.275,"medium/archery":0.375,"light/shield":0.325,"light/archery":0.275,"unarmored/twoHanded":0.625,"unarmored/shield":0.7,"unarmored/archery":0.075},"light/shield":{"heavy/twoHanded":0.1,"heavy/shield":0.125,"heavy/archery":0.525,"medium/twoHanded":0.775,"medium/shield":0.375,"medium/archery":0.95,"light/twoHanded":0.625,"light/archery":0.975,"unarmored/twoHanded":0.75,"unarmored/shield":1,"unarmored/archery":1},"light/archery":{"heavy/twoHanded":0.125,"heavy/shield":0.2,"heavy/archery":0.1,"medium/twoHanded":0.825,"medium/shield":0.025,"medium/archery":0.35,"light/twoHanded":0.7,"light/shield":0.025,"unarmored/twoHanded":0.9,"unarmored/shield":0.475,"unarmored/archery":0.825},"unarmored/twoHanded":{"heavy/twoHanded":0,"heavy/shield":0,"heavy/archery":0.025,"medium/twoHanded":0.55,"medium/shield":0.225,"medium/archery":0.1,"light/twoHanded":0.375,"light/shield":0.25,"light/archery":0.1,"unarmored/shield":0.625,"unarmored/archery":0},"unarmored/shield":{"heavy/twoHanded":0.1,"heavy/shield":0.025,"heavy/archery":0.025,"medium/twoHanded":0.5,"medium/shield":0,"medium/archery":0.375,"light/twoHanded":0.3,"light/shield":0,"light/archery":0.35,"unarmored/twoHanded":0.375,"unarmored/archery":0.825},"unarmored/archery":{"heavy/twoHanded":0,"heavy/shield":0.325,"heavy/archery":0,"medium/twoHanded":0.825,"medium/shield":0.025,"medium/archery":0,"light/twoHanded":0.75,"light/shield":0,"light/archery":0.05,"unarmored/twoHanded":1,"unarmored/shield":0.175}},"close":{"heavy/twoHanded":{"heavy/shield":0.55,"heavy/archery":0.9,"medium/twoHanded":0.725,"medium/shield":1,"medium/archery":0.975,"light/twoHanded":0.725,"light/shield":0.95,"light/archery":0.725,"unarmored/twoHanded":0.975,"unarmored/shield":0.9,"unarmored/archery":0.825},"heavy/shield":{"heavy/twoHanded":0.425,"heavy/archery":0.85,"medium/twoHanded":1,"medium/shield":0.75,"medium/archery":0.975,"light/twoHanded":0.975,"light/shield":0.35,"light/archery":0.975,"unarmored/twoHanded":1,"unarmored/shield":0.875,"unarmored/archery":0.7},"heavy/archery":{"heavy/twoHanded":0.025,"heavy/shield":0.1,"medium/twoHanded":0.575,"medium/shield":0.6,"medium/archery":1,"light/twoHanded":0.5,"light/shield":0.375,"light/archery":0.975,"unarmored/twoHanded":0.925,"unarmored/shield":0.925,"unarmored/archery":1},"medium/twoHanded":{"heavy/twoHanded":0.25,"heavy/shield":0,"heavy/archery":0.35,"medium/shield":0.125,"medium/archery":0.475,"light/twoHanded":0.5,"light/shield":0.025,"light/archery":0.25,"unarmored/twoHanded":1,"unarmored/shield":0.15,"unarmored/archery":0.725},"medium/shield":{"heavy/twoHanded":0,"heavy/shield":0.2,"heavy/archery":0.3,"medium/twoHanded":0.85,"medium/archery":0.975,"light/twoHanded":0.65,"light/shield":0.45,"light/archery":0.975,"unarmored/twoHanded":0.95,"unarmored/shield":0.9,"unarmored/archery":1},"medium/archery":{"heavy/twoHanded":0.025,"heavy/shield":0,"heavy/archery":0,"medium/twoHanded":0.4,"medium/shield":0,"light/twoHanded":0.375,"light/shield":0.025,"light/archery":0.425,"unarmored/twoHanded":0.7,"unarmored/shield":0.75,"unarmored/archery":0.775},"light/twoHanded":{"heavy/twoHanded":0.25,"heavy/shield":0.025,"heavy/archery":0.45,"medium/twoHanded":0.475,"medium/shield":0.25,"medium/archery":0.6,"light/shield":0.2,"light/archery":0.35,"unarmored/twoHanded":0.925,"unarmored/shield":0.225,"unarmored/archery":0.75},"light/shield":{"heavy/twoHanded":0.05,"heavy/shield":0.55,"heavy/archery":0.575,"medium/twoHanded":0.925,"medium/shield":0.525,"medium/archery":0.95,"light/twoHanded":0.8,"light/archery":1,"unarmored/twoHanded":0.9,"unarmored/shield":0.925,"unarmored/archery":0.975},"light/archery":{"heavy/twoHanded":0.175,"heavy/shield":0.025,"heavy/archery":0.025,"medium/twoHanded":0.65,"medium/shield":0,"medium/archery":0.35,"light/twoHanded":0.5,"light/shield":0,"unarmored/twoHanded":0.7,"unarmored/shield":0.675,"unarmored/archery":0.825},"unarmored/twoHanded":{"heavy/twoHanded":0,"heavy/shield":0,"heavy/archery":0.075,"medium/twoHanded":0,"medium/shield":0.05,"medium/archery":0.3,"light/twoHanded":0.05,"light/shield":0.1,"light/archery":0.3,"unarmored/shield":0.1,"unarmored/archery":0.2},"unarmored/shield":{"heavy/twoHanded":0.075,"heavy/shield":0.05,"heavy/archery":0.05,"medium/twoHanded":0.85,"medium/shield":0.1,"medium/archery":0.25,"light/twoHanded":0.775,"light/shield":0.075,"light/archery":0.275,"unarmored/twoHanded":0.9,"unarmored/archery":0.425},"unarmored/archery":{"heavy/twoHanded":0.075,"heavy/shield":0.175,"heavy/archery":0,"medium/twoHanded":0.25,"medium/shield":0,"medium/archery":0,"light/twoHanded":0.2,"light/shield":0.025,"light/archery":0.05,"unarmored/twoHanded":0.8,"unarmored/shield":0.575}}},"agg":{"open":{"heavy/twoHanded":{"avgWin":0.8477272727272728,"meanRounds":4.402272727272727,"deathRate":0.03636363636363636,"koRate":0.1159090909090909,"timeoutRate":0,"perFight":{"windUps":0.5568181818181818,"windLost":0.10909090909090909,"powerHits":0.20681818181818182,"shots":0,"shotHits":0,"spells":0,"spellHits":0,"noPower":0,"closeHits":0.09318181818181819,"tooClose":0,"outOfReach":0.125,"exhausted":0.06136363636363636,"blocks":0,"parries":0,"dodges":0,"hits":1.8181818181818181,"sidearmDraws":0.5863636363636363,"readiesMain":0,"drops":0.5863636363636363,"shieldsBroken":0,"shoves":0.03636363636363636,"shoveFails":0.06136363636363636,"backlash":0}},"heavy/shield":{"avgWin":0.8727272727272727,"meanRounds":4.8522727272727275,"deathRate":0.0022727272727272726,"koRate":0.11363636363636363,"timeoutRate":0.011363636363636364,"perFight":{"windUps":0,"windLost":0,"powerHits":0,"shots":0,"shotHits":0,"spells":0,"spellHits":0,"noPower":0,"closeHits":0.020454545454545454,"tooClose":0,"outOfReach":0.32045454545454544,"exhausted":0.41818181818181815,"blocks":1.4090909090909092,"parries":0.0022727272727272726,"dodges":0,"hits":1.540909090909091,"sidearmDraws":0.4772727272727273,"readiesMain":0.029545454545454545,"drops":0.4772727272727273,"shieldsBroken":0.31363636363636366,"shoves":0.02727272727272727,"shoveFails":0.04090909090909091,"backlash":0}},"heavy/archery":{"avgWin":0.7,"meanRounds":3.3704545454545456,"deathRate":0,"koRate":0.3,"timeoutRate":0,"perFight":{"windUps":1.3227272727272728,"windLost":0,"powerHits":0,"shots":0.7954545454545454,"shotHits":0.7954545454545454,"spells":0,"spellHits":0,"noPower":0,"closeHits":0,"tooClose":0,"outOfReach":0.43863636363636366,"exhausted":0.07045454545454545,"blocks":0,"parries":0,"dodges":0,"hits":1.6818181818181819,"sidearmDraws":0.5590909090909091,"readiesMain":0,"drops":0.5590909090909091,"shieldsBroken":0,"shoves":0.045454545454545456,"shoveFails":0.06136363636363636,"backlash":0}},"medium/twoHanded":{"avgWin":0.2409090909090909,"meanRounds":2.8636363636363638,"deathRate":0.6409090909090909,"koRate":0.11818181818181818,"timeoutRate":0,"perFight":{"windUps":0.5477272727272727,"windLost":0.15227272727272728,"powerHits":0.09318181818181819,"shots":0,"shotHits":0,"spells":0,"spellHits":0,"noPower":0,"closeHits":0.08181818181818182,"tooClose":0,"outOfReach":0.07272727272727272,"exhausted":0.1159090909090909,"blocks":0,"parries":0.33636363636363636,"dodges":0.3,"hits":0.675,"sidearmDraws":0.5431818181818182,"readiesMain":0.06136363636363636,"drops":0.5431818181818182,"shieldsBroken":0,"shoves":0.015909090909090907,"shoveFails":0.022727272727272728,"backlash":0}},"medium/shield":{"avgWin":0.6136363636363636,"meanRounds":3.1704545454545454,"deathRate":0.18636363636363637,"koRate":0.19772727272727272,"timeoutRate":0.0022727272727272726,"perFight":{"windUps":0,"windLost":0,"powerHits":0,"shots":0,"shotHits":0,"spells":0,"spellHits":0,"noPower":0,"closeHits":0,"tooClose":0,"outOfReach":0.08409090909090909,"exhausted":0.2340909090909091,"blocks":1.1977272727272728,"parries":0.17272727272727273,"dodges":0,"hits":1.475,"sidearmDraws":0.95,"readiesMain":0.1409090909090909,"drops":0.95,"shieldsBroken":0.16590909090909092,"shoves":0.09545454545454546,"shoveFails":0.11363636363636363,"backlash":0}},"medium/archery":{"avgWin":0.35909090909090907,"meanRounds":3.3045454545454547,"deathRate":0.22727272727272727,"koRate":0.41363636363636364,"timeoutRate":0,"perFight":{"windUps":1.884090909090909,"windLost":0.24545454545454545,"powerHits":0,"shots":0.8068181818181818,"shotHits":0.7840909090909091,"spells":0,"spellHits":0,"noPower":0,"closeHits":0,"tooClose":0.022727272727272728,"outOfReach":0.04090909090909091,"exhausted":0.5886363636363636,"blocks":0,"parries":0,"dodges":0.9477272727272728,"hits":1.0136363636363637,"sidearmDraws":0.22954545454545455,"readiesMain":0,"drops":0.22954545454545455,"shieldsBroken":0,"shoves":0.022727272727272728,"shoveFails":0.07045454545454545,"backlash":0}},"light/twoHanded":{"avgWin":0.32045454545454544,"meanRounds":2.984090909090909,"deathRate":0.5977272727272728,"koRate":0.08181818181818182,"timeoutRate":0,"perFight":{"windUps":0.6318181818181818,"windLost":0.16363636363636364,"powerHits":0.1318181818181818,"shots":0,"shotHits":0,"spells":0,"spellHits":0,"noPower":0,"closeHits":0.10681818181818181,"tooClose":0,"outOfReach":0.05454545454545454,"exhausted":0.1340909090909091,"blocks":0,"parries":0.35909090909090907,"dodges":0.33181818181818185,"hits":0.8590909090909091,"sidearmDraws":0.5204545454545455,"readiesMain":0.04318181818181818,"drops":0.5204545454545455,"shieldsBroken":0,"shoves":0.013636363636363636,"shoveFails":0.022727272727272728,"backlash":0}},"light/shield":{"avgWin":0.6545454545454545,"meanRounds":3.6159090909090907,"deathRate":0.27954545454545454,"koRate":0.056818181818181816,"timeoutRate":0.00909090909090909,"perFight":{"windUps":0,"windLost":0,"powerHits":0,"shots":0,"shotHits":0,"spells":0,"spellHits":0,"noPower":0,"closeHits":0.015909090909090907,"tooClose":0,"outOfReach":0.075,"exhausted":0.029545454545454545,"blocks":1.356818181818182,"parries":0.2590909090909091,"dodges":0,"hits":1.615909090909091,"sidearmDraws":0.9840909090909091,"readiesMain":0.19545454545454546,"drops":0.9840909090909091,"shieldsBroken":0.2,"shoves":0.075,"shoveFails":0.1318181818181818,"backlash":0}},"light/archery":{"avgWin":0.41363636363636364,"meanRounds":3.8659090909090907,"deathRate":0.24545454545454545,"koRate":0.3409090909090909,"timeoutRate":0,"perFight":{"windUps":2.143181818181818,"windLost":0.2909090909090909,"powerHits":0,"shots":0.825,"shotHits":0.825,"spells":0,"spellHits":0,"noPower":0,"closeHits":0,"tooClose":0,"outOfReach":0.01818181818181818,"exhausted":0.6,"blocks":0,"parries":0,"dodges":1.4045454545454545,"hits":1.0909090909090908,"sidearmDraws":0.30454545454545456,"readiesMain":0.004545454545454545,"drops":0.30454545454545456,"shieldsBroken":0,"shoves":0.022727272727272728,"shoveFails":0.03636363636363636,"backlash":0}},"unarmored/twoHanded":{"avgWin":0.20454545454545456,"meanRounds":2.077272727272727,"deathRate":0.7954545454545454,"koRate":0,"timeoutRate":0,"perFight":{"windUps":0.33636363636363636,"windLost":0.04772727272727273,"powerHits":0.03409090909090909,"shots":0,"shotHits":0,"spells":0,"spellHits":0,"noPower":0,"closeHits":0.006818181818181818,"tooClose":0,"outOfReach":0.1,"exhausted":0.0022727272727272726,"blocks":0,"parries":0.03636363636363636,"dodges":0.19090909090909092,"hits":0.45454545454545453,"sidearmDraws":0.24545454545454545,"readiesMain":0.09318181818181819,"drops":0.24545454545454545,"shieldsBroken":0,"shoves":0.013636363636363636,"shoveFails":0.006818181818181818,"backlash":0}},"unarmored/shield":{"avgWin":0.26136363636363635,"meanRounds":2.036363636363636,"deathRate":0.7181818181818181,"koRate":0.020454545454545454,"timeoutRate":0,"perFight":{"windUps":0,"windLost":0,"powerHits":0,"shots":0,"shotHits":0,"spells":0,"spellHits":0,"noPower":0,"closeHits":0.0022727272727272726,"tooClose":0,"outOfReach":0.05909090909090909,"exhausted":0.00909090909090909,"blocks":0.9681818181818181,"parries":0.06363636363636363,"dodges":0,"hits":0.6977272727272728,"sidearmDraws":0.6886363636363636,"readiesMain":0.10681818181818181,"drops":0.6886363636363636,"shieldsBroken":0.19545454545454546,"shoves":0.015909090909090907,"shoveFails":0.03409090909090909,"backlash":0}},"unarmored/archery":{"avgWin":0.2863636363636364,"meanRounds":3.3068181818181817,"deathRate":0.7068181818181818,"koRate":0.006818181818181818,"timeoutRate":0,"perFight":{"windUps":2.0613636363636365,"windLost":0.23636363636363636,"powerHits":0,"shots":0.8772727272727273,"shotHits":0.8772727272727273,"spells":0,"spellHits":0,"noPower":0,"closeHits":0,"tooClose":0,"outOfReach":0.0022727272727272726,"exhausted":0.12727272727272726,"blocks":0,"parries":0,"dodges":0.7818181818181819,"hits":0.975,"sidearmDraws":0.19318181818181818,"readiesMain":0.0022727272727272726,"drops":0.19318181818181818,"shieldsBroken":0,"shoves":0.00909090909090909,"shoveFails":0.00909090909090909,"backlash":0}}},"close":{"heavy/twoHanded":{"avgWin":0.8409090909090909,"meanRounds":3.9977272727272726,"deathRate":0.011363636363636364,"koRate":0.14772727272727273,"timeoutRate":0,"perFight":{"windUps":1.2795454545454545,"windLost":0.21818181818181817,"powerHits":0.525,"shots":0,"shotHits":0,"spells":0,"spellHits":0,"noPower":0,"closeHits":0.07954545454545454,"tooClose":0,"outOfReach":0.07045454545454545,"exhausted":0.08409090909090909,"blocks":0,"parries":0,"dodges":0,"hits":1.7022727272727274,"sidearmDraws":0.3068181818181818,"readiesMain":0,"drops":0.3068181818181818,"shieldsBroken":0,"shoves":0.02727272727272727,"shoveFails":0.03636363636363636,"backlash":0}},"heavy/shield":{"avgWin":0.8068181818181818,"meanRounds":4.786363636363636,"deathRate":0,"koRate":0.16818181818181818,"timeoutRate":0.025,"perFight":{"windUps":0,"windLost":0,"powerHits":0,"shots":0,"shotHits":0,"spells":0,"spellHits":0,"noPower":0,"closeHits":0,"tooClose":0,"outOfReach":0.21136363636363636,"exhausted":1.1454545454545455,"blocks":0.615909090909091,"parries":0.004545454545454545,"dodges":0,"hits":1.6295454545454546,"sidearmDraws":0.9409090909090909,"readiesMain":0.19772727272727272,"drops":0.9409090909090909,"shieldsBroken":0.26136363636363635,"shoves":0.05454545454545454,"shoveFails":0.06136363636363636,"backlash":0}},"heavy/archery":{"avgWin":0.6363636363636364,"meanRounds":3.4272727272727272,"deathRate":0,"koRate":0.36363636363636365,"timeoutRate":0,"perFight":{"windUps":1.1636363636363636,"windLost":0.038636363636363635,"powerHits":0,"shots":0.6454545454545455,"shotHits":0.6431818181818182,"spells":0,"spellHits":0,"noPower":0,"closeHits":0,"tooClose":0.0022727272727272726,"outOfReach":0.7272727272727273,"exhausted":0.2772727272727273,"blocks":0,"parries":0,"dodges":0,"hits":1.4386363636363637,"sidearmDraws":0.5159090909090909,"readiesMain":0,"drops":0.5159090909090909,"shieldsBroken":0,"shoves":0.06818181818181818,"shoveFails":0.11136363636363636,"backlash":0}},"medium/twoHanded":{"avgWin":0.35,"meanRounds":2.5931818181818183,"deathRate":0.4409090909090909,"koRate":0.20909090909090908,"timeoutRate":0,"perFight":{"windUps":0.9272727272727272,"windLost":0.04090909090909091,"powerHits":0.4,"shots":0,"shotHits":0,"spells":0,"spellHits":0,"noPower":0,"closeHits":0.14545454545454545,"tooClose":0,"outOfReach":0.11136363636363636,"exhausted":0.19090909090909092,"blocks":0,"parries":0.17272727272727273,"dodges":0.32272727272727275,"hits":1.1181818181818182,"sidearmDraws":0.3613636363636364,"readiesMain":0.013636363636363636,"drops":0.3613636363636364,"shieldsBroken":0,"shoves":0.01818181818181818,"shoveFails":0.020454545454545454,"backlash":0}},"medium/shield":{"avgWin":0.6590909090909091,"meanRounds":3.161363636363636,"deathRate":0.10681818181818181,"koRate":0.22954545454545455,"timeoutRate":0.004545454545454545,"perFight":{"windUps":0,"windLost":0,"powerHits":0,"shots":0,"shotHits":0,"spells":0,"spellHits":0,"noPower":0,"closeHits":0,"tooClose":0,"outOfReach":0.12045454545454545,"exhausted":0.18409090909090908,"blocks":1.6045454545454545,"parries":0.2340909090909091,"dodges":0,"hits":1.459090909090909,"sidearmDraws":1.0545454545454545,"readiesMain":0.22954545454545455,"drops":1.0545454545454545,"shieldsBroken":0.2863636363636364,"shoves":0.09545454545454546,"shoveFails":0.12954545454545455,"backlash":0}},"medium/archery":{"avgWin":0.3159090909090909,"meanRounds":2.756818181818182,"deathRate":0.2727272727272727,"koRate":0.4090909090909091,"timeoutRate":0.0022727272727272726,"perFight":{"windUps":1.2113636363636364,"windLost":0.18409090909090908,"powerHits":0,"shots":0.48863636363636365,"shotHits":0.48863636363636365,"spells":0,"spellHits":0,"noPower":0,"closeHits":0,"tooClose":0,"outOfReach":0.004545454545454545,"exhausted":0.6477272727272727,"blocks":0,"parries":0,"dodges":1.5613636363636363,"hits":0.725,"sidearmDraws":0.19545454545454546,"readiesMain":0.004545454545454545,"drops":0.19545454545454546,"shieldsBroken":0,"shoves":0.013636363636363636,"shoveFails":0.031818181818181815,"backlash":0}},"light/twoHanded":{"avgWin":0.4090909090909091,"meanRounds":2.838636363636364,"deathRate":0.42272727272727273,"koRate":0.16818181818181818,"timeoutRate":0,"perFight":{"windUps":0.9431818181818182,"windLost":0.04772727272727273,"powerHits":0.40454545454545454,"shots":0,"shotHits":0,"spells":0,"spellHits":0,"noPower":0,"closeHits":0.16590909090909092,"tooClose":0,"outOfReach":0.16818181818181818,"exhausted":0.17727272727272728,"blocks":0,"parries":0.2159090909090909,"dodges":0.3386363636363636,"hits":1.2431818181818182,"sidearmDraws":0.3977272727272727,"readiesMain":0.013636363636363636,"drops":0.3977272727272727,"shieldsBroken":0,"shoves":0.04090909090909091,"shoveFails":0.020454545454545454,"backlash":0}},"light/shield":{"avgWin":0.7431818181818182,"meanRounds":3.463636363636364,"deathRate":0.17045454545454544,"koRate":0.07954545454545454,"timeoutRate":0.006818181818181818,"perFight":{"windUps":0,"windLost":0,"powerHits":0,"shots":0,"shotHits":0,"spells":0,"spellHits":0,"noPower":0,"closeHits":0.022727272727272728,"tooClose":0,"outOfReach":0.12954545454545455,"exhausted":0.07045454545454545,"blocks":1.7272727272727273,"parries":0.24772727272727274,"dodges":0,"hits":1.6636363636363636,"sidearmDraws":1.0977272727272727,"readiesMain":0.32045454545454544,"drops":1.0977272727272727,"shieldsBroken":0.32727272727272727,"shoves":0.08636363636363636,"shoveFails":0.18409090909090908,"backlash":0}},"light/archery":{"avgWin":0.3568181818181818,"meanRounds":2.925,"deathRate":0.3340909090909091,"koRate":0.3090909090909091,"timeoutRate":0,"perFight":{"windUps":1.2363636363636363,"windLost":0.22045454545454546,"powerHits":0,"shots":0.5318181818181819,"shotHits":0.5318181818181819,"spells":0,"spellHits":0,"noPower":0,"closeHits":0,"tooClose":0,"outOfReach":0.0022727272727272726,"exhausted":0.38181818181818183,"blocks":0,"parries":0,"dodges":1.9659090909090908,"hits":0.7727272727272727,"sidearmDraws":0.19772727272727272,"readiesMain":0,"drops":0.19772727272727272,"shieldsBroken":0,"shoves":0.038636363636363635,"shoveFails":0.03409090909090909,"backlash":0}},"unarmored/twoHanded":{"avgWin":0.10681818181818181,"meanRounds":1.9522727272727274,"deathRate":0.8931818181818182,"koRate":0,"timeoutRate":0,"perFight":{"windUps":0.8409090909090909,"windLost":0.02727272727272727,"powerHits":0.21363636363636362,"shots":0,"shotHits":0,"spells":0,"spellHits":0,"noPower":0,"closeHits":0.03409090909090909,"tooClose":0,"outOfReach":0.11363636363636363,"exhausted":0.013636363636363636,"blocks":0,"parries":0.17045454545454544,"dodges":0.325,"hits":0.49318181818181817,"sidearmDraws":0.20227272727272727,"readiesMain":0.10227272727272728,"drops":0.20227272727272727,"shieldsBroken":0,"shoves":0.022727272727272728,"shoveFails":0.00909090909090909,"backlash":0}},"unarmored/shield":{"avgWin":0.3477272727272727,"meanRounds":2.6886363636363635,"deathRate":0.6409090909090909,"koRate":0.011363636363636364,"timeoutRate":0,"perFight":{"windUps":0,"windLost":0,"powerHits":0,"shots":0,"shotHits":0,"spells":0,"spellHits":0,"noPower":0,"closeHits":0.0022727272727272726,"tooClose":0,"outOfReach":0.004545454545454545,"exhausted":0.05227272727272727,"blocks":1.940909090909091,"parries":0.21818181818181817,"dodges":0,"hits":0.7272727272727273,"sidearmDraws":0.7045454545454546,"readiesMain":0.1409090909090909,"drops":0.7045454545454546,"shieldsBroken":0.25227272727272726,"shoves":0.03409090909090909,"shoveFails":0.029545454545454545,"backlash":0}},"unarmored/archery":{"avgWin":0.19545454545454546,"meanRounds":2.5863636363636364,"deathRate":0.7931818181818182,"koRate":0,"timeoutRate":0.011363636363636364,"perFight":{"windUps":1.231818181818182,"windLost":0.1431818181818182,"powerHits":0,"shots":0.5454545454545454,"shotHits":0.5454545454545454,"spells":0,"spellHits":0,"noPower":0,"closeHits":0,"tooClose":0,"outOfReach":0,"exhausted":0.27045454545454545,"blocks":0,"parries":0,"dodges":1.2204545454545455,"hits":0.7136363636363636,"sidearmDraws":0.12954545454545455,"readiesMain":0,"drops":0.12954545454545455,"shieldsBroken":0,"shoves":0.0022727272727272726,"shoveFails":0.013636363636363636,"backlash":0}}}},"rollups":{"open":{"armor":{"heavy":{"heavy":0.47083333333333327,"medium":0.9249999999999999,"light":0.7916666666666666,"unarmored":0.9277777777777777},"medium":{"heavy":0.04722222222222223,"medium":0.4958333333333334,"light":0.44722222222222224,"unarmored":0.6583333333333334},"light":{"heavy":0.16666666666666669,"medium":0.5,"light":0.48750000000000004,"unarmored":0.7055555555555556},"unarmored":{"heavy":0.05555555555555555,"medium":0.2888888888888889,"light":0.24166666666666664,"unarmored":0.5}},"strategy":{"twoHanded":{"twoHanded":0.49583333333333335,"shield":0.40312500000000007,"archery":0.33437500000000003},"shield":{"twoHanded":0.5781250000000001,"shield":0.48750000000000004,"archery":0.7078125000000001},"archery":{"twoHanded":0.634375,"shield":0.2484375,"archery":0.4354166666666666}}},"close":{"armor":{"heavy":{"heavy":0.47500000000000003,"medium":0.8444444444444444,"light":0.7277777777777777,"unarmored":0.9027777777777778},"medium":{"heavy":0.125,"medium":0.47083333333333327,"light":0.4083333333333333,"unarmored":0.7722222222222223},"light":{"heavy":0.2361111111111111,"medium":0.5249999999999999,"light":0.47500000000000003,"unarmored":0.7666666666666667},"unarmored":{"heavy":0.05555555555555555,"medium":0.2,"light":0.20555555555555557,"unarmored":0.5}},"strategy":{"twoHanded":{"twoHanded":0.48958333333333326,"shield":0.2906249999999999,"archery":0.5156249999999999},"shield":{"twoHanded":0.6953125,"shield":0.4791666666666667,"archery":0.703125},"archery":{"twoHanded":0.42968750000000006,"shield":0.26562499999999994,"archery":0.45208333333333334}}}},"results":{"open":{"heavy/twoHanded|heavy/shield":{"n":40,"winA":7,"winB":29,"draw":4,"timeout":0,"deadA":0,"deadB":0,"koA":33,"koB":11,"medRounds":7,"meanRounds":7.075},"heavy/twoHanded|heavy/archery":{"n":40,"winA":36,"winB":1,"draw":3,"timeout":0,"deadA":4,"deadB":0,"koA":0,"koB":39,"medRounds":4,"meanRounds":4},"heavy/twoHanded|medium/twoHanded":{"n":40,"winA":39,"winB":0,"draw":1,"timeout":0,"deadA":0,"deadB":21,"koA":1,"koB":19,"medRounds":4,"meanRounds":3.8},"heavy/twoHanded|medium/shield":{"n":40,"winA":38,"winB":1,"draw":1,"timeout":0,"deadA":0,"deadB":10,"koA":2,"koB":29,"medRounds":4,"meanRounds":4.825},"heavy/twoHanded|medium/archery":{"n":40,"winA":35,"winB":4,"draw":1,"timeout":0,"deadA":5,"deadB":5,"koA":0,"koB":31,"medRounds":5,"meanRounds":4.775},"heavy/twoHanded|light/twoHanded":{"n":40,"winA":36,"winB":3,"draw":1,"timeout":0,"deadA":0,"deadB":27,"koA":4,"koB":10,"medRounds":4,"meanRounds":3.8},"heavy/twoHanded|light/shield":{"n":40,"winA":34,"winB":4,"draw":2,"timeout":0,"deadA":0,"deadB":15,"koA":6,"koB":21,"medRounds":5,"meanRounds":5.45},"heavy/twoHanded|light/archery":{"n":40,"winA":32,"winB":5,"draw":3,"timeout":0,"deadA":7,"deadB":5,"koA":1,"koB":30,"medRounds":5,"meanRounds":5.35},"heavy/twoHanded|unarmored/twoHanded":{"n":40,"winA":40,"winB":0,"draw":0,"timeout":0,"deadA":0,"deadB":40,"koA":0,"koB":0,"medRounds":2,"meanRounds":2.25},"heavy/twoHanded|unarmored/shield":{"n":40,"winA":36,"winB":4,"draw":0,"timeout":0,"deadA":0,"deadB":27,"koA":4,"koB":9,"medRounds":3,"meanRounds":3.975},"heavy/twoHanded|unarmored/archery":{"n":40,"winA":40,"winB":0,"draw":0,"timeout":0,"deadA":0,"deadB":40,"koA":0,"koB":0,"medRounds":3,"meanRounds":3.125},"heavy/shield|heavy/archery":{"n":40,"winA":40,"winB":0,"draw":0,"timeout":0,"deadA":0,"deadB":0,"koA":0,"koB":40,"medRounds":4,"meanRounds":4},"heavy/shield|medium/twoHanded":{"n":40,"winA":40,"winB":0,"draw":0,"timeout":0,"deadA":0,"deadB":24,"koA":0,"koB":16,"medRounds":4,"meanRounds":3.5},"heavy/shield|medium/shield":{"n":40,"winA":36,"winB":3,"draw":0,"timeout":1,"deadA":0,"deadB":28,"koA":3,"koB":8,"medRounds":2,"meanRounds":3.575},"heavy/shield|medium/archery":{"n":40,"winA":39,"winB":0,"draw":1,"timeout":0,"deadA":0,"deadB":3,"koA":1,"koB":37,"medRounds":5,"meanRounds":4.975},"heavy/shield|light/twoHanded":{"n":40,"winA":35,"winB":5,"draw":0,"timeout":0,"deadA":0,"deadB":29,"koA":5,"koB":6,"medRounds":3,"meanRounds":4.25},"heavy/shield|light/shield":{"n":40,"winA":31,"winB":5,"draw":0,"timeout":4,"deadA":0,"deadB":31,"koA":5,"koB":0,"medRounds":4,"meanRounds":6.075},"heavy/shield|light/archery":{"n":40,"winA":31,"winB":8,"draw":1,"timeout":0,"deadA":0,"deadB":3,"koA":9,"koB":29,"medRounds":9,"meanRounds":8.5},"heavy/shield|unarmored/twoHanded":{"n":40,"winA":40,"winB":0,"draw":0,"timeout":0,"deadA":0,"deadB":40,"koA":0,"koB":0,"medRounds":1,"meanRounds":1.45},"heavy/shield|unarmored/shield":{"n":40,"winA":39,"winB":1,"draw":0,"timeout":0,"deadA":0,"deadB":39,"koA":1,"koB":0,"medRounds":1,"meanRounds":1.7},"heavy/shield|unarmored/archery":{"n":40,"winA":24,"winB":13,"draw":3,"timeout":0,"deadA":1,"deadB":25,"koA":15,"koB":2,"medRounds":8,"meanRounds":8.275},"heavy/archery|medium/twoHanded":{"n":40,"winA":34,"winB":4,"draw":2,"timeout":0,"deadA":0,"deadB":32,"koA":6,"koB":4,"medRounds":3,"meanRounds":3.425},"heavy/archery|medium/shield":{"n":40,"winA":33,"winB":5,"draw":2,"timeout":0,"deadA":0,"deadB":18,"koA":7,"koB":17,"medRounds":4,"meanRounds":3.7},"heavy/archery|medium/archery":{"n":40,"winA":39,"winB":0,"draw":1,"timeout":0,"deadA":0,"deadB":17,"koA":1,"koB":23,"medRounds":3,"meanRounds":3.025},"heavy/archery|light/twoHanded":{"n":40,"winA":35,"winB":5,"draw":0,"timeout":0,"deadA":0,"deadB":31,"koA":5,"koB":4,"medRounds":3,"meanRounds":3.6},"heavy/archery|light/shield":{"n":40,"winA":17,"winB":21,"draw":2,"timeout":0,"deadA":0,"deadB":19,"koA":23,"koB":0,"medRounds":6,"meanRounds":5.275},"heavy/archery|light/archery":{"n":40,"winA":34,"winB":4,"draw":2,"timeout":0,"deadA":0,"deadB":17,"koA":6,"koB":19,"medRounds":4,"meanRounds":3.525},"heavy/archery|unarmored/twoHanded":{"n":40,"winA":39,"winB":1,"draw":0,"timeout":0,"deadA":0,"deadB":39,"koA":1,"koB":0,"medRounds":2,"meanRounds":2.3},"heavy/archery|unarmored/shield":{"n":40,"winA":36,"winB":1,"draw":3,"timeout":0,"deadA":0,"deadB":39,"koA":4,"koB":0,"medRounds":2,"meanRounds":2.225},"heavy/archery|unarmored/archery":{"n":40,"winA":40,"winB":0,"draw":0,"timeout":0,"deadA":0,"deadB":40,"koA":0,"koB":0,"medRounds":2,"meanRounds":2},"medium/twoHanded|medium/shield":{"n":40,"winA":13,"winB":26,"draw":1,"timeout":0,"deadA":27,"deadB":5,"koA":0,"koB":9,"medRounds":2,"meanRounds":2.45},"medium/twoHanded|medium/archery":{"n":40,"winA":12,"winB":28,"draw":0,"timeout":0,"deadA":26,"deadB":4,"koA":2,"koB":8,"medRounds":4,"meanRounds":3.55},"medium/twoHanded|light/twoHanded":{"n":40,"winA":18,"winB":22,"draw":0,"timeout":0,"deadA":22,"deadB":18,"koA":0,"koB":0,"medRounds":1,"meanRounds":1.3},"medium/twoHanded|light/shield":{"n":40,"winA":9,"winB":31,"draw":0,"timeout":0,"deadA":30,"deadB":9,"koA":1,"koB":0,"medRounds":2,"meanRounds":2.15},"medium/twoHanded|light/archery":{"n":40,"winA":7,"winB":33,"draw":0,"timeout":0,"deadA":31,"deadB":2,"koA":2,"koB":5,"medRounds":3,"meanRounds":3.625},"medium/twoHanded|unarmored/twoHanded":{"n":40,"winA":18,"winB":22,"draw":0,"timeout":0,"deadA":22,"deadB":18,"koA":0,"koB":0,"medRounds":2,"meanRounds":2.15},"medium/twoHanded|unarmored/shield":{"n":40,"winA":20,"winB":20,"draw":0,"timeout":0,"deadA":20,"deadB":20,"koA":0,"koB":0,"medRounds":2,"meanRounds":1.925},"medium/twoHanded|unarmored/archery":{"n":40,"winA":5,"winB":33,"draw":2,"timeout":0,"deadA":27,"deadB":7,"koA":8,"koB":0,"medRounds":4,"meanRounds":3.625},"medium/shield|medium/archery":{"n":40,"winA":37,"winB":3,"draw":0,"timeout":0,"deadA":1,"deadB":14,"koA":2,"koB":23,"medRounds":4,"meanRounds":3.825},"medium/shield|light/twoHanded":{"n":40,"winA":27,"winB":11,"draw":2,"timeout":0,"deadA":4,"deadB":28,"koA":9,"koB":1,"medRounds":2,"meanRounds":2.275},"medium/shield|light/shield":{"n":40,"winA":24,"winB":15,"draw":1,"timeout":0,"deadA":11,"deadB":25,"koA":5,"koB":0,"medRounds":1,"meanRounds":2.2},"medium/shield|light/archery":{"n":40,"winA":38,"winB":1,"draw":1,"timeout":0,"deadA":0,"deadB":12,"koA":2,"koB":27,"medRounds":4,"meanRounds":4.225},"medium/shield|unarmored/twoHanded":{"n":40,"winA":31,"winB":9,"draw":0,"timeout":0,"deadA":5,"deadB":31,"koA":4,"koB":0,"medRounds":1,"meanRounds":1.6},"medium/shield|unarmored/shield":{"n":40,"winA":40,"winB":0,"draw":0,"timeout":0,"deadA":0,"deadB":40,"koA":0,"koB":0,"medRounds":2,"meanRounds":2.125},"medium/shield|unarmored/archery":{"n":40,"winA":38,"winB":1,"draw":1,"timeout":0,"deadA":0,"deadB":39,"koA":2,"koB":0,"medRounds":4,"meanRounds":4.075},"medium/archery|light/twoHanded":{"n":40,"winA":24,"winB":15,"draw":1,"timeout":0,"deadA":2,"deadB":23,"koA":14,"koB":2,"medRounds":4,"meanRounds":3.625},"medium/archery|light/shield":{"n":40,"winA":2,"winB":38,"draw":0,"timeout":0,"deadA":7,"deadB":2,"koA":31,"koB":0,"medRounds":4,"meanRounds":3.875},"medium/archery|light/archery":{"n":40,"winA":12,"winB":14,"draw":14,"timeout":0,"deadA":22,"deadB":26,"koA":6,"koB":0,"medRounds":2,"meanRounds":2.375},"medium/archery|unarmored/twoHanded":{"n":40,"winA":36,"winB":4,"draw":0,"timeout":0,"deadA":0,"deadB":36,"koA":4,"koB":0,"medRounds":2,"meanRounds":2.625},"medium/archery|unarmored/shield":{"n":40,"winA":18,"winB":15,"draw":7,"timeout":0,"deadA":17,"deadB":25,"koA":5,"koB":0,"medRounds":2,"meanRounds":1.7},"medium/archery|unarmored/archery":{"n":40,"winA":31,"winB":0,"draw":9,"timeout":0,"deadA":9,"deadB":40,"koA":0,"koB":0,"medRounds":2,"meanRounds":2},"light/twoHanded|light/shield":{"n":40,"winA":13,"winB":25,"draw":2,"timeout":0,"deadA":27,"deadB":12,"koA":0,"koB":3,"medRounds":3,"meanRounds":2.6},"light/twoHanded|light/archery":{"n":40,"winA":11,"winB":28,"draw":1,"timeout":0,"deadA":25,"deadB":3,"koA":4,"koB":9,"medRounds":4,"meanRounds":4},"light/twoHanded|unarmored/twoHanded":{"n":40,"winA":25,"winB":15,"draw":0,"timeout":0,"deadA":15,"deadB":25,"koA":0,"koB":0,"medRounds":1,"meanRounds":1.95},"light/twoHanded|unarmored/shield":{"n":40,"winA":28,"winB":12,"draw":0,"timeout":0,"deadA":12,"deadB":28,"koA":0,"koB":0,"medRounds":2,"meanRounds":1.875},"light/twoHanded|unarmored/archery":{"n":40,"winA":3,"winB":30,"draw":7,"timeout":0,"deadA":28,"deadB":9,"koA":9,"koB":1,"medRounds":3,"meanRounds":3.55},"light/shield|light/archery":{"n":40,"winA":39,"winB":1,"draw":0,"timeout":0,"deadA":1,"deadB":12,"koA":0,"koB":27,"medRounds":4,"meanRounds":4.125},"light/shield|unarmored/twoHanded":{"n":40,"winA":30,"winB":10,"draw":0,"timeout":0,"deadA":9,"deadB":30,"koA":1,"koB":0,"medRounds":1,"meanRounds":1.65},"light/shield|unarmored/shield":{"n":40,"winA":40,"winB":0,"draw":0,"timeout":0,"deadA":0,"deadB":40,"koA":0,"koB":0,"medRounds":2,"meanRounds":2.175},"light/shield|unarmored/archery":{"n":40,"winA":40,"winB":0,"draw":0,"timeout":0,"deadA":0,"deadB":40,"koA":0,"koB":0,"medRounds":4,"meanRounds":4.2},"light/archery|unarmored/twoHanded":{"n":40,"winA":36,"winB":4,"draw":0,"timeout":0,"deadA":2,"deadB":36,"koA":2,"koB":0,"medRounds":2,"meanRounds":2.775},"light/archery|unarmored/shield":{"n":40,"winA":19,"winB":14,"draw":7,"timeout":0,"deadA":19,"deadB":26,"koA":2,"koB":0,"medRounds":2,"meanRounds":2.025},"light/archery|unarmored/archery":{"n":40,"winA":33,"winB":2,"draw":5,"timeout":0,"deadA":7,"deadB":38,"koA":0,"koB":0,"medRounds":2,"meanRounds":2},"unarmored/twoHanded|unarmored/shield":{"n":40,"winA":25,"winB":15,"draw":0,"timeout":0,"deadA":15,"deadB":25,"koA":0,"koB":0,"medRounds":2,"meanRounds":1.625},"unarmored/twoHanded|unarmored/archery":{"n":40,"winA":0,"winB":40,"draw":0,"timeout":0,"deadA":40,"deadB":0,"koA":0,"koB":0,"medRounds":2,"meanRounds":2.475},"unarmored/shield|unarmored/archery":{"n":40,"winA":33,"winB":7,"draw":0,"timeout":0,"deadA":7,"deadB":33,"koA":0,"koB":0,"medRounds":1,"meanRounds":1.05}},"close":{"heavy/twoHanded|heavy/shield":{"n":40,"winA":22,"winB":17,"draw":1,"timeout":0,"deadA":0,"deadB":0,"koA":18,"koB":23,"medRounds":6,"meanRounds":5.875},"heavy/twoHanded|heavy/archery":{"n":40,"winA":36,"winB":1,"draw":3,"timeout":0,"deadA":4,"deadB":0,"koA":0,"koB":39,"medRounds":4,"meanRounds":4},"heavy/twoHanded|medium/twoHanded":{"n":40,"winA":29,"winB":10,"draw":1,"timeout":0,"deadA":0,"deadB":6,"koA":11,"koB":24,"medRounds":3,"meanRounds":3.475},"heavy/twoHanded|medium/shield":{"n":40,"winA":40,"winB":0,"draw":0,"timeout":0,"deadA":0,"deadB":6,"koA":0,"koB":34,"medRounds":4,"meanRounds":3.875},"heavy/twoHanded|medium/archery":{"n":40,"winA":39,"winB":1,"draw":0,"timeout":0,"deadA":0,"deadB":8,"koA":1,"koB":31,"medRounds":3,"meanRounds":3.725},"heavy/twoHanded|light/twoHanded":{"n":40,"winA":29,"winB":10,"draw":1,"timeout":0,"deadA":0,"deadB":2,"koA":11,"koB":28,"medRounds":3,"meanRounds":3.825},"heavy/twoHanded|light/shield":{"n":40,"winA":38,"winB":2,"draw":0,"timeout":0,"deadA":0,"deadB":16,"koA":2,"koB":22,"medRounds":4,"meanRounds":4.525},"heavy/twoHanded|light/archery":{"n":40,"winA":29,"winB":7,"draw":4,"timeout":0,"deadA":1,"deadB":11,"koA":10,"koB":22,"medRounds":5,"meanRounds":4.9},"heavy/twoHanded|unarmored/twoHanded":{"n":40,"winA":39,"winB":0,"draw":1,"timeout":0,"deadA":0,"deadB":40,"koA":1,"koB":0,"medRounds":2,"meanRounds":1.925},"heavy/twoHanded|unarmored/shield":{"n":40,"winA":36,"winB":3,"draw":1,"timeout":0,"deadA":0,"deadB":35,"koA":4,"koB":2,"medRounds":4,"meanRounds":4.325},"heavy/twoHanded|unarmored/archery":{"n":40,"winA":33,"winB":3,"draw":4,"timeout":0,"deadA":0,"deadB":37,"koA":7,"koB":0,"medRounds":3,"meanRounds":3.525},"heavy/shield|heavy/archery":{"n":40,"winA":34,"winB":4,"draw":2,"timeout":0,"deadA":0,"deadB":0,"koA":6,"koB":36,"medRounds":5,"meanRounds":5.325},"heavy/shield|medium/twoHanded":{"n":40,"winA":40,"winB":0,"draw":0,"timeout":0,"deadA":0,"deadB":35,"koA":0,"koB":5,"medRounds":3,"meanRounds":2.95},"heavy/shield|medium/shield":{"n":40,"winA":30,"winB":8,"draw":0,"timeout":2,"deadA":0,"deadB":13,"koA":8,"koB":17,"medRounds":5,"meanRounds":6.425},"heavy/shield|medium/archery":{"n":40,"winA":39,"winB":0,"draw":0,"timeout":1,"deadA":0,"deadB":14,"koA":0,"koB":25,"medRounds":4,"meanRounds":4.25},"heavy/shield|light/twoHanded":{"n":40,"winA":39,"winB":1,"draw":0,"timeout":0,"deadA":0,"deadB":36,"koA":1,"koB":3,"medRounds":3,"meanRounds":3.275},"heavy/shield|light/shield":{"n":40,"winA":14,"winB":22,"draw":1,"timeout":3,"deadA":0,"deadB":14,"koA":23,"koB":1,"medRounds":6,"meanRounds":8.325},"heavy/shield|light/archery":{"n":40,"winA":39,"winB":1,"draw":0,"timeout":0,"deadA":0,"deadB":18,"koA":1,"koB":21,"medRounds":4,"meanRounds":4.05},"heavy/shield|unarmored/twoHanded":{"n":40,"winA":40,"winB":0,"draw":0,"timeout":0,"deadA":0,"deadB":40,"koA":0,"koB":0,"medRounds":2,"meanRounds":1.7},"heavy/shield|unarmored/shield":{"n":40,"winA":35,"winB":2,"draw":3,"timeout":0,"deadA":0,"deadB":38,"koA":5,"koB":0,"medRounds":3,"meanRounds":3.3},"heavy/shield|unarmored/archery":{"n":40,"winA":28,"winB":7,"draw":0,"timeout":5,"deadA":0,"deadB":28,"koA":7,"koB":0,"medRounds":4,"meanRounds":7.175},"heavy/archery|medium/twoHanded":{"n":40,"winA":23,"winB":14,"draw":3,"timeout":0,"deadA":0,"deadB":17,"koA":17,"koB":9,"medRounds":3,"meanRounds":3.375},"heavy/archery|medium/shield":{"n":40,"winA":24,"winB":12,"draw":4,"timeout":0,"deadA":0,"deadB":11,"koA":16,"koB":17,"medRounds":4,"meanRounds":4.4},"heavy/archery|medium/archery":{"n":40,"winA":40,"winB":0,"draw":0,"timeout":0,"deadA":0,"deadB":9,"koA":0,"koB":31,"medRounds":3,"meanRounds":2.475},"heavy/archery|light/twoHanded":{"n":40,"winA":20,"winB":18,"draw":2,"timeout":0,"deadA":0,"deadB":12,"koA":20,"koB":10,"medRounds":4,"meanRounds":3.55},"heavy/archery|light/shield":{"n":40,"winA":15,"winB":23,"draw":2,"timeout":0,"deadA":0,"deadB":17,"koA":25,"koB":0,"medRounds":6,"meanRounds":5.175},"heavy/archery|light/archery":{"n":40,"winA":39,"winB":1,"draw":0,"timeout":0,"deadA":0,"deadB":21,"koA":1,"koB":18,"medRounds":2,"meanRounds":2.625},"heavy/archery|unarmored/twoHanded":{"n":40,"winA":37,"winB":3,"draw":0,"timeout":0,"deadA":0,"deadB":37,"koA":3,"koB":0,"medRounds":3,"meanRounds":2.6},"heavy/archery|unarmored/shield":{"n":40,"winA":37,"winB":2,"draw":1,"timeout":0,"deadA":0,"deadB":38,"koA":3,"koB":0,"medRounds":2,"meanRounds":2.175},"heavy/archery|unarmored/archery":{"n":40,"winA":40,"winB":0,"draw":0,"timeout":0,"deadA":0,"deadB":40,"koA":0,"koB":0,"medRounds":2,"meanRounds":2},"medium/twoHanded|medium/shield":{"n":40,"winA":5,"winB":34,"draw":1,"timeout":0,"deadA":27,"deadB":3,"koA":8,"koB":3,"medRounds":3,"meanRounds":2.55},"medium/twoHanded|medium/archery":{"n":40,"winA":19,"winB":16,"draw":5,"timeout":0,"deadA":9,"deadB":3,"koA":12,"koB":21,"medRounds":3,"meanRounds":3},"medium/twoHanded|light/twoHanded":{"n":40,"winA":20,"winB":19,"draw":1,"timeout":0,"deadA":20,"deadB":21,"koA":0,"koB":0,"medRounds":1,"meanRounds":1.275},"medium/twoHanded|light/shield":{"n":40,"winA":1,"winB":37,"draw":2,"timeout":0,"deadA":27,"deadB":1,"koA":12,"koB":2,"medRounds":2,"meanRounds":2.6},"medium/twoHanded|light/archery":{"n":40,"winA":10,"winB":26,"draw":4,"timeout":0,"deadA":16,"deadB":5,"koA":14,"koB":9,"medRounds":3,"meanRounds":3.075},"medium/twoHanded|unarmored/twoHanded":{"n":40,"winA":40,"winB":0,"draw":0,"timeout":0,"deadA":0,"deadB":40,"koA":0,"koB":0,"medRounds":1,"meanRounds":1.325},"medium/twoHanded|unarmored/shield":{"n":40,"winA":6,"winB":34,"draw":0,"timeout":0,"deadA":27,"deadB":4,"koA":7,"koB":2,"medRounds":3,"meanRounds":2.825},"medium/twoHanded|unarmored/archery":{"n":40,"winA":29,"winB":10,"draw":1,"timeout":0,"deadA":10,"deadB":30,"koA":1,"koB":0,"medRounds":2,"meanRounds":2.075},"medium/shield|medium/archery":{"n":40,"winA":39,"winB":0,"draw":1,"timeout":0,"deadA":0,"deadB":21,"koA":1,"koB":19,"medRounds":2,"meanRounds":2.5},"medium/shield|light/twoHanded":{"n":40,"winA":26,"winB":10,"draw":4,"timeout":0,"deadA":3,"deadB":22,"koA":11,"koB":8,"medRounds":3,"meanRounds":3.1},"medium/shield|light/shield":{"n":40,"winA":18,"winB":21,"draw":1,"timeout":0,"deadA":10,"deadB":16,"koA":12,"koB":3,"medRounds":3,"meanRounds":3.35},"medium/shield|light/archery":{"n":40,"winA":39,"winB":0,"draw":1,"timeout":0,"deadA":0,"deadB":22,"koA":1,"koB":18,"medRounds":2,"meanRounds":2.625},"medium/shield|unarmored/twoHanded":{"n":40,"winA":38,"winB":2,"draw":0,"timeout":0,"deadA":0,"deadB":38,"koA":2,"koB":0,"medRounds":1,"meanRounds":1.6},"medium/shield|unarmored/shield":{"n":40,"winA":36,"winB":4,"draw":0,"timeout":0,"deadA":1,"deadB":36,"koA":3,"koB":0,"medRounds":3,"meanRounds":2.775},"medium/shield|unarmored/archery":{"n":40,"winA":40,"winB":0,"draw":0,"timeout":0,"deadA":0,"deadB":40,"koA":0,"koB":0,"medRounds":1,"meanRounds":1.575},"medium/archery|light/twoHanded":{"n":40,"winA":15,"winB":24,"draw":1,"timeout":0,"deadA":3,"deadB":12,"koA":22,"koB":4,"medRounds":3,"meanRounds":3.15},"medium/archery|light/shield":{"n":40,"winA":1,"winB":38,"draw":1,"timeout":0,"deadA":24,"deadB":2,"koA":15,"koB":0,"medRounds":2,"meanRounds":2.45},"medium/archery|light/archery":{"n":40,"winA":17,"winB":14,"draw":9,"timeout":0,"deadA":22,"deadB":26,"koA":1,"koB":0,"medRounds":2,"meanRounds":2.2},"medium/archery|unarmored/twoHanded":{"n":40,"winA":28,"winB":12,"draw":0,"timeout":0,"deadA":1,"deadB":28,"koA":11,"koB":0,"medRounds":2,"meanRounds":2.55},"medium/archery|unarmored/shield":{"n":40,"winA":30,"winB":10,"draw":0,"timeout":0,"deadA":6,"deadB":30,"koA":4,"koB":0,"medRounds":2,"meanRounds":2.025},"medium/archery|unarmored/archery":{"n":40,"winA":31,"winB":0,"draw":9,"timeout":0,"deadA":9,"deadB":40,"koA":0,"koB":0,"medRounds":2,"meanRounds":2},"light/twoHanded|light/shield":{"n":40,"winA":8,"winB":32,"draw":0,"timeout":0,"deadA":25,"deadB":4,"koA":7,"koB":4,"medRounds":3,"meanRounds":3.075},"light/twoHanded|light/archery":{"n":40,"winA":14,"winB":20,"draw":6,"timeout":0,"deadA":16,"deadB":4,"koA":10,"koB":16,"medRounds":3,"meanRounds":3.375},"light/twoHanded|unarmored/twoHanded":{"n":40,"winA":37,"winB":2,"draw":1,"timeout":0,"deadA":3,"deadB":38,"koA":0,"koB":0,"medRounds":1,"meanRounds":1.55},"light/twoHanded|unarmored/shield":{"n":40,"winA":9,"winB":31,"draw":0,"timeout":0,"deadA":30,"deadB":8,"koA":1,"koB":1,"medRounds":3,"meanRounds":2.9},"light/twoHanded|unarmored/archery":{"n":40,"winA":30,"winB":8,"draw":2,"timeout":0,"deadA":7,"deadB":32,"koA":3,"koB":0,"medRounds":2,"meanRounds":2.15},"light/shield|light/archery":{"n":40,"winA":40,"winB":0,"draw":0,"timeout":0,"deadA":0,"deadB":24,"koA":0,"koB":16,"medRounds":2,"meanRounds":2.35},"light/shield|unarmored/twoHanded":{"n":40,"winA":36,"winB":4,"draw":0,"timeout":0,"deadA":2,"deadB":36,"koA":2,"koB":0,"medRounds":1,"meanRounds":1.65},"light/shield|unarmored/shield":{"n":40,"winA":37,"winB":3,"draw":0,"timeout":0,"deadA":2,"deadB":37,"koA":1,"koB":0,"medRounds":3,"meanRounds":2.725},"light/shield|unarmored/archery":{"n":40,"winA":39,"winB":1,"draw":0,"timeout":0,"deadA":1,"deadB":39,"koA":0,"koB":0,"medRounds":1,"meanRounds":1.875},"light/archery|unarmored/twoHanded":{"n":40,"winA":28,"winB":12,"draw":0,"timeout":0,"deadA":1,"deadB":28,"koA":11,"koB":0,"medRounds":2,"meanRounds":2.625},"light/archery|unarmored/shield":{"n":40,"winA":27,"winB":11,"draw":2,"timeout":0,"deadA":8,"deadB":29,"koA":5,"koB":0,"medRounds":2,"meanRounds":2.35},"light/archery|unarmored/archery":{"n":40,"winA":33,"winB":2,"draw":5,"timeout":0,"deadA":7,"deadB":38,"koA":0,"koB":0,"medRounds":2,"meanRounds":2},"unarmored/twoHanded|unarmored/shield":{"n":40,"winA":4,"winB":36,"draw":0,"timeout":0,"deadA":36,"deadB":4,"koA":0,"koB":0,"medRounds":2,"meanRounds":2.025},"unarmored/twoHanded|unarmored/archery":{"n":40,"winA":8,"winB":32,"draw":0,"timeout":0,"deadA":32,"deadB":8,"koA":0,"koB":0,"medRounds":2,"meanRounds":1.925},"unarmored/shield|unarmored/archery":{"n":40,"winA":17,"winB":23,"draw":0,"timeout":0,"deadA":23,"deadB":17,"koA":0,"koB":0,"medRounds":2,"meanRounds":2.15}}},"baseline":{"label":"round 5 (without magic)","agg":{"open":{"heavy/twoHanded":{"avgWin":0.8363636363636363,"meanRounds":4.9340909090909095,"deathRate":0.028333333333333332,"koRate":0.34833333333333333},"heavy/shield":{"avgWin":0.7681818181818183,"meanRounds":5.293181818181818,"deathRate":0.0016666666666666668,"koRate":0.22333333333333333},"heavy/archery":{"avgWin":0.618181818181818,"meanRounds":3.6500000000000004,"deathRate":0.03,"koRate":0.395},"medium/twoHanded":{"avgWin":0.18181818181818182,"meanRounds":3.2068181818181816,"deathRate":0.55,"koRate":0.14833333333333334},"medium/shield":{"avgWin":0.6659090909090909,"meanRounds":3.8363636363636373,"deathRate":0.13166666666666665,"koRate":0.11333333333333333},"medium/archery":{"avgWin":0.47954545454545455,"meanRounds":3.409090909090909,"deathRate":0.09,"koRate":0.44333333333333336},"light/twoHanded":{"avgWin":0.1840909090909091,"meanRounds":3.2113636363636364,"deathRate":0.5966666666666667,"koRate":0.03333333333333333},"light/shield":{"avgWin":0.765909090909091,"meanRounds":4.297727272727273,"deathRate":0.14333333333333334,"koRate":0.025},"light/archery":{"avgWin":0.5227272727272726,"meanRounds":3.934090909090909,"deathRate":0.145,"koRate":0.25833333333333336},"unarmored/twoHanded":{"avgWin":0.06136363636363638,"meanRounds":1.9227272727272728,"deathRate":0.795,"koRate":0},"unarmored/shield":{"avgWin":0.3568181818181818,"meanRounds":2.4090909090909096,"deathRate":0.465,"koRate":0.006666666666666667},"unarmored/archery":{"avgWin":0.39545454545454545,"meanRounds":3.5500000000000003,"deathRate":0.47,"koRate":0.041666666666666664}},"close":{"heavy/twoHanded":{"avgWin":0.7545454545454546,"meanRounds":4.745454545454545,"deathRate":0.01,"koRate":0.24833333333333332},"heavy/shield":{"avgWin":0.75,"meanRounds":5.779545454545454,"deathRate":0.0016666666666666668,"koRate":0.205},"heavy/archery":{"avgWin":0.6136363636363636,"meanRounds":3.838636363636363,"deathRate":0.005,"koRate":0.355},"medium/twoHanded":{"avgWin":0.31136363636363634,"meanRounds":2.831818181818182,"deathRate":0.3516666666666667,"koRate":0.16333333333333333},"medium/shield":{"avgWin":0.6840909090909091,"meanRounds":3.602272727272728,"deathRate":0.09,"koRate":0.14666666666666667},"medium/archery":{"avgWin":0.28409090909090906,"meanRounds":2.9204545454545454,"deathRate":0.22333333333333333,"koRate":0.46},"light/twoHanded":{"avgWin":0.32954545454545453,"meanRounds":3.0727272727272723,"deathRate":0.36666666666666664,"koRate":0.145},"light/shield":{"avgWin":0.8568181818181819,"meanRounds":4.177272727272726,"deathRate":0.085,"koRate":0.018333333333333333},"light/archery":{"avgWin":0.2977272727272727,"meanRounds":3.238636363636364,"deathRate":0.30833333333333335,"koRate":0.25666666666666665},"unarmored/twoHanded":{"avgWin":0.1159090909090909,"meanRounds":1.9613636363636362,"deathRate":0.7016666666666667,"koRate":0.011666666666666667},"unarmored/shield":{"avgWin":0.6227272727272728,"meanRounds":3.0568181818181817,"deathRate":0.27166666666666667,"koRate":0.005},"unarmored/archery":{"avgWin":0.13636363636363638,"meanRounds":2.6386363636363637,"deathRate":0.6966666666666667,"koRate":0.04666666666666667}}},"rollups":{"open":{"armor":{"heavy":{"heavy":0.4645833333333334,"medium":0.621875,"light":0.4546875000000001,"unarmored":0.5703125},"medium":{"heavy":0.325,"medium":0.47083333333333327,"light":0.3656250000000001,"unarmored":0.58125},"light":{"heavy":0.475,"medium":0.5375,"light":0.46875,"unarmored":0.6015625},"unarmored":{"heavy":0.36875,"medium":0.36093749999999997,"light":0.3296875,"unarmored":0.49166666666666664}},"strategy":{"twoHanded":{"twoHanded":0.4895833333333333,"shield":0.21093749999999997,"magic":0.4546875000000001,"archery":0.290625},"shield":{"twoHanded":0.765625,"shield":0.48958333333333326,"magic":0.809375,"archery":0.625},"magic":{"twoHanded":0.45156250000000003,"shield":0.056249999999999994,"magic":0.42083333333333334,"archery":0.35312499999999997},"archery":{"twoHanded":0.684375,"shield":0.359375,"magic":0.5609375,"archery":0.45625000000000004}}},"close":{"armor":{"heavy":{"heavy":0.4666666666666666,"medium":0.734375,"light":0.571875,"unarmored":0.7359375},"medium":{"heavy":0.225,"medium":0.4833333333333334,"light":0.403125,"unarmored":0.5984375000000001},"light":{"heavy":0.38906250000000003,"medium":0.528125,"light":0.48750000000000004,"unarmored":0.6203124999999999},"unarmored":{"heavy":0.2265625,"medium":0.36718750000000006,"light":0.33125,"unarmored":0.4979166666666666}},"strategy":{"twoHanded":{"twoHanded":0.49166666666666675,"shield":0.20625,"magic":0.8296875,"archery":0.4640625},"shield":{"twoHanded":0.7734375,"shield":0.4791666666666667,"magic":0.9249999999999999,"archery":0.8703125},"magic":{"twoHanded":0.1546875,"shield":0.057812499999999996,"magic":0.4354166666666666,"archery":0.32812500000000006},"archery":{"twoHanded":0.4749999999999999,"shield":0.09687499999999999,"magic":0.6031249999999999,"archery":0.45833333333333326}}}}}};
+const ARENAS = Object.keys(DATA.arenas);
+const STRATS = Object.keys(DATA.strategies);
+const ARMORS = Object.keys(DATA.armorClasses);
+const byKey = Object.fromEntries(DATA.combatants.map((c) => [c.key, c]));
+const KEYS_ALL = DATA.combatants.map((c) => c.key);
+const pct = (x) => (x == null ? '—' : Math.round(x * 100) + '%');
+const el = (tag, attrs, ...kids) => {
+  const e = document.createElement(tag);
+  for (const k in attrs || {}) {
+    if (k === 'style') Object.assign(e.style, attrs[k]);
+    else if (k.startsWith('on')) e.addEventListener(k.slice(2), attrs[k]);
+    else e.setAttribute(k, attrs[k]);
+  }
+  for (const kid of kids.flat(Infinity)) if (kid != null) e.append(kid instanceof Node ? kid : document.createTextNode(kid));
+  return e;
+};
+
+// Diverging color: red below 50%, gray at 50%, blue above.
+function heat(x) {
+  if (x == null) return { bg: 'var(--surface-2)', fg: 'var(--muted)' };
+  const t = Math.max(-1, Math.min(1, (x - 0.5) * 2));
+  const pole = t >= 0 ? 'var(--div-pos)' : 'var(--div-neg)';
+  const amt = Math.round(Math.abs(t) * 100);
+  return { bg: `color-mix(in oklab, ${pole} ${amt}%, var(--div-mid))`, fg: Math.abs(t) > 0.55 ? '#fff' : 'var(--ink)' };
+}
+
+const tip = document.getElementById('tip');
+function showTip(e, text) {
+  tip.textContent = text;
+  tip.hidden = false;
+  const r = e.target.getBoundingClientRect();
+  const x = e.clientX != null && e.type.startsWith('mouse') ? e.clientX : r.left + r.width / 2;
+  const y = e.clientY != null && e.type.startsWith('mouse') ? e.clientY : r.top;
+  tip.style.left = Math.min(window.innerWidth - tip.offsetWidth - 8, Math.max(8, x + 12)) + 'px';
+  tip.style.top = Math.max(8, y - tip.offsetHeight - 10) + 'px';
+}
+const hideTip = () => (tip.hidden = true);
+function cell(x, text, cls) {
+  const c = heat(x);
+  const td = el('td', { tabindex: '0', class: cls || '', style: { background: c.bg, color: c.fg }, 'aria-label': text }, pct(x));
+  td.addEventListener('mouseenter', (e) => showTip(e, text));
+  td.addEventListener('mousemove', (e) => showTip(e, text));
+  td.addEventListener('focus', (e) => showTip(e, text));
+  td.addEventListener('mouseleave', hideTip);
+  td.addEventListener('blur', hideTip);
+  return td;
+}
+
+// Facts
+const nFights = ARENAS.reduce((t, a) => t + Object.values(DATA.results[a]).reduce((s, r) => s + r.n, 0), 0);
+document.getElementById('facts').append(
+  el('span', null, 'Level ', el('b', null, DATA.level)),
+  el('span', null, el('b', null, DATA.combatants.length), ' fighters'),
+  el('span', null, el('b', null, nFights.toLocaleString()), ' fights'),
+  el('span', null, el('b', null, DATA.n), ' per pairing per arena'),
+  ...ARENAS.map((a) => el('span', null, DATA.arenas[a].label + ' ', el('b', null, `${DATA.arenas[a].w}×${DATA.arenas[a].h}`))),
+  el('span', { class: 'muted' }, 'run ' + DATA.generated.slice(0, 10)));
+
+// Headline: armor × strategy
+const headline = document.getElementById('headline');
+for (const a of ARENAS) {
+  const t = el('table', { class: 'heat' });
+  t.append(el('thead', null, el('tr', null, el('th', null, ''), STRATS.map((s) => el('th', null, DATA.strategies[s])), el('th', null, 'Avg'))));
+  const tb = el('tbody');
+  for (const ar of ARMORS) {
+    const vals = STRATS.map((s) => DATA.agg[a][ar + '/' + s].avgWin);
+    tb.append(el('tr', null, el('th', { scope: 'row' }, DATA.armorClasses[ar]),
+      STRATS.map((s, i) => cell(vals[i], `${DATA.armorClasses[ar]} ${DATA.strategies[s]} · ${DATA.arenas[a].label}: wins ${pct(vals[i])} of fights, ${DATA.agg[a][ar + '/' + s].meanRounds.toFixed(1)} rounds on average`)),
+      el('td', { class: 'avg num' }, pct(vals.reduce((x, y) => x + y) / vals.length))));
+  }
+  const avgRow = el('tr', null, el('th', { scope: 'row' }, 'Avg'), STRATS.map((s) => el('td', { class: 'avg num' }, pct(ARMORS.reduce((t, ar) => t + DATA.agg[a][ar + '/' + s].avgWin, 0) / ARMORS.length))), el('td', null, ''));
+  tb.append(avgRow);
+  t.append(tb);
+  headline.append(el('div', { class: 'card' }, el('h3', null, DATA.arenas[a].label), el('div', { class: 'scroll' }, t)));
+}
+
+// Comparison with the baseline run
+(function compare() {
+  const B = DATA.baseline;
+  if (!B) return;
+  document.getElementById('compare-section').hidden = false;
+  document.getElementById('compare-title').textContent = `What changed since ${B.label}`;
+  document.getElementById('compare-sub').textContent = `Average win rates, ${B.label} → this run. A smaller spread between the best and worst style means no single strategy dominates.`;
+  const styleAvg = (agg, a, s) => ARMORS.reduce((t, ar) => t + agg[a][ar + '/' + s].avgWin, 0) / ARMORS.length;
+  const armorAvg = (agg, a, ar) => STRATS.reduce((t, s) => t + agg[a][ar + '/' + s].avgWin, 0) / STRATS.length;
+  const spreadOf = (agg, a, skip) => { const v = STRATS.filter((s) => s !== skip).map((s) => styleAvg(agg, a, s)); return Math.max(...v) - Math.min(...v); };
+  const pts = (x) => (x >= 0 ? '+' : '−') + Math.abs(Math.round(x * 100));
+  const spread = document.getElementById('spread');
+  for (const a of ARENAS) {
+    const before = spreadOf(B.agg, a), after = spreadOf(DATA.agg, a);
+    const beforeNM = spreadOf(B.agg, a, 'magic'), afterNM = spreadOf(DATA.agg, a, 'magic');
+    const fighters = KEYS_ALL.map((k) => DATA.agg[a][k].avgWin);
+    const fBefore = KEYS_ALL.map((k) => B.agg[a][k].avgWin);
+    spread.append(el('div', { class: 'card' }, el('h3', null, DATA.arenas[a].label),
+      el('div', { class: 'facts' },
+        el('span', { class: 'stat' }, el('span', { class: 'muted small' }, 'Best − worst style'), el('b', null, Math.round(after * 100) + ' pts'), el('span', { class: 'delta muted small' }, `was ${Math.round(before * 100)}`)),
+        STRATS.includes('magic') ? el('span', { class: 'stat' }, el('span', { class: 'muted small' }, 'Same, leaving out magic'), el('b', null, Math.round(afterNM * 100) + ' pts'), el('span', { class: 'delta muted small' }, `was ${Math.round(beforeNM * 100)}`)) : null,
+        el('span', { class: 'stat' }, el('span', { class: 'muted small' }, 'Top fighter'), el('b', null, pct(Math.max(...fighters))), el('span', { class: 'delta muted small' }, `was ${pct(Math.max(...fBefore))}`)),
+        el('span', { class: 'stat' }, el('span', { class: 'muted small' }, 'Bottom fighter'), el('b', null, pct(Math.min(...fighters))), el('span', { class: 'delta muted small' }, `was ${pct(Math.min(...fBefore))}`)))));
+  }
+  const t = el('table', { class: 'data' });
+  t.append(el('thead', null, el('tr', null, el('th', null, ''), ARENAS.map((a) => el('th', { class: 'n', colspan: '2' }, DATA.arenas[a].label)))));
+  const row = (label, f, strong) => el('tr', null, el('td', strong ? { style: { fontWeight: 700 } } : null, label), ARENAS.map((a) => {
+    const [b0, b1] = f(a);
+    return [el('td', { class: 'n' }, `${pct(b0)} → ${pct(b1)}`), el('td', { class: 'n delta' }, pts(b1 - b0))];
+  }));
+  const tb = el('tbody');
+  for (const s of STRATS) tb.append(row(DATA.strategies[s], (a) => [styleAvg(B.agg, a, s), styleAvg(DATA.agg, a, s)], true));
+  for (const ar of ARMORS) tb.append(row(DATA.armorClasses[ar] + ' armor', (a) => [armorAvg(B.agg, a, ar), armorAvg(DATA.agg, a, ar)], true));
+  for (const k of KEYS_ALL) tb.append(row(byKey[k].label, (a) => [B.agg[a][k].avgWin, DATA.agg[a][k].avgWin]));
+  t.append(tb);
+  document.getElementById('compare').append(t);
+})();
+
+// Style vs style
+const styles = document.getElementById('styles');
+for (const a of ARENAS) {
+  const m = DATA.rollups[a].strategy;
+  const t = el('table', { class: 'heat' });
+  t.append(el('thead', null, el('tr', null, el('th', null, 'vs →'), STRATS.map((s) => el('th', null, DATA.strategies[s])))));
+  t.append(el('tbody', null, STRATS.map((r) => el('tr', null, el('th', { scope: 'row' }, DATA.strategies[r]),
+    STRATS.map((c) => cell(m[r][c], `${DATA.strategies[r]} vs ${DATA.strategies[c]} · ${DATA.arenas[a].label}: ${pct(m[r][c])}`, r === c ? 'mirror' : ''))))));
+  styles.append(el('div', { class: 'card' }, el('h3', null, DATA.arenas[a].label), el('div', { class: 'scroll' }, t)));
+}
+
+// Dumbbell: open vs close per fighter
+(function dumbbell() {
+  const rows = DATA.combatants.map((c) => ({ c, o: DATA.agg.open[c.key].avgWin, q: DATA.agg.close[c.key].avgWin })).sort((x, y) => y.o - x.o);
+  const W = 760, L = 190, R = 40, rowH = 26, top = 26, H = top + rows.length * rowH + 10;
+  const x = (v) => L + v * (W - L - R);
+  const ns = 'http://www.w3.org/2000/svg';
+  const s = (tag, attrs, text) => { const e = document.createElementNS(ns, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; return e; };
+  const svg = s('svg', { viewBox: `0 0 ${W} ${H}`, width: '100%', role: 'img', 'aria-label': 'Win rate in the open field and in close quarters for each fighter' });
+  svg.style.minWidth = '560px';
+  svg.style.maxWidth = W + 'px';
+  for (const v of [0, 0.25, 0.5, 0.75, 1]) {
+    svg.append(s('line', { x1: x(v), x2: x(v), y1: top - 6, y2: H - 6, stroke: 'var(--line)', 'stroke-width': v === 0.5 ? 1.5 : 1, 'stroke-dasharray': v === 0.5 ? '' : '2 3' }));
+    svg.append(s('text', { x: x(v), y: 14, 'text-anchor': 'middle' }, pct(v)));
+  }
+  rows.forEach((r, i) => {
+    const y = top + i * rowH + rowH / 2;
+    svg.append(s('text', { x: L - 10, y: y + 4, 'text-anchor': 'end', class: 'lbl' }, r.c.label));
+    svg.append(s('line', { x1: x(Math.min(r.o, r.q)), x2: x(Math.max(r.o, r.q)), y1: y, y2: y, stroke: 'var(--muted)', 'stroke-width': 2 }));
+    const g = s('g', { tabindex: '0', 'aria-label': `${r.c.label}: open ${pct(r.o)}, close quarters ${pct(r.q)}` });
+    g.append(s('circle', { cx: x(r.o), cy: y, r: 6, fill: 'var(--s1)', stroke: 'var(--surface)', 'stroke-width': 2 }));
+    g.append(s('circle', { cx: x(r.q), cy: y, r: 6, fill: 'var(--s2)', stroke: 'var(--surface)', 'stroke-width': 2 }));
+    g.append(s('rect', { x: L, y: y - rowH / 2, width: W - L - R, height: rowH, fill: 'transparent' }));
+    const txt = `${r.c.label}: ${pct(r.o)} in the open, ${pct(r.q)} in close quarters`;
+    g.addEventListener('mousemove', (e) => showTip(e, txt));
+    g.addEventListener('focus', (e) => showTip(e, txt));
+    g.addEventListener('mouseleave', hideTip);
+    g.addEventListener('blur', hideTip);
+    svg.append(g);
+  });
+  document.getElementById('dumbbell').append(svg);
+})();
+
+// Full grid with arena toggle
+function segmented(id, render) {
+  const seg = document.getElementById(id);
+  let current = ARENAS[0];
+  const draw = () => {
+    seg.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.a === current)));
+    render(current);
+  };
+  for (const a of ARENAS) seg.append(el('button', { type: 'button', 'data-a': a, onclick: () => { current = a; draw(); } }, DATA.arenas[a].label));
+  draw();
+}
+const KEYS = DATA.combatants.map((c) => c.key);
+segmented('seg-grid', (a) => {
+  const host = document.getElementById('grid');
+  host.textContent = '';
+  const t = el('table', { class: 'heat big' });
+  t.append(el('thead', null, el('tr', null, el('th', null, ''), KEYS.map((k) => el('th', null, byKey[k].label)), el('th', null, 'Avg'))));
+  const tb = el('tbody');
+  for (const r of KEYS) {
+    tb.append(el('tr', null, el('th', { scope: 'row' }, byKey[r].label),
+      KEYS.map((c) => {
+        if (r === c) return el('td', { class: 'self' }, '·');
+        const pair = DATA.results[a][r + '|' + c] || DATA.results[a][c + '|' + r];
+        const v = DATA.view[a][r][c];
+        return cell(v, `${byKey[r].label} vs ${byKey[c].label} (${DATA.arenas[a].label}): ${pct(v)} · median ${pair.medRounds} rounds · ${pair.n} fights`);
+      }),
+      el('td', { class: 'avg num' }, pct(DATA.agg[a][r].avgWin))));
+  }
+  t.append(tb);
+  host.append(t);
+});
+
+// Outcomes: stacked bars (both arenas pooled)
+(function outcomes() {
+  const rows = DATA.combatants.map((c) => {
+    const w = (DATA.agg.open[c.key].avgWin + DATA.agg.close[c.key].avgWin) / 2;
+    const d = (DATA.agg.open[c.key].deathRate + DATA.agg.close[c.key].deathRate) / 2;
+    const k = (DATA.agg.open[c.key].koRate + DATA.agg.close[c.key].koRate) / 2;
+    return { c, w, d, k, o: Math.max(0, 1 - w - d - k) };
+  });
+  const W = 760, L = 190, R = 50, rowH = 24, top = 8, H = top + rows.length * rowH + 4;
+  const ns = 'http://www.w3.org/2000/svg';
+  const s = (tag, attrs, text) => { const e = document.createElementNS(ns, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (text != null) e.textContent = text; return e; };
+  const svg = s('svg', { viewBox: `0 0 ${W} ${H}`, width: '100%', role: 'img', 'aria-label': 'How each fighter\'s fights ended' });
+  svg.style.minWidth = '560px';
+  svg.style.maxWidth = W + 'px';
+  const span = W - L - R;
+  rows.forEach((r, i) => {
+    const y = top + i * rowH;
+    svg.append(s('text', { x: L - 10, y: y + rowH / 2 + 4, 'text-anchor': 'end', class: 'lbl' }, r.c.label));
+    let x0 = L;
+    const parts = [['w', 'var(--s1)', 'won'], ['d', 'var(--s2)', 'died'], ['k', 'var(--s3)', 'collapsed'], ['o', 'var(--s-other)', 'draw/other']];
+    const txt = `${r.c.label}: won ${pct(r.w)}, died ${pct(r.d)}, collapsed ${pct(r.k)}`;
+    const g = s('g', { tabindex: '0', 'aria-label': txt });
+    for (const [key, color] of parts) {
+      const wpx = Math.max(0, r[key] * span);
+      if (wpx < 0.5) continue;
+      g.append(s('rect', { x: x0, y: y + 3, width: Math.max(0, wpx - 2), height: rowH - 6, rx: 3, fill: color }));
+      x0 += wpx;
+    }
+    g.addEventListener('mousemove', (e) => showTip(e, txt));
+    g.addEventListener('focus', (e) => showTip(e, txt));
+    g.addEventListener('mouseleave', hideTip);
+    g.addEventListener('blur', hideTip);
+    svg.append(g);
+    svg.append(s('text', { x: L + span + 6, y: y + rowH / 2 + 4, class: 'lbl' }, pct(r.w)));
+  });
+  document.getElementById('outcomes').append(svg);
+})();
+
+// Telemetry table per strategy
+const TEL = [
+  ['meanRounds', 'Rounds', 1], ['windUps', 'Wind-ups', 1], ['powerHits', 'Power swings landed', 2], ['shots', 'Arrows shot', 1], ['shotHits', 'Arrows hit', 1],
+  ['spells', 'Spells cast', 1], ['backlash', 'Backlashes', 2], ['blocks', 'Blocks', 1], ['parries', 'Parries', 1], ['dodges', 'Dodges', 1],
+  ['sidearmDraws', 'Dagger drawn', 1], ['exhausted', 'Too tired to act', 2], ['deathRate', 'Deaths', 2], ['koRate', 'Collapses', 2],
+];
+segmented('seg-tel', (a) => {
+  const host = document.getElementById('telemetry');
+  host.textContent = '';
+  const val = (k, s) => {
+    const keys = ARMORS.map((ar) => ar + '/' + s);
+    const v = keys.map((key) => { const g = DATA.agg[a][key]; return k in g ? g[k] : g.perFight[k] || 0; });
+    return v.reduce((x, y) => x + y) / v.length;
+  };
+  const t = el('table', { class: 'data' });
+  t.append(el('thead', null, el('tr', null, el('th', null, 'Per fight'), STRATS.map((s) => el('th', { class: 'n' }, DATA.strategies[s])))));
+  t.append(el('tbody', null, TEL.map(([k, label, dp]) => el('tr', null, el('td', null, label), STRATS.map((s) => el('td', { class: 'n' }, val(k, s).toFixed(dp)))))));
+  host.append(t);
+});
+
+// Loadouts
+(function loadouts() {
+  const t = el('table', { class: 'data' });
+  t.append(el('thead', null, el('tr', null, el('th', null, 'Fighter'), el('th', { class: 'n' }, 'AP'), el('th', { class: 'n' }, 'Stamina'), el('th', { class: 'n' }, 'Regen'), el('th', { class: 'n' }, 'CON'), el('th', null, 'Feats'), el('th', null, 'Main attacks (AP / stamina, range)'))));
+  t.append(el('tbody', null, DATA.combatants.map((c) => el('tr', null, el('td', null, c.label), el('td', { class: 'n' }, c.ap), el('td', { class: 'n' }, c.maxStamina), el('td', { class: 'n' }, (c.regen > 0 ? '+' : '') + c.regen), el('td', { class: 'n' }, c.con),
+    el('td', { class: 'small' }, c.feats.join(', ')),
+    el('td', { class: 'small' }, c.attacks.filter((x) => !x.label.includes('+') || !x.label.includes('Force')).slice(0, 4).map((x) => `${x.label} ${x.windUp ? '(wind-up) ' : ''}${x.ap}/${x.sp ? x.sp + ' SP' : x.stamina}, ${x.range[0] === x.range[1] ? x.range[0] : x.range.join('–')}`).join('; '))))));
+  document.getElementById('loadouts').append(t);
+})();
+</script>
