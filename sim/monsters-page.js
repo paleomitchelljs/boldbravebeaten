@@ -29,6 +29,7 @@ function traitText(c) {
   if (t.nimble) out.push(`nimble +${t.nimble}`);
   if (t.slippery) out.push(`slippery +${t.slippery}`);
   if (t.moveMult) out.push(`leaps ×${t.moveMult} movement`);
+  if (c.armor && (L.B.DATA.ARMOR[c.armor.type] || {}).recoil) out.push('springy chitin (each blow that lands costs the attacker stamina)');
   return out.join('; ');
 }
 data.meta = {};

@@ -14,7 +14,9 @@
     plate: { name: 'Plate', mit: { P: 4, S: 6, B: 3 }, spd: 3, dex: 2, stamina: 2, regen: 4, standUp: 2, rarity: 'very rare' },
     // PROVISIONAL (monster draft): natural armor. No penalties; it can't be taken off or looted.
     fur: { name: 'Thick fur', mit: { P: 1, S: 1, B: 2 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, rarity: 'common', natural: true },
-    chitin: { name: 'Chitin', mit: { P: 2, S: 3, B: 1 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, rarity: 'common', natural: true },
+    // recoil: springy chitin jars the attacker; every blow that lands on it costs them this much
+    // extra base stamina (× staminaScale).
+    chitin: { name: 'Springy chitin', mit: { P: 2, S: 3, B: 1 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, rarity: 'common', natural: true, recoil: 1 },
     trollHide: { name: 'Troll hide', mit: { P: 1, S: 2, B: 3 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, rarity: 'common', natural: true },
     scaleHide: { name: 'Scaly hide', mit: { P: 1, S: 1, B: 0 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, rarity: 'common', natural: true },
     frogSkin: { name: 'Slick skin', mit: { P: 0, S: 1, B: 1 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, rarity: 'common', natural: true },

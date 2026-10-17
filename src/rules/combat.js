@@ -1153,6 +1153,12 @@
         const note = (distance === 1 && d.option.closePenalty) || (CONFIG.grappledWeaponsCramped && d.option.weaponId && !d.option.ranged && isGrappled(a))
           ? (CONFIG.range.closeRule === 'blunt' ? ' (cramped: blunt, half force)' : ' (cramped: half damage)') : d.option.ranged && d.option.longRange && distance > d.option.longRange ? ' (long range)' : '';
         log(enc, `${a.name}'s ${name} hits ${t.name}${half ? ' (Roll With It: half)' : ''}${pack ? ` (pack +${pack})` : ''}${note}: ${r.text}`, 'hit');
+        // Springy armor (chitin): the blow rebounds and jars the attacker.
+        const recoil = t.armor && t.armor.durability > 0 && (G.DATA.ARMOR[t.armor.type] || {}).recoil;
+        if (recoil && !d.option.ranged && !d.option.spell && !C.tireless(a)) {
+          const jar = Math.min(a.stamina - 1, recoil * (CONFIG.staminaScale || 1));
+          if (jar > 0) { a.stamina -= jar; log(enc, `The springy ${t.armor.type === 'chitin' ? 'chitin' : 'hide'} jars ${a.name}'s arms (−${jar} stamina).`, 'fail'); }
+        }
         if (d.option.spell && d.option.spell.element === 'force' && C.isActive(t) && !t.status.prone) {
           const k = await opposed(roller, a, Math.floor(C.attr(a, 'INT') / 2), 'Force knockdown', t, stability(t), 'Keep footing');
           if (k.margin >= CONFIG.magic.forceKnockdownMargin) {
