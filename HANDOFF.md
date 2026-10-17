@@ -148,16 +148,12 @@ Every value is in `src/rules/config.js`. The evidence is in `sim/FINDINGS.md`.
 - Feat tiers are pooled across the four magic sub-trees (`featTierGroups`).
   That fixed a deadlock, but the user hasn't confirmed it yet.
 
-## Arena results (round 5, guards)
+## Arena results (round 6)
 
-See `sim/FINDINGS.md` and the arena page. With guards and the 4-AP cap, style averages
-(open / close): two-handed 35 / 50, sword and shield 68 / 78, archery 52 / 41, magic 31 / 23,
-heavy armor 53 / 64. Fights last 5.9 / 4.3 rounds. Baselines: `sim/results/arena-r3/`, `arena-r4/`.
-
-- Guards favor sword and shield (a cheap block can be readied blind and still leave room to attack).
-- Guard duration (pass vs round) made no difference with this AI.
-- Guards plus a 6-AP cap are the most even version so far (spread 19 / 23 points).
-- Actions per turn: mean 0.82, variance 0.30; only sword and shield often fits two in a turn.
+Magic users are dropped from the arena (twelve fighters). See `sim/FINDINGS.md` and the arena page.
+Style averages (open / close): two-handed 40 / 43, sword and shield 60 / 64, archery 44 / 38
+(spread 20 / 26, the most even yet). Heavy armor 81 / 76, unarmored 25 / 22: armor now dominates.
+Baselines: `sim/results/arena-r3/`, `arena-r4/`, `arena-r5/` (round 5 includes mages).
 
 ## Open questions awaiting the user
 
@@ -168,7 +164,12 @@ heavy armor 53 / 64. Fights last 5.9 / 4.3 rounds. Baselines: `sim/results/arena
    to 6, or adjust two-handed costs (or `spanLands: 'now'`)?
 3. **Item materials, maker tags and keywords.** A proposal went to the user (see below); nothing
    is built yet.
-4. On hold at the user's request: the group-fight arena, the magic overhaul, the magic feat tiers.
+4. **Grappling rules.** Proposal (a clinch → hold → pin ladder) sent to the user, with three
+   questions: is the clinch the first step, should armor matter, should grappling cost lots of
+   stamina?
+5. **Is plate too strong** after round 6?
+6. On hold at the user's request: the group-fight arena, the magic overhaul, the magic feat tiers.
+   Magic users are out of the arena.
 
 ## Done in round 4
 

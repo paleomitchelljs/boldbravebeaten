@@ -91,9 +91,9 @@ details summary { cursor: pointer; font-weight: 700; }
   <header class="head">
     <span class="eyebrow">Bold Brave Beaten · simulation</span>
     <h1>Combat Arena Results</h1>
-    <p>Sixteen level-5 fighters (four armor classes × four fighting styles) fought every other fighter in an open field and in close quarters. This round replaces the defense step with guards: on your own turn you ready a block, parry or dodge for the next attack that lands on you, or the next from a foe you name. Each pass still resolves at its end, under a 4-AP cap per pass.</p>
+    <p>Twelve level-5 fighters (four armor classes × three fighting styles; magic users are left out for now) fought every other fighter in an open field and in close quarters. This round brings back partial damage inside a long weapon's reach, now landing as blunt at half force; makes drawing a weapon cheap and dropping one free; and makes anyone held in a grapple fight cramped, dagger included.</p>
     <div class="facts" id="facts"></div>
-    <p class="note">Every fight is played by the built-in AI. It keeps its preferred range, kites with bows and spells, winds up and draws, shoves to regain distance, swaps between weapon and dagger, and defends by the odds, but it never retreats to heal, flanks, or plans across rounds. Read these as what the rules produce under competent, simple play. Bows and magic are placeholder rules.</p>
+    <p class="note">Every fight is played by the built-in AI. It keeps its preferred range, kites with bows, winds up and draws, shoves to regain distance, swaps between weapon and dagger, and defends by the odds, but it never retreats to heal, flanks, or plans across rounds. Read these as what the rules produce under competent, simple play. Bows and magic are placeholder rules.</p>
   </header>
 
   <section>
@@ -144,31 +144,28 @@ details summary { cursor: pointer; font-weight: 700; }
     <div><span class="eyebrow">For the designer</span><h2>Where the rules need work</h2></div>
     <div class="findings">
       <article class="finding">
-        <h3><span class="tag">This round</span>What guards did</h3>
-        <p>Style averages, open field / close quarters. Round 4 is last round's defense step.</p>
+        <h3><span class="tag">This round</span>Weapon styles evened out; armor took over</h3>
+        <p>Average win rates, round 5 → this run, over the same twelve fighters (open field / close quarters).</p>
         <div class="scroll"><table class="data">
-          <thead><tr><th>Rules</th><th>Two-handed</th><th>Sword &amp; shield</th><th>Archery</th><th>Heavy armor</th><th>Spread</th><th>Rounds</th></tr></thead>
+          <thead><tr><th></th><th>Open field</th><th>Close quarters</th></tr></thead>
           <tbody>
-            <tr><td>Round 4 (defense step, 4-AP cap)</td><td>35 / 53</td><td>63 / 72</td><td>55 / 43</td><td>54 / 70</td><td>28 / 29</td><td>5.6 / 3.8</td></tr>
-            <tr><td><b>Guards lapse at end of pass (default)</b></td><td>35 / 50</td><td>68 / 78</td><td>52 / 41</td><td>53 / 64</td><td>33 / 37</td><td>5.9 / 4.3</td></tr>
-            <tr><td>Guards last the whole round</td><td>35 / 48</td><td>69 / 78</td><td>51 / 41</td><td>53 / 63</td><td>34 / 37</td><td>5.9 / 4.2</td></tr>
-            <tr><td>Guards, 6-AP cap</td><td>46 / 51</td><td>65 / 73</td><td>57 / 50</td><td>52 / 64</td><td>19 / 23</td><td>5.5 / 4.2</td></tr>
+            <tr><td>Two-handed</td><td>32 → 40</td><td>38 → 43</td></tr>
+            <tr><td>Sword &amp; shield</td><td>64 → 60</td><td>73 → 64</td></tr>
+            <tr><td>Archery</td><td>50 → 44</td><td>33 → 38</td></tr>
+            <tr><td>Best − worst style</td><td>32 → 20 pts</td><td>40 → 26 pts</td></tr>
+            <tr><td>Heavy armor</td><td>74 → 81</td><td>71 → 76</td></tr>
+            <tr><td>Unarmored</td><td>27 → 25</td><td>29 → 22</td></tr>
           </tbody></table></div>
-        <p class="small muted">Spread is the gap between the best and worst of the three weapon styles, in points.</p>
         <ul>
-          <li><b>Guards favor sword &amp; shield</b> (+5 points in the open, +6 in close quarters). A buckler or round-shield block is cheap enough to ready blind and still attack in the same turn; a parry or dodge costs a whole pass. Defenses were used about 40% more often and hits fell about 10%.</li>
-          <li><b>How long a guard lasts made no difference</b> with this AI, which readies guards when an attack is coming this pass and so almost always uses them in that pass.</li>
-          <li><b>A 6-AP cap with guards</b> is the most even of every version run so far (spread 19 / 23): two-handers recover to 46% in the open and archers to 50% in close quarters. Magic drops to 23 / 19.</li>
+          <li><b>Sword &amp; shield lost its edge</b> where it used to step inside reach with a dagger: light sword &amp; shield fell from 86% to 74% in close quarters, unarmored from 62% to 35%. Two-handers gained in both arenas.</li>
+          <li><b>Cramped blows are rare</b> (about 0.1 a fight). The AI still prefers to drop its long weapon and draw the dagger (0.3–0.95 times a fight), now that drawing costs 1 AP.</li>
+          <li><b>Armor now decides more than style.</b> Every plate fighter wins 64–87%; every unarmored one wins 11–35% and dies 64–89% of the time.</li>
+          <li>Fights last about 3.3 rounds in the open and 3.1 in close quarters.</li>
         </ul>
       </article>
       <article class="finding">
-        <h3><span class="tag">Decision</span>Sword &amp; shield still dominates; nothing keeps the dagger out</h3>
-        <p>Sword &amp; shield is at 68% in the open and 78% in close quarters with guards. Shove is still used about 0.03 times a fight. Resolving each pass doesn't give a reach weapon a way to stop someone walking in: the step and the attack still happen in the same pass, and nobody reacts to it. Keeping someone at range needs a rule that reacts to the approach.</p>
-        <p class="small muted">Options, unchanged: a set or stop-thrust (a ready reach weapon strikes once at anyone entering its band); extra AP to step inside an enemy's reach; a shove that also costs the target AP; no dagger with a shield.</p>
-      </article>
-      <article class="finding">
-        <h3><span class="tag">Deferred</span>Magic is still weak</h3>
-        <p>Casters average 31% in the open and 23% in close quarters. The magic stub is unchanged and set aside, as agreed.</p>
+        <h3><span class="tag">Decision</span>Is plate too strong now?</h3>
+        <p>If heavy armor should be strong but not around 80%, the levers are: how much force a cramped blow keeps (now half), whether a cramped blow keeps some of its piercing instead of becoming all blunt, plate's blunt mitigation, and the plate retune from round 3. Grappling rules, still being designed, are the other natural counter to plate.</p>
       </article>
       <article class="finding">
         <h3><span class="tag">Context</span>One-on-one is only part of the picture</h3>

@@ -1,5 +1,34 @@
 # Simulation findings
 
+## Round 6: blunt blows inside reach, cheap draws, cramped grapples; magic users dropped
+
+Changes (PROVISIONAL, the user's calls):
+
+- **Inside a long weapon's reach** (range 1), its blows land at half their total force, all blunt
+  (`range.closeRule: 'blunt'`). A spear can jab with the shaft again.
+- **Drop weapon** costs 0 AP; **drawing** a weapon costs 1 AP on the sheet (was 4). Drawing while
+  holding a non-dagger drops it; a dagger is sheathed. Pick up costs 4. Several weapons can lie on
+  the ground; they're gathered after the fight.
+- **Held in a grapple**, any weapon (dagger included) fights cramped (`grappledWeaponsCramped`).
+- **Magic users are out of the arena** for now (`--with-magic` brings them back). Round 5 numbers
+  below are recomputed over the same twelve fighters.
+
+| | Open field | Close quarters |
+|---|---|---|
+| Two-handed | 32 → 40 | 38 → 43 |
+| Sword & shield | 64 → 60 | 73 → 64 |
+| Archery | 50 → 44 | 33 → 38 |
+| Best − worst style | 32 → 20 pts | 40 → 26 pts |
+| Heavy armor | 74 → 81 | 71 → 76 |
+| Unarmored | 27 → 25 | 29 → 22 |
+
+- Weapon styles are the most even they've been; sword & shield lost most where it relied on
+  stepping inside reach with a dagger.
+- Cramped blows are rare (about 0.1 a fight); the AI mostly drops the long weapon and draws a
+  dagger instead (0.3–0.95 times a fight).
+- Armor now dominates: plate fighters win 64–87%, unarmored 11–35%. Likely (not isolated) because
+  cramped blows are blunt, which plate soaks, where before a dagger's piercing got through.
+
 ## Round 5: guards instead of a defense step
 
 Change (PROVISIONAL): defenses are **guards** readied on your own turn: a block, parry or dodge
