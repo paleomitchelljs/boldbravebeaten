@@ -17,9 +17,24 @@ function roller(seed, queue) {
 // Run fn with the numbers exactly as Specifics writes them (before simulation tuning).
 function asWritten(fn) {
   const C0 = B.CONFIG;
-  const saved = { apScale: C0.apScale, staminaScale: C0.staminaScale, pierceMode: C0.pierceMode, passThroughByArmor: C0.passThroughByArmor, moveScale: C0.moveScale, armorAdjust: C0.armorAdjust, standUp: C0.standUp, grappling: C0.grappling };
-  Object.assign(C0, { apScale: 1, staminaScale: 1, pierceMode: 'floor', passThroughByArmor: null, moveScale: 1, armorAdjust: {}, standUp: null, grappling: null });
-  try { return fn(); } finally { Object.assign(C0, saved); }
+  const saved = { apScale: C0.apScale, staminaScale: C0.staminaScale, pierceMode: C0.pierceMode, passThroughByArmor: C0.passThroughByArmor, moveScale: C0.moveScale, armorAdjust: C0.armorAdjust, standUp: C0.standUp, grappling: C0.grappling, weaponModel: C0.weaponModel };
+  Object.assign(C0, { apScale: 1, staminaScale: 1, pierceMode: 'floor', passThroughByArmor: null, moveScale: 1, armorAdjust: {}, standUp: null, grappling: null, weaponModel: 'table' });
+  let out;
+  try { out = fn(); } catch (e) { Object.assign(C0, saved); throw e; }
+  if (out && typeof out.then === 'function') return out.finally(() => Object.assign(C0, saved));
+  Object.assign(C0, saved);
+  return out;
+}
+
+// The hand-set weapon tables of rounds 1–8 (the Specifics numbers), everything else as tuned.
+function tableWeapons(fn) {
+  const saved = B.CONFIG.weaponModel;
+  B.CONFIG.weaponModel = 'table';
+  let out;
+  try { out = fn(); } catch (e) { B.CONFIG.weaponModel = saved; throw e; }
+  if (out && typeof out.then === 'function') return out.finally(() => { B.CONFIG.weaponModel = saved; });
+  B.CONFIG.weaponModel = saved;
+  return out;
 }
 
 function fighter(name, opts) {
@@ -61,7 +76,7 @@ test('fatigue lowers the AP pool', () => {
   assert.strictEqual(C.apPool(c), 3 * S);
 });
 
-test('Specifics worked example: longsword swing vs mail = 1 stamina', () => {
+test('Specifics worked example: longsword swing vs mail = 1 stamina', () => tableWeapons(() => {
   const atk = fighter('Swordsman');
   atk.weapons.push(Items.makeWeapon('longsword'));
   atk.wield = atk.weapons[0].id;
@@ -73,9 +88,9 @@ test('Specifics worked example: longsword swing vs mail = 1 stamina', () => {
   assert.strictEqual(h.converted, 1);
   assert.strictEqual(h.bluntToStamina, 1);
   assert.strictEqual(h.toCON, 0);
-});
+}));
 
-test('Specifics worked example: same swing unarmored = 7 slashing + 7 CON of bleed', async () => {
+test('Specifics worked example: same swing unarmored = 7 slashing + 7 CON of bleed', () => tableWeapons(async () => {
   const enc = { hitThisRound: {}, fortressUsed: {} };
   const atk = fighter('Swordsman');
   atk.weapons.push(Items.makeWeapon('longsword'));
@@ -94,7 +109,7 @@ test('Specifics worked example: same swing unarmored = 7 slashing + 7 CON of ble
   const e = { ids: [tgt.id], hitThisRound: { [tgt.id]: 1 }, log: [], round: 1 };
   for (let i = 0; i < 3; i++) Combat.endRound(e, chars);
   assert.strictEqual(tgt.damage.CON, 7, 'an untreated cut costs its damage again in CON');
-});
+}));
 
 test('losing an attribute lowers max and current stamina', () => {
   const c = fighter('Hurt');
@@ -230,7 +245,7 @@ test('an action costing more than the pass allows lands in a later pass and can 
   assert.strictEqual(la.incoming.length, 1, 'it lands this pass, so a guard now meets it');
 });
 
-test('guards: a general guard meets the next attack, a named one only that attacker', async () => {
+test('guards: a general guard meets the next attack, a named one only that attacker', () => tableWeapons(async () => {
   const a = armed('A', 'dagger', { side: 'party' });
   const b = armed('B', 'dagger', { side: 'party' });
   const t = armed('T', 'longsword', { side: 'enemy' });
@@ -253,7 +268,7 @@ test('guards: a general guard meets the next attack, a named one only that attac
   const text = enc.log.map((l) => l.text).join('\n');
   assert.match(text, /A's Thrust \(point\) hits T/);
   assert.match(text, /T parries B's Thrust/);
-});
+}));
 
 test('Feint hides an attack from a defender without Read Attack', async () => {
   const a = fighter('Feinter', { side: 'party' });
@@ -336,7 +351,7 @@ function armed(name, type, opts) {
 
 const opt = (c, pred) => C.attackOptions(c).find(pred);
 
-test('range bands: inside a long weapon\'s reach its blows land half as hard, all blunt', () => {
+test('range bands: inside a long weapon\'s reach its blows land half as hard, all blunt', () => tableWeapons(() => {
   const spear = opt(armed('S', 'spear'), (o) => o.motion === 'thrust');
   assert.deepStrictEqual([spear.minRange, spear.maxRange, spear.closePenalty], [1, 4, true], 'a spear can jab with the shaft');
   const dagger = opt(armed('D', 'dagger'), (o) => o.motion === 'thrust');
@@ -352,7 +367,7 @@ test('range bands: inside a long weapon\'s reach its blows land half as hard, al
   assert.deepStrictEqual(Combat.computeHit(a, t, swing, { distance: 1 }).vec, [0, 0, 4], '8 force → 4 blunt');
   const bow = opt(armed('B', 'shortbow'), (o) => o.motion === 'shoot');
   assert.strictEqual(bow.minRange, 2, 'bows still need range 2');
-});
+}));
 
 test('weapons in hand: drop is free, a draw is cheap and drops what you hold', async () => {
   const a = armed('A', 'longsword', { side: 'party' });
@@ -391,7 +406,7 @@ test('held in a grapple, even a dagger fights cramped', () => {
   assert.deepStrictEqual(held, [0, 0, Math.floor(free[0] / 2)]);
 });
 
-test('the older half-damage-up-close rule is still available as an option', () => {
+test('the older half-damage-up-close rule is still available as an option', () => tableWeapons(() => {
   const saved = B.CONFIG.range.closeRule;
   B.CONFIG.range.closeRule = 'half';
   try {
@@ -404,7 +419,7 @@ test('the older half-damage-up-close rule is still available as an option', () =
   } finally {
     B.CONFIG.range.closeRule = saved;
   }
-});
+}));
 
 async function duel(a, b, seedQueue) {
   a.side = 'party'; b.side = 'enemy';
@@ -416,7 +431,7 @@ async function duel(a, b, seedQueue) {
   return { enc, chars };
 }
 
-test('a power swing must be wound up the round before, and the swinger is exposed', async () => {
+test('a power swing must be wound up the round before, and the swinger is exposed', () => tableWeapons(async () => {
   const a = armed('Heavy', 'greatsword');
   a.feats.power_swing = 1;
   a.base.CON = 10; // survive the foe's thrust so the wind-up isn't lost
@@ -448,7 +463,7 @@ test('a power swing must be wound up the round before, and the swinger is expose
   const ready = la.attacks.find((o) => o.motion === 'power');
   assert.strictEqual(ready.why, null);
   assert.strictEqual(Combat.declare(enc, chars, { actor: a.id, type: 'strike', option: ready, target: b.id }), null);
-});
+}));
 
 test('an unreleased wind-up is lost at the end of the next round', async () => {
   const a = armed('Heavy', 'greatsword');
@@ -546,7 +561,7 @@ test('shove pushes an enemy back out to range', async () => {
   assert.strictEqual(enc.pos[b.id].x, 3);
 });
 
-test('a longbow must be drawn a round ahead; an archer can redraw after loosing', async () => {
+test('a longbow must be drawn a round ahead; an archer can redraw after loosing', () => tableWeapons(async () => {
   const a = armed('Archer', 'longbow');
   a.inventory.arrows = 5;
   const shot = opt(a, (o) => o.motion === 'shoot');
@@ -573,7 +588,7 @@ test('a longbow must be drawn a round ahead; an archer can redraw after loosing'
   assert.strictEqual(Combat.currentActor(enc), a.id, 'a second pass for the archer');
   la = Combat.legalActions(enc, chars, a.id);
   assert.ok(la.other.find((o) => o.type === 'windUp'), 'can redraw after loosing');
-});
+}));
 
 test('a blocked power swing breaks a shield of equal or softer material and drives through', async () => {
   const run = async (material, quality) => {
@@ -842,4 +857,44 @@ test('sticky webs: every action costs more until torn free', async () => {
   assert.strictEqual(after.thrust, before.thrust + B.CONFIG.web.ap * B.CONFIG.apScale);
   assert.strictEqual(after.parry.stamina, before.parry.stamina + B.CONFIG.web.stamina * B.CONFIG.staminaScale);
   assert.strictEqual(C.actionCost(t, 'dropWeapon').ap, 0, 'dropping is still free');
+});
+
+test('weapons from physics: deeper points hit harder, heavier weapons are slower, STR needs mass', () => {
+  const S = (t) => Items.weaponStats(t);
+  // A dagger stab is shallow next to a sword or spear thrust.
+  assert.ok(S('dagger').faces.point[0] < S('longsword').faces.point[0]);
+  assert.ok(S('longsword').faces.point[0] < S('spear').faces.point[0]);
+  // Deeper points find vital spots more often; wider wounds bleed more.
+  assert.ok(S('dagger').wound.point.vital < S('longsword').wound.point.vital);
+  assert.ok(S('rapier').wound.point.bleed < S('longsword').wound.point.bleed);
+  // Swing cost rises with mass × length; thrust cost with mass.
+  const swingAP = (t) => opt(armed('X', t), (o) => o.motion === 'swing').ap;
+  const thrustAP = (t) => opt(armed('X', t), (o) => o.motion === 'thrust').ap;
+  assert.ok(swingAP('dagger') < swingAP('club') && swingAP('club') <= swingAP('longsword'));
+  assert.ok(thrustAP('dagger') < thrustAP('longsword'));
+  // STR: a rapier thrust barely cares; a mace swing depends on it.
+  assert.ok(S('rapier').strMult.thrust < 0.5 && S('flangedMace').strMult.swing >= 1);
+  const gain = (t) => { const a = armed('A', t); a.base.STR = 13; const b = armed('B', t); b.base.STR = 5; const m = t === 'rapier' ? 'thrust' : 'swing'; return opt(a, (o) => o.motion === m).damage.reduce((x, y) => Math.max(x, y)) - opt(b, (o) => o.motion === m).damage.reduce((x, y) => Math.max(x, y)); };
+  assert.ok(gain('rapier') < gain('flangedMace'), 'STR adds more to a mace than to a rapier');
+});
+
+test('wound roll: armor guards the vitals; a vital stab triples its CON damage', async () => {
+  const a = armed('A', 'longsword');
+  const thrust = opt(a, (o) => o.motion === 'thrust');
+  const naked = fighter('N');
+  const mailed = fighter('M'); mailed.armor = Items.makeArmor('mail', 'full', 'standard');
+  const plated = fighter('P'); plated.armor = Items.makeArmor('plate', 'full', 'standard');
+  const v = (t) => Combat.computeHit(a, t, thrust).pierceVital;
+  assert.ok(v(naked) > v(mailed) && v(mailed) > v(plated));
+  // Pinned: the armor no longer guards the vitals.
+  plated.status.pinned = 'A';
+  assert.strictEqual(v(plated), v(naked));
+  // A wound roll of 1 is vital: ×3 CON.
+  const t = fighter('T'); t.base.CON = 30; t.stamina = C.maxStamina(t);
+  const enc = { hitThisRound: {}, fortressUsed: {} };
+  await Combat.applyHit(enc, { [a.id]: a, [t.id]: t }, a, t, thrust, roller(1, [1]));
+  assert.strictEqual(t.damage.CON, thrust.damage[0] * B.CONFIG.vital.mult);
+  const u = fighter('U'); u.base.CON = 30; u.stamina = C.maxStamina(u);
+  await Combat.applyHit(enc, { [a.id]: a, [u.id]: u }, a, u, thrust, roller(1, [10]));
+  assert.strictEqual(u.damage.CON, thrust.damage[0]);
 });

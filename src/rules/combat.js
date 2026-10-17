@@ -232,7 +232,7 @@
   function takeInHand(c, wid) {
     const held = C.wieldedWeapon(c);
     let dropped = null;
-    if (held && held.id !== wid && WEAPONS[held.type].weight !== 'very light') {
+    if (held && held.id !== wid && Items.weaponStats(held).weight !== 'very light') {
       c.status.dropped.push(held.id);
       dropped = held;
     }
@@ -387,7 +387,7 @@
     const sidearm = c.weapons.find((w) => w.id === c.sidearm);
     const primary = primaryWeaponId(c);
     const heldW = hands.wield ? c.weapons.find((w) => w.id === hands.wield) : null;
-    const dropNote = heldW && WEAPONS[heldW.type].weight !== 'very light' ? { note: `drops ${Items.itemName(heldW)}` } : {};
+    const dropNote = heldW && Items.weaponStats(heldW).weight !== 'very light' ? { note: `drops ${Items.itemName(heldW)}` } : {};
     if (sidearm && hands.wield !== c.sidearm && !hands.dropped.includes(c.sidearm)) addOther('drawSidearm', dropNote);
     if (primary && hands.wield !== primary && !hands.dropped.includes(primary)) addOther('readyPrimary', dropNote);
     if (hands.dropped.length && !declared('pickUp')) addOther('pickUp', dropNote);
@@ -640,7 +640,28 @@
       res.bluntToStamina = 0;
       res.noBleed = true;
     } else if (target.traits && target.traits.noBleed) res.noBleed = true;
+    // Wound roll odds (CONFIG.vital): deep points find vital spots; armor guards them.
+    const w = option.wound;
+    res.pierceVital = 0;
+    res.cutVital = 0;
+    res.bleedFactor = w ? w.bleed : 1;
+    res.bleedRounds = w ? w.rounds : CONFIG.bleedRounds;
+    if (w && w.vital && !C.tireless(target)) {
+      const V = CONFIG.vital;
+      let guard = 1;
+      if (res.armored && !(pinned && V.pinnedOpensArmor)) {
+        const t = target.armor.type;
+        guard = Math.min(1, (V.armor[t] != null ? V.armor[t] : V.otherArmor) * (V.coverage[target.armor.coverage] || 1));
+      }
+      if (w.kind === 'S') res.cutVital = w.vital * guard;
+      else res.pierceVital = w.vital * guard;
+    }
     return res;
+  }
+
+  // The d10 result at or under which a wound roll is vital (0: no roll).
+  function vitalNeed(chance) {
+    return Math.floor(chance * 10 + 1e-9);
   }
 
   // Fire (magic stub): armor stops part of it; every few points left over cost 1 CON,
@@ -686,10 +707,22 @@
       const rolls = await roller({ actorId: attacker.id, sides: 10, count: h.pierceLeft, label: 'Piercing through armor', detail: `${h.pierceLeft}d10 vs ${target.name}'s armor: each ${need} or less reaches CON` });
       h.toCON = rolls.filter((r) => r <= need).length;
     }
+    let pierced = 0, vital = false, cutVital = false;
     if (h.toCON > 0) {
       C.damageAttr(target, 'CON', h.toCON);
       parts.push(`${h.toCON} CON`);
       wound += h.toCON;
+      pierced = h.toCON;
+      const need = vitalNeed(h.pierceVital);
+      if (need > 0) {
+        const r = (await roller({ actorId: attacker.id, sides: 10, count: 1, label: 'Wound roll', detail: `d10: ${need} or less is a vital wound (×${CONFIG.vital.mult} CON)` }))[0];
+        if (r <= need) {
+          const extra = h.toCON * (CONFIG.vital.mult - 1);
+          C.damageAttr(target, 'CON', extra);
+          parts.push(`VITAL WOUND +${extra} CON`);
+          vital = true;
+        }
+      }
     }
     if (h.slashToAttrs > 0) {
       const rolls = await roller({ actorId: attacker.id, sides: 4, count: h.slashToAttrs, label: 'Slashing hit locations', detail: `${h.slashToAttrs}d4 on ${target.name}: 1 STR, 2 CON, 3 SPD, 4 DEX` });
@@ -701,6 +734,15 @@
       }
       parts.push(Object.keys(tally).map((a) => `${tally[a]} ${a}`).join(', '));
       wound += h.slashToAttrs;
+      const need = vitalNeed(h.cutVital);
+      if (need > 0) {
+        const r = (await roller({ actorId: attacker.id, sides: 10, count: 1, label: 'Wound roll', detail: `d10: ${need} or less opens a throat or an artery (+${h.slashToAttrs} CON)` }))[0];
+        if (r <= need) {
+          C.damageAttr(target, 'CON', h.slashToAttrs);
+          parts.push(`VITAL CUT +${h.slashToAttrs} CON`);
+          cutVital = true;
+        }
+      }
     }
     if (h.bluntToCON > 0) {
       C.damageAttr(target, 'CON', h.bluntToCON);
@@ -730,9 +772,19 @@
       if (target.status.webbed) { target.status.webbed = 0; parts.push('the webs burn away'); }
     }
     if (wound > 0 && !h.noBleed) {
-      // A broadhead's wide cut bleeds worse.
+      // A piercing wound bleeds by its width, for longer the deeper it goes (a vital one twice
+      // as much); a cut bleeds its own damage again. A broadhead's wide cut bleeds worse.
       const hd = option.arrowHead && CONFIG.archery.heads[option.arrowHead];
-      target.bleeds.push({ remaining: Math.round(wound * (hd ? hd.bleed : 1)), rounds: CONFIG.bleedRounds });
+      const hdMult = hd ? hd.bleed : 1;
+      const cut = h.slashToAttrs * (cutVital ? 2 : 1);
+      const pierceBleed = pierced * h.bleedFactor * (vital ? 2 : 1);
+      if (h.bleedRounds === CONFIG.bleedRounds) {
+        target.bleeds.push({ remaining: Math.round((pierceBleed + cut) * hdMult), rounds: CONFIG.bleedRounds });
+      } else {
+        if (pierceBleed > 0) target.bleeds.push({ remaining: Math.round(pierceBleed * hdMult), rounds: h.bleedRounds });
+        if (cut > 0) target.bleeds.push({ remaining: Math.round(cut * hdMult), rounds: CONFIG.bleedRounds });
+      }
+      target.bleeds = target.bleeds.filter((b) => b.remaining > 0);
       parts.push('bleeding');
     }
     if (!parts.length) parts.push('no effect');
@@ -1331,7 +1383,7 @@
 
   async function riposte(enc, chars, t, a, roller, posAtStart) {
     const w = C.wieldedWeapon(t);
-    if (!w || !WEAPONS[w.type].faces.point) return;
+    if (!w || !Items.weaponStats(w).faces.point) return;
     const opt = C.attackOptions(t).find((o) => o.motion === 'thrust' && o.weaponId === w.id && !o.halfSword);
     if (!opt || dist(posAtStart[t.id], posAtStart[a.id]) > opt.reach) return;
     if (!payStamina(enc, t, opt.stamina)) return;
@@ -1496,6 +1548,6 @@
   G.Combat = {
     ATTACK_TYPES, DEFENSE_TYPES,
     createEncounter, autoPlace, startRound, currentActor, legalActions, declare, concede, endTurn, submit, describeDecl, passCap, passLeft,
-    projectedPos, posAtPass, dist, defenseOdds, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolvePass, resolveRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
+    vitalNeed, projectedPos, posAtPass, dist, defenseOdds, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolvePass, resolveRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

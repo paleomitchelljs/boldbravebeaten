@@ -104,6 +104,55 @@
     // which reproduces the Specifics worked example (7 slashing → 7 CON of bleed).
     bleedRounds: 3,
 
+    // ---- Weapons from physics (PROVISIONAL; the user asked for a weapon pass) ----------
+    // 'physical': each weapon's damage, AP, weight class, STR scaling and wounds are worked out
+    // from its mass, length, hands and point/edge/head (data.js `phys`; Items.weaponStats).
+    // 'table': the hand-set faces of rounds 1–8 (flat STR bonus, every wound bleeds the same).
+    // Materials, quality and (later) enchantments act through Items.weaponStats, either on the
+    // physical inputs (a lighter metal changes mass, so speed follows) or on the outputs.
+    weaponModel: 'physical',
+    weaponPhysics: {
+      // The longsword is the reference: it costs what the motion table lists.
+      ref: { mass: 1.4, length: 1.2 },
+      grip: 1.5, // two hands on the weapon: more force (and STR) into the blow
+      // Thrust AP × (1 + thrustSlope × (mass/ref − 1)); swing AP × (1 + swingSlope ×
+      // (√(mass×length)/ref − 1)). Heavier, longer weapons are slower.
+      thrustSlope: 0.3,
+      swingSlope: 0.4,
+      // Damage. Point: depth × pointDamage piercing. Edge: edge × (base + k × √(mass × length ×
+      // grip)) slashing, a seventh of it blunt. Head: 1 + k × √(head mass × length × grip)
+      // blunt. Pommel: base + k × √(mass × length).
+      pointDamage: 0.25,
+      edgeDamage: { base: 2, k: 3 },
+      headDamage: 6,
+      hiltDamage: { base: 2, k: 2 },
+      // Weight class (stamina factor, Heavy Weapon Training) from mass, kg upper bounds.
+      weightClass: [[0.5, 'very light'], [1.2, 'light'], [1.8, 'medium'], [Infinity, 'heavy']],
+      // STR adds strBonus × this (rounded toward zero). A sharp point needs little force (rapier
+      // ≈ 0.3, broad spearhead 0.5); a swing needs mass and grip (mace 1, greatsword 1.5).
+      str: { thrustBase: 0.25, thrustWidth: 0.25, swingRefMass: 1.4, max: 1.5 },
+      // Bleeding: a piercing wound bleeds damage × width/bleedWidth over 2 + depth/15 rounds
+      // (deep wounds don't clot). Cuts bleed their damage over CONFIG.bleedRounds, as before.
+      bleedWidth: 4,
+      bleedRounds: { base: 2, perDepth: 15 },
+    },
+    // ---- Wound roll (PROVISIONAL) -------------------------------------------------
+    // A blow that reaches the body rolls a d10: at or under 10 × chance it's a vital wound (neck,
+    // heart, a big artery). Piercing: chance = depth/100 (max 0.4); the wound does `mult` × its
+    // CON damage and bleeds twice as much. Cuts: chance = cut × edge; the cut also takes its
+    // damage again from CON (a throat or an artery). Armor guards the vital spots: the chance is
+    // multiplied by armor[type] (×coverage for half or partial armor, up to 1). Natural weapons
+    // use `natural`. Undead and constructs have no vital spots.
+    vital: {
+      perDepth: 0.01, max: 0.4, mult: 3, cut: 0.1, natural: 0.1,
+      armor: { padded: 0.6, leather: 0.5, mail: 0.3, scale: 0.25, plate: 0.1, fur: 0.8, frogSkin: 0.8, chitin: 0.4, scaleHide: 0.5, sarnakScales: 0.4, trollHide: 0.5, golemStone: 0 },
+      otherArmor: 0.5,
+      coverage: { full: 1, half: 1.5, partial: 2 },
+      // A pinned fighter's armor doesn't guard the vitals: the point goes in at the armpit,
+      // the visor, the groin (how armored men were finished with a dagger).
+      pinnedOpensArmor: true,
+    },
+
     // ---- Weight (Specifics) ----------------------------------------------
     // Multiplies the base stamina cost of every action (before weight and armor).
     // TUNED (sim): 3. At ×1 an early unarmored fighter could attack flat out for 30+ rounds
@@ -347,6 +396,8 @@
     'Spear (not in the catalog): point 6/0/0, thrusting 2–4, one hand.',
     'Bows (not in the design docs): shortbow arrow 5 P, range 2–12, 3 AP, single action; longbow 7 P, range 2–16, drawn one round and loosed the next; −2 damage at long range; arrows can be blocked or dodged, not parried; no STR bonus; one arrow per shot.',
     'Arrows and armor (history): armor catches arrows better than a thrust. Extra piercing protection against arrows: padded +2, leather, mail and scale +1, plate 0. Two arrowheads: broadheads cut terrible wounds (bleed ×1.5) but metal armor (mail, scale, plate) stops them better (+1); bodkins do 1 less damage but slip through metal armor (−2 to its protection). A longbow hit, expected CON (broadhead / bodkin): unarmored 7 / 6, padded 2 / 1.5, mail 2 / 3, scale 1.5 / 2.5, plate 0.4 / 0.8.',
+    'Weapons from physics: each weapon has a mass, a length, hands and a point (depth, width), an edge or a head. Damage: point depth/4 piercing; edge (2 + 3√(mass × length × grip)) slashing; head 1 + 6√(head mass × length × grip) blunt. Speed: thrusts cost more with mass, swings with √(mass × length), the longsword costing what the motion table lists. STR adds strBonus × 0.25–0.5 to a thrust (by wound width) and × mass/1.4 (× 1.5 two-handed, up to 1.5) to a swing. A piercing wound bleeds damage × width/4 over 2 + depth/15 rounds.',
+    'Wound roll: a blow that reaches the body rolls a d10; on 10 × chance or less it is a vital wound. Piercing chance = depth/100 (dagger 1, swords 2, spear and greatsword 3 on the d10): triple CON damage, double bleeding. Cuts: chance = edge/10: the cut takes its damage again from CON. Armor guards the vitals: padded ×0.6, leather ×0.5, mail ×0.3, scale ×0.25, plate ×0.1 (×1.5 half armor, ×2 partial).',
     'Monster attributes go past the human range (1–10, 13 with Conditioning feats), up to 30: bears and trolls STR 16–20, a stone golem 22, a troll chieftain 24. The usual formulas apply to the raw number (damage bonus ⌊(STR−5)/2⌋, grappling ⌊STR/2⌋, stamina, death at CON 0).',
     'Monsters (draft): natural weapons are always ready and can\'t be dropped; natural armor can\'t be looted. Traits: knockdown bites, pack bonus (+1 damage per packmate beside the target), venom (poison up to 2 CON a round for 3 rounds, no more than the wound; bandages don\'t stop it), rust (corrodes metal armor and shields), displacement (each attack first rolls a d10 to find the real creature: arrows miss on 1–5, blows on 1–2), springy chitin (a blow that lands costs the attacker 3 stamina), sticky webs (each layer adds 2 AP and 3 stamina to every action, up to two layers; one layer comes loose each round; tear free with d10 + ⌊STR/2⌋ ≥ 8, or burn them), shield-crushing blows, regeneration (unless burned), tireless (undead and constructs: no stamina, damage to attributes, no bleeding or venom), resistances (skeletons: no piercing, half slashing), nimble, slippery, leaping, and boss multipliers on AP, per-pass allowance and stamina.',
     'Magic (stub): verbs Attack (range 1–2, magnitude 4, cost 2) and Launch (2–12, 3, 3); nouns Fire and Force (cost 1); modifier Strong (+3, cost 2, must be wound up). Spell points = INT + 3 × Casting rank, limited by stamina. Fire: armor stops half its blunt mitigation, every 2 points left cost 1 CON, the rest stamina. Force: blunt with a knockdown check. Backlash: d10 + Control below the cost loses 2 stamina per point short.',

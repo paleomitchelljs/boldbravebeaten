@@ -62,61 +62,79 @@
   //   ranged       — bows: { min, max, long } (beyond `long` damage drops)
   //   material     — what the striking part is made of (for breaking shields)
   //   drawWindUp   — the shot must be drawn (wound up) a round ahead
+  //   phys         — PROVISIONAL physical description (CONFIG.weaponPhysics). Under the
+  //                  'physical' weapon model, damage, AP, weight class, STR scaling and wounds
+  //                  are worked out from it (Items.weaponStats) and `faces` and `weight` are only
+  //                  the old hand-set table. mass kg, length m; point {depth cm it can drive in,
+  //                  width cm of the wound}; edge 0–1 (how much cutting edge); head {mass kg at
+  //                  the striking end, spikes {depth, width}, cut}; beak {depth, width}; hilt
+  //                  (pommel strikes); arrow {depth, width} for bows.
   const WEAPONS = {
     club: {
+      phys: { mass: 1.0, length: 0.7, head: { mass: 0.6 } },
       name: 'Club', hands: 1, weight: 'light', reach: 2, reachName: 'short', closeOK: true, material: 'wood',
       faces: { head: [0, 0, 4] }, motions: ['swing', 'power'], rarity: 'common',
       notes: 'Cheapest; common starter.',
     },
     spikedMace: {
+      phys: { mass: 1.5, length: 0.7, head: { mass: 1.0, spikes: { depth: 6, width: 1.5 } } },
       name: 'Spiked mace', hands: 1, weight: 'medium', reach: 2, reachName: 'short', closeOK: true, material: 'steel',
       faces: { head: [3, 0, 6] }, motions: ['swing', 'power'], rarity: 'uncommon',
       notes: 'Spikes carry piercing through armor to CON.',
     },
     flangedMace: {
+      phys: { mass: 1.4, length: 0.7, head: { mass: 1.0, cut: 2 } },
       name: 'Flanged mace', hands: 1, weight: 'medium', reach: 2, reachName: 'short', closeOK: true, material: 'steel',
       faces: { head: [0, 2, 7] }, motions: ['swing', 'power'], rarity: 'uncommon',
       bluntMitigationIgnore: 2, notes: 'Flanges concentrate force: −2 to target blunt mitigation.',
     },
     dagger: {
+      phys: { mass: 0.3, length: 0.35, point: { depth: 12, width: 2.5 }, edge: 0.5 },
       name: 'Dagger', hands: 1, weight: 'very light', reach: 1, reachName: 'close only', closeOK: true, material: 'steel',
       faces: { point: [5, 0, 0], edge: [0, 3, 0] }, motions: ['thrust', 'swing'], rarity: 'common',
       sidearm: true, grappleUsable: true,
       notes: 'Lowest AP; works up close with no penalty but cannot reach sword distance; usable while grappling.',
     },
     rapier: {
+      phys: { mass: 1.1, length: 1.15, point: { depth: 25, width: 1.2 }, edge: 0.3 },
       name: 'Rapier', hands: 1, weight: 'light', reach: 2, reachName: 'long thrust', thrust: { ext: 1, min: 1 }, material: 'steel',
       faces: { point: [6, 0, 0], edge: [0, 2, 0] }, motions: ['thrust', 'swing'], rarity: 'uncommon',
       notes: 'Thrusts reach one square farther; ungainly up close; weak edge.',
     },
     longsword: {
+      phys: { mass: 1.4, length: 1.2, point: { depth: 25, width: 4 }, edge: 1, hilt: true },
       name: 'Longsword', hands: 1.5, weight: 'medium', reach: 2, reachName: 'medium', material: 'steel',
       faces: { point: [5, 0, 0], edge: [0, 7, 1], hilt: [0, 0, 5] }, motions: ['thrust', 'swing', 'twoHanded'],
       sword: true, rarity: 'uncommon', notes: 'Versatile; half-sword and murder stroke work up close.',
     },
     greatsword: {
+      phys: { mass: 2.5, length: 1.6, point: { depth: 30, width: 5 }, edge: 1, hilt: true },
       name: 'Greatsword', hands: 2, weight: 'heavy', reach: 3, reachName: 'long', material: 'steel',
       faces: { point: [6, 0, 0], edge: [0, 9, 2], hilt: [0, 0, 6] }, motions: ['thrust', 'twoHanded', 'power'],
       sword: true, rarity: 'rare', notes: 'No shield; long reach.',
     },
     warhammer: {
+      phys: { mass: 1.8, length: 0.8, head: { mass: 1.0 }, beak: { depth: 20, width: 1.5 } },
       name: 'Warhammer', hands: 1.5, weight: 'heavy', reach: 2, reachName: 'medium', closeOK: true, material: 'steel',
       faces: { head: [0, 0, 8], beak: [6, 0, 1] }, motions: ['swing', 'twoHanded', 'power'], rarity: 'rare',
       hook: true, notes: 'Anti-plate: head drains stamina, beak pierces to CON.',
     },
     // PROVISIONAL: the spear is listed in the rarity table but not the weapon catalog.
     spear: {
+      phys: { mass: 1.7, length: 2.2, point: { depth: 30, width: 5 } },
       name: 'Spear', hands: 1, weight: 'medium', reach: 2, reachName: 'thrusts 2–4, not up close', thrust: { ext: 2, min: 2 }, material: 'steel',
       faces: { point: [6, 0, 0] }, motions: ['thrust'], rarity: 'uncommon',
       notes: 'Thrusts reach far but not up close; shove an enemy back out to range.',
     },
     // PROVISIONAL: bows are not in the design docs yet.
     shortbow: {
+      phys: { arrow: { depth: 18, width: 2.5 } },
       name: 'Shortbow', hands: 2, weight: 'light', reach: 0, reachName: 'range 2–12', ranged: { min: 2, max: 12, long: 8 },
       faces: { arrow: [5, 0, 0] }, motions: ['shoot'], rarity: 'common', shootAP: 3, shootStamina: 1, material: 'steel',
       notes: 'Arrows can be blocked or dodged, not parried. −2 damage beyond 8 squares.',
     },
     longbow: {
+      phys: { arrow: { depth: 25, width: 2.5 } },
       name: 'Longbow', hands: 2, weight: 'medium', reach: 0, reachName: 'range 2–16', ranged: { min: 2, max: 16, long: 10 },
       faces: { arrow: [7, 0, 0] }, motions: ['shoot'], rarity: 'uncommon', shootAP: 4, shootStamina: 2, material: 'steel', drawWindUp: true,
       notes: 'Heavy draw: drawn one round, loosed the next. −2 damage beyond 10 squares.',

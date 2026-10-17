@@ -102,7 +102,7 @@
       h('td', null, select('wq-' + w.id, w.quality, opts(D.QUALITY), (v) => { w.quality = v; app.save(); app.render(); }, { 'aria-label': 'Weapon quality' })),
       h('td', null, h('input', { type: 'radio', name: 'wield', id: 'wield-' + w.id, checked: c.wield === w.id, 'aria-label': 'In hand', onchange: () => { c.wield = w.id; c.status.dropped = null; app.save(); app.render(); } })),
       h('td', null, h('input', { type: 'radio', name: 'sidearm', id: 'side-' + w.id, checked: c.sidearm === w.id, 'aria-label': 'Sidearm', onchange: () => { c.sidearm = w.id; app.save(); app.render(); } })),
-      h('td', { class: 'small muted' }, `${D.WEAPONS[w.type].hands === 1.5 ? '1½' : D.WEAPONS[w.type].hands}H · ${D.WEAPONS[w.type].weight} · ${D.WEAPONS[w.type].reachName}`),
+      h('td', { class: 'small muted' }, `${D.WEAPONS[w.type].hands === 1.5 ? '1½' : D.WEAPONS[w.type].hands}H · ${G.Items.weaponStats(w).weight} · ${D.WEAPONS[w.type].reachName}`),
       h('td', null, h('button', { class: 'small ghost', 'aria-label': 'Move to pack', title: 'Move to pack', onclick: () => {
         c.weapons = c.weapons.filter((x) => x !== w);
         if (c.wield === w.id) c.wield = null;

@@ -40,10 +40,16 @@
       return metal ? Math.min(option.rust, target.armor.durability) * 1.0 : 0;
     }
     const h = Combat.computeHit(attacker, target, option, { distance: distance || (option.minRange || 1) + (option.closePenalty ? 1 : 0) });
-    const attrDmg = h.toCON + h.slashToAttrs + h.bluntToCON;
-    let v = attrDmg * (h.noBleed ? 5 : 8) + h.bluntToStamina;
+    // A CON point now is worth 5, a point of bleeding later 3 (it can be bandaged). Piercing
+    // bleeds by the wound's width; a vital wound (wound roll) multiplies it.
+    const bleedV = h.noBleed ? 0 : 3;
+    const pierceV = h.toCON * (5 + bleedV * h.bleedFactor);
+    const pV = Combat.vitalNeed(h.pierceVital) / 10, cV = Combat.vitalNeed(h.cutVital) / 10;
+    let v = pierceV * (1 + pV * (G.CONFIG.vital.mult - 1)) + h.slashToAttrs * (5 + bleedV) * (1 + cV) + h.bluntToCON * 5 + h.bluntToStamina;
     if (option.venom && h.toCON + h.slashToAttrs > 0) v += Math.min(option.venom.con, h.toCON + h.slashToAttrs) * option.venom.rounds * 6;
-    if (h.toCON + h.bluntToCON >= C.attr(target, 'CON')) v += 60;
+    const con = C.attr(target, 'CON');
+    if (h.toCON + h.bluntToCON >= con) v += 60;
+    else if (h.toCON > 0 && h.toCON * G.CONFIG.vital.mult + h.bluntToCON >= con) v += 60 * pV;
     else if (h.bluntToStamina >= target.stamina && target.stamina > 0) v += 40;
     return v;
   }

@@ -333,14 +333,14 @@
   }
 
   function effectiveWeight(c, weapon) {
-    const w = WEAPONS[weapon.type].weight;
+    const w = Items.weaponStats(weapon).weight;
     const order = CONFIG.weightOrder;
     const i = Math.max(order.indexOf('light'), order.indexOf(w) - rank(c, 'heavy_weapon_training'));
     return order.indexOf(w) <= order.indexOf('light') ? w : order[i];
   }
 
   function isLightWeapon(weapon) {
-    const w = WEAPONS[weapon.type].weight;
+    const w = Items.weaponStats(weapon).weight;
     return w === 'very light' || w === 'light';
   }
 
@@ -356,13 +356,17 @@
   }
 
   function weaponDamage(c, weapon, face, motion) {
-    const def = WEAPONS[weapon.type];
+    const def = Items.weaponStats(weapon);
     const raw = def.faces[face];
     let mult = CONFIG.motionMultiplier[motion] || 1;
-    if (def.weight === 'heavy') mult += CONFIG.heavyMultiplierAdjust[motion] || 0;
+    // Table model only: the physical model already counts mass.
+    if (def.model === 'table' && def.weight === 'heavy') mult += CONFIG.heavyMultiplierAdjust[motion] || 0;
     const v = raw.map((x) => Math.round(x * mult));
     const main = mainIndex(raw);
-    let bonus = G.DATA.QUALITY[weapon.quality].bonus + (motion === 'shoot' && !CONFIG.archery.strBonus ? 0 : strBonus(c));
+    // STR counts for as much as the blow needs it: little behind a sharp point, a lot behind a
+    // mace (physical model; the table model adds it in full).
+    const str = Math.trunc(strBonus(c) * (def.strMult[motion] != null ? def.strMult[motion] : 1));
+    let bonus = G.DATA.QUALITY[weapon.quality].bonus + (motion === 'shoot' && !CONFIG.archery.strBonus ? 0 : str);
     if (isLightWeapon(weapon) && motion !== 'shoot') bonus += rank(c, 'precision');
     if (motion === 'twoHanded' || motion === 'power') bonus += rank(c, 'weight_of_the_blow');
     v[main] = Math.max(0, v[main] + bonus);
@@ -382,7 +386,7 @@
     if (st.pinned) return opts;
     const w = wieldedWeapon(c);
     if (w) {
-      const def = WEAPONS[w.type];
+      const def = Items.weaponStats(w);
       const usable = !grappling || def.grappleUsable;
       if (usable) {
         for (const motion of def.motions) {
@@ -419,7 +423,7 @@
     }
     // Natural weapons (monsters): always ready; a held monster keeps only its grapple-usable ones.
     for (const type of c.natural || []) {
-      const def = WEAPONS[type];
+      const def = WEAPONS[type] && Items.weaponStats(type);
       if (!def || (grappling && !def.grappleUsable)) continue;
       const pseudo = { id: 'nat-' + type, type, quality: 'standard', natural: true };
       for (const motion of def.motions) {
@@ -462,7 +466,7 @@
   }
 
   function strikeOption(c, w, face, motion) {
-    const def = WEAPONS[w.type];
+    const def = Items.weaponStats(w);
     const m = MOTIONS[motion];
     const windUp = needsWindUp(motion) || (motion === 'shoot' && !!def.drawWindUp);
     const W = CONFIG.windUp || { ap: 0, stamina: 0 };
@@ -470,7 +474,10 @@
     let baseSt = motion === 'shoot' && def.shootStamina != null ? def.shootStamina : m.stamina;
     if (windUp) { baseAP -= W.ap; baseSt -= W.stamina; }
     let ap = baseAP * apScale();
-    if (def.weight === 'very light' && (motion === 'thrust' || motion === 'swing')) ap -= CONFIG.veryLightApDiscount;
+    if (def.model === 'physical') {
+      // Heavier, longer weapons are slower (Items.weaponStats speed factors).
+      if (motion !== 'shoot') ap = Math.round(ap * (motion === 'thrust' ? def.speed.thrust : def.speed.swing));
+    } else if (def.weight === 'very light' && (motion === 'thrust' || motion === 'swing')) ap -= CONFIG.veryLightApDiscount;
     if (motion === 'thrust') ap -= rank(c, 'quick_thrust');
     if (motion === 'twoHanded' || motion === 'power') ap -= rank(c, 'heavy_tempo');
     ap = Math.max(CONFIG.minActionAP, CONFIG.minStrikeAP || 0, ap);
@@ -507,7 +514,7 @@
       kind: 'strike', weaponId: w.id, weaponType: w.type, face, motion, ap, stamina,
       natural: !!def.natural, knockdown: trait.knockdown || null, venom: trait.venom || null, rust: trait.rust || null, shieldCrush: !!trait.shieldCrush, web: trait.web || null,
       reach: maxRange, minRange, maxRange, closePenalty, ranged, longRange: ranged ? def.ranged.long : null,
-      windUp, damage: weaponDamage(c, w, face, motion),
+      windUp, damage: weaponDamage(c, w, face, motion), wound: def.wound[face] || null,
       label: def.natural ? `${def.name}${motion === 'power' ? ' (power)' : ''}` : `${m.name} (${face})`,
     };
   }

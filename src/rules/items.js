@@ -94,5 +94,111 @@
     return RARITY[best];
   }
 
-  G.Items = { uid, makeArmor, makeShield, makeWeapon, armorBase, armorMaxDurability, shieldStats, itemName, itemRarity };
+
+  // ---- Weapon stats ------------------------------------------------------------------
+  // Everything the rules need to know about a weapon goes through here, for a particular item
+  // (or a bare type). Under CONFIG.weaponModel 'physical' the numbers come from the weapon's
+  // physical description; under 'table' they're the hand-set catalog values. Later, materials
+  // and enchantments change an item's physical inputs (inputsFor) or its outputs (outputsFor);
+  // nothing else reads the catalog's damage, weight or AP numbers directly.
+  //
+  // Returns the catalog entry plus:
+  //   faces   {face: [P, S, B]}      weight  weight class      speed {thrust, swing} AP factors
+  //   strMult {motion: ×STR bonus}   wound   {face: {vital, bleed, rounds, kind}}
+  const statCache = {};
+  function weaponStats(item) {
+    const type = typeof item === 'string' ? item : item.type;
+    const key = type + '|' + CONFIG.weaponModel + '|' + (typeof item === 'string' ? '' : itemKey(item));
+    if (statCache[key]) return statCache[key];
+    const def = WEAPONS[type];
+    const physical = CONFIG.weaponModel === 'physical' && def.phys && !def.phys.arrow; // bows: hand-set arrows, physical wounds
+    const out = physical ? derivePhysical(def, inputsFor(def.phys, item)) : tableStats(def);
+    return (statCache[key] = Object.freeze(outputsFor(Object.assign({}, def, out), item)));
+  }
+  // What about an item can change its stats (none yet: materials and enchantments will).
+  function itemKey(item) {
+    return [item.material || '', item.enchant || ''].join('|');
+  }
+  function inputsFor(phys, item) {
+    return phys;
+  }
+  function outputsFor(stats, item) {
+    return stats;
+  }
+
+  function tableStats(def) {
+    const wound = {};
+    for (const f of Object.keys(def.faces)) {
+      const kind = mainKind(def.faces[f]);
+      wound[f] = { kind, vital: 0, bleed: 1, rounds: CONFIG.bleedRounds };
+      if (def.natural && CONFIG.weaponModel === 'physical' && kind !== 'B') wound[f].vital = kind === 'P' ? CONFIG.vital.natural : CONFIG.vital.natural / 2;
+      if (def.phys && def.phys.arrow && CONFIG.weaponModel === 'physical') Object.assign(wound[f], pointWound(def.phys.arrow));
+    }
+    const strMult = {};
+    for (const m of Object.keys(G.DATA.MOTIONS)) strMult[m] = 1;
+    return { faces: def.faces, weight: def.weight, speed: { thrust: 1, swing: 1 }, strMult, wound, model: 'table' };
+  }
+
+  function mainKind(v) {
+    const i = v.indexOf(Math.max(v[0], v[1], v[2]));
+    return ['P', 'S', 'B'][i];
+  }
+
+  function pointWound(pt) {
+    const X = CONFIG.weaponPhysics, V = CONFIG.vital;
+    return {
+      kind: 'P',
+      vital: Math.min(V.max, pt.depth * V.perDepth),
+      bleed: pt.width / X.bleedWidth,
+      rounds: Math.round(X.bleedRounds.base + pt.depth / X.bleedRounds.perDepth),
+    };
+  }
+
+  function derivePhysical(def, ph) {
+    const X = CONFIG.weaponPhysics, V = CONFIG.vital;
+    const grip = def.hands === 2 ? X.grip : 1;
+    const ml = ph.mass * ph.length;
+    const faces = {}, wound = {};
+    if (ph.point) {
+      faces.point = [Math.round(ph.point.depth * X.pointDamage), 0, 0];
+      wound.point = pointWound(ph.point);
+    }
+    if (ph.edge) {
+      const S = Math.round(ph.edge * (X.edgeDamage.base + X.edgeDamage.k * Math.sqrt(ml * grip)));
+      faces.edge = [0, S, Math.round(S / 7)];
+      wound.edge = { kind: 'S', vital: V.cut * ph.edge, bleed: 1, rounds: CONFIG.bleedRounds };
+    }
+    if (ph.head) {
+      const B = Math.round(1 + X.headDamage * Math.sqrt(ph.head.mass * ph.length * grip));
+      const sp = ph.head.spikes;
+      faces.head = [sp ? Math.round(sp.depth * X.pointDamage) : 0, ph.head.cut || 0, B];
+      wound.head = sp ? pointWound(sp) : { kind: 'B', vital: 0, bleed: 1, rounds: CONFIG.bleedRounds };
+    }
+    if (ph.beak) {
+      faces.beak = [Math.round(ph.beak.depth * X.pointDamage), 0, 1];
+      wound.beak = pointWound(ph.beak);
+    }
+    if (ph.hilt) {
+      faces.hilt = [0, 0, Math.round(X.hiltDamage.base + X.hiltDamage.k * Math.sqrt(ml))];
+      wound.hilt = { kind: 'B', vital: 0, bleed: 1, rounds: CONFIG.bleedRounds };
+    }
+    const refMl = Math.sqrt(X.ref.mass * X.ref.length);
+    const speed = {
+      thrust: 1 + X.thrustSlope * (ph.mass / grip / X.ref.mass - 1),
+      swing: 1 + X.swingSlope * (Math.sqrt(ml) / refMl - 1),
+    };
+    const weight = X.weightClass.find(([max]) => ph.mass < max)[1];
+    const width = (ph.point || ph.beak || {}).width || 0;
+    const swingMult = (g) => Math.min(X.str.max, (ph.mass * g) / X.str.swingRefMass);
+    const strMult = {
+      thrust: X.str.thrustBase + X.str.thrustWidth * Math.min(1, width / 5),
+      swing: swingMult(grip),
+      twoHanded: swingMult(X.grip),
+      power: swingMult(X.grip),
+      shoot: 0,
+    };
+    return { faces, weight, speed, strMult, wound, model: 'physical' };
+  }
+
+  G.Items = { weaponStats, uid, makeArmor, makeShield, makeWeapon, armorBase, armorMaxDurability, shieldStats, itemName, itemRarity };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

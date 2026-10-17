@@ -52,8 +52,14 @@
           Object.entries(D.ARMOR).filter(([, a]) => !a.natural).map(([k, a]) => [a.name, a.mit.P, a.mit.S, a.mit.B, a.spd, a.dex, a.stamina, a.regen, CONFIG.armorDurability[k]]))),
       h('div', { class: 'grid-2' },
         h('section', { class: 'panel' }, h('h2', null, 'Weapons'),
-          table(['Weapon', 'Hands', 'Weight', 'Reach', 'Faces P/S/B'],
-            Object.values(D.WEAPONS).filter((w) => !w.natural).map((w) => [w.name, w.hands === 1.5 ? '1½' : w.hands, w.weight, w.reachName, Object.entries(w.faces).map(([f, v]) => `${f} ${v.join('/')}`).join(', ')]))),
+          table(['Weapon', 'Hands', 'Mass', 'Weight', 'Reach', 'Faces P/S/B', 'Vital (d10)', 'STR ×'],
+            Object.entries(D.WEAPONS).filter(([, w]) => !w.natural).map(([k, w]) => {
+              const s = Items.weaponStats(k);
+              const vital = Object.entries(s.wound).filter(([, x]) => G.Combat.vitalNeed(x.vital) > 0).map(([f, x]) => `${f} ≤${G.Combat.vitalNeed(x.vital)}`).join(', ') || '—';
+              const str = [...new Set(w.motions.filter((m) => m !== 'shoot').map((m) => (s.strMult[m] != null ? s.strMult[m] : 1).toFixed(1)))].join('–') || '—';
+              return [w.name, w.hands === 1.5 ? '1½' : w.hands, w.phys && w.phys.mass ? w.phys.mass + ' kg' : '—', s.weight, w.reachName, Object.entries(s.faces).map(([f, v]) => `${f} ${v.join('/')}`).join(', '), vital, str];
+            })),
+          CONFIG.weaponModel === 'physical' ? h('p', { class: 'small muted' }, 'Worked out from each weapon\'s mass, length and point, edge or head. Vital: a blow that reaches the body rolls a d10; at or under the number it is a vital wound (armor lowers the odds). STR ×: how much of the STR bonus the blow gets.') : null),
         h('section', { class: 'panel' }, h('h2', null, 'Shields'),
           table(['Shield', 'Block AP', 'Break above', 'Durability'], Object.values(D.SHIELDS).map((s) => [s.name, s.blockAP, s.threshold, s.durability])),
           h('p', { class: 'small muted' }, 'Material multiplies threshold and durability: wood ×1.0, hide-faced ×1.2, iron-rimmed ×1.5, steel ×2.0. Quality: crude ×0.6, fine ×1.3, masterwork ×1.6.'))),
