@@ -19,6 +19,7 @@
  *   defendFloor   minimum expected value before spending AP on a defense (default 1.5)
  *   cautious      think twice about spending the whole pass when a foe still to act can reach (default true)
  *   windUp        willingness to wind up (multiplier on its value; 0 = never; default 1)
+ *   grappler      works up the grappling ladder: clinch, hold, pin, then stab or throw (default: has Grappler)
  *   kite          ranged characters back away from melee (default true)
  */
 (function (G) {
@@ -26,7 +27,7 @@
   const C = G.Character;
   const Combat = G.Combat;
 
-  const DEFAULTS = { maneuverRate: 0.15, kickBias: 1, defendFloor: 1.5, cautious: true, windUp: 1, kite: true };
+  const DEFAULTS = { maneuverRate: 0.15, kickBias: 1, defendFloor: 1.5, cautious: true, windUp: 1, kite: true, grappler: null };
 
   // How much a hit is worth to the attacker, in stamina-equivalent points.
   // Attribute damage costs max stamina and bleeds; a hit that drops the target is worth most.
@@ -52,7 +53,7 @@
     return v;
   }
 
-  const MANEUVER_THREAT = { trip: 8, grapple: 8, takedown: 12, disarm: 6 };
+  const MANEUVER_THREAT = { trip: 8, disarm: 6, shove: 3, clinch: 6, grapple: 8, pin: 10, throw: 10, break: 2 };
 
   // Threat of an incoming declaration, as the defender perceives it.
   function perceivedThreat(enc, chars, decl, viewerId) {
@@ -79,7 +80,7 @@
     const c = chars[id];
     const threats = [];
     for (const d of la.incoming) {
-      if (!C.isActive(chars[d.actor])) continue;
+      if (!C.isActive(chars[d.actor]) || Combat.GRAPPLE_STEPS.includes(d.type)) continue; // guards don't meet grapples
       const { threat, motion } = perceivedThreat(enc, chars, d, id);
       threats.push({ threat, motion, prob: 1, against: d.actor, decl: d });
     }
@@ -239,6 +240,7 @@
     const la = Combat.legalActions(enc, chars, id);
     const ap = la.ap;
     const endTurn = { actor: id, type: 'endTurn' };
+    if (P.grappler == null) P.grappler = C.rank(c, 'grappler') > 0;
     // One move per pass: it lands at the end of the pass, so a second one would plan from a
     // square the character hasn't reached yet.
     const movedThisPass = enc.decls.some((d) => d.actor === id && d.type === 'move' && d.declaredPass === enc.pass);
@@ -263,13 +265,40 @@
       if (t) return { actor: id, type: 'strike', option: atk, target: t.id };
     }
 
+    // 2b. Grappling: work the ladder (grapplers), or get loose (everyone else).
+    const gm = (type) => la.maneuvers.find((m) => m.type === type && m.affordable);
+    const link = la.grapple;
+    if (link) {
+      const partner = chars[link.partner];
+      if (link.role === 'held') {
+        const br = gm('break');
+        return br ? { actor: id, type: 'break', target: link.partner } : endTurn;
+      }
+      if (link.role === 'holder') {
+        if (P.grappler && link.level === 'hold' && gm('pin')) return { actor: id, type: 'pin', target: link.partner };
+        // Pinned (or not a grappler): stab if a dagger works, else throw.
+        const stab = la.attacks.find((o) => o.affordable && !o.why && o.weaponType === 'dagger' && o.targets.some((t) => t.id === link.partner && t.inReach));
+        if (stab && (link.level === 'pin' || !gm('throw'))) return { actor: id, type: 'strike', option: stab, target: link.partner };
+        if (gm('throw')) return { actor: id, type: 'throw', target: link.partner };
+      }
+      if (link.level === 'clinch') {
+        if (P.grappler && gm('grapple')) return { actor: id, type: 'grapple', target: link.partner };
+        // Not a grappler: stay and fight if something works up close, else break away.
+        const close = la.attacks.filter((o) => o.affordable && !o.why && !o.unarmed);
+        const hereRate = bestRate(c, partner, close, 1);
+        if ((hereRate < 1 || C.rank(partner, 'grappler') > C.rank(c, 'grappler')) && gm('break')) return { actor: id, type: 'break', target: link.partner };
+      }
+    } else if (P.grappler) {
+      const cl = gm('clinch');
+      const t = cl && cl.targets.find((x) => x.inReach && foes.includes(x.id));
+      if (t) return { actor: id, type: 'clinch', target: t.id };
+    }
+
     // 3. Ready a guard against the attack most worth stopping.
     const def = chooseGuard(enc, chars, id, la, P);
     if (def) return def.decl;
 
-    // 4. Escape, bandage, re-arm.
-    const esc = la.other.find((o) => o.type === 'escape' && o.affordable);
-    if (esc) return { actor: id, type: 'escape' };
+    // 4. Bandage, re-arm.
     const band = la.other.find((o) => o.type === 'bandage' && o.affordable);
     if (band && C.bleedPerRound(c) >= 1.5 && band.targets.some((t) => t.id === id)) return { actor: id, type: 'bandage', target: id };
     if (!C.wieldedWeapon(c)) {
@@ -318,7 +347,7 @@
     if (rng() < P.maneuverRate) {
       for (const m of la.maneuvers) {
         if (!m.affordable || m.type === 'disarm') continue;
-        if (m.type === 'grapple' && !C.rank(c, 'grappler') && P.maneuverRate < 0.3) continue;
+        if (Combat.GRAPPLE_STEPS.includes(m.type) && !C.rank(c, 'grappler') && P.maneuverRate < 0.3) continue;
         const t = m.targets.find((x) => x.inReach && foes.includes(x.id) && !chars[x.id].status.prone);
         if (t) return { actor: id, type: m.type, target: t.id };
       }

@@ -641,3 +641,95 @@ test('grappling is exhausting: costly to start and to keep', async () => {
   assert.strictEqual(a.status.grappling, null, 'too spent to keep the hold');
   assert.deepStrictEqual(t.status.grappledBy, []);
 });
+
+// Two adjacent fighters for grappling tests; rolls come from the queue, attacker first.
+async function grapplePair(armor) {
+  const a = armed('Grappler', 'dagger', { side: 'party' });
+  a.base.STR = 8; a.base.SPD = 9; a.base.CON = 10; a.feats.grappler = 1;
+  const t = armed('Mark', 'longsword', { side: 'enemy' });
+  t.base.STR = 6;
+  if (armor) t.armor = Items.makeArmor(armor, 'full', 'standard');
+  for (const c of [a, t]) c.stamina = C.maxStamina(c);
+  const chars = { [a.id]: a, [t.id]: t };
+  const enc = Combat.createEncounter('t', [a.id, t.id], chars, 6, 1);
+  enc.pos[a.id] = { x: 1, y: 0 }; enc.pos[t.id] = { x: 2, y: 0 };
+  return { a, t, chars, enc };
+}
+
+async function step(g, type, rolls) {
+  await Combat.startRound(g.enc, g.chars, roller(1, [10, 1]));
+  assert.strictEqual(Combat.currentActor(g.enc), g.a.id);
+  const err = Combat.declare(g.enc, g.chars, { actor: g.a.id, type, target: g.t.id });
+  assert.strictEqual(err, null, type + ': ' + err);
+  Combat.concede(g.enc, g.a.id); Combat.concede(g.enc, g.t.id);
+  await Combat.resolveRound(g.enc, g.chars, roller(2, rolls));
+  return g.enc.log.map((l) => l.text).join('\n');
+}
+
+test('grappling ladder: clinch, hold, pin, each a directly opposed roll', async () => {
+  const g = await grapplePair(null);
+  const la = Combat.legalActions(g.enc, g.chars, g.a.id);
+  // Free: only a clinch is offered from the ladder.
+  await Combat.startRound(g.enc, g.chars, roller(1, [10, 1]));
+  assert.deepStrictEqual(Combat.legalActions(g.enc, g.chars, g.a.id).maneuvers.filter((m) => Combat.GRAPPLE_STEPS.includes(m.type)).map((m) => m.type), ['clinch']);
+  Combat.concede(g.enc, g.a.id); Combat.concede(g.enc, g.t.id); await Combat.resolveRound(g.enc, g.chars, roller(2));
+  // Clinch: 6+5=11 vs 4+3=7 → win by 4: a clinch, not yet a hold.
+  await step(g, 'clinch', [6, 4]);
+  assert.strictEqual(g.a.status.clinch, g.t.id);
+  assert.strictEqual(g.t.status.clinch, g.a.id);
+  assert.ok(!C.attackOptions(g.t).some((o) => o.motion === 'twoHanded'), 'no two-handed swings in a clinch');
+  assert.strictEqual(Combat.legalActions(g.enc, g.chars, g.t.id).move, null, "can't step away without breaking");
+  // Grapple: win by 1 → hold.
+  await step(g, 'grapple', [3, 4]);
+  assert.strictEqual(g.a.status.grappling, g.t.id);
+  assert.deepStrictEqual(g.t.status.grappledBy, [g.a.id]);
+  // Pin: break score max(STR 6, DEX 5)/2 = 3; 5+5=10 vs 1+3=4.
+  await step(g, 'pin', [5, 1]);
+  assert.ok(g.t.status.pinned);
+  assert.deepStrictEqual(C.attackOptions(g.t), [], 'a pinned fighter can only try to break');
+  void la;
+});
+
+test('grappling: a big win jumps two rungs; a big loss reverses', async () => {
+  const g = await grapplePair(null);
+  await step(g, 'clinch', [10, 1]); // 15 vs 4: straight to a hold
+  assert.strictEqual(g.a.status.grappling, g.t.id);
+  const h = await grapplePair(null);
+  await step(h, 'clinch', [6, 4]);
+  await step(h, 'grapple', [1, 10]); // 6 vs 13: lose by 7 → they hold you
+  assert.strictEqual(h.t.status.grappling, h.a.id);
+});
+
+test('grappling and armor: plate is easy to grab but hard to throw', async () => {
+  // Same rolls; the attacker's grapple roll ties against unarmored but wins against plate (+2 handles).
+  const tie = await grapplePair(null);
+  await step(tie, 'clinch', [6, 4]);
+  await step(tie, 'grapple', [2, 4]); // 7 vs 7
+  assert.ok(!tie.a.status.grappling);
+  const plate = await grapplePair('plate');
+  await step(plate, 'clinch', [6, 4]);
+  await step(plate, 'grapple', [2, 4]); // 7 + 2 vs 7
+  assert.strictEqual(plate.a.status.grappling, plate.t.id);
+  // Throw: grapple score 5 vs 3 + plate footing 2: rolls 4 vs 6 → 9 vs 11, kept.
+  const log = await step(plate, 'throw', [4, 6]);
+  assert.match(log, /keeps their feet/);
+  // The same throw against an unarmored, held fighter lands: 9 vs 9 is a tie, so roll 5 vs 6.
+  const bare = await grapplePair(null);
+  await step(bare, 'clinch', [10, 1]);
+  await step(bare, 'throw', [5, 6]);
+  assert.ok(bare.t.status.prone, 'thrown prone');
+  assert.ok(!bare.a.status.grappling, 'the throw ends the grapple');
+});
+
+test('grappling: guards never meet a grapple; pinned armor is pierced', async () => {
+  const g = await grapplePair('plate');
+  await step(g, 'clinch', [10, 1]);
+  await step(g, 'pin', [10, 1]);
+  assert.ok(g.t.status.pinned);
+  const stab = C.attackOptions(g.a).find((o) => o.motion === 'thrust');
+  const pinned = Combat.computeHit(g.a, g.t, stab, { distance: 1 });
+  g.t.status.pinned = false;
+  const held = Combat.computeHit(g.a, g.t, stab, { distance: 1 });
+  assert.ok(pinned.pass > held.pass, 'a pin opens the armor');
+  assert.ok(Combat.legalActions(g.enc, g.chars, g.t.id).defenses.length > 0);
+});

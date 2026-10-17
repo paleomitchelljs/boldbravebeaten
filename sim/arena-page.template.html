@@ -277,16 +277,19 @@ for (const a of ARENAS) {
   document.getElementById('compare-section').hidden = false;
   document.getElementById('compare-title').textContent = `What changed since ${B.label}`;
   document.getElementById('compare-sub').textContent = `Average win rates, ${B.label} → this run. A smaller spread between the best and worst style means no single strategy dominates.`;
-  const styleAvg = (agg, a, s) => ARMORS.reduce((t, ar) => t + agg[a][ar + '/' + s].avgWin, 0) / ARMORS.length;
-  const armorAvg = (agg, a, ar) => STRATS.reduce((t, s) => t + agg[a][ar + '/' + s].avgWin, 0) / STRATS.length;
-  const spreadOf = (agg, a, skip) => { const v = STRATS.filter((s) => s !== skip).map((s) => styleAvg(agg, a, s)); return Math.max(...v) - Math.min(...v); };
+  // A fighter missing from one run (a style added or dropped since) is left out of its averages.
+  const mean = (xs) => { const v = xs.filter((x) => Number.isFinite(x)); return v.length ? v.reduce((t, x) => t + x, 0) / v.length : NaN; };
+  const win = (agg, a, k) => (agg[a][k] ? agg[a][k].avgWin : NaN);
+  const styleAvg = (agg, a, s) => mean(ARMORS.map((ar) => win(agg, a, ar + '/' + s)));
+  const armorAvg = (agg, a, ar) => mean(STRATS.map((s) => win(agg, a, ar + '/' + s)));
+  const spreadOf = (agg, a, skip) => { const v = STRATS.filter((s) => s !== skip).map((s) => styleAvg(agg, a, s)).filter((x) => Number.isFinite(x)); return Math.max(...v) - Math.min(...v); };
   const pts = (x) => (x >= 0 ? '+' : '−') + Math.abs(Math.round(x * 100));
   const spread = document.getElementById('spread');
   for (const a of ARENAS) {
     const before = spreadOf(B.agg, a), after = spreadOf(DATA.agg, a);
     const beforeNM = spreadOf(B.agg, a, 'magic'), afterNM = spreadOf(DATA.agg, a, 'magic');
     const fighters = KEYS_ALL.map((k) => DATA.agg[a][k].avgWin);
-    const fBefore = KEYS_ALL.map((k) => B.agg[a][k].avgWin);
+    const fBefore = KEYS_ALL.map((k) => win(B.agg, a, k)).filter((x) => Number.isFinite(x));
     spread.append(el('div', { class: 'card' }, el('h3', null, DATA.arenas[a].label),
       el('div', { class: 'facts' },
         el('span', { class: 'stat' }, el('span', { class: 'muted small' }, 'Best − worst style'), el('b', null, Math.round(after * 100) + ' pts'), el('span', { class: 'delta muted small' }, `was ${Math.round(before * 100)}`)),
@@ -298,12 +301,13 @@ for (const a of ARENAS) {
   t.append(el('thead', null, el('tr', null, el('th', null, ''), ARENAS.map((a) => el('th', { class: 'n', colspan: '2' }, DATA.arenas[a].label)))));
   const row = (label, f, strong) => el('tr', null, el('td', strong ? { style: { fontWeight: 700 } } : null, label), ARENAS.map((a) => {
     const [b0, b1] = f(a);
+    if (!Number.isFinite(b0)) return [el('td', { class: 'n' }, `new: ${pct(b1)}`), el('td', { class: 'n delta muted' }, '—')];
     return [el('td', { class: 'n' }, `${pct(b0)} → ${pct(b1)}`), el('td', { class: 'n delta' }, pts(b1 - b0))];
   }));
   const tb = el('tbody');
   for (const s of STRATS) tb.append(row(DATA.strategies[s], (a) => [styleAvg(B.agg, a, s), styleAvg(DATA.agg, a, s)], true));
   for (const ar of ARMORS) tb.append(row(DATA.armorClasses[ar] + ' armor', (a) => [armorAvg(B.agg, a, ar), armorAvg(DATA.agg, a, ar)], true));
-  for (const k of KEYS_ALL) tb.append(row(byKey[k].label, (a) => [B.agg[a][k].avgWin, DATA.agg[a][k].avgWin]));
+  for (const k of KEYS_ALL) tb.append(row(byKey[k].label, (a) => [win(B.agg, a, k), DATA.agg[a][k].avgWin]));
   t.append(tb);
   document.getElementById('compare').append(t);
 })();

@@ -57,6 +57,12 @@ const STRATEGY = {
     weapon: null, shield: null, nouns: ['fire', 'force'],
     feats: ['casting', 'verb_attack', 'mod_strong', 'verb_launch', 'casting', 'control', 'fire_affinity', 'quick_casting', 'casting'],
   },
+  grappler: {
+    label: 'Grappler', attrs: { STR: 7, CON: 6, DEX: 6, SPD: 5, INT: 3, WIS: 4, CHA: 4 },
+    weapon: null, shield: null, policy: { grappler: true },
+    // Works the clinch → hold → pin ladder with a dagger in the free hand.
+    feats: ['grappler', 'pin', 'coup_de_grace', 'grappler', 'escape_artist', 'brawlers_wind', 'trip', 'takedown', 'toughness', 'strength'],
+  },
   archery: {
     label: 'Archery', attrs: { STR: 5, CON: 5, DEX: 7, SPD: 6, INT: 4, WIS: 4, CHA: 4 },
     weapon: 'longbow', shield: null, arrows: 30,
@@ -85,7 +91,7 @@ function makeCombatant(armorKey, stratKey, side) {
   c.nouns = (S.nouns || []).slice();
   L.Enemies.chooseFeats(c, A.feats.concat(S.feats), L.Enemies.makeRng(1));
   c.stamina = C.maxStamina(c);
-  c.policy = {};
+  c.policy = Object.assign({}, S.policy || {});
   return c;
 }
 

@@ -27,7 +27,8 @@
   const C = G.Character;
   const Items = G.Items;
 
-  const ATTACK_TYPES = ['strike', 'trip', 'disarm', 'grapple', 'takedown', 'shove'];
+  const GRAPPLE_STEPS = ['clinch', 'grapple', 'pin', 'throw', 'break'];
+  const ATTACK_TYPES = ['strike', 'trip', 'disarm', 'shove'].concat(GRAPPLE_STEPS);
   const DEFENSE_TYPES = ['block', 'parry', 'dodge'];
 
   // ---- Encounter setup ---------------------------------------------------
@@ -322,25 +323,52 @@
 
     const reach = CONFIG.range.maneuverMax;
     const grappled = isGrappled(c);
-    for (const kind of ['shove', 'trip', 'disarm', 'grapple', 'takedown']) {
-      if (kind === 'takedown' && !C.rank(c, 'takedown')) continue;
-      if (c.status.prone || c.status.grappling) continue;
+    const link = linkOf(c);
+    out.grapple = link;
+    const pushManeuver = (kind, targets) => {
       const cost = C.actionCost(c, kind);
-      let r = reach;
-      if (kind === 'trip' && hookWeapon(c)) r = WEAPONS[C.wieldedWeapon(c).type].reach;
-      out.maneuvers.push({
-        type: kind, ap: cost.ap, stamina: cost.stamina, affordable: can(cost.ap) && !(grappled && kind !== 'grapple'), spans: cost.ap > left,
-        targets: others.filter((o) => !chars[o].status.unconscious).map((o) => ({ id: o, inReach: dist(me, posAtPass(enc, o, enc.pass)) <= r })),
-      });
+      out.maneuvers.push({ type: kind, ap: cost.ap, stamina: cost.stamina, affordable: can(cost.ap) && targets.some((t) => t.inReach), spans: cost.ap > left, targets });
+    };
+    const near = (o) => ({ id: o, inReach: dist(me, posAtPass(enc, o, enc.pass)) <= reach });
+    // Trips, disarms and shoves: free, or a trip or disarm from a clinch.
+    if (!c.status.prone && !grappled && !c.status.grappling) {
+      for (const kind of ['shove', 'trip', 'disarm']) {
+        if (kind === 'shove' && link) continue;
+        let r = reach;
+        if (kind === 'trip' && hookWeapon(c)) r = WEAPONS[C.wieldedWeapon(c).type].reach;
+        pushManeuver(kind, others.filter((o) => !chars[o].status.unconscious).map((o) => ({ id: o, inReach: dist(me, posAtPass(enc, o, enc.pass)) <= r })));
+      }
+    }
+    // The grappling ladder.
+    if (!link) {
+      if (!c.status.prone) pushManeuver('clinch', others.filter((o) => C.isActive(chars[o]) && !linkOf(chars[o])).map(near));
+    } else if (link.level === 'clinch') {
+      pushManeuver('grapple', [near(link.partner)]);
+      if (C.rank(c, 'takedown')) pushManeuver('throw', [near(link.partner)]);
+      pushManeuver('break', [near(link.partner)]);
+    } else if (link.role === 'holder') {
+      if (link.level === 'hold') pushManeuver('pin', [near(link.partner)]);
+      pushManeuver('throw', [near(link.partner)]);
+    } else {
+      pushManeuver('break', [near(link.partner)]);
+    }
+    if (c.status.pinned) {
+      // Pinned: only trying to break free.
+      out.maneuvers = out.maneuvers.filter((m) => m.type === 'break');
+      out.defenses.forEach((o) => { o.affordable = false; o.why = 'Pinned'; });
+      return out;
     }
 
-    if (!c.status.prone && !grappled && !c.status.grappling && can(1)) {
+    // Moving: not while prone, held or clinched. A holder drags the held fighter one square.
+    if (!c.status.prone && !grappled && !c.status.clinch && can(1)) {
       const spa = C.squaresPerAP(c);
       const cost1 = C.actionCost(c, 'move', { ap: 1 });
+      const drag = !!c.status.grappling;
       out.move = {
         squaresPerAP: spa, maxAP: ap, stamina: cost1.stamina, from: projectedPos(enc, id),
-        maxSquares: Math.floor((ap * spa) / C.apScale()),
-        passSquares: Math.floor((left * spa) / C.apScale()), // as far as it can go and still land this pass
+        maxSquares: drag ? 1 : Math.floor((ap * spa) / C.apScale()),
+        passSquares: drag ? 1 : Math.floor((left * spa) / C.apScale()), // as far as it can go and still land this pass
+        drag,
       };
     }
 
@@ -359,7 +387,6 @@
     if (primary && hands.wield !== primary && !hands.dropped.includes(primary)) addOther('readyPrimary', dropNote);
     if (hands.dropped.length && !declared('pickUp')) addOther('pickUp', dropNote);
     if (hands.wield) addOther('dropWeapon', { note: Items.itemName(heldW) });
-    if (grappled) addOther('escape');
     if (c.status.grappling && !declared('release')) addOther('release');
     // Wind-ups for attacks that need one (power swings, Strong spells).
     if (canWindUp(enc, c) && !c.status.prone && !grappled) {
@@ -421,8 +448,7 @@
   }
 
   function defenseUnavailable(c, kind, attackDecl, chars, enc) {
-    const grapplers = c.status.grappledBy.map((g) => chars[g]).filter(Boolean);
-    if (grapplers.some((g) => C.rank(g, 'pin'))) return 'Pinned';
+    if (c.status.pinned) return 'Pinned';
     const winding = c.status.windUp || (enc && enc.decls.some((d) => d.actor === c.id && d.type === 'windUp'));
     if (winding && (CONFIG.windUp.exposed || []).includes(kind)) return 'Winding up';
     const opt = attackDecl ? attackDecl.option : null;
@@ -478,7 +504,11 @@
     } else {
       if (!ACTIONS[decl.type]) return 'Unknown action';
       ({ ap, stamina } = C.actionCost(c, decl.type));
-      if (['trip', 'disarm', 'grapple', 'takedown', 'shove', 'bandage'].includes(decl.type) && !decl.target) return 'Choose a target';
+      if (['trip', 'disarm', 'shove', 'bandage'].concat(GRAPPLE_STEPS).includes(decl.type) && !decl.target) return 'Choose a target';
+      if (GRAPPLE_STEPS.includes(decl.type)) {
+        const m = legalActions(enc, chars, id).maneuvers.find((x) => x.type === decl.type);
+        if (!m || !m.targets.some((t) => t.id === decl.target)) return 'Not possible from here';
+      }
     }
     if (ap > enc.ap[id]) return 'Not enough AP';
     if (passLeft(enc, id) < CONFIG.minActionAP) return 'No AP left this pass';
@@ -530,7 +560,7 @@
     const v = option.damage.slice();
     const st = target.status;
     const prone = st.prone;
-    const grappled = isGrappled(target);
+    const pinned = !!st.pinned;
     // Cramped: inside the weapon's reach, or wielding a weapon while held in a grapple. Under the
     // 'blunt' rule the blow lands as a fraction of its force, all blunt (pommel, haft, guard).
     const cramped = (flags.distance === 1 && option.closePenalty) ||
@@ -550,7 +580,7 @@
 
     const unconscious = target.stamina <= 0;
     const weapon = option.weaponType ? WEAPONS[option.weaponType] : null;
-    const coupDeGrace = weapon && option.weaponType === 'dagger' && C.rank(attacker, 'coup_de_grace') && (prone || grappled);
+    const coupDeGrace = weapon && option.weaponType === 'dagger' && C.rank(attacker, 'coup_de_grace') && (prone || pinned);
     const ai = C.armorInfo(target);
     const armored = target.armor && target.armor.durability > 0 && !unconscious && !coupDeGrace;
 
@@ -568,7 +598,7 @@
       let pass = ai.passThrough;
       if (C.rank(attacker, 'find_the_gap')) pass += 0.25;
       if (C.rank(attacker, 'spot_weakness')) pass += 0.25;
-      if (option.halfSword || prone || grappled) pass = CONFIG.maneuver.pronePassThrough;
+      if (option.halfSword || prone || pinned) pass = CONFIG.maneuver.pronePassThrough;
       pass = Math.min(1, pass);
       res.pierceLeft = Pr;
       res.pass = pass;
@@ -747,28 +777,153 @@
     return opposed(roller, atk, aB, label, tgt, stability(tgt), 'Keep footing');
   }
 
-  function grappleStrength(chars, c) {
-    const gs = c.status.grappledBy.map((g) => chars[g]).filter((g) => g && C.isActive(g));
-    if (!gs.length) return 0;
-    const vals = gs.map((g) => Math.floor(C.attr(g, 'STR') / 2) + C.rank(g, 'grappler'));
-    vals.sort((x, y) => y - x);
-    let total = vals[0];
-    gs.forEach((g, i) => {
-      if (i === 0) return;
-      const frac = C.rank(g, 'dogpile') ? 1 : CONFIG.maneuver.dogpileFraction;
-      total += Math.floor((Math.floor(C.attr(g, 'STR') / 2) + C.rank(g, 'grappler')) * frac);
-    });
-    return total;
+  // ---- Grappling ladder -----------------------------------------------------
+  // State lives on both fighters: a clinch is status.clinch on each; a hold is the holder's
+  // status.grappling and the held fighter's status.grappledBy; a pin adds status.pinned.
+  function linkOf(c) {
+    const st = c.status;
+    if (st.clinch) return { partner: st.clinch, level: 'clinch', role: 'mutual' };
+    if (st.grappling) return { partner: st.grappling, level: st.grappling && st.grapplingPin ? 'pin' : 'hold', role: 'holder' };
+    if (st.grappledBy && st.grappledBy.length) return { partner: st.grappledBy[0], level: st.pinned ? 'pin' : 'hold', role: 'held' };
+    return null;
   }
 
-  function releaseGrapples(chars, c) {
-    if (c.status.grappling) {
-      const t = chars[c.status.grappling];
-      if (t) t.status.grappledBy = t.status.grappledBy.filter((g) => g !== c.id);
-      c.status.grappling = null;
+  // Set the grapple between a and b. level: null (free), 'clinch', 'hold' or 'pin'; for a hold
+  // or pin, a is the holder.
+  function setGrapple(chars, a, b, level) {
+    for (const c of [a, b]) {
+      const L = linkOf(c);
+      if (L && chars[L.partner] && ![a.id, b.id].includes(L.partner)) clearGrapple(chars, c);
     }
-    for (const g of c.status.grappledBy) if (chars[g]) chars[g].status.grappling = null;
-    c.status.grappledBy = [];
+    for (const [x, y] of [[a, b], [b, a]]) {
+      x.status.clinch = null;
+      if (x.status.grappling === y.id) { x.status.grappling = null; x.status.grapplingPin = false; }
+      x.status.grappledBy = x.status.grappledBy.filter((g) => g !== y.id);
+      x.status.pinned = false;
+    }
+    if (level === 'clinch') { a.status.clinch = b.id; b.status.clinch = a.id; }
+    if (level === 'hold' || level === 'pin') {
+      a.status.grappling = b.id;
+      b.status.grappledBy = [a.id];
+      if (level === 'pin') { b.status.pinned = true; a.status.grapplingPin = true; }
+    }
+  }
+
+  function clearGrapple(chars, c) {
+    const L = linkOf(c);
+    if (L && chars[L.partner]) setGrapple(chars, c, chars[L.partner], null);
+    c.status.clinch = null; c.status.grappling = null; c.status.grappledBy = []; c.status.pinned = false; c.status.grapplingPin = false;
+  }
+  const releaseGrapples = clearGrapple;
+
+  // d10 + this for clinching, grappling, pinning and throwing.
+  function grappleScore(c) {
+    return Math.floor(C.attr(c, 'STR') / 2) + C.rank(c, 'grappler');
+  }
+
+  // d10 + this for breaking a clinch, hold or pin.
+  function breakScore(c) {
+    return Math.floor(Math.max(C.attr(c, 'STR'), C.combatAttr(c, 'DEX')) / 2) + (C.rank(c, 'escape_artist') ? CONFIG.maneuver.escapeArtistBonus : 0);
+  }
+
+  // Allies next to the target add to the attacker's grapple rolls.
+  function dogpileBonus(enc, chars, a, t) {
+    const D = CONFIG.grappling.dogpile;
+    const allies = enc.ids.filter((o) => o !== a.id && o !== t.id && chars[o].side === a.side && C.isActive(chars[o]) && dist(enc.pos[o], enc.pos[t.id]) <= 1).length;
+    return allies * (C.rank(a, 'dogpile') ? D.withFeat : D.perAlly);
+  }
+
+  // Armor is easy to grab (option 4).
+  function handles(t) {
+    return (CONFIG.grappling.handles || {})[C.armorInfo(t).type] || 0;
+  }
+
+  // Footing against throws: armor weight and Iron Stance (the same as against trips).
+  function footing(t) {
+    const M = CONFIG.maneuver;
+    return (M.armorStability[t.armor ? t.armor.type : 'none'] || 0) + (C.rank(t, 'iron_stance') ? M.ironStanceBonus : 0);
+  }
+
+  // Resolve one rung of the ladder. Preconditions are rechecked: the grapple may have changed
+  // earlier in the pass.
+  async function resolveGrapple(enc, chars, d, roller) {
+    const a = chars[d.actor];
+    const t = chars[d.target];
+    const G2 = CONFIG.grappling;
+    const big = G2.bigMargin;
+    const L = linkOf(a);
+    const withT = L && L.partner === t.id;
+    const fizzle = (why) => log(enc, `${a.name}'s ${ACTIONS[d.type].name.toLowerCase()} fizzles — ${why}.`, 'fizzle');
+    const show = (o) => `(${o.a} vs ${o.b})`;
+    if (d.type === 'clinch') {
+      if (L || linkOf(t)) return fizzle('someone is already tangled up');
+      const o = await opposed(roller, a, grappleScore(a) + dogpileBonus(enc, chars, a, t), 'Clinch', t, grappleScore(t), 'Keep clear');
+      if (o.margin >= big) { setGrapple(chars, a, t, 'hold'); loseWindUp(enc, t, 'grappled'); return log(enc, `${a.name} closes and seizes ${t.name} in a hold ${show(o)}.`, 'hit'); }
+      if (o.margin > 0) { setGrapple(chars, a, t, 'clinch'); loseWindUp(enc, t, 'clinched'); loseWindUp(enc, a, null); return log(enc, `${a.name} clinches with ${t.name} ${show(o)}.`, 'hit'); }
+      return log(enc, `${t.name} keeps ${a.name} off ${show(o)}.`, 'fail');
+    }
+    if (!withT) return fizzle(`not grappling ${t.name}`);
+    if (d.type === 'grapple') {
+      if (L.level !== 'clinch') return fizzle('not in a clinch');
+      const o = await opposed(roller, a, grappleScore(a) + handles(t) + dogpileBonus(enc, chars, a, t), 'Grapple', t, grappleScore(t), 'Resist');
+      if (o.margin >= big) { setGrapple(chars, a, t, 'pin'); return log(enc, `${a.name} drives ${t.name} down into a pin ${show(o)}.`, 'hit'); }
+      if (o.margin > 0) { setGrapple(chars, a, t, 'hold'); return log(enc, `${a.name} takes hold of ${t.name} ${show(o)}.`, 'hit'); }
+      if (o.margin <= -big) { setGrapple(chars, t, a, 'hold'); loseWindUp(enc, a, 'grappled'); return log(enc, `${t.name} reverses and holds ${a.name} ${show(o)}.`, 'hit'); }
+      return log(enc, `${a.name} can't get a hold on ${t.name} ${show(o)}.`, 'fail');
+    }
+    if (d.type === 'pin') {
+      if (L.role !== 'holder' || L.level !== 'hold') return fizzle('not holding them');
+      const o = await opposed(roller, a, grappleScore(a) + handles(t) + (C.rank(a, 'pin') ? G2.pinBonus : 0) + dogpileBonus(enc, chars, a, t), 'Pin', t, breakScore(t), 'Resist');
+      if (o.margin > 0) { setGrapple(chars, a, t, 'pin'); return log(enc, `${a.name} pins ${t.name} ${show(o)}.`, 'hit'); }
+      if (o.margin <= -big) { setGrapple(chars, a, t, 'clinch'); return log(enc, `${t.name} twists out of the hold into a clinch ${show(o)}.`, 'defend'); }
+      return log(enc, `${a.name} can't pin ${t.name} ${show(o)}.`, 'fail');
+    }
+    if (d.type === 'throw') {
+      if (!(L.role === 'holder' || (L.level === 'clinch' && C.rank(a, 'takedown')))) return fizzle('no grip to throw from');
+      const o = await opposed(roller, a, grappleScore(a), 'Throw', t, grappleScore(t) + footing(t), 'Keep footing');
+      if (o.margin <= 0) return log(enc, `${t.name} keeps their feet against ${a.name}'s throw ${show(o)}.`, 'fail');
+      setGrapple(chars, a, t, null);
+      // Land a square beyond, away from the thrower, if there is room.
+      const from = enc.pos[a.id], at = enc.pos[t.id];
+      const nx = at.x + Math.sign(at.x - from.x), ny = at.y + Math.sign(at.y - from.y);
+      const free = nx >= 0 && ny >= 0 && nx < enc.grid.w && ny < enc.grid.h && !enc.ids.some((id) => id !== t.id && C.isActive(chars[id]) && enc.pos[id].x === nx && enc.pos[id].y === ny);
+      if (free) enc.pos[t.id] = { x: nx, y: ny };
+      knockDown(enc, t);
+      log(enc, `${a.name} throws ${t.name} to the ground ${show(o)}.`, 'hit');
+      if (o.margin >= big) {
+        const slam = { kind: 'strike', motion: 'swing', damage: [0, 0, Math.max(0, G2.throwDamage + C.strBonus(a))], label: 'Throw' };
+        const r = await applyHit(enc, chars, a, t, slam, roller, {});
+        log(enc, `The fall jars ${t.name}: ${r.text}`, 'hit');
+      }
+      return;
+    }
+    if (d.type === 'break') {
+      const holderBonus = L.level === 'pin' && C.rank(t, 'pin') ? G2.pinBonus : 0;
+      const o = await opposed(roller, a, breakScore(a), 'Break free', t, grappleScore(t) + holderBonus, 'Hold on');
+      if (o.margin <= 0) return log(enc, `${a.name} can't break ${t.name}'s grip ${show(o)}.`, 'fail');
+      if (L.level === 'clinch') { setGrapple(chars, a, t, null); return log(enc, `${a.name} breaks the clinch with ${t.name} ${show(o)}.`, 'defend'); }
+      if (L.level === 'hold') {
+        if (o.margin >= big) { setGrapple(chars, a, t, 'hold'); loseWindUp(enc, t, 'grappled'); return log(enc, `${a.name} reverses ${t.name}'s hold ${show(o)}.`, 'defend'); }
+        setGrapple(chars, a, t, 'clinch');
+        return log(enc, `${a.name} works out of the hold into a clinch ${show(o)}.`, 'defend');
+      }
+      // Pinned.
+      if (o.margin >= big) { setGrapple(chars, a, t, 'clinch'); return log(enc, `${a.name} bursts out of the pin into a clinch ${show(o)}.`, 'defend'); }
+      setGrapple(chars, t, a, 'hold');
+      return log(enc, `${a.name} gets out from under the pin; still held ${show(o)}.`, 'defend');
+    }
+  }
+
+  // Grapples come apart when the fighters are no longer adjacent or one goes down; a clinch
+  // also breaks when either is knocked prone.
+  function settleGrapples(enc, chars) {
+    for (const id of enc.ids) {
+      const c = chars[id];
+      const L = linkOf(c);
+      if (!L) continue;
+      const p = chars[L.partner];
+      if (!p || !C.isActive(c) || !C.isActive(p) || dist(enc.pos[id], enc.pos[p.id]) > 1 || (L.level === 'clinch' && (c.status.prone || p.status.prone))) clearGrapple(chars, c);
+    }
   }
 
   // ---- Resolution --------------------------------------------------------
@@ -802,8 +957,14 @@
       const claimed = {};
       for (const d of moves) {
         const a = chars[d.actor];
-        if (a.status.prone || isGrappled(a) || a.status.grappling) {
+        if (a.status.prone || isGrappled(a) || a.status.clinch) {
           log(enc, `${a.name} can't move (${a.status.prone ? 'prone' : 'grappled'}).`, 'fizzle');
+          continue;
+        }
+        // A holder drags the held fighter one square, into the square the holder leaves.
+        const dragged = a.status.grappling ? chars[a.status.grappling] : null;
+        if (dragged && dist(enc.pos[a.id], d.to) > 1) {
+          log(enc, `${a.name} can only drag ${dragged.name} one square.`, 'fizzle');
           continue;
         }
         const key = d.to.x + ',' + d.to.y;
@@ -815,11 +976,16 @@
         }
         if (!payStamina(enc, a, d.stamina)) continue;
         claimed[key] = d.actor;
+        const left = enc.pos[d.actor];
         enc.pos[d.actor] = { x: d.to.x, y: d.to.y };
-        log(enc, `${a.name} moves to (${d.to.x + 1}, ${d.to.y + 1}).`);
+        if (dragged) {
+          enc.pos[dragged.id] = { x: left.x, y: left.y };
+          log(enc, `${a.name} drags ${dragged.name} to (${d.to.x + 1}, ${d.to.y + 1}).`);
+        } else log(enc, `${a.name} moves to (${d.to.x + 1}, ${d.to.y + 1}).`);
       }
     }
     for (const d of enc.decls) if (d.pass === p) d.done = true;
+    settleGrapples(enc, chars);
 
     // Another pass while anything is still on its way or anyone can still act. A pass in
     // which nobody started or landed anything (everyone waited) ends the round.
@@ -893,6 +1059,8 @@
         a.inventory.arrows -= 1;
       }
       if (!payStamina(enc, a, d.stamina)) return;
+      // Grappling is a directly opposed roll; guards never meet it.
+      if (GRAPPLE_STEPS.includes(d.type)) return resolveGrapple(enc, chars, d, roller);
       if (d.type === 'strike' && d.option.spell) {
         if (!(await castSpell(enc, a, d.option, roller))) return;
       }
@@ -985,24 +1153,10 @@
         if (w) log(enc, `${a.name} drops ${Items.itemName(w)}.`);
         break;
       }
-      case 'escape': {
-        const str = grappleStrength(chars, a);
-        const bonus = Math.floor(Math.max(C.attr(a, 'STR'), C.combatAttr(a, 'DEX')) / 2) + (C.rank(a, 'escape_artist') ? CONFIG.maneuver.escapeArtistBonus : 0);
-        const ra = await rollDie(roller, a.id, 10, `${a.name}: Escape`, `d10 + ${bonus}`);
-        const g = chars[a.status.grappledBy[0]];
-        const rb = g ? await rollDie(roller, g.id, 10, `${g.name}: Hold on`, `d10 + ${str}`) : 0;
-        if (ra + bonus > rb + str) {
-          releaseGrapples(chars, a);
-          log(enc, `${a.name} breaks free (${ra + bonus} vs ${rb + str}).`, 'defend');
-        } else log(enc, `${a.name} fails to escape (${ra + bonus} vs ${rb + str}).`, 'fail');
-        break;
-      }
       case 'release':
-        if (a.status.grappling) {
-          const t2 = chars[a.status.grappling];
-          if (t2) t2.status.grappledBy = t2.status.grappledBy.filter((g) => g !== a.id);
-          a.status.grappling = null;
-          log(enc, `${a.name} releases their hold.`);
+        if (a.status.grappling && chars[a.status.grappling]) {
+          setGrapple(chars, a, chars[a.status.grappling], null);
+          log(enc, `${a.name} lets go.`);
         }
         break;
       case 'bandage':
@@ -1145,17 +1299,6 @@
         loseWindUp(enc, t, 'disarmed');
         log(enc, `${a.name} disarms ${t.name}; ${Items.itemName(w)} falls (${o.a} vs ${o.b}).`, 'hit');
       } else log(enc, `${a.name}'s disarm fails (${o.a} vs ${o.b}).`, 'fail');
-    } else if (d.type === 'grapple' || d.type === 'takedown') {
-      const aB = Math.floor(C.attr(a, 'STR') / 2) + C.rank(a, 'grappler');
-      const bB = Math.floor(Math.max(C.attr(t, 'STR'), C.combatAttr(t, 'DEX')) / 2) + (C.rank(t, 'escape_artist') ? M.escapeArtistBonus : 0);
-      const o = await opposed(roller, a, aB, d.type === 'takedown' ? 'Takedown' : 'Grapple', t, bB, 'Resist grapple');
-      if (o.margin > 0 || t.status.unconscious) {
-        if (!t.status.grappledBy.includes(a.id)) t.status.grappledBy.push(a.id);
-        a.status.grappling = t.id;
-        loseWindUp(enc, t, 'grappled');
-        if (d.type === 'takedown') knockDown(enc, t);
-        log(enc, `${a.name} grapples ${t.name}${d.type === 'takedown' ? ' and takes them down' : ''} (${o.a} vs ${o.b}).`, 'hit');
-      } else log(enc, `${a.name}'s grapple fails (${o.a} vs ${o.b}).`, 'fail');
     }
   }
 
@@ -1206,9 +1349,7 @@
           c.stamina -= cost;
           log(enc, `${c.name} spends ${cost} stamina holding ${chars[c.status.grappling] ? chars[c.status.grappling].name : 'their foe'}.`);
         } else {
-          const t2 = chars[c.status.grappling];
-          if (t2) t2.status.grappledBy = t2.status.grappledBy.filter((g) => g !== c.id);
-          c.status.grappling = null;
+          clearGrapple(chars, c);
           log(enc, `${c.name} is too spent to keep the hold and lets go.`, 'fizzle');
         }
       }
@@ -1236,6 +1377,9 @@
       c.status.windUp = null;
       c.status.grappling = null;
       c.status.grappledBy = [];
+      c.status.clinch = null;
+      c.status.pinned = false;
+      c.status.grapplingPin = false;
       // Weapons on the ground are gathered up after the fight.
       if (c.status.dropped.length || c.wield == null) {
         c.status.dropped = [];
@@ -1247,6 +1391,6 @@
   G.Combat = {
     ATTACK_TYPES, DEFENSE_TYPES,
     createEncounter, autoPlace, startRound, currentActor, legalActions, declare, concede, endTurn, submit, describeDecl, passCap, passLeft,
-    projectedPos, posAtPass, dist, defenseOdds, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolvePass, resolveRound, endRound, cleanup, grappleStrength,
+    projectedPos, posAtPass, dist, defenseOdds, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolvePass, resolveRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

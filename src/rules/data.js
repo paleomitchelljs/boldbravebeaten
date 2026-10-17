@@ -138,10 +138,13 @@
     trip: { name: 'Trip', ap: 3, stamina: 2 },
     disarm: { name: 'Disarm', ap: 3, stamina: 2 },
     shove: { name: 'Shove', ap: 2, stamina: 1 },
-    grapple: { name: 'Grapple', ap: 3, stamina: 2 },
-    takedown: { name: 'Takedown', ap: 3, stamina: 2 },
-    escape: { name: 'Escape grapple', ap: 2, stamina: 1 },
-    release: { name: 'Release grapple', ap: 1, stamina: 0 },
+    // The grappling ladder (PROVISIONAL; stamina in CONFIG.grappling): free → clinch → hold → pin.
+    clinch: { name: 'Clinch', ap: 2, stamina: 3 },
+    grapple: { name: 'Grapple', ap: 3, stamina: 5 },
+    pin: { name: 'Pin', ap: 3, stamina: 5 },
+    throw: { name: 'Throw', ap: 3, stamina: 5 },
+    break: { name: 'Break grapple', ap: 2, stamina: 3 },
+    release: { name: 'Release hold', ap: 1, stamina: 0 },
     bandage: { name: 'Bandage', ap: 3, stamina: 0 },
     move: { name: 'Move', ap: 1, stamina: 0 },
     windUp: { name: 'Wind up', ap: 2, stamina: 1 }, // costs set in CONFIG.windUp
@@ -176,9 +179,9 @@
   feat(t, 'trip', 'Trip', [N], [], 'Better knockdown chance', true);
   feat(t, 'disarm', 'Disarm', [N], [], 'Better disarm chance', true);
   feat(t, 'grappler', 'Grappler', [N, A, D], [], '+1 grapple checks per rank', true);
-  feat(t, 'pin', 'Pin', [A], [['grappler:1']], "A grappled target can't block, parry, or dodge", true);
-  feat(t, 'dogpile', 'Dogpile', [A], [['grappler:1']], 'Your strength adds fully to a group grapple', true);
-  feat(t, 'takedown', 'Takedown', [D], [['trip:1'], ['grappler:2']], 'Grapple and knock prone in one action', true);
+  feat(t, 'pin', 'Pin', [A], [['grappler:1']], '+2 to pin a held foe and to keep a pinned one down', true);
+  feat(t, 'dogpile', 'Dogpile', [A], [['grappler:1']], 'Each ally next to your target adds +2 to your grapple rolls (not +1)', true);
+  feat(t, 'takedown', 'Takedown', [D], [['trip:1'], ['grappler:2']], 'Throw straight from a clinch, without a hold first', true);
   feat(t, 'joint_lock', 'Joint Lock', [E], [['pin:1']], 'Grapple deals STR or DEX damage', false);
   feat(t, 'human_shield', 'Human Shield', [E], [['grappler:3']], 'Block a strike with a grappled foe', false);
   feat(t, 'iron_grip', 'Iron Grip', [M], [['joint_lock:1']], "A grappled foe can't escape while you keep paying AP", false);
@@ -194,7 +197,7 @@
   feat(t, 'riposte', 'Riposte', [A], [['parry_training:1']], 'A successful parry grants a free thrust', true);
   feat(t, 'offhand_dagger', 'Off-hand Dagger', [A], [], 'Parry or strike with an off-hand dagger', false);
   feat(t, 'find_the_gap', 'Find the Gap', [D], [['precision:2']], 'More piercing passes through armor', true);
-  feat(t, 'coup_de_grace', 'Coup de Grâce', [D], [], 'Dagger vs. prone or grappled ignores armor', true);
+  feat(t, 'coup_de_grace', 'Coup de Grâce', [D], [], 'Dagger vs. prone or pinned ignores armor', true);
   feat(t, 'lunge', 'Lunge', [E], [['find_the_gap:1']], 'Thrust at +1 reach', true);
   feat(t, 'flurry', 'Flurry', [M], [['quick_thrust:3'], ['riposte:1']], 'Declare two thrusts as one action', false);
 
@@ -236,7 +239,7 @@
   feat(t, 'fleet_foot', 'Fleet Foot', [N, A, D], [], '+1 square per movement AP per rank', true);
   feat(t, 'stealth', 'Stealth', [N, A, D], [], '+1 stealth per rank', false);
   feat(t, 'kip_up', 'Kip-up', [N], [], 'Stand from prone for 1 AP', true);
-  feat(t, 'escape_artist', 'Escape Artist', [A], [], 'Bonus to escape grapples', true);
+  feat(t, 'escape_artist', 'Escape Artist', [A], [], '+2 to break a clinch, hold or pin', true);
   feat(t, 'slip_through', 'Slip Through', [A], [['fleet_foot:1']], 'Move past enemies without being grabbed', false);
   feat(t, 'roll_with_it', 'Roll With It', [D], [['dodge_training:2']], "A failed dodge halves the strike's damage", true);
   feat(t, 'counter_step', 'Counter-step', [E], [['dodge_training:3']], 'A successful dodge grants a free move', false);

@@ -139,11 +139,31 @@
       stamina: { none: 1, padded: 1, leather: 1, mail: 2, scale: 3, plate: 5 },
     },
 
-    // ---- Grappling stamina (PROVISIONAL, the user's call) ------------------
-    // Grappling is exhausting. Base stamina (× staminaScale) for grapple, takedown and escape,
-    // and an upkeep paid at the end of every round you hold someone; a grappler who can't pay
-    // it lets go. Specifics: grapple 2, escape 1, no upkeep.
-    grappling: { stamina: { grapple: 5, takedown: 6, escape: 3 }, holdUpkeep: 2 },
+    // ---- Grappling (PROVISIONAL, designed with the user) -------------------
+    // A ladder between two adjacent fighters: free → clinch (mutual) → hold → pin. Every step is a
+    // directly opposed roll, d10 + score each; guards never apply. Grapple score = ⌊STR/2⌋ +
+    // Grappler rank; breaking free uses ⌊max(STR, DEX)/2⌋ + Escape Artist (+2).
+    //   Clinch  (free → clinch; win by bigMargin → you hold them)
+    //   Grapple (clinch → you hold; by bigMargin → pin; lose by bigMargin → they hold you)
+    //   Pin     (hold → pin; lose by bigMargin → back to a clinch)
+    //   Throw   (from a hold or pin: they land prone a square away, the grapple ends; by
+    //            bigMargin they also take throwDamage blunt + STR bonus)
+    //   Break   (the lower side, or either side of a clinch: one step down; by bigMargin two
+    //            steps, or from a hold a reversal)
+    // Armor (option 4, the user's choice): plate is easy to grab — `handles` adds to the attacker's
+    // grapple and pin rolls — but hard to throw: footing (maneuver.armorStability) adds to the
+    // defender's roll against throws.
+    // Grappling is exhausting: base stamina per step (× staminaScale), and holdUpkeep at the end
+    // of every round you hold or pin someone; a holder who can't pay lets go.
+    grappling: {
+      stamina: { clinch: 3, grapple: 5, pin: 5, throw: 5, break: 3 },
+      holdUpkeep: 2,
+      bigMargin: 5,
+      handles: { mail: 1, scale: 1, plate: 2 },
+      throwDamage: 3,
+      pinBonus: 2, // Pin feat
+      dogpile: { perAlly: 1, withFeat: 2 },
+    },
 
     // ---- Shove (PROVISIONAL) ----------------------------------------------
     // Opposed d10 + ⌊STR/2⌋ (+2 two-handed weapon) vs d10 + footing. A win pushes the
@@ -266,7 +286,7 @@
       proneDamageBonus: 1, // "attacks against the target gain a bonus"
       proneDefenseExtraAP: 1, // "defensive actions cost more"
       grappledDefenseExtraAP: 1,
-      // Lean: piercing vs a prone or grappled armored target passes through fully
+      // Lean: piercing vs a prone or pinned armored target passes through fully (held is not enough)
       pronePassThrough: 1.0,
       dogpileFraction: 0.5, // extra grapplers add half their STR without the Dogpile feat
     },
@@ -320,7 +340,8 @@
     'Kick: opposed d10 + ⌊STR/2⌋; a kick knocks down only on a win by 3 or more. Trip wins on any margin.',
     'Disarm: d10 + ⌊DEX/2⌋ opposed (+2 for a two-handed grip). Grapple: d10 + ⌊STR/2⌋ + Grappler rank vs. d10 + ⌊max(STR,DEX)/2⌋.',
     'Prone: +1 damage to attacks against you, +1 AP on your defenses, no dodging. Grappled: +1 AP on defenses, no movement.',
-    'Trip and disarm each cost 3 AP and 2 stamina (base). Grappling is exhausting: grapple 3 AP and 5 stamina, takedown 6 stamina, escape 2 AP and 3 stamina, and holding someone costs 2 stamina at the end of every round (base; let go if you can\'t pay).',
+    'Trip and disarm each cost 3 AP and 2 stamina (base).',
+    'Grappling ladder: free → clinch → hold → pin, each step a directly opposed d10 roll (⌊STR/2⌋ + Grappler; breaking free may use ⌊max(STR, DEX)/2⌋ + Escape Artist). Win by 5+ for two steps; lose by 5+ and it can reverse. Clinch: both cramped with long weapons, no two-handed swings or bows, no stepping away without a break. Hold: the held fighter can\'t move and fights cramped with every weapon, dagger included; the holder keeps a dagger hand and can drag them a square. Pin: the pinned fighter can only try to break; piercing and a Coup de Grâce dagger go through their armor. Throw: from a hold or pin, prone a square away. Armor is easy to grab (+1 mail and scale, +2 plate to grapple and pin) but hard to throw (footing +1 / +2). Costs in base AP / stamina: clinch 2 / 3, grapple, pin and throw 3 / 5, break 2 / 3, and 2 stamina a round to keep a hold.',
     'Getting up from prone, base AP / stamina by armor: none, padded or leather 1 / 1; mail 2 / 2; scale 3 / 3; plate 4 / 5 (on the sheet: plate is 8 AP and about 15 stamina). Never more AP than your pool. Kip-Up: 1 AP.',
     'Movement costs only the armor stamina penalty, once per move action.',
     'Bandage: 3 AP (1 AP with Field Dressing) and uses one bandage.',

@@ -54,7 +54,7 @@
   }
 
   function freshStatus() {
-    return { prone: false, grappledBy: [], grappling: null, unconscious: false, dead: false, dropped: [], windUp: null };
+    return { prone: false, grappledBy: [], grappling: null, clinch: null, pinned: false, unconscious: false, dead: false, dropped: [], windUp: null };
   }
 
   // Bring older saves up to the current shape.
@@ -361,7 +361,12 @@
   function attackOptions(c) {
     const opts = [];
     const st = c.status || freshStatus();
+    // Holding or held: only grapple-usable weapons (a dagger) and no two-handed blows. In a clinch
+    // long weapons are merely cramped (range 1), but there's no room to swing two-handed or shoot.
+    // Pinned: nothing but trying to break free.
     const grappling = !!st.grappling || (st.grappledBy && st.grappledBy.length > 0);
+    const tangled = grappling || !!st.clinch;
+    if (st.pinned) return opts;
     const w = wieldedWeapon(c);
     if (w) {
       const def = WEAPONS[w.type];
@@ -370,11 +375,11 @@
         for (const motion of def.motions) {
           const m = MOTIONS[motion];
           if (m.requiresFeat && !rank(c, m.requiresFeat)) continue;
-          if (motion === 'shoot' && (grappling || st.prone)) continue;
+          if (motion === 'shoot' && (tangled || st.prone)) continue;
           // Lean: no two-handed attacks while carrying a shield.
           const twoHands = m.twoHands || (motion === 'power' && def.hands > 1) || def.hands === 2;
           if (twoHands && c.shield && c.shield.durability > 0 && def.hands !== 2) continue;
-          if (twoHands && grappling) continue;
+          if (twoHands && tangled) continue;
           for (const face of m.faces) {
             if (!def.faces[face]) continue;
             if (face === 'hilt' && !(def.sword && rank(c, 'murder_stroke'))) continue;
@@ -519,10 +524,12 @@
         if (curve) return { ap, stamina: staminaCost(c, curve.stamina[type], null, 0) };
         break;
       }
+      case 'clinch':
       case 'grapple':
-      case 'takedown':
-      case 'escape': {
-        if (kind !== 'escape') red = rank(c, 'brawlers_wind');
+      case 'pin':
+      case 'throw':
+      case 'break': {
+        if (kind !== 'break') red = rank(c, 'brawlers_wind');
         const g = CONFIG.grappling;
         if (g) return { ap: Math.max(CONFIG.minActionAP, ap), stamina: staminaCost(c, g.stamina[kind], null, red) };
         break;
