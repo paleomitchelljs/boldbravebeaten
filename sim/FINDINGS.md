@@ -1,5 +1,31 @@
 # Simulation findings
 
+## Ready a thrust, fend off, shoves spoil a move
+
+The user asked for a way to hold a foe off. **Ready a thrust:** on your turn you hold a long
+thrust ready, paying its AP now and its stamina only if you make it. It lasts the pass. A foe
+whose move brings them closer and into its reach is thrust at first, where they enter the reach.
+A hit stops the advance, and their guards meet it as usual. **Fend off:** a long weapon shoves
+at range 2, and a ready shield adds +1. **A shove that drives a foe back or floors them spoils
+their move that pass.**
+
+The AI readies only against a move a foe has already declared this pass. A foe still to act
+would see the point and wait: with speculative readies, mirror matches in close quarters stood
+off and timed out every fight. So the advantage goes to whoever acts later, as the user wants.
+When planning a distance, the AI counts the cost of walking past a long thrust (half its rate,
+once). It puts up a guard before stepping onto a point it can see, or doesn't step.
+
+Unarmored sword and two-hander duels (320 fights): fights where someone drew the dagger 240 → 65;
+fighters met a readied point 310 times and were stopped 131 times; mean length 1.57 → 1.24
+rounds. All unarmored pairings (2,000): both die 2% (34% in the sword-and-shield mirror in the
+open, the same pass); no timeouts.
+
+Arena by style, open field / close quarters, weapon pass → now: two-handed 48 → 49 / 47 → 58%;
+sword and shield 61 → 59 / 66 → 62%; grappler 33 → 33 / 45 → 41%; archery 49 → 49 / 32 → 32%.
+In close quarters the greatsword's reach-3 point holds the line. Parties against groups
+recovered some (veterans, open / room): kobold band 60/53 → 80/48%, wolf pack 90/50 → 90/83%.
+Skeletons and zombies don't care: they're tireless and immune to the point.
+
 ## Weapons from physics and the wound roll (`CONFIG.weaponModel: 'physical'`)
 
 Each weapon has a mass, a length, hands and a point (depth, width), an edge or a head

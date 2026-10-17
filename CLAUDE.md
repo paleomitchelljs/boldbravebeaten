@@ -58,11 +58,11 @@ Characters who spend early sit out the last passes.
 - Weapons come from physics (`weaponModel: 'physical'`, `Items.weaponStats`): mass, length,
   point/edge/head give damage, AP, STR scaling and wounds; a d10 wound roll can be vital; armor
   guards the vitals. Go through `Items.weaponStats(item)`, never the catalog's numbers directly.
+- Ready a thrust (stop-thrust), fend off at range 2, and shoves that spoil a move are built.
 - Don't tune individual monsters; experiments are about fundamentals for now.
 
 ## Waiting on the user
 
-0. **Daggers inside a sword's reach:** the AI still closes in with one; a reach rule is open.
 1. **The cap.** Keep it at 4, change it to 6, or adjust two-handed costs?
 2. **Item materials, maker tags and keywords.** The proposal is in HANDOFF.md; build only after
    the user approves.

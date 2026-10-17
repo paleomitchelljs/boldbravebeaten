@@ -187,11 +187,15 @@ Bleeding of a piercing wound scales with width and lasts longer with depth. The 
 and vital odds. Tests that check old weapon numbers use `tableWeapons()`. Before-pass arena:
 `sim/results/arena-r9base`.
 
+## Holding a foe off (round 9)
+
+`readyStrike` declarations (HELD_TYPES, like guards): `Combat.stopThrusts` runs in move resolution.
+`CONFIG.readyStrike`; `CONFIG.shove.fendReach` (2) and `shieldBonus`; `enc.disrupted` spoils the
+move of a foe shoved back (reset each pass). AI: `readyChoice` (only against a declared move),
+`approach` (guard before walking onto a visible point), `entryCost` in `preferredDistance`.
+
 ## Open questions awaiting the user
 
-0. **Daggers inside reach.** The AI still closes inside a sword's reach with a dagger (the sword
-   only jabs at half force there). A reach rule (stop-thrust on someone entering your reach, or
-   half-swording without a feat) is the user's call.
 1. **The AP cap.** On trial at 4 AP per pass; 6 balanced better with guards.
 2. **Item materials, maker tags and keywords.** Proposal below; build only after approval.
 3. **Pass system revision.** The user likes the timeline and faster-first ideas but wants
