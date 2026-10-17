@@ -176,8 +176,22 @@ Monster attributes go past the human range (1–10, 13 with Conditioning; `CONFI
 30): troll 20/18 STR/CON, owlbear 18/16, golem 22/22, chieftain 24/24 (boss ×2 AP only),
 sarnak 12/11, displacer 12/11. Formulas run on the raw number. Pre-change results: `sim/results/monsters-r8`.
 
+## Weapons from physics (round 9)
+
+`CONFIG.weaponModel: 'physical'` (switch back with 'table'). Each non-natural weapon has `phys`
+(mass, length, point {depth, width}, edge, head, beak, hilt; bows `arrow`). `Items.weaponStats(item)`
+derives faces, speed factors (AP), weight class, STR multipliers per motion and wounds per face;
+`inputsFor`/`outputsFor` there are the hooks for materials and enchantments. Wound roll: d10 vs
+`CONFIG.vital` (piercing depth/100, cuts edge/10; armor guards the vitals; pinned opens them).
+Bleeding of a piercing wound scales with width and lasts longer with depth. The AI values bleed
+and vital odds. Tests that check old weapon numbers use `tableWeapons()`. Before-pass arena:
+`sim/results/arena-r9base`.
+
 ## Open questions awaiting the user
 
+0. **Daggers inside reach.** The AI still closes inside a sword's reach with a dagger (the sword
+   only jabs at half force there). A reach rule (stop-thrust on someone entering your reach, or
+   half-swording without a feat) is the user's call.
 1. **The AP cap.** On trial at 4 AP per pass; 6 balanced better with guards.
 2. **Item materials, maker tags and keywords.** Proposal below; build only after approval.
 3. **Pass system revision.** The user likes the timeline and faster-first ideas but wants

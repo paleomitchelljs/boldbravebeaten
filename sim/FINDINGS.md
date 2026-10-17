@@ -1,5 +1,40 @@
 # Simulation findings
 
+## Weapons from physics and the wound roll (`CONFIG.weaponModel: 'physical'`)
+
+Each weapon has a mass, a length, hands and a point (depth, width), an edge or a head
+(`data.js` `phys`). `Items.weaponStats(item)` works out the faces, AP speed, weight class, STR
+multiplier and wounds from those. Every rules reader goes through it, so materials and enchantments
+can act on its inputs or outputs later. `weaponModel: 'table'` brings back the hand-set values.
+A blow that reaches the body rolls a d10 wound roll (vital = ×3 CON, double bleeding; vital cuts
+take their damage again from CON), and armor guards the vitals. Baseline: `results/arena-r9base`.
+
+One blow on an unarmored CON-9 target, killed outright / killed if the bleeding goes untended
+(4,000 trials per row, engine code):
+
+| | STR 5 | STR 13 | vs mail, STR 13 | Old table, STR 5 |
+|---|---|---|---|---|
+| Dagger thrust (3 AP) | 10 / 10% | 9 / 9% | 0 / 0% | 0 / 100% |
+| Rapier thrust (4) | 20 / 20% | 20 / 100% | 0 / 0% | 0 / 100% |
+| Longsword thrust (4) | 20 / 100% | 20 / 100% | 0 / 11% | 0 / 100% |
+| Longsword cut (6) | 2 / 26% | 9 / 100% | 0 / 0% | 0 / 55% |
+| Greatsword thrust (4) | 31 / 100% | 100 / 100% | 0 / 74% | 0 / 100% |
+| Spear thrust (4) | 30 / 100% | 100 / 100% | 0 / 73% | 0 / 100% |
+| Warhammer beak (6) | 21 / 21% | 100 / 100% | 0 / 8% | 0 / 100% |
+
+Arena (40 fights per pairing), average win rate by style, open field / close quarters, before →
+after: two-handed 45 → 48 / 37 → 47%; sword and shield 57 → 61 / 61 → 66%; grappler 44 → 33 /
+60 → 45%; archery 49 → 49 / 36 → 32%. Grapplers lose the most because their dagger now does 3
+rather than 5. Letting a pin open the armor's guard on the vitals (`vital.pinnedOpensArmor`) moved
+them less than a point.
+
+Unarmored duels (all style pairings, 2,000 fights): both die 2% → 0%; at least one dead counting
+untended bleeding 95% → 87%.
+
+The AI still steps inside a sword's reach with a dagger. At range 2 its rate is 40 but the foe's
+threat is just as high; at range 1 the foe's sword is a half-force blunt jab, and the dagger's
+rate is 20 against a threat of 3. That's a reach and positioning rule question, not damage.
+
 ## Monster attributes past the human range
 
 Humans run 1–10, 13 with Conditioning feats. Big creatures now go past that (CONFIG.monsterAttrMax 30,
