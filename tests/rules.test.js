@@ -594,6 +594,7 @@ test('a longbow must be drawn a round ahead; an archer can redraw after loosing'
 test('a blocked power swing breaks a shield of equal or softer material and drives through', async () => {
   const run = async (material, quality) => {
     const a = armed('Heavy', 'greatsword');
+    a.base.STR = 7; // a greatsword wants a strong wielder (weapon strain)
     a.feats.power_swing = 1;
     a.status.windUp = null;
     const b = armed('Shield', 'longsword');
@@ -1521,4 +1522,21 @@ test('size: a man-sized wound bleeds a giant less, and its vitals are harder to 
   await Combat.applyHit(enc, chars, man, giant, thrust, roller(10, []), {});
   const bled = (c) => c.bleeds.reduce((t, b) => t + b.remaining, 0);
   assert.ok(bled(giant) < bled(plain), `giant bleeds ${bled(giant)}, a man ${bled(plain)}`);
+});
+
+test('weapon strain: strength never speeds a light weapon, makes a heavy one functional, and a weapon far too heavy is unusable', () => {
+  const swingAP = (type, str) => {
+    const c = fighter('W');
+    c.base.STR = str;
+    const w = Items.makeWeapon(type, 'standard');
+    c.weapons.push(w);
+    c.wield = w.id;
+    const o = C.attackOptions(c).find((x) => x.weaponId === w.id && (x.motion === 'swing' || x.motion === 'twoHanded'));
+    return o ? o.ap : null;
+  };
+  assert.equal(swingAP('rapier', 5), swingAP('rapier', 15), 'no faster with more STR');
+  assert.ok(swingAP('greatsword', 4) > swingAP('greatsword', 7), 'a weak wielder strains');
+  assert.equal(swingAP('greatsword', 10), swingAP('greatsword', 20), 'past capacity, natural speed');
+  assert.equal(swingAP('giantClub', 6), null, 'a giant\'s club is beyond a man');
+  assert.ok(swingAP('giantClub', 23) <= swingAP('greatsword', 10), 'an ogre swings it like a sword');
 });

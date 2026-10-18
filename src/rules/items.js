@@ -183,10 +183,13 @@
       wound.hilt = { kind: 'B', vital: 0, bleed: 1, rounds: CONFIG.bleedRounds };
     }
     const refMl = Math.sqrt(X.ref.mass * X.ref.length);
+    // Natural speed (no STR in it): lighter and shorter is quicker; heavier is a matter of strain
+    // (Character.strikeOption), not of the weapon alone. Load: what the wielder must move.
     const speed = {
-      thrust: 1 + X.thrustSlope * (ph.mass / grip / X.ref.mass - 1),
-      swing: 1 + X.swingSlope * (Math.sqrt(ml) / refMl - 1),
+      thrust: 1 + X.thrustSlope * (Math.min(1, ph.mass / grip / X.ref.mass) - 1),
+      swing: 1 + X.swingSlope * (Math.min(1, Math.sqrt(ml) / refMl) - 1) + (X.reachSlope || 0) * Math.max(0, ph.length / X.ref.length - 1),
     };
+    const load = { thrust: ph.mass, swing: ph.mass * ph.length / X.ref.length };
     const weight = X.weightClass.find(([max]) => ph.mass < max)[1];
     const width = (ph.point || ph.beak || {}).width || 0;
     const swingMult = (g) => Math.min(X.str.max, (ph.mass * g) / X.str.swingRefMass);
@@ -200,7 +203,7 @@
     // Natural weapons are the body itself: STR counts in full, and the effort is the creature's
     // (the catalog's weight class), not a carried mass.
     if (def.natural) for (const m of Object.keys(strMult)) if (m !== 'shoot') strMult[m] = 1;
-    return { faces, weight: def.natural ? def.weight : weight, speed, strMult, wound, model: 'physical' };
+    return { faces, weight: def.natural ? def.weight : weight, speed, load, strMult, wound, model: 'physical' };
   }
 
   G.Items = { weaponStats, uid, makeArmor, makeShield, makeWeapon, armorBase, armorMaxDurability, shieldStats, itemName, itemRarity };

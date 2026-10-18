@@ -386,6 +386,7 @@
     if (e.kind === 'strike' && !o.spell) {
       const range = (o.minRange === o.maxRange ? `${o.maxRange}` : `${o.minRange}–${o.maxRange}`) + (o.closePenalty ? (G.CONFIG.range.closeRule === 'blunt' ? ' (half force, blunt, at 1)' : ' (half at 1)') : '');
       rows.unshift(['Weapon', e.weapon ? Items.itemName(e.weapon) : 'Unarmed'], ['Damage', `P/S/B ${o.damage.join('/')}`], ['Range', range]);
+      if (o.strain > 1) rows.push(['Strain', `${o.strain.toFixed(1)}× your strength: slow and tiring (AP and stamina ×${(o.strain * o.strain).toFixed(1)})`]);
       if (o.windUp) notes.push('Needs a wind-up the round before (under Other).');
     } else if (o && o.spell) {
       const s = o.spell;

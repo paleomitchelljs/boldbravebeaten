@@ -489,7 +489,7 @@
     }
     const t = webTax(c);
     if (t.ap || t.stamina) for (const o of opts) { o.ap += t.ap; o.stamina += t.stamina; }
-    return opts;
+    return opts.filter((o) => !o.tooHeavy);
   }
 
   // A free hand to cast with, or Battle Casting (cast with sword and shield in hand).
@@ -516,6 +516,18 @@
     return ((CONFIG.windUp && CONFIG.windUp.motions) || []).includes(motion);
   }
 
+  // How hard this weapon is for this wielder in this motion: load / capacity (1 = at the limit
+  // of a functional swing). Natural weapons are the body itself: 0.
+  function weaponStrain(c, w, motion) {
+    const def = Items.weaponStats(w);
+    const X = CONFIG.weaponPhysics;
+    if (def.model !== 'physical' || def.natural || !def.load || !X.strain) return 0;
+    const raw = G.DATA.WEAPONS[w.type] || {};
+    const twoHands = raw.hands === 2 || motion === 'twoHanded' || motion === 'power';
+    const cap = Math.max(0.1, attr(c, 'STR')) * X.strain.kgPerStr * (twoHands ? X.grip : 1) * (1 + X.strain.perTraining * rank(c, 'heavy_weapon_training'));
+    return (motion === 'thrust' ? def.load.thrust : def.load.swing) / cap;
+  }
+
   function strikeOption(c, w, face, motion) {
     const def = Items.weaponStats(w);
     const m = MOTIONS[motion];
@@ -525,16 +537,21 @@
     let baseSt = motion === 'shoot' && def.shootStamina != null ? def.shootStamina : m.stamina;
     if (windUp) { baseAP -= W.ap; baseSt -= W.stamina; }
     let ap = baseAP * apScale();
+    let strain = 0, strainF = 1;
     if (def.model === 'physical') {
-      // Heavier, longer weapons are slower (Items.weaponStats speed factors).
-      if (motion !== 'shoot') ap = Math.round(ap * (motion === 'thrust' ? def.speed.thrust : def.speed.swing));
+      // Natural speed, then strain: the weapon's load against this wielder's strength.
+      if (motion !== 'shoot') {
+        strain = weaponStrain(c, w, motion);
+        strainF = strain > 1 ? Math.pow(strain, CONFIG.weaponPhysics.strain.exp) : 1;
+        ap = Math.round(ap * (motion === 'thrust' ? def.speed.thrust : def.speed.swing) * strainF);
+      }
     } else if (def.weight === 'very light' && (motion === 'thrust' || motion === 'swing')) ap -= CONFIG.veryLightApDiscount;
     if (motion === 'thrust') ap -= rank(c, 'quick_thrust');
     if (motion === 'twoHanded' || motion === 'power') ap -= rank(c, 'heavy_tempo');
     ap = Math.max(CONFIG.minActionAP, CONFIG.minStrikeAP || 0, ap);
     let red = 0;
     if (isLightWeapon(w) && (motion === 'thrust' || motion === 'swing')) red += rank(c, 'light_touch');
-    const stamina = Math.max(CONFIG.minStrikeStamina || 0, staminaCost(c, Math.max(0, baseSt), effectiveWeight(c, w), red));
+    const stamina = Math.round(strainF * Math.max(CONFIG.minStrikeStamina || 0, staminaCost(c, Math.max(0, baseSt), effectiveWeight(c, w), red)));
     // Range band.
     let minRange = 1, maxRange = def.reach, closePenalty = !def.closeOK, ranged = false;
     if (motion === 'thrust') {
@@ -565,6 +582,7 @@
       kind: 'strike', weaponId: w.id, weaponType: w.type, face, motion, ap, stamina,
       natural: !!def.natural, knockdown: trait.knockdown || null, venom: trait.venom || null, rust: trait.rust || null, shieldCrush: !!trait.shieldCrush, web: trait.web || null,
       reach: maxRange, minRange, maxRange, closePenalty, ranged, longRange: ranged ? def.ranged.long : null,
+      strain: Math.round(strain * 100) / 100, tooHeavy: strain > CONFIG.weaponPhysics.strain.max,
       windUp, damage: weaponDamage(c, w, face, motion), wound: def.wound[face] || null,
       label: def.natural ? `${def.name}${motion === 'power' ? ' (power)' : ''}` : `${m.name} (${face})`,
     };
@@ -740,7 +758,7 @@
     newCharacter, normalize, freshStatus,
     rank, featCount, featBudget, treeCount, tierCount, tierName, canTakeFeat, canRemoveFeat, addFeat, removeFeat, reqText, roman,
     conditioning, attr, attrMax, combatAttr, armorInfo, shieldInfo, shieldReady, wieldedWeapon, offhandWeapon,
-    maxStamina, regen, fatiguePenalty, apPool, apScale, moveCost, squaresPerAP, handsBusy, castingHands, trinketAP, inRange, optionKey, needsWindUp, strOffset, staminaCost, effectiveWeight, isLightWeapon,
+    maxStamina, regen, fatiguePenalty, apPool, apScale, moveCost, squaresPerAP, handsBusy, castingHands, trinketAP, weaponStrain, inRange, optionKey, needsWindUp, strOffset, staminaCost, effectiveWeight, isLightWeapon,
     strBonus, weaponDamage, mainIndex, attackOptions, actionCost, ammoLeft, tireless, webTax,
     damageAttr, healAttr, totalDamage, updateCondition, isActive, bleedPerRound,
     TREES, ARMOR,
