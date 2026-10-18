@@ -118,6 +118,11 @@
       faces: { point: [5, 0, 0], edge: [0, 7, 1], hilt: [0, 0, 5] }, motions: ['thrust', 'swing', 'twoHanded'],
       sword: true, rarity: 'uncommon', notes: 'Versatile; half-sword and murder stroke work up close.',
     },
+    warScythe: {
+      phys: { mass: 2.2, length: 1.9, edge: 1.0 },
+      name: 'War scythe', hands: 2, weight: 'heavy', reach: 3, reachName: 'long', material: 'steel',
+      faces: { edge: [0, 10, 2] }, motions: ['twoHanded', 'power'], rarity: 'very rare', notes: 'A reaping blade on a long haft; no thrust.',
+    },
     greatsword: {
       phys: { mass: 2.5, length: 1.6, point: { depth: 30, width: 5 }, edge: 1, hilt: true },
       name: 'Greatsword', hands: 2, weight: 'heavy', reach: 3, reachName: 'long', material: 'steel',
@@ -161,6 +166,11 @@
     //   rust       — no damage; corrodes metal armor (or a blocking metal shield) by `rust` durability
     //   shieldCrush — every blow caught on a shield counts as a power blow (can break it, drives through)
     //   web        — no damage; sticks a layer of web on the target (CONFIG.web): every action costs more
+    ratBite: {
+      phys: { mass: 0.12, length: 0.1, point: { depth: 7, width: 2.5 } },
+      name: 'Bite', hands: 1, weight: 'very light', reach: 1, reachName: 'close', closeOK: true, natural: true, grappleUsable: true,
+      faces: { point: [2, 0, 0] }, motions: ['thrust'], rarity: 'common',
+    },
     wolfBite: {
       phys: { mass: 0.6, length: 0.3, point: { depth: 10, width: 4 } },
       name: 'Bite', hands: 1, weight: 'light', reach: 1, reachName: 'close', closeOK: true, natural: true, grappleUsable: true,

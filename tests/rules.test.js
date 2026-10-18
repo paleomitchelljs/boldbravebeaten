@@ -1452,3 +1452,25 @@ test('death knight: his aura of dread saps foes near him each round; the silk sa
   assert.equal(far.stamina, st2);
   assert.ok(!B.Conditions.has(far, 'dread'));
 });
+
+test('spectre: ordinary weapons pass through; magical weapons and spells hurt it', async () => {
+  const [sp] = B.Enemies.makeMonster('spectre');
+  assert.ok(sp.traits.incorporeal && C.tireless(sp));
+  const swordsman = fighter('Swordsman');
+  const w = Items.makeWeapon('longsword', 'standard');
+  swordsman.weapons.push(w);
+  swordsman.wield = w.id;
+  const thrust = C.attackOptions(swordsman).find((o) => o.weaponId === w.id && o.motion === 'thrust');
+  const chars = { [sp.id]: sp, [swordsman.id]: swordsman };
+  const enc = Combat.createEncounter('t', Object.keys(chars), chars, 6, 3);
+  const plain = await Combat.applyHit(enc, chars, swordsman, sp, thrust, roller(10, []), {});
+  assert.match(plain.text, /passes through/);
+  assert.equal(C.totalDamage(sp), 0);
+  w.magical = true;
+  await Combat.applyHit(enc, chars, swordsman, sp, thrust, roller(1, []), {});
+  assert.ok(C.totalDamage(sp) > 0, 'a magical blade bites');
+  // No grabbing or tripping a ghost.
+  enc.pos[sp.id] = { x: 2, y: 1 }; enc.pos[swordsman.id] = { x: 1, y: 1 };
+  const la = Combat.legalActions(enc, chars, swordsman.id);
+  for (const m of la.maneuvers.filter((m) => !['bait', 'readIntent'].includes(m.type))) assert.ok(!m.targets.some((t) => t.inReach), m.type);
+});

@@ -219,6 +219,12 @@
       attrs: { STR: 6, CON: 6, DEX: 7, SPD: 8, INT: 3, WIS: 6, CHA: 3 },
       natural: ['alphaBite'], armor: 'fur', traits: { pack: 2 }, feats: { dodge_training: 1, toughness: 1 },
     },
+    rat: {
+      name: 'Giant rat', blurb: 'A dog-sized rat: quick, weak, a nuisance alone.',
+      attrs: { STR: 3, CON: 3, DEX: 7, SPD: 7, INT: 1, WIS: 4, CHA: 1 },
+      natural: ['ratBite'], traits: { pack: 1, staminaMult: 0.35 }, feats: {},
+    },
+    ratPack: { name: 'Rat swarm', blurb: 'Six giant rats: each bite is nothing; a dozen a round is something.', group: ['rat', 'rat', 'rat', 'rat', 'rat', 'rat'] },
     wolfPack: { name: 'Wolf pack', blurb: 'An alpha and two wolves. Surround, drag down, tear.', group: ['alphaWolf', 'wolf', 'wolf'] },
     rustBeetle: {
       name: 'Rust beetle', blurb: 'Its antennae turn metal armor to flaking rust. Meant to beat plate; harmless-looking to the unarmored.',
@@ -317,6 +323,16 @@
       featPrefs: ['casting', 'verb_strike', 'verb_launch', 'casting', 'verb_burst', 'verb_bless', 'battle_casting', 'verb_conjure', 'mod_strong', 'casting',
         'plate_mobility', 'plate_mobility', 'shield_training', 'half_swording', 'plate_endurance', 'shield_training', 'quick_block', 'iron_stance', 'plate_endurance',
         'living_fortress', 'strength', 'toughness', 'parry_training', 'riposte', 'casting', 'control', 'quick_casting', 'half_swording'],
+    },
+    // A high-level undead: only magic hurts it (incorporeal: weapons without an enchantment pass
+    // through), a scythe that drinks life, and a wail that panics those near it (WIL resists).
+    spectre: {
+      name: 'Spectre', blurb: 'A high-level undead. Only spells and magical weapons hurt it; its scythe drinks life; its wail panics the living near it.',
+      level: 15, attrs: { STR: 10, CON: 14, DEX: 9, SPD: 9, INT: 9, WIL: 12, WIS: 8, CHA: 10 },
+      natural: [], keepUnarmed: false,
+      weaponItems: [{ type: 'warScythe', quality: 'legendary', name: 'Reaping scythe', enchant: { drain: { stamina: 0.5, attrs: 0.5 } } }],
+      traits: { tireless: true, undead: true, incorporeal: true, aura: { name: 'wail', radius: 2, cond: 'frightened', resisted: true } },
+      featPrefs: ['heavy_weapon_training', 'power_swing', 'heavy_tempo', 'dodge_training', 'dodge_training', 'dodge_training', 'parry_training', 'parry_training', 'parry_training', 'quick_parry', 'agility', 'agility', 'toughness', 'toughness', 'heavy_tempo', 'riposte', 'iron_stance'],
     },
     deathKnightCourt: { name: 'Death knight and his dead', blurb: 'The death knight with two skeletons at his side.', group: ['deathKnight', 'skeleton', 'skeleton'] },
   };

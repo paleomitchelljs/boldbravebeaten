@@ -103,11 +103,18 @@ ul.plain { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column
   <header class="head">
     <span class="eyebrow">Bold Brave Beaten · simulation</span>
     <h1>The Gauntlet</h1>
+    <div class="pick" id="levelPick" hidden><span class="small muted">Party</span><div class="seg" id="level" role="group" aria-label="Party level"></div></div>
     <div class="pick"><span class="small muted">Mode</span><div class="seg" id="mode" role="group" aria-label="Mode"></div></div>
     <p class="muted" id="modeBlurb"></p>
     <p class="lead" id="lead"></p>
     <p class="small muted" id="meta"></p>
   </header>
+
+  <section id="byLevel" hidden>
+    <h2>Early, mid and high adventurers</h2>
+    <p class="muted">Mean rooms each lineup gets through, by party level. Attrition: rooms cleared in a row. Reset: rooms won by a fresh party. Darker is further.</p>
+    <div class="card scroll" id="levelTable"></div>
+  </section>
 
   <section>
     <h2 id="curvesTitle"></h2>
@@ -146,18 +153,27 @@ ul.plain { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column
 </main>
 
 <script>
-const DATA = /*__DATA__*/null;
+const ALL = /*__DATA__*/null;
+// One run (DATA) or several party levels (ALL.levels: { 2: run, 6: run, 15: run }).
+const LEVEL_KEYS = ALL.levels ? Object.keys(ALL.levels).sort((a, b) => a - b) : null;
 const $ = (id) => document.getElementById(id);
 const pct = (x) => (x == null ? '—' : Math.round(100 * x) + '%');
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const R = DATA.rooms, M = DATA.members;
+let DATA = null, R = null, M = null;
 const short = (m) => M[m].label.split(' (')[0];
 // Color follows the lineup across the page.
 const COLOR = { core: 'var(--base)', mage: 'var(--s1)', enchanter: 'var(--s2)', grappler: 'var(--s3)', duelist: 'var(--s4)', noKnight: 'var(--s5)', noTwoHander: 'var(--s6)', noArcher: 'var(--s7)', cleric: 'var(--s8)' };
 const store = { get: (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } };
+let level = LEVEL_KEYS ? (LEVEL_KEYS.includes(store.get('gauntlet-level')) ? store.get('gauntlet-level') : LEVEL_KEYS[Math.floor(LEVEL_KEYS.length / 2)]) : null;
+function useLevel() {
+  DATA = LEVEL_KEYS ? ALL.levels[level] : ALL;
+  R = DATA.rooms; M = DATA.members;
+}
+useLevel();
 let mode = DATA.modes[store.get('gauntlet-mode')] ? store.get('gauntlet-mode') : Object.keys(DATA.modes)[0];
 let cur = null;
 const reset = () => mode === 'reset';
+const campsAfter = () => DATA.campsAfter || (DATA.campAfter != null ? [DATA.campAfter] : []);
 
 // ---- Charts: one line per lineup over the rooms ------------------------------------------
 // Attrition: share of runs that cleared at least k rooms (k = 0…8). Reset: win rate in room k.
@@ -255,13 +271,13 @@ function drawLineup() {
       const where = s.diedIn.map((v, i) => [v, i]).sort((a, b) => b[0] - a[0])[0];
       return `<tr><td><b>${esc(short(k))}</b> <span class="small muted">${esc(M[k].label.split(' (')[1] ? '(' + M[k].label.split(' (')[1] : '')}</span></td><td class="n">${bar(s.shareAttrs, maxShare)}</td><td class="n">${s.downs.toFixed(1)} <span class="muted">(${pct(s.shareDowns)})</span></td><td class="n">${s.dealtAttrs.toFixed(1)}</td><td class="n">${s.dealtStamina.toFixed(1)}</td><td class="n">${s.takenAttrs.toFixed(1)}</td><td class="n">${reset() ? s.deathRate.toFixed(2) : pct(s.deathRate)}</td><td>${where[0] > 0 ? esc(R[where[1]].name) : '—'}</td></tr>`;
     }).join('')}</tbody></table>
-    <p class="small muted">Per run${reset() ? ' (eight fights, each with a fresh party)' : ''}. Wounds are attribute points (mostly CON) from blows and spells; bleeding, poison and hazards aren't credited to anyone. A foe is credited to whoever landed the blow that dropped it.</p>`;
+    <p class="small muted">Per run${reset() ? ` (${R.length} fights, each with a fresh party)` : ''}. Wounds are attribute points (mostly CON) from blows and spells; bleeding, poison and hazards aren't credited to anyone. A foe is credited to whoever landed the blow that dropped it.</p>`;
   $('rooms').innerHTML = R.map((room, i) => {
     const s = l.roomStats[i];
     const w = room.map[0].length;
     const cellsHtml = room.map.join('').split('').map((ch) => `<i class="${TILE_CLASS[ch] || ''}"></i>`).join('');
     const deaths = s.reached ? `<div class="deaths" aria-label="Who dies here">${l.members.map((m) => `<div><span>${esc(short(m))}</span><span class="track"><span style="width:${(s.memberDeaths[m] || 0) * 100}%"></span></span><span class="v">${pct(s.memberDeaths[m])}</span></div>`).join('')}</div>` : '';
-    return `<div class="card room"><h3><span class="k">${i + 1}</span>${esc(room.name)}${!reset() && i === DATA.campAfter ? ' <span class="small muted" style="font-family:var(--font-body);font-weight:500">after camp</span>' : ''}</h3>
+    return `<div class="card room"><h3><span class="k">${i + 1}</span>${esc(room.name)}${!reset() && campsAfter().includes(i) ? ' <span class="small muted" style="font-family:var(--font-body);font-weight:500">after camp</span>' : ''}</h3>
       <div class="mini" style="grid-template-columns:repeat(${w},1fr)" role="img" aria-label="Map of ${esc(room.name)}">${cellsHtml}</div>
       <p class="small">${esc(room.blurb)} <span class="muted">${esc(room.foeNames.join(', '))}.</span></p>
       <div class="stats">${reset() ? '' : `<span>Reached <b>${pct(s.reached / DATA.n)}</b></span>`}<span>Won ${reset() ? '' : 'there '}<b>${s.reached ? pct(s.cleared / s.reached) : '—'}</b></span><span>Rounds <b>${s.rounds == null ? '—' : s.rounds.toFixed(1)}</b></span></div>
@@ -269,7 +285,29 @@ function drawLineup() {
   }).join('');
 }
 
+// Across levels: rows lineups, columns level × mode, shaded by share of rooms.
+function drawLevels() {
+  if (!LEVEL_KEYS) return;
+  $('byLevel').hidden = false;
+  const modes = Object.keys(ALL.levels[LEVEL_KEYS[0]].modes);
+  const lineups = Object.keys(ALL.levels[LEVEL_KEYS[0]].modes[modes[0]].lineups);
+  const nRooms = ALL.levels[LEVEL_KEYS[0]].rooms.length;
+  const cell = (v) => {
+    const f = v / nRooms;
+    return `<td class="n" style="background:color-mix(in srgb, var(--s1) ${Math.round(f * 85)}%, var(--surface));color:${f > 0.55 ? 'var(--surface)' : 'var(--ink)'}">${v.toFixed(1)}</td>`;
+  };
+  $('levelTable').innerHTML = `<table class="data"><thead><tr><th rowspan="2">Lineup</th>${modes.map((m) => `<th colspan="${LEVEL_KEYS.length}" style="text-align:center">${esc(ALL.levels[LEVEL_KEYS[0]].modes[m].label)}</th>`).join('')}</tr>
+    <tr>${modes.map(() => LEVEL_KEYS.map((k) => `<th class="n">L${k}</th>`).join('')).join('')}</tr></thead><tbody>
+    ${lineups.map((lk) => `<tr><td>${esc(ALL.levels[LEVEL_KEYS[0]].modes[modes[0]].lineups[lk].label)}</td>${modes.map((m) => LEVEL_KEYS.map((k) => cell(ALL.levels[k].modes[m].lineups[lk].meanCleared)).join('')).join('')}</tr>`).join('')}</tbody></table>
+    <p class="small muted">Out of ${nRooms} rooms. Early: level 2, standard gear. Mid: level 6, fine gear. High: level 15, masterwork gear and magical weapons.</p>`;
+}
+
 function render() {
+  if (LEVEL_KEYS) {
+    $('levelPick').hidden = false;
+    $('level').innerHTML = LEVEL_KEYS.map((k) => `<button type="button" data-k="${k}" aria-pressed="${k === level}">${esc(ALL.levels[k].levelLabel.split(' (')[0].replace(' adventurers', ''))} · L${k}</button>`).join('');
+    $('level').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { level = b.dataset.k; store.set('gauntlet-level', level); useLevel(); render(); }));
+  }
   const D = DATA.modes[mode], L = D.lineups;
   $('mode').innerHTML = Object.entries(DATA.modes).map(([k, v]) => `<button type="button" data-k="${k}" aria-pressed="${k === mode}">${esc(v.label)}</button>`).join('');
   $('mode').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { mode = b.dataset.k; store.set('gauntlet-mode', mode); render(); }));
@@ -282,11 +320,11 @@ function render() {
   } else {
     const furthest = Math.max(...Object.values(L).map((l) => l.clear.findLastIndex((x) => x > 0) + 1));
     $('lead').textContent = `${best.label} gets furthest, clearing ${best.meanCleared.toFixed(1)} of ${R.length} rooms on average; ${worst.label.toLowerCase()} clears ${worst.meanCleared.toFixed(1)}. ` +
-      (best.fullClear > 0 ? `${pct(best.fullClear)} of its runs clear every room.` : `No run has cleared all eight; the deepest any run got was room ${Math.min(furthest + 1, R.length)}, ${R[Math.min(furthest, R.length - 1)].name}.`);
+      (best.fullClear > 0 ? `${pct(best.fullClear)} of its runs clear every room.` : `No run has cleared all ${R.length}; the deepest any run got was room ${Math.min(furthest + 1, R.length)}, ${R[Math.min(furthest, R.length - 1)].name}.`);
   }
   $('meta').textContent = `${DATA.n} runs per lineup per mode, the same seeds for every lineup · ${DATA.seconds} s · generated ${DATA.generated.slice(0, 10)}`;
   $('curvesTitle').textContent = reset() ? 'How each room goes at full strength' : 'How far each party gets';
-  $('curvesNote').textContent = reset() ? 'Win rate in each room for a fresh, full-strength party.' : `Share of runs that cleared at least this many rooms. The party camps (a long rest) after room ${DATA.campAfter}.`;
+  $('curvesNote').textContent = reset() ? 'Win rate in each room for a fresh, full-strength party.' : `Share of runs that cleared at least this many rooms. The party camps (a long rest) after room${campsAfter().length > 1 ? 's' : ''} ${campsAfter().join(', ')}.`;
   $('curves').innerHTML = '';
   const fourth = ['core', 'mage', 'enchanter', 'cleric', 'grappler', 'duelist'].filter((k) => L[k]);
   const ablate = ['mage', 'noKnight', 'noTwoHander', 'noArcher'].filter((k) => L[k]);
@@ -300,11 +338,12 @@ function render() {
   drawLineup();
 }
 $('lineup').addEventListener('change', (e) => { cur = e.target.value; store.set('gauntlet-lineup', cur); drawLineup(); });
+drawLevels();
 render();
 
 $('how').innerHTML = [
-  'A party of level-5 adventurers (the arena builds) fights the eight rooms in order. A room is lost if the party is wiped out or can\'t win within 30 rounds.',
-  `Attrition mode: the same party goes on from room to room. Between rooms there is a breather: stamina comes back and the unconscious get up; wounds (CON), spell points, arrows and battered shields carry on. Each member has one bandage, used on whoever is bleeding while they last; untended bleeding runs its course. After room ${DATA.campAfter} the party makes camp: the long-rest rules (bleeding tended, stamina and spell points back, one daily heal roll, some armor repair). The run ends at the first room lost.`,
+  `A party (${LEVEL_KEYS ? 'early adventurers at level 2 in standard gear, mid at level 6 in fine gear, or high at level 15 in masterwork gear with magical weapons' : 'level-5 adventurers'}; the arena builds) fights the ${R.length} rooms in order. A room is lost if the party is wiped out or can\'t win within 30 rounds.`,
+  `Attrition mode: the same party goes on from room to room. Between rooms there is a breather: stamina comes back and the unconscious get up; wounds (CON), spell points, arrows and battered shields carry on. Each member has one bandage, used on whoever is bleeding while they last; untended bleeding runs its course. After room${campsAfter().length > 1 ? 's' : ''} ${campsAfter().join(', ')} the party makes camp: the long-rest rules (bleeding tended, stamina and spell points back, one daily heal roll, some armor repair). The run ends at the first room lost.`,
   'Reset mode: every room is fought by a fresh, full-strength party, the dead restored, so every room is tested in every run. Deaths are still recorded room by room.',
   'Traps are hidden runes laid by the foes\' side: the foes know where they are and the party does not. There is no way to search for them yet.',
   'The rooms are ordered by how hard each fight was for a fresh party in the party arena, from goblins up to the troll chieftain.',

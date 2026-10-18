@@ -82,7 +82,7 @@
   // ---- Round start -------------------------------------------------------
   // Auras (trait aura: { radius, stamina, cond }): at the start of each round every foe within
   // the radius loses stamina and takes the condition for the round.
-  function auras(enc, chars) {
+  async function auras(enc, chars, roller) {
     for (const id of enc.ids) {
       const c = chars[id];
       const A = c && c.traits && c.traits.aura;
@@ -91,9 +91,14 @@
       for (const o of hit) {
         const t = chars[o];
         if (A.stamina && !C.tireless(t)) { t.stamina = Math.max(0, t.stamina - A.stamina); C.updateCondition(t); }
-        if (A.cond && G.Conditions) G.Conditions.add(t, A.cond, { rounds: 1, src: id });
+        if (A.cond && G.Conditions) {
+          // A resisted aura (a spectre's wail) is contested like a spell; otherwise it simply takes hold.
+          if (A.resisted && G.Magic && t === chars[hit[0]]) log(enc, `${c.name}'s ${A.name || 'aura'} rises over ${hit.map((o) => chars[o].name).join(', ')}.`, 'hit');
+          if (A.resisted && G.Magic) await G.Magic.afflict(enc, c, t, A.cond, { rounds: 1, mag: 1 }, roller);
+          else G.Conditions.add(t, A.cond, { rounds: 1, src: id });
+        }
       }
-      if (hit.length) log(enc, `${c.name}'s ${A.name || 'aura'} falls on ${hit.map((o) => chars[o].name).join(', ')}${A.stamina ? ` (−${A.stamina} stamina` : ' ('}${A.cond ? `${A.stamina ? ', ' : ''}${CONFIG.conditions[A.cond].name.toLowerCase()}` : ''}).`, 'hit');
+      if (hit.length && !A.resisted) log(enc, `${c.name}'s ${A.name || 'aura'} falls on ${hit.map((o) => chars[o].name).join(', ')}${A.stamina ? ` (−${A.stamina} stamina` : ' ('}${A.cond ? `${A.stamina ? ', ' : ''}${CONFIG.conditions[A.cond].name.toLowerCase()}` : ''}).`, 'hit');
     }
   }
 
@@ -101,7 +106,7 @@
     enc.round += 1;
     // The first round: wards, boons and runes laid in advance by ritual take hold.
     if (enc.round === 1 && G.Ritual) for (const line of G.Ritual.applyPrepared(enc, chars)) log(enc, line, 'pass');
-    auras(enc, chars);
+    await auras(enc, chars, roller);
     enc.phase = 'initiative';
     enc.decls = [];
     enc.conceded = {};
@@ -457,6 +462,8 @@
     out.grapple = link;
     const pushManeuver = (kind, targets) => {
       const cost = C.actionCost(c, kind);
+      // Nothing to grab, trip or shove on the incorporeal (bait and reading still work).
+      if (kind !== 'bait' && kind !== 'readIntent') for (const t of targets) if (chars[t.id] && chars[t.id].traits && chars[t.id].traits.incorporeal) t.inReach = false;
       out.maneuvers.push({ type: kind, ap: cost.ap, stamina: cost.stamina, affordable: can(cost.ap) && targets.some((t) => t.inReach), spans: cost.ap > left, targets });
     };
     const near = (o) => ({ id: o, inReach: dist(me, posAtPass(enc, o, enc.pass)) <= reach });
@@ -766,11 +773,22 @@
 
   // ---- Damage pipeline ---------------------------------------------------
   // Pure: works out what a hit would do (before d4 hit-location rolls).
+  function magicalWeapon(c, option) {
+    const w = option && option.weaponId && c.weapons ? c.weapons.find((x) => x.id === option.weaponId) : null;
+    return !!(w && (w.enchant || w.magical));
+  }
+
+  function passesThrough(attacker, target, option) {
+    return !!(target.traits && target.traits.incorporeal && !option.spell && !magicalWeapon(attacker, option));
+  }
+
   function computeHit(attacker, target, option, flags) {
     flags = flags || {};
     if (option.spell && CONFIG.magic.energyMitigation && CONFIG.magic.energyMitigation[option.spell.element] != null) return computeFire(attacker, target, option, flags);
     if (option.spell && option.spell.element === 'life') return computeLife(attacker, target, option, flags);
     const v = option.damage.slice();
+    // Incorporeal (a spectre): blows from weapons without an enchantment pass through.
+    if (passesThrough(attacker, target, option)) v[0] = v[1] = v[2] = 0;
     const st = target.status;
     const prone = st.prone;
     const pinned = !!st.pinned;
@@ -1025,6 +1043,7 @@
     if (harmed && G.Conditions) for (const x of G.Conditions.list(target).slice()) {
       if ((CONFIG.conditions[x.key] || {}).breakOnHarm) { G.Conditions.remove(target, x.key); parts.push(`${CONFIG.conditions[x.key].name.toLowerCase()} no more`); }
     }
+    if (passesThrough(attacker, target, option)) parts.push('it passes through');
     if (!parts.length) parts.push('no effect');
     const wasDown = st.unconscious;
     C.updateCondition(target);

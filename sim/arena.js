@@ -56,14 +56,16 @@ const STRATEGY = {
     label: 'Magic', attrs: { STR: 4, CON: 5, DEX: 5, SPD: 5, INT: 8, WIL: 5, WIS: 5, CHA: 3 },
     // A battlefield mage: fire to burn, earth for walls and pits, vine to root, force to ward.
     weapon: null, shield: null, nouns: ['fire', 'earth', 'vine', 'force'],
-    feats: ['casting', 'verb_strike', 'verb_ward', 'verb_launch', 'verb_build', 'verb_blink', 'casting', 'verb_hex', 'verb_open', 'control', 'mod_strong', 'quick_casting'],
+    feats: ['casting', 'verb_strike', 'verb_ward', 'verb_launch', 'verb_build', 'verb_blink', 'casting', 'verb_hex', 'verb_open', 'control', 'mod_strong', 'quick_casting',
+      'casting', 'verb_burst', 'fire_affinity', 'casting', 'mod_wide', 'control', 'quick_casting', 'casting', 'fire_affinity', 'mod_far', 'battle_casting'],
   },
   enchanter: {
     // A mind mage (magic phase 2): mesmerize, calm, enrage and confuse; a ward of force and a
     // blink to get away.
     label: 'Enchanter', attrs: { STR: 4, CON: 5, DEX: 5, SPD: 5, INT: 8, WIL: 5, WIS: 4, CHA: 3 },
     weapon: null, shield: null, nouns: ['dream', 'rage', 'calm', 'fear', 'force'],
-    feats: ['casting', 'verb_hex', 'verb_beguile', 'verb_ward', 'casting', 'word_doubling', 'verb_blink', 'control', 'quick_casting'],
+    feats: ['casting', 'verb_hex', 'verb_beguile', 'verb_ward', 'casting', 'word_doubling', 'verb_blink', 'control', 'quick_casting',
+      'casting', 'mod_long', 'casting', 'mod_far', 'control', 'quick_casting', 'casting', 'verb_bless', 'mod_strong'],
   },
   cleric: {
     // A healer: Restore + Life mends a friend (Wide: everyone around them; Name: anywhere on the
@@ -72,7 +74,8 @@ const STRATEGY = {
     // mace; one hand free to cast.
     label: 'Cleric', attrs: { STR: 5, CON: 6, DEX: 4, SPD: 4, INT: 7, WIL: 5, WIS: 6, CHA: 3 },
     weapon: 'flangedMace', shield: null, nouns: ['life', 'light', 'force'],
-    feats: ['casting', 'verb_restore', 'casting', 'mod_wide', 'mod_name', 'verb_strike', 'verb_ward', 'control', 'quick_casting'],
+    feats: ['casting', 'verb_restore', 'casting', 'mod_wide', 'mod_name', 'verb_strike', 'verb_ward', 'control', 'quick_casting',
+      'casting', 'mod_strong', 'casting', 'verb_bless', 'control', 'quick_casting', 'casting', 'verb_launch', 'battle_casting'],
   },
   grappler: {
     label: 'Grappler', attrs: { STR: 7, CON: 6, DEX: 6, SPD: 5, INT: 3, WIL: 4, WIS: 4, CHA: 4 },
@@ -94,23 +97,29 @@ const STRATEGY = {
   },
 };
 
-function makeCombatant(armorKey, stratKey, side) {
+// opts: { level, quality (gear), magical (weapons carry an enchantment: they hurt the incorporeal) }.
+function makeCombatant(armorKey, stratKey, side, opts) {
+  opts = opts || {};
   const A = ARMOR[armorKey], S = STRATEGY[stratKey];
+  const q = opts.quality || 'standard';
   const c = C.newCharacter({ name: `${A.label} ${S.label} [${side}]`, starterGear: false, base: Object.assign({}, S.attrs) });
-  c.level = LEVEL;
-  if (A.armor) c.armor = Items.makeArmor(A.armor, 'full', 'standard');
-  if (S.shield) c.shield = Items.makeShield(S.shield[0], S.shield[1], 'standard');
+  c.level = opts.level || LEVEL;
+  if (A.armor) c.armor = Items.makeArmor(A.armor, 'full', q);
+  if (S.shield) c.shield = Items.makeShield(S.shield[0], S.shield[1], q);
   if (S.weapon) {
-    const w = Items.makeWeapon(S.weapon, 'standard');
+    const w = Items.makeWeapon(S.weapon, q);
+    if (opts.magical) w.magical = true;
     c.weapons.push(w);
     c.wield = w.id;
   }
   if (S.offhand) {
-    const off = Items.makeWeapon(S.offhand, 'standard');
+    const off = Items.makeWeapon(S.offhand, q);
+    if (opts.magical) off.magical = true;
     c.weapons.push(off);
     c.offhand = off.id;
   }
-  const d = Items.makeWeapon('dagger', 'standard');
+  const d = Items.makeWeapon('dagger', q);
+  if (opts.magical) d.magical = true;
   c.weapons.push(d);
   c.sidearm = d.id;
   if (!S.weapon) c.wield = d.id;
