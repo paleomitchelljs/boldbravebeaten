@@ -1,39 +1,58 @@
 # Simulation findings
 
-## The gauntlet: an eight-room crawl with attrition (`sim/gauntlet.js`)
+## The gauntlet: an eight-room crawl (`sim/gauntlet.js`)
 
-A level-5 party fights eight rooms in order, from goblins to the troll chieftain. Rooms have
-pillars, pits, rough ground, darkness, hot coals and hidden trap runes. Between rooms there is
-only a breather: wounds, spell points, arrows and shield damage carry on. A core trio (knight,
-mail two-hander, archer) runs alone and with each fourth member. The mage party also runs with
-each core member left out. There are 100 runs per lineup, with the same seeds for every lineup.
+A level-5 party fights eight rooms in order, from goblins to the troll chieftain. The rooms have
+pillars, pits, rough ground, darkness, hot coals and hidden trap runes. There are two modes, each
+with 100 runs per lineup and the same seeds for every lineup:
 
-| Lineup | Mean rooms cleared | Clears room 3 | Clears room 5 |
-|---|---|---|---|
-| Core trio | 1.90 | 17% | 1% |
-| + Enchanter | 2.18 | 25% | 2% |
-| + Mage | 2.78 | 49% | 7% |
-| + Grappler | 3.07 | 53% | 21% |
-| + Duelist | 3.84 | 84% | 29% |
+- **Attrition:** one party goes through all eight rooms. Wounds, spell points, arrows and shield
+  damage carry on. There is a breather between rooms and a camp (the long-rest rules) after room 4.
+  The run ends at the first room lost.
+- **Reset:** a fresh, full-strength party fights every room, with the dead restored. Every room is
+  tested, and deaths are recorded room by room.
 
-- **No lineup gets far.** The best clears 3.8 of 8 rooms on average, and nobody clears the
-  whole run. Rooms 6–8 (kobolds, skeletons, the chieftain) are reached in under 10% of runs, so
-  they are barely tested yet. The cause is attrition: CON damage and bleeding carry from room to
-  room with nothing to heal them.
-- **Marginal value, paired on seeds (rooms cleared with the member minus without, ± one standard
-  error):**
-  - duelist +1.94 ± 0.15 and two-hander +1.73 ± 0.14;
-  - grappler +1.17, archer +1.03, knight +0.96 and mage +0.88 (each ± about 0.17);
-  - enchanter +0.28 ± 0.11.
-  Every member helps. The enchanter helps least, but its gain is still about 2.5 standard errors
-  above zero.
-- **Damage share undersells support.** The mage deals only 6% of the party's wounds yet adds 0.88
-  rooms, so its value comes from walls, wards and roots. It also dies in 94% of runs, most often
-  first, in the kennels. The unarmored casters are the ones the foes reach, and nothing in the
-  rules lets the knight protect them. The knight takes 1–2 wounds a run and dies in 9–43% of
-  runs: its plate protects itself, not the party.
-- **The two-hander does most of the killing** in every lineup without the duelist, with 56–70% of
-  the wounds dealt. Removing it drops the mage party from 2.78 rooms to 1.05.
+The lineups are a core trio (knight, mail two-hander, archer), the trio plus each fourth member,
+and the mage party with each core member left out.
+
+| Lineup | Attrition: rooms cleared | Reset: rooms won (of 8) |
+|---|---|---|
+| Core trio | 1.91 | 3.59 |
+| + Enchanter | 2.19 | 4.71 |
+| + Mage | 2.81 | 5.23 |
+| + Grappler | 3.07 | 5.08 |
+| + Duelist | 3.78 | 6.11 |
+
+**What a member adds.** Each number is the score with the member minus the score without, paired
+on seeds (attrition / reset, ± about 0.15):
+
+| Member | Attrition | Reset |
+|---|---|---|
+| Two-hander | +1.76 | +3.01 |
+| Duelist | +1.87 | +2.52 |
+| Knight | +0.99 | +1.84 |
+| Mage | +0.90 | +1.64 |
+| Grappler | +1.16 | +1.49 |
+| Archer | +1.05 | +1.47 |
+| Enchanter | +0.28 | +1.12 |
+
+- **The camp barely helps.** Few runs reach room 5, and a long rest heals only one point of CON. It
+  adds only 1–3 points to the share of runs that clear the cistern. Attrition is decided by the
+  kennels and the trapped corridor.
+- **Reset mode shows the differentiation the attrition mode hid.** Each fourth member has a room
+  where it is the best pick:
+  - Mage: the kobold warren, 42% against 8–22% for the enchanter and grappler. Area spells work
+    against a band.
+  - Grappler: the cistern, 62%.
+  - Enchanter: the chieftain's hall, 44% against 14% for the core trio. Mind spells work against
+    a lone big foe.
+  - Duelist: best or close to best in every room.
+- **The hardest rooms at full strength** are the crypt (skeletons: 4–25% wins) and the kobold
+  warren (3–42%). The troll den is easy fresh (86–100%) but a wall under attrition.
+- **The casters die.** At full strength, out of eight fights, the enchanter dies 5.0 times, the
+  mage 3.6 and the knight 0.5. The enchanter dies even in the gatehouse (60%). Its value is
+  real when it's fresh (+1.1 rooms), but it can't keep itself alive, and nothing lets the knight
+  protect it.
 
 ## Magic phases 2 and 3 (mind, body, venom, light and shadow; rituals)
 
