@@ -62,6 +62,10 @@ Characters who spend early sit out the last passes.
 - Parry and dodge are opposed rolls (defender DEX/SPD vs attacker STR/SPD); no parry vs power
   blows. Parrying dagger in the off hand (`c.offhand`, `offParry` meets thrusts only). Natural
   weapons have physical stats too.
+- Magic overhaul phase 1 (see HANDOFF.md): WIL split from WIS; verbs × nouns × modifier grammar
+  (Strike, Launch, Burst, Cover, Build, Open, Inscribe, Hex, Bless, Conjure × Fire, Frost,
+  Lightning, Wind, Earth, Vine, Life, Force); terrain tiles (walls, pits, hazards, runes) with
+  square-by-square movement and line of sight; timed conditions. Spell points kept for now.
 - Don't tune individual monsters; experiments are about fundamentals for now.
 
 ## Waiting on the user
@@ -72,5 +76,5 @@ Characters who spend early sit out the last passes.
 3. **Throws:** teach the AI to throw plate wearers?
 4. **Pass system revision:** beats within a pass proposed (see HANDOFF.md); waiting for a go.
 
-On hold at the user's request: group fights, the magic overhaul, the magic feat tiers. Magic users
-are dropped from the arena entirely for now (`node sim/arena.js --with-magic` brings them back).
+On hold at the user's request: group fights, the magic feat tiers. Magic phases 2 (mind, body,
+mystic nouns) and 3 (rituals, information magic) are planned, not built.

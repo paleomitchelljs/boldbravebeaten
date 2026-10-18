@@ -202,6 +202,31 @@ Parry/dodge: `CONFIG.defense.opposed` (defenseNumbers returns {bonus, attack, op
 Sheet has an Off hand column. Natural weapons have `phys` (STR ×1, catalog weight class). Arena
 style `duelist` (rapier + parrying dagger). Baselines: `results/arena-r9b`, `results/monsters-r9b`.
 
+## Magic overhaul (round 10, phase 1 built)
+
+User decisions: WIL split from WIS (done; regen uses CON + WIL); keep spell points for now (not
+all-in; a Focus/mental-stamina track was proposed); noun Life covers bane, boon, healing and
+reanimation depending on the verb; include Conjure; rituals limited by components as well as
+time; combinations should tend to general (some may fail); nouns tend to be found in the world,
+verbs and modifiers studied (feats), though all words can be findable. Everything in the design
+docs is open to revision.
+
+Files: `src/rules/conditions.js` (timed conditions, `CONFIG.conditions`), `src/rules/terrain.js`
+(tiles: walls, pits, hazards, runes; Dijkstra paths and cost maps; line checks; `CONFIG.terrain`),
+`src/rules/magic.js` (grammar: `CONFIG.magic.words` verbs/nouns/mods; `spellOptions`, `combines`,
+`resolveCast`, `elementBlow`, `springRune`, conjuring). Bolts (Strike, Launch) are 'strike'
+declarations; every other spell is a 'cast' declaration (`decl.at` square or `decl.target`).
+Moves now walk square by square (`Terrain.path`) and can be stopped by walls, pits, runes, ice
+or readied points; strikes past range 1 check the line (`Terrain.lineCheck`). AI: `castChoice`
+in ai.js; `planMove` avoids visible hazards. UI: Spells section, square targeting, terrain on
+the map. The arena includes mages again (`--no-magic` to drop them); the party arena has a party
+with a mage. Example mage Ysolde Marr in the starter company.
+
+Next phases (not built): (2) Beguile and the mind nouns (calm, dream, rage, fear, will; WIL to
+resist), more body nouns (swiftness, might, grace; venom and disease), mystic nouns (light,
+shadow, spirit, death); doubled words. (3) Rituals with components and time, information magic
+(read, seek, divine, speak with the dead) and GM-authored secrets; summoning with names.
+
 ## Open questions awaiting the user
 
 1. **The AP cap.** On trial at 4 AP per pass; 6 balanced better with guards.
