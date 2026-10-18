@@ -246,17 +246,17 @@
     owlbear: {
       name: 'Owlbear', blurb: 'Hugs and won\'t let go: no room for a greatsword or a bow. Meant to beat two-handers.',
       attrs: { STR: 18, CON: 16, DEX: 5, SPD: 5, INT: 2, WIS: 5, CHA: 2 },
-      natural: ['claws', 'beak'], armor: 'fur', traits: {}, feats: { grappler: 2, pin: 1 }, policy: { grappler: true },
+      natural: ['claws', 'beak'], armor: 'fur', traits: { size: 1.3 }, feats: { grappler: 2, pin: 1 }, policy: { grappler: true },
     },
     caveTroll: {
       name: 'Cave troll', blurb: 'Regenerates unless burned; wound-up slams break shields and knock you flat. Meant to beat sword and shield.',
       attrs: { STR: 20, CON: 18, DEX: 4, SPD: 4, INT: 2, WIS: 4, CHA: 2 },
-      natural: ['trollFists', 'claws'], armor: 'trollHide', traits: { regen: { con: 1, stamina: 6 } }, feats: { power_swing: 1, shield_breaker: 1 },
+      natural: ['trollFists', 'claws'], armor: 'trollHide', traits: { size: 1.3, regen: { con: 1, stamina: 6 } }, feats: { power_swing: 1, shield_breaker: 1 },
     },
     trollChieftain: {
       name: 'Troll chieftain', blurb: 'A boss for a whole party: acts like two fighters (AP and per-pass allowance ×2) on a STR-24, CON-24 body.',
       attrs: { STR: 24, CON: 24, DEX: 4, SPD: 4, INT: 3, WIS: 4, CHA: 3 },
-      natural: ['trollFists', 'claws'], armor: 'trollHide', traits: { regen: { con: 1, stamina: 6 }, apMult: 2 }, feats: { power_swing: 1, shield_breaker: 1, toughness: 1 },
+      natural: ['trollFists', 'claws'], armor: 'trollHide', traits: { size: 1.5, regen: { con: 1, stamina: 6 }, apMult: 2 }, feats: { power_swing: 1, shield_breaker: 1, toughness: 1 },
     },
     ogre: {
       name: 'Ogre', blurb: 'Like a troll but bigger and stronger: a club and fists that knock you flat. It doesn\'t regenerate.',
@@ -288,7 +288,7 @@
     stoneGolem: {
       name: 'Stone golem', blurb: 'A construct of stone: blades skate off, hammers crack it. Slow, tireless, and its fists crush shields.',
       attrs: { STR: 22, CON: 22, DEX: 3, SPD: 3, INT: 1, WIS: 1, CHA: 1 },
-      natural: ['golemFists'], armor: 'golemStone', traits: { tireless: true, magicImmune: true }, feats: {},
+      natural: ['golemFists'], armor: 'golemStone', traits: { size: 1.3, tireless: true, magicImmune: true }, feats: {},
     },
     // ---- Drakes and wyverns: armored scales, wings ----
     drake: {
@@ -300,13 +300,13 @@
     wyvern: {
       name: 'Wyvern', blurb: 'A bigger winged beast with heavy scales: a powerful bite, a venomous stinger and wing beats that knock you flat.',
       level: 10, attrs: { STR: 17, CON: 16, DEX: 6, SPD: 7, INT: 3, WIL: 7, WIS: 5, CHA: 3 },
-      natural: ['wyvernBite', 'wyvernSting', 'wyvernWings'], armor: 'wyvernScales', traits: { flying: true, slippery: 1 }, feats: { toughness: 2, strength: 1 },
+      natural: ['wyvernBite', 'wyvernSting', 'wyvernWings'], armor: 'wyvernScales', traits: { size: 1.5, flying: true, slippery: 1 }, feats: { toughness: 2, strength: 1 },
     },
     // ---- A constrictor: a grappler beyond any human, weak against a crowd ----
     constrictor: {
       name: 'Giant constrictor', blurb: 'A huge snake: it wraps one victim and crushes them every round, but while it holds one, the rest can cut at it.',
       attrs: { STR: 18, CON: 12, DEX: 7, SPD: 5, INT: 2, WIL: 6, WIS: 5, CHA: 2 },
-      natural: ['constrictorBite'], armor: 'scaleHide', traits: { constrict: { stamina: 8, con: 1 }, slippery: 2 },
+      natural: ['constrictorBite'], armor: 'scaleHide', traits: { size: 1.2, constrict: { stamina: 8, con: 1 }, slippery: 2 },
       feats: { grappler: 3, pin: 1, takedown: 1, brawlers_wind: 1 }, policy: { grappler: true },
     },
     // ---- Humanoids with natural armor ----

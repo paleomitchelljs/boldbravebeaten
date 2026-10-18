@@ -1540,3 +1540,52 @@ test('weapon strain: strength never speeds a light weapon, makes a heavy one fun
   assert.equal(swingAP('giantClub', 6), null, 'a giant\'s club is beyond a man');
   assert.ok(swingAP('giantClub', 23) <= swingAP('greatsword', 10), 'an ogre swings it like a sword');
 });
+
+test('impact: heavy blunt crushes, a hard blow throws its target back, and big blows cannot be parried', async () => {
+  const [giant] = B.Enemies.makeMonster('hillGiant');
+  const club = C.attackOptions(giant).find((o) => o.motion === 'swing');
+  const man = fighter('Man');
+  man.side = 'party';
+  man.base.CON = 10;
+  man.stamina = C.maxStamina(man);
+  const h = Combat.computeHit(giant, man, club, {});
+  assert.ok(h.crushed > 0 && h.bluntToCON >= h.crushed, 'bones break');
+  // A troll's fist into a sturdy man: crushed a little, hurled back.
+  const [troll] = B.Enemies.makeMonster('caveTroll');
+  const fist = C.attackOptions(troll).find((o) => o.label === 'Fists');
+  const sturdy = fighter('Sturdy');
+  sturdy.side = 'party';
+  sturdy.base.CON = 10;
+  sturdy.stamina = C.maxStamina(sturdy);
+  const chars = { [troll.id]: troll, [sturdy.id]: sturdy };
+  const enc = Combat.createEncounter('t', Object.keys(chars), chars, 12, 3);
+  enc.pos[troll.id] = { x: 3, y: 1 };
+  enc.pos[sturdy.id] = { x: 4, y: 1 };
+  await Combat.applyHit(enc, chars, troll, sturdy, fist, roller(5, []), {});
+  assert.ok(enc.pos[sturdy.id].x > 4, 'thrown back');
+  assert.ok(enc.struck[sturdy.id], 'stopped where struck');
+  // No parrying a big creature, or any blow of 20+; a weaker blow is easier to parry than a stronger.
+  const decl = { actor: troll.id, type: 'strike', option: fist };
+  sturdy.weapons.push(Items.makeWeapon('longsword', 'standard'));
+  sturdy.wield = sturdy.weapons[0].id;
+  assert.match(Combat.defenseUnavailable(sturdy, 'parry', decl, chars, enc) || '', /parry/);
+  const soft = { damage: [0, 4, 0], motion: 'swing' }, hard = { damage: [0, 16, 2], motion: 'swing' };
+  assert.ok(Combat.defenseOdds(sturdy, 'parry', 'swing', null, soft) > Combat.defenseOdds(sturdy, 'parry', 'swing', null, hard));
+});
+
+test('impact: a fighter struck during a pass loses that pass\'s move', async () => {
+  const a = armed('A', 'longsword'), b = fighter('B');
+  b.base.CON = 10;
+  b.stamina = C.maxStamina(b);
+  const { enc, chars } = await duel(a, b); // a acts first (initiative 10 vs 1); 6×1 field
+  enc.pos[a.id] = { x: 1, y: 0 }; enc.pos[b.id] = { x: 2, y: 0 };
+  const thrust = C.attackOptions(a).find((o) => o.motion === 'thrust' && o.maxRange >= 1);
+  assert.strictEqual(Combat.declare(enc, chars, { actor: a.id, type: 'strike', option: thrust, target: b.id }), null);
+  Combat.concede(enc, a.id);
+  assert.strictEqual(Combat.declare(enc, chars, { actor: b.id, type: 'move', to: { x: 5, y: 0 } }), null);
+  Combat.concede(enc, b.id);
+  await Combat.resolvePass(enc, chars, roller(10, [10, 1, 1, 1, 1, 1, 1]));
+  const log = enc.log.map((l) => l.text).join('\n');
+  assert.match(log, /B is struck and stopped where they stand/);
+  assert.deepEqual(enc.pos[b.id], { x: 2, y: 0 });
+});

@@ -607,6 +607,11 @@
     const parry = kind === 'parry' || kind === 'offParry';
     if (parry && opt && (opt.spell || (opt.ranged && !CONFIG.archery.parry))) return opt.spell ? "Can't parry a spell" : "Can't parry an arrow";
     if (parry && opt && opt.motion === 'power' && CONFIG.defense.noParryVsPower) return "Can't parry a power blow";
+    if (parry && opt && CONFIG.defense.parryForce) {
+      const by = attackDecl && chars ? chars[attackDecl.actor] : null;
+      if (by && sizeOf(by) > 1) return 'Too big a blow to parry';
+      if (blowForce(opt) >= CONFIG.defense.parryForce.unparryable) return 'Too heavy a blow to parry';
+    }
     if (kind === 'block' && !C.shieldReady(c)) return 'No ready shield';
     if (kind === 'offParry') {
       if (!C.offhandWeapon(c)) return 'No off-hand dagger';
@@ -864,6 +869,12 @@
       if (unconscious) res.bluntToCON = B;
       else res.bluntToStamina = B;
     }
+    // Crushing: blunt past the armor beyond a threshold breaks bones (CON) as well as winding.
+    const I = CONFIG.impact;
+    if (I && res.bluntToStamina > 0 && !C.tireless(target)) {
+      const crush = Math.floor(Math.max(0, res.bluntToStamina - I.crushAt * sizeOf(target)) / I.crushPer);
+      if (crush > 0) { res.bluntToCON += crush; res.crushed = crush; }
+    }
     // Tireless creatures have no stamina to absorb a blow: blunt goes to the body (CON), and
     // they neither bleed nor take venom.
     if (C.tireless(target)) {
@@ -1069,6 +1080,15 @@
     let tail = '';
     if (st.dead) tail = ` ${target.name} is DEAD.`;
     else if (st.unconscious && !wasDown) tail = ` ${target.name} collapses, unconscious.`;
+    // Impact: the struck stop where they stand this pass, and a hard blow throws them back.
+    if (harmed && CONFIG.impact) {
+      (enc.struck || (enc.struck = {}))[target.id] = true;
+      const landed = h.bluntToStamina + h.bluntToCON + (h.toCON + h.slashToAttrs) / 2;
+      const back = Math.min(CONFIG.impact.knockbackMax, Math.floor(landed / CONFIG.impact.knockbackPer / sizeOf(target)));
+      if (back > 0 && !option.spell && !st.dead && attacker !== target && enc.pos[attacker.id] && enc.pos[target.id] && G.Magic) {
+        G.Magic.push(enc, chars, target, enc.pos[attacker.id], back);
+      }
+    }
     // An enchanted blade that drinks (enchant.drain): the wielder takes back a share of the
     // stamina and attribute points the blow dealt.
     const blade = option.weaponId && attacker.weapons ? attacker.weapons.find((w) => w.id === option.weaponId) : null;
@@ -1154,13 +1174,18 @@
       let bonus = agile + (parry ? C.rank(defender, 'parry_training') : C.rank(defender, 'dodge_training') + ((defender.traits && defender.traits.nimble) || 0));
       if (kind === 'offParry') bonus += D.offhandBonus || 0;
       let atk = D.motionPenalty[motion] || 0;
-      atk += attacker ? Math.floor((C.attr(attacker, 'STR') + C.combatAttr(attacker, 'SPD')) / 4) : D.typicalAttacker;
-      if (parry && atkOption && atkOption.weaponType) {
-        const order = CONFIG.weightOrder;
-        const theirs = order.indexOf(Items.weaponStats(atkOption.weaponType).weight);
-        const mine = parryingWeapon(defender, kind);
-        const gap = theirs - (mine ? order.indexOf(Items.weaponStats(mine).weight) : 0);
-        atk += Math.max(0, gap);
+      if (parry && D.parryForce) {
+        // A parry meets the blow's force: what it would do (its expected damage).
+        atk += atkOption && atkOption.damage ? Math.floor(blowForce(atkOption) / D.parryForce.per) : D.typicalAttacker;
+      } else {
+        atk += attacker ? Math.floor((C.attr(attacker, 'STR') + C.combatAttr(attacker, 'SPD')) / 4) : D.typicalAttacker;
+        if (parry && atkOption && atkOption.weaponType) {
+          const order = CONFIG.weightOrder;
+          const theirs = order.indexOf(Items.weaponStats(atkOption.weaponType).weight);
+          const mine = parryingWeapon(defender, kind);
+          const gap = theirs - (mine ? order.indexOf(Items.weaponStats(mine).weight) : 0);
+          atk += Math.max(0, gap);
+        }
       }
       return { bonus, attack: atk, opposed: true };
     }
@@ -1173,6 +1198,11 @@
       tn += D.motionPenalty[motion] || 0;
     }
     return { bonus, tn };
+  }
+
+  // A blow's force: its expected damage, all kinds together.
+  function blowForce(o) {
+    return o && o.damage ? o.damage[0] + o.damage[1] + o.damage[2] : 0;
   }
 
   // The weapon a parry is made with.
@@ -1403,6 +1433,7 @@
       .sort((x, y) => rank(x.actor) - rank(y.actor) || x.n - y.n);
     if (actsThisPass.length) {
       log(enc, `Pass ${p}`, 'pass');
+      enc.struck = {};
       const activeAtStart = {};
       enc.ids.forEach((id) => (activeAtStart[id] = C.isActive(chars[id])));
       const posAtStart = JSON.parse(JSON.stringify(enc.pos));
@@ -1425,6 +1456,10 @@
         const a = chars[d.actor];
         if (a.status.prone || isGrappled(a) || a.status.clinch) {
           log(enc, `${a.name} can't move (${a.status.prone ? 'prone' : 'grappled'}).`, 'fizzle');
+          continue;
+        }
+        if (CONFIG.impact && CONFIG.impact.stopsMove && enc.struck && enc.struck[a.id]) {
+          log(enc, `${a.name} is struck and stopped where they stand.`, 'fizzle');
           continue;
         }
         // A holder drags the held fighter one square, into the square the holder leaves.

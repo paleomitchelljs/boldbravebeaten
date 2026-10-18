@@ -533,12 +533,24 @@
       offhandBonus: 1, // a parrying dagger is made to catch a blade
       // PROVISIONAL (the user's call): a power blow can't be parried, only dodged or blocked.
       noParryVsPower: true,
+      // PROVISIONAL (the user's call): a parry is against the blow's force, not the arm behind
+      // it: the attacker's side is ⌊expected damage / per⌋ (+ motion penalty). A blow of
+      // `unparryable` or more, or any blow from a big creature (trait size > 1), can't be parried.
+      parryForce: { per: 4, unparryable: 20 },
       // Heavier motions are harder to parry/dodge
       motionPenalty: { thrust: 0, swing: 0, twoHanded: 1, power: 2, unarmed: 0, maneuver: 0 },
       // PROVISIONAL: a successful parry or dodge negates the strike fully
       parryNegates: 1.0,
       dodgeNegates: 1.0,
     },
+
+    // ---- Impact (PROVISIONAL, the user's call) -----------------------------
+    // Crushing: blunt that gets past armor beyond crushAt (× the target's size) breaks bones:
+    //   1 CON per crushPer points over, on top of the stamina it takes.
+    // Knockback: a blow that lands throws its target back 1 square per knockbackPer points landed
+    //   (blunt in full, cuts and stabs at half), ÷ the target's size, up to knockbackMax squares.
+    // A fighter struck during a pass loses that pass's move: they stop where they were hit.
+    impact: { crushAt: 8, crushPer: 2, knockbackPer: 8, knockbackMax: 3, stopsMove: true },
 
     // ---- Shields ----------------------------------------------------------
     // PROVISIONAL: wear per block is multiplied by this (fewer hits before a shield fails).
@@ -637,6 +649,7 @@
     'Fend off and push back: with a long weapon (reach 2+) a shove reaches 2 squares; a ready shield adds +1. A shove that drives a foe back or floors them also spoils their move that pass.',
     'Ward (verb) and Blink (verb): Ward + Force soaks 3 × magnitude points of spells and missiles; Ward + Wind turns half the missiles aside; Ward + an element halves that element and keeps off its after-effects; Ward + Mind keeps out baits. Blink steps up to 4 squares through walls and out of any hold, roots or webs. Wind blows now hurl a target back 2 squares.',
     'Bait and Read intent (in-combat charm and wisdom): Bait (2 AP on the sheet, within 3 squares) is d10 + ⌊CHA/2⌋ + Feint against d10 + ⌊WIS/2⌋ + Read Attack: the foe\'s guards are drawn out and spent, and they defend at −2 for the rest of the round. Read intent (1 AP, within 4, in sight): the reader rolls d10 + ⌊WIS/2⌋ + Read Attack against 5 + the foe\'s ⌊CHA/2⌋ + Feint, a number they don\'t see. Made it: the foe\'s true intent (what they have committed to this round, feints seen through) and +2 to defend against them and to beat their defenses. Missed by 1–3: nothing to go on. Missed by 4 or more: a confident misread — a false intent and −2 — reported just like a true read. Hex + Mind baits by magic (WIL resists); Bless + Mind gives foresight (true reads of every foe).',
+    'Impact: blunt past armor beyond 8 points breaks bones (1 CON per 2 points over, ÷ size for big bodies) as well as winding; a blow that lands throws its target back 1 square per 8 points landed (blunt in full, cuts and stabs at half; ÷ size; up to 3); anyone struck during a pass loses that pass\'s move. Parries are against the blow\'s force (⌊expected damage / 4⌋ + motion), not the attacker\'s STR; a blow of 20+ or any blow from a big creature can\'t be parried. Shields already wear by force, shatter past their threshold, and break outright under a power blow from as hard a material.',
     'Weapon weight and strength (TUNED): a weapon has a natural speed strength can\'t beat (light and short is quick; long travels farther), and a strain: its load (mass for a thrust; mass with the leverage of its length for a swing) over the wielder\'s capacity (0.3 kg per STR point, ×1.5 two-handed, +10% per Heavy Weapon Training rank). Within capacity it swings at its natural speed; past it AP and stamina rise with strain²; past 3× it is too ungainly to use. A man (STR 7) can barely lift a giant\'s club; an ogre swings it like a sword.',
     'Ogre and hill giant; size and grip: big creatures (trait size: ogre 1.5, giant 2.5) take vital wounds less often (the wound roll\'s target ÷ size) and bleed less per wound (÷ size): a man-sized wound is shallow in a big body. Grip (giant 5, ogre 2) adds to grapple rolls: a giant seizes a man in one hand. The ogre (level 8, STR 23, CON 21) swings a crude giant club and its fists; no regeneration. The hill giant (level 12, STR 28, CON 26) swings a giant club one-handed, hurls boulders (range 2–10, 14 blunt, can knock down) and grapples.',
     'Drakes, wyverns, the constrictor and the golem: fliers (drake, wyvern) pass over rough ground, pits, traps, hazards and walls that aren\'t solid (solid walls still stop them) and are slippery to grab. The drake (level 8) has drake scales (P4 S4 B2), a bite, claws, a reach-2 wing buffet that can knock you down, 1.5× movement and fire breath (Burst + Fire, Strong for a bigger one). The wyvern (level 10) has heavier scales (P5 S5 B3), a reach-2 bite, a venomous stinger (3 CON a round over 4 rounds at full depth) and a crushing wing beat. The giant constrictor grapples beyond any human (Grappler III, STR 18) and crushes whoever it holds every round (−8 stamina, −1 CON), but it has one victim at a time and thin scales. The stone golem is immune to magic: spells do nothing to it and it shrugs off conditions; it never tires.',
