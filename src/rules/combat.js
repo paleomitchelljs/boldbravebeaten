@@ -419,7 +419,9 @@
         const targets = opt.target === 'square' ? null : enc.ids.filter((o) => {
           const t = chars[o];
           if (!t || t.status.dead) return false;
-          return opt.target === 'ally' ? t.side === c.side : t.side !== c.side && C.isActive(t);
+          // Restore reaches a friend turned by a mind spell, too (to free them).
+          if (opt.target === 'ally') return t.side === c.side || (opt.spell.shape === 'restore' && t.charmed && t.charmed.side === c.side);
+          return t.side !== c.side && C.isActive(t);
         }).map((o) => {
           const op = posAtPass(enc, o, enc.pass);
           const dd = dist(me, op);

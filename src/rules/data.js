@@ -414,9 +414,9 @@
 
   t = tree('magicWords', 'Magic: words', 'INT');
   // Verbs and modifiers are studied; nouns are found in the world (c.nouns).
-  [['Strike', 'a bolt at arm\'s reach'], ['Hex', 'a bane on a foe'], ['Bless', 'a boon on an ally'], ['Cover', 'a hazard on the ground'], ['Ward', 'protection from magic, missiles or an element']]
+  [['Strike', 'a bolt at arm\'s reach'], ['Hex', 'a bane on a foe'], ['Bless', 'a boon on an ally'], ['Restore', 'undo a noun\'s harm on an ally; Life heals'], ['Cover', 'a hazard on the ground'], ['Ward', 'protection from magic, missiles or an element']]
     .forEach(([w, what]) => feat(t, 'verb_' + w.toLowerCase(), 'Verb: ' + w, [N], [], `Learn the verb ${w} (${what})`, false));
-  const anyNoviceVerb = ['verb_strike:1', 'verb_hex:1', 'verb_bless:1', 'verb_cover:1', 'verb_ward:1'];
+  const anyNoviceVerb = ['verb_strike:1', 'verb_hex:1', 'verb_bless:1', 'verb_restore:1', 'verb_cover:1', 'verb_ward:1'];
   [['Launch', 'a bolt at range'], ['Build', 'a wall across several squares'], ['Open', 'a pit'], ['Inscribe', 'a hidden rune on a square'], ['Blink', 'a short step through space']]
     .forEach(([w, what]) => feat(t, 'verb_' + w.toLowerCase(), 'Verb: ' + w, [A], [anyNoviceVerb], `Learn the verb ${w} (${what})`, false));
   feat(t, 'verb_burst', 'Verb: Burst', [D], [['verb_launch:1']], 'Learn the verb Burst (an area)', false);
@@ -441,7 +441,7 @@
   feat(t, 'ritualist', 'Ritualist', [N, A, D], [], 'Faster rituals; fewer components per rank', false);
   feat(t, 'binding_circle', 'Binding Circle', [N], [['ritualist:1']], 'Prepare binding runes for summons', false);
   feat(t, 'warding', 'Warding', [A], [['ritualist:1']], 'Wards, barriers, and magical traps', false);
-  feat(t, 'rite_of_healing', 'Rite of Healing', [A], [['ritualist:1'], ['verb_bless:1']], 'Healing ritual', false);
+  feat(t, 'rite_of_healing', 'Rite of Healing', [A], [['ritualist:1'], ['verb_restore:1']], 'Healing ritual', false);
   feat(t, 'true_naming', 'True Naming', [D], [['ritualist:2']], 'Name substitution gives a larger bonus', false);
   feat(t, 'imbue', 'Imbue', [E], [['ritualist:3']], 'Enchant words into items with gems', false);
   feat(t, 'necromancy', 'Necromancy', [E], [['verb_raise:1']], 'Reanimation rituals; evil components', false);

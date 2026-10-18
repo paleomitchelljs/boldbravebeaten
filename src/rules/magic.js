@@ -52,9 +52,18 @@
   }
 
   // Does this verb make anything of this noun (and take this modifier)?
+  // The conditions a noun inflicts, which Restore + that noun lifts.
+  function curesOf(n) {
+    const N = W()[n];
+    if (!N) return [];
+    const out = [N.onHit && N.onHit.cond, N.bane, N.mind].filter((k) => k && CONFIG.conditions[k]);
+    return [...new Set(out)];
+  }
+
   function combines(v, n, m) {
     const V = W()[v], N = W()[n];
     if (!V || !N) return false;
+    if (V.shape === 'restore' && !N.heals && !curesOf(n).length) return false;
     const need = { ground: 'ground', wall: 'wall', terrain: 'terrain', bane: 'bane', boon: 'boon', conjure: 'conjure', ward: 'ward', mind: 'mind' }[V.shape];
     if (need && !N[need]) return false;
     if (m) {
@@ -137,7 +146,7 @@
       });
     }
     // target: what the caster aims at — a square, a foe (hex), or an ally or self (bless).
-    const target = V.shape === 'bane' || V.shape === 'mind' ? 'foe' : V.shape === 'boon' || V.shape === 'ward' ? 'ally' : 'square';
+    const target = V.shape === 'bane' || V.shape === 'mind' ? 'foe' : V.shape === 'boon' || V.shape === 'ward' || V.shape === 'restore' ? 'ally' : 'square';
     return Object.assign(base, { kind: 'cast', target, windUp: false, ranged: true });
   }
 
@@ -351,6 +360,21 @@
     return `${t.name}: ${bits.length ? bits.join(', ') : 'nothing to mend'}${woke ? `; ${t.name} comes to` : ''}.`;
   }
 
+  // Restore: Life mends; every noun lifts the conditions it inflicts (Venom also drains the
+  // poison from the blood). Returns log lines.
+  function restore(t, s, share) {
+    const lines = [];
+    for (const n of s.nouns || [s.noun]) {
+      const N = W()[n];
+      if (N.heals && !C().tireless(t)) lines.push(mend(t, s, share));
+      const lifted = curesOf(n).filter((k) => G.Conditions.has(t, k));
+      for (const k of lifted) G.Conditions.remove(t, k);
+      if (n === 'venom' && t.bleeds.some((b) => b.poison)) { t.bleeds = t.bleeds.filter((b) => !b.poison); lifted.push('poison'); }
+      if (lifted.length) lines.push(`${t.name}: ${lifted.map((k) => (CONFIG.conditions[k] ? CONFIG.conditions[k].name : k).toLowerCase()).join(', ')} lifted.`);
+    }
+    return lines;
+  }
+
   // A conjured creature: a fresh character on the caster's side for a few rounds.
   function conjure(enc, chars, caster, n, at, spell) {
     const N = W()[n];
@@ -395,12 +419,7 @@
     const N = W()[s.noun];
     switch (s.shape) {
       case 'area': {
-        log(`${a.name} casts ${o.label} at (${at.x + 1}, ${at.y + 1}).`, N.heals ? 'defend' : 'hit');
-        if (N.heals) {
-          // A burst of life mends everyone living in it, friend or foe; the made feel nothing.
-          for (const id of within(enc, chars, at.x, at.y, s.radius)) if (!C().tireless(chars[id])) log(mend(chars[id], s, CONFIG.magic.heal.areaShare), 'defend');
-          return;
-        }
+        log(`${a.name} casts ${o.label} at (${at.x + 1}, ${at.y + 1}).`, 'hit');
         for (const id of within(enc, chars, at.x, at.y, s.radius)) {
           const t = chars[id];
           const k = await contest(roller, a, t, 'avoid', o.label);
@@ -464,12 +483,21 @@
         const t = chars[d.target];
         if (!t || t.status.dead) return log(`${a.name}'s ${o.label} fizzles.`, 'fizzle');
         log(`${a.name} casts ${o.label} on ${t === a ? 'themself' : t.name}.`, 'defend');
-        if (N.heals) log(mend(t, s, 1), 'defend');
         for (const k of s.nouns || [s.noun]) {
           const boon = W()[k].boon;
           G.Conditions.add(t, boon, { rounds: s.rounds, mag: s.condMag, src: a.id });
           log(`${t.name} is ${CONFIG.conditions[boon].name.toLowerCase()} (${s.rounds} rounds).`, 'defend');
         }
+        return;
+      }
+      case 'restore': {
+        const t = chars[d.target];
+        if (!t || t.status.dead || !enc.pos[t.id]) return log(`${a.name}'s ${o.label} fizzles.`, 'fizzle');
+        log(`${a.name} casts ${o.label} on ${t === a ? 'themself' : t.name}${s.radius ? ' and all around' : ''}.`, 'defend');
+        // Wide: everyone living within the radius, friend or foe, at a share of the stamina.
+        const who = s.radius ? within(enc, chars, enc.pos[t.id].x, enc.pos[t.id].y, s.radius).map((id) => chars[id]) : [t];
+        const share = s.radius ? CONFIG.magic.heal.areaShare : 1;
+        for (const x of who) for (const line of restore(x, s, share)) log(line, 'defend');
         return;
       }
       case 'ward': {
@@ -518,5 +546,5 @@
     return lines;
   }
 
-  G.Magic = { mend, wardAgainst, maxSP, availableSP, spellOptions, knows, combines, backlash, makeOption, contest, afflict, onHit, elementBlow, afterHit, springRune, resolveCast, lineAcross, endRound, push };
+  G.Magic = { mend, restore, curesOf, wardAgainst, maxSP, availableSP, spellOptions, knows, combines, backlash, makeOption, contest, afflict, onHit, elementBlow, afterHit, springRune, resolveCast, lineAcross, endRound, push };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

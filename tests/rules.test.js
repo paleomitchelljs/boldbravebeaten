@@ -1088,7 +1088,7 @@ test('build a stone wall across the line; it blocks the way and arrows', async (
   assert.ok(B.Terrain.lineCheck(enc, enc.pos[f.id], enc.pos[m.id], 'missile').blocked);
 });
 
-test('hex with vine roots a foe unless they resist; bless with life closes wounds', async () => {
+test('hex with vine roots a foe unless they resist; bless with life innervates (healing is Restore)', async () => {
   const m = mage('M', ['vine', 'life']);
   const f = armed('F', 'longsword', { side: 'enemy' });
   // Backlash 10, caster rolls 9, target rolls 1: rooted.
@@ -1102,8 +1102,8 @@ test('hex with vine roots a foe unless they resist; bless with life closes wound
   ally.damage.CON = 2;
   ally.bleeds = [{ remaining: 4, rounds: 3 }];
   await castAt(m, [ally], 'bless+life', { target: ally.id }, [10]);
-  assert.strictEqual(ally.bleeds.length, 0);
-  assert.strictEqual(ally.damage.CON, 1);
+  assert.strictEqual(ally.bleeds.length, 1, 'Bless is a boon: no mending');
+  assert.strictEqual(ally.damage.CON, 2);
   assert.ok(B.Conditions.has(ally, 'innervated'));
 });
 
@@ -1348,8 +1348,8 @@ test('phase 3: mend heals far better than in a fight; prepared wards take hold w
   assert.strictEqual(m.prepared.length, 0);
 });
 
-test('Life heals: Bless mends one (bleeding, CON, stamina; wakes the downed), Burst mends all in the area', async () => {
-  const m = mage('Cleric', ['life']);
+test('Restore: + Life mends (bleeding, CON, stamina; wakes the downed); Wide reaches all around; other nouns lift their conditions', async () => {
+  const m = mage('Cleric', ['life', 'venom']);
   const ally = fighter('Ally');
   ally.side = m.side;
   ally.at = { x: 2, y: 2 };
@@ -1358,24 +1358,30 @@ test('Life heals: Bless mends one (bleeding, CON, stamina; wakes the downed), Bu
   ally.stamina = 0;
   ally.status.unconscious = true;
   const maxBefore = C.maxStamina(ally);
-  const { o } = await castAt(m, [ally], 'bless+life', { target: ally.id });
+  const { o } = await castAt(m, [ally], 'restore+life', { target: ally.id });
   const H = B.CONFIG.magic.heal;
   assert.equal(ally.damage.CON, 1, 'one CON back');
   assert.deepEqual(ally.bleeds.map((b) => !!b.poison), [true], 'bleeding stops, poison stays');
   // A point of CON back raises max stamina, and that comes back too (Character.healAttr).
   assert.equal(ally.stamina, (C.maxStamina(ally) - maxBefore) + H.stamina + H.staminaPerMag * o.spell.magnitude);
   assert.equal(ally.status.unconscious, false, 'the downed come to');
-  assert.ok(B.Conditions.has(ally, 'innervated'));
-  // A burst mends friend and foe alike in its area, at a share of the stamina.
-  const foe = fighter('Foe');
-  foe.stamina = 1;
-  foe.at = { x: 5, y: 2 };
+  // Restore + Venom drains the poison and lifts Poisoned.
+  B.Conditions.add(ally, 'poisoned', { rounds: 3 });
+  await castAt(m, [ally], 'restore+venom', { target: ally.id });
+  assert.equal(ally.bleeds.length, 0);
+  assert.ok(!B.Conditions.has(ally, 'poisoned'));
+  // Bless + Life is a boon only; Restore doesn't combine with a noun that inflicts nothing.
+  assert.ok(B.Magic.combines('bless', 'life') && !B.Magic.combines('restore', 'wind'));
+  // Wide: everyone within a square of the target, friend or foe, at a share of the stamina.
   const friend = fighter('Friend');
   friend.side = m.side;
   friend.stamina = 1;
-  friend.at = { x: 5, y: 3 };
-  const r = await castAt(m, [foe, friend], 'burst+life', { at: { x: 5, y: 2 } });
+  friend.at = { x: 2, y: 2 };
+  const foe = fighter('Foe');
+  foe.stamina = 1;
+  foe.at = { x: 2, y: 3 };
+  const r = await castAt(m, [friend, foe], 'restore+life+wide', { target: friend.id });
   const gain = Math.round((H.stamina + H.staminaPerMag * r.o.spell.magnitude) * H.areaShare);
-  assert.equal(foe.stamina, 1 + gain);
   assert.equal(friend.stamina, 1 + gain);
+  assert.equal(foe.stamina, 1 + gain);
 });

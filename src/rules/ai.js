@@ -334,6 +334,18 @@
     return v;
   }
 
+  // What Restore is worth on a creature: mending (Life) plus the conditions it would lift.
+  function restoreValue(a, s, share) {
+    if (!a || a.status.dead) return 0;
+    let v = 0;
+    for (const n of s.nouns || [s.noun]) {
+      if (G.CONFIG.magic.words[n].heals) v += mendValue(a, s, share);
+      for (const k of G.Magic.curesOf(n)) if (G.Conditions.has(a, k)) v += { controlled: 40, mesmerized: 30, confused: 24, calmed: 16, frightened: 16, rooted: 14, poisoned: 16, withering: 18, diseased: 10 }[k] || 10;
+      if (n === 'venom') v += a.bleeds.filter((b) => b.poison).reduce((t, b) => t + b.remaining, 0) * 3;
+    }
+    return v;
+  }
+
   function castChoice(enc, chars, id, la, foes) {
     if (!la.spells || !la.spells.length) return null;
     const c = chars[id];
@@ -389,10 +401,20 @@
           else if (kind === 'missiles') v = ranged.filter((f) => !G.Magic.maxSP(chars[f])).length * 8;
           consider(v, cast({ target: t.id }), o);
         }
-      } else if (o.target === 'ally' && N.heals) {
-        // Mend: the downed first, then the bleeding and the worn out.
+      } else if (s.shape === 'restore') {
+        // Restore: the downed first, then the bleeding, the afflicted and the worn out. Wide
+        // reaches everyone around the target, so foes there count against it.
+        const share = s.radius ? G.CONFIG.magic.heal.areaShare : 1;
         for (const t of o.targets) {
-          if (t.inReach) consider(mendValue(chars[t.id], s, 1), cast({ target: t.id }), o);
+          if (!t.inReach) continue;
+          const around = s.radius ? enc.ids.filter((o2) => chars[o2] && !chars[o2].status.dead && enc.pos[o2] && Combat.dist(posOf(o2), posOf(t.id)) <= s.radius) : [t.id];
+          let v = 0;
+          for (const o2 of around) {
+            const x = chars[o2];
+            const friend = x.side === c.side || (x.charmed && x.charmed.side === c.side);
+            v += (friend ? 1 : -1) * restoreValue(x, s, share);
+          }
+          consider(v, cast({ target: t.id }), o);
         }
       } else if (o.target === 'ally') {
         const key = N.boon;
@@ -427,18 +449,6 @@
           if (away > far) { far = away; spot = { x, y }; }
         }
         if (spot && far >= 3) consider(stuck ? 30 : 22, cast({ at: spot }), o);
-      } else if (s.shape === 'area' && N.heals) {
-        // A burst of life where friends (the downed too) need it and foes don't stand.
-        const friends = enc.ids.filter((o2) => chars[o2] && chars[o2].side === c.side && !chars[o2].status.dead);
-        for (const f of friends) {
-          const p = posOf(f);
-          const d = Combat.dist(me, p);
-          if (d > o.maxRange || d < o.minRange) continue;
-          if (G.Terrain && enc.tiles && d >= 2 && G.Terrain.lineCheck(enc, me, p, 'missile').blocked) continue;
-          const gain = inArea(friends, p, s.radius).reduce((t, a2) => t + mendValue(chars[a2], s, G.CONFIG.magic.heal.areaShare), 0);
-          const helpFoes = inArea(foes, p, s.radius).reduce((t, f2) => t + mendValue(chars[f2], s, G.CONFIG.magic.heal.areaShare), 0);
-          consider(gain - helpFoes, cast({ at: p }), o);
-        }
       } else if (s.shape === 'area') {
         for (const f of foes) {
           const p = posOf(f);
