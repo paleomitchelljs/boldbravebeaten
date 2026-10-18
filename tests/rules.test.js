@@ -955,10 +955,12 @@ test('parries and dodges are opposed rolls; a power blow cannot be parried', () 
   // Equal fighters: the defender wins ties.
   const even = Combat.defenseOdds(d, 'parry', 'thrust', human, opt(human, (o) => o.motion === 'thrust'));
   assert.ok(even > 0.5 && even < 0.75, String(even));
-  // A heavier attacking weapon is harder to parry.
+  // A harder blow (more force) is harder to parry: a greatsword's two-handed swing against a thrust.
   const g = armed('G', 'greatsword');
+  g.base.STR = 7;
   const gs = opt(g, (o) => o.motion === 'thrust');
-  assert.ok(Combat.defenseOdds(d, 'parry', 'thrust', g, gs) < Combat.defenseOdds(d, 'parry', 'thrust', human, opt(human, (o) => o.motion === 'thrust')));
+  const big = opt(g, (o) => o.motion === 'twoHanded');
+  assert.ok(Combat.defenseOdds(d, 'parry', 'twoHanded', g, big) < Combat.defenseOdds(d, 'parry', 'thrust', human, opt(human, (o) => o.motion === 'thrust')));
   // No parrying a power blow.
   const power = { type: 'strike', actor: g.id, option: Object.assign({}, gs, { motion: 'power' }) };
   assert.strictEqual(Combat.defenseUnavailable(d, 'parry', power, { [g.id]: g }, null), "Can't parry a power blow");
@@ -1564,11 +1566,19 @@ test('impact: heavy blunt crushes, a hard blow throws its target back, and big b
   await Combat.applyHit(enc, chars, troll, sturdy, fist, roller(5, []), {});
   assert.ok(enc.pos[sturdy.id].x > 4, 'thrown back');
   assert.ok(enc.struck[sturdy.id], 'stopped where struck');
-  // No parrying a big creature, or any blow of 20+; a weaker blow is easier to parry than a stronger.
-  const decl = { actor: troll.id, type: 'strike', option: fist };
+  // A parry meets force with force: a sword against a giant's club is hopeless; a strong
+  // two-hander trained to parry has a chance; a soft blow is easier than a hard one.
   sturdy.weapons.push(Items.makeWeapon('longsword', 'standard'));
   sturdy.wield = sturdy.weapons[0].id;
-  assert.match(Combat.defenseUnavailable(sturdy, 'parry', decl, chars, enc) || '', /parry/);
+  assert.ok(Combat.defenseOdds(sturdy, 'parry', 'swing', null, club) < 0.02, 'a sword against a giant');
+  const barb = fighter('Barbarian');
+  barb.base.STR = 10; barb.base.DEX = 6; barb.base.SPD = 6;
+  barb.feats = { parry_training: 3, heavy_weapon_training: 2, strength: 2 };
+  const gs = Items.makeWeapon('greatsword', 'fine');
+  barb.weapons.push(gs);
+  barb.wield = gs.id;
+  const pBarb = Combat.defenseOdds(barb, 'parry', 'swing', null, club);
+  assert.ok(pBarb > 0.1 && pBarb < 0.6, `a barbarian has a chance (${pBarb.toFixed(2)})`);
   const soft = { damage: [0, 4, 0], motion: 'swing' }, hard = { damage: [0, 16, 2], motion: 'swing' };
   assert.ok(Combat.defenseOdds(sturdy, 'parry', 'swing', null, soft) > Combat.defenseOdds(sturdy, 'parry', 'swing', null, hard));
 });

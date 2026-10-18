@@ -607,11 +607,7 @@
     const parry = kind === 'parry' || kind === 'offParry';
     if (parry && opt && (opt.spell || (opt.ranged && !CONFIG.archery.parry))) return opt.spell ? "Can't parry a spell" : "Can't parry an arrow";
     if (parry && opt && opt.motion === 'power' && CONFIG.defense.noParryVsPower) return "Can't parry a power blow";
-    if (parry && opt && CONFIG.defense.parryForce) {
-      const by = attackDecl && chars ? chars[attackDecl.actor] : null;
-      if (by && sizeOf(by) > 1) return 'Too big a blow to parry';
-      if (blowForce(opt) >= CONFIG.defense.parryForce.unparryable) return 'Too heavy a blow to parry';
-    }
+
     if (kind === 'block' && !C.shieldReady(c)) return 'No ready shield';
     if (kind === 'offParry') {
       if (!C.offhandWeapon(c)) return 'No off-hand dagger';
@@ -1175,8 +1171,12 @@
       if (kind === 'offParry') bonus += D.offhandBonus || 0;
       let atk = D.motionPenalty[motion] || 0;
       if (parry && D.parryForce) {
-        // A parry meets the blow's force: what it would do (its expected damage).
-        atk += atkOption && atkOption.damage ? Math.floor(blowForce(atkOption) / D.parryForce.per) : D.typicalAttacker;
+        // A parry meets the blow's force with the parrying weapon's own (its best blow in my hands).
+        if (atkOption && atkOption.damage) {
+          const f = blowForce(atkOption), mine = parryForce(defender, kind);
+          atk += Math.floor(Math.max(0, f - mine / 2) / D.parryForce.per) + Math.floor(Math.max(0, f - mine) / D.parryForce.over);
+          if (attacker) atk += Math.floor(C.combatAttr(attacker, 'SPD') / 4); // the quickness of the blow
+        } else atk += D.typicalAttacker;
       } else {
         atk += attacker ? Math.floor((C.attr(attacker, 'STR') + C.combatAttr(attacker, 'SPD')) / 4) : D.typicalAttacker;
         if (parry && atkOption && atkOption.weaponType) {
@@ -1203,6 +1203,15 @@
   // A blow's force: its expected damage, all kinds together.
   function blowForce(o) {
     return o && o.damage ? o.damage[0] + o.damage[1] + o.damage[2] : 0;
+  }
+
+  // The force a parrying weapon can meet a blow with: its best blow in this wielder's hands.
+  function parryForce(c, kind) {
+    const w = parryingWeapon(c, kind);
+    if (!w) return 0;
+    let best = 0;
+    for (const o of C.attackOptions(c)) if (o.weaponId === w.id && !o.unarmed) best = Math.max(best, blowForce(o));
+    return best;
   }
 
   // The weapon a parry is made with.
