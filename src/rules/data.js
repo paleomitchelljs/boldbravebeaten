@@ -265,6 +265,9 @@
     break: { name: 'Break grapple', ap: 2, stamina: 3 },
     release: { name: 'Release hold', ap: 1, stamina: 0 },
     tearFree: { name: 'Tear free of webs', ap: 2, stamina: 1 },
+    // PROVISIONAL: in-combat charm and wisdom actions (CONFIG.social).
+    bait: { name: 'Bait', ap: 1, stamina: 1 },
+    readIntent: { name: 'Read intent', ap: 1, stamina: 0 },
     bandage: { name: 'Bandage', ap: 3, stamina: 0 },
     move: { name: 'Move', ap: 1, stamina: 0 },
     windUp: { name: 'Wind up', ap: 2, stamina: 1 }, // costs set in CONFIG.windUp
@@ -411,10 +414,10 @@
 
   t = tree('magicWords', 'Magic: words', 'INT');
   // Verbs and modifiers are studied; nouns are found in the world (c.nouns).
-  [['Strike', 'a bolt at arm\'s reach'], ['Hex', 'a bane on a foe'], ['Bless', 'a boon on an ally'], ['Cover', 'a hazard on the ground']]
+  [['Strike', 'a bolt at arm\'s reach'], ['Hex', 'a bane on a foe'], ['Bless', 'a boon on an ally'], ['Cover', 'a hazard on the ground'], ['Ward', 'protection from magic, missiles or an element']]
     .forEach(([w, what]) => feat(t, 'verb_' + w.toLowerCase(), 'Verb: ' + w, [N], [], `Learn the verb ${w} (${what})`, false));
-  const anyNoviceVerb = ['verb_strike:1', 'verb_hex:1', 'verb_bless:1', 'verb_cover:1'];
-  [['Launch', 'a bolt at range'], ['Build', 'a wall across several squares'], ['Open', 'a pit'], ['Inscribe', 'a hidden rune on a square']]
+  const anyNoviceVerb = ['verb_strike:1', 'verb_hex:1', 'verb_bless:1', 'verb_cover:1', 'verb_ward:1'];
+  [['Launch', 'a bolt at range'], ['Build', 'a wall across several squares'], ['Open', 'a pit'], ['Inscribe', 'a hidden rune on a square'], ['Blink', 'a short step through space']]
     .forEach(([w, what]) => feat(t, 'verb_' + w.toLowerCase(), 'Verb: ' + w, [A], [anyNoviceVerb], `Learn the verb ${w} (${what})`, false));
   feat(t, 'verb_burst', 'Verb: Burst', [D], [['verb_launch:1']], 'Learn the verb Burst (an area)', false);
   feat(t, 'verb_conjure', 'Verb: Conjure', [D], [['verb_build:1', 'verb_bless:1']], 'Learn the verb Conjure (a creature of the noun, for a few rounds)', false);

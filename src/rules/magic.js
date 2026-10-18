@@ -55,7 +55,7 @@
   function combines(v, n, m) {
     const V = W()[v], N = W()[n];
     if (!V || !N) return false;
-    const need = { ground: 'ground', wall: 'wall', terrain: 'terrain', bane: 'bane', boon: 'boon', conjure: 'conjure' }[V.shape];
+    const need = { ground: 'ground', wall: 'wall', terrain: 'terrain', bane: 'bane', boon: 'boon', conjure: 'conjure', ward: 'ward' }[V.shape];
     if (need && !N[need]) return false;
     if (m) {
       const M = W()[m];
@@ -128,7 +128,7 @@
       });
     }
     // target: what the caster aims at — a square, a foe (hex), or an ally or self (bless).
-    const target = V.shape === 'bane' ? 'foe' : V.shape === 'boon' ? 'ally' : 'square';
+    const target = V.shape === 'bane' ? 'foe' : V.shape === 'boon' || V.shape === 'ward' ? 'ally' : 'square';
     return Object.assign(base, { kind: 'cast', target, windUp: false, ranged: true });
   }
 
@@ -163,6 +163,11 @@
   async function afflict(enc, caster, target, key, opts, roller) {
     if (!G.Conditions || !CONFIG.conditions[key] || !G.Character.isActive(target)) return false;
     if (C().tireless(target) && CONFIG.conditions[key].living) return false;
+    const ward = G.Conditions.get(target, 'warded');
+    if (ward && ward.kind === 'mind' && (key === 'baited')) {
+      logger(enc)(`${target.name}'s ward keeps the spell out of their mind.`, 'defend');
+      return false;
+    }
     const resist = CONFIG.conditions[key].resist;
     const name = CONFIG.conditions[key].name;
     if (resist && caster && caster !== target) {
@@ -182,6 +187,8 @@
     const N = W()[n];
     const H = N.onHit;
     if (!H || !G.Character.isActive(target)) return;
+    const ward = G.Conditions && G.Conditions.get(target, 'warded');
+    if (ward && ward.kind === n) return; // warded against this element
     const condMag = (opts && opts.condMag) || 1;
     if (H.cond) await afflict(enc, caster, target, H.cond, { rounds: H.rounds || 1, mag: condMag }, roller);
     if (H.push && opts && opts.from) push(enc, chars, target, opts.from, H.push);
@@ -220,6 +227,9 @@
     let m = mag;
     if (opts.half) m = Math.floor(m / 2);
     if (N.element === 'fire' && G.Conditions && G.Conditions.flag(target, 'halveFire')) m = Math.floor(m / 2);
+    const w = wardAgainst(enc, target, { spell: { element: N.element, noun: n, magnitude: m } }, false);
+    if (w.blocked) return;
+    m = w.magnitude;
     const option = { kind: 'strike', motion: 'spell', label, spell: { noun: n, element: N.element, magnitude: m }, damage: damageVector(n, m) };
     const r = await G.Combat.applyHit(enc, chars, caster, target, option, roller, {});
     logger(enc)(`${label} hits ${target.name}${opts.half ? ' (half: dodged aside)' : ''}: ${r.text}`, 'hit');
@@ -231,6 +241,33 @@
     const s = option.spell;
     await onHit(enc, chars, a, t, s.noun, roller, { from: enc.pos[a.id], condMag: s.condMag });
     if (s.lingering && G.Conditions && G.Character.isActive(t)) await afflict(enc, a, t, 'afflicted', { rounds: 3, mag: Math.max(1, Math.round(s.magnitude / 4)) }, roller);
+  }
+
+  // A ward meets a spell or a missile. Returns { blocked, magnitude, damage } for the blow to
+  // go ahead with (missile weapons: damage vector; spells: magnitude). `missile`: an arrow or a
+  // ranged bolt. Logs what the ward does.
+  function wardAgainst(enc, target, option, missile) {
+    const out = { blocked: false, magnitude: option.spell ? option.spell.magnitude : 0, damage: option.damage ? option.damage.slice() : null };
+    const ward = G.Conditions && G.Conditions.get(target, 'warded');
+    if (!ward) return out;
+    const log = logger(enc);
+    const spell = option.spell;
+    if (ward.kind === 'magic' && (spell || missile)) {
+      let pool = ward.pool || 0;
+      if (spell && out.magnitude > 0) { const take = Math.min(pool, out.magnitude); out.magnitude -= take; pool -= take; }
+      else if (out.damage) for (let i = 0; i < 3 && pool > 0; i++) { const take = Math.min(pool, out.damage[i]); out.damage[i] -= take; pool -= take; }
+      log(`${target.name}'s ward of force takes ${(ward.pool || 0) - pool} of it${pool <= 0 ? ' and breaks' : ''}.`, 'defend');
+      ward.pool = pool;
+      if (pool <= 0) G.Conditions.remove(target, 'warded');
+      if ((spell && out.magnitude <= 0) || (!spell && out.damage && out.damage.every((v) => v <= 0))) out.blocked = true;
+    } else if (ward.kind === 'missiles' && missile) {
+      // Half the missiles are turned aside (rolled where a die is at hand: the caller decides).
+      out.deflect = 0.5;
+    } else if (spell && ward.kind === spell.noun) {
+      out.magnitude = Math.floor(out.magnitude / 2);
+      log(`${target.name}'s ward against ${spell.noun} halves it.`, 'defend');
+    }
+    return out;
   }
 
   // Characters within `r` squares of (x, y).
@@ -309,7 +346,8 @@
     if (!at) return;
     const distance = G.Combat.dist(from, at);
     if (distance > o.maxRange || distance < (o.target === 'ally' ? 0 : o.minRange)) return log(`${a.name}'s ${o.label} fizzles — out of range.`, 'fizzle');
-    if (distance >= 2 && G.Terrain.lineCheck(enc, from, at, 'missile').blocked) return log(`${a.name}'s ${o.label} fizzles — no clear line.`, 'fizzle');
+    // Blink needs no line (it goes through); everything else does.
+    if (distance >= 2 && s.shape !== 'blink' && G.Terrain.lineCheck(enc, from, at, 'missile').blocked) return log(`${a.name}'s ${o.label} fizzles — no clear line.`, 'fizzle');
     if (!(await G.Combat.castSpell(enc, a, o, roller))) return;
     const side = a.side;
     const N = W()[s.noun];
@@ -382,6 +420,24 @@
         log(`${t.name} is ${CONFIG.conditions[N.boon].name.toLowerCase()} (${s.rounds} rounds).`, 'defend');
         return;
       }
+      case 'ward': {
+        const t = chars[d.target];
+        if (!t || t.status.dead) return log(`${a.name}'s ${o.label} fizzles.`, 'fizzle');
+        const kind = N.ward;
+        const pool = kind === 'magic' ? s.magnitude * 3 : null;
+        G.Conditions.add(t, 'warded', { rounds: s.rounds, mag: s.condMag, kind, pool, src: a.id });
+        const what = { magic: `a ward of force (${pool} points against spells and missiles)`, missiles: 'a ward of wind that turns missiles aside', mind: 'a ward on the mind' }[kind] || `a ward against ${kind}`;
+        return log(`${a.name} casts ${o.label}: ${t === a ? 'themself' : t.name} is wrapped in ${what} (${s.rounds} rounds).`, 'defend');
+      }
+      case 'blink': {
+        if (!G.Terrain.passable(enc, at.x, at.y) || occupied(enc, chars, at.x, at.y)) return log(`${a.name}'s ${o.label} fizzles — no room there.`, 'fizzle');
+        // A step through space: walls, pits and grips don't hold you.
+        if (G.Combat.releaseAll) G.Combat.releaseAll(chars, a);
+        if (G.Conditions) for (const x of G.Conditions.list(a).slice()) if ((CONFIG.conditions[x.key] || {}).noMove) G.Conditions.remove(a, x.key);
+        a.status.webbed = 0;
+        enc.pos[a.id] = { x: at.x, y: at.y };
+        return log(`${a.name} blinks to (${at.x + 1}, ${at.y + 1}).`, 'defend');
+      }
       case 'conjure': {
         if (!G.Terrain.passable(enc, at.x, at.y) || occupied(enc, chars, at.x, at.y)) return log(`${a.name}'s ${o.label} fizzles — no room.`, 'fizzle');
         const c = conjure(enc, chars, a, s.noun, at, s);
@@ -410,5 +466,5 @@
     return lines;
   }
 
-  G.Magic = { maxSP, availableSP, spellOptions, knows, combines, backlash, makeOption, contest, afflict, onHit, elementBlow, afterHit, springRune, resolveCast, lineAcross, endRound, push };
+  G.Magic = { wardAgainst, maxSP, availableSP, spellOptions, knows, combines, backlash, makeOption, contest, afflict, onHit, elementBlow, afterHit, springRune, resolveCast, lineAcross, endRound, push };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

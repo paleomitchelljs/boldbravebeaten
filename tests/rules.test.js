@@ -1152,3 +1152,67 @@ test('conjure: a fire elemental joins the caster for a few rounds; life raises t
   const z = Object.values(r2.enc.extra || {})[0];
   assert.ok(z && z.side === m.side && corpse.raised);
 });
+
+test('ward of force soaks spells and missiles; ward of wind turns missiles aside', async () => {
+  const m = mage('M', ['force', 'wind', 'fire']);
+  const ally = armed('A', 'longsword'); ally.at = { x: 2, y: 2 };
+  await castAt(m, [ally], 'ward+force', { target: ally.id }, [10]);
+  const w = B.Conditions.get(ally, 'warded');
+  assert.ok(w && w.kind === 'magic' && w.pool === B.CONFIG.magic.words.ward.mag * 3);
+  const enc = { log: [] };
+  const bolt = B.Magic.spellOptions(m).find((o) => o.spellKey === 'launch+fire');
+  const out = B.Magic.wardAgainst(enc, ally, bolt, true);
+  assert.strictEqual(out.magnitude, 0, 'the bolt is soaked');
+  assert.ok(out.blocked);
+  assert.strictEqual(B.Conditions.get(ally, 'warded').pool, w.pool > 0 ? 6 - bolt.spell.magnitude : 0);
+  const other = armed('O', 'longsword'); other.at = { x: 2, y: 2 };
+  m.spSpent = 0;
+  await castAt(m, [other], 'ward+wind', { target: other.id }, [10]);
+  assert.strictEqual(B.Magic.wardAgainst(enc, other, { damage: [5, 0, 0] }, true).deflect, 0.5);
+});
+
+test('blink: a caster held in a grapple steps out of it to a square', async () => {
+  const m = mage('M', ['wind']);
+  const g = armed('G', 'dagger', { side: 'enemy' }); g.at = { x: 2, y: 2 };
+  const chars = { [m.id]: m, [g.id]: g };
+  m.status.grappledBy = [g.id]; g.status.grappling = m.id;
+  const enc = Combat.createEncounter('t', [m.id, g.id], chars, 10, 5);
+  enc.pos[m.id] = { x: 1, y: 2 }; enc.pos[g.id] = { x: 2, y: 2 };
+  await Combat.startRound(enc, chars, roller(1, [9, 1]));
+  const la = Combat.legalActions(enc, chars, m.id);
+  const blink = la.spells.find((o) => o.spell.shape === 'blink');
+  assert.ok(blink && blink.affordable, 'blink is open even while held');
+  assert.ok(!la.spells.some((o) => o.spell.shape === 'wall'), 'nothing else while held');
+  await B.Magic.resolveCast(enc, chars, { actor: m.id, type: 'cast', option: blink.option || blink, at: { x: 4, y: 0 } }, roller(2, [10]), JSON.parse(JSON.stringify(enc.pos)));
+  assert.deepStrictEqual(enc.pos[m.id], { x: 4, y: 0 });
+  assert.ok(!m.status.grappledBy.length && !g.status.grappling);
+});
+
+test('bait draws out guards and leaves a foe off balance; reading intent gives +2 both ways', async () => {
+  const a = armed('A', 'longsword', { side: 'party' }); a.base.CHA = 8; a.base.WIS = 8;
+  const t = armed('T', 'longsword', { side: 'enemy' });
+  const chars = { [a.id]: a, [t.id]: t };
+  const swing = opt(a, (o) => o.motion === 'thrust');
+  const before = Combat.defenseOdds(t, 'parry', 'thrust', a, swing);
+  B.Conditions.add(t, 'baited', { rounds: 1 });
+  assert.ok(Combat.defenseOdds(t, 'parry', 'thrust', a, swing) < before);
+  B.Conditions.remove(t, 'baited');
+  B.Conditions.add(a, 'reading', { rounds: 1, vs: t.id });
+  assert.ok(Combat.defenseOdds(t, 'parry', 'thrust', a, swing) < before, 'harder to parry one who reads you');
+  const theirs = opt(t, (o) => o.motion === 'thrust');
+  assert.ok(Combat.defenseOdds(a, 'parry', 'thrust', t, theirs) > Combat.defenseOdds(t, 'parry', 'thrust', a, swing));
+  // The action: bait wins, the foe's guard is spent.
+  B.Conditions.remove(a, 'reading');
+  const enc = Combat.createEncounter('t', [a.id, t.id], chars, 6, 1);
+  enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[t.id] = { x: 2, y: 0 };
+  t.base.SPD = 9;
+  await Combat.startRound(enc, chars, roller(1, [5, 9]));
+  assert.strictEqual(Combat.currentActor(enc), t.id);
+  assert.strictEqual(Combat.declare(enc, chars, { actor: t.id, type: 'parry' }), null);
+  Combat.endTurn(enc, t.id);
+  assert.strictEqual(Combat.declare(enc, chars, { actor: a.id, type: 'bait', target: t.id }), null);
+  Combat.endTurn(enc, a.id);
+  await Combat.resolvePass(enc, chars, roller(2, [9, 1]));
+  assert.ok(B.Conditions.has(t, 'baited'));
+  assert.ok(enc.decls.find((d) => d.actor === t.id && d.type === 'parry').used);
+});

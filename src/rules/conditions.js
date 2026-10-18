@@ -41,12 +41,16 @@
     const conds = c.status.conds || (c.status.conds = []);
     const cur = conds.find((x) => x.key === key);
     const rounds = opts.rounds || 1, mag = opts.mag || 1;
+    // Extra details some conditions carry: vs (whom it concerns), kind (a ward's kind), pool.
+    const extra = {};
+    for (const k of ['vs', 'kind', 'pool']) if (opts[k] != null) extra[k] = opts[k];
     if (cur) {
       cur.rounds = Math.max(cur.rounds, rounds);
       cur.mag = Math.max(cur.mag, mag);
+      Object.assign(cur, extra);
       return cur;
     }
-    const n = { key, rounds, mag, src: opts.src || null };
+    const n = Object.assign({ key, rounds, mag, src: opts.src || null }, extra);
     conds.push(n);
     return n;
   }
@@ -97,7 +101,7 @@
 
   // Short labels for the roster.
   function labels(c) {
-    return list(c).map((x) => `${(defs()[x.key] || {}).name || x.key}${x.mag > 1 ? ' ' + x.mag : ''} (${x.rounds})`);
+    return list(c).map((x) => `${(defs()[x.key] || {}).name || x.key}${x.kind ? ': ' + x.kind : ''}${x.pool != null ? ' ' + x.pool : x.mag > 1 ? ' ' + x.mag : ''} (${x.rounds})`);
   }
 
   G.Conditions = { list, get, has, add, remove, apMod, attrMod, mitigation, regenMod, flag, canMove, endRound, labels };

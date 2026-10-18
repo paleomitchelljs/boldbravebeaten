@@ -393,9 +393,10 @@
 
     // Spells cast at a square, a foe or an ally (bolts are among the attacks above).
     out.spells = [];
-    if (G.Magic && C.handsBusy(c) < 2 && !isGrappled(c) && !c.status.pinned) {
+    if (G.Magic && C.handsBusy(c) < 2 && !c.status.pinned) {
       for (const opt of G.Magic.spellOptions(c)) {
         if (opt.kind !== 'cast') continue;
+        if (isGrappled(c) && opt.spell.shape !== 'blink') continue; // held: only a blink gets you out
         const why = spellShort(c, opt, spPlanned);
         const targets = opt.target === 'square' ? null : enc.ids.filter((o) => {
           const t = chars[o];
@@ -442,6 +443,18 @@
       pushManeuver('throw', [near(link.partner)]);
     } else {
       pushManeuver('break', [near(link.partner)]);
+    }
+    // Bait (CHA vs WIS) and Read intent (WIS vs CHA): any foe in sight within range.
+    if (CONFIG.social) {
+      for (const kind of ['bait', 'readIntent']) {
+        const r = CONFIG.social[kind].range;
+        pushManeuver(kind, others.filter((o) => chars[o].side !== c.side && C.isActive(chars[o])).map((o) => {
+          const op = posAtPass(enc, o, enc.pass);
+          const dd = dist(me, op);
+          const sight = !(G.Terrain && enc.tiles && dd >= 2 && G.Terrain.lineCheck(enc, me, op, 'sight').blocked);
+          return { id: o, inReach: dd <= r && sight, distance: dd };
+        }));
+      }
     }
     if (c.status.pinned) {
       // Pinned: only trying to break free.
@@ -590,7 +603,7 @@
       const key = decl.option.spellKey;
       const opt = G.Magic.spellOptions(c).find((o) => o.kind === 'cast' && o.spellKey === key);
       if (!opt) return 'Spell not available';
-      if (C.handsBusy(c) >= 2 || isGrappled(c)) return 'Needs a free hand';
+      if (C.handsBusy(c) >= 2 || (isGrappled(c) && opt.spell.shape !== 'blink')) return 'Needs a free hand';
       const spPlanned = enc.decls.filter((d) => d.actor === id && (d.type === 'strike' || d.type === 'cast') && d.option.spell).reduce((t, d) => t + d.option.spCost, 0);
       const why = spellShort(c, opt, spPlanned);
       if (why) return why;
@@ -640,7 +653,7 @@
     } else {
       if (!ACTIONS[decl.type]) return 'Unknown action';
       ({ ap, stamina } = C.actionCost(c, decl.type));
-      if (['trip', 'disarm', 'shove', 'bandage'].concat(GRAPPLE_STEPS).includes(decl.type) && !decl.target) return 'Choose a target';
+      if (['trip', 'disarm', 'shove', 'bandage', 'bait', 'readIntent'].concat(GRAPPLE_STEPS).includes(decl.type) && !decl.target) return 'Choose a target';
       if (GRAPPLE_STEPS.includes(decl.type)) {
         const m = legalActions(enc, chars, id).maneuvers.find((x) => x.type === decl.type);
         if (!m || !m.targets.some((t) => t.id === decl.target)) return 'Not possible from here';
@@ -957,7 +970,27 @@
   //   ⌊(DEX + SPD)/4⌋ (armor-reduced) against attacker d10 + ⌊(STR + SPD)/4⌋ + the motion's
   //   penalty (+ for a parry, how much heavier the attacking weapon is). Ties go to the defender.
   //   Off-hand parry: a parry with the off-hand dagger (+offhandBonus), against thrusts only.
+  // Reading and bait: +read to the one who reads the other's intent; baited defends worse.
+  function intentMods(defender, attacker) {
+    const out = { def: 0, atk: 0 };
+    if (!G.Conditions) return out;
+    const reads = (x, y) => G.Conditions.list(x).some((k) => { const D = CONFIG.conditions[k.key] || {}; return D.read && (D.all || (y && k.vs === y.id)); });
+    if (attacker && reads(defender, attacker)) out.def += CONFIG.social ? CONFIG.social.readBonus : 2;
+    if (attacker && reads(attacker, defender)) out.atk += CONFIG.social ? CONFIG.social.readBonus : 2;
+    out.def += G.Conditions.list(defender).reduce((t, k) => t + ((CONFIG.conditions[k.key] || {}).defense || 0), 0);
+    return out;
+  }
+
   function defenseNumbers(defender, kind, motion, attacker, atkOption) {
+    const r = defenseNumbersBase(defender, kind, motion, attacker, atkOption);
+    const m = intentMods(defender, attacker);
+    r.bonus += m.def;
+    if (r.opposed) r.attack += m.atk;
+    else r.tn += m.atk;
+    return r;
+  }
+
+  function defenseNumbersBase(defender, kind, motion, attacker, atkOption) {
     const D = CONFIG.defense;
     if (kind === 'block') {
       let tn = D.block.tn;
@@ -1440,7 +1473,18 @@
         const pack = a.traits && a.traits.pack
           ? Math.min(a.traits.pack, enc.ids.filter((o) => o !== a.id && o !== t.id && chars[o].side === a.side && C.isActive(chars[o]) && dist(posAtStart[o], posAtStart[t.id]) <= 1).length)
           : 0;
-        const r = await applyHit(enc, chars, a, t, d.option, roller, { half, distance, pack });
+        // A ward meets spells and missiles first.
+        let hitOpt = d.option;
+        if (G.Magic && G.Conditions && G.Conditions.has(t, 'warded') && (d.option.spell || d.option.ranged)) {
+          const w = G.Magic.wardAgainst(enc, t, d.option, !!d.option.ranged);
+          if (w.deflect) {
+            const r0 = await rollDie(roller, t.id, 10, `${t.name}: ward of wind`, 'd10: 5 or less turns it aside');
+            if (r0 <= 5) return log(enc, `${t.name}'s ward of wind turns ${a.name}'s ${name} aside.`, 'defend');
+          }
+          if (w.blocked) return;
+          hitOpt = Object.assign({}, d.option, { damage: w.damage || d.option.damage, spell: d.option.spell ? Object.assign({}, d.option.spell, { magnitude: w.magnitude }) : undefined });
+        }
+        const r = await applyHit(enc, chars, a, t, hitOpt, roller, { half, distance, pack });
         const note = (distance === 1 && d.option.closePenalty) || (CONFIG.grappledWeaponsCramped && d.option.weaponId && !d.option.ranged && isGrappled(a))
           ? (CONFIG.range.closeRule === 'blunt' ? ' (cramped: blunt, half force)' : ' (cramped: half damage)') : d.option.ranged && d.option.longRange && distance > d.option.longRange ? ' (long range)' : '';
         log(enc, `${a.name}'s ${name} hits ${t.name}${half ? ' (Roll With It: half)' : ''}${pack ? ` (pack +${pack})` : ''}${note}: ${r.text}`, 'hit');
@@ -1506,6 +1550,28 @@
       case 'cast':
         if (G.Magic) await G.Magic.resolveCast(enc, chars, d, roller, posAtStart);
         break;
+      case 'bait':
+      case 'readIntent': {
+        if (!t || !C.isActive(t)) break;
+        const R = CONFIG.social;
+        if (dist(posAtStart[a.id], posAtStart[t.id]) > R[d.type].range) { log(enc, `${a.name}'s ${ACTIONS[d.type].name.toLowerCase()} fizzles — ${t.name} is too far.`, 'fizzle'); break; }
+        if (d.type === 'bait') {
+          const o = await opposed(roller, a, Math.floor(C.attr(a, 'CHA') / 2) + C.rank(a, 'feint'), 'Bait', t, Math.floor(C.attr(t, 'WIS') / 2) + C.rank(t, 'read_attack'), 'See through it');
+          if (o.margin > 0) {
+            // The bait draws out their guards and leaves them off balance for the round.
+            for (const g of enc.decls) if (g.actor === t.id && DEFENSE_TYPES.includes(g.type) && !g.used) g.used = true;
+            if (G.Conditions) G.Conditions.add(t, 'baited', { rounds: 1, src: a.id });
+            log(enc, `${a.name} baits ${t.name}, who commits too early and is off balance (${o.a} vs ${o.b}).`, 'hit');
+          } else log(enc, `${t.name} sees through ${a.name}'s bait (${o.a} vs ${o.b}).`, 'fail');
+        } else {
+          const o = await opposed(roller, a, Math.floor(C.attr(a, 'WIS') / 2) + C.rank(a, 'read_attack'), 'Read intent', t, Math.floor(C.attr(t, 'CHA') / 2) + C.rank(t, 'feint'), 'Hide intent');
+          if (o.margin > 0) {
+            if (G.Conditions) G.Conditions.add(a, 'reading', { rounds: 1, vs: t.id, src: a.id });
+            log(enc, `${a.name} reads ${t.name}'s intent (${o.a} vs ${o.b}).`, 'defend');
+          } else log(enc, `${t.name} gives nothing away to ${a.name} (${o.a} vs ${o.b}).`, 'fail');
+        }
+        break;
+      }
       case 'tearFree': {
         const W = CONFIG.web;
         const bonus = Math.floor(C.attr(a, 'STR') / 2);
@@ -1795,7 +1861,7 @@
   }
 
   G.Combat = {
-    ATTACK_TYPES, DEFENSE_TYPES, HELD_TYPES, readiesUp, readyable, shoveReach, log, rollDie, castSpell, knockDown, stability,
+    ATTACK_TYPES, DEFENSE_TYPES, HELD_TYPES, readiesUp, readyable, shoveReach, log, rollDie, castSpell, knockDown, stability, releaseAll: clearGrapple,
     createEncounter, autoPlace, startRound, currentActor, legalActions, declare, concede, endTurn, submit, describeDecl, passCap, passLeft,
     vitalNeed, projectedPos, posAtPass, dist, defenseOdds, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolvePass, resolveRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
   };

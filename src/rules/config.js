@@ -235,6 +235,12 @@
     // long weapon (reach 2+) shoves at range 2 with the haft or point; shieldBonus — a ready
     // shield adds to the shove. A shove that moves or floors a foe spoils their move that pass.
     shove: { twoHandBonus: 2, farMargin: 5, fendReach: 2, shieldBonus: 1 },
+    // PROVISIONAL (the user asked for in-combat charm and wisdom actions): Bait — d10 + ⌊CHA/2⌋
+    // + Feint against d10 + ⌊WIS/2⌋: the foe's guards are drawn out (spent) and they defend at
+    // −2 for the rest of the round. Read intent — d10 + ⌊WIS/2⌋ + Read Attack against d10 +
+    // ⌊CHA/2⌋: for the rest of the round, +2 to your defenses against that foe and +2 to beat
+    // their defenses. Range: within `range` squares, in sight.
+    social: { bait: { range: 3 }, readIntent: { range: 4 }, readBonus: 2 },
     // PROVISIONAL: Ready a thrust (a long melee thrust: sword, rapier, spear). Declared on your
     // turn for its AP (stamina only if made); lasts the pass. A foe whose move this pass brings
     // them closer and into its reach is thrust at first, where they enter the reach; a hit stops
@@ -292,17 +298,22 @@
         inscribe: { kind: 'verb', shape: 'rune', cost: 2, mag: 5, range: [0, 1], radius: 0, ap: 3, feat: 'verb_inscribe', name: 'Inscribe' },
         hex: { kind: 'verb', shape: 'bane', cost: 2, mag: 1, range: [1, 8], rounds: 3, feat: 'verb_hex', name: 'Hex' },
         bless: { kind: 'verb', shape: 'boon', cost: 2, mag: 1, range: [0, 2], rounds: 3, ap: 2, feat: 'verb_bless', name: 'Bless' },
+        ward: { kind: 'verb', shape: 'ward', cost: 2, mag: 2, range: [0, 2], rounds: 3, ap: 2, feat: 'verb_ward', name: 'Ward' },
+        blink: { kind: 'verb', shape: 'blink', cost: 3, mag: 0, range: [1, 4], ap: 2, feat: 'verb_blink', name: 'Blink' },
         conjure: { kind: 'verb', shape: 'conjure', cost: 5, mag: 3, range: [1, 4], rounds: 4, ap: 4, feat: 'verb_conjure', name: 'Conjure' },
         // Nouns: element (how computeHit treats it), hurt (blunt / halfBlunt / thorns for vectors),
         // onHit (after a blow: a condition, a push, a knockdown), and what the other verbs make.
-        fire: { kind: 'noun', cost: 1, element: 'fire', name: 'Fire', onHit: { cond: 'burning', rounds: 2 }, ground: 'hot', wall: 'fireWall', bane: 'burning', boon: 'kindled', conjure: 'elemental' },
-        frost: { kind: 'noun', cost: 1, element: 'frost', name: 'Frost', onHit: { cond: 'slowed', rounds: 1 }, ground: 'ice', wall: 'iceWall', bane: 'numbed', boon: 'frostWard', conjure: 'elemental' },
-        lightning: { kind: 'noun', cost: 1, element: 'lightning', name: 'Lightning', onHit: { cond: 'shocked', rounds: 1 }, ground: 'charged', wall: 'stormWall', bane: 'shocked', boon: 'hasted', conjure: 'elemental' },
-        wind: { kind: 'noun', cost: 1, element: 'wind', hurt: 'halfBlunt', name: 'Wind', onHit: { push: 1 }, ground: 'winds', wall: 'windWall', boon: 'freedom', conjure: 'elemental' },
-        earth: { kind: 'noun', cost: 1, element: 'earth', hurt: 'blunt', name: 'Earth', ground: 'rough', wall: 'stoneWall', terrain: 'pit', bane: 'slowed', boon: 'stoneskin', conjure: 'elemental' },
-        vine: { kind: 'noun', cost: 1, element: 'vine', hurt: 'thorns', name: 'Vine', onHit: { cond: 'rooted', rounds: 1 }, ground: 'brambles', wall: 'brambleWall', bane: 'rooted', boon: 'barkskin', conjure: 'elemental' },
-        life: { kind: 'noun', cost: 1, element: 'life', name: 'Life', bane: 'withering', boon: 'innervated', heals: true, conjure: 'raise' },
-        force: { kind: 'noun', cost: 1, element: 'force', hurt: 'blunt', name: 'Force', onHit: { knockdown: true }, wall: 'forceWall', boon: 'shielded' },
+        fire: { kind: 'noun', cost: 1, element: 'fire', ward: 'fire', name: 'Fire', onHit: { cond: 'burning', rounds: 2 }, ground: 'hot', wall: 'fireWall', bane: 'burning', boon: 'kindled', conjure: 'elemental' },
+        frost: { kind: 'noun', cost: 1, element: 'frost', ward: 'frost', name: 'Frost', onHit: { cond: 'slowed', rounds: 1 }, ground: 'ice', wall: 'iceWall', bane: 'numbed', boon: 'frostWard', conjure: 'elemental' },
+        lightning: { kind: 'noun', cost: 1, element: 'lightning', ward: 'lightning', name: 'Lightning', onHit: { cond: 'shocked', rounds: 1 }, ground: 'charged', wall: 'stormWall', bane: 'shocked', boon: 'hasted', conjure: 'elemental' },
+        wind: { kind: 'noun', cost: 1, element: 'wind', ward: 'missiles', hurt: 'halfBlunt', name: 'Wind', onHit: { push: 2 }, ground: 'winds', wall: 'windWall', boon: 'freedom', conjure: 'elemental' },
+        earth: { kind: 'noun', cost: 1, element: 'earth', ward: 'earth', hurt: 'blunt', name: 'Earth', ground: 'rough', wall: 'stoneWall', terrain: 'pit', bane: 'slowed', boon: 'stoneskin', conjure: 'elemental' },
+        vine: { kind: 'noun', cost: 1, element: 'vine', ward: 'vine', hurt: 'thorns', name: 'Vine', onHit: { cond: 'rooted', rounds: 1 }, ground: 'brambles', wall: 'brambleWall', bane: 'rooted', boon: 'barkskin', conjure: 'elemental' },
+        life: { kind: 'noun', cost: 1, element: 'life', ward: 'life', name: 'Life', bane: 'withering', boon: 'innervated', heals: true, conjure: 'raise' },
+        force: { kind: 'noun', cost: 1, element: 'force', ward: 'magic', hurt: 'blunt', name: 'Force', onHit: { knockdown: true }, wall: 'forceWall', boon: 'shielded' },
+        // Mind (a first mind noun; more in phase 2): no blow to speak of, but it baits (draws out
+        // guards) and gives foresight (reads every foe's intent).
+        mind: { kind: 'noun', cost: 1, element: 'mind', name: 'Mind', onHit: { cond: 'baited', rounds: 1 }, bane: 'baited', boon: 'foresight', ward: 'mind' },
         // Modifiers: shapes they work on (all if absent).
         strong: { kind: 'mod', cost: 2, mag: 3, feat: 'mod_strong', name: 'Strong', windUp: true },
         wide: { kind: 'mod', cost: 2, radius: 1, length: 2, feat: 'mod_wide', name: 'Wide', shapes: ['area', 'ground', 'wall', 'terrain', 'rune'] },
@@ -350,6 +361,14 @@
       barkskin: { name: 'Barkskin', mit: { P: 1, S: 1 } },
       shielded: { name: 'Shielded', mit: { P: 1, S: 1, B: 1 } },
       afflicted: { name: 'Lingering harm', dot: { CON: 1 } }, // a Lingering spell's after-burn
+      // Ward (verb): kind 'magic' absorbs `pool` points of spell or missile damage; 'missiles'
+      // turns aside half of the arrows and bolts; an element's ward halves that element and
+      // keeps off its after-effects; 'mind' keeps off baits and the like.
+      warded: { name: 'Warded' },
+      // Bait (CHA vs WIS) and Read intent (WIS vs CHA); Hex + Mind and Bless + Mind do the same.
+      baited: { name: 'Baited', resist: 'WIL', defense: -2 }, // guards drawn out; −2 to defend
+      reading: { name: 'Reading', read: 2 }, // +2 to defend against and to beat the defense of `vs`
+      foresight: { name: 'Foresight', read: 2, all: true }, // reading every foe
     },
 
     // ---- Terrain (PROVISIONAL, magic overhaul) ------------------------------------------
@@ -498,6 +517,8 @@
     'Weapons from physics: each weapon has a mass, a length, hands and a point (depth, width), an edge or a head. Damage: point depth/4 piercing; edge (2 + 3√(mass × length × grip)) slashing; head 1 + 6√(head mass × length × grip) blunt. Speed: thrusts cost more with mass, swings with √(mass × length), the longsword costing what the motion table lists. STR adds strBonus × 0.25–0.5 to a thrust (by wound width) and × mass/1.4 (× 1.5 two-handed, up to 1.5) to a swing. A piercing wound bleeds damage × width/4 over 2 + depth/15 rounds.',
     'Ready a thrust: on your turn, hold a long thrust (sword, rapier, spear) ready for its AP; stamina only if it is made. It lasts the pass. A foe whose move this pass brings them closer and into its reach meets it first, struck where they enter the reach (no inside-reach penalty); a hit stops their advance. Guards meet it as usual; it can be aimed at one foe.',
     'Fend off and push back: with a long weapon (reach 2+) a shove reaches 2 squares; a ready shield adds +1. A shove that drives a foe back or floors them also spoils their move that pass.',
+    'Ward (verb) and Blink (verb): Ward + Force soaks 3 × magnitude points of spells and missiles; Ward + Wind turns half the missiles aside; Ward + an element halves that element and keeps off its after-effects; Ward + Mind keeps out baits. Blink steps up to 4 squares through walls and out of any hold, roots or webs. Wind blows now hurl a target back 2 squares.',
+    'Bait and Read intent (in-combat charm and wisdom): Bait (2 AP on the sheet, within 3 squares) is d10 + ⌊CHA/2⌋ + Feint against d10 + ⌊WIS/2⌋ + Read Attack: the foe\'s guards are drawn out and spent, and they defend at −2 for the rest of the round. Read intent (2 AP, within 4) is d10 + ⌊WIS/2⌋ + Read Attack against d10 + ⌊CHA/2⌋ + Feint: for the rest of the round, +2 to your defenses against that foe and +2 against their defenses. Hex + Mind baits by magic (WIL resists); Bless + Mind gives foresight (reading every foe).',
     'Wound roll: a blow that reaches the body rolls a d10; on 10 × chance or less it is a vital wound. Piercing chance = depth/100 (dagger 1, swords 2, spear and greatsword 3 on the d10): triple CON damage, double bleeding. Cuts: chance = edge/10: the cut takes its damage again from CON. Armor guards the vitals: padded ×0.6, leather ×0.5, mail ×0.3, scale ×0.25, plate ×0.1 (×1.5 half armor, ×2 partial).',
     'WIL split from WIS (the user\'s call): eight attributes. WIL is resolve: magic defense, resisting fear and compulsion, and stamina regeneration (⌊(CON + WIL)/4⌋ − armor). WIS stays judgment and perception. Older characters get WIL = their WIS.',
     'Monster attributes go past the human range (1–10, 13 with Conditioning feats), up to 30: bears and trolls STR 16–20, a stone golem 22, a troll chieftain 24. The usual formulas apply to the raw number (damage bonus ⌊(STR−5)/2⌋, grappling ⌊STR/2⌋, stamina, death at CON 0).',

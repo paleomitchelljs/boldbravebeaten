@@ -347,8 +347,21 @@
           if (!t.inReach || !foes.includes(t.id)) continue;
           const foe = chars[t.id];
           if (Cn.has(foe, key) || (G.CONFIG.conditions[key].living && C.tireless(foe))) continue;
-          let v = { rooted: closing && closing.f === t.id && t.distance >= 2 ? 30 : 6, slowed: 14, shocked: 12, numbed: 10, withering: 22, burning: 12 }[key] || 6;
+          let v = { rooted: closing && closing.f === t.id && t.distance >= 2 ? 30 : 6, slowed: 14, shocked: 12, numbed: 10, withering: 22, burning: 12, baited: 6 }[key] || 6;
           consider(v * 0.55, cast({ target: t.id }), o);
+        }
+      } else if (s.shape === 'ward') {
+        // Ward myself (or a friend) against what the foes throw: spells and missiles (force),
+        // missiles (wind), or one element.
+        const ranged = foes.filter((f) => C.attackOptions(chars[f]).some((x) => x.ranged));
+        const casters = foes.filter((f) => G.Magic.maxSP(chars[f]) > 0);
+        for (const t of o.targets) {
+          if (!t.inReach || Cn.has(chars[t.id], 'warded')) continue;
+          const kind = N.ward;
+          let v = 0;
+          if (kind === 'magic') v = (ranged.length + casters.length) * 7;
+          else if (kind === 'missiles') v = ranged.filter((f) => !G.Magic.maxSP(chars[f])).length * 8;
+          consider(v, cast({ target: t.id }), o);
         }
       } else if (o.target === 'ally') {
         const key = N.boon;
@@ -364,8 +377,22 @@
           else if (['stoneskin', 'barkskin', 'shielded'].includes(key)) v = fighting ? 12 : 0;
           else if (key === 'kindled') v = fighting && t.id !== id ? 10 : 0;
           else if (key === 'frostWard') v = 0;
+          else if (key === 'foresight') v = fighting ? 12 : 0;
           consider(v, cast({ target: t.id }), o);
         }
+      } else if (s.shape === 'blink') {
+        // Out of a melee I'm losing (a caster), or out of a hold or roots.
+        const stuck = C.isActive(c) && (Combat.linkOf(c) || !Cn.canMove(c));
+        const pressed = foes.some((f) => Combat.dist(posOf(f), me) <= Math.max(1, meleeReach(chars[f])));
+        if (!stuck && !(pressed && meleeReach(c) <= 1)) continue;
+        let spot = null, far = -1;
+        for (let y = me.y - o.maxRange; y <= me.y + o.maxRange; y++) for (let x = me.x - o.maxRange; x <= me.x + o.maxRange; x++) {
+          if (!G.Terrain.passable(enc, x, y) || Combat.dist(me, { x, y }) < o.minRange || Combat.dist(me, { x, y }) > o.maxRange) continue;
+          if (enc.ids.some((o2) => chars[o2] && !chars[o2].status.dead && posOf(o2).x === x && posOf(o2).y === y)) continue;
+          const away = Math.min(...foes.map((f) => Combat.dist(posOf(f), { x, y })));
+          if (away > far) { far = away; spot = { x, y }; }
+        }
+        if (spot && far >= 3) consider(stuck ? 30 : 22, cast({ at: spot }), o);
       } else if (s.shape === 'area') {
         for (const f of foes) {
           const p = posOf(f);
@@ -577,7 +604,7 @@
     // 6. Occasionally trip or grapple a standing foe in reach.
     if (rng() < P.maneuverRate) {
       for (const m of la.maneuvers) {
-        if (!m.affordable || m.type === 'disarm') continue;
+        if (!m.affordable || m.type === 'disarm' || m.type === 'bait' || m.type === 'readIntent') continue;
         if (Combat.GRAPPLE_STEPS.includes(m.type) && !C.rank(c, 'grappler') && P.maneuverRate < 0.3) continue;
         const t = m.targets.find((x) => x.inReach && foes.includes(x.id) && !chars[x.id].status.prone);
         if (t) return { actor: id, type: m.type, target: t.id };
@@ -597,6 +624,20 @@
         const mv = planMove(enc, chars, id, la, near.id, Math.max(pref.d, reach + 2), foes, reach);
         if (mv && Combat.dist(mv.to, Combat.projectedPos(enc, near.id)) > near.d) return approach(enc, chars, id, la, mv) || endTurn;
       }
+    }
+
+    // 7a. Bait a foe out of the guard they have up, or read the intent of the one I'm fighting,
+    // when there's AP left after it for a blow.
+    const bait = la.maneuvers.find((m) => m.type === 'bait' && m.affordable);
+    const blowAP = Math.min(...usable.filter((o) => !o.spell).map((o) => o.ap).concat([99]));
+    if (bait && la.passLeft >= bait.ap + Math.min(blowAP, 99) && blowAP < 99) {
+      const guarded = bait.targets.find((x) => x.inReach && foes.includes(x.id) && enc.decls.some((g) => g.actor === x.id && Combat.DEFENSE_TYPES.includes(g.type) && !g.used && g.pass === enc.pass) && usable.some((o) => C.inRange(o, x.distance)));
+      if (guarded && Math.floor(C.attr(c, 'CHA') / 2) + C.rank(c, 'feint') >= Math.floor(C.attr(chars[guarded.id], 'WIS') / 2)) return { actor: id, type: 'bait', target: guarded.id };
+    }
+    const read = la.maneuvers.find((m) => m.type === 'readIntent' && m.affordable);
+    if (read && G.Conditions && !G.Conditions.has(c, 'reading') && la.ap >= read.ap + 2 * C.apScale()) {
+      const close = read.targets.find((x) => x.inReach && x.distance <= 2 && foes.includes(x.id));
+      if (close && Math.floor(C.attr(c, 'WIS') / 2) + C.rank(c, 'read_attack') >= Math.floor(C.attr(chars[close.id], 'CHA') / 2)) return { actor: id, type: 'readIntent', target: close.id };
     }
 
     // 7b. Hold the point for a foe who is about to step in.
