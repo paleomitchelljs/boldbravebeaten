@@ -54,9 +54,9 @@ const STRATEGY = {
   },
   magic: {
     label: 'Magic', attrs: { STR: 4, CON: 5, DEX: 5, SPD: 5, INT: 8, WIL: 5, WIS: 5, CHA: 3 },
-    // A battlefield mage: fire to burn, earth for walls and pits, vine to root.
-    weapon: null, shield: null, nouns: ['fire', 'earth', 'vine'],
-    feats: ['casting', 'verb_strike', 'verb_hex', 'casting', 'verb_launch', 'verb_build', 'verb_open', 'verb_cover', 'control', 'mod_strong', 'casting', 'quick_casting'],
+    // A battlefield mage: fire to burn, earth for walls and pits, vine to root, force to ward.
+    weapon: null, shield: null, nouns: ['fire', 'earth', 'vine', 'force'],
+    feats: ['casting', 'verb_strike', 'verb_ward', 'verb_launch', 'verb_build', 'verb_blink', 'casting', 'verb_hex', 'verb_open', 'control', 'mod_strong', 'quick_casting'],
   },
   grappler: {
     label: 'Grappler', attrs: { STR: 7, CON: 6, DEX: 6, SPD: 5, INT: 3, WIL: 4, WIS: 4, CHA: 4 },
