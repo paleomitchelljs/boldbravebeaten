@@ -1,5 +1,41 @@
 # Simulation findings
 
+## The gauntlet by party level (`node sim/gauntlet.js --level 2|6|15`, then `node sim/gauntlet-page.js --levels`)
+
+There are 13 rooms: a rat, a rat swarm, a wolf, then the eight earlier rooms, then the spectre and
+the death knight. Camps fall after rooms 4, 8 and 11. Party levels:
+
+- **Early:** level 2, standard gear.
+- **Mid:** level 6, fine gear.
+- **High:** level 15, masterwork gear and magical weapons.
+
+There are 100 runs per lineup per mode. Mean rooms cleared in a row (attrition) / won by a fresh
+party (reset):
+
+| Lineup | L2 | L6 | L15 |
+|---|---|---|---|
+| Core trio | 4.8 / 6.5 | 5.5 / 8.1 | 7.6 / 11.3 |
+| + Mage | 5.0 / 8.5 | 5.8 / 10.5 | 8.4 / 12.0 |
+| + Cleric | 5.4 / 7.5 | 7.3 / 9.9 | 9.3 / 11.9 |
+| + Duelist | 6.3 / 8.8 | 7.8 / 10.4 | 10.2 / 12.6 |
+
+- **Level carries the run as it should.** Each step up buys about 1–3 rooms. Under attrition,
+  early parties stall at the kennels and the trapped corridor. Mid parties stall at the cistern
+  and the kobold warren. High parties reach the chieftain.
+- **The spectre separates the styles.** Without magic weapons, only spells hurt it. At level 6 the
+  mage party wins against it 75% of the time and the cleric party 34%; every party without a
+  caster wins 0–3%. With the high-level party's magic weapons, everyone beats it.
+- **The death knight is beaten only by high grapplers and duelists.** At level 15 with a fresh
+  party, the trio plus the duelist wins 65% and plus the grappler 50%. Every other high lineup
+  wins 0–2%. Grappling gets past his plate and shield; so does the duelist's speed.
+- **A member's worth changes with level.**
+  - The cleric adds most at level 6 under attrition: +1.80 rooms, the most of any member there.
+    Healing matters when wounds are what end the run.
+  - The early mage adds almost nothing under attrition (+0.24). It dies in the rat swarm 71% of
+    the time, because the rats surround the unarmored.
+  - At level 6 at full strength, the mage adds +2.40 rooms (bands and the spectre).
+- **The enchanter adds the least at every level** (+0.17 to +1.12).
+
 ## Arena after the AI fixes (baseline `sim/results/arena-r12`)
 
 The fixes: a character kites only when its ranged attacks beat its melee; bursts can land beside
