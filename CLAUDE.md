@@ -68,6 +68,9 @@ Characters who spend early sit out the last passes.
   (Strike, Launch, Burst, Cover, Build, Open, Inscribe, Hex, Bless, Conjure × Fire, Frost,
   Lightning, Wind, Earth, Vine, Life, Force); terrain tiles (walls, pits, hazards, runes) with
   square-by-square movement and line of sight; timed conditions. Spell points kept for now.
+- Magic phases 2 (mind, body, venom/plague, light/shadow/spirit, word doubling) and 3 (rituals,
+  information magic, GM secrets, Lore tab) are built as drafts. Read intent is a cheap WIS roll
+  that can misread. The user accepts hard counters between styles: distinct, not evenly matched.
 - Don't tune individual monsters; experiments are about fundamentals for now.
 
 ## Waiting on the user
@@ -78,5 +81,4 @@ Characters who spend early sit out the last passes.
 3. **Throws:** teach the AI to throw plate wearers?
 4. **Pass system revision:** beats within a pass proposed (see HANDOFF.md); waiting for a go.
 
-On hold at the user's request: group fights, the magic feat tiers. Magic phases 2 (mind, body,
-mystic nouns) and 3 (rituals, information magic) are planned, not built.
+On hold at the user's request: group fights, the magic feat tiers.

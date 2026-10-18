@@ -222,10 +222,29 @@ in ai.js; `planMove` avoids visible hazards. UI: Spells section, square targetin
 the map. The arena includes mages again (`--no-magic` to drop them); the party arena has a party
 with a mage. Example mage Ysolde Marr in the starter company.
 
-Next phases (not built): (2) Beguile and the mind nouns (calm, dream, rage, fear, will; WIL to
-resist), more body nouns (swiftness, might, grace; venom and disease), mystic nouns (light,
-shadow, spirit, death); doubled words. (3) Rituals with components and time, information magic
-(read, seek, divine, speak with the dead) and GM-authored secrets; summoning with names.
+Also built in round 10: Ward (force soaks spells and missiles, wind deflects missiles, an
+element halves itself) and Blink verbs; the Mind noun; Bait (CHA vs WIS) and Read intent (cheap,
+a WIS roll against a hidden number: true read +2, nothing, or a confident misread −2 that looks the
+same; `intentNote` in combat.js).
+
+Phase 2 (draft, built): Beguile + mind nouns calm, dream, rage, fear, will (WIL resists;
+`conditionForbids` in combat.js enforces calmed / mesmerized / frenzy / fear / blind for declarations
+and legal actions; Will flips `c.side` while the caster concentrates, restored at round end or
+`cleanup`); Word Doubling (two nouns, `combos` e.g. rage+dream → confused); body nouns swiftness,
+might, grace; venom (poison, miasma) and plague (disease persists past the fight); light (×2 to the
+undead, radiance reveals runes), shadow (darkness blocks sight and missiles, not blades; blind;
+shroud), spirit (only the undead, ×2). Conditions now shift every attribute but CON (`attr`).
+Arena style `enchanter`.
+
+Phase 3 (draft, built): `src/rules/ritual.js` — Read, Seek (noun = what is sought), Divine, Speak
+(dead / spirits / beasts), Mend, Prepare (ward / boon / rune laid for the next fight:
+`Ritual.applyPrepared` at round 1), Summon (true name), Raise; time, spell points, components
+(`inventory.components`), roll d10 + ⌊INT/2⌋ + Ritualist vs the GM's tier, outcomes fail / partial
+/ full / exceptional. GM secrets in `state.secrets` ({subject, reveals, tier, text}) revealed by
+matching rituals. UI: Lore tab (`src/ui/views/lore.js`); components on the sheet.
+
+Not yet: summoning and raising are records for the GM; true names as loot; doubled verbs; mind
+spells' per-round resistance (durations only); social system proper.
 
 ## Open questions awaiting the user
 
