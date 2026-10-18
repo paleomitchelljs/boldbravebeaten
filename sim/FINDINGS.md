@@ -21,6 +21,11 @@ fourth member with the core trio, 100 runs per mode, paired with the other lineu
 - **It's weaker than the mage against bands** (the kobold warren: 21% against 42%).
 - **It survives where the other casters don't.** It dies about half as often as the mage, because
   it wears mail and its party keeps itself standing.
+- **One-on-one (arena), the cleric is a middling duelist.** Averaged over its opponents, it wins
+  about 42% in the open field and 49% in close quarters. It beats the other casters (mage 54–66%,
+  enchanter 71–72%) and archers in close quarters (79%). It loses to the duelist and the grappler
+  up close (22–26%) and to sword and shield. Head to head, the matchups between the older styles
+  stayed within sampling noise of the baseline taken before the cleric (`sim/results/arena-r11`).
 
 ## The gauntlet: an eight-room crawl (`sim/gauntlet.js`)
 
