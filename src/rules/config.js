@@ -237,10 +237,12 @@
     shove: { twoHandBonus: 2, farMargin: 5, fendReach: 2, shieldBonus: 1 },
     // PROVISIONAL (the user asked for in-combat charm and wisdom actions): Bait — d10 + ⌊CHA/2⌋
     // + Feint against d10 + ⌊WIS/2⌋: the foe's guards are drawn out (spent) and they defend at
-    // −2 for the rest of the round. Read intent — d10 + ⌊WIS/2⌋ + Read Attack against d10 +
-    // ⌊CHA/2⌋: for the rest of the round, +2 to your defenses against that foe and +2 to beat
-    // their defenses. Range: within `range` squares, in sight.
-    social: { bait: { range: 3 }, readIntent: { range: 4 }, readBonus: 2 },
+    // −2 for the rest of the round. Read intent (cheap, 1 AP on the sheet) — the reader rolls
+    // d10 + ⌊WIS/2⌋ + Read Attack against tn + ⌊CHA/2⌋ + Feint (the foe's, unseen). Made it: the
+    // foe's true intent and, for the round, +2 to defend against them and to beat their defenses.
+    // Missed by less than misreadBy: nothing to go on. Missed by misreadBy or more: a confident
+    // misread — a false intent and −2 — that looks just like a true read. Range: in sight.
+    social: { bait: { range: 3 }, readIntent: { range: 4, tn: 5, misreadBy: 4 }, readBonus: 2 },
     // PROVISIONAL: Ready a thrust (a long melee thrust: sword, rapier, spear). Declared on your
     // turn for its AP (stamina only if made); lasts the pass. A foe whose move this pass brings
     // them closer and into its reach is thrust at first, where they enter the reach; a hit stops
@@ -518,7 +520,7 @@
     'Ready a thrust: on your turn, hold a long thrust (sword, rapier, spear) ready for its AP; stamina only if it is made. It lasts the pass. A foe whose move this pass brings them closer and into its reach meets it first, struck where they enter the reach (no inside-reach penalty); a hit stops their advance. Guards meet it as usual; it can be aimed at one foe.',
     'Fend off and push back: with a long weapon (reach 2+) a shove reaches 2 squares; a ready shield adds +1. A shove that drives a foe back or floors them also spoils their move that pass.',
     'Ward (verb) and Blink (verb): Ward + Force soaks 3 × magnitude points of spells and missiles; Ward + Wind turns half the missiles aside; Ward + an element halves that element and keeps off its after-effects; Ward + Mind keeps out baits. Blink steps up to 4 squares through walls and out of any hold, roots or webs. Wind blows now hurl a target back 2 squares.',
-    'Bait and Read intent (in-combat charm and wisdom): Bait (2 AP on the sheet, within 3 squares) is d10 + ⌊CHA/2⌋ + Feint against d10 + ⌊WIS/2⌋ + Read Attack: the foe\'s guards are drawn out and spent, and they defend at −2 for the rest of the round. Read intent (2 AP, within 4) is d10 + ⌊WIS/2⌋ + Read Attack against d10 + ⌊CHA/2⌋ + Feint: for the rest of the round, +2 to your defenses against that foe and +2 against their defenses. Hex + Mind baits by magic (WIL resists); Bless + Mind gives foresight (reading every foe).',
+    'Bait and Read intent (in-combat charm and wisdom): Bait (2 AP on the sheet, within 3 squares) is d10 + ⌊CHA/2⌋ + Feint against d10 + ⌊WIS/2⌋ + Read Attack: the foe\'s guards are drawn out and spent, and they defend at −2 for the rest of the round. Read intent (1 AP, within 4, in sight): the reader rolls d10 + ⌊WIS/2⌋ + Read Attack against 5 + the foe\'s ⌊CHA/2⌋ + Feint, a number they don\'t see. Made it: the foe\'s true intent (what they have committed to this round, feints seen through) and +2 to defend against them and to beat their defenses. Missed by 1–3: nothing to go on. Missed by 4 or more: a confident misread — a false intent and −2 — reported just like a true read. Hex + Mind baits by magic (WIL resists); Bless + Mind gives foresight (true reads of every foe).',
     'Wound roll: a blow that reaches the body rolls a d10; on 10 × chance or less it is a vital wound. Piercing chance = depth/100 (dagger 1, swords 2, spear and greatsword 3 on the d10): triple CON damage, double bleeding. Cuts: chance = edge/10: the cut takes its damage again from CON. Armor guards the vitals: padded ×0.6, leather ×0.5, mail ×0.3, scale ×0.25, plate ×0.1 (×1.5 half armor, ×2 partial).',
     'WIL split from WIS (the user\'s call): eight attributes. WIL is resolve: magic defense, resisting fear and compulsion, and stamina regeneration (⌊(CON + WIL)/4⌋ − armor). WIS stays judgment and perception. Older characters get WIL = their WIS.',
     'Monster attributes go past the human range (1–10, 13 with Conditioning feats), up to 30: bears and trolls STR 16–20, a stone golem 22, a troll chieftain 24. The usual formulas apply to the raw number (damage bonus ⌊(STR−5)/2⌋, grappling ⌊STR/2⌋, stamina, death at CON 0).',

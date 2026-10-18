@@ -970,13 +970,31 @@
   //   ⌊(DEX + SPD)/4⌋ (armor-reduced) against attacker d10 + ⌊(STR + SPD)/4⌋ + the motion's
   //   penalty (+ for a parry, how much heavier the attacking weapon is). Ties go to the defender.
   //   Off-hand parry: a parry with the off-hand dagger (+offhandBonus), against thrusts only.
-  // Reading and bait: +read to the one who reads the other's intent; baited defends worse.
+  // What a read of `t` says: their real commitments this round (feints seen through), or, on a
+  // misread, something they aren't doing. `seed` picks the false one.
+  function intentNote(enc, chars, t, truth, seed) {
+    const pending = enc.decls.filter((d) => d.actor === t.id && !d.done && !d.used);
+    const say = (d) => describeBare(enc, chars, d, t.id).text.replace(t.name + ': ', '').replace(/ \[\d+ AP\]$/, '');
+    if (truth) return pending.length ? `they mean to ${pending.map(say).join(', then ')}.` : 'they are holding back, waiting for an opening.';
+    const real = new Set(pending.filter((d) => d.type === 'strike').map((d) => d.option.label));
+    const opts = C.attackOptions(t).filter((o) => !real.has(o.label));
+    const fakes = opts.map((o) => `${o.label.toLowerCase()} at the nearest foe`).concat(['ready a parry', 'fall back', 'rush in close']);
+    return `they mean to ${fakes[seed % fakes.length]}.`;
+  }
+
+  // Reading and bait: +read to the one who reads the other's intent (−read on a misread);
+  // baited defends worse.
   function intentMods(defender, attacker) {
     const out = { def: 0, atk: 0 };
     if (!G.Conditions) return out;
-    const reads = (x, y) => G.Conditions.list(x).some((k) => { const D = CONFIG.conditions[k.key] || {}; return D.read && (D.all || (y && k.vs === y.id)); });
-    if (attacker && reads(defender, attacker)) out.def += CONFIG.social ? CONFIG.social.readBonus : 2;
-    if (attacker && reads(attacker, defender)) out.atk += CONFIG.social ? CONFIG.social.readBonus : 2;
+    const bonus = CONFIG.social ? CONFIG.social.readBonus : 2;
+    // +bonus for a true read, −bonus for a misread, 0 for none.
+    const reads = (x, y) => {
+      const k = G.Conditions.list(x).find((q) => { const D = CONFIG.conditions[q.key] || {}; return D.read && (D.all || (y && q.vs === y.id)); });
+      return !k ? 0 : k.truth === false ? -bonus : bonus;
+    };
+    if (attacker) out.def += reads(defender, attacker);
+    if (attacker) out.atk += reads(attacker, defender);
     out.def += G.Conditions.list(defender).reduce((t, k) => t + ((CONFIG.conditions[k.key] || {}).defense || 0), 0);
     return out;
   }
@@ -1564,11 +1582,21 @@
             log(enc, `${a.name} baits ${t.name}, who commits too early and is off balance (${o.a} vs ${o.b}).`, 'hit');
           } else log(enc, `${t.name} sees through ${a.name}'s bait (${o.a} vs ${o.b}).`, 'fail');
         } else {
-          const o = await opposed(roller, a, Math.floor(C.attr(a, 'WIS') / 2) + C.rank(a, 'read_attack'), 'Read intent', t, Math.floor(C.attr(t, 'CHA') / 2) + C.rank(t, 'feint'), 'Hide intent');
-          if (o.margin > 0) {
-            if (G.Conditions) G.Conditions.add(a, 'reading', { rounds: 1, vs: t.id, src: a.id });
-            log(enc, `${a.name} reads ${t.name}'s intent (${o.a} vs ${o.b}).`, 'defend');
-          } else log(enc, `${t.name} gives nothing away to ${a.name} (${o.a} vs ${o.b}).`, 'fail');
+          // The reader rolls against a number they can't see: a true read, nothing, or a
+          // confident misread that looks just like a true one.
+          const RI = R.readIntent;
+          const bonus = Math.floor(C.attr(a, 'WIS') / 2) + C.rank(a, 'read_attack');
+          const tn = RI.tn + Math.floor(C.attr(t, 'CHA') / 2) + C.rank(t, 'feint');
+          const r = await rollDie(roller, a.id, 10, `${a.name}: Read intent`, `d10 + ${bonus} (WIS) against ${t.name}'s guarded face`);
+          const margin = r + bonus - tn;
+          if (margin < 0 && margin > -RI.misreadBy) {
+            log(enc, `${a.name} studies ${t.name} but can't read them.`, 'fail');
+            break;
+          }
+          const truth = margin >= 0;
+          const note = intentNote(enc, chars, t, truth, r);
+          if (G.Conditions) G.Conditions.add(a, 'reading', { rounds: 1, vs: t.id, src: a.id, truth, note });
+          log(enc, `${a.name} reads ${t.name}: ${note}`, 'defend');
         }
         break;
       }

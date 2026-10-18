@@ -1216,3 +1216,27 @@ test('bait draws out guards and leaves a foe off balance; reading intent gives +
   assert.ok(B.Conditions.has(t, 'baited'));
   assert.ok(enc.decls.find((d) => d.actor === t.id && d.type === 'parry').used);
 });
+
+test('read intent: a true read shows their real plan (+2); a bad roll misreads it (−2) and looks the same', async () => {
+  const a = armed('A', 'longsword', { side: 'party' }); a.base.WIS = 6;
+  const t = armed('T', 'longsword', { side: 'enemy' }); t.base.CHA = 4;
+  const chars = { [a.id]: a, [t.id]: t };
+  const enc = Combat.createEncounter('t', [a.id, t.id], chars, 6, 1);
+  enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[t.id] = { x: 2, y: 0 };
+  t.base.SPD = 9;
+  await Combat.startRound(enc, chars, roller(1, [5, 9]));
+  const th = Combat.legalActions(enc, chars, t.id).attacks.find((o) => o.motion === 'thrust');
+  assert.strictEqual(Combat.declare(enc, chars, { actor: t.id, type: 'strike', option: th, target: a.id }), null);
+  Combat.endTurn(enc, t.id);
+  assert.strictEqual(C.actionCost(a, 'readIntent').ap, 1, 'cheap');
+  assert.strictEqual(Combat.declare(enc, chars, { actor: a.id, type: 'readIntent', target: t.id }), null);
+  Combat.endTurn(enc, a.id);
+  // TN = 5 + 2 = 7; WIS 6 → +3. Roll 9: 12, a true read. (Then the parry-less thrust resolves.)
+  await Combat.resolvePass(enc, chars, roller(2, [9, 10, 10]));
+  const r = B.Conditions.get(a, 'reading');
+  assert.ok(r && r.truth === true && /thrust/i.test(r.note), r && r.note);
+  const tt = opt(t, (o) => o.motion === 'thrust');
+  const withRead = Combat.defenseOdds(a, 'parry', 'thrust', t, tt);
+  r.truth = false; // a misread
+  assert.ok(Combat.defenseOdds(a, 'parry', 'thrust', t, tt) < withRead);
+});

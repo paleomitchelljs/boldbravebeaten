@@ -43,7 +43,7 @@
     const rounds = opts.rounds || 1, mag = opts.mag || 1;
     // Extra details some conditions carry: vs (whom it concerns), kind (a ward's kind), pool.
     const extra = {};
-    for (const k of ['vs', 'kind', 'pool']) if (opts[k] != null) extra[k] = opts[k];
+    for (const k of ['vs', 'kind', 'pool', 'truth', 'note']) if (opts[k] != null) extra[k] = opts[k];
     if (cur) {
       cur.rounds = Math.max(cur.rounds, rounds);
       cur.mag = Math.max(cur.mag, mag);

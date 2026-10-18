@@ -267,7 +267,7 @@
     tearFree: { name: 'Tear free of webs', ap: 2, stamina: 1 },
     // PROVISIONAL: in-combat charm and wisdom actions (CONFIG.social).
     bait: { name: 'Bait', ap: 1, stamina: 1 },
-    readIntent: { name: 'Read intent', ap: 1, stamina: 0 },
+    readIntent: { name: 'Read intent', ap: 0.5, stamina: 0 }, // cheap: a glance
     bandage: { name: 'Bandage', ap: 3, stamina: 0 },
     move: { name: 'Move', ap: 1, stamina: 0 },
     windUp: { name: 'Wind up', ap: 2, stamina: 1 }, // costs set in CONFIG.windUp
