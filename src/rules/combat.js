@@ -411,7 +411,7 @@
 
     // Spells cast at a square, a foe or an ally (bolts are among the attacks above).
     out.spells = [];
-    if (G.Magic && C.handsBusy(c) < 2 && !c.status.pinned) {
+    if (G.Magic && C.castingHands(c) && !c.status.pinned) {
       for (const opt of G.Magic.spellOptions(c)) {
         if (opt.kind !== 'cast') continue;
         if (isGrappled(c) && opt.spell.shape !== 'blink') continue; // held: only a blink gets you out
@@ -643,7 +643,7 @@
       const key = decl.option.spellKey;
       const opt = G.Magic.spellOptions(c).find((o) => o.kind === 'cast' && o.spellKey === key);
       if (!opt) return 'Spell not available';
-      if (C.handsBusy(c) >= 2 || (isGrappled(c) && opt.spell.shape !== 'blink')) return 'Needs a free hand';
+      if (!C.castingHands(c) || (isGrappled(c) && opt.spell.shape !== 'blink')) return 'Needs a free hand';
       const spPlanned = enc.decls.filter((d) => d.actor === id && (d.type === 'strike' || d.type === 'cast') && d.option.spell).reduce((t, d) => t + d.option.spCost, 0);
       const why = spellShort(c, opt, spPlanned);
       if (why) return why;
@@ -904,7 +904,8 @@
     const h = computeHit(attacker, target, option, flags);
     const parts = [];
     const st = target.status;
-    const before = enc.onHit ? { dmg: C.totalDamage(target), stamina: target.stamina, up: C.isActive(target) } : null;
+    const before0 = { dmg: C.totalDamage(target), stamina: target.stamina, up: C.isActive(target) };
+    const before = enc.onHit ? before0 : null;
 
     if (h.fire != null && h.fireStopped) parts.push(`armor stops ${h.fireStopped} ${option.spell ? option.spell.element : 'fire'}`);
     if (h.armored && target.armor) {
@@ -1012,6 +1013,25 @@
     let tail = '';
     if (st.dead) tail = ` ${target.name} is DEAD.`;
     else if (st.unconscious && !wasDown) tail = ` ${target.name} collapses, unconscious.`;
+    // An enchanted blade that drinks (enchant.drain): the wielder takes back a share of the
+    // stamina and attribute points the blow dealt.
+    const blade = option.weaponId && attacker.weapons ? attacker.weapons.find((w) => w.id === option.weaponId) : null;
+    const drain = blade && blade.enchant && blade.enchant.drain;
+    if (drain && before0) {
+      const took = { attrs: C.totalDamage(target) - before0.dmg, stamina: Math.max(0, before0.stamina - target.stamina) };
+      const st = Math.round(took.stamina * (drain.stamina || 0));
+      let heal = Math.round(took.attrs * (drain.attrs || 0));
+      const gotSt = Math.min(st, C.maxStamina(attacker) - attacker.stamina);
+      if (gotSt > 0) attacker.stamina += gotSt;
+      let healed = 0;
+      while (heal > 0) {
+        const a = G.Recovery ? G.Recovery.healTarget(attacker) : (attacker.damage.CON ? 'CON' : null);
+        if (!a) break;
+        C.healAttr(attacker, a, 1);
+        heal--; healed++;
+      }
+      if (gotSt > 0 || healed) tail += ` ${Items.itemName(blade)} drinks: ${attacker.name} ${[gotSt ? `+${gotSt} stamina` : null, healed ? `+${healed} healed` : null].filter(Boolean).join(', ')}.`;
+    }
     // Sims attach enc.onHit to credit harm and knockdowns to whoever dealt them.
     if (before) enc.onHit({ attacker, target, attrs: C.totalDamage(target) - before.dmg, stamina: Math.max(0, before.stamina - target.stamina), downed: before.up && !C.isActive(target), spell: !!option.spell });
     return { text: `${h.P}/${h.S}/${h.B} P/S/B → ${parts.join(', ')}.${tail}`, hit: h };

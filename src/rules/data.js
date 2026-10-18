@@ -37,6 +37,7 @@
     hide: { name: 'Hide-faced', mult: 1.2, rarity: 'common' },
     iron: { name: 'Iron-rimmed', mult: 1.5, rarity: 'uncommon' },
     steel: { name: 'Steel', mult: 2.0, rarity: 'rare' },
+    adamant: { name: 'Adamant', mult: 3.5, rarity: 'unique' }, // end-game metal (PROVISIONAL)
   };
 
   // ---- Quality (Specifics) ------------------------------------------------
@@ -45,6 +46,7 @@
     standard: { name: 'Standard', durability: 1.0, bonus: 0, threshold: 1.0, rarity: 'common' },
     fine: { name: 'Fine', durability: 1.3, bonus: 1, threshold: 1.3, rarity: 'uncommon' },
     masterwork: { name: 'Masterwork', durability: 1.6, bonus: 2, threshold: 1.6, rarity: 'very rare' },
+    legendary: { name: 'Legendary', durability: 2.2, bonus: 3, threshold: 2.0, rarity: 'unique' }, // end-game (PROVISIONAL)
   };
 
   const COVERAGE = {
@@ -408,6 +410,7 @@
   feat(t, 'casting', 'Casting', [N, A, D, E, M], [], 'Larger casting pool per rank', false);
   feat(t, 'control', 'Control', [A, D, E], [['casting:1']], '−backlash per rank', false);
   feat(t, 'quick_casting', 'Quick Casting', [A, D], [['casting:1']], 'Spell AP −1 per rank', false);
+  feat(t, 'battle_casting', 'Battle Casting', [D], [['casting:2']], 'Cast with both hands full (sword and shield)', true);
   feat(t, 'steady_mind', 'Steady Mind', [D], [['control:1']], 'Cast while grappled or after taking damage this pass', false);
   feat(t, 'focus_bond', 'Focus Bond', [E], [['casting:3']], 'Bond a held weapon or shield as a casting focus', false);
   feat(t, 'overchannel', 'Overchannel', [M], [['casting:5']], 'Cast beyond your pool by paying CON', false);

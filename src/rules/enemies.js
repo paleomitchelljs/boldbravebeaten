@@ -300,6 +300,24 @@
       natural: ['tail'], armor: 'sarnakScales', weapons: ['warhammer'], traits: {}, feats: { heavy_weapon_training: 1, toughness: 1 }, keepUnarmed: true,
     },
     sarnakPair: { name: 'Sarnak pair', blurb: 'Two sarnak warriors.', group: ['sarnak', 'sarnak'] },
+    // ---- A non-monster boss: an end-game character (PROVISIONAL test build) ----
+    // Level 20 at the human attribute cap, in legendary plate with an adamant heater and
+    // Soulreaver, a longsword that drinks half the stamina and wounds it deals. Battle Casting
+    // lets him cast with sword and shield in hand: Burst + Life + Strong (a withering burst, no
+    // armor stops it) and Conjure + Life (raises the fallen to fight for him).
+    deathKnight: {
+      name: 'Death knight', blurb: 'An end-game knight: legendary plate, an adamant shield, a blade that drinks stamina and wounds, a withering burst, and the dead rise for him.',
+      level: 20, attrs: { STR: 10, CON: 10, DEX: 8, SPD: 7, INT: 10, WIL: 10, WIS: 7, CHA: 8 },
+      natural: [], keepUnarmed: true, nouns: ['life', 'shadow', 'fire'],
+      armorItem: ['plate', 'full'], armorQuality: 'legendary',
+      weaponItems: [{ type: 'longsword', quality: 'legendary', name: 'Soulreaver', enchant: { drain: { stamina: 0.5, attrs: 0.5 } } }],
+      sidearm: 'dagger', shield: ['heater', 'adamant'], shieldQuality: 'legendary',
+      traits: {},
+      featPrefs: ['casting', 'verb_strike', 'verb_launch', 'casting', 'verb_burst', 'verb_bless', 'battle_casting', 'verb_conjure', 'mod_strong', 'casting',
+        'plate_mobility', 'plate_mobility', 'shield_training', 'half_swording', 'plate_endurance', 'shield_training', 'quick_block', 'iron_stance', 'plate_endurance',
+        'living_fortress', 'strength', 'toughness', 'parry_training', 'riposte', 'casting', 'control', 'quick_casting', 'half_swording'],
+    },
+    deathKnightCourt: { name: 'Death knight and his dead', blurb: 'The death knight with two skeletons at his side.', group: ['deathKnight', 'skeleton', 'skeleton'] },
   };
 
   // A conjured creature (Magic: Conjure). 'elemental': a spirit of the noun whose blows carry it,
@@ -330,22 +348,30 @@
     const M = MONSTERS[key];
     if (M.group) return M.group.map((k, i) => makeMonster(k, Object.assign({}, opts, { n: i }))[0]);
     const c = C.newCharacter({ name: opts.name || M.name + (opts.n ? ' ' + (opts.n + 1) : ''), side: opts.side || 'enemy', base: Object.assign({ WIL: M.attrs.WIS }, M.attrs), starterGear: false });
-    c.level = opts.level || 5;
+    c.level = opts.level || M.level || 5;
     c.monster = key;
-    c.natural = M.natural.slice();
+    c.natural = (M.natural || []).slice();
     c.noUnarmed = !M.keepUnarmed;
     c.traits = JSON.parse(JSON.stringify(M.traits || {}));
     c.feats = Object.assign({}, M.feats || {});
+    if (M.featPrefs) chooseFeats(c, M.featPrefs, makeRng(c.level * 7919 + 1));
+    if (M.nouns) c.nouns = M.nouns.slice();
     if (M.armor) c.armor = Items.makeArmor(M.armor, 'full', 'standard');
-    if (M.armorItem) c.armor = Items.makeArmor(M.armorItem[0], M.armorItem[1] || 'full', M.quality || 'standard');
+    if (M.armorItem) c.armor = Items.makeArmor(M.armorItem[0], M.armorItem[1] || 'full', M.armorQuality || M.quality || 'standard');
     const q = M.quality || 'standard';
     for (const [i, type] of (M.weapons || []).entries()) {
       const w = Items.makeWeapon(type, q);
       c.weapons.push(w);
       if (i === 0) c.wield = w.id;
     }
+    // Named or enchanted weapons: { type, quality, name, enchant }.
+    for (const spec of M.weaponItems || []) {
+      const w = Object.assign(Items.makeWeapon(spec.type, spec.quality || q), spec.name ? { name: spec.name } : {}, spec.enchant ? { enchant: JSON.parse(JSON.stringify(spec.enchant)) } : {});
+      c.weapons.push(w);
+      if (!c.wield) c.wield = w.id;
+    }
     if (M.sidearm) { const s = Items.makeWeapon(M.sidearm, q); c.weapons.push(s); c.sidearm = s.id; }
-    if (M.shield) c.shield = Items.makeShield(M.shield[0], M.shield[1], q);
+    if (M.shield) c.shield = Items.makeShield(M.shield[0], M.shield[1], M.shieldQuality || q);
     c.policy = Object.assign({}, M.policy || {});
     c.inventory = { bandages: 0, gold: 0, arrows: M.arrows || 0, bodkins: 0, items: [] };
     c.stamina = C.maxStamina(c);

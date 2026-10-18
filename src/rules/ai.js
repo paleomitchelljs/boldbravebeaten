@@ -346,8 +346,18 @@
     return v;
   }
 
+  // Spell points to hold back: a caster who can raise the dead keeps enough for it until a body
+  // lies within reach (then the raise itself may spend them).
+  function spReserve(enc, chars, id, la) {
+    const raise = (la.spells || []).find((o) => o.spell.shape === 'conjure' && G.CONFIG.magic.words[o.spell.noun].conjure === 'raise' && !o.spell.mod);
+    if (!raise) return 0;
+    const body = enc.ids.some((o2) => chars[o2] && chars[o2].status.dead && !chars[o2].vanished && !chars[o2].raised);
+    return body ? 0 : raise.spCost;
+  }
+
   function castChoice(enc, chars, id, la, foes) {
     if (!la.spells || !la.spells.length) return null;
+    const keep = spReserve(enc, chars, id, la);
     const c = chars[id];
     const S = C.apScale();
     const me = Combat.projectedPos(enc, id);
@@ -365,6 +375,8 @@
     };
     for (const o of la.spells) {
       if (!o.affordable) continue;
+      const isRaise = o.spell.shape === 'conjure' && G.CONFIG.magic.words[o.spell.noun].conjure === 'raise';
+      if (!isRaise && G.Magic.availableSP(chars[id]) - o.spCost < keep) continue;
       const s = o.spell, N = G.CONFIG.magic.words[s.noun];
       const cast = (extra) => Object.assign({ actor: id, type: 'cast', option: o }, extra);
       if (s.shape === 'mind') {
@@ -450,13 +462,21 @@
         }
         if (spot && far >= 3) consider(stuck ? 30 : 22, cast({ at: spot }), o);
       } else if (s.shape === 'area') {
+        // Aim at a foe or a square beside one, so a burst can catch foes pressed close without
+        // catching the caster.
+        const seen = {};
         for (const f of foes) {
-          const p = posOf(f);
-          const d = Combat.dist(me, p);
-          if (d > o.maxRange || d < o.minRange) continue;
-          if (G.Terrain && enc.tiles && d >= 2 && G.Terrain.lineCheck(enc, me, p, 'missile').blocked) continue;
-          const hitF = inArea(foes, p, s.radius), hitA = inArea(allies, p, s.radius);
-          consider((hitF.length - 1.5 * hitA.length) * s.magnitude * 2.2, cast({ at: p }), o);
+          const fp = posOf(f);
+          for (let dx = -s.radius; dx <= s.radius; dx++) for (let dy = -s.radius; dy <= s.radius; dy++) {
+            const p = { x: fp.x + dx, y: fp.y + dy };
+            if (seen[p.x + ',' + p.y] || !G.Terrain.inGrid(enc, p.x, p.y)) continue;
+            seen[p.x + ',' + p.y] = true;
+            const d = Combat.dist(me, p);
+            if (d > o.maxRange || d < o.minRange || d <= s.radius) continue;
+            if (G.Terrain && enc.tiles && d >= 2 && G.Terrain.lineCheck(enc, me, p, 'missile').blocked) continue;
+            const hitF = inArea(foes, p, s.radius), hitA = inArea(allies, p, s.radius);
+            consider((hitF.length - 1.5 * hitA.length) * s.magnitude * 2.2, cast({ at: p }), o);
+          }
         }
       } else if (s.shape === 'ground') {
         for (const f of foes) {
@@ -485,10 +505,16 @@
         if (G.Terrain.at(enc, at.x, at.y).some((t) => t.kind === 'rune')) continue;
         consider(s.magnitude * 2.5, cast({ at }), o);
       } else if (s.shape === 'conjure' && !conjuredUp && foes.length) {
+        if (G.CONFIG.magic.words[s.noun].conjure === 'raise') {
+          // Raising the fallen turns a body against its friends: worth more than a summoned beast.
+          // The body rises where it lies, within the spell's range.
+          const body = enc.ids.find((o2) => chars[o2] && chars[o2].status.dead && !chars[o2].vanished && !chars[o2].raised && enc.pos[o2] && Combat.dist(enc.pos[o2], me) <= o.maxRange);
+          if (body) consider(80, cast({ at: enc.pos[body] }), o);
+          continue;
+        }
         const at = { x: me.x + (foes.length ? Math.sign(posOf(foes[0]).x - me.x) : 1), y: me.y };
         if (!G.Terrain.passable(enc, at.x, at.y) || enc.ids.some((o2) => chars[o2] && !chars[o2].status.dead && posOf(o2).x === at.x && posOf(o2).y === at.y)) continue;
-        if (G.CONFIG.magic.words[s.noun].conjure === 'raise' && !enc.ids.some((o2) => chars[o2] && chars[o2].status.dead && !chars[o2].vanished && !chars[o2].raised && Combat.dist(enc.pos[o2], me) <= o.maxRange)) continue;
-        consider(30, cast({ at: G.CONFIG.magic.words[s.noun].conjure === 'raise' ? enc.pos[enc.ids.find((o2) => chars[o2] && chars[o2].status.dead && !chars[o2].vanished && !chars[o2].raised && Combat.dist(enc.pos[o2], me) <= o.maxRange)] : at }), o);
+        consider(30, cast({ at }), o);
       }
     }
     return best;
@@ -673,8 +699,14 @@
       }
     }
 
-    const usable = la.attacks.filter((o) => !o.windUp && !o.why);
-    const rangedLoadout = planBase.some((o) => o.ranged && !o.unarmed);
+    const keep = spReserve(enc, chars, id, la);
+    const usable = la.attacks.filter((o) => !o.windUp && !o.why && !(o.spell && G.Magic.availableSP(c) - o.spCost < keep));
+    // A ranged loadout kites only if its ranged blows are worth at least as much as its blade:
+    // a knight with a bolt spell still closes in; a bowman or a mage backs away.
+    const rangedOpts = planBase.filter((o) => o.ranged && !o.unarmed);
+    const meleeOpts = planBase.filter((o) => !o.ranged && !o.unarmed);
+    const bestOver = (opts, ds) => Math.max(0, ...ds.map((d) => bestRate(c, target, opts, d)));
+    const rangedLoadout = rangedOpts.length > 0 && (!meleeOpts.length || bestOver(rangedOpts, [2, 3, 4, 5, 6]) >= bestOver(meleeOpts, [1, 2, 3]));
     // A kiting loadout plans its distance around its ranged options only.
     const planOpts = rangedLoadout && P.kite ? planBase.filter((o) => o.ranged) : planBase.filter((o) => !o.unarmed).length ? planBase.filter((o) => !o.unarmed) : planBase;
     const pref = preferredDistance(c, target, planOpts, near.d);
@@ -697,7 +729,9 @@
       if (guarded && Math.floor(C.attr(c, 'CHA') / 2) + C.rank(c, 'feint') >= Math.floor(C.attr(chars[guarded.id], 'WIS') / 2)) return { actor: id, type: 'bait', target: guarded.id };
     }
     const read = la.maneuvers.find((m) => m.type === 'readIntent' && m.affordable);
-    if (read && G.Conditions && !G.Conditions.has(c, 'reading') && la.ap >= read.ap + 2 * C.apScale()) {
+    // One look a round: a misread leaves nothing to show for it, so don't keep trying.
+    const readThisRound = enc.decls.some((d) => d.actor === id && d.type === 'readIntent');
+    if (read && !readThisRound && G.Conditions && !G.Conditions.has(c, 'reading') && la.ap >= read.ap + 2 * C.apScale()) {
       const close = read.targets.find((x) => x.inReach && x.distance <= 2 && foes.includes(x.id));
       if (close && Math.floor(C.attr(c, 'WIS') / 2) + C.rank(c, 'read_attack') >= Math.floor(C.attr(chars[close.id], 'CHA') / 2)) return { actor: id, type: 'readIntent', target: close.id };
     }

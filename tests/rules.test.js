@@ -1414,3 +1414,23 @@ test('Name: a named spell finds a companion anywhere, past walls; a foe only if 
   assert.ok(B.Magic.knowsName(m, foe), 'a learned name reaches a foe');
   assert.ok(Combat.legalActions(enc, chars, m.id).spells.find((x) => x.spellKey === 'beguile+calm+name').targets.find((t) => t.id === foe.id).inReach);
 });
+
+test('death knight: Battle Casting casts with sword and shield; Soulreaver drinks stamina and wounds', async () => {
+  const [dk] = B.Enemies.makeMonster('deathKnight');
+  assert.equal(dk.level, 20);
+  assert.ok(dk.shield && C.handsBusy(dk) === 2 && C.castingHands(dk), 'hands full, still casting');
+  assert.ok(C.attackOptions(dk).some((o) => o.spell), 'bolts offered with sword and shield in hand');
+  const blade = dk.weapons.find((w) => w.enchant);
+  assert.equal(Items.itemName(blade), 'Soulreaver');
+  // A thrust that wounds: the knight, worn and wounded, takes some back.
+  C.damageAttr(dk, 'CON', 3);
+  dk.stamina = 10;
+  const t = fighter('Victim');
+  t.side = 'party';
+  const chars = { [dk.id]: dk, [t.id]: t };
+  const enc = Combat.createEncounter('t', Object.keys(chars), chars, 6, 3);
+  const opt = C.attackOptions(dk).find((o) => o.weaponId === blade.id && o.motion === 'thrust');
+  const r = await Combat.applyHit(enc, chars, dk, t, opt, roller(10, []), {});
+  assert.match(r.text, /Soulreaver drinks/);
+  assert.ok(dk.damage.CON < 3 || dk.stamina > 10, 'healed or refreshed');
+});

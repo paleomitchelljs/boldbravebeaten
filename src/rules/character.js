@@ -474,11 +474,16 @@
       if (shieldReady(c) && rank(c, 'shield_bash') && !grappling) opts.push(unarmedOption(c, 'shieldBash'));
       // Spells need a free hand (see magic.js).
       // Bolts (Strike, Launch) are attacks; the other spells are cast actions (Combat.legalActions).
-      if (G.Magic && handsBusy(c) < 2 && !grappling) for (const o of G.Magic.spellOptions(c)) if (o.kind === 'strike') opts.push(o);
+      if (G.Magic && castingHands(c) && !grappling) for (const o of G.Magic.spellOptions(c)) if (o.kind === 'strike') opts.push(o);
     }
     const t = webTax(c);
     if (t.ap || t.stamina) for (const o of opts) { o.ap += t.ap; o.stamina += t.stamina; }
     return opts;
+  }
+
+  // A free hand to cast with, or Battle Casting (cast with sword and shield in hand).
+  function castingHands(c) {
+    return handsBusy(c) < 2 || rank(c, 'battle_casting') > 0;
   }
 
   function handsBusy(c) {
@@ -724,7 +729,7 @@
     newCharacter, normalize, freshStatus,
     rank, featCount, featBudget, treeCount, tierCount, tierName, canTakeFeat, canRemoveFeat, addFeat, removeFeat, reqText, roman,
     conditioning, attr, attrMax, combatAttr, armorInfo, shieldInfo, shieldReady, wieldedWeapon, offhandWeapon,
-    maxStamina, regen, fatiguePenalty, apPool, apScale, moveCost, squaresPerAP, handsBusy, inRange, optionKey, needsWindUp, strOffset, staminaCost, effectiveWeight, isLightWeapon,
+    maxStamina, regen, fatiguePenalty, apPool, apScale, moveCost, squaresPerAP, handsBusy, castingHands, inRange, optionKey, needsWindUp, strOffset, staminaCost, effectiveWeight, isLightWeapon,
     strBonus, weaponDamage, mainIndex, attackOptions, actionCost, ammoLeft, tireless, webTax,
     damageAttr, healAttr, totalDamage, updateCondition, isActive, bleedPerRound,
     TREES, ARMOR,

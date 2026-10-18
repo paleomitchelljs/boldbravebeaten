@@ -6,7 +6,9 @@
  * between rooms there is only a breather (stamina back, bandages used up), and a camp partway.
  * The run ends when the party clears the last room, is wiped out, or can't win a room in time.
  *
- *   node sim/gauntlet.js [--n 50] [--only mage,core] [--mode attrition|reset] [--out sim/results/gauntlet]
+ *   node sim/gauntlet.js [--n 50] [--only mage,core] [--mode attrition|reset] [--rooms gauntlet|boss] [--out …]
+ *
+ * --rooms boss swaps the eight rooms for the death knight's two (sim/results/boss).
  *
  * Two modes: attrition (wounds carry on, with a camp partway) and reset (a fresh party for every
  * room, the dead restored, deaths still recorded).
@@ -32,7 +34,7 @@ const T = L.B.Terrain;
 const argv = process.argv.slice(2);
 const arg = (k, d) => { const i = argv.indexOf('--' + k); return i >= 0 ? argv[i + 1] : d; };
 const N = Number(arg('n', 50));
-const OUT = arg('out', path.join(__dirname, 'results', 'gauntlet'));
+const OUT = arg('out', path.join(__dirname, 'results', arg('rooms', 'gauntlet') === 'boss' ? 'boss' : 'gauntlet'));
 
 // ---- The rooms ------------------------------------------------------------------------
 // Map legend: A party start, E foe start, # stone pillar, O pit, : rough ground, D darkness,
@@ -126,6 +128,33 @@ const ROOMS = [
     ],
   },
 ];
+// Boss rooms (--rooms boss): the end-game death knight, alone and with his dead.
+const BOSS_ROOMS = [
+  {
+    key: 'chapel', name: 'Black chapel', foes: 'deathKnight', blurb: 'The death knight alone among the pillars of his chapel.',
+    map: [
+      '..............',
+      'A...#....#....',
+      'A............E',
+      'A.............',
+      'A...#....#....',
+      '..............',
+    ],
+  },
+  {
+    key: 'crypt-court', name: 'Court of the dead', foes: 'deathKnightCourt', blurb: 'The death knight with two skeletons at his side.',
+    map: [
+      '..............',
+      'A...#....#...E',
+      'A............E',
+      'A............E',
+      'A...#....#....',
+      '..............',
+    ],
+  },
+];
+if (arg('rooms', 'gauntlet') === 'boss') ROOMS.splice(0, ROOMS.length, ...BOSS_ROOMS);
+
 const TILE = {
   '#': (enc, x, y) => T.add(enc, x, y, 'stoneWall'),
   O: (enc, x, y) => T.add(enc, x, y, 'pit'),

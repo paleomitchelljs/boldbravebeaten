@@ -75,7 +75,7 @@
     if (item.kind === 'shield') {
       return cap(q + SHIELD_MATERIALS[item.material].name.toLowerCase() + ' ' + SHIELDS[item.size].name.toLowerCase() + ' shield');
     }
-    if (item.kind === 'weapon') return cap(q + WEAPONS[item.type].name.toLowerCase());
+    if (item.kind === 'weapon') return item.name || cap(q + WEAPONS[item.type].name.toLowerCase());
     return item.name || 'Item';
   }
 
