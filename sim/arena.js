@@ -58,6 +58,13 @@ const STRATEGY = {
     weapon: null, shield: null, nouns: ['fire', 'earth', 'vine', 'force'],
     feats: ['casting', 'verb_strike', 'verb_ward', 'verb_launch', 'verb_build', 'verb_blink', 'casting', 'verb_hex', 'verb_open', 'control', 'mod_strong', 'quick_casting'],
   },
+  enchanter: {
+    // A mind mage (magic phase 2): mesmerize, calm, enrage and confuse; a ward of force and a
+    // blink to get away.
+    label: 'Enchanter', attrs: { STR: 4, CON: 5, DEX: 5, SPD: 5, INT: 8, WIL: 5, WIS: 4, CHA: 3 },
+    weapon: null, shield: null, nouns: ['dream', 'rage', 'calm', 'fear', 'force'],
+    feats: ['casting', 'verb_hex', 'verb_beguile', 'verb_ward', 'casting', 'word_doubling', 'verb_blink', 'control', 'quick_casting'],
+  },
   grappler: {
     label: 'Grappler', attrs: { STR: 7, CON: 6, DEX: 6, SPD: 5, INT: 3, WIL: 4, WIS: 4, CHA: 4 },
     weapon: null, shield: null, policy: { grappler: true },
@@ -110,7 +117,7 @@ function makeCombatant(armorKey, stratKey, side) {
 
 // Magic users are back with the magic overhaul (they were left out while magic was a stub).
 // Pass --no-magic to leave them out.
-if (argv.includes('--no-magic')) delete STRATEGY.magic;
+if (argv.includes('--no-magic')) { delete STRATEGY.magic; delete STRATEGY.enchanter; }
 
 const KEYS = [];
 for (const a of Object.keys(ARMOR)) for (const s of Object.keys(STRATEGY)) KEYS.push(a + '/' + s);
