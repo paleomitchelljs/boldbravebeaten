@@ -1,5 +1,20 @@
 # Simulation findings
 
+## Weapon strain, impact and force parries (party arena at level 5; arena baseline `arena-r13`)
+
+- **Duels barely moved.** Strain was calibrated so the arena builds keep their speeds; every
+  style-against-style rate is within about 4 points of before.
+- **Big creatures became deadly.** Their blunt blows now crush (CON as well as stamina), knock
+  back, and can't be parried by an ordinary weapon. Party win rate and deaths per fight:
+  - The troll chieftain kills 2.3–3.0 of the party per fight and loses only 0–35% (was 3–83%
+    with almost no deaths).
+  - The cave troll drops to 15–98%, with up to 2.4 deaths.
+  - The ogre and the hill giant kill 0.5–2.4.
+- **The weapon must suit the creature.** STR-3 kobolds with a man's spear strained 1.9×, and the
+  band went from a coin flip to losing every fight. With a short spear they are back to dangerous:
+  the light party wins 0–25%, full parties 55–98%.
+- **Thrust load (70% of the mass) keeps an ordinary spear easy for an average person.**
+
 ## The gauntlet by party level (`node sim/gauntlet.js --level 2|6|15`, then `node sim/gauntlet-page.js --levels`)
 
 There are 13 rooms: a rat, a rat swarm, a wolf, then the eight earlier rooms, then the spectre and
