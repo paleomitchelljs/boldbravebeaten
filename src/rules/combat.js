@@ -373,8 +373,10 @@
         spans: opt.ap > left,
         why,
         targets: others.map((o) => {
-          const dd = dist(me, posAtPass(enc, o, enc.pass));
-          return { id: o, inReach: C.inRange(opt, dd), tooClose: dd < (opt.minRange || 1), distance: dd };
+          const op = posAtPass(enc, o, enc.pass);
+          const dd = dist(me, op);
+          const line = G.Terrain && enc.tiles && dd >= 2 ? G.Terrain.lineCheck(enc, me, op, opt.ranged || opt.spell ? 'missile' : 'melee') : null;
+          return { id: o, inReach: C.inRange(opt, dd) && !(line && line.blocked), tooClose: dd < (opt.minRange || 1), distance: dd, blockedBy: line && line.blocked ? line.by : null };
         }),
       }));
     }
@@ -429,7 +431,7 @@
     }
 
     // Moving: not while prone, held or clinched. A holder drags the held fighter one square.
-    if (!c.status.prone && !grappled && !c.status.clinch && can(1)) {
+    if (!c.status.prone && !grappled && !c.status.clinch && can(1) && (!G.Conditions || G.Conditions.canMove(c))) {
       const spa = C.squaresPerAP(c);
       const cost1 = C.actionCost(c, 'move', { ap: 1 });
       const drag = !!c.status.grappling;
@@ -458,6 +460,7 @@
     if (hands.wield) addOther('dropWeapon', { note: Items.itemName(heldW) });
     if (c.status.grappling && !declared('release')) addOther('release');
     if (c.status.webbed && !declared('tearFree')) addOther('tearFree', { note: `${c.status.webbed} layer${c.status.webbed > 1 ? 's' : ''}` });
+    else if (G.Conditions && !G.Conditions.canMove(c) && !declared('tearFree')) addOther('tearFree', { name: 'Break free', note: 'rooted' });
     // Wind-ups for attacks that need one (power swings, Strong spells).
     if (canWindUp(enc, c) && !c.status.prone && !grappled) {
       const seen = {};
@@ -586,7 +589,15 @@
       const from = projectedPos(enc, id);
       const d = dist(from, decl.to);
       if (d === 0) return 'Pick a different square';
-      const need = C.moveCost(c, d);
+      // Walls are walked around; rough ground, brambles and climbing out of a pit cost extra.
+      let squares = d;
+      if (G.Terrain && enc.tiles) {
+        if (!G.Terrain.passable(enc, decl.to.x, decl.to.y)) return 'A wall stands there';
+        const pc = G.Terrain.pathCost(enc, from, decl.to, c);
+        if (!pc.reaches) return 'No way through';
+        squares = pc.cost;
+      }
+      const need = C.moveCost(c, squares);
       ({ ap, stamina } = C.actionCost(c, 'move', { ap: need }));
       decl.from = from;
     } else {
@@ -671,6 +682,8 @@
     // takes no piercing and half slashing; only blunt breaks bones cleanly.
     const resist = target.traits && target.traits.resist;
     if (resist) ['P', 'S', 'B'].forEach((k, i) => { if (resist[k] != null) v[i] = Math.floor(v[i] * resist[k]); });
+    // Stoneskin, barkskin, a shield of force: protection that isn't armor.
+    if (G.Conditions) ['P', 'S', 'B'].forEach((k, i) => { v[i] = Math.max(0, v[i] - G.Conditions.mitigation(target, k)); });
     const [P, S, B] = v;
     const motion = option.motion === 'unarmed' ? 'swing' : option.motion;
     const res = { vec: v, P, S, B, armored: false, toCON: 0, slashToAttrs: 0, bluntToStamina: 0, bluntToCON: 0, converted: 0, durLoss: 0, mitigated: { P: 0, S: 0, B: 0 } };
@@ -1196,15 +1209,30 @@
           continue;
         }
         if (!payStamina(enc, a, d.stamina)) continue;
-        // Readied points: stepping closer into one meets it first; a hit stops the advance.
-        if (await stopThrusts(enc, chars, a, d.to, roller)) continue;
         claimed[key] = d.actor;
-        const left = enc.pos[d.actor];
-        enc.pos[d.actor] = { x: d.to.x, y: d.to.y };
         if (dragged) {
+          // Readied points: stepping closer into one meets it first; a hit stops the advance.
+          if (await stopThrusts(enc, chars, a, d.to, roller)) continue;
+          const left = enc.pos[d.actor];
+          enc.pos[d.actor] = { x: d.to.x, y: d.to.y };
           enc.pos[dragged.id] = { x: left.x, y: left.y };
           log(enc, `${a.name} drags ${dragged.name} to (${d.to.x + 1}, ${d.to.y + 1}).`);
-        } else log(enc, `${a.name} moves to (${d.to.x + 1}, ${d.to.y + 1}).`);
+          continue;
+        }
+        // Square by square: around walls, past allies (not foes), into readied points, runes,
+        // pits and hazards, any of which can end the move early.
+        const steps = G.Terrain ? G.Terrain.path(enc, enc.pos[a.id], d.to, a) : [d.to];
+        let moved = false, why = '';
+        for (const q of steps) {
+          if (await stopThrusts(enc, chars, a, q, roller)) { why = 'stopped'; break; }
+          if (enc.ids.some((o) => o !== a.id && chars[o].side !== a.side && C.isActive(chars[o]) && enc.pos[o].x === q.x && enc.pos[o].y === q.y)) { why = 'blocked'; break; }
+          enc.pos[a.id] = { x: q.x, y: q.y };
+          moved = true;
+          if (G.Terrain && enc.tiles && (await G.Terrain.enter(enc, chars, a, q.x, q.y, roller, (t) => log(enc, t, 'hit')))) { why = 'stops'; break; }
+        }
+        const at = enc.pos[a.id];
+        if (moved) log(enc, `${a.name} moves to (${at.x + 1}, ${at.y + 1})${at.x !== d.to.x || at.y !== d.to.y ? ' and gets no farther' : ''}.`);
+        else if (why === 'blocked') log(enc, `${a.name}'s way is blocked.`, 'fizzle');
       }
     }
     for (const d of enc.decls) if (d.pass === p) d.done = true;
@@ -1219,7 +1247,11 @@
     for (const id of enc.order) if (!C.isActive(chars[id])) enc.conceded[id] = true;
     const canAct = enc.order.some((id) => !enc.conceded[id] && (enc.ap[id] || 0) >= CONFIG.minActionAP);
     if (Object.keys(sides).length > 1 && (pending || (canAct && (started || actsThisPass.length)))) startPass(enc, chars);
-    else endRound(enc, chars);
+    else {
+      // Standing in a hazard hurts; fire burns what burns; terrain ticks down.
+      if (G.Terrain && enc.tiles) await G.Terrain.endRound(enc, chars, roller, (t) => log(enc, t, 'hit'));
+      endRound(enc, chars);
+    }
   }
 
   // Resolve passes until someone has to decide something (or the round ends).
@@ -1284,6 +1316,18 @@
         a.inventory[d.option.ammo || 'arrows'] -= 1;
       }
       if (!payStamina(enc, a, d.stamina)) return;
+      // Walls in the way: solid ones stop everything, others stop blades or missiles; swirling
+      // winds carry missiles astray.
+      if (d.type === 'strike' && G.Terrain && enc.tiles && distance >= 2) {
+        const missile = d.option.ranged || !!d.option.spell;
+        const lc = G.Terrain.lineCheck(enc, posAtStart[d.actor], posAtStart[d.target], missile ? 'missile' : 'melee');
+        if (lc.blocked) return log(enc, `${a.name}'s ${label} is stopped by the ${lc.by.toLowerCase()}.`, 'fizzle');
+        if (lc.miss > 0 && missile) {
+          const need = Math.round(lc.miss * 10);
+          const r = await rollDie(roller, a.id, 10, `${a.name}: through the winds`, `d10: ${need} or less goes astray`);
+          if (r <= need) return log(enc, `The winds carry ${a.name}'s ${label} astray.`, 'fizzle');
+        }
+      }
       // Grappling is a directly opposed roll; guards never meet it.
       if (GRAPPLE_STEPS.includes(d.type)) return resolveGrapple(enc, chars, d, roller);
       if (d.type === 'strike' && d.option.spell) {
@@ -1345,6 +1389,12 @@
         const note = (distance === 1 && d.option.closePenalty) || (CONFIG.grappledWeaponsCramped && d.option.weaponId && !d.option.ranged && isGrappled(a))
           ? (CONFIG.range.closeRule === 'blunt' ? ' (cramped: blunt, half force)' : ' (cramped: half damage)') : d.option.ranged && d.option.longRange && distance > d.option.longRange ? ' (long range)' : '';
         log(enc, `${a.name}'s ${name} hits ${t.name}${half ? ' (Roll With It: half)' : ''}${pack ? ` (pack +${pack})` : ''}${note}: ${r.text}`, 'hit');
+        // Kindled (Bless + Fire): a blade wreathed in flame sets what it strikes burning.
+        if (G.Conditions && G.Conditions.flag(a, 'kindled') && !d.option.ranged && !d.option.spell && C.isActive(t) && !C.tireless(t)) {
+          G.Conditions.add(t, 'burning', { rounds: 2, mag: 1, src: a.id });
+          log(enc, `${t.name} catches fire.`, 'hit');
+        }
+        if (d.option.spell && G.Magic && G.Magic.afterHit) await G.Magic.afterHit(enc, chars, a, t, d.option, r.hit, roller);
         // Springy armor (chitin): the blow rebounds and jars the attacker.
         const recoil = t.armor && t.armor.durability > 0 && (G.DATA.ARMOR[t.armor.type] || {}).recoil;
         if (recoil && !d.option.ranged && !d.option.spell && !C.tireless(a)) {
@@ -1406,6 +1456,14 @@
       case 'tearFree': {
         const W = CONFIG.web;
         const bonus = Math.floor(C.attr(a, 'STR') / 2);
+        if (!a.status.webbed && G.Conditions && !G.Conditions.canMove(a)) {
+          const root = G.Conditions.list(a).find((x) => (CONFIG.conditions[x.key] || {}).noMove);
+          const tn = W.tearTN + (root ? root.mag - 1 : 0);
+          const r = await rollDie(roller, a.id, 10, `${a.name}: Break free`, `d10 + ${bonus} ≥ ${tn}`);
+          if (r + bonus >= tn) { G.Conditions.remove(a, root.key); log(enc, `${a.name} breaks free (${r + bonus}).`, 'defend'); }
+          else log(enc, `${a.name} strains against the roots (${r + bonus} vs ${tn}).`, 'fail');
+          break;
+        }
         const r = await rollDie(roller, a.id, 10, `${a.name}: Tear free`, `d10 + ${bonus} ≥ ${W.tearTN}`);
         if (r + bonus >= W.tearTN) { a.status.webbed = 0; log(enc, `${a.name} tears free of the webs (${r + bonus}).`, 'defend'); }
         else log(enc, `${a.name} strains against the webs (${r + bonus} vs ${W.tearTN}).`, 'fail');
@@ -1597,6 +1655,8 @@
         C.damageAttr(c, 'CON', poison);
         log(enc, `Venom costs ${c.name} ${poison} CON.`, 'bleed');
       }
+      // Conditions: damage over time, then each ticks down a round.
+      if (G.Conditions) for (const line of G.Conditions.endRound(c)) log(enc, line, 'bleed');
       // Regeneration (monster trait): wounds close and strength returns, unless burned this round.
       const R = c.traits && c.traits.regen;
       if (R && !(enc.burned || {})[id] && C.attr(c, 'CON') > 0) {
@@ -1670,6 +1730,7 @@
       c.status.pinned = false;
       c.status.grapplingPin = false;
       c.status.webbed = 0;
+      c.status.conds = [];
       // Weapons on the ground are gathered up after the fight.
       if (c.status.dropped.length || c.wield == null) {
         c.status.dropped = [];

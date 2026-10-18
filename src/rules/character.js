@@ -55,7 +55,7 @@
   }
 
   function freshStatus() {
-    return { prone: false, grappledBy: [], grappling: null, clinch: null, pinned: false, webbed: 0, unconscious: false, dead: false, dropped: [], windUp: null };
+    return { prone: false, grappledBy: [], grappling: null, clinch: null, pinned: false, webbed: 0, unconscious: false, dead: false, dropped: [], windUp: null, conds: [] };
   }
 
   // Bring older saves up to the current shape.
@@ -280,6 +280,7 @@
     let v = attr(c, a);
     if (a === 'SPD') v -= ai.spd;
     if (a === 'DEX') v -= ai.dex;
+    if (G.Conditions) v += G.Conditions.attrMod(c, a); // numbed, clumsy, deft…
     return Math.max(0, v);
   }
 
@@ -294,7 +295,7 @@
 
   function regen(c) {
     if (tireless(c)) return 0;
-    return Math.floor((attr(c, 'CON') + attr(c, 'WIL')) / CONFIG.regenDivisor) - armorInfo(c).regen;
+    return Math.floor((attr(c, 'CON') + attr(c, 'WIL')) / CONFIG.regenDivisor) - armorInfo(c).regen + (G.Conditions ? G.Conditions.regenMod(c) : 0);
   }
 
   // Tireless (undead, constructs): no stamina at all. Damage goes straight to attributes,
@@ -315,7 +316,8 @@
 
   function apPool(c) {
     const mult = (c.traits && c.traits.apMult) || 1; // monster trait: a boss acts like several fighters
-    return Math.max(0, Math.round((CONFIG.apBase + Math.floor(combatAttr(c, 'SPD') / CONFIG.apSpdDivisor) - fatiguePenalty(c)) * apScale() * mult));
+    const cond = G.Conditions ? G.Conditions.apMod(c) : 0; // slowed, hasted, shocked…
+    return Math.max(0, Math.round((CONFIG.apBase + Math.floor(combatAttr(c, 'SPD') / CONFIG.apSpdDivisor) - fatiguePenalty(c) + cond) * apScale() * mult));
   }
 
   function apScale() {

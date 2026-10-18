@@ -299,6 +299,53 @@
       backlashPerPoint: 2,
     },
 
+    // ---- Conditions (PROVISIONAL, magic overhaul) ------------------------------------
+    // Timed effects (src/rules/conditions.js). Values are per point of magnitude.
+    conditions: {
+      burning: { name: 'Burning', dot: { CON: 1 } },
+      slowed: { name: 'Slowed', ap: -1 },
+      hasted: { name: 'Hasted', ap: 1 },
+      shocked: { name: 'Shocked', ap: -1 },
+      rooted: { name: 'Rooted', noMove: true, breakAttr: 'STR' },
+      numbed: { name: 'Numbed', attrs: { DEX: -1, SPD: -1 } },
+      withering: { name: 'Withering', dot: { CON: 1 }, ap: -1 }, // Life bane (asystole)
+      innervated: { name: 'Innervated', regen: 2 },
+      kindled: { name: 'Kindled', kindled: true }, // blows set targets burning
+      frostWard: { name: 'Frost ward', halveFire: true },
+      freedom: { name: 'Freedom', freedom: true },
+      stoneskin: { name: 'Stoneskin', mit: { B: 2 }, attrs: { SPD: -1 } },
+      barkskin: { name: 'Barkskin', mit: { P: 1, S: 1 } },
+      shielded: { name: 'Shielded', mit: { P: 1, S: 1, B: 1 } },
+    },
+
+    // ---- Terrain (PROVISIONAL, magic overhaul) ------------------------------------------
+    // Features on tiles (src/rules/terrain.js). wall: can't be entered; solid: blocks sight and
+    // missiles; blocksMissiles: arrows and bolts can't pass; cost: extra squares of movement to
+    // enter; slick: a footing roll on entering or fall; pit: fall in (prone, the move ends, and
+    // climbing out costs climbCost extra); onEnter/perRound: an element's blow with that
+    // magnitude to whoever enters / stands there at the end of the round; flammable: fire burns
+    // it away; hidden: unseen by the other side until it springs.
+    terrain: {
+      stoneWall: { name: 'Stone wall', wall: true, solid: true },
+      iceWall: { name: 'Ice wall', wall: true, solid: true, meltsInFire: true },
+      brambleWall: { name: 'Bramble wall', wall: true, flammable: true },
+      forceWall: { name: 'Force wall', wall: true, blocksMissiles: true },
+      fireWall: { name: 'Wall of fire', onEnter: { fire: 3 }, perRound: { fire: 2 }, burns: true },
+      windWall: { name: 'Wind wall', blocksMissiles: true, cost: 2 },
+      stormWall: { name: 'Storm wall', onEnter: { lightning: 3 } },
+      hot: { name: 'Hot ground', onEnter: { fire: 1 }, perRound: { fire: 1 }, burns: true },
+      ice: { name: 'Ice', slick: true, cost: 1 },
+      charged: { name: 'Charged ground', onEnter: { lightning: 2 } },
+      winds: { name: 'Swirling winds', cost: 1, missileMiss: 0.5 },
+      rough: { name: 'Rough ground', cost: 1 },
+      brambles: { name: 'Brambles', cost: 1, onEnter: { vine: 2 }, flammable: true },
+      pit: { name: 'Pit', pit: true },
+      rune: { name: 'Rune', rune: true, hidden: true },
+      slickFootingTN: 6, // d10 + ⌊(DEX + SPD)/4⌋ ≥ this, or fall
+      climbCost: 2, // extra squares to climb out of a pit
+      pitDamage: 2, // blunt, to stamina
+    },
+
     // ---- Defense checks: all PROVISIONAL (Outline: "success checks Open") --
     // Success when d10 + bonuses ≥ target number.
     defense: {

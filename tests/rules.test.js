@@ -990,3 +990,51 @@ test('natural weapons come from physics too, with STR in full', () => {
   const fist = C.attackOptions(troll).find((o) => o.weaponType === 'trollFists' && o.motion === 'swing');
   assert.strictEqual(fist.damage[2], S.faces.head[2] + C.strBonus(troll));
 });
+
+test('terrain: walls are walked around or block, pits catch, solid walls stop arrows', async () => {
+  const T = B.Terrain;
+  const a = armed('A', 'longsword', { side: 'party' });
+  const f = armed('F', 'shortbow', { side: 'enemy' });
+  f.inventory.arrows = 5;
+  for (const c of [a, f]) c.stamina = C.maxStamina(c);
+  const chars = { [a.id]: a, [f.id]: f };
+  const enc = Combat.createEncounter('t', [a.id, f.id], chars, 8, 3);
+  enc.pos[a.id] = { x: 0, y: 1 }; enc.pos[f.id] = { x: 7, y: 1 };
+  // A wall across the middle: the path goes around through a gap; fully closed, no way through.
+  T.add(enc, 3, 0, 'stoneWall'); T.add(enc, 3, 1, 'stoneWall');
+  const around = T.pathCost(enc, { x: 0, y: 1 }, { x: 5, y: 1 }, a);
+  assert.ok(around.reaches && around.steps.some((q) => q.x === 3 && q.y === 2));
+  T.add(enc, 3, 2, 'stoneWall');
+  assert.ok(!T.pathCost(enc, { x: 0, y: 1 }, { x: 5, y: 1 }, a).reaches);
+  // The solid wall blocks the archer's line.
+  assert.ok(T.lineCheck(enc, enc.pos[f.id], enc.pos[a.id], 'missile').blocked);
+  // A pit: stepping in ends the move, prone.
+  T.remove(enc, 3, 2, () => true);
+  T.add(enc, 3, 2, 'pit');
+  await Combat.startRound(enc, chars, roller(3, [9, 1]));
+  assert.strictEqual(Combat.currentActor(enc), a.id);
+  assert.strictEqual(Combat.declare(enc, chars, { actor: a.id, type: 'move', to: { x: 4, y: 2 } }), null);
+  Combat.endTurn(enc, a.id);
+  Combat.endTurn(enc, f.id);
+  await Combat.resolvePass(enc, chars, roller(4, []));
+  assert.deepStrictEqual(enc.pos[a.id], { x: 3, y: 2 });
+  assert.ok(a.status.prone);
+});
+
+test('conditions: slowed costs AP, rooted can\'t move, stoneskin turns blunt', () => {
+  const Cn = B.Conditions;
+  const c = armed('C', 'longsword');
+  const ap = C.apPool(c);
+  Cn.add(c, 'slowed', { rounds: 2, mag: 1 });
+  assert.strictEqual(C.apPool(c), ap - C.apScale());
+  Cn.add(c, 'rooted', { rounds: 1 });
+  assert.ok(!Cn.canMove(c));
+  Cn.endRound(c);
+  assert.ok(Cn.canMove(c), 'rooted wears off');
+  assert.ok(Cn.has(c, 'slowed'));
+  const atk = armed('A', 'club');
+  const blow = opt(atk, (o) => o.motion === 'swing');
+  const before = Combat.computeHit(atk, c, blow).B;
+  Cn.add(c, 'stoneskin', { rounds: 2, mag: 1 });
+  assert.strictEqual(Combat.computeHit(atk, c, blow).B, Math.max(0, before - 2));
+});
