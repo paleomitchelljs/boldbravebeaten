@@ -31,6 +31,12 @@ the arena results and the queued work.
 - Codes in R and builds Stan models. Comfortable with simulation-based reasoning.
 - Wants a plain position stated and defended. When unsure, say so.
 
+## Balance (in the Philosophy doc)
+
+Balance is differentiation, not parity, as in classic EverQuest: a style can be hopeless in one
+setting (solo, a duel) and vital in another (a group, a crowd). Hard counters between styles are
+fine. Judge sims by whether each style has a setting where it matters, not by even win rates.
+
 ## Terminology (the user's standard; apply it everywhere)
 
 | Term | Meaning |
@@ -71,7 +77,7 @@ Characters who spend early sit out the last passes.
   square-by-square movement and line of sight; timed conditions. Spell points kept for now.
 - Magic phases 2 (mind, body, venom/plague, light/shadow/spirit, word doubling) and 3 (rituals,
   information magic, GM secrets, Lore tab) are built as drafts. Read intent is a cheap WIS roll
-  that can misread. The user accepts hard counters between styles: distinct, not evenly matched.
+  that can misread.
 - Don't tune individual monsters; experiments are about fundamentals for now.
 
 ## Waiting on the user
