@@ -26,8 +26,9 @@ const ARENAS = {
 const PARTIES = {
   veterans: { label: 'Veterans (4): knight with shield, mail two-hander, archer, grappler', keys: ['heavy/shield', 'medium/twoHanded', 'light/archery', 'light/grappler'] },
   light: { label: 'Light party (3): shield, archer, grappler', keys: ['light/shield', 'light/archery', 'unarmored/grappler'] },
+  mage: { label: 'With a mage (4): knight with shield, mail two-hander, archer, mage', keys: ['heavy/shield', 'medium/twoHanded', 'light/archery', 'unarmored/magic'] },
 };
-const ROLE = (k) => ({ 'heavy/shield': 'knight', 'medium/twoHanded': 'two-hander', 'light/archery': 'archer', 'light/grappler': 'grappler', 'light/shield': 'shield', 'unarmored/grappler': 'grappler' }[k] || k);
+const ROLE = (k) => ({ 'unarmored/magic': 'mage', 'heavy/shield': 'knight', 'medium/twoHanded': 'two-hander', 'light/archery': 'archer', 'light/grappler': 'grappler', 'light/shield': 'shield', 'unarmored/grappler': 'grappler' }[k] || k);
 const ENCOUNTERS = arg('only', null) ? arg('only', '').split(',') : [
   'wolf', 'wolfPack', 'koboldBand', 'goblinBand', 'frogPatrol', 'sarnak', 'sarnakPair',
   'skeleton', 'skeletonSquad', 'zombie', 'zombieHorde', 'stoneGolem',

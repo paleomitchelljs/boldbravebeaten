@@ -1775,6 +1775,8 @@
     for (const id of enc.ids) {
       const c = chars[id];
       if (!c) continue;
+      // Conjured creatures and the raised dead don't outlast the fight.
+      if (c.conjured) { delete chars[id]; continue; }
       c.status.prone = false;
       c.status.windUp = null;
       c.status.grappling = null;

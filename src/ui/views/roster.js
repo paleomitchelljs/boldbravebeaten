@@ -19,6 +19,8 @@
     if (st.dropped && st.dropped.length) out.push(h('span', { class: 'chip warn' }, 'Weapon on the ground'));
     if (st.windUp) out.push(h('span', { class: 'chip warn', title: 'Cannot block or parry until the blow is released' }, 'Wound up: ' + st.windUp.label));
     if (c.bleeds.length && !st.dead) out.push(h('span', { class: 'chip bad' }, `Bleeding ${C.bleedPerRound(c).toFixed(1)}/rd`));
+    if (G.Conditions && !st.dead) for (const l of G.Conditions.labels(c)) out.push(h('span', { class: 'chip warn' }, l));
+    if (c.conjured && !st.dead) out.push(h('span', { class: 'chip' }, `Conjured (${c.conjured.rounds} rd)`));
     return out;
   }
 

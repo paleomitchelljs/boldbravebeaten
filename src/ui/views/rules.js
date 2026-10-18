@@ -70,7 +70,7 @@
         h('p', { class: 'small muted' }, 'The Mechanics Outline marks these as Open. The platform needs some answer to run, so it uses these until playtesting or simulation settles them.'),
         h('ul', { class: 'stack tight', style: { paddingLeft: '1.2em', margin: 0 } }, CONFIG.provisional.map((p) => h('li', null, p)))),
       h('section', { class: 'panel' }, h('h2', null, 'Not in the platform yet'),
-        h('p', { class: 'small' }, 'Magic (words, spell points, backlash), the social system, terrain and stealth, and feats marked "table ruling" on the sheet. Feats from those systems can still be recorded on sheets and ruled by the GM.')));
+        h('p', { class: 'small' }, 'Rituals, information magic (reading, divining, speaking with the dead), the mind spells, the social system, stealth, and feats marked "table ruling" on the sheet. Feats from those systems can still be recorded on sheets and ruled by the GM.')));
   }
 
   UI.Views.rules = view;

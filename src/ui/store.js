@@ -57,7 +57,17 @@
     hale.feats = { parry_training: 1, read_attack: 1, strength: 1 };
     hale.notes = 'Example character. Edit or delete freely.';
 
-    [wren, osk, hale].forEach((c) => { c.stamina = C.maxStamina(c); add(c); });
+    const ysolde = C.newCharacter({ name: 'Ysolde Marr', base: { STR: 4, CON: 5, DEX: 5, SPD: 5, INT: 8, WIL: 6, WIS: 5, CHA: 4 }, starterGear: false });
+    ysolde.armor = Items.makeArmor('padded', 'full', 'standard');
+    const yd = Items.makeWeapon('dagger', 'standard');
+    ysolde.weapons.push(yd);
+    ysolde.sidearm = yd.id;
+    ysolde.feats = { casting: 2, verb_strike: 1, verb_hex: 1, verb_build: 1, verb_cover: 1, mod_strong: 1 };
+    ysolde.level = 3;
+    ysolde.nouns = ['fire', 'earth', 'vine'];
+    ysolde.notes = 'Example caster: Fire, Earth and Vine. Walls, roots, burning ground. Edit or delete freely.';
+
+    [wren, osk, hale, ysolde].forEach((c) => { c.stamina = C.maxStamina(c); add(c); });
     add(G.Enemies.generate('bandit', 1, { seed: 11, name: 'Gorm the bandit' }));
     add(G.Enemies.generate('bandit', 1, { seed: 23, name: 'Fenna the bandit' }));
     add(G.Enemies.generate('sellsword', 2, { seed: 5, name: 'Rurik the sellsword' }));

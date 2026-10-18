@@ -225,6 +225,20 @@ table.data td.n, table.data th.n { text-align: right; font-family: var(--font-mo
 .token.active { outline: 3px solid var(--brass); outline-offset: 2px; }
 .token.targetable { cursor: pointer; outline: 2px dashed var(--brass); outline-offset: 2px; }
 .cell.has-token { cursor: pointer; }
+/* Terrain (magic): walls, pits, hazards, runes. */
+.cell .glyph { font-size: 0.85em; opacity: 0.8; }
+.cell.can-cast { box-shadow: inset 0 0 0 2px var(--accent); cursor: crosshair; }
+.cell.tile-stoneWall, .cell.tile-iceWall { background: var(--wall, #8a8478); color: #fff; }
+.cell.tile-iceWall { background: #9cc3d6; }
+.cell.tile-brambleWall, .cell.tile-brambles { background: #7d8f5a; color: #1f2a12; }
+.cell.tile-forceWall { background: #b9b2dc; }
+.cell.tile-fireWall, .cell.tile-hot { background: #e9a46a; color: #5a1c00; }
+.cell.tile-windWall, .cell.tile-winds { background: #d6e4ea; }
+.cell.tile-stormWall, .cell.tile-charged { background: #e6dd8a; }
+.cell.tile-ice { background: #cfe6f2; }
+.cell.tile-rough { background: #c9b99a; }
+.cell.tile-pit { background: #3b342c; color: #e8dcc8; }
+.cell.tile-rune { box-shadow: inset 0 0 0 2px #8a5cc2; }
 .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: var(--step--1); color: var(--muted); }
 
 .cmd { border-top: 3px solid var(--brass); gap: 10px; }

@@ -8,6 +8,9 @@
   const Items = G.Items;
   const D = G.DATA;
 
+  // A mark for each kind of terrain on the map.
+  const TILE_GLYPH = { stoneWall: '■', iceWall: '▦', brambleWall: '✶', forceWall: '▫', fireWall: '▲', windWall: '≋', stormWall: 'ϟ', hot: '♨', ice: '≈', charged: 'ϟ', winds: '~', rough: '∴', brambles: '✶', pit: '◯', rune: 'ᚱ' };
+
   function bui(app) {
     return app.ui.battle || (app.ui.battle = { mode: null, pending: null, placeSel: null, lootTo: '', removeDefeated: true });
   }
@@ -85,12 +88,34 @@
         const p = Combat.projectedPos(enc, id);
         blocked[p.x + ',' + p.y] = true;
       }
+      // With terrain: walls are walked around and rough ground costs more.
+      const terrain = G.Terrain && enc.tiles && Object.keys(enc.tiles).length;
+      const map = terrain ? G.Terrain.costMap(enc, m.from, chars[actor]) : null;
       for (let y = 0; y < enc.grid.h; y++) for (let x = 0; x < enc.grid.w; x++) {
         const d = Combat.dist(m.from, { x, y });
-        const need = C.moveCost(chars[actor], d);
+        const squares = map ? map.cost[map.idx(x, y)] : d;
+        if (!isFinite(squares)) continue;
+        const need = C.moveCost(chars[actor], Math.round(squares));
         if (d > 0 && need <= m.maxAP && !blocked[x + ',' + y]) reach[x + ',' + y] = need;
       }
     }
+    // Casting at a square: those in range with a clear line.
+    let castable = null;
+    if (ui.mode === 'cast' && ui.pending && legal) {
+      castable = {};
+      const me = Combat.projectedPos(enc, actor);
+      const o = ui.pending.option;
+      for (let y = 0; y < enc.grid.h; y++) for (let x = 0; x < enc.grid.w; x++) {
+        const d = Combat.dist(me, { x, y });
+        if (d < o.minRange || d > o.maxRange) continue;
+        if (d >= 2 && G.Terrain && enc.tiles && G.Terrain.lineCheck(enc, me, { x, y }, 'missile').blocked) continue;
+        castable[x + ',' + y] = true;
+      }
+    }
+    // Terrain this side can see (hidden runes only by those who laid them).
+    const viewer = actor && chars[actor] && !aiControlled(app, chars[actor]) ? chars[actor].side : 'party';
+    const ground = {};
+    if (G.Terrain && enc.tiles) for (const t of G.Terrain.all(enc)) if (G.Terrain.visible(t.f, viewer)) (ground[t.x + ',' + t.y] || (ground[t.x + ',' + t.y] = [])).push(t);
     const late = (need) => legal && need > legal.passLeft;
     const cells = [];
     for (let y = 0; y < enc.grid.h; y++) {
@@ -105,18 +130,27 @@
           token = h('span', { class: cls, title: c.name }, initials(c.name));
         }
         const canMove = reach && reach[key] != null;
+        const canCast = castable && castable[key];
+        const g = ground[key] || [];
+        const tileCls = g.map((t) => ' tile-' + t.f.kind).join('');
+        const glyph = !token && !canMove && g.length ? h('span', { class: 'glyph', 'aria-hidden': 'true' }, TILE_GLYPH[g[g.length - 1].f.kind] || '·') : null;
         cells.push(h('button', {
-          class: 'cell' + (canMove ? ' can-move' + (late(reach[key]) ? ' late' : '') : '') + (ghosts[key] && !c ? ' ghost' : '') + (c ? ' has-token' : ''),
-          'aria-label': c ? `${c.name} at ${x + 1}, ${y + 1}` : `Square ${x + 1}, ${y + 1}${canMove ? `, move for ${reach[key]} AP` : ''}`,
-          onclick: () => cellClick(app, enc, legal, x, y, id, reach),
-        }, token || (canMove ? String(reach[key]) : '')));
+          class: 'cell' + tileCls + (canMove ? ' can-move' + (late(reach[key]) ? ' late' : '') : '') + (canCast ? ' can-cast' : '') + (ghosts[key] && !c ? ' ghost' : '') + (c ? ' has-token' : ''),
+          title: g.length ? g.map((t) => `${t.def.name}${t.f.rounds != null ? ` (${t.f.rounds} rd)` : ''}`).join(', ') : null,
+          'aria-label': (c ? `${c.name} at ${x + 1}, ${y + 1}` : `Square ${x + 1}, ${y + 1}${canMove ? `, move for ${reach[key]} AP` : ''}`) + (g.length ? ` — ${g.map((t) => t.def.name).join(', ')}` : ''),
+          onclick: () => cellClick(app, enc, legal, x, y, id, reach, castable),
+        }, token || (canMove ? String(reach[key]) : glyph)));
       }
     }
     return h('div', { class: 'map-wrap' }, h('div', { class: 'map', style: { gridTemplateColumns: `repeat(${enc.grid.w}, auto)`, '--cols': enc.grid.w } }, cells));
   }
 
-  function cellClick(app, enc, legal, x, y, id, reach) {
+  function cellClick(app, enc, legal, x, y, id, reach, castable) {
     const ui = bui(app);
+    if (ui.mode === 'cast' && castable && castable[x + ',' + y]) {
+      declare(app, enc, { actor: Combat.currentActor(enc), type: 'cast', option: ui.pending.option, at: { x, y } });
+      return;
+    }
     if (ui.mode === 'place') {
       if (id) ui.placeSel = ui.placeSel === id ? null : id;
       else if (ui.placeSel) { enc.pos[ui.placeSel] = { x, y }; ui.placeSel = null; app.save(); }
@@ -140,6 +174,7 @@
     const actor = Combat.currentActor(enc);
     const p = ui.pending;
     if (p.kind === 'strike') declare(app, enc, { actor, type: 'strike', option: p.option, target: targetId });
+    else if (p.kind === 'cast') declare(app, enc, { actor, type: 'cast', option: p.option, target: targetId });
     else declare(app, enc, { actor, type: p.type, target: targetId });
   }
 
@@ -218,6 +253,10 @@
         h('div', { class: 'row', style: { marginTop: '6px' } }, ui.pending.targets.map((t) =>
           h('button', { class: 'small' + (t.inReach ? '' : ' ghost'), onclick: () => finishTarget(app, enc, t.id) }, chars[t.id].name + (t.distance != null ? ` · ${t.distance} sq` : '') + (t.inReach ? '' : t.tooClose ? ' (too close now)' : ' (out of reach now)'))))));
     }
+    if (ui.mode === 'cast' && ui.pending) {
+      notes.push(h('div', { class: 'note row spread' }, h('span', null, `${ui.pending.option.label}: tap a highlighted square (range ${ui.pending.option.minRange}–${ui.pending.option.maxRange}).`),
+        h('button', { class: 'small', onclick: () => { ui.mode = null; ui.pending = null; app.render(); } }, 'Cancel')));
+    }
     if (ui.mode === 'move') {
       notes.push(h('div', { class: 'note row spread' }, h('span', null, 'Tap a highlighted square; the number is its AP. Striped squares land next pass.'),
         h('button', { class: 'small', onclick: () => { ui.mode = null; app.render(); } }, 'Cancel')));
@@ -245,6 +284,23 @@
         })),
         legal.attacks.length > attacks.length || ui.showAll ? h('button', { class: 'small ghost', onclick: () => { ui.showAll = !ui.showAll; app.render(); } },
           ui.showAll ? 'Hide unavailable attacks' : `Show ${legal.attacks.length - attacks.length} unavailable`) : null]]);
+      // Spells cast at a square, a foe or an ally (bolts are under Attack).
+      const spells = (legal.spells || []).filter((o) => o.affordable || ui.showAll);
+      if ((legal.spells || []).length) {
+        groups.push(['spell', 'Spells', spells.length, [
+          h('div', { class: 'action-list' }, spells.map((o) => {
+            const s = o.spell;
+            const shape = { area: `radius ${s.radius}`, ground: `radius ${s.radius}, ${s.rounds} rd`, wall: `${s.length} squares, ${s.rounds} rd`, terrain: `${s.length} square${s.length > 1 ? 's' : ''}`, rune: 'hidden rune', bane: `${s.rounds} rd, resisted`, boon: `${s.rounds} rd`, conjure: `${s.rounds} rd` }[s.shape] || '';
+            const onclick = o.target === 'square'
+              ? () => { ui.mode = 'cast'; ui.pending = { option: o }; app.render(); }
+              : () => pick({ kind: 'cast', option: o, label: o.label, targets: sortTargets(o.targets.map((t) => Object.assign({}, t, { inReach: t.inReach }))) });
+            return h('button', { class: 'action', disabled: !o.affordable, title: o.why || '', onclick },
+              h('span', null, o.label),
+              h('span', { class: 'cost' }, `${o.ap} AP · ${o.spCost} SP`),
+              h('span', { class: 'meta' }, `mag ${s.magnitude} · range ${o.minRange}–${o.maxRange} · ${shape}${o.why ? ' · ' + o.why : ''}${lateNote(o)}`));
+          })),
+          h('p', { class: 'small muted' }, 'Spells cast at a square ask for a square on the map. Areas and hazards hit friends too.')]]);
+      }
       // Guards: ready a defense for the next attack, or the next from one foe.
       const vs = legal.guardAgainst.includes(ui.guardAgainst) ? ui.guardAgainst : '';
       groups.push(['guard', 'Guard', legal.guards.length ? `${legal.guards.length} up` : null, [
