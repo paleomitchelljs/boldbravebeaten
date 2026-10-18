@@ -511,12 +511,12 @@ test('arrows: range 2+, use ammunition, cannot be parried', async () => {
 
 test('magic: words make spells; spell points, fire through armor, backlash', async () => {
   const m = fighter('Mage');
-  m.feats = { casting: 2, verb_attack: 1, verb_launch: 1, mod_strong: 1 };
+  m.feats = { casting: 2, verb_strike: 1, verb_launch: 1, mod_strong: 1 };
   m.nouns = ['fire'];
   m.stamina = C.maxStamina(m);
   assert.strictEqual(B.Magic.maxSP(m), 5 + 3 * 2);
   const labels = C.attackOptions(m).filter((o) => o.spell).map((o) => o.label).sort();
-  assert.deepStrictEqual(labels, ['Attack + Fire', 'Attack + Fire + Strong', 'Launch + Fire', 'Launch + Fire + Strong']);
+  assert.deepStrictEqual(labels, ['Launch + Fire', 'Launch + Fire + Strong', 'Strike + Fire', 'Strike + Fire + Strong']);
   const bolt = opt(m, (o) => o.label === 'Launch + Fire');
   assert.strictEqual(bolt.spCost, 4);
   assert.strictEqual(opt(m, (o) => o.label === 'Launch + Fire + Strong').windUp, true);
@@ -1037,4 +1037,117 @@ test('conditions: slowed costs AP, rooted can\'t move, stoneskin turns blunt', (
   const before = Combat.computeHit(atk, c, blow).B;
   Cn.add(c, 'stoneskin', { rounds: 2, mag: 1 });
   assert.strictEqual(Combat.computeHit(atk, c, blow).B, Math.max(0, before - 2));
+});
+
+// A caster who knows every verb and modifier and the given nouns.
+function mage(name, nouns, opts) {
+  const m = fighter(name, opts);
+  m.feats = { casting: 3 };
+  for (const [k, w] of Object.entries(B.CONFIG.magic.words)) if (w.feat) m.feats[w.feat] = 1;
+  m.base.INT = 8;
+  m.nouns = nouns;
+  m.stamina = C.maxStamina(m);
+  return m;
+}
+
+async function castAt(m, foes, spellKey, aim, rolls) {
+  const chars = { [m.id]: m };
+  for (const f of foes) chars[f.id] = f;
+  const enc = Combat.createEncounter('t', Object.keys(chars), chars, 10, 5);
+  enc.pos[m.id] = { x: 1, y: 2 };
+  foes.forEach((f, i) => { enc.pos[f.id] = f.at || { x: 6, y: 2 + i }; });
+  const o = B.Magic.spellOptions(m).find((x) => x.spellKey === spellKey);
+  assert.ok(o, 'spell ' + spellKey);
+  const d = Object.assign({ actor: m.id, type: 'cast', option: o, pass: 1, n: 1 }, aim);
+  const pos = JSON.parse(JSON.stringify(enc.pos));
+  await B.Magic.resolveCast(enc, chars, d, roller(5, rolls || []), pos);
+  return { enc, chars, o };
+}
+
+test('magic grammar: verbs take nouns broadly; a few pairings make nothing', () => {
+  const M = B.Magic;
+  assert.ok(M.combines('build', 'earth') && M.combines('build', 'vine') && M.combines('build', 'fire'));
+  assert.ok(!M.combines('build', 'life'), 'no wall of life');
+  assert.ok(M.combines('open', 'earth') && !M.combines('open', 'fire'), 'pits are earth');
+  assert.ok(M.combines('hex', 'life') && M.combines('bless', 'life') && M.combines('conjure', 'life'));
+  assert.ok(!M.combines('hex', 'wind'));
+  assert.ok(!M.combines('strike', 'fire', 'wide'), 'Wide makes no sense for a bolt');
+  const m = mage('M', ['fire', 'earth', 'vine', 'life']);
+  const keys = M.spellOptions(m).map((o) => o.spellKey);
+  assert.ok(keys.includes('build+earth') && keys.includes('cover+vine+wide') && keys.includes('hex+life+long'));
+  assert.ok(keys.length > 60, `${keys.length} spells`);
+});
+
+test('build a stone wall across the line; it blocks the way and arrows', async () => {
+  const m = mage('M', ['earth']);
+  const f = armed('F', 'shortbow', { side: 'enemy' });
+  const { enc } = await castAt(m, [f], 'build+earth', { at: { x: 4, y: 2 } }, [10]);
+  const walls = B.Terrain.all(enc).filter((t) => t.f.kind === 'stoneWall').map((t) => t.y).sort();
+  assert.deepStrictEqual(walls, [1, 2, 3], 'three squares across');
+  assert.ok(B.Terrain.lineCheck(enc, enc.pos[f.id], enc.pos[m.id], 'missile').blocked);
+});
+
+test('hex with vine roots a foe unless they resist; bless with life closes wounds', async () => {
+  const m = mage('M', ['vine', 'life']);
+  const f = armed('F', 'longsword', { side: 'enemy' });
+  // Backlash 10, caster rolls 9, target rolls 1: rooted.
+  await castAt(m, [f], 'hex+vine', { target: f.id }, [10, 9, 1]);
+  assert.ok(!B.Conditions.canMove(f));
+  const g = armed('G', 'longsword', { side: 'enemy' });
+  await castAt(m, [g], 'hex+vine', { target: g.id }, [10, 1, 9]);
+  assert.ok(B.Conditions.canMove(g), 'resisted');
+  const ally = armed('A', 'longsword');
+  ally.at = { x: 2, y: 2 };
+  ally.damage.CON = 2;
+  ally.bleeds = [{ remaining: 4, rounds: 3 }];
+  await castAt(m, [ally], 'bless+life', { target: ally.id }, [10]);
+  assert.strictEqual(ally.bleeds.length, 0);
+  assert.strictEqual(ally.damage.CON, 1);
+  assert.ok(B.Conditions.has(ally, 'innervated'));
+});
+
+test('burst hits everyone in the area, friend or foe; dodging aside halves it', async () => {
+  const m = mage('M', ['fire']);
+  const f = armed('F', 'longsword', { side: 'enemy' }); f.at = { x: 6, y: 2 };
+  const pal = armed('P', 'longsword'); pal.at = { x: 6, y: 3 };
+  for (const c of [f, pal]) c.base.CON = 20;
+  // backlash 10; F: caster 9 vs 1 (full); P: caster 1 vs 9 (half)
+  const { enc } = await castAt(m, [f, pal], 'burst+fire', { at: { x: 6, y: 2 } }, [10, 9, 1, 1, 9]);
+  const text = enc.log.map((l) => l.text).join('\n');
+  assert.match(text, /Burst \+ Fire hits F:/);
+  assert.match(text, /Burst \+ Fire hits P \(half/);
+});
+
+test('an inscribed rune springs on a foe who steps on it; lightning goes through plate', async () => {
+  const m = mage('M', ['lightning']);
+  const f = armed('F', 'longsword', { side: 'enemy' });
+  f.armor = Items.makeArmor('plate', 'full', 'standard');
+  f.at = { x: 4, y: 2 };
+  const { enc, chars } = await castAt(m, [f], 'inscribe+lightning', { at: { x: 2, y: 2 } }, [10]);
+  const rune = B.Terrain.at(enc, 2, 2).find((t) => t.kind === 'rune');
+  assert.ok(rune && rune.hidden);
+  assert.ok(!B.Terrain.visible(rune, 'enemy'));
+  const stop = await B.Terrain.enter(enc, chars, f, 2, 2, roller(6, [1, 9]), (t) => enc.log.push({ text: t }));
+  assert.ok(!B.Terrain.at(enc, 2, 2).some((t) => t.kind === 'rune'), 'used up');
+  const hit = Combat.computeHit(m, f, { kind: 'strike', motion: 'spell', spell: { element: 'lightning', magnitude: 4 }, damage: [0, 0, 0] }, {});
+  assert.strictEqual(hit.fire, 4);
+  assert.ok(!hit.fireStopped, 'plate stops none of it');
+  assert.ok(typeof stop === 'boolean');
+});
+
+test('conjure: a fire elemental joins the caster for a few rounds; life raises the dead', async () => {
+  const m = mage('M', ['fire', 'life']);
+  const f = armed('F', 'longsword', { side: 'enemy' });
+  const { enc, chars } = await castAt(m, [f], 'conjure+fire', { at: { x: 2, y: 2 } }, [10]);
+  const el = Object.values(enc.extra || {})[0];
+  assert.ok(el && el.side === m.side && el.traits.element === 'fire');
+  assert.ok(enc.ids.includes(el.id) && chars[el.id] === el);
+  // Raise: no body, no spell; with a body nearby, the dead rise.
+  const r1 = await castAt(m, [f], 'conjure+life', { at: { x: 3, y: 2 } }, [10]);
+  assert.ok(!r1.enc.extra);
+  const corpse = armed('Dead', 'club', { side: 'enemy' }); corpse.status.dead = true; corpse.at = { x: 3, y: 1 };
+  m.spSpent = 0;
+  const r2 = await castAt(m, [f, corpse], 'conjure+life', { at: { x: 3, y: 2 } }, [10]);
+  const z = Object.values(r2.enc.extra || {})[0];
+  assert.ok(z && z.side === m.side && corpse.raised);
 });

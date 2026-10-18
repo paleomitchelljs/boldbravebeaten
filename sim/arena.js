@@ -55,7 +55,7 @@ const STRATEGY = {
   magic: {
     label: 'Magic', attrs: { STR: 4, CON: 5, DEX: 5, SPD: 5, INT: 8, WIL: 5, WIS: 5, CHA: 3 },
     weapon: null, shield: null, nouns: ['fire', 'force'],
-    feats: ['casting', 'verb_attack', 'mod_strong', 'verb_launch', 'casting', 'control', 'fire_affinity', 'quick_casting', 'casting'],
+    feats: ['casting', 'verb_strike', 'mod_strong', 'verb_launch', 'casting', 'control', 'fire_affinity', 'quick_casting', 'casting'],
   },
   grappler: {
     label: 'Grappler', attrs: { STR: 7, CON: 6, DEX: 6, SPD: 5, INT: 3, WIL: 4, WIS: 4, CHA: 4 },

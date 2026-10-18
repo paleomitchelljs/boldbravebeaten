@@ -278,13 +278,44 @@
     // ---- Magic (PROVISIONAL stub so casters can be tested) ---------------
     // Spells are an unordered verb + noun (+ modifier); cost = sum of word costs.
     magic: {
+      // PROVISIONAL (magic overhaul, phase 1). Verbs set the shape, nouns what it is, a modifier
+      // scales it. Verbs and modifiers come from Magic: words feats; nouns are found in the world.
+      // Verbs: cost (spell points), mag (magnitude), range [min, max], ap (base AP, else castAP),
+      // radius / length / rounds for areas, walls and lingering effects.
       words: {
-        attack: { kind: 'verb', cost: 2, magnitude: 4, range: [1, 2], feat: 'verb_attack', name: 'Attack' },
-        launch: { kind: 'verb', cost: 3, magnitude: 3, range: [2, 12], feat: 'verb_launch', name: 'Launch' },
-        fire: { kind: 'noun', cost: 1, element: 'fire', name: 'Fire' },
-        force: { kind: 'noun', cost: 1, element: 'force', name: 'Force' },
-        strong: { kind: 'mod', cost: 2, magnitude: 3, feat: 'mod_strong', name: 'Strong', windUp: true },
+        strike: { kind: 'verb', shape: 'bolt', cost: 2, mag: 4, range: [1, 2], feat: 'verb_strike', name: 'Strike' },
+        launch: { kind: 'verb', shape: 'bolt', cost: 3, mag: 3, range: [2, 12], feat: 'verb_launch', name: 'Launch' },
+        burst: { kind: 'verb', shape: 'area', cost: 4, mag: 3, range: [2, 8], radius: 1, ap: 4, feat: 'verb_burst', name: 'Burst' },
+        cover: { kind: 'verb', shape: 'ground', cost: 3, mag: 1, range: [1, 8], radius: 1, rounds: 3, feat: 'verb_cover', name: 'Cover' },
+        build: { kind: 'verb', shape: 'wall', cost: 3, mag: 1, range: [1, 6], length: 3, rounds: 3, ap: 4, feat: 'verb_build', name: 'Build' },
+        open: { kind: 'verb', shape: 'terrain', cost: 3, mag: 0, range: [1, 6], length: 1, rounds: null, ap: 4, feat: 'verb_open', name: 'Open' },
+        inscribe: { kind: 'verb', shape: 'rune', cost: 2, mag: 4, range: [0, 1], radius: 0, ap: 4, feat: 'verb_inscribe', name: 'Inscribe' },
+        hex: { kind: 'verb', shape: 'bane', cost: 2, mag: 1, range: [1, 8], rounds: 3, feat: 'verb_hex', name: 'Hex' },
+        bless: { kind: 'verb', shape: 'boon', cost: 2, mag: 1, range: [0, 2], rounds: 3, ap: 2, feat: 'verb_bless', name: 'Bless' },
+        conjure: { kind: 'verb', shape: 'conjure', cost: 5, mag: 3, range: [1, 4], rounds: 4, ap: 5, feat: 'verb_conjure', name: 'Conjure' },
+        // Nouns: element (how computeHit treats it), hurt (blunt / halfBlunt / thorns for vectors),
+        // onHit (after a blow: a condition, a push, a knockdown), and what the other verbs make.
+        fire: { kind: 'noun', cost: 1, element: 'fire', name: 'Fire', onHit: { cond: 'burning', rounds: 2 }, ground: 'hot', wall: 'fireWall', bane: 'burning', boon: 'kindled', conjure: 'elemental' },
+        frost: { kind: 'noun', cost: 1, element: 'frost', name: 'Frost', onHit: { cond: 'slowed', rounds: 1 }, ground: 'ice', wall: 'iceWall', bane: 'numbed', boon: 'frostWard', conjure: 'elemental' },
+        lightning: { kind: 'noun', cost: 1, element: 'lightning', name: 'Lightning', onHit: { cond: 'shocked', rounds: 1 }, ground: 'charged', wall: 'stormWall', bane: 'shocked', boon: 'hasted', conjure: 'elemental' },
+        wind: { kind: 'noun', cost: 1, element: 'wind', hurt: 'halfBlunt', name: 'Wind', onHit: { push: 1 }, ground: 'winds', wall: 'windWall', boon: 'freedom', conjure: 'elemental' },
+        earth: { kind: 'noun', cost: 1, element: 'earth', hurt: 'blunt', name: 'Earth', ground: 'rough', wall: 'stoneWall', terrain: 'pit', bane: 'slowed', boon: 'stoneskin', conjure: 'elemental' },
+        vine: { kind: 'noun', cost: 1, element: 'vine', hurt: 'thorns', name: 'Vine', onHit: { cond: 'rooted', rounds: 1 }, ground: 'brambles', wall: 'brambleWall', bane: 'rooted', boon: 'barkskin', conjure: 'elemental' },
+        life: { kind: 'noun', cost: 1, element: 'life', name: 'Life', bane: 'withering', boon: 'innervated', heals: true, conjure: 'raise' },
+        force: { kind: 'noun', cost: 1, element: 'force', hurt: 'blunt', name: 'Force', onHit: { knockdown: true }, wall: 'forceWall', boon: 'shielded' },
+        // Modifiers: shapes they work on (all if absent).
+        strong: { kind: 'mod', cost: 2, mag: 3, feat: 'mod_strong', name: 'Strong', windUp: true },
+        wide: { kind: 'mod', cost: 2, radius: 1, length: 2, feat: 'mod_wide', name: 'Wide', shapes: ['area', 'ground', 'wall', 'terrain', 'rune'] },
+        long: { kind: 'mod', cost: 1, roundsMult: 2, feat: 'mod_long', name: 'Long', shapes: ['ground', 'wall', 'terrain', 'bane', 'boon', 'conjure'] },
+        far: { kind: 'mod', cost: 1, rangeMult: 2, feat: 'mod_far', name: 'Far', shapes: ['bolt', 'area', 'ground', 'wall', 'terrain', 'bane', 'conjure'] },
+        lingering: { kind: 'mod', cost: 1, lingering: true, feat: 'mod_lingering', name: 'Lingering', shapes: ['bolt', 'area'] },
       },
+      affinity: { fire: 'fire_affinity' }, // +magnitude per rank
+      // Energies (fire, frost, lightning): armor stops this share of its blunt protection
+      // (lightning goes straight through metal); every fireConPer points left cost 1 CON, the
+      // rest stamina. Life withers the body: half its magnitude to CON, no armor; the dead and
+      // the made (tireless) are past withering.
+      energyMitigation: { fire: 0.5, frost: 0.5, lightning: 0.5 },
       castAP: 3, // base, × apScale
       poolPerCasting: 3, // spell points = INT + 3 × Casting rank
       // A tired caster can't draw as much power: usable points scale with stamina.
@@ -300,15 +331,17 @@
     },
 
     // ---- Conditions (PROVISIONAL, magic overhaul) ------------------------------------
-    // Timed effects (src/rules/conditions.js). Values are per point of magnitude.
+    // Timed effects (src/rules/conditions.js). Values are per point of magnitude. resist: the
+    // attribute a target rolls to shake it off as it lands (d10 + ⌊attr/2⌋ against the caster's
+    // d10 + ⌊INT/2⌋ + Casting); living: the tireless (undead, constructs) are immune.
     conditions: {
       burning: { name: 'Burning', dot: { CON: 1 } },
-      slowed: { name: 'Slowed', ap: -1 },
+      slowed: { name: 'Slowed', ap: -1, resist: 'CON' },
       hasted: { name: 'Hasted', ap: 1 },
-      shocked: { name: 'Shocked', ap: -1 },
-      rooted: { name: 'Rooted', noMove: true, breakAttr: 'STR' },
-      numbed: { name: 'Numbed', attrs: { DEX: -1, SPD: -1 } },
-      withering: { name: 'Withering', dot: { CON: 1 }, ap: -1 }, // Life bane (asystole)
+      shocked: { name: 'Shocked', ap: -1, resist: 'CON' },
+      rooted: { name: 'Rooted', noMove: true, breakAttr: 'STR', resist: 'STR' },
+      numbed: { name: 'Numbed', attrs: { DEX: -1, SPD: -1 }, resist: 'CON' },
+      withering: { name: 'Withering', dot: { CON: 1 }, ap: -1, resist: 'CON', living: true }, // Life bane (asystole)
       innervated: { name: 'Innervated', regen: 2 },
       kindled: { name: 'Kindled', kindled: true }, // blows set targets burning
       frostWard: { name: 'Frost ward', halveFire: true },
@@ -316,6 +349,7 @@
       stoneskin: { name: 'Stoneskin', mit: { B: 2 }, attrs: { SPD: -1 } },
       barkskin: { name: 'Barkskin', mit: { P: 1, S: 1 } },
       shielded: { name: 'Shielded', mit: { P: 1, S: 1, B: 1 } },
+      afflicted: { name: 'Lingering harm', dot: { CON: 1 } }, // a Lingering spell's after-burn
     },
 
     // ---- Terrain (PROVISIONAL, magic overhaul) ------------------------------------------

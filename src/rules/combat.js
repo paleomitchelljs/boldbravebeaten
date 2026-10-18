@@ -365,7 +365,7 @@
     out.incomingLater = incomingAttacks(enc, id).filter((d) => d.pass > enc.pass);
 
     const planned = plannedAttackOptions(enc, c);
-    const spPlanned = enc.decls.filter((d) => d.actor === id && d.type === 'strike' && d.option.spell).reduce((t, d) => t + d.option.spCost, 0);
+    const spPlanned = enc.decls.filter((d) => d.actor === id && (d.type === 'strike' || d.type === 'cast') && d.option.spell).reduce((t, d) => t + d.option.spCost, 0);
     for (const opt of planned) {
       const why = attackUnavailable(enc, c, opt, spPlanned);
       out.attacks.push(Object.assign({}, opt, {
@@ -388,6 +388,26 @@
         if (!readyable(opt)) continue;
         const why = attackUnavailable(enc, c, opt, spPlanned);
         out.readies.push({ type: 'readyStrike', option: opt, name: `Ready ${opt.label.toLowerCase()}`, ap: opt.ap, stamina: opt.stamina, affordable: can(opt.ap) && !why, spans: opt.ap > left, why });
+      }
+    }
+
+    // Spells cast at a square, a foe or an ally (bolts are among the attacks above).
+    out.spells = [];
+    if (G.Magic && C.handsBusy(c) < 2 && !isGrappled(c) && !c.status.pinned) {
+      for (const opt of G.Magic.spellOptions(c)) {
+        if (opt.kind !== 'cast') continue;
+        const why = spellShort(c, opt, spPlanned);
+        const targets = opt.target === 'square' ? null : enc.ids.filter((o) => {
+          const t = chars[o];
+          if (!t || t.status.dead) return false;
+          return opt.target === 'ally' ? t.side === c.side : t.side !== c.side && C.isActive(t);
+        }).map((o) => {
+          const op = posAtPass(enc, o, enc.pass);
+          const dd = dist(me, op);
+          const line = G.Terrain && enc.tiles && dd >= 2 ? G.Terrain.lineCheck(enc, me, op, 'missile') : null;
+          return { id: o, distance: dd, inReach: dd <= opt.maxRange && dd >= (opt.target === 'ally' ? 0 : opt.minRange) && !(line && line.blocked) };
+        });
+        out.spells.push(Object.assign({}, opt, { affordable: can(opt.ap) && !why, spans: opt.ap > left, why, targets }));
       }
     }
 
@@ -553,7 +573,7 @@
       const key = C.optionKey(decl.option);
       const opt = plannedAttackOptions(enc, c).find((o) => C.optionKey(o) === key);
       if (!opt) return 'Attack not available';
-      const spPlanned = enc.decls.filter((d) => d.actor === id && d.type === 'strike' && d.option.spell).reduce((t, d) => t + d.option.spCost, 0);
+      const spPlanned = enc.decls.filter((d) => d.actor === id && (d.type === 'strike' || d.type === 'cast') && d.option.spell).reduce((t, d) => t + d.option.spCost, 0);
       const why = attackUnavailable(enc, c, opt, spPlanned);
       if (why) return why;
       decl.option = opt;
@@ -565,6 +585,23 @@
       const why = defenseUnavailable(c, decl.type, null, chars, enc);
       if (why) return why;
       ({ ap, stamina } = C.actionCost(c, decl.type));
+    } else if (decl.type === 'cast') {
+      if (!G.Magic || !decl.option) return 'Choose a spell';
+      const key = decl.option.spellKey;
+      const opt = G.Magic.spellOptions(c).find((o) => o.kind === 'cast' && o.spellKey === key);
+      if (!opt) return 'Spell not available';
+      if (C.handsBusy(c) >= 2 || isGrappled(c)) return 'Needs a free hand';
+      const spPlanned = enc.decls.filter((d) => d.actor === id && (d.type === 'strike' || d.type === 'cast') && d.option.spell).reduce((t, d) => t + d.option.spCost, 0);
+      const why = spellShort(c, opt, spPlanned);
+      if (why) return why;
+      if (opt.target === 'square') {
+        if (!decl.at || !G.Terrain.inGrid(enc, decl.at.x, decl.at.y)) return 'Choose a square';
+        const dd = dist(projectedPos(enc, id), decl.at);
+        if (dd > opt.maxRange || dd < opt.minRange) return 'Out of range';
+      } else if (!decl.target || !chars[decl.target]) return 'Choose a target';
+      decl.option = opt;
+      ap = opt.ap;
+      stamina = 0;
     } else if (decl.type === 'readyStrike') {
       if (!CONFIG.readyStrike) return 'Unknown action';
       if (!decl.option) return 'Choose a thrust to ready';
@@ -652,6 +689,7 @@
     }
     if (d.type === 'move') return { text: `${a.name}: move to (${d.to.x + 1}, ${d.to.y + 1}) [${d.ap} AP]` };
     if (d.type === 'windUp') return { text: `${a.name}: winds up ${d.option.label} [${d.ap} AP]` };
+    if (d.type === 'cast') return { text: `${a.name}: casts ${d.option.label} ${d.at ? `at (${d.at.x + 1}, ${d.at.y + 1})` : `on ${tn}`} [${d.ap} AP]` };
     return { text: `${a.name}: ${ACTIONS[d.type].name.toLowerCase()}${tn ? ' ' + tn : ''} [${d.ap} AP]` };
   }
 
@@ -659,7 +697,8 @@
   // Pure: works out what a hit would do (before d4 hit-location rolls).
   function computeHit(attacker, target, option, flags) {
     flags = flags || {};
-    if (option.spell && option.spell.element === 'fire') return computeFire(attacker, target, option, flags);
+    if (option.spell && CONFIG.magic.energyMitigation && CONFIG.magic.energyMitigation[option.spell.element] != null) return computeFire(attacker, target, option, flags);
+    if (option.spell && option.spell.element === 'life') return computeLife(attacker, target, option, flags);
     const v = option.damage.slice();
     const st = target.status;
     const prone = st.prone;
@@ -772,8 +811,12 @@
     const res = { vec: [0, 0, 0], P: 0, S: 0, B: 0, fire: mag, armored: false, toCON: 0, slashToAttrs: 0, bluntToStamina: 0, bluntToCON: 0, converted: 0, durLoss: 0, mitigated: { P: 0, S: 0, B: 0 }, noBleed: true };
     const unconscious = target.stamina <= 0;
     let left = mag;
-    if (target.armor && target.armor.durability > 0) {
-      const stop = Math.round(C.armorInfo(target).effMit.B * M.fireMitigation);
+    const el = option.spell.element;
+    const share = M.energyMitigation ? M.energyMitigation[el] : M.fireMitigation;
+    // Lightning runs straight through metal armor.
+    const conducts = el === 'lightning' && target.armor && (CONFIG.archery.metalArmor || []).includes(target.armor.type);
+    if (target.armor && target.armor.durability > 0 && !conducts) {
+      const stop = Math.round(C.armorInfo(target).effMit.B * (share == null ? M.fireMitigation : share));
       left = Math.max(0, mag - stop);
       res.fireStopped = mag - left;
     }
@@ -785,13 +828,23 @@
     return res;
   }
 
+  // Life withers the living body: half its magnitude to CON, no armor stops it. The tireless
+  // (undead, constructs) have no life to wither.
+  function computeLife(attacker, target, option, flags) {
+    let mag = option.spell.magnitude;
+    if (flags.half) mag = Math.floor(mag / 2);
+    const res = { vec: [0, 0, 0], P: 0, S: 0, B: 0, armored: false, toCON: 0, slashToAttrs: 0, bluntToStamina: 0, bluntToCON: 0, converted: 0, durLoss: 0, mitigated: { P: 0, S: 0, B: 0 }, noBleed: true };
+    if (!C.tireless(target)) res.toCON = Math.floor(mag / 2);
+    return res;
+  }
+
   // Apply a hit, rolling d4s for slashing. Returns a short description.
   async function applyHit(enc, chars, attacker, target, option, roller, flags) {
     const h = computeHit(attacker, target, option, flags);
     const parts = [];
     const st = target.status;
 
-    if (h.fire != null && h.fireStopped) parts.push(`armor stops ${h.fireStopped} fire`);
+    if (h.fire != null && h.fireStopped) parts.push(`armor stops ${h.fireStopped} ${option.spell ? option.spell.element : 'fire'}`);
     if (h.armored && target.armor) {
       const before = target.armor.durability;
       target.armor.durability = Math.max(0, before - h.durLoss);
@@ -1248,8 +1301,10 @@
     const canAct = enc.order.some((id) => !enc.conceded[id] && (enc.ap[id] || 0) >= CONFIG.minActionAP);
     if (Object.keys(sides).length > 1 && (pending || (canAct && (started || actsThisPass.length)))) startPass(enc, chars);
     else {
-      // Standing in a hazard hurts; fire burns what burns; terrain ticks down.
+      // Standing in a hazard hurts; fire burns what burns; terrain ticks down; conjured
+      // creatures fade.
       if (G.Terrain && enc.tiles) await G.Terrain.endRound(enc, chars, roller, (t) => log(enc, t, 'hit'));
+      if (G.Magic && G.Magic.endRound) for (const line of G.Magic.endRound(enc, chars)) log(enc, line, 'pass');
       endRound(enc, chars);
     }
   }
@@ -1395,18 +1450,13 @@
           log(enc, `${t.name} catches fire.`, 'hit');
         }
         if (d.option.spell && G.Magic && G.Magic.afterHit) await G.Magic.afterHit(enc, chars, a, t, d.option, r.hit, roller);
+        // A conjured elemental's blows carry its element.
+        if (a.traits && a.traits.element && !d.option.spell && G.Magic && C.isActive(t)) await G.Magic.onHit(enc, chars, a, t, a.traits.element, roller, { from: posAtStart[a.id] });
         // Springy armor (chitin): the blow rebounds and jars the attacker.
         const recoil = t.armor && t.armor.durability > 0 && (G.DATA.ARMOR[t.armor.type] || {}).recoil;
         if (recoil && !d.option.ranged && !d.option.spell && !C.tireless(a)) {
           const jar = Math.min(a.stamina - 1, recoil * (CONFIG.staminaScale || 1));
           if (jar > 0) { a.stamina -= jar; log(enc, `The springy ${t.armor.type === 'chitin' ? 'chitin' : 'hide'} jars ${a.name}'s arms (−${jar} stamina).`, 'fail'); }
-        }
-        if (d.option.spell && d.option.spell.element === 'force' && C.isActive(t) && !t.status.prone) {
-          const k = await opposed(roller, a, Math.floor(C.attr(a, 'INT') / 2), 'Force knockdown', t, stability(t), 'Keep footing');
-          if (k.margin >= CONFIG.magic.forceKnockdownMargin) {
-            knockDown(enc, t);
-            log(enc, `${t.name} is knocked prone by the force (${k.a} vs ${k.b}).`, 'hit');
-          }
         }
         if (!C.isActive(t)) loseWindUp(enc, t, null);
         if ((d.option.unarmed === 'kick' || d.option.unarmed === 'shieldBash' || d.option.knockdown) && C.isActive(t) && !t.status.prone) {
@@ -1453,6 +1503,9 @@
         if (w) log(enc, `${a.name} drops ${Items.itemName(w)}.`);
         break;
       }
+      case 'cast':
+        if (G.Magic) await G.Magic.resolveCast(enc, chars, d, roller, posAtStart);
+        break;
       case 'tearFree': {
         const W = CONFIG.web;
         const bonus = Math.floor(C.attr(a, 'STR') / 2);
@@ -1740,7 +1793,7 @@
   }
 
   G.Combat = {
-    ATTACK_TYPES, DEFENSE_TYPES, HELD_TYPES, readiesUp, readyable, shoveReach,
+    ATTACK_TYPES, DEFENSE_TYPES, HELD_TYPES, readiesUp, readyable, shoveReach, log, rollDie, castSpell, knockDown, stability,
     createEncounter, autoPlace, startRound, currentActor, legalActions, declare, concede, endTurn, submit, describeDecl, passCap, passLeft,
     vitalNeed, projectedPos, posAtPass, dist, defenseOdds, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolvePass, resolveRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
   };

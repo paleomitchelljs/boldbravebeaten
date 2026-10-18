@@ -73,6 +73,9 @@
       if (c.base[a] == null) c.base[a] = 5;
     });
     c.feats = c.feats || {};
+    // The magic overhaul renamed the verbs.
+    const RENAMED = { verb_attack: 'verb_strike', verb_mend: 'verb_bless', verb_ward: 'verb_bless', verb_calm: 'verb_hex', verb_hold: 'verb_hex', verb_bind: 'verb_build', verb_reveal: 'verb_inscribe', verb_explode: 'verb_burst' };
+    for (const [from, to] of Object.entries(RENAMED)) if (c.feats[from]) { c.feats[to] = Math.max(c.feats[to] || 0, c.feats[from]); delete c.feats[from]; }
     c.weapons = c.weapons || [];
     c.bleeds = c.bleeds || [];
     if (c.offhand === undefined) c.offhand = null;
@@ -466,7 +469,8 @@
       if (!grappling && !st.prone) opts.push(unarmedOption(c, 'kick'));
       if (shieldReady(c) && rank(c, 'shield_bash') && !grappling) opts.push(unarmedOption(c, 'shieldBash'));
       // Spells need a free hand (see magic.js).
-      if (G.Magic && handsBusy(c) < 2 && !grappling) for (const o of G.Magic.spellOptions(c)) opts.push(o);
+      // Bolts (Strike, Launch) are attacks; the other spells are cast actions (Combat.legalActions).
+      if (G.Magic && handsBusy(c) < 2 && !grappling) for (const o of G.Magic.spellOptions(c)) if (o.kind === 'strike') opts.push(o);
     }
     const t = webTax(c);
     if (t.ap || t.stamina) for (const o of opts) { o.ap += t.ap; o.stamina += t.stamina; }

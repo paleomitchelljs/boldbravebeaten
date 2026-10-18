@@ -302,6 +302,28 @@
     sarnakPair: { name: 'Sarnak pair', blurb: 'Two sarnak warriors.', group: ['sarnak', 'sarnak'] },
   };
 
+  // A conjured creature (Magic: Conjure). 'elemental': a spirit of the noun whose blows carry it,
+  // tireless, stronger with the spell's magnitude. 'raise': the dead walk (a zombie).
+  function makeConjured(kind, noun, mag) {
+    if (kind === 'raise') {
+      const [z] = makeMonster('zombie');
+      z.name = 'Raised dead';
+      return z;
+    }
+    if (kind !== 'elemental') return null;
+    const name = (G.CONFIG.magic.words[noun] || {}).name || noun;
+    const c = C.newCharacter({ name: `${name} elemental`, side: 'enemy', starterGear: false,
+      base: { STR: 4 + mag, CON: 4 + Math.floor(mag / 2), DEX: 6, SPD: 6, INT: 1, WIL: 5, WIS: 3, CHA: 1 } });
+    c.level = 1;
+    c.monster = 'elemental';
+    c.natural = ['elementalTouch'];
+    c.noUnarmed = true;
+    c.traits = { tireless: true, element: noun };
+    c.feats = {};
+    c.stamina = C.maxStamina(c);
+    return c;
+  }
+
   // Make a monster (or, for a group, all its members). Returns an array of characters.
   function makeMonster(key, opts) {
     opts = opts || {};
@@ -330,5 +352,5 @@
     return [c];
   }
 
-  G.Enemies = { TEMPLATES, generate, makeRng, chooseFeats, MONSTERS, makeMonster };
+  G.Enemies = { makeConjured, TEMPLATES, generate, makeRng, chooseFeats, MONSTERS, makeMonster };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

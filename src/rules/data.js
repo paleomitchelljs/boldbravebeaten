@@ -217,6 +217,12 @@
       name: 'Stone fists', hands: 2, weight: 'heavy', reach: 2, reachName: 'reach 2', closeOK: true, natural: true,
       faces: { head: [0, 0, 8] }, motions: ['swing'], rarity: 'common', material: 'stone', trait: { knockdown: { bonus: 3, margin: 3 }, shieldCrush: true },
     },
+    // A conjured elemental's blow (CONFIG.magic: Conjure): it carries the elemental's noun.
+    elementalTouch: {
+      phys: { mass: 2, length: 0.8, head: { mass: 0.8 } },
+      name: 'Elemental blow', hands: 1, weight: 'medium', reach: 1, reachName: 'close', closeOK: true, natural: true,
+      faces: { head: [0, 0, 4] }, motions: ['swing'], rarity: 'common',
+    },
     trollFists: {
       phys: { mass: 4, length: 1.0, head: { mass: 1.5 } },
       name: 'Fists', hands: 2, weight: 'heavy', reach: 2, reachName: 'reach 2', closeOK: true, natural: true,
@@ -404,11 +410,15 @@
   feat(t, 'overchannel', 'Overchannel', [M], [['casting:5']], 'Cast beyond your pool by paying CON', false);
 
   t = tree('magicWords', 'Magic: words', 'INT');
-  ['Attack', 'Calm', 'Ward', 'Mend'].forEach((w) => feat(t, 'verb_' + w.toLowerCase(), 'Verb: ' + w, [N], [], 'Learn the verb ' + w, false));
-  const anyNoviceVerb = ['verb_attack:1', 'verb_calm:1', 'verb_ward:1', 'verb_mend:1'];
-  ['Launch', 'Bind', 'Reveal', 'Hold'].forEach((w) => feat(t, 'verb_' + w.toLowerCase(), 'Verb: ' + w, [A], [anyNoviceVerb], 'Learn the verb ' + w, false));
-  feat(t, 'verb_explode', 'Verb: Explode', [D], [['verb_launch:1']], 'Learn the verb Explode', false);
-  feat(t, 'verb_summon', 'Verb: Summon', [D], [['verb_bind:1']], 'Learn the verb Summon', false);
+  // Verbs and modifiers are studied; nouns are found in the world (c.nouns).
+  [['Strike', 'a bolt at arm\'s reach'], ['Hex', 'a bane on a foe'], ['Bless', 'a boon on an ally'], ['Cover', 'a hazard on the ground']]
+    .forEach(([w, what]) => feat(t, 'verb_' + w.toLowerCase(), 'Verb: ' + w, [N], [], `Learn the verb ${w} (${what})`, false));
+  const anyNoviceVerb = ['verb_strike:1', 'verb_hex:1', 'verb_bless:1', 'verb_cover:1'];
+  [['Launch', 'a bolt at range'], ['Build', 'a wall across several squares'], ['Open', 'a pit'], ['Inscribe', 'a hidden rune on a square']]
+    .forEach(([w, what]) => feat(t, 'verb_' + w.toLowerCase(), 'Verb: ' + w, [A], [anyNoviceVerb], `Learn the verb ${w} (${what})`, false));
+  feat(t, 'verb_burst', 'Verb: Burst', [D], [['verb_launch:1']], 'Learn the verb Burst (an area)', false);
+  feat(t, 'verb_conjure', 'Verb: Conjure', [D], [['verb_build:1', 'verb_bless:1']], 'Learn the verb Conjure (a creature of the noun, for a few rounds)', false);
+  feat(t, 'verb_summon', 'Verb: Summon', [D], [['verb_conjure:1']], 'Learn the verb Summon (needs the creature\'s name)', false);
   feat(t, 'verb_raise', 'Verb: Raise', [E], [['verb_summon:1']], 'Reanimation; needs evil components', false);
   ['Strong', 'Wide', 'Long'].forEach((w) => feat(t, 'mod_' + w.toLowerCase(), 'Modifier: ' + w, [N], [], 'Learn the modifier ' + w, false));
   const anyNoviceMod = ['mod_strong:1', 'mod_wide:1', 'mod_long:1'];
@@ -426,7 +436,7 @@
   feat(t, 'ritualist', 'Ritualist', [N, A, D], [], 'Faster rituals; fewer components per rank', false);
   feat(t, 'binding_circle', 'Binding Circle', [N], [['ritualist:1']], 'Prepare binding runes for summons', false);
   feat(t, 'warding', 'Warding', [A], [['ritualist:1']], 'Wards, barriers, and magical traps', false);
-  feat(t, 'rite_of_healing', 'Rite of Healing', [A], [['ritualist:1'], ['verb_mend:1']], 'Healing ritual', false);
+  feat(t, 'rite_of_healing', 'Rite of Healing', [A], [['ritualist:1'], ['verb_bless:1']], 'Healing ritual', false);
   feat(t, 'true_naming', 'True Naming', [D], [['ritualist:2']], 'Name substitution gives a larger bonus', false);
   feat(t, 'imbue', 'Imbue', [E], [['ritualist:3']], 'Enchant words into items with gems', false);
   feat(t, 'necromancy', 'Necromancy', [E], [['verb_raise:1']], 'Reanimation rituals; evil components', false);
