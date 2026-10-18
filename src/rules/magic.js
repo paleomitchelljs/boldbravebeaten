@@ -55,7 +55,7 @@
   function combines(v, n, m) {
     const V = W()[v], N = W()[n];
     if (!V || !N) return false;
-    const need = { ground: 'ground', wall: 'wall', terrain: 'terrain', bane: 'bane', boon: 'boon', conjure: 'conjure', ward: 'ward' }[V.shape];
+    const need = { ground: 'ground', wall: 'wall', terrain: 'terrain', bane: 'bane', boon: 'boon', conjure: 'conjure', ward: 'ward', mind: 'mind' }[V.shape];
     if (need && !N[need]) return false;
     if (m) {
       const M = W()[m];
@@ -72,6 +72,13 @@
     const mods = [null].concat(Object.keys(words).filter((k) => words[k].kind === 'mod' && knows(c, k)));
     const out = [];
     for (const v of verbs) for (const n of nouns) for (const m of mods) if (combines(v, n, m)) out.push(makeOption(c, v, n, m));
+    // Doubled nouns (Word Doubling): two nouns, no modifier; both do the verb.
+    if (C().rank(c, 'word_doubling')) {
+      for (const v of verbs) for (let i = 0; i < nouns.length; i++) for (let j = i + 1; j < nouns.length; j++) {
+        const a = nouns[i], b = nouns[j];
+        if (combines(v, a, null) && combines(v, b, null)) out.push(makeOption(c, v, a, null, b));
+      }
+    }
     return out;
   }
 
@@ -94,12 +101,12 @@
     return [0, 0, 0];
   }
 
-  function makeOption(c, v, n, m) {
+  function makeOption(c, v, n, m, n2) {
     const w = W();
     const S = C().apScale();
     const V = w[v], N = w[n], M = m ? w[m] : null;
     const mag = magnitude(c, v, n, m);
-    const cost = V.cost + N.cost + (M ? M.cost : 0);
+    const cost = V.cost + N.cost + (M ? M.cost : 0) + (n2 ? w[n2].cost + CONFIG.magic.doubleSurcharge : 0);
     const bolt = BOLT.includes(V.shape);
     const windUp = !!(bolt && M && M.windUp && CONFIG.windUp && CONFIG.windUp.spells);
     let ap = (V.ap || CONFIG.magic.castAP) * S - C().rank(c, 'quick_casting') + (!bolt && M && M.windUp ? S : 0);
@@ -108,9 +115,11 @@
     ap = Math.max(CONFIG.minActionAP, ap);
     const far = M && M.rangeMult ? M.rangeMult : 1;
     const range = [V.range[0], V.range[1] * far];
-    const label = [V.name, N.name, M ? M.name : null].filter(Boolean).join(' + ');
+    const label = [V.name, N.name, n2 ? w[n2].name : null, M ? M.name : null].filter(Boolean).join(' + ');
+    const nouns = n2 ? [n, n2] : [n];
+    const combo = n2 ? (CONFIG.magic.combos || {})[nouns.slice().sort().join('+')] || null : null;
     const spell = {
-      verb: v, noun: n, mod: m, shape: V.shape, element: N.element, magnitude: mag, cost,
+      verb: v, noun: n, nouns, combo, mod: m, shape: V.shape, element: N.element, magnitude: mag, cost,
       radius: (V.radius || 0) + (M && M.radius ? M.radius : 0),
       length: (V.length || 1) + (M && M.length ? M.length : 0),
       rounds: V.rounds == null ? null : V.rounds * (M && M.roundsMult ? M.roundsMult : 1),
@@ -118,7 +127,7 @@
       condMag: 1 + (M && M.mag ? 1 : 0),
     };
     const base = {
-      spellKey: [v, n, m].filter(Boolean).join('+'), label, spell, ap, stamina: 0, spCost: cost,
+      spellKey: [v, n, n2, m].filter(Boolean).join('+'), label, spell, ap, stamina: 0, spCost: cost,
       minRange: range[0], maxRange: range[1], reach: range[1], closePenalty: false,
     };
     if (bolt) {
@@ -128,7 +137,7 @@
       });
     }
     // target: what the caster aims at — a square, a foe (hex), or an ally or self (bless).
-    const target = V.shape === 'bane' ? 'foe' : V.shape === 'boon' || V.shape === 'ward' ? 'ally' : 'square';
+    const target = V.shape === 'bane' || V.shape === 'mind' ? 'foe' : V.shape === 'boon' || V.shape === 'ward' ? 'ally' : 'square';
     return Object.assign(base, { kind: 'cast', target, windUp: false, ranged: true });
   }
 
@@ -164,8 +173,18 @@
     if (!G.Conditions || !CONFIG.conditions[key] || !G.Character.isActive(target)) return false;
     if (C().tireless(target) && CONFIG.conditions[key].living) return false;
     const ward = G.Conditions.get(target, 'warded');
-    if (ward && ward.kind === 'mind' && (key === 'baited')) {
-      logger(enc)(`${target.name}'s ward keeps the spell out of their mind.`, 'defend');
+    const mindish = CONFIG.conditions[key].resist === 'WIL';
+    if (mindish && ((ward && ward.kind === 'mind') || G.Conditions.flag(target, 'mindWard'))) {
+      logger(enc)(`${target.name}'s mind is shut against it.`, 'defend');
+      return false;
+    }
+    if (key === 'frightened' && G.Conditions.flag(target, 'noFear')) return false;
+    if (G.Conditions.list(target).some((x) => ((CONFIG.conditions[x.key] || {}).immune || []).includes(key))) {
+      logger(enc)(`${target.name} shrugs it off.`, 'defend');
+      return false;
+    }
+    if (ward && ward.kind && CONFIG.magic.words[ward.kind] && (CONFIG.magic.words[ward.kind].bane === key || (CONFIG.magic.words[ward.kind].onHit || {}).cond === key)) {
+      logger(enc)(`${target.name}'s ward keeps it off.`, 'defend');
       return false;
     }
     const resist = CONFIG.conditions[key].resist;
@@ -179,6 +198,13 @@
     }
     G.Conditions.add(target, key, Object.assign({ src: caster ? caster.id : null }, opts));
     logger(enc)(`${target.name} is ${name.toLowerCase()} (${opts.rounds} round${opts.rounds > 1 ? 's' : ''}).`, 'hit');
+    // Controlled: fights for the caster while it lasts; the caster must hold it.
+    if (CONFIG.conditions[key].control && caster) {
+      if (!target.charmed) target.charmed = { side: target.side, control: target.control };
+      target.side = caster.side;
+      target.control = caster.control || 'auto';
+      G.Conditions.add(caster, 'concentrating', { rounds: opts.rounds, src: caster.id });
+    }
     return true;
   }
 
@@ -239,7 +265,7 @@
   // After a bolt lands (combat engine): the noun's after-effects and lingering damage.
   async function afterHit(enc, chars, a, t, option, hit, roller) {
     const s = option.spell;
-    await onHit(enc, chars, a, t, s.noun, roller, { from: enc.pos[a.id], condMag: s.condMag });
+    for (const n of s.nouns || [s.noun]) await onHit(enc, chars, a, t, n, roller, { from: enc.pos[a.id], condMag: s.condMag });
     if (s.lingering && G.Conditions && G.Character.isActive(t)) await afflict(enc, a, t, 'afflicted', { rounds: 3, mag: Math.max(1, Math.round(s.magnitude / 4)) }, roller);
   }
 
@@ -364,11 +390,14 @@
       }
       case 'ground': {
         let n = 0;
+        const grounds = (s.nouns || [s.noun]).map((k) => W()[k].ground);
         for (let y = at.y - s.radius; y <= at.y + s.radius; y++) for (let x = at.x - s.radius; x <= at.x + s.radius; x++) {
           if (!G.Terrain.passable(enc, x, y)) continue;
-          if (G.Terrain.add(enc, x, y, N.ground, { rounds: s.rounds, mag: s.magnitude - 1, noun: s.noun, owner: a.id, side })) n++;
+          let any = false;
+          for (const g of grounds) if (G.Terrain.add(enc, x, y, g, { rounds: s.rounds, mag: s.magnitude - 1, noun: s.noun, owner: a.id, side })) any = true;
+          if (any) n++;
         }
-        return log(`${a.name} casts ${o.label}: ${CONFIG.terrain[N.ground].name.toLowerCase()} covers ${n} squares.`, 'hit');
+        return log(`${a.name} casts ${o.label}: ${grounds.map((g) => CONFIG.terrain[g].name.toLowerCase()).join(' and ')} cover${grounds.length > 1 ? '' : 's'} ${n} squares.`, 'hit');
       }
       case 'wall': {
         const solid = !!CONFIG.terrain[N.wall].wall;
@@ -399,11 +428,15 @@
         if (f) { f.radius = s.radius; f.condMag = s.condMag; }
         return log(`${a.name} traces a rune on the ground.`, 'pass');
       }
-      case 'bane': {
+      case 'bane':
+      case 'mind': {
         const t = chars[d.target];
         if (!t || !C().isActive(t)) return log(`${a.name}'s ${o.label} fizzles.`, 'fizzle');
         log(`${a.name} casts ${o.label} on ${t.name}.`, 'hit');
-        await afflict(enc, a, t, N.bane, { rounds: s.rounds, mag: s.condMag }, roller);
+        const field = s.shape === 'mind' ? 'mind' : 'bane';
+        // A combination of two nouns can make something new (Rage + Dream: confusion).
+        const keys = s.combo ? [s.combo] : (s.nouns || [s.noun]).map((k) => W()[k][field]);
+        for (const key of keys) await afflict(enc, a, t, key, { rounds: s.rounds, mag: s.condMag }, roller);
         return;
       }
       case 'boon': {
@@ -416,8 +449,11 @@
           if (healed) C().healAttr(t, 'CON', healed);
           log(`${t.name}'s wounds close${healed ? ` (+${healed} CON)` : ''}.`, 'defend');
         }
-        G.Conditions.add(t, N.boon, { rounds: s.rounds, mag: s.condMag, src: a.id });
-        log(`${t.name} is ${CONFIG.conditions[N.boon].name.toLowerCase()} (${s.rounds} rounds).`, 'defend');
+        for (const k of s.nouns || [s.noun]) {
+          const boon = W()[k].boon;
+          G.Conditions.add(t, boon, { rounds: s.rounds, mag: s.condMag, src: a.id });
+          log(`${t.name} is ${CONFIG.conditions[boon].name.toLowerCase()} (${s.rounds} rounds).`, 'defend');
+        }
         return;
       }
       case 'ward': {

@@ -301,6 +301,7 @@
         hex: { kind: 'verb', shape: 'bane', cost: 2, mag: 1, range: [1, 8], rounds: 3, feat: 'verb_hex', name: 'Hex' },
         bless: { kind: 'verb', shape: 'boon', cost: 2, mag: 1, range: [0, 2], rounds: 3, ap: 2, feat: 'verb_bless', name: 'Bless' },
         ward: { kind: 'verb', shape: 'ward', cost: 2, mag: 2, range: [0, 2], rounds: 3, ap: 2, feat: 'verb_ward', name: 'Ward' },
+        beguile: { kind: 'verb', shape: 'mind', cost: 3, mag: 1, range: [1, 6], rounds: 2, feat: 'verb_beguile', name: 'Beguile' },
         blink: { kind: 'verb', shape: 'blink', cost: 3, mag: 0, range: [1, 4], ap: 2, feat: 'verb_blink', name: 'Blink' },
         conjure: { kind: 'verb', shape: 'conjure', cost: 5, mag: 3, range: [1, 4], rounds: 4, ap: 4, feat: 'verb_conjure', name: 'Conjure' },
         // Nouns: element (how computeHit treats it), hurt (blunt / halfBlunt / thorns for vectors),
@@ -316,19 +317,45 @@
         // Mind (a first mind noun; more in phase 2): no blow to speak of, but it baits (draws out
         // guards) and gives foresight (reads every foe's intent).
         mind: { kind: 'noun', cost: 1, element: 'mind', name: 'Mind', onHit: { cond: 'baited', rounds: 1 }, bane: 'baited', boon: 'foresight', ward: 'mind' },
+        // ---- Phase 2 (draft) -----------------------------------------------------------
+        // Mind nouns: Beguile casts them (WIL resists). No blow of their own.
+        calm: { kind: 'noun', cost: 1, element: 'mind', name: 'Calm', mind: 'calmed', boon: 'steadied', ward: 'mind' },
+        dream: { kind: 'noun', cost: 2, element: 'mind', name: 'Dream', mind: 'mesmerized', ward: 'mind' },
+        rage: { kind: 'noun', cost: 1, element: 'mind', name: 'Rage', mind: 'enraged', boon: 'emboldened', ward: 'mind' },
+        fear: { kind: 'noun', cost: 1, element: 'mind', name: 'Fear', mind: 'frightened', ward: 'mind' },
+        will: { kind: 'noun', cost: 3, element: 'mind', name: 'Will', mind: 'controlled', boon: 'resolute', ward: 'mind' },
+        // Body nouns: a bolt carries the bane (CON resists); Bless gives the boon.
+        swiftness: { kind: 'noun', cost: 1, element: 'body', name: 'Swiftness', onHit: { cond: 'slowed', rounds: 2 }, bane: 'slowed', boon: 'hasted' },
+        might: { kind: 'noun', cost: 1, element: 'body', name: 'Might', onHit: { cond: 'enfeebled', rounds: 2 }, bane: 'enfeebled', boon: 'empowered' },
+        grace: { kind: 'noun', cost: 1, element: 'body', name: 'Grace', onHit: { cond: 'clumsy', rounds: 2 }, bane: 'clumsy', boon: 'deft' },
+        // Poison and disease.
+        venom: { kind: 'noun', cost: 1, element: 'venom', name: 'Venom', onHit: { cond: 'poisoned', rounds: 3 }, ground: 'miasma', bane: 'poisoned', boon: 'antivenom', ward: 'venom' },
+        plague: { kind: 'noun', cost: 2, element: 'plague', name: 'Plague', onHit: { cond: 'diseased', rounds: 10 }, bane: 'diseased', ward: 'plague' },
+        // Mystic nouns.
+        light: { kind: 'noun', cost: 1, element: 'light', name: 'Light', onHit: { cond: 'dazzled', rounds: 1 }, ground: 'radiance', wall: 'lightWall', bane: 'dazzled', boon: 'radiant', ward: 'light', conjure: 'elemental' },
+        shadow: { kind: 'noun', cost: 1, element: 'shadow', name: 'Shadow', onHit: { cond: 'blinded', rounds: 1 }, ground: 'darkness', wall: 'shadowWall', bane: 'blinded', boon: 'shrouded', ward: 'shadow', conjure: 'elemental' },
+        spirit: { kind: 'noun', cost: 1, element: 'spirit', name: 'Spirit', mind: 'frightened', boon: 'spiritShield', ward: 'spirit', conjure: 'elemental' },
         // Modifiers: shapes they work on (all if absent).
         strong: { kind: 'mod', cost: 2, mag: 3, feat: 'mod_strong', name: 'Strong', windUp: true },
         wide: { kind: 'mod', cost: 2, radius: 1, length: 2, feat: 'mod_wide', name: 'Wide', shapes: ['area', 'ground', 'wall', 'terrain', 'rune'] },
-        long: { kind: 'mod', cost: 1, roundsMult: 2, feat: 'mod_long', name: 'Long', shapes: ['ground', 'wall', 'terrain', 'bane', 'boon', 'conjure'] },
-        far: { kind: 'mod', cost: 1, rangeMult: 2, feat: 'mod_far', name: 'Far', shapes: ['bolt', 'area', 'ground', 'wall', 'terrain', 'bane', 'conjure'] },
+        long: { kind: 'mod', cost: 1, roundsMult: 2, feat: 'mod_long', name: 'Long', shapes: ['ground', 'wall', 'terrain', 'bane', 'boon', 'conjure', 'mind', 'ward'] },
+        far: { kind: 'mod', cost: 1, rangeMult: 2, feat: 'mod_far', name: 'Far', shapes: ['bolt', 'area', 'ground', 'wall', 'terrain', 'bane', 'mind', 'conjure', 'blink'] },
         lingering: { kind: 'mod', cost: 1, lingering: true, feat: 'mod_lingering', name: 'Lingering', shapes: ['bolt', 'area'] },
       },
       affinity: { fire: 'fire_affinity' }, // +magnitude per rank
+      // Doubled nouns (Outline): with the Word Doubling feat, a spell may take two nouns instead
+      // of a modifier; both do the verb. Cost: the words + doubleSurcharge. Some pairs make
+      // something new (combos).
+      doubleSurcharge: 2,
+      combos: { 'dream+rage': 'confused' },
+      // Energies the undead fear: light and spirit do double to them; spirit does nothing to the
+      // living beyond a chill (half, to stamina).
+      undeadBane: { light: 2, spirit: 2 },
       // Energies (fire, frost, lightning): armor stops this share of its blunt protection
       // (lightning goes straight through metal); every fireConPer points left cost 1 CON, the
       // rest stamina. Life withers the body: half its magnitude to CON, no armor; the dead and
       // the made (tireless) are past withering.
-      energyMitigation: { fire: 0.5, frost: 0.5, lightning: 0.5 },
+      energyMitigation: { fire: 0.5, frost: 0.5, lightning: 0.5, light: 0.5, shadow: 0.5, spirit: 0 },
       castAP: 2, // base, × apScale. PROVISIONAL: at 3, a bolt cost 6 sheet AP for a third of a sword thrust
       poolPerCasting: 3, // spell points = INT + 3 × Casting rank
       // A tired caster can't draw as much power: usable points scale with stamina.
@@ -371,6 +398,33 @@
       baited: { name: 'Baited', resist: 'WIL', defense: -2 }, // guards drawn out; −2 to defend
       reading: { name: 'Reading', read: 2 }, // +2 to defend against and to beat the defense of `vs`
       foresight: { name: 'Foresight', read: 2, all: true }, // reading every foe
+      // ---- Phase 2 (draft) -------------------------------------------------------------
+      // Mind (WIL resists). breakOnHarm: ends when the bearer takes damage.
+      calmed: { name: 'Calmed', resist: 'WIL', noAttack: true, breakOnHarm: true },
+      mesmerized: { name: 'Mesmerized', resist: 'WIL', ap: -99, breakOnHarm: true },
+      enraged: { name: 'Enraged', resist: 'WIL', noGuard: true, berserk: true },
+      frightened: { name: 'Frightened', resist: 'WIL', fearOf: true }, // won't close with or strike the source
+      controlled: { name: 'Controlled', resist: 'WIL', control: true }, // fights for the caster
+      confused: { name: 'Confused', resist: 'WIL', confused: true, noGuard: true },
+      concentrating: { name: 'Concentrating', ap: -1 }, // holding a Will spell
+      steadied: { name: 'Steadied', mindWard: true },
+      emboldened: { name: 'Emboldened', attrs: { STR: 1 }, noFear: true },
+      resolute: { name: 'Resolute', mindWard: true, attrs: { WIL: 2 } },
+      // Body (CON resists the banes).
+      enfeebled: { name: 'Enfeebled', resist: 'CON', attrs: { STR: -2 } },
+      empowered: { name: 'Empowered', attrs: { STR: 2 } },
+      clumsy: { name: 'Clumsy', resist: 'CON', attrs: { DEX: -2 } },
+      deft: { name: 'Deft', attrs: { DEX: 2 } },
+      // Poison and disease. persist: outlasts the fight (until cured or run its course).
+      poisoned: { name: 'Poisoned', resist: 'CON', dot: { CON: 1 }, living: true },
+      antivenom: { name: 'Antivenom', immune: ['poisoned'] },
+      diseased: { name: 'Diseased', resist: 'CON', attrs: { STR: -1 }, regen: -2, living: true, persist: true },
+      // Mystic.
+      dazzled: { name: 'Dazzled', resist: 'CON', defense: -1 },
+      blinded: { name: 'Blinded', resist: 'CON', defense: -2, blind: true }, // strikes only at range 1
+      radiant: { name: 'Radiant', halveShadow: true },
+      shrouded: { name: 'Shrouded', shroud: 0.5 }, // missiles at the bearer miss half the time
+      spiritShield: { name: 'Spirit shield', mit: { P: 1, S: 1, B: 1 }, vsUndead: true },
     },
 
     // ---- Terrain (PROVISIONAL, magic overhaul) ------------------------------------------
@@ -396,6 +450,11 @@
       brambles: { name: 'Brambles', cost: 1, onEnter: { vine: 2 }, flammable: true },
       pit: { name: 'Pit', pit: true },
       rune: { name: 'Rune', rune: true, hidden: true },
+      miasma: { name: 'Miasma', perRound: { venom: 1 }, onEnter: { venom: 1 } },
+      radiance: { name: 'Radiance', reveals: true, perRound: { light: 1 } },
+      lightWall: { name: 'Wall of light', onEnter: { light: 3 } },
+      darkness: { name: 'Darkness', blocksSight: true },
+      shadowWall: { name: 'Wall of shadow', blocksSight: true, cost: 1 },
       slickFootingTN: 6, // d10 + ⌊(DEX + SPD)/4⌋ ≥ this, or fall
       climbCost: 2, // extra squares to climb out of a pit
       pitDamage: 2, // blunt, to stamina
@@ -521,6 +580,7 @@
     'Fend off and push back: with a long weapon (reach 2+) a shove reaches 2 squares; a ready shield adds +1. A shove that drives a foe back or floors them also spoils their move that pass.',
     'Ward (verb) and Blink (verb): Ward + Force soaks 3 × magnitude points of spells and missiles; Ward + Wind turns half the missiles aside; Ward + an element halves that element and keeps off its after-effects; Ward + Mind keeps out baits. Blink steps up to 4 squares through walls and out of any hold, roots or webs. Wind blows now hurl a target back 2 squares.',
     'Bait and Read intent (in-combat charm and wisdom): Bait (2 AP on the sheet, within 3 squares) is d10 + ⌊CHA/2⌋ + Feint against d10 + ⌊WIS/2⌋ + Read Attack: the foe\'s guards are drawn out and spent, and they defend at −2 for the rest of the round. Read intent (1 AP, within 4, in sight): the reader rolls d10 + ⌊WIS/2⌋ + Read Attack against 5 + the foe\'s ⌊CHA/2⌋ + Feint, a number they don\'t see. Made it: the foe\'s true intent (what they have committed to this round, feints seen through) and +2 to defend against them and to beat their defenses. Missed by 1–3: nothing to go on. Missed by 4 or more: a confident misread — a false intent and −2 — reported just like a true read. Hex + Mind baits by magic (WIL resists); Bless + Mind gives foresight (true reads of every foe).',
+    'Magic phase 2 (draft): Beguile (verb, WIL resists, 2 rounds) with the mind nouns — Calm (won\'t attack; a blow ends it), Dream (mesmerized: no actions until harmed), Rage (a frenzy: no guards, strikes the nearest body, friend or foe), Fear (won\'t close with or strike the caster), Will (fights for the caster while the caster concentrates, −1 AP). Word Doubling (feat): two nouns instead of a modifier, both do the verb (+2 cost); Rage + Dream makes confusion. Body nouns Swiftness, Might, Grace: a bolt or Hex slows, enfeebles (−2 STR) or makes clumsy (−2 DEX), CON resists; Bless hastens, empowers, makes deft. Venom (poison, 1 CON a round; miasma ground; antivenom boon) and Plague (disease: −1 STR, −2 regeneration, lasts past the fight). Light (sears the undead ×2; dazzles; radiance reveals runes; wall of light), Shadow (blinds — strikes only at arm\'s reach; darkness blocks sight and missiles but not blades; shroud turns half the missiles), Spirit (harms only the undead, ×2; chills the living for half, to stamina; Beguile + Spirit frightens). Conditions now shift every attribute but CON.',
     'Wound roll: a blow that reaches the body rolls a d10; on 10 × chance or less it is a vital wound. Piercing chance = depth/100 (dagger 1, swords 2, spear and greatsword 3 on the d10): triple CON damage, double bleeding. Cuts: chance = edge/10: the cut takes its damage again from CON. Armor guards the vitals: padded ×0.6, leather ×0.5, mail ×0.3, scale ×0.25, plate ×0.1 (×1.5 half armor, ×2 partial).',
     'WIL split from WIS (the user\'s call): eight attributes. WIL is resolve: magic defense, resisting fear and compulsion, and stamina regeneration (⌊(CON + WIL)/4⌋ − armor). WIS stays judgment and perception. Older characters get WIL = their WIS.',
     'Monster attributes go past the human range (1–10, 13 with Conditioning feats), up to 30: bears and trolls STR 16–20, a stone golem 22, a troll chieftain 24. The usual formulas apply to the raw number (damage bonus ⌊(STR−5)/2⌋, grappling ⌊STR/2⌋, stamina, death at CON 0).',

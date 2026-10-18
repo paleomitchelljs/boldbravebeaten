@@ -290,7 +290,7 @@
         groups.push(['spell', 'Spells', spells.length, [
           h('div', { class: 'action-list' }, spells.map((o) => {
             const s = o.spell;
-            const shape = { area: `radius ${s.radius}`, ground: `radius ${s.radius}, ${s.rounds} rd`, wall: `${s.length} squares, ${s.rounds} rd`, terrain: `${s.length} square${s.length > 1 ? 's' : ''}`, rune: 'hidden rune', bane: `${s.rounds} rd, resisted`, boon: `${s.rounds} rd`, conjure: `${s.rounds} rd`, ward: `${s.rounds} rd`, blink: 'through walls; out of any hold' }[s.shape] || '';
+            const shape = { area: `radius ${s.radius}`, ground: `radius ${s.radius}, ${s.rounds} rd`, wall: `${s.length} squares, ${s.rounds} rd`, terrain: `${s.length} square${s.length > 1 ? 's' : ''}`, rune: 'hidden rune', bane: `${s.rounds} rd, resisted`, boon: `${s.rounds} rd`, conjure: `${s.rounds} rd`, ward: `${s.rounds} rd`, blink: 'through walls; out of any hold', mind: `${s.rounds} rd, WIL resists` }[s.shape] || '';
             const onclick = o.target === 'square'
               ? () => { ui.mode = 'cast'; ui.pending = { option: o }; app.render(); }
               : () => pick({ kind: 'cast', option: o, label: o.label, targets: sortTargets(o.targets.map((t) => Object.assign({}, t, { inReach: t.inReach }))) });

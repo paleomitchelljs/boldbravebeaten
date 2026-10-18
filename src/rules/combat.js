@@ -339,8 +339,24 @@
     return out;
   }
 
-  // Everything the current actor may declare now, for the UI.
+  // Everything the current actor may declare now, for the UI — with what conditions forbid
+  // (calmed, mesmerized, in a frenzy, afraid, blinded) marked unavailable.
   function legalActions(enc, chars, id) {
+    const out = legalActionsRaw(enc, chars, id);
+    const c = chars[id];
+    if (!G.Conditions || !G.Conditions.list(c).length) return out;
+    const no = (decl) => conditionForbids(enc, chars, c, decl);
+    const mark = (o, decl) => { const f = no(decl); if (f) { o.affordable = false; o.why = f; } return !f; };
+    for (const o of out.attacks) if (mark(o, { type: 'strike' })) for (const t of o.targets) if (no({ type: 'strike', target: t.id })) t.inReach = false;
+    for (const o of out.defenses) mark(o, { type: o.type });
+    for (const m of out.maneuvers) if (mark(m, { type: m.type })) for (const t of m.targets) if (no({ type: m.type, target: t.id })) t.inReach = false;
+    for (const o of out.spells || []) if (mark(o, { type: 'cast', option: o })) for (const t of o.targets || []) if (no({ type: 'cast', option: o, target: t.id })) t.inReach = false;
+    for (const o of out.readies || []) mark(o, { type: 'strike' });
+    if (G.Conditions.has(c, 'mesmerized')) { out.move = null; for (const o of out.other) o.affordable = false; }
+    return out;
+  }
+
+  function legalActionsRaw(enc, chars, id) {
     const c = chars[id];
     const ap = enc.ap[id] || 0;
     const left = passLeft(enc, id);
@@ -575,11 +591,30 @@
     return null;
   }
 
+  // What a condition forbids this declaration (calmed, mesmerized, enraged, frightened, blind).
+  function conditionForbids(enc, chars, c, decl) {
+    if (!G.Conditions) return null;
+    const F = (f) => G.Conditions.flag(c, f);
+    if (G.Conditions.has(c, 'mesmerized') && decl.type !== 'endTurn' && decl.type !== 'concede') return 'Mesmerized';
+    const attack = decl.type === 'strike' || (ATTACK_TYPES.includes(decl.type) && decl.type !== 'strike') || (decl.type === 'cast' && decl.option && decl.option.target === 'foe');
+    if (attack && F('noAttack')) return 'Calmed: won\'t attack';
+    if (DEFENSE_TYPES.includes(decl.type) && F('noGuard')) return 'In a frenzy: no guards';
+    const fear = G.Conditions.get(c, 'frightened');
+    if (fear && fear.src && chars[fear.src]) {
+      if (attack && decl.target === fear.src) return 'Too afraid';
+      if (decl.type === 'move' && dist(decl.to, projectedPos(enc, fear.src)) < dist(projectedPos(enc, c.id), projectedPos(enc, fear.src))) return 'Too afraid to close';
+    }
+    if (F('blind') && decl.type === 'strike' && decl.target && dist(projectedPos(enc, c.id), projectedPos(enc, decl.target)) > 1) return 'Blinded: only at arm\'s reach';
+    return null;
+  }
+
   // Validate and record a declaration. Returns an error string or null.
   function declare(enc, chars, decl) {
     const id = currentActor(enc);
     if (decl.actor !== id) return 'Not your turn';
     const c = chars[id];
+    const forbid = conditionForbids(enc, chars, c, decl);
+    if (forbid) return forbid;
     let ap, stamina;
     const defense = DEFENSE_TYPES.includes(decl.type);
     if (decl.type === 'strike') {
@@ -833,6 +868,14 @@
       left = Math.max(0, mag - stop);
       res.fireStopped = mag - left;
     }
+    // Light and spirit sear the undead; spirit only chills the living (half, to stamina).
+    const bane = (M.undeadBane || {})[el];
+    if (bane && target.traits && target.traits.undead) left *= bane;
+    if (el === 'spirit' && !(target.traits && target.traits.undead)) {
+      res.bluntToStamina = Math.floor(left / 2);
+      return res;
+    }
+    if (el === 'shadow' && G.Conditions && G.Conditions.flag(target, 'halveShadow')) left = Math.floor(left / 2);
     if (unconscious) res.toCON = left;
     else {
       res.toCON = Math.floor(left / M.fireConPer);
@@ -951,6 +994,11 @@
       }
       target.bleeds = target.bleeds.filter((b) => b.remaining > 0);
       parts.push('bleeding');
+    }
+    // A blow that hurts wakes the mesmerized and ends a calm.
+    const harmed = h.toCON + h.slashToAttrs + h.bluntToCON + h.bluntToStamina > 0;
+    if (harmed && G.Conditions) for (const x of G.Conditions.list(target).slice()) {
+      if ((CONFIG.conditions[x.key] || {}).breakOnHarm) { G.Conditions.remove(target, x.key); parts.push(`${CONFIG.conditions[x.key].name.toLowerCase()} no more`); }
     }
     if (!parts.length) parts.push('no effect');
     const wasDown = st.unconscious;
@@ -1424,14 +1472,17 @@
       if (!payStamina(enc, a, d.stamina)) return;
       // Walls in the way: solid ones stop everything, others stop blades or missiles; swirling
       // winds carry missiles astray.
-      if (d.type === 'strike' && G.Terrain && enc.tiles && distance >= 2) {
+      // A shrouded target (Bless + Shadow) is hard to pick out at range.
+      if (d.type === 'strike' && distance >= 2) {
         const missile = d.option.ranged || !!d.option.spell;
-        const lc = G.Terrain.lineCheck(enc, posAtStart[d.actor], posAtStart[d.target], missile ? 'missile' : 'melee');
+        const lc = G.Terrain && enc.tiles ? G.Terrain.lineCheck(enc, posAtStart[d.actor], posAtStart[d.target], missile ? 'missile' : 'melee') : { blocked: false, miss: 0 };
         if (lc.blocked) return log(enc, `${a.name}'s ${label} is stopped by the ${lc.by.toLowerCase()}.`, 'fizzle');
+        const shroud = G.Conditions ? G.Conditions.list(t).reduce((m, x) => Math.max(m, (CONFIG.conditions[x.key] || {}).shroud || 0), 0) : 0;
+        if (shroud && missile) lc.miss = 1 - (1 - lc.miss) * (1 - shroud);
         if (lc.miss > 0 && missile) {
           const need = Math.round(lc.miss * 10);
-          const r = await rollDie(roller, a.id, 10, `${a.name}: through the winds`, `d10: ${need} or less goes astray`);
-          if (r <= need) return log(enc, `The winds carry ${a.name}'s ${label} astray.`, 'fizzle');
+          const r = await rollDie(roller, a.id, 10, `${a.name}: through ${shroud ? 'the shroud' : 'the winds'}`, `d10: ${need} or less goes astray`);
+          if (r <= need) return log(enc, `${a.name}'s ${label} goes astray.`, 'fizzle');
         }
       }
       // Grappling is a directly opposed roll; guards never meet it.
@@ -1804,6 +1855,15 @@
       }
       // Conditions: damage over time, then each ticks down a round.
       if (G.Conditions) for (const line of G.Conditions.endRound(c)) log(enc, line, 'bleed');
+      // A controlled fighter comes back to themselves when the spell ends or its caster falls.
+      if (c.charmed) {
+        const ctl = G.Conditions.get(c, 'controlled');
+        if (ctl && chars[ctl.src] && !C.isActive(chars[ctl.src])) G.Conditions.remove(c, 'controlled');
+        if (!G.Conditions.has(c, 'controlled')) {
+          c.side = c.charmed.side; c.control = c.charmed.control; delete c.charmed;
+          log(enc, `${c.name} comes back to themselves.`, 'pass');
+        }
+      }
       // Regeneration (monster trait): wounds close and strength returns, unless burned this round.
       const R = c.traits && c.traits.regen;
       if (R && !(enc.burned || {})[id] && C.attr(c, 'CON') > 0) {
@@ -1879,7 +1939,9 @@
       c.status.pinned = false;
       c.status.grapplingPin = false;
       c.status.webbed = 0;
-      c.status.conds = [];
+      // Diseases and the like outlast the fight; everything else ends with it.
+      c.status.conds = (c.status.conds || []).filter((x) => (CONFIG.conditions[x.key] || {}).persist);
+      if (c.charmed) { c.side = c.charmed.side; c.control = c.charmed.control; delete c.charmed; }
       // Weapons on the ground are gathered up after the fight.
       if (c.status.dropped.length || c.wield == null) {
         c.status.dropped = [];
@@ -1889,7 +1951,7 @@
   }
 
   G.Combat = {
-    ATTACK_TYPES, DEFENSE_TYPES, HELD_TYPES, readiesUp, readyable, shoveReach, log, rollDie, castSpell, knockDown, stability, releaseAll: clearGrapple,
+    conditionForbids, ATTACK_TYPES, DEFENSE_TYPES, HELD_TYPES, readiesUp, readyable, shoveReach, log, rollDie, castSpell, knockDown, stability, releaseAll: clearGrapple,
     createEncounter, autoPlace, startRound, currentActor, legalActions, declare, concede, endTurn, submit, describeDecl, passCap, passLeft,
     vitalNeed, projectedPos, posAtPass, dist, defenseOdds, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolvePass, resolveRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
   };

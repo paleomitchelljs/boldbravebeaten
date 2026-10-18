@@ -420,6 +420,8 @@
   [['Launch', 'a bolt at range'], ['Build', 'a wall across several squares'], ['Open', 'a pit'], ['Inscribe', 'a hidden rune on a square'], ['Blink', 'a short step through space']]
     .forEach(([w, what]) => feat(t, 'verb_' + w.toLowerCase(), 'Verb: ' + w, [A], [anyNoviceVerb], `Learn the verb ${w} (${what})`, false));
   feat(t, 'verb_burst', 'Verb: Burst', [D], [['verb_launch:1']], 'Learn the verb Burst (an area)', false);
+  feat(t, 'verb_beguile', 'Verb: Beguile', [A], [['verb_hex:1', 'verb_bless:1']], 'Learn the verb Beguile (a mind spell: calm, dream, rage, fear, will)', false);
+  feat(t, 'word_doubling', 'Word Doubling', [D], [['casting:2']], 'Cast a spell with two nouns instead of a modifier; both do the verb (Rage + Dream: confusion)', false);
   feat(t, 'verb_conjure', 'Verb: Conjure', [D], [['verb_build:1', 'verb_bless:1']], 'Learn the verb Conjure (a creature of the noun, for a few rounds)', false);
   feat(t, 'verb_summon', 'Verb: Summon', [D], [['verb_conjure:1']], 'Learn the verb Summon (needs the creature\'s name)', false);
   feat(t, 'verb_raise', 'Verb: Raise', [E], [['verb_summon:1']], 'Reanimation; needs evil components', false);

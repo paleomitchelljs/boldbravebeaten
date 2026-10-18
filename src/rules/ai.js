@@ -341,13 +341,25 @@
       if (!o.affordable) continue;
       const s = o.spell, N = G.CONFIG.magic.words[s.noun];
       const cast = (extra) => Object.assign({ actor: id, type: 'cast', option: o }, extra);
-      if (o.target === 'foe') {
+      if (s.shape === 'mind') {
+        // Mind spells on a dangerous foe: the closer and harder-hitting, the better.
+        const key = s.combo || N.mind;
+        const worth = { mesmerized: 30, calmed: 20, enraged: 14, frightened: 18, controlled: 40, confused: 24, baited: 6 }[key] || 10;
+        for (const t of o.targets) {
+          if (!t.inReach || !foes.includes(t.id)) continue;
+          const foe = chars[t.id];
+          if (Cn.has(foe, key) || C.tireless(foe)) continue;
+          if (key === 'enraged' && !enc.ids.some((o2) => o2 !== t.id && chars[o2] && chars[o2].side === foe.side && C.isActive(chars[o2]) && Combat.dist(posOf(o2), posOf(t.id)) <= 2)) continue;
+          const resist = 0.5 + (Math.floor(C.attr(c, 'INT') / 2) - Math.floor(C.attr(foe, 'WIL') / 2)) * 0.08;
+          consider(worth * Math.max(0.15, Math.min(0.85, resist)), cast({ target: t.id }), o);
+        }
+      } else if (o.target === 'foe') {
         const key = N.bane;
         for (const t of o.targets) {
           if (!t.inReach || !foes.includes(t.id)) continue;
           const foe = chars[t.id];
           if (Cn.has(foe, key) || (G.CONFIG.conditions[key].living && C.tireless(foe))) continue;
-          let v = { rooted: closing && closing.f === t.id && t.distance >= 2 ? 30 : 6, slowed: 14, shocked: 12, numbed: 10, withering: 22, burning: 12, baited: 6 }[key] || 6;
+          let v = { rooted: closing && closing.f === t.id && t.distance >= 2 ? 30 : 6, slowed: 14, shocked: 12, numbed: 10, withering: 22, burning: 12, baited: 6, enfeebled: 12, clumsy: 10, poisoned: 16, diseased: 12, dazzled: 6, blinded: 18 }[key] || 6;
           consider(v * 0.55, cast({ target: t.id }), o);
         }
       } else if (s.shape === 'ward') {
@@ -378,6 +390,9 @@
           else if (key === 'kindled') v = fighting && t.id !== id ? 10 : 0;
           else if (key === 'frostWard') v = 0;
           else if (key === 'foresight') v = fighting ? 12 : 0;
+          else if (key === 'empowered' || key === 'deft') v = fighting && t.id !== id ? 10 : 0;
+          else if (key === 'shrouded') v = foes.some((f) => C.attackOptions(chars[f]).some((x) => x.ranged)) ? 10 : 0;
+          else if (key === 'steadied' || key === 'resolute') v = foes.some((f) => G.Magic.maxSP(chars[f]) > 0) ? 8 : 0;
           consider(v, cast({ target: t.id }), o);
         }
       } else if (s.shape === 'blink') {
@@ -507,7 +522,13 @@
       foeRate(chars[f], c, Combat.dist(Combat.posAtPass(enc, id, enc.pass), Combat.posAtPass(enc, f, enc.pass))) > 0);
     const minDefense = Math.min(...['block', 'parry', 'dodge'].map((k) => C.actionCost(c, k).ap));
     const S = C.apScale();
-    const foes = enemiesOf(enc, chars, id);
+    let foes = enemiesOf(enc, chars, id);
+    // In a frenzy (Rage) the nearest body is the foe, friend or not; confused, anyone near.
+    if (G.Conditions && (G.Conditions.flag(c, 'berserk') || (G.Conditions.flag(c, 'confused') && rng() < 0.5))) {
+      const me = Combat.projectedPos(enc, id);
+      const near = enc.ids.filter((o) => o !== id && chars[o] && C.isActive(chars[o])).sort((x, y) => Combat.dist(me, Combat.projectedPos(enc, x)) - Combat.dist(me, Combat.projectedPos(enc, y)));
+      if (near.length) foes = G.Conditions.flag(c, 'confused') ? [near[Math.floor(rng() * Math.min(3, near.length))]] : [near[0]];
+    }
     const at = (x) => Combat.posAtPass(enc, x, enc.pass);
 
     // 1. Get up; tear free of webs.

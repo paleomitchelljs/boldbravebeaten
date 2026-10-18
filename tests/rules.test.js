@@ -1240,3 +1240,61 @@ test('read intent: a true read shows their real plan (+2); a bad roll misreads i
   r.truth = false; // a misread
   assert.ok(Combat.defenseOdds(a, 'parry', 'thrust', t, tt) < withRead);
 });
+
+test('phase 2: beguile — mesmerized until harmed; controlled fights for the caster, then returns', async () => {
+  const m = mage('M', ['dream', 'will', 'calm']);
+  const f = armed('F', 'longsword', { side: 'enemy' });
+  // backlash 10, caster 9 vs target 1 → mesmerized.
+  const { enc, chars } = await castAt(m, [f], 'beguile+dream', { target: f.id }, [10, 9, 1]);
+  assert.ok(B.Conditions.has(f, 'mesmerized'));
+  assert.strictEqual(C.apPool(f), 0, 'no actions');
+  const a = armed('A', 'club');
+  await Combat.applyHit(enc, chars, a, f, opt(a, (o) => o.motion === 'swing'), roller(1, []), {});
+  assert.ok(!B.Conditions.has(f, 'mesmerized'), 'a blow wakes them');
+  m.spSpent = 0;
+  const g = armed('G', 'longsword', { side: 'enemy' });
+  const r = await castAt(m, [g], 'beguile+will', { target: g.id }, [10, 9, 1]);
+  assert.strictEqual(g.side, m.side, 'fights for the caster');
+  assert.ok(B.Conditions.has(m, 'concentrating'));
+  B.Conditions.remove(g, 'controlled');
+  Combat.endRound(r.enc, r.chars);
+  assert.strictEqual(g.side, 'enemy', 'back to themselves');
+});
+
+test('phase 2: doubled nouns — rage and dream make confusion; calmed foes cannot attack', async () => {
+  const m = mage('M', ['rage', 'dream', 'calm']);
+  m.feats.word_doubling = 1;
+  const keys = B.Magic.spellOptions(m).map((o) => o.spellKey);
+  assert.ok(keys.includes('beguile+rage+dream') || keys.includes('beguile+dream+rage'));
+  const key = keys.find((k) => /beguile\+(rage\+dream|dream\+rage)$/.test(k));
+  const f = armed('F', 'longsword', { side: 'enemy' });
+  await castAt(m, [f], key, { target: f.id }, [10, 9, 1]);
+  assert.ok(B.Conditions.has(f, 'confused') && !B.Conditions.has(f, 'enraged'));
+  const c = armed('C', 'longsword', { side: 'enemy' });
+  B.Conditions.add(c, 'calmed', { rounds: 2 });
+  const chars = { [c.id]: c, [m.id]: m };
+  const enc = Combat.createEncounter('t', [c.id, m.id], chars, 6, 1);
+  enc.pos[c.id] = { x: 0, y: 0 }; enc.pos[m.id] = { x: 1, y: 0 };
+  c.base.SPD = 9;
+  await Combat.startRound(enc, chars, roller(1, [9, 1]));
+  const th = Combat.legalActions(enc, chars, c.id).attacks.find((o) => o.motion === 'thrust');
+  assert.strictEqual(th.affordable, false);
+  assert.match(Combat.declare(enc, chars, { actor: c.id, type: 'strike', option: th, target: m.id }), /Calmed/);
+});
+
+test('phase 2: light sears the undead; darkness blocks sight; disease outlasts the fight', async () => {
+  const m = mage('M', ['light']);
+  const [skel] = Enemies.makeMonster('skeleton');
+  const man = armed('Man', 'longsword', { side: 'enemy' });
+  const bolt = { kind: 'strike', motion: 'spell', spell: { element: 'light', magnitude: 4 }, damage: [0, 0, 0] };
+  const hs = Combat.computeHit(m, skel, bolt, {}), hm = Combat.computeHit(m, man, bolt, {});
+  assert.ok(hs.toCON + hs.bluntToCON + hs.bluntToStamina > hm.toCON + hm.bluntToStamina);
+  const enc = Combat.createEncounter('t', [m.id, man.id], { [m.id]: m, [man.id]: man }, 8, 3);
+  B.Terrain.add(enc, 3, 1, 'darkness');
+  assert.ok(B.Terrain.lineCheck(enc, { x: 1, y: 1 }, { x: 5, y: 1 }, 'missile').blocked);
+  assert.ok(!B.Terrain.lineCheck(enc, { x: 2, y: 1 }, { x: 4, y: 1 }, 'melee').blocked, 'blades still reach through darkness');
+  B.Conditions.add(man, 'diseased', { rounds: 10 });
+  B.Conditions.add(man, 'slowed', { rounds: 2 });
+  Combat.cleanup(enc, { [m.id]: m, [man.id]: man });
+  assert.ok(B.Conditions.has(man, 'diseased') && !B.Conditions.has(man, 'slowed'));
+});

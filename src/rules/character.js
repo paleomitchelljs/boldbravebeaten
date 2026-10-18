@@ -204,7 +204,9 @@
 
   // Natural attribute: base + Conditioning − damage. Used for stamina and death.
   function attr(c, a) {
-    return Math.max(0, c.base[a] + conditioning(c, a) - (c.damage[a] || 0));
+    // Conditions (enfeebled, deft, resolute…) shift every attribute but CON, the body's life.
+    const cond = a !== 'CON' && G.Conditions ? G.Conditions.attrMod(c, a) : 0;
+    return Math.max(0, c.base[a] + conditioning(c, a) - (c.damage[a] || 0) + cond);
   }
 
   function attrMax(c, a) {
@@ -283,7 +285,6 @@
     let v = attr(c, a);
     if (a === 'SPD') v -= ai.spd;
     if (a === 'DEX') v -= ai.dex;
-    if (G.Conditions) v += G.Conditions.attrMod(c, a); // numbed, clumsy, deft…
     return Math.max(0, v);
   }
 

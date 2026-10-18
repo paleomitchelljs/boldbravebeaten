@@ -256,13 +256,13 @@
       name: 'Skeleton', blurb: 'Bones and a rusty sword. Arrows and thrusts pass between the ribs; slashing chips; a mace breaks it. Never tires.',
       attrs: { STR: 5, CON: 10, DEX: 5, SPD: 5, INT: 1, WIS: 1, CHA: 1 },
       natural: [], weapons: ['longsword'], shield: ['round', 'wood'], quality: 'crude',
-      traits: { tireless: true, resist: { P: 0, S: 0.5 } }, feats: { shield_training: 1 }, keepUnarmed: true,
+      traits: { tireless: true, undead: true, resist: { P: 0, S: 0.5 } }, feats: { shield_training: 1 }, keepUnarmed: true,
     },
     skeletonSquad: { name: 'Skeleton squad', blurb: 'Three skeletons with swords and shields.', group: ['skeleton', 'skeleton', 'skeleton'] },
     zombie: {
       name: 'Zombie', blurb: 'Slow, grabbing, biting. Piercing does half as much; no stamina to run down. Never tires.',
       attrs: { STR: 9, CON: 12, DEX: 3, SPD: 3, INT: 1, WIS: 1, CHA: 1 },
-      natural: ['claws', 'zombieBite'], traits: { tireless: true, resist: { P: 0.5 } }, feats: { grappler: 1 }, policy: { grappler: true },
+      natural: ['claws', 'zombieBite'], traits: { tireless: true, undead: true, resist: { P: 0.5 } }, feats: { grappler: 1 }, policy: { grappler: true },
     },
     zombieHorde: { name: 'Zombie horde', blurb: 'Four zombies.', group: ['zombie', 'zombie', 'zombie', 'zombie'] },
     stoneGolem: {

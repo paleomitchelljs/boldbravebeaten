@@ -37,6 +37,9 @@
     const i = list.findIndex((g) => g.kind === kind);
     if (i >= 0) list.splice(i, 1);
     list.push(f);
+    // Radiance lays bare what was hidden on its square.
+    if (T()[kind].reveals) for (const g of list) g.hidden = false;
+    else if (list.some((g) => (T()[g.kind] || {}).reveals)) f.hidden = false;
     return f;
   }
 
@@ -173,6 +176,7 @@
         const d = def(f);
         if (d.solid) return { blocked: true, by: d.name, miss: 0 };
         if (kind === 'melee' && d.wall) return { blocked: true, by: d.name, miss: 0 };
+        if ((kind === 'missile' || kind === 'sight') && d.blocksSight) return { blocked: true, by: d.name, miss: 0 };
         if (kind === 'missile' && d.blocksMissiles) return { blocked: true, by: d.name, miss: 0 };
         if (kind === 'missile' && d.missileMiss) miss = 1 - (1 - miss) * (1 - d.missileMiss);
       }
