@@ -146,6 +146,11 @@
       hook: true, notes: 'Anti-plate: head drains stamina, beak pierces to CON.',
     },
     // PROVISIONAL: the spear is listed in the rarity table but not the weapon catalog.
+    shortSpear: {
+      phys: { mass: 0.8, length: 1.4, point: { depth: 22, width: 4 } },
+      name: 'Short spear', hands: 1, weight: 'light', reach: 2, reachName: 'thrusts 1–3', thrust: { ext: 1, min: 1 }, material: 'steel',
+      faces: { point: [5, 0, 0] }, motions: ['thrust'], rarity: 'common', notes: 'A small folk\'s spear.',
+    },
     spear: {
       phys: { mass: 1.7, length: 2.2, point: { depth: 30, width: 5 } },
       name: 'Spear', hands: 1, weight: 'medium', reach: 2, reachName: 'thrusts 2–4, not up close', thrust: { ext: 2, min: 2 }, material: 'steel',

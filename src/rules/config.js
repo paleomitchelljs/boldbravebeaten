@@ -122,15 +122,15 @@
       //  reference is quicker (thrust: 1 + thrustSlope × (min(1, mass/ref) − 1); swing:
       //  1 + swingSlope × (min(1, √(mass×length)/ref) − 1)), and a longer one travels farther
       //  (+ reachSlope × (length/ref − 1) on swings).
-      //  Strain = load / capacity. Load: the mass for a thrust; mass × length/ref length for a
-      //  swing (leverage). Capacity: STR × strain.kgPerStr, × grip with both hands on it, × (1 +
+      //  Strain = load / capacity. Load: the mass × thrustLoad for a thrust; mass × length/ref
+      //  length for a swing (leverage). Capacity: STR × strain.kgPerStr, × grip with both hands on it, × (1 +
       //  strain.perTraining × Heavy Weapon Training). Within capacity the weapon runs at its natural
       //  speed (more STR doesn't make a light weapon faster); past it, AP and stamina × strain^exp;
       //  past strain.max it is too ungainly to use at all. Natural weapons are the body: no strain.
       thrustSlope: 0.3,
       swingSlope: 0.4,
       reachSlope: 0.3,
-      strain: { kgPerStr: 0.3, exp: 2, max: 3, perTraining: 0.1 },
+      strain: { kgPerStr: 0.3, exp: 2, max: 3, perTraining: 0.1, thrustLoad: 0.7 }, // a thrust drives the point, not the whole mass round
       // Damage. Point: depth × pointDamage piercing. Edge: edge × (base + k × √(mass × length ×
       // grip)) slashing, a seventh of it blunt. Head: 1 + k × √(head mass × length × grip)
       // blunt. Pommel: base + k × √(mass × length).

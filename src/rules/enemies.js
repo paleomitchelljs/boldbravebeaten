@@ -311,9 +311,9 @@
     },
     // ---- Humanoids with natural armor ----
     kobold: {
-      name: 'Kobold', blurb: 'Small, quick, scaly, cowardly alone and vicious in a pack. Spear.',
+      name: 'Kobold', blurb: 'Small, quick, scaly, cowardly alone and vicious in a pack. A short spear.',
       attrs: { STR: 3, CON: 4, DEX: 6, SPD: 7, INT: 4, WIS: 4, CHA: 3 },
-      natural: [], armor: 'scaleHide', weapons: ['spear'], quality: 'crude', traits: { pack: 1, nimble: 1 }, feats: {}, keepUnarmed: true,
+      natural: [], armor: 'scaleHide', weapons: ['shortSpear'], quality: 'crude', traits: { pack: 1, nimble: 1 }, feats: {}, keepUnarmed: true,
     },
     koboldBand: { name: 'Kobold band', blurb: 'Four kobolds with spears.', group: ['kobold', 'kobold', 'kobold', 'kobold'] },
     goblin: {

@@ -189,7 +189,7 @@
       thrust: 1 + X.thrustSlope * (Math.min(1, ph.mass / grip / X.ref.mass) - 1),
       swing: 1 + X.swingSlope * (Math.min(1, Math.sqrt(ml) / refMl) - 1) + (X.reachSlope || 0) * Math.max(0, ph.length / X.ref.length - 1),
     };
-    const load = { thrust: ph.mass, swing: ph.mass * ph.length / X.ref.length };
+    const load = { thrust: ph.mass * ((X.strain && X.strain.thrustLoad) || 1), swing: ph.mass * ph.length / X.ref.length };
     const weight = X.weightClass.find(([max]) => ph.mass < max)[1];
     const width = (ph.point || ph.beak || {}).width || 0;
     const swingMult = (g) => Math.min(X.str.max, (ph.mass * g) / X.str.swingRefMass);
