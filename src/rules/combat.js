@@ -901,6 +901,7 @@
     const h = computeHit(attacker, target, option, flags);
     const parts = [];
     const st = target.status;
+    const before = enc.onHit ? { dmg: C.totalDamage(target), stamina: target.stamina, up: C.isActive(target) } : null;
 
     if (h.fire != null && h.fireStopped) parts.push(`armor stops ${h.fireStopped} ${option.spell ? option.spell.element : 'fire'}`);
     if (h.armored && target.armor) {
@@ -1008,6 +1009,8 @@
     let tail = '';
     if (st.dead) tail = ` ${target.name} is DEAD.`;
     else if (st.unconscious && !wasDown) tail = ` ${target.name} collapses, unconscious.`;
+    // Sims attach enc.onHit to credit harm and knockdowns to whoever dealt them.
+    if (before) enc.onHit({ attacker, target, attrs: C.totalDamage(target) - before.dmg, stamina: Math.max(0, before.stamina - target.stamina), downed: before.up && !C.isActive(target), spell: !!option.spell });
     return { text: `${h.P}/${h.S}/${h.B} P/S/B → ${parts.join(', ')}.${tail}`, hit: h };
   }
 

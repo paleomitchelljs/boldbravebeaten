@@ -1,0 +1,285 @@
+<title>The Gauntlet</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Grenze:wght@500;700&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a crawl report. How far each lineup gets (survival curves), what each member adds
+   (paired marginal value), who does the work, then the rooms themselves as small maps.
+   Same tokens as the arena and monster pages, so the three read as a set. */
+:root {
+  --bg: #e7e9e4; --surface: #f5f6f2; --surface-2: #eceee9; --ink: #1b2220; --muted: #59645f; --line: #c6ccc5;
+  --accent: #2b6a5c; --brass: #8d6d22;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; --s7: #6250d6; --base: #8b938e;
+  --t-wall: #6b665c; --t-pit: #3b342c; --t-rough: #cdbf9f; --t-dark: #2b2d3a; --t-hot: #e2884d; --t-trap: #b0352f; --t-party: #2a78d6; --t-foe: #b0352f;
+  --font-display: 'Grenze', 'Palatino Linotype', Palatino, Georgia, serif;
+  --font-body: 'Alegreya Sans', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141918; --surface: #1d2422; --surface-2: #232b29; --ink: #e2e6e1; --muted: #98a49f; --line: #33403c;
+    --accent: #5db09d; --brass: #c7a24f;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --base: #7d8783;
+    --t-wall: #8a8475; --t-pit: #0c0b09; --t-rough: #6c6248; --t-dark: #3d4054; --t-hot: #c4642c; --t-trap: #e57a72; --t-party: #3987e5; --t-foe: #e57a72;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141918; --surface: #1d2422; --surface-2: #232b29; --ink: #e2e6e1; --muted: #98a49f; --line: #33403c;
+  --accent: #5db09d; --brass: #c7a24f;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --base: #7d8783;
+  --t-wall: #8a8475; --t-pit: #0c0b09; --t-rough: #6c6248; --t-dark: #3d4054; --t-hot: #c4642c; --t-trap: #e57a72; --t-party: #3987e5; --t-foe: #e57a72;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 1rem; line-height: 1.5; margin: 0; }
+main { max-width: 1120px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 34px; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 700; line-height: 1.1; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(2rem, 5vw, 2.7rem); }
+h2 { font-size: 1.55rem; }
+h3 { font-size: 1.2rem; }
+p { margin: 0; max-width: 72ch; }
+.muted { color: var(--muted); }
+.small { font-size: 0.88rem; }
+.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.eyebrow { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; color: var(--brass); }
+section { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.head { display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--line); padding-bottom: 22px; }
+.lead { font-size: 1.12rem; max-width: 70ch; }
+.panels { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 18px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; position: relative; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.86rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 16px; height: 0; border-top: 2px solid; display: inline-block; }
+.legend i.dash { border-top-style: dashed; }
+#curves svg { max-width: 600px; }
+#marginal svg { max-width: 720px; }
+svg text { font-family: var(--font-body); fill: var(--muted); font-size: 12px; }
+svg .grid { stroke: var(--line); stroke-width: 1; }
+svg .axis { stroke: var(--muted); stroke-width: 1; }
+.tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; font-size: 0.82rem; box-shadow: 0 4px 14px rgb(0 0 0 / 0.14); z-index: 5; min-width: 170px; }
+.tip b { font-family: var(--font-display); font-size: 1rem; }
+.tip .row { display: flex; justify-content: space-between; gap: 12px; }
+.tip .row span:first-child { display: inline-flex; align-items: center; gap: 6px; }
+.tip i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+details.tv summary { cursor: pointer; font-size: 0.86rem; color: var(--muted); }
+table.data { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+table.data th, table.data td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+table.data th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 700; }
+table.data td.n, table.data th.n { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.scroll { overflow-x: auto; }
+.cellbar { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+.cellbar .b { height: 8px; border-radius: 0 4px 4px 0; background: var(--accent); }
+.cellbar .track { width: 90px; display: flex; }
+.pick { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+select { font: inherit; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+.rooms { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 14px; }
+.room h3 { display: flex; gap: 8px; align-items: baseline; }
+.room h3 .k { font-family: var(--font-mono); font-size: 0.85rem; color: var(--brass); }
+.mini { display: grid; gap: 2px; width: 100%; }
+.mini i { aspect-ratio: 1; border-radius: 2px; background: var(--surface-2); display: grid; place-items: center; font-style: normal; font-size: 0.6rem; font-weight: 700; color: #fff; }
+.mini i.w { background: var(--t-wall); } .mini i.o { background: var(--t-pit); } .mini i.r { background: var(--t-rough); }
+.mini i.d { background: var(--t-dark); } .mini i.h { background: var(--t-hot); } .mini i.t { background: var(--surface-2); outline: 2px dashed var(--t-trap); outline-offset: -3px; }
+.mini i.a { background: var(--t-party); } .mini i.e { background: var(--t-foe); }
+.keyrow { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 0.8rem; color: var(--muted); }
+.keyrow span { display: inline-flex; align-items: center; gap: 5px; }
+.keyrow i { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
+.stats { display: flex; flex-wrap: wrap; gap: 2px 14px; font-size: 0.86rem; color: var(--muted); }
+.stats b { font-family: var(--font-mono); font-weight: 600; color: var(--ink); }
+.note { background: var(--surface-2); border-left: 3px solid var(--brass); padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 0.92rem; max-width: 80ch; }
+ul.plain { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 4px; max-width: 80ch; }
+</style>
+
+<main>
+  <header class="head">
+    <span class="eyebrow">Bold Brave Beaten · simulation</span>
+    <h1>The Gauntlet</h1>
+    <p class="lead" id="lead"></p>
+    <p class="small muted" id="meta"></p>
+  </header>
+
+  <section>
+    <h2>How far each party gets</h2>
+    <p class="muted">Share of runs that cleared at least this many rooms. Each line starts at 100% (no rooms) and falls as rooms take their toll.</p>
+    <div class="panels" id="curves"></div>
+  </section>
+
+  <section>
+    <h2>What each member adds</h2>
+    <p class="muted">Rooms cleared with the member minus without, on the same seeds. Whiskers are 95% intervals. The fourth-slot members are compared with the core trio, and the core members with the mage party minus that member.</p>
+    <div class="card" id="marginal"></div>
+  </section>
+
+  <section>
+    <h2>Who does the work</h2>
+    <div class="pick"><label for="lineup" class="small muted">Lineup</label><select id="lineup"></select></div>
+    <div class="card scroll" id="members"></div>
+  </section>
+
+  <section>
+    <h2>The rooms</h2>
+    <p class="muted">In order. The numbers are for the lineup chosen above: how often it got this far, and how it did once there.</p>
+    <div class="keyrow">
+      <span><i style="background:var(--t-party)"></i>Party start</span><span><i style="background:var(--t-foe)"></i>Foes</span>
+      <span><i style="background:var(--t-wall)"></i>Pillar</span><span><i style="background:var(--t-pit)"></i>Pit</span>
+      <span><i style="background:var(--t-rough)"></i>Rough ground</span><span><i style="background:var(--t-dark)"></i>Darkness</span>
+      <span><i style="background:var(--t-hot)"></i>Hot coals</span><span><i style="outline:2px dashed var(--t-trap);outline-offset:-2px"></i>Hidden trap</span>
+    </div>
+    <div class="rooms" id="rooms"></div>
+  </section>
+
+  <section>
+    <h2>How the gauntlet works</h2>
+    <ul class="plain" id="how"></ul>
+  </section>
+</main>
+
+<script>
+const DATA = /*__DATA__*/null;
+const $ = (id) => document.getElementById(id);
+const pct = (x) => Math.round(100 * x) + '%';
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const L = DATA.lineups, R = DATA.rooms, M = DATA.members;
+const short = (m) => M[m].label.split(' (')[0];
+// Color follows the lineup across the page.
+const COLOR = { core: 'var(--base)', mage: 'var(--s1)', enchanter: 'var(--s2)', grappler: 'var(--s3)', duelist: 'var(--s4)', noKnight: 'var(--s5)', noTwoHander: 'var(--s6)', noArcher: 'var(--s7)' };
+
+// ---- Lead ------------------------------------------------------------------------------
+{
+  const ranked = Object.entries(L).sort((a, b) => b[1].meanCleared - a[1].meanCleared);
+  const best = ranked[0][1], worst = ranked[ranked.length - 1][1];
+  const furthest = Math.max(...Object.values(L).map((l) => l.clear.findLastIndex((x) => x > 0) + 1));
+  $('lead').textContent = `${best.label} gets furthest, clearing ${best.meanCleared.toFixed(1)} of ${R.length} rooms on average; ${worst.label.toLowerCase()} clears ${worst.meanCleared.toFixed(1)}. ` +
+    (furthest < R.length ? `No lineup has cleared the whole gauntlet yet; the deepest any run reached was room ${furthest + 1}, ${R[Math.min(furthest, R.length - 1)].name}.` : `${pct(best.fullClear)} of its runs clear every room.`);
+  $('meta').textContent = `${DATA.n} runs per lineup, same seeds for every lineup · ${DATA.seconds} s · generated ${DATA.generated.slice(0, 10)}`;
+}
+
+// ---- Survival curves --------------------------------------------------------------------
+function curveChart(title, keys, baseKey) {
+  const card = document.createElement('div');
+  card.className = 'card';
+  const W = 520, H = 260, m = { l: 40, r: 12, t: 10, b: 30 };
+  const x = (i) => m.l + (i / R.length) * (W - m.l - m.r);
+  const y = (v) => m.t + (1 - v) * (H - m.t - m.b);
+  const series = keys.map((k) => ({ k, vals: [1].concat(L[k].clear) }));
+  let svg = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${esc(title)}: share of runs clearing each room">`;
+  for (const v of [0, 0.25, 0.5, 0.75, 1]) svg += `<line class="grid" x1="${m.l}" x2="${W - m.r}" y1="${y(v)}" y2="${y(v)}"/><text x="${m.l - 6}" y="${y(v) + 4}" text-anchor="end">${pct(v)}</text>`;
+  for (let i = 0; i <= R.length; i++) svg += `<text x="${x(i)}" y="${H - 10}" text-anchor="middle">${i}</text>`;
+  svg += `<text x="${W - m.r}" y="${H - 10 + 0}" text-anchor="end" dy="0" style="display:none"></text>`;
+  for (const s of series) {
+    const pts = s.vals.map((v, i) => `${x(i)},${y(v)}`).join(' ');
+    const dash = s.k === baseKey ? ' stroke-dasharray="6 4"' : '';
+    svg += `<polyline points="${pts}" fill="none" stroke="${COLOR[s.k]}" stroke-width="2" stroke-linejoin="round"${dash}/>`;
+    s.vals.forEach((v, i) => { svg += `<circle cx="${x(i)}" cy="${y(v)}" r="3.5" fill="${COLOR[s.k]}" stroke="var(--surface)" stroke-width="2"/>`; });
+  }
+  svg += `<line class="hair" x1="0" x2="0" y1="${m.t}" y2="${H - m.b}" stroke="var(--muted)" stroke-width="1" style="display:none"/>`;
+  svg += `<rect class="hit" x="${m.l}" y="${m.t}" width="${W - m.l - m.r}" height="${H - m.t - m.b}" fill="transparent"/></svg>`;
+  card.innerHTML = `<h3>${esc(title)}</h3><div class="legend">${series.map((s) => `<span><i class="${s.k === baseKey ? 'dash' : ''}" style="border-color:${COLOR[s.k]}"></i>${esc(L[s.k].label)}</span>`).join('')}</div>${svg}
+    <p class="small muted">Rooms cleared (0 to ${R.length})</p>
+    <details class="tv"><summary>Table</summary><div class="scroll"><table class="data"><thead><tr><th>Lineup</th>${R.map((r, i) => `<th class="n">${i + 1}</th>`).join('')}<th class="n">Mean</th></tr></thead><tbody>
+    ${series.map((s) => `<tr><td>${esc(L[s.k].label)}</td>${L[s.k].clear.map((v) => `<td class="n">${pct(v)}</td>`).join('')}<td class="n">${L[s.k].meanCleared.toFixed(2)}</td></tr>`).join('')}</tbody></table></div></details>`;
+  const tip = document.createElement('div');
+  tip.className = 'tip';
+  tip.hidden = true;
+  card.appendChild(tip);
+  const svgEl = card.querySelector('svg'), hair = svgEl.querySelector('.hair');
+  svgEl.querySelector('.hit').addEventListener('pointermove', (e) => {
+    const pt = svgEl.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+    const p = pt.matrixTransform(svgEl.getScreenCTM().inverse());
+    const i = Math.max(0, Math.min(R.length, Math.round(((p.x - m.l) / (W - m.l - m.r)) * R.length)));
+    hair.setAttribute('x1', x(i)); hair.setAttribute('x2', x(i)); hair.style.display = '';
+    const rows = series.slice().sort((a, b) => b.vals[i] - a.vals[i]).map((s) => `<div class="row"><span><i style="background:${COLOR[s.k]}"></i>${esc(L[s.k].label)}</span><span class="num">${pct(s.vals[i])}</span></div>`).join('');
+    tip.innerHTML = `<b>${i === 0 ? 'Start' : `${i}: ${esc(R[i - 1].name)}`}</b>${i ? `<div class="small muted">cleared at least this far</div>` : ''}${rows}`;
+    tip.hidden = false;
+    const box = card.getBoundingClientRect(), sb = svgEl.getBoundingClientRect();
+    const left = sb.left - box.left + (x(i) / W) * sb.width;
+    tip.style.left = Math.min(box.width - tip.offsetWidth - 8, Math.max(8, left + 12)) + 'px';
+    tip.style.top = (sb.top - box.top + 12) + 'px';
+  });
+  svgEl.querySelector('.hit').addEventListener('pointerleave', () => { tip.hidden = true; hair.style.display = 'none'; });
+  return card;
+}
+{
+  const fourth = ['core', 'mage', 'enchanter', 'grappler', 'duelist'].filter((k) => L[k]);
+  const ablate = ['mage', 'noKnight', 'noTwoHander', 'noArcher'].filter((k) => L[k]);
+  if (fourth.length) $('curves').appendChild(curveChart('Who fills the fourth slot', fourth, 'core'));
+  if (ablate.length > 1) $('curves').appendChild(curveChart('The mage party, one member short', ablate, null));
+}
+
+// ---- Marginal value ---------------------------------------------------------------------
+{
+  const rows = Object.entries(DATA.marginal).sort((a, b) => b[1].mean - a[1].mean);
+  const W = 640, rowH = 34, m = { l: 150, r: 30, t: 10, b: 34 };
+  const H = m.t + m.b + rows.length * rowH;
+  const lo = Math.min(-0.5, ...rows.map(([, v]) => v.mean - 1.96 * v.se)), hi = Math.max(0.5, ...rows.map(([, v]) => v.mean + 1.96 * v.se));
+  const x = (v) => m.l + ((v - lo) / (hi - lo)) * (W - m.l - m.r);
+  let svg = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Marginal rooms cleared per member, with 95% intervals">`;
+  const step = hi - lo > 4 ? 1 : 0.5;
+  for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) svg += `<line class="grid" x1="${x(v)}" x2="${x(v)}" y1="${m.t}" y2="${H - m.b}"/><text x="${x(v)}" y="${H - 14}" text-anchor="middle">${v > 0 ? '+' : ''}${v}</text>`;
+  svg += `<line x1="${x(0)}" x2="${x(0)}" y1="${m.t}" y2="${H - m.b}" stroke="var(--ink)" stroke-width="1.5"/>`;
+  rows.forEach(([k, v], i) => {
+    const cy = m.t + i * rowH + rowH / 2;
+    svg += `<g class="mrow" data-k="${k}"><rect x="0" y="${cy - rowH / 2}" width="${W}" height="${rowH}" fill="transparent"/>`;
+    svg += `<text x="${m.l - 10}" y="${cy + 4}" text-anchor="end" style="fill:var(--ink);font-weight:600">${esc(short(k))}</text>`;
+    svg += `<line x1="${x(v.mean - 1.96 * v.se)}" x2="${x(v.mean + 1.96 * v.se)}" y1="${cy}" y2="${cy}" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>`;
+    svg += `<circle cx="${x(v.mean)}" cy="${cy}" r="6" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/></g>`;
+  });
+  svg += `<text x="${(m.l + W - m.r) / 2}" y="${H - 1}" text-anchor="middle">Rooms cleared, with minus without</text></svg>`;
+  const card = $('marginal');
+  card.innerHTML = svg + `<details class="tv"><summary>Table</summary><div class="scroll"><table class="data"><thead><tr><th>Member</th><th>Compared</th><th class="n">Δ rooms</th><th class="n">95% interval</th><th class="n">Full clear with / without</th></tr></thead><tbody>
+    ${rows.map(([k, v]) => `<tr><td>${esc(M[k].label)}</td><td>${esc(L[v.with].label)} vs ${esc(L[v.without].label.toLowerCase())}</td><td class="n">${v.mean >= 0 ? '+' : ''}${v.mean.toFixed(2)}</td><td class="n">${(v.mean - 1.96 * v.se).toFixed(2)} to ${(v.mean + 1.96 * v.se).toFixed(2)}</td><td class="n">${pct(v.fullClearWith)} / ${pct(v.fullClearWithout)}</td></tr>`).join('')}</tbody></table></div></details>`;
+  const tip = document.createElement('div');
+  tip.className = 'tip'; tip.hidden = true; card.appendChild(tip);
+  card.querySelectorAll('.mrow').forEach((g) => {
+    g.addEventListener('pointermove', (e) => {
+      const v = DATA.marginal[g.dataset.k];
+      tip.innerHTML = `<b>${esc(M[g.dataset.k].label)}</b><div class="row"><span>${esc(L[v.with].label)}</span><span class="num">${L[v.with].meanCleared.toFixed(2)}</span></div><div class="row"><span>${esc(L[v.without].label)}</span><span class="num">${L[v.without].meanCleared.toFixed(2)}</span></div><div class="row"><span>Difference</span><span class="num">${v.mean >= 0 ? '+' : ''}${v.mean.toFixed(2)} ± ${(1.96 * v.se).toFixed(2)}</span></div>`;
+      tip.hidden = false;
+      const box = card.getBoundingClientRect();
+      tip.style.left = Math.min(box.width - tip.offsetWidth - 8, e.clientX - box.left + 14) + 'px';
+      tip.style.top = (e.clientY - box.top + 14) + 'px';
+    });
+    g.addEventListener('pointerleave', () => { tip.hidden = true; });
+  });
+}
+
+// ---- Members and rooms for one lineup ---------------------------------------------------
+let cur = L.mage ? 'mage' : Object.keys(L)[0];
+try { const saved = localStorage.getItem('gauntlet-lineup'); if (saved && L[saved]) cur = saved; } catch (e) {}
+$('lineup').innerHTML = Object.entries(L).map(([k, l]) => `<option value="${k}"${k === cur ? ' selected' : ''}>${esc(l.label)}</option>`).join('');
+$('lineup').addEventListener('change', (e) => { cur = e.target.value; try { localStorage.setItem('gauntlet-lineup', cur); } catch (err) {} drawLineup(); });
+
+const TILE_CLASS = { '#': 'w', O: 'o', ':': 'r', D: 'd', '^': 'h', F: 't', P: 't', A: 'a', E: 'e' };
+function drawLineup() {
+  const l = L[cur];
+  const ms = Object.entries(l.memberStats);
+  const maxShare = Math.max(...ms.map(([, s]) => s.shareAttrs), 0.01);
+  const bar = (v, max) => `<div class="cellbar"><span class="num">${pct(v)}</span><span class="track"><span class="b" style="width:${(v / max) * 100}%"></span></span></div>`;
+  $('members').innerHTML = `<table class="data"><thead><tr><th>Member</th><th class="n">Share of wounds dealt</th><th class="n">Foes downed</th><th class="n">Wounds dealt</th><th class="n">Stamina dealt</th><th class="n">Wounds taken</th><th class="n">Dies</th><th>Most often dies in</th></tr></thead><tbody>
+    ${ms.map(([k, s]) => {
+      const where = s.diedIn.map((v, i) => [v, i]).sort((a, b) => b[0] - a[0])[0];
+      return `<tr><td><b>${esc(short(k))}</b> <span class="small muted">${esc(M[k].label.split(' (')[1] ? '(' + M[k].label.split(' (')[1] : '')}</span></td><td class="n">${bar(s.shareAttrs, maxShare)}</td><td class="n">${s.downs.toFixed(1)} <span class="muted">(${pct(s.shareDowns)})</span></td><td class="n">${s.dealtAttrs.toFixed(1)}</td><td class="n">${s.dealtStamina.toFixed(1)}</td><td class="n">${s.takenAttrs.toFixed(1)}</td><td class="n">${pct(s.deathRate)}</td><td>${where[0] > 0 ? esc(R[where[1]].name) : '—'}</td></tr>`;
+    }).join('')}</tbody></table>
+    <p class="small muted">Per run. Wounds are attribute points (mostly CON) from blows and spells; bleeding, poison and hazards aren't credited to anyone. A foe is credited to whoever landed the blow that dropped it.</p>`;
+  $('rooms').innerHTML = R.map((room, i) => {
+    const s = l.roomStats[i];
+    const w = room.map[0].length;
+    const cellsHtml = room.map.join('').split('').map((ch) => `<i class="${TILE_CLASS[ch] || ''}"></i>`).join('');
+    return `<div class="card room"><h3><span class="k">${i + 1}</span>${esc(room.name)}</h3>
+      <div class="mini" style="grid-template-columns:repeat(${w},1fr)" role="img" aria-label="Map of ${esc(room.name)}">${cellsHtml}</div>
+      <p class="small">${esc(room.blurb)} <span class="muted">${esc(room.foeNames.join(', '))}.</span></p>
+      <div class="stats"><span>Reached <b>${pct(s.reached / DATA.n)}</b></span><span>Won there <b>${s.reached ? pct(s.cleared / s.reached) : '—'}</b></span><span>Rounds <b>${s.rounds == null ? '—' : s.rounds.toFixed(1)}</b></span><span>Deaths <b>${s.deaths == null ? '—' : s.deaths.toFixed(2)}</b></span></div></div>`;
+  }).join('');
+}
+drawLineup();
+
+$('how').innerHTML = [
+  'A party of level-5 adventurers (the arena builds) fights through the rooms in order. The run ends when the party clears the last room, is wiped out, or fails to win a room within 30 rounds.',
+  'Between rooms there is only a breather: stamina comes back and the unconscious get up. Wounds (CON), spent spell points, arrows and battered shields carry on. Each member has one bandage; between rooms the party bandages whoever is bleeding while bandages last, and untended bleeding runs its course.',
+  'Traps are hidden runes laid by the foes\' side: the foes know where they are and the party does not. There is no way to search for them yet, which is one of the things this gauntlet is meant to test when it exists.',
+  'The rooms are ordered by how hard each fight was for a fresh party in the party arena, from goblins up to the troll chieftain.',
+  'Every lineup runs the same seeds, so the comparison between lineups is paired; the marginal value of a member is the mean paired difference in rooms cleared.',
+  'Raw data: runs.csv has one row per run per member (rooms cleared, survival, wounds dealt and taken, foes downed, room of death), for R.',
+].map((t) => `<li>${esc(t)}</li>`).join('');
+</script>

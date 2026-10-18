@@ -135,7 +135,9 @@ async function fight(spec) {
   const flip = seed % 2 === 1;
   const ids = flip ? Bs.concat(A).map((c) => c.id) : A.concat(Bs).map((c) => c.id);
   const enc = Combat.createEncounter('sim', ids, chars, spec.grid.w, spec.grid.h);
-  place(enc, A.map((c) => c.id), Bs.map((c) => c.id));
+  (spec.place || place)(enc, A.map((c) => c.id), Bs.map((c) => c.id));
+  if (spec.setup) spec.setup(enc, chars);
+  if (spec.onHit) enc.onHit = spec.onHit;
   const roller = makeRoller(seed * 2654435761 % 4294967296);
   const rng = Enemies.makeRng(seed * 40503 + 17);
   const maxRounds = spec.maxRounds || 30;
@@ -157,7 +159,7 @@ async function fight(spec) {
   const winner = enc.phase !== 'over' ? 'timeout' : enc.winner === 'party' ? 'A' : enc.winner === 'enemy' ? 'B' : 'draw';
   return {
     winner, rounds: enc.round, downA: down(A), downB: down(Bs), deadA: dead(A), deadB: dead(Bs),
-    hitsA: stats.hitsA, hitsB: stats.hitsB, log: spec.keepLog ? enc.log : null,
+    hitsA: stats.hitsA, hitsB: stats.hitsB, log: spec.keepLog ? enc.log : null, enc: spec.keepEnc ? enc : null,
   };
 }
 
