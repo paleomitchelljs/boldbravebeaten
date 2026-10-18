@@ -1,5 +1,17 @@
 # Simulation findings
 
+## Arena after the AI fixes (baseline `sim/results/arena-r12`)
+
+The fixes: a character kites only when its ranged attacks beat its melee; bursts can land beside
+foes; a raise goes to a body where it lies; a caster who can raise keeps spell points for it; one
+read of intent a round. Open field, head to head:
+
+- **The cleric gained most.** It averages about 51%, up from 42%, because it now closes in with
+  its mace instead of kiting. It beats the enchanter 82%, the mage 64% and the archer 54%, and
+  now splits even with the grappler (50%).
+- **The enchanter rose a little** (it reads intent less), and is still the weakest duelist.
+- **The other styles moved by sampling noise** (within about 5 points).
+
 ## The death knight against level-5 parties (`node sim/gauntlet.js --rooms boss --mode reset`)
 
 The death knight is a level-20 character with an aura of dread and a silk sash (14 AP). He was
