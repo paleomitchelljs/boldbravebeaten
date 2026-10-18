@@ -27,6 +27,7 @@ Published artifacts:
 - Arena results: https://claude.ai/artifact/8wLMyG578Csqdvxi9XErP7 (version 2).
 - Gauntlet results: https://claude.ai/artifact/37iyt3REBbLHgV1jETTF1T (from `sim/results/gauntlet/report.html`).
 - Death knight trials: https://claude.ai/artifact/XjojvtKJxxMJ2PDRSgt9iP (from `sim/results/boss/report.html`; `node sim/gauntlet.js --rooms boss --mode reset`).
+- Death knight scaling: https://claude.ai/artifact/HeuTjaAFUfMives1FZTVcF (`node sim/dk-scaling.js --dk 5`, …, then `--merge`, then `node sim/dk-scaling-page.js`).
 
 The branch is `claude/game-platform`.
 
