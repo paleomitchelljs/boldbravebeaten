@@ -23,6 +23,8 @@
     sarnakScales: { name: 'Sarnak scales', mit: { P: 2, S: 3, B: 2 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, rarity: 'common', natural: true },
     drakeScales: { name: 'Drake scales', mit: { P: 4, S: 4, B: 2 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, rarity: 'common', natural: true },
     wyvernScales: { name: 'Wyvern scales', mit: { P: 5, S: 5, B: 3 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, rarity: 'common', natural: true },
+    ogreHide: { name: 'Ogre hide', mit: { P: 1, S: 2, B: 3 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, rarity: 'common', natural: true },
+    giantHide: { name: 'Giant\'s hide', mit: { P: 2, S: 2, B: 4 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, rarity: 'common', natural: true },
     golemStone: { name: 'Stone body', mit: { P: 4, S: 5, B: 1 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, rarity: 'common', natural: true },
   };
 
@@ -120,6 +122,12 @@
       faces: { point: [5, 0, 0], edge: [0, 7, 1], hilt: [0, 0, 5] }, motions: ['thrust', 'swing', 'twoHanded'],
       sword: true, rarity: 'uncommon', notes: 'Versatile; half-sword and murder stroke work up close.',
     },
+    giantClub: {
+      phys: { mass: 5, length: 1.6, head: { mass: 2.5 } },
+      name: 'Giant club', hands: 1, weight: 'heavy', reach: 3, reachName: 'long', closeOK: true, material: 'wood',
+      faces: { head: [0, 0, 10] }, motions: ['swing', 'power'], rarity: 'common', notes: 'A tree trunk, one-handed for a giant.',
+      trait: { knockdown: { bonus: 2, margin: 3 }, shieldCrush: true },
+    },
     warScythe: {
       phys: { mass: 2.2, length: 1.9, edge: 1.0 },
       name: 'War scythe', hands: 2, weight: 'heavy', reach: 3, reachName: 'long', material: 'steel',
@@ -191,6 +199,10 @@
     webSpinner: {
       name: 'Spit web', hands: 1, weight: 'very light', reach: 0, reachName: 'range 2–5', natural: true, ranged: { min: 2, max: 5, long: 5 },
       faces: { arrow: [0, 0, 0] }, motions: ['shoot'], rarity: 'common', shootAP: 2, shootStamina: 1, trait: { web: 1 },
+    },
+    boulder: {
+      name: 'Hurl boulder', hands: 1, weight: 'heavy', reach: 0, reachName: 'range 2–10', natural: true, ranged: { min: 2, max: 10, long: 8 },
+      faces: { arrow: [0, 0, 14] }, motions: ['shoot'], rarity: 'common', shootAP: 4, shootStamina: 3, trait: { knockdown: { bonus: 3, margin: 2 }, shieldCrush: true },
     },
     antennae: {
       name: 'Rusting antennae', hands: 1, weight: 'very light', reach: 2, reachName: 'reach 2', closeOK: true, natural: true,

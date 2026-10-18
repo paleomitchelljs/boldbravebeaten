@@ -204,7 +204,9 @@
   //              tireless (undead and constructs: no stamina; damage goes to attributes, never
   //              tires, no bleeding or venom), resist ({P, S, B} damage multipliers),
   //              nimble (+dodge), slippery (+ against being grappled and to break free),
-  //              moveMult (leapers cover more ground)
+  //              moveMult (leapers cover more ground), grip (a huge hand: + to grapple rolls),
+  //              flying, magicImmune, incorporeal, constrict, aura, size (big bodies: fewer
+  //              vital wounds, less bleeding per wound)
   //   weapons, shield, sidearm, quality, arrows — carried gear, for monsters that use it
   //   policy   — AI policy (grappler, kite…)
   //   group    — several creatures (a pack)
@@ -255,6 +257,18 @@
       name: 'Troll chieftain', blurb: 'A boss for a whole party: acts like two fighters (AP and per-pass allowance ×2) on a STR-24, CON-24 body.',
       attrs: { STR: 24, CON: 24, DEX: 4, SPD: 4, INT: 3, WIS: 4, CHA: 3 },
       natural: ['trollFists', 'claws'], armor: 'trollHide', traits: { regen: { con: 1, stamina: 6 }, apMult: 2 }, feats: { power_swing: 1, shield_breaker: 1, toughness: 1 },
+    },
+    ogre: {
+      name: 'Ogre', blurb: 'Like a troll but bigger and stronger: a club and fists that knock you flat. It doesn\'t regenerate.',
+      level: 8, attrs: { STR: 23, CON: 21, DEX: 4, SPD: 5, INT: 3, WIL: 5, WIS: 4, CHA: 3 },
+      natural: ['trollFists'], armor: 'ogreHide', weapons: ['giantClub'], quality: 'crude', keepUnarmed: true,
+      traits: { grip: 2, apMult: 1.5, size: 1.5 }, feats: { power_swing: 1, shield_breaker: 1, toughness: 1 },
+    },
+    hillGiant: {
+      name: 'Hill giant', blurb: 'Bigger and stronger than an ogre: a tree-trunk club, boulders hurled from afar, and a hand big enough to seize a man and hold him.',
+      level: 12, attrs: { STR: 28, CON: 26, DEX: 4, SPD: 5, INT: 4, WIL: 6, WIS: 5, CHA: 4 },
+      natural: ['boulder'], armor: 'giantHide', weapons: ['giantClub'], quality: 'crude', keepUnarmed: true,
+      traits: { grip: 5, apMult: 1.75, size: 2.5 }, feats: { power_swing: 1, shield_breaker: 1, grappler: 2, pin: 1, toughness: 2 },
     },
     displacerPair: { name: 'Displacer pair', blurb: 'Two displacer beasts: arrows mostly strike illusions, so the archers have to close while the beasts maul the front line.', group: ['displacer', 'displacer'] },
     // ---- Undead and constructs: tireless ----

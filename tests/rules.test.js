@@ -1504,3 +1504,21 @@ test('golem is immune to magic; a constrictor crushes whoever it holds; fliers p
   assert.ok(!drake.status.prone);
   assert.equal(await B.Terrain.enter(e2, { [victim.id]: victim }, victim, 2, 1, roller(5, []), () => {}), true);
 });
+
+test('size: a man-sized wound bleeds a giant less, and its vitals are harder to reach; grip helps a giant seize a man', async () => {
+  const [giant] = B.Enemies.makeMonster('hillGiant');
+  const man = fighter('Man');
+  assert.ok(Combat.grappleScore(giant) >= Math.floor(C.attr(giant, 'STR') / 2) + giant.traits.grip);
+  const spear = Items.makeWeapon('spear', 'standard');
+  man.weapons.push(spear);
+  man.wield = spear.id;
+  const thrust = C.attackOptions(man).find((o) => o.weaponId === spear.id && o.motion === 'thrust');
+  const plain = fighter('Plain');
+  for (const t of [giant, plain]) t.armor = null;
+  const chars = { [giant.id]: giant, [plain.id]: plain, [man.id]: man };
+  const enc = Combat.createEncounter('t', Object.keys(chars), chars, 6, 3);
+  await Combat.applyHit(enc, chars, man, plain, thrust, roller(10, []), {});
+  await Combat.applyHit(enc, chars, man, giant, thrust, roller(10, []), {});
+  const bled = (c) => c.bleeds.reduce((t, b) => t + b.remaining, 0);
+  assert.ok(bled(giant) < bled(plain), `giant bleeds ${bled(giant)}, a man ${bled(plain)}`);
+});

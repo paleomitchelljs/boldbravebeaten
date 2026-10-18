@@ -33,7 +33,7 @@ const ENCOUNTERS = arg('only', null) ? arg('only', '').split(',') : [
   'wolf', 'wolfPack', 'koboldBand', 'goblinBand', 'frogPatrol', 'sarnak', 'sarnakPair',
   'skeleton', 'skeletonSquad', 'zombie', 'zombieHorde', 'stoneGolem',
   'giantSpider', 'rustBeetle', 'displacer', 'displacerPair', 'owlbear', 'caveTroll', 'trollChieftain',
-  'rat', 'ratPack', 'drake', 'wyvern', 'constrictor', 'spectre',
+  'rat', 'ratPack', 'drake', 'wyvern', 'constrictor', 'ogre', 'hillGiant', 'spectre',
 ];
 
 (async () => {

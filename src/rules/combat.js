@@ -939,6 +939,17 @@
     return res;
   }
 
+  // Size (monster trait, 1 = a person): a blade's reach into a big body is shallow; its vitals
+  // are harder to reach and its wounds bleed less in proportion.
+  function sizeOf(c) {
+    return (c.traits && c.traits.size) || 1;
+  }
+
+  function sizedVital(target, need) {
+    const sz = sizeOf(target);
+    return sz > 1 ? Math.floor(need / sz) : need;
+  }
+
   // Apply a hit, rolling d4s for slashing. Returns a short description.
   async function applyHit(enc, chars, attacker, target, option, roller, flags) {
     const h = computeHit(attacker, target, option, flags);
@@ -968,7 +979,7 @@
       parts.push(`${h.toCON} CON`);
       wound += h.toCON;
       pierced = h.toCON;
-      const need = vitalNeed(h.pierceVital);
+      const need = sizedVital(target, vitalNeed(h.pierceVital));
       if (need > 0) {
         const r = (await roller({ actorId: attacker.id, sides: 10, count: 1, label: 'Wound roll', detail: `d10: ${need} or less is a vital wound (×${CONFIG.vital.mult} CON)` }))[0];
         if (r <= need) {
@@ -989,7 +1000,7 @@
       }
       parts.push(Object.keys(tally).map((a) => `${tally[a]} ${a}`).join(', '));
       wound += h.slashToAttrs;
-      const need = vitalNeed(h.cutVital);
+      const need = sizedVital(target, vitalNeed(h.cutVital));
       if (need > 0) {
         const r = (await roller({ actorId: attacker.id, sides: 10, count: 1, label: 'Wound roll', detail: `d10: ${need} or less opens a throat or an artery (+${h.slashToAttrs} CON)` }))[0];
         if (r <= need) {
@@ -1039,6 +1050,9 @@
         if (pierceBleed > 0) target.bleeds.push({ remaining: Math.round(pierceBleed * hdMult), rounds: h.bleedRounds });
         if (cut > 0) target.bleeds.push({ remaining: Math.round(cut * hdMult), rounds: CONFIG.bleedRounds });
       }
+      // A big body (trait size) loses less of itself to a man-sized wound.
+      const sz = sizeOf(target);
+      if (sz > 1) for (const b of target.bleeds) if (!b.sized) { b.remaining = Math.round(b.remaining / sz); b.sized = true; }
       target.bleeds = target.bleeds.filter((b) => b.remaining > 0);
       parts.push('bleeding');
     }
@@ -1264,7 +1278,8 @@
 
   // d10 + this for clinching, grappling, pinning and throwing.
   function grappleScore(c) {
-    return Math.floor(C.attr(c, 'STR') / 2) + C.rank(c, 'grappler');
+    // grip: a giant's hand closes around a man (monster trait).
+    return Math.floor(C.attr(c, 'STR') / 2) + C.rank(c, 'grappler') + ((c.traits && c.traits.grip) || 0);
   }
 
   // d10 + this for breaking a clinch, hold or pin.
