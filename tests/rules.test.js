@@ -523,8 +523,9 @@ test('magic: words make spells; spell points, fire through armor, backlash', asy
   const knight = fighter('Knight');
   knight.armor = Items.makeArmor('plate', 'full', 'standard'); // B mitigation 3 → stops 2 fire
   const h = Combat.computeHit(m, knight, bolt, {});
-  assert.strictEqual(h.fire, 3);
-  assert.strictEqual(h.toCON + h.bluntToStamina, 1);
+  const mag = B.CONFIG.magic.words.launch.mag;
+  assert.strictEqual(h.fire, mag);
+  assert.strictEqual(h.toCON + h.bluntToStamina, mag - 2, 'plate stops 2 of the fire');
   // Tired casters draw less power.
   m.stamina = Math.floor(C.maxStamina(m) / 2);
   assert.strictEqual(B.Magic.availableSP(m), 5);

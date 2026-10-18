@@ -283,16 +283,16 @@
       // Verbs: cost (spell points), mag (magnitude), range [min, max], ap (base AP, else castAP),
       // radius / length / rounds for areas, walls and lingering effects.
       words: {
-        strike: { kind: 'verb', shape: 'bolt', cost: 2, mag: 4, range: [1, 2], feat: 'verb_strike', name: 'Strike' },
-        launch: { kind: 'verb', shape: 'bolt', cost: 3, mag: 3, range: [2, 12], feat: 'verb_launch', name: 'Launch' },
-        burst: { kind: 'verb', shape: 'area', cost: 4, mag: 3, range: [2, 8], radius: 1, ap: 4, feat: 'verb_burst', name: 'Burst' },
+        strike: { kind: 'verb', shape: 'bolt', cost: 2, mag: 6, range: [1, 2], feat: 'verb_strike', name: 'Strike' },
+        launch: { kind: 'verb', shape: 'bolt', cost: 3, mag: 5, range: [2, 12], feat: 'verb_launch', name: 'Launch' },
+        burst: { kind: 'verb', shape: 'area', cost: 4, mag: 4, range: [2, 8], radius: 1, ap: 3, feat: 'verb_burst', name: 'Burst' },
         cover: { kind: 'verb', shape: 'ground', cost: 3, mag: 1, range: [1, 8], radius: 1, rounds: 3, feat: 'verb_cover', name: 'Cover' },
-        build: { kind: 'verb', shape: 'wall', cost: 3, mag: 1, range: [1, 6], length: 3, rounds: 3, ap: 4, feat: 'verb_build', name: 'Build' },
-        open: { kind: 'verb', shape: 'terrain', cost: 3, mag: 0, range: [1, 6], length: 1, rounds: null, ap: 4, feat: 'verb_open', name: 'Open' },
-        inscribe: { kind: 'verb', shape: 'rune', cost: 2, mag: 4, range: [0, 1], radius: 0, ap: 4, feat: 'verb_inscribe', name: 'Inscribe' },
+        build: { kind: 'verb', shape: 'wall', cost: 3, mag: 1, range: [1, 6], length: 3, rounds: 3, ap: 3, feat: 'verb_build', name: 'Build' },
+        open: { kind: 'verb', shape: 'terrain', cost: 3, mag: 0, range: [1, 6], length: 1, rounds: null, ap: 3, feat: 'verb_open', name: 'Open' },
+        inscribe: { kind: 'verb', shape: 'rune', cost: 2, mag: 5, range: [0, 1], radius: 0, ap: 3, feat: 'verb_inscribe', name: 'Inscribe' },
         hex: { kind: 'verb', shape: 'bane', cost: 2, mag: 1, range: [1, 8], rounds: 3, feat: 'verb_hex', name: 'Hex' },
         bless: { kind: 'verb', shape: 'boon', cost: 2, mag: 1, range: [0, 2], rounds: 3, ap: 2, feat: 'verb_bless', name: 'Bless' },
-        conjure: { kind: 'verb', shape: 'conjure', cost: 5, mag: 3, range: [1, 4], rounds: 4, ap: 5, feat: 'verb_conjure', name: 'Conjure' },
+        conjure: { kind: 'verb', shape: 'conjure', cost: 5, mag: 3, range: [1, 4], rounds: 4, ap: 4, feat: 'verb_conjure', name: 'Conjure' },
         // Nouns: element (how computeHit treats it), hurt (blunt / halfBlunt / thorns for vectors),
         // onHit (after a blow: a condition, a push, a knockdown), and what the other verbs make.
         fire: { kind: 'noun', cost: 1, element: 'fire', name: 'Fire', onHit: { cond: 'burning', rounds: 2 }, ground: 'hot', wall: 'fireWall', bane: 'burning', boon: 'kindled', conjure: 'elemental' },
@@ -316,7 +316,7 @@
       // rest stamina. Life withers the body: half its magnitude to CON, no armor; the dead and
       // the made (tireless) are past withering.
       energyMitigation: { fire: 0.5, frost: 0.5, lightning: 0.5 },
-      castAP: 3, // base, × apScale
+      castAP: 2, // base, × apScale (TUNED-ish: at 3, a bolt cost 6 sheet AP for a third of a sword thrust)
       poolPerCasting: 3, // spell points = INT + 3 × Casting rank
       // A tired caster can't draw as much power: usable points scale with stamina.
       staminaLimitsPoints: true,

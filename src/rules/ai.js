@@ -29,6 +29,10 @@
 
   const DEFAULTS = { maneuverRate: 0.15, kickBias: 1, defendFloor: 1.5, cautious: true, windUp: 1, kite: true, grappler: null };
 
+  function attrDmgOrStamina(h) {
+    return h.toCON + h.slashToAttrs + h.bluntToCON + h.bluntToStamina;
+  }
+
   // How much a hit is worth to the attacker, in stamina-equivalent points.
   // Attribute damage costs max stamina and bleeds; a hit that drops the target is worth most.
   function hitValue(attacker, target, option, distance) {
@@ -47,6 +51,15 @@
     const pV = Combat.vitalNeed(h.pierceVital) / 10, cV = Combat.vitalNeed(h.cutVital) / 10;
     let v = pierceV * (1 + pV * (G.CONFIG.vital.mult - 1)) + h.slashToAttrs * (5 + bleedV) * (1 + cV) + h.bluntToCON * 5 + h.bluntToStamina;
     if (option.venom && h.toCON + h.slashToAttrs > 0) v += Math.min(option.venom.con, h.toCON + h.slashToAttrs) * option.venom.rounds * 6;
+    // A spell's after-effects (Magic: noun onHit), if anything got through.
+    if (option.spell && option.spell.noun && attrDmgOrStamina(h) > 0) {
+      const H = (G.CONFIG.magic.words[option.spell.noun] || {}).onHit || {};
+      const conds = G.Conditions ? G.Conditions : null;
+      if (H.cond && conds && !conds.has(target, H.cond)) v += ({ burning: 8, slowed: 6, shocked: 6, rooted: 8 }[H.cond] || 4) * 0.6;
+      if (H.knockdown && !target.status.prone) v += 4;
+      if (H.push) v += 2;
+      if (option.spell.lingering) v += Math.max(1, Math.round(option.spell.magnitude / 4)) * 3 * 5 * 0.6;
+    }
     const con = C.attr(target, 'CON');
     if (h.toCON + h.bluntToCON >= con) v += 60;
     else if (h.toCON > 0 && h.toCON * G.CONFIG.vital.mult + h.bluntToCON >= con) v += 60 * pV;
@@ -297,6 +310,107 @@
     return best ? best.decl : null;
   }
 
+  // ---- Casting (magic overhaul) -------------------------------------------------------
+  // Value of each cast spell in the same units as an attack's rate (stamina-equivalent points
+  // per AP). Rough by design: hold a melee foe off with a wall, a pit or roots; hazards and
+  // bursts where foes bunch and friends don't; bane the dangerous; bless the engaged.
+  function meleeReach(c) {
+    let r = 0;
+    for (const o of C.attackOptions(c)) if (!o.ranged && !o.spell) r = Math.max(r, o.maxRange || 1);
+    return r;
+  }
+
+  function castChoice(enc, chars, id, la, foes) {
+    if (!la.spells || !la.spells.length) return null;
+    const c = chars[id];
+    const S = C.apScale();
+    const me = Combat.projectedPos(enc, id);
+    const Cn = G.Conditions;
+    const allies = enc.ids.filter((o) => chars[o] && chars[o].side === c.side && C.isActive(chars[o]));
+    const posOf = (o) => Combat.projectedPos(enc, o);
+    const closing = foes.filter((f) => meleeReach(chars[f]) > 0).map((f) => ({ f, d: Combat.dist(me, posOf(f)) })).sort((x, y) => x.d - y.d)[0];
+    const engaged = (o) => foes.some((f) => Combat.dist(posOf(o), posOf(f)) <= Math.max(1, meleeReach(chars[f])));
+    const inArea = (list, p, r) => list.filter((o) => Combat.dist(posOf(o), p) <= r);
+    const conjuredUp = enc.ids.some((o) => chars[o] && chars[o].conjured && chars[o].conjured.by === id && !chars[o].status.dead);
+    let best = null;
+    const consider = (v, decl, o) => {
+      const r = (v * S) / Math.max(1, o.ap);
+      if (r > 0 && (!best || r > best.v)) best = { v: r, decl };
+    };
+    for (const o of la.spells) {
+      if (!o.affordable) continue;
+      const s = o.spell, N = G.CONFIG.magic.words[s.noun];
+      const cast = (extra) => Object.assign({ actor: id, type: 'cast', option: o }, extra);
+      if (o.target === 'foe') {
+        const key = N.bane;
+        for (const t of o.targets) {
+          if (!t.inReach || !foes.includes(t.id)) continue;
+          const foe = chars[t.id];
+          if (Cn.has(foe, key) || (G.CONFIG.conditions[key].living && C.tireless(foe))) continue;
+          let v = { rooted: closing && closing.f === t.id && t.distance >= 2 ? 30 : 6, slowed: 14, shocked: 12, numbed: 10, withering: 22, burning: 12 }[key] || 6;
+          consider(v * 0.55, cast({ target: t.id }), o);
+        }
+      } else if (o.target === 'ally') {
+        const key = N.boon;
+        for (const t of o.targets) {
+          if (!t.inReach) continue;
+          const a = chars[t.id];
+          if (Cn.has(a, key)) continue;
+          let v = 0;
+          const fighting = engaged(t.id);
+          if (key === 'innervated') v = (C.bleedPerRound(a) >= 1 ? 18 : 0) + (a.damage.CON ? 6 : 0);
+          else if (key === 'freedom') v = (!Cn.canMove(a) || a.status.webbed) ? 20 : 0;
+          else if (key === 'hasted') v = fighting || t.id === id ? 14 : 4;
+          else if (['stoneskin', 'barkskin', 'shielded'].includes(key)) v = fighting ? 12 : 0;
+          else if (key === 'kindled') v = fighting && t.id !== id ? 10 : 0;
+          else if (key === 'frostWard') v = 0;
+          consider(v, cast({ target: t.id }), o);
+        }
+      } else if (s.shape === 'area') {
+        for (const f of foes) {
+          const p = posOf(f);
+          const d = Combat.dist(me, p);
+          if (d > o.maxRange || d < o.minRange) continue;
+          if (G.Terrain && enc.tiles && d >= 2 && G.Terrain.lineCheck(enc, me, p, 'missile').blocked) continue;
+          const hitF = inArea(foes, p, s.radius), hitA = inArea(allies, p, s.radius);
+          consider((hitF.length - 1.5 * hitA.length) * s.magnitude * 2.2, cast({ at: p }), o);
+        }
+      } else if (s.shape === 'ground') {
+        for (const f of foes) {
+          const p = posOf(f);
+          const d = Combat.dist(me, p);
+          if (d > o.maxRange) continue;
+          const hitF = inArea(foes, p, s.radius), hitA = inArea(allies, p, s.radius);
+          if (hitA.length) continue;
+          consider(hitF.length * 7 + (closing && closing.f === f && closing.d >= 2 ? 6 : 0), cast({ at: p }), o);
+        }
+      } else if ((s.shape === 'wall' || s.shape === 'terrain') && closing && closing.d >= 2 && closing.d <= 7) {
+        // Across the way of the nearest melee foe: a square or two in front of me, or (a pit)
+        // right under them.
+        const fp = posOf(closing.f);
+        const step = (k) => ({ x: me.x + Math.round(((fp.x - me.x) * k) / closing.d), y: me.y + Math.round(((fp.y - me.y) * k) / closing.d) });
+        const at = s.shape === 'terrain' ? fp : step(Math.min(2, closing.d - 1));
+        if (Combat.dist(me, at) > o.maxRange || Combat.dist(me, at) < o.minRange) continue;
+        if (allies.some((a) => a !== id && Combat.dist(posOf(a), at) <= 1)) continue;
+        if (s.shape === 'wall' && enc.tiles && G.Terrain.at(enc, at.x, at.y).some((t) => G.CONFIG.terrain[t.kind].wall)) continue;
+        // A wall that stops a body is worth far more than one that only singes it.
+        const stops = s.shape === 'terrain' || !!G.CONFIG.terrain[G.CONFIG.magic.words[s.noun].wall].wall;
+        consider(s.shape === 'terrain' ? 24 : stops ? 26 : 8, cast({ at }), o);
+      } else if (s.shape === 'rune' && closing && closing.d >= 2 && closing.d <= 6) {
+        const fp = posOf(closing.f);
+        const at = { x: me.x + Math.sign(fp.x - me.x), y: me.y + Math.sign(fp.y - me.y) };
+        if (G.Terrain.at(enc, at.x, at.y).some((t) => t.kind === 'rune')) continue;
+        consider(s.magnitude * 2.5, cast({ at }), o);
+      } else if (s.shape === 'conjure' && !conjuredUp && foes.length) {
+        const at = { x: me.x + (foes.length ? Math.sign(posOf(foes[0]).x - me.x) : 1), y: me.y };
+        if (!G.Terrain.passable(enc, at.x, at.y) || enc.ids.some((o2) => chars[o2] && !chars[o2].status.dead && posOf(o2).x === at.x && posOf(o2).y === at.y)) continue;
+        if (G.CONFIG.magic.words[s.noun].conjure === 'raise' && !enc.ids.some((o2) => chars[o2] && chars[o2].status.dead && !chars[o2].vanished && !chars[o2].raised && Combat.dist(enc.pos[o2], me) <= o.maxRange)) continue;
+        consider(30, cast({ at: G.CONFIG.magic.words[s.noun].conjure === 'raise' ? enc.pos[enc.ids.find((o2) => chars[o2] && chars[o2].status.dead && !chars[o2].vanished && !chars[o2].raised && Combat.dist(enc.pos[o2], me) <= o.maxRange)] : at }), o);
+      }
+    }
+    return best;
+  }
+
   function planMove(enc, chars, id, la, targetId, goal, foes, avoid) {
     if (!la.move) return null;
     const c = chars[id];
@@ -307,6 +421,9 @@
     const taken = new Set();
     for (const o of enc.ids) if (o !== id && C.isActive(chars[o])) { const q = Combat.projectedPos(enc, o); taken.add(q.x + ',' + q.y); }
     const foePos = foes.map((f) => Combat.projectedPos(enc, f));
+    // With terrain about: walk around walls (cost map), keep out of hazards this side can see.
+    const terrain = G.Terrain && enc.tiles && Object.keys(enc.tiles).length;
+    const map = terrain ? G.Terrain.costMap(enc, from, c) : null;
     let best = null;
     const x0 = Math.max(0, from.x - step), x1 = Math.min(enc.grid.w - 1, from.x + step);
     const y0 = Math.max(0, from.y - step), y1 = Math.min(enc.grid.h - 1, from.y + step);
@@ -314,14 +431,24 @@
       for (let y = y0; y <= y1; y++) {
         const dx = x - from.x, dy = y - from.y;
         if ((!dx && !dy) || taken.has(x + ',' + y)) continue;
-        const need = C.moveCost(c, Math.max(Math.abs(dx), Math.abs(dy)));
+        let squares = Math.max(Math.abs(dx), Math.abs(dy)), hazard = 0;
+        if (map) {
+          const k = map.cost[map.idx(x, y)];
+          if (k === Infinity) continue;
+          squares = Math.round(k);
+          for (const q of G.Terrain.trace(map, from, x, y)) hazard += G.Terrain.danger(enc, q.x, q.y, c.side);
+        }
+        const need = C.moveCost(c, squares);
         if (need > la.ap) continue;
         const dd = Combat.dist({ x, y }, tp);
-        let score = Math.abs(dd - goal) * 10 + need / C.apScale();
+        let score = Math.abs(dd - goal) * 10 + need / C.apScale() + hazard;
         if (need > la.passLeft) score += 4; // lands a pass later
         if (avoid) {
-          // Stay out of every foe's reach if possible.
+          // Stay out of every foe's reach if possible, and out of corners you can't leave.
           for (const fp of foePos) if (Combat.dist({ x, y }, fp) <= avoid) score += 25;
+          const edge = Math.min(x, y, enc.grid.w - 1 - x, enc.grid.h - 1 - y);
+          if (edge === 0) score += 4;
+          if (Math.min(x, enc.grid.w - 1 - x) === 0 && Math.min(y, enc.grid.h - 1 - y) === 0) score += 8;
         }
         if (!best || score < best.score) best = { x, y, dd, need, score };
       }
@@ -488,6 +615,9 @@
       }
     }
     const winds = la.other.filter((o) => o.type === 'windUp' && o.affordable);
+    // Spells cast at squares, foes or friends, when one is worth more than the best blow.
+    const castBest = castChoice(enc, chars, id, la, foes);
+    if (castBest && castBest.v > (best ? best.v : 0)) return castBest.decl;
     if (winds.length && P.windUp > 0 && enc.pass <= 2) {
       let bestW = null;
       for (const w of winds) {

@@ -808,7 +808,7 @@
     const M = CONFIG.magic;
     let mag = option.spell.magnitude;
     if (flags.half) mag = Math.floor(mag / 2);
-    const res = { vec: [0, 0, 0], P: 0, S: 0, B: 0, fire: mag, armored: false, toCON: 0, slashToAttrs: 0, bluntToStamina: 0, bluntToCON: 0, converted: 0, durLoss: 0, mitigated: { P: 0, S: 0, B: 0 }, noBleed: true };
+    const res = { vec: [0, 0, 0], P: 0, S: 0, B: 0, fire: mag, armored: false, toCON: 0, slashToAttrs: 0, bluntToStamina: 0, bluntToCON: 0, converted: 0, durLoss: 0, mitigated: { P: 0, S: 0, B: 0 }, noBleed: true, pierceVital: 0, cutVital: 0, bleedFactor: 1, bleedRounds: CONFIG.bleedRounds };
     const unconscious = target.stamina <= 0;
     let left = mag;
     const el = option.spell.element;
@@ -833,7 +833,7 @@
   function computeLife(attacker, target, option, flags) {
     let mag = option.spell.magnitude;
     if (flags.half) mag = Math.floor(mag / 2);
-    const res = { vec: [0, 0, 0], P: 0, S: 0, B: 0, armored: false, toCON: 0, slashToAttrs: 0, bluntToStamina: 0, bluntToCON: 0, converted: 0, durLoss: 0, mitigated: { P: 0, S: 0, B: 0 }, noBleed: true };
+    const res = { vec: [0, 0, 0], P: 0, S: 0, B: 0, armored: false, toCON: 0, slashToAttrs: 0, bluntToStamina: 0, bluntToCON: 0, converted: 0, durLoss: 0, mitigated: { P: 0, S: 0, B: 0 }, noBleed: true, pierceVital: 0, cutVital: 0, bleedFactor: 1, bleedRounds: CONFIG.bleedRounds };
     if (!C.tireless(target)) res.toCON = Math.floor(mag / 2);
     return res;
   }

@@ -66,22 +66,21 @@
   // The cheapest way from `from` to `to`, step by step (8 directions; walls can't be entered;
   // rough ground costs more). Without a way through, the path ends at the reachable square
   // nearest the goal. `c` (optional) is the walker, for Freedom.
-  function path(enc, from, to, c) {
-    if (!enc.tiles || !Object.keys(enc.tiles).length) return straight(from, to);
+  // Cheapest cost from `from` to every square (Dijkstra; stops early at `to` if given).
+  function costMap(enc, from, c, to) {
     const W = enc.grid.w, H = enc.grid.h;
     const idx = (x, y) => y * W + x;
     const cost = new Array(W * H).fill(Infinity);
     const prev = new Array(W * H).fill(-1);
     const done = new Array(W * H).fill(false);
     cost[idx(from.x, from.y)] = 0;
-    const cheb = (x, y) => Math.max(Math.abs(x - to.x), Math.abs(y - to.y));
     for (;;) {
       let u = -1, best = Infinity;
       for (let i = 0; i < W * H; i++) if (!done[i] && cost[i] < best) { best = cost[i]; u = i; }
       if (u < 0) break;
       done[u] = true;
       const ux = u % W, uy = (u - ux) / W;
-      if (ux === to.x && uy === to.y) break;
+      if (to && ux === to.x && uy === to.y) break;
       for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
         if (!dx && !dy) continue;
         const nx = ux + dx, ny = uy + dy;
@@ -92,6 +91,22 @@
         if (nc < cost[v]) { cost[v] = nc; prev[v] = u; }
       }
     }
+    return { cost, prev, W, idx };
+  }
+
+  // The squares of the cheapest way to (x, y) in a cost map.
+  function trace(map, from, x, y) {
+    const out = [];
+    for (let v = map.idx(x, y); v !== map.idx(from.x, from.y) && v >= 0; v = map.prev[v]) out.unshift({ x: v % map.W, y: (v - (v % map.W)) / map.W });
+    return out;
+  }
+
+  function path(enc, from, to, c) {
+    if (!enc.tiles || !Object.keys(enc.tiles).length) return straight(from, to);
+    const map = costMap(enc, from, c, to);
+    const { cost, idx } = map;
+    const W = enc.grid.w, H = enc.grid.h;
+    const cheb = (x, y) => Math.max(Math.abs(x - to.x), Math.abs(y - to.y));
     let end = idx(to.x, to.y);
     if (cost[end] === Infinity) {
       // No way through: as close as can be reached.
@@ -102,9 +117,7 @@
         if (d < bestD || (d === bestD && cost[i] < cost[end])) { bestD = d; end = i; }
       }
     }
-    const out = [];
-    for (let v = end; v !== idx(from.x, from.y) && v >= 0; v = prev[v]) out.unshift({ x: v % W, y: (v - (v % W)) / W });
-    return out;
+    return trace(map, from, end % W, (end - (end % W)) / W);
   }
 
   // Open ground: diagonals first, then straight.
@@ -246,5 +259,20 @@
     return out;
   }
 
-  G.Terrain = { tiles, at, add, remove, has, passable, stepCost, path, pathCost, between, lineCheck, visible, enter, endRound, all, inGrid };
+  // How much a side dislikes stepping onto (x, y): pits, slick ice, hazards it can see.
+  function danger(enc, x, y, side) {
+    let d = 0;
+    for (const f of at(enc, x, y)) {
+      if (!visible(f, side)) continue;
+      const t = def(f);
+      if (t.rune && f.side !== side) d += 25;
+      if (t.pit) d += 30;
+      if (t.slick) d += 8;
+      if (t.onEnter) d += 10;
+      if (t.perRound) d += 6;
+    }
+    return d;
+  }
+
+  G.Terrain = { costMap, trace, danger, tiles, at, add, remove, has, passable, stepCost, path, pathCost, between, lineCheck, visible, enter, endRound, all, inGrid };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});
