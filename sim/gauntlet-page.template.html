@@ -10,7 +10,7 @@
 :root {
   --bg: #e7e9e4; --surface: #f5f6f2; --surface-2: #eceee9; --ink: #1b2220; --muted: #59645f; --line: #c6ccc5;
   --accent: #2b6a5c; --brass: #8d6d22;
-  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; --s7: #6250d6; --base: #8b938e;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; --s7: #6250d6; --s8: #e34948; --base: #8b938e;
   --t-wall: #6b665c; --t-pit: #3b342c; --t-rough: #cdbf9f; --t-dark: #2b2d3a; --t-hot: #e2884d; --t-trap: #b0352f; --t-party: #2a78d6; --t-foe: #b0352f;
   --font-display: 'Grenze', 'Palatino Linotype', Palatino, Georgia, serif;
   --font-body: 'Alegreya Sans', 'Segoe UI', system-ui, sans-serif;
@@ -20,7 +20,7 @@
   :root:not([data-theme="light"]) {
     --bg: #141918; --surface: #1d2422; --surface-2: #232b29; --ink: #e2e6e1; --muted: #98a49f; --line: #33403c;
     --accent: #5db09d; --brass: #c7a24f;
-    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --base: #7d8783;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767; --base: #7d8783;
     --t-wall: #8a8475; --t-pit: #0c0b09; --t-rough: #6c6248; --t-dark: #3d4054; --t-hot: #c4642c; --t-trap: #e57a72; --t-party: #3987e5; --t-foe: #e57a72;
     color-scheme: dark;
   }
@@ -28,7 +28,7 @@
 :root[data-theme="dark"] {
   --bg: #141918; --surface: #1d2422; --surface-2: #232b29; --ink: #e2e6e1; --muted: #98a49f; --line: #33403c;
   --accent: #5db09d; --brass: #c7a24f;
-  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --base: #7d8783;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767; --base: #7d8783;
   --t-wall: #8a8475; --t-pit: #0c0b09; --t-rough: #6c6248; --t-dark: #3d4054; --t-hot: #c4642c; --t-trap: #e57a72; --t-party: #3987e5; --t-foe: #e57a72;
   color-scheme: dark;
 }
@@ -153,7 +153,7 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 const R = DATA.rooms, M = DATA.members;
 const short = (m) => M[m].label.split(' (')[0];
 // Color follows the lineup across the page.
-const COLOR = { core: 'var(--base)', mage: 'var(--s1)', enchanter: 'var(--s2)', grappler: 'var(--s3)', duelist: 'var(--s4)', noKnight: 'var(--s5)', noTwoHander: 'var(--s6)', noArcher: 'var(--s7)' };
+const COLOR = { core: 'var(--base)', mage: 'var(--s1)', enchanter: 'var(--s2)', grappler: 'var(--s3)', duelist: 'var(--s4)', noKnight: 'var(--s5)', noTwoHander: 'var(--s6)', noArcher: 'var(--s7)', cleric: 'var(--s8)' };
 const store = { get: (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } };
 let mode = DATA.modes[store.get('gauntlet-mode')] ? store.get('gauntlet-mode') : Object.keys(DATA.modes)[0];
 let cur = null;
@@ -288,7 +288,7 @@ function render() {
   $('curvesTitle').textContent = reset() ? 'How each room goes at full strength' : 'How far each party gets';
   $('curvesNote').textContent = reset() ? 'Win rate in each room for a fresh, full-strength party.' : `Share of runs that cleared at least this many rooms. The party camps (a long rest) after room ${DATA.campAfter}.`;
   $('curves').innerHTML = '';
-  const fourth = ['core', 'mage', 'enchanter', 'grappler', 'duelist'].filter((k) => L[k]);
+  const fourth = ['core', 'mage', 'enchanter', 'cleric', 'grappler', 'duelist'].filter((k) => L[k]);
   const ablate = ['mage', 'noKnight', 'noTwoHander', 'noArcher'].filter((k) => L[k]);
   if (fourth.length) $('curves').appendChild(curveChart('Who fills the fourth slot', fourth, 'core', L));
   if (ablate.length > 1) $('curves').appendChild(curveChart('The mage party, one member short', ablate, null, L));

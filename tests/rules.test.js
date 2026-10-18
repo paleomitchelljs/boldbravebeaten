@@ -1347,3 +1347,35 @@ test('phase 3: mend heals far better than in a fight; prepared wards take hold w
   assert.ok(w && w.kind === 'magic' && w.rounds === 6);
   assert.strictEqual(m.prepared.length, 0);
 });
+
+test('Life heals: Bless mends one (bleeding, CON, stamina; wakes the downed), Burst mends all in the area', async () => {
+  const m = mage('Cleric', ['life']);
+  const ally = fighter('Ally');
+  ally.side = m.side;
+  ally.at = { x: 2, y: 2 };
+  C.damageAttr(ally, 'CON', 2);
+  ally.bleeds.push({ remaining: 4, rounds: 3 }, { remaining: 3, rounds: 3, poison: true });
+  ally.stamina = 0;
+  ally.status.unconscious = true;
+  const maxBefore = C.maxStamina(ally);
+  const { o } = await castAt(m, [ally], 'bless+life', { target: ally.id });
+  const H = B.CONFIG.magic.heal;
+  assert.equal(ally.damage.CON, 1, 'one CON back');
+  assert.deepEqual(ally.bleeds.map((b) => !!b.poison), [true], 'bleeding stops, poison stays');
+  // A point of CON back raises max stamina, and that comes back too (Character.healAttr).
+  assert.equal(ally.stamina, (C.maxStamina(ally) - maxBefore) + H.stamina + H.staminaPerMag * o.spell.magnitude);
+  assert.equal(ally.status.unconscious, false, 'the downed come to');
+  assert.ok(B.Conditions.has(ally, 'innervated'));
+  // A burst mends friend and foe alike in its area, at a share of the stamina.
+  const foe = fighter('Foe');
+  foe.stamina = 1;
+  foe.at = { x: 5, y: 2 };
+  const friend = fighter('Friend');
+  friend.side = m.side;
+  friend.stamina = 1;
+  friend.at = { x: 5, y: 3 };
+  const r = await castAt(m, [foe, friend], 'burst+life', { at: { x: 5, y: 2 } });
+  const gain = Math.round((H.stamina + H.staminaPerMag * r.o.spell.magnitude) * H.areaShare);
+  assert.equal(foe.stamina, 1 + gain);
+  assert.equal(friend.stamina, 1 + gain);
+});

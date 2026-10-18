@@ -335,6 +335,22 @@
     }
   }
 
+  // Life mends a living body: bleeding stops (poison doesn't), condMag CON back, and stamina
+  // back by the spell's magnitude (share < 1 for a burst), waking the unconscious. Returns a line.
+  function mend(t, s, share) {
+    const H = CONFIG.magic.heal;
+    const stopped = t.bleeds.some((b) => !b.poison);
+    t.bleeds = t.bleeds.filter((b) => b.poison);
+    const con = Math.min(s.condMag, t.damage.CON || 0);
+    if (con) C().healAttr(t, 'CON', con);
+    const before = t.stamina;
+    t.stamina = Math.min(C().maxStamina(t), t.stamina + Math.round((H.stamina + H.staminaPerMag * s.magnitude) * share));
+    const woke = t.status.unconscious && !t.status.dead && t.stamina > 0;
+    if (woke) t.status.unconscious = false;
+    const bits = [stopped ? 'bleeding stops' : null, con ? `+${con} CON` : null, t.stamina > before ? `+${t.stamina - before} stamina` : null].filter(Boolean);
+    return `${t.name}: ${bits.length ? bits.join(', ') : 'nothing to mend'}${woke ? `; ${t.name} comes to` : ''}.`;
+  }
+
   // A conjured creature: a fresh character on the caster's side for a few rounds.
   function conjure(enc, chars, caster, n, at, spell) {
     const N = W()[n];
@@ -379,7 +395,12 @@
     const N = W()[s.noun];
     switch (s.shape) {
       case 'area': {
-        log(`${a.name} casts ${o.label} at (${at.x + 1}, ${at.y + 1}).`, 'hit');
+        log(`${a.name} casts ${o.label} at (${at.x + 1}, ${at.y + 1}).`, N.heals ? 'defend' : 'hit');
+        if (N.heals) {
+          // A burst of life mends everyone living in it, friend or foe; the made feel nothing.
+          for (const id of within(enc, chars, at.x, at.y, s.radius)) if (!C().tireless(chars[id])) log(mend(chars[id], s, CONFIG.magic.heal.areaShare), 'defend');
+          return;
+        }
         for (const id of within(enc, chars, at.x, at.y, s.radius)) {
           const t = chars[id];
           const k = await contest(roller, a, t, 'avoid', o.label);
@@ -443,12 +464,7 @@
         const t = chars[d.target];
         if (!t || t.status.dead) return log(`${a.name}'s ${o.label} fizzles.`, 'fizzle');
         log(`${a.name} casts ${o.label} on ${t === a ? 'themself' : t.name}.`, 'defend');
-        if (N.heals) {
-          t.bleeds = t.bleeds.filter((b) => b.poison);
-          const healed = Math.min(s.condMag, t.damage.CON || 0);
-          if (healed) C().healAttr(t, 'CON', healed);
-          log(`${t.name}'s wounds close${healed ? ` (+${healed} CON)` : ''}.`, 'defend');
-        }
+        if (N.heals) log(mend(t, s, 1), 'defend');
         for (const k of s.nouns || [s.noun]) {
           const boon = W()[k].boon;
           G.Conditions.add(t, boon, { rounds: s.rounds, mag: s.condMag, src: a.id });
@@ -502,5 +518,5 @@
     return lines;
   }
 
-  G.Magic = { wardAgainst, maxSP, availableSP, spellOptions, knows, combines, backlash, makeOption, contest, afflict, onHit, elementBlow, afterHit, springRune, resolveCast, lineAcross, endRound, push };
+  G.Magic = { mend, wardAgainst, maxSP, availableSP, spellOptions, knows, combines, backlash, makeOption, contest, afflict, onHit, elementBlow, afterHit, springRune, resolveCast, lineAcross, endRound, push };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

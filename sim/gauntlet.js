@@ -187,6 +187,7 @@ const MEMBERS = {
   archer: { key: 'light/archery', label: 'Archer (leather, longbow)' },
   mage: { key: 'unarmored/magic', label: 'Mage (fire, earth, vine, force)' },
   enchanter: { key: 'unarmored/enchanter', label: 'Enchanter (mind spells)' },
+  cleric: { key: 'medium/cleric', label: 'Cleric (mail, mace, Life)' },
   grappler: { key: 'light/grappler', label: 'Grappler (leather)' },
   duelist: { key: 'light/duelist', label: 'Duelist (leather, rapier and dagger)' },
 };
@@ -195,6 +196,7 @@ const LINEUPS = {
   core: { label: 'Core trio', members: CORE },
   mage: { label: '+ Mage', members: CORE.concat('mage') },
   enchanter: { label: '+ Enchanter', members: CORE.concat('enchanter') },
+  cleric: { label: '+ Cleric', members: CORE.concat('cleric') },
   grappler: { label: '+ Grappler', members: CORE.concat('grappler') },
   duelist: { label: '+ Duelist', members: CORE.concat('duelist') },
   noKnight: { label: 'Mage party, no knight', members: ['twoHander', 'archer', 'mage'] },
@@ -204,7 +206,7 @@ const LINEUPS = {
 // Marginal value of a member: [with, without].
 const MARGINAL = {
   knight: ['mage', 'noKnight'], twoHander: ['mage', 'noTwoHander'], archer: ['mage', 'noArcher'],
-  mage: ['mage', 'core'], enchanter: ['enchanter', 'core'], grappler: ['grappler', 'core'], duelist: ['duelist', 'core'],
+  mage: ['mage', 'core'], enchanter: ['enchanter', 'core'], cleric: ['cleric', 'core'], grappler: ['grappler', 'core'], duelist: ['duelist', 'core'],
 };
 const ONLY = arg('only', null);
 const RUN = ONLY ? Object.fromEntries(Object.entries(LINEUPS).filter(([k]) => ONLY.split(',').includes(k))) : LINEUPS;

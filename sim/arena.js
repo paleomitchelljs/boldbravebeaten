@@ -65,6 +65,13 @@ const STRATEGY = {
     weapon: null, shield: null, nouns: ['dream', 'rage', 'calm', 'fear', 'force'],
     feats: ['casting', 'verb_hex', 'verb_beguile', 'verb_ward', 'casting', 'word_doubling', 'verb_blink', 'control', 'quick_casting'],
   },
+  cleric: {
+    // A healer (Life): mends and bursts of life for friends, a withering or searing bolt (Light
+    // burns the undead) and a ward of force. Mail and a mace; one hand free to cast.
+    label: 'Cleric', attrs: { STR: 5, CON: 6, DEX: 4, SPD: 4, INT: 7, WIL: 5, WIS: 6, CHA: 3 },
+    weapon: 'flangedMace', shield: null, nouns: ['life', 'light', 'force'],
+    feats: ['casting', 'verb_bless', 'casting', 'verb_launch', 'verb_burst', 'verb_strike', 'verb_ward', 'control', 'quick_casting'],
+  },
   grappler: {
     label: 'Grappler', attrs: { STR: 7, CON: 6, DEX: 6, SPD: 5, INT: 3, WIL: 4, WIS: 4, CHA: 4 },
     weapon: null, shield: null, policy: { grappler: true },
@@ -117,7 +124,7 @@ function makeCombatant(armorKey, stratKey, side) {
 
 // Magic users are back with the magic overhaul (they were left out while magic was a stub).
 // Pass --no-magic to leave them out.
-if (argv.includes('--no-magic')) { delete STRATEGY.magic; delete STRATEGY.enchanter; }
+if (argv.includes('--no-magic')) { delete STRATEGY.magic; delete STRATEGY.enchanter; delete STRATEGY.cleric; }
 
 const KEYS = [];
 for (const a of Object.keys(ARMOR)) for (const s of Object.keys(STRATEGY)) KEYS.push(a + '/' + s);
