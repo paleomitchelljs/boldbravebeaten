@@ -1,5 +1,36 @@
 # Simulation findings
 
+## Magic overhaul, phase 1 (with wards, blink, bait and read intent)
+
+The arena mage is unarmored or armored like everyone else. It knows Fire, Earth, Vine and Force;
+its verbs are Strike, Ward, Launch, Build and Blink, and it has Casting II.
+
+- **One-on-one, the mage is a middling style.** It averages 42% in the open field and 39% in
+  close quarters, against 48–60% for the melee styles. It beats archers 80% in the open and 57%
+  up close: its ward of force soaks arrows. It loses to sword and shield (18–23%), whose shields
+  block bolts.
+- **In a party, magic is a force multiplier.** Compare a party with a mage in place of the
+  grappler (knight, mail two-hander, archer, mage) with the veterans. Wins in the open field / the
+  cramped room:
+
+  | Encounter | Veterans | With a mage |
+  |---|---|---|
+  | Kobold band | 53 / 45% | 78 / 55% |
+  | Froglok patrol | 45 / 50% | 73 / 70% |
+  | Wolf pack | 100 / 88% | 100 / 100% |
+  | Troll chieftain | 65 / 57% | 85 / 50% |
+  | Skeleton squad | 23 / 20% | 30 / 48% |
+  | Zombie horde | 55 / 15% | 15 / 28% |
+
+  Deaths per fight drop by about half against the bands. The zombie horde in the open is the
+  exception, and I haven't diagnosed it.
+- **New actions in use** (240 sample duels): 342 reads of intent, 74 wards, 72 blinks, 28 walls,
+  12 baits. Read intent is used almost every round a melee fighter is engaged, which may be too
+  automatic for 2 AP. Bait is rare because the AI only baits a foe whose guard it can already see.
+- **Engine changes behind this:** square-by-square movement around walls, line of sight for
+  missiles and reach, timed conditions, and casting at 2 base AP (bolts at 3 cost a third of a
+  sword thrust's value).
+
 ## Opposed parries and dodges, parrying dagger, natural weapons from physics
 
 - **Parry and dodge are opposed rolls.** Defender d10 + Training + ⌊(DEX + SPD)/4⌋ (armor-reduced)
