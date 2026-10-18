@@ -35,7 +35,10 @@ the arena results and the queued work.
 
 Balance is differentiation, not parity, as in classic EverQuest: a style can be hopeless in one
 setting (solo, a duel) and vital in another (a group, a crowd). Hard counters between styles are
-fine. Judge sims by whether each style has a setting where it matters, not by even win rates.
+fine. Combat is one setting among several: the end state has social and stealth scenarios too.
+Every style needs a use somewhere, not necessarily in a fight; if every style were equally good
+at direct combat, that would be the opposite of differentiation. Judge sims by whether each style
+has a setting where it matters, not by even win rates.
 
 ## Terminology (the user's standard; apply it everywhere)
 
