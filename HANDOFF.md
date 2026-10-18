@@ -291,6 +291,17 @@ spells' per-round resistance (durations only); social system proper.
   and rules notes sit behind ⓘ pop-ups. `tests/ui-battle.js` plays it in Chromium.
 - Saved battles from before round 4 resume at the next round.
 
+## The gauntlet (baseline for comparisons)
+
+`node sim/gauntlet.js [--n 100]` runs a party through eight rooms in order (Gatehouse, Kennels,
+Trapped corridor, Troll den, Cistern, Kobold warren, Crypt, Chieftain's hall). Wounds, spell
+points, arrows and shields carry from room to room; between rooms there is a breather only. The
+lineups are the core trio, the trio plus each fourth member, and the mage party minus each core
+member, all on paired seeds. Then run `node sim/gauntlet-page.js`, which writes
+`sim/results/gauntlet/report.html` (the gauntlet artifact). Rooms are maps in `ROOMS`, with
+legend characters for tiles and traps; add a room or a hazard there. `enc.onHit` (set by the sim)
+credits wounds and knockdowns.
+
 ## Item system proposal (for the user to approve)
 
 - Material table, replacing SHIELD_MATERIALS. Each material has hardness (used for shield breaks

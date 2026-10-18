@@ -1,5 +1,40 @@
 # Simulation findings
 
+## The gauntlet: an eight-room crawl with attrition (`sim/gauntlet.js`)
+
+A level-5 party fights eight rooms in order, from goblins to the troll chieftain. Rooms have
+pillars, pits, rough ground, darkness, hot coals and hidden trap runes. Between rooms there is
+only a breather: wounds, spell points, arrows and shield damage carry on. A core trio (knight,
+mail two-hander, archer) runs alone and with each fourth member. The mage party also runs with
+each core member left out. There are 100 runs per lineup, with the same seeds for every lineup.
+
+| Lineup | Mean rooms cleared | Clears room 3 | Clears room 5 |
+|---|---|---|---|
+| Core trio | 1.90 | 17% | 1% |
+| + Enchanter | 2.18 | 25% | 2% |
+| + Mage | 2.78 | 49% | 7% |
+| + Grappler | 3.07 | 53% | 21% |
+| + Duelist | 3.84 | 84% | 29% |
+
+- **No lineup gets far.** The best clears 3.8 of 8 rooms on average, and nobody clears the
+  whole run. Rooms 6–8 (kobolds, skeletons, the chieftain) are reached in under 10% of runs, so
+  they are barely tested yet. The cause is attrition: CON damage and bleeding carry from room to
+  room with nothing to heal them.
+- **Marginal value, paired on seeds (rooms cleared with the member minus without, ± one standard
+  error):**
+  - duelist +1.94 ± 0.15 and two-hander +1.73 ± 0.14;
+  - grappler +1.17, archer +1.03, knight +0.96 and mage +0.88 (each ± about 0.17);
+  - enchanter +0.28 ± 0.11.
+  Every member helps. The enchanter helps least, but its gain is still about 2.5 standard errors
+  above zero.
+- **Damage share undersells support.** The mage deals only 6% of the party's wounds yet adds 0.88
+  rooms, so its value comes from walls, wards and roots. It also dies in 94% of runs, most often
+  first, in the kennels. The unarmored casters are the ones the foes reach, and nothing in the
+  rules lets the knight protect them. The knight takes 1–2 wounds a run and dies in 9–43% of
+  runs: its plate protects itself, not the party.
+- **The two-hander does most of the killing** in every lineup without the duelist, with 56–70% of
+  the wounds dealt. Removing it drops the mage party from 2.78 rooms to 1.05.
+
 ## Magic phases 2 and 3 (mind, body, venom, light and shadow; rituals)
 
 A new arena style, the **Enchanter**, is a mind mage: Hex and Beguile with Dream, Rage, Calm and
