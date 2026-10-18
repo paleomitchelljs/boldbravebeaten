@@ -1,5 +1,36 @@
 # Simulation findings
 
+## The death knight as a recurring foe (`node sim/dk-scaling.js`, page: `sim/dk-scaling-page.js`)
+
+The death knight was run at levels 5, 10, 15 and 20, with a martial or caster build and four
+cumulative gear tiers, against the core trio plus a mage, cleric, duelist or grappler at party
+levels 2, 6 and 15. There were 30 fights per cell. "Consistent" means he wins at least 80%
+against every lineup.
+
+| His level | vs early (L2) | vs mid (L6) | vs high (L15) |
+|---|---|---|---|
+| 5 | caster, legendary plate and adamant shield | caster, full gear | none |
+| 10 | caster, legendary plate and adamant shield | caster, full gear | none |
+| 15 | martial, legendary plate and adamant shield | caster, full gear | none |
+| 20 | caster, basic gear | caster, full gear | none |
+
+- **Gear matters more than his level.** His attributes are at the human cap throughout, so level
+  only adds feats.
+  - Against mid parties, the sash and the aura take him from 30–73% to 97–98% at every level.
+  - A level-5 caster in full gear beats level-6 parties 98% of the time.
+- **Magic matters at every level.** The martial build never beats mid parties consistently: 60%
+  at best, even at level 20 in full gear.
+- **High parties beat every version, and the duelist and grappler are why.**
+  - At level 20 in full gear he beats the mage and cleric lineups 93–97% of the time, but the
+    grappler lineup only 40% and the duelist lineup 17%.
+  - The duelist's speed and the grappler's hold (plate is easy to grab) get past his plate and
+    shield.
+- **For a recurring villain:**
+  - Early parties: a level-5 to level-10 caster with legendary plate and the adamant shield.
+  - Mid parties: the same with the sash and the aura.
+  - High parties: he needs a counter to grapplers and duelists, which no feat or item he has
+    gives him.
+
 ## Weapon strain, impact and force parries (party arena at level 5; arena baseline `arena-r13`)
 
 - **Duels barely moved.** Strain was calibrated so the arena builds keep their speeds; every
