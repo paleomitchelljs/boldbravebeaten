@@ -1,5 +1,26 @@
 # Simulation findings
 
+## Magic phases 2 and 3 (mind, body, venom, light and shadow; rituals)
+
+A new arena style, the **Enchanter**, is a mind mage: Hex and Beguile with Dream, Rage, Calm and
+Fear, a Force ward and Blink, with Word Doubling (Dream + Rage confuses). Rituals are out of
+combat and not simulated. The baseline is the phase 1 run (`sim/results/arena-r10`).
+
+- **The enchanter is the weakest duelist in the arena.** It wins 24% on average in the open
+  field and 27% in close quarters. It wins no matchup on either map, losing 6–10% to sword and
+  shield and to rapier and dagger. Against archers it is about even (48% open, 41% close). During
+  development it beat archers about 95%. I haven't diagnosed the drop; my best guess is that the
+  later changes to read intent and the ward pool cost it its edge. Mind spells use fixed durations
+  with no saves each round, so this is a draft number.
+- **The other styles barely moved.** Head to head, every matchup among the six old styles is
+  within about 5 points of phase 1, which is sampling noise. The armor-by-style averages rose
+  2–9 points for most styles because they all get to fight the weak enchanter.
+- **Parties: no clear change.** The party with a mage (which still runs the phase 1 mage) and
+  the veterans are within about 10 points of phase 1 everywhere. Each cell has 40 fights, so a
+  10-point gap is under two standard errors. Kobold band, open field: veterans 53 → 48%, mage
+  party 78 → 63%. Froglok patrol, open field: veterans 45 → 57%, mage party 73 → 70%. The
+  kobold drop for the mage party is the largest, and it is still within noise.
+
 ## Magic overhaul, phase 1 (with wards, blink, bait and read intent)
 
 The arena mage is unarmored or armored like everyone else. It knows Fire, Earth, Vine and Force;
