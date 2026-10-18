@@ -1,0 +1,180 @@
+<title>Death Knight Scaling</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Grenze:wght@500;700&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a recurring villain's power curve. First the answer (what he needs against each party
+   level), then the evidence as heatmaps per party level, then the method.
+   Same tokens as the arena, monster and gauntlet pages. */
+:root {
+  --bg: #e7e9e4; --surface: #f5f6f2; --surface-2: #eceee9; --ink: #1b2220; --muted: #59645f; --line: #c6ccc5;
+  --accent: #2b6a5c; --brass: #8d6d22; --heat: #1c5cab; --none: #b0352f;
+  --font-display: 'Grenze', 'Palatino Linotype', Palatino, Georgia, serif;
+  --font-body: 'Alegreya Sans', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141918; --surface: #1d2422; --surface-2: #232b29; --ink: #e2e6e1; --muted: #98a49f; --line: #33403c;
+    --accent: #5db09d; --brass: #c7a24f; --heat: #3987e5; --none: #e57a72;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141918; --surface: #1d2422; --surface-2: #232b29; --ink: #e2e6e1; --muted: #98a49f; --line: #33403c;
+  --accent: #5db09d; --brass: #c7a24f; --heat: #3987e5; --none: #e57a72;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 1rem; line-height: 1.5; margin: 0; }
+main { max-width: 1120px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 34px; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 700; line-height: 1.1; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(2rem, 5vw, 2.7rem); }
+h2 { font-size: 1.55rem; }
+h3 { font-size: 1.2rem; }
+p { margin: 0; max-width: 72ch; }
+.muted { color: var(--muted); }
+.small { font-size: 0.88rem; }
+.eyebrow { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; color: var(--brass); }
+section { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.head { display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--line); padding-bottom: 22px; }
+.lead { font-size: 1.12rem; max-width: 70ch; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; position: relative; }
+.scroll { overflow-x: auto; }
+table.need { border-collapse: separate; border-spacing: 6px; width: 100%; }
+table.need th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 700; text-align: left; padding: 4px 6px; }
+table.need th[scope="row"] { font-family: var(--font-display); font-size: 1.05rem; text-transform: none; letter-spacing: 0; color: var(--ink); white-space: nowrap; }
+table.need td { background: var(--surface-2); border-radius: 6px; padding: 10px 12px; vertical-align: top; min-width: 180px; }
+table.need td.none { background: transparent; border: 1px dashed var(--line); color: var(--muted); }
+.chip { display: inline-block; font-size: 0.76rem; font-weight: 700; padding: 1px 8px; border-radius: 99px; border: 1px solid var(--line); background: var(--surface); margin: 0 4px 4px 0; white-space: nowrap; }
+.chip.b { color: var(--accent); border-color: var(--accent); }
+.chip.g { color: var(--brass); border-color: var(--brass); }
+.worst { font-family: var(--font-mono); font-size: 0.82rem; color: var(--muted); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.seg button { font: inherit; font-weight: 700; border: 0; background: none; color: var(--muted); padding: 7px 16px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--surface); }
+table.heat { border-collapse: separate; border-spacing: 3px; width: 100%; table-layout: fixed; min-width: 620px; }
+table.heat col.rowhead { width: 150px; }
+table.heat th { font-size: 0.74rem; color: var(--muted); font-weight: 600; padding: 4px 6px; text-align: center; }
+table.heat th[scope="row"] { text-align: left; color: var(--ink); white-space: nowrap; font-size: 0.86rem; }
+table.heat td { height: 52px; min-width: 96px; border-radius: 4px; text-align: center; font-family: var(--font-mono); font-variant-numeric: tabular-nums; cursor: default; }
+table.heat td b { display: block; font-size: 1rem; }
+table.heat td small { font-size: 0.72rem; opacity: 0.85; }
+table.heat td.ok { outline: 2px solid var(--ink); outline-offset: -2px; }
+table.heat tr.lvl th[scope="row"] { padding-top: 10px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; font-size: 0.84rem; color: var(--muted); }
+.ramp { display: inline-block; width: 140px; height: 10px; border-radius: 3px; background: linear-gradient(90deg, var(--surface-2), var(--heat)); vertical-align: middle; }
+.okkey { display: inline-block; width: 14px; height: 14px; border-radius: 3px; outline: 2px solid var(--ink); outline-offset: -2px; vertical-align: middle; }
+.tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; font-size: 0.82rem; box-shadow: 0 4px 14px rgb(0 0 0 / 0.14); z-index: 5; min-width: 190px; }
+.tip b { font-family: var(--font-display); font-size: 1rem; }
+.tip .row { display: flex; justify-content: space-between; gap: 12px; }
+.tip .num { font-family: var(--font-mono); }
+ul.plain { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 4px; max-width: 80ch; }
+</style>
+
+<main>
+  <header class="head">
+    <span class="eyebrow">Bold Brave Beaten · simulation</span>
+    <h1>Death Knight Scaling</h1>
+    <p class="lead" id="lead"></p>
+    <p class="small muted" id="meta"></p>
+  </header>
+
+  <section>
+    <h2>What he needs to win</h2>
+    <p class="muted" id="needNote"></p>
+    <div class="card scroll" id="need"></div>
+  </section>
+
+  <section>
+    <h2>Every combination</h2>
+    <div class="legend"><span>Party</span><div class="seg" id="party" role="group" aria-label="Party level"></div></div>
+    <div class="legend"><span>His win rate, averaged over the four lineups</span><span>0%</span><span class="ramp"></span><span>100%</span><span><span class="okkey"></span> consistent (≥ 80% against every lineup)</span><span>Small number: his worst lineup</span></div>
+    <div class="card scroll" id="heat"></div>
+  </section>
+
+  <section>
+    <h2>How it was run</h2>
+    <ul class="plain" id="how"></ul>
+  </section>
+</main>
+
+<script>
+const D = /*__DATA__*/null;
+const $ = (id) => document.getElementById(id);
+const pct = (x) => Math.round(100 * x) + '%';
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const PL = Object.keys(D.partyLevels).map(Number).sort((a, b) => a - b);
+const BUILDS = Object.keys(D.builds);
+const cell = (dl, pl, b, t) => D.rows.filter((r) => r.dk === dl && r.party === pl && r.build === b && r.tier === t);
+const avg = (rs) => rs.reduce((s, r) => s + r.dkWin, 0) / rs.length;
+const worst = (rs) => Math.min(...rs.map((r) => r.dkWin));
+const store = { get: (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } };
+
+// ---- Lead ------------------------------------------------------------------------------
+{
+  const firstFor = (pl) => D.dkLevels.find((dl) => D.cheapest[dl + '|' + pl]);
+  const parts = PL.map((pl) => {
+    const dl = firstFor(pl);
+    if (dl == null) return `no version tested beats ${D.partyLevels[pl].label.replace(/^\w/, (m) => m.toLowerCase())} parties consistently`;
+    const c = D.cheapest[dl + '|' + pl];
+    return `${D.partyLevels[pl].label.replace(/^\w/, (m) => m.toLowerCase())} parties from level ${dl} (${D.builds[c.build].label.toLowerCase()}, ${D.gear[c.tier].label.toLowerCase()})`;
+  });
+  $('lead').textContent = `He beats ${parts.join('; ')}.`;
+  $('meta').textContent = `${D.n} fights per cell · ${D.rows.length} cells · generated ${D.generated.slice(0, 10)}`;
+  $('needNote').textContent = `For each of his levels and each party level: the least gear (and the martial build before the caster) with which he wins at least ${pct(D.consistent)} of fights against every one of the four lineups.`;
+}
+
+// ---- What he needs ----------------------------------------------------------------------
+$('need').innerHTML = `<table class="need"><thead><tr><th>His level</th>${PL.map((pl) => `<th>Against ${esc(D.partyLevels[pl].label)}</th>`).join('')}</tr></thead><tbody>
+  ${D.dkLevels.map((dl) => `<tr><th scope="row">Level ${dl}</th>${PL.map((pl) => {
+    const c = D.cheapest[dl + '|' + pl];
+    if (!c) {
+      const best = BUILDS.flatMap((b) => D.gear.map((_, t) => ({ b, t, w: worst(cell(dl, pl, b, t)), a: avg(cell(dl, pl, b, t)) }))).sort((x, y) => y.a - x.a)[0];
+      return `<td class="none">Not consistently.<br><span class="small">Best: ${esc(D.builds[best.b].label.toLowerCase())}, ${esc(D.gear[best.t].label.toLowerCase())} — ${pct(best.a)} on average, ${pct(best.w)} worst.</span></td>`;
+    }
+    return `<td><span class="chip b">${esc(D.builds[c.build].label)}</span><span class="chip g">${esc(D.gear[c.tier].label)}</span><div class="worst">worst lineup ${pct(c.worst)}</div></td>`;
+  }).join('')}</tr>`).join('')}</tbody></table>`;
+
+// ---- Heatmaps ------------------------------------------------------------------------
+let party = PL.includes(Number(store.get('dks-party'))) ? Number(store.get('dks-party')) : PL[0];
+const tip = document.createElement('div');
+tip.className = 'tip'; tip.hidden = true;
+$('heat').appendChild(tip);
+function drawHeat() {
+  $('party').innerHTML = PL.map((pl) => `<button type="button" data-k="${pl}" aria-pressed="${pl === party}">${esc(D.partyLevels[pl].label)}</button>`).join('');
+  $('party').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { party = Number(b.dataset.k); store.set('dks-party', party); drawHeat(); }));
+  const rows = D.dkLevels.flatMap((dl) => BUILDS.map((b, i) => ({ dl, b, first: i === 0 })));
+  const table = `<table class="heat"><colgroup><col class="rowhead">${D.gear.map(() => '<col>').join('')}</colgroup><thead><tr><th></th>${D.gear.map((g, t) => `<th>${t}: ${esc(g.label)}</th>`).join('')}</tr></thead><tbody>
+    ${rows.map(({ dl, b, first }) => `<tr class="${first ? 'lvl' : ''}"><th scope="row">L${dl} · ${esc(D.builds[b].label)}</th>${D.gear.map((_, t) => {
+      const rs = cell(dl, party, b, t);
+      if (!rs.length) return '<td>—</td>';
+      const a = avg(rs), w = worst(rs);
+      return `<td data-dl="${dl}" data-b="${b}" data-t="${t}" class="${w >= D.consistent ? 'ok' : ''}" style="background:color-mix(in srgb, var(--heat) ${Math.round(a * 90)}%, var(--surface-2));color:${a > 0.55 ? 'var(--surface)' : 'var(--ink)'}"><b>${pct(a)}</b><small>${pct(w)}</small></td>`;
+    }).join('')}</tr>`).join('')}</tbody></table>`;
+  $('heat').querySelectorAll('table').forEach((t) => t.remove());
+  $('heat').insertAdjacentHTML('afterbegin', table);
+  $('heat').querySelectorAll('td[data-dl]').forEach((td) => {
+    td.addEventListener('pointermove', (e) => {
+      const rs = cell(Number(td.dataset.dl), party, td.dataset.b, Number(td.dataset.t));
+      tip.innerHTML = `<b>Level ${td.dataset.dl}, ${esc(D.builds[td.dataset.b].label.toLowerCase())}</b><div class="small muted">${esc(D.gear[td.dataset.t].label)} · vs ${esc(D.partyLevels[party].label)}</div>` +
+        rs.map((r) => `<div class="row"><span>${esc(D.lineups[r.lineup])}</span><span class="num">${pct(r.dkWin)} · ${r.partyDeaths.toFixed(1)} dead</span></div>`).join('');
+      tip.hidden = false;
+      const box = $('heat').getBoundingClientRect();
+      tip.style.left = Math.min(box.width - tip.offsetWidth - 8, e.clientX - box.left + 14) + 'px';
+      tip.style.top = (e.clientY - box.top + 14) + 'px';
+    });
+    td.addEventListener('pointerleave', () => { tip.hidden = true; });
+  });
+}
+drawHeat();
+
+$('how').innerHTML = [
+  'His attributes are the full death knight\'s throughout (the human cap: STR, CON and WIL 10); his level sets only how many feats he has (3 + one a level).',
+  'Martial build: strength, toughness, plate, shield and parry training, half-swording, iron stance, riposte, Living Fortress. Caster build: the full death knight\'s order — Casting, Battle Casting, Strike, Launch, Burst, Bless, Conjure, Strong — then plate and shield feats.',
+  'Gear tiers add up: basic is standard plate, a steel heater and a plain longsword; then Soulreaver (legendary, drinks half the stamina and wounds it deals); then legendary plate and an adamant heater; then the silk sash (+1 SPD, +1 AP) and the aura of dread.',
+  'Parties: the core trio (knight with sword and shield, mail two-hander, archer) plus a mage, cleric, duelist or grappler, at level 2 (standard gear), 6 (fine) or 15 (masterwork, magical weapons). He fights alone in a 14×6 hall, up to 30 rounds.',
+  'Raw rows are in dk-scaling.json (one per his level × build × gear × party level × lineup), for R.',
+].map((t) => `<li>${esc(t)}</li>`).join('');
+</script>
