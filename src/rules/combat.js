@@ -426,6 +426,7 @@
           const op = posAtPass(enc, o, enc.pass);
           const dd = dist(me, op);
           const line = G.Terrain && enc.tiles && dd >= 2 ? G.Terrain.lineCheck(enc, me, op, 'missile') : null;
+          if (opt.spell.named) return { id: o, distance: dd, inReach: G.Magic.knowsName(c, chars[o]) };
           return { id: o, distance: dd, inReach: dd <= opt.maxRange && dd >= (opt.target === 'ally' ? 0 : opt.minRange) && !(line && line.blocked) };
         });
         out.spells.push(Object.assign({}, opt, { affordable: can(opt.ap) && !why, spans: opt.ap > left, why, targets }));

@@ -66,12 +66,13 @@ const STRATEGY = {
     feats: ['casting', 'verb_hex', 'verb_beguile', 'verb_ward', 'casting', 'word_doubling', 'verb_blink', 'control', 'quick_casting'],
   },
   cleric: {
-    // A healer: Restore + Life mends a friend (Wide: everyone around them), Restore lifts what
+    // A healer: Restore + Life mends a friend (Wide: everyone around them; Name: anywhere on the
+    // field), Restore lifts what
     // Light and Force inflict; a withering or searing bolt (Light burns the undead). Mail and a
     // mace; one hand free to cast.
     label: 'Cleric', attrs: { STR: 5, CON: 6, DEX: 4, SPD: 4, INT: 7, WIL: 5, WIS: 6, CHA: 3 },
     weapon: 'flangedMace', shield: null, nouns: ['life', 'light', 'force'],
-    feats: ['casting', 'verb_restore', 'casting', 'mod_wide', 'verb_strike', 'verb_ward', 'control', 'quick_casting'],
+    feats: ['casting', 'verb_restore', 'casting', 'mod_wide', 'mod_name', 'verb_strike', 'verb_ward', 'control', 'quick_casting'],
   },
   grappler: {
     label: 'Grappler', attrs: { STR: 7, CON: 6, DEX: 6, SPD: 5, INT: 3, WIL: 4, WIS: 4, CHA: 4 },

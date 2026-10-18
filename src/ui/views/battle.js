@@ -390,7 +390,7 @@
     } else if (o && o.spell) {
       const s = o.spell;
       const shape = { area: `radius ${s.radius}`, ground: `radius ${s.radius}, ${s.rounds} rounds`, wall: `${s.length} squares, ${s.rounds} rounds`, terrain: `${s.length} square${s.length > 1 ? 's' : ''}`, bane: `${s.rounds} rounds`, boon: `${s.rounds} rounds`, conjure: `${s.rounds} rounds`, ward: `${s.rounds} rounds`, mind: `${s.rounds} rounds` }[s.shape];
-      rows.unshift(['Power', `${s.magnitude}${s.element ? ' ' + s.element : ''}`], ['Range', `${o.minRange}–${o.maxRange}`], shape ? ['Reach', shape] : null);
+      rows.unshift(['Power', `${s.magnitude}${s.element ? ' ' + s.element : ''}`], ['Range', s.named ? 'anyone whose name you know, anywhere' : `${o.minRange}–${o.maxRange}`], shape ? ['Reach', shape] : null);
       notes.push(SHAPE_INFO[s.shape] || '');
       if (e.square) notes.push('Tap a highlighted square on the map to cast.');
     } else if (e.kind === 'move') {

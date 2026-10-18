@@ -52,6 +52,14 @@
   }
 
   // Does this verb make anything of this noun (and take this modifier)?
+  // A Named spell reaches anyone whose name the caster knows: companions (and themself), or a
+  // foe whose name they've learned (c.knownNames, matched without case).
+  function knowsName(c, t) {
+    if (!t) return false;
+    if (t.id === c.id || t.side === c.side || (t.charmed && t.charmed.side === c.side)) return true;
+    return (c.knownNames || []).some((n) => String(n).trim().toLowerCase() === String(t.name).trim().toLowerCase());
+  }
+
   // The conditions a noun inflicts, which Restore + that noun lifts.
   function curesOf(n) {
     const N = W()[n];
@@ -123,6 +131,7 @@
     if (windUp) ap -= CONFIG.windUp.ap * S;
     ap = Math.max(CONFIG.minActionAP, ap);
     const far = M && M.rangeMult ? M.rangeMult : 1;
+    const named = !!(M && M.named);
     const range = [V.range[0], V.range[1] * far];
     const label = [V.name, N.name, n2 ? w[n2].name : null, M ? M.name : null].filter(Boolean).join(' + ');
     const nouns = n2 ? [n, n2] : [n];
@@ -134,6 +143,7 @@
       rounds: V.rounds == null ? null : V.rounds * (M && M.roundsMult ? M.roundsMult : 1),
       lingering: !!(M && M.lingering),
       condMag: 1 + (M && M.mag ? 1 : 0),
+      named,
     };
     const base = {
       spellKey: [v, n, n2, m].filter(Boolean).join('+'), label, spell, ap, stamina: 0, spCost: cost,
@@ -411,9 +421,12 @@
     const at = d.target ? posAtStart[d.target] : d.at;
     if (!at) return;
     const distance = G.Combat.dist(from, at);
-    if (distance > o.maxRange || distance < (o.target === 'ally' ? 0 : o.minRange)) return log(`${a.name}'s ${o.label} fizzles — out of range.`, 'fizzle');
+    // Named: it finds the one named, wherever they are (if their name is known).
+    if (s.named) {
+      if (!d.target || !knowsName(a, chars[d.target])) return log(`${a.name}'s ${o.label} fizzles — the name means nothing.`, 'fizzle');
+    } else if (distance > o.maxRange || distance < (o.target === 'ally' ? 0 : o.minRange)) return log(`${a.name}'s ${o.label} fizzles — out of range.`, 'fizzle');
     // Blink needs no line (it goes through); everything else does.
-    if (distance >= 2 && s.shape !== 'blink' && G.Terrain.lineCheck(enc, from, at, 'missile').blocked) return log(`${a.name}'s ${o.label} fizzles — no clear line.`, 'fizzle');
+    if (!s.named && distance >= 2 && s.shape !== 'blink' && G.Terrain.lineCheck(enc, from, at, 'missile').blocked) return log(`${a.name}'s ${o.label} fizzles — no clear line.`, 'fizzle');
     if (!(await G.Combat.castSpell(enc, a, o, roller))) return;
     const side = a.side;
     const N = W()[s.noun];
@@ -546,5 +559,5 @@
     return lines;
   }
 
-  G.Magic = { mend, restore, curesOf, wardAgainst, maxSP, availableSP, spellOptions, knows, combines, backlash, makeOption, contest, afflict, onHit, elementBlow, afterHit, springRune, resolveCast, lineAcross, endRound, push };
+  G.Magic = { mend, restore, curesOf, knowsName, wardAgainst, maxSP, availableSP, spellOptions, knows, combines, backlash, makeOption, contest, afflict, onHit, elementBlow, afterHit, springRune, resolveCast, lineAcross, endRound, push };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

@@ -1385,3 +1385,32 @@ test('Restore: + Life mends (bleeding, CON, stamina; wakes the downed); Wide rea
   assert.equal(friend.stamina, 1 + gain);
   assert.equal(foe.stamina, 1 + gain);
 });
+
+test('Name: a named spell finds a companion anywhere, past walls; a foe only if their name is known', async () => {
+  const m = mage('Cleric', ['life', 'calm']);
+  const ally = fighter('Far Ally');
+  ally.side = m.side;
+  ally.at = { x: 9, y: 4 };
+  ally.stamina = 1;
+  const foe = fighter('Grath');
+  foe.side = 'enemy';
+  foe.at = { x: 8, y: 0 };
+  const chars = { [m.id]: m, [ally.id]: ally, [foe.id]: foe };
+  const enc = Combat.createEncounter('t', Object.keys(chars), chars, 10, 5);
+  enc.pos[m.id] = { x: 1, y: 2 };
+  enc.pos[ally.id] = ally.at;
+  enc.pos[foe.id] = foe.at;
+  for (let y = 0; y < 5; y++) B.Terrain.add(enc, 5, y, 'stoneWall');
+  const named = B.Magic.spellOptions(m).find((x) => x.spellKey === 'restore+life+name');
+  assert.ok(named && named.spell.named);
+  const la = Combat.legalActions(enc, chars, m.id);
+  const opt = la.spells.find((x) => x.spellKey === 'restore+life+name');
+  assert.ok(opt.targets.find((t) => t.id === ally.id).inReach, 'a companion is always in reach by name');
+  await B.Magic.resolveCast(enc, chars, { actor: m.id, type: 'cast', option: named, target: ally.id, pass: 1, n: 1 }, roller(5, []), JSON.parse(JSON.stringify(enc.pos)));
+  assert.ok(ally.stamina > 1, 'mended through the wall, eight squares off');
+  assert.ok(!B.Magic.knowsName(m, foe));
+  assert.ok(!Combat.legalActions(enc, chars, m.id).spells.find((x) => x.spellKey === 'beguile+calm+name').targets.find((t) => t.id === foe.id).inReach);
+  m.knownNames = ['grath'];
+  assert.ok(B.Magic.knowsName(m, foe), 'a learned name reaches a foe');
+  assert.ok(Combat.legalActions(enc, chars, m.id).spells.find((x) => x.spellKey === 'beguile+calm+name').targets.find((t) => t.id === foe.id).inReach);
+});

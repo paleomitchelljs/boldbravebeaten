@@ -428,6 +428,7 @@
   ['Strong', 'Wide', 'Long'].forEach((w) => feat(t, 'mod_' + w.toLowerCase(), 'Modifier: ' + w, [N], [], 'Learn the modifier ' + w, false));
   const anyNoviceMod = ['mod_strong:1', 'mod_wide:1', 'mod_long:1'];
   ['Far', 'Swift', 'Lingering'].forEach((w) => feat(t, 'mod_' + w.toLowerCase(), 'Modifier: ' + w, [A], [anyNoviceMod], 'Learn the modifier ' + w, false));
+  feat(t, 'mod_name', 'Modifier: Name', [A], [anyNoviceMod], 'Learn the modifier Name: a targeted spell finds anyone whose name you know, anywhere on the field', false);
 
   t = tree('magicAffinity', 'Magic: affinity (fire)', 'INT');
   feat(t, 'fire_affinity', 'Fire Affinity', [N, A, D], [], '+magnitude for Fire spells per rank (requires knowing the Fire noun)', false);
