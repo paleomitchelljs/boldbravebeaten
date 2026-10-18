@@ -88,6 +88,14 @@ select { font: inherit; padding: 6px 10px; border-radius: 6px; border: 1px solid
 .stats { display: flex; flex-wrap: wrap; gap: 2px 14px; font-size: 0.86rem; color: var(--muted); }
 .stats b { font-family: var(--font-mono); font-weight: 600; color: var(--ink); }
 .note { background: var(--surface-2); border-left: 3px solid var(--brass); padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 0.92rem; max-width: 80ch; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.seg button { font: inherit; font-weight: 700; border: 0; background: none; color: var(--muted); padding: 7px 16px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--surface); }
+.deaths { display: flex; flex-direction: column; gap: 3px; font-size: 0.82rem; }
+.deaths div { display: grid; grid-template-columns: 6.5em 1fr 3em; align-items: center; gap: 6px; }
+.deaths .track { height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+.deaths .track span { display: block; height: 100%; background: var(--t-foe); border-radius: 0 3px 3px 0; }
+.deaths .v { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 ul.plain { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 4px; max-width: 80ch; }
 </style>
 
@@ -95,19 +103,21 @@ ul.plain { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column
   <header class="head">
     <span class="eyebrow">Bold Brave Beaten · simulation</span>
     <h1>The Gauntlet</h1>
+    <div class="pick"><span class="small muted">Mode</span><div class="seg" id="mode" role="group" aria-label="Mode"></div></div>
+    <p class="muted" id="modeBlurb"></p>
     <p class="lead" id="lead"></p>
     <p class="small muted" id="meta"></p>
   </header>
 
   <section>
-    <h2>How far each party gets</h2>
-    <p class="muted">Share of runs that cleared at least this many rooms. Each line starts at 100% (no rooms) and falls as rooms take their toll.</p>
+    <h2 id="curvesTitle"></h2>
+    <p class="muted" id="curvesNote"></p>
     <div class="panels" id="curves"></div>
   </section>
 
   <section>
     <h2>What each member adds</h2>
-    <p class="muted">Rooms cleared with the member minus without, on the same seeds. Whiskers are 95% intervals. The fourth-slot members are compared with the core trio, and the core members with the mage party minus that member.</p>
+    <p class="muted" id="marginalNote"></p>
     <div class="card" id="marginal"></div>
   </section>
 
@@ -119,7 +129,7 @@ ul.plain { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column
 
   <section>
     <h2>The rooms</h2>
-    <p class="muted">In order. The numbers are for the lineup chosen above: how often it got this far, and how it did once there.</p>
+    <p class="muted" id="roomsNote"></p>
     <div class="keyrow">
       <span><i style="background:var(--t-party)"></i>Party start</span><span><i style="background:var(--t-foe)"></i>Foes</span>
       <span><i style="background:var(--t-wall)"></i>Pillar</span><span><i style="background:var(--t-pit)"></i>Pit</span>
@@ -138,85 +148,75 @@ ul.plain { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column
 <script>
 const DATA = /*__DATA__*/null;
 const $ = (id) => document.getElementById(id);
-const pct = (x) => Math.round(100 * x) + '%';
+const pct = (x) => (x == null ? '—' : Math.round(100 * x) + '%');
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const L = DATA.lineups, R = DATA.rooms, M = DATA.members;
+const R = DATA.rooms, M = DATA.members;
 const short = (m) => M[m].label.split(' (')[0];
 // Color follows the lineup across the page.
 const COLOR = { core: 'var(--base)', mage: 'var(--s1)', enchanter: 'var(--s2)', grappler: 'var(--s3)', duelist: 'var(--s4)', noKnight: 'var(--s5)', noTwoHander: 'var(--s6)', noArcher: 'var(--s7)' };
+const store = { get: (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } };
+let mode = DATA.modes[store.get('gauntlet-mode')] ? store.get('gauntlet-mode') : Object.keys(DATA.modes)[0];
+let cur = null;
+const reset = () => mode === 'reset';
 
-// ---- Lead ------------------------------------------------------------------------------
-{
-  const ranked = Object.entries(L).sort((a, b) => b[1].meanCleared - a[1].meanCleared);
-  const best = ranked[0][1], worst = ranked[ranked.length - 1][1];
-  const furthest = Math.max(...Object.values(L).map((l) => l.clear.findLastIndex((x) => x > 0) + 1));
-  $('lead').textContent = `${best.label} gets furthest, clearing ${best.meanCleared.toFixed(1)} of ${R.length} rooms on average; ${worst.label.toLowerCase()} clears ${worst.meanCleared.toFixed(1)}. ` +
-    (furthest < R.length ? `No lineup has cleared the whole gauntlet yet; the deepest any run reached was room ${furthest + 1}, ${R[Math.min(furthest, R.length - 1)].name}.` : `${pct(best.fullClear)} of its runs clear every room.`);
-  $('meta').textContent = `${DATA.n} runs per lineup, same seeds for every lineup · ${DATA.seconds} s · generated ${DATA.generated.slice(0, 10)}`;
-}
-
-// ---- Survival curves --------------------------------------------------------------------
-function curveChart(title, keys, baseKey) {
+// ---- Charts: one line per lineup over the rooms ------------------------------------------
+// Attrition: share of runs that cleared at least k rooms (k = 0…8). Reset: win rate in room k.
+function curveChart(title, keys, baseKey, L) {
   const card = document.createElement('div');
   card.className = 'card';
   const W = 520, H = 260, m = { l: 40, r: 12, t: 10, b: 30 };
-  const x = (i) => m.l + (i / R.length) * (W - m.l - m.r);
+  const xs = reset() ? R.map((_, i) => i + 1) : R.map((_, i) => i).concat(R.length);
+  const span = xs[xs.length - 1] - xs[0];
+  const x = (v) => m.l + ((v - xs[0]) / span) * (W - m.l - m.r);
   const y = (v) => m.t + (1 - v) * (H - m.t - m.b);
-  const series = keys.map((k) => ({ k, vals: [1].concat(L[k].clear) }));
-  let svg = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${esc(title)}: share of runs clearing each room">`;
+  const series = keys.map((k) => ({ k, vals: reset() ? L[k].winRate : [1].concat(L[k].clear) }));
+  let svg = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${esc(title)}">`;
   for (const v of [0, 0.25, 0.5, 0.75, 1]) svg += `<line class="grid" x1="${m.l}" x2="${W - m.r}" y1="${y(v)}" y2="${y(v)}"/><text x="${m.l - 6}" y="${y(v) + 4}" text-anchor="end">${pct(v)}</text>`;
-  for (let i = 0; i <= R.length; i++) svg += `<text x="${x(i)}" y="${H - 10}" text-anchor="middle">${i}</text>`;
-  svg += `<text x="${W - m.r}" y="${H - 10 + 0}" text-anchor="end" dy="0" style="display:none"></text>`;
+  for (const v of xs) svg += `<text x="${x(v)}" y="${H - 10}" text-anchor="middle">${v}</text>`;
   for (const s of series) {
-    const pts = s.vals.map((v, i) => `${x(i)},${y(v)}`).join(' ');
+    const pts = s.vals.map((v, i) => `${x(xs[i])},${y(v)}`).join(' ');
     const dash = s.k === baseKey ? ' stroke-dasharray="6 4"' : '';
     svg += `<polyline points="${pts}" fill="none" stroke="${COLOR[s.k]}" stroke-width="2" stroke-linejoin="round"${dash}/>`;
-    s.vals.forEach((v, i) => { svg += `<circle cx="${x(i)}" cy="${y(v)}" r="3.5" fill="${COLOR[s.k]}" stroke="var(--surface)" stroke-width="2"/>`; });
+    s.vals.forEach((v, i) => { svg += `<circle cx="${x(xs[i])}" cy="${y(v)}" r="3.5" fill="${COLOR[s.k]}" stroke="var(--surface)" stroke-width="2"/>`; });
   }
   svg += `<line class="hair" x1="0" x2="0" y1="${m.t}" y2="${H - m.b}" stroke="var(--muted)" stroke-width="1" style="display:none"/>`;
-  svg += `<rect class="hit" x="${m.l}" y="${m.t}" width="${W - m.l - m.r}" height="${H - m.t - m.b}" fill="transparent"/></svg>`;
+  svg += `<rect class="hit" x="${m.l - 10}" y="${m.t}" width="${W - m.l - m.r + 20}" height="${H - m.t - m.b}" fill="transparent"/></svg>`;
+  const head = reset() ? R.map((r, i) => `<th class="n" title="${esc(r.name)}">${i + 1}</th>`).join('') : R.map((r, i) => `<th class="n" title="${esc(r.name)}">${i + 1}</th>`).join('');
   card.innerHTML = `<h3>${esc(title)}</h3><div class="legend">${series.map((s) => `<span><i class="${s.k === baseKey ? 'dash' : ''}" style="border-color:${COLOR[s.k]}"></i>${esc(L[s.k].label)}</span>`).join('')}</div>${svg}
-    <p class="small muted">Rooms cleared (0 to ${R.length})</p>
-    <details class="tv"><summary>Table</summary><div class="scroll"><table class="data"><thead><tr><th>Lineup</th>${R.map((r, i) => `<th class="n">${i + 1}</th>`).join('')}<th class="n">Mean</th></tr></thead><tbody>
-    ${series.map((s) => `<tr><td>${esc(L[s.k].label)}</td>${L[s.k].clear.map((v) => `<td class="n">${pct(v)}</td>`).join('')}<td class="n">${L[s.k].meanCleared.toFixed(2)}</td></tr>`).join('')}</tbody></table></div></details>`;
+    <p class="small muted">${reset() ? 'Room (1 to ' + R.length + ')' : 'Rooms cleared in a row (0 to ' + R.length + ')'}</p>
+    <details class="tv"><summary>Table</summary><div class="scroll"><table class="data"><thead><tr><th>Lineup</th>${head}<th class="n">Mean</th></tr></thead><tbody>
+    ${series.map((s) => `<tr><td>${esc(L[s.k].label)}</td>${(reset() ? L[s.k].winRate : L[s.k].clear).map((v) => `<td class="n">${pct(v)}</td>`).join('')}<td class="n">${L[s.k].meanCleared.toFixed(2)}</td></tr>`).join('')}</tbody></table></div></details>`;
   const tip = document.createElement('div');
-  tip.className = 'tip';
-  tip.hidden = true;
-  card.appendChild(tip);
+  tip.className = 'tip'; tip.hidden = true; card.appendChild(tip);
   const svgEl = card.querySelector('svg'), hair = svgEl.querySelector('.hair');
   svgEl.querySelector('.hit').addEventListener('pointermove', (e) => {
     const pt = svgEl.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
     const p = pt.matrixTransform(svgEl.getScreenCTM().inverse());
-    const i = Math.max(0, Math.min(R.length, Math.round(((p.x - m.l) / (W - m.l - m.r)) * R.length)));
-    hair.setAttribute('x1', x(i)); hair.setAttribute('x2', x(i)); hair.style.display = '';
+    const i = Math.max(0, Math.min(xs.length - 1, Math.round(((p.x - m.l) / (W - m.l - m.r)) * span)));
+    const v = xs[i];
+    hair.setAttribute('x1', x(v)); hair.setAttribute('x2', x(v)); hair.style.display = '';
     const rows = series.slice().sort((a, b) => b.vals[i] - a.vals[i]).map((s) => `<div class="row"><span><i style="background:${COLOR[s.k]}"></i>${esc(L[s.k].label)}</span><span class="num">${pct(s.vals[i])}</span></div>`).join('');
-    tip.innerHTML = `<b>${i === 0 ? 'Start' : `${i}: ${esc(R[i - 1].name)}`}</b>${i ? `<div class="small muted">cleared at least this far</div>` : ''}${rows}`;
+    const room = reset() ? R[v - 1] : v ? R[v - 1] : null;
+    tip.innerHTML = `<b>${room ? `${v}: ${esc(room.name)}` : 'Start'}</b>${room ? `<div class="small muted">${reset() ? 'won by a fresh party' : 'cleared at least this far'}</div>` : ''}${rows}`;
     tip.hidden = false;
     const box = card.getBoundingClientRect(), sb = svgEl.getBoundingClientRect();
-    const left = sb.left - box.left + (x(i) / W) * sb.width;
+    const left = sb.left - box.left + (x(v) / W) * sb.width;
     tip.style.left = Math.min(box.width - tip.offsetWidth - 8, Math.max(8, left + 12)) + 'px';
     tip.style.top = (sb.top - box.top + 12) + 'px';
   });
   svgEl.querySelector('.hit').addEventListener('pointerleave', () => { tip.hidden = true; hair.style.display = 'none'; });
   return card;
 }
-{
-  const fourth = ['core', 'mage', 'enchanter', 'grappler', 'duelist'].filter((k) => L[k]);
-  const ablate = ['mage', 'noKnight', 'noTwoHander', 'noArcher'].filter((k) => L[k]);
-  if (fourth.length) $('curves').appendChild(curveChart('Who fills the fourth slot', fourth, 'core'));
-  if (ablate.length > 1) $('curves').appendChild(curveChart('The mage party, one member short', ablate, null));
-}
 
-// ---- Marginal value ---------------------------------------------------------------------
-{
-  const rows = Object.entries(DATA.marginal).sort((a, b) => b[1].mean - a[1].mean);
+function marginalChart(D, L, scoreName) {
+  const rows = Object.entries(D.marginal).sort((a, b) => b[1].mean - a[1].mean);
   const W = 640, rowH = 34, m = { l: 150, r: 30, t: 10, b: 34 };
   const H = m.t + m.b + rows.length * rowH;
   const lo = Math.min(-0.5, ...rows.map(([, v]) => v.mean - 1.96 * v.se)), hi = Math.max(0.5, ...rows.map(([, v]) => v.mean + 1.96 * v.se));
   const x = (v) => m.l + ((v - lo) / (hi - lo)) * (W - m.l - m.r);
-  let svg = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Marginal rooms cleared per member, with 95% intervals">`;
+  let svg = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="What each member adds, with 95% intervals">`;
   const step = hi - lo > 4 ? 1 : 0.5;
-  for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) svg += `<line class="grid" x1="${x(v)}" x2="${x(v)}" y1="${m.t}" y2="${H - m.b}"/><text x="${x(v)}" y="${H - 14}" text-anchor="middle">${v > 0 ? '+' : ''}${v}</text>`;
+  for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) svg += `<line class="grid" x1="${x(v)}" x2="${x(v)}" y1="${m.t}" y2="${H - m.b}"/><text x="${x(v)}" y="${H - 14}" text-anchor="middle">${v > 0 ? '+' : ''}${+v.toFixed(1)}</text>`;
   svg += `<line x1="${x(0)}" x2="${x(0)}" y1="${m.t}" y2="${H - m.b}" stroke="var(--ink)" stroke-width="1.5"/>`;
   rows.forEach(([k, v], i) => {
     const cy = m.t + i * rowH + rowH / 2;
@@ -225,15 +225,15 @@ function curveChart(title, keys, baseKey) {
     svg += `<line x1="${x(v.mean - 1.96 * v.se)}" x2="${x(v.mean + 1.96 * v.se)}" y1="${cy}" y2="${cy}" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>`;
     svg += `<circle cx="${x(v.mean)}" cy="${cy}" r="6" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/></g>`;
   });
-  svg += `<text x="${(m.l + W - m.r) / 2}" y="${H - 1}" text-anchor="middle">Rooms cleared, with minus without</text></svg>`;
+  svg += `<text x="${(m.l + W - m.r) / 2}" y="${H - 1}" text-anchor="middle">${esc(scoreName[0].toUpperCase() + scoreName.slice(1))}, with minus without</text></svg>`;
   const card = $('marginal');
-  card.innerHTML = svg + `<details class="tv"><summary>Table</summary><div class="scroll"><table class="data"><thead><tr><th>Member</th><th>Compared</th><th class="n">Δ rooms</th><th class="n">95% interval</th><th class="n">Full clear with / without</th></tr></thead><tbody>
-    ${rows.map(([k, v]) => `<tr><td>${esc(M[k].label)}</td><td>${esc(L[v.with].label)} vs ${esc(L[v.without].label.toLowerCase())}</td><td class="n">${v.mean >= 0 ? '+' : ''}${v.mean.toFixed(2)}</td><td class="n">${(v.mean - 1.96 * v.se).toFixed(2)} to ${(v.mean + 1.96 * v.se).toFixed(2)}</td><td class="n">${pct(v.fullClearWith)} / ${pct(v.fullClearWithout)}</td></tr>`).join('')}</tbody></table></div></details>`;
+  card.innerHTML = svg + `<details class="tv"><summary>Table</summary><div class="scroll"><table class="data"><thead><tr><th>Member</th><th>Compared</th><th class="n">Difference</th><th class="n">95% interval</th></tr></thead><tbody>
+    ${rows.map(([k, v]) => `<tr><td>${esc(M[k].label)}</td><td>${esc(L[v.with].label)} vs ${esc(L[v.without].label.toLowerCase())}</td><td class="n">${v.mean >= 0 ? '+' : ''}${v.mean.toFixed(2)}</td><td class="n">${(v.mean - 1.96 * v.se).toFixed(2)} to ${(v.mean + 1.96 * v.se).toFixed(2)}</td></tr>`).join('')}</tbody></table></div></details>`;
   const tip = document.createElement('div');
   tip.className = 'tip'; tip.hidden = true; card.appendChild(tip);
   card.querySelectorAll('.mrow').forEach((g) => {
     g.addEventListener('pointermove', (e) => {
-      const v = DATA.marginal[g.dataset.k];
+      const v = D.marginal[g.dataset.k];
       tip.innerHTML = `<b>${esc(M[g.dataset.k].label)}</b><div class="row"><span>${esc(L[v.with].label)}</span><span class="num">${L[v.with].meanCleared.toFixed(2)}</span></div><div class="row"><span>${esc(L[v.without].label)}</span><span class="num">${L[v.without].meanCleared.toFixed(2)}</span></div><div class="row"><span>Difference</span><span class="num">${v.mean >= 0 ? '+' : ''}${v.mean.toFixed(2)} ± ${(1.96 * v.se).toFixed(2)}</span></div>`;
       tip.hidden = false;
       const box = card.getBoundingClientRect();
@@ -244,42 +244,71 @@ function curveChart(title, keys, baseKey) {
   });
 }
 
-// ---- Members and rooms for one lineup ---------------------------------------------------
-let cur = L.mage ? 'mage' : Object.keys(L)[0];
-try { const saved = localStorage.getItem('gauntlet-lineup'); if (saved && L[saved]) cur = saved; } catch (e) {}
-$('lineup').innerHTML = Object.entries(L).map(([k, l]) => `<option value="${k}"${k === cur ? ' selected' : ''}>${esc(l.label)}</option>`).join('');
-$('lineup').addEventListener('change', (e) => { cur = e.target.value; try { localStorage.setItem('gauntlet-lineup', cur); } catch (err) {} drawLineup(); });
-
 const TILE_CLASS = { '#': 'w', O: 'o', ':': 'r', D: 'd', '^': 'h', F: 't', P: 't', A: 'a', E: 'e' };
 function drawLineup() {
-  const l = L[cur];
+  const D = DATA.modes[mode], l = D.lineups[cur];
   const ms = Object.entries(l.memberStats);
   const maxShare = Math.max(...ms.map(([, s]) => s.shareAttrs), 0.01);
   const bar = (v, max) => `<div class="cellbar"><span class="num">${pct(v)}</span><span class="track"><span class="b" style="width:${(v / max) * 100}%"></span></span></div>`;
-  $('members').innerHTML = `<table class="data"><thead><tr><th>Member</th><th class="n">Share of wounds dealt</th><th class="n">Foes downed</th><th class="n">Wounds dealt</th><th class="n">Stamina dealt</th><th class="n">Wounds taken</th><th class="n">Dies</th><th>Most often dies in</th></tr></thead><tbody>
+  $('members').innerHTML = `<table class="data"><thead><tr><th>Member</th><th class="n">Share of wounds dealt</th><th class="n">Foes downed</th><th class="n">Wounds dealt</th><th class="n">Stamina dealt</th><th class="n">Wounds taken</th><th class="n">${reset() ? 'Deaths per run' : 'Dies'}</th><th>Dies most in</th></tr></thead><tbody>
     ${ms.map(([k, s]) => {
       const where = s.diedIn.map((v, i) => [v, i]).sort((a, b) => b[0] - a[0])[0];
-      return `<tr><td><b>${esc(short(k))}</b> <span class="small muted">${esc(M[k].label.split(' (')[1] ? '(' + M[k].label.split(' (')[1] : '')}</span></td><td class="n">${bar(s.shareAttrs, maxShare)}</td><td class="n">${s.downs.toFixed(1)} <span class="muted">(${pct(s.shareDowns)})</span></td><td class="n">${s.dealtAttrs.toFixed(1)}</td><td class="n">${s.dealtStamina.toFixed(1)}</td><td class="n">${s.takenAttrs.toFixed(1)}</td><td class="n">${pct(s.deathRate)}</td><td>${where[0] > 0 ? esc(R[where[1]].name) : '—'}</td></tr>`;
+      return `<tr><td><b>${esc(short(k))}</b> <span class="small muted">${esc(M[k].label.split(' (')[1] ? '(' + M[k].label.split(' (')[1] : '')}</span></td><td class="n">${bar(s.shareAttrs, maxShare)}</td><td class="n">${s.downs.toFixed(1)} <span class="muted">(${pct(s.shareDowns)})</span></td><td class="n">${s.dealtAttrs.toFixed(1)}</td><td class="n">${s.dealtStamina.toFixed(1)}</td><td class="n">${s.takenAttrs.toFixed(1)}</td><td class="n">${reset() ? s.deathRate.toFixed(2) : pct(s.deathRate)}</td><td>${where[0] > 0 ? esc(R[where[1]].name) : '—'}</td></tr>`;
     }).join('')}</tbody></table>
-    <p class="small muted">Per run. Wounds are attribute points (mostly CON) from blows and spells; bleeding, poison and hazards aren't credited to anyone. A foe is credited to whoever landed the blow that dropped it.</p>`;
+    <p class="small muted">Per run${reset() ? ' (eight fights, each with a fresh party)' : ''}. Wounds are attribute points (mostly CON) from blows and spells; bleeding, poison and hazards aren't credited to anyone. A foe is credited to whoever landed the blow that dropped it.</p>`;
   $('rooms').innerHTML = R.map((room, i) => {
     const s = l.roomStats[i];
     const w = room.map[0].length;
     const cellsHtml = room.map.join('').split('').map((ch) => `<i class="${TILE_CLASS[ch] || ''}"></i>`).join('');
-    return `<div class="card room"><h3><span class="k">${i + 1}</span>${esc(room.name)}</h3>
+    const deaths = s.reached ? `<div class="deaths" aria-label="Who dies here">${l.members.map((m) => `<div><span>${esc(short(m))}</span><span class="track"><span style="width:${(s.memberDeaths[m] || 0) * 100}%"></span></span><span class="v">${pct(s.memberDeaths[m])}</span></div>`).join('')}</div>` : '';
+    return `<div class="card room"><h3><span class="k">${i + 1}</span>${esc(room.name)}${!reset() && i === DATA.campAfter ? ' <span class="small muted" style="font-family:var(--font-body);font-weight:500">after camp</span>' : ''}</h3>
       <div class="mini" style="grid-template-columns:repeat(${w},1fr)" role="img" aria-label="Map of ${esc(room.name)}">${cellsHtml}</div>
       <p class="small">${esc(room.blurb)} <span class="muted">${esc(room.foeNames.join(', '))}.</span></p>
-      <div class="stats"><span>Reached <b>${pct(s.reached / DATA.n)}</b></span><span>Won there <b>${s.reached ? pct(s.cleared / s.reached) : '—'}</b></span><span>Rounds <b>${s.rounds == null ? '—' : s.rounds.toFixed(1)}</b></span><span>Deaths <b>${s.deaths == null ? '—' : s.deaths.toFixed(2)}</b></span></div></div>`;
+      <div class="stats">${reset() ? '' : `<span>Reached <b>${pct(s.reached / DATA.n)}</b></span>`}<span>Won ${reset() ? '' : 'there '}<b>${s.reached ? pct(s.cleared / s.reached) : '—'}</b></span><span>Rounds <b>${s.rounds == null ? '—' : s.rounds.toFixed(1)}</b></span></div>
+      ${deaths ? `<span class="small muted">Who dies here${reset() ? '' : ' (of runs that got here)'}</span>${deaths}` : ''}</div>`;
   }).join('');
 }
-drawLineup();
+
+function render() {
+  const D = DATA.modes[mode], L = D.lineups;
+  $('mode').innerHTML = Object.entries(DATA.modes).map(([k, v]) => `<button type="button" data-k="${k}" aria-pressed="${k === mode}">${esc(v.label)}</button>`).join('');
+  $('mode').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { mode = b.dataset.k; store.set('gauntlet-mode', mode); render(); }));
+  $('modeBlurb').textContent = D.blurb;
+  const ranked = Object.entries(L).sort((a, b) => b[1].meanCleared - a[1].meanCleared);
+  const best = ranked[0][1], worst = ranked[ranked.length - 1][1];
+  if (reset()) {
+    const hardest = R.map((r, i) => [r, Math.max(...Object.values(L).map((l) => l.winRate[i]))]).sort((a, b) => a[1] - b[1])[0];
+    $('lead').textContent = `At full strength, ${best.label.toLowerCase().replace(/^\+ /, 'the trio plus the ')} wins ${best.meanCleared.toFixed(1)} of ${R.length} rooms on average; ${worst.label.toLowerCase()} wins ${worst.meanCleared.toFixed(1)}. The hardest room is ${hardest[0].name}: the best lineup wins it ${pct(hardest[1])} of the time.`;
+  } else {
+    const furthest = Math.max(...Object.values(L).map((l) => l.clear.findLastIndex((x) => x > 0) + 1));
+    $('lead').textContent = `${best.label} gets furthest, clearing ${best.meanCleared.toFixed(1)} of ${R.length} rooms on average; ${worst.label.toLowerCase()} clears ${worst.meanCleared.toFixed(1)}. ` +
+      (best.fullClear > 0 ? `${pct(best.fullClear)} of its runs clear every room.` : `No run has cleared all eight; the deepest any run got was room ${Math.min(furthest + 1, R.length)}, ${R[Math.min(furthest, R.length - 1)].name}.`);
+  }
+  $('meta').textContent = `${DATA.n} runs per lineup per mode, the same seeds for every lineup · ${DATA.seconds} s · generated ${DATA.generated.slice(0, 10)}`;
+  $('curvesTitle').textContent = reset() ? 'How each room goes at full strength' : 'How far each party gets';
+  $('curvesNote').textContent = reset() ? 'Win rate in each room for a fresh, full-strength party.' : `Share of runs that cleared at least this many rooms. The party camps (a long rest) after room ${DATA.campAfter}.`;
+  $('curves').innerHTML = '';
+  const fourth = ['core', 'mage', 'enchanter', 'grappler', 'duelist'].filter((k) => L[k]);
+  const ablate = ['mage', 'noKnight', 'noTwoHander', 'noArcher'].filter((k) => L[k]);
+  if (fourth.length) $('curves').appendChild(curveChart('Who fills the fourth slot', fourth, 'core', L));
+  if (ablate.length > 1) $('curves').appendChild(curveChart('The mage party, one member short', ablate, null, L));
+  $('marginalNote').textContent = `${D.score[0].toUpperCase() + D.score.slice(1)} with the member minus without, on the same seeds. Whiskers are 95% intervals. The fourth-slot members are compared with the core trio, and the core members with the mage party minus that member.`;
+  marginalChart(D, L, D.score);
+  if (!cur || !L[cur]) cur = L[store.get('gauntlet-lineup')] ? store.get('gauntlet-lineup') : L.mage ? 'mage' : Object.keys(L)[0];
+  $('lineup').innerHTML = Object.entries(L).map(([k, l]) => `<option value="${k}"${k === cur ? ' selected' : ''}>${esc(l.label)}</option>`).join('');
+  $('roomsNote').textContent = reset() ? 'In order. The numbers are for the lineup chosen above, fighting each room fresh.' : 'In order. The numbers are for the lineup chosen above: how often it got this far, and how it did once there.';
+  drawLineup();
+}
+$('lineup').addEventListener('change', (e) => { cur = e.target.value; store.set('gauntlet-lineup', cur); drawLineup(); });
+render();
 
 $('how').innerHTML = [
-  'A party of level-5 adventurers (the arena builds) fights through the rooms in order. The run ends when the party clears the last room, is wiped out, or fails to win a room within 30 rounds.',
-  'Between rooms there is only a breather: stamina comes back and the unconscious get up. Wounds (CON), spent spell points, arrows and battered shields carry on. Each member has one bandage; between rooms the party bandages whoever is bleeding while bandages last, and untended bleeding runs its course.',
-  'Traps are hidden runes laid by the foes\' side: the foes know where they are and the party does not. There is no way to search for them yet, which is one of the things this gauntlet is meant to test when it exists.',
+  'A party of level-5 adventurers (the arena builds) fights the eight rooms in order. A room is lost if the party is wiped out or can\'t win within 30 rounds.',
+  `Attrition mode: the same party goes on from room to room. Between rooms there is a breather: stamina comes back and the unconscious get up; wounds (CON), spell points, arrows and battered shields carry on. Each member has one bandage, used on whoever is bleeding while they last; untended bleeding runs its course. After room ${DATA.campAfter} the party makes camp: the long-rest rules (bleeding tended, stamina and spell points back, one daily heal roll, some armor repair). The run ends at the first room lost.`,
+  'Reset mode: every room is fought by a fresh, full-strength party, the dead restored, so every room is tested in every run. Deaths are still recorded room by room.',
+  'Traps are hidden runes laid by the foes\' side: the foes know where they are and the party does not. There is no way to search for them yet.',
   'The rooms are ordered by how hard each fight was for a fresh party in the party arena, from goblins up to the troll chieftain.',
-  'Every lineup runs the same seeds, so the comparison between lineups is paired; the marginal value of a member is the mean paired difference in rooms cleared.',
-  'Raw data: runs.csv has one row per run per member (rooms cleared, survival, wounds dealt and taken, foes downed, room of death), for R.',
+  'Every lineup runs the same seeds, so comparisons between lineups are paired; a member\'s value is the mean paired difference in the mode\'s score.',
+  'Raw data: runs.csv has one row per mode, run and member (score, deaths and the rooms they happened in, wounds dealt and taken, foes downed), for R.',
 ].map((t) => `<li>${esc(t)}</li>`).join('');
 </script>

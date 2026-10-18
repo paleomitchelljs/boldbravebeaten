@@ -1,11 +1,15 @@
 #!/usr/bin/env node
 /*
  * The gauntlet: a party of level-5 adventurers crawls through a fixed run of eight rooms, ordered
- * by how hard each fight was for a fresh party in the party arena. Wounds, bleeding, spent spell points, spent arrows and battered shields carry
- * from room to room; between rooms there is only a breather (stamina back, bandages used up).
+ * by how hard each fight was for a fresh party in the party arena. In attrition mode, wounds,
+ * bleeding, spent spell points, spent arrows and battered shields carry from room to room;
+ * between rooms there is only a breather (stamina back, bandages used up), and a camp partway.
  * The run ends when the party clears the last room, is wiped out, or can't win a room in time.
  *
- *   node sim/gauntlet.js [--n 50] [--only mage,core] [--out sim/results/gauntlet]
+ *   node sim/gauntlet.js [--n 50] [--only mage,core] [--mode attrition|reset] [--out sim/results/gauntlet]
+ *
+ * Two modes: attrition (wounds carry on, with a camp partway) and reset (a fresh party for every
+ * room, the dead restored, deaths still recorded).
  *
  * Lineups: a core trio (knight with shield, mail two-hander, archer) alone and with each fourth
  * member, and the mage party with each core member left out. Every lineup runs the same seeds,
@@ -226,19 +230,41 @@ function breather(party) {
   }
 }
 
+// ---- Camp: a long rest partway through (attrition mode) -------------------------------
+// After this many rooms the party makes camp: the existing long-rest rules (bleeding tended,
+// stamina and spell points back, one daily heal roll, a little armor and shield repair).
+// Arrows and bandages are not restocked.
+const CAMP_AFTER = 4;
+async function camp(party, seed) {
+  const living = party.filter((c) => !c.status.dead);
+  const tender = living.slice().sort((a, b) => C.rank(b, 'wound_tending') - C.rank(a, 'wound_tending'))[0] || null;
+  const roller = L.makeRoller(seed);
+  for (const c of living) await L.B.Recovery.longRest(c, { tender }, roller);
+}
+
 // ---- Running ----------------------------------------------------------------------------
-async function runGauntlet(lineup, runIdx) {
-  const party = lineup.members.map((m, j) => {
+// mode 'attrition': one party through the rooms in order, wounds carried, a camp after room
+// CAMP_AFTER; the run ends at the first room it can't win.
+// mode 'reset': a fresh, full-strength party for every room (the dead restored), so every room
+// is fought by every run; deaths are still recorded, room by room.
+function freshParty(lineup) {
+  return lineup.members.map((m, j) => {
     const c = makeCombatant(...MEMBERS[m].key.split('/'), 'P' + j);
     c.name = MEMBERS[m].label.split(' (')[0];
     c.role = m;
     return c;
   });
-  const byId = Object.fromEntries(party.map((c) => [c.id, c]));
-  const stat = Object.fromEntries(party.map((c) => [c.role, { dealtAttrs: 0, dealtStamina: 0, downs: 0, takenAttrs: 0, takenStamina: 0, timesDowned: 0, diedIn: null }]));
+}
+
+async function runGauntlet(lineup, runIdx, mode) {
+  let party = freshParty(lineup);
+  const stat = Object.fromEntries(lineup.members.map((m) => [m, { dealtAttrs: 0, dealtStamina: 0, downs: 0, takenAttrs: 0, takenStamina: 0, timesDowned: 0, deaths: [] }]));
   const rooms = [];
   for (let r = 0; r < ROOMS.length; r++) {
     const room = ROOMS[r];
+    if (mode === 'reset' && r > 0) party = freshParty(lineup);
+    if (mode === 'attrition' && r === CAMP_AFTER) await camp(party, 31337 * runIdx + 7);
+    const byId = Object.fromEntries(party.map((c) => [c.id, c]));
     const up = party.filter((c) => C.isActive(c));
     if (!up.length) break;
     const foes = Enemies.makeMonster(room.foes);
@@ -255,26 +281,33 @@ async function runGauntlet(lineup, runIdx) {
     });
     Combat.cleanup(res.enc, Object.fromEntries(res.enc.ids.map((id) => [id, up.find((c) => c.id === id) || foes.find((c) => c.id === id)]).filter(([, c]) => c)));
     const cleared = res.winner === 'A';
-    if (cleared) breather(party);
-    for (const c of party) if (c.status.dead && !deadBefore.has(c.id) && stat[c.role].diedIn == null) stat[c.role].diedIn = r;
-    rooms.push({ cleared, rounds: res.rounds, deaths: party.filter((c) => c.status.dead && !deadBefore.has(c.id)).length, timeout: res.winner === 'timeout' });
-    if (!cleared) break;
+    if (cleared && mode === 'attrition') breather(party);
+    const died = party.filter((c) => c.status.dead && !deadBefore.has(c.id)).map((c) => c.role);
+    for (const m of died) stat[m].deaths.push(r);
+    rooms.push({ cleared, rounds: res.rounds, deaths: died.length, died, timeout: res.winner === 'timeout' });
+    if (!cleared && mode === 'attrition') break;
   }
-  return { cleared: rooms.filter((x) => x.cleared).length, rooms, stat, survivors: party.filter((c) => !c.status.dead).length };
+  const won = rooms.filter((x) => x.cleared).length;
+  return { score: won, rooms, stat, survivors: party.filter((c) => !c.status.dead).length };
 }
 
-(async () => {
-  const t0 = Date.now();
-  const out = { n: N, generated: new Date().toISOString(), rooms: ROOMS.map(({ key, name, foes, blurb, map }) => ({ key, name, foes, foeNames: Enemies.makeMonster(foes).map((c) => c.name), blurb, map })), members: MEMBERS, lineups: {}, marginal: {} };
-  const csv = ['lineup,run,member,rooms_cleared,survived,dealt_attrs,dealt_stamina,downs,taken_attrs,taken_stamina,times_downed,died_in_room'];
+const MODES = {
+  attrition: { label: 'Attrition', blurb: `One party through all eight rooms; wounds carry on, with a breather between rooms and a camp (a long rest) after room ${CAMP_AFTER}. The run ends at the first room the party can't win.`, score: 'rooms cleared in a row' },
+  reset: { label: 'Reset', blurb: 'A fresh, full-strength party for every room, the dead restored. Every room is fought in every run; deaths are recorded room by room.', score: 'rooms won' },
+};
+const ONLY_MODE = arg('mode', null);
+
+async function runMode(mode, csv) {
+  const res = { lineups: {}, marginal: {} };
   for (const [lk, lineup] of Object.entries(RUN)) {
     const runs = [];
-    for (let i = 0; i < N; i++) runs.push(await runGauntlet(lineup, i));
+    for (let i = 0; i < N; i++) runs.push(await runGauntlet(lineup, i, mode));
     const reach = ROOMS.map((_, r) => runs.filter((x) => x.rooms.length > r).length / N);
-    const clear = ROOMS.map((_, r) => runs.filter((x) => x.cleared > r).length / N);
+    const clear = ROOMS.map((_, r) => runs.filter((x) => x.score > r).length / N);
     const roomStats = ROOMS.map((_, r) => {
       const at = runs.map((x) => x.rooms[r]).filter(Boolean);
-      return { reached: at.length, cleared: at.filter((x) => x.cleared).length, timeouts: at.filter((x) => x.timeout).length, rounds: at.length ? at.reduce((t, x) => t + x.rounds, 0) / at.length : null, deaths: at.length ? at.reduce((t, x) => t + x.deaths, 0) / at.length : null };
+      const memberDeaths = Object.fromEntries(lineup.members.map((m) => [m, at.length ? at.filter((x) => x.died.includes(m)).length / at.length : null]));
+      return { reached: at.length, cleared: at.filter((x) => x.cleared).length, timeouts: at.filter((x) => x.timeout).length, rounds: at.length ? at.reduce((t, x) => t + x.rounds, 0) / at.length : null, deaths: at.length ? at.reduce((t, x) => t + x.deaths, 0) / at.length : null, memberDeaths };
     });
     const members = {};
     for (const m of lineup.members) {
@@ -282,44 +315,65 @@ async function runGauntlet(lineup, runIdx) {
       members[m] = {
         dealtAttrs: s((x) => x.dealtAttrs), dealtStamina: s((x) => x.dealtStamina), downs: s((x) => x.downs),
         takenAttrs: s((x) => x.takenAttrs), takenStamina: s((x) => x.takenStamina), timesDowned: s((x) => x.timesDowned),
-        deathRate: runs.filter((x) => x.stat[m].diedIn != null).length / N,
-        diedIn: ROOMS.map((_, r) => runs.filter((x) => x.stat[m].diedIn === r).length / N),
+        // Attrition: the share of runs in which they die. Reset: deaths per run (out of eight rooms).
+        deathRate: mode === 'reset' ? s((x) => x.deaths.length) : runs.filter((x) => x.stat[m].deaths.length).length / N,
+        diedIn: ROOMS.map((_, r) => runs.filter((x) => x.stat[m].deaths.includes(r)).length / N),
       };
     }
     const tot = (k) => Object.values(members).reduce((t, x) => t + x[k], 0) || 1;
     for (const m of Object.values(members)) { m.shareAttrs = m.dealtAttrs / tot('dealtAttrs'); m.shareStamina = m.dealtStamina / tot('dealtStamina'); m.shareDowns = m.downs / tot('downs'); }
-    out.lineups[lk] = {
-      label: lineup.label, members: lineup.members, meanCleared: runs.reduce((t, x) => t + x.cleared, 0) / N, fullClear: runs.filter((x) => x.cleared === ROOMS.length).length / N,
-      meanSurvivors: runs.reduce((t, x) => t + x.survivors, 0) / N, reach, clear, roomStats, memberStats: members, perRun: runs.map((x) => x.cleared),
+    res.lineups[lk] = {
+      label: lineup.label, members: lineup.members, meanCleared: runs.reduce((t, x) => t + x.score, 0) / N, fullClear: runs.filter((x) => x.score === ROOMS.length).length / N,
+      meanSurvivors: runs.reduce((t, x) => t + x.survivors, 0) / N, reach, clear, roomStats, memberStats: members, perRun: runs.map((x) => x.score),
+      winRate: roomStats.map((s) => (s.reached ? s.cleared / s.reached : null)),
     };
     runs.forEach((x, i) => lineup.members.forEach((m) => {
       const s = x.stat[m];
-      csv.push([lk, i, m, x.cleared, s.diedIn == null ? 1 : 0, s.dealtAttrs, s.dealtStamina, s.downs, s.takenAttrs, s.takenStamina, s.timesDowned, s.diedIn == null ? '' : s.diedIn + 1].join(','));
+      csv.push([mode, lk, i, m, x.score, s.deaths.length, s.dealtAttrs, s.dealtStamina, s.downs, s.takenAttrs, s.takenStamina, s.timesDowned, s.deaths.map((r) => r + 1).join(';')].join(','));
     }));
-    process.stderr.write(`${lk} `);
+    process.stderr.write(`${mode}:${lk} `);
   }
-  process.stderr.write('\n');
-  // Marginal value, paired by seed: rooms cleared with the member minus without.
+  // Marginal value, paired by seed: the score with the member minus without.
   for (const [m, [w, wo]] of Object.entries(MARGINAL)) {
-    const a = out.lineups[w], b = out.lineups[wo];
+    const a = res.lineups[w], b = res.lineups[wo];
     if (!a || !b) continue;
     const d = a.perRun.map((x, i) => x - b.perRun[i]);
     const mean = d.reduce((t, x) => t + x, 0) / d.length;
     const sd = Math.sqrt(d.reduce((t, x) => t + (x - mean) ** 2, 0) / Math.max(1, d.length - 1));
-    out.marginal[m] = { with: w, without: wo, mean, se: sd / Math.sqrt(d.length), fullClearWith: a.fullClear, fullClearWithout: b.fullClear };
+    res.marginal[m] = { with: w, without: wo, mean, se: sd / Math.sqrt(d.length), fullClearWith: a.fullClear, fullClearWithout: b.fullClear };
   }
+  return res;
+}
+
+(async () => {
+  const t0 = Date.now();
+  const out = { n: N, generated: new Date().toISOString(), campAfter: CAMP_AFTER, rooms: ROOMS.map(({ key, name, foes, blurb, map }) => ({ key, name, foes, foeNames: Enemies.makeMonster(foes).map((c) => c.name), blurb, map })), members: MEMBERS, modes: {} };
+  const csv = ['mode,lineup,run,member,score,deaths,dealt_attrs,dealt_stamina,downs,taken_attrs,taken_stamina,times_downed,died_in_rooms'];
+  for (const [mk, M] of Object.entries(MODES)) {
+    if (ONLY_MODE && mk !== ONLY_MODE) continue;
+    out.modes[mk] = Object.assign({ label: M.label, blurb: M.blurb, score: M.score }, await runMode(mk, csv));
+  }
+  process.stderr.write('\n');
   out.seconds = Math.round((Date.now() - t0) / 1000);
 
-  const pct = (x) => Math.round(100 * x) + '%';
+  const pct = (x) => (x == null ? '—' : Math.round(100 * x) + '%');
   const f1 = (x) => x.toFixed(1);
-  const md = [`# Gauntlet\n\n${N} runs per lineup, the same seeds for every lineup, ${out.seconds} s. Rooms in order: ${ROOMS.map((r) => `${r.name} (${out.rooms.find((x) => x.key === r.key).foeNames.length} × ${r.foes})`).join(', ')}.\n`,
-    '## Rooms cleared\n', '| Lineup | Mean rooms | Full clear | Survivors | ' + ROOMS.map((r) => `Clears ${r.name}`).join(' | ') + ' |', '|---|---|---|---|' + ROOMS.map(() => '---|').join('')];
-  for (const l of Object.values(out.lineups)) md.push(`| ${l.label} | ${l.meanCleared.toFixed(2)} | ${pct(l.fullClear)} | ${l.meanSurvivors.toFixed(1)} | ` + l.clear.map(pct).join(' | ') + ' |');
-  md.push('\n## Marginal value (rooms cleared with minus without, paired; ± one standard error)\n', '| Member | With | Without | Δ rooms | Full clear with / without |', '|---|---|---|---|---|');
-  for (const [m, v] of Object.entries(out.marginal)) md.push(`| ${MEMBERS[m].label} | ${out.lineups[v.with].label} | ${out.lineups[v.without].label} | ${v.mean >= 0 ? '+' : ''}${v.mean.toFixed(2)} ± ${v.se.toFixed(2)} | ${pct(v.fullClearWith)} / ${pct(v.fullClearWithout)} |`);
-  md.push('\n## Who does what (per run)\n', '| Lineup | Member | Harm dealt (attr / stamina) | Share of harm | Foes downed (share) | Harm taken (attr / stamina) | Dies |', '|---|---|---|---|---|---|---|');
-  for (const l of Object.values(out.lineups)) for (const [m, s] of Object.entries(l.memberStats)) {
-    md.push(`| ${l.label} | ${MEMBERS[m].label.split(' (')[0]} | ${f1(s.dealtAttrs)} / ${f1(s.dealtStamina)} | ${pct(s.shareAttrs)} | ${f1(s.downs)} (${pct(s.shareDowns)}) | ${f1(s.takenAttrs)} / ${f1(s.takenStamina)} | ${pct(s.deathRate)} |`);
+  const md = [`# Gauntlet\n\n${N} runs per lineup per mode, the same seeds for every lineup, ${out.seconds} s. Rooms in order: ${ROOMS.map((r) => `${r.name} (${out.rooms.find((x) => x.key === r.key).foeNames.length} × ${r.foes})`).join(', ')}.\n`];
+  for (const [mk, R] of Object.entries(out.modes)) {
+    md.push(`## ${R.label} mode\n\n${R.blurb}\n`);
+    md.push(`| Lineup | Mean ${R.score} | All eight | ` + ROOMS.map((r) => (mk === 'reset' ? `Wins ${r.name}` : `Clears ${r.name}`)).join(' | ') + ' |', '|---|---|---|' + ROOMS.map(() => '---|').join(''));
+    for (const l of Object.values(R.lineups)) md.push(`| ${l.label} | ${l.meanCleared.toFixed(2)} | ${pct(l.fullClear)} | ` + (mk === 'reset' ? l.winRate : l.clear).map(pct).join(' | ') + ' |');
+    md.push(`\n### Marginal value (${R.score} with minus without, paired; ± one standard error)\n`, '| Member | With | Without | Δ | All eight with / without |', '|---|---|---|---|---|');
+    for (const [m, v] of Object.entries(R.marginal)) md.push(`| ${MEMBERS[m].label} | ${R.lineups[v.with].label} | ${R.lineups[v.without].label} | ${v.mean >= 0 ? '+' : ''}${v.mean.toFixed(2)} ± ${v.se.toFixed(2)} | ${pct(v.fullClearWith)} / ${pct(v.fullClearWithout)} |`);
+    md.push('\n### Who does what (per run)\n', `| Lineup | Member | Harm dealt (attr / stamina) | Share of harm | Foes downed (share) | Harm taken (attr / stamina) | ${mk === 'reset' ? 'Deaths per run' : 'Dies'} |`, '|---|---|---|---|---|---|---|');
+    for (const l of Object.values(R.lineups)) for (const [m, s] of Object.entries(l.memberStats)) {
+      md.push(`| ${l.label} | ${MEMBERS[m].label.split(' (')[0]} | ${f1(s.dealtAttrs)} / ${f1(s.dealtStamina)} | ${pct(s.shareAttrs)} | ${f1(s.downs)} (${pct(s.shareDowns)}) | ${f1(s.takenAttrs)} / ${f1(s.takenStamina)} | ${mk === 'reset' ? s.deathRate.toFixed(2) : pct(s.deathRate)} |`);
+    }
+    if (mk === 'reset') {
+      md.push('\n### Deaths by room (reset mode, share of fights in which each member dies)\n', '| Lineup | Member | ' + ROOMS.map((r) => r.name).join(' | ') + ' |', '|---|---|' + ROOMS.map(() => '---|').join(''));
+      for (const l of Object.values(R.lineups)) for (const m of l.members) md.push(`| ${l.label} | ${MEMBERS[m].label.split(' (')[0]} | ` + l.roomStats.map((s) => pct(s.memberDeaths[m])).join(' | ') + ' |');
+    }
+    md.push('');
   }
   fs.mkdirSync(OUT, { recursive: true });
   fs.writeFileSync(path.join(OUT, 'gauntlet.json'), JSON.stringify(out));
