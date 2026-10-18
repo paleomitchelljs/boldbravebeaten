@@ -16,6 +16,8 @@
       order: [],
       encounter: null,
       settings: { autoRoll: 'auto-only', aiEnemies: true, gmView: false },
+      secrets: [], // the GM's: what rituals can reveal (Lore tab)
+      lore: { log: [] },
       selected: null,
       tab: 'roster',
     };
@@ -62,7 +64,8 @@
     const yd = Items.makeWeapon('dagger', 'standard');
     ysolde.weapons.push(yd);
     ysolde.sidearm = yd.id;
-    ysolde.feats = { casting: 2, verb_strike: 1, verb_hex: 1, verb_build: 1, verb_cover: 1, mod_strong: 1 };
+    ysolde.feats = { casting: 2, verb_strike: 1, verb_hex: 1, verb_build: 1, verb_cover: 1, mod_strong: 1, ritualist: 1 };
+    ysolde.inventory.components = { salt: 3, candle: 3, ink: 2, silverDust: 1, chalk: 2, herbs: 2 };
     ysolde.level = 3;
     ysolde.nouns = ['fire', 'earth', 'vine'];
     ysolde.notes = 'Example caster: Fire, Earth and Vine. Walls, roots, burning ground. Edit or delete freely.';
@@ -71,6 +74,13 @@
     add(G.Enemies.generate('bandit', 1, { seed: 11, name: 'Gorm the bandit' }));
     add(G.Enemies.generate('bandit', 1, { seed: 23, name: 'Fenna the bandit' }));
     add(G.Enemies.generate('sellsword', 2, { seed: 5, name: 'Rurik the sellsword' }));
+    // Example secrets for the Lore tab (the GM writes these).
+    s.secrets = [
+      { id: 'sec1', subject: 'Gorm the bandit', reveals: ['divine', 'seek:mind'], tier: 'easy', text: 'Gorm owes the sellsword money and would sell him out for less.', revealed: false },
+      { id: 'sec2', subject: 'The ruined chapel', reveals: ['seek:force', 'seek'], tier: 'moderate', text: 'A fire rune is laid under the altar step.', revealed: false },
+      { id: 'sec3', subject: 'The ruined chapel', reveals: ['divine'], tier: 'hard', text: 'The chapel burned because the priest bound something in its bell.', revealed: false },
+      { id: 'sec4', subject: 'The black ledger', reveals: ['read'], tier: 'moderate', text: 'The ledger is in a merchant cipher: payments to "the Bell" every new moon.', revealed: false },
+    ];
     s.selected = wren.id;
     return s;
   }
@@ -91,6 +101,8 @@
     const base = emptyState();
     s = Object.assign(base, s);
     s.settings = Object.assign(emptyState().settings, s.settings || {});
+    if (!s.secrets) s.secrets = [];
+    if (!s.lore) s.lore = { log: [] };
     for (const id in s.characters) C.normalize(s.characters[id]);
     s.order = (s.order || []).filter((id) => s.characters[id]);
     for (const id in s.characters) if (!s.order.includes(id)) s.order.push(id);

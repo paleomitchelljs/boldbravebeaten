@@ -370,6 +370,39 @@
       backlashPerPoint: 2,
     },
 
+    // ---- Rituals (PROVISIONAL draft, magic phase 3; src/rules/ritual.js) ----------------
+    ritual: {
+      // Difficulty tiers the GM sets: d10 + ⌊INT/2⌋ + Ritualist against these.
+      tiers: { easy: 6, moderate: 8, hard: 10, veryHard: 12, legendary: 14 },
+      // Margin over the tier for each outcome (below partial: fail).
+      outcomes: { partial: 0, full: 3, exceptional: 6 },
+      reveals: { partial: 1, full: 2, exceptional: 3 }, // secrets learned
+      heals: { partial: 1, full: 2, exceptional: 4 }, // Mend: CON (+ Wound Tending on full+)
+      backlashAt: -5, // a failure this bad turns on the caster (2 stamina per point short)
+      trueNameBonus: 3, // with True Naming, a true name used in the ritual
+      // Components (inventory.components): rituals spend them, success or not.
+      components: {
+        chalk: { name: 'Chalk', rarity: 'common' }, salt: { name: 'Salt', rarity: 'common' },
+        candle: { name: 'Candles', rarity: 'common' }, ink: { name: 'Ink', rarity: 'common' },
+        herbs: { name: 'Herbs', rarity: 'common' }, incense: { name: 'Incense', rarity: 'uncommon' },
+        silverDust: { name: 'Silver dust', rarity: 'uncommon' }, graveDirt: { name: 'Grave dirt', rarity: 'uncommon' },
+        gem: { name: 'Gem', rarity: 'rare' },
+      },
+      // The rituals: time (minutes, shortened by Ritualist), spell points (less 1 per Ritualist
+      // rank), components, the feat it needs, the nouns it takes (true: any known), and which
+      // secrets it reveals.
+      kinds: {
+        read: { name: 'Read', minutes: 60, sp: 1, components: { ink: 1, candle: 1 }, feat: 'ritualist', needs: 'Ritualist', reveals: 'read', subject: 'a tome or writing' },
+        seek: { name: 'Seek', minutes: 10, sp: 2, components: { salt: 1 }, feat: 'ritualist', needs: 'Ritualist', nouns: true, reveals: 'seek', subject: 'the place you stand' },
+        divine: { name: 'Divine', minutes: 60, sp: 3, components: { candle: 1, silverDust: 1 }, feat: 'ritualist', needs: 'Ritualist', reveals: 'divine', subject: 'a person, place or thing' },
+        speak: { name: 'Speak', minutes: 30, sp: 3, components: { graveDirt: 1, incense: 1 }, feat: 'ritualist', needs: 'Ritualist', nouns: ['life', 'spirit', 'vine'], reveals: 'speak', subject: 'the dead (Life), a spirit (Spirit) or a beast (Vine)' },
+        mend: { name: 'Mend', minutes: 60, sp: 2, components: { herbs: 2 }, feat: 'rite_of_healing', needs: 'Rite of Healing', subject: 'a patient' },
+        prepare: { name: 'Prepare', minutes: 30, sp: 0, components: { chalk: 1 }, feat: 'warding', needs: 'Warding', subject: 'a ward, boon or rune laid in advance' },
+        summon: { name: 'Summon', minutes: 60, sp: 6, components: { gem: 1, chalk: 2 }, feat: 'binding_circle', verbFeat: 'verb_summon', needs: 'Binding Circle and the verb Summon', needsName: true, subject: 'a creature, by its true name' },
+        raise: { name: 'Raise', minutes: 120, sp: 6, components: { graveDirt: 3, candle: 2 }, feat: 'necromancy', needs: 'Necromancy', evil: true, subject: 'a body' },
+      },
+    },
+
     // ---- Conditions (PROVISIONAL, magic overhaul) ------------------------------------
     // Timed effects (src/rules/conditions.js). Values are per point of magnitude. resist: the
     // attribute a target rolls to shake it off as it lands (d10 + ⌊attr/2⌋ against the caster's
@@ -581,6 +614,7 @@
     'Ward (verb) and Blink (verb): Ward + Force soaks 3 × magnitude points of spells and missiles; Ward + Wind turns half the missiles aside; Ward + an element halves that element and keeps off its after-effects; Ward + Mind keeps out baits. Blink steps up to 4 squares through walls and out of any hold, roots or webs. Wind blows now hurl a target back 2 squares.',
     'Bait and Read intent (in-combat charm and wisdom): Bait (2 AP on the sheet, within 3 squares) is d10 + ⌊CHA/2⌋ + Feint against d10 + ⌊WIS/2⌋ + Read Attack: the foe\'s guards are drawn out and spent, and they defend at −2 for the rest of the round. Read intent (1 AP, within 4, in sight): the reader rolls d10 + ⌊WIS/2⌋ + Read Attack against 5 + the foe\'s ⌊CHA/2⌋ + Feint, a number they don\'t see. Made it: the foe\'s true intent (what they have committed to this round, feints seen through) and +2 to defend against them and to beat their defenses. Missed by 1–3: nothing to go on. Missed by 4 or more: a confident misread — a false intent and −2 — reported just like a true read. Hex + Mind baits by magic (WIL resists); Bless + Mind gives foresight (true reads of every foe).',
     'Magic phase 2 (draft): Beguile (verb, WIL resists, 2 rounds) with the mind nouns — Calm (won\'t attack; a blow ends it), Dream (mesmerized: no actions until harmed), Rage (a frenzy: no guards, strikes the nearest body, friend or foe), Fear (won\'t close with or strike the caster), Will (fights for the caster while the caster concentrates, −1 AP). Word Doubling (feat): two nouns instead of a modifier, both do the verb (+2 cost); Rage + Dream makes confusion. Body nouns Swiftness, Might, Grace: a bolt or Hex slows, enfeebles (−2 STR) or makes clumsy (−2 DEX), CON resists; Bless hastens, empowers, makes deft. Venom (poison, 1 CON a round; miasma ground; antivenom boon) and Plague (disease: −1 STR, −2 regeneration, lasts past the fight). Light (sears the undead ×2; dazzles; radiance reveals runes; wall of light), Shadow (blinds — strikes only at arm\'s reach; darkness blocks sight and missiles but not blades; shroud turns half the missiles), Spirit (harms only the undead, ×2; chills the living for half, to stamina; Beguile + Spirit frightens). Conditions now shift every attribute but CON.',
+    'Rituals (magic phase 3 draft): Read, Seek, Divine, Speak, Mend, Prepare, Summon, Raise. Each takes time (shortened by Ritualist), spell points (−1 per Ritualist rank) and components (spent win or lose). Roll d10 + ⌊INT/2⌋ + Ritualist (+3 with True Naming and a true name) against the GM\'s tier (easy 6, moderate 8, hard 10, very hard 12, legendary 14): margin 0+ partial, 3+ full, 6+ exceptional; −5 or worse turns on the caster. Information rituals reveal the GM\'s secrets about the subject that the roll could reach (1 / 2 / 3 by outcome). Mend heals 1 / 2 / 4 CON and stops bleeding (exceptional draws out poison and disease). Prepare lays a ward, boon or rune that takes hold when the next fight starts, twice as long.',
     'Wound roll: a blow that reaches the body rolls a d10; on 10 × chance or less it is a vital wound. Piercing chance = depth/100 (dagger 1, swords 2, spear and greatsword 3 on the d10): triple CON damage, double bleeding. Cuts: chance = edge/10: the cut takes its damage again from CON. Armor guards the vitals: padded ×0.6, leather ×0.5, mail ×0.3, scale ×0.25, plate ×0.1 (×1.5 half armor, ×2 partial).',
     'WIL split from WIS (the user\'s call): eight attributes. WIL is resolve: magic defense, resisting fear and compulsion, and stamina regeneration (⌊(CON + WIL)/4⌋ − armor). WIS stays judgment and perception. Older characters get WIL = their WIS.',
     'Monster attributes go past the human range (1–10, 13 with Conditioning feats), up to 30: bears and trolls STR 16–20, a stone golem 22, a troll chieftain 24. The usual formulas apply to the raw number (damage bonus ⌊(STR−5)/2⌋, grappling ⌊STR/2⌋, stamina, death at CON 0).',

@@ -35,7 +35,8 @@
       wield: null,
       sidearm: null,
       offhand: null, // a parrying dagger held in the off hand
-      inventory: { bandages: 2, gold: 10, arrows: 0, bodkins: 0, items: [] },
+      inventory: { bandages: 2, gold: 10, arrows: 0, bodkins: 0, items: [], components: {} },
+      prepared: [], // rituals laid in advance (Ritual.applyPrepared at the next fight)
       nouns: [], // magic nouns learned in the world (Fire, Force…)
       spSpent: 0, // spell points used since the last rest
       status: freshStatus(),
@@ -79,7 +80,9 @@
     c.weapons = c.weapons || [];
     c.bleeds = c.bleeds || [];
     if (c.offhand === undefined) c.offhand = null;
-    c.inventory = Object.assign({ bandages: 0, gold: 0, arrows: 0, bodkins: 0, items: [] }, c.inventory || {});
+    c.inventory = Object.assign({ bandages: 0, gold: 0, arrows: 0, bodkins: 0, items: [], components: {} }, c.inventory || {});
+    if (!c.inventory.components) c.inventory.components = {};
+    if (!c.prepared) c.prepared = [];
     c.nouns = c.nouns || [];
     if (c.spSpent == null) c.spSpent = 0;
     if (c.level == null) c.level = 1;

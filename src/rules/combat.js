@@ -82,6 +82,8 @@
   // ---- Round start -------------------------------------------------------
   async function startRound(enc, chars, roller) {
     enc.round += 1;
+    // The first round: wards, boons and runes laid in advance by ritual take hold.
+    if (enc.round === 1 && G.Ritual) for (const line of G.Ritual.applyPrepared(enc, chars)) log(enc, line, 'pass');
     enc.phase = 'initiative';
     enc.decls = [];
     enc.conceded = {};

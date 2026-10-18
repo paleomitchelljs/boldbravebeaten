@@ -1298,3 +1298,52 @@ test('phase 2: light sears the undead; darkness blocks sight; disease outlasts t
   Combat.cleanup(enc, { [m.id]: m, [man.id]: man });
   assert.ok(B.Conditions.has(man, 'diseased') && !B.Conditions.has(man, 'slowed'));
 });
+
+test('phase 3: rituals spend components and points, reveal secrets the roll can reach', async () => {
+  const R = B.Ritual;
+  const m = mage('M', ['force', 'life', 'spirit']);
+  m.feats.ritualist = 1;
+  m.inventory.components = { salt: 2, ink: 1, candle: 2, silverDust: 1 };
+  const secrets = [
+    { id: 's1', subject: 'Old chapel', reveals: ['seek:force'], tier: 'easy', text: 'A ward of warding glyphs under the altar.' },
+    { id: 's2', subject: 'Old chapel', reveals: ['seek:force'], tier: 'legendary', text: 'The bell is a bound demon.' },
+    { id: 's3', subject: 'Old chapel', reveals: ['divine'], tier: 'easy', text: 'The priest lied about the fire.' },
+  ];
+  assert.ok(!R.missing(m, 'seek', { noun: 'force' }));
+  assert.match(R.missing(m, 'speak', { noun: 'life' }), /Short of/);
+  // INT 8 → +4, Ritualist +1; d10 = 8 → 13 vs moderate 8: margin 5, full; reaches easy (6), not legendary (14).
+  const res = await R.perform(m, { kind: 'seek', noun: 'force', subject: 'old chapel', tier: 'moderate' }, roller(1, [8]), secrets);
+  assert.strictEqual(res.outcome, 'full');
+  assert.deepStrictEqual(res.revealed.map((s) => s.id), ['s1'], 'the legendary secret is out of reach; divine-only stays hidden');
+  assert.strictEqual(m.inventory.components.salt, 1);
+  // A bad failure: components gone, backlash.
+  const st = m.stamina;
+  const bad = await R.perform(m, { kind: 'seek', noun: 'force', subject: 'old chapel', tier: 'legendary' }, roller(2, [1]), secrets);
+  assert.strictEqual(bad.outcome, 'fail');
+  assert.ok(m.stamina < st);
+  assert.strictEqual(m.inventory.components.salt, 0);
+});
+
+test('phase 3: mend heals far better than in a fight; prepared wards take hold when the fight starts', async () => {
+  const R = B.Ritual;
+  const m = mage('M', ['force', 'life']);
+  m.feats.ritualist = 1; m.feats.rite_of_healing = 1; m.feats.warding = 1;
+  m.inventory.components = { herbs: 2, chalk: 1 };
+  const p = armed('P', 'club');
+  p.damage.CON = 4; p.bleeds = [{ remaining: 3, rounds: 3 }];
+  const res = await R.perform(m, { kind: 'mend', patient: p, tier: 'moderate' }, roller(1, [7]), []);
+  assert.strictEqual(res.outcome, 'full');
+  assert.strictEqual(p.damage.CON, 2);
+  assert.strictEqual(p.bleeds.length, 0);
+  const ward = R.preparable(m).find((o) => o.spellKey === 'ward+force');
+  assert.ok(ward);
+  await R.perform(m, { kind: 'prepare', spell: ward, target: p, tier: 'easy' }, roller(2, [8]), []);
+  assert.strictEqual(m.prepared.length, 1);
+  const f = armed('F', 'club', { side: 'enemy' });
+  const chars = { [m.id]: m, [p.id]: p, [f.id]: f };
+  const enc = Combat.createEncounter('t', [m.id, p.id, f.id], chars, 8, 3);
+  await Combat.startRound(enc, chars, roller(3, [5, 5, 5]));
+  const w = B.Conditions.get(p, 'warded');
+  assert.ok(w && w.kind === 'magic' && w.rounds === 6);
+  assert.strictEqual(m.prepared.length, 0);
+});

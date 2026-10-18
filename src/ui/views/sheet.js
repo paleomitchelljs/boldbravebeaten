@@ -146,6 +146,11 @@
         h('label', { class: 'inline', for: 'inv-gold' }, h('span', { class: 'label' }, 'Gold'), num('inv-gold', c.inventory.gold, (v) => { c.inventory.gold = Math.max(0, Math.round(v)); app.save(); app.render(); }, { min: 0 })),
         h('label', { class: 'inline', for: 'inv-arrows' }, h('span', { class: 'label' }, 'Broadheads'), num('inv-arrows', c.inventory.arrows || 0, (v) => { c.inventory.arrows = Math.max(0, Math.round(v)); app.save(); app.render(); }, { min: 0 })),
         h('label', { class: 'inline', for: 'inv-bodkins' }, h('span', { class: 'label' }, 'Bodkins'), num('inv-bodkins', c.inventory.bodkins || 0, (v) => { c.inventory.bodkins = Math.max(0, Math.round(v)); app.save(); app.render(); }, { min: 0 }))),
+      // Ritual components (Lore tab), and anything laid ready by ritual for the next fight.
+      h('div', { class: 'row small' }, h('span', { class: 'label' }, 'Components'),
+        Object.entries(G.CONFIG.ritual.components).map(([id, comp]) => h('label', { class: 'inline', for: 'comp-' + id }, comp.name,
+          num('comp-' + id, (c.inventory.components || {})[id] || 0, (v) => { c.inventory.components = c.inventory.components || {}; c.inventory.components[id] = Math.max(0, Math.round(v)); app.save(); app.render(); }, { min: 0 })))),
+      (c.prepared || []).length ? h('p', { class: 'small' }, h('b', null, 'Laid ready: '), c.prepared.map((p) => `${p.label} (${p.rounds} rd)`).join(', ')) : null,
       items.length ? h('div', { class: 'stack tight' }, h('span', { class: 'label' }, 'Pack'),
         items.map((it) => h('div', { class: 'row spread small' },
           h('span', null, Items.itemName(it), it.durability != null ? h('span', { class: 'muted num' }, ` · dur ${it.durability}`) : null, ' ', h('span', { class: 'chip' }, Items.itemRarity(it))),
@@ -157,7 +162,8 @@
   function attacksTable(c) {
     const atks = C.attackOptions(c);
     const fmt = (v) => v.join('/');
-    const others = ['block', 'parry', 'offParry', 'dodge', 'trip', 'disarm', 'grapple', 'standUp', 'drawSidearm', 'pickUp', 'bandage', 'escape'];
+    // Whatever of these the rules still have (the grappling ladder replaced 'escape' with Break).
+    const others = ['block', 'parry', 'offParry', 'dodge', 'trip', 'disarm', 'shove', 'clinch', 'grapple', 'break', 'standUp', 'drawSidearm', 'pickUp', 'bandage', 'bait', 'readIntent'].filter((k) => D.ACTIONS[k]);
     return h('div', { class: 'grid-2' },
       h('div', { class: 'scroll-x' }, h('table', { class: 'data' },
         h('thead', null, h('tr', null, h('th', null, 'Attack'), h('th', { class: 'n' }, 'AP'), h('th', { class: 'n' }, 'Stam.'), h('th', { class: 'n' }, 'Damage'), h('th', { class: 'n' }, 'Range'))),

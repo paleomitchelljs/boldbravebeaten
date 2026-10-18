@@ -9,6 +9,7 @@
     ['sheet', 'Sheet'],
     ['enemies', 'Enemies'],
     ['battle', 'Battle'],
+    ['lore', 'Lore'],
     ['rules', 'Rules'],
   ];
 

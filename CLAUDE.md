@@ -15,8 +15,10 @@ the arena results and the queued work.
   - back it up with sim evidence in `sim/FINDINGS.md`.
 - **No dependencies, no build step.** Classic scripts attach to `globalThis.BBB`.
   Rules code never touches the DOM, so it runs in Node.
-- **Before committing,** run `node --test`. After a rules change, re-run
-  `node sim/arena.js` and rebuild the page against the previous baseline.
+- **Before committing,** run `node --test`. After a UI change (or a rules change the sheet or
+  battle screen shows), run `node tests/ui-smoke.js`: it opens every tab in Chromium and fails on
+  page errors. After a rules change, re-run `node sim/arena.js` and rebuild the page against the
+  previous baseline.
 - **Tests.** Tests that check Specifics numbers wrap them in `asWritten()`.
   Update that helper when a new tuned value is added.
 - **The AI sees only what its character could see.** It doesn't see hidden
