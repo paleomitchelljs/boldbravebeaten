@@ -306,13 +306,14 @@
     // lets him cast with sword and shield in hand: Burst + Life + Strong (a withering burst, no
     // armor stops it) and Conjure + Life (raises the fallen to fight for him).
     deathKnight: {
-      name: 'Death knight', blurb: 'An end-game knight: legendary plate, an adamant shield, a blade that drinks stamina and wounds, a withering burst, and the dead rise for him.',
+      name: 'Death knight', blurb: 'An end-game knight: legendary plate, an adamant shield, a blade that drinks stamina and wounds, a withering burst, an aura of dread that saps everyone near him, a silk sash that quickens him, and the dead rise for him.',
       level: 20, attrs: { STR: 10, CON: 10, DEX: 8, SPD: 7, INT: 10, WIL: 10, WIS: 7, CHA: 8 },
       natural: [], keepUnarmed: true, nouns: ['life', 'shadow', 'fire'],
       armorItem: ['plate', 'full'], armorQuality: 'legendary',
       weaponItems: [{ type: 'longsword', quality: 'legendary', name: 'Soulreaver', enchant: { drain: { stamina: 0.5, attrs: 0.5 } } }],
       sidearm: 'dagger', shield: ['heater', 'adamant'], shieldQuality: 'legendary',
-      traits: {},
+      trinkets: [{ name: 'Flowing black silk sash', attrs: { SPD: 1 }, ap: 1 }],
+      traits: { aura: { name: 'aura of dread', radius: 2, stamina: 3, cond: 'dread' } },
       featPrefs: ['casting', 'verb_strike', 'verb_launch', 'casting', 'verb_burst', 'verb_bless', 'battle_casting', 'verb_conjure', 'mod_strong', 'casting',
         'plate_mobility', 'plate_mobility', 'shield_training', 'half_swording', 'plate_endurance', 'shield_training', 'quick_block', 'iron_stance', 'plate_endurance',
         'living_fortress', 'strength', 'toughness', 'parry_training', 'riposte', 'casting', 'control', 'quick_casting', 'half_swording'],
@@ -356,6 +357,7 @@
     c.feats = Object.assign({}, M.feats || {});
     if (M.featPrefs) chooseFeats(c, M.featPrefs, makeRng(c.level * 7919 + 1));
     if (M.nouns) c.nouns = M.nouns.slice();
+    if (M.trinkets) c.trinkets = JSON.parse(JSON.stringify(M.trinkets));
     if (M.armor) c.armor = Items.makeArmor(M.armor, 'full', 'standard');
     if (M.armorItem) c.armor = Items.makeArmor(M.armorItem[0], M.armorItem[1] || 'full', M.armorQuality || M.quality || 'standard');
     const q = M.quality || 'standard';

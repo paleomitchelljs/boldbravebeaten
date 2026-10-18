@@ -636,6 +636,8 @@
         h('div', null, h('b', null, 'Armor: '), c.armor ? `${Items.itemName(c.armor)} · durability ${ai.durability}/${ai.maxDurability}` : 'none'),
         c.shield ? h('div', null, h('b', null, 'Shield: '), `${Items.itemName(c.shield)} · durability ${c.shield.durability}`) : null,
         c.inventory.arrows || c.inventory.bodkins ? h('div', null, h('b', null, 'Arrows: '), `${c.inventory.arrows || 0} broadhead, ${c.inventory.bodkins || 0} bodkin`) : null,
+        (c.trinkets || []).length ? h('div', null, h('b', null, 'Wearing: '), c.trinkets.map((t) => t.name).join(', ')) : null,
+        c.traits && c.traits.aura ? h('div', null, h('b', null, 'Aura: '), `${c.traits.aura.name || 'aura'} — foes within ${c.traits.aura.radius} squares lose ${c.traits.aura.stamina} stamina each round${c.traits.aura.cond ? ` and fall into ${G.CONFIG.conditions[c.traits.aura.cond].name.toLowerCase()}` : ''}`) : null,
         h('div', null, h('b', null, 'Bandages: '), c.inventory.bandages)),
       feats.length ? h('details', { class: 'feat-tree' }, h('summary', null, h('span', null, 'Feats'), h('span', { class: 'muted' }, feats.length)), h('p', { class: 'small', style: { padding: '8px 12px' } }, feats.join(', '))) : null,
       h('div', { class: 'row spread' },

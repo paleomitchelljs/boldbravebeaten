@@ -1434,3 +1434,21 @@ test('death knight: Battle Casting casts with sword and shield; Soulreaver drink
   assert.match(r.text, /Soulreaver drinks/);
   assert.ok(dk.damage.CON < 3 || dk.stamina > 10, 'healed or refreshed');
 });
+
+test('death knight: his aura of dread saps foes near him each round; the silk sash quickens him', async () => {
+  const [dk] = B.Enemies.makeMonster('deathKnight');
+  const plain = Object.assign(JSON.parse(JSON.stringify(dk)), { trinkets: [] });
+  assert.ok(C.apPool(dk) > C.apPool(plain), 'the sash adds AP');
+  assert.equal(C.attr(dk, 'SPD'), C.attr(plain, 'SPD') + 1);
+  const near = fighter('Near'), far = fighter('Far');
+  near.side = far.side = 'party';
+  const chars = { [dk.id]: dk, [near.id]: near, [far.id]: far };
+  const enc = Combat.createEncounter('t', Object.keys(chars), chars, 12, 3);
+  enc.pos[dk.id] = { x: 5, y: 1 }; enc.pos[near.id] = { x: 3, y: 1 }; enc.pos[far.id] = { x: 10, y: 1 };
+  const st = near.stamina, st2 = far.stamina;
+  await Combat.startRound(enc, chars, roller(5, []));
+  assert.equal(near.stamina, st - dk.traits.aura.stamina);
+  assert.ok(B.Conditions.has(near, 'dread'));
+  assert.equal(far.stamina, st2);
+  assert.ok(!B.Conditions.has(far, 'dread'));
+});

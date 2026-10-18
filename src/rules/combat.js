@@ -80,10 +80,28 @@
   }
 
   // ---- Round start -------------------------------------------------------
+  // Auras (trait aura: { radius, stamina, cond }): at the start of each round every foe within
+  // the radius loses stamina and takes the condition for the round.
+  function auras(enc, chars) {
+    for (const id of enc.ids) {
+      const c = chars[id];
+      const A = c && c.traits && c.traits.aura;
+      if (!A || !C.isActive(c) || !enc.pos[id]) continue;
+      const hit = enc.ids.filter((o) => chars[o] && chars[o].side !== c.side && C.isActive(chars[o]) && enc.pos[o] && dist(enc.pos[id], enc.pos[o]) <= A.radius);
+      for (const o of hit) {
+        const t = chars[o];
+        if (A.stamina && !C.tireless(t)) { t.stamina = Math.max(0, t.stamina - A.stamina); C.updateCondition(t); }
+        if (A.cond && G.Conditions) G.Conditions.add(t, A.cond, { rounds: 1, src: id });
+      }
+      if (hit.length) log(enc, `${c.name}'s ${A.name || 'aura'} falls on ${hit.map((o) => chars[o].name).join(', ')}${A.stamina ? ` (−${A.stamina} stamina` : ' ('}${A.cond ? `${A.stamina ? ', ' : ''}${CONFIG.conditions[A.cond].name.toLowerCase()}` : ''}).`, 'hit');
+    }
+  }
+
   async function startRound(enc, chars, roller) {
     enc.round += 1;
     // The first round: wards, boons and runes laid in advance by ritual take hold.
     if (enc.round === 1 && G.Ritual) for (const line of G.Ritual.applyPrepared(enc, chars)) log(enc, line, 'pass');
+    auras(enc, chars);
     enc.phase = 'initiative';
     enc.decls = [];
     enc.conceded = {};

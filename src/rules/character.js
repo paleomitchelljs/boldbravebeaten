@@ -209,11 +209,22 @@
   function attr(c, a) {
     // Conditions (enfeebled, deft, resolute…) shift every attribute but CON, the body's life.
     const cond = a !== 'CON' && G.Conditions ? G.Conditions.attrMod(c, a) : 0;
-    return Math.max(0, c.base[a] + conditioning(c, a) - (c.damage[a] || 0) + cond);
+    return Math.max(0, c.base[a] + conditioning(c, a) + trinketMod(c, a) - (c.damage[a] || 0) + cond);
   }
 
   function attrMax(c, a) {
-    return c.base[a] + conditioning(c, a);
+    return c.base[a] + conditioning(c, a) + trinketMod(c, a);
+  }
+
+  // Worn trinkets (a sash, a ring…): c.trinkets = [{ name, attrs: { SPD: 1 }, ap: 1 }] (PROVISIONAL).
+  function trinketMod(c, a) {
+    let n = 0;
+    for (const t of c.trinkets || []) n += (t.attrs && t.attrs[a]) || 0;
+    return n;
+  }
+
+  function trinketAP(c) {
+    return (c.trinkets || []).reduce((n, t) => n + (t.ap || 0), 0);
   }
 
   // ---- Armor & shield ----------------------------------------------------
@@ -324,7 +335,7 @@
   function apPool(c) {
     const mult = (c.traits && c.traits.apMult) || 1; // monster trait: a boss acts like several fighters
     const cond = G.Conditions ? G.Conditions.apMod(c) : 0; // slowed, hasted, shocked…
-    return Math.max(0, Math.round((CONFIG.apBase + Math.floor(combatAttr(c, 'SPD') / CONFIG.apSpdDivisor) - fatiguePenalty(c) + cond) * apScale() * mult));
+    return Math.max(0, Math.round((CONFIG.apBase + Math.floor(combatAttr(c, 'SPD') / CONFIG.apSpdDivisor) - fatiguePenalty(c) + cond + trinketAP(c)) * apScale() * mult));
   }
 
   function apScale() {
@@ -729,7 +740,7 @@
     newCharacter, normalize, freshStatus,
     rank, featCount, featBudget, treeCount, tierCount, tierName, canTakeFeat, canRemoveFeat, addFeat, removeFeat, reqText, roman,
     conditioning, attr, attrMax, combatAttr, armorInfo, shieldInfo, shieldReady, wieldedWeapon, offhandWeapon,
-    maxStamina, regen, fatiguePenalty, apPool, apScale, moveCost, squaresPerAP, handsBusy, castingHands, inRange, optionKey, needsWindUp, strOffset, staminaCost, effectiveWeight, isLightWeapon,
+    maxStamina, regen, fatiguePenalty, apPool, apScale, moveCost, squaresPerAP, handsBusy, castingHands, trinketAP, inRange, optionKey, needsWindUp, strOffset, staminaCost, effectiveWeight, isLightWeapon,
     strBonus, weaponDamage, mainIndex, attackOptions, actionCost, ammoLeft, tireless, webTax,
     damageAttr, healAttr, totalDamage, updateCondition, isActive, bleedPerRound,
     TREES, ARMOR,
