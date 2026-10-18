@@ -25,7 +25,7 @@
     const s = emptyState();
     const add = (c) => { s.characters[c.id] = c; s.order.push(c.id); return c; };
 
-    const wren = C.newCharacter({ name: 'Wren Halloway', base: { STR: 4, CON: 5, DEX: 7, SPD: 6, INT: 5, WIS: 4, CHA: 5 }, starterGear: false });
+    const wren = C.newCharacter({ name: 'Wren Halloway', base: { STR: 4, CON: 5, DEX: 7, SPD: 6, INT: 5, WIL: 4, WIS: 4, CHA: 5 }, starterGear: false });
     wren.armor = Items.makeArmor('leather', 'half', 'standard');
     wren.shield = Items.makeShield('buckler', 'wood', 'standard');
     const rapier = Items.makeWeapon('rapier', 'standard');
@@ -36,7 +36,7 @@
     wren.feats = { quick_thrust: 1, precision: 1, dodge_training: 1 };
     wren.notes = 'Example character. Edit or delete freely.';
 
-    const osk = C.newCharacter({ name: 'Brother Osk', base: { STR: 6, CON: 6, DEX: 4, SPD: 4, INT: 5, WIS: 6, CHA: 4 } });
+    const osk = C.newCharacter({ name: 'Brother Osk', base: { STR: 6, CON: 6, DEX: 4, SPD: 4, INT: 5, WIL: 6, WIS: 6, CHA: 4 } });
     osk.weapons = [];
     const mace = Items.makeWeapon('spikedMace', 'standard');
     const od = Items.makeWeapon('dagger', 'crude');
@@ -47,7 +47,7 @@
     osk.inventory.bandages = 4;
     osk.notes = 'Example character. Edit or delete freely.';
 
-    const hale = C.newCharacter({ name: 'Hale Ashdown', base: { STR: 6, CON: 5, DEX: 5, SPD: 5, INT: 4, WIS: 5, CHA: 5 } });
+    const hale = C.newCharacter({ name: 'Hale Ashdown', base: { STR: 6, CON: 5, DEX: 5, SPD: 5, INT: 4, WIL: 5, WIS: 5, CHA: 5 } });
     hale.weapons = [];
     const ls = Items.makeWeapon('longsword', 'standard');
     const hd = Items.makeWeapon('dagger', 'standard');

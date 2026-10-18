@@ -47,7 +47,7 @@ test('derived stats for an average starting character', () => asWritten(() => {
   assert.strictEqual(C.maxStamina(c), 4 * 5 + 5 + 5 + 5);
   assert.strictEqual(C.apPool(c), 3 + 2);
   assert.strictEqual(C.squaresPerAP(c), 1 + 1);
-  assert.strictEqual(C.regen(c), 2, 'Specifics: CON 5, WIS 5 regenerates 2 unarmored');
+  assert.strictEqual(C.regen(c), 2, 'CON 5, WIL 5 regenerates 2 unarmored');
   c.armor = Items.makeArmor('plate', 'full', 'standard');
   assert.strictEqual(C.combatAttr(c, 'SPD'), 2);
   assert.strictEqual(C.apPool(c), 4);

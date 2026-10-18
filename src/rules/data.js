@@ -280,7 +280,7 @@
 
   let t = tree('conditioning', 'Conditioning', 'attributes');
   [['strength', 'Strength', 'STR'], ['toughness', 'Toughness', 'CON'], ['agility', 'Agility', 'DEX'],
-   ['quickness', 'Quickness', 'SPD'], ['intellect', 'Intellect', 'INT'], ['insight', 'Insight', 'WIS'],
+   ['quickness', 'Quickness', 'SPD'], ['intellect', 'Intellect', 'INT'], ['resolve', 'Resolve', 'WIL'], ['insight', 'Insight', 'WIS'],
    ['presence', 'Presence', 'CHA']].forEach(([id, name, attr]) => {
     feat(t, id, name, [N, A, D], [], `+1 ${attr} per rank`, true);
     FEATS[id].attr = attr;
@@ -395,7 +395,7 @@
   feat(t, 'reagent_craft', 'Reagent Craft', [E], [['alchemy:3']], 'Refine spell components for rituals', false);
   feat(t, 'physician', 'Physician', [M], [['surgeon:1'], ['antidotes:1']], 'Patients heal at the town rate anywhere', true);
 
-  t = tree('magicCasting', 'Magic: casting', 'INT, WIS/WIL');
+  t = tree('magicCasting', 'Magic: casting', 'INT, WIL');
   feat(t, 'casting', 'Casting', [N, A, D, E, M], [], 'Larger casting pool per rank', false);
   feat(t, 'control', 'Control', [A, D, E], [['casting:1']], '−backlash per rank', false);
   feat(t, 'quick_casting', 'Quick Casting', [A, D], [['casting:1']], 'Spell AP −1 per rank', false);
@@ -422,7 +422,7 @@
   feat(t, 'ember_heart', 'Ember Heart', [E], [['fire_affinity:3']], 'Resist fire; recover casting power standing in flame', false);
   feat(t, 'living_flame', 'Living Flame', [M], [['ember_heart:1']], 'Summon a fire spirit without knowing its name', false);
 
-  t = tree('magicRitual', 'Magic: ritual', 'INT, WIS');
+  t = tree('magicRitual', 'Magic: ritual', 'INT, WIL');
   feat(t, 'ritualist', 'Ritualist', [N, A, D], [], 'Faster rituals; fewer components per rank', false);
   feat(t, 'binding_circle', 'Binding Circle', [N], [['ritualist:1']], 'Prepare binding runes for summons', false);
   feat(t, 'warding', 'Warding', [A], [['ritualist:1']], 'Wards, barriers, and magical traps', false);

@@ -43,34 +43,34 @@ const ARMOR = {
 // Every strategy spends the same 35 attribute points.
 const STRATEGY = {
   twoHanded: {
-    label: 'Two-handed', attrs: { STR: 7, CON: 6, DEX: 5, SPD: 5, INT: 3, WIS: 5, CHA: 4 },
+    label: 'Two-handed', attrs: { STR: 7, CON: 6, DEX: 5, SPD: 5, INT: 3, WIL: 5, WIS: 5, CHA: 4 },
     weapon: 'greatsword', shield: null,
     feats: ['power_swing', 'heavy_weapon_training', 'weight_of_the_blow', 'heavy_tempo', 'heavy_weapon_training', 'weight_of_the_blow', 'strength', 'toughness'],
   },
   shield: {
-    label: 'Sword & shield', attrs: { STR: 6, CON: 6, DEX: 5, SPD: 5, INT: 4, WIS: 5, CHA: 4 },
+    label: 'Sword & shield', attrs: { STR: 6, CON: 6, DEX: 5, SPD: 5, INT: 4, WIL: 5, WIS: 5, CHA: 4 },
     weapon: 'longsword', shield: ['round', 'iron'],
     feats: ['shield_training', 'parry_training', 'shield_training', 'half_swording', 'quick_block', 'economical_block', 'toughness', 'strength'],
   },
   magic: {
-    label: 'Magic', attrs: { STR: 4, CON: 5, DEX: 5, SPD: 5, INT: 8, WIS: 5, CHA: 3 },
+    label: 'Magic', attrs: { STR: 4, CON: 5, DEX: 5, SPD: 5, INT: 8, WIL: 5, WIS: 5, CHA: 3 },
     weapon: null, shield: null, nouns: ['fire', 'force'],
     feats: ['casting', 'verb_attack', 'mod_strong', 'verb_launch', 'casting', 'control', 'fire_affinity', 'quick_casting', 'casting'],
   },
   grappler: {
-    label: 'Grappler', attrs: { STR: 7, CON: 6, DEX: 6, SPD: 5, INT: 3, WIS: 4, CHA: 4 },
+    label: 'Grappler', attrs: { STR: 7, CON: 6, DEX: 6, SPD: 5, INT: 3, WIL: 4, WIS: 4, CHA: 4 },
     weapon: null, shield: null, policy: { grappler: true },
     // Works the clinch → hold → pin ladder with a dagger in the free hand.
     feats: ['grappler', 'pin', 'coup_de_grace', 'grappler', 'escape_artist', 'brawlers_wind', 'trip', 'takedown', 'toughness', 'strength'],
   },
   duelist: {
-    label: 'Rapier & dagger', attrs: { STR: 5, CON: 5, DEX: 7, SPD: 7, INT: 3, WIS: 4, CHA: 4 },
+    label: 'Rapier & dagger', attrs: { STR: 5, CON: 5, DEX: 7, SPD: 7, INT: 3, WIL: 4, WIS: 4, CHA: 4 },
     weapon: 'rapier', shield: null, offhand: 'parryingDagger',
     // A rapier with a parrying dagger in the off hand: thrusts, parries, ripostes.
     feats: ['parry_training', 'quick_thrust', 'parry_training', 'riposte', 'quick_parry', 'lunge', 'precision', 'economical_parry', 'toughness'],
   },
   archery: {
-    label: 'Archery', attrs: { STR: 5, CON: 5, DEX: 7, SPD: 6, INT: 4, WIS: 4, CHA: 4 },
+    label: 'Archery', attrs: { STR: 5, CON: 5, DEX: 7, SPD: 6, INT: 4, WIL: 4, WIS: 4, CHA: 4 },
     weapon: 'longbow', shield: null, arrows: 20, bodkins: 10,
     // There are no archery feats in the design docs; archers take mobility and evasion.
     feats: ['fleet_foot', 'dodge_training', 'light_on_your_feet', 'fleet_foot', 'quickness', 'dodge_training', 'toughness'],

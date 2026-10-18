@@ -66,6 +66,8 @@
     if (c.wield != null && c.status.dropped.includes(c.wield)) c.wield = null;
     c.damage = c.damage || {};
     c.base = c.base || {};
+    // WIL was split from WIS: older characters keep their WIS value for it.
+    if (c.base.WIL == null && c.base.WIS != null) c.base.WIL = c.base.WIS;
     ATTRS.forEach((a) => {
       if (c.damage[a] == null) c.damage[a] = 0;
       if (c.base[a] == null) c.base[a] = 5;
@@ -292,7 +294,7 @@
 
   function regen(c) {
     if (tireless(c)) return 0;
-    return Math.floor((attr(c, 'CON') + attr(c, 'WIS')) / CONFIG.regenDivisor) - armorInfo(c).regen;
+    return Math.floor((attr(c, 'CON') + attr(c, 'WIL')) / CONFIG.regenDivisor) - armorInfo(c).regen;
   }
 
   // Tireless (undead, constructs): no stamina at all. Damage goes straight to attributes,

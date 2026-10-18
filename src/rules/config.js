@@ -11,7 +11,9 @@
 
   const CONFIG = {
     // ---- Attributes -------------------------------------------------------
-    attributes: ['STR', 'CON', 'DEX', 'SPD', 'INT', 'WIS', 'CHA'],
+    // WIL (resolve: magic defense, stamina regeneration, resisting fear and compulsion) is split
+    // from WIS (judgment, perception) at the user's call: INT/WIL for magic, CHA/WIS for social.
+    attributes: ['STR', 'CON', 'DEX', 'SPD', 'INT', 'WIL', 'WIS', 'CHA'],
     attrMin: 1,
     attrMax: 10, // Specifics: attributes run 1–10
     conditioningCap: 3, // Specifics: feats raise each attribute by at most +3
@@ -24,7 +26,7 @@
     // ---- Stamina (Specifics) ---------------------------------------------
     // Max stamina = 4×CON + STR + SPD + DEX
     staminaWeights: { CON: 4, STR: 1, SPD: 1, DEX: 1 },
-    // Regen = floor((CON + WIS)/4) − armor regen penalty
+    // Regen = floor((CON + WIL)/4) − armor regen penalty (Specifics had WIS; WIL is resolve)
     regenDivisor: 4,
     // Fatigue: −1 AP below 50% stamina, −2 below 25%
     fatigueSteps: [
@@ -416,6 +418,7 @@
     'Ready a thrust: on your turn, hold a long thrust (sword, rapier, spear) ready for its AP; stamina only if it is made. It lasts the pass. A foe whose move this pass brings them closer and into its reach meets it first, struck where they enter the reach (no inside-reach penalty); a hit stops their advance. Guards meet it as usual; it can be aimed at one foe.',
     'Fend off and push back: with a long weapon (reach 2+) a shove reaches 2 squares; a ready shield adds +1. A shove that drives a foe back or floors them also spoils their move that pass.',
     'Wound roll: a blow that reaches the body rolls a d10; on 10 × chance or less it is a vital wound. Piercing chance = depth/100 (dagger 1, swords 2, spear and greatsword 3 on the d10): triple CON damage, double bleeding. Cuts: chance = edge/10: the cut takes its damage again from CON. Armor guards the vitals: padded ×0.6, leather ×0.5, mail ×0.3, scale ×0.25, plate ×0.1 (×1.5 half armor, ×2 partial).',
+    'WIL split from WIS (the user\'s call): eight attributes. WIL is resolve: magic defense, resisting fear and compulsion, and stamina regeneration (⌊(CON + WIL)/4⌋ − armor). WIS stays judgment and perception. Older characters get WIL = their WIS.',
     'Monster attributes go past the human range (1–10, 13 with Conditioning feats), up to 30: bears and trolls STR 16–20, a stone golem 22, a troll chieftain 24. The usual formulas apply to the raw number (damage bonus ⌊(STR−5)/2⌋, grappling ⌊STR/2⌋, stamina, death at CON 0).',
     'Monsters (draft): natural weapons are always ready and can\'t be dropped; natural armor can\'t be looted. Traits: knockdown bites, pack bonus (+1 damage per packmate beside the target), venom (poison up to 2 CON a round for 3 rounds, no more than the wound; bandages don\'t stop it), rust (corrodes metal armor and shields), displacement (each attack first rolls a d10 to find the real creature: arrows miss on 1–5, blows on 1–2), springy chitin (a blow that lands costs the attacker 3 stamina), sticky webs (each layer adds 2 AP and 3 stamina to every action, up to two layers; one layer comes loose each round; tear free with d10 + ⌊STR/2⌋ ≥ 8, or burn them), shield-crushing blows, regeneration (unless burned), tireless (undead and constructs: no stamina, damage to attributes, no bleeding or venom), resistances (skeletons: no piercing, half slashing), nimble, slippery, leaping, and boss multipliers on AP, per-pass allowance and stamina.',
     'Magic (stub): verbs Attack (range 1–2, magnitude 4, cost 2) and Launch (2–12, 3, 3); nouns Fire and Force (cost 1); modifier Strong (+3, cost 2, must be wound up). Spell points = INT + 3 × Casting rank, limited by stamina. Fire: armor stops half its blunt mitigation, every 2 points left cost 1 CON, the rest stamina. Force: blunt with a knockdown check. Backlash: d10 + Control below the cost loses 2 stamina per point short.',

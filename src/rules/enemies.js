@@ -307,7 +307,7 @@
     opts = opts || {};
     const M = MONSTERS[key];
     if (M.group) return M.group.map((k, i) => makeMonster(k, Object.assign({}, opts, { n: i }))[0]);
-    const c = C.newCharacter({ name: opts.name || M.name + (opts.n ? ' ' + (opts.n + 1) : ''), side: opts.side || 'enemy', base: Object.assign({}, M.attrs), starterGear: false });
+    const c = C.newCharacter({ name: opts.name || M.name + (opts.n ? ' ' + (opts.n + 1) : ''), side: opts.side || 'enemy', base: Object.assign({ WIL: M.attrs.WIS }, M.attrs), starterGear: false });
     c.level = opts.level || 5;
     c.monster = key;
     c.natural = M.natural.slice();
