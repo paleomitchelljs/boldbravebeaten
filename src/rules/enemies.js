@@ -274,7 +274,26 @@
     stoneGolem: {
       name: 'Stone golem', blurb: 'A construct of stone: blades skate off, hammers crack it. Slow, tireless, and its fists crush shields.',
       attrs: { STR: 22, CON: 22, DEX: 3, SPD: 3, INT: 1, WIS: 1, CHA: 1 },
-      natural: ['golemFists'], armor: 'golemStone', traits: { tireless: true }, feats: {},
+      natural: ['golemFists'], armor: 'golemStone', traits: { tireless: true, magicImmune: true }, feats: {},
+    },
+    // ---- Drakes and wyverns: armored scales, wings ----
+    drake: {
+      name: 'Drake', blurb: 'A small dragon (about level 8): fire breath over an area, flies fast over anything in its way, claws, bite and wing buffets.',
+      level: 8, attrs: { STR: 14, CON: 16, DEX: 8, SPD: 8, INT: 6, WIL: 8, WIS: 6, CHA: 6 },
+      natural: ['drakeBite', 'drakeClaws', 'wingBuffet'], armor: 'drakeScales', nouns: ['fire'],
+      traits: { flying: true, moveMult: 1.5, slippery: 2 }, feats: { casting: 2, verb_burst: 1, mod_strong: 1, dodge_training: 1, toughness: 1 },
+    },
+    wyvern: {
+      name: 'Wyvern', blurb: 'A bigger winged beast with heavy scales: a powerful bite, a venomous stinger and wing beats that knock you flat.',
+      level: 10, attrs: { STR: 17, CON: 16, DEX: 6, SPD: 7, INT: 3, WIL: 7, WIS: 5, CHA: 3 },
+      natural: ['wyvernBite', 'wyvernSting', 'wyvernWings'], armor: 'wyvernScales', traits: { flying: true, slippery: 1 }, feats: { toughness: 2, strength: 1 },
+    },
+    // ---- A constrictor: a grappler beyond any human, weak against a crowd ----
+    constrictor: {
+      name: 'Giant constrictor', blurb: 'A huge snake: it wraps one victim and crushes them every round, but while it holds one, the rest can cut at it.',
+      attrs: { STR: 18, CON: 12, DEX: 7, SPD: 5, INT: 2, WIL: 6, WIS: 5, CHA: 2 },
+      natural: ['constrictorBite'], armor: 'scaleHide', traits: { constrict: { stamina: 8, con: 1 }, slippery: 2 },
+      feats: { grappler: 3, pin: 1, takedown: 1, brawlers_wind: 1 }, policy: { grappler: true },
     },
     // ---- Humanoids with natural armor ----
     kobold: {

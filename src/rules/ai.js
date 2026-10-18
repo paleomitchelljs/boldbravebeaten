@@ -545,7 +545,7 @@
           const k = map.cost[map.idx(x, y)];
           if (k === Infinity) continue;
           squares = Math.round(k);
-          for (const q of G.Terrain.trace(map, from, x, y)) hazard += G.Terrain.danger(enc, q.x, q.y, c.side);
+          for (const q of G.Terrain.trace(map, from, x, y)) hazard += G.Terrain.danger(enc, q.x, q.y, c.side, c);
         }
         const need = C.moveCost(c, squares);
         if (need > la.ap) continue;

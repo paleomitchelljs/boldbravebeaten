@@ -1474,3 +1474,33 @@ test('spectre: ordinary weapons pass through; magical weapons and spells hurt it
   const la = Combat.legalActions(enc, chars, swordsman.id);
   for (const m of la.maneuvers.filter((m) => !['bait', 'readIntent'].includes(m.type))) assert.ok(!m.targets.some((t) => t.inReach), m.type);
 });
+
+test('golem is immune to magic; a constrictor crushes whoever it holds; fliers pass over pits and traps', async () => {
+  // Magic washes off the golem.
+  const [golem] = B.Enemies.makeMonster('stoneGolem');
+  const m = mage('Mage', ['fire']);
+  golem.at = { x: 3, y: 2 };
+  await castAt(m, [golem], 'strike+fire', { target: golem.id }, [1, 1, 1, 1]);
+  assert.equal(C.totalDamage(golem), 0);
+  assert.equal(await B.Magic.afflict(Combat.createEncounter('t', [m.id, golem.id], { [m.id]: m, [golem.id]: golem }, 6, 3), m, golem, 'slowed', { rounds: 2 }, roller(10, [])), false);
+  // The constrictor crushes the one it holds at the end of the round.
+  const [snake] = B.Enemies.makeMonster('constrictor');
+  const victim = fighter('Victim');
+  victim.side = 'party';
+  const chars = { [snake.id]: snake, [victim.id]: victim };
+  const enc = Combat.createEncounter('t', Object.keys(chars), chars, 6, 3);
+  snake.status.grappling = victim.id;
+  victim.status.grappledBy = [snake.id];
+  const st = victim.stamina;
+  Combat.endRound(enc, chars);
+  assert.ok(victim.stamina <= st - snake.traits.constrict.stamina, 'crushed (a CON wound costs some stamina too)');
+  assert.equal(victim.damage.CON, snake.traits.constrict.con);
+  // A drake flies over a pit and a hidden rune; a walker falls in.
+  const [drake] = B.Enemies.makeMonster('drake');
+  const e2 = Combat.createEncounter('t', [drake.id], { [drake.id]: drake }, 6, 3);
+  B.Terrain.add(e2, 2, 1, 'pit');
+  assert.equal(B.Terrain.stepCost(e2, 2, 1, drake), 1);
+  assert.equal(await B.Terrain.enter(e2, { [drake.id]: drake }, drake, 2, 1, roller(5, []), () => {}), false);
+  assert.ok(!drake.status.prone);
+  assert.equal(await B.Terrain.enter(e2, { [victim.id]: victim }, victim, 2, 1, roller(5, []), () => {}), true);
+});

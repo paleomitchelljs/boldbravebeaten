@@ -21,6 +21,8 @@
     scaleHide: { name: 'Scaly hide', mit: { P: 1, S: 1, B: 0 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, rarity: 'common', natural: true },
     frogSkin: { name: 'Slick skin', mit: { P: 0, S: 1, B: 1 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, rarity: 'common', natural: true },
     sarnakScales: { name: 'Sarnak scales', mit: { P: 2, S: 3, B: 2 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, rarity: 'common', natural: true },
+    drakeScales: { name: 'Drake scales', mit: { P: 4, S: 4, B: 2 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, rarity: 'common', natural: true },
+    wyvernScales: { name: 'Wyvern scales', mit: { P: 5, S: 5, B: 3 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, rarity: 'common', natural: true },
     golemStone: { name: 'Stone body', mit: { P: 4, S: 5, B: 1 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, rarity: 'common', natural: true },
   };
 
@@ -223,6 +225,41 @@
       phys: { mass: 3, length: 1.5, head: { mass: 0.5 } },
       name: 'Tail sweep', hands: 1, weight: 'medium', reach: 2, reachName: 'reach 2', closeOK: true, natural: true,
       faces: { head: [0, 0, 4] }, motions: ['swing'], rarity: 'common', trait: { knockdown: { bonus: 2, margin: 3 } },
+    },
+    drakeBite: {
+      phys: { mass: 1.2, length: 0.45, point: { depth: 22, width: 5 } },
+      name: 'Bite', hands: 1, weight: 'light', reach: 1, reachName: 'close', closeOK: true, natural: true, grappleUsable: true,
+      faces: { point: [5, 0, 1] }, motions: ['thrust'], rarity: 'common',
+    },
+    drakeClaws: {
+      phys: { mass: 1.0, length: 0.5, edge: 1.0 },
+      name: 'Claws', hands: 1, weight: 'light', reach: 1, reachName: 'close', closeOK: true, natural: true, grappleUsable: true,
+      faces: { edge: [0, 4, 0] }, motions: ['swing'], rarity: 'common',
+    },
+    wingBuffet: {
+      phys: { mass: 3, length: 1.4, head: { mass: 1 } },
+      name: 'Wing buffet', hands: 1, weight: 'medium', reach: 2, reachName: 'reach 2', closeOK: true, natural: true,
+      faces: { head: [0, 0, 4] }, motions: ['swing'], rarity: 'common', trait: { knockdown: { bonus: 2, margin: 3 } },
+    },
+    wyvernBite: {
+      phys: { mass: 1.6, length: 0.6, point: { depth: 22, width: 6 } },
+      name: 'Bite', hands: 1, weight: 'medium', reach: 2, reachName: 'reach 2', closeOK: true, natural: true, grappleUsable: true,
+      faces: { point: [8, 0, 2] }, motions: ['thrust'], rarity: 'common',
+    },
+    wyvernSting: {
+      phys: { mass: 0.8, length: 1.6, point: { depth: 16, width: 2 } },
+      name: 'Venomous stinger', hands: 1, weight: 'medium', reach: 2, reachName: 'reach 2', closeOK: true, natural: true,
+      faces: { point: [5, 0, 0] }, motions: ['thrust'], rarity: 'common', trait: { venom: { con: 3, rounds: 4 } },
+    },
+    wyvernWings: {
+      phys: { mass: 4, length: 2.2, head: { mass: 1.2 } },
+      name: 'Wing beat', hands: 1, weight: 'heavy', reach: 2, reachName: 'reach 2', closeOK: true, natural: true,
+      faces: { head: [0, 0, 7] }, motions: ['swing'], rarity: 'common', trait: { knockdown: { bonus: 3, margin: 2 } },
+    },
+    constrictorBite: {
+      phys: { mass: 0.5, length: 0.3, point: { depth: 8, width: 3 } },
+      name: 'Bite', hands: 1, weight: 'light', reach: 1, reachName: 'close', closeOK: true, natural: true, grappleUsable: true,
+      faces: { point: [3, 0, 0] }, motions: ['thrust'], rarity: 'common',
     },
     golemFists: {
       phys: { mass: 6, length: 1.0, head: { mass: 2 } },

@@ -784,6 +784,10 @@
 
   function computeHit(attacker, target, option, flags) {
     flags = flags || {};
+    // Immune to magic (a stone golem): spells wash off it.
+    if (option.spell && target.traits && target.traits.magicImmune) {
+      return { vec: [0, 0, 0], P: 0, S: 0, B: 0, armored: false, toCON: 0, slashToAttrs: 0, bluntToStamina: 0, bluntToCON: 0, converted: 0, durLoss: 0, mitigated: { P: 0, S: 0, B: 0 }, noBleed: true, pierceVital: 0, cutVital: 0, bleedFactor: 1, bleedRounds: CONFIG.bleedRounds, magicImmune: true };
+    }
     if (option.spell && CONFIG.magic.energyMitigation && CONFIG.magic.energyMitigation[option.spell.element] != null) return computeFire(attacker, target, option, flags);
     if (option.spell && option.spell.element === 'life') return computeLife(attacker, target, option, flags);
     const v = option.damage.slice();
@@ -1044,6 +1048,7 @@
       if ((CONFIG.conditions[x.key] || {}).breakOnHarm) { G.Conditions.remove(target, x.key); parts.push(`${CONFIG.conditions[x.key].name.toLowerCase()} no more`); }
     }
     if (passesThrough(attacker, target, option)) parts.push('it passes through');
+    if (h.magicImmune) parts.push('the magic washes off it');
     if (!parts.length) parts.push('no effect');
     const wasDown = st.unconscious;
     C.updateCondition(target);
@@ -1898,6 +1903,18 @@
   // ---- End of round ------------------------------------------------------
   function endRound(enc, chars) {
     log(enc, 'End of round', 'pass');
+    // Constrictors (trait constrict: { stamina, con }) crush whoever they hold.
+    for (const id of enc.ids) {
+      const c = chars[id];
+      const K = c && c.traits && c.traits.constrict;
+      const held = K && C.isActive(c) && c.status.grappling ? chars[c.status.grappling] : null;
+      if (!held || held.status.dead) continue;
+      if (K.stamina && !C.tireless(held)) held.stamina = Math.max(0, held.stamina - K.stamina);
+      if (K.con) C.damageAttr(held, 'CON', K.con);
+      const wasDown = held.status.unconscious;
+      C.updateCondition(held);
+      log(enc, `${c.name} crushes ${held.name} (${[K.stamina ? `−${K.stamina} stamina` : null, K.con ? `−${K.con} CON` : null].filter(Boolean).join(', ')}).${held.status.dead ? ` ${held.name} is DEAD.` : held.status.unconscious && !wasDown ? ` ${held.name} collapses, unconscious.` : ''}`, 'hit');
+    }
     for (const id of enc.ids) {
       const c = chars[id];
       if (c.status.dead) continue;

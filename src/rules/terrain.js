@@ -61,8 +61,14 @@
   }
 
   // Squares of movement it costs to step onto (x, y): 1 + the ground's extra cost.
+  // Fliers (trait flying) pass over ground, pits, traps and hazards, and over walls that
+  // aren't solid; solid walls still stop them.
+  function flies(c) {
+    return !!(c && c.traits && c.traits.flying);
+  }
+
   function stepCost(enc, x, y, c) {
-    if (c && G.Conditions && G.Conditions.flag(c, 'freedom')) return 1;
+    if (flies(c) || (c && G.Conditions && G.Conditions.flag(c, 'freedom'))) return 1;
     return 1 + at(enc, x, y).reduce((t, f) => t + (def(f).cost || 0), 0);
   }
 
@@ -87,7 +93,7 @@
       for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
         if (!dx && !dy) continue;
         const nx = ux + dx, ny = uy + dy;
-        if (!passable(enc, nx, ny)) continue;
+        if (!passable(enc, nx, ny) && !(flies(c) && inGrid(enc, nx, ny) && !has(enc, nx, ny, 'solid'))) continue;
         const v = idx(nx, ny);
         // A hair's preference for straight steps keeps paths tidy.
         const nc = cost[u] + stepCost(enc, nx, ny, c) + (dx && dy ? 0.001 : 0);
@@ -192,6 +198,7 @@
   // A character steps onto (x, y). Springs runes, falls into pits, slips on ice, takes the
   // ground's blow. Returns true if the move ends here.
   async function enter(enc, chars, c, x, y, roller, log) {
+    if (flies(c)) return !C().isActive(c) || (G.Conditions && !G.Conditions.canMove(c));
     const free = G.Conditions && G.Conditions.flag(c, 'freedom');
     for (const f of at(enc, x, y).slice()) {
       const d = def(f);
@@ -229,7 +236,7 @@
     if (!enc.tiles) return;
     for (const id of enc.ids) {
       const c = chars[id];
-      if (!c || c.status.dead || !enc.pos[id]) continue;
+      if (!c || c.status.dead || !enc.pos[id] || flies(c)) continue;
       const p = enc.pos[id];
       for (const f of at(enc, p.x, p.y)) {
         const d = def(f);
@@ -264,7 +271,8 @@
   }
 
   // How much a side dislikes stepping onto (x, y): pits, slick ice, hazards it can see.
-  function danger(enc, x, y, side) {
+  function danger(enc, x, y, side, c) {
+    if (flies(c)) return 0;
     let d = 0;
     for (const f of at(enc, x, y)) {
       if (!visible(f, side)) continue;
@@ -278,5 +286,5 @@
     return d;
   }
 
-  G.Terrain = { costMap, trace, danger, tiles, at, add, remove, has, passable, stepCost, path, pathCost, between, lineCheck, visible, enter, endRound, all, inGrid };
+  G.Terrain = { flies, costMap, trace, danger, tiles, at, add, remove, has, passable, stepCost, path, pathCost, between, lineCheck, visible, enter, endRound, all, inGrid };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});
