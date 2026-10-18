@@ -1,5 +1,19 @@
 # Simulation findings
 
+## The death knight against level-5 parties (`node sim/gauntlet.js --rooms boss --mode reset`)
+
+The death knight is a level-20 character with an aura of dread and a silk sash (14 AP). He was
+run against every gauntlet lineup at level 5, fresh each time, 100 fights per lineup per room:
+alone in his chapel, and with two skeletons.
+
+- **He wins essentially every fight.** The only wins against him are 3 of 100 for the trio plus
+  the grappler, alone in the chapel. Grappling is the one crack: plate is easy to grab.
+- **The deaths show where his power lands.** With him alone, the two-hander dies in 47–98% of
+  fights (the most) and the knight in 9–33% (the least). With the skeletons, the archer dies in
+  88–94% of fights and the casters in 92–93%.
+- **As a benchmark, he is past what level-5 parties can measure.** Every difference between
+  lineups reads zero. The next step is parties of higher level, not a weaker knight.
+
 ## The cleric: Restore + Life, Wide and Name (gauntlet)
 
 The cleric is a mage in mail with a mace who knows Life, Light and Force. Its spells are Restore

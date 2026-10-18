@@ -1,0 +1,314 @@
+<title>The Gauntlet</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Grenze:wght@500;700&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a crawl report. How far each lineup gets (survival curves), what each member adds
+   (paired marginal value), who does the work, then the rooms themselves as small maps.
+   Same tokens as the arena and monster pages, so the three read as a set. */
+:root {
+  --bg: #e7e9e4; --surface: #f5f6f2; --surface-2: #eceee9; --ink: #1b2220; --muted: #59645f; --line: #c6ccc5;
+  --accent: #2b6a5c; --brass: #8d6d22;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; --s7: #6250d6; --s8: #e34948; --base: #8b938e;
+  --t-wall: #6b665c; --t-pit: #3b342c; --t-rough: #cdbf9f; --t-dark: #2b2d3a; --t-hot: #e2884d; --t-trap: #b0352f; --t-party: #2a78d6; --t-foe: #b0352f;
+  --font-display: 'Grenze', 'Palatino Linotype', Palatino, Georgia, serif;
+  --font-body: 'Alegreya Sans', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141918; --surface: #1d2422; --surface-2: #232b29; --ink: #e2e6e1; --muted: #98a49f; --line: #33403c;
+    --accent: #5db09d; --brass: #c7a24f;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767; --base: #7d8783;
+    --t-wall: #8a8475; --t-pit: #0c0b09; --t-rough: #6c6248; --t-dark: #3d4054; --t-hot: #c4642c; --t-trap: #e57a72; --t-party: #3987e5; --t-foe: #e57a72;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141918; --surface: #1d2422; --surface-2: #232b29; --ink: #e2e6e1; --muted: #98a49f; --line: #33403c;
+  --accent: #5db09d; --brass: #c7a24f;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767; --base: #7d8783;
+  --t-wall: #8a8475; --t-pit: #0c0b09; --t-rough: #6c6248; --t-dark: #3d4054; --t-hot: #c4642c; --t-trap: #e57a72; --t-party: #3987e5; --t-foe: #e57a72;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 1rem; line-height: 1.5; margin: 0; }
+main { max-width: 1120px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 34px; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 700; line-height: 1.1; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(2rem, 5vw, 2.7rem); }
+h2 { font-size: 1.55rem; }
+h3 { font-size: 1.2rem; }
+p { margin: 0; max-width: 72ch; }
+.muted { color: var(--muted); }
+.small { font-size: 0.88rem; }
+.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.eyebrow { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; color: var(--brass); }
+section { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.head { display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--line); padding-bottom: 22px; }
+.lead { font-size: 1.12rem; max-width: 70ch; }
+.panels { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); gap: 18px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; position: relative; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.86rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 16px; height: 0; border-top: 2px solid; display: inline-block; }
+.legend i.dash { border-top-style: dashed; }
+#curves svg { max-width: 600px; }
+#marginal svg { max-width: 720px; }
+svg text { font-family: var(--font-body); fill: var(--muted); font-size: 12px; }
+svg .grid { stroke: var(--line); stroke-width: 1; }
+svg .axis { stroke: var(--muted); stroke-width: 1; }
+.tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; font-size: 0.82rem; box-shadow: 0 4px 14px rgb(0 0 0 / 0.14); z-index: 5; min-width: 170px; }
+.tip b { font-family: var(--font-display); font-size: 1rem; }
+.tip .row { display: flex; justify-content: space-between; gap: 12px; }
+.tip .row span:first-child { display: inline-flex; align-items: center; gap: 6px; }
+.tip i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+details.tv summary { cursor: pointer; font-size: 0.86rem; color: var(--muted); }
+table.data { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+table.data th, table.data td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+table.data th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 700; }
+table.data td.n, table.data th.n { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.scroll { overflow-x: auto; }
+.cellbar { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+.cellbar .b { height: 8px; border-radius: 0 4px 4px 0; background: var(--accent); }
+.cellbar .track { width: 90px; display: flex; }
+.pick { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+select { font: inherit; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+.rooms { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 14px; }
+.room h3 { display: flex; gap: 8px; align-items: baseline; }
+.room h3 .k { font-family: var(--font-mono); font-size: 0.85rem; color: var(--brass); }
+.mini { display: grid; gap: 2px; width: 100%; }
+.mini i { aspect-ratio: 1; border-radius: 2px; background: var(--surface-2); display: grid; place-items: center; font-style: normal; font-size: 0.6rem; font-weight: 700; color: #fff; }
+.mini i.w { background: var(--t-wall); } .mini i.o { background: var(--t-pit); } .mini i.r { background: var(--t-rough); }
+.mini i.d { background: var(--t-dark); } .mini i.h { background: var(--t-hot); } .mini i.t { background: var(--surface-2); outline: 2px dashed var(--t-trap); outline-offset: -3px; }
+.mini i.a { background: var(--t-party); } .mini i.e { background: var(--t-foe); }
+.keyrow { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 0.8rem; color: var(--muted); }
+.keyrow span { display: inline-flex; align-items: center; gap: 5px; }
+.keyrow i { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
+.stats { display: flex; flex-wrap: wrap; gap: 2px 14px; font-size: 0.86rem; color: var(--muted); }
+.stats b { font-family: var(--font-mono); font-weight: 600; color: var(--ink); }
+.note { background: var(--surface-2); border-left: 3px solid var(--brass); padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 0.92rem; max-width: 80ch; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.seg button { font: inherit; font-weight: 700; border: 0; background: none; color: var(--muted); padding: 7px 16px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--surface); }
+.deaths { display: flex; flex-direction: column; gap: 3px; font-size: 0.82rem; }
+.deaths div { display: grid; grid-template-columns: 6.5em 1fr 3em; align-items: center; gap: 6px; }
+.deaths .track { height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+.deaths .track span { display: block; height: 100%; background: var(--t-foe); border-radius: 0 3px 3px 0; }
+.deaths .v { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+ul.plain { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 4px; max-width: 80ch; }
+</style>
+
+<main>
+  <header class="head">
+    <span class="eyebrow">Bold Brave Beaten · simulation</span>
+    <h1>The Gauntlet</h1>
+    <div class="pick"><span class="small muted">Mode</span><div class="seg" id="mode" role="group" aria-label="Mode"></div></div>
+    <p class="muted" id="modeBlurb"></p>
+    <p class="lead" id="lead"></p>
+    <p class="small muted" id="meta"></p>
+  </header>
+
+  <section>
+    <h2 id="curvesTitle"></h2>
+    <p class="muted" id="curvesNote"></p>
+    <div class="panels" id="curves"></div>
+  </section>
+
+  <section>
+    <h2>What each member adds</h2>
+    <p class="muted" id="marginalNote"></p>
+    <div class="card" id="marginal"></div>
+  </section>
+
+  <section>
+    <h2>Who does the work</h2>
+    <div class="pick"><label for="lineup" class="small muted">Lineup</label><select id="lineup"></select></div>
+    <div class="card scroll" id="members"></div>
+  </section>
+
+  <section>
+    <h2>The rooms</h2>
+    <p class="muted" id="roomsNote"></p>
+    <div class="keyrow">
+      <span><i style="background:var(--t-party)"></i>Party start</span><span><i style="background:var(--t-foe)"></i>Foes</span>
+      <span><i style="background:var(--t-wall)"></i>Pillar</span><span><i style="background:var(--t-pit)"></i>Pit</span>
+      <span><i style="background:var(--t-rough)"></i>Rough ground</span><span><i style="background:var(--t-dark)"></i>Darkness</span>
+      <span><i style="background:var(--t-hot)"></i>Hot coals</span><span><i style="outline:2px dashed var(--t-trap);outline-offset:-2px"></i>Hidden trap</span>
+    </div>
+    <div class="rooms" id="rooms"></div>
+  </section>
+
+  <section>
+    <h2>How the gauntlet works</h2>
+    <ul class="plain" id="how"></ul>
+  </section>
+</main>
+
+<script>
+const DATA = {"n":100,"generated":"2026-10-18T17:10:56.865Z","campAfter":4,"rooms":[{"key":"chapel","name":"Black chapel","foes":"deathKnight","foeNames":["Death knight"],"blurb":"The death knight alone among the pillars of his chapel.","map":["..............","A...#....#....","A............E","A.............","A...#....#....",".............."]},{"key":"crypt-court","name":"Court of the dead","foes":"deathKnightCourt","foeNames":["Death knight","Skeleton 2","Skeleton 3"],"blurb":"The death knight with two skeletons at his side.","map":["..............","A...#....#...E","A............E","A............E","A...#....#....",".............."]}],"members":{"knight":{"key":"heavy/shield","label":"Knight (plate, sword and shield)"},"twoHander":{"key":"medium/twoHanded","label":"Two-hander (mail, greatsword)"},"archer":{"key":"light/archery","label":"Archer (leather, longbow)"},"mage":{"key":"unarmored/magic","label":"Mage (fire, earth, vine, force)"},"enchanter":{"key":"unarmored/enchanter","label":"Enchanter (mind spells)"},"cleric":{"key":"medium/cleric","label":"Cleric (mail, mace, Life)"},"grappler":{"key":"light/grappler","label":"Grappler (leather)"},"duelist":{"key":"light/duelist","label":"Duelist (leather, rapier and dagger)"}},"modes":{"reset":{"label":"Reset","blurb":"A fresh, full-strength party for every room, the dead restored. Every room is fought in every run; deaths are recorded room by room.","score":"rooms won","lineups":{"core":{"label":"Core trio","members":["knight","twoHander","archer"],"meanCleared":0,"fullClear":0,"meanSurvivors":0.97,"reach":[1,1],"clear":[0,0],"roomStats":[{"reached":100,"cleared":0,"timeouts":0,"rounds":5.11,"deaths":1.97,"memberDeaths":{"knight":0.33,"twoHander":0.92,"archer":0.72}},{"reached":100,"cleared":0,"timeouts":0,"rounds":4.78,"deaths":2.03,"memberDeaths":{"knight":0.41,"twoHander":0.68,"archer":0.94}}],"memberStats":{"knight":{"dealtAttrs":7.22,"dealtStamina":20.25,"downs":0.62,"takenAttrs":7.48,"takenStamina":25.89,"timesDowned":1.34,"deathRate":0.74,"diedIn":[0.33,0.41],"shareAttrs":0.1935656836461126,"shareStamina":0.20280420630946422,"shareDowns":0.22878228782287824},"twoHander":{"dealtAttrs":23.09,"dealtStamina":54.76,"downs":1.35,"takenAttrs":10.14,"takenStamina":31.2,"timesDowned":1.42,"deathRate":1.6,"diedIn":[0.92,0.68],"shareAttrs":0.6190348525469169,"shareStamina":0.5484226339509264,"shareDowns":0.4981549815498155},"archer":{"dealtAttrs":6.99,"dealtStamina":24.84,"downs":0.74,"takenAttrs":11.36,"takenStamina":32.54,"timesDowned":1.7,"deathRate":1.66,"diedIn":[0.72,0.94],"shareAttrs":0.18739946380697053,"shareStamina":0.24877315973960942,"shareDowns":0.2730627306273063}},"perRun":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"winRate":[0,0]},"mage":{"label":"+ Mage","members":["knight","twoHander","archer","mage"],"meanCleared":0,"fullClear":0,"meanSurvivors":1.65,"reach":[1,1],"clear":[0,0],"roomStats":[{"reached":100,"cleared":0,"timeouts":0,"rounds":7.71,"deaths":2.24,"memberDeaths":{"knight":0.11,"twoHander":0.77,"archer":0.57,"mage":0.79}},{"reached":100,"cleared":0,"timeouts":0,"rounds":6.2,"deaths":2.35,"memberDeaths":{"knight":0.23,"twoHander":0.4,"archer":0.8,"mage":0.92}}],"memberStats":{"knight":{"dealtAttrs":7.7,"dealtStamina":20.84,"downs":0.62,"takenAttrs":3.97,"takenStamina":15.13,"timesDowned":0.95,"deathRate":0.34,"diedIn":[0.11,0.23],"shareAttrs":0.1766460197292957,"shareStamina":0.17974814559254787,"shareDowns":0.20394736842105263},"twoHander":{"dealtAttrs":24.62,"dealtStamina":54.17,"downs":1.43,"takenAttrs":7.53,"takenStamina":22.83,"timesDowned":1.26,"deathRate":1.17,"diedIn":[0.77,0.4],"shareAttrs":0.5648084423032805,"shareStamina":0.4672244264274625,"shareDowns":0.47039473684210525},"archer":{"dealtAttrs":7.07,"dealtStamina":25.36,"downs":0.74,"takenAttrs":8.8,"takenStamina":26.5,"timesDowned":1.48,"deathRate":1.37,"diedIn":[0.57,0.8],"shareAttrs":0.16219316356962604,"shareStamina":0.21873382784198722,"shareDowns":0.24342105263157895},"mage":{"dealtAttrs":4.2,"dealtStamina":15.57,"downs":0.25,"takenAttrs":13.85,"takenStamina":31.67,"timesDowned":1.54,"deathRate":1.71,"diedIn":[0.79,0.92],"shareAttrs":0.09635237439779766,"shareStamina":0.13429360013800243,"shareDowns":0.08223684210526316}},"perRun":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"winRate":[0,0]},"enchanter":{"label":"+ Enchanter","members":["knight","twoHander","archer","enchanter"],"meanCleared":0,"fullClear":0,"meanSurvivors":1.43,"reach":[1,1],"clear":[0,0],"roomStats":[{"reached":100,"cleared":0,"timeouts":0,"rounds":5.57,"deaths":2.69,"memberDeaths":{"knight":0.17,"twoHander":0.82,"archer":0.7,"enchanter":1}},{"reached":100,"cleared":0,"timeouts":0,"rounds":5.54,"deaths":2.57,"memberDeaths":{"knight":0.34,"twoHander":0.39,"archer":0.91,"enchanter":0.93}}],"memberStats":{"knight":{"dealtAttrs":9.17,"dealtStamina":27.67,"downs":0.65,"takenAttrs":5.64,"takenStamina":20.66,"timesDowned":1.02,"deathRate":0.51,"diedIn":[0.17,0.34],"shareAttrs":0.20969586096501258,"shareStamina":0.23164503976559228,"shareDowns":0.21523178807947022},"twoHander":{"dealtAttrs":27.43,"dealtStamina":66.26,"downs":1.62,"takenAttrs":8.12,"takenStamina":24.92,"timesDowned":1.31,"deathRate":1.21,"diedIn":[0.82,0.39],"shareAttrs":0.6272581751657901,"shareStamina":0.5547090832984511,"shareDowns":0.5364238410596027},"archer":{"dealtAttrs":6.76,"dealtStamina":24.4,"downs":0.66,"takenAttrs":9.83,"takenStamina":30.52,"timesDowned":1.59,"deathRate":1.61,"diedIn":[0.7,0.91],"shareAttrs":0.15458495312142695,"shareStamina":0.2042695688572624,"shareDowns":0.2185430463576159},"enchanter":{"dealtAttrs":0.37,"dealtStamina":1.12,"downs":0.09,"takenAttrs":22.23,"takenStamina":36.49,"timesDowned":1.73,"deathRate":1.93,"diedIn":[1,0.93],"shareAttrs":0.00846101074777041,"shareStamina":0.009376308078694013,"shareDowns":0.029801324503311258}},"perRun":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"winRate":[0,0]},"cleric":{"label":"+ Cleric","members":["knight","twoHander","archer","cleric"],"meanCleared":0,"fullClear":0,"meanSurvivors":1.41,"reach":[1,1],"clear":[0,0],"roomStats":[{"reached":100,"cleared":0,"timeouts":0,"rounds":7.5,"deaths":1.91,"memberDeaths":{"knight":0.15,"twoHander":0.76,"archer":0.66,"cleric":0.34}},{"reached":100,"cleared":0,"timeouts":0,"rounds":5.49,"deaths":2.59,"memberDeaths":{"knight":0.26,"twoHander":0.51,"archer":0.89,"cleric":0.93}}],"memberStats":{"knight":{"dealtAttrs":6.18,"dealtStamina":19.38,"downs":0.49,"takenAttrs":4.76,"takenStamina":17.59,"timesDowned":1.11,"deathRate":0.41,"diedIn":[0.15,0.26],"shareAttrs":0.1546933667083855,"shareStamina":0.17899695206428373,"shareDowns":0.1701388888888889},"twoHander":{"dealtAttrs":23.84,"dealtStamina":56.62,"downs":1.47,"takenAttrs":8.73,"takenStamina":26.62,"timesDowned":1.42,"deathRate":1.27,"diedIn":[0.76,0.51],"shareAttrs":0.5967459324155194,"shareStamina":0.5229518795603584,"shareDowns":0.5104166666666666},"archer":{"dealtAttrs":3.67,"dealtStamina":13.52,"downs":0.2,"takenAttrs":9.76,"takenStamina":30.24,"timesDowned":1.45,"deathRate":1.55,"diedIn":[0.66,0.89],"shareAttrs":0.0918648310387985,"shareStamina":0.12487300267848897,"shareDowns":0.06944444444444445},"cleric":{"dealtAttrs":6.26,"dealtStamina":18.75,"downs":0.72,"takenAttrs":9.17,"takenStamina":29.7,"timesDowned":1.45,"deathRate":1.27,"diedIn":[0.34,0.93],"shareAttrs":0.15669586983729664,"shareStamina":0.17317816569686895,"shareDowns":0.25}},"perRun":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"winRate":[0,0]},"grappler":{"label":"+ Grappler","members":["knight","twoHander","archer","grappler"],"meanCleared":0.03,"fullClear":0,"meanSurvivors":1.52,"reach":[1,1],"clear":[0.03,0],"roomStats":[{"reached":100,"cleared":3,"timeouts":0,"rounds":6.89,"deaths":1.49,"memberDeaths":{"knight":0.09,"twoHander":0.47,"archer":0.64,"grappler":0.29}},{"reached":100,"cleared":0,"timeouts":0,"rounds":5.32,"deaths":2.48,"memberDeaths":{"knight":0.23,"twoHander":0.62,"archer":0.91,"grappler":0.72}}],"memberStats":{"knight":{"dealtAttrs":8.05,"dealtStamina":24.45,"downs":0.71,"takenAttrs":4.32,"takenStamina":16.32,"timesDowned":0.95,"deathRate":0.32,"diedIn":[0.09,0.23],"shareAttrs":0.20130032508127033,"shareStamina":0.23392652123995408,"shareDowns":0.25},"twoHander":{"dealtAttrs":26.4,"dealtStamina":60.87,"downs":1.65,"takenAttrs":7.17,"takenStamina":23.96,"timesDowned":1.24,"deathRate":1.09,"diedIn":[0.47,0.62],"shareAttrs":0.660165041260315,"shareStamina":0.5823765786452354,"shareDowns":0.5809859154929577},"archer":{"dealtAttrs":4.65,"dealtStamina":15.76,"downs":0.44,"takenAttrs":9.87,"takenStamina":31.64,"timesDowned":1.49,"deathRate":1.55,"diedIn":[0.64,0.91],"shareAttrs":0.11627906976744186,"shareStamina":0.15078453884424034,"shareDowns":0.15492957746478875},"grappler":{"dealtAttrs":0.89,"dealtStamina":3.44,"downs":0.04,"takenAttrs":9.28,"takenStamina":27.49,"timesDowned":1.46,"deathRate":1.01,"diedIn":[0.29,0.72],"shareAttrs":0.022255563890972743,"shareStamina":0.03291236127057023,"shareDowns":0.014084507042253521}},"perRun":[0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"winRate":[0.03,0]},"duelist":{"label":"+ Duelist","members":["knight","twoHander","archer","duelist"],"meanCleared":0,"fullClear":0,"meanSurvivors":1.42,"reach":[1,1],"clear":[0,0],"roomStats":[{"reached":100,"cleared":0,"timeouts":0,"rounds":6.66,"deaths":2.27,"memberDeaths":{"knight":0.19,"twoHander":0.88,"archer":0.69,"duelist":0.51}},{"reached":100,"cleared":0,"timeouts":0,"rounds":5.41,"deaths":2.58,"memberDeaths":{"knight":0.24,"twoHander":0.53,"archer":0.91,"duelist":0.9}}],"memberStats":{"knight":{"dealtAttrs":6.54,"dealtStamina":20.93,"downs":0.25,"takenAttrs":4.87,"takenStamina":17.46,"timesDowned":1.15,"deathRate":0.43,"diedIn":[0.19,0.24],"shareAttrs":0.14235959947757945,"shareStamina":0.1644793713163065,"shareDowns":0.0764525993883792},"twoHander":{"dealtAttrs":22.36,"dealtStamina":53.72,"downs":1.3,"takenAttrs":9.07,"takenStamina":28.34,"timesDowned":1.37,"deathRate":1.41,"diedIn":[0.88,0.53],"shareAttrs":0.48672181105790163,"shareStamina":0.42216110019646363,"shareDowns":0.39755351681957185},"archer":{"dealtAttrs":2.14,"dealtStamina":6.14,"downs":0.39,"takenAttrs":10.29,"takenStamina":31.6,"timesDowned":1.61,"deathRate":1.6,"diedIn":[0.69,0.91],"shareAttrs":0.04658249891162386,"shareStamina":0.04825147347740668,"shareDowns":0.11926605504587157},"duelist":{"dealtAttrs":14.9,"dealtStamina":46.46,"downs":1.33,"takenAttrs":9.44,"takenStamina":27.2,"timesDowned":1.68,"deathRate":1.41,"diedIn":[0.51,0.9],"shareAttrs":0.3243360905528951,"shareStamina":0.3651080550098232,"shareDowns":0.4067278287461774}},"perRun":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"winRate":[0,0]},"noKnight":{"label":"Mage party, no knight","members":["twoHander","archer","mage"],"meanCleared":0,"fullClear":0,"meanSurvivors":0.73,"reach":[1,1],"clear":[0,0],"roomStats":[{"reached":100,"cleared":0,"timeouts":0,"rounds":5.71,"deaths":2.26,"memberDeaths":{"twoHander":0.85,"archer":0.54,"mage":0.87}},{"reached":100,"cleared":0,"timeouts":0,"rounds":4.48,"deaths":2.27,"memberDeaths":{"twoHander":0.46,"archer":0.88,"mage":0.93}}],"memberStats":{"twoHander":{"dealtAttrs":23.39,"dealtStamina":55.25,"downs":1.45,"takenAttrs":9.03,"takenStamina":27.41,"timesDowned":1.23,"deathRate":1.31,"diedIn":[0.85,0.46],"shareAttrs":0.6517135692393424,"shareStamina":0.5577427821522309,"shareDowns":0.5253623188405797},"archer":{"dealtAttrs":9.29,"dealtStamina":32.96,"downs":1.05,"takenAttrs":9.19,"takenStamina":29.38,"timesDowned":1.55,"deathRate":1.42,"diedIn":[0.54,0.88],"shareAttrs":0.25884647534132066,"shareStamina":0.33272763981425396,"shareDowns":0.3804347826086957},"mage":{"dealtAttrs":3.21,"dealtStamina":10.85,"downs":0.26,"takenAttrs":15.46,"takenStamina":33.7,"timesDowned":1.7,"deathRate":1.8,"diedIn":[0.87,0.93],"shareAttrs":0.08943995541933686,"shareStamina":0.10952957803351504,"shareDowns":0.09420289855072465}},"perRun":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"winRate":[0,0]},"noTwoHander":{"label":"Mage party, no two-hander","members":["knight","archer","mage"],"meanCleared":0,"fullClear":0,"meanSurvivors":0.88,"reach":[1,1],"clear":[0,0],"roomStats":[{"reached":100,"cleared":0,"timeouts":0,"rounds":6.74,"deaths":1.83,"memberDeaths":{"knight":0.14,"archer":0.79,"mage":0.9}},{"reached":100,"cleared":0,"timeouts":0,"rounds":5.05,"deaths":2.12,"memberDeaths":{"knight":0.32,"archer":0.88,"mage":0.92}}],"memberStats":{"knight":{"dealtAttrs":7.12,"dealtStamina":19.67,"downs":0.66,"takenAttrs":4.78,"takenStamina":18.42,"timesDowned":1,"deathRate":0.46,"diedIn":[0.14,0.32],"shareAttrs":0.4054669703872438,"shareStamina":0.34394124847001223,"shareDowns":0.4150943396226416},"archer":{"dealtAttrs":6.97,"dealtStamina":24.62,"downs":0.78,"takenAttrs":10.09,"takenStamina":31.16,"timesDowned":1.56,"deathRate":1.67,"diedIn":[0.79,0.88],"shareAttrs":0.3969248291571754,"shareStamina":0.43049484175555164,"shareDowns":0.4905660377358491},"mage":{"dealtAttrs":3.47,"dealtStamina":12.9,"downs":0.15,"takenAttrs":16.08,"takenStamina":34.7,"timesDowned":1.6,"deathRate":1.82,"diedIn":[0.9,0.92],"shareAttrs":0.1976082004555809,"shareStamina":0.22556390977443608,"shareDowns":0.09433962264150944}},"perRun":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"winRate":[0,0]},"noArcher":{"label":"Mage party, no archer","members":["knight","twoHander","mage"],"meanCleared":0,"fullClear":0,"meanSurvivors":1.33,"reach":[1,1],"clear":[0,0],"roomStats":[{"reached":100,"cleared":0,"timeouts":0,"rounds":6.18,"deaths":1.93,"memberDeaths":{"knight":0.13,"twoHander":0.98,"mage":0.82}},{"reached":100,"cleared":0,"timeouts":0,"rounds":4.76,"deaths":1.67,"memberDeaths":{"knight":0.24,"twoHander":0.51,"mage":0.92}}],"memberStats":{"knight":{"dealtAttrs":8.57,"dealtStamina":27.9,"downs":1.05,"takenAttrs":4.8,"takenStamina":17.7,"timesDowned":0.99,"deathRate":0.37,"diedIn":[0.13,0.24],"shareAttrs":0.263449123885644,"shareStamina":0.31511181386943754,"shareDowns":0.44680851063829785},"twoHander":{"dealtAttrs":21.31,"dealtStamina":50.76,"downs":1.12,"takenAttrs":9.85,"takenStamina":31.25,"timesDowned":1.31,"deathRate":1.49,"diedIn":[0.98,0.51],"shareAttrs":0.6550876114355978,"shareStamina":0.5733002032979445,"shareDowns":0.4765957446808511},"mage":{"dealtAttrs":2.65,"dealtStamina":9.88,"downs":0.18,"takenAttrs":16.34,"takenStamina":32.77,"timesDowned":1.81,"deathRate":1.74,"diedIn":[0.82,0.92],"shareAttrs":0.08146326467875806,"shareStamina":0.11158798283261805,"shareDowns":0.07659574468085106}},"perRun":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"winRate":[0,0]}},"marginal":{"knight":{"with":"mage","without":"noKnight","mean":0,"se":0,"fullClearWith":0,"fullClearWithout":0},"twoHander":{"with":"mage","without":"noTwoHander","mean":0,"se":0,"fullClearWith":0,"fullClearWithout":0},"archer":{"with":"mage","without":"noArcher","mean":0,"se":0,"fullClearWith":0,"fullClearWithout":0},"mage":{"with":"mage","without":"core","mean":0,"se":0,"fullClearWith":0,"fullClearWithout":0},"enchanter":{"with":"enchanter","without":"core","mean":0,"se":0,"fullClearWith":0,"fullClearWithout":0},"cleric":{"with":"cleric","without":"core","mean":0,"se":0,"fullClearWith":0,"fullClearWithout":0},"grappler":{"with":"grappler","without":"core","mean":0.03,"se":0.01714466079977655,"fullClearWith":0,"fullClearWithout":0},"duelist":{"with":"duelist","without":"core","mean":0,"se":0,"fullClearWith":0,"fullClearWithout":0}}}},"seconds":505};
+const $ = (id) => document.getElementById(id);
+const pct = (x) => (x == null ? '—' : Math.round(100 * x) + '%');
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const R = DATA.rooms, M = DATA.members;
+const short = (m) => M[m].label.split(' (')[0];
+// Color follows the lineup across the page.
+const COLOR = { core: 'var(--base)', mage: 'var(--s1)', enchanter: 'var(--s2)', grappler: 'var(--s3)', duelist: 'var(--s4)', noKnight: 'var(--s5)', noTwoHander: 'var(--s6)', noArcher: 'var(--s7)', cleric: 'var(--s8)' };
+const store = { get: (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } };
+let mode = DATA.modes[store.get('gauntlet-mode')] ? store.get('gauntlet-mode') : Object.keys(DATA.modes)[0];
+let cur = null;
+const reset = () => mode === 'reset';
+
+// ---- Charts: one line per lineup over the rooms ------------------------------------------
+// Attrition: share of runs that cleared at least k rooms (k = 0…8). Reset: win rate in room k.
+function curveChart(title, keys, baseKey, L) {
+  const card = document.createElement('div');
+  card.className = 'card';
+  const W = 520, H = 260, m = { l: 40, r: 12, t: 10, b: 30 };
+  const xs = reset() ? R.map((_, i) => i + 1) : R.map((_, i) => i).concat(R.length);
+  const span = xs[xs.length - 1] - xs[0];
+  const x = (v) => m.l + ((v - xs[0]) / span) * (W - m.l - m.r);
+  const y = (v) => m.t + (1 - v) * (H - m.t - m.b);
+  const series = keys.map((k) => ({ k, vals: reset() ? L[k].winRate : [1].concat(L[k].clear) }));
+  let svg = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${esc(title)}">`;
+  for (const v of [0, 0.25, 0.5, 0.75, 1]) svg += `<line class="grid" x1="${m.l}" x2="${W - m.r}" y1="${y(v)}" y2="${y(v)}"/><text x="${m.l - 6}" y="${y(v) + 4}" text-anchor="end">${pct(v)}</text>`;
+  for (const v of xs) svg += `<text x="${x(v)}" y="${H - 10}" text-anchor="middle">${v}</text>`;
+  for (const s of series) {
+    const pts = s.vals.map((v, i) => `${x(xs[i])},${y(v)}`).join(' ');
+    const dash = s.k === baseKey ? ' stroke-dasharray="6 4"' : '';
+    svg += `<polyline points="${pts}" fill="none" stroke="${COLOR[s.k]}" stroke-width="2" stroke-linejoin="round"${dash}/>`;
+    s.vals.forEach((v, i) => { svg += `<circle cx="${x(xs[i])}" cy="${y(v)}" r="3.5" fill="${COLOR[s.k]}" stroke="var(--surface)" stroke-width="2"/>`; });
+  }
+  svg += `<line class="hair" x1="0" x2="0" y1="${m.t}" y2="${H - m.b}" stroke="var(--muted)" stroke-width="1" style="display:none"/>`;
+  svg += `<rect class="hit" x="${m.l - 10}" y="${m.t}" width="${W - m.l - m.r + 20}" height="${H - m.t - m.b}" fill="transparent"/></svg>`;
+  const head = reset() ? R.map((r, i) => `<th class="n" title="${esc(r.name)}">${i + 1}</th>`).join('') : R.map((r, i) => `<th class="n" title="${esc(r.name)}">${i + 1}</th>`).join('');
+  card.innerHTML = `<h3>${esc(title)}</h3><div class="legend">${series.map((s) => `<span><i class="${s.k === baseKey ? 'dash' : ''}" style="border-color:${COLOR[s.k]}"></i>${esc(L[s.k].label)}</span>`).join('')}</div>${svg}
+    <p class="small muted">${reset() ? 'Room (1 to ' + R.length + ')' : 'Rooms cleared in a row (0 to ' + R.length + ')'}</p>
+    <details class="tv"><summary>Table</summary><div class="scroll"><table class="data"><thead><tr><th>Lineup</th>${head}<th class="n">Mean</th></tr></thead><tbody>
+    ${series.map((s) => `<tr><td>${esc(L[s.k].label)}</td>${(reset() ? L[s.k].winRate : L[s.k].clear).map((v) => `<td class="n">${pct(v)}</td>`).join('')}<td class="n">${L[s.k].meanCleared.toFixed(2)}</td></tr>`).join('')}</tbody></table></div></details>`;
+  const tip = document.createElement('div');
+  tip.className = 'tip'; tip.hidden = true; card.appendChild(tip);
+  const svgEl = card.querySelector('svg'), hair = svgEl.querySelector('.hair');
+  svgEl.querySelector('.hit').addEventListener('pointermove', (e) => {
+    const pt = svgEl.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+    const p = pt.matrixTransform(svgEl.getScreenCTM().inverse());
+    const i = Math.max(0, Math.min(xs.length - 1, Math.round(((p.x - m.l) / (W - m.l - m.r)) * span)));
+    const v = xs[i];
+    hair.setAttribute('x1', x(v)); hair.setAttribute('x2', x(v)); hair.style.display = '';
+    const rows = series.slice().sort((a, b) => b.vals[i] - a.vals[i]).map((s) => `<div class="row"><span><i style="background:${COLOR[s.k]}"></i>${esc(L[s.k].label)}</span><span class="num">${pct(s.vals[i])}</span></div>`).join('');
+    const room = reset() ? R[v - 1] : v ? R[v - 1] : null;
+    tip.innerHTML = `<b>${room ? `${v}: ${esc(room.name)}` : 'Start'}</b>${room ? `<div class="small muted">${reset() ? 'won by a fresh party' : 'cleared at least this far'}</div>` : ''}${rows}`;
+    tip.hidden = false;
+    const box = card.getBoundingClientRect(), sb = svgEl.getBoundingClientRect();
+    const left = sb.left - box.left + (x(v) / W) * sb.width;
+    tip.style.left = Math.min(box.width - tip.offsetWidth - 8, Math.max(8, left + 12)) + 'px';
+    tip.style.top = (sb.top - box.top + 12) + 'px';
+  });
+  svgEl.querySelector('.hit').addEventListener('pointerleave', () => { tip.hidden = true; hair.style.display = 'none'; });
+  return card;
+}
+
+function marginalChart(D, L, scoreName) {
+  const rows = Object.entries(D.marginal).sort((a, b) => b[1].mean - a[1].mean);
+  const W = 640, rowH = 34, m = { l: 150, r: 30, t: 10, b: 34 };
+  const H = m.t + m.b + rows.length * rowH;
+  const lo = Math.min(-0.5, ...rows.map(([, v]) => v.mean - 1.96 * v.se)), hi = Math.max(0.5, ...rows.map(([, v]) => v.mean + 1.96 * v.se));
+  const x = (v) => m.l + ((v - lo) / (hi - lo)) * (W - m.l - m.r);
+  let svg = `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="What each member adds, with 95% intervals">`;
+  const step = hi - lo > 4 ? 1 : 0.5;
+  for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) svg += `<line class="grid" x1="${x(v)}" x2="${x(v)}" y1="${m.t}" y2="${H - m.b}"/><text x="${x(v)}" y="${H - 14}" text-anchor="middle">${v > 0 ? '+' : ''}${+v.toFixed(1)}</text>`;
+  svg += `<line x1="${x(0)}" x2="${x(0)}" y1="${m.t}" y2="${H - m.b}" stroke="var(--ink)" stroke-width="1.5"/>`;
+  rows.forEach(([k, v], i) => {
+    const cy = m.t + i * rowH + rowH / 2;
+    svg += `<g class="mrow" data-k="${k}"><rect x="0" y="${cy - rowH / 2}" width="${W}" height="${rowH}" fill="transparent"/>`;
+    svg += `<text x="${m.l - 10}" y="${cy + 4}" text-anchor="end" style="fill:var(--ink);font-weight:600">${esc(short(k))}</text>`;
+    svg += `<line x1="${x(v.mean - 1.96 * v.se)}" x2="${x(v.mean + 1.96 * v.se)}" y1="${cy}" y2="${cy}" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>`;
+    svg += `<circle cx="${x(v.mean)}" cy="${cy}" r="6" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/></g>`;
+  });
+  svg += `<text x="${(m.l + W - m.r) / 2}" y="${H - 1}" text-anchor="middle">${esc(scoreName[0].toUpperCase() + scoreName.slice(1))}, with minus without</text></svg>`;
+  const card = $('marginal');
+  card.innerHTML = svg + `<details class="tv"><summary>Table</summary><div class="scroll"><table class="data"><thead><tr><th>Member</th><th>Compared</th><th class="n">Difference</th><th class="n">95% interval</th></tr></thead><tbody>
+    ${rows.map(([k, v]) => `<tr><td>${esc(M[k].label)}</td><td>${esc(L[v.with].label)} vs ${esc(L[v.without].label.toLowerCase())}</td><td class="n">${v.mean >= 0 ? '+' : ''}${v.mean.toFixed(2)}</td><td class="n">${(v.mean - 1.96 * v.se).toFixed(2)} to ${(v.mean + 1.96 * v.se).toFixed(2)}</td></tr>`).join('')}</tbody></table></div></details>`;
+  const tip = document.createElement('div');
+  tip.className = 'tip'; tip.hidden = true; card.appendChild(tip);
+  card.querySelectorAll('.mrow').forEach((g) => {
+    g.addEventListener('pointermove', (e) => {
+      const v = D.marginal[g.dataset.k];
+      tip.innerHTML = `<b>${esc(M[g.dataset.k].label)}</b><div class="row"><span>${esc(L[v.with].label)}</span><span class="num">${L[v.with].meanCleared.toFixed(2)}</span></div><div class="row"><span>${esc(L[v.without].label)}</span><span class="num">${L[v.without].meanCleared.toFixed(2)}</span></div><div class="row"><span>Difference</span><span class="num">${v.mean >= 0 ? '+' : ''}${v.mean.toFixed(2)} ± ${(1.96 * v.se).toFixed(2)}</span></div>`;
+      tip.hidden = false;
+      const box = card.getBoundingClientRect();
+      tip.style.left = Math.min(box.width - tip.offsetWidth - 8, e.clientX - box.left + 14) + 'px';
+      tip.style.top = (e.clientY - box.top + 14) + 'px';
+    });
+    g.addEventListener('pointerleave', () => { tip.hidden = true; });
+  });
+}
+
+const TILE_CLASS = { '#': 'w', O: 'o', ':': 'r', D: 'd', '^': 'h', F: 't', P: 't', A: 'a', E: 'e' };
+function drawLineup() {
+  const D = DATA.modes[mode], l = D.lineups[cur];
+  const ms = Object.entries(l.memberStats);
+  const maxShare = Math.max(...ms.map(([, s]) => s.shareAttrs), 0.01);
+  const bar = (v, max) => `<div class="cellbar"><span class="num">${pct(v)}</span><span class="track"><span class="b" style="width:${(v / max) * 100}%"></span></span></div>`;
+  $('members').innerHTML = `<table class="data"><thead><tr><th>Member</th><th class="n">Share of wounds dealt</th><th class="n">Foes downed</th><th class="n">Wounds dealt</th><th class="n">Stamina dealt</th><th class="n">Wounds taken</th><th class="n">${reset() ? 'Deaths per run' : 'Dies'}</th><th>Dies most in</th></tr></thead><tbody>
+    ${ms.map(([k, s]) => {
+      const where = s.diedIn.map((v, i) => [v, i]).sort((a, b) => b[0] - a[0])[0];
+      return `<tr><td><b>${esc(short(k))}</b> <span class="small muted">${esc(M[k].label.split(' (')[1] ? '(' + M[k].label.split(' (')[1] : '')}</span></td><td class="n">${bar(s.shareAttrs, maxShare)}</td><td class="n">${s.downs.toFixed(1)} <span class="muted">(${pct(s.shareDowns)})</span></td><td class="n">${s.dealtAttrs.toFixed(1)}</td><td class="n">${s.dealtStamina.toFixed(1)}</td><td class="n">${s.takenAttrs.toFixed(1)}</td><td class="n">${reset() ? s.deathRate.toFixed(2) : pct(s.deathRate)}</td><td>${where[0] > 0 ? esc(R[where[1]].name) : '—'}</td></tr>`;
+    }).join('')}</tbody></table>
+    <p class="small muted">Per run${reset() ? ' (eight fights, each with a fresh party)' : ''}. Wounds are attribute points (mostly CON) from blows and spells; bleeding, poison and hazards aren't credited to anyone. A foe is credited to whoever landed the blow that dropped it.</p>`;
+  $('rooms').innerHTML = R.map((room, i) => {
+    const s = l.roomStats[i];
+    const w = room.map[0].length;
+    const cellsHtml = room.map.join('').split('').map((ch) => `<i class="${TILE_CLASS[ch] || ''}"></i>`).join('');
+    const deaths = s.reached ? `<div class="deaths" aria-label="Who dies here">${l.members.map((m) => `<div><span>${esc(short(m))}</span><span class="track"><span style="width:${(s.memberDeaths[m] || 0) * 100}%"></span></span><span class="v">${pct(s.memberDeaths[m])}</span></div>`).join('')}</div>` : '';
+    return `<div class="card room"><h3><span class="k">${i + 1}</span>${esc(room.name)}${!reset() && i === DATA.campAfter ? ' <span class="small muted" style="font-family:var(--font-body);font-weight:500">after camp</span>' : ''}</h3>
+      <div class="mini" style="grid-template-columns:repeat(${w},1fr)" role="img" aria-label="Map of ${esc(room.name)}">${cellsHtml}</div>
+      <p class="small">${esc(room.blurb)} <span class="muted">${esc(room.foeNames.join(', '))}.</span></p>
+      <div class="stats">${reset() ? '' : `<span>Reached <b>${pct(s.reached / DATA.n)}</b></span>`}<span>Won ${reset() ? '' : 'there '}<b>${s.reached ? pct(s.cleared / s.reached) : '—'}</b></span><span>Rounds <b>${s.rounds == null ? '—' : s.rounds.toFixed(1)}</b></span></div>
+      ${deaths ? `<span class="small muted">Who dies here${reset() ? '' : ' (of runs that got here)'}</span>${deaths}` : ''}</div>`;
+  }).join('');
+}
+
+function render() {
+  const D = DATA.modes[mode], L = D.lineups;
+  $('mode').innerHTML = Object.entries(DATA.modes).map(([k, v]) => `<button type="button" data-k="${k}" aria-pressed="${k === mode}">${esc(v.label)}</button>`).join('');
+  $('mode').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { mode = b.dataset.k; store.set('gauntlet-mode', mode); render(); }));
+  $('modeBlurb').textContent = D.blurb;
+  const ranked = Object.entries(L).sort((a, b) => b[1].meanCleared - a[1].meanCleared);
+  const best = ranked[0][1], worst = ranked[ranked.length - 1][1];
+  if (reset()) {
+    const hardest = R.map((r, i) => [r, Math.max(...Object.values(L).map((l) => l.winRate[i]))]).sort((a, b) => a[1] - b[1])[0];
+    $('lead').textContent = `At full strength, ${best.label.toLowerCase().replace(/^\+ /, 'the trio plus the ')} wins ${best.meanCleared.toFixed(1)} of ${R.length} rooms on average; ${worst.label.toLowerCase()} wins ${worst.meanCleared.toFixed(1)}. The hardest room is ${hardest[0].name}: the best lineup wins it ${pct(hardest[1])} of the time.`;
+  } else {
+    const furthest = Math.max(...Object.values(L).map((l) => l.clear.findLastIndex((x) => x > 0) + 1));
+    $('lead').textContent = `${best.label} gets furthest, clearing ${best.meanCleared.toFixed(1)} of ${R.length} rooms on average; ${worst.label.toLowerCase()} clears ${worst.meanCleared.toFixed(1)}. ` +
+      (best.fullClear > 0 ? `${pct(best.fullClear)} of its runs clear every room.` : `No run has cleared all eight; the deepest any run got was room ${Math.min(furthest + 1, R.length)}, ${R[Math.min(furthest, R.length - 1)].name}.`);
+  }
+  $('meta').textContent = `${DATA.n} runs per lineup per mode, the same seeds for every lineup · ${DATA.seconds} s · generated ${DATA.generated.slice(0, 10)}`;
+  $('curvesTitle').textContent = reset() ? 'How each room goes at full strength' : 'How far each party gets';
+  $('curvesNote').textContent = reset() ? 'Win rate in each room for a fresh, full-strength party.' : `Share of runs that cleared at least this many rooms. The party camps (a long rest) after room ${DATA.campAfter}.`;
+  $('curves').innerHTML = '';
+  const fourth = ['core', 'mage', 'enchanter', 'cleric', 'grappler', 'duelist'].filter((k) => L[k]);
+  const ablate = ['mage', 'noKnight', 'noTwoHander', 'noArcher'].filter((k) => L[k]);
+  if (fourth.length) $('curves').appendChild(curveChart('Who fills the fourth slot', fourth, 'core', L));
+  if (ablate.length > 1) $('curves').appendChild(curveChart('The mage party, one member short', ablate, null, L));
+  $('marginalNote').textContent = `${D.score[0].toUpperCase() + D.score.slice(1)} with the member minus without, on the same seeds. Whiskers are 95% intervals. The fourth-slot members are compared with the core trio, and the core members with the mage party minus that member.`;
+  marginalChart(D, L, D.score);
+  if (!cur || !L[cur]) cur = L[store.get('gauntlet-lineup')] ? store.get('gauntlet-lineup') : L.mage ? 'mage' : Object.keys(L)[0];
+  $('lineup').innerHTML = Object.entries(L).map(([k, l]) => `<option value="${k}"${k === cur ? ' selected' : ''}>${esc(l.label)}</option>`).join('');
+  $('roomsNote').textContent = reset() ? 'In order. The numbers are for the lineup chosen above, fighting each room fresh.' : 'In order. The numbers are for the lineup chosen above: how often it got this far, and how it did once there.';
+  drawLineup();
+}
+$('lineup').addEventListener('change', (e) => { cur = e.target.value; store.set('gauntlet-lineup', cur); drawLineup(); });
+render();
+
+$('how').innerHTML = [
+  'A party of level-5 adventurers (the arena builds) fights the eight rooms in order. A room is lost if the party is wiped out or can\'t win within 30 rounds.',
+  `Attrition mode: the same party goes on from room to room. Between rooms there is a breather: stamina comes back and the unconscious get up; wounds (CON), spell points, arrows and battered shields carry on. Each member has one bandage, used on whoever is bleeding while they last; untended bleeding runs its course. After room ${DATA.campAfter} the party makes camp: the long-rest rules (bleeding tended, stamina and spell points back, one daily heal roll, some armor repair). The run ends at the first room lost.`,
+  'Reset mode: every room is fought by a fresh, full-strength party, the dead restored, so every room is tested in every run. Deaths are still recorded room by room.',
+  'Traps are hidden runes laid by the foes\' side: the foes know where they are and the party does not. There is no way to search for them yet.',
+  'The rooms are ordered by how hard each fight was for a fresh party in the party arena, from goblins up to the troll chieftain.',
+  'Every lineup runs the same seeds, so comparisons between lineups are paired; a member\'s value is the mean paired difference in the mode\'s score.',
+  'Raw data: runs.csv has one row per mode, run and member (score, deaths and the rooms they happened in, wounds dealt and taken, foes downed), for R.',
+].map((t) => `<li>${esc(t)}</li>`).join('');
+</script>
