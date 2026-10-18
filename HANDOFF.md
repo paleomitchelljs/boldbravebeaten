@@ -278,6 +278,17 @@ spells' per-round resistance (durations only); social system proper.
   screens), the map, and the current character's panel with collapsible groups (attack, guard,
   move and maneuver, other). Tapping a name or token opens a pop-up sheet. The
   declarations and the log fold away. It was tested at 390px and 1280px with Playwright.
+- The command panel was overhauled into a dropdown bar (`declarePanel`, `syncCommand` and
+  `commandModel` in `battle.js`). It shows the name (tap for the sheet), AP pips, and ⚠ incoming /
+  ⛨ guards-up badges that open pop-ups. Below them sit a Type dropdown (Martial, Magic, Move,
+  Other), then the actions:
+  - Martial: Attacks, Guards and Maneuvers as option groups.
+  - Magic: three linked dropdowns, Verb → Noun (doubled pairs too) → Modifier, filtered to what
+    combines.
+  - Other: Wits (bait, read intent), gear and wind-ups.
+  Then a target (or "against" for guards) and a Declare button with its cost. The map highlights
+  whatever is chosen (targets, cast squares, move squares), and tapping it declares too. Numbers
+  and rules notes sit behind ⓘ pop-ups. `tests/ui-battle.js` plays it in Chromium.
 - Saved battles from before round 4 resume at the next round.
 
 ## Item system proposal (for the user to approve)

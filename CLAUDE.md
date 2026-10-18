@@ -16,8 +16,8 @@ the arena results and the queued work.
 - **No dependencies, no build step.** Classic scripts attach to `globalThis.BBB`.
   Rules code never touches the DOM, so it runs in Node.
 - **Before committing,** run `node --test`. After a UI change (or a rules change the sheet or
-  battle screen shows), run `node tests/ui-smoke.js`: it opens every tab in Chromium and fails on
-  page errors. After a rules change, re-run `node sim/arena.js` and rebuild the page against the
+  battle screen shows), run `node tests/ui-smoke.js` (every tab) and `node tests/ui-battle.js`
+  (plays the command bar for a few passes); both fail on page errors. After a rules change, re-run `node sim/arena.js` and rebuild the page against the
   previous baseline.
 - **Tests.** Tests that check Specifics numbers wrap them in `asWritten()`.
   Update that helper when a new tuned value is added.
@@ -53,7 +53,8 @@ Characters who spend early sit out the last passes.
   included) fights cramped.
 - Grappling ladder built: clinch → hold → pin (+ throw, break), directly opposed rolls, costly in
   stamina; plate easy to grab (+2) but hard to throw. Plate dominating is accepted (rarity).
-- The mobile battle UI has been redesigned.
+- Battle command bar: name, a type dropdown (Martial / Magic / Move / Other), action dropdowns
+  (Verb → Noun → Modifier for magic), target, Declare; details behind ⓘ pop-ups.
 - Monsters drafted (animals, counters, tireless undead and constructs, scaled humanoids, a boss)
   with traits; a party arena runs cooperating parties against singles and groups. Big monsters
   have attributes past the human cap (troll STR 20 / CON 18).

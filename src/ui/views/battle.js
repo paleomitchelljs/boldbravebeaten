@@ -166,7 +166,7 @@
       finishTarget(app, enc, id);
       return;
     }
-    if (id && !ui.mode) openSheet(app, enc, id);
+    if (id) openSheet(app, enc, id);
   }
 
   function finishTarget(app, enc, targetId) {
@@ -194,12 +194,13 @@
     else Combat.endTurn(enc, id);
     ui.mode = null;
     ui.pending = null;
-    ui.open = null;
     app.save();
     app.render();
   }
 
   // ---- Command panel -----------------------------------------------------
+  // Under the map: the name, a type dropdown (Martial, Magic, Move, Other), the action
+  // dropdown(s), a target and Declare. Numbers and rules sit behind ⓘ buttons and pop-ups.
   function apMeter(cap, passLeft, roundLeft) {
     const out = [];
     const n = Math.min(cap, Math.max(passLeft, 0));
@@ -207,147 +208,290 @@
     return h('span', { class: 'ap-meter', 'aria-label': `${passLeft} AP left this pass` }, out);
   }
 
-  function costText(ap, st) {
-    return `${ap} AP · ${st} st`;
+  function costText(ap, st, sp) {
+    return [`${ap} AP`, st ? `${st} st` : null, sp ? `${sp} SP` : null].filter(Boolean).join(' · ');
   }
 
-  // One collapsible group of actions; only one is open at a time.
-  function section(ui, key, title, count, body) {
-    return h('details', {
-      class: 'cmd-sec', name: 'cmd-sections', open: ui.open === key,
-      ontoggle: (e) => { if (e.target.open) ui.open = key; else if (ui.open === key) ui.open = 'none'; },
-    }, h('summary', null, h('span', null, title), count != null ? h('span', { class: 'count' }, count) : null), h('div', { class: 'cmd-body' }, body));
+  // A select with option groups: groups = [[label|null, [[value, label, disabled]]]].
+  function selectGroups(id, value, groups, onchange, attrs) {
+    const opt = ([v, label, disabled]) => h('option', { value: v, selected: String(v) === String(value), disabled: !!disabled }, label);
+    return h('select', Object.assign({ id, onchange: (e) => onchange(e.target.value) }, attrs || {}),
+      groups.filter((g) => g[1].length).map(([label, opts]) => (label ? h('optgroup', { label }, opts.map(opt)) : opts.map(opt))));
   }
 
-  function lateNote(o) {
-    return o.spans ? ' · lands next pass' : '';
+  function openInfo(title, body) {
+    const box = h('div', { class: 'modal info-pop', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'info-title', onclick: (e) => e.stopPropagation() },
+      h('div', { class: 'row spread' }, h('h2', { id: 'info-title' }, title), h('button', { class: 'small ghost', onclick: closeModal, 'aria-label': 'Close' }, '✕')),
+      h('div', { class: 'stack tight small' }, body));
+    const root = document.getElementById('modal-root');
+    root.innerHTML = '';
+    root.appendChild(h('div', { class: 'modal-backdrop', onclick: closeModal }, box));
+    document.addEventListener('keydown', escClose);
   }
 
-  function declarePanel(app, enc, legal) {
+  function infoButton(title, body) {
+    return h('button', { class: 'info-btn', type: 'button', 'aria-label': `About ${title}`, title: 'Details', onclick: (e) => { e.stopPropagation(); openInfo(title, body()); } }, 'i');
+  }
+
+  function facts(rows) {
+    return h('dl', { class: 'facts' }, rows.filter((r) => r && r[1] != null && r[1] !== '').map(([k, v]) => [h('dt', null, k), h('dd', null, v)]));
+  }
+
+  const ACTION_INFO = {
+    block: 'Meets the next blow, arrow or bolt with the shield: a fixed roll against the shield\'s target number.',
+    parry: 'Meets the next blow with the weapon: your DEX/SPD against the attacker\'s STR/SPD, ties to you. No parry against arrows, spells or power blows; it waits for the next blow.',
+    dodge: 'Slips the next attack of any kind: your DEX/SPD against the attacker\'s STR/SPD, ties to you.',
+    offParry: 'The off-hand dagger meets the next thrust only.',
+    readyStrike: 'Holds a point ready: it meets the first foe (or the named one) who steps closer into its reach this pass. A hit stops them.',
+    trip: 'Knocks a foe down: opposed roll.',
+    disarm: 'Knocks the weapon from a foe\'s hand: opposed roll.',
+    shove: 'Pushes a foe back a square; a foe pushed mid-move loses the move.',
+    clinch: 'Closes in and takes hold: the first step of the grappling ladder.',
+    grapple: 'From a clinch to a hold.',
+    pin: 'From a hold to a pin: the pinned can only try to break free, and armor no longer guards their vitals.',
+    throw: 'Throws a held foe to the ground.',
+    break: 'Breaks free of a hold.',
+    bait: 'CHA against the foe\'s WIS. Won: they commit too early and defend worse for the round.',
+    readIntent: 'A cheap glance: WIS against the foe\'s CHA. Read right, you gain on guarding against them and on hitting through their guards. You can misread, and a misread costs you.',
+    bandage: 'Stops one bleed on yourself or someone adjacent.',
+    windUp: 'Gathers a power swing or a Strong spell; release it next round.',
+  };
+
+  const SHAPE_INFO = {
+    strike: 'A bolt at one target.', launch: 'A bolt at one target.',
+    area: 'Bursts over every square within the radius. Friends too.',
+    ground: 'Covers the ground for some rounds. Friends too.',
+    wall: 'Raises a wall across squares, square by square from the one you tap.',
+    terrain: 'Opens or changes the ground.',
+    rune: 'A hidden rune that springs on the first foe to step on it.',
+    bane: 'A curse on one foe; resisted.', mind: 'Works on one mind; WIL resists.',
+    boon: 'A blessing on an ally or yourself.', ward: 'A ward on an ally or yourself.',
+    blink: 'Steps through space, through walls and out of any hold.',
+    conjure: 'Calls up a creature that fights for some rounds.',
+  };
+
+  const sortTargets = (ts, chars, me, preferAlly) => ts.slice().sort((a, b) => {
+    const fa = (chars[a.id].side !== me.side) !== !!preferAlly, fb = (chars[b.id].side !== me.side) !== !!preferAlly;
+    return (fb - fa) || (b.inReach - a.inReach) || ((a.distance || 0) - (b.distance || 0));
+  });
+
+  // Every choice open to the actor, by type. Each entry knows how to declare and explain itself.
+  function commandModel(app, enc, legal, c) {
+    const chars = app.state.characters;
+    const why = (o) => o.why || (o.affordable ? null : 'Not enough AP');
+    const martial = [], magic = [], other = [];
+    for (const o of legal.attacks) {
+      const e = { key: 'a:' + C.optionKey(o), option: o, ap: o.ap, stamina: o.stamina, sp: o.spCost, affordable: o.affordable, why: why(o), spans: o.spans };
+      if (o.spell) magic.push(Object.assign(e, { kind: 'strike', label: o.label, targets: sortTargets(o.targets, chars, c) }));
+      else {
+        const w = o.weaponId ? c.weapons.find((x) => x.id === o.weaponId) : null;
+        martial.push(Object.assign(e, { group: 'Attacks', kind: 'strike', label: o.label + (w ? ` · ${Items.itemName(w)}` : ''), weapon: w, targets: sortTargets(o.targets, chars, c) }));
+      }
+    }
+    legal.defenses.forEach((o) => martial.push({ key: 'g:' + o.type, group: 'Guards', kind: 'guard', type: o.type, label: D.ACTIONS[o.type].name, ap: o.ap, stamina: o.stamina, affordable: o.affordable, why: why(o), spans: o.spans }));
+    (legal.readies || []).forEach((o, i) => martial.push({ key: 'r:' + C.optionKey(o.option), group: 'Guards', kind: 'ready', type: 'readyStrike', option: o.option, label: o.name, ap: o.ap, stamina: o.stamina, affordable: o.affordable, why: why(o), spans: o.spans }));
+    for (const m of legal.maneuvers) {
+      const e = { key: 'm:' + m.type, kind: 'maneuver', type: m.type, label: D.ACTIONS[m.type].name, ap: m.ap, stamina: m.stamina, affordable: m.affordable, why: m.affordable ? null : m.targets.some((t) => t.inReach) ? 'Not enough AP' : 'No one in reach', spans: m.spans, targets: sortTargets(m.targets, chars, c) };
+      if (m.type === 'bait' || m.type === 'readIntent') other.push(Object.assign(e, { group: 'Wits' }));
+      else martial.push(Object.assign(e, { group: 'Maneuvers' }));
+    }
+    for (const o of legal.spells || []) {
+      magic.push({ key: 's:' + o.spellKey, kind: 'cast', option: o, label: o.label, ap: o.ap, stamina: 0, sp: o.spCost, affordable: o.affordable, why: why(o), spans: o.spans,
+        square: o.target === 'square', targets: o.target === 'square' ? null : sortTargets(o.targets || [], chars, c, o.target === 'ally') });
+    }
+    legal.other.forEach((o, i) => other.push({ key: 'o:' + o.type + (o.option ? ':' + C.optionKey(o.option) : ''), group: o.type === 'windUp' ? 'Wind up' : 'Gear and self', kind: 'other', type: o.type, option: o.option,
+      label: o.name.replace(/^Wind up: /, '') + (o.note ? ` (${o.note})` : ''), ap: o.ap, stamina: o.stamina, affordable: o.affordable, why: why(o), spans: o.spans,
+      targets: o.targets ? sortTargets(o.targets, chars, c, true) : null }));
+    const move = legal.move ? { key: 'move', kind: 'move', label: 'Move', ap: C.moveCost(c, 1), stamina: legal.move.stamina, affordable: true, move: legal.move } : null;
+    const types = [];
+    if (martial.length) types.push(['martial', 'Martial']);
+    if (magic.length) types.push(['magic', 'Magic']);
+    if (move) types.push(['move', 'Move']);
+    if (other.length) types.push(['other', 'Other']);
+    return { martial, magic, other, move, types };
+  }
+
+  // Keep the chosen type and action valid, and set the map's highlighting to match: targets to
+  // tap, squares to cast at, or squares to move to. Runs before the map draws.
+  function syncCommand(app, enc, legal) {
+    const ui = bui(app);
+    const id = Combat.currentActor(enc);
+    const c = app.state.characters[id];
+    const model = commandModel(app, enc, legal, c);
+    if (!ui.cmd || ui.cmd.for !== id) {
+      const guardFirst = legal.incoming.length && model.martial.some((e) => e.kind === 'guard' && e.affordable);
+      ui.cmd = { for: id, type: null, act: guardFirst ? (model.martial.find((e) => e.kind === 'guard' && e.affordable) || {}).key : null, target: null, vs: '' };
+    }
+    const cmd = ui.cmd;
+    if (!model.types.some((t) => t[0] === cmd.type)) cmd.type = model.types[0] ? model.types[0][0] : null;
+    let entry = null;
+    if (cmd.type === 'move') entry = model.move;
+    else if (cmd.type === 'magic') entry = pickMagic(model.magic, cmd);
+    else if (cmd.type) {
+      const list = model[cmd.type];
+      entry = list.find((e) => e.key === cmd.act) || list.find((e) => e.affordable) || list[0] || null;
+      cmd.act = entry ? entry.key : null;
+    }
+    if (entry && entry.targets) {
+      if (!entry.targets.some((t) => t.id === cmd.target)) cmd.target = entry.targets[0] ? entry.targets[0].id : null; // the preferred side first, in reach first
+    }
+    // The map follows the choice.
+    if (ui.mode !== 'place') {
+      ui.mode = null;
+      ui.pending = null;
+      if (entry && entry.kind === 'move') ui.mode = 'move';
+      else if (entry && entry.square) { ui.mode = 'cast'; ui.pending = { option: entry.option }; }
+      else if (entry && entry.targets && entry.targets.length) {
+        ui.mode = 'target';
+        ui.pending = { kind: entry.kind === 'strike' || entry.kind === 'cast' ? entry.kind : 'other', type: entry.type, option: entry.option, label: entry.label, targets: entry.targets };
+      }
+    }
+    return { model, entry };
+  }
+
+  // Magic: verb, then noun (or a doubled pair), then modifier, each filtered to what combines.
+  function pickMagic(list, cmd) {
+    const verbs = [...new Set(list.map((e) => e.option.spell.verb))];
+    const firstGood = (xs) => xs.find((e) => e.affordable) || xs[0];
+    if (!verbs.includes(cmd.mVerb)) cmd.mVerb = (firstGood(list) || {}).option.spell.verb;
+    const byVerb = list.filter((e) => e.option.spell.verb === cmd.mVerb);
+    const nounKey = (e) => e.option.spell.nouns.join('+');
+    if (!byVerb.some((e) => nounKey(e) === cmd.mNoun)) cmd.mNoun = nounKey(firstGood(byVerb.filter((e) => !e.option.spell.mod)) || firstGood(byVerb));
+    const byNoun = byVerb.filter((e) => nounKey(e) === cmd.mNoun);
+    if (!byNoun.some((e) => (e.option.spell.mod || '') === cmd.mMod)) cmd.mMod = (byNoun.find((e) => !e.option.spell.mod) || byNoun[0]).option.spell.mod || '';
+    const entry = byNoun.find((e) => (e.option.spell.mod || '') === cmd.mMod);
+    cmd.act = entry.key;
+    return entry;
+  }
+
+  function magicPicker(app, model, cmd) {
+    const W = G.CONFIG.magic.words;
+    const set = (k) => (v) => { cmd[k] = v; app.render(); };
+    const verbs = [...new Set(model.magic.map((e) => e.option.spell.verb))];
+    const byVerb = model.magic.filter((e) => e.option.spell.verb === cmd.mVerb);
+    const nouns = [...new Map(byVerb.map((e) => [e.option.spell.nouns.join('+'), e.option.spell])).entries()];
+    const byNoun = byVerb.filter((e) => e.option.spell.nouns.join('+') === cmd.mNoun);
+    const nounLabel = (s) => s.nouns.map((n) => W[n].name).join(' + ') + (s.combo ? ` → ${s.combo}` : '');
+    const field = (label, el) => h('label', { class: 'pick' }, h('span', { class: 'label' }, label), el);
+    return h('div', { class: 'spell-pick' },
+      field('Verb', UI.select('cmd-verb', cmd.mVerb, verbs.map((v) => [v, W[v].name]), set('mVerb'))),
+      field('Noun', UI.select('cmd-noun', cmd.mNoun, nouns.map(([k, s]) => [k, nounLabel(s)]), set('mNoun'))),
+      field('Modifier', UI.select('cmd-mod', cmd.mMod, byNoun.map((e) => [e.option.spell.mod || '', e.option.spell.mod ? W[e.option.spell.mod].name : '—']), set('mMod'))));
+  }
+
+  function entryInfo(app, enc, c, e) {
+    const o = e.option;
+    const rows = [['Cost', costText(e.ap, e.stamina, e.sp)]];
+    const notes = [];
+    if (e.kind === 'strike' && !o.spell) {
+      const range = (o.minRange === o.maxRange ? `${o.maxRange}` : `${o.minRange}–${o.maxRange}`) + (o.closePenalty ? (G.CONFIG.range.closeRule === 'blunt' ? ' (half force, blunt, at 1)' : ' (half at 1)') : '');
+      rows.unshift(['Weapon', e.weapon ? Items.itemName(e.weapon) : 'Unarmed'], ['Damage', `P/S/B ${o.damage.join('/')}`], ['Range', range]);
+      if (o.windUp) notes.push('Needs a wind-up the round before (under Other).');
+    } else if (o && o.spell) {
+      const s = o.spell;
+      const shape = { area: `radius ${s.radius}`, ground: `radius ${s.radius}, ${s.rounds} rounds`, wall: `${s.length} squares, ${s.rounds} rounds`, terrain: `${s.length} square${s.length > 1 ? 's' : ''}`, bane: `${s.rounds} rounds`, boon: `${s.rounds} rounds`, conjure: `${s.rounds} rounds`, ward: `${s.rounds} rounds`, mind: `${s.rounds} rounds` }[s.shape];
+      rows.unshift(['Power', `${s.magnitude}${s.element ? ' ' + s.element : ''}`], ['Range', `${o.minRange}–${o.maxRange}`], shape ? ['Reach', shape] : null);
+      notes.push(SHAPE_INFO[s.shape] || '');
+      if (e.square) notes.push('Tap a highlighted square on the map to cast.');
+    } else if (e.kind === 'move') {
+      const m = e.move;
+      rows.unshift(['This pass', `${m.passSquares} squares`], ['This round', `up to ${m.maxSquares} squares`]);
+      notes.push('Tap a highlighted square; the number is its AP. Striped squares land next pass. Walls are walked around; rough ground costs more.');
+    } else notes.push(ACTION_INFO[e.type] || '');
+    if (e.kind === 'guard' || e.kind === 'ready') notes.push('It lasts until it meets an attack or the pass ends. Stamina is paid only if it is used.');
+    if (e.spans) notes.push('Costs more AP than this pass has left: it borrows from the next pass and lands then.');
+    if (e.why) rows.push(['Unavailable', e.why]);
+    return [facts(rows), notes.filter(Boolean).map((n) => h('p', null, n))];
+  }
+
+  function declareEntry(app, enc, id, e, cmd) {
+    const t = cmd.target;
+    if (e.kind === 'strike' || e.kind === 'cast') return declare(app, enc, { actor: id, type: e.kind, option: e.option, target: t });
+    if (e.kind === 'guard') return declare(app, enc, { actor: id, type: e.type, against: cmd.vs || null });
+    if (e.kind === 'ready') return declare(app, enc, { actor: id, type: 'readyStrike', option: e.option, against: cmd.vs || null });
+    return declare(app, enc, e.targets ? { actor: id, type: e.type, target: t } : { actor: id, type: e.type, option: e.option });
+  }
+
+  function declarePanel(app, enc, legal, sync) {
     const chars = app.state.characters;
     const ui = bui(app);
     const id = Combat.currentActor(enc);
     const c = chars[id];
+    const say = (d) => Combat.describeDecl(enc, chars, d, id).text;
+    const badges = [];
+    if (legal.incoming.length || legal.incomingLater.length) {
+      badges.push(h('button', { class: 'badge warn', 'aria-label': 'Attacks coming at you', onclick: () => openInfo('Coming at you', [
+        legal.incoming.length ? [h('b', null, 'This pass'), h('ul', null, legal.incoming.map((d) => h('li', null, say(d))))] : null,
+        legal.incomingLater.length ? [h('b', null, 'Next pass'), h('ul', null, legal.incomingLater.map((d) => h('li', null, say(d))))] : null,
+        h('p', { class: 'muted' }, 'Guards are under Martial.')]) }, `⚠ ${legal.incoming.length + legal.incomingLater.length}`));
+    }
+    const up = legal.guards.concat(legal.readied || []);
+    if (up.length) {
+      badges.push(h('button', { class: 'badge good', 'aria-label': 'Guards up', onclick: () => openInfo('Guards up', h('ul', null, up.map((g) => h('li', null, say(g).replace(c.name + ': ', ''))))) }, `⛨ ${up.length}`));
+    }
+    const sp = G.Magic && G.Magic.maxSP(c) ? G.Magic.availableSP(c) : null;
     const head = h('div', { class: 'cmd-head' },
       h('div', { class: 'stack tight' },
-        h('span', { class: 'label' }, `Round ${enc.round} · pass ${enc.pass} · turn`),
-        h('button', { class: 'who linkish', onclick: () => openSheet(app, enc, id), title: 'Open character sheet' }, c.name)),
+        h('span', { class: 'label' }, `R${enc.round} · pass ${enc.pass}`),
+        h('button', { class: 'who linkish', onclick: () => openSheet(app, enc, id), title: 'Character sheet' }, c.name)),
       h('div', { class: 'stack tight', style: { alignItems: 'flex-end' } },
-        h('div', { class: 'ap-line' }, apMeter(legal.passCap, legal.passLeft, legal.ap), h('span', { class: 'small num', title: 'AP left this pass / this round' }, `${legal.passLeft}/${legal.ap} AP`)),
-        h('span', { class: 'small num muted' }, `stamina ${c.stamina}/${C.maxStamina(c)}`)));
+        h('div', { class: 'ap-line' }, badges, apMeter(legal.passCap, legal.passLeft, legal.ap)),
+        h('span', { class: 'small num muted' }, `${legal.passLeft}/${legal.ap} AP · ${c.stamina} st${sp != null ? ` · ${sp} SP` : ''}`)));
 
-    if (aiControlled(app, c)) {
-      return h('section', { class: 'panel cmd' }, head, h('p', { class: 'muted' }, 'Deciding…'));
-    }
+    if (aiControlled(app, c)) return h('section', { class: 'panel cmd' }, head, h('p', { class: 'muted' }, 'Deciding…'));
 
-    const pick = (pending) => {
-      ui.pending = pending;
-      ui.mode = 'target';
-      app.render();
-    };
-    const notes = [];
-    if (ui.mode === 'target' && ui.pending) {
-      notes.push(h('div', { class: 'note' },
-        h('div', { class: 'row spread' }, h('b', null, `Target for ${ui.pending.label}`), h('button', { class: 'small', onclick: () => { ui.mode = null; ui.pending = null; app.render(); } }, 'Cancel')),
-        h('p', { class: 'small' }, 'Tap a highlighted token on the map, or choose:'),
-        h('div', { class: 'row', style: { marginTop: '6px' } }, ui.pending.targets.map((t) =>
-          h('button', { class: 'small' + (t.inReach ? '' : ' ghost'), onclick: () => finishTarget(app, enc, t.id) }, chars[t.id].name + (t.distance != null ? ` · ${t.distance} sq` : '') + (t.inReach ? '' : t.tooClose ? ' (too close now)' : ' (out of reach now)'))))));
+    const { model, entry } = sync;
+    const cmd = ui.cmd;
+    const rerender = () => app.render();
+    const typeSel = model.types.length
+      ? h('label', { class: 'pick' }, h('span', { class: 'label' }, 'Type'), UI.select('cmd-type', cmd.type, model.types, (v) => { cmd.type = v; cmd.act = null; rerender(); }))
+      : null;
+    let actSel = null;
+    if (cmd.type === 'magic') actSel = magicPicker(app, model, cmd);
+    else if (cmd.type === 'martial' || cmd.type === 'other') {
+      const list = model[cmd.type];
+      const groups = [...new Set(list.map((e) => e.group))].map((g) => [g, list.filter((e) => e.group === g).map((e) => [e.key, e.label + (e.affordable ? '' : ` — ${e.why}`), !e.affordable])]);
+      actSel = h('label', { class: 'pick grow' }, h('span', { class: 'label' }, 'Action'), selectGroups('cmd-act', cmd.act, groups, (v) => { cmd.act = v; rerender(); }));
     }
-    if (ui.mode === 'cast' && ui.pending) {
-      notes.push(h('div', { class: 'note row spread' }, h('span', null, `${ui.pending.option.label}: tap a highlighted square (range ${ui.pending.option.minRange}–${ui.pending.option.maxRange}).`),
-        h('button', { class: 'small', onclick: () => { ui.mode = null; ui.pending = null; app.render(); } }, 'Cancel')));
+    // What the action is aimed at.
+    let aim = null;
+    if (entry && entry.targets) {
+      aim = h('label', { class: 'pick grow' }, h('span', { class: 'label' }, 'Target'),
+        entry.targets.length
+          ? UI.select('cmd-target', cmd.target, entry.targets.map((t) => [t.id, `${chars[t.id].name}${t.distance != null ? ` · ${t.distance} sq` : ''}${t.inReach ? '' : t.tooClose ? ' (too close)' : ' (out of reach)'}`]), (v) => { cmd.target = v; rerender(); })
+          : h('span', { class: 'muted small' }, 'No one'));
+    } else if (entry && (entry.kind === 'guard' || entry.kind === 'ready')) {
+      const vs = legal.guardAgainst.includes(cmd.vs) ? cmd.vs : '';
+      aim = h('label', { class: 'pick grow' }, h('span', { class: 'label' }, 'Against'),
+        UI.select('cmd-vs', vs, [['', 'The next attack']].concat(legal.guardAgainst.map((o) => [o, chars[o].name])), (v) => { cmd.vs = v; rerender(); }));
     }
-    if (ui.mode === 'move') {
-      notes.push(h('div', { class: 'note row spread' }, h('span', null, 'Tap a highlighted square; the number is its AP. Striped squares land next pass.'),
-        h('button', { class: 'small', onclick: () => { ui.mode = null; app.render(); } }, 'Cancel')));
+    let go = null;
+    if (entry) {
+      const tapOnly = entry.kind === 'move' || entry.square;
+      const target = entry.targets ? entry.targets.find((t) => t.id === cmd.target) : null;
+      const blocked = !entry.affordable || (entry.targets && !target);
+      go = h('div', { class: 'cmd-go' },
+        tapOnly
+          ? h('span', { class: 'tap-hint' }, entry.kind === 'move' ? `Tap a square · ${entry.move.passSquares} this pass` : 'Tap a square on the map')
+          : h('button', { class: 'primary', disabled: blocked, title: entry.why || '', onclick: () => declareEntry(app, enc, id, entry, cmd) },
+            entry.label.split(' · ')[0], h('span', { class: 'cost' }, costText(entry.ap, entry.stamina, entry.sp))),
+        infoButton(entry.label, () => entryInfo(app, enc, c, entry)));
     }
-    if (legal.incomingLater.length) {
-      notes.push(h('div', { class: 'note' }, h('b', null, 'On its way: '),
-        legal.incomingLater.map((d) => Combat.describeDecl(enc, chars, d, id).text).join('; ')));
-    }
-
-    const groups = [];
-    {
-      const foes = new Set(enc.ids.filter((o) => chars[o].side !== c.side));
-      const sortTargets = (ts) => ts.slice().sort((a, b) => (foes.has(b.id) - foes.has(a.id)) || (b.inReach - a.inReach));
-      const attacks = legal.attacks.filter((o) => o.affordable || ui.showAll);
-      groups.push(['attack', 'Attack', attacks.length, [
-        h('div', { class: 'action-list' }, attacks.map((o) => {
-          const w = o.weaponId ? c.weapons.find((x) => x.id === o.weaponId) : null;
-          const anyReach = o.targets.some((t) => t.inReach && foes.has(t.id));
-          const range = (o.minRange === o.maxRange ? `range ${o.maxRange}` : `range ${o.minRange}–${o.maxRange}`) + (o.closePenalty ? (G.CONFIG.range.closeRule === 'blunt' ? ' (½ blunt at 1)' : ' (½ at 1)') : '');
-          const dmg = o.spell ? `${o.spell.magnitude} ${o.spell.element} · ${o.spCost} SP` : `P/S/B ${o.damage.join('/')}`;
-          return h('button', { class: 'action', disabled: !o.affordable, title: o.why || '', onclick: () => pick({ kind: 'strike', option: o, label: o.label, targets: sortTargets(o.targets) }) },
-            h('span', null, o.label, w ? h('span', { class: 'muted' }, ' — ' + Items.itemName(w)) : null),
-            h('span', { class: 'cost' }, costText(o.ap, o.stamina)),
-            h('span', { class: 'meta' }, `${dmg} · ${range}${o.why ? ' · ' + o.why : anyReach ? '' : ' · no foe in range'}${lateNote(o)}`));
-        })),
-        legal.attacks.length > attacks.length || ui.showAll ? h('button', { class: 'small ghost', onclick: () => { ui.showAll = !ui.showAll; app.render(); } },
-          ui.showAll ? 'Hide unavailable attacks' : `Show ${legal.attacks.length - attacks.length} unavailable`) : null]]);
-      // Spells cast at a square, a foe or an ally (bolts are under Attack).
-      const spells = (legal.spells || []).filter((o) => o.affordable || ui.showAll);
-      if ((legal.spells || []).length) {
-        groups.push(['spell', 'Spells', spells.length, [
-          h('div', { class: 'action-list' }, spells.map((o) => {
-            const s = o.spell;
-            const shape = { area: `radius ${s.radius}`, ground: `radius ${s.radius}, ${s.rounds} rd`, wall: `${s.length} squares, ${s.rounds} rd`, terrain: `${s.length} square${s.length > 1 ? 's' : ''}`, rune: 'hidden rune', bane: `${s.rounds} rd, resisted`, boon: `${s.rounds} rd`, conjure: `${s.rounds} rd`, ward: `${s.rounds} rd`, blink: 'through walls; out of any hold', mind: `${s.rounds} rd, WIL resists` }[s.shape] || '';
-            const onclick = o.target === 'square'
-              ? () => { ui.mode = 'cast'; ui.pending = { option: o }; app.render(); }
-              : () => pick({ kind: 'cast', option: o, label: o.label, targets: sortTargets(o.targets.map((t) => Object.assign({}, t, { inReach: t.inReach }))) });
-            return h('button', { class: 'action', disabled: !o.affordable, title: o.why || '', onclick },
-              h('span', null, o.label),
-              h('span', { class: 'cost' }, `${o.ap} AP · ${o.spCost} SP`),
-              h('span', { class: 'meta' }, `mag ${s.magnitude} · range ${o.minRange}–${o.maxRange} · ${shape}${o.why ? ' · ' + o.why : ''}${lateNote(o)}`));
-          })),
-          h('p', { class: 'small muted' }, 'Spells cast at a square ask for a square on the map. Areas and hazards hit friends too.')]]);
-      }
-      // Guards: ready a defense for the next attack, or the next from one foe.
-      const vs = legal.guardAgainst.includes(ui.guardAgainst) ? ui.guardAgainst : '';
-      groups.push(['guard', 'Guard', legal.guards.length ? `${legal.guards.length} up` : null, [
-        legal.incoming.length ? h('div', { class: 'small' }, h('b', null, 'Landing on you this pass: '),
-          legal.incoming.map((d) => Combat.describeDecl(enc, chars, d, id).text).join('; ')) : null,
-        legal.guards.length ? h('div', { class: 'small' }, h('b', null, 'Up: '), legal.guards.map((g) => Combat.describeDecl(enc, chars, g, id).text.replace(c.name + ': ', '')).join('; ')) : null,
-        h('label', { class: 'inline small', for: 'guard-vs' }, h('span', { class: 'label' }, 'Against'),
-          UI.select('guard-vs', vs, [['', 'the next attack']].concat(legal.guardAgainst.map((o) => [o, chars[o].name])), (v) => { ui.guardAgainst = v; app.render(); })),
-        h('div', { class: 'row' }, legal.defenses.map((o) => h('button', {
-          disabled: !o.affordable, title: o.why || '',
-          onclick: () => declare(app, enc, { actor: id, type: o.type, against: vs || null }),
-        }, `${D.ACTIONS[o.type].name} · ${costText(o.ap, o.stamina)}${o.why ? ' — ' + o.why : o.spans ? ' · borrows next pass' : ''}`))),
-        (legal.readies || []).length ? h('div', { class: 'row' }, legal.readies.map((o) => h('button', {
-          disabled: !o.affordable, title: o.why || '',
-          onclick: () => declare(app, enc, { actor: id, type: 'readyStrike', option: o.option, against: vs || null }),
-        }, `${o.name} · ${costText(o.ap, o.stamina)}${o.why ? ' — ' + o.why : o.spans ? ' · borrows next pass' : ''}`))) : null,
-        (legal.readied || []).length ? h('div', { class: 'small' }, h('b', null, 'Point ready: '), legal.readied.map((g) => Combat.describeDecl(enc, chars, g, id).text.replace(c.name + ': ', '')).join('; ')) : null,
-        h('p', { class: 'small muted' }, 'A guard lasts until it meets an attack or the pass ends. A parry can\'t meet an arrow or spell; it waits for the next blow. A readied thrust meets the first foe (or the named one) who steps closer into its reach this pass; a hit stops them. Stamina is paid only if it\'s made.')]]);
-      if (legal.move || legal.maneuvers.length) {
-        groups.push(['move', 'Move and maneuver', null, h('div', { class: 'row' },
-          legal.move ? h('button', { class: ui.mode === 'move' ? 'selected' : '', onclick: () => { ui.mode = 'move'; ui.pending = null; app.render(); } },
-            `Move · ${legal.move.passSquares} sq this pass (up to ${legal.move.maxSquares}) · ${legal.move.stamina} st`) : null,
-          legal.maneuvers.map((m) => h('button', { disabled: !m.affordable, onclick: () => pick({ kind: 'maneuver', type: m.type, label: D.ACTIONS[m.type].name, targets: sortTargets(m.targets) }) },
-            `${D.ACTIONS[m.type].name} · ${costText(m.ap, m.stamina)}${lateNote(m)}`)))]);
-      }
-      if (legal.other.length) {
-        groups.push(['other', 'Other', legal.other.length, h('div', { class: 'row' }, legal.other.map((o) => h('button', {
-          disabled: !o.affordable,
-          title: o.why || '',
-          onclick: () => (o.targets ? pick({ kind: 'other', type: o.type, label: o.name, targets: o.targets }) : declare(app, enc, { actor: id, type: o.type, option: o.option })),
-        }, `${o.name}${o.note ? ` (${o.note})` : ''} · ${costText(o.ap, o.stamina)}${lateNote(o)}`)))]);
-      }
-    }
-    if (legal.incoming.length && ui.guardHint !== enc.pass + ':' + id) { ui.open = 'guard'; ui.guardHint = enc.pass + ':' + id; }
-    if (!ui.open || !groups.some((g) => g[0] === ui.open) && ui.open !== 'none') ui.open = groups[0] ? groups[0][0] : null;
-
     return h('section', { class: 'panel cmd' },
       head,
-      notes,
-      groups.map((g) => section(ui, g[0], g[1], g[2], g[3])),
+      h('div', { class: 'cmd-row' }, typeSel, actSel),
+      aim ? h('div', { class: 'cmd-row' }, aim) : null,
+      go,
       h('div', { class: 'cmd-foot' },
-        h('button', { class: 'primary', onclick: () => finishTurn(app, enc, id, false) }, 'End turn'),
-        h('button', { class: 'small ghost', title: 'Spend nothing more this round, including guards', onclick: () => finishTurn(app, enc, id, true) }, 'Done for the round')),
-      h('p', { class: 'small muted' }, 'AP left over at the end of the round is lost. Other players can\'t see your AP; pass the device only after ending your turn.'));
+        h('button', { class: 'end', onclick: () => finishTurn(app, enc, id, false) }, 'End turn'),
+        h('button', { class: 'small ghost', title: 'Spend nothing more this round, including guards', onclick: () => finishTurn(app, enc, id, true) }, 'Done for round'),
+        infoButton('Turns and AP', () => [
+          h('p', null, 'Declare as many actions as this pass\'s AP allows, then end your turn. Everything declared lands when the pass ends.'),
+          h('p', null, '"Done for round" spends nothing more this round, guards included. AP left at the end of the round is lost.'),
+          h('p', { class: 'muted' }, 'Other players can\'t see your AP: pass the device only after ending your turn. Tap a name or token for its sheet.')])));
   }
 
-  function phasePanel(app, enc) {
+  function phasePanel(app, enc, legal, sync) {
     const chars = app.state.characters;
     const ui = bui(app);
     const roller = UI.Dice.makeRoller(app);
@@ -368,7 +512,7 @@
       return h('section', { class: 'panel cmd' }, h('span', { class: 'label' }, `Round ${enc.round}`), h('div', { class: 'who' }, 'Rolling initiative'),
         h('p', { class: 'muted small' }, 'Each player rolls d10; their SPD in armor is added.'));
     }
-    if (enc.phase === 'declare') return declarePanel(app, enc, Combat.legalActions(enc, chars, Combat.currentActor(enc)));
+    if (enc.phase === 'declare') return declarePanel(app, enc, legal, sync);
     if (enc.phase === 'resolve' || enc.phase === 'resolving') {
       return h('section', { class: 'panel cmd' },
         h('span', { class: 'label' }, `Round ${enc.round} · pass ${enc.pass}`),
@@ -561,6 +705,9 @@
     const chars = app.state.characters;
     const legal = enc.phase === 'declare' ? Combat.legalActions(enc, chars, Combat.currentActor(enc)) : null;
     scheduleAI(app, enc);
+    const human = legal && !aiControlled(app, chars[Combat.currentActor(enc)]);
+    const sync = human ? syncCommand(app, enc, legal) : null;
+    if (legal && !human && bui(app).mode !== 'place') { bui(app).mode = null; bui(app).pending = null; }
     const status = enc.phase === 'declare' ? `Pass ${enc.pass} · turns` : enc.phase === 'over' ? 'The fight is over' : enc.phase === 'resolve' || enc.phase === 'resolving' ? `Pass ${enc.pass} · resolving` : '';
     return h('div', { class: 'battle-view' },
       h('div', { class: 'battle-head' },
@@ -575,7 +722,7 @@
       h('div', { class: 'battle' },
         rosterView(app, enc),
         h('div', { class: 'battle-map' }, mapView(app, enc, legal)),
-        h('div', { class: 'battle-side stack' }, phasePanel(app, enc), declsView(app, enc), logView(app, enc))));
+        h('div', { class: 'battle-side stack' }, phasePanel(app, enc, legal, sync), declsView(app, enc), logView(app, enc))));
   }
 
   UI.Views.battle = view;
