@@ -25,6 +25,7 @@ Published artifacts:
 
 - Game: https://claude.ai/artifact/WiZZp7VyJYCf7c7hZwVAQd (version 4).
 - Arena results: https://claude.ai/artifact/8wLMyG578Csqdvxi9XErP7 (version 2).
+- Gauntlet results: https://claude.ai/artifact/37iyt3REBbLHgV1jETTF1T (from `sim/results/gauntlet/report.html`).
 
 The branch is `claude/game-platform`.
 
