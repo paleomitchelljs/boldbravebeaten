@@ -1,5 +1,27 @@
 # Simulation findings
 
+## The cleric: Restore + Life, Wide and Name (gauntlet)
+
+The cleric is a mage in mail with a mace who knows Life, Light and Force. Its spells are Restore
+(plain, Wide and Name) and a Strike bolt; Light doubles against the undead. It was run as the
+fourth member with the core trio, 100 runs per mode, paired with the other lineups.
+
+| | Attrition: rooms cleared | Reset: rooms won | Adds (attrition / reset) | Dies |
+|---|---|---|---|---|
+| + Cleric | 3.10 | 5.14 | +1.19 / +1.55 | 61% of runs / 1.8 per 8 rooms |
+| + Mage | 2.81 | 5.23 | +0.90 / +1.64 | 94% / 3.6 |
+| + Enchanter | 2.19 | 4.71 | +0.28 / +1.12 | 99% / 5.0 |
+| + Duelist | 3.78 | 6.11 | +1.87 / +2.52 | 80% / — |
+
+- **Under attrition, the cleric is the second-best fourth member,** behind the duelist and level
+  with the grappler. Healing keeps the party going: 95% clear the kennels, against 85% with the
+  mage.
+- **It has a room of its own: the crypt.** It wins there 30% of the time, the best of any lineup
+  (duelist 25%, mage 11%). Light burns the skeletons.
+- **It's weaker than the mage against bands** (the kobold warren: 21% against 42%).
+- **It survives where the other casters don't.** It dies about half as often as the mage, because
+  it wears mail and its party keeps itself standing.
+
 ## The gauntlet: an eight-room crawl (`sim/gauntlet.js`)
 
 A level-5 party fights eight rooms in order, from goblins to the troll chieftain. The rooms have

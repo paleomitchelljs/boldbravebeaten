@@ -1,6 +1,6 @@
 # Gauntlet
 
-100 runs per lineup per mode, the same seeds for every lineup, 1192 s. Rooms in order: Gatehouse (3 × goblinBand), Kennels (3 × wolfPack), Trapped corridor (2 × sarnakPair), Troll den (1 × caveTroll), Cistern (3 × frogPatrol), Kobold warren (4 × koboldBand), Crypt (3 × skeletonSquad), Chieftain's hall (1 × trollChieftain).
+100 runs per lineup per mode, the same seeds for every lineup, 1664 s. Rooms in order: Gatehouse (3 × goblinBand), Kennels (3 × wolfPack), Trapped corridor (2 × sarnakPair), Troll den (1 × caveTroll), Cistern (3 × frogPatrol), Kobold warren (4 × koboldBand), Crypt (3 × skeletonSquad), Chieftain's hall (1 × trollChieftain).
 
 ## Attrition mode
 
@@ -11,6 +11,7 @@ One party through all eight rooms; wounds carry on, with a breather between room
 | Core trio | 1.91 | 0% | 98% | 63% | 17% | 11% | 2% | 0% | 0% | 0% |
 | + Mage | 2.81 | 0% | 98% | 85% | 49% | 39% | 10% | 0% | 0% | 0% |
 | + Enchanter | 2.19 | 0% | 99% | 75% | 25% | 17% | 3% | 0% | 0% | 0% |
+| + Cleric | 3.10 | 0% | 100% | 95% | 50% | 45% | 20% | 0% | 0% | 0% |
 | + Grappler | 3.07 | 0% | 100% | 88% | 53% | 42% | 21% | 2% | 1% | 0% |
 | + Duelist | 3.78 | 0% | 100% | 99% | 84% | 68% | 25% | 2% | 0% | 0% |
 | Mage party, no knight | 1.82 | 0% | 97% | 55% | 16% | 13% | 1% | 0% | 0% | 0% |
@@ -26,6 +27,7 @@ One party through all eight rooms; wounds carry on, with a breather between room
 | Archer (leather, longbow) | + Mage | Mage party, no archer | +1.05 ± 0.17 | 0% / 0% |
 | Mage (fire, earth, vine, force) | + Mage | Core trio | +0.90 ± 0.15 | 0% / 0% |
 | Enchanter (mind spells) | + Enchanter | Core trio | +0.28 ± 0.11 | 0% / 0% |
+| Cleric (mail, mace, Life) | + Cleric | Core trio | +1.19 ± 0.15 | 0% / 0% |
 | Grappler (leather) | + Grappler | Core trio | +1.16 ± 0.17 | 0% / 0% |
 | Duelist (leather, rapier and dagger) | + Duelist | Core trio | +1.87 ± 0.15 | 0% / 0% |
 
@@ -44,6 +46,10 @@ One party through all eight rooms; wounds carry on, with a breather between room
 | + Enchanter | Two-hander | 27.8 / 88.1 | 59% | 2.8 (53%) | 4.2 / 17.7 | 74% |
 | + Enchanter | Archer | 10.3 / 31.0 | 22% | 1.5 (27%) | 4.7 / 16.1 | 64% |
 | + Enchanter | Enchanter | 0.6 / 2.1 | 1% | 0.1 (1%) | 5.6 / 17.6 | 99% |
+| + Cleric | Knight | 10.3 / 34.5 | 16% | 1.1 (15%) | 2.2 / 12.5 | 23% |
+| + Cleric | Two-hander | 37.2 / 122.6 | 57% | 3.8 (54%) | 4.4 / 19.3 | 70% |
+| + Cleric | Archer | 14.7 / 43.5 | 22% | 1.6 (23%) | 4.9 / 18.1 | 71% |
+| + Cleric | Cleric | 3.4 / 14.3 | 5% | 0.6 (8%) | 3.8 / 19.8 | 61% |
 | + Grappler | Knight | 9.4 / 31.4 | 15% | 1.1 (16%) | 2.0 / 10.6 | 28% |
 | + Grappler | Two-hander | 35.5 / 113.5 | 56% | 3.8 (53%) | 4.0 / 18.9 | 67% |
 | + Grappler | Archer | 15.7 / 46.6 | 25% | 1.8 (25%) | 4.2 / 16.9 | 68% |
@@ -71,6 +77,7 @@ A fresh, full-strength party for every room, the dead restored. Every room is fo
 | Core trio | 3.59 | 0% | 98% | 79% | 48% | 89% | 24% | 3% | 4% | 14% |
 | + Mage | 5.23 | 1% | 98% | 98% | 83% | 96% | 56% | 42% | 11% | 39% |
 | + Enchanter | 4.71 | 0% | 99% | 89% | 85% | 95% | 42% | 8% | 9% | 44% |
+| + Cleric | 5.14 | 1% | 100% | 96% | 87% | 94% | 56% | 21% | 30% | 30% |
 | + Grappler | 5.08 | 1% | 100% | 98% | 84% | 86% | 62% | 22% | 16% | 40% |
 | + Duelist | 6.11 | 7% | 100% | 99% | 94% | 100% | 75% | 40% | 25% | 78% |
 | Mage party, no knight | 3.39 | 0% | 97% | 72% | 53% | 71% | 17% | 14% | 5% | 10% |
@@ -86,6 +93,7 @@ A fresh, full-strength party for every room, the dead restored. Every room is fo
 | Archer (leather, longbow) | + Mage | Mage party, no archer | +1.47 ± 0.14 | 1% / 0% |
 | Mage (fire, earth, vine, force) | + Mage | Core trio | +1.64 ± 0.15 | 1% / 0% |
 | Enchanter (mind spells) | + Enchanter | Core trio | +1.12 ± 0.15 | 0% / 0% |
+| Cleric (mail, mace, Life) | + Cleric | Core trio | +1.55 ± 0.13 | 1% / 0% |
 | Grappler (leather) | + Grappler | Core trio | +1.49 ± 0.15 | 1% / 0% |
 | Duelist (leather, rapier and dagger) | + Duelist | Core trio | +2.52 ± 0.13 | 7% / 0% |
 
@@ -104,6 +112,10 @@ A fresh, full-strength party for every room, the dead restored. Every room is fo
 | + Enchanter | Two-hander | 78.8 / 276.6 | 62% | 6.4 (59%) | 14.9 / 56.4 | 2.22 |
 | + Enchanter | Archer | 24.3 / 80.7 | 19% | 2.4 (22%) | 15.3 / 59.0 | 2.47 |
 | + Enchanter | Enchanter | 1.8 / 6.9 | 1% | 0.2 (2%) | 49.4 / 142.1 | 4.96 |
+| + Cleric | Knight | 21.5 / 74.0 | 15% | 1.9 (15%) | 5.5 / 34.7 | 0.50 |
+| + Cleric | Two-hander | 80.3 / 271.8 | 56% | 7.0 (54%) | 12.2 / 59.0 | 1.81 |
+| + Cleric | Archer | 23.2 / 72.5 | 16% | 2.5 (20%) | 11.3 / 59.1 | 1.82 |
+| + Cleric | Cleric | 17.3 / 72.3 | 12% | 1.4 (11%) | 11.8 / 80.8 | 1.78 |
 | + Grappler | Knight | 21.3 / 73.7 | 16% | 1.9 (15%) | 5.9 / 30.4 | 0.54 |
 | + Grappler | Two-hander | 81.8 / 270.3 | 60% | 7.5 (59%) | 11.7 / 53.1 | 1.81 |
 | + Grappler | Archer | 26.6 / 83.5 | 20% | 2.6 (20%) | 12.9 / 59.8 | 2.03 |
@@ -137,6 +149,10 @@ A fresh, full-strength party for every room, the dead restored. Every room is fo
 | + Enchanter | Two-hander | 1% | 20% | 1% | 0% | 60% | 85% | 55% | 0% |
 | + Enchanter | Archer | 1% | 15% | 3% | 0% | 66% | 87% | 75% | 0% |
 | + Enchanter | Enchanter | 60% | 64% | 35% | 4% | 94% | 98% | 92% | 49% |
+| + Cleric | Knight | 0% | 0% | 1% | 0% | 22% | 26% | 1% | 0% |
+| + Cleric | Two-hander | 0% | 10% | 4% | 0% | 55% | 71% | 41% | 0% |
+| + Cleric | Archer | 2% | 5% | 2% | 0% | 51% | 79% | 43% | 0% |
+| + Cleric | Cleric | 0% | 5% | 6% | 0% | 54% | 80% | 33% | 0% |
 | + Grappler | Knight | 0% | 0% | 0% | 0% | 23% | 31% | 0% | 0% |
 | + Grappler | Two-hander | 1% | 10% | 3% | 0% | 43% | 77% | 47% | 0% |
 | + Grappler | Archer | 1% | 8% | 3% | 0% | 59% | 73% | 59% | 0% |
