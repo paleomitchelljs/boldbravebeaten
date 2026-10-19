@@ -1,0 +1,71 @@
+# Checks outside combat. A check is d10 + floor(mean of attrs / 2) + (feat rank x weight) - armor penalty,
+# against a target number (tn in rules.yaml: trivial 4, easy 6, moderate 8, hard 11, formidable 14).
+# Who rolls: the party's best for perception and appraisal; the chosen member for locks and traps.
+# armorPenalty multiplies half the worn armor's SPD + DEX penalty.
+
+perception:
+  name: Perception
+  attrs: [WIS]
+  feats: {keen_eye: 2}
+  blurb: Notice traps, hidden doors and lurking foes.
+stealth:
+  name: Stealth
+  attrs: [DEX, SPD]
+  feats: {stealth: 2}
+  armorPenalty: 1.5
+  blurb: Move unseen. Heavy armor is loud.
+lockpicking:
+  name: Lockpicking
+  attrs: [DEX, INT]
+  feats: {lockpicking: 2}
+  blurb: Open a lock without the key. A fumble can jam it.
+trapcraft:
+  name: Trapcraft
+  attrs: [DEX, INT]
+  feats: {trap_craft: 2, keen_eye: 1}
+  blurb: Disarm a trap you have found.
+forcing:
+  name: Forcing
+  attrs: [STR]
+  feats: {}
+  blurb: Break a door or lid open. Loud.
+appraisal:
+  name: Appraisal
+  attrs: [INT, WIS]
+  feats: {appraise: 3}
+  blurb: Judge what an item is worth and what it carries.
+herbalism:
+  name: Herbalism
+  attrs: [WIS, INT]
+  feats: {herbalism: 2}
+  blurb: Find and prepare plants. Used when camping.
+lore:
+  name: Lore
+  attrs: [INT]
+  feats: {ritualist: 1, read_spell: 1}
+  blurb: Read old inscriptions and marks.
+charm:
+  name: Charm
+  attrs: [CHA]
+  feats: {silver_tongue: 1}
+  blurb: Warm someone to you.
+insight:
+  name: Insight
+  attrs: [WIS]
+  feats: {read_the_room: 1, read_intent: 1}
+  blurb: Read what a person feels and wants.
+intimidation:
+  name: Intimidation
+  attrs: [STR, CHA]
+  feats: {intimidate: 2}
+  blurb: Frighten someone into going along. Armor and a name for violence help.
+deception:
+  name: Deception
+  attrs: [INT, CHA]
+  feats: {leading_questions: 1}
+  blurb: Say what is not so, and be believed.
+appeal:
+  name: Appeal
+  attrs: [INT, CHA]
+  feats: {appeal_to_interest: 2}
+  blurb: Show someone how helping you serves their own ends.

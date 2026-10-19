@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /*
- * Build the death knight scaling page from sim/results/dk-scaling/dk-scaling.json.
+ * Build the revenant knight scaling page from sim/results/dk-scaling/dk-scaling.json.
  *   node sim/dk-scaling-page.js [--in …/dk-scaling.json] [--out …/report.html]
  */
 'use strict';

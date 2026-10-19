@@ -9,7 +9,7 @@ const PARTIES = {
   'Shield, archer, heavy two-hander': ['medium/shield', 'light/archery', 'heavy/twoHanded'],
   'Light party: shield, archer, grappler': ['light/shield', 'light/archery', 'unarmored/grappler'],
 };
-const MONS = (argv.includes('--only') ? argv[argv.indexOf('--only') + 1] : 'wolfPack,caveTroll,owlbear,rustBeetle').split(',');
+const MONS = (argv.includes('--only') ? argv[argv.indexOf('--only') + 1] : 'wolfPack,caveTroll,beakbear,rustBeetle').split(',');
 (async () => {
   let seed = 7;
   for (const mk of MONS) {

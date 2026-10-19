@@ -1,0 +1,177 @@
+# Templates for generated human foes (bandits, guards). Gear lists are [weight, value] pairs by level band [1-2, 3-5, 6+].
+
+bandit:
+  faction: cutthroats
+  name: Bandit
+  primary: [DEX, SPD]
+  weak: [INT]
+  armor: [[[3, padded], [1, leather]], [[2, leather], [1, mail]], [[1, leather], [2, mail]]]
+  coverage: [[[2, partial], [2, half], [1, full]], [[1, half], [2, full]], [[1, full]]]
+  weapons:
+    - [[2, club], [2, dagger]]
+    - [[1, club], [1, dagger], [1, spikedMace]]
+    - [[1, rapier], [1, spikedMace]]
+  shield: [[[2, null], [2, buckler]], [[1, null], [2, buckler]], [[1, buckler], [1, round]]]
+  sidearm: dagger
+  feats:
+    - quick_thrust
+    - light_touch
+    - trip
+    - dodge_training
+    - kip_up
+    - precision
+    - fleet_foot
+    - agility
+    - quickness
+militia:
+  faction: town_watch
+  name: Militia
+  primary: [CON, STR]
+  weak: [DEX]
+  armor: [[[1, padded]], [[2, padded], [1, leather]], [[1, leather], [1, mail]]]
+  coverage: [[[1, full]], [[1, full]], [[1, full]]]
+  weapons:
+    - [[2, club], [1, spikedMace]]
+    - [[1, spikedMace], [1, club]]
+    - [[1, spikedMace], [1, flangedMace]]
+  shield: [[[1, round]], [[1, round]], [[1, round], [1, heater]]]
+  feats:
+    - shield_training
+    - quick_block
+    - economical_block
+    - toughness
+    - light_armor_training
+    - heavy_weapon_training
+    - strength
+  sidearm: dagger
+sellsword:
+  faction: cutthroats
+  name: Sellsword
+  primary: [STR, CON]
+  weak: [CHA]
+  armor: [[[2, leather], [1, mail]], [[1, mail]], [[2, mail], [1, scale]]]
+  coverage: [[[1, half], [1, full]], [[1, half], [2, full]], [[1, full]]]
+  weapons: [[[2, longsword], [1, spikedMace]], [[1, longsword]], [[1, longsword]]]
+  shield: [[[1, round]], [[1, round], [1, heater]], [[1, heater]]]
+  sidearm: dagger
+  feats:
+    - shield_training
+    - mail_mobility
+    - parry_training
+    - mail_endurance
+    - quick_block
+    - half_swording
+    - murder_stroke
+    - read_attack
+    - strength
+brute:
+  faction: cutthroats
+  name: Brute
+  primary: [STR, CON]
+  weak: [INT, DEX]
+  armor: [[[2, padded], [1, leather]], [[1, leather], [1, mail]], [[1, mail], [1, scale]]]
+  coverage: [[[1, half], [1, full]], [[1, full]], [[1, full]]]
+  weapons:
+    - [[2, club], [1, warhammer]]
+    - [[1, warhammer], [1, greatsword]]
+    - [[1, warhammer], [1, greatsword]]
+  shield: [[[1, null]], [[1, null]], [[1, null]]]
+  feats:
+    - power_swing
+    - heavy_weapon_training
+    - weight_of_the_blow
+    - strength
+    - heavy_tempo
+    - crushing_blow
+    - shield_breaker
+    - toughness
+  sidearm: dagger
+duelist:
+  faction: cutthroats
+  name: Duelist
+  primary: [DEX, SPD]
+  weak: [STR]
+  armor: [[[1, null], [1, padded]], [[1, leather]], [[1, leather], [1, mail]]]
+  coverage: [[[1, partial]], [[1, half]], [[1, half], [1, full]]]
+  weapons: [[[1, rapier]], [[1, rapier]], [[1, rapier]]]
+  shield: [[[1, null]], [[1, null], [1, buckler]], [[1, buckler]]]
+  sidearm: dagger
+  feats:
+    - quick_thrust
+    - parry_training
+    - feint
+    - riposte
+    - read_attack
+    - precision
+    - quick_parry
+    - light_touch
+    - find_the_gap
+    - agility
+brawler:
+  faction: cutthroats
+  name: Brawler
+  primary: [STR, DEX]
+  weak: [INT]
+  armor: [[[1, padded]], [[1, padded], [1, leather]], [[1, leather]]]
+  coverage: [[[1, partial]], [[1, half]], [[1, full]]]
+  weapons: [[[1, null]], [[1, null]], [[1, null]]]
+  shield: [[[1, null]], [[1, null]], [[1, null]]]
+  sidearm: dagger
+  feats:
+    - grappler
+    - trip
+    - quick_hands
+    - heavy_hands
+    - brawlers_wind
+    - pin
+    - dogpile
+    - takedown
+    - coup_de_grace
+    - strength
+manAtArms:
+  faction: town_watch
+  name: Man-at-arms
+  primary: [STR, CON]
+  weak: [CHA]
+  armor: [[[1, mail]], [[2, mail], [1, scale]], [[1, scale], [1, plate]]]
+  coverage: [[[1, half], [1, full]], [[1, full]], [[2, full], [1, half]]]
+  weapons:
+    - [[1, spikedMace], [1, flangedMace]]
+    - [[1, flangedMace], [1, longsword]]
+    - [[1, flangedMace], [1, warhammer]]
+  shield: [[[1, round]], [[1, heater]], [[1, heater]]]
+  sidearm: dagger
+  feats:
+    - shield_training
+    - mail_mobility
+    - quick_block
+    - weight_of_the_blow
+    - shield_training
+    - economical_block
+    - mail_endurance
+    - iron_stance
+    - toughness
+knight:
+  faction: town_watch
+  name: Knight
+  primary: [STR, CON]
+  weak: [SPD]
+  armor: [[[1, mail]], [[1, scale], [1, plate]], [[1, plate]]]
+  coverage: [[[1, full]], [[1, half], [2, full]], [[1, full]]]
+  weapons:
+    - [[1, longsword]]
+    - [[2, longsword], [1, greatsword]]
+    - [[1, longsword], [1, greatsword], [1, warhammer]]
+  shield: [[[1, heater]], [[1, heater]], [[2, heater], [1, tower]]]
+  sidearm: dagger
+  feats:
+    - plate_mobility
+    - shield_training
+    - plate_endurance
+    - half_swording
+    - murder_stroke
+    - quick_block
+    - strength
+    - iron_stance
+    - toughness
+    - power_swing

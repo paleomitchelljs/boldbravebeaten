@@ -1,0 +1,15 @@
+# Shield sizes (types) and the materials they are made of.
+# blockAP = AP cost of a block; threshold = force a shield stops before it breaks or lets blunt through;
+# durability = base hit points; mult (materials) scales threshold and durability.
+
+types:
+  buckler: {name: Buckler, blockAP: 1, threshold: 6, durability: 10, rarity: common}
+  round: {name: Round, blockAP: 2, threshold: 9, durability: 20, rarity: uncommon}
+  heater: {name: Heater, blockAP: 2, threshold: 12, durability: 30, rarity: rare}
+  tower: {name: Tower, blockAP: 3, threshold: 16, durability: 45, rarity: very rare}
+materials:
+  wood: {name: Wooden, mult: 1, rarity: common}
+  hide: {name: Hide-faced, mult: 1.2, rarity: common}
+  iron: {name: Iron-rimmed, mult: 1.5, rarity: uncommon}
+  steel: {name: Steel, mult: 2, rarity: rare}
+  adamant: {name: Adamant, mult: 3.5, rarity: unique}

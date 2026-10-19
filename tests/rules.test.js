@@ -1418,8 +1418,8 @@ test('Name: a named spell finds a companion anywhere, past walls; a foe only if 
   assert.ok(Combat.legalActions(enc, chars, m.id).spells.find((x) => x.spellKey === 'beguile+calm+name').targets.find((t) => t.id === foe.id).inReach);
 });
 
-test('death knight: Battle Casting casts with sword and shield; Soulreaver drinks stamina and wounds', async () => {
-  const [dk] = B.Enemies.makeMonster('deathKnight');
+test('revenant knight: Battle Casting casts with sword and shield; Soulreaver drinks stamina and wounds', async () => {
+  const [dk] = B.Enemies.makeMonster('revenantKnight');
   assert.equal(dk.level, 20);
   assert.ok(dk.shield && C.handsBusy(dk) === 2 && C.castingHands(dk), 'hands full, still casting');
   assert.ok(C.attackOptions(dk).some((o) => o.spell), 'bolts offered with sword and shield in hand');
@@ -1438,8 +1438,8 @@ test('death knight: Battle Casting casts with sword and shield; Soulreaver drink
   assert.ok(dk.damage.CON < 3 || dk.stamina > 10, 'healed or refreshed');
 });
 
-test('death knight: his aura of dread saps foes near him each round; the silk sash quickens him', async () => {
-  const [dk] = B.Enemies.makeMonster('deathKnight');
+test('revenant knight: his aura of dread saps foes near him each round; the silk sash quickens him', async () => {
+  const [dk] = B.Enemies.makeMonster('revenantKnight');
   const plain = Object.assign(JSON.parse(JSON.stringify(dk)), { trinkets: [] });
   assert.ok(C.apPool(dk) > C.apPool(plain), 'the sash adds AP');
   assert.equal(C.attr(dk, 'SPD'), C.attr(plain, 'SPD') + 1);

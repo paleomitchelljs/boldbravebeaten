@@ -33,9 +33,9 @@ const INTENT = {
   wolf: 'a lone animal: weaker than a trained fighter',
   wolfPack: 'anyone alone, especially the lightly armored',
   rustBeetle: 'plate (heavy armor)',
-  displacer: 'archers',
+  mirageCat: 'archers',
   giantSpider: 'the unarmored',
-  owlbear: 'two-handers',
+  beakbear: 'two-handers',
   caveTroll: 'sword and shield',
   trollChieftain: 'a whole party (a boss; one-on-one it should crush anyone)',
   skeleton: 'archers and thrusting weapons (immune to piercing; only blunt goes through clean)',
@@ -43,8 +43,8 @@ const INTENT = {
   stoneGolem: 'anyone without a blunt weapon (stone shrugs off blades)',
   kobold: 'nobody alone: a pack creature',
   goblin: 'nobody alone: a band creature',
-  froglok: 'grapplers (slippery)',
-  sarnak: 'lightly armored fighters (heavy blows, tail sweeps)',
+  bogfolk: 'grapplers (slippery)',
+  scaleward: 'lightly armored fighters (heavy blows, tail sweeps)',
 };
 
 // Small parties for the party test (three arena fighters).

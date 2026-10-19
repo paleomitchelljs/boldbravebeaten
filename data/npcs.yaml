@@ -1,0 +1,208 @@
+# People you can talk to (parley). Reading list:
+#   attrs        WIS/WIL/CHA/INT used when they resist your moves.
+#   disposition  how much they like you at first (-5..5), before standing and reputation.
+#   willingness  how much they will do for a stranger (0..10). Each topic has a `need`.
+#   courage      resists intimidation (target number = 5 + courage).   patience: moves they tolerate.
+#   temperament  how they read your reputation:
+#                  loyal (their faction's standing counts double), venal (gold talks; reputation doesn't),
+#                  moral (renown helps, notoriety hurts), fearful (notoriety makes them yield),
+#                  starstruck (renown makes them yield), provincial (distrust strangers).
+#   interests    tags used by the Appeal move: a topic with a matching tag is easier.
+# Topics: need = willingness required. kind info | quest | favor | trade | pass.
+#   requires/hide: a condition (see src/game/conditions.js).   once: can only be taken once.
+#   gives {gold, xp, good, flag} / sets [flags] / starts: quest id / standing {faction: n} / renown: n / notoriety: n
+#   tag: matches the Appeal move.   lie: true topics can be Bluffed (+2 willingness once).
+
+marta_quill:
+  name: Marta Quill
+  title: Innkeeper of the Tilted Cask
+  faction: merchants_guild
+  glyph: "🍺"
+  look: A broad woman with ink on her cuffs from keeping everyone's tab.
+  attrs: {WIS: 7, WIL: 5, CHA: 6, INT: 6}
+  disposition: 1
+  willingness: 3
+  courage: 4
+  patience: 6
+  temperament: [venal]
+  interests: [business, quiet]
+  greeting: "Sit, sit. Ale's fair and the beds are dry. What can I do for you?"
+  topics:
+    - {id: rumors, label: "What's the talk in town?", need: 1, kind: info, text: "Smuggled goods are turning up again. The Watch blames the cellars under the old mill; the Guild blames the Watch. The wolves are bolder this winter, too."}
+    - {id: mill, label: "What do you know about the old mill?", need: 3, kind: info, tag: business, sets: [knows_mill], text: "It burned years ago. But there's a cellar door round the back that's oiled. Somebody walks in and out of there at night, and they don't pay the toll at the gate."}
+    - {id: who, label: "Who matters in Stonebridge?", need: 2, kind: info, sets: [knows_factions], text: "Captain Hollis keeps the peace, Pell keeps the ledgers, and Ysa at the Lantern keeps the dead from becoming a nuisance. Cross one and the others hear by supper."}
+    - {id: tab, label: "Could you put a room on a tab?", need: 6, kind: favor, once: true, tag: business, sets: [inn_tab], text: "For someone I trust? Rooms are half price. Pay me back with interest, and don't make me regret it."}
+
+captain_hollis:
+  name: Captain Hollis
+  title: Captain of the Watch
+  faction: town_watch
+  glyph: "🛡"
+  look: Grey at the temples, mail polished, a scar through one eyebrow.
+  attrs: {WIS: 7, WIL: 7, CHA: 5, INT: 5}
+  disposition: 0
+  willingness: 2
+  courage: 7
+  patience: 4
+  temperament: [loyal, moral]
+  interests: [order, safety]
+  greeting: "State your business. I've a gate to run."
+  topics:
+    - {id: rats, label: "Does the Watch need help?", need: 2, kind: quest, starts: rats_in_cellars, hide: {quest: rats_in_cellars}, text: "Rats in the cellars under the mill, bigger than they ought to be. Clear the upper level. I'll pay for proof, not stories."}
+    - {id: rats_report, label: "The upper cellar is clear.", need: 0, kind: favor, requires: {flag: cleared_rat_nest}, hide: {flag: reported_rats}, sets: [reported_rats], text: "Good work. Here is what I promised. The Watch remembers its friends."}
+    - {id: ledger, label: "Tell me about the smugglers.", need: 5, kind: quest, tag: order, starts: smugglers_ledger, hide: {quest: smugglers_ledger}, text: "A man called Rusk runs the cellar. He keeps books. Get me that ledger and I can finally name names."}
+    - {id: gate, label: "Can I come and go after dark?", need: 7, kind: pass, once: true, tag: order, sets: [gate_pass], text: "You've earned a lantern at the gate. Don't make me sorry."}
+    - {id: bounty, label: "Is there a bounty on anything?", need: 3, kind: info, requires: {standing: {faction: town_watch, min: 10}}, text: "Cutthroats in the cellar: two crowns each. Bring a name, not a body."}
+
+guildmaster_pell:
+  name: Guildmaster Pell
+  title: Master of the Merchants' Guild
+  faction: merchants_guild
+  glyph: "⚖"
+  look: Neat, soft-spoken, with rings he never takes off.
+  attrs: {WIS: 8, WIL: 6, CHA: 7, INT: 8}
+  disposition: 0
+  willingness: 2
+  courage: 5
+  patience: 5
+  temperament: [venal]
+  interests: [business, profit]
+  greeting: "Everything has a price. Let us find out what yours is."
+  topics:
+    - {id: shipment, label: "Do you have work?", need: 3, kind: quest, starts: lost_shipment, hide: {quest: lost_shipment}, tag: profit, text: "Three crates of the Guild's goods went missing on the river road. I have reason to think they're in those cellars. Bring them back; the Guild pays well and remembers."}
+    - {id: shipment_done, label: "I have the crates.", need: 0, kind: favor, requires: {item: crate_goods}, hide: {flag: shipment_returned}, sets: [shipment_returned], takes: crate_goods, text: "Marked, sealed, and intact. You are better than my guards."}
+    - {id: stock, label: "Is there better stock than the market shows?", need: 6, kind: favor, once: true, tag: profit, sets: [guild_stock], text: "For friends: yes. I'll open the back room for you at the smith's and the market."}
+    - {id: smugglers, label: "Who is moving goods around the toll?", need: 5, kind: info, sets: [knows_rusk], text: "A man named Rusk. Bad for business. If you find him, you may tell him the Guild has long memories."}
+
+warden_ysa:
+  name: Warden Ysa
+  title: Warden of the Lantern
+  faction: lantern_order
+  glyph: "🏮"
+  look: Calm, tall, a lamp-wick behind one ear for luck. Her robe is stained at the cuffs.
+  attrs: {WIS: 8, WIL: 8, CHA: 6, INT: 7}
+  disposition: 1
+  willingness: 3
+  courage: 8
+  patience: 6
+  temperament: [moral]
+  interests: [mercy, rest]
+  greeting: "Light and quiet to you. Are you hurt, or just tired?"
+  topics:
+    - {id: barrow, label: "What lies beneath the hill?", need: 3, kind: info, sets: [knows_barrow], text: "The Hollow Barrow. An old burial. The Hollow Court wakes the dead there, and the seal on the door has gone missing. If it opens fully, the Watch will not be enough."}
+    - {id: seal, label: "Can I help with the barrow?", need: 5, kind: quest, tag: mercy, starts: barrow_seal, hide: {quest: barrow_seal}, requires: {flag: knows_barrow}, text: "The barrow's seal was carried off to the old cellars by thieves who didn't know what it was. Bring it to me, and then we can close the door. Beware the knight that walks there."}
+    - {id: seal_done, label: "I have the seal.", need: 0, kind: favor, requires: {item: barrow_seal}, hide: {flag: seal_returned}, sets: [seal_returned], takes: barrow_seal, text: "Thank you. It will be set again at dusk. You have done the town a service you will not hear of."}
+    - {id: rites, label: "Will you teach me the old rites?", need: 8, kind: favor, once: true, tag: mercy, gives: {good: tome_still}, text: "These words were written for the keepers of the lamp. You are not a keeper. But you listen. Take it."}
+
+brannock:
+  name: Brannock
+  title: Smith
+  faction: merchants_guild
+  glyph: "🔨"
+  look: Forearms like cordwood, a leather apron burned black along the front.
+  attrs: {WIS: 5, WIL: 7, CHA: 4, INT: 6}
+  disposition: 0
+  willingness: 2
+  courage: 7
+  patience: 4
+  temperament: [moral]
+  interests: [craft, honest work]
+  greeting: "Armor, blades, or a dent you can't hammer out yourself?"
+  topics:
+    - {id: steel, label: "What makes armor worth wearing?", need: 1, kind: info, text: "Plate stops nearly everything and is worth a king's ransom. Mail turns a blade. Leather and padding turn a bad day into a bruise. Most folk die in whatever they could afford."}
+    - {id: weak, label: "What kills a man in plate?", need: 4, kind: info, tag: craft, text: "A hammer. Or a man who gets his arms around you and puts you in the mud. Or waiting for him to wear himself out. Heavy armor tires you."}
+    - {id: discount, label: "Anything for a regular?", need: 5, kind: favor, once: true, tag: craft, sets: [smith_discount], text: "Bring me a coin and honest work and I'll take a tenth off. Don't haggle after."}
+
+wren_urchin:
+  name: Wren
+  title: Gate-runner
+  faction: ~
+  glyph: "🧣"
+  look: Twelve or so, quick-eyed, knows every wall in town that can be climbed.
+  attrs: {WIS: 6, WIL: 3, CHA: 5, INT: 5}
+  disposition: 0
+  willingness: 3
+  courage: 2
+  patience: 4
+  temperament: [venal, fearful]
+  interests: [coin, safety]
+  greeting: "Got a coin? I've got a map in my head."
+  topics:
+    - {id: secret, label: "How do I get into the cellars quietly?", need: 2, kind: info, tag: coin, sets: [knows_cellar_back], text: "The back is oiled, but there's a loose grate at the east end. Ask nicely, or walk in the front and meet the rats."}
+    - {id: patrol, label: "When do the smugglers sleep?", need: 4, kind: info, tag: coin, sets: [knows_patrols], text: "Day. Mostly. The ones who stay up are the ones with the keys."}
+
+old_dagmar:
+  name: Old Dagmar
+  title: Retired sergeant
+  faction: town_watch
+  glyph: "🍺"
+  look: Missing two fingers, most of his hearing and none of his opinions.
+  attrs: {WIS: 5, WIL: 5, CHA: 5, INT: 5}
+  disposition: 1
+  willingness: 4
+  courage: 3
+  patience: 5
+  temperament: [starstruck, fearful]
+  interests: [old days, drink]
+  greeting: "Pull up a chair, lad. I've seen things."
+  topics:
+    - {id: trolls, label: "Tell me about the cave north of the road.", need: 2, kind: info, sets: [knows_trolls], text: "Trolls. They regrow what you cut off. Burn them. Fire's the only thing that makes them stay down. And don't stand in the narrow of the cave. They'll break your shield and your arm together."}
+    - {id: wolves, label: "How do you handle wolves?", need: 1, kind: info, text: "Back to a wall and keep a shield up. Never fight in the open; they go around you."}
+    - {id: sleeve, label: "Do you have anything left from the old days?", need: 7, kind: favor, once: true, gives: {good: charm_wolf}, text: "Here. Wore it a dozen winters. Keeps the cold out of your thinking."}
+
+sly_corvin:
+  name: Corvin
+  title: A man who knows men
+  faction: cutthroats
+  glyph: "🗝"
+  look: Dark coat, soft boots, a smile that stops at the cheeks.
+  attrs: {WIS: 7, WIL: 6, CHA: 6, INT: 7}
+  disposition: -1
+  willingness: 1
+  courage: 6
+  patience: 4
+  temperament: [provincial, loyal]
+  interests: [coin, discretion]
+  greeting: "Sit. Don't stare. Everyone's watching, so smile."
+  topics:
+    - {id: job, label: "I hear certain goods need delivering.", need: 4, kind: quest, tag: discretion, starts: crates_for_corvin, hide: {quest: crates_for_corvin}, lie: true, text: "The Guild's crates in the cellar belong to us now. Bring them to me instead, and you'll find it pays better than the Guild's gratitude."}
+    - {id: job_done, label: "I have the crates.", need: 0, kind: favor, requires: {item: crate_goods}, hide: {flag: shipment_returned}, sets: [crates_fenced], takes: crate_goods, text: "Wise. Here."}
+    - {id: back, label: "Is there a quiet way into the cellars?", need: 5, kind: pass, tag: coin, once: true, sets: [cutthroat_pass], text: "Knock twice, say the word 'tallow.' They'll know you're ours. Don't make me regret it."}
+    - {id: rusk, label: "Who runs the cellar?", need: 3, kind: info, sets: [knows_rusk], text: "Rusk. Sensible, as men with knives go. Take a purse and he might listen."}
+
+captain_rusk:
+  name: Captain Rusk
+  title: Smuggler boss
+  faction: cutthroats
+  glyph: "🗡"
+  look: Heavy coat, light hands. He has a ledger on his belt and a knife in his sleeve.
+  attrs: {WIS: 7, WIL: 7, CHA: 6, INT: 7}
+  disposition: -2
+  willingness: 1
+  courage: 7
+  patience: 3
+  temperament: [venal, loyal]
+  interests: [coin, discretion, survival]
+  greeting: "You walked a long way to die in my cellar. Or to sell me something."
+  topics:
+    - {id: pass, label: "We're only passing through.", need: 5, kind: pass, tag: survival, sets: [rusk_stands_down], once: true, text: "Fine. Take the east tunnel and don't come back this way. If I see Watch colors, our arrangement ends."}
+    - {id: ledger_sale, label: "I'll buy your ledger.", need: 6, kind: trade, tag: coin, requires: {gold: 100}, sets: [ledger_bought], takes_gold: 100, gives: {good: ledger}, once: true, text: "A hundred. Don't spend it all on drink."}
+    - {id: join, label: "Do you need hired steel?", need: 8, kind: favor, tag: coin, once: true, gives: {gold: 60}, standing: {cutthroats: 15}, text: "Maybe. Here is something on account. Do not mention this to the Watch."}
+
+prisoner_tamsin:
+  name: Tamsin
+  title: Cellar prisoner
+  faction: ~
+  glyph: "⛓"
+  look: Pale and thin, ropes marking her wrists. Says she is a courier.
+  attrs: {WIS: 6, WIL: 5, CHA: 5, INT: 6}
+  disposition: 3
+  willingness: 6
+  courage: 3
+  patience: 5
+  temperament: [moral]
+  interests: [mercy, freedom]
+  greeting: "Please. Is it the Watch? Please say it is the Watch."
+  topics:
+    - {id: freed, label: "Walk out. I'll cover you.", need: 0, kind: favor, once: true, sets: [tamsin_freed], renown: 3, standing: {town_watch: 3, cutthroats: -6}, gives: {good: vault_key}, text: "You don't know what this means. They keep a vault key on the second level, and I took it from the guard when he slept. Take it. I can't use it."}
+    - {id: where, label: "What do you know about the lower level?", need: 1, kind: info, sets: [knows_lower], text: "A big room with the barrels. Rusk sleeps beyond it. There's a vault past a locked door, and a pit the guards laid in the corridor."}

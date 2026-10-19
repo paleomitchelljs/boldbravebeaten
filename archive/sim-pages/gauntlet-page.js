@@ -3,7 +3,7 @@
  * Build the gauntlet results page from sim/results/gauntlet/gauntlet.json.
  *   node sim/gauntlet-page.js [--in …/gauntlet.json] [--out …/report.html] [--title "…"]
  *   node sim/gauntlet-page.js --levels    (every sim/results/gauntlet/L{level} run, one page with a level switch)
- * The boss run (rooms starting with the chapel) is titled Death Knight Trials by default.
+ * The boss run (rooms starting with the chapel) is titled Revenant Knight Trials by default.
  */
 'use strict';
 const fs = require('fs');
@@ -25,7 +25,7 @@ if (LEVELS) {
   data.rooms = Object.values(data.levels)[0].rooms;
 } else data = JSON.parse(fs.readFileSync(IN, 'utf8'));
 const template = fs.readFileSync(path.join(__dirname, 'gauntlet-page.template.html'), 'utf8');
-const title = arg('title', data.rooms[0] && data.rooms[0].key === 'chapel' ? 'Death Knight Trials' : 'The Gauntlet');
+const title = arg('title', data.rooms[0] && data.rooms[0].key === 'chapel' ? 'Revenant Knight Trials' : 'The Gauntlet');
 const html = template.replace('/*__DATA__*/null', JSON.stringify(data).replace(/</g, '\\u003c'))
   .replace('<title>The Gauntlet</title>', `<title>${title}</title>`).replace('<h1>The Gauntlet</h1>', `<h1>${title}</h1>`);
 fs.writeFileSync(OUT, html);

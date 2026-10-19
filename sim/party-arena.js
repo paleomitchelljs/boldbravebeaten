@@ -30,9 +30,9 @@ const PARTIES = {
 };
 const ROLE = (k) => ({ 'unarmored/magic': 'mage', 'heavy/shield': 'knight', 'medium/twoHanded': 'two-hander', 'light/archery': 'archer', 'light/grappler': 'grappler', 'light/shield': 'shield', 'unarmored/grappler': 'grappler' }[k] || k);
 const ENCOUNTERS = arg('only', null) ? arg('only', '').split(',') : [
-  'wolf', 'wolfPack', 'koboldBand', 'goblinBand', 'frogPatrol', 'sarnak', 'sarnakPair',
+  'wolf', 'wolfPack', 'koboldBand', 'goblinBand', 'bogPatrol', 'scaleward', 'scalewardPair',
   'skeleton', 'skeletonSquad', 'zombie', 'zombieHorde', 'stoneGolem',
-  'giantSpider', 'rustBeetle', 'displacer', 'displacerPair', 'owlbear', 'caveTroll', 'trollChieftain',
+  'giantSpider', 'rustBeetle', 'mirageCat', 'mirageCatPair', 'beakbear', 'caveTroll', 'trollChieftain',
   'rat', 'ratPack', 'drake', 'wyvern', 'constrictor', 'ogre', 'hillGiant', 'spectre',
 ];
 

@@ -1,0 +1,987 @@
+# Feat trees. A feat has ranks (novice to master), requires (a list of alternatives; each alternative is a list of
+# "feat:rank" that must all hold), an effect line, and auto: true when the engine implements it
+# (auto: false feats are recorded on the sheet but have no effect yet).
+
+- id: conditioning
+  name: Conditioning
+  attrs: attributes
+  feats:
+    strength:
+      name: Strength
+      ranks: [novice, apprentice, adept]
+      requires: []
+      effect: "+1 STR per rank"
+      auto: true
+      attr: STR
+    toughness:
+      name: Toughness
+      ranks: [novice, apprentice, adept]
+      requires: []
+      effect: "+1 CON per rank"
+      auto: true
+      attr: CON
+    agility:
+      name: Agility
+      ranks: [novice, apprentice, adept]
+      requires: []
+      effect: "+1 DEX per rank"
+      auto: true
+      attr: DEX
+    quickness:
+      name: Quickness
+      ranks: [novice, apprentice, adept]
+      requires: []
+      effect: "+1 SPD per rank"
+      auto: true
+      attr: SPD
+    intellect:
+      name: Intellect
+      ranks: [novice, apprentice, adept]
+      requires: []
+      effect: "+1 INT per rank"
+      auto: true
+      attr: INT
+    resolve:
+      name: Resolve
+      ranks: [novice, apprentice, adept]
+      requires: []
+      effect: "+1 WIL per rank"
+      auto: true
+      attr: WIL
+    insight:
+      name: Insight
+      ranks: [novice, apprentice, adept]
+      requires: []
+      effect: "+1 WIS per rank"
+      auto: true
+      attr: WIS
+    presence:
+      name: Presence
+      ranks: [novice, apprentice, adept]
+      requires: []
+      effect: "+1 CHA per rank"
+      auto: true
+      attr: CHA
+- id: handToHand
+  name: Hand-to-hand
+  attrs: "STR, DEX"
+  feats:
+    quick_hands:
+      name: Quick Hands
+      ranks: [novice, apprentice, adept]
+      requires: []
+      effect: "Punch and kick −1 AP per rank"
+      auto: true
+    brawlers_wind:
+      name: Brawler's Wind
+      ranks: [novice, apprentice]
+      requires: []
+      effect: "Punch, kick, and grapple −1 stamina per rank"
+      auto: true
+    heavy_hands:
+      name: Heavy Hands
+      ranks: [novice, apprentice]
+      requires: []
+      effect: "+1 blunt on punches and kicks per rank"
+      auto: true
+    trip: {name: Trip, ranks: [novice], requires: [], effect: Better knockdown chance, auto: true}
+    disarm: {name: Disarm, ranks: [novice], requires: [], effect: Better disarm chance, auto: true}
+    grappler:
+      name: Grappler
+      ranks: [novice, apprentice, adept]
+      requires: []
+      effect: "+1 grapple checks per rank"
+      auto: true
+    pin:
+      name: Pin
+      ranks: [apprentice]
+      requires: [["grappler:1"]]
+      effect: "+2 to pin a held foe and to keep a pinned one down"
+      auto: true
+    dogpile:
+      name: Dogpile
+      ranks: [apprentice]
+      requires: [["grappler:1"]]
+      effect: Each ally next to your target adds +2 to your grapple rolls (not +1)
+      auto: true
+    takedown:
+      name: Takedown
+      ranks: [adept]
+      requires: [["trip:1"], ["grappler:2"]]
+      effect: "Throw straight from a clinch, without a hold first"
+      auto: true
+    joint_lock:
+      name: Joint Lock
+      ranks: [expert]
+      requires: [["pin:1"]]
+      effect: Grapple deals STR or DEX damage
+      auto: false
+    human_shield:
+      name: Human Shield
+      ranks: [expert]
+      requires: [["grappler:3"]]
+      effect: Block a strike with a grappled foe
+      auto: false
+    iron_grip:
+      name: Iron Grip
+      ranks: [master]
+      requires: [["joint_lock:1"]]
+      effect: A grappled foe can't escape while you keep paying AP
+      auto: false
+- id: lightWeapons
+  name: Light weapons
+  attrs: DEX
+  feats:
+    quick_thrust:
+      name: Quick Thrust
+      ranks: [novice, apprentice, adept]
+      requires: []
+      effect: "Thrust −1 AP per rank"
+      auto: true
+    light_touch:
+      name: Light Touch
+      ranks: [novice, apprentice]
+      requires: []
+      effect: "Light-weapon thrusts and swings −1 stamina per rank"
+      auto: true
+    precision:
+      name: Precision
+      ranks: [novice, apprentice]
+      requires: []
+      effect: "+1 damage with light weapons per rank"
+      auto: true
+    feint:
+      name: Feint
+      ranks: [novice, apprentice, adept, expert, master]
+      requires: []
+      effect: Hide attack type and cost from Read Attack below your rank
+      auto: true
+    parry_training:
+      name: Parry Training
+      ranks: [novice, apprentice, adept]
+      requires: []
+      effect: "+parry success per rank"
+      auto: true
+    quick_parry:
+      name: Quick Parry
+      ranks: [apprentice, adept]
+      requires: [["parry_training:1"]]
+      effect: "Parry −1 AP per rank"
+      auto: true
+    economical_parry:
+      name: Economical Parry
+      ranks: [apprentice, adept]
+      requires: [["parry_training:1"]]
+      effect: "Parry −1 stamina per rank"
+      auto: true
+    riposte:
+      name: Riposte
+      ranks: [apprentice]
+      requires: [["parry_training:1"]]
+      effect: A successful parry grants a free thrust
+      auto: true
+    offhand_dagger:
+      name: Off-hand Dagger
+      ranks: [apprentice]
+      requires: []
+      effect: Parry or strike with an off-hand dagger
+      auto: false
+    find_the_gap:
+      name: Find the Gap
+      ranks: [adept]
+      requires: [["precision:2"]]
+      effect: More piercing passes through armor
+      auto: true
+    coup_de_grace:
+      name: "Coup de Grâce"
+      ranks: [adept]
+      requires: []
+      effect: Dagger vs. prone or pinned ignores armor
+      auto: true
+    lunge:
+      name: Lunge
+      ranks: [expert]
+      requires: [["find_the_gap:1"]]
+      effect: Thrust at +1 reach
+      auto: true
+    flurry:
+      name: Flurry
+      ranks: [master]
+      requires: [["quick_thrust:3"], ["riposte:1"]]
+      effect: Declare two thrusts as one action
+      auto: false
+- id: heavyWeapons
+  name: Heavy weapons
+  attrs: STR
+  feats:
+    heavy_weapon_training:
+      name: Heavy Weapon Training
+      ranks: [novice, apprentice, adept]
+      requires: []
+      effect: "−1 effective weight per rank (lowers stamina cost)"
+      auto: true
+    heavy_tempo:
+      name: Heavy Tempo
+      ranks: [apprentice, adept]
+      requires: [["heavy_weapon_training:1"]]
+      effect: "Two-handed and power swings −1 AP per rank"
+      auto: true
+    weight_of_the_blow:
+      name: Weight of the Blow
+      ranks: [novice, apprentice]
+      requires: []
+      effect: "+1 damage on two-handed and power swings per rank"
+      auto: true
+    power_swing:
+      name: Power Swing
+      ranks: [novice]
+      requires: []
+      effect: Unlocks the power swing
+      auto: true
+    half_swording:
+      name: Half-Swording
+      ranks: [apprentice]
+      requires: []
+      effect: Unlocks half-sword with swords
+      auto: true
+    murder_stroke:
+      name: Murder Stroke
+      ranks: [apprentice]
+      requires: []
+      effect: Unlocks hilt strikes with swords
+      auto: true
+    hook:
+      name: Hook
+      ranks: [apprentice]
+      requires: []
+      effect: Beaked or hooked weapons can trip
+      auto: true
+    shield_breaker:
+      name: Shield Breaker
+      ranks: [adept]
+      requires: [["power_swing:1"]]
+      effect: Blows count double against a shield's break threshold
+      auto: true
+    crushing_blow:
+      name: Crushing Blow
+      ranks: [adept]
+      requires: [["weight_of_the_blow:2"]]
+      effect: Blunt ignores 2 points of armor mitigation
+      auto: true
+    cleave:
+      name: Cleave
+      ranks: [expert]
+      requires: [["power_swing:1"]]
+      effect: A blow that drops a foe carries the excess to an adjacent foe
+      auto: false
+    sweep:
+      name: Sweep
+      ranks: [expert]
+      requires: [["heavy_weapon_training:3"]]
+      effect: A two-handed swing hits two adjacent foes
+      auto: false
+    juggernaut:
+      name: Juggernaut
+      ranks: [master]
+      requires: [["crushing_blow:1"], ["cleave:1"]]
+      effect: "Power swings can't be parried, only blocked or dodged"
+      auto: true
+- id: armorShields
+  name: Armor and shields
+  attrs: "CON, STR"
+  feats:
+    light_armor_training:
+      name: Padded/Leather Training
+      ranks: [novice]
+      requires: []
+      effect: Halve padded and leather SPD/DEX penalties
+      auto: true
+    mail_mobility:
+      name: Mail Mobility
+      ranks: [novice, apprentice]
+      requires: []
+      effect: "−1 SPD/DEX penalty per rank in mail"
+      auto: true
+    mail_endurance:
+      name: Mail Endurance
+      ranks: [apprentice]
+      requires: [["mail_mobility:1"]]
+      effect: Removes mail's stamina penalty per action
+      auto: true
+    plate_mobility:
+      name: Plate Mobility
+      ranks: [novice, apprentice, adept]
+      requires: []
+      effect: "−1 SPD/DEX penalty per rank in plate"
+      auto: true
+    plate_endurance:
+      name: Plate Endurance
+      ranks: [apprentice, adept]
+      requires: [["plate_mobility:1"]]
+      effect: "−1 plate stamina penalty per action per rank"
+      auto: true
+    shield_training:
+      name: Shield Training
+      ranks: [novice, apprentice, adept]
+      requires: []
+      effect: "+block success per rank"
+      auto: true
+    quick_block:
+      name: Quick Block
+      ranks: [apprentice, adept]
+      requires: [["shield_training:1"]]
+      effect: "Block −1 AP per rank"
+      auto: true
+    economical_block:
+      name: Economical Block
+      ranks: [apprentice, adept]
+      requires: [["shield_training:1"]]
+      effect: "Block −1 stamina per rank"
+      auto: true
+    shield_bash:
+      name: Shield Bash
+      ranks: [novice]
+      requires: [["shield_training:1"]]
+      effect: "Shield strike: blunt with a knockdown chance"
+      auto: true
+    field_repair:
+      name: Field Repair
+      ranks: [novice]
+      requires: []
+      effect: Restore armor durability outside town
+      auto: true
+    quick_donning:
+      name: Quick Donning
+      ranks: [apprentice]
+      requires: []
+      effect: Don armor in half the time
+      auto: false
+    iron_stance:
+      name: Iron Stance
+      ranks: [adept]
+      requires: [["plate_mobility:1", "shield_training:2"]]
+      effect: Resist knockdown and disarm
+      auto: true
+    second_wind:
+      name: Second Wind
+      ranks: [adept]
+      requires: [["mail_endurance:1"]]
+      effect: "Regenerate stamina even after taking ≤2 blunt last round"
+      auto: true
+    shield_wall:
+      name: Shield Wall
+      ranks: [expert]
+      requires: [["shield_training:3"]]
+      effect: Block for an adjacent ally
+      auto: false
+    living_fortress:
+      name: Living Fortress
+      ranks: [master]
+      requires: [["plate_endurance:2"], ["iron_stance:1"]]
+      effect: The first blocked or converted hit each round costs no stamina
+      auto: true
+- id: evasion
+  name: Evasion
+  attrs: "SPD, DEX"
+  feats:
+    dodge_training:
+      name: Dodge Training
+      ranks: [novice, apprentice, adept]
+      requires: []
+      effect: "+dodge success per rank"
+      auto: true
+    quick_dodge:
+      name: Quick Dodge
+      ranks: [apprentice, adept]
+      requires: [["dodge_training:1"]]
+      effect: "Dodge −1 AP per rank"
+      auto: true
+    light_on_your_feet:
+      name: Light on Your Feet
+      ranks: [novice, apprentice]
+      requires: []
+      effect: "Dodge and movement −1 stamina per rank"
+      auto: true
+    fleet_foot:
+      name: Fleet Foot
+      ranks: [novice, apprentice, adept]
+      requires: []
+      effect: "+1 square per movement AP per rank"
+      auto: true
+    stealth:
+      name: Stealth
+      ranks: [novice, apprentice, adept]
+      requires: []
+      effect: "+2 Stealth per rank"
+      auto: true
+    kip_up:
+      name: Kip-up
+      ranks: [novice]
+      requires: []
+      effect: Stand from prone for 1 AP
+      auto: true
+    escape_artist:
+      name: Escape Artist
+      ranks: [apprentice]
+      requires: []
+      effect: "+2 to break a clinch, hold or pin"
+      auto: true
+    slip_through:
+      name: Slip Through
+      ranks: [apprentice]
+      requires: [["fleet_foot:1"]]
+      effect: Move past enemies without being grabbed
+      auto: false
+    roll_with_it:
+      name: Roll With It
+      ranks: [adept]
+      requires: [["dodge_training:2"]]
+      effect: A failed dodge halves the strike's damage
+      auto: true
+    counter_step:
+      name: Counter-step
+      ranks: [expert]
+      requires: [["dodge_training:3"]]
+      effect: A successful dodge grants a free move
+      auto: false
+    untouchable:
+      name: Untouchable
+      ranks: [master]
+      requires: [["counter_step:1"]]
+      effect: One dodge answers every strike aimed at you in that pass
+      auto: true
+- id: persuasion
+  name: Persuasion
+  attrs: "CHA; WIS to read people"
+  feats:
+    silver_tongue:
+      name: Silver Tongue
+      ranks: [novice, apprentice, adept]
+      requires: []
+      effect: "+1 disposition per rank when a charm lands"
+      auto: true
+    read_the_room:
+      name: Read the Room
+      ranks: [novice]
+      requires: []
+      effect: "See how someone feels about you, in numbers"
+      auto: true
+    flattery:
+      name: Flattery
+      ranks: [novice]
+      requires: []
+      effect: "Charm costs half the patience; weak against high-WIS people"
+      auto: true
+    intimidate:
+      name: Intimidate
+      ranks: [novice]
+      requires: []
+      effect: "+2 to Intimidation per rank; uses STR or CHA"
+      auto: true
+    bargain:
+      name: Bargain
+      ranks: [apprentice]
+      requires: [["read_the_room:1"]]
+      effect: "5% better prices per rank"
+      auto: true
+    appeal_to_interest:
+      name: Appeal to Interest
+      ranks: [apprentice]
+      requires: [["read_the_room:1"]]
+      effect: "+2 to Appeal per rank; shows what someone cares about"
+      auto: true
+    leading_questions:
+      name: Leading Questions
+      ranks: [adept]
+      requires: [["silver_tongue:2"]]
+      effect: Help an NPC work out knowledge with no disposition loss
+      auto: false
+    reputation_control:
+      name: Reputation Control
+      ranks: [expert]
+      requires: [["bargain:1", "appeal_to_interest:1"]]
+      effect: "Choose which side of your reputation someone hears: renown or notoriety"
+      auto: true
+    rally_demoralize:
+      name: Rally / Demoralize
+      ranks: [expert]
+      requires: [["intimidate:1"]]
+      effect: "In combat: allies regenerate stamina even when hit, or enemies lose 1 AP next round"
+      auto: false
+    kingmaker:
+      name: Kingmaker
+      ranks: [master]
+      requires: [["reputation_control:1"]]
+      effect: Shift an NPC's faction allegiance over several meetings
+      auto: false
+- id: perception
+  name: Perception
+  attrs: "WIS; INT for analysis"
+  feats:
+    read_attack:
+      name: Read Attack
+      ranks: [novice, apprentice, adept, expert, master]
+      requires: []
+      effect: See through Feint of equal or lower rank
+      auto: true
+    keen_eye:
+      name: Keen Eye
+      ranks: [novice, apprentice]
+      requires: []
+      effect: "+2 Perception per rank: spot traps, hidden doors and lurking foes"
+      auto: true
+    appraise:
+      name: Appraise
+      ranks: [novice]
+      requires: []
+      effect: Identify an item's keywords and quality
+      auto: false
+    tracker:
+      name: Tracker
+      ranks: [apprentice]
+      requires: [["keen_eye:1"]]
+      effect: Follow trails
+      auto: false
+    read_intent:
+      name: Read Intent
+      ranks: [apprentice]
+      requires: [["keen_eye:1"]]
+      effect: See their willingness and what each topic needs
+      auto: true
+    spot_weakness:
+      name: Spot Weakness
+      ranks: [adept]
+      requires: [["read_attack:2"]]
+      effect: "See an armor's weakest mitigation; more piercing passes through it"
+      auto: true
+    danger_sense:
+      name: Danger Sense
+      ranks: [adept]
+      requires: [["keen_eye:2"]]
+      effect: Never surprised in camp
+      auto: true
+    read_spell:
+      name: Read Spell
+      ranks: [adept]
+      requires: []
+      effect: Identify the words of a spell being cast
+      auto: false
+    word_thief:
+      name: Word Thief
+      ranks: [expert]
+      requires: [["read_spell:1"]]
+      effect: Learn a noun by watching it cast several times
+      auto: false
+    truesight:
+      name: Truesight
+      ranks: [master]
+      requires: [["danger_sense:1"], ["read_spell:1"]]
+      effect: See through illusions and disguises
+      auto: false
+- id: medicine
+  name: Medicine and alchemy
+  attrs: "INT, WIS"
+  feats:
+    field_dressing:
+      name: Field Dressing
+      ranks: [novice]
+      requires: []
+      effect: Stop bleeding with a bandage as a 1-AP action
+      auto: true
+    diagnose:
+      name: Diagnose
+      ranks: [novice]
+      requires: []
+      effect: See a patient's attribute damage and bleed
+      auto: false
+    herbalism:
+      name: Herbalism
+      ranks: [novice]
+      requires: []
+      effect: "+2 Herbalism per rank: find components when camping"
+      auto: true
+    wound_tending:
+      name: Wound Tending
+      ranks: [novice, apprentice, adept]
+      requires: []
+      effect: "+1 per rank to patients' daily heal roll"
+      auto: true
+    alchemy:
+      name: Alchemy
+      ranks: [novice, apprentice, adept]
+      requires: [["herbalism:1"]]
+      effect: "Brew potions: stamina, anti-bleed, healing over time"
+      auto: false
+    poisoner:
+      name: Poisoner
+      ranks: [apprentice]
+      requires: [["alchemy:1"]]
+      effect: Blade poisons
+      auto: false
+    antidotes:
+      name: Antidotes
+      ranks: [adept]
+      requires: [["alchemy:2"]]
+      effect: Cure poison and disease
+      auto: false
+    surgeon:
+      name: Surgeon
+      ranks: [adept]
+      requires: [["wound_tending:2"]]
+      effect: "Patients can't worsen; heal 1 extra point a day from the worst wound"
+      auto: true
+    reagent_craft:
+      name: Reagent Craft
+      ranks: [expert]
+      requires: [["alchemy:3"]]
+      effect: Refine spell components for rituals
+      auto: false
+    physician:
+      name: Physician
+      ranks: [master]
+      requires: [["surgeon:1"], ["antidotes:1"]]
+      effect: Patients heal at the town rate anywhere
+      auto: true
+- id: magicCasting
+  name: "Magic: casting"
+  attrs: "INT, WIL"
+  feats:
+    casting:
+      name: Casting
+      ranks: [novice, apprentice, adept, expert, master]
+      requires: []
+      effect: Larger casting pool per rank
+      auto: false
+    control:
+      name: Control
+      ranks: [apprentice, adept, expert]
+      requires: [["casting:1"]]
+      effect: "−backlash per rank"
+      auto: false
+    quick_casting:
+      name: Quick Casting
+      ranks: [apprentice, adept]
+      requires: [["casting:1"]]
+      effect: "Spell AP −1 per rank"
+      auto: false
+    battle_casting:
+      name: Battle Casting
+      ranks: [adept]
+      requires: [["casting:2"]]
+      effect: Cast with both hands full (sword and shield)
+      auto: true
+    steady_mind:
+      name: Steady Mind
+      ranks: [adept]
+      requires: [["control:1"]]
+      effect: Cast while grappled or after taking damage this pass
+      auto: false
+    focus_bond:
+      name: Focus Bond
+      ranks: [expert]
+      requires: [["casting:3"]]
+      effect: Bond a held weapon or shield as a casting focus
+      auto: false
+    overchannel:
+      name: Overchannel
+      ranks: [master]
+      requires: [["casting:5"]]
+      effect: Cast beyond your pool by paying CON
+      auto: false
+- id: magicWords
+  name: "Magic: words"
+  attrs: INT
+  feats:
+    verb_strike:
+      name: "Verb: Strike"
+      ranks: [novice]
+      requires: []
+      effect: Learn the verb Strike (a bolt at arm's reach)
+      auto: false
+    verb_hex:
+      name: "Verb: Hex"
+      ranks: [novice]
+      requires: []
+      effect: Learn the verb Hex (a bane on a foe)
+      auto: false
+    verb_bless:
+      name: "Verb: Bless"
+      ranks: [novice]
+      requires: []
+      effect: Learn the verb Bless (a boon on an ally)
+      auto: false
+    verb_restore:
+      name: "Verb: Restore"
+      ranks: [novice]
+      requires: []
+      effect: "Learn the verb Restore (undo a noun's harm on an ally; Life heals)"
+      auto: false
+    verb_cover:
+      name: "Verb: Cover"
+      ranks: [novice]
+      requires: []
+      effect: Learn the verb Cover (a hazard on the ground)
+      auto: false
+    verb_ward:
+      name: "Verb: Ward"
+      ranks: [novice]
+      requires: []
+      effect: "Learn the verb Ward (protection from magic, missiles or an element)"
+      auto: false
+    verb_launch:
+      name: "Verb: Launch"
+      ranks: [apprentice]
+      requires:
+        -
+          - "verb_strike:1"
+          - "verb_hex:1"
+          - "verb_bless:1"
+          - "verb_restore:1"
+          - "verb_cover:1"
+          - "verb_ward:1"
+      effect: Learn the verb Launch (a bolt at range)
+      auto: false
+    verb_build:
+      name: "Verb: Build"
+      ranks: [apprentice]
+      requires:
+        -
+          - "verb_strike:1"
+          - "verb_hex:1"
+          - "verb_bless:1"
+          - "verb_restore:1"
+          - "verb_cover:1"
+          - "verb_ward:1"
+      effect: Learn the verb Build (a wall across several squares)
+      auto: false
+    verb_open:
+      name: "Verb: Open"
+      ranks: [apprentice]
+      requires:
+        -
+          - "verb_strike:1"
+          - "verb_hex:1"
+          - "verb_bless:1"
+          - "verb_restore:1"
+          - "verb_cover:1"
+          - "verb_ward:1"
+      effect: Learn the verb Open (a pit)
+      auto: false
+    verb_inscribe:
+      name: "Verb: Inscribe"
+      ranks: [apprentice]
+      requires:
+        -
+          - "verb_strike:1"
+          - "verb_hex:1"
+          - "verb_bless:1"
+          - "verb_restore:1"
+          - "verb_cover:1"
+          - "verb_ward:1"
+      effect: Learn the verb Inscribe (a hidden rune on a square)
+      auto: false
+    verb_blink:
+      name: "Verb: Blink"
+      ranks: [apprentice]
+      requires:
+        -
+          - "verb_strike:1"
+          - "verb_hex:1"
+          - "verb_bless:1"
+          - "verb_restore:1"
+          - "verb_cover:1"
+          - "verb_ward:1"
+      effect: Learn the verb Blink (a short step through space)
+      auto: false
+    verb_burst:
+      name: "Verb: Burst"
+      ranks: [adept]
+      requires: [["verb_launch:1"]]
+      effect: Learn the verb Burst (an area)
+      auto: false
+    verb_beguile:
+      name: "Verb: Beguile"
+      ranks: [apprentice]
+      requires: [["verb_hex:1", "verb_bless:1"]]
+      effect: "Learn the verb Beguile (a mind spell: calm, dream, rage, fear, will)"
+      auto: false
+    word_doubling:
+      name: Word Doubling
+      ranks: [adept]
+      requires: [["casting:2"]]
+      effect: "Cast a spell with two nouns instead of a modifier; both do the verb (Rage + Dream: confusion)"
+      auto: false
+    verb_conjure:
+      name: "Verb: Conjure"
+      ranks: [adept]
+      requires: [["verb_build:1", "verb_bless:1"]]
+      effect: "Learn the verb Conjure (a creature of the noun, for a few rounds)"
+      auto: false
+    verb_summon:
+      name: "Verb: Summon"
+      ranks: [adept]
+      requires: [["verb_conjure:1"]]
+      effect: Learn the verb Summon (needs the creature's name)
+      auto: false
+    verb_raise:
+      name: "Verb: Raise"
+      ranks: [expert]
+      requires: [["verb_summon:1"]]
+      effect: "Reanimation; needs evil components"
+      auto: false
+    mod_strong:
+      name: "Modifier: Strong"
+      ranks: [novice]
+      requires: []
+      effect: Learn the modifier Strong
+      auto: false
+    mod_wide:
+      name: "Modifier: Wide"
+      ranks: [novice]
+      requires: []
+      effect: Learn the modifier Wide
+      auto: false
+    mod_long:
+      name: "Modifier: Long"
+      ranks: [novice]
+      requires: []
+      effect: Learn the modifier Long
+      auto: false
+    mod_far:
+      name: "Modifier: Far"
+      ranks: [apprentice]
+      requires: [["mod_strong:1", "mod_wide:1", "mod_long:1"]]
+      effect: Learn the modifier Far
+      auto: false
+    mod_swift:
+      name: "Modifier: Swift"
+      ranks: [apprentice]
+      requires: [["mod_strong:1", "mod_wide:1", "mod_long:1"]]
+      effect: Learn the modifier Swift
+      auto: false
+    mod_lingering:
+      name: "Modifier: Lingering"
+      ranks: [apprentice]
+      requires: [["mod_strong:1", "mod_wide:1", "mod_long:1"]]
+      effect: Learn the modifier Lingering
+      auto: false
+    mod_name:
+      name: "Modifier: Name"
+      ranks: [apprentice]
+      requires: [["mod_strong:1", "mod_wide:1", "mod_long:1"]]
+      effect: "Learn the modifier Name: a targeted spell finds anyone whose name you know, anywhere on the field"
+      auto: false
+- id: magicAffinity
+  name: "Magic: affinity (fire)"
+  attrs: INT
+  feats:
+    fire_affinity:
+      name: Fire Affinity
+      ranks: [novice, apprentice, adept]
+      requires: []
+      effect: "+magnitude for Fire spells per rank (requires knowing the Fire noun)"
+      auto: false
+    kindling:
+      name: Kindling
+      ranks: [apprentice]
+      requires: [["fire_affinity:1"]]
+      effect: Fire spells set targets burning
+      auto: false
+    cauterize:
+      name: Cauterize
+      ranks: [apprentice]
+      requires: [["fire_affinity:1"], ["field_dressing:1"]]
+      effect: "Stop bleeding with fire; costs 1 CON"
+      auto: false
+    firestorm:
+      name: Firestorm
+      ranks: [adept]
+      requires: [["fire_affinity:2"], ["mod_wide:1"]]
+      effect: Fire + Wide costs 1 less
+      auto: false
+    ember_heart:
+      name: Ember Heart
+      ranks: [expert]
+      requires: [["fire_affinity:3"]]
+      effect: "Resist fire; recover casting power standing in flame"
+      auto: false
+    living_flame:
+      name: Living Flame
+      ranks: [master]
+      requires: [["ember_heart:1"]]
+      effect: Summon a fire spirit without knowing its name
+      auto: false
+- id: magicRitual
+  name: "Magic: ritual"
+  attrs: "INT, WIL"
+  feats:
+    ritualist:
+      name: Ritualist
+      ranks: [novice, apprentice, adept]
+      requires: []
+      effect: "Faster rituals; fewer components per rank"
+      auto: false
+    binding_circle:
+      name: Binding Circle
+      ranks: [novice]
+      requires: [["ritualist:1"]]
+      effect: Prepare binding runes for summons
+      auto: false
+    warding:
+      name: Warding
+      ranks: [apprentice]
+      requires: [["ritualist:1"]]
+      effect: "Wards, barriers, and magical traps"
+      auto: false
+    rite_of_healing:
+      name: Rite of Healing
+      ranks: [apprentice]
+      requires: [["ritualist:1"], ["verb_restore:1"]]
+      effect: Healing ritual
+      auto: false
+    true_naming:
+      name: True Naming
+      ranks: [adept]
+      requires: [["ritualist:2"]]
+      effect: Name substitution gives a larger bonus
+      auto: false
+    imbue:
+      name: Imbue
+      ranks: [expert]
+      requires: [["ritualist:3"]]
+      effect: Enchant words into items with gems
+      auto: false
+    necromancy:
+      name: Necromancy
+      ranks: [expert]
+      requires: [["verb_raise:1"]]
+      effect: "Reanimation rituals; evil components"
+      auto: false
+    archmages_seal:
+      name: Archmage's Seal
+      ranks: [master]
+      requires: [["imbue:1"]]
+      effect: Create items that grant feats
+      auto: false
+- id: subterfuge
+  name: Subterfuge
+  attrs: "DEX, INT"
+  feats:
+    lockpicking:
+      name: Lockpicking
+      ranks: [novice, apprentice, adept]
+      requires: []
+      effect: "+2 Lockpicking per rank: open locks without the key"
+      auto: true
+    trap_craft:
+      name: Trap craft
+      ranks: [novice, apprentice, adept]
+      requires: []
+      effect: "+2 Trapcraft per rank: disarm what you find"
+      auto: true
+    ambusher:
+      name: Ambusher
+      ranks: [apprentice, adept]
+      requires: [["stealth:1"]]
+      effect: "A fight begun from hiding costs the enemy 3/4 of their AP in the first round; at rank 2, all of it"
+      auto: true

@@ -1,0 +1,62 @@
+# Factions. Standing runs -100..100 per faction. Changes spread: allies get a share, enemies the inverse
+# (rules.yaml allyShare / enemyShare). Killing a member costs standing (killStanding).
+#   start: opening standing.
+#   kos: at or below this, members attack on sight and refuse service.
+#   ranks: [[standing, title]]  - titles shown on the faction page.
+#   perks: [[standing, text]]   - what the standing opens (also referenced by services and topics).
+#   style: how members read your reputation (see npcs.yaml temperament).
+
+town_watch:
+  name: Stonebridge Watch
+  blurb: Keeps the gate and the peace, and pays bounties on the people who don't.
+  start: 0
+  kos: -60
+  allies: [merchants_guild, lantern_order]
+  enemies: [cutthroats]
+  ranks: [[0, Stranger], [10, Friend of the Watch], [30, Deputy], [60, Sergeant]]
+  perks: [[10, Bounty board access], [30, Watch armory stock], [60, Free passage after dark]]
+merchants_guild:
+  name: Merchants' Guild
+  blurb: Controls the market, the scales and most of the credit in town. Dislikes smugglers and unpaid debts.
+  start: 0
+  kos: -70
+  allies: [town_watch]
+  enemies: [cutthroats]
+  ranks: [[0, Outsider], [10, Registered trader], [30, Guild associate], [60, Factor]]
+  perks: [[10, Better prices], [30, Rare goods in stock], [60, Guild contracts]]
+cutthroats:
+  name: The Cutthroats
+  blurb: Smugglers, fences and the knives that protect them. Run the cellars under the old mill.
+  start: -5
+  kos: -40
+  allies: []
+  enemies: [town_watch, merchants_guild]
+  ranks: [[-5, Unknown], [10, Trusted outsider], [30, Runner], [60, Cutthroat]]
+  perks: [[10, Back-door buyer], [30, Fence stock], [60, Safe passage in the cellars]]
+lantern_order:
+  name: Order of the Lantern
+  blurb: Keeps the temple, tends the sick and watches the graves. Wants the dead to stay dead.
+  start: 5
+  kos: -80
+  allies: [town_watch]
+  enemies: [grave_cult]
+  ranks: [[0, Pilgrim], [10, Lay brother], [30, Wardener], [60, Lampbearer]]
+  perks: [[10, Discounted healing], [60, Free healing]]
+grave_cult:
+  name: The Hollow Court
+  blurb: Worshippers of what lies under the barrow. They do not trade. They rise.
+  start: -30
+  kos: 0
+  allies: []
+  enemies: [lantern_order, town_watch]
+  ranks: [[-30, Unclean]]
+  perks: []
+wilds:
+  name: The wild things
+  blurb: Beasts and monsters. No politics; they are hungry.
+  start: 0
+  kos: 100
+  allies: []
+  enemies: []
+  ranks: [[0, Prey]]
+  perks: []

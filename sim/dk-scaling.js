@@ -1,19 +1,19 @@
 #!/usr/bin/env node
 /*
- * The death knight as a recurring foe: what level, feats and items does he need to beat parties
+ * The revenant knight as a recurring foe: what level, feats and items does he need to beat parties
  * of each level consistently?
  *
  *   node sim/dk-scaling.js [--dk 5,10,15,20] [--n 25] [--out sim/results/dk-scaling]
  *   node sim/dk-scaling.js --merge          (combine the parts into dk-scaling.json)
  *
  * Factors:
- *   DK level   5, 10, 15, 20 (feats only: his attributes are those of the full death knight)
+ *   DK level   5, 10, 15, 20 (feats only: his attributes are those of the full revenant knight)
  *   build      martial (plate, shield, parry, strength) or caster (the full build: Battle
  *              Casting, a withering burst, raising the dead)
  *   gear tier  0 basic (standard plate, steel heater, a plain longsword)
  *              1 + Soulreaver (a legendary blade that drinks)
  *              2 + legendary plate and an adamant shield
- *              3 + the silk sash and the aura of dread (the full death knight)
+ *              3 + the silk sash and the aura of dread (the full revenant knight)
  *   party      the core trio (knight, two-hander, archer) plus a mage, cleric, duelist or grappler,
  *              at level 2 (standard gear), 6 (fine) or 15 (masterwork, magical weapons)
  * Each cell is n fights in the black chapel, the knight alone. "Consistent" = he wins at least
@@ -40,7 +40,7 @@ const BUILDS = {
       'half_swording', 'parry_training', 'iron_stance', 'plate_endurance', 'riposte', 'living_fortress', 'economical_block', 'quick_parry', 'strength', 'toughness',
       'parry_training', 'shield_training', 'quick_thrust', 'precision'],
   },
-  caster: { label: 'Caster', prefs: null }, // the death knight's own preference list
+  caster: { label: 'Caster', prefs: null }, // the revenant knight's own preference list
 };
 const GEAR = [
   { label: 'Basic' },
@@ -62,7 +62,7 @@ const LINEUPS = {
 };
 
 function makeDK(level, build, tier) {
-  const [d] = Enemies.makeMonster('deathKnight', { level });
+  const [d] = Enemies.makeMonster('revenantKnight', { level });
   if (BUILDS[build].prefs) {
     d.feats = {};
     Enemies.chooseFeats(d, BUILDS[build].prefs, Enemies.makeRng(level * 7919 + 3));
@@ -126,7 +126,7 @@ function merge() {
   const out = { generated: new Date().toISOString(), n: rows[0] ? rows[0].n : N, consistent: CONSISTENT, dkLevels, builds: BUILDS, gear: GEAR, partyLevels: PARTY_LEVELS, lineups: Object.fromEntries(Object.entries(LINEUPS).map(([k, v]) => [k, v.label])), rows, cheapest };
   fs.writeFileSync(path.join(OUT, 'dk-scaling.json'), JSON.stringify(out));
   const pct = (x) => Math.round(100 * x) + '%';
-  const md = [`# Death knight scaling\n\n${out.n} fights per cell. "Consistent": wins ≥ ${pct(CONSISTENT)} against every lineup.\n`,
+  const md = [`# Revenant knight scaling\n\n${out.n} fights per cell. "Consistent": wins ≥ ${pct(CONSISTENT)} against every lineup.\n`,
     '## Cheapest consistent loadout\n', '| DK level | ' + Object.values(PARTY_LEVELS).map((p) => p.label).join(' | ') + ' |', '|---|' + Object.keys(PARTY_LEVELS).map(() => '---|').join('')];
   for (const dl of dkLevels) md.push(`| ${dl} | ` + Object.keys(PARTY_LEVELS).map((pl) => { const c = cheapest[dl + '|' + pl]; return c ? `${BUILDS[c.build].label}, ${GEAR[c.tier].label} (worst ${pct(c.worst)})` : 'none'; }).join(' | ') + ' |');
   md.push('\n## Win rate, averaged over the four lineups (worst lineup in brackets)\n');

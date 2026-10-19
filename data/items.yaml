@@ -1,0 +1,117 @@
+# Items other than the weapons, armor and shields in their own files, plus loot tables.
+#
+# goods: kind = supply | potion | key | book | trinket | trade | component.
+#   value: base price in gold (falls back to rarity). use: what using it does (potion, supply).
+#   supply: engine: bandages | arrows | bodkins -> pooled in the party's supplies.
+#   book: teaches: {noun: fire} (a magic noun) or reveals: [secret ids] (Lore).
+#   trinket: slot ring | charm; attrs {SPD: 1}; ap: extra AP (engine trinkets).
+# tables: loot. Each entry has w (weight) and one of
+#   gold: [min, max] | good: id, n: [min, max] | weapon: id, quality | armor: id, coverage, quality
+#   | shield: size, material, quality | nothing: true
+
+goods:
+  bandage:
+    {name: Bandage, kind: supply, engine: bandages, value: 3, rarity: common, blurb: "Stops bleeding as a 1-AP action (Field Dressing)."}
+  arrows:
+    {name: Arrow bundle, kind: supply, engine: arrows, per: 10, value: 8, rarity: common, blurb: "Ten arrows."}
+  bodkin_arrows:
+    {name: Bodkin bundle, kind: supply, engine: bodkins, per: 5, value: 12, rarity: uncommon, blurb: "Five armor-piercing heads."}
+  salve:
+    {name: Healing salve, kind: potion, value: 30, rarity: uncommon, use: {heal: 1}, blurb: "Closes a wound: heals 1 point of attribute damage (CON first)."}
+  tonic:
+    {name: Steadying tonic, kind: potion, value: 18, rarity: common, use: {cure: bleeding}, blurb: "Stops all bleeding at once."}
+  antidote:
+    {name: Antidote, kind: potion, value: 40, rarity: uncommon, use: {cure: poison}, blurb: "Draws out venom and plague."}
+  repair_kit:
+    {name: Repair kit, kind: supply, value: 25, rarity: common, use: {repair: 0.3}, blurb: "Restores 30% of an armor piece or shield's durability in the field."}
+  salt:
+    {name: Salt, kind: component, value: 2, rarity: common, blurb: "A ritual component."}
+  candle:
+    {name: Tallow candle, kind: component, value: 1, rarity: common, blurb: "A ritual component."}
+  ink:
+    {name: Scribe's ink, kind: component, value: 4, rarity: common, blurb: "A ritual component."}
+  chalk:
+    {name: Chalk, kind: component, value: 1, rarity: common, blurb: "A ritual component."}
+  herbs:
+    {name: Hedge herbs, kind: component, value: 3, rarity: common, blurb: "A ritual component."}
+  silverDust:
+    {name: Silver dust, kind: component, value: 30, rarity: rare, blurb: "A ritual component; expensive."}
+  cellar_key:
+    {name: Rusted cellar key, kind: key, value: 0, rarity: common, blurb: "Opens the iron door in the Undercroft."}
+  vault_key:
+    {name: Vault key, kind: key, value: 0, rarity: uncommon, blurb: "Heavy and new. Opens the lower vault."}
+  barrow_seal:
+    {name: Barrow seal, kind: key, value: 0, rarity: unique, blurb: "A stone disc cut with a closed eye. The temple wants it back."}
+  crate_goods:
+    {name: Crate of marked goods, kind: trade, value: 90, rarity: uncommon, blurb: "Bears the Merchants' Guild stamp. Someone paid for this and never got it."}
+  ledger:
+    {name: Smugglers' ledger, kind: trade, value: 20, rarity: uncommon, blurb: "Names, dates, weights. The Watch would pay for it; so would the people in it."}
+  silver_chalice:
+    {name: Silver chalice, kind: trade, value: 120, rarity: rare, blurb: "Tarnished, heavy."}
+  gem_small:
+    {name: Rough garnet, kind: trade, value: 35, rarity: uncommon, blurb: "Unpolished."}
+  trade_bar:
+    {name: Iron trade bar, kind: trade, value: 15, rarity: common, blurb: "Currency in the villages."}
+  tome_ember:
+    {name: "Charred primer: Fire", kind: book, value: 150, rarity: rare, teaches: {noun: fire}, blurb: "Teaches the noun Fire to one reader."}
+  tome_roots:
+    {name: "Hedge-witch's notes: Vine", kind: book, value: 150, rarity: rare, teaches: {noun: vine}, blurb: "Teaches the noun Vine to one reader."}
+  tome_stone:
+    {name: "Mason's rhymes: Earth", kind: book, value: 150, rarity: rare, teaches: {noun: earth}, blurb: "Teaches the noun Earth to one reader."}
+  tome_still:
+    {name: "A hush of words: Force", kind: book, value: 200, rarity: rare, teaches: {noun: force}, blurb: "Teaches the noun Force to one reader."}
+  scrap_barrow:
+    {name: Rubbing of the barrow door, kind: book, value: 10, rarity: uncommon, reveals: [sec_barrow_door], blurb: "A charcoal rubbing of carved marks."}
+  sash_quick:
+    {name: Courier's sash, kind: trinket, slot: charm, attrs: {SPD: 1}, value: 220, rarity: rare, blurb: "+1 SPD."}
+  ring_iron:
+    {name: Iron signet ring, kind: trinket, slot: ring, attrs: {CON: 1}, value: 200, rarity: rare, blurb: "+1 CON."}
+  charm_wolf:
+    {name: Wolf-tooth charm, kind: trinket, slot: charm, attrs: {WIS: 1}, value: 120, rarity: uncommon, blurb: "+1 WIS."}
+
+tables:
+  vermin_nest:
+    - {w: 4, nothing: true}
+    - {w: 3, gold: [1, 6]}
+    - {w: 2, good: trade_bar}
+    - {w: 1, good: bandage, n: [1, 2]}
+  smuggler_cache:
+    - {w: 4, gold: [8, 25]}
+    - {w: 3, good: bandage, n: [2, 3]}
+    - {w: 2, good: salve}
+    - {w: 2, good: ink}
+    - {w: 2, weapon: dagger, quality: fine}
+    - {w: 1, armor: leather, coverage: full, quality: standard}
+    - {w: 1, good: gem_small}
+  strongbox:
+    - {w: 4, gold: [30, 70]}
+    - {w: 2, good: gem_small}
+    - {w: 2, good: salve}
+    - {w: 1, good: tome_roots}
+    - {w: 1, weapon: longsword, quality: fine}
+    - {w: 1, armor: mail, coverage: half, quality: standard}
+    - {w: 1, shield: round, material: iron, quality: standard}
+  barrow_hoard:
+    - {w: 4, gold: [40, 120]}
+    - {w: 2, good: silver_chalice}
+    - {w: 2, good: tome_ember}
+    - {w: 2, good: antidote}
+    - {w: 1, good: sash_quick}
+    - {w: 1, armor: mail, coverage: full, quality: fine}
+    - {w: 1, weapon: warhammer, quality: fine}
+  humanoid_purse:
+    - {w: 4, gold: [2, 12]}
+    - {w: 2, nothing: true}
+    - {w: 1, good: bandage}
+    - {w: 1, good: trade_bar}
+  beast_leavings:
+    - {w: 14, nothing: true}
+    - {w: 1, good: charm_wolf}
+    - {w: 2, good: herbs}
+  troll_hoard:
+    - {w: 4, gold: [60, 140]}
+    - {w: 3, good: gem_small}
+    - {w: 2, good: ring_iron}
+    - {w: 2, armor: mail, coverage: full, quality: fine}
+    - {w: 1, armor: scale, coverage: half, quality: standard}
+    - {w: 1, weapon: greatsword, quality: fine}

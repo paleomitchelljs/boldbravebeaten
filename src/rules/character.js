@@ -350,7 +350,7 @@
   function squaresPerAP(c) {
     let s = CONFIG.moveBase + Math.floor(combatAttr(c, 'SPD') / CONFIG.moveSpdDivisor) + rank(c, 'fleet_foot');
     if (c.shield && c.shield.size === 'tower' && c.shield.durability > 0) s -= CONFIG.towerMovePenalty;
-    // Monster trait: leapers (frogloks) cover more ground per AP.
+    // Monster trait: leapers (bogfolk) cover more ground per AP.
     return Math.round(Math.max(1, s) * (CONFIG.moveScale || 1) * ((c.traits && c.traits.moveMult) || 1));
   }
 

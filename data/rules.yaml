@@ -1,0 +1,43 @@
+# Rule numbers kept with the content: anything here is merged over src/rules/config.js (deep merge),
+# so a tuned value can live beside the files it affects. Keys under `game` are read by the game layer.
+
+game:
+  # ---- Starting a game ----------------------------------------------------
+  party: {size: 4, attrPool: 40, attrMin: 3, attrMax: 8, startGold: 60}
+  # ---- Progression --------------------------------------------------------
+  # XP needed to reach level n = xpBase * n * (n - 1) / 2 (so 60, 180, 360, 600…).
+  xpBase: 60
+  maxLevel: 10
+  # Training happens only in town, between adventures. Gold per rank, by the tier of the rank taken.
+  trainingCost: {novice: 20, apprentice: 60, adept: 160, expert: 400, master: 1000}
+  # ---- Time and exploring -------------------------------------------------
+  minutesPerStep: 5
+  sneakStepMinutes: 10
+  searchMinutes: 20
+  noticeDistance: 4          # tiles at which an awake group notices an unhidden party
+  sleepNoticeDistance: 2     # ...and a sleeping one
+  lightRadius: 7
+  passivePenalty: 3          # passive perception is this much worse than a deliberate search
+  camp: {wanderingChance: 0.25, guardedChance: 0.5}
+  # ---- Skill checks: d10 + floor(mean of attrs / 2) + feat ranks x weight vs a target number ------
+  tn: {trivial: 4, easy: 6, moderate: 8, hard: 11, formidable: 14}
+  # ---- Factions -----------------------------------------------------------
+  standingMax: 100
+  standingTiers: [[-100, Hated], [-60, Hostile], [-25, Wary], [-5, Cool], [5, Neutral], [25, Friendly], [60, Allied], [90, Revered]]
+  allyShare: 0.25            # of a standing change, passed to a faction's allies
+  enemyShare: 0.5            # ...and passed, inverted, to its enemies
+  killStanding: -3           # standing lost with a faction for each of its members you kill
+  # ---- Social (parley) ----------------------------------------------------
+  parley: {dispositionRange: 5, willingnessMax: 10, standingPerDisposition: 15, bribeStep: 10, fleeFine: 0}
+  # ---- Economy ------------------------------------------------------------
+  economy:
+    rarityValue: {common: 12, uncommon: 60, rare: 300, very rare: 1500, unique: 8000}
+    qualityMult: {crude: 0.5, standard: 1, fine: 2.5, masterwork: 8, legendary: 40}
+    coverageMult: {full: 1, half: 0.6, partial: 0.35}
+    sellRate: 0.4
+    priceStanding: 0.004     # price change per standing point with the seller's faction
+    bargainRank: 0.05        # per Bargain rank
+    repairPerPoint: 0.06     # of the item's value per durability point restored
+    innPerHead: 6
+    healCostPerPoint: 25     # temple healing, per attribute point healed
+    healerStandingFree: 60   # at this standing healing is free of charge

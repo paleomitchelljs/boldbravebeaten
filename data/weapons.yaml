@@ -1,0 +1,517 @@
+# Weapons, including the natural weapons of monsters (natural: true).
+# phys describes the weapon physically (mass kg, length m, point/edge/head); damage, AP, STR scaling and
+# wounds are worked out from it (Items.weaponStats). See src/rules/data.js for the field list.
+
+club:
+  phys: {mass: 1, length: 0.7, head: {mass: 0.6}}
+  name: Club
+  hands: 1
+  weight: light
+  reach: 2
+  reachName: short
+  closeOK: true
+  material: wood
+  faces: {head: [0, 0, 4]}
+  motions: [swing, power]
+  rarity: common
+  notes: "Cheapest; common starter."
+spikedMace:
+  phys: {mass: 1.5, length: 0.7, head: {mass: 1, spikes: {depth: 6, width: 1.5}}}
+  name: Spiked mace
+  hands: 1
+  weight: medium
+  reach: 2
+  reachName: short
+  closeOK: true
+  material: steel
+  faces: {head: [3, 0, 6]}
+  motions: [swing, power]
+  rarity: uncommon
+  notes: Spikes carry piercing through armor to CON.
+flangedMace:
+  phys: {mass: 1.4, length: 0.7, head: {mass: 1, cut: 2}}
+  name: Flanged mace
+  hands: 1
+  weight: medium
+  reach: 2
+  reachName: short
+  closeOK: true
+  material: steel
+  faces: {head: [0, 2, 7]}
+  motions: [swing, power]
+  rarity: uncommon
+  bluntMitigationIgnore: 2
+  notes: "Flanges concentrate force: −2 to target blunt mitigation."
+dagger:
+  phys: {mass: 0.3, length: 0.35, point: {depth: 12, width: 2.5}, edge: 0.5}
+  name: Dagger
+  hands: 1
+  weight: very light
+  reach: 1
+  reachName: close only
+  closeOK: true
+  material: steel
+  faces: {point: [5, 0, 0], edge: [0, 3, 0]}
+  motions: [thrust, swing]
+  rarity: common
+  sidearm: true
+  grappleUsable: true
+  notes: "Lowest AP; works up close with no penalty but cannot reach sword distance; usable while grappling."
+parryingDagger:
+  phys: {mass: 0.45, length: 0.5, point: {depth: 12, width: 2}, edge: 0.3}
+  name: Parrying dagger
+  hands: 1
+  weight: very light
+  reach: 1
+  reachName: close only
+  closeOK: true
+  material: steel
+  faces: {point: [5, 0, 0], edge: [0, 2, 0]}
+  motions: [thrust]
+  rarity: uncommon
+  sidearm: true
+  grappleUsable: true
+  offhand: true
+  notes: "Held in the off hand: stabs, and parries thrusts (Off-hand parry, +1). Lighter than a buckler."
+rapier:
+  phys: {mass: 1.1, length: 1.15, point: {depth: 25, width: 1.2}, edge: 0.3}
+  name: Rapier
+  hands: 1
+  weight: light
+  reach: 2
+  reachName: long thrust
+  thrust: {ext: 1, min: 1}
+  material: steel
+  faces: {point: [6, 0, 0], edge: [0, 2, 0]}
+  motions: [thrust, swing]
+  rarity: uncommon
+  notes: "Thrusts reach one square farther; ungainly up close; weak edge."
+longsword:
+  phys: {mass: 1.4, length: 1.2, point: {depth: 25, width: 4}, edge: 1, hilt: true}
+  name: Longsword
+  hands: 1.5
+  weight: medium
+  reach: 2
+  reachName: medium
+  material: steel
+  faces: {point: [5, 0, 0], edge: [0, 7, 1], hilt: [0, 0, 5]}
+  motions: [thrust, swing, twoHanded]
+  sword: true
+  rarity: uncommon
+  notes: "Versatile; half-sword and murder stroke work up close."
+giantClub:
+  phys: {mass: 5, length: 1.6, head: {mass: 2.5}}
+  name: Giant club
+  hands: 1
+  weight: heavy
+  reach: 3
+  reachName: long
+  closeOK: true
+  material: wood
+  faces: {head: [0, 0, 10]}
+  motions: [swing, power]
+  rarity: common
+  notes: "A tree trunk, one-handed for a giant."
+  trait: {knockdown: {bonus: 2, margin: 3}, shieldCrush: true}
+warScythe:
+  phys: {mass: 2.2, length: 1.9, edge: 1}
+  name: War scythe
+  hands: 2
+  weight: heavy
+  reach: 3
+  reachName: long
+  material: steel
+  faces: {edge: [0, 10, 2]}
+  motions: [twoHanded, power]
+  rarity: very rare
+  notes: "A reaping blade on a long haft; no thrust."
+greatsword:
+  phys: {mass: 2.5, length: 1.6, point: {depth: 30, width: 5}, edge: 1, hilt: true}
+  name: Greatsword
+  hands: 2
+  weight: heavy
+  reach: 3
+  reachName: long
+  material: steel
+  faces: {point: [6, 0, 0], edge: [0, 9, 2], hilt: [0, 0, 6]}
+  motions: [thrust, twoHanded, power]
+  sword: true
+  rarity: rare
+  notes: "No shield; long reach."
+warhammer:
+  phys: {mass: 1.8, length: 0.8, head: {mass: 1}, beak: {depth: 20, width: 1.5}}
+  name: Warhammer
+  hands: 1.5
+  weight: heavy
+  reach: 2
+  reachName: medium
+  closeOK: true
+  material: steel
+  faces: {head: [0, 0, 8], beak: [6, 0, 1]}
+  motions: [swing, twoHanded, power]
+  rarity: rare
+  hook: true
+  notes: "Anti-plate: head drains stamina, beak pierces to CON."
+shortSpear:
+  phys: {mass: 0.8, length: 1.4, point: {depth: 22, width: 4}}
+  name: Short spear
+  hands: 1
+  weight: light
+  reach: 2
+  reachName: "thrusts 1–3"
+  thrust: {ext: 1, min: 1}
+  material: steel
+  faces: {point: [5, 0, 0]}
+  motions: [thrust]
+  rarity: common
+  notes: A small folk's spear.
+spear:
+  phys: {mass: 1.7, length: 2.2, point: {depth: 30, width: 5}}
+  name: Spear
+  hands: 1
+  weight: medium
+  reach: 2
+  reachName: "thrusts 2–4, not up close"
+  thrust: {ext: 2, min: 2}
+  material: steel
+  faces: {point: [6, 0, 0]}
+  motions: [thrust]
+  rarity: uncommon
+  notes: "Thrusts reach far but not up close; shove an enemy back out to range."
+shortbow:
+  phys: {arrow: {depth: 18, width: 2.5}}
+  name: Shortbow
+  hands: 2
+  weight: light
+  reach: 0
+  reachName: "range 2–12"
+  ranged: {min: 2, max: 12, long: 8}
+  faces: {arrow: [5, 0, 0]}
+  motions: [shoot]
+  rarity: common
+  shootAP: 3
+  shootStamina: 1
+  material: steel
+  notes: "Arrows can be blocked or dodged, not parried. −2 damage beyond 8 squares."
+longbow:
+  phys: {arrow: {depth: 25, width: 2.5}}
+  name: Longbow
+  hands: 2
+  weight: medium
+  reach: 0
+  reachName: "range 2–16"
+  ranged: {min: 2, max: 16, long: 10}
+  faces: {arrow: [7, 0, 0]}
+  motions: [shoot]
+  rarity: uncommon
+  shootAP: 4
+  shootStamina: 2
+  material: steel
+  drawWindUp: true
+  notes: "Heavy draw: drawn one round, loosed the next. −2 damage beyond 10 squares."
+ratBite:
+  phys: {mass: 0.12, length: 0.1, point: {depth: 7, width: 2.5}}
+  name: Bite
+  hands: 1
+  weight: very light
+  reach: 1
+  reachName: close
+  closeOK: true
+  natural: true
+  grappleUsable: true
+  faces: {point: [2, 0, 0]}
+  motions: [thrust]
+  rarity: common
+wolfBite:
+  phys: {mass: 0.6, length: 0.3, point: {depth: 10, width: 4}}
+  name: Bite
+  hands: 1
+  weight: light
+  reach: 1
+  reachName: close
+  closeOK: true
+  natural: true
+  grappleUsable: true
+  faces: {point: [4, 0, 1]}
+  motions: [thrust]
+  rarity: common
+  trait: {knockdown: {bonus: 2, margin: 3}}
+alphaBite:
+  phys: {mass: 0.8, length: 0.35, point: {depth: 14, width: 4.5}}
+  name: Bite
+  hands: 1
+  weight: light
+  reach: 1
+  reachName: close
+  closeOK: true
+  natural: true
+  grappleUsable: true
+  faces: {point: [5, 0, 1]}
+  motions: [thrust]
+  rarity: common
+  trait: {knockdown: {bonus: 3, margin: 3}}
+spiderBite:
+  phys: {mass: 0.3, length: 0.2, point: {depth: 10, width: 1}}
+  name: Venomous bite
+  hands: 1
+  weight: very light
+  reach: 1
+  reachName: close
+  closeOK: true
+  natural: true
+  grappleUsable: true
+  faces: {point: [3, 0, 0]}
+  motions: [thrust]
+  rarity: common
+  trait: {venom: {con: 2, rounds: 3}}
+webSpinner:
+  name: Spit web
+  hands: 1
+  weight: very light
+  reach: 0
+  reachName: "range 2–5"
+  natural: true
+  ranged: {min: 2, max: 5, long: 5}
+  faces: {arrow: [0, 0, 0]}
+  motions: [shoot]
+  rarity: common
+  shootAP: 2
+  shootStamina: 1
+  trait: {web: 1}
+boulder:
+  name: Hurl boulder
+  hands: 1
+  weight: heavy
+  reach: 0
+  reachName: "range 2–10"
+  natural: true
+  ranged: {min: 2, max: 10, long: 8}
+  faces: {arrow: [0, 0, 14]}
+  motions: [shoot]
+  rarity: common
+  shootAP: 4
+  shootStamina: 3
+  trait: {knockdown: {bonus: 3, margin: 2}, shieldCrush: true}
+antennae:
+  name: Rusting antennae
+  hands: 1
+  weight: very light
+  reach: 2
+  reachName: reach 2
+  closeOK: true
+  natural: true
+  faces: {head: [0, 0, 0]}
+  motions: [swing]
+  rarity: common
+  trait: {rust: 25}
+mandibles:
+  phys: {mass: 0.5, length: 0.3, point: {depth: 8, width: 3}}
+  name: Mandibles
+  hands: 1
+  weight: light
+  reach: 1
+  reachName: close
+  closeOK: true
+  natural: true
+  grappleUsable: true
+  faces: {point: [2, 1, 0]}
+  motions: [thrust]
+  rarity: common
+tentacles:
+  phys: {mass: 2, length: 1.2, head: {mass: 0.6, spikes: {depth: 6, width: 1.5}, cut: 2}}
+  name: Spiked tentacles
+  hands: 1
+  weight: light
+  reach: 2
+  reachName: reach 2
+  closeOK: true
+  natural: true
+  faces: {head: [3, 2, 3]}
+  motions: [swing]
+  rarity: common
+  material: bone
+claws:
+  phys: {mass: 3, length: 0.8, edge: 0.8}
+  name: Claws
+  hands: 1
+  weight: medium
+  reach: 1
+  reachName: close
+  closeOK: true
+  natural: true
+  grappleUsable: true
+  faces: {edge: [0, 5, 1]}
+  motions: [swing]
+  rarity: common
+  material: bone
+beak:
+  phys: {mass: 2, length: 0.4, point: {depth: 15, width: 3}}
+  name: Beak
+  hands: 1
+  weight: medium
+  reach: 1
+  reachName: close
+  closeOK: true
+  natural: true
+  grappleUsable: true
+  faces: {point: [4, 0, 2]}
+  motions: [thrust]
+  rarity: common
+  material: bone
+zombieBite:
+  phys: {mass: 0.5, length: 0.25, point: {depth: 5, width: 4}}
+  name: Bite
+  hands: 1
+  weight: light
+  reach: 1
+  reachName: close
+  closeOK: true
+  natural: true
+  grappleUsable: true
+  faces: {point: [3, 1, 1]}
+  motions: [thrust]
+  rarity: common
+tail:
+  phys: {mass: 3, length: 1.5, head: {mass: 0.5}}
+  name: Tail sweep
+  hands: 1
+  weight: medium
+  reach: 2
+  reachName: reach 2
+  closeOK: true
+  natural: true
+  faces: {head: [0, 0, 4]}
+  motions: [swing]
+  rarity: common
+  trait: {knockdown: {bonus: 2, margin: 3}}
+drakeBite:
+  phys: {mass: 1.2, length: 0.45, point: {depth: 22, width: 5}}
+  name: Bite
+  hands: 1
+  weight: light
+  reach: 1
+  reachName: close
+  closeOK: true
+  natural: true
+  grappleUsable: true
+  faces: {point: [5, 0, 1]}
+  motions: [thrust]
+  rarity: common
+drakeClaws:
+  phys: {mass: 1, length: 0.5, edge: 1}
+  name: Claws
+  hands: 1
+  weight: light
+  reach: 1
+  reachName: close
+  closeOK: true
+  natural: true
+  grappleUsable: true
+  faces: {edge: [0, 4, 0]}
+  motions: [swing]
+  rarity: common
+wingBuffet:
+  phys: {mass: 3, length: 1.4, head: {mass: 1}}
+  name: Wing buffet
+  hands: 1
+  weight: medium
+  reach: 2
+  reachName: reach 2
+  closeOK: true
+  natural: true
+  faces: {head: [0, 0, 4]}
+  motions: [swing]
+  rarity: common
+  trait: {knockdown: {bonus: 2, margin: 3}}
+wyvernBite:
+  phys: {mass: 1.6, length: 0.6, point: {depth: 22, width: 6}}
+  name: Bite
+  hands: 1
+  weight: medium
+  reach: 2
+  reachName: reach 2
+  closeOK: true
+  natural: true
+  grappleUsable: true
+  faces: {point: [8, 0, 2]}
+  motions: [thrust]
+  rarity: common
+wyvernSting:
+  phys: {mass: 0.8, length: 1.6, point: {depth: 16, width: 2}}
+  name: Venomous stinger
+  hands: 1
+  weight: medium
+  reach: 2
+  reachName: reach 2
+  closeOK: true
+  natural: true
+  faces: {point: [5, 0, 0]}
+  motions: [thrust]
+  rarity: common
+  trait: {venom: {con: 3, rounds: 4}}
+wyvernWings:
+  phys: {mass: 4, length: 2.2, head: {mass: 1.2}}
+  name: Wing beat
+  hands: 1
+  weight: heavy
+  reach: 2
+  reachName: reach 2
+  closeOK: true
+  natural: true
+  faces: {head: [0, 0, 7]}
+  motions: [swing]
+  rarity: common
+  trait: {knockdown: {bonus: 3, margin: 2}}
+constrictorBite:
+  phys: {mass: 0.5, length: 0.3, point: {depth: 8, width: 3}}
+  name: Bite
+  hands: 1
+  weight: light
+  reach: 1
+  reachName: close
+  closeOK: true
+  natural: true
+  grappleUsable: true
+  faces: {point: [3, 0, 0]}
+  motions: [thrust]
+  rarity: common
+golemFists:
+  phys: {mass: 6, length: 1, head: {mass: 2}}
+  name: Stone fists
+  hands: 2
+  weight: heavy
+  reach: 2
+  reachName: reach 2
+  closeOK: true
+  natural: true
+  faces: {head: [0, 0, 8]}
+  motions: [swing]
+  rarity: common
+  material: stone
+  trait: {knockdown: {bonus: 3, margin: 3}, shieldCrush: true}
+elementalTouch:
+  phys: {mass: 2, length: 0.8, head: {mass: 0.8}}
+  name: Elemental blow
+  hands: 1
+  weight: medium
+  reach: 1
+  reachName: close
+  closeOK: true
+  natural: true
+  faces: {head: [0, 0, 4]}
+  motions: [swing]
+  rarity: common
+trollFists:
+  phys: {mass: 4, length: 1, head: {mass: 1.5}}
+  name: Fists
+  hands: 2
+  weight: heavy
+  reach: 2
+  reachName: reach 2
+  closeOK: true
+  natural: true
+  faces: {head: [0, 0, 7]}
+  motions: [swing, power]
+  rarity: common
+  material: stone
+  trait: {knockdown: {bonus: 2, margin: 3}, shieldCrush: true}

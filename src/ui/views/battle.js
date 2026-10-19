@@ -496,6 +496,15 @@
     const chars = app.state.characters;
     const ui = bui(app);
     const roller = UI.Dice.makeRoller(app);
+    if ((enc.phase === 'setup' || enc.phase === 'roundEnd') && app.hooks) {
+      // Inside the game: rounds begin by themselves; the party may try to flee between them.
+      return h('section', { class: 'panel cmd' },
+        h('span', { class: 'label' }, enc.phase === 'setup' ? 'Ready' : `Round ${enc.round} done`),
+        h('div', { class: 'who' }, `Round ${enc.round + 1}`),
+        h('div', { class: 'row' },
+          h('button', { class: 'primary', onclick: async () => { await Combat.startRound(enc, chars, roller); app.save(); app.render(); } }, 'Roll initiative'),
+          app.hooks.flee ? h('button', { onclick: () => app.hooks.flee(app, enc) }, 'Flee') : null));
+    }
     if (enc.phase === 'setup' || enc.phase === 'roundEnd') {
       return h('section', { class: 'panel cmd' },
         h('span', { class: 'label' }, enc.phase === 'setup' ? 'Ready' : `Round ${enc.round} done`),
@@ -520,7 +529,7 @@
         h('div', { class: 'who' }, 'Resolving the pass'),
         h('p', { class: 'muted small' }, 'Players may be asked for defense rolls, hit-location d4s and opposed checks.'));
     }
-    if (enc.phase === 'over') return lootPanel(app, enc);
+    if (enc.phase === 'over') return app.hooks && app.hooks.over ? app.hooks.over(app, enc) : lootPanel(app, enc);
     return null;
   }
 
@@ -677,6 +686,17 @@
   // ---- Computer-run turns and pass resolution ----------------------------
   function scheduleAI(app, enc) {
     const chars = app.state.characters;
+    if (app.hooks && app.hooks.autoStart && (enc.phase === 'setup' || enc.phase === 'roundEnd') && !app.ui.starting) {
+      app.ui.starting = true;
+      setTimeout(async () => {
+        app.ui.starting = false;
+        if (app.state.encounter !== enc || !(enc.phase === 'setup' || enc.phase === 'roundEnd')) return;
+        await Combat.startRound(enc, chars, UI.Dice.makeRoller(app));
+        app.save();
+        app.render();
+      }, enc.phase === 'setup' ? 500 : 1100);
+      return;
+    }
     if (enc.phase === 'resolve') {
       if (app.ui.resolvePending) return;
       app.ui.resolvePending = true;
@@ -716,7 +736,7 @@
       h('div', { class: 'battle-head' },
         h('h1', null, enc.round ? `Round ${enc.round}` : 'Battle'),
         h('span', { class: 'small muted' }, status),
-        enc.phase !== 'over' ? UI.confirmButton('Abandon', 'Abandon? Wounds stay', () => {
+        enc.phase !== 'over' && !app.hooks ? UI.confirmButton('Abandon', 'Abandon? Wounds stay', () => {
           Combat.cleanup(enc, chars);
           app.state.encounter = null;
           app.ui.battleSetup = null;

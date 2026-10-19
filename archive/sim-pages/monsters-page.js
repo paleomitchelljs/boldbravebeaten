@@ -14,7 +14,7 @@ const OUT = arg('out', path.join(__dirname, 'results', 'monsters', 'report.html'
 const data = JSON.parse(fs.readFileSync(IN, 'utf8'));
 
 // What each monster targets, as [0 = armor class | 1 = fighting style, key].
-const TARGET = { rustBeetle: [0, 'heavy'], displacer: [1, 'archery'], giantSpider: [0, 'unarmored'], owlbear: [1, 'twoHanded'], caveTroll: [1, 'shield'], skeleton: [1, 'archery'], froglok: [1, 'grappler'], sarnak: [0, 'light'] };
+const TARGET = { rustBeetle: [0, 'heavy'], mirageCat: [1, 'archery'], giantSpider: [0, 'unarmored'], beakbear: [1, 'twoHanded'], caveTroll: [1, 'shield'], skeleton: [1, 'archery'], bogfolk: [1, 'grappler'], scaleward: [0, 'light'] };
 const { C, Enemies } = L;
 // Plain-words summary of a creature's traits for the page.
 function traitText(c) {

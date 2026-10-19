@@ -1,10 +1,13 @@
 {
   "name": "bold-brave-beaten",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "Browser platform for a lethal, classless fantasy RPG: character sheets, dice entry, enemy generation, and turn-based battles.",
+  "description": "A turn-based party RPG for the browser: first-person dungeons, parley, factions, and lethal tabletop-style combat. Content lives in data/*.yaml.",
   "scripts": {
     "test": "node --test",
-    "serve": "npx serve ."
+    "validate": "node tools/validate.js",
+    "bundle": "node tools/bundle.js",
+    "encounters": "node tools/encounters.js",
+    "serve": "python3 -m http.server 8000"
   }
 }

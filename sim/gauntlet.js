@@ -8,7 +8,7 @@
  *
  *   node sim/gauntlet.js [--level 2|6|15] [--n 50] [--only mage,core] [--mode attrition|reset] [--rooms gauntlet|boss] [--out …]
  *
- * --rooms boss swaps the rooms for the death knight's two (sim/results/boss).
+ * --rooms boss swaps the rooms for the revenant knight's two (sim/results/boss).
  *
  * Two modes: attrition (wounds carry on, with a camp partway) and reset (a fresh party for every
  * room, the dead restored, deaths still recorded).
@@ -104,7 +104,7 @@ const ROOMS = [
     ],
   },
   {
-    key: 'corridor', name: 'Trapped corridor', foes: 'sarnakPair', blurb: 'Two sarnaks at the end of a narrow corridor sown with fire and pit traps.',
+    key: 'corridor', name: 'Trapped corridor', foes: 'scalewardPair', blurb: 'Two scalewards at the end of a narrow corridor sown with fire and pit traps.',
     map: [
       '..............',
       'AA...F...P...E',
@@ -123,7 +123,7 @@ const ROOMS = [
     ],
   },
   {
-    key: 'cistern', name: 'Cistern', foes: 'frogPatrol', blurb: 'Frogloks beyond a flooded channel with one walkway across.',
+    key: 'cistern', name: 'Cistern', foes: 'bogPatrol', blurb: 'Bogfolk beyond a flooded channel with one walkway across.',
     map: [
       '............',
       'A....OO.....',
@@ -178,7 +178,7 @@ const ROOMS = [
     ],
   },
   {
-    key: 'chapel', name: 'Black chapel', foes: 'deathKnight', blurb: 'The death knight alone among the pillars of his chapel.',
+    key: 'chapel', name: 'Black chapel', foes: 'revenantKnight', blurb: 'The revenant knight alone among the pillars of his chapel.',
     map: [
       '..............',
       'A...#....#....',
@@ -189,10 +189,10 @@ const ROOMS = [
     ],
   },
 ];
-// Boss rooms (--rooms boss): the end-game death knight, alone and with his dead.
+// Boss rooms (--rooms boss): the end-game revenant knight, alone and with his dead.
 const BOSS_ROOMS = [
   {
-    key: 'chapel', name: 'Black chapel', foes: 'deathKnight', blurb: 'The death knight alone among the pillars of his chapel.',
+    key: 'chapel', name: 'Black chapel', foes: 'revenantKnight', blurb: 'The revenant knight alone among the pillars of his chapel.',
     map: [
       '..............',
       'A...#....#....',
@@ -203,7 +203,7 @@ const BOSS_ROOMS = [
     ],
   },
   {
-    key: 'crypt-court', name: 'Court of the dead', foes: 'deathKnightCourt', blurb: 'The death knight with two skeletons at his side.',
+    key: 'crypt-court', name: 'Court of the dead', foes: 'revenantCourt', blurb: 'The revenant knight with two skeletons at his side.',
     map: [
       '..............',
       'A...#....#...E',

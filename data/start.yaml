@@ -1,0 +1,34 @@
+# New game: where the party begins, what it carries, and the starter kits to choose from.
+place: stonebridge
+day: 1
+gold: 60
+supplies: {bandages: 4, arrows: 0, bodkins: 0}
+flags: []
+# Starter kits: gear by type. Everyone starts in padded armor with a wooden shield (Philosophy: gear,
+# not level). A kit swaps the weapons. Attribute spreads below are suggestions for the creation screen.
+kits:
+  - {id: sword, name: Sword and board, wield: longsword, sidearm: dagger, armor: padded, shield: round, blurb: "Balanced, steady, a shield between you and trouble."}
+  - {id: club, name: Club and board, wield: club, sidearm: dagger, armor: padded, shield: round, blurb: "Blunt, cheap, and does not care about armor."}
+  - {id: spear, name: Spear and board, wield: shortSpear, sidearm: dagger, armor: padded, shield: round, blurb: "Reach keeps them off you."}
+  - {id: rapier, name: Rapier and dagger, wield: rapier, sidearm: parryingDagger, armor: padded, shield: null, blurb: "Quick and light. Needs room and a clear head."}
+  - {id: bow, name: Bow, wield: shortbow, sidearm: dagger, armor: padded, shield: null, arrows: 20, blurb: "Hit them before they hit you."}
+  - {id: hammer, name: Warhammer, wield: warhammer, sidearm: dagger, armor: padded, shield: null, blurb: "Two hands, slow, and dents plate."}
+  - {id: staff, name: Dagger and ward, wield: dagger, sidearm: null, armor: padded, shield: null, blurb: "A caster's kit: spend the feats on words."}
+presets:
+  - name: Brenna Hale
+    kit: sword
+    attrs: {STR: 6, CON: 6, DEX: 5, SPD: 5, INT: 4, WIL: 5, WIS: 5, CHA: 4}
+    feats: [shield_training, parry_training, strength]
+  - name: Corin Ash
+    kit: bow
+    attrs: {STR: 4, CON: 5, DEX: 7, SPD: 6, INT: 5, WIL: 4, WIS: 6, CHA: 3}
+    feats: [keen_eye, stealth, dodge_training]
+  - name: Osk Marren
+    kit: hammer
+    attrs: {STR: 7, CON: 7, DEX: 4, SPD: 4, INT: 4, WIL: 6, WIS: 4, CHA: 4}
+    feats: [power_swing, toughness, heavy_weapon_training]
+  - name: Ysolde Vane
+    kit: staff
+    attrs: {STR: 3, CON: 5, DEX: 5, SPD: 5, INT: 8, WIL: 7, WIS: 4, CHA: 3}
+    feats: [casting, verb_strike, verb_cover]
+    nouns: [fire]

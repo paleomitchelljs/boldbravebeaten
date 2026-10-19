@@ -1,110 +1,70 @@
 # Bold Brave Beaten
 
-A browser-based platform for a classless, lethal fantasy RPG. Players keep their
-character sheets here, type in their own dice rolls when asked, and the platform
-does the arithmetic: initiative, AP, stamina, armor mitigation, slashing→blunt
-conversion, hit locations, bleed, shield breaks, healing. The GM can generate
-enemies from templates and run turn-based battles on a grid.
+A turn-based party RPG for the browser, in the spirit of the first-person CRPGs of the 1990s with a tabletop
+rules core. You lead four adventurers out of a river town into dungeons, sneak, pick locks, talk, bribe,
+threaten, trade, and sometimes fight, in a combat system where one unarmored stab can kill anyone and armor is king.
 
-The rules come from three design docs: *Game Design Philosophy*, *Mechanics
-Outline* and *Game System Specifics*.
+It is a **draft**: a playable vertical slice with one town and four dungeons, built to be changed. The game is its
+data: monsters, items, spells, feats, skills, factions, people, quests and maps are YAML files in `data/`.
 
-## Running it
+## Play
 
-No build step and no dependencies. Either:
+No build step, no dependencies. Serve the folder and open it:
 
-- open `index.html` directly in a browser, or
-- serve the folder (`npx serve .`) or turn on GitHub Pages for the repo.
+```
+python3 -m http.server 8000      # or: npx serve .
+# then open http://localhost:8000/
+```
 
-Everything is saved in the browser's local storage. **Company → Save and move**
-exports the whole table (characters and any battle in progress) as text that can
-be loaded on another device.
+Opening `index.html` straight from disk also works after `node tools/bundle.js` (browsers will not let a page
+read other files from disk, so this packs the data into one script).
 
-## How a session runs
+On GitHub Pages: push, and the workflow in `.github/workflows/pages.yml` runs the tests and publishes the site.
+(Repository settings → Pages → Source: GitHub Actions.)
 
-1. **Company / Sheet**: build characters. Attributes, gear (quality + size + type
-   keywords), and feats from all trees, with tier and prerequisite checks. Derived
-   numbers (max stamina, regen, AP, attack costs and damage) update live.
-2. **Enemies**: pick a template (bandit, militia, sellsword, brute, duelist,
-   brawler, man-at-arms, knight) and a level. Level sets feat count and gear
-   rarity, so plate only appears on high-level foes.
-3. **Battle**: choose combatants and a grid size, place tokens, then for each round:
-   - roll initiative (players enter a d10);
-   - **turns** go in initiative order. On a turn a character can take several actions (strikes,
-     moves, trips, disarms, grapples, shoves, bandaging, and so on), up to 4 AP per pass. Remaining
-     AP is hidden; Feint hides strikes from anyone whose Read Attack rank is lower;
-   - a **guard** is a block, parry or dodge readied on your own turn. It meets the next attack
-     that lands on you that pass, or the next from a foe you name;
-   - when everyone has had a turn, the **pass** resolves, and the platform asks each player for the rolls it needs
-     (defense checks, slashing d4s, opposed checks). An action costing more than the pass allows
-     lands in a later pass;
-   - passes repeat until no one has actions left; then bleed and regeneration are applied
-     automatically and the next round rolls initiative again.
+## What's in it
 
-   On a phone the battle screen shows a strip of names, the map and the current character's
-   actions in collapsible groups. Tap a name or a token to see that character's sheet.
-4. After a battle, take loot from the fallen. Then use **Long rest** on the Company
-   tab for daily heal rolls, with an optional tender and town bonus.
-
-Characters set to **Roll automatically** have their dice rolled for them, and
-(optionally) an AI declares their actions. Usually that means enemies, but any
-character can be switched.
+- **First-person dungeons** on a grid: doors, locks, secret doors, hidden traps, chests, sleeping and watching foes,
+  camping with wandering visitors, a map that fills in as you see. Sneak (H) is slower and quiet; heavy armor rings.
+- **Parley**: a conversation is a small contest with its own resources. Each person has disposition, willingness,
+  courage, patience and a temperament that says which side of your reputation they care about. You charm, appeal to
+  what they care about, intimidate, bluff, bribe or read them, then ask. Information, quests, favors and passage are
+  topics with a price in willingness.
+- **Factions and reputation**: standing with six factions, spreading to allies and (inverted) to enemies; renown and
+  notoriety as two sides of your name. Standing changes prices, stock, who talks to you and what you may ask.
+- **Combat**: the engine from the earlier rules testbed (see below): passes and AP, guards, physical weapons and
+  wounds, armor and shields that wear, grappling, a verb × noun × modifier magic grammar, monsters with traits.
+  The AI plays the foes and can play your side too (Bench simulations, the Auto-battle in debug).
+- **Character sheet** with a paper doll that follows what is equipped. Gear is shared in a party pack.
+- **Training only in town**: levels give feats, feats are bought at the Training Yard.
+- **Test bench** (`bench.html`): edit any data file in the browser, validate it, apply it live, run many AI fights
+  from the real content; plus the original GM table (`gm.html`) for sheets, enemy generation and typed-dice battles.
 
 ## Layout
 
 ```
-index.html            page shell
-css/style.css         styles (light and dark)
-src/rules/            the rules engine — no DOM, runs in Node too
-  config.js           every tunable number; PROVISIONAL marks placeholders
-  data.js             weapons, armor, shields, keywords, rarity, feat trees
-  items.js            item generation from keywords
-  character.js        derived stats, feats, action costs, damage vectors
-  combat.js           round structure, declarations, resolution, damage pipeline
-  enemies.js          enemy templates and generator
-  recovery.js         long rest and daily heal roll
-  ai.js               simple declaration policy for computer-run combatants
-src/ui/               the browser interface
-tests/                Node tests for the rules engine
+index.html  bench.html  gm.html
+data/            all content, YAML (docs/DATA.md)
+src/data/        YAML reader/writer; content loader and validator
+src/rules/       combat and magic engine (no DOM)
+src/game/        world, exploring, parley, factions, economy, loot, saves (no DOM)
+src/ui/game/     the game's screens, first-person view, paper doll
+src/ui/bench/    the test bench;   src/ui/views/ and app.js: the GM table and the battle screen
+tools/           validate, bundle, encounters   sim/  rules experiments   archive/  the testbed's old notes and results
+tests/           node --test (rules, content, game, every screen rendered in a fake DOM)
 ```
 
-## Tests
+## Tests and checks
 
 ```
-npm test   # or: node --test
+node --test                 # about 120 tests, a few seconds
+node tools/validate.js      # data cross-references
+node tools/encounters.js    # how the example party does against every authored fight
 ```
 
-The tests check the Specifics worked examples (a longsword swing against mail
-costs 1 stamina; the same swing unarmored deals 7 slashing and then 7 CON of
-bleed), feat prerequisites, turn and pass order, the per-pass AP cap, Feint visibility, healing, and
-120 randomized AI-vs-AI fights.
+## Where the rules came from
 
-## Simulations
-
-`sim/` drives the real rules engine with the AI over thousands of fights to answer
-the questions in the Specifics simulation plan. Start with
-[`sim/FINDINGS.md`](sim/FINDINGS.md): what changed, the evidence, and the design
-questions the sims can't settle.
-
-```
-node sim/run.js            # full sweep (about a minute) → sim/results/
-node sim/compare.js        # rule variants side by side (sim/variants.json)
-node sim/arena.js          # armor × style arena (about 3 minutes) → sim/results/arena/
-node sim/arena-page.js --baseline sim/results/arena-r2/arena.json --baseline-label "round 2"   # results page
-node sim/arena-inspect.js light/shield heavy/twoHanded close 3   # one arena fight's log
-```
-
-## Placeholder rulings
-
-Where the Mechanics Outline marks a rule **Open** (defense success checks,
-knockdown chances, armor durability values, and so on), `src/rules/config.js`
-supplies a placeholder so the game can run. Values marked TUNED were changed from
-the Specifics numbers on simulation evidence (see `sim/FINDINGS.md`). Each one is listed in
-`CONFIG.provisional` and on the in-app **Rules** tab. Change them there as
-playtesting and simulation settle them.
-
-## Not implemented yet
-
-The full magic system (only a placeholder stub of a few words exists), the social system, terrain and stealth, and feats tagged "table ruling" on
-the sheet (Cleave, Sweep, Shield Wall, Flurry, and others). These feats can still
-be recorded on the sheet, but the GM has to apply them by hand.
+The combat and magic rules were worked out in an earlier project (a browser testbed for a tabletop RPG) from three
+design documents: a Philosophy, a Mechanics Outline and a Specifics doc. This repo turns that testbed into a game.
+The earlier notes and simulation results are in `archive/` for reference; nothing there is binding.
+`sim/FINDINGS.md` holds the evidence behind each tuned combat number.

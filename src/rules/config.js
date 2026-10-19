@@ -157,7 +157,7 @@
     // use `natural`. Undead and constructs have no vital spots.
     vital: {
       perDepth: 0.01, max: 0.4, mult: 3, cut: 0.1, natural: 0.1,
-      armor: { padded: 0.6, leather: 0.5, mail: 0.3, scale: 0.25, plate: 0.1, fur: 0.8, frogSkin: 0.8, chitin: 0.4, scaleHide: 0.5, sarnakScales: 0.4, trollHide: 0.5, golemStone: 0 },
+      armor: { padded: 0.6, leather: 0.5, mail: 0.3, scale: 0.25, plate: 0.1, fur: 0.8, bogSkin: 0.8, chitin: 0.4, scaleHide: 0.5, scalewardScales: 0.4, trollHide: 0.5, golemStone: 0 },
       otherArmor: 0.5,
       coverage: { full: 1, half: 1.5, partial: 2 },
       // A pinned fighter's armor doesn't guard the vitals: the point goes in at the armpit,
@@ -282,7 +282,7 @@
       // PROVISIONAL (history, the user's call): armor stops arrows better than it stops a thrust
       // at arm's length. Layered textile catches a shaft (padded most); mail is worn over padding.
       // Extra piercing mitigation against arrows only, by armor type.
-      vsArrows: { padded: 2, leather: 1, mail: 1, scale: 1, plate: 0, fur: 1, chitin: 1, trollHide: 1, scaleHide: 1, sarnakScales: 1, golemStone: 0 },
+      vsArrows: { padded: 2, leather: 1, mail: 1, scale: 1, plate: 0, fur: 1, chitin: 1, trollHide: 1, scaleHide: 1, scalewardScales: 1, golemStone: 0 },
       // Arrowheads. Broadheads cut terrible wounds (bleed × bleed) but a broad blade is stopped by
       // metal armor (+metalMit); bodkins are narrow armor-piercers that make a smaller wound
       // (damage on the main type) but slip through mail and plate (metalMit < 0).
@@ -300,66 +300,7 @@
       // scales it. Verbs and modifiers come from Magic: words feats; nouns are found in the world.
       // Verbs: cost (spell points), mag (magnitude), range [min, max], ap (base AP, else castAP),
       // radius / length / rounds for areas, walls and lingering effects.
-      words: {
-        strike: { kind: 'verb', shape: 'bolt', cost: 2, mag: 6, range: [1, 2], feat: 'verb_strike', name: 'Strike' },
-        launch: { kind: 'verb', shape: 'bolt', cost: 3, mag: 5, range: [2, 12], feat: 'verb_launch', name: 'Launch' },
-        burst: { kind: 'verb', shape: 'area', cost: 4, mag: 4, range: [2, 8], radius: 1, ap: 3, feat: 'verb_burst', name: 'Burst' },
-        cover: { kind: 'verb', shape: 'ground', cost: 3, mag: 1, range: [1, 8], radius: 1, rounds: 3, feat: 'verb_cover', name: 'Cover' },
-        build: { kind: 'verb', shape: 'wall', cost: 3, mag: 1, range: [1, 6], length: 3, rounds: 3, ap: 3, feat: 'verb_build', name: 'Build' },
-        open: { kind: 'verb', shape: 'terrain', cost: 3, mag: 0, range: [1, 6], length: 1, rounds: null, ap: 3, feat: 'verb_open', name: 'Open' },
-        inscribe: { kind: 'verb', shape: 'rune', cost: 2, mag: 5, range: [0, 1], radius: 0, ap: 3, feat: 'verb_inscribe', name: 'Inscribe' },
-        hex: { kind: 'verb', shape: 'bane', cost: 2, mag: 1, range: [1, 8], rounds: 3, feat: 'verb_hex', name: 'Hex' },
-        bless: { kind: 'verb', shape: 'boon', cost: 2, mag: 1, range: [0, 2], rounds: 3, ap: 2, feat: 'verb_bless', name: 'Bless' },
-        // Restore undoes a noun's harm on an ally: Life mends wounds; other nouns lift the
-        // conditions they inflict (Venom cures poison, Fire puts out burning, Will frees the
-        // controlled). Wide spreads it to everyone within a square, friend or foe. PROVISIONAL.
-        restore: { kind: 'verb', shape: 'restore', cost: 2, mag: 1, range: [0, 2], ap: 2, feat: 'verb_restore', name: 'Restore' },
-        ward: { kind: 'verb', shape: 'ward', cost: 2, mag: 2, range: [0, 2], rounds: 3, ap: 2, feat: 'verb_ward', name: 'Ward' },
-        beguile: { kind: 'verb', shape: 'mind', cost: 3, mag: 1, range: [1, 6], rounds: 2, feat: 'verb_beguile', name: 'Beguile' },
-        blink: { kind: 'verb', shape: 'blink', cost: 3, mag: 0, range: [1, 4], ap: 2, feat: 'verb_blink', name: 'Blink' },
-        conjure: { kind: 'verb', shape: 'conjure', cost: 5, mag: 3, range: [1, 4], rounds: 4, ap: 4, feat: 'verb_conjure', name: 'Conjure' },
-        // Nouns: element (how computeHit treats it), hurt (blunt / halfBlunt / thorns for vectors),
-        // onHit (after a blow: a condition, a push, a knockdown), and what the other verbs make.
-        fire: { kind: 'noun', cost: 1, element: 'fire', ward: 'fire', name: 'Fire', onHit: { cond: 'burning', rounds: 2 }, ground: 'hot', wall: 'fireWall', bane: 'burning', boon: 'kindled', conjure: 'elemental' },
-        frost: { kind: 'noun', cost: 1, element: 'frost', ward: 'frost', name: 'Frost', onHit: { cond: 'slowed', rounds: 1 }, ground: 'ice', wall: 'iceWall', bane: 'numbed', boon: 'frostWard', conjure: 'elemental' },
-        lightning: { kind: 'noun', cost: 1, element: 'lightning', ward: 'lightning', name: 'Lightning', onHit: { cond: 'shocked', rounds: 1 }, ground: 'charged', wall: 'stormWall', bane: 'shocked', boon: 'hasted', conjure: 'elemental' },
-        wind: { kind: 'noun', cost: 1, element: 'wind', ward: 'missiles', hurt: 'halfBlunt', name: 'Wind', onHit: { push: 2 }, ground: 'winds', wall: 'windWall', boon: 'freedom', conjure: 'elemental' },
-        earth: { kind: 'noun', cost: 1, element: 'earth', ward: 'earth', hurt: 'blunt', name: 'Earth', ground: 'rough', wall: 'stoneWall', terrain: 'pit', bane: 'slowed', boon: 'stoneskin', conjure: 'elemental' },
-        vine: { kind: 'noun', cost: 1, element: 'vine', ward: 'vine', hurt: 'thorns', name: 'Vine', onHit: { cond: 'rooted', rounds: 1 }, ground: 'brambles', wall: 'brambleWall', bane: 'rooted', boon: 'barkskin', conjure: 'elemental' },
-        life: { kind: 'noun', cost: 1, element: 'life', ward: 'life', name: 'Life', bane: 'withering', boon: 'innervated', heals: true, conjure: 'raise' },
-        force: { kind: 'noun', cost: 1, element: 'force', ward: 'magic', hurt: 'blunt', name: 'Force', onHit: { knockdown: true }, wall: 'forceWall', boon: 'shielded' },
-        // Mind (a first mind noun; more in phase 2): no blow to speak of, but it baits (draws out
-        // guards) and gives foresight (reads every foe's intent).
-        mind: { kind: 'noun', cost: 1, element: 'mind', name: 'Mind', onHit: { cond: 'baited', rounds: 1 }, bane: 'baited', boon: 'foresight', ward: 'mind' },
-        // ---- Phase 2 (draft) -----------------------------------------------------------
-        // Mind nouns: Beguile casts them (WIL resists). No blow of their own.
-        calm: { kind: 'noun', cost: 1, element: 'mind', name: 'Calm', mind: 'calmed', boon: 'steadied', ward: 'mind' },
-        dream: { kind: 'noun', cost: 2, element: 'mind', name: 'Dream', mind: 'mesmerized', ward: 'mind' },
-        rage: { kind: 'noun', cost: 1, element: 'mind', name: 'Rage', mind: 'enraged', boon: 'emboldened', ward: 'mind' },
-        fear: { kind: 'noun', cost: 1, element: 'mind', name: 'Fear', mind: 'frightened', ward: 'mind' },
-        will: { kind: 'noun', cost: 3, element: 'mind', name: 'Will', mind: 'controlled', boon: 'resolute', ward: 'mind' },
-        // Body nouns: a bolt carries the bane (CON resists); Bless gives the boon.
-        swiftness: { kind: 'noun', cost: 1, element: 'body', name: 'Swiftness', onHit: { cond: 'slowed', rounds: 2 }, bane: 'slowed', boon: 'hasted' },
-        might: { kind: 'noun', cost: 1, element: 'body', name: 'Might', onHit: { cond: 'enfeebled', rounds: 2 }, bane: 'enfeebled', boon: 'empowered' },
-        grace: { kind: 'noun', cost: 1, element: 'body', name: 'Grace', onHit: { cond: 'clumsy', rounds: 2 }, bane: 'clumsy', boon: 'deft' },
-        // Poison and disease.
-        venom: { kind: 'noun', cost: 1, element: 'venom', name: 'Venom', onHit: { cond: 'poisoned', rounds: 3 }, ground: 'miasma', bane: 'poisoned', boon: 'antivenom', ward: 'venom' },
-        plague: { kind: 'noun', cost: 2, element: 'plague', name: 'Plague', onHit: { cond: 'diseased', rounds: 10 }, bane: 'diseased', ward: 'plague' },
-        // Mystic nouns.
-        light: { kind: 'noun', cost: 1, element: 'light', name: 'Light', onHit: { cond: 'dazzled', rounds: 1 }, ground: 'radiance', wall: 'lightWall', bane: 'dazzled', boon: 'radiant', ward: 'light', conjure: 'elemental' },
-        shadow: { kind: 'noun', cost: 1, element: 'shadow', name: 'Shadow', onHit: { cond: 'blinded', rounds: 1 }, ground: 'darkness', wall: 'shadowWall', bane: 'blinded', boon: 'shrouded', ward: 'shadow', conjure: 'elemental' },
-        spirit: { kind: 'noun', cost: 1, element: 'spirit', name: 'Spirit', mind: 'frightened', boon: 'spiritShield', ward: 'spirit', conjure: 'elemental' },
-        // Modifiers: shapes they work on (all if absent).
-        strong: { kind: 'mod', cost: 2, mag: 3, feat: 'mod_strong', name: 'Strong', windUp: true },
-        wide: { kind: 'mod', cost: 2, radius: 1, length: 2, feat: 'mod_wide', name: 'Wide', shapes: ['area', 'ground', 'wall', 'terrain', 'rune', 'restore'] },
-        long: { kind: 'mod', cost: 1, roundsMult: 2, feat: 'mod_long', name: 'Long', shapes: ['ground', 'wall', 'terrain', 'bane', 'boon', 'conjure', 'mind', 'ward'] },
-        // Name: say the target's name and the spell finds them anywhere on the field, with no
-        // range or line needed. Companions' names are known; a foe's only if learned
-        // (c.knownNames). PROVISIONAL.
-        name: { kind: 'mod', cost: 2, named: true, feat: 'mod_name', name: 'Name', shapes: ['restore', 'boon', 'ward', 'bane', 'mind'] },
-        far: { kind: 'mod', cost: 1, rangeMult: 2, feat: 'mod_far', name: 'Far', shapes: ['bolt', 'area', 'ground', 'wall', 'terrain', 'bane', 'mind', 'conjure', 'blink'] },
-        lingering: { kind: 'mod', cost: 1, lingering: true, feat: 'mod_lingering', name: 'Lingering', shapes: ['bolt', 'area'] },
-      },
+      words: {}, // spells.yaml,
       affinity: { fire: 'fire_affinity' }, // +magnitude per rank
       // Doubled nouns (Outline): with the Word Doubling feat, a spell may take two nouns instead
       // of a modifier; both do the verb. Cost: the words + doubleSurcharge. Some pairs make
@@ -476,7 +417,7 @@
       antivenom: { name: 'Antivenom', immune: ['poisoned'] },
       diseased: { name: 'Diseased', resist: 'CON', attrs: { STR: -1 }, regen: -2, living: true, persist: true },
       // Mystic.
-      dread: { name: 'Dread', attrs: { STR: -1, DEX: -1, SPD: -1 }, defense: -1 }, // a death knight's aura
+      dread: { name: 'Dread', attrs: { STR: -1, DEX: -1, SPD: -1 }, defense: -1 }, // a revenant knight's aura
       dazzled: { name: 'Dazzled', resist: 'CON', defense: -1 },
       blinded: { name: 'Blinded', resist: 'CON', defense: -2, blind: true }, // strikes only at range 1
       radiant: { name: 'Radiant', halveShadow: true },
@@ -576,7 +517,7 @@
 
     // ---- Armor ------------------------------------------------------------
     // PROVISIONAL: base durability per armor type (Outline: durability like HP; numbers Open)
-    armorDurability: { padded: 20, leather: 25, mail: 40, scale: 45, plate: 60, fur: 30, chitin: 40, trollHide: 40, scaleHide: 25, frogSkin: 20, sarnakScales: 45, golemStone: 80 },
+    armorDurability: { padded: 20, leather: 25, mail: 40, scale: 45, plate: 60, fur: 30, chitin: 40, trollHide: 40, scaleHide: 25, bogSkin: 20, scalewardScales: 45, golemStone: 80 },
     // PROVISIONAL: armor coverage keyword
     coverage: {
       full: { mitigation: 0, penalty: 0, passThrough: 0.5 },
@@ -658,8 +599,8 @@
     'Ogre and hill giant; size and grip: big creatures (trait size: ogre 1.5, giant 2.5) take vital wounds less often (the wound roll\'s target ÷ size) and bleed less per wound (÷ size): a man-sized wound is shallow in a big body. Grip (giant 5, ogre 2) adds to grapple rolls: a giant seizes a man in one hand. The ogre (level 8, STR 23, CON 21) swings a crude giant club and its fists; no regeneration. The hill giant (level 12, STR 28, CON 26) swings a giant club one-handed, hurls boulders (range 2–10, 14 blunt, can knock down) and grapples.',
     'Drakes, wyverns, the constrictor and the golem: fliers (drake, wyvern) pass over rough ground, pits, traps, hazards and walls that aren\'t solid (solid walls still stop them) and are slippery to grab. The drake (level 8) has drake scales (P4 S4 B2), a bite, claws, a reach-2 wing buffet that can knock you down, 1.5× movement and fire breath (Burst + Fire, Strong for a bigger one). The wyvern (level 10) has heavier scales (P5 S5 B3), a reach-2 bite, a venomous stinger (3 CON a round over 4 rounds at full depth) and a crushing wing beat. The giant constrictor grapples beyond any human (Grappler III, STR 18) and crushes whoever it holds every round (−8 stamina, −1 CON), but it has one victim at a time and thin scales. The stone golem is immune to magic: spells do nothing to it and it shrugs off conditions; it never tires.',
     'Rats and the spectre: giant rats are weak (STR 3, a third of the stamina) and come alone or as a swarm of six. The spectre is a level-15 undead: incorporeal (weapons without an enchantment pass through; nothing to grab, trip or shove), a legendary war scythe that drinks half the stamina and wounds it deals, and a wail each round that frightens every foe within 2 squares unless they resist (WIL). Magical weapons (high-level gear) and spells hurt it.',
-    'Aura of dread and trinkets: at the start of each round, every foe within the aura (2 squares of the death knight) loses 3 stamina and is in Dread for the round (−1 STR, DEX and SPD, −1 to guard). Trinkets are worn items that shift attributes or AP: the death knight\'s flowing black silk sash gives +1 SPD and +1 AP.',
-    'End-game gear and the death knight (test build): Legendary quality (+3, durability ×2.2, shield threshold ×2.0) and Adamant shields (×3.5). Battle Casting (feat, adept, needs Casting II): cast with both hands full. An enchanted blade that drinks (Soulreaver): the wielder takes back half the stamina and half the attribute points each blow deals. The death knight is a level-20 character at the human cap (22 feats: Casting IV, Burst, Conjure, Strong, Battle Casting, plate and shield training) in legendary plate with a legendary adamant heater and Soulreaver; Burst + Life + Strong withers a whole area through armor, and Conjure + Life raises the fallen.',
+    'Aura of dread and trinkets: at the start of each round, every foe within the aura (2 squares of the revenant knight) loses 3 stamina and is in Dread for the round (−1 STR, DEX and SPD, −1 to guard). Trinkets are worn items that shift attributes or AP: the revenant knight\'s flowing black silk sash gives +1 SPD and +1 AP.',
+    'End-game gear and the revenant knight (test build): Legendary quality (+3, durability ×2.2, shield threshold ×2.0) and Adamant shields (×3.5). Battle Casting (feat, adept, needs Casting II): cast with both hands full. An enchanted blade that drinks (Soulreaver): the wielder takes back half the stamina and half the attribute points each blow deals. The revenant knight is a level-20 character at the human cap (22 feats: Casting IV, Burst, Conjure, Strong, Battle Casting, plate and shield training) in legendary plate with a legendary adamant heater and Soulreaver; Burst + Life + Strong withers a whole area through armor, and Conjure + Life raises the fallen.',
     'Name (modifier): say the target\'s name and a targeted spell (Restore, Bless, Ward, Hex, Beguile) reaches them anywhere on the field, with no range or line of sight; +2 spell points. Companions\' names are known; a foe\'s only if learned (a true name). Restore + Life + Name is the far heal.',
     'Restore (verb) and healing: Restore + a noun undoes that noun\'s harm on an ally (range 2). Restore + Life mends: bleeding stops (poison doesn\'t), 1 CON back (2 with Strong), 4 + 2 × magnitude stamina back (enough to wake the unconscious). Restore + another noun lifts the conditions it inflicts: Venom cures poison, Plague disease, Fire burning, Frost numbness, Will control, Calm calm, Dream a trance, and so on. Wide spreads it to everyone within a square of the target, friend or foe, at half the stamina. Bless + Life stays a boon (Innervated); Strike, Hex and Burst + Life wither. The dead stay dead. The Cleric (arena and gauntlet) is a mage in mail with a mace and Life, Light and Force.',
     'Magic phase 2 (draft): Beguile (verb, WIL resists, 2 rounds) with the mind nouns — Calm (won\'t attack; a blow ends it), Dream (mesmerized: no actions until harmed), Rage (a frenzy: no guards, strikes the nearest body, friend or foe), Fear (won\'t close with or strike the caster), Will (fights for the caster while the caster concentrates, −1 AP). Word Doubling (feat): two nouns instead of a modifier, both do the verb (+2 cost); Rage + Dream makes confusion. Body nouns Swiftness, Might, Grace: a bolt or Hex slows, enfeebles (−2 STR) or makes clumsy (−2 DEX), CON resists; Bless hastens, empowers, makes deft. Venom (poison, 1 CON a round; miasma ground; antivenom boon) and Plague (disease: −1 STR, −2 regeneration, lasts past the fight). Light (sears the undead ×2; dazzles; radiance reveals runes; wall of light), Shadow (blinds — strikes only at arm\'s reach; darkness blocks sight and missiles but not blades; shroud turns half the missiles), Spirit (harms only the undead, ×2; chills the living for half, to stamina; Beguile + Spirit frightens). Conditions now shift every attribute but CON.',

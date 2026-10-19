@@ -1,0 +1,364 @@
+# The magic grammar: verbs, nouns and modifiers. feat = the feat that teaches a verb or modifier.
+# Nouns are found in the world; see the nouns list in each character (c.nouns).
+
+strike: {kind: verb, shape: bolt, cost: 2, mag: 6, range: [1, 2], feat: verb_strike, name: Strike}
+launch:
+  kind: verb
+  shape: bolt
+  cost: 3
+  mag: 5
+  range: [2, 12]
+  feat: verb_launch
+  name: Launch
+burst:
+  kind: verb
+  shape: area
+  cost: 4
+  mag: 4
+  range: [2, 8]
+  radius: 1
+  ap: 3
+  feat: verb_burst
+  name: Burst
+cover:
+  kind: verb
+  shape: ground
+  cost: 3
+  mag: 1
+  range: [1, 8]
+  radius: 1
+  rounds: 3
+  feat: verb_cover
+  name: Cover
+build:
+  kind: verb
+  shape: wall
+  cost: 3
+  mag: 1
+  range: [1, 6]
+  length: 3
+  rounds: 3
+  ap: 3
+  feat: verb_build
+  name: Build
+open:
+  kind: verb
+  shape: terrain
+  cost: 3
+  mag: 0
+  range: [1, 6]
+  length: 1
+  rounds: null
+  ap: 3
+  feat: verb_open
+  name: Open
+inscribe:
+  kind: verb
+  shape: rune
+  cost: 2
+  mag: 5
+  range: [0, 1]
+  radius: 0
+  ap: 3
+  feat: verb_inscribe
+  name: Inscribe
+hex:
+  kind: verb
+  shape: bane
+  cost: 2
+  mag: 1
+  range: [1, 8]
+  rounds: 3
+  feat: verb_hex
+  name: Hex
+bless:
+  kind: verb
+  shape: boon
+  cost: 2
+  mag: 1
+  range: [0, 2]
+  rounds: 3
+  ap: 2
+  feat: verb_bless
+  name: Bless
+restore:
+  kind: verb
+  shape: restore
+  cost: 2
+  mag: 1
+  range: [0, 2]
+  ap: 2
+  feat: verb_restore
+  name: Restore
+ward:
+  kind: verb
+  shape: ward
+  cost: 2
+  mag: 2
+  range: [0, 2]
+  rounds: 3
+  ap: 2
+  feat: verb_ward
+  name: Ward
+beguile:
+  kind: verb
+  shape: mind
+  cost: 3
+  mag: 1
+  range: [1, 6]
+  rounds: 2
+  feat: verb_beguile
+  name: Beguile
+blink:
+  kind: verb
+  shape: blink
+  cost: 3
+  mag: 0
+  range: [1, 4]
+  ap: 2
+  feat: verb_blink
+  name: Blink
+conjure:
+  kind: verb
+  shape: conjure
+  cost: 5
+  mag: 3
+  range: [1, 4]
+  rounds: 4
+  ap: 4
+  feat: verb_conjure
+  name: Conjure
+fire:
+  kind: noun
+  cost: 1
+  element: fire
+  ward: fire
+  name: Fire
+  onHit: {cond: burning, rounds: 2}
+  ground: hot
+  wall: fireWall
+  bane: burning
+  boon: kindled
+  conjure: elemental
+frost:
+  kind: noun
+  cost: 1
+  element: frost
+  ward: frost
+  name: Frost
+  onHit: {cond: slowed, rounds: 1}
+  ground: ice
+  wall: iceWall
+  bane: numbed
+  boon: frostWard
+  conjure: elemental
+lightning:
+  kind: noun
+  cost: 1
+  element: lightning
+  ward: lightning
+  name: Lightning
+  onHit: {cond: shocked, rounds: 1}
+  ground: charged
+  wall: stormWall
+  bane: shocked
+  boon: hasted
+  conjure: elemental
+wind:
+  kind: noun
+  cost: 1
+  element: wind
+  ward: missiles
+  hurt: halfBlunt
+  name: Wind
+  onHit: {push: 2}
+  ground: winds
+  wall: windWall
+  boon: freedom
+  conjure: elemental
+earth:
+  kind: noun
+  cost: 1
+  element: earth
+  ward: earth
+  hurt: blunt
+  name: Earth
+  ground: rough
+  wall: stoneWall
+  terrain: pit
+  bane: slowed
+  boon: stoneskin
+  conjure: elemental
+vine:
+  kind: noun
+  cost: 1
+  element: vine
+  ward: vine
+  hurt: thorns
+  name: Vine
+  onHit: {cond: rooted, rounds: 1}
+  ground: brambles
+  wall: brambleWall
+  bane: rooted
+  boon: barkskin
+  conjure: elemental
+life:
+  kind: noun
+  cost: 1
+  element: life
+  ward: life
+  name: Life
+  bane: withering
+  boon: innervated
+  heals: true
+  conjure: raise
+force:
+  kind: noun
+  cost: 1
+  element: force
+  ward: magic
+  hurt: blunt
+  name: Force
+  onHit: {knockdown: true}
+  wall: forceWall
+  boon: shielded
+mind:
+  kind: noun
+  cost: 1
+  element: mind
+  name: Mind
+  onHit: {cond: baited, rounds: 1}
+  bane: baited
+  boon: foresight
+  ward: mind
+calm: {kind: noun, cost: 1, element: mind, name: Calm, mind: calmed, boon: steadied, ward: mind}
+dream: {kind: noun, cost: 2, element: mind, name: Dream, mind: mesmerized, ward: mind}
+rage:
+  kind: noun
+  cost: 1
+  element: mind
+  name: Rage
+  mind: enraged
+  boon: emboldened
+  ward: mind
+fear: {kind: noun, cost: 1, element: mind, name: Fear, mind: frightened, ward: mind}
+will:
+  kind: noun
+  cost: 3
+  element: mind
+  name: Will
+  mind: controlled
+  boon: resolute
+  ward: mind
+swiftness:
+  kind: noun
+  cost: 1
+  element: body
+  name: Swiftness
+  onHit: {cond: slowed, rounds: 2}
+  bane: slowed
+  boon: hasted
+might:
+  kind: noun
+  cost: 1
+  element: body
+  name: Might
+  onHit: {cond: enfeebled, rounds: 2}
+  bane: enfeebled
+  boon: empowered
+grace:
+  kind: noun
+  cost: 1
+  element: body
+  name: Grace
+  onHit: {cond: clumsy, rounds: 2}
+  bane: clumsy
+  boon: deft
+venom:
+  kind: noun
+  cost: 1
+  element: venom
+  name: Venom
+  onHit: {cond: poisoned, rounds: 3}
+  ground: miasma
+  bane: poisoned
+  boon: antivenom
+  ward: venom
+plague:
+  kind: noun
+  cost: 2
+  element: plague
+  name: Plague
+  onHit: {cond: diseased, rounds: 10}
+  bane: diseased
+  ward: plague
+light:
+  kind: noun
+  cost: 1
+  element: light
+  name: Light
+  onHit: {cond: dazzled, rounds: 1}
+  ground: radiance
+  wall: lightWall
+  bane: dazzled
+  boon: radiant
+  ward: light
+  conjure: elemental
+shadow:
+  kind: noun
+  cost: 1
+  element: shadow
+  name: Shadow
+  onHit: {cond: blinded, rounds: 1}
+  ground: darkness
+  wall: shadowWall
+  bane: blinded
+  boon: shrouded
+  ward: shadow
+  conjure: elemental
+spirit:
+  kind: noun
+  cost: 1
+  element: spirit
+  name: Spirit
+  mind: frightened
+  boon: spiritShield
+  ward: spirit
+  conjure: elemental
+strong: {kind: mod, cost: 2, mag: 3, feat: mod_strong, name: Strong, windUp: true}
+wide:
+  kind: mod
+  cost: 2
+  radius: 1
+  length: 2
+  feat: mod_wide
+  name: Wide
+  shapes: [area, ground, wall, terrain, rune, restore]
+long:
+  kind: mod
+  cost: 1
+  roundsMult: 2
+  feat: mod_long
+  name: Long
+  shapes: [ground, wall, terrain, bane, boon, conjure, mind, ward]
+name:
+  kind: mod
+  cost: 2
+  named: true
+  feat: mod_name
+  name: Name
+  shapes: [restore, boon, ward, bane, mind]
+far:
+  kind: mod
+  cost: 1
+  rangeMult: 2
+  feat: mod_far
+  name: Far
+  shapes: [bolt, area, ground, wall, terrain, bane, mind, conjure, blink]
+lingering:
+  kind: mod
+  cost: 1
+  lingering: true
+  feat: mod_lingering
+  name: Lingering
+  shapes: [bolt, area]

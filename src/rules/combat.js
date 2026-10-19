@@ -132,8 +132,12 @@
     for (const id of enc.order) {
       enc.capMult[id] = (chars[id].traits && chars[id].traits.apMult) || 1;
       enc.ap[id] = C.apPool(chars[id]);
+      // Surprise (an ambush, a trap sprung): that side starts the round with part of its AP.
+      const sp = enc.surprise;
+      if (sp && sp.round === enc.round && chars[id].side === sp.side) enc.ap[id] = Math.floor(enc.ap[id] * sp.factor);
       enc.apStart[id] = enc.ap[id];
     }
+    if (enc.surprise && enc.surprise.round === enc.round) log(enc, `${enc.surprise.side === 'party' ? 'The party is' : 'The enemy is'} caught off guard.`, 'round');
     log(enc, `Round ${enc.round} — initiative: ` + enc.order.map((id) => `${chars[id].name} ${enc.initiative[id]}`).join(', '), 'round');
     startPass(enc, chars);
     return enc;
@@ -1326,7 +1330,7 @@
     return Math.floor(Math.max(C.attr(c, 'STR'), C.combatAttr(c, 'DEX')) / 2) + (C.rank(c, 'escape_artist') ? CONFIG.maneuver.escapeArtistBonus : 0) + slippery(c);
   }
 
-  // Monster trait: slick-skinned creatures (frogloks) are hard to get a grip on.
+  // Monster trait: slick-skinned creatures (bogfolk) are hard to get a grip on.
   function slippery(c) {
     return (c.traits && c.traits.slippery) || 0;
   }

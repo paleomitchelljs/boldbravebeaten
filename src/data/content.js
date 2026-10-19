@@ -1,0 +1,250 @@
+/*
+ * Content: loads the YAML files in data/ and installs them.
+ *
+ * One registry says which file feeds which catalog. Engine catalogs (armor, weapons, feats,
+ * monsters…) are filled in place so every module holding a reference sees the change; game
+ * content (items, factions, places…) lands in Content.world. Installing is repeatable: the
+ * Bench re-installs edited files without a reload.
+ *
+ * Node reads the files with fs (Content.loadSync); the browser fetches them (Content.load).
+ */
+(function (G) {
+  'use strict';
+  const Y = G.Yaml;
+
+  const replaceObject = (target, src) => {
+    for (const k of Object.keys(target)) delete target[k];
+    Object.assign(target, src || {});
+  };
+
+  // Each entry: file, key (in Content.world for game content), install(data) for engine catalogs.
+  const REGISTRY = [
+    { file: 'rules.yaml', optional: true, install: (d) => G.Content.applyRules(d) },
+    { file: 'armor.yaml', install: (d) => replaceObject(G.DATA.ARMOR, d) },
+    { file: 'shields.yaml', install: (d) => { replaceObject(G.DATA.SHIELDS, d.types); replaceObject(G.DATA.SHIELD_MATERIALS, d.materials); } },
+    { file: 'qualities.yaml', install: (d) => replaceObject(G.DATA.QUALITY, d) },
+    { file: 'weapons.yaml', install: (d) => replaceObject(G.DATA.WEAPONS, d) },
+    { file: 'feats.yaml', install: installFeats },
+    { file: 'spells.yaml', install: (d) => replaceObject(G.CONFIG.magic.words, d) },
+    { file: 'monsters.yaml', install: (d) => replaceObject(G.Enemies.MONSTERS, d) },
+    { file: 'foes.yaml', install: (d) => replaceObject(G.Enemies.TEMPLATES, d) },
+    // Game content (kept in Content.world.<key>).
+    { file: 'items.yaml', key: 'items' },
+    { file: 'skills.yaml', key: 'skills' },
+    { file: 'factions.yaml', key: 'factions' },
+    { file: 'npcs.yaml', key: 'npcs' },
+    { file: 'places.yaml', key: 'places' },
+    { file: 'quests.yaml', key: 'quests' },
+    { file: 'start.yaml', key: 'start' },
+  ];
+
+  function installFeats(trees) {
+    G.DATA.TREES.length = 0;
+    for (const k of Object.keys(G.DATA.FEATS)) delete G.DATA.FEATS[k];
+    for (const t of trees || []) {
+      G.DATA.TREES.push({ id: t.id, name: t.name, attrs: t.attrs });
+      for (const id of Object.keys(t.feats || {})) {
+        const f = t.feats[id];
+        G.DATA.FEATS[id] = Object.assign({ id, tree: t.id, requires: [], effect: '', auto: false }, f);
+      }
+    }
+  }
+
+  // rules.yaml: deep-merged over CONFIG, so a tuned number can live beside the content.
+  const base = {};
+  function applyRules(d) {
+    const merge = (dst, src) => {
+      for (const k of Object.keys(src)) {
+        if (src[k] && typeof src[k] === 'object' && !Array.isArray(src[k]) && dst[k] && typeof dst[k] === 'object') merge(dst[k], src[k]);
+        else dst[k] = src[k];
+      }
+    };
+    if (d) merge(G.CONFIG, d);
+  }
+
+  const world = {};
+  const sources = {}; // file -> text as loaded or last edited
+
+  function installAll(texts) {
+    const errors = [];
+    const parsed = {};
+    for (const r of REGISTRY) {
+      const text = texts[r.file];
+      if (text == null) { if (!r.optional && !r.key) errors.push(`${r.file}: missing`); continue; }
+      try { parsed[r.file] = Y.parse(text); } catch (e) { errors.push(`${r.file}: ${e.message}`); }
+    }
+    if (errors.length) return { ok: false, errors };
+    for (const r of REGISTRY) {
+      if (!(r.file in parsed)) continue;
+      sources[r.file] = texts[r.file];
+      if (r.key) world[r.key] = parsed[r.file];
+      else if (r.install) r.install(parsed[r.file]);
+    }
+    return { ok: true, errors: [], warnings: validate() };
+  }
+
+  // ---- Validation: cross references between files --------------------------
+  function validate() {
+    const W = world;
+    const D = G.DATA;
+    const out = [];
+    const err = (m) => out.push(m);
+    const has = (cat, id) => id in cat;
+    const goods = (W.items && W.items.goods) || {};
+    const tables = (W.items && W.items.tables) || {};
+    const places = W.places || {};
+    const factions = W.factions || {};
+    const npcs = W.npcs || {};
+    const quests = W.quests || {};
+    const skills = W.skills || {};
+    const goodExists = (id) => has(goods, id);
+    const gearSpecOk = (where, e) => {
+      if (e.weapon && !has(D.WEAPONS, e.weapon)) err(`${where}: weapon "${e.weapon}" is not in weapons.yaml`);
+      if (e.armor && !has(D.ARMOR, e.armor)) err(`${where}: armor "${e.armor}" is not in armor.yaml`);
+      if (e.shield && !has(D.SHIELDS, e.shield)) err(`${where}: shield "${e.shield}" is not in shields.yaml`);
+      if (e.material && !has(D.SHIELD_MATERIALS, e.material)) err(`${where}: shield material "${e.material}" unknown`);
+      if (e.quality && !has(D.QUALITY, e.quality)) err(`${where}: quality "${e.quality}" is not in qualities.yaml`);
+      if (e.good && !goodExists(e.good)) err(`${where}: good "${e.good}" is not in items.yaml`);
+    };
+    const condOk = (where, c) => {
+      if (!c) return;
+      if (c.item && !goodExists(c.item)) err(`${where}: condition item "${c.item}" unknown`);
+      if (c.standing && !has(factions, c.standing.faction)) err(`${where}: condition faction "${c.standing.faction}" unknown`);
+      if (c.quest && !has(quests, String(c.quest).split(':')[0])) err(`${where}: condition quest "${c.quest}" unknown`);
+      for (const a of c.any || []) condOk(where, a);
+      if (c.not) condOk(where, c.not);
+    };
+
+    for (const [id, m] of Object.entries(G.Enemies.MONSTERS)) {
+      if (m.group) { for (const k of m.group) if (!has(G.Enemies.MONSTERS, k)) err(`monsters.${id}: group member "${k}" is not a monster`); continue; }
+      if (m.armor && !has(D.ARMOR, m.armor)) err(`monsters.${id}: armor "${m.armor}" is not in armor.yaml`);
+      for (const w of m.natural || []) if (!has(D.WEAPONS, w)) err(`monsters.${id}: natural weapon "${w}" is not in weapons.yaml`);
+      for (const w of m.weapons || []) if (!has(D.WEAPONS, w)) err(`monsters.${id}: weapon "${w}" is not in weapons.yaml`);
+      for (const f of Object.keys(m.feats || {})) if (!has(D.FEATS, f)) err(`monsters.${id}: feat "${f}" is not in feats.yaml`);
+      if (m.faction && !has(factions, m.faction)) err(`monsters.${id}: faction "${m.faction}" is not in factions.yaml`);
+      if (m.loot && !has(tables, m.loot)) err(`monsters.${id}: loot table "${m.loot}" is not in items.yaml`);
+    }
+    for (const [id, t] of Object.entries(G.Enemies.TEMPLATES)) {
+      if (t.faction && !has(factions, t.faction)) err(`foes.${id}: faction "${t.faction}" is not in factions.yaml`);
+    }
+    for (const f of Object.values(D.FEATS)) {
+      for (const alt of f.requires) for (const r of alt) { const fid = String(r).split(':')[0]; if (!has(D.FEATS, fid)) err(`feats.${f.id}: requires unknown feat "${fid}"`); }
+    }
+    for (const [id, s] of Object.entries(skills)) {
+      if (id === 'tn') continue;
+      for (const f of Object.keys(s.feats || {})) if (!has(D.FEATS, f)) err(`skills.${id}: feat "${f}" is not in feats.yaml`);
+    }
+    for (const [id, f] of Object.entries(factions)) {
+      for (const k of ['allies', 'enemies']) for (const o of f[k] || []) if (!has(factions, o)) err(`factions.${id}.${k}: "${o}" is not a faction`);
+    }
+    for (const [id, g] of Object.entries(goods)) {
+      if (g.kind === 'trinket' && !['ring', 'charm'].includes(g.slot)) err(`items.goods.${id}: trinket slot must be ring or charm`);
+    }
+    for (const [id, t] of Object.entries(tables)) t.forEach((e, i) => gearSpecOk(`items.tables.${id}[${i}]`, e));
+
+    for (const [id, n] of Object.entries(npcs)) {
+      if (n.faction && !has(factions, n.faction)) err(`npcs.${id}: faction "${n.faction}" is not in factions.yaml`);
+      const seen = new Set();
+      for (const t of n.topics || []) {
+        if (seen.has(t.id)) err(`npcs.${id}: duplicate topic id "${t.id}"`);
+        seen.add(t.id);
+        if (t.starts && !has(quests, t.starts)) err(`npcs.${id}.${t.id}: starts unknown quest "${t.starts}"`);
+        if (t.gives && t.gives.good && !goodExists(t.gives.good)) err(`npcs.${id}.${t.id}: gives unknown good "${t.gives.good}"`);
+        if (t.takes && !goodExists(t.takes)) err(`npcs.${id}.${t.id}: takes unknown good "${t.takes}"`);
+        for (const f of Object.keys(t.standing || {})) if (!has(factions, f)) err(`npcs.${id}.${t.id}: standing faction "${f}" unknown`);
+        condOk(`npcs.${id}.${t.id}`, t.requires); condOk(`npcs.${id}.${t.id}`, t.hide);
+      }
+    }
+
+    for (const [id, p] of Object.entries(places)) {
+      for (const e of p.exits || []) {
+        if (!has(places, e.to)) err(`places.${id}: exit to unknown place "${e.to}"`);
+        condOk(`places.${id}.exit`, e.requires);
+      }
+      for (const loc of p.locations || []) {
+        for (const n of loc.npcs || []) if (!has(npcs, n)) err(`places.${id}.${loc.id}: npc "${n}" is not in npcs.yaml`);
+        for (const s of loc.services || []) {
+          if (s.faction && !has(factions, s.faction)) err(`places.${id}.${loc.id}: service faction "${s.faction}" unknown`);
+          (s.stock || []).forEach((e, i) => { gearSpecOk(`places.${id}.${loc.id}.stock[${i}]`, e); condOk(`places.${id}.${loc.id}.stock[${i}]`, e.req); });
+        }
+      }
+      if (p.map) {
+        const legend = p.legend || {};
+        const rows = p.map;
+        const w = rows[0].length;
+        rows.forEach((r, y) => { if (r.length !== w) err(`places.${id}: map row ${y + 1} is ${r.length} wide, expected ${w}`); });
+        const marks = new Set(rows.join(''));
+        for (const ch of marks) if (!'#. +'.includes(ch) && !(ch in legend)) err(`places.${id}: map character "${ch}" has no legend entry`);
+        for (const ch of Object.keys(legend)) if (!marks.has(ch)) err(`places.${id}: legend "${ch}" is not on the map`);
+        for (const [ch, def] of Object.entries(legend)) {
+          const at = `places.${id}.legend.${ch}`;
+          if (def.kind === 'monster' && !(p.encounters && def.encounter in p.encounters) && !has(G.Enemies.MONSTERS, def.encounter)) err(`${at}: encounter "${def.encounter}" unknown`);
+          if (def.kind === 'npc' && !has(npcs, def.npc)) err(`${at}: npc "${def.npc}" unknown`);
+          if (def.kind === 'stairs' && !has(places, def.to)) err(`${at}: leads to unknown place "${def.to}"`);
+          if (def.kind === 'stairs' && def.at && places[def.to] && places[def.to].map && !places[def.to].map.join('').includes(def.at)) err(`${at}: arrival "${def.at}" is not on ${def.to}'s map`);
+          if (def.kind === 'chest' && !has(tables, def.loot)) err(`${at}: loot table "${def.loot}" unknown`);
+          if (def.kind === 'pickup' && !goodExists(def.good)) err(`${at}: good "${def.good}" unknown`);
+          if (def.key && !goodExists(def.key)) err(`${at}: key "${def.key}" unknown`);
+          for (const a of def.alt || []) { condOk(at, a.requires); if (a.takes && !goodExists(a.takes)) err(`${at}: takes unknown good "${a.takes}"`); }
+        }
+        for (const [eid, e] of Object.entries(p.encounters || {})) {
+          for (const f of e.foes || []) {
+            if (f.monster && !has(G.Enemies.MONSTERS, f.monster)) err(`places.${id}.encounters.${eid}: monster "${f.monster}" unknown`);
+            if (f.template && !has(G.Enemies.TEMPLATES, f.template)) err(`places.${id}.encounters.${eid}: template "${f.template}" unknown`);
+          }
+          if (e.parley && !has(npcs, e.parley)) err(`places.${id}.encounters.${eid}: parley npc "${e.parley}" unknown`);
+        }
+        for (const [i, w2] of (p.wandering || []).entries()) for (const f of w2.foes || []) if (f.monster && !has(G.Enemies.MONSTERS, f.monster)) err(`places.${id}.wandering[${i}]: monster "${f.monster}" unknown`);
+      }
+    }
+    for (const [id, q] of Object.entries(quests)) {
+      if (q.giver && !has(npcs, q.giver)) err(`quests.${id}: giver "${q.giver}" unknown`);
+      if (q.faction && !has(factions, q.faction)) err(`quests.${id}: faction "${q.faction}" unknown`);
+      for (const x of q.exclusive || []) if (!has(quests, x)) err(`quests.${id}: exclusive quest "${x}" unknown`);
+      (q.stages || []).forEach((st, i) => condOk(`quests.${id}.stages[${i}]`, st.done_when));
+      for (const f of Object.keys((q.reward || {}).standing || {})) if (!has(factions, f)) err(`quests.${id}: reward faction "${f}" unknown`);
+    }
+    const S = W.start || {};
+    if (S.place && !has(places, S.place)) err(`start.yaml: place "${S.place}" unknown`);
+    for (const k of S.kits || []) {
+      if (k.wield && !has(D.WEAPONS, k.wield)) err(`start.kits.${k.id}: weapon "${k.wield}" unknown`);
+      if (k.sidearm && !has(D.WEAPONS, k.sidearm)) err(`start.kits.${k.id}: sidearm "${k.sidearm}" unknown`);
+    }
+    for (const p of S.presets || []) for (const f of p.feats || []) if (!has(D.FEATS, f)) err(`start.presets.${p.name}: feat "${f}" unknown`);
+    return out;
+  }
+
+  // ---- Loading ------------------------------------------------------------
+  function loadSync(dir) {
+    const fs = require('fs');
+    const path = require('path');
+    dir = dir || path.join(__dirname, '..', '..', 'data');
+    const texts = {};
+    for (const r of REGISTRY) {
+      const f = path.join(dir, r.file);
+      if (fs.existsSync(f)) texts[r.file] = fs.readFileSync(f, 'utf8');
+    }
+    return installAll(texts);
+  }
+
+  async function load(baseUrl) {
+    baseUrl = baseUrl || 'data/';
+    const texts = {};
+    const bundle = G.BUNDLE; // data/bundle.js: lets index.html open straight from disk (file:// cannot fetch)
+    await Promise.all(REGISTRY.map(async (r) => {
+      try {
+        const res = await fetch(baseUrl + r.file, { cache: 'no-cache' });
+        if (res.ok) { texts[r.file] = await res.text(); return; }
+      } catch (e) { /* fall through to the bundle */ }
+      if (bundle && bundle[r.file] != null) texts[r.file] = bundle[r.file];
+    }));
+    // A saved Bench patch overrides files for this browser only.
+    try {
+      const patch = JSON.parse(localStorage.getItem('bbb-content-patch') || '{}');
+      for (const f of Object.keys(patch)) texts[f] = patch[f];
+    } catch (e) { /* no storage */ }
+    return installAll(texts);
+  }
+
+  G.Content = { REGISTRY, world, sources, installAll, validate, loadSync, load, applyRules };
+})(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});
