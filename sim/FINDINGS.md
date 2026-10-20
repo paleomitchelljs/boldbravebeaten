@@ -1,5 +1,104 @@
 # Simulation findings
 
+## Reach by motion, points against armor, item tags, plate spreads a blow (2026-10-20)
+
+**The user's brief.**
+- **Reach:** "daggers only hit one square away on a thrust/slash. Rapiers/swords/maces/standard one handed weapons hit
+  one square away on a swing, two squares on a thrust. Typical two handed weapons hit 2 squares away on a swing, three
+  on a thrust. Spears can thrust up to 4 squares away. Specialist weapons can deviate (a Scythe can hit 3 squares away on
+  a swing, but is nearly useless on a thrust)."
+- **Points against metal:** "On a thrust, there should be a roll for a chance of finding a joint in the armor. Otherwise
+  a hit does blunt damage as a result of the armor blocking & damages the weapon a lot." The roll depends on "the type of
+  armor & the attacker's skill & feats"; "the weight of the weapon has a big impact". "Heavy spears can pierce mail &
+  worse, but not plate (must find a gap). Rapiers can pierce padded & worse but not mail or better."
+- **Armor tiers:** none, padded, leather/hide, chain-mail, plate. Materials cloth, leather, bronze, iron, steel; rare
+  exotics. Every item has a type, material, craft origin and enchantments ("usually 0").
+- **Craftsmanship** (poor/average/master) "controls how fast an item degrades/how easily it is broken, while origin
+  controls how its durability/damage/protection scales with weight".
+- **Plate** "should dissipate more of the damage (less makes it through as blunt damage to stamina)".
+
+**Adopted (PROVISIONAL; `src/rules/config.js` `pierce`, data files).**
+- **Reach** (`weapons.yaml` `reach: {swing, thrust, min}`): as the brief. Inside `min` (greatsword, spears, scythe at 1)
+  a blow is cramped. A clinch now cramps long blades and spears (`closeOK` means "works in a clinch"), since range 1 is
+  sword distance, no longer the clinch. Heavy spear added (two hands, 2.6 kg). The scythe has no thrust at all.
+- **Punch:** the mass behind the point (× 1.5 two-handed; a swung beak or spikes, the head's mass × the haft × 2.5),
+  × the motion, × (1 + 0.1 × STR bonus). Daggers have an explicit 0.9 (driven by the arm); arrows take the bow's
+  (shortbow 1, longbow 1.8) × the head (bodkin 1.5, broadhead 0.7).
+- **Resistance:** padded 0.75, leather 1, mail 1.6, plate 5; × material and origin protection.
+- **Three outcomes:**
+  - **Burst** (punch ≥ resistance): mitigation and the old pass-through roll, as before.
+  - **Gap** (otherwise): d10 + ⌊DEX/4⌋ + Find the Gap (+2) + Spot Weakness (+1) (+3 prone or half-sword) ≥ the gap
+    number (padded 8, leather 8, mail 10, plate 12; half coverage −2, partial −4). A 10 always finds one; a pinned foe
+    always gives one. All of the piercing goes in.
+  - **Turned:** half the piercing lands as blunt and the weapon takes `weaponWear.deflected` 1.0 (a blow that lands takes
+    0.4).
+- **Items:** type + material (materials.yaml) + origin (origins.yaml) + craft (crafts.yaml) + enchantments
+  (enchantments.yaml), the same for weapons, armor and shields.
+  - Material and origin scale protection (P and S mitigation, resistance), weight (armor penalties; a weapon's mass,
+    so speed, damage and punch follow the physics) and durability.
+  - Craft only touches durability, wear taken and the shield break threshold.
+  - Old `quality` is read as craft. Scale armor became steel mail. Foes roll craft, metal and origin by level band
+    (rules.yaml `enemyGear`).
+- **Plate dissipation** (armor.yaml `dissipate: {glancing: 0.5, crushing: 0}`): half the blunt left after mitigation
+  from a cut or a turned point never reaches stamina; a mainly blunt blow carries as before.
+
+**Tried and dropped.**
+- **A burst point puts all its piercing past mitigation into the body** (no pass-through). Padding became nearly
+  useless:
+  - crew 94% → 75% won (deaths 1.18 → 2.13), rat nest deaths 0.02 → 0.25;
+  - the greatsword won 92% of mailed duels (it alone thrusts at 3 and bursts iron mail).
+  Keeping the Specifics' pass-through for bursts brought these back (below).
+- **Plate spreads every blow, crushing ones included.** Maces lost their place against plate: in the all-plate
+  sweep the flanged mace fell to 2% and the spiked mace to 13% (48% and 53% when crushing blows carry).
+  `crushing: 0.5` turns it back on.
+- **Padded gap 7** (now 8); gap 9 was tried for the encounters below (rat nest deaths 0.21 → 0.14; within noise).
+
+**Weapon sweep** (`sim/run.js --n 60 --only weapons`, level-4 sellswords, no shields; average win, before → after):
+
+| weapon | everyone in mail | everyone in plate |
+|---|---|---|
+| rapier | 90% → 65% | 37% → 33% |
+| longsword | 72% → 64% | 71% → 41% |
+| greatsword | 59% → 63% | 88% → 61% |
+| dagger | 56% → 51% | – |
+| warhammer | 46% → 46% | 4% → 8% |
+| flanged mace | 25% → 38% | 64% → 48% |
+| spiked mace | 24% → 30% | 10% → 53% |
+| club | 20% → 34% | 5% → 10% |
+
+**Armor sweep** (sword and board, trained in their armor; before → after): none 13 → 13%, padded 41 → 45%,
+leather 45 → 41%, iron mail 38 → 66%, steel mail (was scale) 70 → 58%, plate 83 → 73%. Plate against mail head to head
+(60 fights): 75/17 → 48/52, no time-outs, median 4 rounds.
+
+**Encounters** (`tools/encounters.js --n 100`; columns: before, new reach only, final):
+
+| encounter | won | dead per fight |
+|---|---|---|
+| undercroft_1/rat_nest | 100 / 100 / 100% | 0.02 / 0.03 / 0.21 |
+| undercroft_2/crew | 94 / 93 / 89% | 1.18 / 1.41 / 1.55 |
+| barrow/squad | 4 / 0 / 0% | 3.73 / 3.96 / 3.96 |
+| barrow/horde | 18 / 17 / 17% | 1.59 / 1.77 / 2.70 |
+| barrow/knight | 0 / 0 / 10% | 3.79 / 3.96 / 3.66 |
+| trollhole/wolves | 99 / 99 / 100% | 0.37 / 0.44 / 0.43 |
+| trollhole/troll | 97 / 99 / 100% | 0.20 / 0.20 / 0.00 |
+
+**Reading.**
+- **The rapier is no longer dominant in mail** (90% → 65%). It bursts padding and leather but must find a gap in mail
+  (20% at DEX 5), and a turned point wears it hard.
+- **Mail went from middling to strong** (38% → 66% trained). Sword thrusts no longer pass it; only the half-sword
+  thrust (×1.5, a technique) bursts it.
+- **Plate's edge over mail between swordsmen is gone** (75/17 → 48/52). Neither side's sword gets through the other's
+  armor easily, fights run longer, and plate's stamina and AP costs tell.
+  - If plate should still beat mail here, the lever is plate's encumbrance (armorAdjust stamina and regen, the SPD
+    penalty behind armor AP) relative to mail's, not its protection.
+- **Blunt is now the plate-killer it should be.** Spiked and flanged maces 48–53% in the all-plate sweep; blades
+  dropped there (longsword 71% → 41%).
+- **The level-1 party bleeds more against bites and stabs in padding.** Rat-nest deaths 0.02 → 0.21, horde 1.59 → 2.70.
+  - The cause is the gap: a bite that finds a gap in padding puts in all its piercing; before, it lost a point to
+    mitigation and half the rest to pass-through.
+  - Reach alone changed little (second column).
+  - Levers: a higher gap number for padding (9 was tried, within noise), or gap hits taking the pass-through roll too.
+- **The warhammer stays weak in both sweeps** (46% / 8%). It is slow, and its beak needs a gap in plate like any point.
 ## Weapon wear, rest and repair after a fight, weariness (2026-10-20)
 
 **The user's brief.**

@@ -27,23 +27,34 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   (parry/dodge cost against attack cost, pool size), never single monsters.
 - [ ] The turn budget (pool 6, AP in tenths, swing 4, move 2, contested blocks, armor AP, Quick feats halve at the top
   rank): playtest it. From the sims (sim/FINDINGS.md):
-  - the level-1 skeleton squad is now unwinnable (11% → 0%): an encounter-design question;
-  - the rapier rose to 91% in the weapon sweep (all fighters in mail); check whether that is realistic.
+  - the level-1 skeleton squad is now unwinnable (11% → 0%): an encounter-design question.
   The brawler losing most duels to armed fighters (14% → 1%) is realistic and stays (the user's rule: in 1v1, realism
   beats balance; styles get their place from encounters built around them).
-- [ ] Rapier in mail still wins 90% of the weapon sweep: reach (thrust reaches 3) and mail stopping 1 piercing, not
-  wear. Decide whether light points should do worse against metal (momentum); see sim/FINDINGS.md.
+- [ ] Reach by motion (swords swing 1 and thrust 2, two-handers 2 and 3, spears 4) and points against armor (burst,
+  find a gap, or turned): playtest. Open questions from sim/FINDINGS.md:
+  - plate's edge over mail between swordsmen is gone (75/17 → 48/52): if plate should win, lighten its encumbrance
+    against mail's rather than raise its protection;
+  - the level-1 party bleeds more in padding (rat-nest deaths 0.02 → 0.21, horde 1.59 → 2.70): a gap in padding lets a
+    whole bite in. Levers: padded's gap number (armor.yaml), or gap hits taking the pass-through roll;
+  - plate spreads glancing blows but not crushing ones (`dissipate: {glancing: 0.5, crushing: 0}`); spreading
+    crushing blows too costs maces their place against plate (2–13% in the all-plate sweep);
+  - the scythe has no thrust at all ("nearly useless" would need a butt-jab face, which is rules code);
+  - the AI does not weigh weapon wear: a rapier fighter keeps thrusting at plate until the blade breaks.
+- [ ] Item tags in play: foes roll craft, metal and origin, and shops stock bronze and steel mail and the heavy spear;
+  no loot table or shop yet offers an origin, an exotic material or an enchantment (placed by hand only: the
+  revenant knight). Add some rare finds.
+- [ ] The GM sheet's armor row now has five selects (type, material, origin, craft, coverage); only the fake DOM has
+  rendered it. Enchantments show but cannot be edited there.
 - [ ] Weapon wear, "Rest and repair" after fights and weariness (−1 max stamina a round until camp) are untested over a
   whole dungeon run; the encounter sim starts every fight fresh. A multi-fight sim would show attrition.
-- [ ] Weapon materials exist on items (an iron longsword) but nothing generates them yet: loot and shops make the type's
-  default material.
 - [ ] The UI shows fractional AP (pips with a half pip, "1.5 AP"); only the fake DOM has run it.
 - [ ] AI oddities seen in logs: a sword-and-board fighter drops the longsword for a dagger; everyone reads intent every round;
   archers and mages often draw opportunity strikes backing off.
 - [ ] "Always ask" puts a pop-up on every blow at the party (several a round against a group). Playtest; if it drags, add a
   per-character standing order as an option.
 - [ ] The GM table's reaction pop-up (gm.html) has only run in the fake DOM; look at it.
-- [ ] The design docs (Mechanics Outline, Specifics) still describe passes and guards; update them to the turn model.
+- [ ] The design docs (Mechanics Outline, Specifics) still describe passes, guards, the old reach, quality and scale
+  armor; update them to the turn model, reach by motion, points against armor and the item tags.
 
 ## Game
 - [ ] Magic in play: nouns are scarce (books, creation pick) and the Lore/ritual screen exists only in the GM table.
@@ -55,6 +66,11 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 - [ ] More dungeon maps in the new style; the other three are still the old layouts with no scenery props.
 
 ## Done recently
+- This folder is the git repository (the separate bbb-push clone is gone); commit and push `main` from here.
+- Reach by motion (the user's table); points burst armor by punch, find a gap (d10 + ⌊DEX/4⌋ + feats) or are turned
+  (blunt, hard wear). Every weapon, armor piece and shield is type + material + origin + craftsmanship + enchantments
+  (materials.yaml, origins.yaml, crafts.yaml, enchantments.yaml); armor tiers padded, leather, mail, plate; old saves
+  migrate. Plate spreads glancing blows. Rapier in mail 90% → 65% of the weapon sweep.
 - Weapons wear (durability by material, quality and fragility; metal armor, parries and blocks wear them; worn weapons
   hit softer, broken ones need a smith). Thrusts wear armor. After a fight, "Rest and repair" or "Press on". Weariness:
   −1 max stamina per round of combat until a long rest.
