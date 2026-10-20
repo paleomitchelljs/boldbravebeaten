@@ -1,0 +1,28 @@
+# What weapons, armor and shields are made of. Every item carries one (its type's usual one if none is given).
+# An item is type + material + origin (origins.yaml) + craft (crafts.yaml) + enchantments (enchantments.yaml).
+#   hardness    what a blade meets: how fast it wears a weapon that strikes it, and whether a power blow can
+#               shatter a shield of it (CONFIG.weaponWear)
+#   toughness   durability multiplier (iron 1)
+#   weight      armor: multiplies its SPD, DEX, stamina and regeneration penalties; weapons: multiplies the mass,
+#               so speed, damage, strain and punch follow from the physics. Against the type's usual material.
+#   protect     armor: multiplies slashing and piercing mitigation and pierce resistance; shields: threshold
+#   metal       lightning runs through it; rusts: the rust beetle eats it (bronze does not rust)
+#   exotic      a rare find: never stocked by ordinary shops or rolled for ordinary foes
+#   value       price multiplier against the type's usual material
+
+cloth: {name: Cloth, hardness: 0.1, toughness: 1, weight: 1, protect: 1, rarity: common, value: 1}
+leather: {name: Leather, hardness: 0.3, toughness: 1, weight: 1, protect: 1, rarity: common, value: 1}
+hide: {name: Hide, hardness: 0.5, toughness: 1, weight: 1, protect: 1, rarity: common, value: 1}
+wood: {name: Wood, hardness: 1, toughness: 0.6, weight: 1, protect: 1, rarity: common, value: 1}
+bone: {name: Bone, hardness: 1, toughness: 0.7, weight: 1, protect: 1, rarity: common, value: 1}
+chitin: {name: Chitin, hardness: 1.5, toughness: 1, weight: 1, protect: 1, rarity: common, value: 1}
+stone: {name: Stone, hardness: 2, toughness: 1, weight: 1, protect: 1, rarity: common, value: 1}
+bronze: {name: Bronze, hardness: 1.5, toughness: 0.8, weight: 1.1, protect: 0.85, metal: true, rarity: common, value: 0.7}
+iron: {name: Iron, hardness: 2, toughness: 1, weight: 1, protect: 1, metal: true, rusts: true, rarity: common, value: 1}
+steel: {name: Steel, hardness: 3, toughness: 1.5, weight: 1, protect: 1.25, metal: true, rusts: true, rarity: uncommon, value: 2.5}
+
+# Exotic (placeholder names: rename freely).
+silk: {name: Spider silk, hardness: 0.2, toughness: 1.5, weight: 0.5, protect: 1.6, exotic: true, rarity: very rare, value: 12}
+dragonhide: {name: Dragon hide, hardness: 1, toughness: 2.5, weight: 0.9, protect: 2, exotic: true, rarity: very rare, value: 15}
+starIron: {name: Star iron, hardness: 4, toughness: 2.5, weight: 0.75, protect: 1.5, metal: true, rusts: true, exotic: true, rarity: very rare, value: 15}
+adamant: {name: Adamant, hardness: 5, toughness: 3, weight: 1.1, protect: 2, metal: true, exotic: true, rarity: unique, value: 40}

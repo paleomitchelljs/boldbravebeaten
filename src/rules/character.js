@@ -43,10 +43,10 @@
     };
     if (opts.starterGear !== false) {
       // Philosophy: everyone starts in padded armor with a wooden shield.
-      c.armor = Items.makeArmor('padded', 'full', 'standard');
-      c.shield = Items.makeShield('round', 'wood', 'standard');
-      const club = Items.makeWeapon('club', 'standard');
-      const dagger = Items.makeWeapon('dagger', 'standard');
+      c.armor = Items.makeArmor('padded', 'full', 'average');
+      c.shield = Items.makeShield('round', 'wood', 'average');
+      const club = Items.makeWeapon('club', 'average');
+      const dagger = Items.makeWeapon('dagger', 'average');
       c.weapons.push(club, dagger);
       c.wield = club.id;
       c.sidearm = dagger.id;
@@ -78,6 +78,8 @@
     const RENAMED = { verb_attack: 'verb_strike', verb_mend: 'verb_bless', verb_ward: 'verb_bless', verb_calm: 'verb_hex', verb_hold: 'verb_hex', verb_bind: 'verb_build', verb_reveal: 'verb_inscribe', verb_explode: 'verb_burst' };
     for (const [from, to] of Object.entries(RENAMED)) if (c.feats[from]) { c.feats[to] = Math.max(c.feats[to] || 0, c.feats[from]); delete c.feats[from]; }
     c.weapons = c.weapons || [];
+    // Items carry craft (not quality), and scale armor is now steel mail.
+    for (const it of [c.armor, c.shield].concat(c.weapons)) if (it) Items.normalizeItem(it);
     c.bleeds = c.bleeds || [];
     if (c.offhand === undefined) c.offhand = null;
     c.inventory = Object.assign({ bandages: 0, gold: 0, arrows: 0, bodkins: 0, items: [], components: {} }, c.inventory || {});
@@ -230,14 +232,14 @@
   // ---- Armor & shield ----------------------------------------------------
   function armorInfo(c) {
     if (!c.armor) {
-      return { type: 'none', mit: { P: 0, S: 0, B: 0 }, effMit: { P: 0, S: 0, B: 0 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, passThrough: 1, durability: 0, maxDurability: 0 };
+      return { type: 'none', mit: { P: 0, S: 0, B: 0 }, effMit: { P: 0, S: 0, B: 0 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, passThrough: 1, durability: 0, maxDurability: 0, pierce: null, dissipate: null, metal: false, material: null };
     }
     const a = c.armor;
     const b = Items.armorBase(a);
     let spd = b.spd, dex = b.dex, stamina = b.stamina;
     if ((a.type === 'padded' || a.type === 'leather') && rank(c, 'light_armor_training')) {
-      spd = Math.floor(spd / 2);
-      dex = Math.floor(dex / 2);
+      spd = Math.floor(spd / 2 * 10) / 10;
+      dex = Math.floor(dex / 2 * 10) / 10;
     }
     if (a.type === 'mail') {
       spd = Math.max(0, spd - rank(c, 'mail_mobility'));
@@ -257,6 +259,9 @@
     return {
       type: a.type, mit: b.mit, effMit, spd, dex, stamina, regen: b.regen, standUp: b.standUp,
       passThrough: b.passThrough, durability: a.durability, maxDurability: b.maxDurability,
+      pierce: b.pierce, metal: b.metal, material: b.material,
+      // Like mitigation, it fades as the armor wears.
+      dissipate: { glancing: b.dissipate.glancing * scale, crushing: b.dissipate.crushing * scale },
     };
   }
 
@@ -473,7 +478,7 @@
     // STR counts for as much as the blow needs it: little behind a sharp point, a lot behind a
     // mace (physical model; the table model adds it in full).
     const str = Math.trunc(strBonus(c) * (def.strMult[motion] != null ? def.strMult[motion] : 1));
-    let bonus = G.DATA.QUALITY[weapon.quality].bonus + (motion === 'shoot' && !CONFIG.archery.strBonus ? 0 : str);
+    let bonus = motion === 'shoot' && !CONFIG.archery.strBonus ? 0 : str;
     if (isLightWeapon(weapon) && motion !== 'shoot') bonus += rank(c, 'precision');
     if (motion === 'twoHanded' || motion === 'power') bonus += rank(c, 'weight_of_the_blow');
     v[main] = Math.max(0, v[main] + bonus);
@@ -526,6 +531,8 @@
           o.minRange = 1;
           o.maxRange = o.reach = 1;
           o.closePenalty = false;
+          o.clinchPenalty = false;
+          if (o.punch) o.punch = Math.round(o.punch * CONFIG.weaponPhysics.grip * 100) / 100; // both hands on the blade
           opts.push(o);
         }
       }
@@ -542,7 +549,7 @@
     for (const type of c.natural || []) {
       const def = WEAPONS[type] && Items.weaponStats(type);
       if (!def || (grappling && !def.grappleUsable)) continue;
-      const pseudo = { id: 'nat-' + type, type, quality: 'standard', natural: true };
+      const pseudo = { id: 'nat-' + type, type, craft: 'average', natural: true };
       for (const motion of def.motions) {
         const m = MOTIONS[motion];
         if (m.requiresFeat && !rank(c, m.requiresFeat)) continue;
@@ -627,34 +634,36 @@
     let red = 0;
     if (isLightWeapon(w) && (motion === 'thrust' || motion === 'swing')) red += rank(c, 'light_touch');
     const stamina = Math.round(strainF * Math.max(CONFIG.minStrikeStamina || 0, staminaCost(c, Math.max(0, baseSt), effectiveWeight(c, w), red)));
-    // Range band.
-    let minRange = 1, maxRange = def.reach, closePenalty = !def.closeOK, ranged = false;
-    if (motion === 'thrust') {
-      maxRange = def.reach + ((def.thrust && def.thrust.ext) || 0);
-      minRange = (def.thrust && def.thrust.min) || 1;
-      if (rank(c, 'lunge')) maxRange += 1;
-    }
+    // Range band: the motion's reach (weapons.yaml), cramped inside reach.min; in a clinch, cramped
+    // unless the weapon is closeOK (computeHit).
+    let minRange = Items.reachMin(def), maxRange = Items.reachOf(def, motion === 'thrust' ? 'thrust' : 'swing') || 1, closePenalty = false, ranged = false;
+    if (motion === 'thrust' && rank(c, 'lunge')) maxRange += 1;
+    let clinchPenalty = !def.closeOK && !def.natural;
     if (motion === 'shoot') {
       minRange = def.ranged.min;
       maxRange = def.ranged.max;
       closePenalty = false;
+      clinchPenalty = false;
       ranged = true;
     }
-    if (face === 'hilt') closePenalty = false; // the murder stroke is a close technique
-    if (minRange > 1 && !ranged) {
-      // A weapon that can't normally be used up close (a spear's point): under the 'blunt'
-      // rule it can still be jabbed with the shaft at range 1.
-      if (CONFIG.range.closeRule === 'blunt') { minRange = 1; closePenalty = true; } else closePenalty = false;
-    }
-    // Inside the weapon's reach: either the attack can't be made at all, or it is penalized.
-    if (closePenalty && CONFIG.range.closeRule === 'cannot') {
-      minRange = 2;
-      closePenalty = false;
+    if (face === 'hilt') { closePenalty = false; clinchPenalty = false; minRange = 1; } // the murder stroke is a close technique
+    if (minRange > 1 && !ranged && CONFIG.range.closeRule !== 'cannot') {
+      // Inside the weapon's reach (a spear's point at 1): it can still be jabbed with the shaft or
+      // swung from the haft, penalized ('blunt' or 'half'); under 'cannot' it can't be used there.
+      minRange = 1;
+      closePenalty = true;
     }
     const trait = def.trait || {};
     if (def.natural && motion === 'shoot') { minRange = def.ranged.min; maxRange = def.ranged.max; ranged = true; closePenalty = false; }
+    // Punch (CONFIG.pierce): what drives the point into armor. Heavier motions drive harder, and STR
+    // puts the body behind a hand-driven point (not behind an arrow).
+    let punch = (def.punch && def.punch[face]) || 0;
+    if (punch && motion !== 'shoot') {
+      punch *= (CONFIG.motionMultiplier[motion] || 1) * Math.max(0.5, 1 + ((CONFIG.pierce && CONFIG.pierce.strPer) || 0) * strBonus(c));
+      punch = Math.round(punch * Items.weaponEfficacy(w) * 100) / 100;
+    }
     return {
-      kind: 'strike', weaponId: w.id, weaponType: w.type, face, motion, ap, stamina,
+      kind: 'strike', weaponId: w.id, weaponType: w.type, face, motion, ap, stamina, punch, clinchPenalty,
       natural: !!def.natural, knockdown: trait.knockdown || null, venom: trait.venom || null, rust: trait.rust || null, shieldCrush: !!trait.shieldCrush, web: trait.web || null,
       reach: maxRange, minRange, maxRange, closePenalty, ranged, longRange: ranged ? def.ranged.long : null,
       strain: Math.round(strain * 100) / 100, tooHeavy: strain > CONFIG.weaponPhysics.strain.max,
@@ -667,6 +676,7 @@
   function arrowOption(c, o, hd) {
     o.arrowHead = hd.name;
     o.ammo = hd.ammo;
+    if (o.punch && hd.punch != null) o.punch = Math.round(o.punch * hd.punch * 100) / 100;
     o.damage = o.damage.slice();
     const i = mainIndex(o.damage);
     o.damage[i] = Math.max(0, o.damage[i] + hd.damage);

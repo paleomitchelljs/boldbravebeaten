@@ -22,7 +22,10 @@
     { file: 'rules.yaml', optional: true, install: (d) => G.Content.applyRules(d) },
     { file: 'armor.yaml', install: (d) => replaceObject(G.DATA.ARMOR, d) },
     { file: 'shields.yaml', install: (d) => { replaceObject(G.DATA.SHIELDS, d.types); replaceObject(G.DATA.SHIELD_MATERIALS, d.materials); } },
-    { file: 'qualities.yaml', install: (d) => replaceObject(G.DATA.QUALITY, d) },
+    { file: 'materials.yaml', install: (d) => replaceObject(G.DATA.MATERIALS, d) },
+    { file: 'origins.yaml', install: (d) => replaceObject(G.DATA.ORIGINS, d) },
+    { file: 'crafts.yaml', install: (d) => replaceObject(G.DATA.CRAFTS, d) },
+    { file: 'enchantments.yaml', install: (d) => replaceObject(G.DATA.ENCHANTMENTS, d) },
     { file: 'weapons.yaml', install: (d) => replaceObject(G.DATA.WEAPONS, d) },
     { file: 'feats.yaml', install: installFeats },
     { file: 'spells.yaml', install: (d) => replaceObject(G.CONFIG.magic.words, d) },
@@ -98,12 +101,26 @@
     const quests = W.quests || {};
     const skills = W.skills || {};
     const goodExists = (id) => has(goods, id);
+    // An item's tags: material, origin, craft (or an old quality) and enchantments, checked against its kind.
+    const tagsOk = (where, kind, type, e) => {
+      if (e.material) {
+        if (kind === 'shield') { if (!has(D.SHIELD_MATERIALS, e.material)) err(`${where}: shield material "${e.material}" unknown`); }
+        else if (!has(D.MATERIALS, e.material)) err(`${where}: material "${e.material}" is not in materials.yaml`);
+        else if (kind === 'armor' && D.ARMOR[type] && D.ARMOR[type].materials && !D.ARMOR[type].materials.includes(e.material)) err(`${where}: ${type} is not made of ${e.material}`);
+      }
+      if (e.origin && !has(D.ORIGINS, e.origin)) err(`${where}: origin "${e.origin}" is not in origins.yaml`);
+      const craft = e.craft || e.quality;
+      if (craft && !G.Items.craftId(craft)) err(`${where}: craft "${craft}" is not in crafts.yaml`);
+      for (const x of e.enchantments || []) {
+        if (!has(D.ENCHANTMENTS, x)) err(`${where}: enchantment "${x}" is not in enchantments.yaml`);
+        else if (!(D.ENCHANTMENTS[x].kinds || []).includes(kind)) err(`${where}: enchantment "${x}" can't be laid on a ${kind}`);
+      }
+    };
     const gearSpecOk = (where, e) => {
       if (e.weapon && !has(D.WEAPONS, e.weapon)) err(`${where}: weapon "${e.weapon}" is not in weapons.yaml`);
       if (e.armor && !has(D.ARMOR, e.armor)) err(`${where}: armor "${e.armor}" is not in armor.yaml`);
       if (e.shield && !has(D.SHIELDS, e.shield)) err(`${where}: shield "${e.shield}" is not in shields.yaml`);
-      if (e.material && !has(D.SHIELD_MATERIALS, e.material)) err(`${where}: shield material "${e.material}" unknown`);
-      if (e.quality && !has(D.QUALITY, e.quality)) err(`${where}: quality "${e.quality}" is not in qualities.yaml`);
+      if (e.weapon || e.armor || e.shield) tagsOk(where, e.weapon ? 'weapon' : e.armor ? 'armor' : 'shield', e.weapon || e.armor || e.shield, e);
       if (e.good && !goodExists(e.good)) err(`${where}: good "${e.good}" is not in items.yaml`);
     };
     const condOk = (where, c) => {
@@ -118,6 +135,9 @@
     for (const [id, m] of Object.entries(G.Enemies.MONSTERS)) {
       if (m.group) { for (const k of m.group) if (!has(G.Enemies.MONSTERS, k)) err(`monsters.${id}: group member "${k}" is not a monster`); continue; }
       if (m.armor && !has(D.ARMOR, m.armor)) err(`monsters.${id}: armor "${m.armor}" is not in armor.yaml`);
+      if (m.armorItem) { if (!has(D.ARMOR, m.armorItem.type)) err(`monsters.${id}: armor "${m.armorItem.type}" is not in armor.yaml`); else tagsOk(`monsters.${id}.armorItem`, 'armor', m.armorItem.type, m.armorItem); }
+      if (m.shieldItem) { if (!has(D.SHIELDS, m.shieldItem.size)) err(`monsters.${id}: shield "${m.shieldItem.size}" is not in shields.yaml`); else tagsOk(`monsters.${id}.shieldItem`, 'shield', m.shieldItem.size, m.shieldItem); }
+      for (const w of m.weaponItems || []) { if (!has(D.WEAPONS, w.type)) err(`monsters.${id}: weapon "${w.type}" is not in weapons.yaml`); else tagsOk(`monsters.${id}.weaponItems`, 'weapon', w.type, w); }
       for (const w of m.natural || []) if (!has(D.WEAPONS, w)) err(`monsters.${id}: natural weapon "${w}" is not in weapons.yaml`);
       for (const w of m.weapons || []) if (!has(D.WEAPONS, w)) err(`monsters.${id}: weapon "${w}" is not in weapons.yaml`);
       for (const f of Object.keys(m.feats || {})) if (!has(D.FEATS, f)) err(`monsters.${id}: feat "${f}" is not in feats.yaml`);

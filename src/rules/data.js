@@ -7,13 +7,21 @@
 
   // The catalogs below are filled from data/*.yaml by Content.install (src/data/content.js),
   // in place, so every module that holds a reference sees the same objects.
-  // armor.yaml: mit {P,S,B}, spd, dex, stamina, regen, standUp, rarity, natural, recoil.
+  // armor.yaml: mit {P,S,B}, spd, dex, stamina, regen, standUp, weight, durability, material(s), pierce
+  // {resist, gap}, rarity, natural, recoil.
   const ARMOR = {};
   // shields.yaml: blockAP, threshold, durability, rarity (types); mult, rarity (materials).
   const SHIELDS = {};
   const SHIELD_MATERIALS = {};
-  // qualities.yaml: durability and threshold multipliers, a bonus, rarity.
-  const QUALITY = {};
+  // The tags every weapon, armor piece and shield carries besides its type:
+  //   materials.yaml     hardness, toughness, weight, protect, metal, exotic, rarity, value
+  //   origins.yaml       weight, protect, damage, durability (how weight trades against the rest), rarity, value
+  //   crafts.yaml        durability, wear, break, unbreakable (how fast it wears, how easily it breaks)
+  //   enchantments.yaml  kinds, the same multipliers, drain
+  const MATERIALS = {};
+  const ORIGINS = {};
+  const CRAFTS = {};
+  const ENCHANTMENTS = {};
 
   const COVERAGE = {
     full: { name: 'Full' },
@@ -23,12 +31,13 @@
 
   // ---- Weapons (Specifics) ------------------------------------------------
   // faces: [P, S, B]. motions: which motions the weapon allows.
-  // Range, in grid squares (PROVISIONAL scale: 1 = clinch, 2 = sword distance, 3+ = long):
-  //   reach        — farthest a swing reaches; swings work from 1 up to reach
-  //   thrust.ext   — extra reach for thrusts; thrust.min — closest a thrust works
-  //   closeOK      — works up close (range 1); otherwise its attacks need range 2+ (CONFIG.range.closeRule)
+  // Range, in grid squares (PROVISIONAL scale, the user's: 1 = arm's length, where daggers, one-handed
+  // swings and fists work; 2 = a one-handed thrust or a two-handed swing; 3 = a two-handed thrust; 4 = a spear):
+  //   reach        — { swing, thrust, min }: farthest each motion reaches (swing covers the two-handed and
+  //                  power swings); inside `min` (default 1) the weapon is cramped (CONFIG.range.closeRule)
+  //   closeOK      — works in a clinch without being cramped; long blades and spears don't
   //   ranged       — bows: { min, max, long } (beyond `long` damage drops)
-  //   material     — what the striking part is made of (for breaking shields)
+  //   material     — what the striking part is made of (wear, breaking shields); an item may carry its own
   //   drawWindUp   — the shot must be drawn (wound up) a round ahead
   //   phys         — PROVISIONAL physical description (CONFIG.weaponPhysics). Under the
   //                  'physical' weapon model, damage, AP, weight class, STR scaling and wounds
@@ -36,7 +45,8 @@
   //                  the old hand-set table. mass kg, length m; point {depth cm it can drive in,
   //                  width cm of the wound}; edge 0–1 (how much cutting edge); head {mass kg at
   //                  the striking end, spikes {depth, width}, cut}; beak {depth, width}; hilt
-  //                  (pommel strikes); arrow {depth, width} for bows.
+  //                  (pommel strikes); arrow {depth, width} for bows. point.punch / arrow.punch override the
+  //                  punch through armor worked out from mass (CONFIG.pierce).
   const WEAPONS = {}; // weapons.yaml
 
   const MOTIONS = {
@@ -92,6 +102,6 @@
   const TREES = [];
 
   G.DATA = {
-    ARMOR, SHIELDS, SHIELD_MATERIALS, QUALITY, COVERAGE, WEAPONS, MOTIONS, ACTIONS, RARITY, FEATS, TREES,
+    ARMOR, SHIELDS, SHIELD_MATERIALS, MATERIALS, ORIGINS, CRAFTS, ENCHANTMENTS, COVERAGE, WEAPONS, MOTIONS, ACTIONS, RARITY, FEATS, TREES,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

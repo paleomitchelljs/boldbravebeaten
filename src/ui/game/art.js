@@ -22,7 +22,7 @@
   const SKIN = ['#f0d2b4', '#e0b48a', '#c58f60', '#9a6a45', '#6d4630', '#4a2f22'];
   const HAIR = ['#2a1c14', '#5a3a22', '#8a5a2c', '#b8893c', '#d9d2c4', '#8b2f1e', '#3a3f4a'];
   const CLOTH = ['#7a5a3a', '#4f6b52', '#52607a', '#7a4f5a', '#6b5b7a', '#7a6d45'];
-  const ARMOR_COLOR = { padded: '#c9b37a', leather: '#7a4f2a', mail: '#9aa3a8', scale: '#a8803a', plate: '#cdd4da' };
+  const ARMOR_COLOR = { padded: '#c9b37a', leather: '#7a4f2a', mail: '#9aa3a8', plate: '#cdd4da' };
   const METAL = { wood: '#8a6a3c', hide: '#8a6244', iron: '#6f7478', steel: '#b9c2c8', adamant: '#5a5f8f', stone: '#8a8a82', bone: '#d8d2bc' };
 
   const shade = (hex, f) => {
@@ -97,10 +97,9 @@
     const root = svg('svg', { viewBox: '0 0 200 360', class: 'doll', role: 'img', 'aria-label': `${c.name}, as equipped`, style: opts.size ? `height:${opts.size}px;width:auto` : null });
     root.appendChild(svg('defs', null,
       svg('pattern', { id: uid + 'mail', width: 6, height: 6, patternUnits: 'userSpaceOnUse' }, svg('rect', { width: 6, height: 6, fill: ARMOR_COLOR.mail }), svg('circle', { cx: 3, cy: 3, r: 2.2, fill: 'none', stroke: '#6d767a', 'stroke-width': 0.8 })),
-      svg('pattern', { id: uid + 'scale', width: 8, height: 7, patternUnits: 'userSpaceOnUse' }, svg('rect', { width: 8, height: 7, fill: ARMOR_COLOR.scale }), svg('path', { d: 'M0 3 Q4 9 8 3', fill: 'none', stroke: '#6d4f1c', 'stroke-width': 1 })),
       svg('pattern', { id: uid + 'quilt', width: 8, height: 8, patternUnits: 'userSpaceOnUse' }, svg('rect', { width: 8, height: 8, fill: ARMOR_COLOR.padded }), svg('path', { d: 'M0 0 L8 8 M8 0 L0 8', stroke: '#a38d55', 'stroke-width': 0.8 })),
       svg('linearGradient', { id: uid + 'plate', x1: 0, x2: 1, y1: 0, y2: 0 }, svg('stop', { offset: '0', 'stop-color': '#9aa4ab' }), svg('stop', { offset: '0.45', 'stop-color': '#eef2f4' }), svg('stop', { offset: '1', 'stop-color': '#8d979e' }))));
-    const fillFor = (type) => type === 'mail' ? `url(#${uid}mail)` : type === 'scale' ? `url(#${uid}scale)` : type === 'padded' ? `url(#${uid}quilt)` : type === 'plate' ? `url(#${uid}plate)` : (ARMOR_COLOR[type] || '#888');
+    const fillFor = (type) => type === 'mail' ? `url(#${uid}mail)` : type === 'padded' ? `url(#${uid}quilt)` : type === 'plate' ? `url(#${uid}plate)` : (ARMOR_COLOR[type] || '#888');
     const stroke = a ? shade(col, 0.45) : null;
     const armorFill = a ? fillFor(a.type) : null;
     const W = 54 * wide; // torso half-width scale
@@ -148,7 +147,7 @@
     root.appendChild(svg('circle', { cx: cx - 9, cy: 50, r: 2.4, fill: '#2a1c14' }));
     root.appendChild(svg('circle', { cx: cx + 9, cy: 50, r: 2.4, fill: '#2a1c14' }));
     root.appendChild(svg('path', { d: `M${cx - 7} 64 Q ${cx} 68 ${cx + 7} 64`, fill: 'none', stroke: '#6b3b2a', 'stroke-width': 1.6, 'stroke-linecap': 'round' }));
-    const helm = a && (a.type === 'plate' || (a.type === 'mail' && cov === 'full') || (a.type === 'scale' && cov === 'full'));
+    const helm = a && (a.type === 'plate' || (a.type === 'mail' && cov === 'full'));
     if (helm) {
       const hf = a.type === 'plate' ? `url(#${uid}plate)` : fillFor(a.type);
       root.appendChild(svg('path', { d: `M${cx - 27} 54 Q ${cx - 27} 12 ${cx} 12 Q ${cx + 27} 12 ${cx + 27} 54 L ${cx + 22} 54 L ${cx + 22} 44 L ${cx - 22} 44 L ${cx - 22} 54 Z`, fill: hf, stroke, 'stroke-width': 2 }));

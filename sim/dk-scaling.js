@@ -67,16 +67,16 @@ function makeDK(level, build, tier) {
     d.feats = {};
     Enemies.chooseFeats(d, BUILDS[build].prefs, Enemies.makeRng(level * 7919 + 3));
   }
-  const blade = d.weapons.find((w) => w.enchant);
+  const blade = d.weapons.find((w) => w.enchant || (w.enchantments || []).length);
   if (tier < 1) {
     // A plain longsword in place of Soulreaver.
-    const plain = Items.makeWeapon('longsword', 'standard');
+    const plain = Items.makeWeapon('longsword', 'average');
     d.weapons = d.weapons.map((w) => (w === blade ? plain : w));
     d.wield = plain.id;
   }
   if (tier < 2) {
-    d.armor = Items.makeArmor('plate', 'full', 'standard');
-    d.shield = Items.makeShield('heater', 'steel', 'standard');
+    d.armor = Items.makeArmor('plate', 'full', 'average');
+    d.shield = Items.makeShield('heater', 'steel', 'average');
   }
   if (tier < 3) {
     d.trinkets = [];

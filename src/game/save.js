@@ -24,6 +24,7 @@
     w.npcs = w.npcs || {};
     w.maps = w.maps || {};
     w.pack = w.pack || { gear: [], goods: {} };
+    for (const it of w.pack.gear || []) G.Items.normalizeItem(it);
     w.rep = w.rep || { renown: 0, notoriety: 0 };
     return w;
   }

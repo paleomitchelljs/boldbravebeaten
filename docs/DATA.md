@@ -9,11 +9,14 @@ No anchors or tags. Keys must be unique.
 
 | File | What it holds |
 |---|---|
-| `rules.yaml` | Numbers: party creation, XP, training prices, time, skill target numbers, faction spread, parley, economy. `game:` keys are read by the game layer; anything else is deep-merged over `src/rules/config.js`. |
-| `armor.yaml` | Armor types: mitigation per face (P pierce, S slash, B blunt), SPD/DEX penalties, stamina, regen, rarity. `natural: true` for monster hides. |
+| `rules.yaml` | Numbers: party creation, XP, training prices, time, skill target numbers, faction spread, parley, economy, the gear foes roll (`enemyGear`). `game:` keys are read by the game layer; anything else is deep-merged over `src/rules/config.js`. |
+| `armor.yaml` | Armor types (padded, leather, mail, plate): mitigation per face (P pierce, S slash, B blunt), SPD/DEX penalties, stamina, regen, durability, usual and allowed materials, `pierce` (the punch that bursts it, the gap number), `dissipate` (plate), rarity. `natural: true` for monster hides. |
 | `shields.yaml` | `types` (block AP, threshold, durability) and `materials` (multiplier). |
-| `qualities.yaml` | Crude … legendary: durability, threshold, bonus. |
-| `weapons.yaml` | Weapons, including natural ones. `phys` (mass, length, point, edge, head…) generates damage, AP, STR scaling and wounds. |
+| `materials.yaml` | What gear is made of: hardness, toughness, weight, protection, `metal`, `rusts`, `exotic`. |
+| `origins.yaml` | Where and how gear was made (common, elven, dwarven, goblin): weight against protection, damage and durability. |
+| `crafts.yaml` | Craftsmanship (poor, average, masterwork): durability, wear taken, shield break threshold. |
+| `enchantments.yaml` | Rare enchantments: what they can be laid on and the multipliers or effects they add. |
+| `weapons.yaml` | Weapons, including natural ones. `phys` (mass, length, point, edge, head…) generates damage, AP, STR scaling, wounds and punch through armor; `reach: {swing, thrust, min}`; `closeOK` (works in a clinch). |
 | `feats.yaml` | Trees of feats: ranks, `requires`, effect line, `auto` (does the game implement it). |
 | `spells.yaml` | The magic grammar: verbs, nouns, modifiers. |
 | `monsters.yaml` | Creatures and packs. |
@@ -47,14 +50,22 @@ bogHag:
 A pack is `{name, group: [wolf, wolf, alphaWolf]}`. Use it in an encounter: `{monster: bogHag}`.
 People who carry gear come from `foes.yaml` templates: `{template: bandit, level: 2, n: 3}`.
 
-**A weapon** (`weapons.yaml`): give it a `phys` block and the engine works out the rest. A new kind of face, motion
-or trait still needs rules code; a new sword, mace or spear does not.
+**A weapon** (`weapons.yaml`): give it a `phys` block and a `reach` and the engine works out the rest. A new kind of
+face, motion or trait still needs rules code; a new sword, mace or spear does not.
+
+**An item's tags.** Every weapon, armor piece and shield is a type plus the same tags, wherever gear is written
+(loot, shop stock, monsters): `material` (materials.yaml; armor only those its type lists), `origin` (origins.yaml),
+`craft` (`poor | average | master`; an old `quality` is read as one) and `enchantments` (a list, usually absent).
+Armor adds `coverage`; shields have a `size`. Material and origin set protection, weight and damage; craftsmanship
+sets only how fast the item wears and how easily it breaks. A monster's carried gear: `craft` and `origin` for all
+of it, or items spelled out: `armorItem: {type: plate, material: steel, origin: dwarven}`,
+`weaponItems: [{type: longsword, name: Soulreaver, enchantments: [drinking]}]`, `shieldItem: {size: heater, material: adamant}`.
 
 **An item** (`items.yaml` goods): `kind` is `supply | potion | key | book | trinket | trade | component`.
 Potions have `use: {heal: 1}`, `{cure: bleeding}`, `{cure: poison}` or `{repair: 0.3}`. Books have
 `teaches: {noun: fire}` or `reveals: [flag]`. Trinkets have `slot: ring|charm`, `attrs`, `ap`.
-Loot entries: `{w: 3, gold: [5, 20]}`, `{w: 2, good: salve, n: [1, 2]}`, `{w: 1, weapon: dagger, quality: fine}`,
-`{w: 1, armor: mail, coverage: half}`, `{w: 1, shield: round, material: iron}`, `{w: 4, nothing: true}`.
+Loot entries: `{w: 3, gold: [5, 20]}`, `{w: 2, good: salve, n: [1, 2]}`, `{w: 1, weapon: dagger, craft: master}`,
+`{w: 1, armor: mail, material: steel, coverage: half}`, `{w: 1, shield: round, material: iron}`, `{w: 4, nothing: true}`.
 
 **A faction** (`factions.yaml`): `allies` and `enemies` say how a change in standing spreads (a quarter to allies,
 half inverted to enemies; `rules.yaml`). `kos` is the standing at or below which members refuse to talk.

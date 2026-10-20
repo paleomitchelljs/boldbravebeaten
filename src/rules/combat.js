@@ -222,11 +222,11 @@
     return false;
   }
 
-  // Shoving reaches clinch distance; a long weapon fends off at range 2 (haft, crossguard, point).
+  // Shoving reaches range 1; a long weapon (reaching 3 or more) fends off at range 2 (haft, crossguard, point).
   function shoveReach(c) {
     const w = C.wieldedWeapon(c);
     const f = CONFIG.shove.fendReach;
-    return f && w && !WEAPONS[w.type].ranged && (WEAPONS[w.type].reach || 1) >= 2 ? Math.max(CONFIG.range.maneuverMax, f) : CONFIG.range.maneuverMax;
+    return f && w && !WEAPONS[w.type].ranged && Items.longestReach(WEAPONS[w.type]) >= 3 ? Math.max(CONFIG.range.maneuverMax, f) : CONFIG.range.maneuverMax;
   }
 
   // CONFIG.wholeTurnAction: someone who has spent nothing this round may take one action that costs
@@ -400,7 +400,7 @@
       for (const kind of ['shove', 'trip', 'disarm']) {
         if (kind === 'shove' && link) continue;
         let r = reach;
-        if (kind === 'trip' && hookWeapon(c)) r = WEAPONS[C.wieldedWeapon(c).type].reach;
+        if (kind === 'trip' && hookWeapon(c)) r = Math.max(r, Items.longestReach(WEAPONS[C.wieldedWeapon(c).type]));
         if (kind === 'shove') r = shoveReach(c);
         pushManeuver(kind, others.filter((o) => !chars[o].status.unconscious).map((o) => ({ id: o, inReach: dist(me, enc.pos[o]) <= r })));
       }
@@ -743,7 +743,7 @@
   // Pure: works out what a hit would do (before d4 hit-location rolls).
   function magicalWeapon(c, option) {
     const w = option && option.weaponId && c.weapons ? c.weapons.find((x) => x.id === option.weaponId) : null;
-    return !!(w && (w.enchant || w.magical));
+    return !!(w && (w.enchant || w.magical || Items.enchantsOf(w).length));
   }
 
   function passesThrough(attacker, target, option) {
@@ -764,11 +764,7 @@
     const st = target.status;
     const prone = st.prone;
     const pinned = !!st.pinned;
-    // Cramped: inside the weapon's reach, or wielding a weapon while held in a grapple. Under the
-    // 'blunt' rule the blow lands as a fraction of its force, all blunt (pommel, haft, guard).
-    const cramped = (flags.distance === 1 && option.closePenalty) ||
-      (CONFIG.grappledWeaponsCramped && option.weaponId && !option.ranged && isGrappled(attacker));
-    if (cramped) {
+    if (isCramped(attacker, option, flags.distance)) {
       if (CONFIG.range.closeRule === 'blunt') {
         const total = v[0] + v[1] + v[2];
         v[0] = 0; v[1] = 0; v[2] = Math.floor(total * CONFIG.range.closeMult);
@@ -784,48 +780,119 @@
     if (resist) ['P', 'S', 'B'].forEach((k, i) => { if (resist[k] != null) v[i] = Math.floor(v[i] * resist[k]); });
     // Stoneskin, barkskin, a shield of force: protection that isn't armor.
     if (G.Conditions) ['P', 'S', 'B'].forEach((k, i) => { v[i] = Math.max(0, v[i] - G.Conditions.mitigation(target, k)); });
-    const [P, S, B] = v;
-    const motion = option.motion === 'unarmed' ? 'swing' : option.motion;
-    const res = { vec: v, P, S, B, armored: false, toCON: 0, slashToAttrs: 0, bluntToStamina: 0, bluntToCON: 0, converted: 0, durLoss: 0, mitigated: { P: 0, S: 0, B: 0 } };
 
     const unconscious = target.stamina <= 0;
     const weapon = option.weaponType ? WEAPONS[option.weaponType] : null;
     const coupDeGrace = weapon && option.weaponType === 'dagger' && C.rank(attacker, 'coup_de_grace') && (prone || pinned);
-    const ai = C.armorInfo(target);
-    const armored = target.armor && target.armor.durability > 0 && !unconscious && !coupDeGrace;
+    const armored = !!(target.armor && target.armor.durability > 0 && !unconscious && !coupDeGrace);
+    const ctx = { v, prone, pinned, unconscious, weapon, armored, ai: C.armorInfo(target) };
+    // A point against armor (CONFIG.pierce): it bursts through, or it must find a gap; the expectation
+    // over the gap roll is what the AI and the preview see, and applyHit rolls it.
+    const pc = CONFIG.pierce && armored ? pierceCheck(attacker, option, ctx) : null;
+    if (pc && pc.roll) {
+      const got = armorHit(attacker, target, option, ctx, 'gap');
+      const turned = armorHit(attacker, target, option, ctx, 'turned');
+      const res = blendHits(got, turned, pc.chance);
+      res.gap = Object.assign({}, pc, { got, turned });
+      return res;
+    }
+    const res = armorHit(attacker, target, option, ctx, pc ? pc.way : null);
+    if (pc) Object.assign(res, { punch: pc.punch, resist: pc.resist });
+    return res;
+  }
+
+  // Cramped: inside the weapon's reach.min (a spear's point at range 1), in a clinch with a weapon that
+  // isn't closeOK (a sword, a spear), or wielding a weapon while held in a grapple. Under the 'blunt' rule
+  // the blow lands as a fraction of its force, all blunt (pommel, haft, guard).
+  function isCramped(attacker, option, distance) {
+    return !!((distance === 1 && option.closePenalty) ||
+      (option.clinchPenalty && attacker.status && attacker.status.clinch && (distance == null || distance <= 1)) ||
+      (CONFIG.grappledWeaponsCramped && option.weaponId && !option.ranged && isGrappled(attacker)));
+  }
+
+  // CONFIG.pierce: what a blow's piercing does against worn armor. { way: 'burst' } when its punch beats
+  // the armor's resist; { way: 'gap' } when the target is pinned (the point goes in at the armpit or
+  // the visor); otherwise { roll: true, need, chance }: d10 + ⌊DEX/gapDiv⌋ + feats ≥ the armor's gap
+  // number finds one (a 10 always does), and failing that the armor turns the point. null: no piercing.
+  function pierceCheck(attacker, option, ctx) {
+    const P = CONFIG.pierce;
+    const pierce = ctx.ai.pierce;
+    if (!(ctx.v[0] > 0) || option.spell || !pierce) return null;
+    const punch = option.punch || 0;
+    const base = { punch, resist: pierce.resist };
+    if (punch >= pierce.resist) return Object.assign(base, { way: 'burst' });
+    if (ctx.pinned) return Object.assign(base, { way: 'gap' });
+    let bonus = Math.floor(C.combatAttr(attacker, 'DEX') / P.gapDiv);
+    for (const [f, b] of Object.entries(P.feats || {})) if (C.rank(attacker, f)) bonus += b;
+    if (ctx.prone) bonus += P.prone || 0;
+    if (option.halfSword) bonus += P.halfSword || 0;
+    const need = Math.max(1, Math.min(10, pierce.gap - bonus));
+    return Object.assign(base, { way: 'gap', roll: true, need, tn: pierce.gap, bonus, chance: (11 - need) / 10 });
+  }
+
+  // The expectation of two outcomes (a gap found or the point turned) for the AI and the preview.
+  function blendHits(a, b, p) {
+    const out = Object.assign({}, a);
+    for (const k of ['toCON', 'slashToAttrs', 'bluntToStamina', 'bluntToCON', 'durLoss', 'converted']) out[k] = a[k] * p + b[k] * (1 - p);
+    out.mitigated = {};
+    for (const k of ['P', 'S', 'B']) out.mitigated[k] = a.mitigated[k] * p + b.mitigated[k] * (1 - p);
+    out.pierce = null;
+    return out;
+  }
+
+  // What a blow does to this target, armored or not. way (CONFIG.pierce): 'burst' — the point is through,
+  // and the piercing past the armor's P mitigation takes the pass-through rule (CONFIG.pierceMode) as any
+  // blow did before; 'gap' — all of it reaches the body; 'turned' — it lands as blunt instead; null — no
+  // point, or CONFIG.pierce is off (the pass-through rule), or no armor at all.
+  function armorHit(attacker, target, option, ctx, way) {
+    const { v, prone, pinned, unconscious, weapon, armored, ai } = ctx;
+    let [P, S, B] = v;
+    if (way === 'turned') { B += Math.round(P * CONFIG.pierce.deflectBlunt); P = 0; }
+    const motion = option.motion === 'unarmed' ? 'swing' : option.motion;
+    const res = { vec: [P, S, B], P, S, B, armored: false, toCON: 0, slashToAttrs: 0, bluntToStamina: 0, bluntToCON: 0, converted: 0, durLoss: 0, mitigated: { P: 0, S: 0, B: 0 }, pierce: way };
 
     if (armored) {
       res.armored = true;
       const mit = Object.assign({}, ai.effMit);
-      // Arrows: armor (textile most) catches a shaft better than a thrust; broadheads are stopped
-      // by metal, bodkins slip through it.
+      // Arrows: armor (textile most) catches a shaft better than a thrust. (Arrowheads differ in punch.)
       if (option.arrowHead) {
         const A = CONFIG.archery;
-        const hd = A.heads[option.arrowHead];
-        const type = ai.type;
-        mit.P = Math.max(0, mit.P + ((A.vsArrows || {})[type] || 0) + ((A.metalArmor || []).includes(type) ? hd.metalMit : 0));
+        mit.P = Math.max(0, mit.P + ((A.vsArrows || {})[ai.type] || 0) + (CONFIG.pierce ? 0 : ((A.heads[option.arrowHead] || {}).metalMit && ai.metal ? A.heads[option.arrowHead].metalMit : 0)));
       }
       let ignoreB = 0;
       if (weapon && weapon.bluntMitigationIgnore) ignoreB += weapon.bluntMitigationIgnore;
       if (C.rank(attacker, 'crushing_blow')) ignoreB += 2;
       mit.B = Math.max(0, mit.B - ignoreB);
-      const Pr = Math.max(0, P - mit.P);
+      const Pr = way === 'gap' ? P : Math.max(0, P - mit.P);
       const Sr = Math.max(0, S - mit.S);
       const Br = Math.max(0, B - mit.B);
       res.mitigated = { P: P - Pr, S: S - Sr, B: B - Br };
-      let pass = ai.passThrough;
-      if (C.rank(attacker, 'find_the_gap')) pass += 0.25;
-      if (C.rank(attacker, 'spot_weakness')) pass += 0.25;
-      if (option.halfSword || prone || pinned) pass = CONFIG.maneuver.pronePassThrough;
-      pass = Math.min(1, pass);
-      res.pierceLeft = Pr;
-      res.pass = pass;
-      // 'floor': piercing that only barely beats the armor does not reach CON.
-      // 'roll': toCON here is the expectation; applyHit rolls each point.
-      res.toCON = CONFIG.pierceMode === 'roll' && pass < 1 ? Pr * pass : Math.floor(Pr * pass);
+      if (way === 'gap' || way === 'turned') res.toCON = Pr;
+      else {
+        let pass = ai.passThrough;
+        if (C.rank(attacker, 'find_the_gap')) pass += 0.25;
+        if (C.rank(attacker, 'spot_weakness')) pass += 0.25;
+        if (option.halfSword || prone || pinned) pass = CONFIG.maneuver.pronePassThrough;
+        pass = Math.min(1, pass);
+        res.pierceLeft = Pr;
+        res.pass = pass;
+        // 'floor': piercing that only barely beats the armor does not reach CON.
+        // 'roll': toCON here is the expectation; applyHit rolls each point.
+        res.toCON = CONFIG.pierceMode === 'roll' && pass < 1 ? Pr * pass : Math.floor(Pr * pass);
+      }
       res.converted = Math.round(Sr * (CONFIG.conversion[motion] || 0));
       res.bluntToStamina = Br + res.converted;
-      res.durLoss = target.armor.type === 'padded' ? 0 : Math.round((B + res.converted + P * (CONFIG.armorPierceWear || 0)) * (CONFIG.armorWearScale == null ? 1 : CONFIG.armorWearScale));
+      // Plate spreads what is left of a blow over the whole body (armor.yaml dissipate): a cut or a point it
+      // turns (glancing), less or nothing of a crushing blow (a mace, a hammer, a fist).
+      const spread = ai.dissipate && (C.mainIndex(option.damage) === 2 ? ai.dissipate.crushing : ai.dissipate.glancing);
+      if (spread > 0 && res.bluntToStamina > 0) {
+        const kept = Math.floor(res.bluntToStamina * (1 - spread));
+        res.dissipated = res.bluntToStamina - kept;
+        res.bluntToStamina = kept;
+      }
+      // Wear: blunt, converted cuts and (but for a point that went round it through a gap) piercing.
+      const pierceWear = way === 'gap' ? 0 : P * (CONFIG.armorPierceWear || 0);
+      res.durLoss = target.armor.type === 'padded' ? 0 : Math.round((B + res.converted + pierceWear) * (CONFIG.armorWearScale == null ? 1 : CONFIG.armorWearScale) * Items.wearMult(target.armor));
     } else {
       res.toCON = P;
       res.slashToAttrs = S;
@@ -881,7 +948,7 @@
     const el = option.spell.element;
     const share = M.energyMitigation ? M.energyMitigation[el] : M.fireMitigation;
     // Lightning runs straight through metal armor.
-    const conducts = el === 'lightning' && target.armor && (CONFIG.archery.metalArmor || []).includes(target.armor.type);
+    const conducts = el === 'lightning' && target.armor && C.armorInfo(target).metal;
     if (target.armor && target.armor.durability > 0 && !conducts) {
       const stop = Math.round(C.armorInfo(target).effMit.B * (share == null ? M.fireMitigation : share));
       left = Math.max(0, mag - stop);
@@ -926,10 +993,20 @@
 
   // Apply a hit, rolling d4s for slashing. Returns a short description.
   async function applyHit(enc, chars, attacker, target, option, roller, flags) {
-    const h = computeHit(attacker, target, option, flags);
+    let h = computeHit(attacker, target, option, flags);
     const parts = [];
+    // A point that can't burst the armor must find a gap (CONFIG.pierce); failing that, the armor turns it.
+    if (h.gap) {
+      const g = h.gap;
+      const r = (await roller({ actorId: attacker.id, sides: 10, count: 1, label: 'Finding a gap', detail: `d10 ≥ ${g.need} finds a gap in ${target.name}'s armor (punch ${g.punch} against ${g.resist}: too little to burst it); otherwise the point is turned` }))[0];
+      h = r >= g.need ? g.got : g.turned;
+    }
+    if (h.pierce === 'burst') parts.push('the point bursts through');
+    else if (h.pierce === 'gap') parts.push('the point finds a gap');
+    else if (h.pierce === 'turned') parts.push('the armor turns the point');
     // The blade meets the armor: metal chews an edge, cloth and leather barely touch it, flesh not at all.
-    if (h.armored && target.armor) wearWeapon(enc, attacker, weaponItem(attacker, option), blowForce(option), 'hit', armorMaterial(target.armor));
+    // A turned point takes it worst.
+    if (h.armored && target.armor) wearWeapon(enc, attacker, weaponItem(attacker, option), blowForce(option), h.pierce === 'turned' ? 'deflected' : 'hit', armorMaterial(target.armor));
     const st = target.status;
     const before0 = { dmg: C.totalDamage(target), stamina: target.stamina, up: C.isActive(target) };
     const before = enc.onHit ? before0 : null;
@@ -940,11 +1017,12 @@
       target.armor.durability = Math.max(0, before - h.durLoss);
       if (h.mitigated.P + h.mitigated.S + h.mitigated.B > 0) parts.push(`armor stops ${h.mitigated.P}/${h.mitigated.S}/${h.mitigated.B}`);
       if (h.converted) parts.push(`${h.converted} slashing → blunt`);
+      if (h.dissipated) parts.push(`the plate spreads ${h.dissipated} of the blow`);
       if (h.durLoss) parts.push(`armor durability −${h.durLoss}`);
     }
 
     let wound = 0;
-    if (h.armored && CONFIG.pierceMode === 'roll' && h.pierceLeft > 0 && h.pass < 1) {
+    if (h.armored && h.pierce !== 'gap' && h.pierce !== 'turned' && CONFIG.pierceMode === 'roll' && h.pierceLeft > 0 && h.pass < 1) {
       const need = Math.round(h.pass * 10);
       const rolls = await roller({ actorId: attacker.id, sides: 10, count: h.pierceLeft, label: 'Piercing through armor', detail: `${h.pierceLeft}d10 vs ${target.name}'s armor: each ${need} or less reaches CON` });
       h.toCON = rolls.filter((r) => r <= need).length;
@@ -1053,10 +1131,10 @@
         G.Magic.push(enc, chars, target, enc.pos[attacker.id], back);
       }
     }
-    // An enchanted blade that drinks (enchant.drain): the wielder takes back a share of the
-    // stamina and attribute points the blow dealt.
+    // An enchanted blade that drinks (enchantments.yaml drain; an old save's enchant.drain): the wielder
+    // takes back a share of the stamina and attribute points the blow dealt.
     const blade = option.weaponId && attacker.weapons ? attacker.weapons.find((w) => w.id === option.weaponId) : null;
-    const drain = blade && blade.enchant && blade.enchant.drain;
+    const drain = blade && ((blade.enchant && blade.enchant.drain) || (Items.enchantsOf(blade).find((e) => e.drain) || {}).drain);
     if (drain && before0) {
       const took = { attrs: C.totalDamage(target) - before0.dmg, stamina: Math.max(0, before0.stamina - target.stamina) };
       const st = Math.round(took.stamina * (drain.stamina || 0));
@@ -1437,7 +1515,7 @@
       let band = { minRange: 1, maxRange: CONFIG.range.maneuverMax };
       if (d.type === 'strike') band = d.option;
       if (d.type === 'shove') band = { minRange: 1, maxRange: shoveReach(a) };
-      if (d.type === 'trip' && hookWeapon(a)) band = { minRange: 1, maxRange: WEAPONS[C.wieldedWeapon(a).type].reach };
+      if (d.type === 'trip' && hookWeapon(a)) band = { minRange: 1, maxRange: Math.max(CONFIG.range.maneuverMax, Items.longestReach(WEAPONS[C.wieldedWeapon(a).type])) };
       const distance = dist(posAtStart[d.actor], posAtStart[d.target]);
       const label = d.type === 'strike' ? d.option.label : d.type;
       if (distance > (band.maxRange != null ? band.maxRange : band.reach)) {
@@ -1560,7 +1638,7 @@
           hitOpt = Object.assign({}, d.option, { damage: w.damage || d.option.damage, spell: d.option.spell ? Object.assign({}, d.option.spell, { magnitude: w.magnitude }) : undefined });
         }
         const r = await applyHit(enc, chars, a, t, hitOpt, roller, { half, distance, pack });
-        const note = (distance === 1 && d.option.closePenalty) || (CONFIG.grappledWeaponsCramped && d.option.weaponId && !d.option.ranged && isGrappled(a))
+        const note = isCramped(a, d.option, distance)
           ? (CONFIG.range.closeRule === 'blunt' ? ' (cramped: blunt, half force)' : ' (cramped: half damage)') : d.option.ranged && d.option.longRange && distance > d.option.longRange ? ' (long range)' : '';
         log(enc, `${a.name}'s ${name} hits ${t.name}${half ? ' (Roll With It: half)' : ''}${pack ? ` (pack +${pack})` : ''}${note}: ${r.text}`, 'hit');
         // Kindled (Bless + Fire): a blade wreathed in flame sets what it strikes burning.
@@ -1721,10 +1799,10 @@
     if (why) log(enc, `${c.name} loses the wind-up (${why}).`, 'fizzle');
   }
 
-  // Rust (monster trait): no wound, but metal armor corrodes.
+  // Rust (monster trait): no wound, but iron and steel armor corrodes (bronze doesn't rust).
   function rustTouch(enc, a, t, amount) {
-    const metal = t.armor && (CONFIG.archery.metalArmor || []).includes(t.armor.type) && t.armor.durability > 0;
-    if (!metal) return log(enc, `${a.name}'s antennae brush ${t.name}, finding no metal.`, 'fizzle');
+    const metal = t.armor && Items.rusts(Object.assign({ kind: 'armor' }, t.armor)) && t.armor.durability > 0;
+    if (!metal) return log(enc, `${a.name}'s antennae brush ${t.name}, finding nothing that rusts.`, 'fizzle');
     t.armor.durability = Math.max(0, t.armor.durability - amount);
     log(enc, `${a.name}'s antennae touch ${t.name}'s armor: it flakes with rust (durability −${amount}${t.armor.durability ? '' : ', destroyed'}).`, 'hit');
   }
@@ -1734,9 +1812,9 @@
     const ss = Items.shieldStats(s);
     const v = d.type === 'strike' ? d.option.damage : [0, 0, 0];
     const W = CONFIG.shieldWear;
-    const wear = Math.round((v[0] * W.P + v[1] * W.S + v[2] * W.B) * (CONFIG.shieldWearScale || 1));
+    const wear = Math.round((v[0] * W.P + v[1] * W.S + v[2] * W.B) * (CONFIG.shieldWearScale || 1) * Items.wearMult(s));
     s.durability = Math.max(0, s.durability - wear);
-    if (d.type === 'strike' && d.option.rust && ['iron', 'steel'].includes(s.material)) {
+    if (d.type === 'strike' && d.option.rust && Items.rusts(s)) {
       s.durability = Math.max(0, s.durability - d.option.rust);
       log(enc, `The rusting antennae eat into ${t.name}'s ${s.material}-bound shield (durability −${d.option.rust}).`, 'hit');
     }
@@ -1746,10 +1824,10 @@
     if (C.rank(a, 'shield_breaker')) force *= 2;
     const power = d.type === 'strike' && ((CONFIG.powerMotions || []).includes(d.option.motion) || d.option.shieldCrush);
     const weapon = d.type === 'strike' && d.option.weaponType ? WEAPONS[d.option.weaponType] : null;
-    const H = CONFIG.materialHardness || {};
-    const powerful = (CONFIG.powerfulShieldQualities || []).includes(s.quality);
+    const blade = d.type === 'strike' ? weaponItem(a, d.option) : null;
+    const bladeMaterial = blade ? Items.weaponMaterial(blade) : weapon && weapon.material;
     let broken = false;
-    if (power && weapon && weapon.material && !powerful && (H[weapon.material] || 0) >= (H[s.material] || 0)) {
+    if (power && weapon && bladeMaterial && !ss.unbreakable && Items.hardness(bladeMaterial) >= Items.hardness(s.material)) {
       s.durability = 0;
       broken = true;
       msg += ' — the power blow BREAKS it';
@@ -1780,7 +1858,7 @@
   }
 
   function armorMaterial(armor) {
-    return (G.DATA.ARMOR[armor.type] || {}).material || null;
+    return Items.materialOf(Object.assign({ kind: 'armor' }, armor));
   }
 
   // What a natural weapon is made of (a claw is bone), for wear on the blade that meets it.
@@ -1795,7 +1873,7 @@
     const max = Items.weaponMaxDurability(w);
     if (!W || !max || !against || !force) return;
     const own = Items.hardness(Items.weaponMaterial(w)) || 1;
-    const wear = Math.round(force * W[rate] * (WEAPONS[w.type].fragility || 1) * (Items.hardness(against) / own));
+    const wear = Math.round(force * W[rate] * (WEAPONS[w.type].fragility || 1) * (Items.hardness(against) / own) * Items.wearMult(w));
     if (wear <= 0) return;
     const before = Items.weaponDurability(w);
     w.durability = Math.max(0, before - wear);

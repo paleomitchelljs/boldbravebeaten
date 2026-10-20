@@ -39,12 +39,18 @@
     return level <= 2 ? 0 : level <= 5 ? 1 : 2;
   }
 
-  function rollQuality(rng, level) {
-    return pick(rng, [
-      [[3, 'crude'], [7, 'standard']],
-      [[1, 'crude'], [6, 'standard'], [3, 'fine']],
-      [[3, 'standard'], [5, 'fine'], [2, 'masterwork']],
-    ][band(level)]);
+  // Craft, metal and origin by level band (rules.yaml enemyGear).
+  function rollGear(rng, level, what, fallback) {
+    const T = G.CONFIG.enemyGear && G.CONFIG.enemyGear[what];
+    return T ? pick(rng, T[band(level)]) : fallback;
+  }
+
+  // Tags for a rolled armor piece or weapon: a metal one gets a rolled metal; any may get an origin.
+  function rollTags(rng, level, usual) {
+    const tags = { origin: rollGear(rng, level, 'origin', 'common') };
+    const M = G.DATA.MATERIALS[usual];
+    if (M && M.metal) tags.material = rollGear(rng, level, 'metal', usual);
+    return tags;
   }
 
   function shieldMaterial(rng, level) {
@@ -77,19 +83,20 @@
     c.lootTable = T.loot || 'humanoid_purse';
 
     const armorType = pick(rng, T.armor[b]);
-    if (armorType) c.armor = Items.makeArmor(armorType, pick(rng, T.coverage[b]), rollQuality(rng, level));
+    if (armorType) c.armor = Items.makeArmor(armorType, pick(rng, T.coverage[b]), rollGear(rng, level, 'craft', 'average'), rollTags(rng, level, G.DATA.ARMOR[armorType].material));
     const shieldSize = pick(rng, T.shield[b]);
-    if (shieldSize) c.shield = Items.makeShield(shieldSize, shieldMaterial(rng, level), rollQuality(rng, level));
+    if (shieldSize) c.shield = Items.makeShield(shieldSize, shieldMaterial(rng, level), rollGear(rng, level, 'craft', 'average'));
     const wType = pick(rng, T.weapons[b]);
     if (wType) {
-      const w = Items.makeWeapon(wType, rollQuality(rng, level));
+      const tags = rollTags(rng, level, G.DATA.WEAPONS[wType].material);
+      const w = Items.makeWeapon(wType, rollGear(rng, level, 'craft', 'average'), tags.material, tags);
       c.weapons.push(w);
       c.wield = w.id;
       // A greatsword means the shield stays home.
       if (G.DATA.WEAPONS[wType].hands === 2) c.shield = null;
     }
     if (T.sidearm && wType !== T.sidearm) {
-      const s = Items.makeWeapon(T.sidearm, 'standard');
+      const s = Items.makeWeapon(T.sidearm, 'average');
       c.weapons.push(s);
       c.sidearm = s.id;
       if (!c.wield) c.wield = null;
@@ -138,7 +145,8 @@
   //              moveMult (leapers cover more ground), grip (a huge hand: + to grapple rolls),
   //              flying, magicImmune, incorporeal, constrict, aura, size (big bodies: fewer
   //              vital wounds, less bleeding per wound)
-  //   weapons, shield, sidearm, quality, arrows — carried gear, for monsters that use it
+  //   weapons, shield, sidearm, craft, arrows — carried gear, for monsters that use it; armorItem,
+  //   weaponItems, shieldItem — items with their tags spelled out
   //   policy   — AI policy (grappler, kite…)
   //   group    — several creatures (a pack)
   const MONSTERS = {}; // monsters.yaml
@@ -185,22 +193,26 @@
     if (M.featPrefs) chooseFeats(c, M.featPrefs, makeRng(c.level * 7919 + 1));
     if (M.nouns) c.nouns = M.nouns.slice();
     if (M.trinkets) c.trinkets = JSON.parse(JSON.stringify(M.trinkets));
-    if (M.armor) c.armor = Items.makeArmor(M.armor, 'full', 'standard');
-    if (M.armorItem) c.armor = Items.makeArmor(M.armorItem[0], M.armorItem[1] || 'full', M.armorQuality || M.quality || 'standard');
-    const q = M.quality || 'standard';
+    // Gear: `craft` (or an old `quality`) for everything carried; armorItem, weaponItems and shieldItem
+    // spell out an item's tags ({type | size, coverage, material, origin, craft, enchantments, name}).
+    // `origin` is the make of everything carried that doesn't name its own.
+    const q = M.craft || M.quality || 'average';
+    const made = (spec) => Object.assign({ origin: M.origin }, spec || {});
+    if (M.armor) c.armor = Items.makeArmor(M.armor, 'full', 'average');
+    if (M.armorItem) { const a = made(M.armorItem); c.armor = Items.makeArmor(a.type, a.coverage || 'full', a.craft || q, a); }
     for (const [i, type] of (M.weapons || []).entries()) {
-      const w = Items.makeWeapon(type, q);
+      const w = Items.makeWeapon(type, q, null, made());
       c.weapons.push(w);
       if (i === 0) c.wield = w.id;
     }
-    // Named or enchanted weapons: { type, quality, name, enchant }.
     for (const spec of M.weaponItems || []) {
-      const w = Object.assign(Items.makeWeapon(spec.type, spec.quality || q), spec.name ? { name: spec.name } : {}, spec.enchant ? { enchant: JSON.parse(JSON.stringify(spec.enchant)) } : {});
+      const w = Items.makeWeapon(spec.type, spec.craft || q, spec.material, made(spec));
       c.weapons.push(w);
       if (!c.wield) c.wield = w.id;
     }
-    if (M.sidearm) { const s = Items.makeWeapon(M.sidearm, q); c.weapons.push(s); c.sidearm = s.id; }
-    if (M.shield) c.shield = Items.makeShield(M.shield[0], M.shield[1], M.shieldQuality || q);
+    if (M.sidearm) { const s = Items.makeWeapon(M.sidearm, q, null, made()); c.weapons.push(s); c.sidearm = s.id; }
+    if (M.shield) c.shield = Items.makeShield(M.shield[0], M.shield[1], q, made());
+    if (M.shieldItem) { const sh = made(M.shieldItem); c.shield = Items.makeShield(sh.size, sh.material, sh.craft || q, sh); }
     c.policy = Object.assign({}, M.policy || {});
     c.inventory = { bandages: 0, gold: 0, arrows: M.arrows || 0, bodkins: 0, items: [] };
     c.stamina = C.maxStamina(c);

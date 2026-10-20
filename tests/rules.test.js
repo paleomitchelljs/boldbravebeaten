@@ -22,7 +22,7 @@ function asWritten(fn) {
     apScale: 1, apDisplay: 1, costScale: null, apBase: 3, apSpdContinuous: false, apCurve: null, moveAP: null, wholeTurnAction: false,
     armorActionAP: 0, quickCut: null, minActionAP: 1, minStrikeAP: 1, weaponWear: null, weariness: null, armorPierceWear: 0,
     defense: Object.assign({}, D0, { block: Object.assign({}, D0.block, { opposed: false }), dodgeBonus: 0, absorb: null, dodgeStamina: null }),
-    staminaScale: 1, pierceMode: 'floor', passThroughByArmor: null, moveScale: 1, armorAdjust: {}, standUp: null, grappling: null, weaponModel: 'table',
+    staminaScale: 1, pierceMode: 'floor', passThroughByArmor: null, pierce: null, moveScale: 1, armorAdjust: {}, standUp: null, grappling: null, weaponModel: 'table',
   };
   const saved = {};
   for (const k of Object.keys(spec)) saved[k] = C0[k];
@@ -47,6 +47,18 @@ function tableWeapons(fn) {
 
 // The screen's side of a fight: dice, and who reacts how. By default nobody reacts.
 const noReact = () => null;
+// Run fn with some CONFIG keys set (restored after).
+function withConfig(patch, fn) {
+  const saved = {};
+  for (const k of Object.keys(patch)) saved[k] = B.CONFIG[k];
+  Object.assign(B.CONFIG, patch);
+  let out;
+  try { out = fn(); } catch (e) { Object.assign(B.CONFIG, saved); throw e; }
+  if (out && typeof out.then === 'function') return out.finally(() => Object.assign(B.CONFIG, saved));
+  Object.assign(B.CONFIG, saved);
+  return out;
+}
+
 function io(seed, queue, react) { return { roller: roller(seed, queue), react: react || noReact }; }
 // Everyone still to take a turn ends it: the round closes (bleeding, regeneration, wind-ups lapse).
 async function closeRound(enc, chars, x) {
@@ -194,11 +206,11 @@ test('plate stops a thrust; a half-sword thrust finds the gaps', () => asWritten
   const half = opts.find((o) => o.halfSword);
   assert.strictEqual(half.ap, thrust.ap + 1);
   assert.strictEqual(Combat.computeHit(atk, tgt, thrust).toCON, 0, '(5−4)×0.5 rounds down to 0');
-  tgt.armor = Items.makeArmor('plate', 'full', 'crude'); // mitigation 3
+  tgt.armor = Items.makeArmor('plate', 'half', 'average'); // half coverage: mitigation 3
   assert.strictEqual(Combat.computeHit(atk, tgt, half).toCON, 2);
 }));
 
-test('roll mode: each leftover piercing point has a chance to reach CON', async () => {
+test('roll mode (without CONFIG.pierce): each leftover piercing point has a chance to reach CON', () => withConfig({ pierce: null }, async () => {
   const atk = fighter('Stabber');
   atk.weapons.push(Items.makeWeapon('rapier'));
   atk.wield = atk.weapons[0].id;
@@ -212,7 +224,7 @@ test('roll mode: each leftover piercing point has a chance to reach CON', async 
   // d10s 1,5,6,9,10 → two of five are ≤ 5
   await Combat.applyHit(enc, { [atk.id]: atk, [tgt.id]: tgt }, atk, tgt, thrust, roller(1, [1, 5, 6, 9, 10]));
   assert.strictEqual(tgt.damage.CON, 2);
-});
+}));
 
 test('feat tiers and prerequisites', () => {
   const c = fighter('Learner');
@@ -238,8 +250,9 @@ test('two-handed swings are unavailable while carrying a shield', () => {
 });
 
 test('turns (the user\'s example): actions resolve at once; parries are paid from the defender\'s pool; the round ends when everyone has gone', async () => {
-  const a = armed('A', 'longsword', { side: 'party' });
-  const b = armed('B', 'longsword', { side: 'party' });
+  // Clubs: blows that wind C, so C is still standing for its turn.
+  const a = armed('A', 'club', { side: 'party' });
+  const b = armed('B', 'club', { side: 'party' });
   const c = armed('C', 'longsword', { side: 'enemy' });
   a.base.SPD = 9; b.base.SPD = 8; c.base.SPD = 1;
   c.base.CON = 14;
@@ -256,10 +269,10 @@ test('turns (the user\'s example): actions resolve at once; parries are paid fro
   enc.ap[c.id] = 6 * B.CONFIG.apScale; // enough for two parries and a turn
   const pool = enc.ap[c.id];
   const parry = C.actionCost(c, 'parry').ap;
-  // A moves up to C and thrusts: the thrust resolves at once, and C's parry comes out of C's AP.
+  // A moves up to C and swings: the blow resolves at once, and C's parry comes out of C's AP.
   assert.strictEqual(await Combat.act(enc, chars, { actor: a.id, type: 'move', to: { x: 2, y: 0 } }, x), null);
   assert.deepStrictEqual(enc.pos[a.id], { x: 2, y: 0 }, 'the move happened already');
-  const thrust = Combat.legalActions(enc, chars, a.id).attacks.find((o) => o.motion === 'thrust');
+  const thrust = Combat.legalActions(enc, chars, a.id).attacks.find((o) => o.motion === 'swing');
   assert.strictEqual(await Combat.act(enc, chars, { actor: a.id, type: 'strike', option: thrust, target: c.id }, x), null);
   assert.ok(enc.log.some((l) => /C parries A's|C's parry fails/.test(l.text)), 'C reacted');
   assert.strictEqual(enc.ap[c.id], pool - parry);
@@ -267,7 +280,7 @@ test('turns (the user\'s example): actions resolve at once; parries are paid fro
   // B does the same; C parries again.
   assert.strictEqual(Combat.currentActor(enc), b.id);
   assert.strictEqual(await Combat.act(enc, chars, { actor: b.id, type: 'move', to: { x: 2, y: 2 } }, x), null);
-  const thrustB = Combat.legalActions(enc, chars, b.id).attacks.find((o) => o.motion === 'thrust');
+  const thrustB = Combat.legalActions(enc, chars, b.id).attacks.find((o) => o.motion === 'swing');
   assert.strictEqual(await Combat.act(enc, chars, { actor: b.id, type: 'strike', option: thrustB, target: c.id }, x), null);
   assert.strictEqual(enc.ap[c.id], pool - 2 * parry, 'two parries, paid before C ever had a turn');
   await Combat.endTurn(enc, chars, b.id, x);
@@ -286,7 +299,7 @@ test('a turn may spend the whole pool; a fighter out of AP takes the blow on the
   for (const x of [a, b]) x.stamina = C.maxStamina(x);
   const chars = { [a.id]: a, [b.id]: b };
   const enc = Combat.createEncounter('t', [a.id, b.id], chars, 6, 1);
-  enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[b.id] = { x: 2, y: 0 };
+  enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[b.id] = { x: 1, y: 0 };
   await Combat.startRound(enc, chars, roller(3, [5, 5]));
   const asked = [];
   const x = io(4, [], (req) => { asked.push(req.actor); return null; });
@@ -317,7 +330,8 @@ test('reactions: the AI defends a blow worth stopping and lets armor take one th
   const enc = Combat.createEncounter('t', Object.keys(chars), chars, 6, 3);
   enc.pos[atk.id] = { x: 1, y: 1 }; enc.pos[bare.id] = { x: 2, y: 1 }; enc.pos[plated.id] = { x: 0, y: 1 };
   await Combat.startRound(enc, chars, roller(1, [10, 1, 1]));
-  const stab = C.attackOptions(atk).find((o) => o.motion === 'thrust');
+  // A dagger's slash: plate stops all of it (a stab might still find a gap, CONFIG.pierce).
+  const stab = C.attackOptions(atk).find((o) => o.motion === 'swing');
   for (const t of [bare, plated]) enc.ap[t.id] = 5 * B.CONFIG.apScale;
   const ask = (t) => {
     const d = { actor: atk.id, type: 'strike', option: stab, target: t.id };
@@ -414,20 +428,31 @@ function armed(name, type, opts) {
 
 const opt = (c, pred) => C.attackOptions(c).find(pred);
 
-test('range bands: inside a long weapon\'s reach its blows land half as hard, all blunt', () => tableWeapons(() => {
-  const spear = opt(armed('S', 'spear'), (o) => o.motion === 'thrust');
-  assert.deepStrictEqual([spear.minRange, spear.maxRange, spear.closePenalty], [1, 4, true], 'a spear can jab with the shaft');
-  const dagger = opt(armed('D', 'dagger'), (o) => o.motion === 'thrust');
-  assert.deepStrictEqual([dagger.minRange, dagger.maxRange, dagger.closePenalty], [1, 1, false]);
-  const rapier = opt(armed('R', 'rapier'), (o) => o.motion === 'thrust');
-  assert.deepStrictEqual([rapier.minRange, rapier.maxRange], [1, 3]);
-  const mace = opt(armed('M', 'flangedMace'), (o) => o.motion === 'swing');
-  assert.strictEqual(mace.closePenalty, false, 'short hafted weapons work fully up close');
+test('range bands (the user\'s reach): one-handers swing 1 and thrust 2, two-handers 2 and 3, spears to 4; inside a long weapon\'s reach or in a clinch its blows land half as hard, all blunt', () => tableWeapons(() => {
+  const band = (type, motion) => { const o = opt(armed('X', type), (x) => x.motion === motion); return [o.minRange, o.maxRange, o.closePenalty]; };
+  assert.deepStrictEqual(band('dagger', 'thrust'), [1, 1, false]);
+  assert.deepStrictEqual(band('dagger', 'swing'), [1, 1, false]);
+  assert.deepStrictEqual(band('rapier', 'swing'), [1, 1, false]);
+  assert.deepStrictEqual(band('rapier', 'thrust'), [1, 2, false]);
+  assert.deepStrictEqual(band('longsword', 'thrust'), [1, 2, false]);
+  assert.deepStrictEqual(band('flangedMace', 'swing'), [1, 1, false]);
+  assert.deepStrictEqual(band('greatsword', 'twoHanded'), [1, 2, true], 'a two-hander swings to 2, cramped at 1');
+  assert.deepStrictEqual(band('greatsword', 'thrust'), [1, 3, true]);
+  assert.deepStrictEqual(band('spear', 'thrust'), [1, 4, true], 'a spear thrusts to 4 and can jab with the shaft');
+  assert.deepStrictEqual(band('heavySpear', 'thrust'), [1, 4, true]);
+  assert.deepStrictEqual(band('warScythe', 'twoHanded'), [1, 3, true], 'a scythe sweeps to 3');
+  assert.ok(!opt(armed('X', 'warScythe'), (x) => x.motion === 'thrust'), 'and does not thrust');
   const a = armed('L', 'longsword');
   const t = fighter('T');
   const swing = opt(a, (o) => o.motion === 'swing' && o.face === 'edge');
-  assert.deepStrictEqual(Combat.computeHit(a, t, swing, { distance: 2 }).vec, [0, 7, 1]);
-  assert.deepStrictEqual(Combat.computeHit(a, t, swing, { distance: 1 }).vec, [0, 0, 4], '8 force → 4 blunt');
+  assert.deepStrictEqual(Combat.computeHit(a, t, swing, { distance: 1 }).vec, [0, 7, 1], 'a sword works at arm\'s length');
+  a.status.clinch = t.id;
+  assert.deepStrictEqual(Combat.computeHit(a, t, swing, { distance: 1 }).vec, [0, 0, 4], 'in a clinch it is cramped: 8 force → 4 blunt');
+  a.status.clinch = null;
+  const g = armed('G', 'greatsword');
+  const gs = opt(g, (o) => o.motion === 'twoHanded' && o.face === 'edge');
+  const full = Combat.computeHit(g, t, gs, { distance: 2 }).vec;
+  assert.deepStrictEqual(Combat.computeHit(g, t, gs, { distance: 1 }).vec, [0, 0, Math.floor((full[0] + full[1] + full[2]) / 2)], 'a greatsword at 1 is cramped');
   const bow = opt(armed('B', 'shortbow'), (o) => o.motion === 'shoot');
   assert.strictEqual(bow.minRange, 2, 'bows still need range 2');
 }));
@@ -471,12 +496,12 @@ test('the older half-damage-up-close rule is still available as an option', () =
   const saved = B.CONFIG.range.closeRule;
   B.CONFIG.range.closeRule = 'half';
   try {
-    const a = armed('L', 'longsword');
+    const a = armed('G', 'greatsword');
     const t = fighter('T');
-    const swing = opt(a, (o) => o.motion === 'swing' && o.face === 'edge');
+    const swing = opt(a, (o) => o.motion === 'twoHanded' && o.face === 'edge');
     assert.strictEqual(swing.minRange, 1);
-    assert.strictEqual(Combat.computeHit(a, t, swing, { distance: 2 }).S, 7);
-    assert.strictEqual(Combat.computeHit(a, t, swing, { distance: 1 }).S, 3);
+    const S = Combat.computeHit(a, t, swing, { distance: 2 }).S;
+    assert.strictEqual(Combat.computeHit(a, t, swing, { distance: 1 }).S, Math.floor(S / 2));
   } finally {
     B.CONFIG.range.closeRule = saved;
   }
@@ -779,7 +804,8 @@ test('grappling: guards never meet a grapple; pinned armor is pierced', async ()
   const pinned = Combat.computeHit(g.a, g.t, stab, { distance: 1 });
   g.t.status.pinned = false;
   const held = Combat.computeHit(g.a, g.t, stab, { distance: 1 });
-  assert.ok(pinned.pass > held.pass, 'a pin opens the armor');
+  assert.strictEqual(pinned.pierce, 'gap', 'a pin opens the armor: the point goes in at a gap');
+  assert.ok(held.gap && pinned.toCON > held.toCON, 'held but not pinned, it must find one');
   // Guards never meet a grapple: no reaction is offered against one.
   g.enc.ap[g.t.id] = 10;
   assert.deepStrictEqual(Combat.defenseOptions(g.enc, g.chars, g.t, g.a, { actor: g.a.id, type: 'grapple', target: g.t.id }).options, []);
@@ -796,7 +822,10 @@ test('arrows and armor: textile catches arrows; bodkins for metal, broadheads fo
   const con = (o, armor) => Combat.computeHit(a, target(armor), o, { distance: 4 }).toCON;
   assert.ok(con(broad, null) > con(bodkin, null), 'broadheads hit flesh harder');
   assert.ok(con(bodkin, 'mail') > con(broad, 'mail'), 'bodkins go through mail better');
-  assert.ok(con(bodkin, 'plate') > con(broad, 'plate'));
+  const hit = (o, armor) => Combat.computeHit(a, target(armor), o, { distance: 4 });
+  assert.strictEqual(hit(bodkin, 'mail').pierce, 'burst', 'a longbow bodkin bursts mail');
+  assert.ok(hit(broad, 'mail').gap, 'a broadhead must find a gap in it');
+  assert.ok(hit(bodkin, 'plate').gap && hit(broad, 'plate').gap, 'plate: every arrow must find a gap');
   // Padded stops an arrow better than the same piercing from a thrust.
   const spear = opt(armed('S', 'spear'), (o) => o.motion === 'thrust');
   const pad = target('padded');
@@ -1454,7 +1483,7 @@ test('revenant knight: Battle Casting casts with sword and shield; Soulreaver dr
   assert.equal(dk.level, 20);
   assert.ok(dk.shield && C.handsBusy(dk) === 2 && C.castingHands(dk), 'hands full, still casting');
   assert.ok(C.attackOptions(dk).some((o) => o.spell), 'bolts offered with sword and shield in hand');
-  const blade = dk.weapons.find((w) => w.enchant);
+  const blade = dk.weapons.find((w) => (w.enchantments || []).includes('drinking'));
   assert.equal(Items.itemName(blade), 'Soulreaver');
   // A thrust that wounds: the knight, worn and wounded, takes some back.
   C.damageAttr(dk, 'CON', 3);
@@ -1680,4 +1709,139 @@ test('weariness: every round of fighting lowers max stamina until a long rest', 
   assert.strictEqual(C.maxStamina(a), fresh - 3 * B.CONFIG.weariness.perRound);
   await Recovery.longRest(a, {}, roller(1, [5]));
   assert.strictEqual(C.maxStamina(a), fresh);
+});
+
+// ---- Items: type + material + origin + craft + enchantments ---------------------------------
+test('item tags: material and origin scale protection and weight; craft only durability and wear; old qualities still read', () => {
+  const D = B.DATA;
+  const iron = Items.makeArmor('mail', 'full', 'average');
+  const steel = Items.makeArmor('mail', 'full', 'average', { material: 'steel' });
+  const bronze = Items.makeArmor('mail', 'full', 'average', { material: 'bronze' });
+  const elven = Items.makeArmor('mail', 'full', 'average', { origin: 'elven' });
+  const dwarven = Items.makeArmor('mail', 'full', 'average', { origin: 'dwarven' });
+  const master = Items.makeArmor('mail', 'full', 'master');
+  const poor = Items.makeArmor('mail', 'full', 'poor');
+  const base = (a) => Items.armorBase(a);
+  assert.strictEqual(iron.material, 'iron', 'every piece names its material');
+  assert.strictEqual(Items.itemName(iron), 'Iron mail armor');
+  assert.strictEqual(Items.itemName(Items.makeArmor('plate', 'half', 'master', { material: 'steel', origin: 'dwarven', enchantments: ['warding'] })), 'Masterwork dwarven steel half plate armor of warding');
+  assert.ok(base(steel).pierce.resist > base(iron).pierce.resist && base(iron).pierce.resist > base(bronze).pierce.resist, 'steel > iron > bronze');
+  assert.ok(base(steel).mit.S > base(iron).mit.S);
+  assert.ok(base(elven).spd < base(iron).spd && base(dwarven).spd > base(iron).spd, 'origin moves the weight');
+  assert.ok(base(dwarven).pierce.resist > base(iron).pierce.resist && base(dwarven).maxDurability > base(iron).maxDurability);
+  assert.deepStrictEqual(base(master).mit, base(iron).mit, 'craft never changes protection');
+  assert.ok(base(master).maxDurability > base(iron).maxDurability && base(iron).maxDurability > base(poor).maxDurability);
+  assert.ok(Items.wearMult(master) < Items.wearMult(iron) && Items.wearMult(iron) < Items.wearMult(poor), 'and how fast it wears');
+  // Old saves and data: quality names map to crafts; scale armor is steel mail.
+  assert.strictEqual(Items.makeWeapon('dagger', 'crude').craft, 'poor');
+  assert.strictEqual(Items.makeWeapon('dagger', 'masterwork').craft, 'master');
+  const old = Items.normalizeItem({ id: 'x', kind: 'armor', type: 'scale', coverage: 'full', quality: 'fine', durability: 10 });
+  assert.deepStrictEqual([old.type, old.material, old.craft, old.quality], ['mail', 'steel', 'average', undefined]);
+  // Weapons: origin and material change the mass, so speed and damage follow the physics.
+  const sword = Items.makeWeapon('longsword');
+  const light = Items.makeWeapon('longsword', 'average', null, { origin: 'elven' });
+  assert.ok(Items.weaponMass(light) < Items.weaponMass(sword));
+  assert.ok(Items.weaponStats(light).punch.point < Items.weaponStats(sword).punch.point, 'less weight behind the point');
+  assert.ok(Items.weaponMaxDurability(Items.makeWeapon('longsword', 'master')) > Items.weaponMaxDurability(sword));
+  // Enchantments are rare and named; any makes a weapon magical.
+  const keen = Items.makeWeapon('longsword', 'average', null, { enchantments: ['keen'] });
+  assert.ok(Items.weaponStats(keen).faces.edge[1] > Items.weaponStats(sword).faces.edge[1]);
+  assert.strictEqual(Items.itemRarity(keen), 'very rare');
+  assert.ok(D.ENCHANTMENTS.keen && D.CRAFTS.master && D.ORIGINS.elven && D.MATERIALS.starIron);
+});
+
+test('a point against armor: it bursts through, finds a gap, or is turned (the user\'s rule)', async () => {
+  const stab = (weapon, armorType, tags, attrs) => {
+    const a = armed('A', weapon);
+    Object.assign(a.base, attrs || {});
+    const t = fighter('T');
+    if (armorType) t.armor = Items.makeArmor(armorType, 'full', 'average', tags);
+    const o = opt(a, (x) => x.motion === 'thrust');
+    return Combat.computeHit(a, t, o, { distance: o.maxRange });
+  };
+  // The user's anchors: a rapier bursts padding but not mail; a heavy spear any mail but not plate.
+  assert.strictEqual(stab('rapier', 'padded').pierce, 'burst');
+  assert.strictEqual(stab('rapier', 'leather').pierce, 'burst');
+  assert.ok(stab('rapier', 'mail').gap, 'mail: the rapier must find a gap');
+  assert.strictEqual(stab('spear', 'mail').pierce, 'burst', 'a spear bursts iron mail');
+  assert.ok(stab('spear', 'mail', { material: 'steel' }).gap, 'but not steel');
+  assert.strictEqual(stab('heavySpear', 'mail', { material: 'steel' }).pierce, 'burst');
+  assert.ok(stab('heavySpear', 'plate').gap, 'nothing bursts plate');
+  assert.strictEqual(stab('longsword', 'mail', { material: 'bronze' }).pierce, 'burst', 'bronze is softer');
+  // Skill and feats find gaps: DEX and Find the Gap raise the odds.
+  const clumsy = stab('rapier', 'mail', null, { DEX: 3 }), deft = stab('rapier', 'mail', null, { DEX: 9 });
+  assert.ok(deft.gap.chance > clumsy.gap.chance);
+  assert.ok(stab('rapier', 'plate').gap.chance <= stab('rapier', 'mail').gap.chance);
+  assert.ok(stab('rapier', 'plate').gap.chance >= 0.1, 'a 10 always finds one');
+  // The roll: a gap puts all the piercing in; failing, the point lands as a little blunt.
+  const run = async (die) => {
+    const a = armed('A', 'rapier', { side: 'party' });
+    const t = fighter('T', { side: 'enemy' });
+    t.armor = Items.makeArmor('mail', 'full', 'average');
+    t.stamina = C.maxStamina(t);
+    const before = t.stamina;
+    const enc = { hitThisRound: {}, fortressUsed: {}, log: [], round: 1 };
+    const o = opt(a, (x) => x.motion === 'thrust');
+    const r = await Combat.applyHit(enc, { [a.id]: a, [t.id]: t }, a, t, o, roller(1, [die, 10]));
+    return { r, con: t.damage.CON, stamina: before - t.stamina, wear: Items.weaponMaxDurability(a.weapons[0]) - Items.weaponDurability(a.weapons[0]) };
+  };
+  const found = await run(10);
+  assert.match(found.r.text, /finds a gap/);
+  assert.ok(found.con >= opt(armed('X', 'rapier'), (x) => x.motion === 'thrust').damage[0], 'all of it reaches the body');
+  const turned = await run(1);
+  assert.match(turned.r.text, /turns the point/);
+  assert.strictEqual(turned.con, 0);
+  assert.ok(turned.stamina > 0, 'a turned point still bruises');
+  assert.ok(turned.wear > found.wear, 'and wears the blade hard');
+  // Pinned: the point goes in at a gap, no roll.
+  const g = await grapplePair('mail');
+  await step(g, 'clinch', [10, 1]);
+  await step(g, 'pin', [10, 1]);
+  const dagger = C.attackOptions(g.a).find((o) => o.motion === 'thrust');
+  assert.strictEqual(Combat.computeHit(g.a, g.t, dagger, { distance: 1 }).pierce, 'gap');
+});
+
+test('rust eats iron but not bronze; a masterwork shield shrugs off the shattering blow', async () => {
+  const touchWith = async (material) => {
+    const [beetle] = Enemies.makeMonster('rustBeetle');
+    const t = fighter('T', { side: 'party' });
+    t.armor = Items.makeArmor('mail', 'full', 'average', { material });
+    const chars = { [beetle.id]: beetle, [t.id]: t };
+    const enc = Combat.createEncounter('t', [beetle.id, t.id], chars, 4, 1);
+    enc.pos[beetle.id] = { x: 0, y: 0 }; enc.pos[t.id] = { x: 1, y: 0 };
+    await Combat.startRound(enc, chars, roller(1, [10, 1]));
+    const touch = C.attackOptions(beetle).find((o) => o.rust);
+    const before = t.armor.durability;
+    assert.strictEqual(await Combat.act(enc, chars, { actor: beetle.id, type: 'strike', option: touch, target: t.id }, io(1, [10, 10, 10])), null);
+    return { lost: before - t.armor.durability, t, log: enc.log.map((l) => l.text).join('\n') };
+  };
+  const bronze = await touchWith('bronze');
+  assert.strictEqual(bronze.lost, 0, 'bronze does not rust');
+  assert.match(bronze.log, /nothing that rusts/);
+  assert.ok(C.armorInfo(bronze.t).metal, 'though it is metal (lightning)');
+  assert.ok((await touchWith('iron')).lost > 0, 'iron does');
+  const s1 = Items.shieldStats(Items.makeShield('heater', 'wood', 'master'));
+  const s0 = Items.shieldStats(Items.makeShield('heater', 'wood', 'average'));
+  assert.ok(s1.unbreakable && !s0.unbreakable && s1.threshold > s0.threshold);
+});
+
+test('plate spreads a blow it turns: less of a cut\'s or a turned point\'s force reaches stamina; a crushing blow still carries (armor.yaml dissipate)', () => {
+  const a = armed('A', 'greatsword');
+  a.base.STR = 10;
+  const t = fighter('T');
+  t.armor = Items.makeArmor('plate', 'full', 'average');
+  const cut = opt(a, (o) => o.motion === 'twoHanded' && o.face === 'edge');
+  const spread = Combat.computeHit(a, t, cut, { distance: 2 });
+  const saved = B.DATA.ARMOR.plate.dissipate;
+  B.DATA.ARMOR.plate.dissipate = { glancing: 0, crushing: 0 };
+  try {
+    const whole = Combat.computeHit(a, t, cut, { distance: 2 });
+    assert.ok(whole.bluntToStamina > 0 && spread.bluntToStamina < whole.bluntToStamina, 'plate keeps part of it off');
+    assert.strictEqual(spread.dissipated + spread.bluntToStamina, whole.bluntToStamina);
+  } finally { B.DATA.ARMOR.plate.dissipate = saved; }
+  const m = armed('M', 'flangedMace');
+  const blow = opt(m, (o) => o.motion === 'swing');
+  assert.ok(!Combat.computeHit(m, t, blow, { distance: 1 }).dissipated, 'a mace\'s blow is not spread');
+  t.armor = Items.makeArmor('mail', 'full', 'average');
+  assert.ok(!Combat.computeHit(a, t, cut, { distance: 2 }).dissipated, 'mail passes a blow on');
 });

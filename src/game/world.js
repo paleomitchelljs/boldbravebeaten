@@ -31,11 +31,11 @@
     c.gold = undefined;
     c.inventory.gold = 0;
     c.inventory.bandages = 0;
-    if (kit.armor) c.armor = Items.makeArmor(kit.armor, 'full', 'standard');
-    if (kit.shield) c.shield = Items.makeShield(kit.shield, 'wood', 'standard');
+    if (kit.armor) c.armor = Items.makeArmor(kit.armor, 'full', 'average');
+    if (kit.shield) c.shield = Items.makeShield(kit.shield, 'wood', 'average');
     for (const [i, t] of [kit.wield, kit.sidearm].entries()) {
       if (!t) continue;
-      const w = Items.makeWeapon(t, 'standard');
+      const w = Items.makeWeapon(t, 'average');
       c.weapons.push(w);
       if (i === 0) c.wield = w.id; else c.sidearm = w.id;
     }

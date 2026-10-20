@@ -238,7 +238,9 @@
     const h = Combat.computeHit(atk, tgt, option, { distance: Combat.dist(enc.pos[atk.id], enc.pos[tgt.id]) });
     const wound = Math.round(h.toCON + h.slashToAttrs + h.bluntToCON);
     const stamina = Math.round(h.bluntToStamina + (h.converted || 0));
-    return { wound, stamina, text: wound || stamina ? `${wound ? `~${wound} wound` : ''}${wound && stamina ? ', ' : ''}${stamina ? `~${stamina} stamina` : ''}` : 'armor stops it' };
+    // A point against armor (CONFIG.pierce): it bursts through, or it must find a gap.
+    const point = h.gap ? ` (the point must find a gap: ${Math.round(h.gap.chance * 100)}%)` : h.pierce === 'burst' ? ' (the point bursts the armor)' : '';
+    return { wound, stamina, text: (wound || stamina ? `${wound ? `~${wound} wound` : ''}${wound && stamina ? ', ' : ''}${stamina ? `~${stamina} stamina` : ''}` : 'armor stops it') + point };
   }
 
   // The words for a reaction request: who, what, and each choice with its AP and odds.

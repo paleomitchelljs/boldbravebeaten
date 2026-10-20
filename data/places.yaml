@@ -40,28 +40,30 @@ stonebridge:
           repair: true
           buys: [weapon, armor, shield]
           stock:
-            - {weapon: club, quality: standard}
-            - {weapon: dagger, quality: standard}
-            - {weapon: parryingDagger, quality: standard}
-            - {weapon: shortSpear, quality: standard}
-            - {weapon: spikedMace, quality: standard}
-            - {weapon: rapier, quality: standard}
-            - {weapon: longsword, quality: standard}
-            - {weapon: shortbow, quality: standard}
-            - {armor: padded, coverage: full, quality: standard}
-            - {armor: leather, coverage: full, quality: standard}
-            - {armor: leather, coverage: half, quality: standard}
-            - {shield: buckler, material: wood, quality: standard}
-            - {shield: round, material: wood, quality: standard}
-            - {armor: mail, coverage: half, quality: standard, req: {standing: {faction: merchants_guild, min: 10}}}
-            - {armor: mail, coverage: full, quality: standard, req: {standing: {faction: merchants_guild, min: 10}}}
-            - {weapon: warhammer, quality: standard, req: {standing: {faction: merchants_guild, min: 10}}}
-            - {weapon: longbow, quality: standard, req: {standing: {faction: merchants_guild, min: 10}}}
-            - {shield: round, material: iron, quality: standard, req: {standing: {faction: merchants_guild, min: 10}}}
-            - {shield: heater, material: wood, quality: standard, req: {standing: {faction: merchants_guild, min: 25}}}
-            - {weapon: greatsword, quality: standard, req: {flag: guild_stock}}
-            - {armor: scale, coverage: half, quality: standard, req: {flag: guild_stock}}
-            - {armor: mail, coverage: full, quality: fine, req: {flag: guild_stock}}
+            - {weapon: club}
+            - {weapon: dagger}
+            - {weapon: parryingDagger}
+            - {weapon: shortSpear}
+            - {weapon: spikedMace}
+            - {weapon: rapier}
+            - {weapon: longsword}
+            - {weapon: shortbow}
+            - {armor: padded, coverage: full}
+            - {armor: leather, coverage: full}
+            - {armor: leather, coverage: half}
+            - {shield: buckler, material: wood}
+            - {shield: round, material: wood}
+            - {armor: mail, material: bronze, coverage: half}
+            - {armor: mail, coverage: half, req: {standing: {faction: merchants_guild, min: 10}}}
+            - {armor: mail, coverage: full, req: {standing: {faction: merchants_guild, min: 10}}}
+            - {weapon: warhammer, req: {standing: {faction: merchants_guild, min: 10}}}
+            - {weapon: longbow, req: {standing: {faction: merchants_guild, min: 10}}}
+            - {shield: round, material: iron, req: {standing: {faction: merchants_guild, min: 10}}}
+            - {shield: heater, material: wood, req: {standing: {faction: merchants_guild, min: 25}}}
+            - {weapon: greatsword, req: {flag: guild_stock}}
+            - {armor: mail, material: steel, coverage: half, req: {flag: guild_stock}}
+            - {weapon: heavySpear, req: {flag: guild_stock}}
+            - {armor: mail, material: steel, coverage: full, req: {flag: guild_stock}}
     - id: market
       name: The Market Row
       glyph: "⚖"

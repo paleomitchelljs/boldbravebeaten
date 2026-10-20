@@ -37,11 +37,11 @@
   // How much a hit is worth to the attacker, in stamina-equivalent points.
   // Attribute damage costs max stamina and bleeds; a hit that drops the target is worth most.
   function hitValue(attacker, target, option, distance) {
-    // Rust: worth the armor it eats, if there's metal to eat.
+    // Rust: worth the armor it eats, if there's iron or steel to eat.
     // Web: worth what it costs the target over the next actions.
     if (option.web) return (target.status.webbed || 0) >= (G.CONFIG.web.maxLayers || 2) ? 0 : (target.status.webbed ? 5 : 10);
     if (option.rust) {
-      const metal = target.armor && (G.CONFIG.archery.metalArmor || []).includes(target.armor.type) && target.armor.durability > 0;
+      const metal = target.armor && G.Items.rusts(Object.assign({ kind: 'armor' }, target.armor)) && target.armor.durability > 0;
       return metal ? Math.min(option.rust, target.armor.durability) * 1.0 : 0;
     }
     const h = Combat.computeHit(attacker, target, option, { distance: distance || (option.minRange || 1) + (option.closePenalty ? 1 : 0) });
@@ -61,9 +61,11 @@
       if (H.push) v += 2;
       if (option.spell.lingering) v += Math.max(1, Math.round(option.spell.magnitude / 4)) * 3 * 5 * 0.6;
     }
+    // A kill, at the odds of a point finding a gap when it has to (CONFIG.pierce).
     const con = C.attr(target, 'CON');
-    if (h.toCON + h.bluntToCON >= con) v += 60;
-    else if (h.toCON > 0 && h.toCON * G.CONFIG.vital.mult + h.bluntToCON >= con) v += 60 * pV;
+    const k = h.gap ? h.gap.got : h, kp = h.gap ? h.gap.chance : 1;
+    if (k.toCON + k.bluntToCON >= con) v += 60 * kp;
+    else if (k.toCON > 0 && k.toCON * G.CONFIG.vital.mult + k.bluntToCON >= con) v += 60 * pV * kp;
     else if (h.bluntToStamina >= target.stamina && target.stamina > 0) v += 40;
     return v;
   }

@@ -138,7 +138,7 @@ ogre:
   natural: [trollFists]
   armor: ogreHide
   weapons: [giantClub]
-  quality: crude
+  craft: poor
   keepUnarmed: true
   traits: {grip: 2, size: 1.5}
   feats: {power_swing: 1, shield_breaker: 1, toughness: 1}
@@ -155,7 +155,7 @@ hillGiant:
   natural: [boulder]
   armor: giantHide
   weapons: [giantClub]
-  quality: crude
+  craft: poor
   keepUnarmed: true
   traits: {grip: 5, size: 2.5}
   feats: {power_swing: 1, shield_breaker: 1, grappler: 2, pin: 1, toughness: 2}
@@ -174,7 +174,7 @@ skeleton:
   natural: []
   weapons: [longsword]
   shield: [round, wood]
-  quality: crude
+  craft: poor
   traits: {tireless: true, undead: true, resist: {P: 0, S: 0.5}}
   feats: {shield_training: 1}
   keepUnarmed: true
@@ -259,7 +259,7 @@ kobold:
   natural: []
   armor: scaleHide
   weapons: [shortSpear]
-  quality: crude
+  craft: poor
   traits: {pack: 1, nimble: 1}
   feats: {}
   keepUnarmed: true
@@ -277,10 +277,11 @@ goblin:
   loot: humanoid_purse
   attrs: {STR: 4, CON: 4, DEX: 7, SPD: 7, INT: 4, WIS: 3, CHA: 3}
   natural: []
-  armorItem: [leather, half]
+  armorItem: {type: leather, coverage: half}
+  origin: goblin
   weapons: [club]
   sidearm: dagger
-  quality: crude
+  craft: poor
   traits: {nimble: 2}
   feats: {}
   keepUnarmed: true
@@ -294,10 +295,11 @@ goblinArcher:
   loot: humanoid_purse
   attrs: {STR: 4, CON: 4, DEX: 7, SPD: 7, INT: 4, WIS: 3, CHA: 3}
   natural: []
-  armorItem: [leather, half]
+  armorItem: {type: leather, coverage: half}
+  origin: goblin
   weapons: [shortbow]
   sidearm: dagger
-  quality: crude
+  craft: poor
   arrows: 15
   traits: {nimble: 2}
   feats: {}
@@ -341,7 +343,7 @@ scaleward:
 scalewardPair: {name: Scaleward pair, blurb: Two scaleward warriors., group: [scaleward, scaleward]}
 revenantKnight:
   name: Revenant knight
-  blurb: "An end-game knight: legendary plate, an adamant shield, a blade that drinks stamina and wounds, a withering burst, an aura of dread that saps everyone near him, a silk sash that quickens him, and the dead rise for him."
+  blurb: "An end-game knight: masterwork dwarven steel plate, an adamant shield, a blade that drinks stamina and wounds, a withering burst, an aura of dread that saps everyone near him, a silk sash that quickens him, and the dead rise for him."
   faction: grave_cult
   xp: 400
   glyph: "⚔"
@@ -352,16 +354,14 @@ revenantKnight:
   natural: []
   keepUnarmed: true
   nouns: [life, shadow, fire]
-  armorItem: [plate, full]
-  armorQuality: legendary
+  craft: master
+  armorItem: {type: plate, material: steel, origin: dwarven}
   weaponItems:
     - type: longsword
-      quality: legendary
       name: Soulreaver
-      enchant: {drain: {stamina: 0.5, attrs: 0.5}}
+      enchantments: [drinking, keen]
   sidearm: dagger
-  shield: [heater, adamant]
-  shieldQuality: legendary
+  shieldItem: {size: heater, material: adamant}
   trinkets: [{name: Flowing black silk sash, attrs: {SPD: 1}, ap: 1}]
   traits: {aura: {name: aura of dread, radius: 2, stamina: 3, cond: dread}}
   featPrefs:
@@ -406,9 +406,9 @@ spectre:
   keepUnarmed: false
   weaponItems:
     - type: warScythe
-      quality: legendary
+      craft: master
       name: Reaping scythe
-      enchant: {drain: {stamina: 0.5, attrs: 0.5}}
+      enchantments: [drinking]
   traits:
     tireless: true
     undead: true

@@ -138,7 +138,7 @@
     const D = G.DATA;
     if (item.kind === 'armor') {
       const b = Items.armorBase(item);
-      return `P${b.mit.P} S${b.mit.S} B${b.mit.B}` + (b.spd || b.dex ? ` · SPD−${b.spd} DEX−${b.dex}` : '') + ` · dur ${item.durability}/${b.maxDurability}`;
+      return `P${b.mit.P} S${b.mit.S} B${b.mit.B}` + (b.pierce ? ` · points burst at ${b.pierce.resist}, gap ${b.pierce.gap}` : '') + (b.spd || b.dex ? ` · SPD−${b.spd} DEX−${b.dex}` : '') + (b.weight ? ` · ${b.weight} kg` : '') + ` · dur ${item.durability}/${b.maxDurability}`;
     }
     if (item.kind === 'shield') {
       const s = Items.shieldStats(item);
@@ -148,9 +148,12 @@
       const d = D.WEAPONS[item.type];
       const st = Items.weaponStats(item);
       const faces = Object.entries(st.faces).map(([f, v]) => `${f} ${v.join('/')}`).join(' · ');
+      const punch = Object.entries(st.punch || {}).map(([f, x]) => `${f === 'point' || f === 'arrow' ? '' : f + ' '}punch ${x}`).join(' · ');
+      const kg = Items.weaponMass(item);
+      const mass = kg ? ` · ${kg} kg` : '';
       const max = Items.weaponMaxDurability(item);
       const dur = max ? ` · ${Items.weaponBroken(item) ? 'BROKEN' : `dur ${Items.weaponDurability(item)}/${max}`}` : '';
-      return `${d.hands >= 2 ? 'two-handed' : d.hands > 1 ? 'versatile' : 'one-handed'} · ${d.reachName || ''} · ${faces}${dur}`;
+      return `${d.hands >= 2 ? 'two-handed' : d.hands > 1 ? 'versatile' : 'one-handed'} · ${d.reachName || ''} · ${faces}${punch ? ' · ' + punch : ''}${mass}${dur}`;
     }
     return '';
   }

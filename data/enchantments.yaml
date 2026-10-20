@@ -1,0 +1,44 @@
+# Enchantments: rare and strong; most gear has none. An item lists them by id (`enchantments: [warding]`); its name
+# ends "of <name>" (a steel longsword of keenness).
+# Any enchantment makes a weapon magical (it can strike the incorporeal).
+#   kinds       what it can be laid on: weapon, armor, shield
+#   weight, protect, damage, durability, wear   multipliers, as in origins.yaml and crafts.yaml
+#   drain       weapons: the wielder takes back this share of the stamina and of the attribute points each blow deals
+#   value       price multiplier
+
+drinking:
+  name: Drinking
+  kinds: [weapon]
+  drain: {stamina: 0.5, attrs: 0.5}
+  rarity: unique
+  value: 30
+  blurb: "The blade drinks: its wielder takes back half of what each blow takes."
+keen:
+  name: Keenness
+  kinds: [weapon]
+  damage: 1.25
+  rarity: very rare
+  value: 10
+  blurb: Never dulls; bites deeper.
+warding:
+  name: Warding
+  kinds: [armor, shield]
+  protect: 1.3
+  rarity: very rare
+  value: 10
+  blurb: Blows slow as they land.
+lightness:
+  name: Lightness
+  kinds: [armor, weapon, shield]
+  weight: 0.6
+  rarity: very rare
+  value: 8
+  blurb: Weighs little more than cloth.
+enduring:
+  name: Endurance
+  kinds: [armor, weapon, shield]
+  durability: 2
+  wear: 0.5
+  rarity: very rare
+  value: 6
+  blurb: Wears slowly and lasts twice as long.

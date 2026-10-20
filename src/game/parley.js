@@ -322,7 +322,7 @@
   // Heavy armor and a big weapon make a point without words.
   function presenceOf(c) {
     const a = c.armor ? c.armor.type : null;
-    let p = a === 'plate' ? 3 : a === 'scale' ? 2 : a === 'mail' ? 1 : 0;
+    let p = a === 'plate' ? 3 : a === 'mail' ? 1 : 0;
     const w = C.wieldedWeapon(c);
     if (w && G.DATA.WEAPONS[w.type].hands >= 2) p += 1;
     return p;

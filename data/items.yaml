@@ -6,8 +6,8 @@
 #   book: teaches: {noun: fire} (a magic noun) or reveals: [secret ids] (Lore).
 #   trinket: slot ring | charm; attrs {SPD: 1}; ap: extra AP (engine trinkets).
 # tables: loot. Each entry has w (weight) and one of
-#   gold: [min, max] | good: id, n: [min, max] | weapon: id, quality | armor: id, coverage, quality
-#   | shield: size, material, quality | nothing: true
+#   gold: [min, max] | good: id, n: [min, max] | weapon: id | armor: id, coverage | shield: size, material
+#   | nothing: true. Gear may add its tags: material, origin, craft (poor, average, master), enchantments.
 
 goods:
   bandage:
@@ -80,25 +80,25 @@ tables:
     - {w: 3, good: bandage, n: [2, 3]}
     - {w: 2, good: salve}
     - {w: 2, good: ink}
-    - {w: 2, weapon: dagger, quality: fine}
-    - {w: 1, armor: leather, coverage: full, quality: standard}
+    - {w: 2, weapon: dagger, craft: master}
+    - {w: 1, armor: leather, coverage: full}
     - {w: 1, good: gem_small}
   strongbox:
     - {w: 4, gold: [30, 70]}
     - {w: 2, good: gem_small}
     - {w: 2, good: salve}
     - {w: 1, good: tome_roots}
-    - {w: 1, weapon: longsword, quality: fine}
-    - {w: 1, armor: mail, coverage: half, quality: standard}
-    - {w: 1, shield: round, material: iron, quality: standard}
+    - {w: 1, weapon: longsword, craft: master}
+    - {w: 1, armor: mail, coverage: half}
+    - {w: 1, shield: round, material: iron}
   barrow_hoard:
     - {w: 4, gold: [40, 120]}
     - {w: 2, good: silver_chalice}
     - {w: 2, good: tome_ember}
     - {w: 2, good: antidote}
     - {w: 1, good: sash_quick}
-    - {w: 1, armor: mail, coverage: full, quality: fine}
-    - {w: 1, weapon: warhammer, quality: fine}
+    - {w: 1, armor: mail, material: steel, coverage: full}
+    - {w: 1, weapon: warhammer, craft: master}
   humanoid_purse:
     - {w: 4, gold: [2, 12]}
     - {w: 2, nothing: true}
@@ -112,6 +112,6 @@ tables:
     - {w: 4, gold: [60, 140]}
     - {w: 3, good: gem_small}
     - {w: 2, good: ring_iron}
-    - {w: 2, armor: mail, coverage: full, quality: fine}
-    - {w: 1, armor: scale, coverage: half, quality: standard}
-    - {w: 1, weapon: greatsword, quality: fine}
+    - {w: 2, armor: mail, material: steel, coverage: full}
+    - {w: 1, armor: mail, material: steel, coverage: half}
+    - {w: 1, weapon: greatsword, craft: master}

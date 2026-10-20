@@ -75,6 +75,7 @@
       h('div', { class: 'chips' },
         c.armor ? h('span', { class: 'chip', title: 'Mitigation by damage type once coverage and condition are counted' }, `Armor P${ai.effMit.P} S${ai.effMit.S} B${ai.effMit.B}`) : h('span', { class: 'chip' }, 'No armor'),
         c.armor ? h('span', { class: 'chip', title: 'Armor durability' }, `Dur ${ai.durability}/${ai.maxDurability}`) : null,
+        ai.pierce ? h('span', { class: 'chip', title: 'A point with at least this much punch bursts through; a lighter one must find a gap (d10 + ⌊DEX/4⌋ + feats against the gap number) or is turned' }, `Points burst at ${ai.pierce.resist} · gap ${ai.pierce.gap}`) : null,
         ai.spd || ai.dex ? h('span', { class: 'chip warn', title: 'Armor slows and stiffens you' }, `SPD −${ai.spd} · DEX −${ai.dex}`) : null,
         sh ? h('span', { class: 'chip', title: 'Block AP, how much it can hold, durability' }, `Shield ${C.fmtAP(C.actionCost(c, 'block').ap)} AP · holds ${sh.threshold} · ${c.shield.durability}/${sh.maxDurability}`) : null),
       editable ? h('p', { class: 'small muted' }, 'Gear comes from the pack. Swapping is for town, camp and the quiet before a fight.') : null);

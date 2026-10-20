@@ -1,7 +1,0 @@
-# Quality grades for weapons, armor and shields. bonus = to-hit/parry style bonus, durability and threshold are multipliers.
-
-crude: {name: Crude, durability: 0.6, bonus: -1, threshold: 0.6, rarity: common}
-standard: {name: Standard, durability: 1, bonus: 0, threshold: 1, rarity: common}
-fine: {name: Fine, durability: 1.3, bonus: 1, threshold: 1.3, rarity: uncommon}
-masterwork: {name: Masterwork, durability: 1.6, bonus: 2, threshold: 1.6, rarity: very rare}
-legendary: {name: Legendary, durability: 2.2, bonus: 3, threshold: 2, rarity: unique}

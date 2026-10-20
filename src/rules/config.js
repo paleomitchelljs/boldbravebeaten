@@ -68,8 +68,8 @@
     // their whole pool, as their whole turn, so a tired or armored fighter can always make one big swing.
     wholeTurnAction: true,
     // PROVISIONAL (the user's call: armor makes actions dearer): armor's SPD penalty no longer
-    // shrinks the pool; every action costs this many AP more per point of it (plate 3 → +0.5, scale
-    // 2 → +0.3, mail 1 → +0.2; the mobility feats lower it). It still slows moving, initiative and
+    // shrinks the pool; every action costs this many AP more per point of it (plate 3 → +0.5,
+    // mail 1 → +0.2; the mobility feats lower it). It still slows moving, initiative and
     // dodging. 0: as written (the penalty lowers the pool).
     armorActionAP: 1 / 6,
     // PROVISIONAL: a Quick feat (Quick Thrust, Parry, Block, Dodge, Hands, Heavy Tempo, Casting) at its
@@ -77,7 +77,8 @@
     // −1/3, −1/2). null: as written (−1 AP per rank).
     quickCut: 0.5,
     moveBase: 1, // squares per AP = (1 + floor(SPD/4)) × moveScale
-    // PROVISIONAL: squares are about a pace (1 = clinch, 2 = sword distance), so
+    // PROVISIONAL: squares are about an arm's length and a step (the user's reach scale: daggers and
+    // one-handed swings 1, one-handed thrusts and two-handed swings 2, two-handed thrusts 3, spears 4), so
     // movement covers twice as many of them as the Specifics formula gives.
     moveScale: 2,
     moveSpdDivisor: 4,
@@ -113,7 +114,33 @@
     pierceMode: 'roll',
     // Multiplier on pass-through by armor type, e.g. {plate: 0.5}; null = 1 for all.
     // TUNED (sim): plate 0.4 (so 20% per point). At 0.5 plate won 42% against lighter armor.
+    // (pierceMode and pass-through apply only when CONFIG.pierce is null.)
     passThroughByArmor: { plate: 0.4 },
+    // PROVISIONAL (the user's call): a point against armor either bursts through it or must find a gap.
+    //   Burst: the blow's punch (Items.weaponStats(...).punch: the mass behind the point; a swung beak or spikes,
+    //   the head's mass × the haft's leverage × swingPunch; × the motion's damage multiplier; × (1 + strPer ×
+    //   STR bonus); arrows the bow's × the arrowhead's) at least the armor's resist (armor.yaml × material and
+    //   origin protect): the point is through, and the piercing past the armor's P mitigation takes the
+    //   pass-through roll above, as every point did before. (Sending all of it through made padding nearly
+    //   useless: level-1 encounter deaths up by half, sim/FINDINGS.md.)
+    //   Gap: otherwise d10 + ⌊DEX/gapDiv⌋ + feats (+ prone, half-sword) ≥ the armor's gap number (armor.yaml,
+    //   + coverageGap): all the piercing reaches the body, the armor's P mitigation bypassed; a 10 always finds
+    //   one. A pinned target always gives one.
+    //   Turned: the point lands as deflectBlunt of its piercing, blunt (then blunt mitigation as usual), and its
+    //   weapon takes weaponWear.deflected wear instead of `hit`.
+    // A rapier (1.1) bursts padding (0.75) and leather (1.0) but not iron mail (1.6); a spear (1.7) bursts iron
+    // mail but not steel (2.0); a heavy spear (3.9, two hands) any mail; nothing a person swings bursts plate (5).
+    // null: the pass-through roll above.
+    pierce: {
+      swingPunch: 2.5,
+      strPer: 0.1,
+      gapDiv: 4,
+      feats: { find_the_gap: 2, spot_weakness: 1 },
+      prone: 3,
+      halfSword: 3,
+      coverageGap: { full: 0, half: -2, partial: -4 },
+      deflectBlunt: 0.5,
+    },
     // Slashing to an unarmored target: 1d4 per point → 1 STR, 2 CON, 3 SPD, 4 DEX
     slashAttributeTable: { 1: 'STR', 2: 'CON', 3: 'SPD', 4: 'DEX' },
     // Bleed: every 3 points of P/S reaching attributes = 1 bleed/round for 3 rounds.
@@ -125,7 +152,7 @@
     // 'physical': each weapon's damage, AP, weight class, STR scaling and wounds are worked out
     // from its mass, length, hands and point/edge/head (data.js `phys`; Items.weaponStats).
     // 'table': the hand-set faces of rounds 1–8 (flat STR bonus, every wound bleeds the same).
-    // Materials, quality and (later) enchantments act through Items.weaponStats, either on the
+    // Materials, origins and enchantments act through Items.weaponStats, either on the
     // physical inputs (a lighter metal changes mass, so speed follows) or on the outputs.
     weaponModel: 'physical',
     weaponPhysics: {
@@ -172,7 +199,7 @@
     // use `natural`. Undead and constructs have no vital spots.
     vital: {
       perDepth: 0.01, max: 0.4, mult: 3, cut: 0.1, natural: 0.1,
-      armor: { padded: 0.6, leather: 0.5, mail: 0.3, scale: 0.25, plate: 0.1, fur: 0.8, bogSkin: 0.8, chitin: 0.4, scaleHide: 0.5, scalewardScales: 0.4, trollHide: 0.5, golemStone: 0 },
+      armor: { padded: 0.6, leather: 0.5, mail: 0.3, plate: 0.1, fur: 0.8, bogSkin: 0.8, chitin: 0.4, scaleHide: 0.5, scalewardScales: 0.4, trollHide: 0.5, golemStone: 0 },
       otherArmor: 0.5,
       coverage: { full: 1, half: 1.5, partial: 2 },
       // A pinned fighter's armor doesn't guard the vitals: the point goes in at the armpit,
@@ -193,9 +220,10 @@
     strOffsetPivot: 5,
     strOffsetDivisor: 2,
 
-    // ---- Range (PROVISIONAL; weapon reach data lives in data.js) ----------
+    // ---- Range (PROVISIONAL; weapon reach is weapons.yaml `reach: {swing, thrust, min}`) ----------
     range: {
-      // Attacks with weapons that aren't closeOK, at range 1 ("inside the weapon's reach"):
+      // Attacks inside a weapon's reach.min (a spear or greatsword at range 1), or in a clinch with a
+      // weapon that isn't closeOK (a sword, a rapier, a spear):
       //   'blunt'  — the blow lands with closeMult of its total force, all as blunt (pommel, haft,
       //              guard); a spear can be jabbed with the shaft (round-6 rule, the user's call)
       //   'cannot' — the attack can't be made; shove, grapple, draw a dagger or use a close technique
@@ -203,7 +231,7 @@
       closeRule: 'blunt',
       closeMult: 0.5,
       longRangePenalty: 2, // bows: −2 damage beyond their long range
-      maneuverMax: 1, // trips, disarms, grapples, shoves, kicks and punches need clinch distance
+      maneuverMax: 1, // trips, disarms, grapples, shoves, kicks and punches need range 1
     },
 
     // PROVISIONAL: a character held in a grapple fights cramped with any weapon, dagger included
@@ -213,11 +241,11 @@
     // ---- Getting up (PROVISIONAL, the user's call) ------------------------
     // Standing from prone gets steeply harder in heavier armor. Base AP and stamina by armor
     // (× apScale and × staminaScale; plus the armor's usual stamina penalty). Specifics: 2 AP
-    // + 0/0/1/1/2 for padded/leather/mail/scale/plate. The AP is capped at the character's
+    // + 0/0/1/1/2 for padded/leather/mail/scale/plate (scale is now steel mail). The AP is capped at the character's
     // pool, so getting up is always possible, if it takes the whole round. Kip-Up: 1 base AP.
     standUp: {
-      ap: { none: 1, padded: 1, leather: 1, mail: 2, scale: 3, plate: 4 },
-      stamina: { none: 1, padded: 1, leather: 1, mail: 2, scale: 3, plate: 5 },
+      ap: { none: 1, padded: 1, leather: 1, mail: 2, plate: 4 },
+      stamina: { none: 1, padded: 1, leather: 1, mail: 2, plate: 5 },
     },
 
     // ---- Grappling (PROVISIONAL, designed with the user) -------------------
@@ -240,7 +268,7 @@
       stamina: { clinch: 3, grapple: 5, pin: 5, throw: 5, break: 3 },
       holdUpkeep: 2,
       bigMargin: 5,
-      handles: { mail: 1, scale: 1, plate: 2 },
+      handles: { mail: 1, plate: 2 },
       throwDamage: 3,
       pinBonus: 2, // Pin feat
       dogpile: { perAlly: 1, withFeat: 2 },
@@ -257,8 +285,8 @@
     // target straight back (1 square, 2 on a margin of 5+); a blocked push on a margin of
     // 5+ knocks them down instead.
     // PROVISIONAL (user asked for ways to stop an advance or push a foe back): fendReach — a
-    // long weapon (reach 2+) shoves at range 2 with the haft or point; shieldBonus — a ready
-    // shield adds to the shove.
+    // long weapon (reaching 3+: a spear, a greatsword, a scythe) shoves at range 2 with the haft or
+    // point; shieldBonus — a ready shield adds to the shove.
     shove: { twoHandBonus: 2, farMargin: 5, fendReach: 2, shieldBonus: 1 },
     // PROVISIONAL (the user asked for in-combat charm and wisdom actions): Bait — d10 + ⌊CHA/2⌋
     // + Feint against d10 + ⌊WIS/2⌋: the foe is drawn off balance and defends at
@@ -270,8 +298,8 @@
     social: { bait: { range: 3 }, readIntent: { range: 4, tn: 5, misreadBy: 4 }, readBonus: 2 },
     // PROVISIONAL (the user chose opportunity strikes): a step that starts inside a foe's melee
     // reach lets that foe strike at the mover as they go, once per move, paid from the foe's AP.
-    // A hit stops the move where it is. Leaving an adjacent foe provokes; walking up to a sword
-    // does not; walking up to a spear does (you leave its reach-2 square on the way in).
+    // A hit stops the move where it is. Leaving an adjacent foe provokes; so does stepping in to
+    // swing at someone whose thrust reaches farther (a sword thrusts at 2, a spear at 4).
     opportunityStrikes: true,
 
     // ---- Wind-up (PROVISIONAL) --------------------------------------------
@@ -297,15 +325,14 @@
       // PROVISIONAL (history, the user's call): armor stops arrows better than it stops a thrust
       // at arm's length. Layered textile catches a shaft (padded most); mail is worn over padding.
       // Extra piercing mitigation against arrows only, by armor type.
-      vsArrows: { padded: 2, leather: 1, mail: 1, scale: 1, plate: 0, fur: 1, chitin: 1, trollHide: 1, scaleHide: 1, scalewardScales: 1, golemStone: 0 },
-      // Arrowheads. Broadheads cut terrible wounds (bleed × bleed) but a broad blade is stopped by
-      // metal armor (+metalMit); bodkins are narrow armor-piercers that make a smaller wound
-      // (damage on the main type) but slip through mail and plate (metalMit < 0).
+      vsArrows: { padded: 2, leather: 1, mail: 1, plate: 0, fur: 1, chitin: 1, trollHide: 1, scaleHide: 1, scalewardScales: 1, golemStone: 0 },
+      // Arrowheads. Broadheads cut terrible wounds (bleed × bleed) but a broad blade has little punch
+      // (× punch against the bow's, CONFIG.pierce); bodkins are narrow armor-piercers that make a smaller
+      // wound (damage on the main type) but punch harder: a longbow bodkin bursts mail, a broadhead doesn't.
       heads: {
-        broadhead: { name: 'broadhead', ammo: 'arrows', damage: 0, metalMit: 1, bleed: 1.5 },
-        bodkin: { name: 'bodkin', ammo: 'bodkins', damage: -1, metalMit: -2, bleed: 1 },
+        broadhead: { name: 'broadhead', ammo: 'arrows', damage: 0, punch: 0.7, bleed: 1.5 },
+        bodkin: { name: 'bodkin', ammo: 'bodkins', damage: -1, punch: 1.5, bleed: 1 },
       },
-      metalArmor: ['mail', 'scale', 'plate'],
     },
 
     // ---- Magic (PROVISIONAL stub so casters can be tested) ---------------
@@ -534,11 +561,9 @@
     powerMotions: ['power'],
     powerPushThrough: true,
     // PROVISIONAL: a blocked power attack breaks the shield outright when the weapon is at
-    // least as hard as the shield, unless the shield is of a powerful quality. Hardness also sets
-    // how fast a weapon wears on what it strikes (weaponWear): cloth and leather barely touch an
-    // edge, metal chews it.
-    materialHardness: { cloth: 0.1, leather: 0.3, hide: 0.5, wood: 1, bone: 1, chitin: 1.5, iron: 2, stone: 2, steel: 3, adamant: 5 },
-    powerfulShieldQualities: ['masterwork'],
+    // least as hard as the shield (materials.yaml hardness), unless the shield's craft is unbreakable
+    // (crafts.yaml: masterwork). Hardness also sets how fast a weapon wears on what it strikes
+    // (weaponWear): cloth and leather barely touch an edge, metal chews it.
     // Specifics: 10% break chance per point over threshold
     shieldBreakPerPoint: 10,
     // PROVISIONAL: shield wear from a blocked hit = 0.5×P + 0.5×S + 1×B ("blunt wears it most")
@@ -547,8 +572,7 @@
     towerMovePenalty: 1,
 
     // ---- Armor ------------------------------------------------------------
-    // PROVISIONAL: base durability per armor type (Outline: durability like HP; numbers Open)
-    armorDurability: { padded: 20, leather: 25, mail: 40, scale: 45, plate: 60, fur: 30, chitin: 40, trollHide: 40, scaleHide: 25, bogSkin: 20, scalewardScales: 45, golemStone: 80 },
+    // Base durability per armor type lives in armor.yaml (Outline: durability like HP; numbers Open).
     // PROVISIONAL: armor coverage keyword
     coverage: {
       full: { mitigation: 0, penalty: 0, passThrough: 0.5 },
@@ -556,7 +580,7 @@
       partial: { mitigation: -2, penalty: -2, passThrough: 0.75 },
     },
     // PROVISIONAL: durability lost per hit = (incoming blunt + slashing converted to blunt)
-    // × armorWearScale (padding exempt). Mitigation scales with current/max durability,
+    // × armorWearScale × the armor's craft wear (padding exempt). Mitigation scales with current/max durability,
     // keeping at least durabilityMitigationFloor of its value until the armor is destroyed.
     // TUNED (sim): full wear let three harmless kicks strip a point of plate mitigation.
     armorWearScale: 0.33,
@@ -564,17 +588,17 @@
     // too, at this share of their piercing (a point through mail breaks rings). 0: blunt and cuts only.
     armorPierceWear: 0.5,
     // ---- Weapon wear (PROVISIONAL, the user's call) ---------------------------------------------
-    // Every weapon has a durability (weapons.yaml × its material's toughness × quality). Wear per
-    // blow = the blow's force × rate × fragility × (hardness of what it meets ÷ its own hardness):
+    // Every weapon has a durability (weapons.yaml × its material's toughness × origin × craft). Wear per
+    // blow = the blow's force × rate × fragility × (hardness of what it meets ÷ its own hardness) × craft wear:
     //   hit      the blow lands on armor (metal chews an edge; cloth, leather and flesh barely touch it)
+    //   deflected  a point turned by armor it could neither burst nor find a gap in (CONFIG.pierce)
     //   parried  the attacker's weapon, against the parrying weapon
     //   parry    the parrying weapon, against the blow it meets (heavier blows, more wear)
     //   blocked  the attacker's weapon, against the shield
     // A dodge costs a weapon nothing. A worn weapon keeps `floor` of its damage, sliding down as it
     // wears; at 0 it breaks and can't be used until a smith mends it. null: weapons never wear.
-    weaponWear: { hit: 0.4, parried: 0.15, parry: 0.25, blocked: 0.25, floor: 0.6 },
-    // How much more a material lasts than iron (durability multiplier against the weapon's own).
-    materialToughness: { wood: 0.6, bone: 0.7, stone: 1, iron: 1, steel: 1.5, adamant: 3 },
+    weaponWear: { hit: 0.4, deflected: 1.0, parried: 0.15, parry: 0.25, blocked: 0.25, floor: 0.6 },
+    // How much more a material lasts than iron is its toughness in materials.yaml.
     // Per-armor overrides of the Specifics armor table, e.g. { plate: { stamina: 1, regen: 3 } }.
     // TUNED (arena, round 3): plate +1 stamina per action (was +2) and −3 regen (was −4).
     // Plate fighters were losing by exhaustion (0.6 collapses a fight); this brings heavy
@@ -586,7 +610,7 @@
     maneuver: {
       die: 10,
       // knockdown resistance from armor weight
-      armorStability: { none: 0, padded: 0, leather: 0, mail: 1, scale: 1, plate: 2 },
+      armorStability: { none: 0, padded: 0, leather: 0, mail: 1, plate: 2 },
       kickKnockdownMargin: 3, // a kick knocks down only if it wins the opposed roll by 3+
       tripMargin: 1, // a trip needs to win the opposed roll by this much
       tripFeatBonus: 2,
@@ -629,28 +653,30 @@
   // Every PROVISIONAL choice, shown on the Rules tab so nothing is hidden.
   CONFIG.provisional = [
     'The turn budget (the user\'s call): AP pool = 3.5 + SPD/2, unrounded (6 at SPD 5), costs in tenths. At level 1 a turn holds one big action, a step and a medium action, or three quick actions: base costs up to 2 (thrust, parry, dodge, block) stand, every Specifics AP above 2 costs 2 (a swing 3 → 4, a two-handed swing 4 → 6, a power swing 2 + 4, a shortbow 4, a longbow 2 + 4, trip and disarm 4, grapple, pin and throw 4); weapon speed multiplies the result (a dagger thrust 1.5). A move is a quick action: 2 AP for up to (1 + ⌊SPD/4⌋) × 2 squares. Someone who has spent nothing this round may take one action dearer than the whole pool as the whole turn.',
-    'Armor makes actions dearer (the user\'s call): its SPD penalty no longer shrinks the pool; every action costs 1/6 AP more per point of it (plate +0.5, scale +0.3, mail +0.2; the mobility feats lower it). The penalty still slows moving, initiative, dodging and fleeing.',
-    'Weapon wear (the user\'s call): every weapon has a durability (weapons.yaml × its material\'s toughness × quality; a rapier 40, a longsword 100, a mace 120). Each blow wears it by its force × rate × fragility (rapier 2, mace 0.5) × (what it meets ÷ its own hardness): landing on armor 0.4 (metal chews an edge; cloth, leather and flesh barely touch it), being parried 0.15, parrying 0.25 (by the force of the blow met), being blocked 0.25 (by the shield\'s material). A dodge costs nothing. A worn weapon keeps 60% of its damage at the end of its life; at 0 it breaks and is out of the fight until a smith mends it. Thrusts now wear armor too (half their piercing).',
+    'Armor makes actions dearer (the user\'s call): its SPD penalty no longer shrinks the pool; every action costs 1/6 AP more per point of it (plate +0.5, mail +0.2; the mobility feats lower it). The penalty still slows moving, initiative, dodging and fleeing.',
+    'Weapon wear (the user\'s call): every weapon has a durability (weapons.yaml × its material\'s toughness × origin × craftsmanship; a rapier 40, a longsword 100, a mace 120). Each blow wears it by its force × rate × fragility (rapier 2, mace 0.5) × (what it meets ÷ its own hardness): landing on armor 0.4 (metal chews an edge; cloth, leather and flesh barely touch it), being parried 0.15, parrying 0.25 (by the force of the blow met), being blocked 0.25 (by the shield\'s material). A dodge costs nothing. A worn weapon keeps 60% of its damage at the end of its life; at 0 it breaks and is out of the fight until a smith mends it. Thrusts now wear armor too (half their piercing).',
     'After a fight (the user\'s call): one click rests 15 minutes and mends: stamina back to the weary maximum, armor, shields and weapons get 25% back (50% with Field Repair in the party); broken weapons and shields need a smith. Pressing on keeps stamina where it is.',
     'Weariness (the user\'s idea, on trial): every round of combat lowers each fighter\'s maximum stamina by 1 (at most half of it); only a long rest (camp, inn) clears it.',
     'Quick feats (Quick Thrust, Parry, Block, Dodge, Hands, Heavy Tempo, Quick Casting) take a share off every such action: half at the top rank (Quick Thrust I–III: −1/6, −1/3, −1/2; Quick Parry I–II: −1/4, −1/2).',
     'Rounds and turns (the user\'s model): a round starts with initiative; each character takes one turn in initiative order and may spend their whole AP pool on it; every action resolves as it is taken. The round ends when everyone has had their turn; unspent AP is lost.',
     'Reactions: defences are not declared ahead. When a blow comes, the target may block, parry or dodge, paying the AP from their pool on the spot (shown with the odds). AP spent on your turn is AP you cannot defend with; a fighter out of AP takes what comes on their armor. A Feint the defender cannot read hides the blow: they choose blind, and a defence that cannot meet it (a parry against a power swing) is wasted. Untouchable: after your first dodge in a round, further dodges that round cost nothing.',
-    'Opportunity strikes: a step that starts inside a foe\'s melee reach lets that foe strike as the mover goes, once per move, from the foe\'s AP; a hit stops the move (AP for squares not walked is refunded). Leaving an adjacent foe provokes; walking up to a sword does not; walking up to a spear does.',
+    'Opportunity strikes: a step that starts inside a foe\'s melee reach lets that foe strike as the mover goes, once per move, from the foe\'s AP; a hit stops the move (AP for squares not walked is refunded). Leaving an adjacent foe provokes; so does stepping in to swing at someone whose thrust reaches farther (a sword thrusts at 2, a spear at 4).',
     'Stamina scale ×3: every base stamina cost is tripled. Chosen by simulation so the stamina curve matches the Outline.',
-    'Piercing through armor: each leftover point rolls a d10 and reaches CON on ≤ pass-through × 10 (plate 2, other full armor 5). Chosen by simulation over rounding.',
+    'Piercing through armor (when a point bursts it, or CONFIG.pierce is off): each leftover point rolls a d10 and reaches CON on ≤ pass-through × 10 (plate 2, other full armor 5). Chosen by simulation over rounding.',
+    'Points against armor (the user\'s call): a point bursts armor only if its punch reaches the armor\'s resistance. Punch = the mass behind it (two hands ×1.5; a swung beak or spikes, the head\'s mass × the haft × 2.5) × the motion × (1 + 0.1 × STR bonus); a dagger 0.9, a rapier 1.1, a longsword 1.4, a spear 1.7, a greatsword thrust 3.75, a heavy spear 3.9; arrows by the bow (shortbow 1, longbow 1.8) × the head (bodkin 1.5, broadhead 0.7). Resistance: padded 0.75, leather 1, mail 1.6, plate 5 (× material and origin protection: bronze 0.85, steel 1.25, dwarven 1.2). A burst point then takes mitigation and the pass-through roll as before. Otherwise it must find a gap: d10 + ⌊DEX/4⌋ + Find the Gap (+2) + Spot Weakness (+1) (+3 prone, +3 half-sword) ≥ the armor\'s gap number (padded 8, leather 8, mail 10, plate 12; half coverage −2, partial −4); a 10 always finds one and a pinned foe always gives one; all the piercing goes in. Failing that the armor turns the point: half its piercing lands as blunt and the weapon takes the deflected wear (1.0 against 0.4 for a blow that lands). So a rapier bursts padding and leather but must find a gap in mail; a spear bursts iron mail but not steel; nothing a person wields bursts plate.',
+    'Plate spreads a blow it turns (the user\'s call): half of the blunt left after its mitigation from a cut or a point (converted cuts, turned points) never reaches stamina; a crushing blow (a mace, a hammer, a club, a fist) carries as before (armor.yaml dissipate {glancing: 0.5, crushing: 0}; less as the plate wears). Spreading crushing blows too left maces 2–13% against plate in the weapon sweep (sim/FINDINGS.md).',
     'Armor wear per hit is a third of (blunt + converted slashing); armor keeps at least 75% of its mitigation until destroyed.',
     'Blocks are contested (the user\'s call) and the easiest defence: d10 + Shield Training + the shield (buckler 1, round 2, heater 3, tower 4) + ⌊(STR + DEX)/4⌋ against the attacker\'s d10 + ⌊(STR + SPD)/4⌋ + motion. A dodge is the hardest (−2). A defence that works still costs stamina: half the blow\'s force for a block, a quarter for a parry, none for a dodge; a dodge costs 1 base stamina (Specifics 2). Untrained against a sword swing: block 72%, parry 64%, dodge 36%. Bind (feat): a successful parry lets you try a disarm at once.',
-    'Range: a square is about a pace (1 = clinch, 2 = sword distance). Swings reach 1 to the weapon\'s reach; thrusts reach farther on some weapons (rapier +1, spear +2). Inside a long weapon\'s reach (range 1) its blows land with half their force, all as blunt (pommel, haft, guard). Daggers, clubs, maces and hammers work fully at 1, as do half-swording and the murder stroke. Movement covers twice the Specifics squares.',
+    'Range (the user\'s reach): daggers 1; one-handed swords, maces and axes swing 1 and thrust 2; two-handed weapons swing 2 and thrust 3, cramped at 1 (pommel, haft); spears thrust to 4 (the spear and heavy spear cramped at 1, the short spear to 3); the war scythe sweeps 2–3 and does not thrust. Long blades and spears are cramped in a clinch; daggers, clubs, maces and hammers are not, nor are half-swording and the murder stroke. Cramped blows land with half their force, all as blunt. Movement covers twice the Specifics squares.',
     'Weapons in hand: drawing a weapon costs half an AP; dropping one costs nothing; picking one up costs 2. Drawing while holding a weapon drops it (a dagger is sheathed instead). A character held in a grapple fights cramped with any weapon, dagger included: half force, all blunt.',
     'Shove (2 AP, range 1): opposed d10 + ⌊STR/2⌋ (+2 with a two-handed weapon) vs d10 + footing. A win pushes the target back 1 square, 2 on a margin of 5+; if they can\'t move, a margin of 5+ knocks them down.',
     'Wind-up: a power swing, a longbow shot and a Strong spell are wound up (drawn) in one round (2 AP) and released the next for the rest of the cost. After releasing you may wind up again in the same round. While wound up you cannot block or parry; the wind-up is lost if you are knocked down, grappled, disarmed or drop, or if you don\'t release it the next round.',
     'Shields vs power attacks: a blocked power swing breaks the shield outright if the weapon is at least as hard as the shield (wood < iron < steel) unless the shield is masterwork, and force above the shield\'s break threshold drives through as blunt damage. Every block wears a shield twice as fast as before.',
-    'Spear (not in the catalog): point 6/0/0, thrusting 2–4, one hand.',
+    'Spear and heavy spear (not in the catalog): spear point 8/0/0, thrusting 2–4, one hand, 1.7 kg; heavy spear the same point, two hands, 2.6 kg, which bursts any mail.',
     'Bows (not in the design docs): shortbow arrow 5 P, range 2–12, 4 AP, single action; longbow 7 P, range 2–16, drawn one round (2 AP) and loosed the next (4 AP); −2 damage at long range; arrows can be blocked or dodged, not parried; no STR bonus; one arrow per shot.',
-    'Arrows and armor (history): armor catches arrows better than a thrust. Extra piercing protection against arrows: padded +2, leather, mail and scale +1, plate 0. Two arrowheads: broadheads cut terrible wounds (bleed ×1.5) but metal armor (mail, scale, plate) stops them better (+1); bodkins do 1 less damage but slip through metal armor (−2 to its protection). A longbow hit, expected CON (broadhead / bodkin): unarmored 7 / 6, padded 2 / 1.5, mail 2 / 3, scale 1.5 / 2.5, plate 0.4 / 0.8.',
+    'Arrows and armor (history): armor catches arrows better than a thrust. Extra piercing protection against arrows that burst it: padded +2, leather and mail +1, plate 0. Two arrowheads: broadheads cut terrible wounds (bleed ×1.5) but punch weakly (×0.7: a longbow broadhead must find a gap in mail); bodkins do 1 less damage but punch hard (×1.5: a longbow bodkin bursts mail; nothing bursts plate).',
     'Weapons from physics: each weapon has a mass, a length, hands and a point (depth, width), an edge or a head. Damage: point depth/4 piercing; edge (2 + 3√(mass × length × grip)) slashing; head 1 + 6√(head mass × length × grip) blunt. Speed: thrusts cost more with mass, swings with √(mass × length), the longsword costing what the motion table lists. STR adds strBonus × 0.25–0.5 to a thrust (by wound width) and × mass/1.4 (× 1.5 two-handed, up to 1.5) to a swing. A piercing wound bleeds damage × width/4 over 2 + depth/15 rounds.',
-    'Fend off and push back: with a long weapon (reach 2+) a shove reaches 2 squares; a ready shield adds +1.',
+    'Fend off and push back: with a long weapon (reaching 3 or more) a shove reaches 2 squares; a ready shield adds +1.',
     'Ward (verb) and Blink (verb): Ward + Force soaks 3 × magnitude points of spells and missiles; Ward + Wind turns half the missiles aside; Ward + an element halves that element and keeps off its after-effects; Ward + Mind keeps out baits. Blink steps up to 4 squares through walls and out of any hold, roots or webs. Wind blows now hurl a target back 2 squares.',
     'Bait and Read intent (in-combat charm and wisdom): Bait (1 AP, within 3 squares) is d10 + ⌊CHA/2⌋ + Feint against d10 + ⌊WIS/2⌋ + Read Attack: they are drawn off balance and defend at −2 for the rest of the round. Read intent (half an AP, within 4, in sight): the reader rolls d10 + ⌊WIS/2⌋ + Read Attack against 5 + the foe\'s ⌊CHA/2⌋ + Feint, a number they don\'t see. Made it: the foe\'s true intent (what they have committed to this round, feints seen through) and +2 to defend against them and to beat their defenses. Missed by 1–3: nothing to go on. Missed by 4 or more: a confident misread — a false intent and −2 — reported just like a true read. Hex + Mind baits by magic (WIL resists); Bless + Mind gives foresight (true reads of every foe).',
     'Impact: blunt past armor beyond 8 points breaks bones (1 CON per 2 points over, ÷ size for big bodies) as well as winding; a blow that lands throws its target back 1 square per 8 points landed (blunt in full, cuts and stabs at half; ÷ size; up to 3); A parry meets force with force: the attacker adds ⌊(blow − half my weapon\'s blow)/4⌋ + ⌊(blow − my weapon\'s blow)/2⌋ (+ motion) against my d10 + agility + Parry Training — equal weapons parry as before or a little easier; a giant\'s club against a sword is hopeless, against a strong two-hander with Parry Training a chance. Shields already wear by force, shatter past their threshold, and break outright under a power blow from as hard a material.',
@@ -659,12 +685,12 @@
     'Drakes, wyverns, the constrictor and the golem: fliers (drake, wyvern) pass over rough ground, pits, traps, hazards and walls that aren\'t solid (solid walls still stop them) and are slippery to grab. The drake (level 8) has drake scales (P4 S4 B2), a bite, claws, a reach-2 wing buffet that can knock you down, 1.5× movement and fire breath (Burst + Fire, Strong for a bigger one). The wyvern (level 10) has heavier scales (P5 S5 B3), a reach-2 bite, a venomous stinger (3 CON a round over 4 rounds at full depth) and a crushing wing beat. The giant constrictor grapples beyond any human (Grappler III, STR 18) and crushes whoever it holds every round (−8 stamina, −1 CON), but it has one victim at a time and thin scales. The stone golem is immune to magic: spells do nothing to it and it shrugs off conditions; it never tires.',
     'Rats and the spectre: giant rats are weak (STR 3, a third of the stamina) and come alone or as a swarm of six. The spectre is a level-15 undead: incorporeal (weapons without an enchantment pass through; nothing to grab, trip or shove), a legendary war scythe that drinks half the stamina and wounds it deals, and a wail each round that frightens every foe within 2 squares unless they resist (WIL). Magical weapons (high-level gear) and spells hurt it.',
     'Aura of dread and trinkets: at the start of each round, every foe within the aura (2 squares of the revenant knight) loses 3 stamina and is in Dread for the round (−1 STR, DEX and SPD, −1 to guard). Trinkets are worn items that shift attributes or AP: the revenant knight\'s flowing black silk sash gives +1 SPD and +1 AP.',
-    'End-game gear and the revenant knight (test build): Legendary quality (+3, durability ×2.2, shield threshold ×2.0) and Adamant shields (×3.5). Battle Casting (feat, adept, needs Casting II): cast with both hands full. An enchanted blade that drinks (Soulreaver): the wielder takes back half the stamina and half the attribute points each blow deals. The revenant knight is a level-20 character at the human cap (22 feats: Casting IV, Burst, Conjure, Strong, Battle Casting, plate and shield training) in legendary plate with a legendary adamant heater and Soulreaver; Burst + Life + Strong withers a whole area through armor, and Conjure + Life raises the fallen.',
+    'End-game gear and the revenant knight (test build): masterwork dwarven steel plate, a masterwork adamant heater (×3.5) and Soulreaver, a masterwork longsword enchanted with Drinking and Keenness. Battle Casting (feat, adept, needs Casting II): cast with both hands full. Drinking: the wielder takes back half the stamina and half the attribute points each blow deals. The revenant knight is a level-20 character at the human cap (22 feats: Casting IV, Burst, Conjure, Strong, Battle Casting, plate and shield training); Burst + Life + Strong withers a whole area through armor, and Conjure + Life raises the fallen.',
     'Name (modifier): say the target\'s name and a targeted spell (Restore, Bless, Ward, Hex, Beguile) reaches them anywhere on the field, with no range or line of sight; +2 spell points. Companions\' names are known; a foe\'s only if learned (a true name). Restore + Life + Name is the far heal.',
     'Restore (verb) and healing: Restore + a noun undoes that noun\'s harm on an ally (range 2). Restore + Life mends: bleeding stops (poison doesn\'t), 1 CON back (2 with Strong), 4 + 2 × magnitude stamina back (enough to wake the unconscious). Restore + another noun lifts the conditions it inflicts: Venom cures poison, Plague disease, Fire burning, Frost numbness, Will control, Calm calm, Dream a trance, and so on. Wide spreads it to everyone within a square of the target, friend or foe, at half the stamina. Bless + Life stays a boon (Innervated); Strike, Hex and Burst + Life wither. The dead stay dead. The Cleric (arena and gauntlet) is a mage in mail with a mace and Life, Light and Force.',
     'Magic phase 2 (draft): Beguile (verb, WIL resists, 2 rounds) with the mind nouns — Calm (won\'t attack; a blow ends it), Dream (mesmerized: no actions until harmed), Rage (a frenzy: no guards, strikes the nearest body, friend or foe), Fear (won\'t close with or strike the caster), Will (fights for the caster while the caster concentrates, −1 AP). Word Doubling (feat): two nouns instead of a modifier, both do the verb (+2 cost); Rage + Dream makes confusion. Body nouns Swiftness, Might, Grace: a bolt or Hex slows, enfeebles (−2 STR) or makes clumsy (−2 DEX), CON resists; Bless hastens, empowers, makes deft. Venom (poison, 1 CON a round; miasma ground; antivenom boon) and Plague (disease: −1 STR, −2 regeneration, lasts past the fight). Light (sears the undead ×2; dazzles; radiance reveals runes; wall of light), Shadow (blinds — strikes only at arm\'s reach; darkness blocks sight and missiles but not blades; shroud turns half the missiles), Spirit (harms only the undead, ×2; chills the living for half, to stamina; Beguile + Spirit frightens). Conditions now shift every attribute but CON.',
     'Rituals (magic phase 3 draft): Read, Seek, Divine, Speak, Mend, Prepare, Summon, Raise. Each takes time (shortened by Ritualist), spell points (−1 per Ritualist rank) and components (spent win or lose). Roll d10 + ⌊INT/2⌋ + Ritualist (+3 with True Naming and a true name) against the GM\'s tier (easy 6, moderate 8, hard 10, very hard 12, legendary 14): margin 0+ partial, 3+ full, 6+ exceptional; −5 or worse turns on the caster. Information rituals reveal the GM\'s secrets about the subject that the roll could reach (1 / 2 / 3 by outcome). Mend heals 1 / 2 / 4 CON and stops bleeding (exceptional draws out poison and disease). Prepare lays a ward, boon or rune that takes hold when the next fight starts, twice as long.',
-    'Wound roll: a blow that reaches the body rolls a d10; on 10 × chance or less it is a vital wound. Piercing chance = depth/100 (dagger 1, swords 2, spear and greatsword 3 on the d10): triple CON damage, double bleeding. Cuts: chance = edge/10: the cut takes its damage again from CON. Armor guards the vitals: padded ×0.6, leather ×0.5, mail ×0.3, scale ×0.25, plate ×0.1 (×1.5 half armor, ×2 partial).',
+    'Wound roll: a blow that reaches the body rolls a d10; on 10 × chance or less it is a vital wound. Piercing chance = depth/100 (dagger 1, swords 2, spear and greatsword 3 on the d10): triple CON damage, double bleeding. Cuts: chance = edge/10: the cut takes its damage again from CON. Armor guards the vitals: padded ×0.6, leather ×0.5, mail ×0.3, plate ×0.1 (×1.5 half armor, ×2 partial).',
     'WIL split from WIS (the user\'s call): eight attributes. WIL is resolve: magic defense, resisting fear and compulsion, and stamina regeneration (⌊(CON + WIL)/4⌋ − armor). WIS stays judgment and perception. Older characters get WIL = their WIS.',
     'Monster attributes go past the human range (1–10, 13 with Conditioning feats), up to 30: bears and trolls STR 16–20, a stone golem 22, a troll chieftain 24. The usual formulas apply to the raw number (damage bonus ⌊(STR−5)/2⌋, grappling ⌊STR/2⌋, stamina, death at CON 0).',
     'Monsters (draft): natural weapons are always ready and can\'t be dropped; natural armor can\'t be looted. Traits: knockdown bites, pack bonus (+1 damage per packmate beside the target), venom (poison up to 2 CON a round for 3 rounds, no more than the wound; bandages don\'t stop it), rust (corrodes metal armor and shields), displacement (each attack first rolls a d10 to find the real creature: arrows miss on 1–5, blows on 1–2), springy chitin (a blow that lands costs the attacker 3 stamina), sticky webs (each layer adds 2 AP and 3 stamina to every action, up to two layers; one layer comes loose each round; tear free with d10 + ⌊STR/2⌋ ≥ 8, or burn them), shield-crushing blows, regeneration (unless burned), tireless (undead and constructs: no stamina, damage to attributes, no bleeding or venom), resistances (skeletons: no piercing, half slashing), nimble, slippery, leaping, and boss multipliers on AP and stamina.',
@@ -679,15 +705,16 @@
     'Unconscious characters do not regenerate in combat. Heavy-armor negative regen always applies.',
     'Excess blunt beyond remaining stamina is lost; later hits go to attributes.',
     'Blunt damage on an unconscious target goes to CON.',
-    'Armor durability: padded 20, leather 25, mail 40, scale 45, plate 60 (padding takes no wear).',
-    'Armor coverage: half = −1 mitigation and −1 penalties, 60% piercing pass-through; partial = −2 / −2, 75%.',
+    'Items (the user\'s call): every weapon, armor piece and shield is a type plus a material (materials.yaml: cloth, leather, bronze, iron, steel; exotic spider silk, dragon hide, star iron, adamant), an origin (origins.yaml: common, elven, dwarven, goblin: how weight trades against durability, damage and protection), a craftsmanship (crafts.yaml: poor, average, masterwork: how fast it wears and how easily it breaks, never its damage or protection) and enchantments (enchantments.yaml; usually none). Armor tiers: padded, leather, mail, plate (scale is folded into steel mail). Old saves: quality crude → poor, standard and fine → average, masterwork and legendary → masterwork.',
+    'Armor durability: padded 20, leather 25, mail 40, plate 60 (× material toughness, origin, craftsmanship and coverage; padding takes no wear).',
+    'Armor coverage: half = −1 mitigation and −1 penalties, 60% piercing pass-through, gap −2; partial = −2 / −2, 75%, gap −4.',
     'Shield wear per block = ½P + ½S + B.',
     'Kick: opposed d10 + ⌊STR/2⌋; a kick knocks down only on a win by 3 or more. Trip wins on any margin.',
     'Disarm: d10 + ⌊DEX/2⌋ opposed (+2 for a two-handed grip). Grapple: d10 + ⌊STR/2⌋ + Grappler rank vs. d10 + ⌊max(STR,DEX)/2⌋.',
     'Prone: +1 damage to attacks against you, +1 AP on your defenses, no dodging. Grappled: +1 AP on defenses, no movement.',
     'Trip and disarm each cost 3 base AP (4 on the turn-budget curve) and 2 base stamina.',
-    'Grappling ladder: free → clinch → hold → pin, each step a directly opposed d10 roll (⌊STR/2⌋ + Grappler; breaking free may use ⌊max(STR, DEX)/2⌋ + Escape Artist). Win by 5+ for two steps; lose by 5+ and it can reverse. Clinch: both cramped with long weapons, no two-handed swings or bows, no stepping away without a break. Hold: the held fighter can\'t move and fights cramped with every weapon, dagger included; the holder keeps a dagger hand and can drag them a square. Pin: the pinned fighter can only try to break; piercing and a Coup de Grâce dagger go through their armor. Throw: from a hold or pin, prone a square away. Armor is easy to grab (+1 mail and scale, +2 plate to grapple and pin) but hard to throw (footing +1 / +2). Costs in base AP / stamina: clinch 2 / 3, grapple, pin and throw 3 / 5, break 2 / 3, and 2 stamina a round to keep a hold.',
-    'Getting up from prone, base AP / stamina by armor: none, padded or leather 1 / 1; mail 2 / 2; scale 3 / 3; plate 4 / 5 (on the turn-budget curve: plate is 6 AP, the whole of an SPD-5 turn). Never more AP than your pool. Kip-Up: 1 AP.',
+    'Grappling ladder: free → clinch → hold → pin, each step a directly opposed d10 roll (⌊STR/2⌋ + Grappler; breaking free may use ⌊max(STR, DEX)/2⌋ + Escape Artist). Win by 5+ for two steps; lose by 5+ and it can reverse. Clinch: both cramped with long weapons, no two-handed swings or bows, no stepping away without a break. Hold: the held fighter can\'t move and fights cramped with every weapon, dagger included; the holder keeps a dagger hand and can drag them a square. Pin: the pinned fighter can only try to break; piercing and a Coup de Grâce dagger go through their armor. Throw: from a hold or pin, prone a square away. Armor is easy to grab (+1 mail, +2 plate to grapple and pin) but hard to throw (footing +1 / +2). Costs in base AP / stamina: clinch 2 / 3, grapple, pin and throw 3 / 5, break 2 / 3, and 2 stamina a round to keep a hold.',
+    'Getting up from prone, base AP / stamina by armor: none, padded or leather 1 / 1; mail 2 / 2; plate 4 / 5 (on the turn-budget curve: plate is 6 AP, the whole of an SPD-5 turn). Never more AP than your pool. Kip-Up: 1 AP.',
     'Movement costs only the armor stamina penalty, once per move action.',
     'Bandage: 4 AP (1 AP with Field Dressing) and uses one bandage.',
     'Long rest repairs 25% of max armor and shield durability (+25% with Field Repair).',

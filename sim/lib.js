@@ -55,18 +55,19 @@ const ARCHETYPES = {
   },
 };
 
-// opts: { level, quality, feats (explicit {id: rank}), attrs (overrides), armor/shield/weapon overrides, name }
+// opts: { level, quality (a craft; old quality names work), feats (explicit {id: rank}), attrs (overrides),
+//   armor [type, coverage, tags]/shield/weapon overrides, name }
 function build(arch, opts) {
   opts = opts || {};
   const A = typeof arch === 'string' ? ARCHETYPES[arch] : arch;
   const level = opts.level || 1;
-  const q = opts.quality || 'standard';
+  const q = opts.quality || 'average';
   const c = C.newCharacter({ name: opts.name || arch, starterGear: false, base: Object.assign({}, A.attrs, opts.attrs || {}) });
   c.level = level;
   const armor = opts.armor !== undefined ? opts.armor : A.armor;
   const shield = opts.shield !== undefined ? opts.shield : A.shield;
   const weapon = opts.weapon !== undefined ? opts.weapon : A.weapon;
-  if (armor) c.armor = Items.makeArmor(armor[0], armor[1] || 'full', q);
+  if (armor) c.armor = Items.makeArmor(armor[0], armor[1] || 'full', q, armor[2]);
   if (shield) c.shield = Items.makeShield(shield[0], shield[1] || 'wood', q);
   if (weapon) {
     const w = Items.makeWeapon(weapon, q);
@@ -76,7 +77,7 @@ function build(arch, opts) {
   }
   const side = opts.sidearm !== undefined ? opts.sidearm : A.sidearm;
   if (side && side !== weapon) {
-    const s = Items.makeWeapon(side, 'standard');
+    const s = Items.makeWeapon(side, 'average');
     c.weapons.push(s);
     c.sidearm = s.id;
   }

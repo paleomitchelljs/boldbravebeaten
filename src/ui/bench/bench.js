@@ -83,7 +83,7 @@
   }
 
   // ---- Simulate --------------------------------------------------------------------------------------------------
-  const ARMORS = [['', 'as they are'], ['none', 'none'], ['padded', 'padded'], ['leather', 'leather'], ['mail', 'mail'], ['scale', 'scale'], ['plate', 'plate']];
+  const ARMORS = [['', 'as they are'], ['none', 'none'], ['padded', 'padded'], ['leather', 'leather'], ['mail', 'mail'], ['plate', 'plate']];
 
   function foeOptions() {
     const out = [];
@@ -115,7 +115,7 @@
       if (cfg.plev > 1) G.World.grantXP(w, G.World.xpFor(cfg.plev));
       for (const c of party) {
         if (cfg.armor === 'none') c.armor = null;
-        else if (cfg.armor) c.armor = G.Items.makeArmor(cfg.armor, 'full', 'standard');
+        else if (cfg.armor) c.armor = G.Items.makeArmor(cfg.armor, 'full', 'average');
         if (!cfg.shield) c.shield = null;
         c.stamina = C.maxStamina(c);
       }

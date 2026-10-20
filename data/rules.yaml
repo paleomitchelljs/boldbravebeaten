@@ -1,6 +1,14 @@
 # Rule numbers kept with the content: anything here is merged over src/rules/config.js (deep merge),
 # so a tuned value can live beside the files it affects. Keys under `game` are read by the game layer.
 
+# Gear rolled for template foes (foes.yaml), by level band (levels 1–2, 3–5, 6+): weighted [weight, id] lists.
+# metal: the material of metal armor and metal-bladed weapons; origin: armor and weapons. Exotic materials and
+# enchantments are never rolled: they are placed by hand.
+enemyGear:
+  craft: [[[3, poor], [7, average]], [[1, poor], [8, average], [1, master]], [[6, average], [3, master]]]
+  metal: [[[2, bronze], [3, iron]], [[1, bronze], [4, iron], [1, steel]], [[3, iron], [3, steel]]]
+  origin: [[[1, common]], [[18, common], [1, elven], [1, dwarven]], [[8, common], [1, elven], [1, dwarven]]]
+
 game:
   # ---- Starting a game ----------------------------------------------------
   party: {size: 4, attrPool: 40, attrMin: 3, attrMax: 8, startGold: 60}
@@ -33,8 +41,7 @@ game:
   # ---- Economy ------------------------------------------------------------
   economy:
     rarityValue: {common: 12, uncommon: 60, rare: 300, very rare: 1500, unique: 8000}
-    qualityMult: {crude: 0.5, standard: 1, fine: 2.5, masterwork: 8, legendary: 40}
-    coverageMult: {full: 1, half: 0.6, partial: 0.35}
+    coverageMult: {full: 1, half: 0.6, partial: 0.35}   # material, origin, craft and enchantments set their own (value)
     sellRate: 0.4
     priceStanding: 0.004     # price change per standing point with the seller's faction
     bargainRank: 0.05        # per Bargain rank

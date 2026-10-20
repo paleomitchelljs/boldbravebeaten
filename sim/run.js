@@ -273,20 +273,21 @@ SCENARIOS.armor = async () => {
   const feats = { toughness: 1, strength: 1, shield_training: 1, power_swing: 1, half_swording: 1, quick_block: 0 };
   delete feats.quick_block;
   const entries = { none: () => build('sellsword', { level: 4, armor: null, feats }) };
-  for (const a of ['padded', 'leather', 'mail', 'scale', 'plate']) entries[a] = () => build('sellsword', { level: 4, armor: [a, 'full'], feats });
+  const ARMORS = { padded: ['padded'], leather: ['leather'], mail: ['mail'], steelMail: ['mail', 'full', { material: 'steel' }], plate: ['plate'] };
+  for (const a of Object.keys(ARMORS)) entries[a] = () => build('sellsword', { level: 4, armor: ARMORS[a], feats });
   const rr = await roundRobin('armor', entries, OPEN, n);
   for (const k of rr.keys) record('armor', k + ' (untrained)', 'avg_win', rr.avg[k]);
   // Trained: each wearer spends two feats on its armor (others take generic feats).
   const train = { none: { toughness: 2 }, padded: { light_armor_training: 1, toughness: 2 }, leather: { light_armor_training: 1, toughness: 2 },
-    mail: { mail_mobility: 1, mail_endurance: 1 }, scale: { toughness: 2 }, plate: { plate_mobility: 2 } };
+    mail: { mail_mobility: 1, mail_endurance: 1 }, steelMail: { mail_mobility: 1, mail_endurance: 1 }, plate: { plate_mobility: 2 } };
   const trained = {};
   for (const k of Object.keys(entries)) {
     const f = Object.assign({ strength: 1, shield_training: 1, power_swing: 1, half_swording: 1 }, train[k]);
-    trained[k] = () => build('sellsword', { level: 4, armor: k === 'none' ? null : [k, 'full'], feats: f });
+    trained[k] = () => build('sellsword', { level: 4, armor: k === 'none' ? null : ARMORS[k], feats: f });
   }
   const rt = await roundRobin('armor-trained', trained, OPEN, n);
   for (const k of rt.keys) record('armor', k + ' (trained)', 'avg_win', rt.avg[k]);
-  const order = ['none', 'padded', 'leather', 'mail', 'scale', 'plate'];
+  const order = ['none', 'padded', 'leather', 'mail', 'steelMail', 'plate'];
   const mono = order.every((k, i) => i === 0 || rt.avg[k] >= rt.avg[order[i - 1]] - 0.05);
   record('armor', 'heavier armor wins more when trained (within 5 points)', 'monotonic', mono ? 1 : 0, 'true', mono);
   const shields = { none: () => build('sellsword', { level: 4, shield: null, feats }) };

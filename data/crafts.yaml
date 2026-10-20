@@ -1,0 +1,12 @@
+# Craftsmanship: how well an item was made. It sets how fast the item wears and how easily it breaks, never its
+# damage or protection (those come from type, material and origin).
+#   durability  multiplies maximum durability
+#   wear        multiplies every point of wear the item takes (blows on armor, parries, blocks, deflected points)
+#   break       shields: multiplies the threshold a blow must pass before it can shatter the shield
+#   unbreakable shields: a power blow cannot shatter it outright (CONFIG.shieldShatter)
+#   value       price multiplier
+# Old saves and data may say `quality`: crude → poor; standard and fine → average; masterwork and legendary → master.
+
+poor: {name: Poor, durability: 0.7, wear: 1.5, break: 0.7, rarity: common, value: 0.4}
+average: {name: "", durability: 1, wear: 1, break: 1, rarity: common, value: 1}
+master: {name: Masterwork, durability: 1.4, wear: 0.6, break: 1.4, unbreakable: true, rarity: rare, value: 5}

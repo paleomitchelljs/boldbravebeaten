@@ -10,6 +10,11 @@
 
   // Natural (monster) items stay out of the lists, except the one already chosen.
   const opts = (obj, keep) => Object.keys(obj).filter((k) => !obj[k].natural || k === keep).map((k) => [k, obj[k].name]);
+  // The tags every item carries: craft, origin, material (armor: those its type is made in).
+  const craftOpts = () => Object.keys(D.CRAFTS).map((k) => [k, D.CRAFTS[k].name || 'Average']);
+  const originOpts = () => Object.keys(D.ORIGINS).map((k) => [k, D.ORIGINS[k].name || 'Common']);
+  const materialOpts = (list) => list.filter((k) => D.MATERIALS[k]).map((k) => [k, D.MATERIALS[k].name]);
+  const enchantText = (it) => Items.enchantsOf(it).map((e) => e.name).join(', ');
 
   function attrTable(app, c) {
     const change = () => { c.stamina = Math.min(c.stamina, C.maxStamina(c)); app.save(); app.render(); };
@@ -62,33 +67,46 @@
   function armorEditor(app, c) {
     const a = c.armor;
     const ai = C.armorInfo(c);
-    const set = (type, cov, q) => {
-      c.armor = type ? Items.makeArmor(type, cov, q) : null;
+    // Remake the piece with one tag changed (enchantments kept).
+    const set = (patch) => {
+      const t = Object.assign({ coverage: 'full', craft: 'average' }, a ? { type: a.type, coverage: a.coverage, craft: a.craft, material: a.material, origin: a.origin, enchantments: a.enchantments } : {}, patch);
+      if (patch.type && (!a || patch.type !== a.type)) t.material = null;
+      c.armor = t.type ? Items.makeArmor(t.type, t.coverage, t.craft, t) : null;
       app.save(); app.render();
     };
+    const mats = a ? D.ARMOR[a.type].materials || [D.ARMOR[a.type].material] : [];
     return h('div', { class: 'stack tight' },
       h('div', { class: 'row' },
         h('span', { class: 'label', style: { minWidth: '4.5em' } }, 'Armor'),
-        select('armor-type', a ? a.type : '', [['', 'None']].concat(opts(D.ARMOR, a && a.type)), (v) => set(v, a ? a.coverage : 'full', a ? a.quality : 'standard'), { 'aria-label': 'Armor type' }),
-        a ? select('armor-cov', a.coverage, opts(D.COVERAGE), (v) => set(a.type, v, a.quality), { 'aria-label': 'Coverage' }) : null,
-        a ? select('armor-q', a.quality, opts(D.QUALITY), (v) => set(a.type, a.coverage, v), { 'aria-label': 'Armor quality' }) : null),
+        select('armor-type', a ? a.type : '', [['', 'None']].concat(opts(D.ARMOR, a && a.type)), (v) => set({ type: v }), { 'aria-label': 'Armor type' }),
+        a ? select('armor-mat', Items.materialOf(Object.assign({ kind: 'armor' }, a)), materialOpts(mats), (v) => set({ material: v }), { 'aria-label': 'Material' }) : null,
+        a ? select('armor-origin', a.origin || 'common', originOpts(), (v) => set({ origin: v }), { 'aria-label': 'Origin' }) : null,
+        a ? select('armor-craft', Items.craftId(a.craft || a.quality), craftOpts(), (v) => set({ craft: v }), { 'aria-label': 'Craftsmanship' }) : null,
+        a ? select('armor-cov', a.coverage, opts(D.COVERAGE), (v) => set({ coverage: v }), { 'aria-label': 'Coverage' }) : null),
       a ? h('div', { class: 'row small' },
         h('label', { class: 'inline', for: 'armor-dur' }, 'Durability', num('armor-dur', a.durability, (v) => { a.durability = Math.max(0, Math.min(ai.maxDurability, Math.round(v))); app.save(); app.render(); }, { min: 0, max: ai.maxDurability })),
         h('span', { class: 'muted num' }, `/ ${ai.maxDurability}`),
         h('span', { class: 'muted' }, `Mitigation P/S/B ${ai.effMit.P}/${ai.effMit.S}/${ai.effMit.B}`),
-        h('span', { class: 'muted' }, `SPD −${ai.spd} · DEX −${ai.dex} · +${ai.stamina} stamina/action · regen −${ai.regen}`)) : null);
+        ai.pierce ? h('span', { class: 'muted', title: 'A point with this much punch bursts through; otherwise it must find a gap (d10 + ⌊DEX/4⌋ + feats against this number)' }, `Points burst at ${ai.pierce.resist} · gap ${ai.pierce.gap}`) : null,
+        h('span', { class: 'muted' }, `SPD −${ai.spd} · DEX −${ai.dex} · +${ai.stamina} stamina/action · regen −${ai.regen}`),
+        enchantText(a) ? h('span', { class: 'chip' }, enchantText(a)) : null) : null);
   }
 
   function shieldEditor(app, c) {
     const s = c.shield;
     const si = C.shieldInfo(c);
-    const set = (size, mat, q) => { c.shield = size ? Items.makeShield(size, mat, q) : null; app.save(); app.render(); };
+    const set = (patch) => {
+      const t = Object.assign({ material: 'wood', craft: 'average' }, s ? { size: s.size, material: s.material, craft: s.craft, origin: s.origin, enchantments: s.enchantments } : {}, patch);
+      c.shield = t.size ? Items.makeShield(t.size, t.material, t.craft, t) : null;
+      app.save(); app.render();
+    };
     return h('div', { class: 'stack tight' },
       h('div', { class: 'row' },
         h('span', { class: 'label', style: { minWidth: '4.5em' } }, 'Shield'),
-        select('shield-size', s ? s.size : '', [['', 'None']].concat(opts(D.SHIELDS)), (v) => set(v, s ? s.material : 'wood', s ? s.quality : 'standard'), { 'aria-label': 'Shield size' }),
-        s ? select('shield-mat', s.material, opts(D.SHIELD_MATERIALS), (v) => set(s.size, v, s.quality), { 'aria-label': 'Shield material' }) : null,
-        s ? select('shield-q', s.quality, opts(D.QUALITY), (v) => set(s.size, s.material, v), { 'aria-label': 'Shield quality' }) : null),
+        select('shield-size', s ? s.size : '', [['', 'None']].concat(opts(D.SHIELDS)), (v) => set({ size: v }), { 'aria-label': 'Shield size' }),
+        s ? select('shield-mat', s.material, opts(D.SHIELD_MATERIALS), (v) => set({ material: v }), { 'aria-label': 'Shield material' }) : null,
+        s ? select('shield-origin', s.origin || 'common', originOpts(), (v) => set({ origin: v }), { 'aria-label': 'Shield origin' }) : null,
+        s ? select('shield-craft', Items.craftId(s.craft || s.quality), craftOpts(), (v) => set({ craft: v }), { 'aria-label': 'Shield craftsmanship' }) : null),
       s ? h('div', { class: 'row small' },
         h('label', { class: 'inline', for: 'shield-dur' }, 'Durability', num('shield-dur', s.durability, (v) => { s.durability = Math.max(0, Math.min(si.maxDurability, Math.round(v))); app.save(); app.render(); }, { min: 0, max: si.maxDurability })),
         h('span', { class: 'muted num' }, `/ ${si.maxDurability}`),
@@ -99,7 +117,9 @@
   function weaponsEditor(app, c) {
     const rows = c.weapons.map((w) => h('tr', null,
       h('td', null, select('wt-' + w.id, w.type, opts(D.WEAPONS), (v) => { w.type = v; app.save(); app.render(); }, { 'aria-label': 'Weapon type' })),
-      h('td', null, select('wq-' + w.id, w.quality, opts(D.QUALITY), (v) => { w.quality = v; app.save(); app.render(); }, { 'aria-label': 'Weapon quality' })),
+      h('td', null, select('wm-' + w.id, Items.weaponMaterial(w), materialOpts(['bronze', 'iron', 'steel', 'starIron', 'adamant', 'wood', 'bone'].filter((m) => m === Items.weaponMaterial(w) || (D.MATERIALS[D.WEAPONS[w.type].material] || {}).metal)), (v) => { if (v === D.WEAPONS[w.type].material) delete w.material; else w.material = v; w.durability = Items.weaponMaxDurability(w); app.save(); app.render(); }, { 'aria-label': 'Weapon material' })),
+      h('td', null, select('wo-' + w.id, w.origin || 'common', originOpts(), (v) => { if (v === 'common') delete w.origin; else w.origin = v; w.durability = Items.weaponMaxDurability(w); app.save(); app.render(); }, { 'aria-label': 'Weapon origin' })),
+      h('td', null, select('wq-' + w.id, Items.craftId(w.craft || w.quality), craftOpts(), (v) => { w.craft = v; delete w.quality; w.durability = Items.weaponMaxDurability(w); app.save(); app.render(); }, { 'aria-label': 'Weapon craftsmanship' })),
       h('td', null, h('input', { type: 'radio', name: 'wield', id: 'wield-' + w.id, checked: c.wield === w.id, 'aria-label': 'In hand', onchange: () => { c.wield = w.id; c.status.dropped = null; app.save(); app.render(); } })),
       h('td', null, h('input', { type: 'radio', name: 'sidearm', id: 'side-' + w.id, checked: c.sidearm === w.id, 'aria-label': 'Sidearm', onchange: () => { c.sidearm = w.id; app.save(); app.render(); } })),
       h('td', null, D.WEAPONS[w.type].offhand ? h('input', { type: 'radio', name: 'offhand', id: 'off-' + w.id, checked: c.offhand === w.id, 'aria-label': 'Off hand', title: 'Held in the off hand (no shield, no two-handed weapon)', onchange: () => { c.offhand = w.id; app.save(); app.render(); } }) : null),
@@ -114,9 +134,9 @@
       } }, 'To pack'))));
     return h('div', { class: 'stack tight' },
       h('div', { class: 'scroll-x' }, h('table', { class: 'data' },
-        h('thead', null, h('tr', null, h('th', null, 'Weapon'), h('th', null, 'Quality'), h('th', null, 'In hand'), h('th', null, 'Sidearm'), h('th', null, 'Off hand'), h('th', null, ''), h('th', null, ''))),
+        h('thead', null, h('tr', null, h('th', null, 'Weapon'), h('th', null, 'Material'), h('th', null, 'Origin'), h('th', null, 'Craft'), h('th', null, 'In hand'), h('th', null, 'Sidearm'), h('th', null, 'Off hand'), h('th', null, ''), h('th', null, ''))),
         h('tbody', null, rows,
-          h('tr', null, h('td', { colspan: 2, class: 'muted' }, 'Unarmed'),
+          h('tr', null, h('td', { colspan: 4, class: 'muted' }, 'Unarmed'),
             h('td', null, h('input', { type: 'radio', name: 'wield', id: 'wield-none', checked: c.wield == null, 'aria-label': 'Fight unarmed', onchange: () => { c.wield = null; app.save(); app.render(); } })),
             h('td', null, h('input', { type: 'radio', name: 'sidearm', id: 'side-none', checked: c.sidearm == null, 'aria-label': 'No sidearm', onchange: () => { c.sidearm = null; app.save(); app.render(); } })),
             h('td', null, h('input', { type: 'radio', name: 'offhand', id: 'off-none', checked: c.offhand == null, 'aria-label': 'Nothing in the off hand', onchange: () => { c.offhand = null; app.save(); app.render(); } })),
@@ -124,7 +144,7 @@
       h('div', { class: 'row' },
         select('add-weapon', '', [['', 'Add a weapon…']].concat(opts(D.WEAPONS)), (v) => {
           if (!v) return;
-          const w = Items.makeWeapon(v, 'standard');
+          const w = Items.makeWeapon(v, 'average');
           c.weapons.push(w);
           if (c.wield == null) c.wield = w.id;
           app.save(); app.render();

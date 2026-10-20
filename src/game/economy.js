@@ -1,6 +1,6 @@
 /*
  * Money: values, shop stock, buying and selling, repairs, rest and healing.
- * Price = base value (rarity × quality × coverage, or the entry's own value) adjusted by standing with
+ * Price = base value (rarity, or the entry's own value, × the item's tags × coverage) adjusted by standing with
  * the seller's faction, the Bargain feat and a small CHA nudge. Selling pays a fraction of value.
  */
 (function (G) {
@@ -11,10 +11,13 @@
   const E = () => G.CONFIG.game.economy;
 
   // ---- Specs: a stock/loot line becomes an item -----------------------------
+  // A spec may carry an item's tags: material, origin, craft (an old `quality` is read as one), enchantments.
   function makeFromSpec(spec) {
-    if (spec.weapon) return Items.makeWeapon(spec.weapon, spec.quality || 'standard');
-    if (spec.armor) return Items.makeArmor(spec.armor, spec.coverage || 'full', spec.quality || 'standard');
-    if (spec.shield) return Items.makeShield(spec.shield, spec.material || 'wood', spec.quality || 'standard');
+    const craft = spec.craft || spec.quality || 'average';
+    const tags = { material: spec.material, origin: spec.origin, enchantments: spec.enchantments };
+    if (spec.weapon) return Items.makeWeapon(spec.weapon, craft, spec.material, tags);
+    if (spec.armor) return Items.makeArmor(spec.armor, spec.coverage || 'full', craft, tags);
+    if (spec.shield) return Items.makeShield(spec.shield, spec.material || 'wood', craft, tags);
     return null;
   }
 
@@ -28,17 +31,18 @@
 
   function value(item) {
     if (!item) return 0;
+    // The type's value × its tags' (material against the type's usual one, origin, craft, enchantments).
     if (item.kind === 'armor') {
       const base = D().ARMOR[item.type];
-      return Math.max(1, Math.round((base.value || rv(base.rarity)) * E().qualityMult[item.quality] * E().coverageMult[item.coverage]));
+      return Math.max(1, Math.round((base.value || rv(base.rarity)) * Items.tagValue(item) * E().coverageMult[item.coverage]));
     }
     if (item.kind === 'shield') {
       const s = D().SHIELDS[item.size], m = D().SHIELD_MATERIALS[item.material];
-      return Math.max(1, Math.round((s.value || rv(s.rarity)) * (1 + (m.mult - 1) * 1.2) * E().qualityMult[item.quality]));
+      return Math.max(1, Math.round((s.value || rv(s.rarity)) * (1 + (m.mult - 1) * 1.2) * Items.tagValue(item)));
     }
     if (item.kind === 'weapon') {
       const w = D().WEAPONS[item.type];
-      return Math.max(1, Math.round((w.value || rv(w.rarity)) * E().qualityMult[item.quality]));
+      return Math.max(1, Math.round((w.value || rv(w.rarity)) * Items.tagValue(item)));
     }
     return 0;
   }

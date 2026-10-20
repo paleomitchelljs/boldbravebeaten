@@ -1,58 +1,78 @@
-# Armor types. mit = mitigation per damage face (P pierce, S slash, B blunt) at full coverage.
-# spd/dex = penalty to SPD and DEX; stamina = extra stamina per action; regen = stamina regeneration penalty;
-# standUp = extra AP to rise from prone. natural: true marks monster hides (cannot be worn or looted).
-# recoil: attackers lose this much stamina per blow that lands.
-# material: what a blade meets (CONFIG.materialHardness): metal wears a weapon fast, cloth and leather barely.
+# Armor types. Worn armor comes in four tiers: padded, leather (or hide), mail and plate. An item is a type plus
+# a material (materials.yaml), an origin (origins.yaml), a craft (crafts.yaml), enchantments (usually none) and a
+# coverage (full, half, partial). Figures here are for the type's usual material, common origin, full coverage.
+#   mit         mitigation per damage face (P pierce, S slash, B blunt); material and origin scale P and S
+#   spd, dex    penalty to SPD and DEX; stamina = extra stamina per action; regen = stamina regeneration penalty;
+#               standUp = extra AP to rise from prone. Material and origin weight scale all four penalties.
+#   weight      kg, for show (the penalties carry the weight in play)
+#   durability  base durability (× material toughness, origin, craft, coverage)
+#   material    the usual material; materials = what else it may be made of
+#   pierce      what a point must beat (CONFIG.pierce): resist = the punch that bursts through it (× material and
+#               origin protect); gap = the target number to find a gap instead (d10 + ⌊DEX/4⌋ + feats)
+#   dissipate   share of the blunt left after mitigation that the armor spreads away instead of passing to
+#               stamina (rounded down; less as it wears): glancing = cuts and points (converted cuts, turned
+#               points), crushing = blows that are mainly blunt (maces, hammers, clubs, fists). Plate: rigid shells
+#               over padding spread a blow they turn; a crushing blow still carries (set crushing above 0 to
+#               spread it too, at the cost of the mace's place against plate: sim/FINDINGS.md).
+#   natural     true marks monster hides (cannot be worn or looted); recoil: attackers lose this much stamina per
+#               blow that lands
 
 padded:
   name: Padded
   material: cloth
+  materials: [cloth, silk]
   mit: {P: 1, S: 1, B: 3}
   spd: 0
   dex: 0
   stamina: 0
   regen: 1
   standUp: 0
+  weight: 4
+  durability: 20
+  pierce: {resist: 0.75, gap: 8}
   rarity: common
 leather:
   name: Leather
   material: leather
+  materials: [leather, dragonhide]
   mit: {P: 1, S: 2, B: 1}
   spd: 0
   dex: 1
   stamina: 0
   regen: 1
   standUp: 0
+  weight: 7
+  durability: 25
+  pierce: {resist: 1.0, gap: 8}
   rarity: common
 mail:
   name: Mail
   material: iron
+  materials: [bronze, iron, steel, starIron, adamant]
   mit: {P: 1, S: 4, B: 1}
   spd: 1
   dex: 1
   stamina: 1
   regen: 2
   standUp: 1
+  weight: 12
+  durability: 40
+  pierce: {resist: 1.6, gap: 10}
   rarity: uncommon
-scale:
-  name: Scale
-  material: iron
-  mit: {P: 2, S: 4, B: 2}
-  spd: 2
-  dex: 2
-  stamina: 1
-  regen: 3
-  standUp: 1
-  rarity: rare
 plate:
   name: Plate
-  material: steel
+  material: iron
+  materials: [bronze, iron, steel, starIron, adamant]
   mit: {P: 4, S: 6, B: 3}
   spd: 3
   dex: 2
   stamina: 2
   regen: 4
   standUp: 2
+  weight: 22
+  durability: 60
+  pierce: {resist: 5, gap: 12}
+  dissipate: {glancing: 0.5, crushing: 0}
   rarity: very rare
 fur:
   name: Thick fur
@@ -63,6 +83,8 @@ fur:
   stamina: 0
   regen: 0
   standUp: 0
+  durability: 30
+  pierce: {resist: 0.5, gap: 6}
   rarity: common
   natural: true
 chitin:
@@ -74,6 +96,8 @@ chitin:
   stamina: 0
   regen: 0
   standUp: 0
+  durability: 40
+  pierce: {resist: 1.4, gap: 9}
   rarity: common
   natural: true
   recoil: 1
@@ -86,6 +110,8 @@ trollHide:
   stamina: 0
   regen: 0
   standUp: 0
+  durability: 40
+  pierce: {resist: 1.0, gap: 7}
   rarity: common
   natural: true
 scaleHide:
@@ -97,6 +123,8 @@ scaleHide:
   stamina: 0
   regen: 0
   standUp: 0
+  durability: 25
+  pierce: {resist: 0.8, gap: 7}
   rarity: common
   natural: true
 bogSkin:
@@ -108,6 +136,8 @@ bogSkin:
   stamina: 0
   regen: 0
   standUp: 0
+  durability: 20
+  pierce: {resist: 0.4, gap: 6}
   rarity: common
   natural: true
 scalewardScales:
@@ -119,6 +149,8 @@ scalewardScales:
   stamina: 0
   regen: 0
   standUp: 0
+  durability: 45
+  pierce: {resist: 1.4, gap: 9}
   rarity: common
   natural: true
 drakeScales:
@@ -130,6 +162,8 @@ drakeScales:
   stamina: 0
   regen: 0
   standUp: 0
+  durability: 20
+  pierce: {resist: 2.5, gap: 10}
   rarity: common
   natural: true
 wyvernScales:
@@ -141,6 +175,8 @@ wyvernScales:
   stamina: 0
   regen: 0
   standUp: 0
+  durability: 20
+  pierce: {resist: 3.5, gap: 11}
   rarity: common
   natural: true
 ogreHide:
@@ -152,6 +188,8 @@ ogreHide:
   stamina: 0
   regen: 0
   standUp: 0
+  durability: 20
+  pierce: {resist: 1.0, gap: 7}
   rarity: common
   natural: true
 giantHide:
@@ -163,6 +201,8 @@ giantHide:
   stamina: 0
   regen: 0
   standUp: 0
+  durability: 20
+  pierce: {resist: 1.5, gap: 7}
   rarity: common
   natural: true
 golemStone:
@@ -174,5 +214,7 @@ golemStone:
   stamina: 0
   regen: 0
   standUp: 0
+  durability: 80
+  pierce: {resist: 6, gap: 13}
   rarity: common
   natural: true

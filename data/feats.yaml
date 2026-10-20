@@ -196,7 +196,7 @@
       name: Find the Gap
       ranks: [adept]
       requires: [["precision:2"]]
-      effect: More piercing passes through armor
+      effect: "+2 to find a gap in armor a point can't burst (and more of a burst point's piercing passes through)"
       auto: true
     coup_de_grace:
       name: "Coup de Grâce"
@@ -558,7 +558,7 @@
       name: Spot Weakness
       ranks: [adept]
       requires: [["read_attack:2"]]
-      effect: "See an armor's weakest mitigation; more piercing passes through it"
+      effect: "See an armor's weakest point: +1 to find a gap in it (and more of a burst point's piercing passes through)"
       auto: true
     danger_sense:
       name: Danger Sense

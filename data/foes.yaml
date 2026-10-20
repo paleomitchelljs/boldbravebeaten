@@ -52,7 +52,7 @@ sellsword:
   sprite: {kind: knight, tint: "#8a5a5a"}
   primary: [STR, CON]
   weak: [CHA]
-  armor: [[[2, leather], [1, mail]], [[1, mail]], [[2, mail], [1, scale]]]
+  armor: [[[2, leather], [1, mail]], [[1, mail]], [[1, mail]]]
   coverage: [[[1, half], [1, full]], [[1, half], [2, full]], [[1, full]]]
   weapons: [[[2, longsword], [1, spikedMace]], [[1, longsword]], [[1, longsword]]]
   shield: [[[1, round]], [[1, round], [1, heater]], [[1, heater]]]
@@ -73,7 +73,7 @@ brute:
   sprite: {kind: orc_warrior, tint: "#b0907a"}
   primary: [STR, CON]
   weak: [INT, DEX]
-  armor: [[[2, padded], [1, leather]], [[1, leather], [1, mail]], [[1, mail], [1, scale]]]
+  armor: [[[2, padded], [1, leather]], [[1, leather], [1, mail]], [[1, mail]]]
   coverage: [[[1, half], [1, full]], [[1, full]], [[1, full]]]
   weapons:
     - [[2, club], [1, warhammer]]
@@ -140,7 +140,7 @@ manAtArms:
   sprite: {kind: knight, tint: "#8a8a9a"}
   primary: [STR, CON]
   weak: [CHA]
-  armor: [[[1, mail]], [[2, mail], [1, scale]], [[1, scale], [1, plate]]]
+  armor: [[[1, mail]], [[1, mail]], [[1, mail], [1, plate]]]
   coverage: [[[1, half], [1, full]], [[1, full]], [[2, full], [1, half]]]
   weapons:
     - [[1, spikedMace], [1, flangedMace]]
@@ -164,7 +164,7 @@ knight:
   sprite: {kind: knight, tint: "#6a6a7a"}
   primary: [STR, CON]
   weak: [SPD]
-  armor: [[[1, mail]], [[1, scale], [1, plate]], [[1, plate]]]
+  armor: [[[1, mail]], [[1, mail], [1, plate]], [[1, plate]]]
   coverage: [[[1, full]], [[1, half], [2, full]], [[1, full]]]
   weapons:
     - [[1, longsword]]

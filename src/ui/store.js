@@ -28,10 +28,10 @@
     const add = (c) => { s.characters[c.id] = c; s.order.push(c.id); return c; };
 
     const wren = C.newCharacter({ name: 'Wren Halloway', base: { STR: 4, CON: 5, DEX: 7, SPD: 6, INT: 5, WIL: 4, WIS: 4, CHA: 5 }, starterGear: false });
-    wren.armor = Items.makeArmor('leather', 'half', 'standard');
-    wren.shield = Items.makeShield('buckler', 'wood', 'standard');
-    const rapier = Items.makeWeapon('rapier', 'standard');
-    const wd = Items.makeWeapon('dagger', 'standard');
+    wren.armor = Items.makeArmor('leather', 'half', 'average');
+    wren.shield = Items.makeShield('buckler', 'wood', 'average');
+    const rapier = Items.makeWeapon('rapier', 'average');
+    const wd = Items.makeWeapon('dagger', 'average');
     wren.weapons.push(rapier, wd);
     wren.wield = rapier.id;
     wren.sidearm = wd.id;
@@ -40,8 +40,8 @@
 
     const osk = C.newCharacter({ name: 'Brother Osk', base: { STR: 6, CON: 6, DEX: 4, SPD: 4, INT: 5, WIL: 6, WIS: 6, CHA: 4 } });
     osk.weapons = [];
-    const mace = Items.makeWeapon('spikedMace', 'standard');
-    const od = Items.makeWeapon('dagger', 'crude');
+    const mace = Items.makeWeapon('spikedMace', 'average');
+    const od = Items.makeWeapon('dagger', 'poor');
     osk.weapons.push(mace, od);
     osk.wield = mace.id;
     osk.sidearm = od.id;
@@ -51,8 +51,8 @@
 
     const hale = C.newCharacter({ name: 'Hale Ashdown', base: { STR: 6, CON: 5, DEX: 5, SPD: 5, INT: 4, WIL: 5, WIS: 5, CHA: 5 } });
     hale.weapons = [];
-    const ls = Items.makeWeapon('longsword', 'standard');
-    const hd = Items.makeWeapon('dagger', 'standard');
+    const ls = Items.makeWeapon('longsword', 'average');
+    const hd = Items.makeWeapon('dagger', 'average');
     hale.weapons.push(ls, hd);
     hale.wield = ls.id;
     hale.sidearm = hd.id;
@@ -60,8 +60,8 @@
     hale.notes = 'Example character. Edit or delete freely.';
 
     const ysolde = C.newCharacter({ name: 'Ysolde Marr', base: { STR: 4, CON: 5, DEX: 5, SPD: 5, INT: 8, WIL: 6, WIS: 5, CHA: 4 }, starterGear: false });
-    ysolde.armor = Items.makeArmor('padded', 'full', 'standard');
-    const yd = Items.makeWeapon('dagger', 'standard');
+    ysolde.armor = Items.makeArmor('padded', 'full', 'average');
+    const yd = Items.makeWeapon('dagger', 'average');
     ysolde.weapons.push(yd);
     ysolde.sidearm = yd.id;
     ysolde.feats = { casting: 2, verb_strike: 1, verb_hex: 1, verb_build: 1, verb_cover: 1, mod_strong: 1, ritualist: 1 };
