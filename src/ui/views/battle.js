@@ -192,6 +192,7 @@
     if (err) { toast(err); return; }
     ui.mode = null;
     ui.pending = null;
+    if (ui.cmd) { ui.cmd.moveTo = null; ui.cmd.castAt = null; }
     app.save();
     app.render();
   }
@@ -341,7 +342,8 @@
       cmd.act = entry ? entry.key : null;
     }
     if (entry && entry.targets) {
-      if (!entry.targets.some((t) => t.id === cmd.target)) cmd.target = entry.targets[0] ? entry.targets[0].id : null; // the preferred side first, in reach first
+      // The preferred side first, in reach first; a host that wants the player to pick (app.hooks.choose) starts with none.
+      if (!entry.targets.some((t) => t.id === cmd.target)) cmd.target = app.hooks && app.hooks.choose ? null : entry.targets[0] ? entry.targets[0].id : null;
     }
     // The map follows the choice.
     if (ui.mode !== 'place') {
@@ -453,21 +455,21 @@
     const cmd = ui.cmd;
     const rerender = () => app.render();
     const typeSel = model.types.length
-      ? h('label', { class: 'pick' }, h('span', { class: 'label' }, 'Type'), UI.select('cmd-type', cmd.type, model.types, (v) => { cmd.type = v; cmd.act = null; rerender(); }))
+      ? h('label', { class: 'pick' }, h('span', { class: 'label' }, 'Type'), UI.select('cmd-type', cmd.type, model.types, (v) => { cmd.type = v; cmd.act = null; cmd.moveTo = null; cmd.castAt = null; rerender(); }))
       : null;
     let actSel = null;
     if (cmd.type === 'magic') actSel = magicPicker(app, model, cmd);
     else if (cmd.type === 'martial' || cmd.type === 'other') {
       const list = model[cmd.type];
       const groups = [...new Set(list.map((e) => e.group))].map((g) => [g, list.filter((e) => e.group === g).map((e) => [e.key, e.label + (e.affordable ? '' : ` — ${e.why}`), !e.affordable])]);
-      actSel = h('label', { class: 'pick grow' }, h('span', { class: 'label' }, 'Action'), selectGroups('cmd-act', cmd.act, groups, (v) => { cmd.act = v; rerender(); }));
+      actSel = h('label', { class: 'pick grow' }, h('span', { class: 'label' }, 'Action'), selectGroups('cmd-act', cmd.act, groups, (v) => { cmd.act = v; cmd.castAt = null; rerender(); }));
     }
     // What the action is aimed at.
     let aim = null;
     if (entry && entry.targets) {
       aim = h('label', { class: 'pick grow' }, h('span', { class: 'label' }, 'Target'),
         entry.targets.length
-          ? UI.select('cmd-target', cmd.target, entry.targets.map((t) => [t.id, `${chars[t.id].name}${t.distance != null ? ` · ${t.distance} sq` : ''}${t.inReach ? '' : t.tooClose ? ' (too close)' : ' (out of reach)'}`]), (v) => { cmd.target = v; rerender(); })
+          ? UI.select('cmd-target', cmd.target || '', (cmd.target ? [] : [['', '— choose a target —']]).concat(entry.targets.map((t) => [t.id, `${chars[t.id].name}${t.distance != null ? ` · ${t.distance} sq` : ''}${t.inReach ? '' : t.tooClose ? ' (too close)' : ' (out of reach)'}`])), (v) => { cmd.target = v || null; rerender(); })
           : h('span', { class: 'muted small' }, 'No one'));
     } else if (entry && (entry.kind === 'guard' || entry.kind === 'ready')) {
       const vs = legal.guardAgainst.includes(cmd.vs) ? cmd.vs : '';
@@ -479,9 +481,16 @@
       const tapOnly = entry.kind === 'move' || entry.square;
       const target = entry.targets ? entry.targets.find((t) => t.id === cmd.target) : null;
       const blocked = !entry.affordable || (entry.targets && !target);
+      const chosen = entry.kind === 'move' ? cmd.moveTo : entry.square ? cmd.castAt : null;
+      const reachAP = chosen && entry.kind === 'move' && app.ui.lastReach ? app.ui.lastReach[chosen.x + ',' + chosen.y] : null;
       go = h('div', { class: 'cmd-go' },
-        tapOnly
-          ? h('span', { class: 'tap-hint' }, entry.kind === 'move' ? `Tap a square · ${entry.move.passSquares} this pass` : 'Tap a square on the map')
+        chosen
+          ? h('button', { class: 'primary', onclick: () => declare(app, enc, entry.kind === 'move' ? { actor: id, type: 'move', to: chosen } : { actor: id, type: 'cast', option: entry.option, at: chosen }) },
+            entry.kind === 'move' ? 'Move here' : `${entry.label.split(' · ')[0]} here`, h('span', { class: 'cost' }, entry.kind === 'move' ? (reachAP != null ? `${reachAP} AP` : '') : costText(entry.ap, entry.stamina, entry.sp)))
+          : tapOnly
+          ? h('span', { class: 'tap-hint' }, entry.kind === 'move' ? `Click a square · ${entry.move.passSquares} this pass` : 'Click a square on the map')
+          : entry.targets && entry.targets.length && !target && app.hooks && app.hooks.choose
+          ? h('span', { class: 'tap-hint' }, 'Click a target on the map')
           : h('button', { class: 'primary', disabled: blocked, title: entry.why || '', onclick: () => declareEntry(app, enc, id, entry, cmd) },
             entry.label.split(' · ')[0], h('span', { class: 'cost' }, costText(entry.ap, entry.stamina, entry.sp))),
         infoButton(entry.label, () => entryInfo(app, enc, c, entry)));
@@ -759,5 +768,5 @@
 
   UI.Views.battle = view;
   // The pieces the game's own battle screen (src/ui/game/screens/battle.js) reuses.
-  UI.Views.battleParts = { bui, mapState, cellClick, declarePanel, phasePanel, scheduleAI, syncCommand, aiControlled, openInfo, closeModal, TILE_GLYPH };
+  UI.Views.battleParts = { bui, mapState, cellClick, declarePanel, phasePanel, scheduleAI, syncCommand, aiControlled, openInfo, closeModal, declare, declareEntry, finishTurn, TILE_GLYPH };
 })(globalThis.BBB);

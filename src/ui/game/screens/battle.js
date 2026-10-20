@@ -34,6 +34,7 @@
         flee: (a, enc) => flee(game, enc),
         over: () => null,
         sheet: (id) => game.openOverlay('sheet', { id }),
+        choose: true,       // the player picks every target; nothing is pre-selected
       },
     };
     game.ui.battleApp = app;
@@ -56,7 +57,15 @@
   }
 
   // ---- The scene -----------------------------------------------------------------------------------------------
-  // `bs` is what the last render knew: the encounter, the characters, and what the map should highlight.
+  // `bs` is what the last render knew: the encounter, the characters, the command being built and what the map highlights.
+  const INTENT = {
+    strike: { color: '#ff6b5e', icon: 'sword' }, spell: { color: '#c79bff', icon: 'star' }, maneuver: { color: '#ffb35c', icon: 'hand' },
+    other: { color: '#8fe3a8', icon: 'hand' }, guard: { color: '#8ab4ff', icon: 'shield' }, move: { color: '#7fdcff' }, far: { color: '#d9b055' },
+  };
+  const SELF_ICON = { windUp: 'sword', standUp: 'up', bandage: 'heart', drawSidearm: 'hand', pickUp: 'hand', drop: 'hand' };
+  const isSpell = (e) => !!(e && e.option && e.option.spell);
+  const ranged = (e) => !!(e && e.option && (e.option.maxRange || 1) > 1.5);
+
   function scene(game) {
     const bs = game.ui.bs;
     const w = game.world;
@@ -68,14 +77,19 @@
       w: g ? g.w : enc.grid.w, h: g ? g.h : enc.grid.h,
       origin: { x: ox, y: oy },
       cell: g ? (x, y) => G.Explore.peek(w, x, y) : open,
-      actors: [], marks: [],
+      actors: [], marks: [], lines: [], reticles: [], badges: [],
       describe: (x, y) => {
         const id = occupant(enc, chars, x - ox, y - oy);
         if (!id) return '';
         const c = chars[id];
-        return `${c.name} · stamina ${c.stamina}/${C.maxStamina(c)}${C.isActive(c) ? '' : c.status.dead ? ' · dead' : ' · down'}`;
+        const t = bs.sync && bs.sync.entry && bs.sync.entry.targets ? bs.sync.entry.targets.find((q) => q.id === id) : null;
+        return `${c.name} · stamina ${c.stamina}/${C.maxStamina(c)}${C.isActive(c) ? '' : c.status.dead ? ' · dead' : ' · down'}${t ? ` · ${t.distance} sq${t.inReach ? '' : t.tooClose ? ', too close' : ', out of reach'}` : ''}`;
       },
     };
+    const at = (p) => ({ x: p.x + ox, y: p.y + oy });
+    const entry = bs.sync && bs.sync.entry;
+    const cmd = bs.app && P().bui(bs.app).cmd;
+    const actor = map && map.actor;
     const live = enc.ids.filter((id) => chars[id] && enc.pos[id]);
     for (const id of live) {
       const c = chars[id];
@@ -85,23 +99,83 @@
       let near = null, nd = 99;
       for (const o of foesOf) { const d = Math.abs(enc.pos[o].x - p.x) + Math.abs(enc.pos[o].y - p.y); if (d < nd) { nd = d; near = enc.pos[o]; } }
       const down = !C.isActive(c);
+      // The active character wears a gold ring; someone the chosen action could be aimed at, a faint one.
+      // (Friends only count for actions meant for friends: an attack can hit an ally, but rings on the party would be noise.)
+      const forFriends = entry && (entry.kind === 'other' || (isSpell(entry) && entry.option.target === 'ally'));
+      const candidate = map && map.targets[id] && !(cmd && cmd.target === id) && (forFriends || (actor && chars[actor] && chars[actor].side !== c.side));
       sc.actors.push({
         id, x: p.x + ox, y: p.y + oy, kind: L.kind, tint: L.tint, size: L.size, tag: c.side === 'party' ? 'party' : 'enemy',
         flip: near ? near.x < p.x : c.side !== 'party', down, alpha: c.status.dead ? 0.6 : down ? 0.8 : 1, speed: 9, phase: id.length,
         bar: C.maxStamina(c) ? c.stamina / C.maxStamina(c) : 0,
-        ring: map && id === map.actor ? 'rgba(255,224,130,0.95)' : map && map.targets[id] ? 'rgba(255,100,90,0.95)' : null,
+        ring: id === actor ? 'rgba(255,224,130,0.95)' : candidate ? 'rgba(255,110,95,0.4)' : null,
       });
     }
     if (map) {
-      for (const k of Object.keys(map.ghosts)) { const [x, y] = k.split(',').map(Number); sc.marks.push({ x: x + ox, y: y + oy, type: 'ghost' }); }
       for (const k of Object.keys(map.ground)) {
         const [x, y] = k.split(',').map(Number);
         const list = map.ground[k].filter((t) => t.f.kind !== 'dungeonWall');
         if (!list.length) continue;
-        sc.marks.push({ x: x + ox, y: y + oy, type: list.some((t) => t.f.kind === 'fire' || /fire|hot|storm/i.test(t.f.kind)) ? 'target' : 'cast', text: P().TILE_GLYPH[list[list.length - 1].f.kind] || '·' });
+        sc.marks.push({ x: x + ox, y: y + oy, type: list.some((t) => /fire|hot|storm/i.test(t.f.kind)) ? 'target' : 'cast', text: P().TILE_GLYPH[list[list.length - 1].f.kind] || '·' });
       }
-      if (map.reach) for (const k of Object.keys(map.reach)) { const [x, y] = k.split(',').map(Number); sc.marks.push({ x: x + ox, y: y + oy, type: map.late(map.reach[k]) ? 'late' : 'move', text: String(map.reach[k]) }); }
-      if (map.castable) for (const k of Object.keys(map.castable)) { const [x, y] = k.split(',').map(Number); sc.marks.push({ x: x + ox, y: y + oy, type: 'cast' }); }
+    }
+    // Where the party has already said it will go this round: a faint ghost of each mover at the end of the move.
+    for (const d of enc.decls) {
+      if (d.type !== 'move' || d.done || !chars[d.actor] || chars[d.actor].side !== 'party' || !d.to) continue;
+      const L = Sprites.look(chars[d.actor]);
+      sc.actors.push({ id: 'ghost-' + d.actor + '-' + d.to.x + ',' + d.to.y, x: d.to.x + ox, y: d.to.y + oy, kind: L.kind, tint: L.tint, size: L.size, alpha: 0.28, speed: 30 });
+    }
+    if (!map || !actor || !entry || !cmd) return sc;
+    const me = enc.pos[actor];
+    const hv = game.ui.mv && game.ui.mv.hover ? { x: game.ui.mv.hover.x - ox, y: game.ui.mv.hover.y - oy } : null;
+    const hk = hv ? hv.x + ',' + hv.y : null;
+    // What the active character has already declared this round, faintly: lines to its targets.
+    for (const d of enc.decls) {
+      if (d.actor !== actor || d.done || !d.target || !enc.pos[d.target]) continue;
+      sc.lines.push({ pts: [at(me), at(enc.pos[d.target])], color: d.option && d.option.spell ? INTENT.spell.color : INTENT.strike.color, style: 'dash', alpha: 0.3 });
+    }
+    // The choice being made now.
+    if (entry.kind === 'move' && map.reach) {
+      for (const k of Object.keys(map.reach)) {
+        const [x, y] = k.split(',').map(Number);
+        const pick = cmd.moveTo && cmd.moveTo.x === x && cmd.moveTo.y === y;
+        sc.marks.push({ x: x + ox, y: y + oy, type: map.late(map.reach[k]) ? 'reachLate' : 'reach', text: pick || k === hk ? String(map.reach[k]) : null });
+      }
+      const dest = cmd.moveTo || (hv && map.reach[hk] != null ? hv : null);
+      if (dest) {
+        const L = Sprites.look(chars[actor]);
+        const strong = !!cmd.moveTo;
+        sc.actors.push({ id: 'phantom', x: dest.x + ox, y: dest.y + oy, kind: L.kind, tint: L.tint, size: L.size, alpha: strong ? 0.55 : 0.32, flip: dest.x < me.x, speed: 16 });
+        const route = G.Terrain && enc.tiles && Object.keys(enc.tiles).length ? G.Terrain.path(enc, me, dest, chars[actor]) : [dest];
+        sc.lines.push({ pts: [at(me)].concat(route.map(at)), color: map.late(map.reach[dest.x + ',' + dest.y]) ? INTENT.far.color : INTENT.move.color, style: 'dots', alpha: strong ? 0.95 : 0.5 });
+        if (strong) sc.reticles.push({ x: dest.x + ox, y: dest.y + oy, color: INTENT.move.color, strong: true });
+      }
+    } else if (entry.square && map.castable) {
+      for (const k of Object.keys(map.castable)) { const [x, y] = k.split(',').map(Number); sc.marks.push({ x: x + ox, y: y + oy, type: 'reach' }); }
+      const aim = cmd.castAt || (hv && map.castable[hk] ? hv : null);
+      if (aim) {
+        const r = (entry.option.spell && entry.option.spell.radius) || 0;
+        for (let y = aim.y - r; y <= aim.y + r; y++) for (let x = aim.x - r; x <= aim.x + r; x++) if (x >= 0 && y >= 0 && x < enc.grid.w && y < enc.grid.h) sc.marks.push({ x: x + ox, y: y + oy, type: 'area' });
+        sc.lines.push({ pts: [at(me), at(aim)], color: INTENT.spell.color, style: 'dash', alpha: cmd.castAt ? 0.9 : 0.45 });
+        sc.reticles.push({ x: aim.x + ox, y: aim.y + oy, color: INTENT.spell.color, strong: !!cmd.castAt });
+      }
+    } else if (entry.targets) {
+      const look = isSpell(entry) ? INTENT.spell : entry.kind === 'maneuver' ? INTENT.maneuver : entry.kind === 'other' ? INTENT.other : INTENT.strike;
+      const aimAt = (id, strong) => {
+        const t = entry.targets.find((q) => q.id === id);
+        if (!t || !enc.pos[id]) return;
+        const col = t.inReach ? look.color : INTENT.far.color;
+        sc.lines.push({ pts: [at(me), at(enc.pos[id])], color: col, style: ranged(entry) || isSpell(entry) ? 'dash' : 'solid', alpha: strong ? 0.85 : 0.35 });
+        sc.reticles.push({ x: enc.pos[id].x + ox, y: enc.pos[id].y + oy, color: col, strong });
+        if (strong) sc.badges.push({ id, icon: look.icon, color: col });
+      };
+      if (cmd.target) aimAt(cmd.target, true);
+      const hoverId = hv ? occupant(enc, chars, hv.x, hv.y) || occupant(enc, chars, hv.x, hv.y + 1) : null;
+      if (hoverId && hoverId !== cmd.target) aimAt(hoverId, false);
+    } else if (entry.kind === 'guard' || entry.kind === 'ready') {
+      sc.badges.push({ id: actor, icon: entry.kind === 'ready' ? 'sword' : 'shield', color: INTENT.guard.color });
+      if (cmd.vs && enc.pos[cmd.vs]) sc.lines.push({ pts: [at(me), at(enc.pos[cmd.vs])], color: INTENT.guard.color, style: 'dash', alpha: 0.5 });
+    } else {
+      sc.badges.push({ id: actor, icon: SELF_ICON[entry.type] || 'dots', color: INTENT.other.color });
     }
     return sc;
   }
@@ -116,18 +190,100 @@
     return best;
   }
 
+  // Clicking the map builds the command: a first click chooses (a target, a square), a second click on the same thing
+  // commits it. A figure that is not a target opens its sheet.
   function onCell(game, x, y) {
     const bs = game.ui.bs;
     if (!bs || game.overlay || game.ui.result) return;
     const ox = bs.arena ? bs.arena.ox : 0, oy = bs.arena ? bs.arena.oy : 0;
     const ax = x - ox, ay = y - oy;
     if (ax < 0 || ay < 0 || ax >= bs.enc.grid.w || ay >= bs.enc.grid.h) return;
-    // A tap on a figure's head (the tile above its feet) counts as the figure, unless that square is a move or cast target.
     const m = bs.map, key = ax + ',' + ay;
     let id = occupant(bs.enc, bs.chars, ax, ay);
     const marked = m && ((m.reach && m.reach[key] != null) || (m.castable && m.castable[key]));
-    if (!id && !marked) id = occupant(bs.enc, bs.chars, ax, ay + 1);
-    P().cellClick(bs.app, bs.enc, bs.legal, ax, ay, id, m && m.reach, m && m.castable);
+    if (!id && !marked) id = occupant(bs.enc, bs.chars, ax, ay + 1); // a click on a figure's head
+    const entry = bs.sync && bs.sync.entry;
+    const cmd = bs.app && P().bui(bs.app).cmd;
+    const actor = m && m.actor;
+    const same = (p) => p && p.x === ax && p.y === ay;
+    if (entry && cmd && actor) {
+      if (entry.kind === 'move' && m.reach && m.reach[key] != null) {
+        if (same(cmd.moveTo)) P().declare(bs.app, bs.enc, { actor, type: 'move', to: { x: ax, y: ay } });
+        else { cmd.moveTo = { x: ax, y: ay }; game.render(); }
+        return;
+      }
+      if (entry.square && m.castable && m.castable[key]) {
+        if (same(cmd.castAt)) P().declare(bs.app, bs.enc, { actor, type: 'cast', option: entry.option, at: { x: ax, y: ay } });
+        else { cmd.castAt = { x: ax, y: ay }; game.render(); }
+        return;
+      }
+      if (entry.targets && id && entry.targets.some((t) => t.id === id)) {
+        if (cmd.target === id) { if (entry.affordable) P().declareEntry(bs.app, bs.enc, actor, entry, cmd); else toast(entry.why || 'Not enough AP'); }
+        else { cmd.target = id; game.render(); }
+        return;
+      }
+      if (!id && (cmd.moveTo || cmd.castAt)) { cmd.moveTo = null; cmd.castAt = null; game.render(); return; }
+    }
+    if (id) game.openOverlay('sheet', { id });
+  }
+
+  // ---- What happened when a pass resolved: lunges, bolts and numbers over the figures -----------------------------
+  // Declarations aimed at someone, which get a lunge or a bolt when they land.
+  const AIMED = ['strike', 'cast', 'trip', 'disarm', 'shove', 'clinch', 'grapple', 'pin', 'throw', 'bait'];
+  const DEFEND = { blocks: 'Blocked', parries: 'Parried', dodges: 'Dodged', slips: 'Dodged', catches: 'Caught', deflects: 'Deflected' };
+
+  function snapshot(enc, chars) {
+    const s = { enc, log: enc.log.length, done: new Set(enc.decls.filter((d) => d.done)), st: {}, dmg: {}, down: {}, dead: {} };
+    for (const id of enc.ids) {
+      const c = chars[id];
+      if (!c) continue;
+      s.st[id] = c.stamina; s.dmg[id] = Object.assign({}, c.damage); s.down[id] = !C.isActive(c); s.dead[id] = !!c.status.dead;
+    }
+    return s;
+  }
+
+  function effects(game, enc, chars) {
+    const prev = game.ui.snap;
+    const now = snapshot(enc, chars);
+    game.ui.snap = now;
+    const mv = game.ui.mv;
+    if (!mv || !mv.popup || !prev || prev.enc !== enc) return;
+    const delay = {}; // when each struck figure's numbers should appear, so a pass plays out in order
+    let i = 0;
+    const struck = new Set();
+    for (const d of enc.decls) {
+      if (!d.done || prev.done.has(d) || !d.target || !enc.pos[d.actor] || !enc.pos[d.target] || !AIMED.includes(d.type)) continue;
+      const t0 = i++ * 260;
+      const a = enc.pos[d.actor], b = enc.pos[d.target], ox = game.ui.bs.arena ? game.ui.bs.arena.ox : 0, oy = game.ui.bs.arena ? game.ui.bs.arena.oy : 0;
+      const far = Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y)) > 1;
+      if (far || (d.option && d.option.spell)) mv.bolt(d.actor, d.target, d.option && d.option.spell ? '#d7b4ff' : '#ffe9a0', t0);
+      else mv.lunge(d.actor, b.x + ox, b.y + oy, t0);
+      if (delay[d.target] == null) delay[d.target] = t0 + (far ? 200 : 140);
+      struck.add(d.target);
+    }
+    const last = i * 260;
+    // Defences and misses, from the log lines written since last time.
+    const names = enc.ids.filter((id) => chars[id]).map((id) => [chars[id].name, id]).sort((p, q) => q[0].length - p[0].length);
+    const who = (text) => { const hit = names.find(([n]) => text.startsWith(n + ' ') || text.startsWith(n + "'")); return hit ? hit[1] : null; };
+    for (const l of enc.log.slice(prev.log)) {
+      const id = who(l.text);
+      if (!id) continue;
+      if (l.cls === 'defend') { const verb = (l.text.slice(chars[id].name.length + 1).split(' ')[0] || ''); if (DEFEND[verb]) mv.popup(id, /SHATTERS|BREAKS|destroyed/.test(l.text) ? 'Shield broken' : DEFEND[verb], '#9fd1ff', delay[id] != null ? delay[id] : last); }
+      else if (l.cls === 'fizzle' && /astray|illusion/.test(l.text)) mv.popup(id, 'Miss', '#cfd6da', last);
+    }
+    // Numbers: stamina for those struck, wounds and falls for anyone.
+    for (const id of enc.ids) {
+      if (!chars[id] || prev.st[id] == null) continue;
+      const t = delay[id] != null ? delay[id] : last;
+      const lost = prev.st[id] - chars[id].stamina;
+      if (struck.has(id) && lost > 0) { mv.popup(id, '−' + lost, '#ffd166', t); mv.shudder(id, t); }
+      for (const [k, v] of Object.entries(chars[id].damage || {})) {
+        const more = v - ((prev.dmg[id] || {})[k] || 0);
+        if (more > 0) { mv.popup(id, `−${more} ${k}`, '#ff6b6b', t + 260); mv.shudder(id, t); }
+      }
+      if (chars[id].status.dead && !prev.dead[id]) mv.popup(id, 'Dead', '#ff4d4d', t + 520);
+      else if (!C.isActive(chars[id]) && !prev.down[id]) mv.popup(id, 'Down', '#c8c8c8', t + 520);
+    }
   }
 
   // ---- Pieces around the map ----------------------------------------------------------------------------------
@@ -200,7 +356,8 @@
       sync = human ? P().syncCommand(app, enc, legal) : null;
       const bu = P().bui(app);
       if (legal && !human && bu.mode !== 'place') { bu.mode = null; bu.pending = null; }
-      game.ui.bs = { app, enc, chars, legal, arena: w.battle.arena, map: legal && human ? P().mapState(app, enc, legal) : null };
+      game.ui.bs = { app, enc, chars, legal, sync, arena: w.battle.arena, map: legal && human ? P().mapState(app, enc, legal) : null };
+      app.ui.lastReach = game.ui.bs.map && game.ui.bs.map.reach;
       game.ui.spec = w.battle.spec;
       if (enc.phase === 'over') {
         game.ui.finalLog = enc.log.slice(-12);
@@ -215,6 +372,7 @@
       game.ui.mv = UI.MapView.create({ cols: a ? a.w : Math.min(15, bs.enc.grid.w), rows: a ? a.h : Math.min(10, bs.enc.grid.h), scale: 3, label: 'The battlefield', scene: () => scene(game), onCell: (x, y) => onCell(game, x, y) });
       game.ui.mv.start();
     }
+    if (bs && bs.enc) effects(game, bs.enc, bs.chars);
     const live = !game.ui.result;
     const spec = game.ui.spec || {};
     const status = !live ? 'Over' : enc.phase === 'declare' ? `Pass ${enc.pass}` : enc.phase === 'resolve' || enc.phase === 'resolving' ? `Pass ${enc.pass} · resolving` : '';
@@ -233,6 +391,22 @@
         !live ? resultCard(game) : null),
       live ? P().phasePanel(app, enc, legal, sync) : null);
   };
+
+  // Enter commits the action being built; Escape lets go of a chosen target or square.
+  if (typeof document !== 'undefined' && !UI._battleKeys) {
+    UI._battleKeys = true;
+    document.addEventListener('keydown', (e) => {
+      const game = UI.Game;
+      if (!game || game.screen !== 'battle' || game.overlay || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (/INPUT|TEXTAREA|SELECT|BUTTON/.test((e.target && e.target.tagName) || '')) return;
+      if (e.key === 'Enter') { const b = document.querySelector('.battle-screen .cmd-go .primary'); if (b && !b.disabled) { e.preventDefault(); b.click(); } }
+      if (e.key === 'Escape') {
+        const bs = game.ui.bs;
+        const cmd = bs && bs.app && P().bui(bs.app).cmd;
+        if (cmd && (cmd.target || cmd.moveTo || cmd.castAt)) { cmd.target = null; cmd.moveTo = null; cmd.castAt = null; game.render(); }
+      }
+    });
+  }
 
   UI.Screens.gameover = function (game) {
     const w = game.world;

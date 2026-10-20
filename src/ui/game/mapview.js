@@ -127,13 +127,41 @@
     ghost: ['rgba(255,255,255,0.10)', 'rgba(255,255,255,0.5)'],
     select: ['rgba(255,255,255,0.12)', 'rgba(255,255,255,0.9)'],
     ally: ['rgba(90,220,140,0.25)', 'rgba(120,240,170,0.95)'],
+    // Quiet versions for whole areas: where the active character could move, or a spell would land.
+    reach: ['rgba(90,200,235,0.09)', 'rgba(120,220,255,0.22)'],
+    reachLate: ['rgba(240,205,110,0.07)', 'rgba(240,205,110,0.22)'],
+    area: ['rgba(190,110,255,0.20)', 'rgba(210,150,255,0.55)'],
   };
+  const QUIET = { reach: 1, reachLate: 1, area: 1 };
+  const clock = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+
+  // An icon from UI.Icons drawn onto the canvas at (cx, cy), `px` screen pixels per bit, on a dark tab.
+  function drawIcon(ctx, name, cx, cy, px, color) {
+    const rows = (UI.Icons && UI.Icons.BITS[name]) || [];
+    const h = rows.length, w = Math.max(0, ...rows.map((r) => r.length));
+    const x0 = Math.round(cx - (w * px) / 2), y0 = Math.round(cy - (h * px) / 2);
+    ctx.fillStyle = 'rgba(5,8,11,0.82)';
+    ctx.fillRect(x0 - px * 2, y0 - px * 2, (w + 4) * px, (h + 4) * px);
+    ctx.strokeStyle = color; ctx.lineWidth = Math.max(1, px * 0.6);
+    ctx.strokeRect(x0 - px * 2, y0 - px * 2, (w + 4) * px, (h + 4) * px);
+    rows.forEach((row, y) => { for (let x = 0; x < row.length; x++) {
+      if (row[x] !== '#' && row[x] !== '+') continue;
+      ctx.globalAlpha = row[x] === '+' ? 0.5 : 1;
+      ctx.fillStyle = color; ctx.fillRect(x0 + x * px, y0 + y * px, px, px);
+    } });
+    ctx.globalAlpha = 1;
+  }
 
   // opts: {cols, rows, scale, scene: () => scene, onCell(x, y, ev), onHover(x, y)}
   function create(opts) {
     const cols = opts.cols || 15, rows = opts.rows || 10, S = opts.scale || 3;
     const canvas = h('canvas', { class: 'mapcanvas', width: cols * T * S, height: rows * T * S, role: 'img', 'aria-label': opts.label || 'Map' });
-    const view = { el: canvas, cols, rows, S, cam: null, vis: {}, hover: null, stop: false, tick: 0, last: 0 };
+    const view = { el: canvas, cols, rows, S, cam: null, vis: {}, hover: null, stop: false, tick: 0, last: 0, fx: [] };
+    // Short effects, timed from now (+ delay ms): text rising off a figure, a lunge toward a square, a bolt between two figures, a shudder.
+    view.popup = (id, text, color, delay) => view.fx.push({ k: 'text', id, text, color: color || '#fff', t0: clock() + (delay || 0), dur: 1300 });
+    view.lunge = (id, tx, ty, delay) => view.fx.push({ k: 'lunge', id, tx, ty, t0: clock() + (delay || 0), dur: 260 });
+    view.bolt = (from, to, color, delay) => view.fx.push({ k: 'bolt', from, to, color: color || '#ffe9a0', t0: clock() + (delay || 0), dur: 200 });
+    view.shudder = (id, delay) => view.fx.push({ k: 'shudder', id, t0: clock() + (delay || 0), dur: 300 });
     const scene = () => opts.scene();
 
     function cellAt(ev) {
@@ -197,8 +225,8 @@
         ctx.fillStyle = col[0];
         ctx.fillRect(X, Y, size, size);
         ctx.strokeStyle = col[1];
-        ctx.lineWidth = Math.max(1, S * 0.6);
-        if (m.type === 'late') ctx.setLineDash([S * 2, S * 2]);
+        ctx.lineWidth = Math.max(1, S * (QUIET[m.type] ? 0.35 : 0.6));
+        if (m.type === 'late' || m.type === 'reachLate') ctx.setLineDash([S * 2, S * 2]);
         ctx.strokeRect(X + S * 0.8, Y + S * 0.8, size - S * 1.6, size - S * 1.6);
         ctx.setLineDash([]);
         if (m.text) {
@@ -208,6 +236,96 @@
           ctx.fillText(m.text, X + size / 2, Y + size / 2);
         }
       }
+    }
+
+    // Ground-level lines through square centres: a path ('dots'), or an aim line from one figure to another.
+    // line: { pts: [{x, y}], color, style: 'dots' | 'dash' | 'solid', alpha }
+    function drawLines(ctx, sc, ox, oy) {
+      const size = T * S;
+      const P = (p) => [ox + (p.x + 0.5) * size, oy + (p.y + 0.62) * size];
+      for (const L of sc.lines || []) {
+        if (!L.pts || L.pts.length < 2) continue;
+        ctx.save();
+        ctx.globalAlpha = L.alpha == null ? 1 : L.alpha;
+        ctx.strokeStyle = L.color; ctx.fillStyle = L.color;
+        if (L.style === 'dots') {
+          for (let i = 1; i < L.pts.length; i++) {
+            const [ax, ay] = P(L.pts[i - 1]), [bx, by] = P(L.pts[i]);
+            for (const t of [0.33, 0.66, 1]) { const x = ax + (bx - ax) * t, y = ay + (by - ay) * t; const r = t === 1 ? S * 1.5 : S; ctx.fillRect(Math.round(x - r), Math.round(y - r), r * 2, r * 2); }
+          }
+        } else {
+          ctx.lineWidth = S * 0.8;
+          if (L.style === 'dash') ctx.setLineDash([S * 3, S * 2]);
+          ctx.beginPath();
+          L.pts.forEach((p, i) => { const [x, y] = P(p); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); });
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+    }
+
+    // Corner brackets around a square: what the selected action is aimed at. Pulses gently.
+    function drawReticles(ctx, sc, ox, oy, tick) {
+      const size = T * S;
+      for (const r of sc.reticles || []) {
+        const pad = (r.strong ? 0.5 + 0.5 * Math.sin(tick / 2.5) : 0) * S;
+        const X = ox + r.x * size - pad, Y = oy + r.y * size - pad, Z = size + pad * 2, L = size * 0.32, w = Math.max(1, S * (r.strong ? 1 : 0.6));
+        ctx.save();
+        ctx.globalAlpha = r.strong ? 1 : 0.6;
+        ctx.fillStyle = r.color;
+        for (const [cx, cy, dx, dy] of [[X, Y, 1, 1], [X + Z, Y, -1, 1], [X, Y + Z, 1, -1], [X + Z, Y + Z, -1, -1]]) {
+          ctx.fillRect(dx > 0 ? cx : cx - L, dy > 0 ? cy : cy - w, L, w);
+          ctx.fillRect(dx > 0 ? cx : cx - w, dy > 0 ? cy : cy - L, w, L);
+        }
+        ctx.restore();
+      }
+    }
+
+    // Where a figure is drawn this frame (its walk position plus any lunge or shudder), in squares.
+    function offsetOf(id, t) {
+      let dx = 0, dy = 0;
+      for (const f of view.fx) {
+        if (f.id !== id || t < f.t0) continue;
+        const p = (t - f.t0) / f.dur;
+        if (p > 1) continue;
+        if (f.k === 'lunge') { const v = view.vis[id]; if (!v) continue; const ddx = f.tx - v.x, ddy = f.ty - v.y, d = Math.hypot(ddx, ddy) || 1; const k = 0.3 * Math.sin(Math.PI * p); dx += (ddx / d) * k; dy += (ddy / d) * k; }
+        if (f.k === 'shudder') dx += Math.sin(p * 28) * 0.07 * (1 - p);
+      }
+      return [dx, dy];
+    }
+
+    // Above the figures: icons over heads, flying bolts, rising text.
+    function drawOver(ctx, sc, ox, oy, t) {
+      const size = T * S, SS = Math.max(1, S - 1);
+      const head = (id) => { const v = view.vis[id]; if (!v) return null; const a = (sc.actors || []).find((q) => q.id === id); const [dx, dy] = offsetOf(id, t); return [ox + (v.x + dx + 0.5) * size, oy + (v.y + dy + 1) * size - S * 1.5 - 31 * SS * ((a && a.size) || 1)]; };
+      for (const b of sc.badges || []) {
+        const at = b.id ? head(b.id) : [ox + (b.x + 0.5) * size, oy + b.y * size];
+        if (!at) continue;
+        drawIcon(ctx, b.icon, at[0], at[1] - S * 7 + Math.sin(view.tick / 3) * S * 0.8, Math.max(1, Math.round(S * 0.75)), b.color);
+      }
+      for (const f of view.fx) {
+        if (t < f.t0) continue;
+        const p = (t - f.t0) / f.dur;
+        if (p > 1) continue;
+        if (f.k === 'bolt') {
+          const a = head(f.from), b = head(f.to);
+          if (!a || !b) continue;
+          const x = a[0] + (b[0] - a[0]) * p, y = a[1] + 14 * SS + (b[1] - a[1]) * p;
+          ctx.fillStyle = f.color; ctx.fillRect(Math.round(x - S * 1.5), Math.round(y - S * 1.5), S * 3, S * 3);
+          ctx.globalAlpha = 0.4; ctx.fillRect(Math.round(x - (b[0] - a[0]) * 0.06 - S), Math.round(y - (b[1] - a[1]) * 0.06 - S), S * 2, S * 2); ctx.globalAlpha = 1;
+        } else if (f.k === 'text') {
+          const at = head(f.id);
+          if (!at) continue;
+          ctx.save();
+          ctx.globalAlpha = p < 0.6 ? 1 : 1 - (p - 0.6) / 0.4;
+          ctx.font = `bold ${Math.round(S * 6)}px "Pixelify Sans", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+          const y = at[1] - S * 2 - p * size * 0.9;
+          ctx.lineWidth = S * 1.4; ctx.strokeStyle = 'rgba(0,0,0,0.9)'; ctx.strokeText(f.text, at[0], y);
+          ctx.fillStyle = f.color; ctx.fillText(f.text, at[0], y);
+          ctx.restore();
+        }
+      }
+      view.fx = view.fx.filter((f) => t < f.t0 + f.dur);
     }
 
     // The little z's over a sleeper (decor layer: above the walls, below the figures).
@@ -237,8 +355,10 @@
       const plan = Tilemap.plan(sc, x0 - 1, y0 - 1, x0 + cols, y0 + rows);
       // Layer 1: ground, with its edge shading.
       for (const c of plan.ground) Tilemap.paint(ctx, c, env);
-      // Move and aim marks lie on the ground, under everything standing.
+      // Move and aim marks lie on the ground, under everything standing: tints, paths and aim lines, target brackets.
       drawMarks(ctx, sc, ox, oy);
+      drawLines(ctx, sc, ox, oy);
+      drawReticles(ctx, sc, ox, oy, view.tick);
       // Layers 2 and 3: the walls, lower pieces then the upper face and caps.
       for (const c of plan.low) Tilemap.paint(ctx, c, env);
       for (const c of plan.high) Tilemap.paint(ctx, c, env);
@@ -255,7 +375,8 @@
       list.sort((p, q) => p.y - q.y);
       for (const it of list) {
         if (it.prop) { const i = it.prop; drawObject(ctx, i.c, ox + i.x * size, oy + i.y * size, S); continue; }
-        drawActor(ctx, it.fig.a, it.fig.v, ox, oy, S, view.tick);
+        const [dx, dy] = offsetOf(it.fig.a.id, clock());
+        drawActor(ctx, it.fig.a, dx || dy ? { x: it.fig.v.x + dx, y: it.fig.v.y + dy, run: it.fig.v.run, flip: it.fig.v.flip } : it.fig.v, ox, oy, S, view.tick);
       }
       // Fog: unlit squares fade; what has been seen but is out of the light is dim.
       if (sc.light) {
@@ -268,6 +389,8 @@
           if (a > 0.02) { ctx.fillStyle = `rgba(4,8,14,${a.toFixed(2)})`; ctx.fillRect(ox + x * size, oy + y * size, size, size); }
         }
       }
+      // Icons over heads, bolts in flight and rising numbers sit above everything on the map.
+      drawOver(ctx, sc, ox, oy, clock());
       // Hover outline.
       if (view.hover && sc.hoverable !== false) {
         const X = ox + view.hover.x * size, Y = oy + view.hover.y * size;

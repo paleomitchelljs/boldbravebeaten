@@ -12,7 +12,11 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   thicken those walls in the maps rather than special-casing the renderer.
 - [ ] Cap tops are a flat procedural slate with a cyan edge; a hand-drawn cap tile set would look better.
 - [ ] Beasts (rat, wolf, spider, snake, cat) borrow tinted orc sprites; find or draw real ones.
-- [ ] Animate attacks, hits and deaths in a fight (right now: walking, idling, a rotated body when down).
+- [ ] Fights: attacks now lunge or fire a bolt, with floating numbers and "Blocked"/"Dodged"/"Down"; still no real attack or
+  death animation frames (a body is the idle sprite on its side).
+- [ ] Fights: only the active character's declared attacks are drawn (faint lines) and only the party's declared moves (ghosts);
+  enemy intentions stay hidden on purpose. Playtest whether a summary of the whole party's plan for the pass is wanted.
+- [ ] Fights: the outcome of an attack (odds to hit, expected damage through armor) is not previewed when choosing a target.
 - [ ] Click-to-walk and the explore prompts need a pass on touch screens.
 
 ## Art and licences
@@ -35,3 +39,5 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   caps auto-tiled to merge at corners and T-junctions, finished face ends at gaps, an ambient-occlusion baseboard
   under every face, floor unbroken through doorways, doors in vertical walls drawn edge-on.
 - Compact battle screen, character sheet pop-up and character creation with dropdowns and (i) tooltips.
+- Fights: targets are chosen (click to aim, click again or Enter to commit); a move shows a phantom and a dotted path;
+  guards and self-actions show an icon over the character; resolution shows lunges, bolts and floating results.
