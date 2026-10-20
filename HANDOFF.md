@@ -1,6 +1,6 @@
 # To do
 
-Last updated at commit: _(set by the push; see the line below the list)_
+Last updated at commit: fb7fa14
 
 Keep this a short list. Tick things off, add new ones, and refresh the commit line after every push (`git log -1 --format=%h`).
 
@@ -30,5 +30,3 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 - Top-down map shared by exploring and fighting; fights are played on a 15x10 slice of the dungeon.
 - Five-layer tile renderer (`src/ui/game/tilemap.js`): ground, wall base/face, wall top/caps, decor and doors, entities.
 - Compact battle screen, character sheet pop-up and character creation with dropdowns and (i) tooltips.
-
-
