@@ -3,6 +3,7 @@
 bandit:
   faction: cutthroats
   name: Bandit
+  sprite: {kind: rogue, tint: "#9a8a8a"}
   primary: [DEX, SPD]
   weak: [INT]
   armor: [[[3, padded], [1, leather]], [[2, leather], [1, mail]], [[1, leather], [2, mail]]]
@@ -26,6 +27,7 @@ bandit:
 militia:
   faction: town_watch
   name: Militia
+  sprite: {kind: knight, tint: "#a09a7a"}
   primary: [CON, STR]
   weak: [DEX]
   armor: [[[1, padded]], [[2, padded], [1, leather]], [[1, leather], [1, mail]]]
@@ -47,6 +49,7 @@ militia:
 sellsword:
   faction: cutthroats
   name: Sellsword
+  sprite: {kind: knight, tint: "#8a5a5a"}
   primary: [STR, CON]
   weak: [CHA]
   armor: [[[2, leather], [1, mail]], [[1, mail]], [[2, mail], [1, scale]]]
@@ -67,6 +70,7 @@ sellsword:
 brute:
   faction: cutthroats
   name: Brute
+  sprite: {kind: orc_warrior, tint: "#b0907a"}
   primary: [STR, CON]
   weak: [INT, DEX]
   armor: [[[2, padded], [1, leather]], [[1, leather], [1, mail]], [[1, mail], [1, scale]]]
@@ -89,6 +93,7 @@ brute:
 duelist:
   faction: cutthroats
   name: Duelist
+  sprite: {kind: rogue, tint: "#9a7a9a"}
   primary: [DEX, SPD]
   weak: [STR]
   armor: [[[1, null], [1, padded]], [[1, leather]], [[1, leather], [1, mail]]]
@@ -110,6 +115,7 @@ duelist:
 brawler:
   faction: cutthroats
   name: Brawler
+  sprite: {kind: orc, tint: "#b09a80"}
   primary: [STR, DEX]
   weak: [INT]
   armor: [[[1, padded]], [[1, padded], [1, leather]], [[1, leather]]]
@@ -131,6 +137,7 @@ brawler:
 manAtArms:
   faction: town_watch
   name: Man-at-arms
+  sprite: {kind: knight, tint: "#8a8a9a"}
   primary: [STR, CON]
   weak: [CHA]
   armor: [[[1, mail]], [[2, mail], [1, scale]], [[1, scale], [1, plate]]]
@@ -154,6 +161,7 @@ manAtArms:
 knight:
   faction: town_watch
   name: Knight
+  sprite: {kind: knight, tint: "#6a6a7a"}
   primary: [STR, CON]
   weak: [SPD]
   armor: [[[1, mail]], [[1, scale], [1, plate]], [[1, plate]]]

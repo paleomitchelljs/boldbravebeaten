@@ -33,9 +33,17 @@
   const here = (world) => grid(world.place);
   const ents = (world, placeId) => W.mapState(world, placeId || world.place).ents;
   const posKey = (x, y) => x + ',' + y;
+  // Reading a square's state creates it, except while drawing (peek), which must not grow the save.
+  const NO_STATE = Object.freeze({});
+  let peeking = false;
   function state(world, x, y) {
     const e = ents(world);
+    if (peeking) return e[posKey(x, y)] || NO_STATE;
     return e[posKey(x, y)] || (e[posKey(x, y)] = {});
+  }
+  function peek(world, x, y) {
+    peeking = true;
+    try { return cell(world, x, y); } finally { peeking = false; }
   }
 
   // ---- Cells -----------------------------------------------------------------
@@ -58,6 +66,7 @@
       case 'npc': return { ch, def, kind: 'npc', solid: true, opaque: false, st };
       case 'shrine': return { ch, def, kind: 'shrine', solid: true, opaque: false, st };
       case 'monster': return { ch, def, kind: 'monster', solid: !st.done && !st.pacified, opaque: false, st };
+      case 'prop': return { ch, def, kind: 'prop', solid: def.solid !== false, opaque: false, st };
       case 'trap': return { ch, def, kind: 'trap', solid: !!(st.found && !st.disarmed && !st.sprung), opaque: false, st };
       default: return { ch, def, kind: def.kind, solid: false, opaque: false, st };
     }
@@ -174,6 +183,44 @@
     passive(world, ev);
     scan(world, ev);
     return { moved: true, events: ev };
+  }
+
+  // The compass steps from the party to (tx, ty) over squares it has seen and can walk (doors open as it goes).
+  // Returns [] when there is no way, or the target is a thing to deal with rather than walk onto.
+  function path(world, tx, ty) {
+    const ex = world.explore;
+    const ms = W.mapState(world, world.place);
+    const g = here(world);
+    if (tx === ex.x && ty === ex.y) return [];
+    const ok = (x, y) => {
+      if (x < 0 || y < 0 || x >= g.w || y >= g.h || !ms.seen[posKey(x, y)]) return false;
+      const c = peek(world, x, y);
+      if (c.kind === 'door') return true;
+      if (c.kind === 'trap' && c.st.found && !c.st.disarmed && !c.st.sprung) return false;
+      return !c.solid && c.kind !== 'wall' && c.kind !== 'rock';
+    };
+    if (!ok(tx, ty)) return [];
+    const prev = { [posKey(ex.x, ex.y)]: null }, q = [[ex.x, ex.y]];
+    while (q.length) {
+      const [x, y] = q.shift();
+      if (x === tx && y === ty) break;
+      for (let d = 0; d < 4; d++) {
+        const nx = x + DIRS[d][0], ny = y + DIRS[d][1], k = posKey(nx, ny);
+        if (k in prev || !ok(nx, ny)) continue;
+        prev[k] = { from: posKey(x, y), d };
+        q.push([nx, ny]);
+      }
+    }
+    if (!(posKey(tx, ty) in prev)) return [];
+    const out = [];
+    for (let k = posKey(tx, ty); prev[k]; k = prev[k].from) out.unshift(prev[k].d);
+    return out;
+  }
+
+  // Top-down walking: face a compass direction (0 N, 1 E, 2 S, 3 W) and step that way.
+  function go(world, d) {
+    world.explore.dir = ((d % 4) + 4) % 4;
+    return move(world, 0);
   }
 
   function enterSquare(world, c, x, y, ev) {
@@ -489,7 +536,7 @@
 
   G.Explore = {
     DIRS, DIR_NAMES, grid, place, here, cell, state, opaque, lineClear, cheb, markSeen, findChar,
-    enter, leave, front, turn, move, search, facing, describe, act, scan, wake,
+    enter, leave, front, turn, move, go, peek, path, search, facing, describe, act, scan, wake,
     encounterSpec, foeAwareness, resolveSquare, wanderingFor, minutesPerStep,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

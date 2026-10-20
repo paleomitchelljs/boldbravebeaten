@@ -1,3 +1,13 @@
 .DS_Store
 node_modules/
 data/bundle.js
+
+# Paid Cute Fantasy Dungeons art: the licence forbids redistribution
+assets/env/chest.png
+assets/env/objects.png
+assets/env/gold.png
+assets/env/stairs_down.png
+assets/env/spikes.png
+assets/env/plate.png
+assets/env/stairs.png
+assets/CUTE-FANTASY-README.txt

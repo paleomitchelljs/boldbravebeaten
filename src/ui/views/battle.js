@@ -70,7 +70,8 @@
   }
 
   // ---- Map ---------------------------------------------------------------
-  function mapView(app, enc, legal) {
+  // What the map should show for the current choice: who can be targeted, where one can move or cast, the ground.
+  function mapState(app, enc, legal) {
     const chars = app.state.characters;
     const ui = bui(app);
     const actor = Combat.currentActor(enc);
@@ -117,6 +118,13 @@
     const ground = {};
     if (G.Terrain && enc.tiles) for (const t of G.Terrain.all(enc)) if (G.Terrain.visible(t.f, viewer)) (ground[t.x + ',' + t.y] || (ground[t.x + ',' + t.y] = [])).push(t);
     const late = (need) => legal && need > legal.passLeft;
+    return { actor, ghosts, targets, reach, castable, ground, late };
+  }
+
+  function mapView(app, enc, legal) {
+    const chars = app.state.characters;
+    const ui = bui(app);
+    const { actor, ghosts, targets, reach, castable, ground, late } = mapState(app, enc, legal);
     const cells = [];
     for (let y = 0; y < enc.grid.h; y++) {
       for (let x = 0; x < enc.grid.w; x++) {
@@ -620,6 +628,7 @@
 
   // A pop-up character sheet: what matters in a fight, with a link to the full sheet.
   function openSheet(app, enc, id) {
+    if (app.hooks && app.hooks.sheet) return app.hooks.sheet(id);
     const chars = app.state.characters;
     const c = chars[id];
     if (!c) return;
@@ -749,4 +758,6 @@
   }
 
   UI.Views.battle = view;
+  // The pieces the game's own battle screen (src/ui/game/screens/battle.js) reuses.
+  UI.Views.battleParts = { bui, mapState, cellClick, declarePanel, phasePanel, scheduleAI, syncCommand, aiControlled, openInfo, closeModal, TILE_GLYPH };
 })(globalThis.BBB);

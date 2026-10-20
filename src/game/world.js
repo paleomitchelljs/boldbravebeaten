@@ -23,7 +23,7 @@
     cloth: ['#7a5a3a', '#4f6b52', '#52607a', '#7a4f5a', '#6b5b7a', '#7a6d45'],
   };
 
-  // spec: { name, attrs, kit, feats: [ids], nouns: [ids], look: {skin, hair, cloth, build} }
+  // spec: { name, attrs, kit, feats: [ids], nouns: [ids], look: {sprite, tint (0-6), ...} }
   function makeCharacter(spec) {
     const kits = (content().start || {}).kits || [];
     const kit = kits.find((k) => k.id === spec.kit) || kits[0] || {};
@@ -44,7 +44,7 @@
     if (kit.sidearm === 'parryingDagger') { c.offhand = c.sidearm; c.sidearm = null; }
     for (const f of spec.feats || []) if (C.canTakeFeat(c, f).ok) C.addFeat(c, f);
     c.nouns = (spec.nouns || []).slice();
-    c.look = Object.assign({ skin: 1, hair: 1, cloth: 0, build: 1 }, spec.look || {});
+    c.look = Object.assign({ skin: 1, hair: 1, cloth: 0, build: 1, sprite: null, tint: 0 }, spec.look || {}, { kit: spec.kit || (spec.look && spec.look.kit) || null });
     c.xp = 0;
     c.control = 'manual';
     c.stamina = C.maxStamina(c);
@@ -53,7 +53,7 @@
 
   // The ready-made party in start.yaml (the New Game screen's quick start).
   function presetParty() {
-    return (((content().start || {}).presets) || []).map((p, i) => Object.assign({}, p, { look: { skin: [1, 2, 0, 3][i % 4], hair: [1, 2, 4, 5][i % 4], cloth: i % 6, build: 1 } }));
+    return (((content().start || {}).presets) || []).map((p, i) => Object.assign({}, p, { look: { skin: [1, 2, 0, 3][i % 4], hair: [1, 2, 4, 5][i % 4], cloth: i % 6, build: 1, sprite: null, tint: [0, 2, 3, 1][i % 4] } }));
   }
 
   function create(specs, opts) {

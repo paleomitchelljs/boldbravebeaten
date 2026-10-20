@@ -17,6 +17,7 @@ game:
   noticeDistance: 4          # tiles at which an awake group notices an unhidden party
   sleepNoticeDistance: 2     # ...and a sleeping one
   lightRadius: 7
+  arena: {w: 15, h: 10}   # the slice of the dungeon a fight is played on (matches the map view's size)
   passivePenalty: 3          # passive perception is this much worse than a deliberate search
   camp: {wanderingChance: 0.25, guardedChance: 0.5}
   # ---- Skill checks: d10 + floor(mean of attrs / 2) + feat ranks x weight vs a target number ------

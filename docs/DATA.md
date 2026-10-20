@@ -87,7 +87,13 @@ half inverted to enemies; `rules.yaml`). `kos` is the standing at or below which
 **A map** (`places.yaml`): one string per row. `#` wall, `.` floor, `+` door, space is solid rock. Every other character
 is defined in the place's `legend`; the validator complains about a letter with no entry (or an entry not on the map).
 Legend kinds: `stairs {to, at}`, `locked {tn, forceTn, key, alt[]}`, `secret {tn}`, `trap {tn, disarm, damage, text, reveal}`,
-`monster {encounter, asleep}`, `chest {loot, tn}`, `pickup {good}`, `note {text, sets}`, `npc {npc}`, `shrine {heal}`.
+`monster {encounter, asleep}`, `chest {loot, tn}`, `pickup {good}`, `note {text, sets}`, `npc {npc}`, `shrine {heal}`,
+`prop {sprite, scale, solid}` (scenery: a crate, bed, urn, candelabra… from the table in `src/ui/game/mapview.js`; solid by default).
+
+**Looks.** `sprite:` on a monster, a foe template or an NPC names a sheet in `assets/sprites/` (knight, rogue, wizard, orc,
+orc_rogue, orc_shaman, orc_warrior, skeleton, skeleton_mage, skeleton_rogue, skeleton_warrior) or is `{kind, scale, tint}` to resize
+or colour-wash one. A party member's `look.sprite` / `look.tint` work the same way. Fights are played on a slice of the
+dungeon map (`game.arena` in rules.yaml, 15x10): walls and furniture block, a shut ordinary door does not.
 `encounters:` map an id to `{foes, flags, loot, text, parley, peaceFlags, arena}`. `wandering:` is what interrupts a camp.
 A town has `locations` (people and services: `inn`, `shop`, `healer`, `trainer`, `bounty`) and `exits` to dungeons;
 an exit with `requires` stays hidden until the player has heard of it. `look` colors the first-person view.

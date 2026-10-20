@@ -11,113 +11,7 @@
   UI.Overlays = UI.Overlays || {};
 
   const shell = (title, body, close, wide) => h('div', { class: `modal game-modal ${wide ? 'wide' : ''}`, role: 'dialog', 'aria-modal': 'true', onclick: (e) => e.stopPropagation() },
-    h('div', { class: 'row spread' }, h('h2', null, title), h('button', { class: 'small', onclick: close, 'aria-label': 'Close' }, 'Close')), body);
-
-  // ---- Character sheet -----------------------------------------------------------------------------------
-  const SLOT_LAYOUT = { left: ['shield', 'off', 'ring'], right: ['main', 'side', 'charm'], bottom: ['body'] };
-
-  function slotButton(game, o, c, slot) {
-    const label = Equip.SLOTS.find((s) => s[0] === slot)[1];
-    const it = Equip.itemIn(c, slot);
-    const name = it ? (it.kind === 'weapon' || it.kind === 'armor' || it.kind === 'shield' ? Items.itemName(it) : it.name) : '—';
-    return h('button', { class: `slot-btn ${o.pick === slot ? 'selected' : ''} ${it ? 'filled' : ''}`, onclick: () => { o.pick = o.pick === slot ? null : slot; game.openOverlay('sheet', o); }, title: it ? Equip.describe(it) || name : 'Empty' },
-      h('span', { class: 'label' }, label), h('span', { class: 'nm' }, name));
-  }
-
-  function pickerFor(game, o, c) {
-    const w = game.world;
-    const slot = o.pick;
-    const cur = Equip.itemIn(c, slot);
-    const close = () => { o.pick = null; game.openOverlay('sheet', o); };
-    const rows = [];
-    if (slot === 'ring' || slot === 'charm') {
-      for (const [id, n] of Object.entries(w.pack.goods)) {
-        const g = World.goodDef(id);
-        if (!g || g.kind !== 'trinket' || g.slot !== slot) continue;
-        rows.push(h('div', { class: 'ledger-row' }, h('span', { class: 'stack tight' }, h('b', null, g.name), h('span', { class: 'small muted' }, g.blurb + (n > 1 ? ` (×${n})` : ''))),
-          h('button', { class: 'small', onclick: () => { Equip.equipTrinket(w, c, id); game.save(); game.openOverlay('sheet', o); game.render(); } }, 'Wear')));
-      }
-    } else {
-      for (const it of w.pack.gear) {
-        if (!Equip.fits(it).includes(slot)) continue;
-        const chk = Equip.canEquip(c, it, slot);
-        rows.push(h('div', { class: 'ledger-row' }, h('span', { class: 'stack tight' }, h('b', null, Items.itemName(it)), h('span', { class: 'small muted' }, Equip.describe(it) + (chk.ok && chk.note ? ' — ' + chk.note : !chk.ok ? ' — ' + chk.reason : ''))),
-          h('button', { class: 'small', disabled: !chk.ok, onclick: () => { const r = Equip.equip(w, c, it, slot); if (!r.ok) toast(r.reason); for (const l of r.lines || []) toast(l); game.save(); game.openOverlay('sheet', o); game.render(); } }, 'Equip')));
-      }
-    }
-    return h('div', { class: 'picker stack tight' },
-      h('div', { class: 'row spread' }, h('b', null, Equip.SLOTS.find((s) => s[0] === slot)[1]), h('button', { class: 'small', onclick: close }, 'Done')),
-      cur ? h('div', { class: 'ledger-row' }, h('span', { class: 'stack tight' }, h('b', null, cur.kind ? Items.itemName(cur) : cur.name), h('span', { class: 'small muted' }, 'worn: ' + (Equip.describe(cur) || ''))),
-        h('button', { class: 'small', onclick: () => { Equip.unequip(w, c, slot); game.save(); game.openOverlay('sheet', o); game.render(); } }, 'Take off')) : null,
-      rows.length ? rows : h('p', { class: 'small muted' }, 'Nothing in the pack fits here.'));
-  }
-
-  function statsTab(c) {
-    const max = C.maxStamina(c);
-    const ai = C.armorInfo(c);
-    const sh = c.shield ? Items.shieldStats(c.shield) : null;
-    const attr = (a) => h('tr', null, h('th', { scope: 'row' }, a),
-      h('td', { class: 'n' }, c.base[a]), h('td', { class: 'n' }, C.conditioning(c, a) ? '+' + C.conditioning(c, a) : '—'),
-      h('td', { class: 'n' }, c.damage[a] ? '−' + c.damage[a] : '—'), h('td', { class: 'n' }, h('b', null, C.attr(c, a))));
-    return h('div', { class: 'stack' },
-      h('table', { class: 'data' }, h('thead', null, h('tr', null, ['Attribute', 'Base', 'Feats', 'Damage', 'Now'].map((t, i) => h('th', { class: i ? 'n' : '' }, t)))), h('tbody', null, G.CONFIG.attributes.map(attr))),
-      h('div', { class: 'derived' }, [
-        ['Stamina', `${c.stamina}/${max}`], ['Regen', (C.regen(c) >= 0 ? '+' : '') + C.regen(c)], ['AP', C.apPool(c)], ['Move', `${C.squaresPerAP(c)} sq`], ['Initiative', 'd10+' + C.combatAttr(c, 'SPD')], ['STR damage', (C.strBonus(c) >= 0 ? '+' : '') + C.strBonus(c)],
-      ].map(([k, v]) => h('div', { class: 'd' }, h('span', { class: 'label' }, k), h('b', { class: 'num' }, v)))),
-      bar(c.stamina, max),
-      h('div', { class: 'small stack tight' },
-        c.armor ? h('div', null, h('b', null, 'Armor '), Items.itemName(c.armor), ` · mitigation P${ai.effMit.P} S${ai.effMit.S} B${ai.effMit.B}`, ai.spd || ai.dex ? ` · SPD −${ai.spd} DEX −${ai.dex}` : '', ` · durability ${ai.durability}/${ai.maxDurability}`) : h('div', null, h('b', null, 'Armor '), 'none'),
-        sh ? h('div', null, h('b', null, 'Shield '), Items.itemName(c.shield), ` · block ${sh.blockAP} AP · holds ${sh.threshold} · durability ${c.shield.durability}/${sh.maxDurability}`) : null,
-        h('div', null, h('b', null, 'Bleeding '), c.bleeds.length ? `${C.bleedPerRound(c).toFixed(1)}/round` : 'none'),
-        UI.Cards.statusChips(c).length ? h('div', { class: 'row' }, UI.Cards.statusChips(c)) : null),
-      h('p', { class: 'small muted' }, 'CON is your life: 0 is death. Stamina is how long you can keep fighting: 0 is unconscious. Armor is how much of it you keep.'));
-  }
-
-  function featsTab(game, c) {
-    const D = G.DATA;
-    const owned = Object.keys(c.feats).filter((id) => D.FEATS[id]);
-    const left = C.featBudget(c) - C.featCount(c);
-    const inTown = game.world.place && G.Content.world.places[game.world.place].kind === 'town';
-    return h('div', { class: 'stack' },
-      h('div', { class: 'row spread' }, h('b', null, `${C.featCount(c)} of ${C.featBudget(c)} feats`), left > 0 ? h('span', { class: 'chip ok' }, `${left} to spend${inTown ? ' — see the Training Yard' : ' in town'}`) : null),
-      h('div', { class: 'small muted' }, `Level ${c.level} · ${c.xp || 0} XP · next level at ${World.xpFor(c.level + 1)}`),
-      owned.length ? owned.map((id) => { const f = D.FEATS[id]; return h('div', { class: 'feat-row' }, h('span', { class: 'stack tight' }, h('b', null, f.name + (f.ranks.length > 1 ? ' ' + C.roman(c.feats[id]) : '')), h('span', { class: 'small muted' }, f.effect)), f.auto ? null : h('span', { class: 'chip warn', title: 'Not yet implemented' }, 'no effect yet')); }) : h('p', { class: 'muted' }, 'No feats.'),
-      (c.nouns || []).length ? h('div', { class: 'small' }, h('b', null, 'Words known: '), c.nouns.join(', ')) : null);
-  }
-
-  function skillsTab(c) {
-    const defs = G.Skills.defs();
-    return h('div', { class: 'stack tight' }, Object.entries(defs).map(([id, s]) => h('div', { class: 'feat-row' },
-      h('span', { class: 'stack tight' }, h('b', null, s.name), h('span', { class: 'small muted' }, s.blurb)),
-      h('span', { class: 'num' }, (G.Skills.mod(c, id) >= 0 ? '+' : '') + G.Skills.mod(c, id)))),
-    h('p', { class: 'small muted' }, 'A check is d10 + this number against a target (easy 6, moderate 8, hard 11, formidable 14).'));
-  }
-
-  UI.Overlays.sheet = function (game, o) {
-    const w = game.world;
-    const members = World.party(w);
-    const c = w.chars[o.id] || members[0];
-    o.id = c.id;
-    const tab = o.tab || 'stats';
-    const close = () => game.closeOverlay();
-    const tabBtn = (id, label) => h('button', { class: `tab ${tab === id ? 'active' : ''}`, onclick: () => { o.tab = id; game.openOverlay('sheet', o); } }, label);
-    const inFight = !!w.battle;
-    return shell(c.name, h('div', { class: 'stack' },
-      h('div', { class: 'party-strip compact' }, members.map((m) => h('button', { class: `member ${m.id === c.id ? 'selected' : ''} ${m.status.dead ? 'down' : ''}`, onclick: () => { o.id = m.id; o.pick = null; game.openOverlay('sheet', o); } }, UI.Art.portrait(m, 34), h('span', { class: 'nm' }, m.name)))),
-      h('div', { class: 'sheet-grid' },
-        h('div', { class: 'stack doll-col' },
-          h('div', { class: 'equip' },
-            h('div', { class: 'slots left' }, SLOT_LAYOUT.left.map((s) => slotButton(game, o, c, s))),
-            h('div', { class: 'doll-stage' }, UI.Art.paperDoll(c, { size: 340 })),
-            h('div', { class: 'slots right' }, SLOT_LAYOUT.right.map((s) => slotButton(game, o, c, s)))),
-          h('div', { class: 'slots bottom' }, SLOT_LAYOUT.bottom.map((s) => slotButton(game, o, c, s))),
-          inFight ? h('p', { class: 'small muted' }, 'Changing gear mid-fight is not possible. Close this and keep fighting.') : null,
-          o.pick && !inFight ? pickerFor(game, o, c) : null),
-        h('div', { class: 'stack' },
-          h('div', { class: 'tabs' }, tabBtn('stats', 'Stats'), tabBtn('feats', 'Feats'), tabBtn('skills', 'Skills'), tabBtn('notes', 'Notes')),
-          tab === 'stats' ? statsTab(c) : tab === 'feats' ? featsTab(game, c) : tab === 'skills' ? skillsTab(c)
-            : h('textarea', { 'aria-label': 'Notes', value: c.notes || '', placeholder: 'Notes about this character', onchange: (e) => { c.notes = e.target.value; game.save(); } })))), close, true);
-  };
+    h('div', { class: 'row spread' }, h('h2', null, title), UI.ibtn('close', 'Close', close, { size: 14 })), body);
 
   // ---- Pack ------------------------------------------------------------------------------------------------------------
   UI.Overlays.pack = function (game, o) {
@@ -278,11 +172,14 @@
   // ---- Map, text, loot ---------------------------------------------------------------------------------------------------------------------
   UI.Overlays.map = function (game) {
     const close = () => game.closeOverlay();
-    if (!game.world.explore) return shell('Map', h('p', { class: 'muted' }, 'There is no map of the town. Ask around.'), close);
-    const cv = h('canvas', { class: 'mini big', width: 520, height: 520, role: 'img', 'aria-label': 'Map of what you have seen' });
-    UI.FirstPerson.minimap(cv, game.world, { full: true });
-    return shell(G.Explore.place(game.world).name, h('div', { class: 'stack' }, cv,
-      h('p', { class: 'small muted' }, 'Green: you. Red: foes. Gold: chests. Blue: people. Pale: stairs. Orange: traps you have found. Brown: doors.')), close);
+    const w = game.world;
+    if (!w.explore) return shell('Map', h('p', { class: 'muted' }, 'There is no map of the town. Ask around.'), close);
+    const g = G.Explore.here(w), ms = World.mapState(w, w.place), ex = w.explore;
+    const mv = UI.MapView.create({ cols: g.w, rows: g.h, scale: 2, label: 'Map of what you have seen', scene: () => ({
+      w: g.w, h: g.h, origin: { x: 0, y: 0 }, cell: (x, y) => G.Explore.peek(w, x, y), seen: (x, y) => !!ms.seen[x + ',' + y],
+      actors: [{ id: 'me', x: ex.x, y: ex.y, kind: UI.Sprites.look(World.active(w)[0]).kind, tint: UI.Sprites.look(World.active(w)[0]).tint, size: 1, ring: 'rgba(255,255,255,0.85)' }], marks: [], hoverable: false }) });
+    mv.start();
+    return shell(G.Explore.place(w).name, h('div', { class: 'stack' }, h('div', { class: 'mapfull' }, mv.el), h('p', { class: 'small muted' }, 'What you have seen, as you saw it. The ring is your party.')), close, true);
   };
 
   UI.Overlays.text = function (game, o) {

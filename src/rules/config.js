@@ -434,6 +434,7 @@
     // it away; hidden: unseen by the other side until it springs.
     terrain: {
       stoneWall: { name: 'Stone wall', wall: true, solid: true },
+      dungeonWall: { name: 'Dungeon wall', wall: true, solid: true, permanent: true },
       iceWall: { name: 'Ice wall', wall: true, solid: true, meltsInFire: true },
       brambleWall: { name: 'Bramble wall', wall: true, flammable: true },
       forceWall: { name: 'Force wall', wall: true, blocksMissiles: true },

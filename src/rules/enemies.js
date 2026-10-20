@@ -71,6 +71,7 @@
     const c = C.newCharacter({ name, side: 'enemy', base, starterGear: false });
     c.level = level;
     c.template = templateId;
+    c.sprite = T.sprite || null;
     c.faction = T.faction || null;
     c.xp = (T.xpPerLevel || 20) * level;
     c.lootTable = T.loot || 'humanoid_purse';
@@ -175,6 +176,7 @@
     c.faction = M.faction || null;
     c.xp = M.xp || 10;
     c.glyph = M.glyph || null;
+    c.sprite = M.sprite || null;
     c.lootTable = M.loot || null;
     c.natural = (M.natural || []).slice();
     c.noUnarmed = !M.keepUnarmed;

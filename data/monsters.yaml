@@ -10,6 +10,7 @@ wolf:
   faction: wilds
   xp: 18
   glyph: "🐺"
+  sprite: {kind: orc, scale: 0.7, tint: "#8a8a8a"}
   loot: beast_leavings
   attrs: {STR: 5, CON: 5, DEX: 7, SPD: 8, INT: 2, WIS: 6, CHA: 2}
   natural: [wolfBite]
@@ -22,6 +23,7 @@ alphaWolf:
   faction: wilds
   xp: 30
   glyph: "🐺"
+  sprite: {kind: orc, scale: 0.85, tint: "#6a6a6a"}
   loot: beast_leavings
   attrs: {STR: 6, CON: 6, DEX: 7, SPD: 8, INT: 3, WIS: 6, CHA: 3}
   natural: [alphaBite]
@@ -34,6 +36,7 @@ rat:
   faction: wilds
   xp: 5
   glyph: "🐀"
+  sprite: {kind: orc, scale: 0.55, tint: "#8a6a4a"}
   attrs: {STR: 3, CON: 3, DEX: 7, SPD: 7, INT: 1, WIS: 4, CHA: 1}
   natural: [ratBite]
   traits: {pack: 1, staminaMult: 0.35}
@@ -52,6 +55,7 @@ rustBeetle:
   faction: wilds
   xp: 40
   glyph: "🪲"
+  sprite: {kind: orc, scale: 0.8, tint: "#b0603a"}
   attrs: {STR: 10, CON: 12, DEX: 5, SPD: 6, INT: 1, WIS: 5, CHA: 1}
   natural: [antennae, mandibles]
   armor: chitin
@@ -63,6 +67,7 @@ mirageCat:
   faction: wilds
   xp: 70
   glyph: "🐈"
+  sprite: {kind: orc_rogue, scale: 0.8, tint: "#7a6aa0"}
   attrs: {STR: 12, CON: 11, DEX: 7, SPD: 8, INT: 3, WIS: 6, CHA: 3}
   natural: [tentacles]
   armor: fur
@@ -74,6 +79,7 @@ giantSpider:
   faction: wilds
   xp: 55
   glyph: "🕷"
+  sprite: {kind: orc, scale: 0.8, tint: "#4a3a4a"}
   attrs: {STR: 8, CON: 6, DEX: 8, SPD: 7, INT: 1, WIS: 5, CHA: 1}
   natural: [spiderBite, webSpinner]
   armor: chitin
@@ -86,6 +92,7 @@ beakbear:
   faction: wilds
   xp: 90
   glyph: "🐻"
+  sprite: {kind: orc_warrior, scale: 1.2, tint: "#9a7a4a"}
   attrs: {STR: 18, CON: 16, DEX: 5, SPD: 5, INT: 2, WIS: 5, CHA: 2}
   natural: [claws, beak]
   armor: fur
@@ -98,6 +105,7 @@ caveTroll:
   faction: wilds
   xp: 110
   glyph: "👹"
+  sprite: {kind: orc_warrior, scale: 1.4, tint: "#7aa08a"}
   loot: troll_hoard
   attrs: {STR: 20, CON: 18, DEX: 4, SPD: 4, INT: 2, WIS: 4, CHA: 2}
   natural: [trollFists, claws]
@@ -110,6 +118,7 @@ trollChieftain:
   faction: wilds
   xp: 300
   glyph: "👹"
+  sprite: {kind: orc_warrior, scale: 1.55, tint: "#9a8a6a"}
   loot: troll_hoard
   attrs: {STR: 24, CON: 24, DEX: 4, SPD: 4, INT: 3, WIS: 4, CHA: 3}
   natural: [trollFists, claws]
@@ -122,6 +131,7 @@ ogre:
   faction: wilds
   xp: 140
   glyph: "👹"
+  sprite: {kind: orc_warrior, scale: 1.4, tint: "#b0a080"}
   loot: troll_hoard
   level: 8
   attrs: {STR: 23, CON: 21, DEX: 4, SPD: 5, INT: 3, WIL: 5, WIS: 4, CHA: 3}
@@ -138,6 +148,7 @@ hillGiant:
   faction: wilds
   xp: 260
   glyph: "🗿"
+  sprite: {kind: orc_warrior, scale: 1.7, tint: "#a0b0c0"}
   loot: troll_hoard
   level: 12
   attrs: {STR: 28, CON: 26, DEX: 4, SPD: 5, INT: 4, WIL: 6, WIS: 5, CHA: 4}
@@ -158,6 +169,7 @@ skeleton:
   faction: grave_cult
   xp: 22
   glyph: "💀"
+  sprite: skeleton
   attrs: {STR: 5, CON: 10, DEX: 5, SPD: 5, INT: 1, WIS: 1, CHA: 1}
   natural: []
   weapons: [longsword]
@@ -176,6 +188,7 @@ zombie:
   faction: grave_cult
   xp: 25
   glyph: "🧟"
+  sprite: {kind: skeleton, tint: "#7aa070"}
   attrs: {STR: 9, CON: 12, DEX: 3, SPD: 3, INT: 1, WIS: 1, CHA: 1}
   natural: [claws, zombieBite]
   traits: {tireless: true, undead: true, resist: {P: 0.5}}
@@ -188,6 +201,7 @@ stoneGolem:
   faction: grave_cult
   xp: 120
   glyph: "🗿"
+  sprite: {kind: skeleton_warrior, scale: 1.5, tint: "#8a8a8a"}
   attrs: {STR: 22, CON: 22, DEX: 3, SPD: 3, INT: 1, WIS: 1, CHA: 1}
   natural: [golemFists]
   armor: golemStone
@@ -199,6 +213,7 @@ drake:
   faction: wilds
   xp: 200
   glyph: "🐉"
+  sprite: {kind: orc_shaman, scale: 1.3, tint: "#9a4a3a"}
   level: 8
   attrs: {STR: 14, CON: 16, DEX: 8, SPD: 8, INT: 6, WIL: 8, WIS: 6, CHA: 6}
   natural: [drakeBite, drakeClaws, wingBuffet]
@@ -212,6 +227,7 @@ wyvern:
   faction: wilds
   xp: 230
   glyph: "🐉"
+  sprite: {kind: orc_shaman, scale: 1.4, tint: "#4a7a5a"}
   level: 10
   attrs: {STR: 17, CON: 16, DEX: 6, SPD: 7, INT: 3, WIL: 7, WIS: 5, CHA: 3}
   natural: [wyvernBite, wyvernSting, wyvernWings]
@@ -224,6 +240,7 @@ constrictor:
   faction: wilds
   xp: 75
   glyph: "🐍"
+  sprite: {kind: orc, scale: 0.8, tint: "#6a9a5a"}
   attrs: {STR: 18, CON: 12, DEX: 7, SPD: 5, INT: 2, WIL: 6, WIS: 5, CHA: 2}
   natural: [constrictorBite]
   armor: scaleHide
@@ -236,6 +253,7 @@ kobold:
   faction: wilds
   xp: 10
   glyph: "🦎"
+  sprite: {kind: orc_rogue, scale: 0.75, tint: "#c08a5a"}
   loot: humanoid_purse
   attrs: {STR: 3, CON: 4, DEX: 6, SPD: 7, INT: 4, WIS: 4, CHA: 3}
   natural: []
@@ -255,6 +273,7 @@ goblin:
   faction: wilds
   xp: 14
   glyph: "👺"
+  sprite: {kind: orc, scale: 0.85}
   loot: humanoid_purse
   attrs: {STR: 4, CON: 4, DEX: 7, SPD: 7, INT: 4, WIS: 3, CHA: 3}
   natural: []
@@ -271,6 +290,7 @@ goblinArcher:
   faction: wilds
   xp: 16
   glyph: "👺"
+  sprite: {kind: orc_rogue, scale: 0.85}
   loot: humanoid_purse
   attrs: {STR: 4, CON: 4, DEX: 7, SPD: 7, INT: 4, WIS: 3, CHA: 3}
   natural: []
@@ -292,6 +312,7 @@ bogfolk:
   faction: wilds
   xp: 20
   glyph: "🐸"
+  sprite: {kind: orc, tint: "#7a9aa0"}
   loot: humanoid_purse
   attrs: {STR: 5, CON: 5, DEX: 6, SPD: 6, INT: 4, WIS: 5, CHA: 4}
   natural: []
@@ -308,6 +329,7 @@ scaleward:
   faction: wilds
   xp: 55
   glyph: "🦎"
+  sprite: {kind: orc_warrior, tint: "#6a9a8a"}
   loot: humanoid_purse
   attrs: {STR: 12, CON: 11, DEX: 5, SPD: 5, INT: 4, WIS: 4, CHA: 3}
   natural: [tail]
@@ -323,6 +345,7 @@ revenantKnight:
   faction: grave_cult
   xp: 400
   glyph: "⚔"
+  sprite: {kind: skeleton_warrior, scale: 1.25, tint: "#4a4a5a"}
   loot: barrow_hoard
   level: 20
   attrs: {STR: 10, CON: 10, DEX: 8, SPD: 7, INT: 10, WIL: 10, WIS: 7, CHA: 8}
@@ -376,6 +399,7 @@ spectre:
   faction: grave_cult
   xp: 320
   glyph: "👻"
+  sprite: {kind: skeleton_mage, tint: "#8ab4d9"}
   level: 15
   attrs: {STR: 10, CON: 14, DEX: 9, SPD: 9, INT: 9, WIL: 12, WIS: 8, CHA: 10}
   natural: []

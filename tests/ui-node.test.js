@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const fake = require('./fakedom.js');
 fake.install();
 const B = require('./load.js');
-for (const f of ['ui/dom', 'ui/dice', 'ui/views/roster', 'ui/views/battle', 'ui/game/art', 'ui/game/firstperson', 'ui/game/bits', 'ui/game/game', 'ui/game/overlays',
+for (const f of ['ui/dom', 'ui/dice', 'ui/views/roster', 'ui/views/battle', 'ui/game/art', 'ui/game/icons', 'ui/game/sprites', 'ui/game/tilemap', 'ui/game/mapview', 'ui/game/bits', 'ui/game/game', 'ui/game/overlays', 'ui/game/charsheet',
   'ui/game/screens/title', 'ui/game/screens/create', 'ui/game/screens/town', 'ui/game/screens/explore', 'ui/game/screens/parley', 'ui/game/screens/battle']) require('../src/' + f + '.js');
 const { UI, World, Explore, Rand, Content } = B;
 const Game = UI.Game;
@@ -120,7 +120,7 @@ test('ui: exploring: every square of every map renders from every direction', ()
     for (let y = 0; y < g.h; y++) for (let x = 0; x < g.w; x++) {
       if (g.rows[y][x] === '#' || g.rows[y][x] === ' ') continue;
       if (Explore.cell(w, x, y).solid) continue;
-      for (let d = 0; d < 4; d++) { w.explore.x = x; w.explore.y = y; w.explore.dir = d; Game.ui.prompt = null; if (++n % 3 === 0) Game.render(); else { UI.FirstPerson.render(app().querySelector('canvas') || fake.doc.createElement('canvas'), w); } }
+      for (let d = 0; d < 4; d++) { w.explore.x = x; w.explore.y = y; w.explore.dir = d; Game.ui.prompt = null; if (++n % 3 === 0) Game.render(); else if (Game.ui.mv) Game.ui.mv.draw(n * 50); }
     }
     check('walked ' + id);
     Game.world.explore.x = 1; Game.world.explore.y = 1;
@@ -222,4 +222,30 @@ test('ui: the GM table renders every tab', () => {
   const enc = B.Combat.createEncounter('t', Object.keys(gm.state.characters).slice(0, 2), gm.state.characters, 8, 6);
   gm.state.encounter = enc; gm.state.tab = 'battle'; gm.render();
   assert.ok(!/Something broke/.test(fake.doc.getElementById('app').textContent));
+});
+
+test('tilemap: 47-case auto-tiling, and walls stack cap / face / base from the front square up', () => {
+  const TM = UI.Tilemap;
+  const seen = new Set();
+  for (let m = 0; m < 256; m++) seen.add(TM.canon(m));
+  assert.equal(seen.size, 47, 'a corner counts only when both its sides are open');
+  // A corner alone survives; with a side set it is absorbed.
+  assert.equal(TM.canon(TM.bits.NE), TM.bits.NE);
+  assert.equal(TM.canon(TM.bits.NE | TM.bits.N), TM.bits.N);
+  // A room under a thick wall: the column above the floor is cap, face, base from the top down, never a cap at the bottom.
+  const rows = ['#####', '#####', '#####', '#####', '#...#', '#####'];
+  const sc = { w: 5, h: 6, cell: (x, y) => (x < 0 || y < 0 || x >= 5 || y >= 6 ? { kind: 'rock' } : rows[y][x] === '#' ? { kind: 'wall' } : { kind: 'floor', ch: '.' }), seen: null };
+  const p = TM.plan(sc, 0, 0, 4, 5);
+  const col = (x) => [...p.low, ...p.high].filter((c) => c.t === 'wall' && c.x === x).sort((a, b) => a.y - b.y).map((c) => c.piece);
+  assert.deepEqual(col(2), ['cap', 'faceTop', 'face', 'base']);
+  assert.equal(col(2)[col(2).length - 1], 'base');
+  assert.equal(col(2)[0], 'cap');
+  // The wall's run ends where a doorway opens, so the doorway gets jambs: ends bits 1 (left) and 2 (right).
+  const withDoor = ['#####', '#####', '##+##', '#...#', '#####'];
+  const sd = { w: 5, h: 5, cell: (x, y) => (x < 0 || y < 0 || x >= 5 || y >= 5 ? { kind: 'rock' } : withDoor[y][x] === '#' ? { kind: 'wall' } : withDoor[y][x] === '+' ? { kind: 'door', ch: '+' } : { kind: 'floor', ch: '.' }), seen: null };
+  const pd = TM.plan(sd, 0, 0, 4, 4);
+  const near = (x) => pd.low.filter((c) => c.t === 'wall' && c.x === x && c.piece === 'base');
+  assert.equal(near(1)[0].ends & 2, 2, 'right jamb on the wall left of the door');
+  assert.equal(near(3)[0].ends & 1, 1, 'left jamb on the wall right of the door');
+  assert.ok(pd.decor.some((c) => c.t === 'door' && c.x === 2 && c.horizontal));
 });

@@ -42,7 +42,7 @@
           h('button', { onclick: () => Game.go(Game.world ? (Game.world.explore ? 'explore' : 'town') : 'title') }, 'Back'),
           Game.world ? h('button', { onclick: () => { Game.save(); toast('Saved'); } }, 'Save anyway') : null))));
     }
-    if (Game.screen !== 'explore') window.scrollTo(0, scroll);
+    if (Game.screen !== 'explore' && Game.screen !== 'battle') window.scrollTo(0, scroll);
   }
 
   function renderOverlay() {
@@ -60,6 +60,8 @@
   UI.Overlays = UI.Overlays || {};
 
   function go(screen) {
+    if (Game.ui && Game.ui.mv) Game.ui.mv.destroy();
+    if (Game.ui && Game.ui.walk) clearTimeout(Game.ui.walk.timer);
     Game.screen = screen;
     Game.overlay = null;
     Game.ui = {};
@@ -74,7 +76,7 @@
   function closeOverlay() {
     Game.overlay = null;
     renderOverlay();
-    if (Game.screen === 'explore') render();
+    if (Game.screen === 'explore' || Game.screen === 'battle') render();
   }
 
   // ---- Saving ---------------------------------------------------------------------------------

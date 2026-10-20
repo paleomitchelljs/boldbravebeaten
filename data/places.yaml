@@ -121,16 +121,16 @@ undercroft_1:
   look: {wall: "#6e5f4d", floor: "#3a3228", ceiling: "#241e18", fog: "#0e0b09", torch: 0.9}
   map:
     - "#########################"
-    - "#<...#.......#........###"
+    - "#<...#.......#u......x###"
     - "#....+...r...#........###"
     - "#....#.......+...T....sc#"
-    - "#....#.......#........###"
+    - "#....#.......#t......x###"
     - "##.###.......############"
     - "##.######.###############"
     - "##+######............C###"
-    - "#........#.#######.######"
-    - "#...g....#.#######.######"
-    - "#........+.#######.######"
+    - "#xx......#.#######.######"
+    - "#b..g....#.#######.######"
+    - "#b.......+.#######.######"
     - "#.k......#M#######.######"
     - "#........#N#######L######"
     - "###############..!..>.###"
@@ -148,6 +148,10 @@ undercroft_1:
     L: {kind: locked, label: "Iron-banded door", tn: 8, forceTn: 11, key: cellar_key}
     M: {kind: locked, label: "Cell door", tn: 6, forceTn: 8, key: cellar_key}
     N: {kind: npc, npc: prisoner_tamsin}
+    x: {kind: prop, sprite: crate, scale: 0.7}
+    u: {kind: prop, sprite: urn, scale: 0.6}
+    t: {kind: prop, sprite: candelabra, scale: 0.7}
+    b: {kind: prop, sprite: bed, scale: 0.5}
     "!": {kind: note, text: "Scratched into the lintel: 'TOLL PAID IN FULL OR IN BLOOD. - R.'"}
   encounters:
     rat_nest: {foes: [{monster: ratPack}], flags: [cleared_rat_nest], loot: vermin_nest, text: "A sprawl of straw and bones. The rats are bigger than they ought to be."}
