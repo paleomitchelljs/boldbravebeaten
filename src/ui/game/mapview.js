@@ -86,7 +86,9 @@
     ctx.save();
     if (opts.alpha != null) ctx.globalAlpha = opts.alpha;
     if (opts.flipY) { ctx.translate(0, y); ctx.scale(1, -1); ctx.translate(0, -y); }
-    blit(ctx, p[0], p[1], p[2], p[3], p[4], Math.round(x - p[3] * S * k / 2), Math.round(y - p[4] * S * k), p[3] * S * k, p[4] * S * k);
+    // squash narrows a prop (a door seen edge-on or swung open); anchor 'left' pins its left edge at x instead of its middle.
+    const w = p[3] * S * k * (opts.squash || 1);
+    blit(ctx, p[0], p[1], p[2], p[3], p[4], Math.round(opts.anchor === 'left' ? x : x - w / 2), Math.round(y - p[4] * S * k), w, p[4] * S * k);
     ctx.restore();
   }
 
@@ -160,7 +162,8 @@
       if (sc.origin) { tx = sc.origin.x; ty = sc.origin.y; }
       else {
         tx = Math.max(0, Math.min(Math.max(0, sc.w - W), sc.cam.x + 0.5 - W / 2));
-        ty = Math.max(0, Math.min(Math.max(0, sc.h - H), sc.cam.y + 0.5 - H / 2));
+        // One row above the map is allowed: the caps of a top wall stand there.
+        ty = Math.max(-1, Math.min(Math.max(0, sc.h - H), sc.cam.y + 0.5 - H / 2));
         if (sc.w < W) tx = (sc.w - W) / 2;
         if (sc.h < H) ty = (sc.h - H) / 2;
       }

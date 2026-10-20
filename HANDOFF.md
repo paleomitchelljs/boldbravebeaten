@@ -7,8 +7,10 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 ## Look and feel (needs a human eye)
 - [ ] Play it on a phone-width screen: stage, dock, toolbar, command bar and sheet have only been checked on desktop.
 - [ ] Restyle the town, parley, title and pack/journal/standing screens to match the pixel theme (they only inherit colours).
-- [ ] Doors in vertical walls are drawn front-on like horizontal ones; give them a side-on look.
-- [ ] Wall face has no corner pieces for outside corners yet (run ends use a pilaster instead).
+- [ ] Walls one square thick with floor on both sides draw their cap over the floor row to their north (the true 3/4
+  projection): that row's floor is hidden under the cap, though figures and items there still show. If it reads badly,
+  thicken those walls in the maps rather than special-casing the renderer.
+- [ ] Cap tops are a flat procedural slate with a cyan edge; a hand-drawn cap tile set would look better.
 - [ ] Beasts (rat, wolf, spider, snake, cat) borrow tinted orc sprites; find or draw real ones.
 - [ ] Animate attacks, hits and deaths in a fight (right now: walking, idling, a rotated body when down).
 - [ ] Click-to-walk and the explore prompts need a pass on touch screens.
@@ -28,5 +30,8 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 
 ## Done recently
 - Top-down map shared by exploring and fighting; fights are played on a 15x10 slice of the dungeon.
-- Five-layer tile renderer (`src/ui/game/tilemap.js`): ground, wall base/face, wall top/caps, decor and doors, entities.
+- Five-layer tile renderer (`src/ui/game/tilemap.js`): ground, wall faces, wall caps, decor and doors, entities.
+- Walls are a cap row over a one-tile brick face: light only on cap tops facing open floor, dark side shadows,
+  caps auto-tiled to merge at corners and T-junctions, finished face ends at gaps, an ambient-occlusion baseboard
+  under every face, floor unbroken through doorways, doors in vertical walls drawn edge-on.
 - Compact battle screen, character sheet pop-up and character creation with dropdowns and (i) tooltips.

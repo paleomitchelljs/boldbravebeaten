@@ -224,28 +224,51 @@ test('ui: the GM table renders every tab', () => {
   assert.ok(!/Something broke/.test(fake.doc.getElementById('app').textContent));
 });
 
-test('tilemap: 47-case auto-tiling, and walls stack cap / face / base from the front square up', () => {
+test('tilemap: 47-case floor shading; walls are a cap row over a face row, lit only on top; floor runs through doorways', () => {
   const TM = UI.Tilemap;
+  const B = TM.bits;
   const seen = new Set();
   for (let m = 0; m < 256; m++) seen.add(TM.canon(m));
   assert.equal(seen.size, 47, 'a corner counts only when both its sides are open');
-  // A corner alone survives; with a side set it is absorbed.
-  assert.equal(TM.canon(TM.bits.NE), TM.bits.NE);
-  assert.equal(TM.canon(TM.bits.NE | TM.bits.N), TM.bits.N);
-  // A room under a thick wall: the column above the floor is cap, face, base from the top down, never a cap at the bottom.
-  const rows = ['#####', '#####', '#####', '#####', '#...#', '#####'];
-  const sc = { w: 5, h: 6, cell: (x, y) => (x < 0 || y < 0 || x >= 5 || y >= 6 ? { kind: 'rock' } : rows[y][x] === '#' ? { kind: 'wall' } : { kind: 'floor', ch: '.' }), seen: null };
-  const p = TM.plan(sc, 0, 0, 4, 5);
-  const col = (x) => [...p.low, ...p.high].filter((c) => c.t === 'wall' && c.x === x).sort((a, b) => a.y - b.y).map((c) => c.piece);
-  assert.deepEqual(col(2), ['cap', 'faceTop', 'face', 'base']);
-  assert.equal(col(2)[col(2).length - 1], 'base');
-  assert.equal(col(2)[0], 'cap');
-  // The wall's run ends where a doorway opens, so the doorway gets jambs: ends bits 1 (left) and 2 (right).
-  const withDoor = ['#####', '#####', '##+##', '#...#', '#####'];
-  const sd = { w: 5, h: 5, cell: (x, y) => (x < 0 || y < 0 || x >= 5 || y >= 5 ? { kind: 'rock' } : withDoor[y][x] === '#' ? { kind: 'wall' } : withDoor[y][x] === '+' ? { kind: 'door', ch: '+' } : { kind: 'floor', ch: '.' }), seen: null };
-  const pd = TM.plan(sd, 0, 0, 4, 4);
-  const near = (x) => pd.low.filter((c) => c.t === 'wall' && c.x === x && c.piece === 'base');
-  assert.equal(near(1)[0].ends & 2, 2, 'right jamb on the wall left of the door');
-  assert.equal(near(3)[0].ends & 1, 1, 'left jamb on the wall right of the door');
-  assert.ok(pd.decor.some((c) => c.t === 'door' && c.x === 2 && c.horizontal));
+  assert.equal(TM.canon(B.NE), B.NE);
+  assert.equal(TM.canon(B.NE | B.N), B.N);
+  const grid = (rows) => ({ w: rows[0].length, h: rows.length, seen: null,
+    cell: (x, y) => { const ch = rows[y][x]; return ch === '#' ? { kind: 'wall', ch } : ch === '+' ? { kind: 'door', ch } : { kind: 'floor', ch }; } });
+  const at = (list, t, x, y) => list.find((c) => c.t === t && c.x === x && c.y === y);
+
+  // A thick wall over a room: face on the wall square touching the floor, cap on the square above it.
+  let p = TM.plan(grid(['#####', '#####', '#####', '#...#', '#...#', '#####']), 0, 0, 4, 5);
+  assert.ok(at(p.low, 'face', 2, 2), 'face where the wall meets the floor');
+  assert.ok(at(p.high, 'cap', 2, 1), 'cap directly above the face');
+  assert.ok(!p.low.concat(p.high).some((c) => c.x >= 1 && c.x <= 3 && (c.y === 3 || c.y === 4)), 'no wall drawn over the room\'s floor');
+  // A horizontal run: caps merge east and west, faces have no inner ends.
+  assert.equal(at(p.high, 'cap', 2, 1).mask & (B.E | B.W), B.E | B.W);
+  assert.equal(at(p.low, 'face', 2, 2).ends, 0);
+  // The south wall of the room is seen from above: a cap lit along its top edge only.
+  const south = at(p.high, 'cap', 2, 5);
+  assert.equal(south.edge, 'light');
+  for (const c of p.high) if (c.edge === 'light') assert.ok(!(c.mask & B.N), 'light only where the north is open');
+  // Faces never carry a light edge, and floor under a face gets the ambient-occlusion baseboard.
+  assert.ok(p.low.every((c) => c.edge == null));
+  assert.ok(at(p.ground, 'floor', 2, 3).mask & B.N);
+
+  // A thin wall with a doorway between two rooms: the floor runs through, the face and cap runs stop with ends.
+  p = TM.plan(grid(['#####', '#...#', '##+##', '#...#', '#####']), 0, 0, 4, 4);
+  assert.ok(at(p.ground, 'floor', 2, 2), 'floor under the door');
+  assert.equal(at(p.ground, 'floor', 2, 2).mask & (B.E | B.W), 0, 'no wall shading inside the doorway');
+  assert.ok(!at(p.low, 'face', 2, 2) && !at(p.high, 'cap', 2, 2), 'no wall in the doorway');
+  assert.equal(at(p.low, 'face', 1, 2).ends & 2, 2, 'finished end on the wall west of the door');
+  assert.equal(at(p.low, 'face', 3, 2).ends & 1, 1, 'finished end on the wall east of the door');
+  assert.ok(at(p.high, 'cap', 1, 1) && at(p.high, 'cap', 3, 1), 'the thin wall\'s caps stand on the row above');
+  assert.ok(!at(p.high, 'cap', 2, 1), 'and leave a gap over the doorway');
+  assert.equal(at(p.high, 'cap', 1, 1).mask & B.E, 0, 'the cap ends at the doorway (side shadow, not a light)');
+  assert.ok(p.decor.some((c) => c.t === 'door' && c.x === 2 && c.horizontal));
+
+  // A vertical wall: its caps run north-south and merge; its sides are shadow, not light.
+  p = TM.plan(grid(['#####', '#.#.#', '#.#.#', '#.#.#', '#...#', '#####']), 0, 0, 4, 5);
+  const col = p.high.filter((c) => c.x === 2 && c.y >= 1 && c.y <= 2);
+  assert.equal(col.length, 2);
+  for (const c of col) { assert.equal(c.mask & (B.E | B.W), 0, 'open sides'); assert.equal(c.edge, null, 'no light on a cap with cap to the north'); }
+  assert.ok(at(p.low, 'face', 2, 3), 'the wall\'s foot shows a face');
+  assert.equal(at(p.low, 'face', 2, 3).ends, 3, 'finished on both sides');
 });

@@ -1,18 +1,21 @@
 /*
  * Tilemap: turns the dungeon grid into drawing commands for five layers, back to front:
- *   1 ground        floor tiles and the shading where floor meets wall or void (47-case bitmask auto-tiling)
- *   2 walls, low    wall base and lower face, one tile each
- *   3 walls, high   upper face and the cap with its cyan edge
- *   4 decor, doors  doorways and doors, banners, floor markings, sleep markers
+ *   1 ground        floor tiles, with an ambient-occlusion baseboard under every wall face (47-case bitmask)
+ *   2 wall faces    the brick surface facing the camera, one tile tall
+ *   3 wall caps     the top surface of the walls, auto-tiled from its neighbours
+ *   4 decor, doors  doors, banners, floor markings, sleep markers
  *   5 entities      figures and furniture, sorted by their feet (drawn by MapView)
  *
- * A wall seen from the south is a stack going up from its front square (a wall square with open floor to its south):
- *   one tile   thin: upper face, with a base trim
- *   two        upper face / base
- *   three      cap / face / base
- *   four+      cap / upper face / face / base
- * with the stack ending in the wall's own end pieces where the run stops (a doorway's jambs are these ends).
- * The planner is pure (no canvas), so it can be tested in Node; paint() does the drawing.
+ * Wall anatomy, in the 3/4 view: a wall square with open floor to its south shows its FACE in its own square, and its
+ * CAP one row up. A thick wall's cap is simply the wall square above the face; a wall one square thick with floor on
+ * both sides has its cap drawn over the floor row to its north, as the real projection would (figures there are drawn on
+ * top of it). Every other wall square is cap.
+ *   Caps: a light edge along the top only where the square to the north is open; dark side shadows where the square to
+ *   the east or west is not cap; nothing along the bottom (a cap always sits on a cap or a face). Caps that touch merge,
+ *   so corners and T-junctions run on without inner borders.
+ *   Faces: plain brick, no highlight anywhere; where a run of face stops (a doorway, a gap, a wall turning south) the end
+ *   tile shows finished, shadowed side masonry.
+ *   Floor runs on through doorways untouched. The planner is pure (no canvas); paint() draws.
  */
 (function (G) {
   'use strict';
@@ -20,7 +23,6 @@
   const T = 16;
 
   // ---- Bitmask auto-tiling ------------------------------------------------------------------------------------
-  // Bits for the eight neighbours of a square, set when that neighbour is wall or void.
   const N = 1, NE = 2, E = 4, SE = 8, S = 16, SW = 32, W = 64, NW = 128;
 
   // A corner only matters when neither of its two sides is set: that reduces 256 masks to the 47 distinct tiles.
@@ -36,73 +38,74 @@
   const solid = (c) => !c || c.kind === 'wall' || c.kind === 'rock';
   const doorLike = (c) => !!c && (c.kind === 'door' || c.kind === 'locked' || (c.kind === 'floor' && (c.ch === '+' || (c.def && (c.def.kind === 'secret' || c.def.kind === 'locked')))));
 
-  function maskAt(cell, x, y) {
+  const hash = (x, y, k) => { let n = (x * 374761393 + y * 668265263 + (k || 0) * 2147483647) | 0; n = (n ^ (n >>> 13)) * 1274126177; return ((n ^ (n >>> 16)) >>> 0); };
+
+  // The wall geometry of a grid: which squares show face, which show cap.
+  function geometry(sc) {
+    const cache = {};
+    const inGrid = (x, y) => x >= 0 && y >= 0 && x < sc.w && y < sc.h;
+    const cell = (x, y) => { const k = x + ',' + y; return k in cache ? cache[k] : (cache[k] = inGrid(x, y) ? sc.cell(x, y) : null); };
+    const solidAt = (x, y) => !inGrid(x, y) || solid(cell(x, y));
+    const isFace = (x, y) => inGrid(x, y) && solidAt(x, y) && !solidAt(x, y + 1);
+    // The cap of a one-square-thick wall, drawn over the floor square to its north.
+    const raised = (x, y) => inGrid(x, y) && !solidAt(x, y) && !doorLike(cell(x, y)) && isFace(x, y + 1);
+    const isCap = (x, y) => (solidAt(x, y) && solidAt(x, y + 1)) || raised(x, y);
+    return { inGrid, cell, solidAt, isFace, raised, isCap };
+  }
+
+  // The 8-neighbour mask of a floor square for its shading: bits set where the neighbour is wall or void.
+  function maskAt(solidAt, x, y) {
     let m = 0;
-    if (solid(cell(x, y - 1))) m |= N;
-    if (solid(cell(x + 1, y - 1))) m |= NE;
-    if (solid(cell(x + 1, y))) m |= E;
-    if (solid(cell(x + 1, y + 1))) m |= SE;
-    if (solid(cell(x, y + 1))) m |= S;
-    if (solid(cell(x - 1, y + 1))) m |= SW;
-    if (solid(cell(x - 1, y))) m |= W;
-    if (solid(cell(x - 1, y - 1))) m |= NW;
+    if (solidAt(x, y - 1)) m |= N;
+    if (solidAt(x + 1, y - 1)) m |= NE;
+    if (solidAt(x + 1, y)) m |= E;
+    if (solidAt(x + 1, y + 1)) m |= SE;
+    if (solidAt(x, y + 1)) m |= S;
+    if (solidAt(x - 1, y + 1)) m |= SW;
+    if (solidAt(x - 1, y)) m |= W;
+    if (solidAt(x - 1, y - 1)) m |= NW;
     return m;
   }
 
-  const hash = (x, y, k) => { let n = (x * 374761393 + y * 668265263 + (k || 0) * 2147483647) | 0; n = (n ^ (n >>> 13)) * 1274126177; return ((n ^ (n >>> 16)) >>> 0); };
-
-  // Wall pieces, bottom to top, for a stack of n visible tiles.
-  const STACKS = { 1: ['thin'], 2: ['base', 'faceTop'], 3: ['base', 'face', 'cap'], 4: ['base', 'face', 'faceTop', 'cap'] };
-  const LAYER = { thin: 2, base: 2, face: 2, faceTop: 3, cap: 3 };
-
-  // The five layers' commands for the squares x0..x1, y0..y1 (inclusive). `cell(x, y)` reads the grid; `seen(x, y)` is
-  // null when everything is shown. Commands are { t, x, y, ... } in grid squares.
+  // The five layers' commands for the squares x0..x1, y0..y1 (inclusive), in grid squares.
   function plan(sc, x0, y0, x1, y1) {
-    const cache = {};
-    const cell = (x, y) => { const k = x + ',' + y; return cache[k] || (cache[k] = sc.cell(x, y)); };
-    const known = (x, y) => (sc.seen ? sc.seen(x, y) : true);
+    const g = geometry(sc);
+    const known = (x, y) => g.inGrid(x, y) && (sc.seen ? sc.seen(x, y) : true);
     const out = { ground: [], low: [], high: [], decor: [], shown: {} };
-    const front = (x, y) => solid(cell(x, y)) && cell(x, y).kind !== 'rock' && !solid(cell(x, y + 1)) && y + 1 < sc.h;
-    const inStack = {};
-
-    // Walls with open floor to the south: the stacks.
-    for (let y = y0; y <= Math.min(sc.h - 1, y1 + 3); y++) {
-      for (let x = x0; x <= x1; x++) {
-        if (x < 0 || x >= sc.w || y < 0 || !front(x, y) || !known(x, y)) continue;
-        let n = 1;
-        while (n < 6 && y - n >= 0 && solid(cell(x, y - n))) n++;
-        const vis = Math.min(n, 4);
-        const ends = (front(x - 1, y) ? 0 : 1) | (front(x + 1, y) ? 0 : 2);
-        const kinds = STACKS[vis];
-        for (let i = 0; i < kinds.length; i++) {
-          const py = y - i;
-          if (py < y0 - 1) continue;
-          (LAYER[kinds[i]] === 2 ? out.low : out.high).push({ t: 'wall', piece: kinds[i], ends, x, y: py });
-          inStack[x + ',' + py] = 1;
-          out.shown[x + ',' + py] = 1;
+    const cap = (x, y) => {
+      const m = (g.isCap(x, y - 1) ? N : 0) | (g.isCap(x + 1, y) ? E : 0) | (g.isCap(x - 1, y) ? W : 0);
+      // Only an open square to the north gets the light edge; a face there (two thin walls one row apart) gets a dark seam.
+      const edge = m & N ? null : g.isFace(x, y - 1) ? 'dark' : 'light';
+      out.high.push({ t: 'cap', x, y, mask: m, edge });
+      if (g.inGrid(x, y)) out.shown[x + ',' + y] = 1;
+    };
+    for (let y = y0 - 1; y <= y1 + 1; y++) {
+      for (let x = x0 - 1; x <= x1 + 1; x++) {
+        if (!g.solidAt(x, y)) {
+          const c = g.cell(x, y);
+          if (known(x, y)) {
+            out.shown[x + ',' + y] = 1;
+            const door = doorLike(c);
+            let m = canon(maskAt(g.solidAt, x, y)) & ~(S | SE | SW);
+            if (door) m &= N; // the floor runs straight through a doorway
+            out.ground.push({ t: 'floor', x, y, mask: m, v: hash(x, y) });
+            if (door) {
+              const horizontal = g.solidAt(x - 1, y) && g.solidAt(x + 1, y);
+              out.decor.push({ t: 'door', x, y, open: c.kind === 'floor', locked: c.kind === 'locked' || (c.def && c.def.kind === 'locked'), horizontal });
+            } else decal(out, c, x, y);
+          }
+          if (g.raised(x, y) && (known(x, y) || known(x, y + 1))) cap(x, y);
+        } else if (g.isFace(x, y)) {
+          if (!known(x, y)) continue;
+          const ends = (g.isFace(x - 1, y) ? 0 : 1) | (g.isFace(x + 1, y) ? 0 : 2);
+          out.low.push({ t: 'face', x, y, ends });
+          out.shown[x + ',' + y] = 1;
+          // A banner now and then on a plain stretch of wall.
+          if (!ends && hash(x, y, 5) % 7 === 0 && !doorLike(g.cell(x - 1, y)) && !doorLike(g.cell(x + 1, y))) out.decor.push({ t: 'banner', x, y, color: hash(x, y, 9) % 2 });
+        } else if (known(x, y) || (g.isFace(x, y + 1) && known(x, y + 1)) || (!g.inGrid(x, y) && g.isCap(x, y + 1) && known(x, y + 1))) {
+          // (a cap off the edge of the map continues the cap of the edge square below it)
+          cap(x, y);
         }
-        // A banner now and then on a long plain stretch of wall.
-        if (vis >= 3 && ends === 0 && hash(x, y, 5) % 7 === 0 && !doorLike(cell(x - 1, y + 1)) && !doorLike(cell(x + 1, y + 1))) out.decor.push({ t: 'banner', x, y, color: hash(x, y, 9) % 2 });
-      }
-    }
-
-    for (let y = y0; y <= y1; y++) {
-      for (let x = x0; x <= x1; x++) {
-        if (x < 0 || y < 0 || x >= sc.w || y >= sc.h || !known(x, y)) continue;
-        const c = cell(x, y);
-        if (solid(c)) {
-          if (inStack[x + ',' + y] || c.kind === 'rock') continue;
-          // The top of a wall seen from the room to its north, or the side of a wall seen along a corridor.
-          if (!solid(cell(x, y - 1))) { out.high.push({ t: 'roof', x, y }); out.shown[x + ',' + y] = 1; }
-          else if (!solid(cell(x - 1, y)) || !solid(cell(x + 1, y))) { out.low.push({ t: 'side', x, y, west: !solid(cell(x - 1, y)), east: !solid(cell(x + 1, y)) }); out.shown[x + ',' + y] = 1; }
-          continue;
-        }
-        out.shown[x + ',' + y] = 1;
-        out.ground.push({ t: 'floor', x, y, mask: canon(maskAt(cell, x, y)), v: hash(x, y) });
-        if (doorLike(c)) {
-          const horizontal = solid(cell(x - 1, y)) && solid(cell(x + 1, y));
-          out.decor.push({ t: 'door', x, y, open: c.kind === 'floor', locked: c.kind === 'locked' || (c.def && c.def.kind === 'locked'), horizontal });
-        } else decal(out, c, x, y);
       }
     }
     return out;
@@ -120,77 +123,86 @@
     }
   }
 
-  // ---- Atlas of wall pieces, built once from Dungeon_Tiles.png -----------------------------------------------------------
-  // Row 14 is the cap, 15 the upper face (cyan ledge), 16 the face, 17 the base. The sheet's tiles carry coloured banner
-  // trim down one or both edges; the plain interior piece repeats the middle of the tile (columns 4-11) to leave the trim out,
-  // and the run ends are that piece with a stone pilaster.
-  const ROWS = { cap: 14, faceTop: 15, face: 16, base: 17 };
-  let atlas = null;
-  const shadeCache = {};
+  // ---- Tiles, built once ---------------------------------------------------------------------------------------------------
+  const COL = {
+    cap: '#1d262d', capFleck: '#232e36', capPit: '#182027',
+    lightTop: '#b4cde0', lightMid: '#7193b0', underLight: '#2c3b48',
+    sideDark: '#080b0e', sideMid: '#10161b', seam: '#0a0e12',
+  };
+  const capCache = {}, shadeCache = {};
+  let faces = null;
 
-  function buildAtlas(tilesImg) {
+  const canvas16 = () => { const cv = document.createElement('canvas'); cv.width = T; cv.height = T; return cv; };
+
+  // A cap tile for a mask (N/E/W: is the neighbour cap) and its top edge ('light', 'dark' or none).
+  function capTile(mask, edge) {
+    const key = mask + edge;
+    if (capCache[key]) return capCache[key];
+    const cv = canvas16();
+    const x = cv.getContext('2d');
+    const px = (c, a, b, w, h) => { x.fillStyle = c; x.fillRect(a, b, w, h); };
+    px(COL.cap, 0, 0, T, T);
+    for (let yy = 0; yy < T; yy++) for (let xx = 0; xx < T; xx++) {
+      const hsh = hash(xx, yy, 3) % 23;
+      if (hsh === 0) px(COL.capFleck, xx, yy, 1, 1); else if (hsh === 1) px(COL.capPit, xx, yy, 1, 1);
+    }
+    const top = edge === 'light' ? 3 : edge === 'dark' ? 1 : 0;
+    // Dark side shadows where the cap stops to the west or east; they start below the top edge, never wrapping it.
+    if (!(mask & W)) { px(COL.sideDark, 0, top, 1, T - top); px(COL.sideMid, 1, top, 1, T - top); }
+    if (!(mask & E)) { px(COL.sideDark, 15, top, 1, T - top); px(COL.sideMid, 14, top, 1, T - top); }
+    if (edge === 'light') {
+      px(COL.lightTop, 0, 0, T, 1); px(COL.lightMid, 0, 1, T, 1); px(COL.underLight, 0, 2, T, 1);
+      // Round the outer corners of the edge where the cap also stops at the side.
+      if (!(mask & W)) { px(COL.lightMid, 0, 0, 1, 1); px(COL.sideMid, 0, 1, 1, 2); }
+      if (!(mask & E)) { px(COL.lightMid, 15, 0, 1, 1); px(COL.sideMid, 15, 1, 1, 2); }
+    } else if (edge === 'dark') px(COL.seam, 0, 0, T, 1);
+    return (capCache[key] = cv);
+  }
+
+  // Face tiles from Dungeon_Tiles.png row 16 (plain brick, its light bottom row darkened). The sheet's tiles carry coloured trim down their edges, so the
+  // plain piece repeats the tile's middle columns 4-11; the end pieces add shadowed side masonry, with no light at all.
+  function buildFaces(tilesImg) {
     const cv = document.createElement('canvas');
-    cv.width = 4 * T; cv.height = 6 * T;
+    cv.width = 4 * T; cv.height = T;
     const x = cv.getContext('2d');
     x.imageSmoothingEnabled = false;
-    const slot = (row) => ({ cap: 0, faceTop: 1, face: 2, base: 3, thin: 4, side: 5 }[row]);
-    for (const name of ['cap', 'faceTop', 'face', 'base']) {
-      const r = ROWS[name], y = slot(name) * T;
-      // The interior piece repeats the sheet tile's plain middle (columns 4-11) twice, so it joins itself with no trim at the seams.
-      x.drawImage(tilesImg, 1 * T + 4, r * T, 8, T, 0, y, 8, T);
-      x.drawImage(tilesImg, 1 * T + 4, r * T, 8, T, 8, y, 8, T);
-      for (let v = 1; v < 4; v++) x.drawImage(cv, 0, y, T, T, v * T, y, T, T);
-      for (let v = 1; v < 4; v++) pilaster(x, v, y, v & 1, v & 2);
-    }
-    // thin: upper face with the base's foot
-    for (let v = 0; v < 4; v++) {
-      const y = slot('thin') * T;
-      x.drawImage(cv, v * T, slot('faceTop') * T, T, T, v * T, y, T, T);
-      x.drawImage(cv, v * T, slot('base') * T + 11, T, 5, v * T, y + 11, T, 5);
-    }
-    // side: the face in shadow
-    for (let v = 0; v < 4; v++) {
-      const y = slot('side') * T;
-      x.drawImage(cv, 0, slot('face') * T, T, T, v * T, y, T, T);
-      x.fillStyle = 'rgba(4,8,12,0.45)'; x.fillRect(v * T, y, T, T);
+    x.drawImage(tilesImg, T + 4, 16 * T, 8, T, 0, 0, 8, T);
+    x.drawImage(tilesImg, T + 4, 16 * T, 8, T, 8, 0, 8, T);
+    // The sheet's bottom row is the light lip of its base trim; where our face meets the floor it must be dark, so lay the
+    // tile's own dark mortar course (row 11) over it.
+    x.drawImage(cv, 0, 11, T, 1, 0, 15, T, 1);
+    for (let v = 1; v < 4; v++) {
+      x.drawImage(cv, 0, 0, T, T, v * T, 0, T, T);
+      const side = (left) => {
+        const a = left ? v * T : v * T + T;
+        const at = (i) => (left ? a + i : a - 1 - i);
+        x.fillStyle = COL.sideDark; x.fillRect(at(0), 0, 1, T);
+        x.fillStyle = 'rgba(4,7,10,0.6)'; x.fillRect(Math.min(at(1), at(2)), 0, 2, T);
+        x.fillStyle = 'rgba(4,7,10,0.3)'; x.fillRect(at(3), 0, 1, T);
+      };
+      if (v & 1) side(true);
+      if (v & 2) side(false);
     }
     return cv;
   }
 
-  function pilaster(x, v, y, left, right) {
-    const vx = v * T;
-    x.fillStyle = '#0a0e11';
-    if (left) x.fillRect(vx, y, 1, T);
-    if (right) x.fillRect(vx + 15, y, 1, T);
-    x.fillStyle = '#5d6f86';
-    if (left) x.fillRect(vx + 1, y, 2, T);
-    if (right) x.fillRect(vx + 13, y, 2, T);
-    x.fillStyle = '#8aa0b8';
-    if (left) x.fillRect(vx + 1, y, 1, T);
-    if (right) x.fillRect(vx + 14, y, 1, T);
-  }
-
-  // The shading laid over a floor square for one of the 47 neighbour patterns.
+  // The shading laid over a floor square: an ambient-occlusion baseboard under a wall face (N), soft side shadow along a
+  // wall (E, W), and a little spill at the corners. Nothing for walls to the south: the floor meets their lit cap edge.
   function shade(mask) {
     if (shadeCache[mask]) return shadeCache[mask];
-    const cv = document.createElement('canvas');
-    cv.width = T; cv.height = T;
+    const cv = canvas16();
     const x = cv.getContext('2d');
-    const dark = (a, px, py, w, h) => { x.fillStyle = `rgba(4,8,13,${a})`; x.fillRect(px, py, w, h); };
-    if (mask & N) { dark(0.6, 0, 0, T, 2); dark(0.34, 0, 2, T, 2); dark(0.14, 0, 4, T, 2); }
-    if (mask & W) { dark(0.5, 0, 0, 2, T); dark(0.26, 2, 0, 2, T); dark(0.1, 4, 0, 2, T); }
-    if (mask & E) { dark(0.5, 14, 0, 2, T); dark(0.26, 12, 0, 2, T); dark(0.1, 10, 0, 2, T); }
-    if (mask & S) { dark(0.4, 0, 14, T, 2); dark(0.18, 0, 12, T, 2); }
-    // Inner corners: only where the two sides are open.
-    if (mask & NW) { dark(0.55, 0, 0, 3, 3); dark(0.25, 3, 0, 2, 2); dark(0.25, 0, 3, 2, 2); }
-    if (mask & NE) { dark(0.55, 13, 0, 3, 3); dark(0.25, 11, 0, 2, 2); dark(0.25, 14, 3, 2, 2); }
-    if (mask & SW) { dark(0.45, 0, 13, 3, 3); }
-    if (mask & SE) { dark(0.45, 13, 13, 3, 3); }
+    const dark = (a, px, py, w, h) => { x.fillStyle = `rgba(3,6,10,${a.toFixed(3)})`; x.fillRect(px, py, w, h); };
+    if (mask & N) { dark(0.78, 0, 0, T, 1); dark(0.62, 0, 1, T, 1); for (let y = 2; y < 14; y++) dark(0.55 * Math.pow(1 - y / 14, 1.4), 0, y, T, 1); }
+    if (mask & W) { dark(0.32, 0, 0, 1, T); dark(0.2, 1, 0, 1, T); dark(0.1, 2, 0, 2, T); }
+    if (mask & E) { dark(0.32, 15, 0, 1, T); dark(0.2, 14, 0, 1, T); dark(0.1, 12, 0, 2, T); }
+    if (mask & NW) { dark(0.35, 0, 0, 2, 3); dark(0.2, 2, 0, 1, 2); }
+    if (mask & NE) { dark(0.35, 14, 0, 2, 3); dark(0.2, 13, 0, 1, 2); }
     return (shadeCache[mask] = cv);
   }
 
   // ---- Painting ---------------------------------------------------------------------------------------------------------------
-  // env: { S: pixels per art pixel, ox, oy: pixel offset of grid (0,0), img(name) -> {ok, el}, prop(ctx, key, cx, feet, S, opts), tick }
+  // env: { S: pixels per art pixel, ox, oy: pixel offset of grid (0,0), img(name) -> {ok, el}, prop(...), twinkle(...), tick }
   const FLOORS = [[4, 1], [5, 1], [6, 1], [7, 1], [5, 2], [6, 2], [4, 2], [7, 2]];
 
   function paint(ctx, cmd, env) {
@@ -202,44 +214,26 @@
         const f = FLOORS[cmd.v % FLOORS.length];
         if (tiles.ok) ctx.drawImage(tiles.el, f[0] * T, f[1] * T, T, T, X, Y, size, size);
         else { ctx.fillStyle = '#26363a'; ctx.fillRect(X, Y, size, size); }
-        if (cmd.mask && tiles.ok) ctx.drawImage(shade(cmd.mask), 0, 0, T, T, X, Y, size, size);
+        if (cmd.mask) ctx.drawImage(shade(cmd.mask), 0, 0, T, T, X, Y, size, size);
         break;
       }
-      case 'wall': {
-        if (!tiles.ok) { ctx.fillStyle = '#44566a'; ctx.fillRect(X, Y, size, size); break; }
-        atlas = atlas || buildAtlas(tiles.el);
-        const row = { cap: 0, faceTop: 1, face: 2, base: 3, thin: 4 }[cmd.piece];
-        ctx.drawImage(atlas, cmd.ends * T, row * T, T, T, X, Y, size, size);
+      case 'face': {
+        if (!tiles.ok) { ctx.fillStyle = '#3a4656'; ctx.fillRect(X, Y, size, size); break; }
+        faces = faces || buildFaces(tiles.el);
+        ctx.drawImage(faces, cmd.ends * T, 0, T, T, X, Y, size, size);
         break;
       }
-      case 'side': {
-        if (!tiles.ok) break;
-        atlas = atlas || buildAtlas(tiles.el);
-        ctx.drawImage(atlas, 0, 5 * T, T, T, X, Y, size, size);
-        ctx.fillStyle = '#7f95ad';
-        if (cmd.east) ctx.fillRect(X + size - S * 1.5, Y, S * 1.5, size);
-        if (cmd.west) ctx.fillRect(X, Y, S * 1.5, size);
-        break;
-      }
-      case 'roof': {
-        if (tiles.ok) ctx.drawImage(tiles.el, 1 * T, 0, T, T, X, Y, size, size);
-        break;
-      }
+      case 'cap': ctx.drawImage(capTile(cmd.mask, cmd.edge), 0, 0, T, T, X, Y, size, size); break;
       case 'door': {
-        const cx = X + size / 2, feet = Y + size;
-        // The opening: darker floor and a threshold, then the door standing in its frame.
-        ctx.fillStyle = 'rgba(6,10,14,0.3)';
-        ctx.fillRect(X, Y, size, size);
-        ctx.fillStyle = 'rgba(138,160,184,0.55)';
-        ctx.fillRect(X, feet - S, size, S);
-        if (cmd.open) env.prop(ctx, cmd.locked ? 'iron' : 'door', X + S * 1.5, feet - S * 1.5, S, { scale: 0.8, squash: 0.28, anchor: 'left' });
-        else env.prop(ctx, cmd.locked ? 'iron' : 'door', cx, feet - S * 1.5, S, { scale: 0.8 });
+        const feet = Y + size;
+        const key = cmd.locked ? 'iron' : 'door';
+        if (cmd.horizontal) {
+          if (cmd.open) env.prop(ctx, key, X + S, feet, S, { scale: 0.8, squash: 0.28, anchor: 'left' });
+          else env.prop(ctx, key, X + size / 2, feet, S, { scale: 0.8 });
+        } else if (!cmd.open) env.prop(ctx, key, X + size / 2, feet, S, { scale: 0.8, squash: 0.32 }); // seen edge-on
         break;
       }
-      case 'banner': {
-        env.prop(ctx, cmd.color ? 'banner_blue' : 'banner_red', X + size / 2, Y - size * 0.35, S, { scale: 1 });
-        break;
-      }
+      case 'banner': env.prop(ctx, cmd.color ? 'banner_blue' : 'banner_red', X + size / 2, Y + size - S * 1.5, S, { scale: 0.7 }); break;
       case 'stairs': {
         const cx = X + size / 2;
         env.prop(ctx, 'stairs', cx, Y + size, S, { flipY: cmd.up });
@@ -261,5 +255,5 @@
     }
   }
 
-  UI.Tilemap = { plan, paint, canon, maskAt, solid, doorLike, bits: { N, NE, E, SE, S, SW, W, NW } };
+  UI.Tilemap = { plan, paint, canon, geometry, solid, doorLike, bits: { N, NE, E, SE, S, SW, W, NW } };
 })(globalThis.BBB);
