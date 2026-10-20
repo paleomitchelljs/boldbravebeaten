@@ -14,14 +14,23 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 - [ ] Beasts (rat, wolf, spider, snake, cat) borrow tinted orc sprites; find or draw real ones.
 - [ ] Fights: attacks now lunge or fire a bolt, with floating numbers and "Blocked"/"Dodged"/"Down"; still no real attack or
   death animation frames (a body is the idle sprite on its side).
-- [ ] Fights: only the active character's declared attacks are drawn (faint lines) and only the party's declared moves (ghosts);
-  enemy intentions stay hidden on purpose. Playtest whether a summary of the whole party's plan for the pass is wanted.
 - [ ] Fights: the outcome of an attack (odds to hit, expected damage through armor) is not previewed when choosing a target.
 - [ ] Click-to-walk and the explore prompts need a pass on touch screens.
 
 ## Art and licences
 - [ ] `assets/env/{chest,objects,gold,stairs_down,spikes,plate,stairs}.png` come from the paid Cute Fantasy Dungeons pack, whose licence forbids redistribution: they are git-ignored, so a fresh clone or the Pages build draws those props blank. Replace them with Pixel Crawler or own art, or keep the repo private.
 - [ ] Pixel Crawler terms are in `assets/PIXEL-CRAWLER-TERMS.txt`; credit the author in the game's About.
+
+## Combat after the turn-model change (whole-pool turns, reactions, opportunity strikes)
+- [ ] Retune: fights against armed groups got much deadlier (skeleton squad 70% → 27% wins, horde 57% → 13%); see
+  sim/FINDINGS.md. Tune the AI's choices first (its defence reserve, defend threshold, moving past reach), then rule numbers
+  (parry/dodge cost against attack cost, pool size), never single monsters.
+- [ ] AI oddities seen in logs: a sword-and-board fighter drops the longsword for a dagger; everyone reads intent every round;
+  archers and mages often draw opportunity strikes backing off.
+- [ ] "Always ask" puts a pop-up on every blow at the party (several a round against a group). Playtest; if it drags, add a
+  per-character standing order as an option.
+- [ ] The GM table's reaction pop-up (gm.html) has only run in the fake DOM; look at it.
+- [ ] The design docs (Mechanics Outline, Specifics) still describe passes and guards; update them to the turn model.
 
 ## Game
 - [ ] Magic in play: nouns are scarce (books, creation pick) and the Lore/ritual screen exists only in the GM table.
@@ -34,6 +43,9 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 
 ## Done recently
 - Top-down map shared by exploring and fighting; fights are played on a 15x10 slice of the dungeon.
+- Turn model: one turn per round spending as much of the AP pool as wanted, every action resolving at once; defences are
+  reactions paid from the pool, asked of the player on the map with odds and what the blow would do; opportunity strikes
+  when leaving a foe's reach. Passes, guards and the held point are gone.
 - Five-layer tile renderer (`src/ui/game/tilemap.js`): ground, wall faces, wall caps, decor and doors, entities.
 - Walls are a cap row over a one-tile brick face: light only on cap tops facing open floor, dark side shadows,
   caps auto-tiled to merge at corners and T-junctions, finished face ends at gaps, an ambient-occlusion baseboard

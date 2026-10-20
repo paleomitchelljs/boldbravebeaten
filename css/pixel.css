@@ -215,3 +215,11 @@ button.step { padding: 2px 4px; min-height: 0; display: inline-grid; place-items
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 
 .num, .astep .val, .tile b, .gold.num { font-family: var(--font-mono); }
+
+/* ---- Reactions ---- */
+.popcard.react { top: auto; bottom: 12px; left: auto; right: 12px; transform: none; width: min(330px, calc(100% - 24px)); border-color: #2b4a6e; box-shadow: inset var(--px) var(--px) 0 #3d6894, 0 0 0 2px rgba(138, 180, 255, 0.25), 0 6px 0 rgba(0, 0, 0, 0.3); }
+.popcard .act.none { opacity: 0.85; }
+kbd { font: 600 0.72rem var(--font-mono); padding: 0 4px; border: 1px solid var(--line); border-bottom-width: 2px; background: #0e151a; color: var(--muted); }
+.initbar .init { position: relative; }
+.initbar .init.done { opacity: 0.65; }
+.init-ap { position: absolute; right: 1px; top: 1px; font-size: 0.6rem; line-height: 1; padding: 1px 2px; background: rgba(5, 8, 11, 0.85); color: #9fd1ff; }

@@ -7,6 +7,7 @@ const B = require('./load.js');
 for (const f of ['ui/dom', 'ui/dice', 'ui/views/roster', 'ui/views/battle', 'ui/game/art', 'ui/game/icons', 'ui/game/sprites', 'ui/game/tilemap', 'ui/game/mapview', 'ui/game/bits', 'ui/game/game', 'ui/game/overlays', 'ui/game/charsheet',
   'ui/game/screens/title', 'ui/game/screens/create', 'ui/game/screens/town', 'ui/game/screens/explore', 'ui/game/screens/parley', 'ui/game/screens/battle']) require('../src/' + f + '.js');
 const { UI, World, Explore, Rand, Content } = B;
+const G = B;
 const Game = UI.Game;
 const app = () => fake.doc.getElementById('app');
 const find = (sel) => app().querySelector(sel);
@@ -167,6 +168,36 @@ test('ui: a battle plays through the real battle screen with the AI on both side
     assert.match(text(), /Victory|Defeat|No one stands/);
     Game.afterBattle();
     check('after battle');
+  } finally { globalThis.setTimeout = realTimeout; }
+});
+
+test('ui: a player-run party is asked to react when a foe attacks, on the map, and the fight goes on', async () => {
+  const w = Game.world;
+  for (const c of World.party(w)) { c.control = 'manual'; c.status = G.Character.freshStatus(); c.stamina = G.Character.maxStamina(c); for (const k of Object.keys(c.damage)) c.damage[k] = 0; }
+  const realTimeout = globalThis.setTimeout;
+  globalThis.setTimeout = (f) => realTimeout(f, 0);
+  let asked = 0, turns = 0;
+  try {
+    Game.startBattle({ name: 'Reactions', foes: [{ template: 'bandit', level: 1, n: 2 }] });
+    check('reaction battle start');
+    for (let i = 0; i < 6000 && Game.screen === 'battle' && !Game.ui.result; i++) {
+      await new Promise((r) => realTimeout(r, 0));
+      if (Game.error) break;
+      if (Game.ui.reacting) {
+        asked++;
+        Game.render();
+        assert.ok(find('.popcard.react'), 'the reaction card is on the map');
+        // Take the first defence on offer half the time, otherwise take the blow.
+        const pick = asked % 2 ? find('.popcard.react button.act') : find('.popcard.react button.act.none');
+        pick.click();
+        continue;
+      }
+      const end = find('.cmd-foot .end');
+      if (end && w.battle && w.battle.enc.phase === 'turn') { turns++; end.click(); }
+    }
+    check('reaction battle');
+    assert.ok(asked > 0, 'at least one reaction was asked of the party');
+    assert.ok(turns > 0, 'the party took turns');
   } finally { globalThis.setTimeout = realTimeout; }
 });
 

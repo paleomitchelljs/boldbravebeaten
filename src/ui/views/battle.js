@@ -117,7 +117,7 @@
     const viewer = actor && chars[actor] && !aiControlled(app, chars[actor]) ? chars[actor].side : 'party';
     const ground = {};
     if (G.Terrain && enc.tiles) for (const t of G.Terrain.all(enc)) if (G.Terrain.visible(t.f, viewer)) (ground[t.x + ',' + t.y] || (ground[t.x + ',' + t.y] = [])).push(t);
-    const late = (need) => legal && need > legal.passLeft;
+    const late = () => false; // (no passes: a move lands as it is made)
     return { actor, ghosts, targets, reach, castable, ground, late };
   }
 
@@ -186,35 +186,105 @@
     else declare(app, enc, { actor, type: p.type, target: targetId });
   }
 
-  function declare(app, enc, decl) {
+  // What the engine needs from the screen: dice, and a reaction from whoever is attacked or
+  // passed. Computer-run fighters decide for themselves; players are asked (the host's prompt, or
+  // the GM table's pop-up).
+  function ioFor(app) {
+    return {
+      roller: UI.Dice.makeRoller(app),
+      react: (req, enc, chars) => {
+        const c = chars[req.actor];
+        if (aiControlled(app, c)) return G.AI.react(enc, chars, req);
+        return app.hooks && app.hooks.react ? app.hooks.react(req, enc, chars) : askReaction(app, req, enc, chars);
+      },
+    };
+  }
+
+  // Take an action: it resolves at once (with any reactions it draws), then the screen redraws.
+  async function declare(app, enc, decl) {
     const ui = bui(app);
-    const err = Combat.declare(enc, app.state.characters, decl);
-    if (err) { toast(err); return; }
-    ui.mode = null;
-    ui.pending = null;
-    if (ui.cmd) { ui.cmd.moveTo = null; ui.cmd.castAt = null; }
+    if (enc.phase !== 'turn' || ui.busy) return;
+    ui.busy = true;
+    app.render();
+    let err;
+    try { err = await Combat.act(enc, app.state.characters, decl, ioFor(app)); } finally { ui.busy = false; }
+    if (err) toast(err);
+    else {
+      ui.mode = null;
+      ui.pending = null;
+      if (ui.cmd) { ui.cmd.moveTo = null; ui.cmd.castAt = null; }
+    }
     app.save();
     app.render();
   }
 
-  function finishTurn(app, enc, id, wholeRound) {
+  async function finishTurn(app, enc, id) {
     const ui = bui(app);
-    if (wholeRound) Combat.concede(enc, id);
-    else Combat.endTurn(enc, id);
+    if (ui.busy) return;
+    ui.busy = true;
+    try { await Combat.endTurn(enc, app.state.characters, id, ioFor(app)); } finally { ui.busy = false; }
     ui.mode = null;
     ui.pending = null;
     app.save();
     app.render();
+  }
+
+  // What an undefended blow would do through the target's armor, for the reaction prompt.
+  function blowPreview(enc, chars, req) {
+    const d = req.decl || {};
+    const atk = chars[d.actor || req.actor], tgt = chars[d.target || req.target];
+    const option = d.option || (req.options && req.options[0]);
+    if (!atk || !tgt || !option || d.type && d.type !== 'strike') return null;
+    const h = Combat.computeHit(atk, tgt, option, { distance: Combat.dist(enc.pos[atk.id], enc.pos[tgt.id]) });
+    const wound = Math.round(h.toCON + h.slashToAttrs + h.bluntToCON);
+    const stamina = Math.round(h.bluntToStamina + (h.converted || 0));
+    return { wound, stamina, text: wound || stamina ? `${wound ? `~${wound} wound` : ''}${wound && stamina ? ', ' : ''}${stamina ? `~${stamina} stamina` : ''}` : 'armor stops it' };
+  }
+
+  // The words for a reaction request: who, what, and each choice with its AP and odds.
+  function reactionModel(app, req, enc, chars) {
+    const me = chars[req.actor];
+    const ap = Combat.apLeft(enc, req.actor);
+    if (req.kind === 'defend') {
+      const a = chars[req.attacker];
+      const what = req.hidden ? 'a blow you can\'t read' : req.decl.type === 'strike' ? req.decl.option.label : D.ACTIONS[req.decl.type].name;
+      const prev = req.hidden ? null : blowPreview(enc, chars, req);
+      return {
+        title: `${a.name} → ${me.name}`, sub: `${what}${prev ? ` · if it lands: ${prev.text}` : ''}`, ap,
+        choices: req.options.map((o) => ({ value: o.type, label: o.name, cost: `${o.ap} AP${o.stamina ? ` · ${o.stamina} st` : ''}`, odds: o.odds != null ? `${Math.round(o.odds * 100)}%` : '?' })),
+        none: { label: 'Take it', note: 'keep the AP' },
+      };
+    }
+    const t = chars[req.target];
+    return {
+      title: `${t.name} leaves ${me.name}'s reach`, sub: 'Strike as they go? A hit stops them.', ap,
+      choices: req.options.map((o) => { const p = blowPreview(enc, chars, { decl: { actor: req.actor, target: req.target, type: 'strike', option: o } }); return { value: o, label: o.label, cost: `${o.ap} AP`, odds: p ? p.text : '' }; }),
+      none: { label: 'Let them go', note: 'keep the AP' },
+    };
+  }
+
+  // The GM table's reaction pop-up (the game draws its own over the map).
+  function askReaction(app, req, enc, chars) {
+    return new Promise((resolve) => {
+      const m = reactionModel(app, req, enc, chars);
+      const done = (v) => { closeModal(); resolve(v); };
+      const box = h('div', { class: 'modal info-pop', role: 'dialog', 'aria-modal': 'true', onclick: (e) => e.stopPropagation() },
+        h('span', { class: 'label' }, `Reaction · ${m.ap} AP left`), h('h2', null, m.title), h('p', { class: 'small muted' }, m.sub),
+        h('div', { class: 'stack tight' }, m.choices.map((c) => h('button', { class: 'act', onclick: () => done(c.value) }, h('span', null, c.label), h('span', { class: 'small muted num' }, `${c.cost} · ${c.odds}`))),
+          h('button', { class: 'act', onclick: () => done(null) }, h('span', null, m.none.label), h('span', { class: 'small muted' }, m.none.note))));
+      const root = document.getElementById('modal-root');
+      root.innerHTML = '';
+      root.appendChild(h('div', { class: 'modal-backdrop' }, box));
+    });
   }
 
   // ---- Command panel -----------------------------------------------------
   // Under the map: the name, a type dropdown (Martial, Magic, Move, Other), the action
   // dropdown(s), a target and Declare. Numbers and rules sit behind ⓘ buttons and pop-ups.
-  function apMeter(cap, passLeft, roundLeft) {
+  function apMeter(pool, left) {
     const out = [];
-    const n = Math.min(cap, Math.max(passLeft, 0));
-    for (let i = 0; i < (Number.isFinite(cap) ? cap : roundLeft); i++) out.push(h('i', { class: i < n ? '' : 'spent' }));
-    return h('span', { class: 'ap-meter', 'aria-label': `${passLeft} AP left this pass` }, out);
+    for (let i = 0; i < pool; i++) out.push(h('i', { class: i < left ? '' : 'spent' }));
+    return h('span', { class: 'ap-meter', 'aria-label': `${left} of ${pool} AP left this round` }, out);
   }
 
   function costText(ap, st, sp) {
@@ -251,7 +321,6 @@
     parry: 'Meets the next blow with the weapon: your DEX/SPD against the attacker\'s STR/SPD, ties to you. No parry against arrows, spells or power blows; it waits for the next blow.',
     dodge: 'Slips the next attack of any kind: your DEX/SPD against the attacker\'s STR/SPD, ties to you.',
     offParry: 'The off-hand dagger meets the next thrust only.',
-    readyStrike: 'Holds a point ready: it meets the first foe (or the named one) who steps closer into its reach this pass. A hit stops them.',
     trip: 'Knocks a foe down: opposed roll.',
     disarm: 'Knocks the weapon from a foe\'s hand: opposed roll.',
     shove: 'Pushes a foe back a square; a foe pushed mid-move loses the move.',
@@ -290,26 +359,24 @@
     const why = (o) => o.why || (o.affordable ? null : 'Not enough AP');
     const martial = [], magic = [], other = [];
     for (const o of legal.attacks) {
-      const e = { key: 'a:' + C.optionKey(o), option: o, ap: o.ap, stamina: o.stamina, sp: o.spCost, affordable: o.affordable, why: why(o), spans: o.spans };
+      const e = { key: 'a:' + C.optionKey(o), option: o, ap: o.ap, stamina: o.stamina, sp: o.spCost, affordable: o.affordable, why: why(o) };
       if (o.spell) magic.push(Object.assign(e, { kind: 'strike', label: o.label, targets: sortTargets(o.targets, chars, c) }));
       else {
         const w = o.weaponId ? c.weapons.find((x) => x.id === o.weaponId) : null;
         martial.push(Object.assign(e, { group: 'Attacks', kind: 'strike', label: o.label + (w ? ` · ${Items.itemName(w)}` : ''), weapon: w, targets: sortTargets(o.targets, chars, c) }));
       }
     }
-    legal.defenses.forEach((o) => martial.push({ key: 'g:' + o.type, group: 'Guards', kind: 'guard', type: o.type, label: D.ACTIONS[o.type].name, ap: o.ap, stamina: o.stamina, affordable: o.affordable, why: why(o), spans: o.spans }));
-    (legal.readies || []).forEach((o, i) => martial.push({ key: 'r:' + C.optionKey(o.option), group: 'Guards', kind: 'ready', type: 'readyStrike', option: o.option, label: o.name, ap: o.ap, stamina: o.stamina, affordable: o.affordable, why: why(o), spans: o.spans }));
     for (const m of legal.maneuvers) {
-      const e = { key: 'm:' + m.type, kind: 'maneuver', type: m.type, label: D.ACTIONS[m.type].name, ap: m.ap, stamina: m.stamina, affordable: m.affordable, why: m.affordable ? null : m.targets.some((t) => t.inReach) ? 'Not enough AP' : 'No one in reach', spans: m.spans, targets: sortTargets(m.targets, chars, c) };
+      const e = { key: 'm:' + m.type, kind: 'maneuver', type: m.type, label: D.ACTIONS[m.type].name, ap: m.ap, stamina: m.stamina, affordable: m.affordable, why: m.affordable ? null : m.targets.some((t) => t.inReach) ? 'Not enough AP' : 'No one in reach', targets: sortTargets(m.targets, chars, c) };
       if (m.type === 'bait' || m.type === 'readIntent') other.push(Object.assign(e, { group: 'Wits' }));
       else martial.push(Object.assign(e, { group: 'Maneuvers' }));
     }
     for (const o of legal.spells || []) {
-      magic.push({ key: 's:' + o.spellKey, kind: 'cast', option: o, label: o.label, ap: o.ap, stamina: 0, sp: o.spCost, affordable: o.affordable, why: why(o), spans: o.spans,
+      magic.push({ key: 's:' + o.spellKey, kind: 'cast', option: o, label: o.label, ap: o.ap, stamina: 0, sp: o.spCost, affordable: o.affordable, why: why(o),
         square: o.target === 'square', targets: o.target === 'square' ? null : sortTargets(o.targets || [], chars, c, o.target === 'ally') });
     }
     legal.other.forEach((o, i) => other.push({ key: 'o:' + o.type + (o.option ? ':' + C.optionKey(o.option) : ''), group: o.type === 'windUp' ? 'Wind up' : 'Gear and self', kind: 'other', type: o.type, option: o.option,
-      label: o.name.replace(/^Wind up: /, '') + (o.note ? ` (${o.note})` : ''), ap: o.ap, stamina: o.stamina, affordable: o.affordable, why: why(o), spans: o.spans,
+      label: o.name.replace(/^Wind up: /, '') + (o.note ? ` (${o.note})` : ''), ap: o.ap, stamina: o.stamina, affordable: o.affordable, why: why(o),
       targets: o.targets ? sortTargets(o.targets, chars, c, true) : null }));
     const move = legal.move ? { key: 'move', kind: 'move', label: 'Move', ap: C.moveCost(c, 1), stamina: legal.move.stamina, affordable: true, move: legal.move } : null;
     const types = [];
@@ -328,8 +395,7 @@
     const c = app.state.characters[id];
     const model = commandModel(app, enc, legal, c);
     if (!ui.cmd || ui.cmd.for !== id) {
-      const guardFirst = legal.incoming.length && model.martial.some((e) => e.kind === 'guard' && e.affordable);
-      ui.cmd = { for: id, type: null, act: guardFirst ? (model.martial.find((e) => e.kind === 'guard' && e.affordable) || {}).key : null, target: null, vs: '' };
+      ui.cmd = { for: id, type: null, act: null, target: null, vs: '' };
     }
     const cmd = ui.cmd;
     if (!model.types.some((t) => t[0] === cmd.type)) cmd.type = model.types[0] ? model.types[0][0] : null;
@@ -406,11 +472,9 @@
       if (e.square) notes.push('Tap a highlighted square on the map to cast.');
     } else if (e.kind === 'move') {
       const m = e.move;
-      rows.unshift(['This pass', `${m.passSquares} squares`], ['This round', `up to ${m.maxSquares} squares`]);
-      notes.push('Tap a highlighted square; the number is its AP. Striped squares land next pass. Walls are walked around; rough ground costs more.');
+      rows.unshift(['With your AP', `up to ${m.maxSquares} squares`]);
+      notes.push('Click a square; the number is its AP. Walls are walked around; rough ground costs more. Stepping out of a foe\'s reach lets them strike at you as you go.');
     } else notes.push(ACTION_INFO[e.type] || '');
-    if (e.kind === 'guard' || e.kind === 'ready') notes.push('It lasts until it meets an attack or the pass ends. Stamina is paid only if it is used.');
-    if (e.spans) notes.push('Costs more AP than this pass has left: it borrows from the next pass and lands then.');
     if (e.why) rows.push(['Unavailable', e.why]);
     return [facts(rows), notes.filter(Boolean).map((n) => h('p', null, n))];
   }
@@ -419,7 +483,6 @@
     const t = cmd.target;
     if (e.kind === 'strike' || e.kind === 'cast') return declare(app, enc, { actor: id, type: e.kind, option: e.option, target: t });
     if (e.kind === 'guard') return declare(app, enc, { actor: id, type: e.type, against: cmd.vs || null });
-    if (e.kind === 'ready') return declare(app, enc, { actor: id, type: 'readyStrike', option: e.option, against: cmd.vs || null });
     return declare(app, enc, e.targets ? { actor: id, type: e.type, target: t } : { actor: id, type: e.type, option: e.option });
   }
 
@@ -430,24 +493,14 @@
     const c = chars[id];
     const say = (d) => Combat.describeDecl(enc, chars, d, id).text;
     const badges = [];
-    if (legal.incoming.length || legal.incomingLater.length) {
-      badges.push(h('button', { class: 'badge warn', 'aria-label': 'Attacks coming at you', onclick: () => openInfo('Coming at you', [
-        legal.incoming.length ? [h('b', null, 'This pass'), h('ul', null, legal.incoming.map((d) => h('li', null, say(d))))] : null,
-        legal.incomingLater.length ? [h('b', null, 'Next pass'), h('ul', null, legal.incomingLater.map((d) => h('li', null, say(d))))] : null,
-        h('p', { class: 'muted' }, 'Guards are under Martial.')]) }, `⚠ ${legal.incoming.length + legal.incomingLater.length}`));
-    }
-    const up = legal.guards.concat(legal.readied || []);
-    if (up.length) {
-      badges.push(h('button', { class: 'badge good', 'aria-label': 'Guards up', onclick: () => openInfo('Guards up', h('ul', null, up.map((g) => h('li', null, say(g).replace(c.name + ': ', ''))))) }, `⛨ ${up.length}`));
-    }
     const sp = G.Magic && G.Magic.maxSP(c) ? G.Magic.availableSP(c) : null;
     const head = h('div', { class: 'cmd-head' },
       h('div', { class: 'stack tight' },
-        h('span', { class: 'label' }, `R${enc.round} · pass ${enc.pass}`),
+        h('span', { class: 'label' }, `Round ${enc.round}`),
         h('button', { class: 'who linkish', onclick: () => openSheet(app, enc, id), title: 'Character sheet' }, c.name)),
       h('div', { class: 'stack tight', style: { alignItems: 'flex-end' } },
-        h('div', { class: 'ap-line' }, badges, apMeter(legal.passCap, legal.passLeft, legal.ap)),
-        h('span', { class: 'small num muted' }, `${legal.passLeft}/${legal.ap} AP · ${c.stamina} st${sp != null ? ` · ${sp} SP` : ''}`)));
+        h('div', { class: 'ap-line' }, badges, apMeter(legal.pool, legal.ap)),
+        h('span', { class: 'small num muted' }, `${legal.ap}/${legal.pool} AP · ${c.stamina} st${sp != null ? ` · ${sp} SP` : ''}`)));
 
     if (aiControlled(app, c)) return h('section', { class: 'panel cmd' }, head, h('p', { class: 'muted' }, 'Deciding…'));
 
@@ -488,7 +541,7 @@
           ? h('button', { class: 'primary', onclick: () => declare(app, enc, entry.kind === 'move' ? { actor: id, type: 'move', to: chosen } : { actor: id, type: 'cast', option: entry.option, at: chosen }) },
             entry.kind === 'move' ? 'Move here' : `${entry.label.split(' · ')[0]} here`, h('span', { class: 'cost' }, entry.kind === 'move' ? (reachAP != null ? `${reachAP} AP` : '') : costText(entry.ap, entry.stamina, entry.sp)))
           : tapOnly
-          ? h('span', { class: 'tap-hint' }, entry.kind === 'move' ? `Click a square · ${entry.move.passSquares} this pass` : 'Click a square on the map')
+          ? h('span', { class: 'tap-hint' }, entry.kind === 'move' ? `Click a square · up to ${entry.move.maxSquares}` : 'Click a square on the map')
           : entry.targets && entry.targets.length && !target && app.hooks && app.hooks.choose
           ? h('span', { class: 'tap-hint' }, 'Click a target on the map')
           : h('button', { class: 'primary', disabled: blocked, title: entry.why || '', onclick: () => declareEntry(app, enc, id, entry, cmd) },
@@ -501,12 +554,11 @@
       aim ? h('div', { class: 'cmd-row' }, aim) : null,
       go,
       h('div', { class: 'cmd-foot' },
-        h('button', { class: 'end', onclick: () => finishTurn(app, enc, id, false) }, 'End turn'),
-        h('button', { class: 'small ghost', title: 'Spend nothing more this round, including guards', onclick: () => finishTurn(app, enc, id, true) }, 'Done for round'),
+        h('button', { class: 'end', title: legal.ap ? `Keep ${legal.ap} AP to defend with until the round ends` : 'Nothing left this round', onclick: () => finishTurn(app, enc, id) }, legal.ap ? `End turn · keep ${legal.ap} AP` : 'End turn'),
         infoButton('Turns and AP', () => [
-          h('p', null, 'Declare as many actions as this pass\'s AP allows, then end your turn. Everything declared lands when the pass ends.'),
-          h('p', null, '"Done for round" spends nothing more this round, guards included. AP left at the end of the round is lost.'),
-          h('p', { class: 'muted' }, 'Other players can\'t see your AP: pass the device only after ending your turn. Tap a name or token for its sheet.')])));
+          h('p', null, 'On your turn spend as much of your AP as you like; every action happens at once.'),
+          h('p', null, 'AP you keep pays for reactions on other turns: a block, parry or dodge when a blow comes, or a strike at a foe who leaves your reach. AP left when the round ends is lost.'),
+          h('p', { class: 'muted' }, 'Spend it all and you take whatever comes on your armor. Click a name or figure for its sheet.')])));
   }
 
   function phasePanel(app, enc, legal, sync) {
@@ -539,12 +591,13 @@
       return h('section', { class: 'panel cmd' }, h('span', { class: 'label' }, `Round ${enc.round}`), h('div', { class: 'who' }, 'Rolling initiative'),
         h('p', { class: 'muted small' }, 'Each player rolls d10; their SPD in armor is added.'));
     }
-    if (enc.phase === 'declare') return declarePanel(app, enc, legal, sync);
-    if (enc.phase === 'resolve' || enc.phase === 'resolving') {
+    if (enc.phase === 'turn' && legal && !ui.busy) return declarePanel(app, enc, legal, sync);
+    if (enc.phase === 'turn' || enc.phase === 'acting') {
+      const id = Combat.currentActor(enc) || enc.order[enc.turn];
       return h('section', { class: 'panel cmd' },
-        h('span', { class: 'label' }, `Round ${enc.round} · pass ${enc.pass}`),
-        h('div', { class: 'who' }, 'Resolving the pass'),
-        h('p', { class: 'muted small' }, 'Players may be asked for defense rolls, hit-location d4s and opposed checks.'));
+        h('span', { class: 'label' }, `Round ${enc.round}`),
+        h('div', { class: 'who' }, id && chars[id] ? `${chars[id].name}'s turn` : 'Resolving'),
+        h('p', { class: 'muted small' }, 'Watch the map; you will be asked if one of yours can react.'));
     }
     if (enc.phase === 'over') return app.hooks && app.hooks.over ? app.hooks.over(app, enc) : lootPanel(app, enc);
     return null;
@@ -605,7 +658,7 @@
 
   // ---- Combatants: a slim list of names; a name opens that character's sheet ----
   function canSeeAP(app, enc, id) {
-    return app.state.settings.gmView || id === Combat.currentActor(enc) || enc.phase !== 'declare';
+    return app.state.settings.gmView || id === Combat.currentActor(enc) || enc.phase === 'roundEnd' || enc.phase === 'over';
   }
 
   function rosterView(app, enc) {
@@ -715,41 +768,28 @@
       }, enc.phase === 'setup' ? 500 : 1100);
       return;
     }
-    if (enc.phase === 'resolve') {
-      if (app.ui.resolvePending) return;
-      app.ui.resolvePending = true;
-      setTimeout(async () => {
-        app.ui.resolvePending = false;
-        if (app.state.encounter !== enc || enc.phase !== 'resolve') return;
-        await Combat.resolvePass(enc, chars, UI.Dice.makeRoller(app));
-        app.save();
-        app.render();
-      }, 350);
-      return;
-    }
-    if (enc.phase !== 'declare') return;
+    if (enc.phase !== 'turn') return;
     const id = Combat.currentActor(enc);
-    if (!id || !aiControlled(app, chars[id]) || app.ui.aiPending) return;
+    if (!id || !aiControlled(app, chars[id]) || app.ui.aiPending || bui(app).busy) return;
     app.ui.aiPending = true;
-    setTimeout(() => {
-      app.ui.aiPending = false;
-      if (app.state.encounter !== enc || enc.phase !== 'declare' || Combat.currentActor(enc) !== id) return;
-      Combat.submit(enc, chars, G.AI.choose(enc, chars, id));
+    setTimeout(async () => {
+      if (app.state.encounter !== enc || enc.phase !== 'turn' || Combat.currentActor(enc) !== id) { app.ui.aiPending = false; return; }
+      try { await Combat.submit(enc, chars, G.AI.choose(enc, chars, id), ioFor(app)); } finally { app.ui.aiPending = false; }
       app.save();
       app.render();
-    }, 350);
+    }, 450);
   }
 
   function view(app) {
     const enc = app.state.encounter;
     if (!enc) return setupView(app);
     const chars = app.state.characters;
-    const legal = enc.phase === 'declare' ? Combat.legalActions(enc, chars, Combat.currentActor(enc)) : null;
+    const legal = enc.phase === 'turn' ? Combat.legalActions(enc, chars, Combat.currentActor(enc)) : null;
     scheduleAI(app, enc);
     const human = legal && !aiControlled(app, chars[Combat.currentActor(enc)]);
     const sync = human ? syncCommand(app, enc, legal) : null;
     if (legal && !human && bui(app).mode !== 'place') { bui(app).mode = null; bui(app).pending = null; }
-    const status = enc.phase === 'declare' ? `Pass ${enc.pass} · turns` : enc.phase === 'over' ? 'The fight is over' : enc.phase === 'resolve' || enc.phase === 'resolving' ? `Pass ${enc.pass} · resolving` : '';
+    const status = enc.phase === 'turn' || enc.phase === 'acting' ? `${(app.state.characters[enc.order[enc.turn]] || {}).name || ''}'s turn` : enc.phase === 'over' ? 'The fight is over' : '';
     return h('div', { class: 'battle-view' },
       h('div', { class: 'battle-head' },
         h('h1', null, enc.round ? `Round ${enc.round}` : 'Battle'),
@@ -768,5 +808,5 @@
 
   UI.Views.battle = view;
   // The pieces the game's own battle screen (src/ui/game/screens/battle.js) reuses.
-  UI.Views.battleParts = { bui, mapState, cellClick, declarePanel, phasePanel, scheduleAI, syncCommand, aiControlled, openInfo, closeModal, declare, declareEntry, finishTurn, TILE_GLYPH };
+  UI.Views.battleParts = { bui, mapState, cellClick, declarePanel, phasePanel, scheduleAI, syncCommand, aiControlled, openInfo, closeModal, declare, declareEntry, finishTurn, ioFor, reactionModel, blowPreview, TILE_GLYPH };
 })(globalThis.BBB);

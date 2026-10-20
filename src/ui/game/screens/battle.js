@@ -35,10 +35,38 @@
         over: () => null,
         sheet: (id) => game.openOverlay('sheet', { id }),
         choose: true,       // the player picks every target; nothing is pre-selected
+        react: (req, enc, chars) => askOnMap(game, req, enc, chars),
       },
     };
     game.ui.battleApp = app;
     return app;
+  }
+
+  // A reaction asked of one of the party: a card over the map; the fight waits for the answer.
+  function askOnMap(game, req, enc, chars) {
+    return new Promise((resolve) => {
+      game.ui.reacting = { req, model: P().reactionModel(game.ui.battleApp, req, enc, chars), resolve };
+      game.render();
+    });
+  }
+
+  function answer(game, value) {
+    const r = game.ui.reacting;
+    if (!r) return;
+    game.ui.reacting = null;
+    r.resolve(value);
+    game.render();
+  }
+
+  function reactionCard(game) {
+    const r = game.ui.reacting;
+    const m = r.model;
+    return h('section', { class: 'popcard react' },
+      h('div', { class: 'popcard-head' }, h('div', { class: 'stack tight grow' }, h('span', { class: 'label' }, `Reaction · ${m.ap} AP left`), h('h3', null, m.title)), UI.tip(r.req.kind === 'defend' ? 'AP you spend now is gone from this round: from your turn if it is still to come. A defence that fails still costs its AP.' : 'A strike as they go costs its AP now; a hit stops them where they are.')),
+      h('p', { class: 'small muted' }, m.sub),
+      h('div', { class: 'stack tight' },
+        m.choices.map((c, i) => h('button', { class: 'act', onclick: () => answer(game, c.value) }, h('span', null, h('kbd', null, String(i + 1)), ' ', c.label), h('span', { class: 'small muted num' }, `${c.cost}${c.odds ? ' · ' + c.odds : ''}`))),
+        h('button', { class: 'act none', onclick: () => answer(game, null) }, h('span', null, h('kbd', null, 'Esc'), ' ', m.none.label), h('span', { class: 'small muted' }, m.none.note))));
   }
 
   function flee(game, enc) {
@@ -123,6 +151,16 @@
       if (d.type !== 'move' || d.done || !chars[d.actor] || chars[d.actor].side !== 'party' || !d.to) continue;
       const L = Sprites.look(chars[d.actor]);
       sc.actors.push({ id: 'ghost-' + d.actor + '-' + d.to.x + ',' + d.to.y, x: d.to.x + ox, y: d.to.y + oy, kind: L.kind, tint: L.tint, size: L.size, alpha: 0.28, speed: 30 });
+    }
+    // A reaction being asked: the blow's line and the one it threatens.
+    const rq = game.ui.reacting && game.ui.reacting.req;
+    if (rq) {
+      const from = rq.kind === 'defend' ? rq.attacker : rq.actor, to = rq.kind === 'defend' ? rq.actor : rq.target;
+      if (enc.pos[from] && enc.pos[to]) {
+        sc.lines.push({ pts: [at(enc.pos[from]), at(enc.pos[to])], color: rq.kind === 'defend' ? INTENT.strike.color : INTENT.guard.color, style: 'solid', alpha: 0.9 });
+        sc.reticles.push({ x: enc.pos[to].x + ox, y: enc.pos[to].y + oy, color: rq.kind === 'defend' ? INTENT.strike.color : INTENT.guard.color, strong: true });
+        sc.badges.push({ id: rq.actor, icon: rq.kind === 'defend' ? 'shield' : 'sword', color: INTENT.guard.color });
+      }
     }
     if (!map || !actor || !entry || !cmd) return sc;
     const me = enc.pos[actor];
@@ -294,9 +332,11 @@
     return h('nav', { class: 'initbar', 'aria-label': 'Initiative order' }, ids.filter((id) => chars[id]).map((id) => {
       const c = chars[id];
       const max = C.maxStamina(c);
-      return h('button', { class: `init ${c.side === 'party' ? 'party' : 'enemy'} ${C.isActive(c) ? '' : 'down'} ${id === actor ? 'current' : ''}`,
-        title: `${c.name} · stamina ${c.stamina}/${max}${enc.initiative[id] != null ? ` · initiative ${enc.initiative[id]}` : ''}`, onclick: () => game.openOverlay('sheet', { id }) },
-      Sprites.portrait(c, 28), UI.bar(c.stamina, max));
+      const mine = c.side === 'party';
+      const ap = enc.ap[id] != null ? Combat.apLeft(enc, id) : null;
+      return h('button', { class: `init ${mine ? 'party' : 'enemy'} ${C.isActive(c) ? '' : 'down'} ${id === actor || id === enc.order[enc.turn] ? 'current' : ''} ${enc.turnDone && enc.turnDone[id] ? 'done' : ''}`,
+        title: `${c.name} · stamina ${c.stamina}/${max}${enc.initiative[id] != null ? ` · initiative ${enc.initiative[id]}` : ''}${mine && ap != null ? ` · ${ap} AP left` : ''}${enc.turnDone && enc.turnDone[id] ? ' · turn taken' : ''}`, onclick: () => game.openOverlay('sheet', { id }) },
+      Sprites.portrait(c, 28), UI.bar(c.stamina, max), mine && ap != null ? h('span', { class: 'init-ap num' }, ap) : null);
     }));
   }
 
@@ -311,15 +351,15 @@
 
   function declaredPop(game, app, enc) {
     const chars = app.state.characters;
-    const live = enc.decls.filter((d) => d.declaredPass != null);
+    const live = enc.decls.filter((d) => chars[d.actor]);
     if (!live.length) return null;
     const viewer = app.state.settings.gmView ? null : Combat.currentActor(enc);
     const openIt = !!game.ui.declOpen;
     return h('div', { class: 'declwrap' },
-      ibtn('scroll', `Declared this round: ${live.length}`, () => { game.ui.declOpen = !openIt; game.render(); }, { on: openIt, text: String(live.length) }),
+      ibtn('scroll', `This round so far: ${live.length} actions`, () => { game.ui.declOpen = !openIt; game.render(); }, { on: openIt, text: String(live.length) }),
       openIt ? h('div', { class: 'declpop' }, live.map((d) => {
         const desc = viewer === null ? Combat.describeDecl(enc, chars, d, d.actor) : Combat.describeDecl(enc, chars, d, viewer);
-        return h('div', { class: 'decl' + (desc.hidden ? ' hidden' : '') + (d.done ? ' done' : '') }, h('span', { class: 'p' }, 'P' + d.declaredPass), h('span', null, desc.text));
+        return h('div', { class: 'decl' + (desc.hidden ? ' hidden' : '') }, h('span', { class: 'p' }, d.reaction || d.opportunity ? '↺' : '•'), h('span', null, desc.text));
       })) : null);
   }
 
@@ -350,7 +390,7 @@
       app = battleApp(game);
       enc = w.battle.enc;
       const chars = app.state.characters;
-      legal = enc.phase === 'declare' ? Combat.legalActions(enc, chars, Combat.currentActor(enc)) : null;
+      legal = enc.phase === 'turn' ? Combat.legalActions(enc, chars, Combat.currentActor(enc)) : null;
       if (enc.phase !== 'over') P().scheduleAI(app, enc);
       human = !!(legal && !P().aiControlled(app, chars[Combat.currentActor(enc)]));
       sync = human ? P().syncCommand(app, enc, legal) : null;
@@ -375,11 +415,12 @@
     if (bs && bs.enc) effects(game, bs.enc, bs.chars);
     const live = !game.ui.result;
     const spec = game.ui.spec || {};
-    const status = !live ? 'Over' : enc.phase === 'declare' ? `Pass ${enc.pass}` : enc.phase === 'resolve' || enc.phase === 'resolving' ? `Pass ${enc.pass} · resolving` : '';
+    const whose = live && enc.order[enc.turn] && bs.chars[enc.order[enc.turn]];
+    const status = !live ? 'Over' : (enc.phase === 'turn' || enc.phase === 'acting') && whose ? `${whose.name}'s turn` : '';
     const topExtra = live ? [
       h('span', { class: 'chip' }, enc.round ? `Round ${enc.round}` : 'Ready'),
       status ? h('span', { class: 'chip muted' }, status) : null,
-      app.hooks.flee && game.world.battle.canFlee !== false ? ibtn('flee', 'Flee: speed against the quickest foe', () => app.hooks.flee(app, enc)) : null,
+      app.hooks.flee && game.world.battle.canFlee !== false ? ibtn('flee', 'Flee: speed against the quickest foe', () => app.hooks.flee(app, enc), { disabled: !!game.ui.reacting || enc.phase === 'acting' || !!P().bui(app).busy }) : null,
       declaredPop(game, app, enc),
     ] : null;
     return h('div', { class: 'battle-screen' },
@@ -388,6 +429,7 @@
       h('div', { class: 'stage' },
         game.ui.mv ? game.ui.mv.el : null,
         live ? logStrip(game, enc) : null,
+        live && game.ui.reacting ? reactionCard(game) : null,
         !live ? resultCard(game) : null),
       live ? P().phasePanel(app, enc, legal, sync) : null);
   };
@@ -399,6 +441,13 @@
       const game = UI.Game;
       if (!game || game.screen !== 'battle' || game.overlay || e.ctrlKey || e.metaKey || e.altKey) return;
       if (/INPUT|TEXTAREA|SELECT|BUTTON/.test((e.target && e.target.tagName) || '')) return;
+      const r = game.ui.reacting;
+      if (r) {
+        const n = Number(e.key);
+        if (n >= 1 && n <= r.model.choices.length) { e.preventDefault(); answer(game, r.model.choices[n - 1].value); }
+        else if (e.key === 'Escape') { e.preventDefault(); answer(game, null); }
+        return;
+      }
       if (e.key === 'Enter') { const b = document.querySelector('.battle-screen .cmd-go .primary'); if (b && !b.disabled) { e.preventDefault(); b.click(); } }
       if (e.key === 'Escape') {
         const bs = game.ui.bs;

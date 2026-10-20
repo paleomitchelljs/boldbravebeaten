@@ -7,12 +7,13 @@
   const Combat = G.Combat;
   const R = G.Rand;
 
+  // Every turn and every reaction decided by the AI; actions resolve as they are taken.
   async function playRound(enc, chars, roller) {
+    const io = { roller };
     let guard = 2000;
-    while ((enc.phase === 'declare' || enc.phase === 'resolve') && guard-- > 0) {
-      if (enc.phase === 'resolve') { await Combat.resolvePass(enc, chars, roller); continue; }
+    while (enc.phase === 'turn' && guard-- > 0) {
       const id = Combat.currentActor(enc);
-      Combat.submit(enc, chars, G.AI.choose(enc, chars, id, () => R.rng(), chars[id].policy));
+      await Combat.submit(enc, chars, G.AI.choose(enc, chars, id, () => R.rng(), chars[id].policy), io);
     }
     if (guard <= 0) throw new Error('round did not finish');
   }

@@ -154,7 +154,7 @@
       name: Feint
       ranks: [novice, apprentice, adept, expert, master]
       requires: []
-      effect: Hide attack type and cost from Read Attack below your rank
+      effect: Your blows can't be read by Read Attack below your rank; they defend blind, and a wrong guess is wasted
       auto: true
     parry_training:
       name: Parry Training
@@ -448,7 +448,7 @@
       name: Untouchable
       ranks: [master]
       requires: [["counter_step:1"]]
-      effect: One dodge answers every strike aimed at you in that pass
+      effect: After your first dodge in a round, further dodges that round cost nothing
       auto: true
 - id: persuasion
   name: Persuasion

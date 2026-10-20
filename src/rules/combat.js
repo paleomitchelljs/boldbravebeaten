@@ -1,24 +1,20 @@
 /*
- * Combat engine: round structure, declarations, resolution, damage.
+ * Combat engine: round structure, actions, reactions, resolution, damage.
  *
  * Terms:
- *   Round  starts with everyone rolling initiative (AP pool = f(SPD) − fatigue) and
- *          ends when everyone is out of actions; then bleed, regeneration, fatigue.
- *   Turn   one character's actions in a pass, taken in initiative order. A turn may
- *          hold several actions, up to the per-pass AP cap (CONFIG.apPerPass).
- *   Pass   one set of everyone's turns; then every action of the pass resolves together.
+ *   Round     starts with everyone rolling initiative (AP pool = f(SPD) − fatigue) and ends when
+ *             everyone has had their turn; then bleed, regeneration, fatigue. Unspent AP is lost.
+ *   Turn      one character's go, in initiative order: as many actions as their AP pays for.
+ *             Each action resolves as it is taken.
+ *   Reaction  something done out of turn, paid from the same AP pool: a block, parry or dodge
+ *             when a blow comes at you, or an opportunity strike at a foe who leaves your reach.
+ *             AP kept back from your turn is AP to react with; AP spent reacting is gone from it.
  *
- * Defenses are guards: on your turn you ready a block, parry or dodge for the next attack
- * that lands on you (or the next one from a named attacker). A guard lasts until it is used
- * or the pass ends (CONFIG.guardLasts).
+ * So the faster side sets the rhythm: whoever acts first makes the others spend their pool
+ * answering, and a fighter who has spent theirs takes what comes on their armor.
  *
- * An action costing more than the AP left in this pass keeps paying from the next
- * passes' allowance; a strike, maneuver or move lands at the end of the pass in
- * which it is fully paid; a guard is up at once. Unspent AP is lost at the end of the
- * round.
- *
- * Every die roll goes through an async `roller(request)` so the UI can ask the
- * player to type in their physical roll, or roll automatically.
+ * Every die roll goes through an async io.roller(request) and every reaction through an async
+ * io.react(request), so the UI can ask the player, or the AI can decide.
  */
 (function (G) {
   'use strict';
@@ -29,9 +25,8 @@
 
   const GRAPPLE_STEPS = ['clinch', 'grapple', 'pin', 'throw', 'break'];
   const ATTACK_TYPES = ['strike', 'trip', 'disarm', 'shove'].concat(GRAPPLE_STEPS);
+  // Defences are reactions: taken when a blow comes, paid from the defender's AP.
   const DEFENSE_TYPES = ['block', 'parry', 'dodge', 'offParry'];
-  // Held through the pass like guards (not resolved at its end): guards and readied thrusts.
-  const HELD_TYPES = DEFENSE_TYPES.concat(['readyStrike']);
 
   // ---- Encounter setup ---------------------------------------------------
   function createEncounter(name, ids, chars, w, h) {
@@ -113,8 +108,9 @@
     enc.hitThisRound = {};
     enc.burned = {};
     enc.fortressUsed = {};
-    enc.pass = 0;
-    enc.spent = {};
+    enc.turnDone = {};
+    enc.dodged = {};
+    enc.turn = -1;
     enc.initiative = {};
     const active = enc.ids.filter((id) => C.isActive(chars[id]));
     for (const id of active) {
@@ -128,9 +124,7 @@
       if (d) return d;
       return C.combatAttr(chars[b], 'SPD') - C.combatAttr(chars[a], 'SPD');
     });
-    enc.capMult = {};
     for (const id of enc.order) {
-      enc.capMult[id] = (chars[id].traits && chars[id].traits.apMult) || 1;
       enc.ap[id] = C.apPool(chars[id]);
       // Surprise (an ambush, a trap sprung): that side starts the round with part of its AP.
       const sp = enc.surprise;
@@ -139,62 +133,93 @@
     }
     if (enc.surprise && enc.surprise.round === enc.round) log(enc, `${enc.surprise.side === 'party' ? 'The party is' : 'The enemy is'} caught off guard.`, 'round');
     log(enc, `Round ${enc.round} — initiative: ` + enc.order.map((id) => `${chars[id].name} ${enc.initiative[id]}`).join(', '), 'round');
-    startPass(enc, chars);
+    await advance(enc, chars, { roller });
     return enc;
   }
 
-  // ---- Passes and turns --------------------------------------------------
-  // Most AP a character may spend in one pass (Infinity when there is no cap).
-  // Monster trait apMult also raises a boss's per-pass allowance (enc.capMult, set each round).
-  function passCap(enc, id) {
-    const m = (enc && enc.capMult && enc.capMult[id]) || 1;
-    return CONFIG.apPerPass ? CONFIG.apPerPass * C.apScale() * m : Infinity;
+  // ---- Turns and reactions --------------------------------------------------
+  // AP this character has left this round (for their turn, and for reactions on anyone's turn).
+  function apLeft(enc, id) {
+    return Math.max(0, enc.ap[id] || 0);
   }
 
-  function spentIn(enc, id, pass) {
-    return (enc.spent[id] && enc.spent[id][pass]) || 0;
+  // Ask the reactor what they do: the host's react(req) (a player prompt, or the AI for
+  // computer-run fighters), or the AI when the host gave none. Resolves to the chosen
+  // option's type/key, or null for "no reaction".
+  function react(enc, chars, req, io) {
+    if (io && io.react) return Promise.resolve(io.react(req, enc, chars));
+    return Promise.resolve(G.AI ? G.AI.react(enc, chars, req) : null);
   }
 
-  // AP this character can still put in this pass.
-  function passLeft(enc, id) {
-    return Math.max(0, Math.min(enc.ap[id] || 0, passCap(enc, id) - spentIn(enc, id, enc.pass)));
-  }
-
-  // Pay an action's AP from this pass's allowance, then the next passes'. Returns the
-  // pass in which the last of it is paid.
-  function payAP(enc, id, ap) {
-    const cap = passCap(enc, id);
-    const s = enc.spent[id] || (enc.spent[id] = {});
-    let p = enc.pass, left = ap;
-    while (left > 0) {
-      const put = Math.min(left, cap - (s[p] || 0));
-      if (put > 0) { s[p] = (s[p] || 0) + put; left -= put; }
-      if (left > 0) p += 1;
+  // Defences this character could put up against an attack right now, with their cost and odds.
+  // A hidden attack (Feint over Read Attack) offers every defence the defender could make in
+  // general, with no odds: they choose blind, and a defence that can't meet the blow is wasted.
+  function defenseOptions(enc, chars, t, a, d) {
+    if (!C.isActive(t) || GRAPPLE_STEPS.includes(d.type)) return { hidden: false, options: [] };
+    const hidden = describeBare(enc, chars, d, t.id).hidden;
+    const free = C.rank(t, 'untouchable') && enc.dodged && enc.dodged[t.id];
+    const motion = d.type === 'strike' ? d.option.motion : 'maneuver';
+    const options = [];
+    for (const kind of DEFENSE_TYPES) {
+      if (kind === 'offParry' && !C.offhandWeapon(t)) continue;
+      if (conditionForbids(enc, chars, t, { type: kind, target: a.id })) continue;
+      if (defenseUnavailable(t, kind, hidden ? null : d, chars, enc)) continue;
+      let { ap, stamina } = C.actionCost(t, kind);
+      if (kind === 'dodge' && free) { ap = 0; stamina = 0; }
+      if (ap > apLeft(enc, t.id)) continue;
+      options.push({ type: kind, name: ACTIONS[kind].name, ap, stamina, odds: hidden ? null : defenseOdds(t, kind, motion, a, d.option) });
     }
-    enc.ap[id] -= ap;
-    return p;
+    return { hidden, options };
   }
 
-  // Attacks aimed at this character that are on their way (not yet landed).
-  function incomingAttacks(enc, id) {
-    return enc.decls.filter((d) => ATTACK_TYPES.includes(d.type) && d.target === id && !d.done);
+  // The defender's reaction to an attack about to land: pays its AP and returns the defence, or null.
+  async function askDefense(enc, chars, t, a, d, io) {
+    const { hidden, options } = defenseOptions(enc, chars, t, a, d);
+    if (!options.length) return null;
+    const pick = await react(enc, chars, { kind: 'defend', actor: t.id, attacker: a.id, decl: d, hidden, options, ap: apLeft(enc, t.id) }, io);
+    const o = options.find((x) => x.type === pick);
+    if (!o) return null;
+    enc.ap[t.id] -= o.ap;
+    if (o.type === 'dodge' && C.rank(t, 'untouchable')) (enc.dodged || (enc.dodged = {}))[t.id] = true;
+    enc.decls.push({ actor: t.id, type: o.type, against: a.id, reaction: true, ap: o.ap, stamina: o.stamina, n: ++enc.seq, done: true });
+    return o;
   }
 
-  // Guards this character has up that could still be used by an attack landing in `pass`.
-  function guardsUp(enc, id, pass) {
-    return enc.decls.filter((x) => x.actor === id && DEFENSE_TYPES.includes(x.type) && !x.used &&
-      (CONFIG.guardLasts === 'round' ? x.pass <= pass : x.pass === pass));
+  // Melee blows this fighter could aim at a square right now (an opportunity strike).
+  function opportunityOptions(enc, chars, f, from) {
+    if (!C.isActive(f) || f.status.prone || isGrappled(f) || f.status.clinch) return [];
+    const dd = dist(from, enc.pos[f.id]);
+    return C.attackOptions(f).filter((o) => !o.ranged && !o.spell && !o.windUp && C.inRange(o, dd) && o.ap <= apLeft(enc, f.id) && !attackUnavailable(enc, f, o));
   }
 
-  // Thrusts held ready this pass.
-  function readiesUp(enc, id, pass) {
-    return enc.decls.filter((x) => x.actor === id && x.type === 'readyStrike' && !x.used && x.pass === pass);
-  }
-
-  // What can be held ready: a melee thrust that reaches past arm's length (a spear, a sword, a
-  // rapier), not one that has to be wound up.
-  function readyable(opt) {
-    return opt.kind === 'strike' && opt.motion === 'thrust' && !opt.ranged && !opt.windUp && !opt.halfSword && (opt.maxRange || 1) >= 2;
+  // A mover leaving a square inside foes' reach: each foe (once per move) may strike at them as
+  // they go, paying from their own AP. Returns true if a blow lands and stops the move.
+  async function opportunities(enc, chars, m, from, provoked, io) {
+    const foes = enc.order.concat(enc.ids.filter((x) => !enc.order.includes(x)))
+      .filter((f) => f !== m.id && chars[f] && chars[f].side !== m.side && !provoked[f]);
+    for (const f of foes) {
+      const reactor = chars[f];
+      if (conditionForbids(enc, chars, reactor, { type: 'strike', target: m.id })) continue;
+      const options = opportunityOptions(enc, chars, reactor, from);
+      if (!options.length) continue;
+      provoked[f] = true;
+      const pick = await react(enc, chars, { kind: 'opportunity', actor: f, target: m.id, options, ap: apLeft(enc, f) }, io);
+      const opt = options.find((o) => o === pick || C.optionKey(o) === pick || (pick && C.optionKey(o) === C.optionKey(pick)));
+      if (!opt) continue;
+      enc.ap[f] -= opt.ap;
+      const before = { stamina: m.stamina, dmg: C.totalDamage(m), active: C.isActive(m), bleeds: m.bleeds.length };
+      log(enc, `${reactor.name} strikes at ${m.name} as they move.`, 'pass');
+      const sd = { actor: f, type: 'strike', option: opt, target: m.id, ap: opt.ap, stamina: opt.stamina, n: ++enc.seq, opportunity: true, round: enc.round };
+      enc.decls.push(sd);
+      await resolveAction(enc, chars, sd, io, Object.assign({}, enc.pos, { [m.id]: from }));
+      sd.done = true;
+      const hit = m.stamina < before.stamina || C.totalDamage(m) > before.dmg || m.bleeds.length > before.bleeds || !C.isActive(m);
+      if (hit) {
+        if (C.isActive(m)) log(enc, `${reactor.name}'s blow stops ${m.name} where they stand.`, 'hit');
+        return true;
+      }
+    }
+    return false;
   }
 
   // Shoving reaches clinch distance; a long weapon fends off at range 2 (haft, crossguard, point).
@@ -204,103 +229,53 @@
     return f && w && !WEAPONS[w.type].ranged && (WEAPONS[w.type].reach || 1) >= 2 ? Math.max(CONFIG.range.maneuverMax, f) : CONFIG.range.maneuverMax;
   }
 
-  // A mover stepping to `to`: every foe with a thrust ready, whom the step brings closer and
-  // into the thrust's reach, thrusts first (initiative order), where the mover enters its reach.
-  // Returns true if the advance is stopped (a hit, or the mover goes down).
-  async function stopThrusts(enc, chars, m, to, roller) {
-    const from = enc.pos[m.id];
-    const holders = enc.decls
-      .filter((x) => x.type === 'readyStrike' && !x.used && x.pass === enc.pass && chars[x.actor].side !== m.side && (!x.against || x.against === m.id))
-      .sort((x, y) => enc.order.indexOf(x.actor) - enc.order.indexOf(y.actor));
-    for (const r of holders) {
-      const h = chars[r.actor];
-      if (!C.isActive(h) || h.status.prone || isGrappled(h) || h.status.clinch) continue;
-      const hp = enc.pos[h.id];
-      const d0 = dist(from, hp), d1 = dist(to, hp);
-      if (!(d1 < d0 && d1 <= r.option.maxRange)) continue;
-      r.used = true;
-      const at = Math.max(1, Math.min(d0, r.option.maxRange));
-      const virtual = Object.assign({}, enc.pos, { [m.id]: { x: hp.x + at, y: hp.y } });
-      const before = { stamina: m.stamina, dmg: C.totalDamage(m), active: C.isActive(m), bleeds: m.bleeds.length };
-      log(enc, `${m.name} steps into ${h.name}'s readied point.`, 'pass');
-      const sd = { actor: h.id, type: 'strike', option: r.option, target: m.id, pass: enc.pass, stamina: r.stamina, n: ++enc.seq, ready: true };
-      await resolveAction(enc, chars, sd, roller, virtual);
-      const hit = m.stamina < before.stamina || C.totalDamage(m) > before.dmg || m.bleeds.length > before.bleeds || !C.isActive(m);
-      if (hit) {
-        if (C.isActive(m)) log(enc, `${h.name}'s point stops ${m.name}'s advance.`, 'hit');
-        return true;
-      }
-    }
-    return false;
-  }
-
-  function eligible(enc, id) {
-    return id != null && !enc.conceded[id] && passLeft(enc, id) >= CONFIG.minActionAP && !enc.turnDone[id];
-  }
-
-  function startPass(enc, chars) {
-    enc.pass += 1;
-    enc.disrupted = {};
-    enc.turn = -1;
-    enc.turnDone = {};
-    enc.phase = 'declare';
-    for (const id of enc.order) if (!C.isActive(chars[id])) enc.conceded[id] = true;
-    advance(enc);
+  function eligible(enc, chars, id) {
+    return id != null && !enc.turnDone[id] && C.isActive(chars[id]) && apLeft(enc, id) >= CONFIG.minActionAP;
   }
 
   function currentActor(enc) {
-    return enc.phase === 'declare' ? enc.order[enc.turn] : null;
+    return enc.phase === 'turn' ? enc.order[enc.turn] : null;
   }
 
-  // Next character to take a turn in initiative order; after the last, the pass resolves.
-  function advance(enc) {
+  // On to the next character with a turn to take this round, in initiative order. When no one
+  // is left, the round ends.
+  async function advance(enc, chars, io) {
+    if (enc.phase === 'over') return;
     const n = enc.order.length;
     for (;;) {
       enc.turn += 1;
-      if (enc.turn >= n) {
-        enc.phase = 'resolve';
-        return;
-      }
-      if (eligible(enc, enc.order[enc.turn])) return;
+      if (enc.turn >= n) return finishRound(enc, chars, io);
+      if (eligible(enc, chars, enc.order[enc.turn])) { enc.phase = 'turn'; return; }
     }
   }
 
-  // Finish this turn for the pass; any AP left stays for later passes.
-  function endTurn(enc, id) {
+  // End of the round: hazards, spells and conditions tick, wounds bleed, the winded recover.
+  async function finishRound(enc, chars, io) {
+    const roller = io && io.roller;
+    if (G.Terrain && enc.tiles) await G.Terrain.endRound(enc, chars, roller, (t) => log(enc, t, 'hit'));
+    if (G.Magic && G.Magic.endRound) for (const line of G.Magic.endRound(enc, chars)) log(enc, line, 'pass');
+    endRound(enc, chars);
+  }
+
+  // Done with this turn: any AP left stays in hand for reactions until the round ends.
+  async function endTurn(enc, chars, id, io) {
     if (currentActor(enc) !== id) return;
     enc.turnDone[id] = true;
-    advance(enc);
+    await advance(enc, chars, io);
   }
 
-  // Done for the whole round: no more actions or guards until the next round.
-  function concede(enc, id) {
-    enc.conceded[id] = true;
-    if (currentActor(enc) === id) advance(enc);
-  }
-
-  // One entry point for a decision: a declaration, 'endTurn' or 'concede'.
-  // A declaration that can't be made ends the turn and returns the reason.
-  function submit(enc, chars, d) {
-    if (d.type === 'concede') return concede(enc, d.actor), null;
-    if (d.type === 'endTurn') return endTurn(enc, d.actor), null;
-    const err = declare(enc, chars, d);
-    if (err) endTurn(enc, d.actor);
+  // One entry point for a decision: an action, or 'endTurn'. An action that can't be taken
+  // ends the turn and returns the reason (so a confused AI can't loop).
+  async function submit(enc, chars, d, io) {
+    if (d.type === 'endTurn' || d.type === 'concede') { await endTurn(enc, chars, d.actor, io); return null; }
+    const err = await act(enc, chars, d, io);
+    if (err) await endTurn(enc, chars, d.actor, io);
     return err;
   }
 
-  // Where a character will be after its own declared moves.
+  // Everyone's positions are where they stand: actions resolve as they are taken.
   function projectedPos(enc, id) {
-    let p = enc.pos[id];
-    for (const d of enc.decls) if (d.actor === id && d.type === 'move' && !d.done) p = d.to;
-    return p;
-  }
-
-  // Where a character will stand when actions of the given pass resolve
-  // (moves take effect at the end of the pass in which they land).
-  function posAtPass(enc, id, pass) {
-    let p = enc.pos[id];
-    for (const d of enc.decls) if (d.actor === id && d.type === 'move' && !d.done && d.pass < pass) p = d.to;
-    return p;
+    return enc.pos[id];
   }
 
   function isGrappled(c) {
@@ -337,37 +312,6 @@
     return g.includes(primary) ? primary : g[g.length - 1];
   }
 
-  // Apply a weapon-handling declaration to a character (shared by planning and resolution).
-  function handle(c, type) {
-    if (type === 'drawSidearm') return takeInHand(c, c.sidearm);
-    if (type === 'readyPrimary') return takeInHand(c, primaryWeaponId(c));
-    if (type === 'pickUp') { const w = pickUpTarget(c); return w ? takeInHand(c, w) : null; }
-    if (type === 'dropWeapon') return dropHeld(c);
-    return null;
-  }
-  const HANDLING = ['drawSidearm', 'readyPrimary', 'pickUp', 'dropWeapon'];
-
-  // Attack options as they will be once this character's declared weapon handling
-  // (draw, drop, pick up) has resolved.
-  function plannedAttackOptions(enc, c) {
-    const keep = { wield: c.wield, dropped: c.status.dropped.slice() };
-    for (const d of enc.decls) if (d.actor === c.id && !d.done && HANDLING.includes(d.type)) handle(c, d.type);
-    const opts = C.attackOptions(c);
-    c.wield = keep.wield;
-    c.status.dropped = keep.dropped;
-    return opts;
-  }
-
-  // The weapon state after declared handling, for deciding what can be declared next.
-  function plannedHands(enc, c) {
-    const keep = { wield: c.wield, dropped: c.status.dropped.slice() };
-    for (const d of enc.decls) if (d.actor === c.id && !d.done && HANDLING.includes(d.type)) handle(c, d.type);
-    const out = { wield: C.wieldedWeapon(c) ? c.wield : null, dropped: c.status.dropped.slice() };
-    c.wield = keep.wield;
-    c.status.dropped = keep.dropped;
-    return out;
-  }
-
   // Everything the current actor may declare now, for the UI — with what conditions forbid
   // (calmed, mesmerized, in a frenzy, afraid, blinded) marked unavailable.
   function legalActions(enc, chars, id) {
@@ -377,63 +321,34 @@
     const no = (decl) => conditionForbids(enc, chars, c, decl);
     const mark = (o, decl) => { const f = no(decl); if (f) { o.affordable = false; o.why = f; } return !f; };
     for (const o of out.attacks) if (mark(o, { type: 'strike' })) for (const t of o.targets) if (no({ type: 'strike', target: t.id })) t.inReach = false;
-    for (const o of out.defenses) mark(o, { type: o.type });
     for (const m of out.maneuvers) if (mark(m, { type: m.type })) for (const t of m.targets) if (no({ type: m.type, target: t.id })) t.inReach = false;
     for (const o of out.spells || []) if (mark(o, { type: 'cast', option: o })) for (const t of o.targets || []) if (no({ type: 'cast', option: o, target: t.id })) t.inReach = false;
-    for (const o of out.readies || []) mark(o, { type: 'strike' });
     if (G.Conditions.has(c, 'mesmerized')) { out.move = null; for (const o of out.other) o.affordable = false; }
     return out;
   }
 
   function legalActionsRaw(enc, chars, id) {
     const c = chars[id];
-    const ap = enc.ap[id] || 0;
-    const left = passLeft(enc, id);
-    // An action can be started with any AP left this pass; the rest comes out of later passes.
-    const can = (cost) => cost <= ap && left >= CONFIG.minActionAP;
-    const me = posAtPass(enc, id, enc.pass);
+    const ap = apLeft(enc, id);
+    const can = (cost) => cost <= ap && ap >= CONFIG.minActionAP;
+    const me = enc.pos[id];
     const others = enc.ids.filter((o) => o !== id && !chars[o].status.dead);
-    const out = { ap, passLeft: left, passCap: passCap(enc, id), pass: enc.pass, attacks: [], defenses: [], guards: [], maneuvers: [], other: [], move: null, incoming: [], incomingLater: [] };
+    // Defences are not taken on your turn any more: they are reactions, asked for when a blow comes.
+    const out = { ap, pool: enc.apStart[id] || ap, attacks: [], defenses: [], maneuvers: [], other: [], move: null };
 
-    // Guards: ready a block, parry or dodge for the next attack, or the next from one attacker.
-    for (const kind of DEFENSE_TYPES) {
-      if (kind === 'offParry' && !C.offhandWeapon(c)) continue;
-      const cost = C.actionCost(c, kind);
-      const why = defenseUnavailable(c, kind, null, chars, enc);
-      out.defenses.push({ type: kind, ap: cost.ap, stamina: cost.stamina, affordable: can(cost.ap) && !why, spans: cost.ap > left, why });
-    }
-    out.guardAgainst = others.filter((o) => chars[o].side !== c.side && C.isActive(chars[o]));
-    out.readied = readiesUp(enc, id, enc.pass);
-    out.guards = guardsUp(enc, id, enc.pass);
-    // Attacks already declared at me: landing this pass, and slow ones landing later.
-    out.incoming = incomingAttacks(enc, id).filter((d) => d.pass === enc.pass);
-    out.incomingLater = incomingAttacks(enc, id).filter((d) => d.pass > enc.pass);
-
-    const planned = plannedAttackOptions(enc, c);
-    const spPlanned = enc.decls.filter((d) => d.actor === id && (d.type === 'strike' || d.type === 'cast') && d.option.spell).reduce((t, d) => t + d.option.spCost, 0);
+    const planned = C.attackOptions(c);
     for (const opt of planned) {
-      const why = attackUnavailable(enc, c, opt, spPlanned);
+      const why = attackUnavailable(enc, c, opt);
       out.attacks.push(Object.assign({}, opt, {
         affordable: can(opt.ap) && !why,
-        spans: opt.ap > left,
         why,
         targets: others.map((o) => {
-          const op = posAtPass(enc, o, enc.pass);
+          const op = enc.pos[o];
           const dd = dist(me, op);
           const line = G.Terrain && enc.tiles && dd >= 2 ? G.Terrain.lineCheck(enc, me, op, opt.ranged || opt.spell ? 'missile' : 'melee') : null;
           return { id: o, inReach: C.inRange(opt, dd) && !(line && line.blocked), tooClose: dd < (opt.minRange || 1), distance: dd, blockedBy: line && line.blocked ? line.by : null };
         }),
       }));
-    }
-
-    // Ready a thrust: hold the point; whoever steps closer into its reach this pass meets it.
-    out.readies = [];
-    if (CONFIG.readyStrike && !c.status.prone && !isGrappled(c) && !c.status.clinch) {
-      for (const opt of planned) {
-        if (!readyable(opt)) continue;
-        const why = attackUnavailable(enc, c, opt, spPlanned);
-        out.readies.push({ type: 'readyStrike', option: opt, name: `Ready ${opt.label.toLowerCase()}`, ap: opt.ap, stamina: opt.stamina, affordable: can(opt.ap) && !why, spans: opt.ap > left, why });
-      }
     }
 
     // Spells cast at a square, a foe or an ally (bolts are among the attacks above).
@@ -442,7 +357,7 @@
       for (const opt of G.Magic.spellOptions(c)) {
         if (opt.kind !== 'cast') continue;
         if (isGrappled(c) && opt.spell.shape !== 'blink') continue; // held: only a blink gets you out
-        const why = spellShort(c, opt, spPlanned);
+        const why = spellShort(c, opt);
         const targets = opt.target === 'square' ? null : enc.ids.filter((o) => {
           const t = chars[o];
           if (!t || t.status.dead) return false;
@@ -450,13 +365,13 @@
           if (opt.target === 'ally') return t.side === c.side || (opt.spell.shape === 'restore' && t.charmed && t.charmed.side === c.side);
           return t.side !== c.side && C.isActive(t);
         }).map((o) => {
-          const op = posAtPass(enc, o, enc.pass);
+          const op = enc.pos[o];
           const dd = dist(me, op);
           const line = G.Terrain && enc.tiles && dd >= 2 ? G.Terrain.lineCheck(enc, me, op, 'missile') : null;
           if (opt.spell.named) return { id: o, distance: dd, inReach: G.Magic.knowsName(c, chars[o]) };
           return { id: o, distance: dd, inReach: dd <= opt.maxRange && dd >= (opt.target === 'ally' ? 0 : opt.minRange) && !(line && line.blocked) };
         });
-        out.spells.push(Object.assign({}, opt, { affordable: can(opt.ap) && !why, spans: opt.ap > left, why, targets }));
+        out.spells.push(Object.assign({}, opt, { affordable: can(opt.ap) && !why, why, targets }));
       }
     }
 
@@ -468,9 +383,9 @@
       const cost = C.actionCost(c, kind);
       // Nothing to grab, trip or shove on the incorporeal (bait and reading still work).
       if (kind !== 'bait' && kind !== 'readIntent') for (const t of targets) if (chars[t.id] && chars[t.id].traits && chars[t.id].traits.incorporeal) t.inReach = false;
-      out.maneuvers.push({ type: kind, ap: cost.ap, stamina: cost.stamina, affordable: can(cost.ap) && targets.some((t) => t.inReach), spans: cost.ap > left, targets });
+      out.maneuvers.push({ type: kind, ap: cost.ap, stamina: cost.stamina, affordable: can(cost.ap) && targets.some((t) => t.inReach), targets });
     };
-    const near = (o) => ({ id: o, inReach: dist(me, posAtPass(enc, o, enc.pass)) <= reach });
+    const near = (o) => ({ id: o, inReach: dist(me, enc.pos[o]) <= reach });
     // Trips, disarms and shoves: free, or a trip or disarm from a clinch.
     if (!c.status.prone && !grappled && !c.status.grappling) {
       for (const kind of ['shove', 'trip', 'disarm']) {
@@ -478,7 +393,7 @@
         let r = reach;
         if (kind === 'trip' && hookWeapon(c)) r = WEAPONS[C.wieldedWeapon(c).type].reach;
         if (kind === 'shove') r = shoveReach(c);
-        pushManeuver(kind, others.filter((o) => !chars[o].status.unconscious).map((o) => ({ id: o, inReach: dist(me, posAtPass(enc, o, enc.pass)) <= r })));
+        pushManeuver(kind, others.filter((o) => !chars[o].status.unconscious).map((o) => ({ id: o, inReach: dist(me, enc.pos[o]) <= r })));
       }
     }
     // The grappling ladder.
@@ -499,7 +414,7 @@
       for (const kind of ['bait', 'readIntent']) {
         const r = CONFIG.social[kind].range;
         pushManeuver(kind, others.filter((o) => chars[o].side !== c.side && C.isActive(chars[o])).map((o) => {
-          const op = posAtPass(enc, o, enc.pass);
+          const op = enc.pos[o];
           const dd = dist(me, op);
           const sight = !(G.Terrain && enc.tiles && dd >= 2 && G.Terrain.lineCheck(enc, me, op, 'sight').blocked);
           return { id: o, inReach: dd <= r && sight, distance: dd };
@@ -509,7 +424,6 @@
     if (c.status.pinned) {
       // Pinned: only trying to break free.
       out.maneuvers = out.maneuvers.filter((m) => m.type === 'break');
-      out.defenses.forEach((o) => { o.affordable = false; o.why = 'Pinned'; });
       return out;
     }
 
@@ -519,20 +433,19 @@
       const cost1 = C.actionCost(c, 'move', { ap: 1 });
       const drag = !!c.status.grappling;
       out.move = {
-        squaresPerAP: spa, maxAP: ap, stamina: cost1.stamina, from: projectedPos(enc, id),
+        squaresPerAP: spa, maxAP: ap, stamina: cost1.stamina, from: enc.pos[id],
         maxSquares: drag ? 1 : Math.floor((ap * spa) / C.apScale()),
-        passSquares: drag ? 1 : Math.floor((left * spa) / C.apScale()), // as far as it can go and still land this pass
         drag,
       };
     }
 
     const addOther = (type, extra) => {
       const cost = C.actionCost(c, type);
-      out.other.push(Object.assign({ type, name: ACTIONS[type].name, ap: cost.ap, stamina: cost.stamina, affordable: can(cost.ap), spans: cost.ap > left }, extra || {}));
+      out.other.push(Object.assign({ type, name: ACTIONS[type].name, ap: cost.ap, stamina: cost.stamina, affordable: can(cost.ap) }, extra || {}));
     };
     const declared = (type) => enc.decls.some((d) => d.actor === id && d.type === type);
     if (c.status.prone && !declared('standUp')) addOther('standUp');
-    const hands = plannedHands(enc, c);
+    const hands = { wield: C.wieldedWeapon(c) ? c.wield : null, dropped: c.status.dropped.slice() };
     const sidearm = c.weapons.find((w) => w.id === c.sidearm);
     const primary = primaryWeaponId(c);
     const heldW = hands.wield ? c.weapons.find((w) => w.id === hands.wield) : null;
@@ -553,12 +466,12 @@
         if (seen[key]) continue;
         seen[key] = true;
         const cost = C.actionCost(c, 'windUp', { option: opt });
-        const why = opt.spell ? spellShort(c, opt, spPlanned) : null;
-        out.other.push({ type: 'windUp', option: opt, name: `Wind up: ${opt.label}`, ap: cost.ap, stamina: cost.stamina, affordable: can(cost.ap) && !why, spans: cost.ap > left, why });
+        const why = opt.spell ? spellShort(c, opt) : null;
+        out.other.push({ type: 'windUp', option: opt, name: `Wind up: ${opt.label}`, ap: cost.ap, stamina: cost.stamina, affordable: can(cost.ap) && !why, why });
       }
     }
     if (c.inventory.bandages > 0) {
-      const patients = enc.ids.filter((o) => chars[o].bleeds.length > 0 && !chars[o].status.dead && (o === id || dist(me, posAtPass(enc, o, enc.pass)) <= 1));
+      const patients = enc.ids.filter((o) => chars[o].bleeds.length > 0 && !chars[o].status.dead && (o === id || dist(me, enc.pos[o]) <= 1));
       if (patients.length) addOther('bandage', { targets: patients.map((o) => ({ id: o, inReach: true })) });
     }
     return out;
@@ -579,12 +492,12 @@
     return w ? w.id : null;
   }
 
-  function spellShort(c, opt, spPlanned) {
-    return G.Magic && opt.spCost > G.Magic.availableSP(c) - (spPlanned || 0) ? 'Not enough spell points' : null;
+  function spellShort(c, opt) {
+    return G.Magic && opt.spCost > G.Magic.availableSP(c) ? 'Not enough spell points' : null;
   }
 
-  // Why an attack can't be declared right now (beyond AP), or null.
-  function attackUnavailable(enc, c, opt, spPlanned) {
+  // Why an attack can't be made right now (beyond AP), or null.
+  function attackUnavailable(enc, c, opt) {
     if (opt.windUp) {
       const w = c.status.windUp;
       const key = C.optionKey(opt);
@@ -594,7 +507,7 @@
       if (w.round >= enc.round) return 'Release next round';
     }
     if (opt.ranged && opt.weaponId && !opt.natural && C.ammoLeft(c, opt) <= 0) return opt.arrowHead ? `No ${opt.arrowHead}s` : 'No arrows';
-    if (opt.spell) return spellShort(c, opt, spPlanned);
+    if (opt.spell) return spellShort(c, opt);
     return null;
   }
 
@@ -643,113 +556,156 @@
     return null;
   }
 
-  // Validate and record a declaration. Returns an error string or null.
-  function declare(enc, chars, decl) {
+  // Check an action and work out its cost. Returns { err } or { ap, stamina }; fills in decl.option.
+  function validate(enc, chars, decl) {
     const id = currentActor(enc);
-    if (decl.actor !== id) return 'Not your turn';
+    if (decl.actor !== id) return { err: 'Not your turn' };
     const c = chars[id];
     const forbid = conditionForbids(enc, chars, c, decl);
-    if (forbid) return forbid;
+    if (forbid) return { err: forbid };
     let ap, stamina;
-    const defense = DEFENSE_TYPES.includes(decl.type);
+    if (DEFENSE_TYPES.includes(decl.type)) return { err: 'Defences are reactions: they are offered when a blow comes' };
     if (decl.type === 'strike') {
       const key = C.optionKey(decl.option);
-      const opt = plannedAttackOptions(enc, c).find((o) => C.optionKey(o) === key);
-      if (!opt) return 'Attack not available';
-      const spPlanned = enc.decls.filter((d) => d.actor === id && (d.type === 'strike' || d.type === 'cast') && d.option.spell).reduce((t, d) => t + d.option.spCost, 0);
-      const why = attackUnavailable(enc, c, opt, spPlanned);
-      if (why) return why;
+      const opt = C.attackOptions(c).find((o) => C.optionKey(o) === key);
+      if (!opt) return { err: 'Attack not available' };
+      const why = attackUnavailable(enc, c, opt);
+      if (why) return { err: why };
+      if (!decl.target || !chars[decl.target]) return { err: 'Choose a target' };
+      const dd = dist(enc.pos[id], enc.pos[decl.target]);
+      if (dd > opt.maxRange) return { err: 'Out of reach' };
+      if (dd < (opt.minRange || 1)) return { err: 'Too close' };
       decl.option = opt;
       ap = opt.ap;
       stamina = opt.stamina;
-      if (!decl.target) return 'Choose a target';
-    } else if (defense) {
-      if (decl.against && (!chars[decl.against] || chars[decl.against].side === c.side)) return 'Guard against a foe';
-      const why = defenseUnavailable(c, decl.type, null, chars, enc);
-      if (why) return why;
-      ({ ap, stamina } = C.actionCost(c, decl.type));
     } else if (decl.type === 'cast') {
-      if (!G.Magic || !decl.option) return 'Choose a spell';
+      if (!G.Magic || !decl.option) return { err: 'Choose a spell' };
       const key = decl.option.spellKey;
       const opt = G.Magic.spellOptions(c).find((o) => o.kind === 'cast' && o.spellKey === key);
-      if (!opt) return 'Spell not available';
-      if (!C.castingHands(c) || (isGrappled(c) && opt.spell.shape !== 'blink')) return 'Needs a free hand';
-      const spPlanned = enc.decls.filter((d) => d.actor === id && (d.type === 'strike' || d.type === 'cast') && d.option.spell).reduce((t, d) => t + d.option.spCost, 0);
-      const why = spellShort(c, opt, spPlanned);
-      if (why) return why;
+      if (!opt) return { err: 'Spell not available' };
+      if (!C.castingHands(c) || (isGrappled(c) && opt.spell.shape !== 'blink')) return { err: 'Needs a free hand' };
+      const why = spellShort(c, opt);
+      if (why) return { err: why };
       if (opt.target === 'square') {
-        if (!decl.at || !G.Terrain.inGrid(enc, decl.at.x, decl.at.y)) return 'Choose a square';
-        const dd = dist(projectedPos(enc, id), decl.at);
-        if (dd > opt.maxRange || dd < opt.minRange) return 'Out of range';
-      } else if (!decl.target || !chars[decl.target]) return 'Choose a target';
+        if (!decl.at || !G.Terrain.inGrid(enc, decl.at.x, decl.at.y)) return { err: 'Choose a square' };
+        const dd = dist(enc.pos[id], decl.at);
+        if (dd > opt.maxRange || dd < opt.minRange) return { err: 'Out of range' };
+      } else if (!decl.target || !chars[decl.target]) return { err: 'Choose a target' };
       decl.option = opt;
       ap = opt.ap;
       stamina = 0;
-    } else if (decl.type === 'readyStrike') {
-      if (!CONFIG.readyStrike) return 'Unknown action';
-      if (!decl.option) return 'Choose a thrust to ready';
-      if (decl.against && (!chars[decl.against] || chars[decl.against].side === c.side)) return 'Ready it against a foe';
-      const key = C.optionKey(decl.option);
-      const opt = plannedAttackOptions(enc, c).find((o) => C.optionKey(o) === key && readyable(o));
-      if (!opt) return 'Nothing to ready';
-      if (c.status.prone || isGrappled(c) || c.status.clinch) return 'Not from here';
-      decl.option = opt;
-      // AP now; the stamina only if the thrust is made.
-      ap = opt.ap;
-      stamina = opt.stamina;
     } else if (decl.type === 'windUp') {
-      if (!decl.option) return 'Choose what to wind up';
+      if (!decl.option) return { err: 'Choose what to wind up' };
       const key = C.optionKey(decl.option);
-      const opt = plannedAttackOptions(enc, c).find((o) => C.optionKey(o) === key && o.windUp);
-      if (!opt) return 'Nothing to wind up';
-      if (!canWindUp(enc, c)) return 'Already winding up';
+      const opt = C.attackOptions(c).find((o) => C.optionKey(o) === key && o.windUp);
+      if (!opt) return { err: 'Nothing to wind up' };
+      if (!canWindUp(enc, c)) return { err: 'Already winding up' };
       decl.option = opt;
       ({ ap, stamina } = C.actionCost(c, 'windUp', { option: opt }));
     } else if (decl.type === 'move') {
-      const from = projectedPos(enc, id);
+      const from = enc.pos[id];
       const d = dist(from, decl.to);
-      if (d === 0) return 'Pick a different square';
+      if (d === 0) return { err: 'Pick a different square' };
+      if (c.status.prone || isGrappled(c) || c.status.clinch) return { err: c.status.prone ? 'Prone: stand up first' : 'Held fast' };
       // Walls are walked around; rough ground, brambles and climbing out of a pit cost extra.
       let squares = d;
       if (G.Terrain && enc.tiles) {
-        if (!G.Terrain.passable(enc, decl.to.x, decl.to.y)) return 'A wall stands there';
+        if (!G.Terrain.passable(enc, decl.to.x, decl.to.y)) return { err: 'A wall stands there' };
         const pc = G.Terrain.pathCost(enc, from, decl.to, c);
-        if (!pc.reaches) return 'No way through';
+        if (!pc.reaches) return { err: 'No way through' };
         squares = pc.cost;
       }
+      if (c.status.grappling && d > 1) return { err: 'Dragging someone: one square at a time' };
+      if (enc.ids.some((o) => o !== id && C.isActive(chars[o]) && enc.pos[o].x === decl.to.x && enc.pos[o].y === decl.to.y)) return { err: 'Someone stands there' };
+      // Allies can be passed; a foe on the way has to be gone around.
+      const route = G.Terrain ? G.Terrain.path(enc, from, decl.to, c) : [decl.to];
+      if (route.some((q) => enc.ids.some((o) => chars[o].side !== c.side && C.isActive(chars[o]) && enc.pos[o].x === q.x && enc.pos[o].y === q.y))) return { err: 'A foe is in the way' };
       const need = C.moveCost(c, squares);
       ({ ap, stamina } = C.actionCost(c, 'move', { ap: need }));
       decl.from = from;
+      decl.squares = squares;
     } else {
-      if (!ACTIONS[decl.type]) return 'Unknown action';
+      if (!ACTIONS[decl.type]) return { err: 'Unknown action' };
       ({ ap, stamina } = C.actionCost(c, decl.type));
-      if (['trip', 'disarm', 'shove', 'bandage', 'bait', 'readIntent'].concat(GRAPPLE_STEPS).includes(decl.type) && !decl.target) return 'Choose a target';
-      if (GRAPPLE_STEPS.includes(decl.type)) {
+      if (['trip', 'disarm', 'shove', 'bandage', 'bait', 'readIntent'].concat(GRAPPLE_STEPS).includes(decl.type) && !decl.target) return { err: 'Choose a target' };
+      if (ATTACK_TYPES.includes(decl.type) || decl.type === 'bait' || decl.type === 'readIntent') {
         const m = legalActions(enc, chars, id).maneuvers.find((x) => x.type === decl.type);
-        if (!m || !m.targets.some((t) => t.id === decl.target)) return 'Not possible from here';
+        if (!m || !m.targets.some((t) => t.id === decl.target && t.inReach)) return { err: 'Not possible from here' };
       }
     }
-    if (ap > enc.ap[id]) return 'Not enough AP';
-    if (passLeft(enc, id) < CONFIG.minActionAP) return 'No AP left this pass';
-    decl.ap = ap;
-    decl.stamina = stamina;
-    decl.declaredPass = enc.pass;
-    const lands = payAP(enc, id, ap);
-    // A guard is up at once (any AP over the cap is owed from later passes); everything
-    // else lands when fully paid, unless CONFIG.spanLands says it lands now.
-    decl.pass = defense || decl.type === 'readyStrike' || CONFIG.spanLands === 'now' ? enc.pass : lands;
+    if (ap > apLeft(enc, id)) return { err: 'Not enough AP' };
+    if (stamina && !C.tireless(c) && !(CONFIG.exertionCanKnockOut ? c.stamina >= stamina : c.stamina > stamina)) return { err: 'Too exhausted' };
+    return { ap, stamina };
+  }
+
+  // Take an action on your turn: it is paid for and resolves at once, with whatever reactions it
+  // draws (defences, opportunity strikes). io: { roller, react }. Returns an error string or null.
+  async function act(enc, chars, decl, io) {
+    if (enc.phase !== 'turn') return 'Not now';
+    const v = validate(enc, chars, decl);
+    if (v.err) return v.err;
+    const id = decl.actor;
+    decl.ap = v.ap;
+    decl.stamina = v.stamina;
     decl.n = ++enc.seq;
+    decl.round = enc.round;
     if (decl.target) decl.targetWasDown = !C.isActive(chars[decl.target]);
+    enc.ap[id] -= v.ap;
     enc.decls.push(decl);
-    if (passLeft(enc, id) < CONFIG.minActionAP) advance(enc);
+    enc.phase = 'acting';
+    try {
+      if (decl.type === 'move') await resolveMove(enc, chars, decl, io);
+      else await resolveAction(enc, chars, decl, io, Object.assign({}, enc.pos));
+    } finally {
+      decl.done = true;
+    }
+    settleGrapples(enc, chars);
+    for (const o of enc.order) if (!C.isActive(chars[o])) enc.turnDone[o] = true;
+    // A side wiped out mid-turn ends the round, and the fight, at once.
+    const sides = {};
+    for (const o of enc.ids) if (C.isActive(chars[o])) sides[chars[o].side] = true;
+    if (Object.keys(sides).length < 2) { await finishRound(enc, chars, io); return null; }
+    enc.phase = 'turn';
+    if (!eligible(enc, chars, id)) { enc.turnDone[id] = true; await advance(enc, chars, io); }
     return null;
+  }
+
+  // A move, square by square: around walls, past allies (not foes), out of foes' reach (each foe
+  // whose reach the step starts in may strike as they go; a hit stops the move), into runes, pits
+  // and hazards. AP for squares not walked is given back.
+  async function resolveMove(enc, chars, d, io) {
+    const a = chars[d.actor];
+    if (!payStamina(enc, a, d.stamina)) return;
+    const provoked = {};
+    const dragged = a.status.grappling ? chars[a.status.grappling] : null;
+    const steps = dragged ? [d.to] : G.Terrain ? G.Terrain.path(enc, enc.pos[a.id], d.to, a) : [d.to];
+    let walked = 0, why = '';
+    for (const q of steps) {
+      const from = enc.pos[a.id];
+      if (await opportunities(enc, chars, a, from, provoked, io)) { why = 'stopped'; break; }
+      if (!C.isActive(a)) { why = 'stopped'; break; }
+      if (enc.ids.some((o) => o !== a.id && chars[o].side !== a.side && C.isActive(chars[o]) && enc.pos[o].x === q.x && enc.pos[o].y === q.y)) { why = 'blocked'; break; }
+      enc.pos[a.id] = { x: q.x, y: q.y };
+      if (dragged) { enc.pos[dragged.id] = { x: from.x, y: from.y }; }
+      walked += G.Terrain && enc.tiles ? G.Terrain.stepCost(enc, q.x, q.y, a) : 1;
+      if (G.Terrain && enc.tiles && (await G.Terrain.enter(enc, chars, a, q.x, q.y, io && io.roller, (t) => log(enc, t, 'hit')))) { why = 'stops'; break; }
+    }
+    const at = enc.pos[a.id];
+    if (dragged && walked) log(enc, `${a.name} drags ${dragged.name} to (${at.x + 1}, ${at.y + 1}).`);
+    else if (walked) log(enc, `${a.name} moves to (${at.x + 1}, ${at.y + 1})${at.x !== d.to.x || at.y !== d.to.y ? ' and gets no farther' : ''}.`);
+    else if (why === 'blocked') log(enc, `${a.name}'s way is blocked.`, 'fizzle');
+    if (why && C.isActive(a)) {
+      // Stopped short: the squares not walked are given back, but a move always costs its first AP.
+      const used = Math.max(CONFIG.minActionAP, walked ? C.actionCost(a, 'move', { ap: C.moveCost(a, walked) }).ap : 0);
+      const back = Math.max(0, d.ap - used);
+      if (back) { enc.ap[a.id] += back; d.ap -= back; }
+    }
+    d.to = { x: at.x, y: at.y };
   }
 
   // How a declaration looks to a given viewer (Feint vs Read Attack).
   function describeDecl(enc, chars, d, viewerId) {
-    const r = describeBare(enc, chars, d, viewerId);
-    if (d.declaredPass != null && d.pass > d.declaredPass) r.text += ` — lands pass ${d.pass}`;
-    return r;
+    return describeBare(enc, chars, d, viewerId);
   }
 
   function describeBare(enc, chars, d, viewerId) {
@@ -763,12 +719,8 @@
       return { text: `${a.name}: ${d.option.label}${w ? ' — ' + Items.itemName(w) : ''} at ${tn} [${d.ap} AP]` };
     }
     if (DEFENSE_TYPES.includes(d.type)) {
-      const vs = d.against && chars[d.against] ? `${chars[d.against].name}'s next attack` : 'the next attack';
-      return { text: `${a.name}: ready to ${d.type} ${vs} [${d.ap} AP]` };
-    }
-    if (d.type === 'readyStrike') {
-      const vs = d.against && chars[d.against] ? chars[d.against].name : 'anyone';
-      return { text: `${a.name}: holds a ${d.option.label.toLowerCase()} ready for ${vs} who comes closer [${d.ap} AP]` };
+      const vs = d.against && chars[d.against] ? ` ${chars[d.against].name}` : '';
+      return { text: `${a.name}: ${ACTIONS[d.type].name.toLowerCase()} against${vs} [${d.ap} AP]` };
     }
     if (d.type === 'move') return { text: `${a.name}: move to (${d.to.x + 1}, ${d.to.y + 1}) [${d.ap} AP]` };
     if (d.type === 'windUp') return { text: `${a.name}: winds up ${d.option.label} [${d.ap} AP]` };
@@ -1080,9 +1032,8 @@
     let tail = '';
     if (st.dead) tail = ` ${target.name} is DEAD.`;
     else if (st.unconscious && !wasDown) tail = ` ${target.name} collapses, unconscious.`;
-    // Impact: the struck stop where they stand this pass, and a hard blow throws them back.
+    // Impact: a hard blow throws its target back.
     if (harmed && CONFIG.impact) {
-      (enc.struck || (enc.struck = {}))[target.id] = true;
       const landed = h.bluntToStamina + h.bluntToCON + (h.toCON + h.slashToAttrs) / 2;
       const back = Math.min(CONFIG.impact.knockbackMax, Math.floor(landed / CONFIG.impact.knockbackPer / sizeOf(target)));
       if (back > 0 && !option.spell && !st.dead && attacker !== target && enc.pos[attacker.id] && enc.pos[target.id] && G.Magic) {
@@ -1437,115 +1388,6 @@
 
   // ---- Resolution --------------------------------------------------------
   // Resolve everything that lands this pass, then start the next pass or end the round.
-  async function resolvePass(enc, chars, roller) {
-    enc.phase = 'resolving';
-    const p = enc.pass;
-    const rank = (id) => enc.order.indexOf(id);
-    const actsThisPass = enc.decls
-      .filter((d) => d.pass === p && !d.done && !HELD_TYPES.includes(d.type))
-      .sort((x, y) => rank(x.actor) - rank(y.actor) || x.n - y.n);
-    if (actsThisPass.length) {
-      log(enc, `Pass ${p}`, 'pass');
-      enc.struck = {};
-      const activeAtStart = {};
-      enc.ids.forEach((id) => (activeAtStart[id] = C.isActive(chars[id])));
-      const posAtStart = JSON.parse(JSON.stringify(enc.pos));
-      const moves = [];
-      for (const d of actsThisPass) {
-        const a = chars[d.actor];
-        if (!activeAtStart[d.actor]) {
-          log(enc, `${a.name} is down and cannot act (${describeDecl(enc, chars, d, d.actor).text.replace(a.name + ': ', '')}).`, 'fizzle');
-          continue;
-        }
-        if (d.type === 'move') {
-          moves.push(d);
-          continue;
-        }
-        await resolveAction(enc, chars, d, roller, posAtStart);
-      }
-      // Moves resolve after the pass's other actions; ties go to higher initiative.
-      const claimed = {};
-      for (const d of moves) {
-        const a = chars[d.actor];
-        if (a.status.prone || isGrappled(a) || a.status.clinch) {
-          log(enc, `${a.name} can't move (${a.status.prone ? 'prone' : 'grappled'}).`, 'fizzle');
-          continue;
-        }
-        if (CONFIG.impact && CONFIG.impact.stopsMove && enc.struck && enc.struck[a.id]) {
-          log(enc, `${a.name} is struck and stopped where they stand.`, 'fizzle');
-          continue;
-        }
-        // A holder drags the held fighter one square, into the square the holder leaves.
-        const dragged = a.status.grappling ? chars[a.status.grappling] : null;
-        if (dragged && dist(enc.pos[a.id], d.to) > 1) {
-          log(enc, `${a.name} can only drag ${dragged.name} one square.`, 'fizzle');
-          continue;
-        }
-        const key = d.to.x + ',' + d.to.y;
-        // Moves are in initiative order, so an earlier mover already holds the square.
-        const occupied = enc.ids.some((o) => o !== d.actor && C.isActive(chars[o]) && enc.pos[o].x === d.to.x && enc.pos[o].y === d.to.y);
-        if (claimed[key] || occupied) {
-          log(enc, `${a.name}'s move is blocked.`, 'fizzle');
-          continue;
-        }
-        if (!C.isActive(a)) continue;
-        if ((enc.disrupted || {})[a.id]) {
-          log(enc, `${a.name} is driven back and can't press on.`, 'fizzle');
-          continue;
-        }
-        if (!payStamina(enc, a, d.stamina)) continue;
-        claimed[key] = d.actor;
-        if (dragged) {
-          // Readied points: stepping closer into one meets it first; a hit stops the advance.
-          if (await stopThrusts(enc, chars, a, d.to, roller)) continue;
-          const left = enc.pos[d.actor];
-          enc.pos[d.actor] = { x: d.to.x, y: d.to.y };
-          enc.pos[dragged.id] = { x: left.x, y: left.y };
-          log(enc, `${a.name} drags ${dragged.name} to (${d.to.x + 1}, ${d.to.y + 1}).`);
-          continue;
-        }
-        // Square by square: around walls, past allies (not foes), into readied points, runes,
-        // pits and hazards, any of which can end the move early.
-        const steps = G.Terrain ? G.Terrain.path(enc, enc.pos[a.id], d.to, a) : [d.to];
-        let moved = false, why = '';
-        for (const q of steps) {
-          if (await stopThrusts(enc, chars, a, q, roller)) { why = 'stopped'; break; }
-          if (enc.ids.some((o) => o !== a.id && chars[o].side !== a.side && C.isActive(chars[o]) && enc.pos[o].x === q.x && enc.pos[o].y === q.y)) { why = 'blocked'; break; }
-          enc.pos[a.id] = { x: q.x, y: q.y };
-          moved = true;
-          if (G.Terrain && enc.tiles && (await G.Terrain.enter(enc, chars, a, q.x, q.y, roller, (t) => log(enc, t, 'hit')))) { why = 'stops'; break; }
-        }
-        const at = enc.pos[a.id];
-        if (moved) log(enc, `${a.name} moves to (${at.x + 1}, ${at.y + 1})${at.x !== d.to.x || at.y !== d.to.y ? ' and gets no farther' : ''}.`);
-        else if (why === 'blocked') log(enc, `${a.name}'s way is blocked.`, 'fizzle');
-      }
-    }
-    for (const d of enc.decls) if (d.pass === p) d.done = true;
-    settleGrapples(enc, chars);
-
-    // Another pass while anything is still on its way or anyone can still act. A pass in
-    // which nobody started or landed anything (everyone waited) ends the round.
-    const pending = enc.decls.some((d) => !d.done);
-    const started = enc.decls.some((d) => d.declaredPass === p && !HELD_TYPES.includes(d.type));
-    const sides = {};
-    for (const id of enc.ids) if (C.isActive(chars[id])) sides[chars[id].side] = true;
-    for (const id of enc.order) if (!C.isActive(chars[id])) enc.conceded[id] = true;
-    const canAct = enc.order.some((id) => !enc.conceded[id] && (enc.ap[id] || 0) >= CONFIG.minActionAP);
-    if (Object.keys(sides).length > 1 && (pending || (canAct && (started || actsThisPass.length)))) startPass(enc, chars);
-    else {
-      // Standing in a hazard hurts; fire burns what burns; terrain ticks down; conjured
-      // creatures fade.
-      if (G.Terrain && enc.tiles) await G.Terrain.endRound(enc, chars, roller, (t) => log(enc, t, 'hit'));
-      if (G.Magic && G.Magic.endRound) for (const line of G.Magic.endRound(enc, chars)) log(enc, line, 'pass');
-      endRound(enc, chars);
-    }
-  }
-
-  // Resolve passes until someone has to decide something (or the round ends).
-  async function resolveRound(enc, chars, roller) {
-    while (enc.phase === 'resolve') await resolvePass(enc, chars, roller);
-  }
-
   function payStamina(enc, c, cost) {
     if (!cost || C.tireless(c)) return true;
     const ok = CONFIG.exertionCanKnockOut ? c.stamina >= cost : c.stamina > cost;
@@ -1558,7 +1400,11 @@
     return true;
   }
 
-  async function resolveAction(enc, chars, d, roller, posAtStart) {
+  // Resolve one action now. pos: where everyone stands as it is made (an opportunity strike sees
+  // the mover still in the square they are leaving).
+  async function resolveAction(enc, chars, d, io, pos) {
+    const roller = io && io.roller;
+    const posAtStart = pos || enc.pos;
     const a = chars[d.actor];
     const t = d.target ? chars[d.target] : null;
 
@@ -1624,8 +1470,7 @@
         if (!(await castSpell(enc, a, d.option, roller))) return;
       }
 
-      // The target's guard meets it: one aimed at this attacker first, then a general one.
-      // A guard that can't meet this attack (a parry against an arrow) stays up for the next.
+      // The target may react: spend AP from their pool to block, parry or dodge (they see it coming).
       const name = d.type === 'strike' ? d.option.label : ACTIONS[d.type].name;
       // Displacement (monster trait): the target isn't quite where it appears to be.
       const disp = d.type === 'strike' && t.traits && t.traits.displacement;
@@ -1635,19 +1480,12 @@
         if (r <= Math.round(chance * 10)) return log(enc, `${a.name}'s ${name} passes through an illusion of ${t.name}.`, 'defend');
       }
       let failedDodge = false;
-      if (C.isActive(t)) {
-        const guard = guardsUp(enc, t.id, d.pass)
-          .filter((x) => (!x.against || x.against === d.actor) && !defenseUnavailable(t, x.type, d, chars, enc))
-          .sort((x, y) => (y.against === d.actor) - (x.against === d.actor) || x.n - y.n)[0];
-        const defs = [];
-        if (guard) {
-          const untouchable = guard.type === 'dodge' && C.rank(t, 'untouchable');
-          if (!untouchable) guard.used = true; // Untouchable: one dodge meets every attack that pass
-          defs.push(Object.assign({}, guard, { untouchable: untouchable && guard.paid }));
-          guard.paid = true;
-        }
-        for (const def of defs) {
-          if (!def.untouchable && !payStamina(enc, t, def.stamina)) continue;
+      const def = await askDefense(enc, chars, t, a, d, io);
+      if (def) {
+        // Chosen blind (Feint): a defence that can't meet this blow is spent for nothing.
+        const wrong = defenseUnavailable(t, def.type, d, chars, enc);
+        if (wrong) log(enc, `${t.name}'s ${ACTIONS[def.type].name.toLowerCase()} is wasted (${wrong.toLowerCase()}).`, 'fail');
+        else if (payStamina(enc, t, def.stamina)) {
           const chk = await defenseCheck(enc, chars, t, def.type, d, roller);
           if (chk.ok) {
             if (def.type === 'block') {
@@ -1760,8 +1598,7 @@
         if (d.type === 'bait') {
           const o = await opposed(roller, a, Math.floor(C.attr(a, 'CHA') / 2) + C.rank(a, 'feint'), 'Bait', t, Math.floor(C.attr(t, 'WIS') / 2) + C.rank(t, 'read_attack'), 'See through it');
           if (o.margin > 0) {
-            // The bait draws out their guards and leaves them off balance for the round.
-            for (const g of enc.decls) if (g.actor === t.id && DEFENSE_TYPES.includes(g.type) && !g.used) g.used = true;
+            // The bait leaves them off balance: they defend worse for the round.
             if (G.Conditions) G.Conditions.add(t, 'baited', { rounds: 1, src: a.id });
             log(enc, `${a.name} baits ${t.name}, who commits too early and is off balance (${o.a} vs ${o.b}).`, 'hit');
           } else log(enc, `${t.name} sees through ${a.name}'s bait (${o.a} vs ${o.b}).`, 'fail');
@@ -1932,8 +1769,6 @@
         enc.pos[t.id] = { x: nx, y: ny };
         moved++;
       }
-      // Driven back: whatever advance they had in mind this pass is spoiled.
-      if (moved || o.margin >= S.farMargin) (enc.disrupted || (enc.disrupted = {}))[t.id] = true;
       if (moved) log(enc, `${a.name} shoves ${t.name} back ${moved} square${moved > 1 ? 's' : ''} (${o.a} vs ${o.b}).`, 'hit');
       else if (o.margin >= S.farMargin) {
         knockDown(enc, t);
@@ -2096,8 +1931,8 @@
   }
 
   G.Combat = {
-    conditionForbids, ATTACK_TYPES, DEFENSE_TYPES, HELD_TYPES, readiesUp, readyable, shoveReach, log, rollDie, castSpell, knockDown, stability, releaseAll: clearGrapple,
-    createEncounter, autoPlace, startRound, currentActor, legalActions, declare, concede, endTurn, submit, describeDecl, passCap, passLeft,
-    vitalNeed, projectedPos, posAtPass, dist, defenseOdds, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolvePass, resolveRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
+    conditionForbids, ATTACK_TYPES, DEFENSE_TYPES, shoveReach, log, rollDie, castSpell, knockDown, stability, releaseAll: clearGrapple,
+    createEncounter, autoPlace, startRound, currentActor, legalActions, act, validate, endTurn, submit, describeDecl, apLeft, defenseOptions, opportunityOptions,
+    vitalNeed, projectedPos, dist, defenseOdds, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolveAction, finishRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

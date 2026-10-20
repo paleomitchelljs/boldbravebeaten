@@ -1,5 +1,59 @@
 # Simulation findings
 
+## Whole-pool turns with reactions replace passes (2026-10-19; `node tools/encounters.js`)
+
+**The change (the user's model).**
+- **Turns:** each character takes one turn per round and may spend their whole AP pool on it. Every action resolves as
+  it is taken.
+- **Reactions:** defences are no longer declared ahead. When a blow comes, the target may block, parry or dodge, paying
+  from the same pool. A step that starts inside a foe's melee reach lets that foe strike as the mover goes, and a hit
+  stops the move.
+- **Removed:** passes, the per-pass cap (`apPerPass`), late-landing actions (`spanLands`), guards (`guardLasts`), the held
+  point (`readyStrike`) and "struck, so you lose your move".
+- **Reinterpreted:** Feint now means the defender chooses a defence blind, and a wrong guess is wasted.
+- **The AI:**
+  - It keeps AP back for one cheap defence per foe still to act who could reach and hurt it.
+  - It defends when the blow's value through armour, times its odds, beats the AP. An AP is worth twice as much while
+    its own turn is still to come.
+  - It takes an opportunity strike when worth it.
+  - It prices opportunity strikes into where it moves.
+
+**Encounters, example party at level 1, 30 fights each.**
+
+| encounter | won, passes → now | dead per fight, passes → now |
+|---|---|---|
+| undercroft_1/rat_nest | 100% → 100% | 0.00 → 0.07 |
+| undercroft_1/guards_one | 100% → 100% | 0.13 → 0.33 |
+| undercroft_2/crew | 97% → 80% | 0.90 → 1.87 |
+| undercroft_2/store_guards | 100% → 100% | 0.10 → 0.10 |
+| barrow/squad | 70% → 27% | 1.53 → 3.13 |
+| barrow/horde | 57% → 13% | 1.33 → 1.63 |
+| barrow/knight | 0% → 0% | 3.13 → 3.97 |
+| trollhole/wolves | 100% → 90% | 0.60 → 0.93 |
+| trollhole/troll | 100% → 100% | 0.43 → 0.10 |
+
+**What the instrumented runs show (barrow/squad, 30 fights).**
+- **Opportunity strikes:** about 240 were offered and about 220 taken.
+  - The party drew most of them: about 6 per fight.
+  - Many came from the archer and the mage stepping away from skeletons that had reached them. That is the trade-off
+    the rule creates, not a bug.
+- **Defending:** the party defended about 80% of the blows it could; the skeletons about 60%.
+- **AP kept back:** about 3 of 10 AP at the end of each party turn.
+
+**Reading.**
+- **As expected, groups and the side that acts first gain most.** Two attackers drain one defender's pool, and the
+  second attacker's blows land unanswered.
+- **Fights against single big creatures got easier:** the troll lost most of its kills.
+- **Fights against armed groups got much deadlier:** skeletons, the horde, Rusk's crew.
+- **The AI is a large confounder.** Its reserve, its defend threshold and how it weighs walking past reach are first
+  drafts. Before retuning any rule number, tune the AI's choices and re-run.
+
+**Levers if it stays too deadly** (fundamentals, not monsters):
+- the AP cost of a parry or dodge relative to an attack;
+- the pool size;
+- whether a failed defence still costs its full AP;
+- making opportunity strikes optional per weapon (only reach weapons).
+
 ## The death knight as a recurring foe (`node sim/dk-scaling.js`, page: `sim/dk-scaling-page.js`)
 
 The death knight was run at levels 5, 10, 15 and 20, with a martial or caster build and four

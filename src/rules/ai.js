@@ -1,23 +1,24 @@
 /*
- * A declaration policy for computer-controlled combatants, also used by the
- * simulator. It only uses information the character could see: a strike hidden
- * by Feint is judged by what the attacker might be doing, not what they are doing.
+ * The policy for computer-controlled combatants, also used by the simulator. It only uses
+ * information the character could see: a blow hidden by Feint is judged by what the attacker
+ * might be doing, not what they are doing, and nobody sees anyone else's AP.
  *
- * choose() is called again and again during a character's turn until it returns
- * 'endTurn' (done for this pass) or 'concede' (done for the round).
+ * choose() is called again and again during a character's turn until it returns 'endTurn'.
+ * Each action resolves at once. Each turn decision, in order:
+ *   1. stand up; 2. release a wind-up if the target is in range; 3. grapple or get loose;
+ *   4. bandage, re-arm; 5. switch weapons when another fits the distance better; 6. occasional
+ *   trip/grapple; 7. keep a ranged weapon out of melee; 8. attack, or wind up when the delayed
+ *   blow is worth more; 9. move toward the distance its weapons like best; 10. end the turn.
+ * Throughout, it keeps AP back to defend with when foes still to act this round can reach it.
  *
- * Each turn decision, in order:
- *   1. stand up; 2. release a wind-up if the target is in range; 3. ready a guard;
- *   4. escape, bandage, re-arm; 5. switch weapons when another fits the distance
- *   better; 6. occasional trip/grapple; 7. keep a ranged weapon out of melee;
- *   8. attack, or wind up when the delayed blow is worth more; 9. move toward the
- *   distance its weapons like best; 10. end the round.
+ * react() answers out of turn: a defence when a blow comes, an opportunity strike when a foe
+ * leaves its reach.
  *
  * policy (all optional):
- *   maneuverRate  chance per declaration to try a trip/grapple when one is in reach (default 0.15)
+ *   maneuverRate  chance per action to try a trip/grapple when one is in reach (default 0.15)
  *   kickBias      multiplier on the value of kicks (default 1)
- *   defendFloor   minimum expected value before spending AP on a defense (default 1.5)
- *   cautious      think twice about spending the whole pass when a foe still to act can reach (default true)
+ *   defendFloor   minimum expected value before spending AP on a defence (default 1.5)
+ *   cautious      keep AP back for defences against foes still to act (default true)
  *   windUp        willingness to wind up (multiplier on its value; 0 = never; default 1)
  *   grappler      works up the grappling ladder: clinch, hold, pin, then stab or throw (default: has Grappler)
  *   kite          ranged characters back away from melee (default true)
@@ -90,7 +91,7 @@
     const me = chars[viewerId];
     if (decl.type !== 'strike') return { threat: MANEUVER_THREAT[decl.type] || 6, motion: 'maneuver' };
     const hidden = Combat.describeDecl(enc, chars, decl, viewerId).hidden;
-    const d = Combat.dist(Combat.posAtPass(enc, atk.id, decl.pass), Combat.posAtPass(enc, viewerId, decl.pass));
+    const d = Combat.dist(enc.pos[atk.id], enc.pos[viewerId]);
     if (!hidden) return { threat: hitValue(atk, me, decl.option, d), motion: decl.option.motion };
     const opts = C.attackOptions(atk);
     if (!opts.length) return { threat: 4, motion: 'swing' };
@@ -102,50 +103,75 @@
     return enc.ids.filter((o) => chars[o].side !== chars[id].side && C.isActive(chars[o]));
   }
 
-  // Ready a guard? Weighs attacks already declared at me that land this pass (aimed at
-  // that attacker) and foes still to take their turn this pass who could reach me (a
-  // general guard), against the guards already up.
-  function chooseGuard(enc, chars, id, la, P) {
+  // What an AP of mine is worth right now, in the units of hitValue: more while my own turn is
+  // still to come this round (it could be a blow), less once I have had it (it can only defend).
+  function apWorth(enc, id) {
+    const S = C.apScale();
+    const turnAhead = !enc.turnDone[id] && enc.order.indexOf(id) >= Math.max(0, enc.turn) && Combat.currentActor(enc) !== id;
+    return (turnAhead ? 1.0 : 0.45) / S;
+  }
+
+  // AP to keep back on my turn for defences: one cheapest defence for each foe still to act this
+  // round who could reach me and would hurt me (armor that shrugs off their blows needs no reserve).
+  function reserveAP(enc, chars, id, P) {
+    if (!P.cautious) return 0;
     const c = chars[id];
-    const threats = [];
-    for (const d of la.incoming) {
-      if (!C.isActive(chars[d.actor]) || Combat.GRAPPLE_STEPS.includes(d.type)) continue; // guards don't meet grapples
-      const { threat, motion } = perceivedThreat(enc, chars, d, id);
-      const seen = !Combat.describeDecl(enc, chars, d, id).hidden;
-      threats.push({ threat, motion, prob: 1, against: d.actor, decl: seen ? d : null, attacker: chars[d.actor], option: seen && d.type === 'strike' ? d.option : null });
-    }
+    const me = enc.pos[id];
+    const costs = Combat.DEFENSE_TYPES.filter((k) => !Combat.defenseUnavailable(c, k, null, chars, enc) && (k !== 'offParry' || C.offhandWeapon(c))).map((k) => C.actionCost(c, k).ap);
+    if (!costs.length) return 0;
+    const cheapest = Math.min(...costs);
     const myTurn = enc.order.indexOf(id);
-    const me = Combat.posAtPass(enc, id, enc.pass);
+    let n = 0;
     for (const f of enemiesOf(enc, chars, id)) {
-      if (enc.order.indexOf(f) < myTurn || enc.turnDone[f] || Combat.passLeft(enc, f) <= 0) continue;
+      if (enc.turnDone[f] || enc.order.indexOf(f) <= myTurn) continue;
       const foe = chars[f];
-      const d = Combat.dist(me, Combat.posAtPass(enc, f, enc.pass));
-      let best = 0, bestOpt = null;
+      const d = Combat.dist(me, enc.pos[f]);
+      const walk = Math.floor((Combat.apLeft(enc, f) * C.squaresPerAP(foe)) / C.apScale() / 2);
+      let worst = 0;
       for (const o of C.attackOptions(foe)) {
-        if (!C.inRange(o, d) || o.ap > Combat.passLeft(enc, f) + Combat.passCap(enc, f)) continue;
         if (o.windUp && !(foe.status.windUp && foe.status.windUp.key === C.optionKey(o))) continue;
         if (o.ranged && o.weaponId && C.ammoLeft(foe, o) <= 0) continue;
-        const v = hitValue(foe, c, o, d);
-        if (v > best) { best = v; bestOpt = o; }
+        if (d - (o.ranged || o.spell ? 0 : walk) > (o.maxRange || 1)) continue;
+        worst = Math.max(worst, hitValue(foe, c, o, Math.max(o.minRange || 1, Math.min(d, o.maxRange || 1))));
       }
-      if (best > 0) threats.push({ threat: best, motion: bestOpt.motion, prob: 0.6, against: null, attacker: foe, option: bestOpt, decl: { type: 'strike', actor: f, option: bestOpt } });
+      if (worst >= 2) n++;
     }
-    threats.sort((x, y) => y.threat * y.prob - x.threat * x.prob);
-    const open = threats.slice(la.guards.length); // the guards already up cover the worst ones
-    let pick = null;
-    for (const th of open.slice(0, 1)) {
-      for (const o of la.defenses) {
-        if (!o.affordable) continue;
-        if (th.decl && Combat.defenseUnavailable(c, o.type, th.decl, chars, enc)) continue;
-        if (o.type === 'offParry' && th.motion !== 'thrust') continue;
-        const p = Combat.defenseOdds(c, o.type, th.motion, th.attacker, th.option);
-        let value = p * th.threat * th.prob;
-        if (o.type === 'dodge' && C.rank(c, 'roll_with_it')) value += (1 - p) * 0.5 * th.threat * th.prob;
-        value -= (0.6 * o.ap) / C.apScale() + 0.3 * o.stamina;
-        if (value >= P.defendFloor && (!pick || value > pick.value)) pick = { value, decl: { actor: id, type: o.type, against: th.against } };
+    return Math.min(2, n) * cheapest;
+  }
+
+  // Out of turn. req.kind 'defend': { actor, attacker, decl, hidden, options: [{type, ap, stamina, odds}] }
+  // → a defence type or null. req.kind 'opportunity': { actor, target, options: [attack options] }
+  // → an option or null.
+  function react(enc, chars, req) {
+    const c = chars[req.actor];
+    const P = Object.assign({}, DEFAULTS, c.policy || {});
+    const per = apWorth(enc, req.actor);
+    if (req.kind === 'defend') {
+      const atk = chars[req.attacker];
+      const { threat, motion } = perceivedThreat(enc, chars, req.decl, req.actor);
+      let pick = null;
+      for (const o of req.options) {
+        if (o.type === 'offParry' && (req.hidden || motion !== 'thrust')) continue;
+        const p = o.odds != null ? o.odds : 0.4;
+        let v = p * threat;
+        if (o.type === 'dodge' && C.rank(c, 'roll_with_it')) v += (1 - p) * 0.5 * threat;
+        v -= per * o.ap + 0.3 * o.stamina;
+        if (v >= P.defendFloor && (!pick || v > pick.v)) pick = { v, type: o.type };
       }
+      return pick ? pick.type : null;
     }
-    return pick;
+    if (req.kind === 'opportunity') {
+      const t = chars[req.target];
+      const d = Combat.dist(enc.pos[req.actor], enc.pos[req.target]);
+      let pick = null;
+      for (const o of req.options) {
+        // About even odds the mover answers it; still a free blow at someone walking away.
+        const v = hitValue(c, t, o, d) * 0.6 - per * o.ap - 0.3 * o.stamina;
+        if (v >= P.defendFloor && (!pick || v > pick.v)) pick = { v, o };
+      }
+      return pick ? pick.o : null;
+    }
+    return null;
   }
 
   // For planning, an attack that needs a wind-up counts at its full two-round AP cost.
@@ -190,16 +216,29 @@
   // The distance this loadout likes best against a target: the best of
   // (my rate − RISK × their rate), and among near-equal choices the farthest.
   // If nothing scores above zero, fall back to my best raw rate (someone has to fight).
-  // The cost of getting from distance `from` in to `d` past a foe who can hold a long thrust
-  // ready: you may have to take it on the way in (counted at half, once).
+  // The cost of getting from distance `from` in to `d` past a foe whose reach is longer than d:
+  // the step out of that reach toward them is an opportunity strike (counted at half, once).
   function entryCost(c, target, d, from) {
-    if (!G.CONFIG.readyStrike || from == null || d >= from) return 0;
+    if (!G.CONFIG.opportunityStrikes || from == null || d >= from) return 0;
     let worst = 0;
     for (const o of C.attackOptions(target)) {
-      if (!Combat.readyable(o) || o.maxRange < d || o.maxRange < 2) continue;
-      worst = Math.max(worst, rate(target, c, o, Math.min(from, o.maxRange)));
+      if (o.ranged || o.spell || o.windUp || (o.maxRange || 1) <= d) continue;
+      worst = Math.max(worst, hitValue(target, c, o, Math.min(from, o.maxRange)));
     }
     return worst * 0.5;
+  }
+
+  // What walking away from here costs: every foe whose reach I stand in may strike as I go.
+  function leaveCost(enc, chars, id) {
+    if (!G.CONFIG.opportunityStrikes) return 0;
+    let total = 0;
+    for (const f of enemiesOf(enc, chars, id)) {
+      const opts = Combat.opportunityOptions(enc, chars, chars[f], enc.pos[id]);
+      if (!opts.length) continue;
+      const d = Combat.dist(enc.pos[id], enc.pos[f]);
+      total += Math.max(...opts.map((o) => hitValue(chars[f], chars[id], o, d))) * 0.5;
+    }
+    return total;
   }
 
   function preferredDistance(c, target, opts, from) {
@@ -258,58 +297,6 @@
   }
 
   // Best square within the move budget for a goal distance to the target.
-  // Readied points (visible) that a step to `to` would walk into: foes holding a thrust whose
-  // reach the step enters, coming closer.
-  function pointsInTheWay(enc, chars, id, from, to) {
-    const me = chars[id];
-    return enc.decls.filter((d) => {
-      if (d.type !== 'readyStrike' || d.used || d.pass !== enc.pass || chars[d.actor].side === me.side) return false;
-      if (d.against && d.against !== id) return false;
-      if (!C.isActive(chars[d.actor])) return false;
-      const hp = Combat.projectedPos(enc, d.actor);
-      const d0 = Combat.dist(from, hp), d1 = Combat.dist(to, hp);
-      return d1 < d0 && d1 <= d.option.maxRange;
-    });
-  }
-
-  // Before walking onto a readied point: put a guard up against its holder first, or don't go.
-  function approach(enc, chars, id, la, mv) {
-    if (!mv || mv.type !== 'move') return mv;
-    const points = pointsInTheWay(enc, chars, id, la.move.from, mv.to);
-    if (!points.length) return mv;
-    const c = chars[id];
-    const holder = points[0].actor;
-    const covered = la.guards.some((g) => !g.against || g.against === holder);
-    if (covered) return mv;
-    let pick = null;
-    for (const o of la.defenses) {
-      if (!o.affordable) continue;
-      const p = Combat.defenseOdds(c, o.type, 'thrust', chars[holder], points[0].option);
-      if (p > 0.25 && (!pick || p > pick.p)) pick = { p, decl: { actor: id, type: o.type, against: holder } };
-    }
-    return pick ? pick.decl : null;
-  }
-
-  // Should I hold my point ready for a foe who has declared a step closer this pass?
-  function readyChoice(enc, chars, id, la) {
-    if (!la.readies || la.readied.length) return null;
-    const c = chars[id];
-    const hp = Combat.projectedPos(enc, id);
-    // Only against a move already declared: anyone still to act would see the point and wait.
-    let best = null;
-    for (const f of enemiesOf(enc, chars, id)) {
-      const mv = enc.decls.find((d) => d.actor === f && d.type === 'move' && d.pass === enc.pass && !d.done);
-      if (!mv) continue;
-      const d0 = Combat.dist(mv.from, hp), d1 = Combat.dist(mv.to, hp);
-      for (const r of la.readies) {
-        if (!r.affordable || !(d1 < d0 && d1 <= r.option.maxRange)) continue;
-        const v = hitValue(c, chars[f], r.option, Math.min(d0, r.option.maxRange));
-        if (!best || v > best.v) best = { v, decl: { actor: id, type: 'readyStrike', option: r.option, against: f } };
-      }
-    }
-    return best ? best.decl : null;
-  }
-
   // ---- Casting (magic overhaul) -------------------------------------------------------
   // Value of each cast spell in the same units as an attack's rate (stamina-equivalent points
   // per AP). Rough by design: hold a melee foe off with a wall, a pit or roots; hazards and
@@ -530,6 +517,18 @@
     const taken = new Set();
     for (const o of enc.ids) if (o !== id && C.isActive(chars[o])) { const q = Combat.projectedPos(enc, o); taken.add(q.x + ',' + q.y); }
     const foePos = foes.map((f) => Combat.projectedPos(enc, f));
+    // Opportunity strikes: a route that starts inside a foe's reach, or ends deeper inside it than
+    // its edge, gives that foe a free blow (about half its worth; less from one who has had its turn).
+    const provokers = G.CONFIG.opportunityStrikes ? foes.map((f) => {
+      const foe = chars[f];
+      let reach = 0, worst = 0;
+      for (const o of C.attackOptions(foe)) {
+        if (o.ranged || o.spell || o.windUp) continue;
+        reach = Math.max(reach, o.maxRange || 1);
+        worst = Math.max(worst, hitValue(foe, c, o, Math.min(o.maxRange || 1, 2)));
+      }
+      return { at: Combat.projectedPos(enc, f), reach, cost: worst * (enc.turnDone[f] ? 0.25 : 0.5) };
+    }).filter((p) => p.reach) : [];
     // With terrain about: walk around walls (cost map), keep out of hazards this side can see.
     const terrain = G.Terrain && enc.tiles && Object.keys(enc.tiles).length;
     const map = terrain ? G.Terrain.costMap(enc, from, c) : null;
@@ -551,7 +550,7 @@
         if (need > la.ap) continue;
         const dd = Combat.dist({ x, y }, tp);
         let score = Math.abs(dd - goal) * 10 + need / C.apScale() + hazard;
-        if (need > la.passLeft) score += 4; // lands a pass later
+        for (const p of provokers) if (Combat.dist(from, p.at) <= p.reach || Combat.dist({ x, y }, p.at) < p.reach) score += p.cost * 2;
         if (avoid) {
           // Stay out of every foe's reach if possible, and out of corners you can't leave.
           for (const fp of foePos) if (Combat.dist({ x, y }, fp) <= avoid) score += 25;
@@ -579,15 +578,10 @@
     const ap = la.ap;
     const endTurn = { actor: id, type: 'endTurn' };
     if (P.grappler == null) P.grappler = C.rank(c, 'grappler') > 0;
-    // One move per pass: it lands at the end of the pass, so a second one would plan from a
-    // square the character hasn't reached yet.
-    const movedThisPass = enc.decls.some((d) => d.actor === id && d.type === 'move' && d.declaredPass === enc.pass);
-    if (movedThisPass) la.move = null;
-    // Foes who still take a turn this pass and can reach me.
-    const myTurn = enc.order.indexOf(id);
-    const threatened = enemiesOf(enc, chars, id).some((f) => enc.order.indexOf(f) > myTurn && !enc.turnDone[f] && Combat.passLeft(enc, f) > 0 &&
-      foeRate(chars[f], c, Combat.dist(Combat.posAtPass(enc, id, enc.pass), Combat.posAtPass(enc, f, enc.pass))) > 0);
-    const minDefense = Math.min(...['block', 'parry', 'dodge'].map((k) => C.actionCost(c, k).ap));
+    // AP to keep back for defences against foes still to act this round, and whether this turn
+    // has already done something (after the first action, the reserve is not dipped into).
+    const reserve = reserveAP(enc, chars, id, P);
+    const acted = enc.decls.some((d) => d.actor === id && d.round === enc.round && !d.reaction && !d.opportunity);
     const S = C.apScale();
     let foes = enemiesOf(enc, chars, id);
     // In a frenzy (Rage) the nearest body is the foe, friend or not; confused, anyone near.
@@ -596,7 +590,7 @@
       const near = enc.ids.filter((o) => o !== id && chars[o] && C.isActive(chars[o])).sort((x, y) => Combat.dist(me, Combat.projectedPos(enc, x)) - Combat.dist(me, Combat.projectedPos(enc, y)));
       if (near.length) foes = G.Conditions.flag(c, 'confused') ? [near[Math.floor(rng() * Math.min(3, near.length))]] : [near[0]];
     }
-    const at = (x) => Combat.posAtPass(enc, x, enc.pass);
+    const at = (x) => enc.pos[x];
 
     // 1. Get up; tear free of webs.
     const stand = la.other.find((o) => o.type === 'standUp' && o.affordable);
@@ -639,10 +633,6 @@
       const t = cl && cl.targets.find((x) => x.inReach && foes.includes(x.id));
       if (t) return { actor: id, type: 'clinch', target: t.id };
     }
-
-    // 3. Ready a guard against the attack most worth stopping.
-    const def = chooseGuard(enc, chars, id, la, P);
-    if (def) return def.decl;
 
     // 4. Bandage, re-arm.
     const band = la.other.find((o) => o.type === 'bandage' && o.affordable);
@@ -716,16 +706,17 @@
       const reach = threatReach(chars, foes);
       if (near.d <= reach + 1 && ap >= C.moveCost(c, 2) + S) {
         const mv = planMove(enc, chars, id, la, near.id, Math.max(pref.d, reach + 2), foes, reach);
-        if (mv && Combat.dist(mv.to, Combat.projectedPos(enc, near.id)) > near.d) return approach(enc, chars, id, la, mv) || endTurn;
+        // Backing off draws a blow from every foe whose reach I'm in: only worth it against a light one.
+        if (mv && Combat.dist(mv.to, Combat.projectedPos(enc, near.id)) > near.d && leaveCost(enc, chars, id) <= 3) return mv;
       }
     }
 
-    // 7a. Bait a foe out of the guard they have up, or read the intent of the one I'm fighting,
-    // when there's AP left after it for a blow.
+    // 7a. Bait a foe who will defend (one still to take their turn, so likely with AP in hand), or
+    // read the intent of the one I'm fighting, when there's AP left after it for a blow.
     const bait = la.maneuvers.find((m) => m.type === 'bait' && m.affordable);
     const blowAP = Math.min(...usable.filter((o) => !o.spell).map((o) => o.ap).concat([99]));
-    if (bait && la.passLeft >= bait.ap + Math.min(blowAP, 99) && blowAP < 99) {
-      const guarded = bait.targets.find((x) => x.inReach && foes.includes(x.id) && enc.decls.some((g) => g.actor === x.id && Combat.DEFENSE_TYPES.includes(g.type) && !g.used && g.pass === enc.pass) && usable.some((o) => C.inRange(o, x.distance)));
+    if (bait && !acted && la.ap >= bait.ap + Math.min(blowAP, 99) + reserve && blowAP < 99) {
+      const guarded = bait.targets.find((x) => x.inReach && foes.includes(x.id) && !enc.turnDone[x.id] && usable.some((o) => C.inRange(o, x.distance)));
       if (guarded && Math.floor(C.attr(c, 'CHA') / 2) + C.rank(c, 'feint') >= Math.floor(C.attr(chars[guarded.id], 'WIS') / 2)) return { actor: id, type: 'bait', target: guarded.id };
     }
     const read = la.maneuvers.find((m) => m.type === 'readIntent' && m.affordable);
@@ -736,10 +727,6 @@
       if (close && Math.floor(C.attr(c, 'WIS') / 2) + C.rank(c, 'read_attack') >= Math.floor(C.attr(chars[close.id], 'CHA') / 2)) return { actor: id, type: 'readIntent', target: close.id };
     }
 
-    // 7b. Hold the point for a foe who is about to step in.
-    const ready = readyChoice(enc, chars, id, la);
-    if (ready) return ready;
-
     // 8. Attack now, or wind up for a bigger blow next round.
     let best = null;
     for (const atk of usable) {
@@ -747,7 +734,9 @@
       for (const t of atk.targets) {
         if (!t.inReach || !foes.includes(t.id)) continue;
         let v = rate(c, chars[t.id], atk, t.distance) * P.kickBias ** (atk.unarmed === 'kick' ? 1 : 0);
-        if (P.cautious && threatened && la.passLeft - atk.ap < minDefense) v *= 0.85;
+        // Digging into the AP kept for defence: never after the first action of the turn; the first
+        // blow is still worth something, a little less.
+        if (la.ap - atk.ap < reserve) { if (acted) continue; v *= 0.85; }
         if (!best || v > best.v) best = { v, decl: { actor: id, type: 'strike', option: atk, target: t.id } };
       }
     }
@@ -755,7 +744,7 @@
     // Spells cast at squares, foes or friends, when one is worth more than the best blow.
     const castBest = castChoice(enc, chars, id, la, foes);
     if (castBest && castBest.v > (best ? best.v : 0)) return castBest.decl;
-    if (winds.length && P.windUp > 0 && enc.pass <= 2) {
+    if (winds.length && P.windUp > 0 && !acted) {
       let bestW = null;
       for (const w of winds) {
         const release = la.attacks.find((o) => C.optionKey(o) === C.optionKey(w.option)) || w.option;
@@ -774,18 +763,18 @@
     }
     // Step to a better distance when it is clearly better than fighting from here.
     const hereNet = (best ? best.v : 0) - RISK * foeRate(target, c, near.d);
-    if (la.move && !rangedLoadout && pref.d !== near.d && pref.net > hereNet + Math.max(1, Math.abs(hereNet)) && ap >= C.moveCost(c, Math.abs(pref.d - near.d)) + S) {
-      const mv = approach(enc, chars, id, la, planMove(enc, chars, id, la, near.id, pref.d, foes, 0));
+    if (la.move && !rangedLoadout && pref.d !== near.d && pref.net > hereNet + Math.max(1, Math.abs(hereNet)) + leaveCost(enc, chars, id) && ap >= C.moveCost(c, Math.abs(pref.d - near.d)) + S) {
+      const mv = planMove(enc, chars, id, la, near.id, pref.d, foes, 0);
       if (mv) return mv;
     }
     if (best && best.v > 0.2) return best.decl;
 
     // 9. Move toward the distance this loadout likes best.
     const goal = pref.rate > 0 ? pref.d : 1;
-    const mv = approach(enc, chars, id, la, planMove(enc, chars, id, la, near.id, goal, foes, rangedLoadout && P.kite ? threatReach(chars, foes) : 0));
+    const mv = planMove(enc, chars, id, la, near.id, goal, foes, rangedLoadout && P.kite ? threatReach(chars, foes) : 0);
     if (mv) return mv;
     return endTurn;
   }
 
-  G.AI = { choose, hitValue, perceivedThreat, preferredDistance, DEFAULTS };
+  G.AI = { choose, react, reserveAP, hitValue, perceivedThreat, preferredDistance, DEFAULTS };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

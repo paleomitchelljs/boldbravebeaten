@@ -163,13 +163,13 @@ async function fight(spec) {
   };
 }
 
-// Drive one round with the AI: turns and pass resolution.
+// Drive one round with the AI: each turn's actions resolve as taken; the AI answers every reaction.
 async function playRound(enc, chars, roller, rng) {
+  const io = { roller };
   let guard = 1000;
-  while ((enc.phase === 'declare' || enc.phase === 'resolve') && guard-- > 0) {
-    if (enc.phase === 'resolve') { await Combat.resolvePass(enc, chars, roller); continue; }
+  while (enc.phase === 'turn' && guard-- > 0) {
     const id = Combat.currentActor(enc);
-    Combat.submit(enc, chars, AI.choose(enc, chars, id, rng, chars[id].policy));
+    await Combat.submit(enc, chars, AI.choose(enc, chars, id, rng, chars[id].policy), io);
   }
   if (guard <= 0) throw new Error('round did not finish');
 }

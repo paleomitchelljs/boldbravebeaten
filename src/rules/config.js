@@ -54,21 +54,9 @@
     // movement covers twice as many of them as the Specifics formula gives.
     moveScale: 2,
     moveSpdDivisor: 4,
-    // PROVISIONAL (trial): most AP one character may spend in a single pass, in base AP
-    // (× apScale, so 4 on the sheet). A turn can hold several cheap actions up to the cap; an
-    // action costing more keeps paying from the next passes' allowance. null = no cap.
-    apPerPass: 2,
-    // When an action spills past this pass's allowance it lands:
-    //   'late' — at the end of the pass in which it is fully paid (slow actions are telegraphed)
-    //   'now'  — this pass, and the overspend is owed from the next passes (recovery time)
-    // Guards always go up at once.
-    spanLands: 'late',
-    // PROVISIONAL: a guard (a readied block, parry or dodge) meets the next attack that lands on
-    // you, or the next from the attacker you name. It lasts until used or:
-    //   'pass'  — the end of the pass it was readied in (so AP saved for the last passes buys
-    //             attacks the spent can't answer)
-    //   'round' — the end of the round
-    guardLasts: 'pass',
+    // PROVISIONAL (the user's turn model): a turn spends as much of the AP pool as the character
+    // likes; each action resolves at once; AP kept back pays for reactions (block, parry, dodge, an
+    // opportunity strike) on others' turns. No per-pass cap, no passes.
     minActionAP: 1, // costs never drop below 1 AP or 0 stamina
     minStrikeAP: 1, // floor for weapon strikes specifically (tunable separately)
     minStrikeStamina: 0, // floor for weapon strikes' stamina
@@ -243,21 +231,21 @@
     // 5+ knocks them down instead.
     // PROVISIONAL (user asked for ways to stop an advance or push a foe back): fendReach — a
     // long weapon (reach 2+) shoves at range 2 with the haft or point; shieldBonus — a ready
-    // shield adds to the shove. A shove that moves or floors a foe spoils their move that pass.
+    // shield adds to the shove.
     shove: { twoHandBonus: 2, farMargin: 5, fendReach: 2, shieldBonus: 1 },
     // PROVISIONAL (the user asked for in-combat charm and wisdom actions): Bait — d10 + ⌊CHA/2⌋
-    // + Feint against d10 + ⌊WIS/2⌋: the foe's guards are drawn out (spent) and they defend at
+    // + Feint against d10 + ⌊WIS/2⌋: the foe is drawn off balance and defends at
     // −2 for the rest of the round. Read intent (cheap, 1 AP on the sheet) — the reader rolls
     // d10 + ⌊WIS/2⌋ + Read Attack against tn + ⌊CHA/2⌋ + Feint (the foe's, unseen). Made it: the
     // foe's true intent and, for the round, +2 to defend against them and to beat their defenses.
     // Missed by less than misreadBy: nothing to go on. Missed by misreadBy or more: a confident
     // misread — a false intent and −2 — that looks just like a true read. Range: in sight.
     social: { bait: { range: 3 }, readIntent: { range: 4, tn: 5, misreadBy: 4 }, readBonus: 2 },
-    // PROVISIONAL: Ready a thrust (a long melee thrust: sword, rapier, spear). Declared on your
-    // turn for its AP (stamina only if made); lasts the pass. A foe whose move this pass brings
-    // them closer and into its reach is thrust at first, where they enter the reach; a hit stops
-    // their advance. Guards meet it as usual. Optionally aimed at one foe.
-    readyStrike: true,
+    // PROVISIONAL (the user chose opportunity strikes): a step that starts inside a foe's melee
+    // reach lets that foe strike at the mover as they go, once per move, paid from the foe's AP.
+    // A hit stops the move where it is. Leaving an adjacent foe provokes; walking up to a sword
+    // does not; walking up to a spear does (you leave its reach-2 square on the way in).
+    opportunityStrikes: true,
 
     // ---- Wind-up (PROVISIONAL) --------------------------------------------
     // Motions that must be wound up in an earlier round before they can be released.
@@ -495,8 +483,7 @@
     //   1 CON per crushPer points over, on top of the stamina it takes.
     // Knockback: a blow that lands throws its target back 1 square per knockbackPer points landed
     //   (blunt in full, cuts and stabs at half), ÷ the target's size, up to knockbackMax squares.
-    // A fighter struck during a pass loses that pass's move: they stop where they were hit.
-    impact: { crushAt: 8, crushPer: 2, knockbackPer: 8, knockbackMax: 3, stopsMove: true },
+    impact: { crushAt: 8, crushPer: 2, knockbackPer: 8, knockbackMax: 3 },
 
     // ---- Shields ----------------------------------------------------------
     // PROVISIONAL: wear per block is multiplied by this (fewer hits before a shield fails).
@@ -575,9 +562,9 @@
   // Every PROVISIONAL choice, shown on the Rules tab so nothing is hidden.
   CONFIG.provisional = [
     'AP scale ×2: every base AP cost and the AP pool are doubled (pool 8–12); feats still cut a flat 1 AP. Chosen by simulation.',
-    'Rounds, turns and passes: a round starts with initiative; characters take turns in initiative order; one set of everyone\'s turns is a pass, and the pass resolves at its end. Passes repeat until no one has actions left.',
-    'Guards: on your turn you ready a block, parry or dodge. It meets the next attack that lands on you this pass, or the next one from a foe you name; it lasts until used or the end of the pass. A guard that can\'t meet an attack (a parry against an arrow) stays up for the next one. Within a pass, attacks land in initiative order, so the fastest attacker meets a general guard first.',
-    'AP per pass (trial): at most 2 base AP (4 on the sheet) per pass. A turn may hold several actions up to that. An action costing more keeps paying from the next passes and lands at the end of the pass in which it is fully paid (a 6-AP swing lands a pass later). Guards go up at once and borrow any overspend from the next pass. A pass in which no one starts or lands anything ends the round.',
+    'Rounds and turns (the user\'s model): a round starts with initiative; each character takes one turn in initiative order and may spend their whole AP pool on it; every action resolves as it is taken. The round ends when everyone has had their turn; unspent AP is lost.',
+    'Reactions: defences are not declared ahead. When a blow comes, the target may block, parry or dodge, paying the AP from their pool on the spot (shown with the odds). AP spent on your turn is AP you cannot defend with; a fighter out of AP takes what comes on their armor. A Feint the defender cannot read hides the blow: they choose blind, and a defence that cannot meet it (a parry against a power swing) is wasted. Untouchable: after your first dodge in a round, further dodges that round cost nothing.',
+    'Opportunity strikes: a step that starts inside a foe\'s melee reach lets that foe strike as the mover goes, once per move, from the foe\'s AP; a hit stops the move (AP for squares not walked is refunded). Leaving an adjacent foe provokes; walking up to a sword does not; walking up to a spear does.',
     'Stamina scale ×3: every base stamina cost is tripled. Chosen by simulation so the stamina curve matches the Outline.',
     'Piercing through armor: each leftover point rolls a d10 and reaches CON on ≤ pass-through × 10 (plate 2, other full armor 5). Chosen by simulation over rounding.',
     'Armor wear per hit is a third of (blunt + converted slashing); armor keeps at least 75% of its mitigation until destroyed.',
@@ -591,11 +578,10 @@
     'Bows (not in the design docs): shortbow arrow 5 P, range 2–12, 3 AP, single action; longbow 7 P, range 2–16, drawn one round and loosed the next; −2 damage at long range; arrows can be blocked or dodged, not parried; no STR bonus; one arrow per shot.',
     'Arrows and armor (history): armor catches arrows better than a thrust. Extra piercing protection against arrows: padded +2, leather, mail and scale +1, plate 0. Two arrowheads: broadheads cut terrible wounds (bleed ×1.5) but metal armor (mail, scale, plate) stops them better (+1); bodkins do 1 less damage but slip through metal armor (−2 to its protection). A longbow hit, expected CON (broadhead / bodkin): unarmored 7 / 6, padded 2 / 1.5, mail 2 / 3, scale 1.5 / 2.5, plate 0.4 / 0.8.',
     'Weapons from physics: each weapon has a mass, a length, hands and a point (depth, width), an edge or a head. Damage: point depth/4 piercing; edge (2 + 3√(mass × length × grip)) slashing; head 1 + 6√(head mass × length × grip) blunt. Speed: thrusts cost more with mass, swings with √(mass × length), the longsword costing what the motion table lists. STR adds strBonus × 0.25–0.5 to a thrust (by wound width) and × mass/1.4 (× 1.5 two-handed, up to 1.5) to a swing. A piercing wound bleeds damage × width/4 over 2 + depth/15 rounds.',
-    'Ready a thrust: on your turn, hold a long thrust (sword, rapier, spear) ready for its AP; stamina only if it is made. It lasts the pass. A foe whose move this pass brings them closer and into its reach meets it first, struck where they enter the reach (no inside-reach penalty); a hit stops their advance. Guards meet it as usual; it can be aimed at one foe.',
-    'Fend off and push back: with a long weapon (reach 2+) a shove reaches 2 squares; a ready shield adds +1. A shove that drives a foe back or floors them also spoils their move that pass.',
+    'Fend off and push back: with a long weapon (reach 2+) a shove reaches 2 squares; a ready shield adds +1.',
     'Ward (verb) and Blink (verb): Ward + Force soaks 3 × magnitude points of spells and missiles; Ward + Wind turns half the missiles aside; Ward + an element halves that element and keeps off its after-effects; Ward + Mind keeps out baits. Blink steps up to 4 squares through walls and out of any hold, roots or webs. Wind blows now hurl a target back 2 squares.',
-    'Bait and Read intent (in-combat charm and wisdom): Bait (2 AP on the sheet, within 3 squares) is d10 + ⌊CHA/2⌋ + Feint against d10 + ⌊WIS/2⌋ + Read Attack: the foe\'s guards are drawn out and spent, and they defend at −2 for the rest of the round. Read intent (1 AP, within 4, in sight): the reader rolls d10 + ⌊WIS/2⌋ + Read Attack against 5 + the foe\'s ⌊CHA/2⌋ + Feint, a number they don\'t see. Made it: the foe\'s true intent (what they have committed to this round, feints seen through) and +2 to defend against them and to beat their defenses. Missed by 1–3: nothing to go on. Missed by 4 or more: a confident misread — a false intent and −2 — reported just like a true read. Hex + Mind baits by magic (WIL resists); Bless + Mind gives foresight (true reads of every foe).',
-    'Impact: blunt past armor beyond 8 points breaks bones (1 CON per 2 points over, ÷ size for big bodies) as well as winding; a blow that lands throws its target back 1 square per 8 points landed (blunt in full, cuts and stabs at half; ÷ size; up to 3); anyone struck during a pass loses that pass\'s move. A parry meets force with force: the attacker adds ⌊(blow − half my weapon\'s blow)/4⌋ + ⌊(blow − my weapon\'s blow)/2⌋ (+ motion) against my d10 + agility + Parry Training — equal weapons parry as before or a little easier; a giant\'s club against a sword is hopeless, against a strong two-hander with Parry Training a chance. Shields already wear by force, shatter past their threshold, and break outright under a power blow from as hard a material.',
+    'Bait and Read intent (in-combat charm and wisdom): Bait (2 AP on the sheet, within 3 squares) is d10 + ⌊CHA/2⌋ + Feint against d10 + ⌊WIS/2⌋ + Read Attack: they are drawn off balance and defend at −2 for the rest of the round. Read intent (1 AP, within 4, in sight): the reader rolls d10 + ⌊WIS/2⌋ + Read Attack against 5 + the foe\'s ⌊CHA/2⌋ + Feint, a number they don\'t see. Made it: the foe\'s true intent (what they have committed to this round, feints seen through) and +2 to defend against them and to beat their defenses. Missed by 1–3: nothing to go on. Missed by 4 or more: a confident misread — a false intent and −2 — reported just like a true read. Hex + Mind baits by magic (WIL resists); Bless + Mind gives foresight (true reads of every foe).',
+    'Impact: blunt past armor beyond 8 points breaks bones (1 CON per 2 points over, ÷ size for big bodies) as well as winding; a blow that lands throws its target back 1 square per 8 points landed (blunt in full, cuts and stabs at half; ÷ size; up to 3); A parry meets force with force: the attacker adds ⌊(blow − half my weapon\'s blow)/4⌋ + ⌊(blow − my weapon\'s blow)/2⌋ (+ motion) against my d10 + agility + Parry Training — equal weapons parry as before or a little easier; a giant\'s club against a sword is hopeless, against a strong two-hander with Parry Training a chance. Shields already wear by force, shatter past their threshold, and break outright under a power blow from as hard a material.',
     'Weapon weight and strength (TUNED): a weapon has a natural speed strength can\'t beat (light and short is quick; long travels farther), and a strain: its load (mass for a thrust; mass with the leverage of its length for a swing) over the wielder\'s capacity (0.3 kg per STR point, ×1.5 two-handed, +10% per Heavy Weapon Training rank). Within capacity it swings at its natural speed; past it AP and stamina rise with strain²; past 3× it is too ungainly to use. A man (STR 7) can barely lift a giant\'s club; an ogre swings it like a sword.',
     'Ogre and hill giant; size and grip: big creatures (trait size: ogre 1.5, giant 2.5) take vital wounds less often (the wound roll\'s target ÷ size) and bleed less per wound (÷ size): a man-sized wound is shallow in a big body. Grip (giant 5, ogre 2) adds to grapple rolls: a giant seizes a man in one hand. The ogre (level 8, STR 23, CON 21) swings a crude giant club and its fists; no regeneration. The hill giant (level 12, STR 28, CON 26) swings a giant club one-handed, hurls boulders (range 2–10, 14 blunt, can knock down) and grapples.',
     'Drakes, wyverns, the constrictor and the golem: fliers (drake, wyvern) pass over rough ground, pits, traps, hazards and walls that aren\'t solid (solid walls still stop them) and are slippery to grab. The drake (level 8) has drake scales (P4 S4 B2), a bite, claws, a reach-2 wing buffet that can knock you down, 1.5× movement and fire breath (Burst + Fire, Strong for a bigger one). The wyvern (level 10) has heavier scales (P5 S5 B3), a reach-2 bite, a venomous stinger (3 CON a round over 4 rounds at full depth) and a crushing wing beat. The giant constrictor grapples beyond any human (Grappler III, STR 18) and crushes whoever it holds every round (−8 stamina, −1 CON), but it has one victim at a time and thin scales. The stone golem is immune to magic: spells do nothing to it and it shrugs off conditions; it never tires.',
@@ -609,7 +595,7 @@
     'Wound roll: a blow that reaches the body rolls a d10; on 10 × chance or less it is a vital wound. Piercing chance = depth/100 (dagger 1, swords 2, spear and greatsword 3 on the d10): triple CON damage, double bleeding. Cuts: chance = edge/10: the cut takes its damage again from CON. Armor guards the vitals: padded ×0.6, leather ×0.5, mail ×0.3, scale ×0.25, plate ×0.1 (×1.5 half armor, ×2 partial).',
     'WIL split from WIS (the user\'s call): eight attributes. WIL is resolve: magic defense, resisting fear and compulsion, and stamina regeneration (⌊(CON + WIL)/4⌋ − armor). WIS stays judgment and perception. Older characters get WIL = their WIS.',
     'Monster attributes go past the human range (1–10, 13 with Conditioning feats), up to 30: bears and trolls STR 16–20, a stone golem 22, a troll chieftain 24. The usual formulas apply to the raw number (damage bonus ⌊(STR−5)/2⌋, grappling ⌊STR/2⌋, stamina, death at CON 0).',
-    'Monsters (draft): natural weapons are always ready and can\'t be dropped; natural armor can\'t be looted. Traits: knockdown bites, pack bonus (+1 damage per packmate beside the target), venom (poison up to 2 CON a round for 3 rounds, no more than the wound; bandages don\'t stop it), rust (corrodes metal armor and shields), displacement (each attack first rolls a d10 to find the real creature: arrows miss on 1–5, blows on 1–2), springy chitin (a blow that lands costs the attacker 3 stamina), sticky webs (each layer adds 2 AP and 3 stamina to every action, up to two layers; one layer comes loose each round; tear free with d10 + ⌊STR/2⌋ ≥ 8, or burn them), shield-crushing blows, regeneration (unless burned), tireless (undead and constructs: no stamina, damage to attributes, no bleeding or venom), resistances (skeletons: no piercing, half slashing), nimble, slippery, leaping, and boss multipliers on AP, per-pass allowance and stamina.',
+    'Monsters (draft): natural weapons are always ready and can\'t be dropped; natural armor can\'t be looted. Traits: knockdown bites, pack bonus (+1 damage per packmate beside the target), venom (poison up to 2 CON a round for 3 rounds, no more than the wound; bandages don\'t stop it), rust (corrodes metal armor and shields), displacement (each attack first rolls a d10 to find the real creature: arrows miss on 1–5, blows on 1–2), springy chitin (a blow that lands costs the attacker 3 stamina), sticky webs (each layer adds 2 AP and 3 stamina to every action, up to two layers; one layer comes loose each round; tear free with d10 + ⌊STR/2⌋ ≥ 8, or burn them), shield-crushing blows, regeneration (unless burned), tireless (undead and constructs: no stamina, damage to attributes, no bleeding or venom), resistances (skeletons: no piercing, half slashing), nimble, slippery, leaping, and boss multipliers on AP and stamina.',
     'Magic (overhaul, phase 1): a spell is a verb, a noun and at most one modifier; cost = the sum of the words. Verbs (studied, Magic: words feats) set the shape: Strike (a bolt, range 1–2, magnitude 6), Launch (a bolt, 2–12, 5), Burst (radius 1 at 2–8, 4), Cover (ground hazard, radius 1, 3 rounds), Build (a wall 3 squares across, 3 rounds), Open (a pit), Inscribe (a hidden rune on an adjacent square), Hex (a bane, 3 rounds, resisted), Bless (a boon, 3 rounds), Conjure (a creature for 4 rounds). Nouns (found in the world) set what it is: Fire (burns; hot ground; wall of fire; kindled blades), Frost (slows; ice; ice wall; numbs; frost ward), Lightning (straight through metal armor; shocks; charged ground; storm wall; haste), Wind (hurls back; swirling winds that send missiles astray; wind wall; freedom of movement), Earth (stone; rough ground; stone wall; pits; slows; stoneskin), Vine (thorns that root; brambles; bramble wall; barkskin), Life (withers the living — CON, no armor; withering bane; blessing closes wounds and innervates; raises the dead), Force (knocks down; force wall; shielded). Modifiers: Strong (+3, wound up), Wide (bigger area, longer wall), Long (twice as long), Far (twice the range), Lingering (half now, the rest burns on). Resisting: caster d10 + ⌊INT/2⌋ + Casting against the target d10 + ⌊attribute/2⌋ (DEX/SPD to dodge an area or a pit). Areas and hazards hit friends too. Casting costs 2 base AP (4 on the sheet) unless the verb says more.',
     'Magic feat tiers count feats across all four magic sub-trees (otherwise Casting and Fire Affinity can never pass rank I).',
     'Plate: +1 stamina per action and −3 regeneration (Specifics: +2 and −4), tuned in the arena.',
@@ -617,7 +603,6 @@
     'Defense checks: block is d10 + Shield Training against the shield\'s number. Parry and dodge are opposed rolls: defender d10 + Training + ⌊(DEX + SPD)/4⌋ (armor lowers both) against attacker d10 + ⌊(STR + SPD)/4⌋, +1 for a two-handed swing, +2 for a power swing; a parry also faces +1 per weight class the attacking weapon has over the parrying one. Ties go to the defender. A power blow can\'t be parried, only dodged or blocked.',
     'Parrying dagger: held in the off hand (no shield, no two-handed weapon). It stabs (off-hand thrust) and gives an Off-hand parry (1 AP on the sheet ×2, +1 to the roll) that meets thrusts only.',
     'A successful parry or dodge negates the strike completely.',
-    'Within a pass, reach is checked against positions at the start of that pass; moves take effect afterwards.',
     'Actions cannot be paid if they would drop your own stamina to 0.',
     'Unconscious characters do not regenerate in combat. Heavy-armor negative regen always applies.',
     'Excess blunt beyond remaining stamina is lost; later hits go to attributes.',
