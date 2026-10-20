@@ -32,10 +32,10 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   beats balance; styles get their place from encounters built around them).
 - [ ] Reach by motion (swords swing 1 and thrust 2, two-handers 2 and 3, spears 4) and points against armor (burst,
   find a gap, or turned): playtest. Open questions from sim/FINDINGS.md:
-  - plate's edge over mail between swordsmen is gone (75/17 → 48/52): if plate should win, lighten its encumbrance
-    against mail's rather than raise its protection;
-  - the level-1 party bleeds more in padding (rat-nest deaths 0.02 → 0.21, horde 1.59 → 2.70): a gap in padding lets a
-    whole bite in. Levers: padded's gap number (armor.yaml), or gap hits taking the pass-through roll;
+  - V4 adopted (gap hits take the pass-through roll, no automatic 10, mail resists 1.3): plate beats mail 92–5 in
+    duels, armor order is monotonic. The warhammer is the worst weapon against plate (1%) and the longsword dominates
+    duels in mail (82%): see sim/FINDINGS.md and the user's armor research (next item);
+  - the level-1 party still bleeds a little more in padding than before the pierce rule (rat-nest deaths 0.02 → 0.17);
   - plate spreads glancing blows but not crushing ones (`dissipate: {glancing: 0.5, crushing: 0}`); spreading
     crushing blows too costs maces their place against plate (2–13% in the all-plate sweep);
   - the scythe has no thrust at all ("nearly useless" would need a butt-jab face, which is rules code);

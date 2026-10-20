@@ -660,6 +660,7 @@
     let punch = (def.punch && def.punch[face]) || 0;
     if (punch && motion !== 'shoot') {
       punch *= (CONFIG.motionMultiplier[motion] || 1) * Math.max(0.5, 1 + ((CONFIG.pierce && CONFIG.pierce.strPer) || 0) * strBonus(c));
+      if (face === 'point' && def.punch.pointMax != null) punch = Math.min(punch, def.punch.pointMax);
       punch = Math.round(punch * Items.weaponEfficacy(w) * 100) / 100;
     }
     return {

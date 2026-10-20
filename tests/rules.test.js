@@ -1763,17 +1763,31 @@ test('a point against armor: it bursts through, finds a gap, or is turned (the u
   assert.strictEqual(stab('rapier', 'padded').pierce, 'burst');
   assert.strictEqual(stab('rapier', 'leather').pierce, 'burst');
   assert.ok(stab('rapier', 'mail').gap, 'mail: the rapier must find a gap');
-  assert.strictEqual(stab('spear', 'mail').pierce, 'burst', 'a spear bursts iron mail');
-  assert.ok(stab('spear', 'mail', { material: 'steel' }).gap, 'but not steel');
+  assert.ok(stab('rapier', 'mail', null, { STR: 10 }).gap, 'however strong the arm: the blade bends');
+  assert.strictEqual(stab('longsword', 'mail').pierce, 'burst', 'a longsword thrust bursts iron mail');
+  assert.ok(stab('longsword', 'mail', { material: 'steel' }).gap, 'but not steel');
+  assert.strictEqual(stab('spear', 'mail', { material: 'steel' }).pierce, 'burst', 'a spear bursts even steel');
   assert.strictEqual(stab('heavySpear', 'mail', { material: 'steel' }).pierce, 'burst');
   assert.ok(stab('heavySpear', 'plate').gap, 'nothing bursts plate');
-  assert.strictEqual(stab('longsword', 'mail', { material: 'bronze' }).pierce, 'burst', 'bronze is softer');
-  // Skill and feats find gaps: DEX and Find the Gap raise the odds.
+  assert.strictEqual(stab('dagger', 'mail', { material: 'bronze' }).gap ? 'gap' : 'burst', 'gap', 'a dagger needs a gap even in bronze');
+  // Skill and feats find gaps: DEX and Find the Gap raise the odds; an average fighter finds none in plate.
   const clumsy = stab('rapier', 'mail', null, { DEX: 3 }), deft = stab('rapier', 'mail', null, { DEX: 9 });
   assert.ok(deft.gap.chance > clumsy.gap.chance);
-  assert.ok(stab('rapier', 'plate').gap.chance <= stab('rapier', 'mail').gap.chance);
-  assert.ok(stab('rapier', 'plate').gap.chance >= 0.1, 'a 10 always finds one');
-  // The roll: a gap puts all the piercing in; failing, the point lands as a little blunt.
+  assert.strictEqual(stab('rapier', 'plate').gap.chance, 0, 'no lucky 10');
+  assert.ok(stab('rapier', 'plate', null, { DEX: 10 }).gap.chance > 0, 'skill does it');
+  // Bows: a longbow bodkin bursts mail, a shortbow's doesn't.
+  const shot = (bow, armorType) => {
+    const a = armed('A', bow);
+    a.inventory.bodkins = 3;
+    const t = fighter('T');
+    t.armor = Items.makeArmor(armorType, 'full', 'average');
+    const o = C.attackOptions(a).find((x) => x.arrowHead === 'bodkin');
+    return Combat.computeHit(a, t, o, { distance: 4 });
+  };
+  assert.strictEqual(shot('longbow', 'mail').pierce, 'burst');
+  assert.ok(shot('shortbow', 'mail').gap);
+  // The roll: through a gap the piercing takes the pass-through roll (CONFIG.pierce.gapPass); failing, the
+  // point lands as a little blunt.
   const run = async (die) => {
     const a = armed('A', 'rapier', { side: 'party' });
     const t = fighter('T', { side: 'enemy' });
@@ -1782,12 +1796,13 @@ test('a point against armor: it bursts through, finds a gap, or is turned (the u
     const before = t.stamina;
     const enc = { hitThisRound: {}, fortressUsed: {}, log: [], round: 1 };
     const o = opt(a, (x) => x.motion === 'thrust');
-    const r = await Combat.applyHit(enc, { [a.id]: a, [t.id]: t }, a, t, o, roller(1, [die, 10]));
+    // Dice: the gap roll (a DEX-5 rapier needs 9 against mail's 10), six pass-through d10s, the wound roll.
+    const r = await Combat.applyHit(enc, { [a.id]: a, [t.id]: t }, a, t, o, roller(1, [die, 1, 1, 1, 1, 1, 1, 10]));
     return { r, con: t.damage.CON, stamina: before - t.stamina, wear: Items.weaponMaxDurability(a.weapons[0]) - Items.weaponDurability(a.weapons[0]) };
   };
   const found = await run(10);
   assert.match(found.r.text, /finds a gap/);
-  assert.ok(found.con >= opt(armed('X', 'rapier'), (x) => x.motion === 'thrust').damage[0], 'all of it reaches the body');
+  assert.strictEqual(found.con, opt(armed('X', 'rapier'), (x) => x.motion === 'thrust').damage[0], 'every point that passes reaches the body');
   const turned = await run(1);
   assert.match(turned.r.text, /turns the point/);
   assert.strictEqual(turned.con, 0);

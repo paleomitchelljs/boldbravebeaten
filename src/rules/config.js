@@ -124,14 +124,21 @@
     //   pass-through roll above, as every point did before. (Sending all of it through made padding nearly
     //   useless: level-1 encounter deaths up by half, sim/FINDINGS.md.)
     //   Gap: otherwise d10 + ⌊DEX/gapDiv⌋ + feats (+ prone, half-sword) ≥ the armor's gap number (armor.yaml,
-    //   + coverageGap): all the piercing reaches the body, the armor's P mitigation bypassed; a 10 always finds
-    //   one. A pinned target always gives one.
+    //   + coverageGap). natural10: a 10 always finds one (false: skill and feats alone). Through a gap the
+    //   armor's P mitigation is bypassed, and (gapPass) the piercing takes the pass-through roll; without
+    //   gapPass all of it goes in. A pinned target always gives one, and a half-sword thrust or a pinned or
+    //   prone target goes in whole (pronePassThrough).
+    //   TUNED (sim, the user's call: "thrusts to find a gap should be less effective"; V4 in sim/FINDINGS.md):
+    //   gapPass true, natural10 false. With a whole gap hit and an automatic 10, one lucky thrust killed a
+    //   plate wearer outright (28 of mail's 50 wins over plate).
     //   Turned: the point lands as deflectBlunt of its piercing, blunt (then blunt mitigation as usual), and its
     //   weapon takes weaponWear.deflected wear instead of `hit`.
     // A rapier (1.1) bursts padding (0.75) and leather (1.0) but not iron mail (1.6); a spear (1.7) bursts iron
     // mail but not steel (2.0); a heavy spear (3.9, two hands) any mail; nothing a person swings bursts plate (5).
     // null: the pass-through roll above.
     pierce: {
+      gapPass: true,
+      natural10: false,
       swingPunch: 2.5,
       strPer: 0.1,
       gapDiv: 4,
@@ -663,7 +670,7 @@
     'Opportunity strikes: a step that starts inside a foe\'s melee reach lets that foe strike as the mover goes, once per move, from the foe\'s AP; a hit stops the move (AP for squares not walked is refunded). Leaving an adjacent foe provokes; so does stepping in to swing at someone whose thrust reaches farther (a sword thrusts at 2, a spear at 4).',
     'Stamina scale ×3: every base stamina cost is tripled. Chosen by simulation so the stamina curve matches the Outline.',
     'Piercing through armor (when a point bursts it, or CONFIG.pierce is off): each leftover point rolls a d10 and reaches CON on ≤ pass-through × 10 (plate 2, other full armor 5). Chosen by simulation over rounding.',
-    'Points against armor (the user\'s call): a point bursts armor only if its punch reaches the armor\'s resistance. Punch = the mass behind it (two hands ×1.5; a swung beak or spikes, the head\'s mass × the haft × 2.5) × the motion × (1 + 0.1 × STR bonus); a dagger 0.9, a rapier 1.1, a longsword 1.4, a spear 1.7, a greatsword thrust 3.75, a heavy spear 3.9; arrows by the bow (shortbow 1, longbow 1.8) × the head (bodkin 1.5, broadhead 0.7). Resistance: padded 0.75, leather 1, mail 1.6, plate 5 (× material and origin protection: bronze 0.85, steel 1.25, dwarven 1.2). A burst point then takes mitigation and the pass-through roll as before. Otherwise it must find a gap: d10 + ⌊DEX/4⌋ + Find the Gap (+2) + Spot Weakness (+1) (+3 prone, +3 half-sword) ≥ the armor\'s gap number (padded 8, leather 8, mail 10, plate 12; half coverage −2, partial −4); a 10 always finds one and a pinned foe always gives one; all the piercing goes in. Failing that the armor turns the point: half its piercing lands as blunt and the weapon takes the deflected wear (1.0 against 0.4 for a blow that lands). So a rapier bursts padding and leather but must find a gap in mail; a spear bursts iron mail but not steel; nothing a person wields bursts plate.',
+    'Points against armor (the user\'s call): a point bursts armor only if its punch reaches the armor\'s resistance. Punch = the mass behind it (two hands ×1.5; a swung beak or spikes, the head\'s mass × the haft × 2.5) × the motion × (1 + 0.1 × STR bonus); a dagger 0.9, a rapier 1.1 (its flexible blade bends past 1.2), a longsword 1.4, a spear 1.7, a greatsword thrust 3.75, a heavy spear 3.9; arrows by the bow (shortbow 0.8, longbow 1.8) × the head (bodkin 1.5, broadhead 0.7). Resistance: padded 0.75, leather 1, mail 1.3, plate 5 (× material and origin protection: bronze 0.85, steel 1.25, dwarven 1.2). A burst point then takes mitigation and the pass-through roll as before. Otherwise it must find a gap: d10 + ⌊DEX/4⌋ + Find the Gap (+2) + Spot Weakness (+1) (+3 prone, +3 half-sword) ≥ the armor\'s gap number (padded 8, leather 8, mail 10, plate 12; half coverage −2, partial −4), skill alone (no automatic 10); a pinned foe always gives one. Through a gap the armor\'s P mitigation is bypassed but the piercing takes the pass-through roll (whole for a half-sword thrust or a pinned or prone foe). Failing that the armor turns the point: half its piercing lands as blunt and the weapon takes the deflected wear (1.0 against 0.4 for a blow that lands). So a rapier bursts padding and leather but not mail; a longsword bursts iron mail but not steel; a spear any but the best; nothing a person wields bursts plate. TUNED (sim, V4 in sim/FINDINGS.md): with whole gap hits and a lucky 10, one thrust killed a plate wearer outright and mail beat plate.',
     'Plate spreads a blow it turns (the user\'s call): half of the blunt left after its mitigation from a cut or a point (converted cuts, turned points) never reaches stamina; a crushing blow (a mace, a hammer, a club, a fist) carries as before (armor.yaml dissipate {glancing: 0.5, crushing: 0}; less as the plate wears). Spreading crushing blows too left maces 2–13% against plate in the weapon sweep (sim/FINDINGS.md).',
     'Armor wear per hit is a third of (blunt + converted slashing); armor keeps at least 75% of its mitigation until destroyed.',
     'Blocks are contested (the user\'s call) and the easiest defence: d10 + Shield Training + the shield (buckler 1, round 2, heater 3, tower 4) + ⌊(STR + DEX)/4⌋ against the attacker\'s d10 + ⌊(STR + SPD)/4⌋ + motion. A dodge is the hardest (−2). A defence that works still costs stamina: half the blow\'s force for a block, a quarter for a parry, none for a dodge; a dodge costs 1 base stamina (Specifics 2). Untrained against a sword swing: block 72%, parry 64%, dodge 36%. Bind (feat): a successful parry lets you try a disarm at once.',

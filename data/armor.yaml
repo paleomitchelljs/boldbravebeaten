@@ -57,7 +57,7 @@ mail:
   standUp: 1
   weight: 12
   durability: 40
-  pierce: {resist: 1.6, gap: 10}
+  pierce: {resist: 1.3, gap: 10}   # TUNED (V4, sim/FINDINGS.md): a longsword thrust bursts iron mail; a rapier doesn't
   rarity: uncommon
 plate:
   name: Plate

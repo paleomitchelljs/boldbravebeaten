@@ -373,6 +373,7 @@
     if (ph.beak) out.beak = ph.beak.punch != null ? ph.beak.punch * scale : swung;
     if (ph.head && ph.head.spikes) out.head = ph.head.spikes.punch != null ? ph.head.spikes.punch * scale : swung;
     for (const k of Object.keys(out)) out[k] = Math.round(out[k] * 100) / 100;
+    if (ph.point && ph.point.maxPunch != null) out.pointMax = ph.point.maxPunch; // a flexible blade bends past this
     return out;
   }
 

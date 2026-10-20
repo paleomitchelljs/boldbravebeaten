@@ -1,5 +1,59 @@
 # Simulation findings
 
+## Why plate lost to mail, and V4 (2026-10-20)
+
+**The user's brief.** "Mail should have substantially less protection than plate. A sword swing against a plate wearer
+should do almost nothing, and thrusts to find a gap should be less effective. What specifically is causing the plate
+wearers to lose to the mail wearers?"
+
+**Diagnosis** (100 duels, level-4 sellswords with longsword and round shield, trained in their armor; plate 48, mail 50):
+- **One gap killed.** A gap hit put all 6 piercing into CON 6: 61 of 62 gap hits killed outright.
+  - Mail's thrusts found a gap in plate on 11% of landed thrusts, all of them on a lucky 10, but 28 of mail's 50 wins
+    were one such thrust.
+  - Plate's thrusts found a gap in mail on 22%.
+- **Against a longsword, mail was nearly plate.** No sword thrust burst either: mail resisted 1.6 against a thrust of
+  1.54. Slashing never wounds through armor (it converts to blunt), so swings did 0–1 stamina to either. The gap number
+  (10 against 12) was the only difference that counted.
+- **Plate tired itself out.** 23 of plate's 50 losses were collapses at 0 stamina (mail: 10 of 48), though mail's blows
+  did no stamina damage to plate.
+  - Plate pays 1 more stamina per thrust.
+  - Its regeneration penalty (−3) is more than these fighters regenerate (2), so it loses stamina every round.
+- **Plate's blocks failed 33% of the time, mail's 17%.** Plate's SPD penalty makes its own blows slower, so the
+  expected block odds are 79% against 85%. The rest of the gap is not traced.
+- **Swings against plate already did almost nothing:** a sword swing 0 stamina, a greatsword power swing 3 (mail: 1 and 8).
+
+**Variants** (duels: plate–mail wins; sweeps as in the section below):
+
+| variant | duels | plate collapsed | trained: plate / steel mail / iron mail | rapier in mail | spiked mace in plate |
+|---|---|---|---|---|---|
+| V0 (as pushed) | 48–50 | 23 | 73 / 58 / 66% | 65% | 53% |
+| V1 gap hits take the pass-through roll | 83–16 | 6 | 93 / 64 / 59% | 44% | 43% |
+| V2 no automatic 10 | 60–38 | 40 | 84 / 53 / 58% | 65% | 49% |
+| V3 = V1 + V2 | 65–33 | 33 | 83 / 69 / 61% | 44% | 49% |
+| **V4 = V3 + mail resists 1.3** | **92–5** | 8 | **87 / 71 / 37%** | **40%** | 49% |
+| V5 = V3 + plate regeneration penalty 2 | 80–4 (16 unresolved) | 1 | 90 / 63 / 57% | 44% | 23% |
+
+- V2 and V3 show the exhaustion directly: once gaps stop killing it, plate loses by collapsing.
+- V5 cures the collapses but costs maces their place against plate (their job is draining stamina) and leaves fights
+  unresolved.
+- V4 keeps plate's cost and makes mail what the user described.
+
+**Adopted: V4** (`pierce.gapPass`, `pierce.natural10: false`, mail resist 1.3), with two fixes it needed:
+- **Rapier:** its punch is capped at 1.2 (`maxPunch`: a flexible blade bends). Without the cap, a rapier at STR 9+
+  reached 1.32 and burst mail.
+- **Shortbow:** punch 1.0 → 0.8, so its bodkin (1.2) can't burst mail.
+
+The armor sweep is monotonic for the first time: none 16, leather 39, padded 43, iron mail 37, steel mail 71, plate
+87% (trained). The weapon sweep in mail: longsword 82%, rapier 40%, dagger 42%.
+
+**Encounters** (100 each; as pushed → V4): rat nest deaths 0.21 → 0.17, crew 89 → 93% won, horde 17 → 21% (deaths
+2.70 → 2.14), knight 10 → 0% (no lucky gaps in his plate), troll 100 → 95%.
+
+**Still open.**
+- **The warhammer is the worst weapon against plate (1%).** Its notes and the user's research say it should be the
+  best (a pick that ruptures plate).
+- **The longsword dominates duels in mail (82%).**
+
 ## Reach by motion, points against armor, item tags, plate spreads a blow (2026-10-20)
 
 **The user's brief.**

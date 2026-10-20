@@ -10,7 +10,8 @@
 # durability: how much wear the weapon takes before it breaks (average craft, its own material);
 # fragility: how hard each knock bites (a rapier's thin blade 2, a mace's head 0.5). See CONFIG.weaponWear.
 # punch (on a point or arrow, optional): overrides the punch worked out from mass (CONFIG.pierce): a dagger is
-#   driven by the whole arm; an arrow's punch is the bow's.
+#   driven by the whole arm; an arrow's punch is the bow's. maxPunch: a flexible blade bends past this however
+#   hard it is driven (a rapier's 1.2 never bursts mail).
 
 club:
   phys: {mass: 1, length: 0.7, head: {mass: 0.6}}
@@ -94,7 +95,7 @@ parryingDagger:
   offhand: true
   notes: "Held in the off hand: stabs, and parries thrusts (Off-hand parry, +1). Lighter than a buckler."
 rapier:
-  phys: {mass: 1.1, length: 1.15, point: {depth: 25, width: 1.2}, edge: 0.3}
+  phys: {mass: 1.1, length: 1.15, point: {depth: 25, width: 1.2, maxPunch: 1.2}, edge: 0.3}
   name: Rapier
   hands: 1
   weight: light
@@ -226,7 +227,7 @@ heavySpear:
   rarity: uncommon
   notes: "Two hands and the body behind the point: bursts any mail, but plate it must find a gap in."
 shortbow:
-  phys: {arrow: {depth: 18, width: 2.5, punch: 1.0}}
+  phys: {arrow: {depth: 18, width: 2.5, punch: 0.8}}
   name: Shortbow
   hands: 2
   weight: light

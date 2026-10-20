@@ -826,8 +826,9 @@
     for (const [f, b] of Object.entries(P.feats || {})) if (C.rank(attacker, f)) bonus += b;
     if (ctx.prone) bonus += P.prone || 0;
     if (option.halfSword) bonus += P.halfSword || 0;
-    const need = Math.max(1, Math.min(10, pierce.gap - bonus));
-    return Object.assign(base, { way: 'gap', roll: true, need, tn: pierce.gap, bonus, chance: (11 - need) / 10 });
+    // A 10 always finds one unless P.natural10 is false (then it is skill and feats alone).
+    const need = Math.max(1, Math.min(P.natural10 === false ? 11 : 10, pierce.gap - bonus));
+    return Object.assign(base, { way: 'gap', roll: true, need, tn: pierce.gap, bonus, chance: Math.max(0, (11 - need) / 10) });
   }
 
   // The expectation of two outcomes (a gap found or the point turned) for the AI and the preview.
@@ -867,7 +868,8 @@
       const Sr = Math.max(0, S - mit.S);
       const Br = Math.max(0, B - mit.B);
       res.mitigated = { P: P - Pr, S: S - Sr, B: B - Br };
-      if (way === 'gap' || way === 'turned') res.toCON = Pr;
+      // A point in a gap goes in whole, or (P.gapPass) takes the pass-through roll like a burst one.
+      if (way === 'turned' || (way === 'gap' && !(CONFIG.pierce && CONFIG.pierce.gapPass))) res.toCON = Pr;
       else {
         let pass = ai.passThrough;
         if (C.rank(attacker, 'find_the_gap')) pass += 0.25;
@@ -1022,7 +1024,7 @@
     }
 
     let wound = 0;
-    if (h.armored && h.pierce !== 'gap' && h.pierce !== 'turned' && CONFIG.pierceMode === 'roll' && h.pierceLeft > 0 && h.pass < 1) {
+    if (h.armored && h.pierce !== 'turned' && (h.pierce !== 'gap' || CONFIG.pierce.gapPass) && CONFIG.pierceMode === 'roll' && h.pierceLeft > 0 && h.pass < 1) {
       const need = Math.round(h.pass * 10);
       const rolls = await roller({ actorId: attacker.id, sides: 10, count: h.pierceLeft, label: 'Piercing through armor', detail: `${h.pierceLeft}d10 vs ${target.name}'s armor: each ${need} or less reaches CON` });
       h.toCON = rolls.filter((r) => r <= need).length;
