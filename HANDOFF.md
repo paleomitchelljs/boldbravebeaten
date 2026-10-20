@@ -40,6 +40,15 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
     crushing blows too costs maces their place against plate (2–13% in the all-plate sweep);
   - the scythe has no thrust at all ("nearly useless" would need a butt-jab face, which is rules code);
   - the AI does not weigh weapon wear: a rapier fighter keeps thrusting at plate until the blade breaks.
+- [ ] The user's armor research (2026-10-20) against the rules, mismatches awaiting a ruling:
+  - the warhammer's beak should rupture plate ("Warhammer (Pick) … Plate: High"); here it needs a gap like any point
+    and the warhammer is the worst weapon against plate (1%);
+  - a narrow rondel-type dagger should burst mail ("purpose-built to defeat mail"); the one dagger here can't;
+  - heavy cuts on mail should do blunt trauma ("snapping collarbones"); a greatsword power cut does 8 stamina and breaks
+    nothing (mail could pass more of a cut's force as blunt);
+  - textile stops cuts "unless the blade carries massive momentum"; here no cut ever wounds through any armor;
+  - hardened steel plate needs 1.5–1.7× the energy of mild steel; steel protects ×1.25 here;
+  - harness was layered (mail over a gambeson); armor here is one piece.
 - [ ] Item tags in play: foes roll craft, metal and origin, and shops stock bronze and steel mail and the heavy spear;
   no loot table or shop yet offers an origin, an exotic material or an enchantment (placed by hand only: the
   revenant knight). Add some rare finds.
