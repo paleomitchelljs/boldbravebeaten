@@ -229,8 +229,15 @@
     return f && w && !WEAPONS[w.type].ranged && (WEAPONS[w.type].reach || 1) >= 2 ? Math.max(CONFIG.range.maneuverMax, f) : CONFIG.range.maneuverMax;
   }
 
+  // CONFIG.wholeTurnAction: someone who has spent nothing this round may take one action that costs
+  // more than their whole pool, as their whole turn (a tired or armored fighter can always make one
+  // big swing).
+  function wholeTurn(enc, id) {
+    return !!CONFIG.wholeTurnAction && apLeft(enc, id) > 0 && apLeft(enc, id) >= (enc.apStart[id] || 0);
+  }
+
   function eligible(enc, chars, id) {
-    return id != null && !enc.turnDone[id] && C.isActive(chars[id]) && apLeft(enc, id) >= CONFIG.minActionAP;
+    return id != null && !enc.turnDone[id] && C.isActive(chars[id]) && apLeft(enc, id) >= C.minAP();
   }
 
   function currentActor(enc) {
@@ -330,7 +337,9 @@
   function legalActionsRaw(enc, chars, id) {
     const c = chars[id];
     const ap = apLeft(enc, id);
-    const can = (cost) => cost <= ap && ap >= CONFIG.minActionAP;
+    const fits = (cost) => cost <= ap && ap >= C.minAP();
+    const whole = wholeTurn(enc, id);
+    const can = (cost) => fits(cost) || (whole && ap >= C.minAP());
     const me = enc.pos[id];
     const others = enc.ids.filter((o) => o !== id && !chars[o].status.dead);
     // Defences are not taken on your turn any more: they are reactions, asked for when a blow comes.
@@ -428,13 +437,13 @@
     }
 
     // Moving: not while prone, held or clinched. A holder drags the held fighter one square.
-    if (!c.status.prone && !grappled && !c.status.clinch && can(1) && (!G.Conditions || G.Conditions.canMove(c))) {
+    if (!c.status.prone && !grappled && !c.status.clinch && fits(C.moveCost(c, 1)) && (!G.Conditions || G.Conditions.canMove(c))) {
       const spa = C.squaresPerAP(c);
       const cost1 = C.actionCost(c, 'move', { ap: 1 });
       const drag = !!c.status.grappling;
       out.move = {
         squaresPerAP: spa, maxAP: ap, stamina: cost1.stamina, from: enc.pos[id],
-        maxSquares: drag ? 1 : Math.floor((ap * spa) / C.apScale()),
+        maxSquares: drag ? 1 : C.squaresFor(c, ap),
         drag,
       };
     }
@@ -488,7 +497,7 @@
   }
 
   function primaryWeaponId(c) {
-    const w = c.weapons.find((x) => x.id !== c.sidearm);
+    const w = c.weapons.find((x) => x.id !== c.sidearm && !Items.weaponBroken(x));
     return w ? w.id : null;
   }
 
@@ -576,8 +585,7 @@
       if (dd > opt.maxRange) return { err: 'Out of reach' };
       if (dd < (opt.minRange || 1)) return { err: 'Too close' };
       decl.option = opt;
-      ap = opt.ap;
-      stamina = opt.stamina;
+      ({ ap, stamina } = opt);
     } else if (decl.type === 'cast') {
       if (!G.Magic || !decl.option) return { err: 'Choose a spell' };
       const key = decl.option.spellKey;
@@ -633,7 +641,10 @@
         if (!m || !m.targets.some((t) => t.id === decl.target && t.inReach)) return { err: 'Not possible from here' };
       }
     }
-    if (ap > apLeft(enc, id)) return { err: 'Not enough AP' };
+    if (ap > apLeft(enc, id)) {
+      if (decl.type === 'move' || !wholeTurn(enc, id)) return { err: 'Not enough AP' };
+      ap = apLeft(enc, id); // the whole turn
+    }
     if (stamina && !C.tireless(c) && !(CONFIG.exertionCanKnockOut ? c.stamina >= stamina : c.stamina > stamina)) return { err: 'Too exhausted' };
     return { ap, stamina };
   }
@@ -696,7 +707,7 @@
     else if (why === 'blocked') log(enc, `${a.name}'s way is blocked.`, 'fizzle');
     if (why && C.isActive(a)) {
       // Stopped short: the squares not walked are given back, but a move always costs its first AP.
-      const used = Math.max(CONFIG.minActionAP, walked ? C.actionCost(a, 'move', { ap: C.moveCost(a, walked) }).ap : 0);
+      const used = Math.max(C.minAP(), walked ? C.actionCost(a, 'move', { ap: C.moveCost(a, walked) }).ap : 0);
       const back = Math.max(0, d.ap - used);
       if (back) { enc.ap[a.id] += back; d.ap -= back; }
     }
@@ -716,16 +727,16 @@
       const hidden = viewerId !== d.actor && C.rank(a, 'feint') > (viewerId ? C.rank(chars[viewerId], 'read_attack') : 0);
       if (hidden) return { text: `${a.name}: strike at ${tn}`, hidden: true };
       const w = d.option.weaponId ? a.weapons.find((x) => x.id === d.option.weaponId) : null;
-      return { text: `${a.name}: ${d.option.label}${w ? ' — ' + Items.itemName(w) : ''} at ${tn} [${d.ap} AP]` };
+      return { text: `${a.name}: ${d.option.label}${w ? ' — ' + Items.itemName(w) : ''} at ${tn} [${C.fmtAP(d.ap)} AP]` };
     }
     if (DEFENSE_TYPES.includes(d.type)) {
       const vs = d.against && chars[d.against] ? ` ${chars[d.against].name}` : '';
-      return { text: `${a.name}: ${ACTIONS[d.type].name.toLowerCase()} against${vs} [${d.ap} AP]` };
+      return { text: `${a.name}: ${ACTIONS[d.type].name.toLowerCase()} against${vs} [${C.fmtAP(d.ap)} AP]` };
     }
-    if (d.type === 'move') return { text: `${a.name}: move to (${d.to.x + 1}, ${d.to.y + 1}) [${d.ap} AP]` };
-    if (d.type === 'windUp') return { text: `${a.name}: winds up ${d.option.label} [${d.ap} AP]` };
-    if (d.type === 'cast') return { text: `${a.name}: casts ${d.option.label} ${d.at ? `at (${d.at.x + 1}, ${d.at.y + 1})` : `on ${tn}`} [${d.ap} AP]` };
-    return { text: `${a.name}: ${ACTIONS[d.type].name.toLowerCase()}${tn ? ' ' + tn : ''} [${d.ap} AP]` };
+    if (d.type === 'move') return { text: `${a.name}: move to (${d.to.x + 1}, ${d.to.y + 1}) [${C.fmtAP(d.ap)} AP]` };
+    if (d.type === 'windUp') return { text: `${a.name}: winds up ${d.option.label} [${C.fmtAP(d.ap)} AP]` };
+    if (d.type === 'cast') return { text: `${a.name}: casts ${d.option.label} ${d.at ? `at (${d.at.x + 1}, ${d.at.y + 1})` : `on ${tn}`} [${C.fmtAP(d.ap)} AP]` };
+    return { text: `${a.name}: ${ACTIONS[d.type].name.toLowerCase()}${tn ? ' ' + tn : ''} [${C.fmtAP(d.ap)} AP]` };
   }
 
   // ---- Damage pipeline ---------------------------------------------------
@@ -814,7 +825,7 @@
       res.toCON = CONFIG.pierceMode === 'roll' && pass < 1 ? Pr * pass : Math.floor(Pr * pass);
       res.converted = Math.round(Sr * (CONFIG.conversion[motion] || 0));
       res.bluntToStamina = Br + res.converted;
-      res.durLoss = target.armor.type === 'padded' ? 0 : Math.round((B + res.converted) * (CONFIG.armorWearScale == null ? 1 : CONFIG.armorWearScale));
+      res.durLoss = target.armor.type === 'padded' ? 0 : Math.round((B + res.converted + P * (CONFIG.armorPierceWear || 0)) * (CONFIG.armorWearScale == null ? 1 : CONFIG.armorWearScale));
     } else {
       res.toCON = P;
       res.slashToAttrs = S;
@@ -917,6 +928,8 @@
   async function applyHit(enc, chars, attacker, target, option, roller, flags) {
     const h = computeHit(attacker, target, option, flags);
     const parts = [];
+    // The blade meets the armor: metal chews an edge, cloth and leather barely touch it, flesh not at all.
+    if (h.armored && target.armor) wearWeapon(enc, attacker, weaponItem(attacker, option), blowForce(option), 'hit', armorMaterial(target.armor));
     const st = target.status;
     const before0 = { dmg: C.totalDamage(target), stamina: target.stamina, up: C.isActive(target) };
     const before = enc.onHit ? before0 : null;
@@ -1113,6 +1126,13 @@
 
   function defenseNumbersBase(defender, kind, motion, attacker, atkOption) {
     const D = CONFIG.defense;
+    const strikeBonus = () => (attacker ? Math.floor((C.attr(attacker, 'STR') + C.combatAttr(attacker, 'SPD')) / 4) : D.typicalAttacker);
+    if (kind === 'block' && D.block.opposed) {
+      // Contested: d10 + Shield Training + the shield's size + ⌊(STR + DEX)/4⌋ (bracing) against the blow.
+      const size = defender.shield && D.block.bySize ? D.block.bySize[defender.shield.size] || 0 : 0;
+      const bonus = C.rank(defender, 'shield_training') + size + Math.floor((C.attr(defender, 'STR') + C.combatAttr(defender, 'DEX')) / 4);
+      return { bonus, attack: strikeBonus() + (D.motionPenalty[motion] || 0), opposed: true };
+    }
     if (kind === 'block') {
       let tn = D.block.tn;
       const bySize = D.block.tnBySize;
@@ -1122,7 +1142,7 @@
     const parry = kind === 'parry' || kind === 'offParry';
     if (D.opposed) {
       const agile = Math.floor((C.combatAttr(defender, 'DEX') + C.combatAttr(defender, 'SPD')) / 4);
-      let bonus = agile + (parry ? C.rank(defender, 'parry_training') : C.rank(defender, 'dodge_training') + ((defender.traits && defender.traits.nimble) || 0));
+      let bonus = agile + (parry ? C.rank(defender, 'parry_training') : C.rank(defender, 'dodge_training') + ((defender.traits && defender.traits.nimble) || 0) + (D.dodgeBonus || 0));
       if (kind === 'offParry') bonus += D.offhandBonus || 0;
       let atk = D.motionPenalty[motion] || 0;
       if (parry && D.parryForce) {
@@ -1133,7 +1153,7 @@
           if (attacker) atk += Math.floor(C.combatAttr(attacker, 'SPD') / 4); // the quickness of the blow
         } else atk += D.typicalAttacker;
       } else {
-        atk += attacker ? Math.floor((C.attr(attacker, 'STR') + C.combatAttr(attacker, 'SPD')) / 4) : D.typicalAttacker;
+        atk += strikeBonus();
         if (parry && atkOption && atkOption.weaponType) {
           const order = CONFIG.weightOrder;
           const theirs = order.indexOf(Items.weaponStats(atkOption.weaponType).weight);
@@ -1493,7 +1513,22 @@
             } else {
               const verb = { parry: 'parries', offParry: 'catches on the parrying dagger', dodge: 'dodges' }[def.type];
               log(enc, `${t.name} ${verb} ${a.name}'s ${name} (${chk.total} vs ${chk.tn}).`, 'defend');
-              if ((def.type === 'parry' || def.type === 'offParry') && C.rank(t, 'riposte')) await riposte(enc, chars, t, a, roller, posAtStart);
+            }
+            absorbImpact(enc, t, def.type, d);
+            const parried = def.type === 'parry' || def.type === 'offParry';
+            if (d.type === 'strike') {
+              const force = blowForce(d.option);
+              const theirs = weaponItem(a, d.option);
+              if (parried) {
+                const mine = parryingWeapon(t, def.type);
+                wearWeapon(enc, a, theirs, force, 'parried', Items.weaponMaterial(mine));
+                wearWeapon(enc, t, mine, force, 'parry', theirs ? Items.weaponMaterial(theirs) : naturalMaterial(d.option));
+              } else if (def.type === 'block' && t.shield) wearWeapon(enc, a, theirs, force, 'blocked', t.shield.material);
+            }
+            if (parried && C.rank(t, 'riposte') && C.isActive(t)) await riposte(enc, chars, t, a, roller, posAtStart);
+            if (parried && C.rank(t, 'bind') && C.isActive(t) && C.wieldedWeapon(a) && payStamina(enc, t, C.actionCost(t, 'disarm').stamina)) {
+              log(enc, `${t.name} binds ${a.name}'s blade.`, 'defend');
+              await resolveManeuver(enc, chars, { actor: t.id, target: a.id, type: 'disarm' }, roller);
             }
             return;
           }
@@ -1738,6 +1773,49 @@
     }
   }
 
+  // ---- Weapon wear (CONFIG.weaponWear) ------------------------------------------------------
+  // The weapon item behind an attack option (natural weapons and spells have none).
+  function weaponItem(c, option) {
+    return option && option.weaponId && !option.natural && !option.ranged ? c.weapons.find((w) => w.id === option.weaponId) || null : null;
+  }
+
+  function armorMaterial(armor) {
+    return (G.DATA.ARMOR[armor.type] || {}).material || null;
+  }
+
+  // What a natural weapon is made of (a claw is bone), for wear on the blade that meets it.
+  function naturalMaterial(option) {
+    return option && option.weaponType && WEAPONS[option.weaponType] ? WEAPONS[option.weaponType].material || 'bone' : null;
+  }
+
+  // Wear = the blow's force × rate × fragility × (what it meets ÷ its own hardness). A weapon that
+  // drops below half says so; one that reaches 0 breaks.
+  function wearWeapon(enc, owner, w, force, rate, against) {
+    const W = CONFIG.weaponWear;
+    const max = Items.weaponMaxDurability(w);
+    if (!W || !max || !against || !force) return;
+    const own = Items.hardness(Items.weaponMaterial(w)) || 1;
+    const wear = Math.round(force * W[rate] * (WEAPONS[w.type].fragility || 1) * (Items.hardness(against) / own));
+    if (wear <= 0) return;
+    const before = Items.weaponDurability(w);
+    w.durability = Math.max(0, before - wear);
+    if (w.durability <= 0) log(enc, `${owner.name}'s ${Items.itemName(w).toLowerCase()} breaks.`, 'hit');
+    else if (before > max / 2 && w.durability <= max / 2) log(enc, `${owner.name}'s ${Items.itemName(w).toLowerCase()} is badly worn (${w.durability}/${max}).`, 'fail');
+  }
+
+  // A defence that works still costs the defender something of the blow's force (CONFIG.defense.absorb):
+  // a block takes most of it on the arm, a parry some, a dodge none.
+  function absorbImpact(enc, t, kind, d) {
+    const share = CONFIG.defense.absorb && CONFIG.defense.absorb[kind];
+    if (!share || d.type !== 'strike' || C.tireless(t) || !C.isActive(t)) return;
+    const loss = Math.min(t.stamina, Math.round(blowForce(d.option) * share));
+    if (loss <= 0) return;
+    t.stamina -= loss;
+    enc.hitThisRound[t.id] = (enc.hitThisRound[t.id] || 0) + loss;
+    C.updateCondition(t);
+    log(enc, `The blow jars ${t.name} (−${loss} stamina).`, 'hit');
+  }
+
   async function riposte(enc, chars, t, a, roller, posAtStart) {
     const w = C.wieldedWeapon(t);
     if (!w || !Items.weaponStats(w).faces.point) return;
@@ -1855,6 +1933,8 @@
         if (c.status.unconscious && c.stamina > 0) { c.status.unconscious = false; log(enc, `${c.name} heaves itself back up.`, 'death'); }
         if (healed || c.stamina > before) log(enc, `${c.name} regenerates${healed ? ` ${healed} CON` : ''}${c.stamina > before ? `${healed ? ' and' : ''} ${c.stamina - before} stamina` : ''}.`);
       }
+      // Weariness: every round of fighting lowers the most stamina can come back to.
+      if (C.isActive(c)) C.wearyRound(c);
       // Regeneration.
       const r = C.regen(c);
       const conscious = !c.status.unconscious;

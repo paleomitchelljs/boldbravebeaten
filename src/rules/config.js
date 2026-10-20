@@ -41,14 +41,41 @@
     // PROVISIONAL: unconscious characters do not regenerate during combat.
     unconsciousRegenerates: false,
 
-    // ---- Action points (Specifics) ---------------------------------------
-    // Multiplies every base AP cost and the AP pool; feats still cut a flat 1.
-    // At 1, a "−1 AP" feat halves a 2-AP thrust; at 2 it cuts it by a quarter.
-    // TUNED (sim): 2. With 4–6 AP pools a −1 AP feat halved a 2-AP thrust or block, so play
-    // collapsed into 1-AP thrust/block spam and numbers stopped countering plate.
-    apScale: 2,
-    apBase: 3, // AP = 3 + floor(SPD/2)
+    // ---- Action points (Specifics, with the user's turn budget) ------------------------
+    // AP are counted in tenths: apScale internal units are one AP (apDisplay divides them back for
+    // the sheet), so costs can be fractional (a dagger thrust 1.5) with no rounding drift. Rounds
+    // 1–8 ran at 2 (pool 10) to keep −1 AP feats from halving a 2-AP thrust; Quick feats now cut a
+    // share instead (quickCut).
+    apScale: 10,
+    apDisplay: 10,
+    // Multiplies every base action cost instead of apScale, if set (null = apScale).
+    costScale: null,
+    // PROVISIONAL (the user's turn budget): at level 1 a turn holds one big action (a two-handed or
+    // power swing), a step and a medium action (a swing), or three quick actions (thrust, parry,
+    // dodge, block, a step). Pool = apBase + SPD / apSpdDivisor, unrounded: 6 at SPD 5, every point
+    // of SPD worth half an AP. (Specifics: 3 + ⌊SPD/2⌋.)
+    apBase: 3.5,
     apSpdDivisor: 2,
+    apSpdContinuous: true,
+    // PROVISIONAL (turn budget): base costs (the Specifics table) up to `knee` stand; every AP above it
+    // costs `above`. Thrust, parry, dodge, a step 2; a swing 3 → 4; a two-handed swing 4 → 6; a power
+    // swing 2 to wind up + 3 → 4 to release. Weapon speed and strain multiply the result.
+    apCurve: { knee: 2, above: 2 },
+    // PROVISIONAL (turn budget): a move is a quick action, moveAP for each stretch of up to
+    // (1 + ⌊SPD/4⌋) × moveScale squares (4 at SPD 5). null: the Specifics' 1 AP per stretch.
+    moveAP: 2,
+    // PROVISIONAL: someone who has spent nothing this round may take one action that costs more than
+    // their whole pool, as their whole turn, so a tired or armored fighter can always make one big swing.
+    wholeTurnAction: true,
+    // PROVISIONAL (the user's call: armor makes actions dearer): armor's SPD penalty no longer
+    // shrinks the pool; every action costs this many AP more per point of it (plate 3 → +0.5, scale
+    // 2 → +0.3, mail 1 → +0.2; the mobility feats lower it). It still slows moving, initiative and
+    // dodging. 0: as written (the penalty lowers the pool).
+    armorActionAP: 1 / 6,
+    // PROVISIONAL: a Quick feat (Quick Thrust, Parry, Block, Dodge, Hands, Heavy Tempo, Casting) at its
+    // top rank takes this share off the action's cost, each rank its part (Quick Thrust I–III: −1/6,
+    // −1/3, −1/2). null: as written (−1 AP per rank).
+    quickCut: 0.5,
     moveBase: 1, // squares per AP = (1 + floor(SPD/4)) × moveScale
     // PROVISIONAL: squares are about a pace (1 = clinch, 2 = sword distance), so
     // movement covers twice as many of them as the Specifics formula gives.
@@ -57,8 +84,8 @@
     // PROVISIONAL (the user's turn model): a turn spends as much of the AP pool as the character
     // likes; each action resolves at once; AP kept back pays for reactions (block, parry, dodge, an
     // opportunity strike) on others' turns. No per-pass cap, no passes.
-    minActionAP: 1, // costs never drop below 1 AP or 0 stamina
-    minStrikeAP: 1, // floor for weapon strikes specifically (tunable separately)
+    minActionAP: 0.5, // sheet AP: costs never drop below half an AP (as written: 1) or 0 stamina
+    minStrikeAP: 0.5, // floor for weapon strikes specifically (tunable separately)
     minStrikeStamina: 0, // floor for weapon strikes' stamina
     // PROVISIONAL: very light weapons (dagger) get −1 AP on thrust/swing ("lowest AP").
     veryLightApDiscount: 1,
@@ -452,7 +479,21 @@
     defense: {
       die: 10,
       // + Shield Training rank. PROVISIONAL: smaller shields cover less.
-      block: { tn: 3, tnBySize: { buckler: 5, round: 4, heater: 3, tower: 2 } },
+      block: {
+        tn: 3, tnBySize: { buckler: 5, round: 4, heater: 3, tower: 2 },
+        // PROVISIONAL (the user's call): blocks are contested like parries and dodges, and the
+        // easiest of the three: d10 + Shield Training + the shield's size + ⌊(STR + DEX)/4⌋ against
+        // the attacker's d10 + ⌊(STR + SPD)/4⌋ + motion. false: the fixed numbers above.
+        opposed: true, bySize: { buckler: 1, round: 2, heater: 3, tower: 4 },
+      },
+      // PROVISIONAL (the user's call): the dodge is the hardest defence to make.
+      dodgeBonus: -2,
+      // PROVISIONAL (the user's call): a defence that works still costs stamina, this share of the
+      // blow's force: a block most (the arm takes it), a parry some, a dodge none. null: nothing.
+      absorb: { block: 0.5, parry: 0.25, offParry: 0.25, dodge: 0 },
+      // PROVISIONAL: dodging costs 1 base stamina (Specifics: 2), so a dodge is the cheapest
+      // defence in stamina when it works and the block the dearest.
+      dodgeStamina: 1,
       parry: { tn: 6 }, // (opposed: false) + Parry Training rank + floor((DEX−5)/2)
       dodge: { tn: 6 }, // (opposed: false) + Dodge Training rank + floor((SPD−5)/2) − armor DEX penalty
       // PROVISIONAL (the user's call): parries and dodges are opposed rolls. Defender d10 +
@@ -493,8 +534,10 @@
     powerMotions: ['power'],
     powerPushThrough: true,
     // PROVISIONAL: a blocked power attack breaks the shield outright when the weapon is at
-    // least as hard as the shield, unless the shield is of a powerful quality.
-    materialHardness: { wood: 1, hide: 1, bone: 1, iron: 2, stone: 2, steel: 3 },
+    // least as hard as the shield, unless the shield is of a powerful quality. Hardness also sets
+    // how fast a weapon wears on what it strikes (weaponWear): cloth and leather barely touch an
+    // edge, metal chews it.
+    materialHardness: { cloth: 0.1, leather: 0.3, hide: 0.5, wood: 1, bone: 1, chitin: 1.5, iron: 2, stone: 2, steel: 3, adamant: 5 },
     powerfulShieldQualities: ['masterwork'],
     // Specifics: 10% break chance per point over threshold
     shieldBreakPerPoint: 10,
@@ -517,6 +560,21 @@
     // keeping at least durabilityMitigationFloor of its value until the armor is destroyed.
     // TUNED (sim): full wear let three harmless kicks strip a point of plate mitigation.
     armorWearScale: 0.33,
+    // PROVISIONAL (the user's call: armor wears with the intensity of the blows): thrusts wear it
+    // too, at this share of their piercing (a point through mail breaks rings). 0: blunt and cuts only.
+    armorPierceWear: 0.5,
+    // ---- Weapon wear (PROVISIONAL, the user's call) ---------------------------------------------
+    // Every weapon has a durability (weapons.yaml × its material's toughness × quality). Wear per
+    // blow = the blow's force × rate × fragility × (hardness of what it meets ÷ its own hardness):
+    //   hit      the blow lands on armor (metal chews an edge; cloth, leather and flesh barely touch it)
+    //   parried  the attacker's weapon, against the parrying weapon
+    //   parry    the parrying weapon, against the blow it meets (heavier blows, more wear)
+    //   blocked  the attacker's weapon, against the shield
+    // A dodge costs a weapon nothing. A worn weapon keeps `floor` of its damage, sliding down as it
+    // wears; at 0 it breaks and can't be used until a smith mends it. null: weapons never wear.
+    weaponWear: { hit: 0.4, parried: 0.15, parry: 0.25, blocked: 0.25, floor: 0.6 },
+    // How much more a material lasts than iron (durability multiplier against the weapon's own).
+    materialToughness: { wood: 0.6, bone: 0.7, stone: 1, iron: 1, steel: 1.5, adamant: 3 },
     // Per-armor overrides of the Specifics armor table, e.g. { plate: { stamina: 1, regen: 3 } }.
     // TUNED (arena, round 3): plate +1 stamina per action (was +2) and −3 regen (was −4).
     // Plate fighters were losing by exhaustion (0.6 collapses a fight); this brings heavy
@@ -548,6 +606,15 @@
     healDie: 6, // 1 = −1 CON, 2 = no change, 3–6 = +1
     // PROVISIONAL: a long rest repairs 25% of max durability (Field Repair: +25% more)
     restRepairFraction: 0.25,
+    // PROVISIONAL (the user's call): after a fight, one click rests and mends: `minutes` pass,
+    // stamina refills (to the weary maximum), gear gets restRepairFraction back (Field Repair
+    // doubles it; broken weapons and shields need a smith). Skipping it keeps stamina where it is.
+    // null: the old automatic breather (stamina refilled for free).
+    afterBattle: { minutes: 15 },
+    // PROVISIONAL (the user's idea, on trial): every round of combat lowers each fighter's
+    // maximum stamina by perRound (up to `cap` of it); only a long rest (camp, inn) clears it.
+    // Long fights cost more than their wounds, and the party has a reason to camp. null: off.
+    weariness: { perRound: 1, cap: 0.5 },
 
     // ---- Progression (Outline Lean) --------------------------------------
     startingFeats: 3,
@@ -561,26 +628,31 @@
 
   // Every PROVISIONAL choice, shown on the Rules tab so nothing is hidden.
   CONFIG.provisional = [
-    'AP scale ×2: every base AP cost and the AP pool are doubled (pool 8–12); feats still cut a flat 1 AP. Chosen by simulation.',
+    'The turn budget (the user\'s call): AP pool = 3.5 + SPD/2, unrounded (6 at SPD 5), costs in tenths. At level 1 a turn holds one big action, a step and a medium action, or three quick actions: base costs up to 2 (thrust, parry, dodge, block) stand, every Specifics AP above 2 costs 2 (a swing 3 → 4, a two-handed swing 4 → 6, a power swing 2 + 4, a shortbow 4, a longbow 2 + 4, trip and disarm 4, grapple, pin and throw 4); weapon speed multiplies the result (a dagger thrust 1.5). A move is a quick action: 2 AP for up to (1 + ⌊SPD/4⌋) × 2 squares. Someone who has spent nothing this round may take one action dearer than the whole pool as the whole turn.',
+    'Armor makes actions dearer (the user\'s call): its SPD penalty no longer shrinks the pool; every action costs 1/6 AP more per point of it (plate +0.5, scale +0.3, mail +0.2; the mobility feats lower it). The penalty still slows moving, initiative, dodging and fleeing.',
+    'Weapon wear (the user\'s call): every weapon has a durability (weapons.yaml × its material\'s toughness × quality; a rapier 40, a longsword 100, a mace 120). Each blow wears it by its force × rate × fragility (rapier 2, mace 0.5) × (what it meets ÷ its own hardness): landing on armor 0.4 (metal chews an edge; cloth, leather and flesh barely touch it), being parried 0.15, parrying 0.25 (by the force of the blow met), being blocked 0.25 (by the shield\'s material). A dodge costs nothing. A worn weapon keeps 60% of its damage at the end of its life; at 0 it breaks and is out of the fight until a smith mends it. Thrusts now wear armor too (half their piercing).',
+    'After a fight (the user\'s call): one click rests 15 minutes and mends: stamina back to the weary maximum, armor, shields and weapons get 25% back (50% with Field Repair in the party); broken weapons and shields need a smith. Pressing on keeps stamina where it is.',
+    'Weariness (the user\'s idea, on trial): every round of combat lowers each fighter\'s maximum stamina by 1 (at most half of it); only a long rest (camp, inn) clears it.',
+    'Quick feats (Quick Thrust, Parry, Block, Dodge, Hands, Heavy Tempo, Quick Casting) take a share off every such action: half at the top rank (Quick Thrust I–III: −1/6, −1/3, −1/2; Quick Parry I–II: −1/4, −1/2).',
     'Rounds and turns (the user\'s model): a round starts with initiative; each character takes one turn in initiative order and may spend their whole AP pool on it; every action resolves as it is taken. The round ends when everyone has had their turn; unspent AP is lost.',
     'Reactions: defences are not declared ahead. When a blow comes, the target may block, parry or dodge, paying the AP from their pool on the spot (shown with the odds). AP spent on your turn is AP you cannot defend with; a fighter out of AP takes what comes on their armor. A Feint the defender cannot read hides the blow: they choose blind, and a defence that cannot meet it (a parry against a power swing) is wasted. Untouchable: after your first dodge in a round, further dodges that round cost nothing.',
     'Opportunity strikes: a step that starts inside a foe\'s melee reach lets that foe strike as the mover goes, once per move, from the foe\'s AP; a hit stops the move (AP for squares not walked is refunded). Leaving an adjacent foe provokes; walking up to a sword does not; walking up to a spear does.',
     'Stamina scale ×3: every base stamina cost is tripled. Chosen by simulation so the stamina curve matches the Outline.',
     'Piercing through armor: each leftover point rolls a d10 and reaches CON on ≤ pass-through × 10 (plate 2, other full armor 5). Chosen by simulation over rounding.',
     'Armor wear per hit is a third of (blunt + converted slashing); armor keeps at least 75% of its mitigation until destroyed.',
-    'Block target numbers by shield: buckler 5, round 4, heater 3, tower 2 (d10 + Shield Training).',
+    'Blocks are contested (the user\'s call) and the easiest defence: d10 + Shield Training + the shield (buckler 1, round 2, heater 3, tower 4) + ⌊(STR + DEX)/4⌋ against the attacker\'s d10 + ⌊(STR + SPD)/4⌋ + motion. A dodge is the hardest (−2). A defence that works still costs stamina: half the blow\'s force for a block, a quarter for a parry, none for a dodge; a dodge costs 1 base stamina (Specifics 2). Untrained against a sword swing: block 72%, parry 64%, dodge 36%. Bind (feat): a successful parry lets you try a disarm at once.',
     'Range: a square is about a pace (1 = clinch, 2 = sword distance). Swings reach 1 to the weapon\'s reach; thrusts reach farther on some weapons (rapier +1, spear +2). Inside a long weapon\'s reach (range 1) its blows land with half their force, all as blunt (pommel, haft, guard). Daggers, clubs, maces and hammers work fully at 1, as do half-swording and the murder stroke. Movement covers twice the Specifics squares.',
-    'Weapons in hand: drawing a weapon costs 1 AP on the sheet; dropping one costs nothing; picking one up costs 4. Drawing while holding a weapon drops it (a dagger is sheathed instead). A character held in a grapple fights cramped with any weapon, dagger included: half force, all blunt.',
+    'Weapons in hand: drawing a weapon costs half an AP; dropping one costs nothing; picking one up costs 2. Drawing while holding a weapon drops it (a dagger is sheathed instead). A character held in a grapple fights cramped with any weapon, dagger included: half force, all blunt.',
     'Shove (2 AP, range 1): opposed d10 + ⌊STR/2⌋ (+2 with a two-handed weapon) vs d10 + footing. A win pushes the target back 1 square, 2 on a margin of 5+; if they can\'t move, a margin of 5+ knocks them down.',
     'Wind-up: a power swing, a longbow shot and a Strong spell are wound up (drawn) in one round (2 AP) and released the next for the rest of the cost. After releasing you may wind up again in the same round. While wound up you cannot block or parry; the wind-up is lost if you are knocked down, grappled, disarmed or drop, or if you don\'t release it the next round.',
     'Shields vs power attacks: a blocked power swing breaks the shield outright if the weapon is at least as hard as the shield (wood < iron < steel) unless the shield is masterwork, and force above the shield\'s break threshold drives through as blunt damage. Every block wears a shield twice as fast as before.',
     'Spear (not in the catalog): point 6/0/0, thrusting 2–4, one hand.',
-    'Bows (not in the design docs): shortbow arrow 5 P, range 2–12, 3 AP, single action; longbow 7 P, range 2–16, drawn one round and loosed the next; −2 damage at long range; arrows can be blocked or dodged, not parried; no STR bonus; one arrow per shot.',
+    'Bows (not in the design docs): shortbow arrow 5 P, range 2–12, 4 AP, single action; longbow 7 P, range 2–16, drawn one round (2 AP) and loosed the next (4 AP); −2 damage at long range; arrows can be blocked or dodged, not parried; no STR bonus; one arrow per shot.',
     'Arrows and armor (history): armor catches arrows better than a thrust. Extra piercing protection against arrows: padded +2, leather, mail and scale +1, plate 0. Two arrowheads: broadheads cut terrible wounds (bleed ×1.5) but metal armor (mail, scale, plate) stops them better (+1); bodkins do 1 less damage but slip through metal armor (−2 to its protection). A longbow hit, expected CON (broadhead / bodkin): unarmored 7 / 6, padded 2 / 1.5, mail 2 / 3, scale 1.5 / 2.5, plate 0.4 / 0.8.',
     'Weapons from physics: each weapon has a mass, a length, hands and a point (depth, width), an edge or a head. Damage: point depth/4 piercing; edge (2 + 3√(mass × length × grip)) slashing; head 1 + 6√(head mass × length × grip) blunt. Speed: thrusts cost more with mass, swings with √(mass × length), the longsword costing what the motion table lists. STR adds strBonus × 0.25–0.5 to a thrust (by wound width) and × mass/1.4 (× 1.5 two-handed, up to 1.5) to a swing. A piercing wound bleeds damage × width/4 over 2 + depth/15 rounds.',
     'Fend off and push back: with a long weapon (reach 2+) a shove reaches 2 squares; a ready shield adds +1.',
     'Ward (verb) and Blink (verb): Ward + Force soaks 3 × magnitude points of spells and missiles; Ward + Wind turns half the missiles aside; Ward + an element halves that element and keeps off its after-effects; Ward + Mind keeps out baits. Blink steps up to 4 squares through walls and out of any hold, roots or webs. Wind blows now hurl a target back 2 squares.',
-    'Bait and Read intent (in-combat charm and wisdom): Bait (2 AP on the sheet, within 3 squares) is d10 + ⌊CHA/2⌋ + Feint against d10 + ⌊WIS/2⌋ + Read Attack: they are drawn off balance and defend at −2 for the rest of the round. Read intent (1 AP, within 4, in sight): the reader rolls d10 + ⌊WIS/2⌋ + Read Attack against 5 + the foe\'s ⌊CHA/2⌋ + Feint, a number they don\'t see. Made it: the foe\'s true intent (what they have committed to this round, feints seen through) and +2 to defend against them and to beat their defenses. Missed by 1–3: nothing to go on. Missed by 4 or more: a confident misread — a false intent and −2 — reported just like a true read. Hex + Mind baits by magic (WIL resists); Bless + Mind gives foresight (true reads of every foe).',
+    'Bait and Read intent (in-combat charm and wisdom): Bait (1 AP, within 3 squares) is d10 + ⌊CHA/2⌋ + Feint against d10 + ⌊WIS/2⌋ + Read Attack: they are drawn off balance and defend at −2 for the rest of the round. Read intent (half an AP, within 4, in sight): the reader rolls d10 + ⌊WIS/2⌋ + Read Attack against 5 + the foe\'s ⌊CHA/2⌋ + Feint, a number they don\'t see. Made it: the foe\'s true intent (what they have committed to this round, feints seen through) and +2 to defend against them and to beat their defenses. Missed by 1–3: nothing to go on. Missed by 4 or more: a confident misread — a false intent and −2 — reported just like a true read. Hex + Mind baits by magic (WIL resists); Bless + Mind gives foresight (true reads of every foe).',
     'Impact: blunt past armor beyond 8 points breaks bones (1 CON per 2 points over, ÷ size for big bodies) as well as winding; a blow that lands throws its target back 1 square per 8 points landed (blunt in full, cuts and stabs at half; ÷ size; up to 3); A parry meets force with force: the attacker adds ⌊(blow − half my weapon\'s blow)/4⌋ + ⌊(blow − my weapon\'s blow)/2⌋ (+ motion) against my d10 + agility + Parry Training — equal weapons parry as before or a little easier; a giant\'s club against a sword is hopeless, against a strong two-hander with Parry Training a chance. Shields already wear by force, shatter past their threshold, and break outright under a power blow from as hard a material.',
     'Weapon weight and strength (TUNED): a weapon has a natural speed strength can\'t beat (light and short is quick; long travels farther), and a strain: its load (mass for a thrust; mass with the leverage of its length for a swing) over the wielder\'s capacity (0.3 kg per STR point, ×1.5 two-handed, +10% per Heavy Weapon Training rank). Within capacity it swings at its natural speed; past it AP and stamina rise with strain²; past 3× it is too ungainly to use. A man (STR 7) can barely lift a giant\'s club; an ogre swings it like a sword.',
     'Ogre and hill giant; size and grip: big creatures (trait size: ogre 1.5, giant 2.5) take vital wounds less often (the wound roll\'s target ÷ size) and bleed less per wound (÷ size): a man-sized wound is shallow in a big body. Grip (giant 5, ogre 2) adds to grapple rolls: a giant seizes a man in one hand. The ogre (level 8, STR 23, CON 21) swings a crude giant club and its fists; no regeneration. The hill giant (level 12, STR 28, CON 26) swings a giant club one-handed, hurls boulders (range 2–10, 14 blunt, can knock down) and grapples.',
@@ -596,13 +668,13 @@
     'WIL split from WIS (the user\'s call): eight attributes. WIL is resolve: magic defense, resisting fear and compulsion, and stamina regeneration (⌊(CON + WIL)/4⌋ − armor). WIS stays judgment and perception. Older characters get WIL = their WIS.',
     'Monster attributes go past the human range (1–10, 13 with Conditioning feats), up to 30: bears and trolls STR 16–20, a stone golem 22, a troll chieftain 24. The usual formulas apply to the raw number (damage bonus ⌊(STR−5)/2⌋, grappling ⌊STR/2⌋, stamina, death at CON 0).',
     'Monsters (draft): natural weapons are always ready and can\'t be dropped; natural armor can\'t be looted. Traits: knockdown bites, pack bonus (+1 damage per packmate beside the target), venom (poison up to 2 CON a round for 3 rounds, no more than the wound; bandages don\'t stop it), rust (corrodes metal armor and shields), displacement (each attack first rolls a d10 to find the real creature: arrows miss on 1–5, blows on 1–2), springy chitin (a blow that lands costs the attacker 3 stamina), sticky webs (each layer adds 2 AP and 3 stamina to every action, up to two layers; one layer comes loose each round; tear free with d10 + ⌊STR/2⌋ ≥ 8, or burn them), shield-crushing blows, regeneration (unless burned), tireless (undead and constructs: no stamina, damage to attributes, no bleeding or venom), resistances (skeletons: no piercing, half slashing), nimble, slippery, leaping, and boss multipliers on AP and stamina.',
-    'Magic (overhaul, phase 1): a spell is a verb, a noun and at most one modifier; cost = the sum of the words. Verbs (studied, Magic: words feats) set the shape: Strike (a bolt, range 1–2, magnitude 6), Launch (a bolt, 2–12, 5), Burst (radius 1 at 2–8, 4), Cover (ground hazard, radius 1, 3 rounds), Build (a wall 3 squares across, 3 rounds), Open (a pit), Inscribe (a hidden rune on an adjacent square), Hex (a bane, 3 rounds, resisted), Bless (a boon, 3 rounds), Conjure (a creature for 4 rounds). Nouns (found in the world) set what it is: Fire (burns; hot ground; wall of fire; kindled blades), Frost (slows; ice; ice wall; numbs; frost ward), Lightning (straight through metal armor; shocks; charged ground; storm wall; haste), Wind (hurls back; swirling winds that send missiles astray; wind wall; freedom of movement), Earth (stone; rough ground; stone wall; pits; slows; stoneskin), Vine (thorns that root; brambles; bramble wall; barkskin), Life (withers the living — CON, no armor; withering bane; blessing closes wounds and innervates; raises the dead), Force (knocks down; force wall; shielded). Modifiers: Strong (+3, wound up), Wide (bigger area, longer wall), Long (twice as long), Far (twice the range), Lingering (half now, the rest burns on). Resisting: caster d10 + ⌊INT/2⌋ + Casting against the target d10 + ⌊attribute/2⌋ (DEX/SPD to dodge an area or a pit). Areas and hazards hit friends too. Casting costs 2 base AP (4 on the sheet) unless the verb says more.',
+    'Magic (overhaul, phase 1): a spell is a verb, a noun and at most one modifier; cost = the sum of the words. Verbs (studied, Magic: words feats) set the shape: Strike (a bolt, range 1–2, magnitude 6), Launch (a bolt, 2–12, 5), Burst (radius 1 at 2–8, 4), Cover (ground hazard, radius 1, 3 rounds), Build (a wall 3 squares across, 3 rounds), Open (a pit), Inscribe (a hidden rune on an adjacent square), Hex (a bane, 3 rounds, resisted), Bless (a boon, 3 rounds), Conjure (a creature for 4 rounds). Nouns (found in the world) set what it is: Fire (burns; hot ground; wall of fire; kindled blades), Frost (slows; ice; ice wall; numbs; frost ward), Lightning (straight through metal armor; shocks; charged ground; storm wall; haste), Wind (hurls back; swirling winds that send missiles astray; wind wall; freedom of movement), Earth (stone; rough ground; stone wall; pits; slows; stoneskin), Vine (thorns that root; brambles; bramble wall; barkskin), Life (withers the living — CON, no armor; withering bane; blessing closes wounds and innervates; raises the dead), Force (knocks down; force wall; shielded). Modifiers: Strong (+3, wound up), Wide (bigger area, longer wall), Long (twice as long), Far (twice the range), Lingering (half now, the rest burns on). Resisting: caster d10 + ⌊INT/2⌋ + Casting against the target d10 + ⌊attribute/2⌋ (DEX/SPD to dodge an area or a pit). Areas and hazards hit friends too. Casting costs 2 AP unless the verb says more (3 → 4, 4 → 6 on the turn-budget curve).',
     'Magic feat tiers count feats across all four magic sub-trees (otherwise Casting and Fire Affinity can never pass rank I).',
     'Plate: +1 stamina per action and −3 regeneration (Specifics: +2 and −4), tuned in the arena.',
     'Initiative: d10 + effective SPD.',
-    'Defense checks: block is d10 + Shield Training against the shield\'s number. Parry and dodge are opposed rolls: defender d10 + Training + ⌊(DEX + SPD)/4⌋ (armor lowers both) against attacker d10 + ⌊(STR + SPD)/4⌋, +1 for a two-handed swing, +2 for a power swing; a parry also faces +1 per weight class the attacking weapon has over the parrying one. Ties go to the defender. A power blow can\'t be parried, only dodged or blocked.',
+    'Defense checks: parry and dodge are opposed rolls: defender d10 + Training + ⌊(DEX + SPD)/4⌋ (armor lowers both; −2 to dodge) against attacker d10 + ⌊(STR + SPD)/4⌋, +1 for a two-handed swing, +2 for a power swing; a parry also faces the blow\'s force against the parrying weapon\'s. Ties go to the defender. A power blow can\'t be parried, only dodged or blocked. Blocks: see above.',
     'Parrying dagger: held in the off hand (no shield, no two-handed weapon). It stabs (off-hand thrust) and gives an Off-hand parry (1 AP on the sheet ×2, +1 to the roll) that meets thrusts only.',
-    'A successful parry or dodge negates the strike completely.',
+    'A successful parry or dodge negates the strike\'s damage completely (a parry still costs stamina, see blocks).',
     'Actions cannot be paid if they would drop your own stamina to 0.',
     'Unconscious characters do not regenerate in combat. Heavy-armor negative regen always applies.',
     'Excess blunt beyond remaining stamina is lost; later hits go to attributes.',
@@ -613,11 +685,11 @@
     'Kick: opposed d10 + ⌊STR/2⌋; a kick knocks down only on a win by 3 or more. Trip wins on any margin.',
     'Disarm: d10 + ⌊DEX/2⌋ opposed (+2 for a two-handed grip). Grapple: d10 + ⌊STR/2⌋ + Grappler rank vs. d10 + ⌊max(STR,DEX)/2⌋.',
     'Prone: +1 damage to attacks against you, +1 AP on your defenses, no dodging. Grappled: +1 AP on defenses, no movement.',
-    'Trip and disarm each cost 3 AP and 2 stamina (base).',
+    'Trip and disarm each cost 3 base AP (4 on the turn-budget curve) and 2 base stamina.',
     'Grappling ladder: free → clinch → hold → pin, each step a directly opposed d10 roll (⌊STR/2⌋ + Grappler; breaking free may use ⌊max(STR, DEX)/2⌋ + Escape Artist). Win by 5+ for two steps; lose by 5+ and it can reverse. Clinch: both cramped with long weapons, no two-handed swings or bows, no stepping away without a break. Hold: the held fighter can\'t move and fights cramped with every weapon, dagger included; the holder keeps a dagger hand and can drag them a square. Pin: the pinned fighter can only try to break; piercing and a Coup de Grâce dagger go through their armor. Throw: from a hold or pin, prone a square away. Armor is easy to grab (+1 mail and scale, +2 plate to grapple and pin) but hard to throw (footing +1 / +2). Costs in base AP / stamina: clinch 2 / 3, grapple, pin and throw 3 / 5, break 2 / 3, and 2 stamina a round to keep a hold.',
-    'Getting up from prone, base AP / stamina by armor: none, padded or leather 1 / 1; mail 2 / 2; scale 3 / 3; plate 4 / 5 (on the sheet: plate is 8 AP and about 15 stamina). Never more AP than your pool. Kip-Up: 1 AP.',
+    'Getting up from prone, base AP / stamina by armor: none, padded or leather 1 / 1; mail 2 / 2; scale 3 / 3; plate 4 / 5 (on the turn-budget curve: plate is 6 AP, the whole of an SPD-5 turn). Never more AP than your pool. Kip-Up: 1 AP.',
     'Movement costs only the armor stamina penalty, once per move action.',
-    'Bandage: 3 AP (1 AP with Field Dressing) and uses one bandage.',
+    'Bandage: 4 AP (1 AP with Field Dressing) and uses one bandage.',
     'Long rest repairs 25% of max armor and shield durability (+25% with Field Repair).',
     'Daggers get −1 AP on thrusts and swings ("lowest AP").',
     'Very light and light weapons count as "light weapons" for Light Touch and Precision.',

@@ -145,9 +145,9 @@
         cells.push(h('button', {
           class: 'cell' + tileCls + (canMove ? ' can-move' + (late(reach[key]) ? ' late' : '') : '') + (canCast ? ' can-cast' : '') + (ghosts[key] && !c ? ' ghost' : '') + (c ? ' has-token' : ''),
           title: g.length ? g.map((t) => `${t.def.name}${t.f.rounds != null ? ` (${t.f.rounds} rd)` : ''}`).join(', ') : null,
-          'aria-label': (c ? `${c.name} at ${x + 1}, ${y + 1}` : `Square ${x + 1}, ${y + 1}${canMove ? `, move for ${reach[key]} AP` : ''}`) + (g.length ? ` — ${g.map((t) => t.def.name).join(', ')}` : ''),
+          'aria-label': (c ? `${c.name} at ${x + 1}, ${y + 1}` : `Square ${x + 1}, ${y + 1}${canMove ? `, move for ${C.fmtAP(reach[key])} AP` : ''}`) + (g.length ? ` — ${g.map((t) => t.def.name).join(', ')}` : ''),
           onclick: () => cellClick(app, enc, legal, x, y, id, reach, castable),
-        }, token || (canMove ? String(reach[key]) : glyph)));
+        }, token || (canMove ? C.fmtAP(reach[key]) : glyph)));
       }
     }
     return h('div', { class: 'map-wrap' }, h('div', { class: 'map', style: { gridTemplateColumns: `repeat(${enc.grid.w}, auto)`, '--cols': enc.grid.w } }, cells));
@@ -251,14 +251,14 @@
       const prev = req.hidden ? null : blowPreview(enc, chars, req);
       return {
         title: `${a.name} → ${me.name}`, sub: `${what}${prev ? ` · if it lands: ${prev.text}` : ''}`, ap,
-        choices: req.options.map((o) => ({ value: o.type, label: o.name, cost: `${o.ap} AP${o.stamina ? ` · ${o.stamina} st` : ''}`, odds: o.odds != null ? `${Math.round(o.odds * 100)}%` : '?' })),
+        choices: req.options.map((o) => ({ value: o.type, label: o.name, cost: `${C.fmtAP(o.ap)} AP${o.stamina ? ` · ${o.stamina} st` : ''}`, odds: o.odds != null ? `${Math.round(o.odds * 100)}%` : '?' })),
         none: { label: 'Take it', note: 'keep the AP' },
       };
     }
     const t = chars[req.target];
     return {
       title: `${t.name} leaves ${me.name}'s reach`, sub: 'Strike as they go? A hit stops them.', ap,
-      choices: req.options.map((o) => { const p = blowPreview(enc, chars, { decl: { actor: req.actor, target: req.target, type: 'strike', option: o } }); return { value: o, label: o.label, cost: `${o.ap} AP`, odds: p ? p.text : '' }; }),
+      choices: req.options.map((o) => { const p = blowPreview(enc, chars, { decl: { actor: req.actor, target: req.target, type: 'strike', option: o } }); return { value: o, label: o.label, cost: `${C.fmtAP(o.ap)} AP`, odds: p ? p.text : '' }; }),
       none: { label: 'Let them go', note: 'keep the AP' },
     };
   }
@@ -269,7 +269,7 @@
       const m = reactionModel(app, req, enc, chars);
       const done = (v) => { closeModal(); resolve(v); };
       const box = h('div', { class: 'modal info-pop', role: 'dialog', 'aria-modal': 'true', onclick: (e) => e.stopPropagation() },
-        h('span', { class: 'label' }, `Reaction · ${m.ap} AP left`), h('h2', null, m.title), h('p', { class: 'small muted' }, m.sub),
+        h('span', { class: 'label' }, `Reaction · ${C.fmtAP(m.ap)} AP left`), h('h2', null, m.title), h('p', { class: 'small muted' }, m.sub),
         h('div', { class: 'stack tight' }, m.choices.map((c) => h('button', { class: 'act', onclick: () => done(c.value) }, h('span', null, c.label), h('span', { class: 'small muted num' }, `${c.cost} · ${c.odds}`))),
           h('button', { class: 'act', onclick: () => done(null) }, h('span', null, m.none.label), h('span', { class: 'small muted' }, m.none.note))));
       const root = document.getElementById('modal-root');
@@ -281,14 +281,16 @@
   // ---- Command panel -----------------------------------------------------
   // Under the map: the name, a type dropdown (Martial, Magic, Move, Other), the action
   // dropdown(s), a target and Declare. Numbers and rules sit behind ⓘ buttons and pop-ups.
+  // One pip per AP on the sheet; a part-spent AP shows as a half pip.
   function apMeter(pool, left) {
+    const D = G.CONFIG.apDisplay || 1, P = pool / D, L = left / D;
     const out = [];
-    for (let i = 0; i < pool; i++) out.push(h('i', { class: i < left ? '' : 'spent' }));
-    return h('span', { class: 'ap-meter', 'aria-label': `${left} of ${pool} AP left this round` }, out);
+    for (let i = 0; i < Math.ceil(P - 1e-9); i++) out.push(h('i', { class: L >= i + 1 ? '' : L > i ? 'part' : 'spent' }));
+    return h('span', { class: 'ap-meter', 'aria-label': `${C.fmtAP(left)} of ${C.fmtAP(pool)} AP left this round` }, out);
   }
 
   function costText(ap, st, sp) {
-    return [`${ap} AP`, st ? `${st} st` : null, sp ? `${sp} SP` : null].filter(Boolean).join(' · ');
+    return [`${C.fmtAP(ap)} AP`, st ? `${st} st` : null, sp ? `${sp} SP` : null].filter(Boolean).join(' · ');
   }
 
   // A select with option groups: groups = [[label|null, [[value, label, disabled]]]].
@@ -500,7 +502,7 @@
         h('button', { class: 'who linkish', onclick: () => openSheet(app, enc, id), title: 'Character sheet' }, c.name)),
       h('div', { class: 'stack tight', style: { alignItems: 'flex-end' } },
         h('div', { class: 'ap-line' }, badges, apMeter(legal.pool, legal.ap)),
-        h('span', { class: 'small num muted' }, `${legal.ap}/${legal.pool} AP · ${c.stamina} st${sp != null ? ` · ${sp} SP` : ''}`)));
+        h('span', { class: 'small num muted' }, `${C.fmtAP(legal.ap)}/${C.fmtAP(legal.pool)} AP · ${c.stamina} st${sp != null ? ` · ${sp} SP` : ''}`)));
 
     if (aiControlled(app, c)) return h('section', { class: 'panel cmd' }, head, h('p', { class: 'muted' }, 'Deciding…'));
 
@@ -539,7 +541,7 @@
       go = h('div', { class: 'cmd-go' },
         chosen
           ? h('button', { class: 'primary', onclick: () => declare(app, enc, entry.kind === 'move' ? { actor: id, type: 'move', to: chosen } : { actor: id, type: 'cast', option: entry.option, at: chosen }) },
-            entry.kind === 'move' ? 'Move here' : `${entry.label.split(' · ')[0]} here`, h('span', { class: 'cost' }, entry.kind === 'move' ? (reachAP != null ? `${reachAP} AP` : '') : costText(entry.ap, entry.stamina, entry.sp)))
+            entry.kind === 'move' ? 'Move here' : `${entry.label.split(' · ')[0]} here`, h('span', { class: 'cost' }, entry.kind === 'move' ? (reachAP != null ? `${C.fmtAP(reachAP)} AP` : '') : costText(entry.ap, entry.stamina, entry.sp)))
           : tapOnly
           ? h('span', { class: 'tap-hint' }, entry.kind === 'move' ? `Click a square · up to ${entry.move.maxSquares}` : 'Click a square on the map')
           : entry.targets && entry.targets.length && !target && app.hooks && app.hooks.choose
@@ -554,7 +556,7 @@
       aim ? h('div', { class: 'cmd-row' }, aim) : null,
       go,
       h('div', { class: 'cmd-foot' },
-        h('button', { class: 'end', title: legal.ap ? `Keep ${legal.ap} AP to defend with until the round ends` : 'Nothing left this round', onclick: () => finishTurn(app, enc, id) }, legal.ap ? `End turn · keep ${legal.ap} AP` : 'End turn'),
+        h('button', { class: 'end', title: legal.ap ? `Keep ${C.fmtAP(legal.ap)} AP to defend with until the round ends` : 'Nothing left this round', onclick: () => finishTurn(app, enc, id) }, legal.ap ? `End turn · keep ${C.fmtAP(legal.ap)} AP` : 'End turn'),
         infoButton('Turns and AP', () => [
           h('p', null, 'On your turn spend as much of your AP as you like; every action happens at once.'),
           h('p', null, 'AP you keep pays for reactions on other turns: a block, parry or dodge when a blow comes, or a strike at a foe who leaves your reach. AP left when the round ends is lost.'),
@@ -707,7 +709,7 @@
           h('h2', { id: 'pop-title' }, c.name)),
         h('button', { class: 'small', onclick: closeModal, 'aria-label': 'Close' }, 'Close')),
       h('div', { class: 'stack tight' },
-        h('div', { class: 'row spread small' }, h('span', { class: 'num' }, `Stamina ${c.stamina}/${max} · regen ${C.regen(c)}`), seeAP ? h('span', { class: 'num' }, `${enc.ap[id]} AP left this round`) : h('span', { class: 'muted' }, 'AP hidden')),
+        h('div', { class: 'row spread small' }, h('span', { class: 'num' }, `Stamina ${c.stamina}/${max} · regen ${C.regen(c)}`), seeAP ? h('span', { class: 'num' }, `${C.fmtAP(enc.ap[id])} AP left this round`) : h('span', { class: 'muted' }, 'AP hidden')),
         bar(c.stamina, max)),
       UI.Cards.statusChips(c).length ? h('div', { class: 'row', style: { gap: '4px' } }, UI.Cards.statusChips(c)) : null,
       h('div', { class: 'derived attrs' }, attrs),

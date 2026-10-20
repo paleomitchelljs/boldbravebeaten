@@ -1,7 +1,8 @@
 /*
  * Battle: the same top-down map you were walking, with the fighters on it. The map stays in view the whole
- * time. Under it, one compact row of dropdowns declares the active character's actions; the log is a strip over
- * the map that opens on a click; sheets and explanations are pop-ups. The engine, and the turn commands, are
+ * time. The log is a strip just under it (inside the map's frame, so it never covers a square) that opens on a
+ * click; under that, one compact row of dropdowns declares the active character's actions; sheets and explanations
+ * are pop-ups. The engine, and the turn commands, are
  * the rules layer's (src/ui/views/battle.js exports the command panel; this file is the screen around it).
  */
 (function (G) {
@@ -62,7 +63,7 @@
     const r = game.ui.reacting;
     const m = r.model;
     return h('section', { class: 'popcard react' },
-      h('div', { class: 'popcard-head' }, h('div', { class: 'stack tight grow' }, h('span', { class: 'label' }, `Reaction · ${m.ap} AP left`), h('h3', null, m.title)), UI.tip(r.req.kind === 'defend' ? 'AP you spend now is gone from this round: from your turn if it is still to come. A defence that fails still costs its AP.' : 'A strike as they go costs its AP now; a hit stops them where they are.')),
+      h('div', { class: 'popcard-head' }, h('div', { class: 'stack tight grow' }, h('span', { class: 'label' }, `Reaction · ${C.fmtAP(m.ap)} AP left`), h('h3', null, m.title)), UI.tip(r.req.kind === 'defend' ? 'AP you spend now is gone from this round: from your turn if it is still to come. A defence that fails still costs its AP.' : 'A strike as they go costs its AP now; a hit stops them where they are.')),
       h('p', { class: 'small muted' }, m.sub),
       h('div', { class: 'stack tight' },
         m.choices.map((c, i) => h('button', { class: 'act', onclick: () => answer(game, c.value) }, h('span', null, h('kbd', null, String(i + 1)), ' ', c.label), h('span', { class: 'small muted num' }, `${c.cost}${c.odds ? ' · ' + c.odds : ''}`))),
@@ -335,8 +336,8 @@
       const mine = c.side === 'party';
       const ap = enc.ap[id] != null ? Combat.apLeft(enc, id) : null;
       return h('button', { class: `init ${mine ? 'party' : 'enemy'} ${C.isActive(c) ? '' : 'down'} ${id === actor || id === enc.order[enc.turn] ? 'current' : ''} ${enc.turnDone && enc.turnDone[id] ? 'done' : ''}`,
-        title: `${c.name} · stamina ${c.stamina}/${max}${enc.initiative[id] != null ? ` · initiative ${enc.initiative[id]}` : ''}${mine && ap != null ? ` · ${ap} AP left` : ''}${enc.turnDone && enc.turnDone[id] ? ' · turn taken' : ''}`, onclick: () => game.openOverlay('sheet', { id }) },
-      Sprites.portrait(c, 28), UI.bar(c.stamina, max), mine && ap != null ? h('span', { class: 'init-ap num' }, ap) : null);
+        title: `${c.name} · stamina ${c.stamina}/${max}${enc.initiative[id] != null ? ` · initiative ${enc.initiative[id]}` : ''}${mine && ap != null ? ` · ${C.fmtAP(ap)} AP left` : ''}${enc.turnDone && enc.turnDone[id] ? ' · turn taken' : ''}`, onclick: () => game.openOverlay('sheet', { id }) },
+      Sprites.portrait(c, 28), UI.bar(c.stamina, max), mine && ap != null ? h('span', { class: 'init-ap num' }, C.fmtAP(ap)) : null);
     }));
   }
 
@@ -375,7 +376,12 @@
       res.result === 'fled' ? h('p', { class: 'muted small' }, 'You run for the stairs. The foes stay where they were.') : null,
       res.result === 'won' ? h('p', { class: 'small muted' }, 'Gear that fell with them is in the pack. Take what suits you from the Pack.') : null,
       h('div', { class: 'row' },
-        h('button', { class: 'primary', onclick: () => (wiped ? game.go('gameover') : game.afterBattle()) }, 'Continue'),
+        wiped || !G.CONFIG.afterBattle
+          ? h('button', { class: 'primary', onclick: () => (wiped ? game.go('gameover') : game.afterBattle()) }, 'Continue')
+          : [
+            h('button', { class: 'primary', title: `${G.CONFIG.afterBattle.minutes} minutes: stamina back to full (weariness stays until you camp), gear patched up`, onclick: () => { World.restAndRepair(w); game.afterBattle(); } }, 'Rest and repair'),
+            h('button', { title: 'Move on at once: no time passes, stamina stays where it is', onclick: () => game.afterBattle() }, 'Press on'),
+          ],
         ibtn('pack', 'Pack', () => game.openOverlay('pack')),
         game.ui.finalLog ? ibtn('scroll', 'The last of it', () => game.openOverlay('text', { title: 'The last of it', text: game.ui.finalLog.map((l) => l.text).join('\n') })) : null));
   }

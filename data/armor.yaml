@@ -2,9 +2,11 @@
 # spd/dex = penalty to SPD and DEX; stamina = extra stamina per action; regen = stamina regeneration penalty;
 # standUp = extra AP to rise from prone. natural: true marks monster hides (cannot be worn or looted).
 # recoil: attackers lose this much stamina per blow that lands.
+# material: what a blade meets (CONFIG.materialHardness): metal wears a weapon fast, cloth and leather barely.
 
 padded:
   name: Padded
+  material: cloth
   mit: {P: 1, S: 1, B: 3}
   spd: 0
   dex: 0
@@ -14,6 +16,7 @@ padded:
   rarity: common
 leather:
   name: Leather
+  material: leather
   mit: {P: 1, S: 2, B: 1}
   spd: 0
   dex: 1
@@ -23,6 +26,7 @@ leather:
   rarity: common
 mail:
   name: Mail
+  material: iron
   mit: {P: 1, S: 4, B: 1}
   spd: 1
   dex: 1
@@ -32,6 +36,7 @@ mail:
   rarity: uncommon
 scale:
   name: Scale
+  material: iron
   mit: {P: 2, S: 4, B: 2}
   spd: 2
   dex: 2
@@ -41,6 +46,7 @@ scale:
   rarity: rare
 plate:
   name: Plate
+  material: steel
   mit: {P: 4, S: 6, B: 3}
   spd: 3
   dex: 2
@@ -50,6 +56,7 @@ plate:
   rarity: very rare
 fur:
   name: Thick fur
+  material: hide
   mit: {P: 1, S: 1, B: 2}
   spd: 0
   dex: 0
@@ -60,6 +67,7 @@ fur:
   natural: true
 chitin:
   name: Springy chitin
+  material: chitin
   mit: {P: 2, S: 3, B: 1}
   spd: 0
   dex: 0
@@ -71,6 +79,7 @@ chitin:
   recoil: 1
 trollHide:
   name: Troll hide
+  material: hide
   mit: {P: 1, S: 2, B: 3}
   spd: 0
   dex: 0
@@ -81,6 +90,7 @@ trollHide:
   natural: true
 scaleHide:
   name: Scaly hide
+  material: hide
   mit: {P: 1, S: 1, B: 0}
   spd: 0
   dex: 0
@@ -91,6 +101,7 @@ scaleHide:
   natural: true
 bogSkin:
   name: Slick skin
+  material: hide
   mit: {P: 0, S: 1, B: 1}
   spd: 0
   dex: 0
@@ -101,6 +112,7 @@ bogSkin:
   natural: true
 scalewardScales:
   name: Scaleward scales
+  material: chitin
   mit: {P: 2, S: 3, B: 2}
   spd: 0
   dex: 0
@@ -111,6 +123,7 @@ scalewardScales:
   natural: true
 drakeScales:
   name: Drake scales
+  material: chitin
   mit: {P: 4, S: 4, B: 2}
   spd: 0
   dex: 0
@@ -121,6 +134,7 @@ drakeScales:
   natural: true
 wyvernScales:
   name: Wyvern scales
+  material: chitin
   mit: {P: 5, S: 5, B: 3}
   spd: 0
   dex: 0
@@ -131,6 +145,7 @@ wyvernScales:
   natural: true
 ogreHide:
   name: Ogre hide
+  material: hide
   mit: {P: 1, S: 2, B: 3}
   spd: 0
   dex: 0
@@ -141,6 +156,7 @@ ogreHide:
   natural: true
 giantHide:
   name: Giant's hide
+  material: hide
   mit: {P: 2, S: 2, B: 4}
   spd: 0
   dex: 0
@@ -151,6 +167,7 @@ giantHide:
   natural: true
 golemStone:
   name: Stone body
+  material: stone
   mit: {P: 4, S: 5, B: 1}
   spd: 0
   dex: 0

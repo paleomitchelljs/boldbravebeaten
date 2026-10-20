@@ -1,7 +1,62 @@
 {
   "tuned (defaults)": [],
-  "as written": ["apScale=1", "staminaScale=1", "pierceMode=\"floor\"", "passThroughByArmor=null", "armorWearScale=1", "durabilityMitigationFloor=0", "defense.block.tnBySize=null"],
-  "-staminaScale": ["staminaScale=1"],
-  "-apScale": ["apScale=1"],
-  "-roll": ["pierceMode=\"floor\"", "passThroughByArmor=null"]
+  "as written": [
+    "apScale=1",
+    "apDisplay=1",
+    "apBase=3",
+    "apSpdContinuous=false",
+    "apCurve=null",
+    "moveAP=null",
+    "wholeTurnAction=false",
+    "armorActionAP=0",
+    "quickCut=null",
+    "minActionAP=1",
+    "minStrikeAP=1",
+    "defense.block.opposed=false",
+    "defense.dodgeBonus=0",
+    "defense.absorb=null",
+    "defense.dodgeStamina=null",
+    "staminaScale=1",
+    "pierceMode=\"floor\"",
+    "passThroughByArmor=null",
+    "armorWearScale=1",
+    "durabilityMitigationFloor=0",
+    "defense.block.tnBySize=null",
+    "weaponWear=null",
+    "weariness=null",
+    "armorPierceWear=0"
+  ],
+  "-staminaScale": [
+    "staminaScale=1"
+  ],
+  "old AP (pool 10, flat feat cuts)": [
+    "apScale=2",
+    "apDisplay=1",
+    "apBase=3",
+    "apSpdContinuous=false",
+    "apCurve=null",
+    "moveAP=null",
+    "wholeTurnAction=false",
+    "armorActionAP=0",
+    "quickCut=null",
+    "minActionAP=0.5",
+    "minStrikeAP=0.5"
+  ],
+  "old defences": [
+    "defense.block.opposed=false",
+    "defense.dodgeBonus=0",
+    "defense.absorb=null",
+    "defense.dodgeStamina=null"
+  ],
+  "-roll": [
+    "pierceMode=\"floor\"",
+    "passThroughByArmor=null"
+  ],
+  "-weaponWear": [
+    "weaponWear=null",
+    "armorPierceWear=0"
+  ],
+  "-weariness": [
+    "weariness=null"
+  ]
 }

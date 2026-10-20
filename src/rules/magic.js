@@ -120,16 +120,16 @@
 
   function makeOption(c, v, n, m, n2) {
     const w = W();
-    const S = C().apScale();
     const V = w[v], N = w[n], M = m ? w[m] : null;
     const mag = magnitude(c, v, n, m);
     const cost = V.cost + N.cost + (M ? M.cost : 0) + (n2 ? w[n2].cost + CONFIG.magic.doubleSurcharge : 0);
     const bolt = BOLT.includes(V.shape);
     const windUp = !!(bolt && M && M.windUp && CONFIG.windUp && CONFIG.windUp.spells);
-    let ap = (V.ap || CONFIG.magic.castAP) * S - C().rank(c, 'quick_casting') + (!bolt && M && M.windUp ? S : 0);
-    if (M && M.ap) ap += M.ap * S;
-    if (windUp) ap -= CONFIG.windUp.ap * S;
-    ap = Math.max(CONFIG.minActionAP, ap);
+    // Base AP (Specifics units) through the turn-budget curve, then Quick Casting and armor.
+    let baseAP = (V.ap || CONFIG.magic.castAP) + (!bolt && M && M.windUp ? 1 : 0) + (M && M.ap ? M.ap : 0);
+    if (windUp) baseAP -= CONFIG.windUp.ap;
+    const full = Math.max(C().minAP(), Math.round(C().baseAP(baseAP)));
+    const ap = Math.max(C().minAP(), full - C().quickCut(c, 'quick_casting', full)) + C().armorAP(c);
     const far = M && M.rangeMult ? M.rangeMult : 1;
     const named = !!(M && M.named);
     const range = [V.range[0], V.range[1] * far];

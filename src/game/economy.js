@@ -113,11 +113,15 @@
   // ---- Repairs ----------------------------------------------------------------------
   function repairCost(world, item, service) {
     if (!item) return 0;
-    const max = item.kind === 'armor' ? Items.armorMaxDurability(item) : item.kind === 'shield' ? Items.shieldStats(item).maxDurability : 0;
+    const max = maxDurability(item);
     if (!max) return 0;
-    const missing = max - Math.max(0, item.durability);
+    const missing = max - Math.max(0, item.durability == null ? max : item.durability);
     if (missing <= 0) return 0;
     return Math.max(1, Math.round(missing * value(item) * E().repairPerPoint / max * priceFactor(world, service && service.faction, false, service)));
+  }
+
+  function maxDurability(item) {
+    return item.kind === 'armor' ? Items.armorMaxDurability(item) : item.kind === 'shield' ? Items.shieldStats(item).maxDurability : item.kind === 'weapon' ? Items.weaponMaxDurability(item) : 0;
   }
 
   function repair(world, item, service) {
@@ -125,7 +129,7 @@
     if (!cost) return { ok: false, reason: 'Nothing to repair' };
     if (world.gold < cost) return { ok: false, reason: 'Not enough gold' };
     world.gold -= cost;
-    item.durability = item.kind === 'armor' ? Items.armorMaxDurability(item) : Items.shieldStats(item).maxDurability;
+    item.durability = maxDurability(item);
     G.World.logLine(world, `Repaired ${Items.itemName(item)} for ${cost} gold.`, 'info');
     return { ok: true, cost };
   }

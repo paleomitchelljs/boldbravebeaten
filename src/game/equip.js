@@ -148,7 +148,9 @@
       const d = D.WEAPONS[item.type];
       const st = Items.weaponStats(item);
       const faces = Object.entries(st.faces).map(([f, v]) => `${f} ${v.join('/')}`).join(' · ');
-      return `${d.hands >= 2 ? 'two-handed' : d.hands > 1 ? 'versatile' : 'one-handed'} · ${d.reachName || ''} · ${faces}`;
+      const max = Items.weaponMaxDurability(item);
+      const dur = max ? ` · ${Items.weaponBroken(item) ? 'BROKEN' : `dur ${Items.weaponDurability(item)}/${max}`}` : '';
+      return `${d.hands >= 2 ? 'two-handed' : d.hands > 1 ? 'versatile' : 'one-handed'} · ${d.reachName || ''} · ${faces}${dur}`;
     }
     return '';
   }

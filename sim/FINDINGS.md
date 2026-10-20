@@ -1,5 +1,196 @@
 # Simulation findings
 
+## Weapon wear, rest and repair after a fight, weariness (2026-10-20)
+
+**The user's brief.**
+- **Weapon durability:** weapons have a durability and lose efficacy as they wear, until repaired.
+- **What wears them:** hitting metal armor, being parried and being blocked wear a weapon fast; a dodge or flesh
+  barely at all.
+- **The rapier** is fragile: parrying with it wears it by the force it meets, and using it on heavy metal armor is
+  risky with a good payoff.
+- **Armor** wears with its quality and the intensity of the blows. Material is a meaningful attribute.
+- **After a fight:** one click rests and repairs.
+- **On trial:** every round of combat lowers max stamina, to end endless fights and give a reason to rest.
+
+**Adopted (PROVISIONAL, `src/rules/config.js` and data).**
+- **Durability:** weapons.yaml `durability` and `fragility` per weapon (rapier 40 / 2, longsword 100 / 1, maces
+  120 / 0.5, warhammer 140 / 0.5, club 60 / 1).
+- **Material and quality:** an instance may carry its own `material` (an iron longsword 87 durability against
+  steel's 100). Toughness: wood 0.6, iron 1, steel 1.5, adamant 3.
+- **Hardness:** cloth 0.1, leather 0.3, hide 0.5, wood and bone 1, chitin 1.5, iron 2, steel 3, adamant 5. Every
+  armor type now names its material (mail iron, plate steel, padded cloth…).
+- **Wear per blow** (`weaponWear`) = force × rate × fragility × (hardness met ÷ own hardness):
+  - landing on armor 0.4; being parried 0.15; parrying 0.25; being blocked 0.25; a dodge 0;
+  - a rapier thrust on plate costs 5 of its 40; a longsword thrust 2 of 100; nothing on padded or flesh.
+- **Worn and broken weapons:** a worn weapon keeps 60% of its damage at the end of its life. A broken one counts as
+  not in hand until a smith mends it. The smith, repair kits and long rests now mend weapons.
+- **Armor:** thrusts now wear it too (`armorPierceWear` 0.5 of the piercing). Quality already scales armor
+  durability (crude ×0.6 to legendary ×2.2), so better armor lasts longer under the same blows.
+- **After a fight** (`afterBattle`): "Rest and repair" passes 15 minutes, refills stamina to the weary maximum and
+  gives armor, shields and weapons 25% back (50% with Field Repair; broken ones need a smith). "Press on" keeps stamina
+  where it is. Before, stamina refilled for free.
+- **Weariness** (`weariness`): −1 max stamina per round of combat, at most half; a long rest (camp, inn) clears it.
+
+**Sims** (`sim/run.js --n 60`; columns: both off / wear only / weariness only / both):
+
+| measure | off | wear | weary | both |
+|---|---|---|---|---|
+| rapier, weapon sweep in plate | 46% | 37% | 46% | 37% |
+| rapier, weapon sweep in mail | 91% | 90% | 91% | 90% |
+| level-1 knight vs level-8 duelist, corridor | 75% | 93% | 75% | 93% |
+| 2 sellswords vs level-8 duelist | 57% | 65% | 57% | 65% |
+| flanged mace, weapon sweep in plate | 56% | 58% | 61% | 64% |
+
+Encounters (100 each) do not move with wear: single fights are too short. Weariness costs the party a little against
+groups (squad 0 → 4%, horde 25 → 18%; within noise of each other).
+
+**Reading.**
+- **Against plate the rapier is now the risky choice:** it wears out on the armor, and a level-8 duelist beats a
+  level-1 plate knight 7% of the time instead of 25%.
+- **Wear does not touch the rapier's 90% in mail,** even at three times the rates (`--set weaponWear=…`). Duels end in
+  one to three rounds, and the rapier wins them by reach: its thrust reaches 3 squares to the longsword's 2, for the
+  same 6 piercing. Mail stops 1 point of it (it stops cuts, S 4).
+- **Under the realism rule, the open question is whether a light point should burst mail rings as well as a heavy
+  one.** A lever: piercing armor by the blow's momentum (mass), so light points do worse against metal.
+- **Wear will mostly show over a dungeon,** fight after fight, which the encounter sim (a fresh party every fight)
+  does not measure.
+
+## The turn budget: pool 6, fractional AP, contested blocks, armor AP (2026-10-20)
+
+**The user's brief.**
+- **Turn budget:** at level 1 a turn holds one big action (a powerful swing), a step and a medium action (step and
+  swing), or three quick actions (dodge, parry, thrust, a step, block).
+- **Growth:** feats and SPD add to how much a turn holds; fractional AP are fine.
+- **Defences:** all three are contested. Block is the easiest to make and costs the most stamina; dodge the hardest,
+  and costs no stamina from the blow; parry in between, and it can open a disarm or riposte if feated.
+- **Armor** is strong, but makes actions dearer in AP and stamina.
+- **Fast against armored:** a fast unarmored swordsman struggles to fell a slightly lower-level armored foe in close
+  quarters, but can get away.
+- **Reach** matters. The once-a-round Quick rule is out.
+
+**Adopted (all PROVISIONAL switches in `src/rules/config.js`).**
+- **AP in tenths** (`apScale 10`, `apDisplay 10`): costs like 1.5 with no rounding drift.
+- **Pool** `3.5 + SPD/2`, unrounded: 6 at SPD 5, every point of SPD worth half an AP.
+- **Cost curve** (`apCurve`): Specifics costs up to 2 stand; each AP above that costs 2. Thrust, parry, dodge and block
+  2; swing 4; two-handed swing 6; power swing 2 + 4. Weapon speed multiplies: dagger thrust 1.5, club swing 3.4.
+- **A move is a quick action** (`moveAP 2`): 2 AP for up to (1 + ⌊SPD/4⌋) × 2 squares (4 at SPD 5).
+- **One big action** (`wholeTurnAction`): with nothing spent this round, one action dearer than the pool takes the whole
+  turn. A SPD-4 fighter (5.5 AP) can still swing a two-handed warhammer (5.8).
+- **Armor AP** (`armorActionAP 1/6`): the armor's SPD penalty adds AP to every action (plate +0.5, scale +0.3, mail
+  +0.2) instead of shrinking the pool. The penalty still slows moving, initiative, dodging and fleeing.
+- **Quick feats** (`quickCut 0.5`): every use; half the cost at the top rank.
+- **Defences:**
+  - Contested blocks: d10 + Shield Training + shield size (1–4) + ⌊(STR + DEX)/4⌋ against the blow.
+  - Dodge −2.
+  - A successful defence still costs stamina (`absorb`): block half the blow's force, parry a quarter, dodge none.
+  - Dodge exertion 1 base stamina (Specifics 2).
+  - Untrained against a sword swing: block 72% (3 + 4 stamina), parry 64% (3 + 2), dodge 36% (3 + 0).
+- **Bind** (new feat, apprentice, needs Parry Training): a successful parry tries a disarm at once.
+- **Longbow** shootAP 4 → 5, so it is a big action (2 to draw, 4 to loose) and no cheaper than the shortbow (4).
+- **Removed:** the per-action surcharge and the once-a-round Quick rule.
+
+**Level-1 preset party under these rules** (sheet AP):
+- **Brenna** (longsword, SPD 5): pool 6; thrust 2, swing 4; parry, dodge and block 2; a move 2 for 4 squares.
+- **Ysolde** (dagger): thrust 1.5, swing 2.8.
+- **Osk** (warhammer, SPD 4): pool 5.5; two-handed swing 5.8 (the one-big-action rule).
+
+**Encounters** (`tools/encounters.js`, 100 fights each). Columns: old (pool 10, flat feat cuts, old defences) / new AP
+with old defences / old AP with new defences / **both**:
+
+| encounter | won | dead per fight |
+|---|---|---|
+| undercroft_2/crew | 88 / 95 / 93 / **96%** | 1.78 / 1.27 / 1.39 / **1.22** |
+| barrow/squad | 11 / 2 / 12 / **0%** | 3.54 / 3.89 / 3.39 / **3.74** |
+| barrow/horde | 28 / 13 / 25 / **25%** | 1.33 / 1.93 / 1.54 / **1.62** |
+| trollhole/wolves | 95 / 100 / 95 / **99%** | 0.78 / 0.44 / 0.63 / **0.34** |
+
+**Duels** (`sim/run.js --n 60 --only builds,weapons,twoOnOne,length,gap`), old → new:
+- **Armored against the fast duelist (gap):** a level-1 knight beats a level-4 duelist in a corridor 87% → 82%, a
+  level-8 one 78% → 75%; the level-1 heavy 88–93% → 100%. Fleeing uses armor-reduced SPD, so the duelist always gets
+  away from plate.
+- **Two sellswords against one level-8 duelist** (Quick Thrust III, Quick Parry II): 13% → 57%. The flat −1 per rank let
+  the duelist thrust for 1 AP; half at the top rank does not.
+- **Builds (average win, open):** duelist 66 → 63%, sellsword 42 → 52%, knight 88%, heavy 81 → 89%, brute 30 → 33%,
+  militia 18 → 20%, **brawler 14 → 1%**.
+- **Weapons (mail):** rapier 80 → 91%, dagger 66 → 57%, spiked mace 34 → 24%, others within a few points.
+
+**Reading.**
+- **The defences behave as asked.** The new defences help the party against groups (horde 13% → 25% with the new AP).
+  A milder dodge penalty (−1) helped the horde more than the party (25% → 12%), so it stays at −2.
+- **Reach decides featless duels under both rule sets.** In a weapon matrix of level-4 fighters in mail without
+  feats or shields, the spear beats everything 67–93%; it strikes first and fights end in round 1.
+- **The brawler loses nearly every duel against an armed fighter** (14% → 1%). It has no weapon to parry with, a dodge
+  now succeeds 36% of the time, and walking up to a greatsword (thrust reach 3) draws an opportunity strike per move.
+  Exempting the grapple steps from the curve (tried, then removed) only reached 3%.
+  - **The user's ruling:** this is realistic and stays. In 1v1, realism beats balance; a style gets its place from
+    monsters and challenges built around it, not from its duel win rate.
+- **The skeleton squad is now unwinnable at level 1** (11% → 0%), mostly from the new AP. The party's blunt weapons
+  swing, and a swing now costs twice a thrust.
+
+## Turns buy less: +1 AP on every action; Quick feats once a round per rank (2026-10-20, superseded the same day)
+
+_Superseded by the turn budget above; kept for its sims._
+
+### Turns buy less: +1 AP on every action; Quick feats once a round per rank (2026-10-20)
+
+**The problem (the user's playtest).** At level 1 a fighter could move in, swing hard and move away in one turn: with
+whole-pool turns nothing caps a turn, and a 10-AP pool held two steps and a 6-AP swing.
+
+**Adopted (PROVISIONAL, `src/rules/config.js`).**
+- **`actionSurcharge: 1`:** every action costs 1 AP more on top of its ×2 cost: moves, reactions and spells too;
+  dropping a weapon is free. A sword thrust is 5, a swing 7, a parry 5, a two-squares step 2. Moving in, swinging a sword
+  and moving away is 11 against a pool of 10. A dagger can still do it (9): the quick weapon's niche.
+- **`quickPerRound: true`:** Quick feats (Thrust, Parry, Block, Dodge, Hands, Heavy Tempo, Casting) take 1 AP off as
+  many such actions a round as their rank, not off every one.
+- **The pool stays 3 + ⌊SPD/2⌋ × 2** (10 at SPD 5).
+
+**Tried and dropped.**
+- **Pool 5** (`apScale 1`, the user's first suggestion). Halving the pool and every cost leaves what a turn buys the
+  same. Whole AP at that size also flattens weapon speed: every thrust rounds to 2 and every one-handed swing but the
+  dagger's to 3.
+- **All costs ×2.5 or ×3** (`costScale`). Heavy blows outgrow the pool: at ×2.5 a greatsword's two-handed swing costs
+  11 against a pool of 10, at ×3 a warhammer's 12. Brute mirrors at ×3 time out at 30 rounds.
+- **No surcharge on blocks, parries and dodges** (to favour reacting). It helped the party's foes more than the party
+  (horde 21% → 13%), so it is out.
+
+**Encounters** (`tools/encounters.js`, example party at level 1, 100 fights each):
+
+| encounter (won; dead per fight) | old ×2 | pool 5 | costs ×2.5 | **+1 per action** |
+|---|---|---|---|---|
+| undercroft_2/crew | 88%; 1.78 | 94%; 1.24 | 98%; 1.08 | 96%; 1.06 |
+| barrow/squad | 11%; 3.54 | 9%; 3.47 | 9%; 3.74 | 5%; 3.74 |
+| barrow/horde | 28%; 1.33 | 34%; 1.10 | 31%; 1.58 | 21%; 1.78 |
+| barrow/knight (rounds) | 4.4 | 5.3 | 6.1 | 7.1 |
+| trollhole/wolves | 95%; 0.78 | 98%; 0.41 | 98%; 0.72 | 100%; 0.28 |
+| trollhole/troll | 99%; 0.04 | 99%; 0.05 | 98%; 0.12 | 97%; 0.39 |
+
+**Duels** (`sim/run.js --n 60 --only builds,weapons,twoOnOne,length`; every column but "old" has Quick feats once a
+round):
+
+| measure | old ×2 | pool 5 | costs ×2.5 | costs ×3 | **+1 per action** |
+|---|---|---|---|---|---|
+| 2 sellswords vs one L8 duelist (pair wins) | 13% | 60% | 83% | 98% | 90% |
+| 2 sellswords vs one L8 heavy (pair wins) | 12% | – | 47% | 5% | 2% |
+| heavy mirror L4: median rounds; deaths | 3; 0.53 | 3; 0.25 | 7; 0.17 | 7; 0.17 | 4; 0.73 |
+| militia mirror L8: median rounds | 5 | 17 | 8 | 16 | 8 |
+| weapons in mail: dagger / rapier / longsword | 66 / 80 / 66 | 49 / 87 / 69 | 60 / 80 / 77 | 65 / 81 / 68 | 59 / 89 / 72 |
+| weapons in mail: club / greatsword | 20 / 57 | 21 / 61 | 15 / 59 | 18 / 67 | 12 / 57 |
+
+**Reading.**
+- **Why a flat surcharge over a multiplier.** The complaint is about turns of several actions. A surcharge taxes a
+  three-action turn three times and one big blow once, and leaves the gap between weapons as it was. A multiplier hits
+  the heaviest blows hardest. Under the surcharge, heavy-weapon mirrors stay short and deadly (4 rounds, 0.73 deaths),
+  where ×2.5 made them long and safe.
+- **The Quick cap is what tames the high-level duelist.** With the surcharge but the cut on every use, two sellswords
+  beat a level-8 duelist 42% of the time; once a round, 90%. The same build won 87% under the old rules.
+- **Costs.**
+  - **Groups are deadlier:** squad 11% → 5%, horde 28% → 21%. That adds to the turn-model retune already on the list.
+  - **A level-8 plate heavy now beats two sellswords 98% of the time** (88% before).
+  - **The club fell further** (20% → 12%).
+  - **Drawing a weapon and reading intent cost 2.**
+- Single-number sweeps: `--set actionSurcharge=0|1|2`, `--set costScale=2.5`, `--set quickPerRound=false`. At +2,
+  militia mirrors at level 8 time out and knight mirrors at level 4 run 30 rounds.
+
 ## Whole-pool turns with reactions replace passes (2026-10-19; `node tools/encounters.js`)
 
 **The change (the user's model).**

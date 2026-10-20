@@ -76,7 +76,7 @@
         c.armor ? h('span', { class: 'chip', title: 'Mitigation by damage type once coverage and condition are counted' }, `Armor P${ai.effMit.P} S${ai.effMit.S} B${ai.effMit.B}`) : h('span', { class: 'chip' }, 'No armor'),
         c.armor ? h('span', { class: 'chip', title: 'Armor durability' }, `Dur ${ai.durability}/${ai.maxDurability}`) : null,
         ai.spd || ai.dex ? h('span', { class: 'chip warn', title: 'Armor slows and stiffens you' }, `SPD −${ai.spd} · DEX −${ai.dex}`) : null,
-        sh ? h('span', { class: 'chip', title: 'Block AP, how much it can hold, durability' }, `Shield ${sh.blockAP} AP · holds ${sh.threshold} · ${c.shield.durability}/${sh.maxDurability}`) : null),
+        sh ? h('span', { class: 'chip', title: 'Block AP, how much it can hold, durability' }, `Shield ${C.fmtAP(C.actionCost(c, 'block').ap)} AP · holds ${sh.threshold} · ${c.shield.durability}/${sh.maxDurability}`) : null),
       editable ? h('p', { class: 'small muted' }, 'Gear comes from the pack. Swapping is for town, camp and the quiet before a fight.') : null);
   }
 
@@ -88,7 +88,7 @@
       return h('div', { class: 'tile' + (c.damage[a] ? ' hurt' : ''), title: `${ATTR_NAME[a]}. ${ATTR_INFO[a]} ${parts}` },
         h('span', { class: 'label' }, a), h('b', { class: 'num' }, now), now < cap ? h('span', { class: 'small muted num' }, `/${cap}`) : null);
     };
-    const derived = [['AP', C.apPool(c), 'Action points each round.'], ['Move', `${C.squaresPerAP(c)} sq/AP`, 'Squares moved per AP.'], ['Init', 'd10+' + C.combatAttr(c, 'SPD'), 'Initiative roll.'],
+    const derived = [['AP', C.fmtAP(C.apPool(c)), 'Action points each round.'], ['Move', G.CONFIG.moveAP ? `${C.squaresPerAP(c)} sq` : `${C.squaresPerAP(c)} sq/AP`, G.CONFIG.moveAP ? `Squares one move covers, for ${C.fmtAP(C.moveCost(c, 1))} AP.` : 'Squares moved per AP.'], ['Init', 'd10+' + C.combatAttr(c, 'SPD'), 'Initiative roll.'],
       ['Regen', (C.regen(c) >= 0 ? '+' : '') + C.regen(c), 'Stamina regained each round.'], ['Dmg', (C.strBonus(c) >= 0 ? '+' : '') + C.strBonus(c), 'Strength damage bonus.']];
     return h('div', { class: 'stack' },
       h('div', { class: 'tiles' }, G.CONFIG.attributes.map(tile)),
@@ -128,7 +128,7 @@
     const tabBtn = (id, label) => h('button', { class: `tab ${tab === id ? 'active' : ''}`, onclick: () => { o.tab = id; game.openOverlay('sheet', o); } }, label);
     const L = UI.Sprites.look(c);
     const enc = w.battle && w.battle.enc;
-    const apLine = enc && enc.ap && enc.ap[c.id] != null && (mine || enc.phase !== 'declare') ? `${enc.ap[c.id]} AP left` : null;
+    const apLine = enc && enc.ap && enc.ap[c.id] != null && (mine || enc.phase !== 'declare') ? `${C.fmtAP(enc.ap[c.id])} AP left` : null;
     const body = tab === 'gear' ? gearTab(game, o, c, editable) : tab === 'stats' ? statsTab(c) : tab === 'feats' ? featsTab(game, c) : tab === 'skills' ? skillsTab(c)
       : h('textarea', { 'aria-label': 'Notes', value: c.notes || '', placeholder: 'Notes about this character', onchange: (e) => { c.notes = e.target.value; game.save(); } });
     const tabs = mine ? ['gear', 'Gear', 'stats', 'Stats', 'feats', 'Feats', 'skills', 'Skills', 'notes', 'Notes'] : ['gear', 'Gear', 'stats', 'Stats', 'feats', 'Feats'];
@@ -142,7 +142,7 @@
         h('div', { class: 'stack tight grow' },
           h('span', { class: 'label' }, `${mine ? 'Party' : 'Foe'} · level ${c.level}${c.faction && !mine ? ' · ' + c.faction : ''}`),
           h('h2', null, c.name),
-          h('div', { class: 'row small' }, h('span', { class: 'num' }, `Stamina ${c.stamina}/${max}`), apLine ? h('span', { class: 'num muted' }, apLine) : null, h('span', { class: 'num' }, `CON ${C.attr(c, 'CON')}/${C.attrMax(c, 'CON')}`)),
+          h('div', { class: 'row small' }, h('span', { class: 'num', title: c.weary ? `Wearied: ${C.freshStamina(c)} after a long rest` : null }, `Stamina ${c.stamina}/${max}${c.weary ? ` (−${c.weary} weary)` : ''}`), apLine ? h('span', { class: 'num muted' }, apLine) : null, h('span', { class: 'num' }, `CON ${C.attr(c, 'CON')}/${C.attrMax(c, 'CON')}`)),
           bar(c.stamina, max),
           UI.Cards.statusChips(c).length ? h('div', { class: 'chips' }, UI.Cards.statusChips(c)) : null,
           foe && foe.monster && G.Enemies.MONSTERS[foe.monster] && G.Enemies.MONSTERS[foe.monster].blurb ? h('p', { class: 'small muted' }, G.Enemies.MONSTERS[foe.monster].blurb) : null)),

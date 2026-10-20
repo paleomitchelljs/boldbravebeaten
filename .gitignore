@@ -11,3 +11,8 @@ assets/env/spikes.png
 assets/env/plate.png
 assets/env/stairs.png
 assets/CUTE-FANTASY-README.txt
+
+# Local only: the art packs (licences), Claude settings, Dropbox conflict copies
+art/
+.claude/
+*conflicted copy*

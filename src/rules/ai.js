@@ -72,10 +72,10 @@
   function rate(c, target, opt, d) {
     if (!C.inRange(opt, d)) return 0;
     if (opt.stamina && opt.stamina >= c.stamina) return 0; // can't pay for it
-    let v = (hitValue(c, target, opt, d) * C.apScale()) / Math.max(1, opt.ap);
+    let v = (hitValue(c, target, opt, d) * C.costScale()) / Math.max(1, opt.ap);
     if (opt.unarmed === 'kick' || opt.unarmed === 'shieldBash') {
       const pDown = target.status.prone ? 0 : Combat.knockdownOdds(c, target, C.rank(c, 'trip') ? G.CONFIG.maneuver.tripFeatBonus : 0, G.CONFIG.maneuver.kickKnockdownMargin);
-      v += (pDown * 10 * C.apScale()) / Math.max(1, opt.ap);
+      v += (pDown * 10 * C.costScale()) / Math.max(1, opt.ap);
     }
     if (opt.spell) v *= 0.85; // spell points are finite and backlash is a risk
     const disp = target.traits && target.traits.displacement;
@@ -106,7 +106,7 @@
   // What an AP of mine is worth right now, in the units of hitValue: more while my own turn is
   // still to come this round (it could be a blow), less once I have had it (it can only defend).
   function apWorth(enc, id) {
-    const S = C.apScale();
+    const S = C.costScale();
     const turnAhead = !enc.turnDone[id] && enc.order.indexOf(id) >= Math.max(0, enc.turn) && Combat.currentActor(enc) !== id;
     return (turnAhead ? 1.0 : 0.45) / S;
   }
@@ -126,7 +126,7 @@
       if (enc.turnDone[f] || enc.order.indexOf(f) <= myTurn) continue;
       const foe = chars[f];
       const d = Combat.dist(me, enc.pos[f]);
-      const walk = Math.floor((Combat.apLeft(enc, f) * C.squaresPerAP(foe)) / C.apScale() / 2);
+      const walk = Math.floor(C.squaresFor(foe, Combat.apLeft(enc, f)) / 2);
       let worst = 0;
       for (const o of C.attackOptions(foe)) {
         if (o.windUp && !(foe.status.windUp && foe.status.windUp.key === C.optionKey(o))) continue;
@@ -346,7 +346,7 @@
     if (!la.spells || !la.spells.length) return null;
     const keep = spReserve(enc, chars, id, la);
     const c = chars[id];
-    const S = C.apScale();
+    const S = C.costScale();
     const me = Combat.projectedPos(enc, id);
     const Cn = G.Conditions;
     const allies = enc.ids.filter((o) => chars[o] && chars[o].side === c.side && C.isActive(chars[o]));
@@ -549,7 +549,7 @@
         const need = C.moveCost(c, squares);
         if (need > la.ap) continue;
         const dd = Combat.dist({ x, y }, tp);
-        let score = Math.abs(dd - goal) * 10 + need / C.apScale() + hazard;
+        let score = Math.abs(dd - goal) * 10 + need / C.costScale() + hazard;
         for (const p of provokers) if (Combat.dist(from, p.at) <= p.reach || Combat.dist({ x, y }, p.at) < p.reach) score += p.cost * 2;
         if (avoid) {
           // Stay out of every foe's reach if possible, and out of corners you can't leave.
@@ -582,7 +582,7 @@
     // has already done something (after the first action, the reserve is not dipped into).
     const reserve = reserveAP(enc, chars, id, P);
     const acted = enc.decls.some((d) => d.actor === id && d.round === enc.round && !d.reaction && !d.opportunity);
-    const S = C.apScale();
+    const S = C.costScale();
     let foes = enemiesOf(enc, chars, id);
     // In a frenzy (Rage) the nearest body is the foe, friend or not; confused, anyone near.
     if (G.Conditions && (G.Conditions.flag(c, 'berserk') || (G.Conditions.flag(c, 'confused') && rng() < 0.5))) {
@@ -722,7 +722,7 @@
     const read = la.maneuvers.find((m) => m.type === 'readIntent' && m.affordable);
     // One look a round: a misread leaves nothing to show for it, so don't keep trying.
     const readThisRound = enc.decls.some((d) => d.actor === id && d.type === 'readIntent');
-    if (read && !readThisRound && G.Conditions && !G.Conditions.has(c, 'reading') && la.ap >= read.ap + 2 * C.apScale()) {
+    if (read && !readThisRound && G.Conditions && !G.Conditions.has(c, 'reading') && la.ap >= read.ap + 2 * C.costScale()) {
       const close = read.targets.find((x) => x.inReach && x.distance <= 2 && foes.includes(x.id));
       if (close && Math.floor(C.attr(c, 'WIS') / 2) + C.rank(c, 'read_attack') >= Math.floor(C.attr(chars[close.id], 'CHA') / 2)) return { actor: id, type: 'readIntent', target: close.id };
     }

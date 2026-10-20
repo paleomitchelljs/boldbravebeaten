@@ -25,6 +25,19 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 - [ ] Retune: fights against armed groups got much deadlier (skeleton squad 70% → 27% wins, horde 57% → 13%); see
   sim/FINDINGS.md. Tune the AI's choices first (its defence reserve, defend threshold, moving past reach), then rule numbers
   (parry/dodge cost against attack cost, pool size), never single monsters.
+- [ ] The turn budget (pool 6, AP in tenths, swing 4, move 2, contested blocks, armor AP, Quick feats halve at the top
+  rank): playtest it. From the sims (sim/FINDINGS.md):
+  - the level-1 skeleton squad is now unwinnable (11% → 0%): an encounter-design question;
+  - the rapier rose to 91% in the weapon sweep (all fighters in mail); check whether that is realistic.
+  The brawler losing most duels to armed fighters (14% → 1%) is realistic and stays (the user's rule: in 1v1, realism
+  beats balance; styles get their place from encounters built around them).
+- [ ] Rapier in mail still wins 90% of the weapon sweep: reach (thrust reaches 3) and mail stopping 1 piercing, not
+  wear. Decide whether light points should do worse against metal (momentum); see sim/FINDINGS.md.
+- [ ] Weapon wear, "Rest and repair" after fights and weariness (−1 max stamina a round until camp) are untested over a
+  whole dungeon run; the encounter sim starts every fight fresh. A multi-fight sim would show attrition.
+- [ ] Weapon materials exist on items (an iron longsword) but nothing generates them yet: loot and shops make the type's
+  default material.
+- [ ] The UI shows fractional AP (pips with a half pip, "1.5 AP"); only the fake DOM has run it.
 - [ ] AI oddities seen in logs: a sword-and-board fighter drops the longsword for a dagger; everyone reads intent every round;
   archers and mages often draw opportunity strikes backing off.
 - [ ] "Always ask" puts a pop-up on every blow at the party (several a round against a group). Playtest; if it drags, add a
@@ -42,6 +55,12 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 - [ ] More dungeon maps in the new style; the other three are still the old layouts with no scenery props.
 
 ## Done recently
+- Weapons wear (durability by material, quality and fragility; metal armor, parries and blocks wear them; worn weapons
+  hit softer, broken ones need a smith). Thrusts wear armor. After a fight, "Rest and repair" or "Press on". Weariness:
+  −1 max stamina per round of combat until a long rest.
+- The turn budget: pool 3.5 + SPD/2 in tenths of an AP; quick actions 2, a swing 4, a two-handed swing 6, a move 2;
+  one big action allowed with an unspent pool; armor adds AP per action; Quick feats halve at the top rank; blocks
+  contested; defences cost stamina (block most, dodge none); Bind feat. The log sits under the map.
 - Top-down map shared by exploring and fighting; fights are played on a 15x10 slice of the dungeon.
 - Turn model: one turn per round spending as much of the AP pool as wanted, every action resolving at once; defences are
   reactions paid from the pool, asked of the player on the map with odds and what the blow would do; opportunity strikes

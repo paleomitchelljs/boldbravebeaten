@@ -120,8 +120,8 @@
     } else {
       const rows = [];
       const all = [];
-      for (const c of World.party(w)) { if (c.armor) all.push([c.name, c.armor]); if (c.shield) all.push([c.name, c.shield]); }
-      for (const it of w.pack.gear) if (it.kind === 'armor' || it.kind === 'shield') all.push(['Pack', it]);
+      for (const c of World.party(w)) { if (c.armor) all.push([c.name, c.armor]); if (c.shield) all.push([c.name, c.shield]); for (const x of c.weapons) all.push([c.name, x]); }
+      for (const it of w.pack.gear) if (it.kind === 'armor' || it.kind === 'shield' || it.kind === 'weapon') all.push(['Pack', it]);
       for (const [who, it] of all) {
         const cost = Econ.repairCost(w, it, s);
         if (!cost) continue;

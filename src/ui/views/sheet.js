@@ -36,8 +36,8 @@
     const items = [
       ['Max stamina', max, '4×CON + STR + SPD + DEX'],
       ['Regen / round', (C.regen(c) >= 0 ? '+' : '') + C.regen(c), '⌊(CON+WIL)/4⌋ − armor'],
-      ['AP pool', C.apPool(c), `(3 + ⌊SPD/2⌋${C.fatiguePenalty(c) ? ' − ' + C.fatiguePenalty(c) + ' fatigue' : ''})${C.apScale() > 1 ? ' × ' + C.apScale() : ''}`],
-      ['Movement', `${C.squaresPerAP(c)} sq`, `per ${C.apScale()} AP · 1 + ⌊SPD/4⌋`],
+      ['AP pool', C.fmtAP(C.apPool(c)), `${G.CONFIG.apBase} + ${G.CONFIG.apSpdContinuous ? '' : '⌊'}SPD/${G.CONFIG.apSpdDivisor}${G.CONFIG.apSpdContinuous ? '' : '⌋'}${C.fatiguePenalty(c) ? ' − ' + C.fatiguePenalty(c) + ' fatigue' : ''}`],
+      ['Movement', `${C.squaresPerAP(c)} sq`, `per move (${C.fmtAP(C.moveCost(c, 1))} AP) · (1 + ⌊SPD/4⌋) × ${G.CONFIG.moveScale || 1}`],
       ['Initiative', 'd10+' + C.combatAttr(c, 'SPD'), 'SPD in armor'],
       ['STR damage', (C.strBonus(c) >= 0 ? '+' : '') + C.strBonus(c), '⌊(STR−5)/2⌋'],
     ];
@@ -92,7 +92,7 @@
       s ? h('div', { class: 'row small' },
         h('label', { class: 'inline', for: 'shield-dur' }, 'Durability', num('shield-dur', s.durability, (v) => { s.durability = Math.max(0, Math.min(si.maxDurability, Math.round(v))); app.save(); app.render(); }, { min: 0, max: si.maxDurability })),
         h('span', { class: 'muted num' }, `/ ${si.maxDurability}`),
-        h('span', { class: 'muted' }, `Block ${si.blockAP} AP · breaks above ${si.threshold}`),
+        h('span', { class: 'muted' }, `Block ${C.fmtAP(C.actionCost(c, 'block').ap)} AP · breaks above ${si.threshold}`),
         !si.ready ? h('span', { class: 'chip warn' }, s.durability <= 0 ? 'Broken' : 'Slung (two-handed weapon)') : null) : null);
   }
 
@@ -169,15 +169,15 @@
         h('thead', null, h('tr', null, h('th', null, 'Attack'), h('th', { class: 'n' }, 'AP'), h('th', { class: 'n' }, 'Stam.'), h('th', { class: 'n' }, 'Damage'), h('th', { class: 'n' }, 'Range'))),
         h('tbody', null, atks.map((o) => h('tr', null,
           h('td', null, o.label, o.windUp ? h('span', { class: 'chip warn', style: { marginLeft: '6px' }, title: 'Wind up the round before; you cannot block or parry while wound up' }, 'wind-up') : null),
-          h('td', { class: 'n' }, o.windUp ? `${C.actionCost(c, 'windUp', { option: o }).ap} + ${o.ap}` : o.ap),
+          h('td', { class: 'n' }, o.windUp ? `${C.fmtAP(C.actionCost(c, 'windUp', { option: o }).ap)} + ${C.fmtAP(o.ap)}` : C.fmtAP(o.ap)),
           h('td', { class: 'n' }, o.spell ? `${o.spCost} SP` : o.windUp ? `${C.actionCost(c, 'windUp', { option: o }).stamina} + ${o.stamina}` : o.stamina),
           h('td', { class: 'n' }, o.spell ? `${o.spell.magnitude} ${o.spell.element}` : fmt(o.damage)),
           h('td', { class: 'n' }, rangeText(o))))))),
       h('div', { class: 'scroll-x' }, h('table', { class: 'data' },
         h('thead', null, h('tr', null, h('th', null, 'Action'), h('th', { class: 'n' }, 'AP'), h('th', { class: 'n' }, 'Stam.'))),
         h('tbody', null,
-          h('tr', null, h('td', null, 'Move'), h('td', { class: 'n' }, 1), h('td', { class: 'n' }, C.actionCost(c, 'move', { ap: 1 }).stamina)),
-          others.map((k) => { const cost = C.actionCost(c, k); return h('tr', null, h('td', null, D.ACTIONS[k].name), h('td', { class: 'n' }, cost.ap), h('td', { class: 'n' }, cost.stamina)); })))));
+          h('tr', null, h('td', null, `Move (${C.squaresPerAP(c)} sq)`), h('td', { class: 'n' }, C.fmtAP(C.moveCost(c, 1))), h('td', { class: 'n' }, C.actionCost(c, 'move').stamina)),
+          others.map((k) => { const cost = C.actionCost(c, k); return h('tr', null, h('td', null, D.ACTIONS[k].name), h('td', { class: 'n' }, C.fmtAP(cost.ap)), h('td', { class: 'n' }, cost.stamina)); })))));
   }
 
   function rangeText(o) {

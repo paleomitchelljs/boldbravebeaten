@@ -78,29 +78,35 @@
       return lines;
     }
 
+    c.weary = 0; // a night's sleep clears the weariness of the day's fights
     c.stamina = C.maxStamina(c);
     c.spSpent = 0;
     c.status = C.freshStatus();
 
     const repairer = [c, tender].some((x) => x && C.rank(x, 'field_repair'));
-    const frac = CONFIG.restRepairFraction * (repairer || opts.town ? 2 : 1);
-    if (c.armor) {
-      const max = Items.armorMaxDurability(c.armor);
-      const before = c.armor.durability;
-      c.armor.durability = Math.min(max, before + Math.ceil(max * frac));
-      if (c.armor.durability > before) lines.push(`Armor repaired ${before} → ${c.armor.durability}/${max}.`);
-    }
-    if (c.shield) {
-      const max = Items.shieldStats(c.shield).maxDurability;
-      const before = c.shield.durability;
-      if (before > 0) {
-        c.shield.durability = Math.min(max, before + Math.ceil(max * frac));
-        if (c.shield.durability > before) lines.push(`Shield repaired ${before} → ${c.shield.durability}/${max}.`);
-      } else lines.push('The shield is broken beyond field repair.');
-    }
+    lines.push(...mendGear(c, CONFIG.restRepairFraction * (repairer || opts.town ? 2 : 1)));
     lines.push(`Stamina restored to ${c.stamina}.`);
     return lines;
   }
 
-  G.Recovery = { longRest, healTarget };
+  // Field repairs: armor, shield and weapons each get `frac` of their durability back. A broken
+  // shield or weapon needs a smith.
+  function mendGear(c, frac) {
+    const lines = [];
+    const mend = (item, max, label, broken) => {
+      const before = item.durability == null ? max : item.durability;
+      if (broken) { lines.push(`${label} is broken beyond field repair.`); return; }
+      item.durability = Math.min(max, before + Math.ceil(max * frac));
+      if (item.durability > before) lines.push(`${label} repaired ${before} → ${item.durability}/${max}.`);
+    };
+    if (c.armor) mend(c.armor, Items.armorMaxDurability(c.armor), 'Armor', false);
+    if (c.shield) mend(c.shield, Items.shieldStats(c.shield).maxDurability, 'Shield', c.shield.durability <= 0);
+    for (const w of c.weapons) {
+      const max = Items.weaponMaxDurability(w);
+      if (max && Items.weaponDurability(w) < max) mend(w, max, Items.itemName(w), Items.weaponBroken(w));
+    }
+    return lines;
+  }
+
+  G.Recovery = { longRest, mendGear, healTarget };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

@@ -70,7 +70,7 @@
       name: Quick Hands
       ranks: [novice, apprentice, adept]
       requires: []
-      effect: "Punch and kick −1 AP per rank"
+      effect: "Punches and kicks cost a sixth less AP per rank (half at rank III)"
       auto: true
     brawlers_wind:
       name: Brawler's Wind
@@ -136,7 +136,7 @@
       name: Quick Thrust
       ranks: [novice, apprentice, adept]
       requires: []
-      effect: "Thrust −1 AP per rank"
+      effect: "Thrusts cost a sixth less AP per rank (half at rank III)"
       auto: true
     light_touch:
       name: Light Touch
@@ -166,7 +166,7 @@
       name: Quick Parry
       ranks: [apprentice, adept]
       requires: [["parry_training:1"]]
-      effect: "Parry −1 AP per rank"
+      effect: "Parries cost a quarter less AP per rank (half at rank II)"
       auto: true
     economical_parry:
       name: Economical Parry
@@ -179,6 +179,12 @@
       ranks: [apprentice]
       requires: [["parry_training:1"]]
       effect: A successful parry grants a free thrust
+      auto: true
+    bind:
+      name: Bind
+      ranks: [apprentice]
+      requires: [["parry_training:1"]]
+      effect: A successful parry lets you try to disarm the attacker at once (no AP; the disarm's stamina)
       auto: true
     offhand_dagger:
       name: Off-hand Dagger
@@ -224,7 +230,7 @@
       name: Heavy Tempo
       ranks: [apprentice, adept]
       requires: [["heavy_weapon_training:1"]]
-      effect: "Two-handed and power swings −1 AP per rank"
+      effect: "Two-handed and power swings cost a quarter less AP per rank (half at rank II)"
       auto: true
     weight_of_the_blow:
       name: Weight of the Blow
@@ -330,7 +336,7 @@
       name: Quick Block
       ranks: [apprentice, adept]
       requires: [["shield_training:1"]]
-      effect: "Block −1 AP per rank"
+      effect: "Blocks cost a quarter less AP per rank (half at rank II)"
       auto: true
     economical_block:
       name: Economical Block
@@ -394,7 +400,7 @@
       name: Quick Dodge
       ranks: [apprentice, adept]
       requires: [["dodge_training:1"]]
-      effect: "Dodge −1 AP per rank"
+      effect: "Dodges cost a quarter less AP per rank (half at rank II)"
       auto: true
     light_on_your_feet:
       name: Light on Your Feet
@@ -662,7 +668,7 @@
       name: Quick Casting
       ranks: [apprentice, adept]
       requires: [["casting:1"]]
-      effect: "Spell AP −1 per rank"
+      effect: "Spells cost a quarter less AP per rank (half at rank II)"
       auto: false
     battle_casting:
       name: Battle Casting

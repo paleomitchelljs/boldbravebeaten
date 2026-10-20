@@ -288,7 +288,18 @@ test('battle: a fight plays out, pays XP and loot, sets the flag and settles the
   assert.equal(w.battle, null);
   assert.equal(Explore.state(w, 9, 2).done, true);
   assert.ok(World.party(w).every((c) => c.xp > 0));
-  for (const c of World.party(w)) assert.equal(c.stamina, C.maxStamina(c), 'a breather after the fight');
+  // Stamina comes back only if the party stops: one click rests and mends (time passes, gear patched,
+  // weariness stays until a long rest).
+  const t0 = w.minutes;
+  for (const c of World.party(w)) for (const x of c.weapons) if (Items.weaponMaxDurability(x)) x.durability = 1;
+  const lines = World.restAndRepair(w);
+  assert.equal(w.minutes - t0, B.CONFIG.afterBattle.minutes);
+  for (const c of World.party(w)) {
+    assert.equal(c.stamina, C.maxStamina(c), 'rested');
+    assert.ok(c.weapons.every((x) => !Items.weaponMaxDurability(x) || x.durability > 1), 'weapons patched');
+    if (enc.round > 0 && !c.status.dead) assert.ok(C.maxStamina(c) < C.freshStamina(c), 'the fight wearied them');
+  }
+  assert.ok(lines.some((l) => /repaired/.test(l)));
 });
 
 test('battle: killing a faction\'s people costs standing; sparing them (knocked out) does not', async () => {

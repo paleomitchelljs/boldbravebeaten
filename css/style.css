@@ -327,3 +327,4 @@ button.linkish { background: none; border: 0; padding: 0; text-align: left; text
   .cmd .who { font-size: var(--step-1); }
   .brand-name { font-size: 1.15rem; }
 }
+.ap-meter i.part { background: linear-gradient(90deg, var(--brass) 50%, var(--surface-2) 50%); }

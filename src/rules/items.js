@@ -25,8 +25,52 @@
     return s;
   }
 
-  function makeWeapon(type, quality) {
-    return { id: uid('wpn'), kind: 'weapon', type, quality: quality || 'standard' };
+  // material: optional, when it differs from the weapon type's own (an iron longsword).
+  function makeWeapon(type, quality, material) {
+    const w = { id: uid('wpn'), kind: 'weapon', type, quality: quality || 'standard' };
+    if (material && material !== WEAPONS[type].material) w.material = material;
+    const max = weaponMaxDurability(w);
+    if (max) w.durability = max;
+    return w;
+  }
+
+  // ---- Weapon wear (CONFIG.weaponWear) ------------------------------------------------------
+  function weaponMaterial(w) {
+    return (w && (w.material || (WEAPONS[w.type] && WEAPONS[w.type].material))) || null;
+  }
+
+  // 0 for weapons that never wear (natural weapons, bows, anything without a durability).
+  function weaponMaxDurability(w) {
+    const def = w && WEAPONS[w.type];
+    if (!def || !def.durability || w.natural || !CONFIG.weaponWear) return 0;
+    const T = CONFIG.materialToughness || {};
+    const own = T[def.material] || 1;
+    const mine = T[weaponMaterial(w)] || own;
+    return Math.max(1, Math.round((def.durability * mine) / own * QUALITY[w.quality || 'standard'].durability));
+  }
+
+  // Current durability; a weapon that has never been knocked is whole.
+  function weaponDurability(w) {
+    const max = weaponMaxDurability(w);
+    if (!max) return null;
+    return w.durability == null ? max : Math.max(0, Math.min(max, w.durability));
+  }
+
+  function weaponBroken(w) {
+    const d = weaponDurability(w);
+    return d != null && d <= 0;
+  }
+
+  // Share of its damage a worn weapon still does: CONFIG.weaponWear.floor at the end of its life, all of it when whole.
+  function weaponEfficacy(w) {
+    const max = weaponMaxDurability(w);
+    if (!max) return 1;
+    const fl = CONFIG.weaponWear.floor;
+    return fl + (1 - fl) * (weaponDurability(w) / max);
+  }
+
+  function hardness(material) {
+    return (CONFIG.materialHardness || {})[material] || 0;
   }
 
   function armorMaxDurability(a) {
@@ -75,7 +119,7 @@
     if (item.kind === 'shield') {
       return cap(q + SHIELD_MATERIALS[item.material].name.toLowerCase() + ' ' + SHIELDS[item.size].name.toLowerCase() + ' shield');
     }
-    if (item.kind === 'weapon') return item.name || cap(q + WEAPONS[item.type].name.toLowerCase());
+    if (item.kind === 'weapon') return item.name || cap(q + (item.material ? item.material + ' ' : '') + WEAPONS[item.type].name.toLowerCase());
     return item.name || 'Item';
   }
 
@@ -206,5 +250,5 @@
     return { faces, weight: def.natural ? def.weight : weight, speed, load, strMult, wound, model: 'physical' };
   }
 
-  G.Items = { weaponStats, uid, makeArmor, makeShield, makeWeapon, armorBase, armorMaxDurability, shieldStats, itemName, itemRarity };
+  G.Items = { weaponStats, uid, makeArmor, makeShield, makeWeapon, armorBase, armorMaxDurability, shieldStats, itemName, itemRarity, weaponMaterial, weaponMaxDurability, weaponDurability, weaponBroken, weaponEfficacy, hardness };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

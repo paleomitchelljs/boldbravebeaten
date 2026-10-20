@@ -283,11 +283,33 @@
     for (const c of party(world)) {
       if (c.status.dead) continue;
       if (C.attr(c, 'CON') <= 0) { c.status.dead = true; world.stats.deaths++; continue; }
-      c.stamina = C.maxStamina(c);
+      // With CONFIG.afterBattle, stamina comes back only if the party stops to rest (restAndRepair).
+      if (!CONFIG.afterBattle) c.stamina = C.maxStamina(c);
       c.status = Object.assign(C.freshStatus(), { dead: false });
       C.updateCondition(c);
     }
     collectSupplies(world);
+  }
+
+  // After a fight, one click: catch your breath and patch up the gear (CONFIG.afterBattle). Time
+  // passes; stamina refills to the weary maximum; armor, shields and weapons get a share back
+  // (Field Repair in the party doubles it). Returns what happened, line by line.
+  function restAndRepair(world) {
+    const A = CONFIG.afterBattle || { minutes: 15 };
+    advance(world, A.minutes);
+    const members = living(world);
+    const handy = members.some((c) => C.rank(c, 'field_repair'));
+    const frac = CONFIG.restRepairFraction * (handy ? 2 : 1);
+    const lines = [`You stop for ${A.minutes} minutes to catch your breath and see to your gear.`];
+    for (const c of members) {
+      c.stamina = C.maxStamina(c);
+      C.updateCondition(c);
+      const mended = G.Recovery.mendGear(c, frac);
+      if (mended.length) lines.push(`${c.name}: ${mended.join(' ')}`);
+      if (c.weary) lines.push(`${c.name} is wearied: stamina tops out at ${C.maxStamina(c)} of ${C.freshStamina(c)} until a long rest.`);
+    }
+    for (const l of lines) logLine(world, l, 'info');
+    return lines;
   }
 
   G.World = {
@@ -297,6 +319,6 @@
     goodDef, goodCount, addGood, removeGood, loadSupplies, collectSupplies,
     levelFor, xpFor, grantXP,
     questDef, startQuest, updateQuests, giveReward,
-    mapState, wiped, breather,
+    mapState, wiped, breather, restAndRepair,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

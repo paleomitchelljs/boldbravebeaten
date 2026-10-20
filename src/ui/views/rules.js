@@ -28,7 +28,9 @@
       h('div', { class: 'grid-2' },
         h('section', { class: 'panel' }, h('h2', null, 'A round'),
           h('ol', { class: 'stack tight', style: { paddingLeft: '1.2em', margin: 0 } },
-            h('li', null, `Initiative: d10 + SPD (in armor). AP pool = (3 + ⌊SPD/2⌋, −1 below half stamina, −2 below a quarter)${CONFIG.apScale > 1 ? ` × ${CONFIG.apScale}; base action costs are × ${CONFIG.apScale} too, while feats cut a flat 1` : ''}.`),
+            h('li', null, CONFIG.apCurve
+              ? `Initiative: d10 + SPD (in armor). AP pool = ${CONFIG.apBase} + SPD/${CONFIG.apSpdDivisor} (6 at SPD 5; −1 below half stamina, −2 below a quarter). Quick actions cost 2 (thrust, parry, dodge, block, a move of up to (1 + ⌊SPD/4⌋) × ${CONFIG.moveScale} squares), a swing 4, a two-handed or power swing 6; weapon speed scales them. Armor adds ${Math.round(CONFIG.armorActionAP * 100) / 100} AP per point of its SPD penalty to every action. Quick feats take up to ${Math.round(CONFIG.quickCut * 100)}% off at their top rank. With nothing spent this round, one action may cost more than the whole pool and take the whole turn.`
+              : `Initiative: d10 + SPD (in armor). AP pool = (3 + ⌊SPD/2⌋, −1 below half stamina, −2 below a quarter)${CONFIG.apScale > 1 ? ` × ${CONFIG.apScale}; base action costs are × ${CONFIG.apScale} too, while feats cut a flat 1` : ''}.`),
             h('li', null, 'Turns: in initiative order each character takes one turn and may spend as much of their AP as they like on it. Every action resolves as it is taken.'),
             h('li', null, 'Reactions: when a blow comes at you, you may block, parry or dodge, paying the AP from your pool on the spot. AP you spent on your turn is AP you cannot defend with; out of AP, your armor takes it. A parry cannot meet an arrow, a spell or a power blow.'),
             h('li', null, 'Feint: if the attacker\'s Feint beats your Read Attack you cannot read the blow, so you defend blind, and a defence that cannot meet it is wasted.'),

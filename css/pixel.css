@@ -80,7 +80,7 @@ option, optgroup { background: #0e151a; color: var(--ink); }
 
 /* ---- The stage: the map and what floats over it ---- */
 .stage { position: relative; width: fit-content; max-width: 100%; margin: 0 auto; border: 3px solid var(--edge); background: #000; box-shadow: 0 0 0 2px var(--hi), 0 10px 30px rgba(0, 0, 0, 0.5); overflow: visible; }
-canvas.mapcanvas { display: block; width: auto; max-width: 100%; height: auto; max-height: calc(100vh - 86px); image-rendering: pixelated; aspect-ratio: 15 / 10; cursor: pointer; background: #080b0d; }
+canvas.mapcanvas { display: block; width: auto; max-width: 100%; height: auto; max-height: calc(100vh - 140px); image-rendering: pixelated; aspect-ratio: 15 / 10; cursor: pointer; background: #080b0d; }
 .mapfull canvas.mapcanvas { width: 100%; max-width: 640px; margin: 0 auto; cursor: default; aspect-ratio: auto; }
 .dock { position: absolute; left: 8px; top: 8px; display: flex; flex-direction: column; gap: 6px; z-index: 3; }
 .dock-member { position: relative; width: 52px; padding: 3px; display: flex; flex-direction: column; gap: 3px; align-items: center; background: rgba(10, 15, 19, 0.82); }
@@ -92,15 +92,18 @@ canvas.portrait { width: 100%; height: auto; image-rendering: pixelated; backgro
 .toolbar .ibtn { background: rgba(10, 15, 19, 0.82); }
 .toolbar .ibtn.on { background: var(--accent-soft); }
 .sneak-chip { position: absolute; left: 70px; top: 10px; z-index: 3; }
-.logbox { position: absolute; left: 8px; right: 56px; bottom: 8px; z-index: 3; padding: 5px 9px; background: linear-gradient(180deg, rgba(6, 10, 13, 0.6), rgba(6, 10, 13, 0.88)); border: var(--px) solid var(--edge); font-size: 0.9rem; max-height: 5.6em; overflow: hidden; cursor: pointer; display: flex; flex-direction: column; justify-content: flex-end; pointer-events: auto; }
-.logbox.open { max-height: 58%; overflow-y: auto; justify-content: flex-start; background: rgba(6, 10, 13, 0.94); }
+/* The log sits under the map, inside the stage's frame, so it never covers a square. width 0 + min-width 100%:
+   as wide as the map, and a long line can't widen the stage. */
+.logbox { position: relative; z-index: 3; width: 0; min-width: 100%; padding: 4px 9px; background: #060a0d; border-top: var(--px) solid var(--edge); border-radius: 0; font-size: 0.9rem; height: calc(2.6em + 10px); overflow: hidden; cursor: pointer; display: flex; flex-direction: column; justify-content: flex-end; }
+.battle-screen .logbox { height: calc(3.9em + 10px); }
+.logbox.open, .battle-screen .logbox.open { height: auto; max-height: 16em; overflow-y: auto; justify-content: flex-start; }
 .logbox p { margin: 0; line-height: 1.3; }
 .logbox .l { color: #b8c7c9; }
 .logbox .l.find { color: var(--ok); } .logbox .l.hurt, .logbox .l.fight { color: var(--blood); } .logbox .l.quest, .logbox .l.loot { color: var(--brass); } .logbox .l.check { color: var(--muted); font-family: var(--font-mono); font-size: 0.76rem; }
 .logbox:not(.open) p:not(:last-child) { opacity: 0.6; }
 .flavor-strip { position: absolute; left: 8px; right: 56px; top: 8px; margin-left: 66px; z-index: 2; background: rgba(6, 10, 13, 0.8); padding: 4px 9px; font-style: italic; font-size: 0.9rem; color: #c9d3d2; border: var(--px) solid var(--edge); pointer-events: none; }
 
-.battle-screen canvas.mapcanvas { max-height: calc(100vh - 190px); }
+.battle-screen canvas.mapcanvas { max-height: calc(100vh - 260px); }
 .mapfull canvas.mapcanvas { max-height: 70vh; }
 
 /* ---- Cards over the map ---- */
@@ -203,7 +206,7 @@ button.step { padding: 2px 4px; min-height: 0; display: inline-grid; place-items
   .dock { flex-direction: row; left: 6px; top: 6px; } .dock-member { width: 40px; }
   .toolbar { right: 6px; top: 6px; } .toolbar .ibtn { min-width: 28px; min-height: 28px; padding: 3px 5px; }
   .popcard { top: 56px; width: calc(100% - 16px); }
-  .logbox { right: 8px; font-size: 0.82rem; }
+  .logbox { font-size: 0.82rem; }
   .initbar .init { width: 30px; }
   .create-grid { grid-template-columns: minmax(0, 1fr); }
   .attrs { grid-template-columns: repeat(4, 1fr); }
