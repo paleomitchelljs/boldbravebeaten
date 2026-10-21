@@ -232,7 +232,7 @@
   // ---- Armor & shield ----------------------------------------------------
   function armorInfo(c) {
     if (!c.armor) {
-      return { type: 'none', mit: { P: 0, S: 0, B: 0 }, effMit: { P: 0, S: 0, B: 0 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, passThrough: 1, durability: 0, maxDurability: 0, pierce: null, dissipate: null, metal: false, material: null };
+      return { type: 'none', mit: { P: 0, S: 0, B: 0 }, effMit: { P: 0, S: 0, B: 0 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, passThrough: 1, durability: 0, maxDurability: 0, pierce: null, passBurst: 1, transmit: 1, cutThrough: null, dissipate: null, metal: false, material: null };
     }
     const a = c.armor;
     const b = Items.armorBase(a);
@@ -259,7 +259,8 @@
     return {
       type: a.type, mit: b.mit, effMit, spd, dex, stamina, regen: b.regen, standUp: b.standUp,
       passThrough: b.passThrough, durability: a.durability, maxDurability: b.maxDurability,
-      pierce: b.pierce, metal: b.metal, material: b.material,
+      pierce: b.pierce, metal: b.metal, material: b.material, passBurst: b.passBurst, transmit: b.transmit,
+      cutThrough: b.cutThrough != null ? b.cutThrough * scale : null, // a worn coat gives way to a cut sooner
       // Like mitigation, it fades as the armor wears.
       dissipate: { glancing: b.dissipate.glancing * scale, crushing: b.dissipate.crushing * scale },
     };

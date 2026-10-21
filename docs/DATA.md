@@ -10,7 +10,7 @@ No anchors or tags. Keys must be unique.
 | File | What it holds |
 |---|---|
 | `rules.yaml` | Numbers: party creation, XP, training prices, time, skill target numbers, faction spread, parley, economy, the gear foes roll (`enemyGear`). `game:` keys are read by the game layer; anything else is deep-merged over `src/rules/config.js`. |
-| `armor.yaml` | Armor types (padded, leather, mail, plate): mitigation per face (P pierce, S slash, B blunt), SPD/DEX penalties, stamina, regen, durability, usual and allowed materials, `pierce` (the punch that bursts it, the gap number), `dissipate` (plate), rarity. `natural: true` for monster hides. |
+| `armor.yaml` | Armor types (padded, leather, mail, plate): mitigation per face (P pierce, S slash, B blunt), SPD/DEX penalties, stamina, regen, durability, usual and allowed materials, `pierce` (the punch that bursts it, the gap number), `transmit` (mail: more of a cut's force as blunt), `cutThrough` (padding and leather: how much cut they stop), `dissipate` (plate), rarity. Each piece is the whole harness: padding is assumed under mail and plate. `natural: true` for monster hides. |
 | `shields.yaml` | `types` (block AP, threshold, durability) and `materials` (multiplier). |
 | `materials.yaml` | What gear is made of: hardness, toughness, weight, protection, `metal`, `rusts`, `exotic`. |
 | `origins.yaml` | Where and how gear was made (common, elven, dwarven, goblin): weight against protection, damage and durability. |

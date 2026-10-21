@@ -57,6 +57,7 @@ stonebridge:
             - {armor: mail, coverage: half, req: {standing: {faction: merchants_guild, min: 10}}}
             - {armor: mail, coverage: full, req: {standing: {faction: merchants_guild, min: 10}}}
             - {weapon: warhammer, req: {standing: {faction: merchants_guild, min: 10}}}
+            - {weapon: rondel, req: {standing: {faction: merchants_guild, min: 10}}}
             - {weapon: longbow, req: {standing: {faction: merchants_guild, min: 10}}}
             - {shield: round, material: iron, req: {standing: {faction: merchants_guild, min: 10}}}
             - {shield: heater, material: wood, req: {standing: {faction: merchants_guild, min: 25}}}

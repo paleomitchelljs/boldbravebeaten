@@ -1766,7 +1766,8 @@ test('a point against armor: it bursts through, finds a gap, or is turned (the u
   assert.ok(stab('rapier', 'mail', null, { STR: 10 }).gap, 'however strong the arm: the blade bends');
   assert.strictEqual(stab('longsword', 'mail').pierce, 'burst', 'a longsword thrust bursts iron mail');
   assert.ok(stab('longsword', 'mail', { material: 'steel' }).gap, 'but not steel');
-  assert.strictEqual(stab('spear', 'mail', { material: 'steel' }).pierce, 'burst', 'a spear bursts even steel');
+  assert.strictEqual(stab('spear', 'mail').pierce, 'burst', 'a spear bursts iron mail');
+  assert.ok(stab('spear', 'mail', { material: 'steel' }).gap, 'hardened steel holds against an average spearman');
   assert.strictEqual(stab('heavySpear', 'mail', { material: 'steel' }).pierce, 'burst');
   assert.ok(stab('heavySpear', 'plate').gap, 'nothing bursts plate');
   assert.strictEqual(stab('dagger', 'mail', { material: 'bronze' }).gap ? 'gap' : 'burst', 'gap', 'a dagger needs a gap even in bronze');
@@ -1859,4 +1860,40 @@ test('plate spreads a blow it turns: less of a cut\'s or a turned point\'s force
   assert.ok(!Combat.computeHit(m, t, blow, { distance: 1 }).dissipated, 'a mace\'s blow is not spread');
   t.armor = Items.makeArmor('mail', 'full', 'average');
   assert.ok(!Combat.computeHit(a, t, cut, { distance: 2 }).dissipated, 'mail passes a blow on');
+});
+
+test('the user\'s armor research: picks rupture plate, rondels burst mail, mail passes a heavy cut\'s force, a heavy cut goes through padding, steel is much harder', () => {
+  const hit = (weapon, motion, face, armorType, tags, attrs) => {
+    const a = armed('A', weapon);
+    Object.assign(a.base, attrs || {});
+    a.feats.power_swing = 1;
+    const t = fighter('T');
+    if (armorType) t.armor = Items.makeArmor(armorType, 'full', 'average', tags);
+    const o = opt(a, (x) => x.motion === motion && (!face || x.face === face));
+    return Combat.computeHit(a, t, o, { distance: o.maxRange });
+  };
+  // 1. The warhammer's beak: a two-handed blow bursts iron plate, a strong power blow steel; a one-handed one neither.
+  assert.ok(hit('warhammer', 'swing', 'beak', 'plate').gap);
+  const two = hit('warhammer', 'twoHanded', 'beak', 'plate');
+  assert.strictEqual(two.pierce, 'burst');
+  assert.ok(two.toCON >= 1, 'and wounds through it');
+  assert.ok(hit('warhammer', 'power', 'beak', 'plate', { material: 'steel' }, { STR: 6 }).gap, 'steel holds against an average arm');
+  assert.strictEqual(hit('warhammer', 'power', 'beak', 'plate', { material: 'steel' }, { STR: 10 }).pierce, 'burst');
+  // 2. The rondel bursts iron mail where the common dagger can't; plate it must find a gap in.
+  assert.strictEqual(hit('rondel', 'thrust', null, 'mail').pierce, 'burst');
+  assert.ok(hit('dagger', 'thrust', null, 'mail').gap);
+  assert.ok(hit('rondel', 'thrust', null, 'plate').gap);
+  assert.ok(B.DATA.WEAPONS.rondel.dagger, 'it counts as a dagger (Coup de Grâce)');
+  // 3. A greatsword power cut breaks bones through mail; plate spreads it; a sword swing on mail stays a bruise.
+  const onMail = hit('greatsword', 'power', 'edge', 'mail', null, { STR: 7 });
+  assert.ok(onMail.crushed > 0 && onMail.bluntToCON > 0, 'collarbones');
+  assert.ok(!hit('greatsword', 'power', 'edge', 'plate', null, { STR: 7 }).bluntToCON);
+  assert.ok(hit('longsword', 'swing', 'edge', 'mail').bluntToStamina <= 2);
+  // 4. Padding stops a sword cut, not a greatsword chop.
+  assert.strictEqual(hit('longsword', 'swing', 'edge', 'padded').slashToAttrs, 0);
+  assert.ok(hit('greatsword', 'twoHanded', 'edge', 'padded').slashToAttrs > 0, 'massive momentum cuts through');
+  assert.strictEqual(hit('greatsword', 'twoHanded', 'edge', 'mail').slashToAttrs, 0, 'never through mail');
+  // 5. Hardened steel: half again iron's protection.
+  const iron = Items.armorBase(Items.makeArmor('plate', 'full')), steel = Items.armorBase(Items.makeArmor('plate', 'full', 'average', { material: 'steel' }));
+  assert.strictEqual(steel.pierce.resist, iron.pierce.resist * 1.5);
 });

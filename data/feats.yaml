@@ -202,7 +202,7 @@
       name: "Coup de Grâce"
       ranks: [adept]
       requires: []
-      effect: Dagger vs. prone or pinned ignores armor
+      effect: Any dagger (a rondel too) vs. prone or pinned ignores armor
       auto: true
     lunge:
       name: Lunge

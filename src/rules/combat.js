@@ -783,7 +783,7 @@
 
     const unconscious = target.stamina <= 0;
     const weapon = option.weaponType ? WEAPONS[option.weaponType] : null;
-    const coupDeGrace = weapon && option.weaponType === 'dagger' && C.rank(attacker, 'coup_de_grace') && (prone || pinned);
+    const coupDeGrace = weapon && weapon.dagger && C.rank(attacker, 'coup_de_grace') && (prone || pinned);
     const armored = !!(target.armor && target.armor.durability > 0 && !unconscious && !coupDeGrace);
     const ctx = { v, prone, pinned, unconscious, weapon, armored, ai: C.armorInfo(target) };
     // A point against armor (CONFIG.pierce): it bursts through, or it must find a gap; the expectation
@@ -868,10 +868,19 @@
       const Sr = Math.max(0, S - mit.S);
       const Br = Math.max(0, B - mit.B);
       res.mitigated = { P: P - Pr, S: S - Sr, B: B - Br };
+      // Soft armor stops a cut unless the blow carries massive momentum (armor.yaml cutThrough): slashing past
+      // it by more than that cuts through to the body; the rest lands as blunt.
+      let Sc = Sr;
+      if (ai.cutThrough != null && Sr > ai.cutThrough) {
+        res.slashToAttrs = Math.round(Sr - ai.cutThrough);
+        res.cutThrough = res.slashToAttrs;
+        Sc = Sr - res.slashToAttrs;
+      }
       // A point in a gap goes in whole, or (P.gapPass) takes the pass-through roll like a burst one.
       if (way === 'turned' || (way === 'gap' && !(CONFIG.pierce && CONFIG.pierce.gapPass))) res.toCON = Pr;
       else {
-        let pass = ai.passThrough;
+        // A point that burst the armor isn't glancing off it: coverage alone (no plate factor).
+        let pass = way === 'burst' && ai.passBurst != null ? ai.passBurst : ai.passThrough;
         if (C.rank(attacker, 'find_the_gap')) pass += 0.25;
         if (C.rank(attacker, 'spot_weakness')) pass += 0.25;
         if (option.halfSword || prone || pinned) pass = CONFIG.maneuver.pronePassThrough;
@@ -882,7 +891,8 @@
         // 'roll': toCON here is the expectation; applyHit rolls each point.
         res.toCON = CONFIG.pierceMode === 'roll' && pass < 1 ? Pr * pass : Math.floor(Pr * pass);
       }
-      res.converted = Math.round(Sr * (CONFIG.conversion[motion] || 0));
+      // Flexible armor (mail: armor.yaml transmit) passes more of a cut's force to the bone.
+      res.converted = Math.round(Sc * Math.min(1, (CONFIG.conversion[motion] || 0) * (ai.transmit || 1)));
       res.bluntToStamina = Br + res.converted;
       // Plate spreads what is left of a blow over the whole body (armor.yaml dissipate): a cut or a point it
       // turns (glancing), less or nothing of a crushing blow (a mace, a hammer, a fist).
@@ -1020,6 +1030,7 @@
       if (h.mitigated.P + h.mitigated.S + h.mitigated.B > 0) parts.push(`armor stops ${h.mitigated.P}/${h.mitigated.S}/${h.mitigated.B}`);
       if (h.converted) parts.push(`${h.converted} slashing → blunt`);
       if (h.dissipated) parts.push(`the plate spreads ${h.dissipated} of the blow`);
+      if (h.cutThrough) parts.push('the blade cuts through');
       if (h.durLoss) parts.push(`armor durability −${h.durLoss}`);
     }
 

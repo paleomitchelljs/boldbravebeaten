@@ -1,6 +1,7 @@
 # Armor types. Worn armor comes in four tiers: padded, leather (or hide), mail and plate. An item is a type plus
 # a material (materials.yaml), an origin (origins.yaml), a craft (crafts.yaml), enchantments (usually none) and a
 # coverage (full, half, partial). Figures here are for the type's usual material, common origin, full coverage.
+# Each piece is the whole harness: padding is assumed under mail and plate (the user's ruling; no layering).
 #   mit         mitigation per damage face (P pierce, S slash, B blunt); material and origin scale P and S
 #   spd, dex    penalty to SPD and DEX; stamina = extra stamina per action; regen = stamina regeneration penalty;
 #               standUp = extra AP to rise from prone. Material and origin weight scale all four penalties.
@@ -9,6 +10,10 @@
 #   material    the usual material; materials = what else it may be made of
 #   pierce      what a point must beat (CONFIG.pierce): resist = the punch that bursts through it (× material and
 #               origin protect); gap = the target number to find a gap instead (d10 + ⌊DEX/4⌋ + feats)
+#   transmit    multiplies the share of a cut's leftover force that lands as blunt (CONFIG.conversion): flexible
+#               mail passes a heavy cut's force to the bone
+#   cutThrough  soft armor stops a cut unless the blow carries massive momentum: slashing left after mitigation
+#               beyond this (× material and origin protect) cuts through to the body
 #   dissipate   share of the blunt left after mitigation that the armor spreads away instead of passing to
 #               stamina (rounded down; less as it wears): glancing = cuts and points (converted cuts, turned
 #               points), crushing = blows that are mainly blunt (maces, hammers, clubs, fists). Plate: rigid shells
@@ -30,6 +35,7 @@ padded:
   weight: 4
   durability: 20
   pierce: {resist: 0.75, gap: 8}
+  cutThrough: 8
   rarity: common
 leather:
   name: Leather
@@ -44,6 +50,7 @@ leather:
   weight: 7
   durability: 25
   pierce: {resist: 1.0, gap: 8}
+  cutThrough: 8
   rarity: common
 mail:
   name: Mail
@@ -58,6 +65,7 @@ mail:
   weight: 12
   durability: 40
   pierce: {resist: 1.3, gap: 10}   # TUNED (V4, sim/FINDINGS.md): a longsword thrust bursts iron mail; a rapier doesn't
+  transmit: 1.5
   rarity: uncommon
 plate:
   name: Plate

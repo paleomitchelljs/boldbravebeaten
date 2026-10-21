@@ -1,5 +1,42 @@
 # Simulation findings
 
+## The user's armor research: picks, rondels, mail and heavy cuts, cuts through padding, hardened steel (2026-10-20)
+
+**The user's brief.** Adopt the first five mismatches between the rules and the user's armor report:
+- the warhammer's pick should rupture plate ("Warhammer (Pick) … Plate: High");
+- a rondel-type dagger should burst mail ("purpose-built to defeat mail");
+- a heavy cut on mail does blunt trauma ("capable of snapping collarbones or collapsing ribs");
+- padding stops cuts "unless the blade carries massive momentum (e.g., a two-handed greatsword chop)";
+- hardened steel plate takes more than mild steel (">250–300 Joules" against "~150–200").
+Layering is not needed: "padded cloth can be assumed to exist under any plate armor item".
+
+**Adopted (data).**
+- **Warhammer beak** punch 4 (weapons.yaml). Two-handed 5.2 bursts iron plate (5); a power blow 6.4 does too, and it
+  bursts hardened steel (7.5) only from STR 9 up.
+  - A point that bursts armor takes the coverage pass-through without plate's glancing factor (0.4), since it has
+    gone through.
+  - Before, nothing burst plate, so the factor now only touches gap hits.
+- **Rondel dagger** (new): punch 1.4, bursts iron mail, not steel. It and the other daggers are flagged `dagger`, so
+  Coup de Grâce and the AI's stab in a grapple take it.
+- **Mail** `transmit: 1.5`: a cut's leftover force lands as blunt at 1.5× the motion's share, capped at all of it.
+  - A greatsword power cut on iron mail lands 12 stamina and crushes 2 CON.
+  - A one-handed sword swing stays 1–2 stamina.
+- **Padding and leather** `cutThrough: 8` (× protection; less as they wear): slashing beyond 8 after mitigation cuts
+  through to the body.
+  - A greatsword two-handed cut puts about 4 through padding; a one-handed sword swing nothing.
+  - Mail and plate never let a cut through.
+- **Steel** protection 1.25 → 1.5: steel mail resists 1.95 (an average spearman needs a gap), steel plate 7.5.
+
+**Sims** (V4 → now; weapon and armor sweeps at n 60, duels and encounters at 100):
+- **Warhammer in the all-plate sweep: 1% → 39%.** In mail it stays at 47%.
+- **Unchanged within noise:**
+  - plate beats mail 92–5 in sword-and-board duels;
+  - armor order: plate 85, steel mail 73, padded 43, leather 38, iron mail 36%;
+  - rapier in mail 40%; longsword in mail 82%.
+- **Rondel against the common dagger, both in mail:** 73–25. Both lose to a longsword in the open (3%); daggers are
+  for the clinch and the finish.
+- **Encounters:** identical but for Rusk's crew, 93% → 88% won (deaths 1.37 → 1.39).
+
 ## Why plate lost to mail, and V4 (2026-10-20)
 
 **The user's brief.** "Mail should have substantially less protection than plate. A sword swing against a plate wearer

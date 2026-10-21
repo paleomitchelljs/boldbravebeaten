@@ -619,7 +619,7 @@
       if (link.role === 'holder') {
         if (P.grappler && link.level === 'hold' && gm('pin')) return { actor: id, type: 'pin', target: link.partner };
         // Pinned (or not a grappler): stab if a dagger works, else throw.
-        const stab = la.attacks.find((o) => o.affordable && !o.why && o.weaponType === 'dagger' && o.targets.some((t) => t.id === link.partner && t.inReach));
+        const stab = la.attacks.find((o) => o.affordable && !o.why && o.weaponType && G.DATA.WEAPONS[o.weaponType].dagger && o.targets.some((t) => t.id === link.partner && t.inReach));
         if (stab && (link.level === 'pin' || !gm('throw'))) return { actor: id, type: 'strike', option: stab, target: link.partner };
         if (gm('throw')) return { actor: id, type: 'throw', target: link.partner };
       }

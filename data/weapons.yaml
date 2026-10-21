@@ -7,6 +7,7 @@
 #   daggers 1; one-handed swords, maces and axes swing 1 and thrust 2; two-handed weapons swing 2 and thrust 3;
 #   spears thrust to 4. Inside `min` (default 1) the weapon is cramped (CONFIG.range.closeRule).
 # closeOK: works in a clinch without being cramped (daggers, short hafts); long blades and spears don't.
+# dagger: counts as a dagger (Coup de Grâce; the AI's stab in a grapple).
 # durability: how much wear the weapon takes before it breaks (average craft, its own material);
 # fragility: how hard each knock bites (a rapier's thin blade 2, a mace's head 0.5). See CONFIG.weaponWear.
 # punch (on a point or arrow, optional): overrides the punch worked out from mass (CONFIG.pierce): a dagger is
@@ -74,6 +75,7 @@ dagger:
   motions: [thrust, swing]
   rarity: common
   sidearm: true
+  dagger: true
   grappleUsable: true
   notes: "Lowest AP; works in a clinch and while grappling. Driven by the arm: bursts padding, finds gaps in the rest."
 parryingDagger:
@@ -91,9 +93,28 @@ parryingDagger:
   motions: [thrust]
   rarity: uncommon
   sidearm: true
+  dagger: true
   grappleUsable: true
   offhand: true
   notes: "Held in the off hand: stabs, and parries thrusts (Off-hand parry, +1). Lighter than a buckler."
+rondel:
+  phys: {mass: 0.4, length: 0.45, point: {depth: 15, width: 1.2, punch: 1.4}}
+  name: Rondel dagger
+  hands: 1
+  weight: very light
+  reach: {thrust: 1}
+  reachName: "1"
+  closeOK: true
+  material: steel
+  durability: 70
+  fragility: 0.6
+  faces: {point: [4, 0, 0]}
+  motions: [thrust]
+  rarity: uncommon
+  sidearm: true
+  dagger: true
+  grappleUsable: true
+  notes: "A stiff, narrow point made for armor: bursts iron mail, and goes into the gaps of plate. No edge to speak of."
 rapier:
   phys: {mass: 1.1, length: 1.15, point: {depth: 25, width: 1.2, maxPunch: 1.2}, edge: 0.3}
   name: Rapier
@@ -169,7 +190,7 @@ greatsword:
   rarity: rare
   notes: "No shield; long reach."
 warhammer:
-  phys: {mass: 1.8, length: 0.8, head: {mass: 1}, beak: {depth: 20, width: 1.5}}
+  phys: {mass: 1.8, length: 0.8, head: {mass: 1}, beak: {depth: 20, width: 1.5, punch: 4}}
   name: Warhammer
   hands: 1.5
   weight: heavy
@@ -183,7 +204,7 @@ warhammer:
   motions: [swing, twoHanded, power]
   rarity: rare
   hook: true
-  notes: "Anti-armor: the head drains stamina through plate; the beak, swung, bursts mail (plate it must find a gap in)."
+  notes: "Anti-armor: the head carries through plate; the beak bursts any mail, iron plate on a two-handed blow, hardened steel only on a strong power blow."
 shortSpear:
   phys: {mass: 0.8, length: 1.4, point: {depth: 22, width: 4}}
   name: Short spear

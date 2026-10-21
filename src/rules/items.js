@@ -204,6 +204,9 @@
       passThrough: cov.passThrough * ((CONFIG.passThroughByArmor && CONFIG.passThroughByArmor[a.type] != null) ? CONFIG.passThroughByArmor[a.type] : 1),
       maxDurability: armorMaxDurability(a),
       pierce,
+      passBurst: cov.passThrough, // a point that has burst the armor: coverage only, not plate's glancing factor
+      transmit: t.transmit || 1,
+      cutThrough: t.cutThrough != null ? t.cutThrough * protect : null,
       dissipate: { glancing: (t.dissipate && t.dissipate.glancing) || 0, crushing: (t.dissipate && t.dissipate.crushing) || 0 },
       material: materialOf(item),
       metal: isMetal(item),
