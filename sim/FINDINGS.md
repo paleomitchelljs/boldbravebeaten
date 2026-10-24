@@ -24,6 +24,20 @@ Level-1 party, 300 fights each, old rule → new (won / lost / rounds / dead per
 - Fights run up to a round longer; none reached the 40-round cap, so the stand-off breaker works.
 - The squad and the knight are untouched: outnumbering (docs/REVIEW.md §3, risk 1) is still the problem there.
 
+**Duels** (`node sim/arena.js --n 20`, level 5, every armor × strategy; 320 fights a cell, so about ±3 points). Most
+cells moved within noise. The two-handed style lost its edge over the shorter weapons (row's win rate, old → new):
+
+| two-handed vs | open field | close quarters |
+|---|---|---|
+| sword & shield | 63% → 51% | 68% → 42% |
+| rapier & dagger | 74% → 61% | 78% → 55% |
+| magic | 66% → 53% | 67% → 54% |
+| grappler | 78% → 67% | 84% → 62% |
+
+Probably because entering an equal reach now provokes: the AI's two-hander goes in, and the sword-and-shield fighter's
+thrust meets it on the way. Under the old rule only a longer reach got that blow. This is the rule doing what it says
+(the side that waits gets the first blow); whether two-handers should then wait more is an AI question.
+
 ## Magic items, new spells, Raise, companions; engine fixes (2026-10-24; `node tools/encounters.js --n 300`)
 
 Changes that touch every fight: shoves, throws and knockback stop at walls and drop bodies into pits on the way; an
