@@ -1645,19 +1645,25 @@ test('impact: heavy blunt crushes, a hard blow throws its target back, and big b
   enc.pos[sturdy.id] = { x: 4, y: 1 };
   await Combat.applyHit(enc, chars, troll, sturdy, fist, roller(5, []), {});
   assert.ok(enc.pos[sturdy.id].x > 4, 'thrown back');
-  // A parry meets force with force: a sword against a giant's club is hopeless; a strong
-  // two-hander trained to parry has a chance; a soft blow is easier than a hard one.
+  // A parry meets force with force: a sword against a giant's club is hopeless (it may meet the club, but most
+  // of the blow beats through: CONFIG.defense.parryCarry); a strong two-hander trained to parry has a chance;
+  // a soft blow is easier than a hard one. `saved`: the share of the blow a parry keeps off, on average.
+  const saved = (c, o) => Combat.defenseOdds(c, 'parry', o.motion, null, o) * (1 - Combat.parryCarryShare(c, 'parry', o));
   sturdy.weapons.push(Items.makeWeapon('longsword', 'standard'));
   sturdy.wield = sturdy.weapons[0].id;
-  assert.ok(Combat.defenseOdds(sturdy, 'parry', 'swing', null, club) < 0.02, 'a sword against a giant');
+  assert.ok(saved(sturdy, club) < 0.1, `a sword against a giant (${saved(sturdy, club).toFixed(2)})`);
+  assert.ok(Combat.parryCarryShare(sturdy, 'parry', club) > 0.5, 'most of the club beats through the sword');
   const barb = fighter('Barbarian');
   barb.base.STR = 10; barb.base.DEX = 6; barb.base.SPD = 6;
   barb.feats = { parry_training: 3, heavy_weapon_training: 2, strength: 2 };
   const gs = Items.makeWeapon('greatsword', 'fine');
   barb.weapons.push(gs);
   barb.wield = gs.id;
-  const pBarb = Combat.defenseOdds(barb, 'parry', 'swing', null, club);
+  const pBarb = saved(barb, club);
   assert.ok(pBarb > 0.1 && pBarb < 0.6, `a barbarian has a chance (${pBarb.toFixed(2)})`);
+  assert.ok(Combat.parryCarryShare(barb, 'parry', club) < Combat.parryCarryShare(sturdy, 'parry', club), 'a greatsword meets more of it');
+  // A thrust parried is stopped, however hard: a point is turned aside with little force.
+  assert.strictEqual(Combat.parryCarryShare(sturdy, 'parry', { damage: [20, 0, 0], motion: 'thrust' }), 0);
   const soft = { damage: [0, 4, 0], motion: 'swing' }, hard = { damage: [0, 16, 2], motion: 'swing' };
   assert.ok(Combat.defenseOdds(sturdy, 'parry', 'swing', null, soft) > Combat.defenseOdds(sturdy, 'parry', 'swing', null, hard));
 });

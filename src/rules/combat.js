@@ -1389,7 +1389,7 @@
         // A parry meets the blow's force with the parrying weapon's own (its best blow in my hands).
         if (atkOption && atkOption.damage) {
           const f = blowForce(atkOption), mine = parryForce(defender, kind);
-          atk += Math.floor(Math.max(0, f - mine / 2) / D.parryForce.per) + Math.floor(Math.max(0, f - mine) / D.parryForce.over);
+          atk += Math.floor(Math.max(0, f - mine / 2) / D.parryForce.per) + (D.parryForce.over ? Math.floor(Math.max(0, f - mine) / D.parryForce.over) : 0);
           if (attacker) atk += Math.floor(C.combatAttr(attacker, 'SPD') / 4); // the quickness of the blow
         } else atk += D.typicalAttacker;
       } else {
@@ -1427,6 +1427,15 @@
     let best = 0;
     for (const o of C.attackOptions(c)) if (o.weaponId === w.id && !o.unarmed) best = Math.max(best, blowForce(o));
     return best;
+  }
+
+  // CONFIG.defense.parryCarry: the share of a parried blow that still lands (0 for a thrust, or a blow the
+  // parrying weapon can meet in full).
+  function parryCarryShare(defender, kind, option) {
+    const K = CONFIG.defense.parryCarry;
+    if (!K || !option || !option.damage || option.ranged || option.spell || !(K.motions || []).includes(option.motion)) return 0;
+    const f = blowForce(option), mine = parryForce(defender, kind);
+    return f > mine ? Math.min(1, K.share * (f - mine) / f) : 0;
   }
 
   // The weapon a parry is made with.
@@ -1739,7 +1748,7 @@
         const r = await rollDie(roller, a.id, 10, `${a.name}: Find the real ${t.name}`, `d10: ${Math.round(chance * 10)} or less strikes only an illusion`);
         if (r <= Math.round(chance * 10)) return log(enc, `${a.name}'s ${name} passes through an illusion of ${t.name}.`, 'defend');
       }
-      let failedDodge = false;
+      let failedDodge = false, beatThrough = 0;
       const def = await askDefense(enc, chars, t, a, d, io);
       if (def) {
         // Chosen blind (Feint): a defence that can't meet this blow is spent for nothing.
@@ -1756,6 +1765,8 @@
             }
             absorbImpact(enc, t, def.type, d);
             const parried = def.type === 'parry' || def.type === 'offParry';
+            // A heavy swing the parrying weapon can't meet in full beats through it, weakened (parryCarry).
+            const carry = parried && d.type === 'strike' ? parryCarryShare(t, def.type, d.option) : 0;
             if (d.type === 'strike') {
               const force = blowForce(d.option);
               const theirs = weaponItem(a, d.option);
@@ -1765,15 +1776,21 @@
                 wearWeapon(enc, t, mine, force, 'parry', theirs ? Items.weaponMaterial(theirs) : naturalMaterial(d.option));
               } else if (def.type === 'block' && t.shield) wearWeapon(enc, a, theirs, force, 'blocked', t.shield.material);
             }
-            if (parried && C.rank(t, 'riposte') && C.isActive(t)) await riposte(enc, chars, t, a, roller, posAtStart);
-            if (parried && C.rank(t, 'bind') && C.isActive(t) && C.wieldedWeapon(a) && payStamina(enc, t, C.actionCost(t, 'disarm').stamina)) {
+            const through = carry > 0 && d.option.damage.some((x) => Math.floor(x * carry) > 0);
+            if (through) {
+              beatThrough = carry;
+              log(enc, `${a.name}'s ${name} beats through the parry (${Math.round(carry * 100)}% of its force carries on).`, 'hit');
+            }
+            if (!through && parried && C.rank(t, 'riposte') && C.isActive(t)) await riposte(enc, chars, t, a, roller, posAtStart);
+            if (!through && parried && C.rank(t, 'bind') && C.isActive(t) && C.wieldedWeapon(a) && payStamina(enc, t, C.actionCost(t, 'disarm').stamina)) {
               log(enc, `${t.name} binds ${a.name}'s blade.`, 'defend');
               await resolveManeuver(enc, chars, { actor: t.id, target: a.id, type: 'disarm' }, roller);
             }
-            return;
+            if (!through) return;
+          } else {
+            log(enc, `${t.name}'s ${ACTIONS[def.type].name.toLowerCase()} fails (${chk.total} vs ${chk.tn}).`, 'fail');
+            if (def.type === 'dodge') failedDodge = true;
           }
-          log(enc, `${t.name}'s ${ACTIONS[def.type].name.toLowerCase()} fails (${chk.total} vs ${chk.tn}).`, 'fail');
-          if (def.type === 'dodge') failedDodge = true;
         }
       }
 
@@ -1806,6 +1823,8 @@
         const gearSlay = d.option.spell || d.option.ranged ? [] : C.gearSources(a).flatMap((x) => x.effects.slay || []);
         const slay = (fx.slay || []).concat(gearSlay).filter((x) => t.traits && t.traits[x.trait]).reduce((n, x) => n + (x.damage || 0), 0);
         if (slay) { hitOpt = Object.assign({}, hitOpt, { damage: hitOpt.damage.slice() }); hitOpt.damage[C.mainIndex(hitOpt.damage)] += slay; }
+        // What beat through a parry lands with that share of its force (and of its punch into armor).
+        if (beatThrough) hitOpt = Object.assign({}, hitOpt, { damage: hitOpt.damage.map((x) => Math.floor(x * beatThrough)), punch: (hitOpt.punch || 0) * beatThrough });
         const pre = { stamina: t.stamina, dmg: C.totalDamage(t) };
         const r = await applyHit(enc, chars, a, t, hitOpt, roller, { half, distance, pack });
         const note = isCramped(a, d.option, distance)
@@ -2299,6 +2318,6 @@
   G.Combat = {
     unseenBy, strikeEffects, conditionForbids, ATTACK_TYPES, DEFENSE_TYPES, shoveReach, log, rollDie, castSpell, knockDown, stability, releaseAll: clearGrapple,
     createEncounter, autoPlace, startRound, currentActor, legalActions, act, validate, endTurn, submit, describeDecl, apLeft, defenseOptions, opportunityOptions,
-    vitalNeed, projectedPos, dist, defenseOdds, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolveAction, finishRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
+    vitalNeed, projectedPos, dist, defenseOdds, parryCarryShare, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolveAction, finishRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

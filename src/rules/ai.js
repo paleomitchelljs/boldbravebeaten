@@ -178,7 +178,9 @@
       for (const o of req.options) {
         if (o.type === 'offParry' && (req.hidden || motion !== 'thrust')) continue;
         const p = o.odds != null ? o.odds : 0.4;
-        let v = p * threat;
+        // A parry a heavy swing beats through saves only part of it (CONFIG.defense.parryCarry), if I can see the blow.
+        const carry = (o.type === 'parry' || o.type === 'offParry') && !req.hidden && req.decl && req.decl.option ? Combat.parryCarryShare(c, o.type, req.decl.option) : 0;
+        let v = p * threat * (1 - carry);
         if (o.type === 'dodge' && C.rank(c, 'roll_with_it')) v += (1 - p) * 0.5 * threat;
         v -= per * o.ap + 0.3 * o.stamina;
         if (v >= P.defendFloor && (!pick || v > pick.v)) pick = { v, type: o.type };

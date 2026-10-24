@@ -97,3 +97,26 @@ test('carry-through: a cut through a bare arm carries on into the torso, where t
   await Combat.applyHit(enc0(), { [a.id]: a, [sleeved.id]: sleeved }, a, sleeved, o, roller([], 1, asked3), { location: 'arms' });
   if (Combat.computeHit(a, sleeved, o, { location: 'arms' }).slashToAttrs <= K.limb) assert.ok(!asked3.includes('The cut carries on'));
 });
+
+test('parry carry-through: a heavy swing beats through a light parry, weakened; a parried thrust stops dead', async () => {
+  const atk = armed('A', 'greatsword');
+  atk.base.STR = 14; atk.base.SPD = 1;
+  const def = armed('D', 'rapier');
+  def.side = 'enemy'; def.base.SPD = 9; def.base.CON = 30; def.stamina = C.maxStamina(def);
+  const chars = { [atk.id]: atk, [def.id]: def };
+  const enc = Combat.createEncounter('t', [atk.id, def.id], chars, 6, 1);
+  enc.pos[atk.id] = { x: 0, y: 0 }; enc.pos[def.id] = { x: 2, y: 0 }; // the greatsword's own reach (cramped at 1)
+  await Combat.startRound(enc, chars, roller([10, 1]));
+  const cut = C.attackOptions(atk).find((o) => o.motion === 'twoHanded');
+  const share = Combat.parryCarryShare(def, 'parry', cut);
+  assert.ok(share > 0.3, `a rapier meets little of a greatsword's cut (${share.toFixed(2)} carries)`);
+  // The defender parries (and wins the roll: 10 against 1); the blow still lands, weakened.
+  const io = { roller: roller([10, 1], 5), react: (req) => (req.kind === 'defend' ? 'parry' : null) };
+  const before = def.stamina + C.totalDamage(def) * 10;
+  const err = await Combat.act(enc, chars, { actor: atk.id, type: 'strike', option: cut, target: def.id }, io);
+  assert.strictEqual(err, null);
+  assert.ok(enc.log.some((l) => /beats through the parry/.test(l.text)), enc.log.map((l) => l.text).join('\n'));
+  assert.ok(def.stamina + C.totalDamage(def) * 10 < before, 'some of it landed');
+  const thrust = C.attackOptions(atk).find((o) => o.motion === 'thrust');
+  assert.strictEqual(Combat.parryCarryShare(def, 'parry', thrust), 0);
+});

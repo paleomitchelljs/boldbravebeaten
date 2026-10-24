@@ -568,11 +568,17 @@
       // PROVISIONAL (the user's call): a parry meets the blow's force with the parrying weapon's
       // own. Force = expected damage (STR is in it). The attacker's side: motion penalty +
       // ⌊attacker SPD / 4⌋ (the blow's quickness) +
-      // ⌊max(0, force − mine/2) / per⌋ + ⌊max(0, force − mine) / over⌋ (the overwhelm), where
+      // ⌊max(0, force − mine/2) / per⌋ (+ ⌊max(0, force − mine) / over⌋ when over is set: the overwhelm), where
       // mine = the parrying weapon's best blow in this wielder's hands. No special rule for big
       // creatures: their force does it (a giant's club against a sword is hopeless; against a
       // strong two-hander with Parry Training, a chance).
-      parryForce: { per: 4, over: 2 },
+      // PROVISIONAL (the user's idea, 2026-10-24): the overwhelm moved out of the odds into parryCarry, so a
+      // heavy blow isn't counted twice. (Before: over 2.)
+      parryForce: { per: 4, over: null },
+      // PROVISIONAL (the user's idea): a parried swing whose force beats the parrying weapon's carries through,
+      // weakened: share × (force − mine) / force of each face lands (rounded down). A parried thrust is stopped:
+      // turning a point aside takes little force. motions: which blows can carry through a parry.
+      parryCarry: { share: 1, motions: ['swing', 'twoHanded', 'power', 'unarmed'] },
       // Heavier motions are harder to parry/dodge
       motionPenalty: { thrust: 0, swing: 0, twoHanded: 1, power: 2, unarmed: 0, maneuver: 0 },
       // PROVISIONAL: a successful parry or dodge negates the strike fully
@@ -743,6 +749,7 @@
     'Blunt damage on an unconscious target goes to CON.',
     'Items (the user\'s call): every weapon, armor piece and shield is a type plus a material (materials.yaml: cloth, leather, bronze, iron, steel; exotic spider silk, dragon hide, star iron, adamant), an origin (origins.yaml: common, elven, dwarven, goblin: how weight trades against durability, damage and protection), a craftsmanship (crafts.yaml: poor, average, masterwork: how fast it wears and how easily it breaks, never its damage or protection) and enchantments (enchantments.yaml; usually none). Armor tiers: padded, leather, mail, plate (scale is folded into steel mail). Old saves: quality crude → poor, standard and fine → average, masterwork and legendary → masterwork.',
     'Armor durability: padded 20, leather 25, mail 40, plate 60 (× material toughness, origin, craftsmanship and coverage; padding takes no wear).',
+    'Parry carry-through (the user\'s idea, 2026-10-24): a parried swing whose force (its expected damage) beats the parrying weapon\'s own best blow carries through, weakened: (force − mine) / force of each face lands. A parried thrust is stopped. The overwhelm term left the parry odds (parryForce.over 2 → none), so a heavy blow isn\'t counted twice; force still makes a parry harder (parryForce.per). A rapier parrying a greatsword cut keeps off about half of it when the parry succeeds; a sword against a giant\'s club, almost none.',
     'Armor by hit location (the user\'s choice, 2026-10-24; docs/PROPOSALS.md §2, step 1): six locations (head 8%, torso 40%, arms 18%, hands 5%, legs 24%, feet 5% of the body: rules.yaml locations), which are also the armor slots. A piece covers some of them, protects fully there, and carries that share of its type\'s weight, penalties, durability and price; a coverage keyword reads as locations (half = torso, arms, legs; partial = torso). A blow against a body whose locations differ rolls d100 for where it lands; the AI sees the expectation over them. A cut that gets through a limb or the head (bare, or cutting through cloth or leather) carries the slashing beyond 3 into the next location (arm → torso or head, hand → arm, leg → the other leg, foot → leg), whose armor meets it. Before: half coverage was −1 mitigation and −1 penalties everywhere, gap −2; partial −2.',
     'Shield wear per block = ½P + ½S + B.',
     'Kick: opposed d10 + ⌊STR/2⌋; a kick knocks down only on a win by 3 or more. Trip wins on any margin.',
