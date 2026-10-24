@@ -279,7 +279,7 @@
       for (const [n, t] of Object.entries(terr)) {
         if (t.wang && !t.over) err(`tilesets.${id}.${n}: a wang set needs \`over\` (the terrain under it)`);
         if (t.over && !has(terr, t.over)) err(`tilesets.${id}.${n}: over "${t.over}" is not one of its terrains`);
-        if (t.corners && (t.corners.length !== 16 || t.corners.some((c) => !/^[UL]{4}$/.test(c)))) err(`tilesets.${id}.${n}: corners must be 16 codes of four U/L letters`);
+        if (t.corners && (t.corners.some((c) => !/^[UL]{4}$/.test(c)) || new Set(t.corners).size !== 16)) err(`tilesets.${id}.${n}: corners must be codes of four U/L letters covering all 16 (repeats are variants)`);
         if (!t.color && !t.tile && !t.wang) err(`tilesets.${id}.${n}: needs a color, a tile or a wang sheet`);
       }
       for (const [n, pr] of Object.entries(ts.props || {})) if (!Array.isArray(pr) || pr.length !== 5) err(`tilesets.${id}.props.${n}: expected [image, x, y, w, h]`);

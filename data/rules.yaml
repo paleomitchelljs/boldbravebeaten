@@ -102,6 +102,7 @@ game:
   ground:
     ",": {name: Grass, tile: grass, color: "#4a6a34"}
     ";": {name: Rubble, tile: rubble, fight: rough, color: "#7a6a50"}
+    "%": {name: Ferns, tile: ferns, color: "#4d6a3a"}
     "~": {name: Deep water, walk: false, fight: deepWater, tile: water, color: "#1f4450"}
     "_": {name: Shallow water, fight: shallows, tile: shallows, color: "#36616a"}
     "=": {name: Plank bridge, under: "~", tile: bridge, color: "#7a5a36"}

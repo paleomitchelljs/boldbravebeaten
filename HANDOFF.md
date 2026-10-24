@@ -59,11 +59,22 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
 - [x] Courtyard 1 and the wall top are playable (`temple_court`, `temple_wall`; a town exit, "the temple in the jungle"),
   drawn with the two placeholder PixelLab sandstone sets (copied to `art/worldtiles/temple/`). Looked at
   in headless Chrome: walls, corners, doors, daylight and a fight on the court all draw. Not seen on a phone.
-- [ ] The user is not happy with the current temple tiles (the two placeholder sandstone sets, 2026-10-24): "the
-  roughest of drafts"; replacing them, "from layout to detail to color scheme, is fine". Not a base to build on.
-- [ ] Courtyard art, the trial of the pipeline (prompt, PixelLab, `assets/wip/`, cut, `art/`, seen in play): a grass set
-  that doesn't repeat so visibly (the placeholder's all-grass tile tiles in obvious rows), mosaic wall variants, a door,
-  steps up the wall, a well, ferns and vines as props. Each goes in `data/tilesets.yaml` (no code).
+- [x] The placeholder court set is replaced (above); `moss-wall` (labyrinth, wall top) is still the placeholder, "the
+  roughest of drafts": replace it with the labyrinth's set.
+- [x] Courtyard art, first pass (2026-10-24; prompts and palette in `assets/wip/temple-court/court-wall.prompt.md`):
+  a new palette (olive and fern greens against the dragonborn's crimson, sun-yellowed tan sandstone, no near-blacks on
+  the ground); the court wall as a raised corner set; fern patches (`%`, a second set chained from the same grass); grass
+  in three inpainted variants; snake, lizard and vine variants of the wall face (`vary`); door, steps, well, ferns as
+  props. Engine: wang sheets take variant tiles (a corner code listed again), stairs take a legend `sprite`, and the
+  place's own tileset props win over the stock ones (the tileset door was never drawn). Seen in headless Chrome.
+- [ ] Court art, second pass. Seen in screenshots and still weak:
+  - the grass still shows a faint lattice: the all-grass tile has brick fragments on its edges, which inpainting can't
+    change. Regenerate the court set with a lower terrain that keeps bricks off the edges, and put the broken bricks in
+    a rubble set (`;` is still a flat tint);
+  - the lizard mosaic is small and its inpaint lit the face band, so it looks brighter than its neighbours: redo it;
+  - the steps up the wall are a small rotated stair (light from the wrong side) with the stock arrow on top; the west
+    gate door and the stairs back to town draw over each other's look; one door image serves walls of both directions;
+  - the wall top (`temple_wall`) still uses the placeholder labyrinth set; it needs a wall-walk set and the guardhouse.
 - [ ] Style target: the PixelLab dragonborn (64 px). Tiles at 64 px to match (plan §4).
 - [ ] Archive the Undercroft and the Barrow for tests and sims only and start at the temple, once there is more of the
   temple than the court (the labyrinth and palace doors are locked "not built yet").

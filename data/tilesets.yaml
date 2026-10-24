@@ -15,23 +15,39 @@
 #     corners   the sheet's tiles in reading order, each four letters NW NE SW SE (U upper, L lower). Default: the
 #               PixelLab layout, [UULU, ULUL, LULL, UULL, LUUL, ULLL, LLLL, LLLU, ULUU, LLUU, LLUL, LULU, UUUU, UUUL,
 #               ULLU, LUUU]. PixelLab's tileset tool reports each tile's corners; copy them here if they differ.
+#               A code listed again is a variant of the first tile with those corners (a mosaic in a wall face).
+#     vary      the share of corners with variants that draw one (default 0.25), picked by position
 #   props     name -> [image, x, y, w, h], in the art's pixels: map objects (a well, a statue) for legend props and
 #             drops by `sprite`, drawn with their feet at the square's bottom and one cell to one square.
 
-# The temple's open courts: grass, and the high sandstone walls. Placeholder art from assets/wip/temple-tileset
-# (PixelLab, 64 px, made before the style target). The user isn't happy with them: replace them.
+# The temple's open courts: grass with ferns through broken bricks, and the high sandstone walls (PixelLab, 64 px;
+# prompt and palette in assets/wip/temple-court/court-wall.prompt.md).
 temple_court:
   cell: 64
   dir: art/worldtiles/temple/
   floor: grass
   terrains:
-    grass: {color: "#4d6a33"}
+    grass: {color: "#5f7d42", tile: [court-grass-bricks.png, court-grass.png, court-grass.png, court-grass-slab.png, court-grass.png, court-grass-bricks.png]}
     rubble: {color: "#b09a70", alpha: 0.45}
     water: {color: "#1f4450"}
     shallows: {color: "#3b6a70"}
     bridge: {color: "#7a5a36"}
-    wall: {color: "#cdb98a", wang: grass-wall.png, over: grass}
-  props: {}
+    ferns: {color: "#4d6a3a", wang: court-ferns.png, over: grass}
+    wall:
+      color: "#d4b67e"
+      wang: court-wall.png
+      over: grass
+      # Row 5: the straight south face again, with a snake mosaic, a lizard mosaic and vines.
+      corners: [UULU, ULUL, LULL, UULL, LUUL, ULLL, LLLL, LLLU, ULUU, LLUU, LLUL, LULU, UUUU, UUUL, ULLU, LUUU, UULL, UULL, UULL]
+      vary: 0.2
+  # court-props.png: door, steps up the wall, well, a large and a small clump of ferns (PixelLab map objects).
+  props:
+    door: [court-props.png, 0, 0, 64, 61]
+    door_locked: [court-props.png, 0, 0, 64, 61]
+    wall_steps: [court-props.png, 64, 0, 64, 64]
+    well: [court-props.png, 128, 0, 64, 61]
+    fern_large: [court-props.png, 192, 0, 64, 60]
+    fern_small: [court-props.png, 256, 0, 64, 56]
 
 # The labyrinth: worked, damp sandstone underfoot, the same walls.
 temple_maze:

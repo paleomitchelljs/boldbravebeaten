@@ -95,13 +95,17 @@
     return true;
   }
 
-  // A prop by name: the table above, or one a tileset adds (its art drawn at its own cell size, so a 64-px tileset's
-  // well is as wide on the map as a square).
+  // A prop by name: the tileset of the place being drawn first (its door replaces the stock one), then the table
+  // above, then any tileset's (art drawn at its own cell size, so a 64-px tileset's well is as wide as a square).
+  let placeTs = null;
   function propDef(key) {
+    const fromTs = (id) => { const ts = Tilemap.tileset(id), p = ts && ts.props[key]; return p ? [ts.dir + p[0], p[1], p[2], p[3], p[4], T / ts.cell] : null; };
+    const own = placeTs && fromTs(placeTs);
+    if (own) return own;
     if (PROPS[key]) return PROPS[key];
     for (const id of Object.keys((G.Content && G.Content.world.tilesets) || {})) {
-      const ts = Tilemap.tileset(id), p = ts.props[key];
-      if (p) return [ts.dir + p[0], p[1], p[2], p[3], p[4], T / ts.cell];
+      const p = fromTs(id);
+      if (p) return p;
     }
     return null;
   }
@@ -411,7 +415,8 @@
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       const x0 = Math.floor(org.x), y0 = Math.floor(org.y);
       const ox = Math.round(-org.x * size), oy = Math.round(-org.y * size);
-      const env = { S, ox, oy, tick: view.tick, img, imgAt: img, prop, hasProp: (k) => !!propDef(k), twinkle, flat: !!sc.tileset, tileProp: (k) => !PROPS[k] && !!propDef(k) };
+      placeTs = sc.tileset || null;
+      const env = { S, ox, oy, tick: view.tick, img, imgAt: img, prop, hasProp: (k) => !!propDef(k), twinkle, flat: !!sc.tileset, tileProp: (k) => !!(placeTs && (Tilemap.tileset(placeTs) || { props: {} }).props[k]) };
       const plan = Tilemap.plan(sc, x0 - 1, y0 - 1, x0 + cols, y0 + rows);
       const ts = sc.tileset ? Tilemap.tileset(sc.tileset) : null;
       if (ts) {

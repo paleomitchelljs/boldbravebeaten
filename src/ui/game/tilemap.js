@@ -115,7 +115,7 @@
   function decal(out, c, x, y) {
     const st = c.st || {};
     switch (c.kind) {
-      case 'stairs': out.decor.push({ t: 'stairs', x, y, up: c.def.up != null ? !!c.def.up : c.def.at === '>' || ((G.Content.world.places[c.def.to] || {}).kind === 'town') }); break;
+      case 'stairs': out.decor.push({ t: 'stairs', x, y, sprite: c.def.sprite || null, up: c.def.up != null ? !!c.def.up : c.def.at === '>' || ((G.Content.world.places[c.def.to] || {}).kind === 'town') }); break;
       case 'drop': out.decor.push({ t: 'drop', x, y, sprite: c.def.sprite || null }); break;
       case 'trap': if (st.found || st.sprung || st.disarmed) out.decor.push({ t: 'trap', x, y, state: st.disarmed ? 'off' : st.sprung ? 'sprung' : 'armed' }); break;
       case 'pickup': if (!st.done) out.decor.push({ t: 'twinkle', x, y }); break;
@@ -254,7 +254,9 @@
       case 'banner': env.prop(ctx, cmd.color ? 'banner_blue' : 'banner_red', X + size / 2, Y + size - S * 1.5, S, { scale: 0.7 }); break;
       case 'stairs': {
         const cx = X + size / 2;
-        env.prop(ctx, 'stairs', cx, Y + size, S, { flipY: cmd.up });
+        // A legend `sprite` (a tileset's steps up the wall) is drawn as it is; the stock stairs flip to point up.
+        if (cmd.sprite && env.hasProp(cmd.sprite)) env.prop(ctx, cmd.sprite, cx, Y + size, S);
+        else env.prop(ctx, 'stairs', cx, Y + size, S, { flipY: cmd.up });
         ctx.fillStyle = 'rgba(255,230,150,0.9)';
         ctx.font = `${S * 6}px "Pixelify Sans", monospace`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -301,9 +303,13 @@
       if (t.wang) {
         const cols = t.cols || 4;
         t.index = {};
+        t.variants = {};
         (t.corners || PIXELLAB16).forEach((code, k) => {
           const m = [...code].reduce((a, ch, b) => a | (ch === 'U' ? 8 >> b : 0), 0);
-          if (!(m in t.index)) t.index[m] = [k % cols, Math.floor(k / cols)];
+          const at = [k % cols, Math.floor(k / cols)];
+          // The first tile for a mask is the plain one; later tiles with the same corners are variants (a mosaic).
+          if (!(m in t.index)) t.index[m] = at;
+          else (t.variants[m] = t.variants[m] || []).push(at);
         });
       }
       terrains[n] = t;
@@ -373,7 +379,9 @@
       ctx.restore();
     } else if (kind === 'corner') {
       const t = ts.terrains[p.t], X = env.ox + (p.x - 0.5) * size, Y = env.oy + (p.y - 0.5) * size;
-      const im = env.imgAt(ts.dir + t.wang), at = t.index[p.m];
+      const im = env.imgAt(ts.dir + t.wang), vs = t.variants[p.m];
+      // A variant at a share `vary` (default 0.25) of the corners that have one, picked by position.
+      const at = vs && hash(p.x, p.y, 11) % 100 < (t.vary == null ? 0.25 : t.vary) * 100 ? vs[hash(p.x, p.y, 12) % vs.length] : t.index[p.m];
       if (im.ok && at) { ctx.drawImage(im.el, at[0] * cell, at[1] * cell, cell, cell, X, Y, size, size); return; }
       // No art yet: the upper quarters in the terrain's colour.
       ctx.fillStyle = t.color || '#888';
