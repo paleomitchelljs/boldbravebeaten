@@ -12,65 +12,77 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 
 ## Art TODO
 Where art lives: `art/` is what the game draws (published; see `art/README.md`), `assets/` the scratch pad (raw packs,
-ideas, work in progress; see `assets/README.md`). Audited 2026-10-24 from the files and headless screenshots of the
-Undercroft, the Barrow and a fight; nothing here was checked on a phone.
+ideas, work in progress; see `assets/README.md`). New PixelLab output goes to `assets/wip/` first and moves into `art/`
+once it is cut, mapped in `data/art.yaml` and seen in play. The PixelLab MCP server is configured (user scope, not in
+the repo); its tools load when Claude Code restarts.
 
-**Licences and the published site**
-- [ ] Confirm the licences of the creature sheets (`art/characters/creatures`: 42 creatures, 102 files), the PixelLab
-  character and temple tileset, and the spell effects (`art/effects`). Until then they are git-ignored, so the
-  published site shows the Pixel Crawler figure for every creature and plain bolts for spells.
-- [ ] The Cute Fantasy props (`chest`, `objects`: crates, urns, tombs, statues, crosses, graves, webs, cauldrons,
-  candelabras; `gold`, `stairs`, `stairs_down`, `spikes`, `plate`) may not be redistributed, so on the published site
-  chests, stairs, traps and that furniture draw nothing. Replace them from the Pixel Crawler pack (its Environment
-  folder, unprocessed in `assets/packs/`) or with our own art.
-- [ ] Credit Pixel Crawler (Anokolisa) in an About screen (`art/PIXEL-CRAWLER-TERMS.txt`).
+Priorities (set 2026-10-24), in order: **1. heroes, 2. the dungeon's creatures, 3. a temple tileset.** Everything else
+is under *Later*.
 
-**Characters: missing movements and missing art**
-- [ ] Pixel Crawler figures (11 kinds, every party member, foe and fallback): idle (4 frames) and run (6) only, side view,
-  left and right by mirroring. No attack, hurt or death frames, no facing up or down; a fallen body is the idle frame
-  turned on its side.
-- [ ] Creature sheets: two frames per animation. 33 of 42 have idle and attack only. Full walks (side, up, down): beren,
-  gowra, spawnee, swash. Side walk only: lich, spellblade, turquoise. Dragon: a fly set. Dusk bat: idle only (no
-  attack). None has hurt or death frames; a creature with no walk slides across the map in its idle frames.
-- [ ] PixelLab character (Tevax): idle in 8 directions and 4-frame walks, no attack; the only 8-way figure in a 2-way game.
-- [ ] No art yet: wolf, alpha wolf, rust beetle, mirage cat (monsters); militia, sellsword, brawler, man-at-arms, knight
-  (foe templates); every NPC uses a Pixel Crawler figure.
-- [ ] 17 creature sheets are not mapped to any monster: alligator, basilisk, cerenasp, clay golem, evil eye, fae drake,
-  fungus, gargoyle, gowra, iron golem, lich, minotaur, raptor, skeleton lizard, slime, turquoise, yuan-ti.
-- [ ] The goblin and gowra sheets have a stray divider line at the frame edge.
+**0. Decide before generating (blocks all three)**
+- [ ] One standard for figures. What exists: the 16-px Pixel Crawler grid drawn at 3×, side view, two facings by
+  mirroring; creature sheets of 61–363 px with two frames; one PixelLab figure (Tevax) at 64 px, "low top-down",
+  8 directions, 4-frame walks. Recommendation: make every new figure in PixelLab at one canvas (64 px, low top-down,
+  the mannequin template, as Tevax was), and teach `src/ui/game/sprites.js` to pick the nearest of 4 or 8 directions
+  rather than mirror. PixelLab gives the directions free, so a 2-way game throws most of each figure away. The cost
+  is that 64-px figures on 16-px tiles still look finer than the floor; priority 3 is the chance to fix that.
+- [ ] Animations each figure needs: idle, walk, attack (one per weapon kind is enough), hurt, death. Current sheets have
+  no hurt or death; a fallen body is the idle frame turned on its side.
+- [ ] Licence: check PixelLab's terms for publishing what it generates on the public site. Unknown.
 
-**World tiles**
-- [ ] Wall caps are a flat procedural slate with a cyan edge, not hand-drawn tiles.
-- [ ] Outer room corners: in the Barrow's entry room the side walls' caps start a row below the north wall's, leaving dark
-  notches at the two outer corners. Seen in a screenshot; they may be unexplored squares rather than missing tiles.
-  Check in play.
-- [ ] Doors in north-south walls are drawn as a thin side-on door; there is no door art for that orientation.
-- [ ] Walls one square thick with floor on both sides draw their cap over the floor row to their north (the true 3/4
-  projection), hiding that row's floor. If it reads badly, thicken those walls in the maps rather than special-casing the
-  renderer.
-- [ ] One tileset only (the Pixel Crawler dungeon). Waiting in `assets/wip/`: a 64-px PixelLab temple wang tileset (four
-  times the grid) and outdoor cliff pieces cut from Cute Fantasy (no outdoor map yet). The renderer takes one tileset.
+**1. Heroes (four)**
+- [ ] The vampire. No art yet.
+- [ ] Beren, the knight. A creature sheet exists (`beren`: idle, attack, side/up/down walk, 2 frames, 150 px); redo it to
+  the new standard.
+- [ ] A Yuan-Ti. A creature sheet exists (`yuan-ti`: idle and attack only), not mapped to anything; redo it.
+- [ ] The red Dragonborn death knight. Tevax (`art/characters/pixellab/Tevax_Thaukori`) is a red dragonborn with
+  breastplate, black teardrop shield and silver broadsword: idle in 8 directions and walks, no attack. Either give it a
+  death knight's look (darker plate, a two-hander or a rune blade, a deathly glow) or keep it as the base and add the
+  missing animations. The prompt it was made from is in its `metadata.json`.
+- [ ] Add each to `data/art.yaml` with `party: true` so a party member can pick it.
 
-**Items**
-- [ ] No item art: the pack, shops, loot and the sheet are text only. The Pixel Crawler pack's Icons and Weapons folders
-  are unprocessed in `assets/packs/`; finished icons go in `art/items/`.
+**2. Creatures for the dungeon**
+- [ ] Skeletons (`skeleton`, used by Skeleton and the squad; idle and attack only, 216×207). A warrior and an archer or
+  caster would let the squad read as more than three copies.
+- [ ] Rats (`rat`, 77 px, idle and attack; the rat and rat pack). Small and soft beside the tiles.
+- [ ] Lizardfolk (`lizardfolk`, used by the Scaleward; idle and attack). A temple of lizardfolk wants several: warrior,
+  shaman, a larger brute.
+- [ ] Large red drake. The Drake monster borrows the `dragon` sheet (idle, attack, fly). Needs walk, fly, breath and
+  bite.
+- [ ] Fae drake. A `fae-drake` sheet exists (idle and attack) but no monster uses it; it needs a monster in
+  `data/monsters.yaml` as well as art.
 
-**Effects**
-- [ ] Four colour sheets (fire, water, green, purple) cover every element: lightning and wind use water, earth uses fire,
-  and light, shadow, spirit, force, mind and the rest fall back to purple. One bolt cell and one flash cell are used; no
-  art for areas, ground, walls, wards or conjuring.
+**3. Temple tileset (prototype dungeon after the Temple of Cazic-Thule)**
+The look to aim for: a jungle temple of weathered, moss-covered sandstone, stepped and terraced, lit green and torch
+orange, built around fear (idols, blood altars, bone heaps, pits). The `avatar-of-fear` creature sheet already exists.
+- [ ] Floor: sandstone flags, mossy and cracked variants, a blood or water channel, rubble.
+- [ ] Walls: faces, hand-drawn caps (replacing the procedural slate cap), inner and outer corners (the Barrow's
+  outer-corner notches come from here), and wall ends.
+- [ ] Doors in both orientations (there is no art for a door in a north-south wall), and an open archway.
+- [ ] Stairs up and down, a ramp or terrace step, a pit edge.
+- [ ] Props: braziers, idols and statues, an altar, vines, bone piles, urns, a sarcophagus, chests. These also replace
+  the Cute Fantasy props the published site may not show (chest, stairs, traps, urns, tombs, statues).
+- [ ] The renderer takes one tileset in 16-px cells (`src/ui/game/mapview.js`, `T = 16`). A temple set needs either the
+  same cell size or the renderer taking a tileset per map, named in the map's data. The two PixelLab sandstone wang
+  tilesets in `assets/wip/temple-tileset/` are 64 px (four times the grid) and are a starting point.
+- [ ] A small map in `data/places.yaml` to try it on: a few rooms, lizardfolk, skeletons and rats, a drake's lair.
 
-**A common standard (quality differences)**
-- [ ] Resolution: tiles and Pixel Crawler figures are 16–32-px art drawn at 3×. Creature frames run from 61 to 363 px
-  tall (fungus 61, gargoyle 68; rat, ogre, minotaur, slime and evil eye 77; most 150; bone wraith 228; cerenasp 340;
-  coatl 363), drawn smoothed and scaled to a set height, so they look painted and soft beside the pixel tiles. Choose
-  one standard: pixelate creature art to the 16-px grid (nearest-neighbour downscale, a shared palette), or move
-  everything to a higher-resolution style.
-- [ ] Frame counts differ (creatures 2, Pixel Crawler 4 and 6, PixelLab 4), so figures side by side animate at visibly
-  different rates.
-- [ ] No shared palette: Pixel Crawler figures get a per-character multiply tint; creature art keeps its own colours.
-- [ ] Heights, widths and facing for each creature sheet were set by eye (`data/art.yaml`); line them up against one
-  reference figure.
+**Later**
+- Licences: the creature sheets (`art/characters/creatures`), the PixelLab figure and the spell effects (`art/effects`)
+  are git-ignored until their licences are confirmed, so the published site shows the Pixel Crawler figure for every
+  creature and plain bolts for spells. Credit Pixel Crawler (Anokolisa) in an About screen.
+- Pixel Crawler figures (every NPC and fallback): idle and run only, no attack, hurt or death.
+- Other creature sheets: two frames each, mostly idle and attack only; no art for wolf, alpha wolf, rust beetle, mirage
+  cat or the foe templates (militia, sellsword, brawler, man-at-arms, knight); 17 sheets unmapped; stray divider lines
+  on goblin and gowra.
+- Walls one square thick draw their cap over the floor row to their north; thicken those walls in the maps if it reads
+  badly.
+- Outdoor cliff pieces from Cute Fantasy are in `assets/wip/cliffs` (no outdoor map yet).
+- Items: no item art; the Pixel Crawler Icons and Weapons folders are unprocessed in `assets/packs/`; icons go in
+  `art/items/`.
+- Effects: four colour sheets cover every element (light, shadow, spirit, force, mind and the rest fall back to purple);
+  no art for areas, ground, walls, wards or conjuring.
+- Frame counts (2, 4, 6) and palettes differ between sources; heights and facings in `data/art.yaml` were set by eye.
 
 ## Combat after the turn-model change (whole-pool turns, reactions, opportunity strikes)
 - [ ] Retune: fights against armed groups got much deadlier (skeleton squad 70% → 27% wins, horde 57% → 13%); see
