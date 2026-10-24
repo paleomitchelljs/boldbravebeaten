@@ -1,5 +1,5 @@
 /*
- * Sprites: the Pixel Crawler character sheets (assets/sprites), drawn onto canvases.
+ * Sprites: the Pixel Crawler character sheets (art/characters/pixelcrawler), drawn onto canvases.
  *
  * Every sheet is cut into 32x32 frames: idle sheets are 4 frames side by side; run sheets hold 6 frames of
  * 64x64 with the figure in the lower middle 32x32. A sprite is anchored at its feet. Who looks like what
@@ -11,7 +11,7 @@
   'use strict';
   const UI = G.UI;
 
-  const DIR = 'assets/sprites/';
+  const DIR = 'art/characters/pixelcrawler/';
   const HAS_IMG = typeof Image !== 'undefined';
 
   // Name -> what the sheets are called. All 11 have idle and run sheets.
@@ -24,7 +24,7 @@
   const KIT_KIND = { sword: 'knight', club: 'knight', spear: 'knight', hammer: 'knight', rapier: 'rogue', bow: 'rogue', staff: 'wizard' };
 
   const sheets = {};       // `${kind}_${anim}` -> { img, tinted: {color: canvas}, ok }
-  const ART_DIR = 'art/creatures/sprites/';
+  const ART_DIR = 'art/characters/creatures/';
   const waiting = [];      // callbacks to run when something finishes loading
 
   function sheet(kind, anim) {
@@ -91,7 +91,7 @@
   // ---- Creature art (data/art.yaml; the files are local only) ------------------------------------------
   // Two-frame sheets of painted creatures, far finer than the 32-pixel Pixel Crawler figures: drawn smoothed and
   // scaled to an authored height in squares. pixellab characters are 64-pixel, 8-direction figures. Where a file
-  // is missing (art/ is git-ignored) the look's Pixel Crawler `kind` is drawn instead.
+  // is missing (the creature sheets are git-ignored until their licence is settled) the look's Pixel Crawler `kind` is drawn instead.
   const artCat = () => ((G.Content && G.Content.world && G.Content.world.art) || {});
   const artSheets = {};  // `${key}|${anim}` -> { img, ok, failed, tinted }
 

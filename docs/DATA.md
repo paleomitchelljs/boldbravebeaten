@@ -28,7 +28,7 @@ No anchors or tags. Keys must be unique.
 | `quests.yaml` | Staged quests with rewards. |
 | `places.yaml` | The town and the dungeon maps. |
 | `start.yaml` | New-game kits and the example party. |
-| `art.yaml` | Creature art in `art/creatures` and `art/pixellab` (local only): frames, trim box, facing, height on the map. |
+| `art.yaml` | Creature art in `art/characters/creatures` and `art/characters/pixellab` (git-ignored for now): frames, trim box, facing, height on the map. |
 
 ## Adding things
 
@@ -136,7 +136,7 @@ Legend kinds: `stairs {to, at}`, `locked {tn, forceTn, key, alt[]}`, `secret {tn
 `monster {encounter, asleep}`, `chest {loot, tn}`, `pickup {good}`, `note {text, sets}`, `npc {npc}`, `shrine {heal}`,
 `prop {sprite, scale, solid}` (scenery: a crate, bed, urn, candelabra… from the table in `src/ui/game/mapview.js`; solid by default).
 
-**Looks.** `sprite:` on a monster, a foe template or an NPC names a sheet in `assets/sprites/` (knight, rogue, wizard, orc,
+**Looks.** `sprite:` on a monster, a foe template or an NPC names a sheet in `art/characters/pixelcrawler/` (knight, rogue, wizard, orc,
 orc_rogue, orc_shaman, orc_warrior, skeleton, skeleton_mage, skeleton_rogue, skeleton_warrior) or is `{kind, scale, tint}` to resize
 or colour-wash one. Add `art: <key>` (an entry in `art.yaml`, with optional `artTint`, `artScale`) to draw creature art
 instead; the `kind` is drawn wherever the art files are missing (they are git-ignored). A party member's `look.sprite` /

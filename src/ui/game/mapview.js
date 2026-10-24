@@ -21,7 +21,7 @@
 
   const T = 16;
   const HAS_IMG = typeof Image !== 'undefined';
-  const DIR = 'assets/env/';
+  const DIR = 'art/worldtiles/';
 
   // ---- Images and the atlas -----------------------------------------------------------------------
   const imgs = {};
@@ -67,7 +67,7 @@
     stairs: ['stairs_down', 0, 0, 16, 16],
   };
 
-  // Spell effects (art/creatures/fx, 16-pixel cells; local only). Which sheet an element uses, and the cells used:
+  // Spell effects (art/effects, 16-pixel cells; git-ignored for now). Which sheet an element uses, and the cells used:
   // a projectile with its trail behind it (pointing right) and an impact flash.
   const FX_SHEET = { fire: 'Fire', frost: 'Water', lightning: 'Water', wind: 'Water', venom: 'Green', acid: 'Green', vine: 'Green', life: 'Green', plague: 'Green', earth: 'Fire' };
   const FX_CELL = { bolt: [17, 11], flash: [10, 8] };
@@ -78,7 +78,7 @@
     if (!HAS_IMG) return o;
     o.el = new Image();
     o.el.onload = () => { o.ok = true; };
-    o.el.src = `art/creatures/fx/${sheet} Effect and Bullet 16x16.png`;
+    o.el.src = `art/effects/${sheet} Effect and Bullet 16x16.png`;
     return o;
   }
 
@@ -176,7 +176,7 @@
     view.popup = (id, text, color, delay) => view.fx.push({ k: 'text', id, text, color: color || '#fff', t0: clock() + (delay || 0), dur: 1300 });
     view.lunge = (id, tx, ty, delay) => view.fx.push({ k: 'lunge', id, tx, ty, t0: clock() + (delay || 0), dur: 260 });
     // A bolt: a square of colour, or (element given, and the effect sheets there) a fireball, frost shard or spark
-    // from art/creatures/fx with a flash where it lands.
+    // from art/effects with a flash where it lands.
     view.bolt = (from, to, color, delay, element) => {
       const t0 = clock() + (delay || 0), sheet = element ? FX_SHEET[element] || 'Purple' : null;
       view.fx.push({ k: 'bolt', from, to, color: color || '#ffe9a0', t0, dur: sheet ? 320 : 200, sheet });

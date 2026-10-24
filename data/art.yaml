@@ -1,11 +1,11 @@
-# Creature art (art/creatures/sprites, local only: art/ is git-ignored). Each sheet is two frames side by side.
+# Creature art (art/characters/creatures; git-ignored until its licence is settled: art/README.md). Each sheet is two frames side by side.
 # A monster, foe template or NPC uses it with sprite: {art: <key>, ...}; its `kind` is drawn instead wherever the art
 # can't be loaded (a fresh clone, the Pages build). A party member can pick an entry with party: true.
 #   anims   which sheets exist (<key>-<anim>.png); run uses walk, attack is shown on a blow
 #   faces   which way the figure looks as drawn (the map mirrors it to face where it goes)
 #   height  how tall it stands on the map, in squares; maxWidth caps a long body (default 1.8)
 #   box     the figure's trimmed box in the idle frame [x0, y0, x1, y1] (feet at y1), measured from the sheet
-# pixellab entries are 8-direction characters (art/pixellab): idle rotations and 4-frame walks by direction.
+# pixellab entries are 8-direction characters (art/characters/pixellab): idle rotations and 4-frame walks by direction.
 
 alligator: {anims: [idle, attack], frame: [150, 150], box: [0, 108, 150, 150], faces: left, height: 0.6, maxWidth: 2}
 avatar-of-fear: {anims: [idle, attack], frame: [150, 150], box: [12, 0, 138, 150], faces: right, height: 1.9}
@@ -51,7 +51,7 @@ wolfpack-bandit: {anims: [idle, attack], frame: [150, 150], box: [16, 0, 134, 15
 yuan-ti: {anims: [idle, attack], frame: [150, 150], box: [10, 0, 139, 150], faces: right, height: 1.5}
 tevax:
   type: pixellab
-  dir: art/pixellab/Tevax_Thaukori/Idle
+  dir: art/characters/pixellab/Tevax_Thaukori/Idle
   name: Scaled warrior
   size: 64
   box: [8, 1, 59, 63]

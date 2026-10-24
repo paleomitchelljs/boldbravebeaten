@@ -7,26 +7,70 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 ## Look and feel (needs a human eye)
 - [ ] Play it on a phone-width screen: stage, dock, toolbar, command bar and sheet have only been checked on desktop.
 - [ ] Restyle the town, parley, title and pack/journal/standing screens to match the pixel theme (they only inherit colours).
-- [ ] Walls one square thick with floor on both sides draw their cap over the floor row to their north (the true 3/4
-  projection): that row's floor is hidden under the cap, though figures and items there still show. If it reads badly,
-  thicken those walls in the maps rather than special-casing the renderer.
-- [ ] Cap tops are a flat procedural slate with a cyan edge; a hand-drawn cap tile set would look better.
-- [ ] Creature art (`art/creatures`, `art/pixellab`, local only and git-ignored) now draws for 21 monsters, 3 foe templates
-  and 11 party looks (`data/art.yaml`; `art.html` shows each beside its fallback). Seen in headless Chrome only on
-  `art.html`, not in a real fight. Questions: the painted art is finer and softer than the 16-px tiles (decide whether to
-  pixelate it or keep the mix); whether the art may be committed to `assets/` (then the Pages build shows it); wolf,
-  mirage cat, rust beetle and the template knights still have no art. Facing and height per sheet were set by eye.
-  The goblin and gowra sheets have a stray divider line at the frame edge.
-- [ ] Not yet used from the new art: `art/pixellab/temple` (a 64-px wang tileset: a temple dungeon theme would need
-  the tile renderer to take a second tileset) and `art/creatures/decor` (outdoor cliffs; there is no outdoor map).
-- [ ] Fights: attacks now lunge or fire a bolt, with floating numbers and "Blocked"/"Dodged"/"Down"; still no real attack or
-  death animation frames (a body is the idle sprite on its side).
 - [ ] Fights: the outcome of an attack (odds to hit, expected damage through armor) is not previewed when choosing a target.
 - [ ] Click-to-walk and the explore prompts need a pass on touch screens.
 
-## Art and licences
-- [ ] `assets/env/{chest,objects,gold,stairs_down,spikes,plate,stairs}.png` come from the paid Cute Fantasy Dungeons pack, whose licence forbids redistribution: they are git-ignored, so a fresh clone or the Pages build draws those props blank. Replace them with Pixel Crawler or own art, or keep the repo private.
-- [ ] Pixel Crawler terms are in `assets/PIXEL-CRAWLER-TERMS.txt`; credit the author in the game's About.
+## Art TODO
+Where art lives: `art/` is what the game draws (published; see `art/README.md`), `assets/` the scratch pad (raw packs,
+ideas, work in progress; see `assets/README.md`). Audited 2026-10-24 from the files and headless screenshots of the
+Undercroft, the Barrow and a fight; nothing here was checked on a phone.
+
+**Licences and the published site**
+- [ ] Confirm the licences of the creature sheets (`art/characters/creatures`: 42 creatures, 102 files), the PixelLab
+  character and temple tileset, and the spell effects (`art/effects`). Until then they are git-ignored, so the
+  published site shows the Pixel Crawler figure for every creature and plain bolts for spells.
+- [ ] The Cute Fantasy props (`chest`, `objects`: crates, urns, tombs, statues, crosses, graves, webs, cauldrons,
+  candelabras; `gold`, `stairs`, `stairs_down`, `spikes`, `plate`) may not be redistributed, so on the published site
+  chests, stairs, traps and that furniture draw nothing. Replace them from the Pixel Crawler pack (its Environment
+  folder, unprocessed in `assets/packs/`) or with our own art.
+- [ ] Credit Pixel Crawler (Anokolisa) in an About screen (`art/PIXEL-CRAWLER-TERMS.txt`).
+
+**Characters: missing movements and missing art**
+- [ ] Pixel Crawler figures (11 kinds, every party member, foe and fallback): idle (4 frames) and run (6) only, side view,
+  left and right by mirroring. No attack, hurt or death frames, no facing up or down; a fallen body is the idle frame
+  turned on its side.
+- [ ] Creature sheets: two frames per animation. 33 of 42 have idle and attack only. Full walks (side, up, down): beren,
+  gowra, spawnee, swash. Side walk only: lich, spellblade, turquoise. Dragon: a fly set. Dusk bat: idle only (no
+  attack). None has hurt or death frames; a creature with no walk slides across the map in its idle frames.
+- [ ] PixelLab character (Tevax): idle in 8 directions and 4-frame walks, no attack; the only 8-way figure in a 2-way game.
+- [ ] No art yet: wolf, alpha wolf, rust beetle, mirage cat (monsters); militia, sellsword, brawler, man-at-arms, knight
+  (foe templates); every NPC uses a Pixel Crawler figure.
+- [ ] 17 creature sheets are not mapped to any monster: alligator, basilisk, cerenasp, clay golem, evil eye, fae drake,
+  fungus, gargoyle, gowra, iron golem, lich, minotaur, raptor, skeleton lizard, slime, turquoise, yuan-ti.
+- [ ] The goblin and gowra sheets have a stray divider line at the frame edge.
+
+**World tiles**
+- [ ] Wall caps are a flat procedural slate with a cyan edge, not hand-drawn tiles.
+- [ ] Outer room corners: in the Barrow's entry room the side walls' caps start a row below the north wall's, leaving dark
+  notches at the two outer corners. Seen in a screenshot; they may be unexplored squares rather than missing tiles.
+  Check in play.
+- [ ] Doors in north-south walls are drawn as a thin side-on door; there is no door art for that orientation.
+- [ ] Walls one square thick with floor on both sides draw their cap over the floor row to their north (the true 3/4
+  projection), hiding that row's floor. If it reads badly, thicken those walls in the maps rather than special-casing the
+  renderer.
+- [ ] One tileset only (the Pixel Crawler dungeon). Waiting in `assets/wip/`: a 64-px PixelLab temple wang tileset (four
+  times the grid) and outdoor cliff pieces cut from Cute Fantasy (no outdoor map yet). The renderer takes one tileset.
+
+**Items**
+- [ ] No item art: the pack, shops, loot and the sheet are text only. The Pixel Crawler pack's Icons and Weapons folders
+  are unprocessed in `assets/packs/`; finished icons go in `art/items/`.
+
+**Effects**
+- [ ] Four colour sheets (fire, water, green, purple) cover every element: lightning and wind use water, earth uses fire,
+  and light, shadow, spirit, force, mind and the rest fall back to purple. One bolt cell and one flash cell are used; no
+  art for areas, ground, walls, wards or conjuring.
+
+**A common standard (quality differences)**
+- [ ] Resolution: tiles and Pixel Crawler figures are 16–32-px art drawn at 3×. Creature frames run from 61 to 363 px
+  tall (fungus 61, gargoyle 68; rat, ogre, minotaur, slime and evil eye 77; most 150; bone wraith 228; cerenasp 340;
+  coatl 363), drawn smoothed and scaled to a set height, so they look painted and soft beside the pixel tiles. Choose
+  one standard: pixelate creature art to the 16-px grid (nearest-neighbour downscale, a shared palette), or move
+  everything to a higher-resolution style.
+- [ ] Frame counts differ (creatures 2, Pixel Crawler 4 and 6, PixelLab 4), so figures side by side animate at visibly
+  different rates.
+- [ ] No shared palette: Pixel Crawler figures get a per-character multiply tint; creature art keeps its own colours.
+- [ ] Heights, widths and facing for each creature sheet were set by eye (`data/art.yaml`); line them up against one
+  reference figure.
 
 ## Combat after the turn-model change (whole-pool turns, reactions, opportunity strikes)
 - [ ] Retune: fights against armed groups got much deadlier (skeleton squad 70% → 27% wins, horde 57% → 13%); see

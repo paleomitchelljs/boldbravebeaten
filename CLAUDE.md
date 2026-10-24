@@ -27,7 +27,7 @@ Read `HANDOFF.md` first: it is the to-do list. **After every push, update it** (
   `Content` (`src/data/content.js`). Adding a creature or a town should never need a code change. If it does, move
   the thing into data first.
 - **Layers.** `src/rules/` is the combat/magic engine (no DOM; attaches to `globalThis.BBB`). `src/game/` is the world
-  around it (exploring, parley, factions, economy, saves; no DOM). `src/ui/` is screens: one top-down map (`src/ui/game/mapview.js`, Pixel Crawler art in `assets/`) serves exploring and fighting; fights are played on a slice of the dungeon map (`Battle.dungeonArena`). The game's battle screen is `src/ui/game/screens/battle.js`; `src/ui/views/battle.js` is the older GM-table view and exports the command panel it reuses. Rules and game code run in
+  around it (exploring, parley, factions, economy, saves; no DOM). `src/ui/` is screens: one top-down map (`src/ui/game/mapview.js`; the art it draws is in `art/`) serves exploring and fighting; fights are played on a slice of the dungeon map (`Battle.dungeonArena`). The game's battle screen is `src/ui/game/screens/battle.js`; `src/ui/views/battle.js` is the older GM-table view and exports the command panel it reuses. Rules and game code run in
   Node; keep it that way so tests and sims can drive them.
 - **No dependencies, no build step** for the game. `data/bundle.js` is optional (`node tools/bundle.js`) and exists
   only so `index.html` can open from disk; when served, the loader reads the YAML directly.

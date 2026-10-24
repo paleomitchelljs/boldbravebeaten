@@ -25,9 +25,9 @@ jobs:
         run: |
           mkdir _site
           cp index.html bench.html gm.html _site/
-          # assets/: the Pixel Crawler sprites and tiles (tracked; the paid packs are git-ignored and never here).
-          # Without it the map draws every figure as a coloured block.
-          cp -r css src data assets _site/
+          # art/: everything the game draws (only what is committed: git-ignored art is never in the checkout).
+          # Without it the map draws every figure as a coloured block. assets/ is the scratch pad: not published.
+          cp -r css src data art _site/
           rm -f _site/data/bundle.js
       - uses: actions/upload-pages-artifact@v3
         with:

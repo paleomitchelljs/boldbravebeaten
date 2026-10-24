@@ -2,17 +2,26 @@
 node_modules/
 data/bundle.js
 
-# Paid Cute Fantasy Dungeons art: the licence forbids redistribution
-assets/env/chest.png
-assets/env/objects.png
-assets/env/gold.png
-assets/env/stairs_down.png
-assets/env/spikes.png
-assets/env/plate.png
-assets/env/stairs.png
-assets/CUTE-FANTASY-README.txt
+# ---- Art (see art/README.md and assets/README.md) -------------------------------------------------
+# The repo is public: only art whose licence allows redistribution is committed.
+# Paid Cute Fantasy Dungeons props the map uses: the licence forbids redistribution, even modified.
+art/worldtiles/chest.png
+art/worldtiles/objects.png
+art/worldtiles/gold.png
+art/worldtiles/stairs_down.png
+art/worldtiles/spikes.png
+art/worldtiles/plate.png
+art/worldtiles/stairs.png
+# Licence not yet confirmed (the user's call): creature sheets, the PixelLab character, spell effects.
+# Remove a line once its art may be published, and the Pages build will show it.
+art/characters/creatures/
+art/characters/pixellab/
+art/effects/
+# Scratch pad: raw packs as bought or downloaded, and work cut from them, stay local. Ideas are committed.
+assets/packs/
+assets/wip/cliffs/
+assets/wip/temple-tileset/
 
-# Local only: the art packs (licences), Claude settings, Dropbox conflict copies
-art/
+# Local only: Claude settings, Dropbox conflict copies
 .claude/
 *conflicted copy*
