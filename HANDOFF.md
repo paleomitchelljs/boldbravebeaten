@@ -16,8 +16,9 @@ ideas, work in progress; see `assets/README.md`). New PixelLab output goes to `a
 once it is cut, mapped in `data/art.yaml` and seen in play. The PixelLab MCP server is configured (user scope, not in
 the repo); its tools load when Claude Code restarts.
 
-Priorities (set 2026-10-24), in order: **1. heroes, 2. the dungeon's creatures, 3. a temple tileset.** Everything else
-is under *Later*.
+Current goal (2026-10-24): a cohesive-ish set of art for one trial dungeon, the temple. Plan, open questions and build
+order: `assets/ideas/temple-dungeon.md`. Priorities: **3. the temple tileset first, then 2. its creatures; 1. new heroes
+are deferred** (keep the current heroes for now). Everything else is under *Later*.
 
 **0. Notes for generating (not blocking)**
 The art is a deliberate mix while we prototype (the user, 2026-10-24: combine assets now, do art passes later). No
@@ -26,7 +27,7 @@ mannequin template) so they at least match each other, and save each prompt besi
 idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2, so 4- or 8-way facing in
 `src/ui/game/sprites.js` is an option if the extra directions seem worth using.
 
-**1. Heroes (four)**
+**1. Heroes (four; deferred, current heroes stay for now)**
 - [ ] The vampire. No art yet.
 - [ ] Beren, the knight. A creature sheet exists (`beren`: idle, attack, side/up/down walk, 2 frames, 150 px); redo it to
   the new standard.
@@ -48,20 +49,13 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
 - [ ] Fae drake. A `fae-drake` sheet exists (idle and attack) but no monster uses it; it needs a monster in
   `data/monsters.yaml` as well as art.
 
-**3. Temple tileset (prototype dungeon after the Temple of Cazic-Thule)**
-The look to aim for: a jungle temple of weathered, moss-covered sandstone, stepped and terraced, lit green and torch
-orange, built around fear (idols, blood altars, bone heaps, pits). The `avatar-of-fear` creature sheet already exists.
-- [ ] Floor: sandstone flags, mossy and cracked variants, a blood or water channel, rubble.
-- [ ] Walls: faces, hand-drawn caps (replacing the procedural slate cap), inner and outer corners (the Barrow's
-  outer-corner notches come from here), and wall ends.
-- [ ] Doors in both orientations (there is no art for a door in a north-south wall), and an open archway.
-- [ ] Stairs up and down, a ramp or terrace step, a pit edge.
-- [ ] Props: braziers, idols and statues, an altar, vines, bone piles, urns, a sarcophagus, chests. These also replace
-  the Cute Fantasy props the published site may not show (chest, stairs, traps, urns, tombs, statues).
-- [ ] The renderer takes one tileset in 16-px cells (`src/ui/game/mapview.js`, `T = 16`). A temple set needs either the
-  same cell size or the renderer taking a tileset per map, named in the map's data. The two PixelLab sandstone wang
-  tilesets in `assets/wip/temple-tileset/` are 64 px (four times the grid) and are a starting point.
-- [ ] A small map in `data/places.yaml` to try it on: a few rooms, lizardfolk, skeletons and rats, a drake's lair.
+**3. Temple tileset (prototype dungeon after the Temple of Cazic-Thule): see `assets/ideas/temple-dungeon.md`**
+- [ ] Answer the plan's open questions (§2).
+- [ ] Engine: a tileset per place (`look.tileset`, its own cell size; the renderer now takes one 16-px set), terrain
+  (water, bridges, grass/rubble floor, pyramid tier faces), one-way drops. The validator pairs every staircase.
+- [ ] Courtyard 1 alone, as the trial of the pipeline (prompt, PixelLab, `assets/wip/`, cut, `art/`, seen in play).
+- [ ] Then labyrinth, courtyard 2 and pyramid, sewers, ritual chamber, palace and servants' quarters (plan §5).
+- [ ] The temple props also replace the Cute Fantasy props the published site may not show.
 
 **Later**
 - Licences: the creature sheets (`art/characters/creatures`), the PixelLab figure and the spell effects (`art/effects`)
