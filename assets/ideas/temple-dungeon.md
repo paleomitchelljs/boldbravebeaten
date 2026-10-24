@@ -9,12 +9,18 @@ questions in §2 come first; the build order in §5 assumes the answers I recomm
   Barrow are to be "archived or saved for testing only". Do that once courtyard 1 is playable, so the game always has a
   dungeon: move them to a test-only place file the tests and sims still load, and start the game at the temple.
 - **Courtyard 1** is "a flat grassy area surrounded by sandstone walls, and those walls have wooden doors leading to the
-  other areas". So no raised platform (confirm: the first memo had stairs up to a platform with the well). It should be
+  other areas". It should be
   "large enough for about 4 separate encounters despite being wide open (guards at the entrance, guards at the door to
   the labyrinth, guards at the palace, and a central encounter). Since it's open, these might spill and connect."
 - **Wells** "are mostly drop downs, with the only 'way out' being the one by the entrance (that can be climbed) and via
   the ritual chamber". So the courtyard well stands near the entrance and climbs both ways; the labyrinth and pyramid
-  wells are one-way drops; the ritual chamber has a way out (where to is open: §2, question 3).
+  wells are one-way drops.
+- **The gatehouse, not a platform.** "There should just be steps on either side of the entrance that lead to the top of
+  the wall over the entrance which has a small guard house where the well is. So it's an area 'above' the entrance and
+  'on' the courtyard walls." How to build that on a flat grid: §3, *Elevation*.
+- **The ritual chamber** "has a one-way entrance from the sewers (falling down into the shallow water) and the stairs
+  to/from the palace". So the way out of the deep levels is the palace stair, back through the palace to the
+  courtyard. Landing in water: no falling damage (my suggestion), unlike the pit trap.
 - **Style target.** The PixelLab dragonborn (`art/characters/pixellab/Tevax_Thaukori/Idle/rotations/south.png`, 64 px)
   is "the level of NPC detail and style that I ultimately think we're aiming for, so the tiles should be generated to
   match". That settles the tile size at **64 px** (reasons in §4).
@@ -26,7 +32,7 @@ questions in §2 come first; the build order in §5 assumes the answers I recomm
   walls ringing the courtyard, snake motifs and lizard mosaics are on the walls." Ground: "ferns and green plants
   growing through broken, small sandstone bricks." Walls: "large sandstone brick walls with the snake and lizard
   mosaics, overgrown with jungle plants like vines." "Roughly square, very large"; the entry is on the west side.
-  Stairways north and south "lead up to a raised platform with a well". The palace entry is on the east side; "on the
+  Steps either side of the entrance lead up onto the wall over it, to a small guardhouse with the well (§0). The palace entry is on the east side; "on the
   South side of the courtyard are doors that lead into the labyrinth".
 - *Labyrinth.* "Where the occupants of the city temple largely reside in a twisting set of cul-de-sacs and dead ends."
   "Carved stone that's been worked", "that same light tan, though damper and a little darker". "It should twist with
@@ -63,8 +69,10 @@ questions in §2 come first; the build order in §5 assumes the answers I recomm
         |           |           |  court 2  |
  entry  |  court 1  |  palace   |  pyramid  |
  (W) -> |  grass    |  2 floors |  4 tiers  |
-        |  well by  |           |           |
-        |  the door |           |           |
+        |  steps up |           |           |
+        |  to gate- |           |           |
+        |  house +  |           |           |
+        |  well     |           |           |
         +--doors----+-----------+---door----+
         |              labyrinth             |
         +------------------------------------+
@@ -76,18 +84,17 @@ questions in §2 come first; the build order in §5 assumes the answers I recomm
 1. ~~The second dungeon~~ (later; see §0). Still open: how does the party get to the temple from Stonebridge (a road
    exit, as the Barrow has)?
 2. **Where things sit in courtyard 1.** Palace door on the east, labyrinth door on the south, entrance on the west
-   (§0). Is the second courtyard east of the palace, as drawn? Is the raised platform gone?
-3. **The servants' stair.** The memo has the palace's basement steps going to the sewers, and also a stairway from the
-   palace leading "directly to this ritual chamber". Are these the same stair (palace → servants' quarters → sewers, with
-   a separate way down to the ritual chamber), or does the servants' stair skip the sewers? My suggestion: servants'
-   quarters → a locked or hidden stair straight to the ritual chamber (the back door), plus a door into the sewers. The
-   drop from the sewers is then the front door, one-way.
+   (§0). Is the second courtyard east of the palace, as drawn?
+3. **The servants' quarters.** Settled: the palace stair runs down to the ritual chamber and back (§0). Still open:
+   the first memo also had the palace's "basement steps" as one of the four ways into the sewers. Do the servants'
+   quarters open into the sewers too (a door or grate on the way down), or is the palace stair only palace → servants'
+   → ritual chamber? If they do, the sewers have a way back up through the palace and the falling entrance is no longer
+   the only route in from the sewers' side.
 4. **The ritual chamber's centre.** The memo's audio garbled here ("Draining down from the sewer above the day. Orb of
    it with the avatar of fear inside"). My reading: water drains from the sewer into a central pool, and above the pool
    (or on a dais in it) is an orb with the avatar of fear inside. Is the avatar a fight, something sealed, or a choice?
    This decides whether the room needs a fight arena.
-5. ~~Wells~~ (answered in §0). Still open: does the ritual chamber's way out lead back up the palace stair, or
-   somewhere else (outside the walls)?
+5. ~~Wells and the way out~~ (answered in §0).
 6. **Who lives where.** The creatures we've prioritized are skeletons, rats, lizardfolk and drakes. A guess: lizardfolk
    in the labyrinth and palace (warriors, shamans, a chieftain on the throne), rats and slimes in the sewers, skeletons
    in the servants' quarters or the pyramid, the red drake on the pyramid or in the second courtyard, the fae drake
@@ -121,8 +128,20 @@ noted.
 - **Curves.** The map is a square grid, so a curved passage is a stair-stepped diagonal. A wang tileset (the kind
   PixelLab makes) rounds the corners, which goes a long way towards "organic twists". True curves would need a
   different map model; I don't recommend it.
-- **Elevation.** There is none, and the pyramid doesn't need it: each tier is a ring of floor walled off from the next,
+- **Elevation.** There is none. The pyramid doesn't need it: each tier is a ring of floor walled off from the next,
   with one stair square through. It reads as a climb only if the tier faces look like steps, which is an art question.
+  The gatehouse does need it, because the walk on top of the wall crosses over the entrance passage, and a flat grid has
+  one square per place. Two ways to build it:
+  - *A. A separate small place, "On the wall"*: the two sets of steps are a pair of stairs up to a map of the wall top,
+    the guardhouse and the well. Works with today's engine. But guards up there can't join a fight in the courtyard or
+    shoot down into it.
+  - *B. A raised layer in the courtyard map*: squares marked raised, reached only through stair squares. Below, fighters
+    can't strike up at them, but missiles and spells can reach, and the guardhouse can be drawn over the gate. The two
+    or three squares directly over the entrance passage would need two levels each (the passage beneath, the walk
+    above). This touches movement, the arena, line of sight and the AI's pathing: the largest change on this list.
+  
+  I recommend A for the prototype and B later, if archers on the wall turn out to matter. With A, the guardhouse guards
+  are a fifth encounter, upstairs, and the climbable well is the reason to go up there.
 - **Fights that spill and connect.** Each encounter is its own fight now: nothing pulls a nearby group in. For the open
   courtyard, a fight should draw in any other group that would notice it (within its notice range of the fight, or
   inside the arena slice), arriving on a later round from where it stood. Medium-sized change in `src/game/explore.js`
@@ -163,13 +182,14 @@ the style target: try them first, and regenerate if they don't match the dragonb
 
 | Area | Tilesets | Props and special tiles |
 |---|---|---|
-| Courtyard 1 | flat grass, with ferns and plants through broken small sandstone bricks ↔ sandstone wall ("light, tan, slightly yellowed") | wall faces with snake and lizard mosaics (2–3 variants), vines, ferns, wooden doors (west, south, east), a well with a rope or rungs |
+| Courtyard 1 | flat grass, with ferns and plants through broken small sandstone bricks ↔ sandstone wall ("light, tan, slightly yellowed") | wall faces with snake and lizard mosaics (2–3 variants), vines, ferns, wooden doors (west, south, east), steps up the inside of the wall (both sides of the entrance) |
+| Wall top (gatehouse) | sandstone wall-walk ↔ parapet or drop | small guardhouse, a well with a rope or rungs, crenellations |
 | Labyrinth | worked stone floor ↔ wall, "damper and a little darker" | rounded corner pieces, door, well, rubble, bones, urns |
 | Courtyard 2 | as courtyard 1 | step-pyramid tier face (top-down and side), stairs in four facings, a very small altar, well |
 | Palace | carved interior floor ↔ wall | arched and decorated doorway, statues, columns, throne, banners, braziers, beds and tables (2nd floor), a niche with a stair down |
 | Servants' quarters | plain worked stone | cots, tables, barrels, stair |
 | Sewers | "dark gray stone, and natural stone" ↔ "rank water, slimy water" | stone walkway edge, plank bridges (both directions), drain grates, the four arrival points |
-| Ritual chamber | dark stone ↔ pool water | dais, the orb with the avatar of fear inside, drain from above, ritual objects |
+| Ritual chamber | dark stone ↔ shallow pool water | dais, the orb with the avatar of fear inside, the drain or shaft you fall from, the stair to the palace, ritual objects |
 
 These temple props also stand in for the Cute Fantasy props the published site may not show: chest, stairs, traps,
 urns, statues.
@@ -182,7 +202,8 @@ Each step ends with something walkable, to look at in the browser before the nex
 2. **Engine: a tileset per place (64-px cells) and the terrain kinds.** Mostly code, testable with placeholder tiles.
    Done first so generated art lands somewhere real.
 3. **Courtyard 1 alone**, with its four guard posts and fights that draw in neighbours; then archive the Undercroft
-   and the Barrow (§0). One map, one tileset, the door, the mosaic walls, the platform and well, a few props. This is
+   and the Barrow (§0). One map, one tileset, the doors, the mosaic walls, the steps up to the wall top and its
+   guardhouse and well (a separate place, §3), a few props. This is
    the trial of the whole pipeline: prompt → PixelLab → `assets/wip/` → cut → `art/` → `look.tileset` → seen in play.
    Fix what it shows about scale and style before generating the rest.
 4. **Labyrinth**, with its generator, and lizardfolk in it.
