@@ -1,5 +1,21 @@
 # Simulation findings
 
+## Parry carry-through (2026-10-24; `node sim/arena.js --n 20`, `node tools/encounters.js --n 300`)
+
+A parried swing whose force beats the parrying weapon's carries through, weakened; the overwhelm term left the parry
+odds (`CONFIG.defense.parryForce.over` 2 → none). Encounters, level-1 party: all within noise (crew 90 → 91% wins,
+troll 95 → 92%, the rest the same). Duels (level 5, 320 fights a cell, about ±3 points): every cell within noise but
+
+| two-handed vs | before | after |
+|---|---|---|
+| rapier & dagger (open field) | 61% | 54% |
+| magic (open field) | 53% | 47% |
+
+The rapier parries a greatsword far more often now that force no longer piles onto the odds, and even with half or
+more of each cut beating through, it keeps off more than before. That runs against the idea's intent (a light blade
+shouldn't meet a heavy cut well). If it should go the other way, put a weaker overwhelm term back (`parryForce.over`
+4, say): a heavy blow is then both harder to meet and partly carries through. Not changed.
+
 ## Armor by hit location, step 1 (2026-10-24; `node sim/locations.js --n 3000`, `node tools/encounters.js --n 300`)
 
 Pieces cover locations (rules.yaml `locations`); a blow against mixed armor rolls where it lands; a cut through a bare
