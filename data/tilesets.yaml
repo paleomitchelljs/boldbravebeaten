@@ -1,0 +1,49 @@
+# Tilesets for the map (src/ui/game/tilemap.js). A place draws from one with look: {tileset: <id>}; without one it
+# has the 3/4 dungeon walls of art/worldtiles/tiles.png. Until a sheet is there (a fresh clone, the published site:
+# the temple art is git-ignored for now), each terrain is drawn in its colour.
+#   cell      pixels per square in the art (64 for PixelLab). The map is drawn at cell/16 times the 16-px grid, so
+#             one art pixel is one screen pixel before the page scales the canvas.
+#   dir       the folder of the sheets
+#   floor     the terrain plain floor ('.'), doors and legend squares are drawn as (default: the first terrain)
+#   wall      the terrain of walls and rock (default: wall)
+#   terrains  name -> how it is drawn, from the bottom up. Ground letters (rules.yaml game.ground) name these by `tile`.
+#     color     flat colour while there is no art; alpha (0-1) lays it over the floor instead (a patch of rubble)
+#     tile      an image of one square (a list: variants, picked by position)
+#     wang      a 16-tile corner sheet of this terrain (upper) over the terrain named by `over` (lower). Each tile sits
+#               on a corner between four squares and is chosen by which of them are this terrain (or one listed after
+#               it), so edges and corners join up. Its all-lower tile also serves as the plain `over` ground.
+#     cols      tiles across the sheet (default 4)
+#     corners   the sheet's tiles in reading order, each four letters NW NE SW SE (U upper, L lower). Default: the
+#               PixelLab layout, [UULU, ULUL, LULL, UULL, LUUL, ULLL, LLLL, LLLU, ULUU, LLUU, LLUL, LULU, UUUU, UUUL,
+#               ULLU, LUUU]. PixelLab's tileset tool reports each tile's corners; copy them here if they differ.
+#   props     name -> [image, x, y, w, h], in the art's pixels: map objects (a well, a statue) for legend props and
+#             drops by `sprite`, drawn with their feet at the square's bottom and one cell to one square.
+
+# The temple's open courts: grass, and the high sandstone walls. Placeholder art from assets/wip/temple-tileset
+# (PixelLab, 64 px, made before the style target; to be regenerated if it doesn't match).
+temple_court:
+  cell: 64
+  dir: art/worldtiles/temple/
+  floor: grass
+  terrains:
+    grass: {color: "#4d6a33"}
+    rubble: {color: "#b09a70", alpha: 0.45}
+    water: {color: "#1f4450"}
+    shallows: {color: "#3b6a70"}
+    bridge: {color: "#7a5a36"}
+    wall: {color: "#cdb98a", wang: grass-wall.png, over: grass}
+  props: {}
+
+# The labyrinth: worked, damp sandstone underfoot, the same walls.
+temple_maze:
+  cell: 64
+  dir: art/worldtiles/temple/
+  floor: moss
+  terrains:
+    moss: {color: "#6e6c55"}
+    rubble: {color: "#9a8a68", alpha: 0.45}
+    water: {color: "#1f4450"}
+    shallows: {color: "#3b6a70"}
+    bridge: {color: "#7a5a36"}
+    wall: {color: "#cdb98a", wang: moss-wall.png, over: moss}
+  props: {}

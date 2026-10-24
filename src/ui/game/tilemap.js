@@ -88,7 +88,7 @@
             const door = doorLike(c);
             let m = canon(maskAt(g.solidAt, x, y)) & ~(S | SE | SW);
             if (door) m &= N; // the floor runs straight through a doorway
-            out.ground.push({ t: 'floor', x, y, mask: m, v: hash(x, y) });
+            out.ground.push({ t: 'floor', x, y, mask: m, v: hash(x, y), color: c.ground ? c.ground.color : null });
             if (door) {
               const horizontal = g.solidAt(x - 1, y) && g.solidAt(x + 1, y);
               out.decor.push({ t: 'door', x, y, open: c.kind === 'floor', locked: c.kind === 'locked' || (c.def && c.def.kind === 'locked'), horizontal });
@@ -115,7 +115,8 @@
   function decal(out, c, x, y) {
     const st = c.st || {};
     switch (c.kind) {
-      case 'stairs': out.decor.push({ t: 'stairs', x, y, up: c.def.at === '>' || ((G.Content.world.places[c.def.to] || {}).kind === 'town') }); break;
+      case 'stairs': out.decor.push({ t: 'stairs', x, y, up: c.def.up != null ? !!c.def.up : c.def.at === '>' || ((G.Content.world.places[c.def.to] || {}).kind === 'town') }); break;
+      case 'drop': out.decor.push({ t: 'drop', x, y, sprite: c.def.sprite || null }); break;
       case 'trap': if (st.found || st.sprung || st.disarmed) out.decor.push({ t: 'trap', x, y, state: st.disarmed ? 'off' : st.sprung ? 'sprung' : 'armed' }); break;
       case 'pickup': if (!st.done) out.decor.push({ t: 'twinkle', x, y }); break;
       case 'note': if (!st.done) out.decor.push({ t: 'note', x, y }); break;
@@ -212,7 +213,8 @@
     switch (cmd.t) {
       case 'floor': {
         const f = FLOORS[cmd.v % FLOORS.length];
-        if (tiles.ok) ctx.drawImage(tiles.el, f[0] * T, f[1] * T, T, T, X, Y, size, size);
+        if (cmd.color) { ctx.fillStyle = cmd.color; ctx.fillRect(X, Y, size, size); }
+        else if (tiles.ok) ctx.drawImage(tiles.el, f[0] * T, f[1] * T, T, T, X, Y, size, size);
         else { ctx.fillStyle = '#26363a'; ctx.fillRect(X, Y, size, size); }
         if (cmd.mask) ctx.drawImage(shade(cmd.mask), 0, 0, T, T, X, Y, size, size);
         break;
@@ -225,6 +227,22 @@
       }
       case 'cap': ctx.drawImage(capTile(cmd.mask, cmd.edge), 0, 0, T, T, X, Y, size, size); break;
       case 'door': {
+        // Seen from above (a tileset's flat walls): the tileset's door, else a slab of planks across the gap, swung to
+        // one side when open.
+        if (env.flat) {
+          const key = cmd.locked ? 'door_locked' : 'door';
+          if (env.tileProp && env.tileProp(key)) { env.prop(ctx, key, X + size / 2, Y + size, S); break; }
+          const across = cmd.horizontal, th = size * 0.3;
+          const r = cmd.open ? (across ? [X, Y + size / 2 - th / 2, th, size * 0.9] : [X + size / 2 - th / 2, Y, size * 0.9, th])
+            : (across ? [X, Y + size / 2 - th / 2, size, th] : [X + size / 2 - th / 2, Y, th, size]);
+          ctx.fillStyle = '#2a1a0e'; ctx.fillRect(r[0] - S, r[1] - S, r[2] + 2 * S, r[3] + 2 * S);
+          ctx.fillStyle = cmd.locked ? '#5a3e24' : '#7a5232'; ctx.fillRect(r[0], r[1], r[2], r[3]);
+          ctx.fillStyle = 'rgba(0,0,0,0.3)';
+          const n = 4;
+          for (let i = 1; i < n; i++) { if (r[2] > r[3]) ctx.fillRect(r[0] + (r[2] * i) / n, r[1], Math.max(1, S / 2), r[3]); else ctx.fillRect(r[0], r[1] + (r[3] * i) / n, r[2], Math.max(1, S / 2)); }
+          if (cmd.locked) { ctx.fillStyle = '#9aa0a6'; if (r[2] > r[3]) { ctx.fillRect(r[0] + r[2] * 0.2, r[1], S, r[3]); ctx.fillRect(r[0] + r[2] * 0.8, r[1], S, r[3]); } else { ctx.fillRect(r[0], r[1] + r[3] * 0.2, r[2], S); ctx.fillRect(r[0], r[1] + r[3] * 0.8, r[2], S); } }
+          break;
+        }
         const feet = Y + size;
         const key = cmd.locked ? 'iron' : 'door';
         if (cmd.horizontal) {
@@ -249,11 +267,137 @@
         else if (f.ok) ctx.drawImage(f.el, cmd.state === 'armed' ? 96 : 0, 0, 32, 29, X + size / 2 - 16 * S * 0.6, Y + size - 29 * S * 0.6 - S, 32 * S * 0.6, 29 * S * 0.6);
         break;
       }
+      case 'drop': {
+        // A well or a hole: its prop if the place's tileset has one, else a dark mouth with a lip.
+        if (cmd.sprite && env.hasProp(cmd.sprite)) { env.prop(ctx, cmd.sprite, X + size / 2, Y + size, S); break; }
+        ctx.fillStyle = 'rgba(120,110,90,0.9)'; ctx.beginPath(); ctx.ellipse(X + size / 2, Y + size / 2, size * 0.4, size * 0.3, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#05070a'; ctx.beginPath(); ctx.ellipse(X + size / 2, Y + size / 2, size * 0.3, size * 0.21, 0, 0, Math.PI * 2); ctx.fill();
+        break;
+      }
       case 'twinkle': env.twinkle(ctx, X + size / 2, Y + size * 0.62, S, env.tick); break;
       case 'note': env.prop(ctx, 'scroll', X + size / 2, Y + size - S * 2, S, { scale: 0.5 }); break;
       default: break;
     }
   }
 
-  UI.Tilemap = { plan, paint, canon, geometry, solid, doorLike, bits: { N, NE, E, SE, S, SW, W, NW } };
+  // ---- Tilesets (data/tilesets.yaml): flat top-down terrain on the dual grid ---------------------------------------------
+  // A place with look.tileset is drawn from it instead of the 3/4 walls above. Every square has a terrain (grass, wall,
+  // water…). A wang terrain is a 16-tile corner set of itself (upper) over another (lower): each tile sits on a corner
+  // between four squares, half a square up and left of the square below-right of it, and is picked by which of those
+  // four are this terrain or one listed after it. Plain terrains are an image per square, or a flat colour until the art
+  // exists. Ground with `under` (a bridge) is drawn over the terrain it spans.
+  const PIXELLAB16 = ['UULU', 'ULUL', 'LULL', 'UULL', 'LUUL', 'ULLL', 'LLLL', 'LLLU', 'ULUU', 'LLUU', 'LLUL', 'LULU', 'UUUU', 'UUUL', 'ULLU', 'LUUU'];
+  const tsCache = {};
+
+  // The tileset with its terrains ranked and each wang sheet's corner masks indexed (NW 8, NE 4, SW 2, SE 1).
+  function tileset(id) {
+    const raw = ((G.Content && G.Content.world.tilesets) || {})[id];
+    if (!raw) return null;
+    if (tsCache[id] && tsCache[id].raw === raw) return tsCache[id];
+    const names = Object.keys(raw.terrains || {});
+    const terrains = {};
+    names.forEach((n, i) => {
+      const t = Object.assign({ name: n, rank: i }, raw.terrains[n]);
+      if (t.wang) {
+        const cols = t.cols || 4;
+        t.index = {};
+        (t.corners || PIXELLAB16).forEach((code, k) => {
+          const m = [...code].reduce((a, ch, b) => a | (ch === 'U' ? 8 >> b : 0), 0);
+          if (!(m in t.index)) t.index[m] = [k % cols, Math.floor(k / cols)];
+        });
+      }
+      terrains[n] = t;
+    });
+    const out = { id, raw, cell: raw.cell || 16, dir: raw.dir || 'art/worldtiles/', terrains, floor: raw.floor || names[0], wall: raw.wall || 'wall', props: raw.props || {} };
+    return (tsCache[id] = out);
+  }
+
+  // The terrain name a square is drawn as, and the ground drawn over it (a bridge), if any.
+  function terrainOf(sc, ts, x, y) {
+    const c = x >= 0 && y >= 0 && x < sc.w && y < sc.h ? sc.cell(x, y) : null;
+    if (!c || c.kind === 'rock' || (c.kind === 'wall' && !(c.ground && ts.terrains[c.ground.tile]))) return { t: ts.wall };
+    let gr = c.ground, over = null;
+    if (gr && gr.under) { over = gr; gr = (G.Explore && G.Explore.groundOf(gr.under)) || null; }
+    if (!gr) return { t: ts.floor, over };
+    return { t: ts.terrains[gr.tile] ? gr.tile : 'color:' + (gr.color || '#555'), over };
+  }
+
+  function tdef(ts, name) {
+    return ts.terrains[name] || (name.startsWith('color:') ? { name, rank: -1, color: name.slice(6) } : { name, rank: -1, color: '#555' });
+  }
+
+  // Commands for squares x0..x1, y0..y1: `base` per square, `corner` per dual-grid corner and wang terrain, `over` for
+  // bridges. Pure, like plan().
+  function planTiles(sc, ts, x0, y0, x1, y1) {
+    const at = {};
+    const T_ = (x, y) => { const k = x + ',' + y; return at[k] || (at[k] = terrainOf(sc, ts, x, y)); };
+    const out = { base: [], corner: [], over: [] };
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+      let t = tdef(ts, T_(x, y).t);
+      // A wang terrain's square is covered by its corners; under them lies what it is drawn over.
+      while (t.wang && t.over && ts.terrains[t.over]) t = ts.terrains[t.over];
+      out.base.push({ x, y, t: t.name });
+      const o = T_(x, y).over;
+      if (o) {
+        // Water to the east or west: the bridge runs north-south.
+        const wet = (xx, yy) => { const n = T_(xx, yy); return !n.over && n.t === T_(x, y).t; };
+        out.over.push({ x, y, g: o, vertical: wet(x - 1, y) || wet(x + 1, y) });
+      }
+    }
+    for (const w of Object.values(ts.terrains)) {
+      if (!w.wang) continue;
+      for (let y = y0; y <= y1 + 1; y++) for (let x = x0; x <= x1 + 1; x++) {
+        const up = (xx, yy) => tdef(ts, T_(xx, yy).t).rank >= w.rank;
+        const m = (up(x - 1, y - 1) ? 8 : 0) | (up(x, y - 1) ? 4 : 0) | (up(x - 1, y) ? 2 : 0) | (up(x, y) ? 1 : 0);
+        if (m) out.corner.push({ x, y, t: w.name, m });
+      }
+    }
+    return out;
+  }
+
+  // env: as paint(), plus imgAt(path) -> {ok, el}.
+  function paintTiles(ctx, p, ts, env, kind) {
+    const S = env.S, size = T * S, cell = ts.cell;
+    if (kind === 'base') {
+      const t = tdef(ts, p.t), X = env.ox + p.x * size, Y = env.oy + p.y * size;
+      const im = t.tile ? env.imgAt(ts.dir + (Array.isArray(t.tile) ? t.tile[hash(p.x, p.y) % t.tile.length] : t.tile)) : null;
+      if (im && im.ok) { ctx.drawImage(im.el, 0, 0, cell, cell, X, Y, size, size); return; }
+      // Plain ground under a wang set: its all-lower tile.
+      const w = Object.values(ts.terrains).find((q) => q.wang && q.over === p.t && q.index[0]);
+      const wi = w ? env.imgAt(ts.dir + w.wang) : null;
+      if (wi && wi.ok) { const [cx, cy] = w.index[0]; ctx.drawImage(wi.el, cx * cell, cy * cell, cell, cell, X, Y, size, size); return; }
+      // No art: the colour, laid over the floor at the terrain's alpha (a patch of rubble in the grass).
+      if (t.alpha != null && t.alpha < 1 && p.t !== ts.floor) paintTiles(ctx, { x: p.x, y: p.y, t: ts.floor }, ts, env, 'base');
+      ctx.save(); ctx.globalAlpha = t.alpha == null ? 1 : t.alpha;
+      ctx.fillStyle = t.color || '#555'; ctx.fillRect(X, Y, size, size);
+      ctx.restore();
+    } else if (kind === 'corner') {
+      const t = ts.terrains[p.t], X = env.ox + (p.x - 0.5) * size, Y = env.oy + (p.y - 0.5) * size;
+      const im = env.imgAt(ts.dir + t.wang), at = t.index[p.m];
+      if (im.ok && at) { ctx.drawImage(im.el, at[0] * cell, at[1] * cell, cell, cell, X, Y, size, size); return; }
+      // No art yet: the upper quarters in the terrain's colour.
+      ctx.fillStyle = t.color || '#888';
+      const hs = size / 2;
+      if (p.m & 8) ctx.fillRect(X, Y, hs, hs);
+      if (p.m & 4) ctx.fillRect(X + hs, Y, hs, hs);
+      if (p.m & 2) ctx.fillRect(X, Y + hs, hs, hs);
+      if (p.m & 1) ctx.fillRect(X + hs, Y + hs, hs, hs);
+    } else if (kind === 'over') {
+      const X = env.ox + p.x * size, Y = env.oy + p.y * size;
+      const t = ts.terrains[p.g.tile];
+      const im = t && t.tile ? env.imgAt(ts.dir + t.tile) : null;
+      ctx.save();
+      if (p.vertical) { ctx.translate(X + size / 2, Y + size / 2); ctx.rotate(Math.PI / 2); ctx.translate(-(X + size / 2), -(Y + size / 2)); }
+      if (im && im.ok) ctx.drawImage(im.el, 0, 0, cell, cell, X, Y, size, size);
+      else {
+        // Planks across the square, running the way the bridge goes.
+        ctx.fillStyle = p.g.color || '#7a5a36'; ctx.fillRect(X, Y + size * 0.15, size, size * 0.7);
+        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        for (let i = 1; i < 4; i++) ctx.fillRect(X + (size * i) / 4, Y + size * 0.15, Math.max(1, S / 2), size * 0.7);
+      }
+      ctx.restore();
+    }
+  }
+
+  UI.Tilemap = { plan, paint, canon, geometry, solid, doorLike, tileset, planTiles, paintTiles, PIXELLAB16, bits: { N, NE, E, SE, S, SW, W, NW } };
 })(globalThis.BBB);

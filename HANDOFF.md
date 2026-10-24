@@ -51,12 +51,20 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
 
 **3. Temple tileset (prototype dungeon after the Temple of Cazic-Thule): see `assets/ideas/temple-dungeon.md`**
 - [x] The plan's questions are answered (§0 and §2: places and their links listed).
-- [ ] Engine: a tileset per place (`look.tileset`, 64-px cells; the renderer now takes one 16-px set), terrain
-  (water, bridges, grass/rubble floor, pyramid tier faces), one-way drops (the validator pairs every staircase), and
-  fights that draw in nearby groups (the open courtyard has four guard posts).
+- [x] Engine (2026-10-24): a tileset per place (`look.tileset`; `data/tilesets.yaml`: colours, tiles, PixelLab corner
+  sheets drawn on the dual grid, props), drawn at cell/16 (64-px tiles: 4×); ground letters (`rules.yaml game.ground`:
+  grass, rubble, deep and shallow water, bridges, pyramid steps) that fights keep; one-way `drop`s; `look.ground` and
+  `look.light`; fights draw in awake groups within `game.joinDistance` (6, PROVISIONAL; not tuned in play). Findings:
+  two posts together 73% won at level 1, all four a wipe.
+- [x] Courtyard 1 and the wall top are playable (`temple_court`, `temple_wall`; a town exit, "the temple in the jungle"),
+  drawn with the two placeholder PixelLab sandstone sets (copied, git-ignored, to `art/worldtiles/temple/`). Looked at
+  in headless Chrome: walls, corners, doors, daylight and a fight on the court all draw. Not seen on a phone.
+- [ ] Courtyard art, the trial of the pipeline (prompt, PixelLab, `assets/wip/`, cut, `art/`, seen in play): a grass set
+  that doesn't repeat so visibly (the placeholder's all-grass tile tiles in obvious rows), mosaic wall variants, a door,
+  steps up the wall, a well, ferns and vines as props. Each goes in `data/tilesets.yaml` (no code).
 - [ ] Style target: the PixelLab dragonborn (64 px). Tiles at 64 px to match (plan §4).
-- [ ] Once courtyard 1 plays: archive the Undercroft and the Barrow for tests and sims only; start at the temple.
-- [ ] Courtyard 1 alone, as the trial of the pipeline (prompt, PixelLab, `assets/wip/`, cut, `art/`, seen in play).
+- [ ] Archive the Undercroft and the Barrow for tests and sims only and start at the temple, once there is more of the
+  temple than the court (the labyrinth and palace doors are locked "not built yet").
 - [ ] Then labyrinth, courtyard 2 and pyramid, sewers, ritual chamber, palace (plan §5).
 - [ ] Monsters: an alligator monster for the sewers (the sheet exists); lizardfolk variants; the avatar of fear as the
   ritual chamber's boss.

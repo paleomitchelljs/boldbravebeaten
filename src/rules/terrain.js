@@ -55,9 +55,9 @@
     return at(enc, x, y).some((f) => def(f)[prop]);
   }
 
-  // Can a character step onto this square (walls aside, the grid edge)?
+  // Can a character step onto this square (not a wall, not deep water, inside the grid)?
   function passable(enc, x, y) {
-    return inGrid(enc, x, y) && !has(enc, x, y, 'wall');
+    return inGrid(enc, x, y) && !has(enc, x, y, 'wall') && !has(enc, x, y, 'deep');
   }
 
   // Squares of movement it costs to step onto (x, y): 1 + the ground's extra cost.
@@ -65,6 +65,11 @@
   // aren't solid; solid walls still stop them.
   function flies(c) {
     return !!(c && c.traits && c.traits.flying);
+  }
+
+  // Can this character end a move here? A flier may hang over deep water.
+  function canStand(enc, x, y, c) {
+    return passable(enc, x, y) || (flies(c) && inGrid(enc, x, y) && !has(enc, x, y, 'wall'));
   }
 
   function stepCost(enc, x, y, c) {
@@ -286,5 +291,5 @@
     return d;
   }
 
-  G.Terrain = { flies, costMap, trace, danger, tiles, at, add, remove, has, passable, stepCost, path, pathCost, between, lineCheck, visible, enter, endRound, all, inGrid };
+  G.Terrain = { flies, canStand, costMap, trace, danger, tiles, at, add, remove, has, passable, stepCost, path, pathCost, between, lineCheck, visible, enter, endRound, all, inGrid };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

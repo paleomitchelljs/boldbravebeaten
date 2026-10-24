@@ -89,6 +89,23 @@ game:
   sleepNoticeDistance: 2     # ...and a sleeping one
   lightRadius: 7
   arena: {w: 15, h: 10}   # the slice of the dungeon a fight is played on (matches the map view's size)
+  joinDistance: 6         # PROVISIONAL: an awake group this close to a fight (with a clear line) joins it
+  # ---- Ground (PROVISIONAL, for the temple) ----------------------------------------------------------------------
+  # Map letters with the same meaning on every map, besides # wall, . floor, + door and space (rock). A place's
+  # look.ground names the letter its plain floor and legend squares stand on (the courtyard is grass); a legend entry
+  # may say `on: "<letter>"` for its own square.
+  #   walk: false   nobody walks through it (fliers cross; it stops neither sight, missiles nor reach)
+  #   wall: true    a wall, drawn with its own tiles
+  #   fight         the terrain (CONFIG.terrain) the square becomes in a fight on the map
+  #   under         drawn over another letter's ground (a bridge over water)
+  #   tile          the terrain of the place's tileset that draws it (data/tilesets.yaml); color without one
+  ground:
+    ",": {name: Grass, tile: grass, color: "#4a6a34"}
+    ";": {name: Rubble, tile: rubble, fight: rough, color: "#7a6a50"}
+    "~": {name: Deep water, walk: false, fight: deepWater, tile: water, color: "#1f4450"}
+    "_": {name: Shallow water, fight: shallows, tile: shallows, color: "#36616a"}
+    "=": {name: Plank bridge, under: "~", tile: bridge, color: "#7a5a36"}
+    "^": {name: Pyramid step, wall: true, tile: step, color: "#a89468"}
   passivePenalty: 3          # passive perception is this much worse than a deliberate search
   camp: {wanderingChance: 0.25, guardedChance: 0.5}
   # ---- Skill checks: d10 + floor(mean of attrs / 2) + feat ranks x weight vs a target number ------

@@ -12,28 +12,35 @@ test('content: every cross-reference between the YAML files resolves', () => {
   assert.deepEqual(Content.validate(), []);
 });
 
-test('content: each map is rectangular, and everything on it can be reached from the stairs', () => {
+test('content: each map is rectangular, and everything on it can be reached from a way in', () => {
+  // The ways in: '<', and every square another place's stairs or drop arrives on.
+  const arrivals = {};
+  for (const p of Object.values(Content.world.places)) for (const def of Object.values(p.legend || {})) {
+    if ((def.kind === 'stairs' || def.kind === 'drop') && def.at) (arrivals[def.to] = arrivals[def.to] || new Set()).add(def.at);
+  }
   for (const [id, p] of Object.entries(Content.world.places)) {
     if (!p.map) continue;
     const g = Explore.grid(id);
-    // Walk everything that isn't rock: doors, locks and secrets are passable for this purpose.
-    const start = Explore.findChar(id, '<');
-    assert.ok(start, `${id} has an up staircase`);
-    const seen = new Set([start.x + ',' + start.y]);
-    const q = [start];
+    const starts = ['<', ...(arrivals[id] || [])].map((ch) => Explore.findChar(id, ch)).filter(Boolean);
+    assert.ok(starts.length, `${id} has a way in`);
+    // Walk everything that isn't rock, wall or deep water: doors, locks and secrets are passable for this purpose.
+    const ground = B.CONFIG.game.ground || {};
+    const closed = (ch) => ch === '#' || ch === ' ' || (ground[ch] && (ground[ch].wall || ground[ch].walk === false));
+    const seen = new Set(starts.map((s0) => s0.x + ',' + s0.y));
+    const q = starts.slice();
     while (q.length) {
       const { x, y } = q.shift();
       for (const [dx, dy] of Explore.DIRS) {
         const nx = x + dx, ny = y + dy;
         if (nx < 0 || ny < 0 || nx >= g.w || ny >= g.h) continue;
         const ch = g.rows[ny][nx];
-        if (ch === '#' || ch === ' ' || seen.has(nx + ',' + ny)) continue;
+        if (closed(ch) || seen.has(nx + ',' + ny)) continue;
         seen.add(nx + ',' + ny);
         q.push({ x: nx, y: ny });
       }
     }
     for (let y = 0; y < g.h; y++) for (let x = 0; x < g.w; x++) {
-      if (g.rows[y][x] !== '#' && g.rows[y][x] !== ' ') assert.ok(seen.has(x + ',' + y), `${id}: (${x},${y}) '${g.rows[y][x]}' is cut off`);
+      if (!closed(g.rows[y][x])) assert.ok(seen.has(x + ',' + y), `${id}: (${x},${y}) '${g.rows[y][x]}' is cut off`);
     }
   }
 });

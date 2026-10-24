@@ -123,6 +123,7 @@ stonebridge:
       npcs: [captain_hollis]
       services: [{kind: bounty, name: "Bounty board", faction: town_watch}]
   exits:
+    - {to: temple_court, label: "The temple in the jungle (prototype)", arrive: "<"}
     - {to: undercroft_1, label: "The old mill, and the cellars beneath it", arrive: "<"}
     - {to: barrow, label: "The Hollow Barrow, up the old road", arrive: "<", requires: {flag: knows_barrow}}
     - {to: trollhole, label: "Gallows Cave, north of the road", arrive: "<", requires: {flag: knows_trolls}}
@@ -303,4 +304,92 @@ trollhole:
   wandering:
     - {w: 2, foes: [{monster: wolf, n: 2}], text: "Wolves, drawn by the smell of blood."}
     - {w: 4, nothing: true}
+  secrets: []
+
+# ---- The temple (prototype dungeon 1; plan in assets/ideas/temple-dungeon.md) ----------------------------------------
+temple_court:
+  name: The Temple Court
+  kind: dungeon
+  blurb: A walled court of broken sandstone gone to grass and fern. Snakes and lizards are worked into the walls.
+  level: 2
+  look: {wall: "#cdb98a", floor: "#4d6a33", ceiling: "#2a3a22", fog: "#0c120a", torch: 1, tileset: temple_court, ground: ",", light: 20}
+  map:
+    - "################################"
+    - "################################"
+    - "##,,,,,,,,,,,,,,,,,,,,,,,,,,,,##"
+    - "##,,,,,,,,,,,,,,,,,,,,,,,,,,,,##"
+    - "##,,,,,,,,,,,,,,,,,,,,,,,;,,,,##"
+    - "##,,,,,,,,,,,,,,,,,,,,,,,,,,,,##"
+    - "##,,,,,,,;;,,,,,,,,,,,,,,,,,,,##"
+    - "##,,,,,,,;,,,,,,,,,,,,,,,,,,,,##"
+    - "##,,,,,,,,,,,,,,,,,,,;;,,,,,,,##"
+    - "##,,,,,,,,,,,,,,,,,,,,;,,,,,,,##"
+    - "##,,,,,,,,,,,,,,,,,,,,,,,,,,,,##"
+    - "##,,,,,,,,,,,,;,,,,,,,,,,,,,,,##"
+    - "##,,,,,,,,,,,,,,,,,,,,,,,,,,,,##"
+    - "##u,,,,,,,,,,,,,,,,,,,,,,,,,,,##"
+    - "##,,,,,,,,,,,,,,,,,,,,,,,,,,,,##"
+    - "<+,,,,g,,,,,,,,,c,,,,,,,,,p,,,P#"
+    - "##,,,,,,,,,,,,,,,,,,,,,,,,,,,,##"
+    - "##v,,,,,,,,,,,,,,,,,,,,,,,,,,,##"
+    - "##,,,,,,,,,,,,,,,,,,,,,,,,,,,,##"
+    - "##,,,,,,,,,,;,,,,,,,,,,,,,,,,,##"
+    - "##,,,,,,,,,,,,,,,,,,,,,,,,,,,,##"
+    - "##,,,,,,,,,,,,,,,,,,,,;;,,,,,,##"
+    - "##,,,,,,,,,,,,,,,,,,,,;,,,,,,,##"
+    - "##,,,,,,;;,,,,,,,,,,,,,,,,,,,,##"
+    - "##,,,,,,;,,,,,,,,,,,,,,,,,,,,,##"
+    - "##,,,,,,,,,,,,,,,,,,,,,,,,,,,,##"
+    - "##,,,,,,,,,,,,,l,,,,,,,,,,,,,,##"
+    - "##,,;;,,,,,,,,,,,,,,,,,,,,,,,,##"
+    - "##,,,,,,,,,,,,,,,,,,,,,,,,,,,,##"
+    - "##,,,,,,,,,,,,,,,,,,,,,,,,,,,,##"
+    - "###############L################"
+    - "################################"
+  legend:
+    "<": {kind: stairs, to: stonebridge, at: ~, label: "Out through the gate"}
+    u: {kind: stairs, to: temple_wall, at: "1", up: true, label: "Steps up onto the wall"}
+    v: {kind: stairs, to: temple_wall, at: "2", up: true, label: "Steps up onto the wall"}
+    L: {kind: locked, label: "Door to the labyrinth (not built yet)", tn: 99, text: "Heavy wood, barred from the far side. (The labyrinth is not built yet.)"}
+    P: {kind: locked, label: "Arched door to the palace (not built yet)", tn: 99, text: "Carved and painted, and shut fast. (The palace is not built yet.)"}
+    g: {kind: monster, encounter: gate, label: "Guards at the gate"}
+    c: {kind: monster, encounter: court, label: "Lizardfolk in the court"}
+    l: {kind: monster, encounter: maze_door, label: "Guards at the labyrinth door"}
+    p: {kind: monster, encounter: palace_door, label: "Guards at the palace door"}
+  encounters:
+    gate: {foes: [{monster: scaleward}], text: "A scaled warrior by the gate turns, hammer up."}
+    court: {foes: [{monster: scalewardPair}], text: "Two lizardfolk in the middle of the court break off and come at you."}
+    maze_door: {foes: [{monster: scaleward}], text: "The guard at the south door hisses and sets its feet."}
+    palace_door: {foes: [{monster: scalewardPair}], text: "The palace guards step down from the arch together."}
+  wandering:
+    - {w: 1, foes: [{monster: scaleward}], text: "A patrol comes along the wall."}
+    - {w: 4, nothing: true}
+  secrets: []
+
+temple_wall:
+  name: On the Temple Wall
+  kind: dungeon
+  blurb: The walk along the top of the gate wall, and the little guardhouse over the gate.
+  level: 2
+  look: {wall: "#cdb98a", floor: "#6e6c55", ceiling: "#2a3a22", fog: "#0c120a", torch: 1, tileset: temple_maze, light: 20}
+  map:
+    - "#######"
+    - "#..1..#"
+    - "#.....#"
+    - "###+###"
+    - "#.....#"
+    - "#..W..#"
+    - "#.h...#"
+    - "###+###"
+    - "#.....#"
+    - "#..2..#"
+    - "#######"
+  legend:
+    "1": {kind: stairs, to: temple_court, at: u, label: "Steps down into the court"}
+    "2": {kind: stairs, to: temple_court, at: v, label: "Steps down into the court"}
+    W: {kind: prop, sprite: well, label: "The well"}
+    h: {kind: monster, encounter: guardhouse, label: "The guardhouse watch"}
+  encounters:
+    guardhouse: {foes: [{monster: scaleward}], text: "The watch in the guardhouse was dozing. Not any more."}
+  wandering: []
   secrets: []

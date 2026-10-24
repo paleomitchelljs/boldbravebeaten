@@ -1,5 +1,20 @@
 # Simulation findings
 
+## The temple court: ground, drops, fights that draw in their neighbours (2026-10-24; `node tools/encounters.js --n 300`)
+
+New engine pieces for the temple (plan: `assets/ideas/temple-dungeon.md`): ground letters (grass, rubble, deep and
+shallow water, bridges, pyramid steps), one-way drops, tilesets per place, and fights that draw in other awake groups
+within `game.joinDistance` (6, PROVISIONAL) of the party or the group fought. Existing encounters are unchanged (same
+numbers as the section below: crew 91/9/4.8/1.19, horde 28/70/11.4/1.74, troll 96/4/4.7/0.24); `tools/encounters.js`
+starts fights off the map, so joining never applies there.
+
+The court's posts one at a time, level-1 party (won / lost / rounds / dead per fight): gate, labyrinth door and
+guardhouse (one scaleward each) 100/0/3.9/0.15; court and palace door (a pair each) 97/3/7.6/0.28. Fought together
+(a one-off script, 200 fights): gate and court (three scaleward) 73/26/11.2/0.53; all four posts at once (six)
+0/100/9.3/1.41. So drawing groups together is the court's danger, as intended: two posts at once is a hard fight, the
+whole court at once is a wipe. Not tested: how often play actually pulls two posts together at joinDistance 6 with the
+posts about 10 squares apart; that needs the courtyard walked, not simulated.
+
 ## Aimed blows and wounds by location, steps 2–3 (2026-10-24; against the parry commit 9d9da65)
 
 Every blow now rolls where it lands (or is aimed); cuts take attributes by location; vital odds, disarm, trip and stun

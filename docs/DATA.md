@@ -29,6 +29,7 @@ No anchors or tags. Keys must be unique.
 | `places.yaml` | The town and the dungeon maps. |
 | `start.yaml` | New-game kits and the example party. |
 | `art.yaml` | Creature art in `art/characters/creatures` and `art/characters/pixellab` (git-ignored for now): frames, trim box, facing, height on the map. |
+| `tilesets.yaml` | Tilesets a place's map can be drawn from (`look.tileset`): terrains as colours, single tiles or PixelLab corner (wang) sheets, and props. Format in the file's header. |
 
 ## Adding things
 
@@ -130,11 +131,17 @@ half inverted to enemies; `rules.yaml`). `kos` is the standing at or below which
 **A quest** (`quests.yaml`): `stages` each with a `text` and a `done_when` condition; the last stage completes it and pays
 `reward` (`gold, xp, standing, renown, notoriety, good, flags`). `exclusive` closes the others when this one starts.
 
-**A map** (`places.yaml`): one string per row. `#` wall, `.` floor, `+` door, space is solid rock. Every other character
-is defined in the place's `legend`; the validator complains about a letter with no entry (or an entry not on the map).
-Legend kinds: `stairs {to, at}`, `locked {tn, forceTn, key, alt[]}`, `secret {tn}`, `trap {tn, disarm, damage, text, reveal}`,
+**A map** (`places.yaml`): one string per row. `#` wall, `.` floor, `+` door, space is solid rock. The ground letters of
+`rules.yaml` `game.ground` mean the same on every map: `,` grass, `;` rubble (rough in a fight), `~` deep water (nobody
+walks through it; fliers cross; it stops neither sight, missiles nor reach), `_` shallow water (an extra square to wade),
+`=` a plank bridge over water, `^` a pyramid step (a wall). Every other character is defined in the place's `legend`; the
+validator complains about a letter with no entry (or an entry not on the map, or one that is a ground letter).
+Legend kinds: `stairs {to, at, up}` (`up` sets the arrow when the default guess is wrong), `drop {to, at, damage, text,
+sprite}` (a well or a hole: one way down, no stairs back; the fall's `damage` hits everyone), `locked {tn, forceTn, key, alt[]}`, `secret {tn}`, `trap {tn, disarm, damage, text, reveal}`,
 `monster {encounter, asleep}`, `chest {loot, tn}`, `pickup {good}`, `note {text, sets}`, `npc {npc}`, `shrine {heal}`,
-`prop {sprite, scale, solid}` (scenery: a crate, bed, urn, candelabra… from the table in `src/ui/game/mapview.js`; solid by default).
+`prop {sprite, scale, solid}` (scenery: a crate, bed, urn, candelabra… from the table in `src/ui/game/mapview.js` or a
+tileset's `props`; solid by default; a stone block until its art exists). Any legend entry may say `on: "<ground letter>"`
+for the ground under it.
 
 **Looks.** `sprite:` on a monster, a foe template or an NPC names a sheet in `art/characters/pixelcrawler/` (knight, rogue, wizard, orc,
 orc_rogue, orc_shaman, orc_warrior, skeleton, skeleton_mage, skeleton_rogue, skeleton_warrior) or is `{kind, scale, tint}` to resize
@@ -144,7 +151,12 @@ instead; the `kind` is drawn wherever the art files are missing (they are git-ig
 dungeon map (`game.arena` in rules.yaml, 15x10): walls and furniture block, a shut ordinary door does not.
 `encounters:` map an id to `{foes, flags, loot, text, parley, peaceFlags, arena}`. `wandering:` is what interrupts a camp.
 A town has `locations` (people and services: `inn`, `shop`, `healer`, `trainer`, `bounty`) and `exits` to dungeons;
-an exit with `requires` stays hidden until the player has heard of it. `look` colors the first-person view.
+an exit with `requires` stays hidden until the player has heard of it. `look` colors the first-person view; in a dungeon
+it may also name a `tileset` (the map is then drawn flat from `tilesets.yaml`, at the scale of its cell size), a `ground`
+letter for its plain floor and legend squares (the temple court is grass), and `light`, how far the party sees (an open
+court in daylight; default `game.lightRadius`).
+A fight on the map keeps the map's ground (water, shallows, rubble), and every other group that is awake, within
+`game.joinDistance` of the party or of the group fought, in sight, and inside the slice joins it from where it stood.
 
 **The numbers** (`rules.yaml`): everything the game layer tunes. Anything outside `game:` is merged over the combat
 engine's `CONFIG`, so a combat number can be changed beside the content it affects.

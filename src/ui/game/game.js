@@ -115,6 +115,7 @@
     const w = Game.world;
     const to = G.Content.world.places[def.to];
     if (to.kind === 'town') { Explore.leave(w, def.to); save(); go('town'); return; }
+    if (def.kind === 'drop') { Explore.fall(w, def); if (World.wiped(w)) { save(); go('gameover'); return; } }
     Explore.enter(w, def.to, def.at || '<');
     save();
     go('explore');

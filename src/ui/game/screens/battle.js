@@ -105,6 +105,7 @@
     const sc = {
       w: g ? g.w : enc.grid.w, h: g ? g.h : enc.grid.h,
       origin: { x: ox, y: oy },
+      tileset: arena ? ((G.Content.world.places[arena.place] || {}).look || {}).tileset : null,
       cell: g ? (x, y) => G.Explore.peek(w, x, y) : open,
       actors: [], marks: [], lines: [], reticles: [], badges: [],
       describe: (x, y) => {
@@ -415,7 +416,7 @@
     if (!game.ui.mv && bs) {
       UI.MapView.preload();
       const a = bs.arena;
-      game.ui.mv = UI.MapView.create({ cols: a ? a.w : Math.min(15, bs.enc.grid.w), rows: a ? a.h : Math.min(10, bs.enc.grid.h), scale: 3, label: 'The battlefield', scene: () => scene(game), onCell: (x, y) => onCell(game, x, y) });
+      game.ui.mv = UI.MapView.create({ cols: a ? a.w : Math.min(15, bs.enc.grid.w), rows: a ? a.h : Math.min(10, bs.enc.grid.h), scale: UI.MapView.scaleFor(a && a.place, 3), label: 'The battlefield', scene: () => scene(game), onCell: (x, y) => onCell(game, x, y) });
       game.ui.mv.start();
     }
     if (bs && bs.enc) effects(game, bs.enc, bs.chars);

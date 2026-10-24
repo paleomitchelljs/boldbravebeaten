@@ -11,6 +11,8 @@
  *     describe(x, y) -> string }
  * Actors are smoothed: give their logical tile and the view walks them there. Tiles are 16 art pixels,
  * drawn at an integer scale. Without Image (Node) nothing is drawn.
+ * A scene may name a `tileset` (data/tilesets.yaml, from the place's look): the ground and walls are then drawn flat
+ * from it (Tilemap.planTiles) instead of the 3/4 dungeon walls, at the scale its cell size asks for (scaleFor).
  */
 (function (G) {
   'use strict';
@@ -26,13 +28,14 @@
   // ---- Images and the atlas -----------------------------------------------------------------------
   const imgs = {};
   const redraw = [];
+  // A name is a sheet in art/worldtiles; a path (with a slash) is used as it is.
   function img(name) {
     if (imgs[name]) return imgs[name];
     const o = imgs[name] = { ok: false, el: null };
     if (!HAS_IMG) return o;
     o.el = new Image();
     o.el.onload = () => { o.ok = true; };
-    o.el.src = DIR + name + '.png';
+    o.el.src = name.includes('/') ? name : DIR + name + '.png';
     return o;
   }
 
@@ -92,15 +95,27 @@
     return true;
   }
 
+  // A prop by name: the table above, or one a tileset adds (its art drawn at its own cell size, so a 64-px tileset's
+  // well is as wide on the map as a square).
+  function propDef(key) {
+    if (PROPS[key]) return PROPS[key];
+    for (const id of Object.keys((G.Content && G.Content.world.tilesets) || {})) {
+      const ts = Tilemap.tileset(id), p = ts.props[key];
+      if (p) return [ts.dir + p[0], p[1], p[2], p[3], p[4], T / ts.cell];
+    }
+    return null;
+  }
+
   // A prop with its feet at (x, y); `fit` shrinks it to a width in art pixels (a door in a 16px cell).
   function prop(ctx, key, x, y, S, opts) {
-    const p = PROPS[key];
+    const p = propDef(key);
     if (!p) return;
     opts = opts || {};
-    const k = opts.scale || 1;
+    const k = (opts.scale || 1) * (p[5] || 1);
     ctx.save();
     if (opts.alpha != null) ctx.globalAlpha = opts.alpha;
-    if (opts.flipY) { ctx.translate(0, y); ctx.scale(1, -1); ctx.translate(0, -y); }
+    // Flipped upside down about its own middle, so it stays on its square.
+    if (opts.flipY) { const mid = y - (p[4] * S * k) / 2; ctx.translate(0, mid); ctx.scale(1, -1); ctx.translate(0, -mid); }
     // squash narrows a prop (a door seen edge-on or swung open); anchor 'left' pins its left edge at x instead of its middle.
     const w = p[3] * S * k * (opts.squash || 1);
     blit(ctx, p[0], p[1], p[2], p[3], p[4], Math.round(opts.anchor === 'left' ? x : x - w / 2), Math.round(y - p[4] * S * k), w, p[4] * S * k);
@@ -115,7 +130,14 @@
     switch (c.kind) {
       case 'chest': prop(ctx, st.opened ? 'chest_open' : 'chest', cx, feet - S * 1, S); break;
       case 'shrine': prop(ctx, 'statue', cx, feet - S * 1, S, { scale: 0.8 }); break;
-      case 'prop': { const key = d.sprite || 'crate'; if (PROPS[key]) prop(ctx, key, cx, feet - S * (d.lift || 1), S, { scale: d.scale || 1 }); break; }
+      case 'prop': {
+        const key = d.sprite || 'crate';
+        if (propDef(key)) { prop(ctx, key, cx, feet - S * (d.lift || 1), S, { scale: d.scale || 1 }); break; }
+        // No art for it yet: a stone block with a dark top, so it reads as something in the way.
+        ctx.fillStyle = '#8a7e66'; ctx.fillRect(X + size * 0.18, Y + size * 0.3, size * 0.64, size * 0.6);
+        ctx.fillStyle = '#05070a'; ctx.fillRect(X + size * 0.26, Y + size * 0.36, size * 0.48, size * 0.3);
+        break;
+      }
       default: break;
     }
   }
@@ -389,17 +411,33 @@
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       const x0 = Math.floor(org.x), y0 = Math.floor(org.y);
       const ox = Math.round(-org.x * size), oy = Math.round(-org.y * size);
-      const env = { S, ox, oy, tick: view.tick, img, prop, twinkle };
+      const env = { S, ox, oy, tick: view.tick, img, imgAt: img, prop, hasProp: (k) => !!propDef(k), twinkle, flat: !!sc.tileset, tileProp: (k) => !PROPS[k] && !!propDef(k) };
       const plan = Tilemap.plan(sc, x0 - 1, y0 - 1, x0 + cols, y0 + rows);
-      // Layer 1: ground, with its edge shading.
-      for (const c of plan.ground) Tilemap.paint(ctx, c, env);
+      const ts = sc.tileset ? Tilemap.tileset(sc.tileset) : null;
+      if (ts) {
+        // Layer 1 from the tileset: ground, the corner tiles of each wang terrain, bridges; then what hasn't been seen
+        // is put back in the dark (the corner tiles spill half a square past what is known).
+        const tp = Tilemap.planTiles(sc, ts, x0 - 1, y0 - 1, x0 + cols, y0 + rows);
+        for (const k of ['base', 'corner', 'over']) for (const c of tp[k]) Tilemap.paintTiles(ctx, c, ts, env, k);
+        plan.shown = {};
+        for (let y = y0 - 1; y <= y0 + rows; y++) for (let x = x0 - 1; x <= x0 + cols; x++) {
+          if (!sc.seen || sc.seen(x, y)) { plan.shown[x + ',' + y] = 1; continue; }
+          ctx.fillStyle = '#080b0d'; ctx.fillRect(ox + x * size, oy + y * size, size, size);
+        }
+        plan.decor = plan.decor.filter((c) => c.t !== 'banner');
+      } else {
+        // Layer 1: ground, with its edge shading.
+        for (const c of plan.ground) Tilemap.paint(ctx, c, env);
+      }
       // Move and aim marks lie on the ground, under everything standing: tints, paths and aim lines, target brackets.
       drawMarks(ctx, sc, ox, oy);
       drawLines(ctx, sc, ox, oy);
       drawReticles(ctx, sc, ox, oy, view.tick);
-      // Layers 2 and 3: the walls, lower pieces then the upper face and caps.
-      for (const c of plan.low) Tilemap.paint(ctx, c, env);
-      for (const c of plan.high) Tilemap.paint(ctx, c, env);
+      // Layers 2 and 3: the walls, lower pieces then the upper face and caps (a tileset's walls are already down).
+      if (!ts) {
+        for (const c of plan.low) Tilemap.paint(ctx, c, env);
+        for (const c of plan.high) Tilemap.paint(ctx, c, env);
+      }
       // Layer 4: doorways and doors, banners, things on the floor, sleep markers.
       for (const c of plan.decor) Tilemap.paint(ctx, c, env);
       for (const a of sc.actors || []) if (a.sleep && view.vis[a.id]) drawSleep(ctx, view.vis[a.id], ox, oy, S, view.tick);
@@ -491,5 +529,12 @@
   // Warm the images so the first frame is not bare.
   function preload() { for (const n of ['tiles', 'furniture', 'props', 'objects', 'esoteric', 'chest', 'gold', 'stairs_down', 'spikes']) img(n); for (const s2 of ['Fire', 'Water', 'Green', 'Purple']) fxImg(s2); Sprites.preload(); }
 
-  UI.MapView = { T, create, preload, PROPS, img, prop };
+  // The scale a place's map is drawn at: its tileset's cell over the 16-px grid (64-px tiles: 4), else `fallback`.
+  function scaleFor(placeId, fallback) {
+    const p = placeId && G.Content.world.places[placeId];
+    const ts = p && p.look && p.look.tileset ? Tilemap.tileset(p.look.tileset) : null;
+    return ts ? Math.max(1, Math.round(ts.cell / T)) : fallback || 3;
+  }
+
+  UI.MapView = { T, create, preload, PROPS, img, prop, propDef, scaleFor };
 })(globalThis.BBB);

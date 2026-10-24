@@ -2,8 +2,8 @@
  * Exploring a dungeon: a grid map walked one square at a time, seen first-person.
  * DOM-free. The UI calls move()/turn()/interact()/act() and shows the events they return.
  *
- * Map characters: # wall, . floor, + door, space = rock; anything else is defined in the place's
- * `legend` (see data/places.yaml). Persistent per-square state lives in world.maps[place].ents["x,y"]:
+ * Map characters: # wall, . floor, + door, space = rock; the ground letters of rules.yaml game.ground (grass, water,
+ * bridges…) mean the same on every map; anything else is defined in the place's `legend` (see data/places.yaml). Persistent per-square state lives in world.maps[place].ents["x,y"]:
  *   open, found, done, sprung, disarmed, opened, woken, alerted, unseen, pacified, passive…
  */
 (function (G) {
@@ -26,10 +26,19 @@
     const key = placeId + '|' + p.map.join('');
     if (cache[placeId] && cache[placeId].key === key) return cache[placeId];
     const rows = p.map;
-    return (cache[placeId] = { key, rows, w: rows[0].length, h: rows.length, legend: p.legend || {} });
+    const under = p.look && p.look.ground ? groundOf(p.look.ground) : null;
+    return (cache[placeId] = { key, rows, w: rows[0].length, h: rows.length, legend: p.legend || {}, under });
+  }
+
+  // The ground a letter stands for (rules.yaml game.ground), with its letter; null for none.
+  function groundOf(ch) {
+    const d = (cfg().ground || {})[ch];
+    return d ? Object.assign({ ch }, d) : null;
   }
 
   const place = (world) => places()[world.place];
+  // How far the party sees: the place's look.light (an open court in daylight), else the torch's game.lightRadius.
+  const lightRadius = (world) => { const p = place(world); return (p && p.look && p.look.light) || cfg().lightRadius; };
   const here = (world) => grid(world.place);
   const ents = (world, placeId) => W.mapState(world, placeId || world.place).ents;
   const posKey = (x, y) => x + ',' + y;
@@ -47,13 +56,26 @@
   }
 
   // ---- Cells -----------------------------------------------------------------
-  // Returns { ch, def, kind, solid, opaque, st } for a square.
+  // Returns { ch, def, kind, solid, opaque, st, ground } for a square. `ground` is what it stands on (rules.yaml
+  // game.ground), when that is more than plain floor. Deep water is kind 'water': solid to walkers, open to the eye.
   function cell(world, x, y) {
     const g = here(world);
     if (!g || x < 0 || y < 0 || x >= g.w || y >= g.h) return { ch: ' ', kind: 'rock', solid: true, opaque: true };
     const ch = g.rows[y][x];
     if (ch === ' ') return { ch, kind: 'rock', solid: true, opaque: true };
     if (ch === '#') return { ch, kind: 'wall', solid: true, opaque: true };
+    const gr = groundOf(ch);
+    if (gr) {
+      if (gr.wall) return { ch, kind: 'wall', solid: true, opaque: true, ground: gr };
+      if (gr.walk === false) return { ch, kind: 'water', solid: true, opaque: false, ground: gr };
+      return { ch, kind: 'floor', solid: false, opaque: false, st: state(world, x, y), ground: gr };
+    }
+    const c = square(world, g, ch, x, y);
+    if (c.kind !== 'wall' && c.kind !== 'rock') { const on = c.def && c.def.on ? groundOf(c.def.on) : g.under; if (on) c.ground = on; }
+    return c;
+  }
+
+  function square(world, g, ch, x, y) {
     const st = state(world, x, y);
     if (ch === '.') return { ch, kind: 'floor', solid: false, opaque: false, st };
     if (ch === '+') return st.open ? { ch, kind: 'floor', solid: false, opaque: false, st } : { ch, kind: 'door', solid: true, opaque: true, st };
@@ -93,7 +115,7 @@
   function markSeen(world) {
     const ex = world.explore;
     const ms = W.mapState(world, world.place);
-    const r = cfg().lightRadius;
+    const r = lightRadius(world);
     for (let y = ex.y - r; y <= ex.y + r; y++) {
       for (let x = ex.x - r; x <= ex.x + r; x++) {
         const g = here(world);
@@ -161,7 +183,8 @@
     const nx = ex.x + DIRS[d][0], ny = ex.y + DIRS[d][1];
     const ev = [];
     const c = cell(world, nx, ny);
-    if (c.kind === 'wall' || c.kind === 'rock') return { moved: false, events: [{ type: 'bump', text: 'A wall.' }] };
+    if (c.kind === 'wall' || c.kind === 'rock') return { moved: false, events: [{ type: 'bump', text: c.ground ? `${c.ground.name}.` : 'A wall.' }] };
+    if (c.kind === 'water') return { moved: false, events: [{ type: 'bump', text: `${c.ground.name}: no way across here.` }] };
     if (c.kind === 'door') {
       c.st.open = true;
       W.advance(world, minutesPerStep(world));
@@ -234,8 +257,17 @@
       c.st.done = true;
       ev.push({ type: 'note', text: c.def.text });
       if (c.def.sets) for (const f of c.def.sets) W.setFlag(world, f);
-    } else if (c.kind === 'stairs') {
+    } else if (c.kind === 'stairs' || c.kind === 'drop') {
       ev.push({ type: 'stairs', def: c.def, x, y });
+    }
+  }
+
+  // A one-way drop (a well, a hole): its text, and any harm from the fall, before the party arrives below.
+  function fall(world, def) {
+    if (def.text) W.logLine(world, def.text, 'info');
+    for (const v of W.active(world)) {
+      for (const [a, n] of Object.entries(def.damage || {})) { C.damageAttr(v, a, n); W.logLine(world, `${v.name} takes ${n} ${a} damage from the fall.`, 'hurt'); }
+      C.updateCondition(v);
     }
   }
 
@@ -535,8 +567,8 @@
   }
 
   G.Explore = {
-    DIRS, DIR_NAMES, grid, place, here, cell, state, opaque, lineClear, cheb, markSeen, findChar,
-    enter, leave, front, turn, move, go, peek, path, search, facing, describe, act, scan, wake,
+    DIRS, DIR_NAMES, grid, groundOf, place, lightRadius, here, cell, state, opaque, lineClear, cheb, markSeen, findChar,
+    enter, leave, fall, front, turn, move, go, peek, path, search, facing, describe, act, scan, wake,
     encounterSpec, foeAwareness, resolveSquare, wanderingFor, minutesPerStep,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

@@ -118,6 +118,11 @@ spill across.
 
 ## 3. What the engine can't do yet
 
+**Built 2026-10-24**: tilesets per place, ground letters (water, bridges, grass, rubble, steps), one-way drops, fights
+that draw in nearby groups, and courtyard 1 with the wall top as option A below (see HANDOFF and `docs/DATA.md`). Still
+to build from this list: the raised layer (option B, if wanted) and the labyrinth generator. What follows is the
+original list.
+
 Checked against `data/places.yaml`, `docs/DATA.md` and `src/ui/game/mapview.js`. Each is a code change, small unless
 noted.
 

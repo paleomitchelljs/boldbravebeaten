@@ -6,6 +6,9 @@
  * An encounter spec (data/places.yaml `encounters`):
  *   foes: [{monster, n, name} | {template, level, n, name}]
  *   flags: set on victory     arena: {w, h}     text: shown at the start     parley: npc id
+ *
+ * A fight on the map keeps the map's ground (deep water, shallows, rubble) and draws in any other group that is awake,
+ * close (game.joinDistance), in sight of it and inside the slice the fight is played on.
  */
 (function (G) {
   'use strict';
@@ -52,7 +55,9 @@
     return ['wall', 'rock', 'locked', 'chest', 'npc', 'shrine', 'monster'].includes(c.kind) || (c.kind === 'prop' && c.solid);
   }
 
-  // Can the party's square reach `to` without crossing a wall?
+  const closed = (arena, k) => arena.wall[k] || arena.ground[k] === 'deepWater';
+
+  // Can the party's square reach `to` without crossing a wall or deep water?
   function connected(arena, from, to) {
     const seen = { [from.x + ',' + from.y]: 1 }, q = [from];
     while (q.length) {
@@ -60,7 +65,7 @@
       if (p.x === to.x && p.y === to.y) return true;
       for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0]]) {
         const nx = p.x + dx, ny = p.y + dy, k = nx + ',' + ny;
-        if (nx < 0 || ny < 0 || nx >= arena.w || ny >= arena.h || seen[k] || arena.wall[k]) continue;
+        if (nx < 0 || ny < 0 || nx >= arena.w || ny >= arena.h || seen[k] || closed(arena, k)) continue;
         seen[k] = 1; q.push({ x: nx, y: ny });
       }
     }
@@ -72,10 +77,10 @@
     const out = [], seen = { [from.x + ',' + from.y]: 1 }, q = [from];
     while (q.length && out.length < n) {
       const p = q.shift();
-      if (!arena.wall[p.x + ',' + p.y] && !taken[p.x + ',' + p.y]) { out.push(p); taken[p.x + ',' + p.y] = 1; }
+      if (!closed(arena, p.x + ',' + p.y) && !taken[p.x + ',' + p.y]) { out.push(p); taken[p.x + ',' + p.y] = 1; }
       for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0], [1, 1], [-1, 1], [1, -1], [-1, -1]]) {
         const nx = p.x + dx, ny = p.y + dy, k = nx + ',' + ny;
-        if (nx < 0 || ny < 0 || nx >= arena.w || ny >= arena.h || seen[k] || arena.wall[k]) continue;
+        if (nx < 0 || ny < 0 || nx >= arena.w || ny >= arena.h || seen[k] || closed(arena, k)) continue;
         seen[k] = 1; q.push({ x: nx, y: ny });
       }
     }
@@ -92,9 +97,13 @@
     const anchor = ctx && ctx.x != null ? { x: ctx.x, y: ctx.y } : null;
     const cx = anchor ? (me.x + anchor.x) / 2 : me.x, cy = anchor ? (me.y + anchor.y) / 2 : me.y;
     const ox = Math.max(0, Math.min(g.w - w, Math.round(cx - w / 2))), oy = Math.max(0, Math.min(g.h - h, Math.round(cy - h / 2)));
-    const wall = {};
-    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (blocked(world, ox + x, oy + y, anchor)) wall[x + ',' + y] = 1;
-    const arena = { place: world.place, ox, oy, w, h, wall, party: { x: me.x - ox, y: me.y - oy }, anchor: anchor ? { x: anchor.x - ox, y: anchor.y - oy } : null };
+    const wall = {}, ground = {};
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      if (blocked(world, ox + x, oy + y, anchor)) { wall[x + ',' + y] = 1; continue; }
+      const gr = G.Explore.cell(world, ox + x, oy + y).ground;
+      if (gr && gr.fight) ground[x + ',' + y] = gr.fight;
+    }
+    const arena = { place: world.place, ox, oy, w, h, wall, ground, party: { x: me.x - ox, y: me.y - oy }, anchor: anchor ? { x: anchor.x - ox, y: anchor.y - oy } : null };
     // If the window cuts the two sides apart (a long way round), only true walls stay walls.
     if (arena.anchor && !connected(arena, arena.party, arena.anchor)) {
       for (const k of Object.keys(wall)) { const [x, y] = k.split(',').map(Number); const kind = G.Explore.cell(world, ox + x, oy + y).kind; if (kind !== 'wall' && kind !== 'rock') delete wall[k]; }
@@ -102,8 +111,31 @@
     return arena;
   }
 
-  // Put the sides on the arena: the foes where they stood (or across the room if they came to you), the party where it was.
-  function placeOnArena(enc, arena, partyIds, foeIds) {
+  // Other groups on the map that hear the fight and come: awake, not beaten or calmed, within game.joinDistance of the
+  // party or of the group it fights, with a clear line to that one, and inside the slice. Returns [{x, y, def, spec}]
+  // in map squares.
+  function joiners(world, arena, anchor) {
+    const me = { x: world.explore.x, y: world.explore.y };
+    const near = (q) => [me, anchor].some((at) => at && G.Explore.cheb(at, q) <= r && G.Explore.lineClear(world, q.x, q.y, at.x, at.y));
+    const r = G.CONFIG.game.joinDistance || 0;
+    const g = G.Explore.here(world);
+    const out = [];
+    if (!r) return out;
+    for (let y = arena.oy; y < arena.oy + arena.h; y++) for (let x = arena.ox; x < arena.ox + arena.w; x++) {
+      if (anchor && x === anchor.x && y === anchor.y) continue;
+      const def = g.legend[g.rows[y][x]];
+      if (!def || def.kind !== 'monster') continue;
+      const st = G.Explore.state(world, x, y);
+      if (st.done || st.pacified || (def.asleep && !st.woken)) continue;
+      if (!near({ x, y })) continue;
+      out.push({ x, y, def, spec: G.Explore.encounterSpec(world, def) });
+    }
+    return out;
+  }
+
+  // Put the sides on the arena: the foes where they stood (or across the room if they came to you), the party where it
+  // was, and each group that joined around its own square.
+  function placeOnArena(enc, arena, partyIds, foeIds, joined) {
     const taken = {};
     // The side with an anchor claims its squares first.
     let seed = arena.anchor;
@@ -118,6 +150,10 @@
       seed = best || arena.party;
     }
     const foeSq = nearestOpen(arena, seed, taken, foeIds.length);
+    for (const j of joined || []) {
+      const sq = nearestOpen(arena, { x: j.x - arena.ox, y: j.y - arena.oy }, taken, j.ids.length);
+      j.ids.forEach((id, i) => { enc.pos[id] = sq[i] || { x: 0, y: 0 }; });
+    }
     const partySq = nearestOpen(arena, arena.party, taken, partyIds.length);
     foeIds.forEach((id, i) => { enc.pos[id] = foeSq[i] || { x: 0, y: 0 }; });
     partyIds.forEach((id, i) => { enc.pos[id] = partySq[i] || { x: 0, y: 0 }; });
@@ -127,6 +163,9 @@
   function start(world, spec, opts) {
     opts = opts || {};
     const foes = buildFoes(spec);
+    const arena = spec.arena ? null : dungeonArena(world, opts.ctx);
+    const joined = arena ? joiners(world, arena, opts.ctx && opts.ctx.x != null ? opts.ctx : null) : [];
+    for (const j of joined) { const more = buildFoes(j.spec); j.ids = more.map((f) => f.id); foes.push(...more); }
     const foeMap = {};
     for (const f of foes) foeMap[f.id] = f;
     World.loadSupplies(world);
@@ -136,17 +175,19 @@
     for (const b of G.Companions ? G.Companions.fighting(world) : []) allies[b.id] = b;
     const members = World.active(world).concat(Object.values(allies));
     const chars = Object.assign({}, world.chars, allies, foeMap);
-    const arena = spec.arena ? null : dungeonArena(world, opts.ctx);
     const a = arena || spec.arena || { w: 11, h: 7 };
     const enc = Combat.createEncounter(spec.name || 'Battle', members.map((c) => c.id).concat(foes.map((f) => f.id)), chars, a.w, a.h);
     if (arena) {
       for (const k of Object.keys(arena.wall)) { const [x, y] = k.split(',').map(Number); G.Terrain.add(enc, x, y, 'dungeonWall'); }
-      placeOnArena(enc, arena, members.map((c) => c.id), foes.map((f) => f.id));
+      for (const [k, kind] of Object.entries(arena.ground)) { const [x, y] = k.split(',').map(Number); G.Terrain.add(enc, x, y, kind); }
+      const joinIds = new Set(joined.flatMap((j) => j.ids));
+      placeOnArena(enc, arena, members.map((c) => c.id), foes.filter((f) => !joinIds.has(f.id)).map((f) => f.id), joined);
     }
     if (opts.surprise) enc.surprise = { side: opts.surprise, factor: opts.factor == null ? 0.5 : opts.factor, round: 1 };
-    world.battle = { enc, foes: foeMap, allies, spec, arena: arena ? { place: arena.place, ox: arena.ox, oy: arena.oy, w: arena.w, h: arena.h } : null, ctx: opts.ctx || null, canFlee: opts.canFlee !== false, startedDay: world.day };
+    world.battle = { enc, foes: foeMap, allies, spec, joined: joined.map((j) => ({ x: j.x, y: j.y, spec: j.spec })), arena: arena ? { place: arena.place, ox: arena.ox, oy: arena.oy, w: arena.w, h: arena.h } : null, ctx: opts.ctx || null, canFlee: opts.canFlee !== false, startedDay: world.day };
     world.stats.fights++;
     if (spec.text) World.logLine(world, spec.text, 'fight');
+    for (const j of joined) World.logLine(world, `${j.def.label || 'More of them'} hear${j.def.label ? 's' : ''} the fighting and come${j.def.label ? 's' : ''} running.`, 'fight');
     return world.battle;
   }
 
@@ -195,11 +236,13 @@
         if (f.status.dead) { dead[f.faction] = (dead[f.faction] || 0) + 1; world.stats.kills++; if (f.faction && f.faction === (G.CONFIG.game.bounty || {}).on) world.bounty = (world.bounty || 0) + 1; }
       }
       if (b.spec.loot) G.Loot.merge(loot, G.Loot.roll(b.spec.loot));
+      for (const j of b.joined || []) if (j.spec.loot) G.Loot.merge(loot, G.Loot.roll(j.spec.loot));
       out.lines.push(...World.grantXP(world, xp));
       for (const [fac, n] of Object.entries(dead)) if (fac && fac !== 'null') out.lines.push(...G.Factions.killed(world, fac, n));
       out.loot = G.Loot.give(world, loot);
       for (const fl of b.spec.flags || []) World.setFlag(world, fl);
       if (b.ctx && b.ctx.x != null) G.Explore.resolveSquare(world, b.ctx.x, b.ctx.y, 'defeated', b.spec);
+      for (const j of b.joined || []) G.Explore.resolveSquare(world, j.x, j.y, 'defeated', j.spec);
     }
     // Clean up conjured creatures and put supplies back in the pack. A familiar lost tears at its owner.
     if (G.Companions) out.lines.push(...G.Companions.afterFight(world));
@@ -210,5 +253,5 @@
     return out;
   }
 
-  G.Battle = { dungeonArena, buildFoes, table, start, ambushFactor, flee, finish };
+  G.Battle = { dungeonArena, joiners, buildFoes, table, start, ambushFactor, flee, finish };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

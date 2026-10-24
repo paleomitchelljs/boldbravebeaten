@@ -110,7 +110,7 @@ test('ui: every overlay, and every slot picker on the sheet', () => {
 
 test('ui: exploring: every square of every map renders from every direction', () => {
   const w = Game.world;
-  for (const id of ['undercroft_1', 'undercroft_2', 'barrow', 'trollhole']) {
+  for (const id of Object.keys(Content.world.places).filter((k) => Content.world.places[k].map)) {
     Game.travel({ to: id, arrive: '<' });
     check('enter ' + id);
     const g = Explore.grid(id);
@@ -147,6 +147,33 @@ test('ui: prompts: doors, locks, chests, people, stairs, traps and sleepers', ()
   // Sneaking toggles, search, camp (async), map.
   Game.ui = {}; w.explore.sneak = true; show('explore', 'sneaking');
   Explore.search(w); show('explore', 'after search');
+});
+
+test('ui: the temple court: drawn from its tileset at 4x, a drop prompt, and a fight on the court that others join', () => {
+  const w = Game.world;
+  Game.travel({ to: 'temple_court', arrive: '<' });
+  check('enter the temple');
+  assert.equal(Game.ui.mv.S, 4, '64-px tiles: the map is drawn at 4x');
+  const ms = World.mapState(w, 'temple_court');
+  for (let y = 0; y < 32; y++) for (let x = 0; x < 32; x++) ms.seen[x + ',' + y] = 1;
+  for (const [x, y] of [[2, 15], [15, 15], [26, 26], [29, 2]]) { w.explore.x = x; w.explore.y = y; Game.ui.mv.draw(x * 100 + y); }
+  check('walked the court');
+  // A drop prompt (the well is one way).
+  Game.ui = { prompt: { type: 'stairs', def: { kind: 'drop', to: 'temple_wall', at: '1', label: 'A well' } } };
+  show('explore', 'drop prompt');
+  assert.match(text(), /no climbing back up/);
+  // A fight at the gate with the court group close: they come too, and the battle screen draws the court.
+  w.explore.x = 12; w.explore.y = 15;
+  const def = Content.world.places.temple_court.legend.g;
+  Game.startBattle(Explore.encounterSpec(w, def), { ctx: { x: 6, y: 15 } });
+  check('temple battle');
+  assert.equal(w.battle.joined.length, 1, 'the group in the middle of the court joins');
+  assert.equal(Game.ui.mv.S, 4);
+  Game.ui.mv.draw(1);
+  check('temple battle drawn');
+  w.battle = null;
+  Explore.leave(w, 'stonebridge');
+  Game.go('town');
 });
 
 test('ui: a battle plays through the real battle screen with the AI on both sides', async () => {

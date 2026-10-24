@@ -40,6 +40,7 @@
     { file: 'quests.yaml', key: 'quests' },
     { file: 'start.yaml', key: 'start' },
     { file: 'art.yaml', key: 'art' },
+    { file: 'tilesets.yaml', key: 'tilesets' },
   ];
 
   function installFeats(trees) {
@@ -227,14 +228,20 @@
         const w = rows[0].length;
         rows.forEach((r, y) => { if (r.length !== w) err(`places.${id}: map row ${y + 1} is ${r.length} wide, expected ${w}`); });
         const marks = new Set(rows.join(''));
-        for (const ch of marks) if (!'#. +'.includes(ch) && !(ch in legend)) err(`places.${id}: map character "${ch}" has no legend entry`);
+        const ground = (G.CONFIG.game || {}).ground || {};
+        for (const ch of marks) if (!'#. +'.includes(ch) && !(ch in legend) && !(ch in ground)) err(`places.${id}: map character "${ch}" has no legend entry`);
+        for (const ch of Object.keys(legend)) if (ch in ground) err(`places.${id}: legend "${ch}" is a ground letter (rules.yaml game.ground)`);
+        const look = p.look || {};
+        if (look.ground && !(look.ground in ground)) err(`places.${id}.look.ground: "${look.ground}" is not a ground letter`);
+        if (look.tileset && !has(W.tilesets || {}, look.tileset)) err(`places.${id}.look.tileset: "${look.tileset}" is not in tilesets.yaml`);
         for (const ch of Object.keys(legend)) if (!marks.has(ch)) err(`places.${id}: legend "${ch}" is not on the map`);
         for (const [ch, def] of Object.entries(legend)) {
           const at = `places.${id}.legend.${ch}`;
           if (def.kind === 'monster' && !(p.encounters && def.encounter in p.encounters) && !has(G.Enemies.MONSTERS, def.encounter)) err(`${at}: encounter "${def.encounter}" unknown`);
           if (def.kind === 'npc' && !has(npcs, def.npc)) err(`${at}: npc "${def.npc}" unknown`);
-          if (def.kind === 'stairs' && !has(places, def.to)) err(`${at}: leads to unknown place "${def.to}"`);
-          if (def.kind === 'stairs' && def.at && places[def.to] && places[def.to].map && !places[def.to].map.join('').includes(def.at)) err(`${at}: arrival "${def.at}" is not on ${def.to}'s map`);
+          if (def.on && !(def.on in ground)) err(`${at}: on "${def.on}" is not a ground letter`);
+          if ((def.kind === 'stairs' || def.kind === 'drop') && !has(places, def.to)) err(`${at}: leads to unknown place "${def.to}"`);
+          if ((def.kind === 'stairs' || def.kind === 'drop') && def.at && places[def.to] && places[def.to].map && !places[def.to].map.join('').includes(def.at)) err(`${at}: arrival "${def.at}" is not on ${def.to}'s map`);
           if (def.kind === 'chest' && !has(tables, def.loot)) err(`${at}: loot table "${def.loot}" unknown`);
           if (def.kind === 'pickup' && !goodExists(def.good)) err(`${at}: good "${def.good}" unknown`);
           if (def.key && !goodExists(def.key)) err(`${at}: key "${def.key}" unknown`);
@@ -260,6 +267,23 @@
     const BT = (G.CONFIG.game || {}).bounty;
     if (BT) for (const k of ['on', 'payer']) if (BT[k] && !has(factions, BT[k])) err(`rules.yaml game.bounty.${k}: faction "${BT[k]}" unknown`);
     for (const [kind, K] of Object.entries((G.CONFIG.game || {}).companions || {})) for (const r of K.ranks || []) for (const m of r) if (!has(G.Enemies.MONSTERS, m)) err(`rules.yaml game.companions.${kind}: monster "${m}" unknown`);
+    for (const [ch, gd] of Object.entries((G.CONFIG.game || {}).ground || {})) {
+      if (ch.length !== 1 || '#. +'.includes(ch)) err(`rules.yaml game.ground: "${ch}" must be one character other than # . + and space`);
+      if (gd.fight && !(G.CONFIG.terrain || {})[gd.fight]) err(`rules.yaml game.ground."${ch}": fight terrain "${gd.fight}" unknown`);
+      if (gd.under && !((G.CONFIG.game.ground || {})[gd.under])) err(`rules.yaml game.ground."${ch}": under "${gd.under}" is not a ground letter`);
+    }
+    for (const [id, ts] of Object.entries(W.tilesets || {})) {
+      const terr = ts.terrains || {};
+      if (!Object.keys(terr).length) err(`tilesets.${id}: no terrains`);
+      if (ts.floor && !has(terr, ts.floor)) err(`tilesets.${id}: floor "${ts.floor}" is not one of its terrains`);
+      for (const [n, t] of Object.entries(terr)) {
+        if (t.wang && !t.over) err(`tilesets.${id}.${n}: a wang set needs \`over\` (the terrain under it)`);
+        if (t.over && !has(terr, t.over)) err(`tilesets.${id}.${n}: over "${t.over}" is not one of its terrains`);
+        if (t.corners && (t.corners.length !== 16 || t.corners.some((c) => !/^[UL]{4}$/.test(c)))) err(`tilesets.${id}.${n}: corners must be 16 codes of four U/L letters`);
+        if (!t.color && !t.tile && !t.wang) err(`tilesets.${id}.${n}: needs a color, a tile or a wang sheet`);
+      }
+      for (const [n, pr] of Object.entries(ts.props || {})) if (!Array.isArray(pr) || pr.length !== 5) err(`tilesets.${id}.props.${n}: expected [image, x, y, w, h]`);
+    }
     const S = W.start || {};
     if (S.place && !has(places, S.place)) err(`start.yaml: place "${S.place}" unknown`);
     for (const k of S.kits || []) {

@@ -504,6 +504,10 @@
     terrain: {
       stoneWall: { name: 'Stone wall', wall: true, solid: true },
       dungeonWall: { name: 'Dungeon wall', wall: true, solid: true, permanent: true },
+      // The map's own ground (rules.yaml game.ground), carried into a fight on it. Deep water keeps walkers out (fliers
+      // cross) but not sight, missiles or a spear's reach; shallows drag at the feet.
+      deepWater: { name: 'Deep water', deep: true, permanent: true },
+      shallows: { name: 'Shallow water', cost: 1, permanent: true },
       iceWall: { name: 'Ice wall', wall: true, solid: true, meltsInFire: true },
       brambleWall: { name: 'Bramble wall', wall: true, flammable: true },
       forceWall: { name: 'Force wall', wall: true, blocksMissiles: true },
@@ -701,6 +705,8 @@
     'Quick feats (Quick Thrust, Parry, Block, Dodge, Hands, Heavy Tempo, Quick Casting) take a share off every such action: half at the top rank (Quick Thrust I–III: −1/6, −1/3, −1/2; Quick Parry I–II: −1/4, −1/2).',
     'Rounds and turns (the user\'s model): a round starts with initiative; each character takes one turn in initiative order and may spend their whole AP pool on it; every action resolves as it is taken. The round ends when everyone has had their turn; unspent AP is lost.',
     'Reactions: defences are not declared ahead. When a blow comes, the target may block, parry or dodge, paying the AP from their pool on the spot (shown with the odds). AP spent on your turn is AP you cannot defend with; a fighter out of AP takes what comes on their armor. A Feint the defender cannot read hides the blow: they choose blind, and a defence that cannot meet it (a parry against a power swing) is wasted. Untouchable: after your first dodge in a round, further dodges that round cost nothing.',
+    'Ground on the map (for the temple, 2026-10-24): map letters with a fixed meaning (rules.yaml game.ground): grass and rubble to walk on, deep water no one can walk through (fliers cross it; it stops neither sight, missiles nor reach), shallow water that costs an extra square, plank bridges over the water. A fight on the map keeps its water. A well can be a one-way drop.',
+    'Fights draw in their neighbours (for the open courtyard, 2026-10-24): when a fight starts on the map, every other group that is awake, within game.joinDistance (6) squares of the party or of the group it fights (with a clear line), and inside the slice the fight is played on joins it from where it stood. Sleepers sleep on. Beating them settles their squares too. Not simulated: set for the courtyard, to be tried in play.',
     'Opportunity strikes (the user\'s ruling, 2026-10-24): a foe may strike at a mover who enters its melee reach, leaves it, or takes a second step within it in one move; one guarded step within reach is free. Once per foe per move, from the foe\'s AP; a hit stops the move (AP for squares not walked is refunded). Walking up to a swordsman provokes as you come into his thrust (2); to a spearman, at 4.',
     'Stamina scale ×3: every base stamina cost is tripled. Chosen by simulation so the stamina curve matches the Outline.',
     'Piercing through armor (when a point bursts it, or CONFIG.pierce is off): each leftover point rolls a d10 and reaches CON on ≤ pass-through × 10 (plate 2, other full armor 5). Chosen by simulation over rounding.',

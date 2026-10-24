@@ -657,7 +657,7 @@
       // Walls are walked around; rough ground, brambles and climbing out of a pit cost extra.
       let squares = d;
       if (G.Terrain && enc.tiles) {
-        if (!G.Terrain.passable(enc, decl.to.x, decl.to.y)) return { err: 'A wall stands there' };
+        if (!G.Terrain.canStand(enc, decl.to.x, decl.to.y, c)) return { err: G.Terrain.has(enc, decl.to.x, decl.to.y, 'deep') ? 'Deep water' : 'A wall stands there' };
         const pc = G.Terrain.pathCost(enc, from, decl.to, c);
         if (!pc.reaches) return { err: 'No way through' };
         squares = pc.cost;

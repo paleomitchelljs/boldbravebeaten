@@ -183,10 +183,12 @@
 
   function stairsPrompt(game, p) {
     const to = G.Content.world.places[p.def.to];
+    const drop = p.def.kind === 'drop';
     return h('section', { class: 'popcard' },
-      h('div', { class: 'popcard-head' }, icon('door', 18), h('h3', { class: 'grow' }, p.def.label || 'Stairs')),
+      h('div', { class: 'popcard-head' }, icon('door', 18), h('h3', { class: 'grow' }, p.def.label || (drop ? 'A drop' : 'Stairs'))),
+      drop ? h('p', { class: 'muted small' }, 'There is no climbing back up.') : null,
       h('div', { class: 'row' },
-        h('button', { class: 'primary', onclick: () => game.takeStairs(p.def) }, to.kind === 'town' ? `Leave for ${to.name}` : `Go to ${to.name}`),
+        h('button', { class: 'primary', onclick: () => game.takeStairs(p.def) }, to.kind === 'town' ? `Leave for ${to.name}` : drop ? `Drop down to ${to.name}` : `Go to ${to.name}`),
         h('button', { onclick: () => { game.ui.prompt = null; game.render(); } }, 'Stay')));
   }
 
@@ -216,11 +218,13 @@
     const members = World.active(w);
     const tr = trail(game);
     const cfg = G.CONFIG.game;
+    const p = Explore.place(w);
     const sc = {
       w: g.w, h: g.h,
+      tileset: p.look && p.look.tileset,
       cell: (x, y) => Explore.peek(w, x, y),
       seen: (x, y) => !!ms.seen[x + ',' + y],
-      light: { x: ex.x, y: ex.y, r: cfg.lightRadius },
+      light: { x: ex.x, y: ex.y, r: Explore.lightRadius(w) },
       cam: { x: ex.x, y: ex.y },
       actors: [], marks: [],
       describe: (x, y) => {
@@ -315,7 +319,7 @@
     const p = Explore.place(w);
     if (!game.ui.mv) {
       UI.MapView.preload();
-      game.ui.mv = UI.MapView.create({ cols: 15, rows: 10, scale: 3, label: `Map of ${p.name}`, scene: () => (game.ui.lastScene = scene(game)), onCell: (x, y) => onCell(game, x, y) });
+      game.ui.mv = UI.MapView.create({ cols: 15, rows: 10, scale: UI.MapView.scaleFor(w.place, 3), label: `Map of ${p.name}`, scene: () => (game.ui.lastScene = scene(game)), onCell: (x, y) => onCell(game, x, y) });
       game.ui.mv.start();
     }
     trail(game);
