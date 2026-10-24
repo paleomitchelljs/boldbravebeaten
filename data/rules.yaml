@@ -29,6 +29,22 @@ locations:
     penalty: {head: 2, torso: 0, arms: 1, hands: 2, legs: 1, feet: 3}
     thrustLess: 1
     shield: {covers: [torso, arms], block: 1}
+  # wounds (step 3): what a wound does where it lands. Every blow at a body rolls its location once this is set
+  # (a full harness too: the armor is the same everywhere, the body isn't).
+  #   attrs   what each point of a cut takes, rolled among these (the old d4 was STR, CON, SPD, DEX everywhere);
+  #           a point that goes in (piercing) still takes CON
+  #   vital   × the wound roll's chance there (share-weighted to 1, so overall lethality stays put)
+  #   effects per point of wound that reached the body there (÷ the target's size): disarm (drops what is in
+  #           hand), trip (knocked down); stun: per point of blunt that lands on the head (CON resists, as a spell)
+  wounds:
+    attrs: {head: [CON, INT, WIL], torso: [CON, STR], arms: [STR, DEX, CON], hands: [DEX, STR], legs: [SPD, CON], feet: [SPD]}
+    vital: {head: 2, torso: 1.5, arms: 0.4, hands: 0, legs: 0.7, feet: 0}
+    effects:
+      head: {stun: 0.1}
+      arms: {disarm: 0.08}
+      hands: {disarm: 0.15}
+      legs: {trip: 0.08}
+      feet: {trip: 0.1}
   carry:
     limb: 3
     next: {head: [torso], arms: [torso, head], hands: [arms], legs: [legs], feet: [legs]}

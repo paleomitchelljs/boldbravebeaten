@@ -61,7 +61,9 @@ Armor adds where it is worn: `covers: [torso, arms]` (locations from `rules.yaml
 hands, legs, feet), or a `coverage` keyword (`full` = all six, `half` = torso, arms and legs, `partial` = the torso),
 not both. A piece protects fully where it is and carries its share of the type's weight, penalties, durability and
 price; one covering a single location takes the type's `pieces` name (a plate helm, mail chausses). A blow rolls its
-location only against a body whose locations differ. Shields have a `size`. Material and origin set protection, weight and damage; craftsmanship
+location (d100 by share) unless it is aimed; `rules.yaml locations` also holds the aim penalties (`aim`), the cut's
+carry-through (`carry`) and what a wound does where it lands (`wounds`: attributes, vital odds, disarm, trip, stun).
+Shields have a `size`. Material and origin set protection, weight and damage; craftsmanship
 sets only how fast the item wears and how easily it breaks. A monster's carried gear: `craft` and `origin` for all
 of it, or items spelled out: `armorItem: {type: plate, material: steel, origin: dwarven}`,
 `weaponItems: [{type: longsword, name: Soulreaver, enchantments: [drinking]}]`, `shieldItem: {size: heater, material: adamant}`.

@@ -839,22 +839,22 @@
     const L = CONFIG.locations;
     const at = (loc) => hitAt(attacker, target, option, { v: v.slice(), prone, pinned, unconscious, weapon, coupDeGrace }, loc);
     const where = flags.location || option.aim || null;
-    if (where || !L || C.armorUniform(target)) {
-      const r = at(where || (L ? L.order[0] : null));
-      if (!where) r.location = null;
-      return r;
-    }
+    if (where || !L || C.armorUniform(target)) return at(where);
     const parts = L.order.map((loc) => ({ loc, w: L.share[loc] || 0, h: at(loc) }));
     const res = blendMany(parts);
     res.byLocation = parts;
     return res;
   }
 
+  // loc null: nowhere in particular (a body the same everywhere, for the AI and the preview): the armor is the
+  // piece over all of it, and the wound has the body's average odds.
   function hitAt(attacker, target, option, base, loc) {
     const { v, prone, pinned, unconscious, weapon, coupDeGrace } = base;
-    const piece = loc ? C.armorAt(target, loc) : target.armor;
+    const L = CONFIG.locations;
+    const armorLoc = loc || (L ? L.order[0] : null);
+    const piece = armorLoc ? C.armorAt(target, armorLoc) : target.armor;
     const armored = !!(piece && piece.durability > 0 && !unconscious && !coupDeGrace);
-    const ctx = { v, prone, pinned, unconscious, weapon, armored, piece, ai: loc ? C.armorInfo(target, loc) : C.armorInfo(target) };
+    const ctx = { v, prone, pinned, unconscious, weapon, armored, piece, loc, ai: armorLoc ? C.armorInfo(target, armorLoc) : C.armorInfo(target) };
     // A point against armor (CONFIG.pierce): it bursts through, or it must find a gap; the expectation
     // over the gap roll is what the AI and the preview see, and applyHit rolls it.
     const pc = CONFIG.pierce && armored ? pierceCheck(attacker, option, ctx) : null;
@@ -930,7 +930,7 @@
   // blow did before; 'gap' — all of it reaches the body; 'turned' — it lands as blunt instead; null — no
   // point, or CONFIG.pierce is off (the pass-through rule), or no armor at all.
   function armorHit(attacker, target, option, ctx, way) {
-    const { v, prone, pinned, unconscious, weapon, armored, ai, piece } = ctx;
+    const { v, prone, pinned, unconscious, weapon, armored, ai, piece, loc } = ctx;
     let [P, S, B] = v;
     if (way === 'turned') { B += Math.round(P * CONFIG.pierce.deflectBlunt); P = 0; }
     const motion = option.motion === 'unarmed' ? 'swing' : option.motion;
@@ -1022,6 +1022,9 @@
         const t = piece.type;
         guard = Math.min(1, V.armor[t] != null ? V.armor[t] : V.otherArmor);
       }
+      // Where it lands (CONFIG.locations.wounds.vital): the throat and the heart, not the hand.
+      const WV = loc && CONFIG.locations && CONFIG.locations.wounds && CONFIG.locations.wounds.vital;
+      if (WV && WV[loc] != null) guard *= WV[loc];
       if (w.kind === 'S') res.cutVital = w.vital * guard;
       else res.pierceVital = w.vital * guard;
     }
@@ -1105,7 +1108,7 @@
   // differ; null otherwise.
   async function rollLocation(attacker, target, option, roller) {
     const L = CONFIG.locations;
-    if (!L || !bodyBlow(target, option) || C.armorUniform(target)) return null;
+    if (!L || !bodyBlow(target, option) || (!L.wounds && C.armorUniform(target))) return null;
     const r = (await roller({ actorId: attacker.id, sides: 100, count: 1, label: 'Hit location', detail: `d100 on ${target.name}: ` + L.order.map((l) => `${L.names[l] || l} ${Math.round((L.share[l] || 0) * 100)}%`).join(', ') }))[0];
     let acc = 0;
     for (const l of L.order) { acc += Math.round((L.share[l] || 0) * 100); if (r <= acc) return l; }
@@ -1136,6 +1139,36 @@
     return h2;
   }
 
+  // What a wound does where it lands (CONFIG.locations.wounds.effects): a hand or arm may lose its grip, a leg go
+  // out from under, a blow to the head stun. Odds per point that reached the body there (blunt for a stun), ÷ size.
+  async function woundEffects(enc, attacker, target, option, primary, roller, parts) {
+    const E = CONFIG.locations && CONFIG.locations.wounds && CONFIG.locations.wounds.effects;
+    const fx = E && primary.loc ? E[primary.loc] : null;
+    if (!fx || !C.isActive(target)) return;
+    const wound = primary.toCON + primary.slash;
+    const sz = sizeOf(target);
+    const chance = (per, n) => Math.min(0.9, (per * n) / sz);
+    const roll = async (p, label) => p > 0 && (await rollDie(roller, attacker.id, 100, label, `d100: ${Math.round(p * 100)} or less`)) <= Math.round(p * 100);
+    if (fx.disarm && wound > 0 && C.wieldedWeapon(target) && !C.wieldedWeapon(target).natural) {
+      if (await roll(chance(fx.disarm, wound), `${target.name}: keep hold`)) {
+        const w = dropHeld(target);
+        if (w) parts.push(`${target.name}'s hand opens: ${Items.itemName(w)} falls`);
+      }
+    }
+    if (fx.trip && wound > 0 && !target.status.prone && !(target.traits && target.traits.flier)) {
+      if (await roll(chance(fx.trip, wound), `${target.name}: keep footing`)) {
+        knockDown(enc, target);
+        parts.push(`${target.name}'s leg gives: down`);
+      }
+    }
+    if (fx.stun && primary.blunt > 0 && G.Magic && G.Conditions && !C.tireless(target)) {
+      if (await roll(chance(fx.stun, primary.blunt), `${target.name}: a blow to the head`)) {
+        const got = await G.Magic.afflict(enc, attacker, target, 'stunned', { rounds: 1 }, roller);
+        if (got !== false) parts.push(`${target.name} is stunned`);
+      }
+    }
+  }
+
   // Apply a hit, rolling d4s for slashing. Returns a short description.
   async function applyHit(enc, chars, attacker, target, option, roller, flags) {
     const loc = (flags && flags.location) || (option.aim && bodyBlow(target, option) ? option.aim : null) || await rollLocation(attacker, target, option, roller);
@@ -1164,6 +1197,8 @@
       if (h.cutThrough) parts.push('the blade cuts through');
       if (h.durLoss) parts.push(`armor durability −${h.durLoss}`);
     }
+    // What landed where it struck, for the location's wound effects (before a carried cut joins it).
+    const primary = { loc: h.location, toCON: h.toCON, slash: h.slashToAttrs, blunt: h.bluntToStamina + h.bluntToCON };
     // The carried part of a cut: its own armor, its own wear, then it counts with the rest of the blow.
     if (carried) {
       const cn = (CONFIG.locations.names[carried.location] || carried.location).toLowerCase();
@@ -1204,12 +1239,22 @@
       }
     }
     if (h.slashToAttrs > 0) {
-      const rolls = await roller({ actorId: attacker.id, sides: 4, count: h.slashToAttrs, label: 'Slashing hit locations', detail: `${h.slashToAttrs}d4 on ${target.name}: 1 STR, 2 CON, 3 SPD, 4 DEX` });
+      // Each point of a cut takes an attribute: from the location's table (CONFIG.locations.wounds.attrs), else the
+      // old d4 (1 STR, 2 CON, 3 SPD, 4 DEX). A carried cut's points take from where it carried to.
+      const WA = CONFIG.locations && CONFIG.locations.wounds && CONFIG.locations.wounds.attrs;
+      const groups = [{ loc: primary.loc, n: h.slashToAttrs - (carried ? carried.slashToAttrs : 0) }];
+      if (carried && carried.slashToAttrs > 0) groups.push({ loc: carried.location, n: carried.slashToAttrs });
       const tally = {};
-      for (const r of rolls) {
-        const a = CONFIG.slashAttributeTable[r];
-        tally[a] = (tally[a] || 0) + 1;
-        C.damageAttr(target, a, 1);
+      for (const g of groups) {
+        if (g.n <= 0) continue;
+        const table = g.loc && WA && WA[g.loc] ? WA[g.loc] : [1, 2, 3, 4].map((i) => CONFIG.slashAttributeTable[i]);
+        const where = g.loc ? ` (${(CONFIG.locations.names[g.loc] || g.loc).toLowerCase()})` : '';
+        const rolls = await roller({ actorId: attacker.id, sides: table.length, count: g.n, label: 'Slashing hit locations', detail: `${g.n}d${table.length} on ${target.name}${where}: ` + table.map((a, i) => `${i + 1} ${a}`).join(', ') });
+        for (const r of rolls) {
+          const a = table[Math.max(0, Math.min(table.length - 1, r - 1))];
+          tally[a] = (tally[a] || 0) + 1;
+          C.damageAttr(target, a, 1);
+        }
       }
       parts.push(Object.keys(tally).map((a) => `${tally[a]} ${a}`).join(', '));
       wound += h.slashToAttrs;
@@ -1240,6 +1285,7 @@
         parts.push(`${amt} stamina`);
       }
     }
+    await woundEffects(enc, attacker, target, option, primary, roller, parts);
     if (option.venom && wound > 0 && !h.noBleed) {
       // The deeper the bite, the more venom: up to `con` a round, never more than the wound.
       const per = Math.min(option.venom.con, wound);

@@ -23,6 +23,8 @@ function asWritten(fn) {
     armorActionAP: 0, quickCut: null, minActionAP: 1, minStrikeAP: 1, weaponWear: null, weariness: null, armorPierceWear: 0,
     defense: Object.assign({}, D0, { block: Object.assign({}, D0.block, { opposed: false }), dodgeBonus: 0, absorb: null, dodgeStamina: null }),
     staminaScale: 1, pierceMode: 'floor', passThroughByArmor: null, pierce: null, moveScale: 1, armorAdjust: {}, standUp: null, grappling: null, weaponModel: 'table',
+    // The Specifics had no hit locations: one d4 per point of a cut, wherever it lands.
+    locations: Object.assign({}, C0.locations, { wounds: null }),
   };
   const saved = {};
   for (const k of Object.keys(spec)) saved[k] = C0[k];
@@ -58,6 +60,10 @@ function withConfig(patch, fn) {
   Object.assign(B.CONFIG, saved);
   return out;
 }
+
+// Wounds the same wherever they land (no location tables): the tests below script their rolls without a
+// location roll.
+function noWounds(fn) { return withConfig({ locations: Object.assign({}, B.CONFIG.locations, { wounds: null }) }, fn); }
 
 function io(seed, queue, react) { return { roller: roller(seed, queue), react: react || noReact }; }
 // Everyone still to take a turn ends it: the round closes (bleeding, regeneration, wind-ups lapse).
@@ -165,7 +171,7 @@ test('Specifics worked example: longsword swing vs mail = 1 stamina', () => tabl
   assert.strictEqual(h.toCON, 0);
 }));
 
-test('Specifics worked example: same swing unarmored = 7 slashing + 7 CON of bleed', () => tableWeapons(async () => {
+test('Specifics worked example: same swing unarmored = 7 slashing + 7 CON of bleed', () => noWounds(() => tableWeapons(async () => {
   const enc = { hitThisRound: {}, fortressUsed: {} };
   const atk = fighter('Swordsman');
   atk.weapons.push(Items.makeWeapon('longsword'));
@@ -184,7 +190,7 @@ test('Specifics worked example: same swing unarmored = 7 slashing + 7 CON of ble
   const e = { ids: [tgt.id], hitThisRound: { [tgt.id]: 1 }, log: [], round: 1 };
   for (let i = 0; i < 3; i++) Combat.endRound(e, chars);
   assert.strictEqual(tgt.damage.CON, 7, 'an untreated cut costs its damage again in CON');
-}));
+})));
 
 test('losing an attribute lowers max and current stamina', () => {
   const c = fighter('Hurt');
@@ -215,7 +221,7 @@ test('plate stops a thrust; a half-sword thrust finds the gaps', () => asWritten
   assert.ok(mixed > onFull && mixed < half.damage[0], 'the AI sees the expectation over the locations');
 }));
 
-test('roll mode (without CONFIG.pierce): each leftover piercing point has a chance to reach CON', () => withConfig({ pierce: null }, async () => {
+test('roll mode (without CONFIG.pierce): each leftover piercing point has a chance to reach CON', () => noWounds(() => withConfig({ pierce: null }, async () => {
   const atk = fighter('Stabber');
   atk.weapons.push(Items.makeWeapon('rapier'));
   atk.wield = atk.weapons[0].id;
@@ -229,7 +235,7 @@ test('roll mode (without CONFIG.pierce): each leftover piercing point has a chan
   // d10s 1,5,6,9,10 → two of five are ≤ 5
   await Combat.applyHit(enc, { [atk.id]: atk, [tgt.id]: tgt }, atk, tgt, thrust, roller(1, [1, 5, 6, 9, 10]));
   assert.strictEqual(tgt.damage.CON, 2);
-}));
+})));
 
 test('feat tiers and prerequisites', () => {
   const c = fighter('Learner');
@@ -947,7 +953,7 @@ test('weapons from physics: deeper points hit harder, heavier weapons are slower
   assert.ok(gain('rapier') < gain('flangedMace'), 'STR adds more to a mace than to a rapier');
 });
 
-test('wound roll: armor guards the vitals; a vital stab triples its CON damage', async () => {
+test('wound roll: armor guards the vitals; a vital stab triples its CON damage', () => noWounds(async () => {
   const a = armed('A', 'longsword');
   const thrust = opt(a, (o) => o.motion === 'thrust');
   const naked = fighter('N');
@@ -966,7 +972,7 @@ test('wound roll: armor guards the vitals; a vital stab triples its CON damage',
   const u = fighter('U'); u.base.CON = 30; u.stamina = C.maxStamina(u);
   await Combat.applyHit(enc, { [a.id]: a, [u.id]: u }, a, u, thrust, roller(1, [10]));
   assert.strictEqual(u.damage.CON, thrust.damage[0]);
-});
+}));
 
 test('opportunity strikes: entering a foe\'s reach, leaving it, or a second step within it draws a blow; one step within is free', async () => {
   const make = (weapon, h) => {
@@ -1776,7 +1782,7 @@ test('item tags: material and origin scale protection and weight; craft only dur
   assert.ok(D.ENCHANTMENTS.keen && D.CRAFTS.master && D.ORIGINS.elven && D.MATERIALS.starIron);
 });
 
-test('a point against armor: it bursts through, finds a gap, or is turned (the user\'s rule)', async () => {
+test('a point against armor: it bursts through, finds a gap, or is turned (the user\'s rule)', () => noWounds(async () => {
   const stab = (weapon, armorType, tags, attrs) => {
     const a = armed('A', weapon);
     Object.assign(a.base, attrs || {});
@@ -1841,7 +1847,7 @@ test('a point against armor: it bursts through, finds a gap, or is turned (the u
   await step(g, 'pin', [10, 1]);
   const dagger = C.attackOptions(g.a).find((o) => o.motion === 'thrust');
   assert.strictEqual(Combat.computeHit(g.a, g.t, dagger, { distance: 1 }).pierce, 'gap');
-});
+}));
 
 test('rust eats iron but not bronze; a masterwork shield shrugs off the shattering blow', async () => {
   const touchWith = async (material) => {

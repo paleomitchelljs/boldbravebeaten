@@ -37,13 +37,18 @@ test('locations: shares sum to 1; a full harness keeps its old numbers; a half o
   assert.deepStrictEqual(Items.coversOf(Items.makeArmor('plate', 'half', 'average')), ['torso', 'arms', 'legs']);
 });
 
-test('locations: no location is rolled against a full harness or a bare body; one is against mixed armor', async () => {
+test('locations: every body blow rolls where it lands (without wound tables, only against mixed armor)', async () => {
   const a = armed('A', 'longsword');
   const o = swing(a);
+  const W = CONFIG.locations.wounds;
   for (const t of [body('Plate', [Items.makeArmor('plate', 'full', 'average')]), body('Bare')]) {
     const asked = [];
     await Combat.applyHit(enc0(), { [a.id]: a, [t.id]: t }, a, t, o, roller([], 5, asked));
-    assert.ok(!asked.includes('Hit location'), t.name);
+    assert.ok(asked.includes('Hit location'), t.name + ': the body differs even where the armor doesn\'t');
+    CONFIG.locations.wounds = null;
+    const asked2 = [];
+    try { await Combat.applyHit(enc0(), { [a.id]: a, [t.id]: t }, a, t, o, roller([], 5, asked2)); } finally { CONFIG.locations.wounds = W; }
+    assert.ok(!asked2.includes('Hit location'), t.name + ' without wound tables');
   }
   // A plate helm and nothing else: d100 of 1–8 is the head (the helm), anything else bare.
   const helmed = body('Helmed', [Items.makeArmor('plate', null, 'average', { covers: ['head'] })]);
@@ -112,11 +117,11 @@ test('parry carry-through: a heavy swing beats through a light parry, weakened; 
   assert.ok(share > 0.3, `a rapier meets little of a greatsword's cut (${share.toFixed(2)} carries)`);
   // The defender parries (and wins the roll: 10 against 1); the blow still lands, weakened.
   const io = { roller: roller([10, 1], 5), react: (req) => (req.kind === 'defend' ? 'parry' : null) };
-  const before = def.stamina + C.totalDamage(def) * 10;
+  const before = { stamina: def.stamina, dmg: C.totalDamage(def) };
   const err = await Combat.act(enc, chars, { actor: atk.id, type: 'strike', option: cut, target: def.id }, io);
   assert.strictEqual(err, null);
   assert.ok(enc.log.some((l) => /beats through the parry/.test(l.text)), enc.log.map((l) => l.text).join('\n'));
-  assert.ok(def.stamina + C.totalDamage(def) * 10 < before, 'some of it landed');
+  assert.ok(C.totalDamage(def) > before.dmg || def.stamina < before.stamina, 'some of it landed: ' + enc.log.map((l) => l.text).join(' / '));
   const thrust = C.attackOptions(atk).find((o) => o.motion === 'thrust');
   assert.strictEqual(Combat.parryCarryShare(def, 'parry', thrust), 0);
 });
@@ -136,9 +141,11 @@ test('aimed blows: a location costs its penalty against a defence (less for a th
   const aim = B.AI.bestAim(a, t, cut, 1);
   assert.ok(aim && aim.loc && !['torso', 'head'].includes(aim.loc), JSON.stringify(aim));
   assert.ok(aim.ratio > 1);
-  // A full harness: nothing to aim at.
+  // A full harness and no wound tables: nothing to aim at.
   const full = body('Full', [Items.makeArmor('plate', 'full', 'average')]);
-  assert.strictEqual(B.AI.bestAim(a, full, cut, 1), null);
+  const W = CONFIG.locations.wounds;
+  CONFIG.locations.wounds = null;
+  try { assert.strictEqual(B.AI.bestAim(a, full, cut, 1), null); } finally { CONFIG.locations.wounds = W; }
   // A shield makes blows at the torso easier to block, not those at the legs.
   t.shield = Items.makeShield('round', 'wood'); t.weapons = []; t.wield = null;
   const blk = (loc) => Combat.defenseOdds(t, 'block', cut.motion, a, Object.assign({}, cut, { aim: loc }));
@@ -159,4 +166,35 @@ test('aimed blows: a declared location goes where it is aimed, with no location 
   assert.ok(!asked.includes('Hit location'));
   assert.ok(enc.log.some((l) => /on the legs \(bare\)/.test(l.text)), enc.log.map((l) => l.text).join('\n'));
   assert.strictEqual(await Combat.act(enc, chars, { actor: a.id, type: 'strike', option: cut, target: t.id, location: 'tail' }, { roller: roller(), react: () => null }), 'No such place to aim at');
+});
+
+test('wounds by location: a cut takes from the location\'s attributes; a hand may drop its weapon, a leg go, a head be stunned', async () => {
+  const a = armed('A', 'longsword');
+  a.base.STR = 12;
+  const o = swing(a);
+  const W = CONFIG.locations.wounds;
+  // A cut to the bare legs takes SPD or CON only.
+  const t = body('Bare');
+  await Combat.applyHit(enc0(), { [a.id]: a, [t.id]: t }, a, t, o, roller([], 1), { location: 'legs' });
+  const hurt = Object.keys(t.damage).filter((k) => t.damage[k] > 0);
+  assert.ok(hurt.length && hurt.every((k) => W.attrs.legs.includes(k) || k === 'CON'), JSON.stringify(t.damage));
+  // A cut to the hand: d100 of 1 loses the grip.
+  const u = armed('U', 'longsword'); u.side = 'enemy'; u.base.CON = 30; u.stamina = C.maxStamina(u);
+  const r = await Combat.applyHit(enc0(), { [a.id]: a, [u.id]: u }, a, u, o, roller([], 1), { location: 'hands' });
+  assert.match(r.text, /hand opens/);
+  assert.strictEqual(C.wieldedWeapon(u), null);
+  // A cut to the leg: a 1 takes the leg out.
+  const v = body('V');
+  const r2 = await Combat.applyHit(enc0(), { [a.id]: a, [v.id]: v }, a, v, o, roller([], 1), { location: 'legs' });
+  assert.match(r2.text, /leg gives/);
+  assert.ok(v.status.prone);
+  // The vital odds follow the location: none in a hand, more at the head than an arm.
+  const thrust = C.attackOptions(a).find((x) => x.motion === 'thrust');
+  const at = (loc) => Combat.computeHit(a, body('X'), thrust, { location: loc }).pierceVital;
+  assert.strictEqual(at('hands'), 0);
+  assert.ok(at('head') > at('arms'));
+  // Averaged over the body it is what it was before locations (the shares weight the factors to 1).
+  const L = CONFIG.locations;
+  const mean = L.order.reduce((n, l) => n + L.share[l] * W.vital[l], 0);
+  assert.ok(Math.abs(mean - 1) < 0.02, mean);
 });

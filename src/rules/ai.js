@@ -62,6 +62,17 @@
       if (H.push) v += 2;
       if (option.spell.lingering) v += Math.max(1, Math.round(option.spell.magnitude / 4)) * 3 * 5 * 0.6;
     }
+    // What a wound does where it is aimed (CONFIG.locations.wounds.effects): a dropped weapon, a fall, a stun.
+    const E = h.location && G.CONFIG.locations && G.CONFIG.locations.wounds && G.CONFIG.locations.wounds.effects;
+    const fx = E ? E[h.location] : null;
+    if (fx) {
+      const sz = (target.traits && target.traits.size) || 1;
+      const p = (per, n) => Math.min(0.9, (per * n) / sz);
+      const wound = h.toCON + h.slashToAttrs;
+      if (fx.disarm && C.wieldedWeapon(target) && !C.wieldedWeapon(target).natural) v += p(fx.disarm, wound) * 8;
+      if (fx.trip && !target.status.prone) v += p(fx.trip, wound) * 8;
+      if (fx.stun && !C.tireless(target)) v += p(fx.stun, h.bluntToStamina + h.bluntToCON) * 6;
+    }
     // A kill, at the odds of a point finding a gap when it has to (CONFIG.pierce).
     const con = C.attr(target, 'CON');
     const k = h.gap ? h.gap.got : h, kp = h.gap ? h.gap.chance : 1;
@@ -89,10 +100,12 @@
   // Where to aim a blow (CONFIG.locations.aim), from what the attacker can see: the target's armor and how well it
   // could defend. Each choice is worth the blow's value there × the chance it lands, taking the target to defend
   // half the time with its best defence (aiming makes that easier for it). Returns { loc (null: unaimed), v, ratio
-  // (its worth over an unaimed blow's) }, or null when every location is the same (a full harness, bare skin).
+  // (its worth over an unaimed blow's) }, or null when every location is the same (no wound tables, and a full
+  // harness or bare skin).
   function bestAim(c, target, opt, d) {
     const L = G.CONFIG.locations;
-    if (!L || !L.aim || opt.spell || C.armorUniform(target)) return null;
+    // With wound tables every place differs (a hand drops its sword); without them only mixed armor does.
+    if (!L || !L.aim || opt.spell || (!L.wounds && C.armorUniform(target))) return null;
     const kinds = ['parry', 'dodge'].concat(C.shieldReady(target) ? ['block'] : []);
     const land = (o) => 1 - 0.5 * Math.max(0, ...kinds.map((k) => (Combat.defenseUnavailable(target, k, { type: 'strike', option: o, actor: c.id }, { [c.id]: c }) ? 0 : Combat.defenseOdds(target, k, o.motion, c, o))));
     const plain = Object.assign({}, opt); delete plain.aim;

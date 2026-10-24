@@ -1,6 +1,6 @@
 # Proposals awaiting a ruling (2026-10-24)
 
-Each section gives the rule, the options and a recommendation. §1 is ruled and built; §2 steps 1 (pieces, unaimed locations, carry-through) and 2 (aimed blows, the Location menu) are built, with the parry carry-through; step 3 is next.
+Each section gives the rule, the options and a recommendation. §1 is ruled and built; §2 is built in all three steps (pieces and carry-through; aimed blows; wounds by location), with the parry carry-through. The numbers marked *guess* are still guesses.
 
 ## 1. Opportunity strikes: which steps provoke (ruled 2026-10-24: option C, built)
 
@@ -28,7 +28,7 @@ off at the edge of measure. That's realistic, but a sim would show whether fight
 
 ## 2. Armor by body part: hit locations (the user chose option C, 2026-10-24)
 
-Steps 1 and 2 built 2026-10-24 (`rules.yaml locations`, `Items.coversOf`, `Character.armorAt`, `Combat.rollLocation`/`carryCut`/`aimPenalty`, `AI.bestAim`, `sim/locations.js`); step 3 not yet. Numbers marked *guess* are placeholders for `rules.yaml`, to be set by sim.
+All three steps built 2026-10-24 (`rules.yaml locations`, `Items.coversOf`, `Character.armorAt`, `Combat.rollLocation`/`carryCut`/`aimPenalty`/`woundEffects`, `AI.bestAim`, `sim/locations.js`). As built, the vital factors are head 2, torso 1.5, arms 0.4, legs 0.7, hands and feet 0 (weighted to 1), and piercing still goes to CON wherever it lands. Numbers marked *guess* are placeholders for `rules.yaml`, to be set by sim.
 
 ### 2.1 What the evidence says
 

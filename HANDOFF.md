@@ -70,7 +70,9 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 - [x] Armor by hit location, step 1: pieces cover locations, unaimed location rolls against mixed armor, carry-through
   for cuts (docs/PROPOSALS.md §2; sim/FINDINGS.md; `sim/locations.js`).
 - [x] Step 2: aimed blows and a Location menu beside each attack (default: the best expected location, `AI.bestAim`).
-- [ ] Step 3: location effects (attribute tables by location, disarm, trip, stun, vital by location).
+- [x] Step 3: wounds by location (attribute tables, vital odds, disarm, trip, stun), rules.yaml `locations.wounds`.
+- [ ] Sim the location numbers (shares, aim penalties, effect odds: all guesses) in duels with mixed harnesses; the
+  arena builds wear full harnesses, so they show only the wound tables and the AI's aiming.
 - [x] Parry carry-through (the user's idea): a parried swing whose force beats the parrying weapon's carries through,
   weakened; a parried thrust is stopped; the overwhelm term left the parry odds (`CONFIG.defense.parryCarry`).
 - [ ] Sim the strong items (all draft): the Flowing Black Silk Sash (×0.8 AP on everything), the Scimitar of Speed,

@@ -484,12 +484,13 @@
     return [facts(rows), notes.filter(Boolean).map((n) => h('p', null, n))];
   }
 
-  // Where a blow may be aimed (CONFIG.locations.aim): only at someone whose locations differ. Returns null, or
+  // Where a blow may be aimed (CONFIG.locations.aim): anywhere once wounds differ by location, else only at someone
+  // whose armor differs. Returns null, or
   // { best, rows: [[value, label]] } with 'best' (the expected-best place, the default), 'unaimed', each location.
   function aimChoices(enc, chars, id, e, targetId) {
     const L = G.CONFIG.locations;
     const a = chars[id], t = targetId ? chars[targetId] : null;
-    if (!L || !L.aim || !t || e.kind !== 'strike' || !e.option || e.option.spell || e.option.unarmed || C.armorUniform(t)) return null;
+    if (!L || !L.aim || !t || e.kind !== 'strike' || !e.option || e.option.spell || e.option.unarmed || (!L.wounds && C.armorUniform(t))) return null;
     const d = Combat.dist(enc.pos[id], enc.pos[targetId]);
     const best = G.AI.bestAim(a, t, e.option, d);
     const show = (loc) => {
