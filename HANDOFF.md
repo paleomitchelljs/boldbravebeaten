@@ -1,6 +1,6 @@
 # To do
 
-Last updated at commit: 021377f
+Last updated at commit: 1713342
 
 Keep this a short list. Tick things off, add new ones, and refresh the commit line after every push (`git log -1 --format=%h`).
 
@@ -64,12 +64,13 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   armor; update them to the turn model, reach by motion, points against armor and the item tags.
 
 ## Magic items, spells, companions (added 2026-10-24; see docs/REVIEW.md)
-- [ ] Rulings wanted (docs/REVIEW.md §2 and §5): ordinary shields can't block spell bolts (`CONFIG.defense.blockSpells`);
-  opportunity strikes fire on any step begun in reach, not only on leaving it; armor split by body part, or keep one
-  piece with coverage (the head/shoulders/arms/hands/legs/boots slots hold worn things only for now); no ear or waist
-  slot in your list, so the tusk earring takes the head and the sashes the cape.
-- [ ] Sim the strong items before playtest: the silk sash (×0.8 AP on everything), a blade of speed, the at-will Veil
-  circlet (probably wants charges); Raise + Spirit (revenant) in the gauntlet; companions over a multi-fight run.
+- [x] Ruled: ordinary shields can't block spell bolts (`CONFIG.defense.blockSpells: false`); Spellbreaker can.
+- [x] Waist and two ear slots added (sashes on the waist; Orc Fang Earring and Ivandyr's Hoop in the ears).
+- [ ] Proposals in docs/PROPOSALS.md, awaiting a ruling: which steps provoke opportunity strikes (recommended:
+  entering reach, leaving it, or a second step within it); armor by body part (recommended: pieces per slot set the
+  coverage now, a hit-location roll later), and whether armor pieces and worn magic share the body slots.
+- [ ] Sim the strong items (all draft): the Flowing Black Silk Sash (×0.8 AP on everything), the Scimitar of Speed,
+  the at-will Circlet of Shadow (probably wants charges); Raise + Spirit (revenant) in the gauntlet; companions over a multi-fight run.
 - [ ] Magic items use the user's names (the no-published-names rule was dropped). Only `relic_cache` (nested in the barrow, troll and strongbox hoards) offers them; no shop does.
 - [ ] Choosing a companion: `c.companionChoice` picks among those on offer, but no screen sets it yet (the last on offer
   is taken). Companions show on the battle map but have no sheet of their own in town.
