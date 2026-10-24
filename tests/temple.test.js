@@ -165,8 +165,10 @@ test('tilesets: wang corners follow the four squares around each corner; plain g
   // A 3x3 room of grass in a wall, with a bridge over water in the middle.
   const rows = ['#####', '#,,,#', '#,=,#', '#,~,#', '#####'];
   const sc = { w: 5, h: 5, cell: (x, y) => { const ch = rows[y][x]; if (ch === '#') return { kind: 'wall' }; const gr = Explore.groundOf(ch); return { kind: gr.walk === false ? 'water' : 'floor', ground: gr }; } };
-  // A 16-tile set: every one of the 16 masks has a tile in the PixelLab layout.
-  const maze = Tm.tileset('temple_maze');
+  // A 16-tile set (the temple's are all cliff sets now, so one made up here): every one of the 16 masks has a tile in
+  // the PixelLab layout.
+  globalThis.BBB.Content.world.tilesets.test16 = { cell: 64, floor: 'grass', terrains: { grass: { color: '#5f7d42' }, wall: { color: '#ccc', wang: 'x.png', over: 'grass' } } };
+  const maze = Tm.tileset('test16');
   assert.equal(Object.keys(maze.terrains.wall.index).length, 16);
   assert.deepEqual(maze.terrains.wall.index[15], [0, 3], 'all four corners wall: the solid tile');
   assert.deepEqual(maze.terrains.wall.index[0], [2, 1], 'no corner wall: plain floor');
@@ -175,6 +177,7 @@ test('tilesets: wang corners follow the four squares around each corner; plain g
   assert.equal(mc(1, 1).m, 8 | 4 | 2, 'the room\'s inside corner: wall NW, NE and SW of it');
   assert.equal(mc(2, 2), undefined, 'no wall around the middle corner');
   assert.equal(mc(0, 0).m, 15);
+  delete globalThis.BBB.Content.world.tilesets.test16;
   // A cliff set (the court): the wall's last row before the floor is its face, picked by pattern.
   const ts = Tm.tileset('temple_court');
   assert.equal(ts.cell, 64);

@@ -59,8 +59,7 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
 - [x] Courtyard 1 and the wall top are playable (`temple_court`, `temple_wall`; a town exit, "the temple in the jungle"),
   drawn with the two placeholder PixelLab sandstone sets (copied to `art/worldtiles/temple/`). Looked at
   in headless Chrome: walls, corners, doors, daylight and a fight on the court all draw. Not seen on a phone.
-- [x] The placeholder court set is replaced (above); `moss-wall` (labyrinth) is still the placeholder, "the
-  roughest of drafts": replace it with the labyrinth's set.
+- [x] The placeholder sets are all replaced (`moss-wall.png` removed).
 - [x] Courtyard art, first pass (2026-10-24; prompts and palette in `assets/wip/temple-court/court-wall.prompt.md`):
   a new palette (olive and fern greens against the dragonborn's crimson, sun-yellowed tan sandstone, no near-blacks on
   the ground); the court wall as a raised corner set; fern patches (`%`, a second set chained from the same grass); grass
@@ -73,33 +72,26 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
   `decor` pieces (tufts, ferns, bricks, pebbles, flowers; moss, sprigs, cracks on tops) clumped by noise, and `faces`
   (vines, the snake mosaic) on the wall faces. The wall top has its own set (`temple_walltop`). Engine: cliff sets
   picked by pattern, decor and faces in `tilemap.js`. Seen in headless Chrome.
-- [ ] Court art, third pass:
+- [x] Court decor, third pass (2026-10-24, after the user's notes): six kinds of vine on the faces (they had hung
+  identically), four more plants with mirroring, no piece repeated beside itself, fewer plants in the fern beds, and the
+  patches on the map smoothed (single-square notches made hard angles in the loam). The position hash was a float
+  product past 2^53, so a few pieces came up far too often; it uses `Math.imul` now.
+- [ ] Court art, still open:
   - the lizard mosaic came out as a figure: redo it as a face panel; the face mosaics show rarely;
   - the wall-top place's set has dark edge lines and a darker face than the court's; one-square walls between its rooms
     draw odd lips;
   - the jointed tops repeat a 64-px grid; the brick decor is pinkish beside the paving;
-  - the steps up the wall are still the small rotated stair; one door image serves walls of both directions;
+  - the steps up the wall are still the small rotated stair; one door image serves walls of both directions.
   - side walls show only their top edge (top-down): fine, but they look thin beside the faced north walls.
-- [x] The placeholder court set is replaced (above); `moss-wall` (labyrinth) is still the placeholder, "the
-  roughest of drafts": replace it with the labyrinth's set.
-- [x] Courtyard art, first pass (2026-10-24; prompts and palette in `assets/wip/temple-court/court-wall.prompt.md`):
-  a new palette (olive and fern greens against the dragonborn's crimson, sun-yellowed tan sandstone, no near-blacks on
-  the ground); the court wall as a raised corner set; fern patches (`%`, a second set chained from the same grass); grass
-  in three inpainted variants; snake, lizard and vine variants of the wall face (`vary`); door, steps, well, ferns as
-  props. Engine: wang sheets take variant tiles (a corner code listed again), stairs take a legend `sprite`, and the
-  place's own tileset props win over the stock ones (the tileset door was never drawn). Seen in headless Chrome.
-- [ ] Court art, second pass. Seen in screenshots and still weak:
-  - the grass still shows a faint lattice: the all-grass tile has brick fragments on its edges, which inpainting can't
-    change. Regenerate the court set with a lower terrain that keeps bricks off the edges, and put the broken bricks in
-    a rubble set (`;` is still a flat tint);
-  - the lizard mosaic is small and its inpaint lit the face band, so it looks brighter than its neighbours: redo it;
-  - the steps up the wall are a small rotated stair (light from the wrong side) with the stock arrow on top; the west
-    gate door and the stairs back to town draw over each other's look; one door image serves walls of both directions;
-  - the wall top (`temple_wall`) still uses the placeholder labyrinth set; it needs a wall-walk set and the guardhouse.
+- [x] The labyrinth (`temple_maze`, through the court's south door): laid out by `tools/labyrinth.js` (seed 7, 11x7
+  cells: two-square passages between two-square walls, a depth-first walk with 10% extra openings, bends rounded) and
+  its own damp sandstone cliff set and pieces (`assets/wip/temple-maze/README.md`). A constrictor, a scaleward pair, a
+  rat pack and a scaleward in the far dead ends, a cache, a well (a prop until the sewers exist), the east door locked
+  "not built yet". Seen in headless Chrome; not played through, encounters not simmed (`node tools/encounters.js`).
 - [ ] Style target: the PixelLab dragonborn (64 px). Tiles at 64 px to match (plan §4).
 - [ ] Archive the Undercroft and the Barrow for tests and sims only and start at the temple, once there is more of the
   temple than the court (the labyrinth and palace doors are locked "not built yet").
-- [ ] Then labyrinth, courtyard 2 and pyramid, sewers, ritual chamber, palace (plan §5).
+- [ ] Then courtyard 2 and pyramid, sewers, ritual chamber, palace (plan §5).
 - [ ] Monsters: an alligator monster for the sewers (the sheet exists); lizardfolk variants; the avatar of fear as the
   ritual chamber's boss.
 - [ ] The temple props also replace the Cute Fantasy props the published site may not show.

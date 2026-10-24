@@ -25,9 +25,11 @@
 #               spread, margin, edge}. density: pieces per square (above 1, more than one try); clump: squares per
 #               swell of a noise that gathers them in drifts; spread: art pixels a piece may hang over its square;
 #               edge: also on squares bordering a terrain drawn under this one (default: only where all eight
-#               neighbours are the same)
-#     faces     (a wall) pieces on its south face where it runs straight: {density, band: [top, height], pieces}, band
-#               and a piece's optional sixth number (its height) measured from the top of the square in front
+#               neighbours are the same); flip: pieces may mirror left to right. A square never takes the piece its
+#               west and north neighbours would take first, so identical sprites don't stand side by side
+#     faces     (a wall) pieces on its south face where it runs straight: {density, band: [top, height], pieces, drop},
+#               drop: art pixels a piece may hang lower than its set height
+#               band and a piece's optional sixth number (its height) are measured from the top of the square in front
 #   props     name -> [image, x, y, w, h], in the art's pixels: map objects (a well, a statue) for legend props and
 #             drops by `sprite`, drawn with their feet at the square's bottom and one cell to one square.
 
@@ -41,13 +43,14 @@ temple_court:
     grass:
       color: "#5f7d42"
       tile: court-grass.png
-      # tuft, fern, broken bricks, pebbles, flowers, tuft
-      decor: {density: 1.2, clump: 5, pieces: [[court-decor.png, 0, 0, 22, 23], [court-decor.png, 64, 0, 26, 24], [court-decor.png, 128, 0, 28, 24], [court-decor.png, 192, 0, 16, 10], [court-decor.png, 256, 0, 10, 11], [court-decor.png, 0, 0, 22, 23]]}
+      # tuft, fern, broken bricks, pebbles, flowers, feathery fern, ground cover
+      decor: {density: 1.1, clump: 5, flip: true, pieces: [[court-decor.png, 0, 0, 22, 23], [court-decor.png, 64, 0, 26, 24], [court-decor.png, 128, 0, 28, 24], [court-decor.png, 192, 0, 16, 10], [court-decor.png, 256, 0, 10, 11], [court-decor.png, 896, 0, 38, 36], [court-decor.png, 1024, 0, 34, 27]]}
     ferns:
       color: "#4a4030"
       wang: court-loam.png
       over: grass
-      decor: {density: 1.3, edge: true, spread: 14, pieces: [[court-decor.png, 704, 0, 58, 56], [court-decor.png, 768, 0, 43, 44], [court-decor.png, 64, 0, 26, 24], [court-decor.png, 768, 0, 43, 44]]}
+      # large and small fern, feathery fern, broad-leaf plant, palm seedling, ground cover, fern tuft
+      decor: {density: 0.9, edge: true, spread: 14, flip: true, pieces: [[court-decor.png, 704, 0, 58, 56], [court-decor.png, 768, 0, 43, 44], [court-decor.png, 896, 0, 38, 36], [court-decor.png, 832, 0, 36, 38], [court-decor.png, 960, 0, 26, 32], [court-decor.png, 1024, 0, 34, 27], [court-decor.png, 64, 0, 26, 24]]}
     rubble:
       color: "#bba57a"
       wang: court-paving.png
@@ -93,8 +96,8 @@ temple_court:
         - [0, 3, ".01..12..10....."]
       # Wall tops: moss, a vine sprig, a crack.
       decor: {density: 0.4, clump: 4, pieces: [[court-decor.png, 384, 0, 24, 20], [court-decor.png, 512, 0, 20, 22], [court-decor.png, 448, 0, 17, 32], [court-decor.png, 384, 0, 24, 20]]}
-      # Faces: a vine from the lip, a snake mosaic in the face.
-      faces: {density: 0.35, band: [-32, 56], pieces: [[court-decor.png, 576, 0, 30, 44, -32], [court-decor.png, 640, 0, 40, 40, -26], [court-decor.png, 576, 0, 30, 44, -32]]}
+      # Faces: five kinds of vine from the lip, a snake mosaic in the face.
+      faces: {density: 0.4, drop: 2, band: [-32, 56], pieces: [[court-decor.png, 576, 0, 30, 44, -32], [court-decor.png, 640, 0, 40, 40, -26], [court-decor.png, 576, 0, 30, 30, -32], [court-decor.png, 1088, 0, 9, 34, -32], [court-decor.png, 1152, 0, 48, 35, -32], [court-decor.png, 1216, 0, 17, 41, -32]]}
   # court-props.png: door, steps up the wall, well, a large and a small clump of ferns (PixelLab map objects).
   props:
     door: [court-props.png, 0, 0, 64, 61]
@@ -157,16 +160,59 @@ temple_walltop:
     door_locked: [court-props.png, 0, 0, 64, 61]
     well: [court-props.png, 128, 0, 64, 61]
 
-# The labyrinth: worked, damp sandstone underfoot, the same walls.
+# The labyrinth: worked, damp sandstone, a little darker than the court's (PixelLab, 64 px; prompts in
+# assets/wip/temple-maze/README.md). Built like the court: a plain floor and a cliff set, the variety in pieces.
 temple_maze:
   cell: 64
   dir: art/worldtiles/temple/
-  floor: moss
+  floor: stone
   terrains:
-    moss: {color: "#6e6c55"}
+    stone:
+      color: "#8a7656"
+      tile: maze-floor.png
+      # a puddle, bones, a fallen stone, a broken urn, pebbles, broken bricks, moss, a crack
+      decor: {density: 0.45, clump: 4, flip: true, pieces: [[maze-decor.png, 0, 0, 26, 18], [maze-decor.png, 64, 0, 33, 21], [maze-decor.png, 128, 0, 29, 25], [maze-decor.png, 192, 0, 32, 25], [maze-decor.png, 448, 0, 16, 10], [maze-decor.png, 512, 0, 28, 24], [maze-decor.png, 256, 0, 24, 20], [maze-decor.png, 320, 0, 17, 32]]}
     rubble: {color: "#9a8a68", alpha: 0.45}
     water: {color: "#1f4450"}
     shallows: {color: "#3b6a70"}
     bridge: {color: "#7a5a36"}
-    wall: {color: "#cdb98a", wang: moss-wall.png, over: moss}
-  props: {}
+    wall:
+      color: "#a8926c"
+      wang: maze-wall.png
+      over: stone
+      # The court wall's layout (the same 25 patterns); row 8 the plain top as large blocks.
+      cliff:
+        - [2, 2, ".....00..00....."]
+        - [3, 2, ".....00..01....."]
+        - [1, 4, ".....00..11....."]
+        - [2, 4, ".....00..10....."]
+        - [3, 3, ".00..01..01....."]
+        - [3, 4, ".....01..01....."]
+        - [0, 8, ".....11..11....."]
+        - [1, 8, ".....11..11....."]
+        - [2, 8, ".....11..11....."]
+        - [3, 8, ".....11..11....."]
+        - [1, 0, ".11..10..10....."]
+        - [1, 1, ".....10..10....."]
+        - [0, 4, ".....10..11....."]
+        - [3, 6, ".....01..11....."]
+        - [1, 6, ".....11..12...0."]
+        - [3, 0, ".....11..22..00."]
+        - [1, 2, ".....10..20..00."]
+        - [1, 7, ".1...12..10....."]
+        - [3, 1, ".11..22..00....."]
+        - [1, 3, ".....20..00....."]
+        - [2, 0, ".....01..02..00."]
+        - [0, 0, ".....11..21..0.."]
+        - [2, 6, ".....10..21..01."]
+        - [2, 1, ".....02..00....."]
+        - [0, 1, "..1..21..01....."]
+        - [2, 7, ".10..21..01....."]
+        - [0, 2, ".....01..12..10."]
+        - [0, 3, ".01..12..10....."]
+      decor: {density: 0.35, clump: 4, pieces: [[maze-decor.png, 256, 0, 24, 20], [maze-decor.png, 384, 0, 20, 22], [maze-decor.png, 320, 0, 17, 32], [maze-decor.png, 640, 0, 34, 27]]}
+      faces: {density: 0.25, drop: 2, band: [-32, 56], pieces: [[maze-decor.png, 576, 0, 30, 44, -32], [maze-decor.png, 704, 0, 9, 34, -32], [maze-decor.png, 768, 0, 48, 35, -32], [maze-decor.png, 576, 0, 30, 26, -32]]}
+  props:
+    door: [court-props.png, 0, 0, 64, 61]
+    door_locked: [court-props.png, 0, 0, 64, 61]
+    well: [court-props.png, 128, 0, 64, 61]

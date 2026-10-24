@@ -38,7 +38,8 @@
   const solid = (c) => !c || c.kind === 'wall' || c.kind === 'rock';
   const doorLike = (c) => !!c && (c.kind === 'door' || c.kind === 'locked' || (c.kind === 'floor' && (c.ch === '+' || (c.def && (c.def.kind === 'secret' || c.def.kind === 'locked')))));
 
-  const hash = (x, y, k) => { let n = (x * 374761393 + y * 668265263 + (k || 0) * 2147483647) | 0; n = (n ^ (n >>> 13)) * 1274126177; return ((n ^ (n >>> 16)) >>> 0); };
+  // Integer multiplies (Math.imul): a float product past 2^53 loses the low bits, and picks by `% n` then repeat.
+  const hash = (x, y, k) => { let n = (Math.imul(x, 374761393) + Math.imul(y, 668265263) + Math.imul(k || 0, 2147483647)) | 0; n = Math.imul(n ^ (n >>> 13), 1274126177); return ((n ^ (n >>> 16)) >>> 0); };
 
   // The wall geometry of a grid: which squares show face, which show cap.
   function geometry(sc) {
@@ -254,9 +255,10 @@
       case 'banner': env.prop(ctx, cmd.color ? 'banner_blue' : 'banner_red', X + size / 2, Y + size - S * 1.5, S, { scale: 0.7 }); break;
       case 'stairs': {
         const cx = X + size / 2;
-        // A legend `sprite` (a tileset's steps up the wall) is drawn as it is; the stock stairs flip to point up.
-        if (cmd.sprite && env.hasProp(cmd.sprite)) env.prop(ctx, cmd.sprite, cx, Y + size, S);
-        else env.prop(ctx, 'stairs', cx, Y + size, S, { flipY: cmd.up });
+        // A legend `sprite` (a door, a tileset's steps up the wall) is drawn as it is, with no arrow; the stock stairs
+        // flip to point up.
+        if (cmd.sprite && env.hasProp(cmd.sprite)) { env.prop(ctx, cmd.sprite, cx, Y + size, S); break; }
+        env.prop(ctx, 'stairs', cx, Y + size, S, { flipY: cmd.up });
         ctx.fillStyle = 'rgba(255,230,150,0.9)';
         ctx.font = `${S * 6}px "Pixelify Sans", monospace`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -427,13 +429,19 @@
     const dens = (d.density == null ? 0.4 : d.density) * (d.clump ? 3 * Math.max(0, noise(x / d.clump, y / d.clump) - 0.35) : 1);
     for (let i = 0; i < tries; i++) {
       if (hash(x, y, 31 + i) % 1000 >= (dens / tries) * 1000) continue;
-      const k = hash(x, y, 41 + i) % pieces.length, pc = pieces[k], m = d.margin == null ? 2 : d.margin;
+      // Not the piece the squares to the west and north took first, so the same sprite doesn't stand side by side.
+      const pick = (xx, yy) => hash(xx, yy, 41 + i) % pieces.length, near = [pick(x - 1, y), pick(x, y - 1)];
+      let k = pick(x, y);
+      for (let n = 0; n < 2 && pieces.length > 2 && near.includes(k); n++) k = (k + 1) % pieces.length;
+      const pc = pieces[k], m = d.margin == null ? 2 : d.margin;
       const sp = d.spread || 0, room = (len) => Math.max(0, cell - 2 * m - len + 2 * sp);
       const dx = m - sp + (hash(x, y, 51 + i) % (room(pc[3]) + 1));
       const band = d.band || [0, cell];
       // A face piece's sixth number, if any, is its height on the face (a vine hangs from the lip).
       const dy = where === 'face' ? (pc[5] != null ? pc[5] : band[0] + Math.round((band[1] - pc[4]) / 2)) : m - sp + (hash(x, y, 61 + i) % (room(pc[4]) + 1));
-      out.push({ x, y, piece: pc, dx, dy });
+      // `drop` (art pixels) lowers a face piece by up to that much, so a row of vines doesn't hang level; `flip` lets
+      // pieces mirror left to right.
+      out.push({ x, y, piece: pc, dx, dy: dy + (where === 'face' && d.drop ? hash(x, y, 81 + i) % (d.drop + 1) : 0), flip: !!d.flip && hash(x, y, 91 + i) % 2 === 1 });
     }
   }
 
@@ -468,7 +476,12 @@
       if (p.m & 1) ctx.fillRect(X + hs, Y + hs, hs, hs);
     } else if (kind === 'decor') {
       const k = (T * S) / cell, pc = p.piece, im = env.imgAt(ts.dir + pc[0]);
-      if (im.ok) ctx.drawImage(im.el, pc[1], pc[2], pc[3], pc[4], env.ox + p.x * size + Math.round(p.dx * k), env.oy + p.y * size + Math.round(p.dy * k), pc[3] * k, pc[4] * k);
+      if (!im.ok) return;
+      const X = env.ox + p.x * size + Math.round(p.dx * k), Y = env.oy + p.y * size + Math.round(p.dy * k), w = pc[3] * k;
+      if (!p.flip) { ctx.drawImage(im.el, pc[1], pc[2], pc[3], pc[4], X, Y, w, pc[4] * k); return; }
+      ctx.save(); ctx.translate(X + w, Y); ctx.scale(-1, 1);
+      ctx.drawImage(im.el, pc[1], pc[2], pc[3], pc[4], 0, 0, w, pc[4] * k);
+      ctx.restore();
     } else if (kind === 'over') {
       const X = env.ox + p.x * size, Y = env.oy + p.y * size;
       const t = ts.terrains[p.g.tile];

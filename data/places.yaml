@@ -317,32 +317,32 @@ temple_court:
     - "################################"
     - "################################"
     - "##F,,,,,,,,,f,,,,,,,,f,,,,,,,F##"
-    - "##,,,%%%,,,,,,,,,,,,,,,,,,,,,,##"
-    - "##,,%%%,,,,,,,,,,,,,,,,,,;,,,,##"
-    - "##,,,%,,,,,,,,,,,,%%%%%,,,,,,,##"
+    - "##,,,%%,,,,,,,,,,,,,,,,,,,,,,,##"
+    - "##,,,%%,,,,,,,,,,,,,,,,,,,,,,,##"
+    - "##,,,,,,,,,,,,,,,,,%%%%,,,,,,,##"
     - "##,,,,,,,;;,,,,,,,,%%%%,,,,,,,##"
-    - "##,,,,,,,;,,,,,,,,%%%%,,,,,,,,##"
-    - "##,,,,,,,,,,,,,,,,,,,;;,,,,,,,##"
-    - "##,,,,,,,,,,,,,,,,,,,,;,,,,,,,##"
-    - "##,,,,,,,,,%%,,,,,,,,,,,%%,,,,##"
-    - "##,,,,,,,,,,%,;,,,,,,,,,%%%%,,##"
+    - "##,,,,,,;;;;,,,,,,,%%%,,,,,,,,##"
+    - "##,,,,,,,;;,,,,,,,,,,,,,,,,,,,##"
+    - "##,,,,,,,,,,,,,,,,,,;;,,,,,,,,##"
+    - "##,,,,,,,,,,;;,,,,,;;;,,%%,,,,##"
+    - "##,,,,,,,,,,;;,,,,,;;;,,%%%%,,##"
     - "##,,,,,,,,,,,,,,,,,,,,,,%%%%,f##"
     - "##u,,,,,,,,,,,,,,,,,,,,,%%%%,,##"
     - "##,f,,,,,,,,,,,,,,,,,,,,,,,,,,##"
     - "<+,,,,g,,,,,,,,,c,,,,,,,,,p,,,P#"
     - "##,f,,,,,,,,,,,,,,,,,,,,,,,,,,##"
     - "##v,,,,,,,,,,,,,,,,,,,,,,,,,,,##"
+    - "##,,,,,,,,,,;;,,,,,,,,,,,,,,,,##"
+    - "##,,,,,%%,,;;;;,,,,,,,,,,,,,,f##"
+    - "##,,,,,%%%%,;;,,,,,,,,,;;,,,,,##"
+    - "##,,,,,,,%%,,,,,,,,,,,,;;,,,,,##"
     - "##,,,,,,,,,,,,,,,,,,,,,,,,,,,,##"
-    - "##,,,,%%%,,,;,,,,,,,,,,,,,,,,f##"
-    - "##,,,,,%%%%,,,,,,,,,,,,,,,,,,,##"
-    - "##,,,,%%,%%,,,,,,,,,,,;;,,,,,,##"
-    - "##,,,,,,,,,,,,,,,,,,,,;,,,,,,,##"
-    - "##,,,,,,;;,,,,,,,%%%%%%,,,,,,,##"
-    - "##,,,,,,;,,,,,,,,%%%%%%,,,,,,,##"
-    - "##,,,,,,,,,,,,,,,%,%%%%,%,%,,,##"
-    - "##,,,,,,,,,,,,,l,,,,,,,,%%,,,,##"
-    - "##,,;;,,,,,,,,,,,,,,,,,,,%%,,,##"
-    - "##,,,,,,,,,,,,,,,,,,,,,,,,,,,,##"
+    - "##,,,,,,,,,,,,,,,%%%%%%,,,,,,,##"
+    - "##,,,,,,,,,,,,,,,%%%%%%,,,,,,,##"
+    - "##,,,,,,,,,,,,,,,,,%%%%,,,,,,,##"
+    - "##,,,;;;,,,,,,,l,,,,,,,,,,,,,,##"
+    - "##,,;;;;,,,,,,,,,,,,,,,,,,;;,,##"
+    - "##,,;;,,,,,,,,,,,,,,,,,,,,;;,,##"
     - "##F,,,,f,,,,,,,,,,,,,,F,,,,,,F##"
     - "###############L################"
     - "################################"
@@ -352,7 +352,7 @@ temple_court:
     v: {kind: stairs, to: temple_wall, at: "2", up: true, sprite: wall_steps, label: "Steps up onto the wall"}
     F: {kind: prop, sprite: fern_large, solid: false, label: "Ferns"}
     f: {kind: prop, sprite: fern_small, solid: false, label: "Ferns"}
-    L: {kind: locked, label: "Door to the labyrinth (not built yet)", tn: 99, text: "Heavy wood, barred from the far side. (The labyrinth is not built yet.)"}
+    L: {kind: stairs, to: temple_maze, at: N, sprite: door, label: "Door to the labyrinth"}
     P: {kind: locked, label: "Arched door to the palace (not built yet)", tn: 99, text: "Carved and painted, and shut fast. (The palace is not built yet.)"}
     g: {kind: monster, encounter: gate, label: "Guards at the gate"}
     c: {kind: monster, encounter: court, label: "Lizardfolk in the court"}
@@ -366,6 +366,64 @@ temple_court:
   wandering:
     - {w: 1, foes: [{monster: scaleward}], text: "A patrol comes along the wall."}
     - {w: 4, nothing: true}
+  secrets: []
+
+temple_maze:
+  name: The Labyrinth
+  kind: dungeon
+  blurb: Worked passages of damp sandstone, winding and doubling back on themselves. The temple's people live in here.
+  level: 2
+  look: {wall: "#a8926c", floor: "#8a7656", ceiling: "#2a3a22", fog: "#0c120a", torch: 1, tileset: temple_maze, light: 14}
+  # Laid out by tools/labyrinth.js --seed 7 --cols 11 --rows 7 --loops 0.1, then the letters filled in.
+  map:
+    - "##############################################"
+    - "######################N#######################"
+    - "###...............1.##.....................###"
+    - "##..................##......................##"
+    - "##...#####..##########..##..#############...##"
+    - "##...#####...#########..##..##############..##"
+    - "##.....###.....####................####.....##"
+    - "###.....###.....##..................##......##"
+    - "#####...#####...##...#..#########...##...#..##"
+    - "######..######..##...#..##########..##..##..##"
+    - "###.............##......###...W.##..##..##4.##"
+    - "##..............###.....##......##..##..##..##"
+    - "##...#####..##..######..##...#####..##..######"
+    - "##..#####...##...#####..##..#####...##..######"
+    - "##..###.....##....2.##..##..........##.......E"
+    - "##..##.....####.....##..##.........###......##"
+    - "##..##...#############..##..##########..#...##"
+    - "##..##..#############...##...########...##..##"
+    - "##..##..###....####.....##..............##..##"
+    - "##..##..##......##.....####............###..##"
+    - "##..##..##......##...#############..######..##"
+    - "##..##..##..##..##..##############..######..##"
+    - "##..........##..##..###........###.....###..##"
+    - "##..........##..##..##..........##......##..##"
+    - "##..##..##..##..##..##...####...##..#...##..##"
+    - "##..##......##...#..#...######..#...##......##"
+    - "##C.##......##..........##3.........##......##"
+    - "##..###....####........###.........####....###"
+    - "##############################################"
+    - "##############################################"
+  legend:
+    N: {kind: stairs, to: temple_court, at: L, sprite: door, label: "Back to the court"}
+    E: {kind: locked, label: "Door to the second court (not built yet)", tn: 99, text: "A heavy door, barred from the far side. (The second court is not built yet.)"}
+    W: {kind: prop, sprite: well, label: "A well, its rope long gone (the sewers below are not built yet)"}
+    C: {kind: chest, label: "A niche with a sealed jar", loot: strongbox, tn: 8}
+    "1": {kind: monster, encounter: snake, label: "Something in the dead end"}
+    "2": {kind: monster, encounter: pair, label: "Lizardfolk at their fire"}
+    "3": {kind: monster, encounter: rats, label: "Rats"}
+    "4": {kind: monster, encounter: watch, label: "A lizardfolk watch"}
+  encounters:
+    snake: {foes: [{monster: constrictor}], text: "A great snake uncoils from the end of the passage."}
+    pair: {foes: [{monster: scalewardPair}], text: "Two lizardfolk look up from their fire and reach for their weapons."}
+    rats: {foes: [{monster: ratPack}], text: "Rats pour out of a crack in the wall."}
+    watch: {foes: [{monster: scaleward}], text: "A scaled guard steps out of a side passage."}
+  wandering:
+    - {w: 1, foes: [{monster: scaleward}], text: "A lizardfolk patrol rounds the bend."}
+    - {w: 1, foes: [{monster: ratPack}], text: "Rats, running ahead of something."}
+    - {w: 5, nothing: true}
   secrets: []
 
 temple_wall:
