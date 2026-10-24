@@ -258,8 +258,9 @@
       };
     }
     const t = chars[req.target];
+    const why = { enters: 'comes into', leaves: 'leaves', moves: 'moves about in' }[req.why] || 'leaves';
     return {
-      title: `${t.name} leaves ${me.name}'s reach`, sub: 'Strike as they go? A hit stops them.', ap,
+      title: `${t.name} ${why} ${me.name}'s reach`, sub: req.why === 'enters' ? 'Strike as they come in? A hit stops them.' : 'Strike as they go? A hit stops them.', ap,
       choices: req.options.map((o) => { const p = blowPreview(enc, chars, { decl: { actor: req.actor, target: req.target, type: 'strike', option: o } }); return { value: o, label: o.label, cost: `${C.fmtAP(o.ap)} AP`, odds: p ? p.text : '' }; }),
       none: { label: 'Let them go', note: 'keep the AP' },
     };
@@ -477,14 +478,38 @@
     } else if (e.kind === 'move') {
       const m = e.move;
       rows.unshift(['With your AP', `up to ${m.maxSquares} squares`]);
-      notes.push('Click a square; the number is its AP. Walls are walked around; rough ground costs more. Stepping out of a foe\'s reach lets them strike at you as you go.');
+      notes.push('Click a square; the number is its AP. Walls are walked around; rough ground costs more. Stepping into a foe\'s reach, out of it, or twice within it lets them strike at you; one step within it is free.');
     } else notes.push(ACTION_INFO[e.type] || '');
     if (e.why) rows.push(['Unavailable', e.why]);
     return [facts(rows), notes.filter(Boolean).map((n) => h('p', null, n))];
   }
 
+  // Where a blow may be aimed (CONFIG.locations.aim): only at someone whose locations differ. Returns null, or
+  // { best, rows: [[value, label]] } with 'best' (the expected-best place, the default), 'unaimed', each location.
+  function aimChoices(enc, chars, id, e, targetId) {
+    const L = G.CONFIG.locations;
+    const a = chars[id], t = targetId ? chars[targetId] : null;
+    if (!L || !L.aim || !t || e.kind !== 'strike' || !e.option || e.option.spell || e.option.unarmed || C.armorUniform(t)) return null;
+    const d = Combat.dist(enc.pos[id], enc.pos[targetId]);
+    const best = G.AI.bestAim(a, t, e.option, d);
+    const show = (loc) => {
+      const o = Object.assign({}, e.option, loc ? { aim: loc } : {});
+      const p = blowPreview(enc, chars, { decl: { actor: id, target: targetId, type: 'strike', option: o } });
+      const pen = loc ? Combat.aimPenalty(o, loc) : 0;
+      const piece = loc ? C.armorAt(t, loc) : null;
+      return `${loc ? L.names[loc] || loc : 'Unaimed'}${pen ? ` (−${pen})` : ''}${loc ? (piece ? '' : ' · bare') : ''}${p ? ` · ${p.text}` : ''}`;
+    };
+    const bestLabel = best && best.loc ? (L.names[best.loc] || best.loc) : 'unaimed';
+    return { best: best ? best.loc : null, rows: [['best', `Best (${bestLabel})`], ['unaimed', show(null)]].concat(L.order.map((l) => [l, show(l)])) };
+  }
+
   function declareEntry(app, enc, id, e, cmd) {
     const t = cmd.target;
+    if (e.kind === 'strike') {
+      const ac = aimChoices(enc, app.state.characters, id, e, t);
+      const pick = !ac || !cmd.location || cmd.location === 'unaimed' ? null : cmd.location === 'best' ? ac.best : cmd.location;
+      return declare(app, enc, Object.assign({ actor: id, type: 'strike', option: e.option, target: t }, pick ? { location: pick } : {}));
+    }
     if (e.kind === 'strike' || e.kind === 'cast') return declare(app, enc, { actor: id, type: e.kind, option: e.option, target: t });
     if (e.kind === 'guard') return declare(app, enc, { actor: id, type: e.type, against: cmd.vs || null });
     return declare(app, enc, e.targets ? { actor: id, type: e.type, target: t } : { actor: id, type: e.type, option: e.option });
@@ -528,6 +553,13 @@
         entry.targets.length
           ? UI.select('cmd-target', cmd.target || '', (cmd.target ? [] : [['', '— choose a target —']]).concat(entry.targets.map((t) => [t.id, `${chars[t.id].name}${t.distance != null ? ` · ${t.distance} sq` : ''}${t.inReach ? '' : t.tooClose ? ' (too close)' : ' (out of reach)'}`])), (v) => { cmd.target = v || null; rerender(); })
           : h('span', { class: 'muted small' }, 'No one'));
+      // Where to aim it (armor by location): the expected-best place by default.
+      const ac = aimChoices(enc, chars, id, entry, cmd.target);
+      if (ac) {
+        if (!ac.rows.some((r) => r[0] === cmd.location)) cmd.location = 'best';
+        aim = h('div', { class: 'stack tight grow' }, aim, h('label', { class: 'pick grow' }, h('span', { class: 'label' }, 'Location'),
+          UI.select('cmd-location', cmd.location, ac.rows, (v) => { cmd.location = v; rerender(); })));
+      }
     } else if (entry && (entry.kind === 'guard' || entry.kind === 'ready')) {
       const vs = legal.guardAgainst.includes(cmd.vs) ? cmd.vs : '';
       aim = h('label', { class: 'pick grow' }, h('span', { class: 'label' }, 'Against'),
@@ -561,7 +593,7 @@
         h('button', { class: 'end', title: legal.ap ? `Keep ${C.fmtAP(legal.ap)} AP to defend with until the round ends` : 'Nothing left this round', onclick: () => finishTurn(app, enc, id) }, legal.ap ? `End turn · keep ${C.fmtAP(legal.ap)} AP` : 'End turn'),
         infoButton('Turns and AP', () => [
           h('p', null, 'On your turn spend as much of your AP as you like; every action happens at once.'),
-          h('p', null, 'AP you keep pays for reactions on other turns: a block, parry or dodge when a blow comes, or a strike at a foe who leaves your reach. AP left when the round ends is lost.'),
+          h('p', null, 'AP you keep pays for reactions on other turns: a block, parry or dodge when a blow comes, or a strike at a foe who comes into your reach, leaves it, or moves about in it. AP left when the round ends is lost.'),
           h('p', { class: 'muted' }, 'Spend it all and you take whatever comes on your armor. Click a name or figure for its sheet.')])));
   }
 
@@ -812,5 +844,5 @@
 
   UI.Views.battle = view;
   // The pieces the game's own battle screen (src/ui/game/screens/battle.js) reuses.
-  UI.Views.battleParts = { bui, mapState, cellClick, declarePanel, phasePanel, scheduleAI, syncCommand, aiControlled, openInfo, closeModal, declare, declareEntry, finishTurn, ioFor, reactionModel, blowPreview, TILE_GLYPH };
+  UI.Views.battleParts = { bui, mapState, cellClick, declarePanel, phasePanel, scheduleAI, syncCommand, aiControlled, openInfo, closeModal, declare, declareEntry, finishTurn, ioFor, reactionModel, blowPreview, aimChoices, TILE_GLYPH };
 })(globalThis.BBB);

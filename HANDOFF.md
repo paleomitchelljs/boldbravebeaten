@@ -69,8 +69,8 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 - [x] Opportunity strikes on entering a foe's reach, leaving it, or a second step within it (ruled; sim/FINDINGS.md).
 - [x] Armor by hit location, step 1: pieces cover locations, unaimed location rolls against mixed armor, carry-through
   for cuts (docs/PROPOSALS.md §2; sim/FINDINGS.md; `sim/locations.js`).
-- [ ] Step 2: aimed blows and a Location menu beside each attack (default: the best expected location, not the least
-  armored). Step 3: location effects (attribute tables by location, disarm, trip, stun, vital by location).
+- [x] Step 2: aimed blows and a Location menu beside each attack (default: the best expected location, `AI.bestAim`).
+- [ ] Step 3: location effects (attribute tables by location, disarm, trip, stun, vital by location).
 - [x] Parry carry-through (the user's idea): a parried swing whose force beats the parrying weapon's carries through,
   weakened; a parried thrust is stopped; the overwhelm term left the parry odds (`CONFIG.defense.parryCarry`).
 - [ ] Sim the strong items (all draft): the Flowing Black Silk Sash (×0.8 AP on everything), the Scimitar of Speed,

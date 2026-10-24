@@ -86,6 +86,27 @@
     return v;
   }
 
+  // Where to aim a blow (CONFIG.locations.aim), from what the attacker can see: the target's armor and how well it
+  // could defend. Each choice is worth the blow's value there × the chance it lands, taking the target to defend
+  // half the time with its best defence (aiming makes that easier for it). Returns { loc (null: unaimed), v, ratio
+  // (its worth over an unaimed blow's) }, or null when every location is the same (a full harness, bare skin).
+  function bestAim(c, target, opt, d) {
+    const L = G.CONFIG.locations;
+    if (!L || !L.aim || opt.spell || C.armorUniform(target)) return null;
+    const kinds = ['parry', 'dodge'].concat(C.shieldReady(target) ? ['block'] : []);
+    const land = (o) => 1 - 0.5 * Math.max(0, ...kinds.map((k) => (Combat.defenseUnavailable(target, k, { type: 'strike', option: o, actor: c.id }, { [c.id]: c }) ? 0 : Combat.defenseOdds(target, k, o.motion, c, o))));
+    const plain = Object.assign({}, opt); delete plain.aim;
+    const base = hitValue(c, target, plain, d) * land(plain);
+    let best = { loc: null, v: base };
+    for (const loc of L.order) {
+      const o = Object.assign({}, plain, { aim: loc });
+      const v = hitValue(c, target, o, d) * land(o);
+      if (v > best.v + 0.01) best = { loc, v };
+    }
+    best.ratio = base > 0 ? best.v / base : 1;
+    return best;
+  }
+
   const MANEUVER_THREAT = { trip: 8, disarm: 6, shove: 3, clinch: 6, grapple: 8, pin: 10, throw: 10, break: 2 };
 
   // Threat of an incoming declaration, as the defender perceives it.
@@ -777,10 +798,13 @@
       for (const t of atk.targets) {
         if (!t.inReach || !foes.includes(t.id)) continue;
         let v = rate(c, chars[t.id], atk, t.distance) * P.kickBias ** (atk.unarmed === 'kick' ? 1 : 0);
+        // Aim where it pays (a bare leg under a breastplate), if anywhere does.
+        const aim = atk.unarmed ? null : bestAim(c, chars[t.id], atk, t.distance);
+        if (aim && aim.loc) v *= aim.ratio;
         // Digging into the AP kept for defence: never after the first action of the turn; the first
         // blow is still worth something, a little less.
         if (la.ap - atk.ap < reserve) { if (acted) continue; v *= 0.85; }
-        if (!best || v > best.v) best = { v, decl: { actor: id, type: 'strike', option: atk, target: t.id } };
+        if (!best || v > best.v) best = { v, decl: Object.assign({ actor: id, type: 'strike', option: atk, target: t.id }, aim && aim.loc ? { location: aim.loc } : {}) };
       }
     }
     const winds = la.other.filter((o) => o.type === 'windUp' && o.affordable);
@@ -819,5 +843,5 @@
     return endTurn;
   }
 
-  G.AI = { choose, react, reserveAP, hitValue, perceivedThreat, preferredDistance, DEFAULTS };
+  G.AI = { choose, react, reserveAP, hitValue, perceivedThreat, preferredDistance, bestAim, DEFAULTS };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

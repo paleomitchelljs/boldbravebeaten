@@ -63,7 +63,7 @@
     const r = game.ui.reacting;
     const m = r.model;
     return h('section', { class: 'popcard react' },
-      h('div', { class: 'popcard-head' }, h('div', { class: 'stack tight grow' }, h('span', { class: 'label' }, `Reaction · ${C.fmtAP(m.ap)} AP left`), h('h3', null, m.title)), UI.tip(r.req.kind === 'defend' ? 'AP you spend now is gone from this round: from your turn if it is still to come. A defence that fails still costs its AP.' : 'A strike as they go costs its AP now; a hit stops them where they are.')),
+      h('div', { class: 'popcard-head' }, h('div', { class: 'stack tight grow' }, h('span', { class: 'label' }, `Reaction · ${C.fmtAP(m.ap)} AP left`), h('h3', null, m.title)), UI.tip(r.req.kind === 'defend' ? 'AP you spend now is gone from this round: from your turn if it is still to come. A defence that fails still costs its AP.' : 'A strike at a mover costs its AP now; a hit stops them where they are.')),
       h('p', { class: 'small muted' }, m.sub),
       h('div', { class: 'stack tight' },
         m.choices.map((c, i) => h('button', { class: 'act', onclick: () => answer(game, c.value) }, h('span', null, h('kbd', null, String(i + 1)), ' ', c.label), h('span', { class: 'small muted num' }, `${c.cost}${c.odds ? ' · ' + c.odds : ''}`))),

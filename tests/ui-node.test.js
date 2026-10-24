@@ -201,6 +201,46 @@ test('ui: a player-run party is asked to react when a foe attacks, on the map, a
   } finally { globalThis.setTimeout = realTimeout; }
 });
 
+test('ui: a strike at someone in mixed armor offers a Location, defaulting to the best place', async () => {
+  const w = Game.world;
+  for (const c of World.party(w)) { c.control = 'manual'; c.status = G.Character.freshStatus(); c.stamina = G.Character.maxStamina(c); for (const k of Object.keys(c.damage)) c.damage[k] = 0; }
+  const realTimeout = globalThis.setTimeout;
+  globalThis.setTimeout = (f) => realTimeout(f, 0);
+  try {
+    Game.startBattle({ name: 'Aim', foes: [{ template: 'bandit', level: 1, n: 1 }] });
+    const enc = w.battle.enc, chars = G.Battle.table(w).characters;
+    for (const id of enc.ids) if (chars[id].side !== 'party') { chars[id].armor = G.Items.makeArmor('plate', null, 'average', { covers: ['torso'] }); chars[id].pieces = []; }
+    let seen = false;
+    for (let i = 0; i < 3000 && Game.screen === 'battle' && !Game.ui.result && !seen; i++) {
+      await new Promise((r) => realTimeout(r, 0));
+      if (Game.error) break;
+      if (Game.ui.reacting) { find('.popcard.react button.act.none').click(); continue; }
+      const cur = enc.phase === 'turn' && G.Combat.currentActor(enc);
+      if (cur && chars[cur].side === 'party') {
+        // Bring the foe next to whoever's turn it is, and render the command panel.
+        const foe = enc.ids.find((id) => chars[id].side !== 'party' && G.Character.isActive(chars[id]));
+        if (!foe) break;
+        enc.pos[foe] = { x: enc.pos[cur].x + 1, y: enc.pos[cur].y };
+        const bu = UI.Views.battleParts.bui(Game.ui.bs.app);
+        bu.cmd = null;
+        Game.render();
+        // The game waits for the player to pick a target on the map: pick the foe.
+        bu.cmd.target = foe;
+        Game.render();
+        const sel = find('#cmd-location');
+        if (sel) {
+          seen = true;
+          assert.match(sel.textContent, /Best \(/, 'a best choice');
+          assert.match(sel.textContent, /Legs/);
+          assert.match(sel.textContent, /bare/);
+        } else { const end = find('.cmd-foot .end'); if (end) end.click(); }
+      }
+    }
+    check('aim battle');
+    assert.ok(seen, 'the Location menu appeared');
+  } finally { globalThis.setTimeout = realTimeout; }
+});
+
 test('ui: the result of a flight, and the game-over screen', () => {
   const w = Game.world;
   Game.screen = 'gameover'; Game.render(); check('gameover');

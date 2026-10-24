@@ -620,7 +620,10 @@
       const dd = dist(enc.pos[id], enc.pos[decl.target]);
       if (dd > opt.maxRange) return { err: 'Out of reach' };
       if (dd < (opt.minRange || 1)) return { err: 'Too close' };
-      decl.option = opt;
+      // An aimed blow (CONFIG.locations.aim): the location travels with the option (defence odds, the hit).
+      const L = CONFIG.locations;
+      if (decl.location && !(L && L.order.includes(decl.location))) return { err: 'No such place to aim at' };
+      decl.option = decl.location && !opt.spell ? Object.assign({}, opt, { aim: decl.location }) : opt;
       ({ ap, stamina } = opt);
     } else if (decl.type === 'cast') {
       if (!G.Magic || !decl.option) return { err: 'Choose a spell' };
@@ -835,9 +838,10 @@
     // what the AI and the preview see. A full harness or a bare body is the same everywhere.
     const L = CONFIG.locations;
     const at = (loc) => hitAt(attacker, target, option, { v: v.slice(), prone, pinned, unconscious, weapon, coupDeGrace }, loc);
-    if (flags.location || !L || C.armorUniform(target)) {
-      const r = at(flags.location || (L ? L.order[0] : null));
-      if (!flags.location) r.location = null;
+    const where = flags.location || option.aim || null;
+    if (where || !L || C.armorUniform(target)) {
+      const r = at(where || (L ? L.order[0] : null));
+      if (!where) r.location = null;
       return r;
     }
     const parts = L.order.map((loc) => ({ loc, w: L.share[loc] || 0, h: at(loc) }));
@@ -1134,7 +1138,7 @@
 
   // Apply a hit, rolling d4s for slashing. Returns a short description.
   async function applyHit(enc, chars, attacker, target, option, roller, flags) {
-    const loc = (flags && flags.location) || await rollLocation(attacker, target, option, roller);
+    const loc = (flags && flags.location) || (option.aim && bodyBlow(target, option) ? option.aim : null) || await rollLocation(attacker, target, option, roller);
     let h = computeHit(attacker, target, option, Object.assign({}, flags, loc ? { location: loc } : {}));
     const parts = [];
     if (h.location) parts.push(`on the ${(CONFIG.locations.names[h.location] || h.location).toLowerCase()}${h.piece ? '' : ' (bare)'}`);
@@ -1353,9 +1357,23 @@
     return out;
   }
 
+  // What aiming a blow at a location costs it against a defence (CONFIG.locations.aim), and a shield's
+  // edge against a blow aimed at what it covers.
+  function aimPenalty(option, loc) {
+    const A = CONFIG.locations && CONFIG.locations.aim;
+    if (!A || !loc) return 0;
+    return Math.max(0, (A.penalty[loc] || 0) - (option && option.motion === 'thrust' ? A.thrustLess || 0 : 0));
+  }
+
   function defenseNumbers(defender, kind, motion, attacker, atkOption) {
     const r = defenseNumbersBase(defender, kind, motion, attacker, atkOption);
     const m = intentMods(defender, attacker);
+    const aim = atkOption && atkOption.aim;
+    if (aim) {
+      m.atk -= aimPenalty(atkOption, aim);
+      const S = CONFIG.locations.aim.shield;
+      if (kind === 'block' && S && (S.covers || []).includes(aim)) m.def += S.block || 0;
+    }
     // Gear that guides the blow (effects.hit); a blow from someone unseen is hard to meet.
     if (attacker) m.atk += C.gearSum(attacker, 'hit') + (G.Conditions && G.Conditions.flag(attacker, 'unseen') ? 2 : 0);
     r.bonus += m.def;
@@ -2318,6 +2336,6 @@
   G.Combat = {
     unseenBy, strikeEffects, conditionForbids, ATTACK_TYPES, DEFENSE_TYPES, shoveReach, log, rollDie, castSpell, knockDown, stability, releaseAll: clearGrapple,
     createEncounter, autoPlace, startRound, currentActor, legalActions, act, validate, endTurn, submit, describeDecl, apLeft, defenseOptions, opportunityOptions,
-    vitalNeed, projectedPos, dist, defenseOdds, parryCarryShare, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolveAction, finishRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
+    vitalNeed, projectedPos, dist, defenseOdds, parryCarryShare, aimPenalty, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolveAction, finishRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

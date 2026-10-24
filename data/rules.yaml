@@ -22,6 +22,13 @@ locations:
   names: {head: Head, torso: Torso, arms: Arms, hands: Hands, legs: Legs, feet: Feet}
   share: {head: 0.08, torso: 0.40, arms: 0.18, hands: 0.05, legs: 0.24, feet: 0.05}
   coverage: {full: [head, torso, arms, hands, legs, feet], half: [torso, arms, legs], partial: [torso]}
+  # aim (step 2): a blow aimed at a location (decl.location; none = unaimed, rolled) pays `penalty` to beat the
+  # defence (a thrust `thrustLess` less: a point is placed more easily); a shield blocks blows aimed at what it
+  # covers more easily (+`block`).
+  aim:
+    penalty: {head: 2, torso: 0, arms: 1, hands: 2, legs: 1, feet: 3}
+    thrustLess: 1
+    shield: {covers: [torso, arms], block: 1}
   carry:
     limb: 3
     next: {head: [torso], arms: [torso, head], hands: [arms], legs: [legs], feet: [legs]}

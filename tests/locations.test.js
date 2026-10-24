@@ -120,3 +120,43 @@ test('parry carry-through: a heavy swing beats through a light parry, weakened; 
   const thrust = C.attackOptions(atk).find((o) => o.motion === 'thrust');
   assert.strictEqual(Combat.parryCarryShare(def, 'parry', thrust), 0);
 });
+
+test('aimed blows: a location costs its penalty against a defence (less for a thrust); a shield guards the torso and arm; the AI aims at bare legs', () => {
+  const a = armed('A', 'longsword');
+  const t = body('Breastplate', [Items.makeArmor('plate', null, 'average', { covers: ['torso'] }), Items.makeArmor('plate', null, 'average', { covers: ['head'] })]);
+  t.weapons.push(Items.makeWeapon('longsword')); t.wield = t.weapons[0].id;
+  const cut = C.attackOptions(a).find((o) => o.motion === 'swing');
+  const thrust = C.attackOptions(a).find((o) => o.motion === 'thrust');
+  assert.strictEqual(Combat.aimPenalty(cut, 'feet'), 3);
+  assert.strictEqual(Combat.aimPenalty(thrust, 'feet'), 2, 'a point is placed more easily');
+  assert.strictEqual(Combat.aimPenalty(cut, 'torso'), 0);
+  const odds = (o) => Combat.defenseOdds(t, 'parry', o.motion, a, o);
+  assert.ok(odds(Object.assign({}, cut, { aim: 'head' })) > odds(cut), 'an aimed blow is easier to parry');
+  // The AI goes for what the plate doesn't cover.
+  const aim = B.AI.bestAim(a, t, cut, 1);
+  assert.ok(aim && aim.loc && !['torso', 'head'].includes(aim.loc), JSON.stringify(aim));
+  assert.ok(aim.ratio > 1);
+  // A full harness: nothing to aim at.
+  const full = body('Full', [Items.makeArmor('plate', 'full', 'average')]);
+  assert.strictEqual(B.AI.bestAim(a, full, cut, 1), null);
+  // A shield makes blows at the torso easier to block, not those at the legs.
+  t.shield = Items.makeShield('round', 'wood'); t.weapons = []; t.wield = null;
+  const blk = (loc) => Combat.defenseOdds(t, 'block', cut.motion, a, Object.assign({}, cut, { aim: loc }));
+  assert.ok(blk('torso') > blk('legs') - 0.11 && blk('torso') >= blk('legs'));
+});
+
+test('aimed blows: a declared location goes where it is aimed, with no location roll', async () => {
+  const a = armed('A', 'longsword');
+  const t = body('Helmed', [Items.makeArmor('plate', null, 'average', { covers: ['head'] })]);
+  const chars = { [a.id]: a, [t.id]: t };
+  const enc = Combat.createEncounter('t', [a.id, t.id], chars, 4, 1);
+  enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[t.id] = { x: 1, y: 0 };
+  await Combat.startRound(enc, chars, roller([10, 1]));
+  const cut = C.attackOptions(a).find((o) => o.motion === 'swing');
+  const asked = [];
+  const err = await Combat.act(enc, chars, { actor: a.id, type: 'strike', option: cut, target: t.id, location: 'legs' }, { roller: roller([], 5, asked), react: () => null });
+  assert.strictEqual(err, null);
+  assert.ok(!asked.includes('Hit location'));
+  assert.ok(enc.log.some((l) => /on the legs \(bare\)/.test(l.text)), enc.log.map((l) => l.text).join('\n'));
+  assert.strictEqual(await Combat.act(enc, chars, { actor: a.id, type: 'strike', option: cut, target: t.id, location: 'tail' }, { roller: roller(), react: () => null }), 'No such place to aim at');
+});
