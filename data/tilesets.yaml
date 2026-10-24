@@ -19,7 +19,7 @@
 #             drops by `sprite`, drawn with their feet at the square's bottom and one cell to one square.
 
 # The temple's open courts: grass, and the high sandstone walls. Placeholder art from assets/wip/temple-tileset
-# (PixelLab, 64 px, made before the style target; to be regenerated if it doesn't match).
+# (PixelLab, 64 px, made before the style target). The user isn't happy with them: replace them.
 temple_court:
   cell: 64
   dir: art/worldtiles/temple/

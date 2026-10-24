@@ -59,6 +59,8 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
 - [x] Courtyard 1 and the wall top are playable (`temple_court`, `temple_wall`; a town exit, "the temple in the jungle"),
   drawn with the two placeholder PixelLab sandstone sets (copied to `art/worldtiles/temple/`). Looked at
   in headless Chrome: walls, corners, doors, daylight and a fight on the court all draw. Not seen on a phone.
+- [ ] The user is not happy with the current temple tiles (the two placeholder sandstone sets, 2026-10-24): treat
+  them as stand-ins to replace, not a base to build on.
 - [ ] Courtyard art, the trial of the pipeline (prompt, PixelLab, `assets/wip/`, cut, `art/`, seen in play): a grass set
   that doesn't repeat so visibly (the placeholder's all-grass tile tiles in obvious rows), mosaic wall variants, a door,
   steps up the wall, a well, ferns and vines as props. Each goes in `data/tilesets.yaml` (no code).
