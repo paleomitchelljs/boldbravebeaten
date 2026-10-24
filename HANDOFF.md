@@ -19,16 +19,12 @@ the repo); its tools load when Claude Code restarts.
 Priorities (set 2026-10-24), in order: **1. heroes, 2. the dungeon's creatures, 3. a temple tileset.** Everything else
 is under *Later*.
 
-**0. Decide before generating (blocks all three)**
-- [ ] One standard for figures. What exists: the 16-px Pixel Crawler grid drawn at 3×, side view, two facings by
-  mirroring; creature sheets of 61–363 px with two frames; one PixelLab figure (Tevax) at 64 px, "low top-down",
-  8 directions, 4-frame walks. Recommendation: make every new figure in PixelLab at one canvas (64 px, low top-down,
-  the mannequin template, as Tevax was), and teach `src/ui/game/sprites.js` to pick the nearest of 4 or 8 directions
-  rather than mirror. PixelLab gives the directions free, so a 2-way game throws most of each figure away. The cost
-  is that 64-px figures on 16-px tiles still look finer than the floor; priority 3 is the chance to fix that.
-- [ ] Animations each figure needs: idle, walk, attack (one per weapon kind is enough), hurt, death. Current sheets have
-  no hurt or death; a fallen body is the idle frame turned on its side.
-- [ ] Licence: check PixelLab's terms for publishing what it generates on the public site. Unknown.
+**0. Notes for generating (not blocking)**
+The art is a deliberate mix while we prototype (the user, 2026-10-24: combine assets now, do art passes later). No
+common standard is needed yet. Where it costs nothing, make new PixelLab figures as Tevax was (64 px, low top-down,
+mannequin template) so they at least match each other, and save each prompt beside its output. Useful animations:
+idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2, so 4- or 8-way facing in
+`src/ui/game/sprites.js` is an option if the extra directions seem worth using.
 
 **1. Heroes (four)**
 - [ ] The vampire. No art yet.
@@ -82,7 +78,8 @@ orange, built around fear (idols, blood altars, bone heaps, pits). The `avatar-o
   `art/items/`.
 - Effects: four colour sheets cover every element (light, shadow, spirit, force, mind and the rest fall back to purple);
   no art for areas, ground, walls, wards or conjuring.
-- Frame counts (2, 4, 6) and palettes differ between sources; heights and facings in `data/art.yaml` were set by eye.
+- For the eventual art pass: resolutions (16-px tiles at 3x, creature sheets 61-363 px, PixelLab 64 px), frame counts
+  (2, 4, 6) and palettes differ between sources; heights and facings in `data/art.yaml` were set by eye.
 
 ## Combat after the turn-model change (whole-pool turns, reactions, opportunity strikes)
 - [ ] Retune: fights against armed groups got much deadlier (skeleton squad 70% → 27% wins, horde 57% → 13%); see
