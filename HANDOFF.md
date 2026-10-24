@@ -50,14 +50,16 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
   `data/monsters.yaml` as well as art.
 
 **3. Temple tileset (prototype dungeon after the Temple of Cazic-Thule): see `assets/ideas/temple-dungeon.md`**
-- [ ] Answer the plan's open questions (§2).
+- [x] The plan's questions are answered (§0 and §2: places and their links listed).
 - [ ] Engine: a tileset per place (`look.tileset`, 64-px cells; the renderer now takes one 16-px set), terrain
   (water, bridges, grass/rubble floor, pyramid tier faces), one-way drops (the validator pairs every staircase), and
   fights that draw in nearby groups (the open courtyard has four guard posts).
 - [ ] Style target: the PixelLab dragonborn (64 px). Tiles at 64 px to match (plan §4).
 - [ ] Once courtyard 1 plays: archive the Undercroft and the Barrow for tests and sims only; start at the temple.
 - [ ] Courtyard 1 alone, as the trial of the pipeline (prompt, PixelLab, `assets/wip/`, cut, `art/`, seen in play).
-- [ ] Then labyrinth, courtyard 2 and pyramid, sewers, ritual chamber, palace and servants' quarters (plan §5).
+- [ ] Then labyrinth, courtyard 2 and pyramid, sewers, ritual chamber, palace (plan §5).
+- [ ] Monsters: an alligator monster for the sewers (the sheet exists); lizardfolk variants; the avatar of fear as the
+  ritual chamber's boss.
 - [ ] The temple props also replace the Cute Fantasy props the published site may not show.
 
 **Later**
