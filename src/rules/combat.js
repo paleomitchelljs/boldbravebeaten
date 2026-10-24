@@ -807,41 +807,78 @@
     const prone = st.prone;
     // A paralyzed body (helpless) gives up its gaps as a pinned one does.
     const pinned = !!st.pinned || !!(G.Conditions && G.Conditions.flag(target, 'helpless'));
-    if (isCramped(attacker, option, flags.distance)) {
+    if (!flags.carried && isCramped(attacker, option, flags.distance)) {
       if (CONFIG.range.closeRule === 'blunt') {
         const total = v[0] + v[1] + v[2];
         v[0] = 0; v[1] = 0; v[2] = Math.floor(total * CONFIG.range.closeMult);
       } else for (let i = 0; i < 3; i++) v[i] = Math.floor(v[i] * CONFIG.range.closeMult);
     }
-    if (option.ranged && option.longRange && flags.distance > option.longRange) v[C.mainIndex(v)] = Math.max(0, v[C.mainIndex(v)] - CONFIG.range.longRangePenalty);
-    if (prone) v[C.mainIndex(v)] += CONFIG.maneuver.proneDamageBonus;
-    if (flags.pack) v[C.mainIndex(v)] += flags.pack; // pack hunters: allies at the target's side
-    if (flags.half) for (let i = 0; i < 3; i++) v[i] = Math.floor(v[i] / 2);
-    // Resistances (monster trait): multipliers on piercing, slashing and blunt, e.g. a skeleton
-    // takes no piercing and half slashing; only blunt breaks bones cleanly.
-    const resist = target.traits && target.traits.resist;
-    if (resist) ['P', 'S', 'B'].forEach((k, i) => { if (resist[k] != null) v[i] = Math.floor(v[i] * resist[k]); });
+    // A cut carried on into a second location (flags.carried) has had all of this already.
+    if (!flags.carried) {
+      if (option.ranged && option.longRange && flags.distance > option.longRange) v[C.mainIndex(v)] = Math.max(0, v[C.mainIndex(v)] - CONFIG.range.longRangePenalty);
+      if (prone) v[C.mainIndex(v)] += CONFIG.maneuver.proneDamageBonus;
+      if (flags.pack) v[C.mainIndex(v)] += flags.pack; // pack hunters: allies at the target's side
+      if (flags.half) for (let i = 0; i < 3; i++) v[i] = Math.floor(v[i] / 2);
+      // Resistances (monster trait): multipliers on piercing, slashing and blunt, e.g. a skeleton
+      // takes no piercing and half slashing; only blunt breaks bones cleanly.
+      const resist = target.traits && target.traits.resist;
+      if (resist) ['P', 'S', 'B'].forEach((k, i) => { if (resist[k] != null) v[i] = Math.floor(v[i] * resist[k]); });
+    }
     // Stoneskin, barkskin, a shield of force: protection that isn't armor.
     if (G.Conditions) ['P', 'S', 'B'].forEach((k, i) => { v[i] = Math.max(0, v[i] - G.Conditions.mitigation(target, k)); });
 
     const unconscious = target.stamina <= 0;
     const weapon = option.weaponType ? WEAPONS[option.weaponType] : null;
     const coupDeGrace = weapon && weapon.dagger && C.rank(attacker, 'coup_de_grace') && (prone || pinned);
-    const armored = !!(target.armor && target.armor.durability > 0 && !unconscious && !coupDeGrace);
-    const ctx = { v, prone, pinned, unconscious, weapon, armored, ai: C.armorInfo(target) };
+    // Where the blow lands (CONFIG.locations): the piece there, or bare skin. flags.location is the one rolled
+    // (applyHit); without it a body whose locations differ gets the expectation over them, by share, which is
+    // what the AI and the preview see. A full harness or a bare body is the same everywhere.
+    const L = CONFIG.locations;
+    const at = (loc) => hitAt(attacker, target, option, { v: v.slice(), prone, pinned, unconscious, weapon, coupDeGrace }, loc);
+    if (flags.location || !L || C.armorUniform(target)) {
+      const r = at(flags.location || (L ? L.order[0] : null));
+      if (!flags.location) r.location = null;
+      return r;
+    }
+    const parts = L.order.map((loc) => ({ loc, w: L.share[loc] || 0, h: at(loc) }));
+    const res = blendMany(parts);
+    res.byLocation = parts;
+    return res;
+  }
+
+  function hitAt(attacker, target, option, base, loc) {
+    const { v, prone, pinned, unconscious, weapon, coupDeGrace } = base;
+    const piece = loc ? C.armorAt(target, loc) : target.armor;
+    const armored = !!(piece && piece.durability > 0 && !unconscious && !coupDeGrace);
+    const ctx = { v, prone, pinned, unconscious, weapon, armored, piece, ai: loc ? C.armorInfo(target, loc) : C.armorInfo(target) };
     // A point against armor (CONFIG.pierce): it bursts through, or it must find a gap; the expectation
     // over the gap roll is what the AI and the preview see, and applyHit rolls it.
     const pc = CONFIG.pierce && armored ? pierceCheck(attacker, option, ctx) : null;
+    let res;
     if (pc && pc.roll) {
       const got = armorHit(attacker, target, option, ctx, 'gap');
       const turned = armorHit(attacker, target, option, ctx, 'turned');
-      const res = blendHits(got, turned, pc.chance);
+      res = blendHits(got, turned, pc.chance);
       res.gap = Object.assign({}, pc, { got, turned });
-      return res;
+    } else {
+      res = armorHit(attacker, target, option, ctx, pc ? pc.way : null);
+      if (pc) Object.assign(res, { punch: pc.punch, resist: pc.resist });
     }
-    const res = armorHit(attacker, target, option, ctx, pc ? pc.way : null);
-    if (pc) Object.assign(res, { punch: pc.punch, resist: pc.resist });
+    res.location = loc;
+    res.piece = armored ? piece : null;
     return res;
+  }
+
+  // The expectation over several outcomes [{w, h}] (weights summing to 1): hit locations.
+  function blendMany(parts) {
+    const out = Object.assign({}, parts[0].h);
+    const keys = ['toCON', 'slashToAttrs', 'bluntToStamina', 'bluntToCON', 'durLoss', 'converted', 'pierceVital', 'cutVital'];
+    for (const k of keys) out[k] = parts.reduce((n, p) => n + (p.h[k] || 0) * p.w, 0);
+    out.mitigated = {};
+    for (const k of ['P', 'S', 'B']) out.mitigated[k] = parts.reduce((n, p) => n + p.h.mitigated[k] * p.w, 0);
+    out.armored = parts.some((p) => p.h.armored);
+    out.pierce = null; out.gap = null; out.location = null; out.piece = null;
+    return out;
   }
 
   // Cramped: inside the weapon's reach.min (a spear's point at range 1), in a clinch with a weapon that
@@ -889,7 +926,7 @@
   // blow did before; 'gap' — all of it reaches the body; 'turned' — it lands as blunt instead; null — no
   // point, or CONFIG.pierce is off (the pass-through rule), or no armor at all.
   function armorHit(attacker, target, option, ctx, way) {
-    const { v, prone, pinned, unconscious, weapon, armored, ai } = ctx;
+    const { v, prone, pinned, unconscious, weapon, armored, ai, piece } = ctx;
     let [P, S, B] = v;
     if (way === 'turned') { B += Math.round(P * CONFIG.pierce.deflectBlunt); P = 0; }
     const motion = option.motion === 'unarmed' ? 'swing' : option.motion;
@@ -947,7 +984,7 @@
       }
       // Wear: blunt, converted cuts and (but for a point that went round it through a gap) piercing.
       const pierceWear = way === 'gap' ? 0 : P * (CONFIG.armorPierceWear || 0);
-      res.durLoss = target.armor.type === 'padded' ? 0 : Math.round((B + res.converted + pierceWear) * (CONFIG.armorWearScale == null ? 1 : CONFIG.armorWearScale) * Items.wearMult(target.armor));
+      res.durLoss = piece.type === 'padded' ? 0 : Math.round((B + res.converted + pierceWear) * (CONFIG.armorWearScale == null ? 1 : CONFIG.armorWearScale) * Items.wearMult(piece));
     } else {
       res.toCON = P;
       res.slashToAttrs = S;
@@ -977,8 +1014,9 @@
       const V = CONFIG.vital;
       let guard = 1;
       if (res.armored && !(pinned && V.pinnedOpensArmor)) {
-        const t = target.armor.type;
-        guard = Math.min(1, (V.armor[t] != null ? V.armor[t] : V.otherArmor) * (V.coverage[target.armor.coverage] || 1));
+        // The piece over where the blow lands guards the vitals there (CONFIG.locations: bare is unguarded).
+        const t = piece.type;
+        guard = Math.min(1, V.armor[t] != null ? V.armor[t] : V.otherArmor);
       }
       if (w.kind === 'S') res.cutVital = w.vital * guard;
       else res.pierceVital = w.vital * guard;
@@ -1050,35 +1088,92 @@
     return sz > 1 ? Math.floor(need / sz) : need;
   }
 
+  // Spells that don't go through armor by the blow's faces: no hit location (computeHit's early returns).
+  function bodyBlow(target, option) {
+    if (!option.spell) return true;
+    const el = option.spell.element;
+    if (target.traits && target.traits.magicImmune) return false;
+    if (CONFIG.magic.energyMitigation && CONFIG.magic.energyMitigation[el] != null) return false;
+    return el !== 'life';
+  }
+
+  // Roll where a blow lands (CONFIG.locations: d100 against the shares). Only against a body whose locations
+  // differ; null otherwise.
+  async function rollLocation(attacker, target, option, roller) {
+    const L = CONFIG.locations;
+    if (!L || !bodyBlow(target, option) || C.armorUniform(target)) return null;
+    const r = (await roller({ actorId: attacker.id, sides: 100, count: 1, label: 'Hit location', detail: `d100 on ${target.name}: ` + L.order.map((l) => `${L.names[l] || l} ${Math.round((L.share[l] || 0) * 100)}%`).join(', ') }))[0];
+    let acc = 0;
+    for (const l of L.order) { acc += Math.round((L.share[l] || 0) * 100); if (r <= acc) return l; }
+    return L.order[L.order.length - 1];
+  }
+
+  // A point that can't burst the armor must find a gap (CONFIG.pierce); failing that, the armor turns it.
+  async function resolveGap(attacker, target, h, roller) {
+    if (!h.gap) return h;
+    const g = h.gap;
+    const r = (await roller({ actorId: attacker.id, sides: 10, count: 1, label: 'Finding a gap', detail: `d10 ≥ ${g.need} finds a gap in ${target.name}'s armor (punch ${g.punch} against ${g.resist}: too little to burst it); otherwise the point is turned` }))[0];
+    return Object.assign(r >= g.need ? g.got : g.turned, { location: h.location, piece: h.piece });
+  }
+
+  // Carry-through (CONFIG.locations.carry, the user's call): a cut that got through a limb or the head
+  // (bare, or cutting through cloth or leather) carries the slashing beyond a limb's worth into the next
+  // location, where that location's armor meets it. Returns the second hit (applied with the first), or null.
+  async function carryCut(attacker, target, option, h, roller) {
+    const K = CONFIG.locations && CONFIG.locations.carry;
+    if (!K || !h.location || !(h.slashToAttrs > K.limb)) return null;
+    const next = (K.next || {})[h.location];
+    if (!next || !next.length) return null;
+    const into = next.length > 1 ? next[(await roller({ actorId: attacker.id, sides: next.length, count: 1, label: 'The cut carries on', detail: `d${next.length}: ` + next.map((l, i) => `${i + 1} ${CONFIG.locations.names[l] || l}`).join(', ') }))[0] - 1] : next[0];
+    const extra = h.slashToAttrs - K.limb;
+    h.slashToAttrs = K.limb;
+    const h2 = await resolveGap(attacker, target, computeHit(attacker, target, Object.assign({}, option, { damage: [0, extra, 0], punch: 0 }), { location: into, carried: true }), roller);
+    h2.carried = extra;
+    return h2;
+  }
+
   // Apply a hit, rolling d4s for slashing. Returns a short description.
   async function applyHit(enc, chars, attacker, target, option, roller, flags) {
-    let h = computeHit(attacker, target, option, flags);
+    const loc = (flags && flags.location) || await rollLocation(attacker, target, option, roller);
+    let h = computeHit(attacker, target, option, Object.assign({}, flags, loc ? { location: loc } : {}));
     const parts = [];
-    // A point that can't burst the armor must find a gap (CONFIG.pierce); failing that, the armor turns it.
-    if (h.gap) {
-      const g = h.gap;
-      const r = (await roller({ actorId: attacker.id, sides: 10, count: 1, label: 'Finding a gap', detail: `d10 ≥ ${g.need} finds a gap in ${target.name}'s armor (punch ${g.punch} against ${g.resist}: too little to burst it); otherwise the point is turned` }))[0];
-      h = r >= g.need ? g.got : g.turned;
-    }
+    if (h.location) parts.push(`on the ${(CONFIG.locations.names[h.location] || h.location).toLowerCase()}${h.piece ? '' : ' (bare)'}`);
+    h = await resolveGap(attacker, target, h, roller);
+    const carried = await carryCut(attacker, target, option, h, roller);
     if (h.pierce === 'burst') parts.push('the point bursts through');
     else if (h.pierce === 'gap') parts.push('the point finds a gap');
     else if (h.pierce === 'turned') parts.push('the armor turns the point');
     // The blade meets the armor: metal chews an edge, cloth and leather barely touch it, flesh not at all.
     // A turned point takes it worst.
-    if (h.armored && target.armor) wearWeapon(enc, attacker, weaponItem(attacker, option), blowForce(option), h.pierce === 'turned' ? 'deflected' : 'hit', armorMaterial(target.armor));
+    const piece = h.piece || (h.location ? null : target.armor);
+    if (h.armored && piece) wearWeapon(enc, attacker, weaponItem(attacker, option), blowForce(option), h.pierce === 'turned' ? 'deflected' : 'hit', armorMaterial(piece));
     const st = target.status;
     const before0 = { dmg: C.totalDamage(target), stamina: target.stamina, up: C.isActive(target) };
     const before = enc.onHit ? before0 : null;
 
     if (h.fire != null && h.fireStopped) parts.push(`armor stops ${h.fireStopped} ${option.spell ? option.spell.element : 'fire'}`);
-    if (h.armored && target.armor) {
-      const before = target.armor.durability;
-      target.armor.durability = Math.max(0, before - h.durLoss);
+    if (h.armored && piece) {
+      piece.durability = Math.max(0, piece.durability - h.durLoss);
       if (h.mitigated.P + h.mitigated.S + h.mitigated.B > 0) parts.push(`armor stops ${h.mitigated.P}/${h.mitigated.S}/${h.mitigated.B}`);
       if (h.converted) parts.push(`${h.converted} slashing → blunt`);
       if (h.dissipated) parts.push(`the plate spreads ${h.dissipated} of the blow`);
       if (h.cutThrough) parts.push('the blade cuts through');
       if (h.durLoss) parts.push(`armor durability −${h.durLoss}`);
+    }
+    // The carried part of a cut: its own armor, its own wear, then it counts with the rest of the blow.
+    if (carried) {
+      const cn = (CONFIG.locations.names[carried.location] || carried.location).toLowerCase();
+      parts.push(`the cut carries ${carried.carried} into the ${cn}${carried.piece ? '' : ' (bare)'}`);
+      if (carried.armored && carried.piece) {
+        carried.piece.durability = Math.max(0, carried.piece.durability - carried.durLoss);
+        if (carried.mitigated.S + carried.mitigated.B > 0) parts.push(`armor there stops ${carried.mitigated.S}`);
+      }
+      h = Object.assign({}, h, {
+        slashToAttrs: h.slashToAttrs + carried.slashToAttrs,
+        bluntToStamina: h.bluntToStamina + carried.bluntToStamina,
+        bluntToCON: h.bluntToCON + carried.bluntToCON,
+        cutVital: Math.max(h.cutVital || 0, carried.cutVital || 0),
+      });
     }
 
     let wound = 0;

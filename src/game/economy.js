@@ -14,7 +14,7 @@
   // A spec may carry an item's tags: material, origin, craft (an old `quality` is read as one), enchantments.
   function makeFromSpec(spec) {
     const craft = spec.craft || spec.quality || 'average';
-    const tags = { material: spec.material, origin: spec.origin, enchantments: spec.enchantments, name: spec.name };
+    const tags = { material: spec.material, origin: spec.origin, enchantments: spec.enchantments, name: spec.name, covers: spec.covers };
     if (spec.weapon) return Items.makeWeapon(spec.weapon, craft, spec.material, tags);
     if (spec.armor) return Items.makeArmor(spec.armor, spec.coverage || 'full', craft, tags);
     if (spec.shield) return Items.makeShield(spec.shield, spec.material || 'wood', craft, tags);
@@ -34,7 +34,7 @@
     // The type's value × its tags' (material against the type's usual one, origin, craft, enchantments).
     if (item.kind === 'armor') {
       const base = D().ARMOR[item.type];
-      return Math.max(1, Math.round((base.value || rv(base.rarity)) * Items.tagValue(item) * E().coverageMult[item.coverage]));
+      return Math.max(1, Math.round((base.value || rv(base.rarity)) * Items.tagValue(item) * Items.coverShare(item)));
     }
     if (item.kind === 'shield') {
       const s = D().SHIELDS[item.size], m = D().SHIELD_MATERIALS[item.material];

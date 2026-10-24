@@ -1,5 +1,30 @@
 # Simulation findings
 
+## Armor by hit location, step 1 (2026-10-24; `node sim/locations.js --n 3000`, `node tools/encounters.js --n 300`)
+
+Pieces cover locations (rules.yaml `locations`); a blow against mixed armor rolls where it lands; a cut through a bare
+or soft-armored limb carries what is beyond 3 into the next location. What one landed blow does (STR 12, no defence,
+fresh armor; CON and other attribute points per blow; vital %; how often a cut carried on):
+
+| harness | longsword thrust | longsword cut | greatsword cut | carried (greatsword) |
+|---|---|---|---|---|
+| bare | 10.0 CON, 22% | 3.2 CON + 6.7 | 5.6 CON + 12.0 | — |
+| full mail | 3.0, 0% | 0 | 0 | — |
+| full plate | 0, 0% | 0 | 0 | — |
+| half plate (torso, arms, legs) | 1.7, 3% | 0.2 + 0.4 | 0.2 + 0.4 | 17% |
+| breastplate only | 5.9, 12% | 1.5 + 3.2 | 2.7 + 5.6 | 60% |
+| breastplate, helm, mail limbs | 2.4, 2% | 0.1 + 0.2 | 0.1 + 0.2 | 10% |
+| mail shirt (torso, arms) | 5.8, 8% | 1.0 + 2.3 | 1.8 + 3.9 | 43% |
+| gambeson (torso, arms) | 6.2, 15% | 1.1 + 2.3 | 2.9 + 7.0 | 62% |
+
+- The ordering is the design's: the more of the body covered, the less gets through, and a bare 18% (head, hands,
+  feet of a half harness) still lets a point through often enough to matter. A gambeson stops a longsword cut about as
+  well as a mail shirt, but not a greatsword's (it cuts through and carries on).
+- Maces and hammers are unchanged in kind: they go to stamina whatever is worn (blunt has no carry-through).
+- Encounters, level-1 party, before → after: identical except the crew (90/9/5.3/1.34 → 90/10/4.9/1.42, within noise).
+  The party wears full harnesses and the monsters hides, so no location is rolled for them; only the human foes with
+  half or partial armor (crew, guards) now have bare spots.
+
 ## Opportunity strikes on entering, leaving, or a second step within reach (2026-10-24; `node tools/encounters.js --n 300`)
 
 The user's ruling (docs/PROPOSALS.md §1): a foe strikes at a mover who enters its reach, leaves it, or takes a second

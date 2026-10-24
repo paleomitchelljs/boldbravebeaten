@@ -39,7 +39,9 @@
           const g = World.goodDef(id);
           if (g && g.kind === 'trinket' && Equip.wornFor(g.slot).includes(slot)) opts.push(h('option', { value: 't:' + id }, `${g.name}${n > 1 ? ' ×' + n : ''}`));
         }
-      } else {
+      }
+      // Gear from the pack: weapons, shields, and armor pieces for any location they cover.
+      {
         w.pack.gear.forEach((it, i) => {
           if (!Equip.fits(it).includes(slot)) return;
           const chk = Equip.canEquip(c, it, slot);
@@ -74,7 +76,7 @@
       c.side === 'party' ? null : h('div', { class: 'gear-row filled' }, h('span', { class: 'label' }, 'Wields'), h('span', { class: 'gear-name' }, nat.length ? nat.join(', ') : (C.wieldedWeapon(c) ? Items.itemName(C.wieldedWeapon(c)) : 'Unarmed')), h('span', { class: 'tip-gap' })),
       shown.filter((s) => editable || Equip.itemIn(c, s)).map((s) => slotRow(game, o, c, s, editable)),
       h('div', { class: 'chips' },
-        c.armor ? h('span', { class: 'chip', title: 'Mitigation by damage type once coverage and condition are counted' }, `Armor P${ai.effMit.P} S${ai.effMit.S} B${ai.effMit.B}`) : h('span', { class: 'chip' }, 'No armor'),
+        c.armor ? h('span', { class: 'chip', title: 'Torso armor: mitigation by damage type once wear is counted. Other locations have their own piece, or none.' }, `Torso P${ai.effMit.P} S${ai.effMit.S} B${ai.effMit.B}`) : h('span', { class: 'chip' }, C.armorPieces(c).length ? 'Torso bare' : 'No armor'),
         c.armor ? h('span', { class: 'chip', title: 'Armor durability' }, `Dur ${ai.durability}/${ai.maxDurability}`) : null,
         ai.pierce ? h('span', { class: 'chip', title: 'A point with at least this much punch bursts through; a lighter one must find a gap (d10 + ⌊DEX/4⌋ + feats against the gap number) or is turned' }, `Points burst at ${ai.pierce.resist} · gap ${ai.pierce.gap}`) : null,
         ai.spd || ai.dex ? h('span', { class: 'chip warn', title: 'Armor slows and stiffens you' }, `SPD −${ai.spd} · DEX −${ai.dex}`) : null,

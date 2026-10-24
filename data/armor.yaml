@@ -1,7 +1,7 @@
 # Armor types. Worn armor comes in four tiers: padded, leather (or hide), mail and plate. An item is a type plus
 # a material (materials.yaml), an origin (origins.yaml), a craft (crafts.yaml), enchantments (usually none) and a
 # coverage (full, half, partial). Figures here are for the type's usual material, common origin, full coverage.
-# Each piece is the whole harness: padding is assumed under mail and plate (the user's ruling; no layering).
+# Padding is assumed under mail and plate (the user's ruling; no layering).
 #   mit         mitigation per damage face (P pierce, S slash, B blunt); material and origin scale P and S
 #   spd, dex    penalty to SPD and DEX; stamina = extra stamina per action; regen = stamina regeneration penalty;
 #               standUp = extra AP to rise from prone. Material and origin weight scale all four penalties.
@@ -21,9 +21,14 @@
 #               spread it too, at the cost of the mace's place against plate: sim/FINDINGS.md).
 #   natural     true marks monster hides (cannot be worn or looted); recoil: attackers lose this much stamina per
 #               blow that lands
+#   pieces      names for a piece covering one location (rules.yaml locations): a plate helm, mail chausses
+#
+# A piece covers some locations (an item's `covers`, or its coverage keyword: rules.yaml locations); it carries
+# that share of the type's weight, penalties and durability and protects fully where it is.
 
 padded:
   name: Padded
+  pieces: {head: arming cap, torso: gambeson, arms: padded sleeves, hands: padded mittens, legs: padded hose, feet: padded shoes}
   material: cloth
   materials: [cloth, silk]
   mit: {P: 1, S: 1, B: 3}
@@ -39,6 +44,7 @@ padded:
   rarity: common
 leather:
   name: Leather
+  pieces: {head: leather cap, torso: leather jerkin, arms: leather bracers, hands: leather gloves, legs: leather leggings, feet: leather boots}
   material: leather
   materials: [leather, dragonhide]
   mit: {P: 1, S: 2, B: 1}
@@ -54,6 +60,7 @@ leather:
   rarity: common
 mail:
   name: Mail
+  pieces: {head: coif, torso: mail shirt, arms: mail sleeves, hands: mail mittens, legs: chausses, feet: mail sabatons}
   material: iron
   materials: [bronze, iron, steel, starIron, adamant]
   mit: {P: 1, S: 4, B: 1}
@@ -69,6 +76,7 @@ mail:
   rarity: uncommon
 plate:
   name: Plate
+  pieces: {head: helm, torso: breastplate, arms: vambraces, hands: gauntlets, legs: greaves, feet: sabatons}
   material: iron
   materials: [bronze, iron, steel, starIron, adamant]
   mit: {P: 4, S: 6, B: 3}

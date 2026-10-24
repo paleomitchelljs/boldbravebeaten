@@ -206,8 +206,13 @@ test('plate stops a thrust; a half-sword thrust finds the gaps', () => asWritten
   const half = opts.find((o) => o.halfSword);
   assert.strictEqual(half.ap, thrust.ap + 1);
   assert.strictEqual(Combat.computeHit(atk, tgt, thrust).toCON, 0, '(5−4)×0.5 rounds down to 0');
-  tgt.armor = Items.makeArmor('plate', 'half', 'average'); // half coverage: mitigation 3
-  assert.strictEqual(Combat.computeHit(atk, tgt, half).toCON, 2);
+  const onFull = Combat.computeHit(atk, tgt, half).toCON;
+  // A half harness (torso, arms, legs: CONFIG.locations) is full plate where it is and bare where it isn't.
+  tgt.armor = Items.makeArmor('plate', 'half', 'average');
+  assert.strictEqual(Combat.computeHit(atk, tgt, half, { location: 'torso' }).toCON, onFull);
+  assert.strictEqual(Combat.computeHit(atk, tgt, half, { location: 'head' }).toCON, half.damage[0], 'the bare head takes the whole point');
+  const mixed = Combat.computeHit(atk, tgt, half).toCON;
+  assert.ok(mixed > onFull && mixed < half.damage[0], 'the AI sees the expectation over the locations');
 }));
 
 test('roll mode (without CONFIG.pierce): each leftover piercing point has a chance to reach CON', () => withConfig({ pierce: null }, async () => {
@@ -1739,7 +1744,7 @@ test('item tags: material and origin scale protection and weight; craft only dur
   const base = (a) => Items.armorBase(a);
   assert.strictEqual(iron.material, 'iron', 'every piece names its material');
   assert.strictEqual(Items.itemName(iron), 'Iron mail armor');
-  assert.strictEqual(Items.itemName(Items.makeArmor('plate', 'half', 'master', { material: 'steel', origin: 'dwarven', enchantments: ['warding'] })), 'Masterwork dwarven steel half plate armor of warding');
+  assert.strictEqual(Items.itemName(Items.makeArmor('plate', 'half', 'master', { material: 'steel', origin: 'dwarven', enchantments: ['warding'] })), 'Masterwork dwarven steel plate armor (torso, arms, legs) of warding');
   assert.ok(base(steel).pierce.resist > base(iron).pierce.resist && base(iron).pierce.resist > base(bronze).pierce.resist, 'steel > iron > bronze');
   assert.ok(base(steel).mit.S > base(iron).mit.S);
   assert.ok(base(elven).spd < base(iron).spd && base(dwarven).spd > base(iron).spd, 'origin moves the weight');

@@ -108,7 +108,7 @@
       item.durability = Math.min(max, before + Math.ceil(max * frac));
       if (item.durability > before) lines.push(`${label} repaired ${before} → ${item.durability}/${max}.`);
     };
-    if (c.armor) mend(c.armor, Items.armorMaxDurability(c.armor), 'Armor', false);
+    for (const p of C.armorPieces(c)) mend(p, Items.armorMaxDurability(p), C.armorPieces(c).length > 1 ? Items.itemName(p) : 'Armor', false);
     if (c.shield) mend(c.shield, Items.shieldStats(c.shield).maxDurability, 'Shield', c.shield.durability <= 0);
     for (const w of c.weapons) {
       const max = Items.weaponMaxDurability(w);

@@ -1,6 +1,6 @@
 # Proposals awaiting a ruling (2026-10-24)
 
-Each section gives the rule, the options and a recommendation. §1 is ruled and built; §2 is a design awaiting a go-ahead.
+Each section gives the rule, the options and a recommendation. §1 is ruled and built; §2 step 1 (pieces, unaimed locations, carry-through) is built; steps 2 and 3 await a go-ahead.
 
 ## 1. Opportunity strikes: which steps provoke (ruled 2026-10-24: option C, built)
 
@@ -28,7 +28,7 @@ off at the edge of measure. That's realistic, but a sim would show whether fight
 
 ## 2. Armor by body part: hit locations (the user chose option C, 2026-10-24)
 
-Design for review; not built. Numbers marked *guess* are placeholders for `rules.yaml`, to be set by sim.
+Step 1 built 2026-10-24 (`rules.yaml locations`, `Items.coversOf`, `Character.armorAt`, `Combat.rollLocation`/`carryCut`, `sim/locations.js`); steps 2 and 3 not. Numbers marked *guess* are placeholders for `rules.yaml`, to be set by sim.
 
 ### 2.1 What the evidence says
 

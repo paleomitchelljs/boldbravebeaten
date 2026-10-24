@@ -57,7 +57,11 @@ face, motion or trait still needs rules code; a new sword, mace or spear does no
 **An item's tags.** Every weapon, armor piece and shield is a type plus the same tags, wherever gear is written
 (loot, shop stock, monsters): `material` (materials.yaml; armor only those its type lists), `origin` (origins.yaml),
 `craft` (`poor | average | master`; an old `quality` is read as one) and `enchantments` (a list, usually absent).
-Armor adds `coverage`; shields have a `size`. Material and origin set protection, weight and damage; craftsmanship
+Armor adds where it is worn: `covers: [torso, arms]` (locations from `rules.yaml locations`: head, torso, arms,
+hands, legs, feet), or a `coverage` keyword (`full` = all six, `half` = torso, arms and legs, `partial` = the torso),
+not both. A piece protects fully where it is and carries its share of the type's weight, penalties, durability and
+price; one covering a single location takes the type's `pieces` name (a plate helm, mail chausses). A blow rolls its
+location only against a body whose locations differ. Shields have a `size`. Material and origin set protection, weight and damage; craftsmanship
 sets only how fast the item wears and how easily it breaks. A monster's carried gear: `craft` and `origin` for all
 of it, or items spelled out: `armorItem: {type: plate, material: steel, origin: dwarven}`,
 `weaponItems: [{type: longsword, name: Soulreaver, enchantments: [drinking]}]`, `shieldItem: {size: heater, material: adamant}`.

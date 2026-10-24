@@ -39,7 +39,7 @@
   // What one fallen foe drops: carried gear, purse, and its table.
   function fromFoe(foe) {
     const out = { gold: 0, goods: [], gear: [] };
-    for (const it of [foe.armor, foe.shield].concat(foe.weapons || [])) if (it && !natural(it)) out.gear.push(it);
+    for (const it of [foe.armor, foe.shield].concat(foe.pieces || [], foe.weapons || [])) if (it && !natural(it)) out.gear.push(it);
     out.gold += (foe.inventory && foe.inventory.gold) || 0;
     if (foe.inventory) {
       if (foe.inventory.bandages) out.goods.push({ id: 'bandage', n: foe.inventory.bandages });

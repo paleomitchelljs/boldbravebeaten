@@ -30,6 +30,7 @@
       bleeds: [],
       feats: {},
       armor: null,
+      pieces: [],
       shield: null,
       weapons: [],
       wield: null,
@@ -79,7 +80,8 @@
     for (const [from, to] of Object.entries(RENAMED)) if (c.feats[from]) { c.feats[to] = Math.max(c.feats[to] || 0, c.feats[from]); delete c.feats[from]; }
     c.weapons = c.weapons || [];
     // Items carry craft (not quality), and scale armor is now steel mail.
-    for (const it of [c.armor, c.shield].concat(c.weapons)) if (it) Items.normalizeItem(it);
+    if (!Array.isArray(c.pieces)) c.pieces = [];
+    for (const it of [c.armor, c.shield].concat(c.pieces, c.weapons)) if (it) Items.normalizeItem(it);
     c.bleeds = c.bleeds || [];
     if (c.offhand === undefined) c.offhand = null;
     c.inventory = Object.assign({ bandages: 0, gold: 0, arrows: 0, bodkins: 0, items: [], components: {} }, c.inventory || {});
@@ -246,7 +248,7 @@
       out.push({ item: t, effects: e });
     }
     const ench = (it) => { for (const x of Items.enchantsOf(it)) if (x.effects) out.push({ item: it, effects: x.effects }); };
-    if (c.armor && c.armor.durability > 0) ench(c.armor);
+    for (const p of armorPieces(c)) if (p.durability > 0) ench(p);
     if (c.shield && c.shield.durability > 0) ench(c.shield);
     const w = wieldedWeapon(c), off = offhandWeapon(c);
     if (w) ench(w);
@@ -255,7 +257,7 @@
   }
 
   function hasEnchantments(c) {
-    if ((c.armor && c.armor.enchantments) || (c.shield && c.shield.enchantments)) return true;
+    if (armorPieces(c).some((p) => p.enchantments) || (c.shield && c.shield.enchantments)) return true;
     for (const w of c.weapons || []) if (w.enchantments) return true;
     return false;
   }
@@ -317,40 +319,98 @@
   }
 
   // ---- Armor & shield ----------------------------------------------------
-  function armorInfo(c) {
-    if (!c.armor) {
-      return { type: 'none', mit: { P: 0, S: 0, B: 0 }, effMit: { P: 0, S: 0, B: 0 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, passThrough: 1, durability: 0, maxDurability: 0, pierce: null, passBurst: 1, transmit: 1, cutThrough: null, dissipate: null, metal: false, material: null };
-    }
-    const a = c.armor;
-    const b = Items.armorBase(a);
-    let spd = b.spd, dex = b.dex, stamina = b.stamina;
-    if ((a.type === 'padded' || a.type === 'leather') && rank(c, 'light_armor_training')) {
+  // Armor is pieces (CONFIG.locations): c.armor is the piece over the torso (or the only one), c.pieces any
+  // others (a helm, greaves). Each covers locations no other piece does.
+  function armorPieces(c) {
+    const out = c.armor ? [c.armor] : [];
+    for (const p of c.pieces || []) if (p && p !== c.armor) out.push(p);
+    return out;
+  }
+
+  // The piece over a location, or null (bare).
+  function armorAt(c, loc) {
+    for (const p of armorPieces(c)) if (Items.coversOf(p).includes(loc)) return p;
+    return null;
+  }
+
+  // True when every location has the same piece (a full harness) or none (bare, or a monster's hide):
+  // then where a blow lands changes nothing and no location is rolled.
+  function armorUniform(c) {
+    const L = CONFIG.locations;
+    if (!L) return true;
+    const first = armorAt(c, L.order[0]);
+    return L.order.every((l) => armorAt(c, l) === first);
+  }
+
+  const NO_ARMOR = { type: 'none', mit: { P: 0, S: 0, B: 0 }, effMit: { P: 0, S: 0, B: 0 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, passThrough: 1, durability: 0, maxDurability: 0, pierce: null, passBurst: 1, transmit: 1, cutThrough: null, dissipate: null, metal: false, material: null, piece: null };
+
+  // Feats that lighten a type of armor, on the penalties of every piece of that type together.
+  function armorFeats(c, type, p) {
+    let { spd, dex, stamina } = p;
+    if ((type === 'padded' || type === 'leather') && rank(c, 'light_armor_training')) {
       spd = Math.floor(spd / 2 * 10) / 10;
       dex = Math.floor(dex / 2 * 10) / 10;
     }
-    if (a.type === 'mail') {
+    if (type === 'mail') {
       spd = Math.max(0, spd - rank(c, 'mail_mobility'));
       dex = Math.max(0, dex - rank(c, 'mail_mobility'));
       if (rank(c, 'mail_endurance')) stamina = 0;
     }
-    if (a.type === 'plate') {
+    if (type === 'plate') {
       spd = Math.max(0, spd - rank(c, 'plate_mobility'));
       dex = Math.max(0, dex - rank(c, 'plate_mobility'));
       stamina = Math.max(0, stamina - rank(c, 'plate_endurance'));
     }
-    const frac = b.maxDurability ? Math.max(0, a.durability) / b.maxDurability : 0;
+    return { spd, dex, stamina };
+  }
+
+  // What one piece does where it is: mitigation (fading as it wears), the point-in-armor numbers.
+  function pieceInfo(c, a) {
+    if (!a) return NO_ARMOR;
+    const b = Items.armorBase(a);
+    const pen = armorFeats(c, a.type, b);
+    const frac = b.maxDurability ? Math.min(1, Math.max(0, a.durability) / b.maxDurability) : 0;
     const effMit = {};
     const fl = CONFIG.durabilityMitigationFloor || 0;
     const scale = a.durability <= 0 ? 0 : fl + (1 - fl) * frac;
     for (const k of ['P', 'S', 'B']) effMit[k] = Math.round(b.mit[k] * scale);
     return {
-      type: a.type, mit: b.mit, effMit, spd, dex, stamina, regen: b.regen, standUp: b.standUp,
+      type: a.type, mit: b.mit, effMit, spd: pen.spd, dex: pen.dex, stamina: pen.stamina, regen: b.regen, standUp: b.standUp,
       passThrough: b.passThrough, durability: a.durability, maxDurability: b.maxDurability,
       pierce: b.pierce, metal: b.metal, material: b.material, passBurst: b.passBurst, transmit: b.transmit,
       cutThrough: b.cutThrough != null ? b.cutThrough * scale : null, // a worn coat gives way to a cut sooner
       // Like mitigation, it fades as the armor wears.
       dissipate: { glancing: b.dissipate.glancing * scale, crushing: b.dissipate.crushing * scale },
+      piece: a, covers: b.covers, share: b.share,
     };
+  }
+
+  // armorInfo(c, loc): the piece over that location. armorInfo(c): the piece over the torso (or the only one),
+  // with the penalties (SPD, DEX, stamina, regen, standing up) of everything worn: each piece carries its
+  // share of its type's, and the feats for a type apply to all its pieces at once.
+  function armorInfo(c, loc) {
+    if (loc) return pieceInfo(c, armorAt(c, loc));
+    const pieces = armorPieces(c);
+    if (pieces.length <= 1) return pieceInfo(c, pieces[0] || null);
+    const out = Object.assign({}, pieceInfo(c, armorAt(c, 'torso') || pieces[0]));
+    const byType = {};
+    let regen = 0, standUp = 0;
+    for (const p of pieces) {
+      const b = Items.armorBase(p);
+      const t = byType[p.type] || (byType[p.type] = { spd: 0, dex: 0, stamina: 0 });
+      t.spd += b.spd; t.dex += b.dex; t.stamina += b.stamina;
+      regen += b.regen;
+      standUp += b.standUp * b.share;
+    }
+    out.spd = 0; out.dex = 0; out.stamina = 0;
+    for (const [type, t] of Object.entries(byType)) {
+      const f = armorFeats(c, type, t);
+      out.spd += f.spd; out.dex += f.dex; out.stamina += f.stamina;
+    }
+    for (const k of ['spd', 'dex', 'stamina']) out[k] = Math.round(out[k] * 10) / 10;
+    out.regen = Math.round(regen);
+    out.standUp = Math.round(standUp);
+    return out;
   }
 
   // A broken weapon is no weapon: it can't strike or parry, and the hand is free.
@@ -947,7 +1007,7 @@
   G.Character = {
     newCharacter, normalize, freshStatus,
     rank, featCount, featBudget, treeCount, tierCount, tierName, canTakeFeat, canRemoveFeat, addFeat, removeFeat, reqText, roman,
-    conditioning, attr, attrMax, combatAttr, armorInfo, shieldInfo, shieldReady, wieldedWeapon, offhandWeapon,
+    conditioning, attr, attrMax, combatAttr, armorInfo, armorPieces, armorAt, armorUniform, shieldInfo, shieldReady, wieldedWeapon, offhandWeapon,
     maxStamina, freshStamina, wearyRound, regen, fatiguePenalty, apPool, apScale, costScale, fmtAP, minAP, baseAP, armorAP, quickCut, moveCost, squaresFor, squaresPerAP, handsBusy, castingHands, trinketAP, weaponStrain, inRange, optionKey, needsWindUp, strOffset, staminaCost, effectiveWeight, isLightWeapon,
     strBonus, weaponDamage, mainIndex, attackOptions, actionCost, ammoLeft, tireless, webTax,
     damageAttr, healAttr, totalDamage, updateCondition, isActive, bleedPerRound,

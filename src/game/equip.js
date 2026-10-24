@@ -1,14 +1,16 @@
 /*
- * Equipment slots. Main hand, sidearm, off hand (a parrying dagger), shield, chest (the armor) and the worn
- * slots in data/rules.yaml game.wornSlots (head, neck, shoulders, cape, waist, two ears, arms, hands, two rings,
- * legs, boots: the user's list). Worn things are goods of kind 'trinket' whose `slot` names a slot id or a slot's `takes`
+ * Equipment slots. Main hand, sidearm, off hand (a parrying dagger), shield, torso, and the worn slots in
+ * data/rules.yaml game.wornSlots (head, neck, shoulders, cape, waist, two ears, arms, hands, two rings, legs,
+ * boots: the user's list). Worn things are goods of kind 'trinket' whose `slot` names a slot id or a slot's `takes`
  * (both ring slots take 'ring', both ear slots 'ear'). What isn't worn lives in the party pack (world.pack.gear for weapons, armor
  * and shields; goods for worn things), so gear is shared and swapped freely in town and camp. The engine
- * reads c.armor, c.shield, c.weapons / c.wield / c.sidearm / c.offhand and c.trinkets (each worn thing with
- * `at`, the slot it is in), so nothing else needs to know the slots exist.
+ * reads c.armor (the piece over the torso), c.pieces (other armor), c.shield, c.weapons / c.wield / c.sidearm /
+ * c.offhand and c.trinkets (each worn thing with `at`, the slot it is in), so nothing else needs to know the
+ * slots exist.
  *
- * Only the chest slot holds armor: the other body slots hold worn things with effects and no mitigation
- * (armor is one piece with a coverage; splitting it by body part is an open question for the user).
+ * Armor (CONFIG.locations): the six locations are slots too: the torso, and the head, arms, hands, legs and
+ * feet slots, which a worn thing may take instead (a crown or a helm, not both). A piece takes every slot it
+ * covers (a hauberk the torso and arms); putting it on takes off whatever was there.
  */
 (function (G) {
   'use strict';
@@ -16,7 +18,11 @@
   const Items = G.Items;
   const W = () => G.DATA.WEAPONS;
 
-  const HELD = [['main', 'Main hand'], ['off', 'Off hand'], ['side', 'Sidearm'], ['shield', 'Shield'], ['body', 'Chest']];
+  const HELD = [['main', 'Main hand'], ['off', 'Off hand'], ['side', 'Sidearm'], ['shield', 'Shield'], ['body', 'Torso']];
+  // A location's slot: the torso is the 'body' slot (its old name); the others share the worn slots' ids.
+  const LOCS = () => (G.CONFIG.locations ? G.CONFIG.locations.order : ['torso']);
+  const slotOfLoc = (loc) => (loc === 'torso' ? 'body' : loc);
+  const locOfSlot = (slot) => (slot === 'body' ? 'torso' : LOCS().includes(slot) ? slot : null);
   const DEFAULT_WORN = [{ id: 'head', name: 'Head' }, { id: 'neck', name: 'Neck' }, { id: 'ring1', name: 'Ring', takes: 'ring' }, { id: 'ring2', name: 'Ring', takes: 'ring' }];
   function wornSlots() {
     const g = G.CONFIG.game || {};
@@ -40,8 +46,8 @@
       case 'side': return c.weapons.find((w) => w.id === c.sidearm) || null;
       case 'off': return c.weapons.find((w) => w.id === c.offhand) || null;
       case 'shield': return c.shield || null;
-      case 'body': return c.armor || null;
-      default: return (c.trinkets || []).find((t) => t.at === slot) || null;
+      case 'body': return C.armorAt(c, 'torso');
+      default: return (c.trinkets || []).find((t) => t.at === slot) || (locOfSlot(slot) ? C.armorAt(c, locOfSlot(slot)) : null);
     }
   }
 
@@ -52,7 +58,7 @@
   // Slots an item could go in.
   function fits(item) {
     if (!item) return [];
-    if (item.kind === 'armor') return ['body'];
+    if (item.kind === 'armor') return Items.coversOf(item).map(slotOfLoc);
     if (item.kind === 'shield') return ['shield'];
     if (item.kind === 'weapon') {
       const d = W()[item.type];
@@ -90,6 +96,14 @@
     if (!chk.ok) return { ok: false, reason: chk.reason };
     const lines = [];
     world.pack.gear = world.pack.gear.filter((x) => x.id !== item.id);
+    if (item.kind === 'armor') {
+      // Everything over the places it covers comes off first: other pieces, and worn things in those slots.
+      for (const s of fits(item)) while (itemIn(c, s)) unequip(world, c, s, true);
+      if (Items.coversOf(item).includes('torso')) c.armor = item;
+      else c.pieces = (c.pieces || []).concat([item]);
+      cleanup(c);
+      return { ok: true, lines };
+    }
     const prev = itemIn(c, slot);
     if (prev) unequip(world, c, slot, true);
     if (item.kind === 'armor') c.armor = item;
@@ -119,7 +133,11 @@
   function unequip(world, c, slot, quiet) {
     const it = itemIn(c, slot);
     if (!it) return { ok: false };
-    if (slot === 'body') { c.armor = null; stow(world, it); }
+    if (it.kind === 'armor') {
+      if (c.armor === it) c.armor = null;
+      c.pieces = (c.pieces || []).filter((p) => p !== it);
+      stow(world, it);
+    }
     else if (slot === 'shield') { c.shield = null; stow(world, it); }
     else if (slot === 'main') { c.wield = null; stow(world, it); }
     else if (slot === 'side') { c.sidearm = null; stow(world, it); }
@@ -166,7 +184,9 @@
     const D = G.DATA;
     if (item.kind === 'armor') {
       const b = Items.armorBase(item);
-      return `P${b.mit.P} S${b.mit.S} B${b.mit.B}` + (b.pierce ? ` · points burst at ${b.pierce.resist}, gap ${b.pierce.gap}` : '') + (b.spd || b.dex ? ` · SPD−${b.spd} DEX−${b.dex}` : '') + (b.weight ? ` · ${b.weight} kg` : '') + ` · dur ${item.durability}/${b.maxDurability}`;
+      const L = G.CONFIG.locations;
+      const where = L && b.covers.length < L.order.length ? `${L.order.filter((l) => b.covers.includes(l)).map((l) => L.names[l] || l).join(', ')} · ` : '';
+      return where + `P${b.mit.P} S${b.mit.S} B${b.mit.B}` + (b.pierce ? ` · points burst at ${b.pierce.resist}, gap ${b.pierce.gap}` : '') + (b.spd || b.dex ? ` · SPD−${b.spd} DEX−${b.dex}` : '') + (b.weight ? ` · ${b.weight} kg` : '') + ` · dur ${item.durability}/${b.maxDurability}`;
     }
     if (item.kind === 'shield') {
       const s = Items.shieldStats(item);
@@ -186,5 +206,5 @@
     return '';
   }
 
-  G.Equip = { slotList, wornSlots, wornFor, isWorn, wornItem, slotsOf, itemIn, fits, canEquip, equip, unequip, equipTrinket, describe, twoHanded };
+  G.Equip = { slotList, wornSlots, wornFor, isWorn, wornItem, slotsOf, itemIn, fits, canEquip, equip, unequip, equipTrinket, describe, twoHanded, slotOfLoc, locOfSlot };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

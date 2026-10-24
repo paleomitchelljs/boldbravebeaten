@@ -111,6 +111,14 @@
         else if (kind === 'armor' && D.ARMOR[type] && D.ARMOR[type].materials && !D.ARMOR[type].materials.includes(e.material)) err(`${where}: ${type} is not made of ${e.material}`);
       }
       if (e.origin && !has(D.ORIGINS, e.origin)) err(`${where}: origin "${e.origin}" is not in origins.yaml`);
+      // Armor: the locations a piece covers (rules.yaml locations), or a coverage keyword.
+      if (kind === 'armor') {
+        const L = G.CONFIG.locations;
+        if (e.covers != null && (!Array.isArray(e.covers) || !e.covers.length)) err(`${where}: covers must be a list of locations`);
+        for (const l of e.covers || []) if (L && !L.order.includes(l)) err(`${where}: location "${l}" is not in rules.yaml locations`);
+        if (e.coverage && L && !L.coverage[e.coverage]) err(`${where}: coverage "${e.coverage}" is not in rules.yaml locations.coverage`);
+        if (e.covers && e.coverage) err(`${where}: give covers or coverage, not both`);
+      }
       const craft = e.craft || e.quality;
       if (craft && !G.Items.craftId(craft)) err(`${where}: craft "${craft}" is not in crafts.yaml`);
       for (const x of e.enchantments || []) {

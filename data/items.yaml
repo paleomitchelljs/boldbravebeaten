@@ -74,8 +74,6 @@ goods:
   # ---- Worn magic (PROVISIONAL, the user's list) -------------------------------------------------------
   silk_sash:
     {name: Flowing Black Silk Sash, kind: trinket, slot: waist, effects: {apMult: 0.8}, value: 4000, rarity: unique, blurb: "Every action costs a fifth less AP."}
-  journeyman_boots:
-    {name: Journeyman's Boots, kind: trinket, slot: feet, effects: {move: 1}, value: 600, rarity: rare, blurb: "+1 square on every move."}
   circlet_of_shadow:
     {name: Circlet of Shadow, kind: trinket, slot: head, power: {verb: bless, noun: veil, name: Veil}, value: 3000, rarity: unique, blurb: "At will: Bless + Veil — unseen beyond arm's reach for 3 rounds; striking gives you away."}
   crown_of_rile:
@@ -86,8 +84,6 @@ goods:
     {name: Necromancer's Amulet, kind: trinket, slot: neck, effects: {sp: 3, mag: {bone: 1, life: 1, spirit: 1}}, value: 1500, rarity: very rare, blurb: "+3 spell points; +1 magnitude with Bone, Life and Spirit."}
   sorcerer_skullcap:
     {name: Sorcerer's Skullcap, kind: trinket, slot: head, attrs: {INT: 1}, effects: {sp: 2}, value: 1200, rarity: very rare, blurb: "+1 INT and +2 spell points."}
-  dragonslaying_gauntlets:
-    {name: Gauntlets of Dragonslaying, kind: trinket, slot: hands, attrs: {STR: 1}, effects: {slay: [{trait: dragon, damage: 3}]}, value: 1500, rarity: very rare, blurb: "+1 STR; +3 damage to dragons with any blow."}
   zlandicar_heart:
     {name: Zlandicar's Heart, kind: trinket, slot: neck, attrs: {CON: 1}, effects: {resist: {fire: 0.5, frost: 0.5}}, value: 2500, rarity: unique, blurb: "+1 CON; fire and frost do half."}
   velium_pendant:
@@ -139,20 +135,20 @@ tables:
     - {w: 2, weapon: longsword, enchantments: [tactics], name: Blade of Tactics}
     - {w: 2, weapon: longsword, enchantments: [strategy], name: Blade of Strategy}
     - {w: 1, armor: mail, material: steel, craft: master, enchantments: [ebon], name: Ebony Mail}
-    - {w: 2, armor: plate, material: steel, coverage: half, enchantments: [bloodstone], name: Rubicite Breastplate}
+    - {w: 2, armor: plate, material: steel, covers: [torso], enchantments: [bloodstone], name: Rubicite Breastplate}
     - {w: 2, armor: plate, origin: malevolent, name: Malevolent Plate}
     - {w: 2, armor: mail, origin: malevolent, name: Malevolent Mail}
     - {w: 2, armor: plate, craft: master, name: Crafted Plate}
     - {w: 2, armor: mail, craft: master, name: Crafted Mail}
     - {w: 2, shield: heater, material: steel, enchantments: [spellcatching], name: Spellbreaker}
     - {w: 1, good: silk_sash}
-    - {w: 2, good: journeyman_boots}
+    - {w: 2, armor: leather, covers: [feet], craft: master, enchantments: [journeying], name: Journeyman's Boots}
     - {w: 1, good: circlet_of_shadow}
     - {w: 2, good: crown_of_rile}
     - {w: 2, good: froglok_crown}
     - {w: 2, good: necromancer_amulet}
     - {w: 2, good: sorcerer_skullcap}
-    - {w: 2, good: dragonslaying_gauntlets}
+    - {w: 2, armor: plate, covers: [hands], material: steel, enchantments: [dragonslaying], name: Gauntlets of Dragonslaying}
     - {w: 1, good: zlandicar_heart}
     - {w: 2, good: velium_pendant}
     - {w: 1, good: ring_of_dain}

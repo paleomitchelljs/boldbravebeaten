@@ -95,7 +95,7 @@
   function powerSources(c) {
     const out = [];
     for (const t of c.trinkets || []) if (t.power) out.push({ item: t, power: t.power });
-    const held = [c.armor && c.armor.durability > 0 ? c.armor : null, c.shield && c.shield.durability > 0 ? c.shield : null, C().wieldedWeapon(c), C().offhandWeapon(c)];
+    const held = C().armorPieces(c).filter((p) => p.durability > 0).concat([c.shield && c.shield.durability > 0 ? c.shield : null, C().wieldedWeapon(c), C().offhandWeapon(c)]);
     for (const it of held) if (it) for (const e of Items().enchantsOf(it)) if (e.power) out.push({ item: it, power: e.power });
     return out;
   }
@@ -127,7 +127,7 @@
   }
 
   function rechargeAll(c) {
-    for (const it of [c.armor, c.shield].concat(c.weapons || [], c.trinkets || [])) if (it && it.used) delete it.used;
+    for (const it of [c.armor, c.shield].concat(c.pieces || [], c.weapons || [], c.trinkets || [])) if (it && it.used) delete it.used;
   }
 
   function castableOptions(c) {

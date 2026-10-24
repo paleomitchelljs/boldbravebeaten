@@ -607,7 +607,8 @@
 
     // ---- Armor ------------------------------------------------------------
     // Base durability per armor type lives in armor.yaml (Outline: durability like HP; numbers Open).
-    // PROVISIONAL: armor coverage keyword
+    // Armor coverage keyword: only `full` is read now (the pass-through of a burst point). Where a piece is worn is
+    // its locations (rules.yaml locations, Items.coversOf); half and partial are kept for old saves' sake.
     coverage: {
       full: { mitigation: 0, penalty: 0, passThrough: 0.5 },
       half: { mitigation: -1, penalty: -1, passThrough: 0.6 },
@@ -742,7 +743,7 @@
     'Blunt damage on an unconscious target goes to CON.',
     'Items (the user\'s call): every weapon, armor piece and shield is a type plus a material (materials.yaml: cloth, leather, bronze, iron, steel; exotic spider silk, dragon hide, star iron, adamant), an origin (origins.yaml: common, elven, dwarven, goblin: how weight trades against durability, damage and protection), a craftsmanship (crafts.yaml: poor, average, masterwork: how fast it wears and how easily it breaks, never its damage or protection) and enchantments (enchantments.yaml; usually none). Armor tiers: padded, leather, mail, plate (scale is folded into steel mail). Old saves: quality crude → poor, standard and fine → average, masterwork and legendary → masterwork.',
     'Armor durability: padded 20, leather 25, mail 40, plate 60 (× material toughness, origin, craftsmanship and coverage; padding takes no wear).',
-    'Armor coverage: half = −1 mitigation and −1 penalties, 60% piercing pass-through, gap −2; partial = −2 / −2, 75%, gap −4.',
+    'Armor by hit location (the user\'s choice, 2026-10-24; docs/PROPOSALS.md §2, step 1): six locations (head 8%, torso 40%, arms 18%, hands 5%, legs 24%, feet 5% of the body: rules.yaml locations), which are also the armor slots. A piece covers some of them, protects fully there, and carries that share of its type\'s weight, penalties, durability and price; a coverage keyword reads as locations (half = torso, arms, legs; partial = torso). A blow against a body whose locations differ rolls d100 for where it lands; the AI sees the expectation over them. A cut that gets through a limb or the head (bare, or cutting through cloth or leather) carries the slashing beyond 3 into the next location (arm → torso or head, hand → arm, leg → the other leg, foot → leg), whose armor meets it. Before: half coverage was −1 mitigation and −1 penalties everywhere, gap −2; partial −2.',
     'Shield wear per block = ½P + ½S + B.',
     'Kick: opposed d10 + ⌊STR/2⌋; a kick knocks down only on a win by 3 or more. Trip wins on any margin.',
     'Disarm: d10 + ⌊DEX/2⌋ opposed (+2 for a two-handed grip). Grapple: d10 + ⌊STR/2⌋ + Grappler rank vs. d10 + ⌊max(STR,DEX)/2⌋.',

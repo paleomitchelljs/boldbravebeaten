@@ -5,7 +5,8 @@
  *                 damage and protection
  *   craft         how well it was made (crafts.yaml): how fast it wears and how easily it breaks
  *   enchantments  usually none (enchantments.yaml)
- * Armor also has a coverage (full, half, partial); shields a size. Everything the rules need about an item
+ * An armor piece covers some of the body's locations (`covers`, or an old coverage keyword: CONFIG.locations);
+ * shields have a size. Everything the rules need about an item
  * comes through here.
  */
 (function (G) {
@@ -18,7 +19,21 @@
     return prefix + '_' + Date.now().toString(36) + '_' + (nextId++).toString(36) + Math.random().toString(36).slice(2, 6);
   }
 
-  const COVERAGE_DURABILITY = { full: 1.0, half: 0.75, partial: 0.5 }; // PROVISIONAL
+  // ---- Locations (CONFIG.locations, rules.yaml) -------------------------------------------------
+  const LOC = () => CONFIG.locations;
+  // The locations a piece covers: its own `covers`, else its coverage keyword's (full when it has neither).
+  function coversOf(a) {
+    if (!a) return [];
+    if (a.covers && a.covers.length) return a.covers;
+    const L = LOC();
+    return (L && L.coverage[a.coverage || 'full']) || (L ? L.order : []);
+  }
+  // The part of the body a piece covers (1 for a full harness).
+  function coverShare(a) {
+    const L = LOC();
+    if (!L) return 1;
+    return Math.round(coversOf(a).reduce((n, l) => n + (L.share[l] || 0), 0) * 100) / 100;
+  }
 
   // ---- Tags ----------------------------------------------------------------------------------
   // Old saves and data name a quality: crude → poor; standard and fine → average; masterwork and legendary → master.
@@ -85,9 +100,10 @@
     return (MATERIALS[material] || {}).hardness || 0;
   }
 
-  // Tags given to a maker: material (kept even when usual), origin, enchantments.
+  // Tags given to a maker: material (kept even when usual), origin, enchantments, name; for armor, covers.
   function applyTags(item, tags) {
     tags = tags || {};
+    if (item.kind === 'armor' && tags.covers && tags.covers.length) item.covers = tags.covers.slice();
     if (tags.origin && tags.origin !== 'common') item.origin = tags.origin;
     if (tags.enchantments && tags.enchantments.length) item.enchantments = tags.enchantments.slice();
     if (tags.name) item.name = tags.name;
@@ -104,6 +120,8 @@
     if (!item.craft) item.craft = 'average';
     if (item.kind === 'armor' && item.type === 'scale') { item.type = 'mail'; item.material = 'steel'; }
     if (item.kind === 'armor' && !item.material) item.material = usualMaterial(item);
+    // Durability is out of a share of the body now (CONFIG.locations): a half harness from an old save is worth less.
+    if (item.kind === 'armor' && ARMOR[item.type] && item.durability != null) item.durability = Math.min(item.durability, armorMaxDurability(item));
     return item;
   }
 
@@ -172,7 +190,7 @@
     const t = ARMOR[a.type];
     const base = t.durability || 20;
     const item = Object.assign({ kind: 'armor' }, a);
-    return Math.max(1, Math.round(base * matRatio(item, 'toughness') * tagMult(a, 'durability') * craftOf(a).durability * COVERAGE_DURABILITY[a.coverage || 'full']));
+    return Math.max(1, Math.round(base * matRatio(item, 'toughness') * tagMult(a, 'durability') * craftOf(a).durability * coverShare(a)));
   }
 
   const tenth = (x) => Math.round(x * 10) / 10;
@@ -183,7 +201,10 @@
   function armorBase(a) {
     const item = Object.assign({ kind: 'armor' }, a);
     const t = Object.assign({}, ARMOR[a.type], (CONFIG.armorAdjust || {})[a.type] || {});
-    const cov = CONFIG.coverage[a.coverage || 'full'];
+    // A piece protects fully where it is; what it doesn't cover is bare (CONFIG.locations). The old coverage
+    // keyword's penalties to mitigation and the gap number are gone: a half harness is a full one on fewer places.
+    const cov = CONFIG.coverage.full;
+    const share = coverShare(a);
     const protect = matRatio(item, 'protect') * tagMult(a, 'protect');
     const weight = matRatio(item, 'weight') * tagMult(a, 'weight');
     const mit = {};
@@ -191,11 +212,11 @@
     let resistBonus = 0;
     for (const e of enchantsOf(a)) { for (const k of ['P', 'S', 'B']) bonus[k] += (e.mitBonus && e.mitBonus[k]) || 0; resistBonus += e.resistBonus || 0; }
     for (const k of ['P', 'S', 'B']) mit[k] = Math.max(0, Math.round(t.mit[k] * (k === 'B' ? 1 : protect)) + cov.mitigation + bonus[k]);
-    const pen = (v) => Math.max(0, tenth(tenth(v * weight) + cov.penalty));
+    const pen = (v) => Math.max(0, tenth(v * weight * share));
     const PC = CONFIG.pierce;
     const pierce = t.pierce ? {
       resist: Math.round((t.pierce.resist * protect + resistBonus) * 100) / 100,
-      gap: t.pierce.gap + ((PC && PC.coverageGap && PC.coverageGap[a.coverage || 'full']) || 0),
+      gap: t.pierce.gap,
     } : null;
     return {
       mit,
@@ -213,7 +234,9 @@
       dissipate: { glancing: (t.dissipate && t.dissipate.glancing) || 0, crushing: (t.dissipate && t.dissipate.crushing) || 0 },
       material: materialOf(item),
       metal: isMetal(item),
-      weight: t.weight ? tenth(t.weight * weight * (COVERAGE_DURABILITY[a.coverage || 'full'])) : null,
+      weight: t.weight ? tenth(t.weight * weight * share) : null,
+      covers: coversOf(a),
+      share,
     };
   }
 
@@ -244,8 +267,18 @@
       const t = ARMOR[item.type];
       const usual = MATERIALS[t.material];
       if (M && (mat !== t.material || (usual && usual.metal))) words.push(M.name.toLowerCase());
-      if (item.coverage && item.coverage !== 'full') words.push(COVERAGE[item.coverage].name.toLowerCase());
+      const L = LOC(), cv = coversOf(item);
+      // One location: the type's name for it (a plate helm, mail chausses).
+      if (cv.length === 1 && t.pieces && t.pieces[cv[0]]) {
+        words.push(t.pieces[cv[0]].toLowerCase());
+        const ench1 = enchantsOf(item).map((e) => e.name.toLowerCase());
+        return cap(words.join(' ') + (ench1.length ? ' of ' + ench1.join(' and ') : ''));
+      }
       words.push(t.name.toLowerCase() + ' armor');
+      if (L && cv.length < L.order.length) {
+        const names = L.order.filter((l) => cv.includes(l)).map((l) => (L.names[l] || l).toLowerCase());
+        return cap(words.join(' ') + ` (${names.join(', ')})` + (enchantsOf(item).length ? ' of ' + enchantsOf(item).map((e) => e.name.toLowerCase()).join(' and ') : ''));
+      }
     } else if (item.kind === 'shield') {
       words.push(SHIELD_MATERIALS[item.material].name.toLowerCase(), SHIELDS[item.size].name.toLowerCase() + ' shield');
     } else if (item.kind === 'weapon') {
@@ -451,7 +484,7 @@
   }
 
   G.Items = {
-    weaponStats, uid, makeArmor, makeShield, makeWeapon, armorBase, armorMaxDurability, shieldStats, itemName, itemRarity,
+    weaponStats, uid, makeArmor, makeShield, makeWeapon, armorBase, armorMaxDurability, coversOf, coverShare, shieldStats, itemName, itemRarity,
     weaponMaterial, weaponMaxDurability, weaponDurability, weaponBroken, weaponEfficacy, hardness,
     craftId, craftOf, originOf, enchantsOf, materialOf, tagMult, wearMult, tagValue, isMetal, rusts, normalizeItem,
     reachOf, reachMin, longestReach, weaponMass,

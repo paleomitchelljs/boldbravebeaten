@@ -67,8 +67,13 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 - [x] Ruled: ordinary shields can't block spell bolts (`CONFIG.defense.blockSpells: false`); Spellbreaker can.
 - [x] Waist and two ear slots added (sashes on the waist; Orc Fang Earring and Ivandyr's Hoop in the ears).
 - [x] Opportunity strikes on entering a foe's reach, leaving it, or a second step within it (ruled; sim/FINDINGS.md).
-- [ ] Armor by hit location (the user chose it; docs/PROPOSALS.md §2), in three steps: (1) pieces and unaimed
-  locations, with carry-through for cuts (approved); (2) aimed blows and a Location menu; (3) disarm, trip, stun.
+- [x] Armor by hit location, step 1: pieces cover locations, unaimed location rolls against mixed armor, carry-through
+  for cuts (docs/PROPOSALS.md §2; sim/FINDINGS.md; `sim/locations.js`).
+- [ ] Step 2: aimed blows and a Location menu beside each attack (default: the best expected location, not the least
+  armored). Step 3: location effects (attribute tables by location, disarm, trip, stun, vital by location).
+- [ ] The user's idea (2026-10-24): a parried swing whose force beats the parrying weapon's carries through, weakened;
+  a parried thrust is stopped. Proposed: move the overwhelm term of `CONFIG.defense.parryForce` out of the parry odds
+  into the carry-through, so a heavy blow isn't counted twice. Needs the arena sim. Awaiting a go-ahead.
 - [ ] Sim the strong items (all draft): the Flowing Black Silk Sash (×0.8 AP on everything), the Scimitar of Speed,
   the at-will Circlet of Shadow (probably wants charges); Raise + Spirit (revenant) in the gauntlet; companions over a multi-fight run.
 - [ ] Magic items use the user's names (the no-published-names rule was dropped). Only `relic_cache` (nested in the barrow, troll and strongbox hoards) offers them; no shop does.

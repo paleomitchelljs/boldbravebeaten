@@ -9,6 +9,23 @@ enemyGear:
   metal: [[[2, bronze], [3, iron]], [[1, bronze], [4, iron], [1, steel]], [[3, iron], [3, steel]]]
   origin: [[[1, common]], [[18, common], [1, elven], [1, dwarven]], [[8, common], [1, elven], [1, dwarven]]]
 
+# ---- Hit locations (PROVISIONAL, the user's choice: docs/PROPOSALS.md §2, step 1) ------------------------------
+# A body is six locations, which are also the six armor slots. An armor piece `covers` some of them (an item without
+# `covers` reads its coverage keyword below). share: the part of the body each is, so the part of the blows an
+# unaimed blow lands there, and the part of a type's weight, penalties and durability a piece covering it carries
+# (a full harness sums to 1, so it plays as one piece always did). A blow rolls its location only against a body
+# whose locations differ (a piece here, bare skin there).
+# carry: a cut that gets through a location (bare, or cutting through cloth or leather) carries the slashing left
+# beyond `limb` into the next location (one of `next`, rolled), where that location's armor meets it. Not the torso.
+locations:
+  order: [head, torso, arms, hands, legs, feet]
+  names: {head: Head, torso: Torso, arms: Arms, hands: Hands, legs: Legs, feet: Feet}
+  share: {head: 0.08, torso: 0.40, arms: 0.18, hands: 0.05, legs: 0.24, feet: 0.05}
+  coverage: {full: [head, torso, arms, hands, legs, feet], half: [torso, arms, legs], partial: [torso]}
+  carry:
+    limb: 3
+    next: {head: [torso], arms: [torso, head], hands: [arms], legs: [legs], feet: [legs]}
+
 game:
   # ---- Equipment ----------------------------------------------------------
   # Worn slots (the user's list), after the hands, shield and chest (armor). A worn good's `slot` names one of
@@ -65,7 +82,6 @@ game:
   # ---- Economy ------------------------------------------------------------
   economy:
     rarityValue: {common: 12, uncommon: 60, rare: 300, very rare: 1500, unique: 8000}
-    coverageMult: {full: 1, half: 0.6, partial: 0.35}   # material, origin, craft and enchantments set their own (value)
     sellRate: 0.4
     priceStanding: 0.004     # price change per standing point with the seller's faction
     bargainRank: 0.05        # per Bargain rank

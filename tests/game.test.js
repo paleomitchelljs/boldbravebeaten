@@ -408,11 +408,8 @@ test('equip: the user\'s slots — two rings, two ears, a neck, a cape, a waist,
   assert.ok(Equip.equipTrinket(w, c, 'ring_iron').ok);
   assert.ok(Equip.itemIn(c, 'ring1') && Equip.itemIn(c, 'ring2'), 'one ring on each hand');
   assert.equal(C.attr(c, 'CON'), c.base.CON + 2);
-  World.addGood(w, 'journeyman_boots');
-  assert.equal(Equip.equipTrinket(w, c, 'journeyman_boots', 'head').ok, false, 'boots go on the feet');
-  const before = C.squaresPerAP(c);
-  assert.ok(Equip.equipTrinket(w, c, 'journeyman_boots').ok);
-  assert.equal(C.squaresPerAP(c), before + 1);
+  World.addGood(w, 'circlet_of_shadow');
+  assert.equal(Equip.equipTrinket(w, c, 'circlet_of_shadow', 'neck').ok, false, 'a circlet goes on the head');
   // An old save's charm and ring.
   const old = { trinkets: [{ name: 'x', slot: 'charm', attrs: {} }, { name: 'y', slot: 'ring', attrs: {} }, { name: 'z', slot: 'ring', attrs: {} }] };
   C.normalize(old);
@@ -545,4 +542,44 @@ test('play: a party can clear the first dungeon with the AI on both sides of eve
     World.breather(w);
   }
   assert.ok(w.stats.fights >= 1);
+});
+
+test('armor pieces: each takes the slots it covers; a crown and a helm share the head; repairs and loot see every piece', () => {
+  const w = fresh();
+  const c = World.party(w)[0];
+  const Items = B.Items;
+  // Wearing a mail shirt (torso, arms) and a plate helm over the starting harness takes the harness off.
+  const shirt = Items.makeArmor('mail', null, 'average', { covers: ['torso', 'arms'] });
+  const helm = Items.makeArmor('plate', null, 'average', { covers: ['head'] });
+  w.pack.gear.push(shirt, helm);
+  assert.deepStrictEqual(Equip.fits(shirt), ['body', 'arms']);
+  const old = c.armor;
+  assert.ok(Equip.equip(w, c, shirt, 'body').ok);
+  assert.ok(w.pack.gear.includes(old), 'the full harness went into the pack');
+  assert.ok(Equip.equip(w, c, helm, 'head').ok);
+  assert.strictEqual(Equip.itemIn(c, 'body'), shirt);
+  assert.strictEqual(Equip.itemIn(c, 'arms'), shirt);
+  assert.strictEqual(Equip.itemIn(c, 'head'), helm);
+  assert.strictEqual(Equip.itemIn(c, 'legs'), null);
+  assert.ok(!C.armorUniform(c));
+  assert.strictEqual(Items.itemName(helm), 'Iron helm');
+  // Penalties add up by piece: the shirt carries its share of mail's, the helm its share of plate's.
+  const ai = C.armorInfo(c);
+  const sum = Items.armorBase(shirt).spd + Items.armorBase(helm).spd;
+  assert.ok(Math.abs(ai.spd - Math.max(0, sum)) < 0.11, JSON.stringify([ai.spd, sum]));
+  // A crown on the head takes the helm off.
+  World.addGood(w, 'crown_of_rile');
+  assert.ok(Equip.equipTrinket(w, c, 'crown_of_rile').ok);
+  assert.strictEqual(C.armorAt(c, 'head'), null);
+  assert.ok(w.pack.gear.includes(helm));
+  // Journeyman's Boots are leather boots now, and still quicken a move.
+  const boots = Items.makeArmor('leather', null, 'master', { covers: ['feet'], enchantments: ['journeying'] });
+  w.pack.gear.push(boots);
+  const before = C.squaresPerAP(c);
+  assert.ok(Equip.equip(w, c, boots, 'feet').ok);
+  assert.equal(C.squaresPerAP(c), before + 1);
+  // Field repairs reach every piece.
+  shirt.durability = 1; boots.durability = 1;
+  B.Recovery.mendGear(c, 0.5);
+  assert.ok(shirt.durability > 1 && boots.durability > 1);
 });

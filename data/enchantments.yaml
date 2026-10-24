@@ -167,3 +167,18 @@ strategy:
   rarity: very rare
   value: 8
   blurb: "+1 to beat a defence and half an AP more each round while in hand."
+# Worn armor pieces from the user's list (they were worn things before armor had locations).
+journeying:
+  name: Journeying
+  kinds: [armor]
+  effects: {move: 1}
+  rarity: rare
+  value: 6
+  blurb: "+1 square on every move."
+dragonslaying:
+  name: Dragonslaying
+  kinds: [armor]
+  effects: {attrs: {STR: 1}, slay: [{trait: dragon, damage: 3}]}
+  rarity: very rare
+  value: 10
+  blurb: "+1 STR; +3 damage to dragons with any blow."

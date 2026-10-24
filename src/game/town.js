@@ -145,7 +145,7 @@
       if (u.cure === 'bleeding') { if (!c.bleeds.length) return { ok: false, reason: 'Not bleeding.' }; c.bleeds = []; lines.push(`${c.name}'s bleeding stops.`); }
       if (u.cure === 'poison') { c.bleeds = c.bleeds.filter((b) => !b.poison); c.status.conds = (c.status.conds || []).filter((x) => !['venom', 'plague', 'poisoned', 'diseased'].includes(x.key)); lines.push(`${c.name} is cleansed.`); }
       if (u.repair) {
-        const items = [c.armor, c.shield].filter(Boolean).concat(c.weapons.filter((x) => G.Items.weaponMaxDurability(x) && !G.Items.weaponBroken(x)));
+        const items = [c.shield].filter(Boolean).concat(G.Character.armorPieces(c)).concat(c.weapons.filter((x) => G.Items.weaponMaxDurability(x) && !G.Items.weaponBroken(x)));
         if (!items.length) return { ok: false, reason: 'Nothing to repair.' };
         for (const it of items) {
           const max = it.kind === 'armor' ? G.Items.armorMaxDurability(it) : it.kind === 'shield' ? G.Items.shieldStats(it).maxDurability : G.Items.weaponMaxDurability(it);

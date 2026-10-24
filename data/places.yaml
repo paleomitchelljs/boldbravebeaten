@@ -51,11 +51,23 @@ stonebridge:
             - {armor: padded, coverage: full}
             - {armor: leather, coverage: full}
             - {armor: leather, coverage: half}
+            - {armor: leather, covers: [head]}
+            - {armor: leather, covers: [hands]}
+            - {armor: leather, covers: [feet]}
+            - {armor: padded, covers: [torso, arms]}
             - {shield: buckler, material: wood}
             - {shield: round, material: wood}
             - {armor: mail, material: bronze, coverage: half}
             - {armor: mail, coverage: half, req: {standing: {faction: merchants_guild, min: 10}}}
             - {armor: mail, coverage: full, req: {standing: {faction: merchants_guild, min: 10}}}
+            - {armor: mail, covers: [torso, arms], req: {standing: {faction: merchants_guild, min: 10}}}
+            - {armor: mail, covers: [head], req: {standing: {faction: merchants_guild, min: 10}}}
+            - {armor: mail, covers: [legs], req: {standing: {faction: merchants_guild, min: 10}}}
+            - {armor: plate, covers: [head], req: {standing: {faction: merchants_guild, min: 25}}}
+            - {armor: plate, covers: [torso], req: {flag: guild_stock}}
+            - {armor: plate, covers: [legs], req: {flag: guild_stock}}
+            - {armor: plate, covers: [arms], req: {flag: guild_stock}}
+            - {armor: plate, covers: [hands], req: {flag: guild_stock}}
             - {weapon: warhammer, req: {standing: {faction: merchants_guild, min: 10}}}
             - {weapon: rondel, req: {standing: {faction: merchants_guild, min: 10}}}
             - {weapon: longbow, req: {standing: {faction: merchants_guild, min: 10}}}

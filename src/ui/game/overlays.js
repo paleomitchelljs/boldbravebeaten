@@ -32,7 +32,8 @@
       return h('div', { class: 'ledger-row' }, h('span', { class: 'stack tight' }, h('b', null, `${g.name} ×${World.goodCount(w, id)}`), h('span', { class: 'small muted' }, g.blurb)), h('button', { class: 'small', onclick: () => { const r = G.Town.useGood(w, id, tc); toast(r.ok ? r.lines[0] : r.reason); game.save(); game.openOverlay('pack', o); game.render(); } }, 'Use on ' + tc.name));
     });
     const equipTo = (it) => {
-      const slots = Equip.fits(it);
+      // An armor piece takes every slot it covers at once: one button.
+      const slots = it.kind === 'armor' ? Equip.fits(it).slice(0, 1) : Equip.fits(it);
       return h('div', { class: 'row' }, slots.map((s) => h('button', { class: 'small', disabled: !Equip.canEquip(tc, it, s).ok, onclick: () => { const r = Equip.equip(w, tc, it, s); if (!r.ok) toast(r.reason); game.save(); game.openOverlay('pack', o); game.render(); } }, `${Equip.slotList().find((x) => x[0] === s)[1]}`)));
     };
     const gear = w.pack.gear.map((it) => h('div', { class: 'ledger-row' }, h('span', { class: 'stack tight' }, h('b', null, Items.itemName(it)), h('span', { class: 'small muted' }, Equip.describe(it))), equipTo(it)));
