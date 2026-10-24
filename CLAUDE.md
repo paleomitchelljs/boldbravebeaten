@@ -34,7 +34,10 @@ Read `HANDOFF.md` first: it is the to-do list. **After every push, update it** (
 - **Before finishing a change:** `node --test` (rules, content, game, and every screen rendered in a fake DOM) and
   `node tools/validate.js`. After a map or monster change run `node tools/encounters.js`. The fake DOM catches
   exceptions, not bad layout: if you change CSS or the first-person view, say plainly that you could not look at it
-  unless you did.
+  unless you did. `tools/shot.sh out.png "<js>"` takes a headless-Chrome screenshot after running some JavaScript in
+  the page (start a game, travel somewhere, start a fight); use it to look. `node tools/encounters.js --n 300` takes
+  about 7 minutes. In sims, `World.grantXP` raises the level but not the party's power (feats come from training in
+  town), so a "level 3" party fights like a level-1 one.
 - **Departures from the design docs** go in `data/rules.yaml` or `src/rules/config.js`, marked TUNED or PROVISIONAL and
   listed in `CONFIG.provisional`, with evidence from a sim in `sim/FINDINGS.md`. Tests that check Specifics numbers
   wrap them in `asWritten()`; update that helper when a new tuned value is added.
