@@ -87,7 +87,9 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
   cells: two-square passages between two-square walls, a depth-first walk with 10% extra openings, bends rounded) and
   its own damp sandstone cliff set and pieces (`assets/wip/temple-maze/README.md`). A constrictor, a scaleward pair, a
   rat pack and a scaleward in the far dead ends, a cache, a well (a prop until the sewers exist), the east door locked
-  "not built yet". Seen in headless Chrome; not played through, encounters not simmed (`node tools/encounters.js`).
+  "not built yet". Seen in headless Chrome; not played through. `tools/encounters.js` (level-1 party): snake, rats
+  and watch 100% won, the pair 97%; easy for a place meant to be where the temple's people live, so it wants more
+  or bigger groups once the lizardfolk variants exist.
 - [ ] Style target: the PixelLab dragonborn (64 px). Tiles at 64 px to match (plan §4).
 - [ ] Archive the Undercroft and the Barrow for tests and sims only and start at the temple, once there is more of the
   temple than the court (the labyrinth and palace doors are locked "not built yet").
