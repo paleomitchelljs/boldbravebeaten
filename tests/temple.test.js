@@ -162,20 +162,27 @@ test('tilesets: wang corners follow the four squares around each corner; plain g
   const UI = (globalThis.BBB.UI = globalThis.BBB.UI || {});
   if (!UI.Tilemap) require('../src/ui/game/tilemap.js');
   const Tm = globalThis.BBB.UI.Tilemap;
-  const ts = Tm.tileset('temple_court');
-  assert.equal(ts.cell, 64);
-  // Every one of the 16 masks has a tile in the PixelLab layout.
-  assert.equal(Object.keys(ts.terrains.wall.index).length, 16);
-  assert.deepEqual(ts.terrains.wall.index[15], [0, 3], 'all four corners wall: the solid tile');
-  assert.deepEqual(ts.terrains.wall.index[0], [2, 1], 'no corner wall: plain grass');
   // A 3x3 room of grass in a wall, with a bridge over water in the middle.
   const rows = ['#####', '#,,,#', '#,=,#', '#,~,#', '#####'];
   const sc = { w: 5, h: 5, cell: (x, y) => { const ch = rows[y][x]; if (ch === '#') return { kind: 'wall' }; const gr = Explore.groundOf(ch); return { kind: gr.walk === false ? 'water' : 'floor', ground: gr }; } };
+  // A 16-tile set: every one of the 16 masks has a tile in the PixelLab layout.
+  const maze = Tm.tileset('temple_maze');
+  assert.equal(Object.keys(maze.terrains.wall.index).length, 16);
+  assert.deepEqual(maze.terrains.wall.index[15], [0, 3], 'all four corners wall: the solid tile');
+  assert.deepEqual(maze.terrains.wall.index[0], [2, 1], 'no corner wall: plain floor');
+  const pm = Tm.planTiles(sc, maze, 0, 0, 4, 4);
+  const mc = (x, y) => pm.corner.find((c) => c.x === x && c.y === y && c.t === 'wall');
+  assert.equal(mc(1, 1).m, 8 | 4 | 2, 'the room\'s inside corner: wall NW, NE and SW of it');
+  assert.equal(mc(2, 2), undefined, 'no wall around the middle corner');
+  assert.equal(mc(0, 0).m, 15);
+  // A cliff set (the court): the wall's last row before the floor is its face, picked by pattern.
+  const ts = Tm.tileset('temple_court');
+  assert.equal(ts.cell, 64);
   const p = Tm.planTiles(sc, ts, 0, 0, 4, 4);
   const corner = (x, y) => p.corner.find((c) => c.x === x && c.y === y && c.t === 'wall');
-  assert.equal(corner(1, 1).m, 8 | 4 | 2, 'the room\'s inside corner: wall NW, NE and SW of it');
+  assert.deepEqual(corner(2, 1).at, [3, 1], 'the north wall over the room: a straight face');
+  assert.equal(corner(0, 0).at[1], 8, 'deep in the wall: one of the plain tops (row 8), picked by position');
   assert.equal(corner(2, 2), undefined, 'no wall around the middle corner');
-  assert.equal(corner(0, 0).m, 15);
   // Walls draw grass beneath (their `over`); water draws its own terrain; the bridge goes over it, running north-south.
   assert.equal(p.base.find((b) => b.x === 0 && b.y === 0).t, 'grass');
   assert.equal(p.base.find((b) => b.x === 2 && b.y === 3).t, 'water');

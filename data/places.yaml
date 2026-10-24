@@ -373,7 +373,7 @@ temple_wall:
   kind: dungeon
   blurb: The walk along the top of the gate wall, and the little guardhouse over the gate.
   level: 2
-  look: {wall: "#cdb98a", floor: "#6e6c55", ceiling: "#2a3a22", fog: "#0c120a", torch: 1, tileset: temple_maze, light: 20}
+  look: {wall: "#cdb98a", floor: "#bba57a", ceiling: "#2a3a22", fog: "#0c120a", torch: 1, tileset: temple_walltop, light: 20}
   map:
     - "#######"
     - "#..1..#"

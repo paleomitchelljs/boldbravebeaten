@@ -423,7 +423,7 @@
         // Layer 1 from the tileset: ground, the corner tiles of each wang terrain, bridges; then what hasn't been seen
         // is put back in the dark (the corner tiles spill half a square past what is known).
         const tp = Tilemap.planTiles(sc, ts, x0 - 1, y0 - 1, x0 + cols, y0 + rows);
-        for (const k of ['base', 'corner', 'over']) for (const c of tp[k]) Tilemap.paintTiles(ctx, c, ts, env, k);
+        for (const k of ['base', 'corner', 'decor', 'over']) for (const c of tp[k]) Tilemap.paintTiles(ctx, c, ts, env, k);
         plan.shown = {};
         for (let y = y0 - 1; y <= y0 + rows; y++) for (let x = x0 - 1; x <= x0 + cols; x++) {
           if (!sc.seen || sc.seen(x, y)) { plan.shown[x + ',' + y] = 1; continue; }

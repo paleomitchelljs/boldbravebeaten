@@ -300,7 +300,11 @@
     const terrains = {};
     names.forEach((n, i) => {
       const t = Object.assign({ name: n, rank: i }, raw.terrains[n]);
-      if (t.wang) {
+      if (t.cliff) {
+        // A PixelLab cliff set (25 tiles): each tile is [col, row, pattern], the pattern 16 letters, row by row, of the
+        // 4x4 squares around its corner (0 lower, 1 upper, 2 the face row, . any).
+        t.cliffTiles = t.cliff.map(([cx, cy, pat]) => ({ at: [cx, cy], p: [...pat].map((ch) => (ch === '.' ? -1 : +ch)) }));
+      } else if (t.wang) {
         const cols = t.cols || 4;
         t.index = {};
         t.variants = {};
@@ -337,7 +341,7 @@
   function planTiles(sc, ts, x0, y0, x1, y1) {
     const at = {};
     const T_ = (x, y) => { const k = x + ',' + y; return at[k] || (at[k] = terrainOf(sc, ts, x, y)); };
-    const out = { base: [], corner: [], over: [] };
+    const out = { base: [], corner: [], decor: [], over: [] };
     for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
       let t = tdef(ts, T_(x, y).t);
       // A wang terrain's square is covered by its corners; under them lies what it is drawn over.
@@ -350,8 +354,24 @@
         out.over.push({ x, y, g: o, vertical: wet(x - 1, y) || wet(x + 1, y) });
       }
     }
+    // Decor: small pieces scattered over plain squares, so a plain tile need not carry the variety itself. A terrain's
+    // `decor` goes on squares whose eight neighbours are the same terrain (clear of every edge); a wall's `faces` go on
+    // the face it shows the square south of it, where the wall runs straight on both sides.
+    for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+      const me = T_(x, y).t, t = tdef(ts, me);
+      if (t.decor && !T_(x, y).over) {
+        let clear = true;
+        // With `edge`, the pieces may also lie where it meets anything drawn under it (ferns spilling onto grass).
+        const ok = (q) => !q.over && (q.t === me || (t.decor.edge && tdef(ts, q.t).rank < t.rank));
+        for (let dy = -1; dy <= 1 && clear; dy++) for (let dx = -1; dx <= 1; dx++) if (!ok(T_(x + dx, y + dy))) { clear = false; break; }
+        if (clear) scatter(out.decor, t.decor, x, y, 'square', ts.cell);
+      }
+      const n = tdef(ts, T_(x, y - 1).t);
+      if (n.faces && t.rank < n.rank && [-1, 1].every((d) => tdef(ts, T_(x + d, y - 1).t).rank >= n.rank && tdef(ts, T_(x + d, y).t).rank < n.rank)) scatter(out.decor, n.faces, x, y, 'face', ts.cell);
+    }
     for (const w of Object.values(ts.terrains)) {
       if (!w.wang) continue;
+      if (w.cliffTiles) { cliffCorners(out, w, (xx, yy) => tdef(ts, T_(xx, yy).t).rank >= w.rank, x0, y0, x1, y1); continue; }
       for (let y = y0; y <= y1 + 1; y++) for (let x = x0; x <= x1 + 1; x++) {
         const up = (xx, yy) => tdef(ts, T_(xx, yy).t).rank >= w.rank;
         const m = (up(x - 1, y - 1) ? 8 : 0) | (up(x, y - 1) ? 4 : 0) | (up(x - 1, y) ? 2 : 0) | (up(x, y) ? 1 : 0);
@@ -359,6 +379,62 @@
       }
     }
     return out;
+  }
+
+  // Value noise in 0..1, smooth between whole coordinates.
+  function noise(x, y) {
+    const x0 = Math.floor(x), y0 = Math.floor(y), fx = x - x0, fy = y - y0;
+    const at = (i, j) => (hash(i, j, 71) % 1000) / 999, s = (t) => t * t * (3 - 2 * t);
+    const a = at(x0, y0) + (at(x0 + 1, y0) - at(x0, y0)) * s(fx), b = at(x0, y0 + 1) + (at(x0 + 1, y0 + 1) - at(x0, y0 + 1)) * s(fx);
+    return a + (b - a) * s(fy);
+  }
+
+  // A cliff set's corners. A wall square with no wall south of it is the face row (2), the rest of the wall is its top
+  // (1), so the face hangs from the middle of the wall's last row over the top half of the square in front, as 3/4
+  // walls do. Each corner takes the tile whose pattern scores best over the 4x4 squares around it (the middle four
+  // count most), since the 25 tiles don't cover every shape.
+  function cliffCorners(out, w, up, x0, y0, x1, y1) {
+    const v = (x, y) => (up(x, y) ? (up(x, y + 1) ? 1 : 2) : 0);
+    for (let y = y0; y <= y1 + 1; y++) for (let x = x0; x <= x1 + 1; x++) {
+      const g = [];
+      for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) g.push(v(x - 2 + j, y - 2 + i));
+      if (!(g[5] || g[6] || g[9] || g[10])) continue;
+      // Ties (a tile and its variants) are broken by position.
+      let best = null, bs = -Infinity, ties = 0;
+      for (const tl of w.cliffTiles) {
+        let sc = 0;
+        for (let k = 0; k < 16; k++) {
+          const want = tl.p[k];
+          if (want < 0) continue;
+          const mid = k === 5 || k === 6 || k === 9 || k === 10;
+          sc += g[k] === want ? (mid ? 10 : 1) : mid ? -30 : -1;
+        }
+        if (sc > bs) { bs = sc; best = tl; ties = 1; }
+        else if (sc === bs && hash(x, y, 13 + ties++) % ties === 0) best = tl;
+      }
+      if (best) out.corner.push({ x, y, t: w.name, at: best.at });
+    }
+  }
+
+  // Up to ceil(density) pieces on a square, each there at density / that, picked and placed by position. `piece` indexes
+  // d.pieces; dx, dy are the piece's offset in art pixels within the square (a face piece sits in d.band: [top, height],
+  // measured from the top of the square in front of the wall, so its top is negative).
+  // `clump` (squares) scales the density by a smooth noise of that size, none where it is low, so pieces gather in
+  // drifts with bare ground between; `spread` (art pixels) lets a piece hang that far over its square's edge.
+  function scatter(out, d, x, y, where, cell) {
+    const pieces = d.pieces || [], tries = Math.max(1, Math.ceil(d.density == null ? 0.4 : d.density));
+    if (!pieces.length) return;
+    const dens = (d.density == null ? 0.4 : d.density) * (d.clump ? 3 * Math.max(0, noise(x / d.clump, y / d.clump) - 0.35) : 1);
+    for (let i = 0; i < tries; i++) {
+      if (hash(x, y, 31 + i) % 1000 >= (dens / tries) * 1000) continue;
+      const k = hash(x, y, 41 + i) % pieces.length, pc = pieces[k], m = d.margin == null ? 2 : d.margin;
+      const sp = d.spread || 0, room = (len) => Math.max(0, cell - 2 * m - len + 2 * sp);
+      const dx = m - sp + (hash(x, y, 51 + i) % (room(pc[3]) + 1));
+      const band = d.band || [0, cell];
+      // A face piece's sixth number, if any, is its height on the face (a vine hangs from the lip).
+      const dy = where === 'face' ? (pc[5] != null ? pc[5] : band[0] + Math.round((band[1] - pc[4]) / 2)) : m - sp + (hash(x, y, 61 + i) % (room(pc[4]) + 1));
+      out.push({ x, y, piece: pc, dx, dy });
+    }
   }
 
   // env: as paint(), plus imgAt(path) -> {ok, el}.
@@ -369,7 +445,7 @@
       const im = t.tile ? env.imgAt(ts.dir + (Array.isArray(t.tile) ? t.tile[hash(p.x, p.y) % t.tile.length] : t.tile)) : null;
       if (im && im.ok) { ctx.drawImage(im.el, 0, 0, cell, cell, X, Y, size, size); return; }
       // Plain ground under a wang set: its all-lower tile.
-      const w = Object.values(ts.terrains).find((q) => q.wang && q.over === p.t && q.index[0]);
+      const w = Object.values(ts.terrains).find((q) => q.wang && q.over === p.t && q.index && q.index[0]);
       const wi = w ? env.imgAt(ts.dir + w.wang) : null;
       if (wi && wi.ok) { const [cx, cy] = w.index[0]; ctx.drawImage(wi.el, cx * cell, cy * cell, cell, cell, X, Y, size, size); return; }
       // No art: the colour, laid over the floor at the terrain's alpha (a patch of rubble in the grass).
@@ -379,9 +455,9 @@
       ctx.restore();
     } else if (kind === 'corner') {
       const t = ts.terrains[p.t], X = env.ox + (p.x - 0.5) * size, Y = env.oy + (p.y - 0.5) * size;
-      const im = env.imgAt(ts.dir + t.wang), vs = t.variants[p.m];
+      const im = env.imgAt(ts.dir + t.wang), vs = t.variants && t.variants[p.m];
       // A variant at a share `vary` (default 0.25) of the corners that have one, picked by position.
-      const at = vs && hash(p.x, p.y, 11) % 100 < (t.vary == null ? 0.25 : t.vary) * 100 ? vs[hash(p.x, p.y, 12) % vs.length] : t.index[p.m];
+      const at = p.at || (vs && hash(p.x, p.y, 11) % 100 < (t.vary == null ? 0.25 : t.vary) * 100 ? vs[hash(p.x, p.y, 12) % vs.length] : t.index[p.m]);
       if (im.ok && at) { ctx.drawImage(im.el, at[0] * cell, at[1] * cell, cell, cell, X, Y, size, size); return; }
       // No art yet: the upper quarters in the terrain's colour.
       ctx.fillStyle = t.color || '#888';
@@ -390,6 +466,9 @@
       if (p.m & 4) ctx.fillRect(X + hs, Y, hs, hs);
       if (p.m & 2) ctx.fillRect(X, Y + hs, hs, hs);
       if (p.m & 1) ctx.fillRect(X + hs, Y + hs, hs, hs);
+    } else if (kind === 'decor') {
+      const k = (T * S) / cell, pc = p.piece, im = env.imgAt(ts.dir + pc[0]);
+      if (im.ok) ctx.drawImage(im.el, pc[1], pc[2], pc[3], pc[4], env.ox + p.x * size + Math.round(p.dx * k), env.oy + p.y * size + Math.round(p.dy * k), pc[3] * k, pc[4] * k);
     } else if (kind === 'over') {
       const X = env.ox + p.x * size, Y = env.oy + p.y * size;
       const t = ts.terrains[p.g.tile];

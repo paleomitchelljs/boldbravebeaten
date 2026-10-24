@@ -59,7 +59,28 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
 - [x] Courtyard 1 and the wall top are playable (`temple_court`, `temple_wall`; a town exit, "the temple in the jungle"),
   drawn with the two placeholder PixelLab sandstone sets (copied to `art/worldtiles/temple/`). Looked at
   in headless Chrome: walls, corners, doors, daylight and a fight on the court all draw. Not seen on a phone.
-- [x] The placeholder court set is replaced (above); `moss-wall` (labyrinth, wall top) is still the placeholder, "the
+- [x] The placeholder court set is replaced (above); `moss-wall` (labyrinth) is still the placeholder, "the
+  roughest of drafts": replace it with the labyrinth's set.
+- [x] Courtyard art, first pass (2026-10-24; prompts and palette in `assets/wip/temple-court/court-wall.prompt.md`):
+  a new palette (olive and fern greens against the dragonborn's crimson, sun-yellowed tan sandstone, no near-blacks on
+  the ground); the court wall as a raised corner set; fern patches (`%`, a second set chained from the same grass); grass
+  in three inpainted variants; snake, lizard and vine variants of the wall face (`vary`); door, steps, well, ferns as
+  props. Engine: wang sheets take variant tiles (a corner code listed again), stairs take a legend `sprite`, and the
+  place's own tileset props win over the stock ones (the tileset door was never drawn). Seen in headless Chrome.
+- [x] Court art, second pass (2026-10-24; `assets/wip/temple-court/v2/README.md`): layers. Plain grass, plain loam
+  (fern beds, `%`) and plain paving (rubble, `;`), chained from one grass tile so their meandering edges join; a PixelLab
+  25-tile cliff set for the walls (small-block faces a square tall, flat tops redrawn as large blocks); the variety from
+  `decor` pieces (tufts, ferns, bricks, pebbles, flowers; moss, sprigs, cracks on tops) clumped by noise, and `faces`
+  (vines, the snake mosaic) on the wall faces. The wall top has its own set (`temple_walltop`). Engine: cliff sets
+  picked by pattern, decor and faces in `tilemap.js`. Seen in headless Chrome.
+- [ ] Court art, third pass:
+  - the lizard mosaic came out as a figure: redo it as a face panel; the face mosaics show rarely;
+  - the wall-top place's set has dark edge lines and a darker face than the court's; one-square walls between its rooms
+    draw odd lips;
+  - the jointed tops repeat a 64-px grid; the brick decor is pinkish beside the paving;
+  - the steps up the wall are still the small rotated stair; one door image serves walls of both directions;
+  - side walls show only their top edge (top-down): fine, but they look thin beside the faced north walls.
+- [x] The placeholder court set is replaced (above); `moss-wall` (labyrinth) is still the placeholder, "the
   roughest of drafts": replace it with the labyrinth's set.
 - [x] Courtyard art, first pass (2026-10-24; prompts and palette in `assets/wip/temple-court/court-wall.prompt.md`):
   a new palette (olive and fern greens against the dragonborn's crimson, sun-yellowed tan sandstone, no near-blacks on
