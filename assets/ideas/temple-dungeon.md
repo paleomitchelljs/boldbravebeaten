@@ -3,6 +3,22 @@
 From the user's voice memo of 2026-10-24, quoted where the wording matters. Status: plan, nothing built. The open
 questions in §2 come first; the build order in §5 assumes the answers I recommend there.
 
+## 0. Decided since (the user, 2026-10-24)
+
+- **One dungeon first.** "The second prototype dungeon will come later after we try this one." The Undercroft and the
+  Barrow are to be "archived or saved for testing only". Do that once courtyard 1 is playable, so the game always has a
+  dungeon: move them to a test-only place file the tests and sims still load, and start the game at the temple.
+- **Courtyard 1** is "a flat grassy area surrounded by sandstone walls, and those walls have wooden doors leading to the
+  other areas". So no raised platform (confirm: the first memo had stairs up to a platform with the well). It should be
+  "large enough for about 4 separate encounters despite being wide open (guards at the entrance, guards at the door to
+  the labyrinth, guards at the palace, and a central encounter). Since it's open, these might spill and connect."
+- **Wells** "are mostly drop downs, with the only 'way out' being the one by the entrance (that can be climbed) and via
+  the ritual chamber". So the courtyard well stands near the entrance and climbs both ways; the labyrinth and pyramid
+  wells are one-way drops; the ritual chamber has a way out (where to is open: §2, question 3).
+- **Style target.** The PixelLab dragonborn (`art/characters/pixellab/Tevax_Thaukori/Idle/rotations/south.png`, 64 px)
+  is "the level of NPC detail and style that I ultimately think we're aiming for, so the tiles should be generated to
+  match". That settles the tile size at **64 px** (reasons in §4).
+
 ## 1. What the memo asks for
 
 **Surface (level 1)**
@@ -46,8 +62,9 @@ questions in §2 come first; the build order in §5 assumes the answers I recomm
         +-----------+-----------+-----------+
         |           |           |  court 2  |
  entry  |  court 1  |  palace   |  pyramid  |
- (W) -> |  platform |  2 floors |  4 tiers  |
-        |  + well   |           |           |
+ (W) -> |  grass    |  2 floors |  4 tiers  |
+        |  well by  |           |           |
+        |  the door |           |           |
         +--doors----+-----------+---door----+
         |              labyrinth             |
         +------------------------------------+
@@ -56,12 +73,10 @@ questions in §2 come first; the build order in §5 assumes the answers I recomm
 
 ## 2. Questions for after the restart
 
-1. **"The two prototype dungeons."** The memo describes one. What is the second? Do the two replace the Undercroft
-   and the Barrow, or sit beside them? How does the party get to the temple from Stonebridge (a road exit, as the Barrow
-   has)?
-2. **Where things sit in courtyard 1.** The memo says the stairs are "north and south" and the palace entry is "on the
-   north and east side". I've read it as a central raised platform with stairs on its north and south faces, the palace
-   on the east, the labyrinth on the south. Is that right? And is the second courtyard east of the palace, as drawn?
+1. ~~The second dungeon~~ (later; see §0). Still open: how does the party get to the temple from Stonebridge (a road
+   exit, as the Barrow has)?
+2. **Where things sit in courtyard 1.** Palace door on the east, labyrinth door on the south, entrance on the west
+   (§0). Is the second courtyard east of the palace, as drawn? Is the raised platform gone?
 3. **The servants' stair.** The memo has the palace's basement steps going to the sewers, and also a stairway from the
    palace leading "directly to this ritual chamber". Are these the same stair (palace → servants' quarters → sewers, with
    a separate way down to the ritual chamber), or does the servants' stair skip the sewers? My suggestion: servants'
@@ -71,14 +86,17 @@ questions in §2 come first; the build order in §5 assumes the answers I recomm
    it with the avatar of fear inside"). My reading: water drains from the sewer into a central pool, and above the pool
    (or on a dais in it) is an orb with the avatar of fear inside. Is the avatar a fight, something sealed, or a choice?
    This decides whether the room needs a fight arena.
-5. **Wells.** Climbing down a well into the sewer: is it two-way (a rope or rungs, so you can climb back) or a drop?
-   Is the drop into the ritual chamber one-way (you can't climb back up)?
+5. ~~Wells~~ (answered in §0). Still open: does the ritual chamber's way out lead back up the palace stair, or
+   somewhere else (outside the walls)?
 6. **Who lives where.** The creatures we've prioritized are skeletons, rats, lizardfolk and drakes. A guess: lizardfolk
    in the labyrinth and palace (warriors, shamans, a chieftain on the throne), rats and slimes in the sewers, skeletons
    in the servants' quarters or the pyramid, the red drake on the pyramid or in the second courtyard, the fae drake
    somewhere unexpected. Corrections welcome.
-7. **Size.** "Very large" in squares: the current maps are about 25×15. I suggest courtyard 1 at 30×30 and courtyard 2
-   at 32×32 (a 2-square rind around a 28-square pyramid, each tier 3 squares in from the last: 28, 22, 16, 10, with a
+7. **Size.** "Very large" in squares: the current maps are about 25×15. Four encounters (entrance, labyrinth door,
+   palace door, centre) want about 10 squares between posts: a group notices an unhidden party at 4 squares
+   (`noticeDistance`) and a fight is played on a 15×10 slice of the map, so posts closer than that blur into one fight
+   every time, and much farther apart they never connect. That gives courtyard 1 at about 28×28 interior. I suggest
+   courtyard 2 at 32×32 (a 2-square rind around a 28-square pyramid, each tier 3 squares in from the last: 28, 22, 16, 10, with a
    small altar on top). "A quarter of the size" of courtyard 1 is then 15×15 by area (or 8×8 if you meant a quarter of
    the side; 15×15 fits "still a large room" better).
 
@@ -105,6 +123,10 @@ noted.
   different map model; I don't recommend it.
 - **Elevation.** There is none, and the pyramid doesn't need it: each tier is a ring of floor walled off from the next,
   with one stair square through. It reads as a climb only if the tier faces look like steps, which is an art question.
+- **Fights that spill and connect.** Each encounter is its own fight now: nothing pulls a nearby group in. For the open
+  courtyard, a fight should draw in any other group that would notice it (within its notice range of the fight, or
+  inside the arena slice), arriving on a later round from where it stood. Medium-sized change in `src/game/explore.js`
+  and the battle setup; it also makes noise a reason to fight quietly, which serves sneaking.
 - **Big maps.** A 30×30 courtyard is about three times the area of the current maps. Exploring should cope; check the
   minimap and fog draw at that size.
 - **Labyrinth layout.** "Many bifurcating and intersecting passages" with dead ends is tedious to type as strings. I
@@ -114,15 +136,34 @@ noted.
 
 ## 4. Art to generate (PixelLab), by area
 
-Tilesets are wang tilesets between two terrains, top-down, one cell size for all (I suggest 32 px: room for mosaic
-detail, and drawn at 1.5× where the 16-px tiles are drawn at 3×). Props are map objects on a transparent background,
-in the "low top-down" view the PixelLab characters use. Two 64-px sandstone wang tilesets are already in
-`assets/wip/temple-tileset/` (grass-covered ground with weathered sandstone; moss-covered sandstone). Use them as a
-style reference, or regenerate them at the chosen size.
+**Tile size: 64 px.** (I suggested 32 earlier, before the style target was set; 64 is the better fit.) The rule
+that decides it is that tiles and figures should show pixels of one size on screen. The target figure is drawn on a
+64-px canvas and stands about 62 px tall and 51 wide.
+- With 64-px tiles at the same pixel size, a figure fits its own square, slightly taller than wide, which suits a game
+  where each fighter holds one square and reach is counted in squares.
+- With 32-px tiles at the same pixel size, a figure is two squares tall and 1.6 wide, overlapping its neighbours in a
+  shield wall. Drawing the tiles at 2× to fix that makes their pixels twice the size of the figures', the mismatch we
+  have now.
+- PixelLab already makes 64-px wang tilesets: the two in `assets/wip/temple-tileset/` are 5×4 sheets of 64-px tiles.
+
+Costs:
+- A square becomes 64 screen px instead of 48 at 1×, so the 15×10 battle slice is 960×640.
+- The current 16-px tiles and creature sheets will look coarse beside the new ones until replaced. That's acceptable
+  while prototyping.
+- `height` in `data/art.yaml` (1.4 squares for Tevax now) drops to about 1.0 for a figure on its own canvas.
+
+**Matching the target's style:** a strong dark outline, 3–4 tones per colour, flat shading lit from the upper left,
+moderate saturation. Tiles should use the same pixel size and light direction but softer contrast and no black
+outlines on the floor, so figures stand out from the ground. Put this in every prompt and pass the target image as
+the style reference where the tool takes one.
+
+Tilesets are wang tilesets between two terrains, top-down. Props are map objects on a transparent background, in the
+"low top-down" view the PixelLab characters use. The two sandstone tilesets in `assets/wip/temple-tileset/` predate
+the style target: try them first, and regenerate if they don't match the dragonborn.
 
 | Area | Tilesets | Props and special tiles |
 |---|---|---|
-| Courtyard 1 | jungle ground ("ferns and green plants growing through broken, small sandstone bricks") ↔ sandstone wall ("light, tan, slightly yellowed") | wall faces with snake and lizard mosaics (2–3 variants), vines, ferns, wooden door, stairs, raised platform edge, well |
+| Courtyard 1 | flat grass, with ferns and plants through broken small sandstone bricks ↔ sandstone wall ("light, tan, slightly yellowed") | wall faces with snake and lizard mosaics (2–3 variants), vines, ferns, wooden doors (west, south, east), a well with a rope or rungs |
 | Labyrinth | worked stone floor ↔ wall, "damper and a little darker" | rounded corner pieces, door, well, rubble, bones, urns |
 | Courtyard 2 | as courtyard 1 | step-pyramid tier face (top-down and side), stairs in four facings, a very small altar, well |
 | Palace | carved interior floor ↔ wall | arched and decorated doorway, statues, columns, throne, banners, braziers, beds and tables (2nd floor), a niche with a stair down |
@@ -137,10 +178,11 @@ urns, statues.
 
 Each step ends with something walkable, to look at in the browser before the next.
 
-1. **Answers to §2** (questions 2, 3 and 7 at least).
-2. **Engine: a tileset per place and the terrain kinds.** Mostly code, testable with placeholder tiles. Done first so
-   generated art lands somewhere real.
-3. **Courtyard 1 alone.** One map, one tileset, the door, the mosaic walls, the platform and well, a few props. This is
+1. **Answers to §2** (questions 2 and 3 at least).
+2. **Engine: a tileset per place (64-px cells) and the terrain kinds.** Mostly code, testable with placeholder tiles.
+   Done first so generated art lands somewhere real.
+3. **Courtyard 1 alone**, with its four guard posts and fights that draw in neighbours; then archive the Undercroft
+   and the Barrow (§0). One map, one tileset, the door, the mosaic walls, the platform and well, a few props. This is
    the trial of the whole pipeline: prompt → PixelLab → `assets/wip/` → cut → `art/` → `look.tileset` → seen in play.
    Fix what it shows about scale and style before generating the rest.
 4. **Labyrinth**, with its generator, and lizardfolk in it.

@@ -51,8 +51,11 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
 
 **3. Temple tileset (prototype dungeon after the Temple of Cazic-Thule): see `assets/ideas/temple-dungeon.md`**
 - [ ] Answer the plan's open questions (§2).
-- [ ] Engine: a tileset per place (`look.tileset`, its own cell size; the renderer now takes one 16-px set), terrain
-  (water, bridges, grass/rubble floor, pyramid tier faces), one-way drops. The validator pairs every staircase.
+- [ ] Engine: a tileset per place (`look.tileset`, 64-px cells; the renderer now takes one 16-px set), terrain
+  (water, bridges, grass/rubble floor, pyramid tier faces), one-way drops (the validator pairs every staircase), and
+  fights that draw in nearby groups (the open courtyard has four guard posts).
+- [ ] Style target: the PixelLab dragonborn (64 px). Tiles at 64 px to match (plan §4).
+- [ ] Once courtyard 1 plays: archive the Undercroft and the Barrow for tests and sims only; start at the temple.
 - [ ] Courtyard 1 alone, as the trial of the pipeline (prompt, PixelLab, `assets/wip/`, cut, `art/`, seen in play).
 - [ ] Then labyrinth, courtyard 2 and pyramid, sewers, ritual chamber, palace and servants' quarters (plan §5).
 - [ ] The temple props also replace the Cute Fantasy props the published site may not show.
