@@ -1,6 +1,6 @@
 # To do
 
-Last updated at commit: b954f5e
+Last updated at commit: 5130c11
 
 Keep this a short list. Tick things off, add new ones, and refresh the commit line after every push (`git log -1 --format=%h`).
 
@@ -64,6 +64,7 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   armor; update them to the turn model, reach by motion, points against armor and the item tags.
 
 ## Magic items, spells, companions (added 2026-10-24; see docs/REVIEW.md)
+- [x] The published site never had `assets/` (the Pages workflow didn't copy it): figures were coloured blocks, no tiles. Fixed 2026-10-24.
 - [x] Ruled: ordinary shields can't block spell bolts (`CONFIG.defense.blockSpells: false`); Spellbreaker can.
 - [x] Waist and two ear slots added (sashes on the waist; Orc Fang Earring and Ivandyr's Hoop in the ears).
 - [x] Opportunity strikes on entering a foe's reach, leaving it, or a second step within it (ruled; sim/FINDINGS.md).
