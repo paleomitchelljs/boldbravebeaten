@@ -144,7 +144,7 @@ test('items: powers cast without spell points from charges that come back with a
   assert.equal(Magic.spellOptions(c).find((o) => o.power).power.left, 3);
   const m = mage('M', ['life', 'bone']);
   const sp = Magic.maxSP(m);
-  wear(m, 'gravecaller_amulet');
+  wear(m, 'necromancer_amulet');
   assert.equal(Magic.maxSP(m), sp + 3);
   assert.equal(Magic.spellOptions(m).find((o) => o.spellKey === 'strike+life').spell.magnitude, B.CONFIG.magic.words.strike.mag + 1);
 });
@@ -157,7 +157,7 @@ test('items: bane blades and gauntlets bite into their prey; the veil hides the 
   const { enc, chars } = await arena([a, zed]);
   await Combat.act(enc, chars, { actor: a.id, type: 'strike', option: opt, target: zed.id }, { roller: roller([], 3), react: noReact });
   assert.ok(enc.log.some((l) => new RegExp(`\\d+/${opt.damage[1] + 4}/\\d+ P/S/B`).test(l.text)), 'four more slashing: ' + enc.log.map((l) => l.text).join(' | '));
-  const v = fighter('V'); wear(v, 'veil_circlet'); v.at = { x: 1, y: 2 };
+  const v = fighter('V'); wear(v, 'circlet_of_shadow'); v.at = { x: 1, y: 2 };
   const archer = armed('R', 'shortbow', 'enemy'); archer.inventory.arrows = 5; archer.at = { x: 5, y: 2 };
   const r = await arena([v, archer]);
   const veil = Combat.legalActions(r.enc, r.chars, v.id).spells.find((o) => o.power && o.spell.noun === 'veil');

@@ -18,6 +18,9 @@ game:
     - {id: neck, name: Neck}
     - {id: shoulders, name: Shoulders}
     - {id: cape, name: Cape}
+    - {id: waist, name: Waist}
+    - {id: ear1, name: Ear, takes: ear}
+    - {id: ear2, name: Ear, takes: ear}
     - {id: arms, name: Arms}
     - {id: hands, name: Hands}
     - {id: ring1, name: Ring, takes: ring}

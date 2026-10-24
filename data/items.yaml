@@ -66,38 +66,38 @@ goods:
   scrap_barrow:
     {name: Rubbing of the barrow door, kind: book, value: 10, rarity: uncommon, reveals: [sec_barrow_door], blurb: "A charcoal rubbing of carved marks."}
   sash_quick:
-    {name: Courier's sash, kind: trinket, slot: cape, attrs: {SPD: 1}, value: 220, rarity: rare, blurb: "+1 SPD. Worn across the shoulders."}
+    {name: Courier's sash, kind: trinket, slot: waist, attrs: {SPD: 1}, value: 220, rarity: rare, blurb: "+1 SPD."}
   ring_iron:
     {name: Iron signet ring, kind: trinket, slot: ring, attrs: {CON: 1}, value: 200, rarity: rare, blurb: "+1 CON."}
   charm_wolf:
     {name: Wolf-tooth charm, kind: trinket, slot: neck, attrs: {WIS: 1}, value: 120, rarity: uncommon, blurb: "+1 WIS."}
-  # ---- Worn magic (PROVISIONAL, the user's list; names are placeholders) ----------------------------------
+  # ---- Worn magic (PROVISIONAL, the user's list) -------------------------------------------------------
   silk_sash:
-    {name: Flowing black silk sash, kind: trinket, slot: cape, effects: {apMult: 0.8}, value: 4000, rarity: unique, blurb: "Every action costs a fifth less AP. Worn across the shoulders."}
-  wayfarer_boots:
-    {name: Wayfarer's boots, kind: trinket, slot: feet, effects: {move: 1}, value: 600, rarity: rare, blurb: "+1 square on every move."}
-  veil_circlet:
-    {name: Veil circlet, kind: trinket, slot: head, power: {verb: bless, noun: veil, name: Veil}, value: 3000, rarity: unique, blurb: "At will: Bless + Veil — unseen beyond arm's reach for 3 rounds; striking gives you away."}
-  goading_crown:
-    {name: Goading crown, kind: trinket, slot: head, effects: {hit: 1}, power: {verb: beguile, noun: rage, name: Goad, charges: 2}, value: 1500, rarity: very rare, blurb: "+1 to beat a defence. Twice a day: Beguile + Rage on a foe (WIL resists)."}
-  bog_crown:
-    {name: Crown of the bog kings, kind: trinket, slot: head, attrs: {CHA: 1}, effects: {standingWith: {wilds: 2}}, value: 900, rarity: very rare, blurb: "+1 CHA; +2 disposition with the folk of the wilds."}
-  gravecaller_amulet:
-    {name: Gravecaller's amulet, kind: trinket, slot: neck, effects: {sp: 3, mag: {bone: 1, life: 1, spirit: 1}}, value: 1500, rarity: very rare, blurb: "+3 spell points; +1 magnitude with Bone, Life and Spirit."}
-  adept_skullcap:
-    {name: Adept's skullcap, kind: trinket, slot: head, attrs: {INT: 1}, effects: {sp: 2}, value: 1200, rarity: very rare, blurb: "+1 INT and +2 spell points."}
-  drakebane_gauntlets:
-    {name: Drakebane gauntlets, kind: trinket, slot: hands, attrs: {STR: 1}, effects: {slay: [{trait: dragon, damage: 3}]}, value: 1500, rarity: very rare, blurb: "+1 STR; +3 damage to dragons with any blow."}
-  wyrm_heart:
-    {name: Heart of the old wyrm, kind: trinket, slot: neck, attrs: {CON: 1}, effects: {resist: {fire: 0.5, frost: 0.5}}, value: 2500, rarity: unique, blurb: "+1 CON; fire and frost do half."}
-  frostglass_pendant:
-    {name: Ornate frostglass pendant, kind: trinket, slot: neck, effects: {standing: 1}, value: 1200, rarity: very rare, blurb: "+1 disposition with everyone you talk to."}
-  mountain_ring:
-    {name: Ring of the mountain lord, kind: trinket, slot: ring, effects: {regen: 1, hit: 1, retaliate: {noun: frost, mag: 2, name: Frost of the ring}}, value: 2500, rarity: unique, blurb: "+1 stamina regeneration, +1 to beat a defence; whoever lands a blade on you takes Frost 2."}
-  tusk_earring:
-    {name: Tusk earring, kind: trinket, slot: head, attrs: {STR: 1}, effects: {stamina: 4}, value: 500, rarity: rare, blurb: "+1 STR, +4 stamina. (No ear slot: it takes the head slot.)"}
-  leech_hoop:
-    {name: Hoop of the leech, kind: trinket, slot: ring, power: {verb: strike, noun: spirit, name: Leech, charges: 3}, value: 900, rarity: very rare, blurb: "Three times a day: Strike + Spirit — chills the living (stamina), sears the undead."}
+    {name: Flowing Black Silk Sash, kind: trinket, slot: waist, effects: {apMult: 0.8}, value: 4000, rarity: unique, blurb: "Every action costs a fifth less AP."}
+  journeyman_boots:
+    {name: Journeyman's Boots, kind: trinket, slot: feet, effects: {move: 1}, value: 600, rarity: rare, blurb: "+1 square on every move."}
+  circlet_of_shadow:
+    {name: Circlet of Shadow, kind: trinket, slot: head, power: {verb: bless, noun: veil, name: Veil}, value: 3000, rarity: unique, blurb: "At will: Bless + Veil — unseen beyond arm's reach for 3 rounds; striking gives you away."}
+  crown_of_rile:
+    {name: Crown of Rile, kind: trinket, slot: head, effects: {hit: 1}, power: {verb: beguile, noun: rage, name: Goad, charges: 2}, value: 1500, rarity: very rare, blurb: "+1 to beat a defence. Twice a day: Beguile + Rage on a foe (WIL resists)."}
+  froglok_crown:
+    {name: Crown of Froglok Kings, kind: trinket, slot: head, attrs: {CHA: 1}, effects: {standingWith: {wilds: 2}}, value: 900, rarity: very rare, blurb: "+1 CHA; +2 disposition with the folk of the wilds."}
+  necromancer_amulet:
+    {name: Necromancer's Amulet, kind: trinket, slot: neck, effects: {sp: 3, mag: {bone: 1, life: 1, spirit: 1}}, value: 1500, rarity: very rare, blurb: "+3 spell points; +1 magnitude with Bone, Life and Spirit."}
+  sorcerer_skullcap:
+    {name: Sorcerer's Skullcap, kind: trinket, slot: head, attrs: {INT: 1}, effects: {sp: 2}, value: 1200, rarity: very rare, blurb: "+1 INT and +2 spell points."}
+  dragonslaying_gauntlets:
+    {name: Gauntlets of Dragonslaying, kind: trinket, slot: hands, attrs: {STR: 1}, effects: {slay: [{trait: dragon, damage: 3}]}, value: 1500, rarity: very rare, blurb: "+1 STR; +3 damage to dragons with any blow."}
+  zlandicar_heart:
+    {name: Zlandicar's Heart, kind: trinket, slot: neck, attrs: {CON: 1}, effects: {resist: {fire: 0.5, frost: 0.5}}, value: 2500, rarity: unique, blurb: "+1 CON; fire and frost do half."}
+  velium_pendant:
+    {name: Ornate Velium Pendant, kind: trinket, slot: neck, effects: {standing: 1}, value: 1200, rarity: very rare, blurb: "+1 disposition with everyone you talk to."}
+  ring_of_dain:
+    {name: Ring of the Dain, kind: trinket, slot: ring, effects: {regen: 1, hit: 1, retaliate: {noun: frost, mag: 2, name: Frost of the Dain}}, value: 2500, rarity: unique, blurb: "+1 stamina regeneration, +1 to beat a defence; whoever lands a blade on you takes Frost 2."}
+  orc_fang_earring:
+    {name: Orc Fang Earring, kind: trinket, slot: ear, attrs: {STR: 1}, effects: {stamina: 4}, value: 500, rarity: rare, blurb: "+1 STR, +4 stamina."}
+  ivandyr_hoop:
+    {name: Ivandyr's Hoop, kind: trinket, slot: ear, power: {verb: strike, noun: spirit, name: Leech, charges: 3}, value: 900, rarity: very rare, blurb: "Three times a day: Strike + Spirit — chills the living (stamina), sears the undead."}
 
 tables:
   vermin_nest:
@@ -124,36 +124,40 @@ tables:
     - {w: 1, shield: round, material: iron}
   # Rare magic (PROVISIONAL, the user's list): named weapons, armor and shields, and worn things.
   relic_cache:
-    - {w: 2, weapon: longsword, craft: master, enchantments: [sapping], name: Mirebrand}
-    - {w: 2, weapon: longsword, craft: master, enchantments: [speed], name: Quickening blade}
-    - {w: 2, weapon: longsword, enchantments: [gravebane], name: Gravewarden}
-    - {w: 2, weapon: shortsword, enchantments: [stunning], name: Thunderclap}
-    - {w: 2, weapon: staff, enchantments: [dreadgaze], name: Staff of the dread eye}
-    - {w: 2, weapon: club, enchantments: [unmaking], name: Rod of unmaking}
-    - {w: 2, weapon: longsword, enchantments: [goading], name: Goadblade}
-    - {w: 2, weapon: longsword, material: stone, enchantments: [rooting], name: Rootbound blade}
-    - {w: 2, weapon: longsword, craft: master, enchantments: [burning], name: Sunbrand}
-    - {w: 2, weapon: greatsword, enchantments: [wyrmbane], name: Wyrmbiter}
-    - {w: 2, weapon: longsword, enchantments: [tactics], name: Blade of tactics}
-    - {w: 2, weapon: longsword, enchantments: [strategy], name: Blade of strategy}
-    - {w: 1, armor: mail, material: steel, craft: master, enchantments: [ebon], name: Ebon mail}
-    - {w: 2, armor: plate, material: steel, coverage: half, enchantments: [bloodstone], name: Bloodstone breastplate}
-    - {w: 2, armor: plate, origin: blackforged, name: Black-forged plate}
-    - {w: 2, armor: mail, origin: blackforged, craft: master}
-    - {w: 2, shield: heater, material: steel, enchantments: [spellcatching], name: Spellcatcher}
+    - {w: 2, weapon: longsword, craft: master, enchantments: [sapping], name: Greenmist}
+    - {w: 1, weapon: longsword, material: steel, enchantments: [sapping], name: Ebony Blade}
+    - {w: 1, weapon: longsword, enchantments: [sapping], name: Vampiric Blade}
+    - {w: 2, weapon: longsword, craft: master, enchantments: [speed], name: Scimitar of Speed}
+    - {w: 2, weapon: longsword, enchantments: [gravebane], name: Ghoulbane}
+    - {w: 2, weapon: shortsword, enchantments: [stunning], name: Short Sword of the Ykesha}
+    - {w: 2, weapon: staff, enchantments: [dreadgaze], name: Staff of Dreaded Gaze}
+    - {w: 2, weapon: club, enchantments: [unmaking], name: Abashi's Rod of Disempowering}
+    - {w: 2, weapon: longsword, enchantments: [goading], name: Sword of Rile}
+    - {w: 2, weapon: longsword, material: stone, enchantments: [rooting], name: Petrified Heartwood Blade}
+    - {w: 2, weapon: longsword, craft: master, enchantments: [burning], name: Goldenbrand}
+    - {w: 2, weapon: greatsword, enchantments: [wyrmbane], name: Wurmslayer}
+    - {w: 2, weapon: longsword, enchantments: [tactics], name: Blade of Tactics}
+    - {w: 2, weapon: longsword, enchantments: [strategy], name: Blade of Strategy}
+    - {w: 1, armor: mail, material: steel, craft: master, enchantments: [ebon], name: Ebony Mail}
+    - {w: 2, armor: plate, material: steel, coverage: half, enchantments: [bloodstone], name: Rubicite Breastplate}
+    - {w: 2, armor: plate, origin: malevolent, name: Malevolent Plate}
+    - {w: 2, armor: mail, origin: malevolent, name: Malevolent Mail}
+    - {w: 2, armor: plate, craft: master, name: Crafted Plate}
+    - {w: 2, armor: mail, craft: master, name: Crafted Mail}
+    - {w: 2, shield: heater, material: steel, enchantments: [spellcatching], name: Spellbreaker}
     - {w: 1, good: silk_sash}
-    - {w: 2, good: wayfarer_boots}
-    - {w: 1, good: veil_circlet}
-    - {w: 2, good: goading_crown}
-    - {w: 2, good: bog_crown}
-    - {w: 2, good: gravecaller_amulet}
-    - {w: 2, good: adept_skullcap}
-    - {w: 2, good: drakebane_gauntlets}
-    - {w: 1, good: wyrm_heart}
-    - {w: 2, good: frostglass_pendant}
-    - {w: 1, good: mountain_ring}
-    - {w: 2, good: tusk_earring}
-    - {w: 2, good: leech_hoop}
+    - {w: 2, good: journeyman_boots}
+    - {w: 1, good: circlet_of_shadow}
+    - {w: 2, good: crown_of_rile}
+    - {w: 2, good: froglok_crown}
+    - {w: 2, good: necromancer_amulet}
+    - {w: 2, good: sorcerer_skullcap}
+    - {w: 2, good: dragonslaying_gauntlets}
+    - {w: 1, good: zlandicar_heart}
+    - {w: 2, good: velium_pendant}
+    - {w: 1, good: ring_of_dain}
+    - {w: 2, good: orc_fang_earring}
+    - {w: 2, good: ivandyr_hoop}
   barrow_hoard:
     - {w: 2, nothing: true}
     - {w: 1, table: relic_cache}

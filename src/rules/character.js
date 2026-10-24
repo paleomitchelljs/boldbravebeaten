@@ -89,10 +89,14 @@
     if (c.spSpent == null) c.spSpent = 0;
     if (c.level == null) c.level = 1;
     if (c.bonusFeats == null) c.bonusFeats = 0;
-    // Worn things carry the slot they are in (`at`): the old charm slot is the neck; rings fill ring1, then ring2.
+    // Worn things carry the slot they are in (`at`): the old charm slot is the neck; a type two slots take
+    // (rings, earrings) fills the first free one.
+    const worn = ((CONFIG.game || {}).wornSlots) || [];
     for (const t of c.trinkets || []) {
       if (t.slot === 'charm') t.slot = 'neck';
-      if (!t.at) t.at = t.slot === 'ring' ? ((c.trinkets || []).some((x) => x.at === 'ring1') ? 'ring2' : 'ring1') : t.slot;
+      if (t.at) continue;
+      const fits = worn.filter((w) => w.takes === t.slot).map((w) => w.id);
+      t.at = fits.find((id) => !(c.trinkets || []).some((x) => x.at === id)) || fits[0] || t.slot;
     }
     return c;
   }

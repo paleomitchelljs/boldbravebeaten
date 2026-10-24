@@ -70,7 +70,7 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   slot in your list, so the tusk earring takes the head and the sashes the cape.
 - [ ] Sim the strong items before playtest: the silk sash (×0.8 AP on everything), a blade of speed, the at-will Veil
   circlet (probably wants charges); Raise + Spirit (revenant) in the gauntlet; companions over a multi-fight run.
-- [ ] Item names are placeholders (no published-setting names in data or docs). Only `relic_cache` (nested in the barrow, troll and strongbox hoards) offers them; no shop does.
+- [ ] Magic items use the user's names (the no-published-names rule was dropped). Only `relic_cache` (nested in the barrow, troll and strongbox hoards) offers them; no shop does.
 - [ ] Choosing a companion: `c.companionChoice` picks among those on offer, but no screen sets it yet (the last on offer
   is taken). Companions show on the battle map but have no sheet of their own in town.
 - [ ] The AI's worth tables for conditions live in `ai.js`; move a `worth` into `CONFIG.conditions` so a new condition

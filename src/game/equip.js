@@ -1,8 +1,8 @@
 /*
  * Equipment slots. Main hand, sidearm, off hand (a parrying dagger), shield, chest (the armor) and the worn
- * slots in data/rules.yaml game.wornSlots (head, neck, shoulders, cape, arms, hands, two rings, legs, boots:
- * the user's list). Worn things are goods of kind 'trinket' whose `slot` names a slot id or a slot's `takes`
- * (both ring slots take 'ring'). What isn't worn lives in the party pack (world.pack.gear for weapons, armor
+ * slots in data/rules.yaml game.wornSlots (head, neck, shoulders, cape, waist, two ears, arms, hands, two rings,
+ * legs, boots: the user's list). Worn things are goods of kind 'trinket' whose `slot` names a slot id or a slot's `takes`
+ * (both ring slots take 'ring', both ear slots 'ear'). What isn't worn lives in the party pack (world.pack.gear for weapons, armor
  * and shields; goods for worn things), so gear is shared and swapped freely in town and camp. The engine
  * reads c.armor, c.shield, c.weapons / c.wield / c.sidearm / c.offhand and c.trinkets (each worn thing with
  * `at`, the slot it is in), so nothing else needs to know the slots exist.

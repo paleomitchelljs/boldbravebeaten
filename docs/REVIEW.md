@@ -91,14 +91,13 @@ write, before tuning any of these.
 
 ## 5. What was added in this pass (for reference)
 
-- **Equipment slots** (data-driven, `rules.yaml game.wornSlots`): head, neck, shoulders, cape, arms, hands, two rings,
-  legs, boots; the chest is the armor. The body slots hold worn things only. **Open question:** do you want armor
+- **Equipment slots** (data-driven, `rules.yaml game.wornSlots`): head, neck, shoulders, cape, waist, two ears, arms, hands,
+  two rings, legs, boots; the chest is the armor. The body slots hold worn things only. **Open question:** do you want armor
   split by body part? That would replace the one-piece-with-coverage model you ruled on (coverage full/half/partial,
   no layering).
 - **Magic items**: an effects layer (`Character.gearSources` and friends), weapon on-hit effects, powers with daily
   charges, 13 enchantments, 15 worn items, a black-forged origin, staff and short sword types, and a `relic_cache` loot
-  table nested in three hoards. Names are placeholders: the project rule is no names from published settings, so
-  none of the list's EverQuest names are in the data.
+  table nested in three hoards. Names were placeholders at first; they now follow the user's list.
 - **Spells**: Acid, Charm, Stillness (paralysis), Veil (unseen), Bone; frost chills (half the squares); lightning
   chains; darkness hurts and slows; the Delayed modifier; the Raise verb (skeleton, zombie, revenant); Conjure + Vine
   summons a wolf. Walls, pits and rune traps already existed (Build, Open, Inscribe).

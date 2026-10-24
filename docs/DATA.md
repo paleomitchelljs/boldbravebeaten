@@ -65,7 +65,8 @@ of it, or items spelled out: `armorItem: {type: plate, material: steel, origin: 
 **An item** (`items.yaml` goods): `kind` is `supply | potion | key | book | trinket | trade | component`.
 Potions have `use: {heal: 1}`, `{cure: bleeding}`, `{cure: poison}` or `{repair: 0.3}`. Books have
 `teaches: {noun: fire}` or `reveals: [flag]`. Trinkets are worn things: `slot` is a worn slot id from `rules.yaml
-game.wornSlots` (head, neck, shoulders, cape, arms, hands, legs, feet) or `ring` (either ring slot), with `attrs`, `ap`,
+game.wornSlots` (head, neck, shoulders, cape, waist, arms, hands, legs, feet) or a slot's `takes`: `ring` or `ear`
+(either of the two), with `attrs`, `ap`,
 `effects` and `power` (see **Magic items**). The chest slot is the armor; the other body slots hold worn things only.
 Loot entries: `{w: 3, gold: [5, 20]}`, `{w: 2, good: salve, n: [1, 2]}`, `{w: 1, weapon: dagger, craft: master}`,
 `{w: 1, armor: mail, material: steel, coverage: half}`, `{w: 1, shield: round, material: iron}`, `{w: 4, nothing: true}`,

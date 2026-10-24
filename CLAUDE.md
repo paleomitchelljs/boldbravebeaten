@@ -15,8 +15,8 @@ Read `HANDOFF.md` first: it is the to-do list. **After every push, update it** (
   by whether each style has a setting where it matters, not by even win rates. Combat, sneaking and talking are
   three settings of equal standing: when you add a mechanic ask which setting it serves.
 - **No setting.** The engine and rules name no world, no gods, no history. Content (names, places, factions) lives
-  in `data/` and is placeholder: replaceable without touching code. Don't write lore into code or docs, and don't
-  borrow names from published settings or games.
+  in `data/` and is replaceable without touching code. Don't write lore into code or docs. This is a personal project:
+  content may use names from published settings and games (the user's item list does).
 - The rules came from three Claude Docs (Philosophy, Mechanics Outline, Specifics). They are drafts and open to
   pushback; the Specifics most of all. The old testbed's notes are in `archive/docs/`, as reference not instruction.
 

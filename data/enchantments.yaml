@@ -57,7 +57,7 @@ enduring:
 #   mitBonus  armor: added to mitigation after material and origin {P, S, B}; resistBonus: added to the
 #             punch a point needs to burst it
 bloodstone:
-  name: Bloodstone
+  name: Rubicite
   kinds: [armor]
   effects: {regen: 1, heal: 1}
   rarity: very rare
@@ -133,7 +133,7 @@ ebon:
   value: 1
   blurb: "Mail as hard to get through as plate and as light as mail. Fire does half. A poison cloud seeps from it onto every foe beside the wearer (CON resists)."
 spellcatching:
-  name: Spellcatching
+  name: Spellbreaking
   kinds: [shield]
   blockSpells: true
   rarity: very rare
