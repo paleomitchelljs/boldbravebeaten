@@ -66,9 +66,9 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 ## Magic items, spells, companions (added 2026-10-24; see docs/REVIEW.md)
 - [x] Ruled: ordinary shields can't block spell bolts (`CONFIG.defense.blockSpells: false`); Spellbreaker can.
 - [x] Waist and two ear slots added (sashes on the waist; Orc Fang Earring and Ivandyr's Hoop in the ears).
-- [ ] Proposals in docs/PROPOSALS.md, awaiting a ruling: which steps provoke opportunity strikes (recommended:
-  entering reach, leaving it, or a second step within it); armor by body part (recommended: pieces per slot set the
-  coverage now, a hit-location roll later), and whether armor pieces and worn magic share the body slots.
+- [x] Opportunity strikes on entering a foe's reach, leaving it, or a second step within it (ruled; sim/FINDINGS.md).
+- [ ] Armor by hit location (the user chose it; docs/PROPOSALS.md §2), in three steps: (1) pieces and unaimed
+  locations, with carry-through for cuts (approved); (2) aimed blows and a Location menu; (3) disarm, trip, stun.
 - [ ] Sim the strong items (all draft): the Flowing Black Silk Sash (×0.8 AP on everything), the Scimitar of Speed,
   the at-will Circlet of Shadow (probably wants charges); Raise + Spirit (revenant) in the gauntlet; companions over a multi-fight run.
 - [ ] Magic items use the user's names (the no-published-names rule was dropped). Only `relic_cache` (nested in the barrow, troll and strongbox hoards) offers them; no shop does.
@@ -111,7 +111,7 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 - Top-down map shared by exploring and fighting; fights are played on a 15x10 slice of the dungeon.
 - Turn model: one turn per round spending as much of the AP pool as wanted, every action resolving at once; defences are
   reactions paid from the pool, asked of the player on the map with odds and what the blow would do; opportunity strikes
-  when leaving a foe's reach. Passes, guards and the held point are gone.
+  on entering a foe's reach, leaving it, or a second step within it. Passes, guards and the held point are gone.
 - Five-layer tile renderer (`src/ui/game/tilemap.js`): ground, wall faces, wall caps, decor and doors, entities.
 - Walls are a cap row over a one-tile brick face: light only on cap tops facing open floor, dark side shadows,
   caps auto-tiled to merge at corners and T-junctions, finished face ends at gaps, an ambient-occlusion baseboard

@@ -1,5 +1,29 @@
 # Simulation findings
 
+## Opportunity strikes on entering, leaving, or a second step within reach (2026-10-24; `node tools/encounters.js --n 300`)
+
+The user's ruling (docs/PROPOSALS.md §1): a foe strikes at a mover who enters its reach, leaves it, or takes a second
+step within it; one step within is free. The first version stalled: AI bandits stood at the edge of a passive party's
+reach for good. The AI's fear of the stop-thrust now halves each round in which nobody struck (`ai.js wariness`).
+Level-1 party, 300 fights each, old rule → new (won / lost / rounds / dead per fight):
+
+| encounter | old | new |
+|---|---|---|
+| rat nest | 100 / 0 / 2.1 / 0.10 | 100 / 0 / 2.6 / 0.02 |
+| guards (one) | 100 / 0 / 2.8 / 0.21 | 100 / 0 / 3.2 / 0.17 |
+| crew | 88 / 12 / 4.3 / 1.61 | 90 / 9 / 5.3 / 1.34 |
+| store guards | 100 / 0 / 2.3 / 0.11 | 100 / 0 / 2.4 / 0.04 |
+| squad | 1 / 99 / 3.2 / 3.92 | 0 / 100 / 4.2 / 3.88 |
+| horde | 19 / 79 / 10.0 / 2.17 | **34 / 65 / 11.2 / 1.61** |
+| knight | 0 / 100 / 5.0 / 3.84 | 0 / 100 / 4.7 / 3.95 |
+| wolves | 99 / 1 / 3.5 / 0.41 | 99 / 1 / 3.9 / 0.61 |
+| troll | 92 / 7 / 4.5 / 0.25 | 95 / 5 / 4.3 / 0.38 |
+
+- The horde is the one change beyond noise (about five standard errors): probably the skeletons now pay a blow each
+  time they walk into the party's line, where before the approach was free. Not checked against fight logs.
+- Fights run up to a round longer; none reached the 40-round cap, so the stand-off breaker works.
+- The squad and the knight are untouched: outnumbering (docs/REVIEW.md §3, risk 1) is still the problem there.
+
 ## Magic items, new spells, Raise, companions; engine fixes (2026-10-24; `node tools/encounters.js --n 300`)
 
 Changes that touch every fight: shoves, throws and knockback stop at walls and drop bodies into pits on the way; an

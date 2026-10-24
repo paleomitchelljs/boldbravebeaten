@@ -198,26 +198,37 @@
     return C.attackOptions(f).filter((o) => !o.ranged && !o.spell && !o.windUp && C.inRange(o, dd) && o.ap <= apLeft(enc, f.id) && !attackUnavailable(enc, f, o));
   }
 
-  // A mover leaving a square inside foes' reach: each foe (once per move) may strike at them as
-  // they go, paying from their own AP. Returns true if a blow lands and stops the move.
-  async function opportunities(enc, chars, m, from, provoked, io) {
+  // A mover's step from `from` to `to` past foes' reach (CONFIG.opportunityStrikes, the user's ruling): a foe
+  // strikes at a mover who enters its reach, leaves it, or takes a second step within it in one move; one
+  // guarded step within reach is free. Each foe strikes once per move, paying from its own AP. phase 'before'
+  // (the mover still at `from`) answers leaving and the second step within; 'after' (the mover now at `to`)
+  // answers entering. Returns true if a blow lands and stops the move.
+  async function opportunities(enc, chars, m, from, to, phase, state, io) {
     const foes = enc.order.concat(enc.ids.filter((x) => !enc.order.includes(x)))
-      .filter((f) => f !== m.id && chars[f] && chars[f].side !== m.side && !provoked[f]);
+      .filter((f) => f !== m.id && chars[f] && chars[f].side !== m.side && !state.provoked[f]);
     for (const f of foes) {
       const reactor = chars[f];
       if (conditionForbids(enc, chars, reactor, { type: 'strike', target: m.id })) continue;
-      const options = opportunityOptions(enc, chars, reactor, from);
-      if (!options.length) continue;
-      provoked[f] = true;
-      const pick = await react(enc, chars, { kind: 'opportunity', actor: f, target: m.id, options, ap: apLeft(enc, f) }, io);
+      const inFrom = opportunityOptions(enc, chars, reactor, from).length > 0;
+      const inTo = opportunityOptions(enc, chars, reactor, to).length > 0;
+      let at = null, why = '';
+      if (phase === 'before' && inFrom && !inTo) { at = from; why = 'leaves'; }
+      else if (phase === 'before' && inFrom && inTo) {
+        state.within[f] = (state.within[f] || 0) + 1;
+        if (state.within[f] >= 2) { at = from; why = 'moves'; }
+      } else if (phase === 'after' && !inFrom && inTo) { at = to; why = 'enters'; }
+      if (!at) continue;
+      const options = opportunityOptions(enc, chars, reactor, at);
+      state.provoked[f] = true;
+      const pick = await react(enc, chars, { kind: 'opportunity', actor: f, target: m.id, options, ap: apLeft(enc, f), why }, io);
       const opt = options.find((o) => o === pick || C.optionKey(o) === pick || (pick && C.optionKey(o) === C.optionKey(pick)));
       if (!opt) continue;
       enc.ap[f] -= opt.ap;
       const before = { stamina: m.stamina, dmg: C.totalDamage(m), active: C.isActive(m), bleeds: m.bleeds.length };
-      log(enc, `${reactor.name} strikes at ${m.name} as they move.`, 'pass');
+      log(enc, `${reactor.name} strikes at ${m.name} as they ${why === 'enters' ? 'come in' : why === 'leaves' ? 'go' : 'move'}.`, 'pass');
       const sd = { actor: f, type: 'strike', option: opt, target: m.id, ap: opt.ap, stamina: opt.stamina, n: ++enc.seq, opportunity: true, round: enc.round };
       enc.decls.push(sd);
-      await resolveAction(enc, chars, sd, io, Object.assign({}, enc.pos, { [m.id]: from }));
+      await resolveAction(enc, chars, sd, io, Object.assign({}, enc.pos, { [m.id]: at }));
       sd.done = true;
       const hit = m.stamina < before.stamina || C.totalDamage(m) > before.dmg || m.bleeds.length > before.bleeds || !C.isActive(m);
       if (hit) {
@@ -711,25 +722,26 @@
     return null;
   }
 
-  // A move, square by square: around walls, past allies (not foes), out of foes' reach (each foe
-  // whose reach the step starts in may strike as they go; a hit stops the move), into runes, pits
-  // and hazards. AP for squares not walked is given back.
+  // A move, square by square: around walls, past allies (not foes), into and out of foes' reach (see
+  // opportunities(); a hit stops the move), into runes, pits and hazards. AP for squares not walked is
+  // given back.
   async function resolveMove(enc, chars, d, io) {
     const a = chars[d.actor];
     if (!payStamina(enc, a, d.stamina)) return;
-    const provoked = {};
+    const state = { provoked: {}, within: {} };
     const dragged = a.status.grappling ? chars[a.status.grappling] : null;
     const steps = dragged ? [d.to] : G.Terrain ? G.Terrain.path(enc, enc.pos[a.id], d.to, a) : [d.to];
     let walked = 0, why = '';
     for (const q of steps) {
       const from = enc.pos[a.id];
-      if (await opportunities(enc, chars, a, from, provoked, io)) { why = 'stopped'; break; }
+      if (await opportunities(enc, chars, a, from, q, 'before', state, io)) { why = 'stopped'; break; }
       if (!C.isActive(a)) { why = 'stopped'; break; }
       if (enc.ids.some((o) => o !== a.id && chars[o].side !== a.side && C.isActive(chars[o]) && enc.pos[o].x === q.x && enc.pos[o].y === q.y)) { why = 'blocked'; break; }
       enc.pos[a.id] = { x: q.x, y: q.y };
       if (dragged) { enc.pos[dragged.id] = { x: from.x, y: from.y }; }
       walked += G.Terrain && enc.tiles ? G.Terrain.stepCost(enc, q.x, q.y, a) : 1;
       if (G.Terrain && enc.tiles && (await G.Terrain.enter(enc, chars, a, q.x, q.y, io && io.roller, (t) => log(enc, t, 'hit')))) { why = 'stops'; break; }
+      if (await opportunities(enc, chars, a, from, q, 'after', state, io)) { why = 'stopped'; break; }
     }
     const at = enc.pos[a.id];
     if (dragged && walked) log(enc, `${a.name} drags ${dragged.name} to (${at.x + 1}, ${at.y + 1}).`);

@@ -48,7 +48,7 @@ Read `HANDOFF.md` first: it is the to-do list. **After every push, update it** (
 |---|---|
 | Round | Starts with everyone rolling initiative. Ends when everyone has had their turn; unspent AP is lost. |
 | Turn | One character's go in initiative order: as many actions as their AP pays for, each resolving as it is taken. |
-| Reaction | Out of turn, paid from the same AP pool: a block, parry or dodge when a blow comes; an opportunity strike at a foe leaving your reach. |
+| Reaction | Out of turn, paid from the same AP pool: a block, parry or dodge when a blow comes; an opportunity strike at a foe entering your reach, leaving it, or taking a second step within it. |
 
 There are no passes (removed at the user's request): AP kept back from your turn is what you react with. In the
 exploring and social layers the words are: *step* (one square), *move* (a social action, costing patience), *topic*

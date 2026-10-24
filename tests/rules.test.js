@@ -963,44 +963,58 @@ test('wound roll: armor guards the vitals; a vital stab triples its CON damage',
   assert.strictEqual(u.damage.CON, thrust.damage[0]);
 });
 
-test('opportunity strikes: leaving a foe\'s reach draws a blow that stops the move; walking up to a sword does not, to a spear does', async () => {
-  const make = (weapon) => {
+test('opportunity strikes: entering a foe\'s reach, leaving it, or a second step within it draws a blow; one step within is free', async () => {
+  const make = (weapon, h) => {
     const s = armed('S', weapon, { side: 'party' });
     const d = armed('D', 'dagger', { side: 'enemy' });
     s.base.SPD = 1; d.base.SPD = 9; d.base.CON = 12;
     for (const c of [s, d]) c.stamina = C.maxStamina(c);
     const chars = { [s.id]: s, [d.id]: d };
-    const enc = Combat.createEncounter('t', [s.id, d.id], chars, 8, 1);
+    const enc = Combat.createEncounter('t', [s.id, d.id], chars, 8, h || 1);
     return { s, d, chars, enc };
   };
   const strikeIfAsked = (asked) => (req) => { if (req.kind === 'opportunity') { asked.push(req); return req.options[0]; } return null; };
-  // Walking away from an adjacent swordsman: he strikes as D goes; a hit stops D in the first square.
+  const run = async (f, sAt, dAt, to, rolls) => {
+    f.enc.pos[f.s.id] = sAt; f.enc.pos[f.d.id] = dAt;
+    await Combat.startRound(f.enc, f.chars, roller(3, [1, 9]));
+    assert.strictEqual(Combat.currentActor(f.enc), f.d.id);
+    const asked = [];
+    await Combat.act(f.enc, f.chars, { actor: f.d.id, type: 'move', to }, io(4, rolls || [10, 10, 10, 10], strikeIfAsked(asked)));
+    return asked;
+  };
+  // Walking away from an adjacent swordsman: one step back is within his thrust (free); he strikes as D
+  // steps out of it, and a hit stops D at its edge.
   let f = make('longsword');
-  f.enc.pos[f.s.id] = { x: 0, y: 0 }; f.enc.pos[f.d.id] = { x: 1, y: 0 };
-  await Combat.startRound(f.enc, f.chars, roller(3, [1, 9]));
-  assert.strictEqual(Combat.currentActor(f.enc), f.d.id);
-  let asked = [];
-  const apBefore = f.enc.ap[f.s.id];
-  assert.strictEqual(await Combat.act(f.enc, f.chars, { actor: f.d.id, type: 'move', to: { x: 5, y: 0 } }, io(4, [10, 10, 10, 10], strikeIfAsked(asked))), null);
-  assert.strictEqual(asked.length, 1, 'one chance, from the swordsman');
-  assert.ok(f.enc.ap[f.s.id] < apBefore, 'paid from his AP');
-  assert.ok(f.enc.log.some((l) => /S strikes at D as they move/.test(l.text)));
-  if (C.totalDamage(f.d) > 0 || !C.isActive(f.d)) assert.deepStrictEqual(f.enc.pos[f.d.id], { x: 1, y: 0 }, 'a hit stops the move');
-  // Walking up to a sword from outside its reach: nothing to answer.
-  f = make('longsword');
-  f.enc.pos[f.s.id] = { x: 0, y: 0 }; f.enc.pos[f.d.id] = { x: 6, y: 0 };
-  await Combat.startRound(f.enc, f.chars, roller(3, [1, 9]));
-  asked = [];
   const reach = Math.max(...C.attackOptions(f.s).filter((o) => !o.ranged).map((o) => o.maxRange));
-  assert.strictEqual(await Combat.act(f.enc, f.chars, { actor: f.d.id, type: 'move', to: { x: reach, y: 0 } }, io(4, [], strikeIfAsked(asked))), null);
-  assert.strictEqual(asked.length, 0, 'stepping to the edge of a reach provokes nothing');
-  // Walking right up to a spearman: you leave the outer part of his reach on the way in.
+  let asked = await run(f, { x: 0, y: 0 }, { x: 1, y: 0 }, { x: 5, y: 0 });
+  assert.strictEqual(asked.length, 1, 'one chance, from the swordsman');
+  assert.strictEqual(asked[0].why, 'leaves');
+  assert.ok(f.enc.log.some((l) => /S strikes at D as they go/.test(l.text)));
+  if (C.totalDamage(f.d) > 0 || !C.isActive(f.d)) assert.deepStrictEqual(f.enc.pos[f.d.id], { x: reach, y: 0 }, 'a hit stops the move');
+  // Walking up to a sword from outside its reach: the thrust meets D as he comes in, at the edge.
+  f = make('longsword');
+  asked = await run(f, { x: 0, y: 0 }, { x: 6, y: 0 }, { x: 1, y: 0 });
+  assert.strictEqual(asked.length, 1, 'entering the reach provokes, once');
+  assert.strictEqual(asked[0].why, 'enters');
+  if (C.totalDamage(f.d) > 0 || !C.isActive(f.d)) assert.deepStrictEqual(f.enc.pos[f.d.id], { x: reach, y: 0 }, 'a hit stops him at the edge');
+  // One guarded step within reach (a sidestep) is free.
+  f = make('longsword', 3);
+  asked = await run(f, { x: 0, y: 1 }, { x: 1, y: 0 }, { x: 1, y: 1 });
+  assert.strictEqual(asked.length, 0, 'a single step within reach provokes nothing');
+  assert.deepStrictEqual(f.enc.pos[f.d.id], { x: 1, y: 1 });
+  // Two steps within reach: the second provokes.
+  f = make('longsword', 3);
+  asked = await run(f, { x: 0, y: 1 }, { x: 2, y: 0 }, { x: 2, y: 2 });
+  assert.strictEqual(asked.length, 1, 'circling inside the reach provokes');
+  assert.strictEqual(asked[0].why, 'moves');
+  // Walking right up to a spearman: one blow, as you come into his reach.
   f = make('spear');
-  f.enc.pos[f.s.id] = { x: 0, y: 0 }; f.enc.pos[f.d.id] = { x: 6, y: 0 };
-  await Combat.startRound(f.enc, f.chars, roller(3, [1, 9]));
-  asked = [];
-  await Combat.act(f.enc, f.chars, { actor: f.d.id, type: 'move', to: { x: 1, y: 0 } }, io(4, [10, 10, 10, 10], strikeIfAsked(asked)));
+  asked = await run(f, { x: 0, y: 0 }, { x: 6, y: 0 }, { x: 1, y: 0 });
   assert.strictEqual(asked.length, 1, 'the spear gets its blow on the way in');
+  // Stepping to the edge of a reach from far off still provokes; stopping short of it does not.
+  f = make('longsword');
+  asked = await run(f, { x: 0, y: 0 }, { x: 6, y: 0 }, { x: reach + 1, y: 0 });
+  assert.strictEqual(asked.length, 0, 'short of the reach, nothing');
 });
 
 test('fend off: a long weapon shoves at range 2', async () => {

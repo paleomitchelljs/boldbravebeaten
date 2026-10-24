@@ -1,8 +1,8 @@
 # Proposals awaiting a ruling (2026-10-24)
 
-Nothing here is in the code yet. Each section gives the current rule, the options, and a recommendation.
+Each section gives the rule, the options and a recommendation. §1 is ruled and built; §2 is a design awaiting a go-ahead.
 
-## 1. Opportunity strikes: which steps provoke
+## 1. Opportunity strikes: which steps provoke (ruled 2026-10-24: option C, built)
 
 **Now** (`combat.js opportunities`, `CONFIG.opportunityStrikes`): a step that *starts* inside a foe's melee reach
 lets that foe strike once per move. So a sidestep that stays adjacent provokes; the step that first enters reach
@@ -26,63 +26,103 @@ side gets the first blow, paid from its held AP; held AP is lost at round's end,
 needs the duel and encounter sims before it goes in. I'm not confident about how the AI will handle it: it may stand
 off at the edge of measure. That's realistic, but a sim would show whether fights stall.
 
-## 2. Armor by body part
+## 2. Armor by body part: hit locations (the user chose option C, 2026-10-24)
 
-**Now** (`armor.yaml`, `Items.armorBase`, `CONFIG.coverage`): one piece per character, the whole harness, with a
-coverage keyword. Coverage sets mitigation (−0/−1/−2), the armor penalties, piercing pass-through (50/60/75%), the gap
-number (0/−2/−4), the vital-wound factor (×1/1.5/2) and durability. Padding is assumed under mail and plate (no
-layering). A slashing blow already rolls a d4 location per point: 1 STR, 2 CON, 3 SPD, 4 DEX, which reads as arm,
-torso, leg, hand.
+Design for review; not built. Numbers marked *guess* are placeholders for `rules.yaml`, to be set by sim.
 
-Whatever is chosen, one design question comes first: **do armor pieces and the worn magic share slots?** In the
-game the item list comes from, they are the same thing: boots are armor that may also carry magic. If the head,
-arms, hands, legs and feet slots hold armor, Journeyman's Boots should become boots (leather, say) with an effect,
-not a separate thing beside the sabatons. I'd do that: one item per slot, magic or not.
+### 2.1 What the evidence says
 
-### Option A: the pieces set the coverage (smallest change)
+- **Where people were hit depended on what was covered.** At Visby (1361), Ingelmark counted 456 wounds from cutting
+  weapons and 126 from arrows and bolts on about 1,185 bodies; most of the injuries were to the lower body, which the
+  excavators put down to shields covering the upper body ([medievalists.net](https://www.medievalists.net/2024/03/medieval-battle-injuries/);
+  the museum notes the torso was probably covered by mail and shields: [historiska.se](https://historiska.se/utstallningar/medieval-massacre/)).
+  At Towton (1461) the trauma was mostly to the head: 113 wounds on 28 skulls, 73 of them sharp-force, 28 blunt, 12
+  punctures ([Strange Remains](https://strangeremains.com/2015/02/11/the-game-of-thrones-written-in-bones-the-battle-of-towton/),
+  a secondary source). Bones keep only the wounds that reached bone, so neither count is a full hit table. The
+  lesson for the rules: a fixed random location table is wrong. Blows go where the guard and the armor are not.
+- **A cut can cross two regions.** Ingelmark describes a man whose lower legs were both cut off, probably by one blow
+  (medievalists.net, above). A cut that takes a raised forearm and goes on into the head is the classic case.
+- **A thrust meets one point.** It goes where it is aimed, and only a thrust can go for the small gaps inside a
+  piece (the armpit, the visor, the groin). The code already models that (the gap roll).
+- **A cut's force is spent on what stops it.** An edge that a plate or a mail sleeve turns doesn't carry on into the
+  next region at full force; it glances. So "slashes spread across regions" is realistic only as **carry-through**:
+  a cut that gets *through* the first region (bare flesh, or cloth and leather it cuts through) carries what is left
+  into the next. Spreading every cut's damage over two regions is not realistic.
 
-Armor goes in the chest, arms, legs and head slots (shoulders, hands and feet optional). The chest piece decides the
-type: plate, mail and so on. The other pieces decide the coverage: chest only = partial, chest plus two of
-arms/legs/head = half, all four = full. Penalties and weight add up by piece.
+### 2.2 Locations and the armor slots
 
-- All the existing coverage numbers and sims stand: this only changes how the coverage keyword is reached.
-- Mixed types (mail sleeves under a plate breastplate) count as the chest's type. That's a simplification.
-- No new rolls.
+Six locations, which are also the six armor slots: **head, torso, arms, hands, legs, feet**. Every other slot (neck,
+shoulders, cape, waist, two ears, two rings) holds worn things only. Shoulder armor counts as part of the torso
+(or the arms).
 
-### Option B: a blend by body share (no new rolls, mixed types count)
+A piece of armor **covers** one or more locations: `covers: [torso, arms]` for a hauberk, `[legs]` for chausses,
+`[head]` for a helm. A piece takes every slot it covers. That keeps one-piece harnesses possible (a full plate
+harness covers all six) and gives an exact migration for old saves and content: `full` = all six, `half` = torso,
+arms and legs, `partial` = torso alone.
 
-Each location gets a share of blows (say torso 40, arms 20, legs 20, head 10, hands 10). Each piece gives its own
-mitigation, gap number and pass-through, and the armor that faces a blow is the share-weighted average (rounded),
-worked out once on equip. Penalties and durability are per piece; wear goes to pieces by share.
+Each location has a **share** of the body (*guess*: torso 0.40, legs 0.24, arms 0.18, head 0.08, hands 0.05,
+feet 0.05). A piece's weight, penalties (SPD, DEX, stamina, regen) and durability are the type's figures × the
+shares it covers. A full harness sums to 1, so it reproduces today's numbers exactly, and every armor sim to date
+still holds for full armor.
 
-- Mixed harnesses matter (plate legs over mail are better than mail alone) without a location roll.
-- An average blurs what armor-by-physics does: a blow either meets plate or doesn't. Bursting (punch vs resist)
-  against an average resist is a fiction.
-- Moderate change: `armorBase` becomes a sum over pieces; the coverage keyword goes.
+### 2.3 Where a blow lands
 
-### Option C: a hit location per blow (most realistic)
+Each attack gets a **Location** choice beside it (the user's idea), with an **Unaimed** entry:
 
-A blow that lands rolls its location (d10, say: 1 head, 2–3 arm, 4–7 torso, 8–9 leg, 10 hand; the shares are a
-guess, not historical data). The piece on that spot, or nothing, does everything the whole armor does now: resist,
-gap, mitigation, pass-through and wear. Vital wounds use the location (head and torso high, a limb low, except the
-thigh and armpit arteries). Find the Gap becomes literal: aiming at a missing piece.
+- **Unaimed**: no penalty; the location is rolled from the share table (one d100, or a d20 table).
+- **Aimed** at a location: a penalty to beat the defence (*guess*: torso 0, legs −1, arms −1, head −2, hands −2,
+  feet −3). Thrusts aim more easily than cuts (*guess*: the penalty is one less for a thrust, never below 0).
 
-- One location roll **replaces** the per-point slashing d4s: the location picks the attribute (arm STR, torso CON,
-  leg SPD, hand DEX), and the head can carry stun or vital. The roll count doesn't grow; it probably falls.
-  But all a cut's points then go to one attribute, which is swingier than now.
-- An optional aimed blow (−2 to beat the defence, choose the location) makes "go for the unarmored leg" a real
-  choice, which suits "knowledge and preparation matter".
-- The AI and the outcome preview see the expectation over locations, which is what `computeHit` already does for
-  gap rolls.
-- The biggest change: `computeHit`/`applyHit`, the armor tests, every armor sim in `sim/FINDINGS.md` and the
-  coverage keyword would all need redoing. The plate-vs-mail ordering would need re-checking.
+**Pushback on "default to the least armored location".** With free aim, a fighter's armor becomes their weakest
+piece, and nobody would pay for greaves. Aiming has to cost something; with a cost, the least armored spot isn't
+always the best pick. The default should be the **best expected location**: the expectation `computeHit` already
+works out, taken over each choice with its penalty. The menu shows each location's odds and what the blow would do
+there, which is the outcome preview HANDOFF wants anyway. The AI makes the same choice, from what it can see of the
+target's armor.
 
-### Recommendation
+The defender's shield guards the torso and the shield arm (+1 to block blows aimed there, *guess*); that is how
+Visby's wounds ended up on the legs.
 
-**A now, built so C can follow.** Store armor per slot from the start (one piece per slot, the same objects C
-would read) and derive the coverage keyword from the pieces. That gives the slots meaning at once, keeps every
-simmed number, and adds no rolls. Go to C if playtest says a mixed harness should matter. I'd skip B: it costs
-nearly as much as C and blurs the physics the armor model is built on.
+### 2.4 What each location does
 
-Layering (a gambeson under mail as separate pieces) is a separate question; the one-piece-per-slot model allows it
-later as a chest "under" slot, but nothing above needs it.
+| Location | Attribute damage from a wound (one d-roll per point, as the slash d4 now) | Extra effect on a wound |
+|---|---|---|
+| Head | CON, INT, WIL | Vital chance high; blunt stuns (a helm stops the cut but not the concussion) |
+| Torso | CON, STR | Vital chance high for thrusts (organs) |
+| Arms | STR, DEX, CON | Chance to disarm (the hand loses its grip) |
+| Hands | DEX, STR | Higher chance to disarm than the arm |
+| Legs | SPD, CON | Chance to trip (knocked prone); the thigh artery makes deep cuts and thrusts here vital now and then |
+| Feet | SPD | Slowed (lamed) |
+
+This replaces today's fixed d4 (STR, CON, SPD, DEX) with one table per location, so the roll count stays the same.
+Vital chances move from the armor type to the location and the piece there (*guess*: head ×1.5, torso ×1.2,
+limbs ×0.3, legs ×0.5, hands and feet 0). Disarm, trip and stun use the existing manoeuvre and condition code, with
+odds that grow with the wound (*guess*: 10% per point of damage that reached the body).
+
+Head wounds to INT and WIL hit casters hardest. That fits differentiation, but it should be simmed.
+
+### 2.5 Thrusts, cuts and blunt
+
+- **Thrust**: one location; aims best; can try for a gap inside the piece there (today's gap roll, unchanged).
+- **Cut**: one location, then **carry-through**. If slashing is left after that location's armor *and* the cut got
+  through (the target was bare there, or it cut through cloth or leather), what is left beyond a limb's worth
+  (*guess*: 3 points) goes on into the adjacent location: arm → torso or head, hand → arm, leg → the other leg
+  (same location, a second wound), foot → leg. That location's armor then meets it. Against mail or plate the cut
+  stops at the first region, as now (its force goes to blunt there). That gives cuts a real use against the lightly
+  armored and none against the plated, which is the historical picture.
+- **Blunt**: one location; it transmits through rigid armor as now. Its extra effect is the location's, and a blow
+  to the head stuns.
+
+### 2.6 What it costs to build
+
+| Part | Work |
+|---|---|
+| Data | `armor.yaml` unchanged per type; armor items gain `covers` (coverage keyword migrated); `rules.yaml` gets the location table (shares, aim penalties, attributes, effects) |
+| Equip | the six armor slots take pieces; one piece may fill several; shops and loot offer pieces |
+| Engine | `computeHit` takes a location and reads the piece there (or bare); `applyHit` rolls the location (unaimed), the location's attributes, its effect and carry-through; the AI's expectation runs over locations |
+| UI | a Location menu by each attack, with odds per location; the sheet shows the pieces |
+| Tests and sims | armor tests rewritten around locations; a duel set (full plate vs a plate breastplate with mail limbs vs unarmored limbs) and the encounter sim, before and after |
+
+It's the largest change since the turn model. I'd build it in three steps, each pushed and simmed: (1) pieces and
+locations with unaimed rolls only (full harnesses behave exactly as now); (2) aimed blows and the Location menu;
+(3) location effects (disarm, trip, stun, carry-through).

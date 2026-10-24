@@ -34,7 +34,7 @@
             h('li', null, 'Turns: in initiative order each character takes one turn and may spend as much of their AP as they like on it. Every action resolves as it is taken.'),
             h('li', null, 'Reactions: when a blow comes at you, you may block, parry or dodge, paying the AP from your pool on the spot. AP you spent on your turn is AP you cannot defend with; out of AP, your armor takes it. A parry cannot meet an arrow, a spell or a power blow.'),
             h('li', null, 'Feint: if the attacker\'s Feint beats your Read Attack you cannot read the blow, so you defend blind, and a defence that cannot meet it is wasted.'),
-            h('li', null, 'Opportunity strikes: a step that starts inside a foe\'s melee reach lets them strike at you as you go (once per move, from their AP); a hit stops you. Backing away from a foe provokes; walking up to a sword does not; walking up to a spear does.'),
+            h('li', null, 'Opportunity strikes: a foe may strike at you when you step into its reach, step out of it, or take a second step within it in one move (once per move, from its AP); a hit stops you. One step within reach is free: sidestep, don\'t circle.'),
             h('li', null, 'Fend off: with a long weapon a shove reaches 2 squares (a ready shield adds +1).'),
             h('li', null, 'The round ends when everyone has had their turn; unspent AP is lost. Then bleeding, regeneration and the rest.'),
             h('li', null, 'Range: each attack has a band of squares it works at. Daggers and one-handed swings reach 1; one-handed thrusts and two-handed swings 2; two-handed thrusts 3; spears 4. Inside a long weapon\'s reach, or in a clinch with a sword or spear, its blows are cramped: shove the enemy back, grapple, or draw a dagger.'),

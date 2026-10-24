@@ -241,13 +241,14 @@
   // The distance this loadout likes best against a target: the best of
   // (my rate − RISK × their rate), and among near-equal choices the farthest.
   // If nothing scores above zero, fall back to my best raw rate (someone has to fight).
-  // The cost of getting from distance `from` in to `d` past a foe whose reach is longer than d:
-  // the step out of that reach toward them is an opportunity strike (counted at half, once).
+  // The cost of getting from distance `from` in to `d` against a foe who can strike at d: entering its
+  // reach, or two steps within it, is an opportunity strike (counted at half, once).
   function entryCost(c, target, d, from) {
     if (!G.CONFIG.opportunityStrikes || from == null || d >= from) return 0;
     let worst = 0;
     for (const o of C.attackOptions(target)) {
-      if (o.ranged || o.spell || o.windUp || (o.maxRange || 1) <= d) continue;
+      const r = o.maxRange || 1;
+      if (o.ranged || o.spell || o.windUp || r < d || (from <= r && from - d < 2)) continue;
       worst = Math.max(worst, hitValue(target, c, o, Math.min(from, o.maxRange)));
     }
     return worst * 0.5;
@@ -266,7 +267,15 @@
     return total;
   }
 
-  function preferredDistance(c, target, opts, from) {
+  // How much the AI still fears the stop-thrust on its way in: in full at first, half after each round in
+  // which nobody struck (two sides waiting at the edge of each other's reach; someone has to go in).
+  function wariness(enc) {
+    let last = 0;
+    for (const d of enc.decls) if (d.type === 'strike' && d.round > last) last = d.round;
+    return Math.pow(0.5, Math.max(0, enc.round - Math.max(1, last + 1)));
+  }
+
+  function preferredDistance(c, target, opts, from, wary) {
     const myMax = Math.max(1, ...opts.map((o) => o.maxRange || 1));
     const theirMax = Math.max(1, ...C.attackOptions(target).map((o) => o.maxRange || 1));
     const top = Math.min(16, Math.max(myMax, theirMax + 1));
@@ -274,7 +283,7 @@
     for (let d = 1; d <= top; d++) {
       const mine = bestRate(c, target, opts, d);
       if (mine <= 0) continue;
-      const net = mine - RISK * foeRate(target, c, d) - entryCost(c, target, d, from);
+      const net = mine - RISK * foeRate(target, c, d) - entryCost(c, target, d, from) * (wary == null ? 1 : wary);
       if (!best || net > best.net + 0.01 || (Math.abs(net - best.net) <= 0.01 && d > best.d)) best = { d, rate: mine, net };
       if (!bestRaw || mine > bestRaw.rate) bestRaw = { d, rate: mine, net };
     }
@@ -543,8 +552,9 @@
     const taken = new Set();
     for (const o of enc.ids) if (o !== id && C.isActive(chars[o])) { const q = Combat.projectedPos(enc, o); taken.add(q.x + ',' + q.y); }
     const foePos = foes.map((f) => Combat.projectedPos(enc, f));
-    // Opportunity strikes: a route that starts inside a foe's reach, or ends deeper inside it than
-    // its edge, gives that foe a free blow (about half its worth; less from one who has had its turn).
+    // Opportunity strikes: a route that enters a foe's reach, leaves it, or takes two steps within it
+    // gives that foe a free blow (about half its worth; less from one who has had its turn).
+    const wary = wariness(enc);
     const provokers = G.CONFIG.opportunityStrikes ? foes.map((f) => {
       const foe = chars[f];
       let reach = 0, worst = 0;
@@ -553,7 +563,7 @@
         reach = Math.max(reach, o.maxRange || 1);
         worst = Math.max(worst, hitValue(foe, c, o, Math.min(o.maxRange || 1, 2)));
       }
-      return { at: Combat.projectedPos(enc, f), reach, cost: worst * (enc.turnDone[f] ? 0.25 : 0.5) };
+      return { at: Combat.projectedPos(enc, f), reach, cost: worst * (enc.turnDone[f] ? 0.25 : 0.5) * wary };
     }).filter((p) => p.reach) : [];
     // With terrain about: walk around walls (cost map), keep out of hazards this side can see.
     const terrain = G.Terrain && enc.tiles && Object.keys(enc.tiles).length;
@@ -576,7 +586,10 @@
         if (need > la.ap) continue;
         const dd = Combat.dist({ x, y }, tp);
         let score = Math.abs(dd - goal) * 10 + need / C.costScale() + hazard;
-        for (const p of provokers) if (Combat.dist(from, p.at) <= p.reach || Combat.dist({ x, y }, p.at) < p.reach) score += p.cost * 2;
+        for (const p of provokers) {
+          const inFrom = Combat.dist(from, p.at) <= p.reach, inTo = Combat.dist({ x, y }, p.at) <= p.reach;
+          if (inFrom !== inTo || (inFrom && squares >= 2)) score += p.cost * 2;
+        }
         if (avoid) {
           // Stay out of every foe's reach if possible, and out of corners you can't leave.
           for (const fp of foePos) if (Combat.dist({ x, y }, fp) <= avoid) score += 25;
@@ -687,8 +700,8 @@
       const threatHere = RISK * foeRate(target, c, near.d);
       const nowR = bestRate(c, target, nowOpts, near.d) - threatHere;
       const altR = bestRate(c, target, alt, near.d) - threatHere;
-      const nowPref = preferredDistance(c, target, nowOpts, near.d);
-      const altPref = preferredDistance(c, target, alt, near.d);
+      const nowPref = preferredDistance(c, target, nowOpts, near.d, wariness(enc));
+      const altPref = preferredDistance(c, target, alt, near.d, wariness(enc));
       // Swap if the other weapon is much better right here, or its best distance is
       // much better than this weapon's best distance (and reachable).
       const canReach = la.move && Math.abs(altPref.d - near.d) <= la.move.maxSquares;
@@ -727,7 +740,7 @@
     const rangedLoadout = rangedOpts.length > 0 && (!meleeOpts.length || bestOver(rangedOpts, [2, 3, 4, 5, 6]) >= bestOver(meleeOpts, [1, 2, 3]));
     // A kiting loadout plans its distance around its ranged options only.
     const planOpts = rangedLoadout && P.kite ? planBase.filter((o) => o.ranged) : planBase.filter((o) => !o.unarmed).length ? planBase.filter((o) => !o.unarmed) : planBase;
-    const pref = preferredDistance(c, target, planOpts, near.d);
+    const pref = preferredDistance(c, target, planOpts, near.d, wariness(enc));
 
     // 7. Ranged characters step out of melee reach before shooting.
     if (P.kite && rangedLoadout && la.move) {
