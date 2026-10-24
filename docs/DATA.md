@@ -28,7 +28,7 @@ No anchors or tags. Keys must be unique.
 | `quests.yaml` | Staged quests with rewards. |
 | `places.yaml` | The town and the dungeon maps. |
 | `start.yaml` | New-game kits and the example party. |
-| `art.yaml` | Creature art in `art/characters/creatures` and `art/characters/pixellab` (git-ignored for now): frames, trim box, facing, height on the map. |
+| `art.yaml` | Creature art in `art/characters/creatures` (git-ignored until its licence is confirmed) and `art/characters/pixellab`: frames, trim box, facing, height on the map. |
 | `tilesets.yaml` | Tilesets a place's map can be drawn from (`look.tileset`): terrains as colours, single tiles or PixelLab corner (wang) sheets, and props. Format in the file's header. |
 
 ## Adding things

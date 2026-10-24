@@ -1,0 +1,104 @@
+{
+  "group_id": "bd5de183-fa73-43c1-a753-aad9dcfd8121",
+  "states": [
+    {
+      "character": {
+        "id": "68625c81-093c-4ebc-bb30-5c72ac9fb6b3",
+        "name": "Idle",
+        "prompt": "pixel art character sprite sheet of a dragonborn warrior named Skovir. Crimson red scaled skin, dark red V-shaped snout patterns, short spiked red scales on top of head, two black dragon horns curving back. Bold cartoonish grin with front sharp triangular white teeth exposed on long snout, black dot eyes with downward black eyebrows. Wearing a charcoal black fitted breastplate with silver studs, silver shoulder pauldrons with upward spikes, ragged short black cape, holding a black teardrop shield with silver trim and crimson dragon crest in left hand, holding a straight silver broadsword with a silver pommel and silver cross guards tipped with round red gems in right hand",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-20T02:30:43.532179+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {
+          "Walking": {
+            "west": [
+              "Idle/animations/Walking/west/frame_000.png",
+              "Idle/animations/Walking/west/frame_001.png",
+              "Idle/animations/Walking/west/frame_002.png",
+              "Idle/animations/Walking/west/frame_003.png"
+            ],
+            "north": [
+              "Idle/animations/Walking/north/frame_000.png",
+              "Idle/animations/Walking/north/frame_001.png",
+              "Idle/animations/Walking/north/frame_002.png",
+              "Idle/animations/Walking/north/frame_003.png"
+            ],
+            "south-west": [
+              "Idle/animations/Walking/south-west/frame_000.png",
+              "Idle/animations/Walking/south-west/frame_001.png",
+              "Idle/animations/Walking/south-west/frame_002.png",
+              "Idle/animations/Walking/south-west/frame_003.png"
+            ],
+            "south-east": [
+              "Idle/animations/Walking/south-east/frame_000.png",
+              "Idle/animations/Walking/south-east/frame_001.png",
+              "Idle/animations/Walking/south-east/frame_002.png",
+              "Idle/animations/Walking/south-east/frame_003.png"
+            ],
+            "east": [
+              "Idle/animations/Walking/east/frame_000.png",
+              "Idle/animations/Walking/east/frame_001.png",
+              "Idle/animations/Walking/east/frame_002.png",
+              "Idle/animations/Walking/east/frame_003.png"
+            ],
+            "south": [
+              "Idle/animations/Walking/south/frame_000.png",
+              "Idle/animations/Walking/south/frame_001.png",
+              "Idle/animations/Walking/south/frame_002.png",
+              "Idle/animations/Walking/south/frame_003.png"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "character": {
+        "id": "87ba5874-ad22-4b8a-ad46-cc4a1d4c254e",
+        "name": "Unarmed, idle withou",
+        "prompt": "pixel art character sprite sheet of a dragonborn warrior named Skovir. Crimson red scaled skin, dark red V-shaped snout patterns, short spiked red scales on top of head, two black dragon horns curving back. Bold cartoonish grin with front sharp triangular white teeth exposed on long snout, black dot eyes with downward black eyebrows. Wearing a charcoal black fitted breastplate with silver studs, silver shoulder pauldrons with upward spikes, ragged short black cape, holding a black teardrop shield with silver trim and crimson dragon crest in left hand, holding a straight silver broadsword with a silver pommel and silver cross guards tipped with round red gems in right hand",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-20T03:11:32.565392+00:00"
+      },
+      "folder": "Unarmed_idle_withou",
+      "frames": {
+        "rotations": {
+          "south": "Unarmed_idle_withou/rotations/south.png",
+          "south-east": "Unarmed_idle_withou/rotations/south-east.png",
+          "east": "Unarmed_idle_withou/rotations/east.png",
+          "north-east": "Unarmed_idle_withou/rotations/north-east.png",
+          "north": "Unarmed_idle_withou/rotations/north.png",
+          "north-west": "Unarmed_idle_withou/rotations/north-west.png",
+          "west": "Unarmed_idle_withou/rotations/west.png",
+          "south-west": "Unarmed_idle_withou/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-24T03:47:54.701455"
+}

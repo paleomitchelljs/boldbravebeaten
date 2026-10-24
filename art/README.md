@@ -7,9 +7,9 @@ work in progress go in `assets/` (the scratch pad), never here. The art to-do li
 |---|---|---|---|---|
 | `characters/pixelcrawler/` | Party figures, foes and the fallback for every creature: `<kind>_idle.png` (4 frames of 32 px), `<kind>_run.png` (6 frames of 64 px) | `src/ui/game/sprites.js` | Pixel Crawler (Anokolisa, free): use in any project, no resale of the art itself (`PIXEL-CRAWLER-TERMS.txt`) | yes |
 | `characters/creatures/` | Creature sheets: `<key>-<anim>.png`, two frames side by side (idle, attack, walk, walk-up, walk-down, fly…) | `sprites.js` through `data/art.yaml` | Not recorded: **licence to confirm** | no (git-ignored) |
-| `characters/pixellab/` | 8-direction characters made in PixelLab (idle rotations, 4-frame walks) | `sprites.js` through `data/art.yaml` (`type: pixellab`) | PixelLab output: **terms to confirm** | no (git-ignored) |
+| `characters/pixellab/` | 8-direction characters made in PixelLab (idle rotations, 4-frame walks) | `sprites.js` through `data/art.yaml` (`type: pixellab`) | PixelLab output: the maker owns it and may distribute it (PixelLab terms 3.3; not to be used to train other models) | yes |
 | `worldtiles/` | Dungeon tiles and props, 16-px cells: `tiles`, `props`, `furniture`, `esoteric` (Pixel Crawler); `chest`, `objects`, `gold`, `stairs`, `stairs_down`, `spikes`, `plate` (Cute Fantasy Dungeons) | `src/ui/game/mapview.js`, `tilemap.js` | Pixel Crawler (as above); Cute Fantasy is paid and may not be redistributed, even modified | Pixel Crawler yes; Cute Fantasy no |
-| `worldtiles/temple/` | The temple's tilesets, 64-px PixelLab corner (wang) sheets: `grass-wall`, `moss-wall` (placeholders from `assets/wip/temple-tileset`) | `tilemap.js` through `data/tilesets.yaml` | PixelLab output: **terms to confirm** | no (git-ignored); the map draws each terrain's colour instead |
+| `worldtiles/temple/` | The temple's tilesets, 64-px PixelLab corner (wang) sheets: `grass-wall`, `moss-wall` (placeholders from `assets/wip/temple-tileset`) | `tilemap.js` through `data/tilesets.yaml` | PixelLab output, as above | yes |
 | `items/` | Item icons (none yet) | — | — | — |
 | `effects/` | Spell bolts and flashes: `<Colour> Effect and Bullet 16x16.png` | `mapview.js` (`FX_SHEET`) | Not recorded: **licence to confirm** | no (git-ignored) |
 

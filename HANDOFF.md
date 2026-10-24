@@ -57,7 +57,7 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
   `look.light`; fights draw in awake groups within `game.joinDistance` (6, PROVISIONAL; not tuned in play). Findings:
   two posts together 73% won at level 1, all four a wipe.
 - [x] Courtyard 1 and the wall top are playable (`temple_court`, `temple_wall`; a town exit, "the temple in the jungle"),
-  drawn with the two placeholder PixelLab sandstone sets (copied, git-ignored, to `art/worldtiles/temple/`). Looked at
+  drawn with the two placeholder PixelLab sandstone sets (copied to `art/worldtiles/temple/`). Looked at
   in headless Chrome: walls, corners, doors, daylight and a fight on the court all draw. Not seen on a phone.
 - [ ] Courtyard art, the trial of the pipeline (prompt, PixelLab, `assets/wip/`, cut, `art/`, seen in play): a grass set
   that doesn't repeat so visibly (the placeholder's all-grass tile tiles in obvious rows), mosaic wall variants, a door,
@@ -71,8 +71,8 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
 - [ ] The temple props also replace the Cute Fantasy props the published site may not show.
 
 **Later**
-- Licences: the creature sheets (`art/characters/creatures`), the PixelLab figure and the spell effects (`art/effects`)
-  are git-ignored until their licences are confirmed, so the published site shows the Pixel Crawler figure for every
+- Licences: PixelLab output is ours to publish (its terms 3.3) and is committed. The creature sheets
+  (`art/characters/creatures`) and the spell effects (`art/effects`) are git-ignored until their licences are confirmed, so the published site shows the Pixel Crawler figure for every
   creature and plain bolts for spells. Credit Pixel Crawler (Anokolisa) in an About screen.
 - Pixel Crawler figures (every NPC and fallback): idle and run only, no attack, hurt or death.
 - Other creature sheets: two frames each, mostly idle and attack only; no art for wolf, alpha wolf, rust beetle, mirage

@@ -12,12 +12,11 @@ art/worldtiles/stairs_down.png
 art/worldtiles/spikes.png
 art/worldtiles/plate.png
 art/worldtiles/stairs.png
-# Licence not yet confirmed (the user's call): creature sheets, PixelLab art (the character, the temple tiles), spell effects.
+# Licence not yet confirmed (the user's call): creature sheets, spell effects. (PixelLab output is ours to publish: its
+# terms, 3.3, give the maker ownership and the right to distribute.)
 # Remove a line once its art may be published, and the Pages build will show it.
 art/characters/creatures/
-art/characters/pixellab/
 art/effects/
-art/worldtiles/temple/
 # Scratch pad: raw packs as bought or downloaded, and work cut from them, stay local. Ideas are committed.
 assets/packs/
 assets/wip/cliffs/
