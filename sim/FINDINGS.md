@@ -1,5 +1,28 @@
 # Simulation findings
 
+## Aimed blows and wounds by location, steps 2–3 (2026-10-24; against the parry commit 9d9da65)
+
+Every blow now rolls where it lands (or is aimed); cuts take attributes by location; vital odds, disarm, trip and stun
+follow the location; the AI aims by expected value. Encounters, level-1 party, 300 fights each (won / lost / rounds /
+dead per fight): rat nest, guards, store guards, squad, knight and wolves unchanged; crew 91/8/5.2/1.35 →
+91/9/4.8/1.19; horde 34/65/11.2/1.61 → 28/70/11.4/1.74 (about two standard errors); troll 92/7/4.8/0.39 →
+96/4/4.7/0.24.
+
+Duels (level 5, 320 fights a cell, about ±3 points): most cells within noise. Beyond it:
+
+| row vs column | before | after |
+|---|---|---|
+| magic vs two-handed | 44% | 51% |
+| sword & shield vs grappler | 78% | 68% |
+| grappler vs sword & shield | 17% | 23% |
+| rapier & dagger vs two-handed | 42% | 47% |
+
+Not yet explained; plausible causes are disarms (a grappler doesn't care, a sword-and-shield fighter does) and head
+wounds draining INT and WIL (which should hurt casters, though magic came out ahead). Per blow (`sim/locations.js`):
+a longsword cut to a bare body now takes 4.8 CON instead of 3.2 (the location tables send about 41% of a cut's points
+to CON, the old d4 25%), and a thrust into full mail can now be vital (0% → 4%: the vital roll's odds are whole
+tenths, and the head's ×2 lifts mail's guard over the first step).
+
 ## Parry carry-through (2026-10-24; `node sim/arena.js --n 20`, `node tools/encounters.js --n 300`)
 
 A parried swing whose force beats the parrying weapon's carries through, weakened; the overwhelm term left the parry
