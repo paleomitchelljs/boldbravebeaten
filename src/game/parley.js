@@ -65,6 +65,9 @@
       if (!known) { d -= 2; why.push(['stranger', -2]); }
     }
     if (ps.exposed) { d -= ps.exposed; why.push(['caught lying', -ps.exposed]); }
+    // Worn gear (a pendant everyone warms to: effects.standing; a crown one folk honour: standingWith).
+    const gear = Math.max(0, ...W.active(world).map((c) => C.gearSum(c, 'standing') + (npc.faction ? C.gearSum(c, 'standingWith', npc.faction) : 0)));
+    if (gear) { d += gear; why.push(['what you wear', gear]); }
     return { value: clamp(d, -cfg().dispositionRange, cfg().dispositionRange), why };
   }
 

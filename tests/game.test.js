@@ -393,9 +393,30 @@ test('equip: trinkets add to attributes and come off again', () => {
   const spd = C.attr(c, 'SPD');
   assert.ok(Equip.equipTrinket(w, c, 'sash_quick').ok);
   assert.equal(C.attr(c, 'SPD'), spd + 1);
-  Equip.unequip(w, c, 'charm');
+  Equip.unequip(w, c, 'cape');
   assert.equal(C.attr(c, 'SPD'), spd);
   assert.equal(World.goodCount(w, 'sash_quick'), 1);
+});
+
+test('equip: the user\'s slots — two rings, a neck, a cape, head to boots; old charms move to the neck', () => {
+  const w = fresh();
+  const c = World.party(w)[0];
+  const ids = Equip.slotList().map((x) => x[0]);
+  for (const s of ['main', 'off', 'side', 'shield', 'body', 'head', 'neck', 'shoulders', 'cape', 'arms', 'hands', 'ring1', 'ring2', 'legs', 'feet']) assert.ok(ids.includes(s), s);
+  World.addGood(w, 'ring_iron', 2);
+  assert.ok(Equip.equipTrinket(w, c, 'ring_iron').ok);
+  assert.ok(Equip.equipTrinket(w, c, 'ring_iron').ok);
+  assert.ok(Equip.itemIn(c, 'ring1') && Equip.itemIn(c, 'ring2'), 'one ring on each hand');
+  assert.equal(C.attr(c, 'CON'), c.base.CON + 2);
+  World.addGood(w, 'wayfarer_boots');
+  assert.equal(Equip.equipTrinket(w, c, 'wayfarer_boots', 'head').ok, false, 'boots go on the feet');
+  const before = C.squaresPerAP(c);
+  assert.ok(Equip.equipTrinket(w, c, 'wayfarer_boots').ok);
+  assert.equal(C.squaresPerAP(c), before + 1);
+  // An old save's charm and ring.
+  const old = { trinkets: [{ name: 'x', slot: 'charm', attrs: {} }, { name: 'y', slot: 'ring', attrs: {} }] };
+  C.normalize(old);
+  assert.deepStrictEqual(old.trinkets.map((t) => t.at), ['neck', 'ring1']);
 });
 
 test('supplies: bandages and arrows are dealt to members for a fight and collected afterward', () => {

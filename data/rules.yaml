@@ -10,6 +10,26 @@ enemyGear:
   origin: [[[1, common]], [[18, common], [1, elven], [1, dwarven]], [[8, common], [1, elven], [1, dwarven]]]
 
 game:
+  # ---- Equipment ----------------------------------------------------------
+  # Worn slots (the user's list), after the hands, shield and chest (armor). A worn good's `slot` names one of
+  # these ids, or a `takes` (both ring slots take a ring). Add a slot here (a waist, ears) and goods can use it.
+  wornSlots:
+    - {id: head, name: Head}
+    - {id: neck, name: Neck}
+    - {id: shoulders, name: Shoulders}
+    - {id: cape, name: Cape}
+    - {id: arms, name: Arms}
+    - {id: hands, name: Hands}
+    - {id: ring1, name: Ring, takes: ring}
+    - {id: ring2, name: Ring, takes: ring}
+    - {id: legs, name: Legs}
+    - {id: feet, name: Boots}
+  # ---- Companions (PROVISIONAL, the user's idea; src/game/companions.js) -------------------------------------
+  # Which monsters.yaml creatures answer each feat, by rank (rank II adds the second list). The owner may choose
+  # among those on offer; otherwise the last (strongest) is taken. death: attribute points a familiar's death costs.
+  companions:
+    familiar: {ranks: [[duskBat, rat], [fireSprite]], death: {WIL: 2}}
+    beast: {ranks: [[wolf], [alphaWolf]]}
   # ---- Starting a game ----------------------------------------------------
   party: {size: 4, attrPool: 40, attrMin: 3, attrMax: 8, startGold: 60}
   # ---- Progression --------------------------------------------------------
@@ -31,6 +51,7 @@ game:
   # ---- Skill checks: d10 + floor(mean of attrs / 2) + feat ranks x weight vs a target number ------
   tn: {trivial: 4, easy: 6, moderate: 8, hard: 11, formidable: 14}
   # ---- Factions -----------------------------------------------------------
+  bounty: {on: cutthroats, payer: town_watch, gold: 15, minStanding: 10, standingPer: 0.5}   # who pays for whose dead
   standingMax: 100
   standingTiers: [[-100, Hated], [-60, Hostile], [-25, Wary], [-5, Cool], [5, Neutral], [25, Friendly], [60, Allied], [90, Revered]]
   allyShare: 0.25            # of a standing change, passed to a faction's allies

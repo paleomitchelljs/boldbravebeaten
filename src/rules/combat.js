@@ -80,21 +80,26 @@
   async function auras(enc, chars, roller) {
     for (const id of enc.ids) {
       const c = chars[id];
-      const A = c && c.traits && c.traits.aura;
-      if (!A || !C.isActive(c) || !enc.pos[id]) continue;
-      const hit = enc.ids.filter((o) => chars[o] && chars[o].side !== c.side && C.isActive(chars[o]) && enc.pos[o] && dist(enc.pos[id], enc.pos[o]) <= A.radius);
-      for (const o of hit) {
-        const t = chars[o];
-        if (A.stamina && !C.tireless(t)) { t.stamina = Math.max(0, t.stamina - A.stamina); C.updateCondition(t); }
-        if (A.cond && G.Conditions) {
-          // A resisted aura (a spectre's wail) is contested like a spell; otherwise it simply takes hold.
-          if (A.resisted && G.Magic && t === chars[hit[0]]) log(enc, `${c.name}'s ${A.name || 'aura'} rises over ${hit.map((o) => chars[o].name).join(', ')}.`, 'hit');
-          if (A.resisted && G.Magic) await G.Magic.afflict(enc, c, t, A.cond, { rounds: 1, mag: 1 }, roller);
-          else G.Conditions.add(t, A.cond, { rounds: 1, src: id });
-        }
-      }
-      if (hit.length && !A.resisted) log(enc, `${c.name}'s ${A.name || 'aura'} falls on ${hit.map((o) => chars[o].name).join(', ')}${A.stamina ? ` (−${A.stamina} stamina` : ' ('}${A.cond ? `${A.stamina ? ', ' : ''}${CONFIG.conditions[A.cond].name.toLowerCase()}` : ''}).`, 'hit');
+      if (!c || !C.isActive(c) || !enc.pos[id]) continue;
+      // A creature's own aura, and any its gear gives (a mail that breathes poison).
+      for (const A of [c.traits && c.traits.aura].concat(C.gearList(c, 'aura')).filter(Boolean)) await aura(enc, chars, c, A, roller);
     }
+  }
+
+  async function aura(enc, chars, c, A, roller) {
+    const id = c.id;
+    const hit = enc.ids.filter((o) => chars[o] && chars[o].side !== c.side && C.isActive(chars[o]) && enc.pos[o] && dist(enc.pos[id], enc.pos[o]) <= A.radius);
+    for (const o of hit) {
+      const t = chars[o];
+      if (A.stamina && !C.tireless(t)) { t.stamina = Math.max(0, t.stamina - A.stamina); C.updateCondition(t); }
+      if (A.cond && G.Conditions) {
+        // A resisted aura (a spectre's wail) is contested like a spell; otherwise it simply takes hold.
+        if (A.resisted && G.Magic && t === chars[hit[0]]) log(enc, `${c.name}'s ${A.name || 'aura'} rises over ${hit.map((o) => chars[o].name).join(', ')}.`, 'hit');
+        if (A.resisted && G.Magic) await G.Magic.afflict(enc, c, t, A.cond, { rounds: A.rounds || 1, mag: A.mag || 1 }, roller);
+        else G.Conditions.add(t, A.cond, { rounds: A.rounds || 1, src: id });
+      }
+    }
+    if (hit.length && !A.resisted) log(enc, `${c.name}'s ${A.name || 'aura'} falls on ${hit.map((o) => chars[o].name).join(', ')}${A.stamina ? ` (−${A.stamina} stamina` : ' ('}${A.cond ? `${A.stamina ? ', ' : ''}${CONFIG.conditions[A.cond].name.toLowerCase()}` : ''}).`, 'hit');
   }
 
   async function startRound(enc, chars, roller) {
@@ -116,8 +121,9 @@
     for (const id of active) {
       const c = chars[id];
       const spd = C.combatAttr(c, 'SPD');
-      const r = await rollDie(roller, id, CONFIG.initiativeDie, 'Initiative', `d${CONFIG.initiativeDie} + SPD ${spd}`);
-      enc.initiative[id] = r + spd;
+      const gear = C.gearSum(c, 'init');
+      const r = await rollDie(roller, id, CONFIG.initiativeDie, 'Initiative', `d${CONFIG.initiativeDie} + SPD ${spd}${gear ? ` + ${gear} (gear)` : ''}`);
+      enc.initiative[id] = r + spd + gear;
     }
     enc.order = active.slice().sort((a, b) => {
       const d = enc.initiative[b] - enc.initiative[a];
@@ -259,6 +265,7 @@
   // End of the round: hazards, spells and conditions tick, wounds bleed, the winded recover.
   async function finishRound(enc, chars, io) {
     const roller = io && io.roller;
+    if (G.Magic && enc.delayed && enc.delayed.length) await G.Magic.breakDelayed(enc, chars, roller);
     if (G.Terrain && enc.tiles) await G.Terrain.endRound(enc, chars, roller, (t) => log(enc, t, 'hit'));
     if (G.Magic && G.Magic.endRound) for (const line of G.Magic.endRound(enc, chars)) log(enc, line, 'pass');
     endRound(enc, chars);
@@ -324,13 +331,17 @@
   function legalActions(enc, chars, id) {
     const out = legalActionsRaw(enc, chars, id);
     const c = chars[id];
-    if (!G.Conditions || !G.Conditions.list(c).length) return out;
+    if (!G.Conditions) return out;
+    // A foe beyond arm's reach who is unseen can't be aimed at.
+    const hide = (t) => { if (t.inReach && unseenBy(enc, chars, chars[t.id], c)) { t.inReach = false; t.unseen = true; } };
+    for (const o of out.attacks.concat(out.maneuvers, out.spells || [])) for (const t of o.targets || []) hide(t);
+    if (!G.Conditions.list(c).length) return out;
     const no = (decl) => conditionForbids(enc, chars, c, decl);
     const mark = (o, decl) => { const f = no(decl); if (f) { o.affordable = false; o.why = f; } return !f; };
     for (const o of out.attacks) if (mark(o, { type: 'strike' })) for (const t of o.targets) if (no({ type: 'strike', target: t.id })) t.inReach = false;
     for (const m of out.maneuvers) if (mark(m, { type: m.type })) for (const t of m.targets) if (no({ type: m.type, target: t.id })) t.inReach = false;
     for (const o of out.spells || []) if (mark(o, { type: 'cast', option: o })) for (const t of o.targets || []) if (no({ type: 'cast', option: o, target: t.id })) t.inReach = false;
-    if (G.Conditions.has(c, 'mesmerized')) { out.move = null; for (const o of out.other) o.affordable = false; }
+    if (G.Conditions.flag(c, 'noAct')) { out.move = null; for (const o of out.other) o.affordable = false; }
     return out;
   }
 
@@ -362,9 +373,10 @@
 
     // Spells cast at a square, a foe or an ally (bolts are among the attacks above).
     out.spells = [];
-    if (G.Magic && C.castingHands(c) && !c.status.pinned) {
+    if (G.Magic && !c.status.pinned) {
       for (const opt of G.Magic.spellOptions(c)) {
         if (opt.kind !== 'cast') continue;
+        if (!opt.power && !C.castingHands(c)) continue; // spells need a free hand; an item's power doesn't
         if (isGrappled(c) && opt.spell.shape !== 'blink') continue; // held: only a blink gets you out
         const why = spellShort(c, opt);
         const targets = opt.target === 'square' ? null : enc.ids.filter((o) => {
@@ -502,6 +514,7 @@
   }
 
   function spellShort(c, opt) {
+    if (opt.power) return opt.power.left === 0 ? 'No charges left' : null;
     return G.Magic && opt.spCost > G.Magic.availableSP(c) ? 'Not enough spell points' : null;
   }
 
@@ -531,7 +544,11 @@
     if (winding && (CONFIG.windUp.exposed || []).includes(kind)) return 'Winding up';
     const opt = attackDecl ? attackDecl.option : null;
     const parry = kind === 'parry' || kind === 'offParry';
-    if (parry && opt && (opt.spell || (opt.ranged && !CONFIG.archery.parry))) return opt.spell ? "Can't parry a spell" : "Can't parry an arrow";
+    // A spell bolt can't be parried or blocked (PROVISIONAL, the user's call), except with gear made for it
+    // (enchantments.yaml blockSpells on a shield, parrySpells on a weapon). It can be dodged.
+    if (parry && opt && opt.spell && !(C.weaponStrike(parryingWeapon(c, kind)).parrySpells)) return "Can't parry a spell";
+    if (parry && opt && !opt.spell && opt.ranged && !CONFIG.archery.parry) return "Can't parry an arrow";
+    if (kind === 'block' && opt && opt.spell && CONFIG.defense.blockSpells === false && !(c.shield && Items.enchantsOf(c.shield).some((e) => e.blockSpells))) return "Can't block a spell";
     if (parry && opt && opt.motion === 'power' && CONFIG.defense.noParryVsPower) return "Can't parry a power blow";
 
     if (kind === 'block' && !C.shieldReady(c)) return 'No ready shield';
@@ -552,7 +569,7 @@
   function conditionForbids(enc, chars, c, decl) {
     if (!G.Conditions) return null;
     const F = (f) => G.Conditions.flag(c, f);
-    if (G.Conditions.has(c, 'mesmerized') && decl.type !== 'endTurn' && decl.type !== 'concede') return 'Mesmerized';
+    if (F('noAct') && decl.type !== 'endTurn' && decl.type !== 'concede') return G.Conditions.has(c, 'paralyzed') ? 'Paralyzed' : 'Mesmerized';
     const attack = decl.type === 'strike' || (ATTACK_TYPES.includes(decl.type) && decl.type !== 'strike') || (decl.type === 'cast' && decl.option && decl.option.target === 'foe');
     if (attack && F('noAttack')) return 'Calmed: won\'t attack';
     if (DEFENSE_TYPES.includes(decl.type) && F('noGuard')) return 'In a frenzy: no guards';
@@ -562,7 +579,15 @@
       if (decl.type === 'move' && dist(decl.to, projectedPos(enc, fear.src)) < dist(projectedPos(enc, c.id), projectedPos(enc, fear.src))) return 'Too afraid to close';
     }
     if (F('blind') && decl.type === 'strike' && decl.target && dist(projectedPos(enc, c.id), projectedPos(enc, decl.target)) > 1) return 'Blinded: only at arm\'s reach';
+    if (decl.target && chars[decl.target] && unseenBy(enc, chars, chars[decl.target], c)) return 'Can\'t see them';
     return null;
+  }
+
+  // An unseen character (Bless + Veil, a veiling circlet) can't be picked out by a foe farther than arm's reach.
+  function unseenBy(enc, chars, t, viewer) {
+    if (!G.Conditions || !t || !viewer || t.side === viewer.side || !G.Conditions.flag(t, 'unseen')) return false;
+    if (!enc.pos[t.id] || !enc.pos[viewer.id]) return false;
+    return dist(enc.pos[t.id], enc.pos[viewer.id]) > 1;
   }
 
   // Check an action and work out its cost. Returns { err } or { ap, stamina }; fills in decl.option.
@@ -591,7 +616,7 @@
       const key = decl.option.spellKey;
       const opt = G.Magic.spellOptions(c).find((o) => o.kind === 'cast' && o.spellKey === key);
       if (!opt) return { err: 'Spell not available' };
-      if (!C.castingHands(c) || (isGrappled(c) && opt.spell.shape !== 'blink')) return { err: 'Needs a free hand' };
+      if ((!opt.power && !C.castingHands(c)) || (isGrappled(c) && opt.spell.shape !== 'blink')) return { err: 'Needs a free hand' };
       const why = spellShort(c, opt);
       if (why) return { err: why };
       if (opt.target === 'square') {
@@ -661,6 +686,11 @@
     decl.n = ++enc.seq;
     decl.round = enc.round;
     if (decl.target) decl.targetWasDown = !C.isActive(chars[decl.target]);
+    // Striking or casting gives the unseen away.
+    if (G.Conditions && G.Conditions.has(chars[id], 'unseen') && (ATTACK_TYPES.includes(decl.type) || (decl.type === 'cast' && decl.option.target !== 'ally'))) {
+      G.Conditions.remove(chars[id], 'unseen');
+      log(enc, `${chars[id].name} is seen again.`, 'pass');
+    }
     enc.ap[id] -= v.ap;
     enc.decls.push(decl);
     enc.phase = 'acting';
@@ -763,7 +793,8 @@
     if (passesThrough(attacker, target, option)) v[0] = v[1] = v[2] = 0;
     const st = target.status;
     const prone = st.prone;
-    const pinned = !!st.pinned;
+    // A paralyzed body (helpless) gives up its gaps as a pinned one does.
+    const pinned = !!st.pinned || !!(G.Conditions && G.Conditions.flag(target, 'helpless'));
     if (isCramped(attacker, option, flags.distance)) {
       if (CONFIG.range.closeRule === 'blunt') {
         const total = v[0] + v[1] + v[2];
@@ -954,6 +985,9 @@
     const M = CONFIG.magic;
     let mag = option.spell.magnitude;
     if (flags.half) mag = Math.floor(mag / 2);
+    // Gear that resists an element (a mail that shrugs off fire: effects.resist).
+    const gr = C.gearMult(target, 'resist', option.spell.element);
+    if (gr !== 1) mag = Math.floor(mag * gr);
     const res = { vec: [0, 0, 0], P: 0, S: 0, B: 0, fire: mag, armored: false, toCON: 0, slashToAttrs: 0, bluntToStamina: 0, bluntToCON: 0, converted: 0, durLoss: 0, mitigated: { P: 0, S: 0, B: 0 }, noBleed: true, pierceVital: 0, cutVital: 0, bleedFactor: 1, bleedRounds: CONFIG.bleedRounds };
     const unconscious = target.stamina <= 0;
     let left = mag;
@@ -987,6 +1021,7 @@
   function computeLife(attacker, target, option, flags) {
     let mag = option.spell.magnitude;
     if (flags.half) mag = Math.floor(mag / 2);
+    mag = Math.floor(mag * C.gearMult(target, 'resist', 'life'));
     const res = { vec: [0, 0, 0], P: 0, S: 0, B: 0, armored: false, toCON: 0, slashToAttrs: 0, bluntToStamina: 0, bluntToCON: 0, converted: 0, durLoss: 0, mitigated: { P: 0, S: 0, B: 0 }, noBleed: true, pierceVital: 0, cutVital: 0, bleedFactor: 1, bleedRounds: CONFIG.bleedRounds };
     if (!C.tireless(target)) res.toCON = Math.floor(mag / 2);
     return res;
@@ -1128,6 +1163,11 @@
     if (harmed && G.Conditions) for (const x of G.Conditions.list(target).slice()) {
       if ((CONFIG.conditions[x.key] || {}).breakOnHarm) { G.Conditions.remove(target, x.key); parts.push(`${CONFIG.conditions[x.key].name.toLowerCase()} no more`); }
     }
+    // A charm broken by harm gives the bearer back to their own side at once.
+    if (target.charmed && G.Conditions && !G.Conditions.list(target).some((x) => (CONFIG.conditions[x.key] || {}).control)) {
+      target.side = target.charmed.side; target.control = target.charmed.control; delete target.charmed;
+      parts.push(`${target.name} comes back to themselves`);
+    }
     if (passesThrough(attacker, target, option)) parts.push('it passes through');
     if (h.magicImmune) parts.push('the magic washes off it');
     if (!parts.length) parts.push('no effect');
@@ -1141,7 +1181,7 @@
       const landed = h.bluntToStamina + h.bluntToCON + (h.toCON + h.slashToAttrs) / 2;
       const back = Math.min(CONFIG.impact.knockbackMax, Math.floor(landed / CONFIG.impact.knockbackPer / sizeOf(target)));
       if (back > 0 && !option.spell && !st.dead && attacker !== target && enc.pos[attacker.id] && enc.pos[target.id] && G.Magic) {
-        G.Magic.push(enc, chars, target, enc.pos[attacker.id], back);
+        await G.Magic.push(enc, chars, target, enc.pos[attacker.id], back, roller);
       }
     }
     // An enchanted blade that drinks (enchantments.yaml drain; an old save's enchant.drain): the wielder
@@ -1209,6 +1249,8 @@
   function defenseNumbers(defender, kind, motion, attacker, atkOption) {
     const r = defenseNumbersBase(defender, kind, motion, attacker, atkOption);
     const m = intentMods(defender, attacker);
+    // Gear that guides the blow (effects.hit); a blow from someone unseen is hard to meet.
+    if (attacker) m.atk += C.gearSum(attacker, 'hit') + (G.Conditions && G.Conditions.flag(attacker, 'unseen') ? 2 : 0);
     r.bonus += m.def;
     if (r.opposed) r.attack += m.atk;
     else r.tn += m.atk;
@@ -1457,8 +1499,8 @@
       // Land a square beyond, away from the thrower, if there is room.
       const from = enc.pos[a.id], at = enc.pos[t.id];
       const nx = at.x + Math.sign(at.x - from.x), ny = at.y + Math.sign(at.y - from.y);
-      const free = nx >= 0 && ny >= 0 && nx < enc.grid.w && ny < enc.grid.h && !enc.ids.some((id) => id !== t.id && C.isActive(chars[id]) && enc.pos[id].x === nx && enc.pos[id].y === ny);
-      if (free) enc.pos[t.id] = { x: nx, y: ny };
+      const free = (G.Terrain ? G.Terrain.passable(enc, nx, ny) : nx >= 0 && ny >= 0 && nx < enc.grid.w && ny < enc.grid.h) && !enc.ids.some((id) => id !== t.id && C.isActive(chars[id]) && enc.pos[id].x === nx && enc.pos[id].y === ny);
+      if (free) { enc.pos[t.id] = { x: nx, y: ny }; if (G.Terrain && enc.tiles) await G.Terrain.enter(enc, chars, t, nx, ny, roller, (x) => log(enc, x, 'hit')); }
       knockDown(enc, t);
       log(enc, `${a.name} throws ${t.name} to the ground ${show(o)}.`, 'hit');
       if (o.margin >= big) {
@@ -1650,6 +1692,14 @@
           if (w.blocked) return;
           hitOpt = Object.assign({}, d.option, { damage: w.damage || d.option.damage, spell: d.option.spell ? Object.assign({}, d.option.spell, { magnitude: w.magnitude }) : undefined });
         }
+        // A bane blade (enchantments.yaml strike.slay: [{trait, damage}]) bites harder into what it was made for.
+        const blade = weaponItem(a, d.option);
+        const fx = blade ? C.weaponStrike(blade) : {};
+        // Worn bane gear (gauntlets that slay dragons: effects.slay) counts for any blow but a spell or an arrow.
+        const gearSlay = d.option.spell || d.option.ranged ? [] : C.gearSources(a).flatMap((x) => x.effects.slay || []);
+        const slay = (fx.slay || []).concat(gearSlay).filter((x) => t.traits && t.traits[x.trait]).reduce((n, x) => n + (x.damage || 0), 0);
+        if (slay) { hitOpt = Object.assign({}, hitOpt, { damage: hitOpt.damage.slice() }); hitOpt.damage[C.mainIndex(hitOpt.damage)] += slay; }
+        const pre = { stamina: t.stamina, dmg: C.totalDamage(t) };
         const r = await applyHit(enc, chars, a, t, hitOpt, roller, { half, distance, pack });
         const note = isCramped(a, d.option, distance)
           ? (CONFIG.range.closeRule === 'blunt' ? ' (cramped: blunt, half force)' : ' (cramped: half damage)') : d.option.ranged && d.option.longRange && distance > d.option.longRange ? ' (long range)' : '';
@@ -1660,6 +1710,9 @@
           log(enc, `${t.name} catches fire.`, 'hit');
         }
         if (d.option.spell && G.Magic && G.Magic.afterHit) await G.Magic.afterHit(enc, chars, a, t, d.option, r.hit, roller);
+        if (blade && Object.keys(fx).length) await strikeEffects(enc, chars, a, t, blade, fx, roller, t.stamina < pre.stamina || C.totalDamage(t) > pre.dmg, posAtStart);
+        // Gear that bites back (effects.retaliate): whoever lands a melee blow on the wearer takes an element's blow.
+        if (!d.option.ranged && !d.option.spell && G.Magic && C.isActive(a)) for (const x of C.gearList(t, 'retaliate')) await G.Magic.elementBlow(enc, chars, t, a, x.noun, x.mag, roller, x.name || `${Items.itemName(x.from) || x.from.name}`, { from: posAtStart[t.id] });
         // A conjured elemental's blows carry its element.
         if (a.traits && a.traits.element && !d.option.spell && G.Magic && C.isActive(t)) await G.Magic.onHit(enc, chars, a, t, a.traits.element, roller, { from: posAtStart[a.id] });
         // Springy armor (chitin): the blow rebounds and jars the attacker.
@@ -1779,8 +1832,50 @@
     }
   }
 
+  // What an enchanted weapon's blow carries (enchantments.yaml `strike`), once it has landed:
+  //   onHit {cond, rounds, chance}   a condition, resisted as a spell (Magic.afflict) — stun, roots
+  //   element {noun, mag}            an element's blow as well (a burning blade)
+  //   sap {attr, n, stamina}         drains an attribute and stamina into the wielder
+  //   armorWear n                    eats the target's armor
+  //   riled n                        the wielder is Riled: +n to all mitigation until next hurt
+  // `landed`: the blow did harm (onHit, sap and armorWear need it; an element burns regardless).
+  async function strikeEffects(enc, chars, a, t, blade, fx, roller, landed, pos) {
+    const name = Items.itemName(blade);
+    if (fx.riled && C.isActive(a) && G.Conditions) {
+      G.Conditions.add(a, 'riled', { rounds: 99, mag: fx.riled, src: a.id });
+      log(enc, `${name} rouses ${a.name}: riled (+${fx.riled} to all mitigation until hurt).`, 'defend');
+    }
+    if (fx.element && G.Magic && !t.status.dead) await G.Magic.elementBlow(enc, chars, a, t, fx.element.noun, fx.element.mag, roller, name, { from: pos[a.id] });
+    if (!landed) return;
+    if (fx.armorWear && t.armor && t.armor.durability > 0) {
+      t.armor.durability = Math.max(0, t.armor.durability - fx.armorWear);
+      log(enc, `${name} eats at ${t.name}'s armor (durability −${fx.armorWear}).`, 'hit');
+    }
+    if (fx.sap && !t.status.dead) {
+      const S = fx.sap;
+      if (S.attr && S.n) C.damageAttr(t, S.attr, S.n);
+      const took = C.tireless(t) ? 0 : Math.min(t.stamina, S.stamina || 0);
+      t.stamina -= took;
+      const got = Math.min(took, C.maxStamina(a) - a.stamina);
+      if (got > 0) a.stamina += got;
+      C.updateCondition(t);
+      log(enc, `${name} saps ${t.name}${S.attr ? ` (−${S.n} ${S.attr}` : ' ('}${took ? `, −${took} stamina` : ''})${got ? `; ${a.name} +${got} stamina` : ''}.`, 'hit');
+    }
+    if (fx.onHit && C.isActive(t) && G.Magic) {
+      const H = fx.onHit;
+      const need = Math.round((H.chance == null ? 1 : H.chance) * 10);
+      const r = need >= 10 ? 1 : await rollDie(roller, a.id, 10, `${a.name}: ${name}`, `d10 ≤ ${need}: ${(CONFIG.conditions[H.cond] || {}).name || H.cond}`);
+      if (r <= need) await G.Magic.afflict(enc, a, t, H.cond, { rounds: H.rounds || 1, mag: H.mag || 1 }, roller);
+    }
+  }
+
   // Pay spell points and roll backlash. Returns false if the spell fails to go off.
   async function castSpell(enc, a, opt, roller) {
+    // An item's power: a charge, no spell points, no backlash.
+    if (opt.power) {
+      if (!G.Magic.usePower(a, opt)) { log(enc, `${a.name}'s ${opt.power.name} has nothing left in it.`, 'fizzle'); return false; }
+      return true;
+    }
     const avail = G.Magic.availableSP(a);
     if (opt.spCost > avail) {
       log(enc, `${a.name} can't draw enough power for ${opt.label} (${avail} of ${opt.spCost} points).`, 'fizzle');
@@ -1928,16 +2023,9 @@
       const o = await opposed(roller, a, aB, dist(enc.pos[a.id], enc.pos[t.id]) > 1 ? 'Fend off' : 'Shove', t, stability(t), 'Hold ground');
       if (o.margin <= 0) return log(enc, `${a.name}'s shove fails (${o.a} vs ${o.b}).`, 'fail');
       const from = enc.pos[a.id], at = enc.pos[t.id];
-      const dx = Math.sign(at.x - from.x), dy = Math.sign(at.y - from.y);
       const want = o.margin >= S.farMargin ? 2 : 1;
-      let moved = 0;
-      for (let k = 0; k < want; k++) {
-        const nx = enc.pos[t.id].x + dx, ny = enc.pos[t.id].y + dy;
-        const free = nx >= 0 && ny >= 0 && nx < enc.grid.w && ny < enc.grid.h && !enc.ids.some((id) => id !== t.id && C.isActive(chars[id]) && enc.pos[id].x === nx && enc.pos[id].y === ny);
-        if (!free) break;
-        enc.pos[t.id] = { x: nx, y: ny };
-        moved++;
-      }
+      // Walls stop a shove (a body can't be driven into stone); a pit, a rune or a fire on the way takes it.
+      const moved = await G.Magic.push(enc, chars, t, from, want, roller, false);
       if (moved) log(enc, `${a.name} shoves ${t.name} back ${moved} square${moved > 1 ? 's' : ''} (${o.a} vs ${o.b}).`, 'hit');
       else if (o.margin >= S.farMargin) {
         knockDown(enc, t);
@@ -2008,7 +2096,7 @@
       if (c.charmed) {
         const ctl = G.Conditions.get(c, 'controlled');
         if (ctl && chars[ctl.src] && !C.isActive(chars[ctl.src])) G.Conditions.remove(c, 'controlled');
-        if (!G.Conditions.has(c, 'controlled')) {
+        if (!G.Conditions.list(c).some((x) => (CONFIG.conditions[x.key] || {}).control)) {
           c.side = c.charmed.side; c.control = c.charmed.control; delete c.charmed;
           log(enc, `${c.name} comes back to themselves.`, 'pass');
         }
@@ -2102,7 +2190,7 @@
   }
 
   G.Combat = {
-    conditionForbids, ATTACK_TYPES, DEFENSE_TYPES, shoveReach, log, rollDie, castSpell, knockDown, stability, releaseAll: clearGrapple,
+    unseenBy, strikeEffects, conditionForbids, ATTACK_TYPES, DEFENSE_TYPES, shoveReach, log, rollDie, castSpell, knockDown, stability, releaseAll: clearGrapple,
     createEncounter, autoPlace, startRound, currentActor, legalActions, act, validate, endTurn, submit, describeDecl, apLeft, defenseOptions, opportunityOptions,
     vitalNeed, projectedPos, dist, defenseOdds, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolveAction, finishRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
   };

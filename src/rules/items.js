@@ -187,11 +187,14 @@
     const protect = matRatio(item, 'protect') * tagMult(a, 'protect');
     const weight = matRatio(item, 'weight') * tagMult(a, 'weight');
     const mit = {};
-    for (const k of ['P', 'S', 'B']) mit[k] = Math.max(0, Math.round(t.mit[k] * (k === 'B' ? 1 : protect)) + cov.mitigation);
+    const bonus = { P: 0, S: 0, B: 0 };
+    let resistBonus = 0;
+    for (const e of enchantsOf(a)) { for (const k of ['P', 'S', 'B']) bonus[k] += (e.mitBonus && e.mitBonus[k]) || 0; resistBonus += e.resistBonus || 0; }
+    for (const k of ['P', 'S', 'B']) mit[k] = Math.max(0, Math.round(t.mit[k] * (k === 'B' ? 1 : protect)) + cov.mitigation + bonus[k]);
     const pen = (v) => Math.max(0, tenth(tenth(v * weight) + cov.penalty));
     const PC = CONFIG.pierce;
     const pierce = t.pierce ? {
-      resist: Math.round(t.pierce.resist * protect * 100) / 100,
+      resist: Math.round((t.pierce.resist * protect + resistBonus) * 100) / 100,
       gap: t.pierce.gap + ((PC && PC.coverageGap && PC.coverageGap[a.coverage || 'full']) || 0),
     } : null;
     return {

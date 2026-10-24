@@ -33,7 +33,7 @@
     });
     const equipTo = (it) => {
       const slots = Equip.fits(it);
-      return h('div', { class: 'row' }, slots.map((s) => h('button', { class: 'small', disabled: !Equip.canEquip(tc, it, s).ok, onclick: () => { const r = Equip.equip(w, tc, it, s); if (!r.ok) toast(r.reason); game.save(); game.openOverlay('pack', o); game.render(); } }, `${Equip.SLOTS.find((x) => x[0] === s)[1]}`)));
+      return h('div', { class: 'row' }, slots.map((s) => h('button', { class: 'small', disabled: !Equip.canEquip(tc, it, s).ok, onclick: () => { const r = Equip.equip(w, tc, it, s); if (!r.ok) toast(r.reason); game.save(); game.openOverlay('pack', o); game.render(); } }, `${Equip.slotList().find((x) => x[0] === s)[1]}`)));
     };
     const gear = w.pack.gear.map((it) => h('div', { class: 'ledger-row' }, h('span', { class: 'stack tight' }, h('b', null, Items.itemName(it)), h('span', { class: 'small muted' }, Equip.describe(it))), equipTo(it)));
     const comps = Object.entries(S.components).filter(([, n]) => n > 0).map(([id, n]) => `${World.goodDef(id).name} ×${n}`);
@@ -177,7 +177,7 @@
     const g = G.Explore.here(w), ms = World.mapState(w, w.place), ex = w.explore;
     const mv = UI.MapView.create({ cols: g.w, rows: g.h, scale: 2, label: 'Map of what you have seen', scene: () => ({
       w: g.w, h: g.h, origin: { x: 0, y: 0 }, cell: (x, y) => G.Explore.peek(w, x, y), seen: (x, y) => !!ms.seen[x + ',' + y],
-      actors: [{ id: 'me', x: ex.x, y: ex.y, kind: UI.Sprites.look(World.active(w)[0]).kind, tint: UI.Sprites.look(World.active(w)[0]).tint, size: 1, ring: 'rgba(255,255,255,0.85)' }], marks: [], hoverable: false }) });
+      actors: [Object.assign({ id: 'me', x: ex.x, y: ex.y, size: 1 }, UI.Sprites.look(World.active(w)[0]), { size: 1, ring: 'rgba(255,255,255,0.85)' })], marks: [], hoverable: false }) });
     mv.start();
     return shell(G.Explore.place(w).name, h('div', { class: 'stack' }, h('div', { class: 'mapfull' }, mv.el), h('p', { class: 'small muted' }, 'What you have seen, as you saw it. The ring is your party.')), close, true);
   };

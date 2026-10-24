@@ -133,7 +133,7 @@
       const forFriends = entry && (entry.kind === 'other' || (isSpell(entry) && entry.option.target === 'ally'));
       const candidate = map && map.targets[id] && !(cmd && cmd.target === id) && (forFriends || (actor && chars[actor] && chars[actor].side !== c.side));
       sc.actors.push({
-        id, x: p.x + ox, y: p.y + oy, kind: L.kind, tint: L.tint, size: L.size, tag: c.side === 'party' ? 'party' : 'enemy',
+        id, x: p.x + ox, y: p.y + oy, kind: L.kind, tint: L.tint, size: L.size, art: L.art, artTint: L.artTint, artScale: L.artScale, artSize: L.artSize, tag: c.side === 'party' ? 'party' : 'enemy',
         flip: near ? near.x < p.x : c.side !== 'party', down, alpha: c.status.dead ? 0.6 : down ? 0.8 : 1, speed: 9, phase: id.length,
         bar: C.maxStamina(c) ? c.stamina / C.maxStamina(c) : 0,
         ring: id === actor ? 'rgba(255,224,130,0.95)' : candidate ? 'rgba(255,110,95,0.4)' : null,
@@ -151,7 +151,7 @@
     for (const d of enc.decls) {
       if (d.type !== 'move' || d.done || !chars[d.actor] || chars[d.actor].side !== 'party' || !d.to) continue;
       const L = Sprites.look(chars[d.actor]);
-      sc.actors.push({ id: 'ghost-' + d.actor + '-' + d.to.x + ',' + d.to.y, x: d.to.x + ox, y: d.to.y + oy, kind: L.kind, tint: L.tint, size: L.size, alpha: 0.28, speed: 30 });
+      sc.actors.push({ id: 'ghost-' + d.actor + '-' + d.to.x + ',' + d.to.y, x: d.to.x + ox, y: d.to.y + oy, kind: L.kind, tint: L.tint, size: L.size, art: L.art, artTint: L.artTint, artScale: L.artScale, artSize: L.artSize, alpha: 0.28, speed: 30 });
     }
     // A reaction being asked: the blow's line and the one it threatens.
     const rq = game.ui.reacting && game.ui.reacting.req;
@@ -183,7 +183,7 @@
       if (dest) {
         const L = Sprites.look(chars[actor]);
         const strong = !!cmd.moveTo;
-        sc.actors.push({ id: 'phantom', x: dest.x + ox, y: dest.y + oy, kind: L.kind, tint: L.tint, size: L.size, alpha: strong ? 0.55 : 0.32, flip: dest.x < me.x, speed: 16 });
+        sc.actors.push({ id: 'phantom', x: dest.x + ox, y: dest.y + oy, kind: L.kind, tint: L.tint, size: L.size, art: L.art, artTint: L.artTint, artScale: L.artScale, artSize: L.artSize, alpha: strong ? 0.55 : 0.32, flip: dest.x < me.x, speed: 16 });
         const route = G.Terrain && enc.tiles && Object.keys(enc.tiles).length ? G.Terrain.path(enc, me, dest, chars[actor]) : [dest];
         sc.lines.push({ pts: [at(me)].concat(route.map(at)), color: map.late(map.reach[dest.x + ',' + dest.y]) ? INTENT.far.color : INTENT.move.color, style: 'dots', alpha: strong ? 0.95 : 0.5 });
         if (strong) sc.reticles.push({ x: dest.x + ox, y: dest.y + oy, color: INTENT.move.color, strong: true });
@@ -295,7 +295,7 @@
       const t0 = i++ * 260;
       const a = enc.pos[d.actor], b = enc.pos[d.target], ox = game.ui.bs.arena ? game.ui.bs.arena.ox : 0, oy = game.ui.bs.arena ? game.ui.bs.arena.oy : 0;
       const far = Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y)) > 1;
-      if (far || (d.option && d.option.spell)) mv.bolt(d.actor, d.target, d.option && d.option.spell ? '#d7b4ff' : '#ffe9a0', t0);
+      if (far || (d.option && d.option.spell)) mv.bolt(d.actor, d.target, d.option && d.option.spell ? '#d7b4ff' : '#ffe9a0', t0, d.option && d.option.spell ? d.option.spell.element || 'force' : null);
       else mv.lunge(d.actor, b.x + ox, b.y + oy, t0);
       if (delay[d.target] == null) delay[d.target] = t0 + (far ? 200 : 140);
       struck.add(d.target);

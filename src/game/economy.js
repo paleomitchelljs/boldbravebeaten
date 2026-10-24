@@ -14,7 +14,7 @@
   // A spec may carry an item's tags: material, origin, craft (an old `quality` is read as one), enchantments.
   function makeFromSpec(spec) {
     const craft = spec.craft || spec.quality || 'average';
-    const tags = { material: spec.material, origin: spec.origin, enchantments: spec.enchantments };
+    const tags = { material: spec.material, origin: spec.origin, enchantments: spec.enchantments, name: spec.name };
     if (spec.weapon) return Items.makeWeapon(spec.weapon, craft, spec.material, tags);
     if (spec.armor) return Items.makeArmor(spec.armor, spec.coverage || 'full', craft, tags);
     if (spec.shield) return Items.makeShield(spec.shield, spec.material || 'wood', craft, tags);

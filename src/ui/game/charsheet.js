@@ -14,8 +14,9 @@
 
   UI.Overlays = UI.Overlays || {};
 
-  const SLOT_ORDER = ['main', 'side', 'off', 'shield', 'body', 'ring', 'charm'];
-  const SLOT_NAME = Object.fromEntries(Equip.SLOTS);
+  // Held slots, then the worn slots in data/rules.yaml (game.wornSlots).
+  const slotOrder = () => ['main', 'side', 'off', 'shield', 'body'].concat(Equip.wornSlots().map((w) => w.id));
+  const slotName = (slot) => (Equip.slotList().find((x) => x[0] === slot) || [slot, slot])[1];
   const ATTR_NAME = { STR: 'Strength', CON: 'Constitution', DEX: 'Dexterity', SPD: 'Speed', INT: 'Intellect', WIL: 'Will', WIS: 'Wisdom', CHA: 'Charisma' };
   const ATTR_INFO = {
     STR: 'Force: damage, grappling, carrying heavy gear.', CON: 'Toughness: your wounds. At 0 you are dead.', DEX: 'Aim, parrying, locks and traps.',
@@ -29,14 +30,14 @@
   function slotRow(game, o, c, slot, editable) {
     const w = game.world;
     const cur = Equip.itemIn(c, slot);
-    const label = SLOT_NAME[slot];
+    const label = slotName(slot);
     const opts = [h('option', { value: 'keep', selected: true }, cur ? itemName(cur) : '— empty —')];
     if (editable) {
       if (cur) opts.push(h('option', { value: 'none' }, '↧ Take off'));
-      if (slot === 'ring' || slot === 'charm') {
+      if (Equip.isWorn(slot)) {
         for (const [id, n] of Object.entries(w.pack.goods)) {
           const g = World.goodDef(id);
-          if (g && g.kind === 'trinket' && g.slot === slot) opts.push(h('option', { value: 't:' + id }, `${g.name}${n > 1 ? ' ×' + n : ''}`));
+          if (g && g.kind === 'trinket' && Equip.wornFor(g.slot).includes(slot)) opts.push(h('option', { value: 't:' + id }, `${g.name}${n > 1 ? ' ×' + n : ''}`));
         }
       } else {
         w.pack.gear.forEach((it, i) => {
@@ -51,7 +52,7 @@
       if (v === 'keep') return;
       let r = { ok: true };
       if (v === 'none') r = Equip.unequip(w, c, slot);
-      else if (v.startsWith('t:')) r = Equip.equipTrinket(w, c, v.slice(2));
+      else if (v.startsWith('t:')) r = Equip.equipTrinket(w, c, v.slice(2), slot);
       else r = Equip.equip(w, c, w.pack.gear[Number(v.slice(2))], slot);
       if (r && r.ok === false) toast(r.reason);
       for (const l of (r && r.lines) || []) toast(l);
@@ -65,7 +66,7 @@
   }
 
   function gearTab(game, o, c, editable) {
-    const shown = SLOT_ORDER.filter((s) => s !== 'off' || (c.weapons.some((x) => D.WEAPONS[x.type] && D.WEAPONS[x.type].offhand) || Equip.itemIn(c, 'off') || (editable && game.world.pack.gear.some((it) => Equip.fits(it).includes('off')))));
+    const shown = slotOrder().filter((s) => s !== 'off' || (c.weapons.some((x) => D.WEAPONS[x.type] && D.WEAPONS[x.type].offhand) || Equip.itemIn(c, 'off') || (editable && game.world.pack.gear.some((it) => Equip.fits(it).includes('off')))));
     const nat = (c.natural || []).map((t) => D.WEAPONS[t] && D.WEAPONS[t].name).filter(Boolean);
     const ai = C.armorInfo(c);
     const sh = c.shield ? Items.shieldStats(c.shield) : null;

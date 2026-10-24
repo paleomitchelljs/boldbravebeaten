@@ -39,6 +39,7 @@
     { file: 'places.yaml', key: 'places' },
     { file: 'quests.yaml', key: 'quests' },
     { file: 'start.yaml', key: 'start' },
+    { file: 'art.yaml', key: 'art' },
   ];
 
   function installFeats(trees) {
@@ -103,6 +104,7 @@
     const goodExists = (id) => has(goods, id);
     // An item's tags: material, origin, craft (or an old quality) and enchantments, checked against its kind.
     const tagsOk = (where, kind, type, e) => {
+      if (e.name != null && typeof e.name !== 'string') err(`${where}: name must be text`);
       if (e.material) {
         if (kind === 'shield') { if (!has(D.SHIELD_MATERIALS, e.material)) err(`${where}: shield material "${e.material}" unknown`); }
         else if (!has(D.MATERIALS, e.material)) err(`${where}: material "${e.material}" is not in materials.yaml`);
@@ -116,12 +118,26 @@
         else if (!(D.ENCHANTMENTS[x].kinds || []).includes(kind)) err(`${where}: enchantment "${x}" can't be laid on a ${kind}`);
       }
     };
+    // An item's power names spell words that make a spell together.
+    const powerOk = (where, p) => {
+      const words = G.CONFIG.magic.words;
+      if (!p.name) err(`${where}: power needs a name`);
+      if (!words[p.verb] || words[p.verb].kind !== 'verb') err(`${where}: power verb "${p.verb}" is not in spells.yaml`);
+      else if (!words[p.noun] || words[p.noun].kind !== 'noun') err(`${where}: power noun "${p.noun}" is not in spells.yaml`);
+      else if (G.Magic && !G.Magic.combines(p.verb, p.noun, p.mod || null)) err(`${where}: ${p.verb} + ${p.noun}${p.mod ? ' + ' + p.mod : ''} makes no spell`);
+    };
+    for (const [id, e] of Object.entries(D.ENCHANTMENTS)) {
+      if (e.power) powerOk(`enchantments.${id}`, e.power);
+      for (const x of (e.strike && e.strike.slay) || []) if (!x.trait) err(`enchantments.${id}: slay needs a trait`);
+      if (e.strike && e.strike.onHit && !G.CONFIG.conditions[e.strike.onHit.cond]) err(`enchantments.${id}: condition "${e.strike.onHit.cond}" unknown`);
+    }
     const gearSpecOk = (where, e) => {
       if (e.weapon && !has(D.WEAPONS, e.weapon)) err(`${where}: weapon "${e.weapon}" is not in weapons.yaml`);
       if (e.armor && !has(D.ARMOR, e.armor)) err(`${where}: armor "${e.armor}" is not in armor.yaml`);
       if (e.shield && !has(D.SHIELDS, e.shield)) err(`${where}: shield "${e.shield}" is not in shields.yaml`);
       if (e.weapon || e.armor || e.shield) tagsOk(where, e.weapon ? 'weapon' : e.armor ? 'armor' : 'shield', e.weapon || e.armor || e.shield, e);
       if (e.good && !goodExists(e.good)) err(`${where}: good "${e.good}" is not in items.yaml`);
+      if (e.table && !has(tables, e.table)) err(`${where}: table "${e.table}" is not in items.yaml`);
     };
     const condOk = (where, c) => {
       if (!c) return;
@@ -144,6 +160,11 @@
       if (m.faction && !has(factions, m.faction)) err(`monsters.${id}: faction "${m.faction}" is not in factions.yaml`);
       if (m.loot && !has(tables, m.loot)) err(`monsters.${id}: loot table "${m.loot}" is not in items.yaml`);
     }
+    const art = W.art || {};
+    const artOk = (where, sp) => { if (sp && typeof sp === 'object' && sp.art && !has(art, sp.art)) err(`${where}: art "${sp.art}" is not in art.yaml`); };
+    for (const [id, m] of Object.entries(G.Enemies.MONSTERS)) artOk(`monsters.${id}.sprite`, m.sprite);
+    for (const [id, t] of Object.entries(G.Enemies.TEMPLATES)) artOk(`foes.${id}.sprite`, t.sprite);
+    for (const [id, n] of Object.entries(W.npcs || {})) artOk(`npcs.${id}.sprite`, n.sprite);
     for (const [id, t] of Object.entries(G.Enemies.TEMPLATES)) {
       if (t.faction && !has(factions, t.faction)) err(`foes.${id}: faction "${t.faction}" is not in factions.yaml`);
     }
@@ -158,7 +179,11 @@
       for (const k of ['allies', 'enemies']) for (const o of f[k] || []) if (!has(factions, o)) err(`factions.${id}.${k}: "${o}" is not a faction`);
     }
     for (const [id, g] of Object.entries(goods)) {
-      if (g.kind === 'trinket' && !['ring', 'charm'].includes(g.slot)) err(`items.goods.${id}: trinket slot must be ring or charm`);
+      if (g.kind === 'trinket') {
+        const slots = ((G.CONFIG.game || {}).wornSlots || []);
+        if (slots.length && !slots.some((w) => w.id === g.slot || w.takes === g.slot)) err(`items.goods.${id}: trinket slot "${g.slot}" is not in rules.yaml game.wornSlots`);
+        if (g.power) powerOk(`items.goods.${id}`, g.power);
+      }
     }
     for (const [id, t] of Object.entries(tables)) t.forEach((e, i) => gearSpecOk(`items.tables.${id}[${i}]`, e));
 
@@ -224,6 +249,9 @@
       (q.stages || []).forEach((st, i) => condOk(`quests.${id}.stages[${i}]`, st.done_when));
       for (const f of Object.keys((q.reward || {}).standing || {})) if (!has(factions, f)) err(`quests.${id}: reward faction "${f}" unknown`);
     }
+    const BT = (G.CONFIG.game || {}).bounty;
+    if (BT) for (const k of ['on', 'payer']) if (BT[k] && !has(factions, BT[k])) err(`rules.yaml game.bounty.${k}: faction "${BT[k]}" unknown`);
+    for (const [kind, K] of Object.entries((G.CONFIG.game || {}).companions || {})) for (const r of K.ranks || []) for (const m of r) if (!has(G.Enemies.MONSTERS, m)) err(`rules.yaml game.companions.${kind}: monster "${m}" unknown`);
     const S = W.start || {};
     if (S.place && !has(places, S.place)) err(`start.yaml: place "${S.place}" unknown`);
     for (const k of S.kits || []) {

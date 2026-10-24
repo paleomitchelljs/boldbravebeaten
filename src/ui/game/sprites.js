@@ -17,11 +17,14 @@
   // Name -> what the sheets are called. All 11 have idle and run sheets.
   const KINDS = ['knight', 'rogue', 'wizard', 'orc', 'orc_rogue', 'orc_shaman', 'orc_warrior', 'skeleton', 'skeleton_mage', 'skeleton_rogue', 'skeleton_warrior'];
   const PARTY_KINDS = [['knight', 'Knight'], ['rogue', 'Rogue'], ['wizard', 'Mage']];
+  // Plus the creature art marked party: true in data/art.yaml (value 'art:<key>'), when it is there.
+  const partyKinds = () => PARTY_KINDS.concat(Object.entries(artCat()).filter(([, d]) => d.party).map(([k, d]) => ['art:' + k, d.name || k.replace(/-/g, ' ').replace(/^./, (x) => x.toUpperCase())]));
   // Soft colour washes for telling two characters of one kind apart; '' leaves the sheet as drawn.
   const TINTS = [['', 'As drawn', '#9a9a9a'], ['#d98a8a', 'Rose', '#d98a8a'], ['#8ab4d9', 'Sky', '#8ab4d9'], ['#9ad98a', 'Moss', '#9ad98a'], ['#d9c28a', 'Amber', '#d9c28a'], ['#b79ad9', 'Violet', '#b79ad9'], ['#7a7a8a', 'Shade', '#7a7a8a']];
   const KIT_KIND = { sword: 'knight', club: 'knight', spear: 'knight', hammer: 'knight', rapier: 'rogue', bow: 'rogue', staff: 'wizard' };
 
   const sheets = {};       // `${kind}_${anim}` -> { img, tinted: {color: canvas}, ok }
+  const ART_DIR = 'art/creatures/sprites/';
   const waiting = [];      // callbacks to run when something finishes loading
 
   function sheet(kind, anim) {
@@ -85,20 +88,125 @@
     return true;
   }
 
+  // ---- Creature art (data/art.yaml; the files are local only) ------------------------------------------
+  // Two-frame sheets of painted creatures, far finer than the 32-pixel Pixel Crawler figures: drawn smoothed and
+  // scaled to an authored height in squares. pixellab characters are 64-pixel, 8-direction figures. Where a file
+  // is missing (art/ is git-ignored) the look's Pixel Crawler `kind` is drawn instead.
+  const artCat = () => ((G.Content && G.Content.world && G.Content.world.art) || {});
+  const artSheets = {};  // `${key}|${anim}` -> { img, ok, failed, tinted }
+
+  function artFile(key, def, anim) {
+    if (def.type === 'pixellab') {
+      const [dir, n] = anim.split('#');
+      return n == null ? `${def.dir}/rotations/${dir}.png` : `${def.dir}/animations/Walking/${dir}/frame_${String(n).padStart(3, '0')}.png`;
+    }
+    return ART_DIR + key + '-' + anim + '.png';
+  }
+
+  function artSheet(key, anim) {
+    const k = key + '|' + anim;
+    if (artSheets[k]) return artSheets[k];
+    const def = artCat()[key];
+    const s = artSheets[k] = { img: null, ok: false, failed: !def, tinted: {} };
+    if (!HAS_IMG || !def) return s;
+    s.img = new Image();
+    s.img.onload = () => { s.ok = true; for (const f of waiting.splice(0)) f(); };
+    s.img.onerror = () => { s.failed = true; };
+    s.img.src = artFile(key, def, anim);
+    return s;
+  }
+
+  // Which sheet (and frame) shows this art in this animation; null if none of it can be drawn.
+  function artPick(key, anim, frame, flip) {
+    const def = artCat()[key];
+    if (!def) return null;
+    if (def.type === 'pixellab') {
+      const side = flip ? 'west' : 'east';
+      const name = anim === 'run' ? `${side}#${((frame % 4) + 4) % 4}` : flip ? 'south-west' : 'south-east';
+      const s = artSheet(key, name);
+      return s.ok ? { def, s, sx: 0, sy: 0, sw: def.size, sh: def.size, mirror: false } : null;
+    }
+    const anims = def.anims || ['idle'];
+    const want = anim === 'run' ? (anims.includes('walk') ? 'walk' : anims.includes('fly') ? 'fly' : 'idle') : anims.includes(anim) ? anim : 'idle';
+    const s = artSheet(key, want);
+    if (!s.ok) return s.failed && want !== 'idle' ? artPick(key, 'idle', frame, flip) : null;
+    const fw = def.frame ? def.frame[0] : s.img.width / 2, fh = def.frame ? def.frame[1] : s.img.height;
+    // Two frames: idle sways slowly; walks and blows alternate faster.
+    const f = anim === 'idle' ? Math.floor(frame / 3) % 2 : ((frame % 2) + 2) % 2;
+    return { def, s, sx: f * fw, sy: 0, sw: fw, sh: fh, mirror: def.faces === 'left' ? !flip : !!flip };
+  }
+
+  function artReady(key) {
+    const def = artCat()[key];
+    if (!def) return false;
+    return !!artPick(key, 'idle', 0, false);
+  }
+
+  // A canvas of the sheet washed with `color` (as tinted() does for the Pixel Crawler sheets).
+  function artTinted(s, color) {
+    if (!color || typeof document === 'undefined') return s.img;
+    if (s.tinted[color]) return s.tinted[color];
+    const c = document.createElement('canvas');
+    c.width = s.img.width; c.height = s.img.height;
+    const x = c.getContext('2d');
+    x.drawImage(s.img, 0, 0);
+    x.globalCompositeOperation = 'multiply'; x.fillStyle = color; x.fillRect(0, 0, c.width, c.height);
+    x.globalCompositeOperation = 'destination-in'; x.drawImage(s.img, 0, 0);
+    return (s.tinted[color] = c);
+  }
+
+  // Draw creature art with its feet at (x, y). tile = screen pixels per square. Returns false if not ready.
+  function drawArt(ctx, key, anim, frame, x, y, tile, opts) {
+    opts = opts || {};
+    const p = artPick(key, anim, frame, opts.flip);
+    if (!p) return false;
+    const { def, s } = p;
+    const box = def.box || [0, 0, p.sw, p.sh];
+    const bw = box[2] - box[0], bh = box[3] - box[1];
+    const k = Math.min(((def.height || 1.3) * (opts.artScale || 1) * tile) / bh, ((def.maxWidth || 1.8) * (opts.artScale || 1) * tile) / bw);
+    ctx.save();
+    if (opts.alpha != null) ctx.globalAlpha = opts.alpha;
+    if (opts.shadow !== false) {
+      ctx.fillStyle = 'rgba(0,0,0,0.28)';
+      ctx.beginPath();
+      ctx.ellipse(x, y - tile * 0.03, Math.max(tile * 0.25, bw * k * 0.42), tile * 0.1, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.translate(x, y);
+    if (opts.rot) { ctx.translate(0, -tile * 0.15); ctx.rotate(opts.rot); ctx.translate(0, tile * 0.15); }
+    if (p.mirror) ctx.scale(-1, 1);
+    ctx.imageSmoothingEnabled = true;
+    if ('imageSmoothingQuality' in ctx) ctx.imageSmoothingQuality = 'high';
+    // The box's bottom centre sits on (0, 0).
+    const cx = (box[0] + box[2]) / 2;
+    ctx.drawImage(artTinted(s, opts.tint), p.sx, p.sy, p.sw, p.sh, -cx * k, -box[3] * k, p.sw * k, p.sh * k);
+    ctx.restore();
+    return true;
+  }
+
   // ---- Who looks like what ---------------------------------------------------------------------------
   // Returns { kind, tint, size } for a character (party member or foe).
+  // Returns { kind, tint, size } (the Pixel Crawler figure) and, where creature art is authored, { art, artTint,
+  // artScale, artSize } (artSize: how tall it stands, in the units of size, for bars and icons over its head).
   function look(c) {
     if (!c) return { kind: 'orc', tint: '', size: 1 };
     const l = c.look || {};
-    if (c.side === 'party' || !c.side) {
+    if ((c.side === 'party' || !c.side) && !c.monster && !c.conjured) {
+      const art = typeof l.sprite === 'string' && l.sprite.startsWith('art:') ? l.sprite.slice(4) : null;
       const kind = KINDS.includes(l.sprite) ? l.sprite : (KIT_KIND[l.kit] || 'knight');
-      return { kind, tint: (TINTS[l.tint] || TINTS[0])[0], size: 1 };
+      return withArt({ kind, tint: (TINTS[l.tint] || TINTS[0])[0], size: 1 }, art ? { art, artTint: (TINTS[l.tint] || TINTS[0])[0] } : null);
     }
     return fromSpec(c.sprite, c);
   }
 
+  function withArt(L, spec) {
+    if (!spec || !spec.art || !artCat()[spec.art]) return L;
+    const def = artCat()[spec.art];
+    return Object.assign(L, { art: spec.art, artTint: spec.artTint || '', artScale: spec.artScale || 1, artSize: (def.height || 1.3) * (spec.artScale || 1) * 0.8 }); // bars and icons sit over the head at the map's scale 3
+  }
+
   function fromSpec(spec, c) {
-    if (spec && typeof spec === 'object') return { kind: KINDS.includes(spec.kind) ? spec.kind : 'orc', tint: spec.tint || '', size: spec.scale || 1 };
+    if (spec && typeof spec === 'object') return withArt({ kind: KINDS.includes(spec.kind) ? spec.kind : 'orc', tint: spec.tint || '', size: spec.scale || 1 }, spec);
     if (typeof spec === 'string' && KINDS.includes(spec)) return { kind: spec, tint: '', size: 1 };
     // Nothing authored: guess from the name so a new creature still shows up as something.
     const n = String((c && c.name) || spec || '').toLowerCase();
@@ -148,6 +256,24 @@
     if (c && c.name) cv.setAttribute('aria-label', c.name);
     const L = look(c);
     const paint = () => {
+      const x0 = cv.getContext('2d');
+      if (L.art) {
+        const p = artPick(L.art, 'idle', 0, false);
+        if (p) {
+          // The head and shoulders: the top of the figure's box, as a square.
+          const box = p.def.box || [0, 0, p.sw, p.sh];
+          const side = Math.min(box[2] - box[0], (box[3] - box[1]) * 0.55);
+          const cx = (box[0] + box[2]) / 2;
+          x0.clearRect(0, 0, size, size);
+          x0.imageSmoothingEnabled = true;
+          x0.save();
+          if (p.mirror) { x0.translate(size, 0); x0.scale(-1, 1); }
+          x0.drawImage(artTinted(p.s, L.artTint), p.sx + cx - side / 2, p.sy + box[1], side, side, 0, 0, size, size);
+          x0.restore();
+          return true;
+        }
+        if (!artSheet(L.art, 'idle').failed) return false;
+      }
       const s = sheet(L.kind, 'idle');
       if (!s.ok) return false;
       const x = cv.getContext('2d');
@@ -174,6 +300,7 @@
     const paint = () => {
       const x = cv.getContext('2d');
       x.clearRect(0, 0, cv.width, cv.height);
+      if (L.art && drawArt(x, L.art, 'idle', t, 16 * scale, 31 * scale, (30 * scale) / Math.max(1, (artCat()[L.art] || {}).height || 1.3), { tint: L.artTint, shadow: false })) return;
       draw(x, L.kind, 'idle', t, 16 * scale, 31 * scale, scale, { tint: L.tint, shadow: false });
     };
     paint();
@@ -185,7 +312,7 @@
   }
 
   UI.Art = UI.Art || {};
-  UI.Sprites = { forEncounter, crowd, KINDS, PARTY_KINDS, TINTS, KIT_KIND, draw, look, lookFor, portrait, figure, sheet, whenReady: (f) => waiting.push(f), preload: () => KINDS.forEach((k) => { sheet(k, 'idle'); sheet(k, 'run'); }) };
+  UI.Sprites = { forEncounter, crowd, KINDS, PARTY_KINDS, partyKinds, TINTS, KIT_KIND, draw, drawArt, artReady, artSheet, look, lookFor, portrait, figure, sheet, whenReady: (f) => waiting.push(f), preload: () => { KINDS.forEach((k) => { sheet(k, 'idle'); sheet(k, 'run'); }); for (const k of Object.keys(artCat())) artSheet(k, (artCat()[k].type === 'pixellab') ? 'south-east' : 'idle'); } };
   // Portraits everywhere in the game are now the sprite's face.
   UI.Art.portrait = (c, px) => portrait(c, px);
 })(globalThis.BBB);

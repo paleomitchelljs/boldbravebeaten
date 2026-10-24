@@ -78,6 +78,15 @@
       return lines;
     }
 
+    // Gear that heals (a bloodstone breastplate: effects.heal): more points back each night.
+    for (let i = 0; i < C.gearSum(c, 'heal'); i++) {
+      const a = healTarget(c);
+      if (!a) break;
+      C.healAttr(c, a, 1);
+      lines.push(`Healing gear: +1 ${a}.`);
+    }
+    // Items' powers come back with the night.
+    if (G.Magic && G.Magic.rechargeAll) G.Magic.rechargeAll(c);
     c.weary = 0; // a night's sleep clears the weariness of the day's fights
     c.stamina = C.maxStamina(c);
     c.spSpent = 0;

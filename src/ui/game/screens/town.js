@@ -156,13 +156,15 @@
   function bounty(game, s) {
     const w = game.world;
     const n = G.Town.bountyDue(w);
-    const st = G.Factions.standing(w, 'town_watch');
+    const B = G.Town.bountyCfg();
+    const payer = (G.Factions.defs()[B.payer] || {}).name || 'The payer';
+    const st = B.payer ? G.Factions.standing(w, B.payer) : 0;
     return h('div', { class: 'stack' },
       h('h3', null, s.name),
-      h('p', { class: 'muted' }, `The Watch pays ${G.Town.BOUNTY} gold for each outlaw who dies by your hand (friends of the Watch only, standing 10).`),
+      h('p', { class: 'muted' }, `${payer} pays ${B.gold} gold for each outlaw who dies by your hand (friends only, standing ${B.minStanding}).`),
       h('div', { class: 'row spread' }, h('span', null, `${n} outlaw${n === 1 ? '' : 's'} on the list`),
-        h('button', { class: 'primary', disabled: !n || st < 10, onclick: () => { const r = G.Town.collectBounty(w); toast(r.ok ? `+${r.gold} gold` : r.reason); game.save(); game.render(); } }, 'Collect')),
-      st < 10 && n ? h('p', { class: 'small muted' }, `Your standing with the Watch is ${st}.`) : null);
+        h('button', { class: 'primary', disabled: !n || st < B.minStanding, onclick: () => { const r = G.Town.collectBounty(w); toast(r.ok ? `+${r.gold} gold` : r.reason); game.save(); game.render(); } }, 'Collect')),
+      st < B.minStanding && n ? h('p', { class: 'small muted' }, `Your standing with ${payer} is ${st}.`) : null);
   }
 
   // ---- The Training Yard ----------------------------------------------------------------------------------------

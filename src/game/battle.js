@@ -36,7 +36,8 @@
     const b = world.battle;
     if (!b) return null;
     if (!b._table) {
-      b._table = { characters: Object.assign({}, world.chars, b.foes), order: Object.keys(world.chars).concat(Object.keys(b.foes)), encounter: b.enc, settings: world.settings, secrets: world.secrets, lore: { log: [] } };
+      const allies = b.allies || {};
+      b._table = { characters: Object.assign({}, world.chars, allies, b.foes), order: Object.keys(world.chars).concat(Object.keys(allies), Object.keys(b.foes)), encounter: b.enc, settings: world.settings, secrets: world.secrets, lore: { log: [] } };
     }
     b._table.encounter = b.enc;
     return b._table;
@@ -129,8 +130,12 @@
     const foeMap = {};
     for (const f of foes) foeMap[f.id] = f;
     World.loadSupplies(world);
-    const members = World.active(world);
-    const chars = Object.assign({}, world.chars, foeMap);
+    // Familiars and animal companions fight beside their owners.
+    if (G.Companions) G.Companions.ensure(world);
+    const allies = {};
+    for (const b of G.Companions ? G.Companions.fighting(world) : []) allies[b.id] = b;
+    const members = World.active(world).concat(Object.values(allies));
+    const chars = Object.assign({}, world.chars, allies, foeMap);
     const arena = spec.arena ? null : dungeonArena(world, opts.ctx);
     const a = arena || spec.arena || { w: 11, h: 7 };
     const enc = Combat.createEncounter(spec.name || 'Battle', members.map((c) => c.id).concat(foes.map((f) => f.id)), chars, a.w, a.h);
@@ -139,7 +144,7 @@
       placeOnArena(enc, arena, members.map((c) => c.id), foes.map((f) => f.id));
     }
     if (opts.surprise) enc.surprise = { side: opts.surprise, factor: opts.factor == null ? 0.5 : opts.factor, round: 1 };
-    world.battle = { enc, foes: foeMap, spec, arena: arena ? { place: arena.place, ox: arena.ox, oy: arena.oy, w: arena.w, h: arena.h } : null, ctx: opts.ctx || null, canFlee: opts.canFlee !== false, startedDay: world.day };
+    world.battle = { enc, foes: foeMap, allies, spec, arena: arena ? { place: arena.place, ox: arena.ox, oy: arena.oy, w: arena.w, h: arena.h } : null, ctx: opts.ctx || null, canFlee: opts.canFlee !== false, startedDay: world.day };
     world.stats.fights++;
     if (spec.text) World.logLine(world, spec.text, 'fight');
     return world.battle;
@@ -187,7 +192,7 @@
       for (const f of fallen) {
         xp += f.xp || 0;
         G.Loot.merge(loot, G.Loot.fromFoe(f));
-        if (f.status.dead) { dead[f.faction] = (dead[f.faction] || 0) + 1; world.stats.kills++; if (f.faction === 'cutthroats') world.bounty = (world.bounty || 0) + 1; }
+        if (f.status.dead) { dead[f.faction] = (dead[f.faction] || 0) + 1; world.stats.kills++; if (f.faction && f.faction === (G.CONFIG.game.bounty || {}).on) world.bounty = (world.bounty || 0) + 1; }
       }
       if (b.spec.loot) G.Loot.merge(loot, G.Loot.roll(b.spec.loot));
       out.lines.push(...World.grantXP(world, xp));
@@ -196,7 +201,8 @@
       for (const fl of b.spec.flags || []) World.setFlag(world, fl);
       if (b.ctx && b.ctx.x != null) G.Explore.resolveSquare(world, b.ctx.x, b.ctx.y, 'defeated', b.spec);
     }
-    // Clean up conjured creatures and put supplies back in the pack.
+    // Clean up conjured creatures and put supplies back in the pack. A familiar lost tears at its owner.
+    if (G.Companions) out.lines.push(...G.Companions.afterFight(world));
     World.collectSupplies(world);
     if (out.result === 'won' || out.result === 'fled') World.breather(world);
     for (const l of World.updateQuests(world)) out.lines.push(l);

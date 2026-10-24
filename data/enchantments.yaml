@@ -42,3 +42,128 @@ enduring:
   rarity: very rare
   value: 6
   blurb: Wears slowly and lasts twice as long.
+
+# ---- Magic items (PROVISIONAL, the user's list; names are placeholders) ------------------------------------
+# Effects of an enchantment, beyond the multipliers above:
+#   effects   while the item is worn (armor, a ready shield) or in hand (a weapon): the same keys as a worn
+#             item's effects (Character.gearSources): attrs, ap, apMult, regen, stamina, sp, mag, init, hit,
+#             move, resist, aura, retaliate, standing, standingWith, heal, slay
+#   strike    weapons, on each blow that lands (Combat.strikeEffects): onHit {cond, rounds, chance}, element
+#             {noun, mag}, sap {attr, n, stamina}, armorWear, riled, slay [{trait, damage}], parrySpells
+#   apLess    weapons: sheet AP off every action made with it (its strikes and parries)
+#   power     a spell the item casts without spell points or a free hand: {verb, noun, mod, charges (a day;
+#             omit for at will), name}
+#   blockSpells   shields: can block a spell bolt (an ordinary shield can't: CONFIG.defense.blockSpells)
+#   mitBonus  armor: added to mitigation after material and origin {P, S, B}; resistBonus: added to the
+#             punch a point needs to burst it
+bloodstone:
+  name: Bloodstone
+  kinds: [armor]
+  effects: {regen: 1, heal: 1}
+  rarity: very rare
+  value: 8
+  blurb: "Warm to the touch. +1 stamina regeneration; a long rest heals one more point."
+sapping:
+  name: Sapping
+  kinds: [weapon]
+  strike: {sap: {attr: STR, n: 1, stamina: 4}, armorWear: 3}
+  rarity: unique
+  value: 20
+  blurb: "Each blow that lands drains a point of STR and 4 stamina into the wielder and eats 3 from the armor."
+speed:
+  name: Speed
+  kinds: [weapon]
+  apLess: 0.5
+  rarity: very rare
+  value: 12
+  blurb: "Every strike and parry made with it costs half an AP less."
+gravebane:
+  name: Gravebane
+  kinds: [weapon]
+  strike: {slay: [{trait: undead, damage: 4}]}
+  rarity: very rare
+  value: 8
+  blurb: "+4 damage to the undead (and, like any enchanted blade, it bites what is not wholly there)."
+stunning:
+  name: Thunder
+  kinds: [weapon]
+  strike: {onHit: {cond: stunned, rounds: 1, chance: 0.3}}
+  rarity: very rare
+  value: 12
+  blurb: "A blow that lands stuns 3 times in 10 (CON resists): 2 AP lost at once and no guard this round."
+dreadgaze:
+  name: the Dread Eye
+  kinds: [weapon]
+  power: {verb: beguile, noun: fear, name: Dread gaze, charges: 3}
+  rarity: very rare
+  value: 10
+  blurb: "Three times a day: Beguile + Fear on a foe within 6 (WIL resists)."
+unmaking:
+  name: Unmaking
+  kinds: [weapon]
+  power: {verb: hex, noun: might, name: Unmaking, charges: 3}
+  rarity: very rare
+  value: 10
+  blurb: "Three times a day: Hex + Might, −2 STR for 3 rounds (CON resists)."
+goading:
+  name: Goading
+  kinds: [weapon]
+  strike: {riled: 2}
+  rarity: very rare
+  value: 10
+  blurb: "Each blow that lands leaves the wielder Riled: +2 to all mitigation until next hurt (it doesn't stack)."
+rooting:
+  name: Rooting
+  kinds: [weapon]
+  strike: {onHit: {cond: rooted, rounds: 1, chance: 0.5}}
+  rarity: very rare
+  value: 10
+  blurb: "A blow that lands roots the target to its square half the time (STR resists)."
+ebon:
+  name: Ebon
+  kinds: [armor]
+  protect: 1.5
+  durability: 1.5
+  mitBonus: {P: 2, B: 2}
+  resistBonus: 2
+  effects:
+    resist: {fire: 0.5}
+    aura: {name: poison cloud, radius: 1, cond: poisoned, resisted: true}
+  rarity: unique
+  value: 1
+  blurb: "Mail as hard to get through as plate and as light as mail. Fire does half. A poison cloud seeps from it onto every foe beside the wearer (CON resists)."
+spellcatching:
+  name: Spellcatching
+  kinds: [shield]
+  blockSpells: true
+  rarity: very rare
+  value: 12
+  blurb: "Can block a spell bolt (an ordinary shield can't)."
+burning:
+  name: Burning
+  kinds: [weapon]
+  strike: {element: {noun: fire, mag: 3}}
+  rarity: very rare
+  value: 12
+  blurb: "Each blow also burns: Fire of magnitude 3 (and may set the target alight)."
+wyrmbane:
+  name: Wyrmbane
+  kinds: [weapon]
+  strike: {slay: [{trait: dragon, damage: 6}]}
+  rarity: very rare
+  value: 10
+  blurb: "+6 damage to dragons and their kin."
+tactics:
+  name: Tactics
+  kinds: [weapon]
+  effects: {init: 3}
+  rarity: very rare
+  value: 6
+  blurb: "+3 initiative while in hand."
+strategy:
+  name: Strategy
+  kinds: [weapon]
+  effects: {hit: 1, ap: 0.5}
+  rarity: very rare
+  value: 8
+  blurb: "+1 to beat a defence and half an AP more each round while in hand."

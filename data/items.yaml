@@ -4,7 +4,10 @@
 #   value: base price in gold (falls back to rarity). use: what using it does (potion, supply).
 #   supply: engine: bandages | arrows | bodkins -> pooled in the party's supplies.
 #   book: teaches: {noun: fire} (a magic noun) or reveals: [secret ids] (Lore).
-#   trinket: slot ring | charm; attrs {SPD: 1}; ap: extra AP (engine trinkets).
+#   trinket: something worn: slot = a worn slot (rules.yaml game.wornSlots: head, neck, shoulders, cape, arms, hands,
+#     legs, feet) or ring (either ring slot); attrs {SPD: 1}; ap: extra AP; effects: what it does (see
+#     enchantments.yaml for the keys); power: a spell it casts ({verb, noun, mod, charges, name}).
+#     Weapons, armor and shields with magic are gear in tables and stock: a type + tags + enchantments + name.
 # tables: loot. Each entry has w (weight) and one of
 #   gold: [min, max] | good: id, n: [min, max] | weapon: id | armor: id, coverage | shield: size, material
 #   | nothing: true. Gear may add its tags: material, origin, craft (poor, average, master), enchantments.
@@ -63,11 +66,38 @@ goods:
   scrap_barrow:
     {name: Rubbing of the barrow door, kind: book, value: 10, rarity: uncommon, reveals: [sec_barrow_door], blurb: "A charcoal rubbing of carved marks."}
   sash_quick:
-    {name: Courier's sash, kind: trinket, slot: charm, attrs: {SPD: 1}, value: 220, rarity: rare, blurb: "+1 SPD."}
+    {name: Courier's sash, kind: trinket, slot: cape, attrs: {SPD: 1}, value: 220, rarity: rare, blurb: "+1 SPD. Worn across the shoulders."}
   ring_iron:
     {name: Iron signet ring, kind: trinket, slot: ring, attrs: {CON: 1}, value: 200, rarity: rare, blurb: "+1 CON."}
   charm_wolf:
-    {name: Wolf-tooth charm, kind: trinket, slot: charm, attrs: {WIS: 1}, value: 120, rarity: uncommon, blurb: "+1 WIS."}
+    {name: Wolf-tooth charm, kind: trinket, slot: neck, attrs: {WIS: 1}, value: 120, rarity: uncommon, blurb: "+1 WIS."}
+  # ---- Worn magic (PROVISIONAL, the user's list; names are placeholders) ----------------------------------
+  silk_sash:
+    {name: Flowing black silk sash, kind: trinket, slot: cape, effects: {apMult: 0.8}, value: 4000, rarity: unique, blurb: "Every action costs a fifth less AP. Worn across the shoulders."}
+  wayfarer_boots:
+    {name: Wayfarer's boots, kind: trinket, slot: feet, effects: {move: 1}, value: 600, rarity: rare, blurb: "+1 square on every move."}
+  veil_circlet:
+    {name: Veil circlet, kind: trinket, slot: head, power: {verb: bless, noun: veil, name: Veil}, value: 3000, rarity: unique, blurb: "At will: Bless + Veil — unseen beyond arm's reach for 3 rounds; striking gives you away."}
+  goading_crown:
+    {name: Goading crown, kind: trinket, slot: head, effects: {hit: 1}, power: {verb: beguile, noun: rage, name: Goad, charges: 2}, value: 1500, rarity: very rare, blurb: "+1 to beat a defence. Twice a day: Beguile + Rage on a foe (WIL resists)."}
+  bog_crown:
+    {name: Crown of the bog kings, kind: trinket, slot: head, attrs: {CHA: 1}, effects: {standingWith: {wilds: 2}}, value: 900, rarity: very rare, blurb: "+1 CHA; +2 disposition with the folk of the wilds."}
+  gravecaller_amulet:
+    {name: Gravecaller's amulet, kind: trinket, slot: neck, effects: {sp: 3, mag: {bone: 1, life: 1, spirit: 1}}, value: 1500, rarity: very rare, blurb: "+3 spell points; +1 magnitude with Bone, Life and Spirit."}
+  adept_skullcap:
+    {name: Adept's skullcap, kind: trinket, slot: head, attrs: {INT: 1}, effects: {sp: 2}, value: 1200, rarity: very rare, blurb: "+1 INT and +2 spell points."}
+  drakebane_gauntlets:
+    {name: Drakebane gauntlets, kind: trinket, slot: hands, attrs: {STR: 1}, effects: {slay: [{trait: dragon, damage: 3}]}, value: 1500, rarity: very rare, blurb: "+1 STR; +3 damage to dragons with any blow."}
+  wyrm_heart:
+    {name: Heart of the old wyrm, kind: trinket, slot: neck, attrs: {CON: 1}, effects: {resist: {fire: 0.5, frost: 0.5}}, value: 2500, rarity: unique, blurb: "+1 CON; fire and frost do half."}
+  frostglass_pendant:
+    {name: Ornate frostglass pendant, kind: trinket, slot: neck, effects: {standing: 1}, value: 1200, rarity: very rare, blurb: "+1 disposition with everyone you talk to."}
+  mountain_ring:
+    {name: Ring of the mountain lord, kind: trinket, slot: ring, effects: {regen: 1, hit: 1, retaliate: {noun: frost, mag: 2, name: Frost of the ring}}, value: 2500, rarity: unique, blurb: "+1 stamina regeneration, +1 to beat a defence; whoever lands a blade on you takes Frost 2."}
+  tusk_earring:
+    {name: Tusk earring, kind: trinket, slot: head, attrs: {STR: 1}, effects: {stamina: 4}, value: 500, rarity: rare, blurb: "+1 STR, +4 stamina. (No ear slot: it takes the head slot.)"}
+  leech_hoop:
+    {name: Hoop of the leech, kind: trinket, slot: ring, power: {verb: strike, noun: spirit, name: Leech, charges: 3}, value: 900, rarity: very rare, blurb: "Three times a day: Strike + Spirit — chills the living (stamina), sears the undead."}
 
 tables:
   vermin_nest:
@@ -85,13 +115,48 @@ tables:
     - {w: 1, good: gem_small}
   strongbox:
     - {w: 4, gold: [30, 70]}
+    - {w: 1, table: relic_cache}
     - {w: 2, good: gem_small}
     - {w: 2, good: salve}
     - {w: 1, good: tome_roots}
     - {w: 1, weapon: longsword, craft: master}
     - {w: 1, armor: mail, coverage: half}
     - {w: 1, shield: round, material: iron}
+  # Rare magic (PROVISIONAL, the user's list): named weapons, armor and shields, and worn things.
+  relic_cache:
+    - {w: 2, weapon: longsword, craft: master, enchantments: [sapping], name: Mirebrand}
+    - {w: 2, weapon: longsword, craft: master, enchantments: [speed], name: Quickening blade}
+    - {w: 2, weapon: longsword, enchantments: [gravebane], name: Gravewarden}
+    - {w: 2, weapon: shortsword, enchantments: [stunning], name: Thunderclap}
+    - {w: 2, weapon: staff, enchantments: [dreadgaze], name: Staff of the dread eye}
+    - {w: 2, weapon: club, enchantments: [unmaking], name: Rod of unmaking}
+    - {w: 2, weapon: longsword, enchantments: [goading], name: Goadblade}
+    - {w: 2, weapon: longsword, material: stone, enchantments: [rooting], name: Rootbound blade}
+    - {w: 2, weapon: longsword, craft: master, enchantments: [burning], name: Sunbrand}
+    - {w: 2, weapon: greatsword, enchantments: [wyrmbane], name: Wyrmbiter}
+    - {w: 2, weapon: longsword, enchantments: [tactics], name: Blade of tactics}
+    - {w: 2, weapon: longsword, enchantments: [strategy], name: Blade of strategy}
+    - {w: 1, armor: mail, material: steel, craft: master, enchantments: [ebon], name: Ebon mail}
+    - {w: 2, armor: plate, material: steel, coverage: half, enchantments: [bloodstone], name: Bloodstone breastplate}
+    - {w: 2, armor: plate, origin: blackforged, name: Black-forged plate}
+    - {w: 2, armor: mail, origin: blackforged, craft: master}
+    - {w: 2, shield: heater, material: steel, enchantments: [spellcatching], name: Spellcatcher}
+    - {w: 1, good: silk_sash}
+    - {w: 2, good: wayfarer_boots}
+    - {w: 1, good: veil_circlet}
+    - {w: 2, good: goading_crown}
+    - {w: 2, good: bog_crown}
+    - {w: 2, good: gravecaller_amulet}
+    - {w: 2, good: adept_skullcap}
+    - {w: 2, good: drakebane_gauntlets}
+    - {w: 1, good: wyrm_heart}
+    - {w: 2, good: frostglass_pendant}
+    - {w: 1, good: mountain_ring}
+    - {w: 2, good: tusk_earring}
+    - {w: 2, good: leech_hoop}
   barrow_hoard:
+    - {w: 2, nothing: true}
+    - {w: 1, table: relic_cache}
     - {w: 4, gold: [40, 120]}
     - {w: 2, good: silver_chalice}
     - {w: 2, good: tome_ember}
@@ -110,6 +175,7 @@ tables:
     - {w: 2, good: herbs}
   troll_hoard:
     - {w: 4, gold: [60, 140]}
+    - {w: 1, table: relic_cache}
     - {w: 3, good: gem_small}
     - {w: 2, good: ring_iron}
     - {w: 2, armor: mail, material: steel, coverage: full}

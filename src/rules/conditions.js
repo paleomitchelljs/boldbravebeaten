@@ -12,6 +12,9 @@
  *   freedom   ignores difficult ground, slick ice and roots
  *   kindled   the bearer's melee blows set the target burning
  *   halveFire fire and heat do half damage
+ *   moveMult  × squares per move (chilled: 0.5); drainAP: AP lost at once when it lands (stunned)
+ *   noAct     no actions at all (mesmerized, paralyzed); helpless: blows find the gaps as on the pinned
+ *   unseen    can't be picked out beyond arm's reach; ends when the bearer attacks
  * A condition lasts `rounds` round ends. Applying one that is already there keeps the longer
  * duration and the larger magnitude.
  */
@@ -75,6 +78,7 @@
   const regenMod = (c) => sum(c, 'regen');
   const flag = (c, f) => list(c).some((x) => (defs()[x.key] || {})[f]);
   const canMove = (c) => !flag(c, 'noMove');
+  const moveMult = (c) => list(c).reduce((m, x) => m * ((defs()[x.key] || {}).moveMult || 1), 1);
 
   // End of round: damage over time, then every condition ticks down a round.
   function endRound(c) {
@@ -104,5 +108,5 @@
     return list(c).map((x) => `${(defs()[x.key] || {}).name || x.key}${x.kind ? ': ' + x.kind : ''}${x.pool != null ? ' ' + x.pool : x.mag > 1 ? ' ' + x.mag : ''} (${x.rounds})`);
   }
 
-  G.Conditions = { list, get, has, add, remove, apMod, attrMod, mitigation, regenMod, flag, canMove, endRound, labels };
+  G.Conditions = { list, get, has, add, remove, apMod, attrMod, mitigation, regenMod, flag, canMove, moveMult, endRound, labels };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

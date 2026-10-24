@@ -15,7 +15,7 @@ No anchors or tags. Keys must be unique.
 | `materials.yaml` | What gear is made of: hardness, toughness, weight, protection, `metal`, `rusts`, `exotic`. |
 | `origins.yaml` | Where and how gear was made (common, elven, dwarven, goblin): weight against protection, damage and durability. |
 | `crafts.yaml` | Craftsmanship (poor, average, masterwork): durability, wear taken, shield break threshold. |
-| `enchantments.yaml` | Rare enchantments: what they can be laid on and the multipliers or effects they add. |
+| `enchantments.yaml` | Rare enchantments: what they can be laid on, the multipliers, and the magic: `effects` (while worn or in hand), `strike` (on each blow that lands), `apLess`, `power`, `blockSpells`, `mitBonus`, `resistBonus`. See **Magic items** below. |
 | `weapons.yaml` | Weapons, including natural ones. `phys` (mass, length, point, edge, head…) generates damage, AP, STR scaling, wounds and punch through armor; `reach: {swing, thrust, min}`; `closeOK` (works in a clinch). |
 | `feats.yaml` | Trees of feats: ranks, `requires`, effect line, `auto` (does the game implement it). |
 | `spells.yaml` | The magic grammar: verbs, nouns, modifiers. |
@@ -28,6 +28,7 @@ No anchors or tags. Keys must be unique.
 | `quests.yaml` | Staged quests with rewards. |
 | `places.yaml` | The town and the dungeon maps. |
 | `start.yaml` | New-game kits and the example party. |
+| `art.yaml` | Creature art in `art/creatures` and `art/pixellab` (local only): frames, trim box, facing, height on the map. |
 
 ## Adding things
 
@@ -63,9 +64,36 @@ of it, or items spelled out: `armorItem: {type: plate, material: steel, origin: 
 
 **An item** (`items.yaml` goods): `kind` is `supply | potion | key | book | trinket | trade | component`.
 Potions have `use: {heal: 1}`, `{cure: bleeding}`, `{cure: poison}` or `{repair: 0.3}`. Books have
-`teaches: {noun: fire}` or `reveals: [flag]`. Trinkets have `slot: ring|charm`, `attrs`, `ap`.
+`teaches: {noun: fire}` or `reveals: [flag]`. Trinkets are worn things: `slot` is a worn slot id from `rules.yaml
+game.wornSlots` (head, neck, shoulders, cape, arms, hands, legs, feet) or `ring` (either ring slot), with `attrs`, `ap`,
+`effects` and `power` (see **Magic items**). The chest slot is the armor; the other body slots hold worn things only.
 Loot entries: `{w: 3, gold: [5, 20]}`, `{w: 2, good: salve, n: [1, 2]}`, `{w: 1, weapon: dagger, craft: master}`,
-`{w: 1, armor: mail, material: steel, coverage: half}`, `{w: 1, shield: round, material: iron}`, `{w: 4, nothing: true}`.
+`{w: 1, armor: mail, material: steel, coverage: half}`, `{w: 1, shield: round, material: iron}`, `{w: 4, nothing: true}`,
+`{w: 1, table: relic_cache}` (roll another table: a rare find inside a hoard). Gear may carry a `name` (a named blade).
+
+**Magic items.** Two places: an enchantment on a weapon, armor or shield (`enchantments.yaml`, laid on with
+`enchantments: [...]` and usually a `name`), or a worn good (`items.yaml`, kind `trinket`). Keys:
+
+| Key | Where | What it does |
+|---|---|---|
+| `effects.attrs`, `ap`, `stamina`, `regen`, `sp` | worn, or an enchantment's `effects` | + attributes, AP a round, max stamina, regeneration, spell points |
+| `effects.apMult` | same | × the AP of every action (a sash at 0.8) |
+| `effects.mag: {noun: n, '*': n}` | same | + spell magnitude for one noun or all |
+| `effects.init`, `hit`, `move` | same | + initiative; + to beat a defence; + squares on every move |
+| `effects.resist: {fire: 0.5}` | same | × harm from an element |
+| `effects.aura: {name, radius, cond, stamina, resisted, rounds}` | same | each round, on every foe within the radius |
+| `effects.retaliate: {noun, mag, name}` | same | an element's blow at whoever lands a melee blow on the wearer |
+| `effects.slay: [{trait, damage}]` | same | + damage with any blow to a creature with that trait (`undead`, `dragon`) |
+| `effects.standing`, `standingWith: {faction: n}` | same | + disposition in talks, with everyone or one faction |
+| `effects.heal` | same | + attribute points healed each long rest |
+| `strike.onHit: {cond, rounds, chance}` | weapon enchantment | a condition on a blow that lands (resisted like a spell) |
+| `strike.element: {noun, mag}`, `sap: {attr, n, stamina}`, `armorWear`, `riled`, `slay`, `parrySpells` | weapon enchantment | a burning blow; drain into the wielder; eat armor; Riled; bane damage; parry spell bolts |
+| `apLess` | weapon enchantment | sheet AP off every strike and parry made with it |
+| `power: {verb, noun, mod, charges, name}` | either | casts that spell with no spell points, free hand or backlash; `charges` a day (omit: at will) |
+| `blockSpells` | shield enchantment | can block spell bolts (ordinary shields can't) |
+| `mitBonus: {P, S, B}`, `resistBonus` | armor enchantment | + mitigation, + the punch a point needs to burst it |
+
+**Companions** (`rules.yaml game.companions`): which monsters answer the Familiar and Animal Companion feats, by rank.
 
 **A faction** (`factions.yaml`): `allies` and `enemies` say how a change in standing spreads (a quarter to allies,
 half inverted to enemies; `rules.yaml`). `kos` is the standing at or below which members refuse to talk.
@@ -103,7 +131,9 @@ Legend kinds: `stairs {to, at}`, `locked {tn, forceTn, key, alt[]}`, `secret {tn
 
 **Looks.** `sprite:` on a monster, a foe template or an NPC names a sheet in `assets/sprites/` (knight, rogue, wizard, orc,
 orc_rogue, orc_shaman, orc_warrior, skeleton, skeleton_mage, skeleton_rogue, skeleton_warrior) or is `{kind, scale, tint}` to resize
-or colour-wash one. A party member's `look.sprite` / `look.tint` work the same way. Fights are played on a slice of the
+or colour-wash one. Add `art: <key>` (an entry in `art.yaml`, with optional `artTint`, `artScale`) to draw creature art
+instead; the `kind` is drawn wherever the art files are missing (they are git-ignored). A party member's `look.sprite` /
+`look.tint` work the same way, and `look.sprite: art:<key>` picks an art entry marked `party: true`. `art.html` shows them all. Fights are played on a slice of the
 dungeon map (`game.arena` in rules.yaml, 15x10): walls and furniture block, a shut ordinary door does not.
 `encounters:` map an id to `{foes, flags, loot, text, parley, peaceFlags, arena}`. `wandering:` is what interrupts a camp.
 A town has `locations` (people and services: `inn`, `shop`, `healer`, `trainer`, `bounty`) and `exits` to dungeons;

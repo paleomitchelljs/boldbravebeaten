@@ -308,6 +308,7 @@
       if (mended.length) lines.push(`${c.name}: ${mended.join(' ')}`);
       if (c.weary) lines.push(`${c.name} is wearied: stamina tops out at ${C.maxStamina(c)} of ${C.freshStamina(c)} until a long rest.`);
     }
+    if (G.Companions) G.Companions.rest(world, false);
     for (const l of lines) logLine(world, l, 'info');
     return lines;
   }

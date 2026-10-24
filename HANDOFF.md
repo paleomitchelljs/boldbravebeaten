@@ -11,7 +11,14 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   projection): that row's floor is hidden under the cap, though figures and items there still show. If it reads badly,
   thicken those walls in the maps rather than special-casing the renderer.
 - [ ] Cap tops are a flat procedural slate with a cyan edge; a hand-drawn cap tile set would look better.
-- [ ] Beasts (rat, wolf, spider, snake, cat) borrow tinted orc sprites; find or draw real ones.
+- [ ] Creature art (`art/creatures`, `art/pixellab`, local only and git-ignored) now draws for 21 monsters, 3 foe templates
+  and 11 party looks (`data/art.yaml`; `art.html` shows each beside its fallback). Seen in headless Chrome only on
+  `art.html`, not in a real fight. Questions: the painted art is finer and softer than the 16-px tiles (decide whether to
+  pixelate it or keep the mix); whether the art may be committed to `assets/` (then the Pages build shows it); wolf,
+  mirage cat, rust beetle and the template knights still have no art. Facing and height per sheet were set by eye.
+  The goblin and gowra sheets have a stray divider line at the frame edge.
+- [ ] Not yet used from the new art: `art/pixellab/temple` (a 64-px wang tileset: a temple dungeon theme would need
+  the tile renderer to take a second tileset) and `art/creatures/decor` (outdoor cliffs; there is no outdoor map).
 - [ ] Fights: attacks now lunge or fire a bolt, with floating numbers and "Blocked"/"Dodged"/"Down"; still no real attack or
   death animation frames (a body is the idle sprite on its side).
 - [ ] Fights: the outcome of an attack (odds to hit, expected damage through armor) is not previewed when choosing a target.
@@ -56,16 +63,35 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 - [ ] The design docs (Mechanics Outline, Specifics) still describe passes, guards, the old reach, quality and scale
   armor; update them to the turn model, reach by motion, points against armor and the item tags.
 
+## Magic items, spells, companions (added 2026-10-24; see docs/REVIEW.md)
+- [ ] Rulings wanted (docs/REVIEW.md §2 and §5): ordinary shields can't block spell bolts (`CONFIG.defense.blockSpells`);
+  opportunity strikes fire on any step begun in reach, not only on leaving it; armor split by body part, or keep one
+  piece with coverage (the head/shoulders/arms/hands/legs/boots slots hold worn things only for now); no ear or waist
+  slot in your list, so the tusk earring takes the head and the sashes the cape.
+- [ ] Sim the strong items before playtest: the silk sash (×0.8 AP on everything), a blade of speed, the at-will Veil
+  circlet (probably wants charges); Raise + Spirit (revenant) in the gauntlet; companions over a multi-fight run.
+- [ ] Item names are placeholders (no published-setting names in data or docs). Only `relic_cache` (nested in the barrow, troll and strongbox hoards) offers them; no shop does.
+- [ ] Choosing a companion: `c.companionChoice` picks among those on offer, but no screen sets it yet (the last on offer
+  is taken). Companions show on the battle map but have no sheet of their own in town.
+- [ ] The AI's worth tables for conditions live in `ai.js`; move a `worth` into `CONFIG.conditions` so a new condition
+  needs no code.
+
 ## Game
 - [ ] Magic in play: nouns are scarce (books, creation pick) and the Lore/ritual screen exists only in the GM table.
 - [ ] Monsters do not move on the map; fleeing returns you to the stairs.
 - [ ] Feats that need rules code outside a fight (tracker, appraise, diagnose, alchemy, light fingers) are `auto: false`.
-- [ ] No companions, hiring, restocking vendors, torch resource or hunger.
+- [ ] No hiring, restocking vendors, torch resource or hunger.
 - [ ] Social balance has no sim yet (a bot that tries fight / parley / sneak through the Undercroft).
 - [ ] Save format has a version field but no migration.
 - [ ] More dungeon maps in the new style; the other three are still the old layouts with no scenery props.
 
 ## Done recently
+- Review of mechanics and code (docs/REVIEW.md). Fixed: shoves and throws went through walls; pushes ignored pits,
+  runes and fire; any shield stopped spell bolts for free; the bounty factions were in code (now `rules.yaml
+  game.bounty`); Raise ignored the body; frightened AI didn't flee.
+- Magic items (effects, on-hit, powers with charges; 13 enchantments, 15 worn things), the user's ten worn slots, Acid,
+  Charm, Stillness, Veil, Bone, chilling frost, chain lightning, harmful darkness, Delayed, Raise (skeleton, zombie,
+  revenant), Conjure + Vine summons, Familiar and Animal Companion, creature art and spell effects.
 - The user's armor research: the warhammer's beak bursts iron plate two-handed (steel on a strong power blow); a rondel
   dagger bursts mail; mail passes 1.5× a cut's force as blunt (a greatsword power cut breaks bones through it);
   padding and leather let a heavy cut through; hardened steel protects ×1.5. Padding is assumed under mail and plate

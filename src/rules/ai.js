@@ -56,7 +56,8 @@
     if (option.spell && option.spell.noun && attrDmgOrStamina(h) > 0) {
       const H = (G.CONFIG.magic.words[option.spell.noun] || {}).onHit || {};
       const conds = G.Conditions ? G.Conditions : null;
-      if (H.cond && conds && !conds.has(target, H.cond)) v += ({ burning: 8, slowed: 6, shocked: 6, rooted: 8 }[H.cond] || 4) * 0.6;
+      if (H.cond && conds && !conds.has(target, H.cond)) v += ({ burning: 8, slowed: 6, chilled: 6, shocked: 6, rooted: 8, paralyzed: 24 }[H.cond] || 4) * 0.6;
+      if (H.corrode && target.armor && target.armor.durability > 0) v += option.spell.magnitude * 0.8;
       if (H.knockdown && !target.status.prone) v += 4;
       if (H.push) v += 2;
       if (option.spell.lingering) v += Math.max(1, Math.round(option.spell.magnitude / 4)) * 3 * 5 * 0.6;
@@ -101,8 +102,30 @@
     return { threat: mean, motion: 'swing' };
   }
 
+  // Foes this character knows of: an unseen one beyond arm's reach isn't there as far as it can tell.
   function enemiesOf(enc, chars, id) {
-    return enc.ids.filter((o) => chars[o].side !== chars[id].side && C.isActive(chars[o]));
+    return enc.ids.filter((o) => chars[o].side !== chars[id].side && C.isActive(chars[o]) && !(Combat.unseenBy && Combat.unseenBy(enc, chars, chars[o], chars[id])));
+  }
+
+  // Frightened (Fear, a wail): get away from what frightens you while it is close.
+  function fleeFrom(enc, chars, id, la) {
+    const c = chars[id];
+    const fear = G.Conditions && G.Conditions.get(c, 'frightened');
+    const src = fear && chars[fear.src];
+    if (!src || !C.isActive(src) || !la.move || !enc.pos[src.id]) return null;
+    const me = enc.pos[id], from = enc.pos[src.id];
+    if (Combat.dist(me, from) > 3) return null;
+    let best = null, bd = Combat.dist(me, from);
+    const R = la.move.maxSquares;
+    for (let y = me.y - R; y <= me.y + R; y++) for (let x = me.x - R; x <= me.x + R; x++) {
+      if (!G.Terrain.passable(enc, x, y) || (x === me.x && y === me.y)) continue;
+      if (enc.ids.some((o) => o !== id && C.isActive(chars[o]) && enc.pos[o].x === x && enc.pos[o].y === y)) continue;
+      const d = Combat.dist({ x, y }, from);
+      if (d <= bd) continue;
+      if (enc.tiles) { const pc = G.Terrain.pathCost(enc, me, { x, y }, c); if (!pc.reaches || pc.cost > R) continue; }
+      bd = d; best = { x, y };
+    }
+    return best ? { actor: id, type: 'move', to: best } : null;
   }
 
   // What an AP of mine is worth right now, in the units of hitValue: more while my own turn is
@@ -338,7 +361,7 @@
   // Spell points to hold back: a caster who can raise the dead keeps enough for it until a body
   // lies within reach (then the raise itself may spend them).
   function spReserve(enc, chars, id, la) {
-    const raise = (la.spells || []).find((o) => o.spell.shape === 'conjure' && G.CONFIG.magic.words[o.spell.noun].conjure === 'raise' && !o.spell.mod);
+    const raise = (la.spells || []).find((o) => o.spell.shape === 'raise' && !o.spell.mod && !o.power);
     if (!raise) return 0;
     const body = enc.ids.some((o2) => chars[o2] && chars[o2].status.dead && !chars[o2].vanished && !chars[o2].raised);
     return body ? 0 : raise.spCost;
@@ -364,14 +387,14 @@
     };
     for (const o of la.spells) {
       if (!o.affordable) continue;
-      const isRaise = o.spell.shape === 'conjure' && G.CONFIG.magic.words[o.spell.noun].conjure === 'raise';
+      const isRaise = o.spell.shape === 'raise';
       if (!isRaise && G.Magic.availableSP(chars[id]) - o.spCost < keep) continue;
       const s = o.spell, N = G.CONFIG.magic.words[s.noun];
       const cast = (extra) => Object.assign({ actor: id, type: 'cast', option: o }, extra);
       if (s.shape === 'mind') {
         // Mind spells on a dangerous foe: the closer and harder-hitting, the better.
         const key = s.combo || N.mind;
-        const worth = { mesmerized: 30, calmed: 20, enraged: 14, frightened: 18, controlled: 40, confused: 24, baited: 6 }[key] || 10;
+        const worth = { mesmerized: 30, calmed: 20, enraged: 14, frightened: 18, controlled: 40, enthralled: 34, confused: 24, baited: 6 }[key] || 10;
         for (const t of o.targets) {
           if (!t.inReach || !foes.includes(t.id)) continue;
           const foe = chars[t.id];
@@ -386,7 +409,7 @@
           if (!t.inReach || !foes.includes(t.id)) continue;
           const foe = chars[t.id];
           if (Cn.has(foe, key) || (G.CONFIG.conditions[key].living && C.tireless(foe))) continue;
-          let v = { rooted: closing && closing.f === t.id && t.distance >= 2 ? 30 : 6, slowed: 14, shocked: 12, numbed: 10, withering: 22, burning: 12, baited: 6, enfeebled: 12, clumsy: 10, poisoned: 16, diseased: 12, dazzled: 6, blinded: 18 }[key] || 6;
+          let v = { rooted: closing && closing.f === t.id && t.distance >= 2 ? 30 : 6, paralyzed: 34, corroded: 8, slowed: 14, shocked: 12, numbed: 10, withering: 22, burning: 12, baited: 6, enfeebled: 12, clumsy: 10, poisoned: 16, diseased: 12, dazzled: 6, blinded: 18 }[key] || 6;
           consider(v * 0.55, cast({ target: t.id }), o);
         }
       } else if (s.shape === 'ward') {
@@ -434,6 +457,7 @@
           else if (key === 'foresight') v = fighting ? 12 : 0;
           else if (key === 'empowered' || key === 'deft') v = fighting && t.id !== id ? 10 : 0;
           else if (key === 'shrouded') v = foes.some((f) => C.attackOptions(chars[f]).some((x) => x.ranged)) ? 10 : 0;
+          else if (key === 'unseen') v = t.id === id && foes.some((f) => Combat.dist(posOf(f), me) <= Math.max(1, meleeReach(chars[f])) + 1) ? 16 : 0;
           else if (key === 'steadied' || key === 'resolute') v = foes.some((f) => G.Magic.maxSP(chars[f]) > 0) ? 8 : 0;
           consider(v, cast({ target: t.id }), o);
         }
@@ -464,7 +488,8 @@
             if (d > o.maxRange || d < o.minRange || d <= s.radius) continue;
             if (G.Terrain && enc.tiles && d >= 2 && G.Terrain.lineCheck(enc, me, p, 'missile').blocked) continue;
             const hitF = inArea(foes, p, s.radius), hitA = inArea(allies, p, s.radius);
-            consider((hitF.length - 1.5 * hitA.length) * s.magnitude * 2.2, cast({ at: p }), o);
+            // A Delayed spell is seen coming: foes may step out of it before it breaks.
+            consider((hitF.length - 1.5 * hitA.length) * s.magnitude * 2.2 * (s.delayed ? 0.55 : 1), cast({ at: p }), o);
           }
         }
       } else if (s.shape === 'ground') {
@@ -493,14 +518,13 @@
         const at = { x: me.x + Math.sign(fp.x - me.x), y: me.y + Math.sign(fp.y - me.y) };
         if (G.Terrain.at(enc, at.x, at.y).some((t) => t.kind === 'rune')) continue;
         consider(s.magnitude * 2.5, cast({ at }), o);
+      } else if (s.shape === 'raise' && foes.length) {
+        // Raising the fallen turns a body against its friends: worth more than a summoned beast, and more the
+        // stronger what rises (a skeleton, a zombie, a revenant with the body's own strength and gear).
+        // The body rises where it lies, within the spell's range.
+        const body = enc.ids.find((o2) => chars[o2] && chars[o2].status.dead && !chars[o2].vanished && !chars[o2].raised && enc.pos[o2] && Combat.dist(enc.pos[o2], me) <= o.maxRange);
+        if (body) consider({ skeleton: 50, zombie: 70, revenant: 110 }[N.raise] || 60, cast({ at: enc.pos[body] }), o);
       } else if (s.shape === 'conjure' && !conjuredUp && foes.length) {
-        if (G.CONFIG.magic.words[s.noun].conjure === 'raise') {
-          // Raising the fallen turns a body against its friends: worth more than a summoned beast.
-          // The body rises where it lies, within the spell's range.
-          const body = enc.ids.find((o2) => chars[o2] && chars[o2].status.dead && !chars[o2].vanished && !chars[o2].raised && enc.pos[o2] && Combat.dist(enc.pos[o2], me) <= o.maxRange);
-          if (body) consider(80, cast({ at: enc.pos[body] }), o);
-          continue;
-        }
         const at = { x: me.x + (foes.length ? Math.sign(posOf(foes[0]).x - me.x) : 1), y: me.y };
         if (!G.Terrain.passable(enc, at.x, at.y) || enc.ids.some((o2) => chars[o2] && !chars[o2].status.dead && posOf(o2).x === at.x && posOf(o2).y === at.y)) continue;
         consider(30, cast({ at }), o);
@@ -599,6 +623,8 @@
     if (stand) return { actor: id, type: 'standUp' };
     const tear = la.other.find((o) => o.type === 'tearFree' && o.affordable);
     if (tear && rng() < 0.7) return { actor: id, type: 'tearFree' };
+    const flee = fleeFrom(enc, chars, id, la);
+    if (flee && !enc.decls.some((d) => d.actor === id && d.round === enc.round && d.type === 'move')) return flee;
 
     // 2. Release a wound-up blow at whoever is in range.
     for (const atk of la.attacks) {

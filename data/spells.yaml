@@ -128,6 +128,18 @@ conjure:
   ap: 4
   feat: verb_conjure
   name: Conjure
+# Raise: a body within range gets up and fights for the caster until the fight ends or the caster falls.
+# The noun says what comes back (CONFIG.magic.raise): Bone a skeleton, Life a zombie, Spirit a revenant with the
+# body's own strength, gear and fighting skill. raiseCost on a noun adds to the spell's cost.
+raise:
+  kind: verb
+  shape: raise
+  cost: 4
+  mag: 0
+  range: [1, 4]
+  ap: 4
+  feat: verb_raise
+  name: Raise
 fire:
   kind: noun
   cost: 1
@@ -146,7 +158,7 @@ frost:
   element: frost
   ward: frost
   name: Frost
-  onHit: {cond: slowed, rounds: 1}
+  onHit: {cond: chilled, rounds: 2}
   ground: ice
   wall: iceWall
   bane: numbed
@@ -158,7 +170,7 @@ lightning:
   element: lightning
   ward: lightning
   name: Lightning
-  onHit: {cond: shocked, rounds: 1}
+  onHit: {cond: shocked, rounds: 1, chain: true}
   ground: charged
   wall: stormWall
   bane: shocked
@@ -201,7 +213,7 @@ vine:
   wall: brambleWall
   bane: rooted
   boon: barkskin
-  conjure: elemental
+  conjure: {monster: wolf, name: Summoned wolf}
 life:
   kind: noun
   cost: 1
@@ -211,7 +223,7 @@ life:
   bane: withering
   boon: innervated
   heals: true
-  conjure: raise
+  raise: zombie
 force:
   kind: noun
   cost: 1
@@ -325,6 +337,31 @@ spirit:
   boon: spiritShield
   ward: spirit
   conjure: elemental
+  raise: revenant
+  raiseCost: 4
+# ---- Nouns from the user's spell list (PROVISIONAL) -----------------------------------------------------
+# Acid: past armor, eating it and the gear in hand (CONFIG.magic.corrode). Charm: takes the caster's side until
+# hurt. Stillness: paralysis (CON resists), short and costly. Veil: unseen (can't be picked out beyond arm's reach).
+# Bone: what a skeleton is raised from.
+acid:
+  kind: noun
+  cost: 1
+  element: acid
+  ward: acid
+  name: Acid
+  onHit: {corrode: true}
+  ground: acidPool
+  bane: corroded
+charm: {kind: noun, cost: 2, element: mind, name: Charm, mind: enthralled, ward: mind}
+stillness:
+  kind: noun
+  cost: 2
+  element: body
+  name: Stillness
+  onHit: {cond: paralyzed, rounds: 1}
+  bane: paralyzed
+veil: {kind: noun, cost: 2, element: shadow, name: Veil, boon: unseen}
+bone: {kind: noun, cost: 1, element: death, name: Bone, raise: skeleton}
 strong: {kind: mod, cost: 2, mag: 3, feat: mod_strong, name: Strong, windUp: true}
 wide:
   kind: mod
@@ -362,3 +399,13 @@ lingering:
   feat: mod_lingering
   name: Lingering
   shapes: [bolt, area]
+# Delayed (PROVISIONAL, the user's idea): more power for less aim. The area is marked for all to see and breaks at
+# the end of the round on whoever is still in it.
+delayed:
+  kind: mod
+  cost: 1
+  mag: 3
+  delayed: true
+  feat: mod_delayed
+  name: Delayed
+  shapes: [area]

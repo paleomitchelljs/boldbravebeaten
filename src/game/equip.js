@@ -1,9 +1,14 @@
 /*
- * Equipment slots. Body (armor), shield, main hand, sidearm, off hand (a parrying dagger) and two
- * trinket slots (ring, charm). What isn't worn lives in the party pack (world.pack.gear for
- * weapons, armor and shields; goods for trinkets), so gear is shared and swapped freely in town
- * and camp. The engine reads c.armor, c.shield, c.weapons / c.wield / c.sidearm / c.offhand and
- * c.trinkets, so nothing else needs to know the slots exist.
+ * Equipment slots. Main hand, sidearm, off hand (a parrying dagger), shield, chest (the armor) and the worn
+ * slots in data/rules.yaml game.wornSlots (head, neck, shoulders, cape, arms, hands, two rings, legs, boots:
+ * the user's list). Worn things are goods of kind 'trinket' whose `slot` names a slot id or a slot's `takes`
+ * (both ring slots take 'ring'). What isn't worn lives in the party pack (world.pack.gear for weapons, armor
+ * and shields; goods for worn things), so gear is shared and swapped freely in town and camp. The engine
+ * reads c.armor, c.shield, c.weapons / c.wield / c.sidearm / c.offhand and c.trinkets (each worn thing with
+ * `at`, the slot it is in), so nothing else needs to know the slots exist.
+ *
+ * Only the chest slot holds armor: the other body slots hold worn things with effects and no mitigation
+ * (armor is one piece with a coverage; splitting it by body part is an open question for the user).
  */
 (function (G) {
   'use strict';
@@ -11,10 +16,21 @@
   const Items = G.Items;
   const W = () => G.DATA.WEAPONS;
 
-  const SLOTS = [
-    ['main', 'Main hand'], ['off', 'Off hand'], ['side', 'Sidearm'],
-    ['shield', 'Shield'], ['body', 'Body'], ['ring', 'Ring'], ['charm', 'Charm'],
-  ];
+  const HELD = [['main', 'Main hand'], ['off', 'Off hand'], ['side', 'Sidearm'], ['shield', 'Shield'], ['body', 'Chest']];
+  const DEFAULT_WORN = [{ id: 'head', name: 'Head' }, { id: 'neck', name: 'Neck' }, { id: 'ring1', name: 'Ring', takes: 'ring' }, { id: 'ring2', name: 'Ring', takes: 'ring' }];
+  function wornSlots() {
+    const g = G.CONFIG.game || {};
+    return g.wornSlots && g.wornSlots.length ? g.wornSlots : DEFAULT_WORN;
+  }
+  const isWorn = (slot) => wornSlots().some((w) => w.id === slot);
+  // [[id, label]] for every slot, held then worn.
+  function slotList() {
+    return HELD.concat(wornSlots().map((w) => [w.id, w.name]));
+  }
+  // Which worn slots a good's slot type fits (a ring fits either ring slot).
+  function wornFor(type) {
+    return wornSlots().filter((w) => w.id === type || w.takes === type).map((w) => w.id);
+  }
 
   const twoHanded = (w) => !!w && W()[w.type].hands >= 2;
 
@@ -25,14 +41,12 @@
       case 'off': return c.weapons.find((w) => w.id === c.offhand) || null;
       case 'shield': return c.shield || null;
       case 'body': return c.armor || null;
-      case 'ring': return (c.trinkets || []).find((t) => t.slot === 'ring') || null;
-      case 'charm': return (c.trinkets || []).find((t) => t.slot === 'charm') || null;
-      default: return null;
+      default: return (c.trinkets || []).find((t) => t.at === slot) || null;
     }
   }
 
   function slotsOf(c) {
-    return SLOTS.map(([slot, label]) => ({ slot, label, item: itemIn(c, slot) }));
+    return slotList().map(([slot, label]) => ({ slot, label, item: itemIn(c, slot) }));
   }
 
   // Slots an item could go in.
@@ -110,9 +124,10 @@
     else if (slot === 'main') { c.wield = null; stow(world, it); }
     else if (slot === 'side') { c.sidearm = null; stow(world, it); }
     else if (slot === 'off') { c.offhand = null; stow(world, it); }
-    else if (slot === 'ring' || slot === 'charm') {
+    else if (isWorn(slot)) {
       c.trinkets = c.trinkets.filter((t) => t !== it);
-      G.World.addGood(world, it.goodId, 1);
+      if (it.goodId) G.World.addGood(world, it.goodId, 1);
+      if (!quiet && c.stamina > C.maxStamina(c)) c.stamina = C.maxStamina(c);
     }
     if (slot === 'main' || slot === 'side' || slot === 'off') cleanup(c);
     // Keep a sidearm in hand if the main hand was emptied.
@@ -121,15 +136,28 @@
     return { ok: true };
   }
 
-  function equipTrinket(world, c, goodId) {
+  // Wear a good from the pack. `slot`: which slot (for a ring, which hand); otherwise the first free one that fits.
+  function equipTrinket(world, c, goodId, slot) {
     const g = G.World.goodDef(goodId);
     if (!g || g.kind !== 'trinket') return { ok: false, reason: 'Not wearable' };
+    const fitsIn = wornFor(g.slot);
+    if (!fitsIn.length) return { ok: false, reason: `No ${g.slot} slot` };
+    if (slot && !fitsIn.includes(slot)) return { ok: false, reason: 'Does not go there' };
+    const at = slot || fitsIn.find((s) => !itemIn(c, s)) || fitsIn[0];
     if (!G.World.removeGood(world, goodId, 1)) return { ok: false, reason: 'None in the pack' };
     c.trinkets = c.trinkets || [];
-    const prev = itemIn(c, g.slot);
-    if (prev) unequip(world, c, g.slot, true);
-    c.trinkets.push({ id: Items.uid('trk'), goodId, name: g.name, slot: g.slot, attrs: g.attrs || {}, ap: g.ap || 0 });
+    if (itemIn(c, at)) unequip(world, c, at, true);
+    c.trinkets.push(wornItem(goodId, g, at));
     return { ok: true };
+  }
+
+  // The worn copy of a good: its effects and power travel with it (a save keeps them as worn).
+  function wornItem(goodId, g, at) {
+    const t = { id: Items.uid('trk'), goodId, name: g.name, slot: g.slot, at, attrs: g.attrs || {}, ap: g.ap || 0 };
+    if (g.effects) t.effects = JSON.parse(JSON.stringify(g.effects));
+    if (g.power) t.power = Object.assign({}, g.power);
+    if (g.blurb) t.blurb = g.blurb;
+    return t;
   }
 
   // One-line summary of an item for the pack and shop lists.
@@ -158,5 +186,5 @@
     return '';
   }
 
-  G.Equip = { SLOTS, slotsOf, itemIn, fits, canEquip, equip, unequip, equipTrinket, describe, twoHanded };
+  G.Equip = { slotList, wornSlots, wornFor, isWorn, wornItem, slotsOf, itemIn, fits, canEquip, equip, unequip, equipTrinket, describe, twoHanded };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

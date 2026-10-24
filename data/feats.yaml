@@ -548,6 +548,12 @@
       requires: [["keen_eye:1"]]
       effect: Follow trails
       auto: false
+    animal_companion:
+      name: Animal Companion
+      ranks: [apprentice, adept]
+      requires: [["keen_eye:1"]]
+      effect: "A beast follows you and fights at your side (data/rules.yaml game.companions); rank II, a stronger one. A dead companion is replaced after a rest in town"
+      auto: true
     read_intent:
       name: Read Intent
       ranks: [apprentice]
@@ -682,6 +688,12 @@
       requires: [["control:1"]]
       effect: Cast while grappled or after taking damage this pass
       auto: false
+    familiar:
+      name: Familiar
+      ranks: [novice, apprentice]
+      requires: [["casting:1"]]
+      effect: "A small creature bound to you (data/rules.yaml game.companions): it fights at your side, and gives +2 spell points per rank while it lives. If it dies you take 2 WIL damage; a new one answers after a rest in town"
+      auto: true
     focus_bond:
       name: Focus Bond
       ranks: [expert]
@@ -832,8 +844,8 @@
     verb_raise:
       name: "Verb: Raise"
       ranks: [expert]
-      requires: [["verb_summon:1"]]
-      effect: "Reanimation; needs evil components"
+      requires: [["verb_conjure:1", "verb_summon:1"]]
+      effect: "Learn the verb Raise: a body gets up and fights for you (Bone a skeleton, Life a zombie, Spirit a revenant)"
       auto: false
     mod_strong:
       name: "Modifier: Strong"
@@ -870,6 +882,12 @@
       ranks: [apprentice]
       requires: [["mod_strong:1", "mod_wide:1", "mod_long:1"]]
       effect: Learn the modifier Lingering
+      auto: false
+    mod_delayed:
+      name: "Modifier: Delayed"
+      ranks: [apprentice]
+      requires: [["mod_strong:1", "mod_wide:1", "mod_long:1"]]
+      effect: "Learn the modifier Delayed: an area spell breaks at the end of the round, +3 magnitude, its mark seen by all"
       auto: false
     mod_name:
       name: "Modifier: Name"

@@ -89,6 +89,11 @@
     if (c.spSpent == null) c.spSpent = 0;
     if (c.level == null) c.level = 1;
     if (c.bonusFeats == null) c.bonusFeats = 0;
+    // Worn things carry the slot they are in (`at`): the old charm slot is the neck; rings fill ring1, then ring2.
+    for (const t of c.trinkets || []) {
+      if (t.slot === 'charm') t.slot = 'neck';
+      if (!t.at) t.at = t.slot === 'ring' ? ((c.trinkets || []).some((x) => x.at === 'ring1') ? 'ring2' : 'ring1') : t.slot;
+    }
     return c;
   }
 
@@ -218,15 +223,93 @@
     return c.base[a] + conditioning(c, a) + trinketMod(c, a);
   }
 
-  // Worn trinkets (a sash, a ring…): c.trinkets = [{ name, attrs: { SPD: 1 }, ap: 1 }] (PROVISIONAL).
-  function trinketMod(c, a) {
+  // ---- Gear effects (PROVISIONAL, magic items) ---------------------------------------------
+  // What worn and wielded things do beyond their stats. Sources: worn items (c.trinkets: rings, a
+  // cape, boots…; each { attrs, ap, effects }), and the enchantments (enchantments.yaml `effects`) on
+  // the armor, a ready shield and the weapons in hand. Effect keys (all optional):
+  //   attrs {STR: 1}   ap (sheet AP)   apMult (× every action's AP)   regen   stamina (max)   sp (spell points)
+  //   mag {noun: n, '*': n} (spell magnitude)   init   hit (to beat a defence)   move (squares per move)
+  //   resist {fire: 0.5} (× an element's harm)   aura {radius, stamina, cond, element, mag}
+  //   retaliate {noun, mag} (an element's blow at whoever lands a melee blow on the wearer)
+  //   standing (parley disposition with everyone)   standingWith {faction: n}   heal (extra points a long rest)
+  function gearSources(c) {
+    const out = [];
+    if (!(c.trinkets && c.trinkets.length) && !hasEnchantments(c)) return out;
+    for (const t of c.trinkets || []) {
+      const e = Object.assign({}, t.effects || {});
+      if (t.attrs) e.attrs = Object.assign({}, t.attrs, e.attrs || {});
+      if (t.ap) e.ap = (e.ap || 0) + t.ap;
+      out.push({ item: t, effects: e });
+    }
+    const ench = (it) => { for (const x of Items.enchantsOf(it)) if (x.effects) out.push({ item: it, effects: x.effects }); };
+    if (c.armor && c.armor.durability > 0) ench(c.armor);
+    if (c.shield && c.shield.durability > 0) ench(c.shield);
+    const w = wieldedWeapon(c), off = offhandWeapon(c);
+    if (w) ench(w);
+    if (off) ench(off);
+    return out;
+  }
+
+  function hasEnchantments(c) {
+    if ((c.armor && c.armor.enchantments) || (c.shield && c.shield.enchantments)) return true;
+    for (const w of c.weapons || []) if (w.enchantments) return true;
+    return false;
+  }
+
+  // The sum of a numeric effect (or one key of an object effect) over everything worn and wielded.
+  function gearSum(c, key, sub) {
     let n = 0;
-    for (const t of c.trinkets || []) n += (t.attrs && t.attrs[a]) || 0;
+    for (const s of gearSources(c)) {
+      const v = s.effects[key];
+      if (v == null) continue;
+      n += sub != null ? (typeof v === 'object' ? v[sub] || 0 : 0) : typeof v === 'number' ? v : 0;
+    }
     return n;
   }
 
+  // The product of a multiplier effect (apMult; resist for one element).
+  function gearMult(c, key, sub) {
+    let m = 1;
+    for (const s of gearSources(c)) {
+      const v = s.effects[key];
+      if (v == null) continue;
+      m *= sub != null ? (typeof v === 'object' && v[sub] != null ? v[sub] : 1) : v;
+    }
+    return m;
+  }
+
+  // Every value of an effect, for the ones that are not summed (aura, retaliate).
+  function gearList(c, key) {
+    return gearSources(c).filter((s) => s.effects[key] != null).map((s) => Object.assign({ from: s.item }, s.effects[key]));
+  }
+
+  function trinketMod(c, a) {
+    return gearSum(c, 'attrs', a);
+  }
+
   function trinketAP(c) {
-    return (c.trinkets || []).reduce((n, t) => n + (t.ap || 0), 0);
+    return gearSum(c, 'ap');
+  }
+
+  // A weapon's own enchantments: what its blows carry (enchantments.yaml `strike`) and how much AP it
+  // takes off every action made with it (`apLess`, sheet AP).
+  function weaponStrike(w) {
+    const out = {};
+    for (const x of Items.enchantsOf(w)) if (x.strike) for (const [k, v] of Object.entries(x.strike)) out[k] = Array.isArray(v) ? (out[k] || []).concat(v) : v;
+    return out;
+  }
+
+  function weaponApLess(w) {
+    return w ? Items.enchantsOf(w).reduce((n, x) => n + (x.apLess || 0), 0) : 0;
+  }
+
+  // Gear's cut on an action's AP: the product of every apMult, then a weapon's own apLess. Never below the floor.
+  function gearAP(c, ap, weapon) {
+    const m = gearMult(c, 'apMult');
+    let v = m !== 1 ? Math.round(ap * m) : ap;
+    const less = weaponApLess(weapon);
+    if (less) v -= Math.round(less * costScale());
+    return Math.max(minAP(), v);
   }
 
   // ---- Armor & shield ----------------------------------------------------
@@ -320,6 +403,7 @@
   function freshStamina(c) {
     let s = 0;
     for (const a in CONFIG.staminaWeights) s += CONFIG.staminaWeights[a] * attr(c, a);
+    s += gearSum(c, 'stamina');
     if (tireless(c)) return Math.max(1, s);
     // Monster trait: a big creature (a boss) has more to give.
     return Math.round(s * ((c.traits && c.traits.staminaMult) || 1));
@@ -338,7 +422,7 @@
 
   function regen(c) {
     if (tireless(c)) return 0;
-    return Math.floor((attr(c, 'CON') + attr(c, 'WIL')) / CONFIG.regenDivisor) - armorInfo(c).regen + (G.Conditions ? G.Conditions.regenMod(c) : 0);
+    return Math.floor((attr(c, 'CON') + attr(c, 'WIL')) / CONFIG.regenDivisor) - armorInfo(c).regen + (G.Conditions ? G.Conditions.regenMod(c) : 0) + gearSum(c, 'regen');
   }
 
   // Tireless (undead, constructs): no stamina at all. Damage goes straight to attributes,
@@ -412,22 +496,28 @@
   // up to squaresPerAP squares (plus armor). As written, 1 AP per squaresPerAP squares.
   function moveCost(c, d) {
     const per = squaresPerAP(c);
-    if (CONFIG.moveAP) return Math.ceil(d / per) * Math.round(CONFIG.moveAP * costScale()) + armorAP(c);
-    return Math.max(minAP(), Math.ceil((d * costScale()) / per));
+    if (CONFIG.moveAP) return gearAP(c, Math.ceil(d / per) * Math.round(CONFIG.moveAP * costScale()) + armorAP(c));
+    return gearAP(c, Math.max(minAP(), Math.ceil((d * costScale()) / per)));
   }
 
   // How far `ap` AP can carry this character in one move.
   function squaresFor(c, ap) {
     const per = squaresPerAP(c);
-    if (CONFIG.moveAP) return Math.max(0, Math.floor((ap - armorAP(c)) / Math.round(CONFIG.moveAP * costScale()))) * per;
+    if (CONFIG.moveAP) {
+      // The most stretches whose cost (with armor and gear) fits in `ap`.
+      let n = 0;
+      while (n < 50 && moveCost(c, (n + 1) * per) <= ap) n++;
+      return n * per;
+    }
     return Math.floor((ap * per) / costScale());
   }
 
   function squaresPerAP(c) {
     let s = CONFIG.moveBase + Math.floor(combatAttr(c, 'SPD') / CONFIG.moveSpdDivisor) + rank(c, 'fleet_foot');
     if (c.shield && c.shield.size === 'tower' && c.shield.durability > 0) s -= CONFIG.towerMovePenalty;
-    // Monster trait: leapers (bogfolk) cover more ground per AP.
-    return Math.round(Math.max(1, s) * (CONFIG.moveScale || 1) * ((c.traits && c.traits.moveMult) || 1));
+    // Monster trait: leapers (bogfolk) cover more ground per AP. Chill (a condition) halves it; boots add to it.
+    const cond = G.Conditions ? G.Conditions.moveMult(c) : 1;
+    return Math.max(1, Math.round(Math.max(1, s) * (CONFIG.moveScale || 1) * ((c.traits && c.traits.moveMult) || 1) * cond) + gearSum(c, 'move'));
   }
 
   function strOffset(c) {
@@ -565,7 +655,7 @@
       if (shieldReady(c) && rank(c, 'shield_bash') && !grappling) opts.push(unarmedOption(c, 'shieldBash'));
       // Spells need a free hand (see magic.js).
       // Bolts (Strike, Launch) are attacks; the other spells are cast actions (Combat.legalActions).
-      if (G.Magic && castingHands(c) && !grappling) for (const o of G.Magic.spellOptions(c)) if (o.kind === 'strike') opts.push(o);
+      if (G.Magic && !grappling) for (const o of G.Magic.spellOptions(c)) if (o.kind === 'strike' && (o.power || castingHands(c))) opts.push(o);
     }
     const t = webTax(c);
     if (t.ap || t.stamina) for (const o of opts) { o.ap += t.ap; o.stamina += t.stamina; }
@@ -631,7 +721,7 @@
     const full = Math.max(floor, ap);
     const quick = motion === 'thrust' ? 'quick_thrust' : motion === 'twoHanded' || motion === 'power' ? 'heavy_tempo' : null;
     if (quick) ap -= quickCut(c, quick, full);
-    ap = Math.max(floor, ap) + armorAP(c);
+    ap = gearAP(c, Math.max(floor, ap) + armorAP(c), w.natural ? null : w);
     let red = 0;
     if (isLightWeapon(w) && (motion === 'thrust' || motion === 'swing')) red += rank(c, 'light_touch');
     const stamina = Math.round(strainF * Math.max(CONFIG.minStrikeStamina || 0, staminaCost(c, Math.max(0, baseSt), effectiveWeight(c, w), red)));
@@ -700,7 +790,7 @@
       ap -= quickCut(c, 'quick_hands', full);
       red += rank(c, 'brawlers_wind');
     }
-    ap = Math.max(minAP(), ap) + armorAP(c);
+    ap = gearAP(c, Math.max(minAP(), ap) + armorAP(c));
     const dmg = a.damage.slice();
     if (kind === 'punch' || kind === 'kick') dmg[2] += rank(c, 'heavy_hands');
     dmg[2] = Math.max(0, dmg[2] + strBonus(c));
@@ -741,7 +831,7 @@
         const type = armorInfo(c).type;
         const k = curve && curve.ap[type] != null ? type : 'none';
         ap = rank(c, 'kip_up') ? baseAP(1) : curve ? baseAP(curve.ap[k]) : baseAP(a.ap + armorInfo(c).standUp);
-        ap = Math.min(Math.round(ap) + armorAP(c), Math.max(minAP(), apPool(c)));
+        ap = Math.min(gearAP(c, Math.round(ap) + armorAP(c)), Math.max(minAP(), apPool(c)));
         if (curve) return { ap, stamina: staminaCost(c, curve.stamina[k], null, 0) };
         break;
       }
@@ -752,7 +842,7 @@
       case 'break': {
         if (kind !== 'break') red = rank(c, 'brawlers_wind');
         const g = CONFIG.grappling;
-        if (g) return { ap: Math.max(minAP(), Math.round(ap)) + armorAP(c), stamina: staminaCost(c, g.stamina[kind], null, red) };
+        if (g) return { ap: gearAP(c, Math.max(minAP(), Math.round(ap)) + armorAP(c)), stamina: staminaCost(c, g.stamina[kind], null, red) };
         break;
       }
       case 'bandage':
@@ -764,8 +854,8 @@
         break;
       case 'windUp': {
         const W = CONFIG.windUp;
-        ap = Math.round(baseAP(W.ap)) + armorAP(c);
         const o = extra && extra.option;
+        ap = gearAP(c, Math.round(baseAP(W.ap)) + armorAP(c), o && o.weaponId ? c.weapons.find((x) => x.id === o.weaponId) : null);
         if (o && o.spell) return { ap, stamina: 0 };
         const wpn = o && o.weaponId ? c.weapons.find((x) => x.id === o.weaponId) : null;
         return { ap, stamina: staminaCost(c, W.stamina, wpn ? effectiveWeight(c, wpn) : null, 0) };
@@ -780,6 +870,8 @@
     if (kind === 'move') return { ap: Math.round(ap), stamina };
     const full = Math.max(minAP(), Math.round(ap));
     ap = Math.max(minAP(), full - (quick ? quickCut(c, quick, full) : 0)) + armorAP(c);
+    // Gear: an apMult on everything; a weapon's apLess on the parries made with it.
+    ap = gearAP(c, ap, kind === 'parry' ? wieldedWeapon(c) : kind === 'offParry' ? offhandWeapon(c) : null);
     return { ap, stamina };
   }
 
@@ -855,6 +947,7 @@
     maxStamina, freshStamina, wearyRound, regen, fatiguePenalty, apPool, apScale, costScale, fmtAP, minAP, baseAP, armorAP, quickCut, moveCost, squaresFor, squaresPerAP, handsBusy, castingHands, trinketAP, weaponStrain, inRange, optionKey, needsWindUp, strOffset, staminaCost, effectiveWeight, isLightWeapon,
     strBonus, weaponDamage, mainIndex, attackOptions, actionCost, ammoLeft, tireless, webTax,
     damageAttr, healAttr, totalDamage, updateCondition, isActive, bleedPerRound,
+    gearSources, gearSum, gearMult, gearList, gearAP, weaponStrike, weaponApLess,
     TREES, ARMOR,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

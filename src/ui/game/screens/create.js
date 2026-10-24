@@ -81,7 +81,7 @@
         h('div', { class: 'alcove big' }, Sprites.figure(preview, 7)),
         h('label', { class: 'pick' }, h('span', { class: 'label' }, 'Name'), h('input', { id: 'cname', value: m.name, maxlength: 24, oninput: (e) => { m.name = e.target.value; refreshTabs(); }, onchange: set })),
         h('div', { class: 'row2' },
-          sel('look-sprite', 'Look', L.kind, Sprites.PARTY_KINDS, (v) => { m.look.sprite = v; set(); }),
+          sel('look-sprite', 'Look', m.look.sprite || L.kind, Sprites.partyKinds(), (v) => { m.look.sprite = v; set(); }),
           sel('look-tint', 'Colour', m.look.tint, Sprites.TINTS.map((t, i) => [i, t[1]]), (v) => { m.look.tint = Number(v); set(); }))),
       h('div', { class: 'create-form' },
         h('div', { class: 'row kitrow' }, sel('kit', 'Starting kit', m.kit, kits.map((k) => [k.id, k.name]), (v) => { m.kit = v; m.look.sprite = null; set(); }, 'grow'), tip(kit.blurb, kit.name)),

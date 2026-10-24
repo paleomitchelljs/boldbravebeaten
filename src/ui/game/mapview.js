@@ -67,6 +67,21 @@
     stairs: ['stairs_down', 0, 0, 16, 16],
   };
 
+  // Spell effects (art/creatures/fx, 16-pixel cells; local only). Which sheet an element uses, and the cells used:
+  // a projectile with its trail behind it (pointing right) and an impact flash.
+  const FX_SHEET = { fire: 'Fire', frost: 'Water', lightning: 'Water', wind: 'Water', venom: 'Green', acid: 'Green', vine: 'Green', life: 'Green', plague: 'Green', earth: 'Fire' };
+  const FX_CELL = { bolt: [17, 11], flash: [10, 8] };
+  const fxImgs = {};
+  function fxImg(sheet) {
+    if (fxImgs[sheet]) return fxImgs[sheet];
+    const o = fxImgs[sheet] = { ok: false, el: null };
+    if (!HAS_IMG) return o;
+    o.el = new Image();
+    o.el.onload = () => { o.ok = true; };
+    o.el.src = `art/creatures/fx/${sheet} Effect and Bullet 16x16.png`;
+    return o;
+  }
+
   const hash = (x, y, k) => { let n = (x * 374761393 + y * 668265263 + (k || 0) * 2147483647) | 0; n = (n ^ (n >>> 13)) * 1274126177; return ((n ^ (n >>> 16)) >>> 0); };
 
   // Draw part of a named image; false if it has not loaded yet.
@@ -160,7 +175,13 @@
     // Short effects, timed from now (+ delay ms): text rising off a figure, a lunge toward a square, a bolt between two figures, a shudder.
     view.popup = (id, text, color, delay) => view.fx.push({ k: 'text', id, text, color: color || '#fff', t0: clock() + (delay || 0), dur: 1300 });
     view.lunge = (id, tx, ty, delay) => view.fx.push({ k: 'lunge', id, tx, ty, t0: clock() + (delay || 0), dur: 260 });
-    view.bolt = (from, to, color, delay) => view.fx.push({ k: 'bolt', from, to, color: color || '#ffe9a0', t0: clock() + (delay || 0), dur: 200 });
+    // A bolt: a square of colour, or (element given, and the effect sheets there) a fireball, frost shard or spark
+    // from art/creatures/fx with a flash where it lands.
+    view.bolt = (from, to, color, delay, element) => {
+      const t0 = clock() + (delay || 0), sheet = element ? FX_SHEET[element] || 'Purple' : null;
+      view.fx.push({ k: 'bolt', from, to, color: color || '#ffe9a0', t0, dur: sheet ? 320 : 200, sheet });
+      if (sheet) view.fx.push({ k: 'flash', id: to, sheet, t0: t0 + 320, dur: 260 });
+    };
     view.shudder = (id, delay) => view.fx.push({ k: 'shudder', id, t0: clock() + (delay || 0), dur: 300 });
     const scene = () => opts.scene();
 
@@ -297,7 +318,7 @@
     // Above the figures: icons over heads, flying bolts, rising text.
     function drawOver(ctx, sc, ox, oy, t) {
       const size = T * S, SS = Math.max(1, S - 1);
-      const head = (id) => { const v = view.vis[id]; if (!v) return null; const a = (sc.actors || []).find((q) => q.id === id); const [dx, dy] = offsetOf(id, t); return [ox + (v.x + dx + 0.5) * size, oy + (v.y + dy + 1) * size - S * 1.5 - 31 * SS * ((a && a.size) || 1)]; };
+      const head = (id) => { const v = view.vis[id]; if (!v) return null; const a = (sc.actors || []).find((q) => q.id === id); const [dx, dy] = offsetOf(id, t); return [ox + (v.x + dx + 0.5) * size, oy + (v.y + dy + 1) * size - S * 1.5 - 31 * SS * ((a && (a.art && Sprites.artReady(a.art) ? a.artSize : a.size)) || 1)]; };
       for (const b of sc.badges || []) {
         const at = b.id ? head(b.id) : [ox + (b.x + 0.5) * size, oy + b.y * size];
         if (!at) continue;
@@ -307,10 +328,27 @@
         if (t < f.t0) continue;
         const p = (t - f.t0) / f.dur;
         if (p > 1) continue;
+        if (f.k === 'flash') {
+          const at = head(f.id), im = fxImg(f.sheet);
+          if (!at || !im.ok) continue;
+          const z = size * (0.9 + 0.5 * p), [cx, cy] = FX_CELL.flash;
+          ctx.save(); ctx.globalAlpha = 1 - p * 0.8; ctx.imageSmoothingEnabled = false;
+          ctx.drawImage(im.el, cx * 16, cy * 16, 16, 16, at[0] - z / 2, at[1] + 14 * SS - z / 2, z, z);
+          ctx.restore();
+          continue;
+        }
         if (f.k === 'bolt') {
           const a = head(f.from), b = head(f.to);
           if (!a || !b) continue;
           const x = a[0] + (b[0] - a[0]) * p, y = a[1] + 14 * SS + (b[1] - a[1]) * p;
+          const im = f.sheet ? fxImg(f.sheet) : null;
+          if (im && im.ok) {
+            const [cx, cy] = FX_CELL.bolt, z = size * 0.8;
+            ctx.save(); ctx.translate(x, y); ctx.rotate(Math.atan2(b[1] - a[1], b[0] - a[0])); ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(im.el, cx * 16, cy * 16, 16, 16, -z / 2, -z / 2, z, z);
+            ctx.restore();
+            continue;
+          }
           ctx.fillStyle = f.color; ctx.fillRect(Math.round(x - S * 1.5), Math.round(y - S * 1.5), S * 3, S * 3);
           ctx.globalAlpha = 0.4; ctx.fillRect(Math.round(x - (b[0] - a[0]) * 0.06 - S), Math.round(y - (b[1] - a[1]) * 0.06 - S), S * 2, S * 2); ctx.globalAlpha = 1;
         } else if (f.k === 'text') {
@@ -415,7 +453,12 @@
       }
       // Figures are drawn a notch smaller than the tiles so they stand a tile and a half tall, not two.
       const SS = Math.max(1, S - 1);
-      const ok = Sprites.draw(ctx, a.kind, anim, frame, x, y, SS, { flip: v.flip, tint: a.tint, alpha: a.alpha, size: a.size || 1, rot: a.down ? (v.flip ? -1.45 : 1.45) : 0, shadow: !a.down });
+      // Creature art (data/art.yaml) where it is there: its attack frames while a lunge is under way.
+      const lunging = view.fx.some((f) => f.k === 'lunge' && f.id === a.id && clock() >= f.t0 && clock() < f.t0 + f.dur + 140);
+      const rot = a.down ? (v.flip ? -1.45 : 1.45) : 0;
+      const art = a.art && Sprites.drawArt(ctx, a.art, lunging ? 'attack' : anim, frame, x, y, size, { flip: v.flip, tint: a.artTint, alpha: a.alpha, artScale: a.artScale, rot, shadow: !a.down });
+      if (art) a = Object.assign({}, a, { size: a.artSize || a.size });
+      const ok = art || Sprites.draw(ctx, a.kind, anim, frame, x, y, SS, { flip: v.flip, tint: a.tint, alpha: a.alpha, size: a.size || 1, rot, shadow: !a.down });
       if (!ok) { ctx.fillStyle = a.tag === 'enemy' ? '#c0504a' : '#5aa0d0'; ctx.fillRect(x - 5 * S, y - 20 * S, 10 * S, 20 * S); }
       if (a.bar && !a.down) {
         const w = 16 * S * (a.size ? Math.max(0.75, Math.min(1.2, a.size)) : 1), bx = x - w / 2, by = y - 31 * SS * (a.size || 1) - 2 * S;
@@ -446,7 +489,7 @@
   }
 
   // Warm the images so the first frame is not bare.
-  function preload() { for (const n of ['tiles', 'furniture', 'props', 'objects', 'esoteric', 'chest', 'gold', 'stairs_down', 'spikes']) img(n); Sprites.preload(); }
+  function preload() { for (const n of ['tiles', 'furniture', 'props', 'objects', 'esoteric', 'chest', 'gold', 'stairs_down', 'spikes']) img(n); for (const s2 of ['Fire', 'Water', 'Green', 'Purple']) fxImg(s2); Sprites.preload(); }
 
   UI.MapView = { T, create, preload, PROPS, img, prop };
 })(globalThis.BBB);

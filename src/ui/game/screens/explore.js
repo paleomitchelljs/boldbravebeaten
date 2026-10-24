@@ -146,7 +146,7 @@
     const label = p.def.label || 'Foes';
     const parley = spec.parley && !p.afterParley ? G.Content.world.npcs[spec.parley] : null;
     const look = Sprites.forEncounter(spec);
-    const face = Sprites.portrait({ side: 'enemy', sprite: look.kind === 'orc' && !look.tint ? null : { kind: look.kind, tint: look.tint }, name: label }, 40);
+    const face = Sprites.portrait({ side: 'enemy', sprite: look.kind === 'orc' && !look.tint && !look.art ? null : { kind: look.kind, tint: look.tint, art: look.art, artTint: look.artTint }, name: label }, 40);
     return h('section', { class: 'popcard encounter' },
       h('div', { class: 'popcard-head' }, face, h('div', { class: 'stack tight grow' }, h('h3', null, label), h('span', { class: 'small ' + (p.aware ? 'bad' : 'muted') }, p.aware ? 'They have seen you' : 'Unaware of you')), p.aware ? null : closeBtn(game)),
       spec.text ? h('p', { class: 'muted small' }, spec.text) : null,
@@ -236,7 +236,7 @@
       const off = SPREAD[2][(i - 1) % 3] || [0, 0];
       const at = i === 0 ? { x: ex.x, y: ex.y } : (tr[i - 1] || { x: ex.x + off[0], y: ex.y + off[1] + 0.12 });
       const L = Sprites.look(m);
-      sc.actors.push({ id: m.id, x: at.x, y: at.y, kind: L.kind, tint: L.tint, size: L.size, tag: 'party', speed: 8, phase: i, ring: i === 0 && ex.sneak ? 'rgba(150,200,255,0.8)' : null, alpha: ex.sneak ? 0.8 : 1, who: m.id });
+      sc.actors.push({ id: m.id, x: at.x, y: at.y, kind: L.kind, tint: L.tint, size: L.size, art: L.art, artTint: L.artTint, artScale: L.artScale, artSize: L.artSize, tag: 'party', speed: 8, phase: i, ring: i === 0 && ex.sneak ? 'rgba(150,200,255,0.8)' : null, alpha: ex.sneak ? 0.8 : 1, who: m.id });
     });
     for (const b of bodies(game)) {
       if (!sc.seen(b.x, b.y)) continue;
@@ -247,11 +247,11 @@
         const spec = Explore.encounterSpec(w, b.def);
         const look = Sprites.forEncounter(spec);
         const n = Math.min(3, Sprites.crowd(spec));
-        SPREAD[n - 1].forEach(([dx, dy], i) => sc.actors.push({ id: `m${b.x},${b.y},${i}`, x: b.x + dx, y: b.y + dy, kind: look.kind, tint: look.tint, size: look.size, tag: 'enemy', flip: ex.x < b.x, sleep: !!(b.def.asleep && !st.woken), ring: st.pacified ? 'rgba(120,230,160,0.7)' : null, phase: i * 2 + b.x }));
+        SPREAD[n - 1].forEach(([dx, dy], i) => sc.actors.push({ id: `m${b.x},${b.y},${i}`, x: b.x + dx, y: b.y + dy, kind: look.kind, tint: look.tint, size: look.size, art: look.art, artTint: look.artTint, artScale: look.artScale, artSize: look.artSize, tag: 'enemy', flip: ex.x < b.x, sleep: !!(b.def.asleep && !st.woken), ring: st.pacified ? 'rgba(120,230,160,0.7)' : null, phase: i * 2 + b.x }));
       } else {
         const npc = G.Content.world.npcs[b.def.npc] || {};
         const look = Sprites.lookFor(npc.sprite || 'wizard', npc.name);
-        sc.actors.push({ id: `n${b.x},${b.y}`, x: b.x, y: b.y, kind: look.kind, tint: look.tint, size: look.size, tag: 'npc', flip: ex.x < b.x, ring: 'rgba(120,190,255,0.55)', phase: b.y });
+        sc.actors.push({ id: `n${b.x},${b.y}`, x: b.x, y: b.y, kind: look.kind, tint: look.tint, size: look.size, art: look.art, artTint: look.artTint, artScale: look.artScale, artSize: look.artSize, tag: 'npc', flip: ex.x < b.x, ring: 'rgba(120,190,255,0.55)', phase: b.y });
       }
     }
     if (game.ui.prompt && game.ui.prompt.type === 'face') { const f = Explore.front(w); sc.marks.push({ x: f.x, y: f.y, type: 'select' }); }

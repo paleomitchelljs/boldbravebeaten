@@ -16,7 +16,8 @@
     for (let i = 0; i < (times || 1); i++) {
       const e = R.weighted(t);
       if (e.nothing) continue;
-      if (e.gold) out.gold += R.amount(e.gold);
+      if (e.table) merge(out, roll(e.table)); // a nested table: a rare find within a hoard
+      else if (e.gold) out.gold += R.amount(e.gold);
       else if (e.good) out.goods.push({ id: e.good, n: R.amount(e.n) });
       else {
         const item = G.Economy.makeFromSpec(e);

@@ -169,7 +169,7 @@
       if (side) root.appendChild(weaponShape(side.type, cx + 30 * wide, 250, 75, metalOf(side)));
       // Trinkets
       for (const t of c.trinkets || []) {
-        if (t.slot === 'charm') root.appendChild(svg('circle', { cx, cy: 100, r: 5, fill: '#c9a24a', stroke: '#6b4f1a' }));
+        if (t.at === 'neck' || t.slot === 'charm') root.appendChild(svg('circle', { cx, cy: 100, r: 5, fill: '#c9a24a', stroke: '#6b4f1a' }));
         if (t.slot === 'ring') root.appendChild(svg('circle', { cx: cx + W * 0.62 + 8, cy: 196, r: 3.5, fill: 'none', stroke: '#e6c96b', 'stroke-width': 2 }));
       }
     }

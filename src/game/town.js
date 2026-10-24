@@ -25,6 +25,8 @@
     }
     W.collectSupplies(world);
     for (const c of W.party(world)) if (!c.status.dead && C.attr(c, 'CON') <= 0) c.status.dead = true;
+    // Companions rest too; in town a lost one is replaced.
+    if (G.Companions) { G.Companions.rest(world, true); lines.push(...G.Companions.ensure(world, { town: mode === 'inn' })); }
     if (mode === 'inn') {
       const m = world.minutes % 1440;
       W.advance(world, m < 8 * 60 ? 8 * 60 - m : 1440 - m + 8 * 60);
@@ -166,19 +168,22 @@
     return { ok: true, lines };
   }
 
-  // The Watch pays for dead outlaws once you stand well enough with it.
-  const BOUNTY = 15;
+  // A faction pays for dead members of another once you stand well enough with it (rules.yaml game.bounty:
+  // {on, payer, gold, minStanding, standingPer}).
+  const bountyCfg = () => Object.assign({ on: null, payer: null, gold: 15, minStanding: 10, standingPer: 0.5 }, G.CONFIG.game.bounty || {});
   function bountyDue(world) { return world.bounty || 0; }
   function collectBounty(world) {
+    const B = bountyCfg();
     const n = world.bounty || 0;
-    if (!n) return { ok: false, reason: 'No bounty to collect.' };
-    if (G.Factions.standing(world, 'town_watch') < 10) return { ok: false, reason: 'The Watch pays bounties only to its friends (standing 10).' };
+    const payer = B.payer && G.Factions.defs()[B.payer] ? G.Factions.defs()[B.payer].name : 'The payer';
+    if (!n || !B.payer) return { ok: false, reason: 'No bounty to collect.' };
+    if (G.Factions.standing(world, B.payer) < B.minStanding) return { ok: false, reason: `${payer} pays bounties only to its friends (standing ${B.minStanding}).` };
     world.bounty = 0;
-    world.gold += n * BOUNTY;
-    const lines = G.Factions.change(world, 'town_watch', n * 0.5, 'bounties');
-    W.logLine(world, `The Watch pays ${n * BOUNTY} gold for ${n} outlaw${n > 1 ? 's' : ''}.`, 'info');
-    return { ok: true, gold: n * BOUNTY, lines };
+    world.gold += n * B.gold;
+    const lines = G.Factions.change(world, B.payer, n * B.standingPer, 'bounties');
+    W.logLine(world, `${payer} pays ${n * B.gold} gold for ${n} outlaw${n > 1 ? 's' : ''}.`, 'info');
+    return { ok: true, gold: n * B.gold, lines };
   }
 
-  G.Town = { leftForDead, BOUNTY, bountyDue, collectBounty, autoRoller, sleep, innRest, campRest, heal, raise, trainable, train, useGood };
+  G.Town = { leftForDead, bountyCfg, bountyDue, collectBounty, autoRoller, sleep, innRest, campRest, heal, raise, trainable, train, useGood };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

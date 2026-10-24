@@ -1,0 +1,88 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Art preview</title>
+<style>
+  :root { --bg: #0d1013; --ink: #dfe6ea; --muted: #8a979e; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.4 system-ui, sans-serif; }
+  main { padding: 16px; max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 18px; margin: 0 0 4px; } p { color: var(--muted); margin: 0 0 12px; }
+  canvas { max-width: 100%; height: auto; image-rendering: pixelated; display: block; margin-bottom: 16px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; } .row figure { margin: 0; text-align: center; font-size: 11px; color: var(--muted); }
+</style>
+<main>
+  <h1>Art preview</h1>
+  <p>Every monster, foe and party look with creature art (data/art.yaml), drawn by the game's map renderer. Each pair: the art (left) and the Pixel Crawler figure it falls back to (right) when art/ isn't there. Art from art/ is local only (git-ignored).</p>
+  <div id="map"></div>
+  <h1>Party looks and portraits</h1>
+  <div class="row" id="party"></div>
+</main>
+<script src="data/bundle.js" onerror="void 0"></script>
+<script src="src/data/yaml.js"></script>
+<script src="src/data/content.js"></script>
+<script src="src/rules/config.js"></script>
+<script src="src/rules/data.js"></script>
+<script src="src/rules/items.js"></script>
+<script src="src/rules/character.js"></script>
+<script src="src/rules/conditions.js"></script>
+<script src="src/rules/terrain.js"></script>
+<script src="src/rules/magic.js"></script>
+<script src="src/rules/ritual.js"></script>
+<script src="src/rules/combat.js"></script>
+<script src="src/rules/enemies.js"></script>
+<script src="src/rules/recovery.js"></script>
+<script src="src/rules/ai.js"></script>
+<script src="src/game/rand.js"></script>
+<script src="src/game/conditions.js"></script>
+<script src="src/game/skills.js"></script>
+<script src="src/game/factions.js"></script>
+<script src="src/game/world.js"></script>
+<script src="src/game/equip.js"></script>
+<script src="src/game/economy.js"></script>
+<script src="src/game/loot.js"></script>
+<script src="src/game/explore.js"></script>
+<script src="src/game/companions.js"></script>
+<script src="src/game/battle.js"></script>
+<script src="src/game/parley.js"></script>
+<script src="src/game/town.js"></script>
+<script src="src/game/save.js"></script>
+<script src="src/game/auto.js"></script>
+<script src="src/ui/dom.js"></script>
+<script src="src/ui/dice.js"></script>
+<script src="src/ui/views/roster.js"></script>
+<script src="src/ui/views/battle.js"></script>
+<script src="src/ui/game/art.js"></script>
+<script src="src/ui/game/icons.js"></script>
+<script src="src/ui/game/sprites.js"></script>
+<script src="src/ui/game/tilemap.js"></script>
+<script src="src/ui/game/mapview.js"></script>
+<script src="src/ui/game/bits.js"></script>
+<script>
+(async function (G) {
+  await G.Content.load('data/');
+  const UI = G.UI, S = UI.Sprites;
+  const looks = [];
+  for (const [id, m] of Object.entries(G.Enemies.MONSTERS)) if (m.sprite && m.sprite.art) looks.push({ name: m.name, L: S.look({ side: 'enemy', sprite: m.sprite, name: m.name }) });
+  for (const [id, t] of Object.entries(G.Enemies.TEMPLATES)) if (t.sprite && t.sprite.art) looks.push({ name: t.name, L: S.look({ side: 'enemy', sprite: t.sprite, name: t.name }) });
+  const cols = 16, rows = Math.max(8, Math.ceil(looks.length / 4) * 3 + 2);
+  const actors = [];
+  looks.forEach((o, i) => {
+    const gx = 1 + (i % 4) * 4, gy = 2 + Math.floor(i / 4) * 3;
+    actors.push(Object.assign({ id: 'a' + i, x: gx, y: gy, label: o.name, phase: i, bar: 0.8, tag: 'enemy' }, o.L, { flip: true }));
+    actors.push({ id: 'b' + i, x: gx + 1, y: gy, kind: o.L.kind, tint: o.L.tint, size: o.L.size, phase: i, flip: true, tag: 'enemy' });
+  });
+  const scene = () => ({ w: cols, h: rows, origin: { x: 0, y: 0 }, cell: (x, y) => ({ kind: x === 0 || y === 0 || x === cols - 1 || y === rows - 1 ? 'wall' : 'floor', ch: '.' }), seen: () => true, actors, marks: [] });
+  const mv = UI.MapView.create({ cols, rows, scale: 3, scene });
+  document.getElementById('map').appendChild(mv.el);
+  UI.MapView.preload();
+  mv.start();
+  const party = document.getElementById('party');
+  for (const [v, label] of S.partyKinds()) {
+    const c = { side: 'party', name: label, look: { sprite: v, tint: 0 } };
+    const f = document.createElement('figure');
+    f.appendChild(S.figure(c, 3)); f.appendChild(S.portrait(c, 48));
+    const cap = document.createElement('figcaption'); cap.textContent = label; f.appendChild(cap);
+    party.appendChild(f);
+  }
+})(globalThis.BBB);
+</script>

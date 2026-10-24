@@ -363,7 +363,17 @@
       // (lightning goes straight through metal); every fireConPer points left cost 1 CON, the
       // rest stamina. Life withers the body: half its magnitude to CON, no armor; the dead and
       // the made (tireless) are past withering.
-      energyMitigation: { fire: 0.5, frost: 0.5, lightning: 0.5, light: 0.5, shadow: 0.5, spirit: 0 },
+      energyMitigation: { fire: 0.5, frost: 0.5, lightning: 0.5, light: 0.5, shadow: 0.5, spirit: 0, acid: 0 },
+      // PROVISIONAL (the user's spell list): acid goes past armor and eats it instead: each point of magnitude
+      // takes `armor` durability from the armor and `gear` from the shield and the weapon in hand.
+      corrode: { armor: 1, gear: 0.5 },
+      // Lightning jumps: after a bolt lands, a d10 ≤ chance × 10 sends it on to the nearest other creature within
+      // `range` (friend or foe) at `share` of the magnitude, and again from there.
+      chain: { chance: 0.5, range: 2, share: 0.5 },
+      // Raise (verb): what each noun brings back. skeleton and zombie are monsters.yaml templates; revenant copies the
+      // body (its physical attributes, gear and fighting feats) as a tireless undead. Lasts the fight; falls if
+      // the caster does.
+      raise: { skeleton: 'skeleton', zombie: 'zombie' },
       // Healing (Restore + Life). PROVISIONAL. Mends one creature: bleeding stops (not poison),
       // condMag CON back (1; 2 with Strong), stamina + staminaPerMag × magnitude stamina back (which
       // wakes the unconscious). With Wide, every living creature within a square of the target,
@@ -447,10 +457,13 @@
       // ---- Phase 2 (draft) -------------------------------------------------------------
       // Mind (WIL resists). breakOnHarm: ends when the bearer takes damage.
       calmed: { name: 'Calmed', resist: 'WIL', noAttack: true, breakOnHarm: true },
-      mesmerized: { name: 'Mesmerized', resist: 'WIL', ap: -99, breakOnHarm: true },
+      mesmerized: { name: 'Mesmerized', resist: 'WIL', ap: -99, breakOnHarm: true, noAct: true },
       enraged: { name: 'Enraged', resist: 'WIL', noGuard: true, berserk: true },
       frightened: { name: 'Frightened', resist: 'WIL', fearOf: true }, // won't close with or strike the source
       controlled: { name: 'Controlled', resist: 'WIL', control: true }, // fights for the caster
+      // PROVISIONAL (the user's spell list): Charm — the bearer takes the caster's side without the caster holding
+      // it (no concentration), but any harm breaks it at once.
+      enthralled: { name: 'Charmed', resist: 'WIL', control: true, free: true, breakOnHarm: true },
       confused: { name: 'Confused', resist: 'WIL', confused: true, noGuard: true },
       concentrating: { name: 'Concentrating', ap: -1 }, // holding a Will spell
       steadied: { name: 'Steadied', mindWard: true },
@@ -465,6 +478,13 @@
       poisoned: { name: 'Poisoned', resist: 'CON', dot: { CON: 1 }, living: true },
       antivenom: { name: 'Antivenom', immune: ['poisoned'] },
       diseased: { name: 'Diseased', resist: 'CON', attrs: { STR: -1 }, regen: -2, living: true, persist: true },
+      // PROVISIONAL (the user's spell list and magic items).
+      chilled: { name: 'Chilled', resist: 'CON', moveMult: 0.5, attrs: { SPD: -1 }, living: true }, // frost: half the squares
+      paralyzed: { name: 'Paralyzed', resist: 'CON', ap: -99, drainAP: 99, noAct: true, noGuard: true, helpless: true },
+      stunned: { name: 'Stunned', resist: 'CON', drainAP: 2, noGuard: true }, // AP lost at once; no guard this round
+      riled: { name: 'Riled', mit: { P: 1, S: 1, B: 1 }, breakOnHarm: true }, // a goading blade: until the bearer is hurt
+      unseen: { name: 'Unseen', unseen: true }, // can't be picked out beyond arm's reach; striking ends it
+      corroded: { name: 'Corroded', resist: 'CON', dot: { stamina: 2 }, living: true },
       // Mystic.
       dread: { name: 'Dread', attrs: { STR: -1, DEX: -1, SPD: -1 }, defense: -1 }, // a revenant knight's aura
       dazzled: { name: 'Dazzled', resist: 'CON', defense: -1 },
@@ -501,7 +521,10 @@
       miasma: { name: 'Miasma', perRound: { venom: 1 }, onEnter: { venom: 1 } },
       radiance: { name: 'Radiance', reveals: true, perRound: { light: 1 } },
       lightWall: { name: 'Wall of light', onEnter: { light: 3 } },
-      darkness: { name: 'Darkness', blocksSight: true },
+      // PROVISIONAL (the user's spell list): darkness hurts and drags at the feet as well as hiding.
+      darkness: { name: 'Darkness', blocksSight: true, cost: 1, perRound: { shadow: 1 } },
+      acidPool: { name: 'Acid pool', onEnter: { acid: 2 }, perRound: { acid: 1 } },
+      gathering: { name: 'Gathering spell', warn: true }, // where a Delayed spell will break
       shadowWall: { name: 'Wall of shadow', blocksSight: true, cost: 1 },
       slickFootingTN: 6, // d10 + ⌊(DEX + SPD)/4⌋ ≥ this, or fall
       climbCost: 2, // extra squares to climb out of a pit
@@ -538,6 +561,10 @@
       offhandBonus: 1, // a parrying dagger is made to catch a blade
       // PROVISIONAL (the user's call): a power blow can't be parried, only dodged or blocked.
       noParryVsPower: true,
+      // PROVISIONAL (the user's magic items: a shield that "can be used to block spells"): an ordinary shield can't
+      // block a spell bolt, only dodge it; a shield enchanted with blockSpells can. (Before: any shield stopped a
+      // fire bolt whole and took no wear from it.) true: any shield blocks bolts.
+      blockSpells: false,
       // PROVISIONAL (the user's call): a parry meets the blow's force with the parrying weapon's
       // own. Force = expected damage (STR is in it). The attacker's side: motion penalty +
       // ⌊attacker SPD / 4⌋ (the blow's quickness) +
@@ -727,6 +754,12 @@
     'Bandage: 4 AP (1 AP with Field Dressing) and uses one bandage.',
     'Long rest repairs 25% of max armor and shield durability (+25% with Field Repair).',
     'Daggers get −1 AP on thrusts and swings ("lowest AP").',
+    'Spell bolts and shields (the user\'s magic items, 2026-10): an ordinary shield can\'t block a spell bolt, only dodge it; a shield enchanted with Spellcatching can, and a weapon with parrySpells can parry one. Before, any shield stopped a fire bolt whole and took no wear from it.',
+    'Magic items (the user\'s list, 2026-10): worn things (head, neck, shoulders, cape, arms, hands, two rings, legs, boots; the chest is the armor) and enchantments carry effects (attributes, AP, ×AP on every action, regeneration, stamina, spell points, magnitude, initiative, to beat a defence, squares per move, elemental resistance, auras, retaliation, bane damage, disposition, healing per rest), weapon on-hit effects (conditions, a burning blow, sapping STR and stamina, eating armor, Riled: +n mitigation until next hurt) and powers (a spell cast with no spell points, free hand or backlash, from charges that come back each long rest). Placeholder names; numbers untested by sims.',
+    'New spell words (the user\'s list, 2026-10): Acid (past armor, eating armor, shield and the weapon in hand: 1 durability per magnitude, half to the gear), Charm (takes the caster\'s side without concentration; any harm ends it), Stillness (paralysis: no actions, no guard, blows find the gaps as on the pinned; CON resists), Veil (unseen: no foe farther than arm\'s reach can aim at you; +2 to beat a defence; striking or casting ends it), Bone (raises a skeleton). Frost now chills (half the squares per move, −1 SPD) instead of slowing; lightning bolts leap on a d10 ≤ 5 to the nearest other body within 2 at half magnitude, again from there; darkness hurts (Shadow 1 a round) and costs a square extra to enter. Delayed (modifier, areas): +3 magnitude, the area is marked for all to see and breaks at the end of the round.',
+    'Raise (verb, the user\'s list): a body within a square of the aim rises on the caster\'s side for the rest of the fight and falls when the caster does: Bone a skeleton, Life a zombie, Spirit a revenant (the body\'s physical attributes unhurt, its gear and fighting feats, tireless; +4 cost). Conjure + Life no longer raises (it was a fresh zombie for 4 rounds). Conjure + Vine summons a wolf for 4 rounds.',
+    'Companions (the user\'s idea): Familiar (magic, casting I) and Animal Companion (perception, Keen Eye I) give a creature that fights beside its owner, run by the AI, wounds kept between fights (rules.yaml game.companions). A familiar adds 2 spell points per rank while it lives; its death costs the owner 2 WIL. A dead companion is replaced after a rest in town.',
+    'Fear: a frightened creature run by the AI moves away from what frightens it while within 3 squares (before: it only could not close with or strike it). Shoves, throws and knockback stop at walls, and the squares a body is driven into count as entered (pits, runes, fire).',
     'Very light and light weapons count as "light weapons" for Light Touch and Precision.',
   ];
 

@@ -1143,7 +1143,8 @@ test('magic grammar: verbs take nouns broadly; a few pairings make nothing', () 
   assert.ok(M.combines('build', 'earth') && M.combines('build', 'vine') && M.combines('build', 'fire'));
   assert.ok(!M.combines('build', 'life'), 'no wall of life');
   assert.ok(M.combines('open', 'earth') && !M.combines('open', 'fire'), 'pits are earth');
-  assert.ok(M.combines('hex', 'life') && M.combines('bless', 'life') && M.combines('conjure', 'life'));
+  assert.ok(M.combines('hex', 'life') && M.combines('bless', 'life') && M.combines('raise', 'life') && !M.combines('conjure', 'life'));
+  assert.ok(M.combines('raise', 'bone') && M.combines('raise', 'spirit') && !M.combines('raise', 'fire'), 'Raise takes Bone, Life, Spirit');
   assert.ok(!M.combines('hex', 'wind'));
   assert.ok(!M.combines('strike', 'fire', 'wide'), 'Wide makes no sense for a bolt');
   const m = mage('M', ['fire', 'earth', 'vine', 'life']);
@@ -1216,14 +1217,14 @@ test('conjure: a fire elemental joins the caster for a few rounds; life raises t
   const el = Object.values(enc.extra || {})[0];
   assert.ok(el && el.side === m.side && el.traits.element === 'fire');
   assert.ok(enc.ids.includes(el.id) && chars[el.id] === el);
-  // Raise: no body, no spell; with a body nearby, the dead rise.
-  const r1 = await castAt(m, [f], 'conjure+life', { at: { x: 3, y: 2 } }, [10]);
+  // Raise: no body, no spell; with a body nearby, the dead rise (Raise + Life: a zombie, for the whole fight).
+  const r1 = await castAt(m, [f], 'raise+life', { at: { x: 3, y: 2 } }, [10]);
   assert.ok(!r1.enc.extra);
   const corpse = armed('Dead', 'club', { side: 'enemy' }); corpse.status.dead = true; corpse.at = { x: 3, y: 1 };
   m.spSpent = 0;
-  const r2 = await castAt(m, [f, corpse], 'conjure+life', { at: { x: 3, y: 2 } }, [10]);
+  const r2 = await castAt(m, [f, corpse], 'raise+life', { at: { x: 3, y: 2 } }, [10]);
   const z = Object.values(r2.enc.extra || {})[0];
-  assert.ok(z && z.side === m.side && corpse.raised);
+  assert.ok(z && z.side === m.side && corpse.raised && z.monster === 'zombie' && z.conjured.rounds == null);
 });
 
 test('ward of force soaks spells and missiles; ward of wind turns missiles aside', async () => {

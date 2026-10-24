@@ -3,7 +3,7 @@
 bandit:
   faction: cutthroats
   name: Bandit
-  sprite: {kind: rogue, tint: "#9a8a8a"}
+  sprite: {art: thief, kind: rogue, tint: "#9a8a8a"}
   primary: [DEX, SPD]
   weak: [INT]
   armor: [[[3, padded], [1, leather]], [[2, leather], [1, mail]], [[1, leather], [2, mail]]]
@@ -70,7 +70,7 @@ sellsword:
 brute:
   faction: cutthroats
   name: Brute
-  sprite: {kind: orc_warrior, tint: "#b0907a"}
+  sprite: {art: wolfpack-bandit, kind: orc_warrior, tint: "#b0907a"}
   primary: [STR, CON]
   weak: [INT, DEX]
   armor: [[[2, padded], [1, leather]], [[1, leather], [1, mail]], [[1, mail]]]
@@ -93,7 +93,7 @@ brute:
 duelist:
   faction: cutthroats
   name: Duelist
-  sprite: {kind: rogue, tint: "#9a7a9a"}
+  sprite: {art: swash, kind: rogue, tint: "#9a7a9a"}
   primary: [DEX, SPD]
   weak: [STR]
   armor: [[[1, null], [1, padded]], [[1, leather]], [[1, leather], [1, mail]]]

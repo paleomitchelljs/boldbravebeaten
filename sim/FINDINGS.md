@@ -1,5 +1,29 @@
 # Simulation findings
 
+## Magic items, new spells, Raise, companions; engine fixes (2026-10-24; `node tools/encounters.js --n 300`)
+
+Changes that touch every fight: shoves, throws and knockback stop at walls and drop bodies into pits on the way; an
+ordinary shield no longer blocks a spell bolt (`CONFIG.defense.blockSpells: false`); frost chills instead of slowing;
+darkness hurts; the AI flees what frightens it and can't see an unseen foe beyond arm's reach. The level-1 party, 300
+fights each, before → after (won / lost / rounds / dead per fight):
+
+| encounter | before | after |
+|---|---|---|
+| rat nest | 100 / 0 / 2.1 / 0.12 | 100 / 0 / 2.1 / 0.10 |
+| guards | 100 / 0 / 2.9 / 0.29 | 100 / 0 / 2.8 / 0.21 |
+| crew | 89 / 10 / 4.4 / 1.46 | 88 / 12 / 4.3 / 1.61 |
+| store guards | 100 / 0 / 2.2 / 0.14 | 100 / 0 / 2.3 / 0.11 |
+| skeleton squad | 0 / 100 / 3.3 / 3.94 | 1 / 99 / 3.2 / 3.92 |
+| horde | 19 / 80 / 9.8 / 2.14 | 19 / 79 / 10.0 / 2.17 |
+| revenant knight | 0 / 100 / 4.8 / 3.94 | 0 / 100 / 5.0 / 3.84 |
+| wolves | 100 / 0 / 3.4 / 0.42 | 99 / 1 / 3.5 / 0.41 |
+| troll | 92 / 7 / 4.5 / 0.25 | 92 / 7 / 4.5 / 0.25 |
+
+All within noise (a win rate's standard error at n = 300 is about 2 points). The preset party carries none of the new
+items and casts none of the new spells, so this shows the shared changes did no harm; it says nothing about the items'
+or spells' own balance. Not yet simmed: the silk sash (×0.8 AP) and a blade of speed in duels; Raise + Spirit in the
+gauntlet; companions over a multi-fight run. The full review is in `docs/REVIEW.md`.
+
 ## The user's armor research: picks, rondels, mail and heavy cuts, cuts through padding, hardened steel (2026-10-20)
 
 **The user's brief.** Adopt the first five mismatches between the rules and the user's armor report:

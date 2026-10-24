@@ -154,10 +154,13 @@
   // A conjured creature (Magic: Conjure). 'elemental': a spirit of the noun whose blows carry it,
   // tireless, stronger with the spell's magnitude. 'raise': the dead walk (a zombie).
   function makeConjured(kind, noun, mag) {
-    if (kind === 'raise') {
-      const [z] = makeMonster('zombie');
-      z.name = 'Raised dead';
-      return z;
+    // A summoned beast: a monster from monsters.yaml ({monster, name}).
+    if (kind && typeof kind === 'object' && kind.monster && MONSTERS[kind.monster]) {
+      const [b] = makeMonster(kind.monster);
+      if (kind.name) b.name = kind.name;
+      b.lootTable = null;
+      b.xp = 0;
+      return b;
     }
     if (kind !== 'elemental') return null;
     const name = (G.CONFIG.magic.words[noun] || {}).name || noun;
@@ -169,6 +172,46 @@
     c.noUnarmed = true;
     c.traits = { tireless: true, element: noun };
     c.feats = {};
+    c.stamina = C.maxStamina(c);
+    return c;
+  }
+
+  // The dead raised (Magic.raise; CONFIG.magic.raise). 'skeleton' and 'zombie' are monster templates; 'revenant'
+  // copies the body: its physical attributes (unhurt), its gear, its fighting feats and natural weapons, as a
+  // tireless undead with no mind of its own (no spells, no nouns).
+  function makeRaised(tier, body) {
+    const R = G.CONFIG.magic.raise || {};
+    let c;
+    if (tier === 'revenant') {
+      c = JSON.parse(JSON.stringify(body));
+      c.id = G.Items.uid('chr');
+      c.name = `Revenant ${body.name}`;
+      c.damage = {};
+      for (const a of G.CONFIG.attributes) c.damage[a] = 0;
+      Object.assign(c.base, { INT: 1, WIS: 3, CHA: 1, WIL: Math.max(5, c.base.WIL || 5) });
+      for (const f of Object.keys(c.feats || {})) if (G.DATA.FEATS[f] && /^magic/.test(G.DATA.FEATS[f].tree)) delete c.feats[f];
+      c.nouns = [];
+      c.spSpent = 0;
+      c.bleeds = [];
+      c.traits = Object.assign({}, c.traits || {}, { tireless: true, undead: true });
+      c.status = C.freshStatus();
+      c.trinkets = [];
+      c.companion = null;
+      c.look = null;
+      c.sprite = { art: 'shadow-knight', kind: 'skeleton_warrior', tint: '#7a7a9a' };
+      for (const w of c.weapons || []) w.id = G.Items.uid('wpn');
+      c.wield = c.weapons && c.weapons.length ? (c.weapons.find((w) => !G.Items.weaponBroken(w)) || c.weapons[0]).id : null;
+      c.sidearm = null;
+      c.offhand = null;
+    } else {
+      const key = R[tier];
+      if (!key || !MONSTERS[key]) return null;
+      [c] = makeMonster(key);
+      c.name = `Risen ${MONSTERS[key].name.toLowerCase()}`;
+    }
+    c.lootTable = null;
+    c.xp = 0;
+    c.faction = null;
     c.stamina = C.maxStamina(c);
     return c;
   }
@@ -219,5 +262,5 @@
     return [c];
   }
 
-  G.Enemies = { makeConjured, TEMPLATES, generate, makeRng, chooseFeats, MONSTERS, makeMonster };
+  G.Enemies = { makeConjured, makeRaised, TEMPLATES, generate, makeRng, chooseFeats, MONSTERS, makeMonster };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

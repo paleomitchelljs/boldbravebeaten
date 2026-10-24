@@ -1,0 +1,59 @@
+# Creature art (art/creatures/sprites, local only: art/ is git-ignored). Each sheet is two frames side by side.
+# A monster, foe template or NPC uses it with sprite: {art: <key>, ...}; its `kind` is drawn instead wherever the art
+# can't be loaded (a fresh clone, the Pages build). A party member can pick an entry with party: true.
+#   anims   which sheets exist (<key>-<anim>.png); run uses walk, attack is shown on a blow
+#   faces   which way the figure looks as drawn (the map mirrors it to face where it goes)
+#   height  how tall it stands on the map, in squares; maxWidth caps a long body (default 1.8)
+#   box     the figure's trimmed box in the idle frame [x0, y0, x1, y1] (feet at y1), measured from the sheet
+# pixellab entries are 8-direction characters (art/pixellab): idle rotations and 4-frame walks by direction.
+
+alligator: {anims: [idle, attack], frame: [150, 150], box: [0, 108, 150, 150], faces: left, height: 0.6, maxWidth: 2}
+avatar-of-fear: {anims: [idle, attack], frame: [150, 150], box: [12, 0, 138, 150], faces: right, height: 1.9}
+basilisk: {anims: [idle, attack], frame: [160, 160], box: [0, 62, 160, 160], faces: right, height: 0.9, maxWidth: 2}
+beren: {anims: [idle, attack, walk], frame: [150, 150], box: [20, 0, 130, 150], faces: right, height: 1.35, party: true}
+bone-wraith: {anims: [idle, attack], frame: [237, 228], box: [0, 22, 237, 206], faces: right, height: 1.6}
+cerenasp: {anims: [idle, attack], frame: [358, 340], box: [31, 0, 326, 339], faces: left, height: 1.7, maxWidth: 2}
+clay-golem: {anims: [idle, attack], frame: [150, 150], box: [31, 0, 119, 150], faces: right, height: 1.8}
+coatl: {anims: [idle, attack], frame: [338, 363], box: [7, 0, 330, 363], faces: right, height: 1.6, maxWidth: 2}
+dragon: {anims: [idle, attack, fly], frame: [207, 207], box: [20, 8, 186, 199], faces: left, height: 2.2, maxWidth: 2}
+dusk-bat: {anims: [idle], frame: [150, 150], box: [26, 3, 150, 138], faces: right, height: 0.8}
+ember-spirit: {anims: [idle, attack], frame: [150, 150], box: [0, 45, 111, 105], faces: left, height: 0.7}
+evil-eye: {anims: [idle, attack], frame: [77, 77], box: [1, 2, 73, 42], faces: right, height: 0.9}
+fae-drake: {anims: [idle, attack], frame: [150, 150], box: [4, 0, 145, 138], faces: right, height: 1.0}
+froglok: {anims: [idle, attack], frame: [150, 150], box: [17, 0, 133, 150], faces: right, height: 1.35, party: true}
+froglok-zombie: {anims: [idle, attack], frame: [150, 150], box: [18, 0, 132, 150], faces: left, height: 1.35}
+fungus: {anims: [idle, attack], frame: [61, 61], box: [7, 3, 45, 60], faces: right, height: 0.7}
+gargoyle: {anims: [idle, attack], frame: [68, 68], box: [11, 0, 58, 68], faces: left, height: 1.2}
+girallon: {anims: [idle, attack], frame: [150, 150], box: [0, 8, 146, 150], faces: left, height: 1.5}
+goblin: {anims: [idle, attack], frame: [146, 146], box: [28, 20, 146, 146], faces: right, height: 1.0, party: true}
+gowra: {anims: [idle, attack, walk], frame: [297, 297], box: [43, 51, 253, 245], faces: left, height: 1.8, maxWidth: 2}
+iron-golem: {anims: [idle, attack], frame: [150, 150], box: [17, 0, 133, 150], faces: right, height: 1.8}
+lich: {anims: [idle, attack, walk], frame: [150, 150], box: [8, 6, 105, 146], faces: left, height: 1.4}
+lizardfolk: {anims: [idle, attack], frame: [150, 150], box: [13, 0, 137, 150], faces: left, height: 1.45, party: true}
+minotaur: {anims: [idle, attack], frame: [77, 77], box: [11, 8, 65, 77], faces: right, height: 1.8}
+ogre: {anims: [idle, attack], frame: [77, 77], box: [14, 2, 62, 77], faces: left, height: 1.8}
+raptor: {anims: [idle, attack], frame: [160, 160], box: [0, 60, 160, 160], faces: right, height: 1.0, maxWidth: 2}
+rat: {anims: [idle, attack], frame: [77, 77], box: [1, 17, 74, 47], faces: left, height: 0.5}
+sarnak: {anims: [idle, attack], frame: [146, 146], box: [22, 53, 127, 146], faces: right, height: 1.5, party: true}
+shadow-knight: {anims: [idle, attack], frame: [150, 150], box: [6, 0, 143, 150], faces: left, height: 1.45}
+skeleton: {anims: [idle, attack], frame: [216, 207], box: [50, 8, 165, 198], faces: left, height: 1.4}
+skeleton-lizard: {anims: [idle, attack], frame: [283, 210], box: [47, 16, 236, 194], faces: right, height: 1.5, maxWidth: 2}
+slime: {anims: [idle, attack], frame: [77, 77], box: [6, 11, 68, 69], faces: right, height: 0.7}
+snake: {anims: [idle, attack], frame: [160, 160], box: [4, 32, 160, 160], faces: right, height: 0.9, maxWidth: 2}
+spawnee: {anims: [idle, attack, walk], frame: [150, 150], box: [15, 0, 135, 150], faces: right, height: 1.35, party: true}
+spellblade: {anims: [idle, attack, walk], frame: [150, 150], box: [23, 0, 127, 150], faces: right, height: 1.35, party: true}
+spider: {anims: [idle, attack], frame: [160, 160], box: [0, 59, 160, 160], faces: right, height: 0.8, maxWidth: 2}
+stone-golem: {anims: [idle, attack], frame: [150, 150], box: [21, 0, 128, 150], faces: right, height: 1.9}
+swash: {anims: [idle, attack, walk], frame: [150, 150], box: [3, 1, 147, 150], faces: right, height: 1.3, party: true}
+thief: {anims: [idle, attack], frame: [150, 150], box: [21, 0, 128, 150], faces: right, height: 1.35, party: true, portrait: true}
+turquoise: {anims: [idle, attack, walk], frame: [105, 105], box: [9, 10, 91, 105], faces: right, height: 1.2}
+wolfpack-bandit: {anims: [idle, attack], frame: [150, 150], box: [16, 0, 134, 150], faces: right, height: 1.35, party: true}
+yuan-ti: {anims: [idle, attack], frame: [150, 150], box: [10, 0, 139, 150], faces: right, height: 1.5}
+tevax:
+  type: pixellab
+  dir: art/pixellab/Tevax_Thaukori/Idle
+  name: Scaled warrior
+  size: 64
+  box: [8, 1, 59, 63]
+  height: 1.4
+  party: true

@@ -29,6 +29,37 @@ club:
   motions: [swing, power]
   rarity: common
   notes: "Cheapest; common starter."
+staff:
+  phys: {mass: 1.8, length: 1.8, head: {mass: 0.5}}
+  name: Staff
+  hands: 2
+  weight: medium
+  reach: {swing: 2}
+  reachName: "swing 2"
+  closeOK: true
+  material: wood
+  durability: 70
+  fragility: 1.0
+  faces: {head: [0, 0, 4]}
+  motions: [twoHanded]
+  rarity: common
+  notes: "A walking staff: reach and a free conscience. A caster's focus as often as a weapon."
+shortsword:
+  phys: {mass: 0.9, length: 0.75, point: {depth: 20, width: 4}, edge: 1, hilt: true}
+  name: Short sword
+  hands: 1
+  weight: light
+  reach: {swing: 1, thrust: 1}
+  reachName: "swing 1, thrust 1"
+  closeOK: true
+  material: steel
+  durability: 80
+  fragility: 1.0
+  faces: {point: [4, 0, 0], edge: [0, 5, 1], hilt: [0, 0, 4]}
+  motions: [thrust, swing]
+  sword: true
+  rarity: common
+  notes: "Short enough to work in a clinch; reaches no farther than a dagger."
 spikedMace:
   phys: {mass: 1.5, length: 0.7, head: {mass: 1, spikes: {depth: 6, width: 1.5}}}
   name: Spiked mace
