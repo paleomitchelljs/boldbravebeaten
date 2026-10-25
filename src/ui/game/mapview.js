@@ -212,6 +212,8 @@
       if (sheet) view.fx.push({ k: 'flash', id: to, sheet, t0: t0 + 320, dur: 260 });
     };
     view.shudder = (id, delay) => view.fx.push({ k: 'shudder', id, t0: clock() + (delay || 0), dur: 300 });
+    // A hit: the figure washes red and fades back (longer for a wound).
+    view.hurt = (id, delay, wound) => view.fx.push({ k: 'hurt', id, t0: clock() + (delay || 0), dur: wound ? 520 : 360 });
     const scene = () => opts.scene();
 
     function cellAt(ev) {
@@ -227,10 +229,13 @@
       if (view.hover && view.hover.x === c.x && view.hover.y === c.y) return;
       view.hover = c;
       const sc = scene();
-      canvas.title = sc && sc.describe ? (sc.describe(c.x, c.y) || '') : '';
+      const text = sc && sc.describe ? (sc.describe(c.x, c.y) || '') : '';
+      // The game's hover card where it is loaded (at the pointer, at once); else the browser's slow title.
+      if (UI.showHover) { if (text) UI.showHover(canvas, text, { x: ev.clientX, y: ev.clientY - 14 }); else UI.hideHover(); }
+      else canvas.title = text;
       if (opts.onHover) opts.onHover(c.x, c.y);
     });
-    canvas.addEventListener('mouseleave', () => { view.hover = null; });
+    canvas.addEventListener('mouseleave', () => { view.hover = null; if (UI.hideHover) UI.hideHover(); });
 
     // Move the camera and the actors toward where the scene says they are. Returns true while anything moves.
     function advance(sc, dt) {
@@ -505,6 +510,15 @@
       const art = a.art && Sprites.drawArt(ctx, a.art, lunging ? 'attack' : anim, frame, x, y, size, { flip: v.flip, tint: a.artTint, alpha: a.alpha, artScale: a.artScale, rot, shadow: !a.down });
       if (art) a = Object.assign({}, a, { size: a.artSize || a.size });
       const ok = art || Sprites.draw(ctx, a.kind, anim, frame, x, y, SS, { flip: v.flip, tint: a.tint, alpha: a.alpha, size: a.size || 1, rot, shadow: !a.down });
+      // A hit: the same figure again, washed red and added on top (it glows), fading.
+      const now = clock(), hit = view.fx.find((f) => f.k === 'hurt' && f.id === a.id && now >= f.t0 && now < f.t0 + f.dur);
+      if (hit && ok) {
+        const fade = (1 - (now - hit.t0) / hit.dur) * 0.85 * (a.alpha == null ? 1 : a.alpha);
+        ctx.save(); ctx.globalCompositeOperation = 'lighter';
+        if (art) Sprites.drawArt(ctx, a.art, lunging ? 'attack' : anim, frame, x, y, size, { flip: v.flip, tint: '#ff2a1a', alpha: fade, artScale: a.artScale, rot });
+        else Sprites.draw(ctx, a.kind, anim, frame, x, y, SS, { flip: v.flip, tint: '#ff2a1a', alpha: fade, size: a.size || 1, rot });
+        ctx.restore();
+      }
       if (!ok) { ctx.fillStyle = a.tag === 'enemy' ? '#c0504a' : '#5aa0d0'; ctx.fillRect(x - 5 * S, y - 20 * S, 10 * S, 20 * S); }
       if (a.bar && !a.down) {
         const w = 16 * S * (a.size ? Math.max(0.75, Math.min(1.2, a.size)) : 1), bx = x - w / 2, by = y - 31 * SS * (a.size || 1) - 2 * S;

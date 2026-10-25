@@ -63,12 +63,13 @@ option, optgroup { background: #0e151a; color: var(--ink); }
   font: italic 700 11px/1 var(--font-body); background: #0e151a; cursor: help; padding: 0; min-height: 0; text-transform: none; box-shadow: none;
 }
 .tip:hover, .tip:focus, .info-btn:hover { color: var(--brass); border-color: var(--brass); }
-.tip::after {
-  content: attr(data-tip); position: absolute; z-index: 80; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%); width: max-content; max-width: min(280px, 70vw);
-  background: #05090c; color: var(--ink); border: var(--px) solid var(--brass); padding: 6px 9px; font: 400 0.84rem/1.35 var(--font-body); font-style: normal; text-align: left; white-space: normal;
-  pointer-events: none; opacity: 0; visibility: hidden; transition: opacity 0.12s;
-}
-.tip:hover::after, .tip:focus::after { opacity: 1; visibility: visible; }
+/* The one hover card (UI.showHover): every (i), the map's figures. On the body, fixed, so no pane clips it. */
+.hovercard { position: fixed; z-index: 1000; display: none; left: 0; top: 0; width: max-content; max-width: min(300px, 80vw); pointer-events: none;
+  background: #05090c; color: var(--ink); border: var(--px) solid var(--brass); padding: 6px 9px; font: 400 0.84rem/1.4 var(--font-body); white-space: pre-line; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6); }
+.hovercard.show { display: block; }
+.hovercard b { display: block; font-family: var(--font-ui); margin-bottom: 3px; color: var(--brass); }
+.hovercard p { margin: 0 0 4px; } .hovercard p:last-child { margin: 0; }
+.hovercard .facts { margin: 2px 0 6px; }
 .tip-gap { display: inline-block; width: 17px; flex: 0 0 auto; }
 
 /* ---- Top bar ---- */
@@ -86,8 +87,9 @@ canvas.mapcanvas { display: block; width: auto; max-width: 100%; height: auto; m
 .dock-member { position: relative; width: 52px; padding: 3px; display: flex; flex-direction: column; gap: 3px; align-items: center; background: rgba(10, 15, 19, 0.82); }
 .dock-member.down { opacity: 0.5; filter: grayscale(0.8); }
 .dock-member .bar { width: 100%; height: 5px; }
+.dock-member canvas.portrait, .switcher canvas.portrait { width: 100%; }
 .dock-hurt { position: absolute; right: 1px; top: 1px; background: var(--blood); color: #fff; font: 700 0.62rem var(--font-ui); padding: 0 3px; }
-canvas.portrait { width: 100%; height: auto; image-rendering: pixelated; background: radial-gradient(circle at 50% 40%, #2c3d48, #131c22); border: 1px solid var(--edge); display: block; flex: 0 0 auto; }
+canvas.portrait { width: auto; max-width: 100%; height: auto; image-rendering: pixelated; background: radial-gradient(circle at 50% 40%, #2c3d48, #131c22); border: 1px solid var(--edge); display: block; flex: 0 0 auto; }
 .toolbar { position: absolute; right: 8px; top: 8px; display: flex; flex-direction: column; gap: 6px; z-index: 3; }
 .toolbar .ibtn { background: rgba(10, 15, 19, 0.82); }
 .toolbar .ibtn.on { background: var(--accent-soft); }
@@ -95,7 +97,7 @@ canvas.portrait { width: 100%; height: auto; image-rendering: pixelated; backgro
 /* The log sits under the map, inside the stage's frame, so it never covers a square. width 0 + min-width 100%:
    as wide as the map, and a long line can't widen the stage. */
 .logbox { position: relative; z-index: 3; width: 0; min-width: 100%; padding: 4px 9px; background: #060a0d; border-top: var(--px) solid var(--edge); border-radius: 0; font-size: 0.9rem; height: calc(2.6em + 10px); overflow: hidden; cursor: pointer; display: flex; flex-direction: column; justify-content: flex-end; }
-.battle-screen .logbox { height: calc(3.9em + 10px); }
+.battle-screen .logbox { height: calc(2.6em + 10px); }
 .logbox.open, .battle-screen .logbox.open { height: auto; max-height: 16em; overflow-y: auto; justify-content: flex-start; }
 .logbox p { margin: 0; line-height: 1.3; }
 .logbox .l { color: #b8c7c9; }
@@ -103,7 +105,7 @@ canvas.portrait { width: 100%; height: auto; image-rendering: pixelated; backgro
 .logbox:not(.open) p:not(:last-child) { opacity: 0.6; }
 .flavor-strip { position: absolute; left: 8px; right: 56px; top: 8px; margin-left: 66px; z-index: 2; background: rgba(6, 10, 13, 0.8); padding: 4px 9px; font-style: italic; font-size: 0.9rem; color: #c9d3d2; border: var(--px) solid var(--edge); pointer-events: none; }
 
-.battle-screen canvas.mapcanvas { max-height: calc(100vh - 260px); }
+.battle-screen canvas.mapcanvas { max-height: calc(100vh - 170px); }
 .mapfull canvas.mapcanvas { max-height: 70vh; }
 
 /* ---- Cards over the map ---- */
@@ -125,25 +127,66 @@ canvas.portrait { width: 100%; height: auto; image-rendering: pixelated; backgro
 .declwrap { position: relative; }
 .declpop { position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; width: min(340px, 86vw); background: var(--surface); border: var(--px) solid var(--brass); padding: 8px; display: flex; flex-direction: column; gap: 4px; font-size: 0.88rem; }
 .decl { display: flex; gap: 8px; } .decl .p { color: var(--brass); font-family: var(--font-ui); } .decl.hidden { opacity: 0.55; font-style: italic; } .decl.done { opacity: 0.5; text-decoration: line-through; }
-.battle-screen .cmd { flex-direction: row; margin: 8px auto 0; width: fit-content; min-width: min(100%, 720px); max-width: 100%; padding: 8px 10px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; border-top: var(--px) solid var(--edge); }
-.battle-screen .cmd .who { font-size: 1.05rem; font-family: var(--font-ui); }
-.battle-screen .cmd-head { flex: 1 1 100%; align-items: center; gap: 10px; }
-.battle-screen .cmd-head .stack { flex-direction: row; align-items: baseline; gap: 8px; }
-.battle-screen .cmd-head .stack:last-child { margin-left: auto; align-items: center; }
-.battle-screen .cmd-row { display: contents; }
-.battle-screen .pick { flex-direction: row; align-items: center; gap: 6px; flex: 0 1 auto; }
-.battle-screen .pick.grow { flex: 1 1 190px; }
-.battle-screen .pick .label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-.battle-screen .pick select { padding-block: 5px; font-weight: 400; min-width: 110px; width: 100%; }
-.battle-screen .spell-pick { display: contents; }
-.battle-screen .cmd-go { display: flex; gap: 6px; align-items: center; }
-.battle-screen .cmd-go > .primary { padding-block: 6px; display: inline-flex; gap: 10px; }
-.battle-screen .cmd-foot { margin-left: auto; display: flex; gap: 6px; align-items: center; flex-wrap: nowrap; }
-.battle-screen .cmd-foot .end { padding-block: 6px; flex: 0 0 auto; }
-.battle-screen .tap-hint { padding: 5px 10px; border: 2px dashed var(--brass); color: var(--brass); font-family: var(--font-ui); font-size: 0.88rem; }
+/* The map on the left, the command pane on the right; on a narrow screen the pane sits under the map, stuck to the bottom. */
+.battle-body { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 12px; align-items: start; }
+.battle-screen.over .battle-body { grid-template-columns: minmax(0, 1fr); }
+.battle-main { min-width: 0; }
+.battle-side { position: sticky; top: 8px; min-width: 0; }
+.battle-screen .gamebar { margin-bottom: 4px; padding-bottom: 4px; }
+.battle-screen .initbar { margin-bottom: 6px; }
+.battle-screen .cmd { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 10px; width: auto; max-height: calc(100vh - 80px); border-top: var(--px) solid var(--edge); }
+.battle-screen .cmd.waiting { opacity: 0.92; }
+.battle-screen .cmd.waiting.enemy { border-color: #4a2320; }
+.battle-screen .cmd .who { font-size: 1.05rem; font-family: var(--font-ui); text-align: left; }
+.battle-screen .cmd-head { display: flex; gap: 8px; align-items: center; }
+.battle-screen .cmd-face { padding: 0; width: 44px; flex: 0 0 auto; background: none; box-shadow: none; }
+.battle-screen .cmd-face canvas.portrait { width: 100%; }
+.battle-screen .cmd-id { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.battle-screen .cmd-id .who { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.battle-screen .cmd-stats { display: flex; align-items: center; gap: 6px; } .battle-screen .cmd-stats .bar { flex: 1 1 auto; }
+.battle-screen .cmd-ap { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex: 0 0 auto; }
+.battle-screen .cmd-ap .num { font-size: 0.95rem; color: var(--brass); }
+.battle-screen .ap-meter { flex-wrap: wrap; justify-content: flex-end; max-width: 112px; gap: 2px; }
 .battle-screen .ap-meter i { width: 11px; height: 11px; border-radius: 0; }
+.ap-meter i.just { animation: pip-spent 0.9s steps(6) forwards; }
+@keyframes pip-spent { 0% { background: #fff4c2; box-shadow: 0 0 6px #ffd166; transform: translateY(-2px); } 60% { background: var(--brass); box-shadow: 0 0 4px #ffd166; transform: none; } 100% { box-shadow: none; } }
+.cmd-tabs { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 3px; margin-top: 8px; }
+.cmd-tab { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 2px 4px; font-size: 0.66rem; color: var(--muted); min-width: 0; }
+.cmd-tab span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmd-tab.on { background: var(--accent-soft); color: var(--accent); box-shadow: inset var(--px) var(--px) 0 #0e151a; border-bottom-color: var(--accent); }
+.cmd-tab.dim:not(.on) { opacity: 0.45; }
+.battle-screen .cmd-body { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; min-height: 0; flex: 1 1 auto; }
+.battle-screen .pick, .battle-screen .cmd-preview { display: grid; grid-template-columns: 44px minmax(0, 1fr) 17px; align-items: center; gap: 6px; }
+.battle-screen .pick .label, .battle-screen .cmd-preview .label { font-size: 0.6rem; }
+.battle-screen .pick select { padding-block: 5px; font-weight: 400; min-width: 0; width: 100%; }
+.battle-screen .spell-pick { display: flex; flex-direction: column; gap: 6px; }
+.battle-screen .cmd-preview { font-size: 0.88rem; padding: 4px 0; }
+.battle-screen .cmd-preview > span:nth-child(2) { color: #ffb3a8; }
+.battle-screen .cmd-preview.nil > span:nth-child(2) { color: var(--muted); }
+.battle-screen .cmd-foot { display: flex; flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 6px; margin-top: auto; padding-top: 8px; border-top: 2px solid var(--edge); }
+.battle-screen .cmd-go { display: flex; min-width: 0; }
+.battle-screen .cmd-go > .primary { flex: 1 1 auto; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 9px 12px; font-size: 1rem; text-align: left; min-width: 0; }
+.battle-screen .cmd-go > .primary > span:first-child { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.battle-screen .cmd-end { display: flex; gap: 6px; align-items: center; }
+.battle-screen .cmd-end .end { flex: 1 1 auto; min-width: 0; padding-block: 6px; font-weight: 400; }
+.battle-screen .tap-hint { flex: 1 1 auto; text-align: center; padding: 8px 10px; border: 2px dashed var(--brass); color: var(--brass); font-family: var(--font-ui); font-size: 0.88rem; animation: hint-pulse 1.6s ease-in-out infinite; }
+@keyframes hint-pulse { 50% { border-color: rgba(217, 176, 85, 0.35); } }
 .battle-screen .info-btn { width: 17px; min-height: 17px; }
 .battle-screen .badge { padding: 0 7px; font-size: 0.78rem; }
+/* A new round or turn: a band across the map that slides in and fades. */
+.turn-banner { position: absolute; z-index: 5; left: 0; right: 0; top: 36%; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 0 12px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(5, 9, 12, 0.88) 20%, rgba(5, 9, 12, 0.88) 80%, transparent); animation: banner 1.3s ease-out forwards; }
+.turn-banner .tb-round { font: 0.8rem var(--font-ui); letter-spacing: 0.2em; color: var(--brass); text-transform: uppercase; }
+.turn-banner .tb-who { font: 1.6rem var(--font-ui); color: #fff; text-shadow: 0 2px 0 #000; }
+.turn-banner .tb-sub { font: 0.75rem var(--font-ui); letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase; }
+.turn-banner.party .tb-who { color: #bfe0ff; } .turn-banner.enemy .tb-who { color: #ffb3a8; }
+@keyframes banner { 0% { opacity: 0; transform: translateX(-24px); } 14% { opacity: 1; transform: none; } 78% { opacity: 1; } 100% { opacity: 0; transform: translateX(16px); } }
+@media (max-width: 1000px) {
+  .battle-body { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .battle-side { position: sticky; top: auto; bottom: 0; z-index: 10; }
+  .battle-screen .cmd { max-height: 46vh; }
+  .battle-screen canvas.mapcanvas { max-height: calc(100vh - 420px); }
+}
 button.linkish { color: var(--ink); text-decoration: none; background: none; box-shadow: none; border: 0; padding: 0; font-family: var(--font-ui); cursor: pointer; }
 button.linkish:hover:not(:disabled) { color: var(--brass); background: none; }
 
@@ -212,8 +255,6 @@ button.step { padding: 2px 4px; min-height: 0; display: inline-grid; place-items
   .attrs { grid-template-columns: repeat(4, 1fr); }
   .sheet-head { flex-direction: column; align-items: stretch; }
   .tiles { grid-template-columns: repeat(4, 1fr); }
-  .battle-screen .cmd-foot { margin-left: 0; }
-  .battle-screen .pick select { min-width: 0; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 

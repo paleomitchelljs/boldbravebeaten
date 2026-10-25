@@ -285,10 +285,13 @@
   // Under the map: the name, a type dropdown (Martial, Magic, Move, Other), the action
   // dropdown(s), a target and Declare. Numbers and rules sit behind ⓘ buttons and pop-ups.
   // One pip per AP on the sheet; a part-spent AP shows as a half pip.
-  function apMeter(pool, left) {
+  function apMeter(pool, left, flash, now) {
     const D = G.CONFIG.apDisplay || 1, P = pool / D, L = left / D;
     const out = [];
-    for (let i = 0; i < Math.ceil(P - 1e-9); i++) out.push(h('i', { class: L >= i + 1 ? '' : L > i ? 'part' : 'spent' }));
+    for (let i = 0; i < Math.ceil(P - 1e-9); i++) {
+      const just = flash && i + 1 > flash.to / D + 1e-9 && i < flash.from / D - 1e-9;
+      out.push(h('i', { class: (L >= i + 1 ? '' : L > i ? 'part' : 'spent') + (just ? ' just' : ''), style: just ? { animationDelay: `-${now - flash.at}ms` } : null }));
+    }
     return h('span', { class: 'ap-meter', 'aria-label': `${C.fmtAP(left)} of ${C.fmtAP(pool)} AP left this round` }, out);
   }
 
@@ -313,7 +316,9 @@
     document.addEventListener('keydown', escClose);
   }
 
+  // The (i): hover for the details where the game's hover card is loaded (UI.tip); the GM table opens a pop-up.
   function infoButton(title, body) {
+    if (UI.tip) return UI.tip(() => [h('b', null, title), body()], `About ${title}`);
     return h('button', { class: 'info-btn', type: 'button', 'aria-label': `About ${title}`, title: 'Details', onclick: (e) => { e.stopPropagation(); openInfo(title, body()); } }, 'i');
   }
 
@@ -362,7 +367,7 @@
   function commandModel(app, enc, legal, c) {
     const chars = app.state.characters;
     const why = (o) => o.why || (o.affordable ? null : 'Not enough AP');
-    const martial = [], magic = [], other = [];
+    const martial = [], maneuver = [], magic = [], other = [];
     for (const o of legal.attacks) {
       const e = { key: 'a:' + C.optionKey(o), option: o, ap: o.ap, stamina: o.stamina, sp: o.spCost, affordable: o.affordable, why: why(o) };
       if (o.spell) magic.push(Object.assign(e, { kind: 'strike', label: o.label, targets: sortTargets(o.targets, chars, c) }));
@@ -374,7 +379,7 @@
     for (const m of legal.maneuvers) {
       const e = { key: 'm:' + m.type, kind: 'maneuver', type: m.type, label: D.ACTIONS[m.type].name, ap: m.ap, stamina: m.stamina, affordable: m.affordable, why: m.affordable ? null : m.targets.some((t) => t.inReach) ? 'Not enough AP' : 'No one in reach', targets: sortTargets(m.targets, chars, c) };
       if (m.type === 'bait' || m.type === 'readIntent') other.push(Object.assign(e, { group: 'Wits' }));
-      else martial.push(Object.assign(e, { group: 'Maneuvers' }));
+      else maneuver.push(Object.assign(e, { group: 'Maneuvers' }));
     }
     for (const o of legal.spells || []) {
       magic.push({ key: 's:' + o.spellKey, kind: 'cast', option: o, label: o.label, ap: o.ap, stamina: 0, sp: o.spCost, affordable: o.affordable, why: why(o),
@@ -384,12 +389,15 @@
       label: o.name.replace(/^Wind up: /, '') + (o.note ? ` (${o.note})` : ''), ap: o.ap, stamina: o.stamina, affordable: o.affordable, why: why(o),
       targets: o.targets ? sortTargets(o.targets, chars, c, true) : null }));
     const move = legal.move ? { key: 'move', kind: 'move', label: 'Move', ap: C.moveCost(c, 1), stamina: legal.move.stamina, affordable: true, move: legal.move } : null;
+    // The tabs: [key, label, icon, any affordable].
     const types = [];
-    if (martial.length) types.push(['martial', 'Martial']);
-    if (magic.length) types.push(['magic', 'Magic']);
-    if (move) types.push(['move', 'Move']);
-    if (other.length) types.push(['other', 'Other']);
-    return { martial, magic, other, move, types };
+    const ok = (list) => list.some((e) => e.affordable);
+    if (martial.length) types.push(['martial', 'Attack', 'sword', ok(martial)]);
+    if (maneuver.length) types.push(['maneuver', 'Maneuver', 'hand', ok(maneuver)]);
+    if (magic.length) types.push(['magic', 'Magic', 'star', ok(magic)]);
+    if (move) types.push(['move', 'Move', 'boot', legal.move.maxSquares > 0]);
+    if (other.length) types.push(['other', 'Other', 'dots', ok(other)]);
+    return { martial, maneuver, magic, other, move, types };
   }
 
   // Keep the chosen type and action valid, and set the map's highlighting to match: targets to
@@ -516,86 +524,111 @@
     return declare(app, enc, e.targets ? { actor: id, type: e.type, target: t } : { actor: id, type: e.type, option: e.option });
   }
 
+  // The pane's head: who, their AP as pips (the ones just spent flash), stamina and SP.
+  function paneHead(app, enc, id, legal) {
+    const chars = app.state.characters;
+    const c = chars[id];
+    const ui = bui(app);
+    const pool = legal ? legal.pool : null, left = legal ? legal.ap : enc.ap[id] != null ? Combat.apLeft(enc, id) : null;
+    // Pips spent since the last look flash for a moment (the flash outlives re-renders: its delay is set back by the time gone).
+    const now = Date.now();
+    const seen = ui.apSeen;
+    if (left != null && seen && seen.id === id && seen.round === enc.round && left < seen.ap - 1e-9) ui.apFlash = { id, from: seen.ap, to: left, at: now };
+    if (left != null) ui.apSeen = { id, ap: left, round: enc.round };
+    const fl = ui.apFlash && ui.apFlash.id === id && now - ui.apFlash.at < 900 ? ui.apFlash : null;
+    const sp = G.Magic && G.Magic.maxSP(c) ? G.Magic.availableSP(c) : null;
+    const max = C.maxStamina(c);
+    return h('div', { class: 'cmd-head' },
+      UI.Sprites ? h('button', { class: 'cmd-face', title: 'Character sheet', 'aria-label': `${c.name}: character sheet`, onclick: () => openSheet(app, enc, id) }, UI.Sprites.portrait(c, 40)) : null,
+      h('div', { class: 'cmd-id' },
+        h('button', { class: 'who linkish', onclick: () => openSheet(app, enc, id), title: 'Character sheet' }, c.name),
+        h('div', { class: 'cmd-stats', title: `Stamina ${c.stamina}/${max}${sp != null ? ` · ${sp} SP` : ''}` }, bar(c.stamina, max), h('span', { class: 'small num muted' }, `${c.stamina}${sp != null ? ` · ${sp} SP` : ''}`))),
+      pool != null ? h('div', { class: 'cmd-ap', title: `${C.fmtAP(left)} of ${C.fmtAP(pool)} AP left this round` }, apMeter(pool, left, fl, now), h('span', { class: 'num' }, C.fmtAP(left))) : null);
+  }
+
+  function pane(cls, head, body, foot) {
+    return h('section', { class: 'panel cmd' + (cls ? ' ' + cls : '') }, head, h('div', { class: 'cmd-body' }, body), foot ? h('div', { class: 'cmd-foot' }, foot) : null);
+  }
+
+  // What the chosen target would take if the blow lands, for the pane and the map's hover card.
+  function strikePreview(enc, chars, id, entry, targetId) {
+    if (!entry || entry.kind !== 'strike' || !entry.option || entry.option.spell || !targetId) return null;
+    return blowPreview(enc, chars, { decl: { actor: id, target: targetId, type: 'strike', option: entry.option } });
+  }
+
   function declarePanel(app, enc, legal, sync) {
     const chars = app.state.characters;
     const ui = bui(app);
     const id = Combat.currentActor(enc);
     const c = chars[id];
-    const say = (d) => Combat.describeDecl(enc, chars, d, id).text;
-    const badges = [];
-    const sp = G.Magic && G.Magic.maxSP(c) ? G.Magic.availableSP(c) : null;
-    const head = h('div', { class: 'cmd-head' },
-      h('div', { class: 'stack tight' },
-        h('span', { class: 'label' }, `Round ${enc.round}`),
-        h('button', { class: 'who linkish', onclick: () => openSheet(app, enc, id), title: 'Character sheet' }, c.name)),
-      h('div', { class: 'stack tight', style: { alignItems: 'flex-end' } },
-        h('div', { class: 'ap-line' }, badges, apMeter(legal.pool, legal.ap)),
-        h('span', { class: 'small num muted' }, `${C.fmtAP(legal.ap)}/${C.fmtAP(legal.pool)} AP · ${c.stamina} st${sp != null ? ` · ${sp} SP` : ''}`)));
-
-    if (aiControlled(app, c)) return h('section', { class: 'panel cmd' }, head, h('p', { class: 'muted' }, 'Deciding…'));
+    // A computer-run foe's AP stays hidden, as everywhere else.
+    if (aiControlled(app, c)) return pane('waiting ' + (c.side === 'party' ? 'party' : 'enemy'), paneHead(app, enc, id, c.side === 'party' || app.state.settings.gmView ? legal : null), h('p', { class: 'muted small' }, c.side === 'party' ? 'Deciding…' : 'Their turn. You will be asked if one of yours can react.'));
+    const head = paneHead(app, enc, id, legal);
 
     const { model, entry } = sync;
     const cmd = ui.cmd;
     const rerender = () => app.render();
-    const typeSel = model.types.length
-      ? h('label', { class: 'pick' }, h('span', { class: 'label' }, 'Type'), UI.select('cmd-type', cmd.type, model.types, (v) => { cmd.type = v; cmd.act = null; cmd.moveTo = null; cmd.castAt = null; rerender(); }))
-      : null;
-    let actSel = null;
-    if (cmd.type === 'magic') actSel = magicPicker(app, model, cmd);
-    else if (cmd.type === 'martial' || cmd.type === 'other') {
+    const tabs = model.types.length > 1 ? h('div', { class: 'cmd-tabs', role: 'tablist' }, model.types.map(([k, label, ic, can], i) =>
+      h('button', { class: 'cmd-tab' + (cmd.type === k ? ' on' : '') + (can ? '' : ' dim'), role: 'tab', 'aria-selected': cmd.type === k ? 'true' : 'false', title: `${label} (${i + 1})`,
+        onclick: () => { cmd.type = k; cmd.act = null; cmd.moveTo = null; cmd.castAt = null; rerender(); } },
+      UI.icon ? UI.icon(ic, 16) : null, h('span', null, label)))) : null;
+    const rows = [];
+    const field = (label, el, extra) => h('label', { class: 'pick' }, h('span', { class: 'label' }, label), el, extra || null);
+    const info = entry ? infoButton(entry.label, () => entryInfo(app, enc, c, entry)) : null;
+    if (cmd.type === 'magic') rows.push(magicPicker(app, model, cmd));
+    else if (cmd.type && cmd.type !== 'move') {
       const list = model[cmd.type];
-      const groups = [...new Set(list.map((e) => e.group))].map((g) => [g, list.filter((e) => e.group === g).map((e) => [e.key, e.label + (e.affordable ? '' : ` — ${e.why}`), !e.affordable])]);
-      actSel = h('label', { class: 'pick grow' }, h('span', { class: 'label' }, 'Action'), selectGroups('cmd-act', cmd.act, groups, (v) => { cmd.act = v; cmd.castAt = null; rerender(); }));
+      const groups = [...new Set(list.map((e) => e.group))].map((g) => [list.length > 4 && g ? g : null, list.filter((e) => e.group === g).map((e) => [e.key, `${e.label} — ${e.affordable ? C.fmtAP(e.ap) + ' AP' : e.why}`, !e.affordable])]);
+      rows.push(field('Action', selectGroups('cmd-act', cmd.act, groups, (v) => { cmd.act = v; cmd.castAt = null; rerender(); }), info));
     }
     // What the action is aimed at.
-    let aim = null;
+    let target = null;
     if (entry && entry.targets) {
-      aim = h('label', { class: 'pick grow' }, h('span', { class: 'label' }, 'Target'),
-        entry.targets.length
-          ? UI.select('cmd-target', cmd.target || '', (cmd.target ? [] : [['', '— choose a target —']]).concat(entry.targets.map((t) => [t.id, `${chars[t.id].name}${t.distance != null ? ` · ${t.distance} sq` : ''}${t.inReach ? '' : t.tooClose ? ' (too close)' : ' (out of reach)'}`])), (v) => { cmd.target = v || null; rerender(); })
-          : h('span', { class: 'muted small' }, 'No one'));
+      target = entry.targets.find((t) => t.id === cmd.target) || null;
+      rows.push(field('Target', entry.targets.length
+        ? UI.select('cmd-target', cmd.target || '', (cmd.target ? [] : [['', 'Choose a target…']]).concat(entry.targets.map((t) => [t.id, `${chars[t.id].name}${t.distance != null ? ` · ${t.distance} sq` : ''}${t.inReach ? '' : t.tooClose ? ' · too close' : ' · out of reach'}`])), (v) => { cmd.target = v || null; rerender(); })
+        : h('span', { class: 'muted small' }, 'No one in sight')));
       // Where to aim it (armor by location): the expected-best place by default.
       const ac = aimChoices(enc, chars, id, entry, cmd.target);
       if (ac) {
         if (!ac.rows.some((r) => r[0] === cmd.location)) cmd.location = 'best';
-        aim = h('div', { class: 'stack tight grow' }, aim, h('label', { class: 'pick grow' }, h('span', { class: 'label' }, 'Location'),
-          UI.select('cmd-location', cmd.location, ac.rows, (v) => { cmd.location = v; rerender(); })));
+        rows.push(field('Aim', UI.select('cmd-location', cmd.location, ac.rows, (v) => { cmd.location = v; rerender(); })));
       }
+      const prev = strikePreview(enc, chars, id, entry, cmd.target);
+      if (prev) rows.push(h('div', { class: 'cmd-preview' + (prev.wound || prev.stamina ? '' : ' nil') }, h('span', { class: 'label', title: 'If it lands, through their armor' }, 'On hit'), h('span', null, prev.text)));
     } else if (entry && (entry.kind === 'guard' || entry.kind === 'ready')) {
       const vs = legal.guardAgainst.includes(cmd.vs) ? cmd.vs : '';
-      aim = h('label', { class: 'pick grow' }, h('span', { class: 'label' }, 'Against'),
-        UI.select('cmd-vs', vs, [['', 'The next attack']].concat(legal.guardAgainst.map((o) => [o, chars[o].name])), (v) => { cmd.vs = v; rerender(); }));
+      rows.push(field('Against', UI.select('cmd-vs', vs, [['', 'The next attack']].concat(legal.guardAgainst.map((o) => [o, chars[o].name])), (v) => { cmd.vs = v; rerender(); })));
     }
+    if (entry && cmd.type === 'move') rows.push(h('div', { class: 'cmd-preview' }, h('span', { class: 'label' }, 'Move'), h('span', null, `up to ${entry.move.maxSquares} sq`), info));
+    else if (entry && cmd.type === 'magic') rows.push(h('div', { class: 'cmd-preview' }, h('span', { class: 'label' }, 'Cost'), h('span', null, costText(entry.ap, entry.stamina, entry.sp)), info));
+
+    // The button that does it, and End turn: always at the foot of the pane.
     let go = null;
     if (entry) {
       const tapOnly = entry.kind === 'move' || entry.square;
-      const target = entry.targets ? entry.targets.find((t) => t.id === cmd.target) : null;
       const blocked = !entry.affordable || (entry.targets && !target);
       const chosen = entry.kind === 'move' ? cmd.moveTo : entry.square ? cmd.castAt : null;
       const reachAP = chosen && entry.kind === 'move' && app.ui.lastReach ? app.ui.lastReach[chosen.x + ',' + chosen.y] : null;
-      go = h('div', { class: 'cmd-go' },
-        chosen
-          ? h('button', { class: 'primary', onclick: () => declare(app, enc, entry.kind === 'move' ? { actor: id, type: 'move', to: chosen } : { actor: id, type: 'cast', option: entry.option, at: chosen }) },
-            entry.kind === 'move' ? 'Move here' : `${entry.label.split(' · ')[0]} here`, h('span', { class: 'cost' }, entry.kind === 'move' ? (reachAP != null ? `${C.fmtAP(reachAP)} AP` : '') : costText(entry.ap, entry.stamina, entry.sp)))
-          : tapOnly
-          ? h('span', { class: 'tap-hint' }, entry.kind === 'move' ? `Click a square · up to ${entry.move.maxSquares}` : 'Click a square on the map')
-          : entry.targets && entry.targets.length && !target && app.hooks && app.hooks.choose
-          ? h('span', { class: 'tap-hint' }, 'Click a target on the map')
-          : h('button', { class: 'primary', disabled: blocked, title: entry.why || '', onclick: () => declareEntry(app, enc, id, entry, cmd) },
-            entry.label.split(' · ')[0], h('span', { class: 'cost' }, costText(entry.ap, entry.stamina, entry.sp))),
-        infoButton(entry.label, () => entryInfo(app, enc, c, entry)));
+      const name = entry.label.split(' · ')[0].replace(/\s*\(.*\)$/, '');
+      go = chosen
+        ? h('button', { class: 'primary', onclick: () => declare(app, enc, entry.kind === 'move' ? { actor: id, type: 'move', to: chosen } : { actor: id, type: 'cast', option: entry.option, at: chosen }) },
+          h('span', null, entry.kind === 'move' ? 'Move here' : `${name} here`), h('span', { class: 'cost' }, entry.kind === 'move' ? (reachAP != null ? `${C.fmtAP(reachAP)} AP` : '') : costText(entry.ap, entry.stamina, entry.sp)))
+        : tapOnly
+        ? h('span', { class: 'tap-hint' }, 'Click a square on the map')
+        : entry.targets && entry.targets.length && !target && app.hooks && app.hooks.choose
+        ? h('span', { class: 'tap-hint' }, 'Click a target on the map')
+        : h('button', { class: 'primary', disabled: blocked, title: entry.why || 'Enter', onclick: () => declareEntry(app, enc, id, entry, cmd) },
+          h('span', null, target ? `${name} → ${chars[target.id].name}` : name), h('span', { class: 'cost' }, costText(entry.ap, entry.stamina, entry.sp)));
     }
-    return h('section', { class: 'panel cmd' },
-      head,
-      h('div', { class: 'cmd-row' }, typeSel, actSel),
-      aim ? h('div', { class: 'cmd-row' }, aim) : null,
-      go,
-      h('div', { class: 'cmd-foot' },
-        h('button', { class: 'end', title: legal.ap ? `Keep ${C.fmtAP(legal.ap)} AP to defend with until the round ends` : 'Nothing left this round', onclick: () => finishTurn(app, enc, id) }, legal.ap ? `End turn · keep ${C.fmtAP(legal.ap)} AP` : 'End turn'),
+    return pane('', h('div', null, head, tabs), rows, [
+      go ? h('div', { class: 'cmd-go' }, go) : null,
+      h('div', { class: 'cmd-end' },
+        h('button', { class: 'end', title: (legal.ap ? `Keep ${C.fmtAP(legal.ap)} AP to defend with until the round ends` : 'Nothing left this round') + ' (E)', onclick: () => finishTurn(app, enc, id) }, legal.ap ? `End turn · keep ${C.fmtAP(legal.ap)} AP` : 'End turn'),
         infoButton('Turns and AP', () => [
-          h('p', null, 'On your turn spend as much of your AP as you like; every action happens at once.'),
-          h('p', null, 'AP you keep pays for reactions on other turns: a block, parry or dodge when a blow comes, or a strike at a foe who comes into your reach, leaves it, or moves about in it. AP left when the round ends is lost.'),
-          h('p', { class: 'muted' }, 'Spend it all and you take whatever comes on your armor. Click a name or figure for its sheet.')])));
+          h('p', null, 'Spend as much AP as you like on your turn; each action resolves as you take it.'),
+          h('p', null, 'AP you keep pays for reactions: a block, parry or dodge when a blow comes, or a strike at a foe who enters your reach, leaves it, or steps twice in it. AP left when the round ends is lost.')])),
+    ]);
   }
 
   function phasePanel(app, enc, legal, sync) {
@@ -604,12 +637,9 @@
     const roller = UI.Dice.makeRoller(app);
     if ((enc.phase === 'setup' || enc.phase === 'roundEnd') && app.hooks) {
       // Inside the game: rounds begin by themselves; the party may try to flee between them.
-      return h('section', { class: 'panel cmd' },
-        h('span', { class: 'label' }, enc.phase === 'setup' ? 'Ready' : `Round ${enc.round} done`),
-        h('div', { class: 'who' }, `Round ${enc.round + 1}`),
-        h('div', { class: 'row' },
-          h('button', { class: 'primary', onclick: async () => { await Combat.startRound(enc, chars, roller); app.save(); app.render(); } }, 'Roll initiative'),
-          app.hooks.flee ? h('button', { onclick: () => app.hooks.flee(app, enc) }, 'Flee') : null));
+      return pane('waiting', h('div', { class: 'who' }, `Round ${enc.round + 1}`), null, [
+        h('div', { class: 'cmd-go' }, h('button', { class: 'primary', onclick: async () => { await Combat.startRound(enc, chars, roller); app.save(); app.render(); } }, 'Roll initiative')),
+        app.hooks.flee ? h('div', { class: 'cmd-end' }, h('button', { class: 'end', onclick: () => app.hooks.flee(app, enc) }, 'Flee')) : null]);
     }
     if (enc.phase === 'setup' || enc.phase === 'roundEnd') {
       return h('section', { class: 'panel cmd' },
@@ -631,10 +661,10 @@
     if (enc.phase === 'turn' && legal && !ui.busy) return declarePanel(app, enc, legal, sync);
     if (enc.phase === 'turn' || enc.phase === 'acting') {
       const id = Combat.currentActor(enc) || enc.order[enc.turn];
-      return h('section', { class: 'panel cmd' },
-        h('span', { class: 'label' }, `Round ${enc.round}`),
-        h('div', { class: 'who' }, id && chars[id] ? `${chars[id].name}'s turn` : 'Resolving'),
-        h('p', { class: 'muted small' }, 'Watch the map; you will be asked if one of yours can react.'));
+      if (!id || !chars[id]) return pane('waiting', h('div', { class: 'who' }, 'Resolving'), null);
+      const mine = chars[id].side === 'party';
+      return pane('waiting ' + (mine ? 'party' : 'enemy'), paneHead(app, enc, id, (mine || app.state.settings.gmView) && enc.ap[id] != null ? { pool: enc.apStart[id] || Combat.apLeft(enc, id), ap: Combat.apLeft(enc, id) } : null),
+        h('p', { class: 'muted small' }, mine ? 'Acting…' : 'Their turn. You will be asked if one of yours can react.'));
     }
     if (enc.phase === 'over') return app.hooks && app.hooks.over ? app.hooks.over(app, enc) : lootPanel(app, enc);
     return null;

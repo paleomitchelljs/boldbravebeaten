@@ -7,8 +7,23 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 ## Look and feel (needs a human eye)
 - [ ] Play it on a phone-width screen: stage, dock, toolbar, command bar and sheet have only been checked on desktop.
 - [ ] Restyle the town, parley, title and pack/journal/standing screens to match the pixel theme (they only inherit colours).
-- [ ] Fights: the outcome of an attack (odds to hit, expected damage through armor) is not previewed when choosing a target.
+- [x] Fights: expected damage through armor is shown in the pane ("On hit") and in the map's hover card for a target.
+  Odds that the target's block, parry or dodge succeeds are still not shown (the target's AP is hidden, so any figure
+  would be a guess about what they keep back).
 - [ ] Click-to-walk and the explore prompts need a pass on touch screens.
+
+## Playability (the user, 2026-10-25: "a pain to play"; streamline, more feedback, less text)
+- [x] Battle screen: the map on the left, a command pane on the right (under the map below 1000 px, stuck to the
+  bottom), sized to the window so Do-it and End turn never need a scroll. Action types are icon tabs (Attack, Maneuver,
+  Magic, Move, Other; keys 1-5); action, target and aim stay dropdowns; costs are in the action list; E ends the turn.
+- [x] (i) and the map's figures use one hover card (`UI.hover`/`UI.showHover` in `icons.js`) instead of pop-ups and
+  the browser's slow title; a tap pins it on touch screens.
+- [x] Feedback: a banner across the map at each new round and turn; spent AP pips flash; a hit washes the figure red;
+  the click-a-target hint pulses. Seen in headless Chrome at 1280 and 500 px wide (the banner and the hit flash only
+  as still frames).
+- [x] Town company portraits were drawn at full panel width (a CSS rule meant for the dock); fixed.
+- [ ] Not yet looked at for this pass: the reaction card (bottom right of the map), the explore screen's prompts, the
+  sheet (empty gear slots take a row each), town and shop text.
 
 ## Art TODO
 Where art lives: `art/` is what the game draws (published; see `art/README.md`), `assets/` the scratch pad (raw packs,

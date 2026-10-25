@@ -85,19 +85,61 @@
     return b;
   }
 
-  // The small (i): hover or focus it for the explanation. text may be a string; it stays out of the way until asked.
+  // One floating card for every (i) and hover explanation. It lives on the page body, so no scrolling pane clips it.
+  // content: a string, a node or array of nodes, or a function returning one (called when the card opens).
+  let card = null, cardFor = null, pinned = false;
+  function hideHover() {
+    if (card) card.setAttribute('class', 'hovercard');
+    cardFor = null; pinned = false;
+  }
+  function showHover(anchor, content, at) {
+    if (typeof document === 'undefined' || !document.body) return;
+    if (!card) { card = document.createElement('div'); card.setAttribute('role', 'tooltip'); document.body.appendChild(card); }
+    const body = typeof content === 'function' ? content() : content;
+    if (body == null || body === '') { hideHover(); return; }
+    card.innerHTML = '';
+    card.appendChild(UI.h('div', null, body));
+    card.setAttribute('class', 'hovercard show');
+    cardFor = anchor;
+    const r = at ? { left: at.x, top: at.y, width: 0, height: 0 } : anchor.getBoundingClientRect();
+    const vw = typeof innerWidth !== 'undefined' ? innerWidth : 1000;
+    const w = card.offsetWidth || 0, hh = card.offsetHeight || 0;
+    const x = Math.max(8, Math.min(r.left + r.width / 2 - w / 2, vw - w - 8));
+    let y = r.top - hh - 8;
+    if (y < 8) y = r.top + r.height + (at ? 24 : 8);
+    card.style.left = Math.round(x) + 'px';
+    card.style.top = Math.round(y) + 'px';
+  }
+  // A card that gone-from-the-page anchors don't leave behind (call after a render).
+  function sweepHover() { if (cardFor && !cardFor.isConnected) hideHover(); }
+  // Hover or focus `el` for the card; a tap or click pins it open (touch screens), another closes it.
+  function hover(el, content) {
+    el.addEventListener('mouseenter', () => { if (!pinned) showHover(el, content); });
+    el.addEventListener('mouseleave', () => { if (!pinned) hideHover(); });
+    el.addEventListener('focus', () => showHover(el, content));
+    el.addEventListener('blur', hideHover);
+    return el;
+  }
+  if (typeof document !== 'undefined' && document.addEventListener) document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && cardFor) hideHover(); });
+
+  // The small (i): hover or focus it for the explanation. text may be a string, nodes, or a function returning them.
   function tip(text, label) {
     const el = document.createElement('span');
     el.setAttribute('class', 'tip');
     el.setAttribute('tabindex', '0');
     el.setAttribute('role', 'note');
-    el.setAttribute('data-tip', text);
-    el.setAttribute('aria-label', (label ? label + ': ' : '') + text);
+    if (typeof text === 'string') el.setAttribute('aria-label', (label ? label + ': ' : '') + text);
+    else if (label) el.setAttribute('aria-label', label);
     el.appendChild(document.createTextNode('i'));
-    return el;
+    el.addEventListener('click', (e) => { e.stopPropagation(); if (pinned && cardFor === el) hideHover(); else { showHover(el, text); pinned = true; } });
+    return hover(el, text);
   }
 
   UI.tip = tip;
+  UI.hover = hover;
+  UI.showHover = showHover;
+  UI.hideHover = hideHover;
+  UI.sweepHover = sweepHover;
   UI.icon = icon;
   UI.ibtn = ibtn;
   UI.Icons = { BITS, icon, ibtn };

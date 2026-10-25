@@ -112,8 +112,10 @@
         const id = occupant(enc, chars, x - ox, y - oy);
         if (!id) return '';
         const c = chars[id];
-        const t = bs.sync && bs.sync.entry && bs.sync.entry.targets ? bs.sync.entry.targets.find((q) => q.id === id) : null;
-        return `${c.name} · stamina ${c.stamina}/${C.maxStamina(c)}${C.isActive(c) ? '' : c.status.dead ? ' · dead' : ' · down'}${t ? ` · ${t.distance} sq${t.inReach ? '' : t.tooClose ? ', too close' : ', out of reach'}` : ''}`;
+        const e = bs.sync && bs.sync.entry;
+        const t = e && e.targets ? e.targets.find((q) => q.id === id) : null;
+        const prev = t && bs.map ? P().blowPreview(enc, chars, { decl: e.kind === 'strike' && !isSpell(e) ? { actor: bs.map.actor, target: id, type: 'strike', option: e.option } : {} }) : null;
+        return `${c.name}${C.isActive(c) ? '' : c.status.dead ? ' (dead)' : ' (down)'}\nStamina ${c.stamina}/${C.maxStamina(c)}${t ? ` · ${t.distance} sq${t.inReach ? '' : t.tooClose ? ', too close' : ', out of reach'}` : ''}${prev ? `\nIf it lands: ${prev.text}` : ''}`;
       },
     };
     const at = (p) => ({ x: p.x + ox, y: p.y + oy });
@@ -316,10 +318,10 @@
       if (!chars[id] || prev.st[id] == null) continue;
       const t = delay[id] != null ? delay[id] : last;
       const lost = prev.st[id] - chars[id].stamina;
-      if (struck.has(id) && lost > 0) { mv.popup(id, '−' + lost, '#ffd166', t); mv.shudder(id, t); }
+      if (struck.has(id) && lost > 0) { mv.popup(id, '−' + lost, '#ffd166', t); mv.shudder(id, t); if (mv.hurt) mv.hurt(id, t); }
       for (const [k, v] of Object.entries(chars[id].damage || {})) {
         const more = v - ((prev.dmg[id] || {})[k] || 0);
-        if (more > 0) { mv.popup(id, `−${more} ${k}`, '#ff6b6b', t + 260); mv.shudder(id, t); }
+        if (more > 0) { mv.popup(id, `−${more} ${k}`, '#ff6b6b', t + 260); mv.shudder(id, t); if (mv.hurt) mv.hurt(id, t, true); }
       }
       if (chars[id].status.dead && !prev.dead[id]) mv.popup(id, 'Dead', '#ff4d4d', t + 520);
       else if (!C.isActive(chars[id]) && !prev.down[id]) mv.popup(id, 'Down', '#c8c8c8', t + 520);
@@ -344,7 +346,7 @@
 
   function logStrip(game, enc) {
     const open = !!game.ui.logOpen;
-    const lines = enc.log.slice(-(open ? 80 : 3));
+    const lines = enc.log.slice(-(open ? 80 : 2));
     const box = h('div', { class: 'logbox' + (open ? ' open' : ''), role: 'log', title: open ? 'Click to shrink' : 'Click to read the whole fight', onclick: () => { game.ui.logOpen = !open; game.render(); } },
       lines.length ? lines.map((l) => h('p', { class: 'l ' + (l.cls || '') }, l.text)) : h('p', { class: 'l' }, 'The fight is about to begin.'));
     if (open) setTimeout(() => { box.scrollTop = box.scrollHeight; }, 0);
@@ -387,6 +389,26 @@
         game.ui.finalLog ? ibtn('scroll', 'The last of it', () => game.openOverlay('text', { title: 'The last of it', text: game.ui.finalLog.map((l) => l.text).join('\n') })) : null));
   }
 
+  // A banner across the map when a new round or a new turn begins. It is part of each render, so its animation is set
+  // back by the time already gone and it simply stops being drawn once it has played.
+  const BANNER_MS = 1300;
+  function turnBanner(game, enc, chars) {
+    const id = (enc.phase === 'turn' || enc.phase === 'acting') && enc.order[enc.turn];
+    if (!id || !chars[id]) return null;
+    const key = enc.round + ':' + enc.turn + ':' + id;
+    const b = game.ui.banner;
+    const now = Date.now();
+    if (!b || b.key !== key) game.ui.banner = { key, at: now, round: !b || b.inRound !== enc.round ? enc.round : null, inRound: enc.round };
+    const cur = game.ui.banner;
+    const gone = now - cur.at;
+    if (gone > BANNER_MS) return null;
+    if (gone < BANNER_MS) setTimeout(() => { if (game.ui.banner === cur && game.screen === 'battle') game.render(); }, BANNER_MS - gone + 20);
+    const c = chars[id];
+    return h('div', { class: 'turn-banner ' + (c.side === 'party' ? 'party' : 'enemy'), style: { animationDelay: `-${gone}ms` }, 'aria-live': 'polite' },
+      cur.round ? h('span', { class: 'tb-round' }, `Round ${cur.round}`) : null,
+      h('span', { class: 'tb-who' }, c.name), h('span', { class: 'tb-sub' }, c.side === 'party' ? 'your turn' : 'their turn'));
+  }
+
   // ---- The screen ------------------------------------------------------------------------------------------------------
   UI.Screens.battle = function (game) {
     const w = game.world;
@@ -422,23 +444,23 @@
     if (bs && bs.enc) effects(game, bs.enc, bs.chars);
     const live = !game.ui.result;
     const spec = game.ui.spec || {};
-    const whose = live && enc.order[enc.turn] && bs.chars[enc.order[enc.turn]];
-    const status = !live ? 'Over' : (enc.phase === 'turn' || enc.phase === 'acting') && whose ? `${whose.name}'s turn` : '';
     const topExtra = live ? [
       h('span', { class: 'chip' }, enc.round ? `Round ${enc.round}` : 'Ready'),
-      status ? h('span', { class: 'chip muted' }, status) : null,
       app.hooks.flee && game.world.battle.canFlee !== false ? ibtn('flee', 'Flee: speed against the quickest foe', () => app.hooks.flee(app, enc), { disabled: !!game.ui.reacting || enc.phase === 'acting' || !!P().bui(app).busy }) : null,
       declaredPop(game, app, enc),
     ] : null;
-    return h('div', { class: 'battle-screen' },
+    return h('div', { class: 'battle-screen' + (live ? '' : ' over') },
       UI.Bits.topBar(game, { title: spec.name || 'Battle', extra: topExtra }),
-      live ? initiativeBar(game, app, enc) : null,
-      h('div', { class: 'stage' },
-        game.ui.mv ? game.ui.mv.el : null,
-        live ? logStrip(game, enc) : null,
-        live && game.ui.reacting ? reactionCard(game) : null,
-        !live ? resultCard(game) : null),
-      live ? P().phasePanel(app, enc, legal, sync) : null);
+      h('div', { class: 'battle-body' },
+        h('div', { class: 'battle-main' },
+          live ? initiativeBar(game, app, enc) : null,
+          h('div', { class: 'stage' },
+            game.ui.mv ? game.ui.mv.el : null,
+            live ? logStrip(game, enc) : null,
+            live ? turnBanner(game, enc, bs.chars) : null,
+            live && game.ui.reacting ? reactionCard(game) : null,
+            !live ? resultCard(game) : null)),
+        live ? h('div', { class: 'battle-side' }, P().phasePanel(app, enc, legal, sync)) : null));
   };
 
   // Enter commits the action being built; Escape lets go of a chosen target or square.
@@ -456,6 +478,9 @@
         return;
       }
       if (e.key === 'Enter') { const b = document.querySelector('.battle-screen .cmd-go .primary'); if (b && !b.disabled) { e.preventDefault(); b.click(); } }
+      if (e.key === 'e' || e.key === 'E') { const b = document.querySelector('.battle-screen .cmd-end .end'); if (b && !b.disabled) { e.preventDefault(); b.click(); } }
+      const n = Number(e.key);
+      if (n >= 1 && n <= 9) { const tabs = document.querySelectorAll('.battle-screen .cmd-tab'); if (tabs[n - 1]) { e.preventDefault(); tabs[n - 1].click(); } }
       if (e.key === 'Escape') {
         const bs = game.ui.bs;
         const cmd = bs && bs.app && P().bui(bs.app).cmd;

@@ -43,6 +43,7 @@
           Game.world ? h('button', { onclick: () => { Game.save(); toast('Saved'); } }, 'Save anyway') : null))));
     }
     if (Game.screen !== 'explore' && Game.screen !== 'battle') window.scrollTo(0, scroll);
+    if (UI.sweepHover) UI.sweepHover();
   }
 
   function renderOverlay() {
