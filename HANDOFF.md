@@ -28,8 +28,11 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   line; shop, pack and repair rows are one line each (name plus a short tag, the full stats on hover) with a category
   dropdown when a shop has more than six things; the inn, healer, bounty, trainer and supplies explanations and
   faction blurbs are behind (i) or hover; the Training Yard picks who and which feats from two dropdowns.
-- [ ] Still wordy or untouched: the town street's location cards, the parley screen, the journal, the title and
-  creation screens. The reaction card was left as it was (already short).
+- [x] Parley (2026-10-25): topics first, one line each (a mark for their kind, a lock while they are unwilling, why on
+  hover); the moves are one grid of buttons (bonus and patience cost on the button, what it does on hover; Appeal and
+  Bribe each with a dropdown); the speaker picker sits with the moves; the mood meters flash green or red when a move
+  shifts them.
+- [ ] Still wordy or untouched: the town street's location cards, the journal, the title and creation screens. The reaction card was left as it was (already short).
 
 ## Art TODO
 Where art lives: `art/` is what the game draws (published; see `art/README.md`), `assets/` the scratch pad (raw packs,

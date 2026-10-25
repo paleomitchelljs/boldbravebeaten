@@ -278,3 +278,16 @@ kbd { font: 600 0.72rem var(--font-mono); padding: 0 4px; border: 1px solid var(
 .shop-bar .tabs { border-bottom: 0; padding-bottom: 0; }
 .shop-bar select { min-width: 160px; }
 .train-bar { gap: 10px; flex-wrap: wrap; align-items: flex-end; } .train-bar .pick { flex: 1 1 220px; }
+
+/* ---- Parley: moves as one grid of buttons, topics one line each ---- */
+.move-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+@media (max-width: 760px) { .move-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.move-btn { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 6px 10px; text-align: left; width: 100%; min-width: 0; }
+.move-btn b { font-family: var(--font-ui); font-weight: 400; }
+.move-pair { grid-column: span 2; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 4px; align-items: stretch; }
+.parley .topic { display: flex; align-items: center; gap: 8px; padding: 5px 4px; border-bottom: 1px solid var(--line); }
+.parley .topic.done { opacity: 0.55; }
+.topic-mark { width: 1.4em; text-align: center; color: var(--brass); font-family: var(--font-ui); flex: 0 0 auto; }
+.meter-row.up { animation: meter-up 0.9s ease-out; } .meter-row.down { animation: meter-down 0.9s ease-out; }
+@keyframes meter-up { 0% { background: rgba(124, 197, 136, 0.45); } 100% { background: transparent; } }
+@keyframes meter-down { 0% { background: rgba(224, 106, 92, 0.45); } 100% { background: transparent; } }
