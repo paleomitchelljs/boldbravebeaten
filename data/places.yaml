@@ -353,7 +353,7 @@ temple_court:
     F: {kind: prop, sprite: fern_large, solid: false, label: "Ferns"}
     f: {kind: prop, sprite: fern_small, solid: false, label: "Ferns"}
     L: {kind: stairs, to: temple_maze, at: N, sprite: door, wall: true, label: "Door to the labyrinth"}
-    P: {kind: locked, label: "Arched door to the palace (not built yet)", tn: 99, text: "Carved and painted, and shut fast. (The palace is not built yet.)"}
+    P: {kind: stairs, to: temple_palace, at: W, sprite: door, wall: true, label: "The arched door to the palace"}
     g: {kind: monster, encounter: gate, label: "Guards at the gate"}
     c: {kind: monster, encounter: court, label: "Lizardfolk in the court"}
     l: {kind: monster, encounter: maze_door, label: "Guards at the labyrinth door"}
@@ -597,10 +597,162 @@ temple_ritual:
     D: {kind: note, on: "_", text: "Water roars down from the dark above and the pool takes you. It is only knee deep. In the middle of the chamber a green orb the size of a cart hangs over a dais, and something moves inside it."}
     O: {kind: prop, sprite: orb, label: "The orb on its dais. Something coiled inside it watches you."}
     y: {kind: prop, sprite: pyramid, label: "A small pyramid of dark stone"}
-    S: {kind: prop, sprite: stair_up, label: "A narrow stair up toward the palace (the palace is not built yet)"}
+    S: {kind: stairs, to: temple_palace_stair, at: R, up: true, sprite: stair_up, label: "A narrow stair up toward the palace"}
     A: {kind: monster, encounter: avatar, label: "The avatar of fear"}
   encounters:
     avatar: {foes: [{monster: spectre}], text: "The orb clouds, and what was inside it is outside it. (A stand-in: the avatar of fear has no monster yet.)"}
+  wandering: []
+  secrets: []
+
+temple_palace:
+  name: The Palace
+  kind: dungeon
+  blurb: The palace of the temple's masters, east of the court. A long gallery of statues, side chambers, and a great hall with a throne on a dais.
+  level: 2
+  look: {wall: "#b4a26a", floor: "#433d34", ceiling: "#2a2620", fog: "#0c0a08", torch: 1, tileset: temple_palace, light: 14}
+  # assets/wip/temple-palace/layout.js. The user's references: assets/ideas/refs/palace-hall-reference.png (a raised
+  # platform along the hall, a brazier, a great stone mask on the wall) and palace-throne-reference.png.
+  map:
+    - "##########################################"
+    - "##########################################"
+    - "##...U...##.......########################"
+    - "##.......##.......##....................##"
+    - "##.......##.......##..b.................##"
+    - "##.......##....r..##....................##"
+    - "##.......##.......##....................##"
+    - "##.......##.......##....c...c...c.......##"
+    - "##.......##.......##.................b..##"
+    - "##.......##.......##..............|||||.##"
+    - "#####..#######..####..............|||||.##"
+    - "#####..#######..####..............|||||.##"
+    - "##.s...s...s......##..............|||||.##"
+    - "##................##..............|||||.##"
+    - "##................................|k|T|.##"
+    - "#W........................h.......|||||.##"
+    - "##................................|||||.##"
+    - "##................##..............|||||.##"
+    - "##.s...s...s......##..............|||||.##"
+    - "#####..#######..####..............|||||.##"
+    - "#####..#######..####.................b..##"
+    - "##.......##.......##....................##"
+    - "##.......##.......##....................##"
+    - "##.......##.......##....c...c...c.......##"
+    - "##.......##.......##....................##"
+    - "##....C..##.......##....................##"
+    - "##.......##.......##..b.................##"
+    - "##.......##.......##....................##"
+    - "##.......##.......##########....##########"
+    - "##.......##.......##########..D.##########"
+    - "##########################################"
+    - "##########################################"
+  legend:
+    W: {kind: stairs, to: temple_court, at: P, sprite: door, wall: true, label: "Back out to the court"}
+    U: {kind: stairs, to: temple_palace_up, at: U, up: true, sprite: stair_up, label: "Stairs up to the living quarters"}
+    D: {kind: stairs, to: temple_palace_stair, at: U, sprite: stair_down, label: "A stair down, in a niche off the great hall"}
+    s: {kind: prop, sprite: statue, label: "A statue of a lizardfolk warrior"}
+    c: {kind: prop, sprite: column, label: "A column"}
+    b: {kind: prop, sprite: brazier, label: "A brazier, burning"}
+    T: {kind: prop, sprite: throne, on: "|", label: "The throne"}
+    C: {kind: chest, loot: strongbox, tn: 8, label: "A chest"}
+    h: {kind: monster, encounter: hall, label: "A guard in the great hall"}
+    k: {kind: monster, encounter: throne, on: "|", label: "The throne's guard"}
+    r: {kind: monster, encounter: rats, label: "Rats in a side chamber"}
+  encounters:
+    hall: {foes: [{monster: scaleward}], text: "A guard pacing the hall wheels about."}
+    throne: {foes: [{monster: scalewardPair}], text: "The two on the dais come down the steps together."}
+    rats: {foes: [{monster: ratPack}], text: "The chamber is full of rats."}
+  wandering:
+    - {w: 1, foes: [{monster: scaleward}], text: "A guard comes through the gallery."}
+    - {w: 4, nothing: true}
+  secrets: []
+
+temple_palace_up:
+  name: The Palace, Upper Floor
+  kind: dungeon
+  blurb: The living quarters of the temple's masters, and the servants' hall and stores.
+  level: 2
+  look: {wall: "#b4a26a", floor: "#433d34", ceiling: "#2a2620", fog: "#0c0a08", torch: 1, tileset: temple_palace, light: 12}
+  map:
+    - "##################################"
+    - "##################################"
+    - "##.......##.......##............##"
+    - "##.B...B.##.B...B.##..B.......B.##"
+    - "##......z##.......##......C.....##"
+    - "##.......##.......##............##"
+    - "##.......##.......##............##"
+    - "#####..#######..#########..#######"
+    - "#####..#######..#########..#######"
+    - "##..............................##"
+    - "##U.............................##"
+    - "##..............................##"
+    - "########..#################..#####"
+    - "########..#################..#####"
+    - "##................##............##"
+    - "##.o.o.o..........##.a........a.##"
+    - "##.........qt..t..##............##"
+    - "##................##......t.....##"
+    - "##................##.a..........##"
+    - "##.o.o.o..........##............##"
+    - "##################################"
+    - "##################################"
+  legend:
+    U: {kind: stairs, to: temple_palace, at: U, sprite: stair_down, label: "Stairs down to the great hall"}
+    B: {kind: prop, sprite: bed, label: "A bed"}
+    o: {kind: prop, sprite: cot, label: "A cot"}
+    t: {kind: prop, sprite: table, label: "A table"}
+    a: {kind: prop, sprite: barrels, label: "Barrels"}
+    C: {kind: chest, loot: strongbox, tn: 8, label: "A chest at the foot of a bed"}
+    z: {kind: monster, encounter: sleeper, asleep: true, label: "Someone asleep"}
+    q: {kind: monster, encounter: servants, label: "Servants at the table"}
+  encounters:
+    sleeper: {foes: [{monster: scaleward}], text: "The sleeper rolls off the bed with a hammer already in hand."}
+    servants: {foes: [{monster: koboldBand}], text: "The servants drop their bowls and grab knives."}
+  wandering: []
+  secrets: []
+
+temple_palace_stair:
+  name: The Stair Below the Palace
+  kind: dungeon
+  blurb: A long stair down from the palace, a few small rooms off it, and at the bottom the ritual chamber.
+  level: 3
+  look: {wall: "#b4a26a", floor: "#433d34", ceiling: "#2a2620", fog: "#0c0a08", torch: 1, tileset: temple_palace, light: 9}
+  map:
+    - "######################"
+    - "######################"
+    - "#########.U..#########"
+    - "#########....#########"
+    - "#########....#########"
+    - "##......#....#########"
+    - "##.o.o..#....#########"
+    - "##......+....#########"
+    - "##....a.#....#########"
+    - "##......#....#......##"
+    - "#########....#....a.##"
+    - "#########....+..t...##"
+    - "#########....#....a.##"
+    - "#########....#......##"
+    - "#########.g..#########"
+    - "#########....#########"
+    - "##......#....#########"
+    - "##.o.o..#....#########"
+    - "##......+....#########"
+    - "##.C....#....#########"
+    - "##......#....#########"
+    - "#########....#########"
+    - "#########....#########"
+    - "#########..R.#########"
+    - "######################"
+    - "######################"
+  legend:
+    U: {kind: stairs, to: temple_palace, at: D, up: true, sprite: stair_up, label: "Up to the palace"}
+    R: {kind: stairs, to: temple_ritual, at: S, sprite: stair_down, label: "Down to the ritual chamber"}
+    o: {kind: prop, sprite: cot, label: "A cot"}
+    t: {kind: prop, sprite: table, label: "A table"}
+    a: {kind: prop, sprite: barrels, label: "Barrels"}
+    C: {kind: chest, loot: strongbox, tn: 8, label: "A chest"}
+    g: {kind: monster, encounter: stairguard, label: "A guard on the stair"}
+  encounters:
+    stairguard: {foes: [{monster: scaleward}], text: "The guard on the stair blocks the way down."}
   wandering: []
   secrets: []
 

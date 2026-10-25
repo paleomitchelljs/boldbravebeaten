@@ -127,8 +127,8 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
 - [ ] Style target: the PixelLab dragonborn (64 px). Tiles at 64 px to match (plan §4). The user (2026-10-24) gave a
   red dragonborn knight as the NPC style (`assets/ideas/refs/npc-style-dragonborn-knight.jpg`: dark outline, black
   plate, shield with a dragon's head); creatures and NPCs wait until the dungeon's layout is settled.
-- [ ] Archive the Undercroft and the Barrow for tests and sims only and start at the temple, once there is more of the
-  temple than the courts (only the palace door is still locked "not built yet").
+- [ ] Archive the Undercroft and the Barrow for tests and sims only and start at the temple: every temple place now
+  exists (ask the user first).
 - [x] Debug: Menu → Debug → No fights (`world.peaceful`): foes never notice the party and can be walked through, traps
   don't spring, no one comes while you camp. For looking round places and their art (the user asked, 2026-10-24).
 - [x] The wall top (gatehouse), after the user: "the sprites are squished, and the walls seem oddly placed making it
@@ -146,7 +146,14 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
   don't read as more paving.
 - [ ] Ritual chamber, still open: the avatar of fear is a stand-in (a spectre, which beats a level-1 party every time);
   the orb is smaller than the reference's (about two squares); the niche frames came out tan.
-- [ ] Then the palace (plan §5): ground floor, upper floor, the stair rooms down to the ritual chamber.
+- [x] The palace (`temple_palace`, `temple_palace_up`, `temple_palace_stair`; `assets/wip/temple-palace/README.md`),
+  after the user's hall and throne references: in by the court's east door, a gallery of statues with four side
+  chambers, the great hall (columns, braziers, masks and banners on the walls, the throne on a raised dais: ground `|`),
+  stairs up to the living quarters and servants' hall, and in a niche the stair down past a few small rooms to the
+  ritual chamber. Every place of the temple is now joined up; the court's palace door opens.
+- [ ] Palace, still open: the wall face is greyer than the reference's sandy plaster; the statues came out bronze; the
+  stair down is a dark box; doors in north-south walls are drawn face-on; no raised platform along the hall's sides as
+  in the reference (only the dais); encounters are scaleward stand-ins.
 - [ ] Monsters: an alligator monster for the sewers (the sheet exists); lizardfolk variants; the avatar of fear as the
   ritual chamber's boss.
 - [ ] The temple props also replace the Cute Fantasy props the published site may not show.

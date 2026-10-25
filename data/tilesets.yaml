@@ -397,3 +397,62 @@ temple_ritual:
     orb: [ritual-props.png, 0, 0, 112, 118, -24, -44]
     pyramid: [ritual-props.png, 116, 0, 60, 87]
     stair_up: [ritual-props.png, 180, 0, 44, 77]
+
+# The palace: dark slate floors, smooth sandy plastered walls hung with masks and banners, a raised dais for the
+# throne (the user's references, assets/ideas/refs/palace-*.png).
+temple_palace:
+  cell: 64
+  dir: art/worldtiles/temple/
+  floor: slab
+  terrains:
+    slab:
+      color: "#433d34"
+    dais:
+      color: "#c8b67a"
+      wang: palace-dais.png
+      over: slab
+    wall:
+      color: "#b4a26a"
+      wang: palace-wall.png
+      over: slab
+      cliff:
+        - [2, 2, ".....00..00....."]
+        - [3, 2, ".....00..01....."]
+        - [1, 4, ".....00..11....."]
+        - [2, 4, ".....00..10....."]
+        - [3, 3, ".00..01..01....."]
+        - [3, 4, ".....01..01....."]
+        - [0, 6, ".....11..11....."]
+        - [1, 0, ".11..10..10....."]
+        - [1, 1, ".....10..10....."]
+        - [0, 4, ".....10..11....."]
+        - [3, 6, ".....01..11....."]
+        - [1, 6, ".....11..12...0."]
+        - [3, 0, ".....11..22..00."]
+        - [1, 2, ".....10..20..00."]
+        - [1, 7, ".1...12..10....."]
+        - [3, 1, ".11..22..00....."]
+        - [1, 3, ".....20..00....."]
+        - [2, 0, ".....01..02..00."]
+        - [0, 0, ".....11..21..0.."]
+        - [2, 6, ".....10..21..01."]
+        - [2, 1, ".....02..00....."]
+        - [0, 1, "..1..21..01....."]
+        - [2, 7, ".10..21..01....."]
+        - [0, 2, ".....01..12..10."]
+        - [0, 3, ".01..12..10....."]
+      # Faces: a carved stone mask, a green banner with a gold serpent.
+      faces: {density: 0.3, band: [-32, 56], pieces: [[palace-props.png, 584, 0, 22, 52, -26], [palace-props.png, 610, 0, 36, 60, -30]]}
+  props:
+    throne: [palace-props.png, 0, 0, 68, 104]
+    statue: [palace-props.png, 72, 0, 36, 107]
+    brazier: [palace-props.png, 112, 0, 54, 70]
+    column: [palace-props.png, 170, 0, 58, 120]
+    stair_up: [palace-props.png, 232, 0, 46, 80]
+    stair_down: [palace-props.png, 282, 0, 48, 48, 8, 8]
+    bed: [palace-props.png, 334, 0, 56, 98]
+    cot: [palace-props.png, 394, 0, 34, 80]
+    table: [palace-props.png, 432, 0, 90, 56]
+    barrels: [palace-props.png, 526, 0, 54, 35]
+    door: [court-props.png, 0, 0, 64, 61]
+    door_locked: [court-props.png, 0, 0, 64, 61]
