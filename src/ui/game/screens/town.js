@@ -47,13 +47,11 @@
     const w = game.world;
     const n = G.Content.world.npcs[id];
     const rank = n.faction ? G.Factions.rank(w, n.faction) : null;
-    const ps = w.npcs[id];
     return h('div', { class: 'npc' },
       h('span', { class: 'glyph big' }, n.glyph || '🧍'),
       h('div', { class: 'stack tight grow' },
-        h('b', null, n.name), h('span', { class: 'small muted' }, n.title),
-        n.faction ? h('span', { class: 'small' }, `${G.Factions.defs()[n.faction].name} · you are ${G.Factions.tier(w, n.faction).toLowerCase()}`) : null,
-        ps && ps.met ? null : h('span', { class: 'small muted' }, n.look)),
+        h('b', { title: n.look }, n.name), h('span', { class: 'small muted' }, n.title),
+        n.faction ? h('span', { class: 'small muted' }, `${G.Factions.defs()[n.faction].name}: ${G.Factions.tier(w, n.faction).toLowerCase()}`) : null),
       h('button', { class: 'primary', onclick: () => game.talk(id, { type: 'town' }) }, 'Talk'));
   }
 
@@ -74,15 +72,18 @@
     const cost = Econ.innCost(w);
     const res = game.ui.rested;
     return h('div', { class: 'stack' },
-      h('h3', null, s.name || 'Rest'),
-      h('p', { class: 'muted' }, `A room and a hot meal. Everyone's stamina is restored, wounds get a heal roll (two in town), and armor is partly repaired. ${w.flags.inn_tab ? 'Marta has you on her tab: half price.' : ''}`),
+      h('div', { class: 'row' }, h('h3', null, s.name || 'Rest'), UI.tip(`A room and a hot meal. Everyone's stamina is restored, wounds get a heal roll (two in town), and armor is partly repaired.${w.flags.inn_tab ? ' You are on the house tab: half price.' : ''}`)),
       h('div', { class: 'row' },
         h('button', { class: 'primary', disabled: w.gold < cost, onclick: async () => { const r = await G.Town.innRest(w); if (!r.ok) { toast(r.reason); return; } game.ui.rested = r.lines; game.save(); game.render(); } }, `Sleep until morning — ${cost} gold`)),
       res && res.length ? h('div', { class: 'gamelog' }, res.map((l) => h('p', { class: 'l' }, l))) : null);
   }
 
-  function itemLine(item) {
-    return h('span', { class: 'stack tight' }, h('b', null, Items.itemName(item)), h('span', { class: 'small muted' }, G.Equip.describe(item)));
+  const { itemLine, goodLine } = UI.Bits;
+  const KIND_NAME = { weapon: 'Weapons', armor: 'Armor', shield: 'Shields', good: 'Goods' };
+
+  // Standing with a service's faction: one chip, the explanation on hover.
+  function standingChip(w, faction, explain) {
+    return h('span', { class: 'chip', title: explain }, `${G.Factions.defs()[faction].name}: ${G.Factions.tier(w, faction).toLowerCase()}`);
   }
 
   function shop(game, s) {
@@ -90,13 +91,19 @@
     const tab = game.ui['shop_' + s.id] || 'buy';
     const setTab = (t) => { game.ui['shop_' + s.id] = t; game.render(); };
     const tabs = [['buy', 'Buy'], ['sell', 'Sell']].concat(s.repair ? [['repair', 'Repair']] : []);
-    let body;
+    let body, filter = null;
     if (tab === 'buy') {
-      const stock = Econ.stock(w, s);
+      const all = Econ.stock(w, s);
+      const kindOf = (e) => (e.spec.good ? 'good' : e.item.kind);
+      const kinds = [...new Set(all.map(kindOf))];
+      const key = 'shopKind_' + s.id;
+      if (!kinds.includes(game.ui[key])) game.ui[key] = '';
+      const stock = game.ui[key] ? all.filter((e) => kindOf(e) === game.ui[key]) : all;
+      filter = kinds.length > 1 && all.length > 6 ? UI.select('shop-kind-' + s.id, game.ui[key], [['', `Everything (${all.length})`]].concat(kinds.map((k) => [k, `${KIND_NAME[k] || k} (${all.filter((e) => kindOf(e) === k).length})`])), (v) => { game.ui[key] = v; game.render(); }) : null;
       body = h('div', { class: 'ledger' }, stock.map((e) => {
         const g = e.spec.good ? G.World.goodDef(e.spec.good) : null;
         return h('div', { class: 'ledger-row' },
-          g ? h('span', { class: 'stack tight' }, h('b', null, e.name + (e.per > 1 ? ` ×${e.per}` : '')), h('span', { class: 'small muted' }, g.blurb)) : itemLine(e.item),
+          g ? goodLine(e.name + (e.per > 1 ? ` ×${e.per}` : ''), g) : itemLine(e.item),
           h('span', { class: 'num' }, `${e.price} ◈`),
           h('button', { class: 'small', disabled: w.gold < e.price, onclick: () => { const r = Econ.buy(w, s, e); if (!r.ok) toast(r.reason); game.save(); game.render(); } }, 'Buy'));
       }));
@@ -113,10 +120,10 @@
           const g = G.World.goodDef(id);
           if (!g || g.kind === 'key') continue;
           const price = Econ.sellPrice(w, Econ.goodValue(id), s);
-          rows.push(h('div', { class: 'ledger-row' }, h('span', { class: 'stack tight' }, h('b', null, `${g.name} ×${w.pack.goods[id]}`), h('span', { class: 'small muted' }, g.blurb)), h('span', { class: 'num' }, `${price} ◈`), h('button', { class: 'small', onclick: () => { Econ.sellGood(w, id, s); game.save(); game.render(); } }, 'Sell one')));
+          rows.push(h('div', { class: 'ledger-row' }, goodLine(`${g.name} ×${w.pack.goods[id]}`, g), h('span', { class: 'num' }, `${price} ◈`), h('button', { class: 'small', onclick: () => { Econ.sellGood(w, id, s); game.save(); game.render(); } }, 'Sell one')));
         }
       }
-      body = rows.length ? h('div', { class: 'ledger' }, rows) : h('p', { class: 'muted' }, 'Nothing in the pack that this trader will buy. (Worn gear is not for sale; take it off first.)');
+      body = rows.length ? h('div', { class: 'ledger' }, rows) : h('p', { class: 'muted row' }, 'Nothing here they will buy.', UI.tip('Worn gear is not for sale: take it off first, on the sheet.'));
     } else {
       const rows = [];
       const all = [];
@@ -125,28 +132,26 @@
       for (const [who, it] of all) {
         const cost = Econ.repairCost(w, it, s);
         if (!cost) continue;
-        rows.push(h('div', { class: 'ledger-row' }, h('span', { class: 'stack tight' }, h('b', null, Items.itemName(it)), h('span', { class: 'small muted' }, `${who} · ${G.Equip.describe(it)}`)), h('span', { class: 'num' }, `${cost} ◈`), h('button', { class: 'small', disabled: w.gold < cost, onclick: () => { Econ.repair(w, it, s); game.save(); game.render(); } }, 'Repair')));
+        rows.push(h('div', { class: 'ledger-row' }, itemLine(it, who), h('span', { class: 'num' }, `${cost} ◈`), h('button', { class: 'small', disabled: w.gold < cost, onclick: () => { Econ.repair(w, it, s); game.save(); game.render(); } }, 'Repair')));
       }
       body = rows.length ? h('div', { class: 'ledger' }, rows) : h('p', { class: 'muted' }, 'Everything is in order.');
     }
     return h('div', { class: 'stack' },
-      h('div', { class: 'row spread' }, h('h3', null, s.name), h('span', { class: 'gold num' }, `◈ ${w.gold}`)),
-      s.faction ? h('p', { class: 'small muted' }, `${G.Factions.defs()[s.faction].name}: you are ${G.Factions.tier(w, s.faction).toLowerCase()}. Prices follow your standing, and better stock opens as it rises.`) : null,
-      h('div', { class: 'tabs' }, tabs.map(([id, label]) => h('button', { class: `tab ${tab === id ? 'active' : ''}`, onclick: () => setTab(id) }, label))),
+      h('div', { class: 'row spread' }, h('h3', null, s.name), h('span', { class: 'row' }, s.faction ? standingChip(w, s.faction, 'Prices follow your standing, and better stock opens as it rises.') : null, h('span', { class: 'gold num' }, `◈ ${w.gold}`))),
+      h('div', { class: 'row spread shop-bar' }, h('div', { class: 'tabs' }, tabs.map(([id, label]) => h('button', { class: `tab ${tab === id ? 'active' : ''}`, onclick: () => setTab(id) }, label))), filter),
       body);
   }
 
   function healer(game, s) {
     const w = game.world;
     return h('div', { class: 'stack' },
-      h('h3', null, s.name),
-      s.faction ? h('p', { class: 'small muted' }, `The Lantern tends friends cheaper (Friendly 25+: 30% off; Revered: free). It raises the dead only for those it counts as friends (standing 25). You are ${G.Factions.tier(w, s.faction).toLowerCase()}.`) : null,
+      h('div', { class: 'row spread' }, h('h3', null, s.name), s.faction ? standingChip(w, s.faction, 'Friends are tended cheaper (Friendly, standing 25+: 30% off; Revered: free), and only friends are raised from the dead.') : null),
       h('div', { class: 'ledger' }, World.party(w).map((c) => {
         const dead = c.status.dead;
         const cost = dead ? Econ.raiseCost(c) : Econ.healCost(w, c, s);
         const hurt = C.totalDamage(c) || c.bleeds.length || c.stamina < C.maxStamina(c);
         return h('div', { class: 'ledger-row' },
-          h('span', { class: 'row' }, UI.Art.portrait(c, 36), h('span', { class: 'stack tight' }, h('b', null, c.name), h('span', { class: 'small muted' }, dead ? 'Dead' : C.totalDamage(c) ? `${C.totalDamage(c)} points of attribute damage` : hurt ? 'Tired' : 'Well'))),
+          h('span', { class: 'row' }, UI.Art.portrait(c, 36), h('span', { class: 'stack tight' }, h('b', null, c.name), h('span', { class: 'small muted' }, dead ? 'Dead' : C.totalDamage(c) ? `−${C.totalDamage(c)} attributes` : hurt ? 'Tired' : 'Well'))),
           h('span', { class: 'num' }, dead || hurt ? `${cost} ◈` : ''),
           dead ? h('button', { class: 'small', disabled: w.gold < cost, onclick: () => { const r = G.Town.raise(w, c, s); toast(r.ok ? `${c.name} breathes.` : r.reason); game.save(); game.render(); } }, 'Raise')
             : h('button', { class: 'small', disabled: !hurt || w.gold < cost, onclick: () => { const r = G.Town.heal(w, c, s); if (!r.ok) toast(r.reason); game.save(); game.render(); } }, 'Tend'));
@@ -160,8 +165,7 @@
     const payer = (G.Factions.defs()[B.payer] || {}).name || 'The payer';
     const st = B.payer ? G.Factions.standing(w, B.payer) : 0;
     return h('div', { class: 'stack' },
-      h('h3', null, s.name),
-      h('p', { class: 'muted' }, `${payer} pays ${B.gold} gold for each outlaw who dies by your hand (friends only, standing ${B.minStanding}).`),
+      h('div', { class: 'row' }, h('h3', null, s.name), UI.tip(`${payer} pays ${B.gold} gold for each outlaw who dies by your hand (friends only, standing ${B.minStanding}).`)),
       h('div', { class: 'row spread' }, h('span', null, `${n} outlaw${n === 1 ? '' : 's'} on the list`),
         h('button', { class: 'primary', disabled: !n || st < B.minStanding, onclick: () => { const r = G.Town.collectBounty(w); toast(r.ok ? `+${r.gold} gold` : r.reason); game.save(); game.render(); } }, 'Collect')),
       st < B.minStanding && n ? h('p', { class: 'small muted' }, `Your standing with ${payer} is ${st}.`) : null);
@@ -176,27 +180,25 @@
     const left = C.featBudget(cur) - C.featCount(cur);
     const dbg = game.debug;
     const trees = C.TREES.map((t) => ({ t, feats: Object.values(G.DATA.FEATS).filter((f) => f.tree === t.id && (f.auto || dbg)) })).filter((x) => x.feats.length);
-    const open = game.ui.trainTree;
+    if (!trees.some((x) => x.t.id === game.ui.trainTree)) game.ui.trainTree = trees[0] && trees[0].t.id;
+    const tree = trees.find((x) => x.t.id === game.ui.trainTree);
+    const pick = (label, el) => h('label', { class: 'pick' }, h('span', { class: 'label' }, label), el);
     return h('div', { class: 'stack' },
-      h('h3', null, s.name),
-      h('p', { class: 'muted' }, 'Levels give feats; feats are taught here, for a price, and only between adventures. Each costs more the higher the rank.'),
-      h('div', { class: 'party-strip' }, members.map((c) => h('button', { class: `member ${c.id === cur.id ? 'selected' : ''}`, onclick: () => { game.ui.trainer = c.id; game.render(); } },
-        UI.Art.portrait(c, 40), h('span', { class: 'stack tight' }, h('b', null, c.name), h('span', { class: 'small muted num' }, `L${c.level} · ${C.featBudget(c) - C.featCount(c)} to spend`))))),
-      h('div', { class: 'row spread' }, h('b', null, `${cur.name}: ${C.featCount(cur)} of ${C.featBudget(cur)} feats`), h('span', { class: 'gold num' }, `◈ ${w.gold}`)),
-      left <= 0 ? h('p', { class: 'small muted' }, `No feat to spend. The next level is at ${G.World.xpFor(cur.level + 1)} XP (you have ${cur.xp || 0}).`) : null,
-      trees.map(({ t, feats }) => h('details', { class: 'feat-tree', open: open === t.id, ontoggle: (e) => { if (e.target.open) game.ui.trainTree = t.id; } },
-        h('summary', null, h('span', null, t.name), h('span', { class: 'muted small' }, t.attrs)),
-        h('div', { class: 'stack tight pad' }, feats.map((f) => {
-          const rk = C.rank(cur, f.id);
-          const tr = G.Town.trainable(cur, f.id);
-          const full = rk >= f.ranks.length;
-          return h('div', { class: 'feat-row' },
-            h('span', { class: 'stack tight' },
-              h('b', null, f.name, ' ', h('span', { class: 'muted small' }, f.ranks.map((r, i) => (i < rk ? '●' : '○')).join(''))),
-              h('span', { class: 'small muted' }, f.effect)),
-            full ? h('span', { class: 'chip ok' }, 'Mastered') : tr.ok ? h('button', { class: 'small', disabled: w.gold < tr.cost || left <= 0, onclick: () => { const r = G.Town.train(w, cur, f.id); if (!r.ok) toast(r.reason); game.save(); game.render(); } }, `Train — ${tr.cost} ◈`)
-              : dbg ? h('button', { class: 'small', onclick: () => { G.Town.train(w, cur, f.id, { bench: true, free: true }); game.render(); } }, 'Grant (debug)') : h('span', { class: 'small muted' }, tr.reason));
-        })))));
+      h('div', { class: 'row spread' }, h('div', { class: 'row' }, h('h3', null, s.name), UI.tip('Levels give feats; feats are taught here, for a price, and only between adventures. Each costs more the higher the rank.')), h('span', { class: 'gold num' }, `◈ ${w.gold}`)),
+      h('div', { class: 'row train-bar' },
+        pick('Who', UI.select('train-who', cur.id, members.map((c) => [c.id, `${c.name} · L${c.level} · ${C.featBudget(c) - C.featCount(c)} to spend`]), (v) => { game.ui.trainer = v; game.render(); })),
+        pick('Feats', UI.select('train-tree', game.ui.trainTree, trees.map(({ t, feats }) => [t.id, `${t.name} (${feats.filter((f) => C.rank(cur, f.id)).length}/${feats.length})`]), (v) => { game.ui.trainTree = v; game.render(); }))),
+      h('div', { class: 'row small muted' }, `${C.featCount(cur)} of ${C.featBudget(cur)} feats`, left <= 0 ? ` · next level at ${G.World.xpFor(cur.level + 1)} XP (has ${cur.xp || 0})` : ` · ${left} to spend`, tree ? h('span', { class: 'chip' }, tree.t.attrs) : null),
+      tree ? h('div', { class: 'ledger' }, tree.feats.map((f) => {
+        const rk = C.rank(cur, f.id);
+        const tr = G.Town.trainable(cur, f.id);
+        const full = rk >= f.ranks.length;
+        return h('div', { class: 'ledger-row feat-row' },
+          h('span', { class: 'row' }, h('b', null, f.name), h('span', { class: 'muted small' }, f.ranks.map((r, i) => (i < rk ? '●' : '○')).join('')), UI.tip(f.effect, f.name)),
+          h('span'),
+          full ? h('span', { class: 'chip ok' }, 'Mastered') : tr.ok ? h('button', { class: 'small', disabled: w.gold < tr.cost || left <= 0, onclick: () => { const r = G.Town.train(w, cur, f.id); if (!r.ok) toast(r.reason); game.save(); game.render(); } }, `Train — ${tr.cost} ◈`)
+            : dbg ? h('button', { class: 'small', onclick: () => { G.Town.train(w, cur, f.id, { bench: true, free: true }); game.render(); } }, 'Grant (debug)') : h('span', { class: 'small muted', title: tr.reason }, 'Locked'));
+      })) : null);
   }
 
   UI.Screens.town = function (game) {

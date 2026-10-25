@@ -155,7 +155,7 @@
         h('button', { class: 'primary', onclick: () => startFight(game, p, !p.aware) }, icon('sword', 14), p.aware ? 'Fight' : 'Ambush'),
         parley ? h('button', { onclick: () => game.talk(spec.parley, { type: 'encounter', x: p.x, y: p.y, spec }) }, `Talk to ${parley.name}`) : null,
         !p.aware ? h('button', { onclick: () => { game.ui.prompt = null; game.render(); } }, 'Leave them') : null,
-        h('button', { class: 'info-btn', type: 'button', onclick: () => game.openOverlay('text', { title: 'About this meeting', text: p.aware ? 'They know you are here. You can flee once the fight starts, but they are quicker than most.' : 'Sneaking past is possible: stay quiet (H) and keep your distance, or you may wake them. An ambush costs them part of their first round.' }) }, 'i')));
+        UI.tip(p.aware ? 'They know you are here. You can flee once the fight starts, but they are quicker than most.' : 'Sneaking past is possible: stay quiet (H) and keep your distance, or you may wake them. An ambush costs them part of their first round.', 'About this meeting')));
   }
 
   function facePrompt(game) {
@@ -165,9 +165,17 @@
     return h('section', { class: 'popcard' },
       h('div', { class: 'popcard-head' }, h('h3', { class: 'grow' }, f.label), closeBtn(game)),
       f.text ? h('p', { class: 'muted small' }, f.text) : null,
-      h('div', { class: 'stack tight' }, f.actions.map((a) => h('button', { class: 'act', onclick: () => doAction(game, f, a) },
-        h('span', null, a.label),
-        a.skill ? h('span', { class: 'small muted num' }, `${G.Skills.defs()[a.skill].name} +${G.Skills.mod(a.who || World.active(w)[0], a.skill)} vs ${a.tn}${a.who ? ' · ' + a.who.name : ''}`) : null))));
+      h('div', { class: 'stack tight' }, f.actions.map((a, i) => h('button', { class: 'act', onclick: () => doAction(game, f, a),
+        title: a.skill ? `${G.Skills.defs()[a.skill].name} check: d10 +${G.Skills.mod(a.who || World.active(w)[0], a.skill)} against ${a.tn}${a.who ? ` (${a.who.name}, the best at it)` : ''}` : null },
+        h('span', null, i < 9 ? h('kbd', null, String(i + 1)) : null, ' ', a.label),
+        a.skill ? h('span', { class: 'small muted num' }, odds(G.Skills.mod(a.who || World.active(w)[0], a.skill), a.tn)) : null))));
+  }
+
+  // The chance a d10 + mod check meets the target number, as a percentage.
+  function odds(mod, tn) {
+    if (typeof tn !== 'number') return '';
+    const need = tn - mod;
+    return `${Math.round(Math.max(0, Math.min(10, 11 - need)) * 10)}%`;
   }
 
   function doAction(game, f, a) {
@@ -359,7 +367,10 @@
       const dir = { w: 0, arrowup: 0, d: 1, arrowright: 1, s: 2, arrowdown: 2, a: 3, arrowleft: 3 }[k];
       if (dir != null) { e.preventDefault(); stopWalk(game); step(game, dir); return; }
       const map = { f: () => interact(game), ' ': () => interact(game), x: () => search(game), c: () => camp(game), h: () => toggleSneak(game), m: () => game.openOverlay('map'), escape: () => { stopWalk(game); if (game.ui.prompt && !locked(game)) { game.ui.prompt = null; game.render(); } } };
-      if (map[k]) { e.preventDefault(); map[k](); }
+      if (map[k]) { e.preventDefault(); map[k](); return; }
+      const n = Number(k);
+      if (n >= 1 && n <= 9) { const b = document.querySelectorAll('.screen-explore .popcard button.act')[n - 1]; if (b) { e.preventDefault(); b.click(); } return; }
+      if (k === 'enter') { const b = document.querySelector('.screen-explore .popcard button.primary'); if (b) { e.preventDefault(); b.click(); } }
     });
   }
 

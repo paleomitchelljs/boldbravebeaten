@@ -24,29 +24,28 @@
     const goodRows = Object.entries(w.pack.goods).map(([id, n]) => {
       const g = World.goodDef(id);
       const usable = g.kind === 'potion' || g.kind === 'book' || (g.kind === 'supply' && g.use);
-      return h('div', { class: 'ledger-row' }, h('span', { class: 'stack tight' }, h('b', null, `${g.name}${n > 1 ? ' ×' + n : ''}`), h('span', { class: 'small muted' }, g.blurb)),
-        g.kind === 'trinket' ? h('span', { class: 'small muted' }, 'wear it on the sheet') : usable ? h('button', { class: 'small', onclick: () => { const r = G.Town.useGood(w, id, tc); toast(r.ok ? r.lines[0] || 'Done' : r.reason); game.save(); game.openOverlay('pack', o); game.render(); } }, 'Use on ' + tc.name) : null);
+      return h('div', { class: 'ledger-row' }, UI.Bits.goodLine(`${g.name}${n > 1 ? ' ×' + n : ''}`, g),
+        g.kind === 'trinket' ? h('span', { class: 'small muted', title: 'Put it on from a worn slot on the character sheet' }, 'worn') : usable ? h('button', { class: 'small', onclick: () => { const r = G.Town.useGood(w, id, tc); toast(r.ok ? r.lines[0] || 'Done' : r.reason); game.save(); game.openOverlay('pack', o); game.render(); } }, 'Use on ' + tc.name) : null);
     });
     const useSupply = ['repair_kit'].filter((id) => World.goodCount(w, id) > 0).map((id) => {
       const g = World.goodDef(id);
-      return h('div', { class: 'ledger-row' }, h('span', { class: 'stack tight' }, h('b', null, `${g.name} ×${World.goodCount(w, id)}`), h('span', { class: 'small muted' }, g.blurb)), h('button', { class: 'small', onclick: () => { const r = G.Town.useGood(w, id, tc); toast(r.ok ? r.lines[0] : r.reason); game.save(); game.openOverlay('pack', o); game.render(); } }, 'Use on ' + tc.name));
+      return h('div', { class: 'ledger-row' }, UI.Bits.goodLine(`${g.name} ×${World.goodCount(w, id)}`, g), h('button', { class: 'small', onclick: () => { const r = G.Town.useGood(w, id, tc); toast(r.ok ? r.lines[0] : r.reason); game.save(); game.openOverlay('pack', o); game.render(); } }, 'Use on ' + tc.name));
     });
     const equipTo = (it) => {
       // An armor piece takes every slot it covers at once: one button.
       const slots = it.kind === 'armor' ? Equip.fits(it).slice(0, 1) : Equip.fits(it);
       return h('div', { class: 'row' }, slots.map((s) => h('button', { class: 'small', disabled: !Equip.canEquip(tc, it, s).ok, onclick: () => { const r = Equip.equip(w, tc, it, s); if (!r.ok) toast(r.reason); game.save(); game.openOverlay('pack', o); game.render(); } }, `${Equip.slotList().find((x) => x[0] === s)[1]}`)));
     };
-    const gear = w.pack.gear.map((it) => h('div', { class: 'ledger-row' }, h('span', { class: 'stack tight' }, h('b', null, Items.itemName(it)), h('span', { class: 'small muted' }, Equip.describe(it))), equipTo(it)));
+    const gear = w.pack.gear.map((it) => h('div', { class: 'ledger-row' }, UI.Bits.itemLine(it), equipTo(it)));
     const comps = Object.entries(S.components).filter(([, n]) => n > 0).map(([id, n]) => `${World.goodDef(id).name} ×${n}`);
     return shell('Pack', h('div', { class: 'stack' },
       h('div', { class: 'row spread' }, h('span', { class: 'gold num big' }, `◈ ${w.gold}`),
         h('label', { class: 'inline' }, h('span', { class: 'label' }, 'For'), h('select', { 'aria-label': 'Character', onchange: (e) => { o.target = e.target.value; game.openOverlay('pack', o); } }, members.map((m) => h('option', { value: m.id, selected: m.id === target }, m.name))))),
-      h('section', { class: 'stack tight' }, h('h3', null, 'Supplies'),
-        h('p', null, `${S.bandages} bandages · ${S.arrows} arrows · ${S.bodkins} bodkin heads`), comps.length ? h('p', { class: 'small muted' }, comps.join(', ')) : null,
-        h('p', { class: 'small muted' }, 'Supplies are shared and dealt out when a fight starts. Archers get the arrows.')),
+      h('section', { class: 'stack tight' }, h('div', { class: 'row' }, h('h3', null, 'Supplies'), UI.tip('Shared, and dealt out when a fight starts. Archers get the arrows.')),
+        h('p', null, `${S.bandages} bandages · ${S.arrows} arrows · ${S.bodkins} bodkin heads`), comps.length ? h('p', { class: 'small muted' }, comps.join(', ')) : null),
       gear.length ? h('section', { class: 'stack tight' }, h('h3', null, 'Spare gear'), gear) : null,
       goodRows.length || useSupply.length ? h('section', { class: 'stack tight' }, h('h3', null, 'Goods'), useSupply, goodRows) : null,
-      !gear.length && !goodRows.length ? h('p', { class: 'muted' }, 'Nothing else in the pack. Loot comes from the fallen, chests, and the people you help.') : null), close, true);
+      !gear.length && !goodRows.length ? h('p', { class: 'muted' }, 'Nothing else in the pack.') : null), close, true);
   };
 
   // ---- Journal -----------------------------------------------------------------------------------------------------------
@@ -98,7 +97,7 @@
     const defs = G.Factions.defs();
     const close = () => game.closeOverlay();
     const track = (v) => h('div', { class: 'track wide' }, h('span', { class: 'mark', style: { left: ((v + 100) / 2) + '%' } }), h('span', { class: 'zero' }));
-    const rep = (label, v, hint) => h('div', { class: 'stack tight' }, h('div', { class: 'row spread' }, h('b', null, label), h('span', { class: 'num' }, v)), bar(v, 100), h('span', { class: 'small muted' }, hint));
+    const rep = (label, v, hint) => h('div', { class: 'stack tight' }, h('div', { class: 'row spread' }, h('b', { title: hint }, label), h('span', { class: 'num' }, v)), bar(v, 100));
     return shell('Standing', h('div', { class: 'stack' },
       h('div', { class: 'grid-2' },
         rep('Renown', w.rep.renown, 'Your good name. Moral and starstruck people respond to it.'),
@@ -106,12 +105,10 @@
       Object.entries(defs).filter(([id]) => id !== 'wilds').map(([id, f]) => {
         const v = G.Factions.standing(w, id);
         return h('div', { class: 'faction panel stack tight' },
-          h('div', { class: 'row spread' }, h('b', null, f.name), h('span', { class: 'chip' }, `${G.Factions.tier(w, id)} · ${v > 0 ? '+' : ''}${v}`)),
-          h('p', { class: 'small muted' }, f.blurb),
+          h('div', { class: 'row spread' }, h('b', { title: [f.blurb, (f.allies || []).length ? 'Friends: ' + f.allies.map((a) => defs[a].name).join(', ') : null, (f.enemies || []).length ? 'Foes: ' + f.enemies.map((a) => defs[a].name).join(', ') : null].filter(Boolean).join('\n') }, f.name), h('span', { class: 'chip' }, `${G.Factions.tier(w, id)} · ${v > 0 ? '+' : ''}${v}`)),
           track(v),
           G.Factions.rank(w, id) ? h('p', { class: 'small' }, 'Rank: ' + G.Factions.rank(w, id)) : null,
-          (f.perks || []).length ? h('div', { class: 'small stack tight' }, f.perks.map(([min, text]) => h('span', { style: { opacity: v >= min ? 1 : 0.5 } }, `${v >= min ? '✓' : '○'} ${text} (${min}+)`))) : null,
-          h('p', { class: 'small muted' }, [(f.allies || []).length ? 'Friends: ' + f.allies.map((a) => defs[a].name).join(', ') : null, (f.enemies || []).length ? 'Foes: ' + f.enemies.map((a) => defs[a].name).join(', ') : null].filter(Boolean).join(' · ')));
+          (f.perks || []).length ? h('div', { class: 'small stack tight' }, f.perks.map(([min, text]) => h('span', { style: { opacity: v >= min ? 1 : 0.5 } }, `${v >= min ? '✓' : '○'} ${text} (${min}+)`))) : null);
       })), close, true);
   };
 

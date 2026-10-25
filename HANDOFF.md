@@ -22,8 +22,14 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   the click-a-target hint pulses. Seen in headless Chrome at 1280 and 500 px wide (the banner and the hit flash only
   as still frames).
 - [x] Town company portraits were drawn at full panel width (a CSS rule meant for the dock); fixed.
-- [ ] Not yet looked at for this pass: the reaction card (bottom right of the map), the explore screen's prompts, the
-  sheet (empty gear slots take a row each), town and shop text.
+- [x] Second pass (2026-10-25): every `title` in the game shows as the hover card (moved to `data-hint` on first
+  hover); explore prompts number their actions (keys 1-9, Enter for the main button) and give a check's odds as a
+  percentage, its details on hover; the sheet's gear is two columns, and empty slots with nothing to fill them are one
+  line; shop, pack and repair rows are one line each (name plus a short tag, the full stats on hover) with a category
+  dropdown when a shop has more than six things; the inn, healer, bounty, trainer and supplies explanations and
+  faction blurbs are behind (i) or hover; the Training Yard picks who and which feats from two dropdowns.
+- [ ] Still wordy or untouched: the town street's location cards, the parley screen, the journal, the title and
+  creation screens. The reaction card was left as it was (already short).
 
 ## Art TODO
 Where art lives: `art/` is what the game draws (published; see `art/README.md`), `assets/` the scratch pad (raw packs,

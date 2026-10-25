@@ -121,6 +121,19 @@
     return el;
   }
   if (typeof document !== 'undefined' && document.addEventListener) document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && cardFor) hideHover(); });
+  // In the game every `title` shows as this card (at once, styled, wrapped) instead of the browser's slow tooltip.
+  // The title moves to data-hint on first hover so the browser's own does not show as well.
+  if (typeof document !== 'undefined' && document.addEventListener) document.addEventListener('mouseover', (e) => {
+    if (pinned || !document.documentElement.dataset || document.documentElement.dataset.mode !== 'game') return;
+    let el = e.target;
+    while (el && el.nodeType === 1 && !(el.getAttribute('title') || (el.dataset && el.dataset.hint))) el = el.parentNode;
+    if (!el || el.nodeType !== 1 || el.tagName === 'CANVAS') return;
+    if (el.getAttribute('title')) { el.dataset.hint = el.getAttribute('title'); el.removeAttribute('title'); }
+    if (cardFor === el) return;
+    showHover(el, el.dataset.hint);
+    const leave = () => { el.removeEventListener('mouseleave', leave); if (cardFor === el && !pinned) hideHover(); };
+    el.addEventListener('mouseleave', leave);
+  });
 
   // The small (i): hover or focus it for the explanation. text may be a string, nodes, or a function returning them.
   function tip(text, label) {

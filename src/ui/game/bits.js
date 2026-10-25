@@ -51,5 +51,14 @@
     return h('div', { class: 'gamelog', role: 'log', 'aria-live': 'polite' }, lines.map((l) => h('p', { class: `l ${l.cls}` }, l.text)));
   }
 
-  UI.Bits = { checkText, topBar, partyStrip, logPanel };
+  // An item on one line: its name and the first two parts of its stat line; the whole line on hover.
+  function itemLine(item, who) {
+    const full = G.Equip.describe(item);
+    const tag = full.split(' · ').filter(Boolean).slice(0, 2).join(' · ');
+    return h('span', { class: 'item-line', title: (who ? who + ' · ' : '') + full }, h('b', null, G.Items.itemName(item)), h('span', { class: 'small muted' }, (who ? who + ' · ' : '') + tag));
+  }
+  // Goods: the name, their kind, the description on hover.
+  const goodLine = (name, g) => h('span', { class: 'item-line', title: g.blurb }, h('b', null, name), h('span', { class: 'small muted' }, g.kind || 'goods'));
+
+  UI.Bits = { checkText, topBar, partyStrip, logPanel, itemLine, goodLine };
 })(globalThis.BBB);

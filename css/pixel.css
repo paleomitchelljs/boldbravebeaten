@@ -195,7 +195,7 @@ button.linkish:hover:not(:disabled) { color: var(--brass); background: none; }
 .game-modal { padding: 12px 14px; gap: 10px; width: min(94vw, 600px); }
 .game-modal.wide { width: min(96vw, 760px); }
 .modal h2 { font-size: 1.15rem; }
-.sheet-pop { width: min(94vw, 580px); }
+.sheet-pop { width: min(94vw, 640px); max-height: calc(100vh - 32px); overflow-y: auto; }
 .sheet-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .switcher { display: flex; gap: 4px; }
 .switcher .sw { padding: 2px; width: 38px; } .switcher .sw.selected { background: var(--accent-soft); outline: 2px solid var(--accent); outline-offset: 1px; } .switcher .sw.down { opacity: 0.45; }
@@ -210,6 +210,8 @@ button.linkish:hover:not(:disabled) { color: var(--brass); background: none; }
 .gear-row { display: grid; grid-template-columns: 76px minmax(0, 1fr) 17px; gap: 8px; align-items: center; padding: 3px 6px; background: #0e151a; border: var(--px) solid var(--edge); }
 .gear-row.filled { border-left: 3px solid var(--brass); }
 .gear-row select { width: 100%; padding-block: 3px; }
+.gear-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 4px; }
+.gear-grid .gear-row { grid-template-columns: 66px minmax(0, 1fr) 17px; }
 .gear-name { font-size: 0.95rem; }
 .chips { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 .chip.feat, .chip.skill { gap: 5px; font-size: 0.8rem; padding: 2px 6px; color: var(--ink); }
@@ -267,3 +269,12 @@ kbd { font: 600 0.72rem var(--font-mono); padding: 0 4px; border: 1px solid var(
 .initbar .init { position: relative; }
 .initbar .init.done { opacity: 0.65; }
 .init-ap { position: absolute; right: 1px; top: 1px; font-size: 0.6rem; line-height: 1; padding: 1px 2px; background: rgba(5, 8, 11, 0.85); color: #9fd1ff; }
+
+/* ---- Town: one line per item, its stats on hover ---- */
+.item-line { display: flex; align-items: baseline; gap: 8px; min-width: 0; flex-wrap: wrap; }
+.item-line .small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.screen-town .ledger-row { padding-block: 5px; }
+.shop-bar { align-items: flex-end; flex-wrap: wrap; gap: 8px; }
+.shop-bar .tabs { border-bottom: 0; padding-bottom: 0; }
+.shop-bar select { min-width: 160px; }
+.train-bar { gap: 10px; flex-wrap: wrap; align-items: flex-end; } .train-bar .pick { flex: 1 1 220px; }

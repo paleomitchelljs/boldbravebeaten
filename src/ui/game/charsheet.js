@@ -60,6 +60,7 @@
       for (const l of (r && r.lines) || []) toast(l);
       game.save(); game.openOverlay('sheet', o); game.render();
     };
+    if (!cur && opts.length < 2) return null;
     const detail = cur && cur.kind ? Equip.describe(cur) : cur ? cur.blurb : '';
     return h('div', { class: 'gear-row' + (cur ? ' filled' : '') },
       h('span', { class: 'label' }, label),
@@ -72,16 +73,20 @@
     const nat = (c.natural || []).map((t) => D.WEAPONS[t] && D.WEAPONS[t].name).filter(Boolean);
     const ai = C.armorInfo(c);
     const sh = c.shield ? Items.shieldStats(c.shield) : null;
+    const slots = shown.filter((s) => editable || Equip.itemIn(c, s));
+    const rows = slots.map((s) => slotRow(game, o, c, s, editable));
+    const empty = editable ? slots.filter((s, i) => !rows[i]) : [];
     return h('div', { class: 'stack tight' },
       c.side === 'party' ? null : h('div', { class: 'gear-row filled' }, h('span', { class: 'label' }, 'Wields'), h('span', { class: 'gear-name' }, nat.length ? nat.join(', ') : (C.wieldedWeapon(c) ? Items.itemName(C.wieldedWeapon(c)) : 'Unarmed')), h('span', { class: 'tip-gap' })),
-      shown.filter((s) => editable || Equip.itemIn(c, s)).map((s) => slotRow(game, o, c, s, editable)),
+      h('div', { class: 'gear-grid' }, rows.filter(Boolean)),
+      empty.length ? h('p', { class: 'small muted' }, `Nothing for: ${[...new Set(empty.map(slotName))].join(', ').toLowerCase()}`) : null,
       h('div', { class: 'chips' },
         c.armor ? h('span', { class: 'chip', title: 'Torso armor: mitigation by damage type once wear is counted. Other locations have their own piece, or none.' }, `Torso P${ai.effMit.P} S${ai.effMit.S} B${ai.effMit.B}`) : h('span', { class: 'chip' }, C.armorPieces(c).length ? 'Torso bare' : 'No armor'),
         c.armor ? h('span', { class: 'chip', title: 'Armor durability' }, `Dur ${ai.durability}/${ai.maxDurability}`) : null,
-        ai.pierce ? h('span', { class: 'chip', title: 'A point with at least this much punch bursts through; a lighter one must find a gap (d10 + ⌊DEX/4⌋ + feats against the gap number) or is turned' }, `Points burst at ${ai.pierce.resist} · gap ${ai.pierce.gap}`) : null,
+        ai.pierce ? h('span', { class: 'chip', title: `Points: one with ${ai.pierce.resist}+ punch bursts through; a lighter one must find a gap (d10 + ⌊DEX/4⌋ + feats against ${ai.pierce.gap}) or is turned` }, `Pierce ${ai.pierce.resist}/${ai.pierce.gap}`) : null,
         ai.spd || ai.dex ? h('span', { class: 'chip warn', title: 'Armor slows and stiffens you' }, `SPD −${ai.spd} · DEX −${ai.dex}`) : null,
-        sh ? h('span', { class: 'chip', title: 'Block AP, how much it can hold, durability' }, `Shield ${C.fmtAP(C.actionCost(c, 'block').ap)} AP · holds ${sh.threshold} · ${c.shield.durability}/${sh.maxDurability}`) : null),
-      editable ? h('p', { class: 'small muted' }, 'Gear comes from the pack. Swapping is for town, camp and the quiet before a fight.') : null);
+        sh ? h('span', { class: 'chip', title: `Shield: a block costs ${C.fmtAP(C.actionCost(c, 'block').ap)} AP and holds blows up to ${sh.threshold}; durability ${c.shield.durability}/${sh.maxDurability}` }, `Shield ${C.fmtAP(C.actionCost(c, 'block').ap)} AP · ${sh.threshold}`) : null),
+      editable ? h('div', { class: 'row small muted' }, 'Gear comes from the pack.', tip('Swapping is for town, camp and the quiet before a fight. Pick from a slot\'s list to put something on; "Take off" sends it to the pack.')) : null);
   }
 
   function statsTab(c) {
@@ -115,7 +120,7 @@
     const defs = G.Skills.defs();
     return h('div', { class: 'stack tight' },
       h('div', { class: 'chips' }, Object.entries(defs).map(([id, s]) => h('span', { class: 'chip skill' }, s.name, ' ', h('b', { class: 'num' }, (G.Skills.mod(c, id) >= 0 ? '+' : '') + G.Skills.mod(c, id)), tip(s.blurb, s.name)))),
-      h('p', { class: 'small muted' }, 'A check is d10 plus this number against a target: easy 6, moderate 8, hard 11, formidable 14.'));
+      h('div', { class: 'row small muted' }, 'd10 + this against a target', tip('Easy 6, moderate 8, hard 11, formidable 14.')));
   }
 
   UI.Overlays.sheet = function (game, o) {
