@@ -6,13 +6,15 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 
 ## Look and feel (needs a human eye)
 - [ ] Play it on a phone-width screen: stage, dock, toolbar, command bar and sheet have only been checked on desktop.
-- [ ] Restyle the town, parley, title and pack/journal/standing screens to match the pixel theme (they only inherit colours).
+- [ ] Restyle the parley, title and pack/journal/standing screens to match the pixel theme (they only inherit colours).
 - [x] Fights: expected damage through armor is shown in the pane ("On hit") and in the map's hover card for a target.
   Odds that the target's block, parry or dodge succeeds are still not shown (the target's AP is hidden, so any figure
   would be a guess about what they keep back).
 - [ ] Click-to-walk and the explore prompts need a pass on touch screens.
 
 ## Playability (the user, 2026-10-25: "a pain to play"; streamline, more feedback, less text)
+**The town is a debug draft for testing mechanics (the user, 2026-10-25): don't refine its UI, art or text; keep it
+working, nothing more.** The shop and trainer changes below were made before that was said; they stay as they are.
 - [x] Battle screen: the map on the left, a command pane on the right (under the map below 1000 px, stuck to the
   bottom), sized to the window so Do-it and End turn never need a scroll. Action types are icon tabs (Attack, Maneuver,
   Magic, Move, Other; keys 1-5); action, target and aim stay dropdowns; costs are in the action list; E ends the turn.
@@ -32,7 +34,7 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   hover); the moves are one grid of buttons (bonus and patience cost on the button, what it does on hover; Appeal and
   Bribe each with a dropdown); the speaker picker sits with the moves; the mood meters flash green or red when a move
   shifts them.
-- [ ] Still wordy or untouched: the town street's location cards, the journal, the title and creation screens. The reaction card was left as it was (already short).
+- [ ] Still wordy or untouched: the journal, the title and creation screens. The reaction card was left as it was (already short).
 
 ## Art TODO
 Where art lives: `art/` is what the game draws (published; see `art/README.md`), `assets/` the scratch pad (raw packs,
