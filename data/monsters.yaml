@@ -353,7 +353,7 @@ scaleward:
   faction: wilds
   xp: 55
   glyph: "🦎"
-  sprite: {art: lizardfolk, kind: orc_warrior, tint: "#6a9a8a"}
+  sprite: {art: lizardfolk-warrior, kind: orc_warrior, tint: "#6a9a8a"}
   loot: humanoid_purse
   attrs: {STR: 12, CON: 11, DEX: 5, SPD: 5, INT: 4, WIS: 4, CHA: 3}
   natural: [tail]

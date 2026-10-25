@@ -44,6 +44,9 @@ Read `HANDOFF.md` first: it is the to-do list. **After every push, update it** (
 - **The AI sees only what its character could see.** It doesn't see hidden strikes or the other side's AP.
 - Weapons come from physics: go through `Items.weaponStats(item)`, never the catalog's damage numbers directly.
 - Don't tune individual monsters to fix a style's weakness; tune fundamentals.
+- **Never generate or animate characters in PixelLab** (create_character, animate_character and the like): they are
+  costly and the user makes them. Inspect, cut, map and wire up what the user exports. Tiles, props and pixel edits are
+  still fine.
 
 ## Terminology (the user's standard; apply it everywhere)
 

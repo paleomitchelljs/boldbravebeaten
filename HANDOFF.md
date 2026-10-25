@@ -34,7 +34,7 @@ working, nothing more.** The shop and trainer changes below were made before tha
   hover); the moves are one grid of buttons (bonus and patience cost on the button, what it does on hover; Appeal and
   Bribe each with a dropdown); the speaker picker sits with the moves; the mood meters flash green or red when a move
   shifts them.
-- [ ] Still wordy or untouched: the journal, the title and creation screens. The reaction card was left as it was (already short).
+- [ ] Next for the UI (the user's priority, 2026-10-25): character creation, then the title screen. Then the journal. The reaction card was left as it was (already short).
 
 ## Art TODO
 Where art lives: `art/` is what the game draws (published; see `art/README.md`), `assets/` the scratch pad (raw packs,
@@ -64,12 +64,21 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
   missing animations. The prompt it was made from is in its `metadata.json`.
 - [ ] Add each to `data/art.yaml` with `party: true` so a party member can pick it.
 
+**Characters are made by the user in PixelLab; never generate or animate them (CLAUDE.md).**
+
 **2. Creatures for the dungeon**
 - [ ] Skeletons (`skeleton`, used by Skeleton and the squad; idle and attack only, 216×207). A warrior and an archer or
   caster would let the squad read as more than three copies.
 - [ ] Rats (`rat`, 77 px, idle and attack; the rat and rat pack). Small and soft beside the tiles.
-- [ ] Lizardfolk (`lizardfolk`, used by the Scaleward; idle and attack). A temple of lizardfolk wants several: warrior,
-  shaman, a larger brute.
+- [x] Lizardfolk warrior, PixelLab (2026-10-25, the user's export; `art/characters/pixellab/Lizardfolk_Warrior`,
+  `lizardfolk-warrior` in `art.yaml`, party-pickable): 8 idle rotations, a 6-frame walk N/E/S/W. Now the Scaleward's look.
+  Engine: `walkFrames`, and walk frames on PixelLab's 96-px canvas are cropped to the 64-px figure (Tevax's walk was
+  drawn off-centre before this).
+- [ ] Lizardfolk, still wanted: an attack (the map shows attack frames during a blow; without one it lunges in its idle
+  pose), hurt and death (a fall is a rotated idle now); a weapon and some armor if it is to be the Scaleward (the stats
+  give it a warhammer); a dark smudge at the mouth on walk frames east 5 and west 1; the south walk barely moves its
+  legs (unused for now: the map draws only east/west walks). A temple of lizardfolk wants several: warrior, shaman, a
+  larger brute.
 - [ ] Large red drake. The Drake monster borrows the `dragon` sheet (idle, attack, fly). Needs walk, fly, breath and
   bite.
 - [ ] Fae drake. A `fae-drake` sheet exists (idle and attack) but no monster uses it; it needs a monster in

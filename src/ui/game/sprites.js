@@ -121,10 +121,12 @@
     const def = artCat()[key];
     if (!def) return null;
     if (def.type === 'pixellab') {
-      const side = flip ? 'west' : 'east';
-      const name = anim === 'run' ? `${side}#${((frame % 4) + 4) % 4}` : flip ? 'south-west' : 'south-east';
+      const side = flip ? 'west' : 'east', n = def.walkFrames || 4;
+      const name = anim === 'run' ? `${side}#${((frame % n) + n) % n}` : flip ? 'south-west' : 'south-east';
       const s = artSheet(key, name);
-      return s.ok ? { def, s, sx: 0, sy: 0, sw: def.size, sh: def.size, mirror: false } : null;
+      // PixelLab exports walk frames on a larger canvas (96 px round a 64-px figure): take the figure's square from the middle.
+      const pad = s.ok ? Math.max(0, (s.img.width - def.size) / 2) : 0;
+      return s.ok ? { def, s, sx: pad, sy: pad, sw: def.size, sh: def.size, mirror: false } : null;
     }
     const anims = def.anims || ['idle'];
     const want = anim === 'run' ? (anims.includes('walk') ? 'walk' : anims.includes('fly') ? 'fly' : 'idle') : anims.includes(anim) ? anim : 'idle';
