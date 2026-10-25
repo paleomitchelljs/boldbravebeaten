@@ -13,13 +13,15 @@
 #     tile      an image of one square (a list: variants, picked by position)
 #     wang      a 16-tile corner sheet of this terrain (upper) over the terrain named by `over` (lower). Each tile sits
 #               on a corner between four squares and is chosen by which of them are this terrain (or one listed after
-#               it), so edges and corners join up. Its all-lower tile also serves as the plain `over` ground.
+#               it, except the wall unless this is the wall), so edges and corners join up. Its all-lower tile also serves as the plain `over` ground.
 #     cols      tiles across the sheet (default 4)
 #     corners   the sheet's tiles in reading order, each four letters NW NE SW SE (U upper, L lower). Default: the
 #               PixelLab layout, [UULU, ULUL, LULL, UULL, LUUL, ULLL, LLLL, LLLU, ULUU, LLUU, LLUL, LULU, UUUU, UUUL,
 #               ULLU, LUUU]. PixelLab's tileset tool reports each tile's corners; copy them here if they differ.
 #               A code listed again is a variant of the first tile with those corners (a mosaic in a wall face).
 #     vary      the share of corners with variants that draw one (default 0.25), picked by position
+#     like      another terrain to copy every field from (its cliff list, decor); fields given here win. It keeps its
+#               own rank, so a pyramid's tiers can share one layout and each draw over the last
 #     cliff     instead of corners: a PixelLab cliff set (transition_size 1, 25 tiles) as [col, row, pattern], the
 #               pattern 16 letters, row by row, of the 4x4 squares around the tile's corner: 0 lower, 1 upper, 2 the
 #               wall's last row (its face), . any (from the metadata's pattern_4x4). Each corner takes the best-scoring
@@ -65,6 +67,43 @@ temple_court:
     water: {color: "#1f4450"}
     shallows: {color: "#3b6a70"}
     bridge: {color: "#7a5a36"}
+    # The pyramid's tiers (court 2), each a cliff set over the one below, ranked in order so each draws over the last:
+    # the first rises from the grass, the rest from the terrace below (assets/wip/temple-pyramid/). Risers (`^`) are
+    # drawn as the tier they hold up. Same 25-tile layout as the wall.
+    tier1:
+      color: "#bab286"
+      wang: pyramid-tier1.png
+      over: grass
+      cliff:
+        - [2, 2, ".....00..00....."]
+        - [3, 2, ".....00..01....."]
+        - [1, 4, ".....00..11....."]
+        - [2, 4, ".....00..10....."]
+        - [3, 3, ".00..01..01....."]
+        - [3, 4, ".....01..01....."]
+        - [0, 6, ".....11..11....."]
+        - [1, 0, ".11..10..10....."]
+        - [1, 1, ".....10..10....."]
+        - [0, 4, ".....10..11....."]
+        - [3, 6, ".....01..11....."]
+        - [1, 6, ".....11..12...0."]
+        - [3, 0, ".....11..22..00."]
+        - [1, 2, ".....10..20..00."]
+        - [1, 7, ".1...12..10....."]
+        - [3, 1, ".11..22..00....."]
+        - [1, 3, ".....20..00....."]
+        - [2, 0, ".....01..02..00."]
+        - [0, 0, ".....11..21..0.."]
+        - [2, 6, ".....10..21..01."]
+        - [2, 1, ".....02..00....."]
+        - [0, 1, "..1..21..01....."]
+        - [2, 7, ".10..21..01....."]
+        - [0, 2, ".....01..12..10."]
+        - [0, 3, ".01..12..10....."]
+      decor: {density: 0.3, clump: 4, pieces: [[court-decor.png, 384, 0, 24, 20], [court-decor.png, 512, 0, 20, 22], [court-decor.png, 448, 0, 17, 32]]}
+    tier2: {like: tier1, wang: pyramid-tier2.png, over: tier1}
+    tier3: {like: tier1, wang: pyramid-tier3.png, over: tier1}
+    tier4: {like: tier1, wang: pyramid-tier4.png, over: tier1}
     wall:
       color: "#d4b67e"
       wang: court-wall.png
@@ -117,6 +156,13 @@ temple_court:
     well: [court-props.png, 128, 0, 64, 61]
     fern_large: [court-props.png, 192, 0, 64, 60]
     fern_small: [court-props.png, 256, 0, 64, 56]
+    # The pyramid (court 2): its stairs inpainted into renders of their tiers (assets/wip/temple-pyramid/), and the altar.
+    altar: [pyramid-props.png, 0, 0, 64, 64]
+    pyr_steps_w1: [pyramid-props.png, 68, 0, 168, 58, -100, 2]
+    pyr_steps_w3: [pyramid-props.png, 240, 0, 168, 58, -100, 2]
+    pyr_steps_s: [pyramid-props.png, 412, 0, 136, 108, -68, -16]
+    pyr_stair_l: [pyramid-props.png, 552, 0, 68, 108, -4, -16]
+    pyr_stair_r: [pyramid-props.png, 624, 0, 68, 108, 0, -16]
 
 
 # The walk along the top of the gate wall: plain paving, the same walls (chained from the court's), the same pieces.

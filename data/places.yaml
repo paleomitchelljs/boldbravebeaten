@@ -408,7 +408,7 @@ temple_maze:
     - "##############################################"
   legend:
     N: {kind: stairs, to: temple_court, at: L, sprite: door, wall: true, label: "Back to the court"}
-    E: {kind: locked, label: "Door to the second court (not built yet)", tn: 99, text: "A heavy door, barred from the far side. (The second court is not built yet.)"}
+    E: {kind: stairs, to: temple_court2, at: S, sprite: door, wall: true, label: "Door to the second court"}
     W: {kind: prop, sprite: well, label: "A well, its rope long gone (the sewers below are not built yet)"}
     C: {kind: chest, label: "A niche with a sealed jar", loot: strongbox, tn: 8}
     "1": {kind: monster, encounter: snake, label: "Something in the dead end"}
@@ -424,6 +424,83 @@ temple_maze:
     - {w: 1, foes: [{monster: scaleward}], text: "A lizardfolk patrol rounds the bend."}
     - {w: 1, foes: [{monster: ratPack}], text: "Rats, running ahead of something."}
     - {w: 5, nothing: true}
+  secrets: []
+
+temple_court2:
+  name: The Pyramid Court
+  kind: dungeon
+  blurb: A second walled court, nearly filled by a stepped pyramid of four carved tiers with a small altar on top.
+  level: 2
+  look: {wall: "#cdb98a", floor: "#4d6a33", ceiling: "#2a3a22", fog: "#0c120a", torch: 1, tileset: temple_court, ground: ",", light: 20}
+  # A 3-square rind of grass round a 28-square pyramid: four tiers, each a riser (^) and a terrace two squares wide
+  # (- : * &), each 3 squares in from the last. The way up winds round: the first stair at the north end of the west
+  # face, the second at the east end of the south face, the third on the west face again, the fourth in the middle of
+  # the south face. Laid out with a throwaway script (it is all straight lines).
+  map:
+    - "######################################"
+    - "######################################"
+    - "##,,,,,,,,%%,,,,,,,,,,,,;;,,,,,,,,,,##"
+    - "##,F,,,,,,%,,,,,,,,,,,,,;,,,,,,,,,F,##"
+    - "##,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,##"
+    - "##,,,^^^^^^^^^^^^^^^^^^^^^^^^^^^^,,,##"
+    - "##,p,^--------------------------^,,,##"
+    - "##,,,^--------------------------^,,,##"
+    - "##,,,a--^^^^^^^^^^^^^^^^^^^^^^--^,,,##"
+    - "##,,,^--^::::::::::::::::::::^--^,;,##"
+    - "##,,,^--^::::::::::::::::::::^--^,;,##"
+    - "##,,,^--^::^^^^^^^^^^^^^^^^::^--^,,,##"
+    - "##%%,^--^::^*h************^::^--^,,,##"
+    - "##%,,^--^::^**************^::^--^,,,##"
+    - "##,,,^--^::c**^^^^^^^^^^**^::^--^,,,##"
+    - "##,,,^--^::^**^&&&&&&&&^**^::^--^,,,##"
+    - "##,,,^--^::^**^&&&&&&&&^**^::^--^,,,##"
+    - "##,,,^--^::^**^&&&A&&&&^**^::^--^,,,##"
+    - "##,,,^--^::^**^&&&&&&D&^**^::^--^,,,##"
+    - "##,,,^--^::^**^&&&&&&&&^**^::^--^,,,##"
+    - "##,,,^--^::^**^&&&&&W&&^**^::^--^%%,##"
+    - "##,,,^--^::^**^&&&&&&&&^**^::^--^%%,##"
+    - "##,,,^--^::^**^&&&&&&&&^**^::^--^,,,##"
+    - "##,,,^--^::^**^^^^de^^^^**^::^--^,,,##"
+    - "##,,,^--^::^**************^::^--^,,,##"
+    - "##,,,^--^::^****s*********^::^--^,,,##"
+    - "##;;,^--^::^^^^^^^^^^^^^^^^::^--^,,,##"
+    - "##;,,^--^::::::::::::::::::::^--^,,,##"
+    - "##,,,^--^::::::::::::::::::::^--^,,,##"
+    - "##,,,^--^^^^^^^^^^^^^^^^^^^b^^--^,,,##"
+    - "##,,,^---k----------------------^,,,##"
+    - "##,,,^--------------------------^,,,##"
+    - "##,,,^^^^^^^^^^^^^^^^^^^^^^^^^^^^,,,##"
+    - "##,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,##"
+    - "##,F,,,,,,,,,,,,,,,g,,,,,,%%%,,,,,F,##"
+    - "##,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,##"
+    - "###################S##################"
+    - "######################################"
+  legend:
+    S: {kind: stairs, to: temple_maze, at: E, sprite: door, wall: true, label: "Back into the labyrinth"}
+    a: {kind: prop, sprite: pyr_steps_w1, solid: false, on: "^", label: "Steps up the first tier"}
+    b: {kind: prop, sprite: pyr_steps_s, solid: false, on: "^", label: "Steps up the second tier"}
+    c: {kind: prop, sprite: pyr_steps_w3, solid: false, on: "^", label: "Steps up the third tier"}
+    d: {kind: prop, sprite: pyr_stair_l, solid: false, on: "^", label: "The stair to the top"}
+    e: {kind: prop, sprite: pyr_stair_r, solid: false, on: "^", label: "The stair to the top"}
+    A: {kind: prop, sprite: altar, on: "&", label: "A small altar, stained dark"}
+    W: {kind: prop, sprite: well, on: "&", label: "A well in the top of the pyramid (the sewers below are not built yet)"}
+    F: {kind: prop, sprite: fern_large, solid: false, label: "Ferns"}
+    g: {kind: monster, encounter: door, label: "Guards at the door"}
+    p: {kind: monster, encounter: patrol, label: "A patrol at the foot of the pyramid"}
+    k: {kind: monster, encounter: bones, on: "-", label: "Bones on the first terrace"}
+    h: {kind: monster, encounter: terrace, on: "*", label: "A watch on the third terrace"}
+    s: {kind: monster, encounter: snake, on: "*", label: "Something coiled below the top stair"}
+    D: {kind: monster, encounter: top, on: "&", label: "On the top of the pyramid"}
+  encounters:
+    door: {foes: [{monster: scalewardPair}], text: "Two lizardfolk at the door turn as it opens."}
+    patrol: {foes: [{monster: scaleward}], text: "A scaled guard comes round the corner of the pyramid."}
+    bones: {foes: [{monster: skeleton}], text: "Bones laid out on the terrace pull themselves together."}
+    terrace: {foes: [{monster: scaleward}], text: "A guard at the head of the steps raises its hammer."}
+    snake: {foes: [{monster: constrictor}], text: "A great snake slides down the carved face."}
+    top: {foes: [{monster: drake}], text: "A red drake uncurls from the altar and spreads its wings."}
+  wandering:
+    - {w: 1, foes: [{monster: scaleward}], text: "A patrol comes round the pyramid."}
+    - {w: 4, nothing: true}
   secrets: []
 
 temple_wall:

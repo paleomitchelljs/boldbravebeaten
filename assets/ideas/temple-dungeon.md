@@ -1,6 +1,6 @@
 # Prototype dungeon 1: the temple (after the Temple of Cazic-Thule)
 
-From the user's voice memos of 2026-10-24, quoted where the wording matters. Status: plan, nothing built. §0 overrides
+From the user's voice memos of 2026-10-24, quoted where the wording matters. Status (2026-10-24): courtyard 1, the wall top, the labyrinth and courtyard 2 with the pyramid are built (HANDOFF §3). §0 overrides
 §1 where they differ. The questions in §2 are answered; the build order is §5.
 
 ## 0. Decided since (the user, 2026-10-24)

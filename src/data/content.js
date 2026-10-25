@@ -276,7 +276,11 @@
       const terr = ts.terrains || {};
       if (!Object.keys(terr).length) err(`tilesets.${id}: no terrains`);
       if (ts.floor && !has(terr, ts.floor)) err(`tilesets.${id}: floor "${ts.floor}" is not one of its terrains`);
-      for (const [n, t] of Object.entries(terr)) {
+      for (const [n, own] of Object.entries(terr)) {
+        if (own.like && !has(terr, own.like)) err(`tilesets.${id}.${n}: like "${own.like}" is not one of its terrains`);
+        const chain = [];
+        for (let d = own; d && chain.length < 8; d = d.like ? terr[d.like] : null) chain.unshift(d);
+        const t = Object.assign({}, ...chain);
         if (t.wang && !t.over) err(`tilesets.${id}.${n}: a wang set needs \`over\` (the terrain under it)`);
         if (t.over && !has(terr, t.over)) err(`tilesets.${id}.${n}: over "${t.over}" is not one of its terrains`);
         if (t.corners && (t.corners.some((c) => !/^[UL]{4}$/.test(c)) || new Set(t.corners).size !== 16)) err(`tilesets.${id}.${n}: corners must be codes of four U/L letters covering all 16 (repeats are variants)`);

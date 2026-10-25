@@ -99,6 +99,8 @@ game:
   #   fight         the terrain (CONFIG.terrain) the square becomes in a fight on the map
   #   under         drawn over another letter's ground (a bridge over water)
   #   tile          the terrain of the place's tileset that draws it (data/tilesets.yaml); color without one
+  #   rise: true    a riser between terraces (with wall: true, a pyramid's step): drawn as the highest terrain beside
+  #                 it, the tier it holds up. A stair through it is a legend prop that is not solid, `on` this letter
   ground:
     ",": {name: Grass, tile: grass, color: "#4a6a34"}
     ";": {name: Rubble, tile: rubble, fight: rough, color: "#7a6a50"}
@@ -106,7 +108,11 @@ game:
     "~": {name: Deep water, walk: false, fight: deepWater, tile: water, color: "#1f4450"}
     "_": {name: Shallow water, fight: shallows, tile: shallows, color: "#36616a"}
     "=": {name: Plank bridge, under: "~", tile: bridge, color: "#7a5a36"}
-    "^": {name: Pyramid step, wall: true, tile: step, color: "#a89468"}
+    "^": {name: Pyramid step, wall: true, rise: true, color: "#a89468"}
+    "-": {name: First terrace, tile: tier1, color: "#bab286"}
+    ":": {name: Second terrace, tile: tier2, color: "#bab286"}
+    "*": {name: Third terrace, tile: tier3, color: "#bab286"}
+    "&": {name: Top terrace, tile: tier4, color: "#bab286"}
   passivePenalty: 3          # passive perception is this much worse than a deliberate search
   camp: {wanderingChance: 0.25, guardedChance: 0.5}
   # ---- Skill checks: d10 + floor(mean of attrs / 2) + feat ranks x weight vs a target number ------

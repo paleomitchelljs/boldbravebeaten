@@ -193,3 +193,37 @@ test('tilesets: wang corners follow the four squares around each corner; plain g
   assert.equal(br.g.name, 'Plank bridge');
   assert.equal(br.vertical, false, 'grass on both sides: it runs east-west');
 });
+
+test('pyramid: risers draw as the tier they hold up, tiers share a sheet by `like`, and the stairs lead to the top', () => {
+  const UI = (globalThis.BBB.UI = globalThis.BBB.UI || {});
+  if (!UI.Tilemap) require('../src/ui/game/tilemap.js');
+  const Tm = globalThis.BBB.UI.Tilemap;
+  const w = fresh(7);
+  Explore.enter(w, 'temple_court2', 'S');
+  const g = Content.world.places.temple_court2;
+  const sc = { w: g.map[0].length, h: g.map.length, cell: (x, y) => Explore.cell(w, x, y) };
+  const ts = Tm.tileset('temple_court');
+  assert.equal(ts.terrains.tier3.cliffTiles.length, ts.terrains.tier1.cliffTiles.length, 'tier3 copies tier1\'s cliff list');
+  assert.equal(ts.terrains.tier3.wang, 'pyramid-tier3.png', 'and keeps its own sheet');
+  assert.ok(ts.terrains.tier4.rank > ts.terrains.tier3.rank && ts.terrains.tier4.rank < ts.terrains.wall.rank);
+  const p = Tm.planTiles(sc, ts, 0, 0, sc.w - 1, sc.h - 1);
+  const base = (x, y) => p.base.find((b) => b.x === x && b.y === y).t;
+  assert.equal(base(5, 5), 'grass', 'a riser lies over the grass');
+  assert.equal(p.corner.filter((c) => c.t === 'tier1').length > 0, true);
+  // The riser of the second tier (8, 8) counts as tier2 for its corners; the terrace inside it as tier2 too.
+  const at = (x, y) => p.corner.find((c) => c.x === x && c.y === y && c.t === 'tier2');
+  assert.ok(at(9, 9), 'tier2 draws a corner where its riser meets its terrace');
+  assert.equal(at(7, 7), undefined, 'and none out on the first terrace');
+  // Walkers reach the top from the door, by the stairs only.
+  const seen = new Set(['19,35']), q = [[19, 35]];
+  while (q.length) {
+    const [x, y] = q.shift();
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const k = (x + dx) + ',' + (y + dy);
+      if (!seen.has(k) && !Explore.cell(w, x + dx, y + dy).solid) { seen.add(k); q.push([x + dx, y + dy]); }
+    }
+  }
+  assert.ok(seen.has('18,18'), 'the top terrace is reached');
+  const tops = [...seen].filter((k) => g.map[+k.split(',')[1]][+k.split(',')[0]] === '&');
+  assert.ok(tops.length > 40);
+});

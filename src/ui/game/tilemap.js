@@ -314,7 +314,10 @@
     const names = Object.keys(raw.terrains || {});
     const terrains = {};
     names.forEach((n, i) => {
-      const t = Object.assign({ name: n, rank: i }, raw.terrains[n]);
+      // `like`: drawn as another terrain is (the same sheet), ranked where it stands (a pyramid's upper tiers).
+      const chain = [];
+      for (let d = raw.terrains[n]; d && chain.length < 8; d = d.like ? raw.terrains[d.like] : null) chain.unshift(d);
+      const t = Object.assign({ name: n, rank: i }, ...chain);
       if (t.cliff) {
         // A PixelLab cliff set (25 tiles): each tile is [col, row, pattern], the pattern 16 letters, row by row, of the
         // 4x4 squares around its corner (0 lower, 1 upper, 2 the face row, . any).
@@ -343,6 +346,16 @@
     // With `doorsInWall`, a doorway (or a legend square marked `wall: true`, a way out through a gate) is drawn as the
     // wall it stands in, and its door picture laid over it, so the wall runs on unbroken.
     if (c && ts.raw.doorsInWall && (doorLike(c) || (c.def && c.def.wall))) return { t: ts.wall };
+    // A riser (ground with `rise`, a pyramid's step) is drawn as the highest terrain beside it: the tier it holds up.
+    if (c && c.ground && c.ground.rise) {
+      let best = null;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const n = (dx || dy) && x + dx >= 0 && y + dy >= 0 && x + dx < sc.w && y + dy < sc.h ? sc.cell(x + dx, y + dy) : null;
+        const tn = n && n.ground && !n.ground.rise && n.kind !== 'wall' && ts.terrains[n.ground.tile];
+        if (tn && (!best || tn.rank > best.rank)) best = tn;
+      }
+      return { t: best ? best.name : ts.floor };
+    }
     if (!c || c.kind === 'rock' || (c.kind === 'wall' && !(c.ground && ts.terrains[c.ground.tile]))) return { t: ts.wall };
     let gr = c.ground, over = null;
     if (gr && gr.under) { over = gr; gr = (G.Explore && G.Explore.groundOf(gr.under)) || null; }
@@ -387,11 +400,18 @@
       const n = tdef(ts, T_(x, y - 1).t);
       if (n.faces && t.rank < n.rank && [-1, 1].every((d) => tdef(ts, T_(x + d, y - 1).t).rank >= n.rank && tdef(ts, T_(x + d, y).t).rank < n.rank)) scatter(out.decor, n.faces, x, y, 'face', ts.cell);
     }
+    // A wang terrain's upper squares: it and every terrain listed after it, except what is raised over it and draws
+    // itself on top (the walls, for anything but the wall; a cliff set such as a pyramid tier, for flat ground), so
+    // fern beds draw nothing under a pyramid and a tier nothing under the walls.
+    const upOf = (w) => (xx, yy) => {
+      const t = T_(xx, yy).t, d = tdef(ts, t);
+      return d.rank >= w.rank && (t === w.name || (t !== ts.wall && (w.cliffTiles || !d.cliffTiles)));
+    };
     for (const w of Object.values(ts.terrains)) {
       if (!w.wang) continue;
-      if (w.cliffTiles) { cliffCorners(out, w, (xx, yy) => tdef(ts, T_(xx, yy).t).rank >= w.rank, x0, y0, x1, y1); continue; }
+      if (w.cliffTiles) { cliffCorners(out, w, upOf(w), x0, y0, x1, y1); continue; }
       for (let y = y0; y <= y1 + 1; y++) for (let x = x0; x <= x1 + 1; x++) {
-        const up = (xx, yy) => tdef(ts, T_(xx, yy).t).rank >= w.rank;
+        const up = upOf(w);
         const m = (up(x - 1, y - 1) ? 8 : 0) | (up(x, y - 1) ? 4 : 0) | (up(x - 1, y) ? 2 : 0) | (up(x, y) ? 1 : 0);
         if (m) out.corner.push({ x, y, t: w.name, m });
       }

@@ -134,7 +134,7 @@ half inverted to enemies; `rules.yaml`). `kos` is the standing at or below which
 **A map** (`places.yaml`): one string per row. `#` wall, `.` floor, `+` door, space is solid rock. The ground letters of
 `rules.yaml` `game.ground` mean the same on every map: `,` grass, `;` rubble (rough in a fight), `~` deep water (nobody
 walks through it; fliers cross; it stops neither sight, missiles nor reach), `_` shallow water (an extra square to wade),
-`=` a plank bridge over water, `^` a pyramid step (a wall). Every other character is defined in the place's `legend`; the
+`=` a plank bridge over water, `^` a pyramid step (a wall, drawn as the tier it holds up), `-` `:` `*` `&` the four terraces of a stepped pyramid, lowest to highest (each a terrain of the tileset, drawn over the one below; a stair through a step is a `prop` with `solid: false` and `on: "^"`). Every other character is defined in the place's `legend`; the
 validator complains about a letter with no entry (or an entry not on the map, or one that is a ground letter).
 Legend kinds: `stairs {to, at, up}` (`up` sets the arrow when the default guess is wrong), `drop {to, at, damage, text,
 sprite}` (a well or a hole: one way down, no stairs back; the fall's `damage` hits everyone), `locked {tn, forceTn, key, alt[]}`, `secret {tn}`, `trap {tn, disarm, damage, text, reveal}`,

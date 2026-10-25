@@ -98,10 +98,28 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
   "not built yet". Seen in headless Chrome; not played through. `tools/encounters.js` (level-1 party): snake, rats
   and watch 100% won, the pair 97%; easy for a place meant to be where the temple's people live, so it wants more
   or bigger groups once the lizardfolk variants exist.
-- [ ] Style target: the PixelLab dragonborn (64 px). Tiles at 64 px to match (plan §4).
+- [x] Courtyard 2 and the pyramid (`temple_court2`, through the labyrinth's east door; 2026-10-24,
+  `assets/wip/temple-pyramid/README.md`), after the user's reference (`assets/ideas/refs/pyramid-court-reference.jpg`:
+  tall tiers carved in bands of relief, a flight up along a face). A 3-square rind of grass round a 28-square pyramid
+  of four tiers, the stairs winding round as the plan has them (NW, SE along the face, NW, the middle of the south
+  face), the altar and a well (a prop until the sewers exist) on top. Engine: ground letters `-` `:` `*` `&` for the
+  terraces and `^` (now `rise`) for the risers, drawn as the tier they hold up; tileset terrains may copy another's
+  fields (`like`); flat ground draws nothing under raised terrain. Each tier is a PixelLab cliff set over the one below
+  (carved face, slab terrace), shaded a step lighter going up, with a cast shadow east of each tier. Encounters: door
+  pair, patrol, a skeleton, a terrace guard, the constrictor, the drake on top. Seen in headless Chrome.
+- [ ] Pyramid, still open:
+  - the north and side edges of a tier read only as a rim with a shade change (top-down shows no face there); the
+    west-face stairs (tiers 1 and 3) are short and look a little like a fence;
+  - the ledge above the face stair is a shade off where the inpaint repainted it; the altar came out terracotta;
+  - every tier face is the same frieze; risers stop sight, so groups on different terraces never join a fight or
+    shoot down (plan §3, option B, if that matters);
+  - the stair pictures fit their own spots (moving a stair means a new render and inpaint).
+- [ ] Style target: the PixelLab dragonborn (64 px). Tiles at 64 px to match (plan §4). The user (2026-10-24) gave a
+  red dragonborn knight as the NPC style (`assets/ideas/refs/npc-style-dragonborn-knight.jpg`: dark outline, black
+  plate, shield with a dragon's head); creatures and NPCs wait until the dungeon's layout is settled.
 - [ ] Archive the Undercroft and the Barrow for tests and sims only and start at the temple, once there is more of the
-  temple than the court (the labyrinth and palace doors are locked "not built yet").
-- [ ] Then courtyard 2 and pyramid, sewers, ritual chamber, palace (plan §5).
+  temple than the courts (only the palace door is still locked "not built yet").
+- [ ] Then the sewers, ritual chamber, palace (plan §5).
 - [ ] Monsters: an alligator monster for the sewers (the sheet exists); lizardfolk variants; the avatar of fear as the
   ritual chamber's boss.
 - [ ] The temple props also replace the Cute Fantasy props the published site may not show.

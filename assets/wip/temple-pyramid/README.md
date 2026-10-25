@@ -1,0 +1,53 @@
+# The pyramid court (court 2) (2026-10-24)
+
+The user: "I'd like to try the second courtyard with the step pyramid. The game screenshot shows the style and general
+idea of the pyramid in the courtyard" (`assets/ideas/refs/pyramid-court-reference.jpg`: tall tiers carved all over in
+bands of relief, flat tops, a flight of steps running up along a face). The plan (`assets/ideas/temple-dungeon.md`):
+"four tiers", tier 1 stairs in the north-west corner, tier 2 in the south-east, tier 3 in the north-west, tier 4
+"centrally located on the south face", "a very small altar" and a well on top.
+
+How it is built: each tier is a terrain of the court's tileset (`tier1`..`tier4`, ranked in order), drawn as a cliff set
+over everything below it, so the tiers stack. A tier's outer ring is its riser (`^`, solid, drawn as the tier it holds
+up); inside it its terrace (`-` `:` `*` `&`). Stairs are non-solid legend props on a riser square.
+
+All PixelLab pro, 64 px, high top-down, lineless, basic shading, roundness 0, transition 1.0 (the 25-tile cliff layout,
+the same tile positions and patterns as the court wall's).
+
+- tier-cliff-green.png (239b0b35): lower the court grass (base 0d3b4bac), upper "flat terrace of an ancient stepped
+  pyramid, paved with a few very large smooth weathered pale olive-tan stone slabs, broad flat faces, worn edges, low
+  contrast", transition "tall sheer face of a pyramid tier carved all over in deep relief: two bands of interlocking
+  glyphs, coiled serpents and scroll patterns in weathered olive-khaki stone, a plain projecting ledge along the top,
+  soft shadow in the carving, darker toward the foot"; palette the court greens plus olive stone. The face came out
+  dark green (it took the grass greens). Unused. Its terrace became the base 29890ff1.
+- tier-step.png (9075bd72): lower that terrace (29890ff1), upper "the next higher flat terrace of the same stepped
+  pyramid, the same large pale olive-tan stone slabs, very slightly lighter", the same face; palette "weathered olive
+  temple stone" (#4e4a32 #5e5a3c #706a48 #837c56 #968e64 #a8a074 #bab286 #cac49a #d8d2ac #a6b090 #8a9a78 #6e7a58). The
+  face is the olive-khaki wanted; the upper terrace came out one flat cream (#d8d2ac), filled by build.py.
+- tier-cliff.png (d0d8cbe9): tier-cliff-green again with both ends chained (grass and 29890ff1) and the stone palette,
+  so the first tier's face matches the others.
+- build.py makes art/worldtiles/temple/pyramid-tier1..4.png: fills the cream, shades each tier's terrace a step lighter
+  than the one below (0.86, 0.93, 1.0, 1.07) so the height reads from above, and casts a soft shadow on the terrace
+  east of each tier (light from the upper left). Seen from above the north and side edges of a tier are only a rim; the
+  shading is what tells the levels apart there.
+- Stairs, inpainted (`inpaint_image`) into renders of their spots (`ctx-<k>.png`, 4x4 squares, from
+  `assets/wip/temple-doors/render.py`), like the doors:
+  - b, the second tier, east end of the south face (mask 60,112 136x108): "a narrow flight of worn pale stone steps
+    built against the carved stone face, climbing diagonally from the paving at the lower left up to the top ledge at
+    the upper right, the steps seen from above and in front, a low plain side wall on the open side, the carved face
+    behind it". The reference's stair; one try.
+  - d, the top stair, middle of the south face, two squares (mask 60,112 136x108): "a broad straight stone staircase
+    climbing straight up the carved face from the paving at the bottom onto the terrace at the top, many worn pale
+    olive-tan steps running left to right, seen from above and in front, a low carved stone balustrade on each side".
+    Cut in two halves, one per square.
+  - a, the first tier, west face (mask 28,130 168x58): "seen from above: a long narrow flight of worn pale olive-tan
+    stone steps built out from the side of the pyramid tier, climbing from the grass on the left up onto the flat paved
+    top on the right, many thin steps ...". A first try with a smaller mask (out-a-box.png) came out as a box.
+  - c, the third tier, west face: the same prompt (terrace for grass) came out as a box, then as a thin wedge
+    (out-c-box.png, out-c-wedge.png); a's flight is used, its grass keyed out to the terrace (out-c.png).
+  The west-face flights are weak: on a side face there is no face to climb, and they read a little like a fence.
+- altar.png (map object 5e303fd1, basic shading, selective outline): "a small ancient stone altar block of weathered
+  olive-tan stone, carved with a coiled serpent on its front, a shallow dark-stained basin on top, a couple of melted
+  candle stubs". Came out terracotta-red; kept.
+- pack.py cuts the stairs, corrects them for any later shading (the ratio of a fresh render to the one they were
+  painted into) and packs them with the altar into art/worldtiles/temple/pyramid-props.png. The ledge just above the
+  face stair (b) is a shade off where the inpaint repainted it.
