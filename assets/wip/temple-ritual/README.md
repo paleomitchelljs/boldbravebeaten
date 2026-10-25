@@ -33,3 +33,7 @@ All PixelLab pro, 64 px, high top-down, lineless, basic shading.
   came out tan).
 - build.py makes art/worldtiles/temple/ritual-*.png: the two sheets as they are, the plain pool tile, and the props
   sheet, where the orb is enlarged 1.3x and laid at half strength over the dais so the thing shows inside it.
+- Larger pieces (2026-10-25, the user: decor "small relative to the tiles"): p-stair2 (2fb3962d, 112x144) "a wide
+  round-arched dark doorway in a rose-brown stone wall with a broad flight of worn rose stone steps climbing up and
+  away into darkness"; f-niche3 (7bdfcde1, 56x88) the niche again, sized to the wall face (about 85 px tall; f-niche2
+  at 112 stood above the face).

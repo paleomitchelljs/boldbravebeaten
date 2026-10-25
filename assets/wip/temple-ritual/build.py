@@ -34,7 +34,7 @@ orbd.alpha_composite(orb, (96 - orb.width // 2, 164 - orb.height // 2))
 orbd = orbd.crop(orbd.getbbox())
 
 pieces = [('orb', orbd), ('pyramid', Image.open(here + 'p-pyramid.png').convert('RGBA')),
-          ('stair', Image.open(here + 'p-stair.png').convert('RGBA')), ('niche', Image.open(here + 'f-niche.png').convert('RGBA'))]
+          ('stair', Image.open(here + 'p-stair2.png').convert('RGBA')), ('niche', Image.open(here + 'f-niche3.png').convert('RGBA'))]
 pieces = [(n, im.crop(im.getbbox())) for n, im in pieces]
 sheet = Image.new('RGBA', (sum(im.width + 4 for _, im in pieces), max(im.height for _, im in pieces)), (0, 0, 0, 0))
 x = 0

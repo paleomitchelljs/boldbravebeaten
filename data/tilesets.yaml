@@ -227,6 +227,7 @@ temple_walltop:
     stairs_down_1: [temple-doors.png, 558, 0, 52, 58, 6, 2]
     stairs_down_2: [temple-doors.png, 610, 0, 52, 58, 6, 2]
     door_south: [temple-doors.png, 514, 0, 44, 94, 10, -8]
+    door_east: [temple-doors.png, 1196, 0, 80, 52, -8, 6]
 
 # The labyrinth: worked, damp sandstone, a little darker than the court's (PixelLab, 64 px; prompts in
 # assets/wip/temple-maze/README.md). Built like the court: a plain floor and a cliff set, the variety in pieces.
@@ -392,15 +393,16 @@ temple_ritual:
         - [0, 2, ".....01..12..10."]
         - [0, 3, ".01..12..10....."]
       # Faces: a pointed niche carved with green tracery.
-      faces: {density: 0.3, band: [-32, 56], pieces: [[ritual-props.png, 228, 0, 36, 57, -28]]}
+      faces: {density: 0.3, band: [-32, 56], pieces: [[ritual-props.png, 258, 0, 40, 83, -64]]}
   props:
     orb: [ritual-props.png, 0, 0, 112, 118, -24, -44]
     pyramid: [ritual-props.png, 116, 0, 60, 87]
-    stair_up: [ritual-props.png, 180, 0, 44, 77]
+    stair_up: [ritual-props.png, 180, 0, 74, 117]
 
 # The palace: dark slate floors, smooth sandy plastered walls hung with masks and banners, a raised dais for the
 # throne (the user's references, assets/ideas/refs/palace-*.png).
 temple_palace:
+  doorsInWall: true
   cell: 64
   dir: art/worldtiles/temple/
   floor: slab
@@ -442,17 +444,23 @@ temple_palace:
         - [0, 2, ".....01..12..10."]
         - [0, 3, ".01..12..10....."]
       # Faces: a carved stone mask, a green banner with a gold serpent.
-      faces: {density: 0.3, band: [-32, 56], pieces: [[palace-props.png, 584, 0, 22, 52, -26], [palace-props.png, 610, 0, 36, 60, -30]]}
+      faces: {density: 0.3, band: [-32, 56], pieces: [[palace-props.png, 606, 0, 48, 89, -82], [palace-props.png, 658, 0, 40, 87, -80]]}
   props:
     throne: [palace-props.png, 0, 0, 68, 104]
-    statue: [palace-props.png, 72, 0, 36, 107]
-    brazier: [palace-props.png, 112, 0, 54, 70]
-    column: [palace-props.png, 170, 0, 58, 120]
-    stair_up: [palace-props.png, 232, 0, 46, 80]
-    stair_down: [palace-props.png, 282, 0, 48, 48, 8, 8]
-    bed: [palace-props.png, 334, 0, 56, 98]
-    cot: [palace-props.png, 394, 0, 34, 80]
-    table: [palace-props.png, 432, 0, 90, 56]
-    barrels: [palace-props.png, 526, 0, 54, 35]
+    statue: [palace-props.png, 72, 0, 64, 176]
+    brazier: [palace-props.png, 140, 0, 54, 70]
+    column: [palace-props.png, 198, 0, 58, 120]
+    stair_up: [palace-props.png, 260, 0, 92, 102]
+    bed: [palace-props.png, 356, 0, 56, 98]
+    cot: [palace-props.png, 416, 0, 34, 80]
+    table: [palace-props.png, 454, 0, 90, 56]
+    barrels: [palace-props.png, 548, 0, 54, 35]
     door: [court-props.png, 0, 0, 64, 61]
     door_locked: [court-props.png, 0, 0, 64, 61]
+    # Doorways and the stairwell, inpainted into renders of their own spots (assets/wip/temple-doors/): a door in a
+    # narrow north-south wall (seen from above, edge-on across the passage), the way out through the thick west wall,
+    # the stair down in the great hall's niche.
+    door_east: [temple-doors.png, 1116, 0, 80, 52, -8, 6]
+    door_west: [temple-doors.png, 1116, 0, 80, 52, -8, 6]
+    palace_gate: [temple-doors.png, 976, 0, 140, 52, -64, 6]
+    stair_down: [temple-doors.png, 1276, 0, 88, 104, -12, -16]

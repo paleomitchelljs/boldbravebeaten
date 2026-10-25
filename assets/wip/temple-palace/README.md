@@ -34,3 +34,11 @@ All PixelLab pro, 64 px, high top-down, lineless, basic shading.
   carved stone mask of a long gaunt solemn face", f-banner (d5106f6d, low detail) "a long narrow hanging cloth banner of
   dark green with a coiled gold serpent emblem".
 - build.py copies the two sheets into art/worldtiles/temple/ and packs the pieces into palace-props.png.
+- Larger pieces (2026-10-25; the user: "a lot of the decor is small relative to the tiles, even when it seems like it
+  should be larger (statues, windows, etc)"): p-statue2 (18b1d85b, 96x192) "a tall statue carved entirely from pale
+  sandy yellow-tan stone of a lizardfolk warrior ... no metal" (came out golden; about 2.7 squares tall, was 1.7);
+  p-stairup2 (6d7c2565, 112x144) "a wide round-arched dark doorway in a sandy yellow-tan plastered stone wall with a
+  broad flight of worn sandy stone steps climbing up"; f-mask2 (cb468a7c, 64x96) and f-banner3 (ea9326a8, 40x88)
+  sized to fill the wall face (about 84 px, from -80 to +6 against the square in front; f-banner2 at 112 hung onto
+  the floor). The stair down is now inpainted into its niche (assets/wip/temple-doors/, palace_down); p-stairdown2
+  (ca3e6b87) came out a ladder in a hole, unused.

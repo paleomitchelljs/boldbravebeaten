@@ -38,3 +38,24 @@ dark wood plank edges with bronze fittings running from the top of the passage t
 jambs. The plain wall top above and below the passage." The masks now run to the wall's edge (gate 0,70 122x52; palace
 70,70 122x52; labyrinth 122,70 70x52). The labyrinth's came out with no door; the gate's door strip (columns 103-112)
 was pasted into it. The first versions are still in the sheet, unused.
+
+## Doors in north-south walls, the palace's way out, its stair down (2026-10-25)
+
+The user: "some objects (eg doors) are not flush" and "we should probably use pixel lab to generate east-west opening
+doors". The palace's doors in its narrow north-south walls, its way out to the court and the guardhouse door on the
+wall top were drawn face-on in the gap (the palace set had no `doorsInWall`, the wall top no `door_east`). Now the
+palace draws doorways as wall too, and each picture is inpainted into a render of its own spot, with the gate's prompt
+("a passage running left to right through the wall ... a closed heavy wooden door seen from directly above, so it
+appears only as a thin vertical strip"):
+
+- pstair-E (a door in a one-square palace wall, temple_palace_stair 7..9, 6..8; mask 56,70 80x52): the palace's
+  `door_east` and `door_west`. The passage came out grey stone, lighter than the floor.
+- palace-W (the way out, temple_palace 0..2, 14..16; mask 0,70 140x52): `palace_gate`, the W legend's sprite.
+- wall-E (the guardhouse door, temple_wall 4..6, 7..9; mask 56,70 80x52): the wall top's `door_east`.
+- palace-D (the stair down in the great hall's niche, temple_palace 28..31, 27..30; mask 116,112 88x104): "a
+  rectangular stairwell cut into the dark grey-brown stone slab floor, a flight of worn sandy yellow-tan stone steps
+  descending downward toward the bottom of the image, each step lower and darker, fading into deep shadow at the
+  bottom under the wall" (the palace's `stair_down`; the map object had come out a dark box).
+
+render.py now draws plain ground under a corner set (the palace's floor has no tile of its own). add.py appends the
+cut rectangles to temple-doors.png and records them in rects.json.

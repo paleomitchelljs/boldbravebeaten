@@ -445,18 +445,21 @@
       const g = [];
       for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) g.push(v(x - 2 + j, y - 2 + i));
       if (!(g[5] || g[6] || g[9] || g[10])) continue;
-      // Ties (a tile and its variants) are broken by position.
-      let best = null, bs = -Infinity, ties = 0;
+      // Of tiles that score the same, the one that gets fewer squares wrong: a wall's end tile also scores as much as its
+      // straight tile partway along it (one outer square right, one wrong), and drew a lip there. Ties left (a tile and
+      // its variants) are broken by position.
+      let best = null, bs = -Infinity, bm = 0, ties = 0;
       for (const tl of w.cliffTiles) {
-        let sc = 0;
+        let sc = 0, miss = 0;
         for (let k = 0; k < 16; k++) {
           const want = tl.p[k];
           if (want < 0) continue;
           const mid = k === 5 || k === 6 || k === 9 || k === 10;
           sc += g[k] === want ? (mid ? 10 : 1) : mid ? -30 : -1;
+          if (g[k] !== want) miss++;
         }
-        if (sc > bs) { bs = sc; best = tl; ties = 1; }
-        else if (sc === bs && hash(x, y, 13 + ties++) % ties === 0) best = tl;
+        if (sc > bs || (sc === bs && miss < bm)) { bs = sc; bm = miss; best = tl; ties = 1; }
+        else if (sc === bs && miss === bm && hash(x, y, 13 + ties++) % ties === 0) best = tl;
       }
       if (best) out.corner.push({ x, y, t: w.name, at: best.at });
       // A corner no tile fits exactly (some square the tile cares about differs): tools/walls.js lists these.

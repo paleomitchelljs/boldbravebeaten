@@ -151,9 +151,21 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
   chambers, the great hall (columns, braziers, masks and banners on the walls, the throne on a raised dais: ground `|`),
   stairs up to the living quarters and servants' hall, and in a niche the stair down past a few small rooms to the
   ritual chamber. Every place of the temple is now joined up; the court's palace door opens.
-- [ ] Palace, still open: the wall face is greyer than the reference's sandy plaster; the statues came out bronze; the
-  stair down is a dark box; doors in north-south walls are drawn face-on; no raised platform along the hall's sides as
-  in the reference (only the dais); encounters are scaleward stand-ins.
+- [x] Mismatched wall tiles, doors not flush, corner-only contacts, small decor (the user, 2026-10-25):
+  - the wall picker broke score ties by position, so a wall's end tile (as good by score, one outer square wrong) was
+    drawn partway along straight walls as a stray lip; now the tile with fewer wrong squares wins. Every corner in every
+    temple place has an exact tile; `tools/walls.js` now lists any inexact corner and the test holds it at none;
+  - doors in north-south walls, the palace's way out and the guardhouse door are inpainted into their own walls, seen
+    from above edge-on (the palace set now has `doorsInWall`); the palace stair down is a stairwell inpainted into its
+    niche (`assets/wip/temple-doors/README.md`);
+  - `tools/diagonals.js` lists walkable squares that meet only at a corner (a test holds it at none): three in the
+    sewer, where walkway touched the deck ring's corners, are now water;
+  - larger statues (about 2.7 squares), stairs up (palace and ritual), masks, banners and ritual niches, sized to the
+    wall face.
+- [ ] Palace, still open: the wall face is greyer than the reference's sandy plaster; the statues came out golden, not
+  sandstone; the narrow doors' passage is grey stone, lighter than the floor; no raised platform along the hall's
+  sides as in the reference (only the dais); encounters are scaleward stand-ins. Columns, braziers and the orb were
+  left at their size: say if they want to grow too.
 - [ ] Monsters: an alligator monster for the sewers (the sheet exists); lizardfolk variants; the avatar of fear as the
   ritual chamber's boss.
 - [ ] The temple props also replace the Cute Fantasy props the published site may not show.

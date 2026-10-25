@@ -13,8 +13,10 @@ out = root + '/art/worldtiles/temple/'
 for n in ('palace-wall', 'palace-dais'):
     Image.open(here + n + '.png').convert('RGBA').save(out + n + '.png')
 
-PIECES = ['p-throne', 'p-statue', 'p-brazier', 'p-column', 'p-stairup', 'p-stairdown', 'p-bed', 'p-cot', 'p-table',
-          'p-barrels', 'f-mask', 'f-banner']
+# The statue, stair up, mask and banner are the second, larger versions (the user: "a lot of the decor is small
+# relative to the tiles"); the stair down is now inpainted into its niche (temple-doors.png, palace_down).
+PIECES = ['p-throne', 'p-statue2', 'p-brazier', 'p-column', 'p-stairup2', 'p-bed', 'p-cot', 'p-table',
+          'p-barrels', 'f-mask2', 'f-banner3']
 ims = [Image.open(here + n + '.png').convert('RGBA') for n in PIECES]
 ims = [im.crop(im.getbbox()) for im in ims]
 sheet = Image.new('RGBA', (sum(im.width + 4 for im in ims), max(im.height for im in ims)), (0, 0, 0, 0))

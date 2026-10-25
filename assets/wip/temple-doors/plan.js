@@ -18,5 +18,5 @@ const sc = { w: rows[0].length, h: rows.length, cell: (x, y) => {
 const Tm = G.UI.Tilemap, ts = Tm.tileset(pl.look.tileset);
 const p = Tm.planTiles(sc, ts, x0, y0, x1, y1);
 const terr = {};
-for (const [n, t] of Object.entries(ts.terrains)) terr[n] = { tile: t.tile || null, wang: t.wang || null, index: t.index || null, cell: ts.cell };
+for (const [n, t] of Object.entries(ts.terrains)) terr[n] = { tile: t.tile || null, wang: t.wang || null, index: t.index || null, over: t.over || null, cell: ts.cell };
 console.log(JSON.stringify({ dir: ts.dir, cell: ts.cell, base: p.base, corner: p.corner, terr }));

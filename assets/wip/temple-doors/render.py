@@ -15,6 +15,12 @@ for b in d['base']:
     tile = t['tile']
     if isinstance(tile, list): tile = tile[0]
     if tile: im.alpha_composite(img(tile), ((b['x'] - x0) * C, (b['y'] - y0) * C))
+    else:
+        # Plain ground under a corner set, as the game draws it: that set's all-lower tile.
+        w = next((v for v in d['terr'].values() if v.get('over') == b['t'] and v.get('index') and '0' in v['index']), None)
+        if w:
+            cx, cy = w['index']['0']
+            im.alpha_composite(img(w['wang']).crop((cx * C, cy * C, cx * C + C, cy * C + C)), ((b['x'] - x0) * C, (b['y'] - y0) * C))
 for c in d['corner']:
     t = d['terr'][c['t']]
     at = c.get('at') or t['index'][str(c['m'])]
