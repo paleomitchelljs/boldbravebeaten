@@ -64,8 +64,9 @@ def shade(im, pats, lower, upper):
     px = im.load()
     for (cx, cy), pat in pats.items():
         for q, kind in enumerate(kinds(pat)):
-            f = upper if kind == 'upper' else lower if kind == 'lower' else None
-            if f is None or f == 1:
+            # A face quarter takes the lower terrace's shade: the face doesn't fill it, and terrace shows below it.
+            f = upper if kind == 'upper' else lower
+            if f == 1:
                 continue
             x0, y0 = cx * 64 + (q % 2) * 32, cy * 64 + (q // 2) * 32
             for y in range(y0, y0 + 32):

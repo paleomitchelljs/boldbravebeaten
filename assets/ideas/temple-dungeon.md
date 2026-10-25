@@ -55,6 +55,8 @@ From the user's voice memos of 2026-10-24, quoted where the wording matters. Sta
   labyrinth on the south end of this courtyard". Route up: tier 1 stairs in the north-west corner, tier 2 in the
   south-east, tier 3 in the north-west, tier 4 "centrally located on the south face", and "at the top of it is a very
   small altar. With another well going down."
+  Built (2026-10-24) with every stair on a south face instead (the user: "a single, well-matched set of north-south
+  stairs and use those at all levels"): west end, east end, west end, middle.
 - *Palace, ground floor.* Entered "from the first courtyard through an arched and decorated doorway", past statues into
   a long chamber; "a great hall with a throne room", "several side chambers", stairs up to a second floor. "In a niche
   on the first floor off the great hall" a stairwell down (to the ritual chamber, §0).

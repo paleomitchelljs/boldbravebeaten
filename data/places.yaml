@@ -433,9 +433,9 @@ temple_court2:
   level: 2
   look: {wall: "#cdb98a", floor: "#4d6a33", ceiling: "#2a3a22", fog: "#0c120a", torch: 1, tileset: temple_court, ground: ",", light: 20}
   # A 3-square rind of grass round a 28-square pyramid: four tiers, each a riser (^) and a terrace two squares wide
-  # (- : * &), each 3 squares in from the last. The way up winds round: the first stair at the north end of the west
-  # face, the second at the east end of the south face, the third on the west face again, the fourth in the middle of
-  # the south face. Laid out with a throwaway script (it is all straight lines).
+  # (- : * &), each 3 squares in from the last. One stair design, two squares wide, on the south face of every tier
+  # (the user: "a single, well-matched set of north-south stairs ... at all levels"): the way up zigzags from the west
+  # end to the east end and back, then up the middle. Laid out with a throwaway script (it is all straight lines).
   map:
     - "######################################"
     - "######################################"
@@ -443,15 +443,15 @@ temple_court2:
     - "##,F,,,,,,%,,,,,,,,,,,,,;,,,,,,,,,F,##"
     - "##,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,##"
     - "##,,,^^^^^^^^^^^^^^^^^^^^^^^^^^^^,,,##"
-    - "##,p,^--------------------------^,,,##"
     - "##,,,^--------------------------^,,,##"
-    - "##,,,a--^^^^^^^^^^^^^^^^^^^^^^--^,,,##"
+    - "##,,,^--------------------------^,,,##"
+    - "##,,,^--^^^^^^^^^^^^^^^^^^^^^^--^,,,##"
     - "##,,,^--^::::::::::::::::::::^--^,;,##"
     - "##,,,^--^::::::::::::::::::::^--^,;,##"
     - "##,,,^--^::^^^^^^^^^^^^^^^^::^--^,,,##"
     - "##%%,^--^::^*h************^::^--^,,,##"
     - "##%,,^--^::^**************^::^--^,,,##"
-    - "##,,,^--^::c**^^^^^^^^^^**^::^--^,,,##"
+    - "##,,,^--^::^**^^^^^^^^^^**^::^--^,,,##"
     - "##,,,^--^::^**^&&&&&&&&^**^::^--^,,,##"
     - "##,,,^--^::^**^&&&&&&&&^**^::^--^,,,##"
     - "##,,,^--^::^**^&&&A&&&&^**^::^--^,,,##"
@@ -463,25 +463,28 @@ temple_court2:
     - "##,,,^--^::^**^^^^de^^^^**^::^--^,,,##"
     - "##,,,^--^::^**************^::^--^,,,##"
     - "##,,,^--^::^****s*********^::^--^,,,##"
-    - "##;;,^--^::^^^^^^^^^^^^^^^^::^--^,,,##"
+    - "##;;,^--^::^^oq^^^^^^^^^^^^::^--^,,,##"
     - "##;,,^--^::::::::::::::::::::^--^,,,##"
     - "##,,,^--^::::::::::::::::::::^--^,,,##"
-    - "##,,,^--^^^^^^^^^^^^^^^^^^^b^^--^,,,##"
-    - "##,,,^---k----------------------^,,,##"
+    - "##,,,^--^^^^^^^^^^^^^^^^^^mn^^--^,,,##"
+    - "##,,,^--------k-----------------^,,,##"
     - "##,,,^--------------------------^,,,##"
-    - "##,,,^^^^^^^^^^^^^^^^^^^^^^^^^^^^,,,##"
+    - "##,,,^^^ij^^^^^^^^^^^^^^^^^^^^^^^,,,##"
     - "##,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,##"
-    - "##,F,,,,,,,,,,,,,,,g,,,,,,%%%,,,,,F,##"
+    - "##,Fp,,,,,,,,,,,,,,g,,,,,,%%%,,,,,F,##"
     - "##,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,##"
     - "###################S##################"
     - "######################################"
   legend:
     S: {kind: stairs, to: temple_maze, at: E, sprite: door, wall: true, label: "Back into the labyrinth"}
-    a: {kind: prop, sprite: pyr_steps_w1, solid: false, on: "^", label: "Steps up the first tier"}
-    b: {kind: prop, sprite: pyr_steps_s, solid: false, on: "^", label: "Steps up the second tier"}
-    c: {kind: prop, sprite: pyr_steps_w3, solid: false, on: "^", label: "Steps up the third tier"}
-    d: {kind: prop, sprite: pyr_stair_l, solid: false, on: "^", label: "The stair to the top"}
-    e: {kind: prop, sprite: pyr_stair_r, solid: false, on: "^", label: "The stair to the top"}
+    i: {kind: prop, sprite: pyr_stair_l1, solid: false, on: "^", label: "Steps up the first tier"}
+    j: {kind: prop, sprite: pyr_stair_r1, solid: false, on: "^", label: "Steps up the first tier"}
+    m: {kind: prop, sprite: pyr_stair_l2, solid: false, on: "^", label: "Steps up the second tier"}
+    n: {kind: prop, sprite: pyr_stair_r2, solid: false, on: "^", label: "Steps up the second tier"}
+    o: {kind: prop, sprite: pyr_stair_l3, solid: false, on: "^", label: "Steps up the third tier"}
+    q: {kind: prop, sprite: pyr_stair_r3, solid: false, on: "^", label: "Steps up the third tier"}
+    d: {kind: prop, sprite: pyr_stair_l4, solid: false, on: "^", label: "The stair to the top"}
+    e: {kind: prop, sprite: pyr_stair_r4, solid: false, on: "^", label: "The stair to the top"}
     A: {kind: prop, sprite: altar, on: "&", label: "A small altar, stained dark"}
     W: {kind: prop, sprite: well, on: "&", label: "A well in the top of the pyramid (the sewers below are not built yet)"}
     F: {kind: prop, sprite: fern_large, solid: false, label: "Ferns"}

@@ -27,27 +27,22 @@ the same tile positions and patterns as the court wall's).
   so the first tier's face matches the others.
 - build.py makes art/worldtiles/temple/pyramid-tier1..4.png: fills the cream, shades each tier's terrace a step lighter
   than the one below (0.86, 0.93, 1.0, 1.07) so the height reads from above, and casts a soft shadow on the terrace
-  east of each tier (light from the upper left). Seen from above the north and side edges of a tier are only a rim; the
+  east of each tier (light from the upper left). A face's quarter tiles take the lower terrace's shade (the face doesn't
+  fill them; left unshaded they showed as a light strip under each face). Seen from above the north and side edges of a tier are only a rim; the
   shading is what tells the levels apart there.
-- Stairs, inpainted (`inpaint_image`) into renders of their spots (`ctx-<k>.png`, 4x4 squares, from
-  `assets/wip/temple-doors/render.py`), like the doors:
-  - b, the second tier, east end of the south face (mask 60,112 136x108): "a narrow flight of worn pale stone steps
-    built against the carved stone face, climbing diagonally from the paving at the lower left up to the top ledge at
-    the upper right, the steps seen from above and in front, a low plain side wall on the open side, the carved face
-    behind it". The reference's stair; one try.
-  - d, the top stair, middle of the south face, two squares (mask 60,112 136x108): "a broad straight stone staircase
-    climbing straight up the carved face from the paving at the bottom onto the terrace at the top, many worn pale
-    olive-tan steps running left to right, seen from above and in front, a low carved stone balustrade on each side".
-    Cut in two halves, one per square.
-  - a, the first tier, west face (mask 28,130 168x58): "seen from above: a long narrow flight of worn pale olive-tan
-    stone steps built out from the side of the pyramid tier, climbing from the grass on the left up onto the flat paved
-    top on the right, many thin steps ...". A first try with a smaller mask (out-a-box.png) came out as a box.
-  - c, the third tier, west face: the same prompt (terrace for grass) came out as a box, then as a thin wedge
-    (out-c-box.png, out-c-wedge.png); a's flight is used, its grass keyed out to the terrace (out-c.png).
-  The west-face flights are weak: on a side face there is no face to climb, and they read a little like a fence.
+- The stair. The user, after the first pass: "The stairs do not seamlessly mesh with the surrounding tiles. The slant
+  stairs should also go—let's just have a single, well-matched set of north-south stairs and use those at all levels."
+  So one design, two squares wide, on the south face of every tier (west end, east end, west end, the middle): the
+  central stair, inpainted (`inpaint_image`) into a render of the top tier's face (`ctx-d.png`, 4x4 squares from
+  `assets/wip/temple-doors/render.py`, mask 60,112 136x108): "a broad straight stone staircase climbing straight up the
+  carved face from the paving at the bottom onto the terrace at the top, many worn pale olive-tan steps running left to
+  right, seen from above and in front, a low carved stone balustrade on each side" (out-d.png). pack.py keeps only the
+  flight and its balustrades (an outline traced by hand, wider at the newel posts), so the tier's own face, ledge and
+  terraces show round it: the first cut kept the whole rectangle, with plain block walls PixelLab drew beside the
+  balustrades and its own repainted ledge, and showed as a patch. A copy is shaded for each tier.
+  Superseded tries, kept for reference: the flight along the face (out-b.png, the reference's stair) and the west-face
+  flights (out-a*.png, out-c*.png).
 - altar.png (map object 5e303fd1, basic shading, selective outline): "a small ancient stone altar block of weathered
   olive-tan stone, carved with a coiled serpent on its front, a shallow dark-stained basin on top, a couple of melted
   candle stubs". Came out terracotta-red; kept.
-- pack.py cuts the stairs, corrects them for any later shading (the ratio of a fresh render to the one they were
-  painted into) and packs them with the altar into art/worldtiles/temple/pyramid-props.png. The ledge just above the
-  face stair (b) is a shade off where the inpaint repainted it.
+- pack.py packs the stair copies (in halves, one per square) and the altar into art/worldtiles/temple/pyramid-props.png.

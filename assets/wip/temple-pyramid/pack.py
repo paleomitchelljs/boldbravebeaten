@@ -1,47 +1,53 @@
-# Cuts the inpainted stairs out of their renders and packs them, with the altar, into
-# art/worldtiles/temple/pyramid-props.png. Prints each piece's rect and its offset from its square's top-left (the
-# numbers for data/tilesets.yaml). Each piece's stair square sits at the given pixels in its render.
-# The tiers' shading (build.py) may have changed since a piece was painted: each piece is corrected by the ratio of a
-# fresh render of its spot to the render it was painted into (ctx-<k>.png), so it still meets the tiles around it.
+# Cuts the pyramid's stair (one design, used on every tier: the user, "a single, well-matched set of north-south
+# stairs") out of the render it was inpainted into, and packs a copy per tier, in two halves (one per square), with the
+# altar into art/worldtiles/temple/pyramid-props.png. Prints each piece's rect and its offset from its square's
+# top-left (the numbers for data/tilesets.yaml).
 #   python3 assets/wip/temple-pyramid/pack.py "$PWD"
-import subprocess, sys, tempfile
+import sys
 from PIL import Image
 
 root = sys.argv[1]
 here = root + '/assets/wip/temple-pyramid/'
-# The renders: squares x0 y0 x1 y1 of temple_court2.
-CTX = {'a': (3, 6, 6, 9), 'b': (25, 27, 28, 30), 'c': (9, 12, 12, 15), 'd': (17, 21, 20, 24)}
-# name: (render, mask rect x, y, w, h, the stair square's top-left in the render)
-PIECES = {
-    'pyr_steps_w1': ('a', (28, 130, 168, 58), (128, 128)),
-    'pyr_steps_w3': ('c', (28, 130, 168, 58), (128, 128)),
-    'pyr_steps_s': ('b', (60, 112, 136, 108), (128, 128)),
-    'pyr_stair_l': ('d', (60, 112, 68, 108), (64, 128)),
-    'pyr_stair_r': ('d', (128, 112, 68, 108), (128, 128)),
-}
-now, tmp = {}, tempfile.mkdtemp()
-for k, (x0, y0, x1, y1) in CTX.items():
-    f = '%s/now-%s.png' % (tmp, k)
-    subprocess.run(['python3', root + '/assets/wip/temple-doors/render.py', root, 'temple_court2', str(x0), str(y0), str(x1), str(y1), f], check=True, capture_output=True)
-    now[k] = Image.open(f).convert('RGBA')
+# The render the stair was painted into (ctx-d.png, squares 17 21 20 24 of temple_court2): its two squares sit at
+# x 64 and 128, y 128, and the flight stands in the rectangle below.
+BOX = (70, 112, 188, 220)
+# Only the flight and its balustrades are kept; the rest is transparent so the tier's own face and terraces show
+# around it. Its outline, (y, left, right) in the render, straight between these rows: narrower at the top, out to the
+# newel posts at the foot.
+OUTLINE = [(112, 82, 174), (181, 71, 187), (220, 71, 187)]
+# It was painted onto the top tier (shade 1.05 then, build.py): each tier's copy is shaded for its own terraces.
+SHADE = [0.86, 0.93, 1.0, 1.07]
+PAINTED = 1.05
+
+def edge(y):
+    for (y0, l0, r0), (y1, l1, r1) in zip(OUTLINE, OUTLINE[1:]):
+        if y0 <= y <= y1:
+            t = (y - y0) / (y1 - y0)
+            return l0 + (l1 - l0) * t, r0 + (r1 - r0) * t
+    return 0, -1
 
 
-def corrected(k, box):
-    piece = Image.open(here + 'out-%s.png' % k).convert('RGBA').crop(box)
-    old, new = Image.open(here + 'ctx-%s.png' % k).convert('RGBA').crop(box).load(), now[k].crop(box).load()
+def stair(f):
+    piece = Image.open(here + 'out-d.png').convert('RGBA').crop(BOX)
     px = piece.load()
     for y in range(piece.height):
+        l, r = edge(BOX[1] + y)
         for x in range(piece.width):
-            r, g, b, a = px[x, y]
-            o, n = old[x, y], new[x, y]
-            f = [n[i] / o[i] if o[i] else 1 for i in range(3)]
-            px[x, y] = (min(255, round(r * f[0])), min(255, round(g * f[1])), min(255, round(b * f[2])), a)
+            X = BOX[0] + x
+            if X < round(l) or X > round(r):
+                px[x, y] = (0, 0, 0, 0)
+                continue
+            c = px[x, y]
+            px[x, y] = (min(255, round(c[0] * f)), min(255, round(c[1] * f)), min(255, round(c[2] * f)), c[3])
     return piece
 
 
 cuts = [('altar', Image.open(here + 'altar.png').convert('RGBA'), None)]
-for name, (k, (x, y, w, h), (sx, sy)) in PIECES.items():
-    cuts.append((name, corrected(k, (x, y, x + w, y + h)), (x - sx, y - sy)))
+mid = 128 - BOX[0]
+for k in range(1, 5):
+    st = stair(SHADE[k - 1] / PAINTED)
+    cuts.append(('pyr_stair_l%d' % k, st.crop((0, 0, mid, st.height)), (BOX[0] - 64, BOX[1] - 128)))
+    cuts.append(('pyr_stair_r%d' % k, st.crop((mid, 0, st.width, st.height)), (0, BOX[1] - 128)))
 W = sum(c.width for _, c, _ in cuts) + 4 * (len(cuts) - 1)
 sheet = Image.new('RGBA', (W, max(c.height for _, c, _ in cuts)), (0, 0, 0, 0))
 x = 0
