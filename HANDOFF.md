@@ -114,12 +114,22 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
   - the altar came out terracotta; every tier face is the same frieze;
   - risers stop sight, so groups on different terraces never join a fight or shoot down (plan §3, option B);
   - the drake on top wins 73% against a level-1 party (left as is; placement and tuning wait).
+- [x] The sewers (`temple_sewer`, 2026-10-24, `assets/wip/temple-sewer/README.md`), after the user's references
+  (`assets/ideas/refs/sewer-reference-*.jpg`): channels of rank green water, slimed stone walkways that stop on one
+  side or the other so the plank bridges are the way through, a square plank deck on posts round the drain to the
+  ritual chamber (a prop until that exists). The wells: the gatehouse's now goes down and back up (stairs); the
+  labyrinth's and the pyramid's are one-way drops into shallow pools. A cache in an alcove across a channel, a rat nest
+  in a dead end. Engine: a bridge whose terrain has a corner sheet is drawn as that terrain (the deck); `apart`
+  terrains; flat ground counts the walls as its own again (cliff tiers still don't). Seen in headless Chrome.
+- [ ] Sewers, still open: the diagonal stretch of the main channel stair-steps; slime and pipe face pieces show
+  rarely; the drain's rim is tan; no alligators yet (the sheet exists, no monster); `render.py` doesn't draw plain
+  water (the game does).
 - [ ] Style target: the PixelLab dragonborn (64 px). Tiles at 64 px to match (plan §4). The user (2026-10-24) gave a
   red dragonborn knight as the NPC style (`assets/ideas/refs/npc-style-dragonborn-knight.jpg`: dark outline, black
   plate, shield with a dragon's head); creatures and NPCs wait until the dungeon's layout is settled.
 - [ ] Archive the Undercroft and the Barrow for tests and sims only and start at the temple, once there is more of the
   temple than the courts (only the palace door is still locked "not built yet").
-- [ ] Then the sewers, ritual chamber, palace (plan §5).
+- [ ] Then the ritual chamber, palace (plan §5).
 - [ ] Monsters: an alligator monster for the sewers (the sheet exists); lizardfolk variants; the avatar of fear as the
   ritual chamber's boss.
 - [ ] The temple props also replace the Cute Fantasy props the published site may not show.

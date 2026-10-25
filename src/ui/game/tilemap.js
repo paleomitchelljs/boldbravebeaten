@@ -358,7 +358,12 @@
     }
     if (!c || c.kind === 'rock' || (c.kind === 'wall' && !(c.ground && ts.terrains[c.ground.tile]))) return { t: ts.wall };
     let gr = c.ground, over = null;
-    if (gr && gr.under) { over = gr; gr = (G.Explore && G.Explore.groundOf(gr.under)) || null; }
+    if (gr && gr.under) {
+      // A bridge whose terrain has a corner sheet (a plank deck) is drawn as that terrain, edges and all.
+      const bt = ts.terrains[gr.tile];
+      if (bt && bt.wang) return { t: gr.tile };
+      over = gr; gr = (G.Explore && G.Explore.groundOf(gr.under)) || null;
+    }
     if (!gr) return { t: ts.floor, over };
     return { t: ts.terrains[gr.tile] ? gr.tile : 'color:' + (gr.color || '#555'), over };
   }
@@ -400,12 +405,15 @@
       const n = tdef(ts, T_(x, y - 1).t);
       if (n.faces && t.rank < n.rank && [-1, 1].every((d) => tdef(ts, T_(x + d, y - 1).t).rank >= n.rank && tdef(ts, T_(x + d, y).t).rank < n.rank)) scatter(out.decor, n.faces, x, y, 'face', ts.cell);
     }
-    // A wang terrain's upper squares: it and every terrain listed after it, except what is raised over it and draws
-    // itself on top (the walls, for anything but the wall; a cliff set such as a pyramid tier, for flat ground), so
-    // fern beds draw nothing under a pyramid and a tier nothing under the walls.
+    // A wang terrain's upper squares: it and every terrain listed after it, except a raised terrain (a cliff set, or
+    // one marked `apart`, a plank deck) over flat ground, and the walls under another cliff set: those draw themselves on top, so fern beds draw nothing
+    // under a pyramid and a tier nothing under the walls. Flat ground does count the walls, so it runs on under them
+    // (a walkway meets a wall without an edge of water along it).
     const upOf = (w) => (xx, yy) => {
       const t = T_(xx, yy).t, d = tdef(ts, t);
-      return d.rank >= w.rank && (t === w.name || (t !== ts.wall && (w.cliffTiles || !d.cliffTiles)));
+      if (d.rank < w.rank) return false;
+      if (t === w.name || !w.cliffTiles) return t === w.name || t === ts.wall || !(d.cliffTiles || d.apart);
+      return t !== ts.wall;
     };
     for (const w of Object.values(ts.terrains)) {
       if (!w.wang) continue;

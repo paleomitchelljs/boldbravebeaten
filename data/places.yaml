@@ -409,7 +409,7 @@ temple_maze:
   legend:
     N: {kind: stairs, to: temple_court, at: L, sprite: door, wall: true, label: "Back to the court"}
     E: {kind: stairs, to: temple_court2, at: S, sprite: door, wall: true, label: "Door to the second court"}
-    W: {kind: prop, sprite: well, label: "A well, its rope long gone (the sewers below are not built yet)"}
+    W: {kind: drop, to: temple_sewer, at: L, sprite: well, label: "A well, its rope long gone", text: "There is nothing to climb by. You lower yourselves over the edge and let go, and land in a foul shallow pool."}
     C: {kind: chest, label: "A niche with a sealed jar", loot: strongbox, tn: 8}
     "1": {kind: monster, encounter: snake, label: "Something in the dead end"}
     "2": {kind: monster, encounter: pair, label: "Lizardfolk at their fire"}
@@ -486,7 +486,7 @@ temple_court2:
     d: {kind: prop, sprite: pyr_stair_l4, solid: false, on: "^", label: "The stair to the top"}
     e: {kind: prop, sprite: pyr_stair_r4, solid: false, on: "^", label: "The stair to the top"}
     A: {kind: prop, sprite: altar, on: "&", label: "A small altar, stained dark"}
-    W: {kind: prop, sprite: well, on: "&", label: "A well in the top of the pyramid (the sewers below are not built yet)"}
+    W: {kind: drop, to: temple_sewer, at: P, sprite: well, on: "&", label: "A well in the top of the pyramid", text: "The shaft runs straight down through the pyramid. You drop, and drop, and come down in shallow, stinking water."}
     F: {kind: prop, sprite: fern_large, solid: false, label: "Ferns"}
     g: {kind: monster, encounter: door, label: "Guards at the door"}
     p: {kind: monster, encounter: patrol, label: "A patrol at the foot of the pyramid"}
@@ -503,6 +503,65 @@ temple_court2:
     top: {foes: [{monster: drake}], text: "A red drake uncurls from the altar and spreads its wings."}
   wandering:
     - {w: 1, foes: [{monster: scaleward}], text: "A patrol comes round the pyramid."}
+    - {w: 4, nothing: true}
+  secrets: []
+
+temple_sewer:
+  name: The Sewers
+  kind: dungeon
+  blurb: Channels of rank green water under the whole temple, walkways of slimed stone, and plank bridges the only way across.
+  level: 2
+  look: {wall: "#46503f", floor: "#3a4436", ceiling: "#101810", fog: "#060a06", torch: 1, tileset: temple_sewer, light: 7}
+  # A main channel from under the gatehouse east to a cistern, where a ring of planks runs round the drain down to the
+  # ritual chamber; branches from under the labyrinth's well (south) and the pyramid's (north-east). The walkways stop
+  # on one side or the other, so the bridges are the way through. Laid out with a throwaway script, then checked that
+  # every walkway is reached from the shaft.
+  map:
+    - "##################################################"
+    - "##################################################"
+    - "##################################################"
+    - "####...#############################._...#########"
+    - "###.....###########################._P_..#########"
+    - "##........#########################.._...#########"
+    - "##..G...........##........#########....~..########"
+    - "##..............##..........########..~~~.########"
+    - "###.............##............######..~~~.########"
+    - "####....~~~~=~~~~~~~~=~~~.......#####.~~~.########"
+    - "#######.~~~~=~~~~~~~~=~~~~~......####.~~~.########"
+    - "########....=~~~~~~~~=..~~~~~......##.~~~.########"
+    - "#######................~~~~~~~~.......~~~.########"
+    - "#######................~~###~~~~......~~~..#######"
+    - "#######..~~.########...~~####~~~~...~~~~~...######"
+    - "########.~~.#######...~~~#####~~~~.~~~~~~~...#####"
+    - "#######..~~.#######...~~########~~~=======~..#####"
+    - "######...~~#..####...~~~#######..~~=======~~..####"
+    - "######..==...C####...~~########..~~==~~~==~~..####"
+    - "######..~~.#..###...~~~########..=====X~====..####"
+    - "######..~~.######...~~#########..~~==~~~==~~..####"
+    - "######..~~~######...~~~########..~~=======~~..####"
+    - "#######..~~######....~~#########..~=======~~...###"
+    - "#######..~~#######...~~#########...~~~~~~~~~~..###"
+    - "#######...~~######...~~~#########...~~~~~..~~..###"
+    - "########..~~#######...~~##########.........~~~..##"
+    - "########..~~~.#####...~~############.....###~~..##"
+    - "#########..~..####...~~~####################~~~.##"
+    - "#########.....####...~~~##################...~~.##"
+    - "##########...#####.._~~#################....r...##"
+    - "##################._L~~################.........##"
+    - "##################.._~~################.......####"
+    - "##################################################"
+    - "##################################################"
+  legend:
+    G: {kind: stairs, to: temple_wall, at: W, up: true, sprite: shaft, label: "Rungs and a rope up the well to the gatehouse"}
+    L: {kind: note, on: "_", label: "Under the labyrinth's well", text: "A shaft of grey light falls from far above. There is no climbing back up it."}
+    P: {kind: note, on: "_", label: "Under the pyramid's well", text: "The shaft above is too smooth and too far to climb."}
+    C: {kind: chest, label: "A rotten crate wedged in the alcove", loot: strongbox, tn: 8}
+    r: {kind: monster, encounter: rats, label: "Rats in the dead end"}
+    X: {kind: prop, sprite: drain, on: "=", label: "A great grate over the drain (the ritual chamber below is not built yet)"}
+  encounters:
+    rats: {foes: [{monster: ratPack}], text: "The dead end is a nest. The rats come out of it all at once."}
+  wandering:
+    - {w: 1, foes: [{monster: ratPack}], text: "Rats pour along the walkway."}
     - {w: 4, nothing: true}
   secrets: []
 
@@ -527,7 +586,7 @@ temple_wall:
   legend:
     "1": {kind: stairs, to: temple_court, at: u, sprite: stairs_down_1, label: "Steps down into the court"}
     "2": {kind: stairs, to: temple_court, at: v, sprite: stairs_down_2, label: "Steps down into the court"}
-    W: {kind: prop, sprite: well, label: "The well"}
+    W: {kind: stairs, to: temple_sewer, at: G, sprite: well, label: "The well: rungs and a rope down into the dark"}
     h: {kind: monster, encounter: guardhouse, label: "The guardhouse watch"}
   encounters:
     guardhouse: {foes: [{monster: scaleward}], text: "The watch in the guardhouse was dozing. Not any more."}

@@ -20,6 +20,9 @@
 #               ULLU, LUUU]. PixelLab's tileset tool reports each tile's corners; copy them here if they differ.
 #               A code listed again is a variant of the first tile with those corners (a mosaic in a wall face).
 #     vary      the share of corners with variants that draw one (default 0.25), picked by position
+#     apart     flat ground listed before this one doesn't count it as its own: it draws its own edge where it meets
+#               this (a plank deck over water, its sheet's lower ground transparent, lies over the walkway's lip).
+#               A bridge (ground with `under`) whose terrain has a wang sheet is drawn as that terrain, not laid over
 #     like      another terrain to copy every field from (its cliff list, decor); fields given here win. It keeps its
 #               own rank, so a pyramid's tiers can share one layout and each draw over the last
 #     cliff     instead of corners: a PixelLab cliff set (transition_size 1, 25 tiles) as [col, row, pattern], the
@@ -284,3 +287,62 @@ temple_maze:
     well: [court-props.png, 128, 0, 64, 61]
     door_south: [temple-doors.png, 364, 0, 44, 84, 10, 2]
     door_west: [temple-doors.png, 906, 0, 70, 52, -6, 6]
+
+# The sewers (assets/wip/temple-sewer/): rank green water with the walkway raised over it on a slimy lip, walls of
+# dark stone streaked with slime. The wall sheet's lower ground is transparent, so a wall stands in water as well as on
+# the walkway. Bridges are planks laid over the water.
+temple_sewer:
+  cell: 64
+  dir: art/worldtiles/temple/
+  floor: stone
+  terrains:
+    water:
+      color: "#18301b"
+      # scum, floating rubbish, an old post
+      decor: {density: 0.35, clump: 3, flip: true, pieces: [[sewer-decor.png, 0, 0, 34, 28], [sewer-decor.png, 64, 0, 30, 16], [sewer-decor.png, 128, 0, 11, 23], [sewer-decor.png, 0, 0, 34, 28]]}
+    shallows:
+      color: "#2f5a2c"
+      tile: sewer-shallows.png
+    stone:
+      color: "#3a4436"
+      wang: sewer-water.png
+      over: water
+      # grime, a grate, bones
+      decor: {density: 0.3, clump: 4, flip: true, pieces: [[sewer-decor.png, 192, 0, 26, 27], [sewer-decor.png, 256, 0, 24, 24], [maze-decor.png, 64, 0, 33, 21]]}
+    # Bridges and the ring round the drain: a plank deck on posts, drawn as its own corner set.
+    bridge: {color: "#5c4a32", wang: sewer-deck.png, over: water, apart: true}
+    wall:
+      color: "#46503f"
+      wang: sewer-wall.png
+      over: stone
+      cliff:
+        - [2, 2, ".....00..00....."]
+        - [3, 2, ".....00..01....."]
+        - [1, 4, ".....00..11....."]
+        - [2, 4, ".....00..10....."]
+        - [3, 3, ".00..01..01....."]
+        - [3, 4, ".....01..01....."]
+        - [0, 6, ".....11..11....."]
+        - [1, 0, ".11..10..10....."]
+        - [1, 1, ".....10..10....."]
+        - [0, 4, ".....10..11....."]
+        - [3, 6, ".....01..11....."]
+        - [1, 6, ".....11..12...0."]
+        - [3, 0, ".....11..22..00."]
+        - [1, 2, ".....10..20..00."]
+        - [1, 7, ".1...12..10....."]
+        - [3, 1, ".11..22..00....."]
+        - [1, 3, ".....20..00....."]
+        - [2, 0, ".....01..02..00."]
+        - [0, 0, ".....11..21..0.."]
+        - [2, 6, ".....10..21..01."]
+        - [2, 1, ".....02..00....."]
+        - [0, 1, "..1..21..01....."]
+        - [2, 7, ".10..21..01....."]
+        - [0, 2, ".....01..12..10."]
+        - [0, 3, ".01..12..10....."]
+      # Faces: slime oozing from the lip, a drain pipe.
+      faces: {density: 0.35, drop: 3, band: [-32, 56], pieces: [[sewer-decor.png, 320, 0, 34, 51, -32], [sewer-decor.png, 384, 0, 30, 41, -22], [sewer-decor.png, 320, 0, 34, 40, -32]]}
+  props:
+    shaft: [sewer-props.png, 0, 0, 64, 64]
+    drain: [sewer-props.png, 68, 0, 64, 64]
