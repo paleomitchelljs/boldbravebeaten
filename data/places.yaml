@@ -329,7 +329,7 @@ temple_court:
     - "##,,,,,,,,,,,,,,,,,,,,,,%%%%,f##"
     - "##u,,,,,,,,,,,,,,,,,,,,,%%%%,,##"
     - "##,f,,,,,,,,,,,,,,,,,,,,,,,,,,##"
-    - "<+,,,,g,,,,,,,,,c,,,,,,,,,p,,,P#"
+    - "#<,,,,g,,,,,,,,,c,,,,,,,,,p,,,P#"
     - "##,f,,,,,,,,,,,,,,,,,,,,,,,,,,##"
     - "##v,,,,,,,,,,,,,,,,,,,,,,,,,,,##"
     - "##,,,,,,,,,,;;,,,,,,,,,,,,,,,,##"
@@ -347,12 +347,12 @@ temple_court:
     - "###############L################"
     - "################################"
   legend:
-    "<": {kind: stairs, to: stonebridge, at: ~, label: "Out through the gate"}
+    "<": {kind: stairs, to: stonebridge, at: ~, sprite: door, wall: true, label: "Out through the gate"}
     u: {kind: stairs, to: temple_wall, at: "1", up: true, sprite: wall_steps, label: "Steps up onto the wall"}
     v: {kind: stairs, to: temple_wall, at: "2", up: true, sprite: wall_steps, label: "Steps up onto the wall"}
     F: {kind: prop, sprite: fern_large, solid: false, label: "Ferns"}
     f: {kind: prop, sprite: fern_small, solid: false, label: "Ferns"}
-    L: {kind: stairs, to: temple_maze, at: N, sprite: door, label: "Door to the labyrinth"}
+    L: {kind: stairs, to: temple_maze, at: N, sprite: door, wall: true, label: "Door to the labyrinth"}
     P: {kind: locked, label: "Arched door to the palace (not built yet)", tn: 99, text: "Carved and painted, and shut fast. (The palace is not built yet.)"}
     g: {kind: monster, encounter: gate, label: "Guards at the gate"}
     c: {kind: monster, encounter: court, label: "Lizardfolk in the court"}
@@ -407,7 +407,7 @@ temple_maze:
     - "##############################################"
     - "##############################################"
   legend:
-    N: {kind: stairs, to: temple_court, at: L, sprite: door, label: "Back to the court"}
+    N: {kind: stairs, to: temple_court, at: L, sprite: door, wall: true, label: "Back to the court"}
     E: {kind: locked, label: "Door to the second court (not built yet)", tn: 99, text: "A heavy door, barred from the far side. (The second court is not built yet.)"}
     W: {kind: prop, sprite: well, label: "A well, its rope long gone (the sewers below are not built yet)"}
     C: {kind: chest, label: "A niche with a sealed jar", loot: strongbox, tn: 8}
@@ -445,8 +445,8 @@ temple_wall:
     - "#..2..#"
     - "#######"
   legend:
-    "1": {kind: stairs, to: temple_court, at: u, label: "Steps down into the court"}
-    "2": {kind: stairs, to: temple_court, at: v, label: "Steps down into the court"}
+    "1": {kind: stairs, to: temple_court, at: u, sprite: stairs_down_1, label: "Steps down into the court"}
+    "2": {kind: stairs, to: temple_court, at: v, sprite: stairs_down_2, label: "Steps down into the court"}
     W: {kind: prop, sprite: well, label: "The well"}
     h: {kind: monster, encounter: guardhouse, label: "The guardhouse watch"}
   encounters:

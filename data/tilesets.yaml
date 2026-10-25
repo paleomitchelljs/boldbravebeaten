@@ -5,6 +5,9 @@
 #   dir       the folder of the sheets
 #   floor     the terrain plain floor ('.'), doors and legend squares are drawn as (default: the first terrain)
 #   wall      the terrain of walls and rock (default: wall)
+#   doorsInWall  doorways (and legend squares with `wall: true`) are drawn as wall, with the door prop for the side
+#             they open on laid over them: door_south (a door in the face), door_east, door_west, door_north (a way
+#             through the wall top seen from above), else door
 #   terrains  name -> how it is drawn, from the bottom up. Ground letters (rules.yaml game.ground) name these by `tile`.
 #     color     flat colour while there is no art; alpha (0-1) lays it over the floor instead (a patch of rubble)
 #     tile      an image of one square (a list: variants, picked by position)
@@ -31,11 +34,14 @@
 #               drop: art pixels a piece may hang lower than its set height
 #               band and a piece's optional sixth number (its height) are measured from the top of the square in front
 #   props     name -> [image, x, y, w, h], in the art's pixels: map objects (a well, a statue) for legend props and
-#             drops by `sprite`, drawn with their feet at the square's bottom and one cell to one square.
+#             drops by `sprite`, drawn with their feet at the square's bottom and one cell to one square. With two
+#             more numbers [.., dx, dy] it is laid at that offset from the square's top-left instead (a doorway or a
+#             stair cut to fit the wall around it, which may reach into the next square).
 
 # The temple's open courts, built in layers: plain ground and plain wall tops from PixelLab sets, with the variety in
 # small pieces scattered over them (decor) and on the wall faces (faces). Prompts: assets/wip/temple-court/.
 temple_court:
+  doorsInWall: true
   cell: 64
   dir: art/worldtiles/temple/
   floor: grass
@@ -99,10 +105,15 @@ temple_court:
       # Faces: five kinds of vine from the lip, a snake mosaic in the face.
       faces: {density: 0.4, drop: 2, band: [-32, 56], pieces: [[court-decor.png, 576, 0, 30, 44, -32], [court-decor.png, 640, 0, 40, 40, -26], [court-decor.png, 576, 0, 30, 30, -32], [court-decor.png, 1088, 0, 9, 34, -32], [court-decor.png, 1152, 0, 48, 35, -32], [court-decor.png, 1216, 0, 17, 41, -32]]}
   # court-props.png: door, steps up the wall, well, a large and a small clump of ferns (PixelLab map objects).
+  # Doorways and the steps were inpainted into renders of the walls around them (assets/wip/temple-doors/), so they
+  # join the wall; each is laid at its offset from its square.
   props:
     door: [court-props.png, 0, 0, 64, 61]
     door_locked: [court-props.png, 0, 0, 64, 61]
-    wall_steps: [court-props.png, 64, 0, 64, 64]
+    door_east: [temple-doors.png, 0, 0, 110, 52, -64, 6]
+    door_west: [temple-doors.png, 258, 0, 106, 52, -42, 6]
+    door_north: [temple-doors.png, 210, 0, 48, 112, 8, 16]
+    wall_steps: [temple-doors.png, 110, 0, 100, 56, -58, 4]
     well: [court-props.png, 128, 0, 64, 61]
     fern_large: [court-props.png, 192, 0, 64, 60]
     fern_small: [court-props.png, 256, 0, 64, 56]
@@ -110,6 +121,7 @@ temple_court:
 
 # The walk along the top of the gate wall: plain paving, the same walls (chained from the court's), the same pieces.
 temple_walltop:
+  doorsInWall: true
   cell: 64
   dir: art/worldtiles/temple/
   floor: paving
@@ -159,10 +171,14 @@ temple_walltop:
     door: [court-props.png, 0, 0, 64, 61]
     door_locked: [court-props.png, 0, 0, 64, 61]
     well: [court-props.png, 128, 0, 64, 61]
+    stairs_down_1: [temple-doors.png, 558, 0, 52, 58, 6, 2]
+    stairs_down_2: [temple-doors.png, 610, 0, 52, 58, 6, 2]
+    door_south: [temple-doors.png, 514, 0, 44, 94, 10, -8]
 
 # The labyrinth: worked, damp sandstone, a little darker than the court's (PixelLab, 64 px; prompts in
 # assets/wip/temple-maze/README.md). Built like the court: a plain floor and a cliff set, the variety in pieces.
 temple_maze:
+  doorsInWall: true
   cell: 64
   dir: art/worldtiles/temple/
   floor: stone
@@ -216,3 +232,5 @@ temple_maze:
     door: [court-props.png, 0, 0, 64, 61]
     door_locked: [court-props.png, 0, 0, 64, 61]
     well: [court-props.png, 128, 0, 64, 61]
+    door_south: [temple-doors.png, 364, 0, 44, 84, 10, 2]
+    door_west: [temple-doors.png, 408, 0, 106, 52, -42, 6]

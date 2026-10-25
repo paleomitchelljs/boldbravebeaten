@@ -99,7 +99,7 @@
   // above, then any tileset's (art drawn at its own cell size, so a 64-px tileset's well is as wide as a square).
   let placeTs = null;
   function propDef(key) {
-    const fromTs = (id) => { const ts = Tilemap.tileset(id), p = ts && ts.props[key]; return p ? [ts.dir + p[0], p[1], p[2], p[3], p[4], T / ts.cell] : null; };
+    const fromTs = (id) => { const ts = Tilemap.tileset(id), p = ts && ts.props[key]; return p ? [ts.dir + p[0], p[1], p[2], p[3], p[4], T / ts.cell, p[5], p[6]] : null; };
     const own = placeTs && fromTs(placeTs);
     if (own) return own;
     if (PROPS[key]) return PROPS[key];
@@ -122,7 +122,10 @@
     if (opts.flipY) { const mid = y - (p[4] * S * k) / 2; ctx.translate(0, mid); ctx.scale(1, -1); ctx.translate(0, -mid); }
     // squash narrows a prop (a door seen edge-on or swung open); anchor 'left' pins its left edge at x instead of its middle.
     const w = p[3] * S * k * (opts.squash || 1);
-    blit(ctx, p[0], p[1], p[2], p[3], p[4], Math.round(opts.anchor === 'left' ? x : x - w / 2), Math.round(y - p[4] * S * k), w, p[4] * S * k);
+    // A tileset prop with an offset [.., dx, dy] is laid at that many art pixels from its square's top-left corner (a
+    // doorway cut to fit the wall around it) instead of standing on the square's bottom.
+    if (p[6] != null) blit(ctx, p[0], p[1], p[2], p[3], p[4], Math.round(x - (T * S) / 2 + p[6] * S * k), Math.round(y - T * S + p[7] * S * k), w, p[4] * S * k);
+    else blit(ctx, p[0], p[1], p[2], p[3], p[4], Math.round(opts.anchor === 'left' ? x : x - w / 2), Math.round(y - p[4] * S * k), w, p[4] * S * k);
     ctx.restore();
   }
 

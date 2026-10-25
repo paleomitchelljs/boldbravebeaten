@@ -92,8 +92,8 @@
             out.ground.push({ t: 'floor', x, y, mask: m, v: hash(x, y), color: c.ground ? c.ground.color : null });
             if (door) {
               const horizontal = g.solidAt(x - 1, y) && g.solidAt(x + 1, y);
-              out.decor.push({ t: 'door', x, y, open: c.kind === 'floor', locked: c.kind === 'locked' || (c.def && c.def.kind === 'locked'), horizontal });
-            } else decal(out, c, x, y);
+              out.decor.push({ t: 'door', x, y, open: c.kind === 'floor', locked: c.kind === 'locked' || (c.def && c.def.kind === 'locked'), horizontal, side: openSide(g, x, y) });
+            } else decal(out, c, x, y, g);
           }
           if (g.raised(x, y) && (known(x, y) || known(x, y + 1))) cap(x, y);
         } else if (g.isFace(x, y)) {
@@ -113,10 +113,19 @@
   }
 
   // Things lying flat on the floor.
-  function decal(out, c, x, y) {
+  // Which way a doorway in a wall opens onto the floor, for its picture: south (a door in the face), else the first of
+  // east, west and north that is open.
+  function openSide(g, x, y) {
+    if (!g.solidAt(x, y + 1)) return 'south';
+    if (!g.solidAt(x + 1, y)) return 'east';
+    if (!g.solidAt(x - 1, y)) return 'west';
+    return 'north';
+  }
+
+  function decal(out, c, x, y, g) {
     const st = c.st || {};
     switch (c.kind) {
-      case 'stairs': out.decor.push({ t: 'stairs', x, y, sprite: c.def.sprite || null, up: c.def.up != null ? !!c.def.up : c.def.at === '>' || ((G.Content.world.places[c.def.to] || {}).kind === 'town') }); break;
+      case 'stairs': out.decor.push({ t: 'stairs', x, y, sprite: c.def.sprite || null, side: openSide(g, x, y), up: c.def.up != null ? !!c.def.up : c.def.at === '>' || ((G.Content.world.places[c.def.to] || {}).kind === 'town') }); break;
       case 'drop': out.decor.push({ t: 'drop', x, y, sprite: c.def.sprite || null }); break;
       case 'trap': if (st.found || st.sprung || st.disarmed) out.decor.push({ t: 'trap', x, y, state: st.disarmed ? 'off' : st.sprung ? 'sprung' : 'armed' }); break;
       case 'pickup': if (!st.done) out.decor.push({ t: 'twinkle', x, y }); break;
@@ -231,8 +240,10 @@
         // Seen from above (a tileset's flat walls): the tileset's door, else a slab of planks across the gap, swung to
         // one side when open.
         if (env.flat) {
-          const key = cmd.locked ? 'door_locked' : 'door';
-          if (env.tileProp && env.tileProp(key)) { env.prop(ctx, key, X + size / 2, Y + size, S); break; }
+          // The tileset's door for the side it opens on (door_south, a door in the wall face; door_east... a way through
+          // the wall top), else its plain door.
+          const key = [`door_${cmd.side}`, cmd.locked ? 'door_locked' : 'door'].find((k) => env.tileProp && env.tileProp(k));
+          if (key) { env.prop(ctx, key, X + size / 2, Y + size, S); break; }
           const across = cmd.horizontal, th = size * 0.3;
           const r = cmd.open ? (across ? [X, Y + size / 2 - th / 2, th, size * 0.9] : [X + size / 2 - th / 2, Y, size * 0.9, th])
             : (across ? [X, Y + size / 2 - th / 2, size, th] : [X + size / 2 - th / 2, Y, th, size]);
@@ -257,7 +268,9 @@
         const cx = X + size / 2;
         // A legend `sprite` (a door, a tileset's steps up the wall) is drawn as it is, with no arrow; the stock stairs
         // flip to point up.
-        if (cmd.sprite && env.hasProp(cmd.sprite)) { env.prop(ctx, cmd.sprite, cx, Y + size, S); break; }
+        // `door` as a stairs sprite means the doorway picture for its side, as for a door.
+        const spr = cmd.sprite === 'door' && env.tileProp && env.tileProp(`door_${cmd.side}`) ? `door_${cmd.side}` : cmd.sprite;
+        if (spr && env.hasProp(spr)) { env.prop(ctx, spr, cx, Y + size, S); break; }
         env.prop(ctx, 'stairs', cx, Y + size, S, { flipY: cmd.up });
         ctx.fillStyle = 'rgba(255,230,150,0.9)';
         ctx.font = `${S * 6}px "Pixelify Sans", monospace`;
@@ -327,6 +340,9 @@
   // The terrain name a square is drawn as, and the ground drawn over it (a bridge), if any.
   function terrainOf(sc, ts, x, y) {
     const c = x >= 0 && y >= 0 && x < sc.w && y < sc.h ? sc.cell(x, y) : null;
+    // With `doorsInWall`, a doorway (or a legend square marked `wall: true`, a way out through a gate) is drawn as the
+    // wall it stands in, and its door picture laid over it, so the wall runs on unbroken.
+    if (c && ts.raw.doorsInWall && (doorLike(c) || (c.def && c.def.wall))) return { t: ts.wall };
     if (!c || c.kind === 'rock' || (c.kind === 'wall' && !(c.ground && ts.terrains[c.ground.tile]))) return { t: ts.wall };
     let gr = c.ground, over = null;
     if (gr && gr.under) { over = gr; gr = (G.Explore && G.Explore.groundOf(gr.under)) || null; }

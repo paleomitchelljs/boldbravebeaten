@@ -76,12 +76,19 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
   identically), four more plants with mirroring, no piece repeated beside itself, fewer plants in the fern beds, and the
   patches on the map smoothed (single-square notches made hard angles in the loam). The position hash was a float
   product past 2^53, so a few pieces came up far too often; it uses `Math.imul` now.
+- [x] Doors and stairs joined to their walls (2026-10-24, the user: "Doors and stairs need some transition to walls"):
+  with `doorsInWall` a doorway is drawn as the wall it stands in, and its door is a picture for the side it opens on
+  (a door in the face, or a way through the wall top) inpainted by PixelLab into a render of the real tiles around it,
+  so it joins by construction (`assets/wip/temple-doors/README.md`, with the render script). The same for the steps up
+  the court wall and the stairwells on the wall top. The gate out is now the gate itself (no stock stairs). Props
+  take an offset [.., dx, dy] to fit.
 - [ ] Court art, still open:
   - the lizard mosaic came out as a figure: redo it as a face panel; the face mosaics show rarely;
   - the wall-top place's set has dark edge lines and a darker face than the court's; one-square walls between its rooms
     draw odd lips;
   - the jointed tops repeat a 64-px grid; the brick decor is pinkish beside the paving;
-  - the steps up the wall are still the small rotated stair; one door image serves walls of both directions.
+  - the labyrinth's east door came out small; an opened door still shows its closed picture (there is no open one);
+    a new doorway means a render and an inpaint for it (the pictures fit their own spot, not any wall).
   - side walls show only their top edge (top-down): fine, but they look thin beside the faced north walls.
 - [x] The labyrinth (`temple_maze`, through the court's south door): laid out by `tools/labyrinth.js` (seed 7, 11x7
   cells: two-square passages between two-square walls, a depth-first walk with 10% extra openings, bends rounded) and
