@@ -103,7 +103,7 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
   tall tiers carved in bands of relief). A 3-square rind of grass round a 28-square pyramid of four tiers; one stair
   design on the south face of every tier, zigzagging west end, east end, west end, middle (the user: "a single,
   well-matched set of north-south stairs ... at all levels"; the slanted flight and the west-face flights are gone),
-  cut out along its balustrades so it meets the tier's own tiles; the altar and a well (a prop until the sewers exist)
+  its join to the face repainted by PixelLab (a band along its outline, inpainted in place) so it meets the wall set; the altar and a well (a prop until the sewers exist)
   on top. Engine: ground letters `-` `:` `*` `&` for the terraces and `^` (now `rise`) for the risers, drawn as the
   tier they hold up; tileset terrains may copy another's fields (`like`); flat ground draws nothing under raised
   terrain. Each tier is a PixelLab cliff set over the one below (carved face, slab terrace), shaded a step lighter

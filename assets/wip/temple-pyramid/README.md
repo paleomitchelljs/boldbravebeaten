@@ -45,4 +45,16 @@ the same tile positions and patterns as the court wall's).
 - altar.png (map object 5e303fd1, basic shading, selective outline): "a small ancient stone altar block of weathered
   olive-tan stone, carved with a coiled serpent on its front, a shallow dark-stained basin on top, a couple of melted
   candle stubs". Came out terracotta-red; kept.
-- pack.py packs the stair copies (in halves, one per square) and the altar into art/worldtiles/temple/pyramid-props.png.
+- The join, repainted. The user, after the cut-out: "The stairs are still not flush—we may need pixel lab to generate a
+  cleaner transition. Basically a tile that meshes cleanly with the wall set." (The stair's head stood above the
+  ledge, a dark sliver of PixelLab's own wall ran beside the balustrades, and the newel posts stopped short.) seam.py
+  lays the cut-out stair into a fresh render of its spot and masks a band 7 px either side of its outline, plus its
+  head and foot; `inpaint_image` with that mask: "a seamless join between the stone staircase and the carved pyramid
+  wall: the carved relief face runs right up against the outer side of each stone balustrade with no gap, the pale
+  stone ledge along the top of the wall meets the top of the balustrades cleanly, the top step lies level with the
+  paved terrace above, the foot of the stair and the base of each newel post rest flat on the paving below; same
+  colours and pixel style as the surrounding stone" (grass for the first tier). Two spots, one per face sheet: the top
+  tier (out-seam-top.png, used for tiers 2-4, darkened for 2 and 3) and the first tier (out-seam-first.png). One try
+  each. The balustrades now end in caps on the terrace above, and cast a shadow to the right.
+- pack.py keeps the stair and the repainted band (everything else transparent) and packs the copies (in halves, one
+  per square) and the altar into art/worldtiles/temple/pyramid-props.png.
