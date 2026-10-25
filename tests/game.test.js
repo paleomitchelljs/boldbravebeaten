@@ -590,3 +590,20 @@ test('armor pieces: each takes the slots it covers; a crown and a helm share the
   B.Recovery.mendGear(c, 0.5);
   assert.ok(shirt.durability > 1 && boots.durability > 1);
 });
+
+test('a trial start: Tevax at level 8 with every listed feat, his own gear and the sash worn', () => {
+  const B = require('./load.js');
+  const specs = B.World.trialParty('tevax');
+  assert.equal(specs.length, 1);
+  const w = B.World.create(specs);
+  const c = B.World.party(w)[0];
+  assert.equal(c.level, 8);
+  const want = {};
+  for (const f of specs[0].feats) want[f] = (want[f] || 0) + 1;
+  for (const [f, n] of Object.entries(want)) assert.equal(B.Character.rank(c, f), n, `feat ${f}`);
+  assert.equal(B.Items.itemName(c.armor), 'Ebony Mail');
+  assert.equal(B.Items.itemName(B.Character.wieldedWeapon(c)), 'Ebony Blade');
+  assert.ok((c.trinkets || []).some((t) => t.goodId === 'silk_sash'), 'the sash is worn');
+  assert.equal(B.World.goodCount(w, 'silk_sash'), 0, 'and not left in the pack');
+  assert.equal(c.look.sprite, 'art:tevax');
+});

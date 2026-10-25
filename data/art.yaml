@@ -6,7 +6,8 @@
 #   height  how tall it stands on the map, in squares; maxWidth caps a long body (default 1.8)
 #   box     the figure's trimmed box in the idle frame [x0, y0, x1, y1] (feet at y1), measured from the sheet
 # pixellab entries are 8-direction characters (art/characters/pixellab): idle rotations and walks by direction
-# (walkFrames, default 4; walk frames may sit on a larger canvas than `size`, centred, and are cropped to it).
+# (walkFrames, default 4; walks: the directions it has walk frames for, default east and west; the nearest is used;
+# walk frames may sit on a larger canvas than `size`, centred, and are cropped to it).
 
 alligator: {anims: [idle, attack], frame: [150, 150], box: [0, 108, 150, 150], faces: left, height: 0.6, maxWidth: 2}
 avatar-of-fear: {anims: [idle, attack], frame: [150, 150], box: [12, 0, 138, 150], faces: right, height: 1.9}
@@ -56,12 +57,14 @@ lizardfolk-warrior:
   name: Lizardfolk
   size: 64
   walkFrames: 6
+  walks: [north, east, south, west]
   box: [4, 6, 60, 63]
   height: 1.45
   party: true
 tevax:
   type: pixellab
   dir: art/characters/pixellab/Tevax_Thaukori/Idle
+  walks: [north, east, south, west, south-east, south-west]
   name: Scaled warrior
   size: 64
   box: [8, 1, 59, 63]

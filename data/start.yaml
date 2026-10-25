@@ -32,3 +32,27 @@ presets:
     attrs: {STR: 3, CON: 5, DEX: 5, SPD: 5, INT: 8, WIL: 7, WIS: 4, CHA: 3}
     feats: [casting, verb_strike, verb_cover]
     nouns: [fire]
+# Trial starts (title screen): a small or one-person party for trying out art and movement. `look` is the character's
+# look (sprite: "art:<key>" draws data/art.yaml art); `go` travels there at once (a place and its arrival square).
+trials:
+  - id: tevax
+    label: "Trial: Tevax alone (level 8)"
+    go: {to: temple_court, arrive: "<"}
+    party:
+      # A death knight: mostly martial, in Ebony Mail with the silk sash, and able to raise the dead. Raise sits deep
+      # in the magic tree (8 magic feats with Battle Casting), more than a level-8 budget of 10 leaves for fighting, so
+      # this trial character gets 6 feats over the budget (16 in all). Trial only; not a rule.
+      - name: Tevax Thaukori
+        kit: sword
+        level: 8
+        bonusFeats: 6
+        attrs: {STR: 8, CON: 8, DEX: 6, SPD: 6, INT: 6, WIL: 7, WIS: 5, CHA: 5}
+        armorItem: {armor: mail, material: steel, craft: master, enchantments: [ebon], name: Ebony Mail}
+        weaponItems:
+          - {weapon: longsword, material: steel, enchantments: [sapping], name: Ebony Blade}
+          - {weapon: dagger}
+        shieldItem: {shield: heater, material: steel, enchantments: [spellcatching], name: Spellbreaker}
+        trinkets: [silk_sash]
+        feats: [shield_training, mail_mobility, quick_block, mail_mobility, shield_training, mail_endurance, iron_stance, strength, casting, verb_strike, verb_bless, mod_strong, verb_conjure, casting, verb_raise, battle_casting]
+        nouns: [shadow, life, bone, spirit]
+        look: {sprite: "art:tevax"}

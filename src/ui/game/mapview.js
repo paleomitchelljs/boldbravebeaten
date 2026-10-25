@@ -6,7 +6,7 @@
  *   { cell(x, y) -> Explore.cell-like info, w, h,          the dungeon grid
  *     seen(x, y) -> bool | null (null = show everything), light: {x, y, r},
  *     cam: {x, y} (tile the camera centres on) | origin: {x, y} (fixed top-left tile),
- *     actors: [{id, x, y, kind, tint, size, anim, flip, alpha, down, bar, ring, tag, label}],
+ *     actors: [{id, x, y, kind, tint, size, anim, flip, face: {x, y}, alpha, down, bar, ring, tag, label}],
  *     marks: [{x, y, type: 'move'|'late'|'target'|'cast'|'ghost'|'select', text}],
  *     describe(x, y) -> string }
  * Actors are smoothed: give their logical tile and the view walks them there. Tiles are 16 art pixels,
@@ -258,14 +258,22 @@
       const seen = {};
       for (const a of sc.actors || []) {
         seen[a.id] = 1;
-        const v = view.vis[a.id] || (view.vis[a.id] = { x: a.x, y: a.y, f: 0, run: false, flip: !!a.flip });
+        const v = view.vis[a.id] || (view.vis[a.id] = { x: a.x, y: a.y, f: 0, run: false, flip: !!a.flip, dir: a.flip ? 'south-west' : 'south-east' });
         const dx = a.x - v.x, dy = a.y - v.y, d = Math.hypot(dx, dy);
+        // Facing: the way it walks; standing, toward `face` (a square) if the scene gives one, else the side `flip` says,
+        // else the way it last walked.
         if (d > 0.02) {
           const step = Math.min(d, dt * (a.speed || 7.5));
           v.x += dx / d * step; v.y += dy / d * step;
           if (Math.abs(dx) > 0.05) v.flip = dx < 0;
+          v.dir = Sprites.dirOf(dx, dy);
           v.run = true; moving = true;
-        } else { v.x = a.x; v.y = a.y; v.run = false; if (a.flip != null) v.flip = !!a.flip; }
+        } else {
+          v.x = a.x; v.y = a.y; v.run = false;
+          if (a.flip != null) v.flip = !!a.flip;
+          if (a.face && (a.face.x !== a.x || a.face.y !== a.y)) v.dir = Sprites.dirOf(a.face.x - a.x, a.face.y - a.y);
+          else if (a.flip != null && /west/.test(v.dir) !== !!a.flip) v.dir = a.flip ? 'south-west' : 'south-east';
+        }
       }
       for (const id of Object.keys(view.vis)) if (!seen[id]) delete view.vis[id];
       return moving;
@@ -465,7 +473,7 @@
       for (const it of list) {
         if (it.prop) { const i = it.prop; drawObject(ctx, i.c, ox + i.x * size, oy + i.y * size, S); continue; }
         const [dx, dy] = offsetOf(it.fig.a.id, clock());
-        drawActor(ctx, it.fig.a, dx || dy ? { x: it.fig.v.x + dx, y: it.fig.v.y + dy, run: it.fig.v.run, flip: it.fig.v.flip } : it.fig.v, ox, oy, S, view.tick);
+        drawActor(ctx, it.fig.a, dx || dy ? { x: it.fig.v.x + dx, y: it.fig.v.y + dy, run: it.fig.v.run, flip: it.fig.v.flip, dir: it.fig.v.dir } : it.fig.v, ox, oy, S, view.tick);
       }
       // Fog: unlit squares fade; what has been seen but is out of the light is dim.
       if (sc.light) {
@@ -507,7 +515,7 @@
       // Creature art (data/art.yaml) where it is there: its attack frames while a lunge is under way.
       const lunging = view.fx.some((f) => f.k === 'lunge' && f.id === a.id && clock() >= f.t0 && clock() < f.t0 + f.dur + 140);
       const rot = a.down ? (v.flip ? -1.45 : 1.45) : 0;
-      const art = a.art && Sprites.drawArt(ctx, a.art, lunging ? 'attack' : anim, frame, x, y, size, { flip: v.flip, tint: a.artTint, alpha: a.alpha, artScale: a.artScale, rot, shadow: !a.down });
+      const art = a.art && Sprites.drawArt(ctx, a.art, lunging ? 'attack' : anim, frame, x, y, size, { flip: v.flip, dir: v.dir, tint: a.artTint, alpha: a.alpha, artScale: a.artScale, rot, shadow: !a.down });
       if (art) a = Object.assign({}, a, { size: a.artSize || a.size });
       const ok = art || Sprites.draw(ctx, a.kind, anim, frame, x, y, SS, { flip: v.flip, tint: a.tint, alpha: a.alpha, size: a.size || 1, rot, shadow: !a.down });
       // A hit: the same figure again, washed red and added on top (it glows), fading.
@@ -515,7 +523,7 @@
       if (hit && ok) {
         const fade = (1 - (now - hit.t0) / hit.dur) * 0.85 * (a.alpha == null ? 1 : a.alpha);
         ctx.save(); ctx.globalCompositeOperation = 'lighter';
-        if (art) Sprites.drawArt(ctx, a.art, lunging ? 'attack' : anim, frame, x, y, size, { flip: v.flip, tint: '#ff2a1a', alpha: fade, artScale: a.artScale, rot });
+        if (art) Sprites.drawArt(ctx, a.art, lunging ? 'attack' : anim, frame, x, y, size, { flip: v.flip, dir: v.dir, tint: '#ff2a1a', alpha: fade, artScale: a.artScale, rot });
         else Sprites.draw(ctx, a.kind, anim, frame, x, y, SS, { flip: v.flip, tint: '#ff2a1a', alpha: fade, size: a.size || 1, rot });
         ctx.restore();
       }

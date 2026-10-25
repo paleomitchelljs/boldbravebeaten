@@ -295,6 +295,15 @@
       if (k.sidearm && !has(D.WEAPONS, k.sidearm)) err(`start.kits.${k.id}: sidearm "${k.sidearm}" unknown`);
     }
     for (const p of S.presets || []) for (const f of p.feats || []) if (!has(D.FEATS, f)) err(`start.presets.${p.name}: feat "${f}" unknown`);
+    for (const t of S.trials || []) {
+      if (t.go && !has(places, t.go.to)) err(`start.trials.${t.id}: go to unknown place "${t.go.to}"`);
+      for (const p of t.party || []) {
+        for (const f of p.feats || []) if (!has(D.FEATS, f)) err(`start.trials.${t.id}.${p.name}: feat "${f}" unknown`);
+        if (p.kit && !(S.kits || []).some((k) => k.id === p.kit)) err(`start.trials.${t.id}.${p.name}: kit "${p.kit}" unknown`);
+        const sp = p.look && p.look.sprite;
+        if (typeof sp === 'string' && sp.startsWith('art:') && !has(W.art || {}, sp.slice(4))) err(`start.trials.${t.id}.${p.name}: art "${sp.slice(4)}" unknown`);
+      }
+    }
     return out;
   }
 

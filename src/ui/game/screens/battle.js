@@ -137,7 +137,7 @@
       const candidate = map && map.targets[id] && !(cmd && cmd.target === id) && (forFriends || (actor && chars[actor] && chars[actor].side !== c.side));
       sc.actors.push({
         id, x: p.x + ox, y: p.y + oy, kind: L.kind, tint: L.tint, size: L.size, art: L.art, artTint: L.artTint, artScale: L.artScale, artSize: L.artSize, tag: c.side === 'party' ? 'party' : 'enemy',
-        flip: near ? near.x < p.x : c.side !== 'party', down, alpha: c.status.dead ? 0.6 : down ? 0.8 : 1, speed: 9, phase: id.length,
+        flip: near ? near.x < p.x : c.side !== 'party', face: near ? { x: near.x + ox, y: near.y + oy } : null, down, alpha: c.status.dead ? 0.6 : down ? 0.8 : 1, speed: 9, phase: id.length,
         bar: C.maxStamina(c) ? c.stamina / C.maxStamina(c) : 0,
         ring: id === actor ? 'rgba(255,224,130,0.95)' : candidate ? 'rgba(255,110,95,0.4)' : null,
       });

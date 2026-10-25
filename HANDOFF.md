@@ -76,9 +76,19 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
   drawn off-centre before this).
 - [ ] Lizardfolk, still wanted: an attack (the map shows attack frames during a blow; without one it lunges in its idle
   pose), hurt and death (a fall is a rotated idle now); a weapon and some armor if it is to be the Scaleward (the stats
-  give it a warhammer); a dark smudge at the mouth on walk frames east 5 and west 1; the south walk barely moves its
-  legs (unused for now: the map draws only east/west walks). A temple of lizardfolk wants several: warrior, shaman, a
-  larger brute.
+  give it a warhammer); the south walk barely moves its legs. (The open-mouth smudge on walk frames east 5 and west 1
+  was painted over with the closed jaw of the frame before, 2026-10-25.) A temple of lizardfolk wants several: warrior,
+  shaman, a larger brute.
+- [x] PixelLab figures face eight ways (2026-10-25): walking uses the nearest direction the art has walks for
+  (`walks` in `art.yaml`), standing uses the eight rotations; in a fight a figure faces its nearest foe (`face` on a
+  scene actor), exploring it keeps the way it last walked.
+- [x] Trial start "Tevax alone (level 8)" on the title screen (`start.yaml` trials; the user, 2026-10-25: a death
+  knight, mostly martial, against the dungeon's low-level foes with nothing adjusted): Ebony Mail, Ebony Blade,
+  Spellbreaker, the silk sash; 8 martial and 8 magic feats (Raise needs 8 with Battle Casting), so 6 over a level-8
+  budget, trial only. Starts in the temple court. AI-played sim, 40 fights each: scaleward 100%, pair 50%, rat pack 98%,
+  3 bandits 98%, drake 88%, spectre 85%, constrictor 23% (it pins him), zombie horde 15%, skeleton squad 0% (points
+  find gaps). The AI opens with Conjure Shadow (backlash 2-10 stamina) and seldom raises (1 fight in 20 against
+  skeletons, 7 in 20 against bandits): its casting choices for a fighter-caster want a look.
 - [ ] Large red drake. The Drake monster borrows the `dragon` sheet (idle, attack, fly). Needs walk, fly, breath and
   bite.
 - [ ] Fae drake. A `fae-drake` sheet exists (idle and attack) but no monster uses it; it needs a monster in

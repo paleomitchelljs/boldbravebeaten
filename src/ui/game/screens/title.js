@@ -43,6 +43,7 @@
           auto ? h('button', { class: 'primary big', onclick: () => game.loadWorld(auto.world) }, `Continue — ${auto.info.place}, day ${auto.info.day}`) : null,
           h('button', { class: auto ? 'big' : 'primary big', onclick: () => game.go('create') }, 'New game'),
           h('div', { class: 'row' },
+            ((G.Content.world.start || {}).trials || []).map((t) => h('button', { onclick: () => { game.newGame(G.World.trialParty(t.id)); if (t.go) game.travel(t.go); } }, t.label)),
             h('button', { onclick: () => importFile(game) }, 'Import a save file'),
             h('a', { class: 'button', href: 'bench.html' }, 'Test bench'))),
         any ? h('details', { class: 'panel' }, h('summary', null, h('h3', null, 'Saved games')), h('div', { class: 'stack' }, slots.map((s) => slotRow(game, s)))) : null,

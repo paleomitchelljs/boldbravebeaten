@@ -42,6 +42,17 @@
     const main = C.wieldedWeapon(c);
     if (main && G.DATA.WEAPONS[main.type].hands === 2) { c.shield = null; }
     if (kit.sidearm === 'parryingDagger') { c.offhand = c.sidearm; c.sidearm = null; }
+    // A spec may name its own gear (item specs as in the loot tables) in place of the kit's, and start above level 1.
+    const E = G.Economy;
+    if (spec.armorItem) c.armor = E.makeFromSpec(spec.armorItem);
+    if (spec.shieldItem !== undefined) c.shield = spec.shieldItem ? E.makeFromSpec(spec.shieldItem) : null;
+    if (spec.weaponItems) {
+      c.weapons = spec.weaponItems.map(E.makeFromSpec);
+      c.wield = c.weapons[0] ? c.weapons[0].id : null;
+      c.sidearm = c.weapons[1] ? c.weapons[1].id : null;
+    }
+    if (spec.level > 1) { c.level = spec.level; c.xp = xpFor(spec.level); }
+    if (spec.bonusFeats) c.bonusFeats = spec.bonusFeats;
     for (const f of spec.feats || []) if (C.canTakeFeat(c, f).ok) C.addFeat(c, f);
     c.nouns = (spec.nouns || []).slice();
     c.look = Object.assign({ skin: 1, hair: 1, cloth: 0, build: 1, sprite: null, tint: 0 }, spec.look || {}, { kit: spec.kit || (spec.look && spec.look.kit) || null });
@@ -54,6 +65,12 @@
   // The ready-made party in start.yaml (the New Game screen's quick start).
   function presetParty() {
     return (((content().start || {}).presets) || []).map((p, i) => Object.assign({}, p, { look: { skin: [1, 2, 0, 3][i % 4], hair: [1, 2, 4, 5][i % 4], cloth: i % 6, build: 1, sprite: null, tint: [0, 2, 3, 1][i % 4] } }));
+  }
+
+  // A trial start (start.yaml trials): its party specs, each with its own look.
+  function trialParty(id) {
+    const t = ((content().start || {}).trials || []).find((x) => x.id === id);
+    return t ? t.party.map((p) => Object.assign({}, p, { look: Object.assign({ skin: 1, hair: 1, cloth: 0, build: 1, sprite: null, tint: 0 }, p.look || {}) })) : [];
   }
 
   function create(specs, opts) {
@@ -77,6 +94,7 @@
       world.chars[c.id] = c;
       world.partyIds.push(c.id);
       if (spec.kit) { const k = (S.kits || []).find((x) => x.id === spec.kit); if (k && k.arrows) world.supplies.arrows += k.arrows; }
+      for (const t of spec.trinkets || []) { addGood(world, t, 1); G.Equip.equipTrinket(world, c, t); }
     }
     for (const id of Object.keys(content().factions || {})) G.Factions.standing(world, id);
     if (opts.log !== false) logLine(world, 'Your party arrives in Stonebridge.', 'info');
@@ -314,7 +332,7 @@
   }
 
   G.World = {
-    LOOKS, makeCharacter, presetParty, create, party, living, active,
+    LOOKS, makeCharacter, presetParty, trialParty, create, party, living, active,
     logLine, advance, clockText, isNight,
     flag, setFlag,
     goodDef, goodCount, addGood, removeGood, loadSupplies, collectSupplies,

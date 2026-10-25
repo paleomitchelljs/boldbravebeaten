@@ -27,8 +27,8 @@ No anchors or tags. Keys must be unique.
 | `npcs.yaml` | People you can talk to, with topics. |
 | `quests.yaml` | Staged quests with rewards. |
 | `places.yaml` | The town and the dungeon maps. |
-| `start.yaml` | New-game kits and the example party. |
-| `art.yaml` | Creature art in `art/characters/creatures` (git-ignored until its licence is confirmed) and `art/characters/pixellab`: frames, trim box, facing, height on the map. |
+| `start.yaml` | New-game kits, the example party, and trial starts (`trials`: a title-screen button with its own party; a member may set `level`, `bonusFeats`, `armorItem`/`weaponItems`/`shieldItem` as loot-table item specs, worn `trinkets` (goods), `nouns` and `look`; `go` travels there at once). |
+| `art.yaml` | Creature art in `art/characters/creatures` (git-ignored until its licence is confirmed) and `art/characters/pixellab`: frames, trim box, facing, height on the map. PixelLab entries: `walkFrames`, `walks` (directions with walk frames; standing uses all eight rotations). |
 | `tilesets.yaml` | Tilesets a place's map can be drawn from (`look.tileset`): terrains as colours, single tiles or PixelLab corner (wang) sheets, and props. Format in the file's header. |
 
 ## Adding things

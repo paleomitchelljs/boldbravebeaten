@@ -116,13 +116,26 @@
     return s;
   }
 
+  // The eight compass directions, clockwise from east (screen y points down), and the one nearest a vector.
+  const DIRS = ['east', 'south-east', 'south', 'south-west', 'west', 'north-west', 'north', 'north-east'];
+  const dirOf = (dx, dy) => DIRS[((Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) % 8) + 8) % 8];
+  // Of the directions a character has, the one nearest `want`.
+  function nearestDir(want, have) {
+    const i = DIRS.indexOf(want);
+    if (i < 0 || have.includes(want)) return have.includes(want) ? want : have[0];
+    let best = have[0], bd = 9;
+    for (const d of have) { const j = DIRS.indexOf(d), k = Math.min((i - j + 8) % 8, (j - i + 8) % 8); if (k < bd) { bd = k; best = d; } }
+    return best;
+  }
+
   // Which sheet (and frame) shows this art in this animation; null if none of it can be drawn.
-  function artPick(key, anim, frame, flip) {
+  // dir: the compass direction the figure faces (pixellab art has eight standing and some walking).
+  function artPick(key, anim, frame, flip, dir) {
     const def = artCat()[key];
     if (!def) return null;
     if (def.type === 'pixellab') {
-      const side = flip ? 'west' : 'east', n = def.walkFrames || 4;
-      const name = anim === 'run' ? `${side}#${((frame % n) + n) % n}` : flip ? 'south-west' : 'south-east';
+      const want = DIRS.includes(dir) ? dir : flip ? 'south-west' : 'south-east', n = def.walkFrames || 4;
+      const name = anim === 'run' ? `${nearestDir(want, def.walks || ['east', 'west'])}#${((frame % n) + n) % n}` : want;
       const s = artSheet(key, name);
       // PixelLab exports walk frames on a larger canvas (96 px round a 64-px figure): take the figure's square from the middle.
       const pad = s.ok ? Math.max(0, (s.img.width - def.size) / 2) : 0;
@@ -160,7 +173,7 @@
   // Draw creature art with its feet at (x, y). tile = screen pixels per square. Returns false if not ready.
   function drawArt(ctx, key, anim, frame, x, y, tile, opts) {
     opts = opts || {};
-    const p = artPick(key, anim, frame, opts.flip);
+    const p = artPick(key, anim, frame, opts.flip, opts.dir);
     if (!p) return false;
     const { def, s } = p;
     const box = def.box || [0, 0, p.sw, p.sh];
@@ -314,7 +327,7 @@
   }
 
   UI.Art = UI.Art || {};
-  UI.Sprites = { forEncounter, crowd, KINDS, PARTY_KINDS, partyKinds, TINTS, KIT_KIND, draw, drawArt, artReady, artSheet, look, lookFor, portrait, figure, sheet, whenReady: (f) => waiting.push(f), preload: () => { KINDS.forEach((k) => { sheet(k, 'idle'); sheet(k, 'run'); }); for (const k of Object.keys(artCat())) artSheet(k, (artCat()[k].type === 'pixellab') ? 'south-east' : 'idle'); } };
+  UI.Sprites = { DIRS, dirOf, forEncounter, crowd, KINDS, PARTY_KINDS, partyKinds, TINTS, KIT_KIND, draw, drawArt, artReady, artSheet, look, lookFor, portrait, figure, sheet, whenReady: (f) => waiting.push(f), preload: () => { KINDS.forEach((k) => { sheet(k, 'idle'); sheet(k, 'run'); }); for (const k of Object.keys(artCat())) artSheet(k, (artCat()[k].type === 'pixellab') ? 'south-east' : 'idle'); } };
   // Portraits everywhere in the game are now the sprite's face.
   UI.Art.portrait = (c, px) => portrait(c, px);
 })(globalThis.BBB);
