@@ -223,7 +223,8 @@
       w: g.w, h: g.h,
       tileset: p.look && p.look.tileset,
       cell: (x, y) => Explore.peek(w, x, y),
-      seen: (x, y) => !!ms.seen[x + ',' + y],
+      // Rock (' ' in a map) is never shown: it is the dark beyond the place, a drop off a wall top or solid earth.
+      seen: (x, y) => !!ms.seen[x + ',' + y] && Explore.peek(w, x, y).kind !== 'rock',
       light: { x: ex.x, y: ex.y, r: Explore.lightRadius(w) },
       cam: { x: ex.x, y: ex.y },
       actors: [], marks: [],

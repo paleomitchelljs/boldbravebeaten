@@ -87,7 +87,7 @@
       case 'chest': return { ch, def, kind: 'chest', solid: true, opaque: false, st };
       case 'npc': return { ch, def, kind: 'npc', solid: true, opaque: false, st };
       case 'shrine': return { ch, def, kind: 'shrine', solid: true, opaque: false, st };
-      case 'monster': return { ch, def, kind: 'monster', solid: !st.done && !st.pacified, opaque: false, st };
+      case 'monster': return { ch, def, kind: 'monster', solid: !st.done && !st.pacified && !world.peaceful, opaque: false, st };
       case 'prop': return { ch, def, kind: 'prop', solid: def.solid !== false, opaque: false, st };
       case 'trap': return { ch, def, kind: 'trap', solid: !!(st.found && !st.disarmed && !st.sprung), opaque: false, st };
       default: return { ch, def, kind: def.kind, solid: false, opaque: false, st };
@@ -247,7 +247,7 @@
   }
 
   function enterSquare(world, c, x, y, ev) {
-    if (c.kind === 'trap' && !c.st.sprung && !c.st.disarmed) springTrap(world, c, ev);
+    if (c.kind === 'trap' && !c.st.sprung && !c.st.disarmed) { if (!world.peaceful) springTrap(world, c, ev); }
     else if (c.kind === 'pickup' && !c.st.done) {
       c.st.done = true;
       W.addGood(world, c.def.good, 1);
@@ -358,6 +358,7 @@
   // party (or the party's stealth holds). Emits 'encounter' (they know you are there) and
   // 'unseen' (you have not been noticed; the UI offers an ambush, a parley, or sneaking on).
   function scan(world, ev) {
+    if (world.peaceful) return;  // the debug tools' no-fights mode: foes and traps leave the party alone
     const ex = world.explore;
     const g = here(world);
     const me = { x: ex.x, y: ex.y };

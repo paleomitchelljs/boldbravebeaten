@@ -572,17 +572,23 @@ temple_wall:
   level: 2
   look: {wall: "#cdb98a", floor: "#bba57a", ceiling: "#2a3a22", fog: "#0c120a", torch: 1, tileset: temple_walltop, light: 20}
   map:
-    - "#######"
-    - "#..1..#"
-    - "#.....#"
-    - "###+###"
-    - "#.....#"
-    - "#..W..#"
-    - "#.h...#"
-    - "###+###"
-    - "#.....#"
-    - "#..2..#"
-    - "#######"
+    - "           "
+    - " ######### "
+    - " #...1...# "
+    - " #.......# "
+    - " #.......# "
+    - " ####+#### "
+    - " #.......# "
+    - " #.......# "
+    - " #...W...# "
+    - " #.......# "
+    - " #.h.....# "
+    - " ####+#### "
+    - " #.......# "
+    - " #.......# "
+    - " #...2...# "
+    - " ######### "
+    - "           "
   legend:
     "1": {kind: stairs, to: temple_court, at: u, sprite: stairs_down_1, label: "Steps down into the court"}
     "2": {kind: stairs, to: temple_court, at: v, sprite: stairs_down_2, label: "Steps down into the court"}

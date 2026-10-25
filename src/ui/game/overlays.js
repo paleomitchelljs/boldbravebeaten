@@ -153,6 +153,7 @@
         h('button', { class: 'small', onclick: () => { w.gold += 500; refresh(); } }, '+500 gold'),
         h('button', { class: 'small', onclick: () => { World.grantXP(w, 200); refresh(); } }, '+200 XP'),
         h('button', { class: 'small', onclick: () => { for (const c of World.living(w)) { c.stamina = C.maxStamina(c); for (const a of G.CONFIG.attributes) c.damage[a] = 0; c.bleeds = []; c.status = C.freshStatus(); } refresh(); } }, 'Heal all'),
+        h('button', { class: w.peaceful ? 'small selected' : 'small', title: 'Foes ignore the party and can be walked through; traps do not spring; no one comes while you camp', onclick: () => { w.peaceful = !w.peaceful; toast(w.peaceful ? 'No fights: foes and traps leave you alone' : 'Fights back on'); refresh(); } }, w.peaceful ? 'No fights: on' : 'No fights: off'),
         h('button', { class: 'small', onclick: () => { if (w.explore) { const ms = World.mapState(w, w.place); const g = G.Explore.here(w); for (let y = 0; y < g.h; y++) for (let x = 0; x < g.w; x++) ms.seen[x + ',' + y] = 1; } refresh(); } }, 'Reveal map')),
       h('div', { class: 'row' },
         h('select', { id: 'dbg-place', 'aria-label': 'Go to' }, Object.entries(places).map(([id, p]) => h('option', { value: id }, p.name))),

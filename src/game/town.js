@@ -48,7 +48,7 @@
   async function campRest(world) {
     const p = G.Explore.place(world);
     const wander = G.CONFIG.game.camp.wanderingChance;
-    if (R.chance(wander)) {
+    if (!world.peaceful && R.chance(wander)) {
       const w = G.Explore.wanderingFor(world);
       if (w && !w.nothing) {
         // The member with the best eyes keeps the watch.
