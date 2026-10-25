@@ -129,7 +129,17 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
   plate, shield with a dragon's head); creatures and NPCs wait until the dungeon's layout is settled.
 - [ ] Archive the Undercroft and the Barrow for tests and sims only and start at the temple, once there is more of the
   temple than the courts (only the palace door is still locked "not built yet").
-- [ ] Then the ritual chamber, palace (plan §5).
+- [x] Debug: Menu → Debug → No fights (`world.peaceful`): foes never notice the party and can be walked through, traps
+  don't spring, no one comes while you camp. For looking round places and their art (the user asked, 2026-10-24).
+- [x] The wall top (gatehouse), after the user: "the sprites are squished, and the walls seem oddly placed making it
+  hard to move". Its rooms were 5x2 with the wall faces over half of each; now 7x3, the outer edge one parapet square
+  with the dark beyond (rock squares, ' ', are no longer drawn). "Squished" is my reading of the cramped rooms: confirm.
+- [x] The ritual chamber (`temple_ritual`, `assets/wip/temple-ritual/README.md`), after the user's reference: rose stone
+  walls with niches, teal marble, a square shallow pool with the dais and the orb in it, four small pyramids, the stair
+  up to the palace (a prop until the palace exists). The sewer drain is now a one-way drop into the pool.
+- [ ] Ritual chamber, still open: the avatar of fear is a stand-in (a spectre, which beats a level-1 party every time);
+  the orb is smaller than the reference's (about two squares); the niche frames came out tan.
+- [ ] Then the palace (plan §5): ground floor, upper floor, the stair rooms down to the ritual chamber.
 - [ ] Monsters: an alligator monster for the sewers (the sheet exists); lizardfolk variants; the avatar of fear as the
   ritual chamber's boss.
 - [ ] The temple props also replace the Cute Fantasy props the published site may not show.

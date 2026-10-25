@@ -557,12 +557,51 @@ temple_sewer:
     P: {kind: note, on: "_", label: "Under the pyramid's well", text: "The shaft above is too smooth and too far to climb."}
     C: {kind: chest, label: "A rotten crate wedged in the alcove", loot: strongbox, tn: 8}
     r: {kind: monster, encounter: rats, label: "Rats in the dead end"}
-    X: {kind: prop, sprite: drain, on: "=", label: "A great grate over the drain (the ritual chamber below is not built yet)"}
+    X: {kind: drop, to: temple_ritual, at: D, sprite: drain, on: "=", label: "A great grate over the drain, rusted half through", text: "The grate gives under your weight. You fall through the dark with the sewer water and come down in a shallow pool."}
   encounters:
     rats: {foes: [{monster: ratPack}], text: "The dead end is a nest. The rats come out of it all at once."}
   wandering:
     - {w: 1, foes: [{monster: ratPack}], text: "Rats pour along the walkway."}
     - {w: 4, nothing: true}
+  secrets: []
+
+temple_ritual:
+  name: The Ritual Chamber
+  kind: dungeon
+  blurb: A square chamber of rose stone deep under the temple, a shallow pool round a dais, and on the dais a great green orb with something in it.
+  level: 3
+  look: {wall: "#806062", floor: "#244440", ceiling: "#1a2e2c", fog: "#081210", torch: 1, tileset: temple_ritual, light: 8}
+  # assets/wip/temple-ritual/layout.js. The user's reference: assets/ideas/refs/ritual-chamber-reference.png. You fall
+  # in from the sewer drain (one way) into the pool; the way out is the stair up to the palace (not built yet).
+  map:
+    - "                   "
+    - " ################# "
+    - " #.......S.......# "
+    - " #...............# "
+    - " #..y.........y..# "
+    - " #...............# "
+    - " #...._______....# "
+    - " #....___D___....# "
+    - " #...._______....# "
+    - " #....___O___....# "
+    - " #...._______....# "
+    - " #...._______....# "
+    - " #...._______....# "
+    - " #.......A.......# "
+    - " #..y.........y..# "
+    - " #...............# "
+    - " #...............# "
+    - " ################# "
+    - "                   "
+  legend:
+    D: {kind: note, on: "_", text: "Water roars down from the dark above and the pool takes you. It is only knee deep. In the middle of the chamber a green orb the size of a cart hangs over a dais, and something moves inside it."}
+    O: {kind: prop, sprite: orb, label: "The orb on its dais. Something coiled inside it watches you."}
+    y: {kind: prop, sprite: pyramid, label: "A small pyramid of dark stone"}
+    S: {kind: prop, sprite: stair_up, label: "A narrow stair up toward the palace (the palace is not built yet)"}
+    A: {kind: monster, encounter: avatar, label: "The avatar of fear"}
+  encounters:
+    avatar: {foes: [{monster: spectre}], text: "The orb clouds, and what was inside it is outside it. (A stand-in: the avatar of fear has no monster yet.)"}
+  wandering: []
   secrets: []
 
 temple_wall:
