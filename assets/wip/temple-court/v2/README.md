@@ -23,7 +23,8 @@ All PixelLab pro, 64 px, high top-down, lineless unless noted.
   lines despite lineless, and its face is darker than the court's.
 - The wall tops in art/ (row 8 of court-wall.png and walltop-wall.png) are the sheet's plain top [0, 6] with joints drawn
   by hand (a bevel lit from the upper left on each tile's edges, a joint across the middle in three of the four), so
-  every top square reads as one or two large blocks.
+  every top square reads as one or two large blocks. walltop-wall-light.png keeps that sheet; walltop-dark.py darkens its
+  tops into art/ for the wall-top place, where light tops read as more of the walk.
 - Decor pieces (create_map_object, basic shading, low detail): d-tuft "a small tuft of taller olive green grass
   blades"; d-fern "a small tuft of curled young jungle fern fronds"; d-bricks "three small broken weathered tan
   sandstone bricks half sunk in the ground"; d-pebbles; d-flowers "a few tiny pale yellow and white jungle flowers";

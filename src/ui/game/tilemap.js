@@ -377,7 +377,7 @@
   function planTiles(sc, ts, x0, y0, x1, y1) {
     const at = {};
     const T_ = (x, y) => { const k = x + ',' + y; return at[k] || (at[k] = terrainOf(sc, ts, x, y)); };
-    const out = { base: [], corner: [], decor: [], over: [] };
+    const out = { base: [], corner: [], decor: [], over: [], misfit: sc.misfits ? [] : null };
     for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
       let t = tdef(ts, T_(x, y).t);
       // A wang terrain's square is covered by its corners; under them lies what it is drawn over.
@@ -459,6 +459,11 @@
         else if (sc === bs && hash(x, y, 13 + ties++) % ties === 0) best = tl;
       }
       if (best) out.corner.push({ x, y, t: w.name, at: best.at });
+      // A corner no tile fits exactly (some square the tile cares about differs): tools/walls.js lists these.
+      if (best && out.misfit) {
+        const full = best.p.reduce((a, want, k) => a + (want < 0 ? 0 : k === 5 || k === 6 || k === 9 || k === 10 ? 10 : 1), 0);
+        if (bs < full) out.misfit.push({ x, y, t: w.name, at: best.at, g: g.join(''), score: bs, full });
+      }
     }
   }
 

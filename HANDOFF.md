@@ -137,6 +137,13 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
 - [x] The ritual chamber (`temple_ritual`, `assets/wip/temple-ritual/README.md`), after the user's reference: rose stone
   walls with niches, teal marble, a square shallow pool with the dais and the orb in it, four small pyramids, the stair
   up to the palace (a prop until the palace exists). The sewer drain is now a one-way drop into the pool.
+- [x] Broken wall shapes (the user: "The labyrinth has some odd wall features that look broken"): the cliff sets have no
+  tile for a wall stepping down one row at a time or a wall one square thick north-south. `tools/walls.js` lists such
+  corners in every tiled place (a test keeps it at none); `tools/squarewalls.js` squares them off by flipping single
+  squares or pairs between wall and floor, keeping every way through as it was. The labyrinth (45), sewers (29) and
+  wall top (16, redrawn by hand: the guardhouse is now a room beside a long walk, its door in a north-south wall) are
+  clean; the courts and the ritual chamber had none. The wall top's wall tops are darkened (`walltop-dark.py`) so they
+  don't read as more paving.
 - [ ] Ritual chamber, still open: the avatar of fear is a stand-in (a spectre, which beats a level-1 party every time);
   the orb is smaller than the reference's (about two squares); the niche frames came out tan.
 - [ ] Then the palace (plan §5): ground floor, upper floor, the stair rooms down to the ritual chamber.
