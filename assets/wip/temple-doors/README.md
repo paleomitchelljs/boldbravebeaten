@@ -25,3 +25,16 @@ from the door's square in `rects.json`).
 The renders come from `render.py` (it runs `plan.js`, planTiles in Node, and composites in Python with Pillow):
 `python3 assets/wip/temple-doors/render.py "$PWD" temple_court 0 14 2 16 out.png`. To redo one, render the door's
 surroundings the same way and inpaint the same rectangle.
+
+## Redone: doors in east and west walls (out3-*)
+
+The user: "The doors all seem to be north-south oriented and so the doors in east/west walls are rotated incorrectly."
+The first gate, palace door and labyrinth east door came out as a door seen face-on, which only reads in a wall that
+runs east-west. Seen from above, a door in a wall that runs north-south closes a passage running left to right, so it
+shows as a thin strip of planks running top to bottom. Prompt (the gate's; the others the same with "door"):
+"top-down view straight down: a stone-floored passage running left to right through the thick sandstone wall. Across
+the passage stands a closed heavy wooden gate seen from directly above, so it appears only as a thin vertical strip of
+dark wood plank edges with bronze fittings running from the top of the passage to the bottom, set between square stone
+jambs. The plain wall top above and below the passage." The masks now run to the wall's edge (gate 0,70 122x52; palace
+70,70 122x52; labyrinth 122,70 70x52). The labyrinth's came out with no door; the gate's door strip (columns 103-112)
+was pasted into it. The first versions are still in the sheet, unused.

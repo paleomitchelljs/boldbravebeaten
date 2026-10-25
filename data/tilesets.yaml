@@ -110,8 +110,8 @@ temple_court:
   props:
     door: [court-props.png, 0, 0, 64, 61]
     door_locked: [court-props.png, 0, 0, 64, 61]
-    door_east: [temple-doors.png, 0, 0, 110, 52, -64, 6]
-    door_west: [temple-doors.png, 258, 0, 106, 52, -42, 6]
+    door_east: [temple-doors.png, 662, 0, 122, 52, -64, 6]
+    door_west: [temple-doors.png, 784, 0, 122, 52, 6, 6]
     door_north: [temple-doors.png, 210, 0, 48, 112, 8, 16]
     wall_steps: [temple-doors.png, 110, 0, 100, 56, -58, 4]
     well: [court-props.png, 128, 0, 64, 61]
@@ -233,4 +233,4 @@ temple_maze:
     door_locked: [court-props.png, 0, 0, 64, 61]
     well: [court-props.png, 128, 0, 64, 61]
     door_south: [temple-doors.png, 364, 0, 44, 84, 10, 2]
-    door_west: [temple-doors.png, 408, 0, 106, 52, -42, 6]
+    door_west: [temple-doors.png, 906, 0, 70, 52, -6, 6]

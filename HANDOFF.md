@@ -87,7 +87,8 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
   - the wall-top place's set has dark edge lines and a darker face than the court's; one-square walls between its rooms
     draw odd lips;
   - the jointed tops repeat a 64-px grid; the brick decor is pinkish beside the paving;
-  - the labyrinth's east door came out small; an opened door still shows its closed picture (there is no open one);
+  - doors in east and west walls were redone as a passage with the door edge-on across it (they had come out face-on);
+    an opened door still shows its closed picture (there is no open one);
     a new doorway means a render and an inpaint for it (the pictures fit their own spot, not any wall).
   - side walls show only their top edge (top-down): fine, but they look thin beside the faced north walls.
 - [x] The labyrinth (`temple_maze`, through the court's south door): laid out by `tools/labyrinth.js` (seed 7, 11x7
