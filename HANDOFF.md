@@ -1,8 +1,18 @@
 # To do
 
-Last updated at commit: 5198258
+Last updated at commit: b18e704
 
 Keep this a short list. Tick things off, add new ones, and refresh the commit line after every push (`git log -1 --format=%h`).
+
+## Bookkeeping fixes (the user, 2026-10-26; the list and its progress are in `docs/TODO-FIXES.md`)
+- [x] 1. Effect-key registry (`src/rules/effects.js`) checked by `validate` (1ebe64d).
+- [x] 2. One effect lookup, `Effects.sum/mult/has/list` over traits, gear, conditions and feats (b18e704).
+  - Data renames: `regen`→`regrow` (monster), condition `resist`→`resistedBy`, `nimble`→`dodge`, gear `apMult`→`costMult`.
+  - `magicImmune` became the keyword `magic`.
+- [ ] 3. A grapple stored as one link on the encounter.
+- [ ] 4. Harm as a list of entries (deferred until a new damage destination or a keyword boost).
+- [ ] 5. Save versions with step-by-step upgrades; one supplies pool. Old saves still need the renames above mapped
+  (a saved trinket carries its `effects`, so a sash in an old save still says `apMult`).
 
 ## Look and feel (needs a human eye)
 - [ ] Play it on a phone-width screen: stage, dock, toolbar, command bar and sheet have only been checked on desktop.
