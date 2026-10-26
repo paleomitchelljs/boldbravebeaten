@@ -1163,7 +1163,7 @@
         if (w) parts.push(`${target.name}'s hand opens: ${Items.itemName(w)} falls`);
       }
     }
-    if (fx.trip && wound > 0 && !target.status.prone && !(target.traits && target.traits.flier)) {
+    if (fx.trip && wound > 0 && !target.status.prone && !(target.traits && target.traits.flying)) {
       if (await roll(chance(fx.trip, wound), `${target.name}: keep footing`)) {
         knockDown(enc, target);
         parts.push(`${target.name}'s leg gives: down`);
