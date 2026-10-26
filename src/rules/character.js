@@ -233,7 +233,7 @@
   // What worn and wielded things do beyond their stats. Sources: worn items (c.trinkets: rings, a
   // cape, boots…; each { attrs, ap, effects }), and the enchantments (enchantments.yaml `effects`) on
   // the armor, a ready shield and the weapons in hand. Effect keys (all optional):
-  //   attrs {STR: 1}   ap (sheet AP)   apMult (× every action's AP)   regen   stamina (max)   sp (spell points)
+  //   attrs {STR: 1}   ap (sheet AP)   costMult (× every action's AP)   regen   stamina (max)   sp (spell points)
   //   mag {noun: n, '*': n} (spell magnitude)   init   hit (to beat a defence)   move (squares per move)
   //   resist {fire: 0.5} (× harm of that damage keyword: damageMult)   aura {radius, stamina, cond, element, mag}
   //   retaliate {noun, mag} (an element's blow at whoever lands a melee blow on the wearer)
@@ -273,7 +273,7 @@
     return n;
   }
 
-  // The product of a multiplier effect (apMult; resist for one element).
+  // The product of a multiplier effect (costMult; resist for one keyword).
   function gearMult(c, key, sub) {
     let m = 1;
     for (const s of gearSources(c)) {
@@ -318,9 +318,9 @@
     return w ? Items.enchantsOf(w).reduce((n, x) => n + (x.apLess || 0), 0) : 0;
   }
 
-  // Gear's cut on an action's AP: the product of every apMult, then a weapon's own apLess. Never below the floor.
+  // Gear's cut on an action's AP: the product of every costMult, then a weapon's own apLess. Never below the floor.
   function gearAP(c, ap, weapon) {
-    const m = gearMult(c, 'apMult');
+    const m = gearMult(c, 'costMult');
     let v = m !== 1 ? Math.round(ap * m) : ap;
     const less = weaponApLess(weapon);
     if (less) v -= Math.round(less * costScale());
@@ -943,7 +943,7 @@
     if (kind === 'move') return { ap: Math.round(ap), stamina };
     const full = Math.max(minAP(), Math.round(ap));
     ap = Math.max(minAP(), full - (quick ? quickCut(c, quick, full) : 0)) + armorAP(c);
-    // Gear: an apMult on everything; a weapon's apLess on the parries made with it.
+    // Gear: a costMult on everything; a weapon's apLess on the parries made with it.
     ap = gearAP(c, ap, kind === 'parry' ? wieldedWeapon(c) : kind === 'offParry' ? offhandWeapon(c) : null);
     return { ap, stamina };
   }

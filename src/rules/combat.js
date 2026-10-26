@@ -584,7 +584,7 @@
     const attack = decl.type === 'strike' || (ATTACK_TYPES.includes(decl.type) && decl.type !== 'strike') || (decl.type === 'cast' && decl.option && decl.option.target === 'foe');
     if (attack && F('noAttack')) return 'Calmed: won\'t attack';
     if (DEFENSE_TYPES.includes(decl.type) && F('noGuard')) return 'In a frenzy: no guards';
-    const fear = G.Conditions.get(c, 'frightened');
+    const fear = G.Conditions.fear(c);
     if (fear && fear.src && chars[fear.src]) {
       if (attack && decl.target === fear.src) return 'Too afraid';
       if (decl.type === 'move' && dist(decl.to, projectedPos(enc, fear.src)) < dist(projectedPos(enc, c.id), projectedPos(enc, fear.src))) return 'Too afraid to close';
@@ -832,7 +832,7 @@
       if (option.spell) { const m = C.damageMult(target, option.spell.element); if (m !== 1) for (let i = 0; i < 3; i++) v[i] = Math.floor(v[i] * m); }
     }
     // Stoneskin, barkskin, a shield of force: protection that isn't armor.
-    if (G.Conditions) ['P', 'S', 'B'].forEach((k, i) => { v[i] = Math.max(0, v[i] - G.Conditions.mitigation(target, k)); });
+    if (G.Conditions) ['P', 'S', 'B'].forEach((k, i) => { v[i] = Math.max(0, v[i] - G.Conditions.mitigation(target, k, attacker)); });
 
     const unconscious = target.stamina <= 0;
     const weapon = option.weaponType ? WEAPONS[option.weaponType] : null;
@@ -2002,9 +2002,10 @@
       }
       case 'tearFree': {
         const W = CONFIG.web;
-        const bonus = Math.floor(C.attr(a, 'STR') / 2);
+        let bonus = Math.floor(C.attr(a, 'STR') / 2);
         if (!a.status.webbed && G.Conditions && !G.Conditions.canMove(a)) {
           const root = G.Conditions.list(a).find((x) => (CONFIG.conditions[x.key] || {}).noMove);
+          bonus = Math.floor(C.attr(a, CONFIG.conditions[root.key].breakAttr || 'STR') / 2);
           const tn = W.tearTN + (root ? root.mag - 1 : 0);
           const r = await rollDie(roller, a.id, 10, `${a.name}: Break free`, `d10 + ${bonus} ≥ ${tn}`);
           if (r + bonus >= tn) { G.Conditions.remove(a, root.key); log(enc, `${a.name} breaks free (${r + bonus}).`, 'defend'); }

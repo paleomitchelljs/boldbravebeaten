@@ -252,7 +252,7 @@
       logger(enc)(`${target.name}'s mind is shut against it.`, 'defend');
       return false;
     }
-    if (key === 'frightened' && G.Conditions.flag(target, 'noFear')) return false;
+    if (CONFIG.conditions[key].fearOf && G.Conditions.flag(target, 'noFear')) return false;
     if (G.Conditions.list(target).some((x) => ((CONFIG.conditions[x.key] || {}).immune || []).includes(key))) {
       logger(enc)(`${target.name} shrugs it off.`, 'defend');
       return false;

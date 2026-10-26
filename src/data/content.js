@@ -135,6 +135,16 @@
       else if (!words[p.noun] || words[p.noun].kind !== 'noun') err(`${where}: power noun "${p.noun}" is not in spells.yaml`);
       else if (G.Magic && !G.Magic.combines(p.verb, p.noun, p.mod || null)) err(`${where}: ${p.verb} + ${p.noun}${p.mod ? ' + ' + p.mod : ''} makes no spell`);
     };
+    // Effect keys (src/rules/effects.js): a key no rule reads is a typo or a retired mechanic.
+    const keysOk = (kind, bag, where) => { if (G.Effects) for (const m of G.Effects.check(kind, bag, where)) err(m); };
+    for (const [id, m] of Object.entries(G.Enemies.MONSTERS)) {
+      keysOk('traits', m.traits, `monsters.${id}.traits`);
+      (m.trinkets || []).forEach((t, i) => keysOk('gearEffects', t.effects, `monsters.${id}.trinkets[${i}].effects`));
+    }
+    for (const [id, w] of Object.entries(D.WEAPONS)) keysOk('weaponTrait', w.trait, `weapons.${id}.trait`);
+    for (const [id, e] of Object.entries(D.ENCHANTMENTS)) { keysOk('gearEffects', e.effects, `enchantments.${id}.effects`); keysOk('strike', e.strike, `enchantments.${id}.strike`); }
+    for (const [id, g] of Object.entries(goods)) keysOk('gearEffects', g.effects, `items.goods.${id}.effects`);
+    for (const [id, c] of Object.entries(G.CONFIG.conditions || {})) keysOk('condition', c, `conditions.${id}`);
     for (const [id, e] of Object.entries(D.ENCHANTMENTS)) {
       if (e.power) powerOk(`enchantments.${id}`, e.power);
       for (const x of (e.strike && e.strike.slay) || []) if (!x.trait) err(`enchantments.${id}: slay needs a trait`);

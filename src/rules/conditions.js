@@ -69,11 +69,11 @@
     if (c.status && c.status.conds) c.status.conds = c.status.conds.filter((x) => x.key !== key);
   }
 
-  function sum(c, field, sub) {
+  function sum(c, field, sub, keep) {
     let t = 0;
     for (const x of list(c)) {
       const d = defs()[x.key];
-      if (!d || d[field] == null) continue;
+      if (!d || d[field] == null || (keep && !keep(d))) continue;
       t += (sub ? d[field][sub] || 0 : d[field]) * x.mag;
     }
     return t;
@@ -81,10 +81,13 @@
 
   const apMod = (c) => sum(c, 'ap');
   const attrMod = (c, a) => sum(c, 'attrs', a);
-  const mitigation = (c, k) => sum(c, 'mit', k);
+  // Protection that isn't armor; a vsUndead one (a spirit shield) only against an undead attacker.
+  const mitigation = (c, k, attacker) => sum(c, 'mit', k, (d) => !d.vsUndead || !!(attacker && attacker.traits && attacker.traits.undead));
   const regenMod = (c) => sum(c, 'regen');
   const flag = (c, f) => list(c).some((x) => (defs()[x.key] || {})[f]);
   const canMove = (c) => !flag(c, 'noMove');
+  // The condition that makes the bearer afraid of its source (fearOf), if any.
+  const fear = (c) => list(c).find((x) => (defs()[x.key] || {}).fearOf) || null;
   const moveMult = (c) => list(c).reduce((m, x) => m * ((defs()[x.key] || {}).moveMult || 1), 1);
 
   // End of round: damage over time, then every condition ticks down a round.
@@ -115,5 +118,5 @@
     return list(c).map((x) => `${(defs()[x.key] || {}).name || x.key}${x.kind ? ': ' + x.kind : ''}${x.pool != null ? ' ' + x.pool : x.mag > 1 ? ' ' + x.mag : ''} (${x.rounds})`);
   }
 
-  G.Conditions = { list, get, has, add, typeOf, remove, apMod, attrMod, mitigation, regenMod, flag, canMove, moveMult, endRound, labels };
+  G.Conditions = { list, get, has, add, typeOf, remove, apMod, attrMod, mitigation, regenMod, flag, canMove, fear, moveMult, endRound, labels };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

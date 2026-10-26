@@ -144,7 +144,7 @@
   // Frightened (Fear, a wail): get away from what frightens you while it is close.
   function fleeFrom(enc, chars, id, la) {
     const c = chars[id];
-    const fear = G.Conditions && G.Conditions.get(c, 'frightened');
+    const fear = G.Conditions && G.Conditions.fear(c);
     const src = fear && chars[fear.src];
     if (!src || !C.isActive(src) || !la.move || !enc.pos[src.id]) return null;
     const me = enc.pos[id], from = enc.pos[src.id];

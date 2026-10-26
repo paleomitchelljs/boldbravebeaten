@@ -46,9 +46,13 @@ bogHag:
   attrs: {STR: 6, CON: 8, DEX: 5, SPD: 5, INT: 7, WIL: 9, WIS: 8, CHA: 3}   # may exceed 10
   natural: [claws]        # natural weapons, from weapons.yaml
   armor: fur              # natural armor, from armor.yaml
-  traits: {regen: {con: 1, stamina: 4}}   # see the comment block in src/rules/enemies.js
+  traits: {regen: {con: 1, stamina: 4}}   # the keys are listed in src/rules/effects.js
   feats: {dodge_training: 1}
 ```
+**Effect keys.** The bags of extra effects all take keys from one list, `src/rules/effects.js`: a monster's `traits`,
+a weapon's `trait`, an enchantment's `effects` and `strike`, a trinket's `effects` and a condition's fields. `validate`
+rejects a key not on it. A new key means new rules code, and an entry there.
+
 A pack is `{name, group: [wolf, wolf, alphaWolf]}`. Use it in an encounter: `{monster: bogHag}`.
 People who carry gear come from `foes.yaml` templates: `{template: bandit, level: 2, n: 3}`.
 
@@ -85,7 +89,7 @@ Loot entries: `{w: 3, gold: [5, 20]}`, `{w: 2, good: salve, n: [1, 2]}`, `{w: 1,
 | Key | Where | What it does |
 |---|---|---|
 | `effects.attrs`, `ap`, `stamina`, `regen`, `sp` | worn, or an enchantment's `effects` | + attributes, AP a round, max stamina, regeneration, spell points |
-| `effects.apMult` | same | × the AP of every action (a sash at 0.8) |
+| `effects.costMult` | same | × the AP of every action (a sash at 0.8). A monster's `traits.apMult` is a different thing: × its AP pool |
 | `effects.mag: {noun: n, '*': n}` | same | + spell magnitude for one noun or all |
 | `effects.init`, `hit`, `move` | same | + initiative; + to beat a defence; + squares on every move |
 | `effects.resist: {fire: 0.5}` | same | × harm of that damage keyword (see **Damage keywords**) |

@@ -135,16 +135,7 @@
   // fighter; the arena (sim/monsters.js) tests whether it is.
   //   natural  — natural weapons (data.js), always ready
   //   armor    — natural armor type
-  //   traits   — pack (+1 damage per packmate beside the target, up to N), displacement
-  //              (chance an attack strikes an illusion: ranged / melee), regen (CON and stamina
-  //              back each round unless burned; a downed troll can get back up), apMult and
-  //              staminaMult (a boss: more AP, a bigger per-pass allowance, more stamina),
-  //              tireless (undead and constructs: no stamina; damage goes to attributes, never
-  //              tires, no bleeding or venom), resist ({P, S, B} damage multipliers),
-  //              nimble (+dodge), slippery (+ against being grappled and to break free),
-  //              moveMult (leapers cover more ground), grip (a huge hand: + to grapple rolls),
-  //              flying, magicImmune, incorporeal, constrict, aura, size (big bodies: fewer
-  //              vital wounds, less bleeding per wound)
+  //   traits   — mechanical hooks; every key and what it does is in src/rules/effects.js (KEYS.traits)
   //   weapons, shield, sidearm, craft, arrows — carried gear, for monsters that use it; armorItem,
   //   weaponItems, shieldItem — items with their tags spelled out
   //   policy   — AI policy (grappler, kite…)

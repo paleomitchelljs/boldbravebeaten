@@ -46,7 +46,7 @@ enduring:
 # ---- Magic items (PROVISIONAL, the user's list; names are placeholders) ------------------------------------
 # Effects of an enchantment, beyond the multipliers above:
 #   effects   while the item is worn (armor, a ready shield) or in hand (a weapon): the same keys as a worn
-#             item's effects (Character.gearSources): attrs, ap, apMult, regen, stamina, sp, mag, init, hit,
+#             item's effects (Character.gearSources): attrs, ap, costMult, regen, stamina, sp, mag, init, hit,
 #             move, resist, aura, retaliate, standing, standingWith, heal, slay
 #   strike    weapons, on each blow that lands (Combat.strikeEffects): onHit {cond, rounds, chance}, element
 #             {noun, mag}, sap {attr, n, stamina}, armorWear, riled, slay [{trait, damage}], parrySpells
