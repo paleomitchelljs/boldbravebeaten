@@ -82,6 +82,18 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
 - [x] PixelLab figures face eight ways (2026-10-25): walking uses the nearest direction the art has walks for
   (`walks` in `art.yaml`), standing uses the eight rotations; in a fight a figure faces its nearest foe (`face` on a
   scene actor), exploring it keeps the way it last walked.
+- [x] Second PixelLab batch (the user's exports, 2026-10-25; `art/characters/pixellab/`): heroes Beren (sword and
+  shield), Cyrus (swashbuckler; idle only; his south view came out wrong, so `rotations` leaves it out and the
+  diagonals stand in) and Spawnee (spellsword), all party-pickable; Skeleton (now the skeleton's look), Alligator,
+  Raptor (small by design; idle only; tail redrawn longer in the east/west views on a 96-px canvas), the Golem (80 px)
+  as `clay-golem`, `iron-golem` and `stone-golem` (the last two recoloured on load by `recolor` ramps; Stone golem's
+  look) and the Avatar of Fear (`avatar`, 128 px, 3 squares tall by design). The duelist foe wears Cyrus. They replace
+  the old creature sheets of those names (still on disk, unused; `avatar-of-fear` stays: the trolls wear it).
+  None has attack, hurt or death frames yet.
+- [ ] Bosses wanted (the user, 2026-10-25): the clay golem is the labyrinth's boss, the stone golem the sewers', the
+  iron golem the palace upper level's (swapped from the user's first idea so the dark iron is not on the dark sewer
+  floor). Only `stoneGolem` exists as a monster and none is placed. Also no monster yet for the alligator, the raptor
+  or the Avatar of Fear (its encounter in the temple is a spectre stand-in).
 - [x] Trial start "Tevax alone (level 8)" on the title screen (`start.yaml` trials; the user, 2026-10-25: a death
   knight, mostly martial, against the dungeon's low-level foes with nothing adjusted): Ebony Mail, Ebony Blade,
   Spellbreaker, the silk sash; 8 martial and 8 magic feats (Raise needs 8 with Battle Casting), so 6 over a level-8

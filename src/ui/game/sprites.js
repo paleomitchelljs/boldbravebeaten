@@ -110,10 +110,32 @@
     const s = artSheets[k] = { img: null, ok: false, failed: !def, tinted: {} };
     if (!HAS_IMG || !def) return s;
     s.img = new Image();
-    s.img.onload = () => { s.ok = true; for (const f of waiting.splice(0)) f(); };
+    s.img.onload = () => { if (def.recolor) s.img = recolored(s.img, def.recolor); s.ok = true; for (const f of waiting.splice(0)) f(); };
     s.img.onerror = () => { s.failed = true; };
     s.img.src = artFile(key, def, anim);
     return s;
+  }
+
+  // A canvas of the image with each pixel's brightness mapped onto a colour ramp ([[brightness 0..1, '#rrggbb'], ...],
+  // ascending): one figure in another material, its shading kept.
+  function recolored(img, ramp) {
+    if (typeof document === 'undefined') return img;
+    const stops = ramp.map(([at, hex]) => [at, [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16))]);
+    const c = document.createElement('canvas');
+    c.width = img.width; c.height = img.height;
+    const x = c.getContext('2d');
+    x.drawImage(img, 0, 0);
+    const d = x.getImageData(0, 0, c.width, c.height), px = d.data;
+    for (let i = 0; i < px.length; i += 4) {
+      if (!px[i + 3]) continue;
+      const l = (0.3 * px[i] + 0.59 * px[i + 1] + 0.11 * px[i + 2]) / 255;
+      let j = 1;
+      while (j < stops.length - 1 && l > stops[j][0]) j++;
+      const [a, ca] = stops[j - 1], [b, cb] = stops[j], t = Math.max(0, Math.min(1, (l - a) / Math.max(1e-6, b - a)));
+      for (let k = 0; k < 3; k++) px[i + k] = Math.round(ca[k] + (cb[k] - ca[k]) * t);
+    }
+    x.putImageData(d, 0, 0);
+    return c;
   }
 
   // The eight compass directions, clockwise from east (screen y points down), and the one nearest a vector.
@@ -135,7 +157,7 @@
     if (!def) return null;
     if (def.type === 'pixellab') {
       const want = DIRS.includes(dir) ? dir : flip ? 'south-west' : 'south-east', n = def.walkFrames || 4;
-      const name = anim === 'run' ? `${nearestDir(want, def.walks || ['east', 'west'])}#${((frame % n) + n) % n}` : want;
+      const name = anim === 'run' ? `${nearestDir(want, def.walks || ['east', 'west'])}#${((frame % n) + n) % n}` : nearestDir(want, def.rotations || DIRS);
       const s = artSheet(key, name);
       // PixelLab exports walk frames on a larger canvas (96 px round a 64-px figure): take the figure's square from the middle.
       const pad = s.ok ? Math.max(0, (s.img.width - def.size) / 2) : 0;

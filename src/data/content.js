@@ -171,6 +171,14 @@
     }
     const art = W.art || {};
     const artOk = (where, sp) => { if (sp && typeof sp === 'object' && sp.art && !has(art, sp.art)) err(`${where}: art "${sp.art}" is not in art.yaml`); };
+    const COMPASS = ['east', 'south-east', 'south', 'south-west', 'west', 'north-west', 'north', 'north-east'];
+    for (const [id, a] of Object.entries(art)) {
+      if (a.type !== 'pixellab') continue;
+      if (!a.dir || !(a.size > 0)) err(`art.${id}: a pixellab entry needs dir and size`);
+      for (const f of ['walks', 'rotations']) for (const d of a[f] || []) if (!COMPASS.includes(d)) err(`art.${id}.${f}: "${d}" is not a compass direction`);
+      if (a.recolor && !(Array.isArray(a.recolor) && a.recolor.length > 1 && a.recolor.every((r) => Array.isArray(r) && typeof r[0] === 'number' && /^#[0-9a-f]{6}$/i.test(r[1]))))
+        err(`art.${id}.recolor: want [[brightness 0..1, "#rrggbb"], ...], at least two stops`);
+    }
     for (const [id, m] of Object.entries(G.Enemies.MONSTERS)) artOk(`monsters.${id}.sprite`, m.sprite);
     for (const [id, t] of Object.entries(G.Enemies.TEMPLATES)) artOk(`foes.${id}.sprite`, t.sprite);
     for (const [id, n] of Object.entries(W.npcs || {})) artOk(`npcs.${id}.sprite`, n.sprite);

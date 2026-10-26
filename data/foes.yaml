@@ -93,7 +93,7 @@ brute:
 duelist:
   faction: cutthroats
   name: Duelist
-  sprite: {art: swash, kind: rogue, tint: "#9a7a9a"}
+  sprite: {art: cyrus, kind: rogue, tint: "#9a7a9a"}
   primary: [DEX, SPD]
   weak: [STR]
   armor: [[[1, null], [1, padded]], [[1, leather]], [[1, leather], [1, mail]]]
