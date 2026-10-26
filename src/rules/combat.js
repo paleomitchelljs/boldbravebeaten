@@ -801,6 +801,10 @@
     if (option.spell && target.traits && target.traits.magicImmune) {
       return { vec: [0, 0, 0], P: 0, S: 0, B: 0, armored: false, toCON: 0, slashToAttrs: 0, bluntToStamina: 0, bluntToCON: 0, converted: 0, durLoss: 0, mitigated: { P: 0, S: 0, B: 0 }, noBleed: true, pierceVital: 0, cutVital: 0, bleedFactor: 1, bleedRounds: CONFIG.bleedRounds, magicImmune: true };
     }
+    // Immune to the spell's element (resist 0 for its keyword: a golem and mind or life magic).
+    if (option.spell && C.damageMult(target, option.spell.element) === 0) {
+      return { vec: [0, 0, 0], P: 0, S: 0, B: 0, armored: false, toCON: 0, slashToAttrs: 0, bluntToStamina: 0, bluntToCON: 0, converted: 0, durLoss: 0, mitigated: { P: 0, S: 0, B: 0 }, noBleed: true, pierceVital: 0, cutVital: 0, bleedFactor: 1, bleedRounds: CONFIG.bleedRounds, magicImmune: true };
+    }
     if (option.spell && CONFIG.magic.energyMitigation && CONFIG.magic.energyMitigation[option.spell.element] != null) return computeFire(attacker, target, option, flags);
     if (option.spell && option.spell.element === 'life') return computeLife(attacker, target, option, flags);
     const v = option.damage.slice();
@@ -822,10 +826,10 @@
       if (prone) v[C.mainIndex(v)] += CONFIG.maneuver.proneDamageBonus;
       if (flags.pack) v[C.mainIndex(v)] += flags.pack; // pack hunters: allies at the target's side
       if (flags.half) for (let i = 0; i < 3; i++) v[i] = Math.floor(v[i] / 2);
-      // Resistances (monster trait): multipliers on piercing, slashing and blunt, e.g. a skeleton
-      // takes no piercing and half slashing; only blunt breaks bones cleanly.
-      const resist = target.traits && target.traits.resist;
-      if (resist) ['P', 'S', 'B'].forEach((k, i) => { if (resist[k] != null) v[i] = Math.floor(v[i] * resist[k]); });
+      // Resistances by damage keyword (C.damageMult): piercing, slashing and blunt, e.g. a skeleton takes no
+      // piercing and half slashing; only blunt breaks bones cleanly. A spell's blow also answers to its element.
+      ['P', 'S', 'B'].forEach((k, i) => { const m = C.damageMult(target, k); if (m !== 1) v[i] = Math.floor(v[i] * m); });
+      if (option.spell) { const m = C.damageMult(target, option.spell.element); if (m !== 1) for (let i = 0; i < 3; i++) v[i] = Math.floor(v[i] * m); }
     }
     // Stoneskin, barkskin, a shield of force: protection that isn't armor.
     if (G.Conditions) ['P', 'S', 'B'].forEach((k, i) => { v[i] = Math.max(0, v[i] - G.Conditions.mitigation(target, k)); });
@@ -932,7 +936,10 @@
   function armorHit(attacker, target, option, ctx, way) {
     const { v, prone, pinned, unconscious, weapon, armored, ai, piece, loc } = ctx;
     let [P, S, B] = v;
-    if (way === 'turned') { B += Math.round(P * CONFIG.pierce.deflectBlunt); P = 0; }
+    // Force that changes form on the armor (a turned point, a cut's force through mail) lands as blunt, and answers
+    // to the blunt keyword (C.damageMult): a golem immune to blunt takes nothing from an arrow its body turns.
+    const toBlunt = C.damageMult(target, 'B');
+    if (way === 'turned') { B += Math.round(P * CONFIG.pierce.deflectBlunt * toBlunt); P = 0; }
     const motion = option.motion === 'unarmed' ? 'swing' : option.motion;
     const res = { vec: [P, S, B], P, S, B, armored: false, toCON: 0, slashToAttrs: 0, bluntToStamina: 0, bluntToCON: 0, converted: 0, durLoss: 0, mitigated: { P: 0, S: 0, B: 0 }, pierce: way };
 
@@ -976,7 +983,7 @@
         res.toCON = CONFIG.pierceMode === 'roll' && pass < 1 ? Pr * pass : Math.floor(Pr * pass);
       }
       // Flexible armor (mail: armor.yaml transmit) passes more of a cut's force to the bone.
-      res.converted = Math.round(Sc * Math.min(1, (CONFIG.conversion[motion] || 0) * (ai.transmit || 1)));
+      res.converted = Math.round(Sc * Math.min(1, (CONFIG.conversion[motion] || 0) * (ai.transmit || 1)) * toBlunt);
       res.bluntToStamina = Br + res.converted;
       // Plate spreads what is left of a blow over the whole body (armor.yaml dissipate): a cut or a point it
       // turns (glancing), less or nothing of a crushing blow (a mace, a hammer, a fist).
@@ -1042,8 +1049,8 @@
     const M = CONFIG.magic;
     let mag = option.spell.magnitude;
     if (flags.half) mag = Math.floor(mag / 2);
-    // Gear that resists an element (a mail that shrugs off fire: effects.resist).
-    const gr = C.gearMult(target, 'resist', option.spell.element);
+    // Resisting the element (a mail that shrugs off fire: effects.resist; a golem's traits.resist).
+    const gr = C.damageMult(target, option.spell.element);
     if (gr !== 1) mag = Math.floor(mag * gr);
     const res = { vec: [0, 0, 0], P: 0, S: 0, B: 0, fire: mag, armored: false, toCON: 0, slashToAttrs: 0, bluntToStamina: 0, bluntToCON: 0, converted: 0, durLoss: 0, mitigated: { P: 0, S: 0, B: 0 }, noBleed: true, pierceVital: 0, cutVital: 0, bleedFactor: 1, bleedRounds: CONFIG.bleedRounds };
     const unconscious = target.stamina <= 0;
@@ -1078,7 +1085,7 @@
   function computeLife(attacker, target, option, flags) {
     let mag = option.spell.magnitude;
     if (flags.half) mag = Math.floor(mag / 2);
-    mag = Math.floor(mag * C.gearMult(target, 'resist', 'life'));
+    mag = Math.floor(mag * C.damageMult(target, 'life'));
     const res = { vec: [0, 0, 0], P: 0, S: 0, B: 0, armored: false, toCON: 0, slashToAttrs: 0, bluntToStamina: 0, bluntToCON: 0, converted: 0, durLoss: 0, mitigated: { P: 0, S: 0, B: 0 }, noBleed: true, pierceVital: 0, cutVital: 0, bleedFactor: 1, bleedRounds: CONFIG.bleedRounds };
     if (!C.tireless(target)) res.toCON = Math.floor(mag / 2);
     return res;
@@ -1100,6 +1107,7 @@
     if (!option.spell) return true;
     const el = option.spell.element;
     if (target.traits && target.traits.magicImmune) return false;
+    if (C.damageMult(target, el) === 0) return false;
     if (CONFIG.magic.energyMitigation && CONFIG.magic.energyMitigation[el] != null) return false;
     return el !== 'life';
   }
@@ -1286,7 +1294,7 @@
       }
     }
     await woundEffects(enc, attacker, target, option, primary, roller, parts);
-    if (option.venom && wound > 0 && !h.noBleed) {
+    if (option.venom && wound > 0 && !h.noBleed && C.damageMult(target, 'venom') > 0) {
       // The deeper the bite, the more venom: up to `con` a round, never more than the wound.
       const per = Math.min(option.venom.con, wound);
       target.bleeds.push({ remaining: per * option.venom.rounds, rounds: option.venom.rounds, poison: true });
@@ -1901,6 +1909,8 @@
         }
         if (d.option.spell && G.Magic && G.Magic.afterHit) await G.Magic.afterHit(enc, chars, a, t, d.option, r.hit, roller);
         if (blade && Object.keys(fx).length) await strikeEffects(enc, chars, a, t, blade, fx, roller, t.stamina < pre.stamina || C.totalDamage(t) > pre.dmg, posAtStart);
+        // A natural weapon that saps (weapons.yaml trait.sap: the Avatar's claws), as an enchanted blade's strike does.
+        else if (!blade && d.option.sap) await strikeEffects(enc, chars, a, t, { name: d.option.label || 'The blow' }, { sap: d.option.sap }, roller, t.stamina < pre.stamina || C.totalDamage(t) > pre.dmg, posAtStart);
         // Gear that bites back (effects.retaliate): whoever lands a melee blow on the wearer takes an element's blow.
         if (!d.option.ranged && !d.option.spell && G.Magic && C.isActive(a)) for (const x of C.gearList(t, 'retaliate')) await G.Magic.elementBlow(enc, chars, t, a, x.noun, x.mag, roller, x.name || `${Items.itemName(x.from) || x.from.name}`, { from: posAtStart[t.id] });
         // A conjured elemental's blows carry its element.

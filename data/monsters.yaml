@@ -1,5 +1,6 @@
 # Monsters. attrs may exceed the human cap. natural = natural weapons (weapons.yaml). group lists a pack.
 # traits are mechanical hooks: pack, regen, resist, tireless, apMult, staminaMult, size, aura, and so on.
+# resist is by damage keyword (docs/DATA.md, Damage keywords): {P, S, B, fire, mind, life, ...}; 0 immune, 1.5 weak.
 
 # faction: whose standing a kill costs; xp: per creature; glyph: how it shows in the first-person view;
 # loot: a table in items.yaml rolled when it dies (its carried gear is also left on the body).
@@ -217,17 +218,43 @@ zombie:
   feats: {grappler: 1}
   policy: {grappler: true}
 zombieHorde: {name: Zombie horde, blurb: Four zombies., group: [zombie, zombie, zombie, zombie]}
+# The three golems are one body; only what harms them differs (the user, 2026-10-25). Each is immune to two of fire,
+# slashing and blunt and weak (×1.5) to the third; all are immune to mind and life magic. Reach-2 fists.
+clayGolem:
+  name: Clay golem
+  blurb: "A construct of clay: blades bite deep, hammers and fire do nothing. Slow, tireless; its long fists crush shields. Mind and life magic don't touch it."
+  faction: grave_cult
+  xp: 120
+  glyph: "🗿"
+  sprite: {art: clay-golem, kind: skeleton_warrior, scale: 1.5, tint: "#8a8a8a"}
+  attrs: {STR: 22, CON: 22, DEX: 3, SPD: 3, INT: 1, WIS: 1, CHA: 1}
+  natural: [golemFists]
+  armor: golemBody
+  traits: {size: 1.3, tireless: true, resist: {S: 1.5, B: 0, fire: 0, mind: 0, life: 0}}
+  feats: {}
 stoneGolem:
   name: Stone golem
-  blurb: "A construct of stone: blades skate off, hammers crack it. Slow, tireless, and its fists crush shields."
+  blurb: "A construct of stone: blades and fire do nothing, but hammers crack it. Slow, tireless; its long fists crush shields. Mind and life magic don't touch it."
   faction: grave_cult
   xp: 120
   glyph: "🗿"
   sprite: {art: stone-golem, kind: skeleton_warrior, scale: 1.5, tint: "#8a8a8a"}
   attrs: {STR: 22, CON: 22, DEX: 3, SPD: 3, INT: 1, WIS: 1, CHA: 1}
   natural: [golemFists]
-  armor: golemStone
-  traits: {size: 1.3, tireless: true, magicImmune: true}
+  armor: golemBody
+  traits: {size: 1.3, tireless: true, resist: {S: 0, B: 1.5, fire: 0, mind: 0, life: 0}}
+  feats: {}
+ironGolem:
+  name: Iron golem
+  blurb: "A construct of iron: blades and hammers do nothing; fire softens it, and a point can find a seam. Slow, tireless; its long fists crush shields. Mind and life magic don't touch it."
+  faction: grave_cult
+  xp: 120
+  glyph: "🗿"
+  sprite: {art: iron-golem, kind: skeleton_warrior, scale: 1.5, tint: "#8a8a8a"}
+  attrs: {STR: 22, CON: 22, DEX: 3, SPD: 3, INT: 1, WIS: 1, CHA: 1}
+  natural: [golemFists]
+  armor: golemBody
+  traits: {size: 1.3, tireless: true, resist: {S: 0, B: 0, fire: 1.5, mind: 0, life: 0}}
   feats: {}
 drake:
   name: Drake
@@ -459,3 +486,42 @@ revenantCourt:
   name: Revenant knight and his dead
   blurb: The revenant knight with two skeletons at his side.
   group: [revenantKnight, skeleton, skeleton]
+raptor:
+  name: Raptor
+  blurb: "A small, quick hunter in feathers: a sickle claw and a bite, never alone. Fast enough to get round the line; thin-skinned."
+  faction: wilds
+  xp: 25
+  glyph: "🦖"
+  sprite: {art: raptor, kind: orc, scale: 0.7, tint: "#8a6a4a"}
+  loot: beast_leavings
+  attrs: {STR: 5, CON: 6, DEX: 9, SPD: 10, INT: 2, WIS: 6, CHA: 1}
+  natural: [sickleClaw, zombieBite]
+  traits: {pack: 2, moveMult: 1.5, size: 0.7}
+  feats: {dodge_training: 1}
+raptorPack: {name: Raptor pack, blurb: Three raptors., group: [raptor, raptor, raptor]}
+alligator:
+  name: Alligator
+  blurb: "Lies still in the sewer water, then seizes one victim and rolls with it, crushing (as the constrictor). Thick hide; slow on land."
+  faction: wilds
+  xp: 60
+  glyph: "🐊"
+  sprite: {art: alligator, kind: orc, scale: 0.9, tint: "#5a6a4a"}
+  attrs: {STR: 14, CON: 12, DEX: 4, SPD: 4, INT: 1, WIL: 5, WIS: 4, CHA: 1}
+  natural: [gatorJaws, tail]
+  armor: gatorHide
+  traits: {size: 1.2, constrict: {stamina: 6, con: 1}, slippery: 1}
+  feats: {grappler: 2, pin: 1}
+  policy: {grappler: true}
+avatarOfFear:
+  name: Avatar of Fear
+  blurb: "A hulking faceless thing, twice a man's height. Long arms strike from two squares away and every blow that lands drinks stamina; dread rolls off it (frightens those beside it unless they resist). Acts like one and a half fighters."
+  faction: grave_cult
+  xp: 400
+  glyph: "👹"
+  sprite: {art: avatar, kind: orc_warrior, scale: 1.8, tint: "#b05a2a"}
+  level: 10
+  attrs: {STR: 22, CON: 22, DEX: 6, SPD: 5, INT: 4, WIL: 14, WIS: 6, CHA: 2}
+  natural: [avatarArms]
+  armor: avatarHide
+  traits: {size: 1.8, apMult: 1.5, aura: {name: dread, radius: 1, cond: frightened, resisted: true}}
+  feats: {power_swing: 1, toughness: 1}

@@ -573,7 +573,7 @@ constrictorBite:
   rarity: common
 golemFists:
   phys: {mass: 6, length: 1, head: {mass: 2}}
-  name: Stone fists
+  name: Great fists
   hands: 2
   weight: heavy
   reach: {swing: 2}
@@ -611,3 +611,43 @@ trollFists:
   rarity: common
   material: stone
   trait: {knockdown: {bonus: 2, margin: 3}, shieldCrush: true}
+sickleClaw:
+  phys: {mass: 0.3, length: 0.3, point: {depth: 6, width: 2}}
+  name: Sickle claw
+  hands: 1
+  weight: light
+  reach: {thrust: 1}
+  reachName: close
+  closeOK: true
+  natural: true
+  faces: {point: [4, 1, 0]}
+  motions: [thrust]
+  rarity: common
+gatorJaws:
+  phys: {mass: 1.5, length: 0.5, point: {depth: 8, width: 6}}
+  name: Jaws
+  hands: 1
+  weight: medium
+  reach: {thrust: 1}
+  reachName: close
+  closeOK: true
+  natural: true
+  grappleUsable: true
+  faces: {point: [5, 0, 2]}
+  motions: [thrust]
+  rarity: common
+avatarArms:
+  phys: {mass: 6, length: 1.6, edge: 1}
+  name: Dread claws
+  hands: 1
+  weight: heavy
+  reach: {swing: 2}
+  reachName: reach 2
+  closeOK: true
+  natural: true
+  faces: {edge: [0, 6, 3]}
+  motions: [swing]
+  rarity: common
+  material: bone
+  # Each blow that lands takes stamina from the struck into the Avatar (trait.sap, as the Sapping enchantment).
+  trait: {sap: {stamina: 5}}

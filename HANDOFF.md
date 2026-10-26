@@ -90,10 +90,22 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
   look) and the Avatar of Fear (`avatar`, 128 px, 3 squares tall by design). The duelist foe wears Cyrus. They replace
   the old creature sheets of those names (still on disk, unused; `avatar-of-fear` stays: the trolls wear it).
   None has attack, hurt or death frames yet.
-- [ ] Bosses wanted (the user, 2026-10-25): the clay golem is the labyrinth's boss, the stone golem the sewers', the
-  iron golem the palace upper level's (swapped from the user's first idea so the dark iron is not on the dark sewer
-  floor). Only `stoneGolem` exists as a monster and none is placed. Also no monster yet for the alligator, the raptor
-  or the Avatar of Fear (its encounter in the temple is a spectre stand-in).
+- [x] Bosses and new creatures placed (the user, 2026-10-25). Golems are one body (STR/CON 22, reach-2 fists, tireless)
+  differing only in `resist`: clay immune to blunt and fire, weak to slashing (labyrinth dead end, `G`); stone immune to
+  slashing and fire, weak to blunt (sewers, at the planks to the drain); iron immune to slashing and blunt, weak to fire
+  (palace upper floor, by the masters' chest). All immune to mind and life magic. `golemBody` has `cutThrough: 0` (a
+  cut past its hardness bites in; without it clay's weakness to cuts never landed). Raptor packs replace the
+  labyrinth's rats; alligators (grapple and roll, as the constrictor) in the sewer channels; the Avatar of Fear
+  (level 10, reach-2 claws that sap 5 stamina a landed blow, apMult 1.5, a dread aura of radius 1: my addition, the user
+  asked only for the sap and reach) in the ritual chamber, shrunk to 11×10. Lizardfolk height 1.3.
+- [x] Damage keywords (the user: every damage source has a type, for boosts and resistances as things grow): one
+  `resist` map over P/S/B and spell elements, `Character.damageMult`; conditions carry `type`. docs/DATA.md.
+- [ ] Keywords still missing: bleeding, falls, sap/drain stamina; boosts (more harm of a keyword) have no hook yet.
+- [ ] Sims (example party, level 1, 40 each): raptor packs 100% (2.8 rounds, almost no deaths: easy), alligator 100%,
+  two 90%, stone golem 100% (the party's hammer and turned arrows, now blunt ×1.5), Avatar 58% (1.65 dead a fight).
+  Clay and iron golems 0%, but that is the AI: next to a reach-2 foe that hits for 19 it baits from outside its reach
+  and never swings (Brenna's swing on clay scores 25 in hitValue and is never chosen). Played by hand they are
+  beatable in principle; the AI's caution against heavy hitters wants a look.
 - [x] Trial start "Tevax alone (level 8)" on the title screen (`start.yaml` trials; the user, 2026-10-25: a death
   knight, mostly martial, against the dungeon's low-level foes with nothing adjusted): Ebony Mail, Ebony Blade,
   Spellbreaker, the silk sash; 8 martial and 8 magic feats (Raise needs 8 with Battle Casting), so 6 over a level-8

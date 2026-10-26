@@ -88,7 +88,7 @@ Loot entries: `{w: 3, gold: [5, 20]}`, `{w: 2, good: salve, n: [1, 2]}`, `{w: 1,
 | `effects.apMult` | same | × the AP of every action (a sash at 0.8) |
 | `effects.mag: {noun: n, '*': n}` | same | + spell magnitude for one noun or all |
 | `effects.init`, `hit`, `move` | same | + initiative; + to beat a defence; + squares on every move |
-| `effects.resist: {fire: 0.5}` | same | × harm from an element |
+| `effects.resist: {fire: 0.5}` | same | × harm of that damage keyword (see **Damage keywords**) |
 | `effects.aura: {name, radius, cond, stamina, resisted, rounds}` | same | each round, on every foe within the radius |
 | `effects.retaliate: {noun, mag, name}` | same | an element's blow at whoever lands a melee blow on the wearer |
 | `effects.slay: [{trait, damage}]` | same | + damage with any blow to a creature with that trait (`undead`, `dragon`) |
@@ -166,3 +166,21 @@ engine's `CONFIG`, so a combat number can be changed beside the content it affec
 `d10 + ⌊mean(attrs)/2⌋ + feat ranks × weight − armor penalty` against a target number (trivial 4, easy 6, moderate 8,
 hard 11, formidable 14). The party's best member rolls for perception and appraisal; the chosen member for locks and
 traps; stealth uses the group's quietest member weighted with its best. A 1 is a fumble, a 10 a clean success.
+
+## Damage keywords
+
+Every kind of harm has a keyword, and one map, `resist`, scales any of them (`Character.damageMult`):
+
+- `P`, `S`, `B`: a blow's point, edge and weight. Force the armor changes into blunt (a turned point, a cut's force
+  through mail) answers to `B`.
+- A spell element (`spells.yaml` `element`: fire, frost, lightning, mind, life, venom, plague, acid, shadow, spirit…):
+  the spell's harm, and the conditions it leaves (`type` on a condition in `config.js`; a condition the will resists
+  counts as `mind`). Bite venom is `venom`.
+
+Where: a monster's `traits.resist` and worn gear's `effects.resist`; they multiply. `0` is immune (a spell of that
+element washes off, a condition of that type is not taken), `1.5` a weakness. Example, the iron golem:
+`resist: {S: 0, B: 0, fire: 1.5, mind: 0, life: 0}`. Not yet keyed: bleeding, falls, and the stamina a sap or drain
+takes.
+
+A natural weapon can carry `trait: {sap: {stamina: n}}` (each blow that lands takes stamina into the attacker), as the
+Sapping enchantment's `strike.sap` does.

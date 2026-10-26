@@ -38,8 +38,15 @@
     return !!get(c, key);
   }
 
+  // A condition's damage keyword (C.damageMult): its `type`, or mind for one the will resists. Immune to that: no condition.
+  function typeOf(key) {
+    const d = defs()[key] || {};
+    return d.type || (d.resist === 'WIL' ? 'mind' : null);
+  }
+
   function add(c, key, opts) {
     if (!defs()[key]) return null;
+    if (G.Character && G.Character.damageMult(c, typeOf(key)) === 0) return null;
     opts = opts || {};
     const conds = c.status.conds || (c.status.conds = []);
     const cur = conds.find((x) => x.key === key);
@@ -108,5 +115,5 @@
     return list(c).map((x) => `${(defs()[x.key] || {}).name || x.key}${x.kind ? ': ' + x.kind : ''}${x.pool != null ? ' ' + x.pool : x.mag > 1 ? ' ' + x.mag : ''} (${x.rounds})`);
   }
 
-  G.Conditions = { list, get, has, add, remove, apMod, attrMod, mitigation, regenMod, flag, canMove, moveMult, endRound, labels };
+  G.Conditions = { list, get, has, add, typeOf, remove, apMod, attrMod, mitigation, regenMod, flag, canMove, moveMult, endRound, labels };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

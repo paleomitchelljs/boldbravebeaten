@@ -379,7 +379,7 @@ temple_maze:
     - "##############################################"
     - "######################N#######################"
     - "##................1.##......................##"
-    - "##..................##......................##"
+    - "##..................##...........5..........##"
     - "##...#####...#########..##..##############..##"
     - "##...#####...#########..##..##############..##"
     - "##......##......##..................##......##"
@@ -395,7 +395,7 @@ temple_maze:
     - "##..##...############...##...########...#...##"
     - "##..##..#############...##...########...##..##"
     - "##..##..##......##......##..............##..##"
-    - "##..##..##......##.....####............###..##"
+    - "##..##..##..G...##.....####............###..##"
     - "##..##..##......##...#############..######..##"
     - "##..##..##..##..##..##############..######..##"
     - "##..........##..##..##..........##......##..##"
@@ -413,16 +413,20 @@ temple_maze:
     C: {kind: chest, label: "A niche with a sealed jar", loot: strongbox, tn: 8}
     "1": {kind: monster, encounter: snake, label: "Something in the dead end"}
     "2": {kind: monster, encounter: pair, label: "Lizardfolk at their fire"}
-    "3": {kind: monster, encounter: rats, label: "Rats"}
+    "3": {kind: monster, encounter: raptors, label: "Something quick in the dark"}
     "4": {kind: monster, encounter: watch, label: "A lizardfolk watch"}
+    "5": {kind: monster, encounter: raptors2, label: "Clicking claws on stone"}
+    G: {kind: monster, encounter: golem, label: "A great figure of clay in the dead end"}
   encounters:
     snake: {foes: [{monster: constrictor}], text: "A great snake uncoils from the end of the passage."}
     pair: {foes: [{monster: scalewardPair}], text: "Two lizardfolk look up from their fire and reach for their weapons."}
-    rats: {foes: [{monster: ratPack}], text: "Rats pour out of a crack in the wall."}
+    raptors: {foes: [{monster: raptorPack}], text: "Three raptors come out of the dark at a run, spreading as they come."}
+    raptors2: {foes: [{monster: raptorPack}], text: "The hall is a hunting ground. Raptors fan out across it."}
     watch: {foes: [{monster: scaleward}], text: "A scaled guard steps out of a side passage."}
+    golem: {foes: [{monster: clayGolem}], text: "The clay figure at the end of the passage turns its head, and steps down off its plinth."}
   wandering:
     - {w: 1, foes: [{monster: scaleward}], text: "A lizardfolk patrol rounds the bend."}
-    - {w: 1, foes: [{monster: ratPack}], text: "Rats, running ahead of something."}
+    - {w: 1, foes: [{monster: raptor, n: 2}], text: "Two raptors, hunting."}
     - {w: 5, nothing: true}
   secrets: []
 
@@ -529,14 +533,14 @@ temple_sewer:
     - "####....~~~~=~~~~~~~~=~~~........####.~~~.########"
     - "#######.~~~~=~~~~~~~~=~~~~~......####.~~~.########"
     - "#######.....=~~~~~~~~=..~~~~~.........~~~.########"
-    - "#######................~~~~~~~~.......~~~.########"
+    - "#######................~~~~~~~~.b.....~~~.########"
     - "#######............#...~~###~~~~......~~~...######"
     - "#######..~~.########...~~####~~~~...~~~~~...######"
     - "#######..~~.#######...~~~#####~~~~~~~~~~~~~..#####"
-    - "#######..~~.#######...~~#######.~~~=======~..#####"
+    - "#######.a~~.#######...~~#######.~~~=======~..#####"
     - "######...~~...####...~~~#######..~~=======~~..####"
     - "######..==...C####...~~########..~~==~~~==~~..####"
-    - "######..~~.#..###...~~~########..=====X~====..####"
+    - "######..~~.#..###...~~~########.g=====X~====..####"
     - "######..~~.######...~~~~#######..~~==~~~==~~..####"
     - "######..~~~######...~~~########..~~=======~~..####"
     - "#######..~~######....~~#########..~=======~~...###"
@@ -557,11 +561,18 @@ temple_sewer:
     P: {kind: note, on: "_", label: "Under the pyramid's well", text: "The shaft above is too smooth and too far to climb."}
     C: {kind: chest, label: "A rotten crate wedged in the alcove", loot: strongbox, tn: 8}
     r: {kind: monster, encounter: rats, label: "Rats in the dead end"}
+    g: {kind: monster, encounter: golem, label: "A stone figure where the planks begin"}
+    a: {kind: monster, encounter: gator, label: "A log in the channel"}
+    b: {kind: monster, encounter: gators, label: "Ripples in the water"}
     X: {kind: drop, to: temple_ritual, at: D, sprite: drain, on: "=", label: "A great grate over the drain, rusted half through", text: "The grate gives under your weight. You fall through the dark with the sewer water and come down in a shallow pool."}
   encounters:
     rats: {foes: [{monster: ratPack}], text: "The dead end is a nest. The rats come out of it all at once."}
+    golem: {foes: [{monster: stoneGolem}], text: "The statue at the head of the planks is not a statue. It steps into your way."}
+    gator: {foes: [{monster: alligator}], text: "The log in the channel opens its eyes, and its jaws."}
+    gators: {foes: [{monster: alligator, n: 2}], text: "Two alligators slide up out of the water onto the walkway."}
   wandering:
     - {w: 1, foes: [{monster: ratPack}], text: "Rats pour along the walkway."}
+    - {w: 1, foes: [{monster: alligator}], text: "Something heavy comes up out of the water."}
     - {w: 4, nothing: true}
   secrets: []
 
@@ -571,28 +582,24 @@ temple_ritual:
   blurb: A square chamber of rose stone deep under the temple, a shallow pool round a dais, and on the dais a great green orb with something in it.
   level: 3
   look: {wall: "#806062", floor: "#244440", ceiling: "#1a2e2c", fog: "#081210", torch: 1, tileset: temple_ritual, light: 8}
-  # assets/wip/temple-ritual/layout.js. The user's reference: assets/ideas/refs/ritual-chamber-reference.png. You fall
-  # in from the sewer drain (one way) into the pool; the way out is the stair up to the palace (not built yet).
+  # First laid out by assets/wip/temple-ritual/layout.js (the user's reference: assets/ideas/refs/ritual-chamber-reference.png),
+  # then shrunk by hand to 11 by 10 (the user, 2026-10-25: tight round the Avatar, but room for a party to move). You
+  # fall in from the sewer drain (one way) into the pool; the way out is the stair up to the palace.
   map:
-    - "                   "
-    - " ################# "
-    - " #.......S.......# "
-    - " #...............# "
-    - " #..y.........y..# "
-    - " #...............# "
-    - " #...._______....# "
-    - " #....___D___....# "
-    - " #...._______....# "
-    - " #....___O___....# "
-    - " #...._______....# "
-    - " #...._______....# "
-    - " #...._______....# "
-    - " #.......A.......# "
-    - " #..y.........y..# "
-    - " #...............# "
-    - " #...............# "
-    - " ################# "
-    - "                   "
+    - "               "
+    - " ############# "
+    - " #.....S.....# "
+    - " #.y.......y.# "
+    - " #...........# "
+    - " #..._____...# "
+    - " #...__D__...# "
+    - " #...__O__...# "
+    - " #..._____...# "
+    - " #...........# "
+    - " #.y...A...y.# "
+    - " #...........# "
+    - " ############# "
+    - "               "
   legend:
     D: {kind: note, on: "_", text: "Water roars down from the dark above and the pool takes you. It is only knee deep. In the middle of the chamber a green orb the size of a cart hangs over a dais, and something moves inside it."}
     O: {kind: prop, sprite: orb, label: "The orb on its dais. Something coiled inside it watches you."}
@@ -600,7 +607,7 @@ temple_ritual:
     S: {kind: stairs, to: temple_palace_stair, at: R, up: true, sprite: stair_up, label: "A narrow stair up toward the palace"}
     A: {kind: monster, encounter: avatar, label: "The avatar of fear"}
   encounters:
-    avatar: {foes: [{monster: spectre}], text: "The orb clouds, and what was inside it is outside it. (A stand-in: the avatar of fear has no monster yet.)"}
+    avatar: {foes: [{monster: avatarOfFear}], text: "The orb clouds, and what was inside it is outside it: a hunched, faceless thing that has to stoop under the ceiling."}
   wandering: []
   secrets: []
 
@@ -678,7 +685,7 @@ temple_palace_up:
     - "##.......##.......##............##"
     - "##.B...B.##.B...B.##..B.......B.##"
     - "##......z##.......##......C.....##"
-    - "##.......##.......##............##"
+    - "##.......##.......##.....g......##"
     - "##.......##.......##............##"
     - "#####..#######..#########..#######"
     - "#####..#######..#########..#######"
@@ -704,9 +711,11 @@ temple_palace_up:
     C: {kind: chest, loot: strongbox, tn: 8, label: "A chest at the foot of a bed"}
     z: {kind: monster, encounter: sleeper, asleep: true, label: "Someone asleep"}
     q: {kind: monster, encounter: servants, label: "Servants at the table"}
+    g: {kind: monster, encounter: golem, label: "An iron figure by the chest"}
   encounters:
     sleeper: {foes: [{monster: scaleward}], text: "The sleeper rolls off the bed with a hammer already in hand."}
     servants: {foes: [{monster: koboldBand}], text: "The servants drop their bowls and grab knives."}
+    golem: {foes: [{monster: ironGolem}], text: "The iron figure at the foot of the bed grinds round to face you."}
   wandering: []
   secrets: []
 

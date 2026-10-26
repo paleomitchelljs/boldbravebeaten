@@ -245,6 +245,7 @@
     if (!G.Conditions || !CONFIG.conditions[key] || !G.Character.isActive(target)) return false;
     if (target.traits && target.traits.magicImmune && caster) { logger(enc)(`The magic washes off ${target.name}.`, 'defend'); return false; }
     if (C().tireless(target) && CONFIG.conditions[key].living) return false;
+    if (C().damageMult(target, G.Conditions.typeOf(key)) === 0) { logger(enc)(`${target.name} shrugs it off.`, 'defend'); return false; }
     const ward = G.Conditions.get(target, 'warded');
     const mindish = CONFIG.conditions[key].resist === 'WIL';
     if (mindish && ((ward && ward.kind === 'mind') || G.Conditions.flag(target, 'mindWard'))) {

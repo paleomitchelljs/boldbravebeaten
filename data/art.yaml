@@ -52,7 +52,7 @@ lizardfolk-warrior:
   walkFrames: 6
   walks: [north, east, south, west]
   box: [4, 6, 60, 63]
-  height: 1.45
+  height: 1.3
   party: true
 tevax:
   type: pixellab

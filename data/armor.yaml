@@ -221,9 +221,11 @@ giantHide:
   pierce: {resist: 1.5, gap: 7}
   rarity: common
   natural: true
-golemStone:
-  name: Stone body
+golemBody:
+  name: Golem body
   material: stone
+  # The body is the golem's substance, not a shell over flesh: a cut past its hardness bites in.
+  cutThrough: 0
   mit: {P: 4, S: 5, B: 1}
   spd: 0
   dex: 0
@@ -232,5 +234,31 @@ golemStone:
   standUp: 0
   durability: 80
   pierce: {resist: 6, gap: 13}
+  rarity: common
+  natural: true
+gatorHide:
+  name: Alligator hide
+  material: hide
+  mit: {P: 2, S: 2, B: 1}
+  spd: 0
+  dex: 0
+  stamina: 0
+  regen: 0
+  standUp: 0
+  durability: 30
+  pierce: {resist: 1.5, gap: 8}
+  rarity: common
+  natural: true
+avatarHide:
+  name: Spined hide
+  material: hide
+  mit: {P: 2, S: 3, B: 3}
+  spd: 0
+  dex: 0
+  stamina: 0
+  regen: 0
+  standUp: 0
+  durability: 50
+  pierce: {resist: 1.5, gap: 8}
   rarity: common
   natural: true

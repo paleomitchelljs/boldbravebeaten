@@ -427,17 +427,18 @@
     },
 
     // ---- Conditions (PROVISIONAL, magic overhaul) ------------------------------------
-    // Timed effects (src/rules/conditions.js). Values are per point of magnitude. resist: the
+    // Timed effects (src/rules/conditions.js). type: the damage keyword it counts as (C.damageMult; a mind
+    // condition, resisted by WIL, is 'mind' without saying). Values are per point of magnitude. resist: the
     // attribute a target rolls to shake it off as it lands (d10 + ⌊attr/2⌋ against the caster's
     // d10 + ⌊INT/2⌋ + Casting); living: the tireless (undead, constructs) are immune.
     conditions: {
-      burning: { name: 'Burning', dot: { CON: 1 } },
+      burning: { type: 'fire', name: 'Burning', dot: { CON: 1 } },
       slowed: { name: 'Slowed', ap: -1, resist: 'CON' },
       hasted: { name: 'Hasted', ap: 1 },
       shocked: { name: 'Shocked', ap: -1, resist: 'CON' },
       rooted: { name: 'Rooted', noMove: true, breakAttr: 'STR', resist: 'STR' },
       numbed: { name: 'Numbed', attrs: { DEX: -1, SPD: -1 }, resist: 'CON' },
-      withering: { name: 'Withering', dot: { CON: 1 }, ap: -1, resist: 'CON', living: true }, // Life bane (asystole)
+      withering: { type: 'life', name: 'Withering', dot: { CON: 1 }, ap: -1, resist: 'CON', living: true }, // Life bane (asystole)
       innervated: { name: 'Innervated', regen: 2 },
       kindled: { name: 'Kindled', kindled: true }, // blows set targets burning
       frostWard: { name: 'Frost ward', halveFire: true },
@@ -475,16 +476,16 @@
       clumsy: { name: 'Clumsy', resist: 'CON', attrs: { DEX: -2 } },
       deft: { name: 'Deft', attrs: { DEX: 2 } },
       // Poison and disease. persist: outlasts the fight (until cured or run its course).
-      poisoned: { name: 'Poisoned', resist: 'CON', dot: { CON: 1 }, living: true },
+      poisoned: { type: 'venom', name: 'Poisoned', resist: 'CON', dot: { CON: 1 }, living: true },
       antivenom: { name: 'Antivenom', immune: ['poisoned'] },
-      diseased: { name: 'Diseased', resist: 'CON', attrs: { STR: -1 }, regen: -2, living: true, persist: true },
+      diseased: { type: 'plague', name: 'Diseased', resist: 'CON', attrs: { STR: -1 }, regen: -2, living: true, persist: true },
       // PROVISIONAL (the user's spell list and magic items).
-      chilled: { name: 'Chilled', resist: 'CON', moveMult: 0.5, attrs: { SPD: -1 }, living: true }, // frost: half the squares
+      chilled: { type: 'frost', name: 'Chilled', resist: 'CON', moveMult: 0.5, attrs: { SPD: -1 }, living: true }, // frost: half the squares
       paralyzed: { name: 'Paralyzed', resist: 'CON', ap: -99, drainAP: 99, noAct: true, noGuard: true, helpless: true },
       stunned: { name: 'Stunned', resist: 'CON', drainAP: 2, noGuard: true }, // AP lost at once; no guard this round
       riled: { name: 'Riled', mit: { P: 1, S: 1, B: 1 }, breakOnHarm: true }, // a goading blade: until the bearer is hurt
       unseen: { name: 'Unseen', unseen: true }, // can't be picked out beyond arm's reach; striking ends it
-      corroded: { name: 'Corroded', resist: 'CON', dot: { stamina: 2 }, living: true },
+      corroded: { type: 'acid', name: 'Corroded', resist: 'CON', dot: { stamina: 2 }, living: true },
       // Mystic.
       dread: { name: 'Dread', attrs: { STR: -1, DEX: -1, SPD: -1 }, defense: -1 }, // a revenant knight's aura
       dazzled: { name: 'Dazzled', resist: 'CON', defense: -1 },
@@ -730,7 +731,7 @@
     'Impact: blunt past armor beyond 8 points breaks bones (1 CON per 2 points over, ÷ size for big bodies) as well as winding; a blow that lands throws its target back 1 square per 8 points landed (blunt in full, cuts and stabs at half; ÷ size; up to 3); A parry meets force with force: the attacker adds ⌊(blow − half my weapon\'s blow)/4⌋ + ⌊(blow − my weapon\'s blow)/2⌋ (+ motion) against my d10 + agility + Parry Training — equal weapons parry as before or a little easier; a giant\'s club against a sword is hopeless, against a strong two-hander with Parry Training a chance. Shields already wear by force, shatter past their threshold, and break outright under a power blow from as hard a material.',
     'Weapon weight and strength (TUNED): a weapon has a natural speed strength can\'t beat (light and short is quick; long travels farther), and a strain: its load (mass for a thrust; mass with the leverage of its length for a swing) over the wielder\'s capacity (0.3 kg per STR point, ×1.5 two-handed, +10% per Heavy Weapon Training rank). Within capacity it swings at its natural speed; past it AP and stamina rise with strain²; past 3× it is too ungainly to use. A man (STR 7) can barely lift a giant\'s club; an ogre swings it like a sword.',
     'Ogre and hill giant; size and grip: big creatures (trait size: ogre 1.5, giant 2.5) take vital wounds less often (the wound roll\'s target ÷ size) and bleed less per wound (÷ size): a man-sized wound is shallow in a big body. Grip (giant 5, ogre 2) adds to grapple rolls: a giant seizes a man in one hand. The ogre (level 8, STR 23, CON 21) swings a crude giant club and its fists; no regeneration. The hill giant (level 12, STR 28, CON 26) swings a giant club one-handed, hurls boulders (range 2–10, 14 blunt, can knock down) and grapples.',
-    'Drakes, wyverns, the constrictor and the golem: fliers (drake, wyvern) pass over rough ground, pits, traps, hazards and walls that aren\'t solid (solid walls still stop them) and are slippery to grab. The drake (level 8) has drake scales (P4 S4 B2), a bite, claws, a reach-2 wing buffet that can knock you down, 1.5× movement and fire breath (Burst + Fire, Strong for a bigger one). The wyvern (level 10) has heavier scales (P5 S5 B3), a reach-2 bite, a venomous stinger (3 CON a round over 4 rounds at full depth) and a crushing wing beat. The giant constrictor grapples beyond any human (Grappler III, STR 18) and crushes whoever it holds every round (−8 stamina, −1 CON), but it has one victim at a time and thin scales. The stone golem is immune to magic: spells do nothing to it and it shrugs off conditions; it never tires.',
+    'Drakes, wyverns, the constrictor and the golem: fliers (drake, wyvern) pass over rough ground, pits, traps, hazards and walls that aren\'t solid (solid walls still stop them) and are slippery to grab. The drake (level 8) has drake scales (P4 S4 B2), a bite, claws, a reach-2 wing buffet that can knock you down, 1.5× movement and fire breath (Burst + Fire, Strong for a bigger one). The wyvern (level 10) has heavier scales (P5 S5 B3), a reach-2 bite, a venomous stinger (3 CON a round over 4 rounds at full depth) and a crushing wing beat. The giant constrictor grapples beyond any human (Grappler III, STR 18) and crushes whoever it holds every round (−8 stamina, −1 CON), but it has one victim at a time and thin scales. The golems (clay, stone, iron) share one body and reach-2 fists and never tire; each is immune to two of fire, slashing and blunt and weak (×1.5) to the third, and all three are immune to mind and life magic (resist by damage keyword).',
     'Rats and the spectre: giant rats are weak (STR 3, a third of the stamina) and come alone or as a swarm of six. The spectre is a level-15 undead: incorporeal (weapons without an enchantment pass through; nothing to grab, trip or shove), a legendary war scythe that drinks half the stamina and wounds it deals, and a wail each round that frightens every foe within 2 squares unless they resist (WIL). Magical weapons (high-level gear) and spells hurt it.',
     'Aura of dread and trinkets: at the start of each round, every foe within the aura (2 squares of the revenant knight) loses 3 stamina and is in Dread for the round (−1 STR, DEX and SPD, −1 to guard). Trinkets are worn items that shift attributes or AP: the revenant knight\'s flowing black silk sash gives +1 SPD and +1 AP.',
     'End-game gear and the revenant knight (test build): masterwork dwarven steel plate, a masterwork adamant heater (×3.5) and Soulreaver, a masterwork longsword enchanted with Drinking and Keenness. Battle Casting (feat, adept, needs Casting II): cast with both hands full. Drinking: the wielder takes back half the stamina and half the attribute points each blow deals. The revenant knight is a level-20 character at the human cap (22 feats: Casting IV, Burst, Conjure, Strong, Battle Casting, plate and shield training); Burst + Life + Strong withers a whole area through armor, and Conjure + Life raises the fallen.',

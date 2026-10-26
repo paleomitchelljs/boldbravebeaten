@@ -235,7 +235,7 @@
   // the armor, a ready shield and the weapons in hand. Effect keys (all optional):
   //   attrs {STR: 1}   ap (sheet AP)   apMult (× every action's AP)   regen   stamina (max)   sp (spell points)
   //   mag {noun: n, '*': n} (spell magnitude)   init   hit (to beat a defence)   move (squares per move)
-  //   resist {fire: 0.5} (× an element's harm)   aura {radius, stamina, cond, element, mag}
+  //   resist {fire: 0.5} (× harm of that damage keyword: damageMult)   aura {radius, stamina, cond, element, mag}
   //   retaliate {noun, mag} (an element's blow at whoever lands a melee blow on the wearer)
   //   standing (parley disposition with everyone)   standingWith {faction: n}   heal (extra points a long rest)
   function gearSources(c) {
@@ -282,6 +282,15 @@
       m *= sub != null ? (typeof v === 'object' && v[sub] != null ? v[sub] : 1) : v;
     }
     return m;
+  }
+
+  // Damage keywords: every kind of harm has one. P, S and B for a blow's point, edge and weight; a spell element's
+  // name (fire, frost, mind, life, venom…) for magic and what it leaves behind. One map, `resist`, scales any of
+  // them: a monster's traits.resist and worn gear's effects.resist multiply (0 is immune, 1.5 a weakness).
+  function damageMult(c, type) {
+    if (!type) return 1;
+    const t = c.traits && c.traits.resist && c.traits.resist[type];
+    return (t != null ? t : 1) * gearMult(c, 'resist', type);
   }
 
   // Every value of an effect, for the ones that are not summed (aura, retaliate).
@@ -820,7 +829,7 @@
     }
     return {
       kind: 'strike', weaponId: w.id, weaponType: w.type, face, motion, ap, stamina, punch, clinchPenalty,
-      natural: !!def.natural, knockdown: trait.knockdown || null, venom: trait.venom || null, rust: trait.rust || null, shieldCrush: !!trait.shieldCrush, web: trait.web || null,
+      natural: !!def.natural, knockdown: trait.knockdown || null, venom: trait.venom || null, sap: trait.sap || null, rust: trait.rust || null, shieldCrush: !!trait.shieldCrush, web: trait.web || null,
       reach: maxRange, minRange, maxRange, closePenalty, ranged, longRange: ranged ? def.ranged.long : null,
       strain: Math.round(strain * 100) / 100, tooHeavy: strain > CONFIG.weaponPhysics.strain.max,
       windUp, damage: weaponDamage(c, w, face, motion), wound: def.wound[face] || null,
@@ -1011,7 +1020,7 @@
     maxStamina, freshStamina, wearyRound, regen, fatiguePenalty, apPool, apScale, costScale, fmtAP, minAP, baseAP, armorAP, quickCut, moveCost, squaresFor, squaresPerAP, handsBusy, castingHands, trinketAP, weaponStrain, inRange, optionKey, needsWindUp, strOffset, staminaCost, effectiveWeight, isLightWeapon,
     strBonus, weaponDamage, mainIndex, attackOptions, actionCost, ammoLeft, tireless, webTax,
     damageAttr, healAttr, totalDamage, updateCondition, isActive, bleedPerRound,
-    gearSources, gearSum, gearMult, gearList, gearAP, weaponStrike, weaponApLess,
+    gearSources, gearSum, gearMult, damageMult, gearList, gearAP, weaponStrike, weaponApLess,
     TREES, ARMOR,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});
