@@ -59,11 +59,19 @@ nothing checked those names (the leg-wound trip read `traits.flier`; the trait i
   - A condition's attribute changes are still read apart from gear's, because gear raises the maximum and a condition
     does not.
 
-## 3. A grapple stored as one link
+## 3. A grapple stored as one link: done
 
-- [ ] Grapples live on the encounter as `{ holder, held, level }` entries (level: clinch or pin). This replaces the
-  five fields spread over two characters (`grappling`, `grappledBy[]`, `clinch`, `pinned`, `grapplingPin`).
-- [ ] The helpers (`holds`, `heldBy`, `release`) are the only code that touches it.
+- [x] Each fighter has `status.grapple = { partner, level: clinch | hold | pin, role: mutual | holder | held }` or
+  null. It replaces five fields spread over the two fighters: `clinch`, `grappling`, `grappledBy[]`, `pinned` and
+  `grapplingPin` (which was missing from `freshStatus`).
+- [x] Only `Combat.setGrapple` writes it, to both fighters at once. Readers ask `Character.grapple/holding/isHeld/
+  isPinned/inClinch`.
+- [x] `Character.normalize` turns an old save's five fields into the link.
+- Departure from the plan: the link lives on each fighter, not on the encounter. The character rules that read it
+  (attack options, defence costs) are handed a character without its encounter, so moving the link there would mean
+  threading the encounter through the Character API. Two mirrored copies written by one function keep the guarantee
+  that mattered: the two sides can't disagree.
+- Checked: the seeded encounter sims give the same results to the digit, the alligators' grapples included.
 
 ## 4. Harm as a list of entries (deferred)
 

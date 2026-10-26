@@ -457,9 +457,9 @@ test('range bands (the user\'s reach): one-handers swing 1 and thrust 2, two-han
   const t = fighter('T');
   const swing = opt(a, (o) => o.motion === 'swing' && o.face === 'edge');
   assert.deepStrictEqual(Combat.computeHit(a, t, swing, { distance: 1 }).vec, [0, 7, 1], 'a sword works at arm\'s length');
-  a.status.clinch = t.id;
+  a.status.grapple = { partner: t.id, level: 'clinch', role: 'mutual' };
   assert.deepStrictEqual(Combat.computeHit(a, t, swing, { distance: 1 }).vec, [0, 0, 4], 'in a clinch it is cramped: 8 force → 4 blunt');
-  a.status.clinch = null;
+  a.status.grapple = null;
   const g = armed('G', 'greatsword');
   const gs = opt(g, (o) => o.motion === 'twoHanded' && o.face === 'edge');
   const full = Combat.computeHit(g, t, gs, { distance: 2 }).vec;
@@ -497,7 +497,7 @@ test('held in a grapple, even a dagger fights cramped', () => {
   const t = fighter('T');
   const th = opt(a, (o) => o.motion === 'thrust');
   const free = Combat.computeHit(a, t, th, { distance: 1 }).vec;
-  a.status.grappledBy = [t.id];
+  a.status.grapple = { partner: t.id, level: 'hold', role: 'held' };
   const held = Combat.computeHit(a, t, th, { distance: 1 }).vec;
   assert.ok(free[0] > 0);
   assert.deepStrictEqual(held, [0, 0, Math.floor(free[0] / 2)]);
@@ -717,15 +717,15 @@ test('grappling is exhausting: costly to start and to keep', async () => {
   const enc = Combat.createEncounter('t', [a.id, t.id], chars, 4, 1);
   enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[t.id] = { x: 1, y: 0 };
   await Combat.startRound(enc, chars, roller(1, [10, 1]));
-  a.status.grappling = t.id; t.status.grappledBy = [a.id];
+  a.status.grapple = { partner: t.id, level: 'hold', role: 'holder' }; t.status.grapple = { partner: a.id, level: 'hold', role: 'held' };
   const before = a.stamina;
   await closeRound(enc, chars);
   assert.ok(a.stamina < before, 'holding costs stamina at the end of the round');
   a.stamina = 1;
   await Combat.startRound(enc, chars, roller(3, [10, 1]));
   await closeRound(enc, chars);
-  assert.strictEqual(a.status.grappling, null, 'too spent to keep the hold');
-  assert.deepStrictEqual(t.status.grappledBy, []);
+  assert.strictEqual(a.status.grapple, null, 'too spent to keep the hold');
+  assert.strictEqual(t.status.grapple, null);
 });
 
 // Two adjacent fighters for grappling tests; rolls come from the queue, attacker first.
@@ -760,17 +760,17 @@ test('grappling ladder: clinch, hold, pin, each a directly opposed roll', async 
   await closeRound(g.enc, g.chars);
   // Clinch: 6+5=11 vs 4+3=7 → win by 4: a clinch, not yet a hold.
   await step(g, 'clinch', [6, 4]);
-  assert.strictEqual(g.a.status.clinch, g.t.id);
-  assert.strictEqual(g.t.status.clinch, g.a.id);
+  assert.deepStrictEqual(g.a.status.grapple, { partner: g.t.id, level: 'clinch', role: 'mutual' });
+  assert.deepStrictEqual(g.t.status.grapple, { partner: g.a.id, level: 'clinch', role: 'mutual' });
   assert.ok(!C.attackOptions(g.t).some((o) => o.motion === 'twoHanded'), 'no two-handed swings in a clinch');
   assert.strictEqual(Combat.legalActions(g.enc, g.chars, g.t.id).move, null, "can't step away without breaking");
   // Grapple: win by 1 → hold.
   await step(g, 'grapple', [3, 4]);
-  assert.strictEqual(g.a.status.grappling, g.t.id);
-  assert.deepStrictEqual(g.t.status.grappledBy, [g.a.id]);
+  assert.strictEqual(C.holding(g.a), g.t.id);
+  assert.deepStrictEqual(g.t.status.grapple, { partner: g.a.id, level: 'hold', role: 'held' });
   // Pin: break score max(STR 6, DEX 5)/2 = 3; 5+5=10 vs 1+3=4.
   await step(g, 'pin', [5, 1]);
-  assert.ok(g.t.status.pinned);
+  assert.ok(C.isPinned(g.t));
   assert.deepStrictEqual(C.attackOptions(g.t), [], 'a pinned fighter can only try to break');
   void la;
 });
@@ -778,11 +778,11 @@ test('grappling ladder: clinch, hold, pin, each a directly opposed roll', async 
 test('grappling: a big win jumps two rungs; a big loss reverses', async () => {
   const g = await grapplePair(null);
   await step(g, 'clinch', [10, 1]); // 15 vs 4: straight to a hold
-  assert.strictEqual(g.a.status.grappling, g.t.id);
+  assert.strictEqual(C.holding(g.a), g.t.id);
   const h = await grapplePair(null);
   await step(h, 'clinch', [6, 4]);
   await step(h, 'grapple', [1, 10]); // 6 vs 13: lose by 7 → they hold you
-  assert.strictEqual(h.t.status.grappling, h.a.id);
+  assert.strictEqual(C.holding(h.t), h.a.id);
 });
 
 test('grappling and armor: plate is easy to grab but hard to throw', async () => {
@@ -790,11 +790,11 @@ test('grappling and armor: plate is easy to grab but hard to throw', async () =>
   const tie = await grapplePair(null);
   await step(tie, 'clinch', [6, 4]);
   await step(tie, 'grapple', [2, 4]); // 7 vs 7
-  assert.ok(!tie.a.status.grappling);
+  assert.ok(!C.holding(tie.a));
   const plate = await grapplePair('plate');
   await step(plate, 'clinch', [6, 4]);
   await step(plate, 'grapple', [2, 4]); // 7 + 2 vs 7
-  assert.strictEqual(plate.a.status.grappling, plate.t.id);
+  assert.strictEqual(C.holding(plate.a), plate.t.id);
   // Throw: grapple score 5 vs 3 + plate footing 2: rolls 4 vs 6 → 9 vs 11, kept.
   const log = await step(plate, 'throw', [4, 6]);
   assert.match(log, /keeps their feet/);
@@ -803,17 +803,17 @@ test('grappling and armor: plate is easy to grab but hard to throw', async () =>
   await step(bare, 'clinch', [10, 1]);
   await step(bare, 'throw', [5, 6]);
   assert.ok(bare.t.status.prone, 'thrown prone');
-  assert.ok(!bare.a.status.grappling, 'the throw ends the grapple');
+  assert.ok(!bare.a.status.grapple && !bare.t.status.grapple, 'the throw ends the grapple');
 });
 
 test('grappling: guards never meet a grapple; pinned armor is pierced', async () => {
   const g = await grapplePair('plate');
   await step(g, 'clinch', [10, 1]);
   await step(g, 'pin', [10, 1]);
-  assert.ok(g.t.status.pinned);
+  assert.ok(C.isPinned(g.t));
   const stab = C.attackOptions(g.a).find((o) => o.motion === 'thrust');
   const pinned = Combat.computeHit(g.a, g.t, stab, { distance: 1 });
-  g.t.status.pinned = false;
+  g.t.status.grapple = Object.assign({}, g.t.status.grapple, { level: 'hold' });
   const held = Combat.computeHit(g.a, g.t, stab, { distance: 1 });
   assert.strictEqual(pinned.pierce, 'gap', 'a pin opens the armor: the point goes in at a gap');
   assert.ok(held.gap && pinned.toCON > held.toCON, 'held but not pinned, it must find one');
@@ -962,7 +962,7 @@ test('wound roll: armor guards the vitals; a vital stab triples its CON damage',
   const v = (t) => Combat.computeHit(a, t, thrust).pierceVital;
   assert.ok(v(naked) > v(mailed) && v(mailed) > v(plated));
   // Pinned: the armor no longer guards the vitals.
-  plated.status.pinned = 'A';
+  plated.status.grapple = { partner: 'A', level: 'pin', role: 'held' };
   assert.strictEqual(v(plated), v(naked));
   // A wound roll of 1 is vital: ×3 CON.
   const t = fighter('T'); t.base.CON = 30; t.stamina = C.maxStamina(t);
@@ -1274,7 +1274,7 @@ test('blink: a caster held in a grapple steps out of it to a square', async () =
   const m = mage('M', ['wind']);
   const g = armed('G', 'dagger', { side: 'enemy' }); g.at = { x: 2, y: 2 };
   const chars = { [m.id]: m, [g.id]: g };
-  m.status.grappledBy = [g.id]; g.status.grappling = m.id;
+  m.status.grapple = { partner: g.id, level: 'hold', role: 'held' }; g.status.grapple = { partner: m.id, level: 'hold', role: 'holder' };
   const enc = Combat.createEncounter('t', [m.id, g.id], chars, 10, 5);
   enc.pos[m.id] = { x: 1, y: 2 }; enc.pos[g.id] = { x: 2, y: 2 };
   await Combat.startRound(enc, chars, roller(1, [9, 1]));
@@ -1284,7 +1284,7 @@ test('blink: a caster held in a grapple steps out of it to a square', async () =
   assert.ok(!la.spells.some((o) => o.spell.shape === 'wall'), 'nothing else while held');
   await B.Magic.resolveCast(enc, chars, { actor: m.id, type: 'cast', option: blink.option || blink, at: { x: 4, y: 0 } }, roller(2, [10]), JSON.parse(JSON.stringify(enc.pos)));
   assert.deepStrictEqual(enc.pos[m.id], { x: 4, y: 0 });
-  assert.ok(!m.status.grappledBy.length && !g.status.grappling);
+  assert.ok(!m.status.grapple && !g.status.grapple);
 });
 
 test('bait leaves a foe off balance; reading intent gives +2 both ways', async () => {
@@ -1578,8 +1578,8 @@ test('golem is immune to magic; a constrictor crushes whoever it holds; fliers p
   victim.side = 'party';
   const chars = { [snake.id]: snake, [victim.id]: victim };
   const enc = Combat.createEncounter('t', Object.keys(chars), chars, 6, 3);
-  snake.status.grappling = victim.id;
-  victim.status.grappledBy = [snake.id];
+  snake.status.grapple = { partner: victim.id, level: 'hold', role: 'holder' };
+  victim.status.grapple = { partner: snake.id, level: 'hold', role: 'held' };
   const st = victim.stamina;
   Combat.endRound(enc, chars);
   assert.ok(victim.stamina <= st - snake.traits.constrict.stamina, 'crushed (a CON wound costs some stamina too)');

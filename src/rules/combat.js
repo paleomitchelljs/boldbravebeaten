@@ -193,7 +193,7 @@
 
   // Melee blows this fighter could aim at a square right now (an opportunity strike).
   function opportunityOptions(enc, chars, f, from) {
-    if (!C.isActive(f) || f.status.prone || isGrappled(f) || f.status.clinch) return [];
+    if (!C.isActive(f) || f.status.prone || isGrappled(f) || C.inClinch(f)) return [];
     const dd = dist(from, enc.pos[f.id]);
     return C.attackOptions(f).filter((o) => !o.ranged && !o.spell && !o.windUp && C.inRange(o, dd) && o.ap <= apLeft(enc, f.id) && !attackUnavailable(enc, f, o));
   }
@@ -304,7 +304,7 @@
   }
 
   function isGrappled(c) {
-    return c.status.grappledBy && c.status.grappledBy.length > 0;
+    return C.isHeld(c);
   }
 
   // Put a weapon in hand. Whatever was in hand is dropped, unless it is very light (a dagger
@@ -384,7 +384,7 @@
 
     // Spells cast at a square, a foe or an ally (bolts are among the attacks above).
     out.spells = [];
-    if (G.Magic && !c.status.pinned) {
+    if (G.Magic && !C.isPinned(c)) {
       for (const opt of G.Magic.spellOptions(c)) {
         if (opt.kind !== 'cast') continue;
         if (!opt.power && !C.castingHands(c)) continue; // spells need a free hand; an item's power doesn't
@@ -419,7 +419,7 @@
     };
     const near = (o) => ({ id: o, inReach: dist(me, enc.pos[o]) <= reach });
     // Trips, disarms and shoves: free, or a trip or disarm from a clinch.
-    if (!c.status.prone && !grappled && !c.status.grappling) {
+    if (!c.status.prone && !grappled && !C.holding(c)) {
       for (const kind of ['shove', 'trip', 'disarm']) {
         if (kind === 'shove' && link) continue;
         let r = reach;
@@ -453,17 +453,17 @@
         }));
       }
     }
-    if (c.status.pinned) {
+    if (C.isPinned(c)) {
       // Pinned: only trying to break free.
       out.maneuvers = out.maneuvers.filter((m) => m.type === 'break');
       return out;
     }
 
     // Moving: not while prone, held or clinched. A holder drags the held fighter one square.
-    if (!c.status.prone && !grappled && !c.status.clinch && fits(C.moveCost(c, 1)) && (!G.Conditions || G.Conditions.canMove(c))) {
+    if (!c.status.prone && !grappled && !C.inClinch(c) && fits(C.moveCost(c, 1)) && (!G.Conditions || G.Conditions.canMove(c))) {
       const spa = C.squaresPerAP(c);
       const cost1 = C.actionCost(c, 'move', { ap: 1 });
-      const drag = !!c.status.grappling;
+      const drag = !!C.holding(c);
       out.move = {
         squaresPerAP: spa, maxAP: ap, stamina: cost1.stamina, from: enc.pos[id],
         maxSquares: drag ? 1 : C.squaresFor(c, ap),
@@ -486,7 +486,7 @@
     if (primary && hands.wield !== primary && !hands.dropped.includes(primary)) addOther('readyPrimary', dropNote);
     if (hands.dropped.length && !declared('pickUp')) addOther('pickUp', dropNote);
     if (hands.wield) addOther('dropWeapon', { note: Items.itemName(heldW) });
-    if (c.status.grappling && !declared('release')) addOther('release');
+    if (C.holding(c) && !declared('release')) addOther('release');
     if (c.status.webbed && !declared('tearFree')) addOther('tearFree', { note: `${c.status.webbed} layer${c.status.webbed > 1 ? 's' : ''}` });
     else if (G.Conditions && !G.Conditions.canMove(c) && !declared('tearFree')) addOther('tearFree', { name: 'Break free', note: 'rooted' });
     // Wind-ups for attacks that need one (power swings, Strong spells).
@@ -550,7 +550,7 @@
   }
 
   function defenseUnavailable(c, kind, attackDecl, chars, enc) {
-    if (c.status.pinned) return 'Pinned';
+    if (C.isPinned(c)) return 'Pinned';
     const winding = c.status.windUp || (enc && enc.decls.some((d) => d.actor === c.id && d.type === 'windUp'));
     if (winding && (CONFIG.windUp.exposed || []).includes(kind)) return 'Winding up';
     const opt = attackDecl ? attackDecl.option : null;
@@ -653,7 +653,7 @@
       const from = enc.pos[id];
       const d = dist(from, decl.to);
       if (d === 0) return { err: 'Pick a different square' };
-      if (c.status.prone || isGrappled(c) || c.status.clinch) return { err: c.status.prone ? 'Prone: stand up first' : 'Held fast' };
+      if (c.status.prone || isGrappled(c) || C.inClinch(c)) return { err: c.status.prone ? 'Prone: stand up first' : 'Held fast' };
       // Walls are walked around; rough ground, brambles and climbing out of a pit cost extra.
       let squares = d;
       if (G.Terrain && enc.tiles) {
@@ -662,7 +662,7 @@
         if (!pc.reaches) return { err: 'No way through' };
         squares = pc.cost;
       }
-      if (c.status.grappling && d > 1) return { err: 'Dragging someone: one square at a time' };
+      if (C.holding(c) && d > 1) return { err: 'Dragging someone: one square at a time' };
       if (enc.ids.some((o) => o !== id && C.isActive(chars[o]) && enc.pos[o].x === decl.to.x && enc.pos[o].y === decl.to.y)) return { err: 'Someone stands there' };
       // Allies can be passed; a foe on the way has to be gone around.
       const route = G.Terrain ? G.Terrain.path(enc, from, decl.to, c) : [decl.to];
@@ -732,7 +732,7 @@
     const a = chars[d.actor];
     if (!payStamina(enc, a, d.stamina)) return;
     const state = { provoked: {}, within: {} };
-    const dragged = a.status.grappling ? chars[a.status.grappling] : null;
+    const dragged = C.holding(a) ? chars[C.holding(a)] : null;
     const steps = dragged ? [d.to] : G.Terrain ? G.Terrain.path(enc, enc.pos[a.id], d.to, a) : [d.to];
     let walked = 0, why = '';
     for (const q of steps) {
@@ -819,7 +819,7 @@
     const st = target.status;
     const prone = st.prone;
     // A paralyzed body (helpless) gives up its gaps as a pinned one does.
-    const pinned = !!st.pinned || !!(G.Effects.has(target, 'helpless'));
+    const pinned = C.isPinned(target) || G.Effects.has(target, 'helpless');
     if (!flags.carried && isCramped(attacker, option, flags.distance)) {
       if (CONFIG.range.closeRule === 'blunt') {
         const total = v[0] + v[1] + v[2];
@@ -900,7 +900,7 @@
   // the blow lands as a fraction of its force, all blunt (pommel, haft, guard).
   function isCramped(attacker, option, distance) {
     return !!((distance === 1 && option.closePenalty) ||
-      (option.clinchPenalty && attacker.status && attacker.status.clinch && (distance == null || distance <= 1)) ||
+      (option.clinchPenalty && attacker.status && C.inClinch(attacker) && (distance == null || distance <= 1)) ||
       (CONFIG.grappledWeaponsCramped && option.weaponId && !option.ranged && isGrappled(attacker)));
   }
 
@@ -1577,41 +1577,26 @@
   }
 
   // ---- Grappling ladder -----------------------------------------------------
-  // State lives on both fighters: a clinch is status.clinch on each; a hold is the holder's
-  // status.grappling and the held fighter's status.grappledBy; a pin adds status.pinned.
-  function linkOf(c) {
-    const st = c.status;
-    if (st.clinch) return { partner: st.clinch, level: 'clinch', role: 'mutual' };
-    if (st.grappling) return { partner: st.grappling, level: st.grappling && st.grapplingPin ? 'pin' : 'hold', role: 'holder' };
-    if (st.grappledBy && st.grappledBy.length) return { partner: st.grappledBy[0], level: st.pinned ? 'pin' : 'hold', role: 'held' };
-    return null;
-  }
+  // One link on each fighter (Character.grapple): { partner, level: clinch | hold | pin, role: mutual | holder | held }.
+  // Only setGrapple writes it, to both at once, so the two sides always agree.
+  const linkOf = (c) => C.grapple(c);
 
   // Set the grapple between a and b. level: null (free), 'clinch', 'hold' or 'pin'; for a hold
   // or pin, a is the holder.
   function setGrapple(chars, a, b, level) {
     for (const c of [a, b]) {
       const L = linkOf(c);
-      if (L && chars[L.partner] && ![a.id, b.id].includes(L.partner)) clearGrapple(chars, c);
+      if (L && ![a.id, b.id].includes(L.partner)) clearGrapple(chars, c);
     }
-    for (const [x, y] of [[a, b], [b, a]]) {
-      x.status.clinch = null;
-      if (x.status.grappling === y.id) { x.status.grappling = null; x.status.grapplingPin = false; }
-      x.status.grappledBy = x.status.grappledBy.filter((g) => g !== y.id);
-      x.status.pinned = false;
-    }
-    if (level === 'clinch') { a.status.clinch = b.id; b.status.clinch = a.id; }
-    if (level === 'hold' || level === 'pin') {
-      a.status.grappling = b.id;
-      b.status.grappledBy = [a.id];
-      if (level === 'pin') { b.status.pinned = true; a.status.grapplingPin = true; }
-    }
+    a.status.grapple = level ? { partner: b.id, level, role: level === 'clinch' ? 'mutual' : 'holder' } : null;
+    b.status.grapple = level ? { partner: a.id, level, role: level === 'clinch' ? 'mutual' : 'held' } : null;
   }
 
   function clearGrapple(chars, c) {
     const L = linkOf(c);
-    if (L && chars[L.partner]) setGrapple(chars, c, chars[L.partner], null);
-    c.status.clinch = null; c.status.grappling = null; c.status.grappledBy = []; c.status.pinned = false; c.status.grapplingPin = false;
+    const p = L && chars[L.partner];
+    if (p && linkOf(p) && linkOf(p).partner === c.id) p.status.grapple = null;
+    c.status.grapple = null;
   }
   const releaseGrapples = clearGrapple;
 
@@ -2023,8 +2008,8 @@
         break;
       }
       case 'release':
-        if (a.status.grappling && chars[a.status.grappling]) {
-          setGrapple(chars, a, chars[a.status.grappling], null);
+        if (C.holding(a) && chars[C.holding(a)]) {
+          setGrapple(chars, a, chars[C.holding(a)], null);
           log(enc, `${a.name} lets go.`);
         }
         break;
@@ -2268,7 +2253,7 @@
     for (const id of enc.ids) {
       const c = chars[id];
       const K = c && c.traits && c.traits.constrict;
-      const held = K && C.isActive(c) && c.status.grappling ? chars[c.status.grappling] : null;
+      const held = K && C.isActive(c) && C.holding(c) ? chars[C.holding(c)] : null;
       if (!held || held.status.dead) continue;
       if (K.stamina && !C.tireless(held)) held.stamina = Math.max(0, held.stamina - K.stamina);
       if (K.con) C.damageAttr(held, 'CON', K.con);
@@ -2344,11 +2329,11 @@
       if (c.status.webbed && CONFIG.web && CONFIG.web.wearOff) c.status.webbed = Math.max(0, c.status.webbed - CONFIG.web.wearOff);
       // Holding someone is exhausting: pay the upkeep or let go.
       const G2 = CONFIG.grappling;
-      if (c.status.grappling && G2 && G2.holdUpkeep && !c.status.unconscious) {
+      if (C.holding(c) && G2 && G2.holdUpkeep && !c.status.unconscious) {
         const cost = G2.holdUpkeep * (CONFIG.staminaScale || 1);
         if (c.stamina > cost) {
           c.stamina -= cost;
-          log(enc, `${c.name} spends ${cost} stamina holding ${chars[c.status.grappling] ? chars[c.status.grappling].name : 'their foe'}.`);
+          log(enc, `${c.name} spends ${cost} stamina holding ${chars[C.holding(c)] ? chars[C.holding(c)].name : 'their foe'}.`);
         } else {
           clearGrapple(chars, c);
           log(enc, `${c.name} is too spent to keep the hold and lets go.`, 'fizzle');
@@ -2378,11 +2363,7 @@
       if (c.conjured) { delete chars[id]; continue; }
       c.status.prone = false;
       c.status.windUp = null;
-      c.status.grappling = null;
-      c.status.grappledBy = [];
-      c.status.clinch = null;
-      c.status.pinned = false;
-      c.status.grapplingPin = false;
+      c.status.grapple = null;
       c.status.webbed = 0;
       // Diseases and the like outlast the fight; everything else ends with it.
       c.status.conds = (c.status.conds || []).filter((x) => (CONFIG.conditions[x.key] || {}).persist);

@@ -9,7 +9,7 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 - [x] 2. One effect lookup, `Effects.sum/mult/has/list` over traits, gear, conditions and feats (b18e704).
   - Data renames: `regen`→`regrow` (monster), condition `resist`→`resistedBy`, `nimble`→`dodge`, gear `apMult`→`costMult`.
   - `magicImmune` became the keyword `magic`.
-- [ ] 3. A grapple stored as one link on the encounter.
+- [x] 3. A grapple stored as one link, `status.grapple` on each fighter, written only by `setGrapple` (see TODO-FIXES for why not on the encounter).
 - [ ] 4. Harm as a list of entries (deferred until a new damage destination or a keyword boost).
 - [ ] 5. Save versions with step-by-step upgrades; one supplies pool. Old saves still need the renames above mapped
   (a saved trinket carries its `effects`, so a sash in an old save still says `apMult`).

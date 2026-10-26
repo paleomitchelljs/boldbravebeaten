@@ -57,12 +57,22 @@
   }
 
   function freshStatus() {
-    return { prone: false, grappledBy: [], grappling: null, clinch: null, pinned: false, webbed: 0, unconscious: false, dead: false, dropped: [], windUp: null, conds: [] };
+    return { prone: false, grapple: null, webbed: 0, unconscious: false, dead: false, dropped: [], windUp: null, conds: [] };
   }
 
   // Bring older saves up to the current shape.
   function normalize(c) {
     c.status = Object.assign(freshStatus(), c.status || {});
+    // A grapple used to be five fields over the two fighters (clinch, grappling, grappledBy, pinned, grapplingPin).
+    const st = c.status;
+    if ('grappledBy' in st || 'grappling' in st || 'clinch' in st) {
+      if (!st.grapple) {
+        if (st.clinch) st.grapple = { partner: st.clinch, level: 'clinch', role: 'mutual' };
+        else if (st.grappling) st.grapple = { partner: st.grappling, level: st.grapplingPin ? 'pin' : 'hold', role: 'holder' };
+        else if (st.grappledBy && st.grappledBy.length) st.grapple = { partner: st.grappledBy[0], level: st.pinned ? 'pin' : 'hold', role: 'held' };
+      }
+      for (const k of ['clinch', 'grappling', 'grappledBy', 'pinned', 'grapplingPin']) delete st[k];
+    }
     // Weapons on the ground used to be a single id (and the wield pointer stayed on it).
     if (!Array.isArray(c.status.dropped)) c.status.dropped = c.status.dropped ? [c.status.dropped] : [];
     if (c.wield != null && c.status.dropped.includes(c.wield)) c.wield = null;
@@ -101,6 +111,29 @@
       t.at = fits.find((id) => !(c.trinkets || []).some((x) => x.at === id)) || fits[0] || t.slot;
     }
     return c;
+  }
+
+  // ---- Grapples -----------------------------------------------------------
+  // One link per fighter: status.grapple = { partner, level: clinch | hold | pin, role: mutual | holder | held },
+  // or null. Only Combat.setGrapple writes it, to both fighters at once.
+  function grapple(c) {
+    return (c.status && c.status.grapple) || null;
+  }
+  function holding(c) {
+    const L = grapple(c);
+    return L && L.role === 'holder' ? L.partner : null;
+  }
+  function isHeld(c) {
+    const L = grapple(c);
+    return !!L && L.role === 'held';
+  }
+  function isPinned(c) {
+    const L = grapple(c);
+    return !!L && L.role === 'held' && L.level === 'pin';
+  }
+  function inClinch(c) {
+    const L = grapple(c);
+    return !!L && L.level === 'clinch';
   }
 
   // ---- Feats -------------------------------------------------------------
@@ -637,9 +670,9 @@
     // Holding or held: only grapple-usable weapons (a dagger) and no two-handed blows. In a clinch
     // long weapons are merely cramped (range 1), but there's no room to swing two-handed or shoot.
     // Pinned: nothing but trying to break free.
-    const grappling = !!st.grappling || (st.grappledBy && st.grappledBy.length > 0);
-    const tangled = grappling || !!st.clinch;
-    if (st.pinned) return opts;
+    const grappling = !!holding(c) || isHeld(c);
+    const tangled = !!grapple(c);
+    if (isPinned(c)) return opts;
     const w = wieldedWeapon(c);
     if (w) {
       const def = Items.weaponStats(w);
@@ -858,7 +891,7 @@
     const a = ACTIONS[kind];
     const S = costScale();
     let ap = baseAP(a.ap), red = 0, quick = null, stBase = a.stamina;
-    const grappled = st.grappledBy && st.grappledBy.length > 0;
+    const grappled = isHeld(c);
     switch (kind) {
       case 'block': {
         const s = shieldInfo(c);
@@ -998,6 +1031,7 @@
     maxStamina, freshStamina, wearyRound, regen, fatiguePenalty, apPool, apScale, costScale, fmtAP, minAP, baseAP, armorAP, quickCut, moveCost, squaresFor, squaresPerAP, handsBusy, castingHands, weaponStrain, inRange, optionKey, needsWindUp, strOffset, staminaCost, effectiveWeight, isLightWeapon,
     strBonus, weaponDamage, mainIndex, attackOptions, actionCost, ammoLeft, tireless, webTax,
     damageAttr, healAttr, totalDamage, updateCondition, isActive, bleedPerRound,
+    grapple, holding, isHeld, isPinned, inClinch,
     gearSources, gearSum, damageMult, gearAP, weaponStrike, weaponApLess,
     TREES, ARMOR,
   };

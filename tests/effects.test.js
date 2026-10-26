@@ -82,3 +82,14 @@ test('lookup: a frost ward halves a fire bolt through the resist keyword; magic:
   t.traits = { resist: { magic: 0 } };
   assert.ok(B.Combat.computeHit(a, t, bolt, {}).magicImmune);
 });
+
+test('grapple: one link per fighter, written to both at once; an old save\'s five fields become it', () => {
+  const a = C.newCharacter({ name: 'A', starterGear: false }), t = C.newCharacter({ name: 'T', side: 'enemy', starterGear: false });
+  assert.equal(a.status.grapple, null);
+  assert.ok(!('grappledBy' in a.status) && !('pinned' in a.status));
+  const old = { status: { grappling: null, grappledBy: ['X'], clinch: null, pinned: true, grapplingPin: false } };
+  C.normalize(old);
+  assert.deepEqual(old.status.grapple, { partner: 'X', level: 'pin', role: 'held' });
+  assert.ok(!('grappledBy' in old.status));
+  assert.ok(C.isPinned(old) && C.isHeld(old) && !C.holding(old));
+});
