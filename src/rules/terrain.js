@@ -64,7 +64,7 @@
   // Fliers (trait flying) pass over ground, pits, traps and hazards, and over walls that
   // aren't solid; solid walls still stop them.
   function flies(c) {
-    return !!(c && c.traits && c.traits.flying);
+    return !!(c && G.Effects.has(c, 'flying'));
   }
 
   // Can this character end a move here? A flier may hang over deep water.
@@ -73,7 +73,7 @@
   }
 
   function stepCost(enc, x, y, c) {
-    if (flies(c) || (c && G.Conditions && G.Conditions.flag(c, 'freedom'))) return 1;
+    if (flies(c) || (c && G.Effects.has(c, 'freedom'))) return 1;
     return 1 + at(enc, x, y).reduce((t, f) => t + (def(f).cost || 0), 0);
   }
 
@@ -150,7 +150,7 @@
   function pathCost(enc, from, to, c) {
     const steps = path(enc, from, to, c);
     let cost = 0;
-    let climbing = has(enc, from.x, from.y, 'pit') && !(c && G.Conditions && G.Conditions.flag(c, 'freedom'));
+    let climbing = has(enc, from.x, from.y, 'pit') && !(c && G.Effects.has(c, 'freedom'));
     for (const q of steps) {
       cost += stepCost(enc, q.x, q.y, c) + (climbing ? T().climbCost : 0);
       climbing = false;
@@ -204,7 +204,7 @@
   // ground's blow. Returns true if the move ends here.
   async function enter(enc, chars, c, x, y, roller, log) {
     if (flies(c)) return !C().isActive(c) || (G.Conditions && !G.Conditions.canMove(c));
-    const free = G.Conditions && G.Conditions.flag(c, 'freedom');
+    const free = G.Effects.has(c, 'freedom');
     for (const f of at(enc, x, y).slice()) {
       const d = def(f);
       if (d.rune && f.side !== c.side) {

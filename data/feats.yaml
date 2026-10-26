@@ -1,6 +1,8 @@
 # Feat trees. A feat has ranks (novice to master), requires (a list of alternatives; each alternative is a list of
 # "feat:rank" that must all hold), an effect line, and auto: true when the engine implements it
-# (auto: false feats are recorded on the sheet but have no effect yet).
+# (auto: false feats are recorded on the sheet but have no effect yet). A feat that is only a number declares it in
+# `effects`, per rank, with the keys monsters' traits and gear use (src/rules/effects.js): `effects: {dodge: 1}` is
+# +1 to dodge at each rank. Feats that are their own maneuver are written in the rules code.
 
 - id: conditioning
   name: Conditioning
@@ -91,6 +93,7 @@
       ranks: [novice, apprentice, adept]
       requires: []
       effect: "+1 grapple checks per rank"
+      effects: {grip: 1}
       auto: true
     pin:
       name: Pin
@@ -155,12 +158,14 @@
       ranks: [novice, apprentice, adept, expert, master]
       requires: []
       effect: Your blows can't be read by Read Attack below your rank; they defend blind, and a wrong guess is wasted
+      effects: {feint: 1}
       auto: true
     parry_training:
       name: Parry Training
       ranks: [novice, apprentice, adept]
       requires: []
       effect: "+parry success per rank"
+      effects: {parry: 1}
       auto: true
     quick_parry:
       name: Quick Parry
@@ -331,6 +336,7 @@
       ranks: [novice, apprentice, adept]
       requires: []
       effect: "+block success per rank"
+      effects: {block: 1}
       auto: true
     quick_block:
       name: Quick Block
@@ -395,6 +401,7 @@
       ranks: [novice, apprentice, adept]
       requires: []
       effect: "+dodge success per rank"
+      effects: {dodge: 1}
       auto: true
     quick_dodge:
       name: Quick Dodge
@@ -529,6 +536,7 @@
       ranks: [novice, apprentice, adept, expert, master]
       requires: []
       effect: See through Feint of equal or lower rank
+      effects: {readAttack: 1}
       auto: true
     keen_eye:
       name: Keen Eye

@@ -82,7 +82,7 @@
       const c = chars[id];
       if (!c || !C.isActive(c) || !enc.pos[id]) continue;
       // A creature's own aura, and any its gear gives (a mail that breathes poison).
-      for (const A of [c.traits && c.traits.aura].concat(C.gearList(c, 'aura')).filter(Boolean)) await aura(enc, chars, c, A, roller);
+      for (const A of G.Effects.list(c, 'aura')) await aura(enc, chars, c, A, roller);
     }
   }
 
@@ -121,7 +121,7 @@
     for (const id of active) {
       const c = chars[id];
       const spd = C.combatAttr(c, 'SPD');
-      const gear = C.gearSum(c, 'init');
+      const gear = G.Effects.sum(c, 'init');
       const r = await rollDie(roller, id, CONFIG.initiativeDie, 'Initiative', `d${CONFIG.initiativeDie} + SPD ${spd}${gear ? ` + ${gear} (gear)` : ''}`);
       enc.initiative[id] = r + spd + gear;
     }
@@ -352,7 +352,7 @@
     for (const o of out.attacks) if (mark(o, { type: 'strike' })) for (const t of o.targets) if (no({ type: 'strike', target: t.id })) t.inReach = false;
     for (const m of out.maneuvers) if (mark(m, { type: m.type })) for (const t of m.targets) if (no({ type: m.type, target: t.id })) t.inReach = false;
     for (const o of out.spells || []) if (mark(o, { type: 'cast', option: o })) for (const t of o.targets || []) if (no({ type: 'cast', option: o, target: t.id })) t.inReach = false;
-    if (G.Conditions.flag(c, 'noAct')) { out.move = null; for (const o of out.other) o.affordable = false; }
+    if (G.Effects.has(c, 'noAct')) { out.move = null; for (const o of out.other) o.affordable = false; }
     return out;
   }
 
@@ -414,7 +414,7 @@
     const pushManeuver = (kind, targets) => {
       const cost = C.actionCost(c, kind);
       // Nothing to grab, trip or shove on the incorporeal (bait and reading still work).
-      if (kind !== 'bait' && kind !== 'readIntent') for (const t of targets) if (chars[t.id] && chars[t.id].traits && chars[t.id].traits.incorporeal) t.inReach = false;
+      if (kind !== 'bait' && kind !== 'readIntent') for (const t of targets) if (chars[t.id] && G.Effects.has(chars[t.id], 'incorporeal')) t.inReach = false;
       out.maneuvers.push({ type: kind, ap: cost.ap, stamina: cost.stamina, affordable: can(cost.ap) && targets.some((t) => t.inReach), targets });
     };
     const near = (o) => ({ id: o, inReach: dist(me, enc.pos[o]) <= reach });
@@ -579,7 +579,7 @@
   // What a condition forbids this declaration (calmed, mesmerized, enraged, frightened, blind).
   function conditionForbids(enc, chars, c, decl) {
     if (!G.Conditions) return null;
-    const F = (f) => G.Conditions.flag(c, f);
+    const F = (f) => G.Effects.has(c, f);
     if (F('noAct') && decl.type !== 'endTurn' && decl.type !== 'concede') return G.Conditions.has(c, 'paralyzed') ? 'Paralyzed' : 'Mesmerized';
     const attack = decl.type === 'strike' || (ATTACK_TYPES.includes(decl.type) && decl.type !== 'strike') || (decl.type === 'cast' && decl.option && decl.option.target === 'foe');
     if (attack && F('noAttack')) return 'Calmed: won\'t attack';
@@ -596,7 +596,7 @@
 
   // An unseen character (Bless + Veil, a veiling circlet) can't be picked out by a foe farther than arm's reach.
   function unseenBy(enc, chars, t, viewer) {
-    if (!G.Conditions || !t || !viewer || t.side === viewer.side || !G.Conditions.flag(t, 'unseen')) return false;
+    if (!G.Conditions || !t || !viewer || t.side === viewer.side || !G.Effects.has(t, 'unseen')) return false;
     if (!enc.pos[t.id] || !enc.pos[viewer.id]) return false;
     return dist(enc.pos[t.id], enc.pos[viewer.id]) > 1;
   }
@@ -769,7 +769,7 @@
     const t = d.target ? chars[d.target] : null;
     const tn = t ? t.name : '';
     if (d.type === 'strike') {
-      const hidden = viewerId !== d.actor && C.rank(a, 'feint') > (viewerId ? C.rank(chars[viewerId], 'read_attack') : 0);
+      const hidden = viewerId !== d.actor && G.Effects.sum(a, 'feint') > (viewerId ? G.Effects.sum(chars[viewerId], 'readAttack') : 0);
       if (hidden) return { text: `${a.name}: strike at ${tn}`, hidden: true };
       const w = d.option.weaponId ? a.weapons.find((x) => x.id === d.option.weaponId) : null;
       return { text: `${a.name}: ${d.option.label}${w ? ' — ' + Items.itemName(w) : ''} at ${tn} [${C.fmtAP(d.ap)} AP]` };
@@ -792,18 +792,24 @@
   }
 
   function passesThrough(attacker, target, option) {
-    return !!(target.traits && target.traits.incorporeal && !option.spell && !magicalWeapon(attacker, option));
+    return !!(G.Effects.has(target, 'incorporeal') && !option.spell && !magicalWeapon(attacker, option));
+  }
+
+  // A hit result that does nothing (the base the special cases fill in).
+  function blankHit() {
+    return { vec: [0, 0, 0], P: 0, S: 0, B: 0, armored: false, toCON: 0, slashToAttrs: 0, bluntToStamina: 0, bluntToCON: 0, converted: 0, durLoss: 0, mitigated: { P: 0, S: 0, B: 0 }, noBleed: true, pierceVital: 0, cutVital: 0, bleedFactor: 1, bleedRounds: CONFIG.bleedRounds };
+  }
+
+  // What a spell of some element does to the target: its element's keyword times `magic` (every spell).
+  function spellMult(target, el) {
+    return C.damageMult(target, el) * C.damageMult(target, 'magic');
   }
 
   function computeHit(attacker, target, option, flags) {
     flags = flags || {};
-    // Immune to magic (a stone golem): spells wash off it.
-    if (option.spell && target.traits && target.traits.magicImmune) {
-      return { vec: [0, 0, 0], P: 0, S: 0, B: 0, armored: false, toCON: 0, slashToAttrs: 0, bluntToStamina: 0, bluntToCON: 0, converted: 0, durLoss: 0, mitigated: { P: 0, S: 0, B: 0 }, noBleed: true, pierceVital: 0, cutVital: 0, bleedFactor: 1, bleedRounds: CONFIG.bleedRounds, magicImmune: true };
-    }
-    // Immune to the spell's element (resist 0 for its keyword: a golem and mind or life magic).
-    if (option.spell && C.damageMult(target, option.spell.element) === 0) {
-      return { vec: [0, 0, 0], P: 0, S: 0, B: 0, armored: false, toCON: 0, slashToAttrs: 0, bluntToStamina: 0, bluntToCON: 0, converted: 0, durLoss: 0, mitigated: { P: 0, S: 0, B: 0 }, noBleed: true, pierceVital: 0, cutVital: 0, bleedFactor: 1, bleedRounds: CONFIG.bleedRounds, magicImmune: true };
+    // Immune to the spell (resist 0 for its element, or for `magic`, every spell: a golem and mind or life magic).
+    if (option.spell && spellMult(target, option.spell.element) === 0) {
+      return Object.assign(blankHit(), { magicImmune: true });
     }
     if (option.spell && CONFIG.magic.energyMitigation && CONFIG.magic.energyMitigation[option.spell.element] != null) return computeFire(attacker, target, option, flags);
     if (option.spell && option.spell.element === 'life') return computeLife(attacker, target, option, flags);
@@ -813,7 +819,7 @@
     const st = target.status;
     const prone = st.prone;
     // A paralyzed body (helpless) gives up its gaps as a pinned one does.
-    const pinned = !!st.pinned || !!(G.Conditions && G.Conditions.flag(target, 'helpless'));
+    const pinned = !!st.pinned || !!(G.Effects.has(target, 'helpless'));
     if (!flags.carried && isCramped(attacker, option, flags.distance)) {
       if (CONFIG.range.closeRule === 'blunt') {
         const total = v[0] + v[1] + v[2];
@@ -829,7 +835,7 @@
       // Resistances by damage keyword (C.damageMult): piercing, slashing and blunt, e.g. a skeleton takes no
       // piercing and half slashing; only blunt breaks bones cleanly. A spell's blow also answers to its element.
       ['P', 'S', 'B'].forEach((k, i) => { const m = C.damageMult(target, k); if (m !== 1) v[i] = Math.floor(v[i] * m); });
-      if (option.spell) { const m = C.damageMult(target, option.spell.element); if (m !== 1) for (let i = 0; i < 3; i++) v[i] = Math.floor(v[i] * m); }
+      if (option.spell) { const m = spellMult(target, option.spell.element); if (m !== 1) for (let i = 0; i < 3; i++) v[i] = Math.floor(v[i] * m); }
     }
     // Stoneskin, barkskin, a shield of force: protection that isn't armor.
     if (G.Conditions) ['P', 'S', 'B'].forEach((k, i) => { v[i] = Math.max(0, v[i] - G.Conditions.mitigation(target, k, attacker)); });
@@ -1014,7 +1020,7 @@
       res.bluntToCON += res.bluntToStamina;
       res.bluntToStamina = 0;
       res.noBleed = true;
-    } else if (target.traits && target.traits.noBleed) res.noBleed = true;
+    } else if (G.Effects.has(target, 'noBleed')) res.noBleed = true;
     // Wound roll odds (CONFIG.vital): deep points find vital spots; armor guards them.
     const w = option.wound;
     res.pierceVital = 0;
@@ -1049,10 +1055,10 @@
     const M = CONFIG.magic;
     let mag = option.spell.magnitude;
     if (flags.half) mag = Math.floor(mag / 2);
-    // Resisting the element (a mail that shrugs off fire: effects.resist; a golem's traits.resist).
-    const gr = C.damageMult(target, option.spell.element);
+    // Resisting the element (a mail that shrugs off fire, a frost ward, a golem; `magic` for every spell).
+    const gr = spellMult(target, option.spell.element);
     if (gr !== 1) mag = Math.floor(mag * gr);
-    const res = { vec: [0, 0, 0], P: 0, S: 0, B: 0, fire: mag, armored: false, toCON: 0, slashToAttrs: 0, bluntToStamina: 0, bluntToCON: 0, converted: 0, durLoss: 0, mitigated: { P: 0, S: 0, B: 0 }, noBleed: true, pierceVital: 0, cutVital: 0, bleedFactor: 1, bleedRounds: CONFIG.bleedRounds };
+    const res = Object.assign(blankHit(), { fire: mag });
     const unconscious = target.stamina <= 0;
     let left = mag;
     const el = option.spell.element;
@@ -1066,12 +1072,11 @@
     }
     // Light and spirit sear the undead; spirit only chills the living (half, to stamina).
     const bane = (M.undeadBane || {})[el];
-    if (bane && target.traits && target.traits.undead) left *= bane;
-    if (el === 'spirit' && !(target.traits && target.traits.undead)) {
+    if (bane && G.Effects.has(target, 'undead')) left *= bane;
+    if (el === 'spirit' && !G.Effects.has(target, 'undead')) {
       res.bluntToStamina = Math.floor(left / 2);
       return res;
     }
-    if (el === 'shadow' && G.Conditions && G.Conditions.flag(target, 'halveShadow')) left = Math.floor(left / 2);
     if (unconscious) res.toCON = left;
     else {
       res.toCON = Math.floor(left / M.fireConPer);
@@ -1085,8 +1090,8 @@
   function computeLife(attacker, target, option, flags) {
     let mag = option.spell.magnitude;
     if (flags.half) mag = Math.floor(mag / 2);
-    mag = Math.floor(mag * C.damageMult(target, 'life'));
-    const res = { vec: [0, 0, 0], P: 0, S: 0, B: 0, armored: false, toCON: 0, slashToAttrs: 0, bluntToStamina: 0, bluntToCON: 0, converted: 0, durLoss: 0, mitigated: { P: 0, S: 0, B: 0 }, noBleed: true, pierceVital: 0, cutVital: 0, bleedFactor: 1, bleedRounds: CONFIG.bleedRounds };
+    mag = Math.floor(mag * spellMult(target, 'life'));
+    const res = blankHit();
     if (!C.tireless(target)) res.toCON = Math.floor(mag / 2);
     return res;
   }
@@ -1106,8 +1111,7 @@
   function bodyBlow(target, option) {
     if (!option.spell) return true;
     const el = option.spell.element;
-    if (target.traits && target.traits.magicImmune) return false;
-    if (C.damageMult(target, el) === 0) return false;
+    if (spellMult(target, el) === 0) return false;
     if (CONFIG.magic.energyMitigation && CONFIG.magic.energyMitigation[el] != null) return false;
     return el !== 'life';
   }
@@ -1163,7 +1167,7 @@
         if (w) parts.push(`${target.name}'s hand opens: ${Items.itemName(w)} falls`);
       }
     }
-    if (fx.trip && wound > 0 && !target.status.prone && !(target.traits && target.traits.flying)) {
+    if (fx.trip && wound > 0 && !target.status.prone && !G.Effects.has(target, 'flying')) {
       if (await roll(chance(fx.trip, wound), `${target.name}: keep footing`)) {
         knockDown(enc, target);
         parts.push(`${target.name}'s leg gives: down`);
@@ -1429,7 +1433,7 @@
       if (kind === 'block' && S && (S.covers || []).includes(aim)) m.def += S.block || 0;
     }
     // Gear that guides the blow (effects.hit); a blow from someone unseen is hard to meet.
-    if (attacker) m.atk += C.gearSum(attacker, 'hit') + (G.Conditions && G.Conditions.flag(attacker, 'unseen') ? 2 : 0);
+    if (attacker) m.atk += G.Effects.sum(attacker, 'hit') + (G.Effects.has(attacker, 'unseen') ? 2 : 0);
     r.bonus += m.def;
     if (r.opposed) r.attack += m.atk;
     else r.tn += m.atk;
@@ -1442,19 +1446,19 @@
     if (kind === 'block' && D.block.opposed) {
       // Contested: d10 + Shield Training + the shield's size + ⌊(STR + DEX)/4⌋ (bracing) against the blow.
       const size = defender.shield && D.block.bySize ? D.block.bySize[defender.shield.size] || 0 : 0;
-      const bonus = C.rank(defender, 'shield_training') + size + Math.floor((C.attr(defender, 'STR') + C.combatAttr(defender, 'DEX')) / 4);
+      const bonus = G.Effects.sum(defender, 'block') + size + Math.floor((C.attr(defender, 'STR') + C.combatAttr(defender, 'DEX')) / 4);
       return { bonus, attack: strikeBonus() + (D.motionPenalty[motion] || 0), opposed: true };
     }
     if (kind === 'block') {
       let tn = D.block.tn;
       const bySize = D.block.tnBySize;
       if (bySize && defender.shield && bySize[defender.shield.size] != null) tn = bySize[defender.shield.size];
-      return { bonus: C.rank(defender, 'shield_training'), tn };
+      return { bonus: G.Effects.sum(defender, 'block'), tn };
     }
     const parry = kind === 'parry' || kind === 'offParry';
     if (D.opposed) {
       const agile = Math.floor((C.combatAttr(defender, 'DEX') + C.combatAttr(defender, 'SPD')) / 4);
-      let bonus = agile + (parry ? C.rank(defender, 'parry_training') : C.rank(defender, 'dodge_training') + ((defender.traits && defender.traits.nimble) || 0) + (D.dodgeBonus || 0));
+      let bonus = agile + (parry ? G.Effects.sum(defender, 'parry') : G.Effects.sum(defender, 'dodge') + (D.dodgeBonus || 0));
       if (kind === 'offParry') bonus += D.offhandBonus || 0;
       let atk = D.motionPenalty[motion] || 0;
       if (parry && D.parryForce) {
@@ -1478,10 +1482,10 @@
     }
     let bonus = 0, tn = D[parry ? 'parry' : kind].tn;
     if (parry) {
-      bonus = C.rank(defender, 'parry_training') + half(C.combatAttr(defender, 'DEX'));
+      bonus = G.Effects.sum(defender, 'parry') + half(C.combatAttr(defender, 'DEX'));
       tn += D.motionPenalty[motion] || 0;
     } else {
-      bonus = C.rank(defender, 'dodge_training') + half(C.combatAttr(defender, 'SPD')) - C.armorInfo(defender).dex + ((defender.traits && defender.traits.nimble) || 0);
+      bonus = G.Effects.sum(defender, 'dodge') + half(C.combatAttr(defender, 'SPD')) - C.armorInfo(defender).dex;
       tn += D.motionPenalty[motion] || 0;
     }
     return { bonus, tn };
@@ -1614,7 +1618,7 @@
   // d10 + this for clinching, grappling, pinning and throwing.
   function grappleScore(c) {
     // grip: a giant's hand closes around a man (monster trait).
-    return Math.floor(C.attr(c, 'STR') / 2) + C.rank(c, 'grappler') + ((c.traits && c.traits.grip) || 0);
+    return Math.floor(C.attr(c, 'STR') / 2) + G.Effects.sum(c, 'grip');
   }
 
   // d10 + this for breaking a clinch, hold or pin.
@@ -1624,7 +1628,7 @@
 
   // Monster trait: slick-skinned creatures (bogfolk) are hard to get a grip on.
   function slippery(c) {
-    return (c.traits && c.traits.slippery) || 0;
+    return G.Effects.sum(c, 'slippery');
   }
 
   // Allies next to the target add to the attacker's grapple rolls.
@@ -1874,8 +1878,9 @@
       }
       if (d.type === 'strike') {
         const half = failedDodge && C.rank(t, 'roll_with_it');
-        const pack = a.traits && a.traits.pack
-          ? Math.min(a.traits.pack, enc.ids.filter((o) => o !== a.id && o !== t.id && chars[o].side === a.side && C.isActive(chars[o]) && dist(posAtStart[o], posAtStart[t.id]) <= 1).length)
+        const packN = G.Effects.sum(a, 'pack');
+        const pack = packN
+          ? Math.min(packN, enc.ids.filter((o) => o !== a.id && o !== t.id && chars[o].side === a.side && C.isActive(chars[o]) && dist(posAtStart[o], posAtStart[t.id]) <= 1).length)
           : 0;
         // A ward meets spells and missiles first.
         let hitOpt = d.option;
@@ -1893,7 +1898,7 @@
         const fx = blade ? C.weaponStrike(blade) : {};
         // Worn bane gear (gauntlets that slay dragons: effects.slay) counts for any blow but a spell or an arrow.
         const gearSlay = d.option.spell || d.option.ranged ? [] : C.gearSources(a).flatMap((x) => x.effects.slay || []);
-        const slay = (fx.slay || []).concat(gearSlay).filter((x) => t.traits && t.traits[x.trait]).reduce((n, x) => n + (x.damage || 0), 0);
+        const slay = (fx.slay || []).concat(gearSlay).filter((x) => G.Effects.has(t, x.trait)).reduce((n, x) => n + (x.damage || 0), 0);
         if (slay) { hitOpt = Object.assign({}, hitOpt, { damage: hitOpt.damage.slice() }); hitOpt.damage[C.mainIndex(hitOpt.damage)] += slay; }
         // What beat through a parry lands with that share of its force (and of its punch into armor).
         if (beatThrough) hitOpt = Object.assign({}, hitOpt, { damage: hitOpt.damage.map((x) => Math.floor(x * beatThrough)), punch: (hitOpt.punch || 0) * beatThrough });
@@ -1903,7 +1908,7 @@
           ? (CONFIG.range.closeRule === 'blunt' ? ' (cramped: blunt, half force)' : ' (cramped: half damage)') : d.option.ranged && d.option.longRange && distance > d.option.longRange ? ' (long range)' : '';
         log(enc, `${a.name}'s ${name} hits ${t.name}${half ? ' (Roll With It: half)' : ''}${pack ? ` (pack +${pack})` : ''}${note}: ${r.text}`, 'hit');
         // Kindled (Bless + Fire): a blade wreathed in flame sets what it strikes burning.
-        if (G.Conditions && G.Conditions.flag(a, 'kindled') && !d.option.ranged && !d.option.spell && C.isActive(t) && !C.tireless(t)) {
+        if (G.Effects.has(a, 'kindled') && !d.option.ranged && !d.option.spell && C.isActive(t) && !C.tireless(t)) {
           G.Conditions.add(t, 'burning', { rounds: 2, mag: 1, src: a.id });
           log(enc, `${t.name} catches fire.`, 'hit');
         }
@@ -1912,7 +1917,7 @@
         // A natural weapon that saps (weapons.yaml trait.sap: the Avatar's claws), as an enchanted blade's strike does.
         else if (!blade && d.option.sap) await strikeEffects(enc, chars, a, t, { name: d.option.label || 'The blow' }, { sap: d.option.sap }, roller, t.stamina < pre.stamina || C.totalDamage(t) > pre.dmg, posAtStart);
         // Gear that bites back (effects.retaliate): whoever lands a melee blow on the wearer takes an element's blow.
-        if (!d.option.ranged && !d.option.spell && G.Magic && C.isActive(a)) for (const x of C.gearList(t, 'retaliate')) await G.Magic.elementBlow(enc, chars, t, a, x.noun, x.mag, roller, x.name || `${Items.itemName(x.from) || x.from.name}`, { from: posAtStart[t.id] });
+        if (!d.option.ranged && !d.option.spell && G.Magic && C.isActive(a)) for (const x of G.Effects.list(t, 'retaliate')) await G.Magic.elementBlow(enc, chars, t, a, x.noun, x.mag, roller, x.name || `${Items.itemName(x.from) || x.from.name}`, { from: posAtStart[t.id] });
         // A conjured elemental's blows carry its element.
         if (a.traits && a.traits.element && !d.option.spell && G.Magic && C.isActive(t)) await G.Magic.onHit(enc, chars, a, t, a.traits.element, roller, { from: posAtStart[a.id] });
         // Springy armor (chitin): the blow rebounds and jars the attacker.
@@ -1975,7 +1980,7 @@
         const R = CONFIG.social;
         if (dist(posAtStart[a.id], posAtStart[t.id]) > R[d.type].range) { log(enc, `${a.name}'s ${ACTIONS[d.type].name.toLowerCase()} fizzles — ${t.name} is too far.`, 'fizzle'); break; }
         if (d.type === 'bait') {
-          const o = await opposed(roller, a, Math.floor(C.attr(a, 'CHA') / 2) + C.rank(a, 'feint'), 'Bait', t, Math.floor(C.attr(t, 'WIS') / 2) + C.rank(t, 'read_attack'), 'See through it');
+          const o = await opposed(roller, a, Math.floor(C.attr(a, 'CHA') / 2) + G.Effects.sum(a, 'feint'), 'Bait', t, Math.floor(C.attr(t, 'WIS') / 2) + G.Effects.sum(t, 'readAttack'), 'See through it');
           if (o.margin > 0) {
             // The bait leaves them off balance: they defend worse for the round.
             if (G.Conditions) G.Conditions.add(t, 'baited', { rounds: 1, src: a.id });
@@ -1985,8 +1990,8 @@
           // The reader rolls against a number they can't see: a true read, nothing, or a
           // confident misread that looks just like a true one.
           const RI = R.readIntent;
-          const bonus = Math.floor(C.attr(a, 'WIS') / 2) + C.rank(a, 'read_attack');
-          const tn = RI.tn + Math.floor(C.attr(t, 'CHA') / 2) + C.rank(t, 'feint');
+          const bonus = Math.floor(C.attr(a, 'WIS') / 2) + G.Effects.sum(a, 'readAttack');
+          const tn = RI.tn + Math.floor(C.attr(t, 'CHA') / 2) + G.Effects.sum(t, 'feint');
           const r = await rollDie(roller, a.id, 10, `${a.name}: Read intent`, `d10 + ${bonus} (WIS) against ${t.name}'s guarded face`);
           const margin = r + bonus - tn;
           if (margin < 0 && margin > -RI.misreadBy) {
@@ -2302,8 +2307,8 @@
           log(enc, `${c.name} comes back to themselves.`, 'pass');
         }
       }
-      // Regeneration (monster trait): wounds close and strength returns, unless burned this round.
-      const R = c.traits && c.traits.regen;
+      // Regrowth (monster trait): wounds close and strength returns, unless burned this round.
+      const R = c.traits && c.traits.regrow;
       if (R && !(enc.burned || {})[id] && C.attr(c, 'CON') > 0) {
         const healed = Math.min(R.con, c.damage.CON || 0);
         if (healed) C.healAttr(c, 'CON', healed);

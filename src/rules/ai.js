@@ -660,10 +660,10 @@
     const S = C.costScale();
     let foes = enemiesOf(enc, chars, id);
     // In a frenzy (Rage) the nearest body is the foe, friend or not; confused, anyone near.
-    if (G.Conditions && (G.Conditions.flag(c, 'berserk') || (G.Conditions.flag(c, 'confused') && rng() < 0.5))) {
+    if (G.Conditions && (G.Effects.has(c, 'berserk') || (G.Effects.has(c, 'confused') && rng() < 0.5))) {
       const me = Combat.projectedPos(enc, id);
       const near = enc.ids.filter((o) => o !== id && chars[o] && C.isActive(chars[o])).sort((x, y) => Combat.dist(me, Combat.projectedPos(enc, x)) - Combat.dist(me, Combat.projectedPos(enc, y)));
-      if (near.length) foes = G.Conditions.flag(c, 'confused') ? [near[Math.floor(rng() * Math.min(3, near.length))]] : [near[0]];
+      if (near.length) foes = G.Effects.has(c, 'confused') ? [near[Math.floor(rng() * Math.min(3, near.length))]] : [near[0]];
     }
     const at = (x) => enc.pos[x];
 
@@ -794,14 +794,14 @@
     const blowAP = Math.min(...usable.filter((o) => !o.spell).map((o) => o.ap).concat([99]));
     if (bait && !acted && la.ap >= bait.ap + Math.min(blowAP, 99) + reserve && blowAP < 99) {
       const guarded = bait.targets.find((x) => x.inReach && foes.includes(x.id) && !enc.turnDone[x.id] && usable.some((o) => C.inRange(o, x.distance)));
-      if (guarded && Math.floor(C.attr(c, 'CHA') / 2) + C.rank(c, 'feint') >= Math.floor(C.attr(chars[guarded.id], 'WIS') / 2)) return { actor: id, type: 'bait', target: guarded.id };
+      if (guarded && Math.floor(C.attr(c, 'CHA') / 2) + G.Effects.sum(c, 'feint') >= Math.floor(C.attr(chars[guarded.id], 'WIS') / 2)) return { actor: id, type: 'bait', target: guarded.id };
     }
     const read = la.maneuvers.find((m) => m.type === 'readIntent' && m.affordable);
     // One look a round: a misread leaves nothing to show for it, so don't keep trying.
     const readThisRound = enc.decls.some((d) => d.actor === id && d.type === 'readIntent');
     if (read && !readThisRound && G.Conditions && !G.Conditions.has(c, 'reading') && la.ap >= read.ap + 2 * C.costScale()) {
       const close = read.targets.find((x) => x.inReach && x.distance <= 2 && foes.includes(x.id));
-      if (close && Math.floor(C.attr(c, 'WIS') / 2) + C.rank(c, 'read_attack') >= Math.floor(C.attr(chars[close.id], 'CHA') / 2)) return { actor: id, type: 'readIntent', target: close.id };
+      if (close && Math.floor(C.attr(c, 'WIS') / 2) + G.Effects.sum(c, 'readAttack') >= Math.floor(C.attr(chars[close.id], 'CHA') / 2)) return { actor: id, type: 'readIntent', target: close.id };
     }
 
     // 8. Attack now, or wind up for a bigger blow next round.

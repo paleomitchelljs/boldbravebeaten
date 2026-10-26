@@ -16,15 +16,15 @@
     traits: {
       size: 'body size (1 a person): fewer vital wounds, less bleeding per wound, harder to shove',
       pack: '+1 damage per packmate beside the target, up to n',
-      nimble: '+n to dodge',
+      dodge: '+n to dodge',
       slippery: '+n against being grappled and to break free',
-      grip: '+n to grapple rolls (a huge hand)',
+      grip: '+n to grapple rolls (a huge hand; Grappler)',
       moveMult: '× squares per move (leapers)',
       apMult: '× the AP pool (a boss acts like several fighters)',
       staminaMult: '× maximum stamina',
       tireless: 'no stamina: damage goes to attributes, actions cost none, dies at CON 0',
-      regen: '{con, stamina}: back each round unless burned; a downed regenerator can rise',
-      resist: '{keyword: ×}: damage keywords (P, S, B, a spell element); 0 immune, 1.5 weak',
+      regrow: '{con, stamina}: back each round unless burned; a downed regrower can rise',
+      resist: '{keyword: ×}: damage keywords (P, S, B, a spell element, magic for every spell); 0 immune, 1.5 weak',
       flying: 'ignores ground, can\'t be tripped',
       incorporeal: 'only magic and magic weapons touch it',
       displacement: '[ranged, melee]: chance a blow strikes an illusion',
@@ -34,7 +34,6 @@
       undead: 'a kind: bane and spirit magic, slay',
       dragon: 'a kind: slay',
       noBleed: 'wounds don\'t bleed',
-      magicImmune: 'spells wash off (PROVISIONAL: retire in favour of resist keywords)',
     },
     // weapons.yaml `trait` (a natural or odd weapon's extra).
     weaponTrait: {
@@ -45,7 +44,7 @@
       rust: 'a landed blow eats metal armor',
       sap: '{stamina}: a landed blow drinks stamina back into the wielder',
     },
-    // enchantments.yaml `effects` and items.yaml trinkets' `effects`: what worn or wielded gear does.
+    // enchantments.yaml `effects`, items.yaml trinkets' `effects` and feats.yaml `effects` (per rank).
     gearEffects: {
       attrs: '{STR: n}: attribute bonus',
       ap: 'sheet AP added to the pool',
@@ -56,6 +55,12 @@
       mag: '{noun: n, "*": n}: spell magnitude',
       init: 'initiative',
       hit: 'to beat a defence',
+      dodge: '+n to dodge (Dodge Training)',
+      parry: '+n to parry (Parry Training)',
+      block: '+n to block (Shield Training)',
+      grip: '+n to grapple rolls',
+      feint: 'Feint: to bait, and blows a lower Read Attack can\'t read',
+      readAttack: 'Read Attack: to see through bait and read intent',
       move: 'squares per move',
       resist: '{keyword: ×}: as the trait',
       aura: 'as the trait',
@@ -73,12 +78,14 @@
       onHit: '{cond, rounds, chance}: a condition on a landed blow',
       riled: 'a landed blow riles the target',
       element: '{noun, mag}: an element\'s blow on a landed blow',
+      parrySpells: 'the weapon can parry a spell bolt',
     },
     // CONFIG.conditions fields (src/rules/config.js; rules.yaml may override).
     condition: {
       name: 'shown name',
       type: 'damage keyword: immunity to it stops the condition (default mind for one the will resists)',
-      resist: 'the attribute that resists it',
+      resistedBy: 'the attribute that resists it',
+      resist: '{keyword: ×}: as the trait (a frost ward: {fire: 0.5})',
       ap: 'AP pool change per magnitude',
       attrs: 'combat attribute changes per magnitude',
       mit: '{P, S, B}: mitigation per magnitude',
@@ -102,8 +109,6 @@
       freedom: 'ignores difficult ground, ice and roots',
       free: 'the caster needn\'t concentrate to hold it',
       kindled: 'the bearer\'s melee blows set the target burning',
-      halveFire: 'fire and heat do half',
-      halveShadow: 'shadow does half',
       vsUndead: 'its mit counts only against the undead',
       mindWard: 'a ward against mind magic',
       noFear: 'can\'t be frightened',
@@ -124,5 +129,53 @@
     return Object.keys(bag).filter((k) => !(k in known)).map((k) => `${where}: "${k}" is not a known ${kind} key (src/rules/effects.js)`);
   }
 
-  G.Effects = { KEYS, check };
+  // ---- The lookup: one question, every source --------------------------------------------------
+  // What a character has from its own traits, the gear it wears and wields (Character.gearSources), its
+  // conditions and its feats, asked with one vocabulary. A condition's numbers count once per magnitude and a feat's once per rank; multipliers and flags once.
+  function sources(c) {
+    const out = [];
+    if (c.traits) out.push({ from: 'traits', effects: c.traits, mag: 1 });
+    if (G.Character) for (const s of G.Character.gearSources(c)) out.push({ from: s.item, effects: s.effects, mag: 1 });
+    if (G.Conditions) for (const x of G.Conditions.list(c)) { const d = (G.CONFIG.conditions || {})[x.key]; if (d) out.push({ from: x, effects: d, mag: x.mag || 1 }); }
+    // A feat's effects count once per rank (feats.yaml `effects`).
+    const F = G.DATA && G.DATA.FEATS;
+    if (F) for (const id in c.feats || {}) { const f = F[id]; if (f && f.effects && c.feats[id] > 0) out.push({ from: f, effects: f.effects, mag: c.feats[id] }); }
+    return out;
+  }
+
+  // The sum of a number (or of one key of an object: sum(c, 'attrs', 'STR')).
+  function sum(c, key, sub) {
+    let n = 0;
+    for (const s of sources(c)) {
+      const v = s.effects[key];
+      if (v == null) continue;
+      const x = sub != null ? (v && typeof v === 'object' ? v[sub] : 0) : v;
+      if (typeof x === 'number') n += x * s.mag;
+    }
+    return n;
+  }
+
+  // The product of a multiplier (or of one key of a map: mult(c, 'resist', 'fire')). Missing counts 1.
+  function mult(c, key, sub) {
+    let m = 1;
+    for (const s of sources(c)) {
+      const v = s.effects[key];
+      if (v == null) continue;
+      const x = sub != null ? (v && typeof v === 'object' ? v[sub] : null) : v;
+      if (typeof x === 'number') m *= x;
+    }
+    return m;
+  }
+
+  // Whether anything gives it (a flag: flying, freedom, noAct…).
+  function has(c, key) {
+    return sources(c).some((s) => !!s.effects[key]);
+  }
+
+  // Every value of an object effect (aura, retaliate), each tagged with where it came from.
+  function list(c, key) {
+    return sources(c).filter((s) => s.effects[key] && typeof s.effects[key] === 'object' && !Array.isArray(s.effects[key])).map((s) => Object.assign({ from: s.from }, s.effects[key]));
+  }
+
+  G.Effects = { KEYS, check, sources, sum, mult, has, list };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

@@ -262,7 +262,8 @@
     return false;
   }
 
-  // The sum of a numeric effect (or one key of an object effect) over everything worn and wielded.
+  // The sum of a numeric effect over gear alone. Most readers ask G.Effects (traits, gear and conditions together);
+  // gear's attrs come here because they raise an attribute's maximum, which a condition does not.
   function gearSum(c, key, sub) {
     let n = 0;
     for (const s of gearSources(c)) {
@@ -273,37 +274,15 @@
     return n;
   }
 
-  // The product of a multiplier effect (costMult; resist for one keyword).
-  function gearMult(c, key, sub) {
-    let m = 1;
-    for (const s of gearSources(c)) {
-      const v = s.effects[key];
-      if (v == null) continue;
-      m *= sub != null ? (typeof v === 'object' && v[sub] != null ? v[sub] : 1) : v;
-    }
-    return m;
-  }
-
   // Damage keywords: every kind of harm has one. P, S and B for a blow's point, edge and weight; a spell element's
   // name (fire, frost, mind, life, venom…) for magic and what it leaves behind. One map, `resist`, scales any of
-  // them: a monster's traits.resist and worn gear's effects.resist multiply (0 is immune, 1.5 a weakness).
+  // them: a monster's traits, worn gear and conditions (a frost ward) all multiply (0 is immune, 1.5 a weakness).
   function damageMult(c, type) {
-    if (!type) return 1;
-    const t = c.traits && c.traits.resist && c.traits.resist[type];
-    return (t != null ? t : 1) * gearMult(c, 'resist', type);
-  }
-
-  // Every value of an effect, for the ones that are not summed (aura, retaliate).
-  function gearList(c, key) {
-    return gearSources(c).filter((s) => s.effects[key] != null).map((s) => Object.assign({ from: s.item }, s.effects[key]));
+    return type ? G.Effects.mult(c, 'resist', type) : 1;
   }
 
   function trinketMod(c, a) {
     return gearSum(c, 'attrs', a);
-  }
-
-  function trinketAP(c) {
-    return gearSum(c, 'ap');
   }
 
   // A weapon's own enchantments: what its blows carry (enchantments.yaml `strike`) and how much AP it
@@ -320,7 +299,7 @@
 
   // Gear's cut on an action's AP: the product of every costMult, then a weapon's own apLess. Never below the floor.
   function gearAP(c, ap, weapon) {
-    const m = gearMult(c, 'costMult');
+    const m = G.Effects.mult(c, 'costMult');
     let v = m !== 1 ? Math.round(ap * m) : ap;
     const less = weaponApLess(weapon);
     if (less) v -= Math.round(less * costScale());
@@ -476,10 +455,10 @@
   function freshStamina(c) {
     let s = 0;
     for (const a in CONFIG.staminaWeights) s += CONFIG.staminaWeights[a] * attr(c, a);
-    s += gearSum(c, 'stamina');
+    s += G.Effects.sum(c, 'stamina');
     if (tireless(c)) return Math.max(1, s);
-    // Monster trait: a big creature (a boss) has more to give.
-    return Math.round(s * ((c.traits && c.traits.staminaMult) || 1));
+    // A big creature (a boss: staminaMult) has more to give.
+    return Math.round(s * G.Effects.mult(c, 'staminaMult'));
   }
 
   // A round of combat wears a fighter down: maximum stamina falls (CONFIG.weariness) until a long rest.
@@ -495,13 +474,13 @@
 
   function regen(c) {
     if (tireless(c)) return 0;
-    return Math.floor((attr(c, 'CON') + attr(c, 'WIL')) / CONFIG.regenDivisor) - armorInfo(c).regen + (G.Conditions ? G.Conditions.regenMod(c) : 0) + gearSum(c, 'regen');
+    return Math.floor((attr(c, 'CON') + attr(c, 'WIL')) / CONFIG.regenDivisor) - armorInfo(c).regen + G.Effects.sum(c, 'regen');
   }
 
   // Tireless (undead, constructs): no stamina at all. Damage goes straight to attributes,
   // actions cost no stamina, and only AP limits them.
   function tireless(c) {
-    return !!(c.traits && c.traits.tireless);
+    return G.Effects.has(c, 'tireless');
   }
 
   function fatiguePenalty(c) {
@@ -515,12 +494,12 @@
   }
 
   function apPool(c) {
-    const mult = (c.traits && c.traits.apMult) || 1; // monster trait: a boss acts like several fighters
-    const cond = G.Conditions ? G.Conditions.apMod(c) : 0; // slowed, hasted, shocked…
+    const mult = G.Effects.mult(c, 'apMult'); // a boss acts like several fighters
+    const more = G.Effects.sum(c, 'ap'); // slowed, hasted, shocked; a ring
     // With armorActionAP, armor makes each action dearer instead of shrinking the pool.
     const spd = CONFIG.armorActionAP ? attr(c, 'SPD') : combatAttr(c, 'SPD');
     const fromSpd = CONFIG.apSpdContinuous ? spd / CONFIG.apSpdDivisor : Math.floor(spd / CONFIG.apSpdDivisor);
-    return Math.max(0, Math.round((CONFIG.apBase + fromSpd - fatiguePenalty(c) + cond + trinketAP(c)) * apScale() * mult));
+    return Math.max(0, Math.round((CONFIG.apBase + fromSpd - fatiguePenalty(c) + more) * apScale() * mult));
   }
 
   function apScale() {
@@ -588,9 +567,8 @@
   function squaresPerAP(c) {
     let s = CONFIG.moveBase + Math.floor(combatAttr(c, 'SPD') / CONFIG.moveSpdDivisor) + rank(c, 'fleet_foot');
     if (c.shield && c.shield.size === 'tower' && c.shield.durability > 0) s -= CONFIG.towerMovePenalty;
-    // Monster trait: leapers (bogfolk) cover more ground per AP. Chill (a condition) halves it; boots add to it.
-    const cond = G.Conditions ? G.Conditions.moveMult(c) : 1;
-    return Math.max(1, Math.round(Math.max(1, s) * (CONFIG.moveScale || 1) * ((c.traits && c.traits.moveMult) || 1) * cond) + gearSum(c, 'move'));
+    // moveMult: leapers (bogfolk) cover more ground per AP, chill halves it. move: boots add squares.
+    return Math.max(1, Math.round(Math.max(1, s) * (CONFIG.moveScale || 1) * G.Effects.mult(c, 'moveMult')) + G.Effects.sum(c, 'move'));
   }
 
   function strOffset(c) {
@@ -1017,10 +995,10 @@
     newCharacter, normalize, freshStatus,
     rank, featCount, featBudget, treeCount, tierCount, tierName, canTakeFeat, canRemoveFeat, addFeat, removeFeat, reqText, roman,
     conditioning, attr, attrMax, combatAttr, armorInfo, armorPieces, armorAt, armorUniform, shieldInfo, shieldReady, wieldedWeapon, offhandWeapon,
-    maxStamina, freshStamina, wearyRound, regen, fatiguePenalty, apPool, apScale, costScale, fmtAP, minAP, baseAP, armorAP, quickCut, moveCost, squaresFor, squaresPerAP, handsBusy, castingHands, trinketAP, weaponStrain, inRange, optionKey, needsWindUp, strOffset, staminaCost, effectiveWeight, isLightWeapon,
+    maxStamina, freshStamina, wearyRound, regen, fatiguePenalty, apPool, apScale, costScale, fmtAP, minAP, baseAP, armorAP, quickCut, moveCost, squaresFor, squaresPerAP, handsBusy, castingHands, weaponStrain, inRange, optionKey, needsWindUp, strOffset, staminaCost, effectiveWeight, isLightWeapon,
     strBonus, weaponDamage, mainIndex, attackOptions, actionCost, ammoLeft, tireless, webTax,
     damageAttr, healAttr, totalDamage, updateCondition, isActive, bleedPerRound,
-    gearSources, gearSum, gearMult, damageMult, gearList, gearAP, weaponStrike, weaponApLess,
+    gearSources, gearSum, damageMult, gearAP, weaponStrike, weaponApLess,
     TREES, ARMOR,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

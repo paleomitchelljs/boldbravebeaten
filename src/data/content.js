@@ -145,6 +145,7 @@
     for (const [id, e] of Object.entries(D.ENCHANTMENTS)) { keysOk('gearEffects', e.effects, `enchantments.${id}.effects`); keysOk('strike', e.strike, `enchantments.${id}.strike`); }
     for (const [id, g] of Object.entries(goods)) keysOk('gearEffects', g.effects, `items.goods.${id}.effects`);
     for (const [id, c] of Object.entries(G.CONFIG.conditions || {})) keysOk('condition', c, `conditions.${id}`);
+    for (const f of Object.values(D.FEATS)) keysOk('gearEffects', f.effects, `feats.${f.id}.effects`);
     for (const [id, e] of Object.entries(D.ENCHANTMENTS)) {
       if (e.power) powerOk(`enchantments.${id}`, e.power);
       for (const x of (e.strike && e.strike.slay) || []) if (!x.trait) err(`enchantments.${id}: slay needs a trait`);

@@ -33,7 +33,7 @@
     const r = C().rank(c, 'casting');
     if (r <= 0) return 0;
     const fam = C().rank(c, 'familiar') && c.companion && c.companion.familiar && !c.companion.status.dead ? 2 * C().rank(c, 'familiar') : 0;
-    return C().attr(c, 'INT') + CONFIG.magic.poolPerCasting * r + C().gearSum(c, 'sp') + fam;
+    return C().attr(c, 'INT') + CONFIG.magic.poolPerCasting * r + G.Effects.sum(c, 'sp') + fam;
   }
 
   // Points the caster can draw on right now.
@@ -155,7 +155,7 @@
     const aff = (CONFIG.magic.affinity || {})[n];
     if (aff) mag += C().rank(c, aff);
     // Worn gear: a skullcap that strengthens every spell, an amulet that strengthens one noun.
-    mag += C().gearSum(c, 'mag', n) + C().gearSum(c, 'mag', '*');
+    mag += G.Effects.sum(c, 'mag', n) + G.Effects.sum(c, 'mag', '*');
     return mag;
   }
 
@@ -240,19 +240,19 @@
     return (t, cls) => G.Combat.log(enc, t, cls);
   }
 
-  // Put a condition on a target, who may resist (CONFIG.conditions[key].resist).
+  // Put a condition on a target, who may resist (CONFIG.conditions[key].resistedBy).
   async function afflict(enc, caster, target, key, opts, roller) {
     if (!G.Conditions || !CONFIG.conditions[key] || !G.Character.isActive(target)) return false;
-    if (target.traits && target.traits.magicImmune && caster) { logger(enc)(`The magic washes off ${target.name}.`, 'defend'); return false; }
+    if (caster && C().damageMult(target, 'magic') === 0) { logger(enc)(`The magic washes off ${target.name}.`, 'defend'); return false; }
     if (C().tireless(target) && CONFIG.conditions[key].living) return false;
     if (C().damageMult(target, G.Conditions.typeOf(key)) === 0) { logger(enc)(`${target.name} shrugs it off.`, 'defend'); return false; }
     const ward = G.Conditions.get(target, 'warded');
-    const mindish = CONFIG.conditions[key].resist === 'WIL';
-    if (mindish && ((ward && ward.kind === 'mind') || G.Conditions.flag(target, 'mindWard'))) {
+    const mindish = CONFIG.conditions[key].resistedBy === 'WIL';
+    if (mindish && ((ward && ward.kind === 'mind') || G.Effects.has(target, 'mindWard'))) {
       logger(enc)(`${target.name}'s mind is shut against it.`, 'defend');
       return false;
     }
-    if (CONFIG.conditions[key].fearOf && G.Conditions.flag(target, 'noFear')) return false;
+    if (CONFIG.conditions[key].fearOf && G.Effects.has(target, 'noFear')) return false;
     if (G.Conditions.list(target).some((x) => ((CONFIG.conditions[x.key] || {}).immune || []).includes(key))) {
       logger(enc)(`${target.name} shrugs it off.`, 'defend');
       return false;
@@ -261,7 +261,7 @@
       logger(enc)(`${target.name}'s ward keeps it off.`, 'defend');
       return false;
     }
-    const resist = CONFIG.conditions[key].resist;
+    const resist = CONFIG.conditions[key].resistedBy;
     const name = CONFIG.conditions[key].name;
     if (resist && caster && caster !== target) {
       const k = await contest(roller, caster, target, resist, name.toLowerCase());
@@ -371,7 +371,6 @@
     const N = W()[n];
     let m = mag;
     if (opts.half) m = Math.floor(m / 2);
-    if (N.element === 'fire' && G.Conditions && G.Conditions.flag(target, 'halveFire')) m = Math.floor(m / 2);
     const w = wardAgainst(enc, target, { spell: { element: N.element, noun: n, magnitude: m } }, false);
     if (w.blocked) return;
     m = w.magnitude;

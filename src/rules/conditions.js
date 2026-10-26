@@ -11,7 +11,7 @@
  *   noMove    can't move (rooted); `breakAttr` is what breaks free (the Break free action)
  *   freedom   ignores difficult ground, slick ice and roots
  *   kindled   the bearer's melee blows set the target burning
- *   halveFire fire and heat do half damage
+ *   resist    damage keyword multipliers, as on a monster or gear (a frost ward: { fire: 0.5 })
  *   moveMult  × squares per move (chilled: 0.5); drainAP: AP lost at once when it lands (stunned)
  *   noAct     no actions at all (mesmerized, paralyzed); helpless: blows find the gaps as on the pinned
  *   unseen    can't be picked out beyond arm's reach; ends when the bearer attacks
@@ -41,7 +41,7 @@
   // A condition's damage keyword (C.damageMult): its `type`, or mind for one the will resists. Immune to that: no condition.
   function typeOf(key) {
     const d = defs()[key] || {};
-    return d.type || (d.resist === 'WIL' ? 'mind' : null);
+    return d.type || (d.resistedBy === 'WIL' ? 'mind' : null);
   }
 
   function add(c, key, opts) {
@@ -79,16 +79,13 @@
     return t;
   }
 
-  const apMod = (c) => sum(c, 'ap');
+  // AP, regeneration, squares per move and flags are read through G.Effects with traits and gear.
   const attrMod = (c, a) => sum(c, 'attrs', a);
   // Protection that isn't armor; a vsUndead one (a spirit shield) only against an undead attacker.
-  const mitigation = (c, k, attacker) => sum(c, 'mit', k, (d) => !d.vsUndead || !!(attacker && attacker.traits && attacker.traits.undead));
-  const regenMod = (c) => sum(c, 'regen');
-  const flag = (c, f) => list(c).some((x) => (defs()[x.key] || {})[f]);
-  const canMove = (c) => !flag(c, 'noMove');
+  const mitigation = (c, k, attacker) => sum(c, 'mit', k, (d) => !d.vsUndead || !!(attacker && G.Effects.has(attacker, 'undead')));
+  const canMove = (c) => !G.Effects.has(c, 'noMove');
   // The condition that makes the bearer afraid of its source (fearOf), if any.
   const fear = (c) => list(c).find((x) => (defs()[x.key] || {}).fearOf) || null;
-  const moveMult = (c) => list(c).reduce((m, x) => m * ((defs()[x.key] || {}).moveMult || 1), 1);
 
   // End of round: damage over time, then every condition ticks down a round.
   function endRound(c) {
@@ -118,5 +115,5 @@
     return list(c).map((x) => `${(defs()[x.key] || {}).name || x.key}${x.kind ? ': ' + x.kind : ''}${x.pool != null ? ' ' + x.pool : x.mag > 1 ? ' ' + x.mag : ''} (${x.rounds})`);
   }
 
-  G.Conditions = { list, get, has, add, typeOf, remove, apMod, attrMod, mitigation, regenMod, flag, canMove, fear, moveMult, endRound, labels };
+  G.Conditions = { list, get, has, add, typeOf, remove, attrMod, mitigation, canMove, fear, endRound, labels };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

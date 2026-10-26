@@ -30,14 +30,16 @@ test('effects: validate names a misspelt trait, weapon trait, gear effect and co
   assert.deepEqual(Content.validate(), []);
 });
 
-test('effects: every trait, gear effect and condition flag the code reads is in the registry', () => {
+test('effects: every trait and effect key the code reads is in the registry', () => {
   const traits = found(/traits(?:\s*&&\s*[\w.\[\]]+?\.traits)?\??\.(\w+)/g);
   for (const k of traits) assert.ok(k in Effects.KEYS.traits, `code reads traits.${k}; add it to Effects.KEYS.traits`);
-  const gear = found(/gear(?:Sum|Mult|List)\([^,]+,\s*'(\w+)'/g);
-  for (const k of gear) assert.ok(k in Effects.KEYS.gearEffects, `code reads gear effect ${k}`);
-  const flags = found(/Conditions\.flag\([^,]+,\s*'(\w+)'/g);
-  for (const k of flags) assert.ok(k in Effects.KEYS.condition, `code reads condition flag ${k}`);
-  assert.ok(traits.size > 10 && gear.size > 5 && flags.size > 5, 'the scan found the readers');
+  // Effects.sum/mult/has/list read every source, so the key must be a known one for some bag.
+  const K = Effects.KEYS, any = (k) => k in K.traits || k in K.gearEffects || k in K.condition;
+  const asked = found(/Effects\.(?:sum|mult|has|list)\([^,]+,\s*'(\w+)'/g);
+  for (const k of asked) assert.ok(any(k), `code asks Effects for ${k}; add it to a bag in Effects.KEYS`);
+  const strike = found(/weaponStrike\([^)]*\)\)?\.(\w+)/g);
+  for (const k of strike) assert.ok(k in K.strike, `code reads strike.${k}`);
+  assert.ok(traits.size > 5 && asked.size > 15, 'the scan found the readers');
 });
 
 test('conditions: a spirit shield guards only against the undead; frightened is read through fearOf', () => {
@@ -49,4 +51,34 @@ test('conditions: a spirit shield guards only against the undead; frightened is 
   assert.ok(Conditions.mitigation(t, 'S', dead) > 0);
   Conditions.add(t, 'frightened', { rounds: 2, src: 'x' });
   assert.equal(Conditions.fear(t).key, 'frightened');
+});
+
+test('lookup: one key adds up over traits, gear, conditions (per magnitude) and feats (per rank)', () => {
+  const c = C.newCharacter({ name: 'D', starterGear: false });
+  assert.equal(Effects.sum(c, 'dodge'), 0);
+  c.feats.dodge_training = 2;
+  assert.equal(Effects.sum(c, 'dodge'), 2, 'Dodge Training counts per rank');
+  c.traits = { dodge: 1 };
+  c.trinkets = [{ name: 'Ring', effects: { dodge: 1 } }];
+  assert.equal(Effects.sum(c, 'dodge'), 4, 'feat + trait + ring');
+  const ap = C.apPool(c);
+  Conditions.add(c, 'slowed', { rounds: 2, mag: 2 });
+  assert.equal(Effects.sum(c, 'ap'), 2 * CONFIG.conditions.slowed.ap, 'a condition counts per magnitude');
+  assert.ok(C.apPool(c) < ap);
+  assert.equal(Effects.has(c, 'noMove'), false);
+  Conditions.add(c, 'rooted', { rounds: 2 });
+  assert.equal(Effects.has(c, 'noMove'), true);
+  assert.equal(Conditions.canMove(c), false);
+});
+
+test('lookup: a frost ward halves a fire bolt through the resist keyword; magic: 0 is immune to every spell', () => {
+  const a = C.newCharacter({ name: 'A', side: 'enemy', starterGear: false });
+  const t = C.newCharacter({ name: 'T', starterGear: false });
+  const bolt = { kind: 'strike', motion: 'spell', spell: { element: 'fire', magnitude: 12 }, damage: [0, 0, 0] };
+  const plain = B.Combat.computeHit(a, t, bolt, {}).fire;
+  Conditions.add(t, 'frostWard', { rounds: 3 });
+  assert.equal(C.damageMult(t, 'fire'), 0.5);
+  assert.ok(B.Combat.computeHit(a, t, bolt, {}).fire < plain);
+  t.traits = { resist: { magic: 0 } };
+  assert.ok(B.Combat.computeHit(a, t, bolt, {}).magicImmune);
 });

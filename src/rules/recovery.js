@@ -79,7 +79,7 @@
     }
 
     // Gear that heals (a bloodstone breastplate: effects.heal): more points back each night.
-    for (let i = 0; i < C.gearSum(c, 'heal'); i++) {
+    for (let i = 0; i < G.Effects.sum(c, 'heal'); i++) {
       const a = healTarget(c);
       if (!a) break;
       C.healAttr(c, a, 1);

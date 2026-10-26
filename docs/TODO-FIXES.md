@@ -23,18 +23,41 @@ nothing checked those names (the leg-wound trip read `traits.flier`; the trait i
 - Not covered: top-level fields of monsters, weapons and the like. Those are checked by reference (an armour must
   exist), but a misspelt top-level field is still silent.
 
-## 2. One effect lookup
+## 2. One effect lookup: done
 
-- [ ] `Effects.sum(c, key)`, `Effects.mult(c, key)`, `Effects.has(c, key)` and `Effects.list(c, key)` read every
-  source with one vocabulary:
+- [x] `Effects.sum(c, key, sub)`, `Effects.mult`, `Effects.has` and `Effects.list` read every source with one
+  vocabulary:
   - monster traits;
-  - gear effects (trinkets and enchantments);
-  - condition flags.
-- [ ] Move the trait and gear readers onto it. Examples: `traits.moveMult` with gear `move`, `traits.aura` with gear
-  `aura`, `traits.regen`, `staminaMult`, `nimble`, `grip`, `slippery`.
-- [ ] Feats that are only a number (+N to a roll, −N mitigation) declare it in `feats.yaml` (`effects: {key: perRank}`)
-  and feed the same lookup. Feats that are their own maneuver stay in code.
-- [ ] Retire `traits.magicImmune`: no data uses it now that resist keywords exist.
+  - gear (trinkets and enchantments);
+  - conditions, whose numbers count per magnitude;
+  - feats, whose `effects` count per rank.
+- [x] The readers use it: AP pool and `apMult`, `costMult`, stamina and `staminaMult`, regeneration, `moveMult` and
+  `move`, `resist` (`damageMult`), aura, retaliate, init, hit, spell points and magnitude, heal, standing, `dodge`,
+  `grip`, `slippery`, `pack`, slay, and the flags (`flying`, `incorporeal`, `undead`, `noBleed`, `tireless`, and every
+  condition flag that was `Conditions.flag`).
+  - So a ring can now grant `freedom` or `flying`, and a condition can grant `resist`.
+  - `Conditions.flag`, `apMod`, `regenMod` and `moveMult` are gone, as are `gearMult`, `gearList` and `trinketAP`.
+- [x] Vocabulary fixed where one word meant two things:
+  - monster `regen` (regrowth) is now `regrow`;
+  - a condition's `resist` (the attribute that shakes it off) is now `resistedBy`, freeing `resist` for keywords;
+  - `nimble` is now `dodge`, the key Dodge Training also grants.
+- [x] The frost ward and radiance are now `resist: {fire: 0.5}` and `resist: {shadow: 0.5}`.
+  - Before, `halveFire` halved only bursts, runes and walls of fire, not a fire bolt.
+  - `halveShadow` halved after armour; the keyword applies before it.
+- [x] `traits.magicImmune` retired. In its place, a `magic` keyword multiplies every spell: `resist: {magic: 0}` is
+  immune to all spells and to any condition a caster lays.
+- [x] Six feats that were only a number declare `effects` in `feats.yaml`: Dodge, Parry and Shield Training (`dodge`,
+  `parry`, `block`), Grappler (`grip`), Feint (`feint`) and Read Attack (`readAttack`).
+- [x] One `blankHit()` replaces the four copies of the empty hit result.
+- Checked: seeded `node tools/encounters.js --n 30` gives the same results to the digit before and after. It runs
+  about 7% slower (118 s against 110 s), because every question now walks every source.
+- Left in code on purpose:
+  - Feats with a condition or a scale attached: Precision (light weapons only), Casting (two scalings), Fleet Foot
+    (added before the move multiplier), Iron Stance (a flag times a config number), the armour mobility feats.
+  - Traits that are a body measure or a monster's own mechanism, read only from traits: `size`, `displacement`,
+    `element`, `constrict`, `regrow`.
+  - A condition's attribute changes are still read apart from gear's, because gear raises the maximum and a condition
+    does not.
 
 ## 3. A grapple stored as one link
 

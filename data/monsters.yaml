@@ -1,5 +1,5 @@
 # Monsters. attrs may exceed the human cap. natural = natural weapons (weapons.yaml). group lists a pack.
-# traits are mechanical hooks: pack, regen, resist, tireless, apMult, staminaMult, size, aura, and so on.
+# traits are mechanical hooks: pack, regrow, resist, tireless, apMult, staminaMult, size, aura, and so on.
 # resist is by damage keyword (docs/DATA.md, Damage keywords): {P, S, B, fire, mind, life, ...}; 0 immune, 1.5 weak.
 
 # faction: whose standing a kill costs; xp: per creature; glyph: how it shows in the first-person view;
@@ -51,7 +51,7 @@ duskBat:
   sprite: {art: dusk-bat, kind: orc, scale: 0.5, tint: "#6a5a7a"}
   attrs: {STR: 2, CON: 3, DEX: 8, SPD: 9, INT: 3, WIS: 7, CHA: 2}
   natural: [ratBite]
-  traits: {flying: true, nimble: 2, staminaMult: 0.5}
+  traits: {flying: true, dodge: 2, staminaMult: 0.5}
   feats: {dodge_training: 2}
 fireSprite:
   name: Fire sprite
@@ -62,7 +62,7 @@ fireSprite:
   sprite: {art: ember-spirit, kind: orc_shaman, scale: 0.6, tint: "#e08040"}
   attrs: {STR: 3, CON: 4, DEX: 7, SPD: 8, INT: 4, WIS: 5, CHA: 3}
   natural: [elementalTouch]
-  traits: {flying: true, tireless: true, element: fire, nimble: 1}
+  traits: {flying: true, tireless: true, element: fire, dodge: 1}
   feats: {dodge_training: 1}
 ratPack:
   name: Rat swarm
@@ -133,7 +133,7 @@ caveTroll:
   attrs: {STR: 20, CON: 18, DEX: 4, SPD: 4, INT: 2, WIS: 4, CHA: 2}
   natural: [trollFists, claws]
   armor: trollHide
-  traits: {size: 1.3, regen: {con: 1, stamina: 6}}
+  traits: {size: 1.3, regrow: {con: 1, stamina: 6}}
   feats: {power_swing: 1, shield_breaker: 1}
 trollChieftain:
   name: Troll chieftain
@@ -146,7 +146,7 @@ trollChieftain:
   attrs: {STR: 24, CON: 24, DEX: 4, SPD: 4, INT: 3, WIS: 4, CHA: 3}
   natural: [trollFists, claws]
   armor: trollHide
-  traits: {size: 1.5, regen: {con: 1, stamina: 6}, apMult: 2}
+  traits: {size: 1.5, regrow: {con: 1, stamina: 6}, apMult: 2}
   feats: {power_swing: 1, shield_breaker: 1, toughness: 1}
 ogre:
   name: Ogre
@@ -309,7 +309,7 @@ kobold:
   armor: scaleHide
   weapons: [shortSpear]
   craft: poor
-  traits: {pack: 1, nimble: 1}
+  traits: {pack: 1, dodge: 1}
   feats: {}
   keepUnarmed: true
 koboldBand:
@@ -331,7 +331,7 @@ goblin:
   weapons: [club]
   sidearm: dagger
   craft: poor
-  traits: {nimble: 2}
+  traits: {dodge: 2}
   feats: {}
   keepUnarmed: true
 goblinArcher:
@@ -350,7 +350,7 @@ goblinArcher:
   sidearm: dagger
   craft: poor
   arrows: 15
-  traits: {nimble: 2}
+  traits: {dodge: 2}
   feats: {}
   keepUnarmed: true
 goblinBand:

@@ -50,8 +50,10 @@ bogHag:
   feats: {dodge_training: 1}
 ```
 **Effect keys.** The bags of extra effects all take keys from one list, `src/rules/effects.js`: a monster's `traits`,
-a weapon's `trait`, an enchantment's `effects` and `strike`, a trinket's `effects` and a condition's fields. `validate`
-rejects a key not on it. A new key means new rules code, and an entry there.
+a weapon's `trait`, an enchantment's `effects` and `strike`, a trinket's `effects`, a feat's `effects` (per rank) and a
+condition's fields. `validate` rejects a key not on it. The rules ask `Effects.sum/mult/has/list(c, key)`, which reads
+every source at once, so a ring of `dodge: 1`, the Dodge Training feat (`effects: {dodge: 1}`) and a nimble monster's
+`traits: {dodge: 2}` all count the same way. A new key means new rules code, and an entry there.
 
 A pack is `{name, group: [wolf, wolf, alphaWolf]}`. Use it in an encounter: `{monster: bogHag}`.
 People who carry gear come from `foes.yaml` templates: `{template: bandit, level: 2, n: 3}`.
@@ -180,8 +182,11 @@ Every kind of harm has a keyword, and one map, `resist`, scales any of them (`Ch
 - A spell element (`spells.yaml` `element`: fire, frost, lightning, mind, life, venom, plague, acid, shadow, spirit…):
   the spell's harm, and the conditions it leaves (`type` on a condition in `config.js`; a condition the will resists
   counts as `mind`). Bite venom is `venom`.
+- `magic`: every spell, on top of its element (`magic: 0` is immune to all spells and to every condition a caster
+  puts on it).
 
-Where: a monster's `traits.resist` and worn gear's `effects.resist`; they multiply. `0` is immune (a spell of that
+Where: a monster's `traits.resist`, worn gear's `effects.resist` and a condition's `resist` (the frost ward:
+`{fire: 0.5}`); they multiply. `0` is immune (a spell of that
 element washes off, a condition of that type is not taken), `1.5` a weakness. Example, the iron golem:
 `resist: {S: 0, B: 0, fire: 1.5, mind: 0, life: 0}`. Not yet keyed: bleeding, falls, and the stamina a sap or drain
 takes.
