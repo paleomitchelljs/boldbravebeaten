@@ -5,7 +5,8 @@
 #   break       shields: multiplies the threshold a blow must pass before it can shatter the shield
 #   unbreakable shields: a power blow cannot shatter it outright (CONFIG.shieldShatter)
 #   value       price multiplier
-# Old saves and data may say `quality`: crude → poor; standard and fine → average; masterwork and legendary → master.
+# The old quality names still name a craft where code takes one (Items.craftId): crude → poor; standard and fine →
+# average; masterwork and legendary → master. An old save's item `quality` is upgraded to `craft` on load (save.js).
 
 poor: {name: Poor, durability: 0.7, wear: 1.5, break: 0.7, rarity: common, value: 0.4}
 average: {name: "", durability: 1, wear: 1, break: 1, rarity: common, value: 1}

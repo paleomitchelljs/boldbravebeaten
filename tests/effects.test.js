@@ -88,7 +88,7 @@ test('grapple: one link per fighter, written to both at once; an old save\'s fiv
   assert.equal(a.status.grapple, null);
   assert.ok(!('grappledBy' in a.status) && !('pinned' in a.status));
   const old = { status: { grappling: null, grappledBy: ['X'], clinch: null, pinned: true, grapplingPin: false } };
-  C.normalize(old);
+  C.normalize(B.Save.upgradeCharacter(old));
   assert.deepEqual(old.status.grapple, { partner: 'X', level: 'pin', role: 'held' });
   assert.ok(!('grappledBy' in old.status));
   assert.ok(C.isPinned(old) && C.isHeld(old) && !C.holding(old));

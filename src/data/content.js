@@ -103,7 +103,7 @@
     const quests = W.quests || {};
     const skills = W.skills || {};
     const goodExists = (id) => has(goods, id);
-    // An item's tags: material, origin, craft (or an old quality) and enchantments, checked against its kind.
+    // An item's tags: material, origin, craft and enchantments, checked against its kind.
     const tagsOk = (where, kind, type, e) => {
       if (e.name != null && typeof e.name !== 'string') err(`${where}: name must be text`);
       if (e.material) {
@@ -120,7 +120,7 @@
         if (e.coverage && L && !L.coverage[e.coverage]) err(`${where}: coverage "${e.coverage}" is not in rules.yaml locations.coverage`);
         if (e.covers && e.coverage) err(`${where}: give covers or coverage, not both`);
       }
-      const craft = e.craft || e.quality;
+      const craft = e.craft;
       if (craft && !G.Items.craftId(craft)) err(`${where}: craft "${craft}" is not in crafts.yaml`);
       for (const x of e.enchantments || []) {
         if (!has(D.ENCHANTMENTS, x)) err(`${where}: enchantment "${x}" is not in enchantments.yaml`);

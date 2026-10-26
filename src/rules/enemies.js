@@ -227,10 +227,10 @@
     if (M.featPrefs) chooseFeats(c, M.featPrefs, makeRng(c.level * 7919 + 1));
     if (M.nouns) c.nouns = M.nouns.slice();
     if (M.trinkets) c.trinkets = JSON.parse(JSON.stringify(M.trinkets));
-    // Gear: `craft` (or an old `quality`) for everything carried; armorItem, weaponItems and shieldItem
+    // Gear: `craft` for everything carried; armorItem, weaponItems and shieldItem
     // spell out an item's tags ({type | size, coverage, material, origin, craft, enchantments, name}).
     // `origin` is the make of everything carried that doesn't name its own.
-    const q = M.craft || M.quality || 'average';
+    const q = M.craft || 'average';
     const made = (spec) => Object.assign({ origin: M.origin }, spec || {});
     if (M.armor) c.armor = Items.makeArmor(M.armor, 'full', 'average');
     if (M.armorItem) { const a = made(M.armorItem); c.armor = Items.makeArmor(a.type, a.coverage || 'full', a.craft || q, a); }

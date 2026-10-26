@@ -73,19 +73,41 @@ nothing checked those names (the leg-wound trip read `traits.flier`; the trait i
   that mattered: the two sides can't disagree.
 - Checked: the seeded encounter sims give the same results to the digit, the alligators' grapples included.
 
-## 4. Harm as a list of entries (deferred)
+## 5. Saves carry a version: done
 
-- [ ] Rebuild the hit result as entries of `{ keyword, to: CON|stamina|attr, amount, location }` in place of about
-  20 parallel fields.
-- Do this when the next new damage destination or a keyword *boost* arrives, not before. It is the riskiest change of
-  the five and touches every reader of a hit result (combat, AI, UI log).
-
-## 5. Saves carry a version
-
-- [ ] Save data says which version it is. `save.js` upgrades an old save step by step at load time.
-- [ ] The old-save fallbacks inside the rules move into that upgrade:
-  - `blade.enchant.drain`;
-  - a single `status.dropped` id;
-  - `armor` alongside armour `pieces`;
+- [x] `world.version` is the save's shape: `Save.VERSION`, now 3.
+  - Loading runs a step for each version from the save's up (`CHAR_STEPS` for every character, `WORLD_STEPS` for the
+    rest), then `Character.normalize`, which only fills in missing fields.
+  - A save from a newer version is refused, not half-read.
+  - The GM table's characters go through the same steps; its store records `charsVersion`, and `gm.html` now loads
+    `save.js`.
+- [x] Old shapes moved out of the rules into the 2→3 step:
+  - the grapple's five fields;
+  - `status.dropped` as one id;
+  - WIL taken from WIS;
+  - the renamed spell verbs;
+  - item `quality` (now `craft`) and scale armour (now steel mail);
+  - a blade's own `enchant.drain`, now the `drinking` enchantment (`magical` is dropped);
+  - the charm slot;
+  - today's renames: a trinket's `apMult`, and a saved foe's `regen`, `nimble` and `magicImmune`;
   - `c.gold`.
-- [ ] Supplies: one party pool. Each character's `inventory` keeps no bandages or arrows outside a fight.
+- [x] Removed the remaining fallbacks: `combat.js` read `enchant.drain` and `magical`; the validator, the economy,
+  the monster builder and the GM sheet read `quality`. No data used it.
+- [x] Supplies: one place at a time.
+  - Bug fixed: `loadSupplies` dealt bandages, arrows and components to members but left the pool full, and
+    `collectSupplies` then reset the pool, so anything the pool gained during a fight was lost.
+  - Now dealing moves supplies out of the pool and collecting adds them back.
+  - The 2→3 step empties the pool's copy in a save made mid-fight.
+- Departure from the plan: members' `inventory` still holds supplies *during* a fight. The rules engine (bandaging,
+  shooting, casting) and the GM table read a character's own inventory and know nothing of a party, so a single pool
+  would push the world into the rules. What the plan was after, no supply in two places, holds.
+- Not done: `armor` beside `pieces` is not an old shape. `armor` is the harness and `pieces` the partial armour, both
+  current, so it stays.
+- Checked: seeded sims match to the digit; `tests/save.test.js` loads a hand-made version-2 save.
+
+## 4. (still deferred) Harm as a list of entries
+
+- Nothing done beyond `blankHit()`, as planned. The trigger to start: the next new place harm can go, or a keyword
+  *boost* (more fire damage).
+- Known gaps that this would close: bleeding, falls and sap/drain stamina have no keyword, and a condition's damage
+  over time (burning) ignores a partial `resist` (only immunity stops it landing).

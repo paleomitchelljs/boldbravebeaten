@@ -36,7 +36,7 @@
   }
 
   // ---- Tags ----------------------------------------------------------------------------------
-  // Old saves and data name a quality: crude → poor; standard and fine → average; masterwork and legendary → master.
+  // The old quality names still name a craft: crude → poor; standard and fine → average; masterwork and legendary → master.
   const OLD_QUALITY = { crude: 'poor', standard: 'average', fine: 'average', masterwork: 'master', legendary: 'master' };
   function craftId(q) {
     if (!q) return 'average';
@@ -44,7 +44,7 @@
   }
 
   function craftOf(item) {
-    return CRAFTS[craftId(item && (item.craft || item.quality)) || 'average'] || {};
+    return CRAFTS[craftId(item && item.craft) || 'average'] || {};
   }
 
   function originOf(item) {
@@ -110,15 +110,10 @@
     return item;
   }
 
-  // An item from an old save: quality becomes craft; scale armor (no longer a tier) becomes steel mail.
+  // Fill in what an item lacks (old shapes are upgraded first, in src/game/save.js).
   function normalizeItem(item) {
     if (!item || !item.kind) return item;
-    if (item.quality != null) {
-      if (!item.craft) item.craft = craftId(item.quality) || 'average';
-      delete item.quality;
-    }
     if (!item.craft) item.craft = 'average';
-    if (item.kind === 'armor' && item.type === 'scale') { item.type = 'mail'; item.material = 'steel'; }
     if (item.kind === 'armor' && !item.material) item.material = usualMaterial(item);
     // Durability is out of a share of the body now (CONFIG.locations): a half harness from an old save is worth less.
     if (item.kind === 'armor' && ARMOR[item.type] && item.durability != null) item.durability = Math.min(item.durability, armorMaxDurability(item));

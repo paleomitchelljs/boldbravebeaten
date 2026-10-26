@@ -103,7 +103,9 @@
     s.settings = Object.assign(emptyState().settings, s.settings || {});
     if (!s.secrets) s.secrets = [];
     if (!s.lore) s.lore = { log: [] };
-    for (const id in s.characters) C.normalize(s.characters[id]);
+    // Character shapes are versioned with saves (src/game/save.js): charsVersion is the shape these were stored in.
+    for (const id in s.characters) { if (G.Save) G.Save.upgradeCharacter(s.characters[id], s.charsVersion); C.normalize(s.characters[id]); }
+    if (G.Save) s.charsVersion = G.Save.VERSION;
     s.order = (s.order || []).filter((id) => s.characters[id]);
     for (const id in s.characters) if (!s.order.includes(id)) s.order.push(id);
     if (s.encounter) {
@@ -143,7 +145,7 @@
   }
 
   function exportJSON(s) {
-    return JSON.stringify({ app: 'bold-brave-beaten', version: s.version, characters: s.characters, order: s.order, encounter: s.encounter, settings: s.settings }, null, 1);
+    return JSON.stringify({ app: 'bold-brave-beaten', version: s.version, charsVersion: s.charsVersion, characters: s.characters, order: s.order, encounter: s.encounter, settings: s.settings }, null, 1);
   }
 
   function importJSON(text) {

@@ -1555,7 +1555,7 @@ test('spectre: ordinary weapons pass through; magical weapons and spells hurt it
   const plain = await Combat.applyHit(enc, chars, swordsman, sp, thrust, roller(10, []), {});
   assert.match(plain.text, /passes through/);
   assert.equal(C.totalDamage(sp), 0);
-  w.magical = true;
+  w.enchantments = ['keen'];
   await Combat.applyHit(enc, chars, swordsman, sp, thrust, roller(1, []), {});
   assert.ok(C.totalDamage(sp) > 0, 'a magical blade bites');
   // No grabbing or tripping a ghost.
@@ -1764,10 +1764,10 @@ test('item tags: material and origin scale protection and weight; craft only dur
   assert.deepStrictEqual(base(master).mit, base(iron).mit, 'craft never changes protection');
   assert.ok(base(master).maxDurability > base(iron).maxDurability && base(iron).maxDurability > base(poor).maxDurability);
   assert.ok(Items.wearMult(master) < Items.wearMult(iron) && Items.wearMult(iron) < Items.wearMult(poor), 'and how fast it wears');
-  // Old saves and data: quality names map to crafts; scale armor is steel mail.
+  // The old quality names still name a craft; an old save's scale armor is steel mail (save.js upgrades it).
   assert.strictEqual(Items.makeWeapon('dagger', 'crude').craft, 'poor');
   assert.strictEqual(Items.makeWeapon('dagger', 'masterwork').craft, 'master');
-  const old = Items.normalizeItem({ id: 'x', kind: 'armor', type: 'scale', coverage: 'full', quality: 'fine', durability: 10 });
+  const old = Items.normalizeItem(B.Save.upgradeCharacter({ armor: { id: 'x', kind: 'armor', type: 'scale', coverage: 'full', quality: 'fine', durability: 10 } }).armor);
   assert.deepStrictEqual([old.type, old.material, old.craft, old.quality], ['mail', 'steel', 'average', undefined]);
   // Weapons: origin and material change the mass, so speed and damage follow the physics.
   const sword = Items.makeWeapon('longsword');

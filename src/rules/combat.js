@@ -788,7 +788,7 @@
   // Pure: works out what a hit would do (before d4 hit-location rolls).
   function magicalWeapon(c, option) {
     const w = option && option.weaponId && c.weapons ? c.weapons.find((x) => x.id === option.weaponId) : null;
-    return !!(w && (w.enchant || w.magical || Items.enchantsOf(w).length));
+    return !!(w && Items.enchantsOf(w).length);
   }
 
   function passesThrough(attacker, target, option) {
@@ -1353,10 +1353,10 @@
         await G.Magic.push(enc, chars, target, enc.pos[attacker.id], back, roller);
       }
     }
-    // An enchanted blade that drinks (enchantments.yaml drain; an old save's enchant.drain): the wielder
+    // An enchanted blade that drinks (enchantments.yaml drain): the wielder
     // takes back a share of the stamina and attribute points the blow dealt.
     const blade = option.weaponId && attacker.weapons ? attacker.weapons.find((w) => w.id === option.weaponId) : null;
-    const drain = blade && ((blade.enchant && blade.enchant.drain) || (Items.enchantsOf(blade).find((e) => e.drain) || {}).drain);
+    const drain = blade && (Items.enchantsOf(blade).find((e) => e.drain) || {}).drain;
     if (drain && before0) {
       const took = { attrs: C.totalDamage(target) - before0.dmg, stamina: Math.max(0, before0.stamina - target.stamina) };
       const st = Math.round(took.stamina * (drain.stamina || 0));

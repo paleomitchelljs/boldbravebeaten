@@ -5,7 +5,7 @@
  *             supplies, pack, minutes, log, battle, … }
  *
  * Gold, supplies and the pack belong to the party. Supplies (bandages, arrows, bodkins, components)
- * are dealt out to members when a fight starts and collected afterward (see loadSupplies).
+ * are moved out to members when a fight starts and back afterward (see loadSupplies): never in both places.
  */
 (function (G) {
   'use strict';
@@ -28,7 +28,6 @@
     const kits = (content().start || {}).kits || [];
     const kit = kits.find((k) => k.id === spec.kit) || kits[0] || {};
     const c = C.newCharacter({ name: spec.name || 'Adventurer', base: spec.attrs, starterGear: false });
-    c.gold = undefined;
     c.inventory.gold = 0;
     c.inventory.bandages = 0;
     if (kit.armor) c.armor = Items.makeArmor(kit.armor, 'full', 'average');
@@ -77,7 +76,7 @@
     opts = opts || {};
     const S = content().start || {};
     const world = {
-      version: 2, id: Items.uid('world'), created: Date.now(),
+      version: G.Save.VERSION, id: Items.uid('world'), created: Date.now(),
       chars: {}, partyIds: [],
       minutes: 8 * 60, day: 1,
       gold: S.gold != null ? S.gold : cfg().party.startGold,
@@ -163,12 +162,13 @@
     return true;
   }
 
-  // Deal supplies to members at the start of a fight; collect them afterward.
+  // Deal supplies to members at the start of a fight; collect them afterward. Dealing moves them out of the pool,
+  // so each bandage, arrow and component is in exactly one place: the pool between fights, a member's hands in one.
   function loadSupplies(world) {
     const members = active(world);
     if (!members.length) return;
+    collectSupplies(world); // anything still in hand from a fight that never closed
     const S = world.supplies;
-    members.forEach((c) => { c.inventory.bandages = 0; c.inventory.arrows = 0; c.inventory.bodkins = 0; c.inventory.components = {}; });
     const deal = (total, targets, key) => {
       let i = 0;
       for (let n = 0; n < total; n++, i++) targets[i % targets.length].inventory[key] += 1;
@@ -183,11 +183,12 @@
     for (const [id, n] of Object.entries(S.components)) {
       for (let k = 0; k < n; k++) { const c = holders[k % holders.length]; c.inventory.components[id] = (c.inventory.components[id] || 0) + 1; }
     }
+    S.bandages = 0; S.arrows = 0; S.bodkins = 0; S.components = {};
   }
 
+  // Everything in members' hands back to the pool, added to whatever the pool gained meanwhile.
   function collectSupplies(world) {
     const S = world.supplies;
-    S.bandages = 0; S.arrows = 0; S.bodkins = 0; S.components = {};
     for (const c of party(world)) {
       S.bandages += c.inventory.bandages || 0;
       S.arrows += c.inventory.arrows || 0;

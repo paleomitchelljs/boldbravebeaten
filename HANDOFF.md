@@ -11,8 +11,8 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   - `magicImmune` became the keyword `magic`.
 - [x] 3. A grapple stored as one link, `status.grapple` on each fighter, written only by `setGrapple` (see TODO-FIXES for why not on the encounter).
 - [ ] 4. Harm as a list of entries (deferred until a new damage destination or a keyword boost).
-- [ ] 5. Save versions with step-by-step upgrades; one supplies pool. Old saves still need the renames above mapped
-  (a saved trinket carries its `effects`, so a sash in an old save still says `apMult`).
+- [x] 5. Save versions (`Save.VERSION` 3, step-by-step upgrades in `save.js`; normalize only fills gaps); supplies move
+  out of the pool for a fight and back, never in both (fixed a loss of anything gained mid-fight).
 
 ## Look and feel (needs a human eye)
 - [ ] Play it on a phone-width screen: stage, dock, toolbar, command bar and sheet have only been checked on desktop.

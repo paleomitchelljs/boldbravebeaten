@@ -60,36 +60,19 @@
     return { prone: false, grapple: null, webbed: 0, unconscious: false, dead: false, dropped: [], windUp: null, conds: [] };
   }
 
-  // Bring older saves up to the current shape.
+  // Fill in whatever a character lacks (an old save, a hand-made one). Changes of shape between versions are not
+  // here: they are steps in src/game/save.js, run before this.
   function normalize(c) {
     c.status = Object.assign(freshStatus(), c.status || {});
-    // A grapple used to be five fields over the two fighters (clinch, grappling, grappledBy, pinned, grapplingPin).
-    const st = c.status;
-    if ('grappledBy' in st || 'grappling' in st || 'clinch' in st) {
-      if (!st.grapple) {
-        if (st.clinch) st.grapple = { partner: st.clinch, level: 'clinch', role: 'mutual' };
-        else if (st.grappling) st.grapple = { partner: st.grappling, level: st.grapplingPin ? 'pin' : 'hold', role: 'holder' };
-        else if (st.grappledBy && st.grappledBy.length) st.grapple = { partner: st.grappledBy[0], level: st.pinned ? 'pin' : 'hold', role: 'held' };
-      }
-      for (const k of ['clinch', 'grappling', 'grappledBy', 'pinned', 'grapplingPin']) delete st[k];
-    }
-    // Weapons on the ground used to be a single id (and the wield pointer stayed on it).
-    if (!Array.isArray(c.status.dropped)) c.status.dropped = c.status.dropped ? [c.status.dropped] : [];
-    if (c.wield != null && c.status.dropped.includes(c.wield)) c.wield = null;
+    if (!Array.isArray(c.status.dropped)) c.status.dropped = [];
     c.damage = c.damage || {};
     c.base = c.base || {};
-    // WIL was split from WIS: older characters keep their WIS value for it.
-    if (c.base.WIL == null && c.base.WIS != null) c.base.WIL = c.base.WIS;
     ATTRS.forEach((a) => {
       if (c.damage[a] == null) c.damage[a] = 0;
       if (c.base[a] == null) c.base[a] = 5;
     });
     c.feats = c.feats || {};
-    // The magic overhaul renamed the verbs.
-    const RENAMED = { verb_attack: 'verb_strike', verb_mend: 'verb_bless', verb_ward: 'verb_bless', verb_calm: 'verb_hex', verb_hold: 'verb_hex', verb_bind: 'verb_build', verb_reveal: 'verb_inscribe', verb_explode: 'verb_burst' };
-    for (const [from, to] of Object.entries(RENAMED)) if (c.feats[from]) { c.feats[to] = Math.max(c.feats[to] || 0, c.feats[from]); delete c.feats[from]; }
     c.weapons = c.weapons || [];
-    // Items carry craft (not quality), and scale armor is now steel mail.
     if (!Array.isArray(c.pieces)) c.pieces = [];
     for (const it of [c.armor, c.shield].concat(c.pieces, c.weapons)) if (it) Items.normalizeItem(it);
     c.bleeds = c.bleeds || [];
@@ -101,11 +84,9 @@
     if (c.spSpent == null) c.spSpent = 0;
     if (c.level == null) c.level = 1;
     if (c.bonusFeats == null) c.bonusFeats = 0;
-    // Worn things carry the slot they are in (`at`): the old charm slot is the neck; a type two slots take
-    // (rings, earrings) fills the first free one.
+    // Worn things carry the slot they are in (`at`): a type two slots take (rings, earrings) fills the first free one.
     const worn = ((CONFIG.game || {}).wornSlots) || [];
     for (const t of c.trinkets || []) {
-      if (t.slot === 'charm') t.slot = 'neck';
       if (t.at) continue;
       const fits = worn.filter((w) => w.takes === t.slot).map((w) => w.id);
       t.at = fits.find((id) => !(c.trinkets || []).some((x) => x.at === id)) || fits[0] || t.slot;

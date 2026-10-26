@@ -419,7 +419,7 @@ test('equip: the user\'s slots — two rings, two ears, a neck, a cape, a waist,
   assert.equal(Equip.equipTrinket(w, c, 'circlet_of_shadow', 'neck').ok, false, 'a circlet goes on the head');
   // An old save's charm and ring.
   const old = { trinkets: [{ name: 'x', slot: 'charm', attrs: {} }, { name: 'y', slot: 'ring', attrs: {} }, { name: 'z', slot: 'ring', attrs: {} }] };
-  C.normalize(old);
+  C.normalize(B.Save.upgradeCharacter(old));
   assert.deepStrictEqual(old.trinkets.map((t) => t.at), ['neck', 'ring1', 'ring2']);
   // Earrings fill either ear.
   World.addGood(w, 'orc_fang_earring'); World.addGood(w, 'ivandyr_hoop');

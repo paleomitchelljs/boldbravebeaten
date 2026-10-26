@@ -11,9 +11,9 @@
   const E = () => G.CONFIG.game.economy;
 
   // ---- Specs: a stock/loot line becomes an item -----------------------------
-  // A spec may carry an item's tags: material, origin, craft (an old `quality` is read as one), enchantments.
+  // A spec may carry an item's tags: material, origin, craft, enchantments.
   function makeFromSpec(spec) {
-    const craft = spec.craft || spec.quality || 'average';
+    const craft = spec.craft || 'average';
     const tags = { material: spec.material, origin: spec.origin, enchantments: spec.enchantments, name: spec.name, covers: spec.covers };
     if (spec.weapon) return Items.makeWeapon(spec.weapon, craft, spec.material, tags);
     if (spec.armor) return Items.makeArmor(spec.armor, spec.coverage || 'full', craft, tags);
