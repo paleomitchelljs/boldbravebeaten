@@ -82,6 +82,15 @@ cyrus:
   # Idle only (no walk yet). The south view came out wrong: the south-east and south-west stand in.
   rotations: [east, south-east, south-west, west, north-west, north, north-east]
   party: true
+lorc:
+  type: pixellab
+  dir: art/characters/pixellab/Lorc/Idle
+  name: Lorc
+  size: 64
+  box: [8, 3, 61, 60]
+  height: 1.35
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  party: true
 spawnee:
   type: pixellab
   dir: art/characters/pixellab/Spawnee/Idle

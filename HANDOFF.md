@@ -99,6 +99,10 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
   as `clay-golem`, `iron-golem` and `stone-golem` (the last two recoloured on load by `recolor` ramps; Stone golem's
   look) and the Avatar of Fear (`avatar`, 128 px, 3 squares tall by design). The duelist foe wears Cyrus. They replace
   the old creature sheets of those names (still on disk, unused; `avatar-of-fear` stays: the trolls wear it).
+- [x] Lorc, a hooded archer (the user's PixelLab character, 2026-10-27; `art/characters/pixellab/Lorc`, `lorc` in
+  `art.yaml`, party-pickable): 8 idle rotations and a 4-frame walk in all 8 directions. No attack (a bow draw) or death yet.
+- [ ] Cyrus's south view was replaced in PixelLab (2026-10-26) with the user's redraw. Re-export Cyrus, then drop the
+  `rotations` line from `cyrus` in `art.yaml` so the south view is used.
   None has attack, hurt or death frames yet.
 - [x] Bosses and new creatures placed (the user, 2026-10-25). Golems are one body (STR/CON 22, reach-2 fists, tireless)
   differing only in `resist`: clay immune to blunt and fire, weak to slashing (labyrinth dead end, `G`); stone immune to
