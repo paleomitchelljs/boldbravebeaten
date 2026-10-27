@@ -504,8 +504,9 @@
       const size = T * S;
       const x = ox + (v.x + 0.5) * size, y = oy + (v.y + 1) * size - S * 1.5;
       const idleFrame = Math.floor(tick / 2) + (a.phase || 0);
-      const anim = v.run ? 'run' : 'idle';
-      const frame = v.run ? tick : idleFrame;
+      const moving = v.run || (a.art && Sprites.floats(a.art));
+      const anim = moving ? 'run' : 'idle';
+      const frame = v.run ? tick : moving ? tick + (a.phase || 0) : idleFrame;
       if (a.ring) {
         ctx.strokeStyle = a.ring; ctx.lineWidth = Math.max(2, S * 0.8);
         ctx.beginPath(); ctx.ellipse(x, y - S * 1.2, 7 * S, 3 * S, 0, 0, Math.PI * 2); ctx.stroke();

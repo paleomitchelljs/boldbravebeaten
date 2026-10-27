@@ -10,6 +10,7 @@
 # walk frames may sit on a larger canvas than `size`, centred, and are cropped to it). rotations: the standing views
 # to use, default all eight (leave out a bad one and the nearest stands in). recolor: a ramp [[brightness 0..1,
 # "#rrggbb"], ...] the figure's shading is mapped onto when it loads (one figure in another material).
+# floats: true plays the walk standing still as well (a figure that hovers rather than stands).
 
 avatar-of-fear: {anims: [idle, attack], frame: [150, 150], box: [12, 0, 138, 150], faces: right, height: 1.9}
 basilisk: {anims: [idle, attack], frame: [160, 160], box: [0, 62, 160, 160], faces: right, height: 0.9, maxWidth: 2}
@@ -166,3 +167,14 @@ avatar:
   # Meant to tower over everything else.
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
   maxWidth: 3.2
+spectre:
+  type: pixellab
+  dir: art/characters/pixellab/Spectre/Idle
+  name: Spectre
+  size: 64
+  box: [2, 4, 62, 57]
+  height: 1.45
+  # Its walk is a float, and it plays standing still too.
+  walkFrames: 9
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  floats: true

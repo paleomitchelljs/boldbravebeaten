@@ -101,6 +101,8 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
   the old creature sheets of those names (still on disk, unused; `avatar-of-fear` stays: the trolls wear it).
 - [x] Lorc, a gray-skinned orc archer in a blue hood (the user's PixelLab character, 2026-10-27; `art/characters/pixellab/Lorc`, `lorc` in
   `art.yaml`, party-pickable): 8 idle rotations and a 4-frame walk in all 8 directions. No attack (a bow draw) or death yet.
+- [x] Spectre (the user's PixelLab character, 2026-10-27; `spectre` in `art.yaml`, not yet worn by any monster): 8 idle
+  rotations and a 9-frame float in 8 directions. New `floats: true` in `art.yaml`: the walk plays standing still too.
 - [ ] Cyrus's south view was replaced in PixelLab (2026-10-26) with the user's redraw. Re-export Cyrus, then drop the
   `rotations` line from `cyrus` in `art.yaml` so the south view is used.
   None has attack, hurt or death frames yet.

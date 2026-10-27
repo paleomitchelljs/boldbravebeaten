@@ -1,0 +1,138 @@
+{
+  "group_id": "21e84dae-bcca-43a3-ac90-90d88eebab0b",
+  "states": [
+    {
+      "character": {
+        "id": "046bf345-29ab-4e14-96a5-fcf1923f529d",
+        "name": "Idle",
+        "prompt": "A floating black-robed spectre with a skull face & glowing red eyes whose lower body is a twisting taper of its robes, holding a large scythe",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "custom",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-10-27T04:08:33.733200+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {
+          "Floating_with_slight_arm_movements_and_a_a_twistin": {
+            "north-east": [
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/north-east/frame_000.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/north-east/frame_001.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/north-east/frame_002.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/north-east/frame_003.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/north-east/frame_004.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/north-east/frame_005.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/north-east/frame_006.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/north-east/frame_007.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/north-east/frame_008.png"
+            ],
+            "east-0d05e068": [
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/east-0d05e068/frame_000.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/east-0d05e068/frame_001.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/east-0d05e068/frame_002.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/east-0d05e068/frame_003.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/east-0d05e068/frame_004.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/east-0d05e068/frame_005.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/east-0d05e068/frame_006.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/east-0d05e068/frame_007.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/east-0d05e068/frame_008.png"
+            ],
+            "east-22608964": [
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/east-22608964/frame_000.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/east-22608964/frame_001.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/east-22608964/frame_002.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/east-22608964/frame_003.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/east-22608964/frame_004.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/east-22608964/frame_005.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/east-22608964/frame_006.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/east-22608964/frame_007.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/east-22608964/frame_008.png"
+            ],
+            "north": [
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/north/frame_000.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/north/frame_001.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/north/frame_002.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/north/frame_003.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/north/frame_004.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/north/frame_005.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/north/frame_006.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/north/frame_007.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/north/frame_008.png"
+            ],
+            "south": [
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/south/frame_000.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/south/frame_001.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/south/frame_002.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/south/frame_003.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/south/frame_004.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/south/frame_005.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/south/frame_006.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/south/frame_007.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/south/frame_008.png"
+            ],
+            "north-west": [
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/north-west/frame_000.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/north-west/frame_001.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/north-west/frame_002.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/north-west/frame_003.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/north-west/frame_004.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/north-west/frame_005.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/north-west/frame_006.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/north-west/frame_007.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/north-west/frame_008.png"
+            ],
+            "south-east": [
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/south-east/frame_000.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/south-east/frame_001.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/south-east/frame_002.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/south-east/frame_003.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/south-east/frame_004.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/south-east/frame_005.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/south-east/frame_006.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/south-east/frame_007.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/south-east/frame_008.png"
+            ],
+            "south-west": [
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/south-west/frame_000.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/south-west/frame_001.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/south-west/frame_002.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/south-west/frame_003.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/south-west/frame_004.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/south-west/frame_005.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/south-west/frame_006.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/south-west/frame_007.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/south-west/frame_008.png"
+            ],
+            "west": [
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/west/frame_000.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/west/frame_001.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/west/frame_002.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/west/frame_003.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/west/frame_004.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/west/frame_005.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/west/frame_006.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/west/frame_007.png",
+              "Idle/animations/Floating_with_slight_arm_movements_and_a_a_twistin/west/frame_008.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-27T04:29:37.656146"
+}

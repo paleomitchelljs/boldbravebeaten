@@ -173,6 +173,9 @@
     return { def, s, sx: f * fw, sy: 0, sw: fw, sh: fh, mirror: def.faces === 'left' ? !flip : !!flip };
   }
 
+  // A figure that floats (floats: true in art.yaml) plays its walk standing still too.
+  const floats = (key) => !!(artCat()[key] || {}).floats;
+
   function artReady(key) {
     const def = artCat()[key];
     if (!def) return false;
@@ -349,7 +352,7 @@
   }
 
   UI.Art = UI.Art || {};
-  UI.Sprites = { DIRS, dirOf, forEncounter, crowd, KINDS, PARTY_KINDS, partyKinds, TINTS, KIT_KIND, draw, drawArt, artReady, artSheet, look, lookFor, portrait, figure, sheet, whenReady: (f) => waiting.push(f), preload: () => { KINDS.forEach((k) => { sheet(k, 'idle'); sheet(k, 'run'); }); for (const k of Object.keys(artCat())) artSheet(k, (artCat()[k].type === 'pixellab') ? 'south-east' : 'idle'); } };
+  UI.Sprites = { DIRS, dirOf, forEncounter, crowd, KINDS, PARTY_KINDS, partyKinds, TINTS, KIT_KIND, draw, drawArt, floats, artReady, artSheet, look, lookFor, portrait, figure, sheet, whenReady: (f) => waiting.push(f), preload: () => { KINDS.forEach((k) => { sheet(k, 'idle'); sheet(k, 'run'); }); for (const k of Object.keys(artCat())) artSheet(k, (artCat()[k].type === 'pixellab') ? 'south-east' : 'idle'); } };
   // Portraits everywhere in the game are now the sprite's face.
   UI.Art.portrait = (c, px) => portrait(c, px);
 })(globalThis.BBB);
