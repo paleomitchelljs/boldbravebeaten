@@ -19,6 +19,7 @@ is dropped.
 | Beren | `beren` | 7cd3c25e-88e8-43dd-b20f-e003b2c418de | 64 | idle ×8, walk ×8 | attack, death |
 | Cyrus | `cyrus` | 57400efc-503b-472e-8b97-3c1b38147ffa | 64 | idle ×8 | re-export (south view replaced in PixelLab 2026-10-26), walk, attack, death |
 | Golem | `clay-golem`, `iron-golem`, `stone-golem` | 522fdcbf-daea-4936-ab74-a07a96189774 | 80 | idle ×8, walk ×8 | attack, death |
+| Krump | `krump` | 1583e709-7b5c-4544-8c3f-beb640168735 | 64 | idle ×8; a 7-frame two-footed jump ×8 (not used: the sword vanishes in several frames) | walk (or a clean hop), attack, death |
 | Lizardfolk_Warrior | `lizardfolk-warrior` | 5a2d243e-b78f-4b46-9fa8-adbdc18edc92 | 64 | idle ×8, walk ×4 dirs (6 frames) | attack, death; a "fighting pose, head" state (80be2814-aa6b-4a37-85cb-6ac94fc9c8fa) is in PixelLab, not exported |
 | Lorc | `lorc` | 5cdcb694-3e2a-4aae-ae45-ebd006e2dbf7 | 64 | idle ×8, walk ×8 | attack (bow), death |
 | Skeleton | `skeleton` | 07ca48e9-30fe-4cdf-b513-b802a07fe1fd | 64 | idle ×8, walk ×8 | attack, death |

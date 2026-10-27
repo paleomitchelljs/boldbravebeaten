@@ -103,6 +103,9 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
   `art.yaml`, party-pickable): 8 idle rotations and a 4-frame walk in all 8 directions. No attack (a bow draw) or death yet.
 - [x] Spectre (the user's PixelLab character, 2026-10-27; `spectre` in `art.yaml`, not yet worn by any monster): 8 idle
   rotations and a 9-frame float in 8 directions. New `floats: true` in `art.yaml`: the walk plays standing still too.
+- [x] Krump, a froglok knight with a rune greatsword (the user's PixelLab hero, 2026-10-27; `krump`, party-pickable): 8 idle
+  rotations. Its one animation, a two-footed jump, is in the folder but unused (the sword vanishes in several frames).
+  A figure with `walks: []` (Krump, Cyrus) or missing walk frames now moves in its standing view.
 - [ ] Cyrus's south view was replaced in PixelLab (2026-10-26) with the user's redraw. Re-export Cyrus, then drop the
   `rotations` line from `cyrus` in `art.yaml` so the south view is used.
   None has attack, hurt or death frames yet.

@@ -81,6 +81,7 @@ cyrus:
   box: [4, 3, 59, 61]
   height: 1.35
   # Idle only (no walk yet). The south view came out wrong: the south-east and south-west stand in.
+  walks: []
   rotations: [east, south-east, south-west, west, north-west, north, north-east]
   party: true
 lorc:
@@ -91,6 +92,17 @@ lorc:
   box: [8, 3, 61, 60]
   height: 1.35
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  party: true
+krump:
+  type: pixellab
+  dir: art/characters/pixellab/Krump/Idle
+  name: Krump
+  size: 64
+  box: [1, 4, 63, 61]
+  height: 1.35
+  # Idle only. The export's one animation is a two-footed jump (in the folder, unused): the greatsword vanishes in
+  # several frames, so it is not used as the walk.
+  walks: []
   party: true
 spawnee:
   type: pixellab

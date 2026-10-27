@@ -157,7 +157,10 @@
     if (!def) return null;
     if (def.type === 'pixellab') {
       const want = DIRS.includes(dir) ? dir : flip ? 'south-west' : 'south-east', n = def.walkFrames || 4;
-      const name = anim === 'run' ? `${nearestDir(want, def.walks || ['east', 'west'])}#${((frame % n) + n) % n}` : nearestDir(want, def.rotations || DIRS);
+      const walks = def.walks || ['east', 'west'];
+      // With no walk (walks: [], or its frames missing) it moves in its standing view.
+      if (anim === 'run' && (!walks.length || artSheet(key, `${nearestDir(want, walks)}#0`).failed)) return artPick(key, 'idle', frame, flip, dir);
+      const name = anim === 'run' ? `${nearestDir(want, walks)}#${((frame % n) + n) % n}` : nearestDir(want, def.rotations || DIRS);
       const s = artSheet(key, name);
       // PixelLab exports walk frames on a larger canvas (96 px round a 64-px figure): take the figure's square from the middle.
       const pad = s.ok ? Math.max(0, (s.img.width - def.size) / 2) : 0;
