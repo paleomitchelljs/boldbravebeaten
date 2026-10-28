@@ -64,11 +64,13 @@ viewer's right; in E and W views the weapon is in front.
    [3]; strike ×8, cutlass slash [8-16]; death [1].
 3. [x] **Arvir**: walk W [1]; strike ×8, sword slash behind the shield [8-16]; death [1].
 4. [x] **Spawnee**: walk SW [1]; strike ×8, curved-sword slash [8-16]; death [1].
-5. [ ] **Jabiku**: N rotation mirrored [0]; strike ×8, overhead staff blow [8-16]; death [1]. (SE/NW staff hand: step C.)
-6. [ ] **Lorc**: strike ×8, draw and loose an arrow [8-16]; death [1].
+5. [x] **Jabiku**: N rotation mirrored [0]; strike ×8, overhead staff blow [8-16]; death [1]. (SE/NW staff hand: step C.)
+6. [x] **Lorc**: strike ×8, draw and loose an arrow [8-16]; death [1].
 
 ### B. Monsters (5 directions each, mirrored)
-7. [ ] Specks and shadows by hand on Lizardfolk_Alt, Varanus, Golem, Alligator, Gorilla, Skeleton [0].
+7. [ ] Specks and shadows by hand on Lizardfolk_Alt, Varanus, Golem, Alligator, Gorilla, Skeleton [0]. Moved to the
+   end (after step 18): only Lizardfolk_Alt walk S frame 3 has a detached speck; the rest touch the figure or share its
+   colours, so they need picking by hand, and none is a weapon or mirroring error.
 8. [ ] **Lizardfolk_Alt** (Idle): claw swipe ×5 [5]; death [1].
 9. [ ] **Dread shaman**: staff strike ×5 [5]; death [1].
 10. [ ] **Lizardfolk_Varanus**: bite-and-claw ×5 [5]; death [1].
@@ -119,3 +121,5 @@ Estimated A+B: about 150-230.
 | Arvir | strike ×8, death | 9 | | all good first time |
 | Spawnee | strike ×8, death | 9 | | all good first time (NW blade glows cyan: kept, she is a spellsword) |
 | Jabiku | N rotation mirrored | 0 | | SE and NW are exact mirrors of SW and NE, so they stay left-handed until step 18 |
+| Jabiku | strike ×8, death | 9 | | good; in W/NW/SW the staff swings behind him for a frame (a wind-up) |
+| Lorc | strike ×8, death | 9 | | good first time |
