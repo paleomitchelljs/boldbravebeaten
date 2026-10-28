@@ -185,8 +185,10 @@
       const stand = () => framed(def, artSheet(key, `${def.dir}/rotations/${nearestDir(want, def.rotations || DIRS)}.png`), false);
       // A clip plays in the direction asked, or mirrored from its twin; a walk also takes a direction one step off.
       // Anything else (no clip, no such direction, frames missing) shows the standing view.
-      let c = anim === 'run' ? clip(def, 'walk') : anim === 'idle' || anim === 'attack' ? clip(def, anim) : null;
+      let c = anim === 'run' ? clip(def, 'walk') : anim === 'idle' || anim === 'attack' || anim === 'death' ? clip(def, anim) : null;
       let d = c && clipDir(want, c.dirs, anim === 'run');
+      // A death is one picture (the clip's last frame), drawn whichever way the figure faced: a body lies as it fell.
+      if (c && anim === 'death') { d = d || [c.dirs[0], !!flip]; frame = c.frames - 1; }
       // No walk this way: its standing animation, if it has one there.
       if (!d && anim === 'run' && (c = clip(def, 'idle'))) d = clipDir(want, c.dirs, false);
       if (!d) return stand();
@@ -205,6 +207,8 @@
   }
 
   // The sheet that decides whether a character's art is there at all.
+  // Whether a pixellab entry has this clip (`death`: a fallen figure shows it instead of its standing view on its side).
+  const hasClip = (key, which) => { const def = artCat()[key]; return !!(def && def.type === 'pixellab' && def[which]); };
   const artProbe = (key) => { const def = artCat()[key] || {}; return artSheet(key, def.type === 'pixellab' ? `${def.dir}/rotations/south-east.png` : 'idle'); };
 
   // A figure that floats (floats: true in art.yaml) plays its walk standing still too.
@@ -386,7 +390,7 @@
   }
 
   UI.Art = UI.Art || {};
-  UI.Sprites = { DIRS, dirOf, forEncounter, crowd, KINDS, PARTY_KINDS, partyKinds, TINTS, KIT_KIND, draw, drawArt, floats, artReady, artSheet, look, lookFor, portrait, figure, sheet, whenReady: (f) => waiting.push(f), preload: () => { KINDS.forEach((k) => { sheet(k, 'idle'); sheet(k, 'run'); }); for (const k of Object.keys(artCat())) artProbe(k); } };
+  UI.Sprites = { DIRS, dirOf, hasClip, forEncounter, crowd, KINDS, PARTY_KINDS, partyKinds, TINTS, KIT_KIND, draw, drawArt, floats, artReady, artSheet, look, lookFor, portrait, figure, sheet, whenReady: (f) => waiting.push(f), preload: () => { KINDS.forEach((k) => { sheet(k, 'idle'); sheet(k, 'run'); }); for (const k of Object.keys(artCat())) artProbe(k); } };
   // Portraits everywhere in the game are now the sprite's face.
   UI.Art.portrait = (c, px) => portrait(c, px);
 })(globalThis.BBB);

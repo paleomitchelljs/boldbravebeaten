@@ -3,7 +3,8 @@
 One folder per PixelLab export: one subfolder per state of the character (PixelLab's "group"), each with `rotations/`
 (standing views) and `animations/<name>/<direction>/frame_NNN.png`. Each folder's `metadata.json` also holds the IDs
 and the prompts. To open one in PixelLab, go to `https://www.pixellab.ai/create-character/<id>`. The user makes and
-animates these characters in PixelLab; Claude only downloads them and wires them into the game.
+animates these characters in PixelLab; Claude only downloads them and wires them into the game, except for the fixes and
+animations in `assets/ideas/character-animation-plan.md` (the user, 2026-10-28).
 
 **Fetching.** `exports.json` maps each folder to a PixelLab ID (one per group: the export holds every state).
 `node tools/pixellab-pull.js` re-fetches them all, replacing the folders; `node tools/pixellab-pull.js Singe Gorilla`
@@ -21,9 +22,9 @@ Every character the user sends goes in this table, including any not yet in the 
 | Arvir | `arvir` | ee3ed543-32ad-49bd-b428-65c78341e629 | 64 | idle ×8, walk ×8 (6 frames) | attack, death |
 | Avatar_of_Fear | `avatar` | 87521e4a-f274-4ab8-a84a-08fed819a240 | 128 | idle ×8, walk ×8 | attack, death |
 | Bear | `bear` | c71b5d64-37ac-4f6d-b6c8-f9b2b3a9d922 | 96 | idle ×8, walk ×8, attack ×8 (9 frames); Run and Jump_Attack unused | death |
-| Beren | `beren` | 7cd3c25e-88e8-43dd-b20f-e003b2c418de | 64 | idle ×8, walk ×8 | attack, death |
+| Beren | `beren` | 7cd3c25e-88e8-43dd-b20f-e003b2c418de | 64 | idle ×8, walk ×8 (SE, NW redone 2026-10-28: hands had swapped), strike ×8 (`Strike2`, 7 frames), death (south) | idle animation |
 | Crusader | `crusader` | 9b7d3dac-2b67-483e-a6e0-9c33ff0a7f2e | 64 | idle ×8, walk south only | walk in the other directions, attack, death |
-| Cyrus | `cyrus` | 57400efc-503b-472e-8b97-3c1b38147ffa | 64 | idle ×8 (south redrawn), walk ×8 | attack, death |
+| Cyrus | `cyrus` | 57400efc-503b-472e-8b97-3c1b38147ffa | 64 | idle ×8 (south regenerated 2026-10-28 from the SW view), walk ×8 (S, NE, NW redone: the sabre vanished or swapped hands), strike ×8 (`Strike2`, 7 frames), death (south) | idle animation |
 | Farmer | `farmer` | 96889e20-bfd8-419f-aa01-ddec9e1b4590 | 48 | idle ×8 with an 8-frame idle animation, walk ×8 | — |
 | Goblin | `goblin` (Idle, green), `goblin-orange` (Orange_skinned_gobli) | 71e3ab4e-d83b-410e-94de-8fb0493d200c (green), 6bee6343-c2f2-4333-8df8-a3dac88a705d (orange) | 64 | green: idle ×8; orange: idle ×8, walk north and south (6 frames) | walks, attack, death |
 | Golem | `clay-golem`, `iron-golem`, `stone-golem` | 522fdcbf-daea-4936-ab74-a07a96189774 | 80 | idle ×8, walk ×8 | attack, death |

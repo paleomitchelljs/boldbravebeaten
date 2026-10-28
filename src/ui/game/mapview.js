@@ -516,8 +516,10 @@
       // Creature art (data/art.yaml) where it is there: its attack frames while a lunge is under way.
       const lunge = view.fx.find((f) => f.k === 'lunge' && f.id === a.id && clock() >= f.t0 && clock() < f.t0 + f.dur + 140);
       const lunging = !!lunge, progress = lunge ? (clock() - lunge.t0) / (lunge.dur + 140) : null;  // how far through the blow
-      const rot = a.down ? (v.flip ? -1.45 : 1.45) : 0;
-      const art = a.art && Sprites.drawArt(ctx, a.art, lunging ? 'attack' : anim, frame, x, y, size, { flip: v.flip, dir: v.dir, tint: a.artTint, alpha: a.alpha, artScale: a.artScale, rot, progress, shadow: !a.down });
+      // A fallen figure lies on its side, unless its art has a death picture.
+      const dead = a.down && a.art && Sprites.hasClip(a.art, 'death');
+      const rot = a.down && !dead ? (v.flip ? -1.45 : 1.45) : 0;
+      const art = a.art && Sprites.drawArt(ctx, a.art, dead ? 'death' : lunging ? 'attack' : anim, frame, x, y, size, { flip: v.flip, dir: v.dir, tint: a.artTint, alpha: a.alpha, artScale: a.artScale, rot, progress, shadow: !a.down });
       if (art) a = Object.assign({}, a, { size: a.artSize || a.size });
       const ok = art || Sprites.draw(ctx, a.kind, anim, frame, x, y, SS, { flip: v.flip, tint: a.tint, alpha: a.alpha, size: a.size || 1, rot, shadow: !a.down });
       // A hit: the same figure again, washed red and added on top (it glows), fading.

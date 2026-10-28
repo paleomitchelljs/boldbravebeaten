@@ -46,7 +46,9 @@ Read `HANDOFF.md` first: it is the to-do list. **After every push, update it** (
 - Don't tune individual monsters to fix a style's weakness; tune fundamentals.
 - **Never generate or animate characters in PixelLab** (create_character, animate_character and the like): they are
   costly and the user makes them. Inspect, cut, map and wire up what the user exports. Tiles, props and pixel edits are
-  still fine.
+  still fine. Exception (the user, 2026-10-28): the fixes, strikes, deaths and idles listed in
+  `assets/ideas/character-animation-plan.md` may be generated, in its order, logging each spend there. Never
+  `create_character`.
 
 ## Terminology (the user's standard; apply it everywhere)
 

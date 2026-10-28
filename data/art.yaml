@@ -79,6 +79,9 @@ beren:
   box: [6, 3, 60, 60]
   height: 1.35
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  # Strike and death (one picture: the death clip's last frame, facing south) on an 80-84 px canvas, centred.
+  attack: {anim: Strike2, frames: 7}
+  death: {anim: Death, frames: 7, dirs: [south]}
   party: true
 cyrus:
   type: pixellab
@@ -88,6 +91,9 @@ cyrus:
   box: [4, 3, 59, 61]
   height: 1.35
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  # Strike and death (one picture: the death clip's last frame, facing south) on an 80-84 px canvas, centred.
+  attack: {anim: Strike2, frames: 7}
+  death: {anim: Death, frames: 7, dirs: [south]}
   party: true
 lorc:
   type: pixellab
