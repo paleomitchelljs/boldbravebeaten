@@ -28,6 +28,17 @@
           "south-west": "Idle/rotations/south-west.png"
         },
         "animations": {
+          "Death": {
+            "south": [
+              "Idle/animations/Death/south/frame_000.png",
+              "Idle/animations/Death/south/frame_001.png",
+              "Idle/animations/Death/south/frame_002.png",
+              "Idle/animations/Death/south/frame_003.png",
+              "Idle/animations/Death/south/frame_004.png",
+              "Idle/animations/Death/south/frame_005.png",
+              "Idle/animations/Death/south/frame_006.png"
+            ]
+          },
           "Walking": {
             "east": [
               "Idle/animations/Walking/east/frame_000.png",
@@ -93,6 +104,39 @@
         },
         "animations": {
           "lunging_forward_with_an_open_mouth_and_snapping_it": {
+            "south-east": [
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/south-east/frame_000.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/south-east/frame_001.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/south-east/frame_002.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/south-east/frame_003.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/south-east/frame_004.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/south-east/frame_005.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/south-east/frame_006.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/south-east/frame_007.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/south-east/frame_008.png"
+            ],
+            "north": [
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/north/frame_000.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/north/frame_001.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/north/frame_002.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/north/frame_003.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/north/frame_004.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/north/frame_005.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/north/frame_006.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/north/frame_007.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/north/frame_008.png"
+            ],
+            "east": [
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/east/frame_000.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/east/frame_001.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/east/frame_002.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/east/frame_003.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/east/frame_004.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/east/frame_005.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/east/frame_006.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/east/frame_007.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/east/frame_008.png"
+            ],
             "south": [
               "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/south/frame_000.png",
               "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/south/frame_001.png",
@@ -103,6 +147,17 @@
               "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/south/frame_006.png",
               "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/south/frame_007.png",
               "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/south/frame_008.png"
+            ],
+            "north-east": [
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/north-east/frame_000.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/north-east/frame_001.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/north-east/frame_002.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/north-east/frame_003.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/north-east/frame_004.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/north-east/frame_005.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/north-east/frame_006.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/north-east/frame_007.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/north-east/frame_008.png"
             ]
           }
         }
@@ -110,5 +165,5 @@
     }
   ],
   "export_version": "3.1",
-  "export_date": "2026-10-28T14:39:46.793208"
+  "export_date": "2026-10-28T21:09:14.787602"
 }

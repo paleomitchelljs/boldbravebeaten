@@ -71,14 +71,14 @@ viewer's right; in E and W views the weapon is in front.
 7. [ ] Specks and shadows by hand on Lizardfolk_Alt, Varanus, Golem, Alligator, Gorilla, Skeleton [0]. Moved to the
    end (after step 18): only Lizardfolk_Alt walk S frame 3 has a detached speck; the rest touch the figure or share its
    colours, so they need picking by hand, and none is a weapon or mirroring error.
-8. [ ] **Lizardfolk_Alt** (Idle): claw swipe ×5 [5]; death [1].
-9. [ ] **Dread shaman**: staff strike ×5 [5]; death [1].
-10. [ ] **Lizardfolk_Varanus**: bite-and-claw ×5 [5]; death [1].
-11. [ ] **Lizardfolk_Warrior**: the bite exists facing S; add SE, E, NE, N [4]; death [1].
-12. [ ] **Avatar of Fear** (128 px; 2-3 gens a direction): claw sweep ×5 [10-15]; death [2-3].
-13. [ ] **Golem** (80 px; one figure for clay, iron and stone): two-fisted slam ×5 [5-10]; death [1-2].
+8. [x] **Lizardfolk_Alt** (Idle): claw swipe ×5 [5]; death [1].
+9. [x] **Dread shaman**: staff strike ×5 [5]; death [1].
+10. [x] **Lizardfolk_Varanus**: bite-and-claw ×5 [5]; death [1].
+11. [x] **Lizardfolk_Warrior**: the bite exists facing S; add SE, E, NE, N [4]; death [1].
+12. [x] **Avatar of Fear** (128 px; 2-3 gens a direction): claw sweep ×5 [10-15]; death [2-3].
+13. [x] **Golem** (80 px; one figure for clay, iron and stone): two-fisted slam ×5 [5-10]; death [1-2].
 14. [ ] **Alligator** (quadruped template; has `attack`): attack ×5 [5]; death (v3) [1].
-15. [ ] **Gorilla** (80 px): pound ×5 [5-10]; death [1-2].
+15. [x] **Gorilla** (80 px): pound ×5 [5-10]; death [1-2].
 16. [ ] **Skeleton**: claw swipe ×5 [5]; death [1].
 
 Estimated A+B: about 150-230.
@@ -123,3 +123,12 @@ Estimated A+B: about 150-230.
 | Jabiku | N rotation mirrored | 0 | | SE and NW are exact mirrors of SW and NE, so they stay left-handed until step 18 |
 | Jabiku | strike ×8, death | 9 | | good; in W/NW/SW the staff swings behind him for a frame (a wind-up) |
 | Lorc | strike ×8, death | 9 | | good first time |
+| Lizardfolk_Alt | strike S (an orange club appeared), re-roll "bare-handed", ×4 more, death | 7 | | good after the re-roll |
+| Dread shaman | strike ×5, death | 6 | | good; the staff keeps changing hands as in its standing views |
+| Varanus | bite ×5, death | 6 | | good |
+| Lizardfolk_Warrior | bite SE, E, NE, N; N re-rolled ("seen from behind"); death | 6 | | N first turned to face the viewer |
+| Avatar of Fear | strike ×5 (3 a direction, 160-px canvas), death | 18 | | the S strike ends in a burst of fire at its fists: the user's call whether to keep it |
+| Golem | slam ×5 (N cost 2), death, death re-rolled | 8 | | 1st death: a halo, no fall |
+| Gorilla | strike S, re-roll, ×4 more, death | 7 | | 1st barely moved |
+| Alligator | template `attack` S (it shrank sideways mid-clip; deleted), v3 bite S | 2 | | |
+| Skeleton | claw S, SE, death | 3 | | |

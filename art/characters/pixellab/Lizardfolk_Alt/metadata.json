@@ -77,6 +77,64 @@
               "Idle/animations/Walking/north/frame_002.png",
               "Idle/animations/Walking/north/frame_003.png"
             ]
+          },
+          "Strike": {
+            "south": [
+              "Idle/animations/Strike/south/frame_000.png",
+              "Idle/animations/Strike/south/frame_001.png",
+              "Idle/animations/Strike/south/frame_002.png",
+              "Idle/animations/Strike/south/frame_003.png",
+              "Idle/animations/Strike/south/frame_004.png",
+              "Idle/animations/Strike/south/frame_005.png",
+              "Idle/animations/Strike/south/frame_006.png"
+            ],
+            "south-east": [
+              "Idle/animations/Strike/south-east/frame_000.png",
+              "Idle/animations/Strike/south-east/frame_001.png",
+              "Idle/animations/Strike/south-east/frame_002.png",
+              "Idle/animations/Strike/south-east/frame_003.png",
+              "Idle/animations/Strike/south-east/frame_004.png",
+              "Idle/animations/Strike/south-east/frame_005.png",
+              "Idle/animations/Strike/south-east/frame_006.png"
+            ],
+            "east": [
+              "Idle/animations/Strike/east/frame_000.png",
+              "Idle/animations/Strike/east/frame_001.png",
+              "Idle/animations/Strike/east/frame_002.png",
+              "Idle/animations/Strike/east/frame_003.png",
+              "Idle/animations/Strike/east/frame_004.png",
+              "Idle/animations/Strike/east/frame_005.png",
+              "Idle/animations/Strike/east/frame_006.png"
+            ],
+            "north": [
+              "Idle/animations/Strike/north/frame_000.png",
+              "Idle/animations/Strike/north/frame_001.png",
+              "Idle/animations/Strike/north/frame_002.png",
+              "Idle/animations/Strike/north/frame_003.png",
+              "Idle/animations/Strike/north/frame_004.png",
+              "Idle/animations/Strike/north/frame_005.png",
+              "Idle/animations/Strike/north/frame_006.png"
+            ],
+            "north-east": [
+              "Idle/animations/Strike/north-east/frame_000.png",
+              "Idle/animations/Strike/north-east/frame_001.png",
+              "Idle/animations/Strike/north-east/frame_002.png",
+              "Idle/animations/Strike/north-east/frame_003.png",
+              "Idle/animations/Strike/north-east/frame_004.png",
+              "Idle/animations/Strike/north-east/frame_005.png",
+              "Idle/animations/Strike/north-east/frame_006.png"
+            ]
+          },
+          "Death": {
+            "south": [
+              "Idle/animations/Death/south/frame_000.png",
+              "Idle/animations/Death/south/frame_001.png",
+              "Idle/animations/Death/south/frame_002.png",
+              "Idle/animations/Death/south/frame_003.png",
+              "Idle/animations/Death/south/frame_004.png",
+              "Idle/animations/Death/south/frame_005.png",
+              "Idle/animations/Death/south/frame_006.png"
+            ]
           }
         }
       }
@@ -173,11 +231,69 @@
               "Dread_shaman/animations/Walking/south-west/frame_004.png",
               "Dread_shaman/animations/Walking/south-west/frame_005.png"
             ]
+          },
+          "Death": {
+            "south": [
+              "Dread_shaman/animations/Death/south/frame_000.png",
+              "Dread_shaman/animations/Death/south/frame_001.png",
+              "Dread_shaman/animations/Death/south/frame_002.png",
+              "Dread_shaman/animations/Death/south/frame_003.png",
+              "Dread_shaman/animations/Death/south/frame_004.png",
+              "Dread_shaman/animations/Death/south/frame_005.png",
+              "Dread_shaman/animations/Death/south/frame_006.png"
+            ]
+          },
+          "Strike": {
+            "north-east": [
+              "Dread_shaman/animations/Strike/north-east/frame_000.png",
+              "Dread_shaman/animations/Strike/north-east/frame_001.png",
+              "Dread_shaman/animations/Strike/north-east/frame_002.png",
+              "Dread_shaman/animations/Strike/north-east/frame_003.png",
+              "Dread_shaman/animations/Strike/north-east/frame_004.png",
+              "Dread_shaman/animations/Strike/north-east/frame_005.png",
+              "Dread_shaman/animations/Strike/north-east/frame_006.png"
+            ],
+            "east": [
+              "Dread_shaman/animations/Strike/east/frame_000.png",
+              "Dread_shaman/animations/Strike/east/frame_001.png",
+              "Dread_shaman/animations/Strike/east/frame_002.png",
+              "Dread_shaman/animations/Strike/east/frame_003.png",
+              "Dread_shaman/animations/Strike/east/frame_004.png",
+              "Dread_shaman/animations/Strike/east/frame_005.png",
+              "Dread_shaman/animations/Strike/east/frame_006.png"
+            ],
+            "south": [
+              "Dread_shaman/animations/Strike/south/frame_000.png",
+              "Dread_shaman/animations/Strike/south/frame_001.png",
+              "Dread_shaman/animations/Strike/south/frame_002.png",
+              "Dread_shaman/animations/Strike/south/frame_003.png",
+              "Dread_shaman/animations/Strike/south/frame_004.png",
+              "Dread_shaman/animations/Strike/south/frame_005.png",
+              "Dread_shaman/animations/Strike/south/frame_006.png"
+            ],
+            "north": [
+              "Dread_shaman/animations/Strike/north/frame_000.png",
+              "Dread_shaman/animations/Strike/north/frame_001.png",
+              "Dread_shaman/animations/Strike/north/frame_002.png",
+              "Dread_shaman/animations/Strike/north/frame_003.png",
+              "Dread_shaman/animations/Strike/north/frame_004.png",
+              "Dread_shaman/animations/Strike/north/frame_005.png",
+              "Dread_shaman/animations/Strike/north/frame_006.png"
+            ],
+            "south-east": [
+              "Dread_shaman/animations/Strike/south-east/frame_000.png",
+              "Dread_shaman/animations/Strike/south-east/frame_001.png",
+              "Dread_shaman/animations/Strike/south-east/frame_002.png",
+              "Dread_shaman/animations/Strike/south-east/frame_003.png",
+              "Dread_shaman/animations/Strike/south-east/frame_004.png",
+              "Dread_shaman/animations/Strike/south-east/frame_005.png",
+              "Dread_shaman/animations/Strike/south-east/frame_006.png"
+            ]
           }
         }
       }
     }
   ],
   "export_version": "3.1",
-  "export_date": "2026-10-28T14:39:42.012470"
+  "export_date": "2026-10-28T21:06:32.906263"
 }

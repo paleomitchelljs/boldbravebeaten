@@ -57,8 +57,9 @@ lizardfolk-warrior:
   size: 64
   walkFrames: 6
   walks: [north, east, south, west]
-  # Its bite: a lunge, facing south only (another state's folder).
-  attack: {dir: art/characters/pixellab/Lizardfolk_Warrior/fighting_pose_head, anim: lunging_forward_with_an_open_mouth_and_snapping_it, frames: 9, dirs: [south]}
+  # Its bite: a lunge (another state's folder); the west side mirrors the east.
+  attack: {dir: art/characters/pixellab/Lizardfolk_Warrior/fighting_pose_head, anim: lunging_forward_with_an_open_mouth_and_snapping_it, frames: 9, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
   box: [4, 6, 60, 63]
   height: 1.3
   party: true
@@ -165,6 +166,8 @@ clay-golem:
   height: 2.0
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
   maxWidth: 2.2
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
 iron-golem:
   type: pixellab
   dir: art/characters/pixellab/Golem/Idle
@@ -175,6 +178,8 @@ iron-golem:
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
   maxWidth: 2.2
   recolor: [[0, "#08080c"], [0.35, "#26282e"], [0.7, "#545862"], [1, "#969ca8"]]
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
 stone-golem:
   type: pixellab
   dir: art/characters/pixellab/Golem/Idle
@@ -185,6 +190,8 @@ stone-golem:
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
   maxWidth: 2.2
   recolor: [[0, "#141416"], [0.35, "#4a4846"], [0.7, "#82807c"], [1, "#c4c2bc"]]
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
 avatar:
   type: pixellab
   dir: art/characters/pixellab/Avatar_of_Fear/Idle
@@ -195,6 +202,8 @@ avatar:
   # Meant to tower over everything else.
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
   maxWidth: 3.2
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
 spectre:
   type: pixellab
   dir: art/characters/pixellab/Spectre/Idle
@@ -249,6 +258,8 @@ gorilla:
   height: 1.6
   maxWidth: 2.2
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
 singe:
   type: pixellab
   dir: art/characters/pixellab/Singe/Idle
@@ -302,6 +313,8 @@ lizardfolk-alt:
   box: [3, 2, 61, 61]
   height: 1.3
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
   party: true
 dread-shaman:
   type: pixellab
@@ -312,6 +325,8 @@ dread-shaman:
   height: 1.3
   walkFrames: 6
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
   party: true
 lizardfolk-varanus:
   type: pixellab
@@ -321,6 +336,8 @@ lizardfolk-varanus:
   box: [3, 2, 61, 61]
   height: 1.3
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
   party: true
 lizardfolk-knight:
   type: pixellab
