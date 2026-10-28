@@ -62,8 +62,8 @@ viewer's right; in E and W views the weapon is in front.
 1. [x] **Beren**: walk SE, NW [2]; strike ×8, sword slash [8-16]; death [1].
 2. [x] **Cyrus**: south rotation regenerated with the SE/SW views as reference (`edit_image`) [10-25]; walk S, NE, NW
    [3]; strike ×8, cutlass slash [8-16]; death [1].
-3. [ ] **Arvir**: walk W [1]; strike ×8, sword slash behind the shield [8-16]; death [1].
-4. [ ] **Spawnee**: walk SW [1]; strike ×8, curved-sword slash [8-16]; death [1].
+3. [x] **Arvir**: walk W [1]; strike ×8, sword slash behind the shield [8-16]; death [1].
+4. [x] **Spawnee**: walk SW [1]; strike ×8, curved-sword slash [8-16]; death [1].
 5. [ ] **Jabiku**: N rotation mirrored [0]; strike ×8, overhead staff blow [8-16]; death [1]. (SE/NW staff hand: step C.)
 6. [ ] **Lorc**: strike ×8, draw and loose an arrow [8-16]; death [1].
 
@@ -115,4 +115,7 @@ Estimated A+B: about 150-230.
 | Cyrus | walk NW (v3) | 1 | | good |
 | Cyrus | strike S ×2, strike ×7 more | 9 | | 2nd try kept the vest; NW, W last frame turned to face the viewer, replaced by frame 0 |
 | Cyrus | death S | 1 | | good |
-| Arvir, Spawnee | walk W, walk SW (v3) | 2 | 224 | good; saved |
+| Arvir, Spawnee | walk W, walk SW (v3) | 2 | | good; saved |
+| Arvir | strike ×8, death | 9 | | all good first time |
+| Spawnee | strike ×8, death | 9 | | all good first time (NW blade glows cyan: kept, she is a spellsword) |
+| Jabiku | N rotation mirrored | 0 | | SE and NW are exact mirrors of SW and NE, so they stay left-handed until step 18 |

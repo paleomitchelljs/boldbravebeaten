@@ -19,7 +19,7 @@ Every character the user sends goes in this table, including any not yet in the 
 | Folder | `art.yaml` key | PixelLab ID | Size | Has | Still wanted |
 |---|---|---|---|---|---|
 | Alligator | `alligator` | 66466883-3daa-4483-95ee-579e697cd929 | 64 | idle ×8, walk ×4 dirs | attack, death |
-| Arvir | `arvir` | ee3ed543-32ad-49bd-b428-65c78341e629 | 64 | idle ×8, walk ×8 (6 frames) | attack, death |
+| Arvir | `arvir` | ee3ed543-32ad-49bd-b428-65c78341e629 | 64 | idle ×8, walk ×8 (6 frames; W redone 2026-10-28: the sword vanished), strike ×8 (`Strike`, 7 frames), death (south) | idle animation |
 | Avatar_of_Fear | `avatar` | 87521e4a-f274-4ab8-a84a-08fed819a240 | 128 | idle ×8, walk ×8 | attack, death |
 | Bear | `bear` | c71b5d64-37ac-4f6d-b6c8-f9b2b3a9d922 | 96 | idle ×8, walk ×8, attack ×8 (9 frames); Run and Jump_Attack unused | death |
 | Beren | `beren` | 7cd3c25e-88e8-43dd-b20f-e003b2c418de | 64 | idle ×8, walk ×8 (SE, NW redone 2026-10-28: hands had swapped), strike ×8 (`Strike2`, 7 frames), death (south) | idle animation |
@@ -42,7 +42,7 @@ Every character the user sends goes in this table, including any not yet in the 
 | Singe | `singe` | 7232310b-be96-49eb-8755-a1ba806f6427 (hovering), f5da2868-1795-42c6-993a-307c5220ede2 (flying) | 76 (flying 124×76) | hovering: idle ×8 with wingbeats ×8; flying: wingbeats east only (west mirrored) | flight north and south, attack, death |
 | Skeleton | `skeleton` | 07ca48e9-30fe-4cdf-b513-b802a07fe1fd | 64 | idle ×8, walk ×8 | attack, death |
 | Snake_Person | `snake-person` | 9fe6b1b1-3788-4124-a6c2-acea96787303 | 80 | idle ×8 | walk, attack, death |
-| Spawnee | `spawnee` | d8994796-4a0b-4c54-810d-5ce541e272d6 | 64 | idle ×8, walk ×8 | attack, death |
+| Spawnee | `spawnee` | d8994796-4a0b-4c54-810d-5ce541e272d6 | 64 | idle ×8, walk ×8 (SW redone 2026-10-28: the shield had swapped sides), strike ×8 (`Strike`, 7 frames; the NW blade glows), death (south) | idle animation |
 | Spectre | `spectre` | 046bf345-29ab-4e14-96a5-fcf1923f529d | 64 | idle ×8, float ×8 (9 frames; it plays standing too, `floats: true`) | attack, death |
 | Tevax_Thaukori | `tevax` | 68625c81-093c-4ebc-bb30-5c72ac9fb6b3 (armed), 87ba5874-ad22-4b8a-ad46-cc4a1d4c254e (unarmed, not used) | 64 | idle ×8, walk ×6 dirs | attack, death |
 | Warrior_Woman | `warrior-woman` | ab8eb5c0-22fd-4735-99ec-c4ac649879c7 (+ slash 8f00f35f, spell c8428b0b) | 64 (slash 80, spell 60) | idle ×8 with an idle animation, walk ×8, slash ×8 (9 frames); Run, Jump, Spell unused | death |
