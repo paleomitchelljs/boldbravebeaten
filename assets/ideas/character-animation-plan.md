@@ -84,7 +84,7 @@ viewer's right; in E and W views the weapon is in front.
 Estimated A+B: about 150-230.
 
 ### C. If generations are left (in this order)
-17. [ ] Idles, breathing (heroes ×8, monsters ×5): Beren, Cyrus, Arvir, Spawnee, Jabiku, Lorc, then the monsters in
+17. [x] Idles, breathing (heroes ×8, monsters ×5): Beren, Cyrus, Arvir, Spawnee, Jabiku, Lorc, then the monsters in
     the order above.
 18. [x] Jabiku SE/NW staff hand (done before the monster idles: the user ranked mirroring above idles) (`edit_image` of both) [10-25].
 
@@ -101,6 +101,19 @@ Estimated A+B: about 150-230.
 - [ ] A `death` clip in `art.yaml`: a fallen pixellab figure shows the clip's last frame (or plays it once as it falls)
   instead of a rotated idle.
 - [ ] A longer lunge when a figure has a strike clip (the lunge is 400 ms; 6-9 frames flash by). Look in play.
+
+## Where it stands (2026-10-28, 5 generations left)
+
+Steps A, B, 17 and 18 are done: every character on the list has its glitches fixed, a strike, a death and an idle,
+wired in `data/art.yaml` and seen drawing in headless Chrome. Left, all free:
+- Step 7 (specks): Lizardfolk_Alt walk S f3 (a detached speck), SE f2, NW f3, SW f2; Varanus walk N f1 (ghost tail);
+  Golem walk N f0; Gorilla walk N f2; Alligator SW view and Skeleton N view (a dark shadow the other views lack; the
+  skeleton's N idle and strike start on that view, so the shadow flickers there). Fix in the PNGs and `save_to_asset`
+  them back so a re-pull keeps them.
+- For the user to judge: the Avatar's south strike ends in a burst of fire at its fists (no fire in its rules); Cyrus's
+  strikes end on a frame where the blade looks doubled; the alligator's death lies flat rather than belly up; bodies
+  lie about two squares long.
+- Not this cycle (needs generations): the Dread shaman's staff hand (its SE, N, NW views and their clips; ~30 gens).
 
 ## Ledger
 
@@ -136,4 +149,5 @@ Estimated A+B: about 150-230.
 | Beren | idle S (v3, 4 frames + the standing view) | 1 | | good: a gentle breathing loop |
 | Jabiku, Lorc | idle ×8 each | 16 | | good |
 | Jabiku | SE, NW views (`edit_image`, 2 frames, 10); strike and idle SE, NW again (4) | 14 | ~60 | staff now in the right hand in every view; held across the body in those two |
+| Monsters | idle ×5 each (Avatar 2 a direction) | 51 | 5 | all good; the skeleton's N idle starts on the standing view with the stray shadow (step 7) |
 | Beren, Cyrus, Arvir, Spawnee | idle ×8 each (Beren's S above) | 31 | | all good; some drift (Cyrus's sabre sinks facing N): idles play ping-pong (`pingpong: true`) so they never jump |

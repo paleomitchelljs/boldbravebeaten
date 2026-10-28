@@ -58,6 +58,7 @@ lizardfolk-warrior:
   walkFrames: 6
   walks: [north, east, south, west]
   # Its bite: a lunge (another state's folder); the west side mirrors the east.
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
   attack: {dir: art/characters/pixellab/Lizardfolk_Warrior/fighting_pose_head, anim: lunging_forward_with_an_open_mouth_and_snapping_it, frames: 9, dirs: [south, south-east, east, north-east, north]}
   death: {anim: Death, frames: 7, dirs: [south]}
   box: [4, 6, 60, 63]
@@ -141,6 +142,7 @@ skeleton:
   box: [12, 4, 52, 60]
   height: 1.4
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
   attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
   death: {anim: Death, frames: 7, dirs: [south]}
 alligator:
@@ -153,6 +155,7 @@ alligator:
   walk: Walk
   walks: [north, east, south, west]
   maxWidth: 2.2
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
   attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
   death: {anim: Death, frames: 7, dirs: [south]}
 raptor:
@@ -174,6 +177,7 @@ clay-golem:
   height: 2.0
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
   maxWidth: 2.2
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
   attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
   death: {anim: Death, frames: 7, dirs: [south]}
 iron-golem:
@@ -186,6 +190,7 @@ iron-golem:
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
   maxWidth: 2.2
   recolor: [[0, "#08080c"], [0.35, "#26282e"], [0.7, "#545862"], [1, "#969ca8"]]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
   attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
   death: {anim: Death, frames: 7, dirs: [south]}
 stone-golem:
@@ -198,6 +203,7 @@ stone-golem:
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
   maxWidth: 2.2
   recolor: [[0, "#141416"], [0.35, "#4a4846"], [0.7, "#82807c"], [1, "#c4c2bc"]]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
   attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
   death: {anim: Death, frames: 7, dirs: [south]}
 avatar:
@@ -210,6 +216,7 @@ avatar:
   # Meant to tower over everything else.
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
   maxWidth: 3.2
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
   attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
   death: {anim: Death, frames: 7, dirs: [south]}
 spectre:
@@ -266,6 +273,7 @@ gorilla:
   height: 1.6
   maxWidth: 2.2
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
   attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
   death: {anim: Death, frames: 7, dirs: [south]}
 singe:
@@ -323,6 +331,7 @@ lizardfolk-alt:
   box: [3, 2, 61, 61]
   height: 1.3
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
   attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
   death: {anim: Death, frames: 7, dirs: [south]}
   party: true
@@ -335,6 +344,7 @@ dread-shaman:
   height: 1.3
   walkFrames: 6
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
   attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
   death: {anim: Death, frames: 7, dirs: [south]}
   party: true
@@ -346,6 +356,7 @@ lizardfolk-varanus:
   box: [3, 2, 61, 61]
   height: 1.3
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
   attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
   death: {anim: Death, frames: 7, dirs: [south]}
   party: true
