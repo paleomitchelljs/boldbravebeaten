@@ -137,6 +137,8 @@ skeleton:
   box: [12, 4, 52, 60]
   height: 1.4
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
 alligator:
   type: pixellab
   dir: art/characters/pixellab/Alligator/Idle
@@ -147,6 +149,8 @@ alligator:
   walk: Walk
   walks: [north, east, south, west]
   maxWidth: 2.2
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
 raptor:
   type: pixellab
   dir: art/characters/pixellab/Raptor/Idle

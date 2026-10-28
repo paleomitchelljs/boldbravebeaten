@@ -18,7 +18,7 @@ Every character the user sends goes in this table, including any not yet in the 
 
 | Folder | `art.yaml` key | PixelLab ID | Size | Has | Still wanted |
 |---|---|---|---|---|---|
-| Alligator | `alligator` | 66466883-3daa-4483-95ee-579e697cd929 | 64 | idle ×8, walk ×4 dirs | attack, death |
+| Alligator | `alligator` | 66466883-3daa-4483-95ee-579e697cd929 | 64 | idle ×8, walk ×4 dirs, bite ×5 (`Strike`, v3; the quadruped `attack` template shrank it mid-clip), death (south, lies flat) | idle animation |
 | Arvir | `arvir` | ee3ed543-32ad-49bd-b428-65c78341e629 | 64 | idle ×8, walk ×8 (6 frames; W redone 2026-10-28: the sword vanished), strike ×8 (`Strike`, 7 frames), death (south) | idle animation |
 | Avatar_of_Fear | `avatar` | 87521e4a-f274-4ab8-a84a-08fed819a240 | 128 | idle ×8, walk ×8, strike ×5 (claw sweep; the south one ends in a burst of fire at its fists; 160-px canvas), death (south) | idle animation |
 | Bear | `bear` | c71b5d64-37ac-4f6d-b6c8-f9b2b3a9d922 | 96 | idle ×8, walk ×8, attack ×8 (9 frames); Run and Jump_Attack unused | death |
@@ -40,7 +40,7 @@ Every character the user sends goes in this table, including any not yet in the 
 | Old_Man | `old-man` | a754c86c-4b3e-4df3-bd60-ec66e9ed09d7 | 44 | idle ×8, walk ×8 (7 frames) | — |
 | Raptor | `raptor` (not in `exports.json`) | b423209f-cb0e-48a5-bc26-4d5555b00696 | 96 | idle ×8 | walk, attack, death |
 | Singe | `singe` | 7232310b-be96-49eb-8755-a1ba806f6427 (hovering), f5da2868-1795-42c6-993a-307c5220ede2 (flying) | 76 (flying 124×76) | hovering: idle ×8 with wingbeats ×8; flying: wingbeats east only (west mirrored) | flight north and south, attack, death |
-| Skeleton | `skeleton` | 07ca48e9-30fe-4cdf-b513-b802a07fe1fd | 64 | idle ×8, walk ×8 | attack, death |
+| Skeleton | `skeleton` | 07ca48e9-30fe-4cdf-b513-b802a07fe1fd | 64 | idle ×8, walk ×8, claw ×5 (`Strike`), death (south: a heap of bones) | idle animation |
 | Snake_Person | `snake-person` | 9fe6b1b1-3788-4124-a6c2-acea96787303 | 80 | idle ×8 | walk, attack, death |
 | Spawnee | `spawnee` | d8994796-4a0b-4c54-810d-5ce541e272d6 | 64 | idle ×8, walk ×8 (SW redone 2026-10-28: the shield had swapped sides), strike ×8 (`Strike`, 7 frames; the NW blade glows), death (south) | idle animation |
 | Spectre | `spectre` | 046bf345-29ab-4e14-96a5-fcf1923f529d | 64 | idle ×8, float ×8 (9 frames; it plays standing too, `floats: true`) | attack, death |

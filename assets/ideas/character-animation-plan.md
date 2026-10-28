@@ -77,9 +77,9 @@ viewer's right; in E and W views the weapon is in front.
 11. [x] **Lizardfolk_Warrior**: the bite exists facing S; add SE, E, NE, N [4]; death [1].
 12. [x] **Avatar of Fear** (128 px; 2-3 gens a direction): claw sweep ×5 [10-15]; death [2-3].
 13. [x] **Golem** (80 px; one figure for clay, iron and stone): two-fisted slam ×5 [5-10]; death [1-2].
-14. [ ] **Alligator** (quadruped template; has `attack`): attack ×5 [5]; death (v3) [1].
+14. [x] **Alligator** (quadruped template; has `attack`): attack ×5 [5]; death (v3) [1].
 15. [x] **Gorilla** (80 px): pound ×5 [5-10]; death [1-2].
-16. [ ] **Skeleton**: claw swipe ×5 [5]; death [1].
+16. [x] **Skeleton**: claw swipe ×5 [5]; death [1].
 
 Estimated A+B: about 150-230.
 
@@ -131,4 +131,6 @@ Estimated A+B: about 150-230.
 | Golem | slam ×5 (N cost 2), death, death re-rolled | 8 | | 1st death: a halo, no fall |
 | Gorilla | strike S, re-roll, ×4 more, death | 7 | | 1st barely moved |
 | Alligator | template `attack` S (it shrank sideways mid-clip; deleted), v3 bite S | 2 | | |
-| Skeleton | claw S, SE, death | 3 | | |
+| Skeleton | claw ×5, death | 6 | | good |
+| Alligator | bite SE, E, NE, N; N re-rolled; death | 6 | 116 | N first turned sideways mid-clip |
+| Beren | idle S (v3, 4 frames + the standing view) | 1 | | good: a gentle breathing loop |
