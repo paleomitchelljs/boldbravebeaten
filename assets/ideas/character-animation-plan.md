@@ -107,9 +107,16 @@ Estimated A+B: about 150-230.
 Steps A, B, 17 and 18 are done: every character on the list has its glitches fixed, a strike, a death and an idle,
 wired in `data/art.yaml` and seen drawing in headless Chrome. Left, all free:
 - Step 7 (specks): Lizardfolk_Alt walk S f3 (a detached speck), SE f2, NW f3, SW f2; Varanus walk N f1 (ghost tail);
-  Golem walk N f0; Gorilla walk N f2; Alligator SW view and Skeleton N view (a dark shadow the other views lack; the
-  skeleton's N idle and strike start on that view, so the shadow flickers there). Fix in the PNGs and `save_to_asset`
-  them back so a re-pull keeps them.
+  Golem walk N f0; Gorilla walk N f2. Fix in the PNGs and `save_to_asset` them back so a re-pull keeps them.
+- Done: the shadows. The skeleton's N view, N walk, and the first frame of its N idle and strike drew a flat grey
+  shadow (52,52,52) no other view has; the alligator's SW view had a heavy one (50,49,49; its south views keep their
+  small jaw shadow, which every south clip shares). Cleared and saved back to PixelLab.
+- Done: outline repair. The first `gif.py` used black for its transparent palette slot and let Pillow optimise, so on
+  every frame after the first the figure's outermost pure-black outline rows and columns were dropped. That hit the
+  saves of Beren's E strike and NW/SE walks, Arvir's W walk and Spawnee's SW walk (Cyrus's outline is not pure black,
+  so his came through). The originals were gone; the outline was redrawn by rule (a black pixel beyond each edge
+  pixel on the cropped sides; on intact frames this rule recovers ~86% of the outline) and saved back. Any future GIF
+  must round-trip exactly before upload: the transparent slot is now magenta and `optimize=False`.
 - For the user to judge: the Avatar's south strike ends in a burst of fire at its fists (no fire in its rules); Cyrus's
   strikes end on a frame where the blade looks doubled; the alligator's death lies flat rather than belly up; bodies
   lie about two squares long.
