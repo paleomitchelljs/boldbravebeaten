@@ -106,6 +106,7 @@ lorc:
   box: [8, 3, 61, 60]
   height: 1.35
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true}
   attack: {anim: Strike, frames: 7}
   death: {anim: Death, frames: 7, dirs: [south]}
   party: true
@@ -287,6 +288,7 @@ jabiku:
   box: [1, 1, 63, 61]
   height: 1.4
   walks: []
+  idle: {anim: Idle, frames: 5, pingpong: true}
   attack: {anim: Strike, frames: 7}
   death: {anim: Death, frames: 7, dirs: [south]}
   party: true

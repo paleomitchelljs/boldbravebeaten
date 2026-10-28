@@ -30,13 +30,13 @@ Every character the user sends goes in this table, including any not yet in the 
 | Golem | `clay-golem`, `iron-golem`, `stone-golem` | 522fdcbf-daea-4936-ab74-a07a96189774 | 80 | idle ×8, walk ×8, strike ×5 (two-fisted slam), death (south, falls on its face) | idle animation |
 | Gorilla | `gorilla` | 4715ec68-7f75-4217-a783-6ae6ba7b20c5 | 80 | idle ×8, walk ×8, strike ×5 (overhead smash), death (south) | idle animation |
 | Gowra | `gowra` | c23f4935-af47-46d9-9898-6f583de25120 | 64 | idle ×8, a tail sway (9 frames) east, north, south, played standing and moving | walk, attack, death |
-| Jabiku | `jabiku` | 0d63f08a-8af6-47e3-9294-3fc5c229d145 | 64 | idle ×8 (N mirrored 2026-10-28 so the staff is in the right hand; SE and NW still hold it in the left), strike ×8 (`Strike`, 7 frames), death (south) | walk, idle animation, SE/NW staff hand |
+| Jabiku | `jabiku` | 0d63f08a-8af6-47e3-9294-3fc5c229d145 | 64 | idle ×8 (2026-10-28: N mirrored and SE, NW redrawn by `edit_image` so the staff is in the right hand throughout), strike ×8 (`Strike`, 7 frames), idle anim ×8 (`Idle`, 5 frames, ping-pong), death (south) | walk |
 | Krump | `krump` | 1583e709-7b5c-4544-8c3f-beb640168735 | 64 | idle ×8; a 7-frame two-footed jump ×8 (not used: the sword vanishes in several frames) | walk (or a clean hop), attack, death |
 | Lizardfolk_Alt | `lizardfolk-alt` (Idle), `dread-shaman` (Dread_shaman) | 5bbe8c27-f61a-4b38-a04b-2d8a7aa437b6, ecd357da-378c-4ce8-90c2-b9ca3886b301 | 64 | each idle ×8, walk ×8 (shaman 6 frames), strike ×5 (S, SE, E, NE, N; the west side mirrored; `Strike`, 7 frames: a claw rake, a staff blow), death (south) | idle animations; the shaman's staff changes hands between views |
 | Lizardfolk_Alt2 | `lizardfolk-knight` | 418cefa3-69cf-4c05-b797-4b1cf7fd0760 | 80 | idle ×8 | walk, attack, death |
 | Lizardfolk_Varanus | `lizardfolk-varanus` | d91406aa-b523-4a73-98f4-8da72da0f440 | 64 | idle ×8, walk ×8, strike ×5 (a bite, `Strike`), death (south) | idle animation |
 | Lizardfolk_Warrior | `lizardfolk-warrior` | 5a2d243e-b78f-4b46-9fa8-adbdc18edc92 | 64 | idle ×8, walk ×4 dirs (6 frames); bite (fighting_pose_head state, 80be2814-aa6b-4a37-85cb-6ac94fc9c8fa) S, SE, E, NE, N, 9 frames; death (south) | idle animation |
-| Lorc | `lorc` | 5cdcb694-3e2a-4aae-ae45-ebd006e2dbf7 | 64 | idle ×8, walk ×8, strike ×8 (bow draw and loose, `Strike`, 7 frames), death (south) | idle animation |
+| Lorc | `lorc` | 5cdcb694-3e2a-4aae-ae45-ebd006e2dbf7 | 64 | idle ×8, walk ×8, strike ×8 (bow draw and loose, `Strike`, 7 frames), death (south), idle anim ×8 (`Idle`, 5 frames, ping-pong) | — |
 | Old_Man | `old-man` | a754c86c-4b3e-4df3-bd60-ec66e9ed09d7 | 44 | idle ×8, walk ×8 (7 frames) | — |
 | Raptor | `raptor` (not in `exports.json`) | b423209f-cb0e-48a5-bc26-4d5555b00696 | 96 | idle ×8 | walk, attack, death |
 | Singe | `singe` | 7232310b-be96-49eb-8755-a1ba806f6427 (hovering), f5da2868-1795-42c6-993a-307c5220ede2 (flying) | 76 (flying 124×76) | hovering: idle ×8 with wingbeats ×8; flying: wingbeats east only (west mirrored) | flight north and south, attack, death |

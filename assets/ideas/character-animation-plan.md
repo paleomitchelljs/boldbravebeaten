@@ -86,7 +86,7 @@ Estimated A+B: about 150-230.
 ### C. If generations are left (in this order)
 17. [ ] Idles, breathing (heroes ×8, monsters ×5): Beren, Cyrus, Arvir, Spawnee, Jabiku, Lorc, then the monsters in
     the order above.
-18. [ ] Jabiku SE/NW staff hand (`edit_image` of both) [10-25].
+18. [x] Jabiku SE/NW staff hand (done before the monster idles: the user ranked mirroring above idles) (`edit_image` of both) [10-25].
 
 ### D. Later (not this cycle)
 - Dread shaman staff hand (rotations and walks).
@@ -134,4 +134,6 @@ Estimated A+B: about 150-230.
 | Skeleton | claw ×5, death | 6 | | good |
 | Alligator | bite SE, E, NE, N; N re-rolled; death | 6 | 116 | N first turned sideways mid-clip |
 | Beren | idle S (v3, 4 frames + the standing view) | 1 | | good: a gentle breathing loop |
+| Jabiku, Lorc | idle ×8 each | 16 | | good |
+| Jabiku | SE, NW views (`edit_image`, 2 frames, 10); strike and idle SE, NW again (4) | 14 | ~60 | staff now in the right hand in every view; held across the body in those two |
 | Beren, Cyrus, Arvir, Spawnee | idle ×8 each (Beren's S above) | 31 | | all good; some drift (Cyrus's sabre sinks facing N): idles play ping-pong (`pingpong: true`) so they never jump |
