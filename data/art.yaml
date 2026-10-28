@@ -17,7 +17,8 @@
 # off. Otherwise a walk falls back to the idle clip, and anything else to the standing view. Every file of a
 # character is centred on the `size` canvas, so states on larger canvases line up.
 # recolor: a ramp [[brightness 0..1, "#rrggbb"], ...] the figure's shading is mapped onto when it loads (one figure
-# in another material). floats: true plays the walk standing still as well (a figure that hovers rather than stands).
+# in another material); or a list of {hue: [deg, deg], sat: [0..1, 0..1], light: [0..1, 0..1], ramp}, each pixel taking
+# the first whose ranges it falls in and keeping its colour if none (one part recoloured: scales, eyes). floats: true plays the walk standing still as well (a figure that hovers rather than stands).
 
 avatar-of-fear: {anims: [idle, attack], frame: [150, 150], box: [12, 0, 138, 150], faces: right, height: 1.9}
 basilisk: {anims: [idle, attack], frame: [160, 160], box: [0, 62, 160, 160], faces: right, height: 0.9, maxWidth: 2}
@@ -58,6 +59,21 @@ lizardfolk-warrior:
   walkFrames: 6
   walks: [north, east, south, west]
   # Its bite: a lunge (another state's folder); the west side mirrors the east.
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  attack: {dir: art/characters/pixellab/Lizardfolk_Warrior/fighting_pose_head, anim: lunging_forward_with_an_open_mouth_and_snapping_it, frames: 9, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+  box: [4, 6, 60, 63]
+  height: 1.3
+  party: true
+lizardfolk-warrior-tan:
+  type: pixellab
+  dir: art/characters/pixellab/Lizardfolk_Warrior/Idle
+  name: Tan lizardfolk
+  size: 64
+  walkFrames: 6
+  walks: [north, east, south, west]
+  # The green scales in light brown; the cream belly kept.
+  recolor: [{hue: [110, 190], sat: [0.3, 1], light: [0.04, 1], ramp: [[0, "#1a0f06"], [0.18, "#6b4a2b"], [0.27, "#8a6239"], [0.36, "#a97f4c"], [1, "#e6c690"]]}]
   idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
   attack: {dir: art/characters/pixellab/Lizardfolk_Warrior/fighting_pose_head, anim: lunging_forward_with_an_open_mouth_and_snapping_it, frames: 9, dirs: [south, south-east, east, north-east, north]}
   death: {anim: Death, frames: 7, dirs: [south]}
@@ -356,6 +372,48 @@ lizardfolk-varanus:
   box: [3, 2, 61, 61]
   height: 1.3
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+  party: true
+lizardfolk-varanus-black:
+  type: pixellab
+  dir: art/characters/pixellab/Lizardfolk_Varanus/Idle
+  name: Black varanus lizardfolk
+  size: 64
+  box: [3, 2, 61, 61]
+  height: 1.3
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  recolor: [[0, "#040405"], [0.2, "#141418"], [0.45, "#2b2b33"], [0.72, "#57575f"], [1, "#9c9ca6"]]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+  party: true
+lizardfolk-varanus-brown:
+  type: pixellab
+  dir: art/characters/pixellab/Lizardfolk_Varanus/Idle
+  name: Brown varanus lizardfolk
+  size: 64
+  box: [3, 2, 61, 61]
+  height: 1.3
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  recolor: [[0, "#080504"], [0.2, "#2b1b11"], [0.45, "#4f3521"], [0.72, "#86664a"], [1, "#c4a482"]]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+  party: true
+lizardfolk-alt-purple:
+  type: pixellab
+  dir: art/characters/pixellab/Lizardfolk_Alt/Idle
+  name: Purple lizardfolk
+  size: 64
+  box: [3, 2, 61, 61]
+  height: 1.3
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  # The dark grey scales in deep purple, the orange-red eye rings in yellow; belly and straps kept.
+  recolor:
+    - {hue: [200, 300], sat: [0, 0.25], light: [0.04, 0.36], ramp: [[0, "#0b0414"], [0.1, "#200d34"], [0.18, "#31164c"], [0.3, "#4a2270"]]}
+    - {hue: [350, 22], sat: [0.5, 1], ramp: [[0, "#3a2800"], [0.2, "#8c6a08"], [0.35, "#d8aa14"], [0.5, "#f6d630"], [0.7, "#fff27a"]]}
   idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
   attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
   death: {anim: Death, frames: 7, dirs: [south]}

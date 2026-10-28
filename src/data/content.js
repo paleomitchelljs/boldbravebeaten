@@ -195,8 +195,11 @@
         if (c.frames != null && !(c.frames > 0)) err(`art.${id}.${f}.frames: want a positive number`);
         for (const d of c.dirs || []) if (!COMPASS.includes(d)) err(`art.${id}.${f}.dirs: "${d}" is not a compass direction`);
       }
-      if (a.recolor && !(Array.isArray(a.recolor) && a.recolor.length > 1 && a.recolor.every((r) => Array.isArray(r) && typeof r[0] === 'number' && /^#[0-9a-f]{6}$/i.test(r[1]))))
-        err(`art.${id}.recolor: want [[brightness 0..1, "#rrggbb"], ...], at least two stops`);
+      const ramp = (r) => Array.isArray(r) && r.length > 1 && r.every((s) => Array.isArray(s) && typeof s[0] === 'number' && /^#[0-9a-f]{6}$/i.test(s[1]));
+      const range = (r) => r == null || (Array.isArray(r) && r.length === 2 && r.every((v) => typeof v === 'number'));
+      if (a.recolor && !(ramp(a.recolor) || (Array.isArray(a.recolor) && a.recolor.length && a.recolor.every((r) =>
+        r && typeof r === 'object' && ramp(r.ramp) && range(r.hue) && range(r.sat) && range(r.light)))))
+        err(`art.${id}.recolor: want [[brightness 0..1, "#rrggbb"], ...] (two stops or more), or a list of {hue, sat, light, ramp}`);
     }
     for (const [id, m] of Object.entries(G.Enemies.MONSTERS)) artOk(`monsters.${id}.sprite`, m.sprite);
     for (const [id, t] of Object.entries(G.Enemies.TEMPLATES)) artOk(`foes.${id}.sprite`, t.sprite);

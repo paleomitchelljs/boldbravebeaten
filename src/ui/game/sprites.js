@@ -115,10 +115,15 @@
   }
 
   // A canvas of the image with each pixel's brightness mapped onto a colour ramp ([[brightness 0..1, '#rrggbb'], ...],
-  // ascending): one figure in another material, its shading kept.
-  function recolored(img, ramp) {
+  // ascending): one figure in another material, its shading kept. Or a list of rules {hue, sat, light, ramp}: a pixel
+  // takes the first rule whose ranges it falls in ([lo, hi]; a hue range may wrap past 360), and keeps its colour if
+  // none does, so one part of a figure (its eyes, its scales) can change on its own.
+  function recolored(img, recolor) {
     if (typeof document === 'undefined') return img;
-    const stops = ramp.map(([at, hex]) => [at, [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16))]);
+    const rules = (Array.isArray(recolor[0]) ? [{ ramp: recolor }] : recolor).map((r) => ({
+      ...r, stops: r.ramp.map(([at, hex]) => [at, [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16))]),
+    }));
+    const inside = (v, r) => !r || (r[0] <= r[1] ? v >= r[0] && v <= r[1] : v >= r[0] || v <= r[1]);
     const c = document.createElement('canvas');
     c.width = img.width; c.height = img.height;
     const x = c.getContext('2d');
@@ -126,7 +131,10 @@
     const d = x.getImageData(0, 0, c.width, c.height), px = d.data;
     for (let i = 0; i < px.length; i += 4) {
       if (!px[i + 3]) continue;
-      const l = (0.3 * px[i] + 0.59 * px[i + 1] + 0.11 * px[i + 2]) / 255;
+      const [h, s, li] = hsl(px[i], px[i + 1], px[i + 2]);
+      const rule = rules.find((r) => inside(h, r.hue) && inside(s, r.sat) && inside(li, r.light));
+      if (!rule) continue;
+      const stops = rule.stops, l = (0.3 * px[i] + 0.59 * px[i + 1] + 0.11 * px[i + 2]) / 255;
       let j = 1;
       while (j < stops.length - 1 && l > stops[j][0]) j++;
       const [a, ca] = stops[j - 1], [b, cb] = stops[j], t = Math.max(0, Math.min(1, (l - a) / Math.max(1e-6, b - a)));
@@ -134,6 +142,16 @@
     }
     x.putImageData(d, 0, 0);
     return c;
+  }
+
+  // Hue in degrees, saturation and lightness 0..1 (HSL).
+  function hsl(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, dd = mx - mn;
+    if (!dd) return [0, 0, l];
+    const s = l > 0.5 ? dd / (2 - mx - mn) : dd / (mx + mn);
+    const h = mx === r ? (g - b) / dd + (g < b ? 6 : 0) : mx === g ? (b - r) / dd + 2 : (r - g) / dd + 4;
+    return [h * 60, s, l];
   }
 
   // The eight compass directions, clockwise from east (screen y points down), and the one nearest a vector.
