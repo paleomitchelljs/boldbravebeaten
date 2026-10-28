@@ -1,0 +1,170 @@
+{
+  "group_id": "33d5b26e-70fb-4a60-9573-9a4a075ec7c9",
+  "states": [
+    {
+      "character": {
+        "id": "7232310b-be96-49eb-8755-a1ba806f6427",
+        "name": "Idle",
+        "prompt": "Red drake with a lithe body and narrow head. A long sinuous tail that twists and whips about. Front legs that are held bent in flexion at elbow and wrists with catlike shape to the back dangling legs. Broad wings that beat up and down, and a snapping jaw on a head with small horns. Black eyes.",
+        "size": {
+          "width": 76,
+          "height": 76
+        },
+        "template_id": "custom",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-10-28T09:41:02.167115+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {
+          "Wings_flapping_up_and_down_while_the_tail_twists": {
+            "north-east": [
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/north-east/frame_000.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/north-east/frame_001.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/north-east/frame_002.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/north-east/frame_003.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/north-east/frame_004.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/north-east/frame_005.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/north-east/frame_006.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/north-east/frame_007.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/north-east/frame_008.png"
+            ],
+            "south": [
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/south/frame_000.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/south/frame_001.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/south/frame_002.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/south/frame_003.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/south/frame_004.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/south/frame_005.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/south/frame_006.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/south/frame_007.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/south/frame_008.png"
+            ],
+            "south-west": [
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/south-west/frame_000.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/south-west/frame_001.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/south-west/frame_002.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/south-west/frame_003.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/south-west/frame_004.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/south-west/frame_005.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/south-west/frame_006.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/south-west/frame_007.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/south-west/frame_008.png"
+            ],
+            "north": [
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/north/frame_000.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/north/frame_001.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/north/frame_002.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/north/frame_003.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/north/frame_004.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/north/frame_005.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/north/frame_006.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/north/frame_007.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/north/frame_008.png"
+            ],
+            "west": [
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/west/frame_000.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/west/frame_001.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/west/frame_002.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/west/frame_003.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/west/frame_004.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/west/frame_005.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/west/frame_006.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/west/frame_007.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/west/frame_008.png"
+            ],
+            "east": [
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/east/frame_000.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/east/frame_001.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/east/frame_002.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/east/frame_003.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/east/frame_004.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/east/frame_005.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/east/frame_006.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/east/frame_007.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/east/frame_008.png"
+            ],
+            "south-east": [
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/south-east/frame_000.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/south-east/frame_001.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/south-east/frame_002.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/south-east/frame_003.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/south-east/frame_004.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/south-east/frame_005.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/south-east/frame_006.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/south-east/frame_007.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/south-east/frame_008.png"
+            ],
+            "north-west": [
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/north-west/frame_000.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/north-west/frame_001.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/north-west/frame_002.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/north-west/frame_003.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/north-west/frame_004.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/north-west/frame_005.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/north-west/frame_006.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/north-west/frame_007.png",
+              "Idle/animations/Wings_flapping_up_and_down_while_the_tail_twists/north-west/frame_008.png"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "character": {
+        "id": "f5da2868-1795-42c6-993a-307c5220ede2",
+        "name": "Body & tail horizont",
+        "prompt": "Red drake with a lithe body and narrow head. A long sinuous tail that twists and whips about. Front legs that are held bent in flexion at elbow and wrists with catlike shape to the back dangling legs. Broad wings that beat up and down, and a snapping jaw on a head with small horns. Black eyes.",
+        "size": {
+          "width": 124,
+          "height": 76
+        },
+        "template_id": "custom",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-10-28T10:04:55.880614+00:00"
+      },
+      "folder": "Body_tail_horizont",
+      "frames": {
+        "rotations": {
+          "south": "Body_tail_horizont/rotations/south.png",
+          "south-east": "Body_tail_horizont/rotations/south-east.png",
+          "east": "Body_tail_horizont/rotations/east.png",
+          "north-east": "Body_tail_horizont/rotations/north-east.png",
+          "north": "Body_tail_horizont/rotations/north.png",
+          "north-west": "Body_tail_horizont/rotations/north-west.png",
+          "west": "Body_tail_horizont/rotations/west.png",
+          "south-west": "Body_tail_horizont/rotations/south-west.png"
+        },
+        "animations": {
+          "Wings_flapping_extremely_from_vertical_up_to_nearl": {
+            "east": [
+              "Body_tail_horizont/animations/Wings_flapping_extremely_from_vertical_up_to_nearl/east/frame_000.png",
+              "Body_tail_horizont/animations/Wings_flapping_extremely_from_vertical_up_to_nearl/east/frame_001.png",
+              "Body_tail_horizont/animations/Wings_flapping_extremely_from_vertical_up_to_nearl/east/frame_002.png",
+              "Body_tail_horizont/animations/Wings_flapping_extremely_from_vertical_up_to_nearl/east/frame_003.png",
+              "Body_tail_horizont/animations/Wings_flapping_extremely_from_vertical_up_to_nearl/east/frame_004.png",
+              "Body_tail_horizont/animations/Wings_flapping_extremely_from_vertical_up_to_nearl/east/frame_005.png",
+              "Body_tail_horizont/animations/Wings_flapping_extremely_from_vertical_up_to_nearl/east/frame_006.png",
+              "Body_tail_horizont/animations/Wings_flapping_extremely_from_vertical_up_to_nearl/east/frame_007.png",
+              "Body_tail_horizont/animations/Wings_flapping_extremely_from_vertical_up_to_nearl/east/frame_008.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-28T14:39:52.495138"
+}

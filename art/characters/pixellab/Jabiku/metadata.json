@@ -1,0 +1,36 @@
+{
+  "group_id": "3fe784a7-5096-4ce5-9041-047871ec4245",
+  "states": [
+    {
+      "character": {
+        "id": "0d63f08a-8af6-47e3-9294-3fc5c229d145",
+        "name": "Idle",
+        "prompt": "Lizardfolk necromancer wearing a horned animal skull over his head, wearing green and black robes, and holding a staff with a three-horned Dragonborn skull at the end.",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-10-28T01:36:36.042550+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-28T14:39:38.831858"
+}

@@ -1,0 +1,72 @@
+{
+  "group_id": "e3be08f2-c35e-41c1-bb9e-b9ccac214630",
+  "states": [
+    {
+      "character": {
+        "id": "c23f4935-af47-46d9-9898-6f583de25120",
+        "name": "Idle",
+        "prompt": "Snakefolk warrior clade in plate armor and wielding a silver spear, with purple scales and a lower body that is a tapering tail",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "custom",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-10-27T04:32:54.380882+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {
+          "Tail_moving_side_to_side_while_the_torso_leans_for": {
+            "east": [
+              "Idle/animations/Tail_moving_side_to_side_while_the_torso_leans_for/east/frame_000.png",
+              "Idle/animations/Tail_moving_side_to_side_while_the_torso_leans_for/east/frame_001.png",
+              "Idle/animations/Tail_moving_side_to_side_while_the_torso_leans_for/east/frame_002.png",
+              "Idle/animations/Tail_moving_side_to_side_while_the_torso_leans_for/east/frame_003.png",
+              "Idle/animations/Tail_moving_side_to_side_while_the_torso_leans_for/east/frame_004.png",
+              "Idle/animations/Tail_moving_side_to_side_while_the_torso_leans_for/east/frame_005.png",
+              "Idle/animations/Tail_moving_side_to_side_while_the_torso_leans_for/east/frame_006.png",
+              "Idle/animations/Tail_moving_side_to_side_while_the_torso_leans_for/east/frame_007.png",
+              "Idle/animations/Tail_moving_side_to_side_while_the_torso_leans_for/east/frame_008.png"
+            ],
+            "north": [
+              "Idle/animations/Tail_moving_side_to_side_while_the_torso_leans_for/north/frame_000.png",
+              "Idle/animations/Tail_moving_side_to_side_while_the_torso_leans_for/north/frame_001.png",
+              "Idle/animations/Tail_moving_side_to_side_while_the_torso_leans_for/north/frame_002.png",
+              "Idle/animations/Tail_moving_side_to_side_while_the_torso_leans_for/north/frame_003.png",
+              "Idle/animations/Tail_moving_side_to_side_while_the_torso_leans_for/north/frame_004.png",
+              "Idle/animations/Tail_moving_side_to_side_while_the_torso_leans_for/north/frame_005.png",
+              "Idle/animations/Tail_moving_side_to_side_while_the_torso_leans_for/north/frame_006.png",
+              "Idle/animations/Tail_moving_side_to_side_while_the_torso_leans_for/north/frame_007.png",
+              "Idle/animations/Tail_moving_side_to_side_while_the_torso_leans_for/north/frame_008.png"
+            ],
+            "south": [
+              "Idle/animations/Tail_moving_side_to_side_while_the_torso_leans_for/south/frame_000.png",
+              "Idle/animations/Tail_moving_side_to_side_while_the_torso_leans_for/south/frame_001.png",
+              "Idle/animations/Tail_moving_side_to_side_while_the_torso_leans_for/south/frame_002.png",
+              "Idle/animations/Tail_moving_side_to_side_while_the_torso_leans_for/south/frame_003.png",
+              "Idle/animations/Tail_moving_side_to_side_while_the_torso_leans_for/south/frame_004.png",
+              "Idle/animations/Tail_moving_side_to_side_while_the_torso_leans_for/south/frame_005.png",
+              "Idle/animations/Tail_moving_side_to_side_while_the_torso_leans_for/south/frame_006.png",
+              "Idle/animations/Tail_moving_side_to_side_while_the_torso_leans_for/south/frame_007.png",
+              "Idle/animations/Tail_moving_side_to_side_while_the_torso_leans_for/south/frame_008.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-28T14:39:37.936764"
+}

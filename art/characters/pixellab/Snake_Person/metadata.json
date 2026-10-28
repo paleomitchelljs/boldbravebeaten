@@ -1,0 +1,36 @@
+{
+  "group_id": "37c72c08-5b24-41fa-9ecf-5fc0c61b4856",
+  "states": [
+    {
+      "character": {
+        "id": "9fe6b1b1-3788-4124-a6c2-acea96787303",
+        "name": "Idle",
+        "prompt": "A purple-scaled snake person with the head and lower body of a constrictor snake, but the torso and arms of a humanoid. A red bladed sword with black metal hilt and snakes going up the blade, and a large ruby pommel. Bronze cobra head Pauldrons on the shoulders, and a blue cape ",
+        "size": {
+          "width": 80,
+          "height": 80
+        },
+        "template_id": "custom",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-10-25T19:27:53.543183+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-28T14:39:54.747091"
+}

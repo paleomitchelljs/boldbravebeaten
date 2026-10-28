@@ -106,9 +106,19 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
 - [x] Krump, a froglok knight with a rune greatsword (the user's PixelLab hero, 2026-10-27; `krump`, party-pickable): 8 idle
   rotations. Its one animation, a two-footed jump, is in the folder but unused (the sword vanishes in several frames).
   A figure with `walks: []` (Krump, Cyrus) or missing walk frames now moves in its standing view.
-- [ ] Cyrus's south view was replaced in PixelLab (2026-10-26) with the user's redraw. Re-export Cyrus, then drop the
-  `rotations` line from `cyrus` in `art.yaml` so the south view is used.
-  None has attack, hurt or death frames yet.
+- [x] PixelLab library pulled straight from PixelLab (2026-10-28): `node tools/pixellab-pull.js` fetches every folder in
+  `art/characters/pixellab/exports.json` (or some) and prints what each export holds; no downloading by hand. All
+  existing exports refreshed (Cyrus with its south redraw and a walk; Raptor kept, its tail is hand-redrawn). New in
+  `art.yaml`: goblin (green; replaces the creature sheet) and goblin-orange, gowra (replaces the creature sheet),
+  gorilla, singe, jabiku, arvir, crusader, lizardfolk-alt, dread-shaman, lizardfolk-varanus, lizardfolk-knight,
+  snake-person, warrior-woman, farmer, old-man, bear. Engine: `walk`, `idle` and `attack` clips by animation name,
+  from another state's folder if need be (Singe hovers standing and flies moving; the warrior woman's slash and the
+  lizardfolk warrior's bite are other states); a clip missing a direction plays its mirror twin; `size: [w, h]`.
+- [ ] Wire the new figures to monsters and NPCs (none wears them yet except goblin and gowra by key): e.g. girallon ->
+  gorilla?, a kobold -> goblin-orange?, the farmer and old man as town NPCs. The user's call.
+- [ ] Attack animations exist for the bear, the warrior woman and the lizardfolk warrior (south only); the lunge is
+  400 ms, so 9 frames flash by. A longer lunge for art with an attack clip may read better: look in play.
+  None has hurt or death frames yet.
 - [x] Bosses and new creatures placed (the user, 2026-10-25). Golems are one body (STR/CON 22, reach-2 fists, tireless)
   differing only in `resist`: clay immune to blunt and fire, weak to slashing (labyrinth dead end, `G`); stone immune to
   slashing and fire, weak to blunt (sewers, at the planks to the drain); iron immune to slashing and blunt, weak to fire

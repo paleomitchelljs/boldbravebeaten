@@ -64,8 +64,51 @@
           }
         }
       }
+    },
+    {
+      "character": {
+        "id": "80be2814-aa6b-4a37-85cb-6ac94fc9c8fa",
+        "name": "fighting pose, head",
+        "prompt": "A lizardfolk based on Abronia graminea. Two legged with a lithe, long torso, short limbs, and a pointed snout. Dark emerald scales on the dorsal side and pale scales on the belly. A ring of pale scales around each eye. ",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-10-25T15:23:13.037903+00:00"
+      },
+      "folder": "fighting_pose_head",
+      "frames": {
+        "rotations": {
+          "south": "fighting_pose_head/rotations/south.png",
+          "south-east": "fighting_pose_head/rotations/south-east.png",
+          "east": "fighting_pose_head/rotations/east.png",
+          "north-east": "fighting_pose_head/rotations/north-east.png",
+          "north": "fighting_pose_head/rotations/north.png",
+          "north-west": "fighting_pose_head/rotations/north-west.png",
+          "west": "fighting_pose_head/rotations/west.png",
+          "south-west": "fighting_pose_head/rotations/south-west.png"
+        },
+        "animations": {
+          "lunging_forward_with_an_open_mouth_and_snapping_it": {
+            "south": [
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/south/frame_000.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/south/frame_001.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/south/frame_002.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/south/frame_003.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/south/frame_004.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/south/frame_005.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/south/frame_006.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/south/frame_007.png",
+              "fighting_pose_head/animations/lunging_forward_with_an_open_mouth_and_snapping_it/south/frame_008.png"
+            ]
+          }
+        }
+      }
     }
   ],
   "export_version": "3.1",
-  "export_date": "2026-10-25T15:33:47.959080"
+  "export_date": "2026-10-28T14:39:46.793208"
 }

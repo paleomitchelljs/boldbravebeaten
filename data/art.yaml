@@ -5,12 +5,19 @@
 #   faces   which way the figure looks as drawn (the map mirrors it to face where it goes)
 #   height  how tall it stands on the map, in squares; maxWidth caps a long body (default 1.8)
 #   box     the figure's trimmed box in the idle frame [x0, y0, x1, y1] (feet at y1), measured from the sheet
-# pixellab entries are 8-direction characters (art/characters/pixellab): idle rotations and walks by direction
-# (walkFrames, default 4; walks: the directions it has walk frames for, default east and west; the nearest is used;
-# walk frames may sit on a larger canvas than `size`, centred, and are cropped to it). rotations: the standing views
-# to use, default all eight (leave out a bad one and the nearest stands in). recolor: a ramp [[brightness 0..1,
-# "#rrggbb"], ...] the figure's shading is mapped onto when it loads (one figure in another material).
-# floats: true plays the walk standing still as well (a figure that hovers rather than stands).
+# pixellab entries are 8-direction characters (art/characters/pixellab; tools/pixellab-pull.js fetches them): `dir`
+# is one state's folder, `size` its canvas (a number, or [width, height]), `box` measured on it. rotations: the
+# standing views to use, default all eight (leave out a bad one and the nearest stands in). Animations (folders under
+# <dir>/animations) are clips:
+#   walk    played moving: an animation name (default Walking) with walkFrames (default 4) and walks (the directions
+#           it has, default east and west); or {anim, dir, frames, dirs} to take it from another state's folder
+#   idle    played standing: an animation name, or {anim, dir, frames, dirs}; frames default 4, dirs all eight
+#   attack  played through a blow, the same way
+# A clip plays in the direction faced, or mirrored from its twin (west from east); a walk also takes one 45 degrees
+# off. Otherwise a walk falls back to the idle clip, and anything else to the standing view. Every file of a
+# character is centred on the `size` canvas, so states on larger canvases line up.
+# recolor: a ramp [[brightness 0..1, "#rrggbb"], ...] the figure's shading is mapped onto when it loads (one figure
+# in another material). floats: true plays the walk standing still as well (a figure that hovers rather than stands).
 
 avatar-of-fear: {anims: [idle, attack], frame: [150, 150], box: [12, 0, 138, 150], faces: right, height: 1.9}
 basilisk: {anims: [idle, attack], frame: [160, 160], box: [0, 62, 160, 160], faces: right, height: 0.9, maxWidth: 2}
@@ -27,8 +34,6 @@ froglok-zombie: {anims: [idle, attack], frame: [150, 150], box: [18, 0, 132, 150
 fungus: {anims: [idle, attack], frame: [61, 61], box: [7, 3, 45, 60], faces: right, height: 0.7}
 gargoyle: {anims: [idle, attack], frame: [68, 68], box: [11, 0, 58, 68], faces: left, height: 1.2}
 girallon: {anims: [idle, attack], frame: [150, 150], box: [0, 8, 146, 150], faces: left, height: 1.5}
-goblin: {anims: [idle, attack], frame: [146, 146], box: [28, 20, 146, 146], faces: right, height: 1.0, party: true}
-gowra: {anims: [idle, attack, walk], frame: [297, 297], box: [43, 51, 253, 245], faces: left, height: 1.8, maxWidth: 2}
 lich: {anims: [idle, attack, walk], frame: [150, 150], box: [8, 6, 105, 146], faces: left, height: 1.4}
 lizardfolk: {anims: [idle, attack], frame: [150, 150], box: [13, 0, 137, 150], faces: left, height: 1.45, party: true}
 minotaur: {anims: [idle, attack], frame: [77, 77], box: [11, 8, 65, 77], faces: right, height: 1.8}
@@ -52,6 +57,8 @@ lizardfolk-warrior:
   size: 64
   walkFrames: 6
   walks: [north, east, south, west]
+  # Its bite: a lunge, facing south only (another state's folder).
+  attack: {dir: art/characters/pixellab/Lizardfolk_Warrior/fighting_pose_head, anim: lunging_forward_with_an_open_mouth_and_snapping_it, frames: 9, dirs: [south]}
   box: [4, 6, 60, 63]
   height: 1.3
   party: true
@@ -80,9 +87,7 @@ cyrus:
   size: 64
   box: [4, 3, 59, 61]
   height: 1.35
-  # Idle only (no walk yet). The south view came out wrong: the south-east and south-west stand in.
-  walks: []
-  rotations: [east, south-east, south-west, west, north-west, north, north-east]
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
   party: true
 lorc:
   type: pixellab
@@ -128,6 +133,7 @@ alligator:
   size: 64
   box: [2, 4, 62, 61]
   height: 1.4
+  walk: Walk
   walks: [north, east, south, west]
   maxWidth: 2.2
 raptor:
@@ -187,6 +193,185 @@ spectre:
   box: [2, 4, 62, 57]
   height: 1.45
   # Its walk is a float, and it plays standing still too.
+  walk: Floating_with_slight_arm_movements_and_a_a_twistin
   walkFrames: 9
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
   floats: true
+goblin:
+  type: pixellab
+  dir: art/characters/pixellab/Goblin/Idle
+  name: Goblin
+  size: 64
+  box: [3, 2, 61, 63]
+  height: 1.0
+  maxWidth: 1.4
+  # Standing views only (no walk yet).
+  walks: []
+  party: true
+goblin-orange:
+  type: pixellab
+  dir: art/characters/pixellab/Goblin/Orange_skinned_gobli
+  name: Orange goblin
+  size: 64
+  box: [3, 2, 61, 63]
+  height: 1.0
+  maxWidth: 1.4
+  walkFrames: 6
+  walks: [north, south]
+  party: true
+gowra:
+  type: pixellab
+  dir: art/characters/pixellab/Gowra/Idle
+  name: Gowra
+  size: 64
+  box: [2, 4, 61, 61]
+  height: 1.5
+  # No walk: its tail sways, standing and moving, facing east, west (mirrored), north and south.
+  idle: {anim: Tail_moving_side_to_side_while_the_torso_leans_for, frames: 9, dirs: [east, north, south]}
+  walks: []
+  party: true
+gorilla:
+  type: pixellab
+  dir: art/characters/pixellab/Gorilla/Idle
+  name: Gorilla
+  size: 80
+  box: [6, 4, 74, 76]
+  height: 1.6
+  maxWidth: 2.2
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+singe:
+  type: pixellab
+  dir: art/characters/pixellab/Singe/Idle
+  name: Singe
+  size: 76
+  box: [3, 2, 73, 75]
+  height: 1.5
+  maxWidth: 2.2
+  # Hovers standing (wings beating); flies moving, in its long body-and-tail state. That flight was made facing
+  # east only: west is it mirrored, and north or south it hovers.
+  idle: {anim: Wings_flapping_up_and_down_while_the_tail_twists, frames: 9}
+  walk: {dir: art/characters/pixellab/Singe/Body_tail_horizont, anim: Wings_flapping_extremely_from_vertical_up_to_nearl, frames: 9, dirs: [east]}
+jabiku:
+  type: pixellab
+  dir: art/characters/pixellab/Jabiku/Idle
+  name: Jabiku
+  size: 64
+  box: [1, 1, 63, 61]
+  height: 1.4
+  walks: []
+  party: true
+arvir:
+  type: pixellab
+  dir: art/characters/pixellab/Arvir/Idle
+  name: Arvir
+  size: 64
+  box: [4, 2, 63, 61]
+  height: 1.4
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  party: true
+crusader:
+  type: pixellab
+  dir: art/characters/pixellab/Crusader/Idle
+  name: Crusader
+  size: 64
+  box: [4, 3, 60, 61]
+  height: 1.35
+  # Walks facing south (and a step either side) only; other ways it moves in its standing view.
+  walks: [south]
+  party: true
+lizardfolk-alt:
+  type: pixellab
+  dir: art/characters/pixellab/Lizardfolk_Alt/Idle
+  name: Black lizardfolk
+  size: 64
+  box: [3, 2, 61, 61]
+  height: 1.3
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  party: true
+dread-shaman:
+  type: pixellab
+  dir: art/characters/pixellab/Lizardfolk_Alt/Dread_shaman
+  name: Dread shaman
+  size: 64
+  box: [0, 2, 64, 61]
+  height: 1.3
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  party: true
+lizardfolk-varanus:
+  type: pixellab
+  dir: art/characters/pixellab/Lizardfolk_Varanus/Idle
+  name: Varanus lizardfolk
+  size: 64
+  box: [3, 2, 61, 61]
+  height: 1.3
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  party: true
+lizardfolk-knight:
+  type: pixellab
+  dir: art/characters/pixellab/Lizardfolk_Alt2/Idle
+  name: Lizardfolk knight
+  size: 80
+  box: [6, 11, 76, 76]
+  height: 1.35
+  walks: []
+  party: true
+snake-person:
+  type: pixellab
+  dir: art/characters/pixellab/Snake_Person/Idle
+  name: Snake person
+  size: 80
+  box: [2, 10, 77, 78]
+  height: 1.4
+  maxWidth: 2
+  walks: []
+  party: true
+warrior-woman:
+  type: pixellab
+  dir: art/characters/pixellab/Warrior_Woman/warrior_woman_with_orange_hair
+  name: Warrior woman
+  size: 64
+  box: [21, 16, 43, 48]
+  height: 1.3
+  idle: {anim: Idle, frames: 8}
+  walkFrames: 6
+  walk: Walk
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  # Her slash is another state, on an 80-pixel canvas (centred on this one). Her spell (hands_extended_about) is
+  # not used yet: nothing in the game asks for a casting animation.
+  attack: {dir: art/characters/pixellab/Warrior_Woman/about_to_slash_hold, anim: Slash, frames: 9}
+  party: true
+farmer:
+  type: pixellab
+  dir: art/characters/pixellab/Farmer/blonde_farmer_with_long_hair_and_a_dress
+  name: Farmer
+  size: 48
+  box: [13, 8, 35, 41]
+  height: 1.25
+  idle: {anim: Idle, frames: 8}
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+old-man:
+  type: pixellab
+  dir: art/characters/pixellab/Old_Man/old_man_bald
+  name: Old man
+  size: 44
+  box: [11, 6, 33, 39]
+  height: 1.25
+  walk: The_character_walks_forward_with_a_steady_rhythmic
+  walkFrames: 7
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+bear:
+  type: pixellab
+  dir: art/characters/pixellab/Bear/flat_shaded_light_brown_bear
+  name: Bear
+  size: 96
+  box: [27, 28, 70, 71]
+  height: 1.2
+  maxWidth: 2
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  attack: {anim: Attack, frames: 9}

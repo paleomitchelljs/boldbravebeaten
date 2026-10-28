@@ -185,8 +185,16 @@
     const COMPASS = ['east', 'south-east', 'south', 'south-west', 'west', 'north-west', 'north', 'north-east'];
     for (const [id, a] of Object.entries(art)) {
       if (a.type !== 'pixellab') continue;
-      if (!a.dir || !(a.size > 0)) err(`art.${id}: a pixellab entry needs dir and size`);
+      const size = (v) => v > 0 || (Array.isArray(v) && v.length === 2 && v.every((x) => x > 0));
+      if (!a.dir || !size(a.size)) err(`art.${id}: a pixellab entry needs dir and size (a number, or [width, height])`);
       for (const f of ['walks', 'rotations']) for (const d of a[f] || []) if (!COMPASS.includes(d)) err(`art.${id}.${f}: "${d}" is not a compass direction`);
+      for (const f of ['walk', 'idle', 'attack']) {
+        const c = a[f];
+        if (c == null || typeof c === 'string') continue;
+        if (typeof c !== 'object' || (f !== 'walk' && !c.anim)) { err(`art.${id}.${f}: want an animation name, or {anim, dir, frames, dirs}`); continue; }
+        if (c.frames != null && !(c.frames > 0)) err(`art.${id}.${f}.frames: want a positive number`);
+        for (const d of c.dirs || []) if (!COMPASS.includes(d)) err(`art.${id}.${f}.dirs: "${d}" is not a compass direction`);
+      }
       if (a.recolor && !(Array.isArray(a.recolor) && a.recolor.length > 1 && a.recolor.every((r) => Array.isArray(r) && typeof r[0] === 'number' && /^#[0-9a-f]{6}$/i.test(r[1]))))
         err(`art.${id}.recolor: want [[brightness 0..1, "#rrggbb"], ...], at least two stops`);
     }

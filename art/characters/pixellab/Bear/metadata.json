@@ -1,0 +1,357 @@
+{
+  "group_id": "537f42ba-c93e-4e0c-a34f-f8fb1926aa8d",
+  "states": [
+    {
+      "character": {
+        "id": "c71b5d64-37ac-4f6d-b6c8-f9b2b3a9d922",
+        "name": "flat shaded light brown bear",
+        "prompt": "flat shaded light brown bear",
+        "size": {
+          "width": 96,
+          "height": 96
+        },
+        "template_id": "bear",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-24T22:14:36.004163+00:00"
+      },
+      "folder": "flat_shaded_light_brown_bear",
+      "frames": {
+        "rotations": {
+          "south": "flat_shaded_light_brown_bear/rotations/south.png",
+          "south-east": "flat_shaded_light_brown_bear/rotations/south-east.png",
+          "east": "flat_shaded_light_brown_bear/rotations/east.png",
+          "north-east": "flat_shaded_light_brown_bear/rotations/north-east.png",
+          "north": "flat_shaded_light_brown_bear/rotations/north.png",
+          "north-west": "flat_shaded_light_brown_bear/rotations/north-west.png",
+          "west": "flat_shaded_light_brown_bear/rotations/west.png",
+          "south-west": "flat_shaded_light_brown_bear/rotations/south-west.png"
+        },
+        "animations": {
+          "Attack": {
+            "north-west": [
+              "flat_shaded_light_brown_bear/animations/Attack/north-west/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Attack/north-west/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Attack/north-west/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Attack/north-west/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Attack/north-west/frame_004.png",
+              "flat_shaded_light_brown_bear/animations/Attack/north-west/frame_005.png",
+              "flat_shaded_light_brown_bear/animations/Attack/north-west/frame_006.png",
+              "flat_shaded_light_brown_bear/animations/Attack/north-west/frame_007.png",
+              "flat_shaded_light_brown_bear/animations/Attack/north-west/frame_008.png"
+            ],
+            "north-east": [
+              "flat_shaded_light_brown_bear/animations/Attack/north-east/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Attack/north-east/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Attack/north-east/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Attack/north-east/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Attack/north-east/frame_004.png",
+              "flat_shaded_light_brown_bear/animations/Attack/north-east/frame_005.png",
+              "flat_shaded_light_brown_bear/animations/Attack/north-east/frame_006.png",
+              "flat_shaded_light_brown_bear/animations/Attack/north-east/frame_007.png",
+              "flat_shaded_light_brown_bear/animations/Attack/north-east/frame_008.png"
+            ],
+            "west": [
+              "flat_shaded_light_brown_bear/animations/Attack/west/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Attack/west/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Attack/west/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Attack/west/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Attack/west/frame_004.png",
+              "flat_shaded_light_brown_bear/animations/Attack/west/frame_005.png",
+              "flat_shaded_light_brown_bear/animations/Attack/west/frame_006.png",
+              "flat_shaded_light_brown_bear/animations/Attack/west/frame_007.png",
+              "flat_shaded_light_brown_bear/animations/Attack/west/frame_008.png"
+            ],
+            "south-west": [
+              "flat_shaded_light_brown_bear/animations/Attack/south-west/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Attack/south-west/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Attack/south-west/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Attack/south-west/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Attack/south-west/frame_004.png",
+              "flat_shaded_light_brown_bear/animations/Attack/south-west/frame_005.png",
+              "flat_shaded_light_brown_bear/animations/Attack/south-west/frame_006.png",
+              "flat_shaded_light_brown_bear/animations/Attack/south-west/frame_007.png",
+              "flat_shaded_light_brown_bear/animations/Attack/south-west/frame_008.png"
+            ],
+            "north": [
+              "flat_shaded_light_brown_bear/animations/Attack/north/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Attack/north/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Attack/north/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Attack/north/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Attack/north/frame_004.png",
+              "flat_shaded_light_brown_bear/animations/Attack/north/frame_005.png",
+              "flat_shaded_light_brown_bear/animations/Attack/north/frame_006.png",
+              "flat_shaded_light_brown_bear/animations/Attack/north/frame_007.png",
+              "flat_shaded_light_brown_bear/animations/Attack/north/frame_008.png"
+            ],
+            "south-east": [
+              "flat_shaded_light_brown_bear/animations/Attack/south-east/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Attack/south-east/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Attack/south-east/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Attack/south-east/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Attack/south-east/frame_004.png",
+              "flat_shaded_light_brown_bear/animations/Attack/south-east/frame_005.png",
+              "flat_shaded_light_brown_bear/animations/Attack/south-east/frame_006.png",
+              "flat_shaded_light_brown_bear/animations/Attack/south-east/frame_007.png",
+              "flat_shaded_light_brown_bear/animations/Attack/south-east/frame_008.png"
+            ],
+            "south": [
+              "flat_shaded_light_brown_bear/animations/Attack/south/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Attack/south/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Attack/south/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Attack/south/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Attack/south/frame_004.png",
+              "flat_shaded_light_brown_bear/animations/Attack/south/frame_005.png",
+              "flat_shaded_light_brown_bear/animations/Attack/south/frame_006.png",
+              "flat_shaded_light_brown_bear/animations/Attack/south/frame_007.png",
+              "flat_shaded_light_brown_bear/animations/Attack/south/frame_008.png"
+            ],
+            "east": [
+              "flat_shaded_light_brown_bear/animations/Attack/east/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Attack/east/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Attack/east/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Attack/east/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Attack/east/frame_004.png",
+              "flat_shaded_light_brown_bear/animations/Attack/east/frame_005.png",
+              "flat_shaded_light_brown_bear/animations/Attack/east/frame_006.png",
+              "flat_shaded_light_brown_bear/animations/Attack/east/frame_007.png",
+              "flat_shaded_light_brown_bear/animations/Attack/east/frame_008.png"
+            ]
+          },
+          "Jump_Attack": {
+            "south": [
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/south/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/south/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/south/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/south/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/south/frame_004.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/south/frame_005.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/south/frame_006.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/south/frame_007.png"
+            ],
+            "north": [
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/north/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/north/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/north/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/north/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/north/frame_004.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/north/frame_005.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/north/frame_006.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/north/frame_007.png"
+            ],
+            "south-east": [
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/south-east/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/south-east/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/south-east/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/south-east/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/south-east/frame_004.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/south-east/frame_005.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/south-east/frame_006.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/south-east/frame_007.png"
+            ],
+            "west": [
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/west/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/west/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/west/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/west/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/west/frame_004.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/west/frame_005.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/west/frame_006.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/west/frame_007.png"
+            ],
+            "east": [
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/east/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/east/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/east/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/east/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/east/frame_004.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/east/frame_005.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/east/frame_006.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/east/frame_007.png"
+            ],
+            "north-west": [
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/north-west/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/north-west/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/north-west/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/north-west/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/north-west/frame_004.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/north-west/frame_005.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/north-west/frame_006.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/north-west/frame_007.png"
+            ],
+            "north-east": [
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/north-east/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/north-east/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/north-east/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/north-east/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/north-east/frame_004.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/north-east/frame_005.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/north-east/frame_006.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/north-east/frame_007.png"
+            ],
+            "south-west": [
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/south-west/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/south-west/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/south-west/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/south-west/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/south-west/frame_004.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/south-west/frame_005.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/south-west/frame_006.png",
+              "flat_shaded_light_brown_bear/animations/Jump_Attack/south-west/frame_007.png"
+            ]
+          },
+          "Walk": {
+            "north": [
+              "flat_shaded_light_brown_bear/animations/Walk/north/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Walk/north/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Walk/north/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Walk/north/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Walk/north/frame_004.png",
+              "flat_shaded_light_brown_bear/animations/Walk/north/frame_005.png"
+            ],
+            "south": [
+              "flat_shaded_light_brown_bear/animations/Walk/south/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Walk/south/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Walk/south/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Walk/south/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Walk/south/frame_004.png",
+              "flat_shaded_light_brown_bear/animations/Walk/south/frame_005.png"
+            ],
+            "north-west": [
+              "flat_shaded_light_brown_bear/animations/Walk/north-west/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Walk/north-west/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Walk/north-west/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Walk/north-west/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Walk/north-west/frame_004.png",
+              "flat_shaded_light_brown_bear/animations/Walk/north-west/frame_005.png"
+            ],
+            "west": [
+              "flat_shaded_light_brown_bear/animations/Walk/west/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Walk/west/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Walk/west/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Walk/west/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Walk/west/frame_004.png",
+              "flat_shaded_light_brown_bear/animations/Walk/west/frame_005.png"
+            ],
+            "south-west": [
+              "flat_shaded_light_brown_bear/animations/Walk/south-west/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Walk/south-west/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Walk/south-west/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Walk/south-west/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Walk/south-west/frame_004.png",
+              "flat_shaded_light_brown_bear/animations/Walk/south-west/frame_005.png"
+            ],
+            "south-east": [
+              "flat_shaded_light_brown_bear/animations/Walk/south-east/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Walk/south-east/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Walk/south-east/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Walk/south-east/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Walk/south-east/frame_004.png",
+              "flat_shaded_light_brown_bear/animations/Walk/south-east/frame_005.png"
+            ],
+            "north-east": [
+              "flat_shaded_light_brown_bear/animations/Walk/north-east/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Walk/north-east/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Walk/north-east/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Walk/north-east/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Walk/north-east/frame_004.png",
+              "flat_shaded_light_brown_bear/animations/Walk/north-east/frame_005.png"
+            ],
+            "east": [
+              "flat_shaded_light_brown_bear/animations/Walk/east/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Walk/east/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Walk/east/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Walk/east/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Walk/east/frame_004.png",
+              "flat_shaded_light_brown_bear/animations/Walk/east/frame_005.png"
+            ]
+          },
+          "Run": {
+            "north-west": [
+              "flat_shaded_light_brown_bear/animations/Run/north-west/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Run/north-west/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Run/north-west/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Run/north-west/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Run/north-west/frame_004.png",
+              "flat_shaded_light_brown_bear/animations/Run/north-west/frame_005.png",
+              "flat_shaded_light_brown_bear/animations/Run/north-west/frame_006.png",
+              "flat_shaded_light_brown_bear/animations/Run/north-west/frame_007.png"
+            ],
+            "north": [
+              "flat_shaded_light_brown_bear/animations/Run/north/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Run/north/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Run/north/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Run/north/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Run/north/frame_004.png",
+              "flat_shaded_light_brown_bear/animations/Run/north/frame_005.png",
+              "flat_shaded_light_brown_bear/animations/Run/north/frame_006.png",
+              "flat_shaded_light_brown_bear/animations/Run/north/frame_007.png"
+            ],
+            "south": [
+              "flat_shaded_light_brown_bear/animations/Run/south/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Run/south/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Run/south/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Run/south/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Run/south/frame_004.png",
+              "flat_shaded_light_brown_bear/animations/Run/south/frame_005.png",
+              "flat_shaded_light_brown_bear/animations/Run/south/frame_006.png",
+              "flat_shaded_light_brown_bear/animations/Run/south/frame_007.png"
+            ],
+            "south-west": [
+              "flat_shaded_light_brown_bear/animations/Run/south-west/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Run/south-west/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Run/south-west/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Run/south-west/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Run/south-west/frame_004.png",
+              "flat_shaded_light_brown_bear/animations/Run/south-west/frame_005.png",
+              "flat_shaded_light_brown_bear/animations/Run/south-west/frame_006.png",
+              "flat_shaded_light_brown_bear/animations/Run/south-west/frame_007.png"
+            ],
+            "west": [
+              "flat_shaded_light_brown_bear/animations/Run/west/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Run/west/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Run/west/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Run/west/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Run/west/frame_004.png",
+              "flat_shaded_light_brown_bear/animations/Run/west/frame_005.png",
+              "flat_shaded_light_brown_bear/animations/Run/west/frame_006.png",
+              "flat_shaded_light_brown_bear/animations/Run/west/frame_007.png"
+            ],
+            "south-east": [
+              "flat_shaded_light_brown_bear/animations/Run/south-east/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Run/south-east/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Run/south-east/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Run/south-east/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Run/south-east/frame_004.png",
+              "flat_shaded_light_brown_bear/animations/Run/south-east/frame_005.png",
+              "flat_shaded_light_brown_bear/animations/Run/south-east/frame_006.png",
+              "flat_shaded_light_brown_bear/animations/Run/south-east/frame_007.png"
+            ],
+            "north-east": [
+              "flat_shaded_light_brown_bear/animations/Run/north-east/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Run/north-east/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Run/north-east/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Run/north-east/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Run/north-east/frame_004.png",
+              "flat_shaded_light_brown_bear/animations/Run/north-east/frame_005.png",
+              "flat_shaded_light_brown_bear/animations/Run/north-east/frame_006.png",
+              "flat_shaded_light_brown_bear/animations/Run/north-east/frame_007.png"
+            ],
+            "east": [
+              "flat_shaded_light_brown_bear/animations/Run/east/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Run/east/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Run/east/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Run/east/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Run/east/frame_004.png",
+              "flat_shaded_light_brown_bear/animations/Run/east/frame_005.png",
+              "flat_shaded_light_brown_bear/animations/Run/east/frame_006.png",
+              "flat_shaded_light_brown_bear/animations/Run/east/frame_007.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-28T14:39:14.390739"
+}

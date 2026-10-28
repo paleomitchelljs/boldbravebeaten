@@ -1,0 +1,45 @@
+{
+  "group_id": "2785285e-1495-4d2b-aacb-e8a2f084abe9",
+  "states": [
+    {
+      "character": {
+        "id": "9b7d3dac-2b67-483e-a6e0-9c33ff0a7f2e",
+        "name": "Idle",
+        "prompt": "A reptilian humanoid warrior wearing full-body, dark crimson plate armor with intricate patterns. The character has a pale, scaly neck and a long, segmented tail, with their head obscured by a black, textured helmet. They are wielding a silver katana with a gold guard in their right hand and carrying a rectangular gold shield featuring a dragon motif on their left arm",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-10-27T04:52:08.776979+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {
+          "Walking": {
+            "south": [
+              "Idle/animations/Walking/south/frame_000.png",
+              "Idle/animations/Walking/south/frame_001.png",
+              "Idle/animations/Walking/south/frame_002.png",
+              "Idle/animations/Walking/south/frame_003.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-28T14:39:17.756995"
+}

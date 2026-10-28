@@ -90,17 +90,15 @@
 
   // ---- Creature art (data/art.yaml; the files are local only) ------------------------------------------
   // Two-frame sheets of painted creatures, far finer than the 32-pixel Pixel Crawler figures: drawn smoothed and
-  // scaled to an authored height in squares. pixellab characters are 64-pixel, 8-direction figures. Where a file
-  // is missing (the creature sheets are git-ignored until their licence is settled) the look's Pixel Crawler `kind` is drawn instead.
+  // scaled to an authored height in squares. pixellab characters are 8-direction figures: standing views and
+  // animations by direction. Where a file is missing (the creature sheets are git-ignored until their licence is
+  // settled) the look's Pixel Crawler `kind` is drawn instead.
   const artCat = () => ((G.Content && G.Content.world && G.Content.world.art) || {});
   const artSheets = {};  // `${key}|${anim}` -> { img, ok, failed, tinted }
 
+  // pixellab sheets are keyed by their file (a standing view or one animation frame); creature sheets by anim.
   function artFile(key, def, anim) {
-    if (def.type === 'pixellab') {
-      const [dir, n] = anim.split('#');
-      return n == null ? `${def.dir}/rotations/${dir}.png` : `${def.dir}/animations/Walking/${dir}/frame_${String(n).padStart(3, '0')}.png`;
-    }
-    return ART_DIR + key + '-' + anim + '.png';
+    return def.type === 'pixellab' ? anim : ART_DIR + key + '-' + anim + '.png';
   }
 
   function artSheet(key, anim) {
@@ -149,22 +147,52 @@
     for (const d of have) { const j = DIRS.indexOf(d), k = Math.min((i - j + 8) % 8, (j - i + 8) % 8); if (k < bd) { bd = k; best = d; } }
     return best;
   }
+  const MIRROR = { east: 'west', 'south-east': 'south-west', south: 'south', 'south-west': 'south-east', west: 'east', 'north-west': 'north-east', north: 'north', 'north-east': 'north-west' };
+  // Which of a clip's directions to play for `want`, and whether mirrored: [dir, mirror], or null if none will do.
+  // `near` (walks) also takes the nearest direction one step (45 degrees) off.
+  function clipDir(want, have, near) {
+    if (have.includes(want)) return [want, false];
+    if (have.includes(MIRROR[want])) return [MIRROR[want], true];
+    if (!near || !have.length) return null;
+    const d = nearestDir(want, have), k = Math.abs(DIRS.indexOf(d) - DIRS.indexOf(want));
+    return Math.min(k, 8 - k) <= 1 ? [d, false] : null;
+  }
+
+  // An animation of a pixellab entry (art.yaml `walk`, `idle`, `attack`): { dir, anim, frames, dirs }. The walk is
+  // built from the entry's own fields (walkFrames, walks) unless given as an object; a string names the animation.
+  function clip(def, which) {
+    const c = typeof def[which] === 'string' ? { anim: def[which] } : def[which];
+    if (which === 'walk') return Object.assign({ dir: def.dir, anim: 'Walking', frames: def.walkFrames || 4, dirs: def.walks || ['east', 'west'] }, c);
+    return c ? Object.assign({ dir: def.dir, frames: 4, dirs: DIRS }, c) : null;
+  }
+
+  // A pixellab sheet as artPick returns it. Every file of a character (a standing view, or a frame on a larger
+  // canvas, or another state's on another) is centred on the entry's `size` canvas, where `box` is measured: ox, oy
+  // place the file's top-left on that canvas.
+  function framed(def, s, mirror) {
+    if (!s.ok) return null;
+    const [w, h] = Array.isArray(def.size) ? def.size : [def.size, def.size];
+    return { def, s, sx: 0, sy: 0, sw: s.img.width, sh: s.img.height, ox: (w - s.img.width) / 2, oy: (h - s.img.height) / 2, mirror };
+  }
 
   // Which sheet (and frame) shows this art in this animation; null if none of it can be drawn.
   // dir: the compass direction the figure faces (pixellab art has eight standing and some walking).
-  function artPick(key, anim, frame, flip, dir) {
+  function artPick(key, anim, frame, flip, dir, progress) {
     const def = artCat()[key];
     if (!def) return null;
     if (def.type === 'pixellab') {
-      const want = DIRS.includes(dir) ? dir : flip ? 'south-west' : 'south-east', n = def.walkFrames || 4;
-      const walks = def.walks || ['east', 'west'];
-      // With no walk (walks: [], or its frames missing) it moves in its standing view.
-      if (anim === 'run' && (!walks.length || artSheet(key, `${nearestDir(want, walks)}#0`).failed)) return artPick(key, 'idle', frame, flip, dir);
-      const name = anim === 'run' ? `${nearestDir(want, walks)}#${((frame % n) + n) % n}` : nearestDir(want, def.rotations || DIRS);
-      const s = artSheet(key, name);
-      // PixelLab exports walk frames on a larger canvas (96 px round a 64-px figure): take the figure's square from the middle.
-      const pad = s.ok ? Math.max(0, (s.img.width - def.size) / 2) : 0;
-      return s.ok ? { def, s, sx: pad, sy: pad, sw: def.size, sh: def.size, mirror: false } : null;
+      const want = DIRS.includes(dir) ? dir : flip ? 'south-west' : 'south-east';
+      const stand = () => framed(def, artSheet(key, `${def.dir}/rotations/${nearestDir(want, def.rotations || DIRS)}.png`), false);
+      // A clip plays in the direction asked, or mirrored from its twin; a walk also takes a direction one step off.
+      // Anything else (no clip, no such direction, frames missing) shows the standing view.
+      let c = anim === 'run' ? clip(def, 'walk') : anim === 'idle' || anim === 'attack' ? clip(def, anim) : null;
+      let d = c && clipDir(want, c.dirs, anim === 'run');
+      // No walk this way: its standing animation, if it has one there.
+      if (!d && anim === 'run' && (c = clip(def, 'idle'))) d = clipDir(want, c.dirs, false);
+      if (!d) return stand();
+      const n = c.frames, i = anim === 'attack' && progress != null ? Math.min(n - 1, Math.floor(progress * n)) : ((frame % n) + n) % n;
+      const s = artSheet(key, `${c.dir}/animations/${c.anim}/${d[0]}/frame_${String(i).padStart(3, '0')}.png`);
+      return s.ok ? framed(def, s, d[1]) : stand();  // the standing view until the frame loads, or if it is missing
     }
     const anims = def.anims || ['idle'];
     const want = anim === 'run' ? (anims.includes('walk') ? 'walk' : anims.includes('fly') ? 'fly' : 'idle') : anims.includes(anim) ? anim : 'idle';
@@ -175,6 +203,9 @@
     const f = anim === 'idle' ? Math.floor(frame / 3) % 2 : ((frame % 2) + 2) % 2;
     return { def, s, sx: f * fw, sy: 0, sw: fw, sh: fh, mirror: def.faces === 'left' ? !flip : !!flip };
   }
+
+  // The sheet that decides whether a character's art is there at all.
+  const artProbe = (key) => { const def = artCat()[key] || {}; return artSheet(key, def.type === 'pixellab' ? `${def.dir}/rotations/south-east.png` : 'idle'); };
 
   // A figure that floats (floats: true in art.yaml) plays its walk standing still too.
   const floats = (key) => !!(artCat()[key] || {}).floats;
@@ -201,7 +232,7 @@
   // Draw creature art with its feet at (x, y). tile = screen pixels per square. Returns false if not ready.
   function drawArt(ctx, key, anim, frame, x, y, tile, opts) {
     opts = opts || {};
-    const p = artPick(key, anim, frame, opts.flip, opts.dir);
+    const p = artPick(key, anim, frame, opts.flip, opts.dir, opts.progress);
     if (!p) return false;
     const { def, s } = p;
     const box = def.box || [0, 0, p.sw, p.sh];
@@ -222,7 +253,7 @@
     if ('imageSmoothingQuality' in ctx) ctx.imageSmoothingQuality = 'high';
     // The box's bottom centre sits on (0, 0).
     const cx = (box[0] + box[2]) / 2;
-    ctx.drawImage(artTinted(s, opts.tint), p.sx, p.sy, p.sw, p.sh, -cx * k, -box[3] * k, p.sw * k, p.sh * k);
+    ctx.drawImage(artTinted(s, opts.tint), p.sx, p.sy, p.sw, p.sh, ((p.ox || 0) - cx) * k, ((p.oy || 0) - box[3]) * k, p.sw * k, p.sh * k);
     ctx.restore();
     return true;
   }
@@ -301,7 +332,7 @@
     const paint = () => {
       const x0 = cv.getContext('2d');
       if (L.art) {
-        const p = artPick(L.art, 'idle', 0, false);
+        const p = artPick(L.art, 'stand', 0, false); // a standing view (pixellab), or the idle sheet
         if (p) {
           // The head and shoulders: the top of the figure's box, as a square.
           const box = p.def.box || [0, 0, p.sw, p.sh];
@@ -311,11 +342,11 @@
           x0.imageSmoothingEnabled = true;
           x0.save();
           if (p.mirror) { x0.translate(size, 0); x0.scale(-1, 1); }
-          x0.drawImage(artTinted(p.s, L.artTint), p.sx + cx - side / 2, p.sy + box[1], side, side, 0, 0, size, size);
+          x0.drawImage(artTinted(p.s, L.artTint), p.sx + cx - side / 2 - (p.ox || 0), p.sy + box[1] - (p.oy || 0), side, side, 0, 0, size, size);
           x0.restore();
           return true;
         }
-        if (!artSheet(L.art, 'idle').failed) return false;
+        if (!artProbe(L.art).failed) return false;
       }
       const s = sheet(L.kind, 'idle');
       if (!s.ok) return false;
@@ -355,7 +386,7 @@
   }
 
   UI.Art = UI.Art || {};
-  UI.Sprites = { DIRS, dirOf, forEncounter, crowd, KINDS, PARTY_KINDS, partyKinds, TINTS, KIT_KIND, draw, drawArt, floats, artReady, artSheet, look, lookFor, portrait, figure, sheet, whenReady: (f) => waiting.push(f), preload: () => { KINDS.forEach((k) => { sheet(k, 'idle'); sheet(k, 'run'); }); for (const k of Object.keys(artCat())) artSheet(k, (artCat()[k].type === 'pixellab') ? 'south-east' : 'idle'); } };
+  UI.Sprites = { DIRS, dirOf, forEncounter, crowd, KINDS, PARTY_KINDS, partyKinds, TINTS, KIT_KIND, draw, drawArt, floats, artReady, artSheet, look, lookFor, portrait, figure, sheet, whenReady: (f) => waiting.push(f), preload: () => { KINDS.forEach((k) => { sheet(k, 'idle'); sheet(k, 'run'); }); for (const k of Object.keys(artCat())) artProbe(k); } };
   // Portraits everywhere in the game are now the sprite's face.
   UI.Art.portrait = (c, px) => portrait(c, px);
 })(globalThis.BBB);

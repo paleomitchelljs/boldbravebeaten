@@ -1,0 +1,84 @@
+{
+  "group_id": "7da4bad2-d13e-42f1-8395-b6f4cc6c23ff",
+  "states": [
+    {
+      "character": {
+        "id": "71e3ab4e-d83b-410e-94de-8fb0493d200c",
+        "name": "Idle",
+        "prompt": "Lanky goblin with long arms that reach the ground and short legs. A wide toothy maw with a long, lolling tong. Sharp pointed ears, and a ferociously mischievous demeanor.",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-10-28T02:37:24.486849+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "6bee6343-c2f2-4333-8df8-a3dac88a705d",
+        "name": "Orange skinned gobli",
+        "prompt": "Lanky goblin with long arms that reach the ground and short legs. A wide toothy maw with a long, lolling tong. Sharp pointed ears, and a ferociously mischievous demeanor.",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-10-28T02:45:52.009088+00:00"
+      },
+      "folder": "Orange_skinned_gobli",
+      "frames": {
+        "rotations": {
+          "south": "Orange_skinned_gobli/rotations/south.png",
+          "south-east": "Orange_skinned_gobli/rotations/south-east.png",
+          "east": "Orange_skinned_gobli/rotations/east.png",
+          "north-east": "Orange_skinned_gobli/rotations/north-east.png",
+          "north": "Orange_skinned_gobli/rotations/north.png",
+          "north-west": "Orange_skinned_gobli/rotations/north-west.png",
+          "west": "Orange_skinned_gobli/rotations/west.png",
+          "south-west": "Orange_skinned_gobli/rotations/south-west.png"
+        },
+        "animations": {
+          "Walking": {
+            "south": [
+              "Orange_skinned_gobli/animations/Walking/south/frame_000.png",
+              "Orange_skinned_gobli/animations/Walking/south/frame_001.png",
+              "Orange_skinned_gobli/animations/Walking/south/frame_002.png",
+              "Orange_skinned_gobli/animations/Walking/south/frame_003.png",
+              "Orange_skinned_gobli/animations/Walking/south/frame_004.png",
+              "Orange_skinned_gobli/animations/Walking/south/frame_005.png"
+            ],
+            "north": [
+              "Orange_skinned_gobli/animations/Walking/north/frame_000.png",
+              "Orange_skinned_gobli/animations/Walking/north/frame_001.png",
+              "Orange_skinned_gobli/animations/Walking/north/frame_002.png",
+              "Orange_skinned_gobli/animations/Walking/north/frame_003.png",
+              "Orange_skinned_gobli/animations/Walking/north/frame_004.png",
+              "Orange_skinned_gobli/animations/Walking/north/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-28T14:39:32.740269"
+}

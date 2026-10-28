@@ -1,0 +1,36 @@
+{
+  "group_id": "d168723b-e01d-48be-b89b-f0bdcde94c78",
+  "states": [
+    {
+      "character": {
+        "id": "418cefa3-69cf-4c05-b797-4b1cf7fd0760",
+        "name": "Idle",
+        "prompt": "A blue, Varanus-like lizard folk with a relatively long neck, relatively long limbs, and a thin tail along a stout body. Bipdel and capable of holding weapons.",
+        "size": {
+          "width": 80,
+          "height": 80
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-10-27T21:28:39.641573+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-28T14:39:43.166231"
+}

@@ -514,9 +514,10 @@
       // Figures are drawn a notch smaller than the tiles so they stand a tile and a half tall, not two.
       const SS = Math.max(1, S - 1);
       // Creature art (data/art.yaml) where it is there: its attack frames while a lunge is under way.
-      const lunging = view.fx.some((f) => f.k === 'lunge' && f.id === a.id && clock() >= f.t0 && clock() < f.t0 + f.dur + 140);
+      const lunge = view.fx.find((f) => f.k === 'lunge' && f.id === a.id && clock() >= f.t0 && clock() < f.t0 + f.dur + 140);
+      const lunging = !!lunge, progress = lunge ? (clock() - lunge.t0) / (lunge.dur + 140) : null;  // how far through the blow
       const rot = a.down ? (v.flip ? -1.45 : 1.45) : 0;
-      const art = a.art && Sprites.drawArt(ctx, a.art, lunging ? 'attack' : anim, frame, x, y, size, { flip: v.flip, dir: v.dir, tint: a.artTint, alpha: a.alpha, artScale: a.artScale, rot, shadow: !a.down });
+      const art = a.art && Sprites.drawArt(ctx, a.art, lunging ? 'attack' : anim, frame, x, y, size, { flip: v.flip, dir: v.dir, tint: a.artTint, alpha: a.alpha, artScale: a.artScale, rot, progress, shadow: !a.down });
       if (art) a = Object.assign({}, a, { size: a.artSize || a.size });
       const ok = art || Sprites.draw(ctx, a.kind, anim, frame, x, y, SS, { flip: v.flip, tint: a.tint, alpha: a.alpha, size: a.size || 1, rot, shadow: !a.down });
       // A hit: the same figure again, washed red and added on top (it glows), fading.
@@ -524,7 +525,7 @@
       if (hit && ok) {
         const fade = (1 - (now - hit.t0) / hit.dur) * 0.85 * (a.alpha == null ? 1 : a.alpha);
         ctx.save(); ctx.globalCompositeOperation = 'lighter';
-        if (art) Sprites.drawArt(ctx, a.art, lunging ? 'attack' : anim, frame, x, y, size, { flip: v.flip, dir: v.dir, tint: '#ff2a1a', alpha: fade, artScale: a.artScale, rot });
+        if (art) Sprites.drawArt(ctx, a.art, lunging ? 'attack' : anim, frame, x, y, size, { flip: v.flip, dir: v.dir, tint: '#ff2a1a', alpha: fade, artScale: a.artScale, rot, progress });
         else Sprites.draw(ctx, a.kind, anim, frame, x, y, SS, { flip: v.flip, tint: '#ff2a1a', alpha: fade, size: a.size || 1, rot });
         ctx.restore();
       }

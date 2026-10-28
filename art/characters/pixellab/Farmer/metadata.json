@@ -1,0 +1,185 @@
+{
+  "group_id": "737f7226-ec0d-411a-991d-7ebdb5f7209a",
+  "states": [
+    {
+      "character": {
+        "id": "96889e20-bfd8-419f-aa01-ddec9e1b4590",
+        "name": "blonde farmer with long hair and a dress",
+        "prompt": "blonde farmer with long hair and a dress",
+        "size": {
+          "width": 48,
+          "height": 48
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-10-24T22:14:36.004163+00:00"
+      },
+      "folder": "blonde_farmer_with_long_hair_and_a_dress",
+      "frames": {
+        "rotations": {
+          "south": "blonde_farmer_with_long_hair_and_a_dress/rotations/south.png",
+          "south-east": "blonde_farmer_with_long_hair_and_a_dress/rotations/south-east.png",
+          "east": "blonde_farmer_with_long_hair_and_a_dress/rotations/east.png",
+          "north-east": "blonde_farmer_with_long_hair_and_a_dress/rotations/north-east.png",
+          "north": "blonde_farmer_with_long_hair_and_a_dress/rotations/north.png",
+          "north-west": "blonde_farmer_with_long_hair_and_a_dress/rotations/north-west.png",
+          "west": "blonde_farmer_with_long_hair_and_a_dress/rotations/west.png",
+          "south-west": "blonde_farmer_with_long_hair_and_a_dress/rotations/south-west.png"
+        },
+        "animations": {
+          "Idle": {
+            "south-east": [
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/south-east/frame_000.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/south-east/frame_001.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/south-east/frame_002.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/south-east/frame_003.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/south-east/frame_004.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/south-east/frame_005.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/south-east/frame_006.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/south-east/frame_007.png"
+            ],
+            "north": [
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/north/frame_000.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/north/frame_001.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/north/frame_002.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/north/frame_003.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/north/frame_004.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/north/frame_005.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/north/frame_006.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/north/frame_007.png"
+            ],
+            "north-east": [
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/north-east/frame_000.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/north-east/frame_001.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/north-east/frame_002.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/north-east/frame_003.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/north-east/frame_004.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/north-east/frame_005.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/north-east/frame_006.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/north-east/frame_007.png"
+            ],
+            "south-west": [
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/south-west/frame_000.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/south-west/frame_001.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/south-west/frame_002.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/south-west/frame_003.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/south-west/frame_004.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/south-west/frame_005.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/south-west/frame_006.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/south-west/frame_007.png"
+            ],
+            "south": [
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/south/frame_000.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/south/frame_001.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/south/frame_002.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/south/frame_003.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/south/frame_004.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/south/frame_005.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/south/frame_006.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/south/frame_007.png"
+            ],
+            "east": [
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/east/frame_000.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/east/frame_001.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/east/frame_002.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/east/frame_003.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/east/frame_004.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/east/frame_005.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/east/frame_006.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/east/frame_007.png"
+            ],
+            "west": [
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/west/frame_000.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/west/frame_001.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/west/frame_002.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/west/frame_003.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/west/frame_004.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/west/frame_005.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/west/frame_006.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/west/frame_007.png"
+            ],
+            "north-west": [
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/north-west/frame_000.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/north-west/frame_001.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/north-west/frame_002.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/north-west/frame_003.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/north-west/frame_004.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/north-west/frame_005.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/north-west/frame_006.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Idle/north-west/frame_007.png"
+            ]
+          },
+          "Walk": {
+            "north": [
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/north/frame_000.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/north/frame_001.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/north/frame_002.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/north/frame_003.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/north/frame_004.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/north/frame_005.png"
+            ],
+            "south-west": [
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/south-west/frame_000.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/south-west/frame_001.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/south-west/frame_002.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/south-west/frame_003.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/south-west/frame_004.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/south-west/frame_005.png"
+            ],
+            "east": [
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/east/frame_000.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/east/frame_001.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/east/frame_002.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/east/frame_003.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/east/frame_004.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/east/frame_005.png"
+            ],
+            "north-west": [
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/north-west/frame_000.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/north-west/frame_001.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/north-west/frame_002.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/north-west/frame_003.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/north-west/frame_004.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/north-west/frame_005.png"
+            ],
+            "south-east": [
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/south-east/frame_000.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/south-east/frame_001.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/south-east/frame_002.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/south-east/frame_003.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/south-east/frame_004.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/south-east/frame_005.png"
+            ],
+            "north-east": [
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/north-east/frame_000.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/north-east/frame_001.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/north-east/frame_002.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/north-east/frame_003.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/north-east/frame_004.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/north-east/frame_005.png"
+            ],
+            "west": [
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/west/frame_000.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/west/frame_001.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/west/frame_002.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/west/frame_003.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/west/frame_004.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/west/frame_005.png"
+            ],
+            "south": [
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/south/frame_000.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/south/frame_001.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/south/frame_002.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/south/frame_003.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/south/frame_004.png",
+              "blonde_farmer_with_long_hair_and_a_dress/animations/Walk/south/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-10-28T14:39:29.711355"
+}
