@@ -1,6 +1,6 @@
 # To do
 
-Last updated at commit: 9e97205
+Last updated at commit: 9210133
 
 Keep this a short list. Tick things off, add new ones, and refresh the commit line after every push (`git log -1 --format=%h`).
 
@@ -75,6 +75,9 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
 - [ ] Add each to `data/art.yaml` with `party: true` so a party member can pick it.
 
 **Characters are made by the user in PixelLab; never generate or animate them (CLAUDE.md).**
+- [ ] **Character fixes and animations (the user, 2026-10-28): `assets/ideas/character-animation-plan.md`** is the
+  plan, order and spend ledger (265 gens at the start). Work it top to bottom. Done: Beren, Cyrus (walks fixed,
+  strike ×8, death). Engine: `death` clip in `art.yaml` (a fallen figure shows its last frame).
 
 **2. Creatures for the dungeon**
 - [ ] Skeletons (`skeleton`, used by Skeleton and the squad; idle and attack only, 216×207). A warrior and an archer or
