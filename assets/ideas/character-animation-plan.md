@@ -134,3 +134,4 @@ Estimated A+B: about 150-230.
 | Skeleton | claw ×5, death | 6 | | good |
 | Alligator | bite SE, E, NE, N; N re-rolled; death | 6 | 116 | N first turned sideways mid-clip |
 | Beren | idle S (v3, 4 frames + the standing view) | 1 | | good: a gentle breathing loop |
+| Beren, Cyrus, Arvir, Spawnee | idle ×8 each (Beren's S above) | 31 | | all good; some drift (Cyrus's sabre sinks facing N): idles play ping-pong (`pingpong: true`) so they never jump |

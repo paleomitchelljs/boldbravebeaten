@@ -192,7 +192,9 @@
       // No walk this way: its standing animation, if it has one there.
       if (!d && anim === 'run' && (c = clip(def, 'idle'))) d = clipDir(want, c.dirs, false);
       if (!d) return stand();
-      const n = c.frames, i = anim === 'attack' && progress != null ? Math.min(n - 1, Math.floor(progress * n)) : ((frame % n) + n) % n;
+      // An idle plays forward then back (`pingpong`), so a clip that drifts from its first pose never jumps back to it.
+      const n = c.frames, m = c.pingpong && n > 2 ? 2 * n - 2 : n, k = ((frame % m) + m) % m;
+      const i = anim === 'attack' && progress != null ? Math.min(n - 1, Math.floor(progress * n)) : k < n ? k : m - k;
       const s = artSheet(key, `${c.dir}/animations/${c.anim}/${d[0]}/frame_${String(i).padStart(3, '0')}.png`);
       return s.ok ? framed(def, s, d[1]) : stand();  // the standing view until the frame loads, or if it is missing
     }
