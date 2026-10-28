@@ -1,6 +1,6 @@
 # To do
 
-Last updated at commit: f4c06b8
+Last updated at commit: f491907
 
 Keep this a short list. Tick things off, add new ones, and refresh the commit line after every push (`git log -1 --format=%h`).
 
@@ -77,7 +77,7 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
 **Characters are made by the user in PixelLab; never generate or animate them (CLAUDE.md).**
 - [ ] **Character fixes and animations (the user, 2026-10-28): `assets/ideas/character-animation-plan.md`** is the
   plan, order and spend ledger (265 gens at the start). Work it top to bottom. Done (all paid steps; 5 gens left): fixes, strikes, deaths and idles for the heroes and monsters (walks fixed,
-  strike ×8, death). Engine: `death` clip in `art.yaml` (a fallen figure shows its last frame), `pingpong` idles. Left: free speck
+  strike ×8, death). Engine: `death` clip in `art.yaml` (a fallen figure shows its last frame), `pingpong` idles. Shadows cleared and GIF-cropped outlines restored (f491907). Left: free speck
   fixes (step 7) and a few calls for the user, listed under *Where it stands* in the plan.
 
 **2. Creatures for the dungeon**
