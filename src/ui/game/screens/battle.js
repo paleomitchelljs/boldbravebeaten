@@ -64,7 +64,7 @@
     // The card: who strikes whom (and how, on hover), each choice with its AP (and a defence's odds), and the AP left.
     const tip = `${m.sub}. ${r.req.kind === 'defend' ? 'AP spent now is gone from this round; a defence that fails still costs it.' : 'A strike costs its AP now.'}`;
     return h('section', { class: 'popcard react' },
-      h('div', { class: 'react-head', 'data-hint': tip }, h('h3', null, m.title), h('span', { class: 'ap-pill num' }, `${C.fmtAP(m.ap)} AP`)),
+      h('div', { class: 'react-head', 'data-hint': tip }, h('h3', null, m.from), h('span', { class: 'ap-pill num' }, `${C.fmtAP(m.ap)} AP`), h('span', { class: 'to' }, m.to)),
       h('div', { class: 'react-list' },
         m.choices.map((c, i) => h('button', { class: 'act', 'data-hint': c.hint || null, onclick: () => answer(game, c.value) }, h('kbd', null, String(i + 1)), h('span', { class: 'nm' }, c.label), h('span', { class: 'num muted' }, c.odds || ''), h('span', { class: 'num' }, c.cost))),
         h('button', { class: 'act none', onclick: () => answer(game, null) }, h('kbd', null, 'Esc'), h('span', { class: 'nm' }, m.none.label), h('span', null, ''), h('span', null, ''))));

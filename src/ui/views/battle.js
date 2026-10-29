@@ -290,7 +290,7 @@
       const what = req.hidden ? 'a blow you can\'t read' : req.decl.type === 'strike' ? req.decl.option.label : D.ACTIONS[req.decl.type].name;
       const prev = req.hidden ? null : blowPreview(enc, chars, req);
       return {
-        title: `${a.name} → ${me.name}`, tag: what, sub: `${what}${prev ? ` · if it lands: ${prev.text}` : ''}`, ap,
+        title: `${a.name} → ${me.name}`, from: a.name, to: me.name, tag: what, sub: `${what}${prev ? ` · if it lands: ${prev.text}` : ''}`, ap,
         choices: req.options.map((o) => ({ value: o.type, label: o.name, cost: C.fmtAP(o.ap), odds: o.odds != null ? `${Math.round(o.odds * 100)}%` : '?', hint: `${o.stamina ? `${o.stamina} stamina. ` : ''}${o.odds != null ? `${Math.round(o.odds * 100)}% to stop it.` : 'You can\'t read the blow.'}` })),
         none: { label: 'Take it', note: 'keep the AP' },
       };
@@ -298,9 +298,9 @@
     const t = chars[req.target];
     const why = { enters: 'comes into', leaves: 'leaves', moves: 'moves about in' }[req.why] || 'leaves';
     return {
-      title: `${me.name} → ${t.name}`, tag: { enters: 'coming in', leaves: 'leaving', moves: 'moving' }[req.why] || 'leaving', sub: `${t.name} ${why} ${me.name}'s reach. A hit stops them.`, ap,
+      title: `${me.name} → ${t.name}`, from: me.name, to: t.name, tag: { enters: 'coming in', leaves: 'leaving', moves: 'moving' }[req.why] || 'leaving', sub: `${t.name} ${why} ${me.name}'s reach. A hit stops them.`, ap,
       choices: req.options.map((o) => { const p = blowPreview(enc, chars, { decl: { actor: req.actor, target: req.target, type: 'strike', option: o } }); return { value: o, label: o.label, cost: C.fmtAP(o.ap), odds: '', hint: p ? `If it lands: ${p.text}` : '' }; }),
-      none: { label: 'Let them go', note: 'keep the AP' },
+      none: { label: 'Let go', note: 'keep the AP' },
     };
   }
 
