@@ -205,7 +205,9 @@ test('ui: a player-run party is asked to react when a foe attacks, on the map, a
   globalThis.setTimeout = (f) => realTimeout(f, 0);
   let asked = 0, turns = 0;
   try {
-    Game.startBattle({ name: 'Reactions', foes: [{ template: 'bandit', level: 1, n: 2 }] });
+    // Foes that can hurt plate: wolves and level-1 bandits won't spend blows on Beren's, and hold off while he screens
+    // the rest, so a party that only ends its turns would never be attacked.
+    Game.startBattle({ name: 'Reactions', foes: [{ monster: 'koboldBand' }] });
     check('reaction battle start');
     for (let i = 0; i < 6000 && Game.screen === 'battle' && !Game.ui.result; i++) {
       await new Promise((r) => realTimeout(r, 0));

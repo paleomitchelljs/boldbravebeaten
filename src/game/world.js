@@ -43,7 +43,7 @@
     if (kit.sidearm === 'parryingDagger') { c.offhand = c.sidearm; c.sidearm = null; }
     // A spec may name its own gear (item specs as in the loot tables) in place of the kit's, and start above level 1.
     const E = G.Economy;
-    if (spec.armorItem) c.armor = E.makeFromSpec(spec.armorItem);
+    if (spec.armorItem !== undefined) c.armor = spec.armorItem ? E.makeFromSpec(spec.armorItem) : null;
     if (spec.shieldItem !== undefined) c.shield = spec.shieldItem ? E.makeFromSpec(spec.shieldItem) : null;
     if (spec.weaponItems) {
       c.weapons = spec.weaponItems.map(E.makeFromSpec);
@@ -63,7 +63,7 @@
 
   // The ready-made party in start.yaml (the New Game screen's quick start).
   function presetParty() {
-    return (((content().start || {}).presets) || []).map((p, i) => Object.assign({}, p, { look: { skin: [1, 2, 0, 3][i % 4], hair: [1, 2, 4, 5][i % 4], cloth: i % 6, build: 1, sprite: null, tint: [0, 2, 3, 1][i % 4] } }));
+    return (((content().start || {}).presets) || []).map((p, i) => Object.assign({}, p, { look: Object.assign({ skin: [1, 2, 0, 3][i % 4], hair: [1, 2, 4, 5][i % 4], cloth: i % 6, build: 1, sprite: null, tint: [0, 2, 3, 1][i % 4] }, p.look || {}) }));
   }
 
   // A trial start (start.yaml trials): its party specs, each with its own look.
@@ -92,7 +92,8 @@
       const c = makeCharacter(spec);
       world.chars[c.id] = c;
       world.partyIds.push(c.id);
-      if (spec.kit) { const k = (S.kits || []).find((x) => x.id === spec.kit); if (k && k.arrows) world.supplies.arrows += k.arrows; }
+      if (spec.arrows != null) world.supplies.arrows += spec.arrows;
+      else if (spec.kit) { const k = (S.kits || []).find((x) => x.id === spec.kit); if (k && k.arrows) world.supplies.arrows += k.arrows; }
       for (const t of spec.trinkets || []) { addGood(world, t, 1); G.Equip.equipTrinket(world, c, t); }
     }
     for (const id of Object.keys(content().factions || {})) G.Factions.standing(world, id);

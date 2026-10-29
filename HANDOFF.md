@@ -101,6 +101,13 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
 - [ ] Ask the user: Suracayl in the ritual chamber too (they said every area)? Skinks and raptors are harmless to an
   armored level-1 party in the sims; is that their place, or should they get something armor doesn't stop? Jabiku has
   one skeleton guard, not two (two made the throne a 3% fight).
+- [x] Default party (the user, 2026-10-28; `data/start.yaml` presets, used by the quick start, every sim and most
+  tests): level 3 Beren (plate, longsword, heater; blocks), Lorc (longbow, leather), Cyrus (unarmored; rapier and
+  parrying dagger), and Jabiku as the mage until there is one of its own (fire: Strike, Launch, Burst).
+- [ ] Open from the default party: there are no archery feats (Lorc is DEX, Perception and conditioning); the party
+  mage and the palace boss are both "Jabiku"; in the sims Cyrus dies most (105 of 257 deaths over the temple), Beren
+  least (12). Foes that can't hurt plate (wolves, level-1 bandits) won't close on Beren or past him, so a party that
+  waits is never attacked (the AI judging its blows worthless; it attacks the others when he is not covering them).
 - [ ] Raptor sprite (to be regenerated) for the labyrinth's raptor packs: walk, strike, death, idle.
 - [x] PixelLab figures face eight ways (2026-10-25): walking uses the nearest direction the art has walks for
   (`walks` in `art.yaml`), standing uses the eight rotations; in a fight a figure faces its nearest foe (`face` on a

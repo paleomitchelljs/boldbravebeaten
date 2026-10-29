@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Runs every authored encounter against the example party (AI on both sides) and prints how it goes.
 // Use it after editing a map or a monster: a first-dungeon fight should be dangerous, not hopeless.
-//   node tools/encounters.js [--n 30] [--level 1]
+//   node tools/encounters.js [--n 30] [--level 1]   (--level raises the presets to that level if they are below it)
 'use strict';
 const B = require('../tests/load.js');
 const { World, Battle, Auto, Rand, Character: C, Content } = B;
@@ -9,7 +9,7 @@ const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ?
 const N = arg('n', 30), LEVEL = arg('level', 1);
 
 (async () => {
-  console.log(`Example party at level ${LEVEL}, ${N} fights each (fresh and at full strength)\n`);
+  console.log(`The default party (data/start.yaml presets${LEVEL > 1 ? `, raised to level ${LEVEL}` : ''}), ${N} fights each (fresh and at full strength)\n`);
   console.log('encounter'.padEnd(34) + 'won   lost  rounds  dead/fight');
   for (const [pid, p] of Object.entries(Content.world.places)) {
     for (const [eid, e] of Object.entries(p.encounters || {})) {

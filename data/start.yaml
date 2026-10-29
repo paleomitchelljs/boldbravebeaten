@@ -15,23 +15,46 @@ kits:
   - {id: hammer, name: Warhammer, wield: warhammer, sidearm: dagger, armor: padded, shield: null, blurb: "Two hands, slow, and dents plate."}
   - {id: staff, name: Dagger and ward, wield: dagger, sidearm: null, armor: padded, shield: null, blurb: "A caster's kit: spend the feats on words."}
 presets:
-  - name: Brenna Hale
+  # The default party (the user, 2026-10-28): level 3, five feats each (3 + 1 a level), 40 attribute points.
+  # Beren: heavy armor, sword and shield. He blocks: plate he can move in, a shield he is quick and sure with.
+  - name: Beren
     kit: sword
-    attrs: {STR: 6, CON: 6, DEX: 5, SPD: 5, INT: 4, WIL: 5, WIS: 5, CHA: 4}
-    feats: [shield_training, parry_training, strength]
-  - name: Corin Ash
+    level: 3
+    attrs: {STR: 7, CON: 7, DEX: 5, SPD: 5, INT: 3, WIL: 5, WIS: 4, CHA: 4}
+    armorItem: {armor: plate, material: steel}
+    weaponItems: [{weapon: longsword, material: steel}, {weapon: dagger}]
+    shieldItem: {shield: heater, material: wood}
+    feats: [plate_mobility, shield_training, plate_endurance, quick_block, shield_training]
+    look: {sprite: "art:beren"}
+  # Lorc: an archer. There are no archery feats yet, so he is built on a high DEX, his eyes and staying out of reach.
+  - name: Lorc
     kit: bow
-    attrs: {STR: 4, CON: 5, DEX: 7, SPD: 6, INT: 5, WIL: 4, WIS: 6, CHA: 3}
-    feats: [keen_eye, stealth, dodge_training]
-  - name: Osk Marren
-    kit: hammer
-    attrs: {STR: 7, CON: 7, DEX: 4, SPD: 4, INT: 4, WIL: 6, WIS: 4, CHA: 4}
-    feats: [power_swing, toughness, heavy_weapon_training]
-  - name: Ysolde Vane
+    level: 3
+    attrs: {STR: 5, CON: 5, DEX: 8, SPD: 6, INT: 4, WIL: 4, WIS: 5, CHA: 3}
+    armorItem: {armor: leather}
+    weaponItems: [{weapon: longbow}, {weapon: dagger}]
+    shieldItem: null
+    arrows: 30
+    feats: [agility, quickness, agility, keen_eye, light_armor_training]
+    look: {sprite: "art:lorc"}
+  # Cyrus: a swashbuckling fencer, unarmored, all speed: rapier and parrying dagger, quick thrusts, parry and riposte.
+  - name: Cyrus
+    kit: rapier
+    level: 3
+    attrs: {STR: 4, CON: 5, DEX: 8, SPD: 8, INT: 4, WIL: 4, WIS: 4, CHA: 3}
+    armorItem: null
+    feats: [quick_thrust, parry_training, riposte, quickness, dodge_training]
+    look: {sprite: "art:cyrus"}
+  # The mage (Jabiku's look until there is a mage of their own): fire, from arm's reach to a burst across the room.
+  - name: Jabiku
     kit: staff
-    attrs: {STR: 3, CON: 5, DEX: 5, SPD: 5, INT: 8, WIL: 7, WIS: 4, CHA: 3}
-    feats: [casting, verb_strike, verb_cover]
+    level: 3
+    attrs: {STR: 3, CON: 5, DEX: 5, SPD: 5, INT: 8, WIL: 8, WIS: 3, CHA: 3}
+    weaponItems: [{weapon: staff}]
+    feats: [casting, verb_strike, verb_launch, casting, verb_burst]
     nouns: [fire]
+    look: {sprite: "art:jabiku"}
+
 # Trial starts (title screen): a small or one-person party for trying out art and movement. `look` is the character's
 # look (sprite: "art:<key>" draws data/art.yaml art); `go` travels there at once (a place and its arrival square).
 trials:

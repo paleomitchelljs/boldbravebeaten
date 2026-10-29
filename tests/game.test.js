@@ -444,7 +444,7 @@ test('supplies: bandages and arrows are dealt to members for a fight and collect
 test('town: training spends a feat and gold; only implemented feats are taught', () => {
   const w = fresh();
   const c = World.party(w)[0];
-  c.level = 2;
+  c.level += 1;  // one feat to spend
   w.gold = 500;
   assert.ok(Town.trainable(c, 'toughness').ok);
   assert.equal(Town.trainable(c, 'cleave').ok, false, 'table-ruling feats are not in the game');
@@ -553,7 +553,8 @@ test('play: a party can clear the first dungeon with the AI on both sides of eve
 
 test('armor pieces: each takes the slots it covers; a crown and a helm share the head; repairs and loot see every piece', () => {
   const w = fresh();
-  const c = World.party(w)[0];
+  // Someone in the padded harness with no armor feats (they would lower the penalties summed below).
+  const c = World.party(w).find((x) => x.armor && x.armor.type === 'padded' && !Object.keys(x.feats).some((f) => /mobility|armor_training/.test(f)));
   const Items = B.Items;
   // Wearing a mail shirt (torso, arms) and a plate helm over the starting harness takes the harness off.
   const shirt = Items.makeArmor('mail', null, 'average', { covers: ['torso', 'arms'] });
