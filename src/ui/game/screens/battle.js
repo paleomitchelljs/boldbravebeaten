@@ -61,12 +61,13 @@
   function reactionCard(game) {
     const r = game.ui.reacting;
     const m = r.model;
+    // The card: who strikes whom (and how, on hover), each choice with its AP (and a defence's odds), and the AP left.
+    const tip = `${m.sub}. ${r.req.kind === 'defend' ? 'AP spent now is gone from this round; a defence that fails still costs it.' : 'A strike costs its AP now.'}`;
     return h('section', { class: 'popcard react' },
-      h('div', { class: 'popcard-head' }, h('div', { class: 'stack tight grow' }, h('span', { class: 'label' }, `Reaction · ${C.fmtAP(m.ap)} AP left`), h('h3', null, m.title)), UI.tip(r.req.kind === 'defend' ? 'AP you spend now is gone from this round: from your turn if it is still to come. A defence that fails still costs its AP.' : 'A strike at a mover costs its AP now; a hit stops them where they are.')),
-      h('p', { class: 'small muted' }, m.sub),
-      h('div', { class: 'stack tight' },
-        m.choices.map((c, i) => h('button', { class: 'act', onclick: () => answer(game, c.value) }, h('span', null, h('kbd', null, String(i + 1)), ' ', c.label), h('span', { class: 'small muted num' }, `${c.cost}${c.odds ? ' · ' + c.odds : ''}`))),
-        h('button', { class: 'act none', onclick: () => answer(game, null) }, h('span', null, h('kbd', null, 'Esc'), ' ', m.none.label), h('span', { class: 'small muted' }, m.none.note))));
+      h('div', { class: 'react-head', 'data-hint': tip }, h('h3', null, m.title), h('span', { class: 'ap-pill num' }, `${C.fmtAP(m.ap)} AP`)),
+      h('div', { class: 'react-list' },
+        m.choices.map((c, i) => h('button', { class: 'act', 'data-hint': c.hint || null, onclick: () => answer(game, c.value) }, h('kbd', null, String(i + 1)), h('span', { class: 'nm' }, c.label), h('span', { class: 'num muted' }, c.odds || ''), h('span', { class: 'num' }, c.cost))),
+        h('button', { class: 'act none', onclick: () => answer(game, null) }, h('kbd', null, 'Esc'), h('span', { class: 'nm' }, m.none.label), h('span', null, ''), h('span', null, ''))));
   }
 
   function flee(game, enc) {
@@ -384,7 +385,7 @@
         wiped || !G.CONFIG.afterBattle
           ? h('button', { class: 'primary', onclick: () => (wiped ? game.go('gameover') : game.afterBattle()) }, 'Continue')
           : [
-            h('button', { class: 'primary', title: `${G.CONFIG.afterBattle.minutes} minutes: stamina back to full (weariness stays until you camp), gear patched up`, onclick: () => { World.restAndRepair(w); game.afterBattle(); } }, 'Rest and repair'),
+            h('button', { class: 'primary', title: `${G.CONFIG.afterBattle.minutes} minutes in the dungeon: stamina back to full (weariness stays until you camp), gear patched up`, onclick: () => { World.restAndRepair(w); game.afterBattle(); } }, 'Rest and repair'),
             h('button', { title: 'Move on at once: no time passes, stamina stays where it is', onclick: () => game.afterBattle() }, 'Press on'),
           ],
         ibtn('pack', 'Pack', () => game.openOverlay('pack')),

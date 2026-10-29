@@ -1929,3 +1929,20 @@ test('the user\'s armor research: picks rupture plate, rondels burst mail, mail 
   const iron = Items.armorBase(Items.makeArmor('plate', 'full')), steel = Items.armorBase(Items.makeArmor('plate', 'full', 'average', { material: 'steel' }));
   assert.strictEqual(steel.pierce.resist, iron.pierce.resist * 1.5);
 });
+
+test('projected pool: next round\'s AP after spending stamina now, with regeneration first and fatigue after', () => {
+  const c = fighter('Tired');
+  const max = C.maxStamina(c);
+  c.stamina = max;
+  assert.deepEqual(C.projectedPool(c, 0), { pool: C.apPool(c), fatigue: 0 });
+  // Spend down to just over a quarter: regeneration lifts it, but not past half.
+  const r = C.regen(c);
+  const spend = max - Math.ceil(max * 0.3) ;
+  const p = C.projectedPool(c, spend);
+  const after = max - spend + r;
+  const expect = B.CONFIG.fatigueSteps.reduce((n, s) => (after / max < s.below ? Math.max(n, s.ap) : n), 0);
+  assert.equal(p.fatigue, expect);
+  assert.ok(p.fatigue >= 1);
+  assert.equal(c.stamina, max, 'the projection leaves stamina as it was');
+  assert.equal(p.pool, C.apPool(c) - p.fatigue * C.apScale());
+});

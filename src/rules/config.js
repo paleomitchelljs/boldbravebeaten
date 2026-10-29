@@ -685,11 +685,15 @@
     // stamina refills (to the weary maximum), gear gets restRepairFraction back (Field Repair
     // doubles it; broken weapons and shields need a smith). Skipping it keeps stamina where it is.
     // null: the old automatic breather (stamina refilled for free).
-    afterBattle: { minutes: 15 },
+    // (the user, 2026-10-28: an hour, so stopping to rest and mend costs time in the dungeon.)
+    afterBattle: { minutes: 60 },
     // PROVISIONAL (the user's idea, on trial): every round of combat lowers each fighter's
     // maximum stamina by perRound (up to `cap` of it); only a long rest (camp, inn) clears it.
     // Long fights cost more than their wounds, and the party has a reason to camp. null: off.
-    weariness: { perRound: 1, cap: 0.5 },
+    // PROVISIONAL (the user, 2026-10-28): time awake wears too: perHour of fresh stamina each hour (half of it after
+    // a 16-hour day: game.exploreDay), sleep excepted, so a day in a dungeon ends in a camp. The cap covers both
+    // (was 0.5 for fights alone; a fight reaches it only after 30-odd rounds).
+    weariness: { perRound: 1, perHour: 1 / 32, cap: 0.75 },
 
     // ---- Progression (Outline Lean) --------------------------------------
     startingFeats: 3,
@@ -706,8 +710,9 @@
     'The turn budget (the user\'s call): AP pool = 3.5 + SPD/2, unrounded (6 at SPD 5), costs in tenths. At level 1 a turn holds one big action, a step and a medium action, or three quick actions: base costs up to 2 (thrust, parry, dodge, block) stand, every Specifics AP above 2 costs 2 (a swing 3 → 4, a two-handed swing 4 → 6, a power swing 2 + 4, a shortbow 4, a longbow 2 + 4, trip and disarm 4, grapple, pin and throw 4); weapon speed multiplies the result (a dagger thrust 1.5). A move is a quick action: 2 AP for up to (1 + ⌊SPD/4⌋) × 2 squares. Someone who has spent nothing this round may take one action dearer than the whole pool as the whole turn.',
     'Armor makes actions dearer (the user\'s call): its SPD penalty no longer shrinks the pool; every action costs 1/6 AP more per point of it (plate +0.5, mail +0.2; the mobility feats lower it). The penalty still slows moving, initiative, dodging and fleeing.',
     'Weapon wear (the user\'s call): every weapon has a durability (weapons.yaml × its material\'s toughness × origin × craftsmanship; a rapier 40, a longsword 100, a mace 120). Each blow wears it by its force × rate × fragility (rapier 2, mace 0.5) × (what it meets ÷ its own hardness): landing on armor 0.4 (metal chews an edge; cloth, leather and flesh barely touch it), being parried 0.15, parrying 0.25 (by the force of the blow met), being blocked 0.25 (by the shield\'s material). A dodge costs nothing. A worn weapon keeps 60% of its damage at the end of its life; at 0 it breaks and is out of the fight until a smith mends it. Thrusts now wear armor too (half their piercing).',
-    'After a fight (the user\'s call): one click rests 15 minutes and mends: stamina back to the weary maximum, armor, shields and weapons get 25% back (50% with Field Repair in the party); broken weapons and shields need a smith. Pressing on keeps stamina where it is.',
-    'Weariness (the user\'s idea, on trial): every round of combat lowers each fighter\'s maximum stamina by 1 (at most half of it); only a long rest (camp, inn) clears it.',
+    'After a fight (the user\'s call): one click rests an hour (was 15 minutes) and mends: stamina back to the weary maximum, armor, shields and weapons get 25% back (50% with Field Repair in the party); broken weapons and shields need a smith. Pressing on keeps stamina where it is.',
+    'Weariness (the user\'s idea, on trial): every round of combat lowers each fighter\'s maximum stamina by 1, and every hour awake by 1/32 of it (half after a 16-hour day), at most three quarters in all; only a long rest (camp, inn) clears it.',
+    'Time in a dungeon (the user, 2026-10-28): a step is 10 seconds and sneaking 20 (seeing the whole temple by the shortest route takes 2.8 h, walking every square about 12, tools/pace.js; a thorough exploration with searches should come close to a 16-hour day), a search 10 minutes. Every 20 minutes there is a 35% chance of drawing from the place\'s wandering table; loud things (forcing, a fight, a trap) count as extra minutes; a sneaking party can let wanderers pass on a stealth check.',
     'Quick feats (Quick Thrust, Parry, Block, Dodge, Hands, Heavy Tempo, Quick Casting) take a share off every such action: half at the top rank (Quick Thrust I–III: −1/6, −1/3, −1/2; Quick Parry I–II: −1/4, −1/2).',
     'Rounds and turns (the user\'s model): a round starts with initiative; each character takes one turn in initiative order and may spend their whole AP pool on it; every action resolves as it is taken. The round ends when everyone has had their turn; unspent AP is lost.',
     'Reactions: defences are not declared ahead. When a blow comes, the target may block, parry or dodge, paying the AP from their pool on the spot (shown with the odds). AP spent on your turn is AP you cannot defend with; a fighter out of AP takes what comes on their armor. A Feint the defender cannot read hides the blow: they choose blind, and a defence that cannot meet it (a parry against a power swing) is wasted. Untouchable: after your first dodge in a round, further dodges that round cost nothing.',

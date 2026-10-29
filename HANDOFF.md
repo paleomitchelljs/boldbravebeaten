@@ -4,6 +4,26 @@ Last updated at commit: 1fa1657
 
 Keep this a short list. Tick things off, add new ones, and refresh the commit line after every push (`git log -1 --format=%h`).
 
+## Core first (the user, 2026-10-28: core changes before tuning; **no encounter tuning until asked**)
+- [x] Time in a dungeon costs something: a step is 10 s (sneaking 20), a search 10 min, the rest after a fight an
+  hour. Wanderers are drawn from the place's table every 20 minutes spent there (35%), loud things count as extra
+  minutes, a sneaking party can let them pass, a perception check hears them coming (`rules.yaml game.wanderers`).
+- [x] Time wears: every awake hour takes 1/32 of fresh stamina off the maximum (half after 16 h), sleep excepted;
+  combat weariness shares the cap (now 0.75). `tools/pace.js`: seeing all the temple takes 1013 steps (2.8 h),
+  walking every square 4403 (12.2 h); a thorough look with searches should come near a 16-hour day.
+- [x] Fight pane: actions are a table (name, AP, stamina) grouped by weapon, not a dropdown; a bow's Draw and a
+  power swing's wind-up sit with the weapon's attacks; On hit is three numbers (wound, stamina, armor wear); Armor is
+  the piece, its gap odds and Fine/Damaged/Broken; a Next round row when an action leaves you tired (fatigue is taken
+  as the next round's pool is set). Blows are "Thrust", "Swing" (the part named only where a weapon has two blows of
+  one name). The reaction card is the title, the choices with AP (and a defence's odds) and the AP left.
+- [ ] The AI won't close on plate, or on a waiting party (seen again 2026-10-28: two Suracayl stood off and read
+  Cyrus for 8 rounds). Fix in `ai.js` before anything else in combat.
+- [ ] Groups snowball (docs/REVIEW.md Risk 1): needs a ruling (a cheaper second defence against the same attacker,
+  or a cover reaction for a shield-bearer).
+- [ ] An attribute sim: +1 to each attribute in turn against fixed fights, to see what SPD and CON buy over the
+  others (CHA, WIS, INT need their settings, not parity).
+- [ ] Targeted searches ("inspect the mechanism") as content, now that time costs something.
+
 ## Bookkeeping fixes (the user, 2026-10-26; the list and its progress are in `docs/TODO-FIXES.md`)
 - [x] 1. Effect-key registry (`src/rules/effects.js`) checked by `validate` (1ebe64d).
 - [x] 2. One effect lookup, `Effects.sum/mult/has/list` over traits, gear, conditions and feats (b18e704).
@@ -98,9 +118,8 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
   labyrinth and sewers, varanus in the pyramid court, gorillas at the palace door, the dread shaman (with two varanus)
   on the pyramid top in place of the drake, Jabiku on the palace throne with a skeleton. An encounter's foe can wear
   another art entry (`sprite`), and the map square shows a mixed group mixed.
-- [ ] Ask the user: Suracayl in the ritual chamber too (they said every area)? Skinks and raptors are harmless to an
-  armored level-1 party in the sims; is that their place, or should they get something armor doesn't stop? Jabiku has
-  one skeleton guard, not two (two made the throne a 3% fight).
+- [ ] Deferred (encounter tuning): Suracayl in the ritual chamber too (they said every area)? Skinks and raptors are
+  harmless to an armored level-1 party in the sims; is that their place? Jabiku has one skeleton guard, not two.
 - [x] Default party (the user, 2026-10-28; `data/start.yaml` presets, used by the quick start, every sim and most
   tests): level 3 Beren (plate, longsword, heater; blocks), Lorc (longbow, leather), Cyrus (unarmored; rapier and
   parrying dagger), and Jabiku as the mage until there is one of its own (fire: Strike, Launch, Burst).
@@ -122,7 +141,7 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
   opens on the tab last used (a caster's first on Magic). Worn or broken weapons and low arrows show as a chip in the
   pane, a tag on the attack, and a mark on the explore dock (`CONFIG.gearWarn`). The log is a scrollable panel under
   the command pane (on a phone, under it in the bottom-stuck block).
-- [ ] Ask the user: the town (Stonebridge) stays as home; abandon it too? Should the temple be harder now the mage casts?
+- [ ] Ask the user: the town (Stonebridge) stays as home; abandon it too? (Temple difficulty: deferred with encounter tuning.)
 - [ ] Phones (the user, 2026-10-28: "optimize for mobile"): seen at 500 px in headless Chrome only. The explore map
   leaves the lower half of a portrait screen empty (it keeps the 15x10 shape); show more rows when tall. Map clicks are
   small at 500 px.

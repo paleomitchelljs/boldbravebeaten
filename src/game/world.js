@@ -108,18 +108,28 @@
 
   // ---- Log, time ----------------------------------------------------------
   function logLine(world, text, cls) {
-    world.log.push({ day: world.day, t: world.minutes % 1440, text, cls: cls || '' });
+    world.log.push({ day: world.day, t: Math.floor(world.minutes) % 1440, text, cls: cls || '' });
     if (world.log.length > 300) world.log.splice(0, world.log.length - 300);
     return text;
   }
 
-  function advance(world, minutes) {
+  // Time passes. Awake (not opts.asleep), the party wears down (CONFIG.weariness.perHour); a line in the log when a
+  // member's weariness passes a quarter or a half of their stamina.
+  function advance(world, minutes, opts) {
     world.minutes += minutes;
     world.day = 1 + Math.floor(world.minutes / 1440);
+    if (opts && opts.asleep) return;
+    for (const c of living(world)) {
+      const was = (c.weary || 0) / C.freshStamina(c);
+      if (!C.wearyTime(c, minutes)) continue;
+      const now = c.weary / C.freshStamina(c);
+      const mark = [0.5, 0.25].find((m) => was < m && now >= m);
+      if (mark) logLine(world, `${c.name} is ${mark >= 0.5 ? 'worn out' : 'tiring'}: stamina tops out at ${C.maxStamina(c)} of ${C.freshStamina(c)} until a long rest.`, 'hurt');
+    }
   }
 
   function clockText(world) {
-    const m = world.minutes % 1440;
+    const m = Math.floor(world.minutes) % 1440;
     const h = Math.floor(m / 60);
     const part = h < 5 ? 'night' : h < 12 ? 'morning' : h < 17 ? 'afternoon' : h < 21 ? 'evening' : 'night';
     return `Day ${world.day}, ${String(h).padStart(2, '0')}:${String(m % 60).padStart(2, '0')} (${part})`;
@@ -320,7 +330,7 @@
     const members = living(world);
     const handy = members.some((c) => C.rank(c, 'field_repair'));
     const frac = CONFIG.restRepairFraction * (handy ? 2 : 1);
-    const lines = [`You stop for ${A.minutes} minutes to catch your breath and see to your gear.`];
+    const lines = [`You stop for ${A.minutes >= 60 && A.minutes % 60 === 0 ? `${A.minutes / 60} hour${A.minutes === 60 ? '' : 's'}` : `${A.minutes} minutes`} to catch your breath and see to your gear.`];
     for (const c of members) {
       c.stamina = C.maxStamina(c);
       C.updateCondition(c);

@@ -486,6 +486,20 @@
     return c.weary - before;
   }
 
+  // Time awake wears a character down too (CONFIG.weariness.perHour): the fraction carries over between calls.
+  function wearyTime(c, minutes) {
+    const W = CONFIG.weariness;
+    if (!W || !W.perHour || tireless(c) || !(minutes > 0)) return 0;
+    const cap = Math.floor(freshStamina(c) * W.cap);
+    const before = c.weary || 0;
+    const due = (c.wearyCarry || 0) + freshStamina(c) * W.perHour * minutes / 60;
+    const whole = Math.floor(due);
+    c.wearyCarry = due - whole;
+    c.weary = Math.min(cap, before + whole);
+    c.stamina = Math.min(c.stamina, maxStamina(c));
+    return c.weary - before;
+  }
+
   function regen(c) {
     if (tireless(c)) return 0;
     return Math.floor((attr(c, 'CON') + attr(c, 'WIL')) / CONFIG.regenDivisor) - armorInfo(c).regen + G.Effects.sum(c, 'regen');
@@ -514,6 +528,14 @@
     const spd = CONFIG.armorActionAP ? attr(c, 'SPD') : combatAttr(c, 'SPD');
     const fromSpd = CONFIG.apSpdContinuous ? spd / CONFIG.apSpdDivisor : Math.floor(spd / CONFIG.apSpdDivisor);
     return Math.max(0, Math.round((CONFIG.apBase + fromSpd - fatiguePenalty(c) + more) * apScale() * mult));
+  }
+
+  // Next round's pool if this fighter spends `spend` stamina now and takes no blow before the round ends (regeneration
+  // comes in first, then the pool is set with its fatigue): { pool, fatigue }. Weariness is left out (a point of max).
+  function projectedPool(c, spend) {
+    const keep = c.stamina;
+    c.stamina = Math.max(0, Math.min(maxStamina(c), keep - (spend || 0) + regen(c)));
+    try { return { pool: apPool(c), fatigue: fatiguePenalty(c) }; } finally { c.stamina = keep; }
   }
 
   function apScale() {
@@ -724,6 +746,13 @@
     }
     const t = webTax(c);
     if (t.ap || t.stamina) for (const o of opts) { o.ap += t.ap; o.stamina += t.stamina; }
+    // A blow is named by its motion alone ("Thrust"); the striking part is added only where one weapon has two blows
+    // of that name (a halberd's swing with the edge and with the head).
+    for (const o of opts) {
+      if (!o.face || o.natural || o.arrowHead || !/^\S+( \S+)*$/.test(o.label)) continue;
+      if (opts.some((x) => x !== o && x.weaponId === o.weaponId && x.label === o.label && x.face !== o.face)) o.sameName = true;
+    }
+    for (const o of opts) if (o.sameName) { o.label = `${o.label} (${o.face})`; delete o.sameName; }
     return opts.filter((o) => !o.tooHeavy);
   }
 
@@ -825,7 +854,7 @@
       reach: maxRange, minRange, maxRange, closePenalty, ranged, longRange: ranged ? def.ranged.long : null,
       strain: Math.round(strain * 100) / 100, tooHeavy: strain > CONFIG.weaponPhysics.strain.max,
       windUp, damage: weaponDamage(c, w, face, motion), wound: def.wound[face] || null,
-      label: def.natural ? `${def.name}${motion === 'power' ? ' (power)' : ''}` : `${m.name} (${face})`,
+      label: def.natural ? `${def.name}${motion === 'power' ? ' (power)' : ''}` : m.name,
     };
   }
 
@@ -1034,7 +1063,7 @@
     newCharacter, normalize, freshStatus,
     rank, featCount, featBudget, treeCount, tierCount, tierName, canTakeFeat, canRemoveFeat, addFeat, removeFeat, reqText, roman,
     conditioning, attr, attrMax, combatAttr, armorInfo, armorPieces, armorAt, armorUniform, shieldInfo, shieldReady, wieldedWeapon, offhandWeapon,
-    maxStamina, freshStamina, wearyRound, regen, fatiguePenalty, apPool, apScale, costScale, fmtAP, minAP, baseAP, armorAP, quickCut, moveCost, squaresFor, squaresPerAP, handsBusy, castingHands, weaponStrain, inRange, optionKey, needsWindUp, strOffset, staminaCost, effectiveWeight, isLightWeapon,
+    maxStamina, freshStamina, wearyRound, wearyTime, regen, fatiguePenalty, apPool, projectedPool, apScale, costScale, fmtAP, minAP, baseAP, armorAP, quickCut, moveCost, squaresFor, squaresPerAP, handsBusy, castingHands, weaponStrain, inRange, optionKey, needsWindUp, strOffset, staminaCost, effectiveWeight, isLightWeapon,
     strBonus, weaponDamage, mainIndex, attackOptions, actionCost, ammoLeft, gearWarnings, tireless, webTax,
     damageAttr, healAttr, totalDamage, updateCondition, isActive, bleedPerRound,
     grapple, holding, isHeld, isPinned, inClinch,

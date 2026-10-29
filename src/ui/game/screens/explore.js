@@ -15,6 +15,7 @@
   // ---- Turning events into screen state ---------------------------------------------------------------
   function handle(game, events) {
     const w = game.world;
+    let wander = null;
     for (const e of events) {
       switch (e.type) {
         case 'log': World.logLine(w, e.text, e.cls); break;
@@ -30,10 +31,20 @@
         case 'note': game.openOverlay('text', { title: 'You read', text: e.text }); break;
         case 'loot': game.openOverlay('loot', { title: e.title, lines: e.lines }); break;
         case 'trap': game.ui.hurt = Date.now(); break;
+        case 'wander': wander = e; break;
         default: break;
       }
     }
     if (World.wiped(w)) { game.go('gameover'); return false; }
+    if (wander) {
+      stopWalk(game);
+      World.logLine(w, wander.spec.text || 'Something finds you.', 'fight');
+      World.logLine(w, Bits.checkText(wander.check), wander.check.ok ? 'find' : 'check');
+      if (wander.check.ok) World.logLine(w, 'You hear them coming.', 'info');
+      const surprise = World.active(w).some((c) => G.Character.rank(c, 'danger_sense')) ? null : wander.surprise;
+      game.startBattle(wander.spec, { surprise, factor: 0.5, ctx: {} });
+      return false;
+    }
     return true;
   }
 

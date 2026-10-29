@@ -146,7 +146,7 @@
       const nx = at.x + DIRS[d][0], ny = at.y + DIRS[d][1];
       if (!cell(world, nx, ny).solid && cell(world, nx, ny).kind !== 'wall') { dir = d; break; }
     }
-    world.explore = { x: at.x, y: at.y, dir, sneak: false };
+    world.explore = { x: at.x, y: at.y, dir, sneak: false, clock: world.minutes, danger: 0 };
     if (!W.mapState(world, placeId).visited) { W.mapState(world, placeId).visited = true; W.logLine(world, `You enter ${p.name}.`, 'info'); }
     markSeen(world);
   }
@@ -164,8 +164,43 @@
   };
 
   function minutesPerStep(world) {
-    return world.explore && world.explore.sneak ? cfg().sneakStepMinutes : cfg().minutesPerStep;
+    return (world.explore && world.explore.sneak ? cfg().sneakStepSeconds : cfg().stepSeconds) / 60;
   }
+
+  // ---- The dungeon's clock: time and noise draw wanderers (rules.yaml game.wanderers) -----------------------------
+  // Every minute passed in this place since the last look, whatever passed it, counts toward the next check, as
+  // does noise. A camp has its own roll and starts the count afresh (settleClock).
+  function noise(world, kind) {
+    const ex = world.explore, n = ((cfg().wanderers || {}).noise || {})[kind] || 0;
+    if (ex && n) ex.danger = (ex.danger || 0) + n;
+  }
+  function settleClock(world) { if (world.explore) world.explore.clock = world.minutes; }
+
+  // Emits 'wander' ({ spec, check, surprise }) when a wandering group finds the party.
+  function wanderCheck(world, ev) {
+    const ex = world.explore, cw = cfg().wanderers;
+    if (!ex || !cw || world.peaceful) return;
+    if (ex.clock == null) ex.clock = world.minutes;
+    ex.danger = (ex.danger || 0) + Math.max(0, world.minutes - ex.clock);
+    ex.clock = world.minutes;
+    while (ex.danger >= cw.every) {
+      ex.danger -= cw.every;
+      if (!R.chance(cw.chance)) continue;
+      const w = wanderingFor(world);
+      if (!w || w.nothing) continue;
+      const party = W.active(world);
+      if (ex.sneak) {
+        const r = S.groupCheck(party, 'stealth', foeAwareness({ foes: w.foes }), 0);
+        ev.push({ type: 'check', r });
+        if (r.ok) { ev.push({ type: 'log', text: `${w.text ? w.text + ' ' : ''}You keep still, and they pass you by.`, cls: 'find' }); continue; }
+      }
+      const heard = S.bestCheck(party, 'perception', cw.hearTn || 8, 0);
+      ev.push({ type: 'wander', spec: { foes: w.foes, text: w.text, name: 'Wanderers' }, check: heard, surprise: heard.ok ? null : 'party' });
+      ex.danger = 0;
+      return;
+    }
+  }
+  const met = (ev) => ev.some((e) => e.type === 'encounter' || e.type === 'unseen' || e.type === 'stairs');
 
   function turn(world, delta) {
     const ex = world.explore;
@@ -191,6 +226,7 @@
       ev.push({ type: 'log', text: 'You open the door.' });
       markSeen(world);
       scan(world, ev);
+      if (!met(ev)) wanderCheck(world, ev);
       return { moved: false, events: ev };
     }
     if (c.solid) {
@@ -205,6 +241,7 @@
     markSeen(world);
     passive(world, ev);
     scan(world, ev);
+    if (!met(ev)) wanderCheck(world, ev);
     return { moved: true, events: ev };
   }
 
@@ -314,6 +351,7 @@
       if (r.ok || revealed(world, c)) { c.st.found = true; found++; ev.push({ type: 'log', text: foundText(c), cls: 'find' }); }
     }
     if (!found) ev.push({ type: 'log', text: 'You search carefully and find nothing new.' });
+    wanderCheck(world, ev);
     return { events: ev };
   }
 
@@ -331,6 +369,7 @@
     C.updateCondition(v);
     for (const l of lines) ev.push({ type: 'log', text: l, cls: 'hurt' });
     ev.push({ type: 'trap' });
+    noise(world, 'trap');
   }
 
   // ---- Awareness: sleeping and watching foes ----------------------------------------------
@@ -483,6 +522,7 @@
         if (r.ok) { if (c.kind === 'chest') { c.st.unlocked = true; ev.push({ type: 'log', text: 'The lid splinters.' }); } else open('The door gives with a crack that carries.'); }
         else ev.push({ type: 'log', text: 'It does not budge. The noise echoes.' });
         wake(world, f.x, f.y, 6, ev);
+        noise(world, 'force');
         break;
       }
       case 'alt': {
@@ -528,6 +568,7 @@
       default: break;
     }
     updateQuests(world, ev);
+    wanderCheck(world, ev);
     return { events: ev };
   }
 
@@ -570,6 +611,6 @@
   G.Explore = {
     DIRS, DIR_NAMES, grid, groundOf, place, lightRadius, here, cell, state, opaque, lineClear, cheb, markSeen, findChar,
     enter, leave, fall, front, turn, move, go, peek, path, search, facing, describe, act, scan, wake,
-    encounterSpec, foeAwareness, resolveSquare, wanderingFor, minutesPerStep,
+    encounterSpec, foeAwareness, resolveSquare, wanderingFor, minutesPerStep, noise, settleClock, wanderCheck,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

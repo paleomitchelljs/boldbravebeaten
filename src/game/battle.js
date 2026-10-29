@@ -165,6 +165,7 @@
   function start(world, spec, opts) {
     opts = opts || {};
     const foes = buildFoes(spec);
+    if (world.explore && G.Explore) G.Explore.noise(world, 'fight');
     const arena = spec.arena ? null : dungeonArena(world, opts.ctx);
     const joined = arena ? joiners(world, arena, opts.ctx && opts.ctx.x != null ? opts.ctx : null) : [];
     for (const j of joined) { const more = buildFoes(j.spec); j.ids = more.map((f) => f.id); foes.push(...more); }

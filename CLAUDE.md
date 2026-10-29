@@ -32,7 +32,9 @@ Read `HANDOFF.md` first: it is the to-do list. **After every push, update it** (
 - **No dependencies, no build step** for the game. `data/bundle.js` is optional (`node tools/bundle.js`) and exists
   only so `index.html` can open from disk; when served, the loader reads the YAML directly.
 - **Before finishing a change:** `node --test` (rules, content, game, and every screen rendered in a fake DOM) and
-  `node tools/validate.js`. After a map or monster change run `node tools/encounters.js`. The fake DOM catches
+  `node tools/validate.js`. **Encounter tuning is deferred** (the user, 2026-10-28: core changes first): don't run,
+  report or tune against `tools/encounters.js` win rates until asked. After a map change run `node tools/pace.js` (time to
+  explore; a thorough look at a dungeon should take about a day). The fake DOM catches
   exceptions, not bad layout: if you change CSS or the first-person view, say plainly that you could not look at it
   unless you did. `tools/shot.sh out.png "<js>"` takes a headless-Chrome screenshot after running some JavaScript in
   the page (start a game, travel somewhere, start a fight); use it to look. `node tools/encounters.js --n 300` takes

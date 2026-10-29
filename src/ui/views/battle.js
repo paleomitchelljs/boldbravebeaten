@@ -243,7 +243,42 @@
     const stamina = Math.round(h.bluntToStamina + (h.converted || 0));
     // A point against armor (CONFIG.pierce): it bursts through, or it must find a gap.
     const point = h.gap ? ` (the point must find a gap: ${Math.round(h.gap.chance * 100)}%)` : h.pierce === 'burst' ? ' (the point bursts the armor)' : '';
-    return { wound, stamina, text: (wound || stamina ? `${wound ? `~${wound} wound` : ''}${wound && stamina ? ', ' : ''}${stamina ? `~${stamina} stamina` : ''}` : 'armor stops it') + point };
+    return { wound, stamina, wear: Math.round(h.durLoss || 0), hit: h, text: (wound || stamina ? `${wound ? `~${wound} wound` : ''}${wound && stamina ? ', ' : ''}${stamina ? `~${stamina} stamina` : ''}` : 'armor stops it') + point };
+  }
+
+  // The armor where a blow would land, in plain words: the piece, the odds a point finds a gap in it (or that it
+  // bursts it), and its state (Fine, Damaged, Broken by the share of durability left).
+  function armorLine(enc, chars, id, option, targetId, loc) {
+    const a = chars[id], t = chars[targetId];
+    if (!a || !t || !option) return null;
+    const L = G.CONFIG.locations;
+    const at = loc || (L && L.order.includes('torso') ? 'torso' : null);
+    const piece = at ? C.armorAt(t, at) : t.armor;
+    const nat = !piece && t.armor && t.armor.durability > 0 ? t.armor : null;
+    const p = piece || nat;
+    if (!p) return 'None';
+    const h = Combat.computeHit(a, t, Object.assign({}, option, at ? { aim: at } : {}), { distance: Combat.dist(enc.pos[id], enc.pos[targetId]) });
+    const name = (() => { try { return Items.itemName(p); } catch (e) { return p.name || p.type; } })() || 'Armor';
+    const max = (() => { try { return Items.armorMaxDurability(p); } catch (e) { return 0; } })();
+    const frac = max ? p.durability / max : 1;
+    const state = p.durability <= 0 ? 'Broken' : frac >= 2 / 3 ? 'Fine' : 'Damaged';
+    const gap = h.gap ? ` (${Math.round(h.gap.chance * 100)}% gap)` : h.pierce === 'burst' ? ' (pierced)' : '';
+    return `${name}${gap}, ${state}`;
+  }
+
+  // On hit as three numbers: what reaches the body (a wound to attributes), stamina, and wear on the armor.
+  function hitBoxes(prev) {
+    const box = (n, label, hint) => h('span', { class: 'hit-box' + (n ? '' : ' nil'), 'data-hint': hint }, h('b', { class: 'num' }, n ? `~${n}` : '–'), h('small', null, label));
+    return h('span', { class: 'hit-boxes' },
+      box(prev.wound, 'wound', 'Attribute damage that gets past the armor (expected)'),
+      box(prev.stamina, 'stam', 'Stamina the blow knocks out of them (expected)'),
+      box(prev.wear, 'wear', 'Durability the armor loses (expected)'));
+  }
+
+  // A blow's preview in a few words: what lands, and a gap's odds when the point needs one.
+  function shortHit(p) {
+    const gap = / gap: (\d+%)/.exec(p.text);
+    return `${p.wound ? `~${p.wound} wound` : p.stamina ? `~${p.stamina} stamina` : 'stopped'}${gap ? ` · gap ${gap[1]}` : / bursts/.test(p.text) ? ' · bursts' : ''}`;
   }
 
   // The words for a reaction request: who, what, and each choice with its AP and odds.
@@ -255,16 +290,16 @@
       const what = req.hidden ? 'a blow you can\'t read' : req.decl.type === 'strike' ? req.decl.option.label : D.ACTIONS[req.decl.type].name;
       const prev = req.hidden ? null : blowPreview(enc, chars, req);
       return {
-        title: `${a.name} → ${me.name}`, sub: `${what}${prev ? ` · if it lands: ${prev.text}` : ''}`, ap,
-        choices: req.options.map((o) => ({ value: o.type, label: o.name, cost: `${C.fmtAP(o.ap)} AP${o.stamina ? ` · ${o.stamina} st` : ''}`, odds: o.odds != null ? `${Math.round(o.odds * 100)}%` : '?' })),
+        title: `${a.name} → ${me.name}`, tag: what, sub: `${what}${prev ? ` · if it lands: ${prev.text}` : ''}`, ap,
+        choices: req.options.map((o) => ({ value: o.type, label: o.name, cost: C.fmtAP(o.ap), odds: o.odds != null ? `${Math.round(o.odds * 100)}%` : '?', hint: `${o.stamina ? `${o.stamina} stamina. ` : ''}${o.odds != null ? `${Math.round(o.odds * 100)}% to stop it.` : 'You can\'t read the blow.'}` })),
         none: { label: 'Take it', note: 'keep the AP' },
       };
     }
     const t = chars[req.target];
     const why = { enters: 'comes into', leaves: 'leaves', moves: 'moves about in' }[req.why] || 'leaves';
     return {
-      title: `${t.name} ${why} ${me.name}'s reach`, sub: req.why === 'enters' ? 'Strike as they come in? A hit stops them.' : 'Strike as they go? A hit stops them.', ap,
-      choices: req.options.map((o) => { const p = blowPreview(enc, chars, { decl: { actor: req.actor, target: req.target, type: 'strike', option: o } }); return { value: o, label: o.label, cost: `${C.fmtAP(o.ap)} AP`, odds: p ? p.text : '' }; }),
+      title: `${me.name} → ${t.name}`, tag: { enters: 'coming in', leaves: 'leaving', moves: 'moving' }[req.why] || 'leaving', sub: `${t.name} ${why} ${me.name}'s reach. A hit stops them.`, ap,
+      choices: req.options.map((o) => { const p = blowPreview(enc, chars, { decl: { actor: req.actor, target: req.target, type: 'strike', option: o } }); return { value: o, label: o.label, cost: C.fmtAP(o.ap), odds: '', hint: p ? `If it lands: ${p.text}` : '' }; }),
       none: { label: 'Let them go', note: 'keep the AP' },
     };
   }
@@ -276,7 +311,7 @@
       const done = (v) => { closeModal(); resolve(v); };
       const box = h('div', { class: 'modal info-pop', role: 'dialog', 'aria-modal': 'true', onclick: (e) => e.stopPropagation() },
         h('span', { class: 'label' }, `Reaction · ${C.fmtAP(m.ap)} AP left`), h('h2', null, m.title), h('p', { class: 'small muted' }, m.sub),
-        h('div', { class: 'stack tight' }, m.choices.map((c) => h('button', { class: 'act', onclick: () => done(c.value) }, h('span', null, c.label), h('span', { class: 'small muted num' }, `${c.cost} · ${c.odds}`))),
+        h('div', { class: 'stack tight' }, m.choices.map((c) => h('button', { class: 'act', onclick: () => done(c.value) }, h('span', null, c.label), h('span', { class: 'small muted num' }, `${c.cost} AP${c.odds ? ` · ${c.odds}` : ''}`))),
           h('button', { class: 'act', onclick: () => done(null) }, h('span', null, m.none.label), h('span', { class: 'small muted' }, m.none.note))));
       const root = document.getElementById('modal-root');
       root.innerHTML = '';
@@ -378,7 +413,7 @@
         const w = o.weaponId ? c.weapons.find((x) => x.id === o.weaponId) : null;
         const wd = w ? Items.weaponDurability(w) : null, wm = w ? Items.weaponMaxDurability(w) : 0;
         const wear = wm && wd != null && wd / wm <= ((G.CONFIG.gearWarn || {}).weaponWorn || 0.5) ? (wd <= 0 ? ' ⚠ broken' : ` ⚠ worn ${Math.round(100 * wd / wm)}%`) : '';
-        martial.push(Object.assign(e, { group: 'Attacks', kind: 'strike', label: o.label + (w ? ` · ${Items.itemName(w)}` : '') + wear, weapon: w, targets: sortTargets(o.targets, chars, c) }));
+        martial.push(Object.assign(e, { group: (w ? Items.itemName(w) : 'Unarmed') + wear, kind: 'strike', label: o.label + (w ? ` · ${Items.itemName(w)}` : '') + wear, short: o.label, weapon: w, targets: sortTargets(o.targets, chars, c) }));
       }
     }
     for (const m of legal.maneuvers) {
@@ -390,9 +425,28 @@
       magic.push({ key: 's:' + o.spellKey, kind: 'cast', option: o, label: o.label, ap: o.ap, stamina: 0, sp: o.spCost, affordable: o.affordable, why: why(o),
         square: o.target === 'square', targets: o.target === 'square' ? null : sortTargets(o.targets || [], chars, c, o.target === 'ally') });
     }
-    legal.other.forEach((o, i) => other.push({ key: 'o:' + o.type + (o.option ? ':' + C.optionKey(o.option) : ''), group: o.type === 'windUp' ? 'Wind up' : 'Gear and self', kind: 'other', type: o.type, option: o.option,
-      label: o.name.replace(/^Wind up: /, '') + (o.note ? ` (${o.note})` : ''), ap: o.ap, stamina: o.stamina, affordable: o.affordable, why: why(o),
-      targets: o.targets ? sortTargets(o.targets, chars, c, true) : null }));
+    legal.other.forEach((o) => {
+      const e = { key: 'o:' + o.type + (o.option ? ':' + C.optionKey(o.option) : ''), group: o.type === 'windUp' ? 'Wind up' : 'Gear and self', kind: 'other', type: o.type, option: o.option,
+        label: o.name.replace(/^Wind up: /, '') + (o.note ? ` (${o.note})` : ''), ap: o.ap, stamina: o.stamina, affordable: o.affordable, why: why(o),
+        targets: o.targets ? sortTargets(o.targets, chars, c, true) : null };
+      // A blow's wind-up (a power swing, a bow's draw) sits with its weapon's attacks, just before the blow it readies;
+      // a spell's stays under Other.
+      const release = o.type === 'windUp' && o.option && !o.option.spell ? martial.findIndex((m) => m.option && C.optionKey(m.option) === C.optionKey(o.option)) : -1;
+      if (release < 0) { other.push(e); return; }
+      const m = martial[release];
+      e.group = m.group;
+      e.label = `${o.option.ranged ? 'Draw' : 'Wind up'}: ${o.name.replace(/^Wind up: /, '')}${o.note ? ` (${o.note})` : ''}`;
+      e.short = o.option.ranged ? 'Draw' : 'Wind up';
+      martial.splice(release, 0, e);
+    });
+    // Short names on the buttons: the bracketed part (point, edge) only where two blows of one group share a name.
+    for (const list of [martial, maneuver, other]) {
+      for (const e of list) {
+        const base = (e.short || e.label).replace(/\s*\(.*\)$/, '');
+        const clash = list.filter((x) => x !== e && x.group === e.group && (x.short || x.label).replace(/\s*\(.*\)$/, '') === base).length;
+        e.short = clash ? (e.short || e.label) : base;
+      }
+    }
     const move = legal.move ? { key: 'move', kind: 'move', label: 'Move', ap: C.moveCost(c, 1), stamina: legal.move.stamina, affordable: true, move: legal.move } : null;
     // The tabs: [key, label, icon, any affordable].
     const types = [];
@@ -487,7 +541,7 @@
       const range = (o.minRange === o.maxRange ? `${o.maxRange}` : `${o.minRange}–${o.maxRange}`) + (o.closePenalty ? (G.CONFIG.range.closeRule === 'blunt' ? ' (half force, blunt, at 1)' : ' (half at 1)') : '');
       rows.unshift(['Weapon', e.weapon ? Items.itemName(e.weapon) : 'Unarmed'], ['Damage', `P/S/B ${o.damage.join('/')}`], ['Range', range]);
       if (o.strain > 1) rows.push(['Strain', `${o.strain.toFixed(1)}× your strength: slow and tiring (AP and stamina ×${(o.strain * o.strain).toFixed(1)})`]);
-      if (o.windUp) notes.push('Needs a wind-up the round before (under Other).');
+      if (o.windUp) notes.push('Needs a wind-up the round before (Wind up, with the attacks).');
     } else if (o && o.spell) {
       const s = o.spell;
       const shape = { area: `radius ${s.radius}`, ground: `radius ${s.radius}, ${s.rounds} rounds`, wall: `${s.length} squares, ${s.rounds} rounds`, terrain: `${s.length} square${s.length > 1 ? 's' : ''}`, bane: `${s.rounds} rounds`, boon: `${s.rounds} rounds`, conjure: `${s.rounds} rounds`, ward: `${s.rounds} rounds`, mind: `${s.rounds} rounds` }[s.shape];
@@ -517,7 +571,8 @@
       const p = blowPreview(enc, chars, { decl: { actor: id, target: targetId, type: 'strike', option: o } });
       const pen = loc ? Combat.aimPenalty(o, loc) : 0;
       const piece = loc ? C.armorAt(t, loc) : null;
-      return `${loc ? L.names[loc] || loc : 'Unaimed'}${pen ? ` (−${pen})` : ''}${loc ? (piece ? '' : ' · bare') : ''}${p ? ` · ${p.text}` : ''}`;
+      const what = !p ? '' : p.wound ? `~${p.wound} wound` : p.stamina ? `~${p.stamina} st` : 'stopped';
+      return `${loc ? L.names[loc] || loc : 'Unaimed'}${pen ? ` −${pen}` : ''}${loc && !piece ? ' (bare)' : ''}${what ? ` · ${what}` : ''}`;
     };
     const bestLabel = best && best.loc ? (L.names[best.loc] || best.loc) : 'unaimed';
     return { best: best ? best.loc : null, rows: [['best', `Best (${bestLabel})`], ['unaimed', show(null)]].concat(L.order.map((l) => [l, show(l)])) };
@@ -533,6 +588,19 @@
     if (e.kind === 'strike' || e.kind === 'cast') return declare(app, enc, { actor: id, type: e.kind, option: e.option, target: t });
     if (e.kind === 'guard') return declare(app, enc, { actor: id, type: e.type, against: cmd.vs || null });
     return declare(app, enc, e.targets ? { actor: id, type: e.type, target: t } : { actor: id, type: e.type, option: e.option });
+  }
+
+  // Fatigue sets next round's pool (CONFIG.fatigueSteps): shown when this action would leave the fighter tired, or more
+  // tired than they already will be, assuming no blow lands before the round ends.
+  function fatigueRow(c, stamina) {
+    if (!stamina || C.maxStamina(c) <= 0) return null;
+    const base = C.projectedPool(c, 0), after = C.projectedPool(c, stamina);
+    if (!after.fatigue) return null;
+    const steps = G.CONFIG.fatigueSteps.map((s) => `below ${Math.round(s.below * 100)}% stamina −${s.ap} AP`).join(', ');
+    const worse = after.fatigue > base.fatigue;
+    return h('div', { class: 'cmd-preview' + (worse ? ' warn' : ''), title: `Fatigue is taken when a round's AP is set: ${steps}. Assumes nothing hits you first.` },
+      h('span', { class: 'label' }, 'Next round'),
+      h('span', null, `${C.fmtAP(after.pool)} AP (tired −${after.fatigue}${worse ? `; this costs you ${after.fatigue - base.fatigue}` : ''})`));
   }
 
   // The pane's head: who, their AP as pips (the ones just spent flash), stamina and SP.
@@ -553,7 +621,7 @@
       UI.Sprites ? h('button', { class: 'cmd-face', title: 'Character sheet', 'aria-label': `${c.name}: character sheet`, onclick: () => openSheet(app, enc, id) }, UI.Sprites.portrait(c, 40)) : null,
       h('div', { class: 'cmd-id' },
         h('button', { class: 'who linkish', onclick: () => openSheet(app, enc, id), title: 'Character sheet' }, c.name),
-        h('div', { class: 'cmd-stats', title: `Stamina ${c.stamina}/${max}${sp != null ? ` · ${sp} SP` : ''}` }, bar(c.stamina, max), h('span', { class: 'small num muted' }, `${c.stamina}${sp != null ? ` · ${sp} SP` : ''}`))),
+        h('div', { class: 'cmd-stats', title: `Stamina ${c.stamina}/${max}${sp != null ? ` · ${sp} SP` : ''}${C.fatiguePenalty(c) ? ` · tired: −${C.fatiguePenalty(c)} AP this round` : ''}` }, bar(c.stamina, max), h('span', { class: 'small num muted' }, `${c.stamina}${sp != null ? ` · ${sp} SP` : ''}`))),
       pool != null ? h('div', { class: 'cmd-ap', title: `${C.fmtAP(left)} of ${C.fmtAP(pool)} AP left this round` }, apMeter(pool, left, fl, now), h('span', { class: 'num' }, C.fmtAP(left))) : null,
       gearWarn(c));
   }
@@ -571,9 +639,26 @@
   }
 
   // What the chosen target would take if the blow lands, for the pane and the map's hover card.
-  function strikePreview(enc, chars, id, entry, targetId) {
+  function strikePreview(enc, chars, id, entry, targetId, loc) {
     if (!entry || entry.kind !== 'strike' || !entry.option || entry.option.spell || !targetId) return null;
-    return blowPreview(enc, chars, { decl: { actor: id, target: targetId, type: 'strike', option: entry.option } });
+    return blowPreview(enc, chars, { decl: { actor: id, target: targetId, type: 'strike', option: loc ? Object.assign({}, entry.option, { aim: loc }) : entry.option } });
+  }
+
+  // The actions of a tab as a table, a block per group (a weapon, Maneuvers): the short name, then AP and stamina in
+  // their own columns. One that can't be taken now is dimmed, with why on hover. A click picks it; the Do-it button at
+  // the foot takes it.
+  function actionButtons(list, cmd, rerender, info) {
+    const groups = [...new Set(list.map((e) => e.group))];
+    const named = groups.length > 1 || list.length > 4;
+    return h('div', { class: 'acts' },
+      h('div', { class: 'act-head' }, h('span', null, info || ''), h('span', null, 'AP'), h('span', null, 'St')),
+      groups.map((g) => [
+        named && g ? h('div', { class: 'act-group label' }, g) : null,
+        list.filter((e) => e.group === g).map((e) =>
+          h('button', { class: 'act-line' + (e.key === cmd.act ? ' on' : '') + (e.affordable ? '' : ' dim'), 'data-hint': e.affordable ? e.label : `${e.label}: ${e.why}`, 'aria-pressed': e.key === cmd.act ? 'true' : 'false',
+            onclick: () => { cmd.act = e.key; cmd.castAt = null; rerender(); } },
+          h('span', { class: 'nm' }, e.short || e.label), h('span', { class: 'num' }, C.fmtAP(e.ap)), h('span', { class: 'num' }, e.stamina ? String(e.stamina) : '–'))),
+      ]));
   }
 
   function declarePanel(app, enc, legal, sync) {
@@ -597,16 +682,14 @@
     const info = entry ? infoButton(entry.label, () => entryInfo(app, enc, c, entry)) : null;
     if (cmd.type === 'magic') rows.push(magicPicker(app, model, cmd));
     else if (cmd.type && cmd.type !== 'move') {
-      const list = model[cmd.type];
-      const groups = [...new Set(list.map((e) => e.group))].map((g) => [list.length > 4 && g ? g : null, list.filter((e) => e.group === g).map((e) => [e.key, `${e.label} — ${e.affordable ? C.fmtAP(e.ap) + ' AP' : e.why}`, !e.affordable])]);
-      rows.push(field('Action', selectGroups('cmd-act', cmd.act, groups, (v) => { cmd.act = v; cmd.castAt = null; rerender(); }), info));
+      rows.push(actionButtons(model[cmd.type], cmd, rerender, info));
     }
     // What the action is aimed at.
     let target = null;
     if (entry && entry.targets) {
       target = entry.targets.find((t) => t.id === cmd.target) || null;
       rows.push(field('Target', entry.targets.length
-        ? UI.select('cmd-target', cmd.target || '', (cmd.target ? [] : [['', 'Choose a target…']]).concat(entry.targets.map((t) => [t.id, `${chars[t.id].name}${t.distance != null ? ` · ${t.distance} sq` : ''}${t.inReach ? '' : t.tooClose ? ' · too close' : ' · out of reach'}`])), (v) => { cmd.target = v || null; rerender(); })
+        ? UI.select('cmd-target', cmd.target || '', (cmd.target ? [] : [['', 'Choose a target…']]).concat(entry.targets.map((t) => [t.id, `${chars[t.id].name}${t.distance != null ? ` · ${t.distance}` : ''}${t.inReach ? '' : t.tooClose ? ' · close' : ' · far'}`])), (v) => { cmd.target = v || null; rerender(); })
         : h('span', { class: 'muted small' }, 'No one in sight')));
       // Where to aim it (armor by location): the expected-best place by default.
       const ac = aimChoices(enc, chars, id, entry, cmd.target);
@@ -614,12 +697,17 @@
         if (!ac.rows.some((r) => r[0] === cmd.location)) cmd.location = 'best';
         rows.push(field('Aim', UI.select('cmd-location', cmd.location, ac.rows, (v) => { cmd.location = v; rerender(); })));
       }
-      const prev = strikePreview(enc, chars, id, entry, cmd.target);
-      if (prev) rows.push(h('div', { class: 'cmd-preview' + (prev.wound || prev.stamina ? '' : ' nil') }, h('span', { class: 'label', title: 'If it lands, through their armor' }, 'On hit'), h('span', null, prev.text)));
+      const loc = ac ? (cmd.location === 'best' ? ac.best : cmd.location === 'unaimed' ? null : cmd.location) : null;
+      const prev = strikePreview(enc, chars, id, entry, cmd.target, loc);
+      if (prev) rows.push(h('div', { class: 'cmd-preview hit' }, h('span', { class: 'label', 'data-hint': `If it lands, through their armor: ${prev.text}` }, 'On hit'), hitBoxes(prev)));
+      const arm = prev ? armorLine(enc, chars, id, entry.option, cmd.target, loc) : null;
+      if (arm) rows.push(h('div', { class: 'cmd-preview nil' }, h('span', { class: 'label' }, 'Armor'), h('span', null, arm)));
     } else if (entry && (entry.kind === 'guard' || entry.kind === 'ready')) {
       const vs = legal.guardAgainst.includes(cmd.vs) ? cmd.vs : '';
       rows.push(field('Against', UI.select('cmd-vs', vs, [['', 'The next attack']].concat(legal.guardAgainst.map((o) => [o, chars[o].name])), (v) => { cmd.vs = v; rerender(); })));
     }
+    const tired = entry ? fatigueRow(c, entry.stamina) : null;
+    if (tired) rows.push(tired);
     if (entry && cmd.type === 'move') rows.push(h('div', { class: 'cmd-preview' }, h('span', { class: 'label' }, 'Move'), h('span', null, `up to ${entry.move.maxSquares} sq`), info));
     else if (entry && cmd.type === 'magic') rows.push(h('div', { class: 'cmd-preview' }, h('span', { class: 'label' }, 'Cost'), h('span', null, costText(entry.ap, entry.stamina, entry.sp)), info));
 

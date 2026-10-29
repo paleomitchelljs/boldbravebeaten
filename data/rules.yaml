@@ -84,9 +84,26 @@ game:
   trainingCost: {novice: 20, apprentice: 60, adept: 160, expert: 400, master: 1000}
   campTraining: 1
   # ---- Time and exploring -------------------------------------------------
-  minutesPerStep: 5
-  sneakStepMinutes: 10
-  searchMinutes: 20
+  # PROVISIONAL (the user, 2026-10-28): exploring a baseline dungeon (the temple, every area) thoroughly, with no
+  # fights, should take close to one waking day (exploreDay minutes), after which the party needs a long rest. A step
+  # is 10 seconds (the user's call): careful walking with a torch, looking about. `node tools/pace.js` measures the
+  # floor: seeing every square by the shortest greedy route is 1013 steps for the temple (2.8 h); walking every open
+  # square is about 4400 (12 h); searches (10 minutes each) and doubling back make up the rest of the day. Sneaking
+  # is half the pace. Rerun the tool after a map change.
+  exploreDay: 960
+  stepSeconds: 10
+  sneakStepSeconds: 20
+  searchMinutes: 10          # a search covers the 5x5 squares around the party
+  # PROVISIONAL: time in a dungeon draws its wanderers (a camp keeps its own roll, camp below). Every `every` minutes
+  # spent in a place (walking, searching, picking locks, rituals, the rest after a fight) is a check: on `chance` the
+  # place's wandering table is drawn (its `nothing` entries still count). A loud thing adds `noise` minutes to the
+  # count at once. The best perception in the party hears them coming (TN `hearTn`); if it fails, the party is caught
+  # off guard. A party sneaking makes a group stealth check against the wanderers and lets them pass on a success.
+  wanderers:
+    every: 20
+    chance: 0.35
+    hearTn: 8
+    noise: {force: 10, fight: 15, trap: 5}
   noticeDistance: 4          # tiles at which an awake group notices an unhidden party
   sleepNoticeDistance: 2     # ...and a sleeping one
   lightRadius: 7

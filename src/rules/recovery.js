@@ -87,7 +87,8 @@
     }
     // Items' powers come back with the night.
     if (G.Magic && G.Magic.rechargeAll) G.Magic.rechargeAll(c);
-    c.weary = 0; // a night's sleep clears the weariness of the day's fights
+    c.weary = 0; // a night's sleep clears the weariness of the day's fights and hours
+    c.wearyCarry = 0;
     c.stamina = C.maxStamina(c);
     c.spSpent = 0;
     c.status = C.freshStatus();

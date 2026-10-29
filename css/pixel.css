@@ -172,6 +172,7 @@ canvas.portrait { width: auto; max-width: 100%; height: auto; image-rendering: p
 .battle-screen .cmd-preview { font-size: 0.88rem; padding: 4px 0; }
 .battle-screen .cmd-preview > span:nth-child(2) { color: #ffb3a8; }
 .battle-screen .cmd-preview.nil > span:nth-child(2) { color: var(--muted); }
+.battle-screen .cmd-preview.warn > span:nth-child(2) { color: #ffd36b; }
 .battle-screen .cmd-foot { display: flex; flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 6px; margin-top: auto; padding-top: 8px; border-top: 2px solid var(--edge); }
 .battle-screen .cmd-go { display: flex; min-width: 0; }
 .battle-screen .cmd-go > .primary { flex: 1 1 auto; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 9px 12px; font-size: 1rem; text-align: left; min-width: 0; }
@@ -303,3 +304,28 @@ kbd { font: 600 0.72rem var(--font-mono); padding: 0 4px; border: 1px solid var(
 .meter-row.up { animation: meter-up 0.9s ease-out; } .meter-row.down { animation: meter-down 0.9s ease-out; }
 @keyframes meter-up { 0% { background: rgba(124, 197, 136, 0.45); } 100% { background: transparent; } }
 @keyframes meter-down { 0% { background: rgba(224, 106, 92, 0.45); } 100% { background: transparent; } }
+/* The actions of a tab as a table: name, AP, stamina (views/battle.js actionButtons). */
+.battle-screen .acts { display: flex; flex-direction: column; gap: 2px; }
+.battle-screen .act-head, .battle-screen .act-line { display: grid; grid-template-columns: minmax(0, 1fr) 36px 28px; align-items: center; gap: 6px; }
+.battle-screen .act-head { font-size: 0.6rem; color: var(--muted); text-align: right; }
+.battle-screen .act-head > span:first-child { text-align: left; }
+.battle-screen .act-group { font-size: 0.6rem; color: var(--muted); margin-top: 4px; }
+.battle-screen .act-line { padding: 4px 8px; font-size: 0.82rem; min-height: 30px; text-align: right; }
+.battle-screen .act-line .nm { text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.battle-screen .act-line .num { font-size: 0.76rem; color: var(--muted); }
+.battle-screen .act-line.on { background: var(--accent-soft); color: var(--accent); box-shadow: inset var(--px) var(--px) 0 #0e151a; }
+.battle-screen .act-line.dim:not(.on) { opacity: 0.45; }
+/* On hit: three numbers. */
+.battle-screen .hit-boxes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+.battle-screen .hit-box { display: flex; flex-direction: column; align-items: center; padding: 3px 0; background: #0e151a; }
+.battle-screen .hit-box b { font-size: 0.95rem; color: #ffb3a8; }
+.battle-screen .hit-box.nil b { color: var(--muted); }
+.battle-screen .hit-box small { font-size: 0.58rem; color: var(--muted); }
+/* The reaction card: title, choices with AP (and a defence's odds), the AP left. */
+.popcard.react { gap: 6px; }
+.react-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: baseline; }
+.react-head h3 { margin: 0; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.react-head .ap-pill { color: var(--accent); font-size: 0.85rem; }
+.react-list { display: flex; flex-direction: column; gap: 3px; }
+.popcard.react .act { display: grid; grid-template-columns: 34px minmax(0, 1fr) 40px 36px; gap: 6px; align-items: center; text-align: left; padding: 5px 8px; }
+.popcard.react .act .num { text-align: right; }

@@ -29,8 +29,9 @@
     if (G.Companions) { G.Companions.rest(world, true); lines.push(...G.Companions.ensure(world, { town: mode === 'inn' })); }
     if (mode === 'inn') {
       const m = world.minutes % 1440;
-      W.advance(world, m < 8 * 60 ? 8 * 60 - m : 1440 - m + 8 * 60);
-    } else W.advance(world, 8 * 60);
+      W.advance(world, m < 8 * 60 ? 8 * 60 - m : 1440 - m + 8 * 60, { asleep: true });
+    } else W.advance(world, 8 * 60, { asleep: true });
+    if (G.Explore) G.Explore.settleClock(world);
     world.stats.rests++;
     return lines;
   }
@@ -54,6 +55,7 @@
         // The member with the best eyes keeps the watch.
         const r = G.Skills.bestCheck(W.active(world), 'perception', 8, 0);
         W.advance(world, 3 * 60);
+        G.Explore.settleClock(world);
         return { interrupted: { foes: w.foes, text: w.text, name: 'Camp attacked' }, surprise: r.ok ? null : 'party', check: r };
       }
     }
@@ -69,7 +71,7 @@
     if (!survivors.length) return { ok: false };
     const lost = Math.floor(world.gold / 2);
     world.gold -= lost;
-    W.advance(world, 3 * 1440);
+    W.advance(world, 3 * 1440, { asleep: true });
     const home = (G.Content.world.start || {}).place || 'stonebridge';
     world.place = home; world.explore = null; world.location = null; world.battle = null; world.parley = null;
     for (const c of survivors) {

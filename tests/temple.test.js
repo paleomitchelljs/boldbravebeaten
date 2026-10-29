@@ -227,3 +227,68 @@ test('pyramid: risers draw as the tier they hold up, tiers share a sheet by `lik
   const tops = [...seen].filter((k) => g.map[+k.split(',')[1]][+k.split(',')[0]] === '&');
   assert.ok(tops.length > 40);
 });
+
+test('wanderers: time spent in a place draws them; noise counts as time; a camp starts the count afresh; a sneaking party can let them pass', () => {
+  withPlace('t_halls', {
+    map: ['########', '#<.....#', '########'],
+    legend: { '<': { kind: 'stairs', to: 'stonebridge', at: null } },
+    wandering: [{ w: 1, foes: [{ monster: 'rat' }], text: 'A rat.' }],
+  }, () => {
+    const cw = CONFIG.game.wanderers;
+    const keep = cw.chance;
+    cw.chance = 1;
+    try {
+      const w = fresh(3);
+      Explore.enter(w, 't_halls', '<');
+      assert.equal(Explore.minutesPerStep(w), CONFIG.game.stepSeconds / 60);
+      let ev = [];
+      w.minutes += cw.every - 1;
+      Explore.wanderCheck(w, ev);
+      assert.equal(ev.length, 0, 'not yet a check');
+      w.explore.danger = (w.explore.danger || 0) + 1 - cw.noise.force;  // so the noise is just enough
+      Explore.noise(w, 'force');
+      Explore.wanderCheck(w, ev);
+      const met = ev.find((e) => e.type === 'wander');
+      assert.ok(met, 'the noise tipped the count over a check');
+      assert.equal(met.spec.foes[0].monster, 'rat');
+      assert.equal(met.surprise, met.check.ok ? null : 'party');
+      // Time that passed in camp doesn't count.
+      w.minutes += 8 * 60;
+      Explore.settleClock(w);
+      ev = [];
+      Explore.wanderCheck(w, ev);
+      assert.equal(ev.length, 0);
+      // Sneaking: a stealth check comes first; on a pass they go by.
+      w.explore.sneak = true;
+      let passed = 0, found = 0;
+      for (let i = 0; i < 40; i++) {
+        ev = [];
+        w.minutes += cw.every;
+        Explore.wanderCheck(w, ev);
+        assert.ok(ev.some((e) => e.type === 'check'));
+        if (ev.some((e) => e.type === 'wander')) found++; else passed++;
+      }
+      assert.ok(passed > 0 && found > 0, `some pass, some are caught (${passed}/${found})`);
+      // Peaceful mode draws none.
+      w.peaceful = true;
+      ev = [];
+      w.minutes += 5 * cw.every;
+      Explore.wanderCheck(w, ev);
+      assert.equal(ev.length, 0);
+    } finally { cw.chance = keep; }
+  });
+});
+
+test('weariness from time: awake hours lower max stamina, sleep does not, a long rest clears it', () => {
+  const w = fresh(4);
+  const c = World.party(w)[0];
+  const fresh0 = B.Character.freshStamina(c);
+  World.advance(w, 16 * 60);
+  assert.equal(c.weary, Math.floor(fresh0 * CONFIG.weariness.perHour * 16), 'half of it after a 16-hour day');
+  const weary = c.weary;
+  World.advance(w, 8 * 60, { asleep: true });
+  assert.equal(c.weary, weary, 'sleeping time does not tire');
+  World.advance(w, 1000 * 60);
+  assert.equal(c.weary, Math.floor(fresh0 * CONFIG.weariness.cap), 'capped');
+  assert.ok(w.log.some((l) => /worn out/.test(l.text)));
+});
