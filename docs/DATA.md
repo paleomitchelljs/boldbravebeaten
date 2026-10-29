@@ -55,7 +55,9 @@ condition's fields. `validate` rejects a key not on it. The rules ask `Effects.s
 every source at once, so a ring of `dodge: 1`, the Dodge Training feat (`effects: {dodge: 1}`) and a nimble monster's
 `traits: {dodge: 2}` all count the same way. A new key means new rules code, and an entry there.
 
-A pack is `{name, group: [wolf, wolf, alphaWolf]}`. Use it in an encounter: `{monster: bogHag}`.
+A pack is `{name, group: [wolf, wolf, alphaWolf]}`. Use it in an encounter: `{monster: bogHag}`. An encounter's foe may
+dress its monster in another art entry (another colour of the same creature) with `sprite`: `{monster: scaleward,
+sprite: {art: lizardfolk-warrior-tan}}`; the fight and the crowd on the map square both show it.
 People who carry gear come from `foes.yaml` templates: `{template: bandit, level: 2, n: 3}`.
 
 **A weapon** (`weapons.yaml`): give it a `phys` block and a `reach` and the engine works out the rest. A new kind of

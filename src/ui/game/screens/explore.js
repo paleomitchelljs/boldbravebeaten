@@ -258,9 +258,9 @@
       if (b.def.kind === 'monster') {
         if (st.done) continue;
         const spec = Explore.encounterSpec(w, b.def);
-        const look = Sprites.forEncounter(spec);
+        const looks = Sprites.encounterLooks(spec);
         const n = Math.min(3, Sprites.crowd(spec));
-        SPREAD[n - 1].forEach(([dx, dy], i) => sc.actors.push({ id: `m${b.x},${b.y},${i}`, x: b.x + dx, y: b.y + dy, kind: look.kind, tint: look.tint, size: look.size, art: look.art, artTint: look.artTint, artScale: look.artScale, artSize: look.artSize, tag: 'enemy', flip: ex.x < b.x, sleep: !!(b.def.asleep && !st.woken), ring: st.pacified ? 'rgba(120,230,160,0.7)' : null, phase: i * 2 + b.x }));
+        SPREAD[n - 1].forEach(([dx, dy], i) => { const look = looks[i % looks.length]; sc.actors.push({ id: `m${b.x},${b.y},${i}`, x: b.x + dx, y: b.y + dy, kind: look.kind, tint: look.tint, size: look.size, art: look.art, artTint: look.artTint, artScale: look.artScale, artSize: look.artSize, tag: 'enemy', flip: ex.x < b.x, sleep: !!(b.def.asleep && !st.woken), ring: st.pacified ? 'rgba(120,230,160,0.7)' : null, phase: i * 2 + b.x }); });
       } else {
         const npc = G.Content.world.npcs[b.def.npc] || {};
         const look = Sprites.lookFor(npc.sprite || 'wizard', npc.name);

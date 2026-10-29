@@ -60,3 +60,12 @@ wilds:
   enemies: []
   ranks: [[0, Prey]]
   perks: []
+suracayl:
+  name: The Suracayl
+  blurb: The lizardfolk of the jungle temple. They keep its courts, its labyrinth, its pyramid and its palace, and suffer no one in them.
+  start: -20
+  kos: 0
+  allies: []
+  enemies: []
+  ranks: [[-20, Trespasser]]
+  perks: []

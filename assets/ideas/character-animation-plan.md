@@ -93,7 +93,7 @@ Estimated A+B: about 150-230.
 - Lizardfolk_Alt2 (the knight): walk, strike, death. Left out on purpose (the user).
 - Jabiku walk (has none).
 - The rest of the library: Krump (walk or a clean hop, strike, death; the jump loses the sword), Crusader (walks,
-  strike, death), Tevax (strike, death; may be regenerated), Raptor (to be regenerated), Bear (death), Warrior woman
+  strike, death), Tevax (strike, death; may be regenerated), Raptor (to be regenerated; wanted in the labyrinth, 2026-10-28: walk, strike, death, idle), Bear (death), Warrior woman
   (death), Goblin green and orange (walks, strike, death), Gowra (walk, strike, death), Singe (flight N/S, strike,
   death), Snake person (walk, strike, death), Spectre (strike, death), Farmer and Old man (none needed).
 

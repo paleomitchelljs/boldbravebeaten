@@ -651,3 +651,30 @@ avatarArms:
   material: bone
   # Each blow that lands takes stamina from the struck into the Avatar (trait.sap, as the Sapping enchantment).
   trait: {sap: {stamina: 5}}
+monitorBite:
+  phys: {mass: 1, length: 0.4, point: {depth: 7, width: 4}}
+  name: Bite
+  hands: 1
+  weight: medium
+  reach: {thrust: 1}
+  reachName: close
+  closeOK: true
+  natural: true
+  grappleUsable: true
+  faces: {point: [4, 1, 1]}
+  motions: [thrust]
+  rarity: common
+gorillaFists:
+  phys: {mass: 4, length: 0.9, head: {mass: 1.5}}
+  name: Fists
+  hands: 2
+  weight: heavy
+  reach: {swing: 1}
+  reachName: close
+  closeOK: true
+  natural: true
+  grappleUsable: true
+  faces: {head: [0, 0, 7]}
+  motions: [swing, power]
+  rarity: common
+  trait: {knockdown: {bonus: 2, margin: 3}}

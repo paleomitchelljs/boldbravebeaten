@@ -24,6 +24,8 @@
       for (let i = 0; i < n; i++) {
         if (e.monster) {
           const made = G.Enemies.makeMonster(e.monster, { name: e.name && n === 1 ? e.name : undefined, n: n > 1 ? i : 0 });
+          // An encounter may dress its monster differently (another colour of the same creature).
+          if (e.sprite) for (const m of made) m.sprite = Object.assign({}, m.sprite, e.sprite);
           foes.push(...made);
         } else {
           foes.push(G.Enemies.generate(e.template, e.level || 1, { seed: R.int(1, 1e9), name: e.name && n === 1 ? e.name : undefined }));

@@ -30,8 +30,27 @@ From the user's voice memos of 2026-10-24, quoted where the wording matters. Sta
   quarters, and the stair down from the great hall's niche runs to the ritual chamber with a few small rooms off it.
   The palace has no way into the sewers: the sewers' ways in are the three wells (gatehouse, labyrinth, pyramid).
 - **The avatar of fear is a fight.** The ritual chamber is a boss arena: about 15×15, the pool in the middle.
-- **Who lives where:** "Alligators and rats in the sewers, lizardfolk throughout." Placement gets refined once the art
-  and layout are in. The `alligator` creature sheet exists but no monster uses it yet.
+- **Who lives where:** "Alligators and rats in the sewers, lizardfolk throughout." The lizardfolk are the
+  **Suracayl** (the user, 2026-10-28), a faction of their own, with "a population of Suracayl in every area":
+  | Area | Who (monster key; colour by the encounter's `sprite`) |
+  |---|---|
+  | Court | warriors, green and tan (`scaleward`: "the alligator lizard variants populate the rest of the courtyard"); two temple gorillas guard the palace door (`templeGorillaPair`) |
+  | Wall | a tan warrior in the guardhouse |
+  | Labyrinth | skinks, black and purple with yellow eye rings (`suracaylSkink`), in twos and threes; raptors (see below) |
+  | Pyramid court | varanus, blue, black and brown (`suracaylVaranus`); the dread shaman with two varanus on the top (`dreadShaman`; "the dread shaman (when done) should guard the top of the pyramid", in place of the drake) |
+  | Sewers | two skinks hunting rats (`hunter`), with the alligators and rats |
+  | Palace | warriors; Jabiku on the throne with a skeleton guard (`jabiku`: "Jabiku should be in the Palace on the Throne with skeleton guards") |
+  | Palace upper floor, stair | warriors (and the kobold servants, the iron golem) |
+  | Ritual chamber | the Avatar alone (open question: the user asked for Suracayl in every area) |
+  Sims (`node tools/encounters.js`, the level-1 example party): skinks are a nuisance to an armored party (four of
+  them start to hurt), varanus pairs are a real fight (93% won, 0.7 dead), gorillas grind (5 rounds, no deaths), the
+  pyramid top is 77% won with 1.3 dead, Jabiku's throne 50% with 2.2 dead (two skeletons made it 3%: skeletons are
+  the hard counter to points and blades, and Jabiku raises the fallen).
+- **Raptors in the labyrinth** (the user: "I'd like raptors in the labyrinth too but those sprites aren't done so let's
+  just plan that"). The two raptor packs already placed (`raptors`, `raptors2`) stay; their PixelLab sprite (Raptor,
+  96 px) has no clips and is to be regenerated (`assets/ideas/character-animation-plan.md`, *Later*). When it is, give
+  it walk, strike, death and idle like the rest. In the sims raptors are harmless to the armored example party (0.03
+  dead a fight), like the skinks; whether that is right is a design call (they suit an unarmored party, or a chase).
 - **Style target.** The PixelLab dragonborn (`art/characters/pixellab/Tevax_Thaukori/Idle/rotations/south.png`, 64 px)
   is "the level of NPC detail and style that I ultimately think we're aiming for, so the tiles should be generated to
   match". That settles the tile size at **64 px** (reasons in §4).

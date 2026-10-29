@@ -374,10 +374,13 @@ bogfolk:
   feats: {shield_training: 1}
   keepUnarmed: true
 bogPatrol: {name: Bogfolk patrol, blurb: Three bogfolk., group: [bogfolk, bogfolk, bogfolk]}
+# The Suracayl: the temple's lizardfolk. Warriors (green alligator lizards) keep the courts and the palace, skinks the
+# labyrinth, varanus the pyramid; Jabiku rules from the palace throne and the dread shaman keeps the pyramid's top.
+# An encounter picks the colour: {monster: scaleward, sprite: {art: lizardfolk-warrior-tan}}.
 scaleward:
-  name: Scaleward
-  blurb: A big scaled reptilian warrior with a warhammer and a tail that sweeps legs.
-  faction: wilds
+  name: Suracayl warrior
+  blurb: A big scaled Suracayl warrior with a warhammer and a tail that sweeps legs.
+  faction: suracayl
   xp: 55
   glyph: "🦎"
   sprite: {art: lizardfolk-warrior, kind: orc_warrior, tint: "#6a9a8a"}
@@ -389,7 +392,81 @@ scaleward:
   traits: {}
   feats: {heavy_weapon_training: 1, toughness: 1}
   keepUnarmed: true
-scalewardPair: {name: Scaleward pair, blurb: Two scaleward warriors., group: [scaleward, scaleward]}
+scalewardPair: {name: Suracayl warriors, blurb: Two Suracayl warriors., group: [scaleward, scaleward]}
+suracaylSkink:
+  name: Suracayl skink
+  blurb: "A slight, quick Suracayl of the labyrinth: raking claws, a nip, slick scales that slip a grip. Weak alone and against good armor; they come in threes and fours."
+  faction: suracayl
+  xp: 30
+  glyph: "🦎"
+  sprite: {art: lizardfolk-alt, kind: rogue, tint: "#4a4a5a"}
+  loot: humanoid_purse
+  attrs: {STR: 6, CON: 7, DEX: 8, SPD: 8, INT: 5, WIS: 6, CHA: 4}
+  natural: [claws, monitorBite]
+  armor: bogSkin
+  traits: {slippery: 2, moveMult: 1.5}
+  feats: {dodge_training: 2}
+suracaylSkinkPair: {name: Suracayl skinks, blurb: Two Suracayl skinks., group: [suracaylSkink, suracaylSkink]}
+suracaylVaranus:
+  name: Suracayl varanus
+  blurb: "A heavy monitor-folk of the pyramid. It carries nothing: a tearing bite, raking claws, a tail that sweeps legs, and thick scales."
+  faction: suracayl
+  xp: 60
+  glyph: "🦎"
+  sprite: {art: lizardfolk-varanus, kind: orc_warrior, tint: "#5a7aa0"}
+  loot: beast_leavings
+  attrs: {STR: 12, CON: 12, DEX: 5, SPD: 5, INT: 3, WIS: 5, CHA: 2}
+  natural: [monitorBite, claws, tail]
+  armor: scalewardScales
+  traits: {size: 1.1}
+  feats: {toughness: 1}
+suracaylVaranusPair: {name: Suracayl varanus pair, blurb: Two Suracayl varanus., group: [suracaylVaranus, suracaylVaranus]}
+templeGorilla:
+  name: Temple gorilla
+  blurb: "A great ape the Suracayl keep to hold the palace door: long arms, a crushing grip, and blows that knock a man flat. Nothing on it but its hide."
+  faction: suracayl
+  xp: 70
+  glyph: "🦍"
+  sprite: {art: gorilla, kind: orc_warrior, scale: 1.2, tint: "#4a4a4a"}
+  loot: beast_leavings
+  attrs: {STR: 15, CON: 12, DEX: 6, SPD: 6, INT: 3, WIS: 6, CHA: 3}
+  natural: [gorillaFists]
+  armor: fur
+  traits: {size: 1.3}
+  feats: {grappler: 1, toughness: 1}
+templeGorillaPair: {name: Temple gorillas, blurb: Two temple gorillas., group: [templeGorilla, templeGorilla]}
+dreadShaman:
+  name: Dread shaman
+  blurb: "A Suracayl priest in a bone mask, keeping the top of the pyramid: bolts of venom, a word that fills you with fear, and a staff for anyone who gets close."
+  faction: suracayl
+  xp: 150
+  glyph: "🦎"
+  sprite: {art: dread-shaman, kind: orc_shaman, tint: "#c8b890"}
+  loot: humanoid_purse
+  level: 5
+  attrs: {STR: 6, CON: 8, DEX: 6, SPD: 6, INT: 9, WIL: 10, WIS: 8, CHA: 8}
+  natural: []
+  weapons: [staff]
+  armor: bogSkin
+  keepUnarmed: true
+  nouns: [venom, fear]
+  feats: {casting: 2, verb_strike: 1, verb_launch: 1, verb_beguile: 1, dodge_training: 1}
+jabiku:
+  name: Jabiku
+  blurb: "The master of the palace, on its throne in a horned skull. Skeletons stand guard for him, the fallen get up again at his word, and he fills the hall with fear."
+  faction: suracayl
+  xp: 250
+  glyph: "💀"
+  sprite: {art: jabiku, kind: orc_shaman, tint: "#3a4a3a"}
+  loot: humanoid_purse
+  level: 6
+  attrs: {STR: 7, CON: 9, DEX: 6, SPD: 6, INT: 10, WIL: 11, WIS: 9, CHA: 10}
+  natural: []
+  weapons: [staff]
+  armor: bogSkin
+  keepUnarmed: true
+  nouns: [bone, shadow, fear]
+  feats: {casting: 3, verb_raise: 1, verb_launch: 1, verb_beguile: 1, toughness: 1}
 revenantKnight:
   name: Revenant knight
   blurb: "An end-game knight: masterwork dwarven steel plate, an adamant shield, a blade that drinks stamina and wounds, a withering burst, an aura of dread that saps everyone near him, a silk sash that quickens him, and the dead rise for him."

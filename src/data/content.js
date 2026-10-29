@@ -280,6 +280,7 @@
         for (const [eid, e] of Object.entries(p.encounters || {})) {
           for (const f of e.foes || []) {
             if (f.monster && !has(G.Enemies.MONSTERS, f.monster)) err(`places.${id}.encounters.${eid}: monster "${f.monster}" unknown`);
+            artOk(`places.${id}.encounters.${eid}`, f.sprite);
             if (f.template && !has(G.Enemies.TEMPLATES, f.template)) err(`places.${id}.encounters.${eid}: template "${f.template}" unknown`);
           }
           if (e.parley && !has(npcs, e.parley)) err(`places.${id}.encounters.${eid}: parley npc "${e.parley}" unknown`);

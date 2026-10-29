@@ -157,7 +157,7 @@ bogSkin:
   rarity: common
   natural: true
 scalewardScales:
-  name: Scaleward scales
+  name: Suracayl scales
   material: chitin
   mit: {P: 2, S: 3, B: 2}
   spd: 0

@@ -327,11 +327,24 @@
       let m = G.Enemies.MONSTERS[first.monster];
       if (m && m.group) m = G.Enemies.MONSTERS[m.group[0]];
       sp = m && m.sprite; name = (m && m.name) || first.monster;
+      if (first.sprite) sp = Object.assign({}, sp, first.sprite);
     } else if (first && first.template) {
       const t = G.Enemies.TEMPLATES[first.template];
       sp = t && t.sprite; name = (t && t.name) || first.template;
     }
     return fromSpec(sp, { name });
+  }
+
+  // How each creature of an encounter looks, in order (a group's members, `n` copies, an encounter's own `sprite`), so
+  // the crowd on its square shows a mixed pair as mixed.
+  function encounterLooks(spec) {
+    const out = [];
+    for (const f of (spec && spec.foes) || []) {
+      if (!f.monster) { out.push(forEncounter({ foes: [f] })); continue; }
+      const m = G.Enemies.MONSTERS[f.monster];
+      for (let i = 0; i < (f.n || 1); i++) for (const k of m && m.group ? m.group : [f.monster]) out.push(forEncounter({ foes: [Object.assign({}, f, { monster: k })] }));
+    }
+    return out.length ? out : [forEncounter(spec)];
   }
 
   // How many creatures an encounter holds (to draw a small crowd on its square).
@@ -410,7 +423,7 @@
   }
 
   UI.Art = UI.Art || {};
-  UI.Sprites = { DIRS, dirOf, hasClip, forEncounter, crowd, KINDS, PARTY_KINDS, partyKinds, TINTS, KIT_KIND, draw, drawArt, floats, artReady, artSheet, look, lookFor, portrait, figure, sheet, whenReady: (f) => waiting.push(f), preload: () => { KINDS.forEach((k) => { sheet(k, 'idle'); sheet(k, 'run'); }); for (const k of Object.keys(artCat())) artProbe(k); } };
+  UI.Sprites = { DIRS, dirOf, hasClip, forEncounter, encounterLooks, crowd, KINDS, PARTY_KINDS, partyKinds, TINTS, KIT_KIND, draw, drawArt, floats, artReady, artSheet, look, lookFor, portrait, figure, sheet, whenReady: (f) => waiting.push(f), preload: () => { KINDS.forEach((k) => { sheet(k, 'idle'); sheet(k, 'run'); }); for (const k of Object.keys(artCat())) artProbe(k); } };
   // Portraits everywhere in the game are now the sprite's face.
   UI.Art.portrait = (c, px) => portrait(c, px);
 })(globalThis.BBB);

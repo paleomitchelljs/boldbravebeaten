@@ -93,6 +93,15 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
   give it a warhammer); the south walk barely moves its legs. (The open-mouth smudge on walk frames east 5 and west 1
   was painted over with the closed jaw of the frame before, 2026-10-25.) A temple of lizardfolk wants several: warrior,
   shaman, a larger brute.
+- [x] The Suracayl (2026-10-28): the temple's lizardfolk, a faction, in every area but the ritual chamber
+  (`assets/ideas/temple-dungeon.md`, *Who lives where*). Warriors (green and tan) in the court and palace, skinks in the
+  labyrinth and sewers, varanus in the pyramid court, gorillas at the palace door, the dread shaman (with two varanus)
+  on the pyramid top in place of the drake, Jabiku on the palace throne with a skeleton. An encounter's foe can wear
+  another art entry (`sprite`), and the map square shows a mixed group mixed.
+- [ ] Ask the user: Suracayl in the ritual chamber too (they said every area)? Skinks and raptors are harmless to an
+  armored level-1 party in the sims; is that their place, or should they get something armor doesn't stop? Jabiku has
+  one skeleton guard, not two (two made the throne a 3% fight).
+- [ ] Raptor sprite (to be regenerated) for the labyrinth's raptor packs: walk, strike, death, idle.
 - [x] PixelLab figures face eight ways (2026-10-25): walking uses the nearest direction the art has walks for
   (`walks` in `art.yaml`), standing uses the eight rotations; in a fight a figure faces its nearest foe (`face` on a
   scene actor), exploring it keeps the way it last walked.

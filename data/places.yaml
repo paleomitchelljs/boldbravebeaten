@@ -355,16 +355,16 @@ temple_court:
     L: {kind: stairs, to: temple_maze, at: N, sprite: door, wall: true, label: "Door to the labyrinth"}
     P: {kind: stairs, to: temple_palace, at: W, sprite: door, wall: true, label: "The arched door to the palace"}
     g: {kind: monster, encounter: gate, label: "Guards at the gate"}
-    c: {kind: monster, encounter: court, label: "Lizardfolk in the court"}
+    c: {kind: monster, encounter: court, label: "Suracayl in the court"}
     l: {kind: monster, encounter: maze_door, label: "Guards at the labyrinth door"}
-    p: {kind: monster, encounter: palace_door, label: "Guards at the palace door"}
+    p: {kind: monster, encounter: palace_door, label: "Gorillas at the palace door"}
   encounters:
-    gate: {foes: [{monster: scaleward}], text: "A scaled warrior by the gate turns, hammer up."}
-    court: {foes: [{monster: scalewardPair}], text: "Two lizardfolk in the middle of the court break off and come at you."}
-    maze_door: {foes: [{monster: scaleward}], text: "The guard at the south door hisses and sets its feet."}
-    palace_door: {foes: [{monster: scalewardPair}], text: "The palace guards step down from the arch together."}
+    gate: {foes: [{monster: scaleward}], text: "A Suracayl warrior by the gate turns, hammer up."}
+    court: {foes: [{monster: scaleward}, {monster: scaleward, sprite: {art: lizardfolk-warrior-tan}}], text: "Two Suracayl in the middle of the court break off and come at you."}
+    maze_door: {foes: [{monster: scaleward, sprite: {art: lizardfolk-warrior-tan}}], text: "The Suracayl at the south door hisses and sets its feet."}
+    palace_door: {foes: [{monster: templeGorillaPair}], text: "The two great apes squatting under the palace arch come up off their knuckles."}
   wandering:
-    - {w: 1, foes: [{monster: scaleward}], text: "A patrol comes along the wall."}
+    - {w: 1, foes: [{monster: scaleward, sprite: {art: lizardfolk-warrior-tan}}], text: "A Suracayl patrol comes along the wall."}
     - {w: 4, nothing: true}
   secrets: []
 
@@ -412,20 +412,20 @@ temple_maze:
     W: {kind: drop, to: temple_sewer, at: L, sprite: well, label: "A well, its rope long gone", text: "There is nothing to climb by. You lower yourselves over the edge and let go, and land in a foul shallow pool."}
     C: {kind: chest, label: "A niche with a sealed jar", loot: strongbox, tn: 8}
     "1": {kind: monster, encounter: snake, label: "Something in the dead end"}
-    "2": {kind: monster, encounter: pair, label: "Lizardfolk at their fire"}
+    "2": {kind: monster, encounter: pair, label: "Suracayl at their fire"}
     "3": {kind: monster, encounter: raptors, label: "Something quick in the dark"}
-    "4": {kind: monster, encounter: watch, label: "A lizardfolk watch"}
+    "4": {kind: monster, encounter: watch, label: "A Suracayl watch"}
     "5": {kind: monster, encounter: raptors2, label: "Clicking claws on stone"}
     G: {kind: monster, encounter: golem, label: "A great figure of clay in the dead end"}
   encounters:
     snake: {foes: [{monster: constrictor}], text: "A great snake uncoils from the end of the passage."}
-    pair: {foes: [{monster: scalewardPair}], text: "Two lizardfolk look up from their fire and reach for their weapons."}
+    pair: {foes: [{monster: suracaylSkink, n: 2}, {monster: suracaylSkink, sprite: {art: lizardfolk-alt-purple}}], text: "Three Suracayl skinks look up from their fire, and are on their feet before you are through the turn."}
     raptors: {foes: [{monster: raptorPack}], text: "Three raptors come out of the dark at a run, spreading as they come."}
     raptors2: {foes: [{monster: raptorPack}], text: "The hall is a hunting ground. Raptors fan out across it."}
-    watch: {foes: [{monster: scaleward}], text: "A scaled guard steps out of a side passage."}
+    watch: {foes: [{monster: suracaylSkink, n: 2, sprite: {art: lizardfolk-alt-purple}}], text: "Two Suracayl skinks drop out of a side passage, claws out."}
     golem: {foes: [{monster: clayGolem}], text: "The clay figure at the end of the passage turns its head, and steps down off its plinth."}
   wandering:
-    - {w: 1, foes: [{monster: scaleward}], text: "A lizardfolk patrol rounds the bend."}
+    - {w: 1, foes: [{monster: suracaylSkink}, {monster: suracaylSkink, sprite: {art: lizardfolk-alt-purple}}], text: "Two Suracayl skinks round the bend at a run."}
     - {w: 1, foes: [{monster: raptor, n: 2}], text: "Two raptors, hunting."}
     - {w: 5, nothing: true}
   secrets: []
@@ -499,14 +499,14 @@ temple_court2:
     s: {kind: monster, encounter: snake, on: "*", label: "Something coiled below the top stair"}
     D: {kind: monster, encounter: top, on: "&", label: "On the top of the pyramid"}
   encounters:
-    door: {foes: [{monster: scalewardPair}], text: "Two lizardfolk at the door turn as it opens."}
-    patrol: {foes: [{monster: scaleward}], text: "A scaled guard comes round the corner of the pyramid."}
+    door: {foes: [{monster: suracaylVaranus}, {monster: suracaylVaranus, sprite: {art: lizardfolk-varanus-brown}}], text: "Two heavy Suracayl varanus at the door turn as it opens, tongues flicking."}
+    patrol: {foes: [{monster: suracaylVaranus, sprite: {art: lizardfolk-varanus-brown}}], text: "A Suracayl varanus comes round the corner of the pyramid."}
     bones: {foes: [{monster: skeleton}], text: "Bones laid out on the terrace pull themselves together."}
-    terrace: {foes: [{monster: scaleward}], text: "A guard at the head of the steps raises its hammer."}
+    terrace: {foes: [{monster: suracaylVaranus, sprite: {art: lizardfolk-varanus-black}}], text: "A black varanus at the head of the steps lifts its head and opens its jaws."}
     snake: {foes: [{monster: constrictor}], text: "A great snake slides down the carved face."}
-    top: {foes: [{monster: drake}], text: "A red drake uncurls from the altar and spreads its wings."}
+    top: {foes: [{monster: dreadShaman}, {monster: suracaylVaranus, sprite: {art: lizardfolk-varanus-black}}, {monster: suracaylVaranus, sprite: {art: lizardfolk-varanus-brown}}], text: "A Suracayl in a bone mask turns from the altar and lifts its staff. The two varanus at its feet rise."}
   wandering:
-    - {w: 1, foes: [{monster: scaleward}], text: "A patrol comes round the pyramid."}
+    - {w: 1, foes: [{monster: suracaylVaranus}], text: "A Suracayl varanus comes round the pyramid."}
     - {w: 4, nothing: true}
   secrets: []
 
@@ -533,7 +533,7 @@ temple_sewer:
     - "####....~~~~=~~~~~~~~=~~~........####.~~~.########"
     - "#######.~~~~=~~~~~~~~=~~~~~......####.~~~.########"
     - "#######.....=~~~~~~~~=..~~~~~.........~~~.########"
-    - "#######................~~~~~~~~.b.....~~~.########"
+    - "#######.......k........~~~~~~~~.b.....~~~.########"
     - "#######............#...~~###~~~~......~~~...######"
     - "#######..~~.########...~~####~~~~...~~~~~...######"
     - "#######..~~.#######...~~~#####~~~~~~~~~~~~~..#####"
@@ -563,6 +563,7 @@ temple_sewer:
     r: {kind: monster, encounter: rats, label: "Rats in the dead end"}
     g: {kind: monster, encounter: golem, label: "A stone figure where the planks begin"}
     a: {kind: monster, encounter: gator, label: "A log in the channel"}
+    k: {kind: monster, encounter: hunter, label: "Skinks hunting rats"}
     b: {kind: monster, encounter: gators, label: "Ripples in the water"}
     X: {kind: drop, to: temple_ritual, at: D, sprite: drain, on: "=", label: "A great grate over the drain, rusted half through", text: "The grate gives under your weight. You fall through the dark with the sewer water and come down in a shallow pool."}
   encounters:
@@ -570,6 +571,7 @@ temple_sewer:
     golem: {foes: [{monster: stoneGolem}], text: "The statue at the head of the planks is not a statue. It steps into your way."}
     gator: {foes: [{monster: alligator}], text: "The log in the channel opens its eyes, and its jaws."}
     gators: {foes: [{monster: alligator, n: 2}], text: "Two alligators slide up out of the water onto the walkway."}
+    hunter: {foes: [{monster: suracaylSkink}, {monster: suracaylSkink, sprite: {art: lizardfolk-alt-purple}}], text: "Two Suracayl skinks crouched over a dead rat look up, and come at you along the walkway."}
   wandering:
     - {w: 1, foes: [{monster: ratPack}], text: "Rats pour along the walkway."}
     - {w: 1, foes: [{monster: alligator}], text: "Something heavy comes up out of the water."}
@@ -656,20 +658,22 @@ temple_palace:
     W: {kind: stairs, to: temple_court, at: P, sprite: palace_gate, wall: true, label: "Back out to the court"}
     U: {kind: stairs, to: temple_palace_up, at: U, up: true, sprite: stair_up, label: "Stairs up to the living quarters"}
     D: {kind: stairs, to: temple_palace_stair, at: U, sprite: stair_down, label: "A stair down, in a niche off the great hall"}
-    s: {kind: prop, sprite: statue, label: "A statue of a lizardfolk warrior"}
+    s: {kind: prop, sprite: statue, label: "A statue of a Suracayl warrior"}
     c: {kind: prop, sprite: column, label: "A column"}
     b: {kind: prop, sprite: brazier, label: "A brazier, burning"}
     T: {kind: prop, sprite: throne, on: "|", label: "The throne"}
     C: {kind: chest, loot: strongbox, tn: 8, label: "A chest"}
     h: {kind: monster, encounter: hall, label: "A guard in the great hall"}
-    k: {kind: monster, encounter: throne, on: "|", label: "The throne's guard"}
+    k: {kind: monster, encounter: throne, on: "|", label: "Jabiku on his throne"}
     r: {kind: monster, encounter: rats, label: "Rats in a side chamber"}
   encounters:
-    hall: {foes: [{monster: scaleward}], text: "A guard pacing the hall wheels about."}
-    throne: {foes: [{monster: scalewardPair}], text: "The two on the dais come down the steps together."}
+    hall: {foes: [{monster: scaleward}], text: "A Suracayl guard pacing the hall wheels about."}
+    # One skeleton guard, not two: two of them alone beat the example level-1 party (13%, tools/encounters.js), and Jabiku
+    # raises the fallen besides.
+    throne: {foes: [{monster: jabiku}, {monster: skeleton}], text: "On the throne a figure in a horned skull lifts its staff. The skeleton at the foot of the dais steps down to meet you."}
     rats: {foes: [{monster: ratPack}], text: "The chamber is full of rats."}
   wandering:
-    - {w: 1, foes: [{monster: scaleward}], text: "A guard comes through the gallery."}
+    - {w: 1, foes: [{monster: scaleward, sprite: {art: lizardfolk-warrior-tan}}], text: "A Suracayl guard comes through the gallery."}
     - {w: 4, nothing: true}
   secrets: []
 
@@ -713,7 +717,7 @@ temple_palace_up:
     q: {kind: monster, encounter: servants, label: "Servants at the table"}
     g: {kind: monster, encounter: golem, label: "An iron figure by the chest"}
   encounters:
-    sleeper: {foes: [{monster: scaleward}], text: "The sleeper rolls off the bed with a hammer already in hand."}
+    sleeper: {foes: [{monster: scaleward, sprite: {art: lizardfolk-warrior-tan}}], text: "The sleeper rolls off the bed with a hammer already in hand."}
     servants: {foes: [{monster: koboldBand}], text: "The servants drop their bowls and grab knives."}
     golem: {foes: [{monster: ironGolem}], text: "The iron figure at the foot of the bed grinds round to face you."}
   wandering: []
@@ -761,7 +765,7 @@ temple_palace_stair:
     C: {kind: chest, loot: strongbox, tn: 8, label: "A chest"}
     g: {kind: monster, encounter: stairguard, label: "A guard on the stair"}
   encounters:
-    stairguard: {foes: [{monster: scaleward}], text: "The guard on the stair blocks the way down."}
+    stairguard: {foes: [{monster: scaleward}], text: "The Suracayl on the stair blocks the way down."}
   wandering: []
   secrets: []
 
@@ -795,6 +799,6 @@ temple_wall:
     W: {kind: stairs, to: temple_sewer, at: G, sprite: well, label: "The well: rungs and a rope down into the dark"}
     h: {kind: monster, encounter: guardhouse, label: "The guardhouse watch"}
   encounters:
-    guardhouse: {foes: [{monster: scaleward}], text: "The watch in the guardhouse was dozing. Not any more."}
+    guardhouse: {foes: [{monster: scaleward, sprite: {art: lizardfolk-warrior-tan}}], text: "The Suracayl in the guardhouse was dozing. Not any more."}
   wandering: []
   secrets: []
