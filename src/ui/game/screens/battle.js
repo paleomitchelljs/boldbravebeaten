@@ -1,7 +1,7 @@
 /*
  * Battle: the same top-down map you were walking, with the fighters on it. The map stays in view the whole
- * time. The log is a strip just under it (inside the map's frame, so it never covers a square) that opens on a
- * click; under that, one compact row of dropdowns declares the active character's actions; sheets and explanations
+ * time. Beside it (under it on a narrow screen) the command pane declares the active character's actions, with the
+ * fight's log, scrollable, under the pane; sheets and explanations
  * are pop-ups. The engine, and the turn commands, are
  * the rules layer's (src/ui/views/battle.js exports the command panel; this file is the screen around it).
  */
@@ -35,7 +35,6 @@
         flee: (a, enc) => flee(game, enc),
         over: () => null,
         sheet: (id) => game.openOverlay('sheet', { id }),
-        choose: true,       // the player picks every target; nothing is pre-selected
         react: (req, enc, chars) => askOnMap(game, req, enc, chars),
       },
     };
@@ -344,12 +343,15 @@
     }));
   }
 
-  function logStrip(game, enc) {
-    const open = !!game.ui.logOpen;
-    const lines = enc.log.slice(-(open ? 80 : 2));
-    const box = h('div', { class: 'logbox' + (open ? ' open' : ''), role: 'log', title: open ? 'Click to shrink' : 'Click to read the whole fight', onclick: () => { game.ui.logOpen = !open; game.render(); } },
+  // The fight's log, under the command pane: always scrollable, kept at the newest line unless you have scrolled up
+  // to read back.
+  function logPanel(game, enc) {
+    const ui = game.ui;
+    const lines = enc.log.slice(-200);
+    const box = h('div', { class: 'battle-log', role: 'log', 'aria-label': 'Fight log', onscroll: (e) => { const b = e.target; ui.logUp = b.scrollTop + b.clientHeight < b.scrollHeight - 4; ui.logScroll = b.scrollTop; } },
       lines.length ? lines.map((l) => h('p', { class: 'l ' + (l.cls || '') }, l.text)) : h('p', { class: 'l' }, 'The fight is about to begin.'));
-    if (open) setTimeout(() => { box.scrollTop = box.scrollHeight; }, 0);
+    const keep = ui.logUp ? ui.logScroll : null;
+    setTimeout(() => { box.scrollTop = keep != null ? keep : box.scrollHeight; }, 0);
     return box;
   }
 
@@ -456,11 +458,10 @@
           live ? initiativeBar(game, app, enc) : null,
           h('div', { class: 'stage' },
             game.ui.mv ? game.ui.mv.el : null,
-            live ? logStrip(game, enc) : null,
             live ? turnBanner(game, enc, bs.chars) : null,
             live && game.ui.reacting ? reactionCard(game) : null,
             !live ? resultCard(game) : null)),
-        live ? h('div', { class: 'battle-side' }, P().phasePanel(app, enc, legal, sync)) : null));
+        live ? h('div', { class: 'battle-side' }, P().phasePanel(app, enc, legal, sync), logPanel(game, enc)) : null));
   };
 
   // Enter commits the action being built; Escape lets go of a chosen target or square.

@@ -846,6 +846,31 @@
     return (c.inventory && c.inventory[o.ammo || 'arrows']) || 0;
   }
 
+  // What a fighter should know about their gear: weapons worn down or broken, arrows running out (CONFIG.gearWarn).
+  // arrows: the count to judge by (the party's shared supply outside a fight); else what they carry.
+  // Returns [{ kind: 'worn' | 'broken' | 'arrows', text }].
+  function gearWarnings(c, arrows) {
+    const W = CONFIG.gearWarn || {};
+    const out = [];
+    const seen = new Set();
+    for (const id of [c.wield, c.offhand, c.sidearm]) {
+      const w = id && c.weapons.find((x) => x.id === id);
+      if (!w || seen.has(w.id)) continue;
+      seen.add(w.id);
+      const max = Items.weaponMaxDurability(w);
+      if (!max) continue;
+      const d = Items.weaponDurability(w);
+      const name = Items.itemName(w);
+      if (d <= 0) out.push({ kind: 'broken', text: `${name} is broken` });
+      else if (d / max <= (W.weaponWorn != null ? W.weaponWorn : 0.5)) out.push({ kind: 'worn', text: `${name} is worn (${d}/${max}): it hits for less and will break` });
+    }
+    if (c.weapons.some((w) => WEAPONS[w.type] && WEAPONS[w.type].ranged)) {
+      const n = arrows != null ? arrows : ((c.inventory && c.inventory.arrows) || 0) + ((c.inventory && c.inventory.bodkins) || 0);
+      if (n <= (W.arrowsLow != null ? W.arrowsLow : 5)) out.push({ kind: 'arrows', text: n ? `${n} arrow${n === 1 ? '' : 's'} left` : 'No arrows left' });
+    }
+    return out;
+  }
+
   function unarmedOption(c, kind) {
     const a = ACTIONS[kind];
     let ap = Math.round(baseAP(a.ap));
@@ -1010,7 +1035,7 @@
     rank, featCount, featBudget, treeCount, tierCount, tierName, canTakeFeat, canRemoveFeat, addFeat, removeFeat, reqText, roman,
     conditioning, attr, attrMax, combatAttr, armorInfo, armorPieces, armorAt, armorUniform, shieldInfo, shieldReady, wieldedWeapon, offhandWeapon,
     maxStamina, freshStamina, wearyRound, regen, fatiguePenalty, apPool, apScale, costScale, fmtAP, minAP, baseAP, armorAP, quickCut, moveCost, squaresFor, squaresPerAP, handsBusy, castingHands, weaponStrain, inRange, optionKey, needsWindUp, strOffset, staminaCost, effectiveWeight, isLightWeapon,
-    strBonus, weaponDamage, mainIndex, attackOptions, actionCost, ammoLeft, tireless, webTax,
+    strBonus, weaponDamage, mainIndex, attackOptions, actionCost, ammoLeft, gearWarnings, tireless, webTax,
     damageAttr, healAttr, totalDamage, updateCondition, isActive, bleedPerRound,
     grapple, holding, isHeld, isPinned, inClinch,
     gearSources, gearSum, damageMult, gearAP, weaponStrike, weaponApLess,

@@ -108,6 +108,24 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
   mage and the palace boss are both "Jabiku"; in the sims Cyrus dies most (105 of 257 deaths over the temple), Beren
   least (12). Foes that can't hurt plate (wolves, level-1 bandits) won't close on Beren or past him, so a party that
   waits is never attacked (the AI judging its blows worthless; it attacks the others when he is not covering them).
+- [x] The temple is the start (the user, 2026-10-28): `start.yaml go`; the title's Quick start and the creation
+  screen's example party begin the presets as they are (the editor's copy had dropped their level and gear). The
+  Undercroft, the Hollow Barrow, Gallows Cave and the town quests through them are retired to
+  `tests/fixtures/legacy.yaml` (merged by `tests/legacy.js` for the engine tests). Stonebridge stays as home.
+- [x] The mage could not cast: the magic feats were all `auto: false` (no caster could be made or trained), and the
+  preset mage had a two-handed staff (a spell needs a free hand). Implemented magic feats are now in the game; the mage
+  carries a dagger; `validate` refuses a preset caster with a two-hander and no Battle Casting. With a mage who casts,
+  the temple is easy at level 3 (n=30: throne 93%, Avatar 100%, only the clay and iron golems unbeaten).
+- [x] Training at camp (the user, 2026-10-28): making camp offers Train to anyone with a feat to spend, at
+  `rules.yaml game.campTraining` x the Training Yard's price (1).
+- [x] Fights: the target defaults to the foe this fighter last went for, else the nearest; a click switches. A turn
+  opens on the tab last used (a caster's first on Magic). Worn or broken weapons and low arrows show as a chip in the
+  pane, a tag on the attack, and a mark on the explore dock (`CONFIG.gearWarn`). The log is a scrollable panel under
+  the command pane (on a phone, under it in the bottom-stuck block).
+- [ ] Ask the user: the town (Stonebridge) stays as home; abandon it too? Should the temple be harder now the mage casts?
+- [ ] Phones (the user, 2026-10-28: "optimize for mobile"): seen at 500 px in headless Chrome only. The explore map
+  leaves the lower half of a portrait screen empty (it keeps the 15x10 shape); show more rows when tall. Map clicks are
+  small at 500 px.
 - [ ] Raptor sprite (to be regenerated) for the labyrinth's raptor packs: walk, strike, death, idle.
 - [x] PixelLab figures face eight ways (2026-10-25): walking uses the nearest direction the art has walks for
   (`walks` in `art.yaml`), standing uses the eight rotations; in a fight a figure faces its nearest foe (`face` on a
@@ -367,9 +385,8 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
 - [ ] Monsters do not move on the map; fleeing returns you to the stairs.
 - [ ] Feats that need rules code outside a fight (tracker, appraise, diagnose, alchemy, light fingers) are `auto: false`.
 - [ ] No hiring, restocking vendors, torch resource or hunger.
-- [ ] Social balance has no sim yet (a bot that tries fight / parley / sneak through the Undercroft).
+- [ ] Social balance has no sim yet (a bot that tries fight / parley / sneak through a dungeon).
 - [ ] Save format has a version field but no migration.
-- [ ] More dungeon maps in the new style; the other three are still the old layouts with no scenery props.
 
 ## Done recently
 - Review of mechanics and code (docs/REVIEW.md). Fixed: shoves and throws went through walls; pushes ignored pits,

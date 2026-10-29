@@ -646,6 +646,9 @@
     // A dodge costs a weapon nothing. A worn weapon keeps `floor` of its damage, sliding down as it
     // wears; at 0 it breaks and can't be used until a smith mends it. null: weapons never wear.
     weaponWear: { hit: 0.4, deflected: 1.0, parried: 0.15, parry: 0.25, blocked: 0.25, floor: 0.6 },
+    // Warnings shown on a fighter (C.gearWarnings): a weapon at or below this share of its durability, arrows at or
+    // below this count for someone carrying a bow.
+    gearWarn: { weaponWorn: 0.5, arrowsLow: 5 },
     // How much more a material lasts than iron is its toughness in materials.yaml.
     // Per-armor overrides of the Specifics armor table, e.g. { plate: { stamina: 1, regen: 3 } }.
     // TUNED (arena, round 3): plate +1 stamina per action (was +2) and −3 regen (was −4).

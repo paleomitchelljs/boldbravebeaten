@@ -327,6 +327,12 @@
       if (k.sidearm && !has(D.WEAPONS, k.sidearm)) err(`start.kits.${k.id}: sidearm "${k.sidearm}" unknown`);
     }
     for (const p of S.presets || []) for (const f of p.feats || []) if (!has(D.FEATS, f)) err(`start.presets.${p.name}: feat "${f}" unknown`);
+    // A caster whose first weapon takes both hands cannot cast (a spell needs a free hand) without Battle Casting.
+    for (const p of [].concat(S.presets || [], ...(S.trials || []).map((t) => t.party || []))) {
+      const kit = (S.kits || []).find((k) => k.id === p.kit) || {};
+      const first = p.weaponItems ? p.weaponItems[0] && p.weaponItems[0].weapon : kit.wield;
+      if ((p.feats || []).some((f) => /^verb_/.test(f)) && first && (D.WEAPONS[first] || {}).hands === 2 && !(p.feats || []).includes('battle_casting')) err(`start: ${p.name} knows spells but wields a two-handed ${first}, so cannot cast (take battle_casting or a one-handed weapon)`);
+    }
     for (const t of S.trials || []) {
       if (t.go && !has(places, t.go.to)) err(`start.trials.${t.id}: go to unknown place "${t.go.to}"`);
       for (const p of t.party || []) {

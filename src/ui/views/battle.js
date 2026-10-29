@@ -208,6 +208,9 @@
     app.render();
     let err;
     try { err = await Combat.act(enc, app.state.characters, decl, ioFor(app)); } finally { ui.busy = false; }
+    // Remember whom each fighter last went for: their next command defaults to them (syncCommand).
+    const chars = app.state.characters;
+    if (!err && decl.target && chars[decl.target] && chars[decl.actor] && chars[decl.target].side !== chars[decl.actor].side) (ui.lastTarget || (ui.lastTarget = {}))[decl.actor] = decl.target;
     if (err) toast(err);
     else {
       ui.mode = null;
@@ -373,7 +376,9 @@
       if (o.spell) magic.push(Object.assign(e, { kind: 'strike', label: o.label, targets: sortTargets(o.targets, chars, c) }));
       else {
         const w = o.weaponId ? c.weapons.find((x) => x.id === o.weaponId) : null;
-        martial.push(Object.assign(e, { group: 'Attacks', kind: 'strike', label: o.label + (w ? ` · ${Items.itemName(w)}` : ''), weapon: w, targets: sortTargets(o.targets, chars, c) }));
+        const wd = w ? Items.weaponDurability(w) : null, wm = w ? Items.weaponMaxDurability(w) : 0;
+        const wear = wm && wd != null && wd / wm <= ((G.CONFIG.gearWarn || {}).weaponWorn || 0.5) ? (wd <= 0 ? ' ⚠ broken' : ` ⚠ worn ${Math.round(100 * wd / wm)}%`) : '';
+        martial.push(Object.assign(e, { group: 'Attacks', kind: 'strike', label: o.label + (w ? ` · ${Items.itemName(w)}` : '') + wear, weapon: w, targets: sortTargets(o.targets, chars, c) }));
       }
     }
     for (const m of legal.maneuvers) {
@@ -408,10 +413,13 @@
     const c = app.state.characters[id];
     const model = commandModel(app, enc, legal, c);
     if (!ui.cmd || ui.cmd.for !== id) {
-      ui.cmd = { for: id, type: null, act: null, target: null, vs: '' };
+      // A fighter's turn opens on the tab they last used; a caster's first turn on Magic.
+      const last = ui.lastType && ui.lastType[id];
+      ui.cmd = { for: id, type: last || (model.magic.length && C.rank(c, 'casting') ? 'magic' : null), act: null, target: null, vs: '' };
     }
     const cmd = ui.cmd;
     if (!model.types.some((t) => t[0] === cmd.type)) cmd.type = model.types[0] ? model.types[0][0] : null;
+    if (cmd.type) (ui.lastType || (ui.lastType = {}))[id] = cmd.type;
     let entry = null;
     if (cmd.type === 'move') entry = model.move;
     else if (cmd.type === 'magic') entry = pickMagic(model.magic, cmd);
@@ -420,9 +428,12 @@
       entry = list.find((e) => e.key === cmd.act) || list.find((e) => e.affordable) || list[0] || null;
       cmd.act = entry ? entry.key : null;
     }
-    if (entry && entry.targets) {
-      // The preferred side first, in reach first; a host that wants the player to pick (app.hooks.choose) starts with none.
-      if (!entry.targets.some((t) => t.id === cmd.target)) cmd.target = app.hooks && app.hooks.choose ? null : entry.targets[0] ? entry.targets[0].id : null;
+    if (entry && entry.targets && !entry.targets.some((t) => t.id === cmd.target)) {
+      // The default: the foe this fighter last went for, if they are still a target here; else the first of the
+      // sorted list (the preferred side, in reach, nearest). A click on another figure switches.
+      const last = ui.lastTarget && ui.lastTarget[id];
+      cmd.target = last && entry.targets.some((t) => t.id === last) && app.state.characters[last].side !== c.side && !(entry.targets[0] && app.state.characters[entry.targets[0].id].side === c.side)
+        ? last : entry.targets[0] ? entry.targets[0].id : null;
     }
     // The map follows the choice.
     if (ui.mode !== 'place') {
@@ -543,7 +554,16 @@
       h('div', { class: 'cmd-id' },
         h('button', { class: 'who linkish', onclick: () => openSheet(app, enc, id), title: 'Character sheet' }, c.name),
         h('div', { class: 'cmd-stats', title: `Stamina ${c.stamina}/${max}${sp != null ? ` · ${sp} SP` : ''}` }, bar(c.stamina, max), h('span', { class: 'small num muted' }, `${c.stamina}${sp != null ? ` · ${sp} SP` : ''}`))),
-      pool != null ? h('div', { class: 'cmd-ap', title: `${C.fmtAP(left)} of ${C.fmtAP(pool)} AP left this round` }, apMeter(pool, left, fl, now), h('span', { class: 'num' }, C.fmtAP(left))) : null);
+      pool != null ? h('div', { class: 'cmd-ap', title: `${C.fmtAP(left)} of ${C.fmtAP(pool)} AP left this round` }, apMeter(pool, left, fl, now), h('span', { class: 'num' }, C.fmtAP(left))) : null,
+      gearWarn(c));
+  }
+
+  // A worn or broken weapon, or arrows running out: a chip in the pane's head, the details on hover.
+  function gearWarn(c) {
+    const ws = C.gearWarnings ? C.gearWarnings(c) : [];
+    if (!ws.length) return null;
+    const bad = ws.some((x) => x.kind === 'broken' || (x.kind === 'arrows' && /^No/.test(x.text)));
+    return h('span', { class: 'chip gear-warn' + (bad ? ' bad' : ''), title: ws.map((x) => x.text).join('; '), 'aria-label': ws.map((x) => x.text).join('; ') }, '⚠ ' + (ws.length === 1 ? ws[0].kind === 'arrows' ? ws[0].text : ws[0].kind : ws.length + ' gear'));
   }
 
   function pane(cls, head, body, foot) {

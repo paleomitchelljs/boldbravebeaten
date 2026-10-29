@@ -49,11 +49,11 @@ presets:
     feats: [quick_thrust, parry_training, riposte, quickness, dodge_training]
     look: {sprite: "art:cyrus"}
   # The mage (Jabiku's look until there is a mage of their own): fire, from arm's reach to a burst across the room.
+  # The kit's dagger, not a staff: a spell needs a free hand (a two-hander takes both) unless you have Battle Casting.
   - name: Jabiku
     kit: staff
     level: 3
     attrs: {STR: 3, CON: 5, DEX: 5, SPD: 5, INT: 8, WIL: 8, WIS: 3, CHA: 3}
-    weaponItems: [{weapon: staff}]
     feats: [casting, verb_strike, verb_launch, casting, verb_burst]
     nouns: [fire]
     look: {sprite: "art:jabiku"}

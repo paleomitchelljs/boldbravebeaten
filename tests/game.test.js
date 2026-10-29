@@ -615,3 +615,18 @@ test('a trial start: Tevax at level 8 with every listed feat, his own gear and t
   assert.equal(B.World.goodCount(w, 'silk_sash'), 0, 'and not left in the pack');
   assert.equal(c.look.sprite, 'art:tevax');
 });
+
+test('gear warnings: a worn or broken weapon, and arrows running out for a bow-carrier', () => {
+  const w = fresh();
+  const [beren, lorc] = World.party(w);
+  assert.deepEqual(C.gearWarnings(beren), []);
+  const sword = beren.weapons.find((x) => x.id === beren.wield);
+  const max = Items.weaponMaxDurability(sword);
+  sword.durability = Math.floor(max * B.CONFIG.gearWarn.weaponWorn);
+  assert.equal(C.gearWarnings(beren)[0].kind, 'worn');
+  sword.durability = 0;
+  assert.equal(C.gearWarnings(beren)[0].kind, 'broken');
+  assert.deepEqual(C.gearWarnings(lorc, 30), [], 'plenty of arrows');
+  assert.equal(C.gearWarnings(lorc, 2)[0].kind, 'arrows');
+  assert.match(C.gearWarnings(lorc, 0)[0].text, /No arrows/);
+});
