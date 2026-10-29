@@ -172,8 +172,10 @@
   }
 
   // ---- The Training Yard ----------------------------------------------------------------------------------------
-  function trainer(game, s) {
+  // Also the camp's training (overlays.js): opts.camp prices it as rules.yaml game.campTraining says.
+  function trainer(game, s, opts) {
     const w = game.world;
+    const camp = opts && opts.camp ? { camp: true } : null;
     const members = World.party(w).filter((c) => !c.status.dead);
     const cur = (game.ui.trainer && w.chars[game.ui.trainer]) || members[0];
     if (!cur) return h('p', null, 'No one is fit to train.');
@@ -184,22 +186,24 @@
     const tree = trees.find((x) => x.t.id === game.ui.trainTree);
     const pick = (label, el) => h('label', { class: 'pick' }, h('span', { class: 'label' }, label), el);
     return h('div', { class: 'stack' },
-      h('div', { class: 'row spread' }, h('div', { class: 'row' }, h('h3', null, s.name), UI.tip('Levels give feats; feats are taught here, for a price, and only between adventures. Each costs more the higher the rank.')), h('span', { class: 'gold num' }, `◈ ${w.gold}`)),
+      h('div', { class: 'row spread' }, h('div', { class: 'row' }, h('h3', null, s.name), UI.tip(camp ? 'Levels give feats. At camp you drill what you have seen and read, for the same price in gear and supplies as a teacher would ask. Each costs more the higher the rank.' : 'Levels give feats; feats are taught here, or practised at camp, for a price. Each costs more the higher the rank.')), h('span', { class: 'gold num' }, `◈ ${w.gold}`)),
       h('div', { class: 'row train-bar' },
         pick('Who', UI.select('train-who', cur.id, members.map((c) => [c.id, `${c.name} · L${c.level} · ${C.featBudget(c) - C.featCount(c)} to spend`]), (v) => { game.ui.trainer = v; game.render(); })),
         pick('Feats', UI.select('train-tree', game.ui.trainTree, trees.map(({ t, feats }) => [t.id, `${t.name} (${feats.filter((f) => C.rank(cur, f.id)).length}/${feats.length})`]), (v) => { game.ui.trainTree = v; game.render(); }))),
       h('div', { class: 'row small muted' }, `${C.featCount(cur)} of ${C.featBudget(cur)} feats`, left <= 0 ? ` · next level at ${G.World.xpFor(cur.level + 1)} XP (has ${cur.xp || 0})` : ` · ${left} to spend`, tree ? h('span', { class: 'chip' }, tree.t.attrs) : null),
       tree ? h('div', { class: 'ledger' }, tree.feats.map((f) => {
         const rk = C.rank(cur, f.id);
-        const tr = G.Town.trainable(cur, f.id);
+        const tr = G.Town.trainable(cur, f.id, camp);
         const full = rk >= f.ranks.length;
         return h('div', { class: 'ledger-row feat-row' },
           h('span', { class: 'row' }, h('b', null, f.name), h('span', { class: 'muted small' }, f.ranks.map((r, i) => (i < rk ? '●' : '○')).join('')), UI.tip(f.effect, f.name)),
           h('span'),
-          full ? h('span', { class: 'chip ok' }, 'Mastered') : tr.ok ? h('button', { class: 'small', disabled: w.gold < tr.cost || left <= 0, onclick: () => { const r = G.Town.train(w, cur, f.id); if (!r.ok) toast(r.reason); game.save(); game.render(); } }, `Train — ${tr.cost} ◈`)
+          full ? h('span', { class: 'chip ok' }, 'Mastered') : tr.ok ? h('button', { class: 'small', disabled: w.gold < tr.cost || left <= 0, onclick: () => { const r = G.Town.train(w, cur, f.id, camp); if (!r.ok) toast(r.reason); game.save(); game.render(); } }, `Train — ${tr.cost} ◈`)
             : dbg ? h('button', { class: 'small', onclick: () => { G.Town.train(w, cur, f.id, { bench: true, free: true }); game.render(); } }, 'Grant (debug)') : h('span', { class: 'small muted', title: tr.reason }, 'Locked'));
       })) : null);
   }
+
+  UI.Bits.trainer = trainer;
 
   UI.Screens.town = function (game) {
     const w = game.world;

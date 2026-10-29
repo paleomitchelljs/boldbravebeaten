@@ -454,6 +454,13 @@ test('town: training spends a feat and gold; only implemented feats are taught',
   assert.equal(C.rank(c, 'toughness'), 1);
   assert.ok(w.gold < before);
   assert.equal(Town.train(w, c, 'strength').ok, false, 'no free feats left');
+  // At camp the price is rules.yaml game.campTraining × the Training Yard's.
+  c.level += 1;
+  const camp = Town.trainable(c, 'strength', { camp: true });
+  assert.equal(camp.cost, Math.round(B.Economy.trainCost(c, 'strength') * B.CONFIG.game.campTraining));
+  const g0 = w.gold;
+  assert.ok(Town.train(w, c, 'strength', { camp: true }).ok);
+  assert.equal(w.gold, g0 - camp.cost);
 });
 
 test('town: the inn costs gold and restores everyone; healers are cheaper to friends', async () => {

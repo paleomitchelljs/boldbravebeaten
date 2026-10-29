@@ -150,6 +150,12 @@ test('ui: prompts: doors, locks, chests, people, stairs, traps and sleepers', ()
   // Sneaking toggles, search, camp (async), map.
   Game.ui = {}; w.explore.sneak = true; show('explore', 'sneaking');
   Explore.search(w); show('explore', 'after search');
+  // Training at camp: the camp's text overlay offers it, and the overlay draws the trainer.
+  World.party(w)[0].level += 1;
+  Game.openOverlay('text', { title: 'You make camp', text: 'Rest.', actions: [{ label: 'Train', onclick: () => {} }] });
+  Game.openOverlay('train'); check('train at camp');
+  assert.match(fake.doc.getElementById('modal-root').textContent, /Training at camp/);
+  Game.closeOverlay();
 });
 
 test('ui: the temple court: drawn from its tileset at 4x, a drop prompt, and a fight on the court that others join', () => {

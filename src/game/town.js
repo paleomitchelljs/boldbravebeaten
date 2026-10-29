@@ -116,16 +116,19 @@
   }
 
   // ---- Training ------------------------------------------------------------------------------
-  function trainable(c, id) {
+  // opts.camp: training at a camp in a dungeon (rules.yaml game.campTraining scales the price).
+  const trainPrice = (c, id, opts) => Math.round(E.trainCost(c, id) * (opts && opts.camp ? (G.CONFIG.game.campTraining != null ? G.CONFIG.game.campTraining : 1) : 1));
+
+  function trainable(c, id, opts) {
     const f = G.DATA.FEATS[id];
     const chk = C.canTakeFeat(c, id);
-    return { ok: chk.ok && f.auto, reason: !f.auto ? 'Not yet in the game' : chk.reason, cost: chk.ok ? E.trainCost(c, id) : null };
+    return { ok: chk.ok && f.auto, reason: !f.auto ? 'Not yet in the game' : chk.reason, cost: chk.ok ? trainPrice(c, id, opts) : null };
   }
 
   function train(world, c, id, opts) {
-    const t = trainable(c, id);
+    const t = trainable(c, id, opts);
     if (!t.ok && !(opts && opts.bench)) return { ok: false, reason: t.reason };
-    const cost = E.trainCost(c, id);
+    const cost = trainPrice(c, id, opts);
     if (world.gold < cost && !(opts && opts.free)) return { ok: false, reason: `Instruction costs ${cost} gold.` };
     if (!(opts && opts.free)) world.gold -= cost;
     C.addFeat(c, id);

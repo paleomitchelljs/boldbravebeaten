@@ -79,8 +79,10 @@ game:
   # XP needed to reach level n = xpBase * n * (n - 1) / 2 (so 60, 180, 360, 600…).
   xpBase: 60
   maxLevel: 10
-  # Training happens only in town, between adventures. Gold per rank, by the tier of the rank taken.
+  # Training: gold per rank, by the tier of the rank taken. In town at the Training Yard, or in a dungeon when the
+  # party makes camp (the user, 2026-10-28: level up without going back to town), at campTraining × the price.
   trainingCost: {novice: 20, apprentice: 60, adept: 160, expert: 400, master: 1000}
+  campTraining: 1
   # ---- Time and exploring -------------------------------------------------
   minutesPerStep: 5
   sneakStepMinutes: 10

@@ -181,9 +181,18 @@
     return shell(G.Explore.place(w).name, h('div', { class: 'stack' }, h('div', { class: 'mapfull' }, mv.el), h('p', { class: 'small muted' }, 'What you have seen, as you saw it. The ring is your party.')), close, true);
   };
 
+  // o.actions: extra buttons [{label, onclick}] beside Close (the camp's Train).
   UI.Overlays.text = function (game, o) {
     const close = () => game.closeOverlay();
-    return shell(o.title || '', h('div', { class: 'stack' }, String(o.text).split('\n').map((p) => h('p', null, p)), h('button', { class: 'primary', onclick: close }, 'Close')), close);
+    return shell(o.title || '', h('div', { class: 'stack' }, String(o.text).split('\n').map((p) => h('p', null, p)),
+      h('div', { class: 'row' }, (o.actions || []).map((a) => h('button', { onclick: a.onclick }, a.label)), h('button', { class: 'primary', onclick: close }, 'Close'))), close);
+  };
+
+  // Training at camp: the Training Yard's panel, priced for a camp.
+  UI.Overlays.train = function (game) {
+    const close = () => game.closeOverlay();
+    return shell('Training at camp', h('div', { class: 'stack' }, UI.Bits.trainer(game, { name: 'Drill and practice' }, { camp: true }),
+      h('button', { class: 'primary', onclick: close }, 'Done')), close);
   };
 
   UI.Overlays.loot = function (game, o) {

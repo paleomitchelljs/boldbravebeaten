@@ -218,7 +218,7 @@
       const L = levelFor(c.xp);
       if (L > c.level) {
         c.level = L;
-        lines.push(`${c.name} reaches level ${L}. (Spend the new feat at the Training Yard.)`);
+        lines.push(`${c.name} reaches level ${L}. (Spend the new feat at the Training Yard, or when you make camp.)`);
       }
     }
     lines.unshift(`+${amount} XP`);
