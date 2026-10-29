@@ -16,8 +16,11 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   the piece, its gap odds and Fine/Damaged/Broken; a Next round row when an action leaves you tired (fatigue is taken
   as the next round's pool is set). Blows are "Thrust", "Swing" (the part named only where a weapon has two blows of
   one name). The reaction card is the title, the choices with AP (and a defence's odds) and the AP left.
-- [ ] The AI won't close on plate, or on a waiting party (seen again 2026-10-28: two Suracayl stood off and read
-  Cyrus for 8 rounds). Fix in `ai.js` before anything else in combat.
+- [ ] The AI and waiting: in a browser shot (2026-10-28, party surprised, nobody acting) two Suracayl stood off for 8
+  rounds; headless (25 runs: party waiting, surprised, or AI-run) they always struck by round 1-5, so it is not
+  reproduced. Seen headless: an adjacent foe takes Read intent and then ends its turn without a blow (the read's
+  AP check assumes a blow after it, which the defence reserve then forbids). The old case stands: foes whose blows
+  can't hurt plate (wolves, bandits) won't close on Beren.
 - [ ] Groups snowball (docs/REVIEW.md Risk 1): needs a ruling (a cheaper second defence against the same attacker,
   or a cover reaction for a shield-bearer).
 - [ ] An attribute sim: +1 to each attribute in turn against fixed fights, to see what SPD and CON buy over the
