@@ -671,7 +671,7 @@
       ranks: [novice, apprentice, adept, expert, master]
       requires: []
       effect: Larger casting pool per rank
-      auto: false
+      auto: true
     control:
       name: Control
       ranks: [apprentice, adept, expert]
@@ -683,7 +683,7 @@
       ranks: [apprentice, adept]
       requires: [["casting:1"]]
       effect: "Spells cost a quarter less AP per rank (half at rank II)"
-      auto: false
+      auto: true
     battle_casting:
       name: Battle Casting
       ranks: [adept]
@@ -723,37 +723,37 @@
       ranks: [novice]
       requires: []
       effect: Learn the verb Strike (a bolt at arm's reach)
-      auto: false
+      auto: true
     verb_hex:
       name: "Verb: Hex"
       ranks: [novice]
       requires: []
       effect: Learn the verb Hex (a bane on a foe)
-      auto: false
+      auto: true
     verb_bless:
       name: "Verb: Bless"
       ranks: [novice]
       requires: []
       effect: Learn the verb Bless (a boon on an ally)
-      auto: false
+      auto: true
     verb_restore:
       name: "Verb: Restore"
       ranks: [novice]
       requires: []
       effect: "Learn the verb Restore (undo a noun's harm on an ally; Life heals)"
-      auto: false
+      auto: true
     verb_cover:
       name: "Verb: Cover"
       ranks: [novice]
       requires: []
       effect: Learn the verb Cover (a hazard on the ground)
-      auto: false
+      auto: true
     verb_ward:
       name: "Verb: Ward"
       ranks: [novice]
       requires: []
       effect: "Learn the verb Ward (protection from magic, missiles or an element)"
-      auto: false
+      auto: true
     verb_launch:
       name: "Verb: Launch"
       ranks: [apprentice]
@@ -766,7 +766,7 @@
           - "verb_cover:1"
           - "verb_ward:1"
       effect: Learn the verb Launch (a bolt at range)
-      auto: false
+      auto: true
     verb_build:
       name: "Verb: Build"
       ranks: [apprentice]
@@ -779,7 +779,7 @@
           - "verb_cover:1"
           - "verb_ward:1"
       effect: Learn the verb Build (a wall across several squares)
-      auto: false
+      auto: true
     verb_open:
       name: "Verb: Open"
       ranks: [apprentice]
@@ -792,7 +792,7 @@
           - "verb_cover:1"
           - "verb_ward:1"
       effect: Learn the verb Open (a pit)
-      auto: false
+      auto: true
     verb_inscribe:
       name: "Verb: Inscribe"
       ranks: [apprentice]
@@ -805,7 +805,7 @@
           - "verb_cover:1"
           - "verb_ward:1"
       effect: Learn the verb Inscribe (a hidden rune on a square)
-      auto: false
+      auto: true
     verb_blink:
       name: "Verb: Blink"
       ranks: [apprentice]
@@ -818,19 +818,19 @@
           - "verb_cover:1"
           - "verb_ward:1"
       effect: Learn the verb Blink (a short step through space)
-      auto: false
+      auto: true
     verb_burst:
       name: "Verb: Burst"
       ranks: [adept]
       requires: [["verb_launch:1"]]
       effect: Learn the verb Burst (an area)
-      auto: false
+      auto: true
     verb_beguile:
       name: "Verb: Beguile"
       ranks: [apprentice]
       requires: [["verb_hex:1", "verb_bless:1"]]
       effect: "Learn the verb Beguile (a mind spell: calm, dream, rage, fear, will)"
-      auto: false
+      auto: true
     word_doubling:
       name: Word Doubling
       ranks: [adept]
@@ -842,7 +842,7 @@
       ranks: [adept]
       requires: [["verb_build:1", "verb_bless:1"]]
       effect: "Learn the verb Conjure (a creature of the noun, for a few rounds)"
-      auto: false
+      auto: true
     verb_summon:
       name: "Verb: Summon"
       ranks: [adept]
@@ -854,31 +854,31 @@
       ranks: [expert]
       requires: [["verb_conjure:1", "verb_summon:1"]]
       effect: "Learn the verb Raise: a body gets up and fights for you (Bone a skeleton, Life a zombie, Spirit a revenant)"
-      auto: false
+      auto: true
     mod_strong:
       name: "Modifier: Strong"
       ranks: [novice]
       requires: []
       effect: Learn the modifier Strong
-      auto: false
+      auto: true
     mod_wide:
       name: "Modifier: Wide"
       ranks: [novice]
       requires: []
       effect: Learn the modifier Wide
-      auto: false
+      auto: true
     mod_long:
       name: "Modifier: Long"
       ranks: [novice]
       requires: []
       effect: Learn the modifier Long
-      auto: false
+      auto: true
     mod_far:
       name: "Modifier: Far"
       ranks: [apprentice]
       requires: [["mod_strong:1", "mod_wide:1", "mod_long:1"]]
       effect: Learn the modifier Far
-      auto: false
+      auto: true
     mod_swift:
       name: "Modifier: Swift"
       ranks: [apprentice]
@@ -890,19 +890,19 @@
       ranks: [apprentice]
       requires: [["mod_strong:1", "mod_wide:1", "mod_long:1"]]
       effect: Learn the modifier Lingering
-      auto: false
+      auto: true
     mod_delayed:
       name: "Modifier: Delayed"
       ranks: [apprentice]
       requires: [["mod_strong:1", "mod_wide:1", "mod_long:1"]]
       effect: "Learn the modifier Delayed: an area spell breaks at the end of the round, +3 magnitude, its mark seen by all"
-      auto: false
+      auto: true
     mod_name:
       name: "Modifier: Name"
       ranks: [apprentice]
       requires: [["mod_strong:1", "mod_wide:1", "mod_long:1"]]
       effect: "Learn the modifier Name: a targeted spell finds anyone whose name you know, anywhere on the field"
-      auto: false
+      auto: true
 - id: magicAffinity
   name: "Magic: affinity (fire)"
   attrs: INT

@@ -1,7 +1,7 @@
 // Tests for the game layer: content, world, exploring, parley, economy, equipment, battles, saves.
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const B = require('./load.js');
+const B = require('./legacy.js');
 const { World, Explore, Battle, Auto, Parley, Factions, Skills, Economy, Equip, Town, Save, Loot, Rand, Content, Character: C, Items } = B;
 
 const fresh = (seed) => { Rand.seed(seed || 1); return World.create(World.presetParty(), { log: false }); };

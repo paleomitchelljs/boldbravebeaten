@@ -97,7 +97,7 @@
       for (const t of spec.trinkets || []) { addGood(world, t, 1); G.Equip.equipTrinket(world, c, t); }
     }
     for (const id of Object.keys(content().factions || {})) G.Factions.standing(world, id);
-    if (opts.log !== false) logLine(world, 'Your party arrives in Stonebridge.', 'info');
+    if (opts.log !== false) logLine(world, `Your party arrives at ${((content().places || {})[(S.go && S.go.to) || world.place] || {}).name || world.place}.`, 'info');
     return world;
   }
 

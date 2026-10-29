@@ -1,5 +1,8 @@
 # New game: where the party begins, what it carries, and the starter kits to choose from.
+# place is home: the town the party wakes in when left for dead, and where leaving a dungeon leads. go: where a new
+# game begins (a place and its arrival square, as a trial's go); leave it out to begin in the town.
 place: stonebridge
+go: {to: temple_court, arrive: "<"}
 day: 1
 gold: 60
 supplies: {bandages: 4, arrows: 0, bodkins: 0}

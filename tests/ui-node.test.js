@@ -3,7 +3,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fake = require('./fakedom.js');
 fake.install();
-const B = require('./load.js');
+const B = require('./legacy.js');
 for (const f of ['ui/dom', 'ui/dice', 'ui/views/roster', 'ui/views/battle', 'ui/game/art', 'ui/game/icons', 'ui/game/sprites', 'ui/game/tilemap', 'ui/game/mapview', 'ui/game/bits', 'ui/game/game', 'ui/game/overlays', 'ui/game/charsheet',
   'ui/game/screens/title', 'ui/game/screens/create', 'ui/game/screens/town', 'ui/game/screens/explore', 'ui/game/screens/parley', 'ui/game/screens/battle']) require('../src/' + f + '.js');
 const { UI, World, Explore, Rand, Content } = B;
@@ -36,10 +36,13 @@ test('ui: title and creation screens render, and the example party starts a game
   for (let i = 0; i < 4; i++) { st.slot = i; show('create', 'create slot ' + i); }
   st.members[0].feats = ['verb_strike', 'casting', 'keen_eye']; st.members[0].nouns = ['fire'];
   show('create', 'caster');
+  // A new game begins where start.yaml's go says (the temple), in the example party's own gear.
   Game.newGame(World.presetParty());
-  assert.equal(Game.screen, 'town');
+  assert.equal(Game.screen, 'explore');
+  assert.equal(Game.world.place, Content.world.start.go.to);
   assert.ok(Game.world.partyIds.length === 4);
-  check('town after new game');
+  check('explore after new game');
+  Explore.leave(Game.world, 'stonebridge');
 });
 
 test('ui: the street and every location, shop tab, healer and trainer', () => {

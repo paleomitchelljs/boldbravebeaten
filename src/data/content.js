@@ -321,6 +321,7 @@
     }
     const S = W.start || {};
     if (S.place && !has(places, S.place)) err(`start.yaml: place "${S.place}" unknown`);
+    if (S.go && !has(places, S.go.to)) err(`start.yaml: go to unknown place "${S.go.to}"`);
     for (const k of S.kits || []) {
       if (k.wield && !has(D.WEAPONS, k.wield)) err(`start.kits.${k.id}: weapon "${k.wield}" unknown`);
       if (k.sidearm && !has(D.WEAPONS, k.sidearm)) err(`start.kits.${k.id}: sidearm "${k.sidearm}" unknown`);

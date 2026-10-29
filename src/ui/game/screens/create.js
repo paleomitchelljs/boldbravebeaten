@@ -24,6 +24,7 @@
   const spent = (m) => Object.values(m.attrs).reduce((t, v) => t + v, 0);
   const startingFeats = () => G.CONFIG.startingFeats;
   const chosen = (m) => m.feats.filter(Boolean);
+  const startName = () => { const S = G.Content.world.start || {}, id = (S.go && S.go.to) || S.place; return (G.Content.world.places[id] || {}).name || id; };
 
   // Feats a new character may take: first-rank, no prerequisites, and in the game.
   function startFeats() {
@@ -108,14 +109,15 @@
       h('div', { class: 'view-head compact' },
         h('div', { class: 'row' }, h('h1', null, 'Your company'), tip('Four adventurers. Everyone starts in padded armor with what they can carry; the rest you earn.', 'Your company')),
         h('div', { class: 'row' },
-          h('button', { onclick: () => { st.members = G.World.presetParty().map((p) => ({ name: p.name, kit: p.kit, attrs: Object.assign({}, p.attrs), feats: p.feats.slice(), nouns: (p.nouns || []).slice(), look: Object.assign({}, p.look) })); st.slot = 0; game.render(); } }, 'Example party'),
+          // The example party starts above level 1 in its own gear, which this level-1 editor cannot show: it begins as it is.
+          h('button', { onclick: () => game.newGame(G.World.presetParty()) }, 'Begin with the example party'),
           h('button', { onclick: () => game.go('title') }, 'Back'))),
       h('div', { class: 'tabs members', role: 'tablist' }, st.members.map((m, i) => h('button', { class: `tab ${st.slot === i ? 'active' : ''}`, role: 'tab', 'aria-selected': st.slot === i, onclick: () => { st.slot = i; game.render(); } },
         Sprites.portrait(G.World.makeCharacter(Object.assign({}, m, { feats: chosen(m) })), 28), h('span', { 'data-slot-tab': i }, m.name || '—'), bad[i].length ? h('span', { class: 'chip warn', title: bad[i].join('; ') }, '!') : h('span', { class: 'chip ok' }, '✓')))),
       bad[st.slot].length ? h('p', { class: 'small warn-text' }, 'Needs: ' + bad[st.slot].join('; ') + '.') : null,
       memberEditor(game, st),
       h('div', { class: 'row create-foot' },
-        h('button', { class: 'primary big', disabled: !ok, onclick: () => game.newGame(st.members.map((m) => Object.assign({}, m, { name: m.name.trim(), feats: chosen(m) }))) }, 'Begin in Stonebridge'),
+        h('button', { class: 'primary big', disabled: !ok, onclick: () => game.newGame(st.members.map((m) => Object.assign({}, m, { name: m.name.trim(), feats: chosen(m) }))) }, `Begin in ${startName()}`),
         !ok ? h('span', { class: 'small muted' }, 'Every character needs a name, all points spent and feats chosen. Hover the ! on a tab.') : null));
   };
 })(globalThis.BBB);

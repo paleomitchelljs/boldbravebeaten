@@ -50,9 +50,6 @@ captain_hollis:
   interests: [order, safety]
   greeting: "State your business. I've a gate to run."
   topics:
-    - {id: rats, label: "Does the Watch need help?", need: 2, kind: quest, starts: rats_in_cellars, hide: {quest: rats_in_cellars}, text: "Rats in the cellars under the mill, bigger than they ought to be. Clear the upper level. I'll pay for proof, not stories."}
-    - {id: rats_report, label: "The upper cellar is clear.", need: 0, kind: favor, requires: {flag: cleared_rat_nest}, hide: {flag: reported_rats}, sets: [reported_rats], text: "Good work. Here is what I promised. The Watch remembers its friends."}
-    - {id: ledger, label: "Tell me about the smugglers.", need: 5, kind: quest, tag: order, starts: smugglers_ledger, hide: {quest: smugglers_ledger}, text: "A man called Rusk runs the cellar. He keeps books. Get me that ledger and I can finally name names."}
     - {id: gate, label: "Can I come and go after dark?", need: 7, kind: pass, once: true, tag: order, sets: [gate_pass], text: "You've earned a lantern at the gate. Don't make me sorry."}
     - {id: bounty, label: "Is there a bounty on anything?", need: 3, kind: info, requires: {standing: {faction: town_watch, min: 10}}, text: "Cutthroats in the cellar: two crowns each. Bring a name, not a body."}
 
@@ -72,10 +69,7 @@ guildmaster_pell:
   interests: [business, profit]
   greeting: "Everything has a price. Let us find out what yours is."
   topics:
-    - {id: shipment, label: "Do you have work?", need: 3, kind: quest, starts: lost_shipment, hide: {quest: lost_shipment}, tag: profit, text: "Three crates of the Guild's goods went missing on the river road. I have reason to think they're in those cellars. Bring them back; the Guild pays well and remembers."}
-    - {id: shipment_done, label: "I have the crates.", need: 0, kind: favor, requires: {item: crate_goods}, hide: {flag: shipment_returned}, sets: [shipment_returned], takes: crate_goods, text: "Marked, sealed, and intact. You are better than my guards."}
     - {id: stock, label: "Is there better stock than the market shows?", need: 6, kind: favor, once: true, tag: profit, sets: [guild_stock], text: "For friends: yes. I'll open the back room for you at the smith's and the market."}
-    - {id: smugglers, label: "Who is moving goods around the toll?", need: 5, kind: info, sets: [knows_rusk], text: "A man named Rusk. Bad for business. If you find him, you may tell him the Guild has long memories."}
 
 warden_ysa:
   name: Warden Ysa
@@ -93,9 +87,6 @@ warden_ysa:
   interests: [mercy, rest]
   greeting: "Light and quiet to you. Are you hurt, or just tired?"
   topics:
-    - {id: barrow, label: "What lies beneath the hill?", need: 3, kind: info, sets: [knows_barrow], text: "The Hollow Barrow. An old burial. The Hollow Court wakes the dead there, and the seal on the door has gone missing. If it opens fully, the Watch will not be enough."}
-    - {id: seal, label: "Can I help with the barrow?", need: 5, kind: quest, tag: mercy, starts: barrow_seal, hide: {quest: barrow_seal}, requires: {flag: knows_barrow}, text: "The barrow's seal was carried off to the old cellars by thieves who didn't know what it was. Bring it to me, and then we can close the door. Beware the knight that walks there."}
-    - {id: seal_done, label: "I have the seal.", need: 0, kind: favor, requires: {item: barrow_seal}, hide: {flag: seal_returned}, sets: [seal_returned], takes: barrow_seal, text: "Thank you. It will be set again at dusk. You have done the town a service you will not hear of."}
     - {id: rites, label: "Will you teach me the old rites?", need: 8, kind: favor, once: true, tag: mercy, gives: {good: tome_still}, text: "These words were written for the keepers of the lamp. You are not a keeper. But you listen. Take it."}
 
 brannock:
@@ -134,8 +125,6 @@ wren_urchin:
   interests: [coin, safety]
   greeting: "Got a coin? I've got a map in my head."
   topics:
-    - {id: secret, label: "How do I get into the cellars quietly?", need: 2, kind: info, tag: coin, sets: [knows_cellar_back], text: "The back is oiled, but there's a loose grate at the east end. Ask nicely, or walk in the front and meet the rats."}
-    - {id: patrol, label: "When do the smugglers sleep?", need: 4, kind: info, tag: coin, sets: [knows_patrols], text: "Day. Mostly. The ones who stay up are the ones with the keys."}
 
 old_dagmar:
   name: Old Dagmar
@@ -153,7 +142,6 @@ old_dagmar:
   interests: [old days, drink]
   greeting: "Pull up a chair, lad. I've seen things."
   topics:
-    - {id: trolls, label: "Tell me about the cave north of the road.", need: 2, kind: info, sets: [knows_trolls], text: "Trolls. They regrow what you cut off. Burn them. Fire's the only thing that makes them stay down. And don't stand in the narrow of the cave. They'll break your shield and your arm together."}
     - {id: wolves, label: "How do you handle wolves?", need: 1, kind: info, text: "Back to a wall and keep a shield up. Never fight in the open; they go around you."}
     - {id: sleeve, label: "Do you have anything left from the old days?", need: 7, kind: favor, once: true, gives: {good: charm_wolf}, text: "Here. Wore it a dozen winters. Keeps the cold out of your thinking."}
 
@@ -173,46 +161,3 @@ sly_corvin:
   interests: [coin, discretion]
   greeting: "Sit. Don't stare. Everyone's watching, so smile."
   topics:
-    - {id: job, label: "I hear certain goods need delivering.", need: 4, kind: quest, tag: discretion, starts: crates_for_corvin, hide: {quest: crates_for_corvin}, lie: true, text: "The Guild's crates in the cellar belong to us now. Bring them to me instead, and you'll find it pays better than the Guild's gratitude."}
-    - {id: job_done, label: "I have the crates.", need: 0, kind: favor, requires: {item: crate_goods}, hide: {flag: shipment_returned}, sets: [crates_fenced], takes: crate_goods, text: "Wise. Here."}
-    - {id: back, label: "Is there a quiet way into the cellars?", need: 5, kind: pass, tag: coin, once: true, sets: [cutthroat_pass], text: "Knock twice, say the word 'tallow.' They'll know you're ours. Don't make me regret it."}
-    - {id: rusk, label: "Who runs the cellar?", need: 3, kind: info, sets: [knows_rusk], text: "Rusk. Sensible, as men with knives go. Take a purse and he might listen."}
-
-captain_rusk:
-  name: Captain Rusk
-  title: Smuggler boss
-  faction: cutthroats
-  sprite: knight
-  glyph: "🗡"
-  look: Heavy coat, light hands. He has a ledger on his belt and a knife in his sleeve.
-  attrs: {WIS: 7, WIL: 7, CHA: 6, INT: 7}
-  disposition: -2
-  willingness: 1
-  courage: 7
-  patience: 3
-  temperament: [venal, loyal]
-  interests: [coin, discretion, survival]
-  greeting: "You walked a long way to die in my cellar. Or to sell me something."
-  topics:
-    - {id: pass, label: "We're only passing through.", need: 5, kind: pass, tag: survival, sets: [rusk_stands_down], once: true, text: "Fine. Take the east tunnel and don't come back this way. If I see Watch colors, our arrangement ends."}
-    - {id: ledger_sale, label: "I'll buy your ledger.", need: 6, kind: trade, tag: coin, requires: {gold: 100}, sets: [ledger_bought], takes_gold: 100, gives: {good: ledger}, once: true, text: "A hundred. Don't spend it all on drink."}
-    - {id: join, label: "Do you need hired steel?", need: 8, kind: favor, tag: coin, once: true, gives: {gold: 60}, standing: {cutthroats: 15}, text: "Maybe. Here is something on account. Do not mention this to the Watch."}
-
-prisoner_tamsin:
-  name: Tamsin
-  title: Cellar prisoner
-  faction: ~
-  sprite: rogue
-  glyph: "⛓"
-  look: Pale and thin, ropes marking her wrists. Says she is a courier.
-  attrs: {WIS: 6, WIL: 5, CHA: 5, INT: 6}
-  disposition: 3
-  willingness: 6
-  courage: 3
-  patience: 5
-  temperament: [moral]
-  interests: [mercy, freedom]
-  greeting: "Please. Is it the Watch? Please say it is the Watch."
-  topics:
-    - {id: freed, label: "Walk out. I'll cover you.", need: 0, kind: favor, once: true, sets: [tamsin_freed], renown: 3, standing: {town_watch: 3, cutthroats: -6}, gives: {good: vault_key}, text: "You don't know what this means. They keep a vault key on the second level, and I took it from the guard when he slept. Take it. I can't use it."}
-    - {id: where, label: "What do you know about the lower level?", need: 1, kind: info, sets: [knows_lower], text: "A big room with the barrels. Rusk sleeps beyond it. There's a vault past a locked door, and a pit the guards laid in the corridor."}
