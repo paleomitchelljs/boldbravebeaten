@@ -295,6 +295,15 @@
         none: { label: 'Take it', note: 'keep the AP' },
       };
     }
+    if (req.kind === 'cover') {
+      const a = chars[req.attacker], t = chars[req.target];
+      const o = req.options[0];
+      return {
+        title: `${me.name} covers ${t.name}`, from: me.name, to: t.name, sub: `${a.name} swings at ${t.name}, who isn't defending: block it for them with your shield (−${G.CONFIG.defense.cover.penalty})`, ap,
+        choices: [{ value: 'cover', label: 'Cover', cost: C.fmtAP(o.ap), odds: o.odds != null ? `${Math.round(o.odds * 100)}%` : '?', hint: `${o.stamina} stamina; the blow lands on your shield.` }],
+        none: { label: 'Let it land', note: 'keep the AP' },
+      };
+    }
     const t = chars[req.target];
     const why = { enters: 'comes into', leaves: 'leaves', moves: 'moves about in' }[req.why] || 'leaves';
     return {

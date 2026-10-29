@@ -1,5 +1,26 @@
 # Simulation findings
 
+## Cover with a shield (2026-10-29; the user's choice against groups snowballing, docs/REVIEW.md Risk 1)
+
+`CONFIG.defense.cover` (PROVISIONAL): a blow at someone who puts up no defence of their own may be blocked for them
+by an ally within a square with a ready shield, paid from the bearer's AP and stamina, at −1 to the block. The
+alternative (a cheaper second defence against the same attacker) was turned down: it answers a quick striker's
+flurry, not several attackers, so it would move value from fast weapons to slow ones without touching the problem.
+
+Probe (not encounter tuning): the preset level-3 party, AI on both sides, in the temple court against two or three
+Suracayl warriors, 100 fights each, same seeds with cover off and on.
+
+| Foes | Cover | Won | Party deaths per fight | Covers per fight (succeeded) | Rounds |
+|---|---|---|---|---|---|
+| 2 | off | 79% | 0.42 | – | 7.4 |
+| 2 | on | 78% | 0.31 | 0.44 (68%) | 7.5 |
+| 3 | off | 40% | 0.74 | – | 9.1 |
+| 3 | on | 40% | 0.67 | 0.48 (60%) | 9.1 |
+
+Deaths fall (Cyrus 22 → 15 against two), wins don't move. The effect is small because only Beren carries a shield and
+the AI doesn't yet keep him beside the others; with n = 100 the drop against three (0.74 → 0.67) is within noise.
+Next, if cover is to matter: an AI that stands a shield beside the ally most at risk.
+
 ## The temple court: ground, drops, fights that draw in their neighbours (2026-10-24; `node tools/encounters.js --n 300`)
 
 New engine pieces for the temple (plan: `assets/ideas/temple-dungeon.md`): ground letters (grass, rubble, deep and

@@ -199,7 +199,8 @@
   }
 
   // Out of turn. req.kind 'defend': { actor, attacker, decl, hidden, options: [{type, ap, stamina, odds}] }
-  // → a defence type or null. req.kind 'opportunity': { actor, target, options: [attack options] }
+  // → a defence type or null. req.kind 'cover': { actor (the shield-bearer), attacker, target (the ally), decl, options:
+  // [one cover offer] } → 'cover' or null. req.kind 'opportunity': { actor, target, options: [attack options] }
   // → an option or null.
   function react(enc, chars, req) {
     const c = chars[req.actor];
@@ -220,6 +221,13 @@
         if (v >= P.defendFloor && (!pick || v > pick.v)) pick = { v, type: o.type };
       }
       return pick ? pick.type : null;
+    }
+    if (req.kind === 'cover') {
+      // A blow at an ally beside me that they won't meet: what it would do to them, against what my AP is worth.
+      const { threat } = perceivedThreat(enc, chars, req.decl, req.target);
+      const o = req.options[0];
+      const v = (o.odds != null ? o.odds : 0.4) * threat - per * o.ap - 0.3 * o.stamina;
+      return v >= P.defendFloor ? 'cover' : null;
     }
     if (req.kind === 'opportunity') {
       const t = chars[req.target];

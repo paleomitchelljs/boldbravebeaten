@@ -191,6 +191,38 @@
     return o;
   }
 
+  // Cover (CONFIG.defense.cover): allies with a ready shield within reach of the target who could block this blow for
+  // them now, each with the block's cost and odds (none when the blow can't be read).
+  function coverOptions(enc, chars, t, a, d) {
+    const K = CONFIG.defense.cover;
+    if (!K || d.type !== 'strike' || GRAPPLE_STEPS.includes(d.type)) return [];
+    const out = [];
+    for (const id of enc.order.concat(enc.ids.filter((x) => !enc.order.includes(x)))) {
+      const b = chars[id];
+      if (!b || id === t.id || id === a.id || b.side !== t.side || !C.isActive(b)) continue;
+      if (dist(enc.pos[id], enc.pos[t.id]) > K.reach || isGrappled(b)) continue;
+      if (defenseUnavailable(b, 'block', d, chars, enc) || conditionForbids(enc, chars, b, { type: 'block', target: a.id })) continue;
+      const { ap, stamina } = C.actionCost(b, 'block');
+      if (ap > apLeft(enc, id)) continue;
+      const hidden = describeBare(enc, chars, d, id).hidden;
+      out.push({ actor: id, type: 'cover', name: 'Cover', ap, stamina, odds: hidden ? null : defenseOdds(b, 'block', d.option.motion, a, d.option, -K.penalty), hidden });
+    }
+    return out;
+  }
+
+  // A blow nobody defended: the first shield-bearer beside the target who takes the offer covers. Returns the bearer
+  // and the offer, or null.
+  async function askCover(enc, chars, t, a, d, io) {
+    for (const o of coverOptions(enc, chars, t, a, d)) {
+      const pick = await react(enc, chars, { kind: 'cover', actor: o.actor, attacker: a.id, target: t.id, decl: d, hidden: o.hidden, options: [o], ap: apLeft(enc, o.actor) }, io);
+      if (pick !== 'cover') continue;
+      enc.ap[o.actor] -= o.ap;
+      enc.decls.push({ actor: o.actor, type: 'block', cover: t.id, against: a.id, reaction: true, ap: o.ap, stamina: o.stamina, n: ++enc.seq, done: true });
+      return { bearer: chars[o.actor], o };
+    }
+    return null;
+  }
+
   // Melee blows this fighter could aim at a square right now (an opportunity strike).
   function opportunityOptions(enc, chars, f, from) {
     if (!C.isActive(f) || f.status.prone || isGrappled(f) || C.inClinch(f)) return [];
@@ -1520,18 +1552,20 @@
   }
 
   // Chance a defense succeeds (the attacker's numbers when known).
-  function defenseOdds(defender, kind, motion, attacker, atkOption) {
+  function defenseOdds(defender, kind, motion, attacker, atkOption, extra) {
     const n = defenseNumbers(defender, kind, motion, attacker, atkOption);
+    n.bonus += extra || 0;
     if (n.opposed) return opposedOdds(n.bonus, n.attack, 0);
     const die = CONFIG.defense.die;
     return Math.max(0, Math.min(1, (die - (n.tn - n.bonus) + 1) / die));
   }
 
-  async function defenseCheck(enc, chars, defender, kind, atkDecl, roller) {
+  async function defenseCheck(enc, chars, defender, kind, atkDecl, roller, extra) {
     const D = CONFIG.defense;
     const motion = atkDecl.type === 'strike' ? atkDecl.option.motion : 'maneuver';
     const attacker = chars[atkDecl.actor];
     const n = defenseNumbers(defender, kind, motion, attacker, atkDecl.type === 'strike' ? atkDecl.option : null);
+    n.bonus += extra || 0;
     const name = ACTIONS[kind].name;
     if (n.opposed) {
       const o = await opposed(roller, defender, n.bonus, name, attacker, n.attack, 'Press the attack');
@@ -1811,6 +1845,21 @@
       }
       let failedDodge = false, beatThrough = 0;
       const def = await askDefense(enc, chars, t, a, d, io);
+      // Nobody defends themselves: a shield beside them may.
+      const cover = !def && C.isActive(t) ? await askCover(enc, chars, t, a, d, io) : null;
+      if (cover && payStamina(enc, cover.bearer, cover.o.stamina)) {
+        const b = cover.bearer;
+        const chk = await defenseCheck(enc, chars, b, 'block', d, roller, -CONFIG.defense.cover.penalty);
+        if (chk.ok) {
+          log(enc, `${b.name} gets a shield in front of ${t.name} (${chk.total} vs ${chk.tn}).`, 'defend');
+          await shieldAbsorb(enc, chars, a, b, d, roller);
+          absorbImpact(enc, b, 'block', d);
+          const theirs = weaponItem(a, d.option);
+          if (b.shield) wearWeapon(enc, a, theirs, blowForce(d.option), 'blocked', b.shield.material);
+          return;
+        }
+        log(enc, `${b.name} reaches to cover ${t.name}, too late (${chk.total} vs ${chk.tn}).`, 'fail');
+      }
       if (def) {
         // Chosen blind (Feint): a defence that can't meet this blow is spent for nothing.
         const wrong = defenseUnavailable(t, def.type, d, chars, enc);
@@ -2378,7 +2427,7 @@
 
   G.Combat = {
     unseenBy, strikeEffects, conditionForbids, ATTACK_TYPES, DEFENSE_TYPES, shoveReach, log, rollDie, castSpell, knockDown, stability, releaseAll: clearGrapple,
-    createEncounter, autoPlace, startRound, currentActor, legalActions, act, validate, endTurn, submit, describeDecl, apLeft, defenseOptions, opportunityOptions,
+    createEncounter, autoPlace, startRound, currentActor, legalActions, act, validate, endTurn, submit, describeDecl, apLeft, defenseOptions, coverOptions, opportunityOptions,
     vitalNeed, projectedPos, dist, defenseOdds, parryCarryShare, aimPenalty, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolveAction, finishRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

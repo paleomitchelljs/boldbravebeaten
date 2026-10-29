@@ -542,6 +542,11 @@
     // Success when d10 + bonuses ≥ target number.
     defense: {
       die: 10,
+      // PROVISIONAL (the user's choice, 2026-10-29, against groups snowballing: docs/REVIEW.md Risk 1): cover. When a
+      // blow comes at someone who puts up no defence of their own, an ally within `reach` squares of them with a
+      // ready shield may block it for them, paid from the bearer's AP and stamina as a block, at −penalty to the
+      // block roll. The shield takes the blow (wear, and force past its threshold) and the bearer its impact. null: off.
+      cover: { reach: 1, penalty: 1 },
       // + Shield Training rank. PROVISIONAL: smaller shields cover less.
       block: {
         tn: 3, tnBySize: { buckler: 5, round: 4, heater: 3, tower: 2 },
@@ -725,6 +730,7 @@
     'The user\'s armor research (2026-10-20): flexible mail passes 1.5× as much of a cut\'s leftover force as blunt (armor.yaml transmit), so a greatsword power cut breaks bones through it; padding and leather stop a cut unless it carries massive momentum: slashing left after their mitigation beyond 8 (× protection) cuts through (armor.yaml cutThrough); hardened steel protects ×1.5 (was 1.25). Padding is assumed under mail and plate (one piece, no layering).',
     'Plate spreads a blow it turns (the user\'s call): half of the blunt left after its mitigation from a cut or a point (converted cuts, turned points) never reaches stamina; a crushing blow (a mace, a hammer, a club, a fist) carries as before (armor.yaml dissipate {glancing: 0.5, crushing: 0}; less as the plate wears). Spreading crushing blows too left maces 2–13% against plate in the weapon sweep (sim/FINDINGS.md).',
     'Armor wear per hit is a third of (blunt + converted slashing); armor keeps at least 75% of its mitigation until destroyed.',
+    'Cover (the user\'s choice, 2026-10-29): when a blow comes at someone who puts up no defence of their own, an ally within a square with a ready shield may block it for them, paying a block\'s AP and stamina, at −1 to the block roll; the bearer\'s shield and arm take it.',
     'Blocks are contested (the user\'s call) and the easiest defence: d10 + Shield Training + the shield (buckler 1, round 2, heater 3, tower 4) + ⌊(STR + DEX)/4⌋ against the attacker\'s d10 + ⌊(STR + SPD)/4⌋ + motion. A dodge is the hardest (−2). A defence that works still costs stamina: half the blow\'s force for a block, a quarter for a parry, none for a dodge; a dodge costs 1 base stamina (Specifics 2). Untrained against a sword swing: block 72%, parry 64%, dodge 36%. Bind (feat): a successful parry lets you try a disarm at once.',
     'Range (the user\'s reach): daggers 1; one-handed swords, maces and axes swing 1 and thrust 2; two-handed weapons swing 2 and thrust 3, cramped at 1 (pommel, haft); spears thrust to 4 (the spear and heavy spear cramped at 1, the short spear to 3); the war scythe sweeps 2–3 and does not thrust. Long blades and spears are cramped in a clinch; daggers, clubs, maces and hammers are not, nor are half-swording and the murder stroke. Cramped blows land with half their force, all as blunt. Movement covers twice the Specifics squares.',
     'Weapons in hand: drawing a weapon costs half an AP; dropping one costs nothing; picking one up costs 2. Drawing while holding a weapon drops it (a dagger is sheathed instead). A character held in a grapple fights cramped with any weapon, dagger included: half force, all blunt.',

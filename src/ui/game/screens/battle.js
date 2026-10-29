@@ -62,7 +62,7 @@
     const r = game.ui.reacting;
     const m = r.model;
     // The card: who strikes whom (and how, on hover), each choice with its AP (and a defence's odds), and the AP left.
-    const tip = `${m.sub}. ${r.req.kind === 'defend' ? 'AP spent now is gone from this round; a defence that fails still costs it.' : 'A strike costs its AP now.'}`;
+    const tip = `${m.sub}. ${r.req.kind !== 'opportunity' ? 'AP spent now is gone from this round; a defence that fails still costs it.' : 'A strike costs its AP now.'}`;
     return h('section', { class: 'popcard react' },
       h('div', { class: 'react-head', 'data-hint': tip }, h('h3', null, m.from), h('span', { class: 'ap-pill num' }, `${C.fmtAP(m.ap)} AP`), h('span', { class: 'to' }, m.to)),
       h('div', { class: 'react-list' },
@@ -159,11 +159,11 @@
     // A reaction being asked: the blow's line and the one it threatens.
     const rq = game.ui.reacting && game.ui.reacting.req;
     if (rq) {
-      const from = rq.kind === 'defend' ? rq.attacker : rq.actor, to = rq.kind === 'defend' ? rq.actor : rq.target;
+      const from = rq.kind === 'defend' || rq.kind === 'cover' ? rq.attacker : rq.actor, to = rq.kind === 'defend' ? rq.actor : rq.target;
       if (enc.pos[from] && enc.pos[to]) {
         sc.lines.push({ pts: [at(enc.pos[from]), at(enc.pos[to])], color: rq.kind === 'defend' ? INTENT.strike.color : INTENT.guard.color, style: 'solid', alpha: 0.9 });
         sc.reticles.push({ x: enc.pos[to].x + ox, y: enc.pos[to].y + oy, color: rq.kind === 'defend' ? INTENT.strike.color : INTENT.guard.color, strong: true });
-        sc.badges.push({ id: rq.actor, icon: rq.kind === 'defend' ? 'shield' : 'sword', color: INTENT.guard.color });
+        sc.badges.push({ id: rq.actor, icon: rq.kind === 'opportunity' ? 'sword' : 'shield', color: INTENT.guard.color });
       }
     }
     if (!map || !actor || !entry || !cmd) return sc;

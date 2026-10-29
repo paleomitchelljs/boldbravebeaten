@@ -1946,3 +1946,39 @@ test('projected pool: next round\'s AP after spending stamina now, with regenera
   assert.equal(c.stamina, max, 'the projection leaves stamina as it was');
   assert.equal(p.pool, C.apPool(c) - p.fatigue * C.apScale());
 });
+
+test('cover: a shield-bearer beside an undefended ally blocks the blow for them, from the bearer\'s own AP', async () => {
+  const a = armed('A', 'longsword', { side: 'enemy' });
+  const t = fighter('T', { side: 'party' });
+  const s = armed('S', 'longsword', { side: 'party' });
+  s.shield = Items.makeShield('heater', 'iron');
+  a.base.SPD = 9; t.base.SPD = 1; s.base.SPD = 1;
+  for (const x of [a, t, s]) x.stamina = C.maxStamina(x);
+  const chars = { [a.id]: a, [t.id]: t, [s.id]: s };
+  const enc = Combat.createEncounter('t', [a.id, t.id, s.id], chars, 6, 3);
+  enc.pos[a.id] = { x: 1, y: 1 }; enc.pos[t.id] = { x: 2, y: 1 }; enc.pos[s.id] = { x: 2, y: 2 };
+  await Combat.startRound(enc, chars, roller(3, [9, 1, 1]));
+  assert.strictEqual(Combat.currentActor(enc), a.id);
+  const swing = Combat.legalActions(enc, chars, a.id).attacks.find((o) => o.motion === 'swing');
+  const d = { actor: a.id, type: 'strike', option: swing, target: t.id };
+  const offers = Combat.coverOptions(enc, chars, t, a, d);
+  assert.strictEqual(offers.length, 1, 'only the bearer beside the target');
+  assert.strictEqual(offers[0].actor, s.id);
+  assert.ok(offers[0].odds > 0 && offers[0].odds < 1);
+  // Cover is harder than blocking for yourself.
+  assert.ok(offers[0].odds < Combat.defenseOdds(s, 'block', 'swing', a, swing));
+  const asked = [];
+  const x = io(4, [10, 1], (req) => { asked.push(req.kind); return req.kind === 'cover' ? 'cover' : null; });
+  const sAP = enc.ap[s.id], tAP = enc.ap[t.id], dur = s.shield.durability;
+  const before = { stamina: t.stamina, dmg: C.totalDamage(t) };
+  assert.strictEqual(await Combat.act(enc, chars, d, x), null);
+  assert.deepStrictEqual(asked, ['defend', 'cover'], 'the target first, then the bearer');
+  assert.strictEqual(enc.ap[s.id], sAP - C.actionCost(s, 'block').ap, 'the bearer pays');
+  assert.strictEqual(enc.ap[t.id], tAP, 'the target keeps its AP');
+  assert.deepStrictEqual({ stamina: t.stamina, dmg: C.totalDamage(t) }, before, 'the blow never reaches the target');
+  assert.ok(s.shield.durability < dur, 'the shield takes it');
+  assert.ok(enc.log.some((l) => /S gets a shield in front of T/.test(l.text)));
+  // Too far away: no offer.
+  enc.pos[s.id] = { x: 4, y: 2 };
+  assert.strictEqual(Combat.coverOptions(enc, chars, t, a, d).length, 0);
+});

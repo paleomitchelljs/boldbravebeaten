@@ -21,8 +21,10 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   reproduced. Seen headless: an adjacent foe takes Read intent and then ends its turn without a blow (the read's
   AP check assumes a blow after it, which the defence reserve then forbids). The old case stands: foes whose blows
   can't hurt plate (wolves, bandits) won't close on Beren.
-- [ ] Groups snowball (docs/REVIEW.md Risk 1): needs a ruling (a cheaper second defence against the same attacker,
-  or a cover reaction for a shield-bearer).
+- [x] Groups snowball (docs/REVIEW.md Risk 1): the user chose cover (2026-10-29). A shield-bearer within a square of
+  an ally who isn't defending may block for them (block AP and stamina, −1). Probe in `sim/FINDINGS.md`: deaths down,
+  wins flat; few covers, since only Beren has a shield.
+- [ ] Cover in the AI's footing: stand a shield beside the ally most at risk (the probe's covers are incidental).
 - [ ] An attribute sim: +1 to each attribute in turn against fixed fights, to see what SPD and CON buy over the
   others (CHA, WIS, INT need their settings, not parity).
 - [ ] Targeted searches ("inspect the mechanism") as content, now that time costs something.
