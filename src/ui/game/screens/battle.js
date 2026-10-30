@@ -32,7 +32,6 @@
       removeCharacter: () => {},
       hooks: {
         autoStart: true,
-        flee: (a, enc) => flee(game, enc),
         over: () => null,
         sheet: (id) => game.openOverlay('sheet', { id }),
         react: (req, enc, chars) => askOnMap(game, req, enc, chars),
@@ -70,19 +69,18 @@
         h('button', { class: 'act none', onclick: () => answer(game, null) }, h('kbd', null, 'Esc'), h('span', { class: 'nm' }, m.none.label), h('span', null, ''), h('span', null, ''))));
   }
 
-  function flee(game, enc) {
+  // At the end of a round, a party no foe can come at has got away (Battle.disengaged).
+  function getAway(game, enc) {
     const w = game.world;
-    const r = Battle.flee(w);
-    for (const l of r.lines) World.logLine(w, l, 'fight');
-    if (r.ok) {
-      const res = Battle.finish(w, 'fled');
-      if (w.explore) G.Explore.enter(w, w.place, '<');
-      res.lines.unshift(...r.lines);
-      game.ui.result = res;
-      game.ui.finalLog = enc.log.slice(-12);
-      game.save();
-    } else toast('They stay on you.');
-    game.render();
+    if (enc.phase !== 'roundEnd' || enc.awayChecked === enc.round) return false;
+    enc.awayChecked = enc.round;
+    if (!Battle.disengaged(w).ok) return false;
+    game.ui.finalLog = enc.log.slice(-12);
+    const res = Battle.getAway(w);
+    for (const l of res.lines) World.logLine(w, l, 'fight');
+    game.ui.result = res;
+    game.save();
+    return true;
   }
 
   // ---- The scene -----------------------------------------------------------------------------------------------
@@ -379,7 +377,6 @@
       h('div', { class: 'popcard-head' }, h('h2', { class: 'grow' }, title), game.ui.spec && game.ui.spec.name ? h('span', { class: 'label' }, game.ui.spec.name) : null),
       res.lines.length ? h('div', { class: 'stack tight' }, res.lines.map((l) => h('p', { class: 'small' }, l))) : null,
       res.loot && res.loot.length ? h('div', { class: 'stack tight' }, h('span', { class: 'label' }, 'Spoils'), h('ul', { class: 'loot-list' }, res.loot.map((l) => h('li', null, l)))) : null,
-      res.result === 'fled' ? h('p', { class: 'muted small' }, 'You run for the stairs. The foes stay where they were.') : null,
       res.result === 'won' ? h('p', { class: 'small muted' }, 'Gear that fell with them is in the pack. Take what suits you from the Pack.') : null,
       h('div', { class: 'row' },
         wiped || !G.CONFIG.afterBattle
@@ -418,6 +415,7 @@
     if (!game.ui.result && !w.battle) { game.go(w.explore ? 'explore' : 'town'); return h('div'); }
     const hadBattle = !!w.battle;
     let app = null, enc = null, legal = null, sync = null, human = false;
+    if (hadBattle && getAway(game, w.battle.enc)) return UI.Screens.battle(game);
     if (hadBattle) {
       app = battleApp(game);
       enc = w.battle.enc;
@@ -449,7 +447,6 @@
     const spec = game.ui.spec || {};
     const topExtra = live ? [
       h('span', { class: 'chip' }, enc.round ? `Round ${enc.round}` : 'Ready'),
-      app.hooks.flee && game.world.battle.canFlee !== false ? ibtn('flee', 'Flee: speed against the quickest foe', () => app.hooks.flee(app, enc), { disabled: !!game.ui.reacting || enc.phase === 'acting' || !!P().bui(app).busy }) : null,
       declaredPop(game, app, enc),
     ] : null;
     return h('div', { class: 'battle-screen' + (live ? '' : ' over') },

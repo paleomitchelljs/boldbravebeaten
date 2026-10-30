@@ -22,7 +22,7 @@ No anchors or tags. Keys must be unique.
 | `monsters.yaml` | Creatures and packs. |
 | `foes.yaml` | Templates for generated people (bandit, militia…), scaled by level. |
 | `skills.yaml` | Checks outside combat: attributes, feats that add, armor penalty. |
-| `items.yaml` | `goods` (supplies, potions, keys, books, trinkets, trade goods, components) and loot `tables`. |
+| `items.yaml` | `goods` (supplies, potions, oils, keys, books, trinkets, trade goods, components) and loot `tables`. |
 | `factions.yaml` | Who is who, allies, enemies, start standing, ranks, perks. |
 | `npcs.yaml` | People you can talk to, with topics. |
 | `quests.yaml` | Staged quests with rewards. |
@@ -77,9 +77,12 @@ sets only how fast the item wears and how easily it breaks. A monster's carried 
 of it, or items spelled out: `armorItem: {type: plate, material: steel, origin: dwarven}`,
 `weaponItems: [{type: longsword, name: Soulreaver, enchantments: [drinking]}]`, `shieldItem: {size: heater, material: adamant}`.
 
-**An item** (`items.yaml` goods): `kind` is `supply | potion | key | book | trinket | trade | component`.
-Potions have `use: {heal: 1}`, `{cure: bleeding}`, `{cure: poison}` or `{repair: 0.3}`. Books have
-`teaches: {noun: fire}` or `reveals: [flag]`. Trinkets are worn things: `slot` is a worn slot id from `rules.yaml
+**An item** (`items.yaml` goods): `kind` is `supply | potion | oil | key | book | trinket | trade | component`.
+Potions have `use: {heal: 1}`, `{cure: bleeding}`, `{cure: poison}` or `{repair: 0.3}`. An oil is worked into the
+weapon in hand from the pack: `coat: {slay: [{trait: golem, damage: 4}], hits: 5}` adds the damage against foes with
+that trait for the next `hits` blows that land, then is spent. Books have `teaches: {noun: fire}` or `reveals: [flag]`
+(used up when read), or `text:` (read as often as you like; `sets: [flag]`). Something lying on a map is a
+`pickup {good}` square. Trinkets are worn things: `slot` is a worn slot id from `rules.yaml
 game.wornSlots` (head, neck, shoulders, cape, waist, arms, hands, legs, feet) or a slot's `takes`: `ring` or `ear`
 (either of the two), with `attrs`, `ap`,
 `effects` and `power` (see **Magic items**). The chest slot is the armor; the other body slots hold worn things only.

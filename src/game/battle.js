@@ -161,7 +161,7 @@
     partyIds.forEach((id, i) => { enc.pos[id] = partySq[i] || { x: 0, y: 0 }; });
   }
 
-  // opts: { surprise: the side caught off guard ('party' | 'enemy'), factor (share of AP it keeps), ctx: {x, y}, canFlee }
+  // opts: { surprise: the side caught off guard ('party' | 'enemy'), factor (share of AP it keeps), ctx: {x, y}, canFlee (false: no getting away) }
   function start(world, spec, opts) {
     opts = opts || {};
     const foes = buildFoes(spec);
@@ -200,22 +200,49 @@
     return best >= 2 ? 0 : best === 1 ? 0.25 : 0.5;
   }
 
-  // Run away from a fight that hasn't turned yet. SPD against the quickest foe.
-  function flee(world, rng) {
+  // Has the party got away? Asked at the end of a round (CONFIG.disengage). Every foe still standing either can't reach
+  // striking distance of anyone in the party (a wall across the way, or held where it stands) or couldn't in `outrun`
+  // rounds of running, and none has a missile or a spell with a clear line to them. The fallen count: a foe that can
+  // reach one of yours lying on the floor keeps the fight going. Returns { ok, why }.
+  function disengaged(world) {
     const b = world.battle;
+    if (!b || b.canFlee === false) return { ok: false };
+    const enc = b.enc;
     const chars = table(world).characters;
-    const mine = b.enc.ids.map((id) => chars[id]).filter((c) => c.side === 'party' && C.isActive(c));
-    const theirs = b.enc.ids.map((id) => chars[id]).filter((c) => c.side !== 'party' && C.isActive(c));
-    if (!mine.length || !theirs.length) return { ok: true, lines: [] };
-    const slow = Math.min(...mine.map((c) => C.combatAttr(c, 'SPD')));
-    const quick = Math.max(...theirs.map((c) => C.combatAttr(c, 'SPD')));
-    const roll = R.d(10);
-    const total = roll + Math.floor(slow / 2) + Math.floor(mine.reduce((t, c) => t + C.combatAttr(c, 'SPD'), 0) / mine.length / 2);
-    const need = 5 + quick;
-    const ok = total >= need;
-    const lines = [`Flee: d10 ${roll} + speed vs ${need}: ${ok ? 'you break away' : 'they stay on you'}.`];
-    if (!ok) b.enc.surprise = { side: 'party', factor: 0.75, round: b.enc.round + 1 };
-    return { ok, lines };
+    const T = G.Terrain;
+    const mine = enc.ids.filter((id) => chars[id] && chars[id].side === 'party' && !chars[id].status.dead && enc.pos[id]);
+    const theirs = enc.ids.filter((id) => chars[id] && chars[id].side !== 'party' && C.isActive(chars[id]) && enc.pos[id]);
+    if (!mine.some((id) => C.isActive(chars[id])) || !theirs.length) return { ok: false };
+    const D = G.CONFIG.disengage || { outrun: 2 };
+    const near = (p, q, r) => Math.max(Math.abs(p.x - q.x), Math.abs(p.y - q.y)) <= r;
+    for (const id of theirs) {
+      const f = chars[id], at = enc.pos[id];
+      const opts = C.attackOptions(f);
+      const shoots = opts.some((o) => o.ranged) || (G.Magic && G.Magic.availableSP(f) > 0);
+      if (shoots && mine.some((m) => !T.lineCheck(enc, at, enc.pos[m], 'missile').blocked)) return { ok: false, why: `${f.name} can still shoot` };
+      const reach = Math.max(1, ...opts.filter((o) => !o.ranged).map((o) => o.maxRange || 1));
+      if (mine.some((m) => near(at, enc.pos[m], reach))) return { ok: false, why: `${f.name} is on you` };
+      if (G.Conditions && !G.Conditions.canMove(f)) continue;
+      const run = D.outrun * C.squaresFor(f, C.apPool(f));
+      const map = T.costMap(enc, at, f);
+      for (let y = 0; y < enc.grid.h; y++) for (let x = 0; x < enc.grid.w; x++) {
+        if (map.cost[map.idx(x, y)] > run || !T.canStand(enc, x, y, f)) continue;
+        if (mine.some((m) => near({ x, y }, enc.pos[m], reach))) return { ok: false, why: `${f.name} can reach you` };
+      }
+    }
+    return { ok: true };
+  }
+
+  // The party has got away (disengaged): the fight ends, and on the map they stand where the first of them stood on
+  // the field, not back at the way in.
+  function getAway(world) {
+    const b = world.battle;
+    const lead = b.arena && World.active(world).find((c) => b.enc.pos[c.id]);
+    const at = lead && { x: b.arena.ox + b.enc.pos[lead.id].x, y: b.arena.oy + b.enc.pos[lead.id].y };
+    const res = finish(world, 'fled');
+    if (at && world.explore) { world.explore.x = at.x; world.explore.y = at.y; G.Explore.markSeen(world); }
+    res.lines.unshift('You get clear: nothing can come after you.');
+    return res;
   }
 
   // Settle a finished (or fled) battle. Returns { result: 'won'|'lost'|'fled'|'draw', lines, loot }.
@@ -256,5 +283,5 @@
     return out;
   }
 
-  G.Battle = { dungeonArena, joiners, buildFoes, table, start, ambushFactor, flee, finish };
+  G.Battle = { dungeonArena, joiners, buildFoes, table, start, ambushFactor, disengaged, getAway, finish };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

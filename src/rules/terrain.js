@@ -251,6 +251,21 @@
         }
       }
     }
+    // A wall of fire scorches whoever stands beside it: once a round for each kind of wall, however many squares of it.
+    const near = all(enc).filter((t) => t.def.near);
+    if (near.length) for (const id of enc.ids) {
+      const c = chars[id];
+      if (!c || c.status.dead || !enc.pos[id]) continue;
+      const p = enc.pos[id];
+      const seen = {};
+      for (const t of near) {
+        if (seen[t.f.kind] || Math.max(Math.abs(t.x - p.x), Math.abs(t.y - p.y)) !== 1) continue;
+        seen[t.f.kind] = 1;
+        for (const [noun, mag] of Object.entries(t.def.near)) {
+          if (G.Magic && G.Magic.elementBlow) await G.Magic.elementBlow(enc, chars, chars[t.f.owner] || c, c, noun, mag + (t.f.mag || 0), roller, t.def.name);
+        }
+      }
+    }
     for (const k of Object.keys(enc.tiles)) {
       let list = enc.tiles[k];
       if (list.some((f) => def(f).burns)) {
@@ -279,6 +294,8 @@
   function danger(enc, x, y, side, c) {
     if (flies(c)) return 0;
     let d = 0;
+    const beside = [-1, 0, 1].flatMap((dy) => [-1, 0, 1].map((dx) => at(enc, x + dx, y + dy))).flat();
+    if (beside.some((f) => def(f).near && visible(f, side))) d += 6;
     for (const f of at(enc, x, y)) {
       if (!visible(f, side)) continue;
       const t = def(f);

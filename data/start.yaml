@@ -54,7 +54,9 @@ presets:
     kit: staff
     level: 3
     attrs: {STR: 3, CON: 5, DEX: 5, SPD: 5, INT: 8, WIL: 8, WIS: 3, CHA: 3}
-    feats: [casting, verb_strike, verb_launch, casting, verb_burst]
+    # Build (a wall of fire, to get away from what can't be fought) is one over a level-3 budget (the user, 2026-10-29).
+    bonusFeats: 1
+    feats: [casting, verb_strike, verb_launch, casting, verb_burst, verb_build]
     nouns: [fire]
     look: {sprite: "art:jabiku"}
 

@@ -1,9 +1,12 @@
 # Items other than the weapons, armor and shields in their own files, plus loot tables.
 #
-# goods: kind = supply | potion | key | book | trinket | trade | component.
+# goods: kind = supply | potion | oil | key | book | trinket | trade | component.
 #   value: base price in gold (falls back to rarity). use: what using it does (potion, supply).
 #   supply: engine: bandages | arrows | bodkins -> pooled in the party's supplies.
-#   book: teaches: {noun: fire} (a magic noun) or reveals: [secret ids] (Lore).
+#   oil: worked into the weapon in hand (Use), it lasts `coat.hits` landed blows: coat.slay [{trait, damage}] adds
+#     damage against foes with that trait, as a bane blade does.
+#   book: teaches: {noun: fire} (a magic noun) or reveals: [secret ids] (Lore), used up when read; or text: what it
+#     says, read as often as you like (sets: [flags] the first time).
 #   trinket: something worn: slot = a worn slot (rules.yaml game.wornSlots: head, neck, shoulders, cape, arms, hands,
 #     legs, feet) or ring (either ring slot); attrs {SPD: 1}; ap: extra AP; effects: what it does (see
 #     enchantments.yaml for the keys); power: a spell it casts ({verb, noun, mod, charges, name}).
@@ -45,6 +48,11 @@ goods:
     {name: Rough garnet, kind: trade, value: 35, rarity: uncommon, blurb: "Unpolished."}
   trade_bar:
     {name: Iron trade bar, kind: trade, value: 15, rarity: common, blurb: "Currency in the villages."}
+  # Test items for the labyrinth (the user, 2026-10-29): lying on the floor inside its door.
+  golem_bane_oil:
+    {name: Golem-bane oil, kind: oil, value: 60, rarity: rare, coat: {slay: [{trait: golem, damage: 4}], hits: 5}, blurb: "Worked into a blade: +4 damage to golems for the next 5 blows that land."}
+  maze_journal:
+    {name: Water-stained journal, kind: book, value: 1, rarity: common, text: "Most pages have run. One line is still clear: \"This oil should help if we lose control of the golem.\"", blurb: "A few pages in a cramped hand."}
   tome_ember:
     {name: "Charred primer: Fire", kind: book, value: 150, rarity: rare, teaches: {noun: fire}, blurb: "Teaches the noun Fire to one reader."}
   tome_roots:

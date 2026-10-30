@@ -29,11 +29,27 @@
   const BOLT = ['bolt'];
 
   // Spell points: INT + 3 per Casting rank, + what worn gear adds (sp), + 2 per Familiar rank while it lives.
-  function maxSP(c) {
+  function freshSP(c) {
     const r = C().rank(c, 'casting');
     if (r <= 0) return 0;
     const fam = C().rank(c, 'familiar') && c.companion && c.companion.familiar && !c.companion.status.dead ? 2 * C().rank(c, 'familiar') : 0;
     return C().attr(c, 'INT') + CONFIG.magic.poolPerCasting * r + G.Effects.sum(c, 'sp') + fam;
+  }
+
+  // Less what the day's casting has worn off it (c.spWeary, CONFIG.magic.spWeary; a long rest clears it).
+  function maxSP(c) {
+    const f = freshSP(c);
+    return f ? Math.max(0, Math.floor(f - (c.spWeary || 0))) : 0;
+  }
+
+  // A rest after a fight: the points spent come back, and each wears spWeary off the maximum. Returns the points lost.
+  function restSP(c) {
+    const spent = c.spSpent || 0;
+    if (!spent) return 0;
+    const before = maxSP(c);
+    c.spWeary = Math.min(freshSP(c), (c.spWeary || 0) + spent * (CONFIG.magic.spWeary || 0));
+    c.spSpent = 0;
+    return before - maxSP(c);
   }
 
   // Points the caster can draw on right now.
@@ -706,5 +722,5 @@
     return lines;
   }
 
-  G.Magic = { breakDelayed, raise, join, corrode, chainOn, powerOptions, castableOptions, usePower, rechargeAll, chargesLeft, mend, restore, curesOf, knowsName, wardAgainst, maxSP, availableSP, spellOptions, knows, combines, backlash, makeOption, contest, afflict, onHit, elementBlow, afterHit, springRune, resolveCast, lineAcross, endRound, push };
+  G.Magic = { breakDelayed, raise, join, corrode, chainOn, powerOptions, castableOptions, usePower, rechargeAll, chargesLeft, mend, restore, curesOf, knowsName, wardAgainst, freshSP, maxSP, restSP, availableSP, spellOptions, knows, combines, backlash, makeOption, contest, afflict, onHit, elementBlow, afterHit, springRune, resolveCast, lineAcross, endRound, push };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

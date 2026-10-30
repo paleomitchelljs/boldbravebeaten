@@ -199,7 +199,7 @@ temple_maze:
     - "##############################################"
     - "######################N#######################"
     - "##................1.##......................##"
-    - "##..................##...........5..........##"
+    - "##..................##ob.........5..........##"
     - "##...#####...#########..##..##############..##"
     - "##...#####...#########..##..##############..##"
     - "##......##......##..................##......##"
@@ -231,6 +231,8 @@ temple_maze:
     E: {kind: stairs, to: temple_court2, at: S, sprite: door, wall: true, label: "Door to the second court"}
     W: {kind: drop, to: temple_sewer, at: L, sprite: well, label: "A well, its rope long gone", text: "There is nothing to climb by. You lower yourselves over the edge and let go, and land in a foul shallow pool."}
     C: {kind: chest, label: "A niche with a sealed jar", loot: strongbox, tn: 8}
+    o: {kind: pickup, good: golem_bane_oil, text: "A stoppered flask lies against the wall, its wax seal unbroken."}
+    b: {kind: pickup, good: maze_journal, text: "A small book lies face down in the grit."}
     "1": {kind: monster, encounter: snake, label: "Something in the dead end"}
     "2": {kind: monster, encounter: pair, label: "Suracayl at their fire"}
     "3": {kind: monster, encounter: raptors, label: "Something quick in the dark"}

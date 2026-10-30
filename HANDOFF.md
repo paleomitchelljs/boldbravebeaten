@@ -24,6 +24,16 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 - [x] Groups snowball (docs/REVIEW.md Risk 1): the user chose cover (2026-10-29). A shield-bearer within a square of
   an ally who isn't defending may block for them (block AP and stamina, −1). Probe in `sim/FINDINGS.md`: deaths down,
   wins flat; few covers, since only Beren has a shield.
+- [x] Getting away (the user, 2026-10-29): no flee roll, no pause between rounds. At a round's end the party is away
+  if no foe can reach striking distance of them within 2 rounds' running and none can shoot or cast at them
+  (`Battle.disengaged`); they stay on the map where they stood. Wall of fire (Build + Fire): impassable, Fire 2 to
+  anyone beside it each round. Jabiku has Build (one bonus feat). Dry run on the labyrinth golem in `sim/FINDINGS.md`.
+- [x] Spell points come back with a rest after a fight; half of each spent point comes off the maximum until a long rest.
+- [x] Items: oils worked into the weapon in hand (`coat`: slay damage for N landed blows), books with `text` that are
+  read and kept. Golem-bane oil and a journal lie just inside the labyrinth's north door.
+- [ ] Use an item in a fight (oil a blade, drink a potion) as an Other action; today it is only from the pack.
+- [ ] The wall of fire's look on the battle map is a red outlined square with a glyph; it wants a flame tile.
+- [ ] Getting away by running off the edge of the fight's window (today only out-of-reach counts).
 - [ ] Cover in the AI's footing: stand a shield beside the ally most at risk (the probe's covers are incidental).
 - [ ] An attribute sim: +1 to each attribute in turn against fixed fights, to see what SPD and CON buy over the
   others (CHA, WIS, INT need their settings, not parity).

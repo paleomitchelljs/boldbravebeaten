@@ -33,6 +33,7 @@
       aura: '{name, radius, stamina, cond, element, mag, resisted}: works on foes nearby each round',
       undead: 'a kind: bane and spirit magic, slay',
       dragon: 'a kind: slay',
+      golem: 'a kind: slay (golem-bane oil)',
       noBleed: 'wounds don\'t bleed',
     },
     // weapons.yaml `trait` (a natural or odd weapon's extra).

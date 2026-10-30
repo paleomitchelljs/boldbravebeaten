@@ -23,9 +23,11 @@
     const S = w.supplies;
     const goodRows = Object.entries(w.pack.goods).map(([id, n]) => {
       const g = World.goodDef(id);
-      const usable = g.kind === 'potion' || g.kind === 'book' || (g.kind === 'supply' && g.use);
+      const usable = g.kind === 'potion' || g.kind === 'book' || g.kind === 'oil' || (g.kind === 'supply' && g.use);
+      const wpn = g.kind === 'oil' && C.wieldedWeapon(tc);
+      const verb = g.kind === 'book' && g.text ? 'Read' : g.kind === 'oil' ? (wpn ? `Oil ${tc.name}'s ${G.Items.itemName(wpn)}` : `${tc.name}: no weapon`) : 'Use on ' + tc.name;
       return h('div', { class: 'ledger-row' }, UI.Bits.goodLine(`${g.name}${n > 1 ? ' ×' + n : ''}`, g),
-        g.kind === 'trinket' ? h('span', { class: 'small muted', title: 'Put it on from a worn slot on the character sheet' }, 'worn') : usable ? h('button', { class: 'small', onclick: () => { const r = G.Town.useGood(w, id, tc); toast(r.ok ? r.lines[0] || 'Done' : r.reason); game.save(); game.openOverlay('pack', o); game.render(); } }, 'Use on ' + tc.name) : null);
+        g.kind === 'trinket' ? h('span', { class: 'small muted', title: 'Put it on from a worn slot on the character sheet' }, 'worn') : usable ? h('button', { class: 'small', disabled: g.kind === 'oil' && !wpn, onclick: () => { const r = G.Town.useGood(w, id, tc); game.save(); if (r.ok && g.kind === 'book' && g.text) { game.openOverlay('text', { title: g.name, text: r.lines[0] }); game.render(); return; } toast(r.ok ? r.lines[0] || 'Done' : r.reason); game.openOverlay('pack', o); game.render(); } }, verb) : null);
     });
     const useSupply = ['repair_kit'].filter((id) => World.goodCount(w, id) > 0).map((id) => {
       const g = World.goodDef(id);

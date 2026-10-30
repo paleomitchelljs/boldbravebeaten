@@ -422,7 +422,8 @@
         const w = o.weaponId ? c.weapons.find((x) => x.id === o.weaponId) : null;
         const wd = w ? Items.weaponDurability(w) : null, wm = w ? Items.weaponMaxDurability(w) : 0;
         const wear = wm && wd != null && wd / wm <= ((G.CONFIG.gearWarn || {}).weaponWorn || 0.5) ? (wd <= 0 ? ' ⚠ broken' : ` ⚠ worn ${Math.round(100 * wd / wm)}%`) : '';
-        martial.push(Object.assign(e, { group: (w ? Items.itemName(w) : 'Unarmed') + wear, kind: 'strike', label: o.label + (w ? ` · ${Items.itemName(w)}` : '') + wear, short: o.label, weapon: w, targets: sortTargets(o.targets, chars, c) }));
+        const coat = w && w.coat && w.coat.hits > 0 ? ` · ${w.coat.name.toLowerCase()} ×${w.coat.hits}` : '';
+        martial.push(Object.assign(e, { group: (w ? Items.itemName(w) : 'Unarmed') + coat + wear, kind: 'strike', label: o.label + (w ? ` · ${Items.itemName(w)}` : '') + wear, short: o.label, weapon: w, targets: sortTargets(o.targets, chars, c) }));
       }
     }
     for (const m of legal.maneuvers) {
@@ -753,10 +754,8 @@
     const ui = bui(app);
     const roller = UI.Dice.makeRoller(app);
     if ((enc.phase === 'setup' || enc.phase === 'roundEnd') && app.hooks) {
-      // Inside the game: rounds begin by themselves; the party may try to flee between them.
-      return pane('waiting', h('div', { class: 'who' }, `Round ${enc.round + 1}`), null, [
-        h('div', { class: 'cmd-go' }, h('button', { class: 'primary', onclick: async () => { await Combat.startRound(enc, chars, roller); app.save(); app.render(); } }, 'Roll initiative')),
-        app.hooks.flee ? h('div', { class: 'cmd-end' }, h('button', { class: 'end', onclick: () => app.hooks.flee(app, enc) }, 'Flee')) : null]);
+      // Inside the game: rounds begin by themselves. Getting away is a matter of putting something between you and them.
+      return pane('waiting', h('div', { class: 'who' }, `Round ${enc.round + 1}`), null);
     }
     if (enc.phase === 'setup' || enc.phase === 'roundEnd') {
       return h('section', { class: 'panel cmd' },

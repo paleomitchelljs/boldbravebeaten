@@ -1932,15 +1932,20 @@
         const fx = blade ? C.weaponStrike(blade) : {};
         // Worn bane gear (gauntlets that slay dragons: effects.slay) counts for any blow but a spell or an arrow.
         const gearSlay = d.option.spell || d.option.ranged ? [] : C.gearSources(a).flatMap((x) => x.effects.slay || []);
-        const slay = (fx.slay || []).concat(gearSlay).filter((x) => G.Effects.has(t, x.trait)).reduce((n, x) => n + (x.damage || 0), 0);
+        // An oil worked into the blade (items.yaml kind oil: coat {slay, hits}) is used up a landed blow at a time.
+        const coat = blade && blade.coat && blade.coat.hits > 0 ? blade.coat : null;
+        const coatSlay = coat ? coat.slay.filter((x) => G.Effects.has(t, x.trait)).reduce((n, x) => n + (x.damage || 0), 0) : 0;
+        const slay = coatSlay + (fx.slay || []).concat(gearSlay).filter((x) => G.Effects.has(t, x.trait)).reduce((n, x) => n + (x.damage || 0), 0);
         if (slay) { hitOpt = Object.assign({}, hitOpt, { damage: hitOpt.damage.slice() }); hitOpt.damage[C.mainIndex(hitOpt.damage)] += slay; }
+        if (coat && --coat.hits <= 0) delete blade.coat;
         // What beat through a parry lands with that share of its force (and of its punch into armor).
         if (beatThrough) hitOpt = Object.assign({}, hitOpt, { damage: hitOpt.damage.map((x) => Math.floor(x * beatThrough)), punch: (hitOpt.punch || 0) * beatThrough });
         const pre = { stamina: t.stamina, dmg: C.totalDamage(t) };
         const r = await applyHit(enc, chars, a, t, hitOpt, roller, { half, distance, pack });
         const note = isCramped(a, d.option, distance)
           ? (CONFIG.range.closeRule === 'blunt' ? ' (cramped: blunt, half force)' : ' (cramped: half damage)') : d.option.ranged && d.option.longRange && distance > d.option.longRange ? ' (long range)' : '';
-        log(enc, `${a.name}'s ${name} hits ${t.name}${half ? ' (Roll With It: half)' : ''}${pack ? ` (pack +${pack})` : ''}${note}: ${r.text}`, 'hit');
+        log(enc, `${a.name}'s ${name} hits ${t.name}${half ? ' (Roll With It: half)' : ''}${pack ? ` (pack +${pack})` : ''}${coatSlay ? ` (${coat.name.toLowerCase()} +${coatSlay})` : ''}${note}: ${r.text}`, 'hit');
+        if (coat && !blade.coat) log(enc, `The ${coat.name.toLowerCase()} on ${a.name}'s ${Items.itemName(blade)} is spent.`, 'info');
         // Kindled (Bless + Fire): a blade wreathed in flame sets what it strikes burning.
         if (G.Effects.has(a, 'kindled') && !d.option.ranged && !d.option.spell && C.isActive(t) && !C.tireless(t)) {
           G.Conditions.add(t, 'burning', { rounds: 2, mag: 1, src: a.id });

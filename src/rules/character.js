@@ -40,6 +40,7 @@
       prepared: [], // rituals laid in advance (Ritual.applyPrepared at the next fight)
       nouns: [], // magic nouns learned in the world (Fire, Force…)
       spSpent: 0, // spell points used since the last rest
+      spWeary: 0, // spell points worn off the maximum since the last long rest (Magic.restSP)
       status: freshStatus(),
     };
     if (opts.starterGear !== false) {
@@ -82,6 +83,7 @@
     if (!c.prepared) c.prepared = [];
     c.nouns = c.nouns || [];
     if (c.spSpent == null) c.spSpent = 0;
+    if (c.spWeary == null) c.spWeary = 0;
     if (c.level == null) c.level = 1;
     if (c.bonusFeats == null) c.bonusFeats = 0;
     // Worn things carry the slot they are in (`at`): a type two slots take (rings, earrings) fills the first free one.

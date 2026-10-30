@@ -381,6 +381,10 @@
       heal: { stamina: 4, staminaPerMag: 2, areaShare: 0.5 },
       castAP: 2, // base, × apScale. PROVISIONAL: at 3, a bolt cost 6 sheet AP for a third of a sword thrust
       poolPerCasting: 3, // spell points = INT + 3 × Casting rank
+      // PROVISIONAL (the user, 2026-10-29): a rest after a fight brings spent points back, but each point spent takes
+      // this much off the maximum until a long rest, as weariness does stamina. A caster can go hard in a fight and
+      // still has only so many fights in a day.
+      spWeary: 0.5,
       // A tired caster can't draw as much power: usable points scale with stamina.
       staminaLimitsPoints: true,
       // Fire: armor stops half its blunt mitigation; every 2 points left over cost 1 CON,
@@ -505,6 +509,7 @@
     // magnitude to whoever enters / stands there at the end of the round; flammable: fire burns
     // it away; hidden: unseen by the other side until it springs.
     terrain: {
+      // near: {element: magnitude}, at the end of each round, to whoever stands within a square (not on it).
       stoneWall: { name: 'Stone wall', wall: true, solid: true },
       dungeonWall: { name: 'Dungeon wall', wall: true, solid: true, permanent: true },
       // The map's own ground (rules.yaml game.ground), carried into a fight on it. Deep water keeps walkers out (fliers
@@ -514,7 +519,9 @@
       iceWall: { name: 'Ice wall', wall: true, solid: true, meltsInFire: true },
       brambleWall: { name: 'Bramble wall', wall: true, flammable: true },
       forceWall: { name: 'Force wall', wall: true, blocksMissiles: true },
-      fireWall: { name: 'Wall of fire', onEnter: { fire: 3 }, perRound: { fire: 2 }, burns: true },
+      // PROVISIONAL (the user, 2026-10-29): a wall of fire can't be walked through, and scorches whoever ends a round
+      // beside it (near: an element's blow to anyone within a square of it, once a round however many squares).
+      fireWall: { name: 'Wall of fire', wall: true, near: { fire: 2 }, burns: true },
       windWall: { name: 'Wind wall', blocksMissiles: true, cost: 2 },
       stormWall: { name: 'Storm wall', onEnter: { lightning: 3 } },
       hot: { name: 'Hot ground', onEnter: { fire: 1 }, perRound: { fire: 1 }, burns: true },
@@ -699,6 +706,10 @@
     // a 16-hour day: game.exploreDay), sleep excepted, so a day in a dungeon ends in a camp. The cap covers both
     // (was 0.5 for fights alone; a fight reaches it only after 30-odd rounds).
     weariness: { perRound: 1, perHour: 1 / 32, cap: 0.75 },
+    // PROVISIONAL (the user, 2026-10-29): there is no flee roll. The party gets away when, at the end of a round, no
+    // foe can reach striking distance of any of them (a wall across the way, or held where it stands) or none could
+    // in `outrun` rounds of running, and no foe with a missile or a spell has a clear line to them.
+    disengage: { outrun: 2 },
 
     // ---- Progression (Outline Lean) --------------------------------------
     startingFeats: 3,
@@ -717,6 +728,8 @@
     'Weapon wear (the user\'s call): every weapon has a durability (weapons.yaml × its material\'s toughness × origin × craftsmanship; a rapier 40, a longsword 100, a mace 120). Each blow wears it by its force × rate × fragility (rapier 2, mace 0.5) × (what it meets ÷ its own hardness): landing on armor 0.4 (metal chews an edge; cloth, leather and flesh barely touch it), being parried 0.15, parrying 0.25 (by the force of the blow met), being blocked 0.25 (by the shield\'s material). A dodge costs nothing. A worn weapon keeps 60% of its damage at the end of its life; at 0 it breaks and is out of the fight until a smith mends it. Thrusts now wear armor too (half their piercing).',
     'After a fight (the user\'s call): one click rests an hour (was 15 minutes) and mends: stamina back to the weary maximum, armor, shields and weapons get 25% back (50% with Field Repair in the party); broken weapons and shields need a smith. Pressing on keeps stamina where it is.',
     'Weariness (the user\'s idea, on trial): every round of combat lowers each fighter\'s maximum stamina by 1, and every hour awake by 1/32 of it (half after a 16-hour day), at most three quarters in all; only a long rest (camp, inn) clears it.',
+    'Getting away (the user, 2026-10-29): no flee roll and no pause between rounds. The party is away when, at the end of a round, no foe can reach striking distance of any of them (a wall across the way, or held fast) or none could in 2 rounds of running, and no foe with a missile or a spell has a clear line to them. A wall of fire (Build + Fire) can\'t be walked through and scorches anyone within a square of it for Fire 2 at the end of each round.',
+    'Spell points and rest (the user, 2026-10-29): a rest after a fight brings spent points back, but each point spent takes half a point off the maximum until a long rest.',
     'Time in a dungeon (the user, 2026-10-28): a step is 10 seconds and sneaking 20 (seeing the whole temple by the shortest route takes 2.8 h, walking every square about 12, tools/pace.js; a thorough exploration with searches should come close to a 16-hour day), a search 10 minutes. Every 20 minutes there is a 35% chance of drawing from the place\'s wandering table; loud things (forcing, a fight, a trap) count as extra minutes; a sneaking party can let wanderers pass on a stealth check.',
     'Quick feats (Quick Thrust, Parry, Block, Dodge, Hands, Heavy Tempo, Quick Casting) take a share off every such action: half at the top rank (Quick Thrust I–III: −1/6, −1/3, −1/2; Quick Parry I–II: −1/4, −1/2).',
     'Rounds and turns (the user\'s model): a round starts with initiative; each character takes one turn in initiative order and may spend their whole AP pool on it; every action resolves as it is taken. The round ends when everyone has had their turn; unspent AP is lost.',

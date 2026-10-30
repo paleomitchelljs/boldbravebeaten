@@ -1253,6 +1253,24 @@ retreat, flank, use terrain, or plan across rounds. A result like "the duelist w
 65%" means "under these rules, played competently but simply." Pass/fail thresholds
 are my numeric readings of qualitative goals; they live in `sim/targets.js`.
 
+## Getting away and the wall of fire (2026-10-29)
+
+The user dropped the flee roll: getting away should cost movement and need a wall, a trap or a hold between you and
+what chases you. `Battle.disengaged` (CONFIG.disengage, PROVISIONAL) asks at each round's end: can any foe still
+standing reach striking distance of the party (path cost within 2 rounds of its running) or shoot or cast at them over a
+clear line? The wall of fire (Build + Fire) became a true wall (can't be walked through, not solid: it can be seen and
+shot across) that burns anyone within a square of it for Fire 2 at the end of each round.
+
+Dry run in the labyrinth (seed 11, scratch script, not a sim): the party in the clay golem's east exit (2 squares
+wide), the golem in its room. Before the wall: not away ("Clay golem can reach you"). Jabiku casts Build + Fire across
+the exit (4 AP, 4 SP, 4 stamina of backlash): the golem walks up to the wall and stops; at the round's end the party is
+away. The other exit loops back only outside the fight's window, which the check counts as out of reach. No numbers
+were tuned against this; `tests/escape.test.js` holds the rule.
+
+Spell points (the user): a rest after a fight brings them back, with half of each spent point off the maximum until a
+long rest (CONFIG.magic.spWeary). Jabiku (14 SP) spending everything each fight has 14, 7, 3, 2, 1 in successive fights:
+about two hard-casting fights a day, then a trickle. Not simulated.
+
 ## What changed
 
 ### Bugs found by the sims (fixed)

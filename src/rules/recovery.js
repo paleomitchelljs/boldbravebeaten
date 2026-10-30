@@ -91,6 +91,7 @@
     c.wearyCarry = 0;
     c.stamina = C.maxStamina(c);
     c.spSpent = 0;
+    c.spWeary = 0;
     c.status = C.freshStatus();
 
     const repairer = [c, tender].some((x) => x && C.rank(x, 'field_repair'));

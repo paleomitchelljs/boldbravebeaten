@@ -160,6 +160,17 @@
         lines.push(`${c.name}'s gear is patched up.`);
       }
       W.removeGood(world, id, 1);
+    } else if (g.kind === 'oil') {
+      // Worked into the weapon in hand; a fresh coat replaces what is left of an old one.
+      const wpn = C.wieldedWeapon(c);
+      if (!wpn || !g.coat) return { ok: false, reason: `${c.name} has no weapon in hand.` };
+      wpn.coat = { good: id, name: g.name, slay: g.coat.slay || [], hits: g.coat.hits || 1 };
+      lines.push(`${c.name} works the ${g.name.toLowerCase()} into the ${G.Items.itemName(wpn)} (${wpn.coat.hits} blows).`);
+      W.removeGood(world, id, 1);
+    } else if (g.kind === 'book' && g.text) {
+      // Something to read, not to learn from: it stays in the pack.
+      lines.push(g.text);
+      for (const f of g.sets || []) W.setFlag(world, f);
     } else if (g.kind === 'book') {
       if (g.teaches && g.teaches.noun) {
         if ((c.nouns || []).includes(g.teaches.noun)) return { ok: false, reason: `${c.name} already knows ${g.teaches.noun}.` };
