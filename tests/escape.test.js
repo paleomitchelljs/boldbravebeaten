@@ -59,15 +59,17 @@ test('wall of fire: scorches whoever ends the round beside it, once however many
   assert.ok(b.enc.tiles['2,1'].some((f) => f.kind === 'fireWall' && f.rounds === 2), 'it burns down');
 });
 
-test('spell points: a rest brings them back, each spent point wears half a point off the maximum; a night clears it', async () => {
+test('spell points: a rest brings them back, each spent point wears spWeary off the maximum; a night clears it', async () => {
   const w = fresh(6);
   const mage = World.party(w).find((c) => Magic.maxSP(c) > 0);
   const full = Magic.maxSP(mage);
   mage.spSpent = 6;
   World.restAndRepair(w);
   assert.equal(mage.spSpent, 0);
-  assert.equal(Magic.maxSP(mage), full - 3);
-  assert.equal(Magic.availableSP(mage) <= full - 3, true);
+  const after = Math.floor(full - 6 * B.CONFIG.magic.spWeary);
+  assert.ok(after < full);
+  assert.equal(Magic.maxSP(mage), after);
+  assert.equal(Magic.availableSP(mage) <= after, true);
   await B.Recovery.longRest(mage, {}, roll(1));
   assert.equal(Magic.maxSP(mage), full);
 });

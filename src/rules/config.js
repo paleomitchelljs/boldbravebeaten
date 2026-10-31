@@ -384,7 +384,9 @@
       // PROVISIONAL (the user, 2026-10-29): a rest after a fight brings spent points back, but each point spent takes
       // this much off the maximum until a long rest, as weariness does stamina. A caster can go hard in a fight and
       // still has only so many fights in a day.
-      spWeary: 0.5,
+      // TUNED (the user, 2026-10-30: a long rest after clearing an area, about 6 fights): was 0.5, which halved a
+      // caster who emptied the pool every fight. At 0.15 the maximum runs 100, 85, 72, 61, 52, 44% fight by fight.
+      spWeary: 0.15,
       // A tired caster can't draw as much power: usable points scale with stamina.
       staminaLimitsPoints: true,
       // Fire: armor stops half its blunt mitigation; every 2 points left over cost 1 CON,
@@ -657,7 +659,10 @@
     //   blocked  the attacker's weapon, against the shield
     // A dodge costs a weapon nothing. A worn weapon keeps `floor` of its damage, sliding down as it
     // wears; at 0 it breaks and can't be used until a smith mends it. null: weapons never wear.
-    weaponWear: { hit: 0.4, deflected: 1.0, parried: 0.15, parry: 0.25, blocked: 0.25, floor: 0.6 },
+    // TUNED (the user, 2026-10-30: "real but not a tedium"; sim/FINDINGS.md): every rate halved and a turned point
+    // 1.5× a landed blow (was 2.5×). At 0.4/1.0 a rapier lost about half its life a fight to the Suracayl's scales and
+    // broke in two; now about an eighth (a fifth against mail), a longsword about 1%.
+    weaponWear: { hit: 0.2, deflected: 0.3, parried: 0.075, parry: 0.125, blocked: 0.125, floor: 0.6 },
     // Warnings shown on a fighter (C.gearWarnings): a weapon at or below this share of its durability, arrows at or
     // below this count for someone carrying a bow.
     gearWarn: { weaponWorn: 0.5, arrowsLow: 5 },
@@ -725,7 +730,7 @@
   CONFIG.provisional = [
     'The turn budget (the user\'s call): AP pool = 3.5 + SPD/2, unrounded (6 at SPD 5), costs in tenths. At level 1 a turn holds one big action, a step and a medium action, or three quick actions: base costs up to 2 (thrust, parry, dodge, block) stand, every Specifics AP above 2 costs 2 (a swing 3 → 4, a two-handed swing 4 → 6, a power swing 2 + 4, a shortbow 4, a longbow 2 + 4, trip and disarm 4, grapple, pin and throw 4); weapon speed multiplies the result (a dagger thrust 1.5). A move is a quick action: 2 AP for up to (1 + ⌊SPD/4⌋) × 2 squares. Someone who has spent nothing this round may take one action dearer than the whole pool as the whole turn.',
     'Armor makes actions dearer (the user\'s call): its SPD penalty no longer shrinks the pool; every action costs 1/6 AP more per point of it (plate +0.5, mail +0.2; the mobility feats lower it). The penalty still slows moving, initiative, dodging and fleeing.',
-    'Weapon wear (the user\'s call): every weapon has a durability (weapons.yaml × its material\'s toughness × origin × craftsmanship; a rapier 40, a longsword 100, a mace 120). Each blow wears it by its force × rate × fragility (rapier 2, mace 0.5) × (what it meets ÷ its own hardness): landing on armor 0.4 (metal chews an edge; cloth, leather and flesh barely touch it), being parried 0.15, parrying 0.25 (by the force of the blow met), being blocked 0.25 (by the shield\'s material). A dodge costs nothing. A worn weapon keeps 60% of its damage at the end of its life; at 0 it breaks and is out of the fight until a smith mends it. Thrusts now wear armor too (half their piercing).',
+    'Weapon wear (the user\'s call): every weapon has a durability (weapons.yaml × its material\'s toughness × origin × craftsmanship; a rapier 40, a longsword 100, a mace 120). Each blow wears it by its force × rate × fragility (rapier 1.25, mace 0.5) × (what it meets ÷ its own hardness): landing on armor 0.2 (metal chews an edge; cloth, leather and flesh barely touch it), a point turned by armor 0.3, being parried 0.075, parrying 0.125 (by the force of the blow met), being blocked 0.125 (by the shield\'s material); fractions of a point carry to the next knock (TUNED 2026-10-30: was 0.4/1.0/0.15/0.25/0.25 and a rapier\'s fragility 2, which broke a rapier in two fights against scales). Spell points: each spent point takes 0.15 off the maximum until a long rest (TUNED 2026-10-30, was 0.5). A dodge costs nothing. A worn weapon keeps 60% of its damage at the end of its life; at 0 it breaks and is out of the fight until a smith mends it. Thrusts now wear armor too (half their piercing).',
     'After a fight (the user\'s call): one click rests an hour (was 15 minutes) and mends: stamina back to the weary maximum, armor, shields and weapons get 25% back (50% with Field Repair in the party); broken weapons and shields need a smith. Pressing on keeps stamina where it is.',
     'Weariness (the user\'s idea, on trial): every round of combat lowers each fighter\'s maximum stamina by 1, and every hour awake by 1/32 of it (half after a 16-hour day), at most three quarters in all; only a long rest (camp, inn) clears it.',
     'Getting away (the user, 2026-10-29): no flee roll and no pause between rounds. The party is away when, at the end of a round, no foe can reach striking distance of any of them (a wall across the way, or held fast) or none could in 2 rounds of running, and no foe with a missile or a spell has a clear line to them. A wall of fire (Build + Fire) can\'t be walked through and scorches anyone within a square of it for Fire 2 at the end of each round.',

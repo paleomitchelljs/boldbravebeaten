@@ -28,7 +28,14 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   if no foe can reach striking distance of them within 2 rounds' running and none can shoot or cast at them
   (`Battle.disengaged`); they stay on the map where they stood. Wall of fire (Build + Fire): impassable, Fire 2 to
   anyone beside it each round. Jabiku has Build (one bonus feat). Dry run on the labyrinth golem in `sim/FINDINGS.md`.
-- [x] Spell points come back with a rest after a fight; half of each spent point comes off the maximum until a long rest.
+- [x] Spell points come back with a rest after a fight; 0.15 of each spent point comes off the maximum until a long
+  rest (was half; 2026-10-30, so a caster lasts an area of ~6 fights: 100, 86, 71, 64, 56, 46%).
+- [x] Weapon wear halved, a turned point 1.5× a landed blow (was 2.5×), rapier fragility 1.25 (was 2), fractions of a
+  point carried (2026-10-30): a rapier loses ~14% a fight to Suracayl scales (was ~57%, broke in two), ~22% to mail.
+- [ ] With a rest after each fight, wear no longer builds up against scales (the rest gives 25% back). If wear
+  should tell across a day even with rests, lower `afterBattle.restRepairFraction` (0.25).
+- [ ] The Suracayl scales are near mail for a point (resist 1.4, gap 9; iron mail 1.6): if they should read as
+  lightly armored, that is the scales' data.
 - [x] Items: oils worked into the weapon in hand (`coat`: slay damage for N landed blows), books with `text` that are
   read and kept. Golem-bane oil and a journal lie just inside the labyrinth's north door.
 - [ ] Use an item in a fight (oil a blade, drink a potion) as an Other action; today it is only from the pack.

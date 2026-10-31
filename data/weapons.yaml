@@ -9,7 +9,7 @@
 # closeOK: works in a clinch without being cramped (daggers, short hafts); long blades and spears don't.
 # dagger: counts as a dagger (Coup de Grâce; the AI's stab in a grapple).
 # durability: how much wear the weapon takes before it breaks (average craft, its own material);
-# fragility: how hard each knock bites (a rapier's thin blade 2, a mace's head 0.5). See CONFIG.weaponWear.
+# fragility: how hard each knock bites (a rapier's thin blade 1.25, a mace's head 0.5). See CONFIG.weaponWear.
 # punch (on a point or arrow, optional): overrides the punch worked out from mass (CONFIG.pierce): a dagger is
 #   driven by the whole arm; an arrow's punch is the bow's. maxPunch: a flexible blade bends past this however
 #   hard it is driven (a rapier's 1.2 never bursts mail).
@@ -155,7 +155,7 @@ rapier:
   reachName: "swing 1, thrust 2"
   material: steel
   durability: 40
-  fragility: 2.0
+  fragility: 1.25
   faces: {point: [6, 0, 0], edge: [0, 2, 0]}
   motions: [thrust, swing]
   rarity: uncommon

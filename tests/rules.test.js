@@ -1709,11 +1709,14 @@ test('weapons wear on metal armor, not on flesh; a rapier wears fastest', async 
 
 test('a parry wears both blades, the parrying one by the force it meets; a dodge wears nothing', async () => {
   const parry = await blowAt('longsword', () => {}, (req) => (req.kind === 'defend' ? 'parry' : null));
-  assert.ok(Items.weaponDurability(parry.bw) < Items.weaponMaxDurability(parry.bw), 'the parrying sword wears');
-  assert.ok(Items.weaponDurability(parry.w) < Items.weaponMaxDurability(parry.w), 'and so does the parried one');
+  // A single knock may be less than a point: the fraction is carried on the weapon (wearCarry).
+  const worn = (w) => Items.weaponDurability(w) < Items.weaponMaxDurability(w) || w.wearCarry > 0;
+  assert.ok(worn(parry.bw), 'the parrying sword wears');
+  assert.ok(worn(parry.w), 'and so does the parried one');
   const dodge = await blowAt('longsword', () => {}, (req) => (req.kind === 'defend' ? 'dodge' : null));
   assert.strictEqual(Items.weaponDurability(dodge.w), Items.weaponMaxDurability(dodge.w));
   assert.strictEqual(Items.weaponDurability(dodge.bw), Items.weaponMaxDurability(dodge.bw));
+  assert.ok(!dodge.w.wearCarry && !dodge.bw.wearCarry, 'not even a fraction');
 });
 
 test('a worn weapon hits softer; a broken one is out of the fight until a smith mends it', () => {
@@ -1831,7 +1834,8 @@ test('a point against armor: it bursts through, finds a gap, or is turned (the u
     const o = opt(a, (x) => x.motion === 'thrust');
     // Dice: the gap roll (a DEX-5 rapier needs 9 against mail's 10), six pass-through d10s, the wound roll.
     const r = await Combat.applyHit(enc, { [a.id]: a, [t.id]: t }, a, t, o, roller(1, [die, 1, 1, 1, 1, 1, 1, 10]));
-    return { r, con: t.damage.CON, stamina: before - t.stamina, wear: Items.weaponMaxDurability(a.weapons[0]) - Items.weaponDurability(a.weapons[0]) };
+    const w = a.weapons[0];
+    return { r, con: t.damage.CON, stamina: before - t.stamina, wear: Items.weaponMaxDurability(w) - Items.weaponDurability(w) + (w.wearCarry || 0) };
   };
   const found = await run(10);
   assert.match(found.r.text, /finds a gap/);
@@ -1840,7 +1844,7 @@ test('a point against armor: it bursts through, finds a gap, or is turned (the u
   assert.match(turned.r.text, /turns the point/);
   assert.strictEqual(turned.con, 0);
   assert.ok(turned.stamina > 0, 'a turned point still bruises');
-  assert.ok(turned.wear > found.wear, 'and wears the blade hard');
+  assert.ok(turned.wear > found.wear, 'and wears the blade harder');
   // Pinned: the point goes in at a gap, no roll.
   const g = await grapplePair('mail');
   await step(g, 'clinch', [10, 1]);

@@ -1271,6 +1271,44 @@ Spell points (the user): a rest after a fight brings them back, with half of eac
 long rest (CONFIG.magic.spWeary). Jabiku (14 SP) spending everything each fight has 14, 7, 3, 2, 1 in successive fights:
 about two hard-casting fights a day, then a trickle. Not simulated.
 
+## Weapon wear and spell points over a day (2026-10-30)
+
+The user: wear should be real but not a tedium; a rapier should not break against the first lizards in less than a
+cleared area; a party should need a long rest after an area of about 6 fights ("battles short, days long").
+
+Scratch scripts (AI both sides, the default party, seeds 11 and 5, 30-40 fights a row). Durability lost per fight, as
+a share of the weapon's life, against two Suracayl warriors (chitin scales: P resist 1.4, gap 9, so a rapier point
+(punch 1.2) must find a gap or be turned) and against the same warriors in iron mail:
+
+| wear rates (hit / turned / parried / parry / blocked), rapier fragility | rapier, scales | rapier, mail | longsword |
+|---|---|---|---|
+| 0.4 / 1.0 / 0.15 / 0.25 / 0.25, 2 (before) | 57% (censored: it breaks) | 76% | 3-4% |
+| all × 0.25 | 17% | 25% | under 0.5% |
+| × 0.5, turned 0.3, 2 | 21% | 34% | 1.1% |
+| × 0.5, turned 0.3, 1.25 (chosen) | 14% | 22% | 1.3% |
+
+Of the rapier's wear against scales before, turned points were 16 of ~27 points a fight, parried thrusts 7, landed
+blows 4. A rapier was counted thin twice (durability 40 against a longsword's 100, and fragility 2), so scaling all
+rates down far enough to save it left a longsword with no wear at all; its fragility came down instead. Wear per knock
+was rounded to whole points (small knocks on a sturdy blade vanished, on a fragile one rounded up); the fraction now
+carries on the weapon (`wearCarry`).
+
+Fights against the court back to back, resting and repairing after each (the after-fight rest gives 25% back), means
+over the parties still standing:
+
+| fight | rapier life, before | rapier life, now | Jabiku's SP maximum, before (spWeary 0.5) | now (0.15) |
+|---|---|---|---|---|
+| 1 | 100% | 100% | 100% | 100% |
+| 2 | 63% | 100% | 57% | 86% |
+| 3 | 39% | 99% | 32% | 71% |
+| 4 | 20% | 100% | 21% | 64% |
+| 5 | broken | 100% | 21% | 56% |
+| 6 | | 100% | | 46% |
+
+Pressing on without rests the rapier now loses about 11% a fight against scales. With a rest after each fight wear no
+longer accumulates at all against these foes: the after-fight repair (`restRepairFraction` 0.25) now outweighs it. Only
+mail, pressing on, or a hard fight wears a weapon down over a day. Encounter win rates were not looked at (deferred).
+
 ## What changed
 
 ### Bugs found by the sims (fixed)
