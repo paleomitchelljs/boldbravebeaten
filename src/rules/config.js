@@ -662,7 +662,9 @@
     // TUNED (the user, 2026-10-30: "real but not a tedium"; sim/FINDINGS.md): every rate halved and a turned point
     // 1.5× a landed blow (was 2.5×). At 0.4/1.0 a rapier lost about half its life a fight to the Suracayl's scales and
     // broke in two; now about an eighth (a fifth against mail), a longsword about 1%.
-    weaponWear: { hit: 0.2, deflected: 0.3, parried: 0.075, parry: 0.125, blocked: 0.125, floor: 0.6 },
+    // organic: × wear against an organic material (materials.yaml: hide, chitin, bone, wood…), which gives under an
+    // edge where metal chews it (PROVISIONAL, the user, 2026-10-30).
+    weaponWear: { hit: 0.2, deflected: 0.3, parried: 0.075, parry: 0.125, blocked: 0.125, organic: 0.5, floor: 0.6 },
     // Warnings shown on a fighter (C.gearWarnings): a weapon at or below this share of its durability, arrows at or
     // below this count for someone carrying a bow.
     gearWarn: { weaponWorn: 0.5, arrowsLow: 5 },

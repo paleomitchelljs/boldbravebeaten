@@ -1719,6 +1719,23 @@ test('a parry wears both blades, the parrying one by the force it meets; a dodge
   assert.ok(!dodge.w.wearCarry && !dodge.bw.wearCarry, 'not even a fraction');
 });
 
+test('a blade wears less on organic armor than on metal as hard (materials.yaml organic)', async () => {
+  const wearOn = async (material) => {
+    const a = armed('A', 'longsword', { side: 'party' });
+    const t = fighter('T', { side: 'enemy' });
+    t.armor = Items.makeArmor('mail', 'full', 'average');
+    t.armor.material = material;
+    t.stamina = C.maxStamina(t);
+    const enc = { hitThisRound: {}, fortressUsed: {}, log: [], round: 1 };
+    const w = a.weapons[0];
+    for (let i = 0; i < 6; i++) await Combat.applyHit(enc, { [a.id]: a, [t.id]: t }, a, t, opt(a, (x) => x.motion === 'swing'), roller(1, Array(20).fill(5)));
+    return Items.weaponMaxDurability(w) - Items.weaponDurability(w) + (w.wearCarry || 0);
+  };
+  assert.strictEqual(Items.hardness('chitin'), Items.hardness('bronze'), 'the same hardness');
+  const chitin = await wearOn('chitin'), bronze = await wearOn('bronze');
+  assert.ok(bronze > 0 && Math.abs(chitin - bronze * B.CONFIG.weaponWear.organic) < 1e-6, `chitin ${chitin}, bronze ${bronze}`);
+});
+
 test('a worn weapon hits softer; a broken one is out of the fight until a smith mends it', () => {
   const c = armed('Worn', 'longsword');
   const swing = () => opt(c, (o) => o.motion === 'swing').damage.reduce((x, y) => x + y);

@@ -34,8 +34,9 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   point carried (2026-10-30): a rapier loses ~14% a fight to Suracayl scales (was ~57%, broke in two), ~22% to mail.
 - [ ] With a rest after each fight, wear no longer builds up against scales (the rest gives 25% back). If wear
   should tell across a day even with rests, lower `afterBattle.restRepairFraction` (0.25).
-- [ ] The Suracayl scales are near mail for a point (resist 1.4, gap 9; iron mail 1.6): if they should read as
-  lightly armored, that is the scales' data.
+- [x] Suracayl scales have bronze mail's numbers (P1 S3 B1, burst 1.1; were stronger than iron mail). Materials
+  marked `organic` (hide, chitin, bone, wood…) wear a blade at half the rate (`weaponWear.organic`); a rapier loses
+  ~8% a fight to the scales, ~22% to iron mail (2026-10-30). Wear is meant to be a danger from metal, not a chore.
 - [x] Items: oils worked into the weapon in hand (`coat`: slay damage for N landed blows), books with `text` that are
   read and kept. Golem-bane oil and a journal lie just inside the labyrinth's north door.
 - [ ] Use an item in a fight (oil a blade, drink a potion) as an Other action; today it is only from the pack.

@@ -2219,7 +2219,8 @@
     return option && option.weaponType && WEAPONS[option.weaponType] ? WEAPONS[option.weaponType].material || 'bone' : null;
   }
 
-  // Wear = the blow's force × rate × fragility × (what it meets ÷ its own hardness). Durability stays whole: the
+  // Wear = the blow's force × rate × fragility × (what it meets ÷ its own hardness), less against organic
+  // materials (weaponWear.organic). Durability stays whole: the
   // fraction of a point is carried on the weapon (w.wearCarry) to the next knock, so small knocks add up instead of
   // rounding away (or up). A weapon that drops below half says so; one that reaches 0 breaks.
   function wearWeapon(enc, owner, w, force, rate, against) {
@@ -2227,7 +2228,8 @@
     const max = Items.weaponMaxDurability(w);
     if (!W || !max || !against || !force) return;
     const own = Items.hardness(Items.weaponMaterial(w)) || 1;
-    const raw = (w.wearCarry || 0) + force * W[rate] * (WEAPONS[w.type].fragility || 1) * (Items.hardness(against) / own) * Items.wearMult(w);
+    const give = (G.DATA.MATERIALS[against] || {}).organic ? W.organic || 1 : 1; // horn and chitin give under an edge
+    const raw = (w.wearCarry || 0) + force * W[rate] * (WEAPONS[w.type].fragility || 1) * (Items.hardness(against) / own) * give * Items.wearMult(w);
     const wear = Math.floor(raw);
     w.wearCarry = Math.round((raw - wear) * 1000) / 1000;
     if (wear <= 0) return;

@@ -1309,6 +1309,22 @@ Pressing on without rests the rapier now loses about 11% a fight against scales.
 longer accumulates at all against these foes: the after-fight repair (`restRepairFraction` 0.25) now outweighs it. Only
 mail, pressing on, or a hard fight wears a weapon down over a day. Encounter win rates were not looked at (deferred).
 
+Then (the user): breakage should be "a danger, not an annoyance"; the Suracayl scales were stronger than iron mail
+(P2 S3 B2, burst 1.4, gap 9 against iron mail's P1 S4 B1, 1.3, 10) and should be bronze mail; organic armor may stop
+a blow as well without wearing a blade the same way. The scales now have bronze mail's numbers (P1 S3 B1, burst 1.1:
+a rapier's point gets through); materials.yaml marks grown materials `organic` (cloth, leather, hide, wood, bone,
+chitin, silk, dragon hide) and a blade takes `weaponWear.organic` (0.5) of its wear against them (armor it strikes,
+or a wooden or bone weapon that parries it). Same scratch script, 40 fights:
+
+| | rapier, scales | rapier, iron mail | longsword, scales | longsword, mail |
+|---|---|---|---|---|
+| new scales, no organic tag | 13.6% | 22% | 0.7% | 1.6% |
+| new scales, organic 0.5 | 8.0% | 22% | 0.3% | 1.5% |
+
+Pressing on against the court without rests, the rapier stands at 92, 84, 82, 78% before fights 2-5. What wears a
+blade now is metal: mail, a steel weapon that parries it, a shield. The bronze-mail scales make the court easier
+(18 of 20 parties won a second fight in a row without rests, against 10 before); not looked at further (deferred).
+
 ## What changed
 
 ### Bugs found by the sims (fixed)

@@ -12,7 +12,7 @@ No anchors or tags. Keys must be unique.
 | `rules.yaml` | Numbers: party creation, XP, training prices, time, skill target numbers, faction spread, parley, economy, the gear foes roll (`enemyGear`). `game:` keys are read by the game layer; anything else is deep-merged over `src/rules/config.js`. |
 | `armor.yaml` | Armor types (padded, leather, mail, plate): mitigation per face (P pierce, S slash, B blunt), SPD/DEX penalties, stamina, regen, durability, usual and allowed materials, `pierce` (the punch that bursts it, the gap number), `transmit` (mail: more of a cut's force as blunt), `cutThrough` (padding and leather: how much cut they stop), `dissipate` (plate), rarity. Each piece is the whole harness: padding is assumed under mail and plate. `natural: true` for monster hides. |
 | `shields.yaml` | `types` (block AP, threshold, durability) and `materials` (multiplier). |
-| `materials.yaml` | What gear is made of: hardness, toughness, weight, protection, `metal`, `rusts`, `exotic`. |
+| `materials.yaml` | What gear is made of: hardness, toughness, weight, protection, `metal`, `rusts`, `organic` (a blade wears less on it), `exotic`. |
 | `origins.yaml` | Where and how gear was made (common, elven, dwarven, goblin): weight against protection, damage and durability. |
 | `crafts.yaml` | Craftsmanship (poor, average, masterwork): durability, wear taken, shield break threshold. |
 | `enchantments.yaml` | Rare enchantments: what they can be laid on, the multipliers, and the magic: `effects` (while worn or in hand), `strike` (on each blow that lands), `apLess`, `power`, `blockSpells`, `mitBonus`, `resistBonus`. See **Magic items** below. |
