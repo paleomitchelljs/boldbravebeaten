@@ -70,7 +70,8 @@
   }
 
   // ---- Map ---------------------------------------------------------------
-  // What the map should show for the current choice: who can be targeted, where one can move or cast, the ground.
+  // What the map should show for the current choice: who can be targeted, where one can cast, the ground; and, whatever
+  // the choice, where the one acting can move (a move is made by clicking a square, not chosen as an action).
   function mapState(app, enc, legal) {
     const chars = app.state.characters;
     const ui = bui(app);
@@ -80,7 +81,7 @@
     const targets = {};
     if (ui.mode === 'target' && ui.pending) for (const t of ui.pending.targets) targets[t.id] = t;
     let reach = null;
-    if (ui.mode === 'move' && legal && legal.move) {
+    if (ui.mode !== 'place' && legal && legal.move && actor && chars[actor] && !aiControlled(app, chars[actor])) {
       reach = {};
       const m = legal.move;
       const blocked = {};
@@ -166,7 +167,7 @@
       return;
     }
     const actor = Combat.currentActor(enc);
-    if (ui.mode === 'move' && reach && reach[x + ',' + y] != null) {
+    if (reach && reach[x + ',' + y] != null) {
       declare(app, enc, { actor, type: 'move', to: { x, y } });
       return;
     }
@@ -464,13 +465,12 @@
     if (martial.length) types.push(['martial', 'Attack', 'sword', ok(martial)]);
     if (maneuver.length) types.push(['maneuver', 'Maneuver', 'hand', ok(maneuver)]);
     if (magic.length) types.push(['magic', 'Magic', 'star', ok(magic)]);
-    if (move) types.push(['move', 'Move', 'boot', legal.move.maxSquares > 0]);
     if (other.length) types.push(['other', 'Other', 'dots', ok(other)]);
     return { martial, maneuver, magic, other, move, types };
   }
 
   // Keep the chosen type and action valid, and set the map's highlighting to match: targets to
-  // tap, squares to cast at, or squares to move to. Runs before the map draws.
+  // tap or squares to cast at. (Squares to move to are always shown.) Runs before the map draws.
   function syncCommand(app, enc, legal) {
     const ui = bui(app);
     const id = Combat.currentActor(enc);
@@ -485,8 +485,7 @@
     if (!model.types.some((t) => t[0] === cmd.type)) cmd.type = model.types[0] ? model.types[0][0] : null;
     if (cmd.type) (ui.lastType || (ui.lastType = {}))[id] = cmd.type;
     let entry = null;
-    if (cmd.type === 'move') entry = model.move;
-    else if (cmd.type === 'magic') entry = pickMagic(model.magic, cmd);
+    if (cmd.type === 'magic') entry = pickMagic(model.magic, cmd);
     else if (cmd.type) {
       const list = model[cmd.type];
       entry = list.find((e) => e.key === cmd.act) || list.find((e) => e.affordable) || list[0] || null;
@@ -503,8 +502,7 @@
     if (ui.mode !== 'place') {
       ui.mode = null;
       ui.pending = null;
-      if (entry && entry.kind === 'move') ui.mode = 'move';
-      else if (entry && entry.square) { ui.mode = 'cast'; ui.pending = { option: entry.option }; }
+      if (entry && entry.square) { ui.mode = 'cast'; ui.pending = { option: entry.option }; }
       else if (entry && entry.targets && entry.targets.length) {
         ui.mode = 'target';
         ui.pending = { kind: entry.kind === 'strike' || entry.kind === 'cast' ? entry.kind : 'other', type: entry.type, option: entry.option, label: entry.label, targets: entry.targets };
@@ -558,10 +556,6 @@
       rows.unshift(['Power', `${s.magnitude}${s.element ? ' ' + s.element : ''}`], ['Range', s.named ? 'anyone whose name you know, anywhere' : `${o.minRange}–${o.maxRange}`], shape ? ['Reach', shape] : null);
       notes.push(SHAPE_INFO[s.shape] || '');
       if (e.square) notes.push('Tap a highlighted square on the map to cast.');
-    } else if (e.kind === 'move') {
-      const m = e.move;
-      rows.unshift(['With your AP', `up to ${m.maxSquares} squares`]);
-      notes.push('Click a square; the number is its AP. Walls are walked around; rough ground costs more. Stepping into a foe\'s reach, out of it, or twice within it lets them strike at you; one step within it is free.');
     } else notes.push(ACTION_INFO[e.type] || '');
     if (e.why) rows.push(['Unavailable', e.why]);
     return [facts(rows), notes.filter(Boolean).map((n) => h('p', null, n))];
@@ -691,7 +685,7 @@
     const field = (label, el, extra) => h('label', { class: 'pick' }, h('span', { class: 'label' }, label), el, extra || null);
     const info = entry ? infoButton(entry.label, () => entryInfo(app, enc, c, entry)) : null;
     if (cmd.type === 'magic') rows.push(magicPicker(app, model, cmd));
-    else if (cmd.type && cmd.type !== 'move') {
+    else if (cmd.type) {
       rows.push(actionButtons(model[cmd.type], cmd, rerender, info));
     }
     // What the action is aimed at.
@@ -718,21 +712,22 @@
     }
     const tired = entry ? fatigueRow(c, entry.stamina) : null;
     if (tired) rows.push(tired);
-    if (entry && cmd.type === 'move') rows.push(h('div', { class: 'cmd-preview' }, h('span', { class: 'label' }, 'Move'), h('span', null, `up to ${entry.move.maxSquares} sq`), info));
-    else if (entry && cmd.type === 'magic') rows.push(h('div', { class: 'cmd-preview' }, h('span', { class: 'label' }, 'Cost'), h('span', null, costText(entry.ap, entry.stamina, entry.sp)), info));
+    if (entry && cmd.type === 'magic') rows.push(h('div', { class: 'cmd-preview' }, h('span', { class: 'label' }, 'Cost'), h('span', null, costText(entry.ap, entry.stamina, entry.sp)), info));
 
     // The button that does it, and End turn: always at the foot of the pane.
+    // Moving: a square clicked on the map (a second click there, or this button, confirms).
     let go = null;
-    if (entry) {
-      const tapOnly = entry.kind === 'move' || entry.square;
+    const moveAP = cmd.moveTo && app.ui.lastReach ? app.ui.lastReach[cmd.moveTo.x + ',' + cmd.moveTo.y] : null;
+    if (cmd.moveTo && moveAP != null) {
+      go = h('button', { class: 'primary', onclick: () => declare(app, enc, { actor: id, type: 'move', to: cmd.moveTo }) },
+        h('span', null, 'Move here'), h('span', { class: 'cost' }, `${C.fmtAP(moveAP)} AP`));
+    } else if (entry) {
       const blocked = !entry.affordable || (entry.targets && !target);
-      const chosen = entry.kind === 'move' ? cmd.moveTo : entry.square ? cmd.castAt : null;
-      const reachAP = chosen && entry.kind === 'move' && app.ui.lastReach ? app.ui.lastReach[chosen.x + ',' + chosen.y] : null;
       const name = entry.label.split(' · ')[0].replace(/\s*\(.*\)$/, '');
-      go = chosen
-        ? h('button', { class: 'primary', onclick: () => declare(app, enc, entry.kind === 'move' ? { actor: id, type: 'move', to: chosen } : { actor: id, type: 'cast', option: entry.option, at: chosen }) },
-          h('span', null, entry.kind === 'move' ? 'Move here' : `${name} here`), h('span', { class: 'cost' }, entry.kind === 'move' ? (reachAP != null ? `${C.fmtAP(reachAP)} AP` : '') : costText(entry.ap, entry.stamina, entry.sp)))
-        : tapOnly
+      go = entry.square && cmd.castAt
+        ? h('button', { class: 'primary', onclick: () => declare(app, enc, { actor: id, type: 'cast', option: entry.option, at: cmd.castAt }) },
+          h('span', null, `${name} here`), h('span', { class: 'cost' }, costText(entry.ap, entry.stamina, entry.sp)))
+        : entry.square
         ? h('span', { class: 'tap-hint' }, 'Click a square on the map')
         : entry.targets && entry.targets.length && !target && app.hooks && app.hooks.choose
         ? h('span', { class: 'tap-hint' }, 'Click a target on the map')
@@ -744,6 +739,7 @@
       h('div', { class: 'cmd-end' },
         h('button', { class: 'end', title: (legal.ap ? `Keep ${C.fmtAP(legal.ap)} AP to defend with until the round ends` : 'Nothing left this round') + ' (E)', onclick: () => finishTurn(app, enc, id) }, legal.ap ? `End turn · keep ${C.fmtAP(legal.ap)} AP` : 'End turn'),
         infoButton('Turns and AP', () => [
+          model.move ? h('p', null, `To move, click a square on the map (up to ${model.move.move.maxSquares} with your AP): a silhouette shows where you would stand and the AP it costs; click it again to go. Walls are walked around; rough ground costs more. Stepping into a foe's reach, out of it, or twice within it lets them strike at you; one step within it is free.`) : null,
           h('p', null, 'Spend as much AP as you like on your turn; each action resolves as you take it.'),
           h('p', null, 'AP you keep pays for reactions: a block, parry or dodge when a blow comes, or a strike at a foe who enters your reach, leaves it, or steps twice in it. AP left when the round ends is lost.')])),
     ]);

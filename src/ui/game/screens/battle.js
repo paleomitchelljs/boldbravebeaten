@@ -164,32 +164,39 @@
         sc.badges.push({ id: rq.actor, icon: rq.kind === 'opportunity' ? 'sword' : 'shield', color: INTENT.guard.color });
       }
     }
-    if (!map || !actor || !entry || !cmd) return sc;
+    if (!map || !actor || !cmd) return sc;
     const me = enc.pos[actor];
     const hv = game.ui.mv && game.ui.mv.hover ? { x: game.ui.mv.hover.x - ox, y: game.ui.mv.hover.y - oy } : null;
     const hk = hv ? hv.x + ',' + hv.y : null;
+    // Where the one acting can move, whatever action is chosen (unless a spell is being aimed at a square): a faint
+    // wash, its AP over the square hovered or picked. Hovering draws the route; a first click puts a silhouette there.
+    if (map.reach && !(entry && entry.square)) {
+      for (const k of Object.keys(map.reach)) {
+        const [x, y] = k.split(',').map(Number);
+        const pick = cmd.moveTo && cmd.moveTo.x === x && cmd.moveTo.y === y;
+        sc.marks.push({ x: x + ox, y: y + oy, type: map.late(map.reach[k]) ? 'reachLate' : 'reach', text: pick || k === hk ? C.fmtAP(map.reach[k]) : null });
+      }
+      const hoverMove = hv && map.reach[hk] != null && !occupant(enc, chars, hv.x, hv.y) ? hv : null;
+      const dest = cmd.moveTo || hoverMove;
+      if (dest) {
+        const strong = !!cmd.moveTo;
+        if (strong) {
+          const L = Sprites.look(chars[actor]);
+          sc.actors.push({ id: 'phantom', x: dest.x + ox, y: dest.y + oy, kind: L.kind, tint: L.tint, size: L.size, art: L.art, artTint: L.artTint, artScale: L.artScale, artSize: L.artSize, alpha: 0.55, flip: dest.x < me.x, speed: 16 });
+          sc.reticles.push({ x: dest.x + ox, y: dest.y + oy, color: INTENT.move.color, strong: true });
+        }
+        const route = G.Terrain && enc.tiles && Object.keys(enc.tiles).length ? G.Terrain.path(enc, me, dest, chars[actor]) : [dest];
+        sc.lines.push({ pts: [at(me)].concat(route.map(at)), color: map.late(map.reach[dest.x + ',' + dest.y]) ? INTENT.far.color : INTENT.move.color, style: 'dots', alpha: strong ? 0.95 : 0.4 });
+      }
+    }
+    if (!entry) return sc;
     // What the active character has already declared this round, faintly: lines to its targets.
     for (const d of enc.decls) {
       if (d.actor !== actor || d.done || !d.target || !enc.pos[d.target]) continue;
       sc.lines.push({ pts: [at(me), at(enc.pos[d.target])], color: d.option && d.option.spell ? INTENT.spell.color : INTENT.strike.color, style: 'dash', alpha: 0.3 });
     }
     // The choice being made now.
-    if (entry.kind === 'move' && map.reach) {
-      for (const k of Object.keys(map.reach)) {
-        const [x, y] = k.split(',').map(Number);
-        const pick = cmd.moveTo && cmd.moveTo.x === x && cmd.moveTo.y === y;
-        sc.marks.push({ x: x + ox, y: y + oy, type: map.late(map.reach[k]) ? 'reachLate' : 'reach', text: pick || k === hk ? String(map.reach[k]) : null });
-      }
-      const dest = cmd.moveTo || (hv && map.reach[hk] != null ? hv : null);
-      if (dest) {
-        const L = Sprites.look(chars[actor]);
-        const strong = !!cmd.moveTo;
-        sc.actors.push({ id: 'phantom', x: dest.x + ox, y: dest.y + oy, kind: L.kind, tint: L.tint, size: L.size, art: L.art, artTint: L.artTint, artScale: L.artScale, artSize: L.artSize, alpha: strong ? 0.55 : 0.32, flip: dest.x < me.x, speed: 16 });
-        const route = G.Terrain && enc.tiles && Object.keys(enc.tiles).length ? G.Terrain.path(enc, me, dest, chars[actor]) : [dest];
-        sc.lines.push({ pts: [at(me)].concat(route.map(at)), color: map.late(map.reach[dest.x + ',' + dest.y]) ? INTENT.far.color : INTENT.move.color, style: 'dots', alpha: strong ? 0.95 : 0.5 });
-        if (strong) sc.reticles.push({ x: dest.x + ox, y: dest.y + oy, color: INTENT.move.color, strong: true });
-      }
-    } else if (entry.square && map.castable) {
+    if (entry.square && map.castable) {
       for (const k of Object.keys(map.castable)) { const [x, y] = k.split(',').map(Number); sc.marks.push({ x: x + ox, y: y + oy, type: 'reach' }); }
       const aim = cmd.castAt || (hv && map.castable[hk] ? hv : null);
       if (aim) {
@@ -230,8 +237,8 @@
     return best;
   }
 
-  // Clicking the map builds the command: a first click chooses (a target, a square), a second click on the same thing
-  // commits it. A figure that is not a target opens its sheet.
+  // Clicking the map builds the command: a first click chooses (a target, a square to cast at or move to), a second
+  // click on the same thing commits it. A figure that is not a target opens its sheet.
   function onCell(game, x, y) {
     const bs = game.ui.bs;
     if (!bs || game.overlay || game.ui.result) return;
@@ -246,20 +253,20 @@
     const cmd = bs.app && P().bui(bs.app).cmd;
     const actor = m && m.actor;
     const same = (p) => p && p.x === ax && p.y === ay;
-    if (entry && cmd && actor) {
-      if (entry.kind === 'move' && m.reach && m.reach[key] != null) {
-        if (same(cmd.moveTo)) P().declare(bs.app, bs.enc, { actor, type: 'move', to: { x: ax, y: ay } });
-        else { cmd.moveTo = { x: ax, y: ay }; game.render(); }
-        return;
-      }
-      if (entry.square && m.castable && m.castable[key]) {
+    if (cmd && actor) {
+      if (entry && entry.square && m.castable && m.castable[key]) {
         if (same(cmd.castAt)) P().declare(bs.app, bs.enc, { actor, type: 'cast', option: entry.option, at: { x: ax, y: ay } });
         else { cmd.castAt = { x: ax, y: ay }; game.render(); }
         return;
       }
-      if (entry.targets && id && entry.targets.some((t) => t.id === id)) {
+      if (entry && entry.targets && id && entry.targets.some((t) => t.id === id)) {
         if (cmd.target === id) { if (entry.affordable) P().declareEntry(bs.app, bs.enc, actor, entry, cmd); else toast(entry.why || 'Not enough AP'); }
-        else { cmd.target = id; game.render(); }
+        else { cmd.target = id; cmd.moveTo = null; game.render(); }
+        return;
+      }
+      if (!(entry && entry.square) && m.reach && m.reach[key] != null) {
+        if (same(cmd.moveTo)) P().declare(bs.app, bs.enc, { actor, type: 'move', to: { x: ax, y: ay } });
+        else { cmd.moveTo = { x: ax, y: ay }; game.render(); }
         return;
       }
       if (!id && (cmd.moveTo || cmd.castAt)) { cmd.moveTo = null; cmd.castAt = null; game.render(); return; }

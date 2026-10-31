@@ -63,6 +63,9 @@ working, nothing more.** The shop and trainer changes below were made before tha
 - [x] Battle screen: the map on the left, a command pane on the right (under the map below 1000 px, stuck to the
   bottom), sized to the window so Do-it and End turn never need a scroll. Action types are icon tabs (Attack, Maneuver,
   Magic, Move, Other; keys 1-5); action, target and aim stay dropdowns; costs are in the action list; E ends the turn.
+- [x] Moving in a fight has no tab (2026-10-30): the squares one can reach are washed faintly on every tab (not while
+  an area spell is aimed); hovering one draws the route and its AP; a click puts a silhouette there and the Do-it button
+  becomes "Move here · AP"; a second click (or Enter) goes. The provoking rules are under the End turn (i).
 - [x] (i) and the map's figures use one hover card (`UI.hover`/`UI.showHover` in `icons.js`) instead of pop-ups and
   the browser's slow title; a tap pins it on touch screens.
 - [x] Feedback: a banner across the map at each new round and turn; spent AP pips flash; a hit washes the figure red;
