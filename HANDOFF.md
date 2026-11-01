@@ -26,8 +26,11 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 - [ ] Props (portcullis, throne, murder hole, carts, bridge deck, steps) and decor; a look at each place.
 
 ## Next (the user, 2026-10-31, in this order)
-- [ ] Icons: item icons (weapons, armor, shields, goods) in the loot list, the pack, the character sheet and the
-  explore screen, replacing words where they can; spell and fire effects in fights.
+- [x] Spell effects (`data/fx.yaml`, `art/fx/`; PixelLab's effect workbench, free): a bolt in ten colours by spell
+  noun, its impact, a fire burst over area spells (other nouns: a large impact), a flame for the wall of fire. They
+  replace the git-ignored pack in `art/effects/`, so the published site now shows them. Seen in headless Chrome.
+- [ ] Item icons (weapons, armor, shields, goods) in the loot list, the pack, the character sheet and the explore
+  screen, replacing words where they can.
 - [x] A button above the map (and V) hides the on-map UI: the dock, the toolbar, the bars and icons over figures;
   remembered in the browser. Seen in headless Chrome on the explore screen.
 - [ ] Temple map work: some passages are too narrow for the figures, and the wall faces look short beside them (a
@@ -71,7 +74,8 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 - [x] Items: oils worked into the weapon in hand (`coat`: slay damage for N landed blows), books with `text` that are
   read and kept. Golem-bane oil and a journal lie just inside the labyrinth's north door.
 - [ ] Use an item in a fight (oil a blade, drink a potion) as an Other action; today it is only from the pack.
-- [ ] The wall of fire's look on the battle map is a red outlined square with a glyph; it wants a flame tile.
+- [x] The wall of fire burns as a looping flame (`art/fx/flame.png`); the map's own lava, water and bars no longer get
+  outlined marks in a fight.
 - [ ] Getting away by running off the edge of the fight's window (today only out-of-reach counts).
 - [ ] Cover in the AI's footing: stand a shield beside the ally most at risk (the probe's covers are incidental).
 - [ ] An attribute sim: +1 to each attribute in turn against fixed fights, to see what SPD and CON buy over the

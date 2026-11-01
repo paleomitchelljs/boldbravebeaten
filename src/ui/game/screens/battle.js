@@ -143,8 +143,10 @@
     if (map) {
       for (const k of Object.keys(map.ground)) {
         const [x, y] = k.split(',').map(Number);
-        const list = map.ground[k].filter((t) => t.f.kind !== 'dungeonWall');
+        // The map's own ground (lava, water, bars) is drawn by the tiles; a fire burning on a square is a flame.
+        const list = map.ground[k].filter((t) => t.f.kind !== 'dungeonWall' && !(G.CONFIG.terrain[t.f.kind] || {}).permanent);
         if (!list.length) continue;
+        if (list.some((t) => t.f.kind === 'fireWall' || t.f.kind === 'hot')) { (sc.flames = sc.flames || []).push({ x: x + ox, y: y + oy }); continue; }
         sc.marks.push({ x: x + ox, y: y + oy, type: list.some((t) => /fire|hot|storm/i.test(t.f.kind)) ? 'target' : 'cast', text: P().TILE_GLYPH[list[list.length - 1].f.kind] || '·' });
       }
     }
@@ -299,6 +301,12 @@
     let i = 0;
     const struck = new Set();
     for (const d of enc.decls) {
+      // An area spell: a burst over the square it was aimed at.
+      if (d.done && !prev.done.has(d) && d.type === 'cast' && d.at && !d.target && d.option && mv.burst) {
+        const ox = game.ui.bs.arena ? game.ui.bs.arena.ox : 0, oy = game.ui.bs.arena ? game.ui.bs.arena.oy : 0;
+        mv.burst(d.at.x + ox, d.at.y + oy, d.option.noun || (d.option.spell && d.option.spell.noun) || 'force', i++ * 260);
+        continue;
+      }
       if (!d.done || prev.done.has(d) || !d.target || !enc.pos[d.actor] || !enc.pos[d.target] || !AIMED.includes(d.type)) continue;
       const t0 = i++ * 260;
       const a = enc.pos[d.actor], b = enc.pos[d.target], ox = game.ui.bs.arena ? game.ui.bs.arena.ox : 0, oy = game.ui.bs.arena ? game.ui.bs.arena.oy : 0;
@@ -306,7 +314,7 @@
       // than a spell, longer the farther); everything else, a reach weapon's thrust too, is a blow with a lunge.
       const o = d.option || {}, dist = Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
       let land = t0 + 140;
-      if (o.spell) { mv.bolt(d.actor, d.target, '#d7b4ff', t0, o.spell.element || 'force'); land = t0 + 200; }
+      if (o.spell) { mv.bolt(d.actor, d.target, '#d7b4ff', t0, o.spell.noun || o.noun || o.spell.element || 'force'); land = t0 + 200; }
       else if (o.ranged) {
         const dur = Math.max(160, dist * 45);
         mv.lunge(d.actor, b.x + ox, b.y + oy, t0, true);

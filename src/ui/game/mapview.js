@@ -70,19 +70,28 @@
     stairs: ['stairs_down', 0, 0, 16, 16],
   };
 
-  // Spell effects (art/effects, 16-pixel cells; git-ignored for now). Which sheet an element uses, and the cells used:
-  // a projectile with its trail behind it (pointing right) and an impact flash.
-  const FX_SHEET = { fire: 'Fire', frost: 'Water', lightning: 'Water', wind: 'Water', venom: 'Green', acid: 'Green', vine: 'Green', life: 'Green', plague: 'Green', earth: 'Fire' };
-  const FX_CELL = { bolt: [17, 11], flash: [10, 8] };
+  // Spell effects (data/fx.yaml; strips in art/fx): a bolt in flight, an impact where it lands, a burst over an area
+  // spell, a flame on a burning square. A spell noun picks the colour of its bolt and impact.
+  const FX = () => (G.Content && G.Content.world.fx) || null;
+  const fxColour = (noun) => { const d = FX(); return d ? (d.nouns || {})[noun] || 'arcane' : null; };
   const fxImgs = {};
-  function fxImg(sheet) {
-    if (fxImgs[sheet]) return fxImgs[sheet];
-    const o = fxImgs[sheet] = { ok: false, el: null };
-    if (!HAS_IMG) return o;
+  function fxImg(file) {
+    if (fxImgs[file]) return fxImgs[file];
+    const o = fxImgs[file] = { ok: false, el: null };
+    if (!HAS_IMG || !FX()) return o;
     o.el = new Image();
     o.el.onload = () => { o.ok = true; };
-    o.el.src = `art/effects/${sheet} Effect and Bullet 16x16.png`;
+    o.el.src = FX().dir + file;
     return o;
+  }
+  // Frame `i` of a strip whose frames are `w` x `h`, drawn centred on (x, y) at `scale` art pixels to screen pixels.
+  function fxFrame(ctx, file, i, w, h, x, y, scale, alpha) {
+    const im = fxImg(file);
+    if (!im.ok) return false;
+    ctx.save(); ctx.imageSmoothingEnabled = false; if (alpha != null) ctx.globalAlpha = alpha;
+    ctx.drawImage(im.el, i * w, 0, w, h, Math.round(x - w * scale / 2), Math.round(y - h * scale / 2), w * scale, h * scale);
+    ctx.restore();
+    return true;
   }
 
   const hash = (x, y, k) => { let n = (x * 374761393 + y * 668265263 + (k || 0) * 2147483647) | 0; n = (n ^ (n >>> 13)) * 1274126177; return ((n ^ (n >>> 16)) >>> 0); };
@@ -207,11 +216,13 @@
     view.lunge = (id, tx, ty, delay, still) => view.fx.push({ k: 'lunge', id, tx, ty, still, t0: clock() + (delay || 0), dur: 260 });
     // A bolt: a square of colour, an arrow (opts.shape), or (element given, and the effect sheets there) a fireball,
     // frost shard or spark from art/effects with a flash where it lands. opts.dur: its flight in ms.
-    view.bolt = (from, to, color, delay, element, opts) => {
-      const t0 = clock() + (delay || 0), sheet = element ? FX_SHEET[element] || 'Purple' : null;
-      view.fx.push({ k: 'bolt', from, to, color: color || '#ffe9a0', t0, dur: (opts && opts.dur) || (sheet ? 320 : 200), sheet, shape: opts && opts.shape });
-      if (sheet) view.fx.push({ k: 'flash', id: to, sheet, t0: t0 + 320, dur: 260 });
+    view.bolt = (from, to, color, delay, noun, opts) => {
+      const t0 = clock() + (delay || 0), colour = noun ? fxColour(noun) : null;
+      view.fx.push({ k: 'bolt', from, to, color: color || '#ffe9a0', t0, dur: (opts && opts.dur) || (colour ? 320 : 200), colour, shape: opts && opts.shape });
+      if (colour) view.fx.push({ k: 'flash', id: to, colour, t0: t0 + 320, dur: 300 });
     };
+    // An area spell going off over a square (map coordinates).
+    view.burst = (x, y, noun, delay) => view.fx.push({ k: 'burst', x, y, colour: fxColour(noun), t0: clock() + (delay || 0), dur: 860 });
     view.shudder = (id, delay) => view.fx.push({ k: 'shudder', id, t0: clock() + (delay || 0), dur: 300 });
     // A hit: the figure washes red and fades back (longer for a wound).
     view.hurt = (id, delay, wound) => view.fx.push({ k: 'hurt', id, t0: clock() + (delay || 0), dur: wound ? 520 : 360 });
@@ -362,6 +373,9 @@
     function drawOver(ctx, sc, ox, oy, t) {
       const size = T * S, SS = Math.max(1, S - 1);
       const head = (id) => { const v = view.vis[id]; if (!v) return null; const a = (sc.actors || []).find((q) => q.id === id); const [dx, dy] = offsetOf(id, t); return [ox + (v.x + dx + 0.5) * size, oy + (v.y + dy + 1) * size - S * 1.5 - 31 * SS * ((a && (a.art && Sprites.artReady(a.art) ? a.artSize : a.size)) || 1)]; };
+      // Fires burning on squares (a wall of fire): a looping flame standing in each.
+      const fl = FX() && FX().flame;
+      for (const q of sc.flames || []) if (fl) fxFrame(ctx, fl.file, (Math.floor(t / fl.ms) + q.x * 3 + q.y) % fl.frames, fl.w, fl.h, ox + (q.x + 0.5) * size, oy + (q.y + 1) * size - fl.h * size / 64 / 2, size / 64);
       for (const b of UI.cleanMap ? [] : sc.badges || []) {
         const at = b.id ? head(b.id) : [ox + (b.x + 0.5) * size, oy + b.y * size];
         if (!at) continue;
@@ -372,26 +386,26 @@
         const p = (t - f.t0) / f.dur;
         if (p > 1) continue;
         if (f.k === 'flash') {
-          const at = head(f.id), im = fxImg(f.sheet);
-          if (!at || !im.ok) continue;
-          const z = size * (0.9 + 0.5 * p), [cx, cy] = FX_CELL.flash;
-          ctx.save(); ctx.globalAlpha = 1 - p * 0.8; ctx.imageSmoothingEnabled = false;
-          ctx.drawImage(im.el, cx * 16, cy * 16, 16, 16, at[0] - z / 2, at[1] + 14 * SS - z / 2, z, z);
-          ctx.restore();
+          const at = head(f.id), d = FX();
+          if (!at || !d) continue;
+          fxFrame(ctx, `impact-${f.colour}.png`, Math.min(d.impact.frames - 1, Math.floor(p * d.impact.frames)), d.impact.size, d.impact.size, at[0], at[1] + 14 * SS, size / 64);
+          continue;
+        }
+        if (f.k === 'burst') {
+          const d = FX();
+          if (!d) continue;
+          // Fire's own explosion; another colour shows its impact, larger.
+          const fire = f.colour === 'fire', b = d.burst;
+          if (fire) fxFrame(ctx, b.file, Math.min(b.frames - 1, Math.floor(p * b.frames)), b.size, b.size, ox + (f.x + 0.5) * size, oy + (f.y + 0.5) * size, size * 2.4 / b.size);
+          else fxFrame(ctx, `impact-${f.colour}.png`, Math.min(d.impact.frames - 1, Math.floor(p * d.impact.frames)), d.impact.size, d.impact.size, ox + (f.x + 0.5) * size, oy + (f.y + 0.5) * size, size * 2.4 / d.impact.size);
           continue;
         }
         if (f.k === 'bolt') {
           const a = head(f.from), b = head(f.to);
           if (!a || !b) continue;
           const x = a[0] + (b[0] - a[0]) * p, y = a[1] + 14 * SS + (b[1] - a[1]) * p;
-          const im = f.sheet ? fxImg(f.sheet) : null;
-          if (im && im.ok) {
-            const [cx, cy] = FX_CELL.bolt, z = size * 0.8;
-            ctx.save(); ctx.translate(x, y); ctx.rotate(Math.atan2(b[1] - a[1], b[0] - a[0])); ctx.imageSmoothingEnabled = false;
-            ctx.drawImage(im.el, cx * 16, cy * 16, 16, 16, -z / 2, -z / 2, z, z);
-            ctx.restore();
-            continue;
-          }
+          const d = FX();
+          if (f.colour && d && fxFrame(ctx, `bolt-${f.colour}.png`, Math.floor(t / d.bolt.ms) % d.bolt.frames, d.bolt.size, d.bolt.size, x, y, size / 64)) continue;
           if (f.shape === 'arrow') {
             // Shaft, head and fletching, drawn pointing right and turned to its flight.
             ctx.save(); ctx.translate(Math.round(x), Math.round(y)); ctx.rotate(Math.atan2(b[1] - a[1], b[0] - a[0]));

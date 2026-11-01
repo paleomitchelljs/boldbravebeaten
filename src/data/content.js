@@ -41,6 +41,7 @@
     { file: 'start.yaml', key: 'start' },
     { file: 'art.yaml', key: 'art' },
     { file: 'tilesets.yaml', key: 'tilesets' },
+    { file: 'fx.yaml', key: 'fx' },
   ];
 
   function installFeats(trees) {

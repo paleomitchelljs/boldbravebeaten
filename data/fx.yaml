@@ -1,0 +1,37 @@
+# Spell effects on the map (art/fx/, made by assets/wip/fx/build.py from PixelLab's effect tools). Every strip is one
+# row of frames. A bolt in flight loops its frames; an impact plays once where it lands; a burst plays once over an
+# area spell's target; a flame loops on a burning square (a wall of fire).
+dir: art/fx/
+bolt: {size: 48, frames: 8, ms: 83}
+impact: {size: 64, frames: 5}
+burst: {file: burst-fire.png, size: 96, frames: 12}
+flame: {file: flame.png, w: 64, h: 76, frames: 8, ms: 100}
+# The colour (bolt-<colour>.png, impact-<colour>.png) each spell noun takes. A noun not listed is arcane.
+nouns:
+  fire: fire
+  frost: frost
+  lightning: lightning
+  wind: wind
+  earth: earth
+  vine: nature
+  life: light
+  light: light
+  force: arcane
+  mind: arcane
+  calm: arcane
+  dream: arcane
+  fear: shadow
+  charm: arcane
+  rage: fire
+  will: arcane
+  swiftness: wind
+  might: earth
+  grace: light
+  venom: venom
+  plague: venom
+  acid: venom
+  shadow: shadow
+  veil: shadow
+  bone: shadow
+  spirit: light
+  stillness: frost
