@@ -37,7 +37,7 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   remembered in the browser. Seen in headless Chrome on the explore screen.
 - [ ] Temple map work: some passages are too narrow for the figures, and the wall faces look short beside them (a
   sword drawn over the wall face in the court); widen and heighten.
-- [ ] The user's new raptor (PixelLab): walk, strike, death, idle.
+- [x] The user's new raptor (`Raptor_Red`, now the `raptor` art): walk ×8, bite ×5, idle ×5, death.
 - [ ] The animation plan's cycle 2: the dragonborn, orc, mummy lord, then section D.
 
 ## Core first (the user, 2026-10-28: core changes before tuning; **no encounter tuning until asked**)

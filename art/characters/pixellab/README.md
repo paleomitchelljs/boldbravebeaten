@@ -26,7 +26,7 @@ Every character the user sends goes in this table, including any not yet in the 
 | Crusader | `crusader` | 9b7d3dac-2b67-483e-a6e0-9c33ff0a7f2e | 64 | idle ×8, walk south only | walk in the other directions, attack, death |
 | Cyrus | `cyrus` | 57400efc-503b-472e-8b97-3c1b38147ffa | 64 | idle ×8 (south regenerated 2026-10-28 from the SW view), walk ×8 (S, NE, NW redone: the sabre vanished or swapped hands), strike ×8 (`Strike2`, 7 frames), death (south), idle anim ×8 (`Idle`, 5 frames, ping-pong) | — |
 | Farmer | `farmer` | 96889e20-bfd8-419f-aa01-ddec9e1b4590 | 48 | idle ×8 with an 8-frame idle animation, walk ×8 | — |
-| Goblin | `goblin` (Idle, green), `goblin-orange` (Orange_skinned_gobli) | 71e3ab4e-d83b-410e-94de-8fb0493d200c (green), 6bee6343-c2f2-4333-8df8-a3dac88a705d (orange) | 64 | green: idle ×8; orange: idle ×8, walk north and south (6 frames) | walks, attack, death |
+| Goblin | `goblin` (Idle, green), `goblin-orange` (Orange_skinned_gobli) | 71e3ab4e-d83b-410e-94de-8fb0493d200c (green), 6bee6343-c2f2-4333-8df8-a3dac88a705d (orange) | 64 | each: idle ×8, walk ×8 (6 frames), claw strike ×5 (`Strike`), idle anim ×5 (`Idle`, ping-pong), death (south) | — |
 | Golem | `clay-golem`, `iron-golem`, `stone-golem` | 522fdcbf-daea-4936-ab74-a07a96189774 | 80 | idle ×8, walk ×8, strike ×5 (two-fisted slam), death (south, falls on its face), idle anim ×5 (`Idle`, ping-pong; the west side mirrored) | — |
 | Gorilla | `gorilla` | 4715ec68-7f75-4217-a783-6ae6ba7b20c5 | 80 | idle ×8, walk ×8, strike ×5 (overhead smash), death (south), idle anim ×5 (`Idle`, ping-pong; the west side mirrored) | — |
 | Gowra | `gowra` | c23f4935-af47-46d9-9898-6f583de25120 | 64 | idle ×8, a tail sway (9 frames) east, north, south, played standing and moving | walk, attack, death |
@@ -38,14 +38,19 @@ Every character the user sends goes in this table, including any not yet in the 
 | Lizardfolk_Warrior | `lizardfolk-warrior`, `lizardfolk-warrior-tan` (recolour) | 5a2d243e-b78f-4b46-9fa8-adbdc18edc92 | 64 | idle ×8, walk ×4 dirs (6 frames); bite (fighting_pose_head state, 80be2814-aa6b-4a37-85cb-6ac94fc9c8fa) S, SE, E, NE, N, 9 frames; death (south), idle anim ×5 (`Idle`, ping-pong; the west side mirrored) | — |
 | Lorc | `lorc` | 5cdcb694-3e2a-4aae-ae45-ebd006e2dbf7 | 64 | idle ×8, walk ×8, strike ×8 (bow draw and loose, `Strike`, 7 frames), death (south), idle anim ×8 (`Idle`, 5 frames, ping-pong) | — |
 | Old_Man | `old-man` | a754c86c-4b3e-4df3-bd60-ec66e9ed09d7 | 44 | idle ×8, walk ×8 (7 frames) | — |
-| Raptor | `raptor` (not in `exports.json`) | b423209f-cb0e-48a5-bc26-4d5555b00696 | 96 | idle ×8 | walk, attack, death |
-| Singe | `singe` | 7232310b-be96-49eb-8755-a1ba806f6427 (hovering), f5da2868-1795-42c6-993a-307c5220ede2 (flying) | 76 (flying 124×76) | hovering: idle ×8 with wingbeats ×8; flying: wingbeats east only (west mirrored) | flight north and south, attack, death |
+| Raptor | (none; replaced by Raptor_Red) | b423209f-cb0e-48a5-bc26-4d5555b00696 | 96 | idle ×8, its tail redrawn by hand (not in `exports.json`) | — |
+| Raptor_Red | `raptor` | 650325f8-5760-4f60-a8e2-d476cf3ce77c | 76 | idle ×8, walk ×8 (v3, 6 frames), bite ×5 (`Strike`), idle anim ×5 (`Idle`, ping-pong), death (south) | — |
+| Singe | `singe` | 7232310b-be96-49eb-8755-a1ba806f6427 (hovering), f5da2868-1795-42c6-993a-307c5220ede2 (flying) | 76 (flying 124×76) | hovering: idle ×8 with wingbeats ×8, bite ×5 (`Strike`), death (south); flying: wingbeats east only (west mirrored) | flight north and south |
 | Skeleton | `skeleton` | 07ca48e9-30fe-4cdf-b513-b802a07fe1fd | 64 | idle ×8, walk ×8, claw ×5 (`Strike`), death (south: a heap of bones), idle anim ×5 (`Idle`, ping-pong; the west side mirrored) | — |
 | Snake_Person | `snake-person` | 9fe6b1b1-3788-4124-a6c2-acea96787303 | 80 | idle ×8 | walk, attack, death |
 | Spawnee | `spawnee` | d8994796-4a0b-4c54-810d-5ce541e272d6 | 64 | idle ×8, walk ×8 (SW redone 2026-10-28: the shield had swapped sides), strike ×8 (`Strike`, 7 frames; the NW blade glows), death (south), idle anim ×8 (`Idle`, 5 frames, ping-pong) | — |
 | Spectre | `spectre` | 046bf345-29ab-4e14-96a5-fcf1923f529d | 64 | idle ×8, float ×8 (9 frames; it plays standing too, `floats: true`) | attack, death |
 | Tevax_Thaukori | `tevax` | 68625c81-093c-4ebc-bb30-5c72ac9fb6b3 (armed), 87ba5874-ad22-4b8a-ad46-cc4a1d4c254e (unarmed, not used) | 64 | idle ×8, walk ×6 dirs | attack, death |
 | Warrior_Woman | `warrior-woman` | ab8eb5c0-22fd-4735-99ec-c4ac649879c7 (+ slash 8f00f35f, spell c8428b0b) | 64 (slash 80, spell 60) | idle ×8 with an idle animation, walk ×8, slash ×8 (9 frames); Run, Jump, Spell unused | death |
+| Hooded_Knight | `hooded-knight` | e10aeecc-ba1a-4638-b6af-2deca4f9a7b3 | 72 | idle ×8, walk ×8 (v3), strike ×8 (overhead slash), death (south) | idle anim |
+| Dragonborn_Scimitars | `dragonborn-blue` | 713108d2-cb1b-4c27-a1cb-917f3f3222c8 | 64 | idle ×8; walk, strike, death being made (cycle 2) | idle anim |
+| Orc_Warrior | `orc-warrior` (the goblin champion's stand-in) | 3f1f5df5-eba7-4fb9-953c-105c2fc89645 | 64 | idle ×8 | walk, strike, death, idle |
+| Mummy_Lord | `mummy-lord` (the high shaman's stand-in) | f9fecb8f-bc19-4202-ae6b-86fee3bc2a25 | 64 | idle ×8 | walk, strike, death, idle |
 
 "Death" here means a single death sprite, not a full animation, unless the user asks for one. "idle ×8" means
 standing views only; none of these has an idle animation yet.
