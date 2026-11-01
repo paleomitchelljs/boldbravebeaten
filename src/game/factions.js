@@ -40,7 +40,7 @@
     const before = standing(world, id);
     const after = Math.max(-cfg().standingMax, Math.min(cfg().standingMax, Math.round(before + delta)));
     world.standing[id] = after;
-    if (after !== before) lines.push(`${f.name}: ${after > before ? '+' : ''}${after - before} (${tier(world, id)})${reason ? ' — ' + reason : ''}`);
+    if (after !== before) lines.push(`${f.name}: ${after > before ? '+' : ''}${after - before} (${tier(world, id)})`);
     if (!_spread) {
       for (const a of f.allies || []) lines.push(...change(world, a, delta * cfg().allyShare, null, true));
       for (const e of f.enemies || []) lines.push(...change(world, e, -delta * cfg().enemyShare, null, true));

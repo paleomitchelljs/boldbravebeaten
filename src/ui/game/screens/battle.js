@@ -113,7 +113,7 @@
         const e = bs.sync && bs.sync.entry;
         const t = e && e.targets ? e.targets.find((q) => q.id === id) : null;
         const prev = t && bs.map ? P().blowPreview(enc, chars, { decl: e.kind === 'strike' && !isSpell(e) ? { actor: bs.map.actor, target: id, type: 'strike', option: e.option } : {} }) : null;
-        return `${c.name}${C.isActive(c) ? '' : c.status.dead ? ' (dead)' : ' (down)'}\nStamina ${c.stamina}/${C.maxStamina(c)}${t ? ` · ${t.distance} sq${t.inReach ? '' : t.tooClose ? ', too close' : ', out of reach'}` : ''}${prev ? `\nIf it lands: ${prev.text}` : ''}`;
+        return `${c.name}${C.isActive(c) ? '' : c.status.dead ? ' (dead)' : ' (down)'}\nStamina ${c.stamina}/${C.maxStamina(c)}${t ? ` · ${t.distance} sq${t.inReach ? '' : t.tooClose ? ', too close' : ', out of reach'}` : ''}${prev ? `\n${prev.text}` : ''}`;
       },
     };
     const at = (p) => ({ x: p.x + ox, y: p.y + oy });
@@ -391,8 +391,7 @@
     return h('section', { class: 'popcard result ' + res.result },
       h('div', { class: 'popcard-head' }, h('h2', { class: 'grow' }, title), game.ui.spec && game.ui.spec.name ? h('span', { class: 'label' }, game.ui.spec.name) : null),
       res.lines.length ? h('div', { class: 'stack tight' }, res.lines.map((l) => h('p', { class: 'small' }, l))) : null,
-      res.loot && res.loot.length ? h('div', { class: 'stack tight' }, h('span', { class: 'label' }, 'Spoils'), h('ul', { class: 'loot-list' }, res.loot.map((l) => h('li', null, l)))) : null,
-      res.result === 'won' ? h('p', { class: 'small muted' }, 'Gear that fell with them is in the pack. Take what suits you from the Pack.') : null,
+      res.loot && res.loot.length ? h('div', { class: 'stack tight' }, h('span', { class: 'label' }, 'Loot'), h('ul', { class: 'loot-list' }, UI.Bits.tally(res.loot).map((l) => h('li', null, l)))) : null,
       h('div', { class: 'row' },
         wiped || !G.CONFIG.afterBattle
           ? h('button', { class: 'primary', onclick: () => (wiped ? game.go('gameover') : game.afterBattle()) }, 'Continue')

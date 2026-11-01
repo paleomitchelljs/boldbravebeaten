@@ -60,5 +60,17 @@
   // Goods: the name, their kind, the description on hover.
   const goodLine = (name, g) => h('span', { class: 'item-line', title: g.blurb }, h('b', null, name), h('span', { class: 'small muted' }, g.kind || 'goods'));
 
-  UI.Bits = { checkText, topBar, partyStrip, logPanel, itemLine, goodLine };
+  // Identical loot lines as one, with a count: "Warhammer ×2". A line that starts with a number ("5 gold") is summed.
+  function tally(lines) {
+    const out = [], at = {};
+    for (const l of lines) {
+      const m = /^(\d+) (.+)$/.exec(l);
+      const key = m ? '#' + m[2] : l;
+      if (key in at) { out[at[key]].n += m ? +m[1] : 1; continue; }
+      at[key] = out.length; out.push({ text: m ? m[2] : l, n: m ? +m[1] : 1, sum: !!m });
+    }
+    return out.map((e) => e.sum ? `${e.n} ${e.text}` : e.n > 1 ? `${e.text} ×${e.n}` : e.text);
+  }
+
+  UI.Bits = { checkText, topBar, partyStrip, logPanel, itemLine, goodLine, tally };
 })(globalThis.BBB);

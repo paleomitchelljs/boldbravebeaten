@@ -206,6 +206,6 @@
 
   UI.Overlays.loot = function (game, o) {
     const close = () => game.closeOverlay();
-    return shell(o.title || 'You find', h('div', { class: 'stack' }, o.lines.length ? h('ul', { class: 'loot-list' }, o.lines.map((l) => h('li', null, l))) : h('p', { class: 'muted' }, 'Nothing but dust.'), h('button', { class: 'primary', onclick: close }, 'Take it')), close);
+    return shell(o.title || 'You find', h('div', { class: 'stack' }, o.lines.length ? h('ul', { class: 'loot-list' }, UI.Bits.tally(o.lines).map((l) => h('li', null, l))) : h('p', { class: 'muted' }, 'Nothing but dust.'), h('button', { class: 'primary', onclick: close }, 'Take it')), close);
   };
 })(globalThis.BBB);

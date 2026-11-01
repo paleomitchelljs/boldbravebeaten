@@ -243,7 +243,7 @@
     const wound = Math.round(h.toCON + h.slashToAttrs + h.bluntToCON);
     const stamina = Math.round(h.bluntToStamina + (h.converted || 0));
     // A point against armor (CONFIG.pierce): it bursts through, or it must find a gap.
-    const point = h.gap ? ` (the point must find a gap: ${Math.round(h.gap.chance * 100)}%)` : h.pierce === 'burst' ? ' (the point bursts the armor)' : '';
+    const point = h.gap ? ` · ${Math.round((1 - h.gap.chance) * 100)}% miss` : '';
     return { wound, stamina, wear: Math.round(h.durLoss || 0), hit: h, text: (wound || stamina ? `${wound ? `~${wound} wound` : ''}${wound && stamina ? ', ' : ''}${stamina ? `~${stamina} stamina` : ''}` : 'armor stops it') + point };
   }
 
@@ -309,7 +309,7 @@
     const why = { enters: 'comes into', leaves: 'leaves', moves: 'moves about in' }[req.why] || 'leaves';
     return {
       title: `${me.name} → ${t.name}`, from: me.name, to: t.name, tag: { enters: 'coming in', leaves: 'leaving', moves: 'moving' }[req.why] || 'leaving', sub: `${t.name} ${why} ${me.name}'s reach. A hit stops them.`, ap,
-      choices: req.options.map((o) => { const p = blowPreview(enc, chars, { decl: { actor: req.actor, target: req.target, type: 'strike', option: o } }); return { value: o, label: o.label, cost: C.fmtAP(o.ap), odds: '', hint: p ? `If it lands: ${p.text}` : '' }; }),
+      choices: req.options.map((o) => { const p = blowPreview(enc, chars, { decl: { actor: req.actor, target: req.target, type: 'strike', option: o } }); return { value: o, label: o.label, cost: C.fmtAP(o.ap), odds: '', hint: p ? p.text : '' }; }),
       none: { label: 'Let go', note: 'keep the AP' },
     };
   }
@@ -625,7 +625,8 @@
       UI.Sprites ? h('button', { class: 'cmd-face', title: 'Character sheet', 'aria-label': `${c.name}: character sheet`, onclick: () => openSheet(app, enc, id) }, UI.Sprites.portrait(c, 40)) : null,
       h('div', { class: 'cmd-id' },
         h('button', { class: 'who linkish', onclick: () => openSheet(app, enc, id), title: 'Character sheet' }, c.name),
-        h('div', { class: 'cmd-stats', title: `Stamina ${c.stamina}/${max}${sp != null ? ` · ${sp} SP` : ''}${C.fatiguePenalty(c) ? ` · tired: −${C.fatiguePenalty(c)} AP this round` : ''}` }, bar(c.stamina, max), h('span', { class: 'small num muted' }, `${c.stamina}${sp != null ? ` · ${sp} SP` : ''}`))),
+        h('div', { class: 'cmd-stats', title: `Stamina ${c.stamina}/${max}${sp != null ? ` · ${sp} SP` : ''}${C.fatiguePenalty(c) ? ` · tired: −${C.fatiguePenalty(c)} AP this round` : ''}` }, bar(c.stamina, max), h('span', { class: 'small num muted' }, `${c.stamina}`),
+          sp != null ? h('div', { class: 'sp-bar', title: `${sp} of ${G.Magic.maxSP(c)} spell points` }, bar(sp, G.Magic.maxSP(c))) : null)),
       pool != null ? h('div', { class: 'cmd-ap', title: `${C.fmtAP(left)} of ${C.fmtAP(pool)} AP left this round` }, apMeter(pool, left, fl, now), h('span', { class: 'num' }, C.fmtAP(left))) : null,
       gearWarn(c));
   }

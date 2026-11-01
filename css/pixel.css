@@ -152,7 +152,9 @@ canvas.portrait { width: auto; max-width: 100%; height: auto; image-rendering: p
 .battle-screen .cmd-face canvas.portrait { width: 100%; }
 .battle-screen .cmd-id { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .battle-screen .cmd-id .who { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.battle-screen .cmd-stats { display: flex; align-items: center; gap: 6px; } .battle-screen .cmd-stats .bar { flex: 1 1 auto; }
+.battle-screen .cmd-stats { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; } .battle-screen .cmd-stats > .bar { flex: 1 1 auto; }
+/* Spell points: a thin blue bar under the stamina bar. */
+.battle-screen .cmd-stats .sp-bar { flex: 1 0 100%; } .sp-bar .bar { height: 4px; } .sp-bar .bar > span, .sp-bar .bar.low > span, .sp-bar .bar.crit > span { background: #4a8fd9; }
 .battle-screen .cmd-ap { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex: 0 0 auto; }
 .battle-screen .cmd-ap .num { font-size: 0.95rem; color: var(--brass); }
 .battle-screen .ap-meter { flex-wrap: wrap; justify-content: flex-end; max-width: 112px; gap: 2px; }
