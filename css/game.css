@@ -26,7 +26,8 @@ a.button:hover { border-color: var(--accent); }
 
 /* ---- Title ---- */
 .title-screen { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; max-width: 760px; margin: 6vh auto 0; }
-.title-art { font-size: 5rem; text-align: center; color: var(--brass); text-shadow: 0 0 40px rgba(199, 162, 79, 0.35); }
+.title-art { text-align: center; }
+.title-art img { width: min(180px, 45vw); height: auto; filter: drop-shadow(0 0 28px rgba(199, 162, 79, 0.3)); }
 .game-title { font-size: clamp(2.2rem, 7vw, 3.6rem); letter-spacing: 0.02em; }
 .title-body { gap: 20px; }
 .slot { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }

@@ -34,7 +34,7 @@
     const auto = slots.find((s) => s.slot === 'auto' && s.world);
     const any = slots.some((s) => s.world);
     return h('div', { class: 'title-screen' },
-      h('div', { class: 'title-art', 'aria-hidden': 'true' }, h('span', null, '⚔')),
+      h('div', { class: 'title-art', 'aria-hidden': 'true' }, h('img', { src: 'art/icons/bear-wren.png', alt: '' })),
       h('div', { class: 'stack title-body' },
         h('div', { class: 'stack tight' },
           h('h1', { class: 'game-title' }, 'Bold Brave Beaten'),
