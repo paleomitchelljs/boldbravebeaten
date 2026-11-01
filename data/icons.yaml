@@ -1,0 +1,15 @@
+# Item icons: art/icons/items.png, 32-px cells, 8 across, numbered in reading order from 0. Made by PixelLab
+# (create_1_direction_object at 32 px, one prompt per cell; assets/wip/icons/README.md). An item finds its cell by its
+# type (weapons, armor, shields) or its id (goods); a good with no cell of its own takes its kind's.
+sheet: art/icons/items.png
+size: 32
+cols: 8
+weapons: {club: 0, staff: 1, shortsword: 2, spikedMace: 3, flangedMace: 4, dagger: 5, parryingDagger: 6, rondel: 7, rapier: 8, longsword: 9, giantClub: 10, warScythe: 11, greatsword: 12, warhammer: 13, shortSpear: 14, spear: 15, heavySpear: 16, shortbow: 17, longbow: 18}
+armor: {padded: 19, leather: 20, mail: 21, plate: 22}
+# A piece that covers one place: its own picture (soft caps for padding and leather, a helm for mail and plate).
+pieces: {head: 23, headMetal: 24, hands: 25, feet: 26}
+shields: {buckler: 27, round: 28, heater: 29, tower: 30}
+goods: {bandage: 31, arrows: 32, bodkin_arrows: 33, salve: 34, tonic: 35, antidote: 36, repair_kit: 37, salt: 38, candle: 39, ink: 40, chalk: 41, herbs: 42, silverDust: 43, silver_chalice: 44, gem_small: 45, trade_bar: 46, golem_bane_oil: 47, maze_journal: 48, tome_ember: 49, tome_roots: 49, tome_stone: 49, tome_still: 49, sash_quick: 50, silk_sash: 50, ring_iron: 51, ring_of_dain: 51, charm_wolf: 52, circlet_of_shadow: 53, crown_of_rile: 54, froglok_crown: 54, necromancer_amulet: 55, sorcerer_skullcap: 56, zlandicar_heart: 57, velium_pendant: 58, orc_fang_earring: 59, ivandyr_hoop: 60}
+kinds: {supply: 31, potion: 35, oil: 47, key: 62, book: 48, trinket: 51, trade: 46, component: 42}
+gold: 61
+scroll: 63

@@ -44,7 +44,7 @@
       h('div', { class: 'row spread' }, h('span', { class: 'gold num big' }, `◈ ${w.gold}`),
         h('label', { class: 'inline' }, h('span', { class: 'label' }, 'For'), h('select', { 'aria-label': 'Character', onchange: (e) => { o.target = e.target.value; game.openOverlay('pack', o); } }, members.map((m) => h('option', { value: m.id, selected: m.id === target }, m.name))))),
       h('section', { class: 'stack tight' }, h('div', { class: 'row' }, h('h3', null, 'Supplies'), UI.tip('Shared, and dealt out when a fight starts. Archers get the arrows.')),
-        h('p', null, `${S.bandages} bandages · ${S.arrows} arrows · ${S.bodkins} bodkin heads`), comps.length ? h('p', { class: 'small muted' }, comps.join(', ')) : null),
+        h('p', { class: 'row supplies' }, [['bandage', S.bandages, 'bandages'], ['arrows', S.arrows, 'arrows'], ['bodkin_arrows', S.bodkins, 'bodkin heads']].map(([g, n, what]) => h('span', { class: 'row tight', title: `${n} ${what}` }, UI.itemIcon(g), h('b', { class: 'num' }, String(n))))), comps.length ? h('p', { class: 'small muted' }, comps.join(', ')) : null),
       gear.length ? h('section', { class: 'stack tight' }, h('h3', null, 'Spare gear'), gear) : null,
       goodRows.length || useSupply.length ? h('section', { class: 'stack tight' }, h('h3', null, 'Goods'), useSupply, goodRows) : null,
       !gear.length && !goodRows.length ? h('p', { class: 'muted' }, 'Nothing else in the pack.') : null), close, true);
@@ -206,6 +206,6 @@
 
   UI.Overlays.loot = function (game, o) {
     const close = () => game.closeOverlay();
-    return shell(o.title || 'You find', h('div', { class: 'stack' }, o.lines.length ? h('ul', { class: 'loot-list' }, UI.Bits.tally(o.lines).map((l) => h('li', null, l))) : h('p', { class: 'muted' }, 'Nothing but dust.'), h('button', { class: 'primary', onclick: close }, 'Take it')), close);
+    return shell(o.title || 'You find', h('div', { class: 'stack' }, o.lines.length ? h('ul', { class: 'loot-list' }, UI.Bits.tally(o.lines).map((l) => h('li', null, UI.itemIcon(l), l))) : h('p', { class: 'muted' }, 'Nothing but dust.'), h('button', { class: 'primary', onclick: close }, 'Take it')), close);
   };
 })(globalThis.BBB);

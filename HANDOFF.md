@@ -29,8 +29,10 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 - [x] Spell effects (`data/fx.yaml`, `art/fx/`; PixelLab's effect workbench, free): a bolt in ten colours by spell
   noun, its impact, a fire burst over area spells (other nouns: a large impact), a flame for the wall of fire. They
   replace the git-ignored pack in `art/effects/`, so the published site now shows them. Seen in headless Chrome.
-- [ ] Item icons (weapons, armor, shields, goods) in the loot list, the pack, the character sheet and the explore
-  screen, replacing words where they can.
+- [x] Item icons (`data/icons.yaml`, `art/icons/items.png`, one PixelLab call of 64 for 10 gens): in the pack, the
+  shops, the loot lists, the character sheet (armor by the slot's body part) and on the map for things lying there.
+  Goods lose their kind word; the supplies line is icons and counts. Misses to redo: the war scythe (a pickaxe), a green
+  antidote. Seen in headless Chrome.
 - [x] A button above the map (and V) hides the on-map UI: the dock, the toolbar, the bars and icons over figures;
   remembered in the browser. Seen in headless Chrome on the explore screen.
 - [ ] Temple map work: some passages are too narrow for the figures, and the wall faces look short beside them (a

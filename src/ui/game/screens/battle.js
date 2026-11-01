@@ -399,7 +399,7 @@
     return h('section', { class: 'popcard result ' + res.result },
       h('div', { class: 'popcard-head' }, h('h2', { class: 'grow' }, title), game.ui.spec && game.ui.spec.name ? h('span', { class: 'label' }, game.ui.spec.name) : null),
       res.lines.length ? h('div', { class: 'stack tight' }, res.lines.map((l) => h('p', { class: 'small' }, l))) : null,
-      res.loot && res.loot.length ? h('div', { class: 'stack tight' }, h('span', { class: 'label' }, 'Loot'), h('ul', { class: 'loot-list' }, UI.Bits.tally(res.loot).map((l) => h('li', null, l)))) : null,
+      res.loot && res.loot.length ? h('div', { class: 'stack tight' }, h('span', { class: 'label' }, 'Loot'), h('ul', { class: 'loot-list' }, UI.Bits.tally(res.loot).map((l) => h('li', null, UI.itemIcon(l), l)))) : null,
       h('div', { class: 'row' },
         wiped || !G.CONFIG.afterBattle
           ? h('button', { class: 'primary', onclick: () => (wiped ? game.go('gameover') : game.afterBattle()) }, 'Continue')

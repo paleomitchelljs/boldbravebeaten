@@ -42,6 +42,7 @@
     { file: 'art.yaml', key: 'art' },
     { file: 'tilesets.yaml', key: 'tilesets' },
     { file: 'fx.yaml', key: 'fx' },
+    { file: 'icons.yaml', key: 'icons' },
   ];
 
   function installFeats(trees) {

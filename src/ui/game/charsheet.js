@@ -64,6 +64,7 @@
     const detail = cur && cur.kind ? Equip.describe(cur) : cur ? cur.blurb : '';
     return h('div', { class: 'gear-row' + (cur ? ' filled' : '') },
       h('span', { class: 'label' }, label),
+      UI.itemIcon(cur, 24, Equip.locOfSlot(slot)) || h('span', { class: 'itemicon none' }),
       editable && opts.length > 1 ? h('select', { 'aria-label': label, onchange: change }, opts) : h('span', { class: 'gear-name' }, cur ? itemName(cur) : '—'),
       detail ? tip(detail, itemName(cur)) : h('span', { class: 'tip-gap' }));
   }

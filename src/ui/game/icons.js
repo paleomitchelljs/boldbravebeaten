@@ -149,6 +149,59 @@
     return hover(el, text);
   }
 
+  // ---- Item icons (data/icons.yaml) -------------------------------------------------------------------------
+  // The cell of an item (a weapon, armor or shield object), a good (its id, or its definition with `kind`), a worn
+  // trinket ({id, at}), or a line of loot text ("5 gold", "Poor goblin warhammer": the longest known name in it).
+  const ICONS = () => (G.Content && G.Content.world.icons) || null;
+  let byName = null;
+  function nameIndex() {
+    if (byName) return byName;
+    const d = ICONS(), D = G.DATA || {}, W = G.Content.world;
+    const out = [];
+    for (const [k, v] of Object.entries(D.WEAPONS || {})) if (d.weapons[k] != null) out.push([v.name.toLowerCase(), d.weapons[k]]);
+    for (const [k, v] of Object.entries((W.items && W.items.goods) || {})) { const c = d.goods[k] != null ? d.goods[k] : d.kinds[v.kind]; if (c != null) out.push([v.name.toLowerCase(), c]); }
+    for (const [k, c] of Object.entries(d.shields)) out.push([k + ' shield', c]);
+    for (const [k, c] of Object.entries(d.armor)) out.push([k, c]);
+    out.push(['buckler', d.shields.buckler], ['gold', d.gold]);
+    byName = out.sort((a, b) => b[0].length - a[0].length);
+    return byName;
+  }
+  // `loc`: the body part it is shown for (a character sheet's slot), so full plate shows a helm in the head slot.
+  function iconCell(x, loc) {
+    const d = ICONS();
+    if (!d || !x) return null;
+    const goods = (G.Content.world.items && G.Content.world.items.goods) || {};
+    if (typeof x === 'string') {
+      if (d.goods[x] != null) return d.goods[x];
+      if (goods[x]) return d.kinds[goods[x].kind] != null ? d.kinds[goods[x].kind] : null;
+      const t = x.toLowerCase();
+      const hit = nameIndex().find(([n]) => t.includes(n));
+      return hit ? hit[1] : null;
+    }
+    if (x.kind === 'weapon') return d.weapons[x.type] != null ? d.weapons[x.type] : null;
+    if (x.kind === 'shield') return d.shields[x.size] != null ? d.shields[x.size] : null;
+    if (x.kind === 'armor') {
+      const cov = loc ? [loc] : G.Items.coversOf(x);
+      if (cov.length === 1 && cov[0] === 'head') return ['mail', 'plate'].includes(x.type) ? d.pieces.headMetal : d.pieces.head;
+      if (cov.length === 1 && d.pieces[cov[0]] != null) return d.pieces[cov[0]];
+      return d.armor[x.type] != null ? d.armor[x.type] : null;
+    }
+    const id = x.id || x.good;
+    if (id && d.goods[id] != null) return d.goods[id];
+    const named = x.name ? iconCell(String(x.name)) : null;
+    if (named != null) return named;
+    return x.kind && d.kinds[x.kind] != null ? d.kinds[x.kind] : null;
+  }
+  // A span showing the icon at `px` screen pixels (default 24), or null when there is none.
+  function itemIcon(x, px, loc) {
+    const d = ICONS(), cell = iconCell(x, loc);
+    if (cell == null) return null;
+    const z = px || 24, k = z / d.size, sheet = d.size * d.cols * k;
+    return UI.h('span', { class: 'itemicon', 'aria-hidden': 'true', style: { width: z + 'px', height: z + 'px', backgroundImage: `url(${d.sheet})`, backgroundSize: `${sheet}px auto`, backgroundPosition: `-${(cell % d.cols) * d.size * k}px -${Math.floor(cell / d.cols) * d.size * k}px` } });
+  }
+
+  UI.itemIcon = itemIcon;
+  UI.iconCell = iconCell;
   UI.tip = tip;
   UI.hover = hover;
   UI.showHover = showHover;

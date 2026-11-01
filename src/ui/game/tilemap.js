@@ -128,7 +128,7 @@
       case 'stairs': out.decor.push({ t: 'stairs', x, y, sprite: c.def.sprite || null, side: openSide(g, x, y), up: c.def.up != null ? !!c.def.up : c.def.at === '>' || ((G.Content.world.places[c.def.to] || {}).kind === 'town') }); break;
       case 'drop': out.decor.push({ t: 'drop', x, y, sprite: c.def.sprite || null }); break;
       case 'trap': if (st.found || st.sprung || st.disarmed) out.decor.push({ t: 'trap', x, y, state: st.disarmed ? 'off' : st.sprung ? 'sprung' : 'armed' }); break;
-      case 'pickup': if (!st.done) out.decor.push({ t: 'twinkle', x, y }); break;
+      case 'pickup': if (!st.done) out.decor.push({ t: 'twinkle', x, y, good: c.def.good }); break;
       case 'note': if (!st.done) out.decor.push({ t: 'note', x, y }); break;
       default: break;
     }
@@ -291,7 +291,13 @@
         ctx.fillStyle = '#05070a'; ctx.beginPath(); ctx.ellipse(X + size / 2, Y + size / 2, size * 0.3, size * 0.21, 0, 0, Math.PI * 2); ctx.fill();
         break;
       }
-      case 'twinkle': env.twinkle(ctx, X + size / 2, Y + size * 0.62, S, env.tick); break;
+      case 'twinkle': {
+        // The thing lying there, by its item icon (data/icons.yaml), with a glint over it.
+        const d = G.Content && G.Content.world.icons, cell = cmd.good && UI.iconCell ? UI.iconCell(cmd.good) : null, im = d && cell != null ? env.img(d.sheet, true) : null;
+        if (im && im.ok) { const z = size * 0.5; ctx.drawImage(im.el, (cell % d.cols) * d.size, Math.floor(cell / d.cols) * d.size, d.size, d.size, X + size / 2 - z / 2, Y + size * 0.62 - z / 2, z, z); }
+        env.twinkle(ctx, X + size / 2, Y + size * 0.62, S, env.tick);
+        break;
+      }
       case 'note': env.prop(ctx, 'scroll', X + size / 2, Y + size - S * 2, S, { scale: 0.5 }); break;
       default: break;
     }

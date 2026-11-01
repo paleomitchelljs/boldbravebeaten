@@ -65,10 +65,10 @@
   function itemLine(item, who) {
     const full = G.Equip.describe(item);
     const tag = full.split(' · ').filter(Boolean).slice(0, 2).join(' · ');
-    return h('span', { class: 'item-line', title: (who ? who + ' · ' : '') + full }, h('b', null, G.Items.itemName(item)), h('span', { class: 'small muted' }, (who ? who + ' · ' : '') + tag));
+    return h('span', { class: 'item-line', title: (who ? who + ' · ' : '') + full }, UI.itemIcon(item), h('b', null, G.Items.itemName(item)), h('span', { class: 'small muted' }, (who ? who + ' · ' : '') + tag));
   }
   // Goods: the name, their kind, the description on hover.
-  const goodLine = (name, g) => h('span', { class: 'item-line', title: g.blurb }, h('b', null, name), h('span', { class: 'small muted' }, g.kind || 'goods'));
+  const goodLine = (name, g) => h('span', { class: 'item-line', title: g.blurb }, UI.itemIcon(g.id || g) || UI.itemIcon(name), h('b', null, name));
 
   // Identical loot lines as one, with a count: "Warhammer ×2". A line that starts with a number ("5 gold") is summed.
   function tally(lines) {
