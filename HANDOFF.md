@@ -28,7 +28,8 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 ## Next (the user, 2026-10-31, in this order)
 - [ ] Icons: item icons (weapons, armor, shields, goods) in the loot list, the pack, the character sheet and the
   explore screen, replacing words where they can; spell and fire effects in fights.
-- [ ] A button above the map that hides the on-map UI (dock, toolbar, chips), since it covers parts of the map.
+- [x] A button above the map (and V) hides the on-map UI: the dock, the toolbar, the bars and icons over figures;
+  remembered in the browser. Seen in headless Chrome on the explore screen.
 - [ ] Temple map work: some passages are too narrow for the figures, and the wall faces look short beside them (a
   sword drawn over the wall face in the court); widen and heighten.
 - [ ] The user's new raptor (PixelLab): walk, strike, death, idle.

@@ -93,6 +93,8 @@ canvas.mapcanvas { display: block; width: auto; max-width: 100%; height: auto; m
 .chip.gear-warn.bad { background: #3a1612; color: #ffb3a8; border-color: #7a2a22; }
 .dock-hurt { position: absolute; right: 1px; top: 1px; background: var(--blood); color: #fff; font: 700 0.62rem var(--font-ui); padding: 0 3px; }
 canvas.portrait { width: auto; max-width: 100%; height: auto; image-rendering: pixelated; background: radial-gradient(circle at 50% 40%, #2c3d48, #131c22); border: 1px solid var(--edge); display: block; flex: 0 0 auto; }
+/* The map toggle (V) hides what floats over the map. */
+.stage.clean .dock, .stage.clean .toolbar, .stage.clean .sneak-chip { display: none; }
 .toolbar { position: absolute; right: 8px; top: 8px; display: flex; flex-direction: column; gap: 6px; z-index: 3; }
 .toolbar .ibtn { background: rgba(10, 15, 19, 0.82); }
 .toolbar .ibtn.on { background: var(--accent-soft); }

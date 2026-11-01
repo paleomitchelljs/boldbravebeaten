@@ -23,11 +23,21 @@
         h('span', { class: 'label' }, G.World.clockText(w))),
       h('div', { class: 'row gamebar-actions' },
         opts.extra || null,
+        opts.mapToggle ? ib('layers', UI.cleanMap ? 'Show the map\'s overlays (V)' : 'Hide the map\'s overlays: portraits, buttons, bars (V)', () => toggleCleanMap(game), { on: UI.cleanMap }) : null,
         h('span', { class: 'gold num', title: 'Gold' }, UI.icon('coin', 14), ` ${w.gold}`),
         ib('pack', 'Pack: gear, goods and supplies', () => game.openOverlay('pack')),
         ib('book', 'Journal: quests, what you know, the log', () => game.openOverlay('journal')),
         ib('banner', 'Standing with the factions', () => game.openOverlay('factions')),
         ib('menu', 'Menu: save, export, options', () => game.openOverlay('menu'))));
+  }
+
+  // The map's overlays (the party dock, the buttons, bars and icons over figures) hide and come back with one button;
+  // the choice is kept in this browser.
+  try { UI.cleanMap = localStorage.getItem('bbb.cleanMap') === '1'; } catch (e) { UI.cleanMap = false; }
+  function toggleCleanMap(game) {
+    UI.cleanMap = !UI.cleanMap;
+    try { localStorage.setItem('bbb.cleanMap', UI.cleanMap ? '1' : '0'); } catch (e) { /* private window */ }
+    game.render();
   }
 
   function partyStrip(game, opts) {
@@ -72,5 +82,5 @@
     return out.map((e) => e.sum ? `${e.n} ${e.text}` : e.n > 1 ? `${e.text} ×${e.n}` : e.text);
   }
 
-  UI.Bits = { checkText, topBar, partyStrip, logPanel, itemLine, goodLine, tally };
+  UI.Bits = { checkText, topBar, partyStrip, logPanel, itemLine, goodLine, tally, toggleCleanMap };
 })(globalThis.BBB);

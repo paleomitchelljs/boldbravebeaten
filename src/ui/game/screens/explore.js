@@ -358,8 +358,8 @@
       else if (pr.type === 'face') prompt = facePrompt(game);
     }
     return h('div', { class: 'explore' },
-      Bits.topBar(game, { title: p.name }),
-      h('div', { class: 'stage' },
+      Bits.topBar(game, { title: p.name, mapToggle: true }),
+      h('div', { class: 'stage' + (UI.cleanMap ? ' clean' : '') },
         game.ui.mv.el,
         dock(game),
         h('div', { class: 'toolbar' },
@@ -384,7 +384,7 @@
       const k = e.key.toLowerCase();
       const dir = { w: 0, arrowup: 0, d: 1, arrowright: 1, s: 2, arrowdown: 2, a: 3, arrowleft: 3 }[k];
       if (dir != null) { e.preventDefault(); stopWalk(game); step(game, dir); return; }
-      const map = { f: () => interact(game), ' ': () => interact(game), x: () => search(game), c: () => camp(game), h: () => toggleSneak(game), m: () => game.openOverlay('map'), escape: () => { stopWalk(game); if (game.ui.prompt && !locked(game)) { game.ui.prompt = null; game.render(); } } };
+      const map = { f: () => interact(game), ' ': () => interact(game), x: () => search(game), c: () => camp(game), h: () => toggleSneak(game), m: () => game.openOverlay('map'), v: () => Bits.toggleCleanMap(game), escape: () => { stopWalk(game); if (game.ui.prompt && !locked(game)) { game.ui.prompt = null; game.render(); } } };
       if (map[k]) { e.preventDefault(); map[k](); return; }
       const n = Number(k);
       if (n >= 1 && n <= 9) { const b = document.querySelectorAll('.screen-explore .popcard button.act')[n - 1]; if (b) { e.preventDefault(); b.click(); } return; }

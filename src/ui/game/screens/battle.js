@@ -464,7 +464,7 @@
       declaredPop(game, app, enc),
     ] : null;
     return h('div', { class: 'battle-screen' + (live ? '' : ' over') },
-      UI.Bits.topBar(game, { title: spec.name || 'Battle', extra: topExtra }),
+      UI.Bits.topBar(game, { title: spec.name || 'Battle', extra: topExtra, mapToggle: true }),
       h('div', { class: 'battle-body' },
         h('div', { class: 'battle-main' },
           live ? initiativeBar(game, app, enc) : null,
@@ -491,6 +491,7 @@
         return;
       }
       if (e.key === 'Enter') { const b = document.querySelector('.battle-screen .cmd-go .primary'); if (b && !b.disabled) { e.preventDefault(); b.click(); } }
+      if (e.key === 'v' || e.key === 'V') { e.preventDefault(); UI.Bits.toggleCleanMap(game); return; }
       if (e.key === 'e' || e.key === 'E') { const b = document.querySelector('.battle-screen .cmd-end .end'); if (b && !b.disabled) { e.preventDefault(); b.click(); } }
       const n = Number(e.key);
       if (n >= 1 && n <= 9) { const tabs = document.querySelectorAll('.battle-screen .cmd-tab'); if (tabs[n - 1]) { e.preventDefault(); tabs[n - 1].click(); } }

@@ -362,7 +362,7 @@
     function drawOver(ctx, sc, ox, oy, t) {
       const size = T * S, SS = Math.max(1, S - 1);
       const head = (id) => { const v = view.vis[id]; if (!v) return null; const a = (sc.actors || []).find((q) => q.id === id); const [dx, dy] = offsetOf(id, t); return [ox + (v.x + dx + 0.5) * size, oy + (v.y + dy + 1) * size - S * 1.5 - 31 * SS * ((a && (a.art && Sprites.artReady(a.art) ? a.artSize : a.size)) || 1)]; };
-      for (const b of sc.badges || []) {
+      for (const b of UI.cleanMap ? [] : sc.badges || []) {
         const at = b.id ? head(b.id) : [ox + (b.x + 0.5) * size, oy + b.y * size];
         if (!at) continue;
         drawIcon(ctx, b.icon, at[0], at[1] - S * 7 + Math.sin(view.tick / 3) * S * 0.8, Math.max(1, Math.round(S * 0.75)), b.color);
@@ -544,7 +544,7 @@
         ctx.restore();
       }
       if (!ok) { ctx.fillStyle = a.tag === 'enemy' ? '#c0504a' : '#5aa0d0'; ctx.fillRect(x - 5 * S, y - 20 * S, 10 * S, 20 * S); }
-      if (a.bar && !a.down) {
+      if (a.bar && !a.down && !UI.cleanMap) {
         const w = 16 * S * (a.size ? Math.max(0.75, Math.min(1.2, a.size)) : 1), bx = x - w / 2, by = y - 31 * SS * (a.size || 1) - 2 * S;
         ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(bx - S * 0.5, by - S * 0.5, w + S, S * 2.6);
         ctx.fillStyle = a.tag === 'enemy' ? '#d2584c' : '#66c27c';
