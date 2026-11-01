@@ -228,6 +228,7 @@ temple_walltop:
     stairs_down_2: [temple-doors.png, 610, 0, 52, 58, 6, 2]
     door_south: [temple-doors.png, 514, 0, 44, 94, 10, -8]
     door_east: [temple-doors.png, 1196, 0, 80, 52, -8, 6]
+    door_north: [temple-doors.png, 210, 0, 48, 112, 8, 16]
 
 # The labyrinth: worked, damp sandstone, a little darker than the court's (PixelLab, 64 px; prompts in
 # assets/wip/temple-maze/README.md). Built like the court: a plain floor and a cliff set, the variety in pieces.
@@ -693,6 +694,7 @@ outside_swamp:
     # The court's gate and its pyramid stairs (assets/wip/temple-doors/, assets/wip/temple-pyramid/).
     door: [../temple/court-props.png, 0, 0, 64, 61]
     door_south: [../temple/temple-doors.png, 514, 0, 44, 94, 10, -8]
+    door_west: [../temple/temple-doors.png, 784, 0, 122, 52, 6, 6]
     pyr_stair_l1: [../temple/pyramid-props.png, 68, 0, 64, 124, 0, -24]
     pyr_stair_r1: [../temple/pyramid-props.png, 136, 0, 67, 124, 0, -24]
     pyr_stair_l2: [../temple/pyramid-props.png, 207, 0, 64, 124, 0, -24]

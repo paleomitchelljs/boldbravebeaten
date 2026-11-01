@@ -1,0 +1,1 @@
+setTimeout(() => { const Game = BBB.UI.Game; Game.newGame(BBB.World.presetParty()); Game.travel({to: 'temple_approach', arrive: 'G'}); const ms = BBB.World.mapState(Game.world, Game.world.place); for (let y = 0; y < 40; y++) for (let x = 0; x < 45; x++) ms.seen[x + ',' + y] = 1; Game.render();; Game.render(); }, 1500);

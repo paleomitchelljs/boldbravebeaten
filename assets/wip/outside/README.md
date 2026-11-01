@@ -27,7 +27,10 @@ signpost, haystack, woodpile, trough, handcart, barrels, crates, bench, cabbage 
 post). They came out in a steeper, more isometric view than the tiles: prototype art. A building's picture stands on
 its door square; `x` squares (props drawn as nothing) hold the rest of its footprint.
 
-The Temple Swamp (2026-11-01, the user: the outside should match the temple): the temple's outer wall across its
-north is the court's own wall set (`#` on that map; the gate is the court's door in its face), and the two pyramids
+The Temple Swamp (2026-11-01, the user: the outside should match the temple): the temple's outer wall down its
+east side (so the road runs straight east into the court's west gate) is the court's own wall set (`#` on that map; the gate is the court's door in its face), and the two pyramids
 are built of the court's tier sets with its stair props. The jungle round the rest is ground letter `]`. The arch and
-the step-pyramid sprite from the landmark strip are no longer placed.
+the step-pyramid sprite from the landmark strip are no longer placed. The two pyramids are built into
+the wall either side of the gate (half pyramids, their tops running into it); a door at each top leads into the
+guardhouse over the gate (`temple_wall` N and S). Where a tier meets the wall a strip of grass shows: both sheets are
+opaque with grass baked into their edges, so closing it needs a join tile.

@@ -194,45 +194,51 @@ village:
 temple_approach:
   name: The Temple Swamp
   kind: dungeon
-  blurb: Swamp and jungle east of the village. A paved causeway runs between two small stepped pyramids to the gate in the temple's great sandstone wall.
+  blurb: Swamp and jungle east of the village. A paved causeway runs east between two small stepped pyramids to the gate in the temple's great sandstone wall.
   level: 1
   look: {wall: "#cdb98a", floor: "#4d6a33", ceiling: "#2a3a22", fog: "#0c120a", torch: 0, tileset: outside_swamp, ground: ",", light: 20}
-  # Laid out by assets/wip/outside/layout.py: the temple's outer wall (#, the court's own tiles) across the north with
-  # its gate, two small pyramids of the court's tiers, jungle (]) round the rest.
+  # Laid out by assets/wip/outside/layout.py: the temple's outer wall (#, the court's own tiles) down the east side
+  # with its gate, so the road runs straight east into the court; two small pyramids of the court's tiers built into
+  # the wall either side of it, a door at each top into the guardhouse over the gate; jungle (]) round the rest.
   map:
-    - "########################################"
-    - "########################################"
-    - "########################################"
-    - "########################################"
-    - "########################################"
-    - "####################G###################"
-    - "]],,,,,,,,,,,,,,,,,;;;,,,,,,,,,,,,,,,,]]"
-    - "]]~~,^^^^^^^^^^^^,,;;;,,^^^^^^^^^^^^,,]]"
-    - "]]~~,^----------^,f;;;,,^----------^F,]]"
-    - "]]~~,^----------^,,;;;,,^----------^,,]]"
-    - "]]~~,^--^^^^^^--^,,;;;,,^--^^^^^^--^,,]]"
-    - "]]~~,^--^::::^--^,,;;;,,^--^::::^--^,,]]"
-    - "]]~~,^--^::::^--^,,;;;f,^--^::::^--^,,]]"
-    - "]],,,^--^::::^--^,,;;;,,^--^::::^--^,,]]"
-    - "]],,,^--^^mn^^--^,,;;;,,^--^^mn^^--^,F]]"
-    - "]],,,^----------^,,;;;,,^----------^,,]]"
-    - "]]f,,^----------^,,;;;,,^----------^,,]]"
-    - "]],,,^^^^^ij^^^^^,,;;;,,^^^^^ij^^^^^,,]]"
-    - "]],,F,,,,,,,,,,,,,,;;;,F,,,,,,,,,,,,,f]]"
-    - "W;;;;;;;;;;;;;;;;;;;;;,,,,,,F,,,,~~~~,]]"
-    - "]];;;;;;;;;;;;;;;;;;;;,,,,,,,,,,~~~~~,]]"
-    - "]],,F,,,,,,F,,,,,F,,,,,,,~~~~~~,~~~~~,]]"
-    - "]],,,,,,,,,,,,~~~~~,,,,,~~~~~~~,~~~~~,]]"
-    - "]],,~~~~~~,,,~~~~~~,,,,,~~~~~~~,~~~~~,]]"
-    - "]],~~~~~~~,,,~~~~~~,,,,,~~~~~~~,~~~~,,]]"
-    - "]],~~~~~~~,,,~~~~~~,,,,,~~~~~~~,,,,,,,]]"
-    - "]],~~~~~~,,,,~~~~~,,,,,,~~~~~~,,,,,,,,]]"
-    - "]],,,,,,,,F,,,,,,,,,,,F,,,f,,,,,,f,,,,]]"
-    - "]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]"
-    - "]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]"
+    - "]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]##"
+    - "]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]##"
+    - "]],,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,##"
+    - "]],,,,,,,,F,,,,,,,,,,,,,,,,^^^^^^^^^^^##"
+    - "]],,~~~~~,,,,,,,,,,,,,~~~,,^----------##"
+    - "]],~~~~~~,,,,~~~~~~,,~~~~,,^----------##"
+    - "]],~~~~~~,,,~~~~~~~,,~~~~,,^--^^^^^^^^##"
+    - "]],~~~~~~,,,~~~~~~~,,~~~~,,^--^:::::::##"
+    - "]],~~~~~,,,,~~~~~~~,,~~~~,,^--^:::::::A#"
+    - "]],,,,,,,,,,~~~~~~~,,~~~~,,^--^:::::::##"
+    - "]],,,f,,,,,,~~~~~~,,,~~~~,,^--^^mn^^^^##"
+    - "]]~~,,,,,,,,,,,,,,,,,~~~,,,^----------##"
+    - "]]~~,,,,,,,F,,,,,,,f,,,,,,,^----------##"
+    - "]]~~,F,,f,,,,,,,,F,,,,,,,,f^^^^^ij^^^^##"
+    - "]],,,,,,,,,,,,,,,,,,,,,,,,F,,,,,,,,,,,##"
+    - "]];;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;##"
+    - "W;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;G#"
+    - "]];;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;##"
+    - "]]f,,,,,,,,,,,,,,,,,f,,,,,F,,,,,,,,,,,##"
+    - "]],,F,,,,,,F,,,,f,,,,,,,,,,^^^^^^^^^^^##"
+    - "]],,,,,,,,,,,,,,,,,,,,,~~~,^----------##"
+    - "]],,~~~~~~,,,,,,,,,,,,~~~~,^----------##"
+    - "]],~~~~~~~,,,,~~~~~~,,~~~~,^--^^^^^^^^##"
+    - "]],~~~~~~~,,,~~~~~~~,,~~~~,^--^:::::::##"
+    - "]],~~~~~~~,,,~~~~~~~,,~~~~,^--^:::::::B#"
+    - "]],~~~~~~~,,,~~~~~~~,,~~~~,^--^:::::::##"
+    - "]],~~~~~~,,,,~~~~~~~,,~~~~,^--^^mn^^^^##"
+    - "]],,,,,,,,,,,~~~~~~~,,~~~,,^----------##"
+    - "]],,,,,,,,,,,~~~~~~,,,,,,,,^----------##"
+    - "]],,,,F,,,,,,,,,,,,,,,F,,,,^^^^^ij^^^^##"
+    - "]],,,,,,,,f,,,,,,,,,,,,,,,,,,,,,,,,,,,##"
+    - "]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]##"
+    - "]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]##"
   legend:
     W: {kind: stairs, to: village, at: E, sprite: none, label: "The causeway west, back to the village"}
     G: {kind: stairs, to: temple_court, at: "<", sprite: door, wall: true, label: "The temple gate"}
+    A: {kind: stairs, to: temple_wall, at: N, sprite: door, wall: true, label: "A door in the wall at the pyramid's top"}
+    B: {kind: stairs, to: temple_wall, at: S, sprite: door, wall: true, label: "A door in the wall at the pyramid's top"}
     i: {kind: prop, sprite: pyr_stair_l1, solid: false, on: "^", label: "Steps up the pyramid"}
     j: {kind: prop, sprite: pyr_stair_r1, solid: false, on: "^", label: "Steps up the pyramid"}
     m: {kind: prop, sprite: pyr_stair_l2, solid: false, on: "^", label: "Steps up to the top"}
@@ -751,7 +757,7 @@ temple_palace_stair:
 temple_wall:
   name: On the Temple Wall
   kind: dungeon
-  blurb: The walk along the top of the gate wall, and the little guardhouse beside it, over the gate.
+  blurb: The walk along the top of the gate wall, and the little guardhouse beside it, over the gate, with a door out onto each pyramid.
   level: 2
   look: {wall: "#cdb98a", floor: "#bba57a", ceiling: "#2a3a22", fog: "#0c120a", torch: 1, tileset: temple_walltop, light: 20}
   map:
@@ -760,14 +766,14 @@ temple_wall:
     - " #####...1.# "
     - " #####.....# "
     - " #####.....# "
-    - " #####.....# "
+    - " ##N##.....# "
     - " #...#.....# "
     - " #...#.....# "
     - " #.W.+.....# "
     - " #...#.....# "
     - " #.h.#.....# "
     - " #...#.....# "
-    - " #####.....# "
+    - " ##S##.....# "
     - " #####.....# "
     - " #####...2.# "
     - " ########### "
@@ -775,6 +781,8 @@ temple_wall:
   legend:
     "1": {kind: stairs, to: temple_court, at: u, sprite: stairs_down_1, label: "Steps down into the court"}
     "2": {kind: stairs, to: temple_court, at: v, sprite: stairs_down_2, label: "Steps down into the court"}
+    N: {kind: stairs, to: temple_approach, at: A, sprite: door, wall: true, label: "Out onto the top of the north pyramid"}
+    S: {kind: stairs, to: temple_approach, at: B, sprite: door, wall: true, label: "Out onto the top of the south pyramid"}
     W: {kind: stairs, to: temple_sewer, at: G, sprite: well, label: "The well: rungs and a rope down into the dark"}
     h: {kind: monster, encounter: guardhouse, label: "The guardhouse watch"}
   encounters:

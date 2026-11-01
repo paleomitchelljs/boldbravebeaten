@@ -63,38 +63,38 @@ put(v, 11, 12, 'l'); put(v, 21, 12, 'l')     # lamp posts
 put(v, 12, 15, 'n')                  # bench
 show('village', v)
 
-# ---- Before the temple: the temple's outer wall across the north (# here: the court's own wall tiles), its gate
-# in the face; two small stepped pyramids of the court's tiers either side of the causeway up to it; swamp and
-# jungle (]) round the rest. The court's gate is in its west wall; from outside the wall is drawn facing the way you
-# come, so the gate shows as a door in a tall face.
-def pyramid(g, x0, y0):
-    # 12 x 11: a first riser (^) round a terrace (-) two wide, a second riser round a top (:), a stair up the south
-    # face of each tier (i j, m n: the court's stair props, on the riser).
-    rect(g, x0, y0, x0 + 11, y0 + 10, '^')
-    rect(g, x0 + 1, y0 + 1, x0 + 10, y0 + 9, '-')
-    rect(g, x0 + 3, y0 + 3, x0 + 8, y0 + 7, '^')
-    rect(g, x0 + 4, y0 + 4, x0 + 7, y0 + 6, ':')
+# ---- Before the temple: the temple's outer wall down the east side (# here: the court's own wall tiles, two thick
+# as in the court), its gate in the face, so the road from the village runs straight east into it and on into the
+# court. Two small stepped pyramids of the court's tiers are built into the wall either side of the gate; a door at
+# each top leads through the wall into the guardhouse over the gate (temple_wall). Swamp and jungle (]) round the rest.
+def pyramid(g, x0, y0, x1, door):
+    # Half a pyramid against the wall (x1 its last square before it), 11 squares north to south: a first riser (^)
+    # round a terrace (-) two wide, a second riser round a top (:) that runs into the wall, a stair up the south face
+    # of each tier (i j, m n: the court's stair props, on the riser), the door in the wall beside the top.
+    rect(g, x0, y0, x1, y0 + 10, '^')
+    rect(g, x0 + 1, y0 + 1, x1, y0 + 9, '-')
+    rect(g, x0 + 3, y0 + 3, x1, y0 + 7, '^')
+    rect(g, x0 + 4, y0 + 4, x1, y0 + 6, ':')
     put(g, x0 + 5, y0 + 10, 'i'); put(g, x0 + 6, y0 + 10, 'j')
     put(g, x0 + 5, y0 + 7, 'm'); put(g, x0 + 6, y0 + 7, 'n')
+    put(g, x1 + 1, y0 + 5, door)
 
-W, H = 40, 30
+W, H = 40, 33
 s = grid(W, H, ']')
-rect(s, 0, 0, W - 1, 5, '#')         # the temple wall, four squares thick under two of jungle-free top
-rect(s, 2, 6, W - 3, H - 3, ',')
-put(s, 20, 5, 'G')                   # the gate, in the wall's face
-rect(s, 19, 6, 21, 20, ';')          # the causeway: up to the gate...
-rect(s, 0, 19, 21, 20, ';')          # ...from the west road
-put(s, 0, 19, 'W'); put(s, 0, 20, ']'); put(s, 1, 20, ']')
-put(s, 1, 19, ';')
-pyramid(s, 5, 7)
-pyramid(s, 24, 7)
-for (x0, y0, x1, y1) in ((3, 23, 9, 26), (13, 22, 18, 26), (24, 21, 30, 26), (32, 19, 36, 24), (2, 7, 3, 12)):
+rect(s, 2, 2, W - 3, H - 3, ',')
+rect(s, W - 2, 0, W - 1, H - 1, '#')   # the temple wall
+rect(s, 0, 15, W - 3, 17, ';')       # the causeway, from the west road to the gate
+rect(s, 0, 15, 1, 15, ']'); rect(s, 0, 17, 1, 17, ']'); put(s, 0, 16, 'W')   # the jungle closes in at the edge
+put(s, W - 2, 16, 'G')               # the gate, in the wall's face
+pyramid(s, 27, 3, W - 3, 'A')        # north of the gate
+pyramid(s, 27, 19, W - 3, 'B')       # south of it
+for (x0, y0, x1, y1) in ((3, 4, 8, 8), (12, 5, 18, 10), (21, 4, 24, 11), (3, 21, 9, 26), (13, 22, 19, 28), (22, 20, 25, 27), (2, 11, 3, 13)):
     rect(s, x0, y0, x1, y1, '~')     # pools
-for (x, y) in ((3, 23), (9, 26), (13, 22), (18, 26), (24, 21), (30, 26), (32, 19), (36, 24)):
+for (x, y) in ((3, 4), (8, 8), (12, 5), (18, 10), (21, 4), (24, 11), (3, 21), (9, 26), (13, 22), (19, 28), (22, 20), (25, 27)):
     put(s, x, y, ',')                # break the pools' corners
-for x, y in ((4, 18), (17, 21), (11, 21), (23, 18), (36, 8), (37, 14), (22, 27), (4, 21), (28, 19), (10, 27)):
+for x, y in ((4, 19), (17, 13), (11, 12), (26, 14), (10, 3), (6, 29), (22, 29), (5, 13), (26, 18), (11, 19)):
     dot(s, x, y, 'F')
-for x, y in ((18, 8), (22, 12), (2, 16), (33, 27), (15, 19), (37, 18), (8, 20), (26, 27)):
+for x, y in ((19, 12), (8, 13), (2, 18), (16, 19), (10, 30), (26, 13), (20, 18), (5, 10)):
     dot(s, x, y, 'f')
 show('temple approach', s)
 
