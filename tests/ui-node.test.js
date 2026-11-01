@@ -27,7 +27,7 @@ const overlay = (type, data) => { Game.error = null; Game.openOverlay(type, data
 test('ui: title and creation screens render, and the example party starts a game', () => {
   Rand.seed(5);
   show('title');
-  assert.match(text(), /New game/);
+  assert.match(text(), /Custom start/);
   Game.ui = {};
   show('create');
   assert.match(text(), /Your company/);
