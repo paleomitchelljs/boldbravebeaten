@@ -125,7 +125,7 @@
   function decal(out, c, x, y, g) {
     const st = c.st || {};
     switch (c.kind) {
-      case 'stairs': out.decor.push({ t: 'stairs', x, y, sprite: c.def.sprite || null, side: openSide(g, x, y), up: c.def.up != null ? !!c.def.up : c.def.at === '>' || ((G.Content.world.places[c.def.to] || {}).kind === 'town') }); break;
+      case 'stairs': out.decor.push({ t: 'stairs', x, y, sprite: c.def.sprite || null, scale: c.def.scale || null, side: openSide(g, x, y), up: c.def.up != null ? !!c.def.up : c.def.at === '>' || ((G.Content.world.places[c.def.to] || {}).kind === 'town') }); break;
       case 'drop': out.decor.push({ t: 'drop', x, y, sprite: c.def.sprite || null }); break;
       case 'trap': if (st.found || st.sprung || st.disarmed) out.decor.push({ t: 'trap', x, y, state: st.disarmed ? 'off' : st.sprung ? 'sprung' : 'armed' }); break;
       case 'pickup': if (!st.done) out.decor.push({ t: 'twinkle', x, y, good: c.def.good }); break;
@@ -269,8 +269,10 @@
         // A legend `sprite` (a door, a tileset's steps up the wall) is drawn as it is, with no arrow; the stock stairs
         // flip to point up.
         // `door` as a stairs sprite means the doorway picture for its side, as for a door.
+        // `none`: nothing drawn (a path running off the edge of the map is its own sign).
+        if (cmd.sprite === 'none') break;
         const spr = cmd.sprite === 'door' && env.tileProp && env.tileProp(`door_${cmd.side}`) ? `door_${cmd.side}` : cmd.sprite;
-        if (spr && env.hasProp(spr)) { env.prop(ctx, spr, cx, Y + size, S); break; }
+        if (spr && env.hasProp(spr)) { env.prop(ctx, spr, cx, Y + size, S, cmd.scale ? { scale: cmd.scale } : undefined); break; }
         env.prop(ctx, 'stairs', cx, Y + size, S, { flipY: cmd.up });
         ctx.fillStyle = 'rgba(255,230,150,0.9)';
         ctx.font = `${S * 6}px "Pixelify Sans", monospace`;

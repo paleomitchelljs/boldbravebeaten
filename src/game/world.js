@@ -62,8 +62,12 @@
   }
 
   // The ready-made party in start.yaml (the New Game screen's quick start).
+  // Members drawn with stock figures get a colour wash each, so they can be told apart; authored art is left as drawn.
   function presetParty() {
-    return (((content().start || {}).presets) || []).map((p, i) => Object.assign({}, p, { look: Object.assign({ skin: [1, 2, 0, 3][i % 4], hair: [1, 2, 4, 5][i % 4], cloth: i % 6, build: 1, sprite: null, tint: [0, 2, 3, 1][i % 4] }, p.look || {}) }));
+    return (((content().start || {}).presets) || []).map((p, i) => {
+      const art = p.look && typeof p.look.sprite === 'string' && p.look.sprite.startsWith('art:');
+      return Object.assign({}, p, { look: Object.assign({ skin: [1, 2, 0, 3][i % 4], hair: [1, 2, 4, 5][i % 4], cloth: i % 6, build: 1, sprite: null, tint: art ? 0 : [0, 2, 3, 1][i % 4] }, p.look || {}) });
+    });
   }
 
   // A trial start (start.yaml trials): its party specs, each with its own look.

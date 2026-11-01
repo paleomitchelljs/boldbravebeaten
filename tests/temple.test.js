@@ -176,6 +176,24 @@ test('a fight spills over: it is played on the whole map, and a group it comes n
   } finally { CONFIG.game.joinDistance = saved; CONFIG.game.arena = savedArena; }
 });
 
+test('outside: a new game starts in the village; its roads lead to the swamp and the hills, and through them to the temple and the mine', () => {
+  const start = Content.world.start;
+  assert.deepEqual(start.go, { to: 'village', arrive: 'I' });
+  const w = fresh(8);
+  const here = () => w.place;
+  const take = (ch) => {
+    const g = Explore.here(w), def = Object.values(g.legend).find((d, i) => Object.keys(g.legend)[i] === ch);
+    assert.ok(def && def.kind === 'stairs', `${w.place} has stairs ${ch}`);
+    if (Content.world.places[def.to].kind === 'town') Explore.leave(w, def.to); else Explore.enter(w, def.to, def.at || '<');
+  };
+  Explore.enter(w, 'village', 'I');
+  for (const [ch, to] of [['N', 'mine_approach'], ['M', 'ember_hall'], ['<', 'mine_approach'], ['S', 'village'], ['E', 'temple_approach'], ['A', 'temple_court'], ['<', 'temple_approach'], ['W', 'village'], ['I', 'stonebridge']]) {
+    take(ch);
+    assert.equal(here(), to, `${ch} leads to ${to}`);
+    if (w.explore) assert.ok(!Explore.cell(w, w.explore.x, w.explore.y).solid || Explore.cell(w, w.explore.x, w.explore.y).kind === 'stairs', `arrived on a square one can stand on in ${to}`);
+  }
+});
+
 test('content: ground letters, drops and tilesets are checked', () => {
   assert.deepEqual(Content.validate(), []);
   withPlace('t_bad', {

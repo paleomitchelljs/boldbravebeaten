@@ -14,7 +14,7 @@
 
   const store = () => { try { return globalThis.localStorage || null; } catch (e) { return null; } };
 
-  const VERSION = 3;
+  const VERSION = 4;
 
   // An item from before version 3: quality became craft; scale armor (no longer a tier) became steel mail; a
   // drinking blade's own `enchant: {drain}` became the drinking enchantment; `magical` (from the testbed) is dropped,
@@ -32,6 +32,13 @@
 
   // Steps for one character (a party member, a companion, a foe in a saved fight), keyed by the version they leave.
   const CHAR_STEPS = {
+    // The preset party's colour washes (there to tell stock figures apart) came off members drawn with their own art.
+    3: (c) => {
+      const L = c.look;
+      if (!L || !L.tint || typeof L.sprite !== 'string' || !L.sprite.startsWith('art:')) return;
+      const presets = ((G.Content && G.Content.world.start) || {}).presets || [];
+      if (presets.some((p) => p.name === c.name && p.look && p.look.sprite === L.sprite)) L.tint = 0;
+    },
     2: (c) => {
       const st = c.status || {};
       // A grapple was five fields over the two fighters.

@@ -173,6 +173,7 @@
       case 'shrine': prop(ctx, 'statue', cx, feet - S * 1, S, { scale: 0.8 }); break;
       case 'prop': {
         const key = d.sprite || 'crate';
+        if (key === 'none') break; // the rest of something drawn from another square (a building's footprint)
         if (propDef(key)) { prop(ctx, key, cx, feet - S * (d.lift || 1), S, { scale: d.scale || 1 }); break; }
         // No art for it yet: a stone block with a dark top, so it reads as something in the way.
         ctx.fillStyle = '#8a7e66'; ctx.fillRect(X + size * 0.18, Y + size * 0.3, size * 0.64, size * 0.6);

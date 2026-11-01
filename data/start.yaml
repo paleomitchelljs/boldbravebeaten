@@ -2,9 +2,10 @@
 # place is home: the town the party wakes in when left for dead, and where leaving a dungeon leads. go: where a new
 # game begins (a place and its arrival square, as a trial's go); leave it out to begin in the town.
 place: stonebridge
-go: {to: temple_court, arrive: "<"}
+go: {to: village, arrive: I}
 # The title screen's quick starts, one button each with the default party (without this list: one, at `go`).
 starts:
+  - {label: "Start in the village", go: {to: village, arrive: I}}
   - {label: "Quick start: the jungle temple", go: {to: temple_court, arrive: "<"}}
   - {label: "Quick start: the fire-goblin mine", go: {to: ember_hall, arrive: "<"}}
 day: 1

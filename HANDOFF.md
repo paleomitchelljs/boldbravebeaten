@@ -50,6 +50,21 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 - [x] The user's new raptor (`Raptor_Red`, now the `raptor` art): walk ×8, bite ×5, idle ×5, death.
 - [x] The animation plan's cycle 2, the new four: walk, strike, death in 8 directions (idles still to do).
 
+## Outside (the user, 2026-11-01; art and prompts in `assets/wip/outside/`)
+- [x] A new game starts in the village (`village`, "Stonebridge"): a green, the inn (its door is the old town screen),
+  smithy, shop, cottages, a jungle edge round it. Roads north to the Black Hills (`mine_approach`: basalt, a lava
+  channel, the mine mouth in the cliff) and east to the Temple Swamp (`temple_approach`: pools, a paved causeway to
+  an arch between two small pyramids). The temple's gate and the mine's stair now lead out to these. Seen in headless
+  Chrome. No people, no encounters yet.
+- [x] Art: three PixelLab sets chained to the temple's grass (swamp water, dirt path, jungle edge) and 24 props
+  (~115 generations). Open ground is plain grass with the court's decor scattered over it.
+- [ ] The props are drawn steeper (more isometric) than the tiles; the inn is no bigger than a cottage. A second pass
+  at the 3/4 view if they stay.
+- [ ] A stone bridge deck over lava (the Black Hills and the mine both draw it as flat strips); brick bits left on
+  the path's edge tiles.
+- [x] The preset party's colour washes (there to tell stock figures apart) are off members with their own art (Cyrus
+  was moss green); a save step (version 4) clears them in old saves.
+
 ## The user's notes, 2026-11-01
 - [x] Weariness by effort: each point of stamina spent or lost in a round takes 0.25 off the maximum (was 1 a round
   for everyone standing; `sim/effort.js`, `sim/FINDINGS.md`). Spell points already wore by points spent.
