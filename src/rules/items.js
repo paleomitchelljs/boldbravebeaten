@@ -435,6 +435,11 @@
       faces.beak = [Math.round(ph.beak.depth * X.pointDamage), 0, 1];
       wound.beak = pointWound(ph.beak);
     }
+    // A jab with the blunt end (a staff): the mass behind it, no leverage, so weaker than the swung head.
+    if (ph.butt) {
+      faces.butt = [0, 0, Math.round(1 + X.headDamage * Math.sqrt(ph.butt.mass * grip))];
+      wound.butt = { kind: 'B', vital: 0, bleed: 1, rounds: CONFIG.bleedRounds };
+    }
     if (ph.hilt) {
       faces.hilt = [0, 0, Math.round(X.hiltDamage.base + X.hiltDamage.k * Math.sqrt(ml))];
       wound.hilt = { kind: 'B', vital: 0, bleed: 1, rounds: CONFIG.bleedRounds };

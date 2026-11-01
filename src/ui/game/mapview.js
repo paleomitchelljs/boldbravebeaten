@@ -238,8 +238,8 @@
     const view = { el: canvas, cols, rows, S, cam: null, vis: {}, hover: null, stop: false, tick: 0, last: 0, fx: [] };
     // Short effects, timed from now (+ delay ms): text rising off a figure, a lunge toward a square, a bolt between two figures, a shudder.
     view.popup = (id, text, color, delay) => view.fx.push({ k: 'text', id, text, color: color || '#fff', t0: clock() + (delay || 0), dur: 1300 });
-    // A lunge plays the figure's strike frames; `still` keeps it in its square (a shot).
-    view.lunge = (id, tx, ty, delay, still) => view.fx.push({ k: 'lunge', id, tx, ty, still, t0: clock() + (delay || 0), dur: 260 });
+    // A lunge plays the figure's strike frames (its thrust frames with clip 'thrust'); `still` keeps it in its square (a shot).
+    view.lunge = (id, tx, ty, delay, still, clip) => view.fx.push({ k: 'lunge', id, tx, ty, still, clip: clip || 'attack', t0: clock() + (delay || 0), dur: 260 });
     // A bolt: a square of colour, an arrow (opts.shape), or (element given, and the effect sheets there) a fireball,
     // frost shard or spark from art/effects with a flash where it lands. opts.dur: its flight in ms.
     // opts.stop: the square (map coordinates) a wall stops it at, short of `to`.
@@ -581,7 +581,7 @@
       // A fallen figure lies on its side, unless its art has a death picture.
       const dead = a.down && a.art && Sprites.hasClip(a.art, 'death');
       const rot = a.down && !dead ? (v.flip ? -1.45 : 1.45) : 0;
-      const art = a.art && Sprites.drawArt(ctx, a.art, dead ? 'death' : lunging ? 'attack' : anim, frame, x, y, size, { flip: v.flip, dir: v.dir, tint: a.artTint, alpha: a.alpha, artScale: a.artScale, rot, progress, shadow: !a.down });
+      const art = a.art && Sprites.drawArt(ctx, a.art, dead ? 'death' : lunging ? lunge.clip : anim, frame, x, y, size, { flip: v.flip, dir: v.dir, tint: a.artTint, alpha: a.alpha, artScale: a.artScale, rot, progress, shadow: !a.down });
       if (art) a = Object.assign({}, a, { size: a.artSize || a.size });
       // Art still loading: nothing yet, rather than the stand-in for a moment.
       if (!art && a.art && Sprites.pending(a)) return;
@@ -591,7 +591,7 @@
       if (hit && ok) {
         const fade = (1 - (now - hit.t0) / hit.dur) * 0.85 * (a.alpha == null ? 1 : a.alpha);
         ctx.save(); ctx.globalCompositeOperation = 'lighter';
-        if (art) Sprites.drawArt(ctx, a.art, lunging ? 'attack' : anim, frame, x, y, size, { flip: v.flip, dir: v.dir, tint: '#ff2a1a', alpha: fade, artScale: a.artScale, rot, progress });
+        if (art) Sprites.drawArt(ctx, a.art, lunging ? lunge.clip : anim, frame, x, y, size, { flip: v.flip, dir: v.dir, tint: '#ff2a1a', alpha: fade, artScale: a.artScale, rot, progress });
         else Sprites.draw(ctx, a.kind, anim, frame, x, y, SS, { flip: v.flip, tint: '#ff2a1a', alpha: fade, size: a.size || 1, rot });
         ctx.restore();
       }

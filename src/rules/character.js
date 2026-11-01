@@ -763,8 +763,10 @@
   }
 
   // A free hand to cast with, or Battle Casting (cast with sword and shield in hand).
+  // A free hand, Battle Casting, or a focus in hand (a staff: weapons.yaml `focus`).
   function castingHands(c) {
-    return handsBusy(c) < 2 || rank(c, 'battle_casting') > 0;
+    const w = wieldedWeapon(c);
+    return handsBusy(c) < 2 || rank(c, 'battle_casting') > 0 || !!(w && WEAPONS[w.type].focus && !(shieldReady(c) || offhandWeapon(c)));
   }
 
   function handsBusy(c) {

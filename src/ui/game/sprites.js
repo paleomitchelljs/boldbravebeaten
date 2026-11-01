@@ -204,7 +204,9 @@
       const stand = () => framed(def, artSheet(key, `${def.dir}/rotations/${nearestDir(want, def.rotations || DIRS)}.png`), false);
       // A clip plays in the direction asked, or mirrored from its twin; a walk also takes a direction one step off.
       // Anything else (no clip, no such direction, frames missing) shows the standing view.
-      let c = anim === 'run' ? clip(def, 'walk') : anim === 'idle' || anim === 'attack' || anim === 'death' ? clip(def, anim) : null;
+      // A thrust plays its own clip (art.yaml `thrust`) where there is one, else the strike.
+      if (anim === 'thrust' && !clip(def, 'thrust')) anim = 'attack';
+      let c = anim === 'run' ? clip(def, 'walk') : anim === 'idle' || anim === 'attack' || anim === 'thrust' || anim === 'death' ? clip(def, anim) : null;
       let d = c && clipDir(want, c.dirs, anim === 'run');
       // A death is one picture (the clip's last frame), drawn whichever way the figure faced: a body lies as it fell.
       if (c && anim === 'death') { d = d || [c.dirs[0], !!flip]; frame = c.frames - 1; }
@@ -213,10 +215,11 @@
       if (!d) return stand();
       // An idle plays forward then back (`pingpong`), so a clip that drifts from its first pose never jumps back to it.
       const n = c.frames, m = c.pingpong && n > 2 ? 2 * n - 2 : n, k = ((frame % m) + m) % m;
-      const i = anim === 'attack' && progress != null ? Math.min(n - 1, Math.floor(progress * n)) : k < n ? k : m - k;
+      const i = (anim === 'attack' || anim === 'thrust') && progress != null ? Math.min(n - 1, Math.floor(progress * n)) : k < n ? k : m - k;
       const s = artSheet(key, `${c.dir}/animations/${c.anim}/${d[0]}/frame_${String(i).padStart(3, '0')}.png`);
       return s.ok ? framed(def, s, d[1]) : stand();  // the standing view until the frame loads, or if it is missing
     }
+    if (anim === 'thrust') anim = 'attack';
     const anims = def.anims || ['idle'];
     const want = anim === 'run' ? (anims.includes('walk') ? 'walk' : anims.includes('fly') ? 'fly' : 'idle') : anims.includes(anim) ? anim : 'idle';
     const s = artSheet(key, want);

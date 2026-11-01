@@ -190,7 +190,7 @@
       const size = (v) => v > 0 || (Array.isArray(v) && v.length === 2 && v.every((x) => x > 0));
       if (!a.dir || !size(a.size)) err(`art.${id}: a pixellab entry needs dir and size (a number, or [width, height])`);
       for (const f of ['walks', 'rotations']) for (const d of a[f] || []) if (!COMPASS.includes(d)) err(`art.${id}.${f}: "${d}" is not a compass direction`);
-      for (const f of ['walk', 'idle', 'attack']) {
+      for (const f of ['walk', 'idle', 'attack', 'thrust']) {
         const c = a[f];
         if (c == null || typeof c === 'string') continue;
         if (typeof c !== 'object' || (f !== 'walk' && !c.anim)) { err(`art.${id}.${f}: want an animation name, or {anim, dir, frames, dirs}`); continue; }
@@ -332,11 +332,12 @@
       if (k.sidearm && !has(D.WEAPONS, k.sidearm)) err(`start.kits.${k.id}: sidearm "${k.sidearm}" unknown`);
     }
     for (const p of S.presets || []) for (const f of p.feats || []) if (!has(D.FEATS, f)) err(`start.presets.${p.name}: feat "${f}" unknown`);
-    // A caster whose first weapon takes both hands cannot cast (a spell needs a free hand) without Battle Casting.
+    // A caster whose first weapon takes both hands cannot cast (a spell needs a free hand) without Battle Casting,
+    // unless it is a focus (a staff).
     for (const p of [].concat(S.presets || [], ...(S.trials || []).map((t) => t.party || []))) {
       const kit = (S.kits || []).find((k) => k.id === p.kit) || {};
       const first = p.weaponItems ? p.weaponItems[0] && p.weaponItems[0].weapon : kit.wield;
-      if ((p.feats || []).some((f) => /^verb_/.test(f)) && first && (D.WEAPONS[first] || {}).hands === 2 && !(p.feats || []).includes('battle_casting')) err(`start: ${p.name} knows spells but wields a two-handed ${first}, so cannot cast (take battle_casting or a one-handed weapon)`);
+      if ((p.feats || []).some((f) => /^verb_/.test(f)) && first && (D.WEAPONS[first] || {}).hands === 2 && !(D.WEAPONS[first] || {}).focus && !(p.feats || []).includes('battle_casting')) err(`start: ${p.name} knows spells but wields a two-handed ${first}, so cannot cast (take battle_casting or a one-handed weapon)`);
     }
     for (const t of S.trials || []) {
       if (t.go && !has(places, t.go.to)) err(`start.trials.${t.id}: go to unknown place "${t.go.to}"`);

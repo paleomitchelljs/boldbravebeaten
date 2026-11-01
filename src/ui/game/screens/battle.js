@@ -348,7 +348,7 @@
         mv.lunge(d.actor, b.x + ox, b.y + oy, t0, true);
         mv.bolt(d.actor, d.target, '#ffe9a0', t0 + 200, null, { shape: o.natural ? null : 'arrow', dur, stop });
         land = t0 + 200 + dur;
-      } else mv.lunge(d.actor, b.x + ox, b.y + oy, t0);
+      } else mv.lunge(d.actor, b.x + ox, b.y + oy, t0, false, o.motion === 'thrust' ? 'thrust' : 'attack');
       if (delay[d.target] == null) delay[d.target] = land;
       struck.add(d.target);
     }

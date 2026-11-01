@@ -30,18 +30,21 @@ club:
   rarity: common
   notes: "Cheapest; common starter."
 staff:
-  phys: {mass: 1.8, length: 1.8, head: {mass: 0.5}}
+  # butt: a jab with the end (PROVISIONAL, the user 2026-11-01: every hero has a swing and a thrust).
+  phys: {mass: 1.8, length: 1.8, head: {mass: 0.5}, butt: {mass: 0.5}}
   name: Staff
   hands: 2
   weight: medium
-  reach: {swing: 2}
-  reachName: "swing 2"
+  reach: {swing: 2, thrust: 2}
+  reachName: "swing 2, jab 2"
   closeOK: true
   material: wood
   durability: 70
   fragility: 1.0
-  faces: {head: [0, 0, 4]}
-  motions: [twoHanded]
+  faces: {head: [0, 0, 4], butt: [0, 0, 3]}
+  motions: [twoHanded, thrust]
+  # A caster's focus (PROVISIONAL, the user 2026-11-01): spells can be cast with it in both hands.
+  focus: true
   rarity: common
   notes: "A walking staff: reach and a free conscience. A caster's focus as often as a weapon."
 shortsword:

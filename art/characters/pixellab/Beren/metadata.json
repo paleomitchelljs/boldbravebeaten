@@ -220,11 +220,85 @@
               "Idle/animations/Death/south/frame_005.png",
               "Idle/animations/Death/south/frame_006.png"
             ]
+          },
+          "Thrust": {
+            "north": [
+              "Idle/animations/Thrust/north/frame_000.png",
+              "Idle/animations/Thrust/north/frame_001.png",
+              "Idle/animations/Thrust/north/frame_002.png",
+              "Idle/animations/Thrust/north/frame_003.png",
+              "Idle/animations/Thrust/north/frame_004.png",
+              "Idle/animations/Thrust/north/frame_005.png",
+              "Idle/animations/Thrust/north/frame_006.png"
+            ],
+            "west": [
+              "Idle/animations/Thrust/west/frame_000.png",
+              "Idle/animations/Thrust/west/frame_001.png",
+              "Idle/animations/Thrust/west/frame_002.png",
+              "Idle/animations/Thrust/west/frame_003.png",
+              "Idle/animations/Thrust/west/frame_004.png",
+              "Idle/animations/Thrust/west/frame_005.png",
+              "Idle/animations/Thrust/west/frame_006.png"
+            ],
+            "south-west": [
+              "Idle/animations/Thrust/south-west/frame_000.png",
+              "Idle/animations/Thrust/south-west/frame_001.png",
+              "Idle/animations/Thrust/south-west/frame_002.png",
+              "Idle/animations/Thrust/south-west/frame_003.png",
+              "Idle/animations/Thrust/south-west/frame_004.png",
+              "Idle/animations/Thrust/south-west/frame_005.png",
+              "Idle/animations/Thrust/south-west/frame_006.png"
+            ],
+            "north-west": [
+              "Idle/animations/Thrust/north-west/frame_000.png",
+              "Idle/animations/Thrust/north-west/frame_001.png",
+              "Idle/animations/Thrust/north-west/frame_002.png",
+              "Idle/animations/Thrust/north-west/frame_003.png",
+              "Idle/animations/Thrust/north-west/frame_004.png",
+              "Idle/animations/Thrust/north-west/frame_005.png",
+              "Idle/animations/Thrust/north-west/frame_006.png"
+            ],
+            "north-east": [
+              "Idle/animations/Thrust/north-east/frame_000.png",
+              "Idle/animations/Thrust/north-east/frame_001.png",
+              "Idle/animations/Thrust/north-east/frame_002.png",
+              "Idle/animations/Thrust/north-east/frame_003.png",
+              "Idle/animations/Thrust/north-east/frame_004.png",
+              "Idle/animations/Thrust/north-east/frame_005.png",
+              "Idle/animations/Thrust/north-east/frame_006.png"
+            ],
+            "south-east": [
+              "Idle/animations/Thrust/south-east/frame_000.png",
+              "Idle/animations/Thrust/south-east/frame_001.png",
+              "Idle/animations/Thrust/south-east/frame_002.png",
+              "Idle/animations/Thrust/south-east/frame_003.png",
+              "Idle/animations/Thrust/south-east/frame_004.png",
+              "Idle/animations/Thrust/south-east/frame_005.png",
+              "Idle/animations/Thrust/south-east/frame_006.png"
+            ],
+            "east": [
+              "Idle/animations/Thrust/east/frame_000.png",
+              "Idle/animations/Thrust/east/frame_001.png",
+              "Idle/animations/Thrust/east/frame_002.png",
+              "Idle/animations/Thrust/east/frame_003.png",
+              "Idle/animations/Thrust/east/frame_004.png",
+              "Idle/animations/Thrust/east/frame_005.png",
+              "Idle/animations/Thrust/east/frame_006.png"
+            ],
+            "south": [
+              "Idle/animations/Thrust/south/frame_000.png",
+              "Idle/animations/Thrust/south/frame_001.png",
+              "Idle/animations/Thrust/south/frame_002.png",
+              "Idle/animations/Thrust/south/frame_003.png",
+              "Idle/animations/Thrust/south/frame_004.png",
+              "Idle/animations/Thrust/south/frame_005.png",
+              "Idle/animations/Thrust/south/frame_006.png"
+            ]
           }
         }
       }
     }
   ],
   "export_version": "3.1",
-  "export_date": "2026-10-28T21:23:03.844058"
+  "export_date": "2026-11-01T15:17:51.128093"
 }

@@ -39,18 +39,19 @@
   //   ranged       — bows: { min, max, long } (beyond `long` damage drops)
   //   material     — what the striking part is made of (wear, breaking shields); an item may carry its own
   //   drawWindUp   — the shot must be drawn (wound up) a round ahead
+  //   focus        — a caster's focus: spells can be cast with it in hand, though it takes both (a staff)
   //   phys         — PROVISIONAL physical description (CONFIG.weaponPhysics). Under the
   //                  'physical' weapon model, damage, AP, weight class, STR scaling and wounds
   //                  are worked out from it (Items.weaponStats) and `faces` and `weight` are only
   //                  the old hand-set table. mass kg, length m; point {depth cm it can drive in,
   //                  width cm of the wound}; edge 0–1 (how much cutting edge); head {mass kg at
   //                  the striking end, spikes {depth, width}, cut}; beak {depth, width}; hilt
-  //                  (pommel strikes); arrow {depth, width} for bows. point.punch / arrow.punch override the
+  //                  (pommel strikes); butt {mass kg driven by a jab with the blunt end: a staff}; arrow {depth, width} for bows. point.punch / arrow.punch override the
   //                  punch through armor worked out from mass (CONFIG.pierce).
   const WEAPONS = {}; // weapons.yaml
 
   const MOTIONS = {
-    thrust: { name: 'Thrust', ap: 2, stamina: 1, faces: ['point'] },
+    thrust: { name: 'Thrust', ap: 2, stamina: 1, faces: ['point', 'butt'] },
     swing: { name: 'Swing', ap: 3, stamina: 2, faces: ['edge', 'head', 'beak', 'hilt'] },
     twoHanded: { name: 'Two-handed swing', ap: 4, stamina: 3, faces: ['edge', 'head', 'beak', 'hilt'], twoHands: true },
     power: { name: 'Power swing', ap: 5, stamina: 4, faces: ['edge', 'head', 'beak'], requiresFeat: 'power_swing' },

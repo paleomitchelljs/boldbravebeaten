@@ -21,7 +21,7 @@ kits:
   - {id: rapier, name: Rapier and dagger, wield: rapier, sidearm: parryingDagger, armor: padded, shield: null, blurb: "Quick and light. Needs room and a clear head."}
   - {id: bow, name: Bow, wield: shortbow, sidearm: dagger, armor: padded, shield: null, arrows: 20, blurb: "Hit them before they hit you."}
   - {id: hammer, name: Warhammer, wield: warhammer, sidearm: dagger, armor: padded, shield: null, blurb: "Two hands, slow, and dents plate."}
-  - {id: staff, name: Dagger and ward, wield: dagger, sidearm: null, armor: padded, shield: null, blurb: "A caster's kit: spend the feats on words."}
+  - {id: staff, name: Staff and ward, wield: staff, sidearm: null, armor: padded, shield: null, blurb: "A caster's kit: a staff to lean on and spend the feats on words."}
 presets:
   # The default party (the user, 2026-10-28): level 3, five feats each (3 + 1 a level), 40 attribute points.
   # Beren: heavy armor, sword and shield. He blocks: plate he can move in, a shield he is quick and sure with.

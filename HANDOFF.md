@@ -65,6 +65,14 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 - [x] The preset party's colour washes (there to tell stock figures apart) are off members with their own art (Cyrus
   was moss green); a save step (version 4) clears them in old saves.
 
+## Thrusts and Jabiku's staff (the user, 2026-11-01)
+- [x] Beren, Cyrus and Jabiku have a thrust ×8 (`art.yaml thrust`), played for a thrust; a swing plays the strike.
+  Lorc (the archer) keeps his shot. 32 generations; ledger in `assets/ideas/character-animation-plan.md`. Not yet
+  watched in play (only the frames, on contact sheets).
+- [x] Jabiku starts with a staff (the `staff` kit wields one). PROVISIONAL rules so that works: a staff is a casting
+  focus (`focus: true`: spells with it in both hands) and jabs with its butt (a blunt thrust, reach 2, 6 against the
+  swing's 8).
+
 ## The user's notes, 2026-11-01
 - [x] Weariness by effort: each point of stamina spent or lost in a round takes 0.25 off the maximum (was 1 a round
   for everyone standing; `sim/effort.js`, `sim/FINDINGS.md`). Spell points already wore by points spent.

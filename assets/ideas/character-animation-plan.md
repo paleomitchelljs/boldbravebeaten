@@ -190,4 +190,6 @@ what the next dungeon (the fire-goblin mine, `assets/ideas/ember-mine.md`) needs
 | Dragonborn | walk ×7, strike ×7, death | 15 | | walks shuffle; strikes cross the blades |
 | Orc warrior | walk ×8, strike ×8, death | 17 | | NE strike turned the shield into a white disc and SE lost it: both re-rolled |
 | Mummy lord | walk ×8, strike ×2 (the 1st lost its helm flames; deleted) then ×7, death | 17 | 1948 | |
+| Outside (village, swamp, hills) | 3 pro tilesets, 24 props | ~115 | | assets/wip/outside/README.md (not character work) |
+| Thrusts (the user, 2026-11-01: every non-archer hero a swing and a thrust) | Beren ×8 (`Thrust`; W re-rolled: the point went behind him); Cyrus S ×2 (1st raised the blade to the side and made it straight; deleted), ×7 (`Thrust2`; E, W re-rolled: blade drawn back); Jabiku S ×2 (1st swung the staff round and kept it level; deleted), ×7 (`Thrust2`) | 32 | | Jabiku jabs with the butt in SE, N, NW, SW, as the rules have it; Cyrus E frames 4-5 show the sabre in both hands for a moment |
 

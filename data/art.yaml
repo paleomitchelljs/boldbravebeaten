@@ -100,6 +100,7 @@ beren:
   # Strike and death (one picture: the death clip's last frame, facing south) on an 80-84 px canvas, centred.
   idle: {anim: Idle, frames: 5, pingpong: true}
   attack: {anim: Strike2, frames: 7}
+  thrust: {anim: Thrust, frames: 7}
   death: {anim: Death, frames: 7, dirs: [south]}
   party: true
 cyrus:
@@ -113,6 +114,7 @@ cyrus:
   # Strike and death (one picture: the death clip's last frame, facing south) on an 80-84 px canvas, centred.
   idle: {anim: Idle, frames: 5, pingpong: true}
   attack: {anim: Strike2, frames: 7}
+  thrust: {anim: Thrust2, frames: 7}
   death: {anim: Death, frames: 7, dirs: [south]}
   party: true
 lorc:
@@ -328,6 +330,7 @@ jabiku:
   walks: []
   idle: {anim: Idle, frames: 5, pingpong: true}
   attack: {anim: Strike, frames: 7}
+  thrust: {anim: Thrust2, frames: 7}
   death: {anim: Death, frames: 7, dirs: [south]}
   party: true
 arvir:
