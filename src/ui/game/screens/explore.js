@@ -233,6 +233,28 @@
 
   const SPREAD = [[[0, 0]], [[-0.22, 0.04], [0.22, -0.04]], [[-0.3, 0.1], [0.3, 0.1], [0, -0.14]]];
 
+  // The groups and people standing on the map (legend squares), facing `ex` (the party). `skip`: squares not to draw
+  // (groups in a fight under way, drawn as fighters).
+  function drawBodies(game, sc, ex, skip) {
+    const w = game.world;
+    for (const b of bodies(game)) {
+      if ((sc.seen && !sc.seen(b.x, b.y)) || (skip && skip[b.x + ',' + b.y])) continue;
+      const c = Explore.peek(w, b.x, b.y);
+      const st = c.st || {};
+      if (b.def.kind === 'monster') {
+        if (st.done) continue;
+        const spec = Explore.encounterSpec(w, b.def);
+        const looks = Sprites.encounterLooks(spec);
+        const n = Math.min(3, Sprites.crowd(spec));
+        SPREAD[n - 1].forEach(([dx, dy], i) => { const look = looks[i % looks.length]; sc.actors.push({ id: `m${b.x},${b.y},${i}`, x: b.x + dx, y: b.y + dy, kind: look.kind, tint: look.tint, size: look.size, art: look.art, artTint: look.artTint, artScale: look.artScale, artSize: look.artSize, tag: 'enemy', flip: ex.x < b.x, sleep: !!(b.def.asleep && !st.woken), ring: st.pacified ? 'rgba(120,230,160,0.7)' : null, phase: i * 2 + b.x }); });
+      } else {
+        const npc = G.Content.world.npcs[b.def.npc] || {};
+        const look = Sprites.lookFor(npc.sprite || 'wizard', npc.name);
+        sc.actors.push({ id: `n${b.x},${b.y}`, x: b.x, y: b.y, kind: look.kind, tint: look.tint, size: look.size, art: look.art, artTint: look.artTint, artScale: look.artScale, artSize: look.artSize, tag: 'npc', flip: ex.x < b.x, ring: 'rgba(120,190,255,0.55)', phase: b.y });
+      }
+    }
+  }
+
   function scene(game) {
     const w = game.world;
     const g = Explore.here(w);
@@ -275,22 +297,7 @@
       const L = Sprites.look(m);
       sc.actors.push({ id: m.id, x: at.x, y: at.y, kind: L.kind, tint: L.tint, size: L.size, art: L.art, artTint: L.artTint, artScale: L.artScale, artSize: L.artSize, tag: 'party', speed: 8, phase: i, ring: i === 0 && ex.sneak ? 'rgba(150,200,255,0.8)' : null, alpha: ex.sneak ? 0.8 : 1, who: m.id });
     });
-    for (const b of bodies(game)) {
-      if (!sc.seen(b.x, b.y)) continue;
-      const c = Explore.peek(w, b.x, b.y);
-      const st = c.st || {};
-      if (b.def.kind === 'monster') {
-        if (st.done) continue;
-        const spec = Explore.encounterSpec(w, b.def);
-        const looks = Sprites.encounterLooks(spec);
-        const n = Math.min(3, Sprites.crowd(spec));
-        SPREAD[n - 1].forEach(([dx, dy], i) => { const look = looks[i % looks.length]; sc.actors.push({ id: `m${b.x},${b.y},${i}`, x: b.x + dx, y: b.y + dy, kind: look.kind, tint: look.tint, size: look.size, art: look.art, artTint: look.artTint, artScale: look.artScale, artSize: look.artSize, tag: 'enemy', flip: ex.x < b.x, sleep: !!(b.def.asleep && !st.woken), ring: st.pacified ? 'rgba(120,230,160,0.7)' : null, phase: i * 2 + b.x }); });
-      } else {
-        const npc = G.Content.world.npcs[b.def.npc] || {};
-        const look = Sprites.lookFor(npc.sprite || 'wizard', npc.name);
-        sc.actors.push({ id: `n${b.x},${b.y}`, x: b.x, y: b.y, kind: look.kind, tint: look.tint, size: look.size, art: look.art, artTint: look.artTint, artScale: look.artScale, artSize: look.artSize, tag: 'npc', flip: ex.x < b.x, ring: 'rgba(120,190,255,0.55)', phase: b.y });
-      }
-    }
+    drawBodies(game, sc, ex);
     if (game.ui.prompt && game.ui.prompt.type === 'face') { const f = Explore.front(w); sc.marks.push({ x: f.x, y: f.y, type: 'select' }); }
     return sc;
   }
@@ -347,6 +354,8 @@
         warn.length ? h('span', { class: 'dock-warn', 'aria-label': warn.map((x) => x.text).join('; ') }, '⚠') : null);
     }));
   }
+
+  UI.ExploreBodies = drawBodies;
 
   UI.Screens.explore = function (game) {
     const w = game.world;

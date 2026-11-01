@@ -35,6 +35,8 @@
         over: () => null,
         sheet: (id) => game.openOverlay('sheet', { id }),
         react: (req, enc, chars) => askOnMap(game, req, enc, chars),
+        // The fight spills over: groups it comes near join (Battle.reinforce).
+        beforeRound: () => Battle.reinforce(w),
       },
     };
     game.ui.battleApp = app;
@@ -90,6 +92,8 @@
     other: { color: '#8fe3a8', icon: 'hand' }, guard: { color: '#8ab4ff', icon: 'shield' }, move: { color: '#7fdcff' }, far: { color: '#d9b055' },
   };
   const SELF_ICON = { windUp: 'sword', standUp: 'up', bandage: 'heart', drawSidearm: 'hand', pickUp: 'hand', drop: 'hand' };
+  // The battlefield view's size in squares (rules.yaml game.arena).
+  const VIEW = () => G.CONFIG.game.arena || { w: 15, h: 10 };
   const isSpell = (e) => !!(e && e.option && e.option.spell);
   const ranged = (e) => !!(e && e.option && (e.option.maxRange || 1) > 1.5);
 
@@ -100,9 +104,17 @@
     const ox = arena ? arena.ox : 0, oy = arena ? arena.oy : 0;
     const g = arena ? G.Explore.grid(arena.place) : null;
     const open = (x, y) => ({ kind: x >= 0 && y >= 0 && x < enc.grid.w && y < enc.grid.h ? 'floor' : 'rock', st: {} });
+    // On the whole map the camera follows the one acting (or, between turns, the party's first standing); a window is
+    // shown whole.
+    const whole = arena && (arena.w > VIEW().w || arena.h > VIEW().h);
+    const ms = whole ? World.mapState(w, arena.place) : null;
+    const focusId = (map && map.actor) || Combat.currentActor(enc) || enc.ids.find((id) => chars[id] && chars[id].side === 'party' && C.isActive(chars[id]) && enc.pos[id]);
+    const focus = focusId && enc.pos[focusId] ? enc.pos[focusId] : { x: 0, y: 0 };
     const sc = {
       w: g ? g.w : enc.grid.w, h: g ? g.h : enc.grid.h,
-      origin: { x: ox, y: oy },
+      origin: whole ? null : { x: ox, y: oy },
+      cam: whole ? { x: focus.x + ox, y: focus.y + oy } : null,
+      seen: whole ? (x, y) => !!ms.seen[x + ',' + y] || !!occupant(enc, chars, x - ox, y - oy) : null,
       tileset: arena ? ((G.Content.world.places[arena.place] || {}).look || {}).tileset : null,
       cell: g ? (x, y) => G.Explore.peek(w, x, y) : open,
       actors: [], marks: [], lines: [], reticles: [], badges: [],
@@ -139,6 +151,17 @@
         bar: C.maxStamina(c) ? c.stamina / C.maxStamina(c) : 0,
         ring: id === actor ? 'rgba(255,224,130,0.95)' : candidate ? 'rgba(255,110,95,0.4)' : null,
       });
+    }
+    // Groups and people on the map who are not (yet) in the fight stand where they are.
+    const B = w.battle;
+    if (arena && B && UI.ExploreBodies && arena.place === w.place) {
+      const skip = {};
+      if (B.ctx && B.ctx.x != null) skip[B.ctx.x + ',' + B.ctx.y] = 1;
+      for (const j of B.joined || []) skip[j.x + ',' + j.y] = 1;
+      const all = sc.actors.length;
+      UI.ExploreBodies(game, sc, { x: focus.x + ox, y: focus.y + oy }, skip);
+      // Only inside the field (a window shows none beyond its edge).
+      sc.actors = sc.actors.filter((a, i) => i < all || (a.x >= ox - 0.5 && a.y >= oy - 0.5 && a.x < ox + arena.w && a.y < oy + arena.h));
     }
     if (map) {
       for (const k of Object.keys(map.ground)) {
@@ -466,7 +489,7 @@
     if (!game.ui.mv && bs) {
       UI.MapView.preload();
       const a = bs.arena;
-      game.ui.mv = UI.MapView.create({ cols: a ? a.w : Math.min(15, bs.enc.grid.w), rows: a ? a.h : Math.min(10, bs.enc.grid.h), scale: UI.MapView.scaleFor(a && a.place, 3), label: 'The battlefield', scene: () => scene(game), onCell: (x, y) => onCell(game, x, y) });
+      game.ui.mv = UI.MapView.create({ cols: Math.min(VIEW().w, a ? a.w : bs.enc.grid.w), rows: Math.min(VIEW().h, a ? a.h : bs.enc.grid.h), scale: UI.MapView.scaleFor(a && a.place, 3), label: 'The battlefield', scene: () => scene(game), onCell: (x, y) => onCell(game, x, y) });
       game.ui.mv.start();
     }
     if (bs && bs.enc) effects(game, bs.enc, bs.chars);

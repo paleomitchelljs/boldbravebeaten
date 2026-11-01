@@ -26,6 +26,7 @@
     const roller = G.Town.autoRoller;
     const max = opts.maxRounds || 30;
     while (b.enc.phase !== 'over' && b.enc.round < max) {
+      G.Battle.reinforce(world);
       await Combat.startRound(b.enc, chars, roller);
       await playRound(b.enc, chars, roller);
     }

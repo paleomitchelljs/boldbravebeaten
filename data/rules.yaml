@@ -108,7 +108,10 @@ game:
   noticeDistance: 4          # tiles at which an awake group notices an unhidden party
   sleepNoticeDistance: 2     # ...and a sleeping one
   lightRadius: 7
-  arena: {w: 15, h: 10}   # the slice of the dungeon a fight is played on (matches the map view's size)
+  # The battlefield view, w × h squares. whole: true (the user, 2026-11-01) plays the fight on the whole map, so it can
+  # spill into the next room and draw in groups it comes near (joinDistance, checked every round); false, on a slice
+  # of the map that size.
+  arena: {w: 15, h: 10, whole: true}
   joinDistance: 6         # PROVISIONAL: an awake group this close to a fight (with a clear line) joins it
   # ---- Ground (PROVISIONAL, for the temple) ----------------------------------------------------------------------
   # Map letters with the same meaning on every map, besides # wall, . floor, + door and space (rock). A place's

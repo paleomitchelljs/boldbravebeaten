@@ -94,7 +94,8 @@
     const g = G.Explore.here(world);
     if (!g || !world.explore) return null;
     const A = G.CONFIG.game.arena || { w: 15, h: 10 };
-    const w = Math.min(A.w, g.w), h = Math.min(A.h, g.h);
+    // whole: the fight is played on the whole map (A.w × A.h is then only the view); else on a window of it.
+    const w = A.whole ? g.w : Math.min(A.w, g.w), h = A.whole ? g.h : Math.min(A.h, g.h);
     const me = world.explore;
     const anchor = ctx && ctx.x != null ? { x: ctx.x, y: ctx.y } : null;
     const cx = anchor ? (me.x + anchor.x) / 2 : me.x, cy = anchor ? (me.y + anchor.y) / 2 : me.y;
@@ -116,17 +117,18 @@
   }
 
   // Other groups on the map that hear the fight and come: awake, not beaten or calmed, within game.joinDistance of the
-  // party or of the group it fights, with a clear line to that one, and inside the slice. Returns [{x, y, def, spec}]
-  // in map squares.
-  function joiners(world, arena, anchor) {
+  // party or of the group it fights (or of `from`: any fighter's square, mid-fight), with a clear line to that one, and
+  // inside the slice. `skip`: squares already in the fight. Returns [{x, y, def, spec}] in map squares.
+  function joiners(world, arena, anchor, from, skip) {
     const me = { x: world.explore.x, y: world.explore.y };
-    const near = (q) => [me, anchor].some((at) => at && G.Explore.cheb(at, q) <= r && G.Explore.lineClear(world, q.x, q.y, at.x, at.y));
+    const near = (q) => (from || [me, anchor]).some((at) => at && G.Explore.cheb(at, q) <= r && G.Explore.lineClear(world, q.x, q.y, at.x, at.y));
     const r = G.CONFIG.game.joinDistance || 0;
     const g = G.Explore.here(world);
     const out = [];
     if (!r) return out;
     for (let y = arena.oy; y < arena.oy + arena.h; y++) for (let x = arena.ox; x < arena.ox + arena.w; x++) {
       if (anchor && x === anchor.x && y === anchor.y) continue;
+      if (skip && skip[x + ',' + y]) continue;
       const def = g.legend[g.rows[y][x]];
       if (!def || def.kind !== 'monster') continue;
       const st = G.Explore.state(world, x, y);
@@ -200,6 +202,56 @@
   function ambushFactor(world) {
     const best = Math.max(0, ...World.active(world).map((c) => C.rank(c, 'ambusher')));
     return best >= 2 ? 0 : best === 1 ? 0.25 : 0.5;
+  }
+
+  // A fight spills over: at the start of each round, the party sees what its fighters see from where they stand, and
+  // any group the fight has come near (Battle.joiners, from every fighter's square) comes running, around its own
+  // square. Returns the log lines.
+  function reinforce(world) {
+    const b = world.battle;
+    if (!b || !b.arena || !world.explore || b.arena.place !== world.place) return [];
+    const enc = b.enc, A = b.arena, t = table(world), chars = t.characters;
+    const onMap = (id) => ({ x: enc.pos[id].x + A.ox, y: enc.pos[id].y + A.oy });
+    const standing = enc.ids.filter((id) => chars[id] && C.isActive(chars[id]) && enc.pos[id]);
+    for (const id of standing) if (chars[id].side === 'party') G.Explore.markSeen(world, onMap(id));
+    const skip = {};
+    if (b.ctx && b.ctx.x != null) skip[b.ctx.x + ',' + b.ctx.y] = 1;
+    for (const j of b.joined || []) skip[j.x + ',' + j.y] = 1;
+    const lines = [];
+    for (const j of joiners(world, A, null, standing.map(onMap), skip)) {
+      const more = buildFoes(j.spec);
+      const at = { x: j.x - A.ox, y: j.y - A.oy };
+      G.Terrain.remove(enc, at.x, at.y, (f) => f.kind === 'dungeonWall');
+      const sq = openNear(enc, at, more.length);
+      more.forEach((f, i) => {
+        b.foes[f.id] = f; chars[f.id] = f; t.order.push(f.id);
+        enc.ids.push(f.id);
+        enc.pos[f.id] = sq[i] || at;
+      });
+      b.joined.push({ x: j.x, y: j.y, spec: j.spec });
+      const line = `${j.def.label || 'More of them'} hear${j.def.label ? 's' : ''} the fighting and come${j.def.label ? 's' : ''} running.`;
+      enc.log.push({ text: line, cls: 'fight', round: enc.round });
+      lines.push(line);
+    }
+    for (const l of lines) World.logLine(world, l, 'fight');
+    return lines;
+  }
+
+  // Free squares nearest `from` in a fight under way (breadth-first through squares one can stand on).
+  function openNear(enc, from, n) {
+    const held = {};
+    for (const id of enc.ids) if (enc.pos[id]) held[enc.pos[id].x + ',' + enc.pos[id].y] = 1;
+    const out = [], seen = { [from.x + ',' + from.y]: 1 }, q = [from];
+    while (q.length && out.length < n) {
+      const p = q.shift();
+      if (G.Terrain.passable(enc, p.x, p.y) && !held[p.x + ',' + p.y]) { out.push(p); held[p.x + ',' + p.y] = 1; }
+      for (const [dx, dy] of [[0, -1], [1, 0], [0, 1], [-1, 0], [1, 1], [-1, 1], [1, -1], [-1, -1]]) {
+        const nx = p.x + dx, ny = p.y + dy, k = nx + ',' + ny;
+        if (seen[k] || !G.Terrain.passable(enc, nx, ny)) continue;
+        seen[k] = 1; q.push({ x: nx, y: ny });
+      }
+    }
+    return out;
   }
 
   // Has the party got away? Asked at the end of a round (CONFIG.disengage). Every foe still standing either can't reach
@@ -285,5 +337,5 @@
     return out;
   }
 
-  G.Battle = { dungeonArena, joiners, buildFoes, table, start, ambushFactor, disengaged, getAway, finish };
+  G.Battle = { dungeonArena, joiners, reinforce, buildFoes, table, start, ambushFactor, disengaged, getAway, finish };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

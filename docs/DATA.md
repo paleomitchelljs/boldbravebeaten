@@ -160,8 +160,10 @@ for the ground under it.
 orc_rogue, orc_shaman, orc_warrior, skeleton, skeleton_mage, skeleton_rogue, skeleton_warrior) or is `{kind, scale, tint}` to resize
 or colour-wash one. Add `art: <key>` (an entry in `art.yaml`, with optional `artTint`, `artScale`) to draw creature art
 instead; the `kind` is drawn wherever the art files are missing (they are git-ignored). A party member's `look.sprite` /
-`look.tint` work the same way, and `look.sprite: art:<key>` picks an art entry marked `party: true`. `art.html` shows them all. Fights are played on a slice of the
-dungeon map (`game.arena` in rules.yaml, 15x10): walls and furniture block, a shut ordinary door does not.
+`look.tint` work the same way, and `look.sprite: art:<key>` picks an art entry marked `party: true`. `art.html` shows them all. Fights are played on the
+dungeon map (`game.arena` in rules.yaml: the whole map with `whole: true`, else a 15x10 slice): walls and furniture
+block, a shut ordinary door does not. Each round, a group the fight comes near (`game.joinDistance`, with a clear line)
+joins it.
 `encounters:` map an id to `{foes, flags, loot, text, parley, peaceFlags, arena}`. `wandering:` is what comes along: it interrupts a camp, and it is drawn as time passes in the place (`game.wanderers`: a check every 20 minutes, noise counted as extra minutes).
 A town has `locations` (people and services: `inn`, `shop`, `healer`, `trainer`, `bounty`) and `exits` to dungeons;
 an exit with `requires` stays hidden until the player has heard of it. `look` colors the first-person view; in a dungeon

@@ -762,6 +762,7 @@
         h('div', { class: 'row' },
           h('button', { class: 'primary', onclick: async () => {
             ui.mode = null; ui.placeSel = null;
+            if (app.hooks && app.hooks.beforeRound) app.hooks.beforeRound(enc);
             await Combat.startRound(enc, chars, roller);
             app.save(); app.render();
           } }, 'Roll initiative'),
@@ -942,6 +943,7 @@
       setTimeout(async () => {
         app.ui.starting = false;
         if (app.state.encounter !== enc || !(enc.phase === 'setup' || enc.phase === 'roundEnd')) return;
+        if (app.hooks.beforeRound) app.hooks.beforeRound(enc);
         await Combat.startRound(enc, chars, UI.Dice.makeRoller(app));
         app.save();
         app.render();

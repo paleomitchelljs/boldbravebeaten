@@ -142,6 +142,40 @@ test('joining: an awake group near the fight comes; a sleeper or a far one does 
   } finally { CONFIG.game.joinDistance = saved; }
 });
 
+test('a fight spills over: it is played on the whole map, and a group it comes near joins at the next round', () => {
+  const saved = CONFIG.game.joinDistance, savedArena = CONFIG.game.arena;
+  CONFIG.game.joinDistance = 2; CONFIG.game.arena = { w: 15, h: 10, whole: true };
+  try {
+    withPlace('t_spill', {
+      map: ['##############################', '#<.a......................b.#', '##############################'],
+      legend: { '<': { kind: 'stairs', to: 'stonebridge', at: null }, a: { kind: 'monster', encounter: 'wolf' }, b: { kind: 'monster', encounter: 'wolf', label: 'The far wolf' } },
+    }, () => {
+      const w = fresh(7);
+      Explore.enter(w, 't_spill', '<');
+      Battle.start(w, { foes: [{ monster: 'wolf' }] }, { ctx: { x: 3, y: 1 } });
+      const b = w.battle, enc = b.enc;
+      assert.equal(b.arena.w, 30, 'the whole map, not a 15-square window');
+      assert.equal(b.joined.length, 0, 'the far group is out of earshot');
+      assert.ok(B.Terrain.has(enc, 26, 1, 'wall'), 'its square is held until it comes');
+      assert.equal(Battle.reinforce(w).length, 0);
+      // The fight moves down the hall, next to the far group.
+      const lead = World.active(w)[0];
+      enc.pos[lead.id] = { x: 24, y: 1 };
+      const lines = Battle.reinforce(w);
+      assert.equal(lines.length, 1, lines.join());
+      assert.equal(Object.keys(b.foes).length, 2);
+      const second = Object.keys(b.foes)[1];
+      assert.ok(enc.ids.includes(second) && B.Battle.table(w).characters[second]);
+      assert.ok(Math.abs(enc.pos[second].x - 26) <= 1, 'it comes from where it stood');
+      assert.ok(World.mapState(w, 't_spill').seen['25,1'], 'the party sees where its fighters stand');
+      assert.equal(Battle.reinforce(w).length, 0, 'once');
+      for (const f of Object.values(b.foes)) f.status.dead = true;
+      Battle.finish(w);
+      assert.ok(Explore.state(w, 26, 1).done, 'beaten with the rest');
+    });
+  } finally { CONFIG.game.joinDistance = saved; CONFIG.game.arena = savedArena; }
+});
+
 test('content: ground letters, drops and tilesets are checked', () => {
   assert.deepEqual(Content.validate(), []);
   withPlace('t_bad', {

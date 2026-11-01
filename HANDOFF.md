@@ -50,6 +50,21 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 - [x] The user's new raptor (`Raptor_Red`, now the `raptor` art): walk ×8, bite ×5, idle ×5, death.
 - [x] The animation plan's cycle 2, the new four: walk, strike, death in 8 directions (idles still to do).
 
+## The user's notes, 2026-11-01
+- [x] Weariness by effort: each point of stamina spent or lost in a round takes 0.25 off the maximum (was 1 a round
+  for everyone standing; `sim/effort.js`, `sim/FINDINGS.md`). Spell points already wore by points spent.
+- [x] Fights on the whole map (`game.arena.whole`): the camera follows whoever acts, unexplored squares stay dark,
+  fighters reveal what they see, and each round a group within `joinDistance` of any fighter (clear line) joins
+  (`Battle.reinforce`). Groups not in the fight are drawn where they stand. Fights now run 4.2 rounds (was 3.3) and
+  draw in more groups (ember_barracks went to 24 rounds): untuned, as encounter tuning is deferred.
+- [x] Shots and spells stopped by a wall fly only to the wall; the aim line stops there; the hover says what blocks.
+  The rules already stopped them; only the drawing went through.
+- [x] Followers clustered round the leader keep off wall squares. Arrival still puts the leader on the `<` square
+  itself, inside a thick wall (the temple court's gate), so it looks like standing on the wall top.
+- [x] No start-up flicker: the map stays dark until its tiles and figures' art have loaded or failed (3 s at most).
+  Seen in headless Chrome only for the battle; the flicker itself is timing, not checked by eye.
+- [ ] With the whole map there is no way to pan the battle view by hand (it follows the one acting).
+
 ## Core first (the user, 2026-10-28: core changes before tuning; **no encounter tuning until asked**)
 - [x] Time in a dungeon costs something: a step is 10 s (sneaking 20), a search 10 min, the rest after a fight an
   hour. Wanderers are drawn from the place's table every 20 minutes spent there (35%), loud things count as extra

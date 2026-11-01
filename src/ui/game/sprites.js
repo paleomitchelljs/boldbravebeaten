@@ -34,6 +34,7 @@
     if (!HAS_IMG) return s;
     s.img = new Image();
     s.img.onload = () => { s.ok = true; for (const f of waiting.splice(0)) f(); };
+    s.img.onerror = () => { s.failed = true; };
     s.img.src = DIR + key + '.png';
     return s;
   }
@@ -234,6 +235,15 @@
   // A figure that floats (floats: true in art.yaml) plays its walk standing still too.
   const floats = (key) => !!(artCat()[key] || {}).floats;
 
+  // Still on its way: creature art that has neither loaded nor failed (a figure waits for it rather than flash its
+  // stand-in), or, without art, the stand-in sheet itself.
+  function pending(L) {
+    if (!HAS_IMG) return false;
+    if (L.art && artCat()[L.art]) { const s = artProbe(L.art); if (!s.ok && !s.failed) return true; if (s.ok) return false; }
+    const s = sheet(L.kind || 'knight', 'idle');
+    return !s.ok && !s.failed;
+  }
+
   function artReady(key) {
     const def = artCat()[key];
     if (!def) return false;
@@ -423,7 +433,7 @@
   }
 
   UI.Art = UI.Art || {};
-  UI.Sprites = { DIRS, dirOf, hasClip, forEncounter, encounterLooks, crowd, KINDS, PARTY_KINDS, partyKinds, TINTS, KIT_KIND, draw, drawArt, floats, artReady, artSheet, look, lookFor, portrait, figure, sheet, whenReady: (f) => waiting.push(f), preload: () => { KINDS.forEach((k) => { sheet(k, 'idle'); sheet(k, 'run'); }); for (const k of Object.keys(artCat())) artProbe(k); } };
+  UI.Sprites = { DIRS, dirOf, hasClip, forEncounter, encounterLooks, crowd, KINDS, PARTY_KINDS, partyKinds, TINTS, KIT_KIND, draw, drawArt, floats, artReady, pending, artSheet, look, lookFor, portrait, figure, sheet, whenReady: (f) => waiting.push(f), preload: () => { KINDS.forEach((k) => { sheet(k, 'idle'); sheet(k, 'run'); }); for (const k of Object.keys(artCat())) artProbe(k); } };
   // Portraits everywhere in the game are now the sprite's face.
   UI.Art.portrait = (c, px) => portrait(c, px);
 })(globalThis.BBB);

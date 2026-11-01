@@ -35,6 +35,7 @@
     if (!HAS_IMG) return o;
     o.el = new Image();
     o.el.onload = () => { o.ok = true; };
+    o.el.onerror = () => { o.failed = true; };
     o.el.src = name.includes('/') ? name : DIR + name + '.png';
     return o;
   }
@@ -81,6 +82,7 @@
     if (!HAS_IMG || !FX()) return o;
     o.el = new Image();
     o.el.onload = () => { o.ok = true; };
+    o.el.onerror = () => { o.failed = true; };
     o.el.src = FX().dir + file;
     return o;
   }
@@ -545,6 +547,14 @@
         ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = Math.max(1, S * 0.5);
         ctx.strokeRect(X + 0.5, Y + 0.5, size - 1, size - 1);
       }
+      // Until what this view has asked for has loaded (or failed), it stays dark: no flat-colour tiles, no stand-in
+      // figures flashing up before the art (at most 3 s).
+      if (!view.ready) {
+        view.firstDraw = view.firstDraw || now || 1;
+        const waiting = Object.values(imgs).some((o) => o.el && !o.ok && !o.failed) || (sc.actors || []).some((a) => Sprites.pending(a));
+        if (waiting && (now || 0) - view.firstDraw < 3000) { ctx.fillStyle = '#080b0d'; ctx.fillRect(0, 0, canvas.width, canvas.height); return; }
+        view.ready = true;
+      }
       // Vignette.
       const g = ctx.createRadialGradient(canvas.width / 2, canvas.height / 2, canvas.height * 0.45, canvas.width / 2, canvas.height / 2, canvas.width * 0.7);
       g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,0.5)');
@@ -572,6 +582,8 @@
       const rot = a.down && !dead ? (v.flip ? -1.45 : 1.45) : 0;
       const art = a.art && Sprites.drawArt(ctx, a.art, dead ? 'death' : lunging ? 'attack' : anim, frame, x, y, size, { flip: v.flip, dir: v.dir, tint: a.artTint, alpha: a.alpha, artScale: a.artScale, rot, progress, shadow: !a.down });
       if (art) a = Object.assign({}, a, { size: a.artSize || a.size });
+      // Art still loading: nothing yet, rather than the stand-in for a moment.
+      if (!art && a.art && Sprites.pending(a)) return;
       const ok = art || Sprites.draw(ctx, a.kind, anim, frame, x, y, SS, { flip: v.flip, tint: a.tint, alpha: a.alpha, size: a.size || 1, rot, shadow: !a.down });
       // A hit: the same figure again, washed red and added on top (it glows), fading.
       const now = clock(), hit = view.fx.find((f) => f.k === 'hurt' && f.id === a.id && now >= f.t0 && now < f.t0 + f.dur);

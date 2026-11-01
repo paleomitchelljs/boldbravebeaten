@@ -113,8 +113,9 @@
 
   const cheb = (a, b) => Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
 
-  function markSeen(world) {
-    const ex = world.explore;
+  // What the party sees from where it stands (or from `at`: a fighter's square in a fight on the map).
+  function markSeen(world, at) {
+    const ex = at || world.explore;
     const ms = W.mapState(world, world.place);
     const r = lightRadius(world);
     for (let y = ex.y - r; y <= ex.y + r; y++) {
