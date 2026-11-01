@@ -122,6 +122,9 @@
     return el;
   }
   if (typeof document !== 'undefined' && document.addEventListener) document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && cardFor) hideHover(); });
+  // A click closes a hover card (a pinned one stays: its (i) stops the click). On a touch screen a tap shows the card
+  // with no leave after it, so the toolbar's own label stayed over the menu the tap opened.
+  if (typeof document !== 'undefined' && document.addEventListener) document.addEventListener('click', () => { if (cardFor && !pinned) hideHover(); });
   // In the game every `title` shows as this card (at once, styled, wrapped) instead of the browser's slow tooltip.
   // The title moves to data-hint on first hover so the browser's own does not show as well.
   if (typeof document !== 'undefined' && document.addEventListener) document.addEventListener('mouseover', (e) => {

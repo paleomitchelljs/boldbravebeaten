@@ -82,8 +82,11 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   into the gate, and you come into the court still facing east (was: north into the gate, then east in the court).
 - [x] The two pyramids are built into the wall either side of the gate; a door at each top leads into the guardhouse
   over the gate (the well to the sewers), through new doors in its north and south walls. Seen in headless Chrome.
-- [ ] A strip of grass shows where the pyramids' tiers meet the wall (the tile sheets are opaque, grass baked into
-  their edges): a join tile, if it bothers.
+- [x] The pyramids join the wall without a seam: tiers marked `underWalls` run on under it, and the wall's edge there
+  comes from a cut copy of its sheet (`court-wall-cut.png`, grass transparent). The kinds of tile the place uses are
+  listed in `assets/wip/outside/README.md` as a guide for future sets. Seen in headless Chrome.
+- [x] A click closes the hover card (on a touch screen a toolbar button's label stayed over the menu it opened).
+- [ ] The swamp's art, before tuning this dungeon (the user's priority): what else to refine is open.
 
 ## Thrusts and Jabiku's staff (the user, 2026-11-01)
 - [x] Beren, Cyrus and Jabiku have a thrust ×8 (`art.yaml thrust`), played for a thrust; a swing plays the strike.

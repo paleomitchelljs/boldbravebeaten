@@ -32,5 +32,16 @@ east side (so the road runs straight east into the court's west gate) is the cou
 are built of the court's tier sets with its stair props. The jungle round the rest is ground letter `]`. The arch and
 the step-pyramid sprite from the landmark strip are no longer placed. The two pyramids are built into
 the wall either side of the gate (half pyramids, their tops running into it); a door at each top leads into the
-guardhouse over the gate (`temple_wall` N and S). Where a tier meets the wall a strip of grass shows: both sheets are
-opaque with grass baked into their edges, so closing it needs a join tile.
+guardhouse over the gate (`temple_wall` N and S). Where a tier meets the wall they join without a seam: the tiers
+are marked `underWalls` (they run on under a wall beside them, east or west), and the wall draws its edge there from
+`court-wall-cut.png`, its own sheet with the grass cut away (every green pixel; `build.py` makes it).
+
+## The kinds of tile this place uses (a guide for future sets)
+- Plain ground (one tile, decor pieces scattered over it): grass.
+- Flat corner sets (16 tiles, lower and upper ground): swamp water under grass, paving and loam over grass.
+- Cliff sets (25 tiles, a top and a south face): the wall, each pyramid tier (each chained over the one below), the
+  jungle edge. A cliff set's south face is the only side drawn tall; east, west and north edges are a lip.
+- A cut copy of a cliff set (its ground transparent), for where it stands against anything other than its own ground.
+  Any wall that will meet another raised set (a tier, a dais, a second wall) side by side wants one.
+- Props cut to fit their wall: a door for each side it opens on (door_south in a face, door_west and door_east
+  through a side wall's top, door_north), stairs for each tier's south face.

@@ -29,6 +29,8 @@
 #               pattern 16 letters, row by row, of the 4x4 squares around the tile's corner: 0 lower, 1 upper, 2 the
 #               wall's last row (its face), . any (from the metadata's pattern_4x4). Each corner takes the best-scoring
 #               tile; tiles that tie are variants, picked by position.
+#     underWalls  (a cliff set) runs on under a wall beside it, east or west: a pyramid built into a wall
+#     cut       (the wall) its sheet with the ground cut away, drawn where it meets an underWalls terrain
 #     decor     pieces scattered on plain squares of this terrain: {density, pieces: [[image, x, y, w, h], ...], clump,
 #               spread, margin, edge}. density: pieces per square (above 1, more than one try); clump: squares per
 #               swell of a noise that gathers them in drifts; spread: art pixels a piece may hang over its square;
@@ -566,6 +568,8 @@ outside_swamp:
       color: "#bab286"
       wang: ../temple/pyramid-tier1.png
       over: grass
+      # The pyramids are built into the wall: their tiers run on under its edge.
+      underWalls: true
       cliff:
         - [2, 2, ".....00..00....."]
         - [3, 2, ".....00..01....."]
@@ -599,6 +603,8 @@ outside_swamp:
       color: "#d4b67e"
       wang: ../temple/court-wall.png
       over: grass
+      # Its edge over the pyramids: the same sheet with the grass cut away (assets/wip/outside/build.py).
+      cut: ../temple/court-wall-cut.png
       # A cliff set: 25 tiles picked by the 4x4 pattern around each corner (col, row, pattern). Row 8: the plain top
       # redrawn as large blocks (joints drawn by hand, assets/wip/temple-court/v2/), standing in for the sheet's [0, 6].
       cliff:

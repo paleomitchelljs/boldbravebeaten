@@ -70,6 +70,17 @@ def plain_grass():
             if q not in mask: po[x, y] = px[q]; break
     return out_im
 
+def wall_cut():
+    # The court's wall with its ground cut away (every green pixel: the sheet's 16 colours are tan stone, brown lip and
+    # face, and seven greens of grass), so where the pyramids are built into the wall its edge lies over their tiers.
+    im = Image.open(root + '/art/worldtiles/temple/court-wall.png').convert('RGBA')
+    px = im.load()
+    for y in range(im.height):
+        for x in range(im.width):
+            r, g, b, a = px[x, y]
+            if g > r: px[x, y] = (0, 0, 0, 0)
+    return im
+
 if __name__ == '__main__':
     os.makedirs(out, exist_ok=True)
     grass = plain_grass()
@@ -86,5 +97,6 @@ if __name__ == '__main__':
         sheet.save(out + n + '.png')
     plain('swamp-water', 'lower').save(out + 'water.png')
     plain('village-path', 'lower').save(out + 'path.png')
+    wall_cut().save(root + '/art/worldtiles/temple/court-wall-cut.png')
     print('# props\n' + strip())
     if os.path.exists(here + 'jungle-edge.meta.json'): print('# jungle-edge\n' + cliff('jungle-edge'))

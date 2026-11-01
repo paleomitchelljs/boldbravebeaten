@@ -421,11 +421,17 @@
       const t = T_(xx, yy).t, d = tdef(ts, t);
       if (d.rank < w.rank) return false;
       if (t === w.name || !w.cliffTiles) return t === w.name || t === ts.wall || !(d.cliffTiles || d.apart);
+      // `underWalls` (a pyramid built into a wall): a wall square beside this terrain, east or west, is taken as the
+      // square beside it, so the tier runs on under the wall's edge, faces and all; the wall's `cut` sheet lies over it.
+      if (t === ts.wall && w.underWalls) return [-1, 1].some((dx) => T_(xx + dx, yy).t !== ts.wall && upOf(w)(xx + dx, yy));
       return t !== ts.wall;
     };
+    // The wall corners to draw from its cut sheet (the ground cut away): a square of the four round it is a terrain
+    // that runs under walls.
+    const cutAt = (x, y) => [[-1, -1], [0, -1], [-1, 0], [0, 0]].some(([dx, dy]) => { const d = tdef(ts, T_(x + dx, y + dy).t); return d.underWalls && d.name !== ts.wall; });
     for (const w of Object.values(ts.terrains)) {
       if (!w.wang) continue;
-      if (w.cliffTiles) { cliffCorners(out, w, upOf(w), x0, y0, x1, y1); continue; }
+      if (w.cliffTiles) { cliffCorners(out, w, upOf(w), x0, y0, x1, y1, w.cut && w.name === ts.wall ? cutAt : null); continue; }
       for (let y = y0; y <= y1 + 1; y++) for (let x = x0; x <= x1 + 1; x++) {
         const up = upOf(w);
         const m = (up(x - 1, y - 1) ? 8 : 0) | (up(x, y - 1) ? 4 : 0) | (up(x - 1, y) ? 2 : 0) | (up(x, y) ? 1 : 0);
@@ -447,7 +453,7 @@
   // (1), so the face hangs from the middle of the wall's last row over the top half of the square in front, as 3/4
   // walls do. Each corner takes the tile whose pattern scores best over the 4x4 squares around it (the middle four
   // count most), since the 25 tiles don't cover every shape.
-  function cliffCorners(out, w, up, x0, y0, x1, y1) {
+  function cliffCorners(out, w, up, x0, y0, x1, y1, cutAt) {
     const v = (x, y) => (up(x, y) ? (up(x, y + 1) ? 1 : 2) : 0);
     for (let y = y0; y <= y1 + 1; y++) for (let x = x0; x <= x1 + 1; x++) {
       const g = [];
@@ -469,7 +475,7 @@
         if (sc > bs || (sc === bs && miss < bm)) { bs = sc; bm = miss; best = tl; ties = 1; }
         else if (sc === bs && miss === bm && hash(x, y, 13 + ties++) % ties === 0) best = tl;
       }
-      if (best) out.corner.push({ x, y, t: w.name, at: best.at });
+      if (best) out.corner.push({ x, y, t: w.name, at: best.at, cut: !!(cutAt && cutAt(x, y)) });
       // A corner no tile fits exactly (some square the tile cares about differs): tools/walls.js lists these.
       if (best && out.misfit) {
         const full = best.p.reduce((a, want, k) => a + (want < 0 ? 0 : k === 5 || k === 6 || k === 9 || k === 10 ? 10 : 1), 0);
@@ -523,7 +529,7 @@
       ctx.restore();
     } else if (kind === 'corner') {
       const t = ts.terrains[p.t], X = env.ox + (p.x - 0.5) * size, Y = env.oy + (p.y - 0.5) * size;
-      const im = env.imgAt(ts.dir + t.wang), vs = t.variants && t.variants[p.m];
+      const im = env.imgAt(ts.dir + (p.cut ? t.cut : t.wang)), vs = t.variants && t.variants[p.m];
       // A variant at a share `vary` (default 0.25) of the corners that have one, picked by position.
       const at = p.at || (vs && hash(p.x, p.y, 11) % 100 < (t.vary == null ? 0.25 : t.vary) * 100 ? vs[hash(p.x, p.y, 12) % vs.length] : t.index[p.m]);
       if (im.ok && at) { ctx.drawImage(im.el, at[0] * cell, at[1] * cell, cell, cell, X, Y, size, size); return; }

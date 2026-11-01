@@ -72,6 +72,7 @@
 
   function openOverlay(type, data) {
     Game.overlay = Object.assign({ type }, data || {});
+    if (UI.hideHover) UI.hideHover();
     renderOverlay();
   }
   function closeOverlay() {
