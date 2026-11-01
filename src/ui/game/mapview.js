@@ -203,12 +203,13 @@
     const view = { el: canvas, cols, rows, S, cam: null, vis: {}, hover: null, stop: false, tick: 0, last: 0, fx: [] };
     // Short effects, timed from now (+ delay ms): text rising off a figure, a lunge toward a square, a bolt between two figures, a shudder.
     view.popup = (id, text, color, delay) => view.fx.push({ k: 'text', id, text, color: color || '#fff', t0: clock() + (delay || 0), dur: 1300 });
-    view.lunge = (id, tx, ty, delay) => view.fx.push({ k: 'lunge', id, tx, ty, t0: clock() + (delay || 0), dur: 260 });
-    // A bolt: a square of colour, or (element given, and the effect sheets there) a fireball, frost shard or spark
-    // from art/effects with a flash where it lands.
-    view.bolt = (from, to, color, delay, element) => {
+    // A lunge plays the figure's strike frames; `still` keeps it in its square (a shot).
+    view.lunge = (id, tx, ty, delay, still) => view.fx.push({ k: 'lunge', id, tx, ty, still, t0: clock() + (delay || 0), dur: 260 });
+    // A bolt: a square of colour, an arrow (opts.shape), or (element given, and the effect sheets there) a fireball,
+    // frost shard or spark from art/effects with a flash where it lands. opts.dur: its flight in ms.
+    view.bolt = (from, to, color, delay, element, opts) => {
       const t0 = clock() + (delay || 0), sheet = element ? FX_SHEET[element] || 'Purple' : null;
-      view.fx.push({ k: 'bolt', from, to, color: color || '#ffe9a0', t0, dur: sheet ? 320 : 200, sheet });
+      view.fx.push({ k: 'bolt', from, to, color: color || '#ffe9a0', t0, dur: (opts && opts.dur) || (sheet ? 320 : 200), sheet, shape: opts && opts.shape });
       if (sheet) view.fx.push({ k: 'flash', id: to, sheet, t0: t0 + 320, dur: 260 });
     };
     view.shudder = (id, delay) => view.fx.push({ k: 'shudder', id, t0: clock() + (delay || 0), dur: 300 });
@@ -351,7 +352,7 @@
         if (f.id !== id || t < f.t0) continue;
         const p = (t - f.t0) / f.dur;
         if (p > 1) continue;
-        if (f.k === 'lunge') { const v = view.vis[id]; if (!v) continue; const ddx = f.tx - v.x, ddy = f.ty - v.y, d = Math.hypot(ddx, ddy) || 1; const k = 0.3 * Math.sin(Math.PI * p); dx += (ddx / d) * k; dy += (ddy / d) * k; }
+        if (f.k === 'lunge' && !f.still) { const v = view.vis[id]; if (!v) continue; const ddx = f.tx - v.x, ddy = f.ty - v.y, d = Math.hypot(ddx, ddy) || 1; const k = 0.3 * Math.sin(Math.PI * p); dx += (ddx / d) * k; dy += (ddy / d) * k; }
         if (f.k === 'shudder') dx += Math.sin(p * 28) * 0.07 * (1 - p);
       }
       return [dx, dy];
@@ -388,6 +389,17 @@
             const [cx, cy] = FX_CELL.bolt, z = size * 0.8;
             ctx.save(); ctx.translate(x, y); ctx.rotate(Math.atan2(b[1] - a[1], b[0] - a[0])); ctx.imageSmoothingEnabled = false;
             ctx.drawImage(im.el, cx * 16, cy * 16, 16, 16, -z / 2, -z / 2, z, z);
+            ctx.restore();
+            continue;
+          }
+          if (f.shape === 'arrow') {
+            // Shaft, head and fletching, drawn pointing right and turned to its flight.
+            ctx.save(); ctx.translate(Math.round(x), Math.round(y)); ctx.rotate(Math.atan2(b[1] - a[1], b[0] - a[0]));
+            const L = 6 * S, w = Math.max(1, Math.round(S * 0.6));
+            ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(-L, -w, L * 2, w * 2 + 1);
+            ctx.fillStyle = '#c9a46a'; ctx.fillRect(-L, -w / 2, L * 2 - S, w);
+            ctx.fillStyle = '#e8eef0'; ctx.beginPath(); ctx.moveTo(L + S, 0); ctx.lineTo(L - S * 1.5, -S * 1.3); ctx.lineTo(L - S * 1.5, S * 1.3); ctx.closePath(); ctx.fill();
+            ctx.fillStyle = '#e04a3a'; ctx.fillRect(-L, -S * 1.2, S * 2, S * 0.8); ctx.fillRect(-L, S * 0.4, S * 2, S * 0.8);
             ctx.restore();
             continue;
           }

@@ -302,10 +302,18 @@
       if (!d.done || prev.done.has(d) || !d.target || !enc.pos[d.actor] || !enc.pos[d.target] || !AIMED.includes(d.type)) continue;
       const t0 = i++ * 260;
       const a = enc.pos[d.actor], b = enc.pos[d.target], ox = game.ui.bs.arena ? game.ui.bs.arena.ox : 0, oy = game.ui.bs.arena ? game.ui.bs.arena.oy : 0;
-      const far = Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y)) > 1;
-      if (far || (d.option && d.option.spell)) mv.bolt(d.actor, d.target, d.option && d.option.spell ? '#d7b4ff' : '#ffe9a0', t0, d.option && d.option.spell ? d.option.spell.element || 'force' : null);
-      else mv.lunge(d.actor, b.x + ox, b.y + oy, t0);
-      if (delay[d.target] == null) delay[d.target] = t0 + (far ? 200 : 140);
+      // A spell flies; a shot plays the shooter's strike and then the arrow flies (released halfway through, quicker
+      // than a spell, longer the farther); everything else, a reach weapon's thrust too, is a blow with a lunge.
+      const o = d.option || {}, dist = Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
+      let land = t0 + 140;
+      if (o.spell) { mv.bolt(d.actor, d.target, '#d7b4ff', t0, o.spell.element || 'force'); land = t0 + 200; }
+      else if (o.ranged) {
+        const dur = Math.max(160, dist * 45);
+        mv.lunge(d.actor, b.x + ox, b.y + oy, t0, true);
+        mv.bolt(d.actor, d.target, '#ffe9a0', t0 + 200, null, { shape: o.natural ? null : 'arrow', dur });
+        land = t0 + 200 + dur;
+      } else mv.lunge(d.actor, b.x + ox, b.y + oy, t0);
+      if (delay[d.target] == null) delay[d.target] = land;
       struck.add(d.target);
     }
     const last = i * 260;

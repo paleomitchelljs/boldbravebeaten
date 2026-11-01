@@ -9,6 +9,9 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   every file in `precache.txt` and the worker fetches them in the background), saves exported through the share
   sheet on touch screens. Registration checked in headless Chrome; the background fill and the iPhone itself are
   not yet checked.
+- [x] Fight effects: only spells and shots fly; every melee blow (a reach weapon's thrust at 2 squares too) lunges
+  with the figure's strike frames. A shot plays the archer's strike in place, then a drawn arrow flies (45 ms a square).
+- [ ] App icon and title-screen logo from the user's image (the attachment came through as a blank file icon; ask again).
 
 ## Core first (the user, 2026-10-28: core changes before tuning; **no encounter tuning until asked**)
 - [x] Time in a dungeon costs something: a step is 10 s (sneaking 20), a search 10 min, the rest after a fight an
