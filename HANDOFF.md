@@ -65,6 +65,18 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 - [x] The preset party's colour washes (there to tell stock figures apart) are off members with their own art (Cyrus
   was moss green); a save step (version 4) clears them in old saves.
 
+## The user's notes, 2026-11-01 (second set)
+- [x] The Temple Swamp matches the temple: its outer wall (the court's tiles) with the gate in its face, two small
+  pyramids of the court's tiers and stairs, jungle round the rest. Seen in headless Chrome.
+- [x] Movement halved: a stretch is 1 + SPD/4 squares, unrounded (plate still slows); a round of moving carries the
+  presets 3 / 6 / 8 / 13 squares (was 4 / 12 / 12 / 24). Getting away: 4 rounds' running (was 2).
+- [x] Duels (`sim/duels.js`, `sim/FINDINGS.md`): median 2 rounds; against the scaleward 4-6. Vigor (blows × 1.25 fresh
+  to × 0.75 spent) added; smaller stamina pools tried and not taken (no effect). A read of intent lasts 3 rounds:
+  the AI read every round, half a duel's actions. Fights barely shorter; what fills them is reads, moves and shoves.
+- [ ] Ask the user what "slow" is in play: rounds, the number of exchanges, or wall-clock (the AI's pauses).
+- [x] Title: Continue, Load (saves, or a file), New Game (Quick start in the village, or Custom). The dungeon quick
+  starts are gone (start.yaml `starts`).
+
 ## Thrusts and Jabiku's staff (the user, 2026-11-01)
 - [x] Beren, Cyrus and Jabiku have a thrust ×8 (`art.yaml thrust`), played for a thrust; a swing plays the strike.
   Lorc (the archer) keeps his shot. 32 generations; ledger in `assets/ideas/character-animation-plan.md`. Not yet

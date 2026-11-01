@@ -194,39 +194,49 @@ village:
 temple_approach:
   name: The Temple Swamp
   kind: dungeon
-  blurb: Swamp and jungle east of the village, an old paved causeway running through it to an arch between two small pyramids.
+  blurb: Swamp and jungle east of the village. A paved causeway runs between two small stepped pyramids to the gate in the temple's great sandstone wall.
   level: 1
-  look: {wall: "#2f4a2a", floor: "#4d6a33", ceiling: "#2a3a22", fog: "#0c120a", torch: 0, tileset: outside_swamp, ground: ",", light: 20}
+  look: {wall: "#cdb98a", floor: "#4d6a33", ceiling: "#2a3a22", fog: "#0c120a", torch: 0, tileset: outside_swamp, ground: ",", light: 20}
+  # Laid out by assets/wip/outside/layout.py: the temple's outer wall (#, the court's own tiles) across the north with
+  # its gate, two small pyramids of the court's tiers, jungle (]) round the rest.
   map:
-    - "################################"
-    - "################################"
-    - "##,,,,,,,,,,,,,,,,,,,,,,,,,,,,##"
-    - "##,,~~~~~,,,,,,,f,,,~~~~,,,,,,##"
-    - "##,,~~~~~~,F,,,,,,,,~~~~~,F,,,##"
-    - "##,,~~~~~~,,,~~,,,,,~~~~~,,,,,##"
-    - "##,,~~~~~~,,,~~~,,,,~~~~~,,,,,##"
-    - "##,,,~~~~~,,,~~~,,,,,,,,,,,,,,##"
-    - "##,,,,,,,,,,,~~~,,,,,,,,,xxx,,##"
-    - "##,F,,,,,,F,,,,,,,,F,f,,,xPx,,##"
-    - "##,,,,f,,,,,,,,,,,,,,,,,,,,,,,##"
-    - "W;;;;;;;;;;;;;;;;;;;;;;;;;;;;###"
-    - "##;;;;;;;;;;;;;;;;;;;;;;;;;;;A##"
-    - "##,,,,,,,,,,,,,,,F,,,,,,,,,,,,##"
-    - "##,F,,,,,,,,,,f,,,,,,,,,,xxx,,##"
-    - "##,,,,,,,,,,~~~~~~,,,,,,,xPx,,##"
-    - "##,,,~~~,,,,~~~~~~~,,,,,,,,,,,##"
-    - "##,,,~~~~,,,~~~~~~~,,,~~~,,,,,##"
-    - "##,,,~~~~f,,~~~~~~~F,,~~~~,,,,##"
-    - "##,,,~~~~,,,~~~~~~~,,,~~~~,,,,##"
-    - "##,,,~~~~,,,,~~~~~~,,,~~~~,F,,##"
-    - "##,,,,,,,,,,,,,,,,,,,f,,,,,,,,##"
-    - "################################"
-    - "################################"
+    - "########################################"
+    - "########################################"
+    - "########################################"
+    - "########################################"
+    - "########################################"
+    - "####################G###################"
+    - "]],,,,,,,,,,,,,,,,,;;;,,,,,,,,,,,,,,,,]]"
+    - "]]~~,^^^^^^^^^^^^,,;;;,,^^^^^^^^^^^^,,]]"
+    - "]]~~,^----------^,f;;;,,^----------^F,]]"
+    - "]]~~,^----------^,,;;;,,^----------^,,]]"
+    - "]]~~,^--^^^^^^--^,,;;;,,^--^^^^^^--^,,]]"
+    - "]]~~,^--^::::^--^,,;;;,,^--^::::^--^,,]]"
+    - "]]~~,^--^::::^--^,,;;;f,^--^::::^--^,,]]"
+    - "]],,,^--^::::^--^,,;;;,,^--^::::^--^,,]]"
+    - "]],,,^--^^mn^^--^,,;;;,,^--^^mn^^--^,F]]"
+    - "]],,,^----------^,,;;;,,^----------^,,]]"
+    - "]]f,,^----------^,,;;;,,^----------^,,]]"
+    - "]],,,^^^^^ij^^^^^,,;;;,,^^^^^ij^^^^^,,]]"
+    - "]],,F,,,,,,,,,,,,,,;;;,F,,,,,,,,,,,,,f]]"
+    - "W;;;;;;;;;;;;;;;;;;;;;,,,,,,F,,,,~~~~,]]"
+    - "]];;;;;;;;;;;;;;;;;;;;,,,,,,,,,,~~~~~,]]"
+    - "]],,F,,,,,,F,,,,,F,,,,,,,~~~~~~,~~~~~,]]"
+    - "]],,,,,,,,,,,,~~~~~,,,,,~~~~~~~,~~~~~,]]"
+    - "]],,~~~~~~,,,~~~~~~,,,,,~~~~~~~,~~~~~,]]"
+    - "]],~~~~~~~,,,~~~~~~,,,,,~~~~~~~,~~~~,,]]"
+    - "]],~~~~~~~,,,~~~~~~,,,,,~~~~~~~,,,,,,,]]"
+    - "]],~~~~~~,,,,~~~~~,,,,,,~~~~~~,,,,,,,,]]"
+    - "]],,,,,,,,F,,,,,,,,,,,F,,,f,,,,,,f,,,,]]"
+    - "]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]"
+    - "]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]"
   legend:
     W: {kind: stairs, to: village, at: E, sprite: none, label: "The causeway west, back to the village"}
-    A: {kind: stairs, to: temple_court, at: "<", sprite: arch, wall: true, label: "The arch into the temple"}
-    P: {kind: prop, sprite: pyramid, scale: 1.3, label: "A small step pyramid"}
-    x: {kind: prop, sprite: none}
+    G: {kind: stairs, to: temple_court, at: "<", sprite: door, wall: true, label: "The temple gate"}
+    i: {kind: prop, sprite: pyr_stair_l1, solid: false, on: "^", label: "Steps up the pyramid"}
+    j: {kind: prop, sprite: pyr_stair_r1, solid: false, on: "^", label: "Steps up the pyramid"}
+    m: {kind: prop, sprite: pyr_stair_l2, solid: false, on: "^", label: "Steps up to the top"}
+    n: {kind: prop, sprite: pyr_stair_r2, solid: false, on: "^", label: "Steps up to the top"}
     F: {kind: prop, sprite: fern_large, solid: false, label: "Ferns"}
     f: {kind: prop, sprite: fern_small, solid: false, label: "Ferns"}
   encounters: {}
@@ -311,7 +321,7 @@ temple_court:
     - "###############L################"
     - "################################"
   legend:
-    "<": {kind: stairs, to: temple_approach, at: A, sprite: door, wall: true, label: "Out through the gate"}
+    "<": {kind: stairs, to: temple_approach, at: G, sprite: door, wall: true, label: "Out through the gate"}
     u: {kind: stairs, to: temple_wall, at: "1", up: true, sprite: wall_steps, label: "Steps up onto the wall"}
     v: {kind: stairs, to: temple_wall, at: "2", up: true, sprite: wall_steps, label: "Steps up onto the wall"}
     F: {kind: prop, sprite: fern_large, solid: false, label: "Ferns"}

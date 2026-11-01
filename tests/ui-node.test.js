@@ -27,7 +27,16 @@ const overlay = (type, data) => { Game.error = null; Game.openOverlay(type, data
 test('ui: title and creation screens render, and the example party starts a game', () => {
   Rand.seed(5);
   show('title');
-  assert.match(text(), /Custom start/);
+  assert.match(text(), /New Game/);
+  assert.match(text(), /Load/);
+  assert.doesNotMatch(text(), /Quick start/, 'the choices open under New Game');
+  Game.ui = { titleMode: 'new' };
+  show('title', 'title: new game');
+  assert.match(text(), /Quick start/);
+  assert.match(text(), /Custom/);
+  Game.ui = { titleMode: 'load' };
+  show('title', 'title: load');
+  assert.match(text(), /Load a file/);
   Game.ui = {};
   show('create');
   assert.match(text(), /Your company/);
@@ -36,7 +45,7 @@ test('ui: title and creation screens render, and the example party starts a game
   for (let i = 0; i < 4; i++) { st.slot = i; show('create', 'create slot ' + i); }
   st.members[0].feats = ['verb_strike', 'casting', 'keen_eye']; st.members[0].nouns = ['fire'];
   show('create', 'caster');
-  // A new game begins where start.yaml's go says (the temple), in the example party's own gear.
+  // A new game begins where start.yaml's go says (the village), in the example party's own gear.
   Game.newGame(World.presetParty());
   assert.equal(Game.screen, 'explore');
   assert.equal(Game.world.place, Content.world.start.go.to);

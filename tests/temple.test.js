@@ -187,7 +187,7 @@ test('outside: a new game starts in the village; its roads lead to the swamp and
     if (Content.world.places[def.to].kind === 'town') Explore.leave(w, def.to); else Explore.enter(w, def.to, def.at || '<');
   };
   Explore.enter(w, 'village', 'I');
-  for (const [ch, to] of [['N', 'mine_approach'], ['M', 'ember_hall'], ['<', 'mine_approach'], ['S', 'village'], ['E', 'temple_approach'], ['A', 'temple_court'], ['<', 'temple_approach'], ['W', 'village'], ['I', 'stonebridge']]) {
+  for (const [ch, to] of [['N', 'mine_approach'], ['M', 'ember_hall'], ['<', 'mine_approach'], ['S', 'village'], ['E', 'temple_approach'], ['G', 'temple_court'], ['<', 'temple_approach'], ['W', 'village'], ['I', 'stonebridge']]) {
     take(ch);
     assert.equal(here(), to, `${ch} leads to ${to}`);
     if (w.explore) assert.ok(!Explore.cell(w, w.explore.x, w.explore.y).solid || Explore.cell(w, w.explore.x, w.explore.y).kind === 'stairs', `arrived on a square one can stand on in ${to}`);

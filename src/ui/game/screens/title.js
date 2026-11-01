@@ -29,10 +29,13 @@
     setTimeout(() => input.remove(), 60000);
   }
 
+  // Continue (the autosave), Load (the saved games, or a file), New Game (the ready-made party at start.yaml `go`, the
+  // village; or a party of your own). Load and New Game open in place (game.ui.titleMode).
   UI.Screens.title = function (game) {
     const slots = G.Save.list();
     const auto = slots.find((s) => s.slot === 'auto' && s.world);
-    const any = slots.some((s) => s.world);
+    const mode = game.ui.titleMode || null;
+    const pick = (m) => () => { game.ui.titleMode = mode === m ? null : m; game.render(); };
     return h('div', { class: 'title-screen' },
       h('div', { class: 'title-art', 'aria-hidden': 'true' }, h('img', { src: 'art/icons/bear-wren.png', alt: '' })),
       h('div', { class: 'stack title-body' },
@@ -41,12 +44,16 @@
           h('p', { class: 'muted' }, 'A turn-based party RPG about gear, preparation and knowing when not to fight.')),
         h('div', { class: 'stack' },
           auto ? h('button', { class: 'primary big', onclick: () => game.loadWorld(auto.world) }, `Continue — ${auto.info.place}, day ${auto.info.day}`) : null,
-          // One quick start per dungeon in start.yaml `starts` (the default party), else the one at start.yaml `go`.
-          ((G.Content.world.start || {}).starts || [{ label: 'Quick start' }]).map((s, i) =>
-            h('button', { class: !auto && i === 0 ? 'primary big' : 'big', onclick: () => game.newGame(G.World.presetParty(), s.go) }, s.label)),
-          h('button', { class: 'big', onclick: () => game.go('create') }, 'Custom start'),
-          h('button', { class: 'big', onclick: () => importFile(game) }, 'Load save')),
-        any ? h('details', { class: 'panel' }, h('summary', null, h('h3', null, 'Saved games')), h('div', { class: 'stack' }, slots.map((s) => slotRow(game, s)))) : null,
+          h('button', { class: 'big' + (mode === 'load' ? ' selected' : ''), 'aria-expanded': String(mode === 'load'), onclick: pick('load') }, 'Load'),
+          mode === 'load' ? h('div', { class: 'panel stack' },
+            slots.some((s) => s.world) ? slots.map((s) => slotRow(game, s)) : h('p', { class: 'muted small' }, 'No saved games yet.'),
+            h('button', { onclick: () => importFile(game) }, 'Load a file…')) : null,
+          h('button', { class: (auto ? 'big' : 'primary big') + (mode === 'new' ? ' selected' : ''), 'aria-expanded': String(mode === 'new'), onclick: pick('new') }, 'New Game'),
+          mode === 'new' ? h('div', { class: 'panel stack' },
+            h('button', { class: 'primary', onclick: () => { game.ui.titleMode = null; game.newGame(G.World.presetParty(), (G.Content.world.start || {}).go); } }, 'Quick start'),
+            h('p', { class: 'muted small' }, 'The ready-made party of four, in the village.'),
+            h('button', { onclick: () => { game.ui.titleMode = null; game.go('create'); } }, 'Custom'),
+            h('p', { class: 'muted small' }, 'Make your own party.')) : null),
         h('details', { class: 'panel' }, h('summary', null, h('h3', null, 'How it plays')),
           h('div', { class: 'stack small howto' },
             h('p', null, 'Fights are lethal and quick. Armor matters more than levels, and a stab that gets through can kill anyone. Win by reacting more, lasting longer and taking less.'),

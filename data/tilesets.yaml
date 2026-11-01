@@ -561,8 +561,80 @@ outside_swamp:
       wang: ../temple/court-paving.png
       over: grass
       decor: {density: 1, edge: true, spread: 6, pieces: [[../temple/court-decor.png, 128, 0, 28, 24], [../temple/court-decor.png, 192, 0, 16, 10], [../temple/court-decor.png, 0, 0, 22, 23], [../temple/court-decor.png, 448, 0, 17, 32], [../temple/court-decor.png, 128, 0, 28, 24]]}
-    # The map's edge: jungle, a cliff set of trunks and undergrowth under a canopy (chained from the grass).
+    tier1:
+      color: "#bab286"
+      wang: ../temple/pyramid-tier1.png
+      over: grass
+      cliff:
+        - [2, 2, ".....00..00....."]
+        - [3, 2, ".....00..01....."]
+        - [1, 4, ".....00..11....."]
+        - [2, 4, ".....00..10....."]
+        - [3, 3, ".00..01..01....."]
+        - [3, 4, ".....01..01....."]
+        - [0, 6, ".....11..11....."]
+        - [1, 0, ".11..10..10....."]
+        - [1, 1, ".....10..10....."]
+        - [0, 4, ".....10..11....."]
+        - [3, 6, ".....01..11....."]
+        - [1, 6, ".....11..12...0."]
+        - [3, 0, ".....11..22..00."]
+        - [1, 2, ".....10..20..00."]
+        - [1, 7, ".1...12..10....."]
+        - [3, 1, ".11..22..00....."]
+        - [1, 3, ".....20..00....."]
+        - [2, 0, ".....01..02..00."]
+        - [0, 0, ".....11..21..0.."]
+        - [2, 6, ".....10..21..01."]
+        - [2, 1, ".....02..00....."]
+        - [0, 1, "..1..21..01....."]
+        - [2, 7, ".10..21..01....."]
+        - [0, 2, ".....01..12..10."]
+        - [0, 3, ".01..12..10....."]
+      decor: {density: 0.3, clump: 4, pieces: [[../temple/court-decor.png, 384, 0, 24, 20], [../temple/court-decor.png, 512, 0, 20, 22], [../temple/court-decor.png, 448, 0, 17, 32]]}
+    tier2: {like: tier1, wang: ../temple/pyramid-tier2.png, over: tier1}
+    # The temple's outer wall: the court's own (# on this map), so its gate is drawn in it as inside.
     wall:
+      color: "#d4b67e"
+      wang: ../temple/court-wall.png
+      over: grass
+      # A cliff set: 25 tiles picked by the 4x4 pattern around each corner (col, row, pattern). Row 8: the plain top
+      # redrawn as large blocks (joints drawn by hand, assets/wip/temple-court/v2/), standing in for the sheet's [0, 6].
+      cliff:
+        - [2, 2, ".....00..00....."]
+        - [3, 2, ".....00..01....."]
+        - [1, 4, ".....00..11....."]
+        - [2, 4, ".....00..10....."]
+        - [3, 3, ".00..01..01....."]
+        - [3, 4, ".....01..01....."]
+        - [0, 8, ".....11..11....."]
+        - [1, 8, ".....11..11....."]
+        - [2, 8, ".....11..11....."]
+        - [3, 8, ".....11..11....."]
+        - [1, 0, ".11..10..10....."]
+        - [1, 1, ".....10..10....."]
+        - [0, 4, ".....10..11....."]
+        - [3, 6, ".....01..11....."]
+        - [1, 6, ".....11..12...0."]
+        - [3, 0, ".....11..22..00."]
+        - [1, 2, ".....10..20..00."]
+        - [1, 7, ".1...12..10....."]
+        - [3, 1, ".11..22..00....."]
+        - [1, 3, ".....20..00....."]
+        - [2, 0, ".....01..02..00."]
+        - [0, 0, ".....11..21..0.."]
+        - [2, 6, ".....10..21..01."]
+        - [2, 1, ".....02..00....."]
+        - [0, 1, "..1..21..01....."]
+        - [2, 7, ".10..21..01....."]
+        - [0, 2, ".....01..12..10."]
+        - [0, 3, ".01..12..10....."]
+      # Wall tops: moss, a vine sprig, a crack.
+      decor: {density: 0.4, clump: 4, pieces: [[../temple/court-decor.png, 384, 0, 24, 20], [../temple/court-decor.png, 512, 0, 20, 22], [../temple/court-decor.png, 448, 0, 17, 32], [../temple/court-decor.png, 384, 0, 24, 20]]}
+      # Faces: five kinds of vine from the lip, a snake mosaic in the face.
+      faces: {density: 0.4, drop: 2, band: [-32, 56], pieces: [[../temple/court-decor.png, 576, 0, 30, 44, -32], [../temple/court-decor.png, 640, 0, 40, 40, -26], [../temple/court-decor.png, 576, 0, 30, 30, -32], [../temple/court-decor.png, 1088, 0, 9, 34, -32], [../temple/court-decor.png, 1152, 0, 48, 35, -32], [../temple/court-decor.png, 1216, 0, 17, 41, -32]]}
+    # The map's edge: jungle, a cliff set of trunks and undergrowth under a canopy (chained from the grass).
+    jungle:
       color: "#24381f"
       wang: jungle-edge.png
       over: grass
@@ -618,6 +690,13 @@ outside_swamp:
     scarecrow: [props.png, 1874, 0, 47, 61]
     lamppost: [props.png, 1925, 0, 22, 62]
     fern_large: [../temple/court-props.png, 192, 0, 64, 60]
+    # The court's gate and its pyramid stairs (assets/wip/temple-doors/, assets/wip/temple-pyramid/).
+    door: [../temple/court-props.png, 0, 0, 64, 61]
+    door_south: [../temple/temple-doors.png, 514, 0, 44, 94, 10, -8]
+    pyr_stair_l1: [../temple/pyramid-props.png, 68, 0, 64, 124, 0, -24]
+    pyr_stair_r1: [../temple/pyramid-props.png, 136, 0, 67, 124, 0, -24]
+    pyr_stair_l2: [../temple/pyramid-props.png, 207, 0, 64, 124, 0, -24]
+    pyr_stair_r2: [../temple/pyramid-props.png, 275, 0, 67, 124, 0, -24]
     fern_small: [../temple/court-props.png, 256, 0, 64, 56]
 
 # The fire-goblin mine (assets/ideas/ember-mine.md; prompts and build in assets/wip/ember/): black basalt tunnels and

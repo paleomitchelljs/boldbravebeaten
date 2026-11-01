@@ -63,25 +63,38 @@ put(v, 11, 12, 'l'); put(v, 21, 12, 'l')     # lamp posts
 put(v, 12, 15, 'n')                  # bench
 show('village', v)
 
-# ---- Before the temple: swamp, a causeway of old paving east to the arch between two small pyramids -----------------
-W, H = 32, 24
-s = grid(W, H, '#')
-rect(s, 2, 2, W - 3, H - 3, ',')
-for (x0, y0, x1, y1) in ((4, 3, 9, 7), (12, 15, 18, 20), (20, 3, 24, 6), (5, 16, 8, 20), (13, 5, 15, 8), (22, 17, 25, 20)):
+# ---- Before the temple: the temple's outer wall across the north (# here: the court's own wall tiles), its gate
+# in the face; two small stepped pyramids of the court's tiers either side of the causeway up to it; swamp and
+# jungle (]) round the rest. The court's gate is in its west wall; from outside the wall is drawn facing the way you
+# come, so the gate shows as a door in a tall face.
+def pyramid(g, x0, y0):
+    # 12 x 11: a first riser (^) round a terrace (-) two wide, a second riser round a top (:), a stair up the south
+    # face of each tier (i j, m n: the court's stair props, on the riser).
+    rect(g, x0, y0, x0 + 11, y0 + 10, '^')
+    rect(g, x0 + 1, y0 + 1, x0 + 10, y0 + 9, '-')
+    rect(g, x0 + 3, y0 + 3, x0 + 8, y0 + 7, '^')
+    rect(g, x0 + 4, y0 + 4, x0 + 7, y0 + 6, ':')
+    put(g, x0 + 5, y0 + 10, 'i'); put(g, x0 + 6, y0 + 10, 'j')
+    put(g, x0 + 5, y0 + 7, 'm'); put(g, x0 + 6, y0 + 7, 'n')
+
+W, H = 40, 30
+s = grid(W, H, ']')
+rect(s, 0, 0, W - 1, 5, '#')         # the temple wall, four squares thick under two of jungle-free top
+rect(s, 2, 6, W - 3, H - 3, ',')
+put(s, 20, 5, 'G')                   # the gate, in the wall's face
+rect(s, 19, 6, 21, 20, ';')          # the causeway: up to the gate...
+rect(s, 0, 19, 21, 20, ';')          # ...from the west road
+put(s, 0, 19, 'W'); put(s, 0, 20, ']'); put(s, 1, 20, ']')
+put(s, 1, 19, ';')
+pyramid(s, 5, 7)
+pyramid(s, 24, 7)
+for (x0, y0, x1, y1) in ((3, 23, 9, 26), (13, 22, 18, 26), (24, 21, 30, 26), (32, 19, 36, 24), (2, 7, 3, 12)):
     rect(s, x0, y0, x1, y1, '~')     # pools
-for (x, y) in ((9, 3), (4, 7), (18, 15), (12, 20), (24, 3), (8, 16), (15, 5), (25, 17)):
+for (x, y) in ((3, 23), (9, 26), (13, 22), (18, 26), (24, 21), (30, 26), (32, 19), (36, 24)):
     put(s, x, y, ',')                # break the pools' corners
-rect(s, 0, 11, W - 4, 12, ';')       # the causeway, two wide
-put(s, 0, 11, 'W'); put(s, 0, 12, '#')
-put(s, 1, 12, '#')
-# The arch in the east edge, the pyramids either side of the way to it.
-rect(s, W - 3, 11, W - 1, 12, '#')
-put(s, W - 3, 12, 'A')
-building(s, W - 6, 9, 'P')
-building(s, W - 6, 15, 'P')
-for x, y in ((3, 9), (10, 9), (17, 13), (11, 4), (19, 9), (26, 4), (27, 20), (3, 14), (19, 18)):
+for x, y in ((4, 18), (17, 21), (11, 21), (23, 18), (36, 8), (37, 14), (22, 27), (4, 21), (28, 19), (10, 27)):
     dot(s, x, y, 'F')
-for x, y in ((6, 10), (14, 14), (21, 9), (9, 18), (25, 14), (16, 3), (21, 21)):
+for x, y in ((18, 8), (22, 12), (2, 16), (33, 27), (15, 19), (37, 18), (8, 20), (26, 27)):
     dot(s, x, y, 'f')
 show('temple approach', s)
 
