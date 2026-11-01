@@ -21,8 +21,18 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   `opensWhen` (the portcullis); a `trap` with `to` is a pit. Lava's numbers are PROVISIONAL.
 - [x] Monsters, factions (`cinder_goblins`, `deep_gnomes`), three gnomes to talk to, the quest `ember_king`. Art is
   stand-in (the plan's §3 lists the figures wanted from the user). Encounter sizes untuned (deferred).
-- [ ] Tilesets: four PixelLab sets requested (basalt, lava, masonry, gnome stone); `assets/wip/ember/build.py` cuts
-  them. Then props (portcullis, throne, murder hole, carts) and a look at each place.
+- [x] Tilesets: basalt, lava, masonry and gnome stone (`assets/wip/ember/build.py`; prompts in its README); every
+  corner drawable (`assets/wip/ember/rebuild.sh` re-seeds the maps and squares them off).
+- [ ] Props (portcullis, throne, murder hole, carts, bridge deck, steps) and decor; a look at each place.
+
+## Next (the user, 2026-10-31, in this order)
+- [ ] Icons: item icons (weapons, armor, shields, goods) in the loot list, the pack, the character sheet and the
+  explore screen, replacing words where they can; spell and fire effects in fights.
+- [ ] A button above the map that hides the on-map UI (dock, toolbar, chips), since it covers parts of the map.
+- [ ] Temple map work: some passages are too narrow for the figures, and the wall faces look short beside them (a
+  sword drawn over the wall face in the court); widen and heighten.
+- [ ] The user's new raptor (PixelLab): walk, strike, death, idle.
+- [ ] The animation plan's cycle 2: the dragonborn, orc, mummy lord, then section D.
 
 ## Core first (the user, 2026-10-28: core changes before tuning; **no encounter tuning until asked**)
 - [x] Time in a dungeon costs something: a step is 10 s (sneaking 20), a search 10 min, the rest after a fight an

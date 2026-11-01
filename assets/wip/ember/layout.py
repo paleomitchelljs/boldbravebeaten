@@ -50,13 +50,13 @@ def hall():
     m.put(17, 36, 'g')                             # the goblins at the hole
     m.rect(29, 35, 32, 36, '.')                    # the way out east, to the great cavern
     # The great cavern: wide and open, broken by columns of rock and two pools of lava.
-    m.rect(33, 16, 58, 40, '.')
+    m.rect(33, 17, 58, 40, '.')
     for (x, y) in [(38, 21), (52, 21), (38, 34), (52, 34), (45, 27)]: m.rect(x, y, x + 1, y + 1, '#')
     m.ellipse(55, 37, 3, 2, '$'); m.ellipse(36, 18, 2.2, 1.6, '$')
     for (x, y) in [(41, 30), (42, 30), (48, 24), (49, 25), (56, 30)]: m.put(x, y, ';')
     m.put(46, 32, 'h'); m.put(55, 24, 'p')        # goblin groups in the cavern
     # North: the gate court, the portcullis and the gatehouse passage to the castle.
-    m.rect(42, 9, 49, 15, '.')
+    m.rect(42, 9, 49, 16, '.')
     m.put(42, 9, '#'); m.put(49, 9, '#')
     m.rect(44, 3, 45, 7, '.'); m.put(44, 7, 'P'); m.put(45, 7, 'P')
     m.put(44, 2, 'K')
@@ -67,7 +67,7 @@ def hall():
     # West: the small tunnel. A seam in its north wall (the secret way to the castle), then the bridge north over the
     # lava to the mines, then a small chamber with the way down to the lava lake.
     m.path([(4, 17), (32, 17)], ch='.')
-    m.put(26, 16, 'S'); m.rect(26, 5, 26, 15, '.'); m.put(26, 4, 'Q')
+    m.rect(26, 12, 27, 16, '.'); m.put(28, 13, 'S'); m.put(29, 13, '.'); m.rect(30, 5, 31, 14, '.'); m.put(30, 4, 'Q')
     m.rect(13, 8, 24, 13, '$'); m.rect(20, 8, 21, 13, ')'); m.rect(20, 14, 21, 16, '.'); m.rect(20, 3, 21, 7, '.')
     m.put(20, 2, 'M'); m.put(21, 2, '#')
     m.rect(2, 12, 8, 20, '.'); m.put(2, 12, '#'); m.put(8, 20, '#'); m.put(1, 16, 'L')
@@ -91,7 +91,7 @@ def secrets(m, n):
     best = []
     for y in range(3, m.h - 3):
         for x in range(3, 50):
-            for (dx, dy) in [(1, 0), (0, 1)]:
+            for (dx, dy) in [(1, 0)]:
                 a, w1, w2, b = (x - dx, y - dy), (x, y), (x + dx, y + dy), (x + 2 * dx, y + 2 * dy)
                 if m.at(*w1) == '#' and m.at(*w2) == '#' and m.at(*a) == '.' and m.at(*b) == '.':
                     best.append((dist(m, *a).get(b, 999), w1, w2))
@@ -141,7 +141,7 @@ def warrens():
     # The way in, from the bridge in the hall (south).
     m.rect(26, H - 2, 27, H - 2, '.'); m.put(26, H - 1, 'm'); m.put(27, H - 1, '#')
     # The barracks gate (far north).
-    m.rect(26, 1, 27, 1, '.'); m.put(26, 0, 'B'); m.put(27, 0, '#')
+    m.put(26, 1, 'B')
     # The pit trap (hidden) on the main run north-east, and the secret way back up from the pit behind a seam.
     m.put(*pitspot(m), 'T')
     m.put(52, 6, 'Z'); m.rect(53, 6, 55, 7, '.'); m.put(56, 6, 'U')
@@ -163,11 +163,13 @@ def warrens():
 # ---- 3. The lava lake: one great chamber, crossed only on stones ----------------------------------------------------
 def lake():
     m = Map(44, 32)
-    m.ellipse(22, 16, 19.5, 13.5, '$')
+    # Lava from wall to wall, its corners cut in two-square steps; the walls stay square so every corner has a tile (an
+    # oval's one-square steps have none). The only ground is the shores and the stones.
+    m.rect(2, 5, 41, 29, '$')
+    for (x0, y0, x1, y1) in [(2, 5, 5, 8), (38, 5, 41, 8), (2, 26, 5, 29), (38, 26, 41, 29)]: m.rect(x0, y0, x1, y1, '#')
     # Shores: the west shore (the stair from the hall) and the north shore (the two ways down from the warrens).
     m.rect(2, 12, 6, 19, '.'); m.put(1, 15, 'l')
     m.rect(10, 2, 33, 4, '.'); m.put(12, 1, 'j'); m.put(31, 1, 'y')
-    m.rect(9, 3, 9, 4, '.'); m.rect(34, 3, 34, 4, '.')
     # The stones: one square each, a winding way from the west shore to an island and on to the north shore.
     stones = [(7, 15), (8, 15), (9, 16), (10, 16), (11, 17), (12, 17), (13, 17), (14, 18), (15, 18), (16, 19), (17, 19), (18, 19)]
     # (stones step diagonally on the grid; each diagonal pair gets a corner stone so the party can walk it)
@@ -187,7 +189,7 @@ def lake():
 # ---- 4. The pit: the floor gives way, and something lives at the bottom ------------------------------------------------
 def pit():
     m = Map(22, 20)
-    m.ellipse(11, 10, 8.5, 7.5, '.')
+    m.ellipse(11, 10, 8.5, 7.5, '.'); m.rect(0, 3, 21, 3, '#')
     m.ellipse(11, 7, 3, 1.5, '$'); m.ellipse(6, 13, 1.6, 1.2, '$'); m.ellipse(16, 13, 1.6, 1.2, '$')   # lava welling up
     m.put(11, 11, 't'); m.put(11, 9, 'E')
     m.put(19, 14, 'z'); m.put(20, 14, '.'); m.put(21, 14, 'u')
@@ -229,7 +231,7 @@ def gnomes():
 # throne, the stair down to the jail.
 def castle():
     m = Map(50, 38)
-    m.rect(19, 30, 30, 34, '.'); m.put(24, 35, 'S'); m.put(25, 35, '#')    # entrance hall (in from the gatehouse)
+    m.rect(19, 31, 30, 34, '.'); m.put(24, 35, 'S'); m.put(25, 35, '#')    # entrance hall (in from the gatehouse)
     m.put(28, 33, 'w'); m.put(22, 31, 'g')                                  # the portcullis winch; the hall guards
     # West wing.
     m.rect(8, 31, 18, 32, '.'); m.rect(5, 3, 7, 32, '.')
