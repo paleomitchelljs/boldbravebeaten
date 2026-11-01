@@ -465,36 +465,125 @@ temple_palace:
     palace_gate: [temple-doors.png, 976, 0, 140, 52, -64, 6]
     stair_down: [temple-doors.png, 1276, 0, 88, 104, -12, -16]
 
-# The fire-goblin mine (assets/ideas/ember-mine.md): black basalt tunnels and lava; grey goblin masonry (the castle,
-# the barracks, the jail); the gnomes' dark mottled stone. Colours only until the PixelLab sets are made.
+# The fire-goblin mine (assets/ideas/ember-mine.md; prompts and build in assets/wip/ember/): black basalt tunnels and
+# lava; grey goblin masonry (the castle, the barracks, the jail); the gnomes' dark mottled stone. Each wall is a
+# PixelLab cliff set over its own plain floor (the same 25-tile layout as the temple's), its tops toned down.
 ember_basalt:
   doorsInWall: true
   cell: 64
   dir: art/worldtiles/ember/
   floor: rock
   terrains:
-    rock: {color: "#3a3430"}
-    rubble: {color: "#4a403a"}
-    steps: {color: "#55504a"}
     lava: {color: "#d0461a"}
+    # The floor is the upper ground of a corner set over the lava, so its edge breaks off round any lava beside it.
+    rock: {color: "#2a2422", wang: lava.png, over: lava}
+    rubble: {color: "#4a403a", alpha: 0.4}
+    steps: {color: "#55504a", alpha: 0.5}
     bridge: {color: "#5e564e"}
     murderhole: {color: "#181210"}
-    wall: {color: "#1c1816"}
+    wall:
+      color: "#1c1816"
+      wang: basalt-wall.png
+      over: rock
+      cliff:
+        - [2, 2, ".....00..00....."]
+        - [3, 2, ".....00..01....."]
+        - [1, 4, ".....00..11....."]
+        - [2, 4, ".....00..10....."]
+        - [3, 3, ".00..01..01....."]
+        - [3, 4, ".....01..01....."]
+        - [0, 6, ".....11..11....."]
+        - [1, 0, ".11..10..10....."]
+        - [1, 1, ".....10..10....."]
+        - [0, 4, ".....10..11....."]
+        - [3, 6, ".....01..11....."]
+        - [1, 6, ".....11..12...0."]
+        - [3, 0, ".....11..22..00."]
+        - [1, 2, ".....10..20..00."]
+        - [1, 7, ".1...12..10....."]
+        - [3, 1, ".11..22..00....."]
+        - [1, 3, ".....20..00....."]
+        - [2, 0, ".....01..02..00."]
+        - [0, 0, ".....11..21..0.."]
+        - [2, 6, ".....10..21..01."]
+        - [2, 1, ".....02..00....."]
+        - [0, 1, "..1..21..01....."]
+        - [2, 7, ".10..21..01....."]
+        - [0, 2, ".....01..12..10."]
+        - [0, 3, ".01..12..10....."]
 ember_masonry:
   doorsInWall: true
   cell: 64
   dir: art/worldtiles/ember/
   floor: flags
   terrains:
-    flags: {color: "#5a5652"}
-    dais: {color: "#7a6a4a"}
-    steps: {color: "#6a6660"}
-    wall: {color: "#2e2c2a"}
+    flags: {color: "#5a5652", tile: masonry-floor.png}
+    dais: {color: "#7a6a4a", alpha: 0.6}
+    steps: {color: "#6a6660", alpha: 0.5}
+    wall:
+      color: "#2e2c2a"
+      wang: masonry-wall.png
+      over: flags
+      cliff:
+        - [2, 2, ".....00..00....."]
+        - [3, 2, ".....00..01....."]
+        - [1, 4, ".....00..11....."]
+        - [2, 4, ".....00..10....."]
+        - [3, 3, ".00..01..01....."]
+        - [3, 4, ".....01..01....."]
+        - [0, 6, ".....11..11....."]
+        - [1, 0, ".11..10..10....."]
+        - [1, 1, ".....10..10....."]
+        - [0, 4, ".....10..11....."]
+        - [3, 6, ".....01..11....."]
+        - [1, 6, ".....11..12...0."]
+        - [3, 0, ".....11..22..00."]
+        - [1, 2, ".....10..20..00."]
+        - [1, 7, ".1...12..10....."]
+        - [3, 1, ".11..22..00....."]
+        - [1, 3, ".....20..00....."]
+        - [2, 0, ".....01..02..00."]
+        - [0, 0, ".....11..21..0.."]
+        - [2, 6, ".....10..21..01."]
+        - [2, 1, ".....02..00....."]
+        - [0, 1, "..1..21..01....."]
+        - [2, 7, ".10..21..01....."]
+        - [0, 2, ".....01..12..10."]
+        - [0, 3, ".01..12..10....."]
 ember_gnome:
   doorsInWall: true
   cell: 64
   dir: art/worldtiles/ember/
   floor: flags
   terrains:
-    flags: {color: "#4a4a4e"}
-    wall: {color: "#26262c"}
+    flags: {color: "#4a4a4e", tile: gnome-floor.png}
+    wall:
+      color: "#26262c"
+      wang: gnome-wall.png
+      over: flags
+      cliff:
+        - [2, 2, ".....00..00....."]
+        - [3, 2, ".....00..01....."]
+        - [1, 4, ".....00..11....."]
+        - [2, 4, ".....00..10....."]
+        - [3, 3, ".00..01..01....."]
+        - [3, 4, ".....01..01....."]
+        - [0, 6, ".....11..11....."]
+        - [1, 0, ".11..10..10....."]
+        - [1, 1, ".....10..10....."]
+        - [0, 4, ".....10..11....."]
+        - [3, 6, ".....01..11....."]
+        - [1, 6, ".....11..12...0."]
+        - [3, 0, ".....11..22..00."]
+        - [1, 2, ".....10..20..00."]
+        - [1, 7, ".1...12..10....."]
+        - [3, 1, ".11..22..00....."]
+        - [1, 3, ".....20..00....."]
+        - [2, 0, ".....01..02..00."]
+        - [0, 0, ".....11..21..0.."]
+        - [2, 6, ".....10..21..01."]
+        - [2, 1, ".....02..00....."]
+        - [0, 1, "..1..21..01....."]
+        - [2, 7, ".10..21..01....."]
+        - [0, 2, ".....01..12..10."]
+        - [0, 3, ".01..12..10....."]

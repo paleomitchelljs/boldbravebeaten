@@ -12,6 +12,18 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 - [x] Fight effects: only spells and shots fly; every melee blow (a reach weapon's thrust at 2 squares too) lunges
   with the figure's strike frames. A shot plays the archer's strike in place, then a drawn arrow flies (45 ms a square).
 
+## The fire-goblin mine (prototype dungeon 2; the user, 2026-10-31; plan and status in `assets/ideas/ember-mine.md`)
+- [x] Eight places (`ember_*` in `places.yaml`), laid out by `assets/wip/ember/layout.py`: the winding stair with the
+  murder hole and the blade trap, the gallery over lava, the great hall, the warrens (seams, a pit trap to the efreet's
+  pit), the lava lake on stepping stones, the barracks, the gnome fort, the castle loop with the seam to the king's
+  rooms, the jail. From town or the title's second quick start (`start.yaml starts`).
+- [x] Engine: lava (`$`), stone bridge (`)`), stair steps (`/`), murder hole (`'`); `locked` with `see` and
+  `opensWhen` (the portcullis); a `trap` with `to` is a pit. Lava's numbers are PROVISIONAL.
+- [x] Monsters, factions (`cinder_goblins`, `deep_gnomes`), three gnomes to talk to, the quest `ember_king`. Art is
+  stand-in (the plan's §3 lists the figures wanted from the user). Encounter sizes untuned (deferred).
+- [ ] Tilesets: four PixelLab sets requested (basalt, lava, masonry, gnome stone); `assets/wip/ember/build.py` cuts
+  them. Then props (portcullis, throne, murder hole, carts) and a look at each place.
+
 ## Core first (the user, 2026-10-28: core changes before tuning; **no encounter tuning until asked**)
 - [x] Time in a dungeon costs something: a step is 10 s (sneaking 20), a search 10 min, the rest after a fight an
   hour. Wanderers are drawn from the place's table every 20 minutes spent there (35%), loud things count as extra
@@ -98,6 +110,8 @@ working, nothing more.** The shop and trainer changes below were made before tha
   hover); the moves are one grid of buttons (bonus and patience cost on the button, what it does on hover; Appeal and
   Bribe each with a dropdown); the speaker picker sits with the moves; the mood meters flash green or red when a move
   shifts them.
+- [x] Less text (the user, 2026-10-31): level-up and faction lines short, Loot (tallied, ×2) not Spoils, the hover
+  card is damage and miss chance, spell points a blue bar under stamina, feats free at camp (`campTraining: 0`).
 - [ ] Next for the UI (the user's priority, 2026-10-25): character creation, then the title screen. Then the journal. The reaction card was left as it was (already short).
 
 ## Art TODO
@@ -170,7 +184,7 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
   carries a dagger; `validate` refuses a preset caster with a two-hander and no Battle Casting. With a mage who casts,
   the temple is easy at level 3 (n=30: throne 93%, Avatar 100%, only the clay and iron golems unbeaten).
 - [x] Training at camp (the user, 2026-10-28): making camp offers Train to anyone with a feat to spend, at
-  `rules.yaml game.campTraining` x the Training Yard's price (1).
+  `rules.yaml game.campTraining` x the Training Yard's price (0 since 2026-10-31: free).
 - [x] Fights: the target defaults to the foe this fighter last went for, else the nearest; a click switches. A turn
   opens on the tab last used (a caster's first on Magic). Worn or broken weapons and low arrows show as a chip in the
   pane, a tag on the attack, and a mark on the explore dock (`CONFIG.gearWarn`). The log is a scrollable panel under
