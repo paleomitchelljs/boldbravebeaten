@@ -477,13 +477,17 @@
     return Math.round(s * G.Effects.mult(c, 'staminaMult'));
   }
 
-  // A round of combat wears a fighter down: maximum stamina falls (CONFIG.weariness) until a long rest.
-  function wearyRound(c) {
+  // A round of combat wears a fighter down by the effort it took: each point of stamina spent or lost in it takes
+  // CONFIG.weariness.perStamina off the maximum until a long rest (fractions carry, as wearyTime's do).
+  function wearyRound(c, spent) {
     const W = CONFIG.weariness;
     if (!W || tireless(c)) return 0;
     const cap = Math.floor(freshStamina(c) * W.cap);
     const before = c.weary || 0;
-    c.weary = Math.min(cap, before + W.perRound);
+    const due = (c.wearyCarry || 0) + (W.perRound || 0) + (W.perStamina || 0) * (spent || 0);
+    const whole = Math.floor(due);
+    c.wearyCarry = due - whole;
+    c.weary = Math.min(cap, before + whole);
     c.stamina = Math.min(c.stamina, maxStamina(c));
     return c.weary - before;
   }

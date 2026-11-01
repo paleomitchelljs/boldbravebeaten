@@ -239,10 +239,11 @@
     view.lunge = (id, tx, ty, delay, still) => view.fx.push({ k: 'lunge', id, tx, ty, still, t0: clock() + (delay || 0), dur: 260 });
     // A bolt: a square of colour, an arrow (opts.shape), or (element given, and the effect sheets there) a fireball,
     // frost shard or spark from art/effects with a flash where it lands. opts.dur: its flight in ms.
+    // opts.stop: the square (map coordinates) a wall stops it at, short of `to`.
     view.bolt = (from, to, color, delay, noun, opts) => {
-      const t0 = clock() + (delay || 0), colour = noun ? fxColour(noun) : null;
-      view.fx.push({ k: 'bolt', from, to, color: color || '#ffe9a0', t0, dur: (opts && opts.dur) || (colour ? 320 : 200), colour, shape: opts && opts.shape });
-      if (colour) view.fx.push({ k: 'flash', id: to, colour, t0: t0 + 320, dur: 300 });
+      const t0 = clock() + (delay || 0), colour = noun ? fxColour(noun) : null, stop = (opts && opts.stop) || null;
+      view.fx.push({ k: 'bolt', from, to, stop, color: color || '#ffe9a0', t0, dur: (opts && opts.dur) || (colour ? 320 : 200), colour, shape: opts && opts.shape });
+      if (colour && !stop) view.fx.push({ k: 'flash', id: to, colour, t0: t0 + 320, dur: 300 });
     };
     // An area spell going off over a square (map coordinates).
     view.burst = (x, y, noun, delay) => view.fx.push({ k: 'burst', x, y, colour: fxColour(noun), t0: clock() + (delay || 0), dur: 860 });
@@ -424,7 +425,7 @@
           continue;
         }
         if (f.k === 'bolt') {
-          const a = head(f.from), b = head(f.to);
+          const a = head(f.from), b = f.stop ? [ox + (f.stop.x + 0.5) * size, oy + (f.stop.y + 0.5) * size - 14 * SS] : head(f.to);
           if (!a || !b) continue;
           const x = a[0] + (b[0] - a[0]) * p, y = a[1] + 14 * SS + (b[1] - a[1]) * p;
           const d = FX();

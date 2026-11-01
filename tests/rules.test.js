@@ -1750,7 +1750,8 @@ test('a worn weapon hits softer; a broken one is out of the fight until a smith 
   assert.ok(lines.some((l) => /broken/.test(l)));
 });
 
-test('weariness: every round of fighting lowers max stamina until a long rest', async () => {
+test('weariness: stamina spent in a fight lowers max stamina until a long rest; standing by costs nothing', async () => {
+  const W = B.CONFIG.weariness;
   const a = armed('A', 'longsword', { side: 'party' });
   const b = armed('B', 'longsword', { side: 'enemy' });
   const fresh = C.maxStamina(a);
@@ -1758,7 +1759,10 @@ test('weariness: every round of fighting lowers max stamina until a long rest', 
   const enc = Combat.createEncounter('t', [a.id, b.id], chars, 6, 1);
   enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[b.id] = { x: 5, y: 0 };
   for (let r = 0; r < 3; r++) { await Combat.startRound(enc, chars, roller(3, [5, 5])); await closeRound(enc, chars); }
-  assert.strictEqual(C.maxStamina(a), fresh - 3 * B.CONFIG.weariness.perRound);
+  assert.strictEqual(C.maxStamina(a), fresh - Math.floor(3 * (W.perRound || 0)), 'idle rounds wear only perRound');
+  for (let r = 0; r < 2; r++) { await Combat.startRound(enc, chars, roller(3, [5, 5])); a.stamina -= 10; b.stamina -= 2; await closeRound(enc, chars); }
+  assert.strictEqual(C.freshStamina(a) - C.maxStamina(a), Math.floor(5 * (W.perRound || 0) + 20 * W.perStamina), 'by effort');
+  assert.ok(a.weary > b.weary, 'the one who spent more is wearier');
   await Recovery.longRest(a, {}, roller(1, [5]));
   assert.strictEqual(C.maxStamina(a), fresh);
 });

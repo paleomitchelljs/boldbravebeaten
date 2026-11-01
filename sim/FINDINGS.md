@@ -1,5 +1,21 @@
 # Simulation findings
 
+## Weariness by effort (2026-11-01; `node sim/effort.js`)
+
+The user: a fight won in one blow wore the whole party as much as a hard one (1 stamina off the maximum a round, for
+everyone standing). Now each point of stamina spent or lost in a round takes `weariness.perStamina` off the maximum.
+Stamina spent per fight by the presets, every authored encounter × 4, AI on both sides:
+
+| | fresh | rounds | spent, mean | spent ÷ fresh, 10th / 50th / 90th centile |
+|---|---|---|---|---|
+| Beren | 45 | 3.2 | 8.3 | 0.00 / 0.07 / 0.73 |
+| Lorc | 42 | 3.2 | 10.5 | 0.10 / 0.19 / 0.70 |
+| Cyrus | 41 | 3.2 | ~12 | 0.07 / 0.34 / 1.14 |
+| Jabiku | 33 | 3.2 | 8.4 | 0.00 / 0.18 / 1.31 |
+
+The flat rate cost 3.2 points a fight on average. At 0.25 a point, the mean fight costs 2-3, a fight a member sat out
+nothing, a hard one (30-50 spent) 8-12. Spell points already wore by points spent (0.15 each).
+
 ## Cover with a shield (2026-10-29; the user's choice against groups snowballing, docs/REVIEW.md Risk 1)
 
 `CONFIG.defense.cover` (PROVISIONAL): a blow at someone who puts up no defence of their own may be blocked for them

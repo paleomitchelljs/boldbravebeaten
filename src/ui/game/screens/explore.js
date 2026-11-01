@@ -259,9 +259,18 @@
         return c.def && c.def.label ? c.def.label : '';
       },
     };
+    // A follower clustered beside the leader keeps off a wall: in a doorway or a narrow hall it stands behind instead.
+    const solid = (x, y) => { const c = sc.cell(x, y); return !c || c.kind === 'wall' || c.kind === 'rock' || !!(c.def && c.def.wall); };
+    const squeeze = ([dx, dy]) => {
+      if ((dx < 0 && solid(ex.x - 1, ex.y)) || (dx > 0 && solid(ex.x + 1, ex.y))) {
+        const back = solid(ex.x, ex.y + 1) ? -1 : 1;
+        return [0, dy + back * Math.abs(dx)];
+      }
+      return [dx, dy];
+    };
     members.forEach((m, i) => {
       // Before the party has walked far enough to string out, followers cluster around the leader.
-      const off = SPREAD[2][(i - 1) % 3] || [0, 0];
+      const off = squeeze(SPREAD[2][(i - 1) % 3] || [0, 0]);
       const at = i === 0 ? { x: ex.x, y: ex.y } : (tr[i - 1] || { x: ex.x + off[0], y: ex.y + off[1] + 0.12 });
       const L = Sprites.look(m);
       sc.actors.push({ id: m.id, x: at.x, y: at.y, kind: L.kind, tint: L.tint, size: L.size, art: L.art, artTint: L.artTint, artScale: L.artScale, artSize: L.artSize, tag: 'party', speed: 8, phase: i, ring: i === 0 && ex.sneak ? 'rgba(150,200,255,0.8)' : null, alpha: ex.sneak ? 0.8 : 1, who: m.id });

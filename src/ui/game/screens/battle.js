@@ -113,7 +113,7 @@
         const e = bs.sync && bs.sync.entry;
         const t = e && e.targets ? e.targets.find((q) => q.id === id) : null;
         const prev = t && bs.map ? P().blowPreview(enc, chars, { decl: e.kind === 'strike' && !isSpell(e) ? { actor: bs.map.actor, target: id, type: 'strike', option: e.option } : {} }) : null;
-        return `${c.name}${C.isActive(c) ? '' : c.status.dead ? ' (dead)' : ' (down)'}\nStamina ${c.stamina}/${C.maxStamina(c)}${t ? ` · ${t.distance} sq${t.inReach ? '' : t.tooClose ? ', too close' : ', out of reach'}` : ''}${prev ? `\n${prev.text}` : ''}`;
+        return `${c.name}${C.isActive(c) ? '' : c.status.dead ? ' (dead)' : ' (down)'}\nStamina ${c.stamina}/${C.maxStamina(c)}${t ? ` · ${t.distance} sq${t.inReach ? '' : t.tooClose ? ', too close' : t.blockedBy ? `, the ${t.blockedBy.toLowerCase()} is in the way` : ', out of reach'}` : ''}${prev ? `\n${prev.text}` : ''}`;
       },
     };
     const at = (p) => ({ x: p.x + ox, y: p.y + oy });
@@ -213,7 +213,9 @@
         const t = entry.targets.find((q) => q.id === id);
         if (!t || !enc.pos[id]) return;
         const col = t.inReach ? look.color : INTENT.far.color;
-        sc.lines.push({ pts: [at(me), at(enc.pos[id])], color: col, style: ranged(entry) || isSpell(entry) ? 'dash' : 'solid', alpha: strong ? 0.85 : 0.35 });
+        // Blocked: the line runs only as far as the wall.
+        const lc = !t.inReach && G.Terrain && enc.tiles && t.distance >= 2 ? G.Terrain.lineCheck(enc, me, enc.pos[id], ranged(entry) || isSpell(entry) ? 'missile' : 'melee') : null;
+        sc.lines.push({ pts: [at(me), at(lc && lc.blocked ? lc.at : enc.pos[id])], color: col, style: ranged(entry) || isSpell(entry) ? 'dash' : 'solid', alpha: strong ? 0.85 : 0.35 });
         sc.reticles.push({ x: enc.pos[id].x + ox, y: enc.pos[id].y + oy, color: col, strong });
         if (strong) sc.badges.push({ id, icon: look.icon, color: col });
       };
@@ -313,12 +315,15 @@
       // A spell flies; a shot plays the shooter's strike and then the arrow flies (released halfway through, quicker
       // than a spell, longer the farther); everything else, a reach weapon's thrust too, is a blow with a lunge.
       const o = d.option || {}, dist = Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
+      // A wall in the way: the bolt or arrow stops against it.
+      const lc = (o.spell || o.ranged) && dist >= 2 && G.Terrain && enc.tiles ? G.Terrain.lineCheck(enc, a, b, 'missile') : null;
+      const stop = lc && lc.blocked ? { x: lc.at.x + ox, y: lc.at.y + oy } : null;
       let land = t0 + 140;
-      if (o.spell) { mv.bolt(d.actor, d.target, '#d7b4ff', t0, o.spell.noun || o.noun || o.spell.element || 'force'); land = t0 + 200; }
+      if (o.spell) { mv.bolt(d.actor, d.target, '#d7b4ff', t0, o.spell.noun || o.noun || o.spell.element || 'force', { stop }); land = t0 + 200; }
       else if (o.ranged) {
-        const dur = Math.max(160, dist * 45);
+        const dur = Math.max(160, (stop ? Math.max(Math.abs(a.x - lc.at.x), Math.abs(a.y - lc.at.y)) : dist) * 45);
         mv.lunge(d.actor, b.x + ox, b.y + oy, t0, true);
-        mv.bolt(d.actor, d.target, '#ffe9a0', t0 + 200, null, { shape: o.natural ? null : 'arrow', dur });
+        mv.bolt(d.actor, d.target, '#ffe9a0', t0 + 200, null, { shape: o.natural ? null : 'arrow', dur, stop });
         land = t0 + 200 + dur;
       } else mv.lunge(d.actor, b.x + ox, b.y + oy, t0);
       if (delay[d.target] == null) delay[d.target] = land;

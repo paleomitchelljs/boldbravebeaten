@@ -104,6 +104,9 @@
 
   async function startRound(enc, chars, roller) {
     enc.round += 1;
+    // Stamina at the round's start, so its end can tell how much each fighter spent (CONFIG.weariness.perStamina).
+    enc.staminaAtStart = {};
+    for (const id of enc.ids) if (chars[id]) enc.staminaAtStart[id] = chars[id].stamina;
     // The first round: wards, boons and runes laid in advance by ritual take hold.
     if (enc.round === 1 && G.Ritual) for (const line of G.Ritual.applyPrepared(enc, chars)) log(enc, line, 'pass');
     await auras(enc, chars, roller);
@@ -2362,8 +2365,8 @@
         if (c.status.unconscious && c.stamina > 0) { c.status.unconscious = false; log(enc, `${c.name} heaves itself back up.`, 'death'); }
         if (healed || c.stamina > before) log(enc, `${c.name} regenerates${healed ? ` ${healed} CON` : ''}${c.stamina > before ? `${healed ? ' and' : ''} ${c.stamina - before} stamina` : ''}.`);
       }
-      // Weariness: every round of fighting lowers the most stamina can come back to.
-      if (C.isActive(c)) C.wearyRound(c);
+      // Weariness: the stamina a fighter spent or lost this round lowers the most it can come back to.
+      if (C.isActive(c)) C.wearyRound(c, Math.max(0, ((enc.staminaAtStart || {})[id] ?? c.stamina) - c.stamina));
       // Regeneration.
       const r = C.regen(c);
       const conscious = !c.status.unconscious;

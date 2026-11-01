@@ -178,17 +178,17 @@
   }
 
   // What lies between attacker and target. kind: 'missile' (arrows, bolts, spells), 'melee'
-  // (a weapon reaching past a square), 'sight'. Returns { blocked, by, miss }.
+  // (a weapon reaching past a square), 'sight'. Returns { blocked, by, miss, at (the square that stops it) }.
   function lineCheck(enc, a, b, kind) {
     if (!enc.tiles) return { blocked: false, miss: 0 };
     let miss = 0;
     for (const q of between(a, b)) {
       for (const f of at(enc, q.x, q.y)) {
         const d = def(f);
-        if (d.solid) return { blocked: true, by: d.name, miss: 0 };
-        if (kind === 'melee' && d.wall) return { blocked: true, by: d.name, miss: 0 };
-        if ((kind === 'missile' || kind === 'sight') && d.blocksSight) return { blocked: true, by: d.name, miss: 0 };
-        if (kind === 'missile' && d.blocksMissiles) return { blocked: true, by: d.name, miss: 0 };
+        if (d.solid) return { blocked: true, by: d.name, miss: 0, at: q };
+        if (kind === 'melee' && d.wall) return { blocked: true, by: d.name, miss: 0, at: q };
+        if ((kind === 'missile' || kind === 'sight') && d.blocksSight) return { blocked: true, by: d.name, miss: 0, at: q };
+        if (kind === 'missile' && d.blocksMissiles) return { blocked: true, by: d.name, miss: 0, at: q };
         if (kind === 'missile' && d.missileMiss) miss = 1 - (1 - miss) * (1 - d.missileMiss);
       }
     }
