@@ -49,16 +49,16 @@ presets:
     armorItem: null
     feats: [quick_thrust, parry_training, riposte, quickness, dodge_training]
     look: {sprite: "art:cyrus"}
-  # The mage (Jabiku's look until there is a mage of their own): fire, from arm's reach to a burst across the room.
-  # The kit's dagger, not a staff: a spell needs a free hand (a two-hander takes both) unless you have Battle Casting.
+  # The mage: Life, to heal, wither and drain, at arm's reach, at range and over an area. The staff is a casting focus.
   - name: Jabiku
     kit: staff
     level: 3
     attrs: {STR: 3, CON: 5, DEX: 5, SPD: 5, INT: 8, WIL: 8, WIS: 3, CHA: 3}
-    # Build (a wall of fire, to get away from what can't be fought) is one over a level-3 budget (the user, 2026-10-29).
-    bonusFeats: 1
-    feats: [casting, verb_strike, verb_launch, casting, verb_burst, verb_build]
-    nouns: [fire]
+    # Life with Increase, Decrease and Transfer, and the modifiers Launch and Burst (the user, 2026-11-01: for testing;
+    # was Fire with Strike, Launch, Burst and Build). Over a level-3 budget by two.
+    bonusFeats: 2
+    feats: [casting, verb_increase, verb_decrease, casting, verb_transfer, mod_launch, mod_burst]
+    nouns: [life]
     look: {sprite: "art:jabiku"}
 
 # Trial starts (title screen): a small or one-person party for trying out art and movement. `look` is the character's

@@ -754,6 +754,24 @@
       requires: []
       effect: "Learn the verb Ward (protection from magic, missiles or an element)"
       auto: true
+    verb_increase:
+      name: "Verb: Increase"
+      ranks: [novice]
+      requires: []
+      effect: "Learn the verb Increase (give a noun: Increase Life heals)"
+      auto: true
+    verb_decrease:
+      name: "Verb: Decrease"
+      ranks: [novice]
+      requires: []
+      effect: "Learn the verb Decrease (take a noun away: Decrease Life withers)"
+      auto: true
+    verb_transfer:
+      name: "Verb: Transfer"
+      ranks: [apprentice]
+      requires: [["verb_increase:1", "verb_decrease:1"]]
+      effect: "Learn the verb Transfer (take a noun from the target and give it to yourself: Transfer Life heals you by what it withers)"
+      auto: true
     verb_launch:
       name: "Verb: Launch"
       ranks: [apprentice]
@@ -854,6 +872,18 @@
       ranks: [expert]
       requires: [["verb_conjure:1", "verb_summon:1"]]
       effect: "Learn the verb Raise: a body gets up and fights for you (Bone a skeleton, Life a zombie, Spirit a revenant)"
+      auto: true
+    mod_launch:
+      name: "Modifier: Launch"
+      ranks: [novice]
+      requires: []
+      effect: "Learn the modifier Launch (Increase, Decrease, Transfer at range)"
+      auto: true
+    mod_burst:
+      name: "Modifier: Burst"
+      ranks: [novice]
+      requires: []
+      effect: "Learn the modifier Burst (Increase, Decrease, Transfer over an area; with Launch, at range)"
       auto: true
     mod_strong:
       name: "Modifier: Strong"

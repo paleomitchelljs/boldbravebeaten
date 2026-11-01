@@ -74,9 +74,12 @@ test('spell points: a rest brings them back, each spent point wears spWeary off 
   assert.equal(Magic.maxSP(mage), full);
 });
 
-test('jabiku knows Build and Fire: a wall of fire to cast', () => {
+test('a caster with Build and Fire has a wall of fire to cast', () => {
+  // Jabiku had these until 2026-11-01 (now Life with Increase, Decrease, Transfer); taught here instead.
   const w = fresh(7);
   const j = World.party(w).find((c) => c.name === 'Jabiku');
+  j.feats.verb_build = 1;
+  j.nouns = j.nouns.concat(['fire']);
   assert.ok(Magic.spellOptions(j).some((o) => o.spellKey === 'build+fire'));
 });
 

@@ -94,11 +94,24 @@
     if (V.shape === 'restore' && !N.heals && !curesOf(n).length) return false;
     const need = { ground: 'ground', wall: 'wall', terrain: 'terrain', bane: 'bane', boon: 'boon', conjure: 'conjure', ward: 'ward', mind: 'mind', raise: 'raise' }[V.shape];
     if (need && !N[need]) return false;
-    if (m) {
-      const M = W()[m];
+    for (const k of m ? [].concat(m) : []) {
+      const M = W()[k];
       if (M.shapes && !M.shapes.includes(V.shape)) return false;
     }
     return true;
+  }
+
+  // One modifier's words, or two that stack (Launch + Burst) merged into one: costs, magnitudes, radii and AP add;
+  // a range is the one that reaches farthest.
+  function modOf(m) {
+    if (!m) return null;
+    const ms = [].concat(m).map((k) => W()[k]);
+    if (ms.length === 1) return ms[0];
+    const out = Object.assign({}, ...ms);
+    for (const f of ['cost', 'mag', 'radius', 'ap', 'length']) out[f] = ms.reduce((t, x) => t + (x[f] || 0), 0);
+    out.range = ms.filter((x) => x.range).sort((a, b) => b.range[1] - a.range[1]).map((x) => x.range)[0];
+    out.name = ms.map((x) => x.name).join(' + ');
+    return out;
   }
 
   function spellOptions(c) {
@@ -153,6 +166,9 @@
     const nouns = Object.keys(words).filter((k) => words[k].kind === 'noun' && knows(c, k));
     const mods = [null].concat(Object.keys(words).filter((k) => words[k].kind === 'mod' && knows(c, k)));
     const out = [];
+    // Modifiers that stack (Launch + Burst) also go on together.
+    const stacking = mods.filter((k) => k && words[k].stacks);
+    for (let i = 0; i < stacking.length; i++) for (let j = i + 1; j < stacking.length; j++) mods.push([stacking[i], stacking[j]]);
     for (const v of verbs) for (const n of nouns) for (const m of mods) if (combines(v, n, m)) out.push(makeOption(c, v, n, m));
     // Doubled nouns (Word Doubling): two nouns, no modifier; both do the verb.
     if (C().rank(c, 'word_doubling')) {
@@ -167,7 +183,7 @@
   // Magnitude: the verb's, + the modifier's, + affinity with the noun.
   function magnitude(c, v, n, m) {
     const w = W();
-    let mag = (w[v].mag || 0) + (m ? w[m].mag || 0 : 0);
+    let mag = (w[v].mag || 0) + (m ? modOf(m).mag || 0 : 0);
     const aff = (CONFIG.magic.affinity || {})[n];
     if (aff) mag += C().rank(c, aff);
     // Worn gear: a skullcap that strengthens every spell, an amulet that strengthens one noun.
@@ -187,10 +203,12 @@
 
   function makeOption(c, v, n, m, n2) {
     const w = W();
-    const V = w[v], N = w[n], M = m ? w[m] : null;
+    const V = w[v], N = w[n], M = modOf(m);
     const mag = magnitude(c, v, n, m);
     const cost = V.cost + N.cost + (M ? M.cost : 0) + (n2 ? w[n2].cost + CONFIG.magic.doubleSurcharge : 0) + (V.shape === 'raise' ? N.raiseCost || 0 : 0);
-    const bolt = BOLT.includes(V.shape);
+    // Burst makes a bolt an area: round the caster (the caster spared), or Launched, round a square at range.
+    const shape = M && M.area && V.shape === 'bolt' ? 'area' : V.shape;
+    const bolt = BOLT.includes(shape);
     const windUp = !!(bolt && M && M.windUp && CONFIG.windUp && CONFIG.windUp.spells);
     // Base AP (Specifics units) through the turn-budget curve, then Quick Casting and armor.
     let baseAP = (V.ap || CONFIG.magic.castAP) + (!bolt && M && M.windUp ? 1 : 0) + (M && M.ap ? M.ap : 0);
@@ -199,12 +217,14 @@
     const ap = C().gearAP(c, Math.max(C().minAP(), full - C().quickCut(c, 'quick_casting', full)) + C().armorAP(c));
     const far = M && M.rangeMult ? M.rangeMult : 1;
     const named = !!(M && M.named);
-    const range = [V.range[0], V.range[1] * far];
+    // A modifier's range (Launch) replaces the verb's; Burst alone keeps an area spell on the caster.
+    const reach = M && M.range ? [V.range[0] <= 0 ? V.range[0] : M.range[0], M.range[1]] : M && M.area && shape !== 'restore' ? [0, 0] : V.range;
+    const range = [reach[0], reach[1] * far];
     const label = [V.name, N.name, n2 ? w[n2].name : null, M ? M.name : null].filter(Boolean).join(' + ');
     const nouns = n2 ? [n, n2] : [n];
     const combo = n2 ? (CONFIG.magic.combos || {})[nouns.slice().sort().join('+')] || null : null;
     const spell = {
-      verb: v, noun: n, nouns, combo, mod: m, shape: V.shape, element: N.element, magnitude: mag, cost,
+      verb: v, noun: n, nouns, combo, mod: m ? [].concat(m).join('+') : null, shape, element: N.element, magnitude: mag, cost,
       radius: (V.radius || 0) + (M && M.radius ? M.radius : 0),
       length: (V.length || 1) + (M && M.length ? M.length : 0),
       rounds: V.rounds == null ? null : V.rounds * (M && M.roundsMult ? M.roundsMult : 1),
@@ -214,7 +234,7 @@
       named,
     };
     const base = {
-      spellKey: [v, n, n2, m].filter(Boolean).join('+'), label, spell, ap, stamina: 0, spCost: cost,
+      spellKey: [v, n, n2].concat(m ? [].concat(m) : []).filter(Boolean).join('+'), label, spell, ap, stamina: 0, spCost: cost,
       minRange: range[0], maxRange: range[1], reach: range[1], closePenalty: false,
     };
     if (bolt) {
@@ -224,7 +244,8 @@
       });
     }
     // target: what the caster aims at — a square, a foe (hex), or an ally or self (bless).
-    const target = V.shape === 'bane' || V.shape === 'mind' ? 'foe' : V.shape === 'boon' || V.shape === 'ward' || V.shape === 'restore' ? 'ally' : 'square';
+    // Transfer: a foe, or with Burst a square (everyone round it).
+    const target = shape === 'drain' ? (spell.radius ? 'square' : 'foe') : shape === 'bane' || shape === 'mind' ? 'foe' : shape === 'boon' || shape === 'ward' || shape === 'restore' ? 'ally' : 'square';
     // Areas and hazards land on squares; Raise aims at the square a body lies on.
     return Object.assign(base, { kind: 'cast', target, windUp: false, ranged: true });
   }
@@ -568,7 +589,10 @@
           return log(`${a.name} casts ${o.label}: the air over (${at.x + 1}, ${at.y + 1}) begins to gather; it breaks at the end of the round.`, 'hit');
         }
         log(`${a.name} casts ${o.label} at (${at.x + 1}, ${at.y + 1}).`, 'hit');
+        // Round the caster's own square (Burst alone): the caster is spared.
+        const centred = at.x === from.x && at.y === from.y;
         for (const id of within(enc, chars, at.x, at.y, s.radius)) {
+          if (centred && id === a.id) continue;
           const t = chars[id];
           const k = await contest(roller, a, t, 'avoid', o.label);
           await elementBlow(enc, chars, a, t, s.noun, s.lingering ? Math.ceil(s.magnitude / 2) : s.magnitude, roller, o.label, { half: k.resisted, from: at, condMag: s.condMag });
@@ -637,6 +661,29 @@
           log(`${t.name} is ${CONFIG.conditions[boon].name.toLowerCase()} (${s.rounds} rounds).`, 'defend');
         }
         return;
+      }
+      case 'drain': {
+        // Transfer: what each one hit loses of the noun (Life: CON), the caster gains (CONFIG.magic.transfer).
+        const who = s.radius ? within(enc, chars, at.x, at.y, s.radius).filter((id) => id !== a.id) : d.target ? [d.target] : [];
+        if (!who.length) return log(`${a.name}'s ${o.label} finds no one.`, 'fizzle');
+        if (s.radius) log(`${a.name} casts ${o.label} at (${at.x + 1}, ${at.y + 1}).`, 'hit');
+        let taken = 0;
+        for (const id of who) {
+          const t = chars[id];
+          if (!t || t.status.dead) continue;
+          const k = await contest(roller, a, t, 'avoid', o.label);
+          const before = t.damage.CON || 0;
+          await elementBlow(enc, chars, a, t, s.noun, s.magnitude, roller, o.label, { half: k.resisted, from: at, condMag: s.condMag });
+          taken += Math.max(0, (t.damage.CON || 0) - before);
+        }
+        if (!taken) return log(`${a.name} draws nothing back.`, 'fizzle');
+        const mend = Math.min(taken, a.damage.CON || 0);
+        if (mend) C().healAttr(a, 'CON', mend);
+        const st = (taken - mend) * CONFIG.magic.transfer.staminaPerCON;
+        const was = a.stamina;
+        if (st) a.stamina = Math.min(C().maxStamina(a), a.stamina + st);
+        const bits = [mend ? `+${mend} CON` : null, a.stamina > was ? `+${a.stamina - was} stamina` : null].filter(Boolean);
+        return log(`${a.name} draws in what was taken${bits.length ? ': ' + bits.join(', ') : ''}.`, 'defend');
       }
       case 'restore': {
         const t = chars[d.target];

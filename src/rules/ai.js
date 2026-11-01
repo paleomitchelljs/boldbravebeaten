@@ -456,6 +456,24 @@
           const resist = 0.5 + (Math.floor(C.attr(c, 'INT') / 2) - Math.floor(C.attr(foe, 'WIL') / 2)) * 0.08;
           consider(worth * Math.max(0.15, Math.min(0.85, resist)), cast({ target: t.id }), o);
         }
+      } else if (s.shape === 'drain') {
+        // Transfer: the blow on each one it takes from (valued as a spell's blow is, by hitValue), and what comes
+        // back: a blow's worth if I have lost CON for it to mend, half if I am worn down, a quarter otherwise. With
+        // Burst, everyone round the square: friends count against it.
+        const back = (c.damage.CON || 0) > 0 ? 1 : c.stamina < C.maxStamina(c) * 0.6 ? 0.5 : 0.25;
+        const blow = (f, d) => (C.tireless(chars[f]) ? 0 : hitValue(c, chars[f], { kind: 'strike', motion: 'spell', label: o.label, spell: { element: s.element, noun: s.noun, magnitude: s.magnitude }, damage: [0, 0, 0] }, Math.max(1, d)));
+        if (s.radius) {
+          for (const p of o.maxRange === 0 ? [me] : foes.map(posOf)) {
+            const d = Combat.dist(me, p);
+            if (d > o.maxRange || d < o.minRange) continue;
+            const hitF = inArea(foes, p, s.radius), hitA = inArea(allies, p, s.radius).filter((x) => x !== id);
+            const v = hitF.reduce((t, f) => t + blow(f, d) * (1 + back), 0) - hitA.reduce((t, x) => t + 1.5 * blow(x, d), 0);
+            consider(v * 0.85, cast({ at: p }), o);
+          }
+        } else for (const t of o.targets) {
+          if (!t.inReach || !foes.includes(t.id)) continue;
+          consider(blow(t.id, t.distance) * (1 + back) * 0.85, cast({ target: t.id }), o);
+        }
       } else if (o.target === 'foe') {
         const key = N.bane;
         for (const t of o.targets) {
@@ -531,6 +549,11 @@
         // Aim at a foe or a square beside one, so a burst can catch foes pressed close without
         // catching the caster.
         const seen = {};
+        // Round the caster (Burst alone): whoever stands beside me, the caster spared.
+        if (o.maxRange === 0) {
+          const hitF = inArea(foes, me, s.radius), hitA = inArea(allies, me, s.radius).filter((a) => a !== id);
+          consider((hitF.length - 1.5 * hitA.length) * s.magnitude * 2.2, cast({ at: me }), o);
+        }
         for (const f of foes) {
           const fp = posOf(f);
           for (let dx = -s.radius; dx <= s.radius; dx++) for (let dy = -s.radius; dy <= s.radius; dy++) {

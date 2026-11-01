@@ -77,6 +77,15 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 - [x] Title: Continue, Load (saves, or a file), New Game (Quick start in the village, or Custom). The dungeon quick
   starts are gone (start.yaml `starts`).
 
+## Jabiku's words (the user, 2026-11-01)
+- [x] Jabiku: the noun Life, the verbs Increase (heals), Decrease (withers), Transfer (withers the target, mends the
+  caster), the modifiers Launch (range) and Burst (area; alone round the caster), which stack. New verbs and mods sit
+  beside the older ones (Strike, Launch and Burst as verbs, …); nobody else uses them. Tests in `tests/life-words.test.js`.
+- [ ] The party lost Jabiku's wall of fire (its way to get away). Give it back to someone, or leave it.
+- [ ] Watch the Life words in play: Burst alone aims at your own square (not seen in the browser); Increase and
+  Burst in a party fight.
+- [ ] Ask the user whether the whole grammar should go this way (verbs as what is done to a noun; delivery as modifiers).
+
 ## The AI (the user, 2026-11-01, third set)
 - [x] Wind-ups (a bow's draw, a power swing's, a Strong spell's) can be released the same turn if the AP is there, or
   carried into the next round (`windUp.sameTurn`, PROVISIONAL). Every bow is drawn: `draw` in weapons.yaml, shortbow

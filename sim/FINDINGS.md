@@ -1,5 +1,14 @@
 # Simulation findings
 
+## Jabiku's Life words (2026-11-01, the user)
+
+Jabiku now starts with Life and Increase, Decrease, Transfer, and the modifiers Launch and Burst, which go on a spell
+together (12 spells; was Fire with Strike, Launch, Burst, Build: the party has no wall of fire to get away behind).
+20 fights against a scaleward, 12 x 6 room: Jabiku wins 12, 5.1 rounds. Against one foe at range the AI casts only
+Decrease + Life + Launch (3 CON a hit, no armor), then fights with the staff when the spell points run low.
+Transfer is valued as its blow plus what comes back (a blow's worth if the caster has lost CON); hurt and beside a foe
+the AI drains (`tests/life-words.test.js`). Increase and Burst need allies and crowds: not yet seen in a party fight.
+
 ## Draws and wind-ups (2026-11-01, the user)
 
 The user: a draw and a shot are two actions, both in one turn if the AP is there (Lorc drew and could not loose with

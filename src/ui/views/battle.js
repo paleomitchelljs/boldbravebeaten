@@ -538,7 +538,7 @@
     return h('div', { class: 'spell-pick' },
       field('Verb', UI.select('cmd-verb', cmd.mVerb, verbs.map((v) => [v, W[v].name]), set('mVerb'))),
       field('Noun', UI.select('cmd-noun', cmd.mNoun, nouns.map(([k, s]) => [k, nounLabel(s)]), set('mNoun'))),
-      field('Modifier', UI.select('cmd-mod', cmd.mMod, byNoun.map((e) => [e.option.spell.mod || '', e.option.spell.mod ? W[e.option.spell.mod].name : '—']), set('mMod'))));
+      field('Modifier', UI.select('cmd-mod', cmd.mMod, byNoun.map((e) => [e.option.spell.mod || '', e.option.spell.mod ? e.option.spell.mod.split('+').map((k) => W[k].name).join(' + ') : '—']), set('mMod'))));
   }
 
   function entryInfo(app, enc, c, e) {

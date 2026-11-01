@@ -2,6 +2,12 @@
 # Nouns are found in the world; see the nouns list in each character (c.nouns).
 
 strike: {kind: verb, shape: bolt, cost: 2, mag: 6, range: [1, 2], feat: verb_strike, name: Strike}
+# Verbs as what a spell does to its noun (the user, 2026-11-01; Jabiku's words, on trial beside the older verbs): Increase
+# gives the noun (Life heals), Decrease takes it away (Life withers), Transfer takes it from the target and gives it to
+# the caster. At arm's reach; the modifiers Launch and Burst carry them further and wider.
+increase: {kind: verb, shape: restore, cost: 2, mag: 1, range: [0, 1], ap: 2, feat: verb_increase, name: Increase}
+decrease: {kind: verb, shape: bolt, cost: 2, mag: 6, range: [1, 1], feat: verb_decrease, name: Decrease}
+transfer: {kind: verb, shape: drain, cost: 3, mag: 4, range: [1, 1], feat: verb_transfer, name: Transfer}
 launch:
   kind: verb
   shape: bolt
@@ -363,6 +369,10 @@ stillness:
 veil: {kind: noun, cost: 2, element: shadow, name: Veil, boon: unseen}
 bone: {kind: noun, cost: 1, element: death, name: Bone, raise: skeleton}
 strong: {kind: mod, cost: 2, mag: 3, feat: mod_strong, name: Strong, windUp: true}
+# Launch and Burst as modifiers (the user, 2026-11-01), for the verbs above; `stacks`: they go on one spell together.
+# Launch: at range. Burst: over an area, round the caster (the caster spared) or, Launched, round a square at range.
+launchMod: {kind: mod, cost: 1, range: [2, 12], stacks: true, feat: mod_launch, name: Launch, shapes: [bolt, restore, drain]}
+burstMod: {kind: mod, cost: 2, radius: 1, area: true, ap: 1, stacks: true, feat: mod_burst, name: Burst, shapes: [bolt, restore, drain]}
 wide:
   kind: mod
   cost: 2

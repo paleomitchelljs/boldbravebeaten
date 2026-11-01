@@ -354,7 +354,10 @@
       // PROVISIONAL (magic overhaul, phase 1). Verbs set the shape, nouns what it is, a modifier
       // scales it. Verbs and modifiers come from Magic: words feats; nouns are found in the world.
       // Verbs: cost (spell points), mag (magnitude), range [min, max], ap (base AP, else castAP),
-      // radius / length / rounds for areas, walls and lingering effects.
+      // radius / length / rounds for areas, walls and lingering effects. Shape `drain` (Transfer): the blow, and
+      // what it took to the caster (transfer below). Modifiers: shapes (the verbs' shapes they go on), range
+      // (replaces the verb's: Launch), area (a bolt becomes an area; alone, round the caster: Burst), stacks (goes
+      // on one spell with another stacking modifier).
       words: {}, // spells.yaml,
       affinity: { fire: 'fire_affinity' }, // +magnitude per rank
       // Doubled nouns (Outline): with the Word Doubling feat, a spell may take two nouns instead
@@ -385,6 +388,9 @@
       // wakes the unconscious). With Wide, every living creature within a square of the target,
       // friend or foe, at areaShare of the stamina. The dead stay dead.
       heal: { stamina: 4, staminaPerMag: 2, areaShare: 0.5 },
+      // PROVISIONAL (the user's Transfer, 2026-11-01): what the target loses, the caster gains: each CON taken mends a
+      // point of the caster's own lost CON, or, with none lost, gives this much stamina.
+      transfer: { staminaPerCON: 3 },
       castAP: 2, // base, × apScale. PROVISIONAL: at 3, a bolt cost 6 sheet AP for a third of a sword thrust
       poolPerCasting: 3, // spell points = INT + 3 × Casting rank
       // PROVISIONAL (the user, 2026-10-29): a rest after a fight brings spent points back, but each point spent takes
@@ -751,6 +757,7 @@
 
   // Every PROVISIONAL choice, shown on the Rules tab so nothing is hidden.
   CONFIG.provisional = [
+    'Verbs as what a spell does to its noun (the user, 2026-11-01; Jabiku\'s words, beside the older verbs): Increase (Life heals, as Restore), Decrease (Life withers, as Strike, at arm\'s reach), Transfer (withers the target; each CON taken mends one of the caster\'s, or gives 3 stamina). Launch and Burst as modifiers that stack: Launch at range 2–12, Burst an area of radius 1, alone round the caster (who is spared), with Launch round a square at range.',
     'Wind-ups are released in the same turn if the AP is there (the user, 2026-11-01; was: not before the next round): a bow\'s draw and its loose, a power swing\'s wind-up and its blow, a Strong spell\'s gathering and its casting are two actions, both in one turn when the AP allows (Lorc: draw 2, loose 3 of her 6), or the first made ahead and carried into the next round (`windUp.sameTurn`).',
     'Movement (the user, 2026-11-01): a stretch of a move covers round(1 + SPD/4) squares (was (1 + ⌊SPD/4⌋) × 2), so a round spent only moving carries the presets 4 / 6 / 9 / 12 squares, not 4 / 12 / 12 / 24.',
     'Vigor (the user\'s idea, 2026-11-01): a weapon blow\'s damage × 1.25 from a fighter at full fresh stamina down to × 0.75 from one with none left. Spells and shots are untouched.',
