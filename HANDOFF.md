@@ -35,8 +35,13 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   antidote. Seen in headless Chrome.
 - [x] A button above the map (and V) hides the on-map UI: the dock, the toolbar, the bars and icons over figures;
   remembered in the browser. Seen in headless Chrome on the explore screen.
-- [ ] Temple map work: some passages are too narrow for the figures, and the wall faces look short beside them (a
-  sword drawn over the wall face in the court); widen and heighten.
+- [x] Taller walls: on any wall two or more squares thick, the face is raised half a square (its lip and courses drawn
+  again over the wall's last row), so faces stand about a head above the figures (`liftFaces` in mapview.js; a
+  tileset can opt out with `tallFaces: false`). South and side walls still show only their tops, as a 3/4 view must.
+- [x] The labyrinth's passages are three squares wide (`tools/labyrinth.js --wide 3`; seed 7, 10x6, loops 0.05).
+- [ ] Other narrow places, if the user still finds them so: the palace stair rooms, the sewer walkways (two wide beside
+  the water; the plank bridges are one wide by design). Figures drawn over a side wall's top (a sword reaching over
+  the court's west wall) are not changed.
 - [x] The user's new raptor (`Raptor_Red`, now the `raptor` art): walk ×8, bite ×5, idle ×5, death.
 - [ ] The animation plan's cycle 2: the dragonborn, orc, mummy lord, then section D.
 

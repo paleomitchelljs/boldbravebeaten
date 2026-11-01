@@ -94,6 +94,29 @@
     return true;
   }
 
+  // Taller walls. A cliff set's face is one square tall (half the wall's last row, half the square in front), shorter
+  // than the figures. On a wall at least two squares thick, the face is raised half a square more: its lip and the
+  // courses under it are drawn again over the lower half of the wall's last row, so the top recedes and the face
+  // stands about a head taller than a person. A tileset with tallFaces: false keeps the short faces.
+  let liftScratch = null;
+  function liftFaces(ctx, sc, x0, y0, ox, oy, size) {
+    if (typeof document === 'undefined' || !ctx.canvas) return;
+    const solid = (x, y) => { const c = sc.cell(x, y); return !!c && (c.kind === 'wall' || c.kind === 'rock' || !!(c.def && c.def.wall)); };
+    const L = Math.max(1, Math.round(size * 6 / 64)), half = Math.round(size / 2);
+    if (!liftScratch) liftScratch = document.createElement('canvas');
+    if (liftScratch.width !== size || liftScratch.height !== half + L) { liftScratch.width = size; liftScratch.height = half + L; }
+    const sx = liftScratch.getContext('2d');
+    for (let y = y0 - 1; y <= y0 + 12 + Math.ceil(ctx.canvas.height / size); y++) for (let x = x0 - 1; x <= x0 + 1 + Math.ceil(ctx.canvas.width / size); x++) {
+      if (!solid(x, y) || solid(x, y + 1) || !solid(x, y - 1)) continue;
+      const X = ox + x * size, Y = oy + y * size;
+      if (X + size < 0 || Y + size < 0 || X > ctx.canvas.width || Y > ctx.canvas.height) continue;
+      sx.clearRect(0, 0, size, half + L);
+      sx.drawImage(ctx.canvas, X, Y + half, size, half + L, 0, 0, size, half + L);
+      ctx.drawImage(liftScratch, 0, 0, size, L, X, Y, size, L);
+      ctx.drawImage(liftScratch, 0, L, size, half, X, Y + L, size, half);
+    }
+  }
+
   const hash = (x, y, k) => { let n = (x * 374761393 + y * 668265263 + (k || 0) * 2147483647) | 0; n = (n ^ (n >>> 13)) * 1274126177; return ((n ^ (n >>> 16)) >>> 0); };
 
   // Draw part of a named image; false if it has not loaded yet.
@@ -466,6 +489,7 @@
         // is put back in the dark (the corner tiles spill half a square past what is known).
         const tp = Tilemap.planTiles(sc, ts, x0 - 1, y0 - 1, x0 + cols, y0 + rows);
         for (const k of ['base', 'corner', 'decor', 'over']) for (const c of tp[k]) Tilemap.paintTiles(ctx, c, ts, env, k);
+        if (ts.raw.tallFaces !== false) liftFaces(ctx, sc, x0, y0, ox, oy, size);
         plan.shown = {};
         for (let y = y0 - 1; y <= y0 + rows; y++) for (let x = x0 - 1; x <= x0 + cols; x++) {
           if (!sc.seen || sc.seen(x, y)) { plan.shown[x + ',' + y] = 1; continue; }
