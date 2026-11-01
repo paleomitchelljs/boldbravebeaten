@@ -566,15 +566,18 @@
 
   // Why an attack can't be made right now (beyond AP), or null.
   function attackUnavailable(enc, c, opt) {
+    if (opt.ranged && opt.weaponId && !opt.natural && C.ammoLeft(c, opt) <= 0) return opt.arrowHead ? `No ${opt.arrowHead}s` : 'No arrows';
     if (opt.windUp) {
       const w = c.status.windUp;
       const key = C.optionKey(opt);
-      if (enc.decls.some((d) => d.actor === c.id && d.type === 'windUp' && C.optionKey(d.option) === key)) return 'Release next round';
-      if (enc.decls.some((d) => d.actor === c.id && d.type === 'strike' && d.option.windUp && C.optionKey(d.option) === key)) return 'Already released';
+      // Released at once if the AP is there (windUp.sameTurn), else not before the next round.
+      const now = !!CONFIG.windUp.sameTurn;
+      if (!now && enc.decls.some((d) => d.actor === c.id && d.type === 'windUp' && C.optionKey(d.option) === key)) return 'Release next round';
+      // Released already this round: again only after winding up again (then AP is the only limit).
+      if (!w && enc.decls.some((d) => d.actor === c.id && d.type === 'strike' && d.option.windUp && C.optionKey(d.option) === key)) return 'Already released';
       if (!w || w.key !== key) return 'Wind up first';
-      if (w.round >= enc.round) return 'Release next round';
+      if (w.round >= enc.round && !now) return 'Release next round';
     }
-    if (opt.ranged && opt.weaponId && !opt.natural && C.ammoLeft(c, opt) <= 0) return opt.arrowHead ? `No ${opt.arrowHead}s` : 'No arrows';
     if (opt.spell) return spellShort(c, opt);
     return null;
   }
@@ -2016,7 +2019,7 @@
           break;
         }
         a.status.windUp = { key: C.optionKey(d.option), label: d.option.label, round: enc.round };
-        log(enc, `${a.name} winds up a ${d.option.label} — exposed until it lands.`);
+        log(enc, d.option.motion === 'shoot' ? `${a.name} draws for a ${d.option.label} — exposed until it is loosed.` : `${a.name} winds up a ${d.option.label} — exposed until it lands.`);
         break;
       case 'readyPrimary':
       case 'drawSidearm':
@@ -2421,7 +2424,7 @@
           log(enc, `${c.name} is too spent to keep the hold and lets go.`, 'fizzle');
         }
       }
-      // A wind-up must be released the round after it is made.
+      // A wind-up must be released by the end of the round after it is made.
       if (c.status.windUp && c.status.windUp.round < enc.round) loseWindUp(enc, c, 'not released in time');
     }
     const sides = {};

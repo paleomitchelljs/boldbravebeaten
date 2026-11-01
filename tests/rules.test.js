@@ -530,7 +530,7 @@ async function duel(a, b, seedQueue) {
   return { enc, chars };
 }
 
-test('a power swing must be wound up the round before, and the swinger is exposed', () => tableWeapons(async () => {
+test('a power swing must be wound up first (released then or carried over), and the swinger is exposed', () => tableWeapons(async () => {
   const a = armed('Heavy', 'greatsword');
   a.feats.power_swing = 1;
   a.base.CON = 10; // survive the foe's thrust so the wind-up isn't lost
@@ -547,7 +547,8 @@ test('a power swing must be wound up the round before, and the swinger is expose
   assert.strictEqual(await Combat.act(enc, chars, { actor: a.id, type: 'windUp', option: wind.option }, io(2)), null);
   assert.ok(a.status.windUp, 'wound up at once');
   la = Combat.legalActions(enc, chars, a.id);
-  assert.strictEqual(la.attacks.find((o) => o.motion === 'power').why, 'Release next round');
+  assert.strictEqual(la.attacks.find((o) => o.motion === 'power').why, null, 'may swing now (windUp.sameTurn)');
+  // Held over instead: the turn ends wound up.
   await Combat.endTurn(enc, chars, a.id, io(2));
   // Foe strikes; the winding heavy is offered no parry.
   assert.strictEqual(Combat.currentActor(enc), b.id);
@@ -585,6 +586,9 @@ test('arrows: range 2+, use ammunition, cannot be parried', async () => {
   assert.deepStrictEqual([shot.minRange, shot.maxRange, shot.ranged], [2, 12, true]);
   const b = armed('Foe', 'longsword');
   const { enc, chars } = await duel(a, b);
+  // Every bow is drawn first (1 AP for a shortbow), then loosed.
+  const draw = Combat.legalActions(enc, chars, a.id).other.find((o) => o.type === 'windUp');
+  assert.strictEqual(await Combat.act(enc, chars, { actor: a.id, type: 'windUp', option: draw.option }, io(2)), null);
   const la = Combat.legalActions(enc, chars, a.id);
   const s = la.attacks.find((o) => o.motion === 'shoot');
   const offered = [];
@@ -647,12 +651,14 @@ test('shove pushes an enemy back out to range', async () => {
   assert.strictEqual(enc.pos[b.id].x, 3);
 });
 
-test('a longbow must be drawn a round ahead; an archer can redraw after loosing', () => tableWeapons(async () => {
+test('a bow must be drawn first, a longbow dearer than a shortbow; held over a round; an archer can redraw after loosing', () => tableWeapons(async () => {
   const a = armed('Archer', 'longbow');
   a.inventory.arrows = 5;
   const shot = opt(a, (o) => o.motion === 'shoot');
   assert.strictEqual(shot.windUp, true);
-  assert.strictEqual(opt(armed('S', 'shortbow'), (o) => o.motion === 'shoot').windUp, false);
+  const sb = armed('S', 'shortbow'), sbShot = opt(sb, (o) => o.motion === 'shoot');
+  assert.strictEqual(sbShot.windUp, true, 'a shortbow is drawn too');
+  assert.ok(C.actionCost(sb, 'windUp', { option: sbShot }).ap < C.actionCost(a, 'windUp', { option: shot }).ap, 'a lighter draw');
   const b = armed('Foe', 'longsword');
   b.base.CON = 12;
   b.stamina = C.maxStamina(b);
@@ -669,6 +675,37 @@ test('a longbow must be drawn a round ahead; an archer can redraw after loosing'
   assert.strictEqual(await Combat.act(enc, chars, { actor: a.id, type: 'strike', option: loose, target: b.id }, io(4)), null);
   la = Combat.legalActions(enc, chars, a.id);
   assert.ok(la.other.find((o) => o.type === 'windUp'), 'can redraw after loosing');
+}));
+
+test('a wind-up is released in the same turn when the AP allows: a longbow drawn and loosed, a power swing', () => tableWeapons(async () => {
+  const a = armed('Archer', 'longbow');
+  a.inventory.arrows = 5;
+  const b = armed('Foe', 'longsword');
+  b.base.CON = 12;
+  b.stamina = C.maxStamina(b);
+  const { enc, chars } = await duel(a, b);
+  enc.pos[b.id] = { x: 5, y: 0 };
+  let la = Combat.legalActions(enc, chars, a.id);
+  const draw = la.other.find((o) => o.type === 'windUp');
+  await Combat.act(enc, chars, { actor: a.id, type: 'windUp', option: draw.option }, io(2));
+  la = Combat.legalActions(enc, chars, a.id);
+  const loose = la.attacks.find((o) => o.motion === 'shoot');
+  assert.strictEqual(loose.why, null, 'drawn: loose now');
+  assert.ok(Combat.apLeft(enc, a.id) >= loose.ap, `AP ${Combat.apLeft(enc, a.id)} for a loose of ${loose.ap}`);
+  assert.strictEqual(await Combat.act(enc, chars, { actor: a.id, type: 'strike', option: loose, target: b.id }, io(4)), null);
+  assert.strictEqual(a.status.windUp, null, 'the draw is spent');
+  // A power swing the same; with windUp.sameTurn off, it waits for the next round.
+  const h = armed('Heavy', 'greatsword');
+  h.base.STR = 7;
+  h.feats.power_swing = 1;
+  const d2 = await duel(h, armed('Foe2', 'longsword'));
+  const wind = Combat.legalActions(d2.enc, d2.chars, h.id).other.find((o) => o.type === 'windUp');
+  await Combat.act(d2.enc, d2.chars, { actor: h.id, type: 'windUp', option: wind.option }, io(2));
+  const power = Combat.legalActions(d2.enc, d2.chars, h.id).attacks.find((o) => o.motion === 'power');
+  assert.strictEqual(power.why, null, 'wound up: swing now');
+  B.CONFIG.windUp.sameTurn = false;
+  try { assert.strictEqual(Combat.legalActions(d2.enc, d2.chars, h.id).attacks.find((o) => o.motion === 'power').why, 'Release next round'); }
+  finally { B.CONFIG.windUp.sameTurn = true; }
 }));
 
 test('a blocked power swing breaks a shield of equal or softer material and drives through', async () => {

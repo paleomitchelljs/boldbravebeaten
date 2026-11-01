@@ -293,8 +293,9 @@ shortbow:
   rarity: common
   shootAP: 3
   shootStamina: 1
+  draw: {ap: 1, stamina: 1}
   material: steel
-  notes: "Arrows can be blocked or dodged, not parried. −2 damage beyond 8 squares."
+  notes: "A light draw: drawn (1 AP), then loosed (2 AP). Arrows can be blocked or dodged, not parried. −2 damage beyond 8 squares."
 longbow:
   phys: {arrow: {depth: 25, width: 2.5, punch: 1.8}}
   name: Longbow
@@ -308,8 +309,8 @@ longbow:
   shootAP: 5
   shootStamina: 2
   material: steel
-  drawWindUp: true
-  notes: "Heavy draw: drawn one round, loosed the next. −2 damage beyond 10 squares."
+  draw: {ap: 2, stamina: 1}
+  notes: "Heavy draw: drawn (2 AP), then loosed (3 AP), the same turn if the AP is there or held into the next round. −2 damage beyond 10 squares."
 ratBite:
   phys: {mass: 0.12, length: 0.1, point: {depth: 7, width: 2.5}}
   name: Bite

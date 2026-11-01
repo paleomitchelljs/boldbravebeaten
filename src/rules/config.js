@@ -314,10 +314,9 @@
     opportunityStrikes: true,
 
     // ---- Wind-up (PROVISIONAL) --------------------------------------------
-    // Motions that must be wound up in an earlier round before they can be released.
-    // The wind-up costs part of the AP and stamina; the release costs the rest.
-    // While wound up you cannot block or parry. The wind-up is lost if you are knocked
-    // prone, grappled, disarmed or drop, or if you don't release it the next round.
+    // Motions that must be wound up before they can be released: the wind-up costs part of the AP and stamina, the
+    // release the rest. While wound up you cannot block or parry. The wind-up is lost if you are knocked prone,
+    // grappled, disarmed or drop, or if you haven't released it by the end of the next round.
     windUp: {
       motions: ['power'],
       ap: 2,
@@ -327,6 +326,9 @@
       // After releasing in a round you may wind up again that round (a steady archer looses
       // and redraws; a swinger chains blows). Either way you stay exposed.
       rewindAfterRelease: true,
+      // PROVISIONAL (the user, 2026-11-01): a wind-up may be released in the same turn, AP allowing (false: not
+      // before the next round). Two actions either way; a wind-up made ahead carries over into the next round.
+      sameTurn: true,
     },
 
     // ---- Archery (PROVISIONAL; nothing in the design docs yet) -----------
@@ -749,11 +751,12 @@
 
   // Every PROVISIONAL choice, shown on the Rules tab so nothing is hidden.
   CONFIG.provisional = [
+    'Wind-ups are released in the same turn if the AP is there (the user, 2026-11-01; was: not before the next round): a bow\'s draw and its loose, a power swing\'s wind-up and its blow, a Strong spell\'s gathering and its casting are two actions, both in one turn when the AP allows (Lorc: draw 2, loose 3 of her 6), or the first made ahead and carried into the next round (`windUp.sameTurn`).',
     'Movement (the user, 2026-11-01): a stretch of a move covers round(1 + SPD/4) squares (was (1 + ⌊SPD/4⌋) × 2), so a round spent only moving carries the presets 4 / 6 / 9 / 12 squares, not 4 / 12 / 12 / 24.',
     'Vigor (the user\'s idea, 2026-11-01): a weapon blow\'s damage × 1.25 from a fighter at full fresh stamina down to × 0.75 from one with none left. Spells and shots are untouched.',
     'Reading intent lasts 3 rounds (was 1; 2026-11-01): the AI read every round it could, half a duel\'s actions spent watching.',
     'A staff (the user, 2026-11-01: Jabiku starts with one): a caster\'s focus, so spells can be cast with it in both hands (weapons.yaml `focus`; elsewhere a two-handed weapon needs Battle Casting), and it jabs with its butt end (a blunt thrust, reach 2, from `phys.butt`: 6 against the swung head\'s 8).',
-    'The turn budget (the user\'s call): AP pool = 3.5 + SPD/2, unrounded (6 at SPD 5), costs in tenths. At level 1 a turn holds one big action, a step and a medium action, or three quick actions: base costs up to 2 (thrust, parry, dodge, block) stand, every Specifics AP above 2 costs 2 (a swing 3 → 4, a two-handed swing 4 → 6, a power swing 2 + 4, a shortbow 4, a longbow 2 + 4, trip and disarm 4, grapple, pin and throw 4); weapon speed multiplies the result (a dagger thrust 1.5). A move is a quick action: 2 AP for up to (1 + ⌊SPD/4⌋) × 2 squares. Someone who has spent nothing this round may take one action dearer than the whole pool as the whole turn.',
+    'The turn budget (the user\'s call): AP pool = 3.5 + SPD/2, unrounded (6 at SPD 5), costs in tenths. At level 1 a turn holds one big action, a step and a medium action, or three quick actions: base costs up to 2 (thrust, parry, dodge, block) stand, every Specifics AP above 2 costs 2 (a swing 3 → 4, a two-handed swing 4 → 6, a power swing 2 + 4, a shortbow 1 + 2, a longbow 2 + 4, trip and disarm 4, grapple, pin and throw 4); weapon speed multiplies the result (a dagger thrust 1.5). A move is a quick action: 2 AP for up to (1 + ⌊SPD/4⌋) × 2 squares. Someone who has spent nothing this round may take one action dearer than the whole pool as the whole turn.',
     'Armor makes actions dearer (the user\'s call): its SPD penalty no longer shrinks the pool; every action costs 1/6 AP more per point of it (plate +0.5, mail +0.2; the mobility feats lower it). The penalty still slows moving, initiative, dodging and fleeing.',
     'Weapon wear (the user\'s call): every weapon has a durability (weapons.yaml × its material\'s toughness × origin × craftsmanship; a rapier 40, a longsword 100, a mace 120). Each blow wears it by its force × rate × fragility (rapier 1.25, mace 0.5) × (what it meets ÷ its own hardness): landing on armor 0.2 (metal chews an edge; cloth, leather and flesh barely touch it), a point turned by armor 0.3, being parried 0.075, parrying 0.125 (by the force of the blow met), being blocked 0.125 (by the shield\'s material); fractions of a point carry to the next knock (TUNED 2026-10-30: was 0.4/1.0/0.15/0.25/0.25 and a rapier\'s fragility 2, which broke a rapier in two fights against scales). Spell points: each spent point takes 0.15 off the maximum until a long rest (TUNED 2026-10-30, was 0.5). A dodge costs nothing. A worn weapon keeps 60% of its damage at the end of its life; at 0 it breaks and is out of the fight until a smith mends it. Thrusts now wear armor too (half their piercing).',
     'After a fight (the user\'s call): one click rests an hour (was 15 minutes) and mends: stamina back to the weary maximum, armor, shields and weapons get 25% back (50% with Field Repair in the party); broken weapons and shields need a smith. Pressing on keeps stamina where it is.',
@@ -778,10 +781,10 @@
     'Range (the user\'s reach): daggers 1; one-handed swords, maces and axes swing 1 and thrust 2; two-handed weapons swing 2 and thrust 3, cramped at 1 (pommel, haft); spears thrust to 4 (the spear and heavy spear cramped at 1, the short spear to 3); the war scythe sweeps 2–3 and does not thrust. Long blades and spears are cramped in a clinch; daggers, clubs, maces and hammers are not, nor are half-swording and the murder stroke. Cramped blows land with half their force, all as blunt. Movement covers twice the Specifics squares.',
     'Weapons in hand: drawing a weapon costs half an AP; dropping one costs nothing; picking one up costs 2. Drawing while holding a weapon drops it (a dagger is sheathed instead). A character held in a grapple fights cramped with any weapon, dagger included: half force, all blunt.',
     'Shove (2 AP, range 1): opposed d10 + ⌊STR/2⌋ (+2 with a two-handed weapon) vs d10 + footing. A win pushes the target back 1 square, 2 on a margin of 5+; if they can\'t move, a margin of 5+ knocks them down.',
-    'Wind-up: a power swing, a longbow shot and a Strong spell are wound up (drawn) in one round (2 AP) and released the next for the rest of the cost. After releasing you may wind up again in the same round. While wound up you cannot block or parry; the wind-up is lost if you are knocked down, grappled, disarmed or drop, or if you don\'t release it the next round.',
+    'Wind-up: a power swing, a longbow shot and a Strong spell are wound up (drawn) for 2 AP and released for the rest of the cost, in the same turn or the next round. After releasing you may wind up again in the same round. While wound up you cannot block or parry; the wind-up is lost if you are knocked down, grappled, disarmed or drop, or if you haven\'t released it by the end of the next round.',
     'Shields vs power attacks: a blocked power swing breaks the shield outright if the weapon is at least as hard as the shield (wood < iron < steel) unless the shield is masterwork, and force above the shield\'s break threshold drives through as blunt damage. Every block wears a shield twice as fast as before.',
     'Spear and heavy spear (not in the catalog): spear point 8/0/0, thrusting 2–4, one hand, 1.7 kg; heavy spear the same point, two hands, 2.6 kg, which bursts any mail.',
-    'Bows (not in the design docs): shortbow arrow 5 P, range 2–12, 4 AP, single action; longbow 7 P, range 2–16, drawn one round (2 AP) and loosed the next (4 AP); −2 damage at long range; arrows can be blocked or dodged, not parried; no STR bonus; one arrow per shot.',
+    'Bows (not in the design docs): every bow is drawn, then loosed (the user, 2026-11-01), a stronger bow dearer for more range and damage (weapons.yaml `draw`): shortbow arrow 5 P, range 2–12, drawn 1 AP and loosed 2 (was 4 AP in one action); longbow 7 P, range 2–16, drawn 2 AP and loosed 4; −2 damage at long range; arrows can be blocked or dodged, not parried; no STR bonus; one arrow per shot.',
     'Arrows and armor (history): armor catches arrows better than a thrust. Extra piercing protection against arrows that burst it: padded +2, leather and mail +1, plate 0. Two arrowheads: broadheads cut terrible wounds (bleed ×1.5) but punch weakly (×0.7: a longbow broadhead must find a gap in mail); bodkins do 1 less damage but punch hard (×1.5: a longbow bodkin bursts mail; nothing bursts plate).',
     'Weapons from physics: each weapon has a mass, a length, hands and a point (depth, width), an edge or a head. Damage: point depth/4 piercing; edge (2 + 3√(mass × length × grip)) slashing; head 1 + 6√(head mass × length × grip) blunt. Speed: thrusts cost more with mass, swings with √(mass × length), the longsword costing what the motion table lists. STR adds strBonus × 0.25–0.5 to a thrust (by wound width) and × mass/1.4 (× 1.5 two-handed, up to 1.5) to a swing. A piercing wound bleeds damage × width/4 over 2 + depth/15 rounds.',
     'Fend off and push back: with a long weapon (reaching 3 or more) a shove reaches 2 squares; a ready shield adds +1.',

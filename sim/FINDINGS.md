@@ -1,5 +1,21 @@
 # Simulation findings
 
+## Draws and wind-ups (2026-11-01, the user)
+
+The user: a draw and a shot are two actions, both in one turn if the AP is there (Lorc drew and could not loose with
+4 AP left: not rounding, the rule held every wind-up to the next round); wind-ups may also be made ahead and carried
+over; every bow is drawn, a stronger one dearer for more range and damage.
+
+- `windUp.sameTurn` (PROVISIONAL): a wind-up (a draw, a power swing's, a Strong spell's) may be released the same
+  turn; one not released is lost at the end of the next round, as before. Released and wound up again, it may be
+  released again the same round: AP is the only limit.
+- Bows draw by their own `draw` (weapons.yaml): shortbow 1 AP + loose 2 (was 4 in one action), longbow 2 + 4. The
+  shortbow now looses twice in a 7-AP turn (6 AP); the longbow once, for 7 P to 16 squares and a bodkin that bursts mail.
+- The AI may draw after a first action if the loose fits the same turn (a goblin archer that stepped back to range).
+- 20 fights, 12 x 6 room: Lorc vs a scaleward loosed 49 shots (29 before), 43 drawn and loosed in one go; still 1
+  win in 20 (the room is too small for an archer). The goblin archer vs Beren: 1 shot in 20 before and after (Beren
+  reaches it in its first round).
+
 ## The AI: no reading, paths round water and foes (2026-11-01, the user's third set)
 
 The user: the AI should stop reading intent; in the sewer two skinks stared across a canal at an archer on a bridge,

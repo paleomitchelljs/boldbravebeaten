@@ -849,10 +849,13 @@
     // Spells cast at squares, foes or friends, when one is worth more than the best blow.
     const castBest = castChoice(enc, chars, id, la, foes);
     if (castBest && castBest.v > (best ? best.v : 0)) return castBest.decl;
-    if (winds.length && P.windUp > 0 && !acted) {
+    if (winds.length && P.windUp > 0) {
       let bestW = null;
       for (const w of winds) {
         const release = la.attacks.find((o) => C.optionKey(o) === C.optionKey(w.option)) || w.option;
+        // After a first action, only a wind-up that can be released this turn too (windUp.sameTurn): a bow drawn
+        // after stepping back to range.
+        if (acted && !(G.CONFIG.windUp.sameTurn && la.ap >= w.ap + release.ap)) continue;
         // Don't wind up a close-range blow you intend to kite away from.
         if (rangedLoadout && P.kite && !release.ranged && near.d > (release.maxRange || 1)) continue;
         const d = C.inRange(release, near.d) ? near.d : Math.min(Math.max(near.d, release.minRange || 1), release.maxRange);

@@ -38,7 +38,8 @@
   //   closeOK      — works in a clinch without being cramped; long blades and spears don't
   //   ranged       — bows: { min, max, long } (beyond `long` damage drops)
   //   material     — what the striking part is made of (wear, breaking shields); an item may carry its own
-  //   drawWindUp   — the shot must be drawn (wound up) a round ahead
+  //   draw         — bows: {ap, stamina}, the share of shootAP / shootStamina spent drawing (a wind-up, CONFIG.windUp)
+  //                  before the loose; a stronger bow draws dearer for more range and damage
   //   focus        — a caster's focus: spells can be cast with it in hand, though it takes both (a staff)
   //   phys         — PROVISIONAL physical description (CONFIG.weaponPhysics). Under the
   //                  'physical' weapon model, damage, AP, weight class, STR scaling and wounds

@@ -807,8 +807,10 @@
   function strikeOption(c, w, face, motion) {
     const def = Items.weaponStats(w);
     const m = MOTIONS[motion];
-    const windUp = needsWindUp(motion) || (motion === 'shoot' && !!def.drawWindUp);
-    const W = CONFIG.windUp || { ap: 0, stamina: 0 };
+    // A bow is drawn (its own share of the shot's cost, `draw`), then loosed; other wind-ups take CONFIG.windUp's.
+    const draw = motion === 'shoot' && def.draw ? def.draw : null;
+    const windUp = needsWindUp(motion) || !!draw;
+    const W = draw ? { ap: draw.ap, stamina: draw.stamina || 0 } : CONFIG.windUp || { ap: 0, stamina: 0 };
     let base = motion === 'shoot' && def.shootAP ? def.shootAP : m.ap;
     let baseSt = motion === 'shoot' && def.shootStamina != null ? def.shootStamina : m.stamina;
     if (windUp) { base -= W.ap; baseSt -= W.stamina; }
@@ -865,7 +867,7 @@
       natural: !!def.natural, knockdown: trait.knockdown || null, venom: trait.venom || null, sap: trait.sap || null, rust: trait.rust || null, shieldCrush: !!trait.shieldCrush, web: trait.web || null,
       reach: maxRange, minRange, maxRange, closePenalty, ranged, longRange: ranged ? def.ranged.long : null,
       strain: Math.round(strain * 100) / 100, tooHeavy: strain > CONFIG.weaponPhysics.strain.max,
-      windUp, damage: weaponDamage(c, w, face, motion), wound: def.wound[face] || null,
+      windUp, windUpCost: draw ? W : null, damage: weaponDamage(c, w, face, motion), wound: def.wound[face] || null,
       label: def.natural ? `${def.name}${motion === 'power' ? ' (power)' : ''}` : m.name,
     };
   }
@@ -984,8 +986,8 @@
         red = rank(c, 'light_on_your_feet');
         break;
       case 'windUp': {
-        const W = CONFIG.windUp;
         const o = extra && extra.option;
+        const W = (o && o.windUpCost) || CONFIG.windUp;
         ap = gearAP(c, Math.round(baseAP(W.ap)) + armorAP(c), o && o.weaponId ? c.weapons.find((x) => x.id === o.weaponId) : null);
         if (o && o.spell) return { ap, stamina: 0 };
         const wpn = o && o.weaponId ? c.weapons.find((x) => x.id === o.weaponId) : null;

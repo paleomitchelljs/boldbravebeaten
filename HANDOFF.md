@@ -78,6 +78,9 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   starts are gone (start.yaml `starts`).
 
 ## The AI (the user, 2026-11-01, third set)
+- [x] Wind-ups (a bow's draw, a power swing's, a Strong spell's) can be released the same turn if the AP is there, or
+  carried into the next round (`windUp.sameTurn`, PROVISIONAL). Every bow is drawn: `draw` in weapons.yaml, shortbow
+  1 + 2 AP, longbow 2 + 4. The log says "draws for" a shot. Not yet watched in play.
 - [x] The AI no longer reads intent (the player still can).
 - [x] Paths go round foes (the rules refused a move whose route ran through one: skinks stood at a canal while an
   archer held the bridge), and an AI closing to blade's reach measures distance as walked, not as the crow flies.
