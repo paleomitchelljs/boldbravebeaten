@@ -24,11 +24,13 @@ jobs:
       - name: Assemble the site
         run: |
           mkdir _site
-          cp index.html bench.html gm.html _site/
+          cp index.html bench.html gm.html manifest.webmanifest sw.js _site/
           # art/: everything the game draws (only what is committed: git-ignored art is never in the checkout).
           # Without it the map draws every figure as a coloured block. assets/ is the scratch pad: not published.
           cp -r css src data art _site/
           rm -f _site/data/bundle.js
+          # The offline cache (sw.js) fetches every file named here once the home-screen app is installed.
+          (cd _site && find css src data art -type f | sort > precache.txt)
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

@@ -4,6 +4,12 @@ Last updated at commit: 02389ce
 
 Keep this a short list. Tick things off, add new ones, and refresh the commit line after every push (`git log -1 --format=%h`).
 
+## Phone
+- [x] Home-screen app: manifest, icons (`art/icons/`, cut from Cyrus), `sw.js` (network first; the Pages build lists
+  every file in `precache.txt` and the worker fetches them in the background), saves exported through the share
+  sheet on touch screens. Registration checked in headless Chrome; the background fill and the iPhone itself are
+  not yet checked.
+
 ## Core first (the user, 2026-10-28: core changes before tuning; **no encounter tuning until asked**)
 - [x] Time in a dungeon costs something: a step is 10 s (sneaking 20), a search 10 min, the rest after a fight an
   hour. Wanderers are drawn from the place's table every 20 minutes spent there (35%), loud things count as extra

@@ -26,5 +26,13 @@
     UI.Game.go('title');
   }
 
+  // Offline play for the home-screen app (sw.js). Only when served: there are no service workers on file://.
+  if (globalThis.navigator && navigator.serviceWorker && /^https?:$/.test(location.protocol)) {
+    navigator.serviceWorker.register('sw.js')
+      .then(() => navigator.serviceWorker.ready)
+      .then((reg) => reg.active && reg.active.postMessage('fill'))
+      .catch((e) => console.warn('No offline cache:', e));
+  }
+
   boot();
 })(globalThis.BBB);

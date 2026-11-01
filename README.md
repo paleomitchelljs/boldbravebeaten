@@ -22,6 +22,10 @@ read other files from disk, so this packs the data into one script).
 On GitHub Pages: push, and the workflow in `.github/workflows/pages.yml` runs the tests and publishes the site.
 (Repository settings → Pages → Source: GitHub Actions.)
 
+On a phone: open the Pages site in Safari, Share → Add to Home Screen. It then opens full-screen with no address bar
+(nothing to pull and reload), plays offline (`sw.js` keeps every published file once it has been opened online), and
+"Export save file" in the menu goes through the share sheet, where "Save to Files" keeps it.
+
 ## What's in it
 
 - **First-person dungeons** on a grid: doors, locks, secret doors, hidden traps, chests, sleeping and watching foes,

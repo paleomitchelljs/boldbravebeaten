@@ -115,7 +115,14 @@
   };
 
   // ---- Menu ------------------------------------------------------------------------------------------------------------------------
-  function download(name, text) {
+  // Where the share sheet takes files (an iPhone; there "Save to Files" keeps it), use it: in a home-screen app a
+  // download link opens a preview with no way back to the game.
+  async function download(name, text) {
+    const file = globalThis.File && new File([text], name, { type: 'application/json' });
+    const touch = globalThis.matchMedia && matchMedia('(pointer: coarse)').matches;
+    if (touch && file && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file] }); return; } catch (e) { if (e.name === 'AbortError') return; }
+    }
     const a = h('a', { href: URL.createObjectURL(new Blob([text], { type: 'application/json' })), download: name });
     document.body.appendChild(a);
     a.click();
