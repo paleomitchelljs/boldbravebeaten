@@ -222,6 +222,15 @@
             ]
           },
           "Thrust2": {
+            "west": [
+              "Idle/animations/Thrust2/west/frame_000.png",
+              "Idle/animations/Thrust2/west/frame_001.png",
+              "Idle/animations/Thrust2/west/frame_002.png",
+              "Idle/animations/Thrust2/west/frame_003.png",
+              "Idle/animations/Thrust2/west/frame_004.png",
+              "Idle/animations/Thrust2/west/frame_005.png",
+              "Idle/animations/Thrust2/west/frame_006.png"
+            ],
             "south-east": [
               "Idle/animations/Thrust2/south-east/frame_000.png",
               "Idle/animations/Thrust2/south-east/frame_001.png",
@@ -231,15 +240,6 @@
               "Idle/animations/Thrust2/south-east/frame_005.png",
               "Idle/animations/Thrust2/south-east/frame_006.png"
             ],
-            "east": [
-              "Idle/animations/Thrust2/east/frame_000.png",
-              "Idle/animations/Thrust2/east/frame_001.png",
-              "Idle/animations/Thrust2/east/frame_002.png",
-              "Idle/animations/Thrust2/east/frame_003.png",
-              "Idle/animations/Thrust2/east/frame_004.png",
-              "Idle/animations/Thrust2/east/frame_005.png",
-              "Idle/animations/Thrust2/east/frame_006.png"
-            ],
             "south-west": [
               "Idle/animations/Thrust2/south-west/frame_000.png",
               "Idle/animations/Thrust2/south-west/frame_001.png",
@@ -248,6 +248,15 @@
               "Idle/animations/Thrust2/south-west/frame_004.png",
               "Idle/animations/Thrust2/south-west/frame_005.png",
               "Idle/animations/Thrust2/south-west/frame_006.png"
+            ],
+            "east": [
+              "Idle/animations/Thrust2/east/frame_000.png",
+              "Idle/animations/Thrust2/east/frame_001.png",
+              "Idle/animations/Thrust2/east/frame_002.png",
+              "Idle/animations/Thrust2/east/frame_003.png",
+              "Idle/animations/Thrust2/east/frame_004.png",
+              "Idle/animations/Thrust2/east/frame_005.png",
+              "Idle/animations/Thrust2/east/frame_006.png"
             ],
             "north": [
               "Idle/animations/Thrust2/north/frame_000.png",
@@ -284,15 +293,6 @@
               "Idle/animations/Thrust2/north-east/frame_004.png",
               "Idle/animations/Thrust2/north-east/frame_005.png",
               "Idle/animations/Thrust2/north-east/frame_006.png"
-            ],
-            "west": [
-              "Idle/animations/Thrust2/west/frame_000.png",
-              "Idle/animations/Thrust2/west/frame_001.png",
-              "Idle/animations/Thrust2/west/frame_002.png",
-              "Idle/animations/Thrust2/west/frame_003.png",
-              "Idle/animations/Thrust2/west/frame_004.png",
-              "Idle/animations/Thrust2/west/frame_005.png",
-              "Idle/animations/Thrust2/west/frame_006.png"
             ]
           }
         }
@@ -300,5 +300,5 @@
     }
   ],
   "export_version": "3.1",
-  "export_date": "2026-11-01T15:20:13.632882"
+  "export_date": "2026-11-01T15:17:54.821943"
 }

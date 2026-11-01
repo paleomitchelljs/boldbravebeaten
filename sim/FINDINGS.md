@@ -1,5 +1,29 @@
 # Simulation findings
 
+## Duels: movement, vigor, reading (2026-11-01; `node sim/duels.js --n 40`)
+
+The user: Cyrus crosses a courtyard in one round; duels are slow and spongy; perhaps damage should follow stamina.
+`sim/duels.js` pits the presets against each other and common foes one on one (12 x 6 room, AI both sides).
+
+- **Movement** was 4 / 12 / 12 / 24 squares for a round spent only moving (Beren in plate, Jabiku, Lorc, Cyrus). A stretch
+  now covers 1 + SPD/4 squares (unrounded; ×2 before): 3 / 6 / 8 / 13. `disengage.outrun` 2 → 4 rounds, so the gap
+  to open before getting away is as many squares as it was.
+- **Duels are short in rounds** (median 2; against the scaleward 4-6). What fills them is not blows: in a hero vs
+  scaleward fight there were ~7 weapon blows to ~6 reads of intent and ~2 failed shoves. A read lasted one round,
+  so the AI read every round. Now 3 rounds (`social.readIntent.rounds`).
+- **Vigor** (damage × 1.25 at full fresh stamina down to × 0.75 at none) hardly moves duel length: armor takes most
+  of a blow, so a harder blow mostly feeds the armor (Beren's share of a scaleward's stamina per landed blow 0.17 →
+  0.18). At 1.5 / 0.5 spent fighters stall (timeouts 2%). Kept at 1.25 / 0.75 for what it does to choices: a fresh
+  fighter hits a quarter harder.
+- **Smaller stamina pools** (CON ×3 or ×2.5 in the pool, was ×4) did not shorten duels either and were not taken.
+
+| | median, 90th rounds before | after |
+|---|---|---|
+| Beren vs scaleward | 6, 9 | 5, 6 |
+| Cyrus vs scaleward | 4, 7 | 4, 5 |
+| Jabiku vs scaleward | 6, 8 | 5, 12 |
+| all ten pairings | 2, 6 (mean 2.9) | 2, 5 (mean 2.8) |
+
 ## Weariness by effort (2026-11-01; `node sim/effort.js`)
 
 The user: a fight won in one blow wore the whole party as much as a hard one (1 stamina off the maximum a round, for

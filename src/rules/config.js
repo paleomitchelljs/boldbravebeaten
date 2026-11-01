@@ -80,8 +80,12 @@
     // PROVISIONAL: squares are about an arm's length and a step (the user's reach scale: daggers and
     // one-handed swings 1, one-handed thrusts and two-handed swings 2, two-handed thrusts 3, spears 4), so
     // movement covers twice as many of them as the Specifics formula gives.
-    moveScale: 2,
+    // TUNED (the user, 2026-11-01: Cyrus crossed a courtyard in one round): ×1 and SPD counted unrounded
+    // (squares a stretch = round(1 + SPD/4)), was ×2 and ⌊SPD/4⌋. A round spent only moving now carries the
+    // presets 4 / 6 / 9 / 12 squares (Beren in plate, Jabiku, Lorc, Cyrus), was 4 / 12 / 12 / 24.
+    moveScale: 1,
     moveSpdDivisor: 4,
+    moveSpdContinuous: true,
     // PROVISIONAL (the user's turn model): a turn spends as much of the AP pool as the character
     // likes; each action resolves at once; AP kept back pays for reactions (block, parry, dodge, an
     // opportunity strike) on others' turns. No per-pass cap, no passes.
@@ -302,7 +306,7 @@
     // foe's true intent and, for the round, +2 to defend against them and to beat their defenses.
     // Missed by less than misreadBy: nothing to go on. Missed by misreadBy or more: a confident
     // misread — a false intent and −2 — that looks just like a true read. Range: in sight.
-    social: { bait: { range: 3 }, readIntent: { range: 4, tn: 5, misreadBy: 4 }, readBonus: 2 },
+    social: { bait: { range: 3 }, readIntent: { range: 4, tn: 5, misreadBy: 4, rounds: 3 }, readBonus: 2 },
     // PROVISIONAL (the user's ruling, 2026-10-24: docs/PROPOSALS.md §1): a foe may strike at a mover who
     // enters its melee reach, leaves it, or takes a second step within it in one move (one guarded step
     // within reach is free). Once per foe per move, paid from the foe's AP; a hit stops the move where it
@@ -722,10 +726,16 @@
     // much as a hard one). In sim/FINDINGS.md: a preset fighter spends 8-14 stamina in a median fight and 30-50 in
     // a hard one, so 0.25 costs about what the flat rate did on average (2-3 points), nothing for standing by.
     weariness: { perRound: 0, perStamina: 0.25, perHour: 1 / 32, cap: 0.75 },
+    // PROVISIONAL (the user, 2026-11-01: duels too spongy; "more energy = harder swing"): a weapon blow's damage ×
+    // `full` from a fighter at full fresh stamina down to × `empty` from one with none left. null: off.
+    // 1.25 / 0.75 (sim/duels.js; FINDINGS 2026-11-01): it barely shortens duels (armor takes most of a blow), but a
+    // fresh fighter hits a quarter harder and a spent one a quarter softer, so saving stamina pays.
+    vigor: { full: 1.25, empty: 0.75 },
     // PROVISIONAL (the user, 2026-10-29): there is no flee roll. The party gets away when, at the end of a round, no
     // foe can reach striking distance of any of them (a wall across the way, or held where it stands) or none could
     // in `outrun` rounds of running, and no foe with a missile or a spell has a clear line to them.
-    disengage: { outrun: 2 },
+    // TUNED (2026-11-01, with movement halved): 4 rounds (was 2), so the gap to open is as many squares as before.
+    disengage: { outrun: 4 },
 
     // ---- Progression (Outline Lean) --------------------------------------
     startingFeats: 3,
@@ -739,6 +749,9 @@
 
   // Every PROVISIONAL choice, shown on the Rules tab so nothing is hidden.
   CONFIG.provisional = [
+    'Movement (the user, 2026-11-01): a stretch of a move covers round(1 + SPD/4) squares (was (1 + ⌊SPD/4⌋) × 2), so a round spent only moving carries the presets 4 / 6 / 9 / 12 squares, not 4 / 12 / 12 / 24.',
+    'Vigor (the user\'s idea, 2026-11-01): a weapon blow\'s damage × 1.25 from a fighter at full fresh stamina down to × 0.75 from one with none left. Spells and shots are untouched.',
+    'Reading intent lasts 3 rounds (was 1; 2026-11-01): the AI read every round it could, half a duel\'s actions spent watching.',
     'A staff (the user, 2026-11-01: Jabiku starts with one): a caster\'s focus, so spells can be cast with it in both hands (weapons.yaml `focus`; elsewhere a two-handed weapon needs Battle Casting), and it jabs with its butt end (a blunt thrust, reach 2, from `phys.butt`: 6 against the swung head\'s 8).',
     'The turn budget (the user\'s call): AP pool = 3.5 + SPD/2, unrounded (6 at SPD 5), costs in tenths. At level 1 a turn holds one big action, a step and a medium action, or three quick actions: base costs up to 2 (thrust, parry, dodge, block) stand, every Specifics AP above 2 costs 2 (a swing 3 → 4, a two-handed swing 4 → 6, a power swing 2 + 4, a shortbow 4, a longbow 2 + 4, trip and disarm 4, grapple, pin and throw 4); weapon speed multiplies the result (a dagger thrust 1.5). A move is a quick action: 2 AP for up to (1 + ⌊SPD/4⌋) × 2 squares. Someone who has spent nothing this round may take one action dearer than the whole pool as the whole turn.',
     'Armor makes actions dearer (the user\'s call): its SPD penalty no longer shrinks the pool; every action costs 1/6 AP more per point of it (plate +0.5, mail +0.2; the mobility feats lower it). The penalty still slows moving, initiative, dodging and fleeing.',

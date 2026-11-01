@@ -1,6 +1,8 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const B = require('./load');
+// Blows here land at a fixed force; vigor (CONFIG.vigor) has its own test below.
+B.CONFIG.vigor = null;
 const { Character: C, Combat, Items, Enemies, Recovery, AI } = B;
 
 // Deterministic roller: returns queued values, then falls back to a seeded RNG.
@@ -20,9 +22,9 @@ function asWritten(fn) {
   const D0 = C0.defense;
   const spec = {
     apScale: 1, apDisplay: 1, costScale: null, apBase: 3, apSpdContinuous: false, apCurve: null, moveAP: null, wholeTurnAction: false,
-    armorActionAP: 0, quickCut: null, minActionAP: 1, minStrikeAP: 1, weaponWear: null, weariness: null, armorPierceWear: 0,
+    armorActionAP: 0, quickCut: null, minActionAP: 1, minStrikeAP: 1, weaponWear: null, weariness: null, vigor: null, armorPierceWear: 0,
     defense: Object.assign({}, D0, { block: Object.assign({}, D0.block, { opposed: false }), dodgeBonus: 0, absorb: null, dodgeStamina: null }),
-    staminaScale: 1, pierceMode: 'floor', passThroughByArmor: null, pierce: null, moveScale: 1, armorAdjust: {}, standUp: null, grappling: null, weaponModel: 'table',
+    staminaScale: 1, pierceMode: 'floor', passThroughByArmor: null, pierce: null, moveScale: 1, moveSpdContinuous: false, armorAdjust: {}, standUp: null, grappling: null, weaponModel: 'table',
     // The Specifics had no hit locations: one d4 per point of a cut, wherever it lands.
     locations: Object.assign({}, C0.locations, { wounds: null }),
   };
@@ -95,11 +97,11 @@ test('the turn budget: pool 6 at SPD 5 holds one big action, a step and a swing,
   const pool = C.apPool(c);
   assert.strictEqual(C.fmtAP(pool), '6');
   const cost = (motion) => C.attackOptions(c).find((o) => o.motion === motion).ap;
-  const quick = [cost('thrust'), C.actionCost(c, 'parry').ap, C.actionCost(c, 'dodge').ap, C.moveCost(c, 4)];
-  assert.deepStrictEqual(quick, [AP(2), AP(2), AP(2), AP(2)], 'thrust, parry, dodge and a 4-square move are quick');
+  const quick = [cost('thrust'), C.actionCost(c, 'parry').ap, C.actionCost(c, 'dodge').ap, C.moveCost(c, 2)];
+  assert.deepStrictEqual(quick, [AP(2), AP(2), AP(2), AP(2)], 'thrust, parry, dodge and a 2-square move are quick');
   assert.strictEqual(cost('swing'), AP(4), 'a swing is medium');
   assert.strictEqual(cost('twoHanded'), AP(6), 'a two-handed swing is big');
-  assert.strictEqual(C.moveCost(c, 5), AP(4), 'a longer move is two moves');
+  assert.strictEqual(C.moveCost(c, 3), AP(4), 'a longer move is two moves');
   assert.ok(3 * AP(2) <= pool && C.moveCost(c, 2) + cost('swing') <= pool && cost('twoHanded') <= pool);
   assert.ok(C.moveCost(c, 2) + cost('swing') + C.moveCost(c, 2) > pool, 'but not in, swing and out');
   c.base.SPD = 6;
@@ -1765,6 +1767,24 @@ test('weariness: stamina spent in a fight lowers max stamina until a long rest; 
   assert.ok(a.weary > b.weary, 'the one who spent more is wearier');
   await Recovery.longRest(a, {}, roller(1, [5]));
   assert.strictEqual(C.maxStamina(a), fresh);
+});
+
+test('vigor: a fresh fighter hits harder than a spent one; spells and shots do not care', async () => {
+  const saved = B.CONFIG.vigor;
+  B.CONFIG.vigor = { full: 1.25, empty: 0.75 };
+  try {
+    const a = armed('A', 'longsword'), t = armed('T', 'longsword');
+    const swing = C.attackOptions(a).find((o) => o.motion === 'swing');
+    const total = (h) => h.raw ? h.raw.reduce((x, y) => x + y, 0) : null;
+    a.stamina = C.freshStamina(a);
+    const fresh = Combat.computeHit(a, t, swing, {});
+    a.stamina = 0;
+    const spent = Combat.computeHit(a, t, swing, {});
+    const f = JSON.stringify(fresh), s2 = JSON.stringify(spent);
+    assert.notStrictEqual(f, s2, 'the same blow lands differently');
+    const sum = (h) => (h.toCON || 0) + (h.slashToAttrs || 0) + (h.bluntToStamina || 0) + (h.bluntToCON || 0);
+    assert.ok(sum(fresh) > sum(spent), `fresh ${sum(fresh)} > spent ${sum(spent)}`);
+  } finally { B.CONFIG.vigor = saved; }
 });
 
 // ---- Items: type + material + origin + craft + enchantments ---------------------------------

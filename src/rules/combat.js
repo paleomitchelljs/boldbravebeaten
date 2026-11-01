@@ -840,6 +840,16 @@
     return C.damageMult(target, el) * C.damageMult(target, 'magic');
   }
 
+  // How hard a weapon blow lands for the striker's stamina left (of their fresh stamina, so weariness tells too):
+  // CONFIG.vigor.full at full, .empty at none, straight between. Spells, shots and the tireless are untouched.
+  function vigorMult(a, option) {
+    const V = CONFIG.vigor;
+    if (!V || !a || option.spell || option.ranged || C.tireless(a)) return 1;
+    const fresh = C.freshStamina(a);
+    const f = fresh > 0 ? Math.max(0, Math.min(1, (a.stamina || 0) / fresh)) : 1;
+    return V.empty + (V.full - V.empty) * f;
+  }
+
   function computeHit(attacker, target, option, flags) {
     flags = flags || {};
     // Immune to the spell (resist 0 for its element, or for `magic`, every spell: a golem and mind or life magic).
@@ -849,6 +859,9 @@
     if (option.spell && CONFIG.magic.energyMitigation && CONFIG.magic.energyMitigation[option.spell.element] != null) return computeFire(attacker, target, option, flags);
     if (option.spell && option.spell.element === 'life') return computeLife(attacker, target, option, flags);
     const v = option.damage.slice();
+    // Vigor (CONFIG.vigor): a fresh fighter hits harder than a spent one.
+    const vm = vigorMult(attacker, option);
+    if (vm !== 1) for (let i = 0; i < 3; i++) v[i] = Math.round(v[i] * vm);
     // Incorporeal (a spectre): blows from weapons without an enchantment pass through.
     if (passesThrough(attacker, target, option)) v[0] = v[1] = v[2] = 0;
     const st = target.status;
@@ -2042,7 +2055,7 @@
           }
           const truth = margin >= 0;
           const note = intentNote(enc, chars, t, truth, r);
-          if (G.Conditions) G.Conditions.add(a, 'reading', { rounds: 1, vs: t.id, src: a.id, truth, note });
+          if (G.Conditions) G.Conditions.add(a, 'reading', { rounds: RI.rounds || 1, vs: t.id, src: a.id, truth, note });
           log(enc, `${a.name} reads ${t.name}: ${note}`, 'defend');
         }
         break;

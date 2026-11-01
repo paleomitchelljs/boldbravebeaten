@@ -600,17 +600,21 @@
     if (CONFIG.moveAP) {
       // The most stretches whose cost (with armor and gear) fits in `ap`.
       let n = 0;
-      while (n < 50 && moveCost(c, (n + 1) * per) <= ap) n++;
-      return n * per;
+      while (n < 50 && moveCost(c, Math.floor((n + 1) * per)) <= ap) n++;
+      return Math.floor(n * per);
     }
     return Math.floor((ap * per) / costScale());
   }
 
   function squaresPerAP(c) {
-    let s = CONFIG.moveBase + Math.floor(combatAttr(c, 'SPD') / CONFIG.moveSpdDivisor) + rank(c, 'fleet_foot');
+    const spd = combatAttr(c, 'SPD') / CONFIG.moveSpdDivisor;
+    let s = CONFIG.moveBase + (CONFIG.moveSpdContinuous ? spd : Math.floor(spd)) + rank(c, 'fleet_foot');
     if (c.shield && c.shield.size === 'tower' && c.shield.durability > 0) s -= CONFIG.towerMovePenalty;
     // moveMult: leapers (bogfolk) cover more ground per AP, chill halves it. move: boots add squares.
-    return Math.max(1, Math.round(Math.max(1, s) * (CONFIG.moveScale || 1) * G.Effects.mult(c, 'moveMult')) + G.Effects.sum(c, 'move'));
+    const per = Math.max(1, s) * (CONFIG.moveScale || 1) * G.Effects.mult(c, 'moveMult');
+    // Continuous SPD keeps the fraction (1.75 squares a stretch in plate, 2.25 at SPD 5): the squares a move reaches
+    // are rounded down at the end (squaresFor), so armor still slows the feet.
+    return Math.max(1, CONFIG.moveSpdContinuous ? Math.round(per * 4) / 4 : Math.round(per)) + G.Effects.sum(c, 'move');
   }
 
   function strOffset(c) {

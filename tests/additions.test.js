@@ -2,6 +2,8 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const B = require('./load');
+// Blows here land at a fixed force (vigor has its own test in rules.test.js).
+B.CONFIG.vigor = null;
 const { Character: C, Combat, Items, Enemies, Magic, Terrain, Conditions } = B;
 
 function roller(queue, fill) {
