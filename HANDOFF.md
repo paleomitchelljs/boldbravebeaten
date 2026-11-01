@@ -23,7 +23,12 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   stand-in (the plan's §3 lists the figures wanted from the user). Encounter sizes untuned (deferred).
 - [x] Tilesets: basalt, lava, masonry and gnome stone (`assets/wip/ember/build.py`; prompts in its README); every
   corner drawable (`assets/wip/ember/rebuild.sh` re-seeds the maps and squares them off).
-- [ ] Props (portcullis, throne, murder hole, carts, bridge deck, steps) and decor; a look at each place.
+- [x] Props: 16 from one PixelLab call (`art/worldtiles/ember/props.png`); throne, bed, forge, rubble, portcullis placed.
+- [ ] Place the rest (braziers, bar, bunks, tables, carts, ore, winch, racks, cages); a murder-hole tile, stair steps
+  and a stone bridge deck over lava (colours today); a look at each place in headless Chrome (props not yet seen).
+- [ ] Idle animations for the four new characters (the hooded knight's 8 were queued 2026-11-01 and not yet pulled:
+  `node tools/pixellab-pull.js Hooded_Knight`, then add `idle: {anim: Idle, frames: 4, pingpong: true}`); then
+  the animation plan's section D.
 
 ## Next (the user, 2026-10-31, in this order)
 - [x] Spell effects (`data/fx.yaml`, `art/fx/`; PixelLab's effect workbench, free): a bolt in ten colours by spell
@@ -43,7 +48,7 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   the water; the plank bridges are one wide by design). Figures drawn over a side wall's top (a sword reaching over
   the court's west wall) are not changed.
 - [x] The user's new raptor (`Raptor_Red`, now the `raptor` art): walk ×8, bite ×5, idle ×5, death.
-- [ ] The animation plan's cycle 2: the dragonborn, orc, mummy lord, then section D.
+- [x] The animation plan's cycle 2, the new four: walk, strike, death in 8 directions (idles still to do).
 
 ## Core first (the user, 2026-10-28: core changes before tuning; **no encounter tuning until asked**)
 - [x] Time in a dungeon costs something: a step is 10 s (sneaking 20), a search 10 min, the rest after a fight an

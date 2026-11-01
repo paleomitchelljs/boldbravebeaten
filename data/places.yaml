@@ -701,7 +701,7 @@ ember_hall:
     G: {kind: monster, encounter: gate, label: "The gate guards"}
     P: {kind: locked, see: true, forceTn: 15, opensWhen: {flag: ember_winch}, label: "A portcullis of black iron", text: "A portcullis of black iron bars. Its chain runs to a winch in the gate court's wall, and another on the far side.", alt: [{label: "Haul on the gate winch", requires: {flag: ember_gate_won}, opens: true, text: "With the guards dead, nobody stops you. The winch groans, and the portcullis rattles up into the rock."}]}
     K: {kind: stairs, to: ember_castle, at: S, up: true, sprite: door, wall: true, label: "Into the goblin castle"}
-    D: {kind: prop, label: "The tunnel drops away into heat and dark: the way to the deep lair (not built yet)"}
+    D: {kind: prop, sprite: rubble, label: "The tunnel drops away into heat and dark: the way to the deep lair (not built yet)"}
     S: {kind: secret, tn: 10, label: "A seam in the tunnel wall"}
     Q: {kind: stairs, to: ember_castle, at: Q, up: true, sprite: door, wall: true, label: "A goblin door at the end of the secret passage"}
     M: {kind: stairs, to: ember_warrens, at: m, sprite: door, wall: true, label: "On into the mine workings"}
@@ -978,7 +978,7 @@ ember_gnomes:
     P: {kind: locked, see: true, forceTn: 15, opensWhen: {flag: gnomes_trust}, label: "The fort's gate", text: "An iron gate, and gnome eyes behind it. They will open it to a friend."}
     K: {kind: npc, npc: gnome_warden, label: "Warden Odda"}
     k: {kind: shrine, heal: 1, label: "The fort's infirmary", text: "A gnome with a lamp and very steady hands sees to your hurts."}
-    w: {kind: prop, label: "The fort's forge, never let go out"}
+    w: {kind: prop, sprite: forge, label: "The fort's forge, never let go out"}
     h: {kind: note, label: "Gnome bunks", text: "Bunks in rows, a name burned into the head of each. Some of the names are crossed through."}
     C: {kind: note, label: "The fort's stores", text: "Sacks of cave-grain, dried mushroom, lamp oil, and not much else. They have been careful for eleven years."}
   secrets: []
@@ -1044,7 +1044,7 @@ ember_castle:
     Z: {kind: secret, tn: 11, label: "A seam in the end of the passage"}
     C: {kind: chest, label: "The king's hoard", loot: relic_cache, rolls: 2, tn: 12}
     q: {kind: monster, encounter: bodyguard, label: "The king's bodyguard"}
-    e: {kind: prop, sprite: bed, label: "The king's bed, piled with furs"}
+    e: {kind: prop, sprite: bunk, label: "The king's bed, piled with furs"}
     c: {kind: monster, encounter: champions, label: "Champions in the front room"}
     x: {kind: monster, encounter: shaman, label: "The high shaman's fire"}
   encounters:
@@ -1099,7 +1099,7 @@ ember_jail:
     g: {kind: monster, encounter: jailers, label: "Jailers"}
     p: {kind: npc, npc: gnome_prisoner, label: "A gnome in a cell"}
     o: {kind: note, label: "An empty cell", text: "Chains, and what is left of whoever wore them."}
-    D: {kind: prop, label: "The stair goes on down into heat and dark: the way to the deep lair (not built yet)"}
+    D: {kind: prop, sprite: rubble, label: "The stair goes on down into heat and dark: the way to the deep lair (not built yet)"}
   encounters:
     questioner: {foes: [{monster: goblinShaman}, {monster: fireGoblin}], text: "The questioner puts down its irons."}
     jailers: {foes: [{monster: goblinWarrior}, {monster: fireGoblin}], text: "The jailers grab their keys and their spears."}

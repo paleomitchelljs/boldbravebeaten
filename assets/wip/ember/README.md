@@ -28,3 +28,9 @@ top-down, 25 generations a cliff set and 25 the lava set.
 
 Still to make: the stone bridge deck over lava, stair steps, the murder hole, props (portcullis, throne, bar, bunks,
 mine carts, the winch, braziers, the forge), decor (rubble, ore, glowing cracks).
+
+Props (2026-11-01): one `create_1_direction_object` call at 64 px (object 526c6fd5, 10 gens), 16 cells: portcullis,
+throne, brazier, bar, bunk, table, map table, mine cart, ore pile, barrel, crates, winch, forge, weapon rack, cage door,
+rubble. props/ holds them; art/worldtiles/ember/props.png is the strip, named in each ember tileset's `props`.
+Placed so far: the throne, the king's bed (bunk), the gnome forge, the rubble at the two ways down, the portcullis
+(as door_locked). The rest are ready for the legends.
