@@ -518,6 +518,11 @@
       // cross) but not sight, missiles or a spear's reach; shallows drag at the feet.
       deepWater: { name: 'Deep water', deep: true, permanent: true },
       shallows: { name: 'Shallow water', cost: 1, permanent: true },
+      // PROVISIONAL (the fire-goblin mine, 2026-10-31): lava can be walked into but nobody does it willingly. A shove or
+      // a fall into it is a Fire 6 blow, and again at each round's end while still in it; `deadly` keeps the AI out.
+      lava: { name: 'Lava', onEnter: { fire: 6 }, perRound: { fire: 6 }, deadly: true, burns: true, permanent: true },
+      // A murder hole or a portcullis: nobody passes, but sight, missiles, spells and a spear's reach go through.
+      bars: { name: 'Bars', wall: true, permanent: true },
       iceWall: { name: 'Ice wall', wall: true, solid: true, meltsInFire: true },
       brambleWall: { name: 'Bramble wall', wall: true, flammable: true },
       forceWall: { name: 'Force wall', wall: true, blocksMissiles: true },

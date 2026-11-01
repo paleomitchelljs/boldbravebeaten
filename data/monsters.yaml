@@ -602,3 +602,208 @@ avatarOfFear:
   armor: avatarHide
   traits: {size: 1.8, apMult: 1.5, aura: {name: dread, radius: 1, cond: frightened, resisted: true}}
   feats: {power_swing: 1, toughness: 1}
+
+# ---- The fire-goblin mine (assets/ideas/ember-mine.md). Art is stand-in until the user makes the figures: the orange
+# goblin for fire goblins, the green one for miners, the orc warrior for the champions, the golem in fire colours for
+# the elementals, the avatar in fire colours for the efreet, the old man for gnomes, Singe for the drake.
+fireGoblin:
+  name: Fire goblin
+  blurb: "A goblin of the deep mine, red-skinned and heat-hardened: a spear, scraps of leather, and no fear of the lava."
+  faction: cinder_goblins
+  xp: 18
+  glyph: "👺"
+  sprite: {art: goblin-orange, kind: orc, scale: 0.85}
+  loot: humanoid_purse
+  attrs: {STR: 5, CON: 5, DEX: 7, SPD: 7, INT: 4, WIS: 4, CHA: 3}
+  natural: []
+  armorItem: {type: leather, coverage: half}
+  origin: goblin
+  weapons: [shortSpear]
+  sidearm: dagger
+  craft: poor
+  traits: {dodge: 2, resist: {fire: 0.5}}
+  feats: {}
+  keepUnarmed: true
+fireGoblinArcher:
+  name: Fire goblin archer
+  blurb: "A fire goblin with a shortbow. They like a wall between themselves and whoever they shoot."
+  faction: cinder_goblins
+  xp: 18
+  glyph: "👺"
+  sprite: {art: goblin-orange, kind: orc_rogue, scale: 0.85}
+  loot: humanoid_purse
+  attrs: {STR: 4, CON: 5, DEX: 8, SPD: 7, INT: 4, WIS: 5, CHA: 3}
+  natural: []
+  armorItem: {type: leather, coverage: half}
+  origin: goblin
+  weapons: [shortbow]
+  sidearm: dagger
+  craft: poor
+  arrows: 20
+  traits: {dodge: 2, resist: {fire: 0.5}}
+  feats: {}
+  keepUnarmed: true
+goblinMiner:
+  name: Goblin miner
+  blurb: "A green goblin worked half to death in the tunnels. A pick-heavy club and a grudge."
+  faction: cinder_goblins
+  xp: 12
+  glyph: "👺"
+  sprite: {art: goblin, kind: orc, scale: 0.85}
+  loot: humanoid_purse
+  attrs: {STR: 6, CON: 5, DEX: 6, SPD: 6, INT: 3, WIS: 3, CHA: 3}
+  natural: []
+  origin: goblin
+  weapons: [club]
+  craft: poor
+  traits: {dodge: 1}
+  feats: {}
+  keepUnarmed: true
+goblinWarrior:
+  name: Goblin warrior
+  blurb: "A barracks goblin in goblin-made mail with a short sword and a round shield: drilled, and it shows."
+  faction: cinder_goblins
+  xp: 30
+  glyph: "👺"
+  sprite: {art: goblin-orange, artScale: 1.05, kind: orc_warrior, scale: 0.9}
+  loot: humanoid_purse
+  level: 2
+  attrs: {STR: 6, CON: 6, DEX: 7, SPD: 6, INT: 4, WIS: 4, CHA: 3}
+  natural: []
+  armorItem: {type: mail, coverage: half}
+  origin: goblin
+  weapons: [shortsword]
+  shield: [round, wood]
+  craft: average
+  traits: {dodge: 1, resist: {fire: 0.5}}
+  feats: {shield_training: 1}
+  keepUnarmed: true
+goblinShaman:
+  name: Goblin shaman
+  blurb: "A fire goblin with a bone staff who throws flame from a distance and keeps the warriors between you and it."
+  faction: cinder_goblins
+  xp: 40
+  glyph: "👺"
+  sprite: {art: goblin-orange, artScale: 0.95, kind: orc_shaman, scale: 0.85}
+  loot: humanoid_purse
+  level: 3
+  attrs: {STR: 4, CON: 5, DEX: 6, SPD: 6, INT: 7, WIL: 7, WIS: 6, CHA: 5}
+  natural: []
+  weapons: [staff]
+  keepUnarmed: true
+  nouns: [fire]
+  traits: {resist: {fire: 0.25}}
+  feats: {casting: 1, verb_launch: 1}
+goblinChampion:
+  name: Goblin champion
+  blurb: "One of the king's champions: bigger than any goblin has a right to be, in good mail, a falchion-heavy sword and a skull shield."
+  faction: cinder_goblins
+  xp: 90
+  glyph: "👹"
+  sprite: {art: orc-warrior, kind: orc_warrior, scale: 1.0}
+  loot: humanoid_purse
+  level: 4
+  attrs: {STR: 9, CON: 8, DEX: 7, SPD: 6, INT: 4, WIL: 6, WIS: 5, CHA: 4}
+  natural: []
+  armorItem: {type: mail, coverage: full}
+  origin: goblin
+  weapons: [longsword]
+  shield: [heater, iron]
+  craft: average
+  traits: {resist: {fire: 0.5}}
+  feats: {shield_training: 1, toughness: 1}
+  keepUnarmed: true
+goblinKing:
+  name: The goblin king
+  blurb: "The king of the mine on his basalt throne: old, fat, clever, armored like a champion and guarded like a miser."
+  faction: cinder_goblins
+  xp: 220
+  glyph: "👑"
+  sprite: {art: goblin-orange, artScale: 1.25, kind: orc_warrior, scale: 1.1}
+  loot: humanoid_purse
+  level: 6
+  attrs: {STR: 8, CON: 9, DEX: 7, SPD: 5, INT: 7, WIL: 8, WIS: 6, CHA: 8}
+  natural: []
+  armorItem: {type: plate, coverage: half}
+  origin: goblin
+  weapons: [flangedMace]
+  shield: [heater, iron]
+  craft: master
+  traits: {resist: {fire: 0.5}}
+  feats: {shield_training: 2, toughness: 1}
+  keepUnarmed: true
+goblinHighShaman:
+  name: The high shaman
+  blurb: "The keeper of the goblins' fire. It burns whole rooms, and the champions die for it gladly."
+  faction: cinder_goblins
+  xp: 200
+  glyph: "🔥"
+  sprite: {art: mummy-lord, kind: orc_shaman, scale: 1.0}
+  loot: humanoid_purse
+  level: 6
+  attrs: {STR: 5, CON: 7, DEX: 6, SPD: 6, INT: 10, WIL: 10, WIS: 8, CHA: 7}
+  natural: []
+  weapons: [staff]
+  keepUnarmed: true
+  nouns: [fire, fear]
+  traits: {resist: {fire: 0}}
+  feats: {casting: 3, verb_launch: 1, verb_burst: 1, verb_beguile: 1, mod_strong: 1}
+redDrake:
+  name: Red drake
+  blurb: "A young red dragon that hunts the mine tunnels for goblins and anything else. It never goes into the barracks: the goblins learned to keep a fire in the gate."
+  faction: wilds
+  xp: 200
+  glyph: "🐉"
+  sprite: {art: singe, kind: orc_shaman, scale: 1.3, tint: "#9a4a3a"}
+  level: 8
+  attrs: {STR: 14, CON: 16, DEX: 8, SPD: 8, INT: 6, WIL: 8, WIS: 6, CHA: 6}
+  natural: [drakeBite, drakeClaws, wingBuffet]
+  armor: drakeScales
+  nouns: [fire]
+  traits: {flying: true, moveMult: 1.5, slippery: 2, dragon: true, resist: {fire: 0}}
+  feats: {casting: 2, verb_burst: 1, mod_strong: 1, dodge_training: 1, toughness: 1}
+fireElemental:
+  name: Fire elemental
+  blurb: "Living flame in a man's shape. Its touch burns, blades pass half through it, and it can stand in the lava."
+  faction: wilds
+  xp: 80
+  glyph: "🔥"
+  sprite: {art: fire-elemental, kind: orc_shaman, scale: 1.1, tint: "#e06020"}
+  level: 4
+  attrs: {STR: 9, CON: 10, DEX: 7, SPD: 7, INT: 3, WIL: 8, WIS: 4, CHA: 2}
+  natural: [elementalTouch]
+  armor: golemBody
+  traits: {size: 1.2, tireless: true, element: fire, noBleed: true, resist: {P: 0.5, S: 0.5, fire: 0, mind: 0}}
+  feats: {}
+efreetLord:
+  name: The efreet lord
+  blurb: "A great fire spirit bound at the bottom of a pit, with two elementals for company. It flies, it burns, and it is very bored."
+  faction: wilds
+  xp: 350
+  glyph: "🔥"
+  sprite: {art: efreet, kind: orc_shaman, scale: 1.6, tint: "#e04010"}
+  level: 9
+  attrs: {STR: 15, CON: 14, DEX: 8, SPD: 8, INT: 9, WIL: 12, WIS: 8, CHA: 9}
+  natural: [avatarArms]
+  armor: avatarHide
+  nouns: [fire]
+  traits: {size: 1.6, flying: true, element: fire, resist: {fire: 0, mind: 0.5}}
+  feats: {casting: 3, verb_burst: 1, verb_launch: 1, mod_strong: 1, toughness: 1}
+gnomeWarrior:
+  name: Gnome warrior
+  blurb: "A gnome of the cut-off fort in dark iron mail with a hammer. They fight the goblins for every yard of rock."
+  faction: deep_gnomes
+  xp: 25
+  glyph: "🧔"
+  sprite: {art: old-man, artScale: 0.8, kind: knight, scale: 0.7}
+  loot: humanoid_purse
+  level: 2
+  attrs: {STR: 5, CON: 7, DEX: 7, SPD: 5, INT: 7, WIS: 6, CHA: 5}
+  natural: []
+  armorItem: {type: mail, coverage: half}
+  origin: dwarven
+  weapons: [warhammer]
+  craft: average
+  traits: {}
+  feats: {}
+  keepUnarmed: true

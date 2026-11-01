@@ -83,7 +83,8 @@
     if (!def) return { ch, kind: 'floor', solid: false, opaque: false, st };
     switch (def.kind) {
       case 'secret': return st.found ? (st.open ? { ch, def, kind: 'floor', solid: false, opaque: false, st } : { ch, def, kind: 'door', solid: true, opaque: true, st }) : { ch, def, kind: 'wall', solid: true, opaque: true, st, hidden: true };
-      case 'locked': return st.open ? { ch, def, kind: 'floor', solid: false, opaque: false, st } : { ch, def, kind: 'locked', solid: true, opaque: true, st };
+      // A portcullis (`see`) shuts the way but not the view; `opensWhen` raises it once its condition holds.
+      case 'locked': return st.open || (def.opensWhen && G.Cond.test(world, def.opensWhen)) ? { ch, def, kind: 'floor', solid: false, opaque: false, st } : { ch, def, kind: 'locked', solid: true, opaque: !def.see, st };
       case 'chest': return { ch, def, kind: 'chest', solid: true, opaque: false, st };
       case 'npc': return { ch, def, kind: 'npc', solid: true, opaque: false, st };
       case 'shrine': return { ch, def, kind: 'shrine', solid: true, opaque: false, st };
@@ -200,7 +201,7 @@
       return;
     }
   }
-  const met = (ev) => ev.some((e) => e.type === 'encounter' || e.type === 'unseen' || e.type === 'stairs');
+  const met = (ev) => ev.some((e) => e.type === 'encounter' || e.type === 'unseen' || e.type === 'stairs' || e.type === 'fall');
 
   function turn(world, delta) {
     const ex = world.explore;
@@ -370,6 +371,8 @@
     for (const l of lines) ev.push({ type: 'log', text: l, cls: 'hurt' });
     ev.push({ type: 'trap' });
     noise(world, 'trap');
+    // A pit trap (`to`, `at`): the floor gives way and the party goes down whether it likes it or not.
+    if (c.def.to) ev.push({ type: 'fall', def: { kind: 'drop', to: c.def.to, at: c.def.at, label: c.def.label } });
   }
 
   // ---- Awareness: sleeping and watching foes ----------------------------------------------

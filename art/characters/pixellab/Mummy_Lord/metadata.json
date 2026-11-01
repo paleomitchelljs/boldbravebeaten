@@ -1,0 +1,36 @@
+{
+  "group_id": "863e6fa9-5869-4286-9283-fd2dd9bf6bbd",
+  "states": [
+    {
+      "character": {
+        "id": "f9fecb8f-bc19-4202-ae6b-86fee3bc2a25",
+        "name": "Idle",
+        "prompt": "Mummy lord in black cape holding a staff with an ebony bat on top, and wearing a black helm with purple flames",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-10-31T22:28:06.138497+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-11-01T03:26:30.322904"
+}

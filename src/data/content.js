@@ -272,6 +272,8 @@
           if (def.on && !(def.on in ground)) err(`${at}: on "${def.on}" is not a ground letter`);
           if ((def.kind === 'stairs' || def.kind === 'drop') && !has(places, def.to)) err(`${at}: leads to unknown place "${def.to}"`);
           if ((def.kind === 'stairs' || def.kind === 'drop') && def.at && places[def.to] && places[def.to].map && !places[def.to].map.join('').includes(def.at)) err(`${at}: arrival "${def.at}" is not on ${def.to}'s map`);
+          if (def.kind === 'trap' && def.to && (!has(places, def.to) || (def.at && places[def.to].map && !places[def.to].map.join('').includes(def.at)))) err(`${at}: pit leads to unknown place or arrival "${def.to}" "${def.at}"`);
+          if (def.opensWhen) condOk(at, def.opensWhen);
           if (def.kind === 'chest' && !has(tables, def.loot)) err(`${at}: loot table "${def.loot}" unknown`);
           if (def.kind === 'pickup' && !goodExists(def.good)) err(`${at}: good "${def.good}" unknown`);
           if (def.key && !goodExists(def.key)) err(`${at}: key "${def.key}" unknown`);
@@ -322,6 +324,7 @@
     const S = W.start || {};
     if (S.place && !has(places, S.place)) err(`start.yaml: place "${S.place}" unknown`);
     if (S.go && !has(places, S.go.to)) err(`start.yaml: go to unknown place "${S.go.to}"`);
+    for (const [i, s] of (S.starts || []).entries()) if (!s.go || !has(places, s.go.to)) err(`start.starts[${i}]: go to unknown place "${s.go && s.go.to}"`);
     for (const k of S.kits || []) {
       if (k.wield && !has(D.WEAPONS, k.wield)) err(`start.kits.${k.id}: weapon "${k.wield}" unknown`);
       if (k.sidearm && !has(D.WEAPONS, k.sidearm)) err(`start.kits.${k.id}: sidearm "${k.sidearm}" unknown`);

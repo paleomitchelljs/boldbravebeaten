@@ -161,3 +161,64 @@ sly_corvin:
   interests: [coin, discretion]
   greeting: "Sit. Don't stare. Everyone's watching, so smile."
   topics:
+
+# ---- The fire-goblin mine: the gnomes of the cut-off fort ----
+gnome_sergeant:
+  name: Sergeant Brask
+  title: Leader of a gnome patrol
+  faction: deep_gnomes
+  sprite: knight
+  glyph: "🧔"
+  look: A gnome in soot-black mail, a hammer on his shoulder and a lamp on his helm, very sure you are a goblin trick.
+  attrs: {WIS: 7, WIL: 7, CHA: 5, INT: 7}
+  disposition: -1
+  willingness: 2
+  courage: 7
+  patience: 5
+  temperament: [loyal, provincial]
+  interests: [goblins, surface, mining]
+  greeting: "Not one step more. Who sent you down here, and how did you get past the stair?"
+  topics:
+    - {id: who, label: "Who are you?", need: 1, kind: info, text: "The fort's patrol. We hold the bridge and the tunnels either side of it, and the goblins hold the rest. We've held it a long time."}
+    - {id: goblins, label: "We're no friends of the goblins.", need: 3, kind: pass, tag: goblins, sets: [gnomes_trust], standing: {deep_gnomes: 5}, text: "No, you're not, are you. Goblins don't bleed like that. Go on over. Tell the Warden I let you by."}
+    - {id: surface, label: "We came down from the surface.", need: 4, kind: info, tag: surface, text: "From up top? Then the stair's open again. The Warden will want to hear that from your own mouths."}
+gnome_warden:
+  name: Warden Odda
+  title: Warden of the gnome fort
+  faction: deep_gnomes
+  sprite: wizard
+  glyph: "🧔"
+  look: An old gnome with burn scars up both arms and a map of the mine inked on the back of one hand.
+  attrs: {WIS: 9, WIL: 8, CHA: 7, INT: 9}
+  disposition: 1
+  willingness: 3
+  courage: 8
+  patience: 6
+  temperament: [loyal, moral]
+  interests: [goblins, surface, mining]
+  greeting: "Sit. Brask says you came down the stair. Nobody has come down the stair in eleven years."
+  topics:
+    - {id: fort, label: "How long have you been cut off?", need: 1, kind: info, text: "Eleven years. The goblins took the hall and the stair, and we took the far side of the chasm and walled it. We mine, we eat what grows in the warm caves, and we bury our dead in the rock."}
+    - {id: king, label: "What would it take to free you?", need: 3, kind: quest, starts: ember_king, hide: {quest: ember_king}, tag: goblins, text: "Their king. While he sits on that throne the goblins hold together. Kill him, and they'll fall to fighting over the chair, and we can walk out up the stair."}
+    - {id: secret, label: "Is there another way into their castle?", need: 5, kind: info, tag: mining, sets: [knows_castle_seam], text: "There is. West of the hall, before the bridge, the tunnel wall is a goblin door made to look like rock. It comes out inside their portcullis. And in the castle's east wing, the passage that seems to end in nothing ends in another such door, into the king's own rooms."}
+    - {id: pit, label: "What is in the warrens?", need: 4, kind: info, tag: mining, text: "A drake that eats goblins, and anything else it finds. And mind the floor on the way to the barracks: there's a stretch of it laid over a pit, and what lives in the pit is worse than the drake."}
+    - {id: kingdead, label: "The goblin king is dead.", need: 1, kind: info, once: true, requires: {flag: ember_king_dead}, sets: [told_odda_king], text: "Then it's done. Listen: you can hear them already, fighting over the chair. We'll go up the stair when they're through. You'll always have a door here."}
+    - {id: prisoner, label: "Your Fennick is alive. He's free.", need: 2, kind: favor, once: true, requires: {flag: freed_fennick}, gives: {gold: 60, xp: 80}, standing: {deep_gnomes: 15}, text: "Fennick! We said the words for him two winters ago. Take this, it's what we have. And our thanks, which is worth more down here."}
+gnome_prisoner:
+  name: Fennick
+  title: A gnome in the goblins' jail
+  faction: deep_gnomes
+  sprite: wizard
+  glyph: "🧔"
+  look: A thin gnome in a cage, chained at the ankle, who has been asked the same questions for two years.
+  attrs: {WIS: 6, WIL: 9, CHA: 5, INT: 8}
+  disposition: 2
+  willingness: 4
+  courage: 9
+  patience: 6
+  temperament: [loyal]
+  interests: [goblins, surface]
+  greeting: "You're not goblins. Are you real? Say something a goblin wouldn't."
+  topics:
+    - {id: free, label: "We'll get you out. Go to the fort.", need: 2, kind: favor, once: true, sets: [freed_fennick], standing: {deep_gnomes: 5}, text: "I know the way in the dark. Tell the Warden it was Fennick that didn't talk."}
+    - {id: deep, label: "Where does the stair beyond go?", need: 3, kind: info, text: "Down, to where the drake's mother sleeps. The goblins feed her their prisoners. They were saving me for it."}

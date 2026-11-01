@@ -303,6 +303,7 @@
       if (t.pit) d += 30;
       if (t.slick) d += 8;
       if (t.onEnter) d += 10;
+      if (t.deadly) d += 100;
       if (t.perRound) d += 6;
     }
     return d;

@@ -133,6 +133,11 @@ game:
     "*": {name: Third terrace, tile: tier3, color: "#bab286"}
     "&": {name: Top terrace, tile: tier4, color: "#bab286"}
     "|": {name: Dais, tile: dais, color: "#c8b67a"}            # a raised platform you walk on (the palace's throne)
+    # The fire-goblin mine (assets/ideas/ember-mine.md). Lava: nobody walks in, but a shove or a fall puts you there.
+    "$": {name: Lava, walk: false, fight: lava, tile: lava, color: "#c8401a"}
+    ")": {name: Stone bridge, under: "$", tile: bridge, color: "#4a4440"}
+    "/": {name: Stair, tile: steps, color: "#3a3634"}          # cut steps you walk up or down (a winding stair)
+    "'": {name: Murder hole, walk: false, fight: bars, tile: murderhole, color: "#2a2422"}   # see and shoot through
   passivePenalty: 3          # passive perception is this much worse than a deliberate search
   camp: {wanderingChance: 0.25, guardedChance: 0.5}
   # ---- Skill checks: d10 + floor(mean of attrs / 2) + feat ranks x weight vs a target number ------

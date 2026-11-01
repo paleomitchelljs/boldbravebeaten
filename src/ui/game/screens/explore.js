@@ -28,6 +28,7 @@
           if (e.check) World.logLine(w, Bits.checkText(e.check), 'find');
           break;
         case 'stairs': game.ui.prompt = { type: 'stairs', def: e.def }; break;
+        case 'fall': stopWalk(game); game.ui.prompt = null; game.takeStairs(e.def); return false;
         case 'note': game.openOverlay('text', { title: 'You read', text: e.text }); break;
         case 'loot': game.openOverlay('loot', { title: e.title, lines: e.lines }); break;
         case 'trap': game.ui.hurt = Date.now(); break;

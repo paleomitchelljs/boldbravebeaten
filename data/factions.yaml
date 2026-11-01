@@ -69,3 +69,21 @@ suracayl:
   enemies: []
   ranks: [[-20, Trespasser]]
   perks: []
+cinder_goblins:
+  name: The fire goblins
+  blurb: The goblins of the deep mine, its castle and its barracks. They mine the hot rock, and they suffer no one in it.
+  start: -20
+  kos: 0
+  allies: []
+  enemies: [deep_gnomes]
+  ranks: [[-20, Trespasser]]
+  perks: []
+deep_gnomes:
+  name: The gnomes of the fort
+  blurb: Gnome miners walled up in a fort across the lava, at war with the goblins and cut off from the surface for longer than they like to say.
+  start: 0
+  kos: -40
+  allies: []
+  enemies: [cinder_goblins]
+  ranks: [[0, Stranger], [10, Friend of the fort], [30, Rock-brother]]
+  perks: [[10, The fort's gate opens to you]]

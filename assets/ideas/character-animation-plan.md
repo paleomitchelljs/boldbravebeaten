@@ -158,3 +158,29 @@ wired in `data/art.yaml` and seen drawing in headless Chrome. Left, all free:
 | Jabiku | SE, NW views (`edit_image`, 2 frames, 10); strike and idle SE, NW again (4) | 14 | ~60 | staff now in the right hand in every view; held across the body in those two |
 | Monsters | idle ×5 each (Avatar 2 a direction) | 51 | 5 | all good; the skeleton's N idle starts on the standing view with the stray shadow (step 7) |
 | Beren, Cyrus, Arvir, Spawnee | idle ×8 each (Beren's S above) | 31 | | all good; some drift (Cyrus's sabre sinks facing N): idles play ping-pong (`pingpong: true`) so they never jump |
+
+## Cycle 2 (2026-10-31): the rest of the library and the user's four new characters
+
+The user, 2026-10-31: "pick up generating the still missing animations from before as well as the animations for
+these new characters." Balance at the start: 2190 generations (refill 2026-11-24). Same methods as above. Order, by
+what the next dungeon (the fire-goblin mine, `assets/ideas/ember-mine.md`) needs first:
+
+1. [x] Goblin, orange (the fire goblin) and green: walk ×8 (orange has N, S), claw strike ×5, death, idle ×5.
+2. [x] Singe (the red drake): strike ×5 (bite), death. Flight N/S if the hovering wingbeat doesn't serve.
+3. [ ] The new four (the user's, 2026-10-31), each walk ×8 (v3), strike ×8, death, idle ×8:
+   Hooded_Knight (e10aeecc, 72 px; sword and wolf shield), Dragonborn_Scimitars (713108d2; two scimitars),
+   Orc_Warrior (3f1f5df5; falchion and skull shield), Mummy_Lord (f9fecb8f; bat-headed staff).
+4. [ ] Section D, in its order: Dread shaman staff hand; Lizardfolk_Alt2 (walk, strike, death, idle); Jabiku walk;
+   Krump (walk, strike, death); Crusader (walks, strike, death); Tevax (walk NE/NW, strike, death); Bear death;
+   Warrior woman death; Gowra (walk, strike, death); Snake person (walk, strike, death); Spectre (strike, death).
+   Raptor skipped: PixelLab's copy lacks the tail redrawn by hand in the repo; it waits on the user's regeneration.
+
+### Ledger (cycle 2)
+
+| Step | Asked | Charged | Balance after | Notes |
+|---|---|---|---|---|
+| start | | | 2190 | |
+| Goblins (orange, green) | walk 6+8 (template), claw strike ×5 each, re-roll of orange S (drifted dark red; deleted), death ×2, idle ×5 each | 37 | | good; the strikes are a modest rake |
+| Singe | bite ×5, death | 6 | | the bite is mostly wingbeat with a small snap |
+| Hooded knight, dragonborn | walk S, strike S (each), knight death; knight walk ×7, strike ×3 | 15 | 2122 | walks shuffle but keep the weapons |
+

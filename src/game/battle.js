@@ -101,8 +101,10 @@
     const ox = Math.max(0, Math.min(g.w - w, Math.round(cx - w / 2))), oy = Math.max(0, Math.min(g.h - h, Math.round(cy - h / 2)));
     const wall = {}, ground = {};
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const c = G.Explore.cell(world, ox + x, oy + y);
+      if (c.kind === 'locked' && c.def && c.def.see) { ground[x + ',' + y] = 'bars'; continue; }
       if (blocked(world, ox + x, oy + y, anchor)) { wall[x + ',' + y] = 1; continue; }
-      const gr = G.Explore.cell(world, ox + x, oy + y).ground;
+      const gr = c.ground;
       if (gr && gr.fight) ground[x + ',' + y] = gr.fight;
     }
     const arena = { place: world.place, ox, oy, w, h, wall, ground, party: { x: me.x - ox, y: me.y - oy }, anchor: anchor ? { x: anchor.x - ox, y: anchor.y - oy } : null };

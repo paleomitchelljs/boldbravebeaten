@@ -1,0 +1,36 @@
+{
+  "group_id": "c2adfccd-a702-43e6-a762-09cc3853695e",
+  "states": [
+    {
+      "character": {
+        "id": "3f1f5df5-eba7-4fb9-953c-105c2fc89645",
+        "name": "Idle",
+        "prompt": "Green skinned orc warrior with a large faction, skull shield, topknot, and protruding fangs",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-01T03:02:57.898069+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-11-01T03:26:29.272285"
+}

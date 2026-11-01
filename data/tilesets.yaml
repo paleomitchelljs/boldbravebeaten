@@ -464,3 +464,37 @@ temple_palace:
     door_west: [temple-doors.png, 1116, 0, 80, 52, -8, 6]
     palace_gate: [temple-doors.png, 976, 0, 140, 52, -64, 6]
     stair_down: [temple-doors.png, 1276, 0, 88, 104, -12, -16]
+
+# The fire-goblin mine (assets/ideas/ember-mine.md): black basalt tunnels and lava; grey goblin masonry (the castle,
+# the barracks, the jail); the gnomes' dark mottled stone. Colours only until the PixelLab sets are made.
+ember_basalt:
+  doorsInWall: true
+  cell: 64
+  dir: art/worldtiles/ember/
+  floor: rock
+  terrains:
+    rock: {color: "#3a3430"}
+    rubble: {color: "#4a403a"}
+    steps: {color: "#55504a"}
+    lava: {color: "#d0461a"}
+    bridge: {color: "#5e564e"}
+    murderhole: {color: "#181210"}
+    wall: {color: "#1c1816"}
+ember_masonry:
+  doorsInWall: true
+  cell: 64
+  dir: art/worldtiles/ember/
+  floor: flags
+  terrains:
+    flags: {color: "#5a5652"}
+    dais: {color: "#7a6a4a"}
+    steps: {color: "#6a6660"}
+    wall: {color: "#2e2c2a"}
+ember_gnome:
+  doorsInWall: true
+  cell: 64
+  dir: art/worldtiles/ember/
+  floor: flags
+  terrains:
+    flags: {color: "#4a4a4e"}
+    wall: {color: "#26262c"}

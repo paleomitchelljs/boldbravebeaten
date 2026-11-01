@@ -41,7 +41,9 @@
           h('p', { class: 'muted' }, 'A turn-based party RPG about gear, preparation and knowing when not to fight.')),
         h('div', { class: 'stack' },
           auto ? h('button', { class: 'primary big', onclick: () => game.loadWorld(auto.world) }, `Continue — ${auto.info.place}, day ${auto.info.day}`) : null,
-          h('button', { class: auto ? 'big' : 'primary big', onclick: () => game.newGame(G.World.presetParty()) }, 'Quick start'),
+          // One quick start per dungeon in start.yaml `starts` (the default party), else the one at start.yaml `go`.
+          ((G.Content.world.start || {}).starts || [{ label: 'Quick start' }]).map((s, i) =>
+            h('button', { class: !auto && i === 0 ? 'primary big' : 'big', onclick: () => game.newGame(G.World.presetParty(), s.go) }, s.label)),
           h('button', { class: 'big', onclick: () => game.go('create') }, 'Custom start'),
           h('button', { class: 'big', onclick: () => importFile(game) }, 'Load save')),
         any ? h('details', { class: 'panel' }, h('summary', null, h('h3', null, 'Saved games')), h('div', { class: 'stack' }, slots.map((s) => slotRow(game, s)))) : null,

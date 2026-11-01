@@ -96,7 +96,7 @@
   // ---- Flow -------------------------------------------------------------------------------------------
   // A new game begins where start.yaml's go says (or `at`, a trial's own start), else in the home town.
   function newGame(specs, at) {
-    Game.world = World.create(specs);
+    Game.world = World.create(specs, at ? { go: at } : undefined);
     Game.world.settings.autoRoll = 'all';
     const start = at || (G.Content.world.start || {}).go;
     if (start) { travel(start); return; }
