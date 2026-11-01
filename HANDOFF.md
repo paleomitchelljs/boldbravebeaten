@@ -77,6 +77,13 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 - [x] Title: Continue, Load (saves, or a file), New Game (Quick start in the village, or Custom). The dungeon quick
   starts are gone (start.yaml `starts`).
 
+## The AI (the user, 2026-11-01, third set)
+- [x] The AI no longer reads intent (the player still can).
+- [x] Paths go round foes (the rules refused a move whose route ran through one: skinks stood at a canal while an
+  archer held the bridge), and an AI closing to blade's reach measures distance as walked, not as the crow flies.
+  Probe in `sim/FINDINGS.md` (50 + 42 stuck of 443 starts in the sewer, now 0); tests in `tests/ai-paths.test.js`.
+  Not yet watched in play.
+
 ## The swamp road (the user, 2026-11-01, third set)
 - [x] The Temple Swamp turned: the temple wall runs down its east side, the road from the village goes straight east
   into the gate, and you come into the court still facing east (was: north into the gate, then east in the court).

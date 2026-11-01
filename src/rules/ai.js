@@ -156,7 +156,7 @@
       if (enc.ids.some((o) => o !== id && C.isActive(chars[o]) && enc.pos[o].x === x && enc.pos[o].y === y)) continue;
       const d = Combat.dist({ x, y }, from);
       if (d <= bd) continue;
-      if (enc.tiles) { const pc = G.Terrain.pathCost(enc, me, { x, y }, c); if (!pc.reaches || pc.cost > R) continue; }
+      if (enc.tiles) { const pc = G.Terrain.pathCost(enc, me, { x, y }, c, Combat.foeSquares(enc, chars, c)); if (!pc.reaches || pc.cost > R) continue; }
       bd = d; best = { x, y };
     }
     return best ? { actor: id, type: 'move', to: best } : null;
@@ -586,6 +586,17 @@
     return best;
   }
 
+  // The walk from every square to a target's (terrain only: other fighters move), kept for the round.
+  const fields = typeof WeakMap !== 'undefined' ? new WeakMap() : null;
+  function walkField(enc, tp, c, block) {
+    const key = [enc.round, tp.x, tp.y, c.id, Object.keys(enc.tiles).length, [...block].sort().join(';')].join(',');
+    const held = fields && fields.get(enc);
+    if (held && held.key === key) return held.map;
+    const map = G.Terrain.costMap(enc, tp, c, null, block);
+    if (fields) fields.set(enc, { key, map });
+    return map;
+  }
+
   function planMove(enc, chars, id, la, targetId, goal, foes, avoid) {
     if (!la.move) return null;
     const c = chars[id];
@@ -611,7 +622,19 @@
     }).filter((p) => p.reach) : [];
     // With terrain about: walk around walls (cost map), keep out of hazards this side can see.
     const terrain = G.Terrain && enc.tiles && Object.keys(enc.tiles).length;
-    const map = terrain ? G.Terrain.costMap(enc, from, c) : null;
+    // Foes stand in the way: a route goes round them (Combat.foeSquares), and so does the reckoning of how far it is.
+    const block = Combat.foeSquares(enc, chars, c);
+    const map = terrain ? G.Terrain.costMap(enc, from, c, null, block) : null;
+    // Closing to blade's reach, distance is how far there is to walk, not as the crow flies: a foe across a canal is
+    // far off if the way round is long (one on a bridge drew skinks to the bank, staring). A shot crosses water, so
+    // a goal beyond 2 keeps the straight line.
+    const walk = map && !avoid && goal <= 2 ? walkField(enc, tp, c, block) : null;
+    const far = (x, y) => {
+      const d = Combat.dist({ x, y }, tp);
+      if (!walk || d <= goal) return d;
+      const k = walk.cost[walk.idx(x, y)];
+      return k === Infinity ? d + 50 : Math.max(d, Math.round(k));
+    };
     let best = null;
     const x0 = Math.max(0, from.x - step), x1 = Math.min(enc.grid.w - 1, from.x + step);
     const y0 = Math.max(0, from.y - step), y1 = Math.min(enc.grid.h - 1, from.y + step);
@@ -628,7 +651,7 @@
         }
         const need = C.moveCost(c, squares);
         if (need > la.ap) continue;
-        const dd = Combat.dist({ x, y }, tp);
+        const dd = far(x, y);
         let score = Math.abs(dd - goal) * 10 + need / C.costScale() + hazard;
         for (const p of provokers) {
           const inFrom = Combat.dist(from, p.at) <= p.reach, inTo = Combat.dist({ x, y }, p.at) <= p.reach;
@@ -649,7 +672,7 @@
       // A retreat must actually gain distance from the nearest threat.
       const near = (p) => Math.min(...foePos.map((fp) => Combat.dist(p, fp)));
       if (near({ x: best.x, y: best.y }) <= near(from) && Math.abs(best.dd - goal) >= Math.abs(cur - goal)) return null;
-    } else if (Math.abs(best.dd - goal) >= Math.abs(cur - goal)) return null;
+    } else if (Math.abs(best.dd - goal) >= Math.abs(far(from.x, from.y) - goal)) return null;
     return { actor: id, type: 'move', to: { x: best.x, y: best.y } };
   }
 
@@ -796,21 +819,15 @@
       }
     }
 
-    // 7a. Bait a foe who will defend (one still to take their turn, so likely with AP in hand), or
-    // read the intent of the one I'm fighting, when there's AP left after it for a blow.
+    // 7a. Bait a foe who will defend (one still to take their turn, so likely with AP in hand), when there's AP left
+    // after it for a blow.
     const bait = la.maneuvers.find((m) => m.type === 'bait' && m.affordable);
     const blowAP = Math.min(...usable.filter((o) => !o.spell).map((o) => o.ap).concat([99]));
     if (bait && !acted && la.ap >= bait.ap + Math.min(blowAP, 99) + reserve && blowAP < 99) {
       const guarded = bait.targets.find((x) => x.inReach && foes.includes(x.id) && !enc.turnDone[x.id] && usable.some((o) => C.inRange(o, x.distance)));
       if (guarded && Math.floor(C.attr(c, 'CHA') / 2) + G.Effects.sum(c, 'feint') >= Math.floor(C.attr(chars[guarded.id], 'WIS') / 2)) return { actor: id, type: 'bait', target: guarded.id };
     }
-    const read = la.maneuvers.find((m) => m.type === 'readIntent' && m.affordable);
-    // One look a round: a misread leaves nothing to show for it, so don't keep trying.
-    const readThisRound = enc.decls.some((d) => d.actor === id && d.type === 'readIntent');
-    if (read && !readThisRound && G.Conditions && !G.Conditions.has(c, 'reading') && la.ap >= read.ap + 2 * C.costScale()) {
-      const close = read.targets.find((x) => x.inReach && x.distance <= 2 && foes.includes(x.id));
-      if (close && Math.floor(C.attr(c, 'WIS') / 2) + G.Effects.sum(c, 'readAttack') >= Math.floor(C.attr(chars[close.id], 'CHA') / 2)) return { actor: id, type: 'readIntent', target: close.id };
-    }
+    // The AI doesn't read intent (the user, 2026-11-01): it filled foes' turns with looks instead of blows.
 
     // 8. Attack now, or wind up for a bigger blow next round.
     let best = null;

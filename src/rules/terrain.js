@@ -80,8 +80,9 @@
   // The cheapest way from `from` to `to`, step by step (8 directions; walls can't be entered;
   // rough ground costs more). Without a way through, the path ends at the reachable square
   // nearest the goal. `c` (optional) is the walker, for Freedom.
-  // Cheapest cost from `from` to every square (Dijkstra; stops early at `to` if given).
-  function costMap(enc, from, c, to) {
+  // Cheapest cost from `from` to every square (Dijkstra; stops early at `to` if given). `block` (a Set of "x,y"):
+  // squares that can't be walked through, the walker's foes (Combat.foeSquares): they have to be gone around.
+  function costMap(enc, from, c, to, block) {
     const W = enc.grid.w, H = enc.grid.h;
     const idx = (x, y) => y * W + x;
     const cost = new Array(W * H).fill(Infinity);
@@ -99,6 +100,7 @@
         if (!dx && !dy) continue;
         const nx = ux + dx, ny = uy + dy;
         if (!passable(enc, nx, ny) && !(flies(c) && inGrid(enc, nx, ny) && !has(enc, nx, ny, 'solid'))) continue;
+        if (block && block.has(key(nx, ny))) continue;
         const v = idx(nx, ny);
         // A hair's preference for straight steps keeps paths tidy.
         const nc = cost[u] + stepCost(enc, nx, ny, c) + (dx && dy ? 0.001 : 0);
@@ -115,9 +117,9 @@
     return out;
   }
 
-  function path(enc, from, to, c) {
-    if (!enc.tiles || !Object.keys(enc.tiles).length) return straight(from, to);
-    const map = costMap(enc, from, c, to);
+  function path(enc, from, to, c, block) {
+    if ((!enc.tiles || !Object.keys(enc.tiles).length) && !(block && block.size)) return straight(from, to);
+    const map = costMap(enc, from, c, to, block);
     const { cost, idx } = map;
     const W = enc.grid.w, H = enc.grid.h;
     const cheb = (x, y) => Math.max(Math.abs(x - to.x), Math.abs(y - to.y));
@@ -147,8 +149,8 @@
   }
 
   // Cost in squares to walk from `from` to `to`, and whether the path gets there.
-  function pathCost(enc, from, to, c) {
-    const steps = path(enc, from, to, c);
+  function pathCost(enc, from, to, c, block) {
+    const steps = path(enc, from, to, c, block);
     let cost = 0;
     let climbing = has(enc, from.x, from.y, 'pit') && !(c && G.Effects.has(c, 'freedom'));
     for (const q of steps) {

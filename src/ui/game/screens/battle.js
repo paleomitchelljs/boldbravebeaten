@@ -210,7 +210,7 @@
           sc.actors.push({ id: 'phantom', x: dest.x + ox, y: dest.y + oy, kind: L.kind, tint: L.tint, size: L.size, art: L.art, artTint: L.artTint, artScale: L.artScale, artSize: L.artSize, alpha: 0.55, flip: dest.x < me.x, speed: 16 });
           sc.reticles.push({ x: dest.x + ox, y: dest.y + oy, color: INTENT.move.color, strong: true });
         }
-        const route = G.Terrain && enc.tiles && Object.keys(enc.tiles).length ? G.Terrain.path(enc, me, dest, chars[actor]) : [dest];
+        const route = G.Terrain && enc.tiles && Object.keys(enc.tiles).length ? G.Terrain.path(enc, me, dest, chars[actor], Combat.foeSquares(enc, chars, chars[actor])) : [dest];
         sc.lines.push({ pts: [at(me)].concat(route.map(at)), color: map.late(map.reach[dest.x + ',' + dest.y]) ? INTENT.far.color : INTENT.move.color, style: 'dots', alpha: strong ? 0.95 : 0.4 });
       }
     }

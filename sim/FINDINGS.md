@@ -1,5 +1,23 @@
 # Simulation findings
 
+## The AI: no reading, paths round water and foes (2026-11-01, the user's third set)
+
+The user: the AI should stop reading intent; in the sewer two skinks stared across a canal at an archer on a bridge,
+being shot, with an open way round. A skink against Lorc alone on the sewer map, from every square within 9 of five
+bridge and plank squares (443 starts, 8 turns each; scratch harness, case tests in `tests/ai-paths.test.js`):
+
+| | stuck | why |
+|---|---|---|
+| before | 50 | every one a move the rules refused, "A foe is in the way": the route went over the bridge, through the archer |
+| foes gone round, distance as the crow flies | 42 | all on the cistern bank at (33, 14), as near the planks round the drain as a straight line gets |
+| foes gone round, distance as walked | 0 | the mean approach is 2.2 turns (1.9 before, of those that got there at all) |
+
+- Paths (rules and AI, and the battle screen's route and reach) now go round foes' squares; allies are still passed.
+- Closing to blade's reach the AI scores a square by the walk from it to the foe (`walkField`); a goal beyond 2
+  squares keeps the straight line, since a shot crosses water.
+- The AI no longer reads intent (the player still can). Duels, `--n 20`: median 2 rounds, mean 2.7 (2.8 before),
+  scaleward pairings 4-5: no change worth the name; what read did was fill turns, not lengthen fights.
+
 ## Duels: movement, vigor, reading (2026-11-01; `node sim/duels.js --n 40`)
 
 The user: Cyrus crosses a courtyard in one round; duels are slow and spongy; perhaps damage should follow stamina.

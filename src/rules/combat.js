@@ -693,14 +693,14 @@
       let squares = d;
       if (G.Terrain && enc.tiles) {
         if (!G.Terrain.canStand(enc, decl.to.x, decl.to.y, c)) return { err: G.Terrain.has(enc, decl.to.x, decl.to.y, 'deep') ? 'Deep water' : 'A wall stands there' };
-        const pc = G.Terrain.pathCost(enc, from, decl.to, c);
+        const pc = G.Terrain.pathCost(enc, from, decl.to, c, foeSquares(enc, chars, c));
         if (!pc.reaches) return { err: 'No way through' };
         squares = pc.cost;
       }
       if (C.holding(c) && d > 1) return { err: 'Dragging someone: one square at a time' };
       if (enc.ids.some((o) => o !== id && C.isActive(chars[o]) && enc.pos[o].x === decl.to.x && enc.pos[o].y === decl.to.y)) return { err: 'Someone stands there' };
-      // Allies can be passed; a foe on the way has to be gone around.
-      const route = G.Terrain ? G.Terrain.path(enc, from, decl.to, c) : [decl.to];
+      // Allies can be passed; a foe on the way has to be gone around (the path does, where there is a way).
+      const route = G.Terrain ? G.Terrain.path(enc, from, decl.to, c, foeSquares(enc, chars, c)) : [decl.to];
       if (route.some((q) => enc.ids.some((o) => chars[o].side !== c.side && C.isActive(chars[o]) && enc.pos[o].x === q.x && enc.pos[o].y === q.y))) return { err: 'A foe is in the way' };
       const need = C.moveCost(c, squares);
       ({ ap, stamina } = C.actionCost(c, 'move', { ap: need }));
@@ -763,12 +763,19 @@
   // A move, square by square: around walls, past allies (not foes), into and out of foes' reach (see
   // opportunities(); a hit stops the move), into runes, pits and hazards. AP for squares not walked is
   // given back.
+  // The squares of c's foes still standing, as "x,y": a walk goes around them.
+  function foeSquares(enc, chars, c) {
+    const out = new Set();
+    for (const o of enc.ids) if (chars[o] && chars[o].side !== c.side && C.isActive(chars[o]) && enc.pos[o]) out.add(enc.pos[o].x + ',' + enc.pos[o].y);
+    return out;
+  }
+
   async function resolveMove(enc, chars, d, io) {
     const a = chars[d.actor];
     if (!payStamina(enc, a, d.stamina)) return;
     const state = { provoked: {}, within: {} };
     const dragged = C.holding(a) ? chars[C.holding(a)] : null;
-    const steps = dragged ? [d.to] : G.Terrain ? G.Terrain.path(enc, enc.pos[a.id], d.to, a) : [d.to];
+    const steps = dragged ? [d.to] : G.Terrain ? G.Terrain.path(enc, enc.pos[a.id], d.to, a, foeSquares(enc, chars, a)) : [d.to];
     let walked = 0, why = '';
     for (const q of steps) {
       const from = enc.pos[a.id];
@@ -2452,6 +2459,7 @@
   }
 
   G.Combat = {
+    foeSquares,
     unseenBy, strikeEffects, conditionForbids, ATTACK_TYPES, DEFENSE_TYPES, shoveReach, log, rollDie, castSpell, knockDown, stability, releaseAll: clearGrapple,
     createEncounter, autoPlace, startRound, currentActor, legalActions, act, validate, endTurn, submit, describeDecl, apLeft, defenseOptions, coverOptions, opportunityOptions,
     vitalNeed, projectedPos, dist, defenseOdds, parryCarryShare, aimPenalty, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolveAction, finishRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,

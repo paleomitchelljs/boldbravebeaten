@@ -90,9 +90,9 @@
         const p = Combat.projectedPos(enc, id);
         blocked[p.x + ',' + p.y] = true;
       }
-      // With terrain: walls are walked around and rough ground costs more.
+      // With terrain: walls (and foes) are walked around and rough ground costs more.
       const terrain = G.Terrain && enc.tiles && Object.keys(enc.tiles).length;
-      const map = terrain ? G.Terrain.costMap(enc, m.from, chars[actor]) : null;
+      const map = terrain ? G.Terrain.costMap(enc, m.from, chars[actor], null, Combat.foeSquares(enc, chars, chars[actor])) : null;
       for (let y = 0; y < enc.grid.h; y++) for (let x = 0; x < enc.grid.w; x++) {
         const d = Combat.dist(m.from, { x, y });
         const squares = map ? map.cost[map.idx(x, y)] : d;
