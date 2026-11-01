@@ -167,7 +167,7 @@ what the next dungeon (the fire-goblin mine, `assets/ideas/ember-mine.md`) needs
 
 1. [x] Goblin, orange (the fire goblin) and green: walk ×8 (orange has N, S), claw strike ×5, death, idle ×5.
 2. [x] Singe (the red drake): strike ×5 (bite), death. Flight N/S if the hovering wingbeat doesn't serve.
-3. [ ] The new four (the user's, 2026-10-31), each walk ×8 (v3), strike ×8, death, idle ×8:
+3. [~] The new four (the user's, 2026-10-31), each walk ×8 (v3), strike ×8, death, idle ×8:
    Hooded_Knight (e10aeecc, 72 px; sword and wolf shield), Dragonborn_Scimitars (713108d2; two scimitars),
    Orc_Warrior (3f1f5df5; falchion and skull shield), Mummy_Lord (f9fecb8f; bat-headed staff).
 4. [ ] Section D, in its order: Dread shaman staff hand; Lizardfolk_Alt2 (walk, strike, death, idle); Jabiku walk;
@@ -183,4 +183,11 @@ what the next dungeon (the fire-goblin mine, `assets/ideas/ember-mine.md`) needs
 | Goblins (orange, green) | walk 6+8 (template), claw strike ×5 each, re-roll of orange S (drifted dark red; deleted), death ×2, idle ×5 each | 37 | | good; the strikes are a modest rake |
 | Singe | bite ×5, death | 6 | | the bite is mostly wingbeat with a small snap |
 | Hooded knight, dragonborn | walk S, strike S (each), knight death; knight walk ×7, strike ×3 | 15 | 2122 | walks shuffle but keep the weapons |
+| Mine tiles (4 pro sets) | basalt, lava, masonry, gnome stone | 100 | | see assets/wip/ember/README.md (not character work, logged here for the balance) |
+| Item icons | one 64-cell object sheet | 10 | | assets/wip/icons/README.md |
+| Raptor_Red (the user's new raptor) | walk ×8, bite ×5, death, idle ×5 | 19 | | good; the south bite barely shows (seen head on) |
+| Hooded knight | strike ×4 more | 4 | | good |
+| Dragonborn | walk ×7, strike ×7, death | 15 | | walks shuffle; strikes cross the blades |
+| Orc warrior | walk ×8, strike ×8, death | 17 | | NE strike turned the shield into a white disc and SE lost it: both re-rolled |
+| Mummy lord | walk ×8, strike ×2 (the 1st lost its helm flames; deleted) then ×7, death | 17 | 1948 | |
 

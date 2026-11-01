@@ -48,9 +48,9 @@ Every character the user sends goes in this table, including any not yet in the 
 | Tevax_Thaukori | `tevax` | 68625c81-093c-4ebc-bb30-5c72ac9fb6b3 (armed), 87ba5874-ad22-4b8a-ad46-cc4a1d4c254e (unarmed, not used) | 64 | idle ×8, walk ×6 dirs | attack, death |
 | Warrior_Woman | `warrior-woman` | ab8eb5c0-22fd-4735-99ec-c4ac649879c7 (+ slash 8f00f35f, spell c8428b0b) | 64 (slash 80, spell 60) | idle ×8 with an idle animation, walk ×8, slash ×8 (9 frames); Run, Jump, Spell unused | death |
 | Hooded_Knight | `hooded-knight` | e10aeecc-ba1a-4638-b6af-2deca4f9a7b3 | 72 | idle ×8, walk ×8 (v3), strike ×8 (overhead slash), death (south) | idle anim |
-| Dragonborn_Scimitars | `dragonborn-blue` | 713108d2-cb1b-4c27-a1cb-917f3f3222c8 | 64 | idle ×8; walk, strike, death being made (cycle 2) | idle anim |
-| Orc_Warrior | `orc-warrior` (the goblin champion's stand-in) | 3f1f5df5-eba7-4fb9-953c-105c2fc89645 | 64 | idle ×8 | walk, strike, death, idle |
-| Mummy_Lord | `mummy-lord` (the high shaman's stand-in) | f9fecb8f-bc19-4202-ae6b-86fee3bc2a25 | 64 | idle ×8 | walk, strike, death, idle |
+| Dragonborn_Scimitars | `dragonborn-blue` | 713108d2-cb1b-4c27-a1cb-917f3f3222c8 | 64 | idle ×8, walk ×8 (v3), strike ×8 (crossing double cut), death (south) | idle anim |
+| Orc_Warrior | `orc-warrior` (the goblin champion's stand-in) | 3f1f5df5-eba7-4fb9-953c-105c2fc89645 | 64 | idle ×8, walk ×8 (v3), strike ×8 (falchion hack; NE and SE re-rolled), death (south) | idle anim |
+| Mummy_Lord | `mummy-lord` (the high shaman's stand-in) | f9fecb8f-bc19-4202-ae6b-86fee3bc2a25 | 64 | idle ×8, walk ×8 (v3), strike ×8 (`Strike2`: staff blow; the first try lost the helm flames), death (south) | idle anim |
 
 "Death" here means a single death sprite, not a full animation, unless the user asks for one. "idle ×8" means
 standing views only; none of these has an idle animation yet.
