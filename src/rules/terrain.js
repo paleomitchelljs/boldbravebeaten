@@ -82,9 +82,9 @@
   // nearest the goal. `c` (optional) is the walker, for Freedom.
   // Cheapest cost from `from` to every square (Dijkstra; stops early at `to` if given). `block` (a Set of "x,y"):
   // squares that can't be walked through, the walker's foes (Combat.foeSquares): they have to be gone around.
-  // A walker's way never crosses ground it can see would hurt it: deadly ground (lava) only as where it means to end up,
-  // other hazards (a pit, fire, a foe's rune) only when there is no way round. `cost` is the true squares walked;
-  // the detours only steer which way is taken.
+  // Nobody walks onto deadly ground (lava) they can see; only a shove or a fall puts them there, and they can walk out.
+  // Other hazards they can see (a pit, fire, a foe's rune) are crossed only when there is no way round. `cost` is the
+  // true squares walked; the detours only steer which way is taken.
   function costMap(enc, from, c, to, block) {
     const W = enc.grid.w, H = enc.grid.h;
     const idx = (x, y) => y * W + x;
@@ -101,7 +101,6 @@
       done[u] = true;
       const ux = u % W, uy = (u - ux) / W;
       if (to && ux === to.x && uy === to.y) break;
-      if (u !== idx(from.x, from.y) && shun[u] === Infinity) continue;   // in the lava: the way stops here
       for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
         if (!dx && !dy) continue;
         const nx = ux + dx, ny = uy + dy;
@@ -111,14 +110,15 @@
         // A hair's preference for straight steps keeps paths tidy.
         const sc = stepCost(enc, nx, ny, c) + (dx && dy ? 0.001 : 0);
         if (shun[v] === undefined) shun[v] = avoid(enc, nx, ny, c);
-        const nr = rank[u] + sc + (shun[v] === Infinity ? 0 : shun[v]);
+        if (shun[v] === Infinity) continue;
+        const nr = rank[u] + sc + shun[v];
         if (nr < rank[v]) { rank[v] = nr; cost[v] = cost[u] + sc; prev[v] = u; }
       }
     }
     return { cost, prev, W, idx, shun };
   }
 
-  // How hard a walker steers clear of (x, y): Infinity for deadly ground it can see (never crossed), a large detour for
+  // How hard a walker steers clear of (x, y): Infinity for deadly ground it can see (never entered), a large detour for
   // other hazards it can see, 0 otherwise. Fliers pass over all of it.
   const DETOUR = 50;
   function avoid(enc, x, y, c) {
@@ -131,6 +131,16 @@
       if (t.pit || t.onEnter || t.perRound || (t.rune && f.side !== c.side)) a = DETOUR;
     }
     return a;
+  }
+
+  // The names of the hazards a walker can see along these squares (the ones avoid() steers round), each once.
+  function hazardsOn(enc, steps, c) {
+    const out = [];
+    for (const q of steps) {
+      if (!avoid(enc, q.x, q.y, c)) continue;
+      for (const f of at(enc, q.x, q.y)) { const n = def(f).name; if (n && visible(f, c.side) && !out.includes(n)) out.push(n); }
+    }
+    return out;
   }
 
   // The squares of the cheapest way to (x, y) in a cost map.
@@ -334,5 +344,5 @@
     return d;
   }
 
-  G.Terrain = { flies, canStand, costMap, avoid, trace, danger, tiles, at, add, remove, has, passable, stepCost, path, pathCost, between, lineCheck, visible, enter, endRound, all, inGrid };
+  G.Terrain = { flies, canStand, costMap, avoid, hazardsOn, trace, danger, tiles, at, add, remove, has, passable, stepCost, path, pathCost, between, lineCheck, visible, enter, endRound, all, inGrid };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

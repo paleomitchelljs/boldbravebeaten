@@ -292,8 +292,8 @@
         return;
       }
       if (!(entry && entry.square) && m.reach && m.reach[key] != null) {
-        if (same(cmd.moveTo)) P().declare(bs.app, bs.enc, { actor, type: 'move', to: { x: ax, y: ay } });
-        else { cmd.moveTo = { x: ax, y: ay }; game.render(); }
+        if (same(cmd.moveTo)) P().declareMove(bs.app, bs.enc, actor, { x: ax, y: ay }, cmd, () => game.render());
+        else { cmd.moveTo = { x: ax, y: ay }; cmd.hazardOk = null; game.render(); }
         return;
       }
       if (!id && (cmd.moveTo || cmd.castAt)) { cmd.moveTo = null; cmd.castAt = null; game.render(); return; }

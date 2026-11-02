@@ -168,7 +168,7 @@
     }
     const actor = Combat.currentActor(enc);
     if (reach && reach[x + ',' + y] != null) {
-      declare(app, enc, { actor, type: 'move', to: { x, y } });
+      declareMove(app, enc, actor, { x, y }, ui.hazardCmd || (ui.hazardCmd = {}), () => app.render());
       return;
     }
     if (ui.mode === 'target' && id && ui.pending.targets.some((t) => t.id === id)) {
@@ -582,6 +582,26 @@
     return { best: best ? best.loc : null, rows: [['best', `Best (${bestLabel})`], ['unaimed', show(null)]].concat(L.order.map((l) => [l, show(l)])) };
   }
 
+  // A move onto or across ground that hurts (lava, a pit, fire) takes one more confirmation: the first go names the
+  // hazard, the next one walks. Returns the hazards' names when it only warned.
+  function moveHazards(app, enc, id, to) {
+    const T = G.Terrain, chars = app.state.characters, c = chars && chars[id];
+    if (!T || !enc.tiles || !c) return [];
+    return T.hazardsOn(enc, T.path(enc, enc.pos[id], to, c, Combat.foeSquares(enc, chars, c)), c);
+  }
+  function declareMove(app, enc, id, to, cmd, rerender) {
+    const names = moveHazards(app, enc, id, to), key = to.x + ',' + to.y;
+    if (names.length && cmd.hazardOk !== key) {
+      cmd.hazardOk = key;
+      toast(`${names.join(' and ')} on the way. Again to go anyway.`);
+      if (rerender) rerender();
+      return names;
+    }
+    cmd.hazardOk = null;
+    declare(app, enc, { actor: id, type: 'move', to });
+    return null;
+  }
+
   function declareEntry(app, enc, id, e, cmd) {
     const t = cmd.target;
     if (e.kind === 'strike') {
@@ -720,8 +740,9 @@
     let go = null;
     const moveAP = cmd.moveTo && app.ui.lastReach ? app.ui.lastReach[cmd.moveTo.x + ',' + cmd.moveTo.y] : null;
     if (cmd.moveTo && moveAP != null) {
-      go = h('button', { class: 'primary', onclick: () => declare(app, enc, { actor: id, type: 'move', to: cmd.moveTo }) },
-        h('span', null, 'Move here'), h('span', { class: 'cost' }, `${C.fmtAP(moveAP)} AP`));
+      const risky = moveHazards(app, enc, id, cmd.moveTo).length && cmd.hazardOk !== cmd.moveTo.x + ',' + cmd.moveTo.y;
+      go = h('button', { class: 'primary', onclick: () => declareMove(app, enc, id, cmd.moveTo, cmd, rerender) },
+        h('span', null, risky ? 'Move here (hazard)' : cmd.hazardOk ? 'Move here anyway' : 'Move here'), h('span', { class: 'cost' }, `${C.fmtAP(moveAP)} AP`));
     } else if (entry) {
       const blocked = !entry.affordable || (entry.targets && !target);
       const name = entry.label.split(' · ')[0].replace(/\s*\(.*\)$/, '');
@@ -990,5 +1011,5 @@
 
   UI.Views.battle = view;
   // The pieces the game's own battle screen (src/ui/game/screens/battle.js) reuses.
-  UI.Views.battleParts = { bui, mapState, cellClick, declarePanel, phasePanel, scheduleAI, syncCommand, aiControlled, openInfo, closeModal, declare, declareEntry, finishTurn, ioFor, reactionModel, blowPreview, aimChoices, TILE_GLYPH };
+  UI.Views.battleParts = { bui, mapState, cellClick, declarePanel, phasePanel, scheduleAI, syncCommand, aiControlled, openInfo, closeModal, declare, declareMove, declareEntry, finishTurn, ioFor, reactionModel, blowPreview, aimChoices, TILE_GLYPH };
 })(globalThis.BBB);

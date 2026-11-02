@@ -530,8 +530,9 @@
       // cross) but not sight, missiles or a spear's reach; shallows drag at the feet.
       deepWater: { name: 'Deep water', deep: true, permanent: true },
       shallows: { name: 'Shallow water', cost: 1, permanent: true },
-      // PROVISIONAL (the fire-goblin mine, 2026-10-31): lava can be walked into but nobody does it willingly. A shove or
-      // a fall into it is a Fire 6 blow, and again at each round's end while still in it; `deadly` keeps the AI out.
+      // PROVISIONAL (the fire-goblin mine, 2026-10-31; the user, 2026-11-02): nobody walks into lava (`deadly`: a move
+      // can't end in or cross it; fliers pass over). A shove or a fall into it is a Fire 6 blow, and again at each
+      // round's end while still in it; whoever is in it can walk out.
       lava: { name: 'Lava', onEnter: { fire: 6 }, perRound: { fire: 6 }, deadly: true, burns: true, permanent: true },
       // A murder hole or a portcullis: nobody passes, but sight, missiles, spells and a spear's reach go through.
       bars: { name: 'Bars', wall: true, permanent: true },
@@ -847,6 +848,7 @@
     'Companions (the user\'s idea): Familiar (magic, casting I) and Animal Companion (perception, Keen Eye I) give a creature that fights beside its owner, run by the AI, wounds kept between fights (rules.yaml game.companions). A familiar adds 2 spell points per rank while it lives; its death costs the owner 2 WIL. A dead companion is replaced after a rest in town.',
     'Fear: a frightened creature run by the AI moves away from what frightens it while within 3 squares (before: it only could not close with or strike it). Shoves, throws and knockback stop at walls, and the squares a body is driven into count as entered (pits, runes, fire).',
     'Very light and light weapons count as "light weapons" for Light Touch and Precision.',
+    'Lava (the fire-goblin mine, 2026-10-31; the user, 2026-11-02): Fire 6 on entering and at each round\'s end in it. Nobody walks into lava they can see (a route neither ends in nor crosses it; fliers pass over); only a shove or a fall puts someone there, and they can walk out. Other visible hazards are gone round when there is a way round, and a move onto or across one takes a second confirmation.',
   ];
 
   G.CONFIG = CONFIG;

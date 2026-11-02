@@ -1,5 +1,5 @@
 // A route across a fight never cuts through lava (the user, 2026-11-02: autopathing walked a fighter into it).
-// Deadly ground is only ever where a walker means to end up; lesser hazards it can see are gone round when there is
+// Nobody walks onto deadly ground (only a shove puts them there); lesser hazards it can see are gone round when there is
 // a way round; the squares a move costs are the squares walked.
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -37,10 +37,13 @@ test('lava paths: with no way round, the route stops short rather than wade in',
   assert.ok(end.x < 3, 'ends on the near side');
 });
 
-test('lava paths: stepping into lava on purpose still works', () => {
+test('lava paths: nobody walks into lava on purpose; whoever is shoved in can walk out', () => {
   const { enc, c } = field('lava');
   const steps = Terrain.path(enc, { x: 1, y: 1 }, { x: 3, y: 1 }, c);
-  assert.deepEqual(steps, [{ x: 2, y: 1 }, { x: 3, y: 1 }]);
+  assert.ok(!steps.some((q) => on(enc, q, 'lava')), 'stops at the edge: ' + JSON.stringify(steps));
+  assert.equal(Terrain.pathCost(enc, { x: 1, y: 1 }, { x: 3, y: 1 }, c).reaches, false);
+  const out = Terrain.path(enc, { x: 3, y: 1 }, { x: 1, y: 1 }, c);
+  assert.deepEqual(out[out.length - 1], { x: 1, y: 1 }, 'out of the lava');
 });
 
 test('lava paths: a lesser hazard is gone round when it can be, crossed when it cannot', () => {
@@ -50,4 +53,10 @@ test('lava paths: a lesser hazard is gone round when it can be, crossed when it 
   Terrain.add(enc, 3, 4, 'hot');
   steps = Terrain.path(enc, { x: 1, y: 1 }, { x: 5, y: 1 }, c);
   assert.deepEqual(steps[steps.length - 1], { x: 5, y: 1 }, 'through when there is no other way');
+});
+
+test('lava paths: hazardsOn names what a route steps on or across', () => {
+  const { enc, c } = field('lava');
+  assert.deepEqual(Terrain.hazardsOn(enc, [{ x: 2, y: 1 }, { x: 3, y: 1 }], c), ['Lava']);
+  assert.deepEqual(Terrain.hazardsOn(enc, Terrain.path(enc, { x: 1, y: 1 }, { x: 5, y: 1 }, c), c), [], 'the way round is clear');
 });
