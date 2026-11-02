@@ -29,7 +29,9 @@
 #               pattern 16 letters, row by row, of the 4x4 squares around the tile's corner: 0 lower, 1 upper, 2 the
 #               wall's last row (its face), . any (from the metadata's pattern_4x4). Each corner takes the best-scoring
 #               tile; tiles that tie are variants, picked by position.
-#     underWalls  (a cliff set) runs on under a wall beside it, east or west: a pyramid built into a wall
+#     solo      (a cliff set) counts only its own squares as its upper ground, not the cliff sets ranked above it
+#     underWalls  (a cliff set) runs on under a wall beside it, east or west: a pyramid built into a wall; `all`, on any side (a built
+#               wall running into natural rock at its ends)
 #     cut       (the wall) its sheet with the ground cut away, drawn where it meets an underWalls terrain
 #     decor     pieces scattered on plain squares of this terrain: {density, pieces: [[image, x, y, w, h], ...], clump,
 #               spread, margin, edge}. density: pieces per square (above 1, more than one try); clump: squares per
@@ -886,3 +888,231 @@ ember_gnome:
     cage: [props.png, 896, 0, 64, 64]
     rubble: [props.png, 960, 0, 64, 64]
     door_locked: [props.png, 0, 0, 64, 64]
+
+# The country south of the village (the user, 2026-11-01; assets/wip/south/): one temperate meadow grass (PixelLab base
+# 2674f472) with every set chained to it: a dirt road, low hills, scree, a forest edge, grey granite mountains, the
+# fortress wall, a cobbled road. Props: one strip (trees, rocks, road things; the inns, the keep, towers, a gatehouse).
+south_hills:
+  cell: 64
+  dir: art/worldtiles/south/
+  floor: path
+  terrains:
+    path: {color: "#7a5a3a", tile: path.png}
+    grass:
+      color: "#3f7a3a"
+      tile: grass.png
+      wang: hills-road.png
+      over: path
+      decor: {density: 0.5, clump: 6, flip: true, spread: 10, pieces: [[../temple/court-decor.png, 0, 0, 22, 23], [../temple/court-decor.png, 192, 0, 16, 10], [../temple/court-decor.png, 256, 0, 10, 11], [../temple/court-decor.png, 128, 0, 28, 24]]}
+    hill: {color: "#5f8a46", wang: hill.png, over: grass}
+    scree: {color: "#8a8a84", wang: scree.png, over: grass}
+    # Forest groves and the edge of the map: a cliff set of trunks and undergrowth under a canopy.
+    forest:
+      color: "#23401f"
+      wang: forest-edge.png
+      over: grass
+      cliff:
+        - [2, 2, ".....00..00....."]
+        - [3, 2, ".....00..01....."]
+        - [1, 4, ".....00..11....."]
+        - [2, 4, ".....00..10....."]
+        - [3, 3, ".00..01..01....."]
+        - [3, 4, ".....01..01....."]
+        - [0, 6, ".....11..11....."]
+        - [1, 0, ".11..10..10....."]
+        - [1, 1, ".....10..10....."]
+        - [0, 4, ".....10..11....."]
+        - [3, 6, ".....01..11....."]
+        - [1, 6, ".....11..12...0."]
+        - [3, 0, ".....11..22..00."]
+        - [1, 2, ".....10..20..00."]
+        - [1, 7, ".1...12..10....."]
+        - [3, 1, ".11..22..00....."]
+        - [1, 3, ".....20..00....."]
+        - [2, 0, ".....01..02..00."]
+        - [0, 0, ".....11..21..0.."]
+        - [2, 6, ".....10..21..01."]
+        - [2, 1, ".....02..00....."]
+        - [0, 1, "..1..21..01....."]
+        - [2, 7, ".10..21..01....."]
+        - [0, 2, ".....01..12..10."]
+        - [0, 3, ".01..12..10....."]
+    # The mountains: grey granite cliffs.
+    wall:
+      color: "#6a6a66"
+      wang: mountain.png
+      over: grass
+      cliff:
+        - [2, 2, ".....00..00....."]
+        - [3, 2, ".....00..01....."]
+        - [1, 4, ".....00..11....."]
+        - [2, 4, ".....00..10....."]
+        - [3, 3, ".00..01..01....."]
+        - [3, 4, ".....01..01....."]
+        - [0, 6, ".....11..11....."]
+        - [1, 0, ".11..10..10....."]
+        - [1, 1, ".....10..10....."]
+        - [0, 4, ".....10..11....."]
+        - [3, 6, ".....01..11....."]
+        - [1, 6, ".....11..12...0."]
+        - [3, 0, ".....11..22..00."]
+        - [1, 2, ".....10..20..00."]
+        - [1, 7, ".1...12..10....."]
+        - [3, 1, ".11..22..00....."]
+        - [1, 3, ".....20..00....."]
+        - [2, 0, ".....01..02..00."]
+        - [0, 0, ".....11..21..0.."]
+        - [2, 6, ".....10..21..01."]
+        - [2, 1, ".....02..00....."]
+        - [0, 1, "..1..21..01....."]
+        - [2, 7, ".10..21..01....."]
+        - [0, 2, ".....01..12..10."]
+        - [0, 3, ".01..12..10....."]
+    # The mountains climb in rings (tiers.py): a rough ledge over the rock, the summit over that, each chained to the
+    # one below; they copy the rock's cliff layout.
+    ledge: {like: wall, color: "#7a7a74", wang: mountain-ledge.png, over: wall, cut: null}
+    summit: {like: wall, color: "#8a8a84", wang: mountain-summit.png, over: ledge, cut: null}
+  props:
+    pine: [props.png, 0, 0, 44, 63]
+    fir: [props.png, 48, 0, 58, 63]
+    oak: [props.png, 110, 0, 62, 60]
+    birch: [props.png, 176, 0, 39, 62]
+    boulder: [props.png, 219, 0, 50, 41]
+    rocks: [props.png, 273, 0, 52, 18]
+    stump: [props.png, 329, 0, 42, 35]
+    log: [props.png, 375, 0, 54, 35]
+    cairn: [props.png, 433, 0, 33, 43]
+    milestone: [props.png, 470, 0, 24, 42]
+    roadsign: [props.png, 498, 0, 31, 49]
+    hitch: [props.png, 533, 0, 48, 48]
+    table: [props.png, 585, 0, 62, 48]
+    campfire: [props.png, 651, 0, 41, 25]
+    banner: [props.png, 696, 0, 48, 60]
+    wildflowers: [props.png, 748, 0, 59, 47]
+    roadinn: [props.png, 811, 0, 125, 135]
+    tavern: [props.png, 940, 0, 136, 109]
+    stable: [props.png, 1080, 0, 139, 116]
+    keep: [props.png, 1223, 0, 121, 141]
+    watchtower: [props.png, 1348, 0, 62, 129]
+    gatetower: [props.png, 1414, 0, 94, 127]
+    gatehouse: [props.png, 1512, 0, 134, 119]
+    crag: [props.png, 1650, 0, 115, 113]
+    well: [../outside/props.png, 1037, 0, 54, 61]
+    barrels: [../outside/props.png, 1514, 0, 58, 49]
+    crates: [../outside/props.png, 1576, 0, 58, 54]
+    # The gatehouse astride two squares (the gap in Tarnhold's north wall), from the left square's top-left.
+    gatehouse_wide: [props.png, 1512, 0, 134, 119, -3, -55]
+
+tarnvale:
+  cell: 64
+  dir: art/worldtiles/south/
+  floor: cobbles
+  terrains:
+    cobbles: {color: "#77746c", tile: cobbles.png}
+    grass:
+      color: "#3f7a3a"
+      tile: grass.png
+      wang: cobble-road.png
+      over: cobbles
+      decor: {density: 0.5, clump: 6, flip: true, spread: 10, pieces: [[../temple/court-decor.png, 0, 0, 22, 23], [../temple/court-decor.png, 192, 0, 16, 10], [../temple/court-decor.png, 256, 0, 10, 11], [../temple/court-decor.png, 128, 0, 28, 24]]}
+    scree: {color: "#8a8a84", wang: scree.png, over: grass}
+    # Tarnhold's walls and the vales' gate walls: dressed grey stone with a battlemented walk.
+    fort:
+      color: "#6a6862"
+      wang: fort-wall.png
+      over: grass
+      # Where a gate wall meets the rock it runs on under it; the rock's edge (its sheet with the grass cut away) lies over.
+      underWalls: all
+      # The rock's ledge and summit are not part of it.
+      solo: true
+      cliff:
+        - [2, 2, ".....00..00....."]
+        - [3, 2, ".....00..01....."]
+        - [1, 4, ".....00..11....."]
+        - [2, 4, ".....00..10....."]
+        - [3, 3, ".00..01..01....."]
+        - [3, 4, ".....01..01....."]
+        - [0, 6, ".....11..11....."]
+        - [1, 0, ".11..10..10....."]
+        - [1, 1, ".....10..10....."]
+        - [0, 4, ".....10..11....."]
+        - [3, 6, ".....01..11....."]
+        - [1, 6, ".....11..12...0."]
+        - [3, 0, ".....11..22..00."]
+        - [1, 2, ".....10..20..00."]
+        - [1, 7, ".1...12..10....."]
+        - [3, 1, ".11..22..00....."]
+        - [1, 3, ".....20..00....."]
+        - [2, 0, ".....01..02..00."]
+        - [0, 0, ".....11..21..0.."]
+        - [2, 6, ".....10..21..01."]
+        - [2, 1, ".....02..00....."]
+        - [0, 1, "..1..21..01....."]
+        - [2, 7, ".10..21..01....."]
+        - [0, 2, ".....01..12..10."]
+        - [0, 3, ".01..12..10....."]
+    wall:
+      color: "#6a6a66"
+      wang: mountain.png
+      over: grass
+      cut: mountain-cut.png
+      cliff:
+        - [2, 2, ".....00..00....."]
+        - [3, 2, ".....00..01....."]
+        - [1, 4, ".....00..11....."]
+        - [2, 4, ".....00..10....."]
+        - [3, 3, ".00..01..01....."]
+        - [3, 4, ".....01..01....."]
+        - [0, 6, ".....11..11....."]
+        - [1, 0, ".11..10..10....."]
+        - [1, 1, ".....10..10....."]
+        - [0, 4, ".....10..11....."]
+        - [3, 6, ".....01..11....."]
+        - [1, 6, ".....11..12...0."]
+        - [3, 0, ".....11..22..00."]
+        - [1, 2, ".....10..20..00."]
+        - [1, 7, ".1...12..10....."]
+        - [3, 1, ".11..22..00....."]
+        - [1, 3, ".....20..00....."]
+        - [2, 0, ".....01..02..00."]
+        - [0, 0, ".....11..21..0.."]
+        - [2, 6, ".....10..21..01."]
+        - [2, 1, ".....02..00....."]
+        - [0, 1, "..1..21..01....."]
+        - [2, 7, ".10..21..01....."]
+        - [0, 2, ".....01..12..10."]
+        - [0, 3, ".01..12..10....."]
+    # The mountains climb in rings (tiers.py): a rough ledge over the rock, the summit over that, each chained to the
+    # one below; they copy the rock's cliff layout.
+    ledge: {like: wall, color: "#7a7a74", wang: mountain-ledge.png, over: wall, cut: null}
+    summit: {like: wall, color: "#8a8a84", wang: mountain-summit.png, over: ledge, cut: null}
+  props:
+    pine: [props.png, 0, 0, 44, 63]
+    fir: [props.png, 48, 0, 58, 63]
+    oak: [props.png, 110, 0, 62, 60]
+    birch: [props.png, 176, 0, 39, 62]
+    boulder: [props.png, 219, 0, 50, 41]
+    rocks: [props.png, 273, 0, 52, 18]
+    stump: [props.png, 329, 0, 42, 35]
+    log: [props.png, 375, 0, 54, 35]
+    cairn: [props.png, 433, 0, 33, 43]
+    milestone: [props.png, 470, 0, 24, 42]
+    roadsign: [props.png, 498, 0, 31, 49]
+    hitch: [props.png, 533, 0, 48, 48]
+    table: [props.png, 585, 0, 62, 48]
+    campfire: [props.png, 651, 0, 41, 25]
+    banner: [props.png, 696, 0, 48, 60]
+    wildflowers: [props.png, 748, 0, 59, 47]
+    roadinn: [props.png, 811, 0, 125, 135]
+    tavern: [props.png, 940, 0, 136, 109]
+    stable: [props.png, 1080, 0, 139, 116]
+    keep: [props.png, 1223, 0, 121, 141]
+    watchtower: [props.png, 1348, 0, 62, 129]
+    gatetower: [props.png, 1414, 0, 94, 127]
+    gatehouse: [props.png, 1512, 0, 134, 119]
+    crag: [props.png, 1650, 0, 115, 113]
+    well: [../outside/props.png, 1037, 0, 54, 61]
+    barrels: [../outside/props.png, 1514, 0, 58, 49]
+    crates: [../outside/props.png, 1576, 0, 58, 54]
+    # The gatehouse astride two squares (the gap in Tarnhold's north wall), from the left square's top-left.
+    gatehouse_wide: [props.png, 1512, 0, 134, 119, -3, -55]

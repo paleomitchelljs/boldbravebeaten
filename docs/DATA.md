@@ -153,7 +153,7 @@ Legend kinds: `stairs {to, at, up}` (`up` sets the arrow when the default guess 
 sprite}` (a well or a hole: one way down, no stairs back; the fall's `damage` hits everyone), `locked {tn, forceTn, key, alt[]}`, `secret {tn}`, `trap {tn, disarm, damage, text, reveal}`,
 `monster {encounter, asleep}`, `chest {loot, tn}`, `pickup {good}`, `note {text, sets}`, `npc {npc}`, `shrine {heal}`,
 `prop {sprite, scale, solid}` (scenery: a crate, bed, urn, candelabra… from the table in `src/ui/game/mapview.js` or a
-tileset's `props`; solid by default; a stone block until its art exists; `sprite: none` draws nothing, for the rest of a building's footprint). A `stairs` with `sprite: none` is drawn as nothing: a path running off the edge of the map. Any legend entry may say `on: "<ground letter>"`
+tileset's `props`; solid by default; a stone block until its art exists; `sprite: none` draws nothing, for the rest of a building's footprint). A `stairs` with `sprite: none` is drawn as nothing: a path running off the edge of the map. A `note` with `sprite: none` shows no scroll (words met at a road's end). Any legend entry may say `on: "<ground letter>"`
 for the ground under it.
 
 **Looks.** `sprite:` on a monster, a foe template or an NPC names a sheet in `art/characters/pixelcrawler/` (knight, rogue, wizard, orc,

@@ -143,6 +143,15 @@ game:
     "/": {name: Stair, tile: steps, color: "#3a3634"}          # cut steps you walk up or down (a winding stair)
     "]": {name: Jungle, wall: true, tile: jungle, color: "#24381f"}   # the jungle edge round the temple swamp (its own wall)
     "'": {name: Murder hole, walk: false, fight: bars, tile: murderhole, color: "#2a2422"}   # see and shoot through
+    # The country south of the village (assets/wip/south/): forest groves and the hills' edge, low hills, mountain
+    # scree, the fortress walls of Tarnhold and the vales' gates.
+    "}": {name: Forest, wall: true, tile: forest, color: "#23401f"}
+    "{": {name: Hillside, tile: hill, color: "#5f8a46"}
+    "`": {name: Scree, tile: scree, fight: rough, color: "#8a8a84"}
+    "@": {name: Fortress wall, wall: true, tile: fort, color: "#6a6862"}
+    # The mountains climb in rings: the rock (#), a higher ledge ((), the summit (?), each a cliff set over the last.
+    "(": {name: Mountainside, wall: true, tile: ledge, color: "#7a7a74"}
+    "?": {name: Summit, wall: true, tile: summit, color: "#8a8a84"}
   passivePenalty: 3          # passive perception is this much worse than a deliberate search
   camp: {wanderingChance: 0.25, guardedChance: 0.5}
   # ---- Skill checks: d10 + floor(mean of attrs / 2) + feat ranks x weight vs a target number ------

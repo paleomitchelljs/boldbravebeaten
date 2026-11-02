@@ -65,6 +65,22 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 - [x] The preset party's colour washes (there to tell stock figures apart) are off members with their own art (Cyrus
   was moss green); a save step (version 4) clears them in old saves.
 
+## South of the village (the user, 2026-11-01, fourth set; art and prompts in `assets/wip/south/`)
+- [x] A road south from the village to the Hollin Hills (`south_hills`): forest groves, low hills, scree, grey mountains
+  closing in to a pass four squares wide. The pass comes down into Tarnhold (`tarnhold`), whose gates take the pass
+  (north) and the valley road (west, east). The West and East Tarnvales: narrow valleys dog-legging between glades,
+  an inn and a tavern in each, a gate wall with two towers at the far end, the road running on to a note at the edge.
+  No people, encounters or interiors yet. Seen in headless Chrome.
+- [x] Art: nine PixelLab sets chained to one temperate grass, 24 props (~265 generations). Maps by
+  `assets/wip/south/rebuild.sh` (layout, squaring, rings).
+- [x] Mountains climb in rings (rock, ledge, summit: each a cliff set over the last), not one flat-topped step. Built
+  walls run on under the rock at their ends (`underWalls: all`, `solo`, the rock's grass-cut sheet). The gate's north
+  join seen in headless Chrome; its south join not yet looked at.
+- [x] A figure with its own art draws nothing for a moment while a direction or frame loads, never the stand-in
+  (`Sprites.ownArt`). Not watched in play.
+- [ ] A grey strip (the tileset's wall) shows past the hills' north edge, above the forest.
+- [ ] What lies beyond the two vale gates; people in the inns and Tarnhold.
+
 ## The user's notes, 2026-11-01 (second set)
 - [x] The Temple Swamp matches the temple: its outer wall (the court's tiles) with the gate in its face, two small
   pyramids of the court's tiers and stairs, jungle round the rest. Seen in headless Chrome.

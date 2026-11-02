@@ -2,7 +2,9 @@
 // north-south), by flipping single squares between plain wall (#) and plain floor, greedily, keeping only flips that
 // cut the count of corners no tile fits, never touching a legend square, and never joining or cutting off floor
 // (a flip must keep the floor squares round it connected through its 8 neighbours). Prints the new map rows.
-//   node tools/squarewalls.js <place>
+//   node tools/squarewalls.js <place> [wall] [floor]
+// wall and floor: the two letters it flips between (default # and the place's ground, else plain floor): `} ,` squares
+// off a forest's edge against grass, `( #` a mountain's upper tier against the rock below it.
 const path = require('path');
 const repo = path.resolve(__dirname, '..');
 process.chdir(repo + '/tests');
@@ -10,6 +12,7 @@ require(repo + '/tests/load.js');
 const G = globalThis.BBB; G.UI = G.UI || {}; require(repo + '/src/ui/game/tilemap.js');
 const Tm = G.UI.Tilemap, id = process.argv[2], pl = G.Content.world.places[id];
 const gl = (pl.look && pl.look.ground) || '.';
+const WALL = process.argv[3] || '#', FLOOR = process.argv[4] || gl;
 const rows = pl.map.map((r) => [...r]), H = rows.length, W = rows[0].length;
 const ts = Tm.tileset(pl.look.tileset);
 const walk = (ch) => ch !== '#' && ch !== ' ' && !(G.Explore.groundOf(ch) && (G.Explore.groundOf(ch).wall || G.Explore.groundOf(ch).walk === false));
@@ -61,7 +64,7 @@ for (let round = 0; round < 200 && cur.length; round++) {
       if (sq.some(([a, b]) => a < 1 || b < 1 || a >= W - 1 || b >= H - 1)) continue;
       const chs = sq.map(([a, b]) => rows[b][a]);
       if (new Set(chs).size > 1) continue;
-      const ch = chs[0], to = ch === '#' ? gl : ch === gl ? '#' : null;
+      const ch = chs[0], to = ch === WALL ? FLOOR : ch === FLOOR ? WALL : null;
       if (!to) continue;
       const saved = chs.slice();
       let ok = true;
@@ -70,7 +73,7 @@ for (let round = 0; round < 200 && cur.length; round++) {
         rows[b][a] = to;
       }
       // New floor must join floor on a side, or it is an island (a wall square in the water).
-      if (ok && to !== '#') ok = sq.every(([a, b]) => [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => walk(rows[b + dy][a + dx])));
+      if (ok && to !== WALL && walk(FLOOR)) ok = sq.every(([a, b]) => [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => walk(rows[b + dy][a + dx])));
       const n = ok && areas() === nAreas ? bad().length : Infinity;
       sq.forEach(([a, b], i) => { rows[b][a] = saved[i]; });
       if (n < bestN) { bestN = n; bestFlip = sq.map(([a, b]) => [a, b, to]); }

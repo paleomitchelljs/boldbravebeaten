@@ -247,6 +247,12 @@
     return !s.ok && !s.failed;
   }
 
+  // Has art of its own that has not failed to load: while one of its pictures (a direction it has not faced yet, a
+  // frame) is still on its way it draws nothing, never the stand-in.
+  function ownArt(L) {
+    return !!(L.art && artCat()[L.art] && !artProbe(L.art).failed);
+  }
+
   function artReady(key) {
     const def = artCat()[key];
     if (!def) return false;
@@ -425,6 +431,7 @@
       const x = cv.getContext('2d');
       x.clearRect(0, 0, cv.width, cv.height);
       if (L.art && drawArt(x, L.art, 'idle', t, 16 * scale, 31 * scale, (30 * scale) / Math.max(1, (artCat()[L.art] || {}).height || 1.3), { tint: L.artTint, shadow: false })) return;
+      if (ownArt(L)) return;   // a frame still loading: blank for a moment, not the stand-in
       draw(x, L.kind, 'idle', t, 16 * scale, 31 * scale, scale, { tint: L.tint, shadow: false });
     };
     paint();
@@ -436,7 +443,7 @@
   }
 
   UI.Art = UI.Art || {};
-  UI.Sprites = { DIRS, dirOf, hasClip, forEncounter, encounterLooks, crowd, KINDS, PARTY_KINDS, partyKinds, TINTS, KIT_KIND, draw, drawArt, floats, artReady, pending, artSheet, look, lookFor, portrait, figure, sheet, whenReady: (f) => waiting.push(f), preload: () => { KINDS.forEach((k) => { sheet(k, 'idle'); sheet(k, 'run'); }); for (const k of Object.keys(artCat())) artProbe(k); } };
+  UI.Sprites = { DIRS, dirOf, hasClip, forEncounter, encounterLooks, crowd, KINDS, PARTY_KINDS, partyKinds, TINTS, KIT_KIND, draw, drawArt, floats, artReady, pending, ownArt, artSheet, look, lookFor, portrait, figure, sheet, whenReady: (f) => waiting.push(f), preload: () => { KINDS.forEach((k) => { sheet(k, 'idle'); sheet(k, 'run'); }); for (const k of Object.keys(artCat())) artProbe(k); } };
   // Portraits everywhere in the game are now the sprite's face.
   UI.Art.portrait = (c, px) => portrait(c, px);
 })(globalThis.BBB);

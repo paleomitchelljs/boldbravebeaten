@@ -37,9 +37,11 @@ rect(v, 16, 0, 17, 14, '.')          # the road north, out through the trees
 rect(v, 8, 13, W - 1, 14, '.')       # the road east
 rect(v, 8, 15, 9, 19, '.')           # a lane to the cottages
 rect(v, 8, 19, 22, 19, '.')
+rect(v, 16, 19, 17, H - 1, '.')       # the road south, to the hills
 rect(v, 13, 9, 20, 12, '.')          # the green before the inn
 put(v, 16, 0, 'N'); put(v, 17, 0, 'N')
 put(v, W - 1, 13, 'E'); put(v, W - 1, 14, '#')
+put(v, 16, H - 1, 'S'); put(v, 17, H - 1, 'S')
 building(v, 14, 8, 'I')              # the inn: its door leads into the town
 building(v, 21, 8, 'k')              # the smithy
 building(v, 24, 12, 'h')             # the shop

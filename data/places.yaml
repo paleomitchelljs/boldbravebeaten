@@ -134,7 +134,7 @@ stonebridge:
 village:
   name: Stonebridge
   kind: dungeon
-  blurb: A small village in a clearing in the jungle, a green before the inn, a road north into the hills and one east.
+  blurb: A small village in a clearing in the jungle, a green before the inn, a road north into the black hills, one east and one south.
   level: 1
   look: {wall: "#2f4a2a", floor: "#7a5a3a", ceiling: "#6f8aa6", fog: "#0c120a", torch: 0, tileset: outside_village, light: 24}
   map:
@@ -158,16 +158,17 @@ village:
     - "##,,t,,,..,xxx,,,xxx,,,,,,,,,,,,##"
     - "##,,,,,,..,xcx,,,xcx,,,,,,gg,,,,##"
     - "##,,,,,,...............,,,,,,,,,##"
-    - "##,,,,,,,,,,,,,,,,,,,,,,,,r,,,,,##"
-    - "##,,,,,y,,,,,,,,,,,,,a,,,,,,,t,,##"
-    - "##,,,t,,,,,t,,,,u,,,,,,,,,,,,,,,##"
-    - "##,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,##"
-    - "##################################"
-    - "##################################"
+    - "##,,,,,,,,,,,,,,..,,,,,,,,r,,,,,##"
+    - "##,,,,,y,,,,,,,,..,,,a,,,,,,,t,,##"
+    - "##,,,t,,,,,t,,,,..,,,,,,,,,,,,,,##"
+    - "##,,,,,,,,,,,,,,..,,,,,,,,,,,,,,##"
+    - "################..################"
+    - "################SS################"
   # The plain floor is the dirt path; everything standing on the map stands on grass.
   legend:
     N: {kind: stairs, to: mine_approach, at: S, sprite: none, label: "The road north, up into the black hills"}
     E: {kind: stairs, to: temple_approach, at: W, sprite: none, label: "The road east, into the swamp"}
+    S: {kind: stairs, to: south_hills, at: N, sprite: none, label: "The road south, into the hills"}
     I: {kind: stairs, to: stonebridge, at: ~, sprite: inn, scale: 1.2, label: "The Tilted Cask (the inn)", on: ","}
     k: {kind: prop, sprite: smithy, label: "The smithy", on: ","}
     h: {kind: prop, sprite: shop, label: "The shop", on: ","}
@@ -175,7 +176,7 @@ village:
     x: {kind: prop, sprite: none, on: ","}
     w: {kind: prop, sprite: well, label: "The well", on: ","}
     s: {kind: prop, sprite: stall, label: "A market stall", on: ","}
-    p: {kind: prop, sprite: signpost, solid: false, label: "A signpost: north to the mine, east to the temple", on: ","}
+    p: {kind: prop, sprite: signpost, solid: false, label: "A signpost: north to the mine, east to the temple, south to the hills", on: ","}
     g: {kind: prop, sprite: garden, solid: false, label: "A cabbage patch", on: ","}
     r: {kind: prop, sprite: scarecrow, label: "A scarecrow", on: ","}
     b: {kind: prop, sprite: barrels, label: "Barrels", on: ","}
@@ -283,6 +284,295 @@ mine_approach:
     S: {kind: stairs, to: village, at: N, sprite: none, label: "The road south, back to the village"}
     M: {kind: stairs, to: ember_hall, at: "<", sprite: minemouth, label: "The mine"}
     T: {kind: prop, sprite: totem, label: "A goblin totem hung with bones"}
+  encounters: {}
+  secrets: []
+
+# ---- South of the village (the user, 2026-11-01): the Hollin Hills, the pass down to Tarnhold, and the Tarnvales
+# west and east of it. Laid out by assets/wip/south/layout.py; art and prompts in assets/wip/south/. No people or
+# encounters yet; the inns and the tavern are pictures, not doors.
+south_hills:
+  name: The Hollin Hills
+  kind: dungeon
+  blurb: Rolling hills and old forest south of the village, rising to grey mountains; the road winds up to a narrow pass at the far end.
+  level: 1
+  look: {wall: "#6a6a66", floor: "#3f7a3a", ceiling: "#7f9ab6", fog: "#0c120a", torch: 0, tileset: south_hills, light: 24}
+  map:
+    - "}}}}}}}}}}}}}}}}}}}},NN,}}}}}}}}}}}}}}}}}}}}"
+    - "}}}}}}}}}}}}}}}}}}}},...}}}}}}}}}}}}}}}}}}}}"
+    - "}},,,,,,,,,,,,,,,,,,,,...,,,,,,,,,,},,,,,,}}"
+    - "}},P,,,},,,,,,,O,,,,,,,..,,,w,,,,}}}}},,Y,}}"
+    - "}},,,}}}}},,O,,,,,,,,,,...,pO,,,}}}}}}},,,}}"
+    - "}},,}}}}}}},{{{{{,,l,,,w...,,,,,}}}}}}},,,}}"
+    - "}},,}}}}}}},{{{{{{Y,,Y,,,..,,,,,,}}}}},,,,}}"
+    - "}},,,}}}}},{{{{{{{{,,,,,,...,{,,,}}}}},,,,}}"
+    - "}},,,}}}}},{{{{{{{,,,,P,,,..,{{{,,,,,{,,,,}}"
+    - "}},Y,,,,,,,P{{{{{wY,,l,,O,...,{{{,,{{{{{,,}}"
+    - "}},,,,,,,,,,,,,lt,,,,,Yl,{,..,{{{{,{{{{{,,}}"
+    - "}},O,,,,O,,,,,,,,,,,,,,,Y,,..,{{{O{{{{{{{,}}"
+    - "}},,,,{,,,,,},,,,O,P,P,,,,,..,{{,,,{{{{{,,}}"
+    - "}},O{{{{{,}}}}},,,,,,,,P,,,..,,,,,,{{{{{F,}}"
+    - "}},,{{{{{,}}}}}},P,,,,,,,,,..,,}}}}},{,,,,}}"
+    - "}},{{{{{{,}}}}}},,,O,,,,s,...,}}}}}}},,,,,}}"
+    - "}},,{{{{{,}}}}},,,,,,,,F,,..,}}}}}}}}},O,,}}"
+    - "}},O{{}}},,,}}},,,,P{{{{{,..,}}}}}}}}},,,,}}"
+    - "}},,,}}}}},,}}},F,,{{{{{,...,,}}}}}}},,,,,}}"
+    - "}},,,}}}}},,,,,,,,,{{{{,...,,,}}}}}}},,,,,}}"
+    - "}},,,,}}},,,,,Y,,,,{{{{,..,,,,}}}}}}},,,,,}}"
+    - "}},Y,,}}},,,P,,,,w,,{{,...,,,,,,,,,,,,},,,}}"
+    - "}},,,,,,,,,,s,P,F,,,M,...,wY,,,{{{,,}}}}},}}"
+    - "}},,,,,,,,,,,,,,,,,,,...,,,,,,{{{{{,}}}}},}}"
+    - ",,,,P,,F,,{,,P,,,,P,,..,,,O,s{{{{{{{}}}}},,,"
+    - ",,,,,,w,{{{{{,,,,,,,...,},,,,,{{{{{,,,,,,,,,"
+    - "####,,,{{{{{{{Y,,,,...,}}}},P,,{{{,O,,,,,,##"
+    - "#####,,,{{{{{,,,,,...,}}}}},,X,,,,,,,,X,,###"
+    - "((###,X,P,{,s,,},,..,,}}}}},O,,,#####,,,####"
+    - "(((##,,,,,,,,,}},...,,,,,,,,w,,###(###,#####"
+    - "(((##,F,,,,,X,},...,,RP,,,,,,F,###(#######(("
+    - "(((##,,,###,,,},..,K,,,,,F,,,X,,#########((("
+    - "(((##,,#####,,,,..,,,,,r,,,{r,,`######(((((("
+    - "(((##,,#####,,,...,,w,,,,{{{{{``````##(((((("
+    - "(((###,,###,,,,..w,,{,r,,{{{{{,`````##(((((("
+    - "(((####`###```,..,{{{{{,,{{{{{,,,,`###(((???"
+    - "((((###```````r..,{{{{{{,,,{r,,s,s`###(((???"
+    - "(((((###``````,...r{{{{t,r,,t,,,X,`###(((???"
+    - "(((((####``Fr,,,..,,{F,,,,,,,,,,,```##(((???"
+    - "((((((####`,,,,,...,,,r,P,,,,###,,``##(((???"
+    - "??(((((####`#,,,,...,M,,,,X,#####,`###(((???"
+    - "??((((((#######,r,..,,,,F,,,#####,,###(((???"
+    - "???((((((######,,,...,,,,,,,,###,,###((((???"
+    - "????((((((((###,,,,..,,,,,F``###,,###((((???"
+    - "?????(((((((##```,,...,rF,```````###(((((???"
+    - "??????((((((###```,,..,,,,F`````####((((????"
+    - "?????????(((###```,,...,,,,`X`,####(((((????"
+    - "?????????((((##`````,..,,`````####(((((?????"
+    - "?????????((((##`````,..,,````####((((((?????"
+    - "?????????((((###````,..,,```####((((((??????"
+    - "??????????(((#######C..C#######((((((???????"
+    - "??????????((((######,..,######((((((????????"
+    - "??????????((((((((##,..,##(((((((((?????????"
+    - "??????????((((((((##,..,##((((((((??????????"
+    - "???????????(((((((##,..,##(((((((???????????"
+    - "???????????????(((##,..,##(((???????????????"
+    - "???????????????(((##,..,##(((???????????????"
+    - "???????????????(((##,..,##(((???????????????"
+    - "???????????????(((##,..,##(((???????????????"
+    - "???????????????(((##,SS,##(((???????????????"
+  legend:
+    N: {kind: stairs, to: village, at: S, sprite: none, label: "The road north, back to the village"}
+    S: {kind: stairs, to: tarnhold, at: N, sprite: none, label: "The pass, south through the mountains"}
+    P: {kind: prop, sprite: pine, scale: 1.5, label: "A pine", on: ","}
+    F: {kind: prop, sprite: fir, scale: 1.5, label: "A fir", on: ","}
+    O: {kind: prop, sprite: oak, scale: 1.6, label: "An oak", on: ","}
+    Y: {kind: prop, sprite: birch, scale: 1.4, label: "A birch", on: ","}
+    t: {kind: prop, sprite: pine, scale: 1.1, label: "A young pine", on: ","}
+    R: {kind: prop, sprite: boulder, label: "A boulder", on: ","}
+    r: {kind: prop, sprite: rocks, solid: false, label: "Loose rocks", on: ","}
+    s: {kind: prop, sprite: stump, label: "A stump", on: ","}
+    l: {kind: prop, sprite: log, label: "A fallen log", on: ","}
+    w: {kind: prop, sprite: wildflowers, solid: false, label: "Wildflowers", on: ","}
+    M: {kind: prop, sprite: milestone, label: "A milestone", on: ","}
+    p: {kind: prop, sprite: roadsign, label: "A signpost: north to the village, south to the pass", on: ","}
+    C: {kind: prop, sprite: cairn, label: "A cairn at the mouth of the pass", on: ","}
+    X: {kind: prop, sprite: crag, scale: 1.3, label: "A crag of grey granite", on: ","}
+    K: {kind: prop, sprite: campfire, solid: false, label: "The ashes of a campfire", on: ","}
+  encounters: {}
+  secrets: []
+
+tarnhold:
+  name: Tarnhold
+  kind: dungeon
+  blurb: A grey fortress where the pass comes down into the vales. Its north gate takes the pass, its west and east gates the valley road.
+  level: 2
+  look: {wall: "#6a6a66", floor: "#3f7a3a", ceiling: "#7f9ab6", fog: "#0c120a", torch: 0, tileset: tarnvale, light: 24}
+  map:
+    - "??????????????????????(((##,NN,###(((???????????????????????"
+    - "??????????????????????(((##,..,###(((???????????????????????"
+    - "??????????????????????(((##,..,###(((???????????????????????"
+    - "??????????????????????(((###,..,##(((???????????????????????"
+    - "??????????????????????(((###,..,##(((???????????????????????"
+    - "??????????(((((((((((((((###,..,##((((((((((((((((??????????"
+    - "??????????(((((((((((((((###,..,##((((((((((((((((??????????"
+    - "??????????(((((((((((((((##,..,###((((((((((((((((??????????"
+    - "??????????(((##############,..,################(((??????????"
+    - "??????????(((##############,..,################(((??????????"
+    - "??????????(((##,,,,,,,,,,,p,..,,,,,,,`````,,,##(((??????????"
+    - "??????????(((##,,,,,,,,,,,,,..,,,,,,```````,,##((((((((((((("
+    - "??????????(((##,,,,,,,,,,,,,..,,,,,,,`````,,,##((((((((((((("
+    - "((((((((?((((##,,,@@@@@@@@@@..@@@@@@@@@@@@,,,##((((((((((((("
+    - "((((((((?((((##,,,@@@@@@@@@@A.@@@@@@@@@@@@,,,##(############"
+    - "(((((((((((((##,,,@@,,,,,,,,..,,,,,,,,,,@@,,,##(############"
+    - "#####(((((((###,F,@@,T,,,,,f..,f,,,,,,T,@@,,,#####,,,,,,,,,,"
+    - "#####(((((((###,,,@@,,,,,,,,..,,xxxxx,,,@@,,,#####,,,,,,,,,,"
+    - ",,,###########,,,,@@,,,,,,,,..,,xxxxx,,,@@,,,,,,,,,,,F,,,,,,"
+    - ",,,###########,,,,@@,,xxx,,,..,,xxxxx,,,@@,,,,,,,,,,,,,,,,,,"
+    - ",,,,,,,,,,,,,,,,,,@@,,xbx,,,..,,xxkxx,,,@@,,,,,,F,,,,,,,,,r,"
+    - ",,,,,,P,F,,,,,,,,,@@,,,,,,,,..,,,,,,,,,,@@,,,,,,,,,,,,,,,,P,"
+    - "F,,,,,,,,,,,,,,,,,@@f,,,,,h,..,,,,,,,,,f@@,,,,,,P,,,,,,,,,,,"
+    - ",,,,,,,,,,,,,,,,,,Gx,,,,,,,,..,,f,,,,,,,xG,,,,,,,,,,,,,,,,,,"
+    - "Q..........................................................E"
+    - "Q..........................................................E"
+    - ",,,,,,,,,,,,,r,,,,Gx,,,,,,,,,,,,,,,,,,,,xG,r,,,,,,,,,,,,,,,,"
+    - "F,,,,,r,t,,,,,,,,,@@f,Bo,,,,,,,hr,,,B,,f@@,,,,,,,,,,,,,,F,,,"
+    - ",,,,,,F,,,,,,,,,,,@@,,,,,W,,,,,,,,,,,o,,@@,,,,,,,,,,,,P,,,,,"
+    - ",,R,,,,,,,,,###,,,@@,T,,,,,,,,,,,,,,,,T,@@,,,,,,,,,,,,,,,,,,"
+    - ",,,,P,,,,,,,###,,,@@@@@@@@@@@@@@@@@@@@@@@@,P,,,,,,F,,,,,,,,,"
+    - ",,,,,,#########,,,@@@@@@@@@@@@@@@@@@@@@@@@,,,####,,,,,,,,###"
+    - ",,,,,,#########,,,,```````,,,,,,,,,,,,,,,,,,,####,,,,,,,,###"
+    - "########(((((##,,,`````````,,,,,,,,,,,,,,,,,,###############"
+    - "########(((((###############################################"
+    - "########(((((###############################################"
+  legend:
+    N: {kind: stairs, to: south_hills, at: S, sprite: none, label: "The pass, north into the hills"}
+    Q: {kind: stairs, to: tarnvale_west, at: E, sprite: none, label: "The road west, into the vale"}
+    E: {kind: stairs, to: tarnvale_east, at: Q, sprite: none, label: "The road east, into the vale"}
+    A: {kind: prop, sprite: gatehouse_wide, solid: false, label: "The north gate"}
+    G: {kind: prop, sprite: gatetower, label: "A gate tower", on: ","}
+    T: {kind: prop, sprite: watchtower, label: "A corner tower", on: ","}
+    k: {kind: prop, sprite: keep, scale: 1.4, label: "The keep", on: ","}
+    b: {kind: prop, sprite: stable, label: "The stables", on: ","}
+    W: {kind: prop, sprite: well, label: "The well", on: ","}
+    h: {kind: prop, sprite: hitch, label: "A hitching rail", on: ","}
+    f: {kind: prop, sprite: banner, label: "A banner", on: ","}
+    B: {kind: prop, sprite: barrels, label: "Barrels", on: ","}
+    o: {kind: prop, sprite: crates, label: "Crates", on: ","}
+    x: {kind: prop, sprite: none, on: ","}
+    p: {kind: prop, sprite: roadsign, label: "A signpost: the vales west and east, the pass north", on: ","}
+    P: {kind: prop, sprite: pine, scale: 1.5, label: "A pine", on: ","}
+    F: {kind: prop, sprite: fir, scale: 1.5, label: "A fir", on: ","}
+    t: {kind: prop, sprite: pine, scale: 1.1, label: "A young pine", on: ","}
+    R: {kind: prop, sprite: boulder, label: "A boulder", on: ","}
+    r: {kind: prop, sprite: rocks, solid: false, label: "Loose rocks", on: ","}
+  encounters: {}
+  secrets: []
+
+tarnvale_west:
+  name: The West Tarnvale
+  kind: dungeon
+  blurb: Narrow valleys winding west from Tarnhold, opening into glades with an inn and a tavern; a fortified gate where the road leaves.
+  level: 2
+  look: {wall: "#6a6a66", floor: "#3f7a3a", ceiling: "#7f9ab6", fog: "#0c120a", torch: 0, tileset: tarnvale, light: 24}
+  map:
+    - "??????????????????????????((((((((((###################(((((((((((????"
+    - "??????????????????????????((((((((((###################(((((((((((????"
+    - "??????????????????????????((((((((((##,,,,,,,,,,,,,``##(((((((((((????"
+    - "??????????????????????????(((#########,,,,,,,,,,P,P``##########(((????"
+    - "??????????????????????????(((#########,,xxx,xxx,,,,,,##########(((????"
+    - "(((((((((((((((((?????????(((##,,,,,,,,,xbxBxIx,H,o,,,,,,,,,,##(((????"
+    - "(((((((((((((((((?????????(((##,,,,,,,,,,,s,R,wR,,,,,,,,,,,,,##(((????"
+    - "(((((((((((((((((?????????(((##,,..........................,,##(((????"
+    - "##############(((((((((???(((##,,..........................,,##(((????"
+    - "##############(((((((((???(((##,,..,,R,,,,r,,,,,,,R,,,,,,..,,##(((????"
+    - "##,,,,@@,,,,##(((((((((???(((##,,..,,,,,t,,,K,,K,,t,,,,,,..,,##((((((("
+    - "##,P,,@@,w,,########(((???(((##,,..,,#,,,,t,,,,Fs,,,,##,,..,,##((((((("
+    - "##,,,,@@,,,,########(((???(((##,,..,,#,,,,,,,,,,,,,,,##,,..,,##((((((("
+    - ",,,,,,@@,F,,,,,,,,##(((???(((##,,..,,##################,,..,,#########"
+    - ",,,,,,Gx,,,,,,,,,,##(((((((((##,,..,,##################,,..,,#########"
+    - "Z...............,,##(((((((((##,,..,M##((((((((((((((##,,..,,,,,p,,,,,"
+    - "Z...............,,##(((((((((##,,..,,##((((((((((((((##,,..,,,w,,,w,,,"
+    - ",,,,,,Gx,,,,,,..,,#############,,..,,##((((((((((((((##,,............E"
+    - ",,,,,,@@,l,,Pw..,,#############,w..,,##(((????????(((##,,............E"
+    - "##,,,,@@,,,,,,..,,,,,,,,,,,,,,,,,..,,##(((????????(((##,,,,,,,,,,,,,,,"
+    - "##,,w,@@,,,,,,..,,,,,Y,xxx,,P,,,,..,,##(((????????(((##,,,,,,,M,,,,,,,"
+    - "##,,,,@@,,,,,,..,,,t,H,xVxBo,,t,,..,,##(((????????(((#################"
+    - "############,,..,,,,,,,,,,,,,,,,,..,,##(((????????(((#################"
+    - "############,,.....................,,##(((????????(((((((((((((((((((("
+    - "((((((((((##,,.....................,,##(((????????(((((((((((((((((((("
+    - "((((((((((##,w,,,,,,,,,,,,,,,,,,,,,,,##(((????????(((((((((((((((((((("
+    - "((((((((((##,,,,,,,,,,K,,,K,,,,,,,,,,##(((????????????????????????????"
+    - "???????(((#######,,,t,,,P,Y,t,,,#######(((????????????????????????????"
+    - "???????(((#######,,,s,O,,,,,,l,,#######(((????????????????????????????"
+    - "???????((((((((##,,,,,,,,,,,,,,,##((((((((????????????????????????????"
+    - "???????((((((((###################((((((((????????????????????????????"
+    - "???????((((((((###################((((((((????????????????????????????"
+  legend:
+    E: {kind: stairs, to: tarnhold, at: Q, sprite: none, label: "The road east, to Tarnhold"}
+    Z: {kind: note, sprite: none, label: "The road west", text: "The road runs on west through the gate and out of the vale. (What lies beyond is not built yet.)"}
+    G: {kind: prop, sprite: gatetower, label: "A gate tower", on: ","}
+    I: {kind: prop, sprite: roadinn, scale: 1.2, label: "The Drover's Rest (an inn)", on: ","}
+    V: {kind: prop, sprite: tavern, scale: 1.1, label: "The Split Pine (a tavern)", on: ","}
+    b: {kind: prop, sprite: stable, label: "A stable", on: ","}
+    H: {kind: prop, sprite: hitch, label: "A hitching rail", on: ","}
+    K: {kind: prop, sprite: table, label: "A table and benches", on: ","}
+    B: {kind: prop, sprite: barrels, label: "Barrels", on: ","}
+    o: {kind: prop, sprite: crates, label: "Crates", on: ","}
+    x: {kind: prop, sprite: none, on: ","}
+    p: {kind: prop, sprite: roadsign, label: "A signpost: east to Tarnhold", on: ","}
+    P: {kind: prop, sprite: pine, scale: 1.5, label: "A pine", on: ","}
+    F: {kind: prop, sprite: fir, scale: 1.5, label: "A fir", on: ","}
+    O: {kind: prop, sprite: oak, scale: 1.6, label: "An oak", on: ","}
+    Y: {kind: prop, sprite: birch, scale: 1.4, label: "A birch", on: ","}
+    t: {kind: prop, sprite: pine, scale: 1.1, label: "A young pine", on: ","}
+    R: {kind: prop, sprite: boulder, label: "A boulder", on: ","}
+    r: {kind: prop, sprite: rocks, solid: false, label: "Loose rocks", on: ","}
+    s: {kind: prop, sprite: stump, label: "A stump", on: ","}
+    l: {kind: prop, sprite: log, label: "A fallen log", on: ","}
+    w: {kind: prop, sprite: wildflowers, solid: false, label: "Wildflowers", on: ","}
+    M: {kind: prop, sprite: milestone, label: "A milestone", on: ","}
+  encounters: {}
+  secrets: []
+
+tarnvale_east:
+  name: The East Tarnvale
+  kind: dungeon
+  blurb: Narrow valleys winding east from Tarnhold, opening into glades with a tavern and an inn; a fortified gate where the road leaves.
+  level: 2
+  look: {wall: "#6a6a66", floor: "#3f7a3a", ceiling: "#7f9ab6", fog: "#0c120a", torch: 0, tileset: tarnvale, light: 24}
+  map:
+    - "?????????????????????????????(((((((###################((((((((???????"
+    - "?????????????????????????????(((((((###################((((((((???????"
+    - "?????????????????????????????(((((((##,,,,,,,,,,,,,,,##((((((((???????"
+    - "?????????????????????????????(((######,,,,,,,,,,,t,,,#######(((???????"
+    - "?????????????????????????????(((######,,xxx,xxx,,,,,,#######(((???????"
+    - "?????????????????????????????(((##,,,,,,xbxBxIx,H,o,,,,,,,##(((((((((("
+    - "(((((((((((((((((((((????????(((##,,,,,s,,,,,,,,,,,,,,,,,,##(((((((((("
+    - "(((((((((((((((((((((????????(((##,,....................,,##(((((((((("
+    - "(((((((((((((((((((((????????(((##,,....................,,############"
+    - "##################(((????????(((##,,..,,,,,,,,,,r,,rw,..,,############"
+    - "##################(((????????(((##,,..s,t,,,K,,K,,t,t,..,,,,,,@@,,,,##"
+    - ",,,,p,,,,,,,,,,,##(((????????(((##,,..,,,,,,,,,P,,,,,,..,O,,,,@@,,F,##"
+    - ",,,,,,,,,,,,,,,,##(((????????(((##,,..,,,,,,,,,,,,,,,,..,,,,r,@@,,,,##"
+    - "Q.............,,##((((((((((((((##,,..l,############,,..,P,,,,@@,,,,,,"
+    - "Q.............,,##((((((((((((((##,w..,,############,,..,,,,,,xG,,,,,,"
+    - ",,,,,,,,rw,,..,,##((((((((((((((##,,..,,##((((((((##,w...............Z"
+    - ",,,,,,,,,,,,..,,##################,,..,,##((((((((##,,...............Z"
+    - "##########,,..,,##################,,..,,##((((((((##,,,,,,,,,,xG,,,,,,"
+    - "##########,,..,M,,,,,,,,,,,,,,,,,#,,..,,##(((??(((##,,,,,,M,,,@@,,,,,,"
+    - "((((((((##,,..,,w,O,,,,,,,,,,,,,,#,,..,,##(((??(((########,O,,@@,,O,##"
+    - "((((((((##,,..,,,,,,,O,xxx,,,Y,``#,w..,,##(((??(((########,,,,@@,,,,##"
+    - "((((((((##,,..,,,,,F,H,xVxBo,,,```,,..,,##(((??(((((((((##,,,,@@,,,,##"
+    - "?????(((##,,..,,R,,,,,,,,,,,,,,```r,..w,##(((??(((((((((##############"
+    - "?????(((##,,..........................s,##(((??(((((((((##############"
+    - "?????(((##,,..........................,,##(((????????((((((((((((((((("
+    - "?????(((##,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,##(((????????((((((((((((((((("
+    - "?????(((##,,,,,,,,,,,,K,,,K,,,,,,,,,,,,,##(((????????((((((((((((((((("
+    - "?????(((########,,t,t,,,F,Fwt,,,,#########(((?????????????????????????"
+    - "?????(((########,,,,,,,,,,,,,,,,,#########(((?????????????????????????"
+    - "?????(((((((((#####################((((((((((?????????????????????????"
+    - "?????(((((((((#####################((((((((((?????????????????????????"
+  legend:
+    Q: {kind: stairs, to: tarnhold, at: E, sprite: none, label: "The road west, to Tarnhold"}
+    Z: {kind: note, sprite: none, label: "The road east", text: "The road runs on east through the gate and out of the vale. (What lies beyond is not built yet.)"}
+    G: {kind: prop, sprite: gatetower, label: "A gate tower", on: ","}
+    I: {kind: prop, sprite: roadinn, scale: 1.2, label: "The Last Mile (an inn)", on: ","}
+    V: {kind: prop, sprite: tavern, scale: 1.1, label: "The Kettle and Crow (a tavern)", on: ","}
+    b: {kind: prop, sprite: stable, label: "A stable", on: ","}
+    H: {kind: prop, sprite: hitch, label: "A hitching rail", on: ","}
+    K: {kind: prop, sprite: table, label: "A table and benches", on: ","}
+    B: {kind: prop, sprite: barrels, label: "Barrels", on: ","}
+    o: {kind: prop, sprite: crates, label: "Crates", on: ","}
+    x: {kind: prop, sprite: none, on: ","}
+    p: {kind: prop, sprite: roadsign, label: "A signpost: west to Tarnhold", on: ","}
+    P: {kind: prop, sprite: pine, scale: 1.5, label: "A pine", on: ","}
+    F: {kind: prop, sprite: fir, scale: 1.5, label: "A fir", on: ","}
+    O: {kind: prop, sprite: oak, scale: 1.6, label: "An oak", on: ","}
+    Y: {kind: prop, sprite: birch, scale: 1.4, label: "A birch", on: ","}
+    t: {kind: prop, sprite: pine, scale: 1.1, label: "A young pine", on: ","}
+    R: {kind: prop, sprite: boulder, label: "A boulder", on: ","}
+    r: {kind: prop, sprite: rocks, solid: false, label: "Loose rocks", on: ","}
+    s: {kind: prop, sprite: stump, label: "A stump", on: ","}
+    l: {kind: prop, sprite: log, label: "A fallen log", on: ","}
+    w: {kind: prop, sprite: wildflowers, solid: false, label: "Wildflowers", on: ","}
+    M: {kind: prop, sprite: milestone, label: "A milestone", on: ","}
   encounters: {}
   secrets: []
 

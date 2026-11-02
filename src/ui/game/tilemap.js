@@ -129,7 +129,8 @@
       case 'drop': out.decor.push({ t: 'drop', x, y, sprite: c.def.sprite || null }); break;
       case 'trap': if (st.found || st.sprung || st.disarmed) out.decor.push({ t: 'trap', x, y, state: st.disarmed ? 'off' : st.sprung ? 'sprung' : 'armed' }); break;
       case 'pickup': if (!st.done) out.decor.push({ t: 'twinkle', x, y, good: c.def.good }); break;
-      case 'note': if (!st.done) out.decor.push({ t: 'note', x, y }); break;
+      // A note with `sprite: none` (words at a road's end) leaves no scroll lying there.
+      case 'note': if (!st.done && c.def.sprite !== 'none') out.decor.push({ t: 'note', x, y }); break;
       default: break;
     }
   }
@@ -421,9 +422,16 @@
       const t = T_(xx, yy).t, d = tdef(ts, t);
       if (d.rank < w.rank) return false;
       if (t === w.name || !w.cliffTiles) return t === w.name || t === ts.wall || !(d.cliffTiles || d.apart);
+      // `solo` (a built wall among a mountain's tiers): no other cliff set counts as its upper ground, only the rock
+      // it runs under (underWalls).
+      if (w.solo && t !== ts.wall) return false;
       // `underWalls` (a pyramid built into a wall): a wall square beside this terrain, east or west, is taken as the
       // square beside it, so the tier runs on under the wall's edge, faces and all; the wall's `cut` sheet lies over it.
-      if (t === ts.wall && w.underWalls) return [-1, 1].some((dx) => T_(xx + dx, yy).t !== ts.wall && upOf(w)(xx + dx, yy));
+      // `underWalls: all` takes the squares north and south too (a built wall running into natural rock at its ends).
+      if (t === ts.wall && w.underWalls) {
+        const sides = w.underWalls === 'all' ? [[-1, 0], [1, 0], [0, -1], [0, 1]] : [[-1, 0], [1, 0]];
+        return sides.some(([dx, dy]) => T_(xx + dx, yy + dy).t !== ts.wall && upOf(w)(xx + dx, yy + dy));
+      }
       return t !== ts.wall;
     };
     // The wall corners to draw from its cut sheet (the ground cut away): a square of the four round it is a terrain

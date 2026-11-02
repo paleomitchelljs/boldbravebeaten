@@ -583,8 +583,9 @@
       const rot = a.down && !dead ? (v.flip ? -1.45 : 1.45) : 0;
       const art = a.art && Sprites.drawArt(ctx, a.art, dead ? 'death' : lunging ? lunge.clip : anim, frame, x, y, size, { flip: v.flip, dir: v.dir, tint: a.artTint, alpha: a.alpha, artScale: a.artScale, rot, progress, shadow: !a.down });
       if (art) a = Object.assign({}, a, { size: a.artSize || a.size });
-      // Art still loading: nothing yet, rather than the stand-in for a moment.
-      if (!art && a.art && Sprites.pending(a)) return;
+      // Art still loading (all of it, or the picture for this direction or frame): nothing for a moment, never the
+      // stand-in.
+      if (!art && a.art && (Sprites.pending(a) || Sprites.ownArt(a))) return;
       const ok = art || Sprites.draw(ctx, a.kind, anim, frame, x, y, SS, { flip: v.flip, tint: a.tint, alpha: a.alpha, size: a.size || 1, rot, shadow: !a.down });
       // A hit: the same figure again, washed red and added on top (it glows), fading.
       const now = clock(), hit = view.fx.find((f) => f.k === 'hurt' && f.id === a.id && now >= f.t0 && now < f.t0 + f.dur);
