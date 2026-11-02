@@ -22,6 +22,10 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   in explore.js). Fights still glide at 9. Not yet seen on the iPhone; stride and pace may want tuning by eye.
 - [x] Camera surged once a step (it eased toward the leader's square, which jumps). It now moves with the leader's
   glide, easing only across big jumps or when the focus passes to another figure. Not yet seen on the iPhone.
+- [x] Fight routes walked through lava. `Terrain.costMap` now never routes across visible deadly ground (it can still
+  be the square you pick) and detours round other visible hazards (`Terrain.avoid`, DETOUR 50) when it can; with no
+  way round lava the move stops short. Tests in `tests/lava-paths.test.js`. Open: picking a lava square on purpose
+  asks for no confirmation.
 
 ## The fire-goblin mine (prototype dungeon 2; the user, 2026-10-31; plan and status in `assets/ideas/ember-mine.md`)
 - [x] Eight places (`ember_*` in `places.yaml`), laid out by `assets/wip/ember/layout.py`: the winding stair with the
