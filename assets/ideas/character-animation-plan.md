@@ -193,3 +193,26 @@ what the next dungeon (the fire-goblin mine, `assets/ideas/ember-mine.md`) needs
 | Outside (village, swamp, hills) | 3 pro tilesets, 24 props | ~115 | | assets/wip/outside/README.md (not character work) |
 | Thrusts (the user, 2026-11-01: every non-archer hero a swing and a thrust) | Beren ×8 (`Thrust`; W re-rolled: the point went behind him); Cyrus S ×2 (1st raised the blade to the side and made it straight; deleted), ×7 (`Thrust2`; E, W re-rolled: blade drawn back); Jabiku S ×2 (1st swung the staff round and kept it level; deleted), ×7 (`Thrust2`) | 32 | | Jabiku jabs with the butt in SE, N, NW, SW, as the rules have it; Cyrus E frames 4-5 show the sabre in both hands for a moment |
 
+| South, Tarnhold, grassland (not character work) | 18 pro tilesets, ~70 props, 4 object animations | ~610 | | assets/wip/south/, assets/wip/tarn/ |
+
+## Cycle 3 (2026-11-01): the recruits and the new creatures
+
+The user, 2026-11-01: "the unused hero characters ... milling about in the starting town ... Some of them need more
+animations. ... then I'd like the new creatures I've added to PixelLab to have animations added." All v3, 64-80 px.
+
+| Step | Asked | Charged | Notes |
+|---|---|---|---|
+| Crusader | walk ×8 (6 frames), strike ×8, idle ×8, death | 25 | strike N frames 3-4 and SE 3 flashed white: patched with neighbouring frames in the repo |
+| Kalavar (Orc_Warrior), Jadier (Dragonborn_Scimitars) | idle ×8 each | 16 | good |
+| Venril | glide ×8 (its own idle was there), strike ×8, death | 17 | |
+| Xalgoz, minotaur, hill giant, lizardfolk skeleton, wolf, lion, grizzly, orc, gnoll | death each | 9 | |
+| Xalgoz | walk ×8 (its own south scary-walk kept), strike ×8 | 16 | strike N 3, S 3 and SE 4-5 flashed: patched |
+| Minotaur | walk ×8, strike ×8 (fist and horns) | 16 | good |
+| Hill giant | walk ×8, strike ×8 (both fists: they swelled into red mitts; kept in the folder, unused), sweep ×8 (`Sweep`, used) | 24 | |
+| Lizardfolk skeleton | walk ×8, strike ×8 | 16 | good |
+| Grey wolf | trot ×8, bite ×8 | 16 | good |
+| Lion | walk ×8, pounce ×8 | 16 | good |
+| Grizzly | walk ×8, rear-and-swipe ×8 | 16 | S and SW frames 3-4 flashed: patched |
+| Orc (the blue brute; its chain-mail state not animated) | walk ×8, punch ×8 | 16 | the cape flies about in the punch |
+| Gnoll (blue-grey; its white state not animated) | walk ×8, claw ×8 | 16 | N strike loses a third of the figure mid-lunge (seen from behind): kept |
+| | | balance 841 | idles for these nine not made (about 72) |

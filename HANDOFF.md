@@ -78,7 +78,12 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   one (`World.recruit`). Tests in `tests/recruit.test.js`.
 - [x] Crusader: walk ×8, strike ×8, idle ×8, death (25 generations). Two strike frames flashed white: patched with
   their neighbours (a fresh pull brings them back).
-- [ ] Kalavar's idle (queued) and Jadier's; then the new creatures' animations (the user's next ask).
+- [x] Kalavar's and Jadier's idles: all five recruits are fully animated.
+- [x] The user's new creatures, walk ×8, strike ×8, death (cycle 3 of character-animation-plan.md): Venril (glide;
+  its floating idle south), Xalgoz, minotaur, hill giant (a sweep: the fist strike swelled his hands), lizardfolk
+  skeleton, grey wolf, lion, grizzly, orc brute, gnoll. In art.yaml under their own keys; no monster uses them yet.
+  Flashed strike frames patched with their neighbours (a fresh pull brings them back).
+- [ ] Idles for those nine (about 72 generations); the orc's chain-mail and the gnoll's white states unanimated.
 - [ ] The overlook top is close to the canyon floor in colour; tower roofs read dark; the waterfall's square is solid
   (stand beside it).
 
