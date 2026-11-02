@@ -156,6 +156,9 @@
   }
 
   // The eight compass directions, clockwise from east (screen y points down), and the one nearest a vector.
+  // Squares walked per walk cycle (two steps) when an entry gives no `stride`.
+  const STRIDE = 3;
+
   const DIRS = ['east', 'south-east', 'south', 'south-west', 'west', 'north-west', 'north', 'north-east'];
   const dirOf = (dx, dy) => DIRS[((Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) % 8) + 8) % 8];
   // Of the directions a character has, the one nearest `want`.
@@ -196,7 +199,7 @@
 
   // Which sheet (and frame) shows this art in this animation; null if none of it can be drawn.
   // dir: the compass direction the figure faces (pixellab art has eight standing and some walking).
-  function artPick(key, anim, frame, flip, dir, progress) {
+  function artPick(key, anim, frame, flip, dir, progress, travel) {
     const def = artCat()[key];
     if (!def) return null;
     if (def.type === 'pixellab') {
@@ -215,7 +218,10 @@
       if (!d) return stand();
       // An idle plays forward then back (`pingpong`), so a clip that drifts from its first pose never jumps back to it.
       const n = c.frames, m = c.pingpong && n > 2 ? 2 * n - 2 : n, k = ((frame % m) + m) % m;
-      const i = (anim === 'attack' || anim === 'thrust') && progress != null ? Math.min(n - 1, Math.floor(progress * n)) : k < n ? k : m - k;
+      // A walk steps with the ground: one cycle every `stride` squares walked (the feet stay put rather than paddle).
+      const walking = anim === 'run' && travel != null && c.anim === clip(def, 'walk').anim;
+      const i = (anim === 'attack' || anim === 'thrust') && progress != null ? Math.min(n - 1, Math.floor(progress * n))
+        : walking ? Math.floor((travel / (def.stride || STRIDE)) * n) % n : k < n ? k : m - k;
       const s = artSheet(key, `${c.dir}/animations/${c.anim}/${d[0]}/frame_${String(i).padStart(3, '0')}.png`);
       return s.ok ? framed(def, s, d[1]) : stand();  // the standing view until the frame loads, or if it is missing
     }
@@ -294,7 +300,7 @@
   // again, so a figure turning a new way does not blink out.
   function drawArt(ctx, key, anim, frame, x, y, tile, opts) {
     opts = opts || {};
-    let p = artPick(key, anim, frame, opts.flip, opts.dir, opts.progress);
+    let p = artPick(key, anim, frame, opts.flip, opts.dir, opts.progress, opts.travel);
     if (opts.hold) { if (p) opts.hold.pick = p; else if (opts.hold.pick && opts.hold.pick.def === artCat()[key]) p = opts.hold.pick; }
     if (!p) return false;
     const { def, s } = p;

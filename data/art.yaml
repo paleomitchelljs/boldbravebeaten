@@ -10,7 +10,8 @@
 # standing views to use, default all eight (leave out a bad one and the nearest stands in). Animations (folders under
 # <dir>/animations) are clips:
 #   walk    played moving: an animation name (default Walking) with walkFrames (default 4) and walks (the directions
-#           it has, default east and west); or {anim, dir, frames, dirs} to take it from another state's folder
+#           it has, default east and west); or {anim, dir, frames, dirs} to take it from another state's folder.
+#           It steps with the ground: one cycle every `stride` squares walked (default 3; smaller is shorter, quicker steps)
 #   idle    played standing: an animation name, or {anim, dir, frames, dirs}; frames default 4, dirs all eight
 #   attack  played through a blow, the same way
 # A clip plays in the direction faced, or mirrored from its twin (west from east); a walk also takes one 45 degrees

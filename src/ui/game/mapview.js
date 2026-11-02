@@ -22,6 +22,7 @@
   const Tilemap = UI.Tilemap;
 
   const T = 16;
+  const WALK_HOLD = 120;
   const HAS_IMG = typeof Image !== 'undefined';
   const DIR = 'art/worldtiles/';
 
@@ -311,9 +312,13 @@
           v.x += dx / d * step; v.y += dy / d * step;
           if (Math.abs(dx) > 0.05) v.flip = dx < 0;
           v.dir = Sprites.dirOf(dx, dy);
-          v.run = true; moving = true;
+          v.travel = (v.travel || 0) + step;
+          v.run = true; v.walked = clockNow(); moving = true;
         } else {
-          v.x = a.x; v.y = a.y; v.run = false;
+          // Arrived. A walk along a path pauses a moment at each square before the next step; the walk keeps playing
+          // through that pause (WALK_HOLD ms) rather than snapping to the standing pose and back.
+          v.x = a.x; v.y = a.y;
+          if (v.run && clockNow() - (v.walked || 0) > WALK_HOLD) v.run = false;
           if (a.flip != null) v.flip = !!a.flip;
           if (a.face && (a.face.x !== a.x || a.face.y !== a.y)) v.dir = Sprites.dirOf(a.face.x - a.x, a.face.y - a.y);
           else if (a.flip != null && /west/.test(v.dir) !== !!a.flip) v.dir = a.flip ? 'south-west' : 'south-east';
@@ -585,7 +590,7 @@
       for (const it of list) {
         if (it.prop) { const i = it.prop; drawObject(ctx, i.c, ox + i.x * size, oy + i.y * size, S, i.x, i.y); continue; }
         const [dx, dy] = offsetOf(it.fig.a.id, clock());
-        drawActor(ctx, it.fig.a, dx || dy ? { x: it.fig.v.x + dx, y: it.fig.v.y + dy, run: it.fig.v.run, flip: it.fig.v.flip, dir: it.fig.v.dir } : it.fig.v, ox, oy, S, view.tick);
+        drawActor(ctx, it.fig.a, dx || dy ? { x: it.fig.v.x + dx, y: it.fig.v.y + dy, run: it.fig.v.run, travel: it.fig.v.travel, flip: it.fig.v.flip, dir: it.fig.v.dir } : it.fig.v, ox, oy, S, view.tick);
       }
       // Fog: unlit squares fade; what has been seen but is out of the light is dim.
       if (sc.light) {
@@ -640,7 +645,7 @@
       const dead = a.down && a.art && Sprites.hasClip(a.art, 'death');
       const rot = a.down && !dead ? (v.flip ? -1.45 : 1.45) : 0;
       if (a.art) { Sprites.warm(a.art); if (a.bar != null) Sprites.warm(a.art, true); }
-      const art = a.art && Sprites.drawArt(ctx, a.art, dead ? 'death' : lunging ? lunge.clip : anim, frame, x, y, size, { flip: v.flip, dir: v.dir, tint: a.artTint, alpha: a.alpha, artScale: a.artScale, rot, progress, shadow: !a.down, hold: view.vis[a.id] });
+      const art = a.art && Sprites.drawArt(ctx, a.art, dead ? 'death' : lunging ? lunge.clip : anim, frame, x, y, size, { flip: v.flip, dir: v.dir, tint: a.artTint, alpha: a.alpha, artScale: a.artScale, rot, progress, travel: v.run ? v.travel : null, shadow: !a.down, hold: view.vis[a.id] });
       if (art) a = Object.assign({}, a, { size: a.artSize || a.size });
       // Art still loading (all of it, or the picture for this direction or frame): nothing for a moment, never the
       // stand-in.
