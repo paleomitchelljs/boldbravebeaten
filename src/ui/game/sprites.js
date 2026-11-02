@@ -235,6 +235,23 @@
   const hasClip = (key, which) => { const def = artCat()[key]; return !!(def && def.type === 'pixellab' && def[which]); };
   const artProbe = (key) => { const def = artCat()[key] || {}; return artSheet(key, def.type === 'pixellab' ? `${def.dir}/rotations/south-east.png` : 'idle'); };
 
+  // Ask for the pictures of a pixellab character at once (its standing views, walk and idle frames; with `fight`, its
+  // blows and death too), so turning to a new direction never waits on the network. Once per character and set.
+  const warmed = new Set();
+  function warm(key, fight) {
+    const tag = key + (fight ? '|fight' : '');
+    if (!HAS_IMG || warmed.has(tag)) return;
+    warmed.add(tag);
+    const def = artCat()[key];
+    if (!def || def.type !== 'pixellab') return;
+    if (!fight) for (const d of def.rotations || DIRS) artSheet(key, `${def.dir}/rotations/${d}.png`);
+    for (const which of fight ? ['attack', 'thrust', 'death'] : ['walk', 'idle']) {
+      const c = clip(def, which);
+      if (!c) continue;
+      for (const d of c.dirs) for (let i = 0; i < c.frames; i++) artSheet(key, `${c.dir}/animations/${c.anim}/${d}/frame_${String(i).padStart(3, '0')}.png`);
+    }
+  }
+
   // A figure that floats (floats: true in art.yaml) plays its walk standing still too.
   const floats = (key) => !!(artCat()[key] || {}).floats;
 
@@ -273,9 +290,12 @@
   }
 
   // Draw creature art with its feet at (x, y). tile = screen pixels per square. Returns false if not ready.
+  // opts.hold: an object kept per figure; while the picture asked for is still loading, the last one drawn is drawn
+  // again, so a figure turning a new way does not blink out.
   function drawArt(ctx, key, anim, frame, x, y, tile, opts) {
     opts = opts || {};
-    const p = artPick(key, anim, frame, opts.flip, opts.dir, opts.progress);
+    let p = artPick(key, anim, frame, opts.flip, opts.dir, opts.progress);
+    if (opts.hold) { if (p) opts.hold.pick = p; else if (opts.hold.pick && opts.hold.pick.def === artCat()[key]) p = opts.hold.pick; }
     if (!p) return false;
     const { def, s } = p;
     const box = def.box || [0, 0, p.sw, p.sh];
@@ -443,7 +463,7 @@
   }
 
   UI.Art = UI.Art || {};
-  UI.Sprites = { DIRS, dirOf, hasClip, forEncounter, encounterLooks, crowd, KINDS, PARTY_KINDS, partyKinds, TINTS, KIT_KIND, draw, drawArt, floats, artReady, pending, ownArt, artSheet, look, lookFor, portrait, figure, sheet, whenReady: (f) => waiting.push(f), preload: () => { KINDS.forEach((k) => { sheet(k, 'idle'); sheet(k, 'run'); }); for (const k of Object.keys(artCat())) artProbe(k); } };
+  UI.Sprites = { DIRS, dirOf, hasClip, forEncounter, encounterLooks, crowd, KINDS, PARTY_KINDS, partyKinds, TINTS, KIT_KIND, draw, drawArt, warm, floats, artReady, pending, ownArt, artSheet, look, lookFor, portrait, figure, sheet, whenReady: (f) => waiting.push(f), preload: () => { KINDS.forEach((k) => { sheet(k, 'idle'); sheet(k, 'run'); }); for (const k of Object.keys(artCat())) artProbe(k); } };
   // Portraits everywhere in the game are now the sprite's face.
   UI.Art.portrait = (c, px) => portrait(c, px);
 })(globalThis.BBB);

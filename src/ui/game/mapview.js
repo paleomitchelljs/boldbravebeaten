@@ -639,7 +639,8 @@
       // A fallen figure lies on its side, unless its art has a death picture.
       const dead = a.down && a.art && Sprites.hasClip(a.art, 'death');
       const rot = a.down && !dead ? (v.flip ? -1.45 : 1.45) : 0;
-      const art = a.art && Sprites.drawArt(ctx, a.art, dead ? 'death' : lunging ? lunge.clip : anim, frame, x, y, size, { flip: v.flip, dir: v.dir, tint: a.artTint, alpha: a.alpha, artScale: a.artScale, rot, progress, shadow: !a.down });
+      if (a.art) { Sprites.warm(a.art); if (a.bar != null) Sprites.warm(a.art, true); }
+      const art = a.art && Sprites.drawArt(ctx, a.art, dead ? 'death' : lunging ? lunge.clip : anim, frame, x, y, size, { flip: v.flip, dir: v.dir, tint: a.artTint, alpha: a.alpha, artScale: a.artScale, rot, progress, shadow: !a.down, hold: view.vis[a.id] });
       if (art) a = Object.assign({}, a, { size: a.artSize || a.size });
       // Art still loading (all of it, or the picture for this direction or frame): nothing for a moment, never the
       // stand-in.
