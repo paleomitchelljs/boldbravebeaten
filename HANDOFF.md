@@ -1,6 +1,6 @@
 # To do
 
-Last updated at commit: 6d5b34d
+Last updated at commit: c75938a
 
 Keep this a short list. Tick things off, add new ones, and refresh the commit line after every push (`git log -1 --format=%h`).
 
@@ -11,6 +11,10 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   not yet checked.
 - [x] Fight effects: only spells and shots fly; every melee blow (a reach weapon's thrust at 2 squares too) lunges
   with the figure's strike frames. A shot plays the archer's strike in place, then a drawn arrow flies (45 ms a square).
+- [x] Figures blinked out for a few frames on the phone when they turned a new way (each PixelLab frame is its own
+  file, fetched lazily). Now `Sprites.warm` asks for a figure's standing views, walks and idles when it is first drawn
+  (blows and deaths once it has a fight bar), and `drawArt`'s `hold` redraws the last picture until the new one lands.
+  Not yet seen on the iPhone.
 
 ## The fire-goblin mine (prototype dungeon 2; the user, 2026-10-31; plan and status in `assets/ideas/ember-mine.md`)
 - [x] Eight places (`ember_*` in `places.yaml`), laid out by `assets/wip/ember/layout.py`: the winding stair with the
