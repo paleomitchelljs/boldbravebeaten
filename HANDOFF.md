@@ -1,6 +1,6 @@
 # To do
 
-Last updated at commit: c75938a
+Last updated at commit: da0329a
 
 Keep this a short list. Tick things off, add new ones, and refresh the commit line after every push (`git log -1 --format=%h`).
 
@@ -15,6 +15,10 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   file, fetched lazily). Now `Sprites.warm` asks for a figure's standing views, walks and idles when it is first drawn
   (blows and deaths once it has a fight bar), and `drawArt`'s `hold` redraws the last picture until the new one lands.
   Not yet seen on the iPhone.
+- [x] Walks were jerky: the frames ran on the clock (90 ms each, whatever the speed) and each figure dropped to its
+  standing pose for a frame or two between path steps (a step every 150 ms, the glide 125 ms). Now a walk's frames
+  follow distance walked (`stride` in art.yaml, default 3 squares a cycle) and the walk holds 120 ms through the
+  pause. Not yet seen on the iPhone; the stride may want tuning by eye.
 
 ## The fire-goblin mine (prototype dungeon 2; the user, 2026-10-31; plan and status in `assets/ideas/ember-mine.md`)
 - [x] Eight places (`ember_*` in `places.yaml`), laid out by `assets/wip/ember/layout.py`: the winding stair with the
