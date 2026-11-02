@@ -82,6 +82,10 @@
 
   function stopWalk(game) { if (game.ui.walk) { clearTimeout(game.ui.walk.timer); game.ui.walk = null; } }
 
+  // Walking a path: a step every STEP_MS; the figures glide at GLIDE squares a second, so each reaches its square just
+  // before the next step (a walking pace, not a run) and the walk plays straight through.
+  const STEP_MS = 220, GLIDE = 5;
+
   // Click to walk: one step at a time, stopping at anything that needs an answer.
   function walkTo(game, x, y) {
     stopWalk(game);
@@ -98,7 +102,7 @@
       if (game.ui.walk !== run) return;
       if (!moved || game.ui.prompt || !run.dirs.length) { if (game.ui.walk === run) game.ui.walk = null; return; }
       void before;
-      run.timer = setTimeout(next, 150);
+      run.timer = setTimeout(next, STEP_MS);
     };
     next();
     return true;
@@ -299,7 +303,7 @@
       const off = squeeze(SPREAD[2][(i - 1) % 3] || [0, 0]);
       const at = i === 0 ? { x: ex.x, y: ex.y } : (tr[i - 1] || { x: ex.x + off[0], y: ex.y + off[1] + 0.12 });
       const L = Sprites.look(m);
-      sc.actors.push({ id: m.id, x: at.x, y: at.y, kind: L.kind, tint: L.tint, size: L.size, art: L.art, artTint: L.artTint, artScale: L.artScale, artSize: L.artSize, tag: 'party', speed: 8, phase: i, ring: i === 0 && ex.sneak ? 'rgba(150,200,255,0.8)' : null, alpha: ex.sneak ? 0.8 : 1, who: m.id });
+      sc.actors.push({ id: m.id, x: at.x, y: at.y, kind: L.kind, tint: L.tint, size: L.size, art: L.art, artTint: L.artTint, artScale: L.artScale, artSize: L.artSize, tag: 'party', speed: GLIDE, phase: i, ring: i === 0 && ex.sneak ? 'rgba(150,200,255,0.8)' : null, alpha: ex.sneak ? 0.8 : 1, who: m.id });
     });
     drawBodies(game, sc, ex);
     for (const m of milling(game, sc)) {

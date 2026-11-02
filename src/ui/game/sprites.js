@@ -157,7 +157,7 @@
 
   // The eight compass directions, clockwise from east (screen y points down), and the one nearest a vector.
   // Squares walked per walk cycle (two steps) when an entry gives no `stride`.
-  const STRIDE = 3;
+  const STRIDE = 2;
 
   const DIRS = ['east', 'south-east', 'south', 'south-west', 'west', 'north-west', 'north', 'north-east'];
   const dirOf = (dx, dy) => DIRS[((Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) % 8) + 8) % 8];
