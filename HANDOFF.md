@@ -17,8 +17,9 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   Not yet seen on the iPhone.
 - [x] Walks were jerky: the frames ran on the clock (90 ms each, whatever the speed) and each figure dropped to its
   standing pose for a frame or two between path steps (a step every 150 ms, the glide 125 ms). Now a walk's frames
-  follow distance walked (`stride` in art.yaml, default 3 squares a cycle) and the walk holds 120 ms through the
-  pause. Not yet seen on the iPhone; the stride may want tuning by eye.
+  follow distance walked (`stride` in art.yaml, default 2 squares a cycle) and the walk holds 120 ms through the
+  pause. Exploring is now a walk, not a run: a step every 220 ms, gliding at 5 squares a second (`STEP_MS`, `GLIDE`
+  in explore.js). Fights still glide at 9. Not yet seen on the iPhone; stride and pace may want tuning by eye.
 
 ## The fire-goblin mine (prototype dungeon 2; the user, 2026-10-31; plan and status in `assets/ideas/ember-mine.md`)
 - [x] Eight places (`ember_*` in `places.yaml`), laid out by `assets/wip/ember/layout.py`: the winding stair with the
