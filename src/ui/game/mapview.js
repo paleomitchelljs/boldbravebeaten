@@ -286,20 +286,6 @@
     function advance(sc, dt) {
       let moving = false;
       const W = cols, H = rows;
-      let tx, ty;
-      if (sc.origin) { tx = sc.origin.x; ty = sc.origin.y; }
-      else {
-        tx = Math.max(0, Math.min(Math.max(0, sc.w - W), sc.cam.x + 0.5 - W / 2));
-        // One row above the map is allowed: the caps of a top wall stand there.
-        ty = Math.max(-1, Math.min(Math.max(0, sc.h - H), sc.cam.y + 0.5 - H / 2));
-        if (sc.w < W) tx = (sc.w - W) / 2;
-        if (sc.h < H) ty = (sc.h - H) / 2;
-      }
-      if (!view.org) view.org = { x: tx, y: ty };
-      const k = Math.min(1, dt * 9);
-      view.org.x += (tx - view.org.x) * k; view.org.y += (ty - view.org.y) * k;
-      if (Math.abs(tx - view.org.x) < 0.01) view.org.x = tx; else moving = true;
-      if (Math.abs(ty - view.org.y) < 0.01) view.org.y = ty; else moving = true;
       const seen = {};
       for (const a of sc.actors || []) {
         seen[a.id] = 1;
@@ -325,6 +311,28 @@
         }
       }
       for (const id of Object.keys(view.vis)) if (!seen[id]) delete view.vis[id];
+      let tx, ty, follow = false;
+      if (sc.origin) { tx = sc.origin.x; ty = sc.origin.y; }
+      else {
+        // The camera follows the figure standing on its square as it glides (not the square itself, which jumps a
+        // whole square each step and made the view surge).
+        const on = (sc.actors || []).find((a) => a.x === sc.cam.x && a.y === sc.cam.y), fv = on && view.vis[on.id];
+        const cx = fv ? fv.x : sc.cam.x, cy = fv ? fv.y : sc.cam.y;
+        follow = fv && view.follow === on.id;
+        view.follow = fv ? on.id : null;
+        tx = Math.max(0, Math.min(Math.max(0, sc.w - W), cx + 0.5 - W / 2));
+        // One row above the map is allowed: the caps of a top wall stand there.
+        ty = Math.max(-1, Math.min(Math.max(0, sc.h - H), cy + 0.5 - H / 2));
+        if (sc.w < W) tx = (sc.w - W) / 2;
+        if (sc.h < H) ty = (sc.h - H) / 2;
+      }
+      if (!view.org) view.org = { x: tx, y: ty };
+      // Following the same figure as last frame, and close by (it is walking): move with it. Otherwise (a new place, a
+      // fight's focus passing to someone else) ease across.
+      const k = follow && Math.hypot(tx - view.org.x, ty - view.org.y) < 1.5 ? 1 : Math.min(1, dt * 9);
+      view.org.x += (tx - view.org.x) * k; view.org.y += (ty - view.org.y) * k;
+      if (Math.abs(tx - view.org.x) < 0.01) view.org.x = tx; else moving = true;
+      if (Math.abs(ty - view.org.y) < 0.01) view.org.y = ty; else moving = true;
       return moving;
     }
 
