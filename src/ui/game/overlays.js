@@ -27,16 +27,16 @@
       const wpn = g.kind === 'oil' && C.wieldedWeapon(tc);
       const verb = g.kind === 'book' && g.text ? 'Read' : g.kind === 'oil' ? (wpn ? `Oil ${tc.name}'s ${G.Items.itemName(wpn)}` : `${tc.name}: no weapon`) : 'Use on ' + tc.name;
       return h('div', { class: 'ledger-row' }, UI.Bits.goodLine(`${g.name}${n > 1 ? ' ×' + n : ''}`, g),
-        g.kind === 'trinket' ? h('span', { class: 'small muted', title: 'Put it on from a worn slot on the character sheet' }, 'worn') : usable ? h('button', { class: 'small', disabled: g.kind === 'oil' && !wpn, onclick: () => { const r = G.Town.useGood(w, id, tc); game.save(); if (r.ok && g.kind === 'book' && g.text) { game.openOverlay('text', { title: g.name, text: r.lines[0] }); game.render(); return; } toast(r.ok ? r.lines[0] || 'Done' : r.reason); game.openOverlay('pack', o); game.render(); } }, verb) : null);
+        g.kind === 'trinket' ? h('span', { class: 'small muted', title: 'Put it on from a worn slot on the character sheet' }, 'worn') : usable ? h('button', { class: 'small', disabled: g.kind === 'oil' && !wpn, onclick: () => { const r = G.Town.useGood(w, id, tc); if (r.ok && g.kind === 'book' && g.text) { game.openOverlay('text', { title: g.name, text: r.lines[0] }); game.render(); return; } toast(r.ok ? r.lines[0] || 'Done' : r.reason); game.openOverlay('pack', o); game.render(); } }, verb) : null);
     });
     const useSupply = ['repair_kit'].filter((id) => World.goodCount(w, id) > 0).map((id) => {
       const g = World.goodDef(id);
-      return h('div', { class: 'ledger-row' }, UI.Bits.goodLine(`${g.name} ×${World.goodCount(w, id)}`, g), h('button', { class: 'small', onclick: () => { const r = G.Town.useGood(w, id, tc); toast(r.ok ? r.lines[0] : r.reason); game.save(); game.openOverlay('pack', o); game.render(); } }, 'Use on ' + tc.name));
+      return h('div', { class: 'ledger-row' }, UI.Bits.goodLine(`${g.name} ×${World.goodCount(w, id)}`, g), h('button', { class: 'small', onclick: () => { const r = G.Town.useGood(w, id, tc); toast(r.ok ? r.lines[0] : r.reason); game.openOverlay('pack', o); game.render(); } }, 'Use on ' + tc.name));
     });
     const equipTo = (it) => {
       // An armor piece takes every slot it covers at once: one button.
       const slots = it.kind === 'armor' ? Equip.fits(it).slice(0, 1) : Equip.fits(it);
-      return h('div', { class: 'row' }, slots.map((s) => h('button', { class: 'small', disabled: !Equip.canEquip(tc, it, s).ok, onclick: () => { const r = Equip.equip(w, tc, it, s); if (!r.ok) toast(r.reason); game.save(); game.openOverlay('pack', o); game.render(); } }, `${Equip.slotList().find((x) => x[0] === s)[1]}`)));
+      return h('div', { class: 'row' }, slots.map((s) => h('button', { class: 'small', disabled: !Equip.canEquip(tc, it, s).ok, onclick: () => { const r = Equip.equip(w, tc, it, s); if (!r.ok) toast(r.reason); game.openOverlay('pack', o); game.render(); } }, `${Equip.slotList().find((x) => x[0] === s)[1]}`)));
     };
     const gear = w.pack.gear.map((it) => h('div', { class: 'ledger-row' }, UI.Bits.itemLine(it), equipTo(it)));
     const comps = Object.entries(S.components).filter(([, n]) => n > 0).map(([id, n]) => `${World.goodDef(id).name} ×${n}`);
@@ -137,7 +137,7 @@
       h('section', { class: 'stack tight' }, h('h3', null, 'Save'),
         slots.map((s) => h('div', { class: 'row spread' }, h('span', null, `Slot ${s.slot}: ${s.info ? s.info.place + ', day ' + s.info.day : 'empty'}`),
           h('button', { class: 'small', onclick: () => { toast(G.Save.write(s.slot, w) ? 'Saved' : 'Could not save'); game.openOverlay('menu'); } }, 'Save here'))),
-        h('p', { class: 'small muted' }, 'The game also saves itself as you go (the autosave slot, and one before each fight).')),
+        h('p', { class: 'small muted' }, 'The game also saves itself (the autosave slot) when you rest, go to another place, or put the app away.')),
       h('section', { class: 'stack tight' }, h('h3', null, 'Keep a copy'),
         h('div', { class: 'row' }, h('button', { onclick: () => download(`bbb-day${w.day}.json`, G.Save.serialize(w)) }, 'Export save file'))),
       h('section', { class: 'stack tight' }, h('h3', null, 'Other'),

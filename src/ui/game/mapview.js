@@ -469,6 +469,56 @@
       ctx.fillText('z', x + 5 * S, y - 20 * SS - (tick % 12) * 0.3 * S); ctx.fillText('z', x + 8 * S, y - 24 * SS - (tick % 12) * 0.3 * S);
     }
 
+    // The tileset's ground and walls change only when the place does or something in it opens (a door, a secret): they
+    // are drawn once into chunks of CHUNK squares and each frame copies the chunks in view, instead of planning and
+    // painting hundreds of tiles 60 times a second (the user, 2026-11-01: movement lagged on an iPhone). A chunk is
+    // painted with a square of margin all round (corner tiles, decor and raised faces reach over their square; the
+    // raised faces copy from the square below) and only its inside is copied out. The scene's `tileKey` says when
+    // the place's state has changed; a chunk painted while any of its images was still loading is painted again.
+    const CHUNK = 8, CHUNKS_KEPT = 28;
+    view.chunks = { key: null, map: new Map() };
+    function paintChunk(sc, ts, env, cx, cy, size, old) {
+      const cv = old ? old.canvas : document.createElement('canvas');
+      cv.width = cv.height = (CHUNK + 2) * size;   // (re)setting the size clears it
+      const c2 = cv.getContext('2d');
+      c2.imageSmoothingEnabled = false;
+      const X0 = cx * CHUNK - 1, Y0 = cy * CHUNK - 1, ox2 = -X0 * size, oy2 = -Y0 * size;
+      let loading = false;
+      const look = (n) => { const o = img(n); if (!o.ok && !o.failed) loading = true; return o; };
+      const env2 = Object.assign({}, env, { ox: ox2, oy: oy2, img: look, imgAt: look });
+      const tp = Tilemap.planTiles(sc, ts, X0 - 1, Y0 - 1, X0 + CHUNK + 2, Y0 + CHUNK + 2);
+      for (const k of ['base', 'corner', 'decor', 'over']) for (const c of tp[k]) Tilemap.paintTiles(c2, c, ts, env2, k);
+      if (ts.raw.tallFaces !== false) liftFaces(c2, sc, X0, Y0, ox2, oy2, size);
+      return { canvas: cv, loading };
+    }
+    function groundChunks(ctx, sc, ts, env, x0, y0, ox, oy, size) {
+      const cache = view.chunks, key = (sc.tileset || '') + '|' + (sc.tileKey != null ? sc.tileKey : '') + '|' + size;
+      if (cache.key !== key) { cache.key = key; cache.map.clear(); }
+      const cx0 = Math.floor((x0 - 1) / CHUNK), cy0 = Math.floor((y0 - 1) / CHUNK);
+      const cx1 = Math.floor((x0 + cols) / CHUNK), cy1 = Math.floor((y0 + rows) / CHUNK);
+      let painted = false;
+      for (let cy = cy0; cy <= cy1; cy++) for (let cx = cx0; cx <= cx1; cx++) {
+        const k = cx + ',' + cy;
+        let ch = cache.map.get(k);
+        if (!ch || ch.loading) { ch = paintChunk(sc, ts, env, cx, cy, size, ch); painted = true; }
+        cache.map.delete(k); cache.map.set(k, ch);   // most recently used last
+        ctx.drawImage(ch.canvas, size, size, CHUNK * size, CHUNK * size, ox + cx * CHUNK * size, oy + cy * CHUNK * size, CHUNK * size, CHUNK * size);
+      }
+      // A frame that painted nothing paints one chunk of the ring just outside the view, so the camera seldom has to
+      // wait for one as it moves on.
+      if (!painted) {
+        ring: for (let cy = cy0 - 1; cy <= cy1 + 1; cy++) for (let cx = cx0 - 1; cx <= cx1 + 1; cx++) {
+          if (cx >= cx0 && cx <= cx1 && cy >= cy0 && cy <= cy1) continue;
+          if (cx * CHUNK >= sc.w + 1 || cy * CHUNK >= sc.h + 1 || (cx + 1) * CHUNK < -1 || (cy + 1) * CHUNK < -1) continue;
+          const k = cx + ',' + cy;
+          if (cache.map.has(k)) continue;
+          cache.map.set(k, paintChunk(sc, ts, env, cx, cy, size, null));
+          break ring;
+        }
+      }
+      while (cache.map.size > CHUNKS_KEPT) cache.map.delete(cache.map.keys().next().value);
+    }
+
     function draw(now) {
       const sc = scene();
       if (!sc) return;
@@ -491,9 +541,12 @@
       if (ts) {
         // Layer 1 from the tileset: ground, the corner tiles of each wang terrain, bridges; then what hasn't been seen
         // is put back in the dark (the corner tiles spill half a square past what is known).
-        const tp = Tilemap.planTiles(sc, ts, x0 - 1, y0 - 1, x0 + cols, y0 + rows);
-        for (const k of ['base', 'corner', 'decor', 'over']) for (const c of tp[k]) Tilemap.paintTiles(ctx, c, ts, env, k);
-        if (ts.raw.tallFaces !== false) liftFaces(ctx, sc, x0, y0, ox, oy, size);
+        if (HAS_IMG) groundChunks(ctx, sc, ts, env, x0, y0, ox, oy, size);
+        else {
+          const tp = Tilemap.planTiles(sc, ts, x0 - 1, y0 - 1, x0 + cols, y0 + rows);
+          for (const k of ['base', 'corner', 'decor', 'over']) for (const c of tp[k]) Tilemap.paintTiles(ctx, c, ts, env, k);
+          if (ts.raw.tallFaces !== false) liftFaces(ctx, sc, x0, y0, ox, oy, size);
+        }
         plan.shown = {};
         for (let y = y0 - 1; y <= y0 + rows; y++) for (let x = x0 - 1; x <= x0 + cols; x++) {
           if (!sc.seen || sc.seen(x, y)) { plan.shown[x + ',' + y] = 1; continue; }

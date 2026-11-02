@@ -50,6 +50,23 @@
     if (peeking) return e[posKey(x, y)] || NO_STATE;
     return e[posKey(x, y)] || (e[posKey(x, y)] = {});
   }
+  // A fingerprint of the squares of a place that have state (a door open, a secret found, a lock picked), for a map
+  // view to know when what it has drawn of the ground and walls is out of date. Squares merely looked at keep an empty
+  // state, which doesn't count. Worked out again only when the world has moved on (the clock or the log: opening a
+  // door, finding a secret or picking a lock takes time and says so), not on every frame.
+  const tileKeys = new WeakMap();
+  function tileKey(world, placeId) {
+    const e = ents(world, placeId), last = world.log[world.log.length - 1];
+    const sig = world.minutes + '|' + world.log.length + '|' + (last ? last.text : '');
+    const m = tileKeys.get(e);
+    if (m && m.sig === sig) return m.key;
+    const parts = [];
+    for (const k of Object.keys(e)) for (const f in e[k]) { parts.push(k + JSON.stringify(e[k])); break; }
+    const key = (placeId || world.place) + '|' + parts.join(';');
+    tileKeys.set(e, { sig, key });
+    return key;
+  }
+
   function peek(world, x, y) {
     peeking = true;
     try { return cell(world, x, y); } finally { peeking = false; }
@@ -613,7 +630,7 @@
   }
 
   G.Explore = {
-    DIRS, DIR_NAMES, grid, groundOf, place, lightRadius, here, cell, state, opaque, lineClear, cheb, markSeen, findChar,
+    DIRS, DIR_NAMES, grid, groundOf, place, lightRadius, here, cell, state, tileKey, opaque, lineClear, cheb, markSeen, findChar,
     enter, leave, fall, front, turn, move, go, peek, path, search, facing, describe, act, scan, wake,
     encounterSpec, foeAwareness, resolveSquare, wanderingFor, minutesPerStep, noise, settleClock, wanderCheck,
   };

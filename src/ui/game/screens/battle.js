@@ -26,7 +26,7 @@
       world: w,
       state: Battle.table(w),
       ui: {},
-      save: () => game.save(),
+      save: () => {},   // the battle view's own saves: the game saves at a rest or a new place instead
       render: () => game.render(),
       go: (tab, id) => { if (id) game.openOverlay('sheet', { id }); },
       removeCharacter: () => {},
@@ -81,7 +81,6 @@
     const res = Battle.getAway(w);
     for (const l of res.lines) World.logLine(w, l, 'fight');
     game.ui.result = res;
-    game.save();
     return true;
   }
 
@@ -116,6 +115,7 @@
       cam: whole ? { x: focus.x + ox, y: focus.y + oy } : null,
       seen: whole ? (x, y) => !!ms.seen[x + ',' + y] || !!occupant(enc, chars, x - ox, y - oy) : null,
       tileset: arena ? ((G.Content.world.places[arena.place] || {}).look || {}).tileset : null,
+      tileKey: arena ? G.Explore.tileKey(w, arena.place) : null,
       cell: g ? (x, y) => G.Explore.peek(w, x, y) : open,
       actors: [], marks: [], lines: [], reticles: [], badges: [],
       describe: (x, y) => {
@@ -432,7 +432,7 @@
         wiped || !G.CONFIG.afterBattle
           ? h('button', { class: 'primary', onclick: () => (wiped ? game.go('gameover') : game.afterBattle()) }, 'Continue')
           : [
-            h('button', { class: 'primary', title: `${G.CONFIG.afterBattle.minutes} minutes in the dungeon: stamina back to full (weariness stays until you camp), gear patched up`, onclick: () => { World.restAndRepair(w); game.afterBattle(); } }, 'Rest and repair'),
+            h('button', { class: 'primary', title: `${G.CONFIG.afterBattle.minutes} minutes in the dungeon: stamina back to full (weariness stays until you camp), gear patched up`, onclick: () => { World.restAndRepair(w); game.save(); game.afterBattle(); } }, 'Rest and repair'),
             h('button', { title: 'Move on at once: no time passes, stamina stays where it is', onclick: () => game.afterBattle() }, 'Press on'),
           ],
         ibtn('pack', 'Pack', () => game.openOverlay('pack')),
@@ -482,7 +482,6 @@
       if (enc.phase === 'over') {
         game.ui.finalLog = enc.log.slice(-12);
         game.ui.result = Battle.finish(w);
-        game.save();
       }
     }
     const bs = game.ui.bs;

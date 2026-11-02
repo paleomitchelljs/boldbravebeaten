@@ -53,12 +53,12 @@
       if (!r.ok) { toast(r.reason); return; }
       if (r.check) World.logLine(w, Bits.checkText(r.check), r.check.ok ? 'find' : 'check');
       for (const l of r.lines || []) World.logLine(w, l, 'info');
-      game.save(); game.render();
+      game.render();
     };
     const ask = (id) => {
       const r = Parley.ask(w, id);
       if (!r.ok && r.reason !== 'locked') { toast(r.reason); }
-      game.save(); game.render();
+      game.render();
     };
     const disabled = s.ended;
     const spent = s.last;

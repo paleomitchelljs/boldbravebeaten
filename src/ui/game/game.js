@@ -82,6 +82,8 @@
   }
 
   // ---- Saving ---------------------------------------------------------------------------------
+  // The game saves itself only at a rest (a camp, the inn, Rest and repair), on going to another place, and when the
+  // app is put away (the user, 2026-11-01: a save on every step made walking stutter on an iPhone).
   function save(slot) {
     if (!Game.world) return false;
     const ok = G.Save.write(slot || 'auto', Game.world);
@@ -128,7 +130,6 @@
 
   function startBattle(spec, opts) {
     Battle.start(Game.world, spec, opts);
-    save();
     go('battle');
   }
 
@@ -143,7 +144,6 @@
     const w = Game.world;
     const ctx = w.parley && w.parley.ctx;
     G.Parley.close(w);
-    save();
     if (ctx && ctx.type === 'encounter') {
       const pacified = w.flags[ctx.peaceFlag || ''] || (ctx.spec && (ctx.spec.peaceFlags || []).some((f) => w.flags[f]));
       if (pacified) {
@@ -163,9 +163,14 @@
   // Shown after a battle's result is settled.
   function afterBattle() {
     const w = Game.world;
-    save();
     if (World.wiped(w)) { go('gameover'); return; }
     go(w.explore ? 'explore' : 'town');
+  }
+
+  // Put away (another app, the home screen, a locked phone): save, since a phone may close the page without asking.
+  if (typeof document !== 'undefined' && document.addEventListener) {
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') save(); });
+    if (typeof window !== 'undefined' && window.addEventListener) window.addEventListener('pagehide', () => save());
   }
 
   Object.assign(Game, { render, go, openOverlay, closeOverlay, save, say, newGame, loadWorld, travel, takeStairs, startBattle, talk, endParley, afterBattle });

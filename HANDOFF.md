@@ -65,6 +65,19 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 - [x] The preset party's colour washes (there to tell stock figures apart) are off members with their own art (Cyrus
   was moss green); a save step (version 4) clears them in old saves.
 
+## Walking lag on the iPhone (the user, 2026-11-01)
+- [x] Cause: every frame planned and painted the whole visible map (600-950 draw calls, 7-12 ms of script on a Mac,
+  several times that on a phone), and every step saved the whole game. Now the ground and walls are painted once
+  into chunks of 8x8 squares (mapview.js `groundChunks`; redrawn when `Explore.tileKey` says a door, lock or secret
+  changed, or while their images load; idle frames paint the ring outside the view): 15-37 draw calls, 1.3-2.2 ms.
+  Seams, raised faces and unseen dark checked in headless Chrome. Not yet felt on the phone.
+- [x] The game saves only at a camp, the inn, Rest and repair, on going to another place, when the app is put away
+  (`visibilitychange`, `pagehide`; not asked for: a phone may close the page without warning), and from the menu.
+- [ ] The Hollin Hills still drop a few frames (6 over 33 ms in a 30-step walk, from 20-31): likely the browser
+  rasterising the many large tree sprites.
+- [ ] `node --test` takes about 6 minutes: the UI test renders every square of every map, and the new outdoor places
+  added about 3,700.
+
 ## South of the village (the user, 2026-11-01, fourth set; art and prompts in `assets/wip/south/`)
 - [x] A road south from the village to the Hollin Hills (`south_hills`): forest groves, low hills, scree, grey mountains
   closing in to a pass four squares wide. The pass comes down into Tarnhold (`tarnhold`), whose gates take the pass

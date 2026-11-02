@@ -58,7 +58,7 @@
       else r = Equip.equip(w, c, w.pack.gear[Number(v.slice(2))], slot);
       if (r && r.ok === false) toast(r.reason);
       for (const l of (r && r.lines) || []) toast(l);
-      game.save(); game.openOverlay('sheet', o); game.render();
+      game.openOverlay('sheet', o); game.render();
     };
     if (!cur && opts.length < 2) return null;
     const detail = cur && cur.kind ? Equip.describe(cur) : cur ? cur.blurb : '';
@@ -140,7 +140,7 @@
     const enc = w.battle && w.battle.enc;
     const apLine = enc && enc.ap && enc.ap[c.id] != null && (mine || enc.phase !== 'declare') ? `${C.fmtAP(enc.ap[c.id])} AP left` : null;
     const body = tab === 'gear' ? gearTab(game, o, c, editable) : tab === 'stats' ? statsTab(c) : tab === 'feats' ? featsTab(game, c) : tab === 'skills' ? skillsTab(c)
-      : h('textarea', { 'aria-label': 'Notes', value: c.notes || '', placeholder: 'Notes about this character', onchange: (e) => { c.notes = e.target.value; game.save(); } });
+      : h('textarea', { 'aria-label': 'Notes', value: c.notes || '', placeholder: 'Notes about this character', onchange: (e) => { c.notes = e.target.value; } });
     const tabs = mine ? ['gear', 'Gear', 'stats', 'Stats', 'feats', 'Feats', 'skills', 'Skills', 'notes', 'Notes'] : ['gear', 'Gear', 'stats', 'Stats', 'feats', 'Feats'];
     const tabList = []; for (let i = 0; i < tabs.length; i += 2) tabList.push(tabBtn(tabs[i], tabs[i + 1]));
     return h('div', { class: 'modal game-modal sheet-pop', role: 'dialog', 'aria-modal': 'true', 'aria-label': c.name, onclick: (e) => e.stopPropagation() },

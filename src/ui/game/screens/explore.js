@@ -53,7 +53,6 @@
     const out = fn();
     const events = out && out.events ? out.events : [];
     if (!handle(game, events)) return false;
-    game.save();
     game.render();
     return true;
   }
@@ -267,6 +266,8 @@
     const sc = {
       w: g.w, h: g.h,
       tileset: p.look && p.look.tileset,
+      // The map view keeps the ground and walls drawn until this changes (a door opened, a secret found).
+      tileKey: Explore.tileKey(w, w.place),
       cell: (x, y) => Explore.peek(w, x, y),
       // Rock (' ' in a map) is never shown: it is the dark beyond the place, a drop off a wall top or solid earth.
       seen: (x, y) => !!ms.seen[x + ',' + y] && Explore.peek(w, x, y).kind !== 'rock',

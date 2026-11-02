@@ -105,14 +105,14 @@
         return h('div', { class: 'ledger-row' },
           g ? goodLine(e.name + (e.per > 1 ? ` ×${e.per}` : ''), g) : itemLine(e.item),
           h('span', { class: 'num' }, `${e.price} ◈`),
-          h('button', { class: 'small', disabled: w.gold < e.price, onclick: () => { const r = Econ.buy(w, s, e); if (!r.ok) toast(r.reason); game.save(); game.render(); } }, 'Buy'));
+          h('button', { class: 'small', disabled: w.gold < e.price, onclick: () => { const r = Econ.buy(w, s, e); if (!r.ok) toast(r.reason); game.render(); } }, 'Buy'));
       }));
     } else if (tab === 'sell') {
       const rows = [];
       for (const it of w.pack.gear) {
         if (!Econ.canSell(s, it.kind)) continue;
         const price = Econ.sellPrice(w, Econ.value(it), s);
-        rows.push(h('div', { class: 'ledger-row' }, itemLine(it), h('span', { class: 'num' }, `${price} ◈`), h('button', { class: 'small', onclick: () => { Econ.sellItem(w, it, s); game.save(); game.render(); } }, 'Sell')));
+        rows.push(h('div', { class: 'ledger-row' }, itemLine(it), h('span', { class: 'num' }, `${price} ◈`), h('button', { class: 'small', onclick: () => { Econ.sellItem(w, it, s); game.render(); } }, 'Sell')));
       }
       if (Econ.canSell(s, 'good')) {
         const ids = Object.keys(w.pack.goods).concat(['bandage', 'arrows', 'bodkin_arrows'].filter(() => false));
@@ -120,7 +120,7 @@
           const g = G.World.goodDef(id);
           if (!g || g.kind === 'key') continue;
           const price = Econ.sellPrice(w, Econ.goodValue(id), s);
-          rows.push(h('div', { class: 'ledger-row' }, goodLine(`${g.name} ×${w.pack.goods[id]}`, g), h('span', { class: 'num' }, `${price} ◈`), h('button', { class: 'small', onclick: () => { Econ.sellGood(w, id, s); game.save(); game.render(); } }, 'Sell one')));
+          rows.push(h('div', { class: 'ledger-row' }, goodLine(`${g.name} ×${w.pack.goods[id]}`, g), h('span', { class: 'num' }, `${price} ◈`), h('button', { class: 'small', onclick: () => { Econ.sellGood(w, id, s); game.render(); } }, 'Sell one')));
         }
       }
       body = rows.length ? h('div', { class: 'ledger' }, rows) : h('p', { class: 'muted row' }, 'Nothing here they will buy.', UI.tip('Worn gear is not for sale: take it off first, on the sheet.'));
@@ -132,7 +132,7 @@
       for (const [who, it] of all) {
         const cost = Econ.repairCost(w, it, s);
         if (!cost) continue;
-        rows.push(h('div', { class: 'ledger-row' }, itemLine(it, who), h('span', { class: 'num' }, `${cost} ◈`), h('button', { class: 'small', disabled: w.gold < cost, onclick: () => { Econ.repair(w, it, s); game.save(); game.render(); } }, 'Repair')));
+        rows.push(h('div', { class: 'ledger-row' }, itemLine(it, who), h('span', { class: 'num' }, `${cost} ◈`), h('button', { class: 'small', disabled: w.gold < cost, onclick: () => { Econ.repair(w, it, s); game.render(); } }, 'Repair')));
       }
       body = rows.length ? h('div', { class: 'ledger' }, rows) : h('p', { class: 'muted' }, 'Everything is in order.');
     }
@@ -153,8 +153,8 @@
         return h('div', { class: 'ledger-row' },
           h('span', { class: 'row' }, UI.Art.portrait(c, 36), h('span', { class: 'stack tight' }, h('b', null, c.name), h('span', { class: 'small muted' }, dead ? 'Dead' : C.totalDamage(c) ? `−${C.totalDamage(c)} attributes` : hurt ? 'Tired' : 'Well'))),
           h('span', { class: 'num' }, dead || hurt ? `${cost} ◈` : ''),
-          dead ? h('button', { class: 'small', disabled: w.gold < cost, onclick: () => { const r = G.Town.raise(w, c, s); toast(r.ok ? `${c.name} breathes.` : r.reason); game.save(); game.render(); } }, 'Raise')
-            : h('button', { class: 'small', disabled: !hurt || w.gold < cost, onclick: () => { const r = G.Town.heal(w, c, s); if (!r.ok) toast(r.reason); game.save(); game.render(); } }, 'Tend'));
+          dead ? h('button', { class: 'small', disabled: w.gold < cost, onclick: () => { const r = G.Town.raise(w, c, s); toast(r.ok ? `${c.name} breathes.` : r.reason); game.render(); } }, 'Raise')
+            : h('button', { class: 'small', disabled: !hurt || w.gold < cost, onclick: () => { const r = G.Town.heal(w, c, s); if (!r.ok) toast(r.reason); game.render(); } }, 'Tend'));
       })));
   }
 
@@ -167,7 +167,7 @@
     return h('div', { class: 'stack' },
       h('div', { class: 'row' }, h('h3', null, s.name), UI.tip(`${payer} pays ${B.gold} gold for each outlaw who dies by your hand (friends only, standing ${B.minStanding}).`)),
       h('div', { class: 'row spread' }, h('span', null, `${n} outlaw${n === 1 ? '' : 's'} on the list`),
-        h('button', { class: 'primary', disabled: !n || st < B.minStanding, onclick: () => { const r = G.Town.collectBounty(w); toast(r.ok ? `+${r.gold} gold` : r.reason); game.save(); game.render(); } }, 'Collect')),
+        h('button', { class: 'primary', disabled: !n || st < B.minStanding, onclick: () => { const r = G.Town.collectBounty(w); toast(r.ok ? `+${r.gold} gold` : r.reason); game.render(); } }, 'Collect')),
       st < B.minStanding && n ? h('p', { class: 'small muted' }, `Your standing with ${payer} is ${st}.`) : null);
   }
 
@@ -198,7 +198,7 @@
         return h('div', { class: 'ledger-row feat-row' },
           h('span', { class: 'row' }, h('b', null, f.name), h('span', { class: 'muted small' }, f.ranks.map((r, i) => (i < rk ? '●' : '○')).join('')), UI.tip(f.effect, f.name)),
           h('span'),
-          full ? h('span', { class: 'chip ok' }, 'Mastered') : tr.ok ? h('button', { class: 'small', disabled: w.gold < tr.cost || left <= 0, onclick: () => { const r = G.Town.train(w, cur, f.id, camp); if (!r.ok) toast(r.reason); game.save(); game.render(); } }, tr.cost ? `Train — ${tr.cost} ◈` : 'Train')
+          full ? h('span', { class: 'chip ok' }, 'Mastered') : tr.ok ? h('button', { class: 'small', disabled: w.gold < tr.cost || left <= 0, onclick: () => { const r = G.Town.train(w, cur, f.id, camp); if (!r.ok) toast(r.reason); game.render(); } }, tr.cost ? `Train — ${tr.cost} ◈` : 'Train')
             : dbg ? h('button', { class: 'small', onclick: () => { G.Town.train(w, cur, f.id, { bench: true, free: true }); game.render(); } }, 'Grant (debug)') : h('span', { class: 'small muted', title: tr.reason }, 'Locked'));
       })) : null);
   }
