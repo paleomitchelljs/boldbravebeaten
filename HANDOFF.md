@@ -20,6 +20,8 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   follow distance walked (`stride` in art.yaml, default 2 squares a cycle) and the walk holds 120 ms through the
   pause. Exploring is now a walk, not a run: a step every 220 ms, gliding at 5 squares a second (`STEP_MS`, `GLIDE`
   in explore.js). Fights still glide at 9. Not yet seen on the iPhone; stride and pace may want tuning by eye.
+- [x] Camera surged once a step (it eased toward the leader's square, which jumps). It now moves with the leader's
+  glide, easing only across big jumps or when the focus passes to another figure. Not yet seen on the iPhone.
 
 ## The fire-goblin mine (prototype dungeon 2; the user, 2026-10-31; plan and status in `assets/ideas/ember-mine.md`)
 - [x] Eight places (`ember_*` in `places.yaml`), laid out by `assets/wip/ember/layout.py`: the winding stair with the
