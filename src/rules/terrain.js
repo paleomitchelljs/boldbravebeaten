@@ -82,20 +82,26 @@
   // nearest the goal. `c` (optional) is the walker, for Freedom.
   // Cheapest cost from `from` to every square (Dijkstra; stops early at `to` if given). `block` (a Set of "x,y"):
   // squares that can't be walked through, the walker's foes (Combat.foeSquares): they have to be gone around.
+  // A walker's way never crosses ground it can see would hurt it: deadly ground (lava) only as where it means to end up,
+  // other hazards (a pit, fire, a foe's rune) only when there is no way round. `cost` is the true squares walked;
+  // the detours only steer which way is taken.
   function costMap(enc, from, c, to, block) {
     const W = enc.grid.w, H = enc.grid.h;
     const idx = (x, y) => y * W + x;
     const cost = new Array(W * H).fill(Infinity);
+    const rank = new Array(W * H).fill(Infinity);
     const prev = new Array(W * H).fill(-1);
     const done = new Array(W * H).fill(false);
-    cost[idx(from.x, from.y)] = 0;
+    const shun = new Array(W * H);
+    cost[idx(from.x, from.y)] = rank[idx(from.x, from.y)] = 0;
     for (;;) {
       let u = -1, best = Infinity;
-      for (let i = 0; i < W * H; i++) if (!done[i] && cost[i] < best) { best = cost[i]; u = i; }
+      for (let i = 0; i < W * H; i++) if (!done[i] && rank[i] < best) { best = rank[i]; u = i; }
       if (u < 0) break;
       done[u] = true;
       const ux = u % W, uy = (u - ux) / W;
       if (to && ux === to.x && uy === to.y) break;
+      if (u !== idx(from.x, from.y) && shun[u] === Infinity) continue;   // in the lava: the way stops here
       for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
         if (!dx && !dy) continue;
         const nx = ux + dx, ny = uy + dy;
@@ -103,11 +109,28 @@
         if (block && block.has(key(nx, ny))) continue;
         const v = idx(nx, ny);
         // A hair's preference for straight steps keeps paths tidy.
-        const nc = cost[u] + stepCost(enc, nx, ny, c) + (dx && dy ? 0.001 : 0);
-        if (nc < cost[v]) { cost[v] = nc; prev[v] = u; }
+        const sc = stepCost(enc, nx, ny, c) + (dx && dy ? 0.001 : 0);
+        if (shun[v] === undefined) shun[v] = avoid(enc, nx, ny, c);
+        const nr = rank[u] + sc + (shun[v] === Infinity ? 0 : shun[v]);
+        if (nr < rank[v]) { rank[v] = nr; cost[v] = cost[u] + sc; prev[v] = u; }
       }
     }
-    return { cost, prev, W, idx };
+    return { cost, prev, W, idx, shun };
+  }
+
+  // How hard a walker steers clear of (x, y): Infinity for deadly ground it can see (never crossed), a large detour for
+  // other hazards it can see, 0 otherwise. Fliers pass over all of it.
+  const DETOUR = 50;
+  function avoid(enc, x, y, c) {
+    if (!c || flies(c)) return 0;
+    let a = 0;
+    for (const f of at(enc, x, y)) {
+      if (!visible(f, c.side)) continue;
+      const t = def(f);
+      if (t.deadly) return Infinity;
+      if (t.pit || t.onEnter || t.perRound || (t.rune && f.side !== c.side)) a = DETOUR;
+    }
+    return a;
   }
 
   // The squares of the cheapest way to (x, y) in a cost map.
@@ -128,7 +151,7 @@
       // No way through: as close as can be reached.
       let bestD = Infinity;
       for (let i = 0; i < W * H; i++) {
-        if (cost[i] === Infinity) continue;
+        if (cost[i] === Infinity || map.shun[i]) continue;
         const x = i % W, y = (i - x) / W, d = cheb(x, y);
         if (d < bestD || (d === bestD && cost[i] < cost[end])) { bestD = d; end = i; }
       }
@@ -311,5 +334,5 @@
     return d;
   }
 
-  G.Terrain = { flies, canStand, costMap, trace, danger, tiles, at, add, remove, has, passable, stepCost, path, pathCost, between, lineCheck, visible, enter, endRound, all, inGrid };
+  G.Terrain = { flies, canStand, costMap, avoid, trace, danger, tiles, at, add, remove, has, passable, stepCost, path, pathCost, between, lineCheck, visible, enter, endRound, all, inGrid };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});
