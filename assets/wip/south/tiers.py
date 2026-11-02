@@ -2,9 +2,9 @@
 # small step; rings read as a slope climbing to the peaks). Rock three or more squares from open ground becomes the
 # ledge tier ((), six or more the summit (?); off the map counts as rock. Run by rebuild.sh after the first squaring.
 #   python3 assets/wip/south/tiers.py
-import os, re
+import os, re, sys
 
-PLACES = ['south_hills', 'tarnhold', 'tarnvale_west', 'tarnvale_east']
+PLACES = sys.argv[1:] or ['south_hills', 'tarnhold', 'tarnvale_west', 'tarnvale_east']
 path = os.path.join(os.path.dirname(__file__), '../../../data/places.yaml')
 
 def tiers(rows):

@@ -70,6 +70,9 @@
     if (locked(game)) { toast('They have seen you. Fight or talk.'); return false; }
     game.ui.prompt = null;
     const ex = game.world.explore;
+    // Walking into a recruit: a word with them instead of a step.
+    const rec = recruitAt(game, ex.x + Explore.DIRS[d][0], ex.y + Explore.DIRS[d][1]);
+    if (rec) { game.openOverlay('recruit', { id: rec }); return false; }
     const before = { x: ex.x, y: ex.y };
     let moved = false;
     const ok = act(game, () => { const r = Explore.go(game.world, d); moved = r.moved; return r; });
@@ -299,8 +302,44 @@
       sc.actors.push({ id: m.id, x: at.x, y: at.y, kind: L.kind, tint: L.tint, size: L.size, art: L.art, artTint: L.artTint, artScale: L.artScale, artSize: L.artSize, tag: 'party', speed: 8, phase: i, ring: i === 0 && ex.sneak ? 'rgba(150,200,255,0.8)' : null, alpha: ex.sneak ? 0.8 : 1, who: m.id });
     });
     drawBodies(game, sc, ex);
+    for (const m of milling(game, sc)) {
+      const L = Sprites.look({ look: m.r.look, name: m.r.name });
+      sc.actors.push({ id: 'recruit-' + m.r.id, x: m.x, y: m.y, kind: L.kind, tint: L.tint, size: L.size, art: L.art, artTint: L.artTint, artScale: L.artScale, artSize: L.artSize, tag: 'npc', speed: 2.5, recruit: m.r.id });
+    }
     if (game.ui.prompt && game.ui.prompt.type === 'face') { const f = Explore.front(w); sc.marks.push({ x: f.x, y: f.y, type: 'select' }); }
     return sc;
+  }
+
+  // ---- Recruits milling about (the user, 2026-11-01): heroes waiting in this place who will join the party
+  // (start.yaml recruits). Where each stands is for the eye only, not saved: now and then a step, within a few squares
+  // of home, never onto anyone else.
+  const mixHash = (s, n) => { let x = n | 0; for (let i = 0; i < s.length; i++) x = (x * 31 + s.charCodeAt(i)) | 0; x ^= x >>> 15; x = Math.imul(x, 2246822507); return (x ^ (x >>> 13)) >>> 0; };
+  function milling(game, sc) {
+    const w = game.world;
+    const list = World.recruits(w, w.place);
+    if (!list.length) return [];
+    const m = game.ui.mill || (game.ui.mill = {});
+    const tick = Math.floor((typeof performance !== 'undefined' ? performance.now() : 0) / 1400);
+    const busy = (x, y, id) => (sc.actors || []).some((a) => Math.round(a.x) === x && Math.round(a.y) === y) || list.some((r) => r.id !== id && m[r.id] && m[r.id].x === x && m[r.id].y === y);
+    return list.map((r) => {
+      const s = m[r.id] || (m[r.id] = { x: r.at[0], y: r.at[1], t: tick });
+      if (s.t !== tick) {
+        s.t = tick;
+        const k = mixHash(r.id, tick);
+        if (k % 3 === 0) {
+          const d = Explore.DIRS[(k >>> 3) % 4], nx = s.x + d[0], ny = s.y + d[1], c = Explore.peek(w, nx, ny);
+          const near = Math.abs(nx - r.at[0]) <= 3 && Math.abs(ny - r.at[1]) <= 3;
+          if (near && !c.solid && c.kind !== 'wall' && c.kind !== 'water' && c.kind !== 'stairs' && !busy(nx, ny, r.id)) { s.x = nx; s.y = ny; }
+        }
+      }
+      return { r, x: s.x, y: s.y };
+    });
+  }
+  function recruitAt(game, x, y) {
+    const sc = game.ui.lastScene;
+    if (!sc) return null;
+    for (const a of sc.actors) if (a.recruit && Math.round(a.x) === x && (Math.round(a.y) === y || Math.round(a.y) - 1 === y)) return a.recruit;
+    return null;
   }
 
   // Which party member (if any) is drawn at this square? Figures stand a tile and a bit tall.
@@ -314,6 +353,8 @@
   function onCell(game, x, y) {
     const w = game.world;
     if (game.overlay) return;
+    const rec = recruitAt(game, x, y);
+    if (rec) { stopWalk(game); game.openOverlay('recruit', { id: rec }); return; }
     const who = memberAt(game, x, y);
     if (who) { game.openOverlay('sheet', { id: who }); return; }
     const ex = w.explore;

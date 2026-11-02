@@ -271,8 +271,9 @@ def no_pockets(g, start):
 def entry(g, ch):
     return next((x, y) for y, row in enumerate(g) for x, c in enumerate(row) if c == ch)
 
-for pid, make, way in (('south_hills', hills, 'N'), ('tarnhold', tarnhold, 'N'), ('tarnvale_west', vale_west, 'E'),
-                       ('tarnvale_east', vale_east, 'Q')):
+# Tarnhold and the vales are laid out by assets/wip/tarn/layout.py now (the user, 2026-11-01); their old layouts stay
+# here for reference.
+for pid, make, way in (('south_hills', hills, 'N'),):
     g = no_pinches(make())
     MAPS[pid] = no_pockets(g, entry(g, way))
 

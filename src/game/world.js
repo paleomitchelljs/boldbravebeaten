@@ -348,6 +348,44 @@
     return lines;
   }
 
+  // ---- Recruits ------------------------------------------------------------
+  // Heroes waiting in a place (start.yaml recruits) who will join: to take a fallen member's place, or into an empty one.
+  const recruitDefs = () => ((content().start || {}).recruits) || [];
+  function recruits(world, placeId) {
+    const taken = world.recruited || {};
+    return recruitDefs().filter((r) => !taken[r.id] && (!placeId || r.place === placeId));
+  }
+  // What a recruit could do for this party: the fallen they could replace, and whether there is an empty place.
+  function recruitOptions(world) {
+    const fallen = party(world).filter((c) => c.status.dead);
+    return { fallen, room: world.partyIds.length < cfg().party.size };
+  }
+  function recruit(world, id, replaceId) {
+    const spec = recruitDefs().find((r) => r.id === id);
+    if (!spec) return { ok: false, reason: 'No one by that name.' };
+    if ((world.recruited || {})[id]) return { ok: false, reason: `${spec.name} is already with you.` };
+    let slot = -1;
+    if (replaceId) {
+      slot = world.partyIds.indexOf(replaceId);
+      const gone = world.chars[replaceId];
+      if (slot < 0 || !gone || !gone.status.dead) return { ok: false, reason: 'Only a fallen member can be replaced.' };
+    } else if (world.partyIds.length >= cfg().party.size) return { ok: false, reason: 'The party is full.' };
+    const c = makeCharacter(Object.assign({}, spec, { look: Object.assign({ skin: 1, hair: 1, cloth: 0, build: 1, sprite: null, tint: 0 }, spec.look || {}) }));
+    world.chars[c.id] = c;
+    if (slot >= 0) {
+      const gone = world.chars[replaceId];
+      world.partyIds[slot] = c.id;
+      world.fallen = (world.fallen || []).concat(replaceId);
+      logLine(world, `${c.name} takes ${gone.name}'s place in the party.`, 'info');
+    } else {
+      world.partyIds.push(c.id);
+      logLine(world, `${c.name} joins the party.`, 'info');
+    }
+    if (spec.arrows) world.supplies.arrows += spec.arrows;
+    (world.recruited = world.recruited || {})[id] = c.id;
+    return { ok: true, char: c };
+  }
+
   G.World = {
     LOOKS, makeCharacter, presetParty, trialParty, create, party, living, active,
     logLine, advance, clockText, isNight,
@@ -356,5 +394,6 @@
     levelFor, xpFor, grantXP,
     questDef, startQuest, updateQuests, giveReward,
     mapState, wiped, breather, restAndRepair,
+    recruits, recruitOptions, recruit,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

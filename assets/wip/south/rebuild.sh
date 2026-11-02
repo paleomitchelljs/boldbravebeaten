@@ -19,11 +19,11 @@ open(p,'w').write(s[:j]+''.join(rows)+s[k:])
 PY
   rm -f /tmp/sq_$p.txt
 }
-for p in south_hills tarnhold tarnvale_west tarnvale_east; do
+for p in south_hills; do
   for w in '#' '}' '@'; do square $p "$w" ,; done
 done
 # The mountains in rings (tiers.py), each squared against the one below.
 python3 assets/wip/south/tiers.py
-for p in south_hills tarnhold tarnvale_west tarnvale_east; do
+for p in south_hills; do
   square $p '(' '#'; square $p '?' '('
 done

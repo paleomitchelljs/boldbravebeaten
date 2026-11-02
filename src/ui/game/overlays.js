@@ -204,6 +204,29 @@
       h('button', { class: 'primary', onclick: close }, 'Done')), close);
   };
 
+  // A recruit (start.yaml recruits) asked to join: their word, their kit, and a place for them if one is free.
+  UI.Overlays.recruit = function (game, o) {
+    const w = game.world, close = () => game.closeOverlay();
+    const r = World.recruits(w).find((x) => x.id === o.id);
+    if (!r) return shell('Gone', h('p', null, 'They have moved on.'), close);
+    const D = G.DATA, { fallen, room } = World.recruitOptions(w);
+    const gear = [r.armorItem && (D.ARMOR[r.armorItem.armor] || {}).name, ...(r.weaponItems || []).map((x) => (D.WEAPONS[x.weapon] || {}).name), r.shieldItem && `${(D.SHIELDS[r.shieldItem.shield] || {}).name} shield`].filter(Boolean);
+    const join = (replace) => {
+      const res = World.recruit(w, r.id, replace);
+      if (!res.ok) { toast(res.reason); return; }
+      toast(`${res.char.name} joins you.`);
+      close();
+      game.render();
+    };
+    const choices = fallen.map((f) => h('button', { class: 'primary', onclick: () => join(f.id) }, `Take ${f.name}'s place`));
+    if (room) choices.push(h('button', { class: 'primary', onclick: () => join(null) }, 'Join us'));
+    return shell(r.name, h('div', { class: 'stack' },
+      h('div', { class: 'row' }, UI.Sprites.portrait({ look: r.look, name: r.name }, 72), h('p', null, `“${r.pitch}”`)),
+      h('p', { class: 'small muted' }, `Level ${r.level}. ${gear.join(', ')}.`),
+      choices.length ? null : h('p', { class: 'muted' }, 'Your party is whole. If someone falls, come back and ask again.'),
+      h('div', { class: 'row' }, ...choices, h('button', { onclick: close }, 'Not now'))), close);
+  };
+
   UI.Overlays.loot = function (game, o) {
     const close = () => game.closeOverlay();
     return shell(o.title || 'You find', h('div', { class: 'stack' }, o.lines.length ? h('ul', { class: 'loot-list' }, UI.Bits.tally(o.lines).map((l) => h('li', null, UI.itemIcon(l), l))) : h('p', { class: 'muted' }, 'Nothing but dust.'), h('button', { class: 'primary', onclick: close }, 'Take it')), close);

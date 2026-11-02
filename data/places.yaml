@@ -381,198 +381,329 @@ south_hills:
 tarnhold:
   name: Tarnhold
   kind: dungeon
-  blurb: A grey fortress where the pass comes down into the vales. Its north gate takes the pass, its west and east gates the valley road.
+  blurb: Where the pass comes down out of the mountains, a junction of canyon roads; a river falls from the heights past it, a fortress stands over the east road, and an overlook looks down on a mountain lake.
   level: 2
-  look: {wall: "#6a6a66", floor: "#3f7a3a", ceiling: "#7f9ab6", fog: "#0c120a", torch: 0, tileset: tarnvale, light: 24}
+  look: {wall: "#6a6a66", floor: "#7a6a58", ceiling: "#7f9ab6", fog: "#0c120a", torch: 0, tileset: tarnhold, light: 24}
   map:
-    - "??????????????????????(((##,NN,###(((???????????????????????"
-    - "??????????????????????(((##,..,###(((???????????????????????"
-    - "??????????????????????(((##,..,###(((???????????????????????"
-    - "??????????????????????(((###,..,##(((???????????????????????"
-    - "??????????????????????(((###,..,##(((???????????????????????"
-    - "??????????(((((((((((((((###,..,##((((((((((((((((??????????"
-    - "??????????(((((((((((((((###,..,##((((((((((((((((??????????"
-    - "??????????(((((((((((((((##,..,###((((((((((((((((??????????"
-    - "??????????(((##############,..,################(((??????????"
-    - "??????????(((##############,..,################(((??????????"
-    - "??????????(((##,,,,,,,,,,,p,..,,,,,,,`````,,,##(((??????????"
-    - "??????????(((##,,,,,,,,,,,,,..,,,,,,```````,,##((((((((((((("
-    - "??????????(((##,,,,,,,,,,,,,..,,,,,,,`````,,,##((((((((((((("
-    - "((((((((?((((##,,,@@@@@@@@@@..@@@@@@@@@@@@,,,##((((((((((((("
-    - "((((((((?((((##,,,@@@@@@@@@@A.@@@@@@@@@@@@,,,##(############"
-    - "(((((((((((((##,,,@@,,,,,,,,..,,,,,,,,,,@@,,,##(############"
-    - "#####(((((((###,F,@@,T,,,,,f..,f,,,,,,T,@@,,,#####,,,,,,,,,,"
-    - "#####(((((((###,,,@@,,,,,,,,..,,xxxxx,,,@@,,,#####,,,,,,,,,,"
-    - ",,,###########,,,,@@,,,,,,,,..,,xxxxx,,,@@,,,,,,,,,,,F,,,,,,"
-    - ",,,###########,,,,@@,,xxx,,,..,,xxxxx,,,@@,,,,,,,,,,,,,,,,,,"
-    - ",,,,,,,,,,,,,,,,,,@@,,xbx,,,..,,xxkxx,,,@@,,,,,,F,,,,,,,,,r,"
-    - ",,,,,,P,F,,,,,,,,,@@,,,,,,,,..,,,,,,,,,,@@,,,,,,,,,,,,,,,,P,"
-    - "F,,,,,,,,,,,,,,,,,@@f,,,,,h,..,,,,,,,,,f@@,,,,,,P,,,,,,,,,,,"
-    - ",,,,,,,,,,,,,,,,,,Gx,,,,,,,,..,,f,,,,,,,xG,,,,,,,,,,,,,,,,,,"
-    - "Q..........................................................E"
-    - "Q..........................................................E"
-    - ",,,,,,,,,,,,,r,,,,Gx,,,,,,,,,,,,,,,,,,,,xG,r,,,,,,,,,,,,,,,,"
-    - "F,,,,,r,t,,,,,,,,,@@f,Bo,,,,,,,hr,,,B,,f@@,,,,,,,,,,,,,,F,,,"
-    - ",,,,,,F,,,,,,,,,,,@@,,,,,W,,,,,,,,,,,o,,@@,,,,,,,,,,,,P,,,,,"
-    - ",,R,,,,,,,,,###,,,@@,T,,,,,,,,,,,,,,,,T,@@,,,,,,,,,,,,,,,,,,"
-    - ",,,,P,,,,,,,###,,,@@@@@@@@@@@@@@@@@@@@@@@@,P,,,,,,F,,,,,,,,,"
-    - ",,,,,,#########,,,@@@@@@@@@@@@@@@@@@@@@@@@,,,####,,,,,,,,###"
-    - ",,,,,,#########,,,,```````,,,,,,,,,,,,,,,,,,,####,,,,,,,,###"
-    - "########(((((##,,,`````````,,,,,,,,,,,,,,,,,,###############"
-    - "########(((((###############################################"
-    - "########(((((###############################################"
+    - "????????????????????(((((((##,NN,##(((((((((((((((??????????????"
+    - "????????????????????(((((((##,..,##(((((((((((((((??????????????"
+    - "????????????????????(((######,..,##((((########((((((((((((((((("
+    - "????????????????????(((######,..,##((((########((((((((((((((((("
+    - "????????????????????(((##,,,,,..,##((((##,A~,##((((((((((((((((("
+    - "????????????????????(((##,......,##((((##,~~,###################"
+    - "????????????????????(((##,......,##((((##,~~,###################"
+    - "????????????????????(((##,..,,,,,##((((##,~~,,,,,,,,,,,,,,,,,,,#"
+    - "????????????????????(((##,..,######((((##,~~,,@@@@,P,,,,,,@@@@,#"
+    - "????????(((((((((((((((##,..,######((((##,~~,,@■■@,,,,,,,,@■■@,#"
+    - "????????(((((((((((((((##,..,######((((##,~~,,@■■@@@@@@@@@@■■@,#"
+    - "????????(((((((((((((((##,..,,,,,##((((##,~~,,@@@@@@@@@@@@@@@@,#"
+    - "????????(((##############,......,##((((##,~~,,,,@@........@@,,,#"
+    - "????????(((##############,......,##((####,~~,o,,@@.@@@@@@.@@,,,#"
+    - "????????(((##,,,,,,,,,,,#,,,,,..,##((####,~~,,,,@@.@■■■■@.@@,,,#"
+    - "????????(((##,,,L,,,,,,,#####,..,######,,,~~,,,,@@.@■■■■@.@@,,,#"
+    - "(((((((((((##,,,,xxx,,,,#####,..,######,,~~~,,l,@@.@■■■■@.@@,,,#"
+    - "(((((((((((##,o,,xIx,,,,#####,..,####,,,~~~,,,,,@@.@@@@@@.@@,,,#"
+    - "(((((((((((##,xxx,o,rW,,#####,..,####,,~~~,,#,,,@@........@@,,,#"
+    - "((###########,xbx,,t,,r,####,,..,##,,,~~~,,##,,,@@@@@..@@@@@,P,#"
+    - "((############,,,,,,k,l,####g,..,##,,~~~,,###,,,@@■■@..@■■@@,,,#"
+    - "((##▲▲▲▲▲▲▲▲▲########,,,,,,,,,..,,,,~~~,,,###,,,@@■■@..@■■@@,,,#"
+    - "((##▲[[[[[[[▲########,..............==...,###,,,@@@@@..@@@@@,,,#"
+    - "((##▲[[[[[[[▲##((((##,..............==...,###,,,,,,,,..,,,,,,,,#"
+    - "((##▲[[[[[[[▲##((((##,..,,,,,,..,,,,~~,..,###,,,,,lf,..of,,,,,,#"
+    - "((##▲[[[[[[[▲##((((##,..,####,..,##,~~,..,###,,,,,,,,..,,,,,,,,,"
+    - "((##▲[[[[[[[▲########,..,####,..,##,~~,..,#########,...........E"
+    - "((##▲▲▲ST▲▲▲▲########,..,####,..,##,~~,..,#########,...........E"
+    - "######,,,,,,,,,,,,,,,,..,####,..,##,~~,..,#########,..,,,,,,,,,,"
+    - "######,,,,..............,####,..,#,,~~,..,#########,..,#########"
+    - ",,,,,,,,,,..............,####,..,#,~~~,..,,,,,,,,,,,..,#########"
+    - "Q...........,,,,,,,,,,..,####,..,#,~~,,...............,##((((((("
+    - "Q...........,########,..,####,..,#,~~,,...............,##((((((("
+    - ",,,,,,,,,,,,,########,..,,,,,,..,,,,~,,R,,,l,r,,,,,,,,,##((((((("
+    - "#####################,..........,,~xx,F,xx,,,v,##########(((????"
+    - "#####(###############,..........,,~xn,,,xn,l,,,##########(((????"
+    - "((((((##,,,,,,,,,,,######,,,,,,,,~~~,F,,,o,,,,,##(((((((((((????"
+    - "(((((###,,,~~~~~,,,######,,,,,~~~~~~,,,,,,,xx,,##(((((((((((????"
+    - "(((((###,~~~~~~~~~,,,,,,,,~~~~~~~~,,,,z,,,,xn,,##(((((((((((????"
+    - "??(((##,,~~~~~~~~~,,,,~~~~~~~~~,,,,r,,F,po,,,,,##(((????????????"
+    - "??(((###,,~~~~~~~~~~~~~~~~~,,,,,#,,,,,,,,,,,,,,##(((????????????"
+    - "??(((####,,~~~~~,,~~~~~,,,,,#####################(((????????????"
+    - "??((((####,,,,,,,,,,,,,,#########################(((????????????"
+    - "??(((((#######################((((((((((((((((((((((????????????"
+    - "??(((((#######################((((((((((((((((((((((????????????"
   legend:
     N: {kind: stairs, to: south_hills, at: S, sprite: none, label: "The pass, north into the hills"}
     Q: {kind: stairs, to: tarnvale_west, at: E, sprite: none, label: "The road west, into the vale"}
     E: {kind: stairs, to: tarnvale_east, at: Q, sprite: none, label: "The road east, into the vale"}
-    A: {kind: prop, sprite: gatehouse_wide, solid: false, label: "The north gate"}
-    G: {kind: prop, sprite: gatetower, label: "A gate tower", on: ","}
-    T: {kind: prop, sprite: watchtower, label: "A corner tower", on: ","}
-    k: {kind: prop, sprite: keep, scale: 1.4, label: "The keep", on: ","}
-    b: {kind: prop, sprite: stable, label: "The stables", on: ","}
-    W: {kind: prop, sprite: well, label: "The well", on: ","}
-    h: {kind: prop, sprite: hitch, label: "A hitching rail", on: ","}
-    f: {kind: prop, sprite: banner, label: "A banner", on: ","}
-    B: {kind: prop, sprite: barrels, label: "Barrels", on: ","}
-    o: {kind: prop, sprite: crates, label: "Crates", on: ","}
-    x: {kind: prop, sprite: none, on: ","}
-    p: {kind: prop, sprite: roadsign, label: "A signpost: the vales west and east, the pass north", on: ","}
-    P: {kind: prop, sprite: pine, scale: 1.5, label: "A pine", on: ","}
-    F: {kind: prop, sprite: fir, scale: 1.5, label: "A fir", on: ","}
-    t: {kind: prop, sprite: pine, scale: 1.1, label: "A young pine", on: ","}
+    P: {kind: prop, sprite: pine, label: "A mountain pine", on: ","}
+    F: {kind: prop, sprite: fir, label: "A fir", on: ","}
+    t: {kind: prop, sprite: sapling, label: "A young pine", on: ","}
     R: {kind: prop, sprite: boulder, label: "A boulder", on: ","}
     r: {kind: prop, sprite: rocks, solid: false, label: "Loose rocks", on: ","}
+    o: {kind: prop, sprite: rubble, label: "Rubble and charred timber", on: ","}
+    l: {kind: prop, sprite: deadstump, label: "A dead stump", on: ","}
+    A: {kind: prop, sprite: waterfall, label: "A waterfall", on: "~"}
+    S: {kind: prop, sprite: steps_stone, solid: false, label: "Steps up to the overlook", on: "▲"}
+    T: {kind: prop, sprite: steps_stone, solid: false, label: "Steps up to the overlook", on: "▲"}
+    x: {kind: prop, sprite: none, on: ","}
+    I: {kind: prop, sprite: roadinn, label: "The Fork and Flagon (an inn)", on: ","}
+    b: {kind: prop, sprite: stable, label: "A stable", on: ","}
+    W: {kind: prop, sprite: well, label: "A well", on: ","}
+    k: {kind: prop, sprite: table, label: "A table and benches", on: ","}
+    L: {kind: prop, sprite: lantern, label: "A lantern on a post", on: ","}
+    g: {kind: prop, sprite: signpost, label: "A signpost: the vales west and east, the pass north, the keep over the river", on: ","}
+    f: {kind: prop, sprite: banner, label: "A banner", on: ","}
+    n: {kind: prop, sprite: tent, label: "An army tent", on: ","}
+    z: {kind: prop, sprite: brazier, label: "A brazier", on: ","}
+    p: {kind: prop, sprite: pavise, label: "A pavise propped up", on: ","}
+    v: {kind: prop, sprite: watchplatform, label: "A watch platform", on: ","}
   encounters: {}
   secrets: []
 
 tarnvale_west:
   name: The West Tarnvale
   kind: dungeon
-  blurb: Narrow valleys winding west from Tarnhold, opening into glades with an inn and a tavern; a fortified gate where the road leaves.
+  blurb: A narrow canyon road winding west from Tarnhold, crossed by a river on a rope bridge, scarred by raids; an inn and a tavern in its glades; at its end a fortified gate, barricaded, and beyond it the grassland.
   level: 2
-  look: {wall: "#6a6a66", floor: "#3f7a3a", ceiling: "#7f9ab6", fog: "#0c120a", torch: 0, tileset: tarnvale, light: 24}
+  look: {wall: "#6a6a66", floor: "#7a6a58", ceiling: "#7f9ab6", fog: "#0c120a", torch: 0, tileset: tarnhold, light: 24}
   map:
-    - "??????????????????????????((((((((((###################(((((((((((????"
-    - "??????????????????????????((((((((((###################(((((((((((????"
-    - "??????????????????????????((((((((((##,,,,,,,,,,,,,``##(((((((((((????"
-    - "??????????????????????????(((#########,,,,,,,,,,P,P``##########(((????"
-    - "??????????????????????????(((#########,,xxx,xxx,,,,,,##########(((????"
-    - "(((((((((((((((((?????????(((##,,,,,,,,,xbxBxIx,H,o,,,,,,,,,,##(((????"
-    - "(((((((((((((((((?????????(((##,,,,,,,,,,,s,R,wR,,,,,,,,,,,,,##(((????"
-    - "(((((((((((((((((?????????(((##,,..........................,,##(((????"
-    - "##############(((((((((???(((##,,..........................,,##(((????"
-    - "##############(((((((((???(((##,,..,,R,,,,r,,,,,,,R,,,,,,..,,##(((????"
-    - "##,,,,@@,,,,##(((((((((???(((##,,..,,,,,t,,,K,,K,,t,,,,,,..,,##((((((("
-    - "##,P,,@@,w,,########(((???(((##,,..,,#,,,,t,,,,Fs,,,,##,,..,,##((((((("
-    - "##,,,,@@,,,,########(((???(((##,,..,,#,,,,,,,,,,,,,,,##,,..,,##((((((("
-    - ",,,,,,@@,F,,,,,,,,##(((???(((##,,..,,##################,,..,,#########"
-    - ",,,,,,Gx,,,,,,,,,,##(((((((((##,,..,,##################,,..,,#########"
-    - "Z...............,,##(((((((((##,,..,M##((((((((((((((##,,..,,,,,p,,,,,"
-    - "Z...............,,##(((((((((##,,..,,##((((((((((((((##,,..,,,w,,,w,,,"
-    - ",,,,,,Gx,,,,,,..,,#############,,..,,##((((((((((((((##,,............E"
-    - ",,,,,,@@,l,,Pw..,,#############,w..,,##(((????????(((##,,............E"
-    - "##,,,,@@,,,,,,..,,,,,,,,,,,,,,,,,..,,##(((????????(((##,,,,,,,,,,,,,,,"
-    - "##,,w,@@,,,,,,..,,,,,Y,xxx,,P,,,,..,,##(((????????(((##,,,,,,,M,,,,,,,"
-    - "##,,,,@@,,,,,,..,,,t,H,xVxBo,,t,,..,,##(((????????(((#################"
-    - "############,,..,,,,,,,,,,,,,,,,,..,,##(((????????(((#################"
-    - "############,,.....................,,##(((????????(((((((((((((((((((("
-    - "((((((((((##,,.....................,,##(((????????(((((((((((((((((((("
-    - "((((((((((##,w,,,,,,,,,,,,,,,,,,,,,,,##(((????????(((((((((((((((((((("
-    - "((((((((((##,,,,,,,,,,K,,,K,,,,,,,,,,##(((????????????????????????????"
-    - "???????(((#######,,,t,,,P,Y,t,,,#######(((????????????????????????????"
-    - "???????(((#######,,,s,O,,,,,,l,,#######(((????????????????????????????"
-    - "???????((((((((##,,,,,,,,,,,,,,,##((((((((????????????????????????????"
-    - "???????((((((((###################((((((((????????????????????????????"
-    - "???????((((((((###################((((((((????????????????????????????"
+    - "?????????????????????????((((((((((((((((########(((????????????????????"
+    - "?????????????????????????((((((((((((((((########(((????????????????????"
+    - "?????????????????????????(((###############,A~,##(((((((((((((((((??????"
+    - "?????????????????????????(((###############,~~,##(((((((((((((((((??????"
+    - "?????????????????????????(((##▲▲▲▲▲▲▲▲▲▲###,~~,##(((((((((((((((((??????"
+    - "?????????????????????????(((##▲[[[[[[[[▲###,~~,################(((??????"
+    - "?????????????????????????(((##▲[[[[[[[[▲###,~~,################(((((((??"
+    - "?????????????????????????(((##▲[[[[[[[[▲###,~~,,,,,,,,,,,,,,,##(((((((??"
+    - "?????????????????????????(((##▲[[[[[[[[▲##,,~~,,,,,,,,,lh,,W,##(((((((??"
+    - "?????????????????????????(((##▲▲▲ST▲▲▲▲▲##,,~~,,BRP,xxxxxx,,,######(((??"
+    - "????????????????((((((((((((####,,,,,,,,,,,~~~,O,,,,xbxxIx,k,######(((??"
+    - "????????????????((((((((((((((##,,,,,,,,,,,~~,,l,l,B,,,,d,,y,,,,,##(((??"
+    - "????????????????((((((((((((((##########,,~~~,,hP,..............,##(((??"
+    - "????????????????(((#####################,,~~,,O,o,..............,##(((??"
+    - "????????????????(((#####################,~~~,,,,,,..,,,,,,,,,,..,##((((("
+    - "(((((((((((((((((((##,,,,,,,,,,,,,,,,###,~~,,####,..,########,..,##((((("
+    - "(((((((((((((((((((##,..............,###,~~,#####,..,########,..,##((((("
+    - "(((((((((((((((((((##,..............,###,~~,#####,..,##((((##,..,#######"
+    - "#################((##,..,a,r,,,,,,..,###,~~,##(##,..,##((((##,..,#######"
+    - "#################((##,..R,,y,,y,#,..,###,~~,##(##,..,##((((##,..,,,,,,,,"
+    - "###,,,,,@@,,,,,##((##,..,,xxx,,,#,..,###,~~,##(##,..,##((((##,.........E"
+    - "###,,f,,@@,,xx,##((##,..,RxVx,k,#,..,###,~~,#####,..,##((((##,.........E"
+    - "###,O,,@@@@,xn,##((##,..c,,,,,,,#,..,###,~~,#####,..,##((((##,,,,,,,,,,,"
+    - "###,,,,@■■@,,,,######,..,,,,,,,,#,..,,,,,~~,,,,,,,..,##((((#############"
+    - "###,Bt,@■■@,zC,######,..,########,.......==.........,##((((#############"
+    - ",,,,,,,@@@@,,,,,,,,,,,..,########,.......==.........,##((((((((((((((((("
+    - "Z.......................,##((((##,,,,,,,,~~,,,,,,,,,,##((((((((((((((((("
+    - "Z.......................,##((((#########,~~,###########((((((((((((((((("
+    - ",,,,,,,@@@@,,,,,,,,,,,,,,##((((#########,~~,###########(((??????????????"
+    - "###,Bf,@■■@,,R,############((((((((((###,~~,##((((((((((((??????????????"
+    - "###,,Y,@■■@,xx,############((((((((((###,~~,##((((((((((((??????????????"
+    - "###,,l,@@@@,xn,##((((((((((((((((((((##,,~~,##((((((((((((??????????????"
+    - "###,P,,,@@,,,,,##(((((((((((((??((((###,~~~,##(((???????????????????????"
+    - "###,,,,,@@,,,,,##(((((((((((((??((((###,~~,,##(((???????????????????????"
+    - "#################(((????????????(((###,,~~,###(((???????????????????????"
+    - "#################(((????????????(((###,~~~,###(((???????????????????????"
+    - "((((((((((((((((((((????????????(((##,,~~,,##((((???????????????????????"
+    - "((((((((((((((((((((????????????(((##,~~~,###((((???????????????????????"
+    - "((((((((((((((((((((????????????(((##,~~,,###((((???????????????????????"
+    - "((((((((((((((((((((????????????(((##,~~,####((((???????????????????????"
   legend:
     E: {kind: stairs, to: tarnhold, at: Q, sprite: none, label: "The road east, to Tarnhold"}
-    Z: {kind: note, sprite: none, label: "The road west", text: "The road runs on west through the gate and out of the vale. (What lies beyond is not built yet.)"}
-    G: {kind: prop, sprite: gatetower, label: "A gate tower", on: ","}
-    I: {kind: prop, sprite: roadinn, scale: 1.2, label: "The Drover's Rest (an inn)", on: ","}
-    V: {kind: prop, sprite: tavern, scale: 1.1, label: "The Split Pine (a tavern)", on: ","}
-    b: {kind: prop, sprite: stable, label: "A stable", on: ","}
-    H: {kind: prop, sprite: hitch, label: "A hitching rail", on: ","}
-    K: {kind: prop, sprite: table, label: "A table and benches", on: ","}
-    B: {kind: prop, sprite: barrels, label: "Barrels", on: ","}
-    o: {kind: prop, sprite: crates, label: "Crates", on: ","}
-    x: {kind: prop, sprite: none, on: ","}
-    p: {kind: prop, sprite: roadsign, label: "A signpost: east to Tarnhold", on: ","}
-    P: {kind: prop, sprite: pine, scale: 1.5, label: "A pine", on: ","}
-    F: {kind: prop, sprite: fir, scale: 1.5, label: "A fir", on: ","}
-    O: {kind: prop, sprite: oak, scale: 1.6, label: "An oak", on: ","}
-    Y: {kind: prop, sprite: birch, scale: 1.4, label: "A birch", on: ","}
-    t: {kind: prop, sprite: pine, scale: 1.1, label: "A young pine", on: ","}
+    Z: {kind: stairs, to: tarn_plains_west, at: Q, sprite: none, label: "The road west, out through the gate onto the grassland"}
+    P: {kind: prop, sprite: pine, label: "A mountain pine", on: ","}
+    O: {kind: prop, sprite: oak, label: "An oak", on: ","}
+    Y: {kind: prop, sprite: birch, label: "A birch", on: ","}
+    t: {kind: prop, sprite: sapling, label: "A young pine", on: ","}
     R: {kind: prop, sprite: boulder, label: "A boulder", on: ","}
     r: {kind: prop, sprite: rocks, solid: false, label: "Loose rocks", on: ","}
-    s: {kind: prop, sprite: stump, label: "A stump", on: ","}
-    l: {kind: prop, sprite: log, label: "A fallen log", on: ","}
-    w: {kind: prop, sprite: wildflowers, solid: false, label: "Wildflowers", on: ","}
-    M: {kind: prop, sprite: milestone, label: "A milestone", on: ","}
+    o: {kind: prop, sprite: rubble, label: "Rubble and charred timber", on: ","}
+    l: {kind: prop, sprite: deadstump, label: "A dead stump", on: ","}
+    A: {kind: prop, sprite: waterfall, label: "A waterfall", on: "~"}
+    S: {kind: prop, sprite: steps_stone, solid: false, label: "Steps up to the overlook", on: "▲"}
+    T: {kind: prop, sprite: steps_stone, solid: false, label: "Steps up to the overlook", on: "▲"}
+    x: {kind: prop, sprite: none, on: ","}
+    I: {kind: prop, sprite: roadinn, label: "The Drover's Rest (an inn)", on: ","}
+    V: {kind: prop, sprite: tavern, label: "The Split Pine (a tavern)", on: ","}
+    b: {kind: prop, sprite: stable, label: "A stable", on: ","}
+    W: {kind: prop, sprite: well, label: "A well", on: ","}
+    k: {kind: prop, sprite: table, label: "A table and benches", on: ","}
+    f: {kind: prop, sprite: banner, label: "A banner", on: ","}
+    n: {kind: prop, sprite: tent, label: "An army tent", on: ","}
+    z: {kind: prop, sprite: brazier, label: "A brazier", on: ","}
+    B: {kind: prop, sprite: barricade, label: "A barricade", on: ","}
+    C: {kind: prop, sprite: cheval, label: "Sharpened stakes, crossed", on: ","}
+    a: {kind: prop, sprite: burnedcart, label: "A burned cart", on: ","}
+    c: {kind: prop, sprite: stakes, label: "Stakes driven into the ground", on: ","}
+    d: {kind: prop, sprite: scorch, solid: false, label: "Scorched ground", on: ","}
+    h: {kind: prop, sprite: arrows, solid: false, label: "Spent arrows", on: ","}
+    y: {kind: prop, sprite: ladders, label: "Siege ladders", on: ","}
   encounters: {}
   secrets: []
 
 tarnvale_east:
   name: The East Tarnvale
   kind: dungeon
-  blurb: Narrow valleys winding east from Tarnhold, opening into glades with a tavern and an inn; a fortified gate where the road leaves.
+  blurb: A narrow canyon road winding east from Tarnhold, crossed by a river on a rope bridge, scarred by raids; a tavern and an inn in its glades; at its end a fortified gate, barricaded, and beyond it the grassland.
   level: 2
-  look: {wall: "#6a6a66", floor: "#3f7a3a", ceiling: "#7f9ab6", fog: "#0c120a", torch: 0, tileset: tarnvale, light: 24}
+  look: {wall: "#6a6a66", floor: "#7a6a58", ceiling: "#7f9ab6", fog: "#0c120a", torch: 0, tileset: tarnhold, light: 24}
   map:
-    - "?????????????????????????????(((((((###################((((((((???????"
-    - "?????????????????????????????(((((((###################((((((((???????"
-    - "?????????????????????????????(((((((##,,,,,,,,,,,,,,,##((((((((???????"
-    - "?????????????????????????????(((######,,,,,,,,,,,t,,,#######(((???????"
-    - "?????????????????????????????(((######,,xxx,xxx,,,,,,#######(((???????"
-    - "?????????????????????????????(((##,,,,,,xbxBxIx,H,o,,,,,,,##(((((((((("
-    - "(((((((((((((((((((((????????(((##,,,,,s,,,,,,,,,,,,,,,,,,##(((((((((("
-    - "(((((((((((((((((((((????????(((##,,....................,,##(((((((((("
-    - "(((((((((((((((((((((????????(((##,,....................,,############"
-    - "##################(((????????(((##,,..,,,,,,,,,,r,,rw,..,,############"
-    - "##################(((????????(((##,,..s,t,,,K,,K,,t,t,..,,,,,,@@,,,,##"
-    - ",,,,p,,,,,,,,,,,##(((????????(((##,,..,,,,,,,,,P,,,,,,..,O,,,,@@,,F,##"
-    - ",,,,,,,,,,,,,,,,##(((????????(((##,,..,,,,,,,,,,,,,,,,..,,,,r,@@,,,,##"
-    - "Q.............,,##((((((((((((((##,,..l,############,,..,P,,,,@@,,,,,,"
-    - "Q.............,,##((((((((((((((##,w..,,############,,..,,,,,,xG,,,,,,"
-    - ",,,,,,,,rw,,..,,##((((((((((((((##,,..,,##((((((((##,w...............Z"
-    - ",,,,,,,,,,,,..,,##################,,..,,##((((((((##,,...............Z"
-    - "##########,,..,,##################,,..,,##((((((((##,,,,,,,,,,xG,,,,,,"
-    - "##########,,..,M,,,,,,,,,,,,,,,,,#,,..,,##(((??(((##,,,,,,M,,,@@,,,,,,"
-    - "((((((((##,,..,,w,O,,,,,,,,,,,,,,#,,..,,##(((??(((########,O,,@@,,O,##"
-    - "((((((((##,,..,,,,,,,O,xxx,,,Y,``#,w..,,##(((??(((########,,,,@@,,,,##"
-    - "((((((((##,,..,,,,,F,H,xVxBo,,,```,,..,,##(((??(((((((((##,,,,@@,,,,##"
-    - "?????(((##,,..,,R,,,,,,,,,,,,,,```r,..w,##(((??(((((((((##############"
-    - "?????(((##,,..........................s,##(((??(((((((((##############"
-    - "?????(((##,,..........................,,##(((????????((((((((((((((((("
-    - "?????(((##,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,##(((????????((((((((((((((((("
-    - "?????(((##,,,,,,,,,,,,K,,,K,,,,,,,,,,,,,##(((????????((((((((((((((((("
-    - "?????(((########,,t,t,,,F,Fwt,,,,#########(((?????????????????????????"
-    - "?????(((########,,,,,,,,,,,,,,,,,#########(((?????????????????????????"
-    - "?????(((((((((#####################((((((((((?????????????????????????"
-    - "?????(((((((((#####################((((((((((?????????????????????????"
+    - "??????????????????????????(((########((((((((((((((((((((???????????????"
+    - "??????????????????????????(((##,A~,##((((((((((((((((((((???????????????"
+    - "??????????????????????????(((##,~~,##((###############(((???????????????"
+    - "??????????????????????????(((##,~~,##((###############(((???????????????"
+    - "??????????????????????????(((##,~~,##((##▲▲▲▲▲▲▲▲▲▲▲##(((???????????????"
+    - "??????????????????????????(((##,~~,##((##▲[[[[[[[[[▲##(((((((((((((((((("
+    - "????????????????????(((((((((##,~~,##((##▲[[[[[[[[[▲##(((((((((((((((((("
+    - "????????????????????(((((((((##,~~,######▲[[[[[[[[[▲##(((((((((((((((((("
+    - "????????????????????(((((((((##,~~,######▲[[[[[[[[[▲##(#################"
+    - "????????????????????(((########,~~,,,####▲▲ST▲▲▲▲▲▲▲##(#################"
+    - "????????????????????(((########,~~~,,####,,,,,########(##,,,,,@@,,,,,###"
+    - "????????????????????(((##,,,,,,,,~~~,,,,,,,,,,#####((((##xx,,,@@,,f,,###"
+    - "((((((((((((((((((??(((##,........==......,#####(((((((##xn,,@@@@,Pj,###"
+    - "((((((((((((((((((??(((##,........==......,#####(((######,,,,@■■@,,,,###"
+    - "((((((((((((((((((??(((##,..,,,,,,~~~,,,..,##((((((######,Cz,@■■@,Bl,###"
+    - "###############(((??(((##,..,####,,~~,#,..,##((((((##,,,,,,,,@@@@,,,,,,,"
+    - "###############(((??(((##,..,#####,~~,#,..,##########,.................Z"
+    - ",,,,,,,,,,,,,##((((((((##,..,#####,~~,#,..,##########,.................Z"
+    - "Q...........,##((((((((##,..,##(##,~~,#,..,,,,,,,,,##,..u,,,,@@@@,,o,,,,"
+    - "Q...........,##((((((((##,..,##(##,~~,#,..,W,,,,,,,##,..,,y,,@■■@,fB,###"
+    - ",,,,,,,,,,..,############,..,##(##,~~,#,..,,,xxxxxx##,..,xxr,@■■@,,,,###"
+    - "#########,..,############,..,##(##,~~,#,..,k,xIxxbx##,..,xn,,@@@@,Y,,###"
+    - "#########,..,#,,,,,,,,,##,..,##(##,~~,#,..,oc,,,,h,##,..,,,C,,@@,,,R,###"
+    - "(((((((##,..,#,o,,,r,,,##,..,##(##,~~,#,..h,,,j,,,,,,,..,,,,,,@@,,,,,###"
+    - "(((((((##,..,#,,uxxxjR,##,..,##(##,~~,#,................,###############"
+    - "(((((((##,..,#,L,xVx,k,##,..,##(##,~~,#,................,###############"
+    - "????(((##,..,#,,,,,,cl,##,..,##(##,~~,#,,,,,,,,,,,,,,,,,,##((((((((((((("
+    - "????(((##,..,,,,,,,,,,,,,,..,##(##,~~,#####################((((((((((((("
+    - "????(((##,..................,##(##,~~,#####################((((((((((((("
+    - "????(((##,..................,##(##,~~,##((((((((((((((((((((((??????????"
+    - "????(((##,,,,,,,,,,,,,,,,,,,,##(##,~~,##((((((((((((((((((((((??????????"
+    - "????(((########################(##,~~,##((((((((((((((((((((((??????????"
+    - "????(((########################(##,~~,##(((?????????????????????????????"
+    - "????((((((((((((((((((((((((((((##,~~,##(((?????????????????????????????"
+    - "????((((((((((((((((((((((((((((##,~~,##(((?????????????????????????????"
+    - "????((((((((((((((((((((((((((((##,~~,##(((?????????????????????????????"
+    - "?????????????????????????????(((##,~~,##(((?????????????????????????????"
+    - "?????????????????????????????(((##,~~,##(((?????????????????????????????"
+    - "?????????????????????????????(((##,~~,##(((?????????????????????????????"
+    - "?????????????????????????????(((##,~~,##(((?????????????????????????????"
   legend:
     Q: {kind: stairs, to: tarnhold, at: E, sprite: none, label: "The road west, to Tarnhold"}
-    Z: {kind: note, sprite: none, label: "The road east", text: "The road runs on east through the gate and out of the vale. (What lies beyond is not built yet.)"}
-    G: {kind: prop, sprite: gatetower, label: "A gate tower", on: ","}
-    I: {kind: prop, sprite: roadinn, scale: 1.2, label: "The Last Mile (an inn)", on: ","}
-    V: {kind: prop, sprite: tavern, scale: 1.1, label: "The Kettle and Crow (a tavern)", on: ","}
-    b: {kind: prop, sprite: stable, label: "A stable", on: ","}
-    H: {kind: prop, sprite: hitch, label: "A hitching rail", on: ","}
-    K: {kind: prop, sprite: table, label: "A table and benches", on: ","}
-    B: {kind: prop, sprite: barrels, label: "Barrels", on: ","}
-    o: {kind: prop, sprite: crates, label: "Crates", on: ","}
-    x: {kind: prop, sprite: none, on: ","}
-    p: {kind: prop, sprite: roadsign, label: "A signpost: west to Tarnhold", on: ","}
-    P: {kind: prop, sprite: pine, scale: 1.5, label: "A pine", on: ","}
-    F: {kind: prop, sprite: fir, scale: 1.5, label: "A fir", on: ","}
-    O: {kind: prop, sprite: oak, scale: 1.6, label: "An oak", on: ","}
-    Y: {kind: prop, sprite: birch, scale: 1.4, label: "A birch", on: ","}
-    t: {kind: prop, sprite: pine, scale: 1.1, label: "A young pine", on: ","}
+    Z: {kind: stairs, to: tarn_plains_east, at: E, sprite: none, label: "The road east, out through the gate onto the grassland"}
+    P: {kind: prop, sprite: pine, label: "A mountain pine", on: ","}
+    Y: {kind: prop, sprite: birch, label: "A birch", on: ","}
     R: {kind: prop, sprite: boulder, label: "A boulder", on: ","}
     r: {kind: prop, sprite: rocks, solid: false, label: "Loose rocks", on: ","}
-    s: {kind: prop, sprite: stump, label: "A stump", on: ","}
-    l: {kind: prop, sprite: log, label: "A fallen log", on: ","}
-    w: {kind: prop, sprite: wildflowers, solid: false, label: "Wildflowers", on: ","}
-    M: {kind: prop, sprite: milestone, label: "A milestone", on: ","}
+    o: {kind: prop, sprite: rubble, label: "Rubble and charred timber", on: ","}
+    l: {kind: prop, sprite: deadstump, label: "A dead stump", on: ","}
+    A: {kind: prop, sprite: waterfall, label: "A waterfall", on: "~"}
+    S: {kind: prop, sprite: steps_stone, solid: false, label: "Steps up to the overlook", on: "▲"}
+    T: {kind: prop, sprite: steps_stone, solid: false, label: "Steps up to the overlook", on: "▲"}
+    x: {kind: prop, sprite: none, on: ","}
+    I: {kind: prop, sprite: roadinn, label: "The Last Mile (an inn)", on: ","}
+    V: {kind: prop, sprite: tavern, label: "The Kettle and Crow (a tavern)", on: ","}
+    b: {kind: prop, sprite: stable, label: "A stable", on: ","}
+    W: {kind: prop, sprite: well, label: "A well", on: ","}
+    k: {kind: prop, sprite: table, label: "A table and benches", on: ","}
+    L: {kind: prop, sprite: lantern, label: "A lantern on a post", on: ","}
+    f: {kind: prop, sprite: banner, label: "A banner", on: ","}
+    n: {kind: prop, sprite: tent, label: "An army tent", on: ","}
+    z: {kind: prop, sprite: brazier, label: "A brazier", on: ","}
+    B: {kind: prop, sprite: barricade, label: "A barricade", on: ","}
+    C: {kind: prop, sprite: cheval, label: "Sharpened stakes, crossed", on: ","}
+    c: {kind: prop, sprite: stakes, label: "Stakes driven into the ground", on: ","}
+    h: {kind: prop, sprite: arrows, solid: false, label: "Spent arrows", on: ","}
+    j: {kind: prop, sprite: fallenbanner, solid: false, label: "A fallen banner", on: ","}
+    u: {kind: prop, sprite: shields, label: "A heap of shields", on: ","}
+    y: {kind: prop, sprite: ladders, label: "Siege ladders", on: ","}
+  encounters: {}
+  secrets: []
+
+tarn_plains_west:
+  name: The Western Grassland
+  kind: dungeon
+  blurb: Rolling prairie west of the Tarnvale's gate, tall grass moving in the wind; the road runs on west.
+  level: 2
+  look: {wall: "#8aa04a", floor: "#8aa04a", ceiling: "#9ab8d6", fog: "#0c120a", torch: 0, tileset: grassland, light: 28}
+  map:
+    - ",,,,,,,,,,,,,,,,,,,HH,,,,,,,,,,,,,,,"
+    - ",H,J,H,,H,,,G,,,,,,,H,,H,,,,,,,,,,,,"
+    - ",G,,JG,,,,,,H,,,,J,,,,,JH,,,,,,H,,,,"
+    - ",,,,,,,,{,,,,G,HH,,,,,,,,G,J,,,,,,,,"
+    - ",,,,,{{{{{{{,,,,,,H,,J,O{{{{{{{,,,,,"
+    - ",,R,{{{{{{J{{G,,,,,,H,,{{{{{G{{{,,,,"
+    - ",,,G{{{{{{{{{{,,,G,,,,{J{{{HH{{{{G,,"
+    - ",,,J{{{{{{{{H,,,,,,,,{{{J{{{J{{{GH,,"
+    - ",,,,,{G{{J{{,,,,G,,G,J{{{{G{G{{{{,,J"
+    - "HO,,JJ,,{,,H,,,G,,,J,J,{{{{{{{{{,,,,"
+    - ",,,,,,,,,H,,G,,G,HG{,Y,,,,,,,,,,,,,,"
+    - ",,,,,,,,,,H,,,,,,{G{{,,,..........,,"
+    - ",,,,,,,,,,,,,,,,{{,,,..............Q"
+    - "Z..,,,,,G,,,H,,,,,.......,,,,,,,,..Q"
+    - "Z......,,,,,,,........,,,,,,,,,,,,,,"
+    - ",,.................,,,,,,GG,,,,,,,J,"
+    - ",,,,,,.........,,,,,,,,,,,,,,,G,,,,,"
+    - ",,,,,,,,,,,,,,{{{,,,,H,,,HY,{,,,,,,,"
+    - ",,,,,,,H{{{{{G{{{{G,,G,,,{{{{H{{,,,,"
+    - ",G,H,,{H{GJ{{{{{{{{,,,,,GGJ{J{{{{,,,"
+    - "HH,,G,,{{{{GJ{{{{{,,JH,{{G{{{{{{{{H,"
+    - ",,,,,,,,{J{{{{{{{G,,,HJH{{{{{{{{{,,,"
+    - "G,,G,,,,,,J,{,,,,,,,,,,,,{H{{{{{R,,,"
+    - ",,,,,,,,,,,,,,,,,,,,Y,,,,,,,{,R,,,,,"
+    - ",,,,,J,,,,,,,,H,,GHJ,,,,,,,,,,,,,G,,"
+    - ",,,,,,,,,,,,,G,,,,,,,,,,,,,,,,J,,,,,"
+  legend:
+    Q: {kind: stairs, to: tarnvale_west, at: Z, sprite: none, label: "The road east, back through the gate"}
+    Z: {kind: note, sprite: none, label: "The road west", text: "The road runs on west over the grassland. (What lies beyond is not built yet.)"}
+    G: {kind: prop, sprite: tallgrass_gold, solid: false, label: "Tall grass", on: ","}
+    H: {kind: prop, sprite: tallgrass_seed, solid: false, label: "Tall grass", on: ","}
+    J: {kind: prop, sprite: tallgrass_flower, solid: false, label: "Tall grass and wildflowers", on: ","}
+    O: {kind: prop, sprite: oak, label: "An oak", on: ","}
+    Y: {kind: prop, sprite: birch, label: "A birch", on: ","}
+    R: {kind: prop, sprite: boulder, label: "A boulder", on: ","}
+  encounters: {}
+  secrets: []
+
+tarn_plains_east:
+  name: The Eastern Grassland
+  kind: dungeon
+  blurb: Rolling prairie east of the Tarnvale's gate, tall grass moving in the wind; the road runs on east.
+  level: 2
+  look: {wall: "#8aa04a", floor: "#8aa04a", ceiling: "#9ab8d6", fog: "#0c120a", torch: 0, tileset: grassland, light: 28}
+  map:
+    - ",,,H,,,,,G,,H,,,G,,,HH,,,,,,,,J,,,J,"
+    - ",,H,,,H,,,,,,,,G,,,G,,,,,,H,,,,,J,,,"
+    - "G,,,GG,HJ,,,,,,,,,,,,,,,,,,,,,,,,,,,"
+    - ",,J,,,G,G,,,,,H,,,J,,,O,,,,,,,,,,,,,"
+    - ",,,,,{{{{{{{,,,,,G,,,,,,{{{{J{{G,G,,"
+    - ",,,,{G{{{J{{{,,,,,,,,,,{{{{G{{{{,R,,"
+    - "G,,{{{{GG{{{H{,,,,,,,,{{{{{G{{{{{,H,"
+    - ",,O,{G{{{{{{{,,,,,,,,{{{{G{{{H{G{{,,"
+    - ",,,,,{{{{{{G,,,,,,,,,,{{{{{{H{{{{,,,"
+    - "G,,,,JG,{,,,,,,,,H,,,,G{{{{{{{{{,,GJ"
+    - "JH,,GJ,,,,,H,,,,,,,{,,,,,,,,,,,,,,,,"
+    - ",G,,OGJ,,,,RJ,,,,{{{{,,,..........,,"
+    - ",,,,G,,,,,,,,H,,{{,,,..............Z"
+    - "E..,,,,,,,,,,,,,,,.......,,,,,,,,..Z"
+    - "E......,,,,,,,........,,,,,,,HJG,,,,"
+    - ",,.................,,,,,G,,,,,,,,,,J"
+    - ",,,,,,.........,,,,,,,,,,,,O,,,,,J,,"
+    - ",,,,,,,,,,,,,,{{G,,,,R,,,,,H{,H,,,,H"
+    - ",J,,,H,{{{{{J{{J{{,,,,,,,{{{G{{{,,,,"
+    - ",,G,,G{G{{{{{{{{G{G,G,H,{{{{{H{{{,,,"
+    - ",,,,J,,{{{{{{{{{{{,,,,,{{{{{{J{J{{,,"
+    - ",,,J,,,,H{J{{{{{{,,,,,,J{{{{{{{{{,,J"
+    - ",,,,,J,,,,H,G,,,,,,,,,,,O{{{{{{{,,,,"
+    - ",,H,,,G,,H,,,,H,,,,,,,,,,,,,{,,,,,,,"
+    - ",,,,JH,J,,,,,,,,JJ,,,,,,,,,,,,,,,,,H"
+    - ",,,,,,,,,,,,,H,,,,,,,GH,J,,,,,,,,,,H"
+  legend:
+    E: {kind: stairs, to: tarnvale_east, at: Z, sprite: none, label: "The road west, back through the gate"}
+    Z: {kind: note, sprite: none, label: "The road east", text: "The road runs on east over the grassland. (What lies beyond is not built yet.)"}
+    G: {kind: prop, sprite: tallgrass_gold, solid: false, label: "Tall grass", on: ","}
+    H: {kind: prop, sprite: tallgrass_seed, solid: false, label: "Tall grass", on: ","}
+    J: {kind: prop, sprite: tallgrass_flower, solid: false, label: "Tall grass and wildflowers", on: ","}
+    O: {kind: prop, sprite: oak, label: "An oak", on: ","}
+    R: {kind: prop, sprite: boulder, label: "A boulder", on: ","}
   encounters: {}
   secrets: []
 

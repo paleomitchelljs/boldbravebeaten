@@ -61,6 +61,82 @@ presets:
     nouns: [life]
     look: {sprite: "art:jabiku"}
 
+# Recruits (the user, 2026-11-01): heroes milling about the village (place, home square `at`; they wander a few squares
+# from it) who will join the party to take a fallen member's place, or fill an empty one. Same fields as presets, plus
+# `pitch` (what they say when asked) and `id`. Level 3, five feats, 40 attribute points, like the starting four.
+recruits:
+  # An orc sellsword: a heavy chopping blade (a short sword until there is a falchion) behind a heater shield.
+  - id: kalavar
+    name: Kalavar
+    place: village
+    at: [11, 13]
+    pitch: "Coin's thin and the road south is thick with raiders. Short a blade? Mine's heavy and I don't run."
+    kit: sword
+    level: 3
+    attrs: {STR: 8, CON: 7, DEX: 4, SPD: 4, INT: 3, WIL: 5, WIS: 4, CHA: 5}
+    armorItem: {armor: mail, material: iron}
+    weaponItems: [{weapon: shortsword, material: steel}, {weapon: dagger}]
+    shieldItem: {shield: heater, material: wood}
+    feats: [shield_training, quick_block, mail_mobility, power_swing, toughness]
+    look: {sprite: "art:orc-warrior"}
+  # A shield-and-sword man: the blade works from behind the shield.
+  - id: arvir
+    name: Arvir
+    place: village
+    at: [19, 12]
+    pitch: "I've stood in a line before. Put me where the blows come and I'll hold there."
+    kit: sword
+    level: 3
+    attrs: {STR: 6, CON: 6, DEX: 6, SPD: 5, INT: 4, WIL: 5, WIS: 4, CHA: 4}
+    armorItem: {armor: mail, material: iron}
+    weaponItems: [{weapon: longsword, material: iron}, {weapon: dagger}]
+    shieldItem: {shield: round, material: wood}
+    feats: [shield_training, quick_block, parry_training, mail_mobility, half_swording]
+    look: {sprite: "art:arvir"}
+  # A dragonkin duellist: quick, light, a blade in each hand.
+  - id: jadier
+    name: Jadier
+    place: village
+    at: [23, 15]
+    pitch: "Two blades, light feet. I'm bored of this green, and you look like trouble worth following."
+    kit: rapier
+    level: 3
+    attrs: {STR: 5, CON: 5, DEX: 7, SPD: 7, INT: 4, WIL: 4, WIS: 4, CHA: 4}
+    armorItem: {armor: leather}
+    weaponItems: [{weapon: shortsword, material: steel}, {weapon: parryingDagger}]
+    shieldItem: null
+    feats: [dodge_training, quickness, offhand_dagger, flurry, light_armor_training]
+    look: {sprite: "art:dragonborn-blue"}
+  # A knight in plate, sworn to a cause he doesn't name.
+  - id: crusader
+    name: The Crusader
+    place: village
+    at: [14, 17]
+    pitch: "My oath brought me this far south. It will carry me further, beside you, if you have need of steel."
+    kit: sword
+    level: 3
+    attrs: {STR: 7, CON: 7, DEX: 5, SPD: 4, INT: 3, WIL: 6, WIS: 4, CHA: 4}
+    armorItem: {armor: plate, material: iron}
+    weaponItems: [{weapon: longsword, material: steel}, {weapon: dagger}]
+    shieldItem: null
+    feats: [plate_mobility, plate_endurance, half_swording, murder_stroke, resolve]
+    look: {sprite: "art:crusader"}
+  # A spellsword: a curved blade, a buckler, and fire to throw.
+  - id: spawnee
+    name: Spawnee
+    place: village
+    at: [7, 19]
+    pitch: "Steel when they're close, fire when they're not. I've been waiting for a party worth the walk."
+    kit: sword
+    level: 3
+    attrs: {STR: 5, CON: 5, DEX: 6, SPD: 5, INT: 7, WIL: 6, WIS: 3, CHA: 3}
+    armorItem: {armor: padded}
+    weaponItems: [{weapon: shortsword, material: steel}, {weapon: dagger}]
+    shieldItem: {shield: buckler, material: wood}
+    feats: [casting, verb_strike, mod_launch, shield_training, parry_training]
+    nouns: [fire]
+    look: {sprite: "art:spawnee"}
+
 # Trial starts (title screen): a small or one-person party for trying out art and movement. `look` is the character's
 # look (sprite: "art:<key>" draws data/art.yaml art); `go` travels there at once (a place and its arrival square).
 trials:

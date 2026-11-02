@@ -117,6 +117,7 @@ test('ui: every overlay, and every slot picker on the sheet', () => {
   overlay('journal', { tab: 'quests' });
   overlay('factions'); overlay('menu'); Game.debug = true; overlay('menu'); Game.debug = false;
   overlay('text', { title: 't', text: 'a\nb' }); overlay('loot', { title: 'x', lines: ['a'] });
+  overlay('recruit', { id: 'kalavar' }); overlay('recruit', { id: 'nobody' });
   Game.closeOverlay();
 });
 

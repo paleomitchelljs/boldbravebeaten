@@ -65,6 +65,23 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 - [x] The preset party's colour washes (there to tell stock figures apart) are off members with their own art (Cyrus
   was moss green); a save step (version 4) clears them in old saves.
 
+## Tarnhold again, grassland, recruits (the user, 2026-11-01, fifth set; art and prompts in `assets/wip/tarn/`)
+- [x] Tarnhold and both vales laid out again as closed-in canyon passes (the user's reference map): roads two wide on
+  gravel, a river from a waterfall (animated) under rope bridges, overlooks up stone steps, a loop road, raid debris,
+  the fortress and the vale gates built from tiles (towers raised on the wall: `■`, a cliff set over the wall walk;
+  `solo` now lets a wall count what is built on it). Trees regenerated at 128 px, drawn at scale 1. Seen in headless
+  Chrome (junction, falls, fort gate, overlook, a vale gate, a glade).
+- [x] Grassland tilesets (prairie, a rise, the road) and two grasslands beyond the vale gates (`tarn_plains_west`,
+  `_east`) with tall grass that sways (animated props: `[.., dx, dy, frames, fps]`).
+- [x] Recruits (start.yaml `recruits`): Kalavar, Arvir, Jadier, the Crusader and Spawnee mill about the village (a step
+  now and then near home; not saved); bump into or tap one to talk; they take a fallen member's place or fill an empty
+  one (`World.recruit`). Tests in `tests/recruit.test.js`.
+- [x] Crusader: walk ×8, strike ×8, idle ×8, death (25 generations). Two strike frames flashed white: patched with
+  their neighbours (a fresh pull brings them back).
+- [ ] Kalavar's idle (queued) and Jadier's; then the new creatures' animations (the user's next ask).
+- [ ] The overlook top is close to the canyon floor in colour; tower roofs read dark; the waterfall's square is solid
+  (stand beside it).
+
 ## Walking lag on the iPhone (the user, 2026-11-01)
 - [x] Cause: every frame planned and painted the whole visible map (600-950 draw calls, 7-12 ms of script on a Mac,
   several times that on a phone), and every step saved the whole game. Now the ground and walls are painted once

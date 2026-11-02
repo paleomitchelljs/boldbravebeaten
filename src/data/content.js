@@ -321,7 +321,7 @@
         if (t.corners && (t.corners.some((c) => !/^[UL]{4}$/.test(c)) || new Set(t.corners).size !== 16)) err(`tilesets.${id}.${n}: corners must be codes of four U/L letters covering all 16 (repeats are variants)`);
         if (!t.color && !t.tile && !t.wang) err(`tilesets.${id}.${n}: needs a color, a tile or a wang sheet`);
       }
-      for (const [n, pr] of Object.entries(ts.props || {})) if (!Array.isArray(pr) || (pr.length !== 5 && pr.length !== 7)) err(`tilesets.${id}.props.${n}: expected [image, x, y, w, h] or [image, x, y, w, h, dx, dy]`);
+      for (const [n, pr] of Object.entries(ts.props || {})) if (!Array.isArray(pr) || ![5, 7, 9].includes(pr.length)) err(`tilesets.${id}.props.${n}: expected [image, x, y, w, h], [.., dx, dy] or [.., dx, dy, frames, fps]`);
     }
     const S = W.start || {};
     if (S.place && !has(places, S.place)) err(`start.yaml: place "${S.place}" unknown`);

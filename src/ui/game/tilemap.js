@@ -418,13 +418,15 @@
     // one marked `apart`, a plank deck) over flat ground, and the walls under another cliff set: those draw themselves on top, so fern beds draw nothing
     // under a pyramid and a tier nothing under the walls. Flat ground does count the walls, so it runs on under them
     // (a walkway meets a wall without an edge of water along it).
+    // Whether terrain d is built on w (its `over`, or the `over` of what it is built on: a tower on a wall).
+    const builtOn = (d, w) => { for (let i = 0, o = d.over; o && i < 6; i++, o = (ts.terrains[o] || {}).over) if (o === w.name) return true; return false; };
     const upOf = (w) => (xx, yy) => {
       const t = T_(xx, yy).t, d = tdef(ts, t);
       if (d.rank < w.rank) return false;
       if (t === w.name || !w.cliffTiles) return t === w.name || t === ts.wall || !(d.cliffTiles || d.apart);
       // `solo` (a built wall among a mountain's tiers): no other cliff set counts as its upper ground, only the rock
       // it runs under (underWalls).
-      if (w.solo && t !== ts.wall) return false;
+      if (w.solo && t !== ts.wall && !builtOn(d, w)) return false;
       // `underWalls` (a pyramid built into a wall): a wall square beside this terrain, east or west, is taken as the
       // square beside it, so the tier runs on under the wall's edge, faces and all; the wall's `cut` sheet lies over it.
       // `underWalls: all` takes the squares north and south too (a built wall running into natural rock at its ends).

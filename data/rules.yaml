@@ -152,6 +152,11 @@ game:
     # The mountains climb in rings: the rock (#), a higher ledge ((), the summit (?), each a cliff set over the last.
     "(": {name: Mountainside, wall: true, tile: ledge, color: "#7a7a74"}
     "?": {name: Summit, wall: true, tile: summit, color: "#8a8a84"}
+    # Overlooks: a walkable shelf of rock ([) inside a ring of ledge (▲, drawn as the shelf, as a pyramid's steps are), with
+    # steps cut in it; towers (■) raised on a fortress wall.
+    "[": {name: Overlook, tile: shelf, color: "#8a7a62"}
+    "▲": {name: Ledge, wall: true, rise: true, color: "#7a6a52"}
+    "■": {name: Tower, wall: true, tile: tower, color: "#5a5a58"}
   passivePenalty: 3          # passive perception is this much worse than a deliberate search
   camp: {wanderingChance: 0.25, guardedChance: 0.5}
   # ---- Skill checks: d10 + floor(mean of attrs / 2) + feat ranks x weight vs a target number ------

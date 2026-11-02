@@ -129,11 +129,13 @@
     return true;
   }
 
+  const clockNow = () => (typeof performance !== 'undefined' ? performance.now() : 0);
+
   // A prop by name: the tileset of the place being drawn first (its door replaces the stock one), then the table
   // above, then any tileset's (art drawn at its own cell size, so a 64-px tileset's well is as wide as a square).
   let placeTs = null;
   function propDef(key) {
-    const fromTs = (id) => { const ts = Tilemap.tileset(id), p = ts && ts.props[key]; return p ? [ts.dir + p[0], p[1], p[2], p[3], p[4], T / ts.cell, p[5], p[6]] : null; };
+    const fromTs = (id) => { const ts = Tilemap.tileset(id), p = ts && ts.props[key]; return p ? [ts.dir + p[0], p[1], p[2], p[3], p[4], T / ts.cell, p[5], p[6], p[7], p[8]] : null; };
     const own = placeTs && fromTs(placeTs);
     if (own) return own;
     if (PROPS[key]) return PROPS[key];
@@ -156,16 +158,19 @@
     if (opts.flipY) { const mid = y - (p[4] * S * k) / 2; ctx.translate(0, mid); ctx.scale(1, -1); ctx.translate(0, -mid); }
     // squash narrows a prop (a door seen edge-on or swung open); anchor 'left' pins its left edge at x instead of its middle.
     const w = p[3] * S * k * (opts.squash || 1);
+    // An animated prop [.., dx, dy, frames, fps] (a waterfall, grass in the wind): its frames side by side from x, each
+    // `w` wide, played at fps; `phase` staggers props of one kind so they don't move in step.
+    const sx = p[8] > 1 ? p[1] + (Math.floor(clockNow() * (p[9] || 8) / 1000 + (opts.phase || 0)) % p[8]) * p[3] : p[1];
     // A tileset prop with an offset [.., dx, dy] is laid at that many art pixels from its square's top-left corner (a
     // doorway cut to fit the wall around it) instead of standing on the square's bottom.
-    if (p[6] != null) blit(ctx, p[0], p[1], p[2], p[3], p[4], Math.round(x - (T * S) / 2 + p[6] * S * k), Math.round(y - T * S + p[7] * S * k), w, p[4] * S * k);
-    else blit(ctx, p[0], p[1], p[2], p[3], p[4], Math.round(opts.anchor === 'left' ? x : x - w / 2), Math.round(y - p[4] * S * k), w, p[4] * S * k);
+    if (p[6] != null) blit(ctx, p[0], sx, p[2], p[3], p[4], Math.round(x - (T * S) / 2 + p[6] * S * k), Math.round(y - T * S + p[7] * S * k), w, p[4] * S * k);
+    else blit(ctx, p[0], sx, p[2], p[3], p[4], Math.round(opts.anchor === 'left' ? x : x - w / 2), Math.round(y - p[4] * S * k), w, p[4] * S * k);
     ctx.restore();
   }
 
   // ---- Standing things (layer 5) ----------------------------------------------------------------------------------
   // Furniture, chests and shrines: solid things with a body, drawn with their feet at the square's bottom.
-  function drawObject(ctx, c, X, Y, S) {
+  function drawObject(ctx, c, X, Y, S, mx, my) {
     const size = T * S, cx = X + size / 2, feet = Y + size;
     const d = c.def || {}, st = c.st || {};
     switch (c.kind) {
@@ -174,7 +179,7 @@
       case 'prop': {
         const key = d.sprite || 'crate';
         if (key === 'none') break; // the rest of something drawn from another square (a building's footprint)
-        if (propDef(key)) { prop(ctx, key, cx, feet - S * (d.lift || 1), S, { scale: d.scale || 1 }); break; }
+        if (propDef(key)) { prop(ctx, key, cx, feet - S * (d.lift || 1), S, { scale: d.scale || 1, phase: hash(mx || 0, my || 0, 5) % 7 }); break; }
         // No art for it yet: a stone block with a dark top, so it reads as something in the way.
         ctx.fillStyle = '#8a7e66'; ctx.fillRect(X + size * 0.18, Y + size * 0.3, size * 0.64, size * 0.6);
         ctx.fillStyle = '#05070a'; ctx.fillRect(X + size * 0.26, Y + size * 0.36, size * 0.48, size * 0.3);
@@ -578,7 +583,7 @@
       for (const a of sc.actors || []) { const v = view.vis[a.id]; list.push({ y: v.y + 1, fig: { a, v } }); }
       list.sort((p, q) => p.y - q.y);
       for (const it of list) {
-        if (it.prop) { const i = it.prop; drawObject(ctx, i.c, ox + i.x * size, oy + i.y * size, S); continue; }
+        if (it.prop) { const i = it.prop; drawObject(ctx, i.c, ox + i.x * size, oy + i.y * size, S, i.x, i.y); continue; }
         const [dx, dy] = offsetOf(it.fig.a.id, clock());
         drawActor(ctx, it.fig.a, dx || dy ? { x: it.fig.v.x + dx, y: it.fig.v.y + dy, run: it.fig.v.run, flip: it.fig.v.flip, dir: it.fig.v.dir } : it.fig.v, ox, oy, S, view.tick);
       }
