@@ -1,8 +1,20 @@
 # To do
 
-Last updated at commit: 3d2b322
+Last updated at commit: b2131ca
 
 Keep this a short list. Tick things off, add new ones, and refresh the commit line after every push (`git log -1 --format=%h`).
+
+## Heroes and the swamp's edge (the user, 2026-11-03)
+- [x] Cyrus wears a padded gambeson (torso only; blurb and pitch say so). The Crusader carries his longsword in one
+  hand with a heater shield (blurb updated); feats now plate mobility and endurance, shield training, shield bash and
+  heavy weapon training (half-swording and murder stroke dropped: they needed two-handed training first). The picker's
+  buttons read Begin and Edit Characters.
+- [x] Suracayl scales take padded armor's numbers (mit, pierce, cut-through, durability; vital-spot and arrow tables).
+  Not simmed (encounter tuning deferred).
+- [x] Outdoors, past the map's edge, the edge's own wall runs on (jungle west of the swamp, not the temple wall).
+  Seen in headless Chrome at the west exit.
+- [ ] Is a full padded suit wanted for Cyrus, not only the chest? Ask the user.
+- [ ] `_shot.html` / `_shot.js` are tracked, but `tools/shot.sh` deletes them on every run. Untrack them? Ask the user.
 
 ## Block, parry and dodge differ in kind (the user, 2026-11-03)
 - [x] Block rebounds a third of the blow's AP off the attacker, parry a sixth (Beat, new feat: +a sixth per rank);
