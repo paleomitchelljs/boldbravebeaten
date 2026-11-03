@@ -1070,13 +1070,13 @@ temple_palace:
     T: {kind: prop, sprite: throne, on: "|", label: "The throne"}
     C: {kind: chest, loot: strongbox, tn: 8, label: "A chest"}
     h: {kind: monster, encounter: hall, label: "A guard in the great hall"}
-    k: {kind: monster, encounter: throne, on: "|", label: "Jabiku on his throne"}
+    k: {kind: monster, encounter: throne, on: "|", label: "Venril over its throne"}
     r: {kind: monster, encounter: rats, label: "Rats in a side chamber"}
   encounters:
     hall: {foes: [{monster: scaleward}], text: "A Suracayl guard pacing the hall wheels about."}
-    # One skeleton guard, not two: two of them alone beat the example level-1 party (13%, tools/encounters.js), and Jabiku
+    # One skeleton guard, not two: two of them alone beat the example level-1 party (13%, tools/encounters.js), and Venril
     # raises the fallen besides.
-    throne: {foes: [{monster: jabiku}, {monster: skeleton}], text: "On the throne a figure in a horned skull lifts its staff. The skeleton at the foot of the dais steps down to meet you."}
+    throne: {foes: [{monster: venril}, {monster: skeleton}], text: "Above the throne a horned lizard in a dark robe drifts upright, its hands lifting. The skeleton at the foot of the dais steps down to meet you."}
     rats: {foes: [{monster: ratPack}], text: "The chamber is full of rats."}
   wandering:
     - {w: 1, foes: [{monster: scaleward, sprite: {art: lizardfolk-warrior-tan}}], text: "A Suracayl guard comes through the gallery."}

@@ -375,7 +375,7 @@ bogfolk:
   keepUnarmed: true
 bogPatrol: {name: Bogfolk patrol, blurb: Three bogfolk., group: [bogfolk, bogfolk, bogfolk]}
 # The Suracayl: the temple's lizardfolk. Warriors (green alligator lizards) keep the courts and the palace, skinks the
-# labyrinth, varanus the pyramid; Jabiku rules from the palace throne and the dread shaman keeps the pyramid's top.
+# labyrinth, varanus the pyramid; Venril rules from the palace throne and the dread shaman keeps the pyramid's top.
 # An encounter picks the colour: {monster: scaleward, sprite: {art: lizardfolk-warrior-tan}}.
 scaleward:
   name: Suracayl warrior
@@ -451,13 +451,13 @@ dreadShaman:
   keepUnarmed: true
   nouns: [venom, fear]
   feats: {casting: 2, verb_strike: 1, verb_launch: 1, verb_beguile: 1, dodge_training: 1}
-jabiku:
-  name: Jabiku
-  blurb: "The master of the palace, on its throne in a horned skull. Skeletons stand guard for him, the fallen get up again at his word, and he fills the hall with fear."
+venril:
+  name: Venril
+  blurb: "The master of the palace, a horned lizard in a dark robe floating above its throne. Skeletons stand guard for it, the fallen get up again at its word, and it fills the hall with fear."
   faction: suracayl
   xp: 250
   glyph: "💀"
-  sprite: {art: jabiku, kind: orc_shaman, tint: "#3a4a3a"}
+  sprite: {art: venril, kind: orc_shaman}
   loot: humanoid_purse
   level: 6
   attrs: {STR: 7, CON: 9, DEX: 6, SPD: 6, INT: 10, WIL: 11, WIS: 9, CHA: 10}
