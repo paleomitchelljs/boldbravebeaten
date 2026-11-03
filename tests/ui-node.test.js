@@ -24,34 +24,68 @@ function show(screen, label) {
 }
 const overlay = (type, data) => { Game.error = null; Game.openOverlay(type, data); check('overlay ' + type); return fake.doc.getElementById('modal-root'); };
 
-test('ui: title and creation screens render, and the example party starts a game', () => {
+test('ui: title, the heroes\' portraits, editing the chosen, and a new game', () => {
   Rand.seed(5);
   show('title');
   assert.match(text(), /New Game/);
   assert.match(text(), /Load/);
-  assert.doesNotMatch(text(), /Quick start/, 'the choices open under New Game');
-  Game.ui = { titleMode: 'new' };
-  show('title', 'title: new game');
-  assert.match(text(), /Quick start/);
-  assert.match(text(), /Custom/);
   Game.ui = { titleMode: 'load' };
   show('title', 'title: load');
   assert.match(text(), /Load a file/);
-  Game.ui = {};
-  show('create');
-  assert.match(text(), /Your company/);
-  // Every character tab, with and without a caster.
-  const st = Game.ui.create;
-  for (let i = 0; i < 4; i++) { st.slot = i; show('create', 'create slot ' + i); }
-  st.members[0].feats = ['verb_strike', 'casting', 'keen_eye']; st.members[0].nouns = ['fire'];
-  show('create', 'caster');
-  // A new game begins where start.yaml's go says (the village), in the example party's own gear.
-  Game.newGame(World.presetParty());
+  // New Game: every hero who can start, as a portrait card.
+  Game.draft = null;
+  show('heroes');
+  const all = World.heroes();
+  assert.equal(all.length, 9, 'the four presets and the five recruits');
+  for (const hero of all) assert.match(text(), new RegExp(hero.name));
+  // Pick five: the fifth is refused.
+  const card = (id) => fake.doc.querySelector(`[data-hero=${id}]`);
+  for (const id of ['beren', 'kalavar', 'cyrus', 'spawnee', 'lorc']) { card(id).click(); }
+  assert.deepEqual(Game.draft.picked, ['beren', 'kalavar', 'cyrus', 'spawnee']);
+  card('cyrus').click();
+  assert.deepEqual(Game.draft.picked, ['beren', 'kalavar', 'spawnee'], 'a second click takes one out');
+  card('jadier').click();
+  check('heroes picked');
+  // Edit them first: every tab renders; a feat removed, a weapon changed, a name changed.
+  const edit = [...fake.doc.querySelectorAll('button')].find((b) => /Edit them first/.test(b.textContent));
+  edit.click();
+  assert.equal(Game.screen, 'create');
+  const d = Game.draft;
+  assert.deepEqual(d.members.map((m) => m.name), ['Beren', 'Kalavar', 'Spawnee', 'Jadier']);
+  for (let i = 0; i < 4; i++) { d.slot = i; show('create', 'edit slot ' + i); }
+  assert.match(text(), /Gear/);
+  d.slot = 2; show('create', 'spawnee');
+  assert.match(text(), /Words known/, 'a caster chooses words');
+  d.slot = 0;
+  d.members[0].feats.pop();
+  d.members[0].weaponItems = [{ weapon: 'warhammer', material: 'iron' }, { weapon: 'dagger' }];
+  d.members[0].shieldItem = null;
+  d.members[0].name = 'Beren the Bold';
+  show('create', 'edited');
+  assert.match(text(), /4\/5/, 'a feat left to spend');
+  // Back to the heroes keeps the picks; on to the editor again keeps the edits.
+  Game.go('heroes');
+  assert.deepEqual(Game.draft.picked, ['beren', 'kalavar', 'spawnee', 'jadier']);
+  [...fake.doc.querySelectorAll('button')].find((b) => /Edit them first/.test(b.textContent)).click();
+  assert.equal(Game.draft.members[0].name, 'Beren the Bold');
+  // Begin: the party is the four, as edited; those not picked wait in the village, those picked do not.
+  [...fake.doc.querySelectorAll('button')].find((b) => /^Begin in/.test(b.textContent)).click();
   assert.equal(Game.screen, 'explore');
   assert.equal(Game.world.place, Content.world.start.go.to);
-  assert.ok(Game.world.partyIds.length === 4);
+  const party = World.party(Game.world);
+  assert.deepEqual(party.map((c) => c.name), ['Beren the Bold', 'Kalavar', 'Spawnee', 'Jadier']);
+  assert.equal(B.Character.wieldedWeapon(party[0]).type, 'warhammer');
+  assert.deepEqual(World.recruits(Game.world, 'village').map((r) => r.id).sort(), ['arvir', 'crusader', 'cyrus', 'jabiku', 'lorc']);
   check('explore after new game');
   Explore.leave(Game.world, 'stonebridge');
+  // Begin as they are, with the default four.
+  Game.draft = null;
+  Game.go('heroes');
+  for (const id of ['beren', 'lorc', 'cyrus', 'jabiku']) card(id).click();
+  [...fake.doc.querySelectorAll('button')].find((b) => /Begin as they are/.test(b.textContent)).click();
+  assert.deepEqual(World.party(Game.world).map((c) => c.name), ['Beren', 'Lorc', 'Cyrus', 'Jabiku']);
+  Explore.leave(Game.world, 'stonebridge');
+  Game.go('town');   // stops the explore view's drawing
 });
 
 test('ui: the street and every location, shop tab, healer and trainer', () => {

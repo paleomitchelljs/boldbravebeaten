@@ -28,3 +28,12 @@ test('recruits: every one can be made into a character with their gear', () => {
     assert.ok(res.char.wield, r.id + ' holds a weapon');
   }
 });
+
+test('heroes: every one holds every feat listed (in order, within tier rules), and has an id, a blurb and a home', () => {
+  const { Character: C } = B;
+  for (const h of World.heroes()) {
+    const c = World.makeCharacter(h);
+    assert.equal(C.featCount(c), h.feats.length, `${h.name}: a listed feat could not be taken`);
+    assert.ok(h.id && h.blurb && h.place && h.at, `${h.name}: id, blurb, place and at`);
+  }
+});

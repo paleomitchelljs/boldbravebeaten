@@ -115,8 +115,12 @@
     // the start of a round (Battle.reinforce); looked again only when one of them has moved.
     const partyAt = whole ? enc.ids.filter((id) => chars[id] && chars[id].side === 'party' && C.isActive(chars[id]) && enc.pos[id]) : [];
     if (whole && arena.place === w.place) {
-      const key = partyAt.map((id) => enc.pos[id].x + ',' + enc.pos[id].y).join(';');
-      if (bs.seenKey !== key) { bs.seenKey = key; for (const id of partyAt) G.Explore.markSeen(w, { x: enc.pos[id].x + ox, y: enc.pos[id].y + oy }); }
+      // Only for a fighter who has moved since last looked (sight is costly where the light reaches far).
+      const seenAt = bs.seenAt || (bs.seenAt = {});
+      for (const id of partyAt) {
+        const k = enc.pos[id].x + ',' + enc.pos[id].y;
+        if (seenAt[id] !== k) { seenAt[id] = k; G.Explore.markSeen(w, { x: enc.pos[id].x + ox, y: enc.pos[id].y + oy }); }
+      }
     }
     const mine = {};
     for (const id of enc.ids) if (chars[id] && chars[id].side === 'party' && enc.pos[id]) mine[(enc.pos[id].x + ox) + ',' + (enc.pos[id].y + oy)] = 1;

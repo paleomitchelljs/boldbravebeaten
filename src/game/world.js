@@ -49,6 +49,8 @@
       c.weapons = spec.weaponItems.map(E.makeFromSpec);
       c.wield = c.weapons[0] ? c.weapons[0].id : null;
       c.sidearm = c.weapons[1] ? c.weapons[1].id : null;
+      // A second weapon made for the off hand (a parrying dagger) is held there, as the kits do.
+      if (c.weapons[1] && (G.DATA.WEAPONS[c.weapons[1].type] || {}).offhand) { c.offhand = c.sidearm; c.sidearm = null; }
     }
     if (spec.level > 1) { c.level = spec.level; c.xp = xpFor(spec.level); }
     if (spec.bonusFeats) c.bonusFeats = spec.bonusFeats;
@@ -68,6 +70,14 @@
       const art = p.look && typeof p.look.sprite === 'string' && p.look.sprite.startsWith('art:');
       return Object.assign({}, p, { look: Object.assign({ skin: [1, 2, 0, 3][i % 4], hair: [1, 2, 4, 5][i % 4], cloth: i % 6, build: 1, sprite: null, tint: art ? 0 : [0, 2, 3, 1][i % 4] }, p.look || {}) });
     });
+  }
+
+  // Every hero a new game can begin with (New Game's portraits): the presets, then the recruits, each with a look.
+  function heroes() {
+    const S = content().start || {};
+    const ids = new Set();
+    return presetParty().concat((S.recruits || []).map((r) => Object.assign({}, r, { look: Object.assign({ skin: 1, hair: 1, cloth: 0, build: 1, sprite: null, tint: 0 }, r.look || {}) })))
+      .filter((h) => !ids.has(h.id || h.name) && ids.add(h.id || h.name));
   }
 
   // A trial start (start.yaml trials): its party specs, each with its own look.
@@ -99,6 +109,8 @@
       if (spec.arrows != null) world.supplies.arrows += spec.arrows;
       else if (spec.kit) { const k = (S.kits || []).find((x) => x.id === spec.kit); if (k && k.arrows) world.supplies.arrows += k.arrows; }
       for (const t of spec.trinkets || []) { addGood(world, t, 1); G.Equip.equipTrinket(world, c, t); }
+      // A hero who starts in the party is not also waiting in the village to be recruited.
+      if (spec.id) (world.recruited = world.recruited || {})[spec.id] = c.id;
     }
     for (const id of Object.keys(content().factions || {})) G.Factions.standing(world, id);
     if (opts.log !== false) logLine(world, `Your party arrives at ${((content().places || {})[(opts.go && opts.go.to) || (S.go && S.go.to) || world.place] || {}).name || world.place}.`, 'info');
@@ -349,8 +361,9 @@
   }
 
   // ---- Recruits ------------------------------------------------------------
-  // Heroes waiting in a place (start.yaml recruits) who will join: to take a fallen member's place, or into an empty one.
-  const recruitDefs = () => ((content().start || {}).recruits) || [];
+  // Heroes waiting in a place (start.yaml recruits, and the presets not picked for the party, which have a home square
+  // too) who will join: to take a fallen member's place, or into an empty one.
+  const recruitDefs = () => heroes().filter((r) => r.id && r.place);
   function recruits(world, placeId) {
     const taken = world.recruited || {};
     return recruitDefs().filter((r) => !taken[r.id] && (!placeId || r.place === placeId));
@@ -387,7 +400,7 @@
   }
 
   G.World = {
-    LOOKS, makeCharacter, presetParty, trialParty, create, party, living, active,
+    LOOKS, makeCharacter, presetParty, heroes, trialParty, create, party, living, active,
     logLine, advance, clockText, isNight,
     flag, setFlag,
     goodDef, goodCount, addGood, removeGood, loadSupplies, collectSupplies,

@@ -29,8 +29,8 @@
     setTimeout(() => input.remove(), 60000);
   }
 
-  // Continue (the autosave), Load (the saved games, or a file), New Game (the ready-made party at start.yaml `go`, the
-  // village; or a party of your own). Load and New Game open in place (game.ui.titleMode).
+  // Continue (the autosave), Load (the saved games, or a file; opens in place, game.ui.titleMode), New Game (the
+  // heroes' portraits: pick four, begin as they are or edit them; screens/create.js).
   UI.Screens.title = function (game) {
     const slots = G.Save.list();
     const auto = slots.find((s) => s.slot === 'auto' && s.world);
@@ -48,12 +48,7 @@
           mode === 'load' ? h('div', { class: 'panel stack' },
             slots.some((s) => s.world) ? slots.map((s) => slotRow(game, s)) : h('p', { class: 'muted small' }, 'No saved games yet.'),
             h('button', { onclick: () => importFile(game) }, 'Load a file…')) : null,
-          h('button', { class: (auto ? 'big' : 'primary big') + (mode === 'new' ? ' selected' : ''), 'aria-expanded': String(mode === 'new'), onclick: pick('new') }, 'New Game'),
-          mode === 'new' ? h('div', { class: 'panel stack' },
-            h('button', { class: 'primary', onclick: () => { game.ui.titleMode = null; game.newGame(G.World.presetParty(), (G.Content.world.start || {}).go); } }, 'Quick start'),
-            h('p', { class: 'muted small' }, 'The ready-made party of four, in the village.'),
-            h('button', { onclick: () => { game.ui.titleMode = null; game.go('create'); } }, 'Custom'),
-            h('p', { class: 'muted small' }, 'Make your own party.')) : null),
+          h('button', { class: auto ? 'big' : 'primary big', onclick: () => { game.draft = null; game.go('heroes'); } }, 'New Game')),
         h('details', { class: 'panel' }, h('summary', null, h('h3', null, 'How it plays')),
           h('div', { class: 'stack small howto' },
             h('p', null, 'Fights are lethal and quick. Armor matters more than levels, and a stab that gets through can kill anyone. Win by reacting more, lasting longer and taking less.'),

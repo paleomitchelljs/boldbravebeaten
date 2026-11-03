@@ -23,11 +23,15 @@
   function grid(placeId) {
     const p = places()[placeId];
     if (!p || !p.map) return null;
+    // The same rows as last time: the cached grid. Only when they differ is the whole map joined to compare (the Test
+    // bench edits a map in place); joining on every call made each square looked at cost the whole map.
+    const c0 = cache[placeId];
+    if (c0 && c0.rows === p.map && c0.len === p.map.length) return c0;
     const key = placeId + '|' + p.map.join('');
-    if (cache[placeId] && cache[placeId].key === key) return cache[placeId];
+    if (c0 && c0.key === key) { c0.rows = p.map; c0.len = p.map.length; return c0; }
     const rows = p.map;
     const under = p.look && p.look.ground ? groundOf(p.look.ground) : null;
-    return (cache[placeId] = { key, rows, w: rows[0].length, h: rows.length, legend: p.legend || {}, under });
+    return (cache[placeId] = { key, rows, len: rows.length, w: rows[0].length, h: rows.length, legend: p.legend || {}, under });
   }
 
   // The ground a letter stands for (rules.yaml game.ground), with its letter; null for none.
@@ -159,9 +163,11 @@
   // edge walks to the nearest.
   const exitCache = {};
   function exits(placeId) {
+    // Cached on the map's own rows (grid() joins the whole map to check its cache, too slow for every square drawn).
+    const map = (places()[placeId] || {}).map;
+    if (!map) return [];
+    if (exitCache[placeId] && exitCache[placeId].map === map) return exitCache[placeId].list;
     const g = grid(placeId);
-    if (!g) return [];
-    if (exitCache[placeId] && exitCache[placeId].g === g) return exitCache[placeId].list;
     const list = [];
     for (let y = 0; y < g.h; y++) for (let x = 0; x < g.w; x++) {
       const def = g.legend[g.rows[y][x]];
@@ -170,7 +176,7 @@
       const d = x === 0 ? [-1, 0] : x === g.w - 1 ? [1, 0] : y === 0 ? [0, -1] : y === g.h - 1 ? [0, 1] : null;
       if (d) list.push({ x, y, dx: d[0], dy: d[1] });
     }
-    exitCache[placeId] = { g, list };
+    exitCache[placeId] = { map, list };
     return list;
   }
 

@@ -4,6 +4,24 @@ Last updated at commit: e02320f
 
 Keep this a short list. Tick things off, add new ones, and refresh the commit line after every push (`git log -1 --format=%h`).
 
+## New game (the user, 2026-11-02, third set)
+- [x] New Game opens the heroes' portraits (`UI.Screens.heroes`, `World.heroes()`: the presets and the recruits, nine):
+  pick up to four (in order), then Begin as they are, or Edit them first (`UI.Screens.create`, rewritten): name,
+  attributes (each hero's own pool), feats (their level's budget, any feat they can hold; one removed flags those that
+  needed it), words for casters, gear (armor, weapon in hand, at the belt, shield, each with an ordinary material).
+  The draft lives on `game.draft` (going back keeps the picks and edits). Quick start and Custom are gone.
+- [x] Those not picked wait in the village to be recruited (the presets now have home squares and pitches); those
+  picked are not there twice (`World.create` marks a spec's `id` recruited). A second weapon made for the off hand
+  (a parrying dagger) given as an item spec is held there, as kits did.
+- [x] Four recruits listed feats they could not hold (tier rules), silently left out in play. Kalavar reordered;
+  Arvir economical block for half-swording; Jadier quick thrust and parry training for flurry and light armor;
+  the Crusader heavy weapon training and power swing for plate endurance and resolve. A test now checks every hero.
+- [ ] Seen in headless Chrome (portraits at desktop and phone width, the editor); not clicked through in a browser.
+- [ ] No blank hero to build from scratch any more (the old level-1 builder is gone). Ask the user if one is wanted.
+- [x] Speed: `Explore.grid` joined the whole map to check its cache on every call, so every square looked at (each
+  step of a line of sight) cost the whole map. Now it checks the rows' identity first: a fight move's reveal went from
+  111 ms to 22 ms, a draw in the mine from 28 to 16 ms (fake DOM, Mac). A fight reveals only for the fighter who moved.
+
 ## Fog and edges (the user, 2026-11-02, second set)
 - [x] A fight on the map reveals what the party's fighters see after every move (the battle screen's scene, when a
   fighter has moved), not only at round start. A square counts as seen if revealed or a party member stands on it
@@ -149,7 +167,7 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   (`visibilitychange`, `pagehide`; not asked for: a phone may close the page without warning), and from the menu.
 - [ ] The Hollin Hills still drop a few frames (6 over 33 ms in a 30-step walk, from 20-31): likely the browser
   rasterising the many large tree sprites.
-- [ ] `node --test` takes about 6 minutes: the UI test renders every square of every map, and the new outdoor places
+- [ ] `node --test` takes 5 minutes of CPU but 15 of wall time on this Mac (34% CPU: mostly waiting, cause unknown; the UI test that renders every square of every map is 8 of them). The new outdoor places
   added about 3,700.
 
 ## South of the village (the user, 2026-11-01, fourth set; art and prompts in `assets/wip/south/`)
