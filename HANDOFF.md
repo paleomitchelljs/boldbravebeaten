@@ -4,6 +4,20 @@ Last updated at commit: cac5b81
 
 Keep this a short list. Tick things off, add new ones, and refresh the commit line after every push (`git log -1 --format=%h`).
 
+## Fog and edges (the user, 2026-11-02, second set)
+- [x] A fight on the map reveals what the party's fighters see after every move (the battle screen's scene, when a
+  fighter has moved), not only at round start. A square counts as seen if revealed or a party member stands on it
+  (was: anyone), so foes in the dark are not drawn, named on hover, or followed by the camera. Test in
+  `tests/ui-node.test.js`. Not watched in play.
+- [x] `open: true` places (the nine outdoor ones) are seen whole on arrival (`markSeen`; `ms.allSeen`). The temple
+  court is left dark (walled, with sneaking); ask the user.
+- [x] Ways out on a map's edge (stairs, or a road's-end note drawn as nothing; `Explore.exits`) have their ground run
+  on three squares past the edge (`sc.outside`, `sc.margin` lets the camera look there); outdoors the land past the
+  edge is drawn as the place's wall instead of black. A click past the edge walks to the nearest way out within three
+  squares; a click on a way out with a party member standing on it walks there instead of opening the sheet. Seen in
+  headless Chrome (grassland east road, village north road); the clicks not tried in a browser.
+- [ ] Followers still cluster onto an exit square when the leader stands beside it (only drawn there; harmless now).
+
 ## Art pass (the user, 2026-11-02)
 - [x] Venril (its own art) rules the palace from the throne; the party's Jabiku stood in there.
 - [x] Front-on props: buildings, the village's things, the vales' tents and engines redrawn facing the viewer square

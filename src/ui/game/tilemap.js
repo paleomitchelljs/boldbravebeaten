@@ -362,7 +362,8 @@
 
   // The terrain name a square is drawn as, and the ground drawn over it (a bridge), if any.
   function terrainOf(sc, ts, x, y) {
-    const c = x >= 0 && y >= 0 && x < sc.w && y < sc.h ? sc.cell(x, y) : null;
+    // Off the map is the tileset's wall, except where the scene says the ground runs on (`outside`: a road leading out).
+    const c = x >= 0 && y >= 0 && x < sc.w && y < sc.h ? sc.cell(x, y) : sc.outside ? sc.outside(x, y) : null;
     // With `doorsInWall`, a doorway (or a legend square marked `wall: true`, a way out through a gate) is drawn as the
     // wall it stands in, and its door picture laid over it, so the wall runs on unbroken.
     if (c && ts.raw.doorsInWall && (doorLike(c) || (c.def && c.def.wall))) return { t: ts.wall };

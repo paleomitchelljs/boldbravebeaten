@@ -320,9 +320,11 @@
         const cx = fv ? fv.x : sc.cam.x, cy = fv ? fv.y : sc.cam.y;
         follow = fv && view.follow === on.id;
         view.follow = fv ? on.id : null;
-        tx = Math.max(0, Math.min(Math.max(0, sc.w - W), cx + 0.5 - W / 2));
+        // `margin` {l, r, t, b}: squares past an edge the camera may show (the road running on past a way out).
+        const mg = sc.margin || {};
+        tx = Math.max(-(mg.l || 0), Math.min(Math.max(0, sc.w - W) + (mg.r || 0), cx + 0.5 - W / 2));
         // One row above the map is allowed: the caps of a top wall stand there.
-        ty = Math.max(-1, Math.min(Math.max(0, sc.h - H), cy + 0.5 - H / 2));
+        ty = Math.max(-Math.max(1, mg.t || 0), Math.min(Math.max(0, sc.h - H) + (mg.b || 0), cy + 0.5 - H / 2));
         if (sc.w < W) tx = (sc.w - W) / 2;
         if (sc.h < H) ty = (sc.h - H) / 2;
       }

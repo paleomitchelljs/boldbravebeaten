@@ -150,11 +150,15 @@ walks through it; fliers cross; it stops neither sight, missiles nor reach), `_`
 `=` a plank bridge over water, `^` a pyramid step (a wall, drawn as the tier it holds up), `-` `:` `*` `&` the four terraces of a stepped pyramid, lowest to highest (each a terrain of the tileset, drawn over the one below; a stair through a step is a `prop` with `solid: false` and `on: "^"`). Every other character is defined in the place's `legend`; the
 validator complains about a letter with no entry (or an entry not on the map, or one that is a ground letter).
 Legend kinds: `stairs {to, at, up}` (`up` sets the arrow when the default guess is wrong), `drop {to, at, damage, text,
-sprite}` (a well or a hole: one way down, no stairs back; the fall's `damage` hits everyone), `locked {tn, forceTn, key, alt[]}`, `secret {tn}`, `trap {tn, disarm, damage, text, reveal}`,
+sprite}` (a well or a hole: one way down, no stairs back; the fall's `damage` hits everyone), `locked {tn, forceTn, key, alt[]}`, `secret {tn}`, `trap {tn, disarm, damage, text, reveal, sprite}` (`sprite`: blade, spiketrap, vent, pit; default the spike plate),
 `monster {encounter, asleep}`, `chest {loot, tn}`, `pickup {good}`, `note {text, sets}`, `npc {npc}`, `shrine {heal}`,
 `prop {sprite, scale, solid}` (scenery: a crate, bed, urn, candelabra… from the table in `src/ui/game/mapview.js` or a
 tileset's `props`; solid by default; a stone block until its art exists; `sprite: none` draws nothing, for the rest of a building's footprint). A `stairs` with `sprite: none` is drawn as nothing: a path running off the edge of the map. A `note` with `sprite: none` shows no scroll (words met at a road's end). Any legend entry may say `on: "<ground letter>"`
 for the ground under it.
+A `stairs` (or a `note` with `sprite: none`, a road's end) on the map's edge is a way out: the map draws its ground running on three squares past the edge, and a
+click there (or in the dark just past the edge near it) walks the party to it. A legend `sprite` on a `locked` door
+names its own picture for each side (`portcullis` -> `portcullis_north`, ...).
+A place with `open: true` (outdoors) hides nothing: the whole map is seen the first time the party is there.
 
 **Looks.** `sprite:` on a monster, a foe template or an NPC names a sheet in `art/characters/pixelcrawler/` (knight, rogue, wizard, orc,
 orc_rogue, orc_shaman, orc_warrior, skeleton, skeleton_mage, skeleton_rogue, skeleton_warrior) or is `{kind, scale, tint}` to resize

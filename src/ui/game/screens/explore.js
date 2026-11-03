@@ -276,8 +276,19 @@
       // The map view keeps the ground and walls drawn until this changes (a door opened, a secret found).
       tileKey: Explore.tileKey(w, w.place),
       cell: (x, y) => Explore.peek(w, x, y),
+      // Past a way out on the map's edge, its ground runs on a few squares, so the road visibly leaves the map.
+      outside: (x, y) => { const e = Explore.beyond(w.place, x, y); if (!e) return null; const c = Explore.peek(w, e.x, e.y); return { ch: '.', kind: 'floor', ground: c.ground, st: {} }; },
       // Rock (' ' in a map) is never shown: it is the dark beyond the place, a drop off a wall top or solid earth.
-      seen: (x, y) => !!ms.seen[x + ',' + y] && Explore.peek(w, x, y).kind !== 'rock',
+      // The road past a way out shows once the way out has been seen.
+      seen: (x, y) => {
+        if (ms.seen[x + ',' + y] && Explore.peek(w, x, y).kind !== 'rock') return true;
+        // Outdoors the land goes on past the edge (drawn as the place's wall: forest, hills, tall grass).
+        if (p.open && (x < 0 || y < 0 || x >= g.w || y >= g.h)) return true;
+        const e = Explore.beyond(w.place, x, y);
+        return !!e && !!ms.seen[e.x + ',' + e.y];
+      },
+      // The camera may look three squares past an edge with a way out on it, to show the road leaving.
+      margin: Explore.exits(w.place).reduce((m, e) => { if (e.dx < 0) m.l = 3; if (e.dx > 0) m.r = 3; if (e.dy < 0) m.t = 3; if (e.dy > 0) m.b = 3; return m; }, {}),
       light: { x: ex.x, y: ex.y, r: Explore.lightRadius(w) },
       cam: { x: ex.x, y: ex.y },
       actors: [], marks: [],
@@ -359,7 +370,19 @@
     if (game.overlay) return;
     const rec = recruitAt(game, x, y);
     if (rec) { stopWalk(game); game.openOverlay('recruit', { id: rec }); return; }
-    const who = memberAt(game, x, y);
+    const g = Explore.here(w);
+    // Off the map: the road running on past a way out, or the dark beside it, walks to that way out (the nearest
+    // within three squares of where the click meets the edge).
+    if (x < 0 || y < 0 || x >= g.w || y >= g.h) {
+      const cx = Math.max(0, Math.min(g.w - 1, x)), cy = Math.max(0, Math.min(g.h - 1, y));
+      let best = Explore.beyond(w.place, x, y), bd = best ? 0 : 4;
+      if (!best) for (const e of Explore.exits(w.place)) { const d = Math.abs(e.x - cx) + Math.abs(e.y - cy); if (d < bd) { bd = d; best = e; } }
+      if (best && !walkTo(game, best.x, best.y)) toast('No way through to there.');
+      return;
+    }
+    // A way out with one of the party standing on it (or just below it) is walked to, not the sheet of who is there.
+    const way = Explore.peek(w, x, y).kind === 'stairs' || Explore.exits(w.place).some((e) => e.x === x && e.y === y);
+    const who = way ? null : memberAt(game, x, y);
     if (who) { game.openOverlay('sheet', { id: who }); return; }
     const ex = w.explore;
     stopWalk(game);

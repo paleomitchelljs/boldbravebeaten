@@ -134,6 +134,15 @@
   function markSeen(world, at) {
     const ex = at || world.explore;
     const ms = W.mapState(world, world.place);
+    // An open place (outdoors: `open: true`) hides nothing: all of it is seen the first time the party is there.
+    const pl = places()[world.place];
+    if (pl && pl.open) {
+      if (ms.allSeen) return;
+      const g = here(world);
+      for (let y = 0; y < g.h; y++) for (let x = 0; x < g.w; x++) ms.seen[posKey(x, y)] = 1;
+      ms.allSeen = 1;
+      return;
+    }
     const r = lightRadius(world);
     for (let y = ex.y - r; y <= ex.y + r; y++) {
       for (let x = ex.x - r; x <= ex.x + r; x++) {
@@ -143,6 +152,35 @@
         if (lineClear(world, ex.x, ex.y, x, y)) ms.seen[posKey(x, y)] = 1;
       }
     }
+  }
+
+  // The ways out on a place's edge (a stairs square, or a note drawn as nothing, in its first or last row or column), each with the way it leads
+  // off the map: [{x, y, dx, dy}]. The map draws the ground running on past the edge there, and a click beyond the
+  // edge walks to the nearest.
+  const exitCache = {};
+  function exits(placeId) {
+    const g = grid(placeId);
+    if (!g) return [];
+    if (exitCache[placeId] && exitCache[placeId].g === g) return exitCache[placeId].list;
+    const list = [];
+    for (let y = 0; y < g.h; y++) for (let x = 0; x < g.w; x++) {
+      const def = g.legend[g.rows[y][x]];
+      // A road's end marked with a note drawn as nothing counts too (the road runs on to a place not built yet).
+      if (!def || !(def.kind === 'stairs' || (def.kind === 'note' && def.sprite === 'none'))) continue;
+      const d = x === 0 ? [-1, 0] : x === g.w - 1 ? [1, 0] : y === 0 ? [0, -1] : y === g.h - 1 ? [0, 1] : null;
+      if (d) list.push({ x, y, dx: d[0], dy: d[1] });
+    }
+    exitCache[placeId] = { g, list };
+    return list;
+  }
+
+  // The exit whose road runs on through square x, y off the map (up to `reach` squares past the edge), if any.
+  function beyond(placeId, x, y, reach) {
+    for (const e of exits(placeId)) {
+      const k = e.dx ? (x - e.x) * e.dx : (y - e.y) * e.dy;
+      if (k >= 1 && k <= (reach || 3) && (e.dx ? y === e.y : x === e.x)) return e;
+    }
+    return null;
   }
 
   // ---- Entering and leaving ----------------------------------------------------
@@ -630,7 +668,7 @@
   }
 
   G.Explore = {
-    DIRS, DIR_NAMES, grid, groundOf, place, lightRadius, here, cell, state, tileKey, opaque, lineClear, cheb, markSeen, findChar,
+    DIRS, DIR_NAMES, grid, groundOf, place, lightRadius, here, cell, state, tileKey, opaque, lineClear, cheb, markSeen, findChar, exits, beyond,
     enter, leave, fall, front, turn, move, go, peek, path, search, facing, describe, act, scan, wake,
     encounterSpec, foeAwareness, resolveSquare, wanderingFor, minutesPerStep, noise, settleClock, wanderCheck,
   };

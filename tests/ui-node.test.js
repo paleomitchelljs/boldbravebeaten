@@ -195,6 +195,40 @@ test('ui: the temple court: drawn from its tileset at 4x, a drop prompt, and a f
   Game.go('town');
 });
 
+test('ui: a fight on a dark map shows only what the party has seen, and reveals as the party moves', () => {
+  const w = Game.world;
+  Game.travel({ to: 'ember_warrens', arrive: 'Y' });
+  const ms = World.mapState(w, 'ember_warrens');
+  // Earlier tests have marked every map seen: start this one from what the party sees where it stands.
+  for (const k of Object.keys(ms.seen)) delete ms.seen[k];
+  Explore.markSeen(w);
+  Game.startBattle({ name: 'Fog', foes: [{ monster: 'rat', n: 2 }] }, { ctx: { x: w.explore.x, y: w.explore.y } });
+  check('fog battle');
+  const bs = Game.ui.bs, enc = bs.enc, A = bs.arena, chars = bs.chars;
+  assert.ok(A, 'fought on the map');
+  // A foe put far off in a square no one has seen: not drawn, not shown.
+  const foe = enc.ids.find((id) => chars[id].side !== 'party');
+  let dark = null;
+  for (let y = 0; y < A.h && !dark; y++) for (let x = 0; x < A.w && !dark; x++) {
+    if (!ms.seen[(x + A.ox) + ',' + (y + A.oy)] && !Explore.peek(w, x + A.ox, y + A.oy).solid && !Object.values(enc.pos).some((p) => p.x === x && p.y === y)) dark = { x, y };
+  }
+  assert.ok(dark, 'some open square is still unseen');
+  enc.pos[foe] = dark;
+  let sc = UI.BattleScene(Game);
+  assert.equal(sc.seen(dark.x + A.ox, dark.y + A.oy), false);
+  assert.ok(!sc.actors.some((a) => a.id === foe), 'the foe in the dark is not drawn');
+  // A party fighter steps up beside it: the square is seen, the foe drawn.
+  const me = enc.ids.find((id) => chars[id].side === 'party');
+  const near = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => ({ x: dark.x + dx, y: dark.y + dy })).find((p) => !Explore.peek(w, p.x + A.ox, p.y + A.oy).solid);
+  enc.pos[me] = near;
+  sc = UI.BattleScene(Game);
+  assert.ok(sc.seen(dark.x + A.ox, dark.y + A.oy), 'seen once a fighter stands beside it');
+  assert.ok(sc.actors.some((a) => a.id === foe));
+  w.battle = null;
+  Explore.leave(w, 'stonebridge');
+  Game.go('town');
+});
+
 test('ui: a battle plays through the real battle screen with the AI on both sides', async () => {
   const w = Game.world;
   Explore.leave(w, 'stonebridge');

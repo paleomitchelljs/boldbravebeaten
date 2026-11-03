@@ -134,6 +134,7 @@ stonebridge:
 village:
   name: Stonebridge
   kind: dungeon
+  open: true
   blurb: A small village in a clearing in the jungle, a green before the inn, a road north into the black hills, one east and one south.
   level: 1
   look: {wall: "#2f4a2a", floor: "#7a5a3a", ceiling: "#6f8aa6", fog: "#0c120a", torch: 0, tileset: outside_village, light: 24}
@@ -195,6 +196,7 @@ village:
 temple_approach:
   name: The Temple Swamp
   kind: dungeon
+  open: true
   blurb: Swamp and jungle east of the village. A paved causeway runs east between two small stepped pyramids to the gate in the temple's great sandstone wall.
   level: 1
   look: {wall: "#cdb98a", floor: "#4d6a33", ceiling: "#2a3a22", fog: "#0c120a", torch: 0, tileset: outside_swamp, ground: ",", light: 20}
@@ -252,6 +254,7 @@ temple_approach:
 mine_approach:
   name: The Black Hills
   kind: dungeon
+  open: true
   blurb: Bare black rock north of the village, split by a channel of lava; the goblins' mine opens in the cliff beyond.
   level: 1
   look: {wall: "#2a2624", floor: "#3c3632", ceiling: "#3a2a24", fog: "#120604", torch: 0, tileset: ember_basalt, light: 20}
@@ -293,6 +296,7 @@ mine_approach:
 south_hills:
   name: The Hollin Hills
   kind: dungeon
+  open: true
   blurb: Rolling hills and old forest south of the village, rising to grey mountains; the road winds up to a narrow pass at the far end.
   level: 1
   look: {wall: "#6a6a66", floor: "#3f7a3a", ceiling: "#7f9ab6", fog: "#0c120a", torch: 0, tileset: south_hills, light: 24}
@@ -381,6 +385,7 @@ south_hills:
 tarnhold:
   name: Tarnhold
   kind: dungeon
+  open: true
   blurb: Where the pass comes down out of the mountains, a junction of canyon roads; a river falls from the heights past it, a fortress stands over the east road, and an overlook looks down on a mountain lake.
   level: 2
   look: {wall: "#6a6a66", floor: "#7a6a58", ceiling: "#7f9ab6", fog: "#0c120a", torch: 0, tileset: tarnhold, light: 24}
@@ -462,6 +467,7 @@ tarnhold:
 tarnvale_west:
   name: The West Tarnvale
   kind: dungeon
+  open: true
   blurb: A narrow canyon road winding west from Tarnhold, crossed by a river on a rope bridge, scarred by raids; an inn and a tavern in its glades; at its end a fortified gate, barricaded, and beyond it the grassland.
   level: 2
   look: {wall: "#6a6a66", floor: "#7a6a58", ceiling: "#7f9ab6", fog: "#0c120a", torch: 0, tileset: tarnhold, light: 24}
@@ -542,6 +548,7 @@ tarnvale_west:
 tarnvale_east:
   name: The East Tarnvale
   kind: dungeon
+  open: true
   blurb: A narrow canyon road winding east from Tarnhold, crossed by a river on a rope bridge, scarred by raids; a tavern and an inn in its glades; at its end a fortified gate, barricaded, and beyond it the grassland.
   level: 2
   look: {wall: "#6a6a66", floor: "#7a6a58", ceiling: "#7f9ab6", fog: "#0c120a", torch: 0, tileset: tarnhold, light: 24}
@@ -621,6 +628,7 @@ tarnvale_east:
 tarn_plains_west:
   name: The Western Grassland
   kind: dungeon
+  open: true
   blurb: Rolling prairie west of the Tarnvale's gate, tall grass moving in the wind; the road runs on west.
   level: 2
   look: {wall: "#8aa04a", floor: "#8aa04a", ceiling: "#9ab8d6", fog: "#0c120a", torch: 0, tileset: grassland, light: 28}
@@ -678,6 +686,7 @@ tarn_plains_west:
 tarn_plains_east:
   name: The Eastern Grassland
   kind: dungeon
+  open: true
   blurb: Rolling prairie east of the Tarnvale's gate, tall grass moving in the wind; the road runs on east.
   level: 2
   look: {wall: "#8aa04a", floor: "#8aa04a", ceiling: "#9ab8d6", fog: "#0c120a", torch: 0, tileset: grassland, light: 28}

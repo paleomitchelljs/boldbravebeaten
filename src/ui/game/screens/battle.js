@@ -107,20 +107,32 @@
     // shown whole.
     const whole = arena && (arena.w > VIEW().w || arena.h > VIEW().h);
     const ms = whole ? World.mapState(w, arena.place) : null;
-    const focusId = (map && map.actor) || Combat.currentActor(enc) || enc.ids.find((id) => chars[id] && chars[id].side === 'party' && C.isActive(chars[id]) && enc.pos[id]);
+    let focusId = (map && map.actor) || Combat.currentActor(enc) || enc.ids.find((id) => chars[id] && chars[id].side === 'party' && C.isActive(chars[id]) && enc.pos[id]);
+    // A foe acting where the party cannot see is not followed: the camera stays on the party.
+    if (whole && focusId && chars[focusId] && chars[focusId].side !== 'party' && enc.pos[focusId] && !ms.seen[(enc.pos[focusId].x + ox) + ',' + (enc.pos[focusId].y + oy)]) focusId = enc.ids.find((id) => chars[id] && chars[id].side === 'party' && C.isActive(chars[id]) && enc.pos[id]) || focusId;
     const focus = focusId && enc.pos[focusId] ? enc.pos[focusId] : { x: 0, y: 0 };
+    // On the whole map the party sees what its fighters see from where they stand now, after every move, not only at
+    // the start of a round (Battle.reinforce); looked again only when one of them has moved.
+    const partyAt = whole ? enc.ids.filter((id) => chars[id] && chars[id].side === 'party' && C.isActive(chars[id]) && enc.pos[id]) : [];
+    if (whole && arena.place === w.place) {
+      const key = partyAt.map((id) => enc.pos[id].x + ',' + enc.pos[id].y).join(';');
+      if (bs.seenKey !== key) { bs.seenKey = key; for (const id of partyAt) G.Explore.markSeen(w, { x: enc.pos[id].x + ox, y: enc.pos[id].y + oy }); }
+    }
+    const mine = {};
+    for (const id of enc.ids) if (chars[id] && chars[id].side === 'party' && enc.pos[id]) mine[(enc.pos[id].x + ox) + ',' + (enc.pos[id].y + oy)] = 1;
     const sc = {
       w: g ? g.w : enc.grid.w, h: g ? g.h : enc.grid.h,
       origin: whole ? null : { x: ox, y: oy },
       cam: whole ? { x: focus.x + ox, y: focus.y + oy } : null,
-      seen: whole ? (x, y) => !!ms.seen[x + ',' + y] || !!occupant(enc, chars, x - ox, y - oy) : null,
+      // A square is shown once the party has seen it, or while one of the party stands on it; a foe in the dark is not.
+      seen: whole ? (x, y) => !!ms.seen[x + ',' + y] || !!mine[x + ',' + y] : null,
       tileset: arena ? ((G.Content.world.places[arena.place] || {}).look || {}).tileset : null,
       tileKey: arena ? G.Explore.tileKey(w, arena.place) : null,
       cell: g ? (x, y) => G.Explore.peek(w, x, y) : open,
       actors: [], marks: [], lines: [], reticles: [], badges: [],
       describe: (x, y) => {
         const id = occupant(enc, chars, x - ox, y - oy);
-        if (!id) return '';
+        if (!id || (sc.seen && !sc.seen(x, y))) return '';
         const c = chars[id];
         const e = bs.sync && bs.sync.entry;
         const t = e && e.targets ? e.targets.find((q) => q.id === id) : null;
@@ -136,6 +148,7 @@
     for (const id of live) {
       const c = chars[id];
       const p = enc.pos[id];
+      if (whole && c.side !== 'party' && !sc.seen(p.x + ox, p.y + oy)) continue;
       const L = Sprites.look(c);
       const foesOf = live.filter((o) => (chars[o].side === 'party') !== (c.side === 'party') && C.isActive(chars[o]));
       let near = null, nd = 99;
@@ -460,6 +473,8 @@
   }
 
   // ---- The screen ------------------------------------------------------------------------------------------------------
+  UI.BattleScene = scene;   // for tests
+
   UI.Screens.battle = function (game) {
     const w = game.world;
     if (!game.ui.result && !w.battle) { game.go(w.explore ? 'explore' : 'town'); return h('div'); }
