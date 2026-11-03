@@ -4,6 +4,29 @@ Last updated at commit: da0329a
 
 Keep this a short list. Tick things off, add new ones, and refresh the commit line after every push (`git log -1 --format=%h`).
 
+## Art pass (the user, 2026-11-02)
+- [x] Venril (its own art) rules the palace from the throne; the party's Jabiku stood in there.
+- [x] Front-on props: buildings, the village's things, the vales' tents and engines redrawn facing the viewer square
+  to the grid, medieval (`art/worldtiles/front.png`, `assets/wip/front/`, ~75 one-generation map objects). Still
+  angled: the bandit tents, the stilt hut, handcart, mine cart. Seen in headless Chrome (village, camps).
+- [x] Lava moves: one seamless surface 8 squares a side, 24 frames (flow, roiling crust, bubbles), drawn each frame
+  under the cached ground; the rock's edge comes from a cut sheet; now and then a spurt (`anim`, `cut` in
+  tilesets.yaml; `assets/wip/lava/build.py`, all code). Seen in headless Chrome (still frames only).
+- [x] Campfires that burn (small, logs, bonfire, cauldron; `assets/wip/fire/`). Camps in the grasslands: orc and
+  bandit (west), gnoll and minotaur (east). Props only: no foes placed (encounters wait for tuning).
+- [x] The temple court is a lizardfolk village (two kinds of hut, fires, fish racks, urns, nests, totems, an idol);
+  goblin clutter in the warrens and the hall (not solid).
+- [x] Doors for the mine's three walls, each side, plain and locked, plus the hall's portcullis
+  (`assets/wip/doors/`, ~200 generations). Engine: `door_locked_<side>`, a legend `sprite` per side, a doorway beside
+  another no longer counts as open floor. Seen in headless Chrome (castle, jail, hall, gnome fort).
+- [x] Traps move: blade (pendulum), spikes, fire vent, pit (`art/worldtiles/traps.png`, `assets/wip/traps/`; a trap's
+  `sprite`). The stair blade seen in headless Chrome (one frame).
+- [ ] Not seen moving in a browser: lava, spurts, fires, traps (screenshots are single frames). Not seen on the phone:
+  lava-anim.png is 650 KB.
+- [ ] The jail's cell doors open west (the map routes each cell out through the square beside its door), so they draw
+  as strips, not faces. A map change if the user wants faces.
+- [ ] Other tilesets' doors (temple sewer and ritual have no doorways today; the outdoor sets draw none).
+
 ## Phone
 - [x] Home-screen app: manifest, icons (`art/icons/`, from the user's bear-and-wren medallion, which is also the title-screen logo and, as `bear-wren-badge.png`, the favicon), `sw.js` (network first; the Pages build lists
   every file in `precache.txt` and the worker fetches them in the background), saves exported through the share
@@ -73,8 +96,8 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   Chrome. No people, no encounters yet.
 - [x] Art: three PixelLab sets chained to the temple's grass (swamp water, dirt path, jungle edge) and 24 props
   (~115 generations). Open ground is plain grass with the court's decor scattered over it.
-- [ ] The props are drawn steeper (more isometric) than the tiles; the inn is no bigger than a cottage. A second pass
-  at the 3/4 view if they stay.
+- [x] The props were drawn steeper (more isometric) than the tiles; the inn no bigger than a cottage. Redrawn front-on
+  (see Art pass).
 - [ ] A stone bridge deck over lava (the Black Hills and the mine both draw it as flat strips); brick bits left on
   the path's edge tiles.
 - [x] The preset party's colour washes (there to tell stock figures apart) are off members with their own art (Cyrus

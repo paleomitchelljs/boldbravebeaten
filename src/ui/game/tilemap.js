@@ -92,7 +92,7 @@
             out.ground.push({ t: 'floor', x, y, mask: m, v: hash(x, y), color: c.ground ? c.ground.color : null });
             if (door) {
               const horizontal = g.solidAt(x - 1, y) && g.solidAt(x + 1, y);
-              out.decor.push({ t: 'door', x, y, open: c.kind === 'floor', locked: c.kind === 'locked' || (c.def && c.def.kind === 'locked'), horizontal, side: openSide(g, x, y) });
+              out.decor.push({ t: 'door', x, y, sprite: (c.def && c.def.sprite) || null, open: c.kind === 'floor', locked: c.kind === 'locked' || (c.def && c.def.kind === 'locked'), horizontal, side: openSide(g, x, y) });
             } else decal(out, c, x, y, g);
           }
           if (g.raised(x, y) && (known(x, y) || known(x, y + 1))) cap(x, y);
@@ -116,9 +116,11 @@
   // Which way a doorway in a wall opens onto the floor, for its picture: south (a door in the face), else the first of
   // east, west and north that is open.
   function openSide(g, x, y) {
-    if (!g.solidAt(x, y + 1)) return 'south';
-    if (!g.solidAt(x + 1, y)) return 'east';
-    if (!g.solidAt(x - 1, y)) return 'west';
+    // Another doorway beside it (a gate two squares wide) is not the floor it opens on.
+    const shut = (xx, yy) => g.solidAt(xx, yy) || doorLike(g.cell(xx, yy));
+    if (!shut(x, y + 1)) return 'south';
+    if (!shut(x + 1, y)) return 'east';
+    if (!shut(x - 1, y)) return 'west';
     return 'north';
   }
 
@@ -127,7 +129,7 @@
     switch (c.kind) {
       case 'stairs': out.decor.push({ t: 'stairs', x, y, sprite: c.def.sprite || null, scale: c.def.scale || null, side: openSide(g, x, y), up: c.def.up != null ? !!c.def.up : c.def.at === '>' || ((G.Content.world.places[c.def.to] || {}).kind === 'town') }); break;
       case 'drop': out.decor.push({ t: 'drop', x, y, sprite: c.def.sprite || null }); break;
-      case 'trap': if (st.found || st.sprung || st.disarmed) out.decor.push({ t: 'trap', x, y, state: st.disarmed ? 'off' : st.sprung ? 'sprung' : 'armed' }); break;
+      case 'trap': if (st.found || st.sprung || st.disarmed) out.decor.push({ t: 'trap', x, y, sprite: c.def.sprite || null, state: st.disarmed ? 'off' : st.sprung ? 'sprung' : 'armed' }); break;
       case 'pickup': if (!st.done) out.decor.push({ t: 'twinkle', x, y, good: c.def.good }); break;
       // A note with `sprite: none` (words at a road's end) leaves no scroll lying there.
       case 'note': if (!st.done && c.def.sprite !== 'none') out.decor.push({ t: 'note', x, y }); break;
@@ -242,8 +244,9 @@
         // one side when open.
         if (env.flat) {
           // The tileset's door for the side it opens on (door_south, a door in the wall face; door_east... a way through
-          // the wall top), else its plain door.
-          const key = [`door_${cmd.side}`, cmd.locked ? 'door_locked' : 'door'].find((k) => env.tileProp && env.tileProp(k));
+          // the wall top), a locked one's own (door_locked_south...) first, else its plain door. A legend `sprite` with
+          // a picture for the side (portcullis_east) comes before all of them.
+          const key = [...(cmd.sprite ? [`${cmd.sprite}_${cmd.side}`] : []), ...(cmd.locked ? [`door_locked_${cmd.side}`] : []), `door_${cmd.side}`, cmd.locked ? 'door_locked' : 'door'].find((k) => env.tileProp && env.tileProp(k));
           if (key) { env.prop(ctx, key, X + size / 2, Y + size, S); break; }
           const across = cmd.horizontal, th = size * 0.3;
           const r = cmd.open ? (across ? [X, Y + size / 2 - th / 2, th, size * 0.9] : [X + size / 2 - th / 2, Y, size * 0.9, th])
@@ -282,6 +285,14 @@
         break;
       }
       case 'trap': {
+        // A tileset map: the trap's picture (its `sprite`, else the spike plate), moving while it is armed (a blade
+        // swinging, spikes stabbing up), still once it has sprung or been disarmed (`<sprite>_still`). A pit found but
+        // not yet sprung shows faintly (`pit_hint`).
+        if (env.flat) {
+          const name = cmd.sprite || 'spiketrap';
+          const key = cmd.state === 'armed' ? (env.hasProp(name + '_hint') ? name + '_hint' : name) : name + '_still';
+          if (env.hasProp(key)) { env.prop(ctx, key, X + size / 2, Y + size, S, { alpha: cmd.state === 'off' ? 0.55 : 1 }); break; }
+        }
         const f = env.img('spikes');
         if (cmd.state === 'off') { ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(X + S * 3, Y + S * 3, size - S * 6, size - S * 6); }
         else if (f.ok) ctx.drawImage(f.el, cmd.state === 'armed' ? 96 : 0, 0, 32, 29, X + size / 2 - 16 * S * 0.6, Y + size - 29 * S * 0.6 - S, 32 * S * 0.6, 29 * S * 0.6);
@@ -526,6 +537,8 @@
     const S = env.S, size = T * S, cell = ts.cell;
     if (kind === 'base') {
       const t = tdef(ts, p.t), X = env.ox + p.x * size, Y = env.oy + p.y * size;
+      // A moving terrain (lava): the view draws it every frame under the cached ground, so its square is left clear.
+      if (t.anim && env.animGround) return;
       const im = t.tile ? env.imgAt(ts.dir + (Array.isArray(t.tile) ? t.tile[hash(p.x, p.y) % t.tile.length] : t.tile)) : null;
       if (im && im.ok) { ctx.drawImage(im.el, 0, 0, cell, cell, X, Y, size, size); return; }
       // Plain ground under a wang set: its all-lower tile.
@@ -539,7 +552,9 @@
       ctx.restore();
     } else if (kind === 'corner') {
       const t = ts.terrains[p.t], X = env.ox + (p.x - 0.5) * size, Y = env.oy + (p.y - 0.5) * size;
-      const im = env.imgAt(ts.dir + (p.cut ? t.cut : t.wang)), vs = t.variants && t.variants[p.m];
+      // Over a moving terrain the corner tiles come from `cut`, the sheet with that terrain cut away, so it shows through.
+      const overAnim = env.animGround && !t.cliffTiles && t.cut && ts.terrains[t.over] && ts.terrains[t.over].anim;
+      const im = env.imgAt(ts.dir + (p.cut || overAnim ? t.cut : t.wang)), vs = t.variants && t.variants[p.m];
       // A variant at a share `vary` (default 0.25) of the corners that have one, picked by position.
       const at = p.at || (vs && hash(p.x, p.y, 11) % 100 < (t.vary == null ? 0.25 : t.vary) * 100 ? vs[hash(p.x, p.y, 12) % vs.length] : t.index[p.m]);
       if (im.ok && at) { ctx.drawImage(im.el, at[0] * cell, at[1] * cell, cell, cell, X, Y, size, size); return; }
@@ -575,5 +590,15 @@
     }
   }
 
-  UI.Tilemap = { plan, paint, canon, geometry, solid, doorLike, tileset, planTiles, paintTiles, PIXELLAB16, bits: { N, NE, E, SE, S, SW, W, NW } };
+  // The moving terrain (one with `anim`, lava) to draw under square x, y: its own, or a neighbour's whose edge reaches
+  // into it (the corner tiles straddle squares). `own` says the square is that terrain itself.
+  function animAt(sc, ts, x, y) {
+    const of = (xx, yy) => { const t = ts.terrains[terrainOf(sc, ts, xx, yy).t]; return t && t.anim ? t : null; };
+    const me = of(x, y);
+    if (me) return { t: me, own: true };
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const n = (dx || dy) && of(x + dx, y + dy); if (n) return { t: n, own: false }; }
+    return null;
+  }
+
+  UI.Tilemap = { animAt, plan, paint, canon, geometry, solid, doorLike, tileset, planTiles, paintTiles, PIXELLAB16, bits: { N, NE, E, SE, S, SW, W, NW } };
 })(globalThis.BBB);

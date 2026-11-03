@@ -537,6 +537,51 @@
       while (cache.map.size > CHUNKS_KEPT) cache.map.delete(cache.map.keys().next().value);
     }
 
+    // Moving terrain (a tileset terrain with `anim`, lava): drawn each frame under the cached ground, which leaves those
+    // squares clear and draws their edges from a sheet with the terrain cut away. anim: {sheet, size, frames, cols, fps}
+    // is one seamless surface `size` art pixels a side (several squares), each square drawing the part under it, so
+    // neighbours join. `spurt: [sheet, w, h, frames, fps]`, `every` (seconds): a jet now and then from one square in
+    // five well inside it, each square on its own cycle of every to twice that.
+    function animKnown(sc, ts) {
+      const key = view.chunks.key;
+      if (!view.anim || view.anim.key !== key || view.anim.ts !== ts) view.anim = { key, ts, at: new Map(), any: Object.values(ts.terrains).some((t) => t.anim) };
+      return view.anim;
+    }
+    function animGround(ctx, sc, ts, x0, y0, ox, oy, size, now) {
+      const A = animKnown(sc, ts);
+      if (!A.any) return;
+      const cell = ts.cell;
+      for (let y = y0 - 1; y <= y0 + rows; y++) for (let x = x0 - 1; x <= x0 + cols; x++) {
+        const k = x + ',' + y;
+        let a = A.at.get(k);
+        if (a === undefined) { a = Tilemap.animAt(sc, ts, x, y); A.at.set(k, a); }
+        if (!a) continue;
+        const d = a.t.anim, im = img(ts.dir + d.sheet);
+        if (!im.ok) { ctx.fillStyle = a.t.color || '#d0461a'; ctx.fillRect(ox + x * size, oy + y * size, size, size); continue; }
+        const f = Math.floor((now / 1000) * (d.fps || 8)) % d.frames, cols_ = d.cols || d.frames, n = Math.max(1, Math.round(d.size / cell));
+        const sx = (f % cols_) * d.size + (((x % n) + n) % n) * cell, sy = Math.floor(f / cols_) * d.size + (((y % n) + n) % n) * cell;
+        ctx.drawImage(im.el, sx, sy, cell, cell, ox + x * size, oy + y * size, size, size);
+      }
+    }
+    function animSpurts(ctx, sc, ts, x0, y0, ox, oy, size, now, shown) {
+      const A = view.anim;
+      if (!A || !A.any) return;
+      const own = (x, y) => { const a = A.at.get(x + ',' + y); return a && a.own; };
+      for (let y = y0; y < y0 + rows; y++) for (let x = x0; x < x0 + cols; x++) {
+        if (!own(x, y) || !shown[x + ',' + y] || hash(x, y, 17) % 5) continue;
+        const a = A.at.get(x + ',' + y), d = a.t.anim, sp = d.spurt;
+        if (!sp || !own(x - 1, y) || !own(x + 1, y) || !own(x, y - 1) || !own(x, y + 1)) continue;
+        const every = d.every || 10, cycle = every * (1 + (hash(x, y, 18) % 100) / 100), t = (now / 1000 + (hash(x, y, 19) % 1000) / 1000 * cycle) % cycle;
+        const f = Math.floor(t * (sp[4] || 12));
+        if (f >= sp[3]) continue;
+        const im = img(ts.dir + sp[0]);
+        if (!im.ok) continue;
+        // The sheet's surface line is 8 art pixels up from its foot: put it at the square's middle.
+        const k = size / ts.cell, w = sp[1] * k, h = sp[2] * k;
+        ctx.drawImage(im.el, f * sp[1], 0, sp[1], sp[2], Math.round(ox + (x + 0.5) * size - w / 2), Math.round(oy + (y + 0.5) * size + 8 * k - h), w, h);
+      }
+    }
+
     function draw(now) {
       const sc = scene();
       if (!sc) return;
@@ -553,10 +598,12 @@
       const x0 = Math.floor(org.x), y0 = Math.floor(org.y);
       const ox = Math.round(-org.x * size), oy = Math.round(-org.y * size);
       placeTs = sc.tileset || null;
-      const env = { S, ox, oy, tick: view.tick, img, imgAt: img, prop, hasProp: (k) => !!propDef(k), twinkle, flat: !!sc.tileset, tileProp: (k) => !!(placeTs && (Tilemap.tileset(placeTs) || { props: {} }).props[k]) };
+      const env = { S, ox, oy, tick: view.tick, img, imgAt: img, animGround: HAS_IMG, prop, hasProp: (k) => !!propDef(k), twinkle, flat: !!sc.tileset, tileProp: (k) => !!(placeTs && (Tilemap.tileset(placeTs) || { props: {} }).props[k]) };
       const plan = Tilemap.plan(sc, x0 - 1, y0 - 1, x0 + cols, y0 + rows);
       const ts = sc.tileset ? Tilemap.tileset(sc.tileset) : null;
       if (ts) {
+        // The chunks' key decides when moving terrain is looked up again, so it is settled before either is drawn.
+        if (HAS_IMG) { const key = (sc.tileset || '') + '|' + (sc.tileKey != null ? sc.tileKey : '') + '|' + size; if (view.chunks.key !== key) { view.chunks.key = key; view.chunks.map.clear(); } animGround(ctx, sc, ts, x0, y0, ox, oy, size, now || 0); }
         // Layer 1 from the tileset: ground, the corner tiles of each wang terrain, bridges; then what hasn't been seen
         // is put back in the dark (the corner tiles spill half a square past what is known).
         if (HAS_IMG) groundChunks(ctx, sc, ts, env, x0, y0, ox, oy, size);
@@ -570,6 +617,7 @@
           if (!sc.seen || sc.seen(x, y)) { plan.shown[x + ',' + y] = 1; continue; }
           ctx.fillStyle = '#080b0d'; ctx.fillRect(ox + x * size, oy + y * size, size, size);
         }
+        if (HAS_IMG) animSpurts(ctx, sc, ts, x0, y0, ox, oy, size, now || 0, plan.shown);
         plan.decor = plan.decor.filter((c) => c.t !== 'banner');
       } else {
         // Layer 1: ground, with its edge shading.

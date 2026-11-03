@@ -7,7 +7,7 @@
 #   wall      the terrain of walls and rock (default: wall)
 #   doorsInWall  doorways (and legend squares with `wall: true`) are drawn as wall, with the door prop for the side
 #             they open on laid over them: door_south (a door in the face), door_east, door_west, door_north (a way
-#             through the wall top seen from above), else door
+#             through the wall top seen from above), else door; a locked door takes door_locked_south... first
 #   terrains  name -> how it is drawn, from the bottom up. Ground letters (rules.yaml game.ground) name these by `tile`.
 #     color     flat colour while there is no art; alpha (0-1) lays it over the floor instead (a patch of rubble)
 #     tile      an image of one square (a list: variants, picked by position)
@@ -33,7 +33,12 @@
 #               not the other cliff sets ranked above it
 #     underWalls  (a cliff set) runs on under a wall beside it, east or west: a pyramid built into a wall; `all`, on any side (a built
 #               wall running into natural rock at its ends)
-#     cut       (the wall) its sheet with the ground cut away, drawn where it meets an underWalls terrain
+#     cut       (the wall) its sheet with the ground cut away, drawn where it meets an underWalls terrain; (a flat
+#               corner set over a moving terrain) its sheet with that terrain cut away, so it shows through
+#     anim      a moving terrain (lava), drawn every frame under the rest: {sheet, size, frames, cols, fps}, one
+#               seamless surface `size` art pixels a side, `frames` of them, `cols` to a row; each square draws the
+#               part of it under its position. spurt: [sheet, w, h, frames, fps] and every (seconds): a jet now and
+#               then from one square in five whose four neighbours are this terrain too
 #     decor     pieces scattered on plain squares of this terrain: {density, pieces: [[image, x, y, w, h], ...], clump,
 #               spread, margin, edge}. density: pieces per square (above 1, more than one try); clump: squares per
 #               swell of a noise that gathers them in drifts; spread: art pixels a piece may hang over its square;
@@ -177,6 +182,15 @@ temple_court:
     pyr_stair_r3: [pyramid-props.png, 414, 0, 67, 124, 0, -24]
     pyr_stair_l4: [pyramid-props.png, 485, 0, 64, 124, 0, -24]
     pyr_stair_r4: [pyramid-props.png, 553, 0, 67, 124, 0, -24]
+    # Lizardfolk huts and clutter (assets/wip/front/).
+    hut_round: [../front.png, 0, 149, 104, 109]
+    hut_stilts: [../front.png, 106, 149, 100, 113]
+    liz_totem: [../front.png, 208, 149, 42, 92]
+    liz_urns: [../front.png, 252, 149, 52, 38]
+    liz_fishrack: [../front.png, 306, 149, 88, 85]
+    liz_nest: [../front.png, 396, 149, 60, 59]
+    liz_idol: [../front.png, 458, 149, 58, 58]
+    liz_bones: [../front.png, 518, 149, 60, 49]
 
 
 # The walk along the top of the gate wall: plain paving, the same walls (chained from the court's), the same pieces.
@@ -520,30 +534,30 @@ outside_village:
         - [0, 2, ".....01..12..10."]
         - [0, 3, ".01..12..10....."]
   props:
-    cottage: [props.png, 0, 0, 120, 114]
-    inn: [props.png, 124, 0, 128, 141]
-    smithy: [props.png, 256, 0, 125, 130]
-    shop: [props.png, 385, 0, 129, 116]
-    arch: [props.png, 518, 0, 126, 132]
-    minemouth: [props.png, 648, 0, 124, 127]
+    cottage: [../front.png, 0, 0, 136, 121]
+    inn: [../front.png, 253, 0, 147, 146]
+    smithy: [../front.png, 402, 0, 121, 119]
+    shop: [../front.png, 525, 0, 117, 142]
+    arch: [../front.png, 1571, 0, 128, 126]
+    minemouth: [../front.png, 1387, 0, 122, 147]
     pyramid: [props.png, 776, 0, 140, 106]
-    totem: [props.png, 920, 0, 113, 130]
-    well: [props.png, 1037, 0, 54, 61]
-    stall: [props.png, 1095, 0, 58, 61]
-    fence: [props.png, 1157, 0, 62, 41]
-    signpost: [props.png, 1223, 0, 38, 55]
+    totem: [../front.png, 1511, 0, 58, 121]
+    well: [../front.png, 2019, 0, 67, 85]
+    stall: [../front.png, 2088, 0, 84, 66]
+    fence: [../front.png, 2174, 0, 117, 85]
+    signpost: [../front.png, 2293, 0, 71, 84]
     haystack: [props.png, 1265, 0, 52, 49]
-    woodpile: [props.png, 1321, 0, 58, 43]
-    trough: [props.png, 1383, 0, 62, 43]
-    handcart: [props.png, 1449, 0, 61, 47]
+    woodpile: [../front.png, 2366, 0, 92, 73]
+    trough: [../front.png, 2460, 0, 78, 60]
+    handcart: [../front.png, 2540, 0, 76, 54]
     barrels: [props.png, 1514, 0, 58, 49]
-    crates: [props.png, 1576, 0, 58, 54]
-    bench: [props.png, 1638, 0, 60, 54]
+    crates: [../front.png, 2618, 0, 74, 68]
+    bench: [../front.png, 2694, 0, 85, 44]
     garden: [props.png, 1702, 0, 56, 44]
     bush: [props.png, 1762, 0, 56, 48]
     tree: [props.png, 1822, 0, 48, 61]
     scarecrow: [props.png, 1874, 0, 47, 61]
-    lamppost: [props.png, 1925, 0, 22, 62]
+    lamppost: [../front.png, 2781, 0, 57, 92]
 
 outside_swamp:
   doorsInWall: true
@@ -677,30 +691,30 @@ outside_swamp:
         - [0, 2, ".....01..12..10."]
         - [0, 3, ".01..12..10....."]
   props:
-    cottage: [props.png, 0, 0, 120, 114]
-    inn: [props.png, 124, 0, 128, 141]
-    smithy: [props.png, 256, 0, 125, 130]
-    shop: [props.png, 385, 0, 129, 116]
-    arch: [props.png, 518, 0, 126, 132]
-    minemouth: [props.png, 648, 0, 124, 127]
+    cottage: [../front.png, 0, 0, 136, 121]
+    inn: [../front.png, 253, 0, 147, 146]
+    smithy: [../front.png, 402, 0, 121, 119]
+    shop: [../front.png, 525, 0, 117, 142]
+    arch: [../front.png, 1571, 0, 128, 126]
+    minemouth: [../front.png, 1387, 0, 122, 147]
     pyramid: [props.png, 776, 0, 140, 106]
-    totem: [props.png, 920, 0, 113, 130]
-    well: [props.png, 1037, 0, 54, 61]
-    stall: [props.png, 1095, 0, 58, 61]
-    fence: [props.png, 1157, 0, 62, 41]
-    signpost: [props.png, 1223, 0, 38, 55]
+    totem: [../front.png, 1511, 0, 58, 121]
+    well: [../front.png, 2019, 0, 67, 85]
+    stall: [../front.png, 2088, 0, 84, 66]
+    fence: [../front.png, 2174, 0, 117, 85]
+    signpost: [../front.png, 2293, 0, 71, 84]
     haystack: [props.png, 1265, 0, 52, 49]
-    woodpile: [props.png, 1321, 0, 58, 43]
-    trough: [props.png, 1383, 0, 62, 43]
-    handcart: [props.png, 1449, 0, 61, 47]
+    woodpile: [../front.png, 2366, 0, 92, 73]
+    trough: [../front.png, 2460, 0, 78, 60]
+    handcart: [../front.png, 2540, 0, 76, 54]
     barrels: [props.png, 1514, 0, 58, 49]
-    crates: [props.png, 1576, 0, 58, 54]
-    bench: [props.png, 1638, 0, 60, 54]
+    crates: [../front.png, 2618, 0, 74, 68]
+    bench: [../front.png, 2694, 0, 85, 44]
     garden: [props.png, 1702, 0, 56, 44]
     bush: [props.png, 1762, 0, 56, 48]
     tree: [props.png, 1822, 0, 48, 61]
     scarecrow: [props.png, 1874, 0, 47, 61]
-    lamppost: [props.png, 1925, 0, 22, 62]
+    lamppost: [../front.png, 2781, 0, 57, 92]
     fern_large: [../temple/court-props.png, 192, 0, 64, 60]
     # The court's gate and its pyramid stairs (assets/wip/temple-doors/, assets/wip/temple-pyramid/).
     door: [../temple/court-props.png, 0, 0, 64, 61]
@@ -721,9 +735,12 @@ ember_basalt:
   dir: art/worldtiles/ember/
   floor: rock
   terrains:
-    lava: {color: "#d0461a"}
-    # The floor is the upper ground of a corner set over the lava, so its edge breaks off round any lava beside it.
-    rock: {color: "#2a2422", wang: lava.png, over: lava}
+    # Lava moves (assets/wip/lava/build.py): one seamless surface eight squares a side, 24 frames, bubbling and roiling;
+    # now and then a spurt from a square well inside a pool.
+    lava: {color: "#d0461a", anim: {sheet: lava-anim.png, size: 512, frames: 24, cols: 4, fps: 6, spurt: [lava-spurt.png, 48, 96, 16, 12], every: 10}}
+    # The floor is the upper ground of a corner set over the lava, so its edge breaks off round any lava beside it;
+    # `cut` is that sheet with the lava cut away, drawn over the moving lava.
+    rock: {color: "#2a2422", wang: lava.png, over: lava, cut: lava-cut.png}
     rubble: {color: "#4a403a", alpha: 0.4}
     steps: {color: "#55504a", alpha: 0.5}
     bridge: {color: "#5e564e"}
@@ -776,9 +793,42 @@ ember_basalt:
     cage: [props.png, 896, 0, 64, 64]
     rubble: [props.png, 960, 0, 64, 64]
     door_locked: [props.png, 0, 0, 64, 64]
+    # Doors cut to fit this wall, one for each side a doorway opens on, plain and locked (assets/wip/doors/).
+    door_south: [doors.png, 0, 0, 52, 104, 6, -8]
+    door_east: [doors.png, 54, 0, 76, 72, -6, -4]
+    door_west: [doors.png, 132, 0, 76, 72, -6, -4]
+    door_north: [doors.png, 210, 0, 76, 72, -6, -8]
+    door_locked_south: [doors.png, 288, 0, 52, 104, 6, -8]
+    door_locked_east: [doors.png, 342, 0, 76, 72, -6, -4]
+    door_locked_west: [doors.png, 420, 0, 76, 72, -6, -4]
+    door_locked_north: [doors.png, 498, 0, 76, 72, -6, -8]
+    portcullis_east: [doors.png, 576, 0, 76, 72, -6, -4]
+    portcullis_west: [doors.png, 654, 0, 76, 72, -6, -4]
+    portcullis_north: [doors.png, 732, 0, 76, 72, -6, -8]
+    # Traps (assets/wip/traps/build.py), found by every tileset through the props fallback: a trap's `sprite` names
+    # one; `_still` is it sprung or disarmed, `_hint` a found pit not yet sprung.
+    blade: [../traps.png, 0, 0, 172, 98, -54, -34, 16, 12]
+    blade_still: [../traps.png, 2756, 0, 172, 98, -54, -34]
+    spiketrap: [../traps.png, 2932, 0, 46, 68, null, null, 16, 8]
+    spiketrap_still: [../traps.png, 3672, 0, 46, 68]
+    vent: [../traps.png, 3722, 0, 46, 99, null, null, 16, 10]
+    vent_still: [../traps.png, 4462, 0, 46, 99]
+    pit: [../traps.png, 4512, 0, 46, 46]
+    pit_still: [../traps.png, 4562, 0, 46, 46]
+    pit_hint: [../traps.png, 4612, 0, 46, 46]
     # Outside the mine (the Black Hills): the mine mouth and a goblin totem, from the outdoor strip.
-    minemouth: [../outside/props.png, 648, 0, 124, 127]
-    totem: [../outside/props.png, 920, 0, 113, 130]
+    minemouth: [../front.png, 1387, 0, 122, 147]
+    totem: [../front.png, 1511, 0, 58, 121]
+    # Goblin mine clutter (assets/wip/front/).
+    gob_cart: [../front.png, 580, 149, 56, 49]
+    gob_tools: [../front.png, 638, 149, 58, 59]
+    gob_ore: [../front.png, 698, 149, 56, 56]
+    gob_powder: [../front.png, 756, 149, 56, 50]
+    gob_junk: [../front.png, 814, 149, 59, 53]
+    gob_mushrooms: [../front.png, 875, 149, 44, 41]
+    gob_sacks: [../front.png, 921, 149, 62, 58]
+    gob_timber: [../front.png, 985, 149, 64, 88]
+    gob_pot: [../front.png, 1051, 149, 59, 44]
 ember_masonry:
   doorsInWall: true
   cell: 64
@@ -836,6 +886,15 @@ ember_masonry:
     cage: [props.png, 896, 0, 64, 64]
     rubble: [props.png, 960, 0, 64, 64]
     door_locked: [props.png, 0, 0, 64, 64]
+    # Doors cut to fit this wall, one for each side a doorway opens on, plain and locked (assets/wip/doors/).
+    door_south: [doors.png, 810, 0, 52, 104, 6, -8]
+    door_east: [doors.png, 864, 0, 76, 72, -6, -4]
+    door_west: [doors.png, 942, 0, 76, 72, -6, -4]
+    door_north: [doors.png, 1020, 0, 76, 72, -6, -8]
+    door_locked_south: [doors.png, 1098, 0, 52, 104, 6, -8]
+    door_locked_east: [doors.png, 1152, 0, 76, 72, -6, -4]
+    door_locked_west: [doors.png, 1230, 0, 76, 72, -6, -4]
+    door_locked_north: [doors.png, 1308, 0, 76, 72, -6, -8]
 ember_gnome:
   doorsInWall: true
   cell: 64
@@ -891,6 +950,15 @@ ember_gnome:
     cage: [props.png, 896, 0, 64, 64]
     rubble: [props.png, 960, 0, 64, 64]
     door_locked: [props.png, 0, 0, 64, 64]
+    # Doors cut to fit this wall, one for each side a doorway opens on, plain and locked (assets/wip/doors/).
+    door_south: [doors.png, 1386, 0, 52, 104, 6, -8]
+    door_east: [doors.png, 1440, 0, 76, 72, -6, -4]
+    door_west: [doors.png, 1518, 0, 76, 72, -6, -4]
+    door_north: [doors.png, 1596, 0, 76, 72, -6, -8]
+    door_locked_south: [doors.png, 1674, 0, 52, 104, 6, -8]
+    door_locked_east: [doors.png, 1728, 0, 76, 72, -6, -4]
+    door_locked_west: [doors.png, 1806, 0, 76, 72, -6, -4]
+    door_locked_north: [doors.png, 1884, 0, 76, 72, -6, -8]
 
 # The country south of the village (the user, 2026-11-01; assets/wip/south/): one temperate meadow grass (PixelLab base
 # 2674f472) with every set chained to it: a dirt road, low hills, scree, a forest edge, grey granite mountains, the
@@ -988,21 +1056,21 @@ south_hills:
     milestone: [props.png, 470, 0, 24, 42]
     roadsign: [props.png, 498, 0, 31, 49]
     hitch: [props.png, 533, 0, 48, 48]
-    table: [props.png, 585, 0, 62, 48]
-    campfire: [props.png, 651, 0, 41, 25]
+    table: [../front.png, 2840, 0, 86, 53]
+    campfire: [../fires.png, 460, 0, 88, 73, null, null, 8, 10]
     banner: [props.png, 696, 0, 48, 60]
     wildflowers: [props.png, 748, 0, 59, 47]
-    roadinn: [props.png, 811, 0, 125, 135]
-    tavern: [props.png, 940, 0, 136, 109]
-    stable: [props.png, 1080, 0, 139, 116]
-    keep: [props.png, 1223, 0, 121, 141]
+    roadinn: [../front.png, 644, 0, 144, 134]
+    tavern: [../front.png, 790, 0, 123, 127]
+    stable: [../front.png, 915, 0, 140, 131]
+    keep: [../front.png, 1057, 0, 116, 134]
     watchtower: [props.png, 1348, 0, 62, 129]
-    gatetower: [props.png, 1414, 0, 94, 127]
-    gatehouse: [props.png, 1512, 0, 134, 119]
+    gatetower: [../front.png, 1175, 0, 64, 120]
+    gatehouse: [../front.png, 1241, 0, 144, 136]
     crag: [props.png, 1650, 0, 115, 113]
-    well: [../outside/props.png, 1037, 0, 54, 61]
+    well: [../front.png, 2019, 0, 67, 85]
     barrels: [../outside/props.png, 1514, 0, 58, 49]
-    crates: [../outside/props.png, 1576, 0, 58, 54]
+    crates: [../front.png, 2618, 0, 74, 68]
     # The gatehouse astride two squares (the gap in Tarnhold's north wall), from the left square's top-left.
     gatehouse_wide: [props.png, 1512, 0, 134, 119, -3, -55]
 
@@ -1102,21 +1170,21 @@ tarnvale:
     milestone: [props.png, 470, 0, 24, 42]
     roadsign: [props.png, 498, 0, 31, 49]
     hitch: [props.png, 533, 0, 48, 48]
-    table: [props.png, 585, 0, 62, 48]
-    campfire: [props.png, 651, 0, 41, 25]
+    table: [../front.png, 2840, 0, 86, 53]
+    campfire: [../fires.png, 460, 0, 88, 73, null, null, 8, 10]
     banner: [props.png, 696, 0, 48, 60]
     wildflowers: [props.png, 748, 0, 59, 47]
-    roadinn: [props.png, 811, 0, 125, 135]
-    tavern: [props.png, 940, 0, 136, 109]
-    stable: [props.png, 1080, 0, 139, 116]
-    keep: [props.png, 1223, 0, 121, 141]
+    roadinn: [../front.png, 644, 0, 144, 134]
+    tavern: [../front.png, 790, 0, 123, 127]
+    stable: [../front.png, 915, 0, 140, 131]
+    keep: [../front.png, 1057, 0, 116, 134]
     watchtower: [props.png, 1348, 0, 62, 129]
-    gatetower: [props.png, 1414, 0, 94, 127]
-    gatehouse: [props.png, 1512, 0, 134, 119]
+    gatetower: [../front.png, 1175, 0, 64, 120]
+    gatehouse: [../front.png, 1241, 0, 144, 136]
     crag: [props.png, 1650, 0, 115, 113]
-    well: [../outside/props.png, 1037, 0, 54, 61]
+    well: [../front.png, 2019, 0, 67, 85]
     barrels: [../outside/props.png, 1514, 0, 58, 49]
-    crates: [../outside/props.png, 1576, 0, 58, 54]
+    crates: [../front.png, 2618, 0, 74, 68]
     # The gatehouse astride two squares (the gap in Tarnhold's north wall), from the left square's top-left.
     gatehouse_wide: [props.png, 1512, 0, 134, 119, -3, -55]
 
@@ -1245,7 +1313,7 @@ tarnhold:
     ledge: {like: wall, color: "#7a7a74", wang: ../south/mountain-ledge.png, over: wall, cut: null}
     summit: {like: wall, color: "#8a8a84", wang: ../south/mountain-summit.png, over: ledge, cut: null}
   props:
-    barricade: [props.png, 0, 0, 60, 52]
+    barricade: [../front.png, 2928, 0, 79, 58]
     palisade: [props.png, 64, 0, 50, 52]
     cheval: [props.png, 118, 0, 61, 54]
     stakes: [props.png, 183, 0, 59, 50]
@@ -1266,33 +1334,33 @@ tarnhold:
     boulder: [props.png, 1097, 0, 60, 50]
     rocks: [props.png, 1161, 0, 58, 38]
     lantern: [props.png, 1223, 0, 32, 61]
-    signpost: [props.png, 1259, 0, 42, 61]
+    signpost: [../front.png, 2293, 0, 71, 84]
     deadstump: [props.png, 1305, 0, 58, 61]
     sapling: [props.png, 1367, 0, 44, 61]
     ropepost: [props.png, 1415, 0, 27, 61]
     drystone: [props.png, 1446, 0, 62, 52]
     haybale: [props.png, 1512, 0, 60, 56]
     shrine: [props.png, 1576, 0, 44, 63]
-    trough: [props.png, 1624, 0, 60, 50]
+    trough: [../front.png, 2460, 0, 78, 60]
     pine: [props.png, 1688, 0, 69, 118]
     fir: [props.png, 1761, 0, 118, 118]
     oak: [props.png, 1883, 0, 117, 112]
     birch: [props.png, 2004, 0, 66, 116]
-    tent: [props.png, 2074, 0, 152, 116]
-    watchplatform: [props.png, 2230, 0, 124, 140]
-    catapult: [props.png, 2358, 0, 125, 113]
-    palisadegate: [props.png, 2487, 0, 138, 118]
+    tent: [../front.png, 3009, 0, 100, 114]
+    watchplatform: [../front.png, 1701, 0, 80, 106]
+    catapult: [../front.png, 1921, 0, 96, 103]
+    palisadegate: [../front.png, 1783, 0, 136, 84]
     waterfall: [props.png, 2629, 0, 110, 115, null, null, 8, 8]
     tallgrass_gold: [props.png, 3513, 0, 61, 61, null, null, 8, 5]
     tallgrass_seed: [props.png, 4005, 0, 58, 60, null, null, 8, 5]
     tallgrass_flower: [props.png, 4473, 0, 59, 60, null, null, 8, 5]
-    roadinn: [../south/props.png, 811, 0, 125, 135]
-    tavern: [../south/props.png, 940, 0, 136, 109]
-    stable: [../south/props.png, 1080, 0, 139, 116]
-    table: [../south/props.png, 585, 0, 62, 48]
+    roadinn: [../front.png, 644, 0, 144, 134]
+    tavern: [../front.png, 790, 0, 123, 127]
+    stable: [../front.png, 915, 0, 140, 131]
+    table: [../front.png, 2840, 0, 86, 53]
     banner: [../south/props.png, 696, 0, 48, 60]
     hitch: [../south/props.png, 533, 0, 48, 48]
-    well: [../outside/props.png, 1037, 0, 54, 61]
+    well: [../front.png, 2019, 0, 67, 85]
 
 # The grassland beyond the vales' gates: prairie grass (PixelLab base 0c3bb2ec) over the village's dirt road, low
 # rolling rises, tall grass swaying (animated props).
@@ -1311,7 +1379,7 @@ grassland:
       decor: {density: 0.35, clump: 6, flip: true, spread: 8, pieces: [[../temple/court-decor.png, 192, 0, 16, 10], [../temple/court-decor.png, 0, 0, 22, 23], [../temple/court-decor.png, 128, 0, 28, 24]]}
     hill: {color: "#9ab05a", wang: grassland-rise.png, over: grass}
   props:
-    barricade: [props.png, 0, 0, 60, 52]
+    barricade: [../front.png, 2928, 0, 79, 58]
     palisade: [props.png, 64, 0, 50, 52]
     cheval: [props.png, 118, 0, 61, 54]
     stakes: [props.png, 183, 0, 59, 50]
@@ -1332,23 +1400,37 @@ grassland:
     boulder: [props.png, 1097, 0, 60, 50]
     rocks: [props.png, 1161, 0, 58, 38]
     lantern: [props.png, 1223, 0, 32, 61]
-    signpost: [props.png, 1259, 0, 42, 61]
+    signpost: [../front.png, 2293, 0, 71, 84]
     deadstump: [props.png, 1305, 0, 58, 61]
     sapling: [props.png, 1367, 0, 44, 61]
     ropepost: [props.png, 1415, 0, 27, 61]
     drystone: [props.png, 1446, 0, 62, 52]
     haybale: [props.png, 1512, 0, 60, 56]
     shrine: [props.png, 1576, 0, 44, 63]
-    trough: [props.png, 1624, 0, 60, 50]
+    trough: [../front.png, 2460, 0, 78, 60]
     pine: [props.png, 1688, 0, 69, 118]
     fir: [props.png, 1761, 0, 118, 118]
     oak: [props.png, 1883, 0, 117, 112]
     birch: [props.png, 2004, 0, 66, 116]
-    tent: [props.png, 2074, 0, 152, 116]
-    watchplatform: [props.png, 2230, 0, 124, 140]
-    catapult: [props.png, 2358, 0, 125, 113]
-    palisadegate: [props.png, 2487, 0, 138, 118]
+    tent: [../front.png, 3009, 0, 100, 114]
+    watchplatform: [../front.png, 1701, 0, 80, 106]
+    catapult: [../front.png, 1921, 0, 96, 103]
+    palisadegate: [../front.png, 1783, 0, 136, 84]
     waterfall: [props.png, 2629, 0, 110, 115, null, null, 8, 8]
     tallgrass_gold: [props.png, 3513, 0, 61, 61, null, null, 8, 5]
     tallgrass_seed: [props.png, 4005, 0, 58, 60, null, null, 8, 5]
     tallgrass_flower: [props.png, 4473, 0, 59, 60, null, null, 8, 5]
+    # Camps (assets/wip/front/, assets/wip/fire/): tents for orc, gnoll, minotaur and bandit camps; campfires that burn.
+    tent_orc: [../front.png, 3229, 0, 122, 117]
+    tent_orc_small: [../front.png, 3353, 0, 85, 80]
+    tent_gnoll: [../front.png, 3440, 0, 123, 113]
+    tent_minotaur: [../front.png, 3565, 0, 143, 136]
+    tent_bandit: [../front.png, 3710, 0, 116, 116]
+    tent_bandit_chief: [../front.png, 3828, 0, 102, 116]
+    tent_canvas: [../front.png, 3111, 0, 116, 116]
+    campfire_small: [../fires.png, 0, 0, 57, 48, null, null, 8, 10]
+    campfire: [../fires.png, 460, 0, 88, 73, null, null, 8, 10]
+    bonfire: [../fires.png, 1168, 0, 110, 111, null, null, 8, 10]
+    cookfire: [../fires.png, 2052, 0, 72, 82, null, null, 8, 10]
+    cottage_stone: [../front.png, 138, 0, 113, 120]
+    lamppost: [../front.png, 2781, 0, 57, 92]

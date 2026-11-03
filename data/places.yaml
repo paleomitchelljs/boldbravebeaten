@@ -626,10 +626,10 @@ tarn_plains_west:
   look: {wall: "#8aa04a", floor: "#8aa04a", ceiling: "#9ab8d6", fog: "#0c120a", torch: 0, tileset: grassland, light: 28}
   map:
     - ",,,,,,,,,,,,,,,,,,,HH,,,,,,,,,,,,,,,"
-    - ",H,J,H,,H,,,G,,,,,,,H,,H,,,,,,,,,,,,"
-    - ",G,,JG,,,,,,H,,,,J,,,,,JH,,,,,,H,,,,"
+    - ",H,J,H,,H,,,G,,,,,,,H,,H,,,,t,x,,,,,"
+    - ",G,,JG,,,,,,H,,,,J,,,,,JH,b,,,aH,,b,"
     - ",,,,,,,,{,,,,G,HH,,,,,,,,G,J,,,,,,,,"
-    - ",,,,,{{{{{{{,,,,,,H,,J,O{{{{{{{,,,,,"
+    - ",,,,,{{{{{{{,,,,,,H,,J,O{{{{{{c,,d,,"
     - ",,R,{{{{{{J{{G,,,,,,H,,{{{{{G{{{,,,,"
     - ",,,G{{{{{{{{{{,,,G,,,,{J{{{HH{{{{G,,"
     - ",,,J{{{{{{{{H,,,,,,,,{{{J{{{J{{{GH,,"
@@ -647,11 +647,23 @@ tarn_plains_west:
     - ",G,H,,{H{GJ{{{{{{{{,,,,,GGJ{J{{{{,,,"
     - "HH,,G,,{{{{GJ{{{{{,,JH,{{G{{{{{{{{H,"
     - ",,,,,,,,{J{{{{{{{G,,,HJH{{{{{{{{{,,,"
-    - "G,,G,,,,,,J,{,,,,,,,,,,,,{H{{{{{R,,,"
-    - ",,,,,,,,,,,,,,,,,,,,Y,,,,,,,{,R,,,,,"
-    - ",,,,,J,,,,,,,,H,,GHJ,,,,,,,,,,,,,G,,"
-    - ",,,,,,,,,,,,,G,,,,,,,,,,,,,,,,J,,,,,"
+    - "G,,G,x,,,,J,{,,,,,,,,,,,,{H{{{{{R,,,"
+    - ",,,,,e,,,,,,,,,,,,,,Y,,,,,,,{,R,,,,,"
+    - ",,k,,J,,k,,,,,H,,GHJ,,,,,,,,,,,,,G,,"
+    - ",,,h,f,,,,,,,G,,,,,,,,,,,,,,,,J,,,,,"
   legend:
+    # An orc war camp (north-east) and a bandit camp (south-west): props only, no one there yet. A tent stands on its
+    # door square; `x` holds the rest of it.
+    x: {kind: prop, sprite: none, label: "A tent", on: ","}
+    a: {kind: prop, sprite: tent_orc, label: "An orc war tent of stitched hides", on: ","}
+    b: {kind: prop, sprite: tent_orc_small, label: "A hide tent", on: ","}
+    t: {kind: prop, sprite: totem, label: "A totem of lashed timbers and a horned skull", on: ","}
+    c: {kind: prop, sprite: bonfire, label: "A bonfire", on: ","}
+    d: {kind: prop, sprite: cookfire, label: "A cauldron over a fire", on: ","}
+    e: {kind: prop, sprite: tent_bandit_chief, label: "A red tent flying a stolen pennant", on: ","}
+    k: {kind: prop, sprite: tent_bandit, label: "A patched canvas tent", on: ","}
+    f: {kind: prop, sprite: campfire, label: "A campfire", on: ","}
+    h: {kind: prop, sprite: barricade, label: "A barricade", on: ","}
     Q: {kind: stairs, to: tarnvale_west, at: Z, sprite: none, label: "The road east, back through the gate"}
     Z: {kind: note, sprite: none, label: "The road west", text: "The road runs on west over the grassland. (What lies beyond is not built yet.)"}
     G: {kind: prop, sprite: tallgrass_gold, solid: false, label: "Tall grass", on: ","}
@@ -671,10 +683,10 @@ tarn_plains_east:
   look: {wall: "#8aa04a", floor: "#8aa04a", ceiling: "#9ab8d6", fog: "#0c120a", torch: 0, tileset: grassland, light: 28}
   map:
     - ",,,H,,,,,G,,H,,,G,,,HH,,,,,,,,J,,,J,"
-    - ",,H,,,H,,,,,,,,G,,,G,,,,,,H,,,,,J,,,"
-    - "G,,,GG,HJ,,,,,,,,,,,,,,,,,,,,,,,,,,,"
+    - ",,H,,,H,,,,,,,,G,,,G,,,,,xH,,,x,J,,,"
+    - "G,,,GG,HJ,,,,,,,,,,,,,,,,g,,,,g,,,g,"
     - ",,J,,,G,G,,,,,H,,,J,,,O,,,,,,,,,,,,,"
-    - ",,,,,{{{{{{{,,,,,G,,,,,,{{{{J{{G,G,,"
+    - ",,,,,{{{{{{{,,,,,G,,,,,,{{{sJ{{GnG,,"
     - ",,,,{G{{{J{{{,,,,,,,,,,{{{{G{{{{,R,,"
     - "G,,{{{{GG{{{H{,,,,,,,,{{{{{G{{{{{,H,"
     - ",,O,{G{{{{{{{,,,,,,,,{{{{G{{{H{G{{,,"
@@ -693,10 +705,19 @@ tarn_plains_east:
     - ",,,,J,,{{{{{{{{{{{,,,,,{{{{{{J{J{{,,"
     - ",,,J,,,,H{J{{{{{{,,,,,,J{{{{{{{{{,,J"
     - ",,,,,J,,,,H,G,,,,,,,,,,,O{{{{{{{,,,,"
-    - ",,H,,,G,,H,,,,H,,,,,,,,,,,,,{,,,,,,,"
-    - ",,,,JH,J,,,,,,,,JJ,,,,,,,,,,,,,,,,,H"
+    - ",,H,,,G,,H,,,,H,,,,,,,x,,,,,{,,,,,,,"
+    - ",,,,JH,J,,,,,,,,JJ,c,,m,,u,,,,,,,,,H"
     - ",,,,,,,,,,,,,H,,,,,,,GH,J,,,,,,,,,,H"
   legend:
+    # A gnoll camp (north-east) and a minotaur camp (south): props only, no one there yet. A tent stands on its door
+    # square; `x` holds the rest of it.
+    x: {kind: prop, sprite: none, label: "A shelter", on: ","}
+    g: {kind: prop, sprite: tent_gnoll, label: "A lean-to of mangy furs and bones", on: ","}
+    s: {kind: prop, sprite: campfire_small, label: "A smoky fire", on: ","}
+    n: {kind: prop, sprite: liz_bones, label: "A heap of gnawed skulls and bones", on: ","}
+    m: {kind: prop, sprite: tent_minotaur, label: "A great hide yurt, bull horns over its door", on: ","}
+    u: {kind: prop, sprite: totem, label: "A totem of lashed timbers and a horned skull", on: ","}
+    c: {kind: prop, sprite: bonfire, label: "A bonfire", on: ","}
     E: {kind: stairs, to: tarnvale_east, at: Z, sprite: none, label: "The road west, back through the gate"}
     Z: {kind: note, sprite: none, label: "The road east", text: "The road runs on east over the grassland. (What lies beyond is not built yet.)"}
     G: {kind: prop, sprite: tallgrass_gold, solid: false, label: "Tall grass", on: ","}
@@ -718,13 +739,13 @@ temple_court:
     - "################################"
     - "################################"
     - "##F,,,,,,,,,f,,,,,,,,f,,,,,,,F##"
-    - "##,,,%%,,,,,,,,,,,,,,,,,,,,,,,##"
-    - "##,,,%%,,,,,,,,,,,,,,,,,,,,,,,##"
+    - "##,,,%%,,xxx,,xxx,,,,,,,,xxx,,##"
+    - "##,,,%%,,,h,,,,j,,,,,,,,,,h,,,##"
     - "##,,,,,,,,,,,,,,,,,%%%%,,,,,,,##"
-    - "##,,,,,,,;;,,,,,,,,%%%%,,,,,,,##"
-    - "##,,,,,,;;;;,,,,,,,%%%,,,,,,,,##"
-    - "##,,,,,,,;;,,,,,,,,,,,,,,,,,,,##"
-    - "##,,,,,,,,,,,,,,,,,,;;,,,,,,,,##"
+    - "##,,,,,,,;;,,,,,,q,%%%%,,,,,,,##"
+    - "##,,,,,,;;;;,k,,,,,%%%,,,,,,,,##"
+    - "##,,,,,,r;;,,,,,,,,,,,,,n,,,,,##"
+    - "##,,,,,,,,,,t,,,,,,,;;,,,,,,,,##"
     - "##,,,,,,,,,,;;,,,,,;;;,,%%,,,,##"
     - "##,,,,,,,,,,;;,,,,,;;;,,%%%%,,##"
     - "##,,,,,,,,,,,,,,,,,,,,,,%%%%,f##"
@@ -735,19 +756,32 @@ temple_court:
     - "##v,,,,,,,,,,,,,,,,,,,,,,,,,,,##"
     - "##,,,,,,,,,,;;,,,,,,,,,,,,,,,,##"
     - "##,,,,,%%,,;;;;,,,,,,,,,,,,,,f##"
-    - "##,,,,,%%%%,;;,,,,,,,,,;;,,,,,##"
-    - "##,,,,,,,%%,,,,,,,,,,,,;;,,,,,##"
+    - "##,,,,,%%%%,;;,,,,,,i,,;;,,,,,##"
+    - "##,,,,t,,%%,,,,,,,,,,,,;;o,,,,##"
     - "##,,,,,,,,,,,,,,,,,,,,,,,,,,,,##"
-    - "##,,,,,,,,,,,,,,,%%%%%%,,,,,,,##"
-    - "##,,,,,,,,,,,,,,,%%%%%%,,,,,,,##"
+    - "##,xxx,,,,,b,,,,,%%%%%%,,,xxx,##"
+    - "##,,h,,,,,,,,,,,,%%%%%%,,,,j,,##"
     - "##,,,,,,,,,,,,,,,,,%%%%,,,,,,,##"
     - "##,,,;;;,,,,,,,l,,,,,,,,,,,,,,##"
-    - "##,,;;;;,,,,,,,,,,,,,,,,,,;;,,##"
+    - "##,,;;;;,q,,,,,,,,r,,,,,,,;;,,##"
     - "##,,;;,,,,,,,,,,,,,,,,,,,,;;,,##"
     - "##F,,,,f,,,,,,,,,,,,,,F,,,,,,F##"
     - "###############L################"
     - "################################"
   legend:
+    # The Suracayl live in the court: huts round a cooking fire to the north, a bonfire and a shrine to the south.
+    # A hut stands on its door square; `x` holds the rest of it.
+    x: {kind: prop, sprite: none, label: "A hut", on: ","}
+    h: {kind: prop, sprite: hut_round, label: "A round hut of mud and reed, charms over its door", on: ","}
+    j: {kind: prop, sprite: hut_stilts, label: "A reed hut on stilts, fish drying on a string", on: ","}
+    k: {kind: prop, sprite: cookfire, label: "A cauldron over a fire", on: ","}
+    b: {kind: prop, sprite: bonfire, label: "A bonfire", on: ","}
+    r: {kind: prop, sprite: liz_fishrack, label: "A rack of fish and eels drying", on: ","}
+    q: {kind: prop, sprite: liz_urns, label: "Painted clay urns", on: ","}
+    n: {kind: prop, sprite: liz_nest, label: "A nest of reeds and mud holding big speckled eggs", on: ","}
+    t: {kind: prop, sprite: liz_totem, label: "A post topped with a crocodile skull, hung with feathers", on: ","}
+    i: {kind: prop, sprite: liz_idol, label: "A coiled serpent idol, herbs smouldering in a bowl before it", on: ","}
+    o: {kind: prop, sprite: liz_bones, label: "A heap of skulls and bones", on: ","}
     "<": {kind: stairs, to: temple_approach, at: G, sprite: door, wall: true, label: "Out through the gate"}
     u: {kind: stairs, to: temple_wall, at: "1", up: true, sprite: wall_steps, label: "Steps up onto the wall"}
     v: {kind: stairs, to: temple_wall, at: "2", up: true, sprite: wall_steps, label: "Steps up onto the wall"}
@@ -1232,29 +1266,29 @@ ember_hall:
     - "#############$$$$$$$))$$$#####..##########........##################"
     - "#############$$$$$$$))$$$#####..##########........##################"
     - "#############$$$$$$$))$$$#####..##########...G....##################"
-    - "##.......####$$$$$$$))$$$#......##########........##################"
-    - "##...w...####$$$$$$$))$$$#..S...##########........##################"
+    - "##...n...####$$$$$$$))$$$#......##########........##################"
+    - "##...w...####$$$$$$$))$$$#.oS...##########........##################"
     - "##.......###########..####..##..##########........##################"
     - "##.......###########..####..##############........##################"
     - "#L.......###########..####..##############........##################"
-    - "##.................................$$$.....................#########"
+    - "##.e...............................$$$.....................#########"
     - "##................................$$$$$....................#########"
-    - "##.......########################..$$$.....................#########"
+    - "##.......########################..$$$.................e...#########"
     - "##......#########################..........................#########"
     - "###########/////////.////////####.....##............##.....#########"
-    - "###########/////////A////////####.....##............##.....#########"
+    - "###########/////////A////////####...i.##............##.....#########"
     - "###########//#############..#####..........................#########"
     - "###########//#############..#####...............;......p...#########"
-    - "###########//##..............####................;.........#########"
+    - "###########//##..............####.......a........;.........#########"
     - "###########//##..............####..........................#########"
     - "###########//##....$$$$$$$$$.####............##............#########"
     - "###########//##....$$$$$$$$$.####............##.................//##"
     - "###########//##....$$$$$$$$$.####...............................//##"
-    - "###########//##....$$$$$$$$$.####........;;.............;..#####//##"
+    - "###########//##....$$$$$$$$$.####...b....;;.............;..#####//##"
     - "###########//##....$$$$$$$$$.####..........................#####//##"
     - "###########//##....$$$$$$$$$.####.............h............#####//##"
-    - "###########//##....$$$$$$$...####..........................#####//##"
-    - "###########//##..............####.....##............##.....#####//##"
+    - "###########//##....$$$$$$$...####..............f...........#####//##"
+    - "###########//##..............####.....##............##...k.#####//##"
     - "###########//##.......................##............##.$...#####D###"
     - "###########//##..g...................................$$$$$.#########"
     - "###########//##..............####...................$$$$$$$#########"
@@ -1275,13 +1309,22 @@ ember_hall:
     - "#############################<######################################"
     - "####################################################################"
   legend:
+    # Goblin clutter (not solid, so it never closes a tunnel).
+    a: {kind: prop, sprite: gob_pot, solid: false, label: "A dented cookpot, a rat on a skewer beside it"}
+    b: {kind: prop, sprite: gob_junk, solid: false, label: "A junk heap of scrap, rags and bones"}
+    e: {kind: prop, sprite: gob_sacks, solid: false, label: "Ore sacks tied with rope"}
+    f: {kind: prop, sprite: gob_tools, solid: false, label: "A barrel of old picks and shovels"}
+    i: {kind: prop, sprite: gob_cart, solid: false, label: "A mine cart full of glowing ore"}
+    k: {kind: prop, sprite: gob_mushrooms, solid: false, label: "Glowing blue cave mushrooms"}
+    n: {kind: prop, sprite: gob_powder, solid: false, label: "Kegs of black powder daubed with a skull"}
+    o: {kind: prop, sprite: gob_timber, solid: false, label: "A timber frame shoring up the rock"}
     "<": {kind: stairs, to: mine_approach, at: M, sprite: door, wall: true, label: "Back down the stair and out"}
-    A: {kind: trap, on: "/", tn: 9, disarm: 9, damage: {CON: 2}, label: "A slot in the rock across the stair", text: "A blade on a chain swings out of the slot at chest height."}
+    A: {kind: trap, sprite: blade, on: "/", tn: 9, disarm: 9, damage: {CON: 2}, label: "A slot in the rock across the stair", text: "A blade on a chain swings out of the slot at chest height."}
     g: {kind: monster, encounter: murderhole, label: "Goblins at the murder hole"}
     h: {kind: monster, encounter: hall, label: "Goblins in the great hall"}
     p: {kind: monster, encounter: patrol, label: "A goblin patrol"}
     G: {kind: monster, encounter: gate, label: "The gate guards"}
-    P: {kind: locked, see: true, forceTn: 15, opensWhen: {flag: ember_winch}, label: "A portcullis of black iron", text: "A portcullis of black iron bars. Its chain runs to a winch in the gate court's wall, and another on the far side.", alt: [{label: "Haul on the gate winch", requires: {flag: ember_gate_won}, opens: true, text: "With the guards dead, nobody stops you. The winch groans, and the portcullis rattles up into the rock."}]}
+    P: {kind: locked, sprite: portcullis, see: true, forceTn: 15, opensWhen: {flag: ember_winch}, label: "A portcullis of black iron", text: "A portcullis of black iron bars. Its chain runs to a winch in the gate court's wall, and another on the far side.", alt: [{label: "Haul on the gate winch", requires: {flag: ember_gate_won}, opens: true, text: "With the guards dead, nobody stops you. The winch groans, and the portcullis rattles up into the rock."}]}
     K: {kind: stairs, to: ember_castle, at: S, up: true, sprite: door, wall: true, label: "Into the goblin castle"}
     D: {kind: prop, sprite: rubble, label: "The tunnel drops away into heat and dark: the way to the deep lair (not built yet)"}
     S: {kind: secret, tn: 10, label: "A seam in the tunnel wall"}
@@ -1309,11 +1352,11 @@ ember_warrens:
   map:
     - "####################################################################"
     - "##########################B#########################################"
-    - "##..................................##..T...##......################"
+    - "##....a.......b.........e.....f.....##..T...##......################"
     - "##......z...........................##......##......################"
     - "##..C#..##..##..##################..##..##..##..##..################"
     - "##...#..##..##..##################..##..##..##..##..################"
-    - "##......##..##5.....##..........##..##..........##..Z...U###########"
+    - "##......##..##5.....##g.....i...##..##..........##..Z...U###########"
     - "##......##..##......##..........##..##....3.....##..#...############"
     - "##..##..##..######..##..######..##..##..;.....####..################"
     - "##..##..##..######..##..######..##..##........####..################"
@@ -1321,38 +1364,48 @@ ember_warrens:
     - "##..##..##......##..##..........................##..#####$$$$$$$$$##"
     - "##..##..######..##..##########..######..##..##..##..#####$$$$$$$$$##"
     - "##..##..######..##..##########..######..##..##..##..#####$$$$$$$$$##"
-    - "##..##......##..........................##..##......#####$$$$$$$$$##"
+    - "##..##......##..k.............o.........##..##......#####$$$$$$$$$##"
     - "##..##......##.........1................##..##......#####$$$$$$$$$##"
     - "##..######..##########..;.......######..##..##..#########$$$$$$...##"
     - "##..######..##########..........######..##..##..#########$$$$$$...##"
-    - "##..##..##......##..................##..##..##...........))))))...N#"
+    - "##..##..##......##..a...............##..##..##...........))))))...N#"
     - "##..##..##......##...........;......##..##..##...........))))))...##"
     - "##..##..######..##..##..........##..######..######..#####$$$$$$.n.##"
     - "##..##..######..##..##..........##..######..######..#####$$$$$$...##"
-    - "##..##......##......##......##......##......##......#####$$$$$$$$$##"
+    - "##..##......##......##......##......##......##o.....#####$$$$$$$$$##"
     - "##..##......##......##......##......##......##......#####$$$$$$$$$##"
     - "##..##..##..##..##########..##..######..######..#########$$$$$$$$$##"
     - "##..##..##..##..##########..##..######..######..#########$$$$$$$$$##"
-    - "#J..##..........##......##....d.........######......#####$$$$$$$$$##"
+    - "#J..##....e.....##......##....d.........######......#####$$$$$$$$$##"
     - "##..##..........##......##..............z...##......#####$$$$$$$$$##"
     - "##..##..;.......##..##..##################..######..#####$$$$$$$$$##"
     - "##..##..2.......##..##..##################..######..#####$$$$$$$$$##"
-    - "##..................##..##......##..................#####$$$$$$$$$##"
+    - "##..................##..##...g..##.............f....#####$$$$$$$$$##"
     - "##..................##..##......##..................################"
     - "##..##..##############..##..##..##...;......##..####################"
     - "##..##..##############..##..##..##....4..;..##..####################"
-    - "##..................##......##..............##......################"
+    - "##.b................##......##..............##......################"
     - "##..................##......##..............##......################"
     - "##..######..######..##################..##..######..################"
     - "##..######..######..##################..##..######..################"
-    - "##......................z...............##....c.....################"
+    - "##..........k...........z.........q.....##....c.....################"
     - "##......................##..............##..........################"
     - "##############..##########..########################################"
     - "##############Y###########m#########################################"
   legend:
+    # Goblin clutter (not solid, so it never closes a tunnel).
+    a: {kind: prop, sprite: gob_cart, solid: false, label: "A mine cart full of glowing ore"}
+    b: {kind: prop, sprite: gob_tools, solid: false, label: "A barrel of old picks and shovels"}
+    e: {kind: prop, sprite: gob_ore, solid: false, label: "A heap of fire ore, a pick stuck in it"}
+    f: {kind: prop, sprite: gob_sacks, solid: false, label: "Ore sacks tied with rope"}
+    g: {kind: prop, sprite: gob_timber, solid: false, label: "A timber frame shoring up the rock"}
+    i: {kind: prop, sprite: gob_powder, solid: false, label: "Kegs of black powder daubed with a skull"}
+    k: {kind: prop, sprite: gob_junk, solid: false, label: "A junk heap of scrap, rags and bones"}
+    o: {kind: prop, sprite: gob_mushrooms, solid: false, label: "Glowing blue cave mushrooms"}
+    q: {kind: prop, sprite: gob_pot, solid: false, label: "A dented cookpot, a rat on a skewer beside it"}
     m: {kind: stairs, to: ember_hall, at: M, sprite: door, wall: true, label: "Back over the bridge to the hall"}
     B: {kind: stairs, to: ember_barracks, at: b, sprite: door, wall: true, label: "The barracks gate"}
-    T: {kind: trap, tn: 11, disarm: 10, damage: {CON: 1}, to: ember_pit, at: t, label: "A stretch of floor that rings hollow", text: "The floor tips under you, and you fall into heat and red light."}
+    T: {kind: trap, sprite: pit, tn: 11, disarm: 10, damage: {CON: 1}, to: ember_pit, at: t, label: "A stretch of floor that rings hollow", text: "The floor tips under you, and you fall into heat and red light."}
     Z: {kind: secret, tn: 11, label: "A seam in the rock"}
     U: {kind: stairs, to: ember_pit, at: u, sprite: door, wall: true, label: "A narrow way down, warm air rising"}
     J: {kind: stairs, to: ember_lake, at: j, sprite: door, wall: true, label: "Steps down to the lava lake"}
