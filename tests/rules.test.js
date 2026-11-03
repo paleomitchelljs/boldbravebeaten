@@ -1702,10 +1702,11 @@ test('impact: heavy blunt crushes, a hard blow throws its target back, and big b
   enc.pos[sturdy.id] = { x: 4, y: 1 };
   await Combat.applyHit(enc, chars, troll, sturdy, fist, roller(5, []), {});
   assert.ok(enc.pos[sturdy.id].x > 4, 'thrown back');
-  // A parry meets force with force: a sword against a giant's club is hopeless (it may meet the club, but most
-  // of the blow beats through: CONFIG.defense.parryCarry); a strong two-hander trained to parry has a chance;
-  // a soft blow is easier than a hard one. `saved`: the share of the blow a parry keeps off, on average.
-  const saved = (c, o) => Combat.defenseOdds(c, 'parry', o.motion, null, o) * (1 - Combat.parryCarryShare(c, 'parry', o));
+  // A parry meets force with weight: a sword against a giant's club is hopeless (the giant's STR is behind the blow,
+  // the sword has no leverage on it, and most of what it meets beats through: CONFIG.defense.parryCarry); a strong
+  // two-hander trained to parry has a chance; a light blow is easier than a heavy one (CONFIG.defense.leverage).
+  // `saved`: the share of the blow a parry keeps off, on average.
+  const saved = (c, o) => Combat.defenseOdds(c, 'parry', o.motion, giant, o) * (1 - Combat.parryCarryShare(c, 'parry', o));
   sturdy.weapons.push(Items.makeWeapon('longsword', 'standard'));
   sturdy.wield = sturdy.weapons[0].id;
   assert.ok(saved(sturdy, club) < 0.1, `a sword against a giant (${saved(sturdy, club).toFixed(2)})`);
@@ -2075,4 +2076,93 @@ test('cover: a shield-bearer beside an undefended ally blocks the blow for them,
   // Too far away: no offer.
   enc.pos[s.id] = { x: 4, y: 2 };
   assert.strictEqual(Combat.coverOptions(enc, chars, t, a, d).length, 0);
+});
+
+// ---- Block, parry and dodge differ in kind (the user, 2026-11-03) -------------------------------------------------
+// A swings at B, who answers with `react`; B's defence roll comes up 10 against A's 1. Returns the AP A has left.
+async function defended(atkWeapon, setupB, react) {
+  const a = armed('A', atkWeapon, { side: 'party' });
+  const b = armed('B', 'longsword', { side: 'enemy' });
+  a.base.SPD = 9; b.base.CON = 30;
+  setupB(b);
+  for (const x of [a, b]) x.stamina = C.maxStamina(x);
+  const chars = { [a.id]: a, [b.id]: b };
+  const enc = Combat.createEncounter('t', [a.id, b.id], chars, 4, 1);
+  enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[b.id] = { x: 1, y: 0 };
+  await Combat.startRound(enc, chars, roller(3, [10, 1]));
+  enc.ap[b.id] = 6 * B.CONFIG.apScale;
+  const swing = Combat.legalActions(enc, chars, a.id).attacks.find((o) => o.motion === 'swing' || o.motion === 'twoHanded');
+  const before = enc.ap[a.id];
+  await Combat.act(enc, chars, { actor: a.id, type: 'strike', option: swing, target: b.id }, io(5, [10, 1, 10, 1], react));
+  return { enc, a, b, swing, spent: before - enc.ap[a.id] };
+}
+
+test('a block rebounds: the attacker loses a third of the blow\'s AP, the rest owed into next round', async () => {
+  const shield = (b) => { b.shield = Items.makeShield('round', 'iron', 'standard'); };
+  const r = await defended('longsword', shield, (req) => (req.kind === 'defend' ? 'block' : null));
+  assert.strictEqual(r.spent, r.swing.ap + Math.round(r.swing.ap / 3), 'the swing and a third of it');
+  // A greatsword swing that empties the pool: the rebound comes off the next round, and the fighter who owes can't
+  // take a whole-turn action.
+  const g = await defended('greatsword', shield, (req) => (req.kind === 'defend' ? 'block' : null));
+  // A whole-turn swing takes the whole pool; the rebound is a third of what it took.
+  const took = g.enc.decls.find((d) => d.actor === g.a.id && d.type === 'strike').ap;
+  const owe = Math.round(took / 3) - Math.max(0, g.enc.apStart[g.a.id] - took);
+  assert.ok(owe > 0, `owes ${owe}`);
+  assert.ok(g.enc.log.some((l) => /rebounds off the shield/.test(l.text) && /next round/.test(l.text)), 'owed into next round');
+  const gc = { [g.a.id]: g.a, [g.b.id]: g.b };
+  await closeRound(g.enc, gc);
+  if (g.enc.round === 1) await Combat.startRound(g.enc, gc, roller(4, [10, 1]));
+  assert.strictEqual(g.enc.ap[g.a.id], Math.max(0, g.enc.apStart[g.a.id] - owe), 'paid at the start of the next');
+  assert.ok(!Combat.legalActions(g.enc, gc, g.a.id).attacks.some((o) => o.motion === 'twoHanded' && o.affordable), 'no whole-turn swing while owing');
+});
+
+test('a dodge costs the attacker nothing, meets only melee blows, and pays for armor twice', async () => {
+  const r = await defended('longsword', () => {}, (req) => (req.kind === 'defend' ? 'dodge' : null));
+  assert.strictEqual(r.spent, r.swing.ap);
+  const d = armed('D', 'longsword');
+  const bow = armed('Archer', 'longbow');
+  const shot = { type: 'strike', actor: bow.id, option: opt(bow, (o) => o.ranged) };
+  assert.ok(Combat.defenseUnavailable(d, 'dodge', shot, { [bow.id]: bow }, null), 'no dodging an arrow');
+  const atk = armed('Atk', 'longsword');
+  const swing = opt(atk, (o) => o.motion === 'swing');
+  const bare = Combat.defenseOdds(d, 'dodge', 'swing', atk, swing), bareParry = Combat.defenseOdds(d, 'parry', 'swing', atk, swing);
+  d.armor = Items.makeArmor('mail', 'full', 'standard');
+  const mail = Combat.defenseOdds(d, 'dodge', 'swing', atk, swing), mailParry = Combat.defenseOdds(d, 'parry', 'swing', atk, swing);
+  assert.ok(bare - mail > bareParry - mailParry, 'mail costs a dodge more than a parry');
+});
+
+test('a parry is worse than a block, nearing it as the parrying weapon outweighs the blow; it rebounds less, more with Beat', async () => {
+  const atk = armed('Atk', 'longsword');
+  const swing = opt(atk, (o) => o.motion === 'swing');
+  const lev = (w) => Combat.leverage(armed('P', w), 'parry', swing);
+  const max = B.CONFIG.defense.leverage.max;
+  // Against a rapier's thrust: the dagger is outweighed, the rapier equal, the longsword and greatsword heavier.
+  const thrust = opt(armed('R', 'rapier'), (o) => o.motion === 'thrust');
+  const levT = (w) => Combat.leverage(armed('P', w), 'parry', thrust);
+  assert.ok(levT('dagger') < levT('rapier') && levT('rapier') < levT('longsword') && levT('longsword') < levT('greatsword') && levT('greatsword') < max, 'heavier, more');
+  assert.strictEqual(levT('rapier'), 0, 'an equal blade has no leverage');
+  assert.ok(lev('dagger') < 0, 'a dagger against a sword\'s swing is outweighed');
+  const p = await defended('longsword', () => {}, (req) => (req.kind === 'defend' ? 'parry' : null));
+  assert.strictEqual(p.spent, p.swing.ap + Math.round(p.swing.ap / 6), 'a sixth');
+  const beat = await defended('longsword', (b) => { b.feats.parry_training = 1; b.feats.beat = 2; }, (req) => (req.kind === 'defend' ? 'parry' : null));
+  assert.strictEqual(beat.spent, beat.swing.ap + Math.round(beat.swing.ap / 2), 'a sixth and two more with Beat II');
+});
+
+test('a successful parry opens a riposte: anyone may answer for its AP, the Riposte feat for none', async () => {
+  let asked = null;
+  const react = (req) => {
+    if (req.kind === 'defend') return 'parry';
+    if (req.kind === 'opportunity' && req.why === 'riposte') { asked = asked || req; return req.options[0]; }
+    return null;
+  };
+  const r = await defended('longsword', () => {}, react);
+  assert.ok(asked && asked.actor === r.b.id && asked.target === r.a.id, 'the parrier is offered a riposte');
+  assert.ok(asked.options[0].ap > 0, 'paid for');
+  assert.ok(r.enc.decls.some((d) => d.riposte && d.actor === r.b.id), 'and makes it');
+  asked = null;
+  const f = await defended('longsword', (b) => { b.feats.parry_training = 1; b.feats.riposte = 1; }, react);
+  assert.ok(asked && asked.options.every((o) => o.ap === 0), 'free with the feat');
+  asked = null;
+  await defended('longsword', () => {}, (req) => (req.kind === 'defend' ? 'dodge' : react(req)));
+  assert.strictEqual(asked, null, 'a dodge opens nothing');
 });

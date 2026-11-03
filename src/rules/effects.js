@@ -58,6 +58,7 @@
       hit: 'to beat a defence',
       dodge: '+n to dodge (Dodge Training)',
       parry: '+n to parry (Parry Training)',
+      recoil: 'a parried blow costs its attacker n × CONFIG.defense.rebound.perRank more of its AP (Beat)',
       block: '+n to block (Shield Training)',
       grip: '+n to grapple rolls',
       feint: 'Feint: to bait, and blows a lower Read Attack can\'t read',

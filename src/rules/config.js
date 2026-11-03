@@ -335,7 +335,7 @@
     // ---- Archery (PROVISIONAL; nothing in the design docs yet) -----------
     archery: {
       strBonus: false, // STR does not add to arrow damage
-      parry: false, // arrows can be blocked or dodged, not parried
+      parry: false, // arrows can be blocked, not parried (nor dodged: CONFIG.defense.dodgeMeleeOnly)
       // PROVISIONAL (history, the user's call): armor stops arrows better than it stops a thrust
       // at arm's length. Layered textile catches a shaft (padded most); mail is worn over padding.
       // Extra piercing mitigation against arrows only, by armor type.
@@ -583,8 +583,23 @@
         // the attacker's d10 + ⌊(STR + SPD)/4⌋ + motion. false: the fixed numbers above.
         opposed: true, bySize: { buckler: 1, round: 2, heater: 3, tower: 4 },
       },
-      // PROVISIONAL (the user's call): the dodge is the hardest defence to make.
-      dodgeBonus: -2,
+      // PROVISIONAL (the user, 2026-11-03: block, parry and dodge differ in kind). The dodge takes the body out of
+      // the blow's way: it meets melee blows only (no dodging an arrow or a bolt), and it pays the armor's SPD and DEX
+      // penalties again on top of what they take off agility (`dodgeArmor` × them), so it is best unarmored and
+      // hopeless in plate. It costs the attacker nothing. (Before: −2 to every dodge, any armor, missiles too.)
+      dodgeBonus: 0,
+      dodgeArmor: 1,
+      dodgeMeleeOnly: true,
+      // PROVISIONAL (the user, 2026-11-03): a blow that is blocked or parried rebounds, and the attacker loses this
+      // share of the blow's AP cost getting their weapon back: a blocked two-handed swing (6 AP) costs 2, a parried
+      // one 1. Recoil feats (Beat) add `perRank` to a parry's share each rank. AP the attacker hasn't got this round
+      // comes off their next (`carry`; owed AP count as spent, so a fighter who owes can't take an action dearer than
+      // their whole pool). A dodge costs the attacker nothing; a parry beaten through, nothing.
+      rebound: { block: 1 / 3, parry: 1 / 6, offParry: 1 / 6, perRank: 1 / 6, carry: true },
+      // PROVISIONAL (the user, 2026-11-03): a successful parry opens the attacker to a riposte. Anyone may answer a
+      // parry they made with a blow of the parrying weapon at once (a reaction, its AP from their pool, a blow the
+      // attacker may defend). The Riposte feat makes it cost no AP. false: only the feat, as a free thrust.
+      riposteOpen: true,
       // PROVISIONAL (the user's call): a defence that works still costs stamina, this share of the
       // blow's force: a block most (the arm takes it), a parry some, a dodge none. null: nothing.
       absorb: { block: 0.5, parry: 0.25, offParry: 0.25, dodge: 0 },
@@ -614,7 +629,15 @@
       // strong two-hander with Parry Training, a chance).
       // PROVISIONAL (the user's idea, 2026-10-24): the overwhelm moved out of the odds into parryCarry, so a
       // heavy blow isn't counted twice. (Before: over 2.)
-      parryForce: { per: 4, over: null },
+      // PROVISIONAL (the user, 2026-11-03): replaced by `leverage`; null. (Was { per: 4, over: null }.)
+      parryForce: null,
+      // PROVISIONAL (the user, 2026-11-03): a parry is a worse defence than a block, nearing a shield only as the
+      // parrying weapon outweighs the blow. The parrier adds max × x / (1 + |x|), rounded, where x = log2 of the
+      // parrying weapon's best blow in their hands ÷ the blow's force (both expected damage): equal weapons 0, a
+      // greatsword against a sword's swing +1, against a rapier's thrust +2, never as much as max (a heater shield's
+      // 3); a sword against a greatsword −1, against a giant's club −2. The attacker's side is the same as against a
+      // block or a dodge (⌊(STR + SPD)/4⌋ + motion), so between equal weapons the odds are about what they were.
+      leverage: { max: 3 },
       // PROVISIONAL (the user's idea): a parried swing whose force beats the parrying weapon's carries through,
       // weakened: share × (force − mine) / force of each face lands (rounded down). A parried thrust is stopped:
       // turning a point aside takes little force. motions: which blows can carry through a parry.
@@ -786,14 +809,14 @@
     'Plate spreads a blow it turns (the user\'s call): half of the blunt left after its mitigation from a cut or a point (converted cuts, turned points) never reaches stamina; a crushing blow (a mace, a hammer, a club, a fist) carries as before (armor.yaml dissipate {glancing: 0.5, crushing: 0}; less as the plate wears). Spreading crushing blows too left maces 2–13% against plate in the weapon sweep (sim/FINDINGS.md).',
     'Armor wear per hit is a third of (blunt + converted slashing); armor keeps at least 75% of its mitigation until destroyed.',
     'Cover (the user\'s choice, 2026-10-29): when a blow comes at someone who puts up no defence of their own, an ally within a square with a ready shield may block it for them, paying a block\'s AP and stamina, at −1 to the block roll; the bearer\'s shield and arm take it.',
-    'Blocks are contested (the user\'s call) and the easiest defence: d10 + Shield Training + the shield (buckler 1, round 2, heater 3, tower 4) + ⌊(STR + DEX)/4⌋ against the attacker\'s d10 + ⌊(STR + SPD)/4⌋ + motion. A dodge is the hardest (−2). A defence that works still costs stamina: half the blow\'s force for a block, a quarter for a parry, none for a dodge; a dodge costs 1 base stamina (Specifics 2). Untrained against a sword swing: block 72%, parry 64%, dodge 36%. Bind (feat): a successful parry lets you try a disarm at once.',
+    'Blocks are contested (the user\'s call) and the easiest defence: d10 + Shield Training + the shield (buckler 1, round 2, heater 3, tower 4) + ⌊(STR + DEX)/4⌋ against the attacker\'s d10 + ⌊(STR + SPD)/4⌋ + motion. A dodge was the hardest (−2; since 2026-11-03 it pays the armor\'s penalties again instead). A defence that works still costs stamina: half the blow\'s force for a block, a quarter for a parry, none for a dodge; a dodge costs 1 base stamina (Specifics 2). Untrained against a sword swing: block 72% (a round shield), parry 64%, dodge 55% unarmored, 45% in leather, 36% in mail, 10% in plate (before 2026-11-03: 36% in all but plate, 28%). Bind (feat): a successful parry lets you try a disarm at once.',
     'Range (the user\'s reach): daggers 1; one-handed swords, maces and axes swing 1 and thrust 2; two-handed weapons swing 2 and thrust 3, cramped at 1 (pommel, haft); spears thrust to 4 (the spear and heavy spear cramped at 1, the short spear to 3); the war scythe sweeps 2–3 and does not thrust. Long blades and spears are cramped in a clinch; daggers, clubs, maces and hammers are not, nor are half-swording and the murder stroke. Cramped blows land with half their force, all as blunt. Movement covers twice the Specifics squares.',
     'Weapons in hand: drawing a weapon costs half an AP; dropping one costs nothing; picking one up costs 2. Drawing while holding a weapon drops it (a dagger is sheathed instead). A character held in a grapple fights cramped with any weapon, dagger included: half force, all blunt.',
     'Shove (2 AP, range 1): opposed d10 + ⌊STR/2⌋ (+2 with a two-handed weapon) vs d10 + footing. A win pushes the target back 1 square, 2 on a margin of 5+; if they can\'t move, a margin of 5+ knocks them down.',
     'Wind-up: a power swing, a longbow shot and a Strong spell are wound up (drawn) for 2 AP and released for the rest of the cost, in the same turn or the next round. After releasing you may wind up again in the same round. While wound up you cannot block or parry; the wind-up is lost if you are knocked down, grappled, disarmed or drop, or if you haven\'t released it by the end of the next round.',
     'Shields vs power attacks: a blocked power swing breaks the shield outright if the weapon is at least as hard as the shield (wood < iron < steel) unless the shield is masterwork, and force above the shield\'s break threshold drives through as blunt damage. Every block wears a shield twice as fast as before.',
     'Spear and heavy spear (not in the catalog): spear point 8/0/0, thrusting 2–4, one hand, 1.7 kg; heavy spear the same point, two hands, 2.6 kg, which bursts any mail.',
-    'Bows (not in the design docs): every bow is drawn, then loosed (the user, 2026-11-01), a stronger bow dearer for more range and damage (weapons.yaml `draw`): shortbow arrow 5 P, range 2–12, drawn 1 AP and loosed 2 (was 4 AP in one action); longbow 7 P, range 2–16, drawn 2 AP and loosed 4; −2 damage at long range; arrows can be blocked or dodged, not parried; no STR bonus; one arrow per shot.',
+    'Bows (not in the design docs): every bow is drawn, then loosed (the user, 2026-11-01), a stronger bow dearer for more range and damage (weapons.yaml `draw`): shortbow arrow 5 P, range 2–12, drawn 1 AP and loosed 2 (was 4 AP in one action); longbow 7 P, range 2–16, drawn 2 AP and loosed 4; −2 damage at long range; arrows can be blocked, not parried or dodged (2026-11-03: dodging is for melee blows); no STR bonus; one arrow per shot.',
     'Arrows and armor (history): armor catches arrows better than a thrust. Extra piercing protection against arrows that burst it: padded +2, leather and mail +1, plate 0. Two arrowheads: broadheads cut terrible wounds (bleed ×1.5) but punch weakly (×0.7: a longbow broadhead must find a gap in mail); bodkins do 1 less damage but punch hard (×1.5: a longbow bodkin bursts mail; nothing bursts plate).',
     'Weapons from physics: each weapon has a mass, a length, hands and a point (depth, width), an edge or a head. Damage: point depth/4 piercing; edge (2 + 3√(mass × length × grip)) slashing; head 1 + 6√(head mass × length × grip) blunt. Speed: thrusts cost more with mass, swings with √(mass × length), the longsword costing what the motion table lists. STR adds strBonus × 0.25–0.5 to a thrust (by wound width) and × mass/1.4 (× 1.5 two-handed, up to 1.5) to a swing. A piercing wound bleeds damage × width/4 over 2 + depth/15 rounds.',
     'Fend off and push back: with a long weapon (reaching 3 or more) a shove reaches 2 squares; a ready shield adds +1.',
@@ -818,7 +841,8 @@
     'Magic feat tiers count feats across all four magic sub-trees (otherwise Casting and Fire Affinity can never pass rank I).',
     'Plate: +1 stamina per action and −3 regeneration (Specifics: +2 and −4), tuned in the arena.',
     'Initiative: d10 + effective SPD.',
-    'Defense checks: parry and dodge are opposed rolls: defender d10 + Training + ⌊(DEX + SPD)/4⌋ (armor lowers both; −2 to dodge) against attacker d10 + ⌊(STR + SPD)/4⌋, +1 for a two-handed swing, +2 for a power swing; a parry also faces the blow\'s force against the parrying weapon\'s. Ties go to the defender. A power blow can\'t be parried, only dodged or blocked. Blocks: see above.',
+    'Defense checks: parry and dodge are opposed rolls: defender d10 + Training + ⌊(DEX + SPD)/4⌋ (armor lowers both) against attacker d10 + ⌊(STR + SPD)/4⌋, +1 for a two-handed swing, +2 for a power swing. Ties go to the defender. A power blow can\'t be parried, only dodged or blocked. Blocks: see above.',
+    'Block, parry and dodge differ in kind (the user, 2026-11-03). Block: the best odds (the shield\'s size), and the blow rebounds: the attacker loses a third of the AP the blow took. Parry: no shield, so worse odds, by leverage: + 3 × x / (1 + |x|), rounded, x = log2(my weapon\'s best blow ÷ the blow\'s force), 0 between equal weapons, toward +3 (a heater\'s worth) as mine outweighs the blow, toward −3 as it is outweighed (this replaces the force term); the blow rebounds a sixth of its AP (Beat, a new feat: another sixth per rank); and a successful parry opens a riposte, a blow of the parrying weapon at once for its AP, which the attacker may defend (the Riposte feat makes it cost no AP; before, only the feat, a free undefended thrust). Dodge: melee blows only (no arrows or bolts), pays the armor\'s SPD and DEX penalties again (−2 dropped), negates the blow and costs the attacker nothing. AP a rebound takes that the attacker hasn\'t got come off their next round, and a fighter who owes can\'t take an action dearer than the whole pool.',
     'Parrying dagger: held in the off hand (no shield, no two-handed weapon). It stabs (off-hand thrust) and gives an Off-hand parry (1 AP on the sheet ×2, +1 to the roll) that meets thrusts only.',
     'A successful parry or dodge negates the strike\'s damage completely (a parry still costs stamina, see blocks).',
     'Actions cannot be paid if they would drop your own stamina to 0.',
@@ -842,7 +866,7 @@
     'Bandage: 4 AP (1 AP with Field Dressing) and uses one bandage.',
     'Long rest repairs 25% of max armor and shield durability (+25% with Field Repair).',
     'Daggers get −1 AP on thrusts and swings ("lowest AP").',
-    'Spell bolts and shields (the user\'s magic items, 2026-10): an ordinary shield can\'t block a spell bolt, only dodge it; a shield enchanted with Spellcatching can, and a weapon with parrySpells can parry one. Before, any shield stopped a fire bolt whole and took no wear from it.',
+    'Spell bolts and shields (the user\'s magic items, 2026-10): an ordinary shield can\'t block a spell bolt (and since 2026-11-03 it can\'t be dodged either: dodging is for melee blows); a shield enchanted with Spellcatching can, and a weapon with parrySpells can parry one. Before, any shield stopped a fire bolt whole and took no wear from it.',
     'Magic items (the user\'s list, 2026-10): worn things (head, neck, shoulders, cape, arms, hands, two rings, legs, boots; the chest is the armor) and enchantments carry effects (attributes, AP, ×AP on every action, regeneration, stamina, spell points, magnitude, initiative, to beat a defence, squares per move, elemental resistance, auras, retaliation, bane damage, disposition, healing per rest), weapon on-hit effects (conditions, a burning blow, sapping STR and stamina, eating armor, Riled: +n mitigation until next hurt) and powers (a spell cast with no spell points, free hand or backlash, from charges that come back each long rest). Placeholder names; numbers untested by sims.',
     'New spell words (the user\'s list, 2026-10): Acid (past armor, eating armor, shield and the weapon in hand: 1 durability per magnitude, half to the gear), Charm (takes the caster\'s side without concentration; any harm ends it), Stillness (paralysis: no actions, no guard, blows find the gaps as on the pinned; CON resists), Veil (unseen: no foe farther than arm\'s reach can aim at you; +2 to beat a defence; striking or casting ends it), Bone (raises a skeleton). Frost now chills (half the squares per move, −1 SPD) instead of slowing; lightning bolts leap on a d10 ≤ 5 to the nearest other body within 2 at half magnitude, again from there; darkness hurts (Shadow 1 a round) and costs a square extra to enter. Delayed (modifier, areas): +3 magnitude, the area is marked for all to see and breaks at the end of the round.',
     'Raise (verb, the user\'s list): a body within a square of the aim rises on the caster\'s side for the rest of the fight and falls when the caster does: Bone a skeleton, Life a zombie, Spirit a revenant (the body\'s physical attributes unhurt, its gear and fighting feats, tireless; +4 cost). Conjure + Life no longer raises (it was a fresh zombie for 4 rounds). Conjure + Vine summons a wolf for 4 rounds.',

@@ -1,5 +1,41 @@
 # Simulation findings
 
+## Block, parry and dodge differ in kind (2026-11-03; `node sim/arena.js --n 20`, before and after)
+
+The user (2026-11-03): rebalance the greatsword against sword & shield by making the three defences differ, not by
+changing opportunity strikes again. Built (CONFIG.defense `rebound`, `leverage`, `dodgeArmor`, `dodgeMeleeOnly`,
+`riposteOpen`; feat Beat): a block rebounds a third of the blow's AP off the attacker, a parry a sixth (Beat: +a sixth
+per rank); AP the attacker hasn't got come off their next round, and a fighter who owes can't take a whole-turn action;
+a parry's odds come from leverage (0 between equal weapons, toward +3 as the parrying weapon outweighs the blow, toward
+−3 as it is outweighed; replaces the force term) and a successful parry opens a riposte anyone can take for its AP (the
+Riposte feat: for none), which the attacker may defend; a dodge meets melee blows only and pays the armor's SPD and DEX
+penalties again (the flat −2 dropped). Untrained odds against a sword swing: block 72% (round shield), parry 64%
+(unchanged), dodge 55% unarmored, 45% leather, 36% mail, 10% plate (was 36% in all but plate).
+
+Row's win rate, averaged over armor pairs, before → after (±4 points or so on a difference):
+
+| row vs | Two-handed | Sword & shield | Rapier & dagger | Archery | Magic |
+|---|---|---|---|---|---|
+| Two-handed, open | 50 → 49 | **69 → 68** | 79 → 80 | 82 → 81 | 49 → 39 |
+| Two-handed, close | 50 → 50 | **68 → 67** | 80 → 80 | 58 → 50 | 47 → 42 |
+| Sword & shield, open | 30 → 31 | 48 → 48 | 39 → 47 | 71 → 72 | 44 → 41 |
+| Sword & shield, close | 31 → 32 | 49 → 48 | **30 → 51** | 83 → 80 | 19 → 13 |
+| Rapier & dagger, close | 19 → 19 | **64 → 46** | 49 → 50 | 57 → 49 | 11 → 13 |
+| Archery, open | 45 → 53 | 22 → 22 | 50 → 57 | 50 → 48 | 9 → 11 |
+| Magic, close | 47 → 49 | **70 → 80** | 87 → 86 | 64 → 47 | 48 → 47 |
+
+- **It did not move two-handed against sword & shield, and it can't.** Traced (`sim/arena-inspect.js
+  medium/twoHanded medium/shield open 2–8`): the greatsword never swings in these duels; it holds the swordsman at its
+  thrust (reach 3) and stop-thrusts as he steps inside. And the swordsman's AI spends its whole pool (6 AP) on one move
+  toward it, so it comes into reach with 0 AP and can't block the thrust; in mail a thrust that bursts through and the
+  bleeding that follows end most of these fights in round 2. A rebound off a 2-AP thrust is 0.7 AP. The lever is the
+  AI's approach (stop at the edge of a longer reach with AP kept to block), not the defences. Not built.
+- Sword & shield now beats rapier & dagger in close quarters (the riposte can be blocked, and every block costs the
+  duelist AP); the duelist's average fell 2–3 points.
+- No dodging missiles: archers gain against everyone who dodged (two-handed, the duelist), and magic gains against
+  sword & shield in close quarters (bolts can't be blocked by an ordinary shield or dodged now). Magic's mirror fell.
+- Grappler and enchanter unchanged. Encounter win rates not run (deferred).
+
 ## Opportunity strikes inside the edge (2026-11-03; `node sim/arena.js --n 20`, before and after)
 
 The user (2026-11-02): a fast fighter who won initiative and closed on an equal weapon was struck first as they came

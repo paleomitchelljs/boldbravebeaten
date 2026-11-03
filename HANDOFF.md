@@ -4,6 +4,16 @@ Last updated at commit: 48f468e
 
 Keep this a short list. Tick things off, add new ones, and refresh the commit line after every push (`git log -1 --format=%h`).
 
+## Block, parry and dodge differ in kind (the user, 2026-11-03)
+- [x] Block rebounds a third of the blow's AP off the attacker, parry a sixth (Beat, new feat: +a sixth per rank);
+  owed AP come off the next round and bar a whole-turn action. Parry odds by leverage (log weight ratio, toward a
+  heater's +3; replaces the force term). A successful parry opens a riposte anyone may take for its AP (Riposte feat:
+  free); the attacker may defend it. Dodge: melee only, pays armor's SPD/DEX penalties again, −2 dropped.
+  `CONFIG.defense` rebound/leverage/dodgeArmor/dodgeMeleeOnly/riposteOpen; tests; sim/FINDINGS.md.
+- [ ] Two-handed still beats sword & shield 68%: the swordsman's AI spends its whole pool on the approach and walks into
+  the stop-thrust with 0 AP. Fix the AI's approach (stop at the edge of a longer reach, keep AP to block)? Ask the user.
+- [ ] Spell bolts can no longer be dodged (dodge is melee only): only an enchanted shield meets them. Confirm with the user.
+
 ## Opportunity strikes inside the edge (the user, 2026-11-02)
 - [x] Coming up to the edge of a foe's reach is free; stepping from within it to closer still provokes (a hit holds
   the mover at the square they stepped from), as do leaving it and a second step within it that brings no closer.

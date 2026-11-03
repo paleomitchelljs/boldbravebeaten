@@ -183,7 +183,14 @@
       name: Riposte
       ranks: [apprentice]
       requires: [["parry_training:1"]]
-      effect: A successful parry grants a free thrust
+      effect: Your riposte (a blow at once after a successful parry) costs no AP
+      auto: true
+    beat:
+      name: Beat
+      ranks: [apprentice, adept]
+      requires: [["parry_training:1"]]
+      effect: "Your parries knock the blow wide: the attacker loses another sixth of the blow's AP per rank (a block's third at rank II)"
+      effects: {recoil: 1}
       auto: true
     bind:
       name: Bind

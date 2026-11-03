@@ -139,7 +139,11 @@
       const sp = enc.surprise;
       if (sp && sp.round === enc.round && chars[id].side === sp.side) enc.ap[id] = Math.floor(enc.ap[id] * sp.factor);
       enc.apStart[id] = enc.ap[id];
+      // AP owed from a blow that rebounded last round (CONFIG.defense.rebound.carry): already spent.
+      const owed = enc.owed && enc.owed[id];
+      if (owed) enc.ap[id] = Math.max(0, enc.ap[id] - owed);
     }
+    enc.owed = {};
     if (enc.surprise && enc.surprise.round === enc.round) log(enc, `${enc.surprise.side === 'party' ? 'The party is' : 'The enemy is'} caught off guard.`, 'round');
     log(enc, `Round ${enc.round} — initiative: ` + enc.order.map((id) => `${chars[id].name} ${enc.initiative[id]}`).join(', '), 'round');
     await advance(enc, chars, { roller });
@@ -614,6 +618,7 @@
       if (opt && opt.motion === 'power' && atk && C.rank(atk, 'juggernaut')) return 'Juggernaut';
     }
     if (kind === 'dodge' && c.status.prone) return 'Prone';
+    if (kind === 'dodge' && opt && (opt.ranged || opt.spell) && CONFIG.defense.dodgeMeleeOnly) return opt.spell ? "Can't dodge a bolt" : "Can't dodge a missile";
     return null;
   }
 
@@ -1520,8 +1525,17 @@
       const agile = Math.floor((C.combatAttr(defender, 'DEX') + C.combatAttr(defender, 'SPD')) / 4);
       let bonus = agile + (parry ? G.Effects.sum(defender, 'parry') : G.Effects.sum(defender, 'dodge') + (D.dodgeBonus || 0));
       if (kind === 'offParry') bonus += D.offhandBonus || 0;
+      // The dodge pays the armor's weight again (CONFIG.defense.dodgeArmor).
+      if (kind === 'dodge' && D.dodgeArmor) {
+        const ai = C.armorInfo(defender);
+        bonus -= Math.round((ai.spd + ai.dex) * D.dodgeArmor);
+      }
       let atk = D.motionPenalty[motion] || 0;
-      if (parry && D.parryForce) {
+      if (parry && D.leverage) {
+        // A parry meets the blow with the parrying weapon's weight: nearer a shield the more it outweighs the blow.
+        bonus += leverage(defender, kind, atkOption);
+        atk += strikeBonus();
+      } else if (parry && D.parryForce) {
         // A parry meets the blow's force with the parrying weapon's own (its best blow in my hands).
         if (atkOption && atkOption.damage) {
           const f = blowForce(atkOption), mine = parryForce(defender, kind);
@@ -1549,6 +1563,16 @@
       tn += D.motionPenalty[motion] || 0;
     }
     return { bonus, tn };
+  }
+
+  // CONFIG.defense.leverage: what the parrying weapon's weight adds to a parry of this blow (0 for an equal weapon,
+  // nearing +max as it outweighs the blow, −max as it is outweighed). Against a blow whose force can't be seen, 0.
+  function leverage(defender, kind, atkOption) {
+    const K = CONFIG.defense.leverage;
+    const mine = parryForce(defender, kind), f = blowForce(atkOption);
+    if (!(f > 0)) return 0;
+    const x = Math.log2(Math.max(mine, 0.5) / f);
+    return Math.round(K.max * x / (1 + Math.abs(x)));
   }
 
   // A blow's force: its expected damage, all kinds together.
@@ -1884,6 +1908,7 @@
           absorbImpact(enc, b, 'block', d);
           const theirs = weaponItem(a, d.option);
           if (b.shield) wearWeapon(enc, a, theirs, blowForce(d.option), 'blocked', b.shield.material);
+          rebound(enc, a, d, 'block', b);
           return;
         }
         log(enc, `${b.name} reaches to cover ${t.name}, too late (${chk.total} vs ${chk.tn}).`, 'fail');
@@ -1919,7 +1944,8 @@
               beatThrough = carry;
               log(enc, `${a.name}'s ${name} beats through the parry (${Math.round(carry * 100)}% of its force carries on).`, 'hit');
             }
-            if (!through && parried && C.rank(t, 'riposte') && C.isActive(t)) await riposte(enc, chars, t, a, roller, posAtStart);
+            if (!through && def.type !== 'dodge') rebound(enc, a, d, def.type, t);
+            if (!through && parried && C.isActive(t) && C.isActive(a)) await riposte(enc, chars, t, a, def.type, io, posAtStart);
             if (!through && parried && C.rank(t, 'bind') && C.isActive(t) && C.wieldedWeapon(a) && payStamina(enc, t, C.actionCost(t, 'disarm').stamina)) {
               log(enc, `${t.name} binds ${a.name}'s blade.`, 'defend');
               await resolveManeuver(enc, chars, { actor: t.id, target: a.id, type: 'disarm' }, roller);
@@ -2280,14 +2306,52 @@
     log(enc, `The blow jars ${t.name} (−${loss} stamina).`, 'hit');
   }
 
-  async function riposte(enc, chars, t, a, roller, posAtStart) {
-    const w = C.wieldedWeapon(t);
-    if (!w || !Items.weaponStats(w).faces.point) return;
-    const opt = C.attackOptions(t).find((o) => o.motion === 'thrust' && o.weaponId === w.id && !o.halfSword);
-    if (!opt || dist(posAtStart[t.id], posAtStart[a.id]) > opt.reach) return;
-    if (!payStamina(enc, t, opt.stamina)) return;
-    const r = await applyHit(enc, chars, t, a, opt, roller);
-    log(enc, `${t.name} ripostes: ${r.text}`, 'hit');
+  // CONFIG.defense.rebound: a blow blocked or parried costs the attacker a share of its AP getting the weapon back
+  // (more for a parry with Beat). What they haven't got this round comes off the next (`carry`).
+  function rebound(enc, a, d, kind, t) {
+    const R = CONFIG.defense.rebound;
+    if (!R || !d.ap || !(kind in R)) return;
+    const share = R[kind] + (kind === 'block' ? 0 : G.Effects.sum(t, 'recoil') * (R.perRank || 0));
+    const lose = Math.round(d.ap * share);
+    if (lose <= 0) return;
+    const now = Math.min(apLeft(enc, a.id), lose), owe = R.carry ? lose - now : 0;
+    enc.ap[a.id] = (enc.ap[a.id] || 0) - now;
+    if (owe) (enc.owed || (enc.owed = {}))[a.id] = (enc.owed[a.id] || 0) + owe;
+    const what = kind === 'block' ? 'off the shield' : 'off the parry';
+    log(enc, `${a.name}'s blow rebounds ${what}: −${C.fmtAP(lose)} AP${owe ? ` (${C.fmtAP(owe)} of it next round)` : ''}.`, 'defend');
+  }
+
+  // A successful parry opens the attacker (CONFIG.defense.riposteOpen): the parrier may answer at once with a blow of
+  // the parrying weapon that reaches them, paying its AP (none with the Riposte feat), and the attacker may defend it.
+  // With riposteOpen off, only the feat's free thrust, undefended (as before 2026-11-03).
+  async function riposte(enc, chars, t, a, kind, io, posAtStart) {
+    const w = parryingWeapon(t, kind);
+    if (!w) return;
+    const free = C.rank(t, 'riposte') > 0;
+    const d0 = dist(posAtStart[t.id], posAtStart[a.id]);
+    if (!CONFIG.defense.riposteOpen) {
+      if (!free || !Items.weaponStats(w).faces.point) return;
+      const opt = C.attackOptions(t).find((o) => o.motion === 'thrust' && o.weaponId === w.id && !o.halfSword);
+      if (!opt || d0 > opt.reach) return;
+      if (!payStamina(enc, t, opt.stamina)) return;
+      const r = await applyHit(enc, chars, t, a, opt, io && io.roller);
+      return log(enc, `${t.name} ripostes: ${r.text}`, 'hit');
+    }
+    if (t.status.prone || isGrappled(t) || C.inClinch(t)) return;
+    const options = C.attackOptions(t)
+      .filter((o) => o.weaponId === w.id && !o.ranged && !o.spell && !o.windUp && o.motion !== 'power' && C.inRange(o, d0) && !attackUnavailable(enc, t, o))
+      .map((o) => (free ? Object.assign({}, o, { ap: 0 }) : o))
+      .filter((o) => o.ap <= apLeft(enc, t.id));
+    if (!options.length) return;
+    const pick = await react(enc, chars, { kind: 'opportunity', actor: t.id, target: a.id, options, ap: apLeft(enc, t.id), why: 'riposte' }, io);
+    const opt = options.find((o) => o === pick || (pick && C.optionKey(o) === (typeof pick === 'string' ? pick : C.optionKey(pick))));
+    if (!opt) return;
+    enc.ap[t.id] -= opt.ap;
+    log(enc, `${t.name} ripostes.`, 'pass');
+    const sd = { actor: t.id, type: 'strike', option: opt, target: a.id, ap: opt.ap, stamina: opt.stamina, n: ++enc.seq, opportunity: true, riposte: true, round: enc.round };
+    enc.decls.push(sd);
+    await resolveAction(enc, chars, sd, io, posAtStart);
+    sd.done = true;
   }
 
   async function resolveManeuver(enc, chars, d, roller) {
@@ -2467,6 +2531,6 @@
     foeSquares,
     unseenBy, strikeEffects, conditionForbids, ATTACK_TYPES, DEFENSE_TYPES, shoveReach, log, rollDie, castSpell, knockDown, stability, releaseAll: clearGrapple,
     createEncounter, autoPlace, startRound, currentActor, legalActions, act, validate, endTurn, submit, describeDecl, apLeft, defenseOptions, coverOptions, opportunityOptions,
-    vitalNeed, projectedPos, dist, defenseOdds, parryCarryShare, aimPenalty, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolveAction, finishRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
+    vitalNeed, projectedPos, dist, defenseOdds, parryCarryShare, leverage, blowForce, aimPenalty, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolveAction, finishRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

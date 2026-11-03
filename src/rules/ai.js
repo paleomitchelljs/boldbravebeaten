@@ -217,6 +217,9 @@
         const carry = (o.type === 'parry' || o.type === 'offParry') && !req.hidden && req.decl && req.decl.option ? Combat.parryCarryShare(c, o.type, req.decl.option) : 0;
         let v = p * threat * (1 - carry);
         if (o.type === 'dodge' && C.rank(c, 'roll_with_it')) v += (1 - p) * 0.5 * threat;
+        // A blow blocked or parried rebounds: the attacker's lost AP is worth about what mine are (CONFIG.defense.rebound).
+        const R = G.CONFIG.defense.rebound;
+        if (R && R[o.type] && req.decl && req.decl.ap && !carry) v += p * per * req.decl.ap * (R[o.type] + (o.type === 'block' ? 0 : G.Effects.sum(c, 'recoil') * (R.perRank || 0)));
         v -= per * o.ap + 0.3 * o.stamina;
         if (v >= P.defendFloor && (!pick || v > pick.v)) pick = { v, type: o.type };
       }
