@@ -306,9 +306,9 @@
       };
     }
     const t = chars[req.target];
-    const why = { enters: 'comes into', leaves: 'leaves', moves: 'moves about in' }[req.why] || 'leaves';
+    const why = { closes: 'presses inside', leaves: 'leaves', moves: 'moves about in' }[req.why] || 'leaves';
     return {
-      title: `${me.name} → ${t.name}`, from: me.name, to: t.name, tag: { enters: 'coming in', leaves: 'leaving', moves: 'moving' }[req.why] || 'leaving', sub: `${t.name} ${why} ${me.name}'s reach. A hit stops them.`, ap,
+      title: `${me.name} → ${t.name}`, from: me.name, to: t.name, tag: { closes: 'closing in', leaves: 'leaving', moves: 'moving' }[req.why] || 'leaving', sub: `${t.name} ${why} ${me.name}'s reach. A hit stops them.`, ap,
       choices: req.options.map((o) => { const p = blowPreview(enc, chars, { decl: { actor: req.actor, target: req.target, type: 'strike', option: o } }); return { value: o, label: o.label, cost: C.fmtAP(o.ap), odds: '', hint: p ? p.text : '' }; }),
       none: { label: 'Let go', note: 'keep the AP' },
     };

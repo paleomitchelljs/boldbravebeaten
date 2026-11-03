@@ -4,6 +4,14 @@ Last updated at commit: e4c92b6
 
 Keep this a short list. Tick things off, add new ones, and refresh the commit line after every push (`git log -1 --format=%h`).
 
+## Opportunity strikes inside the edge (the user, 2026-11-02)
+- [x] Coming up to the edge of a foe's reach is free; stepping from within it to closer still provokes (a hit holds
+  the mover at the square they stepped from), as do leaving it and a second step within it that brings no closer.
+  `combat.js opportunities`, the AI's `entryCost` and route pricing, the prompt text; tests rewritten.
+- [ ] Duels (sim/FINDINGS.md): mirrors unchanged, but two-handed now beats sword & shield 69% (was 43%) in the open
+  and 68% (31%) in close quarters, and rapier & dagger about 80%. Ask the user whether that is too much; the lever is
+  to let only the step past the edge provoke.
+
 ## New game (the user, 2026-11-02, third set)
 - [x] New Game opens the heroes' portraits (`UI.Screens.heroes`, `World.heroes()`: the presets and the recruits, nine):
   pick up to four (in order), then Begin as they are, or Edit them first (`UI.Screens.create`, rewritten): name,
@@ -658,7 +666,7 @@ idle, walk, attack, hurt, death. PixelLab gives 8 directions; the map mirrors 2,
 - [x] The published site never had `assets/` (the Pages workflow didn't copy it): figures were coloured blocks, no tiles. Fixed 2026-10-24.
 - [x] Ruled: ordinary shields can't block spell bolts (`CONFIG.defense.blockSpells: false`); Spellbreaker can.
 - [x] Waist and two ear slots added (sashes on the waist; Orc Fang Earring and Ivandyr's Hoop in the ears).
-- [x] Opportunity strikes on entering a foe's reach, leaving it, or a second step within it (ruled; sim/FINDINGS.md).
+- [x] Opportunity strikes on entering a foe's reach, leaving it, or a second step within it (ruled; sim/FINDINGS.md). Revised 2026-11-02: the edge is free, stepping inside it provokes.
 - [x] Armor by hit location, step 1: pieces cover locations, unaimed location rolls against mixed armor, carry-through
   for cuts (docs/PROPOSALS.md §2; sim/FINDINGS.md; `sim/locations.js`).
 - [x] Step 2: aimed blows and a Location menu beside each attack (default: the best expected location, `AI.bestAim`).

@@ -2,7 +2,18 @@
 
 Each section gives the rule, the options and a recommendation. §1 is ruled and built; §2 is built in all three steps (pieces and carry-through; aimed blows; wounds by location), with the parry carry-through. The numbers marked *guess* are still guesses.
 
-## 1. Opportunity strikes: which steps provoke (ruled 2026-10-24: option C, built)
+## 1. Opportunity strikes: which steps provoke (ruled 2026-10-24: option C; revised 2026-11-02: option E, built)
+
+**Revised 2026-11-02 (E, inside the edge):** under C a fast fighter who won initiative and closed on an equal weapon
+was struck first as they came into reach, though the square where they entered was one they could strike from too.
+Now coming up to the edge of a foe's reach is free; a step from within it to closer still provokes (the blow comes
+while the mover is still on the square they stepped from, so a hit holds them at range). Leaving reach and a second
+step within it that brings them no closer still provoke. So at equal reach the one who steps in strikes first; a
+spear holds a sword at its edge and every step nearer provokes again; nobody can step inside a reach of 1, so
+coming up to a dagger or a fist is free. A variant that also compared reaches (entering provokes only from a longer
+reach) was dropped: once the edge is free, all it would have added is a free step inside an equal weapon, to the
+clinch or the dagger, which should cost.
+
 
 **Now** (`combat.js opportunities`, `CONFIG.opportunityStrikes`): a step that *starts* inside a foe's melee reach
 lets that foe strike once per move. So a sidestep that stays adjacent provokes; the step that first enters reach

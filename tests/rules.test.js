@@ -1013,7 +1013,7 @@ test('wound roll: armor guards the vitals; a vital stab triples its CON damage',
   assert.strictEqual(u.damage.CON, thrust.damage[0]);
 }));
 
-test('opportunity strikes: entering a foe\'s reach, leaving it, or a second step within it draws a blow; one step within is free', async () => {
+test('opportunity strikes: coming to the edge of a reach is free; stepping inside it, leaving it, or a second step within it draws a blow', async () => {
   const make = (weapon, h) => {
     const s = armed('S', weapon, { side: 'party' });
     const d = armed('D', 'dagger', { side: 'enemy' });
@@ -1032,39 +1032,51 @@ test('opportunity strikes: entering a foe\'s reach, leaving it, or a second step
     await Combat.act(f.enc, f.chars, { actor: f.d.id, type: 'move', to }, io(4, rolls || [10, 10, 10, 10], strikeIfAsked(asked)));
     return asked;
   };
+  const reachOf = (c) => Math.max(...C.attackOptions(c).filter((o) => !o.ranged).map((o) => o.maxRange));
   // Walking away from an adjacent swordsman: one step back is within his thrust (free); he strikes as D
   // steps out of it, and a hit stops D at its edge.
   let f = make('longsword');
-  const reach = Math.max(...C.attackOptions(f.s).filter((o) => !o.ranged).map((o) => o.maxRange));
+  const reach = reachOf(f.s);
   let asked = await run(f, { x: 0, y: 0 }, { x: 1, y: 0 }, { x: 5, y: 0 });
   assert.strictEqual(asked.length, 1, 'one chance, from the swordsman');
   assert.strictEqual(asked[0].why, 'leaves');
   assert.ok(f.enc.log.some((l) => /S strikes at D as they go/.test(l.text)));
   if (C.totalDamage(f.d) > 0 || !C.isActive(f.d)) assert.deepStrictEqual(f.enc.pos[f.d.id], { x: reach, y: 0 }, 'a hit stops the move');
-  // Walking up to a sword from outside its reach: the thrust meets D as he comes in, at the edge.
+  // Walking up to the edge of a sword's reach from far off is free: D gets there and may strike first.
+  f = make('longsword');
+  asked = await run(f, { x: 0, y: 0 }, { x: 6, y: 0 }, { x: reach, y: 0 });
+  assert.strictEqual(asked.length, 0, 'the edge of the reach is free');
+  assert.deepStrictEqual(f.enc.pos[f.d.id], { x: reach, y: 0 });
+  // Walking right up to him: the thrust meets D as he steps past the edge, and a hit holds him there.
   f = make('longsword');
   asked = await run(f, { x: 0, y: 0 }, { x: 6, y: 0 }, { x: 1, y: 0 });
-  assert.strictEqual(asked.length, 1, 'entering the reach provokes, once');
-  assert.strictEqual(asked[0].why, 'enters');
+  assert.strictEqual(asked.length, 1, 'stepping inside the reach provokes, once');
+  assert.strictEqual(asked[0].why, 'closes');
+  assert.ok(f.enc.log.some((l) => /S strikes at D as they close in/.test(l.text)));
   if (C.totalDamage(f.d) > 0 || !C.isActive(f.d)) assert.deepStrictEqual(f.enc.pos[f.d.id], { x: reach, y: 0 }, 'a hit stops him at the edge');
   // One guarded step within reach (a sidestep) is free.
   f = make('longsword', 3);
   asked = await run(f, { x: 0, y: 1 }, { x: 1, y: 0 }, { x: 1, y: 1 });
   assert.strictEqual(asked.length, 0, 'a single step within reach provokes nothing');
   assert.deepStrictEqual(f.enc.pos[f.d.id], { x: 1, y: 1 });
-  // Two steps within reach: the second provokes.
+  // Two steps within reach that bring him no closer: the second provokes.
   f = make('longsword', 3);
   asked = await run(f, { x: 0, y: 1 }, { x: 2, y: 0 }, { x: 2, y: 2 });
   assert.strictEqual(asked.length, 1, 'circling inside the reach provokes');
   assert.strictEqual(asked[0].why, 'moves');
-  // Walking right up to a spearman: one blow, as you come into his reach.
+  // A spearman: the edge of his reach is free, and from there every step nearer provokes, move after move.
   f = make('spear');
+  const spear = reachOf(f.s);
+  asked = await run(f, { x: 0, y: 0 }, { x: 7, y: 0 }, { x: spear, y: 0 });
+  assert.strictEqual(asked.length, 0, 'up to the spear point, nothing');
+  f = make('spear');
+  asked = await run(f, { x: 0, y: 0 }, { x: spear - 1, y: 0 }, { x: spear - 2, y: 0 }, [1, 1, 1, 1]);
+  assert.strictEqual(asked.length, 1, 'already inside, the next step nearer provokes again');
+  assert.strictEqual(asked[0].why, 'closes');
+  // Nobody can step inside a dagger's reach of 1: walking up to one is free.
+  f = make('dagger');
   asked = await run(f, { x: 0, y: 0 }, { x: 6, y: 0 }, { x: 1, y: 0 });
-  assert.strictEqual(asked.length, 1, 'the spear gets its blow on the way in');
-  // Stepping to the edge of a reach from far off still provokes; stopping short of it does not.
-  f = make('longsword');
-  asked = await run(f, { x: 0, y: 0 }, { x: 6, y: 0 }, { x: reach + 1, y: 0 });
-  assert.strictEqual(asked.length, 0, 'short of the reach, nothing');
+  assert.strictEqual(asked.length, 0, 'coming up to a dagger is free');
 });
 
 test('fend off: a long weapon shoves at range 2', async () => {

@@ -285,14 +285,14 @@
   // The distance this loadout likes best against a target: the best of
   // (my rate − RISK × their rate), and among near-equal choices the farthest.
   // If nothing scores above zero, fall back to my best raw rate (someone has to fight).
-  // The cost of getting from distance `from` in to `d` against a foe who can strike at d: entering its
-  // reach, or two steps within it, is an opportunity strike (counted at half, once).
+  // The cost of getting from distance `from` in to `d` against a foe: coming to the edge of its reach is free,
+  // stepping inside it (ending closer than it reaches) is an opportunity strike (counted at half, once).
   function entryCost(c, target, d, from) {
     if (!G.CONFIG.opportunityStrikes || from == null || d >= from) return 0;
     let worst = 0;
     for (const o of C.attackOptions(target)) {
       const r = o.maxRange || 1;
-      if (o.ranged || o.spell || o.windUp || r < d || (from <= r && from - d < 2)) continue;
+      if (o.ranged || o.spell || o.windUp || r <= d) continue;
       worst = Math.max(worst, hitValue(target, c, o, Math.min(from, o.maxRange)));
     }
     return worst * 0.5;
@@ -630,8 +630,8 @@
     const taken = new Set();
     for (const o of enc.ids) if (o !== id && C.isActive(chars[o])) { const q = Combat.projectedPos(enc, o); taken.add(q.x + ',' + q.y); }
     const foePos = foes.map((f) => Combat.projectedPos(enc, f));
-    // Opportunity strikes: a route that enters a foe's reach, leaves it, or takes two steps within it
-    // gives that foe a free blow (about half its worth; less from one who has had its turn).
+    // Opportunity strikes: a route that steps inside a foe's reach (past its edge), leaves it, or takes two
+    // steps within it gives that foe a free blow (about half its worth; less from one who has had its turn).
     const wary = wariness(enc);
     const provokers = G.CONFIG.opportunityStrikes ? foes.map((f) => {
       const foe = chars[f];
@@ -677,8 +677,9 @@
         const dd = far(x, y);
         let score = Math.abs(dd - goal) * 10 + need / C.costScale() + hazard;
         for (const p of provokers) {
-          const inFrom = Combat.dist(from, p.at) <= p.reach, inTo = Combat.dist({ x, y }, p.at) <= p.reach;
-          if (inFrom !== inTo || (inFrom && squares >= 2)) score += p.cost * 2;
+          const dF = Combat.dist(from, p.at), dT = Combat.dist({ x, y }, p.at);
+          const inFrom = dF <= p.reach, inTo = dT <= p.reach;
+          if ((inFrom && !inTo) || (dT < p.reach && dT < dF) || (inFrom && squares >= 2)) score += p.cost * 2;
         }
         if (avoid) {
           // Stay out of every foe's reach if possible, and out of corners you can't leave.

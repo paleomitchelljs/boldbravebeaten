@@ -233,12 +233,12 @@
     return C.attackOptions(f).filter((o) => !o.ranged && !o.spell && !o.windUp && C.inRange(o, dd) && o.ap <= apLeft(enc, f.id) && !attackUnavailable(enc, f, o));
   }
 
-  // A mover's step from `from` to `to` past foes' reach (CONFIG.opportunityStrikes, the user's ruling): a foe
-  // strikes at a mover who enters its reach, leaves it, or takes a second step within it in one move; one
-  // guarded step within reach is free. Each foe strikes once per move, paying from its own AP. phase 'before'
-  // (the mover still at `from`) answers leaving and the second step within; 'after' (the mover now at `to`)
-  // answers entering. Returns true if a blow lands and stops the move.
-  async function opportunities(enc, chars, m, from, to, phase, state, io) {
+  // A mover's step from `from` to `to` past foes' reach (CONFIG.opportunityStrikes, the user's ruling,
+  // 2026-11-02): coming up to the edge of a foe's reach is free; a foe strikes at a mover who steps from within
+  // its reach to closer still, leaves it, or takes a second step within it that brings them no closer. Each foe
+  // strikes once per move, paying from its own AP, with the mover still at `from`: a hit stops them there.
+  // Returns true if a blow lands and stops the move.
+  async function opportunities(enc, chars, m, from, to, state, io) {
     const foes = enc.order.concat(enc.ids.filter((x) => !enc.order.includes(x)))
       .filter((f) => f !== m.id && chars[f] && chars[f].side !== m.side && !state.provoked[f]);
     for (const f of foes) {
@@ -246,13 +246,16 @@
       if (conditionForbids(enc, chars, reactor, { type: 'strike', target: m.id })) continue;
       const inFrom = opportunityOptions(enc, chars, reactor, from).length > 0;
       const inTo = opportunityOptions(enc, chars, reactor, to).length > 0;
-      let at = null, why = '';
-      if (phase === 'before' && inFrom && !inTo) { at = from; why = 'leaves'; }
-      else if (phase === 'before' && inFrom && inTo) {
+      if (!inFrom) continue;
+      const at = from;
+      let why = '';
+      if (!inTo) why = 'leaves';
+      else if (dist(to, enc.pos[f]) < dist(from, enc.pos[f])) why = 'closes';
+      else {
         state.within[f] = (state.within[f] || 0) + 1;
-        if (state.within[f] >= 2) { at = from; why = 'moves'; }
-      } else if (phase === 'after' && !inFrom && inTo) { at = to; why = 'enters'; }
-      if (!at) continue;
+        if (state.within[f] >= 2) why = 'moves';
+      }
+      if (!why) continue;
       const options = opportunityOptions(enc, chars, reactor, at);
       state.provoked[f] = true;
       const pick = await react(enc, chars, { kind: 'opportunity', actor: f, target: m.id, options, ap: apLeft(enc, f), why }, io);
@@ -260,7 +263,7 @@
       if (!opt) continue;
       enc.ap[f] -= opt.ap;
       const before = { stamina: m.stamina, dmg: C.totalDamage(m), active: C.isActive(m), bleeds: m.bleeds.length };
-      log(enc, `${reactor.name} strikes at ${m.name} as they ${why === 'enters' ? 'come in' : why === 'leaves' ? 'go' : 'move'}.`, 'pass');
+      log(enc, `${reactor.name} strikes at ${m.name} as they ${why === 'closes' ? 'close in' : why === 'leaves' ? 'go' : 'move'}.`, 'pass');
       const sd = { actor: f, type: 'strike', option: opt, target: m.id, ap: opt.ap, stamina: opt.stamina, n: ++enc.seq, opportunity: true, round: enc.round };
       enc.decls.push(sd);
       await resolveAction(enc, chars, sd, io, Object.assign({}, enc.pos, { [m.id]: at }));
@@ -782,14 +785,13 @@
     let walked = 0, why = '';
     for (const q of steps) {
       const from = enc.pos[a.id];
-      if (await opportunities(enc, chars, a, from, q, 'before', state, io)) { why = 'stopped'; break; }
+      if (await opportunities(enc, chars, a, from, q, state, io)) { why = 'stopped'; break; }
       if (!C.isActive(a)) { why = 'stopped'; break; }
       if (enc.ids.some((o) => o !== a.id && chars[o].side !== a.side && C.isActive(chars[o]) && enc.pos[o].x === q.x && enc.pos[o].y === q.y)) { why = 'blocked'; break; }
       enc.pos[a.id] = { x: q.x, y: q.y };
       if (dragged) { enc.pos[dragged.id] = { x: from.x, y: from.y }; }
       walked += G.Terrain && enc.tiles ? G.Terrain.stepCost(enc, q.x, q.y, a) : 1;
       if (G.Terrain && enc.tiles && (await G.Terrain.enter(enc, chars, a, q.x, q.y, io && io.roller, (t) => log(enc, t, 'hit')))) { why = 'stops'; break; }
-      if (await opportunities(enc, chars, a, from, q, 'after', state, io)) { why = 'stopped'; break; }
     }
     const at = enc.pos[a.id];
     if (dragged && walked) log(enc, `${a.name} drags ${dragged.name} to (${at.x + 1}, ${at.y + 1}).`);

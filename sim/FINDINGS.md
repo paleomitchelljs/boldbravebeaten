@@ -1,5 +1,29 @@
 # Simulation findings
 
+## Opportunity strikes inside the edge (2026-11-03; `node sim/arena.js --n 20`, before and after)
+
+The user (2026-11-02): a fast fighter who won initiative and closed on an equal weapon was struck first as they came
+into reach. Now coming up to the edge of a foe's reach is free; stepping from within it to closer still, leaving it,
+or a second step within it that brings you no closer provokes (docs/PROPOSALS.md §1, E). Level 5, every armor ×
+strategy, 320 fights a cell (about ±4 points on a difference). Row's win rate, after − before:
+
+| row vs | Two-handed | Sword & shield | Grappler | Rapier & dagger | row average |
+|---|---|---|---|---|---|
+| Two-handed, open | +1 | **+26** (43 → 69) | +18 | **+28** (51 → 79) | 56 → 67 |
+| Two-handed, close quarters | +3 | **+37** (31 → 68) | +29 | **+31** (49 → 80) | 53 → 69 |
+| Sword & shield, open | | 0 | +12 | −8 | 61 → 59 |
+| Grappler, open | | | +2 | −5 | 35 → 30 |
+
+- Mirror matches (two-handed against two-handed, sword & shield against itself) moved within noise, as they should:
+  at equal reach both sides meet at the edge.
+- **Reach now beats the shorter weapons by a lot.** Before, the swordsman paid one blow coming into a greatsword's
+  thrust (3), then closed to 2 and to 1 (where the greatsword is cramped) for free. Now each step nearer is a blow, move
+  after move. This removes the trick the duels showed (step inside and fight with dagger and shield) and swings past it:
+  two-handed is now the strongest melee style in duels.
+- Magic, archery and the enchanter barely moved. Encounter win rates not run (deferred).
+- Lever if it is too much: let only the step past the edge provoke (the stop-thrust at measure); once inside the
+  point, closing further is free. Not built or tested.
+
 ## Jabiku's Life words (2026-11-01, the user)
 
 Jabiku now starts with Life and Increase, Decrease, Transfer, and the modifiers Launch and Burst, which go on a spell
