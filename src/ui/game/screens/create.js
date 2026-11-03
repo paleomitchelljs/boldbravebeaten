@@ -67,8 +67,8 @@
       h('p', { class: 'muted small' }, n ? `${n} of ${SIZE()} chosen: ${chosen.map((x) => x.name).join(', ')}.` : `Pick ${SIZE()} heroes.`),
       h('div', { class: 'hero-grid' }, all.map((hero) => heroCard(game, st, hero))),
       h('div', { class: 'row create-foot' },
-        h('button', { class: 'primary big', disabled: !n, onclick: () => begin(game, chosen.map(clone)) }, 'Begin as they are'),
-        h('button', { class: 'big', disabled: !n, onclick: () => editPicks(game, st, chosen) }, 'Edit them first'),
+        h('button', { class: 'primary big', disabled: !n, onclick: () => begin(game, chosen.map(clone)) }, 'Begin'),
+        h('button', { class: 'big', disabled: !n, onclick: () => editPicks(game, st, chosen) }, 'Edit Characters'),
         n && n < SIZE() ? h('span', { class: 'small muted' }, `${SIZE() - n} place${SIZE() - n === 1 ? '' : 's'} left empty: recruit in ${startName()}.`) : null));
   };
 

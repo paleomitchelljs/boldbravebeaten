@@ -159,14 +159,16 @@ bogSkin:
 scalewardScales:
   name: Suracayl scales
   material: chitin
-  mit: {P: 1, S: 3, B: 1}   # bronze mail's numbers (the user, 2026-10-30: iron mail's were too strong)
+  # Padded armor's numbers (the user, 2026-11-03; was bronze mail's, and iron mail's before 2026-10-30).
+  mit: {P: 1, S: 1, B: 3}
   spd: 0
   dex: 0
   stamina: 0
   regen: 0
   standUp: 0
-  durability: 45
-  pierce: {resist: 1.1, gap: 9}   # bronze mail's 1.1: a rapier's point (1.2) bursts it
+  durability: 20
+  pierce: {resist: 0.75, gap: 8}
+  cutThrough: 8
   rarity: common
   natural: true
 drakeScales:

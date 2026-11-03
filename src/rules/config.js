@@ -210,7 +210,7 @@
     // use `natural`. Undead and constructs have no vital spots.
     vital: {
       perDepth: 0.01, max: 0.4, mult: 3, cut: 0.1, natural: 0.1,
-      armor: { padded: 0.6, leather: 0.5, mail: 0.3, plate: 0.1, fur: 0.8, bogSkin: 0.8, chitin: 0.4, scaleHide: 0.5, scalewardScales: 0.4, trollHide: 0.5, golemStone: 0 },
+      armor: { padded: 0.6, leather: 0.5, mail: 0.3, plate: 0.1, fur: 0.8, bogSkin: 0.8, chitin: 0.4, scaleHide: 0.5, scalewardScales: 0.6, trollHide: 0.5, golemStone: 0 },
       otherArmor: 0.5,
       coverage: { full: 1, half: 1.5, partial: 2 },
       // A pinned fighter's armor doesn't guard the vitals: the point goes in at the armpit,
@@ -339,7 +339,7 @@
       // PROVISIONAL (history, the user's call): armor stops arrows better than it stops a thrust
       // at arm's length. Layered textile catches a shaft (padded most); mail is worn over padding.
       // Extra piercing mitigation against arrows only, by armor type.
-      vsArrows: { padded: 2, leather: 1, mail: 1, plate: 0, fur: 1, chitin: 1, trollHide: 1, scaleHide: 1, scalewardScales: 1, golemStone: 0 },
+      vsArrows: { padded: 2, leather: 1, mail: 1, plate: 0, fur: 1, chitin: 1, trollHide: 1, scaleHide: 1, scalewardScales: 2, golemStone: 0 },
       // Arrowheads. Broadheads cut terrible wounds (bleed × bleed) but a broad blade has little punch
       // (× punch against the bow's, CONFIG.pierce); bodkins are narrow armor-piercers that make a smaller
       // wound (damage on the main type) but punch harder: a longbow bodkin bursts mail, a broadhead doesn't.

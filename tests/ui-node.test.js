@@ -46,8 +46,8 @@ test('ui: title, the heroes\' portraits, editing the chosen, and a new game', ()
   assert.deepEqual(Game.draft.picked, ['beren', 'kalavar', 'spawnee'], 'a second click takes one out');
   card('jadier').click();
   check('heroes picked');
-  // Edit them first: every tab renders; a feat removed, a weapon changed, a name changed.
-  const edit = [...fake.doc.querySelectorAll('button')].find((b) => /Edit them first/.test(b.textContent));
+  // Edit Characters: every tab renders; a feat removed, a weapon changed, a name changed.
+  const edit = [...fake.doc.querySelectorAll('button')].find((b) => /Edit Characters/.test(b.textContent));
   edit.click();
   assert.equal(Game.screen, 'create');
   const d = Game.draft;
@@ -66,7 +66,7 @@ test('ui: title, the heroes\' portraits, editing the chosen, and a new game', ()
   // Back to the heroes keeps the picks; on to the editor again keeps the edits.
   Game.go('heroes');
   assert.deepEqual(Game.draft.picked, ['beren', 'kalavar', 'spawnee', 'jadier']);
-  [...fake.doc.querySelectorAll('button')].find((b) => /Edit them first/.test(b.textContent)).click();
+  [...fake.doc.querySelectorAll('button')].find((b) => /Edit Characters/.test(b.textContent)).click();
   assert.equal(Game.draft.members[0].name, 'Beren the Bold');
   // Begin: the party is the four, as edited; those not picked wait in the village, those picked do not.
   [...fake.doc.querySelectorAll('button')].find((b) => /^Begin in/.test(b.textContent)).click();
@@ -78,11 +78,11 @@ test('ui: title, the heroes\' portraits, editing the chosen, and a new game', ()
   assert.deepEqual(World.recruits(Game.world, 'village').map((r) => r.id).sort(), ['arvir', 'crusader', 'cyrus', 'jabiku', 'lorc']);
   check('explore after new game');
   Explore.leave(Game.world, 'stonebridge');
-  // Begin as they are, with the default four.
+  // Begin, with the default four.
   Game.draft = null;
   Game.go('heroes');
   for (const id of ['beren', 'lorc', 'cyrus', 'jabiku']) card(id).click();
-  [...fake.doc.querySelectorAll('button')].find((b) => /Begin as they are/.test(b.textContent)).click();
+  [...fake.doc.querySelectorAll('button')].find((b) => /^Begin$/.test(b.textContent)).click();
   assert.deepEqual(World.party(Game.world).map((c) => c.name), ['Beren', 'Lorc', 'Cyrus', 'Jabiku']);
   Explore.leave(Game.world, 'stonebridge');
   Game.go('town');   // stops the explore view's drawing

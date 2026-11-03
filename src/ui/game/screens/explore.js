@@ -277,7 +277,14 @@
       tileKey: Explore.tileKey(w, w.place),
       cell: (x, y) => Explore.peek(w, x, y),
       // Past a way out on the map's edge, its ground runs on a few squares, so the road visibly leaves the map.
-      outside: (x, y) => { const e = Explore.beyond(w.place, x, y); if (!e) return null; const c = Explore.peek(w, e.x, e.y); return { ch: '.', kind: 'floor', ground: c.ground, st: {} }; },
+      // Elsewhere outdoors the edge's own wall runs on (the swamp's jungle, not the temple wall the tileset is named for).
+      outside: (x, y) => {
+        const e = Explore.beyond(w.place, x, y);
+        if (e) { const c = Explore.peek(w, e.x, e.y); return { ch: '.', kind: 'floor', ground: c.ground, st: {} }; }
+        if (!p.open) return null;
+        const c = Explore.peek(w, Math.max(0, Math.min(g.w - 1, x)), Math.max(0, Math.min(g.h - 1, y)));
+        return c && c.kind === 'wall' && c.ground ? c : null;
+      },
       // Rock (' ' in a map) is never shown: it is the dark beyond the place, a drop off a wall top or solid earth.
       // The road past a way out shows once the way out has been seen.
       seen: (x, y) => {

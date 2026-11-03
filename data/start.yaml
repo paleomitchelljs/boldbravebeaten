@@ -54,17 +54,18 @@ presets:
     arrows: 30
     feats: [agility, quickness, agility, keen_eye, light_armor_training]
     look: {sprite: "art:lorc"}
-  # Cyrus: a swashbuckling fencer, unarmored, all speed: rapier and parrying dagger, quick thrusts, parry and riposte.
+  # Cyrus: a swashbuckling fencer, all speed: a gambeson and nothing more (the user, 2026-11-03: padded on the chest at
+  # least), rapier and parrying dagger, quick thrusts, parry and riposte.
   - id: cyrus
     name: Cyrus
-    blurb: "A swashbuckling fencer in no armor at all: rapier, parrying dagger, parry and riposte."
+    blurb: "A swashbuckling fencer in a padded gambeson and nothing heavier: rapier, parrying dagger, parry and riposte."
     place: village
     at: [24, 19]
-    pitch: "Armor is for people who can't get out of the way. Shall we?"
+    pitch: "Anything heavier than a gambeson is for people who can't get out of the way. Shall we?"
     kit: rapier
     level: 3
     attrs: {STR: 4, CON: 5, DEX: 8, SPD: 8, INT: 4, WIL: 4, WIS: 4, CHA: 3}
-    armorItem: null
+    armorItem: {armor: padded, covers: [torso]}
     feats: [quick_thrust, parry_training, riposte, quickness, dodge_training]
     look: {sprite: "art:cyrus"}
   # The mage: Life, to heal, wither and drain, at arm's reach, at range and over an area. The staff is a casting focus.
@@ -135,10 +136,11 @@ recruits:
     shieldItem: null
     feats: [quick_thrust, parry_training, offhand_dagger, dodge_training, quickness]
     look: {sprite: "art:dragonborn-blue"}
-  # A knight in plate, sworn to a cause he doesn't name.
+  # A knight in plate, sworn to a cause he doesn't name: a sword and a heater shield (the user, 2026-11-03; was a
+  # longsword in both hands). Where Beren blocks, he knocks them down with the shield and walks on in the plate.
   - id: crusader
     name: The Crusader
-    blurb: "A knight in plate with a longsword in both hands, sworn to a cause he doesn't name."
+    blurb: "A knight in plate with a sword and a heater shield, sworn to a cause he doesn't name."
     place: village
     at: [14, 17]
     pitch: "My oath brought me this far south. It will carry me further, beside you, if you have need of steel."
@@ -147,8 +149,8 @@ recruits:
     attrs: {STR: 7, CON: 7, DEX: 5, SPD: 4, INT: 3, WIL: 6, WIS: 4, CHA: 4}
     armorItem: {armor: plate, material: iron}
     weaponItems: [{weapon: longsword, material: steel}, {weapon: dagger}]
-    shieldItem: null
-    feats: [plate_mobility, heavy_weapon_training, power_swing, half_swording, murder_stroke]
+    shieldItem: {shield: heater, material: wood}
+    feats: [plate_mobility, shield_training, shield_bash, plate_endurance, heavy_weapon_training]
     look: {sprite: "art:crusader"}
   # A spellsword: a curved blade, a buckler, and fire to throw.
   - id: spawnee
