@@ -1256,6 +1256,8 @@ temple_wall:
 
 # ---- The fire-goblin mine (prototype dungeon 2; plan in assets/ideas/ember-mine.md). Maps laid out by
 # assets/wip/ember/layout.py, then hand-edited here. ----------------------------------------------------------
+# TUNED DOWN FOR TESTING (the user, 2026-11-04): every encounter and wanderer here is one foe, not a group. The groups
+# as designed are at commit 691d44f (`git show 691d44f:data/places.yaml`).
 ember_hall:
   name: The Cinder Hall
   kind: dungeon
@@ -1342,13 +1344,13 @@ ember_hall:
     L: {kind: stairs, to: ember_lake, at: l, sprite: door, wall: true, label: "Steps down towards a red glow"}
     w: {kind: monster, encounter: chamber, label: "Goblins resting in the small chamber"}
   encounters:
-    murderhole: {foes: [{monster: fireGoblinArcher, n: 2}, {monster: fireGoblin}], text: "Bowstrings creak behind the murder hole. Goblin faces, lit red from below."}
-    hall: {foes: [{monster: fireGoblin, n: 3}], text: "Three fire goblins across the hall turn and come at a run, spears low."}
-    patrol: {foes: [{monster: fireGoblin, n: 2}, {monster: fireGoblinArcher}], text: "A patrol rounds the column of rock."}
-    gate: {foes: [{monster: goblinWarrior, n: 2}, {monster: fireGoblinArcher}], flags: [ember_gate_won], text: "The gate guards close ranks in front of the portcullis."}
-    chamber: {foes: [{monster: goblinMiner, n: 2}], text: "Two goblin miners scramble up from their blankets."}
+    murderhole: {foes: [{monster: fireGoblinArcher}], text: "A bowstring creaks behind the murder hole. A goblin face, lit red from below."}
+    hall: {foes: [{monster: fireGoblin}], text: "A fire goblin across the hall turns and comes at a run, spear low."}
+    patrol: {foes: [{monster: fireGoblin}], text: "A goblin on patrol rounds the column of rock."}
+    gate: {foes: [{monster: goblinWarrior}], flags: [ember_gate_won], text: "The gate guard steps in front of the portcullis."}
+    chamber: {foes: [{monster: goblinMiner}], text: "A goblin miner scrambles up from its blanket."}
   wandering:
-    - {w: 1, foes: [{monster: fireGoblin, n: 2}], text: "Two fire goblins come along the hall."}
+    - {w: 1, foes: [{monster: fireGoblin}], text: "A fire goblin comes along the hall."}
     - {w: 4, nothing: true}
   secrets: []
 
@@ -1431,15 +1433,15 @@ ember_warrens:
     C: {kind: chest, label: "A goblin's hidden cache", loot: strongbox, tn: 9}
     c: {kind: chest, label: "An ore cart with a false bottom", loot: smuggler_cache, tn: 8}
   encounters:
-    gnomes: {foes: [{monster: gnomeWarrior, n: 3}], parley: gnome_sergeant, peaceFlags: [gnomes_trust], text: "Three gnomes in black mail step out of the bridgehead, hammers up."}
-    miners: {foes: [{monster: goblinMiner, n: 3}], text: "Goblin miners drop their picks and pick up clubs."}
-    miners2: {foes: [{monster: goblinMiner, n: 2}, {monster: fireGoblin}], text: "Two miners and a fire goblin driving them."}
-    overseer: {foes: [{monster: goblinShaman}, {monster: goblinMiner, n: 2}], text: "A goblin with a bone staff shrieks at the miners to fight."}
-    archers: {foes: [{monster: fireGoblinArcher, n: 2}], text: "Two archers in the dead end, nocking arrows."}
+    gnomes: {foes: [{monster: gnomeWarrior}], parley: gnome_sergeant, peaceFlags: [gnomes_trust], text: "A gnome in black mail steps out of the bridgehead, hammer up."}
+    miners: {foes: [{monster: goblinMiner}], text: "A goblin miner drops its pick and picks up a club."}
+    miners2: {foes: [{monster: fireGoblin}], text: "A fire goblin with a whip, looking for miners to drive."}
+    overseer: {foes: [{monster: goblinShaman}], text: "A goblin with a bone staff shrieks for the miners, then comes at you alone."}
+    archers: {foes: [{monster: fireGoblinArcher}], text: "An archer in the dead end, nocking an arrow."}
     drake: {foes: [{monster: redDrake}], text: "The red drake lifts its head from what it was eating."}
   wandering:
     - {w: 1, foes: [{monster: redDrake}], text: "Wingbeats in the tunnel. The drake is hunting."}
-    - {w: 2, foes: [{monster: goblinMiner, n: 2}], text: "Two goblin miners with a cart."}
+    - {w: 2, foes: [{monster: goblinMiner}], text: "A goblin miner with a cart."}
     - {w: 5, nothing: true}
   secrets: []
 
@@ -1489,7 +1491,7 @@ ember_lake:
     X: {kind: chest, label: "A chest on the island, its iron blackened", loot: relic_cache, tn: 10}
     e: {kind: monster, encounter: keepers, label: "Flame standing on the island"}
   encounters:
-    keepers: {foes: [{monster: fireElemental, n: 2}], text: "The flames on the island stand up into the shapes of men."}
+    keepers: {foes: [{monster: fireElemental}], text: "The flames on the island stand up into the shape of a man."}
   wandering:
     - {w: 1, foes: [{monster: fireElemental}], text: "A figure of fire walks up out of the lava."}
     - {w: 5, nothing: true}
@@ -1528,7 +1530,7 @@ ember_pit:
     z: {kind: secret, tn: 10, label: "A seam in the pit wall"}
     u: {kind: stairs, to: ember_warrens, at: U, up: true, sprite: door, wall: true, label: "A narrow way up into the warrens"}
   encounters:
-    efreet: {foes: [{monster: efreetLord}, {monster: fireElemental, n: 2}], text: "The fire in the middle of the pit stands up, and up, and looks down at you. Two smaller flames rise at its sides."}
+    efreet: {foes: [{monster: efreetLord}], text: "The fire in the middle of the pit stands up, and up, and looks down at you."}
   secrets: []
 
 ember_barracks:
@@ -1573,12 +1575,12 @@ ember_barracks:
     C: {kind: chest, label: "The captain's strongbox", loot: strongbox, tn: 10}
     r: {kind: pickup, good: repair_kit, text: "A whetstone and rivets on the armorer's bench."}
   encounters:
-    bunks: {foes: [{monster: goblinWarrior, n: 2}, {monster: fireGoblin, n: 2}], text: "Goblins roll out of the bunks grabbing for weapons."}
-    mess: {foes: [{monster: goblinWarrior, n: 2}, {monster: fireGoblinArcher}], text: "The mess goes over in a crash of bowls."}
-    drill: {foes: [{monster: goblinWarrior, n: 3}], text: "The warriors at drill turn as one."}
-    captain: {foes: [{monster: goblinChampion}, {monster: goblinShaman}], text: "A goblin as big as a man stands up from a table of maps."}
+    bunks: {foes: [{monster: goblinWarrior}], text: "A goblin rolls out of the bunks grabbing for a weapon."}
+    mess: {foes: [{monster: goblinWarrior}], text: "The mess goes over in a crash of bowls."}
+    drill: {foes: [{monster: goblinWarrior}], text: "A warrior at drill turns."}
+    captain: {foes: [{monster: goblinChampion}], text: "A goblin as big as a man stands up from a table of maps."}
   wandering:
-    - {w: 1, foes: [{monster: goblinWarrior, n: 2}], text: "Two warriors on their rounds."}
+    - {w: 1, foes: [{monster: goblinWarrior}], text: "A warrior on its rounds."}
     - {w: 4, nothing: true}
   secrets: []
 
@@ -1692,16 +1694,16 @@ ember_castle:
     c: {kind: monster, encounter: champions, label: "Champions in the front room"}
     x: {kind: monster, encounter: shaman, label: "The high shaman's fire"}
   encounters:
-    hallguard: {foes: [{monster: goblinWarrior, n: 2}], text: "Two guards in the entrance hall shout and come on."}
-    bar: {foes: [{monster: goblinWarrior}, {monster: fireGoblin, n: 2}], text: "The drinkers come over the bar at you."}
-    sleepers: {foes: [{monster: fireGoblin, n: 3}], text: "Goblins tumble out of their blankets."}
+    hallguard: {foes: [{monster: goblinWarrior}], text: "A guard in the entrance hall shouts and comes on."}
+    bar: {foes: [{monster: fireGoblin}], text: "A drinker comes over the bar at you."}
+    sleepers: {foes: [{monster: fireGoblin}], text: "A goblin tumbles out of its blanket."}
     sleepers2: {foes: [{monster: goblinMiner}], text: "A goblin sits up, blinking."}
-    throne: {foes: [{monster: goblinKing}, {monster: goblinChampion, n: 2}], flags: [ember_king_dead], text: "The king heaves himself up from the throne. Two champions step down from the dais in front of him."}
+    throne: {foes: [{monster: goblinKing}], flags: [ember_king_dead], text: "The king heaves himself up from the throne."}
     bodyguard: {foes: [{monster: goblinChampion}], text: "A champion guarding the king's rooms turns, astonished, as the wall opens."}
-    champions: {foes: [{monster: goblinChampion}, {monster: goblinWarrior, n: 2}], text: "A champion and two warriors in the front room."}
-    shaman: {foes: [{monster: goblinHighShaman}, {monster: goblinShaman}], text: "The high shaman looks up from its fire, and the fire looks up with it."}
+    champions: {foes: [{monster: goblinChampion}], text: "A champion in the front room."}
+    shaman: {foes: [{monster: goblinHighShaman}], text: "The high shaman looks up from its fire, and the fire looks up with it."}
   wandering:
-    - {w: 1, foes: [{monster: goblinWarrior, n: 2}], text: "Two castle guards on their rounds."}
+    - {w: 1, foes: [{monster: goblinWarrior}], text: "A castle guard on its rounds."}
     - {w: 4, nothing: true}
   secrets: []
 
@@ -1745,7 +1747,7 @@ ember_jail:
     o: {kind: note, label: "An empty cell", text: "Chains, and what is left of whoever wore them."}
     D: {kind: prop, sprite: rubble, label: "The stair goes on down into heat and dark: the way to the deep lair (not built yet)"}
   encounters:
-    questioner: {foes: [{monster: goblinShaman}, {monster: fireGoblin}], text: "The questioner puts down its irons."}
-    jailers: {foes: [{monster: goblinWarrior}, {monster: fireGoblin}], text: "The jailers grab their keys and their spears."}
+    questioner: {foes: [{monster: goblinShaman}], text: "The questioner puts down its irons."}
+    jailers: {foes: [{monster: goblinWarrior}], text: "The jailer grabs its keys and its spear."}
   secrets: []
 
