@@ -201,6 +201,7 @@
 
   function doAction(game, f, a) {
     const w = game.world;
+    if (a.id === 'service') { game.ui.prompt = { type: 'service', x: f.x, y: f.y, i: a.alt }; game.render(); return; }
     if (a.id === 'talk') { const def = Explore.cell(w, f.x, f.y).def; game.talk(def.npc, { type: 'npc', x: f.x, y: f.y }); return; }
     if (a.id === 'fight' || a.id === 'ambush') { startFight(game, { x: f.x, y: f.y, def: Explore.cell(w, f.x, f.y).def, aware: a.id === 'fight' }, a.id === 'ambush'); return; }
     if (a.id === 'parley') { const def = Explore.cell(w, f.x, f.y).def; const spec = Explore.encounterSpec(w, def); game.talk(spec.parley, { type: 'encounter', x: f.x, y: f.y, spec }); return; }
@@ -208,6 +209,16 @@
     const now = Explore.facing(w);
     if (!now.actions.length) game.ui.prompt = null;
     game.render();
+  }
+
+  // A village person's service (the town's shop, healer or trainer panel), from their square.
+  function servicePrompt(game, p) {
+    const def = Explore.cell(game.world, p.x, p.y).def;
+    const s = Explore.serviceList(def)[p.i];
+    if (!s) return null;
+    return h('section', { class: 'popcard service' },
+      h('div', { class: 'popcard-head' }, h('h3', { class: 'grow' }, def.label || s.name), closeBtn(game)),
+      UI.TownService(game, s));
   }
 
   function stairsPrompt(game, p) {
@@ -255,7 +266,7 @@
         SPREAD[n - 1].forEach(([dx, dy], i) => { const look = looks[i % looks.length]; sc.actors.push({ id: `m${b.x},${b.y},${i}`, x: b.x + dx, y: b.y + dy, kind: look.kind, tint: look.tint, size: look.size, art: look.art, artTint: look.artTint, artScale: look.artScale, artSize: look.artSize, tag: 'enemy', flip: ex.x < b.x, sleep: !!(b.def.asleep && !st.woken), ring: st.pacified ? 'rgba(120,230,160,0.7)' : null, phase: i * 2 + b.x }); });
       } else {
         const npc = G.Content.world.npcs[b.def.npc] || {};
-        const look = Sprites.lookFor(npc.sprite || 'wizard', npc.name);
+        const look = Sprites.lookFor(b.def.sprite || npc.sprite || 'wizard', npc.name || b.def.label);
         sc.actors.push({ id: `n${b.x},${b.y}`, x: b.x, y: b.y, kind: look.kind, tint: look.tint, size: look.size, art: look.art, artTint: look.artTint, artScale: look.artScale, artSize: look.artSize, tag: 'npc', flip: ex.x < b.x, ring: 'rgba(120,190,255,0.55)', phase: b.y });
       }
     }
@@ -303,7 +314,7 @@
         const c = Explore.peek(w, x, y);
         if (!sc.seen(x, y)) return '';
         if (c.kind === 'monster' && !(c.st && (c.st.done || c.st.pacified))) return c.def.label || 'Foes';
-        if (c.kind === 'npc') return G.Content.world.npcs[c.def.npc].name;
+        if (c.kind === 'npc') return c.def.npc ? G.Content.world.npcs[c.def.npc].name : c.def.label;
         return c.def && c.def.label ? c.def.label : '';
       },
     };
@@ -450,6 +461,7 @@
       if (pr.type === 'encounter') prompt = encounterPrompt(game, pr);
       else if (pr.type === 'stairs') prompt = stairsPrompt(game, pr);
       else if (pr.type === 'face') prompt = facePrompt(game);
+      else if (pr.type === 'service') prompt = servicePrompt(game, pr);
     }
     return h('div', { class: 'explore' },
       Bits.topBar(game, { title: p.name, mapToggle: true }),

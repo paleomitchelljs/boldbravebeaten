@@ -117,6 +117,7 @@ canvas.portrait { width: auto; max-width: 100%; height: auto; image-rendering: p
 .popcard { position: absolute; z-index: 6; left: 50%; top: 14px; transform: translateX(-50%); width: min(380px, calc(100% - 140px)); padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
 .popcard-head { display: flex; gap: 10px; align-items: center; }
 .popcard .act { display: flex; justify-content: space-between; gap: 10px; text-align: left; align-items: center; width: 100%; }
+.popcard.service { width: min(560px, calc(100% - 24px)); max-height: calc(100% - 28px); overflow-y: auto; }
 .popcard.result { top: 50%; transform: translate(-50%, -50%); width: min(420px, 92%); }
 .popcard.result.won { border-color: #1d4a3b; }
 .popcard.encounter { border-color: #4a2320; }

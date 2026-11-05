@@ -1,0 +1,198 @@
+{
+  "group_id": "d87d7c20-3506-4467-9bfd-0bbf15411e5d",
+  "states": [
+    {
+      "character": {
+        "id": "5dfe600c-bf88-41ae-b4ef-840be0b5f591",
+        "name": "Idle",
+        "prompt": "An armored goblin warlord in bronze armor holding a pike with a pronged axe head of strange design",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-05T05:19:02.269844+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "1e16ff39-5552-443a-b8c8-a6b7672818c8",
+        "name": "Lava-orange-red skin",
+        "prompt": "An armored goblin warlord in bronze armor holding a pike with a pronged axe head of strange design",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-05T05:22:07.843126+00:00"
+      },
+      "folder": "Lava-orange-red_skin",
+      "frames": {
+        "rotations": {
+          "south": "Lava-orange-red_skin/rotations/south.png",
+          "south-east": "Lava-orange-red_skin/rotations/south-east.png",
+          "east": "Lava-orange-red_skin/rotations/east.png",
+          "north-east": "Lava-orange-red_skin/rotations/north-east.png",
+          "north": "Lava-orange-red_skin/rotations/north.png",
+          "north-west": "Lava-orange-red_skin/rotations/north-west.png",
+          "west": "Lava-orange-red_skin/rotations/west.png",
+          "south-west": "Lava-orange-red_skin/rotations/south-west.png"
+        },
+        "animations": {
+          "Walk": {
+            "north-west": [
+              "Lava-orange-red_skin/animations/Walk/north-west/frame_000.png",
+              "Lava-orange-red_skin/animations/Walk/north-west/frame_001.png",
+              "Lava-orange-red_skin/animations/Walk/north-west/frame_002.png",
+              "Lava-orange-red_skin/animations/Walk/north-west/frame_003.png",
+              "Lava-orange-red_skin/animations/Walk/north-west/frame_004.png",
+              "Lava-orange-red_skin/animations/Walk/north-west/frame_005.png"
+            ],
+            "east": [
+              "Lava-orange-red_skin/animations/Walk/east/frame_000.png",
+              "Lava-orange-red_skin/animations/Walk/east/frame_001.png",
+              "Lava-orange-red_skin/animations/Walk/east/frame_002.png",
+              "Lava-orange-red_skin/animations/Walk/east/frame_003.png",
+              "Lava-orange-red_skin/animations/Walk/east/frame_004.png",
+              "Lava-orange-red_skin/animations/Walk/east/frame_005.png"
+            ],
+            "north": [
+              "Lava-orange-red_skin/animations/Walk/north/frame_000.png",
+              "Lava-orange-red_skin/animations/Walk/north/frame_001.png",
+              "Lava-orange-red_skin/animations/Walk/north/frame_002.png",
+              "Lava-orange-red_skin/animations/Walk/north/frame_003.png",
+              "Lava-orange-red_skin/animations/Walk/north/frame_004.png",
+              "Lava-orange-red_skin/animations/Walk/north/frame_005.png"
+            ],
+            "south-east": [
+              "Lava-orange-red_skin/animations/Walk/south-east/frame_000.png",
+              "Lava-orange-red_skin/animations/Walk/south-east/frame_001.png",
+              "Lava-orange-red_skin/animations/Walk/south-east/frame_002.png",
+              "Lava-orange-red_skin/animations/Walk/south-east/frame_003.png",
+              "Lava-orange-red_skin/animations/Walk/south-east/frame_004.png",
+              "Lava-orange-red_skin/animations/Walk/south-east/frame_005.png"
+            ],
+            "south": [
+              "Lava-orange-red_skin/animations/Walk/south/frame_000.png",
+              "Lava-orange-red_skin/animations/Walk/south/frame_001.png",
+              "Lava-orange-red_skin/animations/Walk/south/frame_002.png",
+              "Lava-orange-red_skin/animations/Walk/south/frame_003.png",
+              "Lava-orange-red_skin/animations/Walk/south/frame_004.png",
+              "Lava-orange-red_skin/animations/Walk/south/frame_005.png"
+            ],
+            "north-east": [
+              "Lava-orange-red_skin/animations/Walk/north-east/frame_000.png",
+              "Lava-orange-red_skin/animations/Walk/north-east/frame_001.png",
+              "Lava-orange-red_skin/animations/Walk/north-east/frame_002.png",
+              "Lava-orange-red_skin/animations/Walk/north-east/frame_003.png",
+              "Lava-orange-red_skin/animations/Walk/north-east/frame_004.png",
+              "Lava-orange-red_skin/animations/Walk/north-east/frame_005.png"
+            ],
+            "west": [
+              "Lava-orange-red_skin/animations/Walk/west/frame_000.png",
+              "Lava-orange-red_skin/animations/Walk/west/frame_001.png",
+              "Lava-orange-red_skin/animations/Walk/west/frame_002.png",
+              "Lava-orange-red_skin/animations/Walk/west/frame_003.png",
+              "Lava-orange-red_skin/animations/Walk/west/frame_004.png",
+              "Lava-orange-red_skin/animations/Walk/west/frame_005.png"
+            ],
+            "south-west": [
+              "Lava-orange-red_skin/animations/Walk/south-west/frame_000.png",
+              "Lava-orange-red_skin/animations/Walk/south-west/frame_001.png",
+              "Lava-orange-red_skin/animations/Walk/south-west/frame_002.png",
+              "Lava-orange-red_skin/animations/Walk/south-west/frame_003.png",
+              "Lava-orange-red_skin/animations/Walk/south-west/frame_004.png",
+              "Lava-orange-red_skin/animations/Walk/south-west/frame_005.png"
+            ]
+          },
+          "Death": {
+            "south": [
+              "Lava-orange-red_skin/animations/Death/south/frame_000.png",
+              "Lava-orange-red_skin/animations/Death/south/frame_001.png",
+              "Lava-orange-red_skin/animations/Death/south/frame_002.png",
+              "Lava-orange-red_skin/animations/Death/south/frame_003.png",
+              "Lava-orange-red_skin/animations/Death/south/frame_004.png",
+              "Lava-orange-red_skin/animations/Death/south/frame_005.png",
+              "Lava-orange-red_skin/animations/Death/south/frame_006.png"
+            ]
+          },
+          "Idle": {
+            "south": [
+              "Lava-orange-red_skin/animations/Idle/south/frame_000.png",
+              "Lava-orange-red_skin/animations/Idle/south/frame_001.png",
+              "Lava-orange-red_skin/animations/Idle/south/frame_002.png",
+              "Lava-orange-red_skin/animations/Idle/south/frame_003.png"
+            ]
+          },
+          "Strike": {
+            "east": [
+              "Lava-orange-red_skin/animations/Strike/east/frame_000.png",
+              "Lava-orange-red_skin/animations/Strike/east/frame_001.png",
+              "Lava-orange-red_skin/animations/Strike/east/frame_002.png",
+              "Lava-orange-red_skin/animations/Strike/east/frame_003.png",
+              "Lava-orange-red_skin/animations/Strike/east/frame_004.png",
+              "Lava-orange-red_skin/animations/Strike/east/frame_005.png",
+              "Lava-orange-red_skin/animations/Strike/east/frame_006.png"
+            ],
+            "north": [
+              "Lava-orange-red_skin/animations/Strike/north/frame_000.png",
+              "Lava-orange-red_skin/animations/Strike/north/frame_001.png",
+              "Lava-orange-red_skin/animations/Strike/north/frame_002.png",
+              "Lava-orange-red_skin/animations/Strike/north/frame_003.png",
+              "Lava-orange-red_skin/animations/Strike/north/frame_004.png",
+              "Lava-orange-red_skin/animations/Strike/north/frame_005.png",
+              "Lava-orange-red_skin/animations/Strike/north/frame_006.png"
+            ],
+            "south": [
+              "Lava-orange-red_skin/animations/Strike/south/frame_000.png",
+              "Lava-orange-red_skin/animations/Strike/south/frame_001.png",
+              "Lava-orange-red_skin/animations/Strike/south/frame_002.png",
+              "Lava-orange-red_skin/animations/Strike/south/frame_003.png",
+              "Lava-orange-red_skin/animations/Strike/south/frame_004.png",
+              "Lava-orange-red_skin/animations/Strike/south/frame_005.png",
+              "Lava-orange-red_skin/animations/Strike/south/frame_006.png"
+            ],
+            "north-east": [
+              "Lava-orange-red_skin/animations/Strike/north-east/frame_000.png",
+              "Lava-orange-red_skin/animations/Strike/north-east/frame_001.png",
+              "Lava-orange-red_skin/animations/Strike/north-east/frame_002.png",
+              "Lava-orange-red_skin/animations/Strike/north-east/frame_003.png",
+              "Lava-orange-red_skin/animations/Strike/north-east/frame_004.png",
+              "Lava-orange-red_skin/animations/Strike/north-east/frame_005.png",
+              "Lava-orange-red_skin/animations/Strike/north-east/frame_006.png"
+            ],
+            "south-east": [
+              "Lava-orange-red_skin/animations/Strike/south-east/frame_000.png",
+              "Lava-orange-red_skin/animations/Strike/south-east/frame_001.png",
+              "Lava-orange-red_skin/animations/Strike/south-east/frame_002.png",
+              "Lava-orange-red_skin/animations/Strike/south-east/frame_003.png",
+              "Lava-orange-red_skin/animations/Strike/south-east/frame_004.png",
+              "Lava-orange-red_skin/animations/Strike/south-east/frame_005.png",
+              "Lava-orange-red_skin/animations/Strike/south-east/frame_006.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-11-05T05:40:21.422164"
+}

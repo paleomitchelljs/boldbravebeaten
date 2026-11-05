@@ -53,6 +53,17 @@ duskBat:
   natural: [ratBite]
   traits: {flying: true, dodge: 2, staminaMult: 0.5}
   feats: {dodge_training: 2}
+faeDrake:
+  name: Fae drake
+  blurb: "A drake no bigger than a cat, on butterfly wings: quick, clever and spiteful. Bound to a caster, a fine familiar."
+  faction: wilds
+  xp: 14
+  glyph: "🐉"
+  sprite: {art: fae-drake-pl, kind: orc, scale: 0.6, tint: "#8a5ac0"}
+  attrs: {STR: 3, CON: 4, DEX: 8, SPD: 9, INT: 6, WIS: 6, CHA: 5}
+  natural: [ratBite]
+  traits: {flying: true, dodge: 2, staminaMult: 0.6}
+  feats: {dodge_training: 2}
 fireSprite:
   name: Fire sprite
   blurb: "A mote of living flame bound to a caster: its touch burns."
@@ -700,7 +711,7 @@ goblinChampion:
   faction: cinder_goblins
   xp: 90
   glyph: "👹"
-  sprite: {art: orc-warrior, kind: orc_warrior, scale: 1.0}
+  sprite: {art: goblin-warlord, kind: orc_warrior, scale: 1.0}
   loot: humanoid_purse
   level: 4
   attrs: {STR: 9, CON: 8, DEX: 7, SPD: 6, INT: 4, WIL: 6, WIS: 5, CHA: 4}
@@ -738,7 +749,7 @@ goblinHighShaman:
   faction: cinder_goblins
   xp: 200
   glyph: "🔥"
-  sprite: {art: mummy-lord, kind: orc_shaman, scale: 1.0}
+  sprite: {art: goblin-shaman, kind: orc_shaman, scale: 1.0}
   loot: humanoid_purse
   level: 6
   attrs: {STR: 5, CON: 7, DEX: 6, SPD: 6, INT: 10, WIL: 10, WIS: 8, CHA: 7}
@@ -775,6 +786,19 @@ fireElemental:
   armor: golemBody
   traits: {size: 1.2, tireless: true, element: fire, noBleed: true, resist: {P: 0.5, S: 0.5, fire: 0, mind: 0}}
   feats: {}
+efreeti:
+  name: Efreeti
+  blurb: "A lesser fire spirit in a man's shape, a servant of the pit. It fights with burning fists and throws fire."
+  faction: wilds
+  xp: 160
+  glyph: "🔥"
+  sprite: {art: efreeti, kind: orc_shaman, scale: 1.1, tint: "#e04010"}
+  level: 6
+  attrs: {STR: 11, CON: 11, DEX: 8, SPD: 8, INT: 7, WIL: 9, WIS: 6, CHA: 7}
+  natural: [elementalTouch]
+  nouns: [fire]
+  traits: {size: 1.1, element: fire, resist: {fire: 0, mind: 0.5}}
+  feats: {casting: 2, verb_strike: 1, mod_launch: 1}
 efreetLord:
   name: The efreet lord
   blurb: "A great fire spirit bound at the bottom of a pit, with two elementals for company. It flies, it burns, and it is very bored."

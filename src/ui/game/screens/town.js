@@ -55,7 +55,8 @@
       h('button', { class: 'primary', onclick: () => game.talk(id, { type: 'town' }) }, 'Talk'));
   }
 
-  // ---- Services ---------------------------------------------------------------------------------------------
+  // ---- Services (also opened from a person on the map: UI.TownService) ---------------------------------------
+  UI.TownService = (game, s) => service(game, s);
   function service(game, s) {
     switch (s.kind) {
       case 'inn': return inn(game, s);

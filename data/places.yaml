@@ -151,11 +151,11 @@ village:
     - "##,,,,,,,,,,,........,,d,,,,,,,,##"
     - "##,,xxx,,,,,,........,,,,,,,,,,,##"
     - "##,,xcx,,,,,,.....w..,,xxx,,,,,,##"
-    - "##,,,,,,,,,l,........l,xhx,,,,,,##"
+    - "##,,,,,,,,Pl,........l,xhx,,,,,,##"
     - "##,,,,,,.........................E"
     - "##,u,,,,.........................#"
-    - "##,,ffff..,,n,,p,,,s,s,,,,,,,,,,##"
-    - "##,,,,,,..,,,,,,,,,,,,,,bo,,,u,,##"
+    - "##,,ffff..,,n,,p,,,sMs,,,,,,,,,,##"
+    - "##,,,,,,..,,,,T,,,,,,,,,bo,,,u,,##"
     - "##,,t,,,..,xxx,,,xxx,,,,,,,,,,,,##"
     - "##,,,,,,..,xcx,,,xcx,,,,,,gg,,,,##"
     - "##,,,,,,...............,,,,,,,,,##"
@@ -190,6 +190,11 @@ village:
     f: {kind: prop, sprite: fence, label: "A fence", on: ","}
     l: {kind: prop, sprite: lamppost, label: "A lamp post", on: ","}
     n: {kind: prop, sprite: bench, solid: false, label: "A bench", on: ","}
+    # People (the user, 2026-11-04: a priest, a merchant and a trainer in the start village, on the old placeholder
+    # sprites). Each opens the town's own service there (services: {place, location}).
+    P: {kind: npc, npc: warden_ysa, sprite: wizard, label: "Warden Ysa, priest of the Lantern", services: {place: stonebridge, location: lantern_house}, on: ","}
+    M: {kind: npc, npc: guildmaster_pell, sprite: rogue, label: "Guildmaster Pell, merchant", services: {place: stonebridge, location: market}, on: ","}
+    T: {kind: npc, sprite: knight, label: "The drillmaster", services: {place: stonebridge, location: yard}, on: ","}
   encounters: {}
   secrets: []
 
@@ -1544,6 +1549,7 @@ ember_lake:
     keepers: {foes: [{monster: fireElemental}], text: "The flames on the island stand up into the shape of a man."}
   wandering:
     - {w: 1, foes: [{monster: fireElemental}], text: "A figure of fire walks up out of the lava."}
+    - {w: 1, foes: [{monster: efreeti}], text: "An efreeti steps out of the heat haze over the lava, fists alight."}
     - {w: 5, nothing: true}
   secrets: []
 

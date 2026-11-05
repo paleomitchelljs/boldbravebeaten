@@ -540,7 +540,11 @@
         out.actions.push({ id: 'disarm', label: 'Disarm it', skill: 'trapcraft', tn: c.def.disarm || 8, who: S.best(party, 'trapcraft') });
         out.actions.push({ id: 'hop', label: 'Jump over it', skill: 'forcing', tn: 7 });
         break;
-      case 'npc': out.actions.push({ id: 'talk', label: `Talk to ${G.Content.world.npcs[c.def.npc].name}` }); break;
+      case 'npc': {
+        if (c.def.npc) out.actions.push({ id: 'talk', label: `Talk to ${G.Content.world.npcs[c.def.npc].name}` });
+        serviceList(c.def).forEach((s, i) => out.actions.push({ id: 'service', alt: i, label: s.name }));
+        break;
+      }
       case 'shrine': out.actions.push({ id: 'pray', label: 'Kneel' }); break;
       case 'monster': {
         const spec = encounterSpec(world, c.def);
@@ -673,7 +677,19 @@
     return p && p.wandering ? R.weighted(p.wandering) : null;
   }
 
+  // What a person on the map offers besides talk (a priest's healing, a merchant's stall, a trainer): `services` is a
+  // list, or {place, location} to borrow a town location's.
+  function serviceList(def) {
+    const S = def && def.services;
+    if (!S) return [];
+    if (Array.isArray(S)) return S;
+    const p = G.Content.world.places[S.place];
+    const loc = p && (p.locations || []).find((l) => l.id === S.location);
+    return (loc && loc.services) || [];
+  }
+
   G.Explore = {
+    serviceList,
     DIRS, DIR_NAMES, grid, groundOf, place, lightRadius, here, cell, state, tileKey, opaque, lineClear, cheb, markSeen, findChar, exits, beyond,
     enter, leave, fall, front, turn, move, go, peek, path, search, facing, describe, act, scan, wake,
     encounterSpec, foeAwareness, resolveSquare, wanderingFor, minutesPerStep, noise, settleClock, wanderCheck,

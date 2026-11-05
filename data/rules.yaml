@@ -71,7 +71,7 @@ game:
   # Which monsters.yaml creatures answer each feat, by rank (rank II adds the second list). The owner may choose
   # among those on offer; otherwise the last (strongest) is taken. death: attribute points a familiar's death costs.
   companions:
-    familiar: {ranks: [[duskBat, rat], [fireSprite]], death: {WIL: 2}}
+    familiar: {ranks: [[duskBat, rat, faeDrake], [fireSprite]], death: {WIL: 2}}
     beast: {ranks: [[wolf], [alphaWolf]]}
   # ---- Starting a game ----------------------------------------------------
   party: {size: 4, attrPool: 40, attrMin: 3, attrMax: 8, startGold: 60}

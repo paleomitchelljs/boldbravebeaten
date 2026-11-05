@@ -1,0 +1,190 @@
+{
+  "group_id": "800b62c6-da6c-4979-9903-d3671b4fc81f",
+  "states": [
+    {
+      "character": {
+        "id": "07c1a3b3-699d-4312-883d-142ae5654c4f",
+        "name": "Idle",
+        "prompt": "Goblin wearing thin totemic armor ",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-05T05:13:22.162289+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "627a7f10-8fd8-4e6d-9312-50a2a19c6f4a",
+        "name": "with lava-orange/red",
+        "prompt": "Goblin wearing thin totemic armor ",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-05T05:16:45.195069+00:00"
+      },
+      "folder": "with_lava-orange_red",
+      "frames": {
+        "rotations": {
+          "south": "with_lava-orange_red/rotations/south.png",
+          "south-east": "with_lava-orange_red/rotations/south-east.png",
+          "east": "with_lava-orange_red/rotations/east.png",
+          "north-east": "with_lava-orange_red/rotations/north-east.png",
+          "north": "with_lava-orange_red/rotations/north.png",
+          "north-west": "with_lava-orange_red/rotations/north-west.png",
+          "west": "with_lava-orange_red/rotations/west.png",
+          "south-west": "with_lava-orange_red/rotations/south-west.png"
+        },
+        "animations": {
+          "Death": {
+            "south": [
+              "with_lava-orange_red/animations/Death/south/frame_000.png",
+              "with_lava-orange_red/animations/Death/south/frame_001.png",
+              "with_lava-orange_red/animations/Death/south/frame_002.png",
+              "with_lava-orange_red/animations/Death/south/frame_003.png",
+              "with_lava-orange_red/animations/Death/south/frame_004.png",
+              "with_lava-orange_red/animations/Death/south/frame_005.png",
+              "with_lava-orange_red/animations/Death/south/frame_006.png"
+            ]
+          },
+          "Strike": {
+            "south": [
+              "with_lava-orange_red/animations/Strike/south/frame_000.png",
+              "with_lava-orange_red/animations/Strike/south/frame_001.png",
+              "with_lava-orange_red/animations/Strike/south/frame_002.png",
+              "with_lava-orange_red/animations/Strike/south/frame_003.png",
+              "with_lava-orange_red/animations/Strike/south/frame_004.png",
+              "with_lava-orange_red/animations/Strike/south/frame_005.png",
+              "with_lava-orange_red/animations/Strike/south/frame_006.png"
+            ],
+            "south-east": [
+              "with_lava-orange_red/animations/Strike/south-east/frame_000.png",
+              "with_lava-orange_red/animations/Strike/south-east/frame_001.png",
+              "with_lava-orange_red/animations/Strike/south-east/frame_002.png",
+              "with_lava-orange_red/animations/Strike/south-east/frame_003.png",
+              "with_lava-orange_red/animations/Strike/south-east/frame_004.png",
+              "with_lava-orange_red/animations/Strike/south-east/frame_005.png",
+              "with_lava-orange_red/animations/Strike/south-east/frame_006.png"
+            ],
+            "east": [
+              "with_lava-orange_red/animations/Strike/east/frame_000.png",
+              "with_lava-orange_red/animations/Strike/east/frame_001.png",
+              "with_lava-orange_red/animations/Strike/east/frame_002.png",
+              "with_lava-orange_red/animations/Strike/east/frame_003.png",
+              "with_lava-orange_red/animations/Strike/east/frame_004.png",
+              "with_lava-orange_red/animations/Strike/east/frame_005.png",
+              "with_lava-orange_red/animations/Strike/east/frame_006.png"
+            ],
+            "north-east": [
+              "with_lava-orange_red/animations/Strike/north-east/frame_000.png",
+              "with_lava-orange_red/animations/Strike/north-east/frame_001.png",
+              "with_lava-orange_red/animations/Strike/north-east/frame_002.png",
+              "with_lava-orange_red/animations/Strike/north-east/frame_003.png",
+              "with_lava-orange_red/animations/Strike/north-east/frame_004.png",
+              "with_lava-orange_red/animations/Strike/north-east/frame_005.png",
+              "with_lava-orange_red/animations/Strike/north-east/frame_006.png"
+            ],
+            "north": [
+              "with_lava-orange_red/animations/Strike/north/frame_000.png",
+              "with_lava-orange_red/animations/Strike/north/frame_001.png",
+              "with_lava-orange_red/animations/Strike/north/frame_002.png",
+              "with_lava-orange_red/animations/Strike/north/frame_003.png",
+              "with_lava-orange_red/animations/Strike/north/frame_004.png",
+              "with_lava-orange_red/animations/Strike/north/frame_005.png",
+              "with_lava-orange_red/animations/Strike/north/frame_006.png"
+            ]
+          },
+          "Walk": {
+            "north-west": [
+              "with_lava-orange_red/animations/Walk/north-west/frame_000.png",
+              "with_lava-orange_red/animations/Walk/north-west/frame_001.png",
+              "with_lava-orange_red/animations/Walk/north-west/frame_002.png",
+              "with_lava-orange_red/animations/Walk/north-west/frame_003.png",
+              "with_lava-orange_red/animations/Walk/north-west/frame_004.png",
+              "with_lava-orange_red/animations/Walk/north-west/frame_005.png"
+            ],
+            "east": [
+              "with_lava-orange_red/animations/Walk/east/frame_000.png",
+              "with_lava-orange_red/animations/Walk/east/frame_001.png",
+              "with_lava-orange_red/animations/Walk/east/frame_002.png",
+              "with_lava-orange_red/animations/Walk/east/frame_003.png",
+              "with_lava-orange_red/animations/Walk/east/frame_004.png",
+              "with_lava-orange_red/animations/Walk/east/frame_005.png"
+            ],
+            "south-east": [
+              "with_lava-orange_red/animations/Walk/south-east/frame_000.png",
+              "with_lava-orange_red/animations/Walk/south-east/frame_001.png",
+              "with_lava-orange_red/animations/Walk/south-east/frame_002.png",
+              "with_lava-orange_red/animations/Walk/south-east/frame_003.png",
+              "with_lava-orange_red/animations/Walk/south-east/frame_004.png",
+              "with_lava-orange_red/animations/Walk/south-east/frame_005.png"
+            ],
+            "north": [
+              "with_lava-orange_red/animations/Walk/north/frame_000.png",
+              "with_lava-orange_red/animations/Walk/north/frame_001.png",
+              "with_lava-orange_red/animations/Walk/north/frame_002.png",
+              "with_lava-orange_red/animations/Walk/north/frame_003.png",
+              "with_lava-orange_red/animations/Walk/north/frame_004.png",
+              "with_lava-orange_red/animations/Walk/north/frame_005.png"
+            ],
+            "west": [
+              "with_lava-orange_red/animations/Walk/west/frame_000.png",
+              "with_lava-orange_red/animations/Walk/west/frame_001.png",
+              "with_lava-orange_red/animations/Walk/west/frame_002.png",
+              "with_lava-orange_red/animations/Walk/west/frame_003.png",
+              "with_lava-orange_red/animations/Walk/west/frame_004.png",
+              "with_lava-orange_red/animations/Walk/west/frame_005.png"
+            ],
+            "north-east": [
+              "with_lava-orange_red/animations/Walk/north-east/frame_000.png",
+              "with_lava-orange_red/animations/Walk/north-east/frame_001.png",
+              "with_lava-orange_red/animations/Walk/north-east/frame_002.png",
+              "with_lava-orange_red/animations/Walk/north-east/frame_003.png",
+              "with_lava-orange_red/animations/Walk/north-east/frame_004.png",
+              "with_lava-orange_red/animations/Walk/north-east/frame_005.png"
+            ],
+            "south": [
+              "with_lava-orange_red/animations/Walk/south/frame_000.png",
+              "with_lava-orange_red/animations/Walk/south/frame_001.png",
+              "with_lava-orange_red/animations/Walk/south/frame_002.png",
+              "with_lava-orange_red/animations/Walk/south/frame_003.png",
+              "with_lava-orange_red/animations/Walk/south/frame_004.png",
+              "with_lava-orange_red/animations/Walk/south/frame_005.png"
+            ],
+            "south-west": [
+              "with_lava-orange_red/animations/Walk/south-west/frame_000.png",
+              "with_lava-orange_red/animations/Walk/south-west/frame_001.png",
+              "with_lava-orange_red/animations/Walk/south-west/frame_002.png",
+              "with_lava-orange_red/animations/Walk/south-west/frame_003.png",
+              "with_lava-orange_red/animations/Walk/south-west/frame_004.png",
+              "with_lava-orange_red/animations/Walk/south-west/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-11-05T05:42:40.402885"
+}

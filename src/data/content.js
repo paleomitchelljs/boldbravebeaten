@@ -270,7 +270,11 @@
         for (const [ch, def] of Object.entries(legend)) {
           const at = `places.${id}.legend.${ch}`;
           if (def.kind === 'monster' && !(p.encounters && def.encounter in p.encounters) && !has(G.Enemies.MONSTERS, def.encounter)) err(`${at}: encounter "${def.encounter}" unknown`);
-          if (def.kind === 'npc' && !has(npcs, def.npc)) err(`${at}: npc "${def.npc}" unknown`);
+          if (def.kind === 'npc' && (def.npc != null || !def.services) && !has(npcs, def.npc)) err(`${at}: npc "${def.npc}" unknown`);
+          if (def.kind === 'npc' && def.services && !Array.isArray(def.services)) {
+            const sp = places[def.services.place], sl = sp && (sp.locations || []).find((l) => l.id === def.services.location);
+            if (!sl || !(sl.services || []).length) err(`${at}: services ${def.services.place}/${def.services.location} not found`);
+          }
           if (def.on && !(def.on in ground)) err(`${at}: on "${def.on}" is not a ground letter`);
           if ((def.kind === 'stairs' || def.kind === 'drop') && !has(places, def.to)) err(`${at}: leads to unknown place "${def.to}"`);
           if ((def.kind === 'stairs' || def.kind === 'drop') && def.at && places[def.to] && places[def.to].map && !places[def.to].map.join('').includes(def.at)) err(`${at}: arrival "${def.at}" is not on ${def.to}'s map`);
