@@ -22,7 +22,7 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   leaning tree is still (two takes redrew its crown every frame). 72 generations. Seen in headless Chrome.
 - [x] Ground tiles redone in the same style (the user, a trial for a broader art rework): forest floor, marsh, swamp
   water and bank, trail, canopy wall, drawn fresh from a palette taken from the new trees and decor
-  (`assets/wip/jungle/palette.json`). 125 generations (the marsh twice: the first came out teal, like water).
+  (`assets/wip/jungle/palette.json`). 98 generations (the marsh twice: the first came out teal, like water).
 - [x] The first jungle art is archived, not lost: `archive/art/jungle-v1/` (painterly ground sheets and tiles, the
   rejected teal marsh, the painterly trees with their moss frames).
 - [ ] The trail ends in a straight edge at the east exit (exit squares draw as plain floor; `on: trail` drew a square
