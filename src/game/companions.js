@@ -4,7 +4,7 @@
  * to fight like anyone's. It joins every fight on the party's side, run by the AI, and rests when the party rests.
  *
  * What may follow whom is data (rules.yaml game.companions): for each kind, the monsters.yaml keys on offer by feat
- * rank (rank II offers stronger beasts). The owner picks one (c.companionChoice); otherwise the first on offer.
+ * rank (rank II offers stronger beasts). The owner picks one (c.companionChoice); otherwise the last on offer.
  *   familiar  +2 spell points per Familiar rank while it lives (Magic.maxSP); its death costs the owner `death`
  *             attribute points (the bond tears)
  *   beast     a fighter at your side

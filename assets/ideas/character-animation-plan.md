@@ -216,3 +216,29 @@ animations. ... then I'd like the new creatures I've added to PixelLab to have a
 | Orc (the blue brute; its chain-mail state not animated) | walk ×8, punch ×8 | 16 | the cape flies about in the punch |
 | Gnoll (blue-grey; its white state not animated) | walk ×8, claw ×8 | 16 | N strike loses a third of the figure mid-lunge (seen from behind): kept |
 | | | balance 841 | idles for these nine not made (about 72) |
+
+## The mine's new figures and a familiar (the user, 2026-11-04)
+
+The user: "getting the orange skinned goblin sprites, the Efreeti, and one familiar in place are the priorities in that
+order. Could you please generate the animations and poses for them". 183 generations at the start, 86 at the end.
+The calls below come to 57 by their receipts; the balance fell 97 (the rest is not accounted for here: other use of
+the account the same day, perhaps).
+
+| Character | Clip | How | Receipt |
+|---|---|---|---|
+| Goblin warlord (orange) | walk ×8 | template walking-6-frames; SE, E, NW dropped the halberd: deleted, redone in v3 into the same group | 8 + 3 |
+| | halberd chop ×5 | v3, 6 frames (south first, then 4) | 1 + 4 |
+| | death (south) | v3 | 1 |
+| | breathing idle (south) | template; not wired (south only) | 1 |
+| Goblin shaman (orange) | walk ×8 | template walking-6-frames | 8 |
+| | fire cast ×5 | v3 | 1 + 4 |
+| | death (south) | v3 | 1 |
+| Efreeti | walk ×8 | template walking-6-frames | 8 |
+| | flaming punch ×5 (`Strike2`) | v3; the first `Strike` (south) had a shapeless smoke frame: deleted. SE frame 4 washed out: replaced by frame 3 in the repo (a re-pull brings it back) | 1 + 1 + 4 |
+| | death (south, into embers) | v3 | 1 |
+| Fae drake | hover ×5 (8 frames) | v3, played standing and moving | 4 + 1 |
+| | bite ×5 | v3 | 5 |
+
+Left for later: idles for the warlord (4 more directions), the shaman and the Efreeti (breathing-idle, 5 each); the
+drake's death; Tylo (its south view needs fixing first).
+

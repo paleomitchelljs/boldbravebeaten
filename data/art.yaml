@@ -335,7 +335,11 @@ fae-drake-pl:
   height: 0.8
   maxWidth: 1.2
   floats: true
-  idle: {anim: Idle, frames: 8, dirs: [south]}
+  walk: Hover
+  walkFrames: 8
+  walks: [south, south-east, east, north-east, north]
+  idle: {anim: Hover, frames: 8, dirs: [south, south-east, east, north-east, north]}
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
 gowra:
   type: pixellab
   dir: art/characters/pixellab/Gowra/Idle

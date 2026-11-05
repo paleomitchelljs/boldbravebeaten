@@ -4,6 +4,21 @@ Last updated at commit: 179a369
 
 Keep this a short list. Tick things off, add new ones, and refresh the commit line after every push (`git log -1 --format=%h`).
 
+## Village people; the mine's new figures (the user, 2026-11-04)
+- [x] The start village has a priest (Warden Ysa), a merchant (Guildmaster Pell) and a trainer (the drillmaster) on
+  the old placeholder sprites (wizard, rogue, knight). Each opens the town's own service there: legend `services:
+  {place, location}` (`Explore.serviceList`; the explore screen shows `UI.TownService` in a card). A person may have
+  services and no conversation (the drillmaster). Seen in headless Chrome (the priest's healing card).
+- [ ] The Lantern still raises only friends (Friendly, standing 25). Fine for testing? Ask the user.
+- [x] Mine: the goblin champion is the user's goblin warlord (lava-orange; was the orc warrior, Kalavar's figure), the
+  high shaman the goblin shaman (lava-orange; was the mummy lord). A new monster, the efreeti (a lesser fire spirit:
+  burning fists, fire bolts), wanders the lava lake. Walks, strikes and deaths generated for all three
+  (assets/ideas/character-animation-plan.md has the ledger). Seen in headless Chrome in a staged fight.
+- [x] The fae drake is a familiar (rank I, after the dusk bat and the rat, so the default there): hovers, bites.
+  No hero starts with Familiar; seen in a staged fight with it given to Jabiku.
+- [ ] Not generated (86 generations left until 2026-11-24): idles for the warlord, shaman and efreeti, the drake's
+  death, anything for Tylo (its south view needs fixing first).
+
 ## Jungle west of the grassland; the mine tuned down (the user, 2026-11-04)
 - [x] The mine (all eight ember_ places): every encounter and wanderer is one foe, not a group (the king alone, the
   efreet alone, one gnome at the bridgehead). Texts rewritten. The groups as designed are at commit 691d44f; a
