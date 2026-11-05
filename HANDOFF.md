@@ -16,6 +16,11 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 - [x] A first place to show it: `jungle_west` (The Mire Wood), off the western grassland's road west (was a note);
   its own road west is a note. Props only, no foes. Seen in headless Chrome (east end, marsh); the sway not watched.
 - [ ] Shallow and deep swamp water are drawn alike; the canopy's green is loud against the dark floor. Ask the user.
+- [x] Trees and decor were too detailed and realistic for the sprites (the user): redone in the sprites' look (thick
+  outlines, flat three-tone shading, saturated, max 16 colours), and 16 jungle decor pieces (ferns, toadstools, log,
+  reeds, cattails, lily pads...) replace the temple court's ferns. Moss sways on the oak, dead tree and branch; the
+  leaning tree is still (two takes redrew its crown every frame). 72 generations. Seen in headless Chrome.
+- [ ] The ground tiles are still the first, painterly sets and now look busier than the trees. Redo them? Ask the user.
 
 ## Heroes and the swamp's edge (the user, 2026-11-03)
 - [x] Cyrus wears a padded gambeson (torso only; blurb and pitch say so). The Crusader carries his longsword in one

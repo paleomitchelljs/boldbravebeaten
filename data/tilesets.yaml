@@ -1444,16 +1444,27 @@ jungle:
   floor: floor
   wall: jungle
   terrains:
-    water: {color: "#2a3824", tile: water.png}
-    shallows: {color: "#2a3824", tile: water.png}
-    marsh: {color: "#3a3a26", tile: marsh.png, wang: jungle-swamp.png, over: water}
+    water:
+      color: "#2a3824"
+      tile: water.png
+      decor: {density: 0.25, flip: true, spread: 6, pieces: [[decor.png, 318, 0, 46, 32]]}
+    shallows:
+      color: "#2a3824"
+      tile: water.png
+      decor: {density: 0.25, flip: true, spread: 6, edge: true, pieces: [[decor.png, 318, 0, 46, 32]]}
+    marsh:
+      color: "#3a3a26"
+      tile: marsh.png
+      wang: jungle-swamp.png
+      over: water
+      decor: {density: 0.45, clump: 4, flip: true, spread: 10, edge: true, pieces: [[decor.png, 494, 0, 58, 60], [decor.png, 65, 0, 39, 60], [decor.png, 686, 0, 62, 53], [decor.png, 686, 0, 62, 53]]}
     floor:
       color: "#4a3a28"
       tile: floor.png
       wang: jungle-marsh.png
       over: marsh
-      # ferns and broad-leaf plants from the temple court's decor
-      decor: {density: 0.35, clump: 5, flip: true, spread: 10, pieces: [[../temple/court-decor.png, 704, 0, 58, 56], [../temple/court-decor.png, 768, 0, 43, 44], [../temple/court-decor.png, 896, 0, 38, 36], [../temple/court-decor.png, 960, 0, 26, 32], [../temple/court-decor.png, 64, 0, 26, 24]]}
+      # ferns, toadstools, a mossy rock, a log, roots, a stump (assets/wip/jungle/decor/)
+      decor: {density: 0.3, clump: 5, flip: true, spread: 10, pieces: [[decor.png, 108, 0, 62, 60], [decor.png, 174, 0, 29, 30], [decor.png, 0, 0, 61, 60], [decor.png, 752, 0, 49, 51], [decor.png, 433, 0, 57, 53], [decor.png, 368, 0, 61, 43], [decor.png, 556, 0, 61, 53], [decor.png, 870, 0, 51, 44], [decor.png, 621, 0, 61, 60], [decor.png, 254, 0, 60, 36], [decor.png, 805, 0, 61, 49], [decor.png, 207, 0, 43, 45], [decor.png, 108, 0, 62, 60], [decor.png, 174, 0, 29, 30], [decor.png, 254, 0, 60, 36]]}
     trail:
       color: "#5a4030"
       tile: trail.png
@@ -1491,11 +1502,11 @@ jungle:
         - [0, 2, ".....01..12..10."]
         - [0, 3, ".01..12..10....."]
   props:
-    kapok: [props.png, 0, 0, 110, 118]
-    mangrove: [props.png, 114, 0, 106, 111]
-    strangler: [props.png, 224, 0, 116, 115]
-    cypress: [props.png, 344, 0, 111, 112, null, null, 8, 5]
-    mossoak: [props.png, 1236, 0, 116, 116, null, null, 14, 5]
-    mossdead: [props.png, 2864, 0, 96, 119, null, null, 8, 5]
-    mossleaning: [props.png, 3636, 0, 110, 114, null, null, 8, 5]
-    mossbranch: [props.png, 4520, 0, 116, 107, null, null, 8, 5]
+    kapok: [props.png, 0, 0, 109, 113]
+    mangrove: [props.png, 113, 0, 91, 113]
+    strangler: [props.png, 208, 0, 111, 113]
+    cypress: [props.png, 323, 0, 93, 109]
+    mossoak: [props.png, 533, 0, 115, 110, null, null, 8, 5]
+    mossdead: [props.png, 1457, 0, 97, 110, null, null, 8, 5]
+    mossleaning: [props.png, 420, 0, 109, 111]
+    mossbranch: [props.png, 2237, 0, 109, 109, null, null, 14, 5]

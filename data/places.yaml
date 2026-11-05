@@ -725,7 +725,7 @@ jungle_west:
     K: {kind: prop, sprite: kapok, label: "A kapok tree on great buttress roots"}
     M: {kind: prop, sprite: mangrove, label: "A mangrove standing on its roots", on: "≈"}
     F: {kind: prop, sprite: strangler, label: "A strangler fig, its trunk a lattice of roots"}
-    C: {kind: prop, sprite: cypress, label: "A swamp cypress, knees round its feet, moss in its branches", on: "≈"}
+    C: {kind: prop, sprite: cypress, label: "A swamp cypress, knees round its feet", on: "≈"}
     A: {kind: prop, sprite: mossoak, label: "A gnarled oak hung with moss"}
     D: {kind: prop, sprite: mossdead, label: "A dead tree hung with pale moss"}
     L: {kind: prop, sprite: mossleaning, label: "A leaning tree trailing moss and vines"}

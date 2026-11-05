@@ -24,18 +24,29 @@ shallow brown puddles between tufts of green sedge and short reeds, soft and low
   transition "a tall wall of gnarled jungle tree trunks on twisted buttress roots, hanging vines and grey-green moss".
   Same 25-tile layout as outside/jungle-edge, so its cliff table is copied.
 
-## Trees (create_1_direction_object, 128 px, drawn at scale 1; all eight kept, 20 generations)
-- Gnarled roots: kapok (7a06d1c8, buttress roots), mangrove (fa703b34, stilt roots), strangler fig (059dae9d),
-  cypress (e7dc0306, knees and some moss).
-- Moss-hung: mossoak (671d7b05), mossdead (133eed36), mossleaning (f24b4832), mossbranch (f223d422, a branch with no
-  trunk, not solid, set under the canopy's edge).
-- Moss sway: animate_object v3, 8 frames, 2 generations each ("the long strands of hanging moss sway gently back and
-  forth in a light breeze, a seamless loop; the trunk ... stay perfectly still"). The first takes of mossleaning
-  (barely moved) and mossoak (two pops) were redone ("swing slowly side to side ... clearly visible movement"); the
-  oak's second take jumps from its last frame to its first, so it plays there and back (`PINGPONG`, 14 frames).
-  The animated frames are v3's redraw of the tree, a shade different from the still in props/.
+## Trees and decor, second pass (the user: "too detailed and realistic, not quite matching the art of the character sprites")
+The first trees (128 px, painterly: hundreds of fine root strands, no outline, muted) were replaced. The prompts now ask
+for the sprites' look in words, with a colour cap: "a stylized cartoon ... tree in chunky 16-bit RPG pixel art, thick
+dark outline around every shape, simple bold shapes, flat cel shading with only three tones per colour, bright
+saturated greens and warm browns, few large leaf clumps, a handful of thick gnarled roots", max_colors 16
+(create_1_direction_object, 128 px, drawn at scale 1; all kept).
+- Gnarled roots: kapok (124147d9), mangrove (5a00d23a), strangler fig (8bab1945), cypress (814a6fd8; no moss, still).
+- Moss-hung ("a few long clumps of grey-green hanging moss"): mossoak (86831e0e), mossdead (76bfffa3), mossleaning
+  (51858e36), mossbranch (c38f59dd, a branch with no trunk, not solid, set under the canopy's edge). Still a little
+  more muted than the sprites (grey moss, dark bark).
+- Moss sway: animate_object v3, 8 frames, 2 generations each ("the long clumps of hanging moss swing slowly and evenly
+  side to side ... small smooth steps between frames ... the trunk ... stay perfectly still"). The branch jumps from
+  its last frame to its first, so it plays there and back (`PINGPONG`, 14 frames). The leaning tree is still: two
+  takes (the second "the leafy crown, the trunk and the roots do not move or change at all") redrew its crown every
+  frame, ~1,400 pixels a step, which would shimmer.
+- Decor (decor/, 64 px, max_colors 12, the same style words; 16 pieces, one generation call, 33f92870): fern, small
+  fern, broad-leaf plant, toadstools, mossy rock, log, root, violets, stump, leaves, vine, glowing caps on the floor;
+  reeds, cattails, swamp grass on the marsh; lily pads on the water. `DECOR` in build.py sets which and how thick.
+  They replace the temple court's ferns.
 
 ## Known
+- The ground tiles (floor, marsh, trail, canopy) are still the first, painterly sets: beside the new trees they are now
+  the most detailed thing on screen.
 - The canopy's bright green is the temple jungle edge's; against the darker floor it reads a little loud.
 - The trail's band is wide and blobby where it forks (rows 10-13).
 - Seen in headless Chrome (east arrival, the marsh); the sway not watched moving.

@@ -32,11 +32,60 @@ def put_plain(im, name, side, tile):
     return im
 
 # Trees in the strip's order; the moss-hung ones are animated (anim/<name>/0..7.png, cut to one box so they don't jump).
-STILL = ['kapok', 'mangrove', 'strangler']
-ANIM = ['cypress', 'mossoak', 'mossdead', 'mossleaning', 'mossbranch']
+STILL = ['kapok', 'mangrove', 'strangler', 'cypress', 'mossleaning']
+ANIM = ['mossoak', 'mossdead', 'mossbranch']
 FRAMES, FPS = 8, 5
 # played there and back (0..7..1), for a take whose last frame doesn't lead into its first
-PINGPONG = ['mossoak']
+PINGPONG = ['mossbranch']
+
+# Small pieces scattered over each ground (decor/, 64-px candidates cut to their largest piece), and how thickly.
+DECOR = {
+    'floor': ({'density': 0.3, 'clump': 5, 'flip': True, 'spread': 10},
+              ['fern', 'fern_small', 'broadleaf', 'toadstools', 'mossrock', 'log', 'root', 'violets', 'stump', 'leaves',
+               'vine', 'glowcaps', 'fern', 'fern_small', 'leaves']),
+    'marsh': ({'density': 0.45, 'clump': 4, 'flip': True, 'spread': 10, 'edge': True}, ['reeds', 'cattails', 'swampgrass', 'swampgrass']),
+    'shallows': ({'density': 0.25, 'flip': True, 'spread': 6, 'edge': True}, ['lilypad']),
+    'water': ({'density': 0.25, 'flip': True, 'spread': 6}, ['lilypad']),
+}
+
+def largest_piece(im):
+    a = im.split()[3].load()
+    W, H = im.size
+    seen, best = set(), set()
+    for y in range(H):
+        for x in range(W):
+            if a[x, y] > 0 and (x, y) not in seen:
+                comp, stack = set(), [(x, y)]
+                seen.add((x, y))
+                while stack:
+                    cx, cy = stack.pop(); comp.add((cx, cy))
+                    for dx in (-1, 0, 1):
+                        for dy in (-1, 0, 1):
+                            q = (cx + dx, cy + dy)
+                            if 0 <= q[0] < W and 0 <= q[1] < H and q not in seen and a[q] > 0:
+                                seen.add(q); stack.append(q)
+                if len(comp) > len(best): best = comp
+    o = Image.new('RGBA', im.size)
+    src, dst = im.load(), o.load()
+    for p in best: dst[p] = src[p]
+    return o
+
+def decor_strip():
+    names = sorted({n for _, ns in DECOR.values() for n in ns})
+    ims = []
+    for n in names:
+        im = largest_piece(Image.open(here + 'decor/' + n + '.png').convert('RGBA')); ims.append((n, im.crop(im.getbbox())))
+    out_im = Image.new('RGBA', (sum(im.width + 4 for _, im in ims), max(im.height for _, im in ims)))
+    x, at = 0, {}
+    for n, im in ims:
+        out_im.paste(im, (x, 0)); at[n] = (x, im.width, im.height); x += im.width + 4
+    out_im.save(out + 'decor.png')
+    lines = {}
+    for terrain, (opts, ns) in DECOR.items():
+        o = ', '.join(f'{k}: {str(v).lower() if isinstance(v, bool) else v}' for k, v in opts.items())
+        ps = ', '.join(f'[decor.png, {at[n][0]}, 0, {at[n][1]}, {at[n][2]}]' for n in ns)
+        lines[terrain] = f'decor: {{{o}, pieces: [{ps}]}}'
+    return lines
 
 def strip():
     ims = []
@@ -77,10 +126,22 @@ if __name__ == '__main__':
     sheet('jungle-canopy').save(out + 'jungle-canopy.png')
     lines = strip()
     print('# props\n' + lines)
+    decor = decor_strip()
+    for k, v in decor.items(): print(f'# {k}: {v}')
     if '--yaml' in sys.argv:
         new = dict(re.findall(r'    (\S+): (\[props\.png,[^\]]*\])', lines))
         p = root + '/data/tilesets.yaml'; t = open(p).read()
         i = t.index('\njungle:'); j = t.find('\n', t.index('  props:', i))
         k = re.search(r'\n\S', t[j:]); k = j + k.start() if k else len(t)
         t = t[:j] + re.sub(r'(    (\S+): )\[props\.png,[^\]]*\]', lambda m: m.group(1) + new.get(m.group(2), m.group(0)[len(m.group(1)):]), t[j:k]) + t[k:]
+        # each ground's decor: line (one line, in the terrain's block of the jungle tileset)
+        i = t.index('\njungle:'); j = t.index('  props:', i)
+        block = t[i:j]
+        for k, v in decor.items():
+            m = re.search(rf'\n    {k}:\n.*?(?=\n    \S|\n  \S|$)', block, re.S)
+            seg = m.group(0)
+            if re.search(r'\n      decor: .*', seg): new_seg = re.sub(r'\n      decor: .*', '\n      ' + v, seg)
+            else: new_seg = seg + '\n      ' + v
+            block = block.replace(seg, new_seg, 1)
+        t = t[:i] + block + t[j:]
         open(p, 'w').write(t)
