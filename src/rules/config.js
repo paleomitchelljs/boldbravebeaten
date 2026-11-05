@@ -387,8 +387,12 @@
       // Healing (Restore + Life). PROVISIONAL. Mends one creature: bleeding stops (not poison),
       // condMag CON back (1; 2 with Strong), stamina + staminaPerMag × magnitude stamina back (which
       // wakes the unconscious). With Wide, every living creature within a square of the target,
-      // friend or foe, at areaShare of the stamina. The dead stay dead.
+      // friend or foe, at areaShare of the stamina. The dead stay dead, but see revive.
       heal: { stamina: 4, staminaPerMag: 2, areaShare: 0.5 },
+      // The user (2026-11-04): one who dies in a fight can be called back for `rounds` rounds after the one they died
+      // in (three more turns of their own): a Restore with Life aimed at them brings CON back up to `con` and leaves
+      // them alive but unconscious, at 0 stamina. After that they are beyond saving there (a priest in town still can).
+      revive: { rounds: 3, con: 1 },
       // PROVISIONAL (the user's Transfer, 2026-11-01): what the target loses, the caster gains: each CON taken mends a
       // point of the caster's own lost CON, or, with none lost, gives this much stamina.
       transfer: { staminaPerCON: 3 },

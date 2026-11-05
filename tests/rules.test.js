@@ -1488,6 +1488,37 @@ test('phase 3: mend heals far better than in a fight; prepared wards take hold w
   assert.strictEqual(m.prepared.length, 0);
 });
 
+test('death: for three rounds after the one they died in, a Restore with Life calls the fallen back, unconscious', async () => {
+  const m = mage('Cleric', ['life', 'venom']);
+  const ally = fighter('Ally'), late = fighter('Late'), foe = fighter('Foe');
+  ally.side = late.side = m.side;
+  foe.side = 'enemy';
+  const chars = { [m.id]: m, [ally.id]: ally, [late.id]: late, [foe.id]: foe };
+  const enc = Combat.createEncounter('t', Object.keys(chars), chars, 10, 5);
+  Object.assign(enc.pos, { [m.id]: { x: 1, y: 2 }, [ally.id]: { x: 2, y: 2 }, [late.id]: { x: 2, y: 3 }, [foe.id]: { x: 8, y: 2 } });
+  enc.round = 1;
+  for (const c of [ally, late]) { C.damageAttr(c, 'CON', C.attr(c, 'CON') + 4); C.updateCondition(c); c.bleeds.push({ remaining: 4, rounds: 3 }); }
+  Combat.endRound(enc, chars); // stamps both as dead in round 1
+  assert.equal(ally.status.diedRound, 1);
+  late.status.diedRound = 0; // died a round earlier: its window closes at the end of round 3
+  enc.round = 4;
+  const R = B.CONFIG.magic.revive;
+  assert.ok(B.Magic.revivable(enc, ally) && !B.Magic.revivable(enc, late), `${R.rounds} rounds after the round of death, no more`);
+  const la = Combat.legalActions(enc, chars, m.id);
+  const ids = la.spells.find((x) => x.spellKey === 'restore+life').targets.map((t) => t.id);
+  assert.ok(ids.includes(ally.id) && !ids.includes(late.id), 'Restore + Life can aim at the body still in reach of it');
+  assert.ok(!la.spells.find((x) => x.spellKey === 'restore+venom').targets.some((t) => t.id === ally.id), 'only Life calls back');
+  const o = B.Magic.spellOptions(m).find((x) => x.spellKey === 'restore+life');
+  await B.Magic.resolveCast(enc, chars, { actor: m.id, type: 'cast', option: o, target: ally.id, pass: 1, n: 1 }, roller(5, []), JSON.parse(JSON.stringify(enc.pos)));
+  assert.equal(ally.status.dead, false, 'alive again');
+  assert.equal(ally.status.unconscious, true, 'but unconscious');
+  assert.equal(C.attr(ally, 'CON'), R.con);
+  assert.equal(ally.stamina, 0);
+  assert.equal(ally.bleeds.length, 0, 'bleeding stopped');
+  await B.Magic.resolveCast(enc, chars, { actor: m.id, type: 'cast', option: o, target: late.id, pass: 1, n: 1 }, roller(5, []), JSON.parse(JSON.stringify(enc.pos)));
+  assert.equal(late.status.dead, true, 'beyond saving');
+});
+
 test('Restore: + Life mends (bleeding, CON, stamina; wakes the downed); Wide reaches all around; other nouns lift their conditions', async () => {
   const m = mage('Cleric', ['life', 'venom']);
   const ally = fighter('Ally');

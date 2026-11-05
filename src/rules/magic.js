@@ -507,6 +507,24 @@
     return `${t.name}: ${bits.length ? bits.join(', ') : 'nothing to mend'}${woke ? `; ${t.name} comes to` : ''}.`;
   }
 
+  // Dead, but still within reach of a Life restore (CONFIG.magic.revive): the fight stamps the round they died in.
+  function revivable(enc, c) {
+    const R = CONFIG.magic.revive;
+    return !!(R && c && c.status.dead && !c.vanished && !c.raised && !c.conjured && !C().tireless(c) && c.status.diedRound != null && enc && enc.round - c.status.diedRound <= R.rounds);
+  }
+
+  // Called back from death: CON up to revive.con, bleeding stopped, alive but unconscious at 0 stamina.
+  function revive(t) {
+    // attr() reads 0 however far below a blow took CON, so mend a point at a time until it shows.
+    while (C().attr(t, 'CON') < CONFIG.magic.revive.con && (t.damage.CON || 0) > 0) C().healAttr(t, 'CON', 1);
+    t.bleeds = t.bleeds.filter((b) => b.poison);
+    t.stamina = 0;
+    t.status.dead = false;
+    t.status.unconscious = true;
+    delete t.status.diedRound;
+    return `${t.name} is called back from death, breathing but unconscious.`;
+  }
+
   // Restore: Life mends; every noun lifts the conditions it inflicts (Venom also drains the
   // poison from the blood). Returns log lines.
   function restore(t, s, share) {
@@ -687,6 +705,11 @@
       }
       case 'restore': {
         const t = chars[d.target];
+        const life = (s.nouns || [s.noun]).some((n) => W()[n].heals);
+        if (t && life && revivable(enc, t) && enc.pos[t.id]) {
+          log(`${a.name} casts ${o.label} on the body of ${t.name}.`, 'defend');
+          return log(revive(t), 'defend');
+        }
         if (!t || t.status.dead || !enc.pos[t.id]) return log(`${a.name}'s ${o.label} fizzles.`, 'fizzle');
         log(`${a.name} casts ${o.label} on ${t === a ? 'themself' : t.name}${s.radius ? ' and all around' : ''}.`, 'defend');
         // Wide: everyone living within the radius, friend or foe, at a share of the stamina.
@@ -769,5 +792,5 @@
     return lines;
   }
 
-  G.Magic = { breakDelayed, raise, join, corrode, chainOn, powerOptions, castableOptions, usePower, rechargeAll, chargesLeft, mend, restore, curesOf, knowsName, wardAgainst, freshSP, maxSP, restSP, availableSP, spellOptions, knows, combines, backlash, makeOption, contest, afflict, onHit, elementBlow, afterHit, springRune, resolveCast, lineAcross, endRound, push };
+  G.Magic = { revivable, revive, breakDelayed, raise, join, corrode, chainOn, powerOptions, castableOptions, usePower, rechargeAll, chargesLeft, mend, restore, curesOf, knowsName, wardAgainst, freshSP, maxSP, restSP, availableSP, spellOptions, knows, combines, backlash, makeOption, contest, afflict, onHit, elementBlow, afterHit, springRune, resolveCast, lineAcross, endRound, push };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

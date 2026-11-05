@@ -434,7 +434,9 @@
         const why = spellShort(c, opt);
         const targets = opt.target === 'square' ? null : enc.ids.filter((o) => {
           const t = chars[o];
-          if (!t || t.status.dead) return false;
+          if (!t) return false;
+          // The newly dead can be called back by a Life restore (CONFIG.magic.revive).
+          if (t.status.dead) return opt.target === 'ally' && t.side === c.side && opt.spell.shape === 'restore' && (opt.spell.nouns || [opt.spell.noun]).some((n) => CONFIG.magic.words[n].heals) && G.Magic.revivable(enc, t);
           // Restore reaches a friend turned by a mind spell, too (to free them).
           if (opt.target === 'ally') return t.side === c.side || (opt.spell.shape === 'restore' && t.charmed && t.charmed.side === c.side);
           return t.side !== c.side && C.isActive(t);
@@ -761,6 +763,7 @@
       decl.done = true;
     }
     settleGrapples(enc, chars);
+    markDeaths(enc, chars);
     for (const o of enc.order) if (!C.isActive(chars[o])) enc.turnDone[o] = true;
     // A side wiped out mid-turn ends the round, and the fight, at once.
     const sides = {};
@@ -2398,6 +2401,14 @@
   }
 
   // ---- End of round ------------------------------------------------------
+  // The round each death happened in, for the window in which a Life restore can still call them back.
+  function markDeaths(enc, chars) {
+    for (const id of enc.ids) {
+      const c = chars[id];
+      if (c && c.status.dead && c.status.diedRound == null && !c.conjured && !c.vanished) c.status.diedRound = enc.round;
+    }
+  }
+
   function endRound(enc, chars) {
     log(enc, 'End of round', 'pass');
     // Constrictors (trait constrict: { stamina, con }) crush whoever they hold.
@@ -2492,6 +2503,12 @@
       }
       // A wind-up must be released by the end of the round after it is made.
       if (c.status.windUp && c.status.windUp.round < enc.round) loseWindUp(enc, c, 'not released in time');
+    }
+    markDeaths(enc, chars);
+    const R = CONFIG.magic && CONFIG.magic.revive;
+    for (const id of enc.ids) {
+      const c = chars[id];
+      if (R && c && c.status.dead && c.status.diedRound != null && !c.conjured && !c.vanished && !C.tireless(c) && enc.round - c.status.diedRound === R.rounds) log(enc, `${c.name} is beyond saving now.`, 'death');
     }
     const sides = {};
     for (const id of enc.ids) if (C.isActive(chars[id])) sides[chars[id].side] = true;

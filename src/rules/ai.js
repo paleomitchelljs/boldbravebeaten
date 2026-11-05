@@ -403,8 +403,9 @@
   }
 
   // What Restore is worth on a creature: mending (Life) plus the conditions it would lift.
-  function restoreValue(a, s, share) {
-    if (!a || a.status.dead) return 0;
+  function restoreValue(a, s, share, enc) {
+    if (a && a.status.dead) return (s.nouns || [s.noun]).some((n) => G.CONFIG.magic.words[n].heals) && G.Magic.revivable(enc, a) ? 60 : 0;
+    if (!a) return 0;
     let v = 0;
     for (const n of s.nouns || [s.noun]) {
       if (G.CONFIG.magic.words[n].heals) v += mendValue(a, s, share);
@@ -510,7 +511,7 @@
           for (const o2 of around) {
             const x = chars[o2];
             const friend = x.side === c.side || (x.charmed && x.charmed.side === c.side);
-            v += (friend ? 1 : -1) * restoreValue(x, s, share);
+            v += (friend ? 1 : -1) * restoreValue(x, s, share, enc);
           }
           consider(v, cast({ target: t.id }), o);
         }
