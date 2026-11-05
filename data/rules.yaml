@@ -157,6 +157,9 @@ game:
     "[": {name: Overlook, tile: shelf, color: "#8a7a62"}
     "▲": {name: Ledge, wall: true, rise: true, color: "#7a6a52"}
     "■": {name: Tower, wall: true, tile: tower, color: "#5a5a58"}
+    # The jungle west of the grassland (assets/wip/jungle/): marsh (sodden, slow footing) and a trodden trail.
+    "≈": {name: Marsh, tile: marsh, fight: rough, color: "#3a3a26"}
+    "≡": {name: Trail, tile: trail, color: "#5a4030"}
   passivePenalty: 3          # passive perception is this much worse than a deliberate search
   camp: {wanderingChance: 0.25, guardedChance: 0.5}
   # ---- Skill checks: d10 + floor(mean of attrs / 2) + feat ranks x weight vs a target number ------

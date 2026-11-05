@@ -4,6 +4,19 @@ Last updated at commit: b2131ca
 
 Keep this a short list. Tick things off, add new ones, and refresh the commit line after every push (`git log -1 --format=%h`).
 
+## Jungle west of the grassland; the mine tuned down (the user, 2026-11-04)
+- [x] The mine (all eight ember_ places): every encounter and wanderer is one foe, not a group (the king alone, the
+  efreet alone, one gnome at the bridgehead). Texts rewritten. The groups as designed are at commit 691d44f; a
+  TUNED DOWN note in places.yaml says so.
+- [ ] Put the mine's groups back when testing is done. Ask the user.
+- [x] Jungle art (`assets/wip/jungle/`, art/worldtiles/jungle/, tileset `jungle`): forest floor, marsh, swamp water
+  with a muddy bank, a dirt trail, a canopy wall of gnarled trunks; eight 128-px trees with gnarled roots (kapok,
+  mangrove, strangler fig, cypress), five of them hung with moss that sways (8 frames, the oak there and back).
+  New ground letters `≈` marsh (fight: rough) and `≡` trail. 140 generations.
+- [x] A first place to show it: `jungle_west` (The Mire Wood), off the western grassland's road west (was a note);
+  its own road west is a note. Props only, no foes. Seen in headless Chrome (east end, marsh); the sway not watched.
+- [ ] Shallow and deep swamp water are drawn alike; the canopy's green is loud against the dark floor. Ask the user.
+
 ## Heroes and the swamp's edge (the user, 2026-11-03)
 - [x] Cyrus wears a padded gambeson (torso only; blurb and pitch say so). The Crusader carries his longsword in one
   hand with a heater shield (blurb updated); feats now plate mobility and endurance, shield training, shield bash and

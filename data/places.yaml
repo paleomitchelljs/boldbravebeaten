@@ -629,7 +629,7 @@ tarn_plains_west:
   name: The Western Grassland
   kind: dungeon
   open: true
-  blurb: Rolling prairie west of the Tarnvale's gate, tall grass moving in the wind; the road runs on west.
+  blurb: Rolling prairie west of the Tarnvale's gate, tall grass moving in the wind; the road runs on west into the jungle.
   level: 2
   look: {wall: "#8aa04a", floor: "#8aa04a", ceiling: "#9ab8d6", fog: "#0c120a", torch: 0, tileset: grassland, light: 28}
   map:
@@ -673,13 +673,63 @@ tarn_plains_west:
     f: {kind: prop, sprite: campfire, label: "A campfire", on: ","}
     h: {kind: prop, sprite: barricade, label: "A barricade", on: ","}
     Q: {kind: stairs, to: tarnvale_west, at: Z, sprite: none, label: "The road east, back through the gate"}
-    Z: {kind: note, sprite: none, label: "The road west", text: "The road runs on west over the grassland. (What lies beyond is not built yet.)"}
+    Z: {kind: stairs, to: jungle_west, at: Q, sprite: none, label: "The road west, into the jungle"}
     G: {kind: prop, sprite: tallgrass_gold, solid: false, label: "Tall grass", on: ","}
     H: {kind: prop, sprite: tallgrass_seed, solid: false, label: "Tall grass", on: ","}
     J: {kind: prop, sprite: tallgrass_flower, solid: false, label: "Tall grass and wildflowers", on: ","}
     O: {kind: prop, sprite: oak, label: "An oak", on: ","}
     Y: {kind: prop, sprite: birch, label: "A birch", on: ","}
     R: {kind: prop, sprite: boulder, label: "A boulder", on: ","}
+  encounters: {}
+  secrets: []
+
+# ---- The jungle west of the grassland (the user, 2026-11-04). Laid out by assets/wip/jungle/layout.py; art and
+# prompts in assets/wip/jungle/. Props only: no foes placed (encounters wait for tuning).
+jungle_west:
+  name: The Mire Wood
+  kind: dungeon
+  open: true
+  blurb: Jungle west of the grassland, dark under the canopy; a trail winds between great gnarled trees hung with moss, past a marsh of black pools in the south.
+  level: 2
+  look: {wall: "#24381f", floor: "#4a3a28", ceiling: "#2a3a22", fog: "#0c120a", torch: 0, tileset: jungle, light: 20}
+  map:
+    - "####################################"
+    - "####################################"
+    - "######..............K.......########"
+    - "######...A.........F........########"
+    - "####........##..........D.....######"
+    - "####....K...##................######"
+    - "####........##.......B...A....######"
+    - "###....F.........................###"
+    - "###.......B.......K.......F......###"
+    - "##.....................A..........##"
+    - "##...D.....≡≡≡≡≡≡......≡≡≡≡.......##"
+    - "##.....≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡......#"
+    - "Z≡≡≡≡≡≡≡≡≡......≡≡≡≡≡≡.....≡≡≡≡≡≡≡≡#"
+    - "Z≡≡≡≡≡......................≡≡≡≡≡≡≡Q"
+    - "#.........≈≈≈≈........≈≈≈.......≡≡≡Q"
+    - "##...C...≈≈≈≈≈≈≈.....≈≈≈≈≈≈........#"
+    - "##.....≈≈≈__≈≈≈≈≈...≈≈≈__≈≈≈..L....#"
+    - "###...≈≈__~~__≈≈≈M.≈≈__~~_≈≈≈.....##"
+    - "###..≈≈_~~~~~__≈≈≈≈≈≈_~~~~__≈≈....##"
+    - "###..≈≈__~~~~__≈≈C≈≈≈__~~___≈≈...###"
+    - "####..≈≈___~__≈≈≈≈≈≈≈≈≈__≈≈≈≈M..####"
+    - "####..M≈≈≈___≈≈≈..D..≈≈≈≈≈≈≈...#####"
+    - "#####...≈≈≈≈≈≈.........≈≈≈.A..######"
+    - "######.......####...........########"
+    - "########...#######.....#############"
+    - "####################################"
+  legend:
+    Q: {kind: stairs, to: tarn_plains_west, at: Z, sprite: none, label: "The trail east, out onto the grassland"}
+    Z: {kind: note, sprite: none, label: "The trail west", text: "The trail runs on west under the trees. (What lies beyond is not built yet.)"}
+    K: {kind: prop, sprite: kapok, label: "A kapok tree on great buttress roots"}
+    M: {kind: prop, sprite: mangrove, label: "A mangrove standing on its roots", on: "≈"}
+    F: {kind: prop, sprite: strangler, label: "A strangler fig, its trunk a lattice of roots"}
+    C: {kind: prop, sprite: cypress, label: "A swamp cypress, knees round its feet, moss in its branches", on: "≈"}
+    A: {kind: prop, sprite: mossoak, label: "A gnarled oak hung with moss"}
+    D: {kind: prop, sprite: mossdead, label: "A dead tree hung with pale moss"}
+    L: {kind: prop, sprite: mossleaning, label: "A leaning tree trailing moss and vines"}
+    B: {kind: prop, sprite: mossbranch, solid: false, label: "Moss hanging from a branch overhead"}
   encounters: {}
   secrets: []
 
