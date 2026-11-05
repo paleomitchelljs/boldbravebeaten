@@ -11,21 +11,28 @@ Map: `layout.py` (its rows are `tools/squarewalls.js`'s output; `--write` puts t
 Ground letters (rules.yaml): `.` forest floor, `≈` marsh (fight: rough), `_` shallow swamp, `~` deep swamp, `≡` trail,
 `#` the canopy. Shallow and deep swamp are drawn alike (one water tile).
 
-## Tilesets (PixelLab pro, 64 px, high top-down; sheets fetched from /mcp/tilesets/<id>/image and /metadata)
-Forest floor, base 3d87f1d9 ("dark jungle forest floor of damp brown leaf litter, fallen broad leaves, small ferns and
-patches of moss, soft and low contrast, low detail"). Marsh, base f558d754 ("marshy wet ground, dark soft mud with
-shallow brown puddles between tufts of green sedge and short reeds, soft and low contrast, low detail").
-- jungle-marsh (45e0e547), flat, boundary 0.15: lower the marsh, upper the forest floor.
-- jungle-swamp (3a7a3e29), 0.25, boundary 0.15: lower the temple swamp's water (816cf65a), upper the marsh, transition
-  "a low sodden mud bank with reeds, cattails and tangled mangrove roots at the water's edge".
-- jungle-trail (1ccd04bc), flat, boundary 0.1: lower "a narrow trodden dirt trail of dark brown earth, a few exposed
-  roots and pebbles" (base 807a1a24), upper the floor. Read the other way up (`corners` swapped): trail over floor.
-- jungle-canopy (0f9e42ab), cliff, raggedness 0.5: lower the floor, upper the temple jungle edge's canopy (2bcf8f68),
-  transition "a tall wall of gnarled jungle tree trunks on twisted buttress roots, hanging vines and grey-green moss".
-  Same 25-tile layout as outside/jungle-edge, so its cliff table is copied.
+## Tilesets, second pass (PixelLab pro, 64 px, high top-down; sheets fetched from /mcp/tilesets/<id>/image and /metadata)
+The first, painterly sets (chained to the temple swamp's water and canopy) are in archive/art/jungle-v1/ground/.
+These were drawn fresh (no temple base tiles) in the trees' style, from `palette.json`: 39 colours picked from the new
+trees and decor (browns, greens, olives, greys), plus three swamp-water teals; the teals are left out of every set but
+the water's. Each description starts "... in chunky 16-bit RPG pixel art:" and ends "flat cel shading with three
+tones, simple (bold) shapes, low detail".
+- Forest floor, base 9571a5ef ("warm brown earth with a few scattered simple fallen leaves and small clumps of moss").
+- jungle-marsh (fbebcf96), flat, boundary 0.15: lower marsh, base 8aa5ec13 ("soft dark olive-brown mud, clearly earth
+  not water, with a few small round brown puddles and a few small bold tufts of green sedge"), upper the floor. A first
+  take (c29480fa, with the teals) drew the mud dark teal, like water: archived as teal-marsh-rejected.
+- jungle-swamp (1e463402), 0.25, boundary 0.15: lower "still swamp water ... dark murky green-teal water with a few
+  simple light ripples and a few bits of duckweed" (base 9a937a3e), upper the marsh, transition "a low muddy bank with
+  a thick dark outline, a few bold reeds at the water's edge".
+- jungle-trail (ca7c5f99), flat, boundary 0.1: lower "smooth packed light brown earth with a few small pebbles" (base
+  5b36a538), upper the floor. Read the other way up (`corners` swapped): trail over floor.
+- jungle-canopy (8879a959), cliff, raggedness 0.5: lower the floor, upper "big round clumps of bright green leaves with
+  thick dark outlines" (base caa70d97), transition "a wall of thick gnarled brown tree trunks on a few big twisted
+  roots, with some hanging vines". Same 25-tile layout as outside/jungle-edge, so its cliff table is copied.
 
 ## Trees and decor, second pass (the user: "too detailed and realistic, not quite matching the art of the character sprites")
-The first trees (128 px, painterly: hundreds of fine root strands, no outline, muted) were replaced. The prompts now ask
+The first trees (128 px, painterly: hundreds of fine root strands, no outline, muted) were replaced; they are in
+archive/art/jungle-v1/trees-painterly/. The prompts now ask
 for the sprites' look in words, with a colour cap: "a stylized cartoon ... tree in chunky 16-bit RPG pixel art, thick
 dark outline around every shape, simple bold shapes, flat cel shading with only three tones per colour, bright
 saturated greens and warm browns, few large leaf clumps, a handful of thick gnarled roots", max_colors 16
@@ -45,8 +52,8 @@ saturated greens and warm browns, few large leaf clumps, a handful of thick gnar
   They replace the temple court's ferns.
 
 ## Known
-- The ground tiles (floor, marsh, trail, canopy) are still the first, painterly sets: beside the new trees they are now
-  the most detailed thing on screen.
-- The canopy's bright green is the temple jungle edge's; against the darker floor it reads a little loud.
+- The trail ends in a straight edge at the east exit: the exit squares are drawn as plain floor. Putting them on the
+  trail (`on`) was worse (the exits and the ground run on past the edge are drawn without edges: a square step).
+- The marsh is near black beside the warm floor.
 - The trail's band is wide and blobby where it forks (rows 10-13).
 - Seen in headless Chrome (east arrival, the marsh); the sway not watched moving.

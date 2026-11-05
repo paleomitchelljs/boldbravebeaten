@@ -20,7 +20,25 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   outlines, flat three-tone shading, saturated, max 16 colours), and 16 jungle decor pieces (ferns, toadstools, log,
   reeds, cattails, lily pads...) replace the temple court's ferns. Moss sways on the oak, dead tree and branch; the
   leaning tree is still (two takes redrew its crown every frame). 72 generations. Seen in headless Chrome.
-- [ ] The ground tiles are still the first, painterly sets and now look busier than the trees. Redo them? Ask the user.
+- [x] Ground tiles redone in the same style (the user, a trial for a broader art rework): forest floor, marsh, swamp
+  water and bank, trail, canopy wall, drawn fresh from a palette taken from the new trees and decor
+  (`assets/wip/jungle/palette.json`). 125 generations (the marsh twice: the first came out teal, like water).
+- [x] The first jungle art is archived, not lost: `archive/art/jungle-v1/` (painterly ground sheets and tiles, the
+  rejected teal marsh, the painterly trees with their moss frames).
+- [ ] The trail ends in a straight edge at the east exit (exit squares draw as plain floor; `on: trail` drew a square
+  step instead). A tilemap fix: let exit squares and the ground past the edge take part in corner sets.
+- [ ] The broader art rework: the same recipe (style words, max colours, a palette from the sprites) for other places?
+  Ask the user which first.
+
+## Death leaves a window (the user, 2026-11-04)
+- [x] One who dies in a fight can be called back for three rounds after the round of death (three more turns of
+  their own): Restore + Life aimed at the body brings CON up to 1, stops bleeding, and leaves them alive, unconscious,
+  at 0 stamina. Then "X is beyond saving now." `CONFIG.magic.revive {rounds, con}`, `Magic.revivable/revive`, the
+  round of death stamped as `status.diedRound` (`Combat` markDeaths after each action and at round end). Restore + Life
+  lists bodies in the window as targets; the AI values calling one back above waking the downed. Test in rules.test.js.
+- [ ] Only a single-target Restore calls back (Wide skips the dead). Town priests still raise the dead at any time for
+  gold: should the window be the only way back? Ask the user.
+- [ ] Not clicked through in a browser (the body as a target on the battle screen).
 
 ## Heroes and the swamp's edge (the user, 2026-11-03)
 - [x] Cyrus wears a padded gambeson (torso only; blurb and pitch say so). The Crusader carries his longsword in one
