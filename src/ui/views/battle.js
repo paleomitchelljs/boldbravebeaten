@@ -307,9 +307,9 @@
     }
     const t = chars[req.target];
     const why = { closes: 'presses inside', leaves: 'leaves', moves: 'moves about in' }[req.why] || 'leaves';
-    const sub = req.why === 'riposte' ? `You parried ${t.name}: answer with a blow they may still defend.` : `${t.name} ${why} ${me.name}'s reach. A hit stops them.`;
+    const sub = req.why === 'riposte' ? `You parried ${t.name}: answer with a blow they may still defend.` : req.why === 'cleave' ? `Your blow dropped its foe: carry it on into ${t.name}, free.` : `${t.name} ${why} ${me.name}'s reach. A hit stops them.`;
     return {
-      title: `${me.name} → ${t.name}`, from: me.name, to: t.name, tag: { closes: 'closing in', leaves: 'leaving', moves: 'moving', riposte: 'riposte' }[req.why] || 'leaving', sub, ap,
+      title: `${me.name} → ${t.name}`, from: me.name, to: t.name, tag: { closes: 'closing in', leaves: 'leaving', moves: 'moving', riposte: 'riposte', cleave: 'cleave' }[req.why] || 'leaving', sub, ap,
       choices: req.options.map((o) => { const p = blowPreview(enc, chars, { decl: { actor: req.actor, target: req.target, type: 'strike', option: o } }); return { value: o, label: o.label, cost: C.fmtAP(o.ap), odds: '', hint: p ? p.text : '' }; }),
       none: { label: 'Let go', note: 'keep the AP' },
     };

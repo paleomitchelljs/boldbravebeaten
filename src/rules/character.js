@@ -762,7 +762,15 @@
       if (shieldReady(c) && rank(c, 'shield_bash') && !grappling) opts.push(unarmedOption(c, 'shieldBash'));
       // Spells need a free hand (see magic.js).
       // Bolts (Strike, Launch) are attacks; the other spells are cast actions (Combat.legalActions).
-      if (G.Magic && !grappling) for (const o of G.Magic.spellOptions(c)) if (o.kind === 'strike' && (o.power || castingHands(c))) opts.push(o);
+      // Steady Mind: a bolt even in a grapple, a hand free.
+      if (G.Magic && (!grappling || rank(c, 'steady_mind'))) for (const o of G.Magic.spellOptions(c)) if (o.kind === 'strike' && (o.power || castingHands(c))) opts.push(o);
+    }
+    // Flurry: a light weapon's thrust doubled into one action, at half again the AP and twice the stamina.
+    if (rank(c, 'flurry')) {
+      for (const o of opts.slice()) {
+        const w = o.weaponId && !o.offhand && c.weapons.find((x) => x.id === o.weaponId);
+        if (w && o.motion === 'thrust' && !o.halfSword && isLightWeapon(w)) opts.push(Object.assign({}, o, { flurry: true, label: 'Flurry', ap: Math.round(o.ap * 1.5), stamina: o.stamina * 2 }));
+      }
     }
     const t = webTax(c);
     if (t.ap || t.stamina) for (const o of opts) { o.ap += t.ap; o.stamina += t.stamina; }

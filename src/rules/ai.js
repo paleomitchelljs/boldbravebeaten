@@ -92,6 +92,7 @@
       v += (pDown * 10 * C.costScale()) / Math.max(1, opt.ap);
     }
     if (opt.spell) v *= 0.85; // spell points are finite and backlash is a risk
+    if (opt.flurry) v *= 1.8; // two thrusts, the second only if the first leaves them up
     const disp = target.traits && target.traits.displacement;
     if (disp) v *= 1 - (opt.ranged || opt.spell ? disp.ranged : disp.melee);
     return v;

@@ -207,12 +207,15 @@
     for (const id of enc.order.concat(enc.ids.filter((x) => !enc.order.includes(x)))) {
       const b = chars[id];
       if (!b || id === t.id || id === a.id || b.side !== t.side || !C.isActive(b)) continue;
-      if (dist(enc.pos[id], enc.pos[t.id]) > K.reach || isGrappled(b)) continue;
+      // Shield Wall: a square farther, and no harder than a block of your own.
+      const wall = C.rank(b, 'shield_wall') > 0;
+      if (dist(enc.pos[id], enc.pos[t.id]) > K.reach + (wall ? 1 : 0) || isGrappled(b)) continue;
       if (defenseUnavailable(b, 'block', d, chars, enc) || conditionForbids(enc, chars, b, { type: 'block', target: a.id })) continue;
       const { ap, stamina } = C.actionCost(b, 'block');
       if (ap > apLeft(enc, id)) continue;
       const hidden = describeBare(enc, chars, d, id).hidden;
-      out.push({ actor: id, type: 'cover', name: 'Cover', ap, stamina, odds: hidden ? null : defenseOdds(b, 'block', d.option.motion, a, d.option, -K.penalty), hidden });
+      const penalty = wall ? 0 : K.penalty;
+      out.push({ actor: id, type: 'cover', name: 'Cover', ap, stamina, penalty, odds: hidden ? null : defenseOdds(b, 'block', d.option.motion, a, d.option, -penalty), hidden });
     }
     return out;
   }
@@ -260,6 +263,9 @@
         if (state.within[f] >= 2) why = 'moves';
       }
       if (!why) continue;
+      // Slip Through: only closing in draws a blow. Counter Step: the step after a good dodge draws none.
+      if (C.rank(m, 'slip_through') && why !== 'closes') continue;
+      if (state.free) continue;
       const options = opportunityOptions(enc, chars, reactor, at);
       state.provoked[f] = true;
       const pick = await react(enc, chars, { kind: 'opportunity', actor: f, target: m.id, options, ap: apLeft(enc, f), why }, io);
@@ -430,7 +436,7 @@
       for (const opt of G.Magic.spellOptions(c)) {
         if (opt.kind !== 'cast') continue;
         if (!opt.power && !C.castingHands(c)) continue; // spells need a free hand; an item's power doesn't
-        if (isGrappled(c) && opt.spell.shape !== 'blink') continue; // held: only a blink gets you out
+        if (isGrappled(c) && opt.spell.shape !== 'blink' && !C.rank(c, 'steady_mind')) continue; // held: only a blink gets you out (or Steady Mind)
         const why = spellShort(c, opt);
         const targets = opt.target === 'square' ? null : enc.ids.filter((o) => {
           const t = chars[o];
@@ -570,7 +576,7 @@
 
   function spellShort(c, opt) {
     if (opt.power) return opt.power.left === 0 ? 'No charges left' : null;
-    return G.Magic && opt.spCost > G.Magic.availableSP(c) ? 'Not enough spell points' : null;
+    return G.Magic && opt.spCost > G.Magic.availableSP(c) + G.Magic.overchannelSP(c) ? 'Not enough spell points' : null;
   }
 
   // Why an attack can't be made right now (beyond AP), or null.
@@ -678,7 +684,7 @@
       const key = decl.option.spellKey;
       const opt = G.Magic.spellOptions(c).find((o) => o.kind === 'cast' && o.spellKey === key);
       if (!opt) return { err: 'Spell not available' };
-      if ((!opt.power && !C.castingHands(c)) || (isGrappled(c) && opt.spell.shape !== 'blink')) return { err: 'Needs a free hand' };
+      if ((!opt.power && !C.castingHands(c)) || (isGrappled(c) && opt.spell.shape !== 'blink' && !C.rank(c, 'steady_mind'))) return { err: 'Needs a free hand' };
       const why = spellShort(c, opt);
       if (why) return { err: why };
       if (opt.target === 'square') {
@@ -758,7 +764,19 @@
     enc.phase = 'acting';
     try {
       if (decl.type === 'move') await resolveMove(enc, chars, decl, io);
-      else await resolveAction(enc, chars, decl, io, Object.assign({}, enc.pos));
+      else {
+        await resolveAction(enc, chars, decl, io, Object.assign({}, enc.pos));
+        // Flurry: the second thrust of the pair, at once, if the first left them standing.
+        if (decl.type === 'strike' && decl.option.flurry && C.isActive(chars[id]) && C.isActive(chars[decl.target])) {
+          log(enc, `${chars[id].name} thrusts again.`, 'pass');
+          const sd = Object.assign({}, decl, { n: ++enc.seq, ap: 0, stamina: 0, flurrySecond: true });
+          enc.decls.push(sd);
+          await resolveAction(enc, chars, sd, io, Object.assign({}, enc.pos));
+          sd.done = true;
+        }
+        if (decl.type === 'strike') await sweep(enc, chars, chars[id], decl, io);
+        if (decl.type === 'strike' && !decl.targetWasDown && !C.isActive(chars[decl.target])) await cleave(enc, chars, chars[id], decl, io);
+      }
     } finally {
       decl.done = true;
     }
@@ -788,11 +806,15 @@
     const a = chars[d.actor];
     if (!payStamina(enc, a, d.stamina)) return;
     const state = { provoked: {}, within: {} };
+    // Counter Step: a good dodge this round makes the next move's first square free and unanswered.
+    const counter = a.status.counterStep === enc.round && !C.holding(a);
+    if (counter) a.status.counterStep = null;
     const dragged = C.holding(a) ? chars[C.holding(a)] : null;
     const steps = dragged ? [d.to] : G.Terrain ? G.Terrain.path(enc, enc.pos[a.id], d.to, a, foeSquares(enc, chars, a)) : [d.to];
     let walked = 0, why = '';
     for (const q of steps) {
       const from = enc.pos[a.id];
+      state.free = counter && walked === 0;
       if (await opportunities(enc, chars, a, from, q, state, io)) { why = 'stopped'; break; }
       if (!C.isActive(a)) { why = 'stopped'; break; }
       if (enc.ids.some((o) => o !== a.id && chars[o].side !== a.side && C.isActive(chars[o]) && enc.pos[o].x === q.x && enc.pos[o].y === q.y)) { why = 'blocked'; break; }
@@ -805,11 +827,14 @@
     if (dragged && walked) log(enc, `${a.name} drags ${dragged.name} to (${at.x + 1}, ${at.y + 1}).`);
     else if (walked) log(enc, `${a.name} moves to (${at.x + 1}, ${at.y + 1})${at.x !== d.to.x || at.y !== d.to.y ? ' and gets no farther' : ''}.`);
     else if (why === 'blocked') log(enc, `${a.name}'s way is blocked.`, 'fizzle');
-    if (why && C.isActive(a)) {
-      // Stopped short: the squares not walked are given back, but a move always costs its first AP.
-      const used = Math.max(C.minAP(), walked ? C.actionCost(a, 'move', { ap: C.moveCost(a, walked) }).ap : 0);
+    if ((why || (counter && walked)) && C.isActive(a)) {
+      // Stopped short: the squares not walked are given back, but a move always costs its first AP. After a Counter
+      // Step the first square is free.
+      const paid = counter ? Math.max(0, walked - 1) : walked;
+      const used = Math.max(counter ? 0 : C.minAP(), paid ? C.actionCost(a, 'move', { ap: C.moveCost(a, paid) }).ap : 0);
       const back = Math.max(0, d.ap - used);
       if (back) { enc.ap[a.id] += back; d.ap -= back; }
+      if (counter && walked) log(enc, `${a.name} steps off the dodge.`, 'pass');
     }
     d.to = { x: at.x, y: at.y };
   }
@@ -1764,7 +1789,7 @@
     if (d.type === 'pin') {
       if (L.role !== 'holder' || L.level !== 'hold') return fizzle('not holding them');
       const o = await opposed(roller, a, grappleScore(a) + handles(t) + (C.rank(a, 'pin') ? G2.pinBonus : 0) + dogpileBonus(enc, chars, a, t), 'Pin', t, breakScore(t), 'Resist');
-      if (o.margin > 0) { setGrapple(chars, a, t, 'pin'); return log(enc, `${a.name} pins ${t.name} ${show(o)}.`, 'hit'); }
+      if (o.margin > 0) { setGrapple(chars, a, t, 'pin'); log(enc, `${a.name} pins ${t.name} ${show(o)}.`, 'hit'); return jointLock(enc, a, t); }
       if (o.margin <= -big) { setGrapple(chars, a, t, 'clinch'); return log(enc, `${t.name} twists out of the hold into a clinch ${show(o)}.`, 'defend'); }
       return log(enc, `${a.name} can't pin ${t.name} ${show(o)}.`, 'fail');
     }
@@ -1788,9 +1813,15 @@
       return;
     }
     if (d.type === 'break') {
+      // Iron Grip: a holder who pays a step's AP is not broken out of a hold or a pin.
+      if (L.level !== 'clinch' && C.rank(t, 'iron_grip') && C.isActive(t) && apLeft(enc, t.id) >= C.minAP()) {
+        enc.ap[t.id] -= C.minAP();
+        log(enc, `${t.name}'s grip does not give: ${a.name} stays held.`, 'defend');
+        return jointLock(enc, t, a);
+      }
       const holderBonus = L.level === 'pin' && C.rank(t, 'pin') ? G2.pinBonus : 0;
       const o = await opposed(roller, a, breakScore(a), 'Break free', t, grappleScore(t) + holderBonus, 'Hold on');
-      if (o.margin <= 0) return log(enc, `${a.name} can't break ${t.name}'s grip ${show(o)}.`, 'fail');
+      if (o.margin <= 0) { log(enc, `${a.name} can't break ${t.name}'s grip ${show(o)}.`, 'fail'); return L.level !== 'clinch' ? jointLock(enc, t, a) : undefined; }
       if (L.level === 'clinch') { setGrapple(chars, a, t, null); return log(enc, `${a.name} breaks the clinch with ${t.name} ${show(o)}.`, 'defend'); }
       if (L.level === 'hold') {
         if (o.margin >= big) { setGrapple(chars, a, t, 'hold'); loseWindUp(enc, t, 'grappled'); return log(enc, `${a.name} reverses ${t.name}'s hold ${show(o)}.`, 'defend'); }
@@ -1802,6 +1833,14 @@
       setGrapple(chars, t, a, 'hold');
       return log(enc, `${a.name} gets out from under the pin; still held ${show(o)}.`, 'defend');
     }
+  }
+
+  // Joint Lock: a hold or pin that holds wrenches a joint (CONFIG.grappling.jointLock: the attribute and points).
+  function jointLock(enc, holder, held) {
+    if (!C.rank(holder, 'joint_lock') || !C.isActive(holder)) return;
+    const J = CONFIG.grappling.jointLock || { attr: 'DEX', points: 1 };
+    C.damageAttr(held, J.attr, J.points);
+    log(enc, `${holder.name} wrenches ${held.name}'s joint (−${J.points} ${J.attr}).`, 'hit');
   }
 
   // Grapples come apart when the fighters are no longer adjacent or one goes down; a clinch
@@ -1903,19 +1942,29 @@
       // The target may react: spend AP from their pool to block, parry or dodge (they see it coming).
       const name = d.type === 'strike' ? d.option.label : ACTIONS[d.type].name;
       // Displacement (monster trait): the target isn't quite where it appears to be.
-      const disp = d.type === 'strike' && t.traits && t.traits.displacement;
+      const disp = d.type === 'strike' && t.traits && t.traits.displacement && !C.rank(a, 'truesight');
       if (disp) {
         const chance = d.option.ranged || d.option.spell ? disp.ranged : disp.melee;
         const r = await rollDie(roller, a.id, 10, `${a.name}: Find the real ${t.name}`, `d10: ${Math.round(chance * 10)} or less strikes only an illusion`);
         if (r <= Math.round(chance * 10)) return log(enc, `${a.name}'s ${name} passes through an illusion of ${t.name}.`, 'defend');
       }
       let failedDodge = false, beatThrough = 0;
+      // Human Shield: someone holding a foe turns the held body into the blow (a block's AP), if they can pay.
+      const shieldBody = d.type === 'strike' && C.rank(t, 'human_shield') && C.holding(t) !== a.id ? chars[C.holding(t)] : null;
+      if (shieldBody && C.isActive(shieldBody) && linkOf(t).level !== 'clinch' && C.actionCost(t, 'block').ap <= apLeft(enc, t.id)) {
+        enc.ap[t.id] -= C.actionCost(t, 'block').ap;
+        log(enc, `${t.name} hauls ${shieldBody.name} into the way of ${a.name}'s ${name}.`, 'defend');
+        const r = await applyHit(enc, chars, a, shieldBody, d.option, roller, { distance: dist(posAtStart[a.id], posAtStart[t.id]) });
+        log(enc, `${shieldBody.name} takes it: ${r.text}`, 'hit');
+        C.updateCondition(shieldBody);
+        return;
+      }
       const def = await askDefense(enc, chars, t, a, d, io);
       // Nobody defends themselves: a shield beside them may.
       const cover = !def && C.isActive(t) ? await askCover(enc, chars, t, a, d, io) : null;
       if (cover && payStamina(enc, cover.bearer, cover.o.stamina)) {
         const b = cover.bearer;
-        const chk = await defenseCheck(enc, chars, b, 'block', d, roller, -CONFIG.defense.cover.penalty);
+        const chk = await defenseCheck(enc, chars, b, 'block', d, roller, -cover.o.penalty);
         if (chk.ok) {
           log(enc, `${b.name} gets a shield in front of ${t.name} (${chk.total} vs ${chk.tn}).`, 'defend');
           await shieldAbsorb(enc, chars, a, b, d, roller);
@@ -1939,6 +1988,7 @@
             } else {
               const verb = { parry: 'parries', offParry: 'catches on the parrying dagger', dodge: 'dodges' }[def.type];
               log(enc, `${t.name} ${verb} ${a.name}'s ${name} (${chk.total} vs ${chk.tn}).`, 'defend');
+              if (def.type === 'dodge' && C.rank(t, 'counter_step')) t.status.counterStep = enc.round;
             }
             absorbImpact(enc, t, def.type, d);
             const parried = def.type === 'parry' || def.type === 'offParry';
@@ -2190,11 +2240,16 @@
       return true;
     }
     const avail = G.Magic.availableSP(a);
-    if (opt.spCost > avail) {
+    if (opt.spCost > avail + G.Magic.overchannelSP(a)) {
       log(enc, `${a.name} can't draw enough power for ${opt.label} (${avail} of ${opt.spCost} points).`, 'fizzle');
       return false;
     }
-    a.spSpent = (a.spSpent || 0) + opt.spCost;
+    a.spSpent = (a.spSpent || 0) + Math.min(avail, opt.spCost);
+    // Overchannel: the points the pool lacks are paid from the body, a point of CON each.
+    if (opt.spCost > avail) {
+      C.damageAttr(a, 'CON', opt.spCost - avail);
+      log(enc, `${a.name} overchannels: ${opt.spCost - avail} CON for the points the pool lacks.`, 'hit');
+    }
     const lost = await G.Magic.backlash(a, opt.spCost, roller);
     if (lost > 0) {
       a.stamina = Math.max(0, a.stamina - lost);
@@ -2333,6 +2388,49 @@
     if (owe) (enc.owed || (enc.owed = {}))[a.id] = (enc.owed[a.id] || 0) + owe;
     const what = kind === 'block' ? 'off the shield' : 'off the parry';
     log(enc, `${a.name}'s blow rebounds ${what}: −${C.fmtAP(lose)} AP${owe ? ` (${C.fmtAP(owe)} of it next round)` : ''}.`, 'defend');
+  }
+
+  // Sweep: a two-handed swing carries on into one more foe beside its target and in reach, free, at half its force
+  // (that foe may defend).
+  async function sweep(enc, chars, a, d, io) {
+    const o = d.option;
+    if (!C.rank(a, 'sweep') || !C.isActive(a) || o.ranged || o.spell || !o.weaponId || o.motion === 'thrust' || o.offhand) return;
+    const w = a.weapons.find((x) => x.id === o.weaponId);
+    if (!w || WEAPONS[w.type].hands !== 2) return;
+    const me = enc.pos[a.id], at = enc.pos[d.target];
+    const next = enc.ids.find((x) => x !== d.target && chars[x].side !== a.side && C.isActive(chars[x]) && enc.pos[x] && dist(enc.pos[x], at) <= 1 && C.inRange(o, dist(me, enc.pos[x])));
+    if (!next) return;
+    const half = Object.assign({}, o, { damage: o.damage.map((v) => Math.floor(v / 2)), ap: 0, label: 'Sweep' });
+    log(enc, `${a.name}'s swing sweeps on into ${chars[next].name}.`, 'pass');
+    const sd = { actor: a.id, type: 'strike', option: half, target: next, ap: 0, stamina: 0, n: ++enc.seq, opportunity: true, sweep: true, round: enc.round };
+    enc.decls.push(sd);
+    await resolveAction(enc, chars, sd, io, Object.assign({}, enc.pos));
+    sd.done = true;
+  }
+
+  // Cleave: a melee blow that drops its foe carries on, free, into another foe the same weapon can reach (the
+  // striker chooses; that foe may defend). Once a blow.
+  async function cleave(enc, chars, a, d, io) {
+    if (!C.rank(a, 'cleave') || !C.isActive(a) || d.option.ranged || d.option.spell || !d.option.weaponId) return;
+    const me = enc.pos[a.id];
+    const foes = enc.ids.filter((o) => o !== d.target && chars[o].side !== a.side && C.isActive(chars[o]) && enc.pos[o])
+      .sort((x, y) => dist(me, enc.pos[x]) - dist(me, enc.pos[y]));
+    for (const o of foes) {
+      const dd = dist(me, enc.pos[o]);
+      const options = C.attackOptions(a)
+        .filter((x) => x.weaponId === d.option.weaponId && !x.ranged && !x.spell && !x.windUp && C.inRange(x, dd) && !attackUnavailable(enc, a, x))
+        .map((x) => Object.assign({}, x, { ap: 0 }));
+      if (!options.length) continue;
+      const pick = await react(enc, chars, { kind: 'opportunity', actor: a.id, target: o, options, ap: apLeft(enc, a.id), why: 'cleave' }, io);
+      const opt = options.find((x) => x === pick || (pick && C.optionKey(x) === (typeof pick === 'string' ? pick : C.optionKey(pick))));
+      if (!opt) continue;
+      log(enc, `${a.name} cleaves on into ${chars[o].name}.`, 'pass');
+      const sd = { actor: a.id, type: 'strike', option: opt, target: o, ap: 0, stamina: opt.stamina, n: ++enc.seq, opportunity: true, cleave: true, round: enc.round };
+      enc.decls.push(sd);
+      await resolveAction(enc, chars, sd, io, Object.assign({}, enc.pos));
+      sd.done = true;
+      return;
+    }
   }
 
   // A successful parry opens the attacker (CONFIG.defense.riposteOpen): the parrier may answer at once with a blow of

@@ -53,6 +53,11 @@
   }
 
   // Points the caster can draw on right now.
+  // Overchannel (feat): points beyond the pool, paid in CON, short of the last point of it.
+  function overchannelSP(c) {
+    return C().rank(c, 'overchannel') ? Math.max(0, C().attr(c, 'CON') - 1) : 0;
+  }
+
   function availableSP(c) {
     const max = maxSP(c);
     let left = Math.max(0, max - (c.spSpent || 0));
@@ -205,7 +210,9 @@
     const w = W();
     const V = w[v], N = w[n], M = modOf(m);
     const mag = magnitude(c, v, n, m);
-    const cost = V.cost + N.cost + (M ? M.cost : 0) + (n2 ? w[n2].cost + CONFIG.magic.doubleSurcharge : 0) + (V.shape === 'raise' ? N.raiseCost || 0 : 0);
+    // Firestorm: Fire with Wide costs a point less.
+    const storm = n === 'fire' && m && [].concat(m).includes('wide') && C().rank(c, 'firestorm') ? 1 : 0;
+    const cost = Math.max(1, V.cost + N.cost + (M ? M.cost : 0) + (n2 ? w[n2].cost + CONFIG.magic.doubleSurcharge : 0) + (V.shape === 'raise' ? N.raiseCost || 0 : 0) - storm);
     // Burst makes a bolt an area: round the caster (the caster spared), or Launched, round a square at range.
     const shape = M && M.area && V.shape === 'bolt' ? 'area' : V.shape;
     const bolt = BOLT.includes(shape);
@@ -421,6 +428,8 @@
   async function afterHit(enc, chars, a, t, option, hit, roller) {
     const s = option.spell;
     for (const n of s.nouns || [s.noun]) await onHit(enc, chars, a, t, n, roller, { from: enc.pos[a.id], condMag: s.condMag, mag: s.magnitude });
+    // Kindling: a fire spell that lands sets its target burning.
+    if (s.element === 'fire' && C().rank(a, 'kindling') && G.Conditions && G.Character.isActive(t)) await afflict(enc, a, t, 'burning', { rounds: 2, mag: 1 }, roller);
     if (s.lingering && G.Conditions && G.Character.isActive(t)) await afflict(enc, a, t, 'afflicted', { rounds: 3, mag: Math.max(1, Math.round(s.magnitude / 4)) }, roller);
     for (const n of s.nouns || [s.noun]) if ((W()[n].onHit || {}).chain) await chainOn(enc, chars, a, t, n, s.magnitude, roller);
   }
@@ -792,5 +801,5 @@
     return lines;
   }
 
-  G.Magic = { revivable, revive, breakDelayed, raise, join, corrode, chainOn, powerOptions, castableOptions, usePower, rechargeAll, chargesLeft, mend, restore, curesOf, knowsName, wardAgainst, freshSP, maxSP, restSP, availableSP, spellOptions, knows, combines, backlash, makeOption, contest, afflict, onHit, elementBlow, afterHit, springRune, resolveCast, lineAcross, endRound, push };
+  G.Magic = { revivable, revive, breakDelayed, raise, join, corrode, chainOn, powerOptions, castableOptions, usePower, rechargeAll, chargesLeft, mend, restore, curesOf, knowsName, wardAgainst, freshSP, maxSP, restSP, availableSP, overchannelSP, spellOptions, knows, combines, backlash, makeOption, contest, afflict, onHit, elementBlow, afterHit, springRune, resolveCast, lineAcross, endRound, push };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

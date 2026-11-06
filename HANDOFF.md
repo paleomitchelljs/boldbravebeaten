@@ -16,8 +16,18 @@ seven new trees.
   desktop and phone; creation).
 - [ ] Branches without a capstone yet (Striker, Fencer, Assassin, Reaper, Technique, Runner, Charmer, Menace, Wilds,
   Arcane eye, Alchemist, Battle, Bond, the ritual ones, all of Subterfuge): design them with phase 2.
-- [ ] Phase 2: build the unbuilt (`auto: false`) feats worth keeping, about 20 of 45 (cleave, sweep, shield wall,
-  counter step, slip through, flurry, human shield, rally/demoralize, steady mind, overchannel, tracker, diagnose...).
+- [x] Phase 2, first part: 18 feats switched on (tests/feats-built.test.js). Built: Cleave (a free blow on when one
+  drops its foe; a prompt), Sweep (two-handed swing carries into a foe beside, half force), Flurry (two light thrusts
+  for 1.5× AP), Shield Wall (cover at 2 squares, no penalty), Slip Through (only closing in provokes), Counter Step
+  (after a dodge the next move's first square is free and unanswered), Joint Lock (−1 DEX when a hold holds), Iron
+  Grip (pay a step's AP: no breaking free), Human Shield (a blow at a holder lands on the held), Truesight (ignores
+  displacement), Overchannel (spell points past the pool in CON), Steady Mind (cast in a grapple), Kindling, Firestorm,
+  Ember Heart (resist fire ½). Already working but marked unbuilt: Control, Word Doubling, Fire Affinity.
+- [ ] Kindling has no test; Cleave/Sweep/Flurry/Human Shield not watched in a browser fight. The AI never overchannels.
+- [ ] Still unbuilt, and why: Off-hand Dagger (anyone may off-hand parry already: redesign it?), Quick Donning (the
+  game has no donning), Living Flame, Verb Summon and Mod Swift (summoning by name isn't built), Cauterize, Focus
+  Bond, Diagnose, the alchemy line, every Ritual feat (rituals exist in the rules but the game never offers one).
+  Appraise, Tracker, Read Spell, Word Thief, Rally/Demoralize, Leading Questions, Kingmaker go to the phase 3 trees.
 - [ ] Phase 3: new trees Archery, Shadow (stealth out of Evasion), Leadership (rally out of Persuasion), Survival,
   Lore, Athletics, Deception: mechanics, not numbers. Old saves keep moved feats (ids unchanged).
 - [ ] The tree tabs take a lot of height on a phone; the graph scrolls sideways in a narrow modal. Fine for now?

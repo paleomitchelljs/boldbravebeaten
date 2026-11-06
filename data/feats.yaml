@@ -145,23 +145,23 @@
       branch: wrestler
       ranks: [expert]
       requires: [["pin:1"]]
-      effect: Grapple deals STR or DEX damage
-      auto: false
+      effect: "Whenever your hold or pin holds (you pin them, or they fail to break it), you wrench a joint: −1 DEX"
+      auto: true
     human_shield:
       name: Human Shield
       branch: wrestler
       ranks: [expert]
       requires: [["grappler:3"]]
-      effect: Block a strike with a grappled foe
-      auto: false
+      effect: "Holding or pinning a foe, a blow at you strikes them instead, for a block's AP"
+      auto: true
     iron_grip:
       name: Iron Grip
       branch: wrestler
       capstone: true
       ranks: [master]
       requires: [["joint_lock:1"]]
-      effect: A grappled foe can't escape while you keep paying AP
-      auto: false
+      effect: "Pay a step's AP and a foe you hold or pin cannot break free: no roll (and your Joint Lock bites)"
+      auto: true
 - id: lightWeapons
   name: Light weapons
   attrs: DEX
@@ -277,8 +277,8 @@
       capstone: true
       ranks: [master]
       requires: [["quick_thrust:3"], ["riposte:1"]]
-      effect: Declare two thrusts as one action
-      auto: false
+      effect: "A light weapon's thrust doubled: two thrusts as one action, for half again the AP and twice the stamina; the second only if the first leaves them standing"
+      auto: true
 - id: heavyWeapons
   name: Heavy weapons
   attrs: STR
@@ -354,15 +354,15 @@
       branch: reaper
       ranks: [expert]
       requires: [["power_swing:1"]]
-      effect: A blow that drops a foe carries the excess to an adjacent foe
-      auto: false
+      effect: "A melee blow that drops its foe carries on, free, into another foe the same weapon can reach (they may defend)"
+      auto: true
     sweep:
       name: Sweep
       branch: reaper
       ranks: [expert]
       requires: [["heavy_weapon_training:3"]]
-      effect: A two-handed swing hits two adjacent foes
-      auto: false
+      effect: "A two-handed swing carries on, free, into one more foe beside its target and in reach, at half its force (they may defend)"
+      auto: true
     juggernaut:
       name: Juggernaut
       branch: breaker
@@ -476,8 +476,8 @@
       capstone: true
       ranks: [expert]
       requires: [["shield_training:3"]]
-      effect: Block for an adjacent ally
-      auto: false
+      effect: "Cover an ally up to 2 squares away (not 1), at no penalty: as good as blocking for yourself"
+      auto: true
     living_fortress:
       name: Living Fortress
       branch: plate
@@ -547,8 +547,8 @@
       branch: runner
       ranks: [apprentice]
       requires: [["fleet_foot:1"]]
-      effect: Move past enemies without being grabbed
-      auto: false
+      effect: "Only closing in on a foe draws an opportunity strike: leaving its reach or moving about in it does not"
+      auto: true
     roll_with_it:
       name: Roll With It
       branch: dodger
@@ -561,8 +561,8 @@
       branch: dodger
       ranks: [expert]
       requires: [["dodge_training:3"]]
-      effect: A successful dodge grants a free move
-      auto: false
+      effect: "After a successful dodge, your next move this round has its first square free, and that step draws no strike"
+      auto: true
     untouchable:
       name: Untouchable
       branch: dodger
@@ -734,8 +734,8 @@
       capstone: true
       ranks: [master]
       requires: [["danger_sense:1"], ["read_spell:1"]]
-      effect: See through illusions and disguises
-      auto: false
+      effect: "See through illusions: a displaced foe is struck where it really is"
+      auto: true
 - id: medicine
   name: Medicine and alchemy
   attrs: "INT, WIS"
@@ -833,8 +833,8 @@
       branch: control
       ranks: [apprentice, adept, expert]
       requires: [["casting:1"]]
-      effect: "−backlash per rank"
-      auto: false
+      effect: "+1 per rank to the backlash roll (d10 + Control against the spell's points)"
+      auto: true
     quick_casting:
       name: Quick Casting
       branch: battle
@@ -854,8 +854,8 @@
       branch: control
       ranks: [adept]
       requires: [["control:1"]]
-      effect: Cast while grappled or after taking damage this pass
-      auto: false
+      effect: "Cast while grappled (a hand free): bolts and spells, not only a blink"
+      auto: true
     familiar:
       name: Familiar
       branch: bond
@@ -876,8 +876,8 @@
       capstone: true
       ranks: [master]
       requires: [["casting:5"]]
-      effect: Cast beyond your pool by paying CON
-      auto: false
+      effect: "Cast past an empty pool: each point it lacks costs 1 CON (never the last)"
+      auto: true
 - id: magicWords
   name: "Magic: words"
   attrs: INT
@@ -1040,7 +1040,7 @@
       ranks: [adept]
       requires: [["casting:2"]]
       effect: "Cast a spell with two nouns instead of a modifier; both do the verb (Rage + Dream: confusion)"
-      auto: false
+      auto: true
     verb_conjure:
       name: "Verb: Conjure"
       branch: higher
@@ -1145,14 +1145,14 @@
       ranks: [novice, apprentice, adept]
       requires: []
       effect: "+magnitude for Fire spells per rank (requires knowing the Fire noun)"
-      auto: false
+      auto: true
     kindling:
       name: Kindling
       branch: fire
       ranks: [apprentice]
       requires: [["fire_affinity:1"]]
-      effect: Fire spells set targets burning
-      auto: false
+      effect: "Your fire spells set what they hit burning (2 rounds)"
+      auto: true
     cauterize:
       name: Cauterize
       branch: fire
@@ -1165,15 +1165,16 @@
       branch: fire
       ranks: [adept]
       requires: [["fire_affinity:2"], ["mod_wide:1"]]
-      effect: Fire + Wide costs 1 less
-      auto: false
+      effect: "Fire with Wide costs 1 spell point less"
+      auto: true
     ember_heart:
       name: Ember Heart
       branch: fire
       ranks: [expert]
       requires: [["fire_affinity:3"]]
-      effect: "Resist fire; recover casting power standing in flame"
-      auto: false
+      effect: "Fire harms you half as much"
+      auto: true
+      effects: {resist: {fire: 0.5}}
     living_flame:
       name: Living Flame
       branch: fire

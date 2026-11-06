@@ -276,6 +276,7 @@
     // Grappling is exhausting: base stamina per step (× staminaScale), and holdUpkeep at the end
     // of every round you hold or pin someone; a holder who can't pay lets go.
     grappling: {
+      jointLock: { attr: 'DEX', points: 1 }, // the Joint Lock feat: what a hold or pin that holds takes
       stamina: { clinch: 3, grapple: 5, pin: 5, throw: 5, break: 3 },
       holdUpkeep: 2,
       bigMargin: 5,
