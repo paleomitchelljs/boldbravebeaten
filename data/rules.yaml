@@ -49,6 +49,17 @@ locations:
     limb: 3
     next: {head: [torso], arms: [torso, head], hands: [arms], legs: [legs], feet: [legs]}
 
+# ---- Hero mode (the menu's checkbox: testing, and an easy game) ----------------------------------------------------
+# Party members and their companions (a character with `hero` set; World.syncHero). dealt and taken multiply each
+# blow's damage before armor (a spell's magnitude); regen is added to stamina regeneration each round, and with
+# regenWhenHit a hero recovers even in a round they were struck. A hero's CON never falls below 1: a blow that would
+# kill knocks them out instead.
+hero:
+  dealt: 1.5
+  taken: 0.5
+  regen: 2
+  regenWhenHit: true
+
 game:
   # ---- Equipment ----------------------------------------------------------
   # Worn slots (the user's list), after the hands, shield and chest (armor). A worn good's `slot` names one of

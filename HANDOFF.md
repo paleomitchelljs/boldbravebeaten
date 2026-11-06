@@ -4,6 +4,17 @@ Last updated at commit: 9427e47
 
 Keep this a short list. Tick things off, add new ones, and refresh the commit line after every push (`git log -1 --format=%h`).
 
+## Hero mode (the user, 2026-11-05)
+- [x] A checkbox in the Menu (Play section): `world.hero`, copied onto each party member and companion as `c.hero`
+  (`World.syncHero`; `Battle.start` sets it too). Numbers in rules.yaml `hero`: blows by a hero ×1.5, on a hero ×0.5
+  (before armor; a spell's magnitude likewise), +2 stamina regen and regen even in a round they were hit. A hero's
+  CON stops at 1 in `C.damageAttr`: the blow that would kill knocks out instead. tests/hero.test.js. Sim: three
+  ogres kill a normal party (DDDD) and knock out a hero one (uuuu); one ogre, hero party wins in 2–3 rounds unhurt.
+  Seen in headless Chrome (the menu).
+- [ ] A hero party all knocked out still goes to the game-over screen ("Wake in Stonebridge, lose half your gold").
+  Kinder for a child: wake where they fell, no gold lost? Ask the user.
+- [ ] Not covered: auras, constriction's stamina, trap and condition damage are not scaled (CON still stops at 1).
+
 ## Village people; the mine's new figures (the user, 2026-11-04)
 - [x] The start village has a priest (Warden Ysa), a merchant (Guildmaster Pell) and a trainer (the drillmaster) on
   the old placeholder sprites (wizard, rogue, knight). Each opens the town's own service there: legend `services:

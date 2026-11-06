@@ -309,6 +309,12 @@
   // ---- Death and defeat -----------------------------------------------------
   const wiped = (world) => active(world).length === 0;
 
+  // Hero mode (the menu's checkbox; CONFIG.hero): world.hero marks every party member and companion as a hero.
+  function syncHero(world) {
+    const on = !!world.hero;
+    for (const c of party(world)) { c.hero = on; if (c.companion) c.companion.hero = on; }
+  }
+
   // Stamina back, bleeding settled, bandages used. Between fights, not a night's rest.
   function breather(world) {
     loadSupplies(world);
@@ -406,7 +412,7 @@
     goodDef, goodCount, addGood, removeGood, loadSupplies, collectSupplies,
     levelFor, xpFor, grantXP,
     questDef, startQuest, updateQuests, giveReward,
-    mapState, wiped, breather, restAndRepair,
+    mapState, wiped, syncHero, breather, restAndRepair,
     recruits, recruitOptions, recruit,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

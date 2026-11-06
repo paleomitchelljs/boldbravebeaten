@@ -181,6 +181,7 @@
     const allies = {};
     for (const b of G.Companions ? G.Companions.fighting(world) : []) allies[b.id] = b;
     const members = World.active(world).concat(Object.values(allies));
+    for (const c of members) c.hero = !!world.hero;
     const chars = Object.assign({}, world.chars, allies, foeMap);
     const a = arena || spec.arena || { w: 11, h: 7 };
     const enc = Combat.createEncounter(spec.name || 'Battle', members.map((c) => c.id).concat(foes.map((f) => f.id)), chars, a.w, a.h);

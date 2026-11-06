@@ -508,7 +508,7 @@
 
   function regen(c) {
     if (tireless(c)) return 0;
-    return Math.floor((attr(c, 'CON') + attr(c, 'WIL')) / CONFIG.regenDivisor) - armorInfo(c).regen + G.Effects.sum(c, 'regen');
+    return Math.floor((attr(c, 'CON') + attr(c, 'WIL')) / CONFIG.regenDivisor) - armorInfo(c).regen + G.Effects.sum(c, 'regen') + (c.hero && CONFIG.hero ? CONFIG.hero.regen || 0 : 0);
   }
 
   // Tireless (undead, constructs): no stamina at all. Damage goes straight to attributes,
@@ -1025,12 +1025,16 @@
 
   // ---- Health ------------------------------------------------------------
   // Apply attribute damage, lowering current stamina by the drop in max stamina.
+  // Hero mode (CONFIG.hero): a hero's CON stops at 1, and what would have gone past it knocks them out.
   function damageAttr(c, a, n) {
     if (n <= 0) return;
+    let knockout = false;
+    if (c.hero && a === 'CON' && n >= attr(c, 'CON')) { n = Math.max(0, attr(c, 'CON') - 1); knockout = true; }
     const before = maxStamina(c);
     c.damage[a] = (c.damage[a] || 0) + n;
     const after = maxStamina(c);
     c.stamina = Math.max(0, Math.min(after, c.stamina - (before - after)));
+    if (knockout) c.stamina = 0;
   }
 
   function healAttr(c, a, n) {

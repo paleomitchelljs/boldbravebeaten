@@ -870,6 +870,13 @@
     return V.empty + (V.full - V.empty) * f;
   }
 
+  // Hero mode (CONFIG.hero): a hero's blows land harder and blows on a hero land softer.
+  function heroMult(attacker, target) {
+    const H = CONFIG.hero;
+    if (!H) return 1;
+    return (attacker && attacker.hero ? H.dealt || 1 : 1) * (target.hero ? H.taken || 1 : 1);
+  }
+
   function computeHit(attacker, target, option, flags) {
     flags = flags || {};
     // Immune to the spell (resist 0 for its element, or for `magic`, every spell: a golem and mind or life magic).
@@ -904,6 +911,8 @@
       // piercing and half slashing; only blunt breaks bones cleanly. A spell's blow also answers to its element.
       ['P', 'S', 'B'].forEach((k, i) => { const m = C.damageMult(target, k); if (m !== 1) v[i] = Math.floor(v[i] * m); });
       if (option.spell) { const m = spellMult(target, option.spell.element); if (m !== 1) for (let i = 0; i < 3; i++) v[i] = Math.floor(v[i] * m); }
+      const hm = heroMult(attacker, target);
+      if (hm !== 1) for (let i = 0; i < 3; i++) v[i] = Math.round(v[i] * hm);
     }
     // Stoneskin, barkskin, a shield of force: protection that isn't armor.
     if (G.Conditions) ['P', 'S', 'B'].forEach((k, i) => { v[i] = Math.max(0, v[i] - G.Conditions.mitigation(target, k, attacker)); });
@@ -1126,6 +1135,8 @@
     // Resisting the element (a mail that shrugs off fire, a frost ward, a golem; `magic` for every spell).
     const gr = spellMult(target, option.spell.element);
     if (gr !== 1) mag = Math.floor(mag * gr);
+    const hm = heroMult(attacker, target);
+    if (hm !== 1) mag = Math.round(mag * hm);
     const res = Object.assign(blankHit(), { fire: mag });
     const unconscious = target.stamina <= 0;
     let left = mag;
@@ -2472,7 +2483,7 @@
       const conscious = !c.status.unconscious;
       if (conscious || CONFIG.unconsciousRegenerates) {
         const took = enc.hitThisRound[id] || 0;
-        const allowed = took === 0 || (C.rank(c, 'second_wind') && took <= 2);
+        const allowed = took === 0 || (C.rank(c, 'second_wind') && took <= 2) || (c.hero && CONFIG.hero && CONFIG.hero.regenWhenHit);
         if (r < 0 && CONFIG.negativeRegenAlwaysApplies) {
           c.stamina = Math.max(0, c.stamina + r);
           log(enc, `${c.name} loses ${-r} stamina to heavy armor.`);
