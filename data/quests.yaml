@@ -9,6 +9,6 @@ ember_king:
   faction: deep_gnomes
   summary: The gnomes of the fort have been walled up across the lava for eleven years. Their warden wants the goblin king dead.
   stages:
-    - {text: "Kill the goblin king on his throne in the castle north of the great hall.", done_when: {flag: ember_king_dead}}
+    - {text: "Kill the goblin king on his throne in the castle beyond the gate court.", done_when: {flag: ember_king_dead}}
     - {text: "Tell Warden Odda in the gnome fort.", done_when: {flag: told_odda_king}}
   reward: {gold: 150, xp: 300, standing: {deep_gnomes: 20}, renown: 3}

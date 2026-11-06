@@ -1310,70 +1310,82 @@ temple_wall:
   secrets: []
 
 # ---- The fire-goblin mine (prototype dungeon 2; plan in assets/ideas/ember-mine.md). Maps laid out by
-# assets/wip/ember/layout.py, then hand-edited here. ----------------------------------------------------------
+# assets/wip/ember/layout.py, then hand-edited here; the Cinder Hall instead follows the flame goblins' half of a
+# published adventure's goblin map (assets/wip/ember/hall/ traces it; the PDF is local only). ---------------------
 # TUNED DOWN FOR TESTING (the user, 2026-11-04): every encounter and wanderer here is one foe, not a group. The groups
 # as designed are at commit 691d44f (`git show 691d44f:data/places.yaml`).
 ember_hall:
   name: The Cinder Hall
   kind: dungeon
-  blurb: A tunnel of black basalt climbing from the surface: a winding stair, a gallery over the lava, and a great hall with three ways on.
+  blurb: The flame goblins' caves of black basalt: a stair down to a ledge round a lava pool, a bubbling cavern, warrens, storerooms, a fungus farm, the baron's seat, and a gate court at the south end.
   level: 2
   look: {wall: "#2a2624", floor: "#3c3632", ceiling: "#140c08", fog: "#120604", torch: 1, tileset: ember_basalt, light: 8}
   map:
-    - "####################################################################"
-    - "####################################################################"
-    - "####################M#######################K#######################"
-    - "####################..######################..######################"
-    - "####################..########Q#############..######################"
-    - "####################..########..############..######################"
-    - "####################..########..############..######################"
-    - "####################..########..############PP######################"
-    - "#############$$$$$$$))$$$#####..####################################"
-    - "#############$$$$$$$))$$$#####..##########........##################"
-    - "#############$$$$$$$))$$$#####..##########........##################"
-    - "#############$$$$$$$))$$$#####..##########...G....##################"
-    - "##...n...####$$$$$$$))$$$#......##########........##################"
-    - "##...w...####$$$$$$$))$$$#.oS...##########........##################"
-    - "##.......###########..####..##..##########........##################"
-    - "##.......###########..####..##############........##################"
-    - "#L.......###########..####..##############........##################"
-    - "##.e...............................$$$.....................#########"
-    - "##................................$$$$$....................#########"
-    - "##.......########################..$$$.................e...#########"
-    - "##......#########################..........................#########"
-    - "###########/////////.////////####.....##............##.....#########"
-    - "###########/////////A////////####...i.##............##.....#########"
-    - "###########//#############..#####..........................#########"
-    - "###########//#############..#####...............;......p...#########"
-    - "###########//##..............####.......a........;.........#########"
-    - "###########//##..............####..........................#########"
-    - "###########//##....$$$$$$$$$.####............##............#########"
-    - "###########//##....$$$$$$$$$.####............##.................//##"
-    - "###########//##....$$$$$$$$$.####...............................//##"
-    - "###########//##....$$$$$$$$$.####...b....;;.............;..#####//##"
-    - "###########//##....$$$$$$$$$.####..........................#####//##"
-    - "###########//##....$$$$$$$$$.####.............h............#####//##"
-    - "###########//##....$$$$$$$...####..............f...........#####//##"
-    - "###########//##..............####.....##............##...k.#####//##"
-    - "###########//##.......................##............##.$...#####D###"
-    - "###########//##..g...................................$$$$$.#########"
-    - "###########//##..............####...................$$$$$$$#########"
-    - "###########//#####''#############....................$$$$$.#########"
-    - "###########//#####''#############......................$...#########"
-    - "###########/////////////////////#..........................#########"
-    - "###########/////////////////////####################################"
-    - "###########//################//#####################################"
-    - "#############################//#####################################"
-    - "#############################//#####################################"
-    - "#############################//#####################################"
-    - "#############################//#####################################"
-    - "#############################//#####################################"
-    - "#############################//#####################################"
-    - "#############################//#####################################"
-    - "#############################//#####################################"
-    - "#############################//#####################################"
-    - "#############################<######################################"
-    - "####################################################################"
+    - "##############################################################################"
+    - "##############################################################################"
+    - "######....##########################..##...###################################"
+    - "#<///#....#####......###############..##...###################################"
+    - "##/A/#....#####......#..############a.##..####################################"
+    - "###..........n.......#..#####..#..........##..##############...###############"
+    - "###..$$............h....#####..#........w.##..##############...###############"
+    - "####.$$..''g.....................$$$..........#############........###########"
+    - "####....#''......................$$$$.......b.##############.......###########"
+    - "######..####......................$$$$.......##########..###.....#############"
+    - "######..######.............................############..##......#############"
+    - "######..#######...........$$...............#######.......##...............####"
+    - "######..##########....$$$$$$...............#######.................u......L###"
+    - "######..###########..$$$$$$$.........###...#######..................###...####"
+    - "######...##########.$$$$$$$..........####..............$$.....$$...###########"
+    - "#######..########....$$$$$$.........#####.............$$$....$$$.#############"
+    - "#######...#######....$$$$$$.........#####..#..........$$$$...$$$.#############"
+    - "########..#####.......$$$$.........#####..###.........$$$$...$$$..############"
+    - "########..#####........$$$.........#####..########.....$$$$..$$...############"
+    - "########..#####........$$$.........################.....$$.......#############"
+    - "########..######........$$..#.....####################.........###############"
+    - "########..######...##...$$..##...#######################.....#################"
+    - "########.######....##...$$$..#####.........#############....##################"
+    - "#######..######..e......$$$..#####.........#############....##################"
+    - "#######..#######.........$$$.#####............##########....##################"
+    - "#######.########..........$$...####...k.......###########......###############"
+    - "######..#######............$$..####...........############.....###############"
+    - "######..#######.............$$..####.........k...##########......#############"
+    - "######..######..................####.............#############...#############"
+    - "######..######..f................................##############..#############"
+    - "#######.#####..##....p.....................k.....###############...###########"
+    - "#######..#####.##..............$$$$..............######....######..###########"
+    - "#######..#####.##........i......$$$$$............######....#...##..###########"
+    - "#######..###...##...............$$$$$............#######...#...##...##########"
+    - "#######..###...##.................$$$............#######...........###########"
+    - "#######..###...###.............##..$$...k........######.....r....#############"
+    - "#####..........####............###.$$$...........#######.........#############"
+    - "#####..$$......######...........##.$$$$$..........#########.......############"
+    - "#H....$$$......#######..........##..$$$$$.........#########.......############"
+    - "##....$$$.......#######.........##..$$$$$.........#########......#############"
+    - "#####.$$$$......#######....###...##...$$$$$$$$))$$$.............##############"
+    - "#####.$$$......########...#####..###....$$$$$$))$$$$...........###############"
+    - "#####..$$.....#########..#######..#####...$$$$))$$$$$........#################"
+    - "#####.$$$....#########...#######..#######...$$))$$$$$$......##################"
+    - "#####..$$...##########...########...#######......$$$$$$.....###########D.#####"
+    - "#####.......#########....#########..##########....###$$$$$.......######..#####"
+    - "#####..o....#########.......######...#########....####$$$$$......######...####"
+    - "####M.......#########.......#####....########.....#####$$$$$..............####"
+    - "######....$..########......######........#####......####$$$$$.............####"
+    - "######....$$.########......######....y...#####......######$$####.......v..####"
+    - "#######.m.$$.......#...x...#######.......#######....################.......###"
+    - "#######...$$$......#.......########......########..##################......###"
+    - "######..i.$$$$.....##.....##########.....########..##################......###"
+    - "######..#..$$$$...###.....#############..########...################......####"
+    - "###########$$$$...###.....#############..#####.....###########################"
+    - "###########......####......############......#.....###########################"
+    - "###########...###########.#############..e...#.....###########################"
+    - "#######......##########################..........G.###########################"
+    - "#######...z..##########################.............##########################"
+    - "######.......###########################............##########################"
+    - "#######......####################################..###########################"
+    - "#######....C.####################################..###########################"
+    - "#########S#######################################PP###########################"
+    - "#########Q#######################################K############################"
+    - "##############################################################################"
   legend:
     # Goblin clutter (not solid, so it never closes a tunnel).
     a: {kind: prop, sprite: gob_pot, solid: false, label: "A dented cookpot, a rat on a skewer beside it"}
@@ -1381,31 +1393,47 @@ ember_hall:
     e: {kind: prop, sprite: gob_sacks, solid: false, label: "Ore sacks tied with rope"}
     f: {kind: prop, sprite: gob_tools, solid: false, label: "A barrel of old picks and shovels"}
     i: {kind: prop, sprite: gob_cart, solid: false, label: "A mine cart full of glowing ore"}
-    k: {kind: prop, sprite: gob_mushrooms, solid: false, label: "Glowing blue cave mushrooms"}
+    k: {kind: prop, sprite: gob_mushrooms, solid: false, label: "Fungus in lumps on a bed of ash and guano"}
     n: {kind: prop, sprite: gob_powder, solid: false, label: "Kegs of black powder daubed with a skull"}
     o: {kind: prop, sprite: gob_timber, solid: false, label: "A timber frame shoring up the rock"}
-    "<": {kind: stairs, to: mine_approach, at: M, sprite: door, wall: true, label: "Back down the stair and out"}
+    # The way in (north-west): a stair down to a ledge round a lava pool, under a murder hole.
+    "<": {kind: stairs, to: mine_approach, at: M, sprite: door, wall: true, label: "Back up the stair and out"}
     A: {kind: trap, sprite: blade, on: "/", tn: 9, disarm: 9, damage: {CON: 2}, label: "A slot in the rock across the stair", text: "A blade on a chain swings out of the slot at chest height."}
     g: {kind: monster, encounter: murderhole, label: "Goblins at the murder hole"}
-    h: {kind: monster, encounter: hall, label: "Goblins in the great hall"}
-    p: {kind: monster, encounter: patrol, label: "A goblin patrol"}
-    G: {kind: monster, encounter: gate, label: "The gate guards"}
-    P: {kind: locked, sprite: portcullis, see: true, forceTn: 15, opensWhen: {flag: ember_winch}, label: "A portcullis of black iron", text: "A portcullis of black iron bars. Its chain runs to a winch in the gate court's wall, and another on the far side.", alt: [{label: "Haul on the gate winch", requires: {flag: ember_gate_won}, opens: true, text: "With the guards dead, nobody stops you. The winch groans, and the portcullis rattles up into the rock."}]}
-    K: {kind: stairs, to: ember_castle, at: S, up: true, sprite: door, wall: true, label: "Into the goblin castle"}
-    D: {kind: prop, sprite: rubble, label: "The tunnel drops away into heat and dark: the way to the deep lair (not built yet)"}
-    S: {kind: secret, tn: 10, label: "A seam in the tunnel wall"}
-    Q: {kind: stairs, to: ember_castle, at: Q, up: true, sprite: door, wall: true, label: "A goblin door at the end of the secret passage"}
-    M: {kind: stairs, to: ember_warrens, at: m, sprite: door, wall: true, label: "On into the mine workings"}
+    H: {kind: stairs, to: mine_approach, at: M, sprite: door, wall: true, label: "A low side duct, out onto the slopes"}
+    h: {kind: monster, encounter: hall, label: "Goblins in the bubbling cavern"}
+    w: {kind: monster, encounter: warren, label: "The warren"}
+    u: {kind: monster, encounter: eastpost, label: "The east guard post"}
     L: {kind: stairs, to: ember_lake, at: l, sprite: door, wall: true, label: "Steps down towards a red glow"}
-    w: {kind: monster, encounter: chamber, label: "Goblins resting in the small chamber"}
+    p: {kind: monster, encounter: patrol, label: "A goblin patrol"}
+    r: {kind: monster, encounter: priests, label: "The war-priests' hall"}
+    v: {kind: monster, encounter: riverpost, label: "The river guard post"}
+    D: {kind: prop, sprite: rubble, label: "The tunnel drops away into heat and dark: the way to the deep lair (not built yet)"}
+    x: {kind: monster, encounter: guards, label: "A guards' cave"}
+    y: {kind: monster, encounter: guards, label: "A guards' cave"}
+    m: {kind: monster, encounter: mines, label: "Picks ringing in the mines"}
+    M: {kind: stairs, to: ember_warrens, at: m, sprite: door, wall: true, label: "On into the mine workings"}
+    z: {kind: monster, encounter: baron, label: "The baron's seat"}
+    C: {kind: chest, label: "A chest of drake hide beside the throne", loot: strongbox, tn: 9}
+    S: {kind: secret, tn: 10, label: "A seam in the rock behind the throne"}
+    Q: {kind: stairs, to: ember_castle, at: Q, up: true, sprite: door, wall: true, label: "A goblin door at the end of the secret passage"}
+    G: {kind: monster, encounter: gate, label: "The gate guards"}
+    P: {kind: locked, sprite: portcullis, see: true, forceTn: 15, opensWhen: {flag: ember_winch}, label: "A portcullis of black iron", text: "A portcullis of black iron bars set in a built wall. Its chain runs to a winch in the gate court's wall, and another on the far side.", alt: [{label: "Haul on the gate winch", requires: {flag: ember_gate_won}, opens: true, text: "With the guards dead, nobody stops you. The winch groans, and the portcullis rattles up into the rock."}]}
+    K: {kind: stairs, to: ember_castle, at: S, up: true, sprite: door, wall: true, label: "Into the goblin castle"}
   encounters:
     murderhole: {foes: [{monster: fireGoblinArcher}], text: "A bowstring creaks behind the murder hole. A goblin face, lit red from below."}
-    hall: {foes: [{monster: fireGoblin}], text: "A fire goblin across the hall turns and comes at a run, spear low."}
-    patrol: {foes: [{monster: fireGoblin}], text: "A goblin on patrol rounds the column of rock."}
+    hall: {foes: [{monster: fireGoblin}], text: "A fire goblin across the cavern turns and comes at a run, spear low. It knows where the floor is sound."}
+    warren: {foes: [{monster: fireGoblin}], text: "An off-duty goblin scrambles up from its blanket, slow and cursing, and grabs a spear."}
+    eastpost: {foes: [{monster: goblinWarrior}], text: "A goblin in mail steps out from under a wall hung with skulls and hides."}
+    patrol: {foes: [{monster: fireGoblin}], text: "A goblin on patrol comes round a stack of barrels."}
+    priests: {foes: [{monster: goblinShaman}], text: "A goblin shaman looks up from its painted wall and starts to chant."}
+    riverpost: {foes: [{monster: goblinWarrior}], text: "The guard by the river comes off its stool, shield up."}
+    guards: {foes: [{monster: fireGoblin}], text: "A guard in the side cave comes out at a run."}
+    mines: {foes: [{monster: goblinMiner}], text: "A goblin miner drops its pick and picks up a club."}
+    baron: {foes: [{monster: goblinShaman}], text: "An old goblin on a throne of black rock lifts a staff topped with a glowing crystal."}
     gate: {foes: [{monster: goblinWarrior}], flags: [ember_gate_won], text: "The gate guard steps in front of the portcullis."}
-    chamber: {foes: [{monster: goblinMiner}], text: "A goblin miner scrambles up from its blanket."}
   wandering:
-    - {w: 1, foes: [{monster: fireGoblin}], text: "A fire goblin comes along the hall."}
+    - {w: 1, foes: [{monster: fireGoblin}], text: "A fire goblin comes along the cave."}
     - {w: 4, nothing: true}
   secrets: []
 
@@ -1732,14 +1760,14 @@ ember_castle:
     - "##################################################"
   legend:
     S: {kind: stairs, to: ember_hall, at: K, sprite: door, wall: true, label: "Out through the gatehouse"}
-    Q: {kind: stairs, to: ember_hall, at: Q, sprite: door, wall: true, label: "The secret passage back to the west tunnel"}
+    Q: {kind: stairs, to: ember_hall, at: Q, sprite: door, wall: true, label: "The secret passage back to the baron's seat"}
     w: {kind: note, sets: [ember_winch], label: "The portcullis winch", text: "A great winch for the portcullis chain. You throw your weight on it; somewhere south, the portcullis rattles up into the rock."}
     g: {kind: monster, encounter: hallguard, label: "Guards in the entrance hall"}
     b: {kind: monster, encounter: bar, label: "Goblins at the bar"}
     r: {kind: monster, encounter: sleepers, asleep: true, label: "Goblins asleep"}
     v: {kind: monster, encounter: sleepers2, asleep: true, label: "A goblin snoring in the bunk room"}
     y: {kind: pickup, good: tome_ember, text: "A shaman's book of fire-words lies open on the desk."}
-    m: {kind: note, sets: [knows_castle_seam], label: "The map room", text: "A map of the mine scratched into a slate table. In the castle's east wing, the passage north of the champions' room is drawn to go through into the king's rooms, though the wall there looks solid. West of the great hall, a second line runs from the tunnel to inside the portcullis."}
+    m: {kind: note, sets: [knows_castle_seam], label: "The map room", text: "A map of the mine scratched into a slate table. In the castle's east wing, the passage north of the champions' room is drawn to go through into the king's rooms, though the wall there looks solid. From behind the baron's throne, far to the west, a second line runs to inside the portcullis."}
     T: {kind: prop, sprite: throne, label: "A throne of basalt"}
     k: {kind: monster, encounter: throne, label: "The goblin king and his champions"}
     J: {kind: stairs, to: ember_jail, at: j, sprite: door, wall: true, label: "Stairs down, north of the throne"}

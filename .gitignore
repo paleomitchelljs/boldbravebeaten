@@ -25,3 +25,6 @@ assets/wip/temple-tileset/
 # Local only: Claude settings, Dropbox conflict copies
 .claude/
 *conflicted copy*
+
+# Reference adventures (published PDFs, not ours to redistribute)
+docs/reference-adventures/

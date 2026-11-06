@@ -33,6 +33,17 @@ start (`start.yaml starts`).
 
 Not built: the dragon's lair below (two markers point to it, from the hall's east tunnel and the jail).
 
+### The Cinder Hall redrawn (the user, 2026-11-06)
+
+The hall no longer follows the memo's first rows (winding stair, gallery over lava, great hall). It is the flame
+goblins' half of the goblin map on page 12 of the EverQuest d20 adventure *Solusek's Eye* (G-1 to G-13), traced by
+`assets/wip/ember/hall/` (its README maps each key to the hall). The PDF is in `docs/reference-adventures/`, which
+is gitignored. What carried over from the memo: the blade trap on the stair down, the murder hole (now in G-1's east
+wall), the portcullis with its guards and winch (the gate court, G-13, south end), a seam to inside the portcullis
+(now behind the baron's throne, G-12), the ways on to the warrens (G-11, the mines), the lava lake (G-6's bridge post)
+and the deep lair (G-10's). The castle behind the portcullis stays as built; it stands in for the inferno goblins' half.
+`rebuild.sh` would overwrite it with the old layout: don't run it on `ember_hall`.
+
 ## 2. Engine additions (2026-10-31)
 
 - Ground letters (`rules.yaml game.ground`): `$` lava (no walking into it; in a fight, terrain `lava`: Fire 6 on entering
