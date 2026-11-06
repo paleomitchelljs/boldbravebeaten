@@ -90,6 +90,14 @@
     bait: { name: 'Bait', ap: 1, stamina: 1 },
     readIntent: { name: 'Read intent', ap: 0.5, stamina: 0 }, // cheap: a glance
     bandage: { name: 'Bandage', ap: 3, stamina: 0 },
+    // Feat actions (feats.yaml): Shadow, Leadership, Lore, Deception.
+    vanish: { name: 'Vanish', ap: 2, stamina: 1 },
+    rally: { name: 'Rally', ap: 2, stamina: 0 },
+    command: { name: 'Command', ap: 2, stamina: 0 },
+    rouse: { name: 'To your feet!', ap: 2, stamina: 0 },
+    demoralize: { name: 'Demoralize', ap: 2, stamina: 1 },
+    nameWeakness: { name: 'Name the weakness', ap: 2, stamina: 0 },
+    feign: { name: 'Feign death', ap: 2, stamina: 0 },
     move: { name: 'Move', ap: 1, stamina: 0 },
     windUp: { name: 'Wind up', ap: 2, stamina: 1 }, // costs set in CONFIG.windUp
     readyPrimary: { name: 'Draw main weapon', ap: 0.5, stamina: 0 },

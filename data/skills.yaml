@@ -27,7 +27,7 @@ trapcraft:
 forcing:
   name: Forcing
   attrs: [STR]
-  feats: {}
+  feats: {brute_force: 2}
   blurb: Break a door or lid open. Loud.
 appraisal:
   name: Appraisal
@@ -62,7 +62,7 @@ intimidation:
 deception:
   name: Deception
   attrs: [INT, CHA]
-  feats: {leading_questions: 1}
+  feats: {liar: 2, leading_questions: 1}
   blurb: Say what is not so, and be believed.
 appeal:
   name: Appeal

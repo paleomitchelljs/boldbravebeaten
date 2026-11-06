@@ -511,6 +511,10 @@
       stunned: { name: 'Stunned', resistedBy: 'CON', drainAP: 2, noGuard: true }, // AP lost at once; no guard this round
       riled: { name: 'Riled', mit: { P: 1, S: 1, B: 1 }, breakOnHarm: true }, // a goading blade: until the bearer is hurt
       unseen: { name: 'Unseen', unseen: true }, // can't be picked out beyond arm's reach; striking ends it
+      // Feat conditions (feats.yaml: Feign Death, Dirty Trick, Name the Weakness).
+      feigning: { name: 'Playing dead', unseen: true, feign: true }, // no foe can aim at them, near or far; acting ends it
+      exposed: { name: 'Exposed', noGuard: true }, // no defence this round
+      named: { name: 'Weakness named', named: true }, // blows ignore its resistances
       corroded: { type: 'acid', name: 'Corroded', resistedBy: 'CON', dot: { stamina: 2 }, living: true },
       // Mystic.
       dread: { name: 'Dread', attrs: { STR: -1, DEX: -1, SPD: -1 }, defense: -1 }, // a revenant knight's aura

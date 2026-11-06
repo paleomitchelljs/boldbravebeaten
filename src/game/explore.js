@@ -226,8 +226,10 @@
     return { x: ex.x + DIRS[ex.dir][0], y: ex.y + DIRS[ex.dir][1] };
   };
 
+  // Pathfinder (feat): a quarter less time a step.
   function minutesPerStep(world) {
-    return (world.explore && world.explore.sneak ? cfg().sneakStepSeconds : cfg().stepSeconds) / 60;
+    const path = W.active(world).some((c) => C.rank(c, 'pathfinder')) ? 0.75 : 1;
+    return (world.explore && world.explore.sneak ? cfg().sneakStepSeconds : cfg().stepSeconds) / 60 * path;
   }
 
   // ---- The dungeon's clock: time and noise draw wanderers (rules.yaml game.wanderers) -----------------------------
@@ -252,13 +254,15 @@
       const w = wanderingFor(world);
       if (!w || w.nothing) continue;
       const party = W.active(world);
-      if (ex.sneak) {
+      // Tracker (feat): heard first, so never surprised, and a chance to slip away even when not sneaking.
+      const track = party.some((c) => C.rank(c, 'tracker'));
+      if (ex.sneak || track) {
         const r = S.groupCheck(party, 'stealth', foeAwareness({ foes: w.foes }), 0);
         ev.push({ type: 'check', r });
         if (r.ok) { ev.push({ type: 'log', text: `${w.text ? w.text + ' ' : ''}You keep still, and they pass you by.`, cls: 'find' }); continue; }
       }
       const heard = S.bestCheck(party, 'perception', cw.hearTn || 8, 0);
-      ev.push({ type: 'wander', spec: { foes: w.foes, text: w.text, name: 'Wanderers' }, check: heard, surprise: heard.ok ? null : 'party' });
+      ev.push({ type: 'wander', spec: { foes: w.foes, text: w.text, name: 'Wanderers' }, check: heard, surprise: heard.ok || track ? null : 'party' });
       ex.danger = 0;
       return;
     }

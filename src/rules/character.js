@@ -857,7 +857,7 @@
     if (motion === 'thrust' && rank(c, 'lunge')) maxRange += 1;
     let clinchPenalty = !def.closeOK && !def.natural;
     if (motion === 'shoot') {
-      minRange = def.ranged.min;
+      minRange = rank(c, 'point_blank') ? 1 : def.ranged.min;
       maxRange = def.ranged.max;
       closePenalty = false;
       clinchPenalty = false;
@@ -1006,7 +1006,8 @@
       case 'windUp': {
         const o = extra && extra.option;
         const W = (o && o.windUpCost) || CONFIG.windUp;
-        ap = gearAP(c, Math.round(baseAP(W.ap)) + armorAP(c), o && o.weaponId ? c.weapons.find((x) => x.id === o.weaponId) : null);
+        const drawn = Math.round(baseAP(W.ap));
+        ap = gearAP(c, drawn - (o && o.ranged ? quickCut(c, 'quick_draw', drawn) : 0) + armorAP(c), o && o.weaponId ? c.weapons.find((x) => x.id === o.weaponId) : null);
         if (o && o.spell) return { ap, stamina: 0 };
         const wpn = o && o.weaponId ? c.weapons.find((x) => x.id === o.weaponId) : null;
         return { ap, stamina: staminaCost(c, W.stamina, wpn ? effectiveWeight(c, wpn) : null, 0) };

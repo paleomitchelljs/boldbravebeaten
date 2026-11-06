@@ -90,7 +90,7 @@
     strike: { color: '#ff6b5e', icon: 'sword' }, spell: { color: '#c79bff', icon: 'star' }, maneuver: { color: '#ffb35c', icon: 'hand' },
     other: { color: '#8fe3a8', icon: 'hand' }, guard: { color: '#8ab4ff', icon: 'shield' }, move: { color: '#7fdcff' }, far: { color: '#d9b055' },
   };
-  const SELF_ICON = { windUp: 'sword', standUp: 'up', bandage: 'heart', drawSidearm: 'hand', pickUp: 'hand', drop: 'hand' };
+  const SELF_ICON = { windUp: 'sword', standUp: 'up', bandage: 'heart', drawSidearm: 'hand', pickUp: 'hand', drop: 'hand', vanish: 'eye', feign: 'eye', rally: 'up', command: 'up', rouse: 'heart' };
   // The battlefield view's size in squares (rules.yaml game.arena).
   const VIEW = () => G.CONFIG.game.arena || { w: 15, h: 10 };
   const isSpell = (e) => !!(e && e.option && e.option.spell);
@@ -320,7 +320,7 @@
 
   // ---- What happened when a pass resolved: lunges, bolts and numbers over the figures -----------------------------
   // Declarations aimed at someone, which get a lunge or a bolt when they land.
-  const AIMED = ['strike', 'cast', 'trip', 'disarm', 'shove', 'clinch', 'grapple', 'pin', 'throw', 'bait'];
+  const AIMED = ['strike', 'cast', 'trip', 'disarm', 'shove', 'clinch', 'grapple', 'pin', 'throw', 'bait', 'demoralize', 'nameWeakness'];
   const DEFEND = { blocks: 'Blocked', parries: 'Parried', dodges: 'Dodged', slips: 'Dodged', catches: 'Caught', deflects: 'Deflected' };
 
   function snapshot(enc, chars) {

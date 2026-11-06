@@ -391,6 +391,13 @@
     bait: 'CHA against the foe\'s WIS. Won: they commit too early and defend worse for the round.',
     readIntent: 'A cheap glance: WIS against the foe\'s CHA. Read right, you gain on guarding against them and on hitting through their guards. You can misread, and a misread costs you.',
     bandage: 'Stops one bleed on yourself or someone adjacent.',
+    vanish: 'Out of sight for 2 rounds: no foe beyond arm\'s reach can aim at you, and your blows are harder to meet. Striking ends it.',
+    feign: 'Drop and lie still: no foe can aim at you until you act again.',
+    rally: 'You and allies within 3 squares get stamina back at the round\'s end even if struck.',
+    command: 'An ally within 4 squares gains AP this round.',
+    rouse: 'Haul an unconscious ally beside you to their feet with a quarter of their stamina. Once per ally a fight.',
+    demoralize: 'STR or CHA against the foe\'s WIL. Won: they are frightened of you for a round.',
+    nameWeakness: 'For 2 rounds everyone\'s blows ignore this creature\'s resistances.',
     windUp: 'Gathers a power swing or a Strong spell; release it next round.',
   };
 
@@ -430,7 +437,7 @@
     }
     for (const m of legal.maneuvers) {
       const e = { key: 'm:' + m.type, kind: 'maneuver', type: m.type, label: D.ACTIONS[m.type].name, ap: m.ap, stamina: m.stamina, affordable: m.affordable, why: m.affordable ? null : m.targets.some((t) => t.inReach) ? 'Not enough AP' : 'No one in reach', targets: sortTargets(m.targets, chars, c) };
-      if (m.type === 'bait' || m.type === 'readIntent') other.push(Object.assign(e, { group: 'Wits' }));
+      if (['bait', 'readIntent', 'demoralize', 'nameWeakness'].includes(m.type)) other.push(Object.assign(e, { group: 'Wits' }));
       else maneuver.push(Object.assign(e, { group: 'Maneuvers' }));
     }
     for (const o of legal.spells || []) {

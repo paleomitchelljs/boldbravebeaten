@@ -215,3 +215,171 @@ test('Firestorm makes Fire + Wide a point cheaper; Ember Heart halves fire', () 
   m.feats.ember_heart = 1;
   assert.equal(C.damageMult(m, 'fire'), 0.5);
 });
+
+// ---- The new trees (phase 3): Archery, Shadow, Leadership, Survival, Lore, Athletics, Deception ----------------------
+const { World, Battle, Explore, Conditions: Cond } = B;
+const bow = (name, type) => { const c = armed(name, type || 'shortbow', 'party'); c.inventory.arrows = 20; return c; };
+const shot = (c) => C.attackOptions(c).find((x) => x.ranged && x.motion === 'shoot');
+
+test('Archery: Point Blank shoots at 1; Quick Draw draws cheaper; Far Shot loses nothing at long range; Deadeye aims free', () => {
+  const a = bow('Archer');
+  assert.equal(shot(a).minRange, 2);
+  const draw0 = C.actionCost(a, 'windUp', { option: shot(a) }).ap;
+  a.feats.point_blank = 1; a.feats.quick_draw = 2;
+  assert.equal(shot(a).minRange, 1);
+  assert.ok(C.actionCost(a, 'windUp', { option: shot(a) }).ap < draw0);
+  const t = armed('Mark', null, 'enemy');
+  const o = shot(a);
+  const far = (o.longRange || 8) + 2;
+  const sum = (h) => h.toCON + h.slashToAttrs + h.bluntToStamina + h.bluntToCON;
+  const before = sum(Combat.computeHit(a, t, o, { distance: far, location: 'torso' }));
+  a.feats.far_shot = 1;
+  assert.ok(sum(Combat.computeHit(a, t, o, { distance: far, location: 'torso' })) > before);
+  const aimed = Object.assign({}, o, { aim: 'head' });
+  const p0 = Combat.defenseOdds(t, 'block', o.motion, a, aimed);
+  a.feats.deadeye = 1;
+  const p1 = Combat.defenseOdds(t, 'block', o.motion, a, aimed);
+  assert.ok(p1 <= p0, `aimed shot no harder to land with Deadeye (${p0} → ${p1})`);
+});
+
+test('Shadow: Vanish (no foe beside) makes you unseen; Shadow Step moves unanswered; Backstab hits harder', async () => {
+  const a = armed('Shade', 'dagger', 'party');
+  a.feats.stealth = 1; a.feats.vanish = 1;
+  const b = armed('Guard', 'longsword', 'enemy');
+  const f = await field([[a, 1, 1], [b, 2, 1]]);
+  f.enc.ap[a.id] = 500;
+  assert.ok(!Combat.legalActions(f.enc, f.chars, a.id).other.some((o) => o.type === 'vanish'), 'not with a foe beside');
+  f.enc.pos[a.id] = { x: 5, y: 1 };
+  assert.equal(await Combat.act(f.enc, f.chars, { actor: a.id, type: 'vanish' }, io(recorder([]))), null);
+  assert.ok(Cond.has(a, 'unseen'));
+  // Shadow Step: walking out past the guard's reach draws nothing while unseen.
+  a.feats.shadow_step = 1;
+  f.enc.pos[a.id] = { x: 3, y: 1 };
+  const r = recorder([]);
+  assert.equal(await Combat.act(f.enc, f.chars, { actor: a.id, type: 'move', to: { x: 6, y: 1 } }, io(r)), null);
+  assert.equal(r.asked.filter((q) => q.kind === 'opportunity').length, 0);
+  // Backstab: +3 to the main damage of a melee blow from unseen.
+  a.feats.backstab = 1;
+  f.enc.pos[a.id] = { x: 3, y: 1 };
+  const o = C.attackOptions(a).find((x) => x.weaponId && C.inRange(x, 1));
+  const decl = { actor: a.id, type: 'strike', option: o, target: b.id };
+  f.enc.ap[a.id] = 500;
+  assert.equal(await Combat.act(f.enc, f.chars, decl, io(recorder([]))), null);
+  assert.equal(Math.max(...decl.option.damage), Math.max(...o.damage) + 3);
+  assert.ok(!Cond.has(a, 'unseen'), 'striking gives it away');
+});
+
+test('Leadership: Rally lets the struck regenerate; Command gives AP; To Your Feet wakes; Demoralize and Dread frighten', async () => {
+  const cap = armed('Captain', null, 'party'), ally = armed('Ally', null, 'party');
+  const f1 = armed('Foe1', null, 'enemy'), f2 = armed('Foe2', null, 'enemy');
+  for (const k of ['rally', 'command', 'to_your_feet', 'demoralize']) cap.feats[k] = 1;
+  cap.base.CHA = 10;
+  const f = await field([[cap, 1, 1], [ally, 2, 1], [f1, 4, 1], [f2, 4, 2]]);
+  f.enc.ap[cap.id] = 500;
+  const x = io(recorder([]), [10, 1, 10, 1, 10, 1]);
+  assert.equal(await Combat.act(f.enc, f.chars, { actor: cap.id, type: 'rally' }, x), null);
+  assert.equal(f.enc.rallied[ally.id], f.enc.round);
+  const ap0 = f.enc.ap[ally.id];
+  assert.equal(await Combat.act(f.enc, f.chars, { actor: cap.id, type: 'command', target: ally.id }, x), null);
+  assert.ok(f.enc.ap[ally.id] > ap0);
+  f.enc.ap[cap.id] = 500;
+  ally.stamina = 0; ally.status.unconscious = true;
+  assert.equal(await Combat.act(f.enc, f.chars, { actor: cap.id, type: 'rouse', target: ally.id }, x), null);
+  assert.ok(C.isActive(ally) && ally.stamina === Math.floor(C.maxStamina(ally) / 4));
+  assert.ok(!Combat.legalActions(f.enc, f.chars, cap.id).other.some((o) => o.type === 'rouse'), 'once a fight');
+  assert.equal(await Combat.act(f.enc, f.chars, { actor: cap.id, type: 'demoralize', target: f1.id }, x), null);
+  assert.ok(Cond.has(f1, 'frightened') && !Cond.has(f2, 'frightened'));
+  cap.feats.dread = 1;
+  Cond.remove(f1, 'frightened');
+  assert.equal(await Combat.act(f.enc, f.chars, { actor: cap.id, type: 'demoralize', target: f1.id }, x), null);
+  assert.ok(Cond.has(f1, 'frightened') && Cond.has(f2, 'frightened'), 'Dread: every foe within 3');
+});
+
+test('Lore: Bane Lore hits creatures harder (not people); Name the Weakness strips a skeleton\'s resistance; Monster Lore briefs', () => {
+  const a = armed('Sage', 'dagger', 'party');
+  const [skel] = B.Enemies.makeMonster('skeleton');
+  const person = armed('Bandit', null, 'enemy');
+  const o = C.attackOptions(a).find((x) => x.motion === 'thrust');
+  const sum = (h) => h.toCON + h.slashToAttrs + h.bluntToStamina + h.bluntToCON;
+  const p0 = sum(Combat.computeHit(a, person, o, { location: 'torso' }));
+  a.feats.bane_lore = 2;
+  assert.equal(sum(Combat.computeHit(a, person, o, { location: 'torso' })), p0, 'not people');
+  assert.ok(skel, 'a skeleton');
+  const s0 = sum(Combat.computeHit(a, skel, o, { location: 'torso' }));
+  Cond.add(skel, 'named', { rounds: 2 });
+  assert.ok(sum(Combat.computeHit(a, skel, o, { location: 'torso' })) > s0, 'piercing gets through once named');
+  const w = World.create(World.presetParty(), { log: false });
+  World.party(w)[0].feats.monster_lore = 1;
+  Battle.start(w, { name: 'Bones', foes: [{ monster: 'skeleton' }] });
+  assert.ok(w.battle.enc.log.some((l) => /knows the Skeleton: it takes nothing from piercing; little from slashing/.test(l.text)), w.battle.enc.log.map((l) => l.text).join('\n'));
+});
+
+test('Survival: Pathfinder shortens each step', () => {
+  const w = World.create(World.presetParty(), { log: false });
+  w.explore = { sneak: false };
+  const m0 = Explore.minutesPerStep(w);
+  World.party(w)[0].feats.pathfinder = 1;
+  assert.equal(Explore.minutesPerStep(w), m0 * 0.75);
+});
+
+test('Athletics: Bull Rush follows the shove; Charge adds to the next blow; Unstoppable walks through a hit', async () => {
+  const a = armed('Bull', null, 'party'), b = armed('Mark', null, 'enemy');
+  a.feats.bull_rush = 1; a.base.STR = 12;
+  const f = await field([[a, 1, 1], [b, 2, 1]]);
+  assert.equal(await Combat.act(f.enc, f.chars, { actor: a.id, type: 'shove', target: b.id }, io(recorder([]), [10, 1])), null);
+  assert.ok(f.enc.pos[b.id].x >= 3);
+  assert.deepEqual(f.enc.pos[a.id], { x: 2, y: 1 }, 'followed');
+  const c = armed('Charger', 'shortsword', 'party'), t = armed('Target', null, 'enemy');
+  c.feats.charge = 1;
+  const g = await field([[c, 0, 1], [t, 4, 1]]);
+  assert.equal(await Combat.act(g.enc, g.chars, { actor: c.id, type: 'move', to: { x: 3, y: 1 } }, io(recorder([]))), null);
+  assert.equal(c.status.charging, g.enc.round);
+  const o = C.attackOptions(c).find((x) => x.weaponId && C.inRange(x, 1));
+  const decl = { actor: c.id, type: 'strike', option: o, target: t.id };
+  g.enc.ap[c.id] = 500;
+  assert.equal(await Combat.act(g.enc, g.chars, decl, io(recorder([]))), null);
+  assert.equal(Math.max(...decl.option.damage), Math.max(...o.damage) + 2);
+  // Unstoppable: an opportunity blow that lands does not stop the walk.
+  const u = armed('Ram', null, 'party'), gd = armed('Guard', 'longsword', 'enemy');
+  u.feats.unstoppable = 1; u.base.CON = 30; u.stamina = 300;
+  const h = await field([[u, 2, 1], [gd, 1, 1]]);
+  assert.equal(await Combat.act(h.enc, h.chars, { actor: u.id, type: 'move', to: { x: 5, y: 1 } }, io(recorder(['leaves']), [10, 10, 1, 1, 1, 1])), null);
+  assert.deepEqual(h.enc.pos[u.id], { x: 5, y: 1 });
+});
+
+test('Deception: Feign Death hides you even up close; Dirty Trick leaves a baited foe exposed; Misdirection adds Feint', async () => {
+  const a = armed('Trickster', 'dagger', 'party'), b = armed('Mark', 'longsword', 'enemy');
+  a.feats.feign_death = 1; a.feats.dirty_trick = 1; a.base.CHA = 12;
+  const f = await field([[a, 1, 1], [b, 2, 1]]);
+  assert.equal(await Combat.act(f.enc, f.chars, { actor: a.id, type: 'bait', target: b.id }, io(recorder([]), [10, 1])), null);
+  assert.ok(Cond.has(b, 'exposed'));
+  f.enc.ap[a.id] = 500;
+  assert.equal(await Combat.act(f.enc, f.chars, { actor: a.id, type: 'feign' }, io(recorder([]))), null);
+  assert.ok(a.status.prone && Combat.unseenBy(f.enc, f.chars, a, b), 'unseen beside them');
+  assert.equal(B.Effects.sum(a, 'feint'), 0);
+  a.feats.misdirection = 2;
+  assert.equal(B.Effects.sum(a, 'feint'), 2);
+});
+
+test('Deception in parley: Cover Story loses no disposition when caught; The Big Lie lands for 2', () => {
+  const P = B.Parley, R = B.Rand;
+  // Caught every time (a hopeless liar), with and without a cover story.
+  for (const cover of [false, true]) {
+    R.seed(5);
+    const w = World.create(World.presetParty(), { log: false });
+    for (const c of World.party(w)) { c.base.CHA = 1; c.base.INT = 1; if (cover) c.feats.cover_story = 1; }
+    P.start(w, 'marta_quill');
+    let caught = 0;
+    for (let i = 0; i < 4 && !w.parley.last; i++) { const d0 = w.parley.dispMod; const r = P.move(w, 'bluff'); if (r.check && !r.check.ok) { caught++; assert.equal(w.parley.dispMod, cover ? d0 : d0 - 2); } }
+    assert.ok(caught > 0, 'caught at least once');
+  }
+  // A practised liar with the Big Lie.
+  R.seed(5);
+  const w = World.create(World.presetParty(), { log: false });
+  for (const c of World.party(w)) { c.base.CHA = 10; c.feats.liar = 3; c.feats.big_lie = 1; }
+  P.start(w, 'marta_quill');
+  const m0 = w.parley.willMod;
+  const r = P.move(w, 'bluff');
+  assert.ok(r.check.ok, 'it lands');
+  assert.equal(w.parley.willMod, m0 + 2);
+});

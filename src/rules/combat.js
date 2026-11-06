@@ -24,6 +24,7 @@
   const Items = G.Items;
 
   const GRAPPLE_STEPS = ['clinch', 'grapple', 'pin', 'throw', 'break'];
+  const FEAT_OTHER = ['vanish', 'feign', 'rally', 'command', 'rouse'];
   const ATTACK_TYPES = ['strike', 'trip', 'disarm', 'shove'].concat(GRAPPLE_STEPS);
   // Defences are reactions: taken when a blow comes, paid from the defender's AP.
   const DEFENSE_TYPES = ['block', 'parry', 'dodge', 'offParry'];
@@ -237,7 +238,9 @@
   function opportunityOptions(enc, chars, f, from) {
     if (!C.isActive(f) || f.status.prone || isGrappled(f) || C.inClinch(f)) return [];
     const dd = dist(from, enc.pos[f.id]);
-    return C.attackOptions(f).filter((o) => !o.ranged && !o.spell && !o.windUp && C.inRange(o, dd) && o.ap <= apLeft(enc, f.id) && !attackUnavailable(enc, f, o));
+    // Snap Shot: a bow already drawn may loose too.
+    const snap = C.rank(f, 'snap_shot') > 0;
+    return C.attackOptions(f).filter((o) => (snap && o.ranged && !o.spell ? true : !o.ranged && !o.spell && !o.windUp) && C.inRange(o, dd) && o.ap <= apLeft(enc, f.id) && !attackUnavailable(enc, f, o));
   }
 
   // A mover's step from `from` to `to` past foes' reach (CONFIG.opportunityStrikes, the user's ruling,
@@ -266,6 +269,7 @@
       // Slip Through: only closing in draws a blow. Counter Step: the step after a good dodge draws none.
       if (C.rank(m, 'slip_through') && why !== 'closes') continue;
       if (state.free) continue;
+      if (C.rank(m, 'shadow_step') && G.Effects.has(m, 'unseen')) continue;
       const options = opportunityOptions(enc, chars, reactor, at);
       state.provoked[f] = true;
       const pick = await react(enc, chars, { kind: 'opportunity', actor: f, target: m.id, options, ap: apLeft(enc, f), why }, io);
@@ -503,6 +507,14 @@
         }));
       }
     }
+    // Feat actions at foes: Demoralize (within 3), Name the Weakness (a creature within 6 in sight).
+    const sightTo = (o, r) => {
+      const dd = dist(me, enc.pos[o]);
+      return dd <= r && !(G.Terrain && enc.tiles && dd >= 2 && G.Terrain.lineCheck(enc, me, enc.pos[o], 'sight').blocked);
+    };
+    const foesUp = others.filter((o) => chars[o].side !== c.side && C.isActive(chars[o]));
+    if (C.rank(c, 'demoralize')) pushManeuver('demoralize', foesUp.map((o) => ({ id: o, inReach: sightTo(o, 3), distance: dist(me, enc.pos[o]) })));
+    if (C.rank(c, 'name_weakness')) pushManeuver('nameWeakness', foesUp.map((o) => ({ id: o, inReach: !!chars[o].monster && sightTo(o, 6), distance: dist(me, enc.pos[o]) })));
     if (C.isPinned(c)) {
       // Pinned: only trying to break free.
       out.maneuvers = out.maneuvers.filter((m) => m.type === 'break');
@@ -551,6 +563,19 @@
         const why = opt.spell ? spellShort(c, opt) : null;
         out.other.push({ type: 'windUp', option: opt, name: `Wind up: ${opt.label}`, ap: cost.ap, stamina: cost.stamina, affordable: can(cost.ap) && !why, why });
       }
+    }
+    // Feat actions for yourself and your side (feats.yaml).
+    const friends = enc.ids.filter((o) => o !== id && chars[o] && chars[o].side === c.side && !chars[o].status.dead && enc.pos[o]);
+    if (C.rank(c, 'vanish') && !grappled && !others.some((o) => chars[o].side !== c.side && C.isActive(chars[o]) && dist(me, enc.pos[o]) <= 1)) addOther('vanish');
+    if (C.rank(c, 'feign_death') && !declared('feign')) addOther('feign');
+    if (C.rank(c, 'rally') && !declared('rally')) addOther('rally');
+    if (C.rank(c, 'command')) {
+      const t = friends.filter((o) => C.isActive(chars[o]) && dist(me, enc.pos[o]) <= 4);
+      if (t.length) addOther('command', { targets: t.map((o) => ({ id: o, inReach: true })) });
+    }
+    if (C.rank(c, 'to_your_feet')) {
+      const t = friends.filter((o) => chars[o].status.unconscious && !(enc.roused || {})[o] && dist(me, enc.pos[o]) <= 1);
+      if (t.length) addOther('rouse', { targets: t.map((o) => ({ id: o, inReach: true })) });
     }
     if (c.inventory.bandages > 0) {
       const patients = enc.ids.filter((o) => chars[o].bleeds.length > 0 && !chars[o].status.dead && (o === id || dist(me, enc.pos[o]) <= 1));
@@ -652,6 +677,7 @@
   function unseenBy(enc, chars, t, viewer) {
     if (!G.Conditions || !t || !viewer || t.side === viewer.side || !G.Effects.has(t, 'unseen')) return false;
     if (!enc.pos[t.id] || !enc.pos[viewer.id]) return false;
+    if (G.Effects.has(t, 'feign')) return true;
     return dist(enc.pos[t.id], enc.pos[viewer.id]) > 1;
   }
 
@@ -729,9 +755,14 @@
       if (!ACTIONS[decl.type]) return { err: 'Unknown action' };
       ({ ap, stamina } = C.actionCost(c, decl.type));
       if (['trip', 'disarm', 'shove', 'bandage', 'bait', 'readIntent'].concat(GRAPPLE_STEPS).includes(decl.type) && !decl.target) return { err: 'Choose a target' };
-      if (ATTACK_TYPES.includes(decl.type) || decl.type === 'bait' || decl.type === 'readIntent') {
+      if (ATTACK_TYPES.includes(decl.type) || decl.type === 'bait' || decl.type === 'readIntent' || decl.type === 'demoralize' || decl.type === 'nameWeakness') {
         const m = legalActions(enc, chars, id).maneuvers.find((x) => x.type === decl.type);
         if (!m || !m.targets.some((t) => t.id === decl.target && t.inReach)) return { err: 'Not possible from here' };
+      }
+      if (FEAT_OTHER.includes(decl.type)) {
+        const o = legalActions(enc, chars, id).other.find((x) => x.type === decl.type);
+        if (!o) return { err: 'Not possible now' };
+        if (o.targets && !o.targets.some((t) => t.id === decl.target)) return { err: 'Choose a target' };
       }
     }
     if (ap > apLeft(enc, id)) {
@@ -754,6 +785,20 @@
     decl.n = ++enc.seq;
     decl.round = enc.round;
     if (decl.target) decl.targetWasDown = !C.isActive(chars[decl.target]);
+    // Playing dead ends with any action; striking or casting gives the unseen away.
+    if (G.Conditions && G.Conditions.has(chars[id], 'feigning') && decl.type !== 'feign') { G.Conditions.remove(chars[id], 'feigning'); log(enc, `${chars[id].name} is not dead after all.`, 'pass'); }
+    // Backstab (unseen) and Charge (the move before it): a melee blow made heavier, before the unseen is given away.
+    if (decl.type === 'strike' && !decl.option.ranged && !decl.option.spell) {
+      const me = chars[id];
+      const extra = (C.rank(me, 'backstab') && G.Effects.has(me, 'unseen') ? 3 : 0) + (me.status.charging === enc.round ? 2 : 0);
+      if (extra) {
+        const dmg = decl.option.damage.slice();
+        dmg[C.mainIndex(dmg)] += extra;
+        decl.option = Object.assign({}, decl.option, { damage: dmg });
+        log(enc, `${me.name} ${me.status.charging === enc.round ? 'charges in' : 'strikes from the shadows'} (+${extra}).`, 'pass');
+      }
+    }
+    if (decl.type !== 'move') chars[id].status.charging = null;
     // Striking or casting gives the unseen away.
     if (G.Conditions && G.Conditions.has(chars[id], 'unseen') && (ATTACK_TYPES.includes(decl.type) || (decl.type === 'cast' && decl.option.target !== 'ally'))) {
       G.Conditions.remove(chars[id], 'unseen');
@@ -815,7 +860,8 @@
     for (const q of steps) {
       const from = enc.pos[a.id];
       state.free = counter && walked === 0;
-      if (await opportunities(enc, chars, a, from, q, state, io)) { why = 'stopped'; break; }
+      // Unstoppable: a blow that lands does not stop the move.
+      if (await opportunities(enc, chars, a, from, q, state, io) && !C.rank(a, 'unstoppable')) { why = 'stopped'; break; }
       if (!C.isActive(a)) { why = 'stopped'; break; }
       if (enc.ids.some((o) => o !== a.id && chars[o].side !== a.side && C.isActive(chars[o]) && enc.pos[o].x === q.x && enc.pos[o].y === q.y)) { why = 'blocked'; break; }
       enc.pos[a.id] = { x: q.x, y: q.y };
@@ -836,6 +882,8 @@
       if (back) { enc.ap[a.id] += back; d.ap -= back; }
       if (counter && walked) log(enc, `${a.name} steps off the dodge.`, 'pass');
     }
+    // Charge: two squares or more, ending beside a foe.
+    if (C.rank(a, 'charge') && walked >= 2 && C.isActive(a) && enc.ids.some((o) => chars[o].side !== a.side && C.isActive(chars[o]) && dist(enc.pos[a.id], enc.pos[o]) <= 1)) a.status.charging = enc.round;
     d.to = { x: at.x, y: at.y };
   }
 
@@ -928,14 +976,18 @@
     }
     // A cut carried on into a second location (flags.carried) has had all of this already.
     if (!flags.carried) {
-      if (option.ranged && option.longRange && flags.distance > option.longRange) v[C.mainIndex(v)] = Math.max(0, v[C.mainIndex(v)] - CONFIG.range.longRangePenalty);
+      if (option.ranged && option.longRange && flags.distance > option.longRange && !C.rank(attacker, 'far_shot')) v[C.mainIndex(v)] = Math.max(0, v[C.mainIndex(v)] - CONFIG.range.longRangePenalty);
       if (prone) v[C.mainIndex(v)] += CONFIG.maneuver.proneDamageBonus;
       if (flags.pack) v[C.mainIndex(v)] += flags.pack; // pack hunters: allies at the target's side
       if (flags.half) for (let i = 0; i < 3; i++) v[i] = Math.floor(v[i] / 2);
       // Resistances by damage keyword (C.damageMult): piercing, slashing and blunt, e.g. a skeleton takes no
       // piercing and half slashing; only blunt breaks bones cleanly. A spell's blow also answers to its element.
-      ['P', 'S', 'B'].forEach((k, i) => { const m = C.damageMult(target, k); if (m !== 1) v[i] = Math.floor(v[i] * m); });
-      if (option.spell) { const m = spellMult(target, option.spell.element); if (m !== 1) for (let i = 0; i < 3; i++) v[i] = Math.floor(v[i] * m); }
+      // Name the Weakness: its resistances (not its weaknesses) count for nothing for now.
+      const named = G.Effects.has(target, 'named');
+      ['P', 'S', 'B'].forEach((k, i) => { const m = C.damageMult(target, k); if (m !== 1 && !(named && m < 1)) v[i] = Math.floor(v[i] * m); });
+      if (option.spell) { const m = spellMult(target, option.spell.element); if (m !== 1 && !(named && m < 1)) for (let i = 0; i < 3; i++) v[i] = Math.floor(v[i] * m); }
+      // Bane Lore: a creature's body known, not a person's.
+      if (target.monster && attacker && C.rank(attacker, 'bane_lore')) v[C.mainIndex(v)] += C.rank(attacker, 'bane_lore');
       const hm = heroMult(attacker, target);
       if (hm !== 1) for (let i = 0; i < 3; i++) v[i] = Math.round(v[i] * hm);
     }
@@ -1478,6 +1530,11 @@
     }
     // Sims attach enc.onHit to credit harm and knockdowns to whoever dealt them.
     if (before) enc.onHit({ attacker, target, attrs: C.totalDamage(target) - before.dmg, stamina: Math.max(0, before.stamina - target.stamina), downed: before.up && !C.isActive(target), spell: !!option.spell });
+    // Pinning Shot: an arrow in the legs or feet that draws blood roots them.
+    if (option.ranged && attacker && C.rank(attacker, 'pinning_shot') && ['legs', 'feet'].includes(h.location) && C.isActive(target) && (C.totalDamage(target) > before0.dmg || target.bleeds.length) && G.Conditions) {
+      G.Conditions.add(target, 'rooted', { rounds: 2, src: attacker.id });
+      log(enc, `The arrow pins ${target.name} where they stand.`, 'hit');
+    }
     return { text: `${h.P}/${h.S}/${h.B} P/S/B → ${parts.join(', ')}.${tail}`, hit: h };
   }
 
@@ -1532,7 +1589,7 @@
     const m = intentMods(defender, attacker);
     const aim = atkOption && atkOption.aim;
     if (aim) {
-      m.atk -= aimPenalty(atkOption, aim);
+      if (!(atkOption.ranged && attacker && C.rank(attacker, 'deadeye'))) m.atk -= aimPenalty(atkOption, aim);
       const S = CONFIG.locations.aim.shield;
       if (kind === 'block' && S && (S.covers || []).includes(aim)) m.def += S.block || 0;
     }
@@ -2141,6 +2198,7 @@
           if (o.margin > 0) {
             // The bait leaves them off balance: they defend worse for the round.
             if (G.Conditions) G.Conditions.add(t, 'baited', { rounds: 1, src: a.id });
+            if (G.Conditions && C.rank(a, 'dirty_trick')) { G.Conditions.add(t, 'exposed', { rounds: 1, src: a.id }); log(enc, `${t.name} is left wide open.`, 'hit'); }
             log(enc, `${a.name} baits ${t.name}, who commits too early and is off balance (${o.a} vs ${o.b}).`, 'hit');
           } else log(enc, `${t.name} sees through ${a.name}'s bait (${o.a} vs ${o.b}).`, 'fail');
         } else {
@@ -2184,6 +2242,53 @@
           setGrapple(chars, a, chars[C.holding(a)], null);
           log(enc, `${a.name} lets go.`);
         }
+        break;
+      case 'vanish':
+        if (G.Conditions) { G.Conditions.add(a, 'unseen', { rounds: 2, src: a.id }); log(enc, `${a.name} slips out of sight.`, 'defend'); }
+        break;
+      case 'feign':
+        knockDown(enc, a);
+        if (G.Conditions) G.Conditions.add(a, 'feigning', { rounds: 99, src: a.id });
+        log(enc, `${a.name} crumples and lies still.`, 'death');
+        break;
+      case 'rally': {
+        enc.rallied = enc.rallied || {};
+        const heard = enc.ids.filter((o) => chars[o].side === a.side && C.isActive(chars[o]) && dist(posAtStart[a.id], enc.pos[o]) <= 3);
+        for (const o of heard) enc.rallied[o] = enc.round;
+        log(enc, `${a.name} rallies ${heard.length > 1 ? 'their side' : 'themself'}: they will get their breath back this round, struck or not.`, 'defend');
+        break;
+      }
+      case 'command':
+        if (t && C.isActive(t)) {
+          const gift = Math.round(C.baseAP(1));
+          enc.ap[t.id] = (enc.ap[t.id] || 0) + gift;
+          if (enc.turnDone[t.id] && eligible(enc, chars, t.id)) log(enc, `${t.name} has had their turn; the AP will serve for reactions.`, 'pass');
+          log(enc, `${a.name} commands ${t.name}: +${C.fmtAP(gift)} AP.`, 'defend');
+        }
+        break;
+      case 'rouse':
+        if (t && t.status.unconscious && !t.status.dead) {
+          enc.roused = enc.roused || {};
+          enc.roused[t.id] = true;
+          t.stamina = Math.max(1, Math.floor(C.maxStamina(t) / 4));
+          t.status.unconscious = false;
+          C.updateCondition(t);
+          log(enc, `${a.name} hauls ${t.name} to their feet.`, 'defend');
+        }
+        break;
+      case 'demoralize': {
+        const targets = C.rank(a, 'dread') ? enc.ids.filter((o) => chars[o].side !== a.side && C.isActive(chars[o]) && dist(posAtStart[a.id], enc.pos[o]) <= 3) : t ? [t.id] : [];
+        const bonus = Math.floor(Math.max(C.attr(a, 'STR'), C.attr(a, 'CHA')) / 2) + C.rank(a, 'intimidate');
+        for (const o of targets) {
+          const f = chars[o];
+          const r = await opposed(roller, a, bonus, 'Demoralize', f, Math.floor(C.attr(f, 'WIL') / 2), 'Hold their nerve');
+          if (r.margin > 0 && G.Conditions) { G.Conditions.add(f, 'frightened', { rounds: 1, src: a.id }); log(enc, `${f.name} quails before ${a.name} (${r.a} vs ${r.b}).`, 'hit'); }
+          else log(enc, `${f.name} holds their nerve against ${a.name} (${r.a} vs ${r.b}).`, 'fail');
+        }
+        break;
+      }
+      case 'nameWeakness':
+        if (t && G.Conditions) { G.Conditions.add(t, 'named', { rounds: 2, src: a.id }); log(enc, `${a.name} names ${t.name}'s weakness: its hide will not save it now.`, 'hit'); }
         break;
       case 'bandage':
         if (t && a.inventory.bandages > 0) {
@@ -2473,14 +2578,21 @@
     if (d.type === 'shove') {
       const S = CONFIG.shove;
       const w = C.wieldedWeapon(a);
-      const aB = Math.floor(C.attr(a, 'STR') / 2) + (w && WEAPONS[w.type].hands === 2 ? S.twoHandBonus : 0) + (C.shieldReady(a) ? S.shieldBonus || 0 : 0);
+      const aB = Math.floor(C.attr(a, 'STR') / 2) + (w && WEAPONS[w.type].hands === 2 ? S.twoHandBonus : 0) + (C.shieldReady(a) ? S.shieldBonus || 0 : 0) + (C.rank(a, 'bull_rush') ? 2 : 0);
       const o = await opposed(roller, a, aB, dist(enc.pos[a.id], enc.pos[t.id]) > 1 ? 'Fend off' : 'Shove', t, stability(t), 'Hold ground');
       if (o.margin <= 0) return log(enc, `${a.name}'s shove fails (${o.a} vs ${o.b}).`, 'fail');
       const from = enc.pos[a.id], at = enc.pos[t.id];
       const want = o.margin >= S.farMargin ? 2 : 1;
       // Walls stop a shove (a body can't be driven into stone); a pit, a rune or a fire on the way takes it.
       const moved = await G.Magic.push(enc, chars, t, from, want, roller, false);
-      if (moved) log(enc, `${a.name} shoves ${t.name} back ${moved} square${moved > 1 ? 's' : ''} (${o.a} vs ${o.b}).`, 'hit');
+      if (moved) {
+        log(enc, `${a.name} shoves ${t.name} back ${moved} square${moved > 1 ? 's' : ''} (${o.a} vs ${o.b}).`, 'hit');
+        // Bull Rush: follow them into the square they were driven from.
+        if (C.rank(a, 'bull_rush') && dist(from, at) <= 1 && !C.holding(a) && !enc.ids.some((o) => o !== t.id && C.isActive(chars[o]) && enc.pos[o].x === at.x && enc.pos[o].y === at.y)) {
+          enc.pos[a.id] = { x: at.x, y: at.y };
+          log(enc, `${a.name} follows through.`, 'pass');
+        }
+      }
       else if (o.margin >= S.farMargin) {
         knockDown(enc, t);
         log(enc, `${a.name} shoves ${t.name} against the obstacle and down (${o.a} vs ${o.b}).`, 'hit');
@@ -2581,7 +2693,7 @@
       const conscious = !c.status.unconscious;
       if (conscious || CONFIG.unconsciousRegenerates) {
         const took = enc.hitThisRound[id] || 0;
-        const allowed = took === 0 || (C.rank(c, 'second_wind') && took <= 2) || (c.hero && CONFIG.hero && CONFIG.hero.regenWhenHit);
+        const allowed = took === 0 || (C.rank(c, 'second_wind') && took <= 2) || (c.hero && CONFIG.hero && CONFIG.hero.regenWhenHit) || (enc.rallied || {})[id] === enc.round;
         if (r < 0 && CONFIG.negativeRegenAlwaysApplies) {
           c.stamina = Math.max(0, c.stamina + r);
           log(enc, `${c.name} loses ${-r} stamina to heavy armor.`);

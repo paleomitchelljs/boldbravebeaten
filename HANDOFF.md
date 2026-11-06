@@ -28,8 +28,26 @@ seven new trees.
   game has no donning), Living Flame, Verb Summon and Mod Swift (summoning by name isn't built), Cauterize, Focus
   Bond, Diagnose, the alchemy line, every Ritual feat (rituals exist in the rules but the game never offers one).
   Appraise, Tracker, Read Spell, Word Thief, Rally/Demoralize, Leading Questions, Kingmaker go to the phase 3 trees.
-- [ ] Phase 3: new trees Archery, Shadow (stealth out of Evasion), Leadership (rally out of Persuasion), Survival,
-  Lore, Athletics, Deception: mechanics, not numbers. Old saves keep moved feats (ids unchanged).
+- [x] Phase 3 (the user, 2026-11-06: "a few feats per tree", to be cut down in play): seven new trees, 33 feats,
+  tests in tests/feats-built.test.js. Moved, ids unchanged: Stealth and Ambusher to Shadow, Tracker and Herbalism to
+  Survival, Leading Questions to Deception; Rally/Demoralize split into Leadership's Rally and Demoralize.
+  - Archery: Quick Draw, Far Shot, Pinning Shot (legs/feet root), ★Deadeye (aim free), Point Blank, ★Snap Shot
+    (a drawn bow as an opportunity strike).
+  - Shadow: Vanish (action: unseen 2 rounds), ★Shadow Step (unseen moves unanswered), Backstab (+3 from unseen).
+  - Leadership: Rally (action: struck allies still regenerate), Command (action: an ally +1 AP), ★To Your Feet!
+    (wake an unconscious ally, once each), Demoralize (action: frightened), ★Dread (every foe within 3).
+  - Survival: Pathfinder (¾ time a step), Camp Craft (camps found half as often), ★Tracker (never surprised by
+    wanderers; a Stealth slip-away even when not sneaking).
+  - Lore: Monster Lore (the log names each creature's resistances and gifts at a fight's start), Bane Lore (+1/rank
+    vs creatures), ★Name the Weakness (action: blows ignore its resistances 2 rounds).
+  - Athletics: Brute Force (+2 Forcing/rank), Bull Rush (+2 shove and follow), ★Unstoppable (a hit doesn't stop a
+    move), Charge (2+ squares then a blow: +2).
+  - Deception: Practised Liar (+2 Deception/rank), Cover Story, ★The Big Lie (parley), Misdirection (+1 Feint/rank),
+    Feign Death (action: no foe can aim at you till you act), ★Dirty Trick (a won bait leaves them exposed).
+- [ ] The AI uses none of the new actions (Vanish, Rally, Command, To Your Feet, Demoralize, Name the Weakness, Feign
+  Death); fine while only heroes have them. No test for Snap Shot, Pinning Shot, Tracker or Camp Craft. The new actions
+  not clicked through in a browser fight. Small trees (Lore, Leadership, Survival) have apprentice-tier capstones so
+  they can be reached at all.
 - [ ] The tree tabs take a lot of height on a phone; the graph scrolls sideways in a narrow modal. Fine for now?
 
 ## Hero mode (the user, 2026-11-05)

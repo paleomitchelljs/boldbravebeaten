@@ -263,9 +263,15 @@
         spend(world, s, costs.bluff);
         if (r.ok) {
           s.bluffed = true;
-          s.willMod += 1;
+          // The Big Lie (feat): a story that lands moves them twice as far.
+          s.willMod += rankAny(world, 'big_lie') ? 2 : 1;
           say(s, who.name, 'You tell it with a straight face.', 'pc');
           say(s, npc.name, reply(npc, 'believes'), 'npc');
+        } else if (rankAny(world, 'cover_story')) {
+          // Cover Story (feat): caught, you talk your way back; only the patience is lost.
+          s.patience = Math.max(0, s.patience - 1);
+          persistent(world, s.npc).spent += 1;
+          say(s, who.name, 'The story wobbles, and you laugh it off as a joke.', 'pc');
         } else {
           s.dispMod -= 2;
           s.patience = Math.max(0, s.patience - 1);

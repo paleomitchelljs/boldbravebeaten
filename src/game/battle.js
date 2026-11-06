@@ -194,6 +194,7 @@
     if (opts.surprise) enc.surprise = { side: opts.surprise, factor: opts.factor == null ? 0.5 : opts.factor, round: 1 };
     world.battle = { enc, foes: foeMap, allies, spec, joined: joined.map((j) => ({ x: j.x, y: j.y, spec: j.spec })), arena: arena ? { place: arena.place, ox: arena.ox, oy: arena.oy, w: arena.w, h: arena.h } : null, ctx: opts.ctx || null, canFlee: opts.canFlee !== false, startedDay: world.day };
     world.stats.fights++;
+    for (const line of monsterLore(world, foes)) Combat.log(enc, line, 'pass');
     if (spec.text) World.logLine(world, spec.text, 'fight');
     for (const j of joined) World.logLine(world, `${j.def.label || 'More of them'} hear${j.def.label ? 's' : ''} the fighting and come${j.def.label ? 's' : ''} running.`, 'fight');
     return world.battle;
@@ -298,6 +299,33 @@
     if (at && world.explore) { world.explore.x = at.x; world.explore.y = at.y; G.Explore.markSeen(world); }
     res.lines.unshift('You get clear: nothing can come after you.');
     return res;
+  }
+
+  // Monster Lore (feat): what someone in the party knows of each creature here, once a kind.
+  const RESIST_WORDS = { P: 'piercing', S: 'slashing', B: 'blunt', fire: 'fire', frost: 'frost', lightning: 'lightning', venom: 'venom', magic: 'magic', mind: 'the mind', life: 'life', light: 'light', spirit: 'spirit' };
+  function monsterLore(world, foes) {
+    const sage = World.active(world).find((c) => C.rank(c, 'monster_lore'));
+    if (!sage) return [];
+    const out = [], seen = {};
+    for (const f of foes) {
+      if (!f.monster || seen[f.monster]) continue;
+      seen[f.monster] = true;
+      const none = [], less = [], more = [];
+      for (const [k, word] of Object.entries(RESIST_WORDS)) {
+        const m = C.damageMult(f, k);
+        if (m === 0) none.push(word); else if (m < 1) less.push(word); else if (m > 1) more.push(word);
+      }
+      const gifts = [];
+      if (C.tireless(f)) gifts.push('never tires');
+      if (f.traits && f.traits.regrow) gifts.push('regrows its wounds unless burned');
+      if (f.traits && f.traits.displacement) gifts.push('is never quite where it seems');
+      if (G.Effects.has(f, 'flying')) gifts.push('flies');
+      if (G.Effects.has(f, 'incorporeal')) gifts.push('is touched only by enchanted weapons');
+      const bits = [none.length ? `nothing from ${none.join(', ')}` : null, less.length ? `little from ${less.join(', ')}` : null, more.length ? `more from ${more.join(', ')}` : null].filter(Boolean);
+      const name = f.name.replace(/ \d+$/, '');
+      out.push(`${sage.name} knows the ${name}: ${bits.length ? `it takes ${bits.join('; ')}` : 'no resistances'}${gifts.length ? `; it ${gifts.join(', ')}` : ''}.`);
+    }
+    return out;
   }
 
   // Settle a finished (or fled) battle. Returns { result: 'won'|'lost'|'fled'|'draw', lines, loot }.

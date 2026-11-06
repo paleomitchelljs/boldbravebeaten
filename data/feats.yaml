@@ -522,13 +522,6 @@
       requires: []
       effect: "+1 square per movement AP per rank"
       auto: true
-    stealth:
-      name: Stealth
-      branch: runner
-      ranks: [novice, apprentice, adept]
-      requires: []
-      effect: "+2 Stealth per rank"
-      auto: true
     kip_up:
       name: Kip-up
       ranks: [novice]
@@ -621,13 +614,6 @@
       requires: [["read_the_room:1"]]
       effect: "+2 to Appeal per rank; shows what someone cares about"
       auto: true
-    leading_questions:
-      name: Leading Questions
-      branch: charmer
-      ranks: [adept]
-      requires: [["silver_tongue:2"]]
-      effect: Help an NPC work out knowledge with no disposition loss
-      auto: false
     reputation_control:
       name: Reputation Control
       branch: dealer
@@ -635,13 +621,6 @@
       requires: [["bargain:1", "appeal_to_interest:1"]]
       effect: "Choose which side of your reputation someone hears: renown or notoriety"
       auto: true
-    rally_demoralize:
-      name: Rally / Demoralize
-      branch: menace
-      ranks: [expert]
-      requires: [["intimidate:1"]]
-      effect: "In combat: allies regenerate stamina even when hit, or enemies lose 1 AP next round"
-      auto: false
     kingmaker:
       name: Kingmaker
       branch: dealer
@@ -678,13 +657,6 @@
       ranks: [novice]
       requires: []
       effect: Identify an item's keywords and quality
-      auto: false
-    tracker:
-      name: Tracker
-      branch: wilds
-      ranks: [apprentice]
-      requires: [["keen_eye:1"]]
-      effect: Follow trails
       auto: false
     animal_companion:
       name: Animal Companion
@@ -756,13 +728,6 @@
       requires: []
       effect: See a patient's attribute damage and bleed
       auto: false
-    herbalism:
-      name: Herbalism
-      branch: alchemist
-      ranks: [novice]
-      requires: []
-      effect: "+2 Herbalism per rank: find components when camping"
-      auto: true
     wound_tending:
       name: Wound Tending
       branch: healer
@@ -1255,7 +1220,6 @@
   branches:
     - {id: locks, name: "Locks", blurb: "Doors without keys."}
     - {id: traps, name: "Traps", blurb: "What waits under the floor."}
-    - {id: ambush, name: "Ambush", blurb: "The first blow from the dark."}
   feats:
     lockpicking:
       name: Lockpicking
@@ -1271,10 +1235,300 @@
       requires: []
       effect: "+2 Trapcraft per rank: disarm what you find"
       auto: true
+- id: archery
+  name: Archery
+  attrs: "DEX; WIS to aim"
+  group: combat
+  branches:
+    - {id: marksman, name: "Marksman", blurb: "Far, placed and pinned."}
+    - {id: skirmisher, name: "Skirmisher", blurb: "A bow at close quarters, loosed when they come."}
+  feats:
+    quick_draw:
+      name: Quick Draw
+      ranks: [novice, apprentice]
+      requires: []
+      effect: "Drawing a bow costs a quarter less AP per rank (half at rank II)"
+      auto: true
+    far_shot:
+      name: Far Shot
+      branch: marksman
+      ranks: [novice]
+      requires: []
+      effect: "No damage lost to long range"
+      auto: true
+    pinning_shot:
+      name: Pinning Shot
+      branch: marksman
+      ranks: [apprentice]
+      requires: [["far_shot:1"]]
+      effect: "An arrow that lands in the legs or feet roots the target until the end of the next round (STR to break free)"
+      auto: true
+    deadeye:
+      name: Deadeye
+      branch: marksman
+      capstone: true
+      ranks: [adept]
+      requires: [["pinning_shot:1"]]
+      effect: "Aimed arrows pay no penalty to beat a defence: a shot at the head is as easy as one at the body"
+      auto: true
+    point_blank:
+      name: Point Blank
+      branch: skirmisher
+      ranks: [novice]
+      requires: []
+      effect: "Loose at a foe beside you (range 1), not only at 2 or more"
+      auto: true
+    snap_shot:
+      name: Snap Shot
+      branch: skirmisher
+      capstone: true
+      ranks: [adept]
+      requires: [["point_blank:1"], ["quick_draw:1"]]
+      effect: "A drawn bow can loose as an opportunity strike at a foe who closes in, leaves or moves about within its range"
+      auto: true
+- id: shadow
+  name: Shadow
+  attrs: "DEX, SPD"
+  group: sneaking
+  branches:
+    - {id: hider, name: "Hider", blurb: "Gone from sight in the middle of a fight."}
+    - {id: cutthroat, name: "Cutthroat", blurb: "The first blow, from where they weren't looking."}
+  feats:
     ambusher:
       name: Ambusher
-      branch: ambush
+      branch: cutthroat
       ranks: [apprentice, adept]
       requires: [["stealth:1"]]
       effect: "A fight begun from hiding costs the enemy 3/4 of their AP in the first round; at rank 2, all of it"
+      auto: true
+    stealth:
+      name: Stealth
+      ranks: [novice, apprentice, adept]
+      requires: []
+      effect: "+2 Stealth per rank"
+      auto: true
+    vanish:
+      name: Vanish
+      branch: hider
+      ranks: [novice]
+      requires: [["stealth:1"]]
+      effect: "An action (2 AP) with no foe beside you: you are unseen for 2 rounds (no foe beyond arm's reach can aim at you; +2 to beat a defence). Striking ends it"
+      auto: true
+    shadow_step:
+      name: Shadow Step
+      branch: hider
+      capstone: true
+      ranks: [adept]
+      requires: [["vanish:1"]]
+      effect: "While unseen, your moves draw no opportunity strikes"
+      auto: true
+    backstab:
+      name: Backstab
+      branch: cutthroat
+      ranks: [apprentice]
+      requires: [["stealth:1"]]
+      effect: "A melee blow struck while unseen deals +3 damage of its main kind"
+      auto: true
+- id: leadership
+  name: Leadership
+  attrs: "CHA, WIL"
+  group: talking
+  branches:
+    - {id: captain, name: "Captain", blurb: "Your voice keeps them standing."}
+    - {id: terror, name: "Terror", blurb: "Your voice takes the heart out of them."}
+  feats:
+    rally:
+      name: Rally
+      ranks: [novice]
+      requires: []
+      effect: "An action (2 AP): you and allies within 3 squares get stamina back at the round's end even if struck this round"
+      auto: true
+    command:
+      name: Command
+      branch: captain
+      ranks: [apprentice]
+      requires: [["rally:1"]]
+      effect: "An action (2 AP): an ally within 4 squares who can hear you gains 1 AP this round"
+      auto: true
+    to_your_feet:
+      name: To Your Feet!
+      branch: captain
+      capstone: true
+      ranks: [apprentice]
+      requires: [["command:1"]]
+      effect: "An action (2 AP) beside an unconscious ally: they come to with a quarter of their stamina. Once per ally a fight"
+      auto: true
+    demoralize:
+      name: Demoralize
+      branch: terror
+      ranks: [novice]
+      requires: []
+      effect: "An action (2 AP) at a foe within 3: ⌊best of STR, CHA / 2⌋ + Intimidate against ⌊WIL/2⌋; won, they are frightened of you for a round"
+      auto: true
+    dread:
+      name: Dread
+      branch: terror
+      capstone: true
+      ranks: [apprentice]
+      requires: [["demoralize:1"]]
+      effect: "Demoralize reaches every foe within 3 squares, each rolling for themselves"
+      auto: true
+- id: survival
+  name: Survival
+  attrs: "WIS, CON"
+  group: exploring
+  branches:
+    - {id: trail, name: "Trail", blurb: "Read the ground; hear them first."}
+    - {id: camp, name: "Camp", blurb: "A night out that stays quiet."}
+  feats:
+    herbalism:
+      name: Herbalism
+      ranks: [novice]
+      requires: []
+      effect: "+2 Herbalism per rank: find components when camping"
+      auto: true
+    tracker:
+      name: Tracker
+      branch: trail
+      capstone: true
+      ranks: [apprentice]
+      requires: [["pathfinder:1"]]
+      effect: "You hear wanderers before they find you: they never take the party by surprise, and the party may slip away with a Stealth check even when not sneaking"
+      auto: true
+    pathfinder:
+      name: Pathfinder
+      branch: trail
+      ranks: [novice]
+      requires: []
+      effect: "Exploring takes a quarter less time a step (so wanderers come less often)"
+      auto: true
+    camp_craft:
+      name: Camp Craft
+      branch: camp
+      ranks: [novice]
+      requires: []
+      effect: "A camp you make is found half as often"
+      auto: true
+- id: lore
+  name: Lore
+  attrs: INT
+  group: exploring
+  branches:
+    - {id: bestiary, name: "Bestiary", blurb: "What a creature is, and what kills it."}
+  feats:
+    monster_lore:
+      name: Monster Lore
+      ranks: [novice]
+      requires: []
+      effect: "When a fight starts, you know each creature's resistances, immunities and gifts (the log names them)"
+      auto: true
+    bane_lore:
+      name: Bane Lore
+      branch: bestiary
+      ranks: [novice, apprentice]
+      requires: [["monster_lore:1"]]
+      effect: "+1 damage of the blow's main kind per rank against creatures (not people)"
+      auto: true
+    name_weakness:
+      name: Name the Weakness
+      branch: bestiary
+      capstone: true
+      ranks: [apprentice]
+      requires: [["monster_lore:1"]]
+      effect: "An action (2 AP) at a creature within 6 that you can see: for 2 rounds, everyone's blows ignore its resistances"
+      auto: true
+- id: athletics
+  name: Athletics
+  attrs: "STR, CON"
+  group: exploring
+  branches:
+    - {id: brawn, name: "Brawn", blurb: "Through doors, through people."}
+    - {id: stride, name: "Stride", blurb: "Momentum."}
+  feats:
+    brute_force:
+      name: Brute Force
+      ranks: [novice, apprentice]
+      requires: []
+      effect: "+2 Forcing per rank: doors, lids and leaps"
+      auto: true
+    bull_rush:
+      name: Bull Rush
+      branch: brawn
+      ranks: [novice]
+      requires: []
+      effect: "+2 to shove, and you follow into the square they were driven from"
+      auto: true
+    unstoppable:
+      name: Unstoppable
+      branch: brawn
+      capstone: true
+      ranks: [adept]
+      requires: [["bull_rush:1"]]
+      effect: "An opportunity strike that hits you does not stop your move"
+      auto: true
+    charge:
+      name: Charge
+      branch: stride
+      ranks: [apprentice]
+      requires: []
+      effect: "Move 2 squares or more and end beside a foe: your next melee blow this turn deals +2 damage of its main kind"
+      auto: true
+- id: deception
+  name: Deception
+  attrs: "CHA, INT"
+  group: talking
+  branches:
+    - {id: liar, name: "Liar", blurb: "Stories that hold."}
+    - {id: trickster, name: "Trickster", blurb: "Lies told with the body."}
+  feats:
+    leading_questions:
+      name: Leading Questions
+      branch: liar
+      ranks: [adept]
+      requires: [["silver_tongue:2"]]
+      effect: Help an NPC work out knowledge with no disposition loss
+      auto: false
+    liar:
+      name: Practised Liar
+      ranks: [novice, apprentice, adept]
+      requires: []
+      effect: "+2 Deception per rank"
+      auto: true
+    cover_story:
+      name: Cover Story
+      branch: liar
+      ranks: [apprentice]
+      requires: [["liar:1"]]
+      effect: "Caught in a bluff, you talk your way back: no disposition lost and never exposed (the patience still goes)"
+      auto: true
+    big_lie:
+      name: The Big Lie
+      branch: liar
+      capstone: true
+      ranks: [adept]
+      requires: [["cover_story:1"]]
+      effect: "A bluff that lands raises willingness by 2, not 1"
+      auto: true
+    misdirection:
+      name: Misdirection
+      branch: trickster
+      ranks: [novice, apprentice]
+      requires: []
+      effect: "+1 Feint per rank: your blows can't be read by a Read Attack below it, and your bait is harder to see through"
+      auto: true
+      effects: {feint: 1}
+    feign_death:
+      name: Feign Death
+      branch: trickster
+      ranks: [apprentice]
+      requires: []
+      effect: "An action (2 AP): you drop and lie still. No foe can aim at you until you act again"
+      auto: true
+    dirty_trick:
+      name: Dirty Trick
+      branch: trickster
+      capstone: true
+      ranks: [adept]
+      requires: [["misdirection:1"]]
+      effect: "A bait that wins also leaves them exposed: no defence at all this round"
       auto: true

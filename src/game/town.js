@@ -48,7 +48,8 @@
   // Camp in a dungeon. Returns { ok, lines } or { interrupted: spec, surprise }.
   async function campRest(world) {
     const p = G.Explore.place(world);
-    const wander = G.CONFIG.game.camp.wanderingChance;
+    // Camp Craft (feat): a camp found half as often.
+    const wander = G.CONFIG.game.camp.wanderingChance * (W.active(world).some((c) => C.rank(c, 'camp_craft')) ? 0.5 : 1);
     if (!world.peaceful && R.chance(wander)) {
       const w = G.Explore.wanderingFor(world);
       if (w && !w.nothing) {

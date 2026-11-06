@@ -104,6 +104,8 @@
       helpless: 'blows find the gaps as on the pinned',
       blind: 'strikes only at arm\'s reach',
       unseen: 'can\'t be picked out beyond arm\'s reach; ends when the bearer attacks',
+      feign: 'playing dead: no foe can aim at them at any distance; ends when they act (Feign Death)',
+      named: 'its resistances count for nothing against blows (Name the Weakness)',
       confused: 'half the time strikes whoever is near, friend or foe',
       berserk: 'strikes the nearest body, friend or foe',
       control: 'fights for the caster',
