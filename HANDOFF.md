@@ -11,8 +11,8 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   CON stops at 1 in `C.damageAttr`: the blow that would kill knocks out instead. tests/hero.test.js. Sim: three
   ogres kill a normal party (DDDD) and knock out a hero one (uuuu); one ogre, hero party wins in 2–3 rounds unhurt.
   Seen in headless Chrome (the menu).
-- [ ] A hero party all knocked out still goes to the game-over screen ("Wake in Stonebridge, lose half your gold").
-  Kinder for a child: wake where they fell, no gold lost? Ask the user.
+- [x] A hero party all knocked out goes to the game-over screen ("Wake in Stonebridge, lose half your gold"): the
+  user is fine with that (2026-11-05).
 - [ ] Not covered: auras, constriction's stamina, trap and condition damage are not scaled (CON still stops at 1).
 
 ## Village people; the mine's new figures (the user, 2026-11-04)
