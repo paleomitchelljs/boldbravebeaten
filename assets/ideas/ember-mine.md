@@ -44,6 +44,16 @@ wall), the portcullis with its guards and winch (the gate court, G-13, south end
 and the deep lair (G-10's). The castle behind the portcullis stays as built; it stands in for the inferno goblins' half.
 `rebuild.sh` would overwrite it with the old layout: don't run it on `ember_hall`.
 
+### The castle redrawn, and joined to the gnomes (the user, 2026-11-06)
+
+"I basically want that full dungeon as a trial base to build and alter from." `ember_castle` is now the inferno
+goblins' half of the same map (G-13 to G-24; `assets/wip/ember/castle/README.md` maps each key), in basalt: the book
+calls its rooms hewn from the rock. The memo's castle loop, its masonry, and its east-wing seam are gone; the seam into
+the king's rooms now runs from the warrens' south lobe. The jail is reached from the prison pits (G-16). As in the
+book, the guard post's south-east tunnel (C) leads to the gnomes: `ember_gnomes` has an east gate on it, watched by
+Watchman Tibb, who lets you in on the same terms as Sergeant Brask at the west gate. Art wanted for both halves is in
+`useful-assets-tk.md`.
+
 ## 2. Engine additions (2026-10-31)
 
 - Ground letters (`rules.yaml game.ground`): `$` lava (no walking into it; in a fight, terrain `lava`: Fire 6 on entering

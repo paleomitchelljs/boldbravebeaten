@@ -182,6 +182,25 @@ gnome_sergeant:
     - {id: who, label: "Who are you?", need: 1, kind: info, text: "The fort's patrol. We hold the bridge and the tunnels either side of it, and the goblins hold the rest. We've held it a long time."}
     - {id: goblins, label: "We're no friends of the goblins.", need: 3, kind: pass, tag: goblins, sets: [gnomes_trust], standing: {deep_gnomes: 5}, text: "No, you're not, are you. Goblins don't bleed like that. Go on over. Tell the Warden I let you by."}
     - {id: surface, label: "We came down from the surface.", need: 4, kind: info, tag: surface, text: "From up top? Then the stair's open again. The Warden will want to hear that from your own mouths."}
+gnome_eastwatch:
+  name: Watchman Tibb
+  title: The east gate's watch
+  faction: deep_gnomes
+  sprite: knight
+  glyph: "🧔"
+  look: A gnome in a crossbowman's leather coat, the bolt never quite off you, a burn scar down one side of his face.
+  attrs: {WIS: 8, WIL: 6, CHA: 4, INT: 7}
+  disposition: -1
+  willingness: 2
+  courage: 6
+  patience: 4
+  temperament: [wary, dry]
+  interests: [goblins, surface, mining]
+  greeting: "Stop there. Nothing good has ever come down that tunnel. What are you, and how did you get through their guard post?"
+  topics:
+    - {id: who, label: "Who are you?", need: 1, kind: info, text: "The east gate's watch. Their guard post is at the other end of that tunnel. They come down it two or three times a month, and they go back up it fewer."}
+    - {id: goblins, label: "We're no friends of the goblins.", need: 3, kind: pass, tag: goblins, sets: [gnomes_trust], standing: {deep_gnomes: 5}, text: "No. You've their blood on you, not their paint. Come in, then, quick, before the gate's open long enough to be noticed. The Warden is in the east hall."}
+    - {id: surface, label: "We came down from the surface.", need: 4, kind: info, tag: surface, text: "Through all of that? Then there's more of a way up than we thought. Tell the Warden. That's news worth hearing twice."}
 gnome_warden:
   name: Warden Odda
   title: Warden of the gnome fort
@@ -200,7 +219,7 @@ gnome_warden:
   topics:
     - {id: fort, label: "How long have you been cut off?", need: 1, kind: info, text: "Eleven years. The goblins took the hall and the stair, and we took the far side of the chasm and walled it. We mine, we eat what grows in the warm caves, and we bury our dead in the rock."}
     - {id: king, label: "What would it take to free you?", need: 3, kind: quest, starts: ember_king, hide: {quest: ember_king}, tag: goblins, text: "Their king. While he sits on that throne the goblins hold together. Kill him, and they'll fall to fighting over the chair, and we can walk out up the stair."}
-    - {id: secret, label: "Is there another way into their castle?", need: 5, kind: info, tag: mining, sets: [knows_castle_seam], text: "There is. Their baron sits in the far south-west of the caves, and the rock behind his throne is a goblin door. It comes out inside their portcullis. And in the castle's east wing, the passage that seems to end in nothing ends in another such door, into the king's own rooms."}
+    - {id: secret, label: "Is there another way into their castle?", need: 5, kind: info, tag: mining, sets: [knows_castle_seam], text: "There is. Their baron sits in the far south-west of the caves, and the rock behind his throne is a goblin door. It comes out inside their portcullis. And inside, in the southern warrens, there's a passage that seems to end in nothing. It ends in another such door, into the king's own rooms."}
     - {id: pit, label: "What is in the warrens?", need: 4, kind: info, tag: mining, text: "A drake that eats goblins, and anything else it finds. And mind the floor on the way to the barracks: there's a stretch of it laid over a pit, and what lives in the pit is worse than the drake."}
     - {id: kingdead, label: "The goblin king is dead.", need: 1, kind: info, once: true, requires: {flag: ember_king_dead}, sets: [told_odda_king], text: "Then it's done. Listen: you can hear them already, fighting over the chair. We'll go up the stair when they're through. You'll always have a door here."}
     - {id: prisoner, label: "Your Fennick is alive. He's free.", need: 2, kind: favor, once: true, requires: {flag: freed_fennick}, gives: {gold: 60, xp: 80}, standing: {deep_gnomes: 15}, text: "Fennick! We said the words for him two winters ago. Take this, it's what we have. And our thanks, which is worth more down here."}

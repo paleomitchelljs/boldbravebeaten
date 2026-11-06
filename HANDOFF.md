@@ -237,8 +237,12 @@ seven new trees.
 - [x] The Cinder Hall redrawn after the goblin map in *Solusek's Eye* (flame goblins' half, G-1 to G-13; the user,
   2026-11-06). Trace and key in `assets/wip/ember/hall/`; the PDFs in `docs/reference-adventures/` are gitignored.
   The hall is about twice the old size (pace: 623 steps to see it all, was 329).
-- [ ] Redraw `ember_castle` after the same map's inferno half (G-14 to G-24: the bar, the prison pits, the wizards'
-  hall, the champions, the king)? Ask the user.
+- [x] `ember_castle` redrawn after the same map's inferno half (G-13 to G-24; the user, 2026-11-06: "that full dungeon
+  as a trial base"), in basalt. Key in `assets/wip/ember/castle/`. Tunnel C from the guard post to a new east gate on
+  `ember_gnomes` (Watchman Tibb, `gnome_eastwatch`). Pace: 379 steps (was 186).
+- [ ] Art for both halves is listed in `assets/ideas/useful-assets-tk.md` (keep it current: the user, 2026-11-06).
+  Highest value: a hewn-stone wall set for the built rooms, the eight pillars of G-23, the lever, the pits.
+- [ ] The hall's G-3 side duct is a way out only: give `mine_approach` a matching way in? Ask the user.
 - [ ] Idle animations for the four new characters (the hooded knight's 8 were queued 2026-11-01 and not yet pulled:
   `node tools/pixellab-pull.js Hooded_Knight`, then add `idle: {anim: Idle, frames: 4, pingpong: true}`); then
   the animation plan's section D.
