@@ -194,7 +194,17 @@
         return { ok: false, reason: 'Requires ' + reqText(group) };
       }
     }
+    const rival = closedBy(c, id);
+    if (rival) return { ok: false, closed: true, reason: `Closed: ${FEATS[rival].name} is this tree's capstone for them` };
     return { ok: true };
+  }
+
+  // One capstone to a tree (feats.yaml): the capstone already held that closes this one, if any.
+  function closedBy(c, id) {
+    const f = FEATS[id];
+    if (!f || !f.capstone || rank(c, id)) return null;
+    for (const o in c.feats) if (o !== id && FEATS[o] && FEATS[o].capstone && FEATS[o].tree === f.tree && c.feats[o] > 0) return o;
+    return null;
   }
 
   // Removing a rank must not break the prerequisites or tiers of other feats.
@@ -1079,7 +1089,7 @@
 
   G.Character = {
     newCharacter, normalize, freshStatus,
-    rank, featCount, featBudget, treeCount, tierCount, tierName, canTakeFeat, canRemoveFeat, addFeat, removeFeat, reqText, roman,
+    rank, featCount, featBudget, treeCount, tierCount, tierName, canTakeFeat, closedBy, parseReq, canRemoveFeat, addFeat, removeFeat, reqText, roman,
     conditioning, attr, attrMax, combatAttr, armorInfo, armorPieces, armorAt, armorUniform, shieldInfo, shieldReady, wieldedWeapon, offhandWeapon,
     maxStamina, freshStamina, wearyRound, wearyTime, regen, fatiguePenalty, apPool, projectedPool, apScale, costScale, fmtAP, minAP, baseAP, armorAP, quickCut, moveCost, squaresFor, squaresPerAP, handsBusy, castingHands, weaponStrain, inRange, optionKey, needsWindUp, strOffset, staminaCost, effectiveWeight, isLightWeapon,
     strBonus, weaponDamage, mainIndex, attackOptions, actionCost, ammoLeft, gearWarnings, tireless, webTax,

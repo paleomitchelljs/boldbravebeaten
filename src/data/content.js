@@ -49,7 +49,7 @@
     G.DATA.TREES.length = 0;
     for (const k of Object.keys(G.DATA.FEATS)) delete G.DATA.FEATS[k];
     for (const t of trees || []) {
-      G.DATA.TREES.push({ id: t.id, name: t.name, attrs: t.attrs });
+      G.DATA.TREES.push({ id: t.id, name: t.name, attrs: t.attrs, group: t.group || null, branches: t.branches || [] });
       for (const id of Object.keys(t.feats || {})) {
         const f = t.feats[id];
         G.DATA.FEATS[id] = Object.assign({ id, tree: t.id, requires: [], effect: '', auto: false }, f);
@@ -211,6 +211,9 @@
     }
     for (const f of Object.values(D.FEATS)) {
       for (const alt of f.requires) for (const r of alt) { const fid = String(r).split(':')[0]; if (!has(D.FEATS, fid)) err(`feats.${f.id}: requires unknown feat "${fid}"`); }
+      const t = D.TREES.find((x) => x.id === f.tree);
+      if (f.branch && !t.branches.some((b) => b.id === f.branch)) err(`feats.${f.id}: branch "${f.branch}" is not one of ${f.tree}'s branches`);
+      if (f.capstone && !f.branch) err(`feats.${f.id}: a capstone needs a branch`);
     }
     for (const [id, s] of Object.entries(skills)) {
       if (id === 'tn') continue;

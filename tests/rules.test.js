@@ -632,10 +632,17 @@ test('every feat rank can eventually be taken (no tier deadlocks)', () => {
   let progress = true;
   while (progress) {
     progress = false;
-    for (const id in F) if (C.canTakeFeat(c, id, true).ok) { C.addFeat(c, id); progress = true; }
+    for (const id in F) if (!F[id].capstone && C.canTakeFeat(c, id, true).ok) { C.addFeat(c, id); progress = true; }
   }
-  const stuck = Object.keys(F).filter((id) => C.rank(c, id) < F[id].ranks.length);
+  const stuck = Object.keys(F).filter((id) => !F[id].capstone && C.rank(c, id) < F[id].ranks.length);
   assert.deepStrictEqual(stuck, []);
+  // Capstones (one to a tree): each can be reached, and once one is held its rivals in the tree are closed.
+  for (const id in F) {
+    if (!F[id].capstone) continue;
+    const k = JSON.parse(JSON.stringify(c));
+    while (C.rank(k, id) < F[id].ranks.length) { assert.ok(C.canTakeFeat(k, id, true).ok, id); C.addFeat(k, id); }
+    for (const o in F) if (o !== id && F[o].capstone && F[o].tree === F[id].tree) assert.equal(C.canTakeFeat(k, o, true).closed, true, `${o} after ${id}`);
+  }
 });
 
 test('shove pushes an enemy back out to range', async () => {

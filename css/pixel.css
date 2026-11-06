@@ -354,3 +354,40 @@ kbd { font: 600 0.72rem var(--font-mono); padding: 0 4px; border: 1px solid var(
 .item-line { display: inline-flex; align-items: center; gap: 4px; }
 .loot-list { list-style: none; padding-left: 0; } .loot-list li { display: flex; align-items: center; gap: 2px; }
 .supplies { gap: 14px; } .supplies .itemicon { margin-right: 2px; }
+
+/* ---- Feat trees (src/ui/game/feattree.js) ---------------------------------------------------------------------- */
+.feattree { min-width: 0; }
+.ft-tabs { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.ft-group { display: flex; flex-direction: column; gap: 3px; }
+.ft-group .row { gap: 4px; }
+.ft-tab { position: relative; }
+.ft-tab.has { color: var(--ink); }
+.ft-count { margin-left: 6px; color: var(--brass); }
+.ft-scroll { overflow-x: auto; max-width: 100%; background: #0c1216; border: var(--px) solid var(--edge); box-shadow: inset 0 0 0 var(--px) var(--hi); }
+.ft-graph { position: relative; }
+.ft-lines { position: absolute; left: 0; top: 0; pointer-events: none; }
+.ft-line { fill: none; stroke: var(--line); stroke-width: 2; }
+.ft-line.met { stroke: var(--accent); }
+.ft-line.alt { stroke-dasharray: 4 4; }
+.ft-head { position: absolute; text-align: center; font-family: var(--font-ui); font-size: 0.78rem; color: var(--brass); border-bottom: var(--px) solid #3a3220; padding-bottom: 2px; line-height: 1.6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ft-axis { position: absolute; left: 4px; width: 18px; display: flex; align-items: center; justify-content: center; font-family: var(--font-ui); font-size: 0.66rem; color: var(--muted); opacity: 0.7; }
+.ft-node { position: absolute; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; padding: 4px 7px; text-align: left; font-size: 0.74rem; line-height: 1.15; background: var(--surface); color: var(--muted); }
+.ft-name { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.ft-pips { display: flex; gap: 3px; }
+.ft-pips i { width: 7px; height: 7px; background: #0a0f13; box-shadow: inset 0 0 0 1px var(--line); }
+.ft-pips i.on { background: var(--brass); box-shadow: none; }
+.ft-node.open { color: var(--ink); box-shadow: inset 0 0 0 var(--px) var(--accent); }
+.ft-node.owned, .ft-node.maxed { color: var(--ink); background: #1f2a22; }
+.ft-node.maxed { box-shadow: inset 0 0 0 var(--px) var(--brass); }
+.ft-node.owned.open { box-shadow: inset 0 0 0 var(--px) var(--accent); }
+.ft-node.locked { opacity: 0.55; }
+.ft-node.closed { opacity: 0.35; text-decoration: line-through; }
+.ft-node.unbuilt { opacity: 0.5; background: repeating-linear-gradient(135deg, var(--surface) 0 6px, #10171c 6px 12px); }
+.ft-node.cap .ft-name { color: var(--brass); }
+.ft-node.locked.cap .ft-name, .ft-node.closed.cap .ft-name { color: inherit; }
+.ft-node.sel { outline: var(--px) solid var(--ink); outline-offset: 2px; z-index: 1; }
+.ft-card p { margin: 0; }
+.ft-reqs { margin: 0; padding-left: 0; list-style: none; color: var(--blood); }
+.ft-reqs li.met { color: var(--ok); }
+.ft-paths { gap: 6px; align-items: center; }
+.small.warn, p.warn { color: var(--warn); }

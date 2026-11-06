@@ -114,6 +114,15 @@
       h('div', { class: 'row spread small' }, h('span', null, `${C.featCount(c)} of ${C.featBudget(c)} feats`), left > 0 && c.side === 'party' ? h('span', { class: 'chip ok' }, `${left} to spend${inTown ? ' at the Training Yard' : ' in town'}`) : null),
       c.side === 'party' ? h('div', { class: 'small muted' }, `Level ${c.level} · ${c.xp || 0} XP · next at ${World.xpFor(c.level + 1)}`) : null,
       owned.length ? h('div', { class: 'chips' }, owned.map((id) => { const f = D.FEATS[id]; return h('span', { class: 'chip feat' }, f.name + (f.ranks.length > 1 ? ' ' + C.roman(c.feats[id]) : ''), tip(f.effect + (f.auto === false ? ' (No effect in the game yet.)' : ''), f.name)); })) : h('p', { class: 'muted small' }, 'No feats.'),
+      UI.FeatTree.pathLine(c),
+      c.side === 'party' ? h('details', { class: 'ft-details', open: !!game.ui.sheetTreeOpen, ontoggle: (e) => { game.ui.sheetTreeOpen = e.target.open; } }, h('summary', { class: 'small' }, 'The trees'),
+        UI.FeatTree.view({
+          c, tree: game.ui.sheetTree || (owned[0] && D.FEATS[owned[0]].tree), sel: game.ui.sheetFeat,
+          onTree: (id) => { game.ui.sheetTree = id; game.ui.sheetFeat = null; game.render(); },
+          onSel: (id) => { game.ui.sheetFeat = id; game.render(); },
+          feats: (t) => Object.values(D.FEATS).filter((f) => f.tree === t.id && (f.auto || game.debug)),
+          can: (f) => C.canTakeFeat(c, f.id, true),
+        })) : null,
       (c.nouns || []).length ? h('div', { class: 'small' }, h('b', null, 'Words known: '), c.nouns.join(', ')) : null);
   }
 

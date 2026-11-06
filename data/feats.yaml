@@ -1,15 +1,23 @@
-# Feat trees. A feat has ranks (novice to master), requires (a list of alternatives; each alternative is a list of
-# "feat:rank" that must all hold), an effect line, and auto: true when the engine implements it
-# (auto: false feats are recorded on the sheet but have no effect yet). A feat that is only a number declares it in
+# Feat trees. A tree has a `group` (the setting it serves: body, combat, sneaking, talking, exploring, magic) and
+# `branches` [{id, name, blurb}]: the paths through it, drawn as columns on the training screen. A feat names its
+# `branch` (none: the tree's root, open to all); `capstone: true` marks a branch's last feat, and a character may hold
+# only one capstone in a tree (taking it closes the others). A feat has ranks (the tier each rank needs, novice to
+# master), requires (a list of groups, all of which must hold; within a group, any one "feat:rank" will do), an effect
+# line, and auto: true when the engine implements it (auto: false feats are recorded on the sheet but have no effect yet). A feat that is only a number declares it in
 # `effects`, per rank, with the keys monsters' traits and gear use (src/rules/effects.js): `effects: {dodge: 1}` is
 # +1 to dodge at each rank. Feats that are their own maneuver are written in the rules code.
 
 - id: conditioning
   name: Conditioning
   attrs: attributes
+  group: body
+  branches:
+    - {id: body, name: "Body", blurb: "Strength, toughness, agility and speed."}
+    - {id: mind, name: "Mind", blurb: "Intellect, resolve, insight and presence."}
   feats:
     strength:
       name: Strength
+      branch: body
       ranks: [novice, apprentice, adept]
       requires: []
       effect: "+1 STR per rank"
@@ -17,6 +25,7 @@
       attr: STR
     toughness:
       name: Toughness
+      branch: body
       ranks: [novice, apprentice, adept]
       requires: []
       effect: "+1 CON per rank"
@@ -24,6 +33,7 @@
       attr: CON
     agility:
       name: Agility
+      branch: body
       ranks: [novice, apprentice, adept]
       requires: []
       effect: "+1 DEX per rank"
@@ -31,6 +41,7 @@
       attr: DEX
     quickness:
       name: Quickness
+      branch: body
       ranks: [novice, apprentice, adept]
       requires: []
       effect: "+1 SPD per rank"
@@ -38,6 +49,7 @@
       attr: SPD
     intellect:
       name: Intellect
+      branch: mind
       ranks: [novice, apprentice, adept]
       requires: []
       effect: "+1 INT per rank"
@@ -45,6 +57,7 @@
       attr: INT
     resolve:
       name: Resolve
+      branch: mind
       ranks: [novice, apprentice, adept]
       requires: []
       effect: "+1 WIL per rank"
@@ -52,6 +65,7 @@
       attr: WIL
     insight:
       name: Insight
+      branch: mind
       ranks: [novice, apprentice, adept]
       requires: []
       effect: "+1 WIS per rank"
@@ -59,6 +73,7 @@
       attr: WIS
     presence:
       name: Presence
+      branch: mind
       ranks: [novice, apprentice, adept]
       requires: []
       effect: "+1 CHA per rank"
@@ -67,9 +82,15 @@
 - id: handToHand
   name: Hand-to-hand
   attrs: "STR, DEX"
+  group: combat
+  branches:
+    - {id: striker, name: "Striker", blurb: "Fists and feet, fast and hard."}
+    - {id: wrestler, name: "Wrestler", blurb: "Clinch, hold, pin and break."}
+    - {id: scrapper, name: "Scrapper", blurb: "Put them on the floor; take what they hold."}
   feats:
     quick_hands:
       name: Quick Hands
+      branch: striker
       ranks: [novice, apprentice, adept]
       requires: []
       effect: "Punches and kicks cost a sixth less AP per rank (half at rank III)"
@@ -82,6 +103,7 @@
       auto: true
     heavy_hands:
       name: Heavy Hands
+      branch: striker
       ranks: [novice, apprentice]
       requires: []
       effect: "+1 blunt on punches and kicks per rank"
@@ -90,6 +112,7 @@
     disarm: {name: Disarm, ranks: [novice], requires: [], effect: Better disarm chance, auto: true}
     grappler:
       name: Grappler
+      branch: wrestler
       ranks: [novice, apprentice, adept]
       requires: []
       effect: "+1 grapple checks per rank"
@@ -97,36 +120,44 @@
       auto: true
     pin:
       name: Pin
+      branch: wrestler
       ranks: [apprentice]
       requires: [["grappler:1"]]
       effect: "+2 to pin a held foe and to keep a pinned one down"
       auto: true
     dogpile:
       name: Dogpile
+      branch: wrestler
       ranks: [apprentice]
       requires: [["grappler:1"]]
       effect: Each ally next to your target adds +2 to your grapple rolls (not +1)
       auto: true
     takedown:
       name: Takedown
+      branch: scrapper
+      capstone: true
       ranks: [adept]
       requires: [["trip:1"], ["grappler:2"]]
       effect: "Throw straight from a clinch, without a hold first"
       auto: true
     joint_lock:
       name: Joint Lock
+      branch: wrestler
       ranks: [expert]
       requires: [["pin:1"]]
       effect: Grapple deals STR or DEX damage
       auto: false
     human_shield:
       name: Human Shield
+      branch: wrestler
       ranks: [expert]
       requires: [["grappler:3"]]
       effect: Block a strike with a grappled foe
       auto: false
     iron_grip:
       name: Iron Grip
+      branch: wrestler
+      capstone: true
       ranks: [master]
       requires: [["joint_lock:1"]]
       effect: A grappled foe can't escape while you keep paying AP
@@ -134,9 +165,15 @@
 - id: lightWeapons
   name: Light weapons
   attrs: DEX
+  group: combat
+  branches:
+    - {id: fencer, name: "Fencer", blurb: "Parry, beat and answer."}
+    - {id: duelist, name: "Duelist", blurb: "Speed and deceit: the thrust they never read."}
+    - {id: assassin, name: "Assassin", blurb: "The gap in the armor; the knife in the down."}
   feats:
     quick_thrust:
       name: Quick Thrust
+      branch: duelist
       ranks: [novice, apprentice, adept]
       requires: []
       effect: "Thrusts cost a sixth less AP per rank (half at rank III)"
@@ -149,12 +186,14 @@
       auto: true
     precision:
       name: Precision
+      branch: assassin
       ranks: [novice, apprentice]
       requires: []
       effect: "+1 damage with light weapons per rank"
       auto: true
     feint:
       name: Feint
+      branch: duelist
       ranks: [novice, apprentice, adept, expert, master]
       requires: []
       effect: Your blows can't be read by Read Attack below your rank; they defend blind, and a wrong guess is wasted
@@ -162,6 +201,7 @@
       auto: true
     parry_training:
       name: Parry Training
+      branch: fencer
       ranks: [novice, apprentice, adept]
       requires: []
       effect: "+parry success per rank"
@@ -169,24 +209,28 @@
       auto: true
     quick_parry:
       name: Quick Parry
+      branch: fencer
       ranks: [apprentice, adept]
       requires: [["parry_training:1"]]
       effect: "Parries cost a quarter less AP per rank (half at rank II)"
       auto: true
     economical_parry:
       name: Economical Parry
+      branch: fencer
       ranks: [apprentice, adept]
       requires: [["parry_training:1"]]
       effect: "Parry −1 stamina per rank"
       auto: true
     riposte:
       name: Riposte
+      branch: fencer
       ranks: [apprentice]
       requires: [["parry_training:1"]]
       effect: Your riposte (a blow at once after a successful parry) costs no AP
       auto: true
     beat:
       name: Beat
+      branch: fencer
       ranks: [apprentice, adept]
       requires: [["parry_training:1"]]
       effect: "Your parries knock the blow wide: the attacker loses another sixth of the blow's AP per rank (a block's third at rank II)"
@@ -194,36 +238,43 @@
       auto: true
     bind:
       name: Bind
+      branch: fencer
       ranks: [apprentice]
       requires: [["parry_training:1"]]
       effect: A successful parry lets you try to disarm the attacker at once (no AP; the disarm's stamina)
       auto: true
     offhand_dagger:
       name: Off-hand Dagger
+      branch: duelist
       ranks: [apprentice]
       requires: []
       effect: Parry or strike with an off-hand dagger
       auto: false
     find_the_gap:
       name: Find the Gap
+      branch: assassin
       ranks: [adept]
       requires: [["precision:2"]]
       effect: "+2 to find a gap in armor a point can't burst (and more of a burst point's piercing passes through)"
       auto: true
     coup_de_grace:
       name: "Coup de Grâce"
+      branch: assassin
       ranks: [adept]
       requires: []
       effect: Any dagger (a rondel too) vs. prone or pinned ignores armor
       auto: true
     lunge:
       name: Lunge
+      branch: duelist
       ranks: [expert]
       requires: [["find_the_gap:1"]]
       effect: Thrust at +1 reach
       auto: true
     flurry:
       name: Flurry
+      branch: duelist
+      capstone: true
       ranks: [master]
       requires: [["quick_thrust:3"], ["riposte:1"]]
       effect: Declare two thrusts as one action
@@ -231,6 +282,11 @@
 - id: heavyWeapons
   name: Heavy weapons
   attrs: STR
+  group: combat
+  branches:
+    - {id: breaker, name: "Breaker", blurb: "Through shields and plate."}
+    - {id: reaper, name: "Reaper", blurb: "Many foes with each swing."}
+    - {id: technique, name: "Technique", blurb: "The longsword's tricks and the hook's."}
   feats:
     heavy_weapon_training:
       name: Heavy Weapon Training
@@ -240,12 +296,14 @@
       auto: true
     heavy_tempo:
       name: Heavy Tempo
+      branch: reaper
       ranks: [apprentice, adept]
       requires: [["heavy_weapon_training:1"]]
       effect: "Two-handed and power swings cost a quarter less AP per rank (half at rank II)"
       auto: true
     weight_of_the_blow:
       name: Weight of the Blow
+      branch: breaker
       ranks: [novice, apprentice]
       requires: []
       effect: "+1 damage on two-handed and power swings per rank"
@@ -258,48 +316,57 @@
       auto: true
     half_swording:
       name: Half-Swording
+      branch: technique
       ranks: [apprentice]
       requires: []
       effect: Unlocks half-sword with swords
       auto: true
     murder_stroke:
       name: Murder Stroke
+      branch: technique
       ranks: [apprentice]
       requires: []
       effect: Unlocks hilt strikes with swords
       auto: true
     hook:
       name: Hook
+      branch: technique
       ranks: [apprentice]
       requires: []
       effect: Beaked or hooked weapons can trip
       auto: true
     shield_breaker:
       name: Shield Breaker
+      branch: breaker
       ranks: [adept]
       requires: [["power_swing:1"]]
       effect: Blows count double against a shield's break threshold
       auto: true
     crushing_blow:
       name: Crushing Blow
+      branch: breaker
       ranks: [adept]
       requires: [["weight_of_the_blow:2"]]
       effect: Blunt ignores 2 points of armor mitigation
       auto: true
     cleave:
       name: Cleave
+      branch: reaper
       ranks: [expert]
       requires: [["power_swing:1"]]
       effect: A blow that drops a foe carries the excess to an adjacent foe
       auto: false
     sweep:
       name: Sweep
+      branch: reaper
       ranks: [expert]
       requires: [["heavy_weapon_training:3"]]
       effect: A two-handed swing hits two adjacent foes
       auto: false
     juggernaut:
       name: Juggernaut
+      branch: breaker
+      capstone: true
       ranks: [master]
       requires: [["crushing_blow:1"], ["cleave:1"]]
       effect: "Power swings can't be parried, only blocked or dodged"
@@ -307,6 +374,11 @@
 - id: armorShields
   name: Armor and shields
   attrs: "CON, STR"
+  group: combat
+  branches:
+    - {id: bulwark, name: "Bulwark", blurb: "The shield: block, bash, and cover your friends."}
+    - {id: mail, name: "Mail", blurb: "Light enough to run in, long enough to last."}
+    - {id: plate, name: "Plate", blurb: "A walking wall."}
   feats:
     light_armor_training:
       name: Padded/Leather Training
@@ -316,30 +388,35 @@
       auto: true
     mail_mobility:
       name: Mail Mobility
+      branch: mail
       ranks: [novice, apprentice]
       requires: []
       effect: "−1 SPD/DEX penalty per rank in mail"
       auto: true
     mail_endurance:
       name: Mail Endurance
+      branch: mail
       ranks: [apprentice]
       requires: [["mail_mobility:1"]]
       effect: Removes mail's stamina penalty per action
       auto: true
     plate_mobility:
       name: Plate Mobility
+      branch: plate
       ranks: [novice, apprentice, adept]
       requires: []
       effect: "−1 SPD/DEX penalty per rank in plate"
       auto: true
     plate_endurance:
       name: Plate Endurance
+      branch: plate
       ranks: [apprentice, adept]
       requires: [["plate_mobility:1"]]
       effect: "−1 plate stamina penalty per action per rank"
       auto: true
     shield_training:
       name: Shield Training
+      branch: bulwark
       ranks: [novice, apprentice, adept]
       requires: []
       effect: "+block success per rank"
@@ -347,18 +424,21 @@
       auto: true
     quick_block:
       name: Quick Block
+      branch: bulwark
       ranks: [apprentice, adept]
       requires: [["shield_training:1"]]
       effect: "Blocks cost a quarter less AP per rank (half at rank II)"
       auto: true
     economical_block:
       name: Economical Block
+      branch: bulwark
       ranks: [apprentice, adept]
       requires: [["shield_training:1"]]
       effect: "Block −1 stamina per rank"
       auto: true
     shield_bash:
       name: Shield Bash
+      branch: bulwark
       ranks: [novice]
       requires: [["shield_training:1"]]
       effect: "Shield strike: blunt with a knockdown chance"
@@ -377,24 +457,31 @@
       auto: false
     iron_stance:
       name: Iron Stance
+      branch: plate
       ranks: [adept]
       requires: [["plate_mobility:1", "shield_training:2"]]
       effect: Resist knockdown and disarm
       auto: true
     second_wind:
       name: Second Wind
+      branch: mail
+      capstone: true
       ranks: [adept]
       requires: [["mail_endurance:1"]]
       effect: "Regenerate stamina even after taking ≤2 blunt last round"
       auto: true
     shield_wall:
       name: Shield Wall
+      branch: bulwark
+      capstone: true
       ranks: [expert]
       requires: [["shield_training:3"]]
       effect: Block for an adjacent ally
       auto: false
     living_fortress:
       name: Living Fortress
+      branch: plate
+      capstone: true
       ranks: [master]
       requires: [["plate_endurance:2"], ["iron_stance:1"]]
       effect: The first blocked or converted hit each round costs no stamina
@@ -402,9 +489,14 @@
 - id: evasion
   name: Evasion
   attrs: "SPD, DEX"
+  group: combat
+  branches:
+    - {id: dodger, name: "Dodger", blurb: "Not there when the blow lands."}
+    - {id: runner, name: "Runner", blurb: "Fast feet, and no hold that keeps you."}
   feats:
     dodge_training:
       name: Dodge Training
+      branch: dodger
       ranks: [novice, apprentice, adept]
       requires: []
       effect: "+dodge success per rank"
@@ -412,6 +504,7 @@
       auto: true
     quick_dodge:
       name: Quick Dodge
+      branch: dodger
       ranks: [apprentice, adept]
       requires: [["dodge_training:1"]]
       effect: "Dodges cost a quarter less AP per rank (half at rank II)"
@@ -424,12 +517,14 @@
       auto: true
     fleet_foot:
       name: Fleet Foot
+      branch: runner
       ranks: [novice, apprentice, adept]
       requires: []
       effect: "+1 square per movement AP per rank"
       auto: true
     stealth:
       name: Stealth
+      branch: runner
       ranks: [novice, apprentice, adept]
       requires: []
       effect: "+2 Stealth per rank"
@@ -442,30 +537,36 @@
       auto: true
     escape_artist:
       name: Escape Artist
+      branch: runner
       ranks: [apprentice]
       requires: []
       effect: "+2 to break a clinch, hold or pin"
       auto: true
     slip_through:
       name: Slip Through
+      branch: runner
       ranks: [apprentice]
       requires: [["fleet_foot:1"]]
       effect: Move past enemies without being grabbed
       auto: false
     roll_with_it:
       name: Roll With It
+      branch: dodger
       ranks: [adept]
       requires: [["dodge_training:2"]]
       effect: A failed dodge halves the strike's damage
       auto: true
     counter_step:
       name: Counter-step
+      branch: dodger
       ranks: [expert]
       requires: [["dodge_training:3"]]
       effect: A successful dodge grants a free move
       auto: false
     untouchable:
       name: Untouchable
+      branch: dodger
+      capstone: true
       ranks: [master]
       requires: [["counter_step:1"]]
       effect: After your first dodge in a round, further dodges that round cost nothing
@@ -473,9 +574,15 @@
 - id: persuasion
   name: Persuasion
   attrs: "CHA; WIS to read people"
+  group: talking
+  branches:
+    - {id: charmer, name: "Charmer", blurb: "Warmth and words."}
+    - {id: dealer, name: "Dealer", blurb: "Interests, prices and names."}
+    - {id: menace, name: "Menace", blurb: "Fear, and the nerve of your friends."}
   feats:
     silver_tongue:
       name: Silver Tongue
+      branch: charmer
       ranks: [novice, apprentice, adept]
       requires: []
       effect: "+1 disposition per rank when a charm lands"
@@ -488,48 +595,57 @@
       auto: true
     flattery:
       name: Flattery
+      branch: charmer
       ranks: [novice]
       requires: []
       effect: "Charm costs half the patience; weak against high-WIS people"
       auto: true
     intimidate:
       name: Intimidate
+      branch: menace
       ranks: [novice]
       requires: []
       effect: "+2 to Intimidation per rank; uses STR or CHA"
       auto: true
     bargain:
       name: Bargain
+      branch: dealer
       ranks: [apprentice]
       requires: [["read_the_room:1"]]
       effect: "5% better prices per rank"
       auto: true
     appeal_to_interest:
       name: Appeal to Interest
+      branch: dealer
       ranks: [apprentice]
       requires: [["read_the_room:1"]]
       effect: "+2 to Appeal per rank; shows what someone cares about"
       auto: true
     leading_questions:
       name: Leading Questions
+      branch: charmer
       ranks: [adept]
       requires: [["silver_tongue:2"]]
       effect: Help an NPC work out knowledge with no disposition loss
       auto: false
     reputation_control:
       name: Reputation Control
+      branch: dealer
       ranks: [expert]
       requires: [["bargain:1", "appeal_to_interest:1"]]
       effect: "Choose which side of your reputation someone hears: renown or notoriety"
       auto: true
     rally_demoralize:
       name: Rally / Demoralize
+      branch: menace
       ranks: [expert]
       requires: [["intimidate:1"]]
       effect: "In combat: allies regenerate stamina even when hit, or enemies lose 1 AP next round"
       auto: false
     kingmaker:
       name: Kingmaker
+      branch: dealer
+      capstone: true
       ranks: [master]
       requires: [["reputation_control:1"]]
       effect: Shift an NPC's faction allegiance over several meetings
@@ -537,9 +653,15 @@
 - id: perception
   name: Perception
   attrs: "WIS; INT for analysis"
+  group: exploring
+  branches:
+    - {id: watcher, name: "Watcher", blurb: "Read the blow before it comes; nothing surprises you."}
+    - {id: wilds, name: "Wilds", blurb: "Trails and beasts."}
+    - {id: arcane, name: "Arcane eye", blurb: "Hear the words of a spell."}
   feats:
     read_attack:
       name: Read Attack
+      branch: watcher
       ranks: [novice, apprentice, adept, expert, master]
       requires: []
       effect: See through Feint of equal or lower rank
@@ -559,48 +681,57 @@
       auto: false
     tracker:
       name: Tracker
+      branch: wilds
       ranks: [apprentice]
       requires: [["keen_eye:1"]]
       effect: Follow trails
       auto: false
     animal_companion:
       name: Animal Companion
+      branch: wilds
       ranks: [apprentice, adept]
       requires: [["keen_eye:1"]]
       effect: "A beast follows you and fights at your side (data/rules.yaml game.companions); rank II, a stronger one. A dead companion is replaced after a rest in town"
       auto: true
     read_intent:
       name: Read Intent
+      branch: watcher
       ranks: [apprentice]
       requires: [["keen_eye:1"]]
       effect: See their willingness and what each topic needs
       auto: true
     spot_weakness:
       name: Spot Weakness
+      branch: watcher
       ranks: [adept]
       requires: [["read_attack:2"]]
       effect: "See an armor's weakest point: +1 to find a gap in it (and more of a burst point's piercing passes through)"
       auto: true
     danger_sense:
       name: Danger Sense
+      branch: watcher
       ranks: [adept]
       requires: [["keen_eye:2"]]
       effect: Never surprised in camp
       auto: true
     read_spell:
       name: Read Spell
+      branch: arcane
       ranks: [adept]
       requires: []
       effect: Identify the words of a spell being cast
       auto: false
     word_thief:
       name: Word Thief
+      branch: arcane
       ranks: [expert]
       requires: [["read_spell:1"]]
       effect: Learn a noun by watching it cast several times
       auto: false
     truesight:
       name: Truesight
+      branch: watcher
+      capstone: true
       ranks: [master]
       requires: [["danger_sense:1"], ["read_spell:1"]]
       effect: See through illusions and disguises
@@ -608,6 +739,10 @@
 - id: medicine
   name: Medicine and alchemy
   attrs: "INT, WIS"
+  group: exploring
+  branches:
+    - {id: healer, name: "Healer", blurb: "Wounds closed, patients kept alive."}
+    - {id: alchemist, name: "Alchemist", blurb: "Herbs, potions and poisons."}
   feats:
     field_dressing:
       name: Field Dressing
@@ -623,48 +758,57 @@
       auto: false
     herbalism:
       name: Herbalism
+      branch: alchemist
       ranks: [novice]
       requires: []
       effect: "+2 Herbalism per rank: find components when camping"
       auto: true
     wound_tending:
       name: Wound Tending
+      branch: healer
       ranks: [novice, apprentice, adept]
       requires: []
       effect: "+1 per rank to patients' daily heal roll"
       auto: true
     alchemy:
       name: Alchemy
+      branch: alchemist
       ranks: [novice, apprentice, adept]
       requires: [["herbalism:1"]]
       effect: "Brew potions: stamina, anti-bleed, healing over time"
       auto: false
     poisoner:
       name: Poisoner
+      branch: alchemist
       ranks: [apprentice]
       requires: [["alchemy:1"]]
       effect: Blade poisons
       auto: false
     antidotes:
       name: Antidotes
+      branch: alchemist
       ranks: [adept]
       requires: [["alchemy:2"]]
       effect: Cure poison and disease
       auto: false
     surgeon:
       name: Surgeon
+      branch: healer
       ranks: [adept]
       requires: [["wound_tending:2"]]
       effect: "Patients can't worsen; heal 1 extra point a day from the worst wound"
       auto: true
     reagent_craft:
       name: Reagent Craft
+      branch: alchemist
       ranks: [expert]
       requires: [["alchemy:3"]]
       effect: Refine spell components for rituals
       auto: false
     physician:
       name: Physician
+      branch: healer
+      capstone: true
       ranks: [master]
       requires: [["surgeon:1"], ["antidotes:1"]]
       effect: Patients heal at the town rate anywhere
@@ -672,6 +816,11 @@
 - id: magicCasting
   name: "Magic: casting"
   attrs: "INT, WIL"
+  group: magic
+  branches:
+    - {id: control, name: "Control", blurb: "Safe casting, and casting past safe."}
+    - {id: battle, name: "Battle", blurb: "Cast fast, cast armed."}
+    - {id: bond, name: "Bond", blurb: "A familiar; a focus."}
   feats:
     casting:
       name: Casting
@@ -681,42 +830,50 @@
       auto: true
     control:
       name: Control
+      branch: control
       ranks: [apprentice, adept, expert]
       requires: [["casting:1"]]
       effect: "−backlash per rank"
       auto: false
     quick_casting:
       name: Quick Casting
+      branch: battle
       ranks: [apprentice, adept]
       requires: [["casting:1"]]
       effect: "Spells cost a quarter less AP per rank (half at rank II)"
       auto: true
     battle_casting:
       name: Battle Casting
+      branch: battle
       ranks: [adept]
       requires: [["casting:2"]]
       effect: Cast with both hands full (sword and shield)
       auto: true
     steady_mind:
       name: Steady Mind
+      branch: control
       ranks: [adept]
       requires: [["control:1"]]
       effect: Cast while grappled or after taking damage this pass
       auto: false
     familiar:
       name: Familiar
+      branch: bond
       ranks: [novice, apprentice]
       requires: [["casting:1"]]
       effect: "A small creature bound to you (data/rules.yaml game.companions): it fights at your side, and gives +2 spell points per rank while it lives. If it dies you take 2 WIL damage; a new one answers after a rest in town"
       auto: true
     focus_bond:
       name: Focus Bond
+      branch: bond
       ranks: [expert]
       requires: [["casting:3"]]
       effect: Bond a held weapon or shield as a casting focus
       auto: false
     overchannel:
       name: Overchannel
+      branch: control
+      capstone: true
       ranks: [master]
       requires: [["casting:5"]]
       effect: Cast beyond your pool by paying CON
@@ -724,63 +881,78 @@
 - id: magicWords
   name: "Magic: words"
   attrs: INT
+  group: magic
+  branches:
+    - {id: first, name: "First verbs", blurb: "The six verbs anyone may learn first, and their pairs."}
+    - {id: higher, name: "Higher verbs", blurb: "Verbs that need a first verb."}
+    - {id: mods, name: "Modifiers", blurb: "What changes a spell's reach, size and time."}
   feats:
     verb_strike:
       name: "Verb: Strike"
+      branch: first
       ranks: [novice]
       requires: []
       effect: Learn the verb Strike (a bolt at arm's reach)
       auto: true
     verb_hex:
       name: "Verb: Hex"
+      branch: first
       ranks: [novice]
       requires: []
       effect: Learn the verb Hex (a bane on a foe)
       auto: true
     verb_bless:
       name: "Verb: Bless"
+      branch: first
       ranks: [novice]
       requires: []
       effect: Learn the verb Bless (a boon on an ally)
       auto: true
     verb_restore:
       name: "Verb: Restore"
+      branch: first
       ranks: [novice]
       requires: []
       effect: "Learn the verb Restore (undo a noun's harm on an ally; Life heals)"
       auto: true
     verb_cover:
       name: "Verb: Cover"
+      branch: first
       ranks: [novice]
       requires: []
       effect: Learn the verb Cover (a hazard on the ground)
       auto: true
     verb_ward:
       name: "Verb: Ward"
+      branch: first
       ranks: [novice]
       requires: []
       effect: "Learn the verb Ward (protection from magic, missiles or an element)"
       auto: true
     verb_increase:
       name: "Verb: Increase"
+      branch: first
       ranks: [novice]
       requires: []
       effect: "Learn the verb Increase (give a noun: Increase Life heals)"
       auto: true
     verb_decrease:
       name: "Verb: Decrease"
+      branch: first
       ranks: [novice]
       requires: []
       effect: "Learn the verb Decrease (take a noun away: Decrease Life withers)"
       auto: true
     verb_transfer:
       name: "Verb: Transfer"
+      branch: first
       ranks: [apprentice]
       requires: [["verb_increase:1", "verb_decrease:1"]]
       effect: "Learn the verb Transfer (take a noun from the target and give it to yourself: Transfer Life heals you by what it withers)"
       auto: true
     verb_launch:
       name: "Verb: Launch"
+      branch: higher
       ranks: [apprentice]
       requires:
         -
@@ -794,6 +966,7 @@
       auto: true
     verb_build:
       name: "Verb: Build"
+      branch: higher
       ranks: [apprentice]
       requires:
         -
@@ -807,6 +980,7 @@
       auto: true
     verb_open:
       name: "Verb: Open"
+      branch: higher
       ranks: [apprentice]
       requires:
         -
@@ -820,6 +994,7 @@
       auto: true
     verb_inscribe:
       name: "Verb: Inscribe"
+      branch: higher
       ranks: [apprentice]
       requires:
         -
@@ -833,6 +1008,7 @@
       auto: true
     verb_blink:
       name: "Verb: Blink"
+      branch: higher
       ranks: [apprentice]
       requires:
         -
@@ -846,96 +1022,112 @@
       auto: true
     verb_burst:
       name: "Verb: Burst"
+      branch: higher
       ranks: [adept]
       requires: [["verb_launch:1"]]
       effect: Learn the verb Burst (an area)
       auto: true
     verb_beguile:
       name: "Verb: Beguile"
+      branch: first
       ranks: [apprentice]
       requires: [["verb_hex:1", "verb_bless:1"]]
       effect: "Learn the verb Beguile (a mind spell: calm, dream, rage, fear, will)"
       auto: true
     word_doubling:
       name: Word Doubling
+      branch: mods
       ranks: [adept]
       requires: [["casting:2"]]
       effect: "Cast a spell with two nouns instead of a modifier; both do the verb (Rage + Dream: confusion)"
       auto: false
     verb_conjure:
       name: "Verb: Conjure"
+      branch: higher
       ranks: [adept]
       requires: [["verb_build:1", "verb_bless:1"]]
       effect: "Learn the verb Conjure (a creature of the noun, for a few rounds)"
       auto: true
     verb_summon:
       name: "Verb: Summon"
+      branch: higher
       ranks: [adept]
       requires: [["verb_conjure:1"]]
       effect: Learn the verb Summon (needs the creature's name)
       auto: false
     verb_raise:
       name: "Verb: Raise"
+      branch: higher
       ranks: [expert]
       requires: [["verb_conjure:1", "verb_summon:1"]]
       effect: "Learn the verb Raise: a body gets up and fights for you (Bone a skeleton, Life a zombie, Spirit a revenant)"
       auto: true
     mod_launch:
       name: "Modifier: Launch"
+      branch: mods
       ranks: [novice]
       requires: []
       effect: "Learn the modifier Launch (Increase, Decrease, Transfer at range)"
       auto: true
     mod_burst:
       name: "Modifier: Burst"
+      branch: mods
       ranks: [novice]
       requires: []
       effect: "Learn the modifier Burst (Increase, Decrease, Transfer over an area; with Launch, at range)"
       auto: true
     mod_strong:
       name: "Modifier: Strong"
+      branch: mods
       ranks: [novice]
       requires: []
       effect: Learn the modifier Strong
       auto: true
     mod_wide:
       name: "Modifier: Wide"
+      branch: mods
       ranks: [novice]
       requires: []
       effect: Learn the modifier Wide
       auto: true
     mod_long:
       name: "Modifier: Long"
+      branch: mods
       ranks: [novice]
       requires: []
       effect: Learn the modifier Long
       auto: true
     mod_far:
       name: "Modifier: Far"
+      branch: mods
       ranks: [apprentice]
       requires: [["mod_strong:1", "mod_wide:1", "mod_long:1"]]
       effect: Learn the modifier Far
       auto: true
     mod_swift:
       name: "Modifier: Swift"
+      branch: mods
       ranks: [apprentice]
       requires: [["mod_strong:1", "mod_wide:1", "mod_long:1"]]
       effect: Learn the modifier Swift
       auto: false
     mod_lingering:
       name: "Modifier: Lingering"
+      branch: mods
       ranks: [apprentice]
       requires: [["mod_strong:1", "mod_wide:1", "mod_long:1"]]
       effect: Learn the modifier Lingering
       auto: true
     mod_delayed:
       name: "Modifier: Delayed"
+      branch: mods
       ranks: [apprentice]
       requires: [["mod_strong:1", "mod_wide:1", "mod_long:1"]]
       effect: "Learn the modifier Delayed: an area spell breaks at the end of the round, +3 magnitude, its mark seen by all"
       auto: true
     mod_name:
       name: "Modifier: Name"
+      branch: mods
       ranks: [apprentice]
       requires: [["mod_strong:1", "mod_wide:1", "mod_long:1"]]
       effect: "Learn the modifier Name: a targeted spell finds anyone whose name you know, anywhere on the field"
@@ -943,39 +1135,49 @@
 - id: magicAffinity
   name: "Magic: affinity (fire)"
   attrs: INT
+  group: magic
+  branches:
+    - {id: fire, name: "Fire", blurb: "The flame's own way."}
   feats:
     fire_affinity:
       name: Fire Affinity
+      branch: fire
       ranks: [novice, apprentice, adept]
       requires: []
       effect: "+magnitude for Fire spells per rank (requires knowing the Fire noun)"
       auto: false
     kindling:
       name: Kindling
+      branch: fire
       ranks: [apprentice]
       requires: [["fire_affinity:1"]]
       effect: Fire spells set targets burning
       auto: false
     cauterize:
       name: Cauterize
+      branch: fire
       ranks: [apprentice]
       requires: [["fire_affinity:1"], ["field_dressing:1"]]
       effect: "Stop bleeding with fire; costs 1 CON"
       auto: false
     firestorm:
       name: Firestorm
+      branch: fire
       ranks: [adept]
       requires: [["fire_affinity:2"], ["mod_wide:1"]]
       effect: Fire + Wide costs 1 less
       auto: false
     ember_heart:
       name: Ember Heart
+      branch: fire
       ranks: [expert]
       requires: [["fire_affinity:3"]]
       effect: "Resist fire; recover casting power standing in flame"
       auto: false
     living_flame:
       name: Living Flame
+      branch: fire
+      capstone: true
       ranks: [master]
       requires: [["ember_heart:1"]]
       effect: Summon a fire spirit without knowing its name
@@ -983,6 +1185,11 @@
 - id: magicRitual
   name: "Magic: ritual"
   attrs: "INT, WIL"
+  group: magic
+  branches:
+    - {id: circle, name: "Circle", blurb: "Bindings and wards."}
+    - {id: craft, name: "Craft", blurb: "Words into things."}
+    - {id: rites, name: "Rites", blurb: "Healing and the dead."}
   feats:
     ritualist:
       name: Ritualist
@@ -992,42 +1199,50 @@
       auto: false
     binding_circle:
       name: Binding Circle
+      branch: circle
       ranks: [novice]
       requires: [["ritualist:1"]]
       effect: Prepare binding runes for summons
       auto: false
     warding:
       name: Warding
+      branch: circle
       ranks: [apprentice]
       requires: [["ritualist:1"]]
       effect: "Wards, barriers, and magical traps"
       auto: false
     rite_of_healing:
       name: Rite of Healing
+      branch: rites
       ranks: [apprentice]
       requires: [["ritualist:1"], ["verb_restore:1"]]
       effect: Healing ritual
       auto: false
     true_naming:
       name: True Naming
+      branch: circle
       ranks: [adept]
       requires: [["ritualist:2"]]
       effect: Name substitution gives a larger bonus
       auto: false
     imbue:
       name: Imbue
+      branch: craft
       ranks: [expert]
       requires: [["ritualist:3"]]
       effect: Enchant words into items with gems
       auto: false
     necromancy:
       name: Necromancy
+      branch: rites
       ranks: [expert]
       requires: [["verb_raise:1"]]
       effect: "Reanimation rituals; evil components"
       auto: false
     archmages_seal:
       name: Archmage's Seal
+      branch: craft
+      capstone: true
       ranks: [master]
       requires: [["imbue:1"]]
       effect: Create items that grant feats
@@ -1035,21 +1250,29 @@
 - id: subterfuge
   name: Subterfuge
   attrs: "DEX, INT"
+  group: sneaking
+  branches:
+    - {id: locks, name: "Locks", blurb: "Doors without keys."}
+    - {id: traps, name: "Traps", blurb: "What waits under the floor."}
+    - {id: ambush, name: "Ambush", blurb: "The first blow from the dark."}
   feats:
     lockpicking:
       name: Lockpicking
+      branch: locks
       ranks: [novice, apprentice, adept]
       requires: []
       effect: "+2 Lockpicking per rank: open locks without the key"
       auto: true
     trap_craft:
       name: Trap craft
+      branch: traps
       ranks: [novice, apprentice, adept]
       requires: []
       effect: "+2 Trapcraft per rank: disarm what you find"
       auto: true
     ambusher:
       name: Ambusher
+      branch: ambush
       ranks: [apprentice, adept]
       requires: [["stealth:1"]]
       effect: "A fight begun from hiding costs the enemy 3/4 of their AP in the first round; at rank 2, all of it"

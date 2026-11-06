@@ -182,26 +182,26 @@
     if (!cur) return h('p', null, 'No one is fit to train.');
     const left = C.featBudget(cur) - C.featCount(cur);
     const dbg = game.debug;
-    const trees = C.TREES.map((t) => ({ t, feats: Object.values(G.DATA.FEATS).filter((f) => f.tree === t.id && (f.auto || dbg)) })).filter((x) => x.feats.length);
-    if (!trees.some((x) => x.t.id === game.ui.trainTree)) game.ui.trainTree = trees[0] && trees[0].t.id;
-    const tree = trees.find((x) => x.t.id === game.ui.trainTree);
     const pick = (label, el) => h('label', { class: 'pick' }, h('span', { class: 'label' }, label), el);
     return h('div', { class: 'stack' },
       h('div', { class: 'row spread' }, h('div', { class: 'row' }, h('h3', null, s.name), UI.tip(camp ? 'Levels give feats. At camp you drill them for free; a teacher in town charges more for each higher rank.' : 'Levels give feats; feats are taught here for a price (free at camp). Each costs more the higher the rank.')), h('span', { class: 'gold num' }, `◈ ${w.gold}`)),
       h('div', { class: 'row train-bar' },
-        pick('Who', UI.select('train-who', cur.id, members.map((c) => [c.id, `${c.name} · L${c.level} · ${C.featBudget(c) - C.featCount(c)} to spend`]), (v) => { game.ui.trainer = v; game.render(); })),
-        pick('Feats', UI.select('train-tree', game.ui.trainTree, trees.map(({ t, feats }) => [t.id, `${t.name} (${feats.filter((f) => C.rank(cur, f.id)).length}/${feats.length})`]), (v) => { game.ui.trainTree = v; game.render(); }))),
-      h('div', { class: 'row small muted' }, `${C.featCount(cur)} of ${C.featBudget(cur)} feats`, left <= 0 ? ` · next level at ${G.World.xpFor(cur.level + 1)} XP (has ${cur.xp || 0})` : ` · ${left} to spend`, tree ? h('span', { class: 'chip' }, tree.t.attrs) : null),
-      tree ? h('div', { class: 'ledger' }, tree.feats.map((f) => {
-        const rk = C.rank(cur, f.id);
-        const tr = G.Town.trainable(cur, f.id, camp);
-        const full = rk >= f.ranks.length;
-        return h('div', { class: 'ledger-row feat-row' },
-          h('span', { class: 'row' }, h('b', null, f.name), h('span', { class: 'muted small' }, f.ranks.map((r, i) => (i < rk ? '●' : '○')).join('')), UI.tip(f.effect, f.name)),
-          h('span'),
-          full ? h('span', { class: 'chip ok' }, 'Mastered') : tr.ok ? h('button', { class: 'small', disabled: w.gold < tr.cost || left <= 0, onclick: () => { const r = G.Town.train(w, cur, f.id, camp); if (!r.ok) toast(r.reason); game.render(); } }, tr.cost ? `Train — ${tr.cost} ◈` : 'Train')
-            : dbg ? h('button', { class: 'small', onclick: () => { G.Town.train(w, cur, f.id, { bench: true, free: true }); game.render(); } }, 'Grant (debug)') : h('span', { class: 'small muted', title: tr.reason }, 'Locked'));
-      })) : null);
+        pick('Who', UI.select('train-who', cur.id, members.map((c) => [c.id, `${c.name} · L${c.level} · ${C.featBudget(c) - C.featCount(c)} to spend`]), (v) => { game.ui.trainer = v; game.render(); }))),
+      h('div', { class: 'row small muted' }, `${C.featCount(cur)} of ${C.featBudget(cur)} feats`, left <= 0 ? ` · next level at ${G.World.xpFor(cur.level + 1)} XP (has ${cur.xp || 0})` : ` · ${left} to spend`),
+      UI.FeatTree.pathLine(cur),
+      UI.FeatTree.view({
+        c: cur, tree: game.ui.trainTree, sel: game.ui.trainFeat,
+        onTree: (id) => { game.ui.trainTree = id; game.ui.trainFeat = null; game.render(); },
+        onSel: (id) => { game.ui.trainFeat = id; game.render(); },
+        feats: (t) => Object.values(G.DATA.FEATS).filter((f) => f.tree === t.id && (f.auto || dbg)),
+        can: (f) => G.Town.trainable(cur, f.id, camp),
+        action: (f) => {
+          const tr = G.Town.trainable(cur, f.id, camp);
+          if (C.rank(cur, f.id) >= f.ranks.length) return h('span', { class: 'chip ok' }, 'Mastered');
+          if (tr.ok) return h('button', { class: 'primary', disabled: w.gold < tr.cost || left <= 0, onclick: () => { const r = G.Town.train(w, cur, f.id, camp); if (!r.ok) toast(r.reason); game.render(); } }, tr.cost ? `Train — ${tr.cost} ◈` : 'Train');
+          return dbg ? h('button', { class: 'small', onclick: () => { G.Town.train(w, cur, f.id, { bench: true, free: true }); game.render(); } }, 'Grant (debug)') : null;
+        },
+      }));
   }
 
   UI.Bits.trainer = trainer;

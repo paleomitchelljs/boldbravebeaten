@@ -159,18 +159,19 @@
         name(id),
         h('button', { class: 'chip-x', 'aria-label': `Remove ${name(id)}`, onclick: () => { m.feats.splice(i, 1); if (!m.feats.some((f) => /^verb_/.test(f))) m.nouns = []; set(); } }, icon('close', 9)));
     });
-    const open = [];
-    if (have < budget) {
-      for (const t of C.TREES) {
-        const items = Object.values(G.DATA.FEATS).filter((f) => f.tree === t.id && f.auto && C.canTakeFeat(c, f.id).ok).map((f) => [f.id, f.name + (C.rank(c, f.id) ? ` (rank ${C.rank(c, f.id) + 1})` : '')]);
-        if (items.length) open.push({ group: t.name, items });
-      }
-    }
+    const ui = game.ui.createTree || (game.ui.createTree = {});
     return h('section', { class: 'stack tight' },
       h('div', { class: 'row spread' }, h('span', { class: 'label' }, 'Feats'),
         h('span', { class: 'row' }, tip('Feats buy efficiency and options, not raw stats. Some need others first, or several in their tree. More come with levels, at the Training Yard.', 'Feats'), h('span', { class: `chip ${have === budget ? 'ok' : 'warn'}` }, `${have}/${budget}`))),
       h('div', { class: 'row wrap' }, chips.length ? chips : h('span', { class: 'small muted' }, 'None yet.')),
-      open.length ? sel('feat-add', 'Add a feat', '', [['', '— choose —']].concat(open), (v) => { if (v) { m.feats.push(v); set(); } }, 'grow') : null);
+      UI.FeatTree.view({
+        c, tree: ui.tree, sel: ui.sel,
+        onTree: (id) => { ui.tree = id; ui.sel = null; set(); },
+        onSel: (id) => { ui.sel = id; set(); },
+        feats: (t) => Object.values(G.DATA.FEATS).filter((f) => f.tree === t.id && f.auto),
+        can: (f) => C.canTakeFeat(c, f.id),
+        action: (f) => (C.canTakeFeat(c, f.id).ok ? h('button', { class: 'primary', onclick: () => { m.feats.push(f.id); set(); } }, C.rank(c, f.id) ? `Add rank ${C.rank(c, f.id) + 1}` : 'Add') : null),
+      }));
   }
 
   function memberEditor(game, st) {

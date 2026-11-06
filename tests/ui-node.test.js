@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const fake = require('./fakedom.js');
 fake.install();
 const B = require('./legacy.js');
-for (const f of ['ui/dom', 'ui/dice', 'ui/views/roster', 'ui/views/battle', 'ui/game/art', 'ui/game/icons', 'ui/game/sprites', 'ui/game/tilemap', 'ui/game/mapview', 'ui/game/bits', 'ui/game/game', 'ui/game/overlays', 'ui/game/charsheet',
+for (const f of ['ui/dom', 'ui/dice', 'ui/views/roster', 'ui/views/battle', 'ui/game/art', 'ui/game/icons', 'ui/game/sprites', 'ui/game/tilemap', 'ui/game/mapview', 'ui/game/bits', 'ui/game/feattree', 'ui/game/game', 'ui/game/overlays', 'ui/game/charsheet',
   'ui/game/screens/title', 'ui/game/screens/create', 'ui/game/screens/town', 'ui/game/screens/explore', 'ui/game/screens/parley', 'ui/game/screens/battle']) require('../src/' + f + '.js');
 const { UI, World, Explore, Rand, Content } = B;
 const G = B;
@@ -458,4 +458,17 @@ test('tilemap: 47-case floor shading; walls are a cap row over a face row, lit o
   for (const c of col) { assert.equal(c.mask & (B.E | B.W), 0, 'open sides'); assert.equal(c.edge, null, 'no light on a cap with cap to the north'); }
   assert.ok(at(p.low, 'face', 2, 3), 'the wall\'s foot shows a face');
   assert.equal(at(p.low, 'face', 2, 3).ends, 3, 'finished on both sides');
+});
+
+test('feat trees: every feat of every tree has a place on the graph, and no two nodes overlap', () => {
+  for (const t of B.DATA.TREES) {
+    const feats = Object.values(B.DATA.FEATS).filter((f) => f.tree === t.id);
+    const L = UI.FeatTree.layout(t, feats);
+    const ps = feats.map((f) => [f.id, L.pos[f.id]]);
+    for (const [id, p] of ps) assert.ok(p && p.x >= 0 && p.y >= 0 && p.x < L.width && p.y < L.height, `${t.id}.${id}`);
+    for (let i = 0; i < ps.length; i++) for (let j = i + 1; j < ps.length; j++) {
+      const a = ps[i][1], b = ps[j][1];
+      assert.ok(Math.abs(a.x - b.x) >= 132 || Math.abs(a.y - b.y) >= 50, `${t.id}: ${ps[i][0]} overlaps ${ps[j][0]}`);
+    }
+  }
 });

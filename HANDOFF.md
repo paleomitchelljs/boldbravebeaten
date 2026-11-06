@@ -4,6 +4,24 @@ Last updated at commit: ab19909
 
 Keep this a short list. Tick things off, add new ones, and refresh the commit line after every push (`git log -1 --format=%h`).
 
+## Feat trees overhaul (the user, 2026-11-05; design in docs/PROPOSALS.md §3)
+Ruled: no callings (branches and capstones carry the class), 1 feat a level, build the unbuilt feats first, then all
+seven new trees.
+- [x] Phase 1: schema and the tree screen. A tree has a `group` (setting) and `branches`; a feat a `branch` (none:
+  the root) and maybe `capstone: true` (one to a tree a character: `C.closedBy`). Every existing feat sorted into a
+  branch; 14 existing feats marked capstones. `src/ui/game/feattree.js` draws a tree as a graph (root band, branch
+  columns, tier rows I–V, prerequisite lines lit when met, dashed for alternatives, a card for the picked feat) with
+  tabs grouped by setting and a "Path" line (the branch each character is furthest down). Used at the Training Yard
+  and camp, on the sheet's Feats tab (folded) and in character creation. Seen in headless Chrome (camp training,
+  desktop and phone; creation).
+- [ ] Branches without a capstone yet (Striker, Fencer, Assassin, Reaper, Technique, Runner, Charmer, Menace, Wilds,
+  Arcane eye, Alchemist, Battle, Bond, the ritual ones, all of Subterfuge): design them with phase 2.
+- [ ] Phase 2: build the unbuilt (`auto: false`) feats worth keeping, about 20 of 45 (cleave, sweep, shield wall,
+  counter step, slip through, flurry, human shield, rally/demoralize, steady mind, overchannel, tracker, diagnose...).
+- [ ] Phase 3: new trees Archery, Shadow (stealth out of Evasion), Leadership (rally out of Persuasion), Survival,
+  Lore, Athletics, Deception: mechanics, not numbers. Old saves keep moved feats (ids unchanged).
+- [ ] The tree tabs take a lot of height on a phone; the graph scrolls sideways in a narrow modal. Fine for now?
+
 ## Hero mode (the user, 2026-11-05)
 - [x] A checkbox in the Menu (Play section): `world.hero`, copied onto each party member and companion as `c.hero`
   (`World.syncHero`; `Battle.start` sets it too). Numbers in rules.yaml `hero`: blows by a hero ×1.5, on a hero ×0.5

@@ -137,3 +137,77 @@ Head wounds to INT and WIL hit casters hardest. That fits differentiation, but i
 It's the largest change since the turn model. I'd build it in three steps, each pushed and simmed: (1) pieces and
 locations with unaimed rolls only (full harnesses behave exactly as now); (2) aimed blows and the Location menu;
 (3) location effects (disarm, trip, stun, carry-through).
+
+## 3. Feat trees: branches, callings and a tree screen (the user, 2026-11-05; ruled the same day)
+
+**Ruling:** no callings (branches and their capstones carry the class); keep 1 feat per level; build the unbuilt
+feats first; all seven new trees (Archery, Shadow, Leadership, Survival, Lore, Athletics, Deception). §3.3 stands
+only as the road not taken.
+
+The ask: a more interesting interface for choosing feats; more feats that unlock a new mechanic rather than a number;
+more skills with trees; and "build a defined class through progress within sets of branching feat trees".
+
+### 3.1 Where it stands
+- 14 trees, about 150 feats. The training screen is a list: pick a person, pick a tree from a drop-down, read rows.
+- About 45 feats are `auto: false` (shown, but do nothing): cleave, sweep, shield wall, counter step, slip through,
+  flurry, human shield, rally/demoralize, tracker, diagnose, alchemy and its line, steady mind, overchannel, all of
+  fire affinity and all of ritual. Most of these are already the kind of feat asked for (a new thing you can do).
+- Prerequisites are flat: "feats in this tree" thresholds plus a few `requires`. Nothing makes one path exclude
+  another, so a tree has no branches in any felt sense.
+- Skills (skills.yaml) without a tree of their own: stealth (one feat inside Evasion), forcing (none), appraisal (one
+  unbuilt feat), lore (borrowed from ritual), deception (one unbuilt feat), herbalism (one feat). There is no
+  archery tree at all, though the rules have a whole archery section.
+- Combat has 5 trees, talking 1, sneaking about half of one. CLAUDE.md asks that the three settings stand equal.
+
+### 3.2 Branches inside a tree
+- Each tree gets a **root** (1–2 entry feats anyone can take) and 2–3 **branches** of 3–5 feats, each ending in a
+  **capstone** at the master tier. Taking one capstone closes the tree's other capstones (`exclusive`), so a
+  branch is a real choice; the feats below a capstone stay open to dabblers.
+- Data: a tree lists `branches: [{id, name, blurb}]`; a feat names its `branch` and may say `capstone: true`.
+  Layout is derived (row = tier, column = branch), so a new feat needs no coordinates.
+- Example, Heavy weapons: root *Heavy weapon training, Power swing*; **Breaker** (shield breaker, crushing blow →
+  *Juggernaut*), **Reaper** (cleave, sweep → *Whirlwind*: a swing at every foe in reach), **Polearm** (hook, set
+  against a charge → *Hold the line*: a foe stepping into your reach stops there).
+
+### 3.3 Callings: the class you build
+- A **calling** is earned, not picked at creation, so the game stays classless at the start (Philosophy) and still
+  ends with a defined class (the ask). `data/callings.yaml`: a name, a blurb, what it needs (feats in named trees,
+  or a capstone), and what it grants: a title on the sheet and one **calling feat** with a mechanic of its own.
+- Examples. *Knight*: Armor 6 + any weapon tree 4 → *Challenge* (a named foe who attacks anyone else provokes you).
+  *Duelist*: Light weapons 6 incl. a capstone + Evasion 3 → *Measure*: after a parry, see the foe's AP.
+  *Ranger*: Archery 5 + Survival 4. *Spellblade*: Casting 3 + a weapon tree 5 → cast as a reaction.
+  *Infiltrator*: Shadow 6 + Subterfuge 3. *Envoy*: Persuasion 5 + Lore 3. Eight or so to start.
+- **My recommendation: one calling per character.** It is what makes it a class. Changing it is a retrain in town.
+
+### 3.4 New trees (skills that lack one), each with mechanics, not numbers
+| Tree | Setting | A few of its feats |
+|---|---|---|
+| Archery | combat | Aimed shot (AP spent before to aim), Pinning shot (the target cannot step next turn), Point-blank (no penalty in reach), Volley |
+| Shadow (stealth, from Evasion) | sneaking | Hide in a fight (out of sight: your next blow is a hidden strike), Shadow step, Pickpocket, Backstab |
+| Leadership (from Persuasion) | combat/talking | Rally, Demoralize, Command (spend your AP for an ally's step), Banner |
+| Survival (herbalism, tracking) | exploring | Tracker (wanderers shown on the map), Forage, Camp craft (safer camps), Pathfinder (less travel time) |
+| Lore (lore, appraisal) | exploring/talking | Know thy foe (see a monster's resistances), Appraise, Old tongues (read inscriptions), Read spell |
+| Athletics (forcing) | exploring/combat | Climb and leap (cross gaps on the map), Swim (deep water), Charge, Shove through |
+| Deception | talking | Bluff (a parley move), Feign death, Disguise, Forgery |
+
+### 3.5 The tree screen
+- Tree icons along the top, each with a ring for feats taken; the chosen tree drawn as a graph: columns are
+  branches, rows are tiers (novice → master), nodes are icon tiles with rank pips, joined by lines (lit when the
+  prerequisite is met). States: owned, can train now, locked (dim, with the reason on tap), closed (another
+  capstone taken), not built yet (hatched; debug only).
+- Tapping a node opens a card: what each rank does, what it needs (ticked), price, Train.
+- A strip beneath shows each calling's progress (bars per tree). The same view, read-only, on the sheet's Feats tab,
+  and in character creation for the starting feats.
+- DOM and an SVG layer for the lines; no library.
+
+### 3.6 Order of work
+1. Schema (branches, capstones, exclusivity) and the tree screen, with today's trees sorted into branches.
+2. Build the unbuilt feats worth keeping (about 20 of the 45) before adding more.
+3. New trees: Archery, Shadow, Leadership first (one per setting), then Survival, Lore, Athletics, Deception.
+4. Callings.
+
+### 3.7 Open questions
+- One calling, or several? (Recommended: one.)
+- Feat budget: 3 + 1 per level. A calling needs about 10 feats, so level 8. Raise it to 2 per level?
+- Which new trees first (recommended above), and may existing feats move between trees (stealth to Shadow, rally
+  to Leadership, a retrain free for old saves)?

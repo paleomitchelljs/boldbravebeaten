@@ -204,7 +204,7 @@
   UI.Overlays.train = function (game) {
     const close = () => game.closeOverlay();
     return shell('Training at camp', h('div', { class: 'stack' }, UI.Bits.trainer(game, { name: 'Drill and practice' }, { camp: true }),
-      h('button', { class: 'primary', onclick: close }, 'Done')), close);
+      h('button', { class: 'primary', onclick: close }, 'Done')), close, true);
   };
 
   // A recruit (start.yaml recruits) asked to join: their word, their kit, and a place for them if one is free.
