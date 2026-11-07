@@ -328,6 +328,39 @@
     return out;
   }
 
+  // A fight won while one of the party lies dead but still revivable (CONFIG.magic.revive.afterFight): a companion on
+  // their feet with a Life spell that calls back the dead, and the points for it, casts it; else the party's best at
+  // Medicine gets one try. Called back, they are alive but unconscious. Returns log lines.
+  function saveFallen(enc, chars) {
+    const A = G.CONFIG.magic.revive && G.CONFIG.magic.revive.afterFight;
+    if (!A || !G.Magic) return [];
+    const per = G.CONFIG.magic.transfer.staminaPerCON;
+    const party = enc.ids.map((id) => chars[id]).filter((c) => c && c.side === 'party');
+    const out = [];
+    for (const c of party) {
+      if (!G.Magic.revivable(enc, c)) continue;
+      const helpers = party.filter((h) => h !== c && C.isActive(h));
+      if (!helpers.length) continue;
+      let cast = null;
+      for (const h of helpers) {
+        const give = (o) => Math.min(Math.ceil(o.spell.magnitude / 2), Math.floor((h.stamina - 1) / per));
+        const o = G.Magic.spellOptions(h)
+          .filter((x) => x.kind === 'cast' && !x.power && G.Magic.callsBack(x.spell) && x.spCost <= G.Magic.availableSP(h) && (x.spell.shape !== 'give' || give(x) > 0))
+          .sort((x, y) => x.spCost - y.spCost)[0];
+        if (!o) continue;
+        h.spSpent = (h.spSpent || 0) + o.spCost;
+        if (o.spell.shape === 'give') h.stamina -= give(o) * per;
+        cast = `${h.name} casts ${o.label} over ${c.name}. ${G.Magic.revive(c)}`;
+        break;
+      }
+      if (cast) { out.push(cast); continue; }
+      const r = G.Skills.bestCheck(helpers, A.skill, A.tn);
+      const roll = `Medicine ${r.roll} + ${r.mod} = ${r.total} against ${r.tn}`;
+      out.push(r.ok ? `${r.name} works over ${c.name} (${roll}). ${G.Magic.revive(c)}` : `${r.name} works over ${c.name}, but it is too late (${roll}).`);
+    }
+    return out;
+  }
+
   // Settle a finished (or fled) battle. Returns { result: 'won'|'lost'|'fled'|'draw', lines, loot }.
   function finish(world, how) {
     const b = world.battle;
@@ -336,6 +369,7 @@
     const out = { result: how || null, lines: [], loot: [] };
     const alive = (side) => enc.ids.some((id) => t.characters[id] && (side === 'party' ? t.characters[id].side === 'party' : t.characters[id].side !== 'party') && C.isActive(t.characters[id]));
     if (!out.result) out.result = alive('party') && !alive('enemy') ? 'won' : alive('enemy') && !alive('party') ? 'lost' : 'draw';
+    if (out.result === 'won') out.lines.push(...saveFallen(enc, t.characters));
     Combat.cleanup(enc, t.characters);
     const foes = Object.values(b.foes).filter((f) => !f.conjured);
     if (out.result === 'won') {

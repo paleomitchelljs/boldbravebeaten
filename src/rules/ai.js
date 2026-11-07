@@ -405,7 +405,7 @@
 
   // What Restore is worth on a creature: mending (Life) plus the conditions it would lift.
   function restoreValue(a, s, share, enc) {
-    if (a && a.status.dead) return (s.nouns || [s.noun]).some((n) => G.CONFIG.magic.words[n].heals) && G.Magic.revivable(enc, a) ? 60 : 0;
+    if (a && a.status.dead) return G.Magic.callsBack(s) && G.Magic.revivable(enc, a) ? 60 : 0;
     if (!a) return 0;
     let v = 0;
     for (const n of s.nouns || [s.noun]) {
@@ -499,6 +499,24 @@
           let v = 0;
           if (kind === 'magic') v = (ranged.length + casters.length) * 7;
           else if (kind === 'missiles') v = ranged.filter((f) => !G.Magic.maxSP(chars[f])).length * 8;
+          consider(v, cast({ target: t.id }), o);
+        }
+      } else if (s.shape === 'give') {
+        // Transfer to an ally: my stamina for their life. The dead I can call back first, then the downed, the
+        // bleeding and the CON-hurt; what it costs me counts against it.
+        const per = G.CONFIG.magic.transfer.staminaPerCON;
+        const pts = Math.min(Math.ceil(s.magnitude / 2), Math.floor((c.stamina - 1) / per));
+        if (!pts) continue;
+        for (const t of o.targets) {
+          if (!t.inReach || t.id === id) continue;
+          const a = chars[t.id];
+          let v;
+          if (a.status.dead) v = G.Magic.revivable(enc, a) ? 60 : 0;
+          else {
+            const con = Math.min(pts, a.damage.CON || 0);
+            v = (a.status.unconscious ? 40 : 0) + a.bleeds.filter((b) => !b.poison).reduce((x, b) => x + b.remaining, 0) * 3 + con * 6 +
+              Math.min(C.maxStamina(a) - a.stamina, (pts - con) * per) * 0.6 - pts * per * 0.4;
+          }
           consider(v, cast({ target: t.id }), o);
         }
       } else if (s.shape === 'restore') {

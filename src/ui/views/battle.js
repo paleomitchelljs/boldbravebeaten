@@ -222,6 +222,20 @@
     app.render();
   }
 
+  // Defer: the next in the initiative order goes now, and this turn resumes after theirs.
+  async function deferTurn(app, enc, id) {
+    const ui = bui(app);
+    if (ui.busy) return;
+    ui.busy = true;
+    let err;
+    try { err = await Combat.defer(enc, app.state.characters, id, ioFor(app)); } finally { ui.busy = false; }
+    if (err) toast(err);
+    ui.mode = null;
+    ui.pending = null;
+    app.save();
+    app.render();
+  }
+
   async function finishTurn(app, enc, id) {
     const ui = bui(app);
     if (ui.busy) return;
@@ -768,9 +782,11 @@
       go ? h('div', { class: 'cmd-go' }, go) : null,
       h('div', { class: 'cmd-end' },
         h('button', { class: 'end', title: (legal.ap ? `Keep ${C.fmtAP(legal.ap)} AP to defend with until the round ends` : 'Nothing left this round') + ' (E)', onclick: () => finishTurn(app, enc, id) }, legal.ap ? `End turn · keep ${C.fmtAP(legal.ap)} AP` : 'End turn'),
+        legal.defer ? h('button', { class: 'end defer', disabled: !legal.defer.affordable, title: `Let ${chars[legal.defer.next].name} take their turn now; yours resumes after theirs (D)`, onclick: () => deferTurn(app, enc, id) }, `Defer → ${chars[legal.defer.next].name} · ${C.fmtAP(legal.defer.ap)} AP`) : null,
         infoButton('Turns and AP', () => [
           model.move ? h('p', null, `To move, click a square on the map (up to ${model.move.move.maxSquares} with your AP): a silhouette shows where you would stand and the AP it costs; click it again to go. Walls are walked around; rough ground costs more. Stepping into a foe's reach, out of it, or twice within it lets them strike at you; one step within it is free.`) : null,
           h('p', null, 'Spend as much AP as you like on your turn; each action resolves as you take it.'),
+          h('p', null, 'Defer pays 1 AP to let the next one in the turn order go now; your turn picks up again after theirs, with what you have left. You may defer again, past the next one, as long as the AP lasts.'),
           h('p', null, 'AP you keep pays for reactions: a block, parry or dodge when a blow comes, or a strike at a foe who enters your reach, leaves it, or steps twice in it. AP left when the round ends is lost.')])),
     ]);
   }

@@ -174,7 +174,13 @@
     // Modifiers that stack (Launch + Burst) also go on together.
     const stacking = mods.filter((k) => k && words[k].stacks);
     for (let i = 0; i < stacking.length; i++) for (let j = i + 1; j < stacking.length; j++) mods.push([stacking[i], stacking[j]]);
-    for (const v of verbs) for (const n of nouns) for (const m of mods) if (combines(v, n, m)) out.push(makeOption(c, v, n, m));
+    for (const v of verbs) for (const n of nouns) for (const m of mods) {
+      if (!combines(v, n, m)) continue;
+      const o = makeOption(c, v, n, m);
+      out.push(o);
+      // Transfer of a noun that heals (Life) may be aimed the other way: at an ally, to give.
+      if (o.spell.shape === 'drain' && !o.spell.radius && words[n].heals) out.push(giveOption(o));
+    }
     // Doubled nouns (Word Doubling): two nouns, no modifier; both do the verb.
     if (C().rank(c, 'word_doubling')) {
       for (const v of verbs) for (let i = 0; i < nouns.length; i++) for (let j = i + 1; j < nouns.length; j++) {
@@ -183,6 +189,17 @@
       }
     }
     return out;
+  }
+
+  // Transfer aimed at an ally (CONFIG.magic.transfer): the caster's own life given, not a foe's taken.
+  function giveOption(o) {
+    const spell = Object.assign({}, o.spell, { shape: 'give' });
+    return Object.assign({}, o, { spell, target: 'ally', spellKey: o.spellKey + '+give', label: o.label + ' (to an ally)' });
+  }
+
+  // A spell that calls back the revivably dead: Restore or a given Transfer, with a noun that heals.
+  function callsBack(s) {
+    return !!s && (s.shape === 'restore' || s.shape === 'give') && (s.nouns || [s.noun]).some((n) => W()[n] && W()[n].heals);
   }
 
   // Magnitude: the verb's, + the modifier's, + affinity with the noun.
@@ -516,6 +533,21 @@
     return `${t.name}: ${bits.length ? bits.join(', ') : 'nothing to mend'}${woke ? `; ${t.name} comes to` : ''}.`;
   }
 
+  // What a given Transfer does: bleeding stopped, then each point a lost CON back, or with none lost, stamina.
+  function giveLife(t, pts) {
+    const stopped = t.bleeds.some((b) => !b.poison);
+    t.bleeds = t.bleeds.filter((b) => b.poison);
+    const con = Math.min(pts, t.damage.CON || 0);
+    if (con) C().healAttr(t, 'CON', con);
+    const before = t.stamina;
+    t.stamina = Math.min(C().maxStamina(t), t.stamina + (pts - con) * CONFIG.magic.transfer.staminaPerCON);
+    const woke = t.status.unconscious && !t.status.dead && t.stamina > 0;
+    if (woke) t.status.unconscious = false;
+    C().updateCondition(t);
+    const bits = [stopped ? 'bleeding stops' : null, con ? `+${con} CON` : null, t.stamina > before ? `+${t.stamina - before} stamina` : null].filter(Boolean);
+    return `${t.name}: ${bits.length ? bits.join(', ') : 'nothing to mend'}${woke ? `; ${t.name} comes to` : ''}.`;
+  }
+
   // Dead, but still within reach of a Life restore (CONFIG.magic.revive): the fight stamps the round they died in.
   function revivable(enc, c) {
     const R = CONFIG.magic.revive;
@@ -712,6 +744,20 @@
         const bits = [mend ? `+${mend} CON` : null, a.stamina > was ? `+${a.stamina - was} stamina` : null].filter(Boolean);
         return log(`${a.name} draws in what was taken${bits.length ? ': ' + bits.join(', ') : ''}.`, 'defend');
       }
+      case 'give': {
+        // Transfer to an ally: points of the caster's own life, each a lost CON mended (else stamina), each paid in
+        // the caster's stamina (CONFIG.magic.transfer). The caster keeps enough to stay on their feet.
+        const t = chars[d.target];
+        const per = CONFIG.magic.transfer.staminaPerCON;
+        const can = Math.min(Math.ceil(s.magnitude / 2), Math.floor((a.stamina - 1) / per));
+        if (!t || t === a || !enc.pos[t.id] || (t.status.dead && !revivable(enc, t))) return log(`${a.name}'s ${o.label} fizzles.`, 'fizzle');
+        if (!can) return log(`${a.name} has no life left to give.`, 'fizzle');
+        a.stamina -= can * per;
+        C().updateCondition(a);
+        log(`${a.name} gives ${t.name} of their own life (−${can * per} stamina).`, 'defend');
+        if (t.status.dead) return log(revive(t), 'defend');
+        return log(giveLife(t, can), 'defend');
+      }
       case 'restore': {
         const t = chars[d.target];
         const life = (s.nouns || [s.noun]).some((n) => W()[n].heals);
@@ -801,5 +847,5 @@
     return lines;
   }
 
-  G.Magic = { revivable, revive, breakDelayed, raise, join, corrode, chainOn, powerOptions, castableOptions, usePower, rechargeAll, chargesLeft, mend, restore, curesOf, knowsName, wardAgainst, freshSP, maxSP, restSP, availableSP, overchannelSP, spellOptions, knows, combines, backlash, makeOption, contest, afflict, onHit, elementBlow, afterHit, springRune, resolveCast, lineAcross, endRound, push };
+  G.Magic = { revivable, revive, callsBack, giveLife, breakDelayed, raise, join, corrode, chainOn, powerOptions, castableOptions, usePower, rechargeAll, chargesLeft, mend, restore, curesOf, knowsName, wardAgainst, freshSP, maxSP, restSP, availableSP, overchannelSP, spellOptions, knows, combines, backlash, makeOption, contest, afflict, onHit, elementBlow, afterHit, springRune, resolveCast, lineAcross, endRound, push };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

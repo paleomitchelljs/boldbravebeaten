@@ -912,8 +912,8 @@
       name: "Verb: Transfer"
       branch: first
       ranks: [apprentice]
-      requires: [["verb_increase:1", "verb_decrease:1"]]
-      effect: "Learn the verb Transfer (take a noun from the target and give it to yourself: Transfer Life heals you by what it withers)"
+      requires: []
+      effect: "Learn the verb Transfer (move a noun between you and another: Transfer Life withers a foe to heal you, or spends your own life to heal an ally)"
       auto: true
     verb_launch:
       name: "Verb: Launch"

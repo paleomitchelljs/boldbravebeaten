@@ -182,7 +182,7 @@ canvas.portrait { width: auto; max-width: 100%; height: auto; image-rendering: p
 .battle-screen .cmd-go { display: flex; min-width: 0; }
 .battle-screen .cmd-go > .primary { flex: 1 1 auto; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 9px 12px; font-size: 1rem; text-align: left; min-width: 0; }
 .battle-screen .cmd-go > .primary > span:first-child { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.battle-screen .cmd-end { display: flex; gap: 6px; align-items: center; }
+.battle-screen .cmd-end { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .battle-screen .cmd-end .end { flex: 1 1 auto; min-width: 0; padding-block: 6px; font-weight: 400; }
 .battle-screen .tap-hint { flex: 1 1 auto; text-align: center; padding: 8px 10px; border: 2px dashed var(--brass); color: var(--brass); font-family: var(--font-ui); font-size: 0.88rem; animation: hint-pulse 1.6s ease-in-out infinite; }
 @keyframes hint-pulse { 50% { border-color: rgba(217, 176, 85, 0.35); } }

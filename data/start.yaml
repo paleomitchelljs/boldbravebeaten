@@ -71,17 +71,16 @@ presets:
   # The mage: Life, to heal, wither and drain, at arm's reach, at range and over an area. The staff is a casting focus.
   - id: jabiku
     name: Jabiku
-    blurb: "A mage of Life: heals, withers and drains, at arm's reach, at range and over an area."
+    blurb: "A mage of Life who moves it: drains a foe to mend himself, or gives his own to an ally."
     place: village
     at: [10, 11]
     pitch: "I mend what breaks and unmake what should not stand. Walk with me."
     kit: staff
     level: 3
     attrs: {STR: 3, CON: 5, DEX: 5, SPD: 5, INT: 8, WIL: 8, WIS: 3, CHA: 3}
-    # Life with Increase, Decrease and Transfer, and the modifiers Launch and Burst (the user, 2026-11-01: for testing;
-    # was Fire with Strike, Launch, Burst and Build). Over a level-3 budget by two.
-    bonusFeats: 2
-    feats: [casting, verb_increase, verb_decrease, casting, verb_transfer, mod_launch, mod_burst]
+    # Life with Transfer alone (the user, 2026-11-07: drain a foe, or give to an ally; was Increase, Decrease and
+    # Transfer), and the modifiers Launch and Burst. Casting II and Transfer are apprentice feats: two feats come before each.
+    feats: [casting, mod_launch, mod_burst, casting, verb_transfer]
     nouns: [life]
     look: {sprite: "art:jabiku"}
 

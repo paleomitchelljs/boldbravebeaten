@@ -69,3 +69,8 @@ appeal:
   attrs: [INT, CHA]
   feats: {appeal_to_interest: 2}
   blurb: Show someone how helping you serves their own ends.
+medicine:
+  name: Medicine
+  attrs: [INT, WIS]
+  feats: {field_dressing: 1, wound_tending: 2, surgeon: 2}
+  blurb: Bring back one just fallen, when a fight ends in time.

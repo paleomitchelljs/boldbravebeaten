@@ -547,6 +547,7 @@
       if (e.key === 'Enter') { const b = document.querySelector('.battle-screen .cmd-go .primary'); if (b && !b.disabled) { e.preventDefault(); b.click(); } }
       if (e.key === 'v' || e.key === 'V') { e.preventDefault(); UI.Bits.toggleCleanMap(game); return; }
       if (e.key === 'e' || e.key === 'E') { const b = document.querySelector('.battle-screen .cmd-end .end'); if (b && !b.disabled) { e.preventDefault(); b.click(); } }
+      if (e.key === 'd' || e.key === 'D') { const b = document.querySelector('.battle-screen .cmd-end .defer'); if (b && !b.disabled) { e.preventDefault(); b.click(); } }
       const n = Number(e.key);
       if (n >= 1 && n <= 9) { const tabs = document.querySelectorAll('.battle-screen .cmd-tab'); if (tabs[n - 1]) { e.preventDefault(); tabs[n - 1].click(); } }
       if (e.key === 'Escape') {

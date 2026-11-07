@@ -124,6 +124,16 @@
     return (c.feats && c.feats[id]) || 0;
   }
 
+  // Fighting skill (CONFIG.defense.skill): the feat ranks held in trees of its groups, + effects `skill` (traits, gear).
+  function fightingSkill(c) {
+    const K = CONFIG.defense.skill;
+    if (!K || !c) return 0;
+    const trees = new Set(TREES.filter((t) => (K.groups || []).includes(t.group)).map((t) => t.id));
+    let n = 0;
+    for (const id in c.feats) if (FEATS[id] && trees.has(FEATS[id].tree)) n += c.feats[id];
+    return n + G.Effects.sum(c, 'skill');
+  }
+
   function featCount(c) {
     let n = 0;
     for (const id in c.feats) n += c.feats[id];
@@ -1098,7 +1108,7 @@
 
   G.Character = {
     newCharacter, normalize, freshStatus,
-    rank, featCount, featBudget, treeCount, tierCount, tierName, canTakeFeat, closedBy, parseReq, canRemoveFeat, addFeat, removeFeat, reqText, roman,
+    rank, fightingSkill, featCount, featBudget, treeCount, tierCount, tierName, canTakeFeat, closedBy, parseReq, canRemoveFeat, addFeat, removeFeat, reqText, roman,
     conditioning, attr, attrMax, combatAttr, armorInfo, armorPieces, armorAt, armorUniform, shieldInfo, shieldReady, wieldedWeapon, offhandWeapon,
     maxStamina, freshStamina, wearyRound, wearyTime, regen, fatiguePenalty, apPool, projectedPool, apScale, costScale, fmtAP, minAP, baseAP, armorAP, quickCut, moveCost, squaresFor, squaresPerAP, handsBusy, castingHands, weaponStrain, inRange, optionKey, needsWindUp, strOffset, staminaCost, effectiveWeight, isLightWeapon,
     strBonus, weaponDamage, mainIndex, attackOptions, actionCost, ammoLeft, gearWarnings, tireless, webTax,

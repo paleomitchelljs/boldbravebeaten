@@ -345,6 +345,7 @@
   // ends the turn and returns the reason (so a confused AI can't loop).
   async function submit(enc, chars, d, io) {
     if (d.type === 'endTurn' || d.type === 'concede') { await endTurn(enc, chars, d.actor, io); return null; }
+    if (d.type === 'defer') return defer(enc, chars, d.actor, io);
     const err = await act(enc, chars, d, io);
     if (err) await endTurn(enc, chars, d.actor, io);
     return err;
@@ -446,7 +447,9 @@
           const t = chars[o];
           if (!t) return false;
           // The newly dead can be called back by a Life restore (CONFIG.magic.revive).
-          if (t.status.dead) return opt.target === 'ally' && t.side === c.side && opt.spell.shape === 'restore' && (opt.spell.nouns || [opt.spell.noun]).some((n) => CONFIG.magic.words[n].heals) && G.Magic.revivable(enc, t);
+          if (t.status.dead) return opt.target === 'ally' && t.side === c.side && G.Magic.callsBack(opt.spell) && G.Magic.revivable(enc, t);
+          // Transfer gives to someone else, never back to the caster.
+          if (opt.spell.shape === 'give' && t === c) return false;
           // Restore reaches a friend turned by a mind spell, too (to free them).
           if (opt.target === 'ally') return t.side === c.side || (opt.spell.shape === 'restore' && t.charmed && t.charmed.side === c.side);
           return t.side !== c.side && C.isActive(t);
@@ -581,7 +584,35 @@
       const patients = enc.ids.filter((o) => chars[o].bleeds.length > 0 && !chars[o].status.dead && (o === id || dist(me, enc.pos[o]) <= 1));
       if (patients.length) addOther('bandage', { targets: patients.map((o) => ({ id: o, inReach: true })) });
     }
+    out.defer = deferOption(enc, chars, id);
     return out;
+  }
+
+  // Defer (CONFIG.defer): pay the AP to let the next one in the initiative order take their turn now; mine resumes
+  // after theirs. { ap, next, affordable } on my turn, or null when there is no one left to go.
+  function deferAP() {
+    return Math.round(((CONFIG.defer && CONFIG.defer.ap) || 0) * (CONFIG.apDisplay || 1));
+  }
+  function deferOption(enc, chars, id) {
+    if (!CONFIG.defer || currentActor(enc) !== id) return null;
+    let j = enc.turn + 1;
+    while (j < enc.order.length && !eligible(enc, chars, enc.order[j])) j++;
+    if (j >= enc.order.length) return null;
+    return { ap: deferAP(), next: enc.order[j], affordable: apLeft(enc, id) >= deferAP() };
+  }
+  async function defer(enc, chars, id, io) {
+    const o = deferOption(enc, chars, id);
+    if (!o) return 'No one left to defer to';
+    if (!o.affordable) return 'Not enough AP';
+    enc.ap[id] -= o.ap;
+    // Step back behind the next one: they go now (enc.turn points at them), and I come up again after.
+    const j = enc.order.indexOf(o.next);
+    enc.order.splice(enc.turn, 1);
+    enc.order.splice(j, 0, id);
+    enc.turn = j - 1;
+    log(enc, `${chars[id].name} holds back and lets ${chars[o.next].name} go first.`, 'pass');
+    enc.phase = 'turn';
+    return null;
   }
 
   // A new wind-up needs no wind-up held, or (with rewindAfterRelease) the held one
@@ -1627,6 +1658,7 @@
         bonus -= Math.round((ai.spd + ai.dex) * D.dodgeArmor);
       }
       let atk = D.motionPenalty[motion] || 0;
+      if (parry) bonus += skillEdge(defender, attacker);
       if (parry && D.leverage) {
         // A parry meets the blow with the parrying weapon's weight: nearer a shield the more it outweighs the blow.
         bonus += leverage(defender, kind, atkOption);
@@ -1669,6 +1701,14 @@
     if (!(f > 0)) return 0;
     const x = Math.log2(Math.max(mine, 0.5) / f);
     return Math.round(K.max * x / (1 + Math.abs(x)));
+  }
+
+  // CONFIG.defense.skill: what the gap in fighting skill adds to a parry (0 against an attacker not known).
+  function skillEdge(defender, attacker) {
+    const K = CONFIG.defense.skill;
+    if (!K || !attacker) return 0;
+    const x = Math.round(K.per * (C.fightingSkill(defender) - C.fightingSkill(attacker)));
+    return Math.max(-K.max, Math.min(K.max, x));
   }
 
   // A blow's force: its expected damage, all kinds together.
@@ -2768,7 +2808,7 @@
   G.Combat = {
     foeSquares,
     unseenBy, strikeEffects, conditionForbids, ATTACK_TYPES, DEFENSE_TYPES, shoveReach, log, rollDie, castSpell, knockDown, stability, releaseAll: clearGrapple,
-    createEncounter, autoPlace, startRound, currentActor, legalActions, act, validate, endTurn, submit, describeDecl, apLeft, defenseOptions, coverOptions, opportunityOptions,
-    vitalNeed, projectedPos, dist, defenseOdds, parryCarryShare, leverage, blowForce, aimPenalty, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolveAction, finishRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
+    createEncounter, autoPlace, startRound, currentActor, legalActions, act, validate, endTurn, defer, submit, describeDecl, apLeft, defenseOptions, coverOptions, opportunityOptions,
+    vitalNeed, projectedPos, dist, defenseOdds, parryCarryShare, leverage, skillEdge, blowForce, aimPenalty, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolveAction, finishRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

@@ -67,6 +67,9 @@
     // PROVISIONAL: someone who has spent nothing this round may take one action that costs more than
     // their whole pool, as their whole turn, so a tired or armored fighter can always make one big swing.
     wholeTurnAction: true,
+    // PROVISIONAL (the user, 2026-11-07): Defer. On your turn, pay `ap` (sheet AP) to let the next one in the initiative
+    // order take their turn now; yours resumes after theirs. As often as the AP lasts.
+    defer: { ap: 1 },
     // PROVISIONAL (the user's call: armor makes actions dearer): armor's SPD penalty no longer
     // shrinks the pool; every action costs this many AP more per point of it (plate 3 → +0.5,
     // mail 1 → +0.2; the mobility feats lower it). It still slows moving, initiative and
@@ -393,9 +396,15 @@
       // The user (2026-11-04): one who dies in a fight can be called back for `rounds` rounds after the one they died
       // in (three more turns of their own): a Restore with Life aimed at them brings CON back up to `con` and leaves
       // them alive but unconscious, at 0 stamina. After that they are beyond saving there (a priest in town still can).
-      revive: { rounds: 3, con: 1 },
+      // PROVISIONAL (the user, 2026-11-07): a fight won while one of the party is still revivable leaves time to save
+      // them: a living companion with a Life spell that calls back the dead, and the points for it, casts it; else
+      // the best at `skill` rolls against `tn` (a check name in rules.yaml) to bring them back unconscious.
+      revive: { rounds: 3, con: 1, afterFight: { skill: 'medicine', tn: 'moderate' } },
       // PROVISIONAL (the user's Transfer, 2026-11-01): what the target loses, the caster gains: each CON taken mends a
       // point of the caster's own lost CON, or, with none lost, gives this much stamina.
+      // PROVISIONAL (the user, 2026-11-07): Transfer aimed at an ally gives instead: ceil(magnitude / 2) points of the
+      // caster's own life, each mending a lost CON of theirs (else staminaPerCON stamina), each costing the caster
+      // staminaPerCON stamina. It stops bleeding and calls back the revivably dead.
       transfer: { staminaPerCON: 3 },
       castAP: 2, // base, × apScale. PROVISIONAL: at 3, a bolt cost 6 sheet AP for a third of a sword thrust
       poolPerCasting: 3, // spell points = INT + 3 × Casting rank
@@ -647,6 +656,12 @@
       // 3); a sword against a greatsword −1, against a giant's club −2. The attacker's side is the same as against a
       // block or a dodge (⌊(STR + SPD)/4⌋ + motion), so between equal weapons the odds are about what they were.
       leverage: { max: 3 },
+      // PROVISIONAL (the user, 2026-11-07: a skilled swordsman turns a novice's blows aside almost every time). The
+      // parrier adds per × (their fighting skill − the attacker's), rounded, between −max and +max. Fighting skill:
+      // the feat ranks held in trees of `groups` (one feat a level, so it climbs with level) + effects `skill` (a
+      // monster's traits, gear). Cyrus (level 3, 4 combat ranks) against a goblin (none): +3, a kobold's spear
+      // thrust parried 94% of the time (was 79%), a goblin's club swing 97% (was 85%). Against an unseen attacker, 0.
+      skill: { groups: ['combat'], per: 0.75, max: 4 },
       // PROVISIONAL (the user's idea): a parried swing whose force beats the parrying weapon's carries through,
       // weakened: share × (force − mine) / force of each face lands (rounded down). A parried thrust is stopped:
       // turning a point aside takes little force. motions: which blows can carry through a parry.
@@ -791,6 +806,10 @@
 
   // Every PROVISIONAL choice, shown on the Rules tab so nothing is hidden.
   CONFIG.provisional = [
+    'Skill in a parry (the user, 2026-11-07): the parrier adds ¾ × (their fighting skill − the attacker\'s), rounded, at most ±4. Fighting skill is the feat ranks held in the combat trees, plus a monster\'s `skill` trait. A level-3 fencer parries an untrained goblin\'s spear thrust 94% of the time (was 79%).',
+    'Transfer gives as well as takes (the user, 2026-11-07): aimed at an ally, Transfer + Life gives them the caster\'s own life: what a drain would take (half the magnitude, rounded up) in points, each mending a lost CON or, with none lost, 3 stamina, each costing the caster 3 stamina (never their last); it stops bleeding and calls back the revivably dead. Transfer no longer needs Increase or Decrease first.',
+    'Saving the fallen after a fight (the user, 2026-11-07): when a fight is won while a party member is dead but still revivable, a companion with a Life spell that calls back the dead and the points for it casts it; failing that, the party\'s best healer makes a Medicine check (moderate) to bring them back unconscious.',
+    'Defer (the user, 2026-11-07): on your turn, pay 1 AP to let the next one in the initiative order take their turn now; yours resumes after theirs, with what AP you have left. As often as the AP lasts.',
     'Verbs as what a spell does to its noun (the user, 2026-11-01; Jabiku\'s words, beside the older verbs): Increase (Life heals, as Restore), Decrease (Life withers, as Strike, at arm\'s reach), Transfer (withers the target; each CON taken mends one of the caster\'s, or gives 3 stamina). Launch and Burst as modifiers that stack: Launch at range 2–12, Burst an area of radius 1, alone round the caster (who is spared), with Launch round a square at range.',
     'Wind-ups are released in the same turn if the AP is there (the user, 2026-11-01; was: not before the next round): a bow\'s draw and its loose, a power swing\'s wind-up and its blow, a Strong spell\'s gathering and its casting are two actions, both in one turn when the AP allows (Lorc: draw 2, loose 3 of her 6), or the first made ahead and carried into the next round (`windUp.sameTurn`).',
     'Movement (the user, 2026-11-01): a stretch of a move covers round(1 + SPD/4) squares (was (1 + ⌊SPD/4⌋) × 2), so a round spent only moving carries the presets 4 / 6 / 9 / 12 squares, not 4 / 12 / 12 / 24.',
