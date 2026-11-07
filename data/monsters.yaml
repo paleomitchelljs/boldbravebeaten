@@ -329,7 +329,7 @@ koboldBand:
   group: [kobold, kobold, kobold, kobold]
 goblin:
   name: Goblin
-  blurb: "Nimble and nasty: crude leather, a club, and a knife."
+  blurb: "Nimble and nasty: rags, a club, and a knife."
   faction: wilds
   xp: 14
   glyph: "👺"
@@ -337,7 +337,7 @@ goblin:
   loot: humanoid_purse
   attrs: {STR: 4, CON: 4, DEX: 7, SPD: 7, INT: 4, WIS: 3, CHA: 3}
   natural: []
-  armorItem: {type: leather, coverage: half}
+  armorItem: {type: padded, coverage: half}
   origin: goblin
   weapons: [club]
   sidearm: dagger
@@ -355,7 +355,7 @@ goblinArcher:
   loot: humanoid_purse
   attrs: {STR: 4, CON: 4, DEX: 7, SPD: 7, INT: 4, WIS: 3, CHA: 3}
   natural: []
-  armorItem: {type: leather, coverage: half}
+  armorItem: {type: padded, coverage: half}
   origin: goblin
   weapons: [shortbow]
   sidearm: dagger
@@ -619,7 +619,7 @@ avatarOfFear:
 # the elementals, the avatar in fire colours for the efreet, the old man for gnomes, Singe for the drake.
 fireGoblin:
   name: Fire goblin
-  blurb: "A goblin of the deep mine, red-skinned and heat-hardened: a spear, scraps of leather, and no fear of the lava."
+  blurb: "A goblin of the deep mine, red-skinned and heat-hardened: a spear, rags, and no fear of the lava."
   faction: cinder_goblins
   xp: 18
   glyph: "👺"
@@ -627,7 +627,7 @@ fireGoblin:
   loot: humanoid_purse
   attrs: {STR: 5, CON: 5, DEX: 7, SPD: 7, INT: 4, WIS: 4, CHA: 3}
   natural: []
-  armorItem: {type: leather, coverage: half}
+  armorItem: {type: padded, coverage: half}
   origin: goblin
   weapons: [shortSpear]
   sidearm: dagger
@@ -645,7 +645,7 @@ fireGoblinArcher:
   loot: humanoid_purse
   attrs: {STR: 4, CON: 5, DEX: 8, SPD: 7, INT: 4, WIS: 5, CHA: 3}
   natural: []
-  armorItem: {type: leather, coverage: half}
+  armorItem: {type: padded, coverage: half}
   origin: goblin
   weapons: [shortbow]
   sidearm: dagger
@@ -672,7 +672,7 @@ goblinMiner:
   keepUnarmed: true
 goblinWarrior:
   name: Goblin warrior
-  blurb: "A barracks goblin in goblin-made mail with a short sword and a round shield: drilled, and it shows."
+  blurb: "A barracks goblin in a quilted jack with a short sword and a round shield: drilled, and it shows."
   faction: cinder_goblins
   xp: 30
   glyph: "👺"
@@ -681,7 +681,7 @@ goblinWarrior:
   level: 2
   attrs: {STR: 6, CON: 6, DEX: 7, SPD: 6, INT: 4, WIS: 4, CHA: 3}
   natural: []
-  armorItem: {type: mail, coverage: half}
+  armorItem: {type: padded, coverage: half}
   origin: goblin
   weapons: [shortsword]
   shield: [round, wood]
@@ -815,7 +815,7 @@ efreetLord:
   feats: {casting: 3, verb_burst: 1, verb_launch: 1, mod_strong: 1, toughness: 1}
 gnomeWarrior:
   name: Gnome warrior
-  blurb: "A gnome of the cut-off fort in dark iron mail with a hammer. They fight the goblins for every yard of rock."
+  blurb: "A gnome of the cut-off fort in boiled leather with a hammer. They fight the goblins for every yard of rock."
   faction: deep_gnomes
   xp: 25
   glyph: "🧔"
@@ -824,7 +824,7 @@ gnomeWarrior:
   level: 2
   attrs: {STR: 5, CON: 7, DEX: 7, SPD: 5, INT: 7, WIS: 6, CHA: 5}
   natural: []
-  armorItem: {type: mail, coverage: half}
+  armorItem: {type: leather, coverage: half}
   origin: dwarven
   weapons: [warhammer]
   craft: average

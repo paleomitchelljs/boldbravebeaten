@@ -1,4 +1,6 @@
 # Templates for generated human foes (bandits, guards). Gear lists are [weight, value] pairs by level band [1-2, 3-5, 6+].
+# The world (the user, 2026-11-07): armor is rare among foes. The rank and file wear cloth (padded) or leather at most;
+# only leaders, champions and bosses (a knight, a named foe) wear mail or plate.
 
 bandit:
   faction: cutthroats
@@ -6,7 +8,7 @@ bandit:
   sprite: {art: thief, kind: rogue, tint: "#9a8a8a"}
   primary: [DEX, SPD]
   weak: [INT]
-  armor: [[[3, padded], [1, leather]], [[2, leather], [1, mail]], [[1, leather], [2, mail]]]
+  armor: [[[3, padded], [1, leather]], [[2, padded], [1, leather]], [[1, padded], [2, leather]]]
   coverage: [[[2, partial], [2, half], [1, full]], [[1, half], [2, full]], [[1, full]]]
   weapons:
     - [[2, club], [2, dagger]]
@@ -30,7 +32,7 @@ militia:
   sprite: {kind: knight, tint: "#a09a7a"}
   primary: [CON, STR]
   weak: [DEX]
-  armor: [[[1, padded]], [[2, padded], [1, leather]], [[1, leather], [1, mail]]]
+  armor: [[[1, padded]], [[2, padded], [1, leather]], [[1, padded], [1, leather]]]
   coverage: [[[1, full]], [[1, full]], [[1, full]]]
   weapons:
     - [[2, club], [1, spikedMace]]
@@ -52,7 +54,7 @@ sellsword:
   sprite: {kind: knight, tint: "#8a5a5a"}
   primary: [STR, CON]
   weak: [CHA]
-  armor: [[[2, leather], [1, mail]], [[1, mail]], [[1, mail]]]
+  armor: [[[1, padded], [1, leather]], [[1, leather]], [[1, leather]]]
   coverage: [[[1, half], [1, full]], [[1, half], [2, full]], [[1, full]]]
   weapons: [[[2, longsword], [1, spikedMace]], [[1, longsword]], [[1, longsword]]]
   shield: [[[1, round]], [[1, round], [1, heater]], [[1, heater]]]
@@ -73,7 +75,7 @@ brute:
   sprite: {art: wolfpack-bandit, kind: orc_warrior, tint: "#b0907a"}
   primary: [STR, CON]
   weak: [INT, DEX]
-  armor: [[[2, padded], [1, leather]], [[1, leather], [1, mail]], [[1, mail]]]
+  armor: [[[2, padded], [1, leather]], [[1, padded], [1, leather]], [[1, leather]]]
   coverage: [[[1, half], [1, full]], [[1, full]], [[1, full]]]
   weapons:
     - [[2, club], [1, warhammer]]
@@ -96,7 +98,7 @@ duelist:
   sprite: {art: cyrus, kind: rogue, tint: "#9a7a9a"}
   primary: [DEX, SPD]
   weak: [STR]
-  armor: [[[1, null], [1, padded]], [[1, leather]], [[1, leather], [1, mail]]]
+  armor: [[[1, null], [1, padded]], [[1, padded], [1, leather]], [[1, leather]]]
   coverage: [[[1, partial]], [[1, half]], [[1, half], [1, full]]]
   weapons: [[[1, rapier]], [[1, rapier]], [[1, rapier]]]
   shield: [[[1, null]], [[1, null], [1, buckler]], [[1, buckler]]]
@@ -140,7 +142,7 @@ manAtArms:
   sprite: {kind: knight, tint: "#8a8a9a"}
   primary: [STR, CON]
   weak: [CHA]
-  armor: [[[1, mail]], [[1, mail]], [[1, mail], [1, plate]]]
+  armor: [[[1, padded]], [[1, leather]], [[1, leather]]]
   coverage: [[[1, half], [1, full]], [[1, full]], [[2, full], [1, half]]]
   weapons:
     - [[1, spikedMace], [1, flangedMace]]

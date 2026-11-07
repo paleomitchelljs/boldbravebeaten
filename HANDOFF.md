@@ -5,6 +5,14 @@ Last updated at commit: 0ce67a3
 Keep this a short list. Tick things off, add new ones, and refresh the commit line after every push (`git log -1 --format=%h`).
 
 ## Parry skill, Jabiku's Transfer, saving the fallen, Defer (the user, 2026-11-07)
+- [x] Armor is rare among foes (the user, 2026-11-07): the rank and file wear cloth (padded) or leather at most.
+  Goblins, goblin archers, fire goblins and barracks goblin warriors: padded (were leather, mail). Gnome warriors:
+  leather (were mail). Generated humans (foes.yaml) never roll mail or plate, except the knight. Kept: the goblin
+  champion (mail), goblin king (half plate), revenant knight (plate). Natural hides and scales unchanged.
+- [ ] Skills overhaul (the user, 2026-11-07): generic numeric skills (melee, block, armor, perception, anticipation,
+  medicine, arcane, nature, persuasion, intimidation, deception, alchemy, metalwork, carpentry, devices, stealth…)
+  that give numbers and unlock feats; feats give large benefits; everything gets skills. Design questions put to the
+  user before building.
 - [x] Skill in defence (the user, 2026-11-07), `CONFIG.defense.skill`: the defender adds (their skill in the defence −
   the attacker's with the blow), at most ±4; a block half that, ±2. Skill = feat ranks in a pool + an effects `skill`
   key (monster trait, gear) in every pool. Weapon pools by the blow (`C.weaponSkillTree`): very light/light → Light
