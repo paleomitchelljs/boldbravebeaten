@@ -173,7 +173,7 @@
   }
 
   // ---- The Training Yard ----------------------------------------------------------------------------------------
-  // Also the camp's training (overlays.js): opts.camp prices it as rules.yaml game.campTraining says.
+  // Also the camp's training (overlays.js). Training costs no gold.
   function trainer(game, s, opts) {
     const w = game.world;
     const camp = opts && opts.camp ? { camp: true } : null;
@@ -184,7 +184,7 @@
     const dbg = game.debug;
     const pick = (label, el) => h('label', { class: 'pick' }, h('span', { class: 'label' }, label), el);
     return h('div', { class: 'stack' },
-      h('div', { class: 'row spread' }, h('div', { class: 'row' }, h('h3', null, s.name), UI.tip(camp ? 'Levels give feats. At camp you drill them for free; a teacher in town charges more for each higher rank.' : 'Levels give feats; feats are taught here for a price (free at camp). Each costs more the higher the rank.')), h('span', { class: 'gold num' }, `◈ ${w.gold}`)),
+      h('div', { class: 'row spread' }, h('div', { class: 'row' }, h('h3', null, s.name), UI.tip('Levels give feats; a feat\'s tier needs ranks in its tree\'s skill. Training is free, here, at camp or from the sheet.'))),
       h('div', { class: 'row train-bar' },
         pick('Who', UI.select('train-who', cur.id, members.map((c) => [c.id, `${c.name} · L${c.level} · ${C.featBudget(c) - C.featCount(c)} to spend`]), (v) => { game.ui.trainer = v; game.render(); }))),
       h('div', { class: 'row small muted' }, `${C.featCount(cur)} of ${C.featBudget(cur)} feats`, left <= 0 ? ` · next level at ${G.World.xpFor(cur.level + 1)} XP (has ${cur.xp || 0})` : ` · ${left} to spend`),
@@ -198,7 +198,7 @@
         action: (f) => {
           const tr = G.Town.trainable(cur, f.id, camp);
           if (C.rank(cur, f.id) >= f.ranks.length) return h('span', { class: 'chip ok' }, 'Mastered');
-          if (tr.ok) return h('button', { class: 'primary', disabled: w.gold < tr.cost || left <= 0, onclick: () => { const r = G.Town.train(w, cur, f.id, camp); if (!r.ok) toast(r.reason); game.render(); } }, tr.cost ? `Train — ${tr.cost} ◈` : 'Train');
+          if (tr.ok) return h('button', { class: 'primary', disabled: left <= 0, onclick: () => { const r = G.Town.train(w, cur, f.id, camp); if (!r.ok) toast(r.reason); game.render(); } }, 'Train');
           return dbg ? h('button', { class: 'small', onclick: () => { G.Town.train(w, cur, f.id, { bench: true, free: true }); game.render(); } }, 'Grant (debug)') : null;
         },
       }));

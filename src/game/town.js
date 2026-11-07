@@ -119,24 +119,19 @@
   }
 
   // ---- Training ------------------------------------------------------------------------------
-  // opts.camp: training at a camp in a dungeon (rules.yaml game.campTraining scales the price).
-  const trainPrice = (c, id, opts) => Math.round(E.trainCost(c, id) * (opts && opts.camp ? (G.CONFIG.game.campTraining != null ? G.CONFIG.game.campTraining : 1) : 1));
-
+  // Training costs nothing (the user, 2026-11-07): a feat the character can take, they take.
   function trainable(c, id, opts) {
     const f = G.DATA.FEATS[id];
     const chk = C.canTakeFeat(c, id);
-    return { ok: chk.ok && f.auto, reason: !f.auto ? 'Not yet in the game' : chk.reason, cost: chk.ok ? trainPrice(c, id, opts) : null };
+    return { ok: chk.ok && f.auto, reason: !f.auto ? 'Not yet in the game' : chk.reason };
   }
 
   function train(world, c, id, opts) {
     const t = trainable(c, id, opts);
     if (!t.ok && !(opts && opts.bench)) return { ok: false, reason: t.reason };
-    const cost = trainPrice(c, id, opts);
-    if (world.gold < cost && !(opts && opts.free)) return { ok: false, reason: `Instruction costs ${cost} gold.` };
-    if (!(opts && opts.free)) world.gold -= cost;
     C.addFeat(c, id);
     W.logLine(world, `${c.name} trains ${G.DATA.FEATS[id].name}.`, 'info');
-    return { ok: true, cost };
+    return { ok: true };
   }
 
   // ---- Using goods ------------------------------------------------------------------------------

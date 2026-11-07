@@ -154,15 +154,8 @@
 
   function raiseCost(c) { return 300 + 120 * c.level; }
 
-  // Training: gold for the next rank of a feat.
-  function trainCost(c, featId) {
-    const f = D().FEATS[featId];
-    const tierName = f.ranks[C.rank(c, featId)];
-    return G.CONFIG.game.trainingCost[tierName] || 100;
-  }
-
   G.Economy = {
     makeFromSpec, nameOfSpec, value, goodValue, haggler, priceFactor, buyPrice, sellPrice,
-    stock, buy, sellItem, sellGood, canSell, repairCost, repair, innCost, healCost, raiseCost, trainCost,
+    stock, buy, sellItem, sellGood, canSell, repairCost, repair, innCost, healCost, raiseCost, 
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

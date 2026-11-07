@@ -90,11 +90,8 @@ game:
   # XP needed to reach level n = xpBase * n * (n - 1) / 2 (so 60, 180, 360, 600…).
   xpBase: 60
   maxLevel: 10
-  # Training: gold per rank, by the tier of the rank taken. In town at the Training Yard, or in a dungeon when the
-  # party makes camp (the user, 2026-10-28: level up without going back to town), at campTraining × the price.
-  # Free at camp (the user, 2026-10-31: there is nobody to pay in the middle of a dungeon).
-  trainingCost: {novice: 20, apprentice: 60, adept: 160, expert: 400, master: 1000}
-  campTraining: 0
+  # Training costs no gold (the user, 2026-11-07): skills and feats are trained whenever the party isn't fighting;
+  # levels are the only limit.
   # ---- Time and exploring -------------------------------------------------
   # PROVISIONAL (the user, 2026-10-28): exploring a baseline dungeon (the temple, every area) thoroughly, with no
   # fights, should take close to one waking day (exploreDay minutes), after which the party needs a long rest. A step

@@ -106,7 +106,7 @@
       h('div', { class: 'row small' }, h('span', { class: 'muted' }, 'Bleeding'), h('span', null, c.bleeds.length ? `${C.bleedPerRound(c).toFixed(1)}/round` : 'none'), tip('CON is your life: at 0 you are dead. Stamina is how long you can keep fighting: at 0 you are unconscious. Armor decides how much of the first you keep.')));
   }
 
-  // Feats are trained here too, whenever the party isn't fighting (the user, 2026-11-07), at camp's price.
+  // Feats are trained here too, whenever the party isn't fighting, for no gold (the user, 2026-11-07).
   function featsTab(game, c, editable) {
     const owned = Object.keys(c.feats).filter((id) => D.FEATS[id]);
     const left = C.featBudget(c) - C.featCount(c);
@@ -124,10 +124,8 @@
           can: (f) => C.canTakeFeat(c, f.id, true),
           action: editable ? (f) => {
             if (C.rank(c, f.id) >= f.ranks.length) return h('span', { class: 'chip ok' }, 'Mastered');
-            const tr = G.Town.trainable(c, f.id, { camp: true });
-            if (!tr.ok) return null;
-            const w = game.world;
-            return h('button', { class: 'primary', disabled: left <= 0 || w.gold < tr.cost, onclick: () => { const r = G.Town.train(w, c, f.id, { camp: true }); if (!r.ok) toast(r.reason); game.render(); } }, tr.cost ? `Train — ${tr.cost} ◈` : 'Train');
+            if (!G.Town.trainable(c, f.id).ok) return null;
+            return h('button', { class: 'primary', disabled: left <= 0, onclick: () => { const r = G.Town.train(game.world, c, f.id); if (!r.ok) toast(r.reason); game.render(); } }, 'Train');
           } : null,
         })) : null,
       (c.nouns || []).length ? h('div', { class: 'small' }, h('b', null, 'Words known: '), c.nouns.join(', ')) : null);

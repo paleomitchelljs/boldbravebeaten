@@ -25,8 +25,9 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   can't come back out; checks below; foes' sheets show theirs), creation's skill editor (before feats), the feat tree
   card and tabs show the skill a tier needs, and the sheet's Feats tab trains feats at camp's price outside a fight.
   Seen in headless Chrome (sheet desktop and phone, creation desktop). "Arcane knowledge" clips in a desktop cell.
-- [ ] The Training Yard and camp training still exist beside the sheet's; drop them, or keep the town's as the place
-  to retrain? Ask the user.
+- [x] Training costs no gold anywhere (the user, 2026-11-07): rules.yaml trainingCost and campTraining gone,
+  Economy.trainCost gone, Town.trainable/train take no price. The Training Yard and camp training still exist and do
+  the same as the sheet's Feats tab.
 - [ ] Alchemy, metalwork and carpentry do nothing yet (no crafting). Number feats still left for the revamp: Control,
   Wound Tending, the armor mobility/endurance feats, Heavy Weapon Training, Bane Lore.
 - [ ] sim/ builds (sim/lib.js, dk-scaling.js) still list retired feats and have no skills; fix before the next sim.
