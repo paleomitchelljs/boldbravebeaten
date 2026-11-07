@@ -21,8 +21,12 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   master 9. Requirements may be "skill:melee:4". Fifteen number-only feats retired into skills (rules.yaml
   skills.retired; old saves convert 2 ranks a feat rank, save VERSION 5). Every monster, template band, preset and
   recruit has skills. Training anywhere outside a fight (CLAUDE.md philosophy line changed).
-- [ ] Skills, phase B: the screens. Spend points on the sheet (any time out of a fight) and at creation; the feat
-  tree shows skill needs (done); the sheet's skill chips.
+- [x] Skills, phase B: the sheet's Skills tab (all twenty, − and + whenever not fighting; a point a feat needs
+  can't come back out; checks below; foes' sheets show theirs), creation's skill editor (before feats), the feat tree
+  card and tabs show the skill a tier needs, and the sheet's Feats tab trains feats at camp's price outside a fight.
+  Seen in headless Chrome (sheet desktop and phone, creation desktop). "Arcane knowledge" clips in a desktop cell.
+- [ ] The Training Yard and camp training still exist beside the sheet's; drop them, or keep the town's as the place
+  to retrain? Ask the user.
 - [ ] Alchemy, metalwork and carpentry do nothing yet (no crafting). Number feats still left for the revamp: Control,
   Wound Tending, the armor mobility/endurance feats, Heavy Weapon Training, Bane Lore.
 - [ ] sim/ builds (sim/lib.js, dk-scaling.js) still list retired feats and have no skills; fix before the next sim.

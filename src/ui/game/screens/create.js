@@ -174,6 +174,22 @@
       }));
   }
 
+  // Skills: the level's points (rules.yaml skills), each 0–10. Feats need them, so they come first.
+  function skillEditor(game, m, c) {
+    m.skills = m.skills || {};
+    const used = Object.values(m.skills).reduce((t, n) => t + n, 0);
+    const left = C.skillBudget(c) - used;
+    const set = () => game.render();
+    return h('section', { class: 'stack tight' },
+      h('div', { class: 'row spread' }, h('span', { class: 'label' }, 'Skills'), h('span', { class: 'row' },
+        tip(`${C.skillBudget(c)} points at level ${c.level}, 0 to ${(G.CONFIG.skills || {}).max || 10} each, +1 a rank to the rolls each governs. A feat tree's skill opens its tiers (novice 1, apprentice 3, adept 5, expert 7, master 9). Points left can be spent later.`, 'Skills'),
+        h('span', { class: `chip ${left === 0 ? 'ok' : 'warn'}` }, `${left} left`))),
+      UI.Bits.skillGrid({ edit: true, left, rank: (id) => m.skills[id] || 0,
+        canLower: (id) => (m.skills[id] > 0 ? { ok: true } : { ok: false, reason: 'None to take back' }),
+        raise: (id) => { m.skills[id] = (m.skills[id] || 0) + 1; set(); },
+        lower: (id) => { m.skills[id] -= 1; if (!m.skills[id]) delete m.skills[id]; set(); } }));
+  }
+
   function memberEditor(game, st) {
     const m = st.members[st.slot];
     const pool = st.pools[st.slot];
@@ -198,6 +214,7 @@
         h('section', { class: 'stack tight' },
           h('div', { class: 'row spread' }, h('span', { class: 'label' }, 'Attributes'), h('span', { class: 'row' }, tip(`${pool} points, ${P.attrMin} to ${P.attrMax} each. Attributes only rise further through Conditioning feats; levels do not raise them.`, 'Attributes'), h('span', { class: `chip ${left === 0 ? 'ok' : 'warn'}` }, `${left} left`))),
           h('div', { class: 'attrs' }, G.CONFIG.attributes.map(attr))),
+        skillEditor(game, m, c),
         featEditor(game, m, c, skipped),
         casts ? h('section', { class: 'stack tight' },
           h('div', { class: 'row spread' }, h('span', { class: 'label' }, 'Words known'), tip('Nouns are found in the world, in books and from teachers. A caster begins knowing at least one.', 'Words')),

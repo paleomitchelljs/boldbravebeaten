@@ -267,6 +267,13 @@ textarea { width: 100%; min-height: 120px; }
 .astep .stepper { gap: 3px; flex-wrap: nowrap; }
 .astep .val { font-size: 1.15rem; min-width: 1.4ch; text-align: center; font-family: var(--font-ui); }
 button.step { padding: 2px 4px; min-height: 0; display: inline-grid; place-items: center; }
+.skills-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 4px; }
+.skstep { display: flex; align-items: center; justify-content: space-between; gap: 4px; padding: 3px 6px; background: #0e151a; border: var(--px) solid var(--edge); cursor: help; min-width: 0; }
+.skstep .label { font-size: 0.8rem; text-transform: none; letter-spacing: 0; font-family: var(--font-ui); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.skstep .stepper { gap: 3px; flex-wrap: nowrap; flex: none; }
+.skstep .val { min-width: 1.6ch; text-align: center; font-family: var(--font-mono); }
+.skstep.has { border-color: var(--brass); }
+.skstep.unused { opacity: 0.55; }
 .featslot { display: flex; align-items: flex-end; gap: 8px; } .featslot .tip { margin-bottom: 8px; }
 .tabs.members .tab { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 4px; }
 .tabs.members canvas.portrait { width: 28px; }

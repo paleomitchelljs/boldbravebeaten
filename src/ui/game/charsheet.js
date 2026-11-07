@@ -106,12 +106,12 @@
       h('div', { class: 'row small' }, h('span', { class: 'muted' }, 'Bleeding'), h('span', null, c.bleeds.length ? `${C.bleedPerRound(c).toFixed(1)}/round` : 'none'), tip('CON is your life: at 0 you are dead. Stamina is how long you can keep fighting: at 0 you are unconscious. Armor decides how much of the first you keep.')));
   }
 
-  function featsTab(game, c) {
+  // Feats are trained here too, whenever the party isn't fighting (the user, 2026-11-07), at camp's price.
+  function featsTab(game, c, editable) {
     const owned = Object.keys(c.feats).filter((id) => D.FEATS[id]);
     const left = C.featBudget(c) - C.featCount(c);
-    const inTown = game.world.place && G.Content.world.places[game.world.place].kind === 'town';
     return h('div', { class: 'stack tight' },
-      h('div', { class: 'row spread small' }, h('span', null, `${C.featCount(c)} of ${C.featBudget(c)} feats`), left > 0 && c.side === 'party' ? h('span', { class: 'chip ok' }, `${left} to spend${inTown ? ' at the Training Yard' : ' in town'}`) : null),
+      h('div', { class: 'row spread small' }, h('span', null, `${C.featCount(c)} of ${C.featBudget(c)} feats`), left > 0 && c.side === 'party' ? h('span', { class: 'chip ok' }, `${left} to spend${editable ? ' below' : ' after the fight'}`) : null),
       c.side === 'party' ? h('div', { class: 'small muted' }, `Level ${c.level} · ${c.xp || 0} XP · next at ${World.xpFor(c.level + 1)}`) : null,
       owned.length ? h('div', { class: 'chips' }, owned.map((id) => { const f = D.FEATS[id]; return h('span', { class: 'chip feat' }, f.name + (f.ranks.length > 1 ? ' ' + C.roman(c.feats[id]) : ''), tip(f.effect + (f.auto === false ? ' (No effect in the game yet.)' : ''), f.name)); })) : h('p', { class: 'muted small' }, 'No feats.'),
       UI.FeatTree.pathLine(c),
@@ -122,14 +122,48 @@
           onSel: (id) => { game.ui.sheetFeat = id; game.render(); },
           feats: (t) => Object.values(D.FEATS).filter((f) => f.tree === t.id && (f.auto || game.debug)),
           can: (f) => C.canTakeFeat(c, f.id, true),
+          action: editable ? (f) => {
+            if (C.rank(c, f.id) >= f.ranks.length) return h('span', { class: 'chip ok' }, 'Mastered');
+            const tr = G.Town.trainable(c, f.id, { camp: true });
+            if (!tr.ok) return null;
+            const w = game.world;
+            return h('button', { class: 'primary', disabled: left <= 0 || w.gold < tr.cost, onclick: () => { const r = G.Town.train(w, c, f.id, { camp: true }); if (!r.ok) toast(r.reason); game.render(); } }, tr.cost ? `Train — ${tr.cost} ◈` : 'Train');
+          } : null,
         })) : null,
       (c.nouns || []).length ? h('div', { class: 'small' }, h('b', null, 'Words known: '), c.nouns.join(', ')) : null);
   }
 
-  function skillsTab(c) {
-    const defs = G.Skills.defs();
+  // The skills (skills.yaml), 0–10, each with − and + when o.edit: o.rank(id) the points in it, o.extra(id) what gear and
+  // traits add, o.left the points to spend, o.raise(id) / o.lower(id), o.canLower(id) → {ok, reason}. Also creation's.
+  function skillGrid(o) {
+    const defs = G.Skills.skillDefs();
+    const top = (G.CONFIG.skills || {}).max || 10;
+    return h('div', { class: 'skills-grid' }, Object.entries(defs).map(([id, s]) => {
+      const n = o.rank(id), extra = o.extra ? o.extra(id) : 0;
+      const down = o.edit ? o.canLower(id) : { ok: false };
+      return h('div', { class: 'skstep' + (n + extra ? ' has' : '') + (s.unused ? ' unused' : ''), title: `${s.blurb}${s.used ? ' ' + s.used : ''}${s.unused ? ' (Nothing uses it yet.)' : ''}` },
+        h('span', { class: 'label' }, s.name),
+        o.edit ? h('div', { class: 'row stepper' },
+          h('button', { class: 'step', disabled: !down.ok, title: down.ok ? null : down.reason, 'aria-label': `Lower ${s.name}`, onclick: () => o.lower(id) }, icon('minus', 10)),
+          h('span', { class: 'num val' }, n + extra),
+          h('button', { class: 'step', disabled: o.left <= 0 || n >= top, 'aria-label': `Raise ${s.name}`, onclick: () => o.raise(id) }, icon('plus', 10)))
+          : h('b', { class: 'num val' }, n + extra));
+    }));
+  }
+  UI.Bits.skillGrid = skillGrid;
+
+  function skillsTab(game, c, editable) {
+    const checks = G.Skills.defs();
+    const left = C.skillsLeft(c);
+    const set = () => game.render();
     return h('div', { class: 'stack tight' },
-      h('div', { class: 'chips' }, Object.entries(defs).map(([id, s]) => h('span', { class: 'chip skill' }, s.name, ' ', h('b', { class: 'num' }, (G.Skills.mod(c, id) >= 0 ? '+' : '') + G.Skills.mod(c, id)), tip(s.blurb, s.name)))),
+      h('div', { class: 'row spread small' }, h('span', null, `${C.skillsSpent(c)} of ${C.skillBudget(c)} skill points`),
+        h('span', { class: 'row' }, left > 0 && editable ? h('span', { class: 'chip ok' }, `${left} to spend`) : null,
+          tip(`0 to ${(G.CONFIG.skills || {}).max || 10}, +1 a rank to the rolls each governs. ${G.CONFIG.skills.start} points at level 1 and ${G.CONFIG.skills.perLevel} a level; spend them whenever you are not fighting. A feat tree's skill opens its tiers: novice 1, apprentice 3, adept 5, expert 7, master 9.`, 'Skills'))),
+      skillGrid({ edit: editable, left, rank: (id) => (c.skills || {})[id] || 0, extra: (id) => C.skill(c, id) - ((c.skills || {})[id] || 0),
+        canLower: (id) => C.canLowerSkill(c, id), raise: (id) => { C.raiseSkill(c, id); set(); }, lower: (id) => { C.lowerSkill(c, id); set(); } }),
+      h('span', { class: 'label' }, 'Checks'),
+      h('div', { class: 'chips' }, Object.entries(checks).map(([id, s]) => h('span', { class: 'chip skill' }, s.name, ' ', h('b', { class: 'num' }, (G.Skills.mod(c, id) >= 0 ? '+' : '') + G.Skills.mod(c, id)), tip(s.blurb, s.name)))),
       h('div', { class: 'row small muted' }, 'd10 + this against a target', tip('Easy 6, moderate 8, hard 11, formidable 14.')));
   }
 
@@ -148,9 +182,9 @@
     const L = UI.Sprites.look(c);
     const enc = w.battle && w.battle.enc;
     const apLine = enc && enc.ap && enc.ap[c.id] != null && (mine || enc.phase !== 'declare') ? `${C.fmtAP(enc.ap[c.id])} AP left` : null;
-    const body = tab === 'gear' ? gearTab(game, o, c, editable) : tab === 'stats' ? statsTab(c) : tab === 'feats' ? featsTab(game, c) : tab === 'skills' ? skillsTab(c)
+    const body = tab === 'gear' ? gearTab(game, o, c, editable) : tab === 'stats' ? statsTab(c) : tab === 'feats' ? featsTab(game, c, editable) : tab === 'skills' ? skillsTab(game, c, editable)
       : h('textarea', { 'aria-label': 'Notes', value: c.notes || '', placeholder: 'Notes about this character', onchange: (e) => { c.notes = e.target.value; } });
-    const tabs = mine ? ['gear', 'Gear', 'stats', 'Stats', 'feats', 'Feats', 'skills', 'Skills', 'notes', 'Notes'] : ['gear', 'Gear', 'stats', 'Stats', 'feats', 'Feats'];
+    const tabs = mine ? ['gear', 'Gear', 'stats', 'Stats', 'feats', 'Feats', 'skills', 'Skills', 'notes', 'Notes'] : ['gear', 'Gear', 'stats', 'Stats', 'feats', 'Feats', 'skills', 'Skills'];
     const tabList = []; for (let i = 0; i < tabs.length; i += 2) tabList.push(tabBtn(tabs[i], tabs[i + 1]));
     return h('div', { class: 'modal game-modal sheet-pop', role: 'dialog', 'aria-modal': 'true', 'aria-label': c.name, onclick: (e) => e.stopPropagation() },
       h('div', { class: 'sheet-top' },

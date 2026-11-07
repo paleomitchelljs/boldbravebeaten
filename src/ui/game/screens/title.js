@@ -53,7 +53,7 @@
           h('div', { class: 'stack small howto' },
             h('p', null, 'Fights are lethal and quick. Armor matters more than levels, and a stab that gets through can kill anyone. Win by reacting more, lasting longer and taking less.'),
             h('p', null, 'Not every problem is a fight. Sneak past sleepers, pick locks, talk your way through, or buy someone off. Each style has a place where it shines and a place where it is useless.'),
-            h('p', null, 'Your standing with factions, and your name for good or violence, change prices, doors and how people speak to you. Training happens only in town, between adventures.'),
+            h('p', null, 'Your standing with factions, and your name for good or violence, change prices, doors and how people speak to you. Levels bring skill points and feats, trained whenever you are not fighting.'),
             h('p', null, 'Keys: W/S move, A/D sidestep, Q/E turn, F interact, X search, C camp, H sneak, M map.')))));
   };
 })(globalThis.BBB);
