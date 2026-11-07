@@ -1638,7 +1638,7 @@
     if (kind === 'block' && D.block.opposed) {
       // Contested: d10 + Shield Training + the shield's size + ⌊(STR + DEX)/4⌋ (bracing) against the blow.
       const size = defender.shield && D.block.bySize ? D.block.bySize[defender.shield.size] || 0 : 0;
-      const bonus = G.Effects.sum(defender, 'block') + size + Math.floor((C.attr(defender, 'STR') + C.combatAttr(defender, 'DEX')) / 4);
+      const bonus = G.Effects.sum(defender, 'block') + size + Math.floor((C.attr(defender, 'STR') + C.combatAttr(defender, 'DEX')) / 4) + skillEdge(defender, attacker, 'block');
       return { bonus, attack: strikeBonus() + (D.motionPenalty[motion] || 0), opposed: true };
     }
     if (kind === 'block') {
@@ -1658,7 +1658,7 @@
         bonus -= Math.round((ai.spd + ai.dex) * D.dodgeArmor);
       }
       let atk = D.motionPenalty[motion] || 0;
-      if (parry) bonus += skillEdge(defender, attacker);
+      bonus += skillEdge(defender, attacker, parry ? 'parry' : 'dodge');
       if (parry && D.leverage) {
         // A parry meets the blow with the parrying weapon's weight: nearer a shield the more it outweighs the blow.
         bonus += leverage(defender, kind, atkOption);
@@ -1703,12 +1703,15 @@
     return Math.round(K.max * x / (1 + Math.abs(x)));
   }
 
-  // CONFIG.defense.skill: what the gap in fighting skill adds to a parry (0 against an attacker not known).
-  function skillEdge(defender, attacker) {
+  // CONFIG.defense.skill: what the gap in fighting skill adds to a defence of this kind (0 against an attacker not
+  // known).
+  function skillEdge(defender, attacker, kind) {
     const K = CONFIG.defense.skill;
     if (!K || !attacker) return 0;
-    const x = Math.round(K.per * (C.fightingSkill(defender) - C.fightingSkill(attacker)));
-    return Math.max(-K.max, Math.min(K.max, x));
+    const share = K.share ? K.share[kind === 'offParry' ? 'parry' : kind || 'parry'] || 0 : 1;
+    const x = Math.round(share * K.per * (C.fightingSkill(defender) - C.fightingSkill(attacker)));
+    const cap = Math.round(share * K.max);
+    return Math.max(-cap, Math.min(cap, x));
   }
 
   // A blow's force: its expected damage, all kinds together.

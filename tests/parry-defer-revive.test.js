@@ -7,7 +7,7 @@ const { World, Battle, Combat, Enemies, Magic, Rand, Character: C, CONFIG } = B;
 
 const party = () => World.party(World.create(World.presetParty(), { log: false }));
 
-test('parry: a level-3 fencer turns an untrained goblin\'s blows aside almost every time', () => {
+test('skill in defence: a level-3 fencer turns an untrained goblin\'s blows aside almost every time; dodges count it, blocks half', () => {
   const cyrus = party().find((c) => c.name === 'Cyrus');
   const [kobold] = Enemies.makeMonster('kobold');
   const [goblin] = Enemies.makeMonster('goblin');
@@ -19,11 +19,17 @@ test('parry: a level-3 fencer turns an untrained goblin\'s blows aside almost ev
   const swing = C.attackOptions(goblin).find((o) => o.motion === 'swing');
   assert.ok(Combat.defenseOdds(cyrus, 'parry', 'thrust', kobold, thrust) >= 0.94);
   assert.ok(Combat.defenseOdds(cyrus, 'parry', 'swing', goblin, swing) >= 0.97);
-  // Skill counts in parries only, and a monster's `skill` trait closes the gap.
+  // A dodge counts the gap in full, a block half of it.
+  assert.equal(Combat.skillEdge(cyrus, goblin, 'dodge'), 3);
+  assert.equal(Combat.skillEdge(goblin, cyrus, 'dodge'), -3);
+  assert.equal(Combat.skillEdge(cyrus, goblin, 'block'), 2);
+  const beren = party().find((c) => c.name === 'Beren');
+  assert.equal(Combat.skillEdge(goblin, beren, 'block'), -2, 'half of 4, at most');
   const dodge = Combat.defenseOdds(cyrus, 'dodge', 'swing', goblin, swing);
+  // A monster's `skill` trait closes the gap.
   goblin.traits.skill = 4;
   assert.equal(Combat.skillEdge(cyrus, goblin), 0);
-  assert.equal(Combat.defenseOdds(cyrus, 'dodge', 'swing', goblin, swing), dodge);
+  assert.ok(Combat.defenseOdds(cyrus, 'dodge', 'swing', goblin, swing) < dodge);
   // Not knowing who strikes: no edge either way.
   assert.equal(Combat.skillEdge(cyrus, null), 0);
 });

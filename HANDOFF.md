@@ -8,7 +8,10 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 - [x] Parry: + ¾ × (fighting skill − the attacker's), rounded, ±4 at most (`CONFIG.defense.skill`, `C.fightingSkill`,
   `Combat.skillEdge`). Fighting skill = feat ranks in the combat trees + an effects `skill` key (monster trait, gear).
   Cyrus (4 ranks) vs a goblin (0): +3, a kobold's spear thrust parried 94% (was 79%), a goblin's club swing 97% (was
-  85%). Parries only: blocks and dodges unchanged. Monster `level` is not used (it defaults to 5 and means nothing yet).
+  85%). Monster `level` is not used (it defaults to 5 and means nothing yet).
+- [x] The user (2026-11-07): skilled blows are harder to dodge (the gap in full) and a little harder to block (half,
+  ±2 at most): `skill.share`. The gap works both ways: Cyrus dodges a goblin's swing 94% (was 79%).
+- [x] Defer stays "the next in order, friend or foe" (the user). Monsters never deferring is fine for now.
 - [x] Jabiku knows Transfer + Life alone (with Launch, Burst, Casting II). Transfer no longer needs Increase or
   Decrease. Aimed at an ally it gives ("Transfer + Life (to an ally)", spell shape `give`): ⌈mag/2⌉ points of his
   own life, each a lost CON mended or else 3 stamina, each costing him 3 stamina (never his last); stops bleeding;
@@ -19,8 +22,6 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 - [x] Defer: on your turn, 1 AP lets the next in the initiative order (friend or foe) go now; your turn resumes after
   theirs, repeatable (`CONFIG.defer`, `Combat.defer`, `legal.defer`). A button beside End turn ("Defer → Cyrus · 1 AP",
   key D). Seen in headless Chrome, desktop and phone. tests/parry-defer-revive.test.js.
-- [ ] Ask the user: should Defer let you pick which ally goes, rather than the next in order? Should a skilled
-  attacker also be harder to block and dodge? The AI never defers.
 - [ ] hero.test.js: three ogres no longer always beat a hero party (seed 2 wins), so the test now asks for a loss in
   at least one of three seeds.
 
