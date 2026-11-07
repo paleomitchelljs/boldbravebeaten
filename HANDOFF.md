@@ -5,12 +5,15 @@ Last updated at commit: c264582
 Keep this a short list. Tick things off, add new ones, and refresh the commit line after every push (`git log -1 --format=%h`).
 
 ## Parry skill, Jabiku's Transfer, saving the fallen, Defer (the user, 2026-11-07)
-- [x] Parry: + ¾ × (fighting skill − the attacker's), rounded, ±4 at most (`CONFIG.defense.skill`, `C.fightingSkill`,
-  `Combat.skillEdge`). Fighting skill = feat ranks in the combat trees + an effects `skill` key (monster trait, gear).
-  Cyrus (4 ranks) vs a goblin (0): +3, a kobold's spear thrust parried 94% (was 79%), a goblin's club swing 97% (was
-  85%). Monster `level` is not used (it defaults to 5 and means nothing yet).
-- [x] The user (2026-11-07): skilled blows are harder to dodge (the gap in full) and a little harder to block (half,
-  ±2 at most): `skill.share`. The gap works both ways: Cyrus dodges a goblin's swing 94% (was 79%).
+- [x] Skill in defence (the user, 2026-11-07), `CONFIG.defense.skill`: the defender adds (their skill in the defence −
+  the attacker's with the blow), at most ±4; a block half that, ±2. Skill = feat ranks in a pool + an effects `skill`
+  key (monster trait, gear) in every pool. Weapon pools by the blow (`C.weaponSkillTree`): very light/light → Light
+  weapons, medium/heavy → Heavy weapons, fists and natural weapons → Hand-to-hand, bows → Archery, spells none.
+  Parry: the parrying weapon's tree. Dodge: Evasion + Perception's Watcher. Block: Armor and shields' Bulwark (shield
+  size stays in the roll). Separate from parryCarry. Cyrus vs a goblin: parry +3 (thrust 94%, swing 97%), dodge +1;
+  a goblin dodging Cyrus's rapier −3. Monster `level` not used.
+- [ ] Parry Training sits in Light weapons, so a longsword parrier gets its +1 but no skill credit for it. Monsters
+  with natural weapons have no Hand-to-hand feats: give trained ones `traits.skill`. Ask the user.
 - [x] Defer stays "the next in order, friend or foe" (the user). Monsters never deferring is fine for now.
 - [x] Jabiku knows Transfer + Life alone (with Launch, Burst, Casting II). Transfer no longer needs Increase or
   Decrease. Aimed at an ally it gives ("Transfer + Life (to an ally)", spell shape `give`): ⌈mag/2⌉ points of his

@@ -1638,7 +1638,7 @@
     if (kind === 'block' && D.block.opposed) {
       // Contested: d10 + Shield Training + the shield's size + ⌊(STR + DEX)/4⌋ (bracing) against the blow.
       const size = defender.shield && D.block.bySize ? D.block.bySize[defender.shield.size] || 0 : 0;
-      const bonus = G.Effects.sum(defender, 'block') + size + Math.floor((C.attr(defender, 'STR') + C.combatAttr(defender, 'DEX')) / 4) + skillEdge(defender, attacker, 'block');
+      const bonus = G.Effects.sum(defender, 'block') + size + Math.floor((C.attr(defender, 'STR') + C.combatAttr(defender, 'DEX')) / 4) + skillEdge(defender, attacker, 'block', atkOption);
       return { bonus, attack: strikeBonus() + (D.motionPenalty[motion] || 0), opposed: true };
     }
     if (kind === 'block') {
@@ -1658,7 +1658,7 @@
         bonus -= Math.round((ai.spd + ai.dex) * D.dodgeArmor);
       }
       let atk = D.motionPenalty[motion] || 0;
-      bonus += skillEdge(defender, attacker, parry ? 'parry' : 'dodge');
+      bonus += skillEdge(defender, attacker, kind, atkOption);
       if (parry && D.leverage) {
         // A parry meets the blow with the parrying weapon's weight: nearer a shield the more it outweighs the blow.
         bonus += leverage(defender, kind, atkOption);
@@ -1703,13 +1703,22 @@
     return Math.round(K.max * x / (1 + Math.abs(x)));
   }
 
-  // CONFIG.defense.skill: what the gap in fighting skill adds to a defence of this kind (0 against an attacker not
-  // known).
-  function skillEdge(defender, attacker, kind) {
+  // CONFIG.defense.skill: what the gap between the defender's skill in this defence and the attacker's with the blow
+  // adds to it (0 against an attacker not known). Parry: skill with the parrying weapon; dodge and block: their pools.
+  function defenseSkill(defender, kind) {
+    const K = CONFIG.defense.skill;
+    if (kind === 'parry' || kind === 'offParry') {
+      const w = parryingWeapon(defender, kind);
+      return C.weaponSkill(defender, w ? { weaponType: w.type } : null);
+    }
+    return C.skillIn(defender, K[kind] || []);
+  }
+  function skillEdge(defender, attacker, kind, atkOption) {
     const K = CONFIG.defense.skill;
     if (!K || !attacker) return 0;
-    const share = K.share ? K.share[kind === 'offParry' ? 'parry' : kind || 'parry'] || 0 : 1;
-    const x = Math.round(share * K.per * (C.fightingSkill(defender) - C.fightingSkill(attacker)));
+    kind = kind || 'parry';
+    const share = K.share ? K.share[kind === 'offParry' ? 'parry' : kind] || 0 : 1;
+    const x = Math.round(share * K.per * (defenseSkill(defender, kind) - C.weaponSkill(attacker, atkOption)));
     const cap = Math.round(share * K.max);
     return Math.max(-cap, Math.min(cap, x));
   }

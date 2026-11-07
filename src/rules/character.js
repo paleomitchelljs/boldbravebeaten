@@ -124,14 +124,35 @@
     return (c.feats && c.feats[id]) || 0;
   }
 
-  // Fighting skill (CONFIG.defense.skill): the feat ranks held in trees of its groups, + effects `skill` (traits, gear).
-  function fightingSkill(c) {
-    const K = CONFIG.defense.skill;
-    if (!K || !c) return 0;
-    const trees = new Set(TREES.filter((t) => (K.groups || []).includes(t.group)).map((t) => t.id));
+  // Skill (CONFIG.defense.skill): the feat ranks held in the pools named ("tree" or "tree.branch"), + effects `skill`
+  // (a monster's traits, gear), which counts in every pool.
+  function skillIn(c, pools) {
+    if (!c) return 0;
+    const P = (pools || []).map((p) => p.split('.'));
     let n = 0;
-    for (const id in c.feats) if (FEATS[id] && trees.has(FEATS[id].tree)) n += c.feats[id];
+    for (const id in c.feats) {
+      const F = FEATS[id];
+      if (F && P.some(([t, b]) => F.tree === t && (!b || F.branch === b))) n += c.feats[id];
+    }
     return n + G.Effects.sum(c, 'skill');
+  }
+
+  // The skill tree a blow is struck with (CONFIG.defense.skill.weapon): fists and natural weapons, a bow, or a weapon
+  // by its weight. null for a spell.
+  function weaponSkillTree(o) {
+    const K = CONFIG.defense.skill;
+    if (!K || !o || o.spell) return null;
+    const W = o.weaponType ? WEAPONS[o.weaponType] : null;
+    if (o.unarmed || !W || W.natural) return K.weapon.natural;
+    if (o.ranged) return K.weapon.ranged;
+    return K.weapon[Items.weaponStats(o.weaponType).weight] || null;
+  }
+
+  // Skill with a blow (or, given no blow, with the weapon in hand).
+  function weaponSkill(c, o) {
+    if (!o) { const w = wieldedWeapon(c); o = w ? { weaponType: w.type } : { unarmed: true }; }
+    const t = weaponSkillTree(o);
+    return t ? skillIn(c, [t]) : 0;
   }
 
   function featCount(c) {
@@ -1108,7 +1129,7 @@
 
   G.Character = {
     newCharacter, normalize, freshStatus,
-    rank, fightingSkill, featCount, featBudget, treeCount, tierCount, tierName, canTakeFeat, closedBy, parseReq, canRemoveFeat, addFeat, removeFeat, reqText, roman,
+    rank, skillIn, weaponSkillTree, weaponSkill, featCount, featBudget, treeCount, tierCount, tierName, canTakeFeat, closedBy, parseReq, canRemoveFeat, addFeat, removeFeat, reqText, roman,
     conditioning, attr, attrMax, combatAttr, armorInfo, armorPieces, armorAt, armorUniform, shieldInfo, shieldReady, wieldedWeapon, offhandWeapon,
     maxStamina, freshStamina, wearyRound, wearyTime, regen, fatiguePenalty, apPool, projectedPool, apScale, costScale, fmtAP, minAP, baseAP, armorAP, quickCut, moveCost, squaresFor, squaresPerAP, handsBusy, castingHands, weaponStrain, inRange, optionKey, needsWindUp, strOffset, staminaCost, effectiveWeight, isLightWeapon,
     strBonus, weaponDamage, mainIndex, attackOptions, actionCost, ammoLeft, gearWarnings, tireless, webTax,

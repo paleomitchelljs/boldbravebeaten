@@ -56,9 +56,9 @@ a weapon's `trait`, an enchantment's `effects` and `strike`, a trinket's `effect
 condition's fields. `validate` rejects a key not on it. The rules ask `Effects.sum/mult/has/list(c, key)`, which reads
 every source at once, so a ring of `dodge: 1`, the Dodge Training feat (`effects: {dodge: 1}`) and a nimble monster's
 `traits: {dodge: 2}` all count the same way. A new key means new rules code, and an entry there.
-`skill` (a trait or gear effect) adds to a creature's fighting skill: the feat ranks it holds in the combat trees,
-which a parry compares with the attacker's (CONFIG.defense.skill). A monster with no combat feats has none; give a
-trained one `traits: {skill: 3}` rather than feats it never uses.
+`skill` (a trait or gear effect) adds to every skill pool a defence compares (CONFIG.defense.skill): skill with the
+blow's weapon, and in parrying, dodging and blocking. A monster with no feats has none; give a trained one
+`traits: {skill: 3}` rather than feats it never uses.
 
 A pack is `{name, group: [wolf, wolf, alphaWolf]}`. Use it in an encounter: `{monster: bogHag}`. An encounter's foe may
 dress its monster in another art entry (another colour of the same creature) with `sprite`: `{monster: scaleward,
