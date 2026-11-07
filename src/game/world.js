@@ -54,6 +54,8 @@
     }
     if (spec.level > 1) { c.level = spec.level; c.xp = xpFor(spec.level); }
     if (spec.bonusFeats) c.bonusFeats = spec.bonusFeats;
+    // Skills first: they unlock the feats. Points past the budget are not given.
+    for (const [k, n] of Object.entries(spec.skills || {})) for (let i = 0; i < n; i++) if (C.canRaiseSkill(c, k).ok) C.raiseSkill(c, k);
     for (const f of spec.feats || []) if (C.canTakeFeat(c, f).ok) C.addFeat(c, f);
     c.nouns = (spec.nouns || []).slice();
     c.look = Object.assign({ skin: 1, hair: 1, cloth: 0, build: 1, sprite: null, tint: 0 }, spec.look || {}, { kit: spec.kit || (spec.look && spec.look.kit) || null });

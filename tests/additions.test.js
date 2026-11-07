@@ -25,7 +25,8 @@ function armed(name, type, side, tags) {
 }
 function mage(name, nouns, side) {
   const m = fighter(name, side);
-  m.feats = { casting: 3 };
+  m.feats = {};
+  m.skills = { arcane: 6 };
   for (const w of Object.values(B.CONFIG.magic.words)) if (w.feat) m.feats[w.feat] = 1;
   m.base.INT = 8; m.nouns = nouns; m.stamina = C.maxStamina(m);
   return m;
@@ -259,7 +260,7 @@ test('companions: a familiar adds spell points and fights; its death tears at it
   const w = W.create(W.presetParty());
   const [brenna, corin, , ysolde] = W.party(w);
   ysolde.feats.familiar = 1;
-  corin.feats.keen_eye = corin.feats.keen_eye || 1; corin.feats.animal_companion = 1;
+  corin.skills.nature = Math.max(corin.skills.nature || 0, 1); corin.feats.animal_companion = 1;
   const sp = B.Magic.maxSP(ysolde);
   B.Companions.ensure(w);
   assert.ok(ysolde.companion && ysolde.companion.familiar && ysolde.companion.side === 'party');

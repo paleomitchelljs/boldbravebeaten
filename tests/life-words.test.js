@@ -39,7 +39,7 @@ test('life words: Jabiku knows Transfer + Life alone, with Launch and Burst, and
   for (const m of ['', ' + Launch', ' + Burst', ' + Launch + Burst']) assert.ok(labels.includes(`Transfer + Life${m}`), `Transfer + Life${m}`);
   assert.ok(labels.includes('Transfer + Life (to an ally)') && labels.includes('Transfer + Life + Launch (to an ally)'));
   assert.ok(!labels.some((l) => /^(Increase|Decrease)/.test(l)), 'no other verb');
-  assert.equal(jab.feats.casting, 2);
+  assert.equal(C.skill(jab, 'arcane'), 5);
   teach(jab);
   const all = Magic.spellOptions(jab).map((o) => o.label);
   for (const v of ['Increase', 'Decrease']) for (const m of ['', ' + Launch', ' + Burst', ' + Launch + Burst']) assert.ok(all.includes(`${v} + Life${m}`), `${v} + Life${m}`);

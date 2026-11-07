@@ -56,11 +56,12 @@ test('conditions: a spirit shield guards only against the undead; frightened is 
 test('lookup: one key adds up over traits, gear, conditions (per magnitude) and feats (per rank)', () => {
   const c = C.newCharacter({ name: 'D', starterGear: false });
   assert.equal(Effects.sum(c, 'dodge'), 0);
-  c.feats.dodge_training = 2;
-  assert.equal(Effects.sum(c, 'dodge'), 2, 'Dodge Training counts per rank');
+  c.feats.beat = 2;
+  assert.equal(Effects.sum(c, 'recoil'), 2, 'Beat counts per rank');
   c.traits = { dodge: 1 };
-  c.trinkets = [{ name: 'Ring', effects: { dodge: 1 } }];
-  assert.equal(Effects.sum(c, 'dodge'), 4, 'feat + trait + ring');
+  c.trinkets = [{ name: 'Ring', effects: { dodge: 1, skills: { evasion: 2 } } }];
+  assert.equal(Effects.sum(c, 'dodge'), 2, 'trait + ring');
+  assert.equal(C.skill(c, 'evasion'), 2, 'a ring that adds to a skill');
   const ap = C.apPool(c);
   Conditions.add(c, 'slowed', { rounds: 2, mag: 2 });
   assert.equal(Effects.sum(c, 'ap'), 2 * CONFIG.conditions.slowed.ap, 'a condition counts per magnitude');

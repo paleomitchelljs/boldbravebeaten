@@ -7,32 +7,55 @@ const { World, Battle, Combat, Enemies, Magic, Rand, Character: C, CONFIG } = B;
 
 const party = () => World.party(World.create(World.presetParty(), { log: false }));
 
-test('skill in defence: parry weapon against weapon, dodge Evasion and Watcher, block Bulwark, each against the blow', () => {
+test('skill in defence: parry Melee, dodge Evasion + Anticipation, block half of Block, each against the striker', () => {
   const ps = party();
   const cyrus = ps.find((c) => c.name === 'Cyrus'), beren = ps.find((c) => c.name === 'Beren');
+  const lorc = ps.find((c) => c.name === 'Lorc');
   const [kobold] = Enemies.makeMonster('kobold');
   const [goblin] = Enemies.makeMonster('goblin');
+  const [archer] = Enemies.makeMonster('goblinArcher');
   const thrust = C.attackOptions(kobold).find((o) => o.motion === 'thrust');
   const swing = C.attackOptions(goblin).find((o) => o.motion === 'swing');
+  const shot = C.attackOptions(archer).find((o) => o.ranged);
   const rapier = C.attackOptions(cyrus).find((o) => o.motion === 'thrust' && !o.unarmed);
-  // Cyrus: Quick Thrust, Parry Training, Riposte (Light weapons); Dodge Training (Evasion). Beren: Shield Training 2 and
-  // Quick Block (Bulwark), plate feats (not counted), no weapon feats.
-  assert.equal(C.weaponSkillTree(rapier), 'lightWeapons');
-  assert.equal(C.weaponSkillTree(swing), 'lightWeapons');
-  assert.equal(C.weaponSkill(cyrus), 3);
-  assert.equal(C.skillIn(cyrus, CONFIG.defense.skill.dodge), 1);
-  assert.equal(C.skillIn(beren, CONFIG.defense.skill.block), 3);
-  assert.equal(Combat.skillEdge(cyrus, goblin, 'parry', swing), 3);
-  assert.equal(Combat.skillEdge(cyrus, goblin, 'dodge', swing), 1);
-  assert.equal(Combat.skillEdge(goblin, cyrus, 'dodge', rapier), -3, 'a skilled blow is hard to dodge');
-  assert.equal(Combat.skillEdge(beren, goblin, 'block', swing), 2, 'half of 3, rounded');
+  // Cyrus: Melee 5, Evasion 4, Anticipation 4. Beren: Block 5. A goblin: Melee 1, Evasion 1; its archer Ranged 2.
+  assert.equal(C.attackSkill(goblin, swing), 1);
+  assert.equal(C.attackSkill(archer, shot), 2);
+  assert.equal(C.attackSkill(lorc, C.attackOptions(lorc).find((o) => o.ranged)), 5);
+  assert.equal(Combat.skillEdge(cyrus, goblin, 'parry', swing), 4);
+  assert.equal(Combat.skillEdge(cyrus, goblin, 'dodge', swing), 7);
+  assert.equal(Combat.skillEdge(goblin, cyrus, 'dodge', rapier), -4, 'a skilled blow is hard to dodge (1 + 0 against 5)');
+  assert.equal(Combat.skillEdge(beren, goblin, 'block', swing), 2, 'half of 5 − 1');
+  assert.equal(Combat.skillEdge(beren, archer, 'block', shot), 2, 'half of 5 − 2, rounded');
   assert.ok(Combat.defenseOdds(cyrus, 'parry', 'thrust', kobold, thrust) >= 0.94);
   assert.ok(Combat.defenseOdds(cyrus, 'parry', 'swing', goblin, swing) >= 0.97);
-  // A monster's `skill` trait counts with its weapon.
-  goblin.traits.skill = 4;
-  assert.equal(Combat.skillEdge(cyrus, goblin, 'parry', swing), -1);
+  // Gear and traits add to skills.
+  goblin.traits.skills = { melee: 4 };
+  assert.equal(Combat.skillEdge(cyrus, goblin, 'parry', swing), 0);
   // Not knowing who strikes: no edge either way.
   assert.equal(Combat.skillEdge(cyrus, null, 'parry'), 0);
+});
+
+test('skills: points by level, spent one at a time to 10; a skill a feat needs can\'t be taken back', () => {
+  const c = C.newCharacter({ name: 'Learner', starterGear: false });
+  assert.equal(C.skillBudget(c), CONFIG.skills.start);
+  c.level = 3;
+  assert.equal(C.skillBudget(c), CONFIG.skills.start + 2 * CONFIG.skills.perLevel);
+  for (let i = 0; i < 10; i++) C.raiseSkill(c, 'melee');
+  assert.equal(C.canRaiseSkill(c, 'melee').ok, false, 'at the top');
+  assert.ok(C.canRaiseSkill(c, 'block').ok);
+  while (C.skillsLeft(c) > 0) C.raiseSkill(c, 'block');
+  assert.equal(C.canRaiseSkill(c, 'evasion').ok, false, 'no points left');
+  C.addFeat(c, 'quick_parry');
+  for (let i = 0; i < 7; i++) C.lowerSkill(c, 'melee');
+  assert.equal(C.canLowerSkill(c, 'melee').ok, false, 'Quick Parry needs Melee 3');
+});
+
+test('skills: an old save\'s number-only feats become skill ranks', () => {
+  const c = { name: 'Old', feats: { parry_training: 2, casting: 1, feint: 3, riposte: 1 }, skills: {} };
+  B.Save.upgradeCharacter(c, 4);
+  assert.deepEqual(c.skills, { melee: 4, arcane: 2 });
+  assert.deepEqual(c.feats, { feint: 1, riposte: 1 });
 });
 
 async function fight() {

@@ -22,7 +22,8 @@ kits:
 # player picks four and begins with them as they are or edits them. Each has an `id`, a `blurb` for the portrait
 # card, and a home square in a place (`place`, `at`) where those not picked wait to be recruited (with `pitch`).
 presets:
-  # The default party (the user, 2026-10-28): level 3, five feats each (3 + 1 a level), 40 attribute points.
+  # The default party (the user, 2026-10-28): level 3, five feats each (3 + 1 a level), 40 attribute points, 16 skill
+  # points (10 + 3 a level; the user, 2026-11-07). Skills are put in first: they unlock the feats.
   # Beren: heavy armor, sword and shield. He blocks: plate he can move in, a shield he is quick and sure with.
   - id: beren
     name: Beren
@@ -36,7 +37,8 @@ presets:
     armorItem: {armor: plate, material: steel}
     weaponItems: [{weapon: longsword, material: steel}, {weapon: dagger}]
     shieldItem: {shield: heater, material: wood}
-    feats: [plate_mobility, shield_training, plate_endurance, quick_block, shield_training]
+    skills: {melee: 4, block: 5, armor: 5, athletics: 2}
+    feats: [plate_mobility, plate_endurance, quick_block, shield_bash, iron_stance]
     look: {sprite: "art:beren"}
   # Lorc: an archer. There are no archery feats yet, so he is built on a high DEX, his eyes and staying out of reach.
   - id: lorc
@@ -52,7 +54,8 @@ presets:
     weaponItems: [{weapon: longbow}, {weapon: dagger}]
     shieldItem: null
     arrows: 30
-    feats: [agility, quickness, agility, keen_eye, light_armor_training]
+    skills: {ranged: 5, evasion: 3, perception: 4, stealth: 2, nature: 1, armor: 1}
+    feats: [agility, quickness, agility, light_armor_training, quick_draw]
     look: {sprite: "art:lorc"}
   # Cyrus: a swashbuckling fencer, all speed: a gambeson and nothing more (the user, 2026-11-03: padded on the chest at
   # least), rapier and parrying dagger, quick thrusts, parry and riposte.
@@ -66,7 +69,8 @@ presets:
     level: 3
     attrs: {STR: 4, CON: 5, DEX: 8, SPD: 8, INT: 4, WIL: 4, WIS: 4, CHA: 3}
     armorItem: {armor: padded, covers: [torso]}
-    feats: [quick_thrust, parry_training, riposte, quickness, dodge_training]
+    skills: {melee: 5, evasion: 4, anticipation: 4, deception: 2, athletics: 1}
+    feats: [quick_thrust, riposte, quickness, feint, quick_parry]
     look: {sprite: "art:cyrus"}
   # The mage: Life, to heal, wither and drain, at arm's reach, at range and over an area. The staff is a casting focus.
   - id: jabiku
@@ -79,8 +83,9 @@ presets:
     level: 3
     attrs: {STR: 3, CON: 5, DEX: 5, SPD: 5, INT: 8, WIL: 8, WIS: 3, CHA: 3}
     # Life with Transfer alone (the user, 2026-11-07: drain a foe, or give to an ally; was Increase, Decrease and
-    # Transfer), and the modifiers Launch and Burst. Casting II and Transfer are apprentice feats: two feats come before each.
-    feats: [casting, mod_launch, mod_burst, casting, verb_transfer]
+    # Transfer), and the modifiers Launch and Burst; Control against backlash. The healer of the party (Medicine).
+    skills: {arcane: 5, medicine: 3, anticipation: 3, nature: 2, perception: 2, evasion: 1}
+    feats: [mod_launch, mod_burst, verb_transfer, control, quick_casting]
     nouns: [life]
     look: {sprite: "art:jabiku"}
 
@@ -103,7 +108,8 @@ recruits:
     armorItem: {armor: mail, material: iron}
     weaponItems: [{weapon: shortsword, material: steel}, {weapon: dagger}]
     shieldItem: {shield: heater, material: wood}
-    feats: [shield_training, mail_mobility, quick_block, power_swing, toughness]
+    skills: {melee: 5, block: 4, armor: 4, intimidation: 3}
+    feats: [mail_mobility, quick_block, power_swing, toughness, economical_block]
     look: {sprite: "art:orc-warrior"}
   # A shield-and-sword man: the blade works from behind the shield.
   - id: arvir
@@ -118,7 +124,8 @@ recruits:
     armorItem: {armor: mail, material: iron}
     weaponItems: [{weapon: longsword, material: iron}, {weapon: dagger}]
     shieldItem: {shield: round, material: wood}
-    feats: [shield_training, mail_mobility, quick_block, parry_training, economical_block]
+    skills: {melee: 5, block: 5, armor: 3, persuasion: 2, perception: 1}
+    feats: [mail_mobility, quick_block, economical_block, shield_bash, quick_parry]
     look: {sprite: "art:arvir"}
   # A dragonkin duellist: quick, light, a blade in each hand.
   - id: jadier
@@ -133,7 +140,8 @@ recruits:
     armorItem: {armor: leather}
     weaponItems: [{weapon: shortsword, material: steel}, {weapon: parryingDagger}]
     shieldItem: null
-    feats: [quick_thrust, parry_training, offhand_dagger, dodge_training, quickness]
+    skills: {melee: 5, evasion: 4, anticipation: 3, deception: 2, stealth: 2}
+    feats: [quick_thrust, offhand_dagger, quickness, riposte, feint]
     look: {sprite: "art:dragonborn-blue"}
   # A knight in plate, sworn to a cause he doesn't name: a sword and a heater shield (the user, 2026-11-03; was a
   # longsword in both hands). Where Beren blocks, he knocks them down with the shield and walks on in the plate.
@@ -149,7 +157,8 @@ recruits:
     armorItem: {armor: plate, material: iron}
     weaponItems: [{weapon: longsword, material: steel}, {weapon: dagger}]
     shieldItem: {shield: heater, material: wood}
-    feats: [plate_mobility, shield_training, shield_bash, plate_endurance, heavy_weapon_training]
+    skills: {melee: 4, block: 4, armor: 6, intimidation: 1, persuasion: 1}
+    feats: [plate_mobility, shield_bash, plate_endurance, heavy_weapon_training, iron_stance]
     look: {sprite: "art:crusader"}
   # A spellsword: a curved blade, a buckler, and fire to throw.
   - id: spawnee
@@ -164,7 +173,8 @@ recruits:
     armorItem: {armor: padded}
     weaponItems: [{weapon: shortsword, material: steel}, {weapon: dagger}]
     shieldItem: {shield: buckler, material: wood}
-    feats: [casting, verb_strike, mod_launch, shield_training, parry_training]
+    skills: {arcane: 5, melee: 4, block: 3, evasion: 2, perception: 2}
+    feats: [verb_strike, mod_launch, verb_ward, quick_block, quick_casting]
     nouns: [fire]
     look: {sprite: "art:spawnee"}
 
@@ -189,6 +199,7 @@ trials:
           - {weapon: dagger}
         shieldItem: {shield: heater, material: steel, enchantments: [spellcatching], name: Spellbreaker}
         trinkets: [silk_sash]
-        feats: [shield_training, mail_mobility, quick_block, mail_mobility, shield_training, mail_endurance, iron_stance, strength, casting, verb_strike, verb_bless, mod_strong, verb_conjure, casting, verb_raise, battle_casting]
+        skills: {melee: 7, block: 6, armor: 7, arcane: 7, athletics: 2, intimidation: 2}
+        feats: [mail_mobility, quick_block, mail_mobility, mail_endurance, iron_stance, strength, verb_strike, verb_bless, mod_strong, verb_conjure, verb_raise, battle_casting]
         nouns: [shadow, life, bone, spirit]
         look: {sprite: "art:tevax"}

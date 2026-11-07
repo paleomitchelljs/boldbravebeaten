@@ -1,4 +1,5 @@
-# Templates for generated human foes (bandits, guards). Gear lists are [weight, value] pairs by level band [1-2, 3-5, 6+].
+# Templates for generated human foes (bandits, guards). Gear lists are [weight, value] pairs by level band [1-2, 3-5, 6+];
+# skills is one {skill: rank} map a band. Feats are preferences, taken as the skills allow.
 # The world (the user, 2026-11-07): armor is rare among foes. The rank and file wear cloth (padded) or leather at most;
 # only leaders, champions and bosses (a knight, a named foe) wear mail or plate.
 
@@ -8,6 +9,7 @@ bandit:
   sprite: {art: thief, kind: rogue, tint: "#9a8a8a"}
   primary: [DEX, SPD]
   weak: [INT]
+  skills: [{melee: 2, evasion: 2, stealth: 2, anticipation: 1, deception: 1}, {melee: 4, evasion: 3, stealth: 3, anticipation: 2, deception: 2}, {melee: 6, evasion: 4, stealth: 4, anticipation: 3, deception: 3}]
   armor: [[[3, padded], [1, leather]], [[2, padded], [1, leather]], [[1, padded], [2, leather]]]
   coverage: [[[2, partial], [2, half], [1, full]], [[1, half], [2, full]], [[1, full]]]
   weapons:
@@ -20,7 +22,6 @@ bandit:
     - quick_thrust
     - light_touch
     - trip
-    - dodge_training
     - kip_up
     - precision
     - fleet_foot
@@ -32,6 +33,7 @@ militia:
   sprite: {kind: knight, tint: "#a09a7a"}
   primary: [CON, STR]
   weak: [DEX]
+  skills: [{melee: 1, block: 2, perception: 1}, {melee: 3, block: 3, armor: 1, perception: 2}, {melee: 4, block: 5, armor: 2, perception: 2}]
   armor: [[[1, padded]], [[2, padded], [1, leather]], [[1, padded], [1, leather]]]
   coverage: [[[1, full]], [[1, full]], [[1, full]]]
   weapons:
@@ -40,7 +42,6 @@ militia:
     - [[1, spikedMace], [1, flangedMace]]
   shield: [[[1, round]], [[1, round]], [[1, round], [1, heater]]]
   feats:
-    - shield_training
     - quick_block
     - economical_block
     - toughness
@@ -54,20 +55,18 @@ sellsword:
   sprite: {kind: knight, tint: "#8a5a5a"}
   primary: [STR, CON]
   weak: [CHA]
+  skills: [{melee: 3, block: 2, armor: 1}, {melee: 5, block: 3, armor: 2, intimidation: 2}, {melee: 7, block: 5, armor: 3, intimidation: 3}]
   armor: [[[1, padded], [1, leather]], [[1, leather]], [[1, leather]]]
   coverage: [[[1, half], [1, full]], [[1, half], [2, full]], [[1, full]]]
   weapons: [[[2, longsword], [1, spikedMace]], [[1, longsword]], [[1, longsword]]]
   shield: [[[1, round]], [[1, round], [1, heater]], [[1, heater]]]
   sidearm: dagger
   feats:
-    - shield_training
     - mail_mobility
-    - parry_training
     - mail_endurance
     - quick_block
     - half_swording
     - murder_stroke
-    - read_attack
     - strength
 brute:
   faction: cutthroats
@@ -75,6 +74,7 @@ brute:
   sprite: {art: wolfpack-bandit, kind: orc_warrior, tint: "#b0907a"}
   primary: [STR, CON]
   weak: [INT, DEX]
+  skills: [{melee: 2, athletics: 3, intimidation: 2}, {melee: 4, athletics: 4, intimidation: 3}, {melee: 6, athletics: 5, intimidation: 4}]
   armor: [[[2, padded], [1, leather]], [[1, padded], [1, leather]], [[1, leather]]]
   coverage: [[[1, half], [1, full]], [[1, full]], [[1, full]]]
   weapons:
@@ -98,6 +98,7 @@ duelist:
   sprite: {art: cyrus, kind: rogue, tint: "#9a7a9a"}
   primary: [DEX, SPD]
   weak: [STR]
+  skills: [{melee: 3, evasion: 2, anticipation: 2, deception: 1}, {melee: 5, evasion: 3, anticipation: 3, deception: 3}, {melee: 7, evasion: 4, anticipation: 5, deception: 4}]
   armor: [[[1, null], [1, padded]], [[1, padded], [1, leather]], [[1, leather]]]
   coverage: [[[1, partial]], [[1, half]], [[1, half], [1, full]]]
   weapons: [[[1, rapier]], [[1, rapier]], [[1, rapier]]]
@@ -105,10 +106,8 @@ duelist:
   sidearm: dagger
   feats:
     - quick_thrust
-    - parry_training
     - feint
     - riposte
-    - read_attack
     - precision
     - quick_parry
     - light_touch
@@ -120,13 +119,13 @@ brawler:
   sprite: {kind: orc, tint: "#b09a80"}
   primary: [STR, DEX]
   weak: [INT]
+  skills: [{melee: 3, athletics: 3}, {melee: 4, athletics: 5, evasion: 2}, {melee: 6, athletics: 7, evasion: 3}]
   armor: [[[1, padded]], [[1, padded], [1, leather]], [[1, leather]]]
   coverage: [[[1, partial]], [[1, half]], [[1, full]]]
   weapons: [[[1, null]], [[1, null]], [[1, null]]]
   shield: [[[1, null]], [[1, null]], [[1, null]]]
   sidearm: dagger
   feats:
-    - grappler
     - trip
     - quick_hands
     - heavy_hands
@@ -142,6 +141,7 @@ manAtArms:
   sprite: {kind: knight, tint: "#8a8a9a"}
   primary: [STR, CON]
   weak: [CHA]
+  skills: [{melee: 2, block: 2, armor: 1}, {melee: 4, block: 4, armor: 2}, {melee: 5, block: 5, armor: 3}]
   armor: [[[1, padded]], [[1, leather]], [[1, leather]]]
   coverage: [[[1, half], [1, full]], [[1, full]], [[2, full], [1, half]]]
   weapons:
@@ -151,11 +151,9 @@ manAtArms:
   shield: [[[1, round]], [[1, heater]], [[1, heater]]]
   sidearm: dagger
   feats:
-    - shield_training
     - mail_mobility
     - quick_block
     - weight_of_the_blow
-    - shield_training
     - economical_block
     - mail_endurance
     - iron_stance
@@ -166,6 +164,7 @@ knight:
   sprite: {kind: knight, tint: "#6a6a7a"}
   primary: [STR, CON]
   weak: [SPD]
+  skills: [{melee: 4, block: 3, armor: 3}, {melee: 6, block: 5, armor: 5, persuasion: 2}, {melee: 8, block: 6, armor: 7, persuasion: 3}]
   armor: [[[1, mail]], [[1, mail], [1, plate]], [[1, plate]]]
   coverage: [[[1, full]], [[1, half], [2, full]], [[1, full]]]
   weapons:
@@ -176,7 +175,6 @@ knight:
   sidearm: dagger
   feats:
     - plate_mobility
-    - shield_training
     - plate_endurance
     - half_swording
     - murder_stroke

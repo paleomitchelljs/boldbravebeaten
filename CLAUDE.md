@@ -9,7 +9,7 @@ Read `HANDOFF.md` first: it is the to-do list. **After every push, update it** (
 - **Philosophy** (the user's design doc): classless; gear, preparation, knowledge and roleplay matter more than
   level. Fights are lethal and fast; power comes from reacting more, lasting longer and mitigating damage, never
   from a bigger HP pool. Armor is king in melee. Magic is learned, risky and feat-heavy. Social play is structured
-  like combat. Training happens only between adventures.
+  like combat. Skills and feats can be trained whenever the party is not fighting; no caps (limited points are the cost).
 - **Balance is differentiation, not parity** (as in classic EverQuest). A style can be hopeless in one setting and
   vital in another; hard counters are fine; every style needs a use somewhere, not necessarily in a fight. Judge sims
   by whether each style has a setting where it matters, not by even win rates. Combat, sneaking and talking are

@@ -1,5 +1,11 @@
-# Feat trees. A tree has a `group` (the setting it serves: body, combat, sneaking, talking, exploring, magic) and
-# `branches` [{id, name, blurb}]: the paths through it, drawn as columns on the training screen. A feat names its
+# Feat trees. A tree has a `group` (the setting it serves: body, combat, sneaking, talking, exploring, magic), a `skill`
+# (skills.yaml) that unlocks its feats: a feat's tier needs that many ranks in it (rules.yaml skills.tiers; a tree
+# with no skill counts feats held in it instead, as before), and
+# `branches` [{id, name, blurb, skill}]: the paths through it, drawn as columns on the training screen; a branch's
+# `skill` replaces the tree's for its feats. A requirement "skill:melee:4" asks for Melee 4.
+# Feats give large benefits; numbers come from skills (the user, 2026-11-07). Feats that were only a number (Parry,
+# Shield and Dodge Training, Read Attack, Misdirection, Grappler, Keen Eye, Stealth, Lockpicking, Trap Craft, Brute
+# Force, Liar, Herbalism, Intimidate, Casting) are gone into their skills (rules.yaml skills.retired). A feat names its
 # `branch` (none: the tree's root, open to all); `capstone: true` marks a branch's last feat, and a character may hold
 # only one capstone in a tree (taking it closes the others). A feat has ranks (the tier each rank needs, novice to
 # master), requires (a list of groups, all of which must hold; within a group, any one "feat:rank" will do), an effect
@@ -83,10 +89,11 @@
   name: Hand-to-hand
   attrs: "STR, DEX"
   group: combat
+  skill: melee
   branches:
     - {id: striker, name: "Striker", blurb: "Fists and feet, fast and hard."}
-    - {id: wrestler, name: "Wrestler", blurb: "Clinch, hold, pin and break."}
-    - {id: scrapper, name: "Scrapper", blurb: "Put them on the floor; take what they hold."}
+    - {id: wrestler, name: "Wrestler", blurb: "Clinch, hold, pin and break.", skill: athletics}
+    - {id: scrapper, name: "Scrapper", blurb: "Put them on the floor; take what they hold.", skill: athletics}
   feats:
     quick_hands:
       name: Quick Hands
@@ -110,26 +117,18 @@
       auto: true
     trip: {name: Trip, ranks: [novice], requires: [], effect: Better knockdown chance, auto: true}
     disarm: {name: Disarm, ranks: [novice], requires: [], effect: Better disarm chance, auto: true}
-    grappler:
-      name: Grappler
-      branch: wrestler
-      ranks: [novice, apprentice, adept]
-      requires: []
-      effect: "+1 grapple checks per rank"
-      effects: {grip: 1}
-      auto: true
     pin:
       name: Pin
       branch: wrestler
       ranks: [apprentice]
-      requires: [["grappler:1"]]
+      requires: [["skill:athletics:2"]]
       effect: "+2 to pin a held foe and to keep a pinned one down"
       auto: true
     dogpile:
       name: Dogpile
       branch: wrestler
       ranks: [apprentice]
-      requires: [["grappler:1"]]
+      requires: [["skill:athletics:2"]]
       effect: Each ally next to your target adds +2 to your grapple rolls (not +1)
       auto: true
     takedown:
@@ -137,7 +136,7 @@
       branch: scrapper
       capstone: true
       ranks: [adept]
-      requires: [["trip:1"], ["grappler:2"]]
+      requires: [["trip:1"], ["skill:athletics:4"]]
       effect: "Throw straight from a clinch, without a hold first"
       auto: true
     joint_lock:
@@ -151,7 +150,7 @@
       name: Human Shield
       branch: wrestler
       ranks: [expert]
-      requires: [["grappler:3"]]
+      requires: [["skill:athletics:6"]]
       effect: "Holding or pinning a foe, a blow at you strikes them instead, for a block's AP"
       auto: true
     iron_grip:
@@ -166,6 +165,7 @@
   name: Light weapons
   attrs: DEX
   group: combat
+  skill: melee
   branches:
     - {id: fencer, name: "Fencer", blurb: "Parry, beat and answer."}
     - {id: duelist, name: "Duelist", blurb: "Speed and deceit: the thrust they never read."}
@@ -194,45 +194,36 @@
     feint:
       name: Feint
       branch: duelist
-      ranks: [novice, apprentice, adept, expert, master]
+      ranks: [novice]
       requires: []
-      effect: Your blows can't be read by Read Attack below your rank; they defend blind, and a wrong guess is wasted
-      effects: {feint: 1}
-      auto: true
-    parry_training:
-      name: Parry Training
-      branch: fencer
-      ranks: [novice, apprentice, adept]
-      requires: []
-      effect: "+parry success per rank"
-      effects: {parry: 1}
+      effect: "Your blows can't be read by anyone whose Anticipation is below your Deception: they defend blind, and a wrong guess is wasted"
       auto: true
     quick_parry:
       name: Quick Parry
       branch: fencer
       ranks: [apprentice, adept]
-      requires: [["parry_training:1"]]
+      requires: [["skill:melee:2"]]
       effect: "Parries cost a quarter less AP per rank (half at rank II)"
       auto: true
     economical_parry:
       name: Economical Parry
       branch: fencer
       ranks: [apprentice, adept]
-      requires: [["parry_training:1"]]
+      requires: [["skill:melee:2"]]
       effect: "Parry −1 stamina per rank"
       auto: true
     riposte:
       name: Riposte
       branch: fencer
       ranks: [apprentice]
-      requires: [["parry_training:1"]]
+      requires: [["skill:melee:2"]]
       effect: Your riposte (a blow at once after a successful parry) costs no AP
       auto: true
     beat:
       name: Beat
       branch: fencer
       ranks: [apprentice, adept]
-      requires: [["parry_training:1"]]
+      requires: [["skill:melee:2"]]
       effect: "Your parries knock the blow wide: the attacker loses another sixth of the blow's AP per rank (a block's third at rank II)"
       effects: {recoil: 1}
       auto: true
@@ -240,7 +231,7 @@
       name: Bind
       branch: fencer
       ranks: [apprentice]
-      requires: [["parry_training:1"]]
+      requires: [["skill:melee:2"]]
       effect: A successful parry lets you try to disarm the attacker at once (no AP; the disarm's stamina)
       auto: true
     offhand_dagger:
@@ -283,6 +274,7 @@
   name: Heavy weapons
   attrs: STR
   group: combat
+  skill: melee
   branches:
     - {id: breaker, name: "Breaker", blurb: "Through shields and plate."}
     - {id: reaper, name: "Reaper", blurb: "Many foes with each swing."}
@@ -375,8 +367,9 @@
   name: Armor and shields
   attrs: "CON, STR"
   group: combat
+  skill: armor
   branches:
-    - {id: bulwark, name: "Bulwark", blurb: "The shield: block, bash, and cover your friends."}
+    - {id: bulwark, name: "Bulwark", blurb: "The shield: block, bash, and cover your friends.", skill: block}
     - {id: mail, name: "Mail", blurb: "Light enough to run in, long enough to last."}
     - {id: plate, name: "Plate", blurb: "A walking wall."}
   feats:
@@ -414,33 +407,25 @@
       requires: [["plate_mobility:1"]]
       effect: "−1 plate stamina penalty per action per rank"
       auto: true
-    shield_training:
-      name: Shield Training
-      branch: bulwark
-      ranks: [novice, apprentice, adept]
-      requires: []
-      effect: "+block success per rank"
-      effects: {block: 1}
-      auto: true
     quick_block:
       name: Quick Block
       branch: bulwark
       ranks: [apprentice, adept]
-      requires: [["shield_training:1"]]
+      requires: [["skill:block:2"]]
       effect: "Blocks cost a quarter less AP per rank (half at rank II)"
       auto: true
     economical_block:
       name: Economical Block
       branch: bulwark
       ranks: [apprentice, adept]
-      requires: [["shield_training:1"]]
+      requires: [["skill:block:2"]]
       effect: "Block −1 stamina per rank"
       auto: true
     shield_bash:
       name: Shield Bash
       branch: bulwark
       ranks: [novice]
-      requires: [["shield_training:1"]]
+      requires: [["skill:block:2"]]
       effect: "Shield strike: blunt with a knockdown chance"
       auto: true
     field_repair:
@@ -459,7 +444,7 @@
       name: Iron Stance
       branch: plate
       ranks: [adept]
-      requires: [["plate_mobility:1", "shield_training:2"]]
+      requires: [["plate_mobility:1", "skill:block:4"]]
       effect: Resist knockdown and disarm
       auto: true
     second_wind:
@@ -475,7 +460,7 @@
       branch: bulwark
       capstone: true
       ranks: [expert]
-      requires: [["shield_training:3"]]
+      requires: [["skill:block:6"]]
       effect: "Cover an ally up to 2 squares away (not 1), at no penalty: as good as blocking for yourself"
       auto: true
     living_fortress:
@@ -490,23 +475,16 @@
   name: Evasion
   attrs: "SPD, DEX"
   group: combat
+  skill: evasion
   branches:
     - {id: dodger, name: "Dodger", blurb: "Not there when the blow lands."}
     - {id: runner, name: "Runner", blurb: "Fast feet, and no hold that keeps you."}
   feats:
-    dodge_training:
-      name: Dodge Training
-      branch: dodger
-      ranks: [novice, apprentice, adept]
-      requires: []
-      effect: "+dodge success per rank"
-      effects: {dodge: 1}
-      auto: true
     quick_dodge:
       name: Quick Dodge
       branch: dodger
       ranks: [apprentice, adept]
-      requires: [["dodge_training:1"]]
+      requires: [["skill:evasion:2"]]
       effect: "Dodges cost a quarter less AP per rank (half at rank II)"
       auto: true
     light_on_your_feet:
@@ -546,14 +524,14 @@
       name: Roll With It
       branch: dodger
       ranks: [adept]
-      requires: [["dodge_training:2"]]
+      requires: [["skill:evasion:4"]]
       effect: A failed dodge halves the strike's damage
       auto: true
     counter_step:
       name: Counter-step
       branch: dodger
       ranks: [expert]
-      requires: [["dodge_training:3"]]
+      requires: [["skill:evasion:6"]]
       effect: "After a successful dodge, your next move this round has its first square free, and that step draws no strike"
       auto: true
     untouchable:
@@ -568,10 +546,11 @@
   name: Persuasion
   attrs: "CHA; WIS to read people"
   group: talking
+  skill: persuasion
   branches:
     - {id: charmer, name: "Charmer", blurb: "Warmth and words."}
     - {id: dealer, name: "Dealer", blurb: "Interests, prices and names."}
-    - {id: menace, name: "Menace", blurb: "Fear, and the nerve of your friends."}
+    - {id: menace, name: "Menace", blurb: "Fear, and the nerve of your friends.", skill: intimidation}
   feats:
     silver_tongue:
       name: Silver Tongue
@@ -592,13 +571,6 @@
       ranks: [novice]
       requires: []
       effect: "Charm costs half the patience; weak against high-WIS people"
-      auto: true
-    intimidate:
-      name: Intimidate
-      branch: menace
-      ranks: [novice]
-      requires: []
-      effect: "+2 to Intimidation per rank; uses STR or CHA"
       auto: true
     bargain:
       name: Bargain
@@ -633,25 +605,12 @@
   name: Perception
   attrs: "WIS; INT for analysis"
   group: exploring
+  skill: perception
   branches:
-    - {id: watcher, name: "Watcher", blurb: "Read the blow before it comes; nothing surprises you."}
-    - {id: wilds, name: "Wilds", blurb: "Trails and beasts."}
-    - {id: arcane, name: "Arcane eye", blurb: "Hear the words of a spell."}
+    - {id: watcher, name: "Watcher", blurb: "Read the blow before it comes; nothing surprises you.", skill: anticipation}
+    - {id: wilds, name: "Wilds", blurb: "Trails and beasts.", skill: nature}
+    - {id: arcane, name: "Arcane eye", blurb: "Hear the words of a spell.", skill: arcane}
   feats:
-    read_attack:
-      name: Read Attack
-      branch: watcher
-      ranks: [novice, apprentice, adept, expert, master]
-      requires: []
-      effect: See through Feint of equal or lower rank
-      effects: {readAttack: 1}
-      auto: true
-    keen_eye:
-      name: Keen Eye
-      ranks: [novice, apprentice]
-      requires: []
-      effect: "+2 Perception per rank: spot traps, hidden doors and lurking foes"
-      auto: true
     appraise:
       name: Appraise
       ranks: [novice]
@@ -662,28 +621,28 @@
       name: Animal Companion
       branch: wilds
       ranks: [apprentice, adept]
-      requires: [["keen_eye:1"]]
+      requires: [["skill:perception:2"]]
       effect: "A beast follows you and fights at your side (data/rules.yaml game.companions); rank II, a stronger one. A dead companion is replaced after a rest in town"
       auto: true
     read_intent:
       name: Read Intent
       branch: watcher
       ranks: [apprentice]
-      requires: [["keen_eye:1"]]
+      requires: [["skill:perception:2"]]
       effect: See their willingness and what each topic needs
       auto: true
     spot_weakness:
       name: Spot Weakness
       branch: watcher
       ranks: [adept]
-      requires: [["read_attack:2"]]
+      requires: [["skill:anticipation:4"]]
       effect: "See an armor's weakest point: +1 to find a gap in it (and more of a burst point's piercing passes through)"
       auto: true
     danger_sense:
       name: Danger Sense
       branch: watcher
       ranks: [adept]
-      requires: [["keen_eye:2"]]
+      requires: [["skill:perception:4"]]
       effect: Never surprised in camp
       auto: true
     read_spell:
@@ -712,9 +671,10 @@
   name: Medicine and alchemy
   attrs: "INT, WIS"
   group: exploring
+  skill: medicine
   branches:
     - {id: healer, name: "Healer", blurb: "Wounds closed, patients kept alive."}
-    - {id: alchemist, name: "Alchemist", blurb: "Herbs, potions and poisons."}
+    - {id: alchemist, name: "Alchemist", blurb: "Herbs, potions and poisons.", skill: alchemy}
   feats:
     field_dressing:
       name: Field Dressing
@@ -739,7 +699,7 @@
       name: Alchemy
       branch: alchemist
       ranks: [novice, apprentice, adept]
-      requires: [["herbalism:1"]]
+      requires: [["skill:nature:2"]]
       effect: "Brew potions: stamina, anti-bleed, healing over time"
       auto: false
     poisoner:
@@ -782,36 +742,31 @@
   name: "Magic: casting"
   attrs: "INT, WIL"
   group: magic
+  skill: arcane
   branches:
     - {id: control, name: "Control", blurb: "Safe casting, and casting past safe."}
     - {id: battle, name: "Battle", blurb: "Cast fast, cast armed."}
     - {id: bond, name: "Bond", blurb: "A familiar; a focus."}
   feats:
-    casting:
-      name: Casting
-      ranks: [novice, apprentice, adept, expert, master]
-      requires: []
-      effect: Larger casting pool per rank
-      auto: true
     control:
       name: Control
       branch: control
       ranks: [apprentice, adept, expert]
-      requires: [["casting:1"]]
+      requires: [["skill:arcane:2"]]
       effect: "+1 per rank to the backlash roll (d10 + Control against the spell's points)"
       auto: true
     quick_casting:
       name: Quick Casting
       branch: battle
       ranks: [apprentice, adept]
-      requires: [["casting:1"]]
+      requires: [["skill:arcane:2"]]
       effect: "Spells cost a quarter less AP per rank (half at rank II)"
       auto: true
     battle_casting:
       name: Battle Casting
       branch: battle
       ranks: [adept]
-      requires: [["casting:2"]]
+      requires: [["skill:arcane:4"]]
       effect: Cast with both hands full (sword and shield)
       auto: true
     steady_mind:
@@ -825,14 +780,14 @@
       name: Familiar
       branch: bond
       ranks: [novice, apprentice]
-      requires: [["casting:1"]]
+      requires: [["skill:arcane:2"]]
       effect: "A small creature bound to you (data/rules.yaml game.companions): it fights at your side, and gives +2 spell points per rank while it lives. If it dies you take 2 WIL damage; a new one answers after a rest in town"
       auto: true
     focus_bond:
       name: Focus Bond
       branch: bond
       ranks: [expert]
-      requires: [["casting:3"]]
+      requires: [["skill:arcane:6"]]
       effect: Bond a held weapon or shield as a casting focus
       auto: false
     overchannel:
@@ -840,13 +795,14 @@
       branch: control
       capstone: true
       ranks: [master]
-      requires: [["casting:5"]]
+      requires: [["skill:arcane:10"]]
       effect: "Cast past an empty pool: each point it lacks costs 1 CON (never the last)"
       auto: true
 - id: magicWords
   name: "Magic: words"
   attrs: INT
   group: magic
+  skill: arcane
   branches:
     - {id: first, name: "First verbs", blurb: "The six verbs anyone may learn first, and their pairs."}
     - {id: higher, name: "Higher verbs", blurb: "Verbs that need a first verb."}
@@ -1003,7 +959,7 @@
       name: Word Doubling
       branch: mods
       ranks: [adept]
-      requires: [["casting:2"]]
+      requires: [["skill:arcane:4"]]
       effect: "Cast a spell with two nouns instead of a modifier; both do the verb (Rage + Dream: confusion)"
       auto: true
     verb_conjure:
@@ -1101,6 +1057,7 @@
   name: "Magic: affinity (fire)"
   attrs: INT
   group: magic
+  skill: arcane
   branches:
     - {id: fire, name: "Fire", blurb: "The flame's own way."}
   feats:
@@ -1152,6 +1109,7 @@
   name: "Magic: ritual"
   attrs: "INT, WIL"
   group: magic
+  skill: arcane
   branches:
     - {id: circle, name: "Circle", blurb: "Bindings and wards."}
     - {id: craft, name: "Craft", blurb: "Words into things."}
@@ -1217,28 +1175,16 @@
   name: Subterfuge
   attrs: "DEX, INT"
   group: sneaking
+  skill: devices
   branches:
     - {id: locks, name: "Locks", blurb: "Doors without keys."}
     - {id: traps, name: "Traps", blurb: "What waits under the floor."}
   feats:
-    lockpicking:
-      name: Lockpicking
-      branch: locks
-      ranks: [novice, apprentice, adept]
-      requires: []
-      effect: "+2 Lockpicking per rank: open locks without the key"
-      auto: true
-    trap_craft:
-      name: Trap craft
-      branch: traps
-      ranks: [novice, apprentice, adept]
-      requires: []
-      effect: "+2 Trapcraft per rank: disarm what you find"
-      auto: true
 - id: archery
   name: Archery
   attrs: "DEX; WIS to aim"
   group: combat
+  skill: ranged
   branches:
     - {id: marksman, name: "Marksman", blurb: "Far, placed and pinned."}
     - {id: skirmisher, name: "Skirmisher", blurb: "A bow at close quarters, loosed when they come."}
@@ -1290,6 +1236,7 @@
   name: Shadow
   attrs: "DEX, SPD"
   group: sneaking
+  skill: stealth
   branches:
     - {id: hider, name: "Hider", blurb: "Gone from sight in the middle of a fight."}
     - {id: cutthroat, name: "Cutthroat", blurb: "The first blow, from where they weren't looking."}
@@ -1298,20 +1245,14 @@
       name: Ambusher
       branch: cutthroat
       ranks: [apprentice, adept]
-      requires: [["stealth:1"]]
+      requires: [["skill:stealth:2"]]
       effect: "A fight begun from hiding costs the enemy 3/4 of their AP in the first round; at rank 2, all of it"
-      auto: true
-    stealth:
-      name: Stealth
-      ranks: [novice, apprentice, adept]
-      requires: []
-      effect: "+2 Stealth per rank"
       auto: true
     vanish:
       name: Vanish
       branch: hider
       ranks: [novice]
-      requires: [["stealth:1"]]
+      requires: [["skill:stealth:2"]]
       effect: "An action (2 AP) with no foe beside you: you are unseen for 2 rounds (no foe beyond arm's reach can aim at you; +2 to beat a defence). Striking ends it"
       auto: true
     shadow_step:
@@ -1326,16 +1267,17 @@
       name: Backstab
       branch: cutthroat
       ranks: [apprentice]
-      requires: [["stealth:1"]]
+      requires: [["skill:stealth:2"]]
       effect: "A melee blow struck while unseen deals +3 damage of its main kind"
       auto: true
 - id: leadership
   name: Leadership
   attrs: "CHA, WIL"
   group: talking
+  skill: persuasion
   branches:
     - {id: captain, name: "Captain", blurb: "Your voice keeps them standing."}
-    - {id: terror, name: "Terror", blurb: "Your voice takes the heart out of them."}
+    - {id: terror, name: "Terror", blurb: "Your voice takes the heart out of them.", skill: intimidation}
   feats:
     rally:
       name: Rally
@@ -1377,16 +1319,11 @@
   name: Survival
   attrs: "WIS, CON"
   group: exploring
+  skill: nature
   branches:
     - {id: trail, name: "Trail", blurb: "Read the ground; hear them first."}
     - {id: camp, name: "Camp", blurb: "A night out that stays quiet."}
   feats:
-    herbalism:
-      name: Herbalism
-      ranks: [novice]
-      requires: []
-      effect: "+2 Herbalism per rank: find components when camping"
-      auto: true
     tracker:
       name: Tracker
       branch: trail
@@ -1413,6 +1350,7 @@
   name: Lore
   attrs: INT
   group: exploring
+  skill: nature
   branches:
     - {id: bestiary, name: "Bestiary", blurb: "What a creature is, and what kills it."}
   feats:
@@ -1441,16 +1379,11 @@
   name: Athletics
   attrs: "STR, CON"
   group: exploring
+  skill: athletics
   branches:
     - {id: brawn, name: "Brawn", blurb: "Through doors, through people."}
     - {id: stride, name: "Stride", blurb: "Momentum."}
   feats:
-    brute_force:
-      name: Brute Force
-      ranks: [novice, apprentice]
-      requires: []
-      effect: "+2 Forcing per rank: doors, lids and leaps"
-      auto: true
     bull_rush:
       name: Bull Rush
       branch: brawn
@@ -1477,6 +1410,7 @@
   name: Deception
   attrs: "CHA, INT"
   group: talking
+  skill: deception
   branches:
     - {id: liar, name: "Liar", blurb: "Stories that hold."}
     - {id: trickster, name: "Trickster", blurb: "Lies told with the body."}
@@ -1488,17 +1422,11 @@
       requires: [["silver_tongue:2"]]
       effect: Help an NPC work out knowledge with no disposition loss
       auto: false
-    liar:
-      name: Practised Liar
-      ranks: [novice, apprentice, adept]
-      requires: []
-      effect: "+2 Deception per rank"
-      auto: true
     cover_story:
       name: Cover Story
       branch: liar
       ranks: [apprentice]
-      requires: [["liar:1"]]
+      requires: [["skill:deception:2"]]
       effect: "Caught in a bluff, you talk your way back: no disposition lost and never exposed (the patience still goes)"
       auto: true
     big_lie:
@@ -1509,14 +1437,6 @@
       requires: [["cover_story:1"]]
       effect: "A bluff that lands raises willingness by 2, not 1"
       auto: true
-    misdirection:
-      name: Misdirection
-      branch: trickster
-      ranks: [novice, apprentice]
-      requires: []
-      effect: "+1 Feint per rank: your blows can't be read by a Read Attack below it, and your bait is harder to see through"
-      auto: true
-      effects: {feint: 1}
     feign_death:
       name: Feign Death
       branch: trickster
@@ -1529,6 +1449,6 @@
       branch: trickster
       capstone: true
       ranks: [adept]
-      requires: [["misdirection:1"]]
+      requires: [["skill:deception:2"]]
       effect: "A bait that wins also leaves them exposed: no defence at all this round"
       auto: true

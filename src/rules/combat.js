@@ -928,7 +928,7 @@
     const t = d.target ? chars[d.target] : null;
     const tn = t ? t.name : '';
     if (d.type === 'strike') {
-      const hidden = viewerId !== d.actor && G.Effects.sum(a, 'feint') > (viewerId ? G.Effects.sum(chars[viewerId], 'readAttack') : 0);
+      const hidden = viewerId !== d.actor && C.rank(a, 'feint') > 0 && feintScore(a) > (viewerId ? readScore(chars[viewerId]) : 0);
       if (hidden) return { text: `${a.name}: strike at ${tn}`, hidden: true };
       const w = d.option.weaponId ? a.weapons.find((x) => x.id === d.option.weaponId) : null;
       return { text: `${a.name}: ${d.option.label}${w ? ' — ' + Items.itemName(w) : ''} at ${tn} [${C.fmtAP(d.ap)} AP]` };
@@ -1569,6 +1569,14 @@
     return { text: `${h.P}/${h.S}/${h.B} P/S/B → ${parts.join(', ')}.${tail}`, hit: h };
   }
 
+  // Deceiving and reading in a fight: Deception and Anticipation, + gear's feint and readAttack.
+  function feintScore(c) {
+    return C.skill(c, 'deception') + G.Effects.sum(c, 'feint');
+  }
+  function readScore(c) {
+    return C.skill(c, 'anticipation') + G.Effects.sum(c, 'readAttack');
+  }
+
   // ---- Checks ------------------------------------------------------------
   const half = (n) => Math.floor((n - 5) / 2);
 
@@ -1703,24 +1711,13 @@
     return Math.round(K.max * x / (1 + Math.abs(x)));
   }
 
-  // CONFIG.defense.skill: what the gap between the defender's skill in this defence and the attacker's with the blow
-  // adds to it (0 against an attacker not known). Parry: skill with the parrying weapon; dodge and block: their pools.
-  function defenseSkill(defender, kind) {
-    const K = CONFIG.defense.skill;
-    if (kind === 'parry' || kind === 'offParry') {
-      const w = parryingWeapon(defender, kind);
-      return C.weaponSkill(defender, w ? { weaponType: w.type } : null);
-    }
-    return C.skillIn(defender, K[kind] || []);
-  }
+  // CONFIG.skills.defense: the share of (the defender's skill in this defence − the attacker's with the blow) that
+  // adds to it (0 against an attacker not known).
   function skillEdge(defender, attacker, kind, atkOption) {
-    const K = CONFIG.defense.skill;
+    const K = CONFIG.skills && CONFIG.skills.defense;
     if (!K || !attacker) return 0;
-    kind = kind || 'parry';
-    const share = K.share ? K.share[kind === 'offParry' ? 'parry' : kind] || 0 : 1;
-    const x = Math.round(share * K.per * (defenseSkill(defender, kind) - C.weaponSkill(attacker, atkOption)));
-    const cap = Math.round(share * K.max);
-    return Math.max(-cap, Math.min(cap, x));
+    const share = K[kind === 'offParry' ? 'parry' : kind || 'parry'] || 0;
+    return Math.round(share * (C.defenseSkill(defender, kind || 'parry') - C.attackSkill(attacker, atkOption)));
   }
 
   // A blow's force: its expected damage, all kinds together.
@@ -1784,7 +1781,7 @@
 
   function stability(c) {
     const M = CONFIG.maneuver;
-    return Math.floor(C.attr(c, 'STR') / 2) + (M.armorStability[c.armor ? c.armor.type : 'none'] || 0) + (C.rank(c, 'iron_stance') ? M.ironStanceBonus : 0);
+    return Math.floor(C.attr(c, 'STR') / 2) + C.skill(c, 'athletics') + (M.armorStability[c.armor ? c.armor.type : 'none'] || 0) + (C.rank(c, 'iron_stance') ? M.ironStanceBonus : 0);
   }
 
   // Chance that an opposed d10 roll wins by at least `margin`.
@@ -1796,17 +1793,17 @@
   }
 
   function knockdownOdds(atk, tgt, featBonus, margin) {
-    return opposedOdds(Math.floor(C.attr(atk, 'STR') / 2) + featBonus, stability(tgt), margin);
+    return opposedOdds(Math.floor(C.attr(atk, 'STR') / 2) + C.skill(atk, 'athletics') + featBonus, stability(tgt), margin);
   }
 
   function shoveOdds(a, t) {
     const w = C.wieldedWeapon(a);
-    const aB = Math.floor(C.attr(a, 'STR') / 2) + (w && WEAPONS[w.type].hands === 2 ? CONFIG.shove.twoHandBonus : 0);
+    const aB = Math.floor(C.attr(a, 'STR') / 2) + C.skill(a, 'athletics') + (w && WEAPONS[w.type].hands === 2 ? CONFIG.shove.twoHandBonus : 0);
     return opposedOdds(aB, stability(t), 1);
   }
 
   async function knockdownCheck(roller, atk, tgt, featBonus, label) {
-    const aB = Math.floor(C.attr(atk, 'STR') / 2) + featBonus;
+    const aB = Math.floor(C.attr(atk, 'STR') / 2) + C.skill(atk, 'athletics') + featBonus;
     return opposed(roller, atk, aB, label, tgt, stability(tgt), 'Keep footing');
   }
 
@@ -1837,7 +1834,7 @@
   // d10 + this for clinching, grappling, pinning and throwing.
   function grappleScore(c) {
     // grip: a giant's hand closes around a man (monster trait).
-    return Math.floor(C.attr(c, 'STR') / 2) + G.Effects.sum(c, 'grip');
+    return Math.floor(C.attr(c, 'STR') / 2) + G.Effects.sum(c, 'grip') + C.skill(c, 'athletics');
   }
 
   // d10 + this for breaking a clinch, hold or pin.
@@ -2246,7 +2243,7 @@
         const R = CONFIG.social;
         if (dist(posAtStart[a.id], posAtStart[t.id]) > R[d.type].range) { log(enc, `${a.name}'s ${ACTIONS[d.type].name.toLowerCase()} fizzles — ${t.name} is too far.`, 'fizzle'); break; }
         if (d.type === 'bait') {
-          const o = await opposed(roller, a, Math.floor(C.attr(a, 'CHA') / 2) + G.Effects.sum(a, 'feint'), 'Bait', t, Math.floor(C.attr(t, 'WIS') / 2) + G.Effects.sum(t, 'readAttack'), 'See through it');
+          const o = await opposed(roller, a, Math.floor(C.attr(a, 'CHA') / 2) + feintScore(a), 'Bait', t, Math.floor(C.attr(t, 'WIS') / 2) + readScore(t), 'See through it');
           if (o.margin > 0) {
             // The bait leaves them off balance: they defend worse for the round.
             if (G.Conditions) G.Conditions.add(t, 'baited', { rounds: 1, src: a.id });
@@ -2257,8 +2254,8 @@
           // The reader rolls against a number they can't see: a true read, nothing, or a
           // confident misread that looks just like a true one.
           const RI = R.readIntent;
-          const bonus = Math.floor(C.attr(a, 'WIS') / 2) + G.Effects.sum(a, 'readAttack');
-          const tn = RI.tn + Math.floor(C.attr(t, 'CHA') / 2) + G.Effects.sum(t, 'feint');
+          const bonus = Math.floor(C.attr(a, 'WIS') / 2) + readScore(a);
+          const tn = RI.tn + Math.floor(C.attr(t, 'CHA') / 2) + feintScore(t);
           const r = await rollDie(roller, a.id, 10, `${a.name}: Read intent`, `d10 + ${bonus} (WIS) against ${t.name}'s guarded face`);
           const margin = r + bonus - tn;
           if (margin < 0 && margin > -RI.misreadBy) {
@@ -2330,7 +2327,7 @@
         break;
       case 'demoralize': {
         const targets = C.rank(a, 'dread') ? enc.ids.filter((o) => chars[o].side !== a.side && C.isActive(chars[o]) && dist(posAtStart[a.id], enc.pos[o]) <= 3) : t ? [t.id] : [];
-        const bonus = Math.floor(Math.max(C.attr(a, 'STR'), C.attr(a, 'CHA')) / 2) + C.rank(a, 'intimidate');
+        const bonus = Math.floor(Math.max(C.attr(a, 'STR'), C.attr(a, 'CHA')) / 2) + C.skill(a, 'intimidation');
         for (const o of targets) {
           const f = chars[o];
           const r = await opposed(roller, a, bonus, 'Demoralize', f, Math.floor(C.attr(f, 'WIL') / 2), 'Hold their nerve');
@@ -2630,7 +2627,7 @@
     if (d.type === 'shove') {
       const S = CONFIG.shove;
       const w = C.wieldedWeapon(a);
-      const aB = Math.floor(C.attr(a, 'STR') / 2) + (w && WEAPONS[w.type].hands === 2 ? S.twoHandBonus : 0) + (C.shieldReady(a) ? S.shieldBonus || 0 : 0) + (C.rank(a, 'bull_rush') ? 2 : 0);
+      const aB = Math.floor(C.attr(a, 'STR') / 2) + C.skill(a, 'athletics') + (w && WEAPONS[w.type].hands === 2 ? S.twoHandBonus : 0) + (C.shieldReady(a) ? S.shieldBonus || 0 : 0) + (C.rank(a, 'bull_rush') ? 2 : 0);
       const o = await opposed(roller, a, aB, dist(enc.pos[a.id], enc.pos[t.id]) > 1 ? 'Fend off' : 'Shove', t, stability(t), 'Hold ground');
       if (o.margin <= 0) return log(enc, `${a.name}'s shove fails (${o.a} vs ${o.b}).`, 'fail');
       const from = enc.pos[a.id], at = enc.pos[t.id];
@@ -2821,6 +2818,6 @@
     foeSquares,
     unseenBy, strikeEffects, conditionForbids, ATTACK_TYPES, DEFENSE_TYPES, shoveReach, log, rollDie, castSpell, knockDown, stability, releaseAll: clearGrapple,
     createEncounter, autoPlace, startRound, currentActor, legalActions, act, validate, endTurn, defer, submit, describeDecl, apLeft, defenseOptions, coverOptions, opportunityOptions,
-    vitalNeed, projectedPos, dist, defenseOdds, parryCarryShare, leverage, skillEdge, blowForce, aimPenalty, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolveAction, finishRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
+    vitalNeed, projectedPos, dist, defenseOdds, parryCarryShare, leverage, skillEdge, feintScore, readScore, blowForce, aimPenalty, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolveAction, finishRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

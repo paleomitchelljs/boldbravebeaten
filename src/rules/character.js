@@ -29,6 +29,7 @@
       stamina: 0,
       bleeds: [],
       feats: {},
+      skills: {}, // skills.yaml: id → rank 0–10
       armor: null,
       pieces: [],
       shield: null,
@@ -73,6 +74,7 @@
       if (c.base[a] == null) c.base[a] = 5;
     });
     c.feats = c.feats || {};
+    c.skills = c.skills || {};
     c.weapons = c.weapons || [];
     if (!Array.isArray(c.pieces)) c.pieces = [];
     for (const it of [c.armor, c.shield].concat(c.pieces, c.weapons)) if (it) Items.normalizeItem(it);
@@ -124,35 +126,72 @@
     return (c.feats && c.feats[id]) || 0;
   }
 
-  // Skill (CONFIG.defense.skill): the feat ranks held in the pools named ("tree" or "tree.branch"), + effects `skill`
-  // (a monster's traits, gear), which counts in every pool.
-  function skillIn(c, pools) {
+  // ---- Skills (skills.yaml; CONFIG.skills) ------------------------------------------------------------------------
+  // A skill's rank: points put in it, + what worn gear and a monster's traits add (effects {skills: {id: n}}).
+  function skill(c, id) {
     if (!c) return 0;
-    const P = (pools || []).map((p) => p.split('.'));
+    return ((c.skills && c.skills[id]) || 0) + G.Effects.sum(c, 'skills', id);
+  }
+
+  // Skill points: CONFIG.skills.start at level 1, perLevel more each level after (+ bonusSkills).
+  function skillBudget(c) {
+    const K = CONFIG.skills || {};
+    return (K.start || 0) + Math.max(0, (c.level || 1) - 1) * (K.perLevel || 0) + (c.bonusSkills || 0);
+  }
+  function skillsSpent(c) {
     let n = 0;
-    for (const id in c.feats) {
-      const F = FEATS[id];
-      if (F && P.some(([t, b]) => F.tree === t && (!b || F.branch === b))) n += c.feats[id];
+    for (const id in c.skills || {}) n += c.skills[id];
+    return n;
+  }
+  function skillsLeft(c) {
+    return skillBudget(c) - skillsSpent(c);
+  }
+  // Points go in one at a time, up to CONFIG.skills.max; out again only if no feat held needs them.
+  function canRaiseSkill(c, id) {
+    if (!skillDefs()[id]) return { ok: false, reason: 'Unknown skill' };
+    if (((c.skills || {})[id] || 0) >= (CONFIG.skills.max || 10)) return { ok: false, reason: 'At the top' };
+    if (skillsLeft(c) <= 0) return { ok: false, reason: 'No points left' };
+    return { ok: true };
+  }
+  function canLowerSkill(c, id) {
+    if (!((c.skills || {})[id] > 0)) return { ok: false, reason: 'None to take back' };
+    const probe = Object.assign({}, c, { skills: Object.assign({}, c.skills, { [id]: c.skills[id] - 1 }) });
+    for (const f in c.feats) {
+      const q = Object.assign({}, probe, { feats: Object.assign({}, c.feats, { [f]: c.feats[f] - 1 }) });
+      if (!canTakeFeat(q, f, true).ok) return { ok: false, reason: `${FEATS[f].name} needs it` };
     }
-    return n + G.Effects.sum(c, 'skill');
+    return { ok: true };
+  }
+  function raiseSkill(c, id) {
+    c.skills = c.skills || {};
+    c.skills[id] = (c.skills[id] || 0) + 1;
+  }
+  function lowerSkill(c, id) {
+    c.skills[id] -= 1;
+    if (c.skills[id] <= 0) delete c.skills[id];
+  }
+  const skillDefs = () => ((G.Content && G.Content.world && G.Content.world.skills && G.Content.world.skills.skills) || {});
+
+  // The skill a blow is struck with: Ranged for a shot, Arcane for a spell, Melee for the rest.
+  function attackSkill(c, o) {
+    if (o && o.spell) return skill(c, 'arcane');
+    if (o && o.ranged) return skill(c, 'ranged');
+    return skill(c, 'melee');
+  }
+  // The skill a defence is made with: a parry Melee, a dodge Evasion + Anticipation, a block Block.
+  function defenseSkill(c, kind) {
+    if (kind === 'parry' || kind === 'offParry') return skill(c, 'melee');
+    if (kind === 'dodge') return skill(c, 'evasion') + skill(c, 'anticipation');
+    if (kind === 'block' || kind === 'cover') return skill(c, 'block');
+    return 0;
   }
 
-  // The skill tree a blow is struck with (CONFIG.defense.skill.weapon): fists and natural weapons, a bow, or a weapon
-  // by its weight. null for a spell.
-  function weaponSkillTree(o) {
-    const K = CONFIG.defense.skill;
-    if (!K || !o || o.spell) return null;
-    const W = o.weaponType ? WEAPONS[o.weaponType] : null;
-    if (o.unarmed || !W || W.natural) return K.weapon.natural;
-    if (o.ranged) return K.weapon.ranged;
-    return K.weapon[Items.weaponStats(o.weaponType).weight] || null;
-  }
-
-  // Skill with a blow (or, given no blow, with the weapon in hand).
-  function weaponSkill(c, o) {
-    if (!o) { const w = wieldedWeapon(c); o = w ? { weaponType: w.type } : { unarmed: true }; }
-    const t = weaponSkillTree(o);
-    return t ? skillIn(c, [t]) : 0;
+  // The skill that unlocks a feat (its branch's, else its tree's), or null.
+  function featSkill(f) {
+    const t = TREES.find((x) => x.id === f.tree);
+    if (!t) return null;
+    const b = f.branch && (t.branches || []).find((x) => x.id === f.branch);
+    return (b && b.skill) || t.skill || null;
   }
 
   function featCount(c) {
@@ -188,15 +227,22 @@
     return name;
   }
 
+  // "feat:rank", or "skill:id:rank" (a skill at that rank or more).
   function parseReq(s) {
-    const [id, r] = s.split(':');
-    return { id, rank: Number(r || 1) };
+    const p = String(s).split(':');
+    if (p[0] === 'skill') return { skill: p[1], rank: Number(p[2] || 1) };
+    return { id: p[0], rank: Number(p[1] || 1) };
+  }
+  function reqMet(c, s) {
+    const r = parseReq(s);
+    return r.skill ? skill(c, r.skill) >= r.rank : rank(c, r.id) >= r.rank;
   }
 
   function reqText(group) {
     return group
       .map((s) => {
         const r = parseReq(s);
+        if (r.skill) return `${(skillDefs()[r.skill] || {}).name || r.skill} ${r.rank}`;
         const f = FEATS[r.id];
         const name = f ? f.name : r.id;
         return f && f.ranks.length > 1 ? name + ' ' + roman(r.rank) : name;
@@ -216,12 +262,16 @@
     if (have >= f.ranks.length) return { ok: false, reason: 'Max rank' };
     if (!ignoreBudget && featCount(c) >= featBudget(c)) return { ok: false, reason: 'No feats left' };
     const needTier = f.ranks[have];
-    const inTree = tierCount(c, f.tree);
-    if (inTree < CONFIG.tierThresholds[needTier]) {
+    // A tree with a skill: the tier needs that many ranks in it (CONFIG.skills.tiers). Without: feats in the tree.
+    const sk = featSkill(f);
+    if (sk) {
+      const need = CONFIG.skills.tiers[needTier] || 0;
+      if (skill(c, sk) < need) return { ok: false, reason: `Needs ${(skillDefs()[sk] || {}).name || sk} ${need} (${needTier})` };
+    } else if (tierCount(c, f.tree) < CONFIG.tierThresholds[needTier]) {
       return { ok: false, reason: `Needs ${needTier} tier (${CONFIG.tierThresholds[needTier]} feats in tree)` };
     }
     for (const group of f.requires) {
-      if (!group.some((s) => rank(c, parseReq(s).id) >= parseReq(s).rank)) {
+      if (!group.some((s) => reqMet(c, s))) {
         return { ok: false, reason: 'Requires ' + reqText(group) };
       }
     }
@@ -406,7 +456,10 @@
       dex = Math.max(0, dex - rank(c, 'plate_mobility'));
       stamina = Math.max(0, stamina - rank(c, 'plate_endurance'));
     }
-    return { spd, dex, stamina };
+    // The Armor skill: each rank takes CONFIG.skills.armorPerRank off what is left.
+    const k = Math.max(0, 1 - skill(c, 'armor') * ((CONFIG.skills && CONFIG.skills.armorPerRank) || 0));
+    const r1 = (x) => Math.round(x * k * 10) / 10;
+    return { spd: r1(spd), dex: r1(dex), stamina: r1(stamina) };
   }
 
   // What one piece does where it is: mitigation (fading as it wears), the point-in-armor numbers.
@@ -1129,7 +1182,7 @@
 
   G.Character = {
     newCharacter, normalize, freshStatus,
-    rank, skillIn, weaponSkillTree, weaponSkill, featCount, featBudget, treeCount, tierCount, tierName, canTakeFeat, closedBy, parseReq, canRemoveFeat, addFeat, removeFeat, reqText, roman,
+    rank, skill, skillBudget, skillsSpent, skillsLeft, canRaiseSkill, canLowerSkill, raiseSkill, lowerSkill, attackSkill, defenseSkill, featSkill, featCount, featBudget, treeCount, tierCount, tierName, canTakeFeat, closedBy, parseReq, reqMet, canRemoveFeat, addFeat, removeFeat, reqText, roman,
     conditioning, attr, attrMax, combatAttr, armorInfo, armorPieces, armorAt, armorUniform, shieldInfo, shieldReady, wieldedWeapon, offhandWeapon,
     maxStamina, freshStamina, wearyRound, wearyTime, regen, fatiguePenalty, apPool, projectedPool, apScale, costScale, fmtAP, minAP, baseAP, armorAP, quickCut, moveCost, squaresFor, squaresPerAP, handsBusy, castingHands, weaponStrain, inRange, optionKey, needsWindUp, strOffset, staminaCost, effectiveWeight, isLightWeapon,
     strBonus, weaponDamage, mainIndex, attackOptions, actionCost, ammoLeft, gearWarnings, tireless, webTax,

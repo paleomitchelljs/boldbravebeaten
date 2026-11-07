@@ -730,7 +730,7 @@
     const la = Combat.legalActions(enc, chars, id);
     const ap = la.ap;
     const endTurn = { actor: id, type: 'endTurn' };
-    if (P.grappler == null) P.grappler = C.rank(c, 'grappler') > 0;
+    if (P.grappler == null) P.grappler = C.skill(c, 'athletics') >= 2;
     // AP to keep back for defences against foes still to act this round, and whether this turn
     // has already done something (after the first action, the reserve is not dipped into).
     const reserve = reserveAP(enc, chars, id, P);
@@ -781,7 +781,7 @@
         // Not a grappler: stay and fight if something works up close, else break away.
         const close = la.attacks.filter((o) => o.affordable && !o.why && !o.unarmed);
         const hereRate = bestRate(c, partner, close, 1);
-        if ((hereRate < 1 || C.rank(partner, 'grappler') > C.rank(c, 'grappler')) && gm('break')) return { actor: id, type: 'break', target: link.partner };
+        if ((hereRate < 1 || C.skill(partner, 'athletics') > C.skill(c, 'athletics')) && gm('break')) return { actor: id, type: 'break', target: link.partner };
       }
     } else if (P.grappler) {
       const cl = gm('clinch');
@@ -838,7 +838,7 @@
     if (rng() < P.maneuverRate) {
       for (const m of la.maneuvers) {
         if (!m.affordable || m.type === 'disarm' || m.type === 'bait' || m.type === 'readIntent') continue;
-        if (Combat.GRAPPLE_STEPS.includes(m.type) && !C.rank(c, 'grappler') && P.maneuverRate < 0.3) continue;
+        if (Combat.GRAPPLE_STEPS.includes(m.type) && C.skill(c, 'athletics') < 2 && P.maneuverRate < 0.3) continue;
         const t = m.targets.find((x) => x.inReach && foes.includes(x.id) && !chars[x.id].status.prone);
         if (t) return { actor: id, type: m.type, target: t.id };
       }
@@ -872,7 +872,7 @@
     const blowAP = Math.min(...usable.filter((o) => !o.spell).map((o) => o.ap).concat([99]));
     if (bait && !acted && la.ap >= bait.ap + Math.min(blowAP, 99) + reserve && blowAP < 99) {
       const guarded = bait.targets.find((x) => x.inReach && foes.includes(x.id) && !enc.turnDone[x.id] && usable.some((o) => C.inRange(o, x.distance)));
-      if (guarded && Math.floor(C.attr(c, 'CHA') / 2) + G.Effects.sum(c, 'feint') >= Math.floor(C.attr(chars[guarded.id], 'WIS') / 2)) return { actor: id, type: 'bait', target: guarded.id };
+      if (guarded && Math.floor(C.attr(c, 'CHA') / 2) + Combat.feintScore(c) >= Math.floor(C.attr(chars[guarded.id], 'WIS') / 2) + Combat.readScore(chars[guarded.id])) return { actor: id, type: 'bait', target: guarded.id };
     }
     // The AI doesn't read intent (the user, 2026-11-01): it filled foes' turns with looks instead of blows.
 

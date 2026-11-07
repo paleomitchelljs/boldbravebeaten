@@ -81,6 +81,7 @@
     c.faction = T.faction || null;
     c.xp = (T.xpPerLevel || 20) * level;
     c.lootTable = T.loot || 'humanoid_purse';
+    c.skills = Object.assign({}, (T.skills || [])[b] || {});
 
     const armorType = pick(rng, T.armor[b]);
     if (armorType) c.armor = Items.makeArmor(armorType, pick(rng, T.coverage[b]), rollGear(rng, level, 'craft', 'average'), rollTags(rng, level, G.DATA.ARMOR[armorType].material));
@@ -136,6 +137,7 @@
   //   natural  — natural weapons (data.js), always ready
   //   armor    — natural armor type
   //   traits   — mechanical hooks; every key and what it does is in src/rules/effects.js (KEYS.traits)
+  //   skills   — {skill: rank} (skills.yaml); monsters don't spend points, they have what is written
   //   weapons, shield, sidearm, craft, arrows — carried gear, for monsters that use it; armorItem,
   //   weaponItems, shieldItem — items with their tags spelled out
   //   policy   — AI policy (grappler, kite…)
@@ -223,6 +225,7 @@
     c.natural = (M.natural || []).slice();
     c.noUnarmed = !M.keepUnarmed;
     c.traits = JSON.parse(JSON.stringify(M.traits || {}));
+    c.skills = Object.assign({}, M.skills || {});
     c.feats = Object.assign({}, M.feats || {});
     if (M.featPrefs) chooseFeats(c, M.featPrefs, makeRng(c.level * 7919 + 1));
     if (M.nouns) c.nouns = M.nouns.slice();

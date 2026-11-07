@@ -194,3 +194,25 @@ game:
     innPerHead: 6
     healCostPerPoint: 25     # temple healing, per attribute point healed
     healerStandingFree: 60   # at this standing healing is free of charge
+
+# ---- Skills (the user, 2026-11-07; data/skills.yaml lists them) -----------------------------------------------------
+# Points: `start` at level 1, `perLevel` more each level after, spent whenever the party isn't fighting; a skill tops
+# out at `max`. No other caps: going all in on one thing costs being worse at everything else.
+# tiers: the skill rank a feat's tier needs, in its tree's skill (feats.yaml).
+# defense: the share of (the defender's skill in the defence - the attacker's with the blow) that adds to the defence.
+#   The defender's: parry, Melee; dodge, Evasion + Anticipation; block, Block. The attacker's: Melee for a blow, Ranged
+#   for a shot, Arcane for a spell.
+# armorPerRank: each Armor rank takes this share off the armor's SPD, DEX and stamina penalties.
+# spPerRank: spell points per Arcane rank (with INT); none at Arcane 0.
+# retired: feats that were only a number, and the skill each rank of them became (x perRank) in an old save.
+skills:
+  start: 10
+  perLevel: 3
+  max: 10
+  tiers: {novice: 1, apprentice: 3, adept: 5, expert: 7, master: 9}
+  defense: {parry: 1, dodge: 1, block: 0.5}
+  armorPerRank: 0.05
+  spPerRank: 2
+  retired:
+    perRank: 2
+    feats: {parry_training: melee, shield_training: block, dodge_training: evasion, read_attack: anticipation, misdirection: deception, grappler: athletics, keen_eye: perception, stealth: stealth, lockpicking: devices, trap_craft: devices, brute_force: athletics, liar: deception, herbalism: nature, intimidate: intimidation, casting: arcane}

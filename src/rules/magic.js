@@ -28,12 +28,13 @@
   const W = () => CONFIG.magic.words;
   const BOLT = ['bolt'];
 
-  // Spell points: INT + 3 per Casting rank, + what worn gear adds (sp), + 2 per Familiar rank while it lives.
+  // Spell points: INT + CONFIG.skills.spPerRank per Arcane rank (none at Arcane 0), + what worn gear adds (sp), + 2 per
+  // Familiar rank while it lives.
   function freshSP(c) {
-    const r = C().rank(c, 'casting');
+    const r = C().skill(c, 'arcane');
     if (r <= 0) return 0;
     const fam = C().rank(c, 'familiar') && c.companion && c.companion.familiar && !c.companion.status.dead ? 2 * C().rank(c, 'familiar') : 0;
-    return C().attr(c, 'INT') + CONFIG.magic.poolPerCasting * r + G.Effects.sum(c, 'sp') + fam;
+    return C().attr(c, 'INT') + CONFIG.skills.spPerRank * r + G.Effects.sum(c, 'sp') + fam;
   }
 
   // Less what the day's casting has worn off it (c.spWeary, CONFIG.magic.spWeary; a long rest clears it).
@@ -288,12 +289,12 @@
   // Caster's d10 + ⌊INT/2⌋ + Casting against the target's d10 + its resisting attribute
   // ('avoid' = ⌊(DEX + SPD)/4⌋, like a dodge; otherwise ⌊attribute/2⌋). Ties: the target.
   async function contest(roller, caster, target, attr, what) {
-    const cb = Math.floor(C().attr(caster, 'INT') / 2) + C().rank(caster, 'casting');
+    const cb = Math.floor(C().attr(caster, 'INT') / 2) + C().skill(caster, 'arcane');
     const tb = attr === 'avoid'
-      ? Math.floor((C().combatAttr(target, 'DEX') + C().combatAttr(target, 'SPD')) / 4)
+      ? Math.floor((C().combatAttr(target, 'DEX') + C().combatAttr(target, 'SPD')) / 4) + C().skill(target, 'evasion')
       : Math.floor(C().attr(target, attr) / 2);
     const rc = (await roller({ actorId: caster.id, sides: 10, count: 1, label: `${caster.name}: ${what}`, detail: `d10 + ${cb}` }))[0];
-    const rt = (await roller({ actorId: target.id, sides: 10, count: 1, label: `${target.name}: resist ${what}`, detail: `d10 + ${tb} (${attr === 'avoid' ? 'DEX/SPD' : attr})` }))[0];
+    const rt = (await roller({ actorId: target.id, sides: 10, count: 1, label: `${target.name}: resist ${what}`, detail: `d10 + ${tb} (${attr === 'avoid' ? 'DEX/SPD, Evasion' : attr})` }))[0];
     return { resisted: rt + tb >= rc + cb, a: rc + cb, b: rt + tb };
   }
 

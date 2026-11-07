@@ -111,7 +111,7 @@ test('Cleave: a blow that drops its foe carries on into another in reach', async
 
 test('Overchannel: a spell beyond the pool is paid in CON', async () => {
   const m = C.newCharacter({ name: 'Mage', side: 'party', starterGear: false });
-  m.feats.casting = 1; m.feats.verb_strike = 1; m.nouns = ['fire'];
+  m.skills.arcane = 2; m.feats.verb_strike = 1; m.nouns = ['fire'];
   m.feats.overchannel = 1;
   m.stamina = C.maxStamina(m);
   const o = C.attackOptions(m).find((x) => x.spell);
@@ -128,7 +128,7 @@ test('Overchannel: a spell beyond the pool is paid in CON', async () => {
 
 test('Steady Mind: bolts can be cast in a grapple', () => {
   const m = C.newCharacter({ name: 'Mage', side: 'party', starterGear: false });
-  m.feats.casting = 1; m.feats.verb_strike = 1; m.nouns = ['fire'];
+  m.skills.arcane = 2; m.feats.verb_strike = 1; m.nouns = ['fire'];
   m.status.grapple = { role: 'held', partner: 'someone' };
   assert.ok(C.isHeld(m));
   assert.ok(!C.attackOptions(m).some((x) => x.spell));
@@ -203,7 +203,7 @@ test('Sweep: a two-handed swing carries into a foe beside its target at half for
 
 test('Firestorm makes Fire + Wide a point cheaper; Ember Heart halves fire', () => {
   const m = C.newCharacter({ name: 'Pyre', side: 'party', starterGear: false });
-  m.feats.casting = 1; m.feats.verb_cover = 1; m.feats.mod_wide = 1; m.nouns = ['fire'];
+  m.skills.arcane = 2; m.feats.verb_cover = 1; m.feats.mod_wide = 1; m.nouns = ['fire'];
   const key = (o) => o.spellKey === 'cover+fire+wide';
   const all = () => B.Magic.spellOptions(m);
   const before = all().find(key);
@@ -347,7 +347,7 @@ test('Athletics: Bull Rush follows the shove; Charge adds to the next blow; Unst
   assert.deepEqual(h.enc.pos[u.id], { x: 5, y: 1 });
 });
 
-test('Deception: Feign Death hides you even up close; Dirty Trick leaves a baited foe exposed; Misdirection adds Feint', async () => {
+test('Deception: Feign Death hides you even up close; Dirty Trick leaves a baited foe exposed; Deception adds to bait and feints', async () => {
   const a = armed('Trickster', 'dagger', 'party'), b = armed('Mark', 'longsword', 'enemy');
   a.feats.feign_death = 1; a.feats.dirty_trick = 1; a.base.CHA = 12;
   const f = await field([[a, 1, 1], [b, 2, 1]]);
@@ -356,9 +356,9 @@ test('Deception: Feign Death hides you even up close; Dirty Trick leaves a baite
   f.enc.ap[a.id] = 500;
   assert.equal(await Combat.act(f.enc, f.chars, { actor: a.id, type: 'feign' }, io(recorder([]))), null);
   assert.ok(a.status.prone && Combat.unseenBy(f.enc, f.chars, a, b), 'unseen beside them');
-  assert.equal(B.Effects.sum(a, 'feint'), 0);
-  a.feats.misdirection = 2;
-  assert.equal(B.Effects.sum(a, 'feint'), 2);
+  assert.equal(Combat.feintScore(a), 0);
+  a.skills.deception = 2;
+  assert.equal(Combat.feintScore(a), 2);
 });
 
 test('Deception in parley: Cover Story loses no disposition when caught; The Big Lie lands for 2', () => {

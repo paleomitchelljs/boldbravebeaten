@@ -49,7 +49,7 @@
     G.DATA.TREES.length = 0;
     for (const k of Object.keys(G.DATA.FEATS)) delete G.DATA.FEATS[k];
     for (const t of trees || []) {
-      G.DATA.TREES.push({ id: t.id, name: t.name, attrs: t.attrs, group: t.group || null, branches: t.branches || [] });
+      G.DATA.TREES.push({ id: t.id, name: t.name, attrs: t.attrs, group: t.group || null, skill: t.skill || null, branches: t.branches || [] });
       for (const id of Object.keys(t.feats || {})) {
         const f = t.feats[id];
         G.DATA.FEATS[id] = Object.assign({ id, tree: t.id, requires: [], effect: '', auto: false }, f);
@@ -103,7 +103,16 @@
     const factions = W.factions || {};
     const npcs = W.npcs || {};
     const quests = W.quests || {};
-    const skills = W.skills || {};
+    const skillList = (W.skills && W.skills.skills) || {};
+    const checks = (W.skills && W.skills.checks) || {};
+    const skillOk = (where, id) => { if (!has(skillList, id)) err(`${where}: skill "${id}" is not in skills.yaml`); };
+    // A character's skills (a preset, a recruit, a monster, a template's band): known ids, 0–10.
+    const skillsOk = (where, sk) => {
+      for (const [k, v] of Object.entries(sk || {})) {
+        skillOk(where, k);
+        if (!(Number.isInteger(v) && v >= 0 && v <= ((G.CONFIG.skills || {}).max || 10))) err(`${where}: skill ${k} must be a whole number 0–${(G.CONFIG.skills || {}).max || 10}`);
+      }
+    };
     const goodExists = (id) => has(goods, id);
     // An item's tags: material, origin, craft and enchantments, checked against its kind.
     const tagsOk = (where, kind, type, e) => {
@@ -210,15 +219,23 @@
       if (t.faction && !has(factions, t.faction)) err(`foes.${id}: faction "${t.faction}" is not in factions.yaml`);
     }
     for (const f of Object.values(D.FEATS)) {
-      for (const alt of f.requires) for (const r of alt) { const fid = String(r).split(':')[0]; if (!has(D.FEATS, fid)) err(`feats.${f.id}: requires unknown feat "${fid}"`); }
+      for (const alt of f.requires) for (const r of alt) {
+        const p = String(r).split(':');
+        if (p[0] === 'skill') skillOk(`feats.${f.id}: requires`, p[1]);
+        else if (!has(D.FEATS, p[0])) err(`feats.${f.id}: requires unknown feat "${p[0]}"`);
+      }
       const t = D.TREES.find((x) => x.id === f.tree);
       if (f.branch && !t.branches.some((b) => b.id === f.branch)) err(`feats.${f.id}: branch "${f.branch}" is not one of ${f.tree}'s branches`);
       if (f.capstone && !f.branch) err(`feats.${f.id}: a capstone needs a branch`);
     }
-    for (const [id, s] of Object.entries(skills)) {
-      if (id === 'tn') continue;
-      for (const f of Object.keys(s.feats || {})) if (!has(D.FEATS, f)) err(`skills.${id}: feat "${f}" is not in feats.yaml`);
+    for (const [id, s] of Object.entries(checks)) if (s.skill) skillOk(`skills.checks.${id}`, s.skill);
+    for (const t of D.TREES) {
+      if (t.skill) skillOk(`feats.${t.id}`, t.skill);
+      for (const b of t.branches) if (b.skill) skillOk(`feats.${t.id}.branches.${b.id}`, b.skill);
     }
+    for (const [id, m] of Object.entries(G.Enemies.MONSTERS)) if (!m.group) skillsOk(`monsters.${id}.skills`, m.skills);
+    for (const [id, t] of Object.entries(G.Enemies.TEMPLATES)) (t.skills || []).forEach((b, i) => skillsOk(`foes.${id}.skills[${i}]`, b));
+    for (const [k, sk] of Object.entries(((G.CONFIG.skills || {}).retired || {}).feats || {})) skillOk(`rules.yaml skills.retired.${k}`, sk);
     for (const [id, f] of Object.entries(factions)) {
       for (const k of ['allies', 'enemies']) for (const o of f[k] || []) if (!has(factions, o)) err(`factions.${id}.${k}: "${o}" is not a faction`);
     }
@@ -338,7 +355,10 @@
       if (k.wield && !has(D.WEAPONS, k.wield)) err(`start.kits.${k.id}: weapon "${k.wield}" unknown`);
       if (k.sidearm && !has(D.WEAPONS, k.sidearm)) err(`start.kits.${k.id}: sidearm "${k.sidearm}" unknown`);
     }
-    for (const p of S.presets || []) for (const f of p.feats || []) if (!has(D.FEATS, f)) err(`start.presets.${p.name}: feat "${f}" unknown`);
+    for (const p of [].concat(S.presets || [], S.recruits || [], ...(S.trials || []).map((t) => t.party || []))) {
+      for (const f of p.feats || []) if (!has(D.FEATS, f)) err(`start: ${p.name}'s feat "${f}" unknown`);
+      skillsOk(`start: ${p.name}'s skills`, p.skills);
+    }
     // A caster whose first weapon takes both hands cannot cast (a spell needs a free hand) without Battle Casting,
     // unless it is a focus (a staff).
     for (const p of [].concat(S.presets || [], ...(S.trials || []).map((t) => t.party || []))) {

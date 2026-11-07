@@ -501,7 +501,7 @@
     if (!ui.cmd || ui.cmd.for !== id) {
       // A fighter's turn opens on the tab they last used; a caster's first turn on Magic.
       const last = ui.lastType && ui.lastType[id];
-      ui.cmd = { for: id, type: last || (model.magic.length && C.rank(c, 'casting') ? 'magic' : null), act: null, target: null, vs: '' };
+      ui.cmd = { for: id, type: last || (model.magic.length && C.skill(c, 'arcane') ? 'magic' : null), act: null, target: null, vs: '' };
     }
     const cmd = ui.cmd;
     if (!model.types.some((t) => t[0] === cmd.type)) cmd.type = model.types[0] ? model.types[0][0] : null;

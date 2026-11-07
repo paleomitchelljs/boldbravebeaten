@@ -103,7 +103,7 @@
     svg.setAttribute('aria-hidden', 'true');
     for (const f of feats) for (const g of f.requires) for (const s of g) {
       const r = C.parseReq(s);
-      if (!L.pos[r.id] || !L.pos[f.id]) continue;
+      if (!r.id || !L.pos[r.id] || !L.pos[f.id]) continue;
       line(svg, L.pos[r.id], L.pos[f.id], 'ft-line' + (C.rank(c, r.id) >= r.rank ? ' met' : '') + (g.length > 1 ? ' alt' : ''));
     }
     const nodes = feats.map((f) => {
@@ -130,11 +130,13 @@
     const tree = trees().find((t) => t.id === f.tree);
     const br = tree.branches.find((b) => b.id === f.branch);
     const T = G.CONFIG.tierThresholds;
+    const sk = C.featSkill(f);
+    const skName = sk ? ((G.Skills.skillDefs()[sk] || {}).name || sk) : null;
     const reqs = f.requires.map((g) => {
-      const met = g.some((s) => C.rank(c, C.parseReq(s).id) >= C.parseReq(s).rank);
+      const met = g.some((s) => C.reqMet(c, s));
       return h('li', { class: met ? 'met' : '' }, met ? '✓ ' : '✗ ', C.reqText(g));
     });
-    const tierAt = (i) => `${f.ranks[i]} (${T[f.ranks[i]]} in ${tree.name})`;
+    const tierAt = (i) => sk ? `${f.ranks[i]} (${skName} ${G.CONFIG.skills.tiers[f.ranks[i]]})` : `${f.ranks[i]} (${T[f.ranks[i]]} in ${tree.name})`;
     const closed = C.closedBy(c, f.id);
     const chk = o.can(f);
     return h('div', { class: 'ft-card panel stack tight' },
@@ -157,7 +159,8 @@
       if (!ts.length) return null;
       return h('div', { class: 'ft-group' }, h('span', { class: 'label' }, name), h('div', { class: 'row wrap' }, ts.map((t) => {
         const n = C.treeCount(c, t.id);
-        return h('button', { class: 'small ft-tab' + (o.tree === t.id ? ' selected' : '') + (n ? ' has' : ''), title: `${t.attrs} · ${C.tierName(C.tierCount(c, t.id))} tier`, onclick: () => o.onTree(t.id) }, t.name, n ? h('span', { class: 'ft-count' }, String(n)) : null);
+        const tip = t.skill ? `${(G.Skills.skillDefs()[t.skill] || {}).name || t.skill} ${C.skill(c, t.skill)}` : `${C.tierName(C.tierCount(c, t.id))} tier`;
+        return h('button', { class: 'small ft-tab' + (o.tree === t.id ? ' selected' : '') + (n ? ' has' : ''), title: `${t.attrs} · ${tip}`, onclick: () => o.onTree(t.id) }, t.name, n ? h('span', { class: 'ft-count' }, String(n)) : null);
       })));
     }));
   }

@@ -239,18 +239,22 @@ test('roll mode (without CONFIG.pierce): each leftover piercing point has a chan
   assert.strictEqual(tgt.damage.CON, 2);
 })));
 
-test('feat tiers and prerequisites', () => {
+test('feat tiers and prerequisites: the tree\'s skill unlocks its tiers; a requirement may be a skill', () => {
   const c = fighter('Learner');
   c.level = 10;
-  assert.strictEqual(C.canTakeFeat(c, 'quick_parry').ok, false);
-  C.addFeat(c, 'parry_training');
-  assert.strictEqual(C.canTakeFeat(c, 'quick_parry').ok, false, 'apprentice tier needs 2 feats in the tree');
-  C.addFeat(c, 'quick_thrust');
+  assert.strictEqual(C.canTakeFeat(c, 'quick_thrust').ok, false, 'a novice feat needs Melee 1');
+  C.raiseSkill(c, 'melee');
+  assert.strictEqual(C.canTakeFeat(c, 'quick_thrust').ok, true);
+  C.raiseSkill(c, 'melee');
+  assert.strictEqual(C.canTakeFeat(c, 'quick_parry').ok, false, 'apprentice tier needs Melee 3');
+  C.raiseSkill(c, 'melee');
   assert.strictEqual(C.canTakeFeat(c, 'quick_parry').ok, true);
-  assert.strictEqual(C.canTakeFeat(c, 'iron_stance').ok, false);
-  assert.strictEqual(C.canRemoveFeat(c, 'parry_training').ok, true, 'nothing depends on it yet');
+  assert.strictEqual(C.canTakeFeat(c, 'iron_stance').ok, false, 'Armor 0');
+  assert.strictEqual(C.canLowerSkill(c, 'melee').ok, true, 'nothing depends on it yet');
   C.addFeat(c, 'quick_parry');
-  assert.strictEqual(C.canRemoveFeat(c, 'parry_training').ok, false);
+  assert.strictEqual(C.canLowerSkill(c, 'melee').ok, false, 'Quick Parry needs Melee 3');
+  // A tree without a skill (Conditioning) still counts feats held in it.
+  assert.strictEqual(C.featSkill(B.DATA.FEATS.strength), null);
 });
 
 test('two-handed swings are unavailable while carrying a shield', () => {
@@ -357,10 +361,11 @@ test('reactions: the AI defends a blow worth stopping and lets armor take one th
   assert.strictEqual(ask(plated), null, 'in plate: let it glance off');
 }));
 
-test('Feint hides a blow from a defender without Read Attack: they defend blind, and a wrong guess is wasted', async () => {
+test('Feint hides a blow from a defender whose Anticipation is below the Deception: they defend blind, and a wrong guess is wasted', async () => {
   const a = fighter('Feinter', { side: 'party' });
   const b = fighter('Mark', { side: 'enemy' });
   a.feats.feint = 1;
+  a.skills = { deception: 2 };
   a.weapons.push(Items.makeWeapon('dagger'));
   a.wield = a.weapons[0].id;
   const chars = { [a.id]: a, [b.id]: b };
@@ -370,8 +375,8 @@ test('Feint hides a blow from a defender without Read Attack: they defend blind,
   enc.ap[b.id] = 5 * B.CONFIG.apScale;
   const blind = Combat.defenseOptions(enc, chars, b, a, d);
   assert.ok(blind.hidden && blind.options.length && blind.options.every((o) => o.odds === null), 'no odds when you cannot read it');
-  b.feats.read_attack = 1;
-  assert.ok(!Combat.describeDecl(enc, chars, d, b.id).hidden);
+  b.skills = { anticipation: 2 };
+  assert.ok(!Combat.describeDecl(enc, chars, d, b.id).hidden, 'Anticipation as high as the Deception reads it');
   assert.ok(Combat.defenseOptions(enc, chars, b, a, d).options.every((o) => o.odds != null));
 });
 
@@ -602,10 +607,11 @@ test('arrows: range 2+, use ammunition, cannot be parried', async () => {
 
 test('magic: words make spells; spell points, fire through armor, backlash', async () => {
   const m = fighter('Mage');
-  m.feats = { casting: 2, verb_strike: 1, verb_launch: 1, mod_strong: 1 };
+  m.feats = { verb_strike: 1, verb_launch: 1, mod_strong: 1 };
+  m.skills = { arcane: 4 };
   m.nouns = ['fire'];
   m.stamina = C.maxStamina(m);
-  assert.strictEqual(B.Magic.maxSP(m), 5 + 3 * 2);
+  assert.strictEqual(B.Magic.maxSP(m), 5 + 2 * 4, 'INT + 2 an Arcane rank');
   const labels = C.attackOptions(m).filter((o) => o.spell).map((o) => o.label).sort();
   assert.deepStrictEqual(labels, ['Launch + Fire', 'Launch + Fire + Strong', 'Strike + Fire', 'Strike + Fire + Strong']);
   const bolt = opt(m, (o) => o.label === 'Launch + Fire');
@@ -619,7 +625,7 @@ test('magic: words make spells; spell points, fire through armor, backlash', asy
   assert.strictEqual(h.toCON + h.bluntToStamina, mag - 2, 'plate stops 2 of the fire');
   // Tired casters draw less power.
   m.stamina = Math.floor(C.maxStamina(m) / 2);
-  assert.strictEqual(B.Magic.availableSP(m), 5);
+  assert.strictEqual(B.Magic.availableSP(m), 6);
   // Backlash: d10 = 1 vs cost 4 → 3 short → 6 stamina.
   assert.strictEqual(await B.Magic.backlash(m, 4, roller(1, [1])), 6);
   assert.strictEqual(await B.Magic.backlash(m, 4, roller(1, [7])), 0);
@@ -629,6 +635,7 @@ test('every feat rank can eventually be taken (no tier deadlocks)', () => {
   const F = B.DATA.FEATS;
   const c = fighter('Collector');
   c.level = 999;
+  for (const k of Object.keys(B.Content.world.skills.skills)) c.skills[k] = 10;
   let progress = true;
   while (progress) {
     progress = false;
@@ -777,7 +784,7 @@ test('grappling is exhausting: costly to start and to keep', async () => {
 // Two adjacent fighters for grappling tests; rolls come from the queue, attacker first.
 async function grapplePair(armor) {
   const a = armed('Grappler', 'dagger', { side: 'party' });
-  a.base.STR = 8; a.base.SPD = 9; a.base.CON = 10; a.feats.grappler = 1;
+  a.base.STR = 8; a.base.SPD = 9; a.base.CON = 10; a.skills.athletics = 1;
   const t = armed('Mark', 'longsword', { side: 'enemy' });
   t.base.STR = 6;
   if (armor) t.armor = Items.makeArmor(armor, 'full', 'standard');
@@ -1199,7 +1206,8 @@ test('conditions: slowed costs AP, rooted can\'t move, stoneskin turns blunt', (
 // A caster who knows every verb and modifier and the given nouns.
 function mage(name, nouns, opts) {
   const m = fighter(name, opts);
-  m.feats = { casting: 3 };
+  m.feats = {};
+  m.skills = { arcane: 6 };
   for (const [k, w] of Object.entries(B.CONFIG.magic.words)) if (w.feat) m.feats[w.feat] = 1;
   m.base.INT = 8;
   m.nouns = nouns;
@@ -1751,7 +1759,8 @@ test('impact: heavy blunt crushes, a hard blow throws its target back, and big b
   assert.ok(Combat.parryCarryShare(sturdy, 'parry', club) > 0.5, 'most of the club beats through the sword');
   const barb = fighter('Barbarian');
   barb.base.STR = 10; barb.base.DEX = 6; barb.base.SPD = 6;
-  barb.feats = { parry_training: 3, heavy_weapon_training: 2, strength: 2 };
+  barb.feats = { heavy_weapon_training: 2, strength: 2 };
+  barb.skills = { melee: 7 };
   const gs = Items.makeWeapon('greatsword', 'fine');
   barb.weapons.push(gs);
   barb.wield = gs.id;
@@ -2182,7 +2191,7 @@ test('a parry is worse than a block, nearing it as the parrying weapon outweighs
   assert.ok(lev('dagger') < 0, 'a dagger against a sword\'s swing is outweighed');
   const p = await defended('longsword', () => {}, (req) => (req.kind === 'defend' ? 'parry' : null));
   assert.strictEqual(p.spent, p.swing.ap + Math.round(p.swing.ap / 6), 'a sixth');
-  const beat = await defended('longsword', (b) => { b.feats.parry_training = 1; b.feats.beat = 2; }, (req) => (req.kind === 'defend' ? 'parry' : null));
+  const beat = await defended('longsword', (b) => { b.skills.melee = 2; b.feats.beat = 2; }, (req) => (req.kind === 'defend' ? 'parry' : null));
   assert.strictEqual(beat.spent, beat.swing.ap + Math.round(beat.swing.ap / 2), 'a sixth and two more with Beat II');
 });
 
@@ -2198,7 +2207,7 @@ test('a successful parry opens a riposte: anyone may answer for its AP, the Ripo
   assert.ok(asked.options[0].ap > 0, 'paid for');
   assert.ok(r.enc.decls.some((d) => d.riposte && d.actor === r.b.id), 'and makes it');
   asked = null;
-  const f = await defended('longsword', (b) => { b.feats.parry_training = 1; b.feats.riposte = 1; }, react);
+  const f = await defended('longsword', (b) => { b.skills.melee = 2; b.feats.riposte = 1; }, react);
   assert.ok(asked && asked.options.every((o) => o.ap === 0), 'free with the feat');
   asked = null;
   await defended('longsword', () => {}, (req) => (req.kind === 'defend' ? 'dodge' : react(req)));

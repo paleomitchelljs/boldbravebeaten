@@ -1,76 +1,164 @@
-# Checks outside combat. A check is d10 + floor(mean of attrs / 2) + (feat rank x weight) - armor penalty,
-# against a target number (tn in rules.yaml: trivial 4, easy 6, moderate 8, hard 11, formidable 14).
-# Who rolls: the party's best for perception and appraisal; the chosen member for locks and traps.
-# armorPenalty multiplies half the worn armor's SPD + DEX penalty.
+# Skills (the user, 2026-11-07). Each is 0-10 and adds +1 a rank to the rolls it governs. Points come with levels
+# (rules.yaml skills: start, perLevel) and may be spent whenever the party isn't fighting; no caps beyond 10. Skills
+# give numbers; feats give large benefits, and a feat tree (or branch) names the skill that unlocks it
+# (feats.yaml `skill`; the rank a tier needs is rules.yaml skills.tiers).
+# Worn gear and a monster's traits may add to a skill: effects {skills: {melee: 1}}.
+# `used`: where the rules read it, for the sheet and for authors. unused: true marks one no rule reads yet.
+skills:
+  melee:
+    name: Melee
+    blurb: Fighting hand to hand with a weapon, fists or claws.
+    used: "Striking and parrying: the gap between parrier and striker adds to the parry, and to a dodge or block of your blows."
+  ranged:
+    name: Ranged
+    blurb: Bows, slings and thrown weapons.
+    used: "Your shots against a block."
+  block:
+    name: Block
+    blurb: Taking a blow on a shield.
+    used: "Blocking: half the gap between your Block and the striker's skill. The shield's size counts as well."
+  armor:
+    name: Armor
+    blurb: Moving and fighting in armor.
+    used: "Each rank takes 5% off the armor's SPD, DEX and stamina penalties (half at 10)."
+  evasion:
+    name: Evasion
+    blurb: Not being where the blow lands.
+    used: "Dodging (with Anticipation), and avoiding a spell."
+  athletics:
+    name: Athletics
+    blurb: Climbing, leaping, forcing doors, shoving and wrestling.
+    used: "Forcing and leaping checks, grapple and shove rolls."
+  perception:
+    name: Perception
+    blurb: Noticing things around you.
+    used: "Spotting traps, hidden doors and lurking foes."
+  anticipation:
+    name: Anticipation
+    blurb: Reading others, in a fight or a talk.
+    used: "Dodging (with Evasion), reading intent and seeing through bait and feints, insight in a parley."
+  medicine:
+    name: Medicine
+    blurb: Wounds, sickness and the newly fallen.
+    used: "Bringing back one just fallen when a fight ends in time."
+  arcane:
+    name: Arcane knowledge
+    blurb: Knowing magic, and casting it.
+    used: "Spell points (2 a rank, with INT), the casting roll against a target's resistance, old inscriptions."
+  nature:
+    name: Nature knowledge
+    blurb: Plants, beasts, weather and trails.
+    used: "Finding components when camping."
+  persuasion:
+    name: Persuasion
+    blurb: Winning someone over honestly.
+    used: "Charm and appeal in a parley."
+  intimidation:
+    name: Intimidation
+    blurb: Frightening someone into going along.
+    used: "Intimidation in a parley."
+  deception:
+    name: Deception
+    blurb: Saying what is not so and being believed; feints and bait.
+    used: "Deception in a parley, baiting a foe in a fight; with the Feint feat, blows a lower Anticipation can't read."
+  alchemy:
+    name: Alchemy
+    blurb: Potions, poisons and reagents.
+    unused: true
+  metalwork:
+    name: Metalwork
+    blurb: Smithing and mending metal gear.
+    unused: true
+  carpentry:
+    name: Carpentry
+    blurb: Wood: hafts, bows, shields, doors and camps.
+    unused: true
+  devices:
+    name: Devices
+    blurb: Locks and traps.
+    used: "Picking locks and disarming traps."
+  stealth:
+    name: Stealth
+    blurb: Moving unseen and unheard.
+    used: "Sneaking. Heavy armor is loud."
+  appraisal:
+    name: Appraisal
+    blurb: What a thing is worth and what it carries.
+    used: "Judging items."
 
-perception:
-  name: Perception
-  attrs: [WIS]
-  feats: {keen_eye: 2}
-  blurb: Notice traps, hidden doors and lurking foes.
-stealth:
-  name: Stealth
-  attrs: [DEX, SPD]
-  feats: {stealth: 2}
-  armorPenalty: 1.5
-  blurb: Move unseen. Heavy armor is loud.
-lockpicking:
-  name: Lockpicking
-  attrs: [DEX, INT]
-  feats: {lockpicking: 2}
-  blurb: Open a lock without the key. A fumble can jam it.
-trapcraft:
-  name: Trapcraft
-  attrs: [DEX, INT]
-  feats: {trap_craft: 2, keen_eye: 1}
-  blurb: Disarm a trap you have found.
-forcing:
-  name: Forcing
-  attrs: [STR]
-  feats: {brute_force: 2}
-  blurb: Break a door or lid open. Loud.
-appraisal:
-  name: Appraisal
-  attrs: [INT, WIS]
-  feats: {appraise: 3}
-  blurb: Judge what an item is worth and what it carries.
-herbalism:
-  name: Herbalism
-  attrs: [WIS, INT]
-  feats: {herbalism: 2}
-  blurb: Find and prepare plants. Used when camping.
-lore:
-  name: Lore
-  attrs: [INT]
-  feats: {ritualist: 1, read_spell: 1}
-  blurb: Read old inscriptions and marks.
-charm:
-  name: Charm
-  attrs: [CHA]
-  feats: {silver_tongue: 1}
-  blurb: Warm someone to you.
-insight:
-  name: Insight
-  attrs: [WIS]
-  feats: {read_the_room: 1, read_intent: 1}
-  blurb: Read what a person feels and wants.
-intimidation:
-  name: Intimidation
-  attrs: [STR, CHA]
-  feats: {intimidate: 2}
-  blurb: Frighten someone into going along. Armor and a name for violence help.
-deception:
-  name: Deception
-  attrs: [INT, CHA]
-  feats: {liar: 2, leading_questions: 1}
-  blurb: Say what is not so, and be believed.
-appeal:
-  name: Appeal
-  attrs: [INT, CHA]
-  feats: {appeal_to_interest: 2}
-  blurb: Show someone how helping you serves their own ends.
-medicine:
-  name: Medicine
-  attrs: [INT, WIS]
-  feats: {field_dressing: 1, wound_tending: 2, surgeon: 2}
-  blurb: Bring back one just fallen, when a fight ends in time.
+# Checks away from the fight: d10 + floor(mean of attrs / 2) + the skill's rank - armor penalty, against a target
+# number (tn in rules.yaml: trivial 4, easy 6, moderate 8, hard 11, formidable 14). Who rolls: the party's best for
+# perception and appraisal; the chosen member for locks and traps. armorPenalty multiplies half the worn armor's
+# SPD + DEX penalty.
+checks:
+  perception:
+    name: Perception
+    attrs: [WIS]
+    skill: perception
+    blurb: Notice traps, hidden doors and lurking foes.
+  stealth:
+    name: Stealth
+    attrs: [DEX, SPD]
+    skill: stealth
+    armorPenalty: 1.5
+    blurb: Move unseen. Heavy armor is loud.
+  lockpicking:
+    name: Lockpicking
+    attrs: [DEX, INT]
+    skill: devices
+    blurb: Open a lock without the key. A fumble can jam it.
+  trapcraft:
+    name: Trapcraft
+    attrs: [DEX, INT]
+    skill: devices
+    blurb: Disarm a trap you have found.
+  forcing:
+    name: Forcing
+    attrs: [STR]
+    skill: athletics
+    blurb: Break a door or lid open, or leap a gap. Loud.
+  appraisal:
+    name: Appraisal
+    attrs: [INT, WIS]
+    skill: appraisal
+    blurb: Judge what an item is worth and what it carries.
+  herbalism:
+    name: Herbalism
+    attrs: [WIS, INT]
+    skill: nature
+    blurb: Find and prepare plants. Used when camping.
+  lore:
+    name: Lore
+    attrs: [INT]
+    skill: arcane
+    blurb: Read old inscriptions and marks.
+  charm:
+    name: Charm
+    attrs: [CHA]
+    skill: persuasion
+    blurb: Warm someone to you.
+  insight:
+    name: Insight
+    attrs: [WIS]
+    skill: anticipation
+    blurb: Read what a person feels and wants.
+  intimidation:
+    name: Intimidation
+    attrs: [STR, CHA]
+    skill: intimidation
+    blurb: Frighten someone into going along. Armor and a name for violence help.
+  deception:
+    name: Deception
+    attrs: [INT, CHA]
+    skill: deception
+    blurb: Say what is not so, and be believed.
+  appeal:
+    name: Appeal
+    attrs: [INT, CHA]
+    skill: persuasion
+    blurb: Show someone how helping you serves their own ends.
+  medicine:
+    name: Medicine
+    attrs: [INT, WIS]
+    skill: medicine
+    blurb: Bring back one just fallen, when a fight ends in time.

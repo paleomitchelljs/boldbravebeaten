@@ -9,32 +9,25 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   Goblins, goblin archers, fire goblins and barracks goblin warriors: padded (were leather, mail). Gnome warriors:
   leather (were mail). Generated humans (foes.yaml) never roll mail or plate, except the knight. Kept: the goblin
   champion (mail), goblin king (half plate), revenant knight (plate). Natural hides and scales unchanged.
-- [ ] Skills overhaul (the user, 2026-11-07): generic numeric skills (melee, block, armor, perception, anticipation,
-  medicine, arcane, nature, persuasion, intimidation, deception, alchemy, metalwork, carpentry, devices, stealth…)
-  that give numbers and unlock feats; feats give large benefits; everything gets skills. Design questions put to the
-  user before building.
-- [x] Skill in defence (the user, 2026-11-07), `CONFIG.defense.skill`: the defender adds (their skill in the defence −
-  the attacker's with the blow), at most ±4; a block half that, ±2. Skill = feat ranks in a pool + an effects `skill`
-  key (monster trait, gear) in every pool. Weapon pools by the blow (`C.weaponSkillTree`): very light/light → Light
-  weapons, medium/heavy → Heavy weapons, fists and natural weapons → Hand-to-hand, bows → Archery, spells none.
-  Parry: the parrying weapon's tree. Dodge: Evasion + Perception's Watcher. Block: Armor and shields' Bulwark (shield
-  size stays in the roll). Separate from parryCarry. Cyrus vs a goblin: parry +3 (thrust 94%, swing 97%), dodge +1;
-  a goblin dodging Cyrus's rapier −3. Monster `level` not used.
-- [ ] Parry Training sits in Light weapons, so a longsword parrier gets its +1 but no skill credit for it. Monsters
-  with natural weapons have no Hand-to-hand feats: give trained ones `traits.skill`. Ask the user.
-- [x] Defer stays "the next in order, friend or foe" (the user). Monsters never deferring is fine for now.
-- [x] Jabiku knows Transfer + Life alone (with Launch, Burst, Casting II). Transfer no longer needs Increase or
-  Decrease. Aimed at an ally it gives ("Transfer + Life (to an ally)", spell shape `give`): ⌈mag/2⌉ points of his
-  own life, each a lost CON mended or else 3 stamina, each costing him 3 stamina (never his last); stops bleeding;
-  calls back the revivably dead. The AI weighs it. Tests in tests/life-words.test.js.
-- [x] A fight won while one of the party is revivable: a companion with a spell that calls back the dead and the SP
-  casts it; else the best at Medicine (new skill: INT, WIS; Field Dressing, Wound Tending, Surgeon) rolls against
-  moderate (8). Result lines on the after-fight screen. `saveFallen` in src/game/battle.js.
-- [x] Defer: on your turn, 1 AP lets the next in the initiative order (friend or foe) go now; your turn resumes after
-  theirs, repeatable (`CONFIG.defer`, `Combat.defer`, `legal.defer`). A button beside End turn ("Defer → Cyrus · 1 AP",
-  key D). Seen in headless Chrome, desktop and phone. tests/parry-defer-revive.test.js.
-- [ ] hero.test.js: three ogres no longer always beat a hero party (seed 2 wins), so the test now asks for a loss in
-  at least one of three seeds.
+- [x] Skills, phase A (the user, 2026-11-07; rulings in memory and data/skills.yaml): twenty skills 0–10 (melee,
+  ranged, block, armor, evasion, athletics, perception, anticipation, medicine, arcane, nature, persuasion,
+  intimidation, deception, alchemy, metalwork, carpentry, devices, stealth, appraisal). 10 points at level 1, +3 a
+  level, no caps but 10 (rules.yaml `skills`). `C.skill/skillBudget/raiseSkill/canLowerSkill`. Checks (skills.yaml
+  `checks`) are attrs + one skill. Defences: parry Melee, dodge Evasion + Anticipation, block ½ Block, each against
+  Melee / Ranged / Arcane. Armor: −5% of armor penalties a rank. Athletics: grapple, shove, trip, footing. Arcane:
+  SP (INT + 2 a rank), casting roll. Evasion: avoiding spells. Anticipation/Deception: read intent, bait, feints
+  (Feint is now one rank: blows hidden from a lower Anticipation). Intimidation: Demoralize.
+- [x] Feats unlock by skill: a tree (or branch) names its skill; tiers need novice 1, apprentice 3, adept 5, expert 7,
+  master 9. Requirements may be "skill:melee:4". Fifteen number-only feats retired into skills (rules.yaml
+  skills.retired; old saves convert 2 ranks a feat rank, save VERSION 5). Every monster, template band, preset and
+  recruit has skills. Training anywhere outside a fight (CLAUDE.md philosophy line changed).
+- [ ] Skills, phase B: the screens. Spend points on the sheet (any time out of a fight) and at creation; the feat
+  tree shows skill needs (done); the sheet's skill chips.
+- [ ] Alchemy, metalwork and carpentry do nothing yet (no crafting). Number feats still left for the revamp: Control,
+  Wound Tending, the armor mobility/endurance feats, Heavy Weapon Training, Bane Lore.
+- [ ] sim/ builds (sim/lib.js, dk-scaling.js) still list retired feats and have no skills; fix before the next sim.
+- [ ] SP pools rose (INT + 2 an Arcane rank against INT + 3 a Casting rank): Jabiku 18 (was 14). Encounter tuning
+  is deferred.
 
 ## Feat trees overhaul (the user, 2026-11-05; design in docs/PROPOSALS.md §3)
 Ruled: no callings (branches and capstones carry the class), 1 feat a level, build the unbuilt feats first, then all

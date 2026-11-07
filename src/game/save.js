@@ -14,7 +14,7 @@
 
   const store = () => { try { return globalThis.localStorage || null; } catch (e) { return null; } };
 
-  const VERSION = 4;
+  const VERSION = 5;
 
   // An item from before version 3: quality became craft; scale armor (no longer a tier) became steel mail; a
   // drinking blade's own `enchant: {drain}` became the drinking enchantment; `magical` (from the testbed) is dropped,
@@ -32,6 +32,20 @@
 
   // Steps for one character (a party member, a companion, a foe in a saved fight), keyed by the version they leave.
   const CHAR_STEPS = {
+    // Skills (the user, 2026-11-07): feats that were only a number became skills (rules.yaml skills.retired); each rank
+    // held becomes perRank ranks of its skill (to the top), the feat goes, and Feint is one rank now. Points left over
+    // wait to be spent.
+    4: (c) => {
+      const R = (G.CONFIG.skills && G.CONFIG.skills.retired) || { feats: {}, perRank: 2 };
+      const F = c.feats || {};
+      c.skills = c.skills || {};
+      for (const [f, sk] of Object.entries(R.feats || {})) {
+        if (!F[f]) continue;
+        c.skills[sk] = Math.min((G.CONFIG.skills.max || 10), (c.skills[sk] || 0) + F[f] * (R.perRank || 2));
+        delete F[f];
+      }
+      if (F.feint > 1) F.feint = 1;
+    },
     // The preset party's colour washes (there to tell stock figures apart) came off members drawn with their own art.
     3: (c) => {
       const L = c.look;

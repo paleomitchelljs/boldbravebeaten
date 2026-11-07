@@ -21,7 +21,7 @@ No anchors or tags. Keys must be unique.
 | `spells.yaml` | The magic grammar: verbs, nouns, modifiers. |
 | `monsters.yaml` | Creatures and packs. |
 | `foes.yaml` | Templates for generated people (bandit, militia…), scaled by level. |
-| `skills.yaml` | Checks outside combat: attributes, feats that add, armor penalty. |
+| `skills.yaml` | `skills`: the twenty skills (0–10, +1 a rank; `used` says where the rules read each, `unused: true` none yet). `checks`: checks outside combat, each attributes + one skill + an armor penalty. Points and feat tiers: rules.yaml `skills`. A preset, recruit, monster or template band (`skills: [{…}, {…}, {…}]`) has `skills: {melee: 3}`. |
 | `items.yaml` | `goods` (supplies, potions, oils, keys, books, trinkets, trade goods, components) and loot `tables`. |
 | `factions.yaml` | Who is who, allies, enemies, start standing, ranks, perks. |
 | `npcs.yaml` | People you can talk to, with topics. |
@@ -56,9 +56,8 @@ a weapon's `trait`, an enchantment's `effects` and `strike`, a trinket's `effect
 condition's fields. `validate` rejects a key not on it. The rules ask `Effects.sum/mult/has/list(c, key)`, which reads
 every source at once, so a ring of `dodge: 1`, the Dodge Training feat (`effects: {dodge: 1}`) and a nimble monster's
 `traits: {dodge: 2}` all count the same way. A new key means new rules code, and an entry there.
-`skill` (a trait or gear effect) adds to every skill pool a defence compares (CONFIG.defense.skill): skill with the
-blow's weapon, and in parrying, dodging and blocking. A monster with no feats has none; give a trained one
-`traits: {skill: 3}` rather than feats it never uses.
+`skills: {melee: 1}` (a trait or gear effect) adds to a skill, as if trained. A monster's own skills are its
+`skills` field.
 
 A pack is `{name, group: [wolf, wolf, alphaWolf]}`. Use it in an encounter: `{monster: bogHag}`. An encounter's foe may
 dress its monster in another art entry (another colour of the same creature) with `sprite`: `{monster: scaleward,

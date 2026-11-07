@@ -134,7 +134,7 @@
     }
     const herb = G.Skills.bestCheck(World.active(w), 'herbalism', 8, 0);
     const lines = r.lines.slice();
-    if (herb.ok && G.Character.rank(G.Skills.best(World.active(w), 'herbalism'), 'herbalism')) { World.addGood(w, 'herbs', 1 + (herb.margin >= 4 ? 1 : 0)); lines.push('A forager among you finds hedge herbs.'); }
+    if (herb.ok && G.Character.skill(G.Skills.best(World.active(w), 'herbalism'), 'nature')) { World.addGood(w, 'herbs', 1 + (herb.margin >= 4 ? 1 : 0)); lines.push('A forager among you finds hedge herbs.'); }
     game.save();
     // Anyone with a feat to spend can train before breaking camp.
     const spare = World.living(w).reduce((t, c) => t + Math.max(0, G.Character.featBudget(c) - G.Character.featCount(c)), 0);

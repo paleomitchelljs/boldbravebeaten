@@ -656,21 +656,7 @@
       // 3); a sword against a greatsword −1, against a giant's club −2. The attacker's side is the same as against a
       // block or a dodge (⌊(STR + SPD)/4⌋ + motion), so between equal weapons the odds are about what they were.
       leverage: { max: 3 },
-      // PROVISIONAL (the user, 2026-11-07: a skilled swordsman turns a novice's blows aside almost every time; a
-      // skilled blow is harder to dodge, a little harder to block). The defender adds share[kind] × per × (their skill
-      // in the defence − the attacker's with the blow), rounded, within ±share[kind] × max. Skill is feat ranks held
-      // ("tree" or "tree.branch"), + effects `skill` (a monster's traits, gear) in every pool. The attacker's: the tree
-      // of the blow (`weapon`: by the weapon's weight; fists and natural weapons; bows; a spell has none). Parry: the
-      // parrying weapon's tree. Dodge: Evasion and Perception's Watcher (reading the blow). Block: Armor and shields'
-      // Bulwark (the shield's size is in the roll already). Cyrus (3 Light weapons ranks) against a goblin's club
-      // (none): +3 to parry, a kobold's spear thrust parried 94% (was 79%), the club 97% (was 85%). This is apart from
-      // parryCarry: a heavy blow parried still carries through however skilled the parry.
-      skill: {
-        per: 1, max: 4, share: { parry: 1, dodge: 1, block: 0.5 },
-        weapon: { 'very light': 'lightWeapons', light: 'lightWeapons', medium: 'heavyWeapons', heavy: 'heavyWeapons', natural: 'handToHand', ranged: 'archery' },
-        dodge: ['evasion', 'perception.watcher'],
-        block: ['armorShields.bulwark'],
-      },
+      // Skill in a defence: CONFIG.skills.defense (data/rules.yaml skills).
       // PROVISIONAL (the user's idea): a parried swing whose force beats the parrying weapon's carries through,
       // weakened: share × (force − mine) / force of each face lands (rounded down). A parried thrust is stopped:
       // turning a point aside takes little force. motions: which blows can carry through a parry.
@@ -815,7 +801,7 @@
 
   // Every PROVISIONAL choice, shown on the Rules tab so nothing is hidden.
   CONFIG.provisional = [
-    'Skill in defence (the user, 2026-11-07): a parry or a dodge adds the defender\'s skill in it − the attacker\'s with the blow, at most ±4; a block half that (at most ±2). Skill is feat ranks: with a weapon, its tree (light or heavy weapons by weight, hand-to-hand, archery); dodging, Evasion and Perception\'s Watcher; blocking, the Bulwark branch. Apart from the carry-through of a heavy blow parried. A monster\'s `skill` trait counts in every pool. A level-3 fencer parries an untrained goblin\'s spear thrust 94% of the time (was 79%).',
+    'Skills (the user, 2026-11-07): twenty skills, 0–10, +1 a rank to the rolls they govern; 10 points at level 1 and 3 a level, spent whenever the party isn\'t fighting. Skills give numbers, feats large benefits; a tree\'s skill unlocks its feats (novice 1, apprentice 3, adept 5, expert 7, master 9). Feats that were only a number became skills. Defences add the gap between the defender\'s skill and the attacker\'s: parry Melee, dodge Evasion + Anticipation, block half of Block; against Melee, Ranged or Arcane.',
     'Transfer gives as well as takes (the user, 2026-11-07): aimed at an ally, Transfer + Life gives them the caster\'s own life: what a drain would take (half the magnitude, rounded up) in points, each mending a lost CON or, with none lost, 3 stamina, each costing the caster 3 stamina (never their last); it stops bleeding and calls back the revivably dead. Transfer no longer needs Increase or Decrease first.',
     'Saving the fallen after a fight (the user, 2026-11-07): when a fight is won while a party member is dead but still revivable, a companion with a Life spell that calls back the dead and the points for it casts it; failing that, the party\'s best healer makes a Medicine check (moderate) to bring them back unconscious.',
     'Defer (the user, 2026-11-07): on your turn, pay 1 AP to let the next one in the initiative order take their turn now; yours resumes after theirs, with what AP you have left. As often as the AP lasts.',
