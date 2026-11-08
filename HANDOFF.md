@@ -1,8 +1,23 @@
 # To do
 
-Last updated at commit: e7af8a5
+Last updated at commit: d42f0cc
 
 Keep this a short list. Tick things off, add new ones, and refresh the commit line after every push (`git log -1 --format=%h`).
+
+## Cinder Mine art, the Black Hills, fire creatures (the user, 2026-11-07; assets/wip/cinder/)
+- [x] The mine's basalt places: umber cave walls and a dusty brown floor after the old goblin-cave screenshots; floor
+  decor (rocks, glowing cracks, ore, stalagmites, bones) and wall faces (torches, red skull banners, gold glyphs, lava
+  seeps, timbers, chains). Mine clutter props `cl_*` and `fire_brazier` exist but no legend places them yet.
+- [x] The Black Hills (`mine_approach`, tileset `cinder_hills`): ash, old cooled flows (`{`), the mine's brown floor
+  as a two-wide trail (`≡`), lava under a crusted bank, basalt hills with crag crests, props (spires, columns, a dead
+  tree, a fumarole, a cairn, a signpost, bones). Seen in headless Chrome at both ends.
+- [x] Animated and wired: imp (hovering), efreeti (floats now), lava beetle, fire elemental (replaces the golem
+  stand-in), giant bat (the dusk bat's figure), black widow (the giant spider's). New monsters `imp` and `lavaBeetle`
+  (weight-1 wanderers in the lake and the hall; untuned). Seen drawing in a fight in the hall.
+- [ ] Not looked at: the masonry and gnome places beside the new basalt (they keep first-pass art); the basalt doors
+  (doors.png, cut for the old wall) against the new face; any of the new clips actually playing (screenshots are still).
+- [ ] The efreet lord is still the avatar stand-in. The badger-man, Sorkvild and the troll knight are not animated.
+- [ ] Floating figures don't rise off the ground; a small bob for `floats` figures would sell the imp and efreeti.
 
 ## Parry skill, Jabiku's Transfer, saving the fallen, Defer (the user, 2026-11-07)
 - [x] Armor is rare among foes (the user, 2026-11-07): the rank and file wear cloth (padded) or leather at most.
