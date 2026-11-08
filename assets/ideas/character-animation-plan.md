@@ -194,6 +194,7 @@ what the next dungeon (the fire-goblin mine, `assets/ideas/ember-mine.md`) needs
 | Thrusts (the user, 2026-11-01: every non-archer hero a swing and a thrust) | Beren ×8 (`Thrust`; W re-rolled: the point went behind him); Cyrus S ×2 (1st raised the blade to the side and made it straight; deleted), ×7 (`Thrust2`; E, W re-rolled: blade drawn back); Jabiku S ×2 (1st swung the staff round and kept it level; deleted), ×7 (`Thrust2`) | 32 | | Jabiku jabs with the butt in SE, N, NW, SW, as the rules have it; Cyrus E frames 4-5 show the sabre in both hands for a moment |
 
 | South, Tarnhold, grassland (not character work) | 18 pro tilesets, ~70 props, 4 object animations | ~610 | | assets/wip/south/, assets/wip/tarn/ |
+| Tarnhold second pass, the orc valley (not character work, 2026-11-08) | 19 pro tilesets (one road re-rolled), 5 prop sheets | ~525 | 2117 | assets/wip/orc/ |
 
 ## Cycle 3 (2026-11-01): the recruits and the new creatures
 

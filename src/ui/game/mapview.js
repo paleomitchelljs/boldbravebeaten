@@ -102,6 +102,13 @@
   // courses under it are drawn again over the lower half of the wall's last row, so the top recedes and the face
   // stands about a head taller than a person. A tileset with tallFaces: false keeps the short faces.
   let liftScratch = null;
+  // A planTiles plan painted: ground, corners, floor decor, bridges, then `lift` (raising the wall faces, which copies
+  // them upward), then the pieces hung on the faces, so the lift doesn't copy them a second time.
+  function paintPlan(ctx, tp, ts, env, lift) {
+    for (const k of ['base', 'corner', 'decor', 'over']) for (const c of tp[k]) if (!(k === 'decor' && c.face)) Tilemap.paintTiles(ctx, c, ts, env, k);
+    lift();
+    for (const c of tp.decor) if (c.face) Tilemap.paintTiles(ctx, c, ts, env, 'decor');
+  }
   function liftFaces(ctx, sc, x0, y0, ox, oy, size) {
     if (typeof document === 'undefined' || !ctx.canvas) return;
     const solid = (x, y) => { const c = sc.cell(x, y); return !!c && (c.kind === 'wall' || c.kind === 'rock' || !!(c.def && c.def.wall)); };
@@ -507,8 +514,7 @@
       const look = (n) => { const o = img(n); if (!o.ok && !o.failed) loading = true; return o; };
       const env2 = Object.assign({}, env, { ox: ox2, oy: oy2, img: look, imgAt: look });
       const tp = Tilemap.planTiles(sc, ts, X0 - 1, Y0 - 1, X0 + CHUNK + 2, Y0 + CHUNK + 2);
-      for (const k of ['base', 'corner', 'decor', 'over']) for (const c of tp[k]) Tilemap.paintTiles(c2, c, ts, env2, k);
-      if (ts.raw.tallFaces !== false) liftFaces(c2, sc, X0, Y0, ox2, oy2, size);
+      paintPlan(c2, tp, ts, env2, () => { if (ts.raw.tallFaces !== false) liftFaces(c2, sc, X0, Y0, ox2, oy2, size); });
       return { canvas: cv, loading };
     }
     function groundChunks(ctx, sc, ts, env, x0, y0, ox, oy, size) {
@@ -611,8 +617,7 @@
         if (HAS_IMG) groundChunks(ctx, sc, ts, env, x0, y0, ox, oy, size);
         else {
           const tp = Tilemap.planTiles(sc, ts, x0 - 1, y0 - 1, x0 + cols, y0 + rows);
-          for (const k of ['base', 'corner', 'decor', 'over']) for (const c of tp[k]) Tilemap.paintTiles(ctx, c, ts, env, k);
-          if (ts.raw.tallFaces !== false) liftFaces(ctx, sc, x0, y0, ox, oy, size);
+          paintPlan(ctx, tp, ts, env, () => { if (ts.raw.tallFaces !== false) liftFaces(ctx, sc, x0, y0, ox, oy, size); });
         }
         plan.shown = {};
         for (let y = y0 - 1; y <= y0 + rows; y++) for (let x = x0 - 1; x <= x0 + cols; x++) {

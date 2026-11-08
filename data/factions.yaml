@@ -87,3 +87,13 @@ deep_gnomes:
   enemies: [cinder_goblins]
   ranks: [[0, Stranger], [10, Friend of the fort], [30, Rock-brother]]
   perks: [[10, The fort's gate opens to you]]
+# The orc valley off the East Tarnvale (assets/ideas/orc-valley.md).
+orc_legion:
+  name: The orc legion
+  blurb: The orcs of the valley, drilled in legions under an emperor in his castle; they keep slaves in their quarry and pits, and raid the vales for more.
+  start: -20
+  kos: 0
+  allies: []
+  enemies: []
+  ranks: [[-20, Trespasser]]
+  perks: []

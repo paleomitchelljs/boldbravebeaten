@@ -529,7 +529,7 @@
       const dy = where === 'face' ? (pc[5] != null ? pc[5] : band[0] + Math.round((band[1] - pc[4]) / 2)) : m - sp + (hash(x, y, 61 + i) % (room(pc[4]) + 1));
       // `drop` (art pixels) lowers a face piece by up to that much, so a row of vines doesn't hang level; `flip` lets
       // pieces mirror left to right.
-      out.push({ x, y, piece: pc, dx, dy: dy + (where === 'face' && d.drop ? hash(x, y, 81 + i) % (d.drop + 1) : 0), flip: !!d.flip && hash(x, y, 91 + i) % 2 === 1 });
+      out.push({ x, y, piece: pc, dx, dy: dy + (where === 'face' && d.drop ? hash(x, y, 81 + i) % (d.drop + 1) : 0), flip: !!d.flip && hash(x, y, 91 + i) % 2 === 1, face: where === 'face' });
     }
   }
 

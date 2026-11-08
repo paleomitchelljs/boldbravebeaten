@@ -75,3 +75,20 @@ figure).
 | A goblin painted all over as a clockwork man | `ember_castle` `u` | the orange goblin, larger |
 | A gnome crossbowman (Watchman Tibb) | `ember_gnomes` `W` | the bald old man at 0.8× |
 | The rest of the mine's cast | `ember-mine.md` §3 | see there |
+
+## The orc valley (2026-11-08; assets/ideas/orc-valley.md)
+
+| What | Where | Now | Kind |
+|---|---|---|---|
+| A longhut and a log cabin drawn front-on | `orc_valley` `n`, `C` | PixelLab's, leaning corner-on | prop |
+| Mine clutter in grey (picks, ladders, buckets) | `orc_mines` | the fire mine's umber clutter | prop |
+| The gold coin over the throne, as a wall piece placed by hand | `orc_castle` throne room | only in the throne's label (the piece is in wall-decor.png, scattered at random) | placing |
+
+### Figures (the user's)
+
+| What | Where | Now |
+|---|---|---|
+| Orc legionnaire (spear, round shield), centurion (mail, longsword) | `orc_valley`, `orc_castle` | the orc |
+| The emperor: huge, blue-grey, scale armour, a hammer | `orc_castle` `E` | the orc at 1.35× |
+| The prophet (bones, a staff), the emissaries, the warlord | `orc_castle` | the orc tinted; the orc warrior |
+| Slaves (human, elf, dwarf), the gnome in the pits | `orc_valley`, `orc_mines` | notes, no figures |

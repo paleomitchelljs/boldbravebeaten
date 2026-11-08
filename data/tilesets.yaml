@@ -1290,34 +1290,33 @@ tarnvale:
     # The gatehouse astride two squares (the gap in Tarnhold's north wall), from the left square's top-left.
     gatehouse_wide: [props.png, 1512, 0, 134, 119, -3, -55]
 
-# Tarnhold and the Tarnvales again (the user, 2026-11-01; assets/wip/tarn/): a gravel canyon floor (PixelLab base
-# c4c81e36) with every set chained to it: a cobbled road, a river with rocky banks, a rope-bridge deck over the river
-# (the water cut away), a walkable rock shelf for overlooks, the fortress wall and the mountains on gravel, towers
-# raised on the wall; the mountains climb in rings (the south's ledge and summit). Props: war debris, bigger trees,
-# steps, an animated waterfall.
+# Tarnhold and the Tarnvales, second pass (the user, 2026-11-08: match the sprites and the redrawn Black Hills; the
+# mountains another colour than the lava hills; sloped walls so the tops read as peaks; plateaus and passes that vary in
+# height). assets/wip/orc/ (build.py, README.md): grey granite over a grey-brown gravel floor (PixelLab base 091b1684),
+# every set chained to it. The rock is a cliff; the rings above it (tiers.py) are sloped banks, a scree shoulder and a
+# snow-dusted peak. Two walkable levels, the upland ({) and the high plateau (▓), climb from the floor in sloped banks.
 tarnhold:
   cell: 64
   dir: art/worldtiles/tarn/
   floor: cobbles
   terrains:
-    water: {color: "#2f5a58", tile: water.png}
-    # The gravel is the river's upper ground; the road below is laid over the gravel (its sheet read the other way up).
+    water: {color: "#2f4a48", tile: ../highland/water.png}
+    # The gravel is the river's upper ground; everything else is laid over the gravel.
     grass:
-      color: "#7a6a58"
-      tile: gravel.png
-      wang: river.png
+      color: "#6a5e4c"
+      tile: ../highland/gravel.png
+      wang: ../highland/river.png
       over: water
       decor: {density: 0.35, clump: 6, flip: true, spread: 8, pieces: [[../temple/court-decor.png, 192, 0, 16, 10], [../temple/court-decor.png, 0, 0, 22, 23], [../temple/court-decor.png, 128, 0, 28, 24]]}
-    cobbles:
-      color: "#77746c"
-      tile: cobbles.png
-      wang: canyon-road.png
-      over: grass
-      corners: [LLUL, LULU, ULUU, LLUU, ULLU, LUUU, UUUU, UUUL, LULL, UULL, UULU, ULUL, LLLL, LLLU, LUUL, ULLL]
+    cobbles: {color: "#8a7a5e", wang: ../highland/road2.png, over: grass}
     bridge: {color: "#6a5a44", wang: ropebridge.png, over: water, apart: true}
+    # The walkable levels, listed after the road (a terrain counts everything flat listed after it as its own ground,
+    # so the road would otherwise grow a bank everywhere). A road onto them stops at the bank; the levels carry none.
+    hill: {color: "#6a604c", wang: ../highland/upland.png, over: grass}
+    highland: {color: "#6e6a5e", wang: ../highland/highland.png, over: hill}
     shelf:
-      color: "#8a7a62"
-      wang: overlook.png
+      color: "#7a6e5a"
+      wang: ../highland/overlook.png
       over: grass
       # Only its own squares count as its ground (not the fort or the rock ranked above it).
       solo: true
@@ -1348,8 +1347,8 @@ tarnhold:
         - [0, 2, ".....01..12..10."]
         - [0, 3, ".01..12..10....."]
     fort:
-      color: "#6a6862"
-      wang: canyon-fort.png
+      color: "#5a5a56"
+      wang: ../highland/fort.png
       over: grass
       # Gate walls run on under the rock at their ends; towers built on the wall count as the wall's own.
       underWalls: all
@@ -1380,12 +1379,12 @@ tarnhold:
         - [2, 7, ".10..21..01....."]
         - [0, 2, ".....01..12..10."]
         - [0, 3, ".01..12..10....."]
-    tower: {like: fort, color: "#5a5a58", wang: tower.png, over: fort, underWalls: null, solo: null}
+    tower: {like: fort, color: "#4e4e4c", wang: ../highland/tower.png, over: fort, underWalls: null, solo: null}
     wall:
-      color: "#6a6a66"
-      wang: canyon-mountain.png
+      color: "#55534e"
+      wang: ../highland/mountain.png
       over: grass
-      cut: canyon-mountain-cut.png
+      cut: ../highland/mountain-cut.png
       cliff:
         - [2, 2, ".....00..00....."]
         - [3, 2, ".....00..01....."]
@@ -1412,8 +1411,9 @@ tarnhold:
         - [2, 7, ".10..21..01....."]
         - [0, 2, ".....01..12..10."]
         - [0, 3, ".01..12..10....."]
-    ledge: {like: wall, color: "#7a7a74", wang: ../south/mountain-ledge.png, over: wall, cut: null}
-    summit: {like: wall, color: "#8a8a84", wang: ../south/mountain-summit.png, over: ledge, cut: null}
+    # The rings above the rock (tiers.py), sloped: a shoulder of scree and boulders, then the peak, dusted with snow.
+    ledge: {color: "#6e6c66", wang: ../highland/shoulder.png, over: wall}
+    summit: {color: "#9a9a96", wang: ../highland/peak.png, over: ledge}
   props:
     barricade: [../front.png, 2928, 0, 79, 58]
     palisade: [props.png, 64, 0, 50, 52]
@@ -1612,3 +1612,285 @@ jungle:
     mossdead: [props.png, 1457, 0, 97, 110, null, null, 8, 5]
     mossleaning: [props.png, 420, 0, 109, 111]
     mossbranch: [props.png, 2237, 0, 109, 109, null, null, 14, 5]
+
+# The orc valley off the East Tarnvale, its castle and the slaver caves (the user, 2026-11-08: their map of the classic
+# orc valley and its key; screenshots of the castle outside and its throne room, and of grey hills being quarried).
+# assets/wip/orc/ (build.py, README.md). The valley: mossy grass (PixelLab base 14483f03) chained to Tarnhold's granite
+# (the same rock top, so its shoulder and peak rings go on it), a moat, trampled mud paths, the castle's grey-blue
+# stone, a quarried hill, the trainer hill's slope.
+orc_valley:
+  cell: 64
+  dir: art/worldtiles/orc/
+  floor: path
+  terrains:
+    water: {color: "#2f4a48", tile: moat-water.png}
+    grass:
+      color: "#384a22"
+      tile: grass.png
+      wang: moat.png
+      over: water
+      decor: {density: 0.4, clump: 6, flip: true, spread: 8, pieces: [[../temple/court-decor.png, 0, 0, 22, 23], [../temple/court-decor.png, 64, 0, 26, 24], [../temple/court-decor.png, 128, 0, 28, 24], [../temple/court-decor.png, 192, 0, 16, 10], [../temple/court-decor.png, 256, 0, 10, 11]]}
+    path: {color: "#4a3424", wang: valley-path.png, over: grass}
+    bridge: {color: "#6a5a44", wang: ../tarn/ropebridge.png, over: water, apart: true}
+    # the slave pits' trodden mud
+    rubble: {color: "#2e241a", alpha: 0.45}
+    hill: {color: "#5a6e34", wang: trainer-hill.png, over: grass}
+    # The castle's outer wall: banners, torches, shields and arrow slits on its face.
+    fort:
+      color: "#3a4650"
+      wang: orc-fort.png
+      over: grass
+      solo: true
+      faces: {density: 0.45, drop: 2, band: [-60, 56], pieces: [[wall-decor.png, 0, 0, 46, 62, -64], [wall-decor.png, 66, 0, 16, 61, -63], [wall-decor.png, 132, 0, 52, 52, -54], [wall-decor.png, 462, 0, 46, 60, -62], [wall-decor.png, 0, 0, 46, 62, -64], [wall-decor.png, 66, 0, 16, 61, -63], [wall-decor.png, 594, 0, 57, 56, -58], [wall-decor.png, 924, 0, 48, 53, -55]]}
+      cliff:
+        - [2, 2, ".....00..00....."]
+        - [3, 2, ".....00..01....."]
+        - [1, 4, ".....00..11....."]
+        - [2, 4, ".....00..10....."]
+        - [3, 3, ".00..01..01....."]
+        - [3, 4, ".....01..01....."]
+        - [0, 6, ".....11..11....."]
+        - [1, 0, ".11..10..10....."]
+        - [1, 1, ".....10..10....."]
+        - [0, 4, ".....10..11....."]
+        - [3, 6, ".....01..11....."]
+        - [1, 6, ".....11..12...0."]
+        - [3, 0, ".....11..22..00."]
+        - [1, 2, ".....10..20..00."]
+        - [1, 7, ".1...12..10....."]
+        - [3, 1, ".11..22..00....."]
+        - [1, 3, ".....20..00....."]
+        - [2, 0, ".....01..02..00."]
+        - [0, 0, ".....11..21..0.."]
+        - [2, 6, ".....10..21..01."]
+        - [2, 1, ".....02..00....."]
+        - [0, 1, "..1..21..01....."]
+        - [2, 7, ".10..21..01....."]
+        - [0, 2, ".....01..12..10."]
+        - [0, 3, ".01..12..10....."]
+    # The slaver caves' hill, cut in blocky steps; torches and chains where the slaves work.
+    quarry:
+      color: "#4e5154"
+      wang: quarry.png
+      over: grass
+      solo: true
+      faces: {density: 0.3, drop: 2, band: [-60, 56], pieces: [[wall-decor.png, 66, 0, 16, 61, -63], [wall-decor.png, 330, 0, 59, 49, -51], [wall-decor.png, 726, 0, 50, 60, -62], [wall-decor.png, 858, 0, 32, 55, -57], [wall-decor.png, 66, 0, 16, 61, -63], [wall-decor.png, 726, 0, 50, 60, -62], ["../cinder/cave-wall.png", 384, 0, 58, 53, -54]]}
+      cliff:
+        - [2, 2, ".....00..00....."]
+        - [3, 2, ".....00..01....."]
+        - [1, 4, ".....00..11....."]
+        - [2, 4, ".....00..10....."]
+        - [3, 3, ".00..01..01....."]
+        - [3, 4, ".....01..01....."]
+        - [0, 6, ".....11..11....."]
+        - [1, 0, ".11..10..10....."]
+        - [1, 1, ".....10..10....."]
+        - [0, 4, ".....10..11....."]
+        - [3, 6, ".....01..11....."]
+        - [1, 6, ".....11..12...0."]
+        - [3, 0, ".....11..22..00."]
+        - [1, 2, ".....10..20..00."]
+        - [1, 7, ".1...12..10....."]
+        - [3, 1, ".11..22..00....."]
+        - [1, 3, ".....20..00....."]
+        - [2, 0, ".....01..02..00."]
+        - [0, 0, ".....11..21..0.."]
+        - [2, 6, ".....10..21..01."]
+        - [2, 1, ".....02..00....."]
+        - [0, 1, "..1..21..01....."]
+        - [2, 7, ".10..21..01....."]
+        - [0, 2, ".....01..12..10."]
+        - [0, 3, ".01..12..10....."]
+    wall:
+      color: "#55534e"
+      wang: valley-mountain.png
+      over: grass
+      cut: valley-mountain-cut.png
+      cliff:
+        - [2, 2, ".....00..00....."]
+        - [3, 2, ".....00..01....."]
+        - [1, 4, ".....00..11....."]
+        - [2, 4, ".....00..10....."]
+        - [3, 3, ".00..01..01....."]
+        - [3, 4, ".....01..01....."]
+        - [0, 6, ".....11..11....."]
+        - [1, 0, ".11..10..10....."]
+        - [1, 1, ".....10..10....."]
+        - [0, 4, ".....10..11....."]
+        - [3, 6, ".....01..11....."]
+        - [1, 6, ".....11..12...0."]
+        - [3, 0, ".....11..22..00."]
+        - [1, 2, ".....10..20..00."]
+        - [1, 7, ".1...12..10....."]
+        - [3, 1, ".11..22..00....."]
+        - [1, 3, ".....20..00....."]
+        - [2, 0, ".....01..02..00."]
+        - [0, 0, ".....11..21..0.."]
+        - [2, 6, ".....10..21..01."]
+        - [2, 1, ".....02..00....."]
+        - [0, 1, "..1..21..01....."]
+        - [2, 7, ".10..21..01....."]
+        - [0, 2, ".....01..12..10."]
+        - [0, 3, ".01..12..10....."]
+    ledge: {color: "#6e6c66", wang: ../highland/shoulder.png, over: wall}
+    summit: {color: "#9a9a96", wang: ../highland/peak.png, over: ledge}
+  props:
+    banner: [valley-props.png, 0, 0, 37, 62]
+    tent: [valley-props.png, 66, 0, 62, 62]
+    campfire: [valley-props.png, 132, 0, 54, 46]
+    torchpost: [valley-props.png, 198, 0, 14, 55]
+    skullpike: [valley-props.png, 264, 0, 29, 60]
+    weaponrack: [valley-props.png, 330, 0, 60, 58]
+    dummy: [valley-props.png, 396, 0, 43, 59]
+    minecart: [valley-props.png, 462, 0, 54, 51]
+    stoneblocks: [valley-props.png, 528, 0, 60, 50]
+    rubble: [valley-props.png, 594, 0, 60, 47]
+    cage: [valley-props.png, 660, 0, 58, 60]
+    chainpost: [valley-props.png, 726, 0, 32, 58]
+    palisade: [valley-props.png, 792, 0, 60, 51]
+    totem: [valley-props.png, 858, 0, 37, 61]
+    scaffold: [valley-props.png, 924, 0, 62, 62]
+    woodpile: [valley-props.png, 990, 0, 60, 46]
+    gate: [buildings.png, 0, 0, 122, 116]
+    longhut: [buildings.png, 254, 0, 123, 108]
+    cabin: [buildings.png, 381, 0, 123, 115]
+    bigtent: [buildings.png, 508, 0, 123, 120]
+    watchtower: [buildings.png, 635, 0, 88, 125]
+    pine: [../tarn/props.png, 1688, 0, 69, 118]
+    fir: [../tarn/props.png, 1761, 0, 118, 118]
+    boulder: [../tarn/props.png, 1097, 0, 60, 50]
+    rocks: [../tarn/props.png, 1161, 0, 58, 38]
+    waterfall: [../tarn/props.png, 2629, 0, 110, 115, null, null, 8, 8]
+
+# The castle inside: green marble floors, grey-blue and slate-green block walls hung with the orcs' banners.
+orc_castle:
+  cell: 64
+  dir: art/worldtiles/orc/
+  floor: floor
+  terrains:
+    floor: {color: "#24402f", tile: castle-floor.png}
+    dais: {color: "#0e1614", alpha: 0.3}
+    wall:
+      color: "#283438"
+      wang: castle.png
+      over: floor
+      faces: {density: 0.4, drop: 2, band: [-60, 56], pieces: [[wall-decor.png, 0, 0, 46, 62, -64], [wall-decor.png, 66, 0, 16, 61, -63], [wall-decor.png, 132, 0, 52, 52, -54], [wall-decor.png, 264, 0, 62, 44, -46], [wall-decor.png, 330, 0, 59, 49, -51], [wall-decor.png, 396, 0, 45, 53, -55], [wall-decor.png, 528, 0, 58, 50, -52], [wall-decor.png, 594, 0, 57, 56, -58], [wall-decor.png, 660, 0, 60, 33, -35], [wall-decor.png, 792, 0, 62, 47, -49], [wall-decor.png, 858, 0, 32, 55, -57], [wall-decor.png, 924, 0, 48, 53, -55], [wall-decor.png, 990, 0, 61, 44, -46], [wall-decor.png, 0, 0, 46, 62, -64], [wall-decor.png, 66, 0, 16, 61, -63], [wall-decor.png, 66, 0, 16, 61, -63]]}
+      cliff:
+        - [2, 2, ".....00..00....."]
+        - [3, 2, ".....00..01....."]
+        - [1, 4, ".....00..11....."]
+        - [2, 4, ".....00..10....."]
+        - [3, 3, ".00..01..01....."]
+        - [3, 4, ".....01..01....."]
+        - [0, 6, ".....11..11....."]
+        - [1, 0, ".11..10..10....."]
+        - [1, 1, ".....10..10....."]
+        - [0, 4, ".....10..11....."]
+        - [3, 6, ".....01..11....."]
+        - [1, 6, ".....11..12...0."]
+        - [3, 0, ".....11..22..00."]
+        - [1, 2, ".....10..20..00."]
+        - [1, 7, ".1...12..10....."]
+        - [3, 1, ".11..22..00....."]
+        - [1, 3, ".....20..00....."]
+        - [2, 0, ".....01..02..00."]
+        - [0, 0, ".....11..21..0.."]
+        - [2, 6, ".....10..21..01."]
+        - [2, 1, ".....02..00....."]
+        - [0, 1, "..1..21..01....."]
+        - [2, 7, ".10..21..01....."]
+        - [0, 2, ".....01..12..10."]
+        - [0, 3, ".01..12..10....."]
+  props:
+    pillar: [furniture.png, 0, 0, 32, 62]
+    brazier: [furniture.png, 66, 0, 32, 55]
+    feast: [furniture.png, 132, 0, 62, 55]
+    bench: [furniture.png, 198, 0, 62, 57]
+    bed: [furniture.png, 264, 0, 61, 62]
+    chest: [furniture.png, 330, 0, 53, 52]
+    rack: [furniture.png, 396, 0, 57, 45]
+    barrels: [furniture.png, 462, 0, 59, 56]
+    bones: [furniture.png, 528, 0, 60, 37]
+    maptable: [furniture.png, 594, 0, 61, 52]
+    altar: [furniture.png, 660, 0, 61, 62]
+    hoard: [furniture.png, 726, 0, 59, 38]
+    pallet: [furniture.png, 792, 0, 62, 39]
+    celldoor: [furniture.png, 858, 0, 51, 62]
+    cauldron: [furniture.png, 924, 0, 38, 47]
+    furs: [furniture.png, 990, 0, 61, 40]
+    throne: [buildings.png, 127, 0, 109, 110]
+    cage: [valley-props.png, 660, 0, 58, 60]
+    banner: [valley-props.png, 0, 0, 37, 62]
+    totem: [valley-props.png, 858, 0, 37, 61]
+
+# The slaver caves: galleries hacked out of the grey stone.
+orc_mine:
+  cell: 64
+  dir: art/worldtiles/orc/
+  floor: floor
+  terrains:
+    floor:
+      color: "#3a3c3e"
+      tile: mine-floor.png
+      decor: {density: 0.35, clump: 4, flip: true, spread: 8, pieces: [["../cinder/cave-decor.png", 0, 0, 29, 23], ["../cinder/cave-decor.png", 128, 0, 36, 31], ["../cinder/cave-decor.png", 192, 0, 32, 27], ["../cinder/cave-decor.png", 1088, 0, 35, 29], ["../cinder/cave-decor.png", 704, 0, 27, 26]]}
+    wall:
+      color: "#222426"
+      wang: mine.png
+      over: floor
+      faces: {density: 0.3, drop: 2, band: [-60, 56], pieces: [[wall-decor.png, 66, 0, 16, 61, -63], [wall-decor.png, 330, 0, 59, 49, -51], [wall-decor.png, 726, 0, 50, 60, -62], [wall-decor.png, 858, 0, 32, 55, -57], [wall-decor.png, 66, 0, 16, 61, -63], [wall-decor.png, 726, 0, 50, 60, -62], [wall-decor.png, 990, 0, 61, 44, -46], ["../cinder/cave-wall.png", 384, 0, 58, 53, -54], ["../cinder/cave-wall.png", 384, 0, 58, 53, -54]]}
+      cliff:
+        - [2, 2, ".....00..00....."]
+        - [3, 2, ".....00..01....."]
+        - [1, 4, ".....00..11....."]
+        - [2, 4, ".....00..10....."]
+        - [3, 3, ".00..01..01....."]
+        - [3, 4, ".....01..01....."]
+        - [0, 6, ".....11..11....."]
+        - [1, 0, ".11..10..10....."]
+        - [1, 1, ".....10..10....."]
+        - [0, 4, ".....10..11....."]
+        - [3, 6, ".....01..11....."]
+        - [1, 6, ".....11..12...0."]
+        - [3, 0, ".....11..22..00."]
+        - [1, 2, ".....10..20..00."]
+        - [1, 7, ".1...12..10....."]
+        - [3, 1, ".11..22..00....."]
+        - [1, 3, ".....20..00....."]
+        - [2, 0, ".....01..02..00."]
+        - [0, 0, ".....11..21..0.."]
+        - [2, 6, ".....10..21..01."]
+        - [2, 1, ".....02..00....."]
+        - [0, 1, "..1..21..01....."]
+        - [2, 7, ".10..21..01....."]
+        - [0, 2, ".....01..12..10."]
+        - [0, 3, ".01..12..10....."]
+  props:
+    minecart: [valley-props.png, 462, 0, 54, 51]
+    stoneblocks: [valley-props.png, 528, 0, 60, 50]
+    rubble: [valley-props.png, 594, 0, 60, 47]
+    cage: [valley-props.png, 660, 0, 58, 60]
+    chainpost: [valley-props.png, 726, 0, 32, 58]
+    torchpost: [valley-props.png, 198, 0, 14, 55]
+    scaffold: [valley-props.png, 924, 0, 62, 62]
+    woodpile: [valley-props.png, 990, 0, 60, 46]
+    palisade: [valley-props.png, 792, 0, 60, 51]
+    bed: [furniture.png, 264, 0, 61, 62]
+    chest: [furniture.png, 330, 0, 53, 52]
+    barrels: [furniture.png, 462, 0, 59, 56]
+    pallet: [furniture.png, 792, 0, 62, 39]
+    maptable: [furniture.png, 594, 0, 61, 52]
+    bones: [furniture.png, 528, 0, 60, 37]
+    brazier: [furniture.png, 66, 0, 32, 55]
+    feast: [furniture.png, 132, 0, 62, 55]
+    rack: [furniture.png, 396, 0, 57, 45]
+    furs: [furniture.png, 990, 0, 61, 40]
+    hoard: [furniture.png, 726, 0, 59, 38]
+    cauldron: [furniture.png, 924, 0, 38, 47]
+    pickaxe: [../cinder/cave-clutter.png, 0, 0, 34, 34]
+    ladder: [../cinder/cave-clutter.png, 448, 0, 36, 37]
+    lantern: [../cinder/cave-clutter.png, 512, 0, 22, 37]
+    rope: [../cinder/cave-clutter.png, 640, 0, 36, 28]
+    bucket: [../cinder/cave-clutter.png, 832, 0, 29, 32]
+    crate: [../cinder/cave-clutter.png, 384, 0, 34, 32]
+    wheel: [../cinder/cave-clutter.png, 320, 0, 34, 33]
+    hammer: [../cinder/cave-clutter.png, 768, 0, 34, 34]

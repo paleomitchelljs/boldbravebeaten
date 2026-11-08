@@ -896,3 +896,120 @@ gnomeWarrior:
   traits: {}
   feats: {}
   keepUnarmed: true
+# The orc valley (assets/ideas/orc-valley.md): the legion, its officers and its court. First guesses: encounter tuning
+# is deferred.
+orcLegionnaire:
+  name: Orc legionnaire
+  blurb: "A grey-green orc of the legion in a quilted jack, spear and round shield: it fights in line and holds it."
+  faction: orc_legion
+  xp: 35
+  glyph: "👹"
+  sprite: {art: orc-brute, kind: orc_warrior, scale: 1}
+  loot: humanoid_purse
+  level: 2
+  attrs: {STR: 8, CON: 7, DEX: 5, SPD: 5, INT: 4, WIL: 5, WIS: 4, CHA: 3}
+  skills: {melee: 2, block: 2}
+  natural: []
+  armorItem: {type: padded, coverage: half}
+  weapons: [spear]
+  shield: [round, wood]
+  craft: average
+orcSlaver:
+  name: Orc slaver
+  blurb: "An overseer with a club and a ring of keys, used to beating things that don't hit back."
+  faction: orc_legion
+  xp: 35
+  glyph: "👹"
+  sprite: {art: orc-brute, kind: orc_warrior, scale: 1}
+  loot: humanoid_purse
+  level: 2
+  attrs: {STR: 8, CON: 7, DEX: 5, SPD: 5, INT: 4, WIL: 5, WIS: 4, CHA: 3}
+  skills: {melee: 3, intimidation: 2}
+  natural: []
+  armorItem: {type: leather, coverage: half}
+  weapons: [club]
+  craft: average
+orcCenturion:
+  name: Orc centurion
+  blurb: "An officer of the legion in mail with a longsword and an iron shield, barking orders between blows."
+  faction: orc_legion
+  xp: 70
+  glyph: "👹"
+  sprite: {art: orc-brute, artScale: 1.1, kind: orc_warrior, scale: 1.05}
+  loot: humanoid_purse
+  level: 4
+  attrs: {STR: 9, CON: 8, DEX: 6, SPD: 5, INT: 5, WIL: 6, WIS: 5, CHA: 5}
+  skills: {melee: 4, block: 4, armor: 3, intimidation: 2}
+  natural: []
+  armorItem: {type: mail, coverage: half}
+  weapons: [longsword]
+  shield: [heater, iron]
+  craft: average
+  keepUnarmed: true
+orcEmissary:
+  name: Orc emissary
+  blurb: "One of the emperor's envoys to the tribes beyond the mountains: silk over mail, a fine sword, and a long memory for slights."
+  faction: orc_legion
+  xp: 80
+  glyph: "👹"
+  sprite: {art: orc-warrior, kind: orc_warrior, scale: 1}
+  loot: humanoid_purse
+  level: 4
+  attrs: {STR: 7, CON: 7, DEX: 7, SPD: 6, INT: 7, WIL: 6, WIS: 6, CHA: 7}
+  skills: {melee: 4, anticipation: 3, persuasion: 3}
+  natural: []
+  armorItem: {type: mail, coverage: half}
+  weapons: [longsword]
+  craft: master
+  keepUnarmed: true
+orcProphet:
+  name: The orc prophet
+  blurb: "An old orc hung with bones who reads the emperor's fortunes in the fire, and makes them come true."
+  faction: orc_legion
+  xp: 140
+  glyph: "🧙"
+  sprite: {art: orc-brute, artTint: "#8a9a7a", kind: orc_shaman, scale: 1}
+  loot: humanoid_purse
+  level: 5
+  attrs: {STR: 6, CON: 7, DEX: 5, SPD: 5, INT: 8, WIL: 9, WIS: 8, CHA: 7}
+  skills: {melee: 2, arcane: 4}
+  natural: []
+  weapons: [staff]
+  keepUnarmed: true
+  nouns: [bone, fear]
+  feats: {verb_launch: 1}
+orcWarlord:
+  name: The warlord
+  blurb: "The emperor's right hand and the legion's general: a scarred orc in heavy mail with a greatsword, who has never lost a battle he chose."
+  faction: orc_legion
+  xp: 200
+  glyph: "👹"
+  sprite: {art: orc-warrior, artScale: 1.15, kind: orc_warrior, scale: 1.1}
+  loot: humanoid_purse
+  level: 6
+  attrs: {STR: 10, CON: 9, DEX: 7, SPD: 6, INT: 6, WIL: 8, WIS: 6, CHA: 7}
+  skills: {melee: 6, anticipation: 4, armor: 4, intimidation: 3}
+  natural: []
+  armorItem: {type: mail, coverage: full}
+  weapons: [greatsword]
+  craft: master
+  feats: {toughness: 1}
+  keepUnarmed: true
+orcEmperor:
+  name: The orc emperor
+  blurb: "The emperor on his stone throne under the great gold coin: huge, blue-grey, armored in scale, a warhammer in his fist."
+  faction: orc_legion
+  xp: 300
+  glyph: "👑"
+  sprite: {art: orc-brute, artScale: 1.35, kind: orc_warrior, scale: 1.3}
+  loot: humanoid_purse
+  level: 7
+  attrs: {STR: 11, CON: 10, DEX: 6, SPD: 5, INT: 6, WIL: 9, WIS: 6, CHA: 8}
+  skills: {melee: 7, block: 5, armor: 5, intimidation: 5}
+  natural: []
+  armorItem: {type: plate, coverage: half}
+  weapons: [warhammer]
+  shield: [heater, iron]
+  craft: master
+  feats: {toughness: 1}
+  keepUnarmed: true

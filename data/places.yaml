@@ -405,18 +405,18 @@ tarnhold:
   level: 2
   look: {wall: "#6a6a66", floor: "#7a6a58", ceiling: "#7f9ab6", fog: "#0c120a", torch: 0, tileset: tarnhold, light: 24}
   map:
-    - "????????????????????(((((((##,NN,##(((((((((((((((??????????????"
-    - "????????????????????(((((((##,..,##(((((((((((((((??????????????"
-    - "????????????????????(((######,..,##((((########((((((((((((((((("
-    - "????????????????????(((######,..,##((((########((((((((((((((((("
-    - "????????????????????(((##,,,,,..,##((((##,A~,##((((((((((((((((("
-    - "????????????????????(((##,......,##((((##,~~,###################"
-    - "????????????????????(((##,......,##((((##,~~,###################"
-    - "????????????????????(((##,..,,,,,##((((##,~~,,,,,,,,,,,,,,,,,,,#"
-    - "????????????????????(((##,..,######((((##,~~,,@@@@,P,,,,,,@@@@,#"
-    - "????????(((((((((((((((##,..,######((((##,~~,,@■■@,,,,,,,,@■■@,#"
-    - "????????(((((((((((((((##,..,######((((##,~~,,@■■@@@@@@@@@@■■@,#"
-    - "????????(((((((((((((((##,..,,,,,##((((##,~~,,@@@@@@@@@@@@@@@@,#"
+    - "????????????????????(((((((##▓NN▓##(((((((((((((((??????????????"
+    - "????????????????????(((((((##▓▓▓▓##(((((((((((((((??????????????"
+    - "????????????????????(((######▓▓▓▓##((((########((((((((((((((((("
+    - "????????????????????(((######▓▓▓▓##((((########((((((((((((((((("
+    - "????????????????????(((##▓▓▓▓▓▓▓▓##((((##,A~,##((((((((((((((((("
+    - "????????????????????(((##▓▓▓▓▓▓▓▓##((((##,~~,###################"
+    - "????????????????????(((##{{{{{{{{##((((##,~~,###################"
+    - "????????????????????(((##{{{{{{{{##((((##,~~,,,,,,,,,,,,,,,,,,,#"
+    - "????????????????????(((##{{{{######((((##,~~,,@@@@,P,,,,,,@@@@,#"
+    - "????????(((((((((((((((##{{{{######((((##,~~,,@■■@,,,,,,,,@■■@,#"
+    - "????????(((((((((((((((##{{{{######((((##,~~,,@■■@@@@@@@@@@■■@,#"
+    - "????????(((((((((((((((##{{{{{{{{##((((##,~~,,@@@@@@@@@@@@@@@@,#"
     - "????????(((##############,......,##((((##,~~,,,,@@........@@,,,#"
     - "????????(((##############,......,##((####,~~,o,,@@.@@@@@@.@@,,,#"
     - "????????(((##,,,,,,,,,,,#,,,,,..,##((####,~~,,,,@@.@■■■■@.@@,,,#"
@@ -451,7 +451,7 @@ tarnhold:
     - "??(((((#######################((((((((((((((((((((((????????????"
     - "??(((((#######################((((((((((((((((((((((????????????"
   legend:
-    N: {kind: stairs, to: south_hills, at: S, sprite: none, label: "The pass, north into the hills"}
+    N: {kind: stairs, to: south_hills, at: S, sprite: none, on: "▓", label: "The pass, north into the hills"}
     Q: {kind: stairs, to: tarnvale_west, at: E, sprite: none, label: "The road west, into the vale"}
     E: {kind: stairs, to: tarnvale_east, at: Q, sprite: none, label: "The road east, into the vale"}
     P: {kind: prop, sprite: pine, label: "A mountain pine", on: ","}
@@ -568,16 +568,16 @@ tarnvale_east:
   level: 2
   look: {wall: "#6a6a66", floor: "#7a6a58", ceiling: "#7f9ab6", fog: "#0c120a", torch: 0, tileset: tarnhold, light: 24}
   map:
-    - "??????????????????????????(((########((((((((((((((((((((???????????????"
-    - "??????????????????????????(((##,A~,##((((((((((((((((((((???????????????"
-    - "??????????????????????????(((##,~~,##((###############(((???????????????"
-    - "??????????????????????????(((##,~~,##((###############(((???????????????"
-    - "??????????????????????????(((##,~~,##((##▲▲▲▲▲▲▲▲▲▲▲##(((???????????????"
-    - "??????????????????????????(((##,~~,##((##▲[[[[[[[[[▲##(((((((((((((((((("
-    - "????????????????????(((((((((##,~~,##((##▲[[[[[[[[[▲##(((((((((((((((((("
-    - "????????????????????(((((((((##,~~,######▲[[[[[[[[[▲##(((((((((((((((((("
-    - "????????????????????(((((((((##,~~,######▲[[[[[[[[[▲##(#################"
-    - "????????????????????(((########,~~,,,####▲▲ST▲▲▲▲▲▲▲##(#################"
+    - "??????????????????????????(((########((((((((((((((((((((?????###OO###??"
+    - "??????????????????????????(((##,A~,##((((((((((((((((((((?????###▓▓###??"
+    - "??????????????????????????(((##,~~,##((###############(((?????###▓▓###??"
+    - "??????????????????????????(((##,~~,##((###############(((?????###▓▓###??"
+    - "??????????????????????????(((##,~~,##((##▲▲▲▲▲▲▲▲▲▲▲##(((?????###{{###??"
+    - "??????????????????????????(((##,~~,##((##▲[[[[[[[[[▲##((((((((###{{###(("
+    - "????????????????????(((((((((##,~~,##((##▲[[[[[[[[[▲##((((((((###{{###(("
+    - "????????????????????(((((((((##,~~,######▲[[[[[[[[[▲##((((((((###{{###(("
+    - "????????????????????(((((((((##,~~,######▲[[[[[[[[[▲##(##########,,#####"
+    - "????????????????????(((########,~~,,,####▲▲ST▲▲▲▲▲▲▲##(##########,,#####"
     - "????????????????????(((########,~~~,,####,,,,,########(##,,,,,@@,,,,,###"
     - "????????????????????(((##,,,,,,,,~~~,,,,,,,,,,#####((((##xx,,,@@,,f,,###"
     - "((((((((((((((((((??(((##,........==......,#####(((((((##xn,,@@@@,Pj,###"
@@ -611,6 +611,7 @@ tarnvale_east:
   legend:
     Q: {kind: stairs, to: tarnhold, at: E, sprite: none, label: "The road west, to Tarnhold"}
     Z: {kind: stairs, to: tarn_plains_east, at: E, sprite: none, label: "The road east, out through the gate onto the grassland"}
+    O: {kind: stairs, to: orc_valley, at: S, sprite: none, on: "▓", label: "A side canyon north, into the orcs' valley"}
     P: {kind: prop, sprite: pine, label: "A mountain pine", on: ","}
     Y: {kind: prop, sprite: birch, label: "A birch", on: ","}
     R: {kind: prop, sprite: boulder, label: "A boulder", on: ","}
@@ -800,6 +801,273 @@ tarn_plains_east:
     O: {kind: prop, sprite: oak, label: "An oak", on: ","}
     R: {kind: prop, sprite: boulder, label: "A boulder", on: ","}
   encounters: {}
+  secrets: []
+
+# ---- The orc valley off the East Tarnvale (the user, 2026-11-08: their map of the classic orc valley and its key;
+# assets/ideas/orc-valley.md). Laid out by assets/wip/orc/layout.py and interiors.py; art in assets/wip/orc/.
+orc_valley:
+  name: The Orc Valley
+  kind: dungeon
+  open: true
+  blurb: A green valley shut in by grey mountains, cut through by a moat; the orc legion's camps, its castle of grey-blue stone, a quarried hill where slaves cut stone, and pits where more are kept.
+  level: 3
+  look: {wall: "#55534e", floor: "#384a22", ceiling: "#7f9ab6", fog: "#0c120a", torch: 0, tileset: orc_valley, ground: ",", light: 24}
+  map:
+    - "((#######################################################((("
+    - "((#######################################################((("
+    - "((#######################################################((("
+    - "((##,,,,~~~~~A,,,,w,,,,,,,,.......................,,,,,##((("
+    - "####,,,~~~~~~~~,h,,,,,......w.......................P,,###(("
+    - "####,,~~~~~~~~~~,,,,L,...h..,,,@@@@@@@@@@@@@@,,,,....,,###(("
+    - "###,P,~~~~~~~~~~,,,h,,..,,c,,,,@@@@@@@@@@@@@@@@,,,#..,,,##(("
+    - "###,,~~~~~~~~~~~~,,,Xn.L,,,,,,,@@@@@@@@@@@@@@@@,,,#,,,,,####"
+    - "###,,,~~~~~~~~~~,,k,,,..,,XnX,,@@@@@@@@@@@@@@@@,,,#;;;;,####"
+    - "###,P,~~~~~~~~~~,h,,c,..h,,,,,,@@@@@@@@@@@@@@@@,,,#;;;;P,###"
+    - "##,,,,,~~~~~~~~,,,U,,,.u,,,,k,,,,@@@@@@@@@@@@,,,,,#z;;;,,###"
+    - "##,,,,,,~~~~~~,,,,,,,,..,y,,,,,,,@@@@@@@@@@@@,p,,,#;;;;,,###"
+    - "##,,,,,,,~~,~~~,,,,,,,..,,,,,,,p,,,tb,G.,bt,,,,,,,#;;;z,,###"
+    - "##,,,,,,,~~,~~~~~~,,,,..,,,,,,,,,,,,g,..,,,,,,,,,,#;;;;,,###"
+    - "##,,,,,,,~~,,,~~~~~~~~==~~~~~~~~~~~~~~==~~~~~~~~,,#,,,,,,###"
+    - "##,,,,,,,~~,,,,,,~~~~~==~~~~~~~~~~~~~~==~~~~~~~~~,#,,,,a,###"
+    - "##,,x,,,,~~,,,,,▤▤▤▤▤,..,,,,~~................,~~,#;;;;,,###"
+    - "##,,,,,,,~~,,,▤▤▤▤▤▤▤...▤,,,~~................,~~,#;;;;,,###"
+    - "##,,,,j,,~~,,,▤▤▤▤▤▤...▤▤,,,~~..,,,,,,,,,,,,..,~~,#;z;;,,###"
+    - "##,,,,,,,~~,,▤▤▤▤▤▤▤..▤▤▤▤,,~~..,,,,,,,,,,,,..,~~,#;;;;,,###"
+    - "##,XCX,,,~~,,▤▤▤▤▤▤▤▤▤▤▤▤▤,,~~..,,,{{{{{{,,,...==....;;,,###"
+    - "##,,,,Y,,~~,,▤▤▤▤▤▤▤▤▤▤▤▤▤,,~~..,{{{{{{{{{{,...==....;;,,###"
+    - "##,,,....==...,▤▤▤▤▤▤▤▤▤▤▤,,~~..,{{{{{{{{{{,,,,~~,#;;z;,,###"
+    - "##,,,....==....▤▤▤▤▤▤▤▤▤▤▤r,~~..{{{{{{{{{{{{,,,~~,#;Z;;,,###"
+    - "##,,,,,,,~~,,r..▤▤▤▤▤▤▤▤▤▤,,~~..{{{{{{{{{{{{{,,~~,#;;;;,,###"
+    - "##,,,x,,~~~,,,..▤▤▤▤▤▤▤▤▤,,,~~..{{{{{{{{{{{{{,,~~,#,,,,,,###"
+    - "##,,,,,,~~,,,,,,▤▤▤▤▤▤▤▤▤,,,~~..{{{{{{{{{{{{{,,~~,#,,,,a,###"
+    - "##,,,,,,~~,,,,q,▤▤▤▤▤▤▤▤▤q,,~~..{{{{v{{{{{{{{,,~~,#;;;;,####"
+    - "##,,,,,,~~,,,,,,,,,M,,,,,,,,~~..{{{{{{{{{{{{{,~~~,#;K;;,####"
+    - "##,,,l,,~~,,e,,,m,,..,,,m,,,~~..{{{{{{i{{{{{{,~~,,#;;;;,##(("
+    - "##,,,,,,~~,,,,,,,,N..s,,,,,,~~..{{{{{{{{v{{{{,~~,,#z;;;P##(("
+    - "##,,,,,,~~,,,,,d,r,..,q,,,,,~~..{{{{{T{{{{{{{,~~,,#;;;;,##(("
+    - "###,,,,,~~,,,,,,,,,..,,,,,,,~~..{{{{{{{{{{{{{,~~,,#;;;z,##(("
+    - "###,,,,,~~,,,,,,,,,..,,f,,,,~~,{{{{{{{v{{{{{{,~~,,#;;;;,##(("
+    - "###,,,,,~~,,,,,,,,,..,,,,,,,~~,,{{{{{{{{{{{{,,~~,,#;;;;###(("
+    - "###,,,,,~~,,,,,,,,,..,,,,,,,~~,,,{{{{{{{{{{,,,~~,,#,,,,###(("
+    - "###,,,,,~~,,,,,,,,,...,,,,,,~~,,,{{{{{{{{{{,,R~~~,#,,,,##((("
+    - "###,,,,,~~,,R,,,,,,,..,,,,,,~~,,,,,{{{{{{,,,,,,~~,,,,,,##((("
+    - "###,,,,,~~,,,,,,,,,,...,,,,,~~,,,,,,,..,,,,,,,,~~,,,,,###((("
+    - "####,,,,~~,,,,,,,,,,,.......==...,,,...,,,,,,,,~~,,,,,###((("
+    - "####,P,,~~~,,,,,,,,,,,......==...,,,..,,,,,,,,,~~~~~,###(((("
+    - "((##,,,,,~~~,,,,,,,,,,,,,,,~~~,..,,...,,,,,,,,,,~~~~####(((("
+    - "((###,,,,,~~~,,,,,,,,,,,R,,~~,,......,,,,,R,,,,,~~~####((((("
+    - "((###,,,,,~~~~,,,,,,,,,,,~~~~,,,....,,,,,,,,,,,,,,####(((((("
+    - "(((###,,,,,,~~~~~~~~~~~~~~~~~,o,....,,,,,,,,P,,,,####((((((("
+    - "(((####,,,,,,~~~~~~~~~~~~~,,,,,,,..,o,,,P,,,,,,#####((((((??"
+    - "((((######,,,,,,P,,,,,,,,P,,,R,,,..,,,,,,,#########((((((???"
+    - "(((((########,,,,,,,,,,,,,,####,,..,,############(((((((????"
+    - "((((((((#######################,,..,,#######(((((((((((?????"
+    - "(((((((((((####################,,..,,##(((((((((((((((??????"
+    - "??(((((((((((((((((((((((((((###,..,###(((((((((((((????????"
+    - "?????((((((((((((((((((((((((###,..,###((((((((?????????????"
+    - "????????((((((((((((((((((((((##,..,##((((??????????????????"
+    - "????????((((((((((((((((((((((##SSSS##((((??????????????????"
+  legend:
+    S: {kind: stairs, to: tarnvale_east, at: O, sprite: none, label: "The side canyon south, back to the East Tarnvale"}
+    G: {kind: stairs, to: orc_castle, at: S, sprite: gate, label: "The castle gate: green marble, the legion's banners either side"}
+    M: {kind: stairs, to: orc_mines, at: S, sprite: minemouth, label: "The slaver caves, cut into the quarried hill"}
+    # 1: the legionnaires' camps
+    h: {kind: prop, sprite: tent, label: "A hide tent", on: ","}
+    n: {kind: prop, sprite: longhut, label: "A longhut of logs and hides, skulls over the door", on: ","}
+    X: {kind: prop, sprite: none, on: ","}
+    c: {kind: prop, sprite: campfire, label: "A campfire", on: ","}
+    k: {kind: prop, sprite: weaponrack, label: "A rack of spears and axes", on: ","}
+    u: {kind: prop, sprite: totem, label: "A totem of skulls daubed green", on: ","}
+    w: {kind: prop, sprite: torchpost, label: "A torch on a post", on: ","}
+    y: {kind: prop, sprite: woodpile, label: "Firewood and an axe in a stump", on: ","}
+    L: {kind: monster, encounter: legion, label: "Legionnaires about their fire", on: ","}
+    U: {kind: monster, encounter: centurion, label: "A centurion's tent", on: ","}
+    # 2: the castle front
+    b: {kind: prop, sprite: banner, label: "The legion's banner: a snarling face on green", on: ","}
+    t: {kind: prop, sprite: torchpost, label: "A torch on a post", on: ","}
+    p: {kind: prop, sprite: skullpike, label: "A skull on a spike", on: ","}
+    g: {kind: monster, encounter: gate, label: "The gate guard", on: ","}
+    # 3: the slave cabin
+    C: {kind: prop, sprite: cabin, label: "A run-down log cabin, its window barred, its door barred from outside", on: ","}
+    x: {kind: prop, sprite: chainpost, label: "A post with chains and shackles", on: ","}
+    j: {kind: prop, sprite: woodpile, label: "Firewood", on: ","}
+    l: {kind: prop, sprite: palisade, label: "A short palisade of sharpened logs", on: ","}
+    Y: {kind: note, label: "The cabin door", text: "The bar across the door is heavy, and there are voices inside: tired ones, speaking low in several tongues. Slaves, kept here between shifts at the quarry. (Who they are and what they want is not written yet.)", on: ","}
+    # 4: the slaver caves, slaves outside
+    m: {kind: prop, sprite: minecart, label: "A cart of cut stone", on: ","}
+    q: {kind: prop, sprite: stoneblocks, label: "Cut blocks of grey stone", on: ","}
+    r: {kind: prop, sprite: rubble, label: "Spoil from the quarry", on: ","}
+    f: {kind: prop, sprite: scaffold, label: "A scaffold against the cut face", on: ","}
+    d: {kind: prop, sprite: cage, label: "An empty cage", on: ","}
+    e: {kind: prop, sprite: woodpile, label: "Firewood", on: ","}
+    s: {kind: monster, encounter: slaver, label: "A slaver watching the work", on: ","}
+    N: {kind: note, label: "Slaves at work", text: "Humans, elves, a dwarf or two, all in rags and ankle-chains, hauling blocks to the carts. None of them look up.", on: ","}
+    # 5: the slave pits
+    z: {kind: prop, sprite: cage, label: "A cage of thick bars", on: ";"}
+    K: {kind: prop, sprite: chainpost, label: "A post with chains", on: ";"}
+    a: {kind: prop, sprite: torchpost, label: "A torch on a post", on: ","}
+    Z: {kind: note, label: "A gnome in a cage", text: "A gnome, filthy and furious, rattles the bars at you, then sees you are not orcs and goes very quiet. (What he has to say is not written yet.)", on: ";"}
+    # 6: the trainer hill
+    v: {kind: prop, sprite: dummy, label: "A training dummy, hacked to straw", on: "{"}
+    i: {kind: prop, sprite: bigtent, label: "The drillmaster's tent", on: "{"}
+    T: {kind: monster, encounter: drill, label: "Legionnaires at drill", on: "{"}
+    # the way in and the rest
+    P: {kind: prop, sprite: pine, label: "A pine", on: ","}
+    R: {kind: prop, sprite: boulder, label: "A boulder", on: ","}
+    o: {kind: prop, sprite: rocks, solid: false, label: "Loose rocks", on: ","}
+    A: {kind: prop, sprite: waterfall, label: "A waterfall into the lake", on: "~"}
+  encounters:
+    legion: {foes: [{monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "Two legionnaires kick over their stools and come at you."}
+    centurion: {foes: [{monster: orcCenturion}, {monster: orcLegionnaire}], text: "A centurion ducks out of his tent, roaring for his men."}
+    gate: {foes: [{monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "The gate guard levels their spears."}
+    slaver: {foes: [{monster: orcSlaver}, {monster: orcLegionnaire}], text: "The slaver drops his club on the nearest slave's back and turns to you."}
+    drill: {foes: [{monster: orcCenturion}, {monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "The drill breaks off, and the line turns on you."}
+  wandering:
+    - {w: 1, foes: [{monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "A patrol of the legion."}
+    - {w: 3, nothing: true}
+  secrets: []
+
+# The castle (key 2): the gate hall, a cross passage, the throne room with its marble pillars, the warlord's and the
+# emissaries' rooms off it, the prophet's shrine, the armoury, the mess and the barracks.
+orc_castle:
+  name: The Orc Castle
+  kind: dungeon
+  blurb: Halls of grey-blue stone floored with green marble, hung with the legion's banners; the emperor's throne under a great gold coin.
+  level: 5
+  look: {wall: "#283438", floor: "#24402f", ceiling: "#1a2224", fog: "#060a0a", torch: 1, tileset: orc_castle, light: 18}
+  map:
+    - "##################################"
+    - "##################################"
+    - "##.......##............##.......##"
+    - "##.e...e.##...z|T||z...##.....e.##"
+    - "##..Y..........||||.........L...##"
+    - "##.......##..o...E..o..##.......##"
+    - "##....k..##............##.m...H.##"
+    - "##.......##...g....g...##.......##"
+    - "#####.#####..o......o..#####.#####"
+    - "#####.#####............#####.#####"
+    - "##.a.....##............##.w...w.##"
+    - "##.....P.##............##.....u.##"
+    - "#####.##########..##########.#####"
+    - "#####.##########..##########.#####"
+    - "###.......r..........r.........###"
+    - "#######.########..########.#######"
+    - "#######.########..########.#######"
+    - "##..........##......##..........##"
+    - "##..........##.z..z.##.p.p.p.p..##"
+    - "##..t...t...##......##..........##"
+    - "##..........##..G...##..........##"
+    - "##....M.....##......##....B.....##"
+    - "##........b.##......##..........##"
+    - "##.c........##......##.p.p.p..x.##"
+    - "##..........##..SS..##..........##"
+    - "##################################"
+    - "##################################"
+    - "##################################"
+  legend:
+    S: {kind: stairs, to: orc_valley, at: G, sprite: none, label: "Out through the gate to the valley"}
+    T: {kind: prop, sprite: throne, label: "A stone throne heaped with furs, braziers either side; over it, set in the wall, a gold coin the size of a cartwheel", on: "|"}
+    E: {kind: monster, encounter: emperor, label: "The emperor"}
+    o: {kind: prop, sprite: pillar, label: "A pillar of green marble"}
+    z: {kind: prop, sprite: brazier, label: "A brazier"}
+    g: {kind: monster, encounter: throneguard, label: "The throne guard"}
+    L: {kind: monster, encounter: warlord, label: "The warlord's quarters"}
+    m: {kind: prop, sprite: maptable, label: "A table spread with maps of the vales, a knife through Tarnhold"}
+    H: {kind: chest, label: "The warlord's strongbox", loot: relic_cache, rolls: 2, tn: 12}
+    e: {kind: prop, sprite: bed, label: "A bed of planks and furs"}
+    Y: {kind: monster, encounter: emissaries, label: "The emissaries"}
+    k: {kind: prop, sprite: chest, label: "An iron-bound chest of gifts for the tribes"}
+    a: {kind: prop, sprite: altar, label: "An altar with a green flame burning on a skull"}
+    P: {kind: monster, encounter: prophet, label: "The prophet"}
+    w: {kind: prop, sprite: rack, label: "A rack of axes and clubs"}
+    u: {kind: chest, label: "The armoury's chest", loot: relic_cache, rolls: 1, tn: 10}
+    t: {kind: prop, sprite: feast, label: "A long table with meat and tankards"}
+    c: {kind: prop, sprite: cauldron, label: "A cauldron over a fire"}
+    b: {kind: prop, sprite: barrels, label: "Barrels and crates"}
+    M: {kind: monster, encounter: mess, label: "Orcs at their meat"}
+    p: {kind: prop, sprite: pallet, label: "A straw pallet"}
+    x: {kind: prop, sprite: furs, label: "A heap of furs"}
+    B: {kind: monster, encounter: barracks, asleep: true, label: "Legionnaires asleep"}
+    G: {kind: monster, encounter: gatehall, label: "Guards inside the gate"}
+    r: {kind: monster, encounter: patrol, label: "A patrol in the passage"}
+  encounters:
+    gatehall: {foes: [{monster: orcCenturion}, {monster: orcLegionnaire}], text: "The guards inside the gate bar your way."}
+    patrol: {foes: [{monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "A patrol rounds the corner."}
+    mess: {foes: [{monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "Orcs come up from the benches, knives still in their hands."}
+    barracks: {foes: [{monster: orcLegionnaire}, {monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "A sleeper wakes and bellows the rest awake."}
+    prophet: {foes: [{monster: orcProphet}], text: "The prophet turns from the green flame and says your name, which he should not know."}
+    emissaries: {foes: [{monster: orcEmissary}, {monster: orcEmissary}], text: "The emissaries draw their fine swords with some regret."}
+    warlord: {foes: [{monster: orcWarlord}], text: "The warlord looks up from his maps and reaches for the greatsword."}
+    throneguard: {foes: [{monster: orcCenturion}, {monster: orcCenturion}], text: "The throne guard close in from the pillars."}
+    emperor: {foes: [{monster: orcEmperor}], flags: [orc_emperor_dead], text: "The emperor rises from his throne and takes up the hammer."}
+  wandering:
+    - {w: 1, foes: [{monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "A patrol of the castle."}
+    - {w: 4, nothing: true}
+  secrets: []
+
+# The slaver caves (key 4): galleries hacked out of the quarried hill, the slaves' pens, the overseers' room, the ore
+# store, and an old shaft going on down.
+orc_mines:
+  name: The Slaver Caves
+  kind: dungeon
+  blurb: Galleries hacked out of grey stone, lit by torches; slaves at the rock face, overseers with clubs, pens where the slaves sleep.
+  level: 3
+  look: {wall: "#222426", floor: "#3a3c3e", ceiling: "#1a1b1c", fog: "#060606", torch: 1, tileset: orc_mine, light: 16}
+  map:
+    - "####################################"
+    - "####################################"
+    - "###############......###############"
+    - "###........####.c..c.###.........###"
+    - "###..z..z..####...k..###.t....b..###"
+    - "###........####......###....o....###"
+    - "###.q..G...######..#####.........###"
+    - "###..z.....######..#####.......H.###"
+    - "###.....#........................###"
+    - "#########..................#########"
+    - "########.......m...........#########"
+    - "########..###....w.....###.#########"
+    - "####......###.......m..###......####"
+    - "####......###.n........###......####"
+    - "####..m...###..........###..m...####"
+    - "####......###..........###.......D##"
+    - "####......#######..#######..v...####"
+    - "####.v....#######..#######......####"
+    - "####.........................m..####"
+    - "####...m....x.......g...........####"
+    - "####...................x........####"
+    - "####......................##########"
+    - "####......######....################"
+    - "################....################"
+    - "################....################"
+    - "################....################"
+    - "################.SS.################"
+    - "####################################"
+  legend:
+    S: {kind: stairs, to: orc_valley, at: M, sprite: none, label: "Out to the quarry and the valley"}
+    z: {kind: prop, sprite: pallet, label: "A straw pallet"}
+    G: {kind: note, label: "The slave pens", text: "Slaves asleep on straw in a pen of stakes, too tired to wake for you. (Who they are is not written yet.)"}
+    q: {kind: prop, sprite: bucket, label: "A bucket of water"}
+    o: {kind: monster, encounter: overseers, label: "The overseers' room"}
+    t: {kind: prop, sprite: maptable, label: "A table with a tally of stone and slaves"}
+    H: {kind: chest, label: "The overseers' strongbox", loot: relic_cache, rolls: 1, tn: 10}
+    b: {kind: prop, sprite: barrels, label: "Barrels and crates"}
+    c: {kind: prop, sprite: stoneblocks, label: "Cut stone stacked for the carts"}
+    k: {kind: monster, encounter: store, label: "Guards in the ore store"}
+    m: {kind: prop, sprite: minecart, label: "A cart of stone"}
+    n: {kind: prop, sprite: scaffold, label: "A scaffold against the face"}
+    w: {kind: monster, encounter: cut, label: "Slavers at the great cut"}
+    v: {kind: prop, sprite: rubble, label: "Spoil from the face"}
+    x: {kind: prop, sprite: ladder, label: "A ladder"}
+    g: {kind: monster, encounter: gallery, label: "A slaver in the first gallery"}
+    D: {kind: note, label: "An old shaft", text: "A shaft going straight down, a rope ladder rotted to its last rungs. Cold air comes up it. (Where it goes is not built yet.)"}
+  encounters:
+    gallery: {foes: [{monster: orcSlaver}], text: "A slaver turns from the slaves with his club raised."}
+    cut: {foes: [{monster: orcSlaver}, {monster: orcLegionnaire}], text: "The slavers at the cut leave off their shouting and come at you."}
+    store: {foes: [{monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "Two guards over the stone get up."}
+    overseers: {foes: [{monster: orcCenturion}, {monster: orcSlaver}], text: "The overseers look up from their tally."}
+  wandering:
+    - {w: 1, foes: [{monster: orcSlaver}], text: "A slaver on his rounds."}
+    - {w: 3, nothing: true}
   secrets: []
 
 # ---- The temple (prototype dungeon 1; plan in assets/ideas/temple-dungeon.md) ----------------------------------------

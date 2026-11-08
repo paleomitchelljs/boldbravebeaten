@@ -4,6 +4,33 @@ Last updated at commit: d42f0cc
 
 Keep this a short list. Tick things off, add new ones, and refresh the commit line after every push (`git log -1 --format=%h`).
 
+## Tarnhold's second pass, the orc valley (the user, 2026-11-08; assets/wip/orc/, assets/ideas/orc-valley.md)
+- [x] Tarnhold and both vales redrawn (tileset `tarnhold`, art/worldtiles/highland/): grey granite and moss over a
+  grey-brown gravel floor (not the Black Hills' purple basalt); a tan trodden road; a slate-green river; new fort,
+  tower and overlook. The mountain rings above the rock are sloped banks now, a boulder shoulder then a snow-dusted
+  peak, brighter as they climb. Seen in headless Chrome (the pass, the junction, the side canyon).
+- [x] Walkable levels: upland (`{`) and high plateau (`▓`, new ground letter), each a sloped bank above the last
+  (`heights.py`). Only the north pass into Tarnhold and the new side canyon use them so far: most open ground in the
+  vales carries props set `on: ","`, which would show gravel holes on a raised level. A road stops at a level's bank.
+- [ ] Where an upland meets a cliff a thin gravel rim shows (the cliff tiles carry the floor). More plateaus and
+  climbing passes need either props placed off them or a per-square `on`.
+- [x] The orc valley (`orc_valley`), off a side canyon north from the East Tarnvale's gate yard, laid out from the
+  user's map and key: the lake under a fall, the moat's one long run, bridges, the camps (1), the castle's grey-blue
+  block with its green marble gate (2), the slave cabin (3), the quarried hill and the slaver caves' mouth (4), the
+  slave pits (5), the trainer hill (6), the land strip along the north wall (the user's correction). Inside:
+  `orc_castle` (gate hall, throne room with marble pillars and the throne, warlord, emissaries, prophet, armoury,
+  mess, barracks) and `orc_mines` (galleries, workings, the great cut, pens, overseers, ore store, an old shaft).
+- [x] Faction `orc_legion`; monsters `orcLegionnaire`, `orcSlaver`, `orcCenturion`, `orcEmissary`, `orcWarlord`,
+  `orcProphet`, `orcEmperor` (the user's orc and orc warrior figures stand in; stats untuned). The source's proper
+  names left out: ask whether the user wants them.
+- [ ] The slaves (cabin, caves) and the gnome in the pits are notes, not people; the slave-cabin quest isn't written.
+  Where the old shaft goes. Orc figures of their own (legionnaire, centurion, the blue-grey emperor, the prophet).
+- [ ] `pace.js`: the castle and caves take 145 steps to see (0.4 h); small for a dungeon.
+- [x] Fixed: pieces on wall faces were drawn twice, one above the other (the faces' lift copied them; the Cinder
+  Hall had it too). They are painted after the lift now (mapview.js `paintPlan`).
+- [ ] The longhut and cabin props still lean corner-on (asked front-on twice). The mine borrows the fire mine's
+  umber clutter.
+
 ## Cinder Mine art, the Black Hills, fire creatures (the user, 2026-11-07; assets/wip/cinder/)
 - [x] The mine's basalt places: umber cave walls and a dusty brown floor after the old goblin-cave screenshots; floor
   decor (rocks, glowing cracks, ore, stalagmites, bones) and wall faces (torches, red skull banners, gold glyphs, lava

@@ -451,7 +451,9 @@
     const p = Explore.place(w);
     if (!game.ui.mv) {
       UI.MapView.preload();
-      game.ui.mv = UI.MapView.create({ cols: 15, rows: 10, scale: UI.MapView.scaleFor(w.place, 3), label: `Map of ${p.name}`, scene: () => (game.ui.lastScene = scene(game)), onCell: (x, y) => onCell(game, x, y) });
+      // UI.wideView ({cols, rows, scale}): a bigger view, for screenshots of a whole map (tools/shot.sh).
+      const wv = UI.wideView || {};
+      game.ui.mv = UI.MapView.create({ cols: wv.cols || 15, rows: wv.rows || 10, scale: wv.scale || UI.MapView.scaleFor(w.place, 3), label: `Map of ${p.name}`, scene: () => (game.ui.lastScene = scene(game)), onCell: (x, y) => onCell(game, x, y) });
       game.ui.mv.start();
     }
     trail(game);
