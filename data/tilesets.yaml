@@ -739,16 +739,26 @@ ember_basalt:
     # now and then a spurt from a square well inside a pool.
     lava: {color: "#d0461a", anim: {sheet: lava-anim.png, size: 512, frames: 24, cols: 4, fps: 6, spurt: [lava-spurt.png, 48, 96, 16, 12], every: 10}}
     # The floor is the upper ground of a corner set over the lava, so its edge breaks off round any lava beside it;
-    # `cut` is that sheet with the lava cut away, drawn over the moving lava.
-    rock: {color: "#2a2422", wang: lava.png, over: lava, cut: lava-cut.png}
-    rubble: {color: "#4a403a", alpha: 0.4}
-    steps: {color: "#55504a", alpha: 0.5}
-    bridge: {color: "#5e564e"}
+    # `cut` is that sheet with the lava cut away, drawn over the moving lava. Second pass (the user, 2026-11-07;
+    # assets/wip/cinder/): the warm umber caves of the old goblin-cave screenshots, with cave clutter scattered over it.
+    rock:
+      color: "#6a4e34"
+      wang: ../cinder/lava-floor.png
+      over: lava
+      cut: ../cinder/lava-floor-cut.png
+      # rocks, cracks aglow, rubble, pebbles, ore, stalagmites, embers, crystals, coal, fungus, bones, a skull, a vent
+      decor: {density: 0.55, clump: 5, flip: true, spread: 8, pieces: [["../cinder/cave-decor.png", 0, 0, 29, 23], ["../cinder/cave-decor.png", 64, 0, 35, 30], ["../cinder/cave-decor.png", 128, 0, 36, 31], ["../cinder/cave-decor.png", 192, 0, 32, 27], ["../cinder/cave-decor.png", 256, 0, 32, 30], ["../cinder/cave-decor.png", 320, 0, 23, 33], ["../cinder/cave-decor.png", 384, 0, 34, 22], ["../cinder/cave-decor.png", 448, 0, 30, 29], ["../cinder/cave-decor.png", 512, 0, 26, 34], ["../cinder/cave-decor.png", 576, 0, 36, 36], ["../cinder/cave-decor.png", 640, 0, 29, 26], ["../cinder/cave-decor.png", 704, 0, 27, 26], ["../cinder/cave-decor.png", 768, 0, 30, 28], ["../cinder/cave-decor.png", 832, 0, 26, 20], ["../cinder/cave-decor.png", 896, 0, 34, 36], ["../cinder/cave-decor.png", 960, 0, 30, 27], ["../cinder/cave-decor.png", 1088, 0, 35, 29], ["../cinder/cave-decor.png", 1152, 0, 20, 20], ["../cinder/cave-decor.png", 0, 0, 29, 23], ["../cinder/cave-decor.png", 192, 0, 32, 27]]}
+    rubble: {color: "#5a4430", alpha: 0.4, decor: {density: 1.2, edge: true, spread: 10, pieces: [["../cinder/cave-decor.png", 128, 0, 36, 31], ["../cinder/cave-decor.png", 0, 0, 29, 23], ["../cinder/cave-decor.png", 192, 0, 32, 27], ["../cinder/cave-decor.png", 768, 0, 30, 28]]}}
+    steps: {color: "#6a5038", alpha: 0.5}
+    bridge: {color: "#5e4a3a"}
     murderhole: {color: "#181210"}
     wall:
-      color: "#1c1816"
-      wang: basalt-wall.png
+      color: "#2a1e16"
+      wang: ../cinder/mine-wall.png
       over: rock
+      # on the faces: torches, the goblins' red banners and swags, carved gold glyphs and runes, a lava seep, mine
+      # timbers, a shelf of pots, a skull shield, chains, painted hands, a hanging lantern
+      faces: {density: 0.3, drop: 2, band: [-60, 56], pieces: [["../cinder/cave-wall.png", 0, 0, 18, 58, -60], ["../cinder/cave-wall.png", 64, 0, 50, 62, -64], ["../cinder/cave-wall.png", 128, 0, 60, 51, -64], ["../cinder/cave-wall.png", 192, 0, 48, 49, -56], ["../cinder/cave-wall.png", 320, 0, 42, 64, -64], ["../cinder/cave-wall.png", 384, 0, 58, 53, -54], ["../cinder/cave-wall.png", 448, 0, 54, 28, -40], ["../cinder/cave-wall.png", 512, 0, 36, 52, -56], ["../cinder/cave-wall.png", 576, 0, 26, 56, -62], ["../cinder/cave-wall.png", 640, 0, 49, 55, -58], ["../cinder/cave-wall.png", 704, 0, 24, 59, -60], ["../cinder/cave-wall.png", 768, 0, 18, 59, -60], ["../cinder/cave-wall.png", 832, 0, 26, 55, -62], ["../cinder/cave-wall.png", 896, 0, 40, 58, -62], ["../cinder/cave-wall.png", 0, 0, 18, 58, -60], ["../cinder/cave-wall.png", 704, 0, 24, 59, -60]]}
       cliff:
         - [2, 2, ".....00..00....."]
         - [3, 2, ".....00..01....."]
@@ -829,6 +839,98 @@ ember_basalt:
     gob_sacks: [../front.png, 921, 149, 62, 58]
     gob_timber: [../front.png, 985, 149, 64, 88]
     gob_pot: [../front.png, 1051, 149, 59, 44]
+    # Second pass (assets/wip/cinder/): cave clutter and a brazier with its flames.
+    fire_brazier: [../cinder/cave-wall.png, 256, 0, 43, 59]
+    cl_pickaxe: [../cinder/cave-clutter.png, 0, 0, 34, 34]
+    cl_coins: [../cinder/cave-clutter.png, 64, 0, 31, 22]
+    cl_pot: [../cinder/cave-clutter.png, 128, 0, 30, 33]
+    cl_helm: [../cinder/cave-clutter.png, 192, 0, 31, 30]
+    cl_sack: [../cinder/cave-clutter.png, 256, 0, 29, 35]
+    cl_wheel: [../cinder/cave-clutter.png, 320, 0, 34, 33]
+    cl_crate: [../cinder/cave-clutter.png, 384, 0, 34, 32]
+    cl_ladder: [../cinder/cave-clutter.png, 448, 0, 36, 37]
+    cl_lantern: [../cinder/cave-clutter.png, 512, 0, 22, 37]
+    cl_anvil: [../cinder/cave-clutter.png, 576, 0, 36, 32]
+    cl_rope: [../cinder/cave-clutter.png, 640, 0, 36, 28]
+    cl_spears: [../cinder/cave-clutter.png, 704, 0, 36, 37]
+    cl_hammer: [../cinder/cave-clutter.png, 768, 0, 34, 34]
+    cl_bucket: [../cinder/cave-clutter.png, 832, 0, 29, 32]
+    cl_boots: [../cinder/cave-clutter.png, 896, 0, 34, 33]
+    cl_junk: [../cinder/cave-clutter.png, 960, 0, 36, 35]
+# The Black Hills outside the mine (the user, 2026-11-07: rocky hills and mounds of basalt and old flows; prompts and
+# build in assets/wip/cinder/): grey-brown ash, cooled black flows you can walk over, the mine's own brown floor as the
+# trodden way to its mouth, lava under a crusted bank, and basalt hills climbing in two rings (hill, crag; the summit
+# repeats the crag).
+cinder_hills:
+  cell: 64
+  dir: art/worldtiles/cinder/
+  floor: ash
+  terrains:
+    lava: {color: "#d0461a", anim: {sheet: ../ember/lava-anim.png, size: 512, frames: 24, cols: 4, fps: 6, spurt: [../ember/lava-spurt.png, 48, 96, 16, 12], every: 10}}
+    ash:
+      color: "#5e5352"
+      wang: lava-ash.png
+      over: lava
+      cut: lava-ash-cut.png
+      # small rocks, pebbles, coal, a stone, bones, crust, low boulders, scree, a cracked lava rock
+      decor: {density: 0.35, clump: 6, flip: true, spread: 10, pieces: [[cave-decor.png, 0, 0, 29, 23], [cave-decor.png, 192, 0, 32, 27], [cave-decor.png, 640, 0, 29, 26], [cave-decor.png, 768, 0, 30, 28], [cave-decor.png, 960, 0, 30, 27], [cave-decor.png, 1216, 0, 36, 35], [hills-props.png, 640, 0, 52, 27], [hills-props.png, 384, 0, 61, 38], [cave-decor.png, 1024, 0, 32, 34], [cave-decor.png, 0, 0, 29, 23]]}
+    trail: {color: "#7a5a3a", wang: path.png, over: ash}
+    rubble: {color: "#5e5352", alpha: 0.3, decor: {density: 1.2, edge: true, spread: 10, pieces: [[hills-props.png, 384, 0, 61, 38], [cave-decor.png, 128, 0, 36, 31], [cave-decor.png, 0, 0, 29, 23]]}}
+    # Old flows: low raised lobes of ropy black basalt you can walk over (ground `{`).
+    hill: {color: "#2a2426", wang: flow.png, over: ash, decor: {density: 0.2, clump: 4, spread: 6, pieces: [[cave-decor.png, 1216, 0, 36, 35], [cave-decor.png, 64, 0, 35, 30], [cave-decor.png, 1152, 0, 20, 20]]}}
+    bridge: {color: "#4a4440"}
+    wall:
+      color: "#3a3234"
+      wang: hill.png
+      over: ash
+      cliff:
+        - [2, 2, ".....00..00....."]
+        - [3, 2, ".....00..01....."]
+        - [1, 4, ".....00..11....."]
+        - [2, 4, ".....00..10....."]
+        - [3, 3, ".00..01..01....."]
+        - [3, 4, ".....01..01....."]
+        - [0, 6, ".....11..11....."]
+        - [1, 0, ".11..10..10....."]
+        - [1, 1, ".....10..10....."]
+        - [0, 4, ".....10..11....."]
+        - [3, 6, ".....01..11....."]
+        - [1, 6, ".....11..12...0."]
+        - [3, 0, ".....11..22..00."]
+        - [1, 2, ".....10..20..00."]
+        - [1, 7, ".1...12..10....."]
+        - [3, 1, ".11..22..00....."]
+        - [1, 3, ".....20..00....."]
+        - [2, 0, ".....01..02..00."]
+        - [0, 0, ".....11..21..0.."]
+        - [2, 6, ".....10..21..01."]
+        - [2, 1, ".....02..00....."]
+        - [0, 1, "..1..21..01....."]
+        - [2, 7, ".10..21..01....."]
+        - [0, 2, ".....01..12..10."]
+        - [0, 3, ".01..12..10....."]
+    # The rings (assets/wip/south/tiers.py): the crag over the hill, and the summit drawn as the crag again over it.
+    ledge: {like: wall, color: "#4a3430", wang: crag.png, over: wall}
+    summit: {like: wall, color: "#4a3430", wang: crag.png, over: ledge}
+  props:
+    minemouth: [../front.png, 1387, 0, 122, 147]
+    totem: [../front.png, 1511, 0, 58, 121]
+    boulder: [hills-props.png, 0, 0, 55, 54]
+    spire: [hills-props.png, 64, 0, 36, 61]
+    columns: [hills-props.png, 128, 0, 56, 61]
+    flowmound: [hills-props.png, 192, 0, 60, 34]
+    deadtree: [hills-props.png, 256, 0, 46, 60]
+    fumarole: [hills-props.png, 320, 0, 56, 57]
+    scree: [hills-props.png, 384, 0, 61, 38]
+    obsidian: [hills-props.png, 448, 0, 37, 45]
+    lavarock: [hills-props.png, 512, 0, 48, 43]
+    cairn: [hills-props.png, 576, 0, 47, 57]
+    boulders: [hills-props.png, 640, 0, 52, 27]
+    stump: [hills-props.png, 704, 0, 46, 47]
+    lavapool: [hills-props.png, 768, 0, 61, 38]
+    spire2: [hills-props.png, 832, 0, 43, 61]
+    ribs: [hills-props.png, 896, 0, 61, 35]
+    signpost: [hills-props.png, 960, 0, 38, 60]
 ember_masonry:
   doorsInWall: true
   cell: 64

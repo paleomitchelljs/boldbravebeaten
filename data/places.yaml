@@ -260,38 +260,48 @@ mine_approach:
   name: The Black Hills
   kind: dungeon
   open: true
-  blurb: Bare black rock north of the village, split by a channel of lava; the goblins' mine opens in the cliff beyond.
+  blurb: Blasted ash and old black flows north of the village, among hills of basalt, split by a channel of lava; the goblins' mine opens in the hill beyond.
   level: 1
-  look: {wall: "#2a2624", floor: "#3c3632", ceiling: "#3a2a24", fog: "#120604", torch: 0, tileset: ember_basalt, light: 20}
+  look: {wall: "#2a2624", floor: "#3c3632", ceiling: "#3a2a24", fog: "#120604", torch: 0, tileset: cinder_hills, light: 20}
   map:
-    - "##############################"
-    - "##############################"
-    - "##############################"
-    - "######.........M.......#######"
-    - "######.................#######"
-    - "######......T......##..#######"
-    - "##.................##..#######"
-    - "##..........................##"
-    - "##..........................##"
-    - "##$$......................$$##"
+    - "(((((((##################((((("
+    - "(((((((##################((((("
+    - "((((#####################((((("
+    - "((((##......d≡≡M≡≡c....#####(("
+    - "((####........≡≡≡......#####(("
+    - "((####...{{{..≡≡..t......s##(("
+    - "####....{{{{..≡≡....#####.####"
+    - "####....{{{.f.≡≡....#(((#.####"
+    - "##............≡≡....#(((#...##"
+    - "##$$...b......≡≡....#####...##"
     - "##$$$$$$$$$$$$))$$$$$$$$$$$$##"
     - "##$$$$$$$$$$$$))$$$$$$$$$$$$##"
-    - "##$$$$$$$$$$$$))$$$$$$$$$$$$##"
-    - "##..........................##"
-    - "##..........................##"
-    - "##.......###........$$......##"
-    - "##.......###........$$..######"
-    - "#####...................######"
-    - "#####$$.................######"
-    - "#####$$.................######"
-    - "#####...................######"
-    - "#####...................######"
-    - "###############..#############"
-    - "################S#############"
+    - "##..$$$$$$$$$$))$$$$$$$$$$..##"
+    - "##..{{{{......≡≡.......{{{c.##"
+    - "##.{{{{{.p...≡≡........{{{..##"
+    - "##.{{{{.....≡≡...o.#####....##"
+    - "##.........≡≡......#(((#.#####"
+    - "####.####..≡≡......#(((#.#####"
+    - "####.#((#..≡≡......#####....##"
+    - "((##.#((#..≡≡...{{{..T...r..##"
+    - "((#######.x.≡≡...{{{....######"
+    - "((######.....≡≡≡....d...######"
+    - "((((((#########≡≡.########(((("
+    - "((((((##########S#########(((("
   legend:
     S: {kind: stairs, to: village, at: N, sprite: none, label: "The road south, back to the village"}
     M: {kind: stairs, to: ember_hall, at: "<", sprite: minemouth, label: "The mine"}
     T: {kind: prop, sprite: totem, label: "A goblin totem hung with bones"}
+    c: {kind: prop, sprite: cairn, label: "A cairn of black stones, a horned skull on top"}
+    d: {kind: prop, sprite: deadtree, label: "A dead tree, burnt black"}
+    t: {kind: prop, sprite: signpost, label: "A goblin signpost, a skull nailed to it"}
+    f: {kind: prop, sprite: fumarole, solid: false, label: "Steam hissing out of a vent"}
+    s: {kind: prop, sprite: spire, label: "A spire of red rock"}
+    b: {kind: prop, sprite: columns, label: "Black columns of basalt"}
+    p: {kind: prop, sprite: lavapool, label: "A small pool of lava in a rim of rock"}
+    o: {kind: prop, sprite: obsidian, label: "A shard of black glass"}
+    r: {kind: prop, sprite: ribs, solid: false, label: "The bones of something big"}
+    x: {kind: prop, sprite: spire2, label: "A crooked spire of red rock"}
   encounters: {}
   secrets: []
 
@@ -1434,6 +1444,7 @@ ember_hall:
     gate: {foes: [{monster: goblinWarrior}], flags: [ember_gate_won], text: "The gate guard steps in front of the portcullis."}
   wandering:
     - {w: 1, foes: [{monster: fireGoblin}], text: "A fire goblin comes along the cave."}
+    - {w: 1, foes: [{monster: lavaBeetle}], text: "A lava beetle scuttles out of a crack, its shell aglow."}
     - {w: 4, nothing: true}
   secrets: []
 
@@ -1578,6 +1589,7 @@ ember_lake:
   wandering:
     - {w: 1, foes: [{monster: fireElemental}], text: "A figure of fire walks up out of the lava."}
     - {w: 1, foes: [{monster: efreeti}], text: "An efreeti steps out of the heat haze over the lava, fists alight."}
+    - {w: 1, foes: [{monster: imp}, {monster: imp}], text: "Two imps drop out of the smoke over the lava."}
     - {w: 5, nothing: true}
   secrets: []
 

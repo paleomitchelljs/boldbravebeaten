@@ -320,9 +320,9 @@ efreeti:
   size: 64
   box: [15, 1, 49, 60]
   height: 1.5
-  walk: Walk
-  walkFrames: 6
-  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  # It floats (the user, 2026-11-07): rising with its arms folding, played forward and back, moving and standing.
+  floats: true
+  walk: {anim: Float, frames: 9, dirs: [south, south-east, east, north-east, north], pingpong: true}
   attack: {anim: Strike2, frames: 7, dirs: [south, south-east, east, north-east, north]}
   death: {anim: Death, frames: 7, dirs: [south]}
 # A familiar (the user's, 2026-11-04): a fae drake on butterfly wings; it hovers.
@@ -616,18 +616,19 @@ mummy-lord:
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
   attack: {anim: Strike2, frames: 7}
   death: {anim: Death, frames: 7, dirs: [south]}
-# Stand-ins for the fire-goblin mine until the user makes the figures: the golem and the avatar in fire colours.
+# The fire-goblin mine's fire spirits. The efreet lord is still a stand-in: the avatar in fire colours.
 fire-elemental:
   type: pixellab
-  dir: art/characters/pixellab/Golem/Idle
-  name: Fire elemental (stand-in)
-  size: 80
-  box: [5, 4, 75, 78]
-  height: 1.8
-  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
-  maxWidth: 2.0
-  recolor: [[0, "#2a0600"], [0.35, "#8c1e06"], [0.7, "#e2620e"], [1, "#ffe070"]]
-  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  dir: art/characters/pixellab/Fire_Elemental/Idle
+  name: Fire elemental
+  size: 64
+  box: [3, 3, 61, 63]
+  height: 1.6
+  # A man-shape of fire on a flame tail (the user's, 2026-11-07): it flickers in place, moving and standing.
+  floats: true
+  walk: Flicker
+  walkFrames: 9
+  walks: [south, south-east, east, north-east, north]
   attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
   death: {anim: Death, frames: 7, dirs: [south]}
 efreet:
@@ -760,4 +761,58 @@ gnoll:
   walkFrames: 6
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
   attack: {anim: Strike, frames: 7}
+  death: {anim: Death, frames: 7, dirs: [south]}
+
+# The mine's new creatures (the user's, 2026-11-07): a hovering imp and a lava beetle.
+imp:
+  type: pixellab
+  dir: art/characters/pixellab/Imp/Hovering_with_feet_o
+  name: Imp
+  size: 60
+  box: [4, 6, 56, 60]
+  height: 1.0
+  floats: true
+  walk: Hover
+  walkFrames: 9
+  walks: [south, south-east, east, north-east, north]
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+lava-beetle:
+  type: pixellab
+  dir: art/characters/pixellab/Lava_Beetle/Idle
+  name: Lava beetle
+  size: 64
+  box: [3, 3, 61, 58]
+  height: 0.8
+  maxWidth: 1.3
+  walkFrames: 7
+  walks: [south, south-east, east, north-east, north]
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+# The user's bat and black widow (2026-11-07): the dusk bat's and the giant spider's figures.
+giant-bat:
+  type: pixellab
+  dir: art/characters/pixellab/Giant_Bat/Idle
+  name: Giant bat
+  size: 56
+  box: [1, 9, 55, 46]
+  height: 0.7
+  maxWidth: 1.2
+  floats: true
+  walk: Fly
+  walkFrames: 9
+  walks: [south, south-east, east, north-east, north]
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+black-widow:
+  type: pixellab
+  dir: art/characters/pixellab/Black_Widow/Idle
+  name: Black widow
+  size: 56
+  box: [5, 8, 51, 51]
+  height: 0.7
+  maxWidth: 1.4
+  walkFrames: 7
+  walks: [south, south-east, east, north-east, north]
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
   death: {anim: Death, frames: 7, dirs: [south]}

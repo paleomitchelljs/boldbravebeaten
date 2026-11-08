@@ -242,3 +242,21 @@ the account the same day, perhaps).
 Left for later: idles for the warlord (4 more directions), the shaman and the Efreeti (breathing-idle, 5 each); the
 drake's death; Tylo (its south view needs fixing first).
 
+
+## The mine's fire creatures, and a bat and a spider (the user, 2026-11-07)
+
+The user: "I'd also like the animations updated, including a few new ones added like a floating imp, floating efreet,
+lava beetle, fire elemental, and more." 2975 generations at the start (with the mine's tiles and decor), 2664 at the
+end; the animation calls below come to about 101. All v3, monsters 5 directions (the game mirrors the other 3).
+
+| Character | Clip | How | Charged |
+|---|---|---|---|
+| Imp (hovering state) | wingbeat SE, E, NE, N | appended to the user's own south clip (`Hover`) | 4 |
+| | claw rake ×5, death | | 6 |
+| Efreeti | float ×5 (`Float`) | the first south folds its arms one way only: played ping-pong. A second try (`Float2`, legs dangling) barely moved: deleted. E re-rolled (rings of fire round its legs) | 1 + 1 + 4 + 1 |
+| Lava beetle | scuttle ×5, bite ×5, death | E walk re-rolled (the shell flashed white); N bite re-rolled (a white bar), still shows a mouth for 3 frames; first death sprang back to life on its last frame: re-rolled | 5 + 1 + 5 + 1 + 1 + 1 |
+| Fire elemental | flicker ×5, punch ×5, death | first south punch dissolved into a blob, first death sprang back: both re-rolled | 5 + 1 + 5 + 1 + 1 |
+| Giant bat | wingbeat ×5, bite ×5, death | N bite frames 3-4 flashed white: patched in the repo | 11 |
+| Black widow | crawl ×5, bite ×5, death | E and NE bites grew a fanged mouth on the abdomen: re-rolled; E frame 6 patched | 11 + 2 |
+
+Not animated (the user's other new figures): the badger-man, Sorkvild the Raven, the troll knight.

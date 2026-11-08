@@ -51,7 +51,7 @@ duskBat:
   faction: wilds
   xp: 6
   glyph: "🦇"
-  sprite: {art: dusk-bat, kind: orc, scale: 0.5, tint: "#6a5a7a"}
+  sprite: {art: giant-bat, kind: orc, scale: 0.5, tint: "#6a5a7a"}
   attrs: {STR: 2, CON: 3, DEX: 8, SPD: 9, INT: 3, WIS: 7, CHA: 2}
   skills: {melee: 1, evasion: 4, perception: 3}
   natural: [ratBite]
@@ -121,7 +121,7 @@ giantSpider:
   faction: wilds
   xp: 55
   glyph: "🕷"
-  sprite: {art: spider, kind: orc, scale: 0.8, tint: "#4a3a4a"}
+  sprite: {art: black-widow, kind: orc, scale: 0.8, tint: "#4a3a4a"}
   attrs: {STR: 8, CON: 6, DEX: 8, SPD: 7, INT: 1, WIS: 5, CHA: 1}
   skills: {melee: 2, athletics: 2, stealth: 3, perception: 2}
   natural: [spiderBite, webSpinner]
@@ -834,6 +834,34 @@ efreeti:
   nouns: [fire]
   traits: {size: 1.1, element: fire, resist: {fire: 0, mind: 0.5}}
   feats: {verb_strike: 1, mod_launch: 1}
+imp:
+  name: Imp
+  blurb: "A small winged fiend of the deep mine, red as a coal: it hangs in the air over the lava and rakes with hot claws."
+  faction: wilds
+  xp: 30
+  glyph: "😈"
+  sprite: {art: imp, kind: orc, scale: 0.7, tint: "#c02020"}
+  level: 2
+  attrs: {STR: 4, CON: 5, DEX: 8, SPD: 8, INT: 5, WIL: 6, WIS: 5, CHA: 4}
+  skills: {melee: 2, evasion: 3, perception: 2}
+  natural: [impClaws]
+  nouns: [fire]
+  traits: {flying: true, dodge: 2, element: fire, resist: {fire: 0}}
+  feats: {}
+lavaBeetle:
+  name: Lava beetle
+  blurb: "A beetle the size of a dog, its shell aglow with the heat it lives in: hard to hurt, slow, and its bite burns."
+  faction: wilds
+  xp: 35
+  glyph: "🪲"
+  sprite: {art: lava-beetle, kind: orc, scale: 0.8, tint: "#d06020"}
+  level: 2
+  attrs: {STR: 9, CON: 10, DEX: 5, SPD: 6, INT: 1, WIS: 4, CHA: 1}
+  skills: {melee: 2}
+  natural: [mandibles]
+  armor: chitin
+  traits: {element: fire, resist: {fire: 0}}
+  feats: {}
 efreetLord:
   name: The efreet lord
   blurb: "A great fire spirit bound at the bottom of a pit, with two elementals for company. It flies, it burns, and it is very bored."

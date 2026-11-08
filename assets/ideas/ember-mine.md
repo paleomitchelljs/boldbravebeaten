@@ -82,7 +82,10 @@ guesses: **encounter tuning is deferred** (CLAUDE.md), so no sims have been run 
 | Goblin champion | `goblinChampion` | the orc warrior | (the orc warrior may do) |
 | The goblin king | `goblinKing` | the orange goblin at 1.25× | the king |
 | Red drake | `redDrake` | Singe (bite and death added) | — |
-| Fire elemental | `fireElemental` | the golem in fire colours (`fire-elemental`) | a fire elemental |
+| Fire elemental | `fireElemental` | the user's fire elemental (2026-11-07: flicker, punch, death; `fire-elemental`) | — |
+| Efreeti | `efreeti` | the user's efreeti, floating (2026-11-07) | — |
+| Imp (lake wanderers) | `imp` | the user's imp, hovering (2026-11-07) | — |
+| Lava beetle (hall wanderers) | `lavaBeetle` | the user's lava beetle (2026-11-07) | — |
 | The efreet lord | `efreetLord` | the avatar in fire colours (`efreet`) | the efreet |
 | Gnome warrior; the warden, a sergeant, a prisoner | `gnomeWarrior`; `gnome_warden`, `gnome_sergeant`, `gnome_prisoner` | the bald old man at 0.8× | gnomes (warrior, elder) |
 

@@ -1,0 +1,152 @@
+{
+  "group_id": "54eae881-275b-439d-8406-ca46023492dc",
+  "states": [
+    {
+      "character": {
+        "id": "281d2697-32ed-4727-b62c-3a991b232174",
+        "name": "Idle",
+        "prompt": "a giant brown bat with red eyes flying",
+        "size": {
+          "width": 56,
+          "height": 56
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-08T03:48:15.158947+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {
+          "Strike": {
+            "east": [
+              "Idle/animations/Strike/east/frame_000.png",
+              "Idle/animations/Strike/east/frame_001.png",
+              "Idle/animations/Strike/east/frame_002.png",
+              "Idle/animations/Strike/east/frame_003.png",
+              "Idle/animations/Strike/east/frame_004.png",
+              "Idle/animations/Strike/east/frame_005.png",
+              "Idle/animations/Strike/east/frame_006.png"
+            ],
+            "south-east": [
+              "Idle/animations/Strike/south-east/frame_000.png",
+              "Idle/animations/Strike/south-east/frame_001.png",
+              "Idle/animations/Strike/south-east/frame_002.png",
+              "Idle/animations/Strike/south-east/frame_003.png",
+              "Idle/animations/Strike/south-east/frame_004.png",
+              "Idle/animations/Strike/south-east/frame_005.png",
+              "Idle/animations/Strike/south-east/frame_006.png"
+            ],
+            "south": [
+              "Idle/animations/Strike/south/frame_000.png",
+              "Idle/animations/Strike/south/frame_001.png",
+              "Idle/animations/Strike/south/frame_002.png",
+              "Idle/animations/Strike/south/frame_003.png",
+              "Idle/animations/Strike/south/frame_004.png",
+              "Idle/animations/Strike/south/frame_005.png",
+              "Idle/animations/Strike/south/frame_006.png"
+            ],
+            "north": [
+              "Idle/animations/Strike/north/frame_000.png",
+              "Idle/animations/Strike/north/frame_001.png",
+              "Idle/animations/Strike/north/frame_002.png",
+              "Idle/animations/Strike/north/frame_003.png",
+              "Idle/animations/Strike/north/frame_004.png",
+              "Idle/animations/Strike/north/frame_005.png",
+              "Idle/animations/Strike/north/frame_006.png"
+            ],
+            "north-east": [
+              "Idle/animations/Strike/north-east/frame_000.png",
+              "Idle/animations/Strike/north-east/frame_001.png",
+              "Idle/animations/Strike/north-east/frame_002.png",
+              "Idle/animations/Strike/north-east/frame_003.png",
+              "Idle/animations/Strike/north-east/frame_004.png",
+              "Idle/animations/Strike/north-east/frame_005.png",
+              "Idle/animations/Strike/north-east/frame_006.png"
+            ]
+          },
+          "Death": {
+            "south": [
+              "Idle/animations/Death/south/frame_000.png",
+              "Idle/animations/Death/south/frame_001.png",
+              "Idle/animations/Death/south/frame_002.png",
+              "Idle/animations/Death/south/frame_003.png",
+              "Idle/animations/Death/south/frame_004.png",
+              "Idle/animations/Death/south/frame_005.png",
+              "Idle/animations/Death/south/frame_006.png"
+            ]
+          },
+          "Fly": {
+            "east": [
+              "Idle/animations/Fly/east/frame_000.png",
+              "Idle/animations/Fly/east/frame_001.png",
+              "Idle/animations/Fly/east/frame_002.png",
+              "Idle/animations/Fly/east/frame_003.png",
+              "Idle/animations/Fly/east/frame_004.png",
+              "Idle/animations/Fly/east/frame_005.png",
+              "Idle/animations/Fly/east/frame_006.png",
+              "Idle/animations/Fly/east/frame_007.png",
+              "Idle/animations/Fly/east/frame_008.png"
+            ],
+            "south-east": [
+              "Idle/animations/Fly/south-east/frame_000.png",
+              "Idle/animations/Fly/south-east/frame_001.png",
+              "Idle/animations/Fly/south-east/frame_002.png",
+              "Idle/animations/Fly/south-east/frame_003.png",
+              "Idle/animations/Fly/south-east/frame_004.png",
+              "Idle/animations/Fly/south-east/frame_005.png",
+              "Idle/animations/Fly/south-east/frame_006.png",
+              "Idle/animations/Fly/south-east/frame_007.png",
+              "Idle/animations/Fly/south-east/frame_008.png"
+            ],
+            "north": [
+              "Idle/animations/Fly/north/frame_000.png",
+              "Idle/animations/Fly/north/frame_001.png",
+              "Idle/animations/Fly/north/frame_002.png",
+              "Idle/animations/Fly/north/frame_003.png",
+              "Idle/animations/Fly/north/frame_004.png",
+              "Idle/animations/Fly/north/frame_005.png",
+              "Idle/animations/Fly/north/frame_006.png",
+              "Idle/animations/Fly/north/frame_007.png",
+              "Idle/animations/Fly/north/frame_008.png"
+            ],
+            "south": [
+              "Idle/animations/Fly/south/frame_000.png",
+              "Idle/animations/Fly/south/frame_001.png",
+              "Idle/animations/Fly/south/frame_002.png",
+              "Idle/animations/Fly/south/frame_003.png",
+              "Idle/animations/Fly/south/frame_004.png",
+              "Idle/animations/Fly/south/frame_005.png",
+              "Idle/animations/Fly/south/frame_006.png",
+              "Idle/animations/Fly/south/frame_007.png",
+              "Idle/animations/Fly/south/frame_008.png"
+            ],
+            "north-east": [
+              "Idle/animations/Fly/north-east/frame_000.png",
+              "Idle/animations/Fly/north-east/frame_001.png",
+              "Idle/animations/Fly/north-east/frame_002.png",
+              "Idle/animations/Fly/north-east/frame_003.png",
+              "Idle/animations/Fly/north-east/frame_004.png",
+              "Idle/animations/Fly/north-east/frame_005.png",
+              "Idle/animations/Fly/north-east/frame_006.png",
+              "Idle/animations/Fly/north-east/frame_007.png",
+              "Idle/animations/Fly/north-east/frame_008.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-11-08T04:46:49.790620"
+}
