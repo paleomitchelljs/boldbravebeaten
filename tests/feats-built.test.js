@@ -203,17 +203,45 @@ test('Sweep: a two-handed swing carries into a foe beside its target at half for
 
 test('Firestorm makes Fire + Wide a point cheaper; Ember Heart halves fire', () => {
   const m = C.newCharacter({ name: 'Pyre', side: 'party', starterGear: false });
-  m.skills.arcane = 2; m.feats.verb_cover = 1; m.feats.mod_wide = 1; m.nouns = ['fire'];
-  const key = (o) => o.spellKey === 'cover+fire+wide';
+  m.skills.arcane = 2; m.feats.verb_give = 1; m.feats.mod_wide = 1; m.nouns = ['fire'];
+  const key = (o) => o.spellKey === 'give+fire+ground+wide';
   const all = () => B.Magic.spellOptions(m);
   const before = all().find(key);
   assert.ok(before, 'a wide fire');
   m.feats.firestorm = 1;
   assert.equal(all().find(key).spCost, before.spCost - 1);
-  assert.equal(all().find((o) => o.spellKey === 'cover+fire').spCost, 4, 'not without Wide');
+  assert.equal(all().find((o) => o.spellKey === 'give+fire+ground').spCost, 3, 'not without Wide');
   assert.equal(C.damageMult(m, 'fire'), 1);
   m.feats.ember_heart = 1;
   assert.equal(C.damageMult(m, 'fire'), 0.5);
+});
+
+// ---- Traditions (the spell words, 2026-11-08): necromancy, devotion, summoning ---------------------------------------
+test('traditions: feats strengthen the spells whose words match theirs, and leave the rest alone', () => {
+  const m = C.newCharacter({ name: 'Vess', side: 'party', starterGear: false });
+  m.skills.arcane = 6;
+  Object.assign(m.feats, { verb_give: 1, verb_take: 1, verb_move: 1, verb_raise: 1, verb_bind: 1, verb_summon: 1, mod_wide: 1 });
+  m.nouns = ['life', 'death', 'speed', 'fire'];
+  const o = (k) => B.Magic.spellOptions(m).find((x) => x.spellKey === k);
+  const before = { harm: o('take+life').spell.magnitude, wither: o('give+death').spell.magnitude, heal: o('give+life').spell.magnitude, slow: o('take+speed').spCost, haste: o('give+speed').spCost, burst: o('give+life+wide').spell.radius };
+  m.feats.grave_touch = 2; m.feats.hexer = 1;
+  assert.equal(o('take+life').spell.magnitude, before.harm + 4, 'Grave Touch: Take Life');
+  assert.equal(o('give+death').spell.magnitude, before.wither + 4, 'Grave Touch: Give Death');
+  assert.equal(o('give+life').spell.magnitude, before.heal, 'not a heal');
+  assert.equal(o('take+speed').spCost, before.slow - 1, 'Hexer: Take on a foe');
+  assert.equal(o('give+speed').spCost, before.haste, 'not a blessing');
+  m.feats.mending_hands = 1; m.feats.wide_mercy = 1; m.feats.blessing = 1;
+  assert.equal(o('give+life').spell.magnitude, before.heal + 2, 'Mending Hands');
+  assert.equal(o('give+life+wide').spell.radius, before.burst + 1, 'Wide Mercy: two squares');
+  assert.equal(o('give+speed').spCost, before.haste - 1, 'Blessing');
+  assert.equal(o('raise+death').spell.raise, 'skeleton');
+  m.feats.raise_zombie = 1;
+  assert.equal(o('raise+death').spell.raise, 'zombie');
+  assert.ok(!o('summon+fire').spell.bound);
+  m.feats.living_flame = 1;
+  assert.ok(o('summon+fire').spell.bound, 'Living Flame: fire comes bound');
+  m.feats.deathless_command = 1;
+  assert.equal(o('bind+death').spell.contest, 3);
 });
 
 // ---- The new trees (phase 3): Archery, Shadow, Leadership, Survival, Lore, Athletics, Deception ----------------------

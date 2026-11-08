@@ -18,7 +18,7 @@ No anchors or tags. Keys must be unique.
 | `enchantments.yaml` | Rare enchantments: what they can be laid on, the multipliers, and the magic: `effects` (while worn or in hand), `strike` (on each blow that lands), `apLess`, `power`, `blockSpells`, `mitBonus`, `resistBonus`. See **Magic items** below. |
 | `weapons.yaml` | Weapons, including natural ones. `phys` (mass, length, point, edge, head…) generates damage, AP, STR scaling, wounds and punch through armor; `reach: {swing, thrust, min}`; `closeOK` (works in a clinch). |
 | `feats.yaml` | Trees of feats: a tree's `group` (setting) and `branches`; a feat's `branch`, `capstone` (one per tree a character), ranks, `requires`, effect line, `auto` (does the game implement it). |
-| `spells.yaml` | The magic grammar: verbs, nouns, modifiers. |
+| `spells.yaml` | The magic grammar: verbs, nouns, modifiers, and each shape's base numbers. See **A spell word** below. |
 | `monsters.yaml` | Creatures and packs. |
 | `foes.yaml` | Templates for generated people (bandit, militia…), scaled by level. |
 | `skills.yaml` | `skills`: the twenty skills (0–10, +1 a rank; `used` says where the rules read each, `unused: true` none yet). `checks`: checks outside combat, each attributes + one skill + an armor penalty. Points and feat tiers: rules.yaml `skills`. A preset, recruit, monster or template band (`skills: [{…}, {…}, {…}]`) has `skills: {melee: 3}`. |
@@ -112,9 +112,42 @@ Loot entries: `{w: 3, gold: [5, 20]}`, `{w: 2, good: salve, n: [1, 2]}`, `{w: 1,
 | `strike.onHit: {cond, rounds, chance}` | weapon enchantment | a condition on a blow that lands (resisted like a spell) |
 | `strike.element: {noun, mag}`, `sap: {attr, n, stamina}`, `armorWear`, `riled`, `slay`, `parrySpells` | weapon enchantment | a burning blow; drain into the wielder; eat armor; Riled; bane damage; parry spell bolts |
 | `apLess` | weapon enchantment | sheet AP off every strike and parry made with it |
-| `power: {verb, noun, mod, charges, name}` | either | casts that spell with no spell points, free hand or backlash; `charges` a day (omit: at will) |
+| `power: {verb, noun, mod, aim, charges, name}` | either | casts that spell with no spell points, free hand or backlash; `aim` picks one where the verb does two things with the noun; `charges` a day (omit: at will) |
 | `blockSpells` | shield enchantment | can block spell bolts (ordinary shields can't) |
 | `mitBonus: {P, S, B}`, `resistBonus` | armor enchantment | + mitigation, + the punch a point needs to burst it |
+
+**A spell word** (`spells.yaml`; docs/PROPOSALS.md §4). A verb is `{kind: verb, cost, feat, name}`, plus `alone` (what
+it does with no noun) and `pairs` (a second verb it takes: Summon + Bind). A modifier is `{kind: mod, cost, feat, name,
+shapes}` with what it changes (`mag`, `radius`, `length`, `ap`, `rangeMult`, `roundsMult`, `area`, `hidden`,
+`delayed`). A noun is `{kind: noun, cost, element, name, onHit, does}`; `does` says what each verb makes of it:
+
+```yaml
+fire:
+  kind: noun
+  cost: 1
+  element: fire              # its damage keyword
+  name: Fire
+  onHit: {cond: burning, rounds: 2}   # what its blow leaves
+  does:
+    strike: {shape: bolt}
+    give: [{shape: bane, aim: foe, cond: burning, stack: true}, {shape: ground, ground: hot}]
+    take: {shape: ward, aim: ally, ward: fire}
+    raise: {shape: wall, wall: fireWall}
+    summon: {shape: summon, monster: elemental}
+```
+
+An effect names a `shape` (its numbers in `shapes`, which the effect may override: `mag`, `range`, `rounds`, `radius`)
+and an `aim` (`foe`, `ally`, `any`, `ground`; a square by default for ground, wall, terrain, raise, summon, see). The
+rest says what it leaves: `cond`, `ground`, `wall`, `terrain` (config.js conditions and terrain), `ward` (a noun, or
+`magic` for a shell of force), `raise` and `better: [{feat, raise}]` (CONFIG.magic.raise), `monster` (`elemental`, or a
+monsters.yaml key), `cures`, `stack` (a curse that adds up), `only` (`undead`, `living`, `outsider`), `undead: mend`,
+`named` (needs a name the caster knows). A new noun is data only; a new shape is rules code. `validate` checks every
+effect. A monster casts with `nouns` and the verb and modifier feats, or has `powers` (spells it casts without points:
+`{verb, noun, mod, aim, charges, name}`, the ghost's touch).
+
+**A tradition feat** (`feats.yaml`, the magic trees): `spell: {match: [{verb, noun, aim, mod, shape}], mag, cost,
+radius, roundsMult, contest, bound}` strengthens every spell a rule matches (a rule matches when each field it names
+agrees; `noun` may be a list).
 
 **Companions** (`rules.yaml game.companions`): which monsters answer the Familiar and Animal Companion feats, by rank.
 
@@ -194,9 +227,9 @@ Every kind of harm has a keyword, and one map, `resist`, scales any of them (`Ch
 
 - `P`, `S`, `B`: a blow's point, edge and weight. Force the armor changes into blunt (a turned point, a cut's force
   through mail) answers to `B`.
-- A spell element (`spells.yaml` `element`: fire, frost, lightning, mind, life, venom, plague, acid, shadow, spirit…):
-  the spell's harm, and the conditions it leaves (`type` on a condition in `config.js`; a condition the will resists
-  counts as `mind`). Bite venom is `venom`.
+- A spell element (`spells.yaml` `element`: fire, frost, lightning (Storm), decay, mind, life, spirit (Death), shadow,
+  body…): the spell's harm, and the conditions it leaves (`type` on a condition in `config.js`; a condition the will
+  resists counts as `mind`). Bite venom, and the Poisoned condition, are `venom`.
 - `magic`: every spell, on top of its element (`magic: 0` is immune to all spells and to every condition a caster
   puts on it).
 

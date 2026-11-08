@@ -74,13 +74,14 @@ test('spell points: a rest brings them back, each spent point wears spWeary off 
   assert.equal(Magic.maxSP(mage), full);
 });
 
-test('a caster with Build and Fire has a wall of fire to cast', () => {
-  // Jabiku had these until 2026-11-01 (now Life with Increase, Decrease, Transfer); taught here instead.
+test('a caster with Raise and Fire has a wall of fire to cast', () => {
+  // Jabiku had a wall until 2026-11-01 (now Life with Move); taught here instead.
   const w = fresh(7);
   const j = World.party(w).find((c) => c.name === 'Jabiku');
-  j.feats.verb_build = 1;
+  j.feats.verb_raise = 1;
   j.nouns = j.nouns.concat(['fire']);
-  assert.ok(Magic.spellOptions(j).some((o) => o.spellKey === 'build+fire'));
+  const o = Magic.spellOptions(j).find((x) => x.spellKey === 'raise+fire');
+  assert.ok(o && o.spell.shape === 'wall' && o.spell.wall === 'fireWall');
 });
 
 test('golem-bane oil: worked into the blade in hand, it bites golems a landed blow at a time; the journal reads, and stays', async () => {

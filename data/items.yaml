@@ -56,7 +56,7 @@ goods:
   tome_ember:
     {name: "Charred primer: Fire", kind: book, value: 150, rarity: rare, teaches: {noun: fire}, blurb: "Teaches the noun Fire to one reader."}
   tome_roots:
-    {name: "Hedge-witch's notes: Vine", kind: book, value: 150, rarity: rare, teaches: {noun: vine}, blurb: "Teaches the noun Vine to one reader."}
+    {name: "Hedge-witch's notes: Mind", kind: book, value: 150, rarity: rare, teaches: {noun: mind}, blurb: "Teaches the noun Mind to one reader."}
   tome_stone:
     {name: "Mason's rhymes: Earth", kind: book, value: 150, rarity: rare, teaches: {noun: earth}, blurb: "Teaches the noun Earth to one reader."}
   tome_still:
@@ -71,13 +71,13 @@ goods:
   silk_sash:
     {name: Flowing Black Silk Sash, kind: trinket, slot: waist, effects: {costMult: 0.8}, value: 4000, rarity: unique, blurb: "Every action costs a fifth less AP."}
   circlet_of_shadow:
-    {name: Circlet of Shadow, kind: trinket, slot: head, power: {verb: bless, noun: veil, name: Veil}, value: 3000, rarity: unique, blurb: "At will: Bless + Veil — unseen beyond arm's reach for 3 rounds; striking gives you away."}
+    {name: Circlet of Shadow, kind: trinket, slot: head, power: {verb: give, noun: shadow, aim: ally, name: Veil}, value: 3000, rarity: unique, blurb: "At will: Give + Shadow — unseen beyond arm's reach for 3 rounds; striking gives you away."}
   crown_of_rile:
-    {name: Crown of Rile, kind: trinket, slot: head, effects: {hit: 1}, power: {verb: beguile, noun: rage, name: Goad, charges: 2}, value: 1500, rarity: very rare, blurb: "+1 to beat a defence. Twice a day: Beguile + Rage on a foe (WIL resists)."}
+    {name: Crown of Rile, kind: trinket, slot: head, effects: {hit: 1}, power: {verb: take, noun: mind, name: Goad, charges: 2}, value: 1500, rarity: very rare, blurb: "+1 to beat a defence. Twice a day: Take + Mind on a foe, a frenzy at whoever is nearest (WIL resists)."}
   froglok_crown:
     {name: Crown of Froglok Kings, kind: trinket, slot: head, attrs: {CHA: 1}, effects: {standingWith: {wilds: 2}}, value: 900, rarity: very rare, blurb: "+1 CHA; +2 disposition with the folk of the wilds."}
   necromancer_amulet:
-    {name: Necromancer's Amulet, kind: trinket, slot: neck, effects: {sp: 3, mag: {bone: 1, life: 1, spirit: 1}}, value: 1500, rarity: very rare, blurb: "+3 spell points; +1 magnitude with Bone, Life and Spirit."}
+    {name: Necromancer's Amulet, kind: trinket, slot: neck, effects: {sp: 3, mag: {death: 1, life: 1}}, value: 1500, rarity: very rare, blurb: "+3 spell points; +1 magnitude with Death and Life."}
   sorcerer_skullcap:
     {name: Sorcerer's Skullcap, kind: trinket, slot: head, attrs: {INT: 1}, effects: {sp: 2}, value: 1200, rarity: very rare, blurb: "+1 INT and +2 spell points."}
   zlandicar_heart:
@@ -89,7 +89,7 @@ goods:
   orc_fang_earring:
     {name: Orc Fang Earring, kind: trinket, slot: ear, attrs: {STR: 1}, effects: {stamina: 4}, value: 500, rarity: rare, blurb: "+1 STR, +4 stamina."}
   ivandyr_hoop:
-    {name: Ivandyr's Hoop, kind: trinket, slot: ear, power: {verb: strike, noun: spirit, name: Leech, charges: 3}, value: 900, rarity: very rare, blurb: "Three times a day: Strike + Spirit — chills the living (stamina), sears the undead."}
+    {name: Ivandyr's Hoop, kind: trinket, slot: ear, power: {verb: take, noun: death, aim: foe, name: Leech, charges: 3}, value: 900, rarity: very rare, blurb: "Three times a day: Take + Death — chills the living (stamina), sears the undead."}
 
 tables:
   vermin_nest:

@@ -64,10 +64,10 @@
     const yd = Items.makeWeapon('dagger', 'average');
     ysolde.weapons.push(yd);
     ysolde.sidearm = yd.id;
-    ysolde.feats = { casting: 2, verb_strike: 1, verb_hex: 1, verb_build: 1, verb_cover: 1, mod_strong: 1, ritualist: 1 };
+    ysolde.feats = { casting: 2, verb_strike: 1, verb_take: 1, verb_raise: 1, verb_give: 1, mod_strong: 1, ritualist: 1 };
     ysolde.inventory.components = { salt: 3, candle: 3, ink: 2, silverDust: 1, chalk: 2, herbs: 2 };
     ysolde.level = 3;
-    ysolde.nouns = ['fire', 'earth', 'vine'];
+    ysolde.nouns = ['fire', 'earth', 'frost'];
     ysolde.notes = 'Example caster: Fire, Earth and Vine. Walls, roots, burning ground. Edit or delete freely.';
 
     [wren, osk, hale, ysolde].forEach((c) => { c.stamina = C.maxStamina(c); add(c); });

@@ -12,7 +12,7 @@
   const Sprites = UI.Sprites;
 
   const ATTR_BLURB = { STR: 'Force: damage, grappling, carrying heavy gear', CON: 'Toughness: your wounds. CON 0 is death', DEX: 'Aim, parry, locks, traps', SPD: 'Initiative, AP, movement, stealth', INT: 'Magic, lore, deception', WIL: 'Resolve: stamina regeneration, resisting magic', WIS: 'Perception, reading people', CHA: 'Charm, appeal, bargaining' };
-  const NOUNS = ['fire', 'frost', 'lightning', 'wind', 'earth', 'vine', 'life', 'force'];
+  const NOUNS = ['fire', 'frost', 'storm', 'earth', 'force', 'life', 'death', 'mind'];
   const SIZE = () => G.CONFIG.game.party.size;
   const keyOf = (hero) => hero.id || hero.name;
   const startName = () => { const S = G.Content.world.start || {}, id = (S.go && S.go.to) || S.place; return (G.Content.world.places[id] || {}).name || id; };

@@ -156,19 +156,19 @@
       for (const p of c.prepared) {
         const o = G.Magic.spellOptions(c).find((x) => x.spellKey === p.spellKey);
         if (!o) continue;
-        const s = o.spell, N = CONFIG.magic.words[s.noun];
+        const s = o.spell;
         const t = chars[p.target] && enc.ids.includes(p.target) ? chars[p.target] : c;
         if (s.shape === 'ward') {
-          G.Conditions.add(t, 'warded', { rounds: p.rounds, mag: s.condMag, kind: N.ward, pool: N.ward === 'magic' ? s.magnitude * 3 : null, src: c.id });
+          G.Conditions.add(t, 'warded', { rounds: p.rounds, mag: s.condMag, kind: s.ward, pool: s.ward === 'magic' ? s.magnitude * 3 : null, src: c.id });
           lines.push(`${c.name}'s prepared ${o.label} wraps ${t.name}.`);
         } else if (s.shape === 'boon') {
-          G.Conditions.add(t, N.boon, { rounds: p.rounds, mag: s.condMag, src: c.id });
+          G.Conditions.add(t, s.cond, { rounds: p.rounds, mag: s.condMag, src: c.id });
           lines.push(`${c.name}'s prepared ${o.label} takes hold on ${t.name}.`);
         } else if (s.shape === 'rune') {
           const pos = enc.pos[c.id];
           const dx = c.side === 'party' ? 1 : -1;
           const f = G.Terrain.add(enc, pos.x + dx, pos.y, 'rune', { noun: s.noun, mag: s.magnitude, owner: c.id, side: c.side, hidden: true });
-          if (f) { f.radius = s.radius; f.condMag = s.condMag; lines.push(`${c.name}'s prepared rune lies hidden before them.`); }
+          if (f) { f.radius = s.radius; f.condMag = s.condMag; f.terrain = s.terrain; f.ground = s.ground; lines.push(`${c.name}'s prepared rune lies hidden before them.`); }
         }
       }
       c.prepared = [];

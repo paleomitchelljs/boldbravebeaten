@@ -446,19 +446,23 @@
         const targets = opt.target === 'square' ? null : enc.ids.filter((o) => {
           const t = chars[o];
           if (!t) return false;
-          // The newly dead can be called back by a Life restore (CONFIG.magic.revive).
+          // The newly dead can be called back (Raise + Life, a given Move + Life: CONFIG.magic.revive).
           if (t.status.dead) return opt.target === 'ally' && t.side === c.side && G.Magic.callsBack(opt.spell) && G.Magic.revivable(enc, t);
+          // Raise + Life is for the dead alone.
+          if (opt.spell.shape === 'revive') return false;
           // Transfer gives to someone else, never back to the caster.
           if (opt.spell.shape === 'give' && t === c) return false;
-          // Restore reaches a friend turned by a mind spell, too (to free them).
-          if (opt.target === 'ally') return t.side === c.side || (opt.spell.shape === 'restore' && t.charmed && t.charmed.side === c.side);
+          // A heal or a cleansing ward reaches a friend turned by a mind spell, too (to free them).
+          if (opt.target === 'ally') return t.side === c.side || ((opt.spell.shape === 'restore' || opt.spell.shape === 'ward') && t.charmed && t.charmed.side === c.side);
+          if (opt.target === 'any') return C.isActive(t);
           return t.side !== c.side && C.isActive(t);
         }).map((o) => {
           const op = enc.pos[o];
           const dd = dist(me, op);
           const line = G.Terrain && enc.tiles && dd >= 2 ? G.Terrain.lineCheck(enc, me, op, 'missile') : null;
-          if (opt.spell.named) return { id: o, distance: dd, inReach: G.Magic.knowsName(c, chars[o]) };
-          return { id: o, distance: dd, inReach: dd <= opt.maxRange && dd >= (opt.target === 'ally' ? 0 : opt.minRange) && !(line && line.blocked) };
+          const named = !opt.spell.named || G.Magic.knowsName(c, chars[o]);
+          const fits = !opt.spell.only || G.Magic.fits(chars[o], opt.spell.only);
+          return { id: o, distance: dd, inReach: named && fits && dd <= opt.maxRange && dd >= (opt.target === 'ally' || opt.target === 'any' ? 0 : opt.minRange) && !(line && line.blocked) };
         });
         out.spells.push(Object.assign({}, opt, { affordable: can(opt.ap) && !why, why, targets }));
       }

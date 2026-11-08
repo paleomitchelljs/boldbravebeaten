@@ -804,7 +804,7 @@
   group: magic
   skill: arcane
   branches:
-    - {id: first, name: "First verbs", blurb: "The six verbs anyone may learn first, and their pairs."}
+    - {id: first, name: "First verbs", blurb: "Verbs anyone may learn first."}
     - {id: higher, name: "Higher verbs", blurb: "Verbs that need a first verb."}
     - {id: mods, name: "Modifiers", blurb: "What changes a spell's reach, size and time."}
   feats:
@@ -813,190 +813,64 @@
       branch: first
       ranks: [novice]
       requires: []
-      effect: Learn the verb Strike (a bolt at arm's reach)
+      effect: "Learn the verb Strike (throw the noun: a bolt; with Wide, a burst)"
       auto: true
-    verb_hex:
-      name: "Verb: Hex"
+    verb_give:
+      name: "Verb: Give"
       branch: first
       ranks: [novice]
       requires: []
-      effect: Learn the verb Hex (a bane on a foe)
+      effect: "Learn the verb Give (put the noun into a creature or onto the ground: Give Life heals, Give Fire burns)"
       auto: true
-    verb_bless:
-      name: "Verb: Bless"
+    verb_take:
+      name: "Verb: Take"
       branch: first
       ranks: [novice]
       requires: []
-      effect: Learn the verb Bless (a boon on an ally)
+      effect: "Learn the verb Take (remove the noun or keep it off: Take Speed slows a foe, Take Fire wards an ally)"
       auto: true
-    verb_restore:
-      name: "Verb: Restore"
+    verb_see:
+      name: "Verb: See"
       branch: first
       ranks: [novice]
       requires: []
-      effect: "Learn the verb Restore (undo a noun's harm on an ally; Life heals)"
+      effect: "Learn the verb See (reveal hidden runes and the unseen; See Magic, the spells on everyone)"
       auto: true
-    verb_cover:
-      name: "Verb: Cover"
-      branch: first
-      ranks: [novice]
-      requires: []
-      effect: Learn the verb Cover (a hazard on the ground)
-      auto: true
-    verb_ward:
-      name: "Verb: Ward"
-      branch: first
-      ranks: [novice]
-      requires: []
-      effect: "Learn the verb Ward (protection from magic, missiles or an element)"
-      auto: true
-    verb_increase:
-      name: "Verb: Increase"
-      branch: first
-      ranks: [novice]
-      requires: []
-      effect: "Learn the verb Increase (give a noun: Increase Life heals)"
-      auto: true
-    verb_decrease:
-      name: "Verb: Decrease"
-      branch: first
-      ranks: [novice]
-      requires: []
-      effect: "Learn the verb Decrease (take a noun away: Decrease Life withers)"
-      auto: true
-    verb_transfer:
-      name: "Verb: Transfer"
-      branch: first
-      ranks: [apprentice]
-      requires: []
-      effect: "Learn the verb Transfer (move a noun between you and another: Transfer Life withers a foe to heal you, or spends your own life to heal an ally)"
-      auto: true
-    verb_launch:
-      name: "Verb: Launch"
+    verb_move:
+      name: "Verb: Move"
       branch: higher
       ranks: [apprentice]
-      requires:
-        -
-          - "verb_strike:1"
-          - "verb_hex:1"
-          - "verb_bless:1"
-          - "verb_restore:1"
-          - "verb_cover:1"
-          - "verb_ward:1"
-      effect: Learn the verb Launch (a bolt at range)
+      requires: []
+      effect: "Learn the verb Move (step through space, out of any hold; Move Life drains a foe or gives your own to an ally)"
       auto: true
-    verb_build:
-      name: "Verb: Build"
+    verb_raise:
+      name: "Verb: Raise"
       branch: higher
       ranks: [apprentice]
-      requires:
-        -
-          - "verb_strike:1"
-          - "verb_hex:1"
-          - "verb_bless:1"
-          - "verb_restore:1"
-          - "verb_cover:1"
-          - "verb_ward:1"
-      effect: Learn the verb Build (a wall across several squares)
+      requires: [["verb_strike:1", "verb_give:1", "verb_take:1", "verb_see:1"]]
+      effect: "Learn the verb Raise (a wall of the noun; Raise Death raises a corpse, Raise Life calls back one just dead)"
       auto: true
-    verb_open:
-      name: "Verb: Open"
-      branch: higher
-      ranks: [apprentice]
-      requires:
-        -
-          - "verb_strike:1"
-          - "verb_hex:1"
-          - "verb_bless:1"
-          - "verb_restore:1"
-          - "verb_cover:1"
-          - "verb_ward:1"
-      effect: Learn the verb Open (a pit)
-      auto: true
-    verb_inscribe:
-      name: "Verb: Inscribe"
-      branch: higher
-      ranks: [apprentice]
-      requires:
-        -
-          - "verb_strike:1"
-          - "verb_hex:1"
-          - "verb_bless:1"
-          - "verb_restore:1"
-          - "verb_cover:1"
-          - "verb_ward:1"
-      effect: Learn the verb Inscribe (a hidden rune on a square)
-      auto: true
-    verb_blink:
-      name: "Verb: Blink"
-      branch: higher
-      ranks: [apprentice]
-      requires:
-        -
-          - "verb_strike:1"
-          - "verb_hex:1"
-          - "verb_bless:1"
-          - "verb_restore:1"
-          - "verb_cover:1"
-          - "verb_ward:1"
-      effect: Learn the verb Blink (a short step through space)
-      auto: true
-    verb_burst:
-      name: "Verb: Burst"
+    verb_bind:
+      name: "Verb: Bind"
       branch: higher
       ranks: [adept]
-      requires: [["verb_launch:1"]]
-      effect: Learn the verb Burst (an area)
-      auto: true
-    verb_beguile:
-      name: "Verb: Beguile"
-      branch: first
-      ranks: [apprentice]
-      requires: [["verb_hex:1", "verb_bless:1"]]
-      effect: "Learn the verb Beguile (a mind spell: calm, dream, rage, fear, will)"
-      auto: true
-    word_doubling:
-      name: Word Doubling
-      branch: mods
-      ranks: [adept]
-      requires: [["skill:arcane:4"]]
-      effect: "Cast a spell with two nouns instead of a modifier; both do the verb (Rage + Dream: confusion)"
-      auto: true
-    verb_conjure:
-      name: "Verb: Conjure"
-      branch: higher
-      ranks: [adept]
-      requires: [["verb_build:1", "verb_bless:1"]]
-      effect: "Learn the verb Conjure (a creature of the noun, for a few rounds)"
+      requires: [["verb_give:1", "verb_take:1"]]
+      effect: "Learn the verb Bind (alone, hold a foe still; Bind Mind charms, Bind Death commands the undead, Bind and a name holds what bears it)"
       auto: true
     verb_summon:
       name: "Verb: Summon"
       branch: higher
       ranks: [adept]
-      requires: [["verb_conjure:1"]]
-      effect: Learn the verb Summon (needs the creature's name)
-      auto: false
-    verb_raise:
-      name: "Verb: Raise"
+      requires: [["verb_raise:1", "verb_bind:1"]]
+      effect: "Learn the verb Summon (an elemental of the noun, a ghost with Death, an outsider by its name; unbound it rages at whatever is nearest; Summon + Bind brings it bound)"
+      auto: true
+    verb_shape:
+      name: "Verb: Shape"
       branch: higher
-      ranks: [expert]
-      requires: [["verb_conjure:1", "verb_summon:1"]]
-      effect: "Learn the verb Raise: a body gets up and fights for you (Bone a skeleton, Life a zombie, Spirit a revenant)"
-      auto: true
-    mod_launch:
-      name: "Modifier: Launch"
-      branch: mods
-      ranks: [novice]
-      requires: []
-      effect: "Learn the modifier Launch (Increase, Decrease, Transfer at range)"
-      auto: true
-    mod_burst:
-      name: "Modifier: Burst"
-      branch: mods
-      ranks: [novice]
-      requires: []
-      effect: "Learn the modifier Burst (Increase, Decrease, Transfer over an area; with Launch, at range)"
-      auto: true
+      ranks: [adept]
+      requires: [["verb_give:1", "verb_take:1"]]
+      effect: "Learn the verb Shape (change a form: polymorph, petrify, illusions)"
+      auto: false
     mod_strong:
       name: "Modifier: Strong"
       branch: mods
@@ -1009,7 +883,7 @@
       branch: mods
       ranks: [novice]
       requires: []
-      effect: Learn the modifier Wide
+      effect: "Learn the modifier Wide (a bolt bursts over an area; a wall runs longer; a heal reaches everyone near)"
       auto: true
     mod_long:
       name: "Modifier: Long"
@@ -1021,38 +895,180 @@
     mod_far:
       name: "Modifier: Far"
       branch: mods
+      ranks: [novice]
+      requires: []
+      effect: "Learn the modifier Far (twice the range)"
+      auto: true
+    mod_hidden:
+      name: "Modifier: Hidden"
+      branch: mods
       ranks: [apprentice]
-      requires: [["mod_strong:1", "mod_wide:1", "mod_long:1"]]
-      effect: Learn the modifier Far
+      requires: [["mod_strong:1", "mod_wide:1", "mod_long:1", "mod_far:1"]]
+      effect: "Learn the modifier Hidden: a ground spell waits unseen on one square until someone steps on it (a rune)"
       auto: true
     mod_swift:
       name: "Modifier: Swift"
       branch: mods
       ranks: [apprentice]
-      requires: [["mod_strong:1", "mod_wide:1", "mod_long:1"]]
+      requires: [["mod_strong:1", "mod_wide:1", "mod_long:1", "mod_far:1"]]
       effect: Learn the modifier Swift
       auto: false
-    mod_lingering:
-      name: "Modifier: Lingering"
-      branch: mods
-      ranks: [apprentice]
-      requires: [["mod_strong:1", "mod_wide:1", "mod_long:1"]]
-      effect: Learn the modifier Lingering
-      auto: true
     mod_delayed:
       name: "Modifier: Delayed"
       branch: mods
       ranks: [apprentice]
-      requires: [["mod_strong:1", "mod_wide:1", "mod_long:1"]]
-      effect: "Learn the modifier Delayed: an area spell breaks at the end of the round, +3 magnitude, its mark seen by all"
+      requires: [["mod_strong:1", "mod_wide:1", "mod_long:1", "mod_far:1"]]
+      effect: "Learn the modifier Delayed: a bolt becomes an area that breaks at the end of the round, +3 magnitude, its mark seen by all"
       auto: true
-    mod_name:
-      name: "Modifier: Name"
-      branch: mods
+# Traditions (the user, 2026-11-08): no classes, but feats that strengthen the spells whose words match theirs
+# (`spell`: { match: [{verb, noun, aim, mod, shape}], mag, cost, radius, roundsMult, contest, bound }). Necromancy
+# takes and moves Life, gives and raises Death; Devotion gives to allies and calls back the dead.
+- id: magicNecromancy
+  name: "Magic: necromancy"
+  attrs: INT
+  group: magic
+  skill: arcane
+  branches:
+    - {id: blight, name: "Blight", blurb: "Taking life and strength from the living."}
+    - {id: grave, name: "Grave", blurb: "The dead raised, bound and called."}
+  feats:
+    grave_touch:
+      name: Grave Touch
+      branch: blight
+      ranks: [novice, apprentice]
+      requires: []
+      effect: "+2 magnitude a rank to Take Life, Move Life and Give Death"
+      auto: true
+      spell: {match: [{verb: take, noun: life}, {verb: move, noun: life}, {verb: give, noun: death}], mag: 2}
+    hexer:
+      name: Hexer
+      branch: blight
+      ranks: [novice]
+      requires: []
+      effect: "Take Speed, Might, Grace or Mind on a foe costs 1 spell point less"
+      auto: true
+      spell: {match: [{verb: take, noun: [speed, might, grace, mind], aim: foe}], cost: -1}
+    raise_zombie:
+      name: Raise the Flesh
+      branch: grave
       ranks: [apprentice]
-      requires: [["mod_strong:1", "mod_wide:1", "mod_long:1"]]
-      effect: "Learn the modifier Name: a targeted spell finds anyone whose name you know, anywhere on the field"
+      requires: [["verb_raise:1"]]
+      effect: "Raise Death raises a zombie, not a skeleton"
       auto: true
+    deathless_command:
+      name: Deathless Command
+      branch: grave
+      ranks: [adept]
+      requires: [["verb_bind:1"]]
+      effect: "+3 to bind the undead (Bind Death; Summon + Bind + Death)"
+      auto: true
+      spell: {match: [{verb: bind, noun: death}], contest: 3}
+    ghost_caller:
+      name: Ghost Caller
+      branch: grave
+      ranks: [adept]
+      requires: [["verb_summon:1"]]
+      effect: "Your ghosts (Summon Death) stay twice as long and come 2 magnitude stronger"
+      auto: true
+      spell: {match: [{verb: summon, noun: death}], roundsMult: 2, mag: 2}
+    raise_mummy:
+      name: Raise the Wrapped Dead
+      branch: grave
+      capstone: true
+      ranks: [expert]
+      requires: [["raise_zombie:1"]]
+      effect: "Raise Death raises a mummy"
+      auto: true
+- id: magicDevotion
+  name: "Magic: devotion"
+  attrs: "INT, WIL"
+  group: magic
+  skill: arcane
+  branches:
+    - {id: mercy, name: "Mercy", blurb: "Mending the living and calling back the dead."}
+    - {id: warding, name: "Warding", blurb: "Blessings and wards on allies; the dead put down."}
+  feats:
+    mending_hands:
+      name: Mending Hands
+      branch: mercy
+      ranks: [novice, apprentice]
+      requires: []
+      effect: "+2 magnitude a rank to Give Life"
+      auto: true
+      spell: {match: [{verb: give, noun: life}], mag: 2}
+    blessing:
+      name: Blessing
+      branch: warding
+      ranks: [novice]
+      requires: []
+      effect: "Give on an ally (Speed, Might, Grace, Force, Mind, Shadow) costs 1 spell point less"
+      auto: true
+      spell: {match: [{verb: give, aim: ally, shape: boon}, {verb: give, noun: force}], cost: -1}
+    wide_mercy:
+      name: Wide Mercy
+      branch: mercy
+      ranks: [apprentice]
+      requires: [["mending_hands:1"], ["mod_wide:1"]]
+      effect: "Give Life Wide reaches everyone within 2 squares"
+      auto: true
+      spell: {match: [{verb: give, noun: life, mod: wide}], radius: 1}
+    cleansing:
+      name: Cleansing
+      branch: warding
+      ranks: [apprentice]
+      requires: [["verb_take:1"]]
+      effect: "Take on an ally (wards) costs 1 spell point less and lasts twice as long"
+      auto: true
+      spell: {match: [{verb: take, aim: ally}], cost: -1, roundsMult: 2}
+    turn_the_dead:
+      name: Turn the Dead
+      branch: warding
+      ranks: [adept]
+      requires: [["verb_take:1"]]
+      effect: "+3 magnitude to Take Death"
+      auto: true
+      spell: {match: [{verb: take, noun: death, aim: foe}], mag: 3}
+    call_back:
+      name: Call Back
+      branch: mercy
+      capstone: true
+      ranks: [expert]
+      requires: [["wide_mercy:1"], ["verb_raise:1"]]
+      effect: "Raise Life costs 2 spell points less"
+      auto: true
+      spell: {match: [{verb: raise, noun: life}], cost: -2}
+- id: magicSummoning
+  name: "Magic: summoning"
+  attrs: "INT, WIL"
+  group: magic
+  skill: arcane
+  branches:
+    - {id: calling, name: "Calling", blurb: "Outsiders brought, held and sent away."}
+  feats:
+    binder:
+      name: Binder
+      branch: calling
+      ranks: [novice, apprentice]
+      requires: []
+      effect: "+2 a rank to bind an outsider (Bind Outsider, Bind and a name, Summon + Bind)"
+      auto: true
+      spell: {match: [{verb: bind, noun: outsider}, {verb: bind, noun: name}, {verb: summon}], contest: 2}
+    banisher:
+      name: Banisher
+      branch: calling
+      ranks: [apprentice]
+      requires: []
+      effect: "+3 to banish an outsider (Take Outsider)"
+      auto: true
+      spell: {match: [{verb: take, noun: outsider}], contest: 3}
+    long_summons:
+      name: Long Summons
+      branch: calling
+      ranks: [adept]
+      requires: [["verb_summon:1"]]
+      effect: "What you summon stays twice as long"
+      auto: true
+      spell: {match: [{verb: summon}], roundsMult: 2}
 - id: magicAffinity
   name: "Magic: affinity (fire)"
   attrs: INT
@@ -1103,8 +1119,9 @@
       capstone: true
       ranks: [master]
       requires: [["ember_heart:1"]]
-      effect: Summon a fire spirit without knowing its name
-      auto: false
+      effect: "Your fire elementals (Summon Fire) come bound: no Bind needed"
+      auto: true
+      spell: {match: [{verb: summon, noun: fire}], bound: true}
 - id: magicRitual
   name: "Magic: ritual"
   attrs: "INT, WIL"
@@ -1139,7 +1156,7 @@
       name: Rite of Healing
       branch: rites
       ranks: [apprentice]
-      requires: [["ritualist:1"], ["verb_restore:1"]]
+      requires: [["ritualist:1"], ["verb_give:1"]]
       effect: Healing ritual
       auto: false
     true_naming:

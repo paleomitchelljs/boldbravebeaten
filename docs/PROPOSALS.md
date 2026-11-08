@@ -1,6 +1,6 @@
 # Proposals awaiting a ruling (2026-10-24)
 
-Each section gives the rule, the options and a recommendation. §1 is ruled and built; §2 is built in all three steps (pieces and carry-through; aimed blows; wounds by location), with the parry carry-through. The numbers marked *guess* are still guesses.
+Each section gives the rule, the options and a recommendation. §1 is ruled and built; §2 is built in all three steps (pieces and carry-through; aimed blows; wounds by location), with the parry carry-through. §4 (the spell words) is ruled and built, but for what §4.4 lists. The numbers marked *guess* are still guesses.
 
 ## 1. Opportunity strikes: which steps provoke (ruled 2026-10-24: option C; revised 2026-11-02: option E, built)
 
@@ -211,3 +211,99 @@ more skills with trees; and "build a defined class through progress within sets 
 - Feat budget: 3 + 1 per level. A calling needs about 10 feats, so level 8. Raise it to 2 per level?
 - Which new trees first (recommended above), and may existing feats move between trees (stealth to Shadow, rally
   to Leadership, a retrain free for old saves)?
+
+## 4. The spell words (the user, 2026-11-08; ruled the same day, built)
+
+**Ask:** cover the user's list of spells (mind control, necromancy, summoning, battlefield, terrain, damage, damage over
+time, life, buffs, debuffs, transformation, mobility, utility, divination, illusion, abjuration, mana) with combinations
+of 1–3 words, using as few words as possible so that each serves many spells. Words should be themed so that
+necromancy (control, raise and destroy the undead, debuff foes, steal life) reads apart from priestly magic (heal,
+revive, buff allies). No classes: specialization makes some kinds of spell stronger, as with melee.
+
+**Ruling:** the verb says what happens, the noun what it happens to; nouns carry the theme. Necromancer and priest share
+nouns (Life, Speed, Might) and differ by verb: the priest gives, the necromancer takes. Traditions are feat trees keyed
+on verb–noun patterns, not on words, so every word stays open to everyone. The user's further rulings:
+
+- "Rot" is called **Decay**.
+- Raise doesn't summon. **Summon** is its own verb. What is summoned is simply in the world: unbound it acts as if
+  frenzied, striking whatever is nearest, friend or foe. Summon + Bind + a name gives control.
+- **Outsider** is a generic noun, to bind and banish outsiders without knowing their name. Animals and living people
+  are subject to Bind, never to Summon.
+- Only **elementals** can be summoned without a discovered name; **ghosts** (Summon + Death) are the one other
+  exception, since necromancy is an easy path to power whose balance is in the evil it asks you to roleplay. A name
+  should greatly strengthen a ghost (not built).
+- Raised dead (Raise + Death) obey without a Bind: a skeleton, a zombie with feats, a mummy at high tiers.
+- A ghost: only magic weapons and spells touch it; its touch passes armor and drains stamina only, never attributes
+  (it exhausts, never kills). Give + Force and a ward of Death keep it off. Balance comes from encounters that make
+  "underpowered" strategies crucial: armor is king in melee, and the ghost is where it isn't.
+- Elementals: Fire, Frost, Storm, Earth (no Force or Decay elementals for now).
+
+### 4.1 The words (30, plus names)
+
+| Kind | Words |
+|---|---|
+| Verbs (9) | Strike, Give, Take, Move, Raise, Bind, Summon, Shape (not built), See |
+| Nouns (15) | Fire, Frost, Storm, Decay, Force, Earth · Life, Death · Speed, Might, Grace · Mind, Shadow · Magic, Outsider |
+| Modifiers (6) | Wide, Far, Long, Strong, Hidden, Delayed (the user's earlier idea, kept) |
+| Names | found in the world (c.knownNames): Bind + a name holds what bears it (+3); Summon + an outsider's name calls that kind |
+
+The old grammar had 17 verbs, 31 nouns and 9 modifiers. Word Doubling is retired with the noun pairs it needed.
+
+### 4.2 The user's list, mapped
+
+| Spell | Words | Note |
+|---|---|---|
+| Charm | Bind + Mind; Bind + a name | living only; free, ends on harm; a name adds +3 |
+| Command Undead | Bind + Death | the caster concentrates |
+| Calm / Frenzy | Give + Mind / Take + Mind | on an ally, Give + Mind steadies against mind spells |
+| Raise Dead | Raise + Death (on a corpse) | skeleton; Raise the Flesh: zombie; Raise the Wrapped Dead: mummy |
+| Summon Monster | Summon + a name; Summon + an element; Summon + Death | unbound: frenzied |
+| Bind | Summon + Bind + …; Bind + Outsider / Death / a name on one already here | |
+| Wall | Raise + Earth / Fire / Frost / Storm | on empty squares |
+| Pit | Take + Earth (on the ground) | |
+| Force Barrier | Raise + Force | a wall of force (a dome is not built) |
+| Burning / Frozen tiles, Poison Cloud | Give + Fire / Frost / Decay (on the ground) | |
+| Grease | not a spell | recommended as an alchemy flask (not built) |
+| Rune / Trap | a ground spell + Hidden | springs on whoever steps on it, then lays its ground |
+| Bolt | Strike + Fire / Frost / Storm / Decay | Storm runs through metal; Decay eats armor |
+| Burst / Fireball | Strike + … + Wide | aimed at your own square: round you, you spared |
+| Cyclone, Force Shout | Strike + Force (+ Wide) | knocks back a square and down |
+| Curse / Linger | Give + Fire / Frost / Storm / Decay (on a foe) | stacks |
+| Heal / Healing Burst | Give + Life / + Wide | Wide Mercy (devotion): 2 squares |
+| Harm | Take + Life | at arm's reach |
+| Transfer | Move + Life | from a foe to the caster; or the caster's own to an ally |
+| Revive | Raise + Life | an ally dead within the window |
+| Haste / Slow | Give / Take + Speed | |
+| Stat buff / Weaken / Clumsy | Give / Take + Might, Grace; Give + Force (defense) | |
+| Levitate | Take + Earth (on an ally) | floats over pits and hazards |
+| Ethereal | not built | the proposal: Move with no square |
+| Paralysis | Bind (alone) | one round, CON resists |
+| Disintegrate Armor | Strike + Decay | |
+| Darkness / Invisibility | Give + Shadow (on the ground / an ally) | |
+| Teleport, Break Grapple | Move (alone) | yourself only; moving others and swapping are not built |
+| Unlock | not built | the proposal: Move on a lock |
+| Detect Trap / Magic | See / See + Magic | in a fight: hidden runes and the unseen come to light; See + Magic names the spells on everyone near |
+| Ward | Take + an element (on an ally) | lifts what it left, halves it after; Death's ward stops it |
+| Dispel, Cleanse | Take + Magic (a creature or the ground); Take + an element | |
+| Anti-Magic Zone, Counterspell, Reflect | not built | proposals: Take + Magic on the ground (lasting), as a reaction, Move + Magic as a reaction |
+| Channel | Give + Magic | the caster's stamina into spell points, 3 a point |
+| Transform, Decoy, Phantom Terrain, Disguise | Shape (not built) | Shape + a name, Shape + Earth, Shape + Shadow |
+
+### 4.3 Traditions (feats.yaml)
+
+- **Magic: necromancy** — Grave Touch (+2 a rank to Take Life, Move Life, Give Death), Hexer (Take on a foe −1 point),
+  Raise the Flesh (zombies), Deathless Command (+3 to Bind + Death), Ghost Caller (ghosts last twice as long, +2),
+  Raise the Wrapped Dead (mummies).
+- **Magic: devotion** — Mending Hands (+2 a rank to Give Life), Blessing (Give on an ally −1 point), Wide Mercy (Give
+  Life Wide to 2 squares), Cleansing (Take on an ally −1 point, twice as long), Turn the Dead (+3 to Take Death), Call
+  Back (Raise Life −2 points).
+- **Magic: summoning** — Binder (+2 a rank to bind outsiders), Banisher (+3 to Take Outsider), Long Summons.
+- Living Flame (fire affinity capstone): fire elementals come bound.
+
+### 4.4 Not built, and open
+- Shape (polymorph, petrify, illusions), Ethereal, Counterspell and Reflect as reactions, a lasting anti-magic zone,
+  moving another creature or swapping places, Unlock, a named ghost's strength, a dome of force, See outside a fight
+  (dungeon traps), Grease as an alchemy flask.
+- An unbound summons stands with its caster's side (for who has won, and so the caster's friends don't attack it
+  first): it attacks whoever is nearest, but nobody hunts it. A third side would be truer; ask if wanted.
+- Numbers are guesses (spells.yaml `shapes`, CONFIG.magic): not simmed. Encounter tuning is deferred.

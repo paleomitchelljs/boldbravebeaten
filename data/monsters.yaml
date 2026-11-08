@@ -79,7 +79,7 @@ fireSprite:
   attrs: {STR: 3, CON: 4, DEX: 7, SPD: 8, INT: 4, WIS: 5, CHA: 3}
   skills: {melee: 1, evasion: 2}
   natural: [elementalTouch]
-  traits: {flying: true, tireless: true, element: fire, dodge: 1}
+  traits: {flying: true, tireless: true, element: fire, outsider: true, dodge: 1}
   feats: {}
 ratPack:
   name: Rat swarm
@@ -245,6 +245,37 @@ zombie:
   feats: {}
   policy: {grappler: true}
 zombieHorde: {name: Zombie horde, blurb: Four zombies., group: [zombie, zombie, zombie, zombie]}
+# PROVISIONAL (the user, 2026-11-08): what Summon + Death brings. Only spells and magical weapons touch it; its touch
+# (Take + Death, a power of its own) passes armor and takes only stamina, never attributes: it can exhaust you, not
+# kill you. A shell of force or a ward of Death keeps it off.
+ghost:
+  name: Ghost
+  blurb: "A cold shape of someone dead. Swords pass through it; its touch passes through armor and drains the strength to stand, but never wounds."
+  faction: grave_cult
+  xp: 40
+  glyph: "👻"
+  sprite: {art: bone-wraith, kind: skeleton_mage, tint: "#c0d8f0"}
+  level: 3
+  attrs: {STR: 2, CON: 6, DEX: 7, SPD: 7, INT: 6, WIL: 8, WIS: 5, CHA: 4}
+  skills: {evasion: 3, arcane: 3}
+  natural: []
+  traits: {tireless: true, undead: true, incorporeal: true, flying: true}
+  powers: [{verb: take, noun: death, aim: foe, name: Chill touch}]
+  feats: {}
+# PROVISIONAL (the user, 2026-11-08): the best of the raised (Raise + Death with Raise the Wrapped Dead).
+mummy:
+  name: Mummy
+  blurb: "A wrapped corpse, dried hard: slow, very strong, its grip crushing. Blades bite poorly into it; fire takes it well."
+  faction: grave_cult
+  xp: 60
+  glyph: "🧟"
+  sprite: {art: froglok-zombie, kind: skeleton, tint: "#c8b890"}
+  attrs: {STR: 12, CON: 14, DEX: 4, SPD: 4, INT: 1, WIS: 1, CHA: 1}
+  skills: {melee: 3, athletics: 3}
+  natural: [claws]
+  traits: {tireless: true, undead: true, resist: {P: 0.5, S: 0.5, fire: 1.5}}
+  feats: {}
+  policy: {grappler: true}
 # The three golems are one body; only what harms them differs (the user, 2026-10-25). Each is immune to two of fire,
 # slashing and blunt and weak (×1.5) to the third; all are immune to mind and life magic. Reach-2 fists.
 clayGolem:
@@ -300,7 +331,7 @@ drake:
   armor: drakeScales
   nouns: [fire]
   traits: {flying: true, moveMult: 1.5, slippery: 2, dragon: true}
-  feats: {verb_burst: 1, mod_strong: 1, toughness: 1}
+  feats: {verb_strike: 1, mod_wide: 1, mod_strong: 1, toughness: 1}
 wyvern:
   name: Wyvern
   blurb: "A bigger winged beast with heavy scales: a powerful bite, a venomous stinger and wing beats that knock you flat."
@@ -478,7 +509,7 @@ templeGorilla:
 templeGorillaPair: {name: Temple gorillas, blurb: Two temple gorillas., group: [templeGorilla, templeGorilla]}
 dreadShaman:
   name: Dread shaman
-  blurb: "A Suracayl priest in a bone mask, keeping the top of the pyramid: bolts of venom, a word that fills you with fear, and a staff for anyone who gets close."
+  blurb: "A Suracayl priest in a bone mask, keeping the top of the pyramid: bolts of decay that eat armor, a word that holds you still, and a staff for anyone who gets close."
   faction: suracayl
   xp: 150
   glyph: "🦎"
@@ -491,11 +522,11 @@ dreadShaman:
   weapons: [staff]
   armor: bogSkin
   keepUnarmed: true
-  nouns: [venom, fear]
-  feats: {verb_strike: 1, verb_launch: 1, verb_beguile: 1}
+  nouns: [decay]
+  feats: {verb_strike: 1, mod_far: 1, verb_bind: 1}
 venril:
   name: Venril
-  blurb: "The master of the palace, a horned lizard in a dark robe floating above its throne. Skeletons stand guard for it, the fallen get up again at its word, and it fills the hall with fear."
+  blurb: "The master of the palace, a horned lizard in a dark robe floating above its throne. Skeletons stand guard for it, the fallen get up again at its word, and it drives the living mad."
   faction: suracayl
   xp: 250
   glyph: "💀"
@@ -508,8 +539,8 @@ venril:
   weapons: [staff]
   armor: bogSkin
   keepUnarmed: true
-  nouns: [bone, shadow, fear]
-  feats: {verb_raise: 1, verb_launch: 1, verb_beguile: 1, toughness: 1}
+  nouns: [death, shadow, mind]
+  feats: {verb_raise: 1, verb_take: 1, verb_give: 1, toughness: 1}
 revenantKnight:
   name: Revenant knight
   blurb: "An end-game knight: masterwork dwarven steel plate, an adamant shield, a blade that drinks stamina and wounds, a withering burst, an aura of dread that saps everyone near him, a silk sash that quickens him, and the dead rise for him."
@@ -523,7 +554,7 @@ revenantKnight:
   skills: {melee: 9, block: 8, armor: 9, arcane: 6, anticipation: 6, intimidation: 7}
   natural: []
   keepUnarmed: true
-  nouns: [life, shadow, fire]
+  nouns: [life, death, shadow, fire]
   craft: master
   armorItem: {type: plate, material: steel, origin: dwarven}
   weaponItems:
@@ -535,14 +566,14 @@ revenantKnight:
   trinkets: [{name: Flowing black silk sash, attrs: {SPD: 1}, ap: 1}]
   traits: {aura: {name: aura of dread, radius: 2, stamina: 3, cond: dread}}
   featPrefs:
+    - verb_take
+    - mod_wide
     - verb_strike
-    - verb_launch
-    - verb_burst
-    - verb_bless
+    - verb_give
     - battle_casting
-    - verb_conjure
-    - mod_strong
     - verb_raise
+    - mod_strong
+    - raise_zombie
     - plate_mobility
     - plate_mobility
     - half_swording
@@ -733,7 +764,7 @@ goblinShaman:
   keepUnarmed: true
   nouns: [fire]
   traits: {resist: {fire: 0.25}}
-  feats: {verb_launch: 1}
+  feats: {verb_strike: 1}
 goblinChampion:
   name: Goblin champion
   blurb: "One of the king's champions: bigger than any goblin has a right to be, in good mail, a falchion-heavy sword and a skull shield."
@@ -776,7 +807,7 @@ goblinKing:
   keepUnarmed: true
 goblinHighShaman:
   name: The high shaman
-  blurb: "The keeper of the goblins' fire. It burns whole rooms, and the champions die for it gladly."
+  blurb: "The keeper of the goblins' fire. It burns whole rooms, drives its foes mad, and the champions die for it gladly."
   faction: cinder_goblins
   xp: 200
   glyph: "🔥"
@@ -788,9 +819,9 @@ goblinHighShaman:
   natural: []
   weapons: [staff]
   keepUnarmed: true
-  nouns: [fire, fear]
+  nouns: [fire, mind]
   traits: {resist: {fire: 0}}
-  feats: {verb_launch: 1, verb_burst: 1, verb_beguile: 1, mod_strong: 1}
+  feats: {verb_strike: 1, mod_wide: 1, verb_take: 1, mod_strong: 1}
 redDrake:
   name: Red drake
   blurb: "A young red dragon that hunts the mine tunnels for goblins and anything else. It never goes into the barracks: the goblins learned to keep a fire in the gate."
@@ -805,7 +836,7 @@ redDrake:
   armor: drakeScales
   nouns: [fire]
   traits: {flying: true, moveMult: 1.5, slippery: 2, dragon: true, resist: {fire: 0}}
-  feats: {verb_burst: 1, mod_strong: 1, toughness: 1}
+  feats: {verb_strike: 1, mod_wide: 1, mod_strong: 1, toughness: 1}
 fireElemental:
   name: Fire elemental
   blurb: "Living flame in a man's shape. Its touch burns, blades pass half through it, and it can stand in the lava."
@@ -818,7 +849,7 @@ fireElemental:
   skills: {melee: 3}
   natural: [elementalTouch]
   armor: golemBody
-  traits: {size: 1.2, tireless: true, element: fire, noBleed: true, resist: {P: 0.5, S: 0.5, fire: 0, mind: 0}}
+  traits: {size: 1.2, tireless: true, element: fire, outsider: true, noBleed: true, resist: {P: 0.5, S: 0.5, fire: 0, mind: 0}}
   feats: {}
 efreeti:
   name: Efreeti
@@ -832,8 +863,8 @@ efreeti:
   skills: {melee: 3, arcane: 4}
   natural: [elementalTouch]
   nouns: [fire]
-  traits: {size: 1.1, element: fire, resist: {fire: 0, mind: 0.5}}
-  feats: {verb_strike: 1, mod_launch: 1}
+  traits: {size: 1.1, element: fire, outsider: true, resist: {fire: 0, mind: 0.5}}
+  feats: {verb_strike: 1, mod_far: 1}
 imp:
   name: Imp
   blurb: "A small winged fiend of the deep mine, red as a coal: it hangs in the air over the lava and rakes with hot claws."
@@ -846,7 +877,7 @@ imp:
   skills: {melee: 2, evasion: 3, perception: 2}
   natural: [impClaws]
   nouns: [fire]
-  traits: {flying: true, dodge: 2, element: fire, resist: {fire: 0}}
+  traits: {flying: true, dodge: 2, element: fire, outsider: true, resist: {fire: 0}}
   feats: {}
 lavaBeetle:
   name: Lava beetle
@@ -875,8 +906,8 @@ efreetLord:
   natural: [avatarArms]
   armor: avatarHide
   nouns: [fire]
-  traits: {size: 1.6, flying: true, element: fire, resist: {fire: 0, mind: 0.5}}
-  feats: {verb_burst: 1, verb_launch: 1, mod_strong: 1, toughness: 1}
+  traits: {size: 1.6, flying: true, element: fire, outsider: true, resist: {fire: 0, mind: 0.5}}
+  feats: {verb_strike: 1, mod_wide: 1, mod_strong: 1, toughness: 1}
 gnomeWarrior:
   name: Gnome warrior
   blurb: "A gnome of the cut-off fort in boiled leather with a hammer. They fight the goblins for every yard of rock."
@@ -976,8 +1007,8 @@ orcProphet:
   natural: []
   weapons: [staff]
   keepUnarmed: true
-  nouns: [bone, fear]
-  feats: {verb_launch: 1}
+  nouns: [fire, mind]
+  feats: {verb_strike: 1, verb_take: 1}
 orcWarlord:
   name: The warlord
   blurb: "The emperor's right hand and the legion's general: a scarred orc in heavy mail with a greatsword, who has never lost a battle he chose."

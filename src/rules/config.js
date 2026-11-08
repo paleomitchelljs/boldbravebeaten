@@ -353,48 +353,45 @@
       },
     },
 
-    // ---- Magic (PROVISIONAL stub so casters can be tested) ---------------
-    // Spells are an unordered verb + noun (+ modifier); cost = sum of word costs.
+    // ---- Magic (PROVISIONAL) ---------------------------------------------------------
+    // Spells are a verb and a noun (the user's spell words, 2026-11-08; docs/PROPOSALS.md §4); cost = sum of word costs.
     magic: {
-      // PROVISIONAL (magic overhaul, phase 1). Verbs set the shape, nouns what it is, a modifier
-      // scales it. Verbs and modifiers come from Magic: words feats; nouns are found in the world.
-      // Verbs: cost (spell points), mag (magnitude), range [min, max], ap (base AP, else castAP),
-      // radius / length / rounds for areas, walls and lingering effects. Shape `drain` (Transfer): the blow, and
-      // what it took to the caster (transfer below). Modifiers: shapes (the verbs' shapes they go on), range
-      // (replaces the verb's: Launch), area (a bolt becomes an area; alone, round the caster: Burst), stacks (goes
-      // on one spell with another stacking modifier).
+      // PROVISIONAL. The verb says what happens, the noun what to; each noun's `does` names the shape for each verb
+      // (spells.yaml), and spells.yaml `shapes` holds each shape's numbers: mag (magnitude), range [min, max], ap
+      // (base AP, else castAP), radius / length / rounds. A modifier scales it: shapes (the shapes it goes on), area
+      // (a bolt becomes an area: Wide, Delayed), hidden (a ground spell becomes a rune).
       words: {}, // spells.yaml,
       affinity: { fire: 'fire_affinity' }, // +magnitude per rank
-      // Doubled nouns (Outline): with the Word Doubling feat, a spell may take two nouns instead
-      // of a modifier; both do the verb. Cost: the words + doubleSurcharge. Some pairs make
-      // something new (combos).
-      doubleSurcharge: 2,
-      combos: { 'dream+rage': 'confused' },
-      // Energies the undead fear: light and spirit do double to them; spirit does nothing to the
-      // living beyond a chill (half, to stamina).
+      // PROVISIONAL (the user, 2026-11-08: a name greatly strengthens a spell): Bind + a name adds this to the caster's
+      // side of the contest.
+      nameBonus: 3,
+      // PROVISIONAL: Give + Magic turns the caster's stamina into spell points, this much stamina a point.
+      channel: { staminaPerPoint: 3 },
+      // Energies the undead fear: light and spirit (Death's harm) do double to them; spirit does nothing to the
+      // living beyond a chill (half, to stamina): a ghost's touch never harms attributes (the user, 2026-11-08).
       undeadBane: { light: 2, spirit: 2 },
       // Energies (fire, frost, lightning): armor stops this share of its blunt protection
       // (lightning goes straight through metal); every fireConPer points left cost 1 CON, the
       // rest stamina. Life withers the body: half its magnitude to CON, no armor; the dead and
       // the made (tireless) are past withering.
-      energyMitigation: { fire: 0.5, frost: 0.5, lightning: 0.5, light: 0.5, shadow: 0.5, spirit: 0, acid: 0 },
-      // PROVISIONAL (the user's spell list): acid goes past armor and eats it instead: each point of magnitude
+      energyMitigation: { fire: 0.5, frost: 0.5, lightning: 0.5, light: 0.5, shadow: 0.5, spirit: 0, acid: 0, decay: 0 },
+      // PROVISIONAL (the user's spell list): Decay goes past armor and eats it instead: each point of magnitude
       // takes `armor` durability from the armor and `gear` from the shield and the weapon in hand.
       corrode: { armor: 1, gear: 0.5 },
       // Lightning jumps: after a bolt lands, a d10 ≤ chance × 10 sends it on to the nearest other creature within
       // `range` (friend or foe) at `share` of the magnitude, and again from there.
       chain: { chance: 0.5, range: 2, share: 0.5 },
-      // Raise (verb): what each noun brings back. skeleton and zombie are monsters.yaml templates; revenant copies the
-      // body (its physical attributes, gear and fighting feats) as a tireless undead. Lasts the fight; falls if
-      // the caster does.
-      raise: { skeleton: 'skeleton', zombie: 'zombie' },
-      // Healing (Restore + Life). PROVISIONAL. Mends one creature: bleeding stops (not poison),
+      // Raise + Death: what comes back (the user, 2026-11-08: a skeleton, a zombie or a mummy by feats). Each is a
+      // monsters.yaml template; revenant copies the body (no spell raises one now). Lasts the fight; falls if the
+      // caster does.
+      raise: { skeleton: 'skeleton', zombie: 'zombie', mummy: 'mummy' },
+      // Healing (Give + Life). PROVISIONAL. Mends one creature: bleeding stops (not poison),
       // condMag CON back (1; 2 with Strong), stamina + staminaPerMag × magnitude stamina back (which
       // wakes the unconscious). With Wide, every living creature within a square of the target,
       // friend or foe, at areaShare of the stamina. The dead stay dead, but see revive.
       heal: { stamina: 4, staminaPerMag: 2, areaShare: 0.5 },
       // The user (2026-11-04): one who dies in a fight can be called back for `rounds` rounds after the one they died
-      // in (three more turns of their own): a Restore with Life aimed at them brings CON back up to `con` and leaves
+      // in (three more turns of their own): Raise + Life (or Move + Life given) brings CON back up to `con` and leaves
       // them alive but unconscious, at 0 stamina. After that they are beyond saving there (a priest in town still can).
       // PROVISIONAL (the user, 2026-11-07): a fight won while one of the party is still revivable leaves time to save
       // them: a living companion with a Life spell that calls back the dead, and the points for it, casts it; else
@@ -451,7 +448,7 @@
         read: { name: 'Read', minutes: 60, sp: 1, components: { ink: 1, candle: 1 }, feat: 'ritualist', needs: 'Ritualist', reveals: 'read', subject: 'a tome or writing' },
         seek: { name: 'Seek', minutes: 10, sp: 2, components: { salt: 1 }, feat: 'ritualist', needs: 'Ritualist', nouns: true, reveals: 'seek', subject: 'the place you stand' },
         divine: { name: 'Divine', minutes: 60, sp: 3, components: { candle: 1, silverDust: 1 }, feat: 'ritualist', needs: 'Ritualist', reveals: 'divine', subject: 'a person, place or thing' },
-        speak: { name: 'Speak', minutes: 30, sp: 3, components: { graveDirt: 1, incense: 1 }, feat: 'ritualist', needs: 'Ritualist', nouns: ['life', 'spirit', 'vine'], reveals: 'speak', subject: 'the dead (Life), a spirit (Spirit) or a beast (Vine)' },
+        speak: { name: 'Speak', minutes: 30, sp: 3, components: { graveDirt: 1, incense: 1 }, feat: 'ritualist', needs: 'Ritualist', nouns: ['death', 'outsider', 'mind'], reveals: 'speak', subject: 'the dead (Death), an outsider (Outsider) or a beast (Mind)' },
         mend: { name: 'Mend', minutes: 60, sp: 2, components: { herbs: 2 }, feat: 'rite_of_healing', needs: 'Rite of Healing', subject: 'a patient' },
         prepare: { name: 'Prepare', minutes: 30, sp: 0, components: { chalk: 1 }, feat: 'warding', needs: 'Warding', subject: 'a ward, boon or rune laid in advance' },
         summon: { name: 'Summon', minutes: 60, sp: 6, components: { gem: 1, chalk: 2 }, feat: 'binding_circle', verbFeat: 'verb_summon', needs: 'Binding Circle and the verb Summon', needsName: true, subject: 'a creature, by its true name' },
@@ -516,6 +513,10 @@
       diseased: { type: 'plague', name: 'Diseased', resistedBy: 'CON', attrs: { STR: -1 }, regen: -2, living: true, persist: true },
       // PROVISIONAL (the user's spell list and magic items).
       chilled: { type: 'frost', name: 'Chilled', resistedBy: 'CON', moveMult: 0.5, attrs: { SPD: -1 }, living: true }, // frost: half the squares
+      // PROVISIONAL (the user's spell list: Give + Frost, a curse that stacks): numb and losing stamina each round.
+      frostbite: { type: 'frost', name: 'Frostbite', resistedBy: 'CON', dot: { stamina: 2 }, attrs: { DEX: -1 }, living: true },
+      // PROVISIONAL (Take + Earth on an ally): floats over pits and hazards, as a flier does.
+      levitating: { name: 'Levitating', flying: true },
       paralyzed: { name: 'Paralyzed', resistedBy: 'CON', ap: -99, drainAP: 99, noAct: true, noGuard: true, helpless: true },
       stunned: { name: 'Stunned', resistedBy: 'CON', drainAP: 2, noGuard: true }, // AP lost at once; no guard this round
       riled: { name: 'Riled', mit: { P: 1, S: 1, B: 1 }, breakOnHarm: true }, // a goading blade: until the bearer is hurt
@@ -524,7 +525,7 @@
       feigning: { name: 'Playing dead', unseen: true, feign: true }, // no foe can aim at them, near or far; acting ends it
       exposed: { name: 'Exposed', noGuard: true }, // no defence this round
       named: { name: 'Weakness named', named: true }, // blows ignore its resistances
-      corroded: { type: 'acid', name: 'Corroded', resistedBy: 'CON', dot: { stamina: 2 }, living: true },
+      corroded: { type: 'decay', name: 'Corroded', resistedBy: 'CON', dot: { stamina: 2 }, living: true },
       // Mystic.
       dread: { name: 'Dread', attrs: { STR: -1, DEX: -1, SPD: -1 }, defense: -1 }, // a revenant knight's aura
       dazzled: { name: 'Dazzled', resistedBy: 'CON', defense: -1 },
@@ -562,21 +563,21 @@
       // beside it (near: an element's blow to anyone within a square of it, once a round however many squares).
       fireWall: { name: 'Wall of fire', wall: true, near: { fire: 2 }, burns: true },
       windWall: { name: 'Wind wall', blocksMissiles: true, cost: 2 },
-      stormWall: { name: 'Storm wall', onEnter: { lightning: 3 } },
+      stormWall: { name: 'Storm wall', onEnter: { storm: 3 } },
       hot: { name: 'Hot ground', onEnter: { fire: 1 }, perRound: { fire: 1 }, burns: true },
       ice: { name: 'Ice', slick: true, cost: 1 },
-      charged: { name: 'Charged ground', onEnter: { lightning: 2 } },
+      charged: { name: 'Charged ground', onEnter: { storm: 2 } },
       winds: { name: 'Swirling winds', cost: 1, missileMiss: 0.5 },
       rough: { name: 'Rough ground', cost: 1 },
       brambles: { name: 'Brambles', cost: 1, onEnter: { vine: 2 }, flammable: true },
       pit: { name: 'Pit', pit: true },
       rune: { name: 'Rune', rune: true, hidden: true },
-      miasma: { name: 'Miasma', perRound: { venom: 1 }, onEnter: { venom: 1 } },
+      miasma: { name: 'Miasma', perRound: { decay: 1 }, onEnter: { decay: 1 } },
       radiance: { name: 'Radiance', reveals: true, perRound: { light: 1 } },
       lightWall: { name: 'Wall of light', onEnter: { light: 3 } },
       // PROVISIONAL (the user's spell list): darkness hurts and drags at the feet as well as hiding.
       darkness: { name: 'Darkness', blocksSight: true, cost: 1, perRound: { shadow: 1 } },
-      acidPool: { name: 'Acid pool', onEnter: { acid: 2 }, perRound: { acid: 1 } },
+      acidPool: { name: 'Acid pool', onEnter: { decay: 2 }, perRound: { decay: 1 } },
       gathering: { name: 'Gathering spell', warn: true }, // where a Delayed spell will break
       shadowWall: { name: 'Wall of shadow', blocksSight: true, cost: 1 },
       slickFootingTN: 6, // d10 + ⌊(DEX + SPD)/4⌋ ≥ this, or fall
@@ -802,10 +803,15 @@
   // Every PROVISIONAL choice, shown on the Rules tab so nothing is hidden.
   CONFIG.provisional = [
     'Skills (the user, 2026-11-07): twenty skills, 0–10, +1 a rank to the rolls they govern; 10 points at level 1 and 3 a level, spent whenever the party isn\'t fighting. Skills give numbers, feats large benefits; a tree\'s skill unlocks its feats (novice 1, apprentice 3, adept 5, expert 7, master 9). Feats that were only a number became skills. Defences add the gap between the defender\'s skill and the attacker\'s: parry Melee, dodge Evasion + Anticipation, block half of Block; against Melee, Ranged or Arcane.',
-    'Transfer gives as well as takes (the user, 2026-11-07): aimed at an ally, Transfer + Life gives them the caster\'s own life: what a drain would take (half the magnitude, rounded up) in points, each mending a lost CON or, with none lost, 3 stamina, each costing the caster 3 stamina (never their last); it stops bleeding and calls back the revivably dead. Transfer no longer needs Increase or Decrease first.',
+    'The spell words (the user, 2026-11-08; docs/PROPOSALS.md §4): a spell is a verb and a noun, 1 to 3 words: a verb alone (Bind holds a foe still, Move steps through space, See reveals), a verb and a noun, either with one modifier, or Summon + Bind + a noun. Verbs: Strike, Give, Take, Move, Raise, Bind, Summon, Shape (not built), See. Nouns: Fire, Frost, Storm, Decay, Force, Earth, Life, Death, Speed, Might, Grace, Mind, Shadow, Magic, Outsider, and a Name you know. Modifiers: Wide, Far, Long, Strong, Hidden, Delayed. Each noun says what each verb makes of it (spells.yaml `does`), and where a verb does two things (Give Fire on a foe burns, on the ground covers it) each is its own spell. Retired: Hex, Bless, Restore, Cover, Ward, Increase, Decrease, Transfer, Launch, Build, Open, Inscribe, Blink, Burst, Beguile, Conjure; Lightning (now Storm), Venom, Acid, Plague (now Decay), Wind, Vine, Light, Bone, Spirit, Veil, Stillness, Calm, Dream, Rage, Fear, Will, Charm; the modifiers Launch, Burst, Lingering and Name, and Word Doubling. Numbers: each shape\'s base in spells.yaml `shapes` (a bolt magnitude 6 at 1–6; a Wide bolt an area of magnitude 4).',
+    'Give, Take, Move (the user, 2026-11-01 as Increase, Decrease, Transfer; renamed 2026-11-08): Give puts the noun into a creature or onto the ground (Give Life heals; Give Fire, Frost, Storm or Decay on a foe is a curse that stacks; on the ground a hazard), Take removes it or keeps it off (Take Life harms at arm\'s reach; Take Speed, Might, Grace slow, weaken, make clumsy; Take + an element on an ally lifts what it left and wards against it, halving it; Take Earth opens a pit or makes an ally float; Take Magic lifts every spell on a creature or the ground), Move shifts a creature or a noun (Move Life drains a foe to mend the caster or, aimed at an ally, gives the caster\'s own life: half the magnitude in points, each a lost CON mended or 3 stamina, each costing the caster 3 stamina).',
+    'Summoning (the user, 2026-11-08): Summon + an element (Fire, Frost, Storm, Earth) brings an elemental; Summon + Death a ghost; Summon + an outsider\'s name that kind of outsider; nothing else is summoned, and animals and people never are. What comes is simply in the world for 4 rounds: unbound it is frenzied (strikes the nearest body, friend or foe) until a Bind (Bind + Outsider, + Death, + its name) takes hold; Summon + Bind brings it bound. It stands with the caster\'s side, so the caster\'s friends leave it be unless it goes for them. Take + Outsider banishes one (WIL resists).',
+    'Ghosts (the user, 2026-11-08): only spells and magical weapons touch one; its touch (Take + Death, a power of its own) passes armor and takes stamina only, half the magnitude, never an attribute: it can exhaust you, not kill you. A shell of force (Give + Force: 3 × magnitude points against spells and missiles) soaks it; a ward of Death (Take + Death on an ally) keeps it off altogether. A named ghost is not built.',
+    'Raise (the user, 2026-11-08): Raise + Death on a corpse raises a skeleton; Raise the Flesh (necromancy feat) a zombie; Raise the Wrapped Dead a mummy. It fights for the caster for the rest of the fight and falls when the caster does. Raise + Life calls back an ally dead within the window (CONFIG.magic.revive); Give + Life no longer does. Raise + Earth, Fire, Frost, Storm or Force is a wall.',
+    'Bind (the user, 2026-11-08): alone it paralyzes a foe for a round (CON resists); Bind + Mind charms the living (free, ends on harm); Bind + Death commands the undead and Bind + Outsider an outsider (the caster concentrates); Bind + a name holds one whose name the caster knows, +3 to the contest (CONFIG.magic.nameBonus). The old Name modifier, reaching anyone anywhere, is gone.',
+    'Traditions (the user, 2026-11-08: no classes, specialization): feat trees whose feats strengthen spells by their words (feats.yaml `spell`): Necromancy (Take and Move Life, Give Death, Take on a foe; zombies, mummies, ghosts, Bind + Death), Devotion (Give Life, Wide Mercy to 2 squares, blessings, Take on an ally, Take Death, Raise Life), Summoning (binding, banishing, longer summons). Living Flame (fire affinity capstone) now brings fire elementals bound.',
     'Saving the fallen after a fight (the user, 2026-11-07): when a fight is won while a party member is dead but still revivable, a companion with a Life spell that calls back the dead and the points for it casts it; failing that, the party\'s best healer makes a Medicine check (moderate) to bring them back unconscious.',
     'Defer (the user, 2026-11-07): on your turn, pay 1 AP to let the next one in the initiative order take their turn now; yours resumes after theirs, with what AP you have left. As often as the AP lasts.',
-    'Verbs as what a spell does to its noun (the user, 2026-11-01; Jabiku\'s words, beside the older verbs): Increase (Life heals, as Restore), Decrease (Life withers, as Strike, at arm\'s reach), Transfer (withers the target; each CON taken mends one of the caster\'s, or gives 3 stamina). Launch and Burst as modifiers that stack: Launch at range 2–12, Burst an area of radius 1, alone round the caster (who is spared), with Launch round a square at range.',
     'Wind-ups are released in the same turn if the AP is there (the user, 2026-11-01; was: not before the next round): a bow\'s draw and its loose, a power swing\'s wind-up and its blow, a Strong spell\'s gathering and its casting are two actions, both in one turn when the AP allows (Lorc: draw 2, loose 3 of her 6), or the first made ahead and carried into the next round (`windUp.sameTurn`).',
     'Movement (the user, 2026-11-01): a stretch of a move covers round(1 + SPD/4) squares (was (1 + ⌊SPD/4⌋) × 2), so a round spent only moving carries the presets 4 / 6 / 9 / 12 squares, not 4 / 12 / 12 / 24.',
     'Vigor (the user\'s idea, 2026-11-01): a weapon blow\'s damage × 1.25 from a fighter at full fresh stamina down to × 0.75 from one with none left. Spells and shots are untouched.',
@@ -843,7 +849,6 @@
     'Arrows and armor (history): armor catches arrows better than a thrust. Extra piercing protection against arrows that burst it: padded +2, leather and mail +1, plate 0. Two arrowheads: broadheads cut terrible wounds (bleed ×1.5) but punch weakly (×0.7: a longbow broadhead must find a gap in mail); bodkins do 1 less damage but punch hard (×1.5: a longbow bodkin bursts mail; nothing bursts plate).',
     'Weapons from physics: each weapon has a mass, a length, hands and a point (depth, width), an edge or a head. Damage: point depth/4 piercing; edge (2 + 3√(mass × length × grip)) slashing; head 1 + 6√(head mass × length × grip) blunt. Speed: thrusts cost more with mass, swings with √(mass × length), the longsword costing what the motion table lists. STR adds strBonus × 0.25–0.5 to a thrust (by wound width) and × mass/1.4 (× 1.5 two-handed, up to 1.5) to a swing. A piercing wound bleeds damage × width/4 over 2 + depth/15 rounds.',
     'Fend off and push back: with a long weapon (reaching 3 or more) a shove reaches 2 squares; a ready shield adds +1.',
-    'Ward (verb) and Blink (verb): Ward + Force soaks 3 × magnitude points of spells and missiles; Ward + Wind turns half the missiles aside; Ward + an element halves that element and keeps off its after-effects; Ward + Mind keeps out baits. Blink steps up to 4 squares through walls and out of any hold, roots or webs. Wind blows now hurl a target back 2 squares.',
     'Bait and Read intent (in-combat charm and wisdom): Bait (1 AP, within 3 squares) is d10 + ⌊CHA/2⌋ + Feint against d10 + ⌊WIS/2⌋ + Read Attack: they are drawn off balance and defend at −2 for the rest of the round. Read intent (half an AP, within 4, in sight): the reader rolls d10 + ⌊WIS/2⌋ + Read Attack against 5 + the foe\'s ⌊CHA/2⌋ + Feint, a number they don\'t see. Made it: the foe\'s true intent (what they have committed to this round, feints seen through) and +2 to defend against them and to beat their defenses. Missed by 1–3: nothing to go on. Missed by 4 or more: a confident misread — a false intent and −2 — reported just like a true read. Hex + Mind baits by magic (WIL resists); Bless + Mind gives foresight (true reads of every foe).',
     'Impact: blunt past armor beyond 8 points breaks bones (1 CON per 2 points over, ÷ size for big bodies) as well as winding; a blow that lands throws its target back 1 square per 8 points landed (blunt in full, cuts and stabs at half; ÷ size; up to 3); A parry meets force with force: the attacker adds ⌊(blow − half my weapon\'s blow)/4⌋ + ⌊(blow − my weapon\'s blow)/2⌋ (+ motion) against my d10 + agility + Parry Training — equal weapons parry as before or a little easier; a giant\'s club against a sword is hopeless, against a strong two-hander with Parry Training a chance. Shields already wear by force, shatter past their threshold, and break outright under a power blow from as hard a material.',
     'Weapon weight and strength (TUNED): a weapon has a natural speed strength can\'t beat (light and short is quick; long travels farther), and a strain: its load (mass for a thrust; mass with the leverage of its length for a swing) over the wielder\'s capacity (0.3 kg per STR point, ×1.5 two-handed, +10% per Heavy Weapon Training rank). Within capacity it swings at its natural speed; past it AP and stamina rise with strain²; past 3× it is too ungainly to use. A man (STR 7) can barely lift a giant\'s club; an ogre swings it like a sword.',
@@ -852,15 +857,11 @@
     'Rats and the spectre: giant rats are weak (STR 3, a third of the stamina) and come alone or as a swarm of six. The spectre is a level-15 undead: incorporeal (weapons without an enchantment pass through; nothing to grab, trip or shove), a legendary war scythe that drinks half the stamina and wounds it deals, and a wail each round that frightens every foe within 2 squares unless they resist (WIL). Magical weapons (high-level gear) and spells hurt it.',
     'Aura of dread and trinkets: at the start of each round, every foe within the aura (2 squares of the revenant knight) loses 3 stamina and is in Dread for the round (−1 STR, DEX and SPD, −1 to guard). Trinkets are worn items that shift attributes or AP: the revenant knight\'s flowing black silk sash gives +1 SPD and +1 AP.',
     'End-game gear and the revenant knight (test build): masterwork dwarven steel plate, a masterwork adamant heater (×3.5) and Soulreaver, a masterwork longsword enchanted with Drinking and Keenness. Battle Casting (feat, adept, needs Casting II): cast with both hands full. Drinking: the wielder takes back half the stamina and half the attribute points each blow deals. The revenant knight is a level-20 character at the human cap (22 feats: Casting IV, Burst, Conjure, Strong, Battle Casting, plate and shield training); Burst + Life + Strong withers a whole area through armor, and Conjure + Life raises the fallen.',
-    'Name (modifier): say the target\'s name and a targeted spell (Restore, Bless, Ward, Hex, Beguile) reaches them anywhere on the field, with no range or line of sight; +2 spell points. Companions\' names are known; a foe\'s only if learned (a true name). Restore + Life + Name is the far heal.',
-    'Restore (verb) and healing: Restore + a noun undoes that noun\'s harm on an ally (range 2). Restore + Life mends: bleeding stops (poison doesn\'t), 1 CON back (2 with Strong), 4 + 2 × magnitude stamina back (enough to wake the unconscious). Restore + another noun lifts the conditions it inflicts: Venom cures poison, Plague disease, Fire burning, Frost numbness, Will control, Calm calm, Dream a trance, and so on. Wide spreads it to everyone within a square of the target, friend or foe, at half the stamina. Bless + Life stays a boon (Innervated); Strike, Hex and Burst + Life wither. The dead stay dead. The Cleric (arena and gauntlet) is a mage in mail with a mace and Life, Light and Force.',
-    'Magic phase 2 (draft): Beguile (verb, WIL resists, 2 rounds) with the mind nouns — Calm (won\'t attack; a blow ends it), Dream (mesmerized: no actions until harmed), Rage (a frenzy: no guards, strikes the nearest body, friend or foe), Fear (won\'t close with or strike the caster), Will (fights for the caster while the caster concentrates, −1 AP). Word Doubling (feat): two nouns instead of a modifier, both do the verb (+2 cost); Rage + Dream makes confusion. Body nouns Swiftness, Might, Grace: a bolt or Hex slows, enfeebles (−2 STR) or makes clumsy (−2 DEX), CON resists; Bless hastens, empowers, makes deft. Venom (poison, 1 CON a round; miasma ground; antivenom boon) and Plague (disease: −1 STR, −2 regeneration, lasts past the fight). Light (sears the undead ×2; dazzles; radiance reveals runes; wall of light), Shadow (blinds — strikes only at arm\'s reach; darkness blocks sight and missiles but not blades; shroud turns half the missiles), Spirit (harms only the undead, ×2; chills the living for half, to stamina; Beguile + Spirit frightens). Conditions now shift every attribute but CON.',
     'Rituals (magic phase 3 draft): Read, Seek, Divine, Speak, Mend, Prepare, Summon, Raise. Each takes time (shortened by Ritualist), spell points (−1 per Ritualist rank) and components (spent win or lose). Roll d10 + ⌊INT/2⌋ + Ritualist (+3 with True Naming and a true name) against the GM\'s tier (easy 6, moderate 8, hard 10, very hard 12, legendary 14): margin 0+ partial, 3+ full, 6+ exceptional; −5 or worse turns on the caster. Information rituals reveal the GM\'s secrets about the subject that the roll could reach (1 / 2 / 3 by outcome). Mend heals 1 / 2 / 4 CON and stops bleeding (exceptional draws out poison and disease). Prepare lays a ward, boon or rune that takes hold when the next fight starts, twice as long.',
     'Wound roll: a blow that reaches the body rolls a d10; on 10 × chance or less it is a vital wound. Piercing chance = depth/100 (dagger 1, swords 2, spear and greatsword 3 on the d10): triple CON damage, double bleeding. Cuts: chance = edge/10: the cut takes its damage again from CON. Armor guards the vitals: padded ×0.6, leather ×0.5, mail ×0.3, plate ×0.1 (×1.5 half armor, ×2 partial).',
     'WIL split from WIS (the user\'s call): eight attributes. WIL is resolve: magic defense, resisting fear and compulsion, and stamina regeneration (⌊(CON + WIL)/4⌋ − armor). WIS stays judgment and perception. Older characters get WIL = their WIS.',
     'Monster attributes go past the human range (1–10, 13 with Conditioning feats), up to 30: bears and trolls STR 16–20, a stone golem 22, a troll chieftain 24. The usual formulas apply to the raw number (damage bonus ⌊(STR−5)/2⌋, grappling ⌊STR/2⌋, stamina, death at CON 0).',
     'Monsters (draft): natural weapons are always ready and can\'t be dropped; natural armor can\'t be looted. Traits: knockdown bites, pack bonus (+1 damage per packmate beside the target), venom (poison up to 2 CON a round for 3 rounds, no more than the wound; bandages don\'t stop it), rust (corrodes metal armor and shields), displacement (each attack first rolls a d10 to find the real creature: arrows miss on 1–5, blows on 1–2), springy chitin (a blow that lands costs the attacker 3 stamina), sticky webs (each layer adds 2 AP and 3 stamina to every action, up to two layers; one layer comes loose each round; tear free with d10 + ⌊STR/2⌋ ≥ 8, or burn them), shield-crushing blows, regeneration (unless burned), tireless (undead and constructs: no stamina, damage to attributes, no bleeding or venom), resistances (skeletons: no piercing, half slashing), nimble, slippery, leaping, and boss multipliers on AP and stamina.',
-    'Magic (overhaul, phase 1): a spell is a verb, a noun and at most one modifier; cost = the sum of the words. Verbs (studied, Magic: words feats) set the shape: Strike (a bolt, range 1–2, magnitude 6), Launch (a bolt, 2–12, 5), Burst (radius 1 at 2–8, 4), Cover (ground hazard, radius 1, 3 rounds), Build (a wall 3 squares across, 3 rounds), Open (a pit), Inscribe (a hidden rune on an adjacent square), Hex (a bane, 3 rounds, resisted), Bless (a boon, 3 rounds), Conjure (a creature for 4 rounds). Nouns (found in the world) set what it is: Fire (burns; hot ground; wall of fire; kindled blades), Frost (slows; ice; ice wall; numbs; frost ward), Lightning (straight through metal armor; shocks; charged ground; storm wall; haste), Wind (hurls back; swirling winds that send missiles astray; wind wall; freedom of movement), Earth (stone; rough ground; stone wall; pits; slows; stoneskin), Vine (thorns that root; brambles; bramble wall; barkskin), Life (withers the living — CON, no armor; withering bane; blessing closes wounds and innervates; raises the dead), Force (knocks down; force wall; shielded). Modifiers: Strong (+3, wound up), Wide (bigger area, longer wall), Long (twice as long), Far (twice the range), Lingering (half now, the rest burns on). Resisting: caster d10 + ⌊INT/2⌋ + Casting against the target d10 + ⌊attribute/2⌋ (DEX/SPD to dodge an area or a pit). Areas and hazards hit friends too. Casting costs 2 AP unless the verb says more (3 → 4, 4 → 6 on the turn-budget curve).',
     'Magic feat tiers count feats across all four magic sub-trees (otherwise Casting and Fire Affinity can never pass rank I).',
     'Plate: +1 stamina per action and −3 regeneration (Specifics: +2 and −4), tuned in the arena.',
     'Initiative: d10 + effective SPD.',
@@ -891,8 +892,6 @@
     'Daggers get −1 AP on thrusts and swings ("lowest AP").',
     'Spell bolts and shields (the user\'s magic items, 2026-10): an ordinary shield can\'t block a spell bolt (and since 2026-11-03 it can\'t be dodged either: dodging is for melee blows); a shield enchanted with Spellcatching can, and a weapon with parrySpells can parry one. Before, any shield stopped a fire bolt whole and took no wear from it.',
     'Magic items (the user\'s list, 2026-10): worn things (head, neck, shoulders, cape, arms, hands, two rings, legs, boots; the chest is the armor) and enchantments carry effects (attributes, AP, ×AP on every action, regeneration, stamina, spell points, magnitude, initiative, to beat a defence, squares per move, elemental resistance, auras, retaliation, bane damage, disposition, healing per rest), weapon on-hit effects (conditions, a burning blow, sapping STR and stamina, eating armor, Riled: +n mitigation until next hurt) and powers (a spell cast with no spell points, free hand or backlash, from charges that come back each long rest). Placeholder names; numbers untested by sims.',
-    'New spell words (the user\'s list, 2026-10): Acid (past armor, eating armor, shield and the weapon in hand: 1 durability per magnitude, half to the gear), Charm (takes the caster\'s side without concentration; any harm ends it), Stillness (paralysis: no actions, no guard, blows find the gaps as on the pinned; CON resists), Veil (unseen: no foe farther than arm\'s reach can aim at you; +2 to beat a defence; striking or casting ends it), Bone (raises a skeleton). Frost now chills (half the squares per move, −1 SPD) instead of slowing; lightning bolts leap on a d10 ≤ 5 to the nearest other body within 2 at half magnitude, again from there; darkness hurts (Shadow 1 a round) and costs a square extra to enter. Delayed (modifier, areas): +3 magnitude, the area is marked for all to see and breaks at the end of the round.',
-    'Raise (verb, the user\'s list): a body within a square of the aim rises on the caster\'s side for the rest of the fight and falls when the caster does: Bone a skeleton, Life a zombie, Spirit a revenant (the body\'s physical attributes unhurt, its gear and fighting feats, tireless; +4 cost). Conjure + Life no longer raises (it was a fresh zombie for 4 rounds). Conjure + Vine summons a wolf for 4 rounds.',
     'Companions (the user\'s idea): Familiar (magic, casting I) and Animal Companion (perception, Keen Eye I) give a creature that fights beside its owner, run by the AI, wounds kept between fights (rules.yaml game.companions). A familiar adds 2 spell points per rank while it lives; its death costs the owner 2 WIL. A dead companion is replaced after a rest in town.',
     'Fear: a frightened creature run by the AI moves away from what frightens it while within 3 squares (before: it only could not close with or strike it). Shoves, throws and knockback stop at walls, and the squares a body is driven into count as entered (pits, runes, fire).',
     'Very light and light weapons count as "light weapons" for Light Touch and Precision.',

@@ -114,7 +114,7 @@ test('after a fight won in time: a companion with a Life spell calls the fallen 
   const sp = Magic.availableSP(jab);
   const r = Battle.finish(w);
   assert.equal(r.result, 'won');
-  assert.ok(r.lines.some((l) => /Jabiku casts Transfer \+ Life \(to an ally\) over Beren/.test(l)), r.lines.join('\n'));
+  assert.ok(r.lines.some((l) => /Jabiku casts Move \+ Life \(on an ally\) over Beren/.test(l)), r.lines.join('\n'));
   assert.ok(!beren.status.dead);
   assert.ok(Magic.availableSP(jab) < sp, 'the points are spent');
 });

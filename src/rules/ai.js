@@ -403,15 +403,17 @@
     return v;
   }
 
-  // What Restore is worth on a creature: mending (Life) plus the conditions it would lift.
+  // What a heal (Give + Life) or a cleansing ward (Take + an element on an ally) is worth on a creature: mending
+  // plus the conditions it would lift.
   function restoreValue(a, s, share, enc) {
-    if (a && a.status.dead) return G.Magic.callsBack(s) && G.Magic.revivable(enc, a) ? 60 : 0;
-    if (!a) return 0;
+    if (!a || a.status.dead) return 0;
     let v = 0;
+    const CURE = { controlled: 40, mesmerized: 30, confused: 24, calmed: 16, frightened: 16, rooted: 14, poisoned: 16, withering: 18, diseased: 10, burning: 14, frostbite: 10, shocked: 10, corroded: 10 };
     for (const n of s.nouns || [s.noun]) {
-      if (G.CONFIG.magic.words[n].heals) v += mendValue(a, s, share);
-      for (const k of G.Magic.curesOf(n)) if (G.Conditions.has(a, k)) v += { controlled: 40, mesmerized: 30, confused: 24, calmed: 16, frightened: 16, rooted: 14, poisoned: 16, withering: 18, diseased: 10 }[k] || 10;
-      if (n === 'venom') v += a.bleeds.filter((b) => b.poison).reduce((t, b) => t + b.remaining, 0) * 3;
+      if (s.heals) v += mendValue(a, s, share);
+      const lifts = (s.heals ? [] : G.Magic.curesOf(n)).concat(s.cures || []);
+      for (const k of lifts) if (G.Conditions.has(a, k)) v += (CURE[k] || 10) * Math.max(1, (G.Conditions.get(a, k) || {}).mag || 1);
+      if (!s.heals && (G.CONFIG.magic.words[n] || {}).curesPoison) v += a.bleeds.filter((b) => b.poison).reduce((t, b) => t + b.remaining, 0) * 3;
     }
     return v;
   }
@@ -447,16 +449,24 @@
       if (!o.affordable) continue;
       const isRaise = o.spell.shape === 'raise';
       if (!isRaise && G.Magic.availableSP(chars[id]) - o.spCost < keep) continue;
-      const s = o.spell, N = G.CONFIG.magic.words[s.noun];
+      const s = o.spell;
       const cast = (extra) => Object.assign({ actor: id, type: 'cast', option: o }, extra);
       if (s.shape === 'mind') {
         // Mind spells on a dangerous foe: the closer and harder-hitting, the better.
-        const key = s.combo || N.mind;
+        const key = s.cond;
         const worth = { mesmerized: 30, calmed: 20, enraged: 14, frightened: 18, controlled: 40, enthralled: 34, confused: 24, baited: 6 }[key] || 10;
         for (const t of o.targets) {
-          if (!t.inReach || !foes.includes(t.id)) continue;
+          if (!t.inReach) continue;
+          const who = chars[t.id];
+          // A summons of my own raging unbound: a Bind brings it to heel.
+          if (key === 'controlled' && who.side === c.side && who.conjured && who.conjured.summoned && !who.conjured.bound && who.conjured.by === id && G.Magic.fits(who, s.only)) {
+            consider(26, cast({ target: t.id }), o);
+            continue;
+          }
+          if (!foes.includes(t.id)) continue;
           const foe = chars[t.id];
-          if (Cn.has(foe, key) || C.tireless(foe)) continue;
+          if (!G.Magic.fits(foe, s.only) || (s.named && !G.Magic.knowsName(c, foe))) continue;
+          if (Cn.has(foe, key) || (C.tireless(foe) && !s.only)) continue;
           if (key === 'enraged' && !enc.ids.some((o2) => o2 !== t.id && chars[o2] && chars[o2].side === foe.side && C.isActive(chars[o2]) && Combat.dist(posOf(o2), posOf(t.id)) <= 2)) continue;
           const resist = 0.5 + (Math.floor(C.attr(c, 'INT') / 2) - Math.floor(C.attr(foe, 'WIL') / 2)) * 0.08;
           consider(worth * Math.max(0.15, Math.min(0.85, resist)), cast({ target: t.id }), o);
@@ -479,13 +489,17 @@
           if (!t.inReach || !foes.includes(t.id)) continue;
           consider(blow(t.id, t.distance) * (1 + back) * 0.85, cast({ target: t.id }), o);
         }
-      } else if (o.target === 'foe') {
-        const key = N.bane;
+      } else if (s.shape === 'bane') {
+        const key = s.cond;
         for (const t of o.targets) {
-          if (!t.inReach || !foes.includes(t.id)) continue;
+          if (!t.inReach) continue;
+          // Give + Death on a hurt undead friend mends it.
+          if (s.undeadMend && !foes.includes(t.id) && G.Magic.undead(chars[t.id]) && (chars[t.id].damage.CON || 0) > 0) { consider(Math.min(3, chars[t.id].damage.CON) * 8, cast({ target: t.id }), o); continue; }
+          if (!foes.includes(t.id)) continue;
           const foe = chars[t.id];
-          if (Cn.has(foe, key) || (G.CONFIG.conditions[key].living && C.tireless(foe))) continue;
-          let v = { rooted: closing && closing.f === t.id && t.distance >= 2 ? 30 : 6, paralyzed: 34, corroded: 8, slowed: 14, shocked: 12, numbed: 10, withering: 22, burning: 12, baited: 6, enfeebled: 12, clumsy: 10, poisoned: 16, diseased: 12, dazzled: 6, blinded: 18 }[key] || 6;
+          if ((Cn.has(foe, key) && !s.stack) || (G.CONFIG.conditions[key].living && C.tireless(foe))) continue;
+          let v = { rooted: closing && closing.f === t.id && t.distance >= 2 ? 30 : 6, paralyzed: 34, corroded: 8, slowed: 14, shocked: 12, numbed: 10, withering: 22, burning: 12, frostbite: 10, baited: 6, enfeebled: 12, clumsy: 10, poisoned: 16, diseased: 12, dazzled: 6, blinded: 18 }[key] || 6;
+          if (Cn.has(foe, key)) v *= 0.6; // a curse that stacks: more of it, worth a little less
           consider(v * 0.55, cast({ target: t.id }), o);
         }
       } else if (s.shape === 'ward') {
@@ -494,11 +508,15 @@
         const ranged = foes.filter((f) => C.attackOptions(chars[f]).some((x) => x.ranged));
         const casters = foes.filter((f) => G.Magic.maxSP(chars[f]) > 0);
         for (const t of o.targets) {
-          if (!t.inReach || Cn.has(chars[t.id], 'warded')) continue;
-          const kind = N.ward;
+          if (!t.inReach) continue;
+          const kind = s.ward;
           let v = 0;
-          if (kind === 'magic') v = (ranged.length + casters.length) * 7;
-          else if (kind === 'missiles') v = ranged.filter((f) => !G.Magic.maxSP(chars[f])).length * 8;
+          // A ward taken against an element first lifts what that element left on them.
+          if (kind !== 'magic') v += restoreValue(chars[t.id], s, 1, enc);
+          if (!Cn.has(chars[t.id], 'warded')) {
+            if (kind === 'magic') v += (ranged.length + casters.length) * 7 + foes.filter((f) => G.Magic.undead(chars[f]) && G.Effects.has(chars[f], 'incorporeal')).length * 10;
+            else if (kind === 'death') v += foes.filter((f) => G.Magic.undead(chars[f])).length * 4;
+          }
           consider(v, cast({ target: t.id }), o);
         }
       } else if (s.shape === 'give') {
@@ -534,8 +552,11 @@
           }
           consider(v, cast({ target: t.id }), o);
         }
-      } else if (o.target === 'ally') {
-        const key = N.boon;
+      } else if (s.shape === 'revive') {
+        // Raise + Life: one of mine who died in this fight and can still be called back.
+        for (const t of o.targets) if (t.inReach && chars[t.id].status.dead && G.Magic.revivable(enc, chars[t.id])) consider(60, cast({ target: t.id }), o);
+      } else if (s.shape === 'boon') {
+        const key = s.cond;
         for (const t of o.targets) {
           if (!t.inReach) continue;
           const a = chars[t.id];
@@ -553,6 +574,7 @@
           else if (key === 'shrouded') v = foes.some((f) => C.attackOptions(chars[f]).some((x) => x.ranged)) ? 10 : 0;
           else if (key === 'unseen') v = t.id === id && foes.some((f) => Combat.dist(posOf(f), me) <= Math.max(1, meleeReach(chars[f])) + 1) ? 16 : 0;
           else if (key === 'steadied' || key === 'resolute') v = foes.some((f) => G.Magic.maxSP(chars[f]) > 0) ? 8 : 0;
+          else if (key === 'levitating') v = enc.tiles && G.Terrain.at(enc, posOf(t.id).x, posOf(t.id).y).some((f) => { const d = G.CONFIG.terrain[f.kind] || {}; return d.pit || d.perRound || d.slick; }) ? 16 : 0;
           consider(v, cast({ target: t.id }), o);
         }
       } else if (s.shape === 'blink') {
@@ -572,8 +594,8 @@
         // Aim at a foe or a square beside one, so a burst can catch foes pressed close without
         // catching the caster.
         const seen = {};
-        // Round the caster (Burst alone): whoever stands beside me, the caster spared.
-        if (o.maxRange === 0) {
+        // Round the caster (aimed at my own square): whoever stands beside me, the caster spared.
+        if (o.minRange === 0) {
           const hitF = inArea(foes, me, s.radius), hitA = inArea(allies, me, s.radius).filter((a) => a !== id);
           consider((hitF.length - 1.5 * hitA.length) * s.magnitude * 2.2, cast({ at: me }), o);
         }
@@ -610,7 +632,7 @@
         if (allies.some((a) => a !== id && Combat.dist(posOf(a), at) <= 1)) continue;
         if (s.shape === 'wall' && enc.tiles && G.Terrain.at(enc, at.x, at.y).some((t) => G.CONFIG.terrain[t.kind].wall)) continue;
         // A wall that stops a body is worth far more than one that only singes it.
-        const stops = s.shape === 'terrain' || !!G.CONFIG.terrain[G.CONFIG.magic.words[s.noun].wall].wall;
+        const stops = s.shape === 'terrain' || !!G.CONFIG.terrain[s.wall].wall;
         consider(s.shape === 'terrain' ? 24 : stops ? 26 : 8, cast({ at }), o);
       } else if (s.shape === 'rune' && closing && closing.d >= 2 && closing.d <= 6) {
         const fp = posOf(closing.f);
@@ -622,11 +644,42 @@
         // stronger what rises (a skeleton, a zombie, a revenant with the body's own strength and gear).
         // The body rises where it lies, within the spell's range.
         const body = enc.ids.find((o2) => chars[o2] && chars[o2].status.dead && !chars[o2].vanished && !chars[o2].raised && enc.pos[o2] && Combat.dist(enc.pos[o2], me) <= o.maxRange);
-        if (body) consider({ skeleton: 50, zombie: 70, revenant: 110 }[N.raise] || 60, cast({ at: enc.pos[body] }), o);
-      } else if (s.shape === 'conjure' && !conjuredUp && foes.length) {
-        const at = { x: me.x + (foes.length ? Math.sign(posOf(foes[0]).x - me.x) : 1), y: me.y };
-        if (!G.Terrain.passable(enc, at.x, at.y) || enc.ids.some((o2) => chars[o2] && !chars[o2].status.dead && posOf(o2).x === at.x && posOf(o2).y === at.y)) continue;
-        consider(30, cast({ at }), o);
+        if (body) consider({ skeleton: 50, zombie: 70, mummy: 90, revenant: 110 }[s.raise] || 60, cast({ at: enc.pos[body] }), o);
+      } else if (s.shape === 'summon' && !conjuredUp && foes.length) {
+        // Bound, it stands beside me; unbound and raging, it goes for whatever body is nearest, so put it where that
+        // is a foe: as near the foes as the range allows, nearer to them than to any of mine.
+        const free = (p) => G.Terrain.passable(enc, p.x, p.y) && !enc.ids.some((o2) => chars[o2] && !chars[o2].status.dead && posOf(o2).x === p.x && posOf(o2).y === p.y);
+        let at = null;
+        if (s.bound) at = { x: me.x + Math.sign(posOf(foes[0]).x - me.x || 1), y: me.y };
+        else {
+          let near = Infinity;
+          for (let y = me.y - o.maxRange; y <= me.y + o.maxRange; y++) for (let x = me.x - o.maxRange; x <= me.x + o.maxRange; x++) {
+            const p = { x, y };
+            const d = Combat.dist(me, p);
+            if (d < o.minRange || d > o.maxRange || !G.Terrain.inGrid(enc, x, y) || !free(p)) continue;
+            const foeD = Math.min(...foes.map((f) => Combat.dist(posOf(f), p)));
+            const mineD = Math.min(...allies.map((x2) => Combat.dist(posOf(x2), p)));
+            if (foeD < mineD && foeD < near) { near = foeD; at = p; }
+          }
+        }
+        if (!at || !free(at) || Combat.dist(me, at) > o.maxRange) continue;
+        consider(s.bound ? 30 : 18, cast({ at }), o);
+      } else if (s.shape === 'banish') {
+        for (const t of o.targets) if (t.inReach && foes.includes(t.id) && G.Magic.outsider(chars[t.id])) consider(32, cast({ target: t.id }), o);
+      } else if (s.shape === 'dispel' && o.target === 'any') {
+        // Lift curses and charms from my side, boons and wards from theirs.
+        for (const t of o.targets) {
+          if (!t.inReach) continue;
+          const x = chars[t.id];
+          const friend = x.side === c.side || (x.charmed && x.charmed.side === c.side);
+          const conds = Cn.list(x).filter((q) => G.Magic.dispellable().has(q.key));
+          const bad = (q) => !!(G.CONFIG.conditions[q.key] || {}).resistedBy || q.key === 'controlled' || q.key === 'enthralled';
+          const v = conds.reduce((tt, q) => tt + ((friend ? bad(q) : !bad(q)) ? (q.key === 'controlled' || q.key === 'enthralled' ? 40 : 10) : -8), 0);
+          consider(v, cast({ target: t.id }), o);
+        }
+      } else if (s.shape === 'channel') {
+        // Stamina into spell points when the pool runs low and there's stamina to spare.
+        if (G.Magic.availableSP(c) < 4 && (c.spSpent || 0) >= 2 && c.stamina > C.maxStamina(c) * 0.6) consider(14, cast({ target: id }), o);
       }
     }
     return best;

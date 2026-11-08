@@ -1,421 +1,291 @@
-# The magic grammar: verbs, nouns and modifiers. feat = the feat that teaches a verb or modifier.
-# Nouns are found in the world; see the nouns list in each character (c.nouns).
+# The magic grammar (the user, 2026-11-08; docs/PROPOSALS.md §4): a spell is a verb and a noun (1 to 3 words with a
+# modifier, or a second verb: Summon + Bind). The verb says what happens, the noun what it happens to; nouns carry the
+# theme. Verbs and modifiers are studied (feat = the feat that teaches them); nouns are found in the world (c.nouns).
+# Cost = the sum of the words' costs.
+#
+# Each noun lists what each verb does with it (`does`): a shape the engine knows, and what it is aimed at (`aim`):
+#   foe, ally (or yourself), any (a creature on either side), ground (a square; the default for ground, wall, terrain,
+#   raise, summon, see). Where a verb does two things (Give Fire on a foe burns; on the ground, it covers the squares),
+#   each is its own spell in the cast menu. Other fields of an effect set what it leaves: cond (a condition), ground,
+#   wall, terrain (rules.yaml terrain), ward (a ward's kind), raise, monster, stack (a curse that stacks), only
+#   (undead, living, outsider: who it works on), undead: mend (Give Death mends the undead), and any shape number
+#   (mag, range, rounds, radius, length, ap) to set it for this pair.
+# A verb's `alone` is what it does with no noun (Bind holds a body still; Move steps through space; See reveals).
 
-strike: {kind: verb, shape: bolt, cost: 2, mag: 6, range: [1, 2], feat: verb_strike, name: Strike}
-# Verbs as what a spell does to its noun (the user, 2026-11-01; Jabiku's words, on trial beside the older verbs): Increase
-# gives the noun (Life heals), Decrease takes it away (Life withers), Transfer takes it from the target and gives it to
-# the caster. At arm's reach; the modifiers Launch and Burst carry them further and wider.
-increase: {kind: verb, shape: restore, cost: 2, mag: 1, range: [0, 1], ap: 2, feat: verb_increase, name: Increase}
-decrease: {kind: verb, shape: bolt, cost: 2, mag: 6, range: [1, 1], feat: verb_decrease, name: Decrease}
-transfer: {kind: verb, shape: drain, cost: 3, mag: 4, range: [1, 1], feat: verb_transfer, name: Transfer}
-launch:
+# ---- Shapes: the base numbers of what a spell does (a pair may set its own) ----------------------------------
+shapes:
+  kind: shapes
+  bolt: {mag: 6, range: [1, 6]}            # a blow at one target, through the combat engine
+  area: {mag: 4, range: [0, 6], ap: 3}     # a bolt made Wide: everyone within the radius (aimed at yourself: round you)
+  ground: {mag: 1, range: [1, 8], radius: 1, rounds: 3}
+  wall: {mag: 1, range: [1, 6], length: 3, rounds: 3, ap: 3}
+  terrain: {mag: 0, range: [1, 6], length: 1, ap: 3}
+  rune: {mag: 5, range: [0, 1], radius: 0, ap: 3}  # a ground or terrain spell made Hidden
+  bane: {mag: 1, range: [1, 8], rounds: 3}
+  boon: {mag: 1, range: [0, 2], rounds: 3, ap: 2}
+  mind: {mag: 1, range: [1, 6], rounds: 2}
+  restore: {mag: 1, range: [0, 2], ap: 2}
+  revive: {mag: 0, range: [0, 1], ap: 3}
+  drain: {mag: 4, range: [1, 1]}
+  give: {mag: 4, range: [0, 1]}
+  ward: {mag: 2, range: [0, 2], rounds: 3, ap: 2}
+  blink: {mag: 0, range: [1, 4], ap: 2}
+  raise: {mag: 0, range: [1, 4], ap: 4}
+  summon: {mag: 3, range: [1, 4], rounds: 4, ap: 4}
+  dispel: {mag: 0, range: [0, 6], radius: 1, ap: 2}
+  banish: {mag: 0, range: [1, 6], ap: 3}
+  channel: {mag: 4, range: [0, 1], ap: 2}
+  see: {mag: 0, range: [0, 6], radius: 2, ap: 2}
+
+# ---- Verbs ---------------------------------------------------------------------------------------------
+strike: {kind: verb, cost: 2, feat: verb_strike, name: Strike}
+give: {kind: verb, cost: 2, feat: verb_give, name: Give}
+take: {kind: verb, cost: 2, feat: verb_take, name: Take}
+move:
   kind: verb
-  shape: bolt
   cost: 3
-  mag: 5
-  range: [2, 12]
-  feat: verb_launch
-  name: Launch
-burst:
+  feat: verb_move
+  name: Move
+  alone: {shape: blink}
+raise: {kind: verb, cost: 3, feat: verb_raise, name: Raise}
+bind:
   kind: verb
-  shape: area
-  cost: 4
-  mag: 4
-  range: [2, 8]
-  radius: 1
-  ap: 3
-  feat: verb_burst
-  name: Burst
-cover:
-  kind: verb
-  shape: ground
   cost: 3
-  mag: 1
-  range: [1, 8]
-  radius: 1
-  rounds: 3
-  feat: verb_cover
-  name: Cover
-build:
+  feat: verb_bind
+  name: Bind
+  alone: {shape: bane, aim: foe, cond: paralyzed, rounds: 1}
+# Summon: whatever comes is simply in the world. Unbound it is frenzied (strikes the nearest body, friend or foe) for
+# as long as it stays; Summon + Bind brings it bound to the caster.
+summon: {kind: verb, cost: 4, feat: verb_summon, name: Summon, pairs: [bind]}
+# Shape: change a form (polymorph, petrify, illusions). Not built: no noun does anything with it yet.
+shape: {kind: verb, cost: 3, feat: verb_shape, name: Shape}
+see:
   kind: verb
-  shape: wall
-  cost: 3
-  mag: 1
-  range: [1, 6]
-  length: 3
-  rounds: 3
-  ap: 3
-  feat: verb_build
-  name: Build
-open:
-  kind: verb
-  shape: terrain
-  cost: 3
-  mag: 0
-  range: [1, 6]
-  length: 1
-  rounds: null
-  ap: 3
-  feat: verb_open
-  name: Open
-inscribe:
-  kind: verb
-  shape: rune
-  cost: 2
-  mag: 5
-  range: [0, 1]
-  radius: 0
-  ap: 3
-  feat: verb_inscribe
-  name: Inscribe
-hex:
-  kind: verb
-  shape: bane
-  cost: 2
-  mag: 1
-  range: [1, 8]
-  rounds: 3
-  feat: verb_hex
-  name: Hex
-bless:
-  kind: verb
-  shape: boon
-  cost: 2
-  mag: 1
-  range: [0, 2]
-  rounds: 3
-  ap: 2
-  feat: verb_bless
-  name: Bless
-restore:
-  kind: verb
-  shape: restore
-  cost: 2
-  mag: 1
-  range: [0, 2]
-  ap: 2
-  feat: verb_restore
-  name: Restore
-ward:
-  kind: verb
-  shape: ward
-  cost: 2
-  mag: 2
-  range: [0, 2]
-  rounds: 3
-  ap: 2
-  feat: verb_ward
-  name: Ward
-beguile:
-  kind: verb
-  shape: mind
-  cost: 3
-  mag: 1
-  range: [1, 6]
-  rounds: 2
-  feat: verb_beguile
-  name: Beguile
-blink:
-  kind: verb
-  shape: blink
-  cost: 3
-  mag: 0
-  range: [1, 4]
-  ap: 2
-  feat: verb_blink
-  name: Blink
-conjure:
-  kind: verb
-  shape: conjure
-  cost: 5
-  mag: 3
-  range: [1, 4]
-  rounds: 4
-  ap: 4
-  feat: verb_conjure
-  name: Conjure
-# Raise: a body within range gets up and fights for the caster until the fight ends or the caster falls.
-# The noun says what comes back (CONFIG.magic.raise): Bone a skeleton, Life a zombie, Spirit a revenant with the
-# body's own strength, gear and fighting skill. raiseCost on a noun adds to the spell's cost.
-raise:
-  kind: verb
-  shape: raise
-  cost: 4
-  mag: 0
-  range: [1, 4]
-  ap: 4
-  feat: verb_raise
-  name: Raise
+  cost: 1
+  feat: verb_see
+  name: See
+  alone: {shape: see, what: hidden}
+
+# ---- Nouns: elements ------------------------------------------------------------------------------------
 fire:
   kind: noun
   cost: 1
   element: fire
-  ward: fire
   name: Fire
   onHit: {cond: burning, rounds: 2}
-  ground: hot
-  wall: fireWall
-  bane: burning
-  boon: kindled
-  conjure: elemental
+  does:
+    strike: {shape: bolt}
+    give: [{shape: bane, aim: foe, cond: burning, stack: true}, {shape: ground, ground: hot}]
+    take: {shape: ward, aim: ally, ward: fire}
+    raise: {shape: wall, wall: fireWall}
+    summon: {shape: summon, monster: elemental}
 frost:
   kind: noun
   cost: 1
   element: frost
-  ward: frost
   name: Frost
   onHit: {cond: chilled, rounds: 2}
-  ground: ice
-  wall: iceWall
-  bane: numbed
-  boon: frostWard
-  conjure: elemental
-lightning:
+  does:
+    strike: {shape: bolt}
+    give: [{shape: bane, aim: foe, cond: frostbite, stack: true}, {shape: ground, ground: ice}]
+    take: {shape: ward, aim: ally, ward: frost}
+    raise: {shape: wall, wall: iceWall}
+    summon: {shape: summon, monster: elemental}
+# Storm: lightning (its damage keyword), which runs through metal armor and leaps on.
+storm:
   kind: noun
   cost: 1
   element: lightning
-  ward: lightning
-  name: Lightning
+  name: Storm
   onHit: {cond: shocked, rounds: 1, chain: true}
-  ground: charged
-  wall: stormWall
-  bane: shocked
-  boon: hasted
-  conjure: elemental
-wind:
+  does:
+    strike: {shape: bolt}
+    give: [{shape: bane, aim: foe, cond: shocked, stack: true}, {shape: ground, ground: charged}]
+    take: {shape: ward, aim: ally, ward: storm}
+    raise: {shape: wall, wall: stormWall}
+    summon: {shape: summon, monster: elemental}
+# Decay: poison and rot. Past armor, eating it and the gear in hand (CONFIG.magic.corrode).
+decay:
   kind: noun
   cost: 1
-  element: wind
-  ward: missiles
-  hurt: halfBlunt
-  name: Wind
-  onHit: {push: 2}
-  ground: winds
-  wall: windWall
-  boon: freedom
-  conjure: elemental
-earth:
-  kind: noun
-  cost: 1
-  element: earth
-  ward: earth
-  hurt: blunt
-  name: Earth
-  ground: rough
-  wall: stoneWall
-  terrain: pit
-  bane: slowed
-  boon: stoneskin
-  conjure: elemental
-vine:
-  kind: noun
-  cost: 1
-  element: vine
-  ward: vine
-  hurt: thorns
-  name: Vine
-  onHit: {cond: rooted, rounds: 1}
-  ground: brambles
-  wall: brambleWall
-  bane: rooted
-  boon: barkskin
-  conjure: {monster: wolf, name: Summoned wolf}
-life:
-  kind: noun
-  cost: 1
-  element: life
-  ward: life
-  name: Life
-  bane: withering
-  boon: innervated
-  heals: true
-  raise: zombie
+  element: decay
+  name: Decay
+  onHit: {cond: poisoned, rounds: 3, corrode: true}
+  curesPoison: true
+  does:
+    strike: {shape: bolt}
+    give: [{shape: bane, aim: foe, cond: poisoned, stack: true}, {shape: ground, ground: miasma}]
+    take: {shape: ward, aim: ally, ward: decay, cures: [corroded]}
 force:
   kind: noun
   cost: 1
   element: force
-  ward: magic
   hurt: blunt
   name: Force
-  onHit: {knockdown: true}
-  wall: forceWall
-  boon: shielded
-mind:
+  onHit: {knockdown: true, push: 1}
+  does:
+    strike: {shape: bolt}
+    # A shell of force: it takes spell and missile damage until it breaks (a ghost's touch too).
+    give: {shape: ward, aim: ally, ward: magic}
+    raise: {shape: wall, wall: forceWall}
+earth:
   kind: noun
   cost: 1
-  element: mind
-  name: Mind
-  onHit: {cond: baited, rounds: 1}
-  bane: baited
-  boon: foresight
-  ward: mind
-calm: {kind: noun, cost: 1, element: mind, name: Calm, mind: calmed, boon: steadied, ward: mind}
-dream: {kind: noun, cost: 2, element: mind, name: Dream, mind: mesmerized, ward: mind}
-rage:
+  element: earth
+  hurt: blunt
+  name: Earth
+  does:
+    strike: {shape: bolt}
+    raise: {shape: wall, wall: stoneWall}
+    take: [{shape: terrain, terrain: pit}, {shape: boon, aim: ally, cond: levitating}]
+    summon: {shape: summon, monster: elemental}
+
+# ---- Nouns: life and death -------------------------------------------------------------------------------
+life:
   kind: noun
   cost: 1
-  element: mind
-  name: Rage
-  mind: enraged
-  boon: emboldened
-  ward: mind
-fear: {kind: noun, cost: 1, element: mind, name: Fear, mind: frightened, ward: mind}
-will:
+  element: life
+  name: Life
+  does:
+    give: {shape: restore, aim: ally, heals: true}
+    take: {shape: bolt, range: [1, 1]}
+    move: [{shape: drain, aim: foe}, {shape: give, aim: ally}]
+    raise: {shape: revive, aim: ally}
+# Death: its harm is spirit's (past armor, searing the undead, only a chill to the living: stamina, never attributes).
+death:
   kind: noun
-  cost: 3
-  element: mind
-  name: Will
-  mind: controlled
-  boon: resolute
-  ward: mind
-swiftness:
+  cost: 1
+  element: spirit
+  name: Death
+  wardBlocks: true
+  does:
+    give: {shape: bane, aim: any, cond: withering, undead: mend}
+    take: [{shape: bolt, range: [1, 2]}, {shape: ward, aim: ally, ward: death}]
+    raise: {shape: raise, raise: skeleton, better: [{feat: raise_zombie, raise: zombie}, {feat: raise_mummy, raise: mummy}]}
+    bind: {shape: mind, aim: any, cond: controlled, only: undead}
+    summon: {shape: summon, monster: ghost}
+
+# ---- Nouns: the body -----------------------------------------------------------------------------------
+speed:
   kind: noun
   cost: 1
   element: body
-  name: Swiftness
-  onHit: {cond: slowed, rounds: 2}
-  bane: slowed
-  boon: hasted
+  name: Speed
+  does:
+    give: {shape: boon, aim: ally, cond: hasted}
+    take: {shape: bane, aim: foe, cond: slowed}
 might:
   kind: noun
   cost: 1
   element: body
   name: Might
-  onHit: {cond: enfeebled, rounds: 2}
-  bane: enfeebled
-  boon: empowered
+  does:
+    give: {shape: boon, aim: ally, cond: empowered}
+    take: {shape: bane, aim: foe, cond: enfeebled}
 grace:
   kind: noun
   cost: 1
   element: body
   name: Grace
-  onHit: {cond: clumsy, rounds: 2}
-  bane: clumsy
-  boon: deft
-venom:
+  does:
+    give: {shape: boon, aim: ally, cond: deft}
+    take: {shape: bane, aim: foe, cond: clumsy}
+
+# ---- Nouns: mind and veil ------------------------------------------------------------------------------
+mind:
   kind: noun
   cost: 1
-  element: venom
-  name: Venom
-  onHit: {cond: poisoned, rounds: 3}
-  ground: miasma
-  bane: poisoned
-  boon: antivenom
-  ward: venom
-plague:
-  kind: noun
-  cost: 2
-  element: plague
-  name: Plague
-  onHit: {cond: diseased, rounds: 10}
-  bane: diseased
-  ward: plague
-light:
-  kind: noun
-  cost: 1
-  element: light
-  name: Light
-  onHit: {cond: dazzled, rounds: 1}
-  ground: radiance
-  wall: lightWall
-  bane: dazzled
-  boon: radiant
-  ward: light
-  conjure: elemental
+  element: mind
+  name: Mind
+  does:
+    give: [{shape: mind, aim: foe, cond: calmed}, {shape: boon, aim: ally, cond: steadied}]
+    take: {shape: mind, aim: foe, cond: enraged}
+    bind: {shape: mind, aim: foe, cond: enthralled, only: living}
 shadow:
   kind: noun
   cost: 1
   element: shadow
   name: Shadow
-  onHit: {cond: blinded, rounds: 1}
-  ground: darkness
-  wall: shadowWall
-  bane: blinded
-  boon: shrouded
-  ward: shadow
-  conjure: elemental
-spirit:
+  does:
+    give: [{shape: boon, aim: ally, cond: unseen}, {shape: ground, ground: darkness}]
+
+# ---- Nouns: the arcane ---------------------------------------------------------------------------------
+magic:
   kind: noun
   cost: 1
-  element: spirit
-  name: Spirit
-  mind: frightened
-  boon: spiritShield
-  ward: spirit
-  conjure: elemental
-  raise: revenant
-  raiseCost: 4
-# ---- Nouns from the user's spell list (PROVISIONAL) -----------------------------------------------------
-# Acid: past armor, eating it and the gear in hand (CONFIG.magic.corrode). Charm: takes the caster's side until
-# hurt. Stillness: paralysis (CON resists), short and costly. Veil: unseen (can't be picked out beyond arm's reach).
-# Bone: what a skeleton is raised from.
-acid:
+  element: magic
+  name: Magic
+  does:
+    give: {shape: channel, aim: ally}
+    take: [{shape: dispel, aim: any}, {shape: dispel}]
+    see: {shape: see, what: magic}
+# Outsider: any being from outside the world whose name you don't know (elementals, fiends). Nothing is summoned by
+# it: only elementals (Summon + an element) and ghosts (Summon + Death) come without a name.
+outsider:
   kind: noun
   cost: 1
-  element: acid
-  ward: acid
-  name: Acid
-  onHit: {corrode: true}
-  ground: acidPool
-  bane: corroded
-charm: {kind: noun, cost: 2, element: mind, name: Charm, mind: enthralled, ward: mind}
-stillness:
+  element: magic
+  name: Outsider
+  does:
+    bind: {shape: mind, aim: any, cond: controlled, only: outsider}
+    take: {shape: banish, aim: foe, only: outsider}
+    see: {shape: see, what: outsider}
+# A name you know (c.knownNames): a person's or a kind of outsider's. Bind + a name holds what bears it far more surely;
+# Summon + an outsider's name calls that kind.
+name:
   kind: noun
   cost: 2
-  element: body
-  name: Stillness
-  onHit: {cond: paralyzed, rounds: 1}
-  bane: paralyzed
-veil: {kind: noun, cost: 2, element: shadow, name: Veil, boon: unseen}
-bone: {kind: noun, cost: 1, element: death, name: Bone, raise: skeleton}
-strong: {kind: mod, cost: 2, mag: 3, feat: mod_strong, name: Strong, windUp: true}
-# Launch and Burst as modifiers (the user, 2026-11-01), for the verbs above; `stacks`: they go on one spell together.
-# Launch: at range. Burst: over an area, round the caster (the caster spared) or, Launched, round a square at range.
-launchMod: {kind: mod, cost: 1, range: [2, 12], stacks: true, feat: mod_launch, name: Launch, shapes: [bolt, restore, drain]}
-burstMod: {kind: mod, cost: 2, radius: 1, area: true, ap: 1, stacks: true, feat: mod_burst, name: Burst, shapes: [bolt, restore, drain]}
+  element: mind
+  name: Name
+  does:
+    bind: {shape: mind, aim: any, cond: controlled, named: true}
+    summon: {shape: summon, named: true}
+
+# ---- Modifiers ------------------------------------------------------------------------------------------
+# Wide: a bolt becomes an area round where it lands (or round the caster, aimed at their own square), a ground spell
+# covers more, a wall runs longer, a heal or a dispel reaches everyone near.
 wide:
   kind: mod
   cost: 2
   radius: 1
   length: 2
+  ap: 1
+  area: true
   feat: mod_wide
   name: Wide
-  shapes: [area, ground, wall, terrain, rune, restore]
-long:
-  kind: mod
-  cost: 1
-  roundsMult: 2
-  feat: mod_long
-  name: Long
-  shapes: [ground, wall, terrain, bane, boon, conjure, mind, ward]
-name:
-  kind: mod
-  cost: 2
-  named: true
-  feat: mod_name
-  name: Name
-  shapes: [restore, boon, ward, bane, mind]
+  shapes: [bolt, ground, wall, terrain, restore, drain, dispel, see]
 far:
   kind: mod
   cost: 1
   rangeMult: 2
   feat: mod_far
   name: Far
-  shapes: [bolt, area, ground, wall, terrain, bane, mind, conjure, blink]
-lingering:
+  shapes: [bolt, ground, wall, terrain, bane, boon, mind, restore, revive, drain, give, ward, blink, raise, summon, dispel, banish]
+long:
   kind: mod
   cost: 1
-  lingering: true
-  feat: mod_lingering
-  name: Lingering
-  shapes: [bolt, area]
+  roundsMult: 2
+  feat: mod_long
+  name: Long
+  shapes: [ground, wall, terrain, bane, boon, summon, mind, ward]
+strong: {kind: mod, cost: 2, mag: 3, feat: mod_strong, name: Strong, windUp: true}
+# Hidden: a ground or terrain spell waits unseen on one square until someone steps on it (a rune or a trap).
+hidden:
+  kind: mod
+  cost: 1
+  hidden: true
+  feat: mod_hidden
+  name: Hidden
+  shapes: [ground, terrain]
 # Delayed (PROVISIONAL, the user's idea): more power for less aim. The area is marked for all to see and breaks at
-# the end of the round on whoever is still in it.
+# the end of the round on whoever is still in it. It makes a bolt an area, as Wide does.
 delayed:
   kind: mod
   cost: 1
   mag: 3
+  radius: 1
+  area: true
   delayed: true
   feat: mod_delayed
   name: Delayed
-  shapes: [area]
+  shapes: [bolt]

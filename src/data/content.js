@@ -143,9 +143,43 @@
       const words = G.CONFIG.magic.words;
       if (!p.name) err(`${where}: power needs a name`);
       if (!words[p.verb] || words[p.verb].kind !== 'verb') err(`${where}: power verb "${p.verb}" is not in spells.yaml`);
-      else if (!words[p.noun] || words[p.noun].kind !== 'noun') err(`${where}: power noun "${p.noun}" is not in spells.yaml`);
-      else if (G.Magic && !G.Magic.combines(p.verb, p.noun, p.mod || null)) err(`${where}: ${p.verb} + ${p.noun}${p.mod ? ' + ' + p.mod : ''} makes no spell`);
+      else if (p.noun != null && (!words[p.noun] || words[p.noun].kind !== 'noun')) err(`${where}: power noun "${p.noun}" is not in spells.yaml`);
+      else if (G.Magic && !G.Magic.effectsOf(p.verb, p.noun || null).some((e) => (!p.aim || e.aim === p.aim) && (!p.mod || G.Magic.combines(p.verb, p.noun || null, p.mod)))) err(`${where}: ${p.verb}${p.noun ? ' + ' + p.noun : ''}${p.mod ? ' + ' + p.mod : ''}${p.aim ? ` (${p.aim})` : ''} makes no spell`);
     };
+    // The spell words (spells.yaml): what each verb does with each noun names a shape, and the things it leaves exist.
+    {
+      const words = G.CONFIG.magic.words;
+      const shapes = words.shapes || {};
+      const effOk = (where, e) => {
+        if (!e.shape || !shapes[e.shape]) err(`${where}: shape "${e.shape}" is not in spells.yaml shapes`);
+        if (e.aim && !['foe', 'ally', 'any', 'ground'].includes(e.aim)) err(`${where}: aim "${e.aim}" unknown`);
+        for (const k of [e.cond].concat(e.cures || [])) if (k && !G.CONFIG.conditions[k]) err(`${where}: condition "${k}" unknown`);
+        for (const k of [e.ground, e.wall, e.terrain]) if (k && !G.CONFIG.terrain[k]) err(`${where}: terrain "${k}" unknown`);
+        if (e.ward && e.ward !== 'magic' && !(words[e.ward] && words[e.ward].kind === 'noun')) err(`${where}: ward "${e.ward}" is no noun`);
+        for (const r of [e.raise].concat((e.better || []).map((b) => b.raise))) if (r && !(G.CONFIG.magic.raise || {})[r]) err(`${where}: raise "${r}" is not in CONFIG.magic.raise`);
+        for (const b of e.better || []) if (!has(D.FEATS, b.feat)) err(`${where}: feat "${b.feat}" unknown`);
+        if (e.monster && e.monster !== 'elemental' && !has(G.Enemies.MONSTERS, e.monster)) err(`${where}: monster "${e.monster}" unknown`);
+        if (e.only && !['undead', 'living', 'outsider'].includes(e.only)) err(`${where}: only "${e.only}" unknown`);
+      };
+      for (const [k, w] of Object.entries(words)) {
+        if (k === 'shapes') continue;
+        if (!['verb', 'noun', 'mod'].includes(w.kind)) { err(`spells.${k}: kind "${w.kind}" unknown`); continue; }
+        if (w.feat && !has(D.FEATS, w.feat)) err(`spells.${k}: feat "${w.feat}" is not in feats.yaml`);
+        if (w.alone) effOk(`spells.${k}.alone`, w.alone);
+        for (const p of w.pairs || []) if (!words[p] || words[p].kind !== 'verb') err(`spells.${k}: pair "${p}" is no verb`);
+        for (const [v, list] of Object.entries(w.does || {})) {
+          if (!words[v] || words[v].kind !== 'verb') err(`spells.${k}.does: "${v}" is no verb`);
+          [].concat(list).forEach((e, i) => effOk(`spells.${k}.does.${v}[${i}]`, e));
+        }
+        for (const s2 of w.shapes || []) if (!shapes[s2]) err(`spells.${k}: shape "${s2}" unknown`);
+      }
+      // Tradition feats name words that exist.
+      for (const f of Object.values(D.FEATS)) for (const r of (f.spell && [].concat(f.spell.match || [])) || []) {
+        if (r.verb && !(words[r.verb] && words[r.verb].kind === 'verb')) err(`feats.${f.id}.spell: verb "${r.verb}" unknown`);
+        for (const n of [].concat(r.noun || [])) if (!(words[n] && words[n].kind === 'noun')) err(`feats.${f.id}.spell: noun "${n}" unknown`);
+        if (r.mod && !(words[r.mod] && words[r.mod].kind === 'mod')) err(`feats.${f.id}.spell: modifier "${r.mod}" unknown`);
+      }
+    }
     // Effect keys (src/rules/effects.js): a key no rule reads is a typo or a retired mechanic.
     const keysOk = (kind, bag, where) => { if (G.Effects) for (const m of G.Effects.check(kind, bag, where)) err(m); };
     for (const [id, m] of Object.entries(G.Enemies.MONSTERS)) {
@@ -188,6 +222,9 @@
       for (const w of m.natural || []) if (!has(D.WEAPONS, w)) err(`monsters.${id}: natural weapon "${w}" is not in weapons.yaml`);
       for (const w of m.weapons || []) if (!has(D.WEAPONS, w)) err(`monsters.${id}: weapon "${w}" is not in weapons.yaml`);
       for (const f of Object.keys(m.feats || {})) if (!has(D.FEATS, f)) err(`monsters.${id}: feat "${f}" is not in feats.yaml`);
+      for (const f of m.featPrefs || []) if (!has(D.FEATS, f)) err(`monsters.${id}: featPrefs "${f}" is not in feats.yaml`);
+      for (const n of m.nouns || []) if (!(G.CONFIG.magic.words[n] && G.CONFIG.magic.words[n].kind === 'noun')) err(`monsters.${id}: noun "${n}" is not in spells.yaml`);
+      (m.powers || []).forEach((p, i) => powerOk(`monsters.${id}.powers[${i}]`, p));
       if (m.faction && !has(factions, m.faction)) err(`monsters.${id}: faction "${m.faction}" is not in factions.yaml`);
       if (m.loot && !has(tables, m.loot)) err(`monsters.${id}: loot table "${m.loot}" is not in items.yaml`);
     }
@@ -357,6 +394,7 @@
     }
     for (const p of [].concat(S.presets || [], S.recruits || [], ...(S.trials || []).map((t) => t.party || []))) {
       for (const f of p.feats || []) if (!has(D.FEATS, f)) err(`start: ${p.name}'s feat "${f}" unknown`);
+      for (const n of p.nouns || []) if (!(G.CONFIG.magic.words[n] && G.CONFIG.magic.words[n].kind === 'noun')) err(`start: ${p.name}'s noun "${n}" is not in spells.yaml`);
       skillsOk(`start: ${p.name}'s skills`, p.skills);
     }
     // A caster whose first weapon takes both hands cannot cast (a spell needs a free hand) without Battle Casting,
@@ -370,6 +408,7 @@
       if (t.go && !has(places, t.go.to)) err(`start.trials.${t.id}: go to unknown place "${t.go.to}"`);
       for (const p of t.party || []) {
         for (const f of p.feats || []) if (!has(D.FEATS, f)) err(`start.trials.${t.id}.${p.name}: feat "${f}" unknown`);
+        for (const n of p.nouns || []) if (!(G.CONFIG.magic.words[n] && G.CONFIG.magic.words[n].kind === 'noun')) err(`start: ${p.name}'s noun "${n}" is not in spells.yaml`);
         if (p.kit && !(S.kits || []).some((k) => k.id === p.kit)) err(`start.trials.${t.id}.${p.name}: kit "${p.kit}" unknown`);
         const sp = p.look && p.look.sprite;
         if (typeof sp === 'string' && sp.startsWith('art:') && !has(W.art || {}, sp.slice(4))) err(`start.trials.${t.id}.${p.name}: art "${sp.slice(4)}" unknown`);

@@ -94,17 +94,17 @@ stunning:
 dreadgaze:
   name: the Dread Eye
   kinds: [weapon]
-  power: {verb: beguile, noun: fear, name: Dread gaze, charges: 3}
+  power: {verb: take, noun: speed, name: Dread gaze, charges: 3}
   rarity: very rare
   value: 10
-  blurb: "Three times a day: Beguile + Fear on a foe within 6 (WIL resists)."
+  blurb: "Three times a day: Take + Speed on a foe within 8, slowed by dread (CON resists)."
 unmaking:
   name: Unmaking
   kinds: [weapon]
-  power: {verb: hex, noun: might, name: Unmaking, charges: 3}
+  power: {verb: take, noun: might, name: Unmaking, charges: 3}
   rarity: very rare
   value: 10
-  blurb: "Three times a day: Hex + Might, −2 STR for 3 rounds (CON resists)."
+  blurb: "Three times a day: Take + Might, −2 STR for 3 rounds (CON resists)."
 goading:
   name: Goading
   kinds: [weapon]

@@ -10,28 +10,17 @@ flame: {file: flame.png, w: 64, h: 76, frames: 8, ms: 100}
 nouns:
   fire: fire
   frost: frost
-  lightning: lightning
-  wind: wind
+  storm: lightning
   earth: earth
-  vine: nature
-  life: light
-  light: light
   force: arcane
-  mind: arcane
-  calm: arcane
-  dream: arcane
-  fear: shadow
-  charm: arcane
-  rage: fire
-  will: arcane
-  swiftness: wind
+  life: light
+  death: shadow
+  speed: wind
   might: earth
   grace: light
-  venom: venom
-  plague: venom
-  acid: venom
+  mind: arcane
   shadow: shadow
-  veil: shadow
-  bone: shadow
-  spirit: light
-  stillness: frost
+  decay: venom
+  magic: arcane
+  outsider: arcane
+  name: arcane

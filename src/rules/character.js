@@ -844,11 +844,11 @@
       if (handsBusy(c) < 2) opts.push(unarmedOption(c, 'punch'));
       if (!grappling && !st.prone) opts.push(unarmedOption(c, 'kick'));
       if (shieldReady(c) && rank(c, 'shield_bash') && !grappling) opts.push(unarmedOption(c, 'shieldBash'));
-      // Spells need a free hand (see magic.js).
-      // Bolts (Strike, Launch) are attacks; the other spells are cast actions (Combat.legalActions).
-      // Steady Mind: a bolt even in a grapple, a hand free.
-      if (G.Magic && (!grappling || rank(c, 'steady_mind'))) for (const o of G.Magic.spellOptions(c)) if (o.kind === 'strike' && (o.power || castingHands(c))) opts.push(o);
     }
+    // Spells need a free hand (see magic.js); a power doesn't. Bolts are attacks; the other spells are cast actions
+    // (Combat.legalActions). Steady Mind: a bolt even in a grapple, a hand free. (A monster with no unarmed blow, an
+    // efreeti or a ghost, still has its bolts.)
+    if (G.Magic && (!grappling || rank(c, 'steady_mind'))) for (const o of G.Magic.spellOptions(c)) if (o.kind === 'strike' && (o.power || castingHands(c))) opts.push(o);
     // Flurry: a light weapon's thrust doubled into one action, at half again the AP and twice the stamina.
     if (rank(c, 'flurry')) {
       for (const o of opts.slice()) {

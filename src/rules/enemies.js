@@ -144,10 +144,10 @@
   //   group    — several creatures (a pack)
   const MONSTERS = {}; // monsters.yaml
 
-  // A conjured creature (Magic: Conjure). 'elemental': a spirit of the noun whose blows carry it,
-  // tireless, stronger with the spell's magnitude. 'raise': the dead walk (a zombie).
+  // A summoned creature (Magic: Summon). 'elemental': a spirit of the noun whose blows carry it, tireless, stronger
+  // with the spell's magnitude, an outsider. {monster, name}: a monster from monsters.yaml (a ghost, or a kind of
+  // outsider called by name).
   function makeConjured(kind, noun, mag) {
-    // A summoned beast: a monster from monsters.yaml ({monster, name}).
     if (kind && typeof kind === 'object' && kind.monster && MONSTERS[kind.monster]) {
       const [b] = makeMonster(kind.monster);
       if (kind.name) b.name = kind.name;
@@ -163,7 +163,7 @@
     c.monster = 'elemental';
     c.natural = ['elementalTouch'];
     c.noUnarmed = true;
-    c.traits = { tireless: true, element: noun };
+    c.traits = { tireless: true, element: noun, outsider: true };
     c.feats = {};
     c.stamina = C.maxStamina(c);
     return c;
@@ -230,6 +230,8 @@
     if (M.featPrefs) chooseFeats(c, M.featPrefs, makeRng(c.level * 7919 + 1));
     if (M.nouns) c.nouns = M.nouns.slice();
     if (M.trinkets) c.trinkets = JSON.parse(JSON.stringify(M.trinkets));
+    // Powers of its own (a ghost's chill touch): spells it casts with no spell points (Magic.powerSources).
+    if (M.powers) c.powers = JSON.parse(JSON.stringify(M.powers));
     // Gear: `craft` for everything carried; armorItem, weaponItems and shieldItem
     // spell out an item's tags ({type | size, coverage, material, origin, craft, enchantments, name}).
     // `origin` is the make of everything carried that doesn't name its own.

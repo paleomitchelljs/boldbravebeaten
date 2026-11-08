@@ -1,23 +1,20 @@
 /*
- * Magic (PROVISIONAL overhaul, phase 1).
+ * Magic (PROVISIONAL; the spell words of 2026-11-08, docs/PROPOSALS.md §4).
  *
- * A spell is a verb, a noun and at most one modifier (unordered; cost = the sum of the word
- * costs). Verbs and modifiers are studied (Magic: words feats); nouns are truths found in the
- * world (c.nouns). Every number lives in CONFIG.magic.
+ * A spell is a verb and a noun, 1 to 3 words: a verb alone (Bind, Move, See), a verb and a noun, either with one
+ * modifier, or Summon + Bind + a noun. Cost = the sum of the words' costs. Verbs and modifiers are studied (Magic:
+ * words feats); nouns are found in the world (c.nouns). Every number lives in spells.yaml or CONFIG.magic.
  *
- *   verb — the shape: strike / launch (a bolt at one target), burst (an area), cover (ground
- *          hazard), build (a wall across several squares), open (a pit), inscribe (a hidden rune
- *          on a square), hex (a bane on a foe), bless (a boon on an ally), conjure (a creature)
- *   noun — what it is: fire, frost, lightning, wind, earth, vine, life, force. Each noun says
- *          how it hurts and what it leaves (CONFIG.magic.words[noun]: ground, wall, terrain,
- *          bane, boon, conjure, onHit). A verb that needs something the noun lacks (Build +
- *          Life) makes no spell.
- *   mod  — strong (+magnitude), wide (bigger area, longer wall), long (twice as long),
- *          far (twice the range), lingering (part of the damage burns on over rounds)
+ *   verb — what happens: Strike, Give, Take, Move, Raise, Bind, Summon, Shape, See
+ *   noun — what it happens to. Each noun's `does` says what each verb makes of it: a shape the engine knows
+ *          (bolt, area, ground, wall, terrain, rune, bane, boon, mind, restore, revive, drain, give, ward, blink,
+ *          raise, summon, dispel, banish, channel, see) and what it is aimed at (foe, ally, any, ground).
+ *   mod  — strong (+magnitude), wide (an area, a longer wall, a heal for everyone near), long (twice as long),
+ *          far (twice the range), hidden (a ground spell waits as a rune), delayed (an area that breaks at round end)
  *
- * Bolts (strike, launch) are declared like attacks ('strike' with a spell option) and resolve
- * through the combat engine (guards, armor). Everything else is a 'cast' declaration aimed at a
- * square or a character, resolved here (resolveCast).
+ * Bolts are declared like attacks ('strike' with a spell option) and resolve through the combat engine (guards,
+ * armor). Everything else is a 'cast' declaration aimed at a square or a character, resolved here (resolveCast).
+ * Tradition feats (feats.yaml `spell`) strengthen the spells whose words match theirs (spellBonus).
  */
 (function (G) {
   'use strict';
@@ -26,7 +23,10 @@
   const C = () => G.Character;
   const Items = () => G.Items;
   const W = () => CONFIG.magic.words;
+  const SHAPES = () => W().shapes || {};
   const BOLT = ['bolt'];
+  // What a shape is aimed at when its effect doesn't say.
+  const SQUARE = ['area', 'ground', 'wall', 'terrain', 'rune', 'raise', 'summon', 'see', 'blink', 'dispel'];
 
   // Spell points: INT + CONFIG.skills.spPerRank per Arcane rank (none at Arcane 0), + what worn gear adds (sp), + 2 per
   // Familiar rank while it lives.
@@ -70,53 +70,93 @@
     return left;
   }
 
+  // A noun is known when found (c.nouns); Name when the caster knows anyone's name; verbs and modifiers by feat.
   function knows(c, key) {
     const w = W()[key];
-    if (!w) return false;
+    if (!w || !w.kind) return false;
+    if (key === 'name') return (c.knownNames || []).length > 0;
     if (w.kind === 'noun') return (c.nouns || []).includes(key);
     return !!(w.feat && C().rank(c, w.feat));
   }
 
-  // Does this verb make anything of this noun (and take this modifier)?
-  // A Named spell reaches anyone whose name the caster knows: companions (and themself), or a
-  // foe whose name they've learned (c.knownNames, matched without case).
+  // A Bind + Name reaches anyone whose name the caster knows: companions (and themself), or a foe whose name they've
+  // learned (c.knownNames, matched without case).
   function knowsName(c, t) {
     if (!t) return false;
     if (t.id === c.id || t.side === c.side || (t.charmed && t.charmed.side === c.side)) return true;
     return (c.knownNames || []).some((n) => String(n).trim().toLowerCase() === String(t.name).trim().toLowerCase());
   }
 
-  // The conditions a noun inflicts, which Restore + that noun lifts.
-  function curesOf(n) {
-    const N = W()[n];
-    if (!N) return [];
-    const out = [N.onHit && N.onHit.cond, N.bane, N.mind].filter((k) => k && CONFIG.conditions[k]);
-    return [...new Set(out)];
-  }
-
-  function combines(v, n, m) {
-    const V = W()[v], N = W()[n];
-    if (!V || !N) return false;
-    if (V.shape === 'restore' && !N.heals && !curesOf(n).length) return false;
-    const need = { ground: 'ground', wall: 'wall', terrain: 'terrain', bane: 'bane', boon: 'boon', conjure: 'conjure', ward: 'ward', mind: 'mind', raise: 'raise' }[V.shape];
-    if (need && !N[need]) return false;
-    for (const k of m ? [].concat(m) : []) {
-      const M = W()[k];
-      if (M.shapes && !M.shapes.includes(V.shape)) return false;
-    }
+  // Kinds a spell may be limited to (an effect's `only`).
+  function undead(t) { return !!(t && G.Effects.has(t, 'undead')); }
+  function outsider(t) { return !!(t && (G.Effects.has(t, 'outsider') || (t.conjured && t.conjured.summoned && !undead(t)))); }
+  function fits(t, only) {
+    if (!only) return true;
+    if (only === 'undead') return undead(t);
+    if (only === 'outsider') return outsider(t);
+    if (only === 'living') return !C().tireless(t) && !outsider(t);
     return true;
   }
 
-  // One modifier's words, or two that stack (Launch + Burst) merged into one: costs, magnitudes, radii and AP add;
-  // a range is the one that reaches farthest.
-  function modOf(m) {
-    if (!m) return null;
-    const ms = [].concat(m).map((k) => W()[k]);
-    if (ms.length === 1) return ms[0];
-    const out = Object.assign({}, ...ms);
-    for (const f of ['cost', 'mag', 'radius', 'ap', 'length']) out[f] = ms.reduce((t, x) => t + (x[f] || 0), 0);
-    out.range = ms.filter((x) => x.range).sort((a, b) => b.range[1] - a.range[1]).map((x) => x.range)[0];
-    out.name = ms.map((x) => x.name).join(' + ');
+  // What a verb makes of a noun (or of nothing, for a verb alone): a list of effects, each with its aim filled in.
+  function effectsOf(v, n) {
+    const V = W()[v];
+    if (!V || V.kind !== 'verb') return [];
+    let raw;
+    if (n == null) raw = V.alone;
+    else {
+      const N = W()[n];
+      if (!N || N.kind !== 'noun') return [];
+      raw = (N.does || {})[v];
+    }
+    return [].concat(raw || []).map((e) => Object.assign({ aim: SQUARE.includes(e.shape) ? 'ground' : 'foe' }, e));
+  }
+
+  function modFits(e, m) {
+    if (!m) return true;
+    const M = W()[m];
+    if (!M || M.kind !== 'mod') return false;
+    return !M.shapes || M.shapes.includes(e.shape);
+  }
+
+  // Does this verb make anything of this noun (and take this modifier)? (Validation of item powers.)
+  function combines(v, n, m) {
+    return effectsOf(v, n || null).some((e) => modFits(e, m));
+  }
+
+  // The conditions a noun inflicts (its blow's, and its curses'), which a ward of it keeps off and lifts.
+  function curesOf(n) {
+    const N = W()[n];
+    if (!N || N.kind !== 'noun') return [];
+    const out = [N.onHit && N.onHit.cond];
+    for (const v in N.does || {}) for (const e of [].concat(N.does[v])) {
+      if (e.cond && e.aim !== 'ally' && e.shape !== 'boon') out.push(e.cond);
+      for (const k of e.cures || []) out.push(k);
+    }
+    return [...new Set(out.filter((k) => k && CONFIG.conditions[k]))];
+  }
+
+  // Tradition feats (feats.yaml `spell`: { match: [{verb, noun, aim, mod, shape}], mag, cost, radius, roundsMult,
+  // contest, bound }): what the caster's feats add to a spell. A rule matches when every field it names agrees.
+  function spellBonus(c, sp) {
+    const out = { mag: 0, cost: 0, radius: 0, roundsMult: 1, contest: 0, bound: false };
+    const F = G.DATA && G.DATA.FEATS;
+    if (!F) return out;
+    const agrees = (r) => (!r.verb || (sp.verbs || [sp.verb]).includes(r.verb)) && (!r.noun || [].concat(r.noun).includes(sp.noun)) &&
+      (!r.aim || r.aim === sp.aim) && (!r.mod || r.mod === sp.mod) && (!r.shape || r.shape === sp.shape);
+    for (const id in c.feats || {}) {
+      const f = F[id];
+      if (!f || !f.spell || !(c.feats[id] > 0)) continue;
+      const S = f.spell;
+      if (!S.match || ![].concat(S.match).some(agrees)) continue;
+      const k = c.feats[id];
+      out.mag += (S.mag || 0) * k;
+      out.cost += (S.cost || 0) * k;
+      out.radius += S.radius || 0;
+      out.contest += (S.contest || 0) * k;
+      if (S.roundsMult) out.roundsMult *= S.roundsMult;
+      if (S.bound) out.bound = true;
+    }
     return out;
   }
 
@@ -124,11 +164,13 @@
     return castableOptions(c).concat(powerOptions(c));
   }
 
-  // Powers of worn and wielded things (a circlet that veils at will, a staff with charges of a dread gaze):
-  // item.power or an enchantment's power = { verb, noun, mod, charges (a day; null = at will), name }. A power
-  // needs no spell points, no free hand and no backlash; the wearer's own INT and Casting still set the contest.
+  // Powers of worn and wielded things (a circlet that veils at will, a staff with charges of a dread gaze) and a
+  // monster's own (monsters.yaml `powers`: a ghost's chill touch): item.power or an enchantment's power =
+  // { verb, noun, mod, aim, charges (a day; null = at will), name }. A power needs no spell points, no free hand and
+  // no backlash; the wielder's own INT and Arcane still set the contest.
   function powerSources(c) {
     const out = [];
+    for (const p of c.powers || []) out.push({ item: c, power: p });
     for (const t of c.trinkets || []) if (t.power) out.push({ item: t, power: t.power });
     const held = C().armorPieces(c).filter((p) => p.durability > 0).concat([c.shield && c.shield.durability > 0 ? c.shield : null, C().wieldedWeapon(c), C().offhandWeapon(c)]);
     for (const it of held) if (it) for (const e of Items().enchantsOf(it)) if (e.power) out.push({ item: it, power: e.power });
@@ -144,10 +186,11 @@
   function powerOptions(c) {
     const out = [];
     for (const { item, power: p } of powerSources(c)) {
-      if (!W()[p.verb] || !W()[p.noun] || !combines(p.verb, p.noun, p.mod || null)) continue;
-      const o = makeOption(c, p.verb, p.noun, p.mod || null);
+      const e = effectsOf(p.verb, p.noun || null).find((x) => (!p.aim || x.aim === p.aim) && modFits(x, p.mod || null));
+      if (!e) continue;
+      const o = makeOption(c, p.verb, p.noun || null, p.mod || null, { effect: e });
       const left = chargesLeft(item, p);
-      Object.assign(o, { spCost: 0, power: { item: item.id, name: p.name, left: left === Infinity ? null : left }, label: `${p.name} (${o.label}${left === Infinity ? '' : `, ${left} left`})`, spellKey: `power:${item.id}:${p.name}` });
+      Object.assign(o, { spCost: 0, power: { item: item.id, name: p.name, left: left === Infinity ? null : left }, label: `${p.name} (${o.label.replace(/ \(([^)]*)\)$/, ', $1')}${left === Infinity ? '' : `, ${left} left`})`, spellKey: `power:${item.id}:${p.name}` });
       out.push(o);
     }
     return out;
@@ -162,116 +205,138 @@
   }
 
   function rechargeAll(c) {
-    for (const it of [c.armor, c.shield].concat(c.pieces || [], c.weapons || [], c.trinkets || [])) if (it && it.used) delete it.used;
+    for (const it of [c, c.armor, c.shield].concat(c.pieces || [], c.weapons || [], c.trinkets || [])) if (it && it.used) delete it.used;
+  }
+
+  // Kinds of outsider the caster can call by name: a known name that is a summonable monster's (monsters.yaml traits
+  // outsider), as [monster key, its name].
+  function namedOutsiders(c) {
+    const M = (G.Enemies && G.Enemies.MONSTERS) || {};
+    const out = [];
+    for (const n of c.knownNames || []) {
+      const want = String(n).trim().toLowerCase();
+      const k = Object.keys(M).find((key) => !M[key].group && (M[key].traits || {}).outsider && String(M[key].name).toLowerCase() === want);
+      if (k && !out.some((x) => x[0] === k)) out.push([k, M[k].name]);
+    }
+    return out;
   }
 
   function castableOptions(c) {
     const words = W();
     if (!maxSP(c)) return [];
     const verbs = Object.keys(words).filter((k) => words[k].kind === 'verb' && knows(c, k));
-    const nouns = Object.keys(words).filter((k) => words[k].kind === 'noun' && knows(c, k));
+    const nouns = [null].concat(Object.keys(words).filter((k) => words[k].kind === 'noun' && knows(c, k)));
     const mods = [null].concat(Object.keys(words).filter((k) => words[k].kind === 'mod' && knows(c, k)));
     const out = [];
-    // Modifiers that stack (Launch + Burst) also go on together.
-    const stacking = mods.filter((k) => k && words[k].stacks);
-    for (let i = 0; i < stacking.length; i++) for (let j = i + 1; j < stacking.length; j++) mods.push([stacking[i], stacking[j]]);
-    for (const v of verbs) for (const n of nouns) for (const m of mods) {
-      if (!combines(v, n, m)) continue;
-      const o = makeOption(c, v, n, m);
-      out.push(o);
-      // Transfer of a noun that heals (Life) may be aimed the other way: at an ally, to give.
-      if (o.spell.shape === 'drain' && !o.spell.radius && words[n].heals) out.push(giveOption(o));
-    }
-    // Doubled nouns (Word Doubling): two nouns, no modifier; both do the verb.
-    if (C().rank(c, 'word_doubling')) {
-      for (const v of verbs) for (let i = 0; i < nouns.length; i++) for (let j = i + 1; j < nouns.length; j++) {
-        const a = nouns[i], b = nouns[j];
-        if (combines(v, a, null) && combines(v, b, null)) out.push(makeOption(c, v, a, null, b));
+    for (const v of verbs) for (const n of nouns) for (const e of effectsOf(v, n)) {
+      // Summon + a name: one spell for each kind of outsider whose name the caster knows.
+      const kinds = e.shape === 'summon' && e.named ? namedOutsiders(c) : [null];
+      for (const kind of kinds) {
+        const extra = kind ? { monster: kind[0], monsterName: kind[1] } : {};
+        for (const m of mods) {
+          if (!modFits(e, m)) continue;
+          out.push(makeOption(c, v, n, m, Object.assign({ effect: e }, extra)));
+        }
+        // Two verbs (Summon + Bind): the third word, so no modifier.
+        for (const p of words[v].pairs || []) if (knows(c, p)) out.push(makeOption(c, v, n, null, Object.assign({ effect: e, pair: p }, extra)));
       }
     }
     return out;
   }
 
-  // Transfer aimed at an ally (CONFIG.magic.transfer): the caster's own life given, not a foe's taken.
-  function giveOption(o) {
-    const spell = Object.assign({}, o.spell, { shape: 'give' });
-    return Object.assign({}, o, { spell, target: 'ally', spellKey: o.spellKey + '+give', label: o.label + ' (to an ally)' });
-  }
-
-  // A spell that calls back the revivably dead: Restore or a given Transfer, with a noun that heals.
+  // Raise + Life calls back the dead still in the window, and so does Move + Life given to them.
   function callsBack(s) {
-    return !!s && (s.shape === 'restore' || s.shape === 'give') && (s.nouns || [s.noun]).some((n) => W()[n] && W()[n].heals);
+    return !!s && (s.shape === 'revive' || s.shape === 'give');
   }
 
-  // Magnitude: the verb's, + the modifier's, + affinity with the noun.
-  function magnitude(c, v, n, m) {
-    const w = W();
-    let mag = (w[v].mag || 0) + (m ? modOf(m).mag || 0 : 0);
-    const aff = (CONFIG.magic.affinity || {})[n];
+  // Magnitude: the shape's, + the modifier's, + affinity with the noun, + gear.
+  function magnitude(c, base, n, M) {
+    let mag = (base || 0) + (M ? M.mag || 0 : 0);
+    const aff = n && (CONFIG.magic.affinity || {})[n];
     if (aff) mag += C().rank(c, aff);
     // Worn gear: a skullcap that strengthens every spell, an amulet that strengthens one noun.
-    mag += G.Effects.sum(c, 'mag', n) + G.Effects.sum(c, 'mag', '*');
+    if (n) mag += G.Effects.sum(c, 'mag', n);
+    mag += G.Effects.sum(c, 'mag', '*');
     return mag;
   }
 
-  // The damage vector a noun's blow carries (energies — fire, frost, lightning, life — are
-  // worked out by Combat.computeHit from spell.element and magnitude instead).
+  // The damage vector a noun's blow carries (energies — fire, frost, lightning, decay, spirit, life — are worked out
+  // by Combat.computeHit from spell.element and magnitude instead).
   function damageVector(n, mag) {
-    const kind = W()[n].hurt;
+    const kind = n && (W()[n] || {}).hurt;
     if (kind === 'blunt') return [0, 0, mag];
     if (kind === 'halfBlunt') return [0, 0, Math.ceil(mag / 2)];
     if (kind === 'thorns') return [0, Math.ceil(mag / 2), 0];
     return [0, 0, 0];
   }
 
-  function makeOption(c, v, n, m, n2) {
+  const AIM_TEXT = { foe: 'on a foe', ally: 'on an ally', any: 'on anyone', ground: 'on the ground' };
+
+  // One spell. opts: { effect (one of effectsOf(v, n); the first when not given), pair (a second verb: Summon +
+  // Bind), monster and monsterName (Summon + a name) }.
+  function makeOption(c, v, n, m, opts) {
+    opts = opts || {};
     const w = W();
-    const V = w[v], N = w[n], M = modOf(m);
-    const mag = magnitude(c, v, n, m);
+    const e = opts.effect || effectsOf(v, n || null)[0];
+    if (!e) return null;
+    const V = w[v], N = n ? w[n] : null, M = m ? w[m] : null;
+    // A Wide or Delayed bolt bursts over an area; a Hidden ground spell waits as a rune.
+    const shape = e.shape === 'bolt' && M && M.area ? 'area' : M && M.hidden ? 'rune' : e.shape;
+    const S = SHAPES()[shape] || {};
+    const verbs = [v].concat(opts.pair ? [opts.pair] : []);
+    // A raise's tier: the best of `better` whose feat the caster has.
+    let raiseKind = e.raise || null;
+    for (const b of e.better || []) if (C().rank(c, b.feat)) raiseKind = b.raise;
+    const sp = { verb: v, verbs, noun: n || null, aim: e.aim, mod: m || null, shape };
+    const fb = spellBonus(c, sp);
+    const baseMag = shape !== e.shape ? S.mag : e.mag != null ? e.mag : S.mag;
+    const mag = magnitude(c, baseMag, n, M) + fb.mag;
     // Firestorm: Fire with Wide costs a point less.
-    const storm = n === 'fire' && m && [].concat(m).includes('wide') && C().rank(c, 'firestorm') ? 1 : 0;
-    const cost = Math.max(1, V.cost + N.cost + (M ? M.cost : 0) + (n2 ? w[n2].cost + CONFIG.magic.doubleSurcharge : 0) + (V.shape === 'raise' ? N.raiseCost || 0 : 0) - storm);
-    // Burst makes a bolt an area: round the caster (the caster spared), or Launched, round a square at range.
-    const shape = M && M.area && V.shape === 'bolt' ? 'area' : V.shape;
+    const storm = n === 'fire' && m === 'wide' && C().rank(c, 'firestorm') ? 1 : 0;
+    const cost = Math.max(1, verbs.reduce((t, k) => t + (w[k].cost || 0), 0) + (N ? N.cost : 0) + (M ? M.cost : 0) + (e.cost || 0) + fb.cost - storm);
     const bolt = BOLT.includes(shape);
     const windUp = !!(bolt && M && M.windUp && CONFIG.windUp && CONFIG.windUp.spells);
     // Base AP (Specifics units) through the turn-budget curve, then Quick Casting and armor.
-    let baseAP = (V.ap || CONFIG.magic.castAP) + (!bolt && M && M.windUp ? 1 : 0) + (M && M.ap ? M.ap : 0);
+    let baseAP = (e.ap || S.ap || CONFIG.magic.castAP) + (!bolt && M && M.windUp ? 1 : 0) + (M && M.ap ? M.ap : 0);
     if (windUp) baseAP -= CONFIG.windUp.ap;
     const full = Math.max(C().minAP(), Math.round(C().baseAP(baseAP)));
     const ap = C().gearAP(c, Math.max(C().minAP(), full - C().quickCut(c, 'quick_casting', full)) + C().armorAP(c));
     const far = M && M.rangeMult ? M.rangeMult : 1;
-    const named = !!(M && M.named);
-    // A modifier's range (Launch) replaces the verb's; Burst alone keeps an area spell on the caster.
-    const reach = M && M.range ? [V.range[0] <= 0 ? V.range[0] : M.range[0], M.range[1]] : M && M.area && shape !== 'restore' ? [0, 0] : V.range;
+    // An area keeps its bolt's reach (Take Life Wide: round the caster or a square beside them).
+    const reach = shape === 'area' ? [0, (e.range || S.range || [0, 6])[1]] : e.range || S.range || [1, 1];
     const range = [reach[0], reach[1] * far];
-    const label = [V.name, N.name, n2 ? w[n2].name : null, M ? M.name : null].filter(Boolean).join(' + ');
-    const nouns = n2 ? [n, n2] : [n];
-    const combo = n2 ? (CONFIG.magic.combos || {})[nouns.slice().sort().join('+')] || null : null;
-    const spell = {
-      verb: v, noun: n, nouns, combo, mod: m ? [].concat(m).join('+') : null, shape, element: N.element, magnitude: mag, cost,
-      radius: (V.radius || 0) + (M && M.radius ? M.radius : 0),
-      length: (V.length || 1) + (M && M.length ? M.length : 0),
-      rounds: V.rounds == null ? null : V.rounds * (M && M.roundsMult ? M.roundsMult : 1),
-      lingering: !!(M && M.lingering),
+    const rounds = e.rounds != null ? e.rounds : S.rounds;
+    const named = !!e.named;
+    const verbLabel = verbs.map((k) => w[k].name).join(' + ');
+    const nounName = opts.monsterName || (N ? N.name : null);
+    const twoAims = n != null && effectsOf(v, n).length > 1;
+    const nounLabel = (nounName || '—') + (twoAims ? ` (${AIM_TEXT[e.aim] || e.aim})` : '');
+    const label = [verbLabel, nounName, M ? M.name : null].filter(Boolean).join(' + ') + (twoAims ? ` (${AIM_TEXT[e.aim] || e.aim})` : '');
+    const spell = Object.assign(sp, {
+      nouns: n ? [n] : [], element: N ? N.element : null, magnitude: mag, cost,
+      radius: (S.radius || 0) + (e.radius || 0) + (M && M.radius ? M.radius : 0) + (fb.radius || 0),
+      length: (S.length || 1) + (M && M.length ? M.length : 0),
+      rounds: rounds == null ? null : Math.round(rounds * (M && M.roundsMult ? M.roundsMult : 1) * fb.roundsMult),
       delayed: !!(M && M.delayed),
       condMag: 1 + (M && M.mag ? 1 : 0),
-      named,
-    };
+      named, contest: fb.contest + (named ? CONFIG.magic.nameBonus || 0 : 0),
+      cond: e.cond || null, ground: e.ground || null, wall: e.wall || null, terrain: e.terrain || null, ward: e.ward || null,
+      raise: raiseKind, monster: opts.monster || e.monster || null, stack: !!e.stack, only: e.only || null, undeadMend: e.undead === 'mend',
+      bound: !!opts.pair || fb.bound, heals: !!e.heals, cures: e.cures || [], what: e.what || null,
+      verbKey: verbs.join('+'), verbLabel, nounKey: (n || '') + (opts.monster ? ':' + opts.monster : '') + (twoAims ? '@' + e.aim : ''), nounLabel,
+    });
     const base = {
-      spellKey: [v, n, n2].concat(m ? [].concat(m) : []).filter(Boolean).join('+'), label, spell, ap, stamina: 0, spCost: cost,
+      spellKey: [verbs.join('+'), n, opts.monster, twoAims ? e.aim : null, m].filter(Boolean).join('+'), label, spell, ap, stamina: 0, spCost: cost,
       minRange: range[0], maxRange: range[1], reach: range[1], closePenalty: false,
     };
     if (bolt) {
       return Object.assign(base, {
         kind: 'strike', motion: 'spell', windUp, ranged: range[0] > 1,
-        damage: damageVector(n, spell.lingering ? Math.ceil(mag / 2) : mag),
+        damage: damageVector(n, mag),
       });
     }
-    // target: what the caster aims at — a square, a foe (hex), or an ally or self (bless).
-    // Transfer: a foe, or with Burst a square (everyone round it).
-    const target = shape === 'drain' ? (spell.radius ? 'square' : 'foe') : shape === 'bane' || shape === 'mind' ? 'foe' : shape === 'boon' || shape === 'ward' || shape === 'restore' ? 'ally' : 'square';
-    // Areas and hazards land on squares; Raise aims at the square a body lies on.
+    // target: what the caster aims at — a square, a foe, an ally or themself, or anyone.
+    const target = SQUARE.includes(shape) && !(shape === 'dispel' && e.aim === 'any') ? 'square' : shape === 'drain' ? (spell.radius ? 'square' : 'foe') : e.aim === 'ground' ? 'square' : e.aim;
     return Object.assign(base, { kind: 'cast', target, windUp: false, ranged: true });
   }
 
@@ -286,10 +351,10 @@
 
   // ---- Resolution ----------------------------------------------------------------------
 
-  // Caster's d10 + ⌊INT/2⌋ + Casting against the target's d10 + its resisting attribute
-  // ('avoid' = ⌊(DEX + SPD)/4⌋, like a dodge; otherwise ⌊attribute/2⌋). Ties: the target.
-  async function contest(roller, caster, target, attr, what) {
-    const cb = Math.floor(C().attr(caster, 'INT') / 2) + C().skill(caster, 'arcane');
+  // Caster's d10 + ⌊INT/2⌋ + Arcane (+ bonus: a known name, a tradition feat) against the target's d10 + its resisting
+  // attribute ('avoid' = ⌊(DEX + SPD)/4⌋, like a dodge; otherwise ⌊attribute/2⌋). Ties: the target.
+  async function contest(roller, caster, target, attr, what, bonus) {
+    const cb = Math.floor(C().attr(caster, 'INT') / 2) + C().skill(caster, 'arcane') + (bonus || 0);
     const tb = attr === 'avoid'
       ? Math.floor((C().combatAttr(target, 'DEX') + C().combatAttr(target, 'SPD')) / 4) + C().skill(target, 'evasion')
       : Math.floor(C().attr(target, attr) / 2);
@@ -319,21 +384,25 @@
       logger(enc)(`${target.name} shrugs it off.`, 'defend');
       return false;
     }
-    if (ward && ward.kind && CONFIG.magic.words[ward.kind] && (CONFIG.magic.words[ward.kind].bane === key || (CONFIG.magic.words[ward.kind].onHit || {}).cond === key)) {
+    if (ward && ward.kind && curesOf(ward.kind).includes(key)) {
       logger(enc)(`${target.name}'s ward keeps it off.`, 'defend');
       return false;
     }
     const resist = CONFIG.conditions[key].resistedBy;
     const name = CONFIG.conditions[key].name;
     if (resist && caster && caster !== target) {
-      const k = await contest(roller, caster, target, resist, name.toLowerCase());
+      const k = await contest(roller, caster, target, resist, name.toLowerCase(), opts.contest);
       if (k.resisted) {
         logger(enc)(`${target.name} resists being ${name.toLowerCase()} (${k.b} vs ${k.a}).`, 'defend');
         return false;
       }
     }
-    G.Conditions.add(target, key, Object.assign({ src: caster ? caster.id : null }, opts));
-    logger(enc)(`${target.name} is ${name.toLowerCase()} (${opts.rounds} round${opts.rounds > 1 ? 's' : ''}).`, 'hit');
+    const had = opts.stack && G.Conditions.get(target, key);
+    const before = had ? had.mag : 0;
+    const n = G.Conditions.add(target, key, Object.assign({ src: caster ? caster.id : null }, opts));
+    // A curse cast again (stack) adds to the one already there.
+    if (had && n) n.mag = before + (opts.mag || 1);
+    logger(enc)(`${target.name} is ${name.toLowerCase()} (${opts.rounds} round${opts.rounds > 1 ? 's' : ''}${n && n.mag > 1 && opts.stack ? `, ×${n.mag}` : ''}).`, 'hit');
     // Stunned, paralyzed: AP lost at once, not only next round.
     const drain = CONFIG.conditions[key].drainAP;
     if (drain && enc.ap && enc.ap[target.id] != null) enc.ap[target.id] = Math.max(0, enc.ap[target.id] - Math.round(drain * (opts.mag || 1) * C().apScale()));
@@ -349,7 +418,7 @@
 
   // What a noun does after its blow lands: conditions, a push, a knockdown.
   async function onHit(enc, chars, caster, target, n, roller, opts) {
-    const N = W()[n];
+    const N = W()[n] || {};
     const H = N.onHit;
     if (!H || !G.Character.isActive(target)) return;
     const ward = G.Conditions && G.Conditions.get(target, 'warded');
@@ -367,7 +436,7 @@
     }
   }
 
-  // Acid eats what it touches: armor, the shield and the weapon in hand (CONFIG.magic.corrode).
+  // Decay eats what it touches: armor, the shield and the weapon in hand (CONFIG.magic.corrode).
   function corrode(enc, t, mag) {
     const K = CONFIG.magic.corrode || { armor: 1, gear: 0.5 };
     const bits = [];
@@ -380,7 +449,7 @@
     eat(t.shield, Math.round(mag * K.gear), 'shield');
     const w = C().wieldedWeapon(t);
     if (w && Items().weaponMaxDurability(w)) { if (w.durability == null) w.durability = Items().weaponMaxDurability(w); eat(w, Math.round(mag * K.gear), Items().itemName(w).toLowerCase()); }
-    if (bits.length) logger(enc)(`The acid eats at ${t.name}'s gear (${bits.join(', ')}).`, 'hit');
+    if (bits.length) logger(enc)(`Decay eats at ${t.name}'s gear (${bits.join(', ')}).`, 'hit');
   }
 
   // Lightning leaps on from where a bolt struck (CONFIG.magic.chain): to the nearest other creature within
@@ -430,7 +499,8 @@
     if (!G.Character.isActive(target) && !target.status.unconscious) return;
     if (target.status.dead) return;
     opts = opts || {};
-    const N = W()[n];
+    // A noun, or a bare element a hazard names (radiance: light) with no word of its own.
+    const N = W()[n] || { element: n, name: n };
     let m = mag;
     if (opts.half) m = Math.floor(m / 2);
     const w = wardAgainst(enc, target, { spell: { element: N.element, noun: n, magnitude: m } }, false);
@@ -442,13 +512,12 @@
     if (m > 0) await onHit(enc, chars, caster, target, n, roller, { from: opts.from || enc.pos[caster.id], condMag: opts.condMag, mag: m });
   }
 
-  // After a bolt lands (combat engine): the noun's after-effects and lingering damage.
+  // After a bolt lands (combat engine): the noun's after-effects.
   async function afterHit(enc, chars, a, t, option, hit, roller) {
     const s = option.spell;
     for (const n of s.nouns || [s.noun]) await onHit(enc, chars, a, t, n, roller, { from: enc.pos[a.id], condMag: s.condMag, mag: s.magnitude });
     // Kindling: a fire spell that lands sets its target burning.
     if (s.element === 'fire' && C().rank(a, 'kindling') && G.Conditions && G.Character.isActive(t)) await afflict(enc, a, t, 'burning', { rounds: 2, mag: 1 }, roller);
-    if (s.lingering && G.Conditions && G.Character.isActive(t)) await afflict(enc, a, t, 'afflicted', { rounds: 3, mag: Math.max(1, Math.round(s.magnitude / 4)) }, roller);
     for (const n of s.nouns || [s.noun]) if ((W()[n].onHit || {}).chain) await chainOn(enc, chars, a, t, n, s.magnitude, roller);
   }
 
@@ -473,8 +542,15 @@
       // Half the missiles are turned aside (rolled where a die is at hand: the caller decides).
       out.deflect = 0.5;
     } else if (spell && ward.kind === spell.noun) {
-      out.magnitude = Math.floor(out.magnitude / 2);
-      log(`${target.name}'s ward against ${spell.noun} halves it.`, 'defend');
+      // A ward of Death keeps a ghost's touch off altogether; the others halve their element.
+      if ((W()[ward.kind] || {}).wardBlocks) {
+        out.magnitude = 0;
+        out.blocked = true;
+        log(`${target.name}'s ward against ${(W()[ward.kind] || {}).name || ward.kind} turns it aside.`, 'defend');
+      } else {
+        out.magnitude = Math.floor(out.magnitude / 2);
+        log(`${target.name}'s ward against ${(W()[ward.kind] || {}).name || ward.kind} halves it.`, 'defend');
+      }
     }
     return out;
   }
@@ -502,19 +578,23 @@
   }
 
   // A rune springs on whoever stepped on it (Terrain.enter calls this).
+  // A Hidden spell: the noun's blow on whoever is on it (or within its radius), a pit opening (Take + Earth), the
+  // ground the spell would have laid (Give + Fire: hot ground) round the square.
   async function springRune(enc, chars, f, x, y, roller) {
     const caster = chars[f.owner] || null;
     const N = W()[f.noun];
     const r = f.radius || 0;
     for (const id of within(enc, chars, x, y, r)) {
       const t = chars[id];
-      if (N.terrain === 'pit' && enc.pos[id].x === x && enc.pos[id].y === y) {
+      if (f.terrain === 'pit' && enc.pos[id].x === x && enc.pos[id].y === y) {
         G.Terrain.add(enc, x, y, 'pit', { side: f.side, owner: f.owner });
         t.status.prone = true;
         logger(enc)(`The ground opens under ${t.name}!`, 'hit');
       }
       await elementBlow(enc, chars, caster || t, t, f.noun, f.mag, roller, `The rune of ${N.name.toLowerCase()}`, { from: { x, y }, condMag: f.condMag });
-      if (N.bane && !N.onHit) await afflict(enc, caster, t, N.bane, { rounds: 3, mag: f.condMag || 1 }, roller);
+    }
+    if (f.ground && CONFIG.terrain[f.ground]) for (let yy = y - 1; yy <= y + 1; yy++) for (let xx = x - 1; xx <= x + 1; xx++) {
+      if (G.Terrain.passable(enc, xx, yy)) G.Terrain.add(enc, xx, yy, f.ground, { rounds: 3, mag: Math.max(0, (f.mag || 1) - 4), noun: f.noun, owner: f.owner, side: f.side });
     }
   }
 
@@ -567,43 +647,86 @@
     return `${t.name} is called back from death, breathing but unconscious.`;
   }
 
-  // Restore: Life mends; every noun lifts the conditions it inflicts (Venom also drains the
-  // poison from the blood). Returns log lines.
+  // Give + Life mends; a ward taken against a noun (Take + Fire on an ally) first lifts the conditions it inflicts
+  // (Decay also drains the poison from the blood). Returns log lines.
   function restore(t, s, share) {
     const lines = [];
     for (const n of s.nouns || [s.noun]) {
       const N = W()[n];
-      if (N.heals && !C().tireless(t)) lines.push(mend(t, s, share));
-      const lifted = curesOf(n).filter((k) => G.Conditions.has(t, k));
+      if (s.heals && !C().tireless(t)) lines.push(mend(t, s, share));
+      const lifted = (s.heals ? [] : curesOf(n)).concat(s.cures || []).filter((k) => G.Conditions.has(t, k));
       for (const k of lifted) G.Conditions.remove(t, k);
-      if (n === 'venom' && t.bleeds.some((b) => b.poison)) { t.bleeds = t.bleeds.filter((b) => !b.poison); lifted.push('poison'); }
+      if (N.curesPoison && t.bleeds.some((b) => b.poison)) { t.bleeds = t.bleeds.filter((b) => !b.poison); lifted.push('poison'); }
       if (lifted.length) lines.push(`${t.name}: ${lifted.map((k) => (CONFIG.conditions[k] ? CONFIG.conditions[k].name : k).toLowerCase()).join(', ')} lifted.`);
     }
     return lines;
   }
 
-  // A conjured creature: a fresh character on the caster's side for a few rounds.
-  function conjure(enc, chars, caster, n, at, spell) {
-    const N = W()[n];
+  // Summon (verb): an elemental of the noun, a ghost (Death), or a kind of outsider called by name. It is simply in
+  // the world for its rounds: unbound, it is frenzied (strikes the nearest body, friend or foe) until a Bind takes
+  // hold of it; Summon + Bind brings it bound to the caster. It stands with the caster's side either way, so the
+  // caster's friends don't go for it unless it goes for them.
+  function summon(enc, chars, caster, s, at) {
     if (!G.Enemies || !G.Enemies.makeConjured) return null;
-    const c = G.Enemies.makeConjured(N.conjure, n, spell.magnitude);
+    const kind = s.monster === 'elemental' ? 'elemental' : { monster: s.monster };
+    const c = G.Enemies.makeConjured(kind, s.noun, s.magnitude);
     if (!c) return null;
-    return join(enc, chars, caster, c, at, { by: caster.id, rounds: spell.rounds || 4 });
+    c.traits = Object.assign({}, c.traits, undead(c) ? {} : { outsider: true });
+    join(enc, chars, caster, c, at, { by: caster.id, rounds: s.rounds || 4, summoned: true, bound: !!s.bound });
+    if (!s.bound) frenzy(c, s.rounds || 4);
+    return c;
   }
 
-  // Raise (verb): the body nearest the aim (within a square) gets up on the caster's side, as the noun says
-  // (CONFIG.magic.raise: a skeleton, a zombie, or a revenant copied from the body). It lasts the fight and falls
-  // when its caster does.
+  // An unbound summons: the frenzy lasts as long as it does (a Bind ends it).
+  function frenzy(c, rounds) {
+    G.Conditions.add(c, 'enraged', { rounds: rounds + 1, src: null });
+    c.conjured.bound = false;
+  }
+
+  // Raise (verb): the body nearest the aim (within a square) gets up on the caster's side, as the spell says
+  // (CONFIG.magic.raise: a skeleton; with the feats, a zombie or a mummy). It lasts the fight and falls when its
+  // caster does.
   function raise(enc, chars, caster, spell, at) {
-    const N = W()[spell.noun];
     const body = enc.ids.map((id) => chars[id]).filter((d) => d && d.status.dead && !d.vanished && !d.raised && enc.pos[d.id] && G.Combat.dist(enc.pos[d.id], at) <= 1)
       .sort((x, y) => G.Combat.dist(enc.pos[x.id], at) - G.Combat.dist(enc.pos[y.id], at))[0];
     if (!body || !G.Enemies || !G.Enemies.makeRaised) return null;
-    const c = G.Enemies.makeRaised(N.raise, body);
+    const c = G.Enemies.makeRaised(spell.raise, body);
     if (!c) return null;
     body.raised = true;
     body.vanished = true; // the body is up and walking: it no longer lies there
     return join(enc, chars, caster, c, enc.pos[body.id], { by: caster.id, rounds: null, bound: true });
+  }
+
+  // Give + Death on the undead: as Life on the living (stamina back by magnitude; the tireless mend CON instead).
+  function mendUndead(t, s) {
+    const con = Math.min(Math.max(1, Math.ceil(s.magnitude / 2)) + s.condMag - 1, t.damage.CON || 0);
+    if (con) C().healAttr(t, 'CON', con);
+    return `${t.name} drinks the death in: ${con ? `+${con} CON` : 'nothing to mend'}.`;
+  }
+
+  // Conditions a spell can lay (any noun's or verb's effect), and wards: what Take + Magic lifts.
+  function dispellable() {
+    const out = new Set(['warded', 'controlled', 'enthralled', 'concentrating']);
+    for (const k of Object.keys(W())) {
+      const x = W()[k];
+      if (x.alone && x.alone.cond) out.add(x.alone.cond);
+      for (const v in x.does || {}) for (const e of [].concat(x.does[v])) if (e.cond) out.add(e.cond);
+      if (x.onHit && x.onHit.cond) out.add(x.onHit.cond);
+    }
+    return out;
+  }
+
+  // Lift every spell on a creature; one held by a charm comes back to themselves. Returns the names lifted.
+  function dispelOn(t) {
+    const set = dispellable();
+    const gone = G.Conditions.list(t).filter((x) => set.has(x.key));
+    for (const x of gone) G.Conditions.remove(t, x.key);
+    if (t.charmed && !G.Conditions.list(t).some((x) => (CONFIG.conditions[x.key] || {}).control)) {
+      t.side = t.charmed.side; t.control = t.charmed.control; delete t.charmed;
+    }
+    // A summons raging unbound stays unbound: its frenzy is what it is, not a spell on it.
+    if (t.conjured && t.conjured.summoned && !t.conjured.bound && gone.some((x) => x.key === 'enraged')) G.Conditions.add(t, 'enraged', { rounds: t.conjured.rounds + 1 });
+    return gone.map((x) => CONFIG.conditions[x.key].name.toLowerCase());
   }
 
   // A new fighter on the caster's side, acting from next round.
@@ -631,15 +754,16 @@
     const at = d.target ? posAtStart[d.target] : d.at;
     if (!at) return;
     const distance = G.Combat.dist(from, at);
-    // Named: it finds the one named, wherever they are (if their name is known).
-    if (s.named) {
-      if (!d.target || !knowsName(a, chars[d.target])) return log(`${a.name}'s ${o.label} fizzles — the name means nothing.`, 'fizzle');
-    } else if (distance > o.maxRange || distance < (o.target === 'ally' ? 0 : o.minRange)) return log(`${a.name}'s ${o.label} fizzles — out of range.`, 'fizzle');
+    // A name: only one whose name the caster knows.
+    if (s.named && (!d.target || !knowsName(a, chars[d.target]))) return log(`${a.name}'s ${o.label} fizzles — the name means nothing.`, 'fizzle');
+    if (distance > o.maxRange || distance < (o.target === 'ally' || o.target === 'any' ? 0 : o.minRange)) return log(`${a.name}'s ${o.label} fizzles — out of range.`, 'fizzle');
     // Blink needs no line (it goes through); everything else does.
-    if (!s.named && distance >= 2 && s.shape !== 'blink' && G.Terrain.lineCheck(enc, from, at, 'missile').blocked) return log(`${a.name}'s ${o.label} fizzles — no clear line.`, 'fizzle');
+    if (distance >= 2 && s.shape !== 'blink' && G.Terrain.lineCheck(enc, from, at, 'missile').blocked) return log(`${a.name}'s ${o.label} fizzles — no clear line.`, 'fizzle');
+    // Spells for one kind (Bind + Death: the undead; Take + Outsider: outsiders) have no hold on others.
+    const t0 = d.target ? chars[d.target] : null;
+    if (t0 && s.only && !fits(t0, s.only)) return log(`${a.name}'s ${o.label} has no hold on ${t0.name}.`, 'fizzle');
     if (!(await G.Combat.castSpell(enc, a, o, roller))) return;
     const side = a.side;
-    const N = W()[s.noun];
     switch (s.shape) {
       case 'area': {
         if (s.delayed) {
@@ -649,20 +773,19 @@
           return log(`${a.name} casts ${o.label}: the air over (${at.x + 1}, ${at.y + 1}) begins to gather; it breaks at the end of the round.`, 'hit');
         }
         log(`${a.name} casts ${o.label} at (${at.x + 1}, ${at.y + 1}).`, 'hit');
-        // Round the caster's own square (Burst alone): the caster is spared.
+        // Round the caster's own square (aimed at themself): the caster is spared.
         const centred = at.x === from.x && at.y === from.y;
         for (const id of within(enc, chars, at.x, at.y, s.radius)) {
           if (centred && id === a.id) continue;
           const t = chars[id];
           const k = await contest(roller, a, t, 'avoid', o.label);
-          await elementBlow(enc, chars, a, t, s.noun, s.lingering ? Math.ceil(s.magnitude / 2) : s.magnitude, roller, o.label, { half: k.resisted, from: at, condMag: s.condMag });
-          if (s.lingering && G.Character.isActive(t)) await afflict(enc, a, t, 'afflicted', { rounds: 3, mag: Math.max(1, Math.round(s.magnitude / 4)) }, roller);
+          await elementBlow(enc, chars, a, t, s.noun, s.magnitude, roller, o.label, { half: k.resisted, from: at, condMag: s.condMag });
         }
         return;
       }
       case 'ground': {
         let n = 0;
-        const grounds = (s.nouns || [s.noun]).map((k) => W()[k].ground);
+        const grounds = [s.ground];
         for (let y = at.y - s.radius; y <= at.y + s.radius; y++) for (let x = at.x - s.radius; x <= at.x + s.radius; x++) {
           if (!G.Terrain.passable(enc, x, y)) continue;
           let any = false;
@@ -672,15 +795,15 @@
         return log(`${a.name} casts ${o.label}: ${grounds.map((g) => CONFIG.terrain[g].name.toLowerCase()).join(' and ')} cover${grounds.length > 1 ? '' : 's'} ${n} squares.`, 'hit');
       }
       case 'wall': {
-        const solid = !!CONFIG.terrain[N.wall].wall;
+        const solid = !!CONFIG.terrain[s.wall].wall;
         const squares = lineAcross(from, at.x, at.y, s.length).filter((q) => G.Terrain.inGrid(enc, q.x, q.y) && !(solid && occupied(enc, chars, q.x, q.y)));
-        for (const q of squares) G.Terrain.add(enc, q.x, q.y, N.wall, { rounds: s.rounds, mag: Math.max(0, s.magnitude - 1), noun: s.noun, owner: a.id, side });
-        return log(`${a.name} casts ${o.label}: a ${CONFIG.terrain[N.wall].name.toLowerCase()} rises across ${squares.length} square${squares.length === 1 ? '' : 's'}.`, 'hit');
+        for (const q of squares) G.Terrain.add(enc, q.x, q.y, s.wall, { rounds: s.rounds, mag: Math.max(0, s.magnitude - 1), noun: s.noun, owner: a.id, side });
+        return log(`${a.name} casts ${o.label}: a ${CONFIG.terrain[s.wall].name.toLowerCase()} rises across ${squares.length} square${squares.length === 1 ? '' : 's'}.`, 'hit');
       }
       case 'terrain': {
         const squares = lineAcross(from, at.x, at.y, s.length).filter((q) => G.Terrain.passable(enc, q.x, q.y));
         for (const q of squares) {
-          G.Terrain.add(enc, q.x, q.y, N.terrain, { rounds: s.rounds, noun: s.noun, owner: a.id, side });
+          G.Terrain.add(enc, q.x, q.y, s.terrain, { rounds: s.rounds, noun: s.noun, owner: a.id, side });
           const who = enc.ids.find((id) => chars[id] && C().isActive(chars[id]) && enc.pos[id].x === q.x && enc.pos[id].y === q.y);
           if (who) {
             const t = chars[who];
@@ -697,7 +820,7 @@
       }
       case 'rune': {
         const f = G.Terrain.add(enc, at.x, at.y, 'rune', { noun: s.noun, mag: s.magnitude, owner: a.id, side, hidden: true });
-        if (f) { f.radius = s.radius; f.condMag = s.condMag; }
+        if (f) { f.radius = s.radius; f.condMag = s.condMag; f.terrain = s.terrain; f.ground = s.ground; }
         return log(`${a.name} traces a rune on the ground.`, 'pass');
       }
       case 'bane':
@@ -705,22 +828,26 @@
         const t = chars[d.target];
         if (!t || !C().isActive(t)) return log(`${a.name}'s ${o.label} fizzles.`, 'fizzle');
         log(`${a.name} casts ${o.label} on ${t.name}.`, 'hit');
-        const field = s.shape === 'mind' ? 'mind' : 'bane';
-        // A combination of two nouns can make something new (Rage + Dream: confusion).
-        const keys = s.combo ? [s.combo] : (s.nouns || [s.noun]).map((k) => W()[k][field]);
-        for (const key of keys) await afflict(enc, a, t, key, { rounds: s.rounds, mag: s.condMag }, roller);
+        // Give + Death mends the undead it would wither in the living.
+        if (s.undeadMend && undead(t)) return log(mendUndead(t, s), 'defend');
+        // A Bind on a summons of the caster's own, raging unbound: it is bound now.
+        if (s.cond === 'controlled' && t.side === a.side && t.conjured && t.conjured.summoned && !t.conjured.bound) {
+          const k = await contest(roller, a, t, 'WIL', 'binding', s.contest);
+          if (k.resisted) return log(`${t.name} slips the binding (${k.b} vs ${k.a}).`, 'defend');
+          G.Conditions.remove(t, 'enraged');
+          t.conjured.bound = true;
+          return log(`${t.name} is bound to ${a.name}'s will (${k.a} vs ${k.b}).`, 'hit');
+        }
+        if (t.side === a.side) return log(`${a.name}'s ${o.label} finds no foe in ${t.name}.`, 'fizzle');
+        await afflict(enc, a, t, s.cond, { rounds: s.rounds, mag: s.condMag, stack: s.stack, contest: s.contest }, roller);
         return;
       }
       case 'boon': {
         const t = chars[d.target];
         if (!t || t.status.dead) return log(`${a.name}'s ${o.label} fizzles.`, 'fizzle');
         log(`${a.name} casts ${o.label} on ${t === a ? 'themself' : t.name}.`, 'defend');
-        for (const k of s.nouns || [s.noun]) {
-          const boon = W()[k].boon;
-          G.Conditions.add(t, boon, { rounds: s.rounds, mag: s.condMag, src: a.id });
-          log(`${t.name} is ${CONFIG.conditions[boon].name.toLowerCase()} (${s.rounds} rounds).`, 'defend');
-        }
-        return;
+        G.Conditions.add(t, s.cond, { rounds: s.rounds, mag: s.condMag, src: a.id });
+        return log(`${t.name} is ${CONFIG.conditions[s.cond].name.toLowerCase()} (${s.rounds} rounds).`, 'defend');
       }
       case 'drain': {
         // Transfer: what each one hit loses of the noun (Life: CON), the caster gains (CONFIG.magic.transfer).
@@ -761,11 +888,6 @@
       }
       case 'restore': {
         const t = chars[d.target];
-        const life = (s.nouns || [s.noun]).some((n) => W()[n].heals);
-        if (t && life && revivable(enc, t) && enc.pos[t.id]) {
-          log(`${a.name} casts ${o.label} on the body of ${t.name}.`, 'defend');
-          return log(revive(t), 'defend');
-        }
         if (!t || t.status.dead || !enc.pos[t.id]) return log(`${a.name}'s ${o.label} fizzles.`, 'fizzle');
         log(`${a.name} casts ${o.label} on ${t === a ? 'themself' : t.name}${s.radius ? ' and all around' : ''}.`, 'defend');
         // Wide: everyone living within the radius, friend or foe, at a share of the stamina.
@@ -774,13 +896,23 @@
         for (const x of who) for (const line of restore(x, s, share)) log(line, 'defend');
         return;
       }
+      case 'revive': {
+        // Raise + Life: one who died in this fight, still in the window, is called back.
+        const t = chars[d.target];
+        if (!t || !revivable(enc, t) || !enc.pos[t.id]) return log(`${a.name}'s ${o.label} fizzles — no one to call back.`, 'fizzle');
+        log(`${a.name} casts ${o.label} on the body of ${t.name}.`, 'defend');
+        return log(revive(t), 'defend');
+      }
       case 'ward': {
         const t = chars[d.target];
         if (!t || t.status.dead) return log(`${a.name}'s ${o.label} fizzles.`, 'fizzle');
-        const kind = N.ward;
+        // Take + an element on an ally: what that element left on them is lifted, then it is kept off.
+        if (s.noun && s.ward !== 'magic') for (const line of restore(t, Object.assign({}, s, { heals: false }), 1)) log(line, 'defend');
+        const kind = s.ward;
         const pool = kind === 'magic' ? s.magnitude * 3 : null;
         G.Conditions.add(t, 'warded', { rounds: s.rounds, mag: s.condMag, kind, pool, src: a.id });
-        const what = { magic: `a ward of force (${pool} points against spells and missiles)`, missiles: 'a ward of wind that turns missiles aside', mind: 'a ward on the mind' }[kind] || `a ward against ${kind}`;
+        const wname = ((W()[kind] || {}).name || kind).toLowerCase();
+        const what = { magic: `a shell of force (${pool} points against spells and missiles)` }[kind] || `a ward against ${wname}`;
         return log(`${a.name} casts ${o.label}: ${t === a ? 'themself' : t.name} is wrapped in ${what} (${s.rounds} rounds).`, 'defend');
       }
       case 'blink': {
@@ -792,18 +924,76 @@
         enc.pos[a.id] = { x: at.x, y: at.y };
         return log(`${a.name} blinks to (${at.x + 1}, ${at.y + 1}).`, 'defend');
       }
+      case 'summon': {
+        if (!G.Terrain.passable(enc, at.x, at.y) || occupied(enc, chars, at.x, at.y)) return log(`${a.name}'s ${o.label} fizzles — no room.`, 'fizzle');
+        const c = summon(enc, chars, a, s, at);
+        if (!c) return log(`${a.name}'s ${o.label} fizzles.`, 'fizzle');
+        const p = enc.pos[c.id];
+        return log(`${a.name} casts ${o.label}: ${c.name} appears at (${p.x + 1}, ${p.y + 1}) for ${c.conjured.rounds} rounds${s.bound ? ', bound' : ', unbound and raging'}.`, 'hit');
+      }
+      case 'dispel': {
+        // Take + Magic: every spell on a creature (curses, charms, boons, wards), or every spell laid on the squares
+        // round the one aimed at (walls, hazards, runes).
+        if (d.target) {
+          const t = chars[d.target];
+          if (!t || t.status.dead) return log(`${a.name}'s ${o.label} fizzles.`, 'fizzle');
+          const gone = dispelOn(t);
+          return log(`${a.name} casts ${o.label} on ${t.name}: ${gone.length ? gone.join(', ') + ' lifted' : 'nothing there to lift'}.`, gone.length ? 'hit' : 'fizzle');
+        }
+        let n = 0;
+        for (let y = at.y - s.radius; y <= at.y + s.radius; y++) for (let x = at.x - s.radius; x <= at.x + s.radius; x++) {
+          const before = G.Terrain.at(enc, x, y).length;
+          G.Terrain.remove(enc, x, y, (f) => !!f.owner && !(CONFIG.terrain[f.kind] || {}).permanent);
+          n += before - G.Terrain.at(enc, x, y).length;
+        }
+        return log(`${a.name} casts ${o.label}: ${n ? `${n} spell${n > 1 ? 's' : ''} on the ground unmade` : 'nothing laid there'}.`, n ? 'hit' : 'fizzle');
+      }
+      case 'banish': {
+        const t = chars[d.target];
+        if (!t || !C().isActive(t)) return log(`${a.name}'s ${o.label} fizzles.`, 'fizzle');
+        const k = await contest(roller, a, t, 'WIL', 'banishing', s.contest);
+        if (k.resisted) return log(`${t.name} holds to the world (${k.b} vs ${k.a}).`, 'defend');
+        t.status.dead = true;
+        t.vanished = true;
+        return log(`${a.name} casts ${o.label}: ${t.name} is sent out of the world (${k.a} vs ${k.b}).`, 'hit');
+      }
+      case 'channel': {
+        // Give + Magic: the caster's stamina becomes spell points, theirs or an ally's (CONFIG.magic.channel).
+        const t = chars[d.target];
+        if (!t || !C().isActive(t)) return log(`${a.name}'s ${o.label} fizzles.`, 'fizzle');
+        const per = (CONFIG.magic.channel || {}).staminaPerPoint || 3;
+        const pts = Math.min(s.magnitude, t.spSpent || 0, Math.floor((a.stamina - 1) / per));
+        if (pts <= 0) return log(`${a.name}'s ${o.label} finds nothing to fill.`, 'fizzle');
+        a.stamina -= pts * per;
+        t.spSpent -= pts;
+        C().updateCondition(a);
+        return log(`${a.name} casts ${o.label}: −${pts * per} stamina, ${t === a ? 'their' : `${t.name}'s`} pool +${pts}.`, 'defend');
+      }
+      case 'see': {
+        // See: hidden runes and traps round the square come to light for everyone, and the unseen are picked out;
+        // See + Magic also names the spells on everyone there, See + Outsider the outsiders.
+        let found = 0;
+        for (let y = at.y - s.radius; y <= at.y + s.radius; y++) for (let x = at.x - s.radius; x <= at.x + s.radius; x++) {
+          for (const f of G.Terrain.at(enc, x, y)) if (f.hidden) { f.hidden = false; found++; }
+        }
+        const near = within(enc, chars, at.x, at.y, s.radius).map((id) => chars[id]).filter((t) => C().isActive(t));
+        for (const t of near) if (G.Conditions.has(t, 'unseen') && t.side !== side) { G.Conditions.remove(t, 'unseen'); found++; }
+        const bits = [found ? `${found} hidden thing${found > 1 ? 's' : ''} brought to light` : 'nothing hidden'];
+        if (s.what === 'magic') {
+          const on = near.map((t) => [t, G.Conditions.list(t).filter((x) => dispellable().has(x.key))]).filter(([, l]) => l.length);
+          bits.push(on.length ? on.map(([t, l]) => `${t.name}: ${l.map((x) => CONFIG.conditions[x.key].name.toLowerCase()).join(', ')}`).join('; ') : 'no spells on anyone');
+        }
+        if (s.what === 'outsider') {
+          const os = near.filter(outsider);
+          bits.push(os.length ? `outsiders: ${os.map((t) => t.name).join(', ')}` : 'no outsiders');
+        }
+        return log(`${a.name} casts ${o.label}: ${bits.join('; ')}.`, 'pass');
+      }
       case 'raise': {
         const c = raise(enc, chars, a, s, at);
         if (!c) return log(`${a.name}'s ${o.label} fizzles — no body to raise there.`, 'fizzle');
         const p = enc.pos[c.id];
         return log(`${a.name} casts ${o.label}: ${c.name} rises at (${p.x + 1}, ${p.y + 1}).`, 'hit');
-      }
-      case 'conjure': {
-        if (!G.Terrain.passable(enc, at.x, at.y) || occupied(enc, chars, at.x, at.y)) return log(`${a.name}'s ${o.label} fizzles — no room.`, 'fizzle');
-        const c = conjure(enc, chars, a, s.noun, at, s);
-        if (!c) return log(`${a.name}'s ${o.label} fizzles.`, 'fizzle');
-        const p = enc.pos[c.id];
-        return log(`${a.name} ${typeof N.conjure === 'object' ? 'summons' : 'conjures'} ${c.name} at (${p.x + 1}, ${p.y + 1}) for ${c.conjured.rounds} rounds.`, 'hit');
       }
       default:
         return log(`${a.name}'s ${o.label} does nothing.`, 'fizzle');
@@ -822,7 +1012,7 @@
       for (const id of within(enc, chars, d.at.x, d.at.y, s.radius)) {
         const t = chars[id];
         if (!C().isActive(t)) continue;
-        await elementBlow(enc, chars, a, t, s.noun, s.lingering ? Math.ceil(s.magnitude / 2) : s.magnitude, roller, d.label, { from: d.at, condMag: s.condMag });
+        await elementBlow(enc, chars, a, t, s.noun, s.magnitude, roller, d.label, { from: d.at, condMag: s.condMag });
       }
     }
   }
@@ -848,5 +1038,5 @@
     return lines;
   }
 
-  G.Magic = { revivable, revive, callsBack, giveLife, breakDelayed, raise, join, corrode, chainOn, powerOptions, castableOptions, usePower, rechargeAll, chargesLeft, mend, restore, curesOf, knowsName, wardAgainst, freshSP, maxSP, restSP, availableSP, overchannelSP, spellOptions, knows, combines, backlash, makeOption, contest, afflict, onHit, elementBlow, afterHit, springRune, resolveCast, lineAcross, endRound, push };
+  G.Magic = { effectsOf, spellBonus, fits, undead, outsider, summon, dispelOn, dispellable, namedOutsiders, revivable, revive, callsBack, giveLife, breakDelayed, raise, join, corrode, chainOn, powerOptions, castableOptions, usePower, rechargeAll, chargesLeft, mend, restore, curesOf, knowsName, wardAgainst, freshSP, maxSP, restSP, availableSP, overchannelSP, spellOptions, knows, combines, backlash, makeOption, contest, afflict, onHit, elementBlow, afterHit, springRune, resolveCast, lineAcross, endRound, push };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

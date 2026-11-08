@@ -4,6 +4,29 @@ Last updated at commit: 36bf80a
 
 Keep this a short list. Tick things off, add new ones, and refresh the commit line after every push (`git log -1 --format=%h`).
 
+## The spell words (the user, 2026-11-08; design and rulings in docs/PROPOSALS.md §4)
+- [x] spells.yaml rebuilt: 9 verbs (Strike, Give, Take, Move, Raise, Bind, Summon, Shape, See), 15 nouns (Fire, Frost,
+  Storm, Decay, Force, Earth, Life, Death, Speed, Might, Grace, Mind, Shadow, Magic, Outsider) and a Name, 6 modifiers
+  (Wide, Far, Long, Strong, Hidden, Delayed). Each noun's `does` names a shape per verb; `shapes` holds the numbers.
+  Engine: magic.js builds spells from those effects; new shapes summon, revive, dispel, banish, channel, see; curses
+  stack; Summon + Bind (two verbs); Bind + a name (+3). AI taught them (unbound summons go where the nearest body is
+  a foe). validate checks every effect, monster noun and power.
+- [x] Summons are unbound and frenzied unless bound; elementals (Fire, Frost, Storm, Earth) and ghosts need no name.
+  Ghost (monsters.yaml): incorporeal, a Take + Death touch past armor that takes stamina only; Give + Force and a ward
+  of Death keep it off. Raise + Death: skeleton, zombie (Raise the Flesh), mummy (Raise the Wrapped Dead; new monster).
+- [x] Feats: Magic: words rebuilt; new trees Magic: necromancy, devotion, summoning, keyed on verb–noun patterns
+  (feats.yaml `spell`). Living Flame brings fire elementals bound. Word Doubling retired.
+- [x] Monsters respecced (drakes, efreet, shamans, Venril, revenant knight, orc prophet, dread shaman); fire spirits are
+  outsiders. Heroes, items, enchantments, ritual nouns, the fx colours moved to the new words. Save version 6 maps old
+  feats, nouns and worn powers onto the new ones.
+- [x] Fixed on the way: a monster with no unarmed blow (efreeti, ghost) now has its bolts (character.js).
+- [ ] Not built: Shape (polymorph, petrify, illusions), Ethereal, Counterspell and Reflect as reactions, a lasting
+  anti-magic zone, Move on another creature or a swap, Unlock, a named ghost's strength, a dome of force, See in the
+  dungeon (traps), Grease as an alchemy flask.
+- [ ] An unbound summons stands with its caster's side (nobody hunts it; it hunts the nearest). A third side? Ask.
+- [ ] Not simmed; numbers are guesses (encounter tuning deferred). The spell picker was seen in headless Chrome
+  (Verb, Noun, Modifier); the Summon + Bind and aimed-noun entries not clicked through.
+
 ## Tarnhold and the orc valley, art refinement (the user, 2026-11-08; assets/wip/orc/README.md, assets/wip/orc2/)
 - [x] The mountains are steep scree slopes (16-tile corner sets), not vertical cliffs, and climb in rings a square
   apart, up to six (`assets/wip/orc/rings.py`; wall letters # ( ? ▁ ▂ ▃ ▄), one granite slope set stacked, each ring a
@@ -111,10 +134,10 @@ seven new trees.
   (after a dodge the next move's first square is free and unanswered), Joint Lock (−1 DEX when a hold holds), Iron
   Grip (pay a step's AP: no breaking free), Human Shield (a blow at a holder lands on the held), Truesight (ignores
   displacement), Overchannel (spell points past the pool in CON), Steady Mind (cast in a grapple), Kindling, Firestorm,
-  Ember Heart (resist fire ½). Already working but marked unbuilt: Control, Word Doubling, Fire Affinity.
+  Ember Heart (resist fire ½). Already working but marked unbuilt: Control, Fire Affinity (Word Doubling retired 2026-11-08).
 - [ ] Kindling has no test; Cleave/Sweep/Flurry/Human Shield not watched in a browser fight. The AI never overchannels.
 - [ ] Still unbuilt, and why: Off-hand Dagger (anyone may off-hand parry already: redesign it?), Quick Donning (the
-  game has no donning), Living Flame, Verb Summon and Mod Swift (summoning by name isn't built), Cauterize, Focus
+  game has no donning), Mod Swift (Living Flame and Verb Summon built 2026-11-08), Cauterize, Focus
   Bond, Diagnose, the alchemy line, every Ritual feat (rituals exist in the rules but the game never offers one).
   Appraise, Tracker, Read Spell, Word Thief, Rally/Demoralize, Leading Questions, Kingmaker go to the phase 3 trees.
 - [x] Phase 3 (the user, 2026-11-06: "a few feats per tree", to be cut down in play): seven new trees, 33 feats,

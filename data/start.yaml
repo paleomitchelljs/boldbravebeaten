@@ -82,10 +82,10 @@ presets:
     kit: staff
     level: 3
     attrs: {STR: 3, CON: 5, DEX: 5, SPD: 5, INT: 8, WIL: 8, WIS: 3, CHA: 3}
-    # Life with Transfer alone (the user, 2026-11-07: drain a foe, or give to an ally; was Increase, Decrease and
-    # Transfer), and the modifiers Launch and Burst; Control against backlash. The healer of the party (Medicine).
+    # Life with Move alone (the user, 2026-11-07: drain a foe, or give to an ally; Move was Transfer before the spell
+    # words of 2026-11-08), and the modifiers Far and Wide; Control against backlash. The healer of the party (Medicine).
     skills: {arcane: 5, medicine: 3, anticipation: 3, nature: 2, perception: 2, evasion: 1}
-    feats: [mod_launch, mod_burst, verb_transfer, control, quick_casting]
+    feats: [mod_far, mod_wide, verb_move, control, quick_casting]
     nouns: [life]
     look: {sprite: "art:jabiku"}
 
@@ -174,7 +174,7 @@ recruits:
     weaponItems: [{weapon: shortsword, material: steel}, {weapon: dagger}]
     shieldItem: {shield: buckler, material: wood}
     skills: {arcane: 5, melee: 4, block: 3, evasion: 2, perception: 2}
-    feats: [verb_strike, mod_launch, verb_ward, quick_block, quick_casting]
+    feats: [verb_strike, mod_far, verb_take, quick_block, quick_casting]
     nouns: [fire]
     look: {sprite: "art:spawnee"}
 
@@ -200,6 +200,6 @@ trials:
         shieldItem: {shield: heater, material: steel, enchantments: [spellcatching], name: Spellbreaker}
         trinkets: [silk_sash]
         skills: {melee: 7, block: 6, armor: 7, arcane: 7, athletics: 2, intimidation: 2}
-        feats: [mail_mobility, quick_block, mail_mobility, mail_endurance, iron_stance, strength, verb_strike, verb_bless, mod_strong, verb_conjure, verb_raise, battle_casting]
-        nouns: [shadow, life, bone, spirit]
+        feats: [mail_mobility, quick_block, mail_mobility, mail_endurance, iron_stance, strength, verb_give, verb_take, mod_strong, verb_raise, raise_zombie, battle_casting]
+        nouns: [shadow, life, death]
         look: {sprite: "art:tevax"}

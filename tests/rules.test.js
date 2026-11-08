@@ -607,20 +607,21 @@ test('arrows: range 2+, use ammunition, cannot be parried', async () => {
 
 test('magic: words make spells; spell points, fire through armor, backlash', async () => {
   const m = fighter('Mage');
-  m.feats = { verb_strike: 1, verb_launch: 1, mod_strong: 1 };
+  m.feats = { verb_strike: 1, mod_far: 1, mod_strong: 1 };
   m.skills = { arcane: 4 };
   m.nouns = ['fire'];
   m.stamina = C.maxStamina(m);
   assert.strictEqual(B.Magic.maxSP(m), 5 + 2 * 4, 'INT + 2 an Arcane rank');
   const labels = C.attackOptions(m).filter((o) => o.spell).map((o) => o.label).sort();
-  assert.deepStrictEqual(labels, ['Launch + Fire', 'Launch + Fire + Strong', 'Strike + Fire', 'Strike + Fire + Strong']);
-  const bolt = opt(m, (o) => o.label === 'Launch + Fire');
+  assert.deepStrictEqual(labels, ['Strike + Fire', 'Strike + Fire + Far', 'Strike + Fire + Strong']);
+  const bolt = opt(m, (o) => o.label === 'Strike + Fire + Far');
   assert.strictEqual(bolt.spCost, 4);
-  assert.strictEqual(opt(m, (o) => o.label === 'Launch + Fire + Strong').windUp, true);
+  assert.strictEqual(bolt.maxRange, 2 * opt(m, (o) => o.label === 'Strike + Fire').maxRange);
+  assert.strictEqual(opt(m, (o) => o.label === 'Strike + Fire + Strong').windUp, true);
   const knight = fighter('Knight');
   knight.armor = Items.makeArmor('plate', 'full', 'standard'); // B mitigation 3 → stops 2 fire
   const h = Combat.computeHit(m, knight, bolt, {});
-  const mag = B.CONFIG.magic.words.launch.mag;
+  const mag = B.CONFIG.magic.words.shapes.bolt.mag;
   assert.strictEqual(h.fire, mag);
   assert.strictEqual(h.toCON + h.bluntToStamina, mag - 2, 'plate stops 2 of the fire');
   // Tired casters draw less power.
@@ -1229,111 +1230,118 @@ async function castAt(m, foes, spellKey, aim, rolls) {
   return { enc, chars, o };
 }
 
-test('magic grammar: verbs take nouns broadly; a few pairings make nothing', () => {
+test('magic grammar: each noun says what each verb makes of it; a few pairings make nothing', () => {
   const M = B.Magic;
-  assert.ok(M.combines('build', 'earth') && M.combines('build', 'vine') && M.combines('build', 'fire'));
-  assert.ok(!M.combines('build', 'life'), 'no wall of life');
-  assert.ok(M.combines('open', 'earth') && !M.combines('open', 'fire'), 'pits are earth');
-  assert.ok(M.combines('hex', 'life') && M.combines('bless', 'life') && M.combines('raise', 'life') && !M.combines('conjure', 'life'));
-  assert.ok(M.combines('raise', 'bone') && M.combines('raise', 'spirit') && !M.combines('raise', 'fire'), 'Raise takes Bone, Life, Spirit');
-  assert.ok(!M.combines('hex', 'wind'));
-  assert.ok(!M.combines('strike', 'fire', 'wide'), 'Wide makes no sense for a bolt');
-  const m = mage('M', ['fire', 'earth', 'vine', 'life']);
+  assert.ok(M.combines('raise', 'earth') && M.combines('raise', 'fire') && M.combines('raise', 'force'), 'walls');
+  assert.ok(!M.combines('raise', 'mind') && !M.combines('raise', 'speed'), 'no wall of mind');
+  assert.ok(M.combines('take', 'earth') && !M.combines('take', 'force'), 'pits are earth taken away');
+  assert.ok(M.combines('give', 'life') && M.combines('take', 'life') && M.combines('move', 'life') && M.combines('raise', 'life') && !M.combines('summon', 'life'));
+  assert.ok(M.combines('raise', 'death') && M.combines('summon', 'death') && M.combines('bind', 'death'), 'Death: raise, summon a ghost, command');
+  assert.ok(M.combines('summon', 'fire') && M.combines('summon', 'earth') && !M.combines('summon', 'force') && !M.combines('summon', 'decay'), 'four elementals');
+  assert.ok(M.combines('bind', null) && M.combines('move', null) && M.combines('see', null) && !M.combines('give', null), 'three verbs alone');
+  assert.ok(M.combines('strike', 'fire', 'wide') && !M.combines('strike', 'fire', 'hidden'), 'Wide bursts a bolt; Hidden is for the ground');
+  assert.deepStrictEqual(M.effectsOf('give', 'fire').map((e) => e.aim), ['foe', 'ground'], 'Give Fire burns a foe or covers the ground');
+  const m = mage('M', ['fire', 'earth', 'mind', 'life']);
   const keys = M.spellOptions(m).map((o) => o.spellKey);
-  assert.ok(keys.includes('build+earth') && keys.includes('cover+vine+wide') && keys.includes('hex+life+long'));
-  assert.ok(keys.length > 60, `${keys.length} spells`);
+  assert.ok(keys.includes('raise+earth') && keys.includes('give+fire+ground+wide') && keys.includes('give+mind+foe+long') && keys.includes('summon+bind+fire'));
+  assert.ok(keys.length > 40, `${keys.length} spells`);
 });
 
-test('build a stone wall across the line; it blocks the way and arrows', async () => {
+test('Raise + Earth builds a stone wall across the line; it blocks the way and arrows', async () => {
   const m = mage('M', ['earth']);
   const f = armed('F', 'shortbow', { side: 'enemy' });
-  const { enc } = await castAt(m, [f], 'build+earth', { at: { x: 4, y: 2 } }, [10]);
+  const { enc } = await castAt(m, [f], 'raise+earth', { at: { x: 4, y: 2 } }, [10]);
   const walls = B.Terrain.all(enc).filter((t) => t.f.kind === 'stoneWall').map((t) => t.y).sort();
   assert.deepStrictEqual(walls, [1, 2, 3], 'three squares across');
   assert.ok(B.Terrain.lineCheck(enc, enc.pos[f.id], enc.pos[m.id], 'missile').blocked);
 });
 
-test('hex with vine roots a foe unless they resist; bless with life innervates (healing is Restore)', async () => {
-  const m = mage('M', ['vine', 'life']);
+test('Take + Speed slows a foe unless they resist; Give + Speed hastens an ally (and mends nothing)', async () => {
+  const m = mage('M', ['speed', 'life']);
   const f = armed('F', 'longsword', { side: 'enemy' });
-  // Backlash 10, caster rolls 9, target rolls 1: rooted.
-  await castAt(m, [f], 'hex+vine', { target: f.id }, [10, 9, 1]);
-  assert.ok(!B.Conditions.canMove(f));
+  // Backlash 10, caster rolls 9, target rolls 1: slowed.
+  await castAt(m, [f], 'take+speed', { target: f.id }, [10, 9, 1]);
+  assert.ok(B.Conditions.has(f, 'slowed'));
   const g = armed('G', 'longsword', { side: 'enemy' });
-  await castAt(m, [g], 'hex+vine', { target: g.id }, [10, 1, 9]);
-  assert.ok(B.Conditions.canMove(g), 'resisted');
+  await castAt(m, [g], 'take+speed', { target: g.id }, [10, 1, 9]);
+  assert.ok(!B.Conditions.has(g, 'slowed'), 'resisted');
   const ally = armed('A', 'longsword');
   ally.at = { x: 2, y: 2 };
   ally.damage.CON = 2;
   ally.bleeds = [{ remaining: 4, rounds: 3 }];
-  await castAt(m, [ally], 'bless+life', { target: ally.id }, [10]);
-  assert.strictEqual(ally.bleeds.length, 1, 'Bless is a boon: no mending');
+  await castAt(m, [ally], 'give+speed', { target: ally.id }, [10]);
+  assert.strictEqual(ally.bleeds.length, 1, 'a boon: no mending');
   assert.strictEqual(ally.damage.CON, 2);
-  assert.ok(B.Conditions.has(ally, 'innervated'));
+  assert.ok(B.Conditions.has(ally, 'hasted'));
 });
 
-test('burst hits everyone in the area, friend or foe; dodging aside halves it', async () => {
+test('Strike + Wide bursts on everyone in the area, friend or foe; dodging aside halves it', async () => {
   const m = mage('M', ['fire']);
   const f = armed('F', 'longsword', { side: 'enemy' }); f.at = { x: 6, y: 2 };
   const pal = armed('P', 'longsword'); pal.at = { x: 6, y: 3 };
   for (const c of [f, pal]) c.base.CON = 20;
   // backlash 10; F: caster 9 vs 1 (full); P: caster 1 vs 9 (half)
-  const { enc } = await castAt(m, [f, pal], 'burst+fire', { at: { x: 6, y: 2 } }, [10, 9, 1, 1, 9]);
+  const { enc } = await castAt(m, [f, pal], 'strike+fire+wide', { at: { x: 6, y: 2 } }, [10, 9, 1, 1, 9]);
   const text = enc.log.map((l) => l.text).join('\n');
-  assert.match(text, /Burst \+ Fire hits F:/);
-  assert.match(text, /Burst \+ Fire hits P \(half/);
+  assert.match(text, /Strike \+ Fire \+ Wide hits F:/);
+  assert.match(text, /Strike \+ Fire \+ Wide hits P \(half/);
 });
 
-test('an inscribed rune springs on a foe who steps on it; lightning goes through plate', async () => {
-  const m = mage('M', ['lightning']);
+test('a Hidden spell is a rune that springs on a foe who steps on it; lightning goes through plate', async () => {
+  const m = mage('M', ['storm']);
   const f = armed('F', 'longsword', { side: 'enemy' });
   f.armor = Items.makeArmor('plate', 'full', 'standard');
   f.at = { x: 4, y: 2 };
-  const { enc, chars } = await castAt(m, [f], 'inscribe+lightning', { at: { x: 2, y: 2 } }, [10]);
+  const { enc, chars } = await castAt(m, [f], 'give+storm+ground+hidden', { at: { x: 2, y: 2 } }, [10]);
   const rune = B.Terrain.at(enc, 2, 2).find((t) => t.kind === 'rune');
-  assert.ok(rune && rune.hidden);
+  assert.ok(rune && rune.hidden && rune.ground === 'charged');
   assert.ok(!B.Terrain.visible(rune, 'enemy'));
   const stop = await B.Terrain.enter(enc, chars, f, 2, 2, roller(6, [1, 9]), (t) => enc.log.push({ text: t }));
   assert.ok(!B.Terrain.at(enc, 2, 2).some((t) => t.kind === 'rune'), 'used up');
+  assert.ok(B.Terrain.at(enc, 2, 2).some((t) => t.kind === 'charged'), 'and leaves the ground it would have laid');
   const hit = Combat.computeHit(m, f, { kind: 'strike', motion: 'spell', spell: { element: 'lightning', magnitude: 4 }, damage: [0, 0, 0] }, {});
   assert.strictEqual(hit.fire, 4);
   assert.ok(!hit.fireStopped, 'plate stops none of it');
   assert.ok(typeof stop === 'boolean');
 });
 
-test('conjure: a fire elemental joins the caster for a few rounds; life raises the dead', async () => {
-  const m = mage('M', ['fire', 'life']);
+test('summon: a bound fire elemental joins the caster for a few rounds; Raise + Death raises the dead', async () => {
+  const m = mage('M', ['fire', 'death']);
   const f = armed('F', 'longsword', { side: 'enemy' });
-  const { enc, chars } = await castAt(m, [f], 'conjure+fire', { at: { x: 2, y: 2 } }, [10]);
+  const { enc, chars } = await castAt(m, [f], 'summon+bind+fire', { at: { x: 2, y: 2 } }, [10]);
   const el = Object.values(enc.extra || {})[0];
-  assert.ok(el && el.side === m.side && el.traits.element === 'fire');
+  assert.ok(el && el.side === m.side && el.traits.element === 'fire' && el.conjured.bound && !B.Conditions.has(el, 'enraged'));
   assert.ok(enc.ids.includes(el.id) && chars[el.id] === el);
-  // Raise: no body, no spell; with a body nearby, the dead rise (Raise + Life: a zombie, for the whole fight).
-  const r1 = await castAt(m, [f], 'raise+life', { at: { x: 3, y: 2 } }, [10]);
+  // Raise: no body, no spell; with a body nearby, the dead rise (a skeleton, for the whole fight).
+  m.spSpent = 0;
+  const r1 = await castAt(m, [f], 'raise+death', { at: { x: 3, y: 2 } }, [10]);
   assert.ok(!r1.enc.extra);
   const corpse = armed('Dead', 'club', { side: 'enemy' }); corpse.status.dead = true; corpse.at = { x: 3, y: 1 };
   m.spSpent = 0;
-  const r2 = await castAt(m, [f, corpse], 'raise+life', { at: { x: 3, y: 2 } }, [10]);
+  const r2 = await castAt(m, [f, corpse], 'raise+death', { at: { x: 3, y: 2 } }, [10]);
   const z = Object.values(r2.enc.extra || {})[0];
-  assert.ok(z && z.side === m.side && corpse.raised && z.monster === 'zombie' && z.conjured.rounds == null);
+  assert.ok(z && z.side === m.side && corpse.raised && z.monster === 'skeleton' && z.conjured.rounds == null);
 });
 
-test('ward of force soaks spells and missiles; ward of wind turns missiles aside', async () => {
-  const m = mage('M', ['force', 'wind', 'fire']);
+test('Give + Force: a shell that soaks spells and missiles; Take + Fire on an ally puts out the fire and halves the next', async () => {
+  const m = mage('M', ['force', 'fire']);
   const ally = armed('A', 'longsword'); ally.at = { x: 2, y: 2 };
-  await castAt(m, [ally], 'ward+force', { target: ally.id }, [10]);
+  await castAt(m, [ally], 'give+force', { target: ally.id }, [10]);
   const w = B.Conditions.get(ally, 'warded');
-  assert.ok(w && w.kind === 'magic' && w.pool === B.CONFIG.magic.words.ward.mag * 3);
+  assert.ok(w && w.kind === 'magic' && w.pool === B.CONFIG.magic.words.shapes.ward.mag * 3);
   const enc = { log: [] };
-  const bolt = B.Magic.spellOptions(m).find((o) => o.spellKey === 'launch+fire');
+  const bolt = B.Magic.spellOptions(m).find((o) => o.spellKey === 'strike+fire');
   const out = B.Magic.wardAgainst(enc, ally, bolt, true);
   assert.strictEqual(out.magnitude, 0, 'the bolt is soaked');
   assert.ok(out.blocked);
-  assert.strictEqual(B.Conditions.get(ally, 'warded').pool, w.pool > 0 ? 6 - bolt.spell.magnitude : 0);
+  const left = B.Conditions.get(ally, 'warded');
+  assert.strictEqual(left ? left.pool : 0, Math.max(0, w.pool - bolt.spell.magnitude), 'what it soaked comes off the shell (gone at 0)');
   const other = armed('O', 'longsword'); other.at = { x: 2, y: 2 };
+  B.Conditions.add(other, 'burning', { rounds: 3 });
   m.spSpent = 0;
-  await castAt(m, [other], 'ward+wind', { target: other.id }, [10]);
-  assert.strictEqual(B.Magic.wardAgainst(enc, other, { damage: [5, 0, 0] }, true).deflect, 0.5);
+  await castAt(m, [other], 'take+fire', { target: other.id }, [10]);
+  assert.ok(!B.Conditions.has(other, 'burning'), 'the fire is put out');
+  assert.strictEqual(B.Magic.wardAgainst(enc, other, bolt, false).magnitude, Math.floor(bolt.spell.magnitude / 2));
 });
 
 test('blink: a caster held in a grapple steps out of it to a square', async () => {
@@ -1396,35 +1404,36 @@ test('read intent: a true read shows their real plan (+2); a bad roll misreads i
   assert.ok(Combat.defenseOdds(a, 'parry', 'thrust', t, tt) < withRead);
 });
 
-test('phase 2: beguile — mesmerized until harmed; controlled fights for the caster, then returns', async () => {
-  const m = mage('M', ['dream', 'will', 'calm']);
+test('mind: Give + Mind calms; Bind + Death commands the undead while the caster holds it, then they return', async () => {
+  const m = mage('M', ['mind', 'death']);
   const f = armed('F', 'longsword', { side: 'enemy' });
-  // backlash 10, caster 9 vs target 1 → mesmerized.
-  const { enc, chars } = await castAt(m, [f], 'beguile+dream', { target: f.id }, [10, 9, 1]);
-  assert.ok(B.Conditions.has(f, 'mesmerized'));
-  assert.strictEqual(C.apPool(f), 0, 'no actions');
+  // backlash 10, caster 9 vs target 1 → calmed.
+  const { enc, chars } = await castAt(m, [f], 'give+mind+foe', { target: f.id }, [10, 9, 1]);
+  assert.ok(B.Conditions.has(f, 'calmed'));
   const a = armed('A', 'club');
   await Combat.applyHit(enc, chars, a, f, opt(a, (o) => o.motion === 'swing'), roller(1, []), {});
-  assert.ok(!B.Conditions.has(f, 'mesmerized'), 'a blow wakes them');
+  assert.ok(!B.Conditions.has(f, 'calmed'), 'a blow ends it');
   m.spSpent = 0;
-  const g = armed('G', 'longsword', { side: 'enemy' });
-  const r = await castAt(m, [g], 'beguile+will', { target: g.id }, [10, 9, 1]);
+  const living = armed('L', 'longsword', { side: 'enemy' });
+  const r0 = await castAt(m, [living], 'bind+death', { target: living.id }, [10, 9, 1]);
+  assert.strictEqual(living.side, 'enemy', 'Bind + Death has no hold on the living');
+  assert.ok(r0.enc.log.some((l) => /no hold on L/.test(l.text)));
+  m.spSpent = 0;
+  const g = Enemies.makeMonster('skeleton')[0];
+  g.side = 'enemy';
+  const r = await castAt(m, [g], 'bind+death', { target: g.id }, [10, 9, 1]);
   assert.strictEqual(g.side, m.side, 'fights for the caster');
   assert.ok(B.Conditions.has(m, 'concentrating'));
   B.Conditions.remove(g, 'controlled');
   Combat.endRound(r.enc, r.chars);
-  assert.strictEqual(g.side, 'enemy', 'back to themselves');
+  assert.strictEqual(g.side, 'enemy', 'back to itself');
 });
 
-test('phase 2: doubled nouns — rage and dream make confusion; calmed foes cannot attack', async () => {
-  const m = mage('M', ['rage', 'dream', 'calm']);
-  m.feats.word_doubling = 1;
-  const keys = B.Magic.spellOptions(m).map((o) => o.spellKey);
-  assert.ok(keys.includes('beguile+rage+dream') || keys.includes('beguile+dream+rage'));
-  const key = keys.find((k) => /beguile\+(rage\+dream|dream\+rage)$/.test(k));
+test('mind: Take + Mind sends a foe into a frenzy at the nearest body; calmed foes cannot attack', async () => {
+  const m = mage('M', ['mind']);
   const f = armed('F', 'longsword', { side: 'enemy' });
-  await castAt(m, [f], key, { target: f.id }, [10, 9, 1]);
-  assert.ok(B.Conditions.has(f, 'confused') && !B.Conditions.has(f, 'enraged'));
+  await castAt(m, [f], 'take+mind', { target: f.id }, [10, 9, 1]);
+  assert.ok(B.Conditions.has(f, 'enraged') && B.Effects.has(f, 'berserk'));
   const c = armed('C', 'longsword', { side: 'enemy' });
   B.Conditions.add(c, 'calmed', { rounds: 2 });
   const chars = { [c.id]: c, [m.id]: m };
@@ -1456,7 +1465,7 @@ test('phase 2: light sears the undead; darkness blocks sight; disease outlasts t
 
 test('phase 3: rituals spend components and points, reveal secrets the roll can reach', async () => {
   const R = B.Ritual;
-  const m = mage('M', ['force', 'life', 'spirit']);
+  const m = mage('M', ['force', 'life', 'death']);
   m.feats.ritualist = 1;
   m.inventory.components = { salt: 2, ink: 1, candle: 2, silverDust: 1 };
   const secrets = [
@@ -1465,7 +1474,7 @@ test('phase 3: rituals spend components and points, reveal secrets the roll can 
     { id: 's3', subject: 'Old chapel', reveals: ['divine'], tier: 'easy', text: 'The priest lied about the fire.' },
   ];
   assert.ok(!R.missing(m, 'seek', { noun: 'force' }));
-  assert.match(R.missing(m, 'speak', { noun: 'life' }), /Short of/);
+  assert.match(R.missing(m, 'speak', { noun: 'death' }), /Short of/);
   // INT 8 → +4, Ritualist +1; d10 = 8 → 13 vs moderate 8: margin 5, full; reaches easy (6), not legendary (14).
   const res = await R.perform(m, { kind: 'seek', noun: 'force', subject: 'old chapel', tier: 'moderate' }, roller(1, [8]), secrets);
   assert.strictEqual(res.outcome, 'full');
@@ -1490,7 +1499,7 @@ test('phase 3: mend heals far better than in a fight; prepared wards take hold w
   assert.strictEqual(res.outcome, 'full');
   assert.strictEqual(p.damage.CON, 2);
   assert.strictEqual(p.bleeds.length, 0);
-  const ward = R.preparable(m).find((o) => o.spellKey === 'ward+force');
+  const ward = R.preparable(m).find((o) => o.spellKey === 'give+force');
   assert.ok(ward);
   await R.perform(m, { kind: 'prepare', spell: ward, target: p, tier: 'easy' }, roller(2, [8]), []);
   assert.strictEqual(m.prepared.length, 1);
@@ -1503,8 +1512,8 @@ test('phase 3: mend heals far better than in a fight; prepared wards take hold w
   assert.strictEqual(m.prepared.length, 0);
 });
 
-test('death: for three rounds after the one they died in, a Restore with Life calls the fallen back, unconscious', async () => {
-  const m = mage('Cleric', ['life', 'venom']);
+test('death: for three rounds after the one they died in, Raise + Life calls the fallen back, unconscious', async () => {
+  const m = mage('Cleric', ['life', 'decay']);
   const ally = fighter('Ally'), late = fighter('Late'), foe = fighter('Foe');
   ally.side = late.side = m.side;
   foe.side = 'enemy';
@@ -1520,10 +1529,10 @@ test('death: for three rounds after the one they died in, a Restore with Life ca
   const R = B.CONFIG.magic.revive;
   assert.ok(B.Magic.revivable(enc, ally) && !B.Magic.revivable(enc, late), `${R.rounds} rounds after the round of death, no more`);
   const la = Combat.legalActions(enc, chars, m.id);
-  const ids = la.spells.find((x) => x.spellKey === 'restore+life').targets.map((t) => t.id);
-  assert.ok(ids.includes(ally.id) && !ids.includes(late.id), 'Restore + Life can aim at the body still in reach of it');
-  assert.ok(!la.spells.find((x) => x.spellKey === 'restore+venom').targets.some((t) => t.id === ally.id), 'only Life calls back');
-  const o = B.Magic.spellOptions(m).find((x) => x.spellKey === 'restore+life');
+  const ids = la.spells.find((x) => x.spellKey === 'raise+life').targets.map((t) => t.id);
+  assert.ok(ids.includes(ally.id) && !ids.includes(late.id), 'Raise + Life can aim at the body still in reach of it');
+  assert.ok(!la.spells.find((x) => x.spellKey === 'give+life').targets.some((t) => t.id === ally.id), 'a heal does not call back');
+  const o = B.Magic.spellOptions(m).find((x) => x.spellKey === 'raise+life');
   await B.Magic.resolveCast(enc, chars, { actor: m.id, type: 'cast', option: o, target: ally.id, pass: 1, n: 1 }, roller(5, []), JSON.parse(JSON.stringify(enc.pos)));
   assert.equal(ally.status.dead, false, 'alive again');
   assert.equal(ally.status.unconscious, true, 'but unconscious');
@@ -1534,8 +1543,8 @@ test('death: for three rounds after the one they died in, a Restore with Life ca
   assert.equal(late.status.dead, true, 'beyond saving');
 });
 
-test('Restore: + Life mends (bleeding, CON, stamina; wakes the downed); Wide reaches all around; other nouns lift their conditions', async () => {
-  const m = mage('Cleric', ['life', 'venom']);
+test('Give + Life mends (bleeding, CON, stamina; wakes the downed); Wide reaches all around; Take + Decay drains poison', async () => {
+  const m = mage('Cleric', ['life', 'decay']);
   const ally = fighter('Ally');
   ally.side = m.side;
   ally.at = { x: 2, y: 2 };
@@ -1544,20 +1553,19 @@ test('Restore: + Life mends (bleeding, CON, stamina; wakes the downed); Wide rea
   ally.stamina = 0;
   ally.status.unconscious = true;
   const maxBefore = C.maxStamina(ally);
-  const { o } = await castAt(m, [ally], 'restore+life', { target: ally.id });
+  const { o } = await castAt(m, [ally], 'give+life', { target: ally.id });
   const H = B.CONFIG.magic.heal;
   assert.equal(ally.damage.CON, 1, 'one CON back');
   assert.deepEqual(ally.bleeds.map((b) => !!b.poison), [true], 'bleeding stops, poison stays');
   // A point of CON back raises max stamina, and that comes back too (Character.healAttr).
   assert.equal(ally.stamina, (C.maxStamina(ally) - maxBefore) + H.stamina + H.staminaPerMag * o.spell.magnitude);
   assert.equal(ally.status.unconscious, false, 'the downed come to');
-  // Restore + Venom drains the poison and lifts Poisoned.
+  // Take + Decay on an ally drains the poison, lifts Poisoned and wards against more.
   B.Conditions.add(ally, 'poisoned', { rounds: 3 });
-  await castAt(m, [ally], 'restore+venom', { target: ally.id });
+  await castAt(m, [ally], 'take+decay', { target: ally.id });
   assert.equal(ally.bleeds.length, 0);
   assert.ok(!B.Conditions.has(ally, 'poisoned'));
-  // Bless + Life is a boon only; Restore doesn't combine with a noun that inflicts nothing.
-  assert.ok(B.Magic.combines('bless', 'life') && !B.Magic.combines('restore', 'wind'));
+  assert.equal(B.Conditions.get(ally, 'warded').kind, 'decay');
   // Wide: everyone within a square of the target, friend or foe, at a share of the stamina.
   const friend = fighter('Friend');
   friend.side = m.side;
@@ -1566,39 +1574,28 @@ test('Restore: + Life mends (bleeding, CON, stamina; wakes the downed); Wide rea
   const foe = fighter('Foe');
   foe.stamina = 1;
   foe.at = { x: 2, y: 3 };
-  const r = await castAt(m, [friend, foe], 'restore+life+wide', { target: friend.id });
+  const r = await castAt(m, [friend, foe], 'give+life+wide', { target: friend.id });
   const gain = Math.round((H.stamina + H.staminaPerMag * r.o.spell.magnitude) * H.areaShare);
   assert.equal(friend.stamina, 1 + gain);
   assert.equal(foe.stamina, 1 + gain);
 });
 
-test('Name: a named spell finds a companion anywhere, past walls; a foe only if their name is known', async () => {
-  const m = mage('Cleric', ['life', 'calm']);
-  const ally = fighter('Far Ally');
-  ally.side = m.side;
-  ally.at = { x: 9, y: 4 };
-  ally.stamina = 1;
+test('Name: Bind + a name holds only one whose name the caster knows, and holds them more surely', async () => {
+  const m = mage('Cleric', ['mind']);
   const foe = fighter('Grath');
   foe.side = 'enemy';
-  foe.at = { x: 8, y: 0 };
-  const chars = { [m.id]: m, [ally.id]: ally, [foe.id]: foe };
+  const chars = { [m.id]: m, [foe.id]: foe };
   const enc = Combat.createEncounter('t', Object.keys(chars), chars, 10, 5);
   enc.pos[m.id] = { x: 1, y: 2 };
-  enc.pos[ally.id] = ally.at;
-  enc.pos[foe.id] = foe.at;
-  for (let y = 0; y < 5; y++) B.Terrain.add(enc, 5, y, 'stoneWall');
-  const named = B.Magic.spellOptions(m).find((x) => x.spellKey === 'restore+life+name');
-  assert.ok(named && named.spell.named);
-  const la = Combat.legalActions(enc, chars, m.id);
-  const opt = la.spells.find((x) => x.spellKey === 'restore+life+name');
-  assert.ok(opt.targets.find((t) => t.id === ally.id).inReach, 'a companion is always in reach by name');
-  await B.Magic.resolveCast(enc, chars, { actor: m.id, type: 'cast', option: named, target: ally.id, pass: 1, n: 1 }, roller(5, []), JSON.parse(JSON.stringify(enc.pos)));
-  assert.ok(ally.stamina > 1, 'mended through the wall, eight squares off');
-  assert.ok(!B.Magic.knowsName(m, foe));
-  assert.ok(!Combat.legalActions(enc, chars, m.id).spells.find((x) => x.spellKey === 'beguile+calm+name').targets.find((t) => t.id === foe.id).inReach);
-  m.knownNames = ['grath'];
+  enc.pos[foe.id] = { x: 3, y: 2 };
+  assert.ok(!B.Magic.spellOptions(m).some((x) => x.spellKey === 'bind+name'), 'no names known, no Name');
+  m.knownNames = ['someone else'];
+  const opt0 = Combat.legalActions(enc, chars, m.id).spells.find((x) => x.spellKey === 'bind+name');
+  assert.ok(opt0 && opt0.spell.named && opt0.spell.contest === B.CONFIG.magic.nameBonus);
+  assert.ok(!opt0.targets.find((t) => t.id === foe.id).inReach, 'a stranger is out of its reach');
+  m.knownNames.push('grath');
   assert.ok(B.Magic.knowsName(m, foe), 'a learned name reaches a foe');
-  assert.ok(Combat.legalActions(enc, chars, m.id).spells.find((x) => x.spellKey === 'beguile+calm+name').targets.find((t) => t.id === foe.id).inReach);
+  assert.ok(Combat.legalActions(enc, chars, m.id).spells.find((x) => x.spellKey === 'bind+name').targets.find((t) => t.id === foe.id).inReach);
 });
 
 test('revenant knight: Battle Casting casts with sword and shield; Soulreaver drinks stamina and wounds', async () => {

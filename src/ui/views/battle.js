@@ -416,16 +416,23 @@
   };
 
   const SHAPE_INFO = {
-    strike: 'A bolt at one target.', launch: 'A bolt at one target.',
-    area: 'Bursts over every square within the radius. Friends too.',
+    bolt: 'A bolt at one target.',
+    area: 'Bursts over every square within the radius. Friends too. Aimed at your own square, round you (you are spared).',
     ground: 'Covers the ground for some rounds. Friends too.',
     wall: 'Raises a wall across squares, square by square from the one you tap.',
     terrain: 'Opens or changes the ground.',
     rune: 'A hidden rune that springs on the first foe to step on it.',
     bane: 'A curse on one foe; resisted.', mind: 'Works on one mind; WIL resists.',
-    boon: 'A blessing on an ally or yourself.', ward: 'A ward on an ally or yourself.',
+    boon: 'A blessing on an ally or yourself.', ward: 'A ward on an ally or yourself: what it keeps off is lifted first.',
+    restore: 'Mends an ally or yourself.', revive: 'Calls back an ally who died this fight, while there is still time.',
+    drain: 'Takes from a foe and gives it to you.', give: 'Gives your own to an ally.',
     blink: 'Steps through space, through walls and out of any hold.',
-    conjure: 'Calls up a creature that fights for some rounds.',
+    raise: 'A body gets up and fights for you until the fight ends or you fall.',
+    summon: 'Something appears for some rounds. Unbound, it rages at whatever is nearest, friend or foe.',
+    dispel: 'Lifts every spell on a creature, or every spell laid on the ground.',
+    banish: 'Sends an outsider out of the world; WIL resists.',
+    channel: 'Your stamina becomes spell points, yours or an ally\'s.',
+    see: 'Brings hidden runes and the unseen to light.',
   };
 
   const sortTargets = (ts, chars, me, preferAlly) => ts.slice().sort((a, b) => {
@@ -533,13 +540,14 @@
     return { model, entry };
   }
 
-  // Magic: verb, then noun (or a doubled pair), then modifier, each filtered to what combines.
+  // Magic: verb (or Summon + Bind), then noun (and what it is aimed at, where a verb does two things with it), then
+  // modifier, each filtered to what combines.
   function pickMagic(list, cmd) {
-    const verbs = [...new Set(list.map((e) => e.option.spell.verb))];
+    const verbs = [...new Set(list.map((e) => e.option.spell.verbKey))];
     const firstGood = (xs) => xs.find((e) => e.affordable) || xs[0];
-    if (!verbs.includes(cmd.mVerb)) cmd.mVerb = (firstGood(list) || {}).option.spell.verb;
-    const byVerb = list.filter((e) => e.option.spell.verb === cmd.mVerb);
-    const nounKey = (e) => e.option.spell.nouns.join('+');
+    if (!verbs.includes(cmd.mVerb)) cmd.mVerb = (firstGood(list) || {}).option.spell.verbKey;
+    const byVerb = list.filter((e) => e.option.spell.verbKey === cmd.mVerb);
+    const nounKey = (e) => e.option.spell.nounKey;
     if (!byVerb.some((e) => nounKey(e) === cmd.mNoun)) cmd.mNoun = nounKey(firstGood(byVerb.filter((e) => !e.option.spell.mod)) || firstGood(byVerb));
     const byNoun = byVerb.filter((e) => nounKey(e) === cmd.mNoun);
     if (!byNoun.some((e) => (e.option.spell.mod || '') === cmd.mMod)) cmd.mMod = (byNoun.find((e) => !e.option.spell.mod) || byNoun[0]).option.spell.mod || '';
@@ -551,15 +559,14 @@
   function magicPicker(app, model, cmd) {
     const W = G.CONFIG.magic.words;
     const set = (k) => (v) => { cmd[k] = v; app.render(); };
-    const verbs = [...new Set(model.magic.map((e) => e.option.spell.verb))];
-    const byVerb = model.magic.filter((e) => e.option.spell.verb === cmd.mVerb);
-    const nouns = [...new Map(byVerb.map((e) => [e.option.spell.nouns.join('+'), e.option.spell])).entries()];
-    const byNoun = byVerb.filter((e) => e.option.spell.nouns.join('+') === cmd.mNoun);
-    const nounLabel = (s) => s.nouns.map((n) => W[n].name).join(' + ') + (s.combo ? ` → ${s.combo}` : '');
+    const verbs = [...new Map(model.magic.map((e) => [e.option.spell.verbKey, e.option.spell.verbLabel])).entries()];
+    const byVerb = model.magic.filter((e) => e.option.spell.verbKey === cmd.mVerb);
+    const nouns = [...new Map(byVerb.map((e) => [e.option.spell.nounKey, e.option.spell])).entries()];
+    const byNoun = byVerb.filter((e) => e.option.spell.nounKey === cmd.mNoun);
     const field = (label, el) => h('label', { class: 'pick' }, h('span', { class: 'label' }, label), el);
     return h('div', { class: 'spell-pick' },
-      field('Verb', UI.select('cmd-verb', cmd.mVerb, verbs.map((v) => [v, W[v].name]), set('mVerb'))),
-      field('Noun', UI.select('cmd-noun', cmd.mNoun, nouns.map(([k, s]) => [k, nounLabel(s)]), set('mNoun'))),
+      field('Verb', UI.select('cmd-verb', cmd.mVerb, verbs, set('mVerb'))),
+      field('Noun', UI.select('cmd-noun', cmd.mNoun, nouns.map(([k, s]) => [k, s.nounLabel]), set('mNoun'))),
       field('Modifier', UI.select('cmd-mod', cmd.mMod, byNoun.map((e) => [e.option.spell.mod || '', e.option.spell.mod ? e.option.spell.mod.split('+').map((k) => W[k].name).join(' + ') : '—']), set('mMod'))));
   }
 
@@ -574,8 +581,8 @@
       if (o.windUp) notes.push('Needs a wind-up the round before (Wind up, with the attacks).');
     } else if (o && o.spell) {
       const s = o.spell;
-      const shape = { area: `radius ${s.radius}`, ground: `radius ${s.radius}, ${s.rounds} rounds`, wall: `${s.length} squares, ${s.rounds} rounds`, terrain: `${s.length} square${s.length > 1 ? 's' : ''}`, bane: `${s.rounds} rounds`, boon: `${s.rounds} rounds`, conjure: `${s.rounds} rounds`, ward: `${s.rounds} rounds`, mind: `${s.rounds} rounds` }[s.shape];
-      rows.unshift(['Power', `${s.magnitude}${s.element ? ' ' + s.element : ''}`], ['Range', s.named ? 'anyone whose name you know, anywhere' : `${o.minRange}–${o.maxRange}`], shape ? ['Reach', shape] : null);
+      const shape = { area: `radius ${s.radius}`, ground: `radius ${s.radius}, ${s.rounds} rounds`, wall: `${s.length} squares, ${s.rounds} rounds`, terrain: `${s.length} square${s.length > 1 ? 's' : ''}`, bane: `${s.rounds} rounds`, boon: `${s.rounds} rounds`, summon: `${s.rounds} rounds${s.bound ? ', bound' : ', unbound'}`, ward: `${s.rounds} rounds`, mind: `${s.rounds} rounds`, dispel: `radius ${s.radius}`, see: `radius ${s.radius}` }[s.shape];
+      rows.unshift(['Power', `${s.magnitude}${s.element ? ' ' + s.element : ''}`], ['Range', `${o.minRange}–${o.maxRange}${s.named ? ', only one whose name you know' : ''}`], shape ? ['Reach', shape] : null);
       notes.push(SHAPE_INFO[s.shape] || '');
       if (e.square) notes.push('Tap a highlighted square on the map to cast.');
     } else notes.push(ACTION_INFO[e.type] || '');
