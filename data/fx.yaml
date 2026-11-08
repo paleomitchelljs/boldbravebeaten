@@ -20,6 +20,7 @@ nouns:
   grace: light
   mind: arcane
   shadow: shadow
+  fear: shadow
   decay: venom
   magic: arcane
   outsider: arcane

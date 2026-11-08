@@ -94,10 +94,10 @@ stunning:
 dreadgaze:
   name: the Dread Eye
   kinds: [weapon]
-  power: {verb: take, noun: speed, name: Dread gaze, charges: 3}
+  power: {verb: give, noun: fear, name: Dread gaze, charges: 3}
   rarity: very rare
   value: 10
-  blurb: "Three times a day: Take + Speed on a foe within 8, slowed by dread (CON resists)."
+  blurb: "Three times a day: Give + Fear on a foe within 6: it can't come closer to you and must back away (WIL resists)."
 unmaking:
   name: Unmaking
   kinds: [weapon]

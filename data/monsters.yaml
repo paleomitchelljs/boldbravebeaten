@@ -509,7 +509,7 @@ templeGorilla:
 templeGorillaPair: {name: Temple gorillas, blurb: Two temple gorillas., group: [templeGorilla, templeGorilla]}
 dreadShaman:
   name: Dread shaman
-  blurb: "A Suracayl priest in a bone mask, keeping the top of the pyramid: bolts of decay that eat armor, a word that holds you still, and a staff for anyone who gets close."
+  blurb: "A Suracayl priest in a bone mask, keeping the top of the pyramid: bolts of decay that eat armor, a word that fills you with fear, and a staff for anyone who gets close."
   faction: suracayl
   xp: 150
   glyph: "🦎"
@@ -522,11 +522,11 @@ dreadShaman:
   weapons: [staff]
   armor: bogSkin
   keepUnarmed: true
-  nouns: [decay]
-  feats: {verb_strike: 1, mod_far: 1, verb_bind: 1}
+  nouns: [decay, fear]
+  feats: {verb_strike: 1, mod_far: 1, verb_give: 1}
 venril:
   name: Venril
-  blurb: "The master of the palace, a horned lizard in a dark robe floating above its throne. Skeletons stand guard for it, the fallen get up again at its word, and it drives the living mad."
+  blurb: "The master of the palace, a horned lizard in a dark robe floating above its throne. Skeletons stand guard for it, the fallen get up again at its word, and it fills the hall with fear."
   faction: suracayl
   xp: 250
   glyph: "💀"
@@ -539,7 +539,7 @@ venril:
   weapons: [staff]
   armor: bogSkin
   keepUnarmed: true
-  nouns: [death, shadow, mind]
+  nouns: [death, shadow, fear]
   feats: {verb_raise: 1, verb_take: 1, verb_give: 1, toughness: 1}
 revenantKnight:
   name: Revenant knight
@@ -807,7 +807,7 @@ goblinKing:
   keepUnarmed: true
 goblinHighShaman:
   name: The high shaman
-  blurb: "The keeper of the goblins' fire. It burns whole rooms, drives its foes mad, and the champions die for it gladly."
+  blurb: "The keeper of the goblins' fire. It burns whole rooms, fills its foes with fear, and the champions die for it gladly."
   faction: cinder_goblins
   xp: 200
   glyph: "🔥"
@@ -819,9 +819,9 @@ goblinHighShaman:
   natural: []
   weapons: [staff]
   keepUnarmed: true
-  nouns: [fire, mind]
+  nouns: [fire, fear]
   traits: {resist: {fire: 0}}
-  feats: {verb_strike: 1, mod_wide: 1, verb_take: 1, mod_strong: 1}
+  feats: {verb_strike: 1, mod_wide: 1, verb_give: 1, mod_strong: 1}
 redDrake:
   name: Red drake
   blurb: "A young red dragon that hunts the mine tunnels for goblins and anything else. It never goes into the barracks: the goblins learned to keep a fire in the gate."
@@ -1007,8 +1007,8 @@ orcProphet:
   natural: []
   weapons: [staff]
   keepUnarmed: true
-  nouns: [fire, mind]
-  feats: {verb_strike: 1, verb_take: 1}
+  nouns: [fire, fear]
+  feats: {verb_strike: 1, verb_give: 1}
 orcWarlord:
   name: The warlord
   blurb: "The emperor's right hand and the legion's general: a scarred orc in heavy mail with a greatsword, who has never lost a battle he chose."

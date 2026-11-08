@@ -142,14 +142,15 @@
     return enc.ids.filter((o) => chars[o].side !== chars[id].side && C.isActive(chars[o]) && !(Combat.unseenBy && Combat.unseenBy(enc, chars, chars[o], chars[id])));
   }
 
-  // Frightened (Fear, a wail): get away from what frightens you while it is close.
+  // Frightened (Fear, a wail): the turn must begin with a step away from what frightens you (Combat.mustFlee); after
+  // that, keep away while it is close. The farthest square the move reaches without coming closer on the way.
   function fleeFrom(enc, chars, id, la) {
     const c = chars[id];
-    const fear = G.Conditions && G.Conditions.fear(c);
-    const src = fear && chars[fear.src];
-    if (!src || !C.isActive(src) || !la.move || !enc.pos[src.id]) return null;
+    const src = Combat.fearSource(enc, chars, c);
+    if (!src || !la.move) return null;
     const me = enc.pos[id], from = enc.pos[src.id];
-    if (Combat.dist(me, from) > 3) return null;
+    const owed = Combat.mustFlee(enc, chars, c);
+    if (!owed && (Combat.dist(me, from) > 3 || enc.decls.some((d) => d.actor === id && d.round === enc.round && d.type === 'move'))) return null;
     let best = null, bd = Combat.dist(me, from);
     const R = la.move.maxSquares;
     for (let y = me.y - R; y <= me.y + R; y++) for (let x = me.x - R; x <= me.x + R; x++) {
@@ -158,8 +159,11 @@
       const d = Combat.dist({ x, y }, from);
       if (d <= bd) continue;
       if (enc.tiles) { const pc = G.Terrain.pathCost(enc, me, { x, y }, c, Combat.foeSquares(enc, chars, c)); if (!pc.reaches || pc.cost > R) continue; }
+      const way = G.Terrain.path ? G.Terrain.path(enc, me, { x, y }, c, Combat.foeSquares(enc, chars, c)) : [{ x, y }];
+      if (way.some((q) => Combat.dist(q, from) < Combat.dist(me, from))) continue;
       bd = d; best = { x, y };
     }
+    if (!best && owed) best = Combat.fleeSteps(enc, chars, c)[0] || null;
     return best ? { actor: id, type: 'move', to: best } : null;
   }
 
@@ -776,7 +780,17 @@
     return { actor: id, type: 'move', to: { x: best.x, y: best.y } };
   }
 
+  // Afraid, the turn can't end before its step away (Combat.mustFlee): if nothing else chose one, take it.
   function choose(enc, chars, id, rng, policy) {
+    const d = decide(enc, chars, id, rng, policy);
+    if (d && (d.type === 'endTurn' || d.type === 'concede') && Combat.mustFlee && Combat.mustFlee(enc, chars, chars[id])) {
+      const to = Combat.fleeSteps(enc, chars, chars[id])[0];
+      if (to) return { actor: id, type: 'move', to };
+    }
+    return d;
+  }
+
+  function decide(enc, chars, id, rng, policy) {
     rng = rng || Math.random;
     const P = Object.assign({}, DEFAULTS, policy || {});
     const c = chars[id];
@@ -804,7 +818,7 @@
     const tear = la.other.find((o) => o.type === 'tearFree' && o.affordable);
     if (tear && rng() < 0.7) return { actor: id, type: 'tearFree' };
     const flee = fleeFrom(enc, chars, id, la);
-    if (flee && !enc.decls.some((d) => d.actor === id && d.round === enc.round && d.type === 'move')) return flee;
+    if (flee) return flee;
 
     // 2. Release a wound-up blow at whoever is in range.
     for (const atk of la.attacks) {

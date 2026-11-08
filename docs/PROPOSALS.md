@@ -237,13 +237,17 @@ on verb–noun patterns, not on words, so every word stays open to everyone. The
   (it exhausts, never kills). Give + Force and a ward of Death keep it off. Balance comes from encounters that make
   "underpowered" strategies crucial: armor is king in melee, and the ghost is where it isn't.
 - Elementals: Fire, Frost, Storm, Earth (no Force or Decay elementals for now).
+- **Fear** is a noun again (ruled later the same day): the frightened can't move closer to whatever frightened them,
+  and on their turn must first move at least one square farther away. Give + Fear frightens a foe (WIL resists); Take +
+  Fear on an ally lifts it and wards against it. The rule covers every fear (Demoralize, auras), and a frightened
+  creature may now strike or shoot at its fear.
 
-### 4.1 The words (30, plus names)
+### 4.1 The words (31, plus names)
 
 | Kind | Words |
 |---|---|
 | Verbs (9) | Strike, Give, Take, Move, Raise, Bind, Summon, Shape (not built), See |
-| Nouns (15) | Fire, Frost, Storm, Decay, Force, Earth · Life, Death · Speed, Might, Grace · Mind, Shadow · Magic, Outsider |
+| Nouns (16) | Fire, Frost, Storm, Decay, Force, Earth · Life, Death · Speed, Might, Grace · Mind, Fear, Shadow · Magic, Outsider |
 | Modifiers (6) | Wide, Far, Long, Strong, Hidden, Delayed (the user's earlier idea, kept) |
 | Names | found in the world (c.knownNames): Bind + a name holds what bears it (+3); Summon + an outsider's name calls that kind |
 
@@ -256,6 +260,7 @@ The old grammar had 17 verbs, 31 nouns and 9 modifiers. Word Doubling is retired
 | Charm | Bind + Mind; Bind + a name | living only; free, ends on harm; a name adds +3 |
 | Command Undead | Bind + Death | the caster concentrates |
 | Calm / Frenzy | Give + Mind / Take + Mind | on an ally, Give + Mind steadies against mind spells |
+| Fear | Give + Fear / Take + Fear (ally) | can't come closer; must step away first each turn |
 | Raise Dead | Raise + Death (on a corpse) | skeleton; Raise the Flesh: zombie; Raise the Wrapped Dead: mummy |
 | Summon Monster | Summon + a name; Summon + an element; Summon + Death | unbound: frenzied |
 | Bind | Summon + Bind + …; Bind + Outsider / Death / a name on one already here | |

@@ -239,6 +239,9 @@
   async function finishTurn(app, enc, id) {
     const ui = bui(app);
     if (ui.busy) return;
+    // Afraid: the turn owes a step away from what frightens them first (Combat.mustFlee).
+    const chars = app.state.characters;
+    if (Combat.mustFlee(enc, chars, chars[id])) { toast(`Afraid: first step away from ${Combat.fearSource(enc, chars, chars[id]).name}`); return; }
     ui.busy = true;
     try { await Combat.endTurn(enc, app.state.characters, id, ioFor(app)); } finally { ui.busy = false; }
     ui.mode = null;

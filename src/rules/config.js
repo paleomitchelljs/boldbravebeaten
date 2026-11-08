@@ -492,7 +492,9 @@
       calmed: { name: 'Calmed', resistedBy: 'WIL', noAttack: true, breakOnHarm: true },
       mesmerized: { name: 'Mesmerized', resistedBy: 'WIL', ap: -99, breakOnHarm: true, noAct: true },
       enraged: { name: 'Enraged', resistedBy: 'WIL', noGuard: true, berserk: true },
-      frightened: { name: 'Frightened', resistedBy: 'WIL', fearOf: true }, // won't close with or strike the source
+      // The user (2026-11-08): can't come closer to the source, and must first step at least a square farther from it
+      // each turn (Combat.mustFlee). It may still strike or shoot at it.
+      frightened: { name: 'Frightened', resistedBy: 'WIL', fearOf: true },
       controlled: { name: 'Controlled', resistedBy: 'WIL', control: true }, // fights for the caster
       // PROVISIONAL (the user's spell list): Charm — the bearer takes the caster's side without the caster holding
       // it (no concentration), but any harm breaks it at once.
@@ -893,7 +895,7 @@
     'Spell bolts and shields (the user\'s magic items, 2026-10): an ordinary shield can\'t block a spell bolt (and since 2026-11-03 it can\'t be dodged either: dodging is for melee blows); a shield enchanted with Spellcatching can, and a weapon with parrySpells can parry one. Before, any shield stopped a fire bolt whole and took no wear from it.',
     'Magic items (the user\'s list, 2026-10): worn things (head, neck, shoulders, cape, arms, hands, two rings, legs, boots; the chest is the armor) and enchantments carry effects (attributes, AP, ×AP on every action, regeneration, stamina, spell points, magnitude, initiative, to beat a defence, squares per move, elemental resistance, auras, retaliation, bane damage, disposition, healing per rest), weapon on-hit effects (conditions, a burning blow, sapping STR and stamina, eating armor, Riled: +n mitigation until next hurt) and powers (a spell cast with no spell points, free hand or backlash, from charges that come back each long rest). Placeholder names; numbers untested by sims.',
     'Companions (the user\'s idea): Familiar (magic, casting I) and Animal Companion (perception, Keen Eye I) give a creature that fights beside its owner, run by the AI, wounds kept between fights (rules.yaml game.companions). A familiar adds 2 spell points per rank while it lives; its death costs the owner 2 WIL. A dead companion is replaced after a rest in town.',
-    'Fear: a frightened creature run by the AI moves away from what frightens it while within 3 squares (before: it only could not close with or strike it). Shoves, throws and knockback stop at walls, and the squares a body is driven into count as entered (pits, runes, fire).',
+    'Fear (the user, 2026-11-08): a frightened creature can\'t come closer to what frightens it, not even a square of the way, and on its turn must first step at least a square farther from it (no other action, no ending or deferring the turn), unless it can\'t: down, held, out of AP for a step, or hemmed in. It may strike or shoot at it (before: it could not). The same for Give + Fear, Demoralize, the spectre\'s wail and every fear aura. The AI keeps backing away while within 3 squares. Shoves, throws and knockback stop at walls, and the squares a body is driven into count as entered (pits, runes, fire).',
     'Very light and light weapons count as "light weapons" for Light Touch and Precision.',
     'Lava (the fire-goblin mine, 2026-10-31; the user, 2026-11-02): Fire 6 on entering and at each round\'s end in it. Nobody walks into lava they can see (a route neither ends in nor crosses it; fliers pass over); only a shove or a fall puts someone there, and they can walk out. Other visible hazards are gone round when there is a way round, and a move onto or across one takes a second confirmation.',
   ];

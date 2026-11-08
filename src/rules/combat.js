@@ -119,6 +119,7 @@
     enc.fortressUsed = {};
     enc.turnDone = {};
     enc.dodged = {};
+    enc.fled = {};
     enc.turn = -1;
     enc.initiative = {};
     const active = enc.ids.filter((id) => C.isActive(chars[id]));
@@ -344,6 +345,8 @@
   // One entry point for a decision: an action, or 'endTurn'. An action that can't be taken
   // ends the turn and returns the reason (so a confused AI can't loop).
   async function submit(enc, chars, d, io) {
+    // Afraid: the turn can't end (or be put off) before the step away it owes, while one can be taken.
+    if ((d.type === 'endTurn' || d.type === 'concede') && currentActor(enc) === d.actor && mustFlee(enc, chars, chars[d.actor])) return `Afraid: first step away from ${fearSource(enc, chars, chars[d.actor]).name}`;
     if (d.type === 'endTurn' || d.type === 'concede') { await endTurn(enc, chars, d.actor, io); return null; }
     if (d.type === 'defer') return defer(enc, chars, d.actor, io);
     const err = await act(enc, chars, d, io);
@@ -605,6 +608,7 @@
     return { ap: deferAP(), next: enc.order[j], affordable: apLeft(enc, id) >= deferAP() };
   }
   async function defer(enc, chars, id, io) {
+    if (mustFlee(enc, chars, chars[id])) return `Afraid: first step away from ${fearSource(enc, chars, chars[id]).name}`;
     const o = deferOption(enc, chars, id);
     if (!o) return 'No one left to defer to';
     if (!o.affordable) return 'Not enough AP';
@@ -690,6 +694,43 @@
     return null;
   }
 
+  // Fear (the user, 2026-11-08): the frightened can't come closer to what frightens them (Conditions.fear: the
+  // condition's src), and on their turn must first step at least a square farther from it, unless no step can (down,
+  // held, out of AP, hemmed in). The source must still be up and on the field.
+  function fearSource(enc, chars, c) {
+    const f = G.Conditions && c && G.Conditions.fear(c);
+    const s = f && f.src && chars[f.src];
+    return s && C.isActive(s) && enc.pos[s.id] && enc.pos[c.id] ? s : null;
+  }
+
+  // The squares beside a frightened character that take it farther from its fear, and that it can step to now.
+  function fleeSteps(enc, chars, c) {
+    const src = fearSource(enc, chars, c);
+    if (!src || c.status.prone || isGrappled(c) || C.inClinch(c) || G.Effects.has(c, 'noAct') || (G.Conditions && !G.Conditions.canMove(c))) return [];
+    const me = enc.pos[c.id], from = enc.pos[src.id], d0 = dist(me, from);
+    const out = [];
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      const q = { x: me.x + dx, y: me.y + dy };
+      if ((!dx && !dy) || dist(q, from) <= d0) continue;
+      if (G.Terrain && (!G.Terrain.passable(enc, q.x, q.y) || (enc.tiles && !G.Terrain.canStand(enc, q.x, q.y, c)))) continue;
+      if (enc.ids.some((o) => o !== c.id && C.isActive(chars[o]) && enc.pos[o] && enc.pos[o].x === q.x && enc.pos[o].y === q.y)) continue;
+      let squares = 1;
+      if (G.Terrain && enc.tiles) {
+        const pc = G.Terrain.pathCost(enc, me, q, c, foeSquares(enc, chars, c));
+        if (!pc.reaches) continue;
+        squares = pc.cost;
+      }
+      if (C.actionCost(c, 'move', { ap: C.moveCost(c, squares) }).ap > apLeft(enc, c.id)) continue;
+      out.push(q);
+    }
+    return out;
+  }
+
+  // Must this character still step away from its fear before anything else this turn?
+  function mustFlee(enc, chars, c) {
+    return !!c && !(enc.fled || {})[c.id] && fleeSteps(enc, chars, c).length > 0;
+  }
+
   // What a condition forbids this declaration (calmed, mesmerized, enraged, frightened, blind).
   function conditionForbids(enc, chars, c, decl) {
     if (!G.Conditions) return null;
@@ -698,10 +739,10 @@
     const attack = decl.type === 'strike' || (ATTACK_TYPES.includes(decl.type) && decl.type !== 'strike') || (decl.type === 'cast' && decl.option && decl.option.target === 'foe');
     if (attack && F('noAttack')) return 'Calmed: won\'t attack';
     if (DEFENSE_TYPES.includes(decl.type) && F('noGuard')) return 'In a frenzy: no guards';
-    const fear = G.Conditions.fear(c);
-    if (fear && fear.src && chars[fear.src]) {
-      if (attack && decl.target === fear.src) return 'Too afraid';
-      if (decl.type === 'move' && dist(decl.to, projectedPos(enc, fear.src)) < dist(projectedPos(enc, c.id), projectedPos(enc, fear.src))) return 'Too afraid to close';
+    const fear = fearSource(enc, chars, c);
+    if (fear) {
+      if (decl.type === 'move') { if (dist(decl.to, projectedPos(enc, fear.id)) < dist(projectedPos(enc, c.id), projectedPos(enc, fear.id))) return 'Too afraid to close'; }
+      else if (!['standUp', 'tearFree', 'break'].includes(decl.type) && mustFlee(enc, chars, c)) return `Afraid: first step away from ${fear.name}`;
     }
     if (F('blind') && decl.type === 'strike' && decl.target && dist(projectedPos(enc, c.id), projectedPos(enc, decl.target)) > 1) return 'Blinded: only at arm\'s reach';
     if (decl.target && chars[decl.target] && unseenBy(enc, chars, chars[decl.target], c)) return 'Can\'t see them';
@@ -782,6 +823,9 @@
       // Allies can be passed; a foe on the way has to be gone around (the path does, where there is a way).
       const route = G.Terrain ? G.Terrain.path(enc, from, decl.to, c, foeSquares(enc, chars, c)) : [decl.to];
       if (route.some((q) => enc.ids.some((o) => chars[o].side !== c.side && C.isActive(chars[o]) && enc.pos[o].x === q.x && enc.pos[o].y === q.y))) return { err: 'A foe is in the way' };
+      // Afraid: no square of the way may come closer to the fear than where the move began.
+      const fear = fearSource(enc, chars, c);
+      if (fear && route.some((q) => dist(q, enc.pos[fear.id]) < dist(from, enc.pos[fear.id]))) return { err: 'Too afraid to close' };
       const need = C.moveCost(c, squares);
       ({ ap, stamina } = C.actionCost(c, 'move', { ap: need }));
       decl.from = from;
@@ -890,6 +934,7 @@
     const counter = a.status.counterStep === enc.round && !C.holding(a);
     if (counter) a.status.counterStep = null;
     const dragged = C.holding(a) ? chars[C.holding(a)] : null;
+    const start = { x: enc.pos[a.id].x, y: enc.pos[a.id].y };
     const steps = dragged ? [d.to] : G.Terrain ? G.Terrain.path(enc, enc.pos[a.id], d.to, a, foeSquares(enc, chars, a)) : [d.to];
     let walked = 0, why = '';
     for (const q of steps) {
@@ -905,6 +950,9 @@
       if (G.Terrain && enc.tiles && (await G.Terrain.enter(enc, chars, a, q.x, q.y, io && io.roller, (t) => log(enc, t, 'hit')))) { why = 'stops'; break; }
     }
     const at = enc.pos[a.id];
+    // Fear: a step farther from it is the step the turn owed (Combat.mustFlee).
+    const fear = fearSource(enc, chars, a);
+    if (fear && walked && dist(at, enc.pos[fear.id]) > dist(start, enc.pos[fear.id])) (enc.fled || (enc.fled = {}))[a.id] = true;
     if (dragged && walked) log(enc, `${a.name} drags ${dragged.name} to (${at.x + 1}, ${at.y + 1}).`);
     else if (walked) log(enc, `${a.name} moves to (${at.x + 1}, ${at.y + 1})${at.x !== d.to.x || at.y !== d.to.y ? ' and gets no farther' : ''}.`);
     else if (why === 'blocked') log(enc, `${a.name}'s way is blocked.`, 'fizzle');
@@ -2819,7 +2867,7 @@
   }
 
   G.Combat = {
-    foeSquares,
+    foeSquares, fearSource, fleeSteps, mustFlee,
     unseenBy, strikeEffects, conditionForbids, ATTACK_TYPES, DEFENSE_TYPES, shoveReach, log, rollDie, castSpell, knockDown, stability, releaseAll: clearGrapple,
     createEncounter, autoPlace, startRound, currentActor, legalActions, act, validate, endTurn, defer, submit, describeDecl, apLeft, defenseOptions, coverOptions, opportunityOptions,
     vitalNeed, projectedPos, dist, defenseOdds, parryCarryShare, leverage, skillEdge, feintScore, readScore, blowForce, aimPenalty, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolveAction, finishRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,

@@ -133,7 +133,7 @@ test('items: powers cast without spell points from charges that come back with a
   const c = armed('C', 'staff', 'party', { enchantments: ['dreadgaze'] });
   assert.equal(Magic.maxSP(c), 0, 'no caster');
   const p = Magic.spellOptions(c).find((o) => o.power);
-  assert.ok(p && p.spCost === 0 && p.power.left === 3 && p.spell.shape === 'bane' && p.spell.cond === 'slowed');
+  assert.ok(p && p.spCost === 0 && p.power.left === 3 && p.spell.shape === 'mind' && p.spell.cond === 'frightened');
   c.at = { x: 1, y: 2 };
   const f = fighter('F', 'enemy'); f.at = { x: 3, y: 2 };
   const { enc, chars } = await arena([c, f]);
@@ -225,6 +225,44 @@ test('spells: Delayed marks an area that breaks at the end of the round; darknes
   assert.ok(f.stamina < sf || C.totalDamage(f) > 0, 'caught in it');
   assert.ok(g.stamina >= sg - 1, 'outside it');
   assert.ok(B.CONFIG.terrain.darkness.cost >= 1 && B.CONFIG.terrain.darkness.perRound.shadow >= 1);
+});
+
+test('fear: Give + Fear; the frightened can\'t come closer, and must first step away each turn (unless hemmed in)', async () => {
+  const m = mage('M', ['fear']); m.at = { x: 2, y: 2 };
+  const f = armed('F', 'longsword', 'enemy'); f.at = { x: 3, y: 2 };
+  const { enc, chars } = await arena([m, f], 8, 5);
+  const o = Combat.legalActions(enc, chars, m.id).spells.find((x) => x.spellKey === 'give+fear');
+  assert.equal(o.spell.cond, 'frightened');
+  await Combat.act(enc, chars, { actor: m.id, type: 'cast', option: o, target: f.id }, { roller: roller([10, 10, 1], 5), react: noReact });
+  assert.ok(Conditions.has(f, 'frightened') && Conditions.fear(f).src === m.id);
+  // F's turn: nothing but a step away first; no step closer, not even by a roundabout way.
+  while (Combat.currentActor(enc) !== f.id) await Combat.endTurn(enc, chars, Combat.currentActor(enc), { roller: roller([], 5), react: noReact });
+  const swing = C.attackOptions(f).find((x) => x.motion === 'swing');
+  assert.ok(Combat.mustFlee(enc, chars, f));
+  assert.match(Combat.validate(enc, chars, { actor: f.id, type: 'strike', option: swing, target: m.id }).err, /first step away from M/);
+  assert.match(await Combat.submit(enc, chars, { actor: f.id, type: 'endTurn' }, { roller: roller([], 5), react: noReact }), /first step away/);
+  assert.equal(Combat.currentActor(enc), f.id, 'the turn goes on');
+  assert.equal(await Combat.act(enc, chars, { actor: f.id, type: 'move', to: { x: 4, y: 2 } }, { roller: roller([], 5), react: noReact }), null);
+  assert.ok(!Combat.mustFlee(enc, chars, f), 'the step is taken');
+  assert.match(Combat.validate(enc, chars, { actor: f.id, type: 'move', to: { x: 3, y: 2 } }).err, /Too afraid to close/);
+  // Hemmed in (walls all round but towards the caster): nothing owed.
+  const g = armed('G', 'longsword', 'enemy'); g.at = { x: 1, y: 2 };
+  const r = await arena([m, g], 3, 3);
+  r.enc.pos[m.id] = { x: 1, y: 1 }; r.enc.pos[g.id] = { x: 1, y: 2 };
+  for (const [x, y] of [[0, 2], [2, 2], [0, 1], [2, 1]]) Terrain.add(r.enc, x, y, 'stoneWall');
+  Conditions.add(g, 'frightened', { rounds: 2, src: m.id });
+  assert.ok(!Combat.mustFlee(r.enc, r.chars, g), 'no square farther to step to');
+  // The AI, frightened, steps away before anything else.
+  const h = armed('H', 'longsword', 'enemy'); h.at = { x: 3, y: 2 };
+  const m2 = mage('M2', ['fear']); m2.at = { x: 2, y: 2 };
+  const q = await arena([h, m2], 8, 5);
+  Conditions.add(h, 'frightened', { rounds: 2, src: m2.id });
+  const d = B.AI.choose(q.enc, q.chars, h.id, () => 0.5);
+  assert.equal(d.type, 'move');
+  assert.ok(Combat.dist(d.to, q.enc.pos[m2.id]) > 1);
+  // Take + Fear on an ally lifts it and keeps it off.
+  const t = Magic.spellOptions(m).find((x) => x.spellKey === 'take+fear');
+  assert.equal(t.spell.ward, 'fear');
 });
 
 test('Raise: Death raises a skeleton, with the feats a zombie or a mummy; Life calls back one just dead; they fall with their caster', async () => {

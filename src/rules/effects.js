@@ -112,7 +112,7 @@
       confused: 'half the time strikes whoever is near, friend or foe',
       berserk: 'strikes the nearest body, friend or foe',
       control: 'fights for the caster',
-      fearOf: 'won\'t close with or strike the source',
+      fearOf: 'can\'t come closer to the source; each turn must first step a square farther from it',
       freedom: 'ignores difficult ground, ice and roots',
       flying: 'floats over pits and hazards, as the trait (Levitating)',
       free: 'the caster needn\'t concentrate to hold it',

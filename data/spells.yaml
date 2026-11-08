@@ -201,6 +201,16 @@ mind:
     give: [{shape: mind, aim: foe, cond: calmed}, {shape: boon, aim: ally, cond: steadied}]
     take: {shape: mind, aim: foe, cond: enraged}
     bind: {shape: mind, aim: foe, cond: enthralled, only: living}
+# Fear (the user, 2026-11-08): the frightened can't come closer to the caster, and each turn must first step at least a
+# square farther away. Take + Fear on an ally lifts it and keeps it off.
+fear:
+  kind: noun
+  cost: 1
+  element: mind
+  name: Fear
+  does:
+    give: {shape: mind, aim: foe, cond: frightened}
+    take: {shape: ward, aim: ally, ward: fear}
 shadow:
   kind: noun
   cost: 1

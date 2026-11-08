@@ -31,7 +31,7 @@
   }
 
   // A worn thing's power in the spell words of 2026-11-08 (the goods that had one).
-  const POWERS = { 'bless+veil': { verb: 'give', noun: 'shadow', aim: 'ally' }, 'beguile+rage': { verb: 'take', noun: 'mind' }, 'strike+spirit': { verb: 'take', noun: 'death', aim: 'foe' }, 'beguile+fear': { verb: 'take', noun: 'speed' }, 'hex+might': { verb: 'take', noun: 'might' } };
+  const POWERS = { 'bless+veil': { verb: 'give', noun: 'shadow', aim: 'ally' }, 'beguile+rage': { verb: 'take', noun: 'mind' }, 'strike+spirit': { verb: 'take', noun: 'death', aim: 'foe' }, 'beguile+fear': { verb: 'give', noun: 'fear' }, 'hex+might': { verb: 'take', noun: 'might' } };
   function resayPower(t) {
     const p = t && t.power;
     if (p && POWERS[`${p.verb}+${p.noun}`]) Object.assign(p, POWERS[`${p.verb}+${p.noun}`]);
@@ -46,7 +46,7 @@
       const WORDS = { verb_hex: 'verb_take', verb_bless: 'verb_give', verb_restore: 'verb_give', verb_cover: 'verb_give', verb_increase: 'verb_give', verb_decrease: 'verb_take', verb_transfer: 'verb_move', verb_launch: 'mod_far', verb_build: 'verb_raise', verb_open: 'verb_take', verb_inscribe: 'mod_hidden', verb_blink: 'verb_move', verb_burst: 'mod_wide', verb_beguile: 'verb_bind', verb_conjure: 'verb_summon', mod_launch: 'mod_far', mod_burst: 'mod_wide', mod_lingering: 'mod_long', mod_name: 'verb_bind', word_doubling: 'mod_strong' };
       const F = c.feats || {};
       for (const [from, to] of Object.entries(WORDS)) if (F[from]) { F[to] = Math.max(F[to] || 0, F[from]); delete F[from]; }
-      const NOUNS = { lightning: 'storm', venom: 'decay', acid: 'decay', plague: 'decay', bone: 'death', spirit: 'death', veil: 'shadow', light: 'life', wind: 'force', vine: 'earth', swiftness: 'speed', calm: 'mind', dream: 'mind', rage: 'mind', fear: 'mind', will: 'mind', charm: 'mind', stillness: 'mind' };
+      const NOUNS = { lightning: 'storm', venom: 'decay', acid: 'decay', plague: 'decay', bone: 'death', spirit: 'death', veil: 'shadow', light: 'life', wind: 'force', vine: 'earth', swiftness: 'speed', calm: 'mind', dream: 'mind', rage: 'mind', will: 'mind', charm: 'mind', stillness: 'mind' };
       if (Array.isArray(c.nouns)) c.nouns = [...new Set(c.nouns.map((n) => NOUNS[n] || n))];
       for (const t of c.trinkets || []) resayPower(t);
     },

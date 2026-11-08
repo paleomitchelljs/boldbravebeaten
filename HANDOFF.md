@@ -20,6 +20,10 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   outsiders. Heroes, items, enchantments, ritual nouns, the fx colours moved to the new words. Save version 6 maps old
   feats, nouns and worn powers onto the new ones.
 - [x] Fixed on the way: a monster with no unarmed blow (efreeti, ghost) now has its bolts (character.js).
+- [x] Fear back as a noun (the user, same day): the frightened can't come closer (no square of the way) and must first
+  step a square farther each turn, unless down, held, out of AP or hemmed in (Combat.mustFlee; the UI's End turn and
+  Defer refuse with a toast). It may now strike its fear. Dread shaman, Venril, the high shaman, the orc prophet and the
+  Dread Eye cast it again. The AI rarely chooses Give + Fear (worth 18 in castChoice): look at it when tuning.
 - [ ] Not built: Shape (polymorph, petrify, illusions), Ethereal, Counterspell and Reflect as reactions, a lasting
   anti-magic zone, Move on another creature or a swap, Unlock, a named ghost's strength, a dome of force, See in the
   dungeon (traps), Grease as an alchemy flask.
