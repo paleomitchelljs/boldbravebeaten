@@ -80,9 +80,11 @@ figure).
 
 | What | Where | Now | Kind |
 |---|---|---|---|
-| A longhut and a log cabin drawn front-on | `orc_valley` `n`, `C` | PixelLab's, leaning corner-on | prop |
 | Mine clutter in grey (picks, ladders, buckets) | `orc_mines` | the fire mine's umber clutter | prop |
 | The gold coin over the throne, as a wall piece placed by hand | `orc_castle` throne room | only in the throne's label (the piece is in wall-decor.png, scattered at random) | placing |
+| Bigger front-on orc hide tents for the camps | `orc_valley` `h` | the first pass's 62-px tent, small beside the new longhuts | prop |
+| An animated waterfall from PixelLab, front-on, grey granite | Tarnhold, the vales, `orc_valley` `A` | drawn from the river's colours (assets/wip/orc2/drawn.py) | prop |
+| Small ground details without outlines (pebbles, ruts, twigs) beyond the ones cut from the tiles | the canyon floor, roads | seven gravel bits, twenty-odd road bits | decor |
 
 ### Figures (the user's)
 

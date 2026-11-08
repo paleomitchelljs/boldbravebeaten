@@ -1,6 +1,6 @@
 #!/bin/sh
 # Re-seeds Tarnhold's, the vales' and the grasslands' maps in data/places.yaml from layout.py, squares off the rock the
-# cliff sets can't draw (tools/squarewalls.js), raises the mountains in rings (../south/tiers.py) and squares those.
+# cliff sets can't draw (tools/squarewalls.js), raises the mountains in slope rings (../orc/rings.py).
 # Overwrites any hand edits to those maps.
 set -e
 cd "$(dirname "$0")/../../.."
@@ -20,5 +20,6 @@ PY
   rm -f /tmp/sq_$p.txt
 }
 for p in tarnhold tarnvale_west tarnvale_east; do square $p '#' ,; done
-python3 assets/wip/south/tiers.py tarnhold tarnvale_west tarnvale_east
-for p in tarnhold tarnvale_west tarnvale_east; do square $p '(' '#'; square $p '?' '('; done
+# The mountains are slopes now, in rings a square apart (../orc/rings.py, the user 2026-11-08); then the side canyon.
+python3 assets/wip/orc/rings.py tarnhold tarnvale_west tarnvale_east
+python3 assets/wip/orc/heights.py

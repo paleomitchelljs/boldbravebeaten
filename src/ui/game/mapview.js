@@ -100,7 +100,8 @@
   // Taller walls. A cliff set's face is one square tall (half the wall's last row, half the square in front), shorter
   // than the figures. On a wall at least two squares thick, the face is raised half a square more: its lip and the
   // courses under it are drawn again over the lower half of the wall's last row, so the top recedes and the face
-  // stands about a head taller than a person. A tileset with tallFaces: false keeps the short faces.
+  // stands about a head taller than a person. A tileset with tallFaces: false keeps the short faces, and so does a
+  // terrain with lift: false (a low ledge); a wall drawn as a slope (a corner set, not a cliff) has no face to raise.
   let liftScratch = null;
   // A planTiles plan painted: ground, corners, floor decor, bridges, then `lift` (raising the wall faces, which copies
   // them upward), then the pieces hung on the faces, so the lift doesn't copy them a second time.
@@ -109,15 +110,16 @@
     lift();
     for (const c of tp.decor) if (c.face) Tilemap.paintTiles(ctx, c, ts, env, 'decor');
   }
-  function liftFaces(ctx, sc, x0, y0, ox, oy, size) {
+  function liftFaces(ctx, sc, ts, x0, y0, ox, oy, size) {
     if (typeof document === 'undefined' || !ctx.canvas) return;
     const solid = (x, y) => { const c = sc.cell(x, y); return !!c && (c.kind === 'wall' || c.kind === 'rock' || !!(c.def && c.def.wall)); };
+    const sloped = (x, y) => { const t = ts.terrains[Tilemap.terrainAt(sc, ts, x, y)]; return !!(t && ((t.wang && !t.cliffTiles) || t.lift === false)); };
     const L = Math.max(1, Math.round(size * 6 / 64)), half = Math.round(size / 2);
     if (!liftScratch) liftScratch = document.createElement('canvas');
     if (liftScratch.width !== size || liftScratch.height !== half + L) { liftScratch.width = size; liftScratch.height = half + L; }
     const sx = liftScratch.getContext('2d');
     for (let y = y0 - 1; y <= y0 + 12 + Math.ceil(ctx.canvas.height / size); y++) for (let x = x0 - 1; x <= x0 + 1 + Math.ceil(ctx.canvas.width / size); x++) {
-      if (!solid(x, y) || solid(x, y + 1) || !solid(x, y - 1)) continue;
+      if (!solid(x, y) || solid(x, y + 1) || !solid(x, y - 1) || sloped(x, y)) continue;
       const X = ox + x * size, Y = oy + y * size;
       if (X + size < 0 || Y + size < 0 || X > ctx.canvas.width || Y > ctx.canvas.height) continue;
       sx.clearRect(0, 0, size, half + L);
@@ -514,7 +516,7 @@
       const look = (n) => { const o = img(n); if (!o.ok && !o.failed) loading = true; return o; };
       const env2 = Object.assign({}, env, { ox: ox2, oy: oy2, img: look, imgAt: look });
       const tp = Tilemap.planTiles(sc, ts, X0 - 1, Y0 - 1, X0 + CHUNK + 2, Y0 + CHUNK + 2);
-      paintPlan(c2, tp, ts, env2, () => { if (ts.raw.tallFaces !== false) liftFaces(c2, sc, X0, Y0, ox2, oy2, size); });
+      paintPlan(c2, tp, ts, env2, () => { if (ts.raw.tallFaces !== false) liftFaces(c2, sc, ts, X0, Y0, ox2, oy2, size); });
       return { canvas: cv, loading };
     }
     function groundChunks(ctx, sc, ts, env, x0, y0, ox, oy, size) {
@@ -617,7 +619,7 @@
         if (HAS_IMG) groundChunks(ctx, sc, ts, env, x0, y0, ox, oy, size);
         else {
           const tp = Tilemap.planTiles(sc, ts, x0 - 1, y0 - 1, x0 + cols, y0 + rows);
-          paintPlan(ctx, tp, ts, env, () => { if (ts.raw.tallFaces !== false) liftFaces(ctx, sc, x0, y0, ox, oy, size); });
+          paintPlan(ctx, tp, ts, env, () => { if (ts.raw.tallFaces !== false) liftFaces(ctx, sc, ts, x0, y0, ox, oy, size); });
         }
         plan.shown = {};
         for (let y = y0 - 1; y <= y0 + rows; y++) for (let x = x0 - 1; x <= x0 + cols; x++) {

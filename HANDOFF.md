@@ -4,16 +4,33 @@ Last updated at commit: 4ef09ba
 
 Keep this a short list. Tick things off, add new ones, and refresh the commit line after every push (`git log -1 --format=%h`).
 
+## Tarnhold and the orc valley, art refinement (the user, 2026-11-08; assets/wip/orc/README.md, assets/wip/orc2/)
+- [x] The mountains are steep scree slopes (16-tile corner sets), not vertical cliffs, and climb in rings a square
+  apart, up to six (`assets/wip/orc/rings.py`; wall letters # ( ? ▁ ▂ ▃ ▄), one granite slope set stacked, each ring a
+  step lighter. Walls drawn as slopes get no raised face (mapview.js `liftFaces`); a wall at the map's edge runs on
+  past it (tilemap.js `terrainOf`), so the rings don't drop back at the border. Seen in headless Chrome.
+- [x] The trails stay on the valley floor: the walkable levels came off the north pass and the side canyon.
+- [x] Plain ground, decorated: gravel, road and valley grass are one plain tile each in every sheet (build.py
+  GROUNDS), which also ends the seams where a sheet's toning shifted its ground; their own pebbles, ruts and tufts
+  are cut out and scattered as decor. No decor on the rock tops.
+- [x] The overlook: a low ledge of the floor's gravel with a short face (`lift: false`), running under the mountain's
+  foot (`underWalls: all`); its steps and the waterfalls are drawn from the tiles' pixels (orc2/drawn.py).
+- [x] The orc valley: front-on gate, longhut, cabin, cages (and gibbets) in the pits, which are mud now (they were
+  drawn as bridge planks: ranking); the trainer hill's top is the valley grass; the quarry's top granite; a window
+  in the castle wall's own stone. Inside: front-on throne, beds, chests, war tables, racks, benches, altar, barrels.
+- [ ] Not looked at: tarnvale_west and tarnvale_east whole (only spots), the caves' interior after the furniture
+  swap, the waterfalls animating (screenshots are still).
+- [ ] The camps' hide tents are the small first-pass ones. The south hills keep their cliff tiers (tiers.py).
+- [ ] Tried and taken out: a shaded relief (ridges by distance from the edge) on the rock tops: "discordant with the
+  sprites and other areas".
+
 ## Tarnhold's second pass, the orc valley (the user, 2026-11-08; assets/wip/orc/, assets/ideas/orc-valley.md)
 - [x] Tarnhold and both vales redrawn (tileset `tarnhold`, art/worldtiles/highland/): grey granite and moss over a
   grey-brown gravel floor (not the Black Hills' purple basalt); a tan trodden road; a slate-green river; new fort,
   tower and overlook. The mountain rings above the rock are sloped banks now, a boulder shoulder then a snow-dusted
   peak, brighter as they climb. Seen in headless Chrome (the pass, the junction, the side canyon).
-- [x] Walkable levels: upland (`{`) and high plateau (`▓`, new ground letter), each a sloped bank above the last
-  (`heights.py`). Only the north pass into Tarnhold and the new side canyon use them so far: most open ground in the
-  vales carries props set `on: ","`, which would show gravel holes on a raised level. A road stops at a level's bank.
-- [ ] Where an upland meets a cliff a thin gravel rim shows (the cliff tiles carry the floor). More plateaus and
-  climbing passes need either props placed off them or a per-square `on`.
+- [x] Walkable levels (upland, high plateau) on the north pass and the side canyon: taken off again in the
+  refinement pass above (the user wants the trails on the valley floor); the `▓` letter is gone.
 - [x] The orc valley (`orc_valley`), off a side canyon north from the East Tarnvale's gate yard, laid out from the
   user's map and key: the lake under a fall, the moat's one long run, bridges, the camps (1), the castle's grey-blue
   block with its green marble gate (2), the slave cabin (3), the quarried hill and the slaver caves' mouth (4), the
@@ -28,8 +45,8 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 - [ ] `pace.js`: the castle and caves take 145 steps to see (0.4 h); small for a dungeon.
 - [x] Fixed: pieces on wall faces were drawn twice, one above the other (the faces' lift copied them; the Cinder
   Hall had it too). They are painted after the lift now (mapview.js `paintPlan`).
-- [ ] The longhut and cabin props still lean corner-on (asked front-on twice). The mine borrows the fire mine's
-  umber clutter.
+- [x] The longhut and cabin props face front (the refinement pass). [ ] The mine borrows the fire mine's umber
+  clutter.
 
 ## Cinder Mine art, the Black Hills, fire creatures (the user, 2026-11-07; assets/wip/cinder/)
 - [x] The mine's basalt places: umber cave walls and a dusty brown floor after the old goblin-cave screenshots; floor

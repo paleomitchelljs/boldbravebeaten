@@ -107,7 +107,8 @@ PROPS = {
     'm': [(16, 29), (24, 29)], 'q': [(14, 27), (25, 27), (22, 31)], 'r': [(13, 24), (17, 31), (26, 23)], 'f': [(23, 33)],
     'd': [(15, 31)], 'e': [(12, 29)],
     # 5: the pits
-    'z': [(51, 10), (54, 12), (52, 18), (53, 22), (51, 30), (54, 32)], 'K': [(52, 28)], 'a': [(55, 15), (55, 26)],
+    # (the cages in the trenches' middle columns, clear of the rock spine; the gnome's beside his note; two gibbets)
+    'z': [(52, 10), (53, 17), (53, 23), (52, 30)], 'Q': [(53, 12), (52, 33)], 'K': [(52, 28)], 'a': [(55, 15), (55, 26)],
     # 6: the trainer hill
     'v': [(36, 27), (40, 30), (38, 33)], 'i': [(38, 29)],
     # the south: trees, rocks and the camp's watch on the way in

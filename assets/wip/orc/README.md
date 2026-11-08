@@ -47,3 +47,37 @@ All PixelLab pro, 64 px, high top-down, chained to one gravel floor (base 091b16
 - Where an upland meets a cliff, a thin rim of gravel shows at the cliff's foot (the cliff tiles carry the floor).
 - A road stops at an upland's bank; the levels carry no road.
 - The mine reuses the fire mine's clutter and rock decor (umber), and a timber from its wall pieces.
+
+## The art refinement pass (2026-11-08, later)
+The user, on the screenshots: "broken seams in Tarnhold as well as a lack of 'peaks' and ridges for the wall tops.
+Extremely repetitive ground tiling in the orc valley. Doors that don't face properly & windows that don't match their
+walls, as well as steps to plateaus"; "some decor is oddly placed / out of scale/style (see the cages)". Then, as it
+went: a shaded relief on the rock tops was "discordant with the sprites" (taken out); "simpler tiles that work as walls
+but appear as steep slopes instead of truly vertical walls ... while keeping the mountain trails on the valley floor";
+"the slope tiles should be able to line up so you can put two next to make stepped mountains"; "the rings should be
+closer ... and there should be more of them"; "plainer ground that is decorated would look less repetitive"; the
+waterfall "tilted and mismatched", the decor "too square ... like clusters of debris", "the wrong decor ... on the
+mountain tops"; "some issues with joinings".
+
+- The mountains are steep scree slopes, not cliffs: `slope20` (gravel -> granite top, transition 0.25, step_slope 2,
+  8fd138eb; `slope12` at 1.2 unused) and `valley-slope` (valley grass -> granite, e2e35967). The rings above are one
+  granite -> granite slope set (`ring`, e62f6e09; PixelLab won't chain both sides to one tile, so build.py lays the
+  granite over both its grounds), built six times a step lighter (`ring1`..`ring6`). `rings.py` puts a ring a square
+  on every mountain by its distance from open ground: # ( ? ▁ ▂ ▃ ▄ (four new wall letters). `ring-snow` (ad494e8f,
+  snow-capped) came out as blocky white boulders and is unused.
+- The walkable levels came off the north pass and the side canyon (heights.py keeps only the canyon's cut).
+- The overlook is `plateau` (34908333, a low cliff, transition 0.5): its top came out one flat colour, filled with the
+  floor's gravel, so it is a raised ledge of the canyon floor; `lift: false` keeps its face short; `underWalls: all`
+  runs it under the mountain's foot. Its steps and the waterfall are drawn from the tiles' own pixels
+  (../orc2/drawn.py): PixelLab's inpainted tries came out as a brick panel and a dark slab.
+- The ground is plain and decorated: build.py's GROUNDS (gravel, road, grass) take each sheet's ground pixels (the
+  chained ground lies in each tile unchanged) back to one plain tile after toning, so no sheet's toning shifts its
+  ground and nothing repeats in a grid; the details plainify took out (pebbles, ruts, tufts) are cut out (`bits`) and
+  scattered as decor, with a few PixelLab pieces on the grass (flowers, clover, fern, mushrooms, thistle; 6359e2e8).
+  The canyon pieces (a4c36992) came out too big and outlined for the road and are unused.
+- The trainer hill's top is the valley grass a shade lighter; the quarry's top the mountains' granite; the slave pits
+  a darker mud (`pit-mud`, the path's, its grass cut away, ranked before the bridge: they were being drawn as planks).
+- Props, front-on (create_map_object; ids and prompts in ../orc2/ids.txt; ../orc2/keep.py prepares them): the gate (a
+  teal stone gatehouse), throne, longhut, cabin (its green roof toned to moss), a timber-and-iron cage and a gibbet
+  for the pits, feast table, bed, chest and war table (halved), weapon rack, bench, altar, barrels. The window on the
+  castle's faces is drawn from the wall's own stone (drawn.py); the beige relief and the mossy crack are gone.

@@ -195,6 +195,7 @@ what the next dungeon (the fire-goblin mine, `assets/ideas/ember-mine.md`) needs
 
 | South, Tarnhold, grassland (not character work) | 18 pro tilesets, ~70 props, 4 object animations | ~610 | | assets/wip/south/, assets/wip/tarn/ |
 | Tarnhold second pass, the orc valley (not character work, 2026-11-08) | 19 pro tilesets (one road re-rolled), 5 prop sheets | ~525 | 2117 | assets/wip/orc/ |
+| Tarnhold and orc valley art refinement (not character work, 2026-11-08) | 6 pro tilesets (slopes, rings, the overlook; 2 unused), 2 decor sheets, 24 map objects (props, 2 inpaint tries unused) | 323 | 1658 | assets/wip/orc/, assets/wip/orc2/ |
 
 ## Cycle 3 (2026-11-01): the recruits and the new creatures
 

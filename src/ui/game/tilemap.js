@@ -363,7 +363,9 @@
   // The terrain name a square is drawn as, and the ground drawn over it (a bridge), if any.
   function terrainOf(sc, ts, x, y) {
     // Off the map is the tileset's wall, except where the scene says the ground runs on (`outside`: a road leading out).
-    const c = x >= 0 && y >= 0 && x < sc.w && y < sc.h ? sc.cell(x, y) : sc.outside ? sc.outside(x, y) : null;
+    let c = x >= 0 && y >= 0 && x < sc.w && y < sc.h ? sc.cell(x, y) : sc.outside ? sc.outside(x, y) : null;
+    // Past a wall at the map's edge, that wall runs on (a mountain's upper rings don't drop back to its foot there).
+    if (!c && sc.w && sc.h) { const e = sc.cell(Math.max(0, Math.min(sc.w - 1, x)), Math.max(0, Math.min(sc.h - 1, y))); if (e && e.kind === 'wall') c = e; }
     // With `doorsInWall`, a doorway (or a legend square marked `wall: true`, a way out through a gate) is drawn as the
     // wall it stands in, and its door picture laid over it, so the wall runs on unbroken.
     if (c && ts.raw.doorsInWall && (doorLike(c) || (c.def && c.def.wall))) return { t: ts.wall };
@@ -457,7 +459,8 @@
       for (let y = y0; y <= y1 + 1; y++) for (let x = x0; x <= x1 + 1; x++) {
         const up = upOf(w);
         const m = (up(x - 1, y - 1) ? 8 : 0) | (up(x, y - 1) ? 4 : 0) | (up(x - 1, y) ? 2 : 0) | (up(x, y) ? 1 : 0);
-        if (m) out.corner.push({ x, y, t: w.name, m });
+        // A wall drawn as a slope (a corner set, not a cliff) takes its cut sheet where a built wall runs under it.
+        if (m) out.corner.push({ x, y, t: w.name, m, cut: !!(w.cut && w.name === ts.wall && cutAt(x, y)) });
       }
     }
     return out;
@@ -601,5 +604,5 @@
     return null;
   }
 
-  UI.Tilemap = { animAt, plan, paint, canon, geometry, solid, doorLike, tileset, planTiles, paintTiles, PIXELLAB16, bits: { N, NE, E, SE, S, SW, W, NW } };
+  UI.Tilemap = { animAt, plan, paint, canon, geometry, solid, doorLike, tileset, planTiles, paintTiles, terrainAt: (sc, ts, x, y) => terrainOf(sc, ts, x, y).t, PIXELLAB16, bits: { N, NE, E, SE, S, SW, W, NW } };
 })(globalThis.BBB);

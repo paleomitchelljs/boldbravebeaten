@@ -1,16 +1,12 @@
-# Raises parts of Tarnhold's and the vales' open ground onto the walkable levels (the user, 2026-11-08: plateaus and
-# passes that vary in height): the upland ({) and the high plateau (▓), each a sloped bank above the last. Run after
-# assets/wip/tarn/rebuild.sh (which rewrites the maps).
+# Cuts the side canyon from the East Tarnvale up to the orc valley, and can raise parts of open ground onto the walkable
+# levels (the upland {, the high plateau ▓). Run after assets/wip/tarn/rebuild.sh (which rewrites the maps).
 #   python3 assets/wip/orc/heights.py
+# The levels went on the north pass and the canyon on 2026-11-08 and came off the same day: the user wants the
+# mountains drawn as steep slopes with "the mountain trails on the valley floor". ZONES is left empty.
 import re
 
 # place -> [(x0, y0, x1, y1, level)]: open ground and road (, .) in the box goes up to that level, later boxes win.
-ZONES = {
-    # The pass comes down from the north: the high plateau at the top, the upland below it, the junction on the floor.
-    'tarnhold': [(25, 0, 33, 5, '▓'), (25, 6, 33, 11, '{')],
-    # The side canyon from the gate yard climbs to the orc valley.
-    'tarnvale_east': [(64, 0, 67, 3, '▓'), (64, 4, 67, 7, '{')],
-}
+ZONES = {}
 OPEN = ',.'
 # Cut before the levels: the side canyon north from the East Tarnvale's gate yard to the orc valley (O, its way out),
 # walled two squares either side, through the peaks (the layout predates it).
@@ -23,7 +19,8 @@ CARVE = {'tarnvale_east': carve_tarnvale_east}
 
 path = 'data/places.yaml'
 text = open(path).read()
-for pid, zones in ZONES.items():
+for pid in {**CARVE, **ZONES}:
+    zones = ZONES.get(pid, [])
     pat = re.compile(r'(^' + re.escape(pid) + r':\n(?:(?!^\S).*\n)*?  map:\n)((?:    - ".*"\n)*)', re.M)
     m = pat.search(text)
     rows = [list(l[7:-1]) for l in m.group(2).splitlines()]

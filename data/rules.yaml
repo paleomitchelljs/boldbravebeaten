@@ -158,8 +158,14 @@ game:
     "`": {name: Scree, tile: scree, fight: rough, color: "#8a8a84"}
     "@": {name: Fortress wall, wall: true, tile: fort, color: "#6a6862"}
     # The mountains climb in rings: the rock (#), a higher ledge ((), the summit (?), each a cliff set over the last.
+    # Where the mountains are steep slopes (Tarnhold, the vales, the orc valley: assets/wip/orc/rings.py) they climb a
+    # ring a square: # ( ? ▁ ▂ ▃ ▄.
     "(": {name: Mountainside, wall: true, tile: ledge, color: "#7a7a74"}
     "?": {name: Summit, wall: true, tile: summit, color: "#8a8a84"}
+    "▁": {name: Ridge, wall: true, tile: ridge3, color: "#82827c"}
+    "▂": {name: High ridge, wall: true, tile: ridge4, color: "#8a8a84"}
+    "▃": {name: Crags, wall: true, tile: ridge5, color: "#92928c"}
+    "▄": {name: Peak, wall: true, tile: ridge6, color: "#9a9a94"}
     # Overlooks: a walkable shelf of rock ([) inside a ring of ledge (▲, drawn as the shelf, as a pyramid's steps are), with
     # steps cut in it; towers (■) raised on a fortress wall.
     "[": {name: Overlook, tile: shelf, color: "#8a7a62"}
@@ -168,9 +174,7 @@ game:
     # The jungle west of the grassland (assets/wip/jungle/): marsh (sodden, slow footing) and a trodden trail.
     "≈": {name: Marsh, tile: marsh, fight: rough, color: "#3a3a26"}
     "≡": {name: Trail, tile: trail, color: "#5a4030"}
-    # Tarnhold's second pass (assets/wip/orc/): the high plateau, a walkable level above the upland ({), climbed by a
-    # sloped bank. The orc valley: a quarried hill of grey stone (a wall), the slaver caves cut into it.
-    "▓": {name: High ground, tile: highland, color: "#6e6a5e"}
+    # The orc valley (assets/wip/orc/): a quarried hill of grey stone (a wall), the slaver caves cut into it.
     "▤": {name: Quarried rock, wall: true, tile: quarry, color: "#4e5154"}
   passivePenalty: 3          # passive perception is this much worse than a deliberate search
   camp: {wanderingChance: 0.25, guardedChance: 0.5}

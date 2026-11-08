@@ -1,8 +1,8 @@
 #!/bin/sh
 # Re-seeds the orc valley's, castle's and caves' maps in data/places.yaml (layout.py, interiors.py), squares off the
-# wall shapes the cliff sets can't draw (tools/squarewalls.js), raises the valley's mountains in rings
-# (../south/tiers.py) and squares those, then puts Tarnhold's walkable levels back (heights.py; run it after
-# ../tarn/rebuild.sh too). Overwrites hand edits to these maps.
+# wall shapes the cliff sets can't draw (tools/squarewalls.js), raises the valley's mountains in slope rings, one a
+# square (rings.py), then cuts the side canyon from the East Tarnvale (heights.py; run it after ../tarn/rebuild.sh
+# too). Overwrites hand edits to these maps.
 set -e
 cd "$(dirname "$0")/../../.."
 python3 assets/wip/orc/layout.py --write
@@ -26,6 +26,5 @@ square orc_valley '▤' ,
 square orc_valley '@' ,
 square orc_castle '#' .
 square orc_mines '#' .
-python3 assets/wip/south/tiers.py orc_valley
-square orc_valley '(' '#'; square orc_valley '?' '('
+python3 assets/wip/orc/rings.py orc_valley
 python3 assets/wip/orc/heights.py
