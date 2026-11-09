@@ -84,3 +84,8 @@ Every character the user sends goes in this table, including any not yet in the 
 
 "Death" here means a single death sprite, not a full animation, unless the user asks for one. "idle ×8" means
 standing views only; none of these has an idle animation yet.
+| Kobold | `kobold-claws` (skin_patterned_with: `koboldWorker`), `kobold-spear` (holding_a_short_spea: `kobold`), `kobold-bow` (holding_a_bone_bow: `koboldHunter`) | d4bc847f-c8e0-459b-8776-861b927962ea (+ edfc7891 spear, ac10a069 bow) | 48 | each: idle ×8, strike (claws ×5; spear, bow ×8), walk ×8, death (south); idle anim (claws ×5 template, armed ×8 v3) | — |
+| Kobold_Warrior | `kobold-warrior` (wearing_patchwork_br: `koboldWarrior`), `kobold-warrior-spear` (`koboldSpearman`), `kobold-warrior-bow` (`koboldHuntLeader`) | 20fd3de0-3dfb-4afc-a56d-47592d3bc3e5 (+ 0d0b2ef6 spear, 80653106 bow) | 48 | as Kobold | — |
+| Kobold_Skirmisher | `kobold-champion` (wearing_mottled_leat, red hat: `koboldChampion`), `kobold-duelist` (wielding_a_bronze_ra, brown hat: `koboldDuelist`) | 0d373ddd-1578-4e22-8aeb-372973257432 (+ 23abdb68) | 48 | each: idle ×8, rapier lunge ×8, walk ×8, death, idle anim ×8 | — |
+| Kobold_King | `kobold-king` (`koboldKing`) | 10c4d2fa-745d-4927-a41b-7534ea710f58 | 48 | idle ×8, axe chop ×8, walk ×8, death, idle anim ×8 | — |
+| Kobold_Necromancer | `kobold-shaman` (`koboldShaman`, `koboldElder` and `koboldHighShaman` tinted) | e2f7275d-f09f-4c8a-a842-74c7d241390f | 48 | idle ×8, staff blow ×8, walk ×8, death, idle anim ×8 | — |

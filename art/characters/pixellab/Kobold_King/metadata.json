@@ -39,6 +39,72 @@
               "clad_in_spiked_bronz/animations/Death/south/frame_006.png"
             ]
           },
+          "Walk": {
+            "west": [
+              "clad_in_spiked_bronz/animations/Walk/west/frame_000.png",
+              "clad_in_spiked_bronz/animations/Walk/west/frame_001.png",
+              "clad_in_spiked_bronz/animations/Walk/west/frame_002.png",
+              "clad_in_spiked_bronz/animations/Walk/west/frame_003.png",
+              "clad_in_spiked_bronz/animations/Walk/west/frame_004.png",
+              "clad_in_spiked_bronz/animations/Walk/west/frame_005.png"
+            ],
+            "north-west": [
+              "clad_in_spiked_bronz/animations/Walk/north-west/frame_000.png",
+              "clad_in_spiked_bronz/animations/Walk/north-west/frame_001.png",
+              "clad_in_spiked_bronz/animations/Walk/north-west/frame_002.png",
+              "clad_in_spiked_bronz/animations/Walk/north-west/frame_003.png",
+              "clad_in_spiked_bronz/animations/Walk/north-west/frame_004.png",
+              "clad_in_spiked_bronz/animations/Walk/north-west/frame_005.png"
+            ],
+            "north-east": [
+              "clad_in_spiked_bronz/animations/Walk/north-east/frame_000.png",
+              "clad_in_spiked_bronz/animations/Walk/north-east/frame_001.png",
+              "clad_in_spiked_bronz/animations/Walk/north-east/frame_002.png",
+              "clad_in_spiked_bronz/animations/Walk/north-east/frame_003.png",
+              "clad_in_spiked_bronz/animations/Walk/north-east/frame_004.png",
+              "clad_in_spiked_bronz/animations/Walk/north-east/frame_005.png"
+            ],
+            "east": [
+              "clad_in_spiked_bronz/animations/Walk/east/frame_000.png",
+              "clad_in_spiked_bronz/animations/Walk/east/frame_001.png",
+              "clad_in_spiked_bronz/animations/Walk/east/frame_002.png",
+              "clad_in_spiked_bronz/animations/Walk/east/frame_003.png",
+              "clad_in_spiked_bronz/animations/Walk/east/frame_004.png",
+              "clad_in_spiked_bronz/animations/Walk/east/frame_005.png"
+            ],
+            "south-west": [
+              "clad_in_spiked_bronz/animations/Walk/south-west/frame_000.png",
+              "clad_in_spiked_bronz/animations/Walk/south-west/frame_001.png",
+              "clad_in_spiked_bronz/animations/Walk/south-west/frame_002.png",
+              "clad_in_spiked_bronz/animations/Walk/south-west/frame_003.png",
+              "clad_in_spiked_bronz/animations/Walk/south-west/frame_004.png",
+              "clad_in_spiked_bronz/animations/Walk/south-west/frame_005.png"
+            ],
+            "south-east": [
+              "clad_in_spiked_bronz/animations/Walk/south-east/frame_000.png",
+              "clad_in_spiked_bronz/animations/Walk/south-east/frame_001.png",
+              "clad_in_spiked_bronz/animations/Walk/south-east/frame_002.png",
+              "clad_in_spiked_bronz/animations/Walk/south-east/frame_003.png",
+              "clad_in_spiked_bronz/animations/Walk/south-east/frame_004.png",
+              "clad_in_spiked_bronz/animations/Walk/south-east/frame_005.png"
+            ],
+            "south": [
+              "clad_in_spiked_bronz/animations/Walk/south/frame_000.png",
+              "clad_in_spiked_bronz/animations/Walk/south/frame_001.png",
+              "clad_in_spiked_bronz/animations/Walk/south/frame_002.png",
+              "clad_in_spiked_bronz/animations/Walk/south/frame_003.png",
+              "clad_in_spiked_bronz/animations/Walk/south/frame_004.png",
+              "clad_in_spiked_bronz/animations/Walk/south/frame_005.png"
+            ],
+            "north": [
+              "clad_in_spiked_bronz/animations/Walk/north/frame_000.png",
+              "clad_in_spiked_bronz/animations/Walk/north/frame_001.png",
+              "clad_in_spiked_bronz/animations/Walk/north/frame_002.png",
+              "clad_in_spiked_bronz/animations/Walk/north/frame_003.png",
+              "clad_in_spiked_bronz/animations/Walk/north/frame_004.png",
+              "clad_in_spiked_bronz/animations/Walk/north/frame_005.png"
+            ]
+          },
           "Strike": {
             "north-east": [
               "clad_in_spiked_bronz/animations/Strike/north-east/frame_000.png",
@@ -112,11 +178,61 @@
               "clad_in_spiked_bronz/animations/Strike/north/frame_005.png",
               "clad_in_spiked_bronz/animations/Strike/north/frame_006.png"
             ]
+          },
+          "Idle": {
+            "south-east": [
+              "clad_in_spiked_bronz/animations/Idle/south-east/frame_000.png",
+              "clad_in_spiked_bronz/animations/Idle/south-east/frame_001.png",
+              "clad_in_spiked_bronz/animations/Idle/south-east/frame_002.png",
+              "clad_in_spiked_bronz/animations/Idle/south-east/frame_003.png"
+            ],
+            "east": [
+              "clad_in_spiked_bronz/animations/Idle/east/frame_000.png",
+              "clad_in_spiked_bronz/animations/Idle/east/frame_001.png",
+              "clad_in_spiked_bronz/animations/Idle/east/frame_002.png",
+              "clad_in_spiked_bronz/animations/Idle/east/frame_003.png"
+            ],
+            "north-west": [
+              "clad_in_spiked_bronz/animations/Idle/north-west/frame_000.png",
+              "clad_in_spiked_bronz/animations/Idle/north-west/frame_001.png",
+              "clad_in_spiked_bronz/animations/Idle/north-west/frame_002.png",
+              "clad_in_spiked_bronz/animations/Idle/north-west/frame_003.png"
+            ],
+            "south-west": [
+              "clad_in_spiked_bronz/animations/Idle/south-west/frame_000.png",
+              "clad_in_spiked_bronz/animations/Idle/south-west/frame_001.png",
+              "clad_in_spiked_bronz/animations/Idle/south-west/frame_002.png",
+              "clad_in_spiked_bronz/animations/Idle/south-west/frame_003.png"
+            ],
+            "south": [
+              "clad_in_spiked_bronz/animations/Idle/south/frame_000.png",
+              "clad_in_spiked_bronz/animations/Idle/south/frame_001.png",
+              "clad_in_spiked_bronz/animations/Idle/south/frame_002.png",
+              "clad_in_spiked_bronz/animations/Idle/south/frame_003.png"
+            ],
+            "north": [
+              "clad_in_spiked_bronz/animations/Idle/north/frame_000.png",
+              "clad_in_spiked_bronz/animations/Idle/north/frame_001.png",
+              "clad_in_spiked_bronz/animations/Idle/north/frame_002.png",
+              "clad_in_spiked_bronz/animations/Idle/north/frame_003.png"
+            ],
+            "west": [
+              "clad_in_spiked_bronz/animations/Idle/west/frame_000.png",
+              "clad_in_spiked_bronz/animations/Idle/west/frame_001.png",
+              "clad_in_spiked_bronz/animations/Idle/west/frame_002.png",
+              "clad_in_spiked_bronz/animations/Idle/west/frame_003.png"
+            ],
+            "north-east": [
+              "clad_in_spiked_bronz/animations/Idle/north-east/frame_000.png",
+              "clad_in_spiked_bronz/animations/Idle/north-east/frame_001.png",
+              "clad_in_spiked_bronz/animations/Idle/north-east/frame_002.png",
+              "clad_in_spiked_bronz/animations/Idle/north-east/frame_003.png"
+            ]
           }
         }
       }
     }
   ],
   "export_version": "3.1",
-  "export_date": "2026-11-09T04:04:05.917265"
+  "export_date": "2026-11-09T04:33:47.746700"
 }

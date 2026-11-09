@@ -176,6 +176,8 @@ game:
     "≡": {name: Trail, tile: trail, color: "#5a4030"}
     # The orc valley (assets/wip/orc/): a quarried hill of grey stone (a wall), the slaver caves cut into it.
     "▤": {name: Quarried rock, wall: true, tile: quarry, color: "#4e5154"}
+    # The desert south of the grassland (assets/wip/desert/): outcrops of red sandstone (a wall).
+    "▩": {name: Sandstone, wall: true, tile: mesa, color: "#8a4a2a"}
   passivePenalty: 3          # passive perception is this much worse than a deliberate search
   camp: {wanderingChance: 0.25, guardedChance: 0.5}
   # ---- Skill checks: d10 + floor(mean of attrs / 2) + feat ranks x weight vs a target number ------

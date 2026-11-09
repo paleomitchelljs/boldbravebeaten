@@ -675,7 +675,7 @@ tarn_plains_west:
     - "G,,G,x,,,,J,{,,,,,,,,,,,,{H{{{{{R,,,"
     - ",,,,,e,,,,,,,,,,,,,,Y,,,,,,,{,R,,,,,"
     - ",,k,,J,,k,,,,,H,,GHJ,,,,,,,,,,,,,G,,"
-    - ",,,h,f,,,,,,,G,,,,,,,,,,,,,,,,J,,,,,"
+    - ",,,h,f,,,,,,,G,,SS,,,,,,,,,,,,J,,,,,"
   legend:
     # An orc war camp (north-east) and a bandit camp (south-west): props only, no one there yet. A tent stands on its
     # door square; `x` holds the rest of it.
@@ -691,6 +691,7 @@ tarn_plains_west:
     h: {kind: prop, sprite: barricade, label: "A barricade", on: ","}
     Q: {kind: stairs, to: tarnvale_west, at: Z, sprite: none, label: "The road east, back through the gate"}
     Z: {kind: stairs, to: jungle_west, at: Q, sprite: none, label: "The road west, into the jungle"}
+    S: {kind: stairs, to: desert, at: N, sprite: none, label: "South, toward the desert"}
     G: {kind: prop, sprite: tallgrass_gold, solid: false, label: "Tall grass", on: ","}
     H: {kind: prop, sprite: tallgrass_seed, solid: false, label: "Tall grass", on: ","}
     J: {kind: prop, sprite: tallgrass_flower, solid: false, label: "Tall grass and wildflowers", on: ","}
@@ -702,6 +703,103 @@ tarn_plains_west:
 
 # ---- The jungle west of the grassland (the user, 2026-11-04). Laid out by assets/wip/jungle/layout.py; art and
 # prompts in assets/wip/jungle/. Props only: no foes placed (encounters wait for tuning).
+# ---- The desert south of the western grassland (the user, 2026-11-08): a broad coastal desert, Tarnhold's mountains on
+# its east, a stream down from them into a great oasis lake, a river out of the lake west to the sea, and a ruined
+# tower on an island in the lake, guarded by spectres. Laid out by assets/wip/desert/layout.py; art by build.py.
+desert:
+  name: The Desert
+  kind: dungeon
+  open: true
+  blurb: "Sand and red rock south of the grassland, under Tarnhold's mountains: a stream falls out of them into a great oasis lake ringed with palms, and a river runs from the lake west to the sea. A ruined tower stands on an island in the lake."
+  level: 3
+  look: {wall: "#8a4a2a", floor: "#d8b878", ceiling: "#9ab8d6", fog: "#1a140a", torch: 0, tileset: desert, light: 28}
+  map:
+    - "~~............................NN........................``````````#(?▁▂▃▄▄▄▄▄▄▄▄"
+    - "~~.....................................................`m`````````#(?▁▂▃▄▄▄▄▄▄▄▄"
+    - "~~~............................a.....................`````````````#(?▁▂▃▄▄▄▄▄▄▄▄"
+    - "~~~.................................................````###########(?▁▂▃▄▄▄▄▄▄▄▄"
+    - "~~~~;;;;;............................g..............````#(((((((((((?▁▂▃▄▄▄▄▄▄▄▄"
+    - "~~~~;;;;;..;..............t.................▩▩▩▩.;..````#(???????????▁▂▃▄▄▄▄▄▄▄▄"
+    - "~~~~;;;;;;.;.▩▩▩............................▩▩▩▩.....```#(((((((?▁▁▁▁▁▂▃▄▄▄▄▄▄▄▄"
+    - "~~~~~..;...;▩▩▩▩▩▩..........................▩▩▩▩;;.;;```#((####(?▁▁▁▂▂▂▃▄▄▄▄▄▄▄▄"
+    - "~~~~~.......▩▩▩▩▩▩...t....................c.......;;````#((`A~#(???▁▂▃▃▃▄▄▄▄▄▄▄▄"
+    - "~~~~~........▩▩▩▩..............g....g..............;;``o#((`~~#(((?▁▂▃▄▄▄▄▄▄▄▄▄▄"
+    - "~~~~~........▩▩▩▩........................t.g........m```###`~~###(?▁▂▃▄▄▄▄▄▄▄▄▄▄"
+    - "~~~~.....................▩▩▩.........................```````~~~~#(?▁▂▃▄▄▄▄▄▄▄▄▄▄"
+    - "~~~~.....................▩▩▩......t...............d...```o`~~`###(?▁▂▃▄▄▄▄▄▄▄▄▄▄"
+    - "~~~~.....................▩▩▩c..........................,`~~~~`#(((?▁▂▃▄▄▄▄▄▄▄▄▄▄"
+    - "~~~~.g...........................,,,,,,Q,,,...........P~~~~~~`#(???▁▂▃▄▄▄▄▄▄▄▄▄▄"
+    - "~~~~...o.......m;;;;........m.,Y,,D,,,,,,Y,Y,,Y......,~~~~~```#(?▁▁▁▂▃▄▄▄▄▄▄▄▄▄▄"
+    - "~~~~...........;;;;;........,,,,,,,,,y,,,,,,,,,,,Y..,_~~~,u```#(?▁▂▂▂▃▄▄▄▄▄▄▄▄▄▄"
+    - "~~~~....▩▩▩....;...;......,,,,,,,,,~~~~~~~,r,,,,,,,,__~~b..```#(?▁▁▁▂▃▄▄▄▄▄▄▄▄▄▄"
+    - "~~~....▩▩▩▩▩....a........,b,Y,y~~~~~~~~~~~~~~~,,,,,~__~,..````#(???▁▂▃▃▄▄▄▄▄▄▄▄▄"
+    - "~~~....▩▩▩▩▩............P,,,,,~~~~~~~~~~~~~~~~~,Y~~~__,....```#(((?▁▂▂▃▄▄▄▄▄▄▄▄▄"
+    - "~~~.....................,,,b,~~~~~~~~~~~~~~~~~~~~~~~,b....````###(?▁▁▂▃▄▄▄▄▄▄▄▄▄"
+    - "~~~....................,,,,,~~~~~~~~,,,,,~~~~~~~~,,y,,......````#(??▁▂▃▄▄▄▄▄▄▄▄▄"
+    - "~~~.....t..n...........,,,,P~~~~~~~,r,,P,,~~~~~~~~,,,u,.....````#((?▁▂▃▄▄▄▄▄▄▄▄▄"
+    - "~~~....................,,,,,~~~~~~..,,,,,s,~~~~~~~r,,,,......```##(?▁▂▃▄▄▄▄▄▄▄▄▄"
+    - "~~~....................P,,Q,~~~~~~,s,xTx,,,~~~~~~~,,u,,....t.````#(?▁▂▃▄▄▄▄▄▄▄▄▄"
+    - "~~~g..............,,r,,,,~~~~~~~~~,.,,X,,.r~~~~~~~,,,,,.;....````#(?▁▂▃▄▄▄▄▄▄▄▄▄"
+    - "~~~.............,b~~~~~~~~~~~~~~~~~,,,,,y,~~~~~~~~Y,,,,.......`o`#(?▁▂▃▄▄▄▄▄▄▄▄▄"
+    - "~~~......a.....,~~~~~~~~~~~~~~~~~~~~r.,.,~~~~~~~~,,,,,..;.....```#(?▁▂▃▄▄▄▄▄▄▄▄▄"
+    - "~~~....;;;.;.,,~~~~,Y,r~~r,,~~~~~~~~~~__~~~~~~~,,,Q,b........````#(?▁▂▃▄▄▄▄▄▄▄▄▄"
+    - "~~~....;;.;,u~~~~~.....,,,,,r~~~~~~~~~__~~~~~,,r,,,,....▩▩▩▩..```#(?▁▂▃▄▄▄▄▄▄▄▄▄"
+    - "~~~.....;P,_~~~~~,a.....,,,,,,,~~~~~~~__~~~,,u,,,Y,.....▩▩▩▩..```#(?▁▂▃▄▄▄▄▄▄▄▄▄"
+    - "~~~....~~~__~~~,y........Y,,P,,,r,y,,y,,,,r,,,,,,.....c.▩▩▩▩..```#(?▁▂▃▄▄▄▄▄▄▄▄▄"
+    - "~~~~~~~~~~__~,,...........,,,,Y,,,,,,,,D,,,,u,,...............```#(?▁▂▃▄▄▄▄▄▄▄▄▄"
+    - "~~~~~~~~~,.r,....k...........,,,Y,Y,Y,,,,,P,,.................```#(?▁▂▃▄▄▄▄▄▄▄▄▄"
+    - "~~~....................................k......................```#(?▁▂▃▄▄▄▄▄▄▄▄▄"
+    - "~~~.....;;;;;.............g...................................```#(?▁▂▃▄▄▄▄▄▄▄▄▄"
+    - "~~~.......;.;....d.............................g.............````#(?▁▂▃▄▄▄▄▄▄▄▄▄"
+    - "~~~.....;;;.;.................................................```#(?▁▂▃▄▄▄▄▄▄▄▄▄"
+    - "~~~~..........g.....................................▩▩.......````#(?▁▂▃▄▄▄▄▄▄▄▄▄"
+    - "~~~~.............................t........d.t.....▩▩▩▩▩......```##(?▁▂▃▄▄▄▄▄▄▄▄▄"
+    - "~~~~...........;..................................▩▩▩▩▩▩....````#((?▁▂▃▄▄▄▄▄▄▄▄▄"
+    - "~~~~...........;;;.;.▩▩▩........;;.;;............m▩▩▩▩▩▩.....```#(??▁▂▃▄▄▄▄▄▄▄▄▄"
+    - "~~~~...........;..;▩▩▩▩▩▩........;;;.......................````##(?▁▁▂▃▄▄▄▄▄▄▄▄▄"
+    - "~~~~.......▩▩▩.....▩▩▩▩▩▩▩;..;;.▩▩▩;;.t.....................```##(?▁▂▂▃▄▄▄▄▄▄▄▄▄"
+    - "~~~~......▩▩▩▩...o.▩▩▩▩▩▩▩..;;;.▩▩▩.;;;.....................```##(?▁▂▃▃▄▄▄▄▄▄▄▄▄"
+    - "~~~~......▩▩▩▩.;;.;▩▩▩▩▩▩▩;.o;;.▩▩▩..;......k................```#(?▁▂▃▄▄▄▄▄▄▄▄▄▄"
+    - "~~~~...........;;;;....o.........w...;d.............d........```#(?▁▂▃▄▄▄▄▄▄▄▄▄▄"
+    - "~~~~...........;.;.;..........m............g.................```#(?▁▂▃▄▄▄▄▄▄▄▄▄▄"
+    - "~~~~........................................................````#(?▁▂▃▄▄▄▄▄▄▄▄▄▄"
+    - "~~~~..................t........t............................````#(?▁▂▃▄▄▄▄▄▄▄▄▄▄"
+    - "~~~~..........................................t.............`o`o#(?▁▂▃▄▄▄▄▄▄▄▄▄▄"
+    - "~~~~..........................SS.............................```#(?▁▂▃▄▄▄▄▄▄▄▄▄▄"
+  legend:
+    N: {kind: stairs, to: tarn_plains_west, at: S, sprite: none, label: "North, back to the grassland"}
+    S: {kind: note, sprite: none, label: "The desert south", text: "Sand and red rock run on south as far as you can see. (What lies beyond is not built yet.)"}
+    A: {kind: prop, sprite: waterfall, label: "A stream falling out of the mountains", on: "~"}
+    # the island and its tower
+    T: {kind: prop, sprite: tower, label: "A ruined tower", text: "A round tower of pale sandstone, its top broken open to the sky. Its doorway is dark, and the air round it is cold.", on: ","}
+    x: {kind: prop, sprite: none, label: "The tower's wall", on: ","}
+    s: {kind: monster, encounter: spectres, label: "Something pale beside the tower", on: ","}
+    X: {kind: chest, label: "What is left in the tower's doorway", loot: relic_cache, rolls: 2, tn: 10, on: ","}
+    # the oasis and the banks
+    P: {kind: prop, sprite: palm, label: "A date palm", on: ","}
+    Q: {kind: prop, sprite: palms, label: "Two palms grown from one root", on: ","}
+    Y: {kind: prop, sprite: youngpalm, label: "A young palm", on: ","}
+    D: {kind: prop, sprite: deadpalm, label: "A dead palm, its fronds hanging brown", on: ","}
+    r: {kind: prop, sprite: reeds, solid: false, label: "Reeds", on: ","}
+    y: {kind: prop, sprite: papyrus, solid: false, label: "Papyrus", on: ","}
+    b: {kind: prop, sprite: blossom, solid: false, label: "A flowering shrub", on: ","}
+    u: {kind: prop, sprite: bush, solid: false, label: "A leafy bush", on: ","}
+    # the desert
+    t: {kind: prop, sprite: thornbush, solid: false, label: "A thorn bush"}
+    a: {kind: prop, sprite: aloe, solid: false, label: "An aloe"}
+    g: {kind: prop, sprite: drygrass, solid: false, label: "Dry grass"}
+    k: {kind: prop, sprite: skull, solid: false, label: "Bones bleached white"}
+    d: {kind: prop, sprite: deadtree, label: "A dead tree"}
+    n: {kind: prop, sprite: cairn, label: "A cairn of flat stones"}
+    o: {kind: prop, sprite: boulder, label: "A sandstone boulder"}
+    m: {kind: prop, sprite: rubble, solid: false, label: "Fallen sandstone"}
+    c: {kind: prop, sprite: column, label: "A fallen column, half buried"}
+    w: {kind: prop, sprite: ruinwall, label: "The stub of an old wall"}
+  encounters:
+    spectres: {foes: [{monster: spectre}, {monster: spectre}], text: "Two pale shapes come round the tower without touching the ground. The air goes cold as a cellar, and they lift their scythes."}
+  wandering: []
+  secrets: []
+
 jungle_west:
   name: The Mire Wood
   kind: dungeon

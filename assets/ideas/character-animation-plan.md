@@ -311,3 +311,24 @@ at the start, 964 at the end (394, tiles and props included). Plan of the places
 | Wizard | staff fire-burst ×8, death, walk ×8, idle ×8 (v3) | W washed out pink-white: re-rolled | 18 + 2 + 16 + 9 |
 | King | maul blow ×8, death, walk ×8, idle ×8 (v3) | SW turned the maul into an orb: re-rolled; the SE idle drew a puff of smoke twice: frames 0-1 replaced by 3 and 2 in the repo (a re-pull brings it back) | 24 + 2 + 21 + 18 |
 | Citadel tiles and props | 2 pro cliff sets (giant-cut flagstones under dressed basalt walls, and under black glassy cavern rock), 16 props | `assets/wip/ember/deep/build.py` | 50 + 10 |
+
+## Cycle 5 (2026-11-08): the kobolds
+
+The user: "I have made the kobold sprites we need to finish off the cinder mine areas, I believe. They need animating
+still." Ten 48-px figures in four PixelLab groups (Kobold: plain, spear, bone bow; Kobold_Warrior: patchwork coat,
+spear, bone bow; Kobold_Skirmisher: the red-hat and brown-hat fencers; Kobold_King; Kobold_Necromancer). 854
+generations at the start. The canonical set: strike (8 directions armed, 5 unarmed), death (south), walk ×8 (v3 for
+the armed, which keeps the weapon; template for the two unarmed), idle (v3 ×8 armed, template ×5 unarmed).
+
+| Character | Clip | How | Charged |
+|---|---|---|---|
+| All ten | south strike first, looked at | the necromancer threw a fireball despite "no fire" (re-rolled as a staff blow); the brown-hat fencer's blade vanished mid-lunge (re-rolled: "the thin rapier blade ... always visible"); both claw rakes barely moved (re-rolled: "leaps forward and slashes hard ... arms sweeping wide") | 10 + 4 |
+| Armed eight | strike, the other 7 directions | good | 56 |
+| Unarmed two | strike SE, E, NE, N | good | 8 |
+| All ten | death (south) | all fall cleanly | 10 |
+| All ten | walk ×8 | good; weapons kept | 80 |
+| Unarmed two | idle ×5 (template) | | 10 |
+| Armed eight | idle ×8 (v3, 4 frames) | | 64 |
+
+Also this cycle (not characters): the dens' 16 props (10), the desert's five tilesets (5 × 25), its 16 props, palms
+and tower (30).

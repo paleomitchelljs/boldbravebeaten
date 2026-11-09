@@ -39,6 +39,56 @@
               "holding_a_staff_with/animations/Death/south/frame_006.png"
             ]
           },
+          "Idle": {
+            "west": [
+              "holding_a_staff_with/animations/Idle/west/frame_000.png",
+              "holding_a_staff_with/animations/Idle/west/frame_001.png",
+              "holding_a_staff_with/animations/Idle/west/frame_002.png",
+              "holding_a_staff_with/animations/Idle/west/frame_003.png"
+            ],
+            "south-west": [
+              "holding_a_staff_with/animations/Idle/south-west/frame_000.png",
+              "holding_a_staff_with/animations/Idle/south-west/frame_001.png",
+              "holding_a_staff_with/animations/Idle/south-west/frame_002.png",
+              "holding_a_staff_with/animations/Idle/south-west/frame_003.png"
+            ],
+            "east": [
+              "holding_a_staff_with/animations/Idle/east/frame_000.png",
+              "holding_a_staff_with/animations/Idle/east/frame_001.png",
+              "holding_a_staff_with/animations/Idle/east/frame_002.png",
+              "holding_a_staff_with/animations/Idle/east/frame_003.png"
+            ],
+            "south": [
+              "holding_a_staff_with/animations/Idle/south/frame_000.png",
+              "holding_a_staff_with/animations/Idle/south/frame_001.png",
+              "holding_a_staff_with/animations/Idle/south/frame_002.png",
+              "holding_a_staff_with/animations/Idle/south/frame_003.png"
+            ],
+            "south-east": [
+              "holding_a_staff_with/animations/Idle/south-east/frame_000.png",
+              "holding_a_staff_with/animations/Idle/south-east/frame_001.png",
+              "holding_a_staff_with/animations/Idle/south-east/frame_002.png",
+              "holding_a_staff_with/animations/Idle/south-east/frame_003.png"
+            ],
+            "north": [
+              "holding_a_staff_with/animations/Idle/north/frame_000.png",
+              "holding_a_staff_with/animations/Idle/north/frame_001.png",
+              "holding_a_staff_with/animations/Idle/north/frame_002.png",
+              "holding_a_staff_with/animations/Idle/north/frame_003.png"
+            ],
+            "north-east": [
+              "holding_a_staff_with/animations/Idle/north-east/frame_000.png",
+              "holding_a_staff_with/animations/Idle/north-east/frame_001.png",
+              "holding_a_staff_with/animations/Idle/north-east/frame_002.png",
+              "holding_a_staff_with/animations/Idle/north-east/frame_003.png"
+            ],
+            "north-west": [
+              "holding_a_staff_with/animations/Idle/north-west/frame_000.png",
+              "holding_a_staff_with/animations/Idle/north-west/frame_001.png",
+              "holding_a_staff_with/animations/Idle/north-west/frame_002.png",
+              "holding_a_staff_with/animations/Idle/north-west/frame_003.png"
+            ]
+          },
           "Strike": {
             "south": [
               "holding_a_staff_with/animations/Strike/south/frame_000.png",
@@ -112,11 +162,77 @@
               "holding_a_staff_with/animations/Strike/east/frame_005.png",
               "holding_a_staff_with/animations/Strike/east/frame_006.png"
             ]
+          },
+          "Walk": {
+            "east": [
+              "holding_a_staff_with/animations/Walk/east/frame_000.png",
+              "holding_a_staff_with/animations/Walk/east/frame_001.png",
+              "holding_a_staff_with/animations/Walk/east/frame_002.png",
+              "holding_a_staff_with/animations/Walk/east/frame_003.png",
+              "holding_a_staff_with/animations/Walk/east/frame_004.png",
+              "holding_a_staff_with/animations/Walk/east/frame_005.png"
+            ],
+            "south-west": [
+              "holding_a_staff_with/animations/Walk/south-west/frame_000.png",
+              "holding_a_staff_with/animations/Walk/south-west/frame_001.png",
+              "holding_a_staff_with/animations/Walk/south-west/frame_002.png",
+              "holding_a_staff_with/animations/Walk/south-west/frame_003.png",
+              "holding_a_staff_with/animations/Walk/south-west/frame_004.png",
+              "holding_a_staff_with/animations/Walk/south-west/frame_005.png"
+            ],
+            "north": [
+              "holding_a_staff_with/animations/Walk/north/frame_000.png",
+              "holding_a_staff_with/animations/Walk/north/frame_001.png",
+              "holding_a_staff_with/animations/Walk/north/frame_002.png",
+              "holding_a_staff_with/animations/Walk/north/frame_003.png",
+              "holding_a_staff_with/animations/Walk/north/frame_004.png",
+              "holding_a_staff_with/animations/Walk/north/frame_005.png"
+            ],
+            "west": [
+              "holding_a_staff_with/animations/Walk/west/frame_000.png",
+              "holding_a_staff_with/animations/Walk/west/frame_001.png",
+              "holding_a_staff_with/animations/Walk/west/frame_002.png",
+              "holding_a_staff_with/animations/Walk/west/frame_003.png",
+              "holding_a_staff_with/animations/Walk/west/frame_004.png",
+              "holding_a_staff_with/animations/Walk/west/frame_005.png"
+            ],
+            "south": [
+              "holding_a_staff_with/animations/Walk/south/frame_000.png",
+              "holding_a_staff_with/animations/Walk/south/frame_001.png",
+              "holding_a_staff_with/animations/Walk/south/frame_002.png",
+              "holding_a_staff_with/animations/Walk/south/frame_003.png",
+              "holding_a_staff_with/animations/Walk/south/frame_004.png",
+              "holding_a_staff_with/animations/Walk/south/frame_005.png"
+            ],
+            "north-east": [
+              "holding_a_staff_with/animations/Walk/north-east/frame_000.png",
+              "holding_a_staff_with/animations/Walk/north-east/frame_001.png",
+              "holding_a_staff_with/animations/Walk/north-east/frame_002.png",
+              "holding_a_staff_with/animations/Walk/north-east/frame_003.png",
+              "holding_a_staff_with/animations/Walk/north-east/frame_004.png",
+              "holding_a_staff_with/animations/Walk/north-east/frame_005.png"
+            ],
+            "south-east": [
+              "holding_a_staff_with/animations/Walk/south-east/frame_000.png",
+              "holding_a_staff_with/animations/Walk/south-east/frame_001.png",
+              "holding_a_staff_with/animations/Walk/south-east/frame_002.png",
+              "holding_a_staff_with/animations/Walk/south-east/frame_003.png",
+              "holding_a_staff_with/animations/Walk/south-east/frame_004.png",
+              "holding_a_staff_with/animations/Walk/south-east/frame_005.png"
+            ],
+            "north-west": [
+              "holding_a_staff_with/animations/Walk/north-west/frame_000.png",
+              "holding_a_staff_with/animations/Walk/north-west/frame_001.png",
+              "holding_a_staff_with/animations/Walk/north-west/frame_002.png",
+              "holding_a_staff_with/animations/Walk/north-west/frame_003.png",
+              "holding_a_staff_with/animations/Walk/north-west/frame_004.png",
+              "holding_a_staff_with/animations/Walk/north-west/frame_005.png"
+            ]
           }
         }
       }
     }
   ],
   "export_version": "3.1",
-  "export_date": "2026-11-09T04:04:08.399292"
+  "export_date": "2026-11-09T04:33:49.795523"
 }

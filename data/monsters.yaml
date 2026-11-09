@@ -594,7 +594,7 @@ spectre:
   faction: grave_cult
   xp: 320
   glyph: "👻"
-  sprite: {art: bone-wraith, kind: skeleton_mage, tint: "#8ab4d9"}
+  sprite: {art: spectre, kind: skeleton_mage, tint: "#8ab4d9"}
   level: 15
   attrs: {STR: 10, CON: 14, DEX: 9, SPD: 9, INT: 9, WIL: 12, WIS: 8, CHA: 10}
   skills: {melee: 8, evasion: 6, anticipation: 5, intimidation: 6}

@@ -1976,3 +1976,92 @@ orc_mine:
     crate: [../cinder/cave-clutter.png, 384, 0, 34, 32]
     wheel: [../cinder/cave-clutter.png, 320, 0, 34, 33]
     hammer: [../cinder/cave-clutter.png, 768, 0, 34, 34]
+desert:
+  # The desert south of the western grassland (assets/wip/desert/build.py; the user, 2026-11-08). Sand over the Tarnhold
+  # river's own water, an oasis grass and a gravel foot over the sand, sandstone outcrops (cliffs), and Tarnhold's
+  # mountains (its slope and rings) over the gravel on the east.
+  cell: 64
+  dir: art/worldtiles/desert/
+  floor: sand
+  terrains:
+    water: {color: "#2f4a48", tile: ../highland/water.png}
+    # The fords: stepping stones in shallow water.
+    shallows: {color: "#4f7a70", wang: ford.png, over: water}
+    sand:
+      color: "#d8b878"
+      tile: sand.png
+      wang: shore.png
+      over: water
+      decor: {density: 0.08, clump: 3, flip: true, spread: 8, pieces: [["props.png", 753, 192, 48, 37], ["props.png", 308, 181, 49, 48], ["props.png", 3417, 186, 48, 43]]}
+    grass:
+      color: "#3e8a3a"
+      tile: grass.png
+      wang: oasis.png
+      over: sand
+    scree:
+      color: "#6a5e4c"
+      tile: ../highland/gravel.png
+      wang: foot.png
+      over: sand
+    rubble: {color: "#b09060", alpha: 0.25, decor: {density: 1.0, edge: true, spread: 10, pieces: [["props.png", 753, 192, 48, 37], ["props.png", 1634, 179, 61, 50], ["props.png", 753, 192, 48, 37]]}}
+    mesa:
+      color: "#8a4a2a"
+      wang: mesa.png
+      over: sand
+      cliff:
+        - [2, 2, ".....00..00....."]
+        - [3, 2, ".....00..01....."]
+        - [1, 4, ".....00..11....."]
+        - [2, 4, ".....00..10....."]
+        - [3, 3, ".00..01..01....."]
+        - [3, 4, ".....01..01....."]
+        - [0, 6, ".....11..11....."]
+        - [1, 0, ".11..10..10....."]
+        - [1, 1, ".....10..10....."]
+        - [0, 4, ".....10..11....."]
+        - [3, 6, ".....01..11....."]
+        - [1, 6, ".....11..12...0."]
+        - [3, 0, ".....11..22..00."]
+        - [1, 2, ".....10..20..00."]
+        - [1, 7, ".1...12..10....."]
+        - [3, 1, ".11..22..00....."]
+        - [1, 3, ".....20..00....."]
+        - [2, 0, ".....01..02..00."]
+        - [0, 0, ".....11..21..0.."]
+        - [2, 6, ".....10..21..01."]
+        - [2, 1, ".....02..00....."]
+        - [0, 1, "..1..21..01....."]
+        - [2, 7, ".10..21..01....."]
+        - [0, 2, ".....01..12..10."]
+        - [0, 3, ".01..12..10....."]
+    # Tarnhold's mountains on the east, as there: a steep scree slope over the gravel, then a ring a square.
+    wall: {color: "#55534e", wang: ../highland/slope20.png, over: scree, cut: ../highland/slope20-cut.png}
+    ledge: {color: "#6e6c66", wang: ../highland/ring1.png, over: wall}
+    summit: {color: "#7a7872", wang: ../highland/ring2.png, over: ledge}
+    ridge3: {color: "#82827c", wang: ../highland/ring3.png, over: summit}
+    ridge4: {color: "#8a8a84", wang: ../highland/ring4.png, over: ridge3}
+    ridge5: {color: "#92928c", wang: ../highland/ring5.png, over: ridge4}
+    ridge6: {color: "#9a9a94", wang: ../highland/ring6.png, over: ridge5}
+  props:
+    waterfall: [../highland/waterfall.png, 0, 0, 96, 222, 16, -163, 8, 8]
+    thornbush: ["props.png", 85, 183, 51, 46]
+    drygrass: ["props.png", 308, 181, 49, 48]
+    aloe: ["props.png", 525, 174, 60, 55]
+    pebbles: ["props.png", 753, 192, 48, 37]
+    boulder: ["props.png", 969, 175, 60, 54]
+    skull: ["props.png", 1195, 188, 52, 41]
+    column: ["props.png", 1414, 173, 58, 56]
+    rubble: ["props.png", 1634, 179, 61, 50]
+    deadtree: ["props.png", 1861, 166, 51, 63]
+    reeds: ["props.png", 2081, 168, 55, 61]
+    papyrus: ["props.png", 2304, 167, 53, 62]
+    blossom: ["props.png", 2523, 172, 59, 57]
+    bush: ["props.png", 2744, 183, 61, 46]
+    ruinwall: ["props.png", 2968, 175, 57, 54]
+    cairn: ["props.png", 3197, 177, 44, 52]
+    tumbleweed: ["props.png", 3417, 186, 48, 43]
+    palm: ["props.png", 3621, 109, 83, 120]
+    palms: ["props.png", 3825, 114, 120, 115]
+    youngpalm: ["props.png", 4060, 129, 94, 100]
+    deadpalm: ["props.png", 4289, 122, 79, 107]
+    tower: ["props.png", 4441, 0, 220, 229]

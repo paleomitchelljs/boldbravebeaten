@@ -4,6 +4,38 @@ Last updated at commit: a68e3ed
 
 Keep this a short list. Tick things off, add new ones, and refresh the commit line after every push (`git log -1 --format=%h`).
 
+## The kobold dens and the desert (the user, 2026-11-08)
+- [x] The kobolds animated (assets/ideas/character-animation-plan.md, cycle 5): the user's ten figures (plain, spear and
+  bow kobolds; the patchwork warrior, its spear and bow states; the red-hat and brown-hat fencers; the king; the
+  necromancer) with strikes, deaths, walks ×8 and idles. The fireball, the vanishing rapier and two limp claw rakes were
+  re-rolled.
+- [x] `ember_kobolds`, the kobold dens: Chapter Three of the source (K-1 to K-15) traced from its map
+  (assets/wip/ember/kobolds/: trace.py seals the tunnel mouths and tells floor from rock by the map's grid; clean.py,
+  dens.py), two squares to the 20-ft square (69 × 86). Ways in from both of the hall's bridge posts (`O` north of G-6,
+  `N` east of G-10), the gnome fort (`d`), the duct (`k`) and a cave mouth in the Black Hills (`K`). 0 broken corners.
+  Seen in headless Chrome (the king's den, the hall of howling).
+- [x] Monsters `koboldWorker`, `koboldHunter`, `koboldHuntLeader`, `koboldWarrior`, `koboldSpearman`, `koboldDuelist`,
+  `koboldChampion`, `koboldShaman`, `koboldElder`, `koboldHighShaman`, `koboldKing`, `gorgeHound` (the grey wolf, red
+  and bigger), `steamElemental` (the fire elemental, white); faction `kobolds`; weapon `greatAxe`. The old `kobold`
+  (the temple's servants) now wears the spear kobold. Groups of two or three, untuned.
+- [x] 16 den props (pools, fur mats, refuse, statuette, mandibles, skull rack, obsidian throne, dragon brazier, bench,
+  shards, crate, trough, chain, stone box, mobile).
+- [ ] Not built from the chapter: the queen and pups (notes only), the throne's fire-proofing, the scalding pools'
+  damage, the tunnel's poison vapour, the secret door from the king's den to the watch.
+- [x] `desert`, south of the western grassland (its `S`): the sea on the west, Tarnhold's mountains on the east (their
+  slope and rings, a ring a square by distance into the mask), a stream from a notch in a spur (Tarnhold's waterfall)
+  into the oasis lake, a river out west to the sea, fords of stepping stones, sandstone outcrops, rocky patches, palms
+  and reeds round the water, sparse scrub, bones and ruins in the sand. The ruined tower on the island, two spectres
+  and a chest. assets/wip/desert/ (layout.py, build.py, README). Tileset `desert`, ground `▩` sandstone. 0 broken
+  corners. Seen in headless Chrome (the island, the ford, the waterfall).
+- [x] `spectre` now wears the user's PixelLab spectre (was the bone wraith).
+- [ ] The spectres are level 15 in a level-3 place and only magic hurts them: a party there today dies. Intended as
+  a hard counter, or a lesser spectre? Ask the user. The spectre still has no strike or death clip (not animated:
+  the rule on characters).
+- [ ] The water is Tarnhold's slate-green throughout (lake, river, sea): a bluer oasis needs its own water and shore.
+  The stream and river run as staircases of two-square blocks; a smoother meander would read better.
+- [ ] The desert has no wanderers or people yet; its south edge is a note.
+
 ## The deep mine: duct, giants' citadel, dragon's lair (the user, 2026-11-08; assets/ideas/ember-mine.md §5)
 - [x] `ember_duct` (the three old markers lead into it), `ember_citadel` (Chapter Six of the source, F-1 to F-17, in
   dressed basalt), `ember_lair` (the moat, the bridge, the ring, the dragon). Maps from assets/wip/ember/deep/maps.py,
@@ -18,7 +50,7 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   (an encounter whose `peaceFlags` are already set is pacified on sight: src/game/explore.js `scan`; the east gate's
   watch now does the same); Surveyor Wila (the woman surveyor) tells of the giants below. The emperor carries a heavy
   spear in mail, as his figure does.
-- [ ] Not built: the kobolds (no sprites), the web chasm north of the citadel (a note), the vestibule's statue traps,
+- [ ] Not built: the web chasm north of the citadel (a note), the vestibule's statue traps,
   the cyth in the guest room. The source's names stay out: every place is a test draft for now (the user, 2026-11-08).
 - [ ] The citadel's floor is lighter grey than the black basalt it was asked for (it is baked into both wall sets).
 
