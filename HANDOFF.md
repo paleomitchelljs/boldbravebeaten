@@ -19,7 +19,7 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   watch now does the same); Surveyor Wila (the woman surveyor) tells of the giants below. The emperor carries a heavy
   spear in mail, as his figure does.
 - [ ] Not built: the kobolds (no sprites), the web chasm north of the citadel (a note), the vestibule's statue traps,
-  the cyth in the guest room. The source's names left out (the dragon, the king, the warlord, the magus): ask.
+  the cyth in the guest room. The source's names stay out: every place is a test draft for now (the user, 2026-11-08).
 - [ ] The citadel's floor is lighter grey than the black basalt it was asked for (it is baked into both wall sets).
 
 ## Animations for the mine's and the orc valley's new figures (the user, 2026-11-08; ledger in assets/ideas/character-animation-plan.md, cycle 4)
@@ -99,7 +99,7 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
   mess, barracks) and `orc_mines` (galleries, workings, the great cut, pens, overseers, ore store, an old shaft).
 - [x] Faction `orc_legion`; monsters `orcLegionnaire`, `orcSlaver`, `orcCenturion`, `orcEmissary`, `orcWarlord`,
   `orcProphet`, `orcEmperor` (the user's orc and orc warrior figures stand in; stats untuned). The source's proper
-  names left out: ask whether the user wants them.
+  names left out: no names until the real world is built (the user, 2026-11-08).
 - [ ] The slaves (cabin, caves) and the gnome in the pits are notes, not people; the slave-cabin quest isn't written.
   Where the old shaft goes. Orc figures of their own (legionnaire, centurion, the blue-grey emperor, the prophet).
 - [ ] `pace.js`: the castle and caves take 145 steps to see (0.4 h); small for a dungeon.

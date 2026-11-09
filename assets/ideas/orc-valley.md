@@ -13,7 +13,7 @@ their hand-drawn map of the classic orc valley and its key, quoted:
 > castle at area 5
 
 The source's proper names are left out (as with the fire-goblin mine): the emperor, the warlord, the emissaries and
-the prophet are unnamed. Ask the user whether they want the names.
+the prophet are unnamed. No names yet: every place is a test draft for tiles and mechanics (the user, 2026-11-08).
 
 ## Where it is built
 
