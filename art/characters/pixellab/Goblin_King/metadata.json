@@ -1,0 +1,238 @@
+{
+  "group_id": "81dd4e76-a83d-4962-8497-b90a3d285e97",
+  "states": [
+    {
+      "character": {
+        "id": "d9d283b8-a1e4-42ba-a9ba-f5b9533f6aa7",
+        "name": "Red-Orange skinned g",
+        "prompt": "Lanky goblin with long arms that reach the ground and short legs. A wide toothy maw with a long, lolling tong. Sharp pointed ears, and a ferociously mischievous demeanor.",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-08T22:43:41.828459+00:00"
+      },
+      "folder": "Red-Orange_skinned_g",
+      "frames": {
+        "rotations": {
+          "south": "Red-Orange_skinned_g/rotations/south.png",
+          "south-east": "Red-Orange_skinned_g/rotations/south-east.png",
+          "east": "Red-Orange_skinned_g/rotations/east.png",
+          "north-east": "Red-Orange_skinned_g/rotations/north-east.png",
+          "north": "Red-Orange_skinned_g/rotations/north.png",
+          "north-west": "Red-Orange_skinned_g/rotations/north-west.png",
+          "west": "Red-Orange_skinned_g/rotations/west.png",
+          "south-west": "Red-Orange_skinned_g/rotations/south-west.png"
+        },
+        "animations": {
+          "Death": {
+            "south": [
+              "Red-Orange_skinned_g/animations/Death/south/frame_000.png",
+              "Red-Orange_skinned_g/animations/Death/south/frame_001.png",
+              "Red-Orange_skinned_g/animations/Death/south/frame_002.png",
+              "Red-Orange_skinned_g/animations/Death/south/frame_003.png",
+              "Red-Orange_skinned_g/animations/Death/south/frame_004.png",
+              "Red-Orange_skinned_g/animations/Death/south/frame_005.png",
+              "Red-Orange_skinned_g/animations/Death/south/frame_006.png"
+            ]
+          },
+          "Idle": {
+            "east": [
+              "Red-Orange_skinned_g/animations/Idle/east/frame_000.png",
+              "Red-Orange_skinned_g/animations/Idle/east/frame_001.png",
+              "Red-Orange_skinned_g/animations/Idle/east/frame_002.png",
+              "Red-Orange_skinned_g/animations/Idle/east/frame_003.png"
+            ],
+            "north": [
+              "Red-Orange_skinned_g/animations/Idle/north/frame_000.png",
+              "Red-Orange_skinned_g/animations/Idle/north/frame_001.png",
+              "Red-Orange_skinned_g/animations/Idle/north/frame_002.png",
+              "Red-Orange_skinned_g/animations/Idle/north/frame_003.png"
+            ],
+            "south-east": [
+              "Red-Orange_skinned_g/animations/Idle/south-east/frame_000.png",
+              "Red-Orange_skinned_g/animations/Idle/south-east/frame_001.png",
+              "Red-Orange_skinned_g/animations/Idle/south-east/frame_002.png",
+              "Red-Orange_skinned_g/animations/Idle/south-east/frame_003.png"
+            ],
+            "south-west": [
+              "Red-Orange_skinned_g/animations/Idle/south-west/frame_000.png",
+              "Red-Orange_skinned_g/animations/Idle/south-west/frame_001.png",
+              "Red-Orange_skinned_g/animations/Idle/south-west/frame_002.png",
+              "Red-Orange_skinned_g/animations/Idle/south-west/frame_003.png"
+            ],
+            "south": [
+              "Red-Orange_skinned_g/animations/Idle/south/frame_000.png",
+              "Red-Orange_skinned_g/animations/Idle/south/frame_001.png",
+              "Red-Orange_skinned_g/animations/Idle/south/frame_002.png",
+              "Red-Orange_skinned_g/animations/Idle/south/frame_003.png"
+            ],
+            "north-east": [
+              "Red-Orange_skinned_g/animations/Idle/north-east/frame_000.png",
+              "Red-Orange_skinned_g/animations/Idle/north-east/frame_001.png",
+              "Red-Orange_skinned_g/animations/Idle/north-east/frame_002.png",
+              "Red-Orange_skinned_g/animations/Idle/north-east/frame_003.png"
+            ],
+            "west": [
+              "Red-Orange_skinned_g/animations/Idle/west/frame_000.png",
+              "Red-Orange_skinned_g/animations/Idle/west/frame_001.png",
+              "Red-Orange_skinned_g/animations/Idle/west/frame_002.png",
+              "Red-Orange_skinned_g/animations/Idle/west/frame_003.png"
+            ],
+            "north-west": [
+              "Red-Orange_skinned_g/animations/Idle/north-west/frame_000.png",
+              "Red-Orange_skinned_g/animations/Idle/north-west/frame_001.png",
+              "Red-Orange_skinned_g/animations/Idle/north-west/frame_002.png",
+              "Red-Orange_skinned_g/animations/Idle/north-west/frame_003.png"
+            ]
+          },
+          "Strike": {
+            "south": [
+              "Red-Orange_skinned_g/animations/Strike/south/frame_000.png",
+              "Red-Orange_skinned_g/animations/Strike/south/frame_001.png",
+              "Red-Orange_skinned_g/animations/Strike/south/frame_002.png",
+              "Red-Orange_skinned_g/animations/Strike/south/frame_003.png",
+              "Red-Orange_skinned_g/animations/Strike/south/frame_004.png",
+              "Red-Orange_skinned_g/animations/Strike/south/frame_005.png",
+              "Red-Orange_skinned_g/animations/Strike/south/frame_006.png"
+            ],
+            "north": [
+              "Red-Orange_skinned_g/animations/Strike/north/frame_000.png",
+              "Red-Orange_skinned_g/animations/Strike/north/frame_001.png",
+              "Red-Orange_skinned_g/animations/Strike/north/frame_002.png",
+              "Red-Orange_skinned_g/animations/Strike/north/frame_003.png",
+              "Red-Orange_skinned_g/animations/Strike/north/frame_004.png",
+              "Red-Orange_skinned_g/animations/Strike/north/frame_005.png",
+              "Red-Orange_skinned_g/animations/Strike/north/frame_006.png"
+            ],
+            "south-east": [
+              "Red-Orange_skinned_g/animations/Strike/south-east/frame_000.png",
+              "Red-Orange_skinned_g/animations/Strike/south-east/frame_001.png",
+              "Red-Orange_skinned_g/animations/Strike/south-east/frame_002.png",
+              "Red-Orange_skinned_g/animations/Strike/south-east/frame_003.png",
+              "Red-Orange_skinned_g/animations/Strike/south-east/frame_004.png",
+              "Red-Orange_skinned_g/animations/Strike/south-east/frame_005.png",
+              "Red-Orange_skinned_g/animations/Strike/south-east/frame_006.png"
+            ],
+            "north-east": [
+              "Red-Orange_skinned_g/animations/Strike/north-east/frame_000.png",
+              "Red-Orange_skinned_g/animations/Strike/north-east/frame_001.png",
+              "Red-Orange_skinned_g/animations/Strike/north-east/frame_002.png",
+              "Red-Orange_skinned_g/animations/Strike/north-east/frame_003.png",
+              "Red-Orange_skinned_g/animations/Strike/north-east/frame_004.png",
+              "Red-Orange_skinned_g/animations/Strike/north-east/frame_005.png",
+              "Red-Orange_skinned_g/animations/Strike/north-east/frame_006.png"
+            ],
+            "west": [
+              "Red-Orange_skinned_g/animations/Strike/west/frame_000.png",
+              "Red-Orange_skinned_g/animations/Strike/west/frame_001.png",
+              "Red-Orange_skinned_g/animations/Strike/west/frame_002.png",
+              "Red-Orange_skinned_g/animations/Strike/west/frame_003.png",
+              "Red-Orange_skinned_g/animations/Strike/west/frame_004.png",
+              "Red-Orange_skinned_g/animations/Strike/west/frame_005.png",
+              "Red-Orange_skinned_g/animations/Strike/west/frame_006.png"
+            ],
+            "north-west": [
+              "Red-Orange_skinned_g/animations/Strike/north-west/frame_000.png",
+              "Red-Orange_skinned_g/animations/Strike/north-west/frame_001.png",
+              "Red-Orange_skinned_g/animations/Strike/north-west/frame_002.png",
+              "Red-Orange_skinned_g/animations/Strike/north-west/frame_003.png",
+              "Red-Orange_skinned_g/animations/Strike/north-west/frame_004.png",
+              "Red-Orange_skinned_g/animations/Strike/north-west/frame_005.png",
+              "Red-Orange_skinned_g/animations/Strike/north-west/frame_006.png"
+            ],
+            "east": [
+              "Red-Orange_skinned_g/animations/Strike/east/frame_000.png",
+              "Red-Orange_skinned_g/animations/Strike/east/frame_001.png",
+              "Red-Orange_skinned_g/animations/Strike/east/frame_002.png",
+              "Red-Orange_skinned_g/animations/Strike/east/frame_003.png",
+              "Red-Orange_skinned_g/animations/Strike/east/frame_004.png",
+              "Red-Orange_skinned_g/animations/Strike/east/frame_005.png",
+              "Red-Orange_skinned_g/animations/Strike/east/frame_006.png"
+            ],
+            "south-west": [
+              "Red-Orange_skinned_g/animations/Strike/south-west/frame_000.png",
+              "Red-Orange_skinned_g/animations/Strike/south-west/frame_001.png",
+              "Red-Orange_skinned_g/animations/Strike/south-west/frame_002.png",
+              "Red-Orange_skinned_g/animations/Strike/south-west/frame_003.png",
+              "Red-Orange_skinned_g/animations/Strike/south-west/frame_004.png",
+              "Red-Orange_skinned_g/animations/Strike/south-west/frame_005.png",
+              "Red-Orange_skinned_g/animations/Strike/south-west/frame_006.png"
+            ]
+          },
+          "Walk": {
+            "south": [
+              "Red-Orange_skinned_g/animations/Walk/south/frame_000.png",
+              "Red-Orange_skinned_g/animations/Walk/south/frame_001.png",
+              "Red-Orange_skinned_g/animations/Walk/south/frame_002.png",
+              "Red-Orange_skinned_g/animations/Walk/south/frame_003.png",
+              "Red-Orange_skinned_g/animations/Walk/south/frame_004.png",
+              "Red-Orange_skinned_g/animations/Walk/south/frame_005.png"
+            ],
+            "east": [
+              "Red-Orange_skinned_g/animations/Walk/east/frame_000.png",
+              "Red-Orange_skinned_g/animations/Walk/east/frame_001.png",
+              "Red-Orange_skinned_g/animations/Walk/east/frame_002.png",
+              "Red-Orange_skinned_g/animations/Walk/east/frame_003.png",
+              "Red-Orange_skinned_g/animations/Walk/east/frame_004.png",
+              "Red-Orange_skinned_g/animations/Walk/east/frame_005.png"
+            ],
+            "north-east": [
+              "Red-Orange_skinned_g/animations/Walk/north-east/frame_000.png",
+              "Red-Orange_skinned_g/animations/Walk/north-east/frame_001.png",
+              "Red-Orange_skinned_g/animations/Walk/north-east/frame_002.png",
+              "Red-Orange_skinned_g/animations/Walk/north-east/frame_003.png",
+              "Red-Orange_skinned_g/animations/Walk/north-east/frame_004.png",
+              "Red-Orange_skinned_g/animations/Walk/north-east/frame_005.png"
+            ],
+            "south-west": [
+              "Red-Orange_skinned_g/animations/Walk/south-west/frame_000.png",
+              "Red-Orange_skinned_g/animations/Walk/south-west/frame_001.png",
+              "Red-Orange_skinned_g/animations/Walk/south-west/frame_002.png",
+              "Red-Orange_skinned_g/animations/Walk/south-west/frame_003.png",
+              "Red-Orange_skinned_g/animations/Walk/south-west/frame_004.png",
+              "Red-Orange_skinned_g/animations/Walk/south-west/frame_005.png"
+            ],
+            "west": [
+              "Red-Orange_skinned_g/animations/Walk/west/frame_000.png",
+              "Red-Orange_skinned_g/animations/Walk/west/frame_001.png",
+              "Red-Orange_skinned_g/animations/Walk/west/frame_002.png",
+              "Red-Orange_skinned_g/animations/Walk/west/frame_003.png",
+              "Red-Orange_skinned_g/animations/Walk/west/frame_004.png",
+              "Red-Orange_skinned_g/animations/Walk/west/frame_005.png"
+            ],
+            "south-east": [
+              "Red-Orange_skinned_g/animations/Walk/south-east/frame_000.png",
+              "Red-Orange_skinned_g/animations/Walk/south-east/frame_001.png",
+              "Red-Orange_skinned_g/animations/Walk/south-east/frame_002.png",
+              "Red-Orange_skinned_g/animations/Walk/south-east/frame_003.png",
+              "Red-Orange_skinned_g/animations/Walk/south-east/frame_004.png",
+              "Red-Orange_skinned_g/animations/Walk/south-east/frame_005.png"
+            ],
+            "north-west": [
+              "Red-Orange_skinned_g/animations/Walk/north-west/frame_000.png",
+              "Red-Orange_skinned_g/animations/Walk/north-west/frame_001.png",
+              "Red-Orange_skinned_g/animations/Walk/north-west/frame_002.png",
+              "Red-Orange_skinned_g/animations/Walk/north-west/frame_003.png",
+              "Red-Orange_skinned_g/animations/Walk/north-west/frame_004.png",
+              "Red-Orange_skinned_g/animations/Walk/north-west/frame_005.png"
+            ],
+            "north": [
+              "Red-Orange_skinned_g/animations/Walk/north/frame_000.png",
+              "Red-Orange_skinned_g/animations/Walk/north/frame_001.png",
+              "Red-Orange_skinned_g/animations/Walk/north/frame_002.png",
+              "Red-Orange_skinned_g/animations/Walk/north/frame_003.png",
+              "Red-Orange_skinned_g/animations/Walk/north/frame_004.png",
+              "Red-Orange_skinned_g/animations/Walk/north/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-11-09T00:28:46.769889"
+}

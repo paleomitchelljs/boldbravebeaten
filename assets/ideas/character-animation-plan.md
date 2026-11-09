@@ -262,3 +262,19 @@ end; the animation calls below come to about 101. All v3, monsters 5 directions 
 | Black widow | crawl ×5, bite ×5, death | E and NE bites grew a fanged mouth on the abdomen: re-rolled; E frame 6 patched | 11 + 2 |
 
 Not animated (the user's other new figures): the badger-man, Sorkvild the Raven, the troll knight.
+
+## Cycle 4 (2026-11-08): the orc valley's and the mine's new figures
+
+The user: "There are a lot of new monsters and NPCs and states that need the canonical set of animations. Most of the
+monsters needed to fill out the orc valley and the mine have now been generated, and should be prioritized."
+1578 generations at the start. The canonical set: walk ×8, strike, death (south), breathing idle. Armed figures get
+the strike and idle in 8 directions (a mirror swaps the weapon hand) and v3 walks (the template drops weapons);
+unarmed ones 5 directions, mirrored, and the template walk. South strike first, looked at, then the rest.
+
+Order: the mine (goblin king, gnome miner, the two gnome surveyors, the clockwork gnome, the bronze clockwork spider),
+then the orc valley (orc emperor, ambassador, the orc's chain-mail state), then the mine's leftovers (warlord idle
+×4 more, shaman and efreeti idles, the fae drake's death). Not this pass unless the user says: the fire giant,
+Nagafen (168-232 px: costly), the Sarnak, Burynai, Daedroth, guar, werewolf, Kregon, and the other new states.
+
+| Character | Clip | How | Charged |
+|---|---|---|---|

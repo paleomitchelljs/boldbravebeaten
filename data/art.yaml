@@ -816,3 +816,97 @@ black-widow:
   walks: [south, south-east, east, north-east, north]
   attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
   death: {anim: Death, frames: 7, dirs: [south]}
+# ---- The mine's and the orc valley's own figures (the user's, animated 2026-11-08) ----
+clockwork-gnome:
+  type: pixellab
+  dir: art/characters/pixellab/Clockwork_Gnome/Idle
+  name: Clockwork gnome
+  size: 48
+  box: [7, 1, 39, 45]
+  height: 0.85
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 4, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+gnome-surveyor:
+  type: pixellab
+  dir: art/characters/pixellab/Gnome_Surveyor/Idle
+  name: Gnome surveyor
+  size: 48
+  box: [8, 2, 40, 46]
+  height: 0.85
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 4, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+goblin-king:
+  type: pixellab
+  dir: art/characters/pixellab/Goblin_King/Red-Orange_skinned_g
+  name: Goblin king
+  size: 64
+  box: [1, 1, 64, 63]
+  height: 1.2
+  maxWidth: 1.6
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 4, pingpong: true}
+  attack: {anim: Strike, frames: 7}
+  death: {anim: Death, frames: 7, dirs: [south]}
+gnome-surveyor-f:
+  type: pixellab
+  dir: art/characters/pixellab/Gnome_Surveyor_2/Female
+  name: Gnome surveyor (woman)
+  size: 48
+  box: [8, 2, 40, 46]
+  height: 0.85
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 4, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+gnome-miner:
+  type: pixellab
+  dir: art/characters/pixellab/Gnome_Miner/Idle
+  name: Gnome miner
+  size: 48
+  box: [3, 1, 45, 45]
+  height: 0.85
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 4, pingpong: true}
+  attack: {anim: Strike, frames: 7}
+  death: {anim: Death, frames: 7, dirs: [south]}
+orc-mail:
+  type: pixellab
+  dir: art/characters/pixellab/Orc/No_cape_chain_mail
+  name: Orc in mail
+  size: 64
+  box: [11, 5, 53, 61]
+  height: 1.4
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 4, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+orc-emperor:
+  type: pixellab
+  dir: art/characters/pixellab/Orc_Emperor/Wearing_an_ornate_wa
+  name: Orc emperor
+  size: 64
+  box: [1, 0, 64, 61]
+  height: 1.6
+  maxWidth: 1.8
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 4, pingpong: true}
+  attack: {anim: Strike, frames: 7}
+  death: {anim: Death, frames: 7, dirs: [south]}

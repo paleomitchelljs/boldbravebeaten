@@ -1,0 +1,238 @@
+{
+  "group_id": "656e905e-e9f8-45de-b8da-47d6dc9f11d5",
+  "states": [
+    {
+      "character": {
+        "id": "b7c6d615-f691-4ec9-8609-bdb9cf1f3cce",
+        "name": "Wearing an ornate wa",
+        "prompt": "A blue skinned orc in chainmail with red eyes and a bald head. No weapons or shield.",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-08T23:52:33.124962+00:00"
+      },
+      "folder": "Wearing_an_ornate_wa",
+      "frames": {
+        "rotations": {
+          "south": "Wearing_an_ornate_wa/rotations/south.png",
+          "south-east": "Wearing_an_ornate_wa/rotations/south-east.png",
+          "east": "Wearing_an_ornate_wa/rotations/east.png",
+          "north-east": "Wearing_an_ornate_wa/rotations/north-east.png",
+          "north": "Wearing_an_ornate_wa/rotations/north.png",
+          "north-west": "Wearing_an_ornate_wa/rotations/north-west.png",
+          "west": "Wearing_an_ornate_wa/rotations/west.png",
+          "south-west": "Wearing_an_ornate_wa/rotations/south-west.png"
+        },
+        "animations": {
+          "Strike": {
+            "north-east": [
+              "Wearing_an_ornate_wa/animations/Strike/north-east/frame_000.png",
+              "Wearing_an_ornate_wa/animations/Strike/north-east/frame_001.png",
+              "Wearing_an_ornate_wa/animations/Strike/north-east/frame_002.png",
+              "Wearing_an_ornate_wa/animations/Strike/north-east/frame_003.png",
+              "Wearing_an_ornate_wa/animations/Strike/north-east/frame_004.png",
+              "Wearing_an_ornate_wa/animations/Strike/north-east/frame_005.png",
+              "Wearing_an_ornate_wa/animations/Strike/north-east/frame_006.png"
+            ],
+            "north": [
+              "Wearing_an_ornate_wa/animations/Strike/north/frame_000.png",
+              "Wearing_an_ornate_wa/animations/Strike/north/frame_001.png",
+              "Wearing_an_ornate_wa/animations/Strike/north/frame_002.png",
+              "Wearing_an_ornate_wa/animations/Strike/north/frame_003.png",
+              "Wearing_an_ornate_wa/animations/Strike/north/frame_004.png",
+              "Wearing_an_ornate_wa/animations/Strike/north/frame_005.png",
+              "Wearing_an_ornate_wa/animations/Strike/north/frame_006.png"
+            ],
+            "east": [
+              "Wearing_an_ornate_wa/animations/Strike/east/frame_000.png",
+              "Wearing_an_ornate_wa/animations/Strike/east/frame_001.png",
+              "Wearing_an_ornate_wa/animations/Strike/east/frame_002.png",
+              "Wearing_an_ornate_wa/animations/Strike/east/frame_003.png",
+              "Wearing_an_ornate_wa/animations/Strike/east/frame_004.png",
+              "Wearing_an_ornate_wa/animations/Strike/east/frame_005.png",
+              "Wearing_an_ornate_wa/animations/Strike/east/frame_006.png"
+            ],
+            "south": [
+              "Wearing_an_ornate_wa/animations/Strike/south/frame_000.png",
+              "Wearing_an_ornate_wa/animations/Strike/south/frame_001.png",
+              "Wearing_an_ornate_wa/animations/Strike/south/frame_002.png",
+              "Wearing_an_ornate_wa/animations/Strike/south/frame_003.png",
+              "Wearing_an_ornate_wa/animations/Strike/south/frame_004.png",
+              "Wearing_an_ornate_wa/animations/Strike/south/frame_005.png",
+              "Wearing_an_ornate_wa/animations/Strike/south/frame_006.png"
+            ],
+            "south-west": [
+              "Wearing_an_ornate_wa/animations/Strike/south-west/frame_000.png",
+              "Wearing_an_ornate_wa/animations/Strike/south-west/frame_001.png",
+              "Wearing_an_ornate_wa/animations/Strike/south-west/frame_002.png",
+              "Wearing_an_ornate_wa/animations/Strike/south-west/frame_003.png",
+              "Wearing_an_ornate_wa/animations/Strike/south-west/frame_004.png",
+              "Wearing_an_ornate_wa/animations/Strike/south-west/frame_005.png",
+              "Wearing_an_ornate_wa/animations/Strike/south-west/frame_006.png"
+            ],
+            "south-east": [
+              "Wearing_an_ornate_wa/animations/Strike/south-east/frame_000.png",
+              "Wearing_an_ornate_wa/animations/Strike/south-east/frame_001.png",
+              "Wearing_an_ornate_wa/animations/Strike/south-east/frame_002.png",
+              "Wearing_an_ornate_wa/animations/Strike/south-east/frame_003.png",
+              "Wearing_an_ornate_wa/animations/Strike/south-east/frame_004.png",
+              "Wearing_an_ornate_wa/animations/Strike/south-east/frame_005.png",
+              "Wearing_an_ornate_wa/animations/Strike/south-east/frame_006.png"
+            ],
+            "west": [
+              "Wearing_an_ornate_wa/animations/Strike/west/frame_000.png",
+              "Wearing_an_ornate_wa/animations/Strike/west/frame_001.png",
+              "Wearing_an_ornate_wa/animations/Strike/west/frame_002.png",
+              "Wearing_an_ornate_wa/animations/Strike/west/frame_003.png",
+              "Wearing_an_ornate_wa/animations/Strike/west/frame_004.png",
+              "Wearing_an_ornate_wa/animations/Strike/west/frame_005.png",
+              "Wearing_an_ornate_wa/animations/Strike/west/frame_006.png"
+            ],
+            "north-west": [
+              "Wearing_an_ornate_wa/animations/Strike/north-west/frame_000.png",
+              "Wearing_an_ornate_wa/animations/Strike/north-west/frame_001.png",
+              "Wearing_an_ornate_wa/animations/Strike/north-west/frame_002.png",
+              "Wearing_an_ornate_wa/animations/Strike/north-west/frame_003.png",
+              "Wearing_an_ornate_wa/animations/Strike/north-west/frame_004.png",
+              "Wearing_an_ornate_wa/animations/Strike/north-west/frame_005.png",
+              "Wearing_an_ornate_wa/animations/Strike/north-west/frame_006.png"
+            ]
+          },
+          "Idle": {
+            "north-west": [
+              "Wearing_an_ornate_wa/animations/Idle/north-west/frame_000.png",
+              "Wearing_an_ornate_wa/animations/Idle/north-west/frame_001.png",
+              "Wearing_an_ornate_wa/animations/Idle/north-west/frame_002.png",
+              "Wearing_an_ornate_wa/animations/Idle/north-west/frame_003.png"
+            ],
+            "north-east": [
+              "Wearing_an_ornate_wa/animations/Idle/north-east/frame_000.png",
+              "Wearing_an_ornate_wa/animations/Idle/north-east/frame_001.png",
+              "Wearing_an_ornate_wa/animations/Idle/north-east/frame_002.png",
+              "Wearing_an_ornate_wa/animations/Idle/north-east/frame_003.png"
+            ],
+            "south": [
+              "Wearing_an_ornate_wa/animations/Idle/south/frame_000.png",
+              "Wearing_an_ornate_wa/animations/Idle/south/frame_001.png",
+              "Wearing_an_ornate_wa/animations/Idle/south/frame_002.png",
+              "Wearing_an_ornate_wa/animations/Idle/south/frame_003.png"
+            ],
+            "south-east": [
+              "Wearing_an_ornate_wa/animations/Idle/south-east/frame_000.png",
+              "Wearing_an_ornate_wa/animations/Idle/south-east/frame_001.png",
+              "Wearing_an_ornate_wa/animations/Idle/south-east/frame_002.png",
+              "Wearing_an_ornate_wa/animations/Idle/south-east/frame_003.png"
+            ],
+            "east": [
+              "Wearing_an_ornate_wa/animations/Idle/east/frame_000.png",
+              "Wearing_an_ornate_wa/animations/Idle/east/frame_001.png",
+              "Wearing_an_ornate_wa/animations/Idle/east/frame_002.png",
+              "Wearing_an_ornate_wa/animations/Idle/east/frame_003.png"
+            ],
+            "west": [
+              "Wearing_an_ornate_wa/animations/Idle/west/frame_000.png",
+              "Wearing_an_ornate_wa/animations/Idle/west/frame_001.png",
+              "Wearing_an_ornate_wa/animations/Idle/west/frame_002.png",
+              "Wearing_an_ornate_wa/animations/Idle/west/frame_003.png"
+            ],
+            "north": [
+              "Wearing_an_ornate_wa/animations/Idle/north/frame_000.png",
+              "Wearing_an_ornate_wa/animations/Idle/north/frame_001.png",
+              "Wearing_an_ornate_wa/animations/Idle/north/frame_002.png",
+              "Wearing_an_ornate_wa/animations/Idle/north/frame_003.png"
+            ],
+            "south-west": [
+              "Wearing_an_ornate_wa/animations/Idle/south-west/frame_000.png",
+              "Wearing_an_ornate_wa/animations/Idle/south-west/frame_001.png",
+              "Wearing_an_ornate_wa/animations/Idle/south-west/frame_002.png",
+              "Wearing_an_ornate_wa/animations/Idle/south-west/frame_003.png"
+            ]
+          },
+          "Walk": {
+            "south-west": [
+              "Wearing_an_ornate_wa/animations/Walk/south-west/frame_000.png",
+              "Wearing_an_ornate_wa/animations/Walk/south-west/frame_001.png",
+              "Wearing_an_ornate_wa/animations/Walk/south-west/frame_002.png",
+              "Wearing_an_ornate_wa/animations/Walk/south-west/frame_003.png",
+              "Wearing_an_ornate_wa/animations/Walk/south-west/frame_004.png",
+              "Wearing_an_ornate_wa/animations/Walk/south-west/frame_005.png"
+            ],
+            "south-east": [
+              "Wearing_an_ornate_wa/animations/Walk/south-east/frame_000.png",
+              "Wearing_an_ornate_wa/animations/Walk/south-east/frame_001.png",
+              "Wearing_an_ornate_wa/animations/Walk/south-east/frame_002.png",
+              "Wearing_an_ornate_wa/animations/Walk/south-east/frame_003.png",
+              "Wearing_an_ornate_wa/animations/Walk/south-east/frame_004.png",
+              "Wearing_an_ornate_wa/animations/Walk/south-east/frame_005.png"
+            ],
+            "north-west": [
+              "Wearing_an_ornate_wa/animations/Walk/north-west/frame_000.png",
+              "Wearing_an_ornate_wa/animations/Walk/north-west/frame_001.png",
+              "Wearing_an_ornate_wa/animations/Walk/north-west/frame_002.png",
+              "Wearing_an_ornate_wa/animations/Walk/north-west/frame_003.png",
+              "Wearing_an_ornate_wa/animations/Walk/north-west/frame_004.png",
+              "Wearing_an_ornate_wa/animations/Walk/north-west/frame_005.png"
+            ],
+            "north": [
+              "Wearing_an_ornate_wa/animations/Walk/north/frame_000.png",
+              "Wearing_an_ornate_wa/animations/Walk/north/frame_001.png",
+              "Wearing_an_ornate_wa/animations/Walk/north/frame_002.png",
+              "Wearing_an_ornate_wa/animations/Walk/north/frame_003.png",
+              "Wearing_an_ornate_wa/animations/Walk/north/frame_004.png",
+              "Wearing_an_ornate_wa/animations/Walk/north/frame_005.png"
+            ],
+            "north-east": [
+              "Wearing_an_ornate_wa/animations/Walk/north-east/frame_000.png",
+              "Wearing_an_ornate_wa/animations/Walk/north-east/frame_001.png",
+              "Wearing_an_ornate_wa/animations/Walk/north-east/frame_002.png",
+              "Wearing_an_ornate_wa/animations/Walk/north-east/frame_003.png",
+              "Wearing_an_ornate_wa/animations/Walk/north-east/frame_004.png",
+              "Wearing_an_ornate_wa/animations/Walk/north-east/frame_005.png"
+            ],
+            "east": [
+              "Wearing_an_ornate_wa/animations/Walk/east/frame_000.png",
+              "Wearing_an_ornate_wa/animations/Walk/east/frame_001.png",
+              "Wearing_an_ornate_wa/animations/Walk/east/frame_002.png",
+              "Wearing_an_ornate_wa/animations/Walk/east/frame_003.png",
+              "Wearing_an_ornate_wa/animations/Walk/east/frame_004.png",
+              "Wearing_an_ornate_wa/animations/Walk/east/frame_005.png"
+            ],
+            "west": [
+              "Wearing_an_ornate_wa/animations/Walk/west/frame_000.png",
+              "Wearing_an_ornate_wa/animations/Walk/west/frame_001.png",
+              "Wearing_an_ornate_wa/animations/Walk/west/frame_002.png",
+              "Wearing_an_ornate_wa/animations/Walk/west/frame_003.png",
+              "Wearing_an_ornate_wa/animations/Walk/west/frame_004.png",
+              "Wearing_an_ornate_wa/animations/Walk/west/frame_005.png"
+            ],
+            "south": [
+              "Wearing_an_ornate_wa/animations/Walk/south/frame_000.png",
+              "Wearing_an_ornate_wa/animations/Walk/south/frame_001.png",
+              "Wearing_an_ornate_wa/animations/Walk/south/frame_002.png",
+              "Wearing_an_ornate_wa/animations/Walk/south/frame_003.png",
+              "Wearing_an_ornate_wa/animations/Walk/south/frame_004.png",
+              "Wearing_an_ornate_wa/animations/Walk/south/frame_005.png"
+            ]
+          },
+          "Death": {
+            "south": [
+              "Wearing_an_ornate_wa/animations/Death/south/frame_000.png",
+              "Wearing_an_ornate_wa/animations/Death/south/frame_001.png",
+              "Wearing_an_ornate_wa/animations/Death/south/frame_002.png",
+              "Wearing_an_ornate_wa/animations/Death/south/frame_003.png",
+              "Wearing_an_ornate_wa/animations/Death/south/frame_004.png",
+              "Wearing_an_ornate_wa/animations/Death/south/frame_005.png",
+              "Wearing_an_ornate_wa/animations/Death/south/frame_006.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-11-09T00:31:02.964306"
+}

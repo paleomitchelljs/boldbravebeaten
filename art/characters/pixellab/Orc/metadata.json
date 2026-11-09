@@ -208,10 +208,167 @@
           "west": "No_cape_chain_mail/rotations/west.png",
           "south-west": "No_cape_chain_mail/rotations/south-west.png"
         },
-        "animations": {}
+        "animations": {
+          "Walk": {
+            "south-west": [
+              "No_cape_chain_mail/animations/Walk/south-west/frame_000.png",
+              "No_cape_chain_mail/animations/Walk/south-west/frame_001.png",
+              "No_cape_chain_mail/animations/Walk/south-west/frame_002.png",
+              "No_cape_chain_mail/animations/Walk/south-west/frame_003.png",
+              "No_cape_chain_mail/animations/Walk/south-west/frame_004.png",
+              "No_cape_chain_mail/animations/Walk/south-west/frame_005.png"
+            ],
+            "south": [
+              "No_cape_chain_mail/animations/Walk/south/frame_000.png",
+              "No_cape_chain_mail/animations/Walk/south/frame_001.png",
+              "No_cape_chain_mail/animations/Walk/south/frame_002.png",
+              "No_cape_chain_mail/animations/Walk/south/frame_003.png",
+              "No_cape_chain_mail/animations/Walk/south/frame_004.png",
+              "No_cape_chain_mail/animations/Walk/south/frame_005.png"
+            ],
+            "south-east": [
+              "No_cape_chain_mail/animations/Walk/south-east/frame_000.png",
+              "No_cape_chain_mail/animations/Walk/south-east/frame_001.png",
+              "No_cape_chain_mail/animations/Walk/south-east/frame_002.png",
+              "No_cape_chain_mail/animations/Walk/south-east/frame_003.png",
+              "No_cape_chain_mail/animations/Walk/south-east/frame_004.png",
+              "No_cape_chain_mail/animations/Walk/south-east/frame_005.png"
+            ],
+            "north-east": [
+              "No_cape_chain_mail/animations/Walk/north-east/frame_000.png",
+              "No_cape_chain_mail/animations/Walk/north-east/frame_001.png",
+              "No_cape_chain_mail/animations/Walk/north-east/frame_002.png",
+              "No_cape_chain_mail/animations/Walk/north-east/frame_003.png",
+              "No_cape_chain_mail/animations/Walk/north-east/frame_004.png",
+              "No_cape_chain_mail/animations/Walk/north-east/frame_005.png"
+            ],
+            "west": [
+              "No_cape_chain_mail/animations/Walk/west/frame_000.png",
+              "No_cape_chain_mail/animations/Walk/west/frame_001.png",
+              "No_cape_chain_mail/animations/Walk/west/frame_002.png",
+              "No_cape_chain_mail/animations/Walk/west/frame_003.png",
+              "No_cape_chain_mail/animations/Walk/west/frame_004.png",
+              "No_cape_chain_mail/animations/Walk/west/frame_005.png"
+            ],
+            "north": [
+              "No_cape_chain_mail/animations/Walk/north/frame_000.png",
+              "No_cape_chain_mail/animations/Walk/north/frame_001.png",
+              "No_cape_chain_mail/animations/Walk/north/frame_002.png",
+              "No_cape_chain_mail/animations/Walk/north/frame_003.png",
+              "No_cape_chain_mail/animations/Walk/north/frame_004.png",
+              "No_cape_chain_mail/animations/Walk/north/frame_005.png"
+            ],
+            "east": [
+              "No_cape_chain_mail/animations/Walk/east/frame_000.png",
+              "No_cape_chain_mail/animations/Walk/east/frame_001.png",
+              "No_cape_chain_mail/animations/Walk/east/frame_002.png",
+              "No_cape_chain_mail/animations/Walk/east/frame_003.png",
+              "No_cape_chain_mail/animations/Walk/east/frame_004.png",
+              "No_cape_chain_mail/animations/Walk/east/frame_005.png"
+            ],
+            "north-west": [
+              "No_cape_chain_mail/animations/Walk/north-west/frame_000.png",
+              "No_cape_chain_mail/animations/Walk/north-west/frame_001.png",
+              "No_cape_chain_mail/animations/Walk/north-west/frame_002.png",
+              "No_cape_chain_mail/animations/Walk/north-west/frame_003.png",
+              "No_cape_chain_mail/animations/Walk/north-west/frame_004.png",
+              "No_cape_chain_mail/animations/Walk/north-west/frame_005.png"
+            ]
+          },
+          "Death": {
+            "south": [
+              "No_cape_chain_mail/animations/Death/south/frame_000.png",
+              "No_cape_chain_mail/animations/Death/south/frame_001.png",
+              "No_cape_chain_mail/animations/Death/south/frame_002.png",
+              "No_cape_chain_mail/animations/Death/south/frame_003.png",
+              "No_cape_chain_mail/animations/Death/south/frame_004.png",
+              "No_cape_chain_mail/animations/Death/south/frame_005.png",
+              "No_cape_chain_mail/animations/Death/south/frame_006.png"
+            ]
+          },
+          "Strike": {
+            "south-east": [
+              "No_cape_chain_mail/animations/Strike/south-east/frame_000.png",
+              "No_cape_chain_mail/animations/Strike/south-east/frame_001.png",
+              "No_cape_chain_mail/animations/Strike/south-east/frame_002.png",
+              "No_cape_chain_mail/animations/Strike/south-east/frame_003.png",
+              "No_cape_chain_mail/animations/Strike/south-east/frame_004.png",
+              "No_cape_chain_mail/animations/Strike/south-east/frame_005.png",
+              "No_cape_chain_mail/animations/Strike/south-east/frame_006.png"
+            ],
+            "north-east": [
+              "No_cape_chain_mail/animations/Strike/north-east/frame_000.png",
+              "No_cape_chain_mail/animations/Strike/north-east/frame_001.png",
+              "No_cape_chain_mail/animations/Strike/north-east/frame_002.png",
+              "No_cape_chain_mail/animations/Strike/north-east/frame_003.png",
+              "No_cape_chain_mail/animations/Strike/north-east/frame_004.png",
+              "No_cape_chain_mail/animations/Strike/north-east/frame_005.png",
+              "No_cape_chain_mail/animations/Strike/north-east/frame_006.png"
+            ],
+            "east": [
+              "No_cape_chain_mail/animations/Strike/east/frame_000.png",
+              "No_cape_chain_mail/animations/Strike/east/frame_001.png",
+              "No_cape_chain_mail/animations/Strike/east/frame_002.png",
+              "No_cape_chain_mail/animations/Strike/east/frame_003.png",
+              "No_cape_chain_mail/animations/Strike/east/frame_004.png",
+              "No_cape_chain_mail/animations/Strike/east/frame_005.png",
+              "No_cape_chain_mail/animations/Strike/east/frame_006.png"
+            ],
+            "south": [
+              "No_cape_chain_mail/animations/Strike/south/frame_000.png",
+              "No_cape_chain_mail/animations/Strike/south/frame_001.png",
+              "No_cape_chain_mail/animations/Strike/south/frame_002.png",
+              "No_cape_chain_mail/animations/Strike/south/frame_003.png",
+              "No_cape_chain_mail/animations/Strike/south/frame_004.png",
+              "No_cape_chain_mail/animations/Strike/south/frame_005.png",
+              "No_cape_chain_mail/animations/Strike/south/frame_006.png"
+            ],
+            "north": [
+              "No_cape_chain_mail/animations/Strike/north/frame_000.png",
+              "No_cape_chain_mail/animations/Strike/north/frame_001.png",
+              "No_cape_chain_mail/animations/Strike/north/frame_002.png",
+              "No_cape_chain_mail/animations/Strike/north/frame_003.png",
+              "No_cape_chain_mail/animations/Strike/north/frame_004.png",
+              "No_cape_chain_mail/animations/Strike/north/frame_005.png",
+              "No_cape_chain_mail/animations/Strike/north/frame_006.png"
+            ]
+          },
+          "Idle": {
+            "south-east": [
+              "No_cape_chain_mail/animations/Idle/south-east/frame_000.png",
+              "No_cape_chain_mail/animations/Idle/south-east/frame_001.png",
+              "No_cape_chain_mail/animations/Idle/south-east/frame_002.png",
+              "No_cape_chain_mail/animations/Idle/south-east/frame_003.png"
+            ],
+            "east": [
+              "No_cape_chain_mail/animations/Idle/east/frame_000.png",
+              "No_cape_chain_mail/animations/Idle/east/frame_001.png",
+              "No_cape_chain_mail/animations/Idle/east/frame_002.png",
+              "No_cape_chain_mail/animations/Idle/east/frame_003.png"
+            ],
+            "north-east": [
+              "No_cape_chain_mail/animations/Idle/north-east/frame_000.png",
+              "No_cape_chain_mail/animations/Idle/north-east/frame_001.png",
+              "No_cape_chain_mail/animations/Idle/north-east/frame_002.png",
+              "No_cape_chain_mail/animations/Idle/north-east/frame_003.png"
+            ],
+            "south": [
+              "No_cape_chain_mail/animations/Idle/south/frame_000.png",
+              "No_cape_chain_mail/animations/Idle/south/frame_001.png",
+              "No_cape_chain_mail/animations/Idle/south/frame_002.png",
+              "No_cape_chain_mail/animations/Idle/south/frame_003.png"
+            ],
+            "north": [
+              "No_cape_chain_mail/animations/Idle/north/frame_000.png",
+              "No_cape_chain_mail/animations/Idle/north/frame_001.png",
+              "No_cape_chain_mail/animations/Idle/north/frame_002.png",
+              "No_cape_chain_mail/animations/Idle/north/frame_003.png"
+            ]
+          }
+        }
       }
     }
   ],
   "export_version": "3.1",
-  "export_date": "2026-11-02T04:44:51.073928"
+  "export_date": "2026-11-09T00:30:58.891871"
 }
