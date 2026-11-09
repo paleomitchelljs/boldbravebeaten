@@ -328,7 +328,8 @@ the armed, which keeps the weapon; template for the two unarmed), idle (v3 ×8 a
 | All ten | death (south) | all fall cleanly | 10 |
 | All ten | walk ×8 | good; weapons kept | 80 |
 | Unarmed two | idle ×5 (template) | | 10 |
-| Armed eight | idle ×8 (v3, 4 frames) | | 64 |
+| Armed eight | idle ×8 (v3, 4 frames) | the plain hunter's south idle has no bow: its south standing view has none (re-rolled once, same) | 64 + 1 |
+| | | balance 446 (408 spent this session, tiles and props included) | |
 
 Also this cycle (not characters): the dens' 16 props (10), the desert's five tilesets (5 × 25), its 16 props, palms
 and tower (30).

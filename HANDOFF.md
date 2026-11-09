@@ -8,7 +8,9 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 - [x] The kobolds animated (assets/ideas/character-animation-plan.md, cycle 5): the user's ten figures (plain, spear and
   bow kobolds; the patchwork warrior, its spear and bow states; the red-hat and brown-hat fencers; the king; the
   necromancer) with strikes, deaths, walks ×8 and idles. The fireball, the vanishing rapier and two limp claw rakes were
-  re-rolled.
+  re-rolled. 408 generations this session (animations about 250, tiles and props the rest); 446 left (refill 2026-11-24).
+- [ ] The plain bow kobold's south standing view has no bow (the user's figure), so its south idle has none either
+  (one re-roll confirmed it). Fix the rotation in PixelLab if it matters.
 - [x] `ember_kobolds`, the kobold dens: Chapter Three of the source (K-1 to K-15) traced from its map
   (assets/wip/ember/kobolds/: trace.py seals the tunnel mouths and tells floor from rock by the map's grid; clean.py,
   dens.py), two squares to the 20-ft square (69 × 86). Ways in from both of the hall's bridge posts (`O` north of G-6,
