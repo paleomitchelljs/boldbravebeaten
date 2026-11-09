@@ -107,7 +107,7 @@ test('parry carry-through: a heavy swing beats through a light parry, weakened; 
   const atk = armed('A', 'greatsword');
   atk.base.STR = 14; atk.base.SPD = 1;
   const def = armed('D', 'rapier');
-  def.side = 'enemy'; def.base.SPD = 9; def.base.CON = 30; def.stamina = C.maxStamina(def);
+  def.side = 'enemy'; def.base.SPD = 5; def.base.CON = 30; // slow enough that the greatsword, rolling high, goes first def.stamina = C.maxStamina(def);
   const chars = { [atk.id]: atk, [def.id]: def };
   const enc = Combat.createEncounter('t', [atk.id, def.id], chars, 6, 1);
   enc.pos[atk.id] = { x: 0, y: 0 }; enc.pos[def.id] = { x: 2, y: 0 }; // the greatsword's own reach (cramped at 1)

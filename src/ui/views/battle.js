@@ -909,7 +909,7 @@
         onclick: () => openSheet(app, enc, id), title: 'Open character sheet',
       },
       h('span', { class: 'nm' }, c.name),
-      h('span', { class: 'sub num' }, `${c.stamina}/${max}`, enc.initiative[id] != null ? ` · init ${enc.initiative[id]}` : ''),
+      h('span', { class: 'sub num' }, `${c.stamina}/${max}`, enc.initiative[id] != null ? (G.CONFIG.apDie ? ` · ${C.fmtAP(enc.apStart[id] || 0)} AP rolled` : ` · init ${enc.initiative[id]}`) : ''),
       bar(c.stamina, max));
     }));
   }

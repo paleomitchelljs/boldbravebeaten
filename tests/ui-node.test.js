@@ -38,11 +38,11 @@ test('ui: title, the heroes\' portraits, editing the chosen, and a new game', ()
   const all = World.heroes();
   assert.equal(all.length, 9, 'the four presets and the five recruits');
   for (const hero of all) assert.match(text(), new RegExp(hero.name));
-  // Pick five: the fifth is refused.
+  // Pick seven: the seventh is refused (a party is 1 to 6).
   const card = (id) => fake.doc.querySelector(`[data-hero=${id}]`);
-  for (const id of ['beren', 'kalavar', 'cyrus', 'spawnee', 'lorc']) { card(id).click(); }
-  assert.deepEqual(Game.draft.picked, ['beren', 'kalavar', 'cyrus', 'spawnee']);
-  card('cyrus').click();
+  for (const id of ['beren', 'kalavar', 'cyrus', 'spawnee', 'lorc', 'jabiku', 'arvir']) { card(id).click(); }
+  assert.deepEqual(Game.draft.picked, ['beren', 'kalavar', 'cyrus', 'spawnee', 'lorc', 'jabiku']);
+  for (const id of ['cyrus', 'lorc', 'jabiku']) card(id).click();
   assert.deepEqual(Game.draft.picked, ['beren', 'kalavar', 'spawnee'], 'a second click takes one out');
   card('jadier').click();
   check('heroes picked');
@@ -62,7 +62,7 @@ test('ui: title, the heroes\' portraits, editing the chosen, and a new game', ()
   d.members[0].shieldItem = null;
   d.members[0].name = 'Beren the Bold';
   show('create', 'edited');
-  assert.match(text(), /4\/5/, 'a feat left to spend');
+  assert.match(text(), /2\/3/, 'a feat left to spend (level 1: three)');
   // Back to the heroes keeps the picks; on to the editor again keeps the edits.
   Game.go('heroes');
   assert.deepEqual(Game.draft.picked, ['beren', 'kalavar', 'spawnee', 'jadier']);

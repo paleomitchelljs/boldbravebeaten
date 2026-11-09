@@ -1,6 +1,6 @@
 /*
  * New game (the user, 2026-11-02): the portraits of every hero who can start (start.yaml presets and recruits); pick
- * up to four, then begin with them as they are or edit them first: name, attributes, feats, words and gear. Those
+ * one to six (rules.yaml game.party.size), then begin with them as they are or edit them first: name, attributes, feats, words and gear. Those
  * not picked wait in the village to be recruited.
  */
 (function (G) {
@@ -34,7 +34,7 @@
   }
   function editPicks(game, st, chosen) {
     const keys = chosen.map(keyOf);
-    if (!st.members || String(st.keys) !== String(keys)) { st.members = chosen.map(clone); st.pools = chosen.map(spent); st.keys = keys; st.slot = 0; }
+    if (!st.members || String(st.keys) !== String(keys)) { st.members = chosen.map((x) => clone(G.World.settle(x))); st.pools = chosen.map(spent); st.keys = keys; st.slot = 0; }
     game.go('create');
   }
 
@@ -64,7 +64,7 @@
       h('div', { class: 'view-head compact' },
         h('div', { class: 'row' }, h('h1', null, 'Choose your company'), tip(`Pick up to ${SIZE()}. Those you leave wait in ${startName()}: you can recruit them there later, to fill a place or take a fallen friend's.`, 'Your company')),
         h('button', { onclick: () => game.go('title') }, 'Back')),
-      h('p', { class: 'muted small' }, n ? `${n} of ${SIZE()} chosen: ${chosen.map((x) => x.name).join(', ')}.` : `Pick ${SIZE()} heroes.`),
+      h('p', { class: 'muted small' }, n ? `${n} of ${SIZE()} chosen: ${chosen.map((x) => x.name).join(', ')}.` : `Pick 1 to ${SIZE()} heroes.`),
       h('div', { class: 'hero-grid' }, all.map((hero) => heroCard(game, st, hero))),
       h('div', { class: 'row create-foot' },
         h('button', { class: 'primary big', disabled: !n, onclick: () => begin(game, chosen.map(clone)) }, 'Begin'),

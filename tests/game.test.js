@@ -327,7 +327,8 @@ test('battle: an ambush costs the enemy AP in the first round, and an ambusher c
   const wolf = Object.values(w.battle.foes)[0];
   assert.ok(w.battle.enc.ap[wolf.id] <= Math.floor(C.apPool(wolf) / 2));
   const mate = World.party(w)[0];
-  assert.equal(w.battle.enc.ap[mate.id], C.apPool(mate), 'the ambushers keep their AP');
+  assert.equal(w.battle.enc.ap[mate.id], w.battle.enc.apStart[mate.id], 'the ambushers keep their AP');
+  assert.ok(w.battle.enc.ap[mate.id] >= C.apPool(mate, 1), 'all the AP they rolled');
   Battle.finish(w, 'fled');
   mate.feats.ambusher = 2;
   assert.equal(Battle.ambushFactor(w), 0);

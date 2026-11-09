@@ -41,7 +41,7 @@
     const items = [
       ['Max stamina', max, '4×CON + STR + SPD + DEX'],
       ['Regen / round', (C.regen(c) >= 0 ? '+' : '') + C.regen(c), '⌊(CON+WIL)/4⌋ − armor'],
-      ['AP pool', C.fmtAP(C.apPool(c)), `${G.CONFIG.apBase} + ${G.CONFIG.apSpdContinuous ? '' : '⌊'}SPD/${G.CONFIG.apSpdDivisor}${G.CONFIG.apSpdContinuous ? '' : '⌋'}${C.fatiguePenalty(c) ? ' − ' + C.fatiguePenalty(c) + ' fatigue' : ''}`],
+      ['AP pool', C.fmtAP(C.apPool(c)), `${G.CONFIG.apBase} + ${G.CONFIG.apDie ? `d${G.CONFIG.apDie} (each round; ${(G.CONFIG.apDie + 1) / 2} on average) + ` : ''}${G.CONFIG.apSpdContinuous ? '' : '⌊'}SPD/${G.CONFIG.apSpdDivisor}${G.CONFIG.apSpdContinuous ? '' : '⌋'}${C.fatiguePenalty(c) ? ' − ' + C.fatiguePenalty(c) + ' fatigue' : ''}`],
       ['Movement', `${C.squaresPerAP(c)} sq`, `per move (${C.fmtAP(C.moveCost(c, 1))} AP) · (1 + ⌊SPD/4⌋) × ${G.CONFIG.moveScale || 1}`],
       ['Initiative', 'd10+' + C.combatAttr(c, 'SPD'), 'SPD in armor'],
       ['STR damage', (C.strBonus(c) >= 0 ? '+' : '') + C.strBonus(c), '⌊(STR−5)/2⌋'],

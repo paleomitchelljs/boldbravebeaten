@@ -21,7 +21,7 @@ function asWritten(fn) {
   const C0 = B.CONFIG;
   const D0 = C0.defense;
   const spec = {
-    apScale: 1, apDisplay: 1, costScale: null, apBase: 3, apSpdContinuous: false, apCurve: null, moveAP: null, wholeTurnAction: false,
+    apScale: 1, apDisplay: 1, costScale: null, apBase: 3, apDie: null, apSpdContinuous: false, apCurve: null, moveAP: null, wholeTurnAction: false,
     armorActionAP: 0, quickCut: null, minActionAP: 1, minStrikeAP: 1, weaponWear: null, weariness: null, vigor: null, armorPierceWear: 0,
     defense: Object.assign({}, D0, { block: Object.assign({}, D0.block, { opposed: false }), dodgeBonus: 0, absorb: null, dodgeStamina: null }),
     staminaScale: 1, pierceMode: 'floor', passThroughByArmor: null, pierce: null, moveScale: 1, moveSpdContinuous: false, armorAdjust: {}, standUp: null, grappling: null, weaponModel: 'table',

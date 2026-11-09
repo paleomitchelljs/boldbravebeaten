@@ -52,9 +52,15 @@
     costScale: null,
     // PROVISIONAL (the user's turn budget): at level 1 a turn holds one big action (a two-handed or
     // power swing), a step and a medium action (a swing), or three quick actions (thrust, parry,
-    // dodge, block, a step). Pool = apBase + SPD / apSpdDivisor, unrounded: 6 at SPD 5, every point
-    // of SPD worth half an AP. (Specifics: 3 + ⌊SPD/2⌋.)
-    apBase: 3.5,
+    // dodge, block, a step). Pool = apBase + SPD / apSpdDivisor + d(apDie), unrounded: 6 at SPD 5 on
+    // average, every point of SPD worth half an AP. (Specifics: 3 + ⌊SPD/2⌋.)
+    // PROVISIONAL (the user, 2026-11-09): AP are rolled every round (d apDie, whole AP) and the round's
+    // turns go in order of AP rolled, most first: going first means more to spend, and SPD, which feeds
+    // both, carries more weight against CON. apBase came down 3.5 → 1 so the mean pool (1 + 2.5 + SPD/2)
+    // is the old fixed one. Where a pool is wanted without a roll (the sheet, the AI's planning), the
+    // die counts at its mean. apDie null: no die (the Specifics' fixed pool, with initiativeDie).
+    apBase: 1,
+    apDie: 4,
     apSpdDivisor: 2,
     apSpdContinuous: true,
     // PROVISIONAL (turn budget): base costs (the Specifics table) up to `knee` stand; every AP above it
@@ -72,8 +78,8 @@
     defer: { ap: 1 },
     // PROVISIONAL (the user's call: armor makes actions dearer): armor's SPD penalty no longer
     // shrinks the pool; every action costs this many AP more per point of it (plate 3 → +0.5,
-    // mail 1 → +0.2; the mobility feats lower it). It still slows moving, initiative and
-    // dodging. 0: as written (the penalty lowers the pool).
+    // mail 1 → +0.2; the mobility feats lower it). It still slows moving and dodging (and, with
+    // apDie null, initiative). 0: as written (the penalty lowers the pool).
     armorActionAP: 1 / 6,
     // PROVISIONAL: a Quick feat (Quick Thrust, Parry, Block, Dodge, Hands, Heavy Tempo, Casting) at its
     // top rank takes this share off the action's cost, each rank its part (Quick Thrust I–III: −1/6,
@@ -99,7 +105,7 @@
     veryLightApDiscount: 1,
 
     // ---- Initiative -------------------------------------------------------
-    // PROVISIONAL: initiative = d10 + effective SPD
+    // With apDie null only: initiative = d10 + effective SPD (otherwise the order is the AP rolled).
     initiativeDie: 10,
 
     // ---- Damage (Specifics) ----------------------------------------------
@@ -813,6 +819,7 @@
     'Bind (the user, 2026-11-08): alone it paralyzes a foe for a round (CON resists); Bind + Mind charms the living (free, ends on harm); Bind + Death commands the undead and Bind + Outsider an outsider (the caster concentrates); Bind + a name holds one whose name the caster knows, +3 to the contest (CONFIG.magic.nameBonus). The old Name modifier, reaching anyone anywhere, is gone.',
     'Traditions (the user, 2026-11-08: no classes, specialization): feat trees whose feats strengthen spells by their words (feats.yaml `spell`): Necromancy (Take and Move Life, Give Death, Take on a foe; zombies, mummies, ghosts, Bind + Death), Devotion (Give Life, Wide Mercy to 2 squares, blessings, Take on an ally, Take Death, Raise Life), Summoning (binding, banishing, longer summons). Living Flame (fire affinity capstone) now brings fire elementals bound.',
     'Saving the fallen after a fight (the user, 2026-11-07): when a fight is won while a party member is dead but still revivable, a companion with a Life spell that calls back the dead and the points for it casts it; failing that, the party\'s best healer makes a Medicine check (moderate) to bring them back unconscious.',
+    'AP rolled each round (the user, 2026-11-09): every fighter rolls their AP at the start of a round, 1 + d4 + SPD/2 less fatigue (the old fixed 3.5 + SPD/2 on average), and turns go in order of AP rolled, most first; gear that adds initiative breaks a tie. Going first means having more to spend, and SPD, feeding both, weighs more against CON. Armor no longer slows the order (it makes each action dearer instead).',
     'Defer (the user, 2026-11-07): on your turn, pay 1 AP to let the next one in the initiative order take their turn now; yours resumes after theirs, with what AP you have left. As often as the AP lasts.',
     'Wind-ups are released in the same turn if the AP is there (the user, 2026-11-01; was: not before the next round): a bow\'s draw and its loose, a power swing\'s wind-up and its blow, a Strong spell\'s gathering and its casting are two actions, both in one turn when the AP allows (Lorc: draw 2, loose 3 of her 6), or the first made ahead and carried into the next round (`windUp.sameTurn`).',
     'Movement (the user, 2026-11-01): a stretch of a move covers round(1 + SPD/4) squares (was (1 + ⌊SPD/4⌋) × 2), so a round spent only moving carries the presets 4 / 6 / 9 / 12 squares, not 4 / 12 / 12 / 24.',

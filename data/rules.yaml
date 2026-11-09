@@ -85,7 +85,8 @@ game:
     familiar: {ranks: [[duskBat, rat, faeDrake], [fireSprite]], death: {WIL: 2}}
     beast: {ranks: [[wolf], [alphaWolf]]}
   # ---- Starting a game ----------------------------------------------------
-  party: {size: 4, attrPool: 40, attrMin: 3, attrMax: 8, startGold: 60}
+  # size: the most heroes in a party; a new game begins with 1 to size of them (the user, 2026-11-09: 1 to 6).
+  party: {size: 6, attrPool: 40, attrMin: 3, attrMax: 8, startGold: 60}
   # ---- Progression --------------------------------------------------------
   # XP needed to reach level n = xpBase * n * (n - 1) / 2 (so 60, 180, 360, 600…).
   xpBase: 60

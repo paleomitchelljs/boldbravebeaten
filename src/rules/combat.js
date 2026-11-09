@@ -2,7 +2,7 @@
  * Combat engine: round structure, actions, reactions, resolution, damage.
  *
  * Terms:
- *   Round     starts with everyone rolling initiative (AP pool = f(SPD) − fatigue) and ends when
+ *   Round     starts with everyone rolling their AP (f(SPD) + a die − fatigue; the order is the AP rolled) and ends when
  *             everyone has had their turn; then bleed, regeneration, fatigue. Unspent AP is lost.
  *   Turn      one character's go, in initiative order: as many actions as their AP pays for.
  *             Each action resolves as it is taken.
@@ -72,7 +72,7 @@
 
   async function rollDie(roller, actorId, sides, label, detail) {
     const r = await roller({ actorId, sides, count: 1, label, detail });
-    return r[0];
+    return Math.max(1, Math.min(sides, r[0]));
   }
 
   // ---- Round start -------------------------------------------------------
@@ -123,12 +123,23 @@
     enc.turn = -1;
     enc.initiative = {};
     const active = enc.ids.filter((id) => C.isActive(chars[id]));
+    const sp = enc.surprise;
+    const rolled = {};
     for (const id of active) {
       const c = chars[id];
       const spd = C.combatAttr(c, 'SPD');
       const gear = G.Effects.sum(c, 'init');
-      const r = await rollDie(roller, id, CONFIG.initiativeDie, 'Initiative', `d${CONFIG.initiativeDie} + SPD ${spd}${gear ? ` + ${gear} (gear)` : ''}`);
-      enc.initiative[id] = r + spd + gear;
+      if (CONFIG.apDie) {
+        // The round's AP (CONFIG.apDie): rolled, and the order is the AP rolled, most first. Surprise (an ambush, a
+        // trap sprung) leaves that side part of its AP, and so later in the order.
+        const r = await rollDie(roller, id, CONFIG.apDie, 'AP', `d${CONFIG.apDie} + ${CONFIG.apBase} + SPD/${CONFIG.apSpdDivisor}`);
+        rolled[id] = C.apPool(c, r);
+        if (sp && sp.round === enc.round && c.side === sp.side) rolled[id] = Math.floor(rolled[id] * sp.factor);
+        enc.initiative[id] = rolled[id] + gear * C.apScale() / 100; // gear's `init` breaks a tie
+      } else {
+        const r = await rollDie(roller, id, CONFIG.initiativeDie, 'Initiative', `d${CONFIG.initiativeDie} + SPD ${spd}${gear ? ` + ${gear} (gear)` : ''}`);
+        enc.initiative[id] = r + spd + gear;
+      }
     }
     enc.order = active.slice().sort((a, b) => {
       const d = enc.initiative[b] - enc.initiative[a];
@@ -136,10 +147,11 @@
       return C.combatAttr(chars[b], 'SPD') - C.combatAttr(chars[a], 'SPD');
     });
     for (const id of enc.order) {
-      enc.ap[id] = C.apPool(chars[id]);
-      // Surprise (an ambush, a trap sprung): that side starts the round with part of its AP.
-      const sp = enc.surprise;
-      if (sp && sp.round === enc.round && chars[id].side === sp.side) enc.ap[id] = Math.floor(enc.ap[id] * sp.factor);
+      if (CONFIG.apDie) enc.ap[id] = rolled[id];
+      else {
+        enc.ap[id] = C.apPool(chars[id]);
+        if (sp && sp.round === enc.round && chars[id].side === sp.side) enc.ap[id] = Math.floor(enc.ap[id] * sp.factor);
+      }
       enc.apStart[id] = enc.ap[id];
       // AP owed from a blow that rebounded last round (CONFIG.defense.rebound.carry): already spent.
       const owed = enc.owed && enc.owed[id];
@@ -147,7 +159,9 @@
     }
     enc.owed = {};
     if (enc.surprise && enc.surprise.round === enc.round) log(enc, `${enc.surprise.side === 'party' ? 'The party is' : 'The enemy is'} caught off guard.`, 'round');
-    log(enc, `Round ${enc.round} — initiative: ` + enc.order.map((id) => `${chars[id].name} ${enc.initiative[id]}`).join(', '), 'round');
+    log(enc, CONFIG.apDie
+      ? `Round ${enc.round} — AP rolled: ` + enc.order.map((id) => `${chars[id].name} ${C.fmtAP(enc.apStart[id])}`).join(', ')
+      : `Round ${enc.round} — initiative: ` + enc.order.map((id) => `${chars[id].name} ${enc.initiative[id]}`).join(', '), 'round');
     await advance(enc, chars, { roller });
     return enc;
   }

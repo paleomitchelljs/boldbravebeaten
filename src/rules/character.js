@@ -621,13 +621,15 @@
     return p;
   }
 
-  function apPool(c) {
+  // The round's pool. roll: the AP die's face (CONFIG.apDie); left out, the die counts at its mean.
+  function apPool(c, roll) {
     const mult = G.Effects.mult(c, 'apMult'); // a boss acts like several fighters
     const more = G.Effects.sum(c, 'ap'); // slowed, hasted, shocked; a ring
     // With armorActionAP, armor makes each action dearer instead of shrinking the pool.
     const spd = CONFIG.armorActionAP ? attr(c, 'SPD') : combatAttr(c, 'SPD');
     const fromSpd = CONFIG.apSpdContinuous ? spd / CONFIG.apSpdDivisor : Math.floor(spd / CONFIG.apSpdDivisor);
-    return Math.max(0, Math.round((CONFIG.apBase + fromSpd - fatiguePenalty(c) + more) * apScale() * mult));
+    const die = CONFIG.apDie ? (roll != null ? roll : (CONFIG.apDie + 1) / 2) : 0;
+    return Math.max(0, Math.round((CONFIG.apBase + fromSpd + die - fatiguePenalty(c) + more) * apScale() * mult));
   }
 
   // Next round's pool if this fighter spends `spend` stamina now and takes no blow before the round ends (regeneration

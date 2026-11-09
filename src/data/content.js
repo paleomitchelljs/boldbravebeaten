@@ -106,8 +106,10 @@
     const skillList = (W.skills && W.skills.skills) || {};
     const checks = (W.skills && W.skills.checks) || {};
     const skillOk = (where, id) => { if (!has(skillList, id)) err(`${where}: skill "${id}" is not in skills.yaml`); };
-    // A character's skills (a preset, a recruit, a monster, a template's band): known ids, 0–10.
+    // A character's skills (a preset, a recruit, a monster, a template's band): known ids, 0–10. A hero's may be a list
+    // of stages (start.yaml), each a map.
     const skillsOk = (where, sk) => {
+      if (Array.isArray(sk)) { for (const st of sk) skillsOk(where, st); return; }
       for (const [k, v] of Object.entries(sk || {})) {
         skillOk(where, k);
         if (!(Number.isInteger(v) && v >= 0 && v <= ((G.CONFIG.skills || {}).max || 10))) err(`${where}: skill ${k} must be a whole number 0–${(G.CONFIG.skills || {}).max || 10}`);

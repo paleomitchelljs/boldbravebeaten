@@ -19,11 +19,14 @@ kits:
   - {id: hammer, name: Warhammer, wield: warhammer, sidearm: dagger, armor: padded, shield: null, blurb: "Two hands, slow, and dents plate."}
   - {id: staff, name: Staff and ward, wield: staff, sidearm: null, armor: padded, shield: null, blurb: "A caster's kit: a staff to lean on and spend the feats on words."}
 # The heroes (the user, 2026-11-02): New Game shows every one of the presets and the recruits as a portrait; the
-# player picks four and begins with them as they are or edits them. Each has an `id`, a `blurb` for the portrait
+# player picks some and begins with them as they are or edits them. Each has an `id`, a `blurb` for the portrait
 # card, and a home square in a place (`place`, `at`) where those not picked wait to be recruited (with `pitch`).
+# A new game begins with 1 to 6 of them (rules.yaml game.party.size).
 presets:
-  # The default party (the user, 2026-10-28): level 3, five feats each (3 + 1 a level), 40 attribute points, 16 skill
-  # points (10 + 3 a level; the user, 2026-11-07). Skills are put in first: they unlock the feats.
+  # The default party (the user, 2026-10-28; level 1 since 2026-11-09): 40 attribute points each. `skills` and
+  # `feats` are a plan to grow by up to level 10: skills raised to each stage's ranks in order (10 points at level 1,
+  # +3 a level), then feats taken in order (3 at level 1, +1 a level), while the level's budget lasts. At level 1 a
+  # hero holds the first few; a recruit joining later, and the sims' level-N heroes, grow along the same plan.
   # Beren: heavy armor, sword and shield. He blocks: plate he can move in, a shield he is quick and sure with.
   - id: beren
     name: Beren
@@ -32,13 +35,13 @@ presets:
     at: [16, 14]
     pitch: "Plate on my back and a shield on my arm. If you need someone to stand in front, I'll stand."
     kit: sword
-    level: 3
+    level: 1
     attrs: {STR: 7, CON: 7, DEX: 5, SPD: 5, INT: 3, WIL: 5, WIS: 4, CHA: 4}
     armorItem: {armor: plate, material: steel}
     weaponItems: [{weapon: longsword, material: steel}, {weapon: dagger}]
     shieldItem: {shield: heater, material: wood}
-    skills: {melee: 4, block: 5, armor: 5, athletics: 2}
-    feats: [plate_mobility, plate_endurance, quick_block, shield_bash, iron_stance]
+    skills: [{melee: 4, block: 5, armor: 5, athletics: 2}, {block: 7, armor: 7, melee: 6}, {block: 9, armor: 9, melee: 7}, {anticipation: 3, melee: 8}, {athletics: 5, perception: 3, melee: 10, anticipation: 5}]
+    feats: [plate_mobility, plate_endurance, quick_block, shield_bash, iron_stance, quick_block, plate_mobility, economical_block, toughness, plate_endurance, shield_wall, strength]
     look: {sprite: "art:beren"}
   # Lorc: an archer. There are no archery feats yet, so he is built on a high DEX, his eyes and staying out of reach.
   - id: lorc
@@ -48,14 +51,14 @@ presets:
     at: [9, 20]
     pitch: "Give me a long sightline and a quiver. I'll thin them out before they reach you."
     kit: bow
-    level: 3
+    level: 1
     attrs: {STR: 5, CON: 5, DEX: 8, SPD: 6, INT: 4, WIL: 4, WIS: 5, CHA: 3}
     armorItem: {armor: leather}
     weaponItems: [{weapon: longbow}, {weapon: dagger}]
     shieldItem: null
     arrows: 30
-    skills: {ranged: 5, evasion: 3, perception: 4, stealth: 2, nature: 1, armor: 1}
-    feats: [agility, quickness, agility, light_armor_training, quick_draw]
+    skills: [{ranged: 5, evasion: 3, perception: 4, stealth: 2, nature: 1, armor: 1}, {ranged: 7, evasion: 5, perception: 5, stealth: 3}, {ranged: 9, evasion: 7, anticipation: 3, perception: 7}, {stealth: 5, ranged: 10}, {anticipation: 5, athletics: 3, nature: 3}]
+    feats: [agility, quickness, agility, light_armor_training, quick_draw, far_shot, quick_draw, point_blank, pinning_shot, deadeye, quick_dodge, quickness]
     look: {sprite: "art:lorc"}
   # Cyrus: a swashbuckling fencer, all speed: a gambeson and nothing more (the user, 2026-11-03: padded on the chest at
   # least), rapier and parrying dagger, quick thrusts, parry and riposte.
@@ -66,11 +69,11 @@ presets:
     at: [24, 19]
     pitch: "Anything heavier than a gambeson is for people who can't get out of the way. Shall we?"
     kit: rapier
-    level: 3
+    level: 1
     attrs: {STR: 4, CON: 5, DEX: 8, SPD: 8, INT: 4, WIL: 4, WIS: 4, CHA: 3}
     armorItem: {armor: padded, covers: [torso]}
-    skills: {melee: 5, evasion: 4, anticipation: 4, deception: 2, athletics: 1}
-    feats: [quick_thrust, riposte, quickness, feint, quick_parry]
+    skills: [{melee: 5, evasion: 4, anticipation: 4, deception: 2, athletics: 1}, {melee: 7, evasion: 6, anticipation: 5}, {melee: 9, evasion: 7, anticipation: 7}, {deception: 4, melee: 10}, {evasion: 9, athletics: 4, perception: 3}]
+    feats: [quick_thrust, riposte, quickness, feint, quick_parry, precision, precision, find_the_gap, quick_thrust, lunge, quick_parry, quick_thrust]
     look: {sprite: "art:cyrus"}
   # The mage: Life, to heal, wither and drain, at arm's reach, at range and over an area. The staff is a casting focus.
   - id: jabiku
@@ -80,20 +83,20 @@ presets:
     at: [10, 11]
     pitch: "I mend what breaks and unmake what should not stand. Walk with me."
     kit: staff
-    level: 3
+    level: 1
     attrs: {STR: 3, CON: 5, DEX: 5, SPD: 5, INT: 8, WIL: 8, WIS: 3, CHA: 3}
     # Life with Move alone (the user, 2026-11-07: drain a foe, or give to an ally; Move was Transfer before the spell
     # words of 2026-11-08), and the modifiers Far and Wide; Control against backlash. The healer of the party (Medicine).
-    skills: {arcane: 5, medicine: 3, anticipation: 3, nature: 2, perception: 2, evasion: 1}
-    feats: [mod_far, mod_wide, verb_move, control, quick_casting]
+    skills: [{arcane: 5, medicine: 3, anticipation: 3, nature: 2, perception: 2, evasion: 1}, {arcane: 7, medicine: 5}, {arcane: 9, anticipation: 5, medicine: 7}, {arcane: 10, evasion: 3}, {medicine: 9, anticipation: 6, perception: 4}]
+    feats: [mod_far, mod_wide, verb_move, control, quick_casting, mending_hands, control, mod_strong, mending_hands, wide_mercy, steady_mind, control]
     nouns: [life]
     look: {sprite: "art:jabiku"}
 
 # Recruits (the user, 2026-11-01): heroes milling about the village (place, home square `at`; they wander a few squares
 # from it) who will join the party to take a fallen member's place, or fill an empty one. Same fields as presets, plus
-# `pitch` (what they say when asked) and `id`. Level 3, five feats, 40 attribute points, like the starting four. Feats are
-# taken in the order listed, and an apprentice feat needs two in its tree first (2026-11-02: four of these listed feats
-# they could not hold, which were silently left out; now each list is one a level-3 character can take).
+# `pitch` (what they say when asked) and `id`. Level 1 and 40 attribute points, like the presets, with the same kind of
+# plan to grow by; one recruited later joins at the party's level, grown along it. A fallen hero is back at their home
+# square to be recruited again (the user, 2026-11-09, for testing).
 recruits:
   # An orc sellsword: a heavy chopping blade (a short sword until there is a falchion) behind a heater shield.
   - id: kalavar
@@ -103,13 +106,13 @@ recruits:
     at: [11, 13]
     pitch: "Coin's thin and the road south is thick with raiders. Short a blade? Mine's heavy and I don't run."
     kit: sword
-    level: 3
+    level: 1
     attrs: {STR: 8, CON: 7, DEX: 4, SPD: 4, INT: 3, WIL: 5, WIS: 4, CHA: 5}
     armorItem: {armor: mail, material: iron}
     weaponItems: [{weapon: shortsword, material: steel}, {weapon: dagger}]
     shieldItem: {shield: heater, material: wood}
-    skills: {melee: 5, block: 4, armor: 4, intimidation: 3}
-    feats: [mail_mobility, quick_block, power_swing, toughness, economical_block]
+    skills: [{melee: 5, block: 4, armor: 4, intimidation: 3}, {melee: 7, armor: 6, block: 6}, {melee: 9, armor: 7, block: 7}, {athletics: 3, melee: 10}, {block: 9, armor: 9, intimidation: 5}]
+    feats: [mail_mobility, quick_block, power_swing, toughness, economical_block, mail_endurance, weight_of_the_blow, heavy_weapon_training, mail_mobility, toughness, heavy_tempo, cleave, strength, toughness]
     look: {sprite: "art:orc-warrior"}
   # A shield-and-sword man: the blade works from behind the shield.
   - id: arvir
@@ -119,13 +122,13 @@ recruits:
     at: [19, 12]
     pitch: "I've stood in a line before. Put me where the blows come and I'll hold there."
     kit: sword
-    level: 3
+    level: 1
     attrs: {STR: 6, CON: 6, DEX: 6, SPD: 5, INT: 4, WIL: 5, WIS: 4, CHA: 4}
     armorItem: {armor: mail, material: iron}
     weaponItems: [{weapon: longsword, material: iron}, {weapon: dagger}]
     shieldItem: {shield: round, material: wood}
-    skills: {melee: 5, block: 5, armor: 3, persuasion: 2, perception: 1}
-    feats: [mail_mobility, quick_block, economical_block, shield_bash, quick_parry]
+    skills: [{melee: 5, block: 5, armor: 3, persuasion: 2, perception: 1}, {melee: 7, block: 7, armor: 5}, {melee: 8, block: 9, armor: 6}, {anticipation: 3, melee: 9}, {armor: 8, perception: 3, persuasion: 4, melee: 10}]
+    feats: [mail_mobility, quick_block, economical_block, shield_bash, quick_parry, mail_endurance, quick_block, economical_block, half_swording, shield_wall, toughness, mail_mobility]
     look: {sprite: "art:arvir"}
   # A dragonkin duellist: quick, light, a blade in each hand.
   - id: jadier
@@ -135,13 +138,13 @@ recruits:
     at: [23, 15]
     pitch: "Two blades, light feet. I'm bored of this green, and you look like trouble worth following."
     kit: rapier
-    level: 3
+    level: 1
     attrs: {STR: 5, CON: 5, DEX: 7, SPD: 7, INT: 4, WIL: 4, WIS: 4, CHA: 4}
     armorItem: {armor: leather}
     weaponItems: [{weapon: shortsword, material: steel}, {weapon: parryingDagger}]
     shieldItem: null
-    skills: {melee: 5, evasion: 4, anticipation: 3, deception: 2, stealth: 2}
-    feats: [quick_thrust, offhand_dagger, quickness, riposte, feint]
+    skills: [{melee: 5, evasion: 4, anticipation: 3, deception: 2, stealth: 2}, {melee: 7, evasion: 6, anticipation: 5}, {melee: 9, evasion: 7, anticipation: 6}, {stealth: 4, melee: 10}, {evasion: 9, anticipation: 7, perception: 3}]
+    feats: [quick_thrust, offhand_dagger, quickness, riposte, feint, quick_parry, precision, precision, find_the_gap, quick_thrust, quick_dodge, lunge]
     look: {sprite: "art:dragonborn-blue"}
   # A knight in plate, sworn to a cause he doesn't name: a sword and a heater shield (the user, 2026-11-03; was a
   # longsword in both hands). Where Beren blocks, he knocks them down with the shield and walks on in the plate.
@@ -152,13 +155,13 @@ recruits:
     at: [14, 17]
     pitch: "My oath brought me this far south. It will carry me further, beside you, if you have need of steel."
     kit: sword
-    level: 3
+    level: 1
     attrs: {STR: 7, CON: 7, DEX: 5, SPD: 4, INT: 3, WIL: 6, WIS: 4, CHA: 4}
     armorItem: {armor: plate, material: iron}
     weaponItems: [{weapon: longsword, material: steel}, {weapon: dagger}]
     shieldItem: {shield: heater, material: wood}
-    skills: {melee: 4, block: 4, armor: 6, intimidation: 1, persuasion: 1}
-    feats: [plate_mobility, shield_bash, plate_endurance, heavy_weapon_training, iron_stance]
+    skills: [{melee: 4, block: 4, armor: 6, intimidation: 1, persuasion: 1}, {melee: 6, block: 6, armor: 8}, {melee: 8, block: 8, armor: 9}, {athletics: 3, melee: 9}, {block: 9, armor: 10, intimidation: 3, persuasion: 3}]
+    feats: [plate_mobility, shield_bash, plate_endurance, heavy_weapon_training, iron_stance, quick_block, plate_mobility, plate_endurance, toughness, shield_wall, heavy_weapon_training, strength]
     look: {sprite: "art:crusader"}
   # A spellsword: a curved blade, a buckler, and fire to throw.
   - id: spawnee
@@ -168,13 +171,13 @@ recruits:
     at: [7, 19]
     pitch: "Steel when they're close, fire when they're not. I've been waiting for a party worth the walk."
     kit: sword
-    level: 3
+    level: 1
     attrs: {STR: 5, CON: 5, DEX: 6, SPD: 5, INT: 7, WIL: 6, WIS: 3, CHA: 3}
     armorItem: {armor: padded}
     weaponItems: [{weapon: shortsword, material: steel}, {weapon: dagger}]
     shieldItem: {shield: buckler, material: wood}
-    skills: {arcane: 5, melee: 4, block: 3, evasion: 2, perception: 2}
-    feats: [verb_strike, mod_far, verb_take, quick_block, quick_casting]
+    skills: [{arcane: 5, melee: 4, block: 3, evasion: 2, perception: 2}, {arcane: 7, melee: 6, block: 5}, {arcane: 9, melee: 7, block: 6}, {evasion: 4, arcane: 10}, {melee: 9, block: 8, perception: 4}]
+    feats: [verb_strike, mod_far, verb_take, quick_block, quick_casting, fire_affinity, mod_strong, battle_casting, fire_affinity, kindling, mod_wide, firestorm]
     nouns: [fire]
     look: {sprite: "art:spawnee"}
 

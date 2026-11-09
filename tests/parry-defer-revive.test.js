@@ -5,7 +5,8 @@ const assert = require('node:assert/strict');
 const B = require('./load.js');
 const { World, Battle, Combat, Enemies, Magic, Rand, Character: C, CONFIG } = B;
 
-const party = () => World.party(World.create(World.presetParty(), { log: false }));
+// The presets as they stand at level 3 (their plan's first stage: the numbers below).
+const party = () => World.party(World.create(World.presetParty().map((p) => World.settle(p, 3)), { log: false }));
 
 test('skill in defence: parry Melee, dodge Evasion + Anticipation, block half of Block, each against the striker', () => {
   const ps = party();

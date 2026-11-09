@@ -86,6 +86,20 @@
     return { ok: true, lost };
   }
 
+  // Nobody left standing (PROVISIONAL, the user, 2026-11-09, for testing): the heroes among the dead rise where they
+  // wait to be recruited (World.respawnAll), three days on and half the gold gone. The caller takes them to start.yaml's
+  // `go`. Returns { ok, back: [names] }.
+  function riseAgain(world) {
+    const back = W.respawnAll(world);
+    if (!W.living(world).length) return { ok: false, back };
+    const lost = Math.floor(world.gold / 2);
+    world.gold -= lost;
+    W.advance(world, 3 * 1440, { asleep: true });
+    world.explore = null; world.location = null; world.battle = null; world.parley = null;
+    W.logLine(world, `${back.join(', ')} ${back.length === 1 ? 'is' : 'are'} back in the village three days later. ${lost} gold went missing on the way.`, 'hurt');
+    return { ok: true, back, lost };
+  }
+
   // ---- Temple ---------------------------------------------------------------------------
   function heal(world, c, service) {
     const cost = E.healCost(world, c, service);
@@ -197,5 +211,5 @@
     return { ok: true, gold: n * B.gold, lines };
   }
 
-  G.Town = { leftForDead, bountyCfg, bountyDue, collectBounty, autoRoller, sleep, innRest, campRest, heal, raise, trainable, train, useGood };
+  G.Town = { leftForDead, riseAgain, bountyCfg, bountyDue, collectBounty, autoRoller, sleep, innRest, campRest, heal, raise, trainable, train, useGood };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

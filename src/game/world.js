@@ -24,7 +24,8 @@
   };
 
   // spec: { name, attrs, kit, feats: [ids], nouns: [ids], look: {sprite, tint (0-6), ...} }
-  function makeCharacter(spec) {
+  function makeCharacter(spec) { return build(spec).c; }
+  function build(spec) {
     const kits = (content().start || {}).kits || [];
     const kit = kits.find((k) => k.id === spec.kit) || kits[0] || {};
     const c = C.newCharacter({ name: spec.name || 'Adventurer', base: spec.attrs, starterGear: false });
@@ -54,15 +55,25 @@
     }
     if (spec.level > 1) { c.level = spec.level; c.xp = xpFor(spec.level); }
     if (spec.bonusFeats) c.bonusFeats = spec.bonusFeats;
-    // Skills first: they unlock the feats. Points past the budget are not given.
-    for (const [k, n] of Object.entries(spec.skills || {})) for (let i = 0; i < n; i++) if (C.canRaiseSkill(c, k).ok) C.raiseSkill(c, k);
-    for (const f of spec.feats || []) if (C.canTakeFeat(c, f).ok) C.addFeat(c, f);
+    // Skills first: they unlock the feats. A hero's lists are a plan to grow by (start.yaml): skills are raised to
+    // each stage's ranks in order (a map, or a list of maps), feats taken in order, while the level's points last.
+    for (const stage of [].concat(spec.skills || {})) for (const [k, n] of Object.entries(stage)) while (C.skill(c, k) < n && C.canRaiseSkill(c, k).ok) C.raiseSkill(c, k);
+    const taken = [];
+    for (const f of spec.feats || []) if (C.canTakeFeat(c, f).ok) { C.addFeat(c, f); taken.push(f); }
     c.nouns = (spec.nouns || []).slice();
     c.look = Object.assign({ skin: 1, hair: 1, cloth: 0, build: 1, sprite: null, tint: 0 }, spec.look || {}, { kit: spec.kit || (spec.look && spec.look.kit) || null });
-    c.xp = 0;
+    c.xp = xpFor(c.level || 1);
     c.control = 'manual';
     c.stamina = C.maxStamina(c);
-    return c;
+    return { c, taken };
+  }
+
+  // A hero's spec as they stand at their level (or `level`): the plan cut to the feats they hold, in order, and the
+  // skills they have. The New Game editor works on this, so feats past the budget are not flagged as missing.
+  function settle(spec, level) {
+    const s = Object.assign({}, spec, level ? { level } : {});
+    const { c, taken } = build(s);
+    return Object.assign(s, { feats: taken, skills: Object.assign({}, c.skills) });
   }
 
   // The ready-made party in start.yaml (the New Game screen's quick start).
@@ -371,27 +382,32 @@
   // ---- Recruits ------------------------------------------------------------
   // Heroes waiting in a place (start.yaml recruits, and the presets not picked for the party, which have a home square
   // too) who will join: to take a fallen member's place, or into an empty one.
+  // PROVISIONAL (the user, 2026-11-09, for testing): a hero who falls is back at their home square, as their spec
+  // stands, and can be recruited again, so play can go on for ever.
   const recruitDefs = () => heroes().filter((r) => r.id && r.place);
+  const fallenHero = (world, id) => { const c = world.chars[(world.recruited || {})[id]]; return !!c && c.status.dead; };
   function recruits(world, placeId) {
     const taken = world.recruited || {};
-    return recruitDefs().filter((r) => !taken[r.id] && (!placeId || r.place === placeId));
+    return recruitDefs().filter((r) => (!taken[r.id] || fallenHero(world, r.id)) && (!placeId || r.place === placeId));
   }
   // What a recruit could do for this party: the fallen they could replace, and whether there is an empty place.
   function recruitOptions(world) {
     const fallen = party(world).filter((c) => c.status.dead);
     return { fallen, room: world.partyIds.length < cfg().party.size };
   }
-  function recruit(world, id, replaceId) {
+  function recruit(world, id, replaceId, opts) {
     const spec = recruitDefs().find((r) => r.id === id);
     if (!spec) return { ok: false, reason: 'No one by that name.' };
-    if ((world.recruited || {})[id]) return { ok: false, reason: `${spec.name} is already with you.` };
+    if ((world.recruited || {})[id] && !fallenHero(world, id)) return { ok: false, reason: `${spec.name} is already with you.` };
     let slot = -1;
     if (replaceId) {
       slot = world.partyIds.indexOf(replaceId);
       const gone = world.chars[replaceId];
       if (slot < 0 || !gone || !gone.status.dead) return { ok: false, reason: 'Only a fallen member can be replaced.' };
     } else if (world.partyIds.length >= cfg().party.size) return { ok: false, reason: 'The party is full.' };
-    const c = makeCharacter(Object.assign({}, spec, { look: Object.assign({ skin: 1, hair: 1, cloth: 0, build: 1, sprite: null, tint: 0 }, spec.look || {}) }));
+    // They join at the party's level (the highest among the living), grown along their own plan.
+    const level = Math.max(spec.level || 1, (opts && opts.level) || 0, ...living(world).map((x) => x.level || 1));
+    const c = makeCharacter(Object.assign({}, spec, { level, look: Object.assign({ skin: 1, hair: 1, cloth: 0, build: 1, sprite: null, tint: 0 }, spec.look || {}) }));
     world.chars[c.id] = c;
     if (slot >= 0) {
       const gone = world.chars[replaceId];
@@ -407,14 +423,26 @@
     return { ok: true, char: c };
   }
 
+  // Everyone fell (the same testing rule): the heroes among the dead rise in the village, in their own places in the
+  // party, and the party goes on from there. Returns the names of those who came back.
+  function respawnAll(world) {
+    const back = [];
+    for (const [id, cid] of Object.entries(world.recruited || {})) {
+      if (!fallenHero(world, id) || !world.partyIds.includes(cid)) continue;
+      const res = recruit(world, id, cid, { level: world.chars[cid].level });
+      if (res.ok) back.push(res.char.name);
+    }
+    return back;
+  }
+
   G.World = {
-    LOOKS, makeCharacter, presetParty, heroes, trialParty, create, party, living, active,
+    LOOKS, makeCharacter, settle, presetParty, heroes, trialParty, create, party, living, active,
     logLine, advance, clockText, isNight,
     flag, setFlag,
     goodDef, goodCount, addGood, removeGood, loadSupplies, collectSupplies,
     levelFor, xpFor, grantXP,
     questDef, startQuest, updateQuests, giveReward,
     mapState, wiped, syncHero, breather, restAndRepair,
-    recruits, recruitOptions, recruit,
+    recruits, recruitOptions, recruit, respawnAll,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

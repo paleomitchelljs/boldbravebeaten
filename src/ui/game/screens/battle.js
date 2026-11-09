@@ -405,7 +405,7 @@
       const mine = c.side === 'party';
       const ap = enc.ap[id] != null ? Combat.apLeft(enc, id) : null;
       return h('button', { class: `init ${mine ? 'party' : 'enemy'} ${C.isActive(c) ? '' : 'down'} ${id === actor || id === enc.order[enc.turn] ? 'current' : ''} ${enc.turnDone && enc.turnDone[id] ? 'done' : ''}`,
-        title: `${c.name} · stamina ${c.stamina}/${max}${enc.initiative[id] != null ? ` · initiative ${enc.initiative[id]}` : ''}${mine && ap != null ? ` · ${C.fmtAP(ap)} AP left` : ''}${enc.turnDone && enc.turnDone[id] ? ' · turn taken' : ''}`, onclick: () => game.openOverlay('sheet', { id }) },
+        title: `${c.name} · stamina ${c.stamina}/${max}${enc.initiative[id] != null ? (G.CONFIG.apDie ? ` · rolled ${C.fmtAP(enc.apStart[id] || 0)} AP` : ` · initiative ${enc.initiative[id]}`) : ''}${mine && ap != null ? ` · ${C.fmtAP(ap)} AP left` : ''}${enc.turnDone && enc.turnDone[id] ? ' · turn taken' : ''}`, onclick: () => game.openOverlay('sheet', { id }) },
       Sprites.portrait(c, 28), UI.bar(c.stamina, max), mine && ap != null ? h('span', { class: 'init-ap num' }, C.fmtAP(ap)) : null);
     }));
   }
@@ -565,9 +565,10 @@
     return h('div', { class: 'gameover stack' },
       h('div', { class: 'panel stack' },
         h('h1', null, survivors.length ? 'The company falls' : 'None are left'),
-        h('p', { class: 'muted' }, survivors.length ? 'Everyone who could stand is down. The dead are dead. Whatever walks away from a fight like this does not always take its time.' : 'There is no one to carry the dead home.'),
+        h('p', { class: 'muted' }, survivors.length ? 'Everyone who could stand is down. The dead wait in the village to be recruited again. Whatever walks away from a fight like this does not always take its time.' : 'There is no one to carry the dead home. For now, the dead do not stay dead.'),
         h('div', { class: 'row' },
           survivors.length ? h('button', { class: 'primary', onclick: () => { const r = G.Town.leftForDead(w); if (r.ok) { game.save(); game.go('town'); } } }, 'Wake in Stonebridge (lose half your gold)') : null,
+          !survivors.length ? h('button', { class: 'primary', onclick: () => { const r = G.Town.riseAgain(w); if (r.ok) game.travel((G.Content.world.start || {}).go || { to: (G.Content.world.start || {}).place || 'stonebridge' }); } }, 'Rise again in the village (lose half your gold)') : null,
           auto ? h('button', { onclick: () => game.loadWorld(auto.world) }, 'Reload the last autosave') : null,
           h('button', { onclick: () => game.go('title') }, 'Title screen'))));
   };
