@@ -180,11 +180,43 @@
               "with_lava-orange_red/animations/Walk/south-west/frame_004.png",
               "with_lava-orange_red/animations/Walk/south-west/frame_005.png"
             ]
+          },
+          "Idle": {
+            "east": [
+              "with_lava-orange_red/animations/Idle/east/frame_000.png",
+              "with_lava-orange_red/animations/Idle/east/frame_001.png",
+              "with_lava-orange_red/animations/Idle/east/frame_002.png",
+              "with_lava-orange_red/animations/Idle/east/frame_003.png"
+            ],
+            "north-east": [
+              "with_lava-orange_red/animations/Idle/north-east/frame_000.png",
+              "with_lava-orange_red/animations/Idle/north-east/frame_001.png",
+              "with_lava-orange_red/animations/Idle/north-east/frame_002.png",
+              "with_lava-orange_red/animations/Idle/north-east/frame_003.png"
+            ],
+            "south": [
+              "with_lava-orange_red/animations/Idle/south/frame_000.png",
+              "with_lava-orange_red/animations/Idle/south/frame_001.png",
+              "with_lava-orange_red/animations/Idle/south/frame_002.png",
+              "with_lava-orange_red/animations/Idle/south/frame_003.png"
+            ],
+            "south-east": [
+              "with_lava-orange_red/animations/Idle/south-east/frame_000.png",
+              "with_lava-orange_red/animations/Idle/south-east/frame_001.png",
+              "with_lava-orange_red/animations/Idle/south-east/frame_002.png",
+              "with_lava-orange_red/animations/Idle/south-east/frame_003.png"
+            ],
+            "north": [
+              "with_lava-orange_red/animations/Idle/north/frame_000.png",
+              "with_lava-orange_red/animations/Idle/north/frame_001.png",
+              "with_lava-orange_red/animations/Idle/north/frame_002.png",
+              "with_lava-orange_red/animations/Idle/north/frame_003.png"
+            ]
           }
         }
       }
     }
   ],
   "export_version": "3.1",
-  "export_date": "2026-11-05T05:42:40.402885"
+  "export_date": "2026-11-09T00:36:06.470214"
 }

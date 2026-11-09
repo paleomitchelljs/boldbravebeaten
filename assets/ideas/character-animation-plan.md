@@ -278,3 +278,20 @@ Nagafen (168-232 px: costly), the Sarnak, Burynai, Daedroth, guar, werewolf, Kre
 
 | Character | Clip | How | Charged |
 |---|---|---|---|
+| Goblin king | strike ×8 (sceptre blow), death, walk ×8 (v3), idle ×8 (v3) | N, NW lost the sceptre, SW turned into a fireball: re-rolled ("the sceptre always visible, no magic"). His SW standing view holds no sceptre, so the SW strike draws one in | 11 + 1 + 8 + 8 |
+| Orc emperor | strike ×8 (spear thrust), death, walk ×8 (v3), idle ×8 | NW lost the spear, W thrust behind him: re-rolled. The template idle dropped the spear in SE, E, NE, N, SW: those redone in v3 | 10 + 1 + 8 + 13 |
+| Ambassador | strike ×8 (curved-sword cut), death, walk ×8 (v3), idle ×8 (v3) | E re-rolled twice (a burst of fire; a white arc that hid the blade); the third ends turned away: its last frame is frame 0 in the repo (a re-pull brings it back). The S strike flashes white at the tip for a frame | 10 + 1 + 8 + 8 |
+| Orc, chain-mail state | punch ×5, death, walk ×8 (template), idle ×5 (template) | E punched backwards: re-rolled | 6 + 1 + 8 + 5 |
+| Gnome miner | pick blow ×8, death, walk ×8 (v3), idle ×8 (v3) | SW ended in a white swirl: re-rolled | 9 + 1 + 8 + 8 |
+| Gnome surveyor, gnome surveyor (woman) | walk ×8 (template), shove ×5, death, idle ×5 (template) each | good | 19 + 19 |
+| Clockwork gnome | punch ×5, death, walk ×8 (template), idle ×5 | the first death stood still: re-rolled ("topples over backwards") | 5 + 2 + 8 + 5 |
+| Bronze clockwork spider | bite ×5, scuttle ×5 (v3), idle ×5 (v3); no death | the first bite barely moved (re-rolled as a lunge). Three deaths ("collapses", "legs fold", "flips onto its back") all left it standing: dropped, so a dead spider is its standing view on its side | 6 + 3 + 5 + 5 |
+| Goblin warlord | idle SE, E, NE, N (v3, halberd) | good | 4 |
+| Goblin shaman | idle ×5 (template) | good | 5 |
+| Fae drake | death (south: wings fold, it drops) | good | 1 |
+| | | balance 1358 (220 spent) | |
+
+Left for later (the user's other new figures, not in the two areas): the fire giant, Nagafen (168-232 px), the Sarnak
+(and its ghost and skeleton), the Burynai and its warrior, the Daedroth (three states), the guar (two), the werewolf,
+Kregon, Krump without a sword, the minotaur with a double axe, the black widow's long-legged state, the spear snake
+person, the gnoll's white state; the efreeti's idle (it floats, so its `Float` plays standing).

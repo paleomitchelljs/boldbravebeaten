@@ -127,6 +127,17 @@
               "Idle/animations/Strike/south/frame_006.png"
             ]
           },
+          "Death": {
+            "south": [
+              "Idle/animations/Death/south/frame_000.png",
+              "Idle/animations/Death/south/frame_001.png",
+              "Idle/animations/Death/south/frame_002.png",
+              "Idle/animations/Death/south/frame_003.png",
+              "Idle/animations/Death/south/frame_004.png",
+              "Idle/animations/Death/south/frame_005.png",
+              "Idle/animations/Death/south/frame_006.png"
+            ]
+          },
           "Idle": {
             "south": [
               "Idle/animations/Idle/south/frame_000.png",
@@ -144,5 +155,5 @@
     }
   ],
   "export_version": "3.1",
-  "export_date": "2026-11-05T05:48:04.160449"
+  "export_date": "2026-11-09T00:34:53.171075"
 }

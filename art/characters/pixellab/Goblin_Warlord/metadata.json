@@ -135,11 +135,35 @@
             ]
           },
           "Idle": {
+            "south-east": [
+              "Lava-orange-red_skin/animations/Idle/south-east/frame_000.png",
+              "Lava-orange-red_skin/animations/Idle/south-east/frame_001.png",
+              "Lava-orange-red_skin/animations/Idle/south-east/frame_002.png",
+              "Lava-orange-red_skin/animations/Idle/south-east/frame_003.png"
+            ],
+            "north": [
+              "Lava-orange-red_skin/animations/Idle/north/frame_000.png",
+              "Lava-orange-red_skin/animations/Idle/north/frame_001.png",
+              "Lava-orange-red_skin/animations/Idle/north/frame_002.png",
+              "Lava-orange-red_skin/animations/Idle/north/frame_003.png"
+            ],
             "south": [
               "Lava-orange-red_skin/animations/Idle/south/frame_000.png",
               "Lava-orange-red_skin/animations/Idle/south/frame_001.png",
               "Lava-orange-red_skin/animations/Idle/south/frame_002.png",
               "Lava-orange-red_skin/animations/Idle/south/frame_003.png"
+            ],
+            "north-east": [
+              "Lava-orange-red_skin/animations/Idle/north-east/frame_000.png",
+              "Lava-orange-red_skin/animations/Idle/north-east/frame_001.png",
+              "Lava-orange-red_skin/animations/Idle/north-east/frame_002.png",
+              "Lava-orange-red_skin/animations/Idle/north-east/frame_003.png"
+            ],
+            "east": [
+              "Lava-orange-red_skin/animations/Idle/east/frame_000.png",
+              "Lava-orange-red_skin/animations/Idle/east/frame_001.png",
+              "Lava-orange-red_skin/animations/Idle/east/frame_002.png",
+              "Lava-orange-red_skin/animations/Idle/east/frame_003.png"
             ]
           },
           "Strike": {
@@ -194,5 +218,5 @@
     }
   ],
   "export_version": "3.1",
-  "export_date": "2026-11-05T05:40:21.422164"
+  "export_date": "2026-11-09T00:34:52.498391"
 }

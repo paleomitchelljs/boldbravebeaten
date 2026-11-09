@@ -983,7 +983,7 @@ orcEmissary:
   faction: orc_legion
   xp: 80
   glyph: "👹"
-  sprite: {art: orc-warrior, kind: orc_warrior, scale: 1}
+  sprite: {art: ambassador, kind: orc_warrior, scale: 1}
   loot: humanoid_purse
   level: 4
   attrs: {STR: 7, CON: 7, DEX: 7, SPD: 6, INT: 7, WIL: 6, WIS: 6, CHA: 7}

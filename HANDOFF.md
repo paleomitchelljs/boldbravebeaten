@@ -4,6 +4,20 @@ Last updated at commit: 5bd9bd3
 
 Keep this a short list. Tick things off, add new ones, and refresh the commit line after every push (`git log -1 --format=%h`).
 
+## Animations for the mine's and the orc valley's new figures (the user, 2026-11-08; ledger in assets/ideas/character-animation-plan.md, cycle 4)
+- [x] Walk, strike, death and idle for the goblin king, orc emperor, ambassador, the orc's chain-mail state, the gnome
+  miner, both gnome surveyors, the clockwork gnome; the clockwork spider (no death: three tries stayed standing).
+  Mine leftovers: warlord idle ×5, shaman idle ×5, fae drake death. 220 generations; 1358 left (refill 2026-11-24).
+- [x] Wired: `goblinKing` → goblin-king, `orcEmperor` → orc-emperor, `orcEmissary` → ambassador, `orcCenturion` →
+  orc-mail, `gnomeWarrior` and the gnome sergeant, eastwatch and prisoner → gnome-miner, the warden → gnome-surveyor.
+  Seen in headless Chrome in a fight in the orc castle.
+- [ ] Not used yet: the clockwork gnome, the clockwork spider, the woman surveyor (no monster or NPC is theirs). Ask
+  whether they get monsters (the gnome fort's guards?) or NPCs.
+- [ ] The emperor's blurb says a warhammer; his figure carries a barbed spear. Change one? Ask.
+- [ ] The legionnaire and slaver still use the caped orc; the warlord and prophet the orc warrior and a tinted orc.
+- [ ] The user's other new figures (fire giant, Nagafen, Sarnak, Burynai, Daedroth, guar, werewolf, Kregon, extra
+  states): not animated. Listed in art/characters/pixellab/README.md.
+
 ## The spell words (the user, 2026-11-08; design and rulings in docs/PROPOSALS.md §4)
 - [x] spells.yaml rebuilt: 9 verbs (Strike, Give, Take, Move, Raise, Bind, Summon, Shape, See), 15 nouns (Fire, Frost,
   Storm, Decay, Force, Earth, Life, Death, Speed, Might, Grace, Mind, Shadow, Magic, Outsider) and a Name, 6 modifiers
