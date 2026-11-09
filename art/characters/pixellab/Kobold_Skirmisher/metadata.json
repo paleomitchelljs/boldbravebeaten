@@ -1,0 +1,237 @@
+{
+  "group_id": "46c923d9-7af5-4738-8896-dc6c175ddea3",
+  "states": [
+    {
+      "character": {
+        "id": "23abdb68-86a0-4a8d-ba01-fd04e72c0464",
+        "name": "wielding a bronze ra",
+        "prompt": "A short humanoid with digitigrade feet and dragon-person body shape and proportions",
+        "size": {
+          "width": 48,
+          "height": 48
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-09T03:15:05.657801+00:00"
+      },
+      "folder": "wielding_a_bronze_ra",
+      "frames": {
+        "rotations": {
+          "south": "wielding_a_bronze_ra/rotations/south.png",
+          "south-east": "wielding_a_bronze_ra/rotations/south-east.png",
+          "east": "wielding_a_bronze_ra/rotations/east.png",
+          "north-east": "wielding_a_bronze_ra/rotations/north-east.png",
+          "north": "wielding_a_bronze_ra/rotations/north.png",
+          "north-west": "wielding_a_bronze_ra/rotations/north-west.png",
+          "west": "wielding_a_bronze_ra/rotations/west.png",
+          "south-west": "wielding_a_bronze_ra/rotations/south-west.png"
+        },
+        "animations": {
+          "Strike": {
+            "south-west": [
+              "wielding_a_bronze_ra/animations/Strike/south-west/frame_000.png",
+              "wielding_a_bronze_ra/animations/Strike/south-west/frame_001.png",
+              "wielding_a_bronze_ra/animations/Strike/south-west/frame_002.png",
+              "wielding_a_bronze_ra/animations/Strike/south-west/frame_003.png",
+              "wielding_a_bronze_ra/animations/Strike/south-west/frame_004.png",
+              "wielding_a_bronze_ra/animations/Strike/south-west/frame_005.png",
+              "wielding_a_bronze_ra/animations/Strike/south-west/frame_006.png"
+            ],
+            "south-east": [
+              "wielding_a_bronze_ra/animations/Strike/south-east/frame_000.png",
+              "wielding_a_bronze_ra/animations/Strike/south-east/frame_001.png",
+              "wielding_a_bronze_ra/animations/Strike/south-east/frame_002.png",
+              "wielding_a_bronze_ra/animations/Strike/south-east/frame_003.png",
+              "wielding_a_bronze_ra/animations/Strike/south-east/frame_004.png",
+              "wielding_a_bronze_ra/animations/Strike/south-east/frame_005.png",
+              "wielding_a_bronze_ra/animations/Strike/south-east/frame_006.png"
+            ],
+            "west": [
+              "wielding_a_bronze_ra/animations/Strike/west/frame_000.png",
+              "wielding_a_bronze_ra/animations/Strike/west/frame_001.png",
+              "wielding_a_bronze_ra/animations/Strike/west/frame_002.png",
+              "wielding_a_bronze_ra/animations/Strike/west/frame_003.png",
+              "wielding_a_bronze_ra/animations/Strike/west/frame_004.png",
+              "wielding_a_bronze_ra/animations/Strike/west/frame_005.png",
+              "wielding_a_bronze_ra/animations/Strike/west/frame_006.png"
+            ],
+            "east": [
+              "wielding_a_bronze_ra/animations/Strike/east/frame_000.png",
+              "wielding_a_bronze_ra/animations/Strike/east/frame_001.png",
+              "wielding_a_bronze_ra/animations/Strike/east/frame_002.png",
+              "wielding_a_bronze_ra/animations/Strike/east/frame_003.png",
+              "wielding_a_bronze_ra/animations/Strike/east/frame_004.png",
+              "wielding_a_bronze_ra/animations/Strike/east/frame_005.png",
+              "wielding_a_bronze_ra/animations/Strike/east/frame_006.png"
+            ],
+            "north-east": [
+              "wielding_a_bronze_ra/animations/Strike/north-east/frame_000.png",
+              "wielding_a_bronze_ra/animations/Strike/north-east/frame_001.png",
+              "wielding_a_bronze_ra/animations/Strike/north-east/frame_002.png",
+              "wielding_a_bronze_ra/animations/Strike/north-east/frame_003.png",
+              "wielding_a_bronze_ra/animations/Strike/north-east/frame_004.png",
+              "wielding_a_bronze_ra/animations/Strike/north-east/frame_005.png",
+              "wielding_a_bronze_ra/animations/Strike/north-east/frame_006.png"
+            ],
+            "north": [
+              "wielding_a_bronze_ra/animations/Strike/north/frame_000.png",
+              "wielding_a_bronze_ra/animations/Strike/north/frame_001.png",
+              "wielding_a_bronze_ra/animations/Strike/north/frame_002.png",
+              "wielding_a_bronze_ra/animations/Strike/north/frame_003.png",
+              "wielding_a_bronze_ra/animations/Strike/north/frame_004.png",
+              "wielding_a_bronze_ra/animations/Strike/north/frame_005.png",
+              "wielding_a_bronze_ra/animations/Strike/north/frame_006.png"
+            ],
+            "south": [
+              "wielding_a_bronze_ra/animations/Strike/south/frame_000.png",
+              "wielding_a_bronze_ra/animations/Strike/south/frame_001.png",
+              "wielding_a_bronze_ra/animations/Strike/south/frame_002.png",
+              "wielding_a_bronze_ra/animations/Strike/south/frame_003.png",
+              "wielding_a_bronze_ra/animations/Strike/south/frame_004.png",
+              "wielding_a_bronze_ra/animations/Strike/south/frame_005.png",
+              "wielding_a_bronze_ra/animations/Strike/south/frame_006.png"
+            ],
+            "north-west": [
+              "wielding_a_bronze_ra/animations/Strike/north-west/frame_000.png",
+              "wielding_a_bronze_ra/animations/Strike/north-west/frame_001.png",
+              "wielding_a_bronze_ra/animations/Strike/north-west/frame_002.png",
+              "wielding_a_bronze_ra/animations/Strike/north-west/frame_003.png",
+              "wielding_a_bronze_ra/animations/Strike/north-west/frame_004.png",
+              "wielding_a_bronze_ra/animations/Strike/north-west/frame_005.png",
+              "wielding_a_bronze_ra/animations/Strike/north-west/frame_006.png"
+            ]
+          },
+          "Death": {
+            "south": [
+              "wielding_a_bronze_ra/animations/Death/south/frame_000.png",
+              "wielding_a_bronze_ra/animations/Death/south/frame_001.png",
+              "wielding_a_bronze_ra/animations/Death/south/frame_002.png",
+              "wielding_a_bronze_ra/animations/Death/south/frame_003.png",
+              "wielding_a_bronze_ra/animations/Death/south/frame_004.png",
+              "wielding_a_bronze_ra/animations/Death/south/frame_005.png",
+              "wielding_a_bronze_ra/animations/Death/south/frame_006.png"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "character": {
+        "id": "0d373ddd-1578-4e22-8aeb-372973257432",
+        "name": "wearing mottled leat",
+        "prompt": "A short humanoid with digitigrade feet and dragon-person body shape and proportions",
+        "size": {
+          "width": 48,
+          "height": 48
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-09T03:28:50.918530+00:00"
+      },
+      "folder": "wearing_mottled_leat",
+      "frames": {
+        "rotations": {
+          "south": "wearing_mottled_leat/rotations/south.png",
+          "south-east": "wearing_mottled_leat/rotations/south-east.png",
+          "east": "wearing_mottled_leat/rotations/east.png",
+          "north-east": "wearing_mottled_leat/rotations/north-east.png",
+          "north": "wearing_mottled_leat/rotations/north.png",
+          "north-west": "wearing_mottled_leat/rotations/north-west.png",
+          "west": "wearing_mottled_leat/rotations/west.png",
+          "south-west": "wearing_mottled_leat/rotations/south-west.png"
+        },
+        "animations": {
+          "Strike": {
+            "west": [
+              "wearing_mottled_leat/animations/Strike/west/frame_000.png",
+              "wearing_mottled_leat/animations/Strike/west/frame_001.png",
+              "wearing_mottled_leat/animations/Strike/west/frame_002.png",
+              "wearing_mottled_leat/animations/Strike/west/frame_003.png",
+              "wearing_mottled_leat/animations/Strike/west/frame_004.png",
+              "wearing_mottled_leat/animations/Strike/west/frame_005.png",
+              "wearing_mottled_leat/animations/Strike/west/frame_006.png"
+            ],
+            "north": [
+              "wearing_mottled_leat/animations/Strike/north/frame_000.png",
+              "wearing_mottled_leat/animations/Strike/north/frame_001.png",
+              "wearing_mottled_leat/animations/Strike/north/frame_002.png",
+              "wearing_mottled_leat/animations/Strike/north/frame_003.png",
+              "wearing_mottled_leat/animations/Strike/north/frame_004.png",
+              "wearing_mottled_leat/animations/Strike/north/frame_005.png",
+              "wearing_mottled_leat/animations/Strike/north/frame_006.png"
+            ],
+            "north-east": [
+              "wearing_mottled_leat/animations/Strike/north-east/frame_000.png",
+              "wearing_mottled_leat/animations/Strike/north-east/frame_001.png",
+              "wearing_mottled_leat/animations/Strike/north-east/frame_002.png",
+              "wearing_mottled_leat/animations/Strike/north-east/frame_003.png",
+              "wearing_mottled_leat/animations/Strike/north-east/frame_004.png",
+              "wearing_mottled_leat/animations/Strike/north-east/frame_005.png",
+              "wearing_mottled_leat/animations/Strike/north-east/frame_006.png"
+            ],
+            "north-west": [
+              "wearing_mottled_leat/animations/Strike/north-west/frame_000.png",
+              "wearing_mottled_leat/animations/Strike/north-west/frame_001.png",
+              "wearing_mottled_leat/animations/Strike/north-west/frame_002.png",
+              "wearing_mottled_leat/animations/Strike/north-west/frame_003.png",
+              "wearing_mottled_leat/animations/Strike/north-west/frame_004.png",
+              "wearing_mottled_leat/animations/Strike/north-west/frame_005.png",
+              "wearing_mottled_leat/animations/Strike/north-west/frame_006.png"
+            ],
+            "south-west": [
+              "wearing_mottled_leat/animations/Strike/south-west/frame_000.png",
+              "wearing_mottled_leat/animations/Strike/south-west/frame_001.png",
+              "wearing_mottled_leat/animations/Strike/south-west/frame_002.png",
+              "wearing_mottled_leat/animations/Strike/south-west/frame_003.png",
+              "wearing_mottled_leat/animations/Strike/south-west/frame_004.png",
+              "wearing_mottled_leat/animations/Strike/south-west/frame_005.png",
+              "wearing_mottled_leat/animations/Strike/south-west/frame_006.png"
+            ],
+            "east": [
+              "wearing_mottled_leat/animations/Strike/east/frame_000.png",
+              "wearing_mottled_leat/animations/Strike/east/frame_001.png",
+              "wearing_mottled_leat/animations/Strike/east/frame_002.png",
+              "wearing_mottled_leat/animations/Strike/east/frame_003.png",
+              "wearing_mottled_leat/animations/Strike/east/frame_004.png",
+              "wearing_mottled_leat/animations/Strike/east/frame_005.png",
+              "wearing_mottled_leat/animations/Strike/east/frame_006.png"
+            ],
+            "south-east": [
+              "wearing_mottled_leat/animations/Strike/south-east/frame_000.png",
+              "wearing_mottled_leat/animations/Strike/south-east/frame_001.png",
+              "wearing_mottled_leat/animations/Strike/south-east/frame_002.png",
+              "wearing_mottled_leat/animations/Strike/south-east/frame_003.png",
+              "wearing_mottled_leat/animations/Strike/south-east/frame_004.png",
+              "wearing_mottled_leat/animations/Strike/south-east/frame_005.png",
+              "wearing_mottled_leat/animations/Strike/south-east/frame_006.png"
+            ],
+            "south": [
+              "wearing_mottled_leat/animations/Strike/south/frame_000.png",
+              "wearing_mottled_leat/animations/Strike/south/frame_001.png",
+              "wearing_mottled_leat/animations/Strike/south/frame_002.png",
+              "wearing_mottled_leat/animations/Strike/south/frame_003.png",
+              "wearing_mottled_leat/animations/Strike/south/frame_004.png",
+              "wearing_mottled_leat/animations/Strike/south/frame_005.png",
+              "wearing_mottled_leat/animations/Strike/south/frame_006.png"
+            ]
+          },
+          "Death": {
+            "south": [
+              "wearing_mottled_leat/animations/Death/south/frame_000.png",
+              "wearing_mottled_leat/animations/Death/south/frame_001.png",
+              "wearing_mottled_leat/animations/Death/south/frame_002.png",
+              "wearing_mottled_leat/animations/Death/south/frame_003.png",
+              "wearing_mottled_leat/animations/Death/south/frame_004.png",
+              "wearing_mottled_leat/animations/Death/south/frame_005.png",
+              "wearing_mottled_leat/animations/Death/south/frame_006.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-11-09T04:04:01.806873"
+}

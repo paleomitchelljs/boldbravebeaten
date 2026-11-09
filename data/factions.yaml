@@ -87,6 +87,15 @@ deep_gnomes:
   enemies: [cinder_goblins]
   ranks: [[0, Stranger], [10, Friend of the fort], [30, Rock-brother]]
   perks: [[10, The fort's gate opens to you]]
+kobolds:
+  name: The kobolds
+  blurb: The kobolds of the mine's outer caves, sworn guardians of the dragon below. At war with the goblins; they kill any intruder without a word.
+  start: -20
+  kos: 0
+  allies: []
+  enemies: [cinder_goblins, deep_gnomes]
+  ranks: [[-20, Trespasser]]
+  perks: []
 fire_giants:
   name: The fire giants
   blurb: The giants of the basalt citadel at the bottom of the mine, who keep the great dragon's gate and its peace. They suffer no one in their city.

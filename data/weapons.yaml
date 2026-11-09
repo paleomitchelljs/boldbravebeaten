@@ -239,6 +239,21 @@ warhammer:
   rarity: rare
   hook: true
   notes: "Anti-armor: the head carries through plate; the beak bursts any mail, iron plate on a two-handed blow, hardened steel only on a strong power blow."
+greatAxe:
+  phys: {mass: 2.6, length: 1.4, edge: 1.2}
+  name: Great axe
+  hands: 2
+  weight: heavy
+  reach: {swing: 2}
+  reachName: "swing 2"
+  material: steel
+  durability: 100
+  fragility: 0.9
+  faces: {edge: [0, 10, 3]}
+  motions: [twoHanded, power]
+  rarity: rare
+  hook: true
+  notes: "A broad bearded blade on a long haft: a heavy cleaving swing, and the beard hooks a shield or a leg. No thrust."
 shortSpear:
   phys: {mass: 0.8, length: 1.4, point: {depth: 22, width: 4}}
   name: Short spear

@@ -1,0 +1,325 @@
+{
+  "group_id": "93ef2ba7-a277-48a1-9694-4ba07d3d7e24",
+  "states": [
+    {
+      "character": {
+        "id": "20fd3de0-3dfb-4afc-a56d-47592d3bc3e5",
+        "name": "wearing patchwork br",
+        "prompt": "A short humanoid with digitigrade feet and dragon-person body shape and proportions",
+        "size": {
+          "width": 48,
+          "height": 48
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-09T03:04:04.918510+00:00"
+      },
+      "folder": "wearing_patchwork_br",
+      "frames": {
+        "rotations": {
+          "south": "wearing_patchwork_br/rotations/south.png",
+          "south-east": "wearing_patchwork_br/rotations/south-east.png",
+          "east": "wearing_patchwork_br/rotations/east.png",
+          "north-east": "wearing_patchwork_br/rotations/north-east.png",
+          "north": "wearing_patchwork_br/rotations/north.png",
+          "north-west": "wearing_patchwork_br/rotations/north-west.png",
+          "west": "wearing_patchwork_br/rotations/west.png",
+          "south-west": "wearing_patchwork_br/rotations/south-west.png"
+        },
+        "animations": {
+          "Strike": {
+            "north": [
+              "wearing_patchwork_br/animations/Strike/north/frame_000.png",
+              "wearing_patchwork_br/animations/Strike/north/frame_001.png",
+              "wearing_patchwork_br/animations/Strike/north/frame_002.png",
+              "wearing_patchwork_br/animations/Strike/north/frame_003.png",
+              "wearing_patchwork_br/animations/Strike/north/frame_004.png",
+              "wearing_patchwork_br/animations/Strike/north/frame_005.png",
+              "wearing_patchwork_br/animations/Strike/north/frame_006.png"
+            ],
+            "south": [
+              "wearing_patchwork_br/animations/Strike/south/frame_000.png",
+              "wearing_patchwork_br/animations/Strike/south/frame_001.png",
+              "wearing_patchwork_br/animations/Strike/south/frame_002.png",
+              "wearing_patchwork_br/animations/Strike/south/frame_003.png",
+              "wearing_patchwork_br/animations/Strike/south/frame_004.png",
+              "wearing_patchwork_br/animations/Strike/south/frame_005.png",
+              "wearing_patchwork_br/animations/Strike/south/frame_006.png"
+            ],
+            "north-east": [
+              "wearing_patchwork_br/animations/Strike/north-east/frame_000.png",
+              "wearing_patchwork_br/animations/Strike/north-east/frame_001.png",
+              "wearing_patchwork_br/animations/Strike/north-east/frame_002.png",
+              "wearing_patchwork_br/animations/Strike/north-east/frame_003.png",
+              "wearing_patchwork_br/animations/Strike/north-east/frame_004.png",
+              "wearing_patchwork_br/animations/Strike/north-east/frame_005.png",
+              "wearing_patchwork_br/animations/Strike/north-east/frame_006.png"
+            ],
+            "south-east": [
+              "wearing_patchwork_br/animations/Strike/south-east/frame_000.png",
+              "wearing_patchwork_br/animations/Strike/south-east/frame_001.png",
+              "wearing_patchwork_br/animations/Strike/south-east/frame_002.png",
+              "wearing_patchwork_br/animations/Strike/south-east/frame_003.png",
+              "wearing_patchwork_br/animations/Strike/south-east/frame_004.png",
+              "wearing_patchwork_br/animations/Strike/south-east/frame_005.png",
+              "wearing_patchwork_br/animations/Strike/south-east/frame_006.png"
+            ],
+            "east": [
+              "wearing_patchwork_br/animations/Strike/east/frame_000.png",
+              "wearing_patchwork_br/animations/Strike/east/frame_001.png",
+              "wearing_patchwork_br/animations/Strike/east/frame_002.png",
+              "wearing_patchwork_br/animations/Strike/east/frame_003.png",
+              "wearing_patchwork_br/animations/Strike/east/frame_004.png",
+              "wearing_patchwork_br/animations/Strike/east/frame_005.png",
+              "wearing_patchwork_br/animations/Strike/east/frame_006.png"
+            ]
+          },
+          "Death": {
+            "south": [
+              "wearing_patchwork_br/animations/Death/south/frame_000.png",
+              "wearing_patchwork_br/animations/Death/south/frame_001.png",
+              "wearing_patchwork_br/animations/Death/south/frame_002.png",
+              "wearing_patchwork_br/animations/Death/south/frame_003.png",
+              "wearing_patchwork_br/animations/Death/south/frame_004.png",
+              "wearing_patchwork_br/animations/Death/south/frame_005.png",
+              "wearing_patchwork_br/animations/Death/south/frame_006.png"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "character": {
+        "id": "0d0b2ef6-9411-4043-9de4-91473f0bd18f",
+        "name": "holding a short spea",
+        "prompt": "A short humanoid with digitigrade feet and dragon-person body shape and proportions",
+        "size": {
+          "width": 48,
+          "height": 48
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-09T03:13:32.388349+00:00"
+      },
+      "folder": "holding_a_short_spea",
+      "frames": {
+        "rotations": {
+          "south": "holding_a_short_spea/rotations/south.png",
+          "south-east": "holding_a_short_spea/rotations/south-east.png",
+          "east": "holding_a_short_spea/rotations/east.png",
+          "north-east": "holding_a_short_spea/rotations/north-east.png",
+          "north": "holding_a_short_spea/rotations/north.png",
+          "north-west": "holding_a_short_spea/rotations/north-west.png",
+          "west": "holding_a_short_spea/rotations/west.png",
+          "south-west": "holding_a_short_spea/rotations/south-west.png"
+        },
+        "animations": {
+          "Death": {
+            "south": [
+              "holding_a_short_spea/animations/Death/south/frame_000.png",
+              "holding_a_short_spea/animations/Death/south/frame_001.png",
+              "holding_a_short_spea/animations/Death/south/frame_002.png",
+              "holding_a_short_spea/animations/Death/south/frame_003.png",
+              "holding_a_short_spea/animations/Death/south/frame_004.png",
+              "holding_a_short_spea/animations/Death/south/frame_005.png",
+              "holding_a_short_spea/animations/Death/south/frame_006.png"
+            ]
+          },
+          "Strike": {
+            "east": [
+              "holding_a_short_spea/animations/Strike/east/frame_000.png",
+              "holding_a_short_spea/animations/Strike/east/frame_001.png",
+              "holding_a_short_spea/animations/Strike/east/frame_002.png",
+              "holding_a_short_spea/animations/Strike/east/frame_003.png",
+              "holding_a_short_spea/animations/Strike/east/frame_004.png",
+              "holding_a_short_spea/animations/Strike/east/frame_005.png",
+              "holding_a_short_spea/animations/Strike/east/frame_006.png"
+            ],
+            "north-east": [
+              "holding_a_short_spea/animations/Strike/north-east/frame_000.png",
+              "holding_a_short_spea/animations/Strike/north-east/frame_001.png",
+              "holding_a_short_spea/animations/Strike/north-east/frame_002.png",
+              "holding_a_short_spea/animations/Strike/north-east/frame_003.png",
+              "holding_a_short_spea/animations/Strike/north-east/frame_004.png",
+              "holding_a_short_spea/animations/Strike/north-east/frame_005.png",
+              "holding_a_short_spea/animations/Strike/north-east/frame_006.png"
+            ],
+            "north-west": [
+              "holding_a_short_spea/animations/Strike/north-west/frame_000.png",
+              "holding_a_short_spea/animations/Strike/north-west/frame_001.png",
+              "holding_a_short_spea/animations/Strike/north-west/frame_002.png",
+              "holding_a_short_spea/animations/Strike/north-west/frame_003.png",
+              "holding_a_short_spea/animations/Strike/north-west/frame_004.png",
+              "holding_a_short_spea/animations/Strike/north-west/frame_005.png",
+              "holding_a_short_spea/animations/Strike/north-west/frame_006.png"
+            ],
+            "south-east": [
+              "holding_a_short_spea/animations/Strike/south-east/frame_000.png",
+              "holding_a_short_spea/animations/Strike/south-east/frame_001.png",
+              "holding_a_short_spea/animations/Strike/south-east/frame_002.png",
+              "holding_a_short_spea/animations/Strike/south-east/frame_003.png",
+              "holding_a_short_spea/animations/Strike/south-east/frame_004.png",
+              "holding_a_short_spea/animations/Strike/south-east/frame_005.png",
+              "holding_a_short_spea/animations/Strike/south-east/frame_006.png"
+            ],
+            "west": [
+              "holding_a_short_spea/animations/Strike/west/frame_000.png",
+              "holding_a_short_spea/animations/Strike/west/frame_001.png",
+              "holding_a_short_spea/animations/Strike/west/frame_002.png",
+              "holding_a_short_spea/animations/Strike/west/frame_003.png",
+              "holding_a_short_spea/animations/Strike/west/frame_004.png",
+              "holding_a_short_spea/animations/Strike/west/frame_005.png",
+              "holding_a_short_spea/animations/Strike/west/frame_006.png"
+            ],
+            "north": [
+              "holding_a_short_spea/animations/Strike/north/frame_000.png",
+              "holding_a_short_spea/animations/Strike/north/frame_001.png",
+              "holding_a_short_spea/animations/Strike/north/frame_002.png",
+              "holding_a_short_spea/animations/Strike/north/frame_003.png",
+              "holding_a_short_spea/animations/Strike/north/frame_004.png",
+              "holding_a_short_spea/animations/Strike/north/frame_005.png",
+              "holding_a_short_spea/animations/Strike/north/frame_006.png"
+            ],
+            "south": [
+              "holding_a_short_spea/animations/Strike/south/frame_000.png",
+              "holding_a_short_spea/animations/Strike/south/frame_001.png",
+              "holding_a_short_spea/animations/Strike/south/frame_002.png",
+              "holding_a_short_spea/animations/Strike/south/frame_003.png",
+              "holding_a_short_spea/animations/Strike/south/frame_004.png",
+              "holding_a_short_spea/animations/Strike/south/frame_005.png",
+              "holding_a_short_spea/animations/Strike/south/frame_006.png"
+            ],
+            "south-west": [
+              "holding_a_short_spea/animations/Strike/south-west/frame_000.png",
+              "holding_a_short_spea/animations/Strike/south-west/frame_001.png",
+              "holding_a_short_spea/animations/Strike/south-west/frame_002.png",
+              "holding_a_short_spea/animations/Strike/south-west/frame_003.png",
+              "holding_a_short_spea/animations/Strike/south-west/frame_004.png",
+              "holding_a_short_spea/animations/Strike/south-west/frame_005.png",
+              "holding_a_short_spea/animations/Strike/south-west/frame_006.png"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "character": {
+        "id": "80653106-3447-4dc5-a2fa-82c39321869f",
+        "name": "holding a bone bow",
+        "prompt": "A short humanoid with digitigrade feet and dragon-person body shape and proportions",
+        "size": {
+          "width": 48,
+          "height": 48
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-09T03:13:52.885887+00:00"
+      },
+      "folder": "holding_a_bone_bow",
+      "frames": {
+        "rotations": {
+          "south": "holding_a_bone_bow/rotations/south.png",
+          "south-east": "holding_a_bone_bow/rotations/south-east.png",
+          "east": "holding_a_bone_bow/rotations/east.png",
+          "north-east": "holding_a_bone_bow/rotations/north-east.png",
+          "north": "holding_a_bone_bow/rotations/north.png",
+          "north-west": "holding_a_bone_bow/rotations/north-west.png",
+          "west": "holding_a_bone_bow/rotations/west.png",
+          "south-west": "holding_a_bone_bow/rotations/south-west.png"
+        },
+        "animations": {
+          "Strike": {
+            "north-east": [
+              "holding_a_bone_bow/animations/Strike/north-east/frame_000.png",
+              "holding_a_bone_bow/animations/Strike/north-east/frame_001.png",
+              "holding_a_bone_bow/animations/Strike/north-east/frame_002.png",
+              "holding_a_bone_bow/animations/Strike/north-east/frame_003.png",
+              "holding_a_bone_bow/animations/Strike/north-east/frame_004.png",
+              "holding_a_bone_bow/animations/Strike/north-east/frame_005.png",
+              "holding_a_bone_bow/animations/Strike/north-east/frame_006.png"
+            ],
+            "east": [
+              "holding_a_bone_bow/animations/Strike/east/frame_000.png",
+              "holding_a_bone_bow/animations/Strike/east/frame_001.png",
+              "holding_a_bone_bow/animations/Strike/east/frame_002.png",
+              "holding_a_bone_bow/animations/Strike/east/frame_003.png",
+              "holding_a_bone_bow/animations/Strike/east/frame_004.png",
+              "holding_a_bone_bow/animations/Strike/east/frame_005.png",
+              "holding_a_bone_bow/animations/Strike/east/frame_006.png"
+            ],
+            "north": [
+              "holding_a_bone_bow/animations/Strike/north/frame_000.png",
+              "holding_a_bone_bow/animations/Strike/north/frame_001.png",
+              "holding_a_bone_bow/animations/Strike/north/frame_002.png",
+              "holding_a_bone_bow/animations/Strike/north/frame_003.png",
+              "holding_a_bone_bow/animations/Strike/north/frame_004.png",
+              "holding_a_bone_bow/animations/Strike/north/frame_005.png",
+              "holding_a_bone_bow/animations/Strike/north/frame_006.png"
+            ],
+            "west": [
+              "holding_a_bone_bow/animations/Strike/west/frame_000.png",
+              "holding_a_bone_bow/animations/Strike/west/frame_001.png",
+              "holding_a_bone_bow/animations/Strike/west/frame_002.png",
+              "holding_a_bone_bow/animations/Strike/west/frame_003.png",
+              "holding_a_bone_bow/animations/Strike/west/frame_004.png",
+              "holding_a_bone_bow/animations/Strike/west/frame_005.png",
+              "holding_a_bone_bow/animations/Strike/west/frame_006.png"
+            ],
+            "south-west": [
+              "holding_a_bone_bow/animations/Strike/south-west/frame_000.png",
+              "holding_a_bone_bow/animations/Strike/south-west/frame_001.png",
+              "holding_a_bone_bow/animations/Strike/south-west/frame_002.png",
+              "holding_a_bone_bow/animations/Strike/south-west/frame_003.png",
+              "holding_a_bone_bow/animations/Strike/south-west/frame_004.png",
+              "holding_a_bone_bow/animations/Strike/south-west/frame_005.png",
+              "holding_a_bone_bow/animations/Strike/south-west/frame_006.png"
+            ],
+            "north-west": [
+              "holding_a_bone_bow/animations/Strike/north-west/frame_000.png",
+              "holding_a_bone_bow/animations/Strike/north-west/frame_001.png",
+              "holding_a_bone_bow/animations/Strike/north-west/frame_002.png",
+              "holding_a_bone_bow/animations/Strike/north-west/frame_003.png",
+              "holding_a_bone_bow/animations/Strike/north-west/frame_004.png",
+              "holding_a_bone_bow/animations/Strike/north-west/frame_005.png",
+              "holding_a_bone_bow/animations/Strike/north-west/frame_006.png"
+            ],
+            "south-east": [
+              "holding_a_bone_bow/animations/Strike/south-east/frame_000.png",
+              "holding_a_bone_bow/animations/Strike/south-east/frame_001.png",
+              "holding_a_bone_bow/animations/Strike/south-east/frame_002.png",
+              "holding_a_bone_bow/animations/Strike/south-east/frame_003.png",
+              "holding_a_bone_bow/animations/Strike/south-east/frame_004.png",
+              "holding_a_bone_bow/animations/Strike/south-east/frame_005.png",
+              "holding_a_bone_bow/animations/Strike/south-east/frame_006.png"
+            ],
+            "south": [
+              "holding_a_bone_bow/animations/Strike/south/frame_000.png",
+              "holding_a_bone_bow/animations/Strike/south/frame_001.png",
+              "holding_a_bone_bow/animations/Strike/south/frame_002.png",
+              "holding_a_bone_bow/animations/Strike/south/frame_003.png",
+              "holding_a_bone_bow/animations/Strike/south/frame_004.png",
+              "holding_a_bone_bow/animations/Strike/south/frame_005.png",
+              "holding_a_bone_bow/animations/Strike/south/frame_006.png"
+            ]
+          },
+          "Death": {
+            "south": [
+              "holding_a_bone_bow/animations/Death/south/frame_000.png",
+              "holding_a_bone_bow/animations/Death/south/frame_001.png",
+              "holding_a_bone_bow/animations/Death/south/frame_002.png",
+              "holding_a_bone_bow/animations/Death/south/frame_003.png",
+              "holding_a_bone_bow/animations/Death/south/frame_004.png",
+              "holding_a_bone_bow/animations/Death/south/frame_005.png",
+              "holding_a_bone_bow/animations/Death/south/frame_006.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-11-09T04:03:57.670167"
+}
