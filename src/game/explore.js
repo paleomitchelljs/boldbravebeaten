@@ -476,6 +476,9 @@
         if (!def || def.kind !== 'monster') continue;
         const st = state(world, x, y);
         if (st.done || st.pacified) continue;
+        // An encounter whose peace flag is already set (the gnomes trust you, so their machines do) stands down unfought.
+        const peace = encounterSpec(world, def);
+        if (peace && peace.peaceFlags && peace.peaceFlags.some((f) => world.flags[f])) { st.pacified = true; continue; }
         const d = cheb(me, { x, y });
         const sleeping = def.asleep && !st.woken;
         const range = sleeping ? cfg().sleepNoticeDistance : cfg().noticeDistance;

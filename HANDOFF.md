@@ -4,6 +4,24 @@ Last updated at commit: dac00a6
 
 Keep this a short list. Tick things off, add new ones, and refresh the commit line after every push (`git log -1 --format=%h`).
 
+## The deep mine: duct, giants' citadel, dragon's lair (the user, 2026-11-08; assets/ideas/ember-mine.md §5)
+- [x] `ember_duct` (the three old markers lead into it), `ember_citadel` (Chapter Six of the source, F-1 to F-17, in
+  dressed basalt), `ember_lair` (the moat, the bridge, the ring, the dragon). Maps from assets/wip/ember/deep/maps.py,
+  squared with squarewalls; 0 broken corners. Seen in headless Chrome: the gate, the courtyard, the arena, the lair
+  fight; the whole city never in one view (the map can't zoom out).
+- [x] Monsters `fireGiant`, `fireGiantYoung`, `fireGiantGuard`, `fireGiantWarlord`, `fireGiantWizard`, `fireGiantMagus`,
+  `fireGiantKing`, `giantShade`, `dragonLord`; faction `fire_giants`. Untuned (encounter tuning deferred): the dragon is
+  level 18 in a mine of level 3-4 goblins.
+- [x] Art: the dragon (breath from its wings-spread state), the fire giant and three states (armored, wizard, king),
+  tileset `ember_citadel`, 16 props. 394 generations; 964 left.
+- [x] The gnome fort: the clockwork gnome (two) and spider (two) stand guard and stand down once the gnomes trust you
+  (an encounter whose `peaceFlags` are already set is pacified on sight: src/game/explore.js `scan`; the east gate's
+  watch now does the same); Surveyor Wila (the woman surveyor) tells of the giants below. The emperor carries a heavy
+  spear in mail, as his figure does.
+- [ ] Not built: the kobolds (no sprites), the web chasm north of the citadel (a note), the vestibule's statue traps,
+  the cyth in the guest room. The source's names left out (the dragon, the king, the warlord, the magus): ask.
+- [ ] The citadel's floor is lighter grey than the black basalt it was asked for (it is baked into both wall sets).
+
 ## Animations for the mine's and the orc valley's new figures (the user, 2026-11-08; ledger in assets/ideas/character-animation-plan.md, cycle 4)
 - [x] Walk, strike, death and idle for the goblin king, orc emperor, ambassador, the orc's chain-mail state, the gnome
   miner, both gnome surveyors, the clockwork gnome; the clockwork spider (no death: three tries stayed standing).
@@ -11,9 +29,10 @@ Keep this a short list. Tick things off, add new ones, and refresh the commit li
 - [x] Wired: `goblinKing` → goblin-king, `orcEmperor` → orc-emperor, `orcEmissary` → ambassador, `orcCenturion` →
   orc-mail, `gnomeWarrior` and the gnome sergeant, eastwatch and prisoner → gnome-miner, the warden → gnome-surveyor.
   Seen in headless Chrome in a fight in the orc castle.
-- [ ] Not used yet: the clockwork gnome, the clockwork spider, the woman surveyor (no monster or NPC is theirs). Ask
-  whether they get monsters (the gnome fort's guards?) or NPCs.
-- [ ] The emperor's blurb says a warhammer; his figure carries a barbed spear. Change one? Ask.
+- [x] The clockwork gnome, the clockwork spider and the woman surveyor are in the gnome fort (the user: "gnomes and
+  clockworks all go in the gnome fort"; see the deep mine section above).
+- [x] The emperor's description and gear follow his figure: mail, a heavy barbed spear (the user: "Description should
+  change").
 - [ ] The legionnaire and slaver still use the caped orc; the warlord and prophet the orc warrior and a tinted orc.
 - [ ] The user's other new figures (fire giant, Nagafen, Sarnak, Burynai, Daedroth, guar, werewolf, Kregon, extra
   states): not animated. Listed in art/characters/pixellab/README.md.

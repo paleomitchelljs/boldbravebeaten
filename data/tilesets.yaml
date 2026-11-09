@@ -932,6 +932,107 @@ cinder_hills:
     spire2: [hills-props.png, 832, 0, 43, 61]
     ribs: [hills-props.png, 896, 0, 61, 35]
     signpost: [hills-props.png, 960, 0, 38, 60]
+ember_citadel:
+  # The fire giants' citadel at the bottom of the mine (assets/wip/ember/deep/build.py, the user, 2026-11-08): one floor
+  # of giant-cut basalt flagstones, the cavern's black glassy rock (`#`) and the giants' dressed basalt walls veined
+  # with violet and ember quartz (`@`). The doors are the mine's, cut for its wall.
+  doorsInWall: true
+  cell: 64
+  dir: art/worldtiles/citadel/
+  floor: flags
+  terrains:
+    flags: {color: "#57515f", tile: flags.png}
+    steps: {color: "#45404d", alpha: 0.5}
+    wall:
+      color: "#16141a"
+      wang: citadel-cave.png
+      over: flags
+      cliff:
+        - [2, 2, ".....00..00....."]
+        - [3, 2, ".....00..01....."]
+        - [1, 4, ".....00..11....."]
+        - [2, 4, ".....00..10....."]
+        - [3, 3, ".00..01..01....."]
+        - [3, 4, ".....01..01....."]
+        - [0, 6, ".....11..11....."]
+        - [1, 0, ".11..10..10....."]
+        - [1, 1, ".....10..10....."]
+        - [0, 4, ".....10..11....."]
+        - [3, 6, ".....01..11....."]
+        - [1, 6, ".....11..12...0."]
+        - [3, 0, ".....11..22..00."]
+        - [1, 2, ".....10..20..00."]
+        - [1, 7, ".1...12..10....."]
+        - [3, 1, ".11..22..00....."]
+        - [1, 3, ".....20..00....."]
+        - [2, 0, ".....01..02..00."]
+        - [0, 0, ".....11..21..0.."]
+        - [2, 6, ".....10..21..01."]
+        - [2, 1, ".....02..00....."]
+        - [0, 1, "..1..21..01....."]
+        - [2, 7, ".10..21..01....."]
+        - [0, 2, ".....01..12..10."]
+        - [0, 3, ".01..12..10....."]
+    fort:
+      color: "#2b2731"
+      wang: citadel-wall.png
+      over: flags
+      underWalls: all
+      cliff:
+        - [2, 2, ".....00..00....."]
+        - [3, 2, ".....00..01....."]
+        - [1, 4, ".....00..11....."]
+        - [2, 4, ".....00..10....."]
+        - [3, 3, ".00..01..01....."]
+        - [3, 4, ".....01..01....."]
+        - [0, 6, ".....11..11....."]
+        - [1, 0, ".11..10..10....."]
+        - [1, 1, ".....10..10....."]
+        - [0, 4, ".....10..11....."]
+        - [3, 6, ".....01..11....."]
+        - [1, 6, ".....11..12...0."]
+        - [3, 0, ".....11..22..00."]
+        - [1, 2, ".....10..20..00."]
+        - [1, 7, ".1...12..10....."]
+        - [3, 1, ".11..22..00....."]
+        - [1, 3, ".....20..00....."]
+        - [2, 0, ".....01..02..00."]
+        - [0, 0, ".....11..21..0.."]
+        - [2, 6, ".....10..21..01."]
+        - [2, 1, ".....02..00....."]
+        - [0, 1, "..1..21..01....."]
+        - [2, 7, ".10..21..01....."]
+        - [0, 2, ".....01..12..10."]
+        - [0, 3, ".01..12..10....."]
+  props:
+    c_brazier: ["props.png", 14, 3, 36, 61]
+    c_statue: ["props.png", 81, 2, 29, 62]
+    c_table: ["props.png", 129, 20, 62, 44]
+    c_chair: ["props.png", 204, 4, 40, 60]
+    c_anvil: ["props.png", 257, 14, 62, 50]
+    c_forge: ["props.png", 323, 1, 58, 63]
+    c_dragon: ["props.png", 395, 2, 41, 62]
+    c_whitedragon: ["props.png", 463, 3, 34, 61]
+    c_coffin: ["props.png", 513, 25, 62, 39]
+    c_sphere: ["props.png", 581, 6, 53, 58]
+    c_banner: ["props.png", 645, 2, 53, 62]
+    c_rack: ["props.png", 705, 3, 62, 61]
+    c_bed: ["props.png", 769, 4, 61, 60]
+    c_cauldron: ["props.png", 835, 1, 57, 63]
+    c_bench: ["props.png", 896, 16, 64, 48]
+    c_hoard: ["props.png", 961, 16, 62, 48]
+    throne: [../ember/props.png, 64, 0, 64, 64]
+    door_locked: [../ember/props.png, 0, 0, 64, 64]
+    door_south: [../ember/doors.png, 0, 0, 52, 104, 6, -8]
+    door_east: [../ember/doors.png, 54, 0, 76, 72, -6, -4]
+    door_west: [../ember/doors.png, 132, 0, 76, 72, -6, -4]
+    door_north: [../ember/doors.png, 210, 0, 76, 72, -6, -8]
+    door_locked_south: [../ember/doors.png, 288, 0, 52, 104, 6, -8]
+    door_locked_east: [../ember/doors.png, 342, 0, 76, 72, -6, -4]
+    door_locked_west: [../ember/doors.png, 420, 0, 76, 72, -6, -4]
+    door_locked_north: [../ember/doors.png, 498, 0, 76, 72, -6, -8]
+    pit_still: [../traps.png, 4562, 0, 46, 46]
+
 ember_masonry:
   doorsInWall: true
   cell: 64

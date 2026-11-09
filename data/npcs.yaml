@@ -223,6 +223,24 @@ gnome_warden:
     - {id: pit, label: "What is in the warrens?", need: 4, kind: info, tag: mining, text: "A drake that eats goblins, and anything else it finds. And mind the floor on the way to the barracks: there's a stretch of it laid over a pit, and what lives in the pit is worse than the drake."}
     - {id: kingdead, label: "The goblin king is dead.", need: 1, kind: info, once: true, requires: {flag: ember_king_dead}, sets: [told_odda_king], text: "Then it's done. Listen: you can hear them already, fighting over the chair. We'll go up the stair when they're through. You'll always have a door here."}
     - {id: prisoner, label: "Your Fennick is alive. He's free.", need: 2, kind: favor, once: true, requires: {flag: freed_fennick}, gives: {gold: 60, xp: 80}, standing: {deep_gnomes: 15}, text: "Fennick! We said the words for him two winters ago. Take this, it's what we have. And our thanks, which is worth more down here."}
+gnome_surveyor:
+  name: Surveyor Wila
+  title: The fort's surveyor
+  faction: deep_gnomes
+  sprite: {art: gnome-surveyor-f, kind: wizard, scale: 0.7}
+  glyph: "🧓"
+  look: An old gnome in a red coat with chalk on her cuffs and a knotted measuring cord wound round one wrist.
+  attrs: {WIS: 8, WIL: 7, CHA: 6, INT: 10}
+  disposition: 1
+  willingness: 3
+  courage: 6
+  patience: 8
+  temperament: [curious]
+  interests: [mining, surface]
+  greeting: "Mind the cord. That's eleven years of the mine on it, knot by knot."
+  topics:
+    - {id: clocks, label: "What are the bronze things?", need: 1, kind: info, text: "Ours. We've hands enough to dig or to watch, not both, so we built watchers. They know a friend of the fort when the Warden has said so; until then, keep your hands where they can see them."}
+    - {id: deep, label: "What lies below the goblins?", need: 3, kind: info, tag: mining, sets: [knows_citadel], text: "Below their jail the rock turns to black glass, and below that the giants built. A castle of basalt, cut fine as any gnome would cut it, round a cavern where something breathes. The giants keep the gate and the giants keep the dragon. I have measured the heat on that stair and I have not gone further."}
 gnome_prisoner:
   name: Fennick
   title: A gnome in the goblins' jail

@@ -295,3 +295,19 @@ Left for later (the user's other new figures, not in the two areas): the fire gi
 (and its ghost and skeleton), the Burynai and its warrior, the Daedroth (three states), the guar (two), the werewolf,
 Kregon, Krump without a sword, the minotaur with a double axe, the black widow's long-legged state, the spear snake
 person, the gnoll's white state; the efreeti's idle (it floats, so its `Float` plays standing).
+
+## The deep mine: the dragon, the fire giants (the user, 2026-11-08)
+
+The user: "Please go ahead and animate Nagafen: he's the centre piece of the mine", and, of the fire giants, "If we have
+an obvious need for a simple variant, like an armored fire giant, please go ahead and generate it." 1358 generations
+at the start, 964 at the end (394, tiles and props included). Plan of the places: `assets/ideas/ember-mine.md` §5.
+
+| Character | Clip | How | Charged |
+|---|---|---|---|
+| Nagafen (168 px; Angry 232 × 188) | fire breath ×5 from the wings-spread state (`Strike`), walk ×5, death, idle ×5 (all v3) | the breath costs 6 a direction at its 256-px canvas; facing N it is a white blast seen from behind (kept) | 30 + 18 + 3 + 13 |
+| Fire giant (100 px) | walk ×8 (template), burning-fist punch ×5, death, idle ×5 (template) | the punch ends in a white fire burst at the fist; facing E the figure goes half-transparent for two frames (kept) | 8 + 10 + 2 + 5 |
+| Fire giant states: Armored, Wizard, King | `create_character_state` (128, 112, 128 px canvases) | the user's permission above; one character, three states | ~65 |
+| Armored | greatsword cut ×8, death, walk ×8, idle ×8 (v3) | SE turned his armour gold, NW broke into a brown ring: re-rolled. Most directions swing a sword trailing fire (kept: they are fire giants) | 29 + 3 + 23 + 15 |
+| Wizard | staff fire-burst ×8, death, walk ×8, idle ×8 (v3) | W washed out pink-white: re-rolled | 18 + 2 + 16 + 9 |
+| King | maul blow ×8, death, walk ×8, idle ×8 (v3) | SW turned the maul into an orb: re-rolled; the SE idle drew a puff of smoke twice: frames 0-1 replaced by 3 and 2 in the repo (a re-pull brings it back) | 24 + 2 + 21 + 18 |
+| Citadel tiles and props | 2 pro cliff sets (giant-cut flagstones under dressed basalt walls, and under black glassy cavern rock), 16 props | `assets/wip/ember/deep/build.py` | 50 + 10 |

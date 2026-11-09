@@ -108,3 +108,37 @@ are, and freeing Fennick from the jail pays in gold and standing.
 - [ ] Tilesets (§4), then a look at each place in headless Chrome.
 - [ ] `node tools/pace.js` on the eight places (a thorough look should take about a day).
 - [ ] The user's figures (§3).
+
+## 5. The deep: the duct, the giants' citadel, the dragon's lair (the user, 2026-11-08)
+
+The user: "Please go ahead and animate Nagafen: he's the centre piece of the mine. There should be a basalt castle made
+by fire giants and populated by fire giants surrounding and guarding his lair. If you refer to the adventure path, we
+have all the sprites except the kobolds done." Chapter Six of *Solusek's Eye* ("Citadel of the Krombral", F-1 to F-18;
+map on page 82) is the source. The kobolds' realm (Chapter Three) and the web chasm (L-19) are not built. As in the
+rest of the mine, the source's proper names are left out: the dragon, the king, the warlord and the magus go unnamed.
+
+Built by `assets/wip/ember/deep/maps.py` (prints the maps and checks every floor square can be walked to), then squared
+off with `tools/squarewalls.js` (`#`, and `@ .` for the citadel's walls); the YAML is now the source. The book's
+buildings had to change shape to draw: every wall is two squares thick north-south, doorways are gaps, the arena is a
+rectangle, the gates stand in a north-south wall (as the gnome fort's do), and buildings never meet at a corner.
+
+| Place | What it is |
+|---|---|
+| `ember_duct` | The three old markers lead down into it: the hall's east tunnel (`h`), a rope down the castle's harvester pit (`p`), the jail's stair (`j`). One black-glass lava duct winds down by stairs to a ledge over a magma lake (the book's F-1 approach) and on to the gates (`C`). Lava beetles, a fire elemental, imps. |
+| `ember_citadel` | The giants' city, three squares to the book's 40-ft square (60 × 76). F-1 the gates (`G`, barred: tn 16, force 20) in the cavern's west wall at its south-west corner, the gatehouse with two guards just inside; F-2 quarters (giants asleep, a chest); F-3 the grand hall and F-4 the cookhouse; F-5 the arena (squared off: seating tiers round the pit, sparring); F-6 the warlord and his daughters; F-7 the forge; F-8 the mines (a pocket in the west wall); F-9 the courtyard (braziers, benches); F-9a the passage north to the chasm (not built: a note at its end); F-10 the temple of war; F-11 the jeweller; F-12 the magus and his study; F-13 the hall of wizardry (four cells); F-14 the mausoleum (giant shades, coffins, the oldest tomb as a chest); F-15 the torture pit and the cold guest room of the ice dragon's envoys; F-16 the king's palace (guards, the king, the throne, the letter about the egg, the treasury); F-17 the vestibule (a warrior and a wizard between the two dragon statues); the tunnel east to the lair (`L`). |
+| `ember_lair` | A domed cavern: a ledge round a moat of lava round the ring of stone, one bridge of natural stone across, the dragon (`d`) on its hoard (`H`). |
+
+Monsters (`data/monsters.yaml`, "The deep mine"; first guesses, encounter tuning deferred): `fireGiant`, `fireGiantYoung`,
+`fireGiantGuard` (armored), `fireGiantWarlord`, `fireGiantWizard`, `fireGiantMagus`, `fireGiantKing`, `giantShade` (the
+spectre art, red), `dragonLord` (level 18, size 4, flies, fire breath as Strike + Fire with Wide, Strong, Far). Faction
+`fire_giants`, hostile on sight.
+
+Art: the user's fire giant with three states made for this (armored, wizard, king; the user, 2026-11-08: "If we have an
+obvious need for a simple variant, like an armored fire giant, please go ahead and generate it"), the user's dragon
+(walk, idle and death from its folded state, the fire breath from its wings-spread state), and the tileset
+`ember_citadel` (art/worldtiles/citadel/, `assets/wip/ember/deep/build.py`): giant-cut basalt flagstones, the cavern's
+black glassy rock (`#`), the giants' dressed basalt walls veined with violet and ember quartz (`@`), and 16 props. The
+duct and the lair use the mine's basalt set.
+
+Not built: the kobolds, the web chasm beyond the north lattice, the vestibule's statue traps (cones of fire and frost
+on whoever prises out the gems), the cyth (icy goblins) in the guest room.

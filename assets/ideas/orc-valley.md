@@ -35,6 +35,6 @@ the prophet are unnamed. Ask the user whether they want the names.
 
 ## Not done
 - People: the slaves in the cabin (the quest), the gnome in the pits, the slaves in the caves are notes, not people.
-- The orcs' own figures: legionnaire, centurion, emperor (blue-grey, scale armour, hammer), prophet. The user's orc
+- The orcs' own figures: legionnaire, centurion, emperor (blue-grey, mail, a barbed spear), prophet. The user's orc
   stands in for all of them.
 - Where the old shaft goes.

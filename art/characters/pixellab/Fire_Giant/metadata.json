@@ -1,0 +1,886 @@
+{
+  "group_id": "875101e1-dd21-46f3-acfd-d9facfe6c142",
+  "states": [
+    {
+      "character": {
+        "id": "79f9a392-d83d-4f71-ac24-71390b90b341",
+        "name": "Idle",
+        "prompt": "Fire giant with orange skin wearing only loose pants",
+        "size": {
+          "width": 100,
+          "height": 100
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-08T04:43:09.424232+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {
+          "Idle": {
+            "north-east": [
+              "Idle/animations/Idle/north-east/frame_000.png",
+              "Idle/animations/Idle/north-east/frame_001.png",
+              "Idle/animations/Idle/north-east/frame_002.png",
+              "Idle/animations/Idle/north-east/frame_003.png"
+            ],
+            "south-east": [
+              "Idle/animations/Idle/south-east/frame_000.png",
+              "Idle/animations/Idle/south-east/frame_001.png",
+              "Idle/animations/Idle/south-east/frame_002.png",
+              "Idle/animations/Idle/south-east/frame_003.png"
+            ],
+            "east": [
+              "Idle/animations/Idle/east/frame_000.png",
+              "Idle/animations/Idle/east/frame_001.png",
+              "Idle/animations/Idle/east/frame_002.png",
+              "Idle/animations/Idle/east/frame_003.png"
+            ],
+            "north": [
+              "Idle/animations/Idle/north/frame_000.png",
+              "Idle/animations/Idle/north/frame_001.png",
+              "Idle/animations/Idle/north/frame_002.png",
+              "Idle/animations/Idle/north/frame_003.png"
+            ],
+            "south": [
+              "Idle/animations/Idle/south/frame_000.png",
+              "Idle/animations/Idle/south/frame_001.png",
+              "Idle/animations/Idle/south/frame_002.png",
+              "Idle/animations/Idle/south/frame_003.png"
+            ]
+          },
+          "Walk": {
+            "west": [
+              "Idle/animations/Walk/west/frame_000.png",
+              "Idle/animations/Walk/west/frame_001.png",
+              "Idle/animations/Walk/west/frame_002.png",
+              "Idle/animations/Walk/west/frame_003.png",
+              "Idle/animations/Walk/west/frame_004.png",
+              "Idle/animations/Walk/west/frame_005.png"
+            ],
+            "south-west": [
+              "Idle/animations/Walk/south-west/frame_000.png",
+              "Idle/animations/Walk/south-west/frame_001.png",
+              "Idle/animations/Walk/south-west/frame_002.png",
+              "Idle/animations/Walk/south-west/frame_003.png",
+              "Idle/animations/Walk/south-west/frame_004.png",
+              "Idle/animations/Walk/south-west/frame_005.png"
+            ],
+            "south": [
+              "Idle/animations/Walk/south/frame_000.png",
+              "Idle/animations/Walk/south/frame_001.png",
+              "Idle/animations/Walk/south/frame_002.png",
+              "Idle/animations/Walk/south/frame_003.png",
+              "Idle/animations/Walk/south/frame_004.png",
+              "Idle/animations/Walk/south/frame_005.png"
+            ],
+            "south-east": [
+              "Idle/animations/Walk/south-east/frame_000.png",
+              "Idle/animations/Walk/south-east/frame_001.png",
+              "Idle/animations/Walk/south-east/frame_002.png",
+              "Idle/animations/Walk/south-east/frame_003.png",
+              "Idle/animations/Walk/south-east/frame_004.png",
+              "Idle/animations/Walk/south-east/frame_005.png"
+            ],
+            "east": [
+              "Idle/animations/Walk/east/frame_000.png",
+              "Idle/animations/Walk/east/frame_001.png",
+              "Idle/animations/Walk/east/frame_002.png",
+              "Idle/animations/Walk/east/frame_003.png",
+              "Idle/animations/Walk/east/frame_004.png",
+              "Idle/animations/Walk/east/frame_005.png"
+            ],
+            "north-east": [
+              "Idle/animations/Walk/north-east/frame_000.png",
+              "Idle/animations/Walk/north-east/frame_001.png",
+              "Idle/animations/Walk/north-east/frame_002.png",
+              "Idle/animations/Walk/north-east/frame_003.png",
+              "Idle/animations/Walk/north-east/frame_004.png",
+              "Idle/animations/Walk/north-east/frame_005.png"
+            ],
+            "north-west": [
+              "Idle/animations/Walk/north-west/frame_000.png",
+              "Idle/animations/Walk/north-west/frame_001.png",
+              "Idle/animations/Walk/north-west/frame_002.png",
+              "Idle/animations/Walk/north-west/frame_003.png",
+              "Idle/animations/Walk/north-west/frame_004.png",
+              "Idle/animations/Walk/north-west/frame_005.png"
+            ],
+            "north": [
+              "Idle/animations/Walk/north/frame_000.png",
+              "Idle/animations/Walk/north/frame_001.png",
+              "Idle/animations/Walk/north/frame_002.png",
+              "Idle/animations/Walk/north/frame_003.png",
+              "Idle/animations/Walk/north/frame_004.png",
+              "Idle/animations/Walk/north/frame_005.png"
+            ]
+          },
+          "Death": {
+            "south": [
+              "Idle/animations/Death/south/frame_000.png",
+              "Idle/animations/Death/south/frame_001.png",
+              "Idle/animations/Death/south/frame_002.png",
+              "Idle/animations/Death/south/frame_003.png",
+              "Idle/animations/Death/south/frame_004.png",
+              "Idle/animations/Death/south/frame_005.png",
+              "Idle/animations/Death/south/frame_006.png"
+            ]
+          },
+          "Strike": {
+            "north-east": [
+              "Idle/animations/Strike/north-east/frame_000.png",
+              "Idle/animations/Strike/north-east/frame_001.png",
+              "Idle/animations/Strike/north-east/frame_002.png",
+              "Idle/animations/Strike/north-east/frame_003.png",
+              "Idle/animations/Strike/north-east/frame_004.png",
+              "Idle/animations/Strike/north-east/frame_005.png",
+              "Idle/animations/Strike/north-east/frame_006.png"
+            ],
+            "north": [
+              "Idle/animations/Strike/north/frame_000.png",
+              "Idle/animations/Strike/north/frame_001.png",
+              "Idle/animations/Strike/north/frame_002.png",
+              "Idle/animations/Strike/north/frame_003.png",
+              "Idle/animations/Strike/north/frame_004.png",
+              "Idle/animations/Strike/north/frame_005.png",
+              "Idle/animations/Strike/north/frame_006.png"
+            ],
+            "south-east": [
+              "Idle/animations/Strike/south-east/frame_000.png",
+              "Idle/animations/Strike/south-east/frame_001.png",
+              "Idle/animations/Strike/south-east/frame_002.png",
+              "Idle/animations/Strike/south-east/frame_003.png",
+              "Idle/animations/Strike/south-east/frame_004.png",
+              "Idle/animations/Strike/south-east/frame_005.png",
+              "Idle/animations/Strike/south-east/frame_006.png"
+            ],
+            "south": [
+              "Idle/animations/Strike/south/frame_000.png",
+              "Idle/animations/Strike/south/frame_001.png",
+              "Idle/animations/Strike/south/frame_002.png",
+              "Idle/animations/Strike/south/frame_003.png",
+              "Idle/animations/Strike/south/frame_004.png",
+              "Idle/animations/Strike/south/frame_005.png",
+              "Idle/animations/Strike/south/frame_006.png"
+            ],
+            "east": [
+              "Idle/animations/Strike/east/frame_000.png",
+              "Idle/animations/Strike/east/frame_001.png",
+              "Idle/animations/Strike/east/frame_002.png",
+              "Idle/animations/Strike/east/frame_003.png",
+              "Idle/animations/Strike/east/frame_004.png",
+              "Idle/animations/Strike/east/frame_005.png",
+              "Idle/animations/Strike/east/frame_006.png"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "character": {
+        "id": "c657f92c-a502-4dc3-9ff7-ccdc2db9e984",
+        "name": "Armored",
+        "prompt": "Fire giant with orange skin wearing only loose pants",
+        "size": {
+          "width": 128,
+          "height": 128
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-09T00:58:32.321387+00:00"
+      },
+      "folder": "Armored",
+      "frames": {
+        "rotations": {
+          "south": "Armored/rotations/south.png",
+          "south-east": "Armored/rotations/south-east.png",
+          "east": "Armored/rotations/east.png",
+          "north-east": "Armored/rotations/north-east.png",
+          "north": "Armored/rotations/north.png",
+          "north-west": "Armored/rotations/north-west.png",
+          "west": "Armored/rotations/west.png",
+          "south-west": "Armored/rotations/south-west.png"
+        },
+        "animations": {
+          "Idle": {
+            "south-east": [
+              "Armored/animations/Idle/south-east/frame_000.png",
+              "Armored/animations/Idle/south-east/frame_001.png",
+              "Armored/animations/Idle/south-east/frame_002.png",
+              "Armored/animations/Idle/south-east/frame_003.png"
+            ],
+            "west": [
+              "Armored/animations/Idle/west/frame_000.png",
+              "Armored/animations/Idle/west/frame_001.png",
+              "Armored/animations/Idle/west/frame_002.png",
+              "Armored/animations/Idle/west/frame_003.png"
+            ],
+            "north-east": [
+              "Armored/animations/Idle/north-east/frame_000.png",
+              "Armored/animations/Idle/north-east/frame_001.png",
+              "Armored/animations/Idle/north-east/frame_002.png",
+              "Armored/animations/Idle/north-east/frame_003.png"
+            ],
+            "south-west": [
+              "Armored/animations/Idle/south-west/frame_000.png",
+              "Armored/animations/Idle/south-west/frame_001.png",
+              "Armored/animations/Idle/south-west/frame_002.png",
+              "Armored/animations/Idle/south-west/frame_003.png"
+            ],
+            "east": [
+              "Armored/animations/Idle/east/frame_000.png",
+              "Armored/animations/Idle/east/frame_001.png",
+              "Armored/animations/Idle/east/frame_002.png",
+              "Armored/animations/Idle/east/frame_003.png"
+            ],
+            "south": [
+              "Armored/animations/Idle/south/frame_000.png",
+              "Armored/animations/Idle/south/frame_001.png",
+              "Armored/animations/Idle/south/frame_002.png",
+              "Armored/animations/Idle/south/frame_003.png"
+            ],
+            "north-west": [
+              "Armored/animations/Idle/north-west/frame_000.png",
+              "Armored/animations/Idle/north-west/frame_001.png",
+              "Armored/animations/Idle/north-west/frame_002.png",
+              "Armored/animations/Idle/north-west/frame_003.png"
+            ],
+            "north": [
+              "Armored/animations/Idle/north/frame_000.png",
+              "Armored/animations/Idle/north/frame_001.png",
+              "Armored/animations/Idle/north/frame_002.png",
+              "Armored/animations/Idle/north/frame_003.png"
+            ]
+          },
+          "Death": {
+            "south": [
+              "Armored/animations/Death/south/frame_000.png",
+              "Armored/animations/Death/south/frame_001.png",
+              "Armored/animations/Death/south/frame_002.png",
+              "Armored/animations/Death/south/frame_003.png",
+              "Armored/animations/Death/south/frame_004.png",
+              "Armored/animations/Death/south/frame_005.png",
+              "Armored/animations/Death/south/frame_006.png"
+            ]
+          },
+          "Walk": {
+            "north-west": [
+              "Armored/animations/Walk/north-west/frame_000.png",
+              "Armored/animations/Walk/north-west/frame_001.png",
+              "Armored/animations/Walk/north-west/frame_002.png",
+              "Armored/animations/Walk/north-west/frame_003.png",
+              "Armored/animations/Walk/north-west/frame_004.png",
+              "Armored/animations/Walk/north-west/frame_005.png"
+            ],
+            "east": [
+              "Armored/animations/Walk/east/frame_000.png",
+              "Armored/animations/Walk/east/frame_001.png",
+              "Armored/animations/Walk/east/frame_002.png",
+              "Armored/animations/Walk/east/frame_003.png",
+              "Armored/animations/Walk/east/frame_004.png",
+              "Armored/animations/Walk/east/frame_005.png"
+            ],
+            "south": [
+              "Armored/animations/Walk/south/frame_000.png",
+              "Armored/animations/Walk/south/frame_001.png",
+              "Armored/animations/Walk/south/frame_002.png",
+              "Armored/animations/Walk/south/frame_003.png",
+              "Armored/animations/Walk/south/frame_004.png",
+              "Armored/animations/Walk/south/frame_005.png"
+            ],
+            "north-east": [
+              "Armored/animations/Walk/north-east/frame_000.png",
+              "Armored/animations/Walk/north-east/frame_001.png",
+              "Armored/animations/Walk/north-east/frame_002.png",
+              "Armored/animations/Walk/north-east/frame_003.png",
+              "Armored/animations/Walk/north-east/frame_004.png",
+              "Armored/animations/Walk/north-east/frame_005.png"
+            ],
+            "south-west": [
+              "Armored/animations/Walk/south-west/frame_000.png",
+              "Armored/animations/Walk/south-west/frame_001.png",
+              "Armored/animations/Walk/south-west/frame_002.png",
+              "Armored/animations/Walk/south-west/frame_003.png",
+              "Armored/animations/Walk/south-west/frame_004.png",
+              "Armored/animations/Walk/south-west/frame_005.png"
+            ],
+            "west": [
+              "Armored/animations/Walk/west/frame_000.png",
+              "Armored/animations/Walk/west/frame_001.png",
+              "Armored/animations/Walk/west/frame_002.png",
+              "Armored/animations/Walk/west/frame_003.png",
+              "Armored/animations/Walk/west/frame_004.png",
+              "Armored/animations/Walk/west/frame_005.png"
+            ],
+            "north": [
+              "Armored/animations/Walk/north/frame_000.png",
+              "Armored/animations/Walk/north/frame_001.png",
+              "Armored/animations/Walk/north/frame_002.png",
+              "Armored/animations/Walk/north/frame_003.png",
+              "Armored/animations/Walk/north/frame_004.png",
+              "Armored/animations/Walk/north/frame_005.png"
+            ],
+            "south-east": [
+              "Armored/animations/Walk/south-east/frame_000.png",
+              "Armored/animations/Walk/south-east/frame_001.png",
+              "Armored/animations/Walk/south-east/frame_002.png",
+              "Armored/animations/Walk/south-east/frame_003.png",
+              "Armored/animations/Walk/south-east/frame_004.png",
+              "Armored/animations/Walk/south-east/frame_005.png"
+            ]
+          },
+          "Strike": {
+            "east": [
+              "Armored/animations/Strike/east/frame_000.png",
+              "Armored/animations/Strike/east/frame_001.png",
+              "Armored/animations/Strike/east/frame_002.png",
+              "Armored/animations/Strike/east/frame_003.png",
+              "Armored/animations/Strike/east/frame_004.png",
+              "Armored/animations/Strike/east/frame_005.png",
+              "Armored/animations/Strike/east/frame_006.png"
+            ],
+            "south": [
+              "Armored/animations/Strike/south/frame_000.png",
+              "Armored/animations/Strike/south/frame_001.png",
+              "Armored/animations/Strike/south/frame_002.png",
+              "Armored/animations/Strike/south/frame_003.png",
+              "Armored/animations/Strike/south/frame_004.png",
+              "Armored/animations/Strike/south/frame_005.png",
+              "Armored/animations/Strike/south/frame_006.png"
+            ],
+            "south-east": [
+              "Armored/animations/Strike/south-east/frame_000.png",
+              "Armored/animations/Strike/south-east/frame_001.png",
+              "Armored/animations/Strike/south-east/frame_002.png",
+              "Armored/animations/Strike/south-east/frame_003.png",
+              "Armored/animations/Strike/south-east/frame_004.png",
+              "Armored/animations/Strike/south-east/frame_005.png",
+              "Armored/animations/Strike/south-east/frame_006.png"
+            ],
+            "north": [
+              "Armored/animations/Strike/north/frame_000.png",
+              "Armored/animations/Strike/north/frame_001.png",
+              "Armored/animations/Strike/north/frame_002.png",
+              "Armored/animations/Strike/north/frame_003.png",
+              "Armored/animations/Strike/north/frame_004.png",
+              "Armored/animations/Strike/north/frame_005.png",
+              "Armored/animations/Strike/north/frame_006.png"
+            ],
+            "north-west": [
+              "Armored/animations/Strike/north-west/frame_000.png",
+              "Armored/animations/Strike/north-west/frame_001.png",
+              "Armored/animations/Strike/north-west/frame_002.png",
+              "Armored/animations/Strike/north-west/frame_003.png",
+              "Armored/animations/Strike/north-west/frame_004.png",
+              "Armored/animations/Strike/north-west/frame_005.png",
+              "Armored/animations/Strike/north-west/frame_006.png"
+            ],
+            "west": [
+              "Armored/animations/Strike/west/frame_000.png",
+              "Armored/animations/Strike/west/frame_001.png",
+              "Armored/animations/Strike/west/frame_002.png",
+              "Armored/animations/Strike/west/frame_003.png",
+              "Armored/animations/Strike/west/frame_004.png",
+              "Armored/animations/Strike/west/frame_005.png",
+              "Armored/animations/Strike/west/frame_006.png"
+            ],
+            "south-west": [
+              "Armored/animations/Strike/south-west/frame_000.png",
+              "Armored/animations/Strike/south-west/frame_001.png",
+              "Armored/animations/Strike/south-west/frame_002.png",
+              "Armored/animations/Strike/south-west/frame_003.png",
+              "Armored/animations/Strike/south-west/frame_004.png",
+              "Armored/animations/Strike/south-west/frame_005.png",
+              "Armored/animations/Strike/south-west/frame_006.png"
+            ],
+            "north-east": [
+              "Armored/animations/Strike/north-east/frame_000.png",
+              "Armored/animations/Strike/north-east/frame_001.png",
+              "Armored/animations/Strike/north-east/frame_002.png",
+              "Armored/animations/Strike/north-east/frame_003.png",
+              "Armored/animations/Strike/north-east/frame_004.png",
+              "Armored/animations/Strike/north-east/frame_005.png",
+              "Armored/animations/Strike/north-east/frame_006.png"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "character": {
+        "id": "95c9ba18-f70b-42d9-9663-e23f6020cd4a",
+        "name": "Wizard",
+        "prompt": "Fire giant with orange skin wearing only loose pants",
+        "size": {
+          "width": 112,
+          "height": 112
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-09T00:58:32.551703+00:00"
+      },
+      "folder": "Wizard",
+      "frames": {
+        "rotations": {
+          "south": "Wizard/rotations/south.png",
+          "south-east": "Wizard/rotations/south-east.png",
+          "east": "Wizard/rotations/east.png",
+          "north-east": "Wizard/rotations/north-east.png",
+          "north": "Wizard/rotations/north.png",
+          "north-west": "Wizard/rotations/north-west.png",
+          "west": "Wizard/rotations/west.png",
+          "south-west": "Wizard/rotations/south-west.png"
+        },
+        "animations": {
+          "Idle": {
+            "east": [
+              "Wizard/animations/Idle/east/frame_000.png",
+              "Wizard/animations/Idle/east/frame_001.png",
+              "Wizard/animations/Idle/east/frame_002.png",
+              "Wizard/animations/Idle/east/frame_003.png"
+            ],
+            "south": [
+              "Wizard/animations/Idle/south/frame_000.png",
+              "Wizard/animations/Idle/south/frame_001.png",
+              "Wizard/animations/Idle/south/frame_002.png",
+              "Wizard/animations/Idle/south/frame_003.png"
+            ],
+            "north-west": [
+              "Wizard/animations/Idle/north-west/frame_000.png",
+              "Wizard/animations/Idle/north-west/frame_001.png",
+              "Wizard/animations/Idle/north-west/frame_002.png",
+              "Wizard/animations/Idle/north-west/frame_003.png"
+            ],
+            "north-east": [
+              "Wizard/animations/Idle/north-east/frame_000.png",
+              "Wizard/animations/Idle/north-east/frame_001.png",
+              "Wizard/animations/Idle/north-east/frame_002.png",
+              "Wizard/animations/Idle/north-east/frame_003.png"
+            ],
+            "south-west": [
+              "Wizard/animations/Idle/south-west/frame_000.png",
+              "Wizard/animations/Idle/south-west/frame_001.png",
+              "Wizard/animations/Idle/south-west/frame_002.png",
+              "Wizard/animations/Idle/south-west/frame_003.png"
+            ],
+            "north": [
+              "Wizard/animations/Idle/north/frame_000.png",
+              "Wizard/animations/Idle/north/frame_001.png",
+              "Wizard/animations/Idle/north/frame_002.png",
+              "Wizard/animations/Idle/north/frame_003.png"
+            ],
+            "west": [
+              "Wizard/animations/Idle/west/frame_000.png",
+              "Wizard/animations/Idle/west/frame_001.png",
+              "Wizard/animations/Idle/west/frame_002.png",
+              "Wizard/animations/Idle/west/frame_003.png"
+            ],
+            "south-east": [
+              "Wizard/animations/Idle/south-east/frame_000.png",
+              "Wizard/animations/Idle/south-east/frame_001.png",
+              "Wizard/animations/Idle/south-east/frame_002.png",
+              "Wizard/animations/Idle/south-east/frame_003.png"
+            ]
+          },
+          "Death": {
+            "south": [
+              "Wizard/animations/Death/south/frame_000.png",
+              "Wizard/animations/Death/south/frame_001.png",
+              "Wizard/animations/Death/south/frame_002.png",
+              "Wizard/animations/Death/south/frame_003.png",
+              "Wizard/animations/Death/south/frame_004.png",
+              "Wizard/animations/Death/south/frame_005.png",
+              "Wizard/animations/Death/south/frame_006.png"
+            ]
+          },
+          "Strike": {
+            "east": [
+              "Wizard/animations/Strike/east/frame_000.png",
+              "Wizard/animations/Strike/east/frame_001.png",
+              "Wizard/animations/Strike/east/frame_002.png",
+              "Wizard/animations/Strike/east/frame_003.png",
+              "Wizard/animations/Strike/east/frame_004.png",
+              "Wizard/animations/Strike/east/frame_005.png",
+              "Wizard/animations/Strike/east/frame_006.png"
+            ],
+            "north": [
+              "Wizard/animations/Strike/north/frame_000.png",
+              "Wizard/animations/Strike/north/frame_001.png",
+              "Wizard/animations/Strike/north/frame_002.png",
+              "Wizard/animations/Strike/north/frame_003.png",
+              "Wizard/animations/Strike/north/frame_004.png",
+              "Wizard/animations/Strike/north/frame_005.png",
+              "Wizard/animations/Strike/north/frame_006.png"
+            ],
+            "north-east": [
+              "Wizard/animations/Strike/north-east/frame_000.png",
+              "Wizard/animations/Strike/north-east/frame_001.png",
+              "Wizard/animations/Strike/north-east/frame_002.png",
+              "Wizard/animations/Strike/north-east/frame_003.png",
+              "Wizard/animations/Strike/north-east/frame_004.png",
+              "Wizard/animations/Strike/north-east/frame_005.png",
+              "Wizard/animations/Strike/north-east/frame_006.png"
+            ],
+            "south-east": [
+              "Wizard/animations/Strike/south-east/frame_000.png",
+              "Wizard/animations/Strike/south-east/frame_001.png",
+              "Wizard/animations/Strike/south-east/frame_002.png",
+              "Wizard/animations/Strike/south-east/frame_003.png",
+              "Wizard/animations/Strike/south-east/frame_004.png",
+              "Wizard/animations/Strike/south-east/frame_005.png",
+              "Wizard/animations/Strike/south-east/frame_006.png"
+            ],
+            "south-west": [
+              "Wizard/animations/Strike/south-west/frame_000.png",
+              "Wizard/animations/Strike/south-west/frame_001.png",
+              "Wizard/animations/Strike/south-west/frame_002.png",
+              "Wizard/animations/Strike/south-west/frame_003.png",
+              "Wizard/animations/Strike/south-west/frame_004.png",
+              "Wizard/animations/Strike/south-west/frame_005.png",
+              "Wizard/animations/Strike/south-west/frame_006.png"
+            ],
+            "west": [
+              "Wizard/animations/Strike/west/frame_000.png",
+              "Wizard/animations/Strike/west/frame_001.png",
+              "Wizard/animations/Strike/west/frame_002.png",
+              "Wizard/animations/Strike/west/frame_003.png",
+              "Wizard/animations/Strike/west/frame_004.png",
+              "Wizard/animations/Strike/west/frame_005.png",
+              "Wizard/animations/Strike/west/frame_006.png"
+            ],
+            "north-west": [
+              "Wizard/animations/Strike/north-west/frame_000.png",
+              "Wizard/animations/Strike/north-west/frame_001.png",
+              "Wizard/animations/Strike/north-west/frame_002.png",
+              "Wizard/animations/Strike/north-west/frame_003.png",
+              "Wizard/animations/Strike/north-west/frame_004.png",
+              "Wizard/animations/Strike/north-west/frame_005.png",
+              "Wizard/animations/Strike/north-west/frame_006.png"
+            ],
+            "south": [
+              "Wizard/animations/Strike/south/frame_000.png",
+              "Wizard/animations/Strike/south/frame_001.png",
+              "Wizard/animations/Strike/south/frame_002.png",
+              "Wizard/animations/Strike/south/frame_003.png",
+              "Wizard/animations/Strike/south/frame_004.png",
+              "Wizard/animations/Strike/south/frame_005.png",
+              "Wizard/animations/Strike/south/frame_006.png"
+            ]
+          },
+          "Walk": {
+            "east": [
+              "Wizard/animations/Walk/east/frame_000.png",
+              "Wizard/animations/Walk/east/frame_001.png",
+              "Wizard/animations/Walk/east/frame_002.png",
+              "Wizard/animations/Walk/east/frame_003.png",
+              "Wizard/animations/Walk/east/frame_004.png",
+              "Wizard/animations/Walk/east/frame_005.png"
+            ],
+            "north-west": [
+              "Wizard/animations/Walk/north-west/frame_000.png",
+              "Wizard/animations/Walk/north-west/frame_001.png",
+              "Wizard/animations/Walk/north-west/frame_002.png",
+              "Wizard/animations/Walk/north-west/frame_003.png",
+              "Wizard/animations/Walk/north-west/frame_004.png",
+              "Wizard/animations/Walk/north-west/frame_005.png"
+            ],
+            "west": [
+              "Wizard/animations/Walk/west/frame_000.png",
+              "Wizard/animations/Walk/west/frame_001.png",
+              "Wizard/animations/Walk/west/frame_002.png",
+              "Wizard/animations/Walk/west/frame_003.png",
+              "Wizard/animations/Walk/west/frame_004.png",
+              "Wizard/animations/Walk/west/frame_005.png"
+            ],
+            "north": [
+              "Wizard/animations/Walk/north/frame_000.png",
+              "Wizard/animations/Walk/north/frame_001.png",
+              "Wizard/animations/Walk/north/frame_002.png",
+              "Wizard/animations/Walk/north/frame_003.png",
+              "Wizard/animations/Walk/north/frame_004.png",
+              "Wizard/animations/Walk/north/frame_005.png"
+            ],
+            "south-east": [
+              "Wizard/animations/Walk/south-east/frame_000.png",
+              "Wizard/animations/Walk/south-east/frame_001.png",
+              "Wizard/animations/Walk/south-east/frame_002.png",
+              "Wizard/animations/Walk/south-east/frame_003.png",
+              "Wizard/animations/Walk/south-east/frame_004.png",
+              "Wizard/animations/Walk/south-east/frame_005.png"
+            ],
+            "south-west": [
+              "Wizard/animations/Walk/south-west/frame_000.png",
+              "Wizard/animations/Walk/south-west/frame_001.png",
+              "Wizard/animations/Walk/south-west/frame_002.png",
+              "Wizard/animations/Walk/south-west/frame_003.png",
+              "Wizard/animations/Walk/south-west/frame_004.png",
+              "Wizard/animations/Walk/south-west/frame_005.png"
+            ],
+            "north-east": [
+              "Wizard/animations/Walk/north-east/frame_000.png",
+              "Wizard/animations/Walk/north-east/frame_001.png",
+              "Wizard/animations/Walk/north-east/frame_002.png",
+              "Wizard/animations/Walk/north-east/frame_003.png",
+              "Wizard/animations/Walk/north-east/frame_004.png",
+              "Wizard/animations/Walk/north-east/frame_005.png"
+            ],
+            "south": [
+              "Wizard/animations/Walk/south/frame_000.png",
+              "Wizard/animations/Walk/south/frame_001.png",
+              "Wizard/animations/Walk/south/frame_002.png",
+              "Wizard/animations/Walk/south/frame_003.png",
+              "Wizard/animations/Walk/south/frame_004.png",
+              "Wizard/animations/Walk/south/frame_005.png"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "character": {
+        "id": "893b7a2a-b4e7-4035-a4b8-9d16698cf230",
+        "name": "King",
+        "prompt": "Fire giant with orange skin wearing only loose pants",
+        "size": {
+          "width": 128,
+          "height": 128
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-09T00:58:32.780409+00:00"
+      },
+      "folder": "King",
+      "frames": {
+        "rotations": {
+          "south": "King/rotations/south.png",
+          "south-east": "King/rotations/south-east.png",
+          "east": "King/rotations/east.png",
+          "north-east": "King/rotations/north-east.png",
+          "north": "King/rotations/north.png",
+          "north-west": "King/rotations/north-west.png",
+          "west": "King/rotations/west.png",
+          "south-west": "King/rotations/south-west.png"
+        },
+        "animations": {
+          "Walk": {
+            "north-west": [
+              "King/animations/Walk/north-west/frame_000.png",
+              "King/animations/Walk/north-west/frame_001.png",
+              "King/animations/Walk/north-west/frame_002.png",
+              "King/animations/Walk/north-west/frame_003.png",
+              "King/animations/Walk/north-west/frame_004.png",
+              "King/animations/Walk/north-west/frame_005.png"
+            ],
+            "north-east": [
+              "King/animations/Walk/north-east/frame_000.png",
+              "King/animations/Walk/north-east/frame_001.png",
+              "King/animations/Walk/north-east/frame_002.png",
+              "King/animations/Walk/north-east/frame_003.png",
+              "King/animations/Walk/north-east/frame_004.png",
+              "King/animations/Walk/north-east/frame_005.png"
+            ],
+            "south": [
+              "King/animations/Walk/south/frame_000.png",
+              "King/animations/Walk/south/frame_001.png",
+              "King/animations/Walk/south/frame_002.png",
+              "King/animations/Walk/south/frame_003.png",
+              "King/animations/Walk/south/frame_004.png",
+              "King/animations/Walk/south/frame_005.png"
+            ],
+            "east": [
+              "King/animations/Walk/east/frame_000.png",
+              "King/animations/Walk/east/frame_001.png",
+              "King/animations/Walk/east/frame_002.png",
+              "King/animations/Walk/east/frame_003.png",
+              "King/animations/Walk/east/frame_004.png",
+              "King/animations/Walk/east/frame_005.png"
+            ],
+            "south-west": [
+              "King/animations/Walk/south-west/frame_000.png",
+              "King/animations/Walk/south-west/frame_001.png",
+              "King/animations/Walk/south-west/frame_002.png",
+              "King/animations/Walk/south-west/frame_003.png",
+              "King/animations/Walk/south-west/frame_004.png",
+              "King/animations/Walk/south-west/frame_005.png"
+            ],
+            "south-east": [
+              "King/animations/Walk/south-east/frame_000.png",
+              "King/animations/Walk/south-east/frame_001.png",
+              "King/animations/Walk/south-east/frame_002.png",
+              "King/animations/Walk/south-east/frame_003.png",
+              "King/animations/Walk/south-east/frame_004.png",
+              "King/animations/Walk/south-east/frame_005.png"
+            ],
+            "north": [
+              "King/animations/Walk/north/frame_000.png",
+              "King/animations/Walk/north/frame_001.png",
+              "King/animations/Walk/north/frame_002.png",
+              "King/animations/Walk/north/frame_003.png",
+              "King/animations/Walk/north/frame_004.png",
+              "King/animations/Walk/north/frame_005.png"
+            ],
+            "west": [
+              "King/animations/Walk/west/frame_000.png",
+              "King/animations/Walk/west/frame_001.png",
+              "King/animations/Walk/west/frame_002.png",
+              "King/animations/Walk/west/frame_003.png",
+              "King/animations/Walk/west/frame_004.png",
+              "King/animations/Walk/west/frame_005.png"
+            ]
+          },
+          "Strike": {
+            "north-west": [
+              "King/animations/Strike/north-west/frame_000.png",
+              "King/animations/Strike/north-west/frame_001.png",
+              "King/animations/Strike/north-west/frame_002.png",
+              "King/animations/Strike/north-west/frame_003.png",
+              "King/animations/Strike/north-west/frame_004.png",
+              "King/animations/Strike/north-west/frame_005.png",
+              "King/animations/Strike/north-west/frame_006.png"
+            ],
+            "south-west": [
+              "King/animations/Strike/south-west/frame_000.png",
+              "King/animations/Strike/south-west/frame_001.png",
+              "King/animations/Strike/south-west/frame_002.png",
+              "King/animations/Strike/south-west/frame_003.png",
+              "King/animations/Strike/south-west/frame_004.png",
+              "King/animations/Strike/south-west/frame_005.png",
+              "King/animations/Strike/south-west/frame_006.png"
+            ],
+            "west": [
+              "King/animations/Strike/west/frame_000.png",
+              "King/animations/Strike/west/frame_001.png",
+              "King/animations/Strike/west/frame_002.png",
+              "King/animations/Strike/west/frame_003.png",
+              "King/animations/Strike/west/frame_004.png",
+              "King/animations/Strike/west/frame_005.png",
+              "King/animations/Strike/west/frame_006.png"
+            ],
+            "south-east": [
+              "King/animations/Strike/south-east/frame_000.png",
+              "King/animations/Strike/south-east/frame_001.png",
+              "King/animations/Strike/south-east/frame_002.png",
+              "King/animations/Strike/south-east/frame_003.png",
+              "King/animations/Strike/south-east/frame_004.png",
+              "King/animations/Strike/south-east/frame_005.png",
+              "King/animations/Strike/south-east/frame_006.png"
+            ],
+            "north": [
+              "King/animations/Strike/north/frame_000.png",
+              "King/animations/Strike/north/frame_001.png",
+              "King/animations/Strike/north/frame_002.png",
+              "King/animations/Strike/north/frame_003.png",
+              "King/animations/Strike/north/frame_004.png",
+              "King/animations/Strike/north/frame_005.png",
+              "King/animations/Strike/north/frame_006.png"
+            ],
+            "south": [
+              "King/animations/Strike/south/frame_000.png",
+              "King/animations/Strike/south/frame_001.png",
+              "King/animations/Strike/south/frame_002.png",
+              "King/animations/Strike/south/frame_003.png",
+              "King/animations/Strike/south/frame_004.png",
+              "King/animations/Strike/south/frame_005.png",
+              "King/animations/Strike/south/frame_006.png"
+            ],
+            "north-east": [
+              "King/animations/Strike/north-east/frame_000.png",
+              "King/animations/Strike/north-east/frame_001.png",
+              "King/animations/Strike/north-east/frame_002.png",
+              "King/animations/Strike/north-east/frame_003.png",
+              "King/animations/Strike/north-east/frame_004.png",
+              "King/animations/Strike/north-east/frame_005.png",
+              "King/animations/Strike/north-east/frame_006.png"
+            ],
+            "east": [
+              "King/animations/Strike/east/frame_000.png",
+              "King/animations/Strike/east/frame_001.png",
+              "King/animations/Strike/east/frame_002.png",
+              "King/animations/Strike/east/frame_003.png",
+              "King/animations/Strike/east/frame_004.png",
+              "King/animations/Strike/east/frame_005.png",
+              "King/animations/Strike/east/frame_006.png"
+            ]
+          },
+          "Death": {
+            "south": [
+              "King/animations/Death/south/frame_000.png",
+              "King/animations/Death/south/frame_001.png",
+              "King/animations/Death/south/frame_002.png",
+              "King/animations/Death/south/frame_003.png",
+              "King/animations/Death/south/frame_004.png",
+              "King/animations/Death/south/frame_005.png",
+              "King/animations/Death/south/frame_006.png"
+            ]
+          },
+          "Idle": {
+            "south-west": [
+              "King/animations/Idle/south-west/frame_000.png",
+              "King/animations/Idle/south-west/frame_001.png",
+              "King/animations/Idle/south-west/frame_002.png",
+              "King/animations/Idle/south-west/frame_003.png"
+            ],
+            "south-east": [
+              "King/animations/Idle/south-east/frame_000.png",
+              "King/animations/Idle/south-east/frame_001.png",
+              "King/animations/Idle/south-east/frame_002.png",
+              "King/animations/Idle/south-east/frame_003.png"
+            ],
+            "south": [
+              "King/animations/Idle/south/frame_000.png",
+              "King/animations/Idle/south/frame_001.png",
+              "King/animations/Idle/south/frame_002.png",
+              "King/animations/Idle/south/frame_003.png"
+            ],
+            "north-east": [
+              "King/animations/Idle/north-east/frame_000.png",
+              "King/animations/Idle/north-east/frame_001.png",
+              "King/animations/Idle/north-east/frame_002.png",
+              "King/animations/Idle/north-east/frame_003.png"
+            ],
+            "east": [
+              "King/animations/Idle/east/frame_000.png",
+              "King/animations/Idle/east/frame_001.png",
+              "King/animations/Idle/east/frame_002.png",
+              "King/animations/Idle/east/frame_003.png"
+            ],
+            "west": [
+              "King/animations/Idle/west/frame_000.png",
+              "King/animations/Idle/west/frame_001.png",
+              "King/animations/Idle/west/frame_002.png",
+              "King/animations/Idle/west/frame_003.png"
+            ],
+            "north-west": [
+              "King/animations/Idle/north-west/frame_000.png",
+              "King/animations/Idle/north-west/frame_001.png",
+              "King/animations/Idle/north-west/frame_002.png",
+              "King/animations/Idle/north-west/frame_003.png"
+            ],
+            "north": [
+              "King/animations/Idle/north/frame_000.png",
+              "King/animations/Idle/north/frame_001.png",
+              "King/animations/Idle/north/frame_002.png",
+              "King/animations/Idle/north/frame_003.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-11-09T01:23:49.348806"
+}

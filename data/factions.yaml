@@ -87,6 +87,15 @@ deep_gnomes:
   enemies: [cinder_goblins]
   ranks: [[0, Stranger], [10, Friend of the fort], [30, Rock-brother]]
   perks: [[10, The fort's gate opens to you]]
+fire_giants:
+  name: The fire giants
+  blurb: The giants of the basalt citadel at the bottom of the mine, who keep the great dragon's gate and its peace. They suffer no one in their city.
+  start: -20
+  kos: 0
+  allies: []
+  enemies: []
+  ranks: [[-20, Trespasser]]
+  perks: []
 # The orc valley off the East Tarnvale (assets/ideas/orc-valley.md).
 orc_legion:
   name: The orc legion

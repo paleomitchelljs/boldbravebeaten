@@ -939,3 +939,75 @@ clockwork-spider:
   walks: [south, south-east, east, north-east, north]
   idle: {anim: Idle, frames: 4, pingpong: true, dirs: [south, south-east, east, north-east, north]}
   attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+# ---- The deep mine: the great red dragon and the fire giants (the user's figures, animated 2026-11-08) ----
+dragon-lord:
+  type: pixellab
+  dir: art/characters/pixellab/Nagafen/Idle
+  name: The great red dragon
+  size: 168
+  box: [12, 21, 156, 153]
+  height: 3.5
+  maxWidth: 4.5
+  walk: Walk
+  walkFrames: 6
+  walks: [south, south-east, east, north-east, north]
+  idle: {anim: Idle, frames: 4, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  # The breath is played from the wings-spread state.
+  attack: {dir: art/characters/pixellab/Nagafen/Angry, anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+fire-giant:
+  type: pixellab
+  dir: art/characters/pixellab/Fire_Giant/Idle
+  name: Fire giant
+  size: 100
+  box: [18, 11, 82, 89]
+  height: 2.3
+  maxWidth: 2.4
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 4, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+fire-giant-armored:
+  type: pixellab
+  dir: art/characters/pixellab/Fire_Giant/Armored
+  name: Fire giant warrior
+  size: 128
+  box: [3, 7, 126, 109]
+  height: 2.4
+  maxWidth: 3
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 4, pingpong: true}
+  attack: {anim: Strike, frames: 7}
+  death: {anim: Death, frames: 7, dirs: [south]}
+fire-giant-wizard:
+  type: pixellab
+  dir: art/characters/pixellab/Fire_Giant/Wizard
+  name: Fire giant wizard
+  size: 112
+  box: [20, 9, 92, 95]
+  height: 2.3
+  maxWidth: 2.4
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 4, pingpong: true}
+  attack: {anim: Strike, frames: 7}
+  death: {anim: Death, frames: 7, dirs: [south]}
+fire-giant-king:
+  type: pixellab
+  dir: art/characters/pixellab/Fire_Giant/King
+  name: The giant king
+  size: 128
+  box: [4, 17, 124, 118]
+  height: 2.5
+  maxWidth: 3
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 4, pingpong: true}
+  attack: {anim: Strike, frames: 7}
+  death: {anim: Death, frames: 7, dirs: [south]}

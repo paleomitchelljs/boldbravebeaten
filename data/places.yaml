@@ -1000,7 +1000,7 @@ orc_castle:
     emissaries: {foes: [{monster: orcEmissary}, {monster: orcEmissary}], text: "The emissaries draw their fine swords with some regret."}
     warlord: {foes: [{monster: orcWarlord}], text: "The warlord looks up from his maps and reaches for the greatsword."}
     throneguard: {foes: [{monster: orcCenturion}, {monster: orcCenturion}], text: "The throne guard close in from the pillars."}
-    emperor: {foes: [{monster: orcEmperor}], flags: [orc_emperor_dead], text: "The emperor rises from his throne and takes up the hammer."}
+    emperor: {foes: [{monster: orcEmperor}], flags: [orc_emperor_dead], text: "The emperor rises from his throne and takes up the spear."}
   wandering:
     - {w: 1, foes: [{monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "A patrol of the castle."}
     - {w: 4, nothing: true}
@@ -1687,7 +1687,7 @@ ember_hall:
     p: {kind: monster, encounter: patrol, label: "A goblin patrol"}
     r: {kind: monster, encounter: priests, label: "The war-priests' hall"}
     v: {kind: monster, encounter: riverpost, label: "The river guard post"}
-    D: {kind: prop, sprite: rubble, label: "The tunnel drops away into heat and dark: the way to the deep lair (not built yet)"}
+    D: {kind: stairs, to: ember_duct, at: h, sprite: none, label: "The tunnel drops away into heat and dark, toward the deep"}
     x: {kind: monster, encounter: guards, label: "A guards' cave"}
     y: {kind: monster, encounter: guards, label: "A guards' cave"}
     m: {kind: monster, encounter: mines, label: "Picks ringing in the mines"}
@@ -1959,7 +1959,7 @@ ember_gnomes:
     - "##########################################"
     - "##########################################"
     - "##########............####################"
-    - "##########....w.......####################"
+    - "##########....w...s...####################"
     - "##########............####################"
     - "##########............####################"
     - "###############..#########......##########"
@@ -1968,7 +1968,7 @@ ember_gnomes:
     - "########...#........#...##......##########"
     - "########...#........#...##......##########"
     - "########................##......##########"
-    - "#......#................##..K...#........#"
+    - "#......#..c.............##..K.f.#........#"
     - "n......P........................E.....W..e"
     - "#......P........................E........#"
     - "#....###...#...k....#...##......##.......#"
@@ -1980,7 +1980,7 @@ ember_gnomes:
     - "###############..#########......##########"
     - "##########............####################"
     - "##########............####################"
-    - "##########........C...####################"
+    - "##########...a....C...####################"
     - "##########............####################"
     - "##########################################"
     - "##########################################"
@@ -1991,11 +1991,18 @@ ember_gnomes:
     n: {kind: stairs, to: ember_warrens, at: N, sprite: door, wall: true, label: "Back over the bridge to the warrens"}
     P: {kind: locked, see: true, forceTn: 15, opensWhen: {flag: gnomes_trust}, label: "The fort's gate", text: "An iron gate, and gnome eyes behind it. They will open it to a friend."}
     K: {kind: npc, npc: gnome_warden, label: "Warden Odda"}
+    s: {kind: npc, npc: gnome_surveyor, label: "Surveyor Wila"}
+    c: {kind: monster, encounter: clockgate, label: "A clockwork gnome on guard"}
+    f: {kind: monster, encounter: clockyard, label: "A clockwork gnome and a bronze spider"}
+    a: {kind: monster, encounter: clockstore, label: "A bronze spider among the stores"}
     k: {kind: shrine, heal: 1, label: "The fort's infirmary", text: "A gnome with a lamp and very steady hands sees to your hurts."}
     w: {kind: prop, sprite: forge, label: "The fort's forge, never let go out"}
     h: {kind: note, label: "Gnome bunks", text: "Bunks in rows, a name burned into the head of each. Some of the names are crossed through."}
     C: {kind: note, label: "The fort's stores", text: "Sacks of cave-grain, dried mushroom, lamp oil, and not much else. They have been careful for eleven years."}
   encounters:
+    clockgate: {foes: [{monster: clockworkGnome}], peaceFlags: [gnomes_trust], text: "A gnome of bronze plates turns its goggles on you and its fists come up with a ratchet of gears."}
+    clockyard: {foes: [{monster: clockworkGnome}, {monster: clockworkSpider}], peaceFlags: [gnomes_trust], text: "Something ticks in the yard: a clockwork gnome, and a bronze spider at its heel."}
+    clockstore: {foes: [{monster: clockworkSpider}], peaceFlags: [gnomes_trust], text: "A bronze spider unfolds from between the sacks, ticking."}
     eastwatch: {foes: [{monster: gnomeWarrior}], parley: gnome_eastwatch, peaceFlags: [gnomes_trust], text: "A gnome on the east gate's watch levels a crossbow at you across the yard."}
   secrets: []
 
@@ -2086,7 +2093,7 @@ ember_castle:
     y: {kind: pickup, good: tome_ember, text: "A book of fire-words lies open on a dingy carpet."}
     m: {kind: note, sets: [knows_castle_seam], label: "Slates on a shelf", text: "Slates scratched with plans of the caves. One shows the warrens' southern lobe going on through the rock into the king's own rooms, though the wall there looks solid. Another runs a line from behind the baron's throne, far to the west, to inside the portcullis."}
     # G-20, the harvester pit
-    D: {kind: prop, sprite: pit_still, label: "A pit under boards weighed down with rock, a hundred feet of rope tied off beside it: the way to the deep lair (not built yet)"}
+    D: {kind: stairs, to: ember_duct, at: p, sprite: pit_still, label: "A pit under boards weighed down with rock, a hundred feet of rope tied off beside it: down to the deep"}
     # G-21, the guard post, and the tunnel to the gnomes
     u: {kind: monster, encounter: guardpost, label: "The guard post"}
     N: {kind: stairs, to: ember_gnomes, at: e, sprite: door, wall: true, label: "The south-east tunnel, towards the gnomes' fort"}
@@ -2152,9 +2159,290 @@ ember_jail:
     g: {kind: monster, encounter: jailers, label: "Jailers"}
     p: {kind: npc, npc: gnome_prisoner, label: "A gnome in a cell"}
     o: {kind: note, label: "An empty cell", text: "Chains, and what is left of whoever wore them."}
-    D: {kind: prop, sprite: rubble, label: "The stair goes on down into heat and dark: the way to the deep lair (not built yet)"}
+    D: {kind: stairs, to: ember_duct, at: j, sprite: none, label: "The stair goes on down into heat and dark, toward the deep"}
   encounters:
     questioner: {foes: [{monster: goblinShaman}], text: "The questioner puts down its irons."}
     jailers: {foes: [{monster: goblinWarrior}], text: "The jailer grabs its keys and its spear."}
+  secrets: []
+
+ember_duct:
+  name: The Black Glass Duct
+  kind: dungeon
+  blurb: Below the goblins the rock turns to black glass. Three ways come down into one old lava duct, and the duct winds on down past a lake of magma to the giants' gate.
+  level: 6
+  look: {wall: "#1e1a1c", floor: "#2e2a2a", ceiling: "#0c0808", fog: "#100404", torch: 1, tileset: ember_basalt, light: 8}
+  map:
+    - "##############################j#####"
+    - "###############......#########/#####"
+    - "###.....#######..p...#######.....###"
+    - "###..b..#######......#######.....###"
+    - "h................................###"
+    - "###..............................###"
+    - "###.....#########//#########.....###"
+    - "#################//#################"
+    - "#################//#################"
+    - "#################//#################"
+    - "#################//#################"
+    - "#################//#################"
+    - "#########....f.....#################"
+    - "#########..........#################"
+    - "#########//#########################"
+    - "#########//#########################"
+    - "#########//#########################"
+    - "#########//#########################"
+    - "#########//#########################"
+    - "#########..................#########"
+    - "#########.....e............#########"
+    - "#########################//#########"
+    - "#########################//#########"
+    - "#########################//#########"
+    - "#########################//#########"
+    - "##########.................#########"
+    - "##########..o..............#########"
+    - "##########....$$$$$$$$$$$$$$$$$#####"
+    - "##########..$$$$$$$$$$$$$$$$$$$#####"
+    - "##########..$$$$$$$$$$$$$$$$$$$#####"
+    - "##########.i$$$$$$$$$$$$$$$$$$$#####"
+    - "##########..$$$$$$$$$$$$$$$$$$$#####"
+    - "##########..$$$$$$$$$$$$$$$$$$$#####"
+    - "##########..$$$$$$$$$$$$$$$$$$$#####"
+    - "##########..$$$$$$$$$$$$$$$$$$$#####"
+    - "##########.....$$$$$$$$$$$$$$#######"
+    - "##########.............///##########"
+    - "##########.............///##########"
+    - "########################/###########"
+    - "########################C###########"
+  legend:
+    h: {kind: stairs, to: ember_hall, at: D, up: true, sprite: none, label: "Back up the east tunnel to the hall"}
+    p: {kind: stairs, to: ember_castle, at: D, up: true, sprite: none, label: "The rope back up to the harvester pit"}
+    j: {kind: stairs, to: ember_jail, at: D, up: true, sprite: none, label: "The stair up to the goblin jail"}
+    C: {kind: stairs, to: ember_citadel, at: D, sprite: none, label: "The ramp down to the giants' gates"}
+    b: {kind: note, label: "Black glass", text: "The walls here are glass, black and rippled where the rock ran like water and froze. Your torch looks back at you from every face."}
+    o: {kind: note, label: "The ledge", text: "The duct opens on a ledge over a lake of magma. Across it, cut square into the cavern wall, is a gate taller than a goblin's castle: iron doors, and a barred window looking out over the fire."}
+    e: {kind: monster, encounter: crawlers, label: "Something scrapes in the duct"}
+    f: {kind: monster, encounter: flare, label: "A light in the dark that is not a torch"}
+    i: {kind: monster, encounter: imps, label: "Shapes over the magma"}
+  encounters:
+    crawlers: {foes: [{monster: lavaBeetle}, {monster: lavaBeetle}], text: "Two lava beetles back out of a side crack, mandibles open."}
+    flare: {foes: [{monster: fireElemental}], text: "A fire elemental drifts up the duct, lighting the glass."}
+    imps: {foes: [{monster: imp}, {monster: imp}], text: "Imps rise off the magma, laughing."}
+  wandering:
+    - {w: 1, foes: [{monster: lavaBeetle}], text: "A lava beetle, following the warmth."}
+    - {w: 1, foes: [{monster: imp}], text: "An imp out hunting."}
+    - {w: 3, nothing: true}
+  secrets: []
+
+ember_citadel:
+  name: The Giants' Citadel
+  kind: dungeon
+  blurb: A city of the fire giants under the bottom of the mine, built in dressed black basalt veined with glowing quartz round a cavern lit by braziers. Its gate faces the duct; past the king's palace a guard house keeps the way to the dragon.
+  level: 10
+  look: {wall: "#2b2731", floor: "#37323e", ceiling: "#0c0b0e", fog: "#0c0608", torch: 1, tileset: ember_citadel, light: 9}
+  map:
+    - "##################################################N#########"
+    - "##################################################.#########"
+    - "#..........@@@@@@@@@@@@@@@@@.@@@@@@@@.@@@@@@@..............#"
+    - "#..........@@@@@@@@@@@@@@@@@.@@@@@@@@.@@@@@@@.....q........#"
+    - "#..........@....@.....@.c..@.@......@.@..j..@..............#"
+    - "#..........@.s..@..s..@..n.@.@..S...@.@....J@..............#"
+    - "#..........@....@.....@....@.@......@.@@@.@@@..............#"
+    - "#..........@....@.....@....@.@......@.@@@.@@@..............#"
+    - "#..........@@@@.@@@.@@@@.@@@.@..O...@............@@@@@@@@@@#"
+    - "#..........@@@@.@@@.@@@@.@@@.@......@..b.........@@@@@@@@@@#"
+    - "#.....@@@@@@@@@..............@@@.@@@@.....................@#"
+    - "#.....@@@@@@@@@..............@@@.@@@@................s....@#"
+    - "#.....@.F..A.....@@@@@@@@@@@............@@@@@@@..@........@#"
+    - "#.....@..f.......@@@@@@@@@@@............@@@@@@@..@@@@@@@@@@#"
+    - "#.....@..........@....@....@......B.....@w.@.w@..@@@@@@@@@@#"
+    - "#.....@.....R.@..@..s.@.n..@............@..@..@............#"
+    - "#.....@@@@@@@@@..@....@....@............@@.@.@@............#"
+    - "#..m..@@@@@@@@@..@@.@@@@@.@@............@@.@.@@@@@@@@@@@@@@#"
+    - "#................@@.@@@@@.@@........B...@.....@@@@@@@@@@@@@#"
+    - "#.......................................@.....@@X....X....@#"
+    - "#..................@@@@@@@....b.........@..w..@@...M....Y.@#"
+    - "#...............B..@@@@@@@..............@.....@@......@...@#"
+    - "#...........b......@...s.@..............@@@.@@@@@@.@@@@@@@@#"
+    - "#..................@.....@..............@@@.@@@@@@.@@@@@@@@#"
+    - "#..................@.....@.@@@@@.@@@@@@....................#"
+    - "#..................@@@.@@@.@@@@@.@@@@@@......b.............#"
+    - "#...@@@@@@@........@@@.@@@.@..........@.....@@@@@@@@@@@@@@@#"
+    - "#...@@@@@@@................@....h.....@.....@@@@@@@@@@@@@@@#"
+    - "#...@.......@@@@@@@........@..........@..........o.o.o....@#"
+    - "#...@.......@@@@@@@........@@@@@.@@@@@@.................E.@#"
+    - "#...@.....@.@..............@@@@@.@@@@@@.....@.........P...@#"
+    - "#...@@@@@@@.@..n...........@........l.@.....@....o.o.o....@#"
+    - "#...@@@@@@@.@.....@........@z...K.....@.....@@@@@@@@@@@@@@@#"
+    - "#...........@@@@@@@........@....U.....@.....@@@@@@@@@@@@@@@#"
+    - "#@@@@@@@....@@@@@@@........@@@@@@@@@@@@....................#"
+    - "#@@@@@@@.......b...........@@@@@@@@@@@@......###############"
+    - "#@...........................................###############"
+    - "#@.s.......@@@@@@@@@@@.@@@@@@@@@@@...#####...###############"
+    - "#@.....@...@@@@@@@@@@@.@@@@@@@@@@@...#####...###############"
+    - "#@@@@@@@...@.....................@...#####...###############"
+    - "#@@@@@@@...@./////////./////////.@...........###############"
+    - "#@@@@@@@...@./////////./////////.@...........######........L"
+    - "#@@@@@@@...@.//...............//.@...........######........#"
+    - "#@.........@.//...............//.@...........######..#######"
+    - "#@.n.......@.//...............//.@...........######..#######"
+    - "#@.....@...@.//...............//.@...........######..#######"
+    - "#@@@@@@@...@.//...............//.@...........######..#######"
+    - "#@@@@@@@...@.//.......a.......//.@.....@@@@@@######..#######"
+    - "#@@@@@@@...@.//...............//.@.....@@@@@@######..#######"
+    - "#@@@@@@@...@.//...............//.@......y..x.........#######"
+    - "#@H........@.//...............//.@...................#######"
+    - "#@..W......@.//...............//.@.....@..v.@........#######"
+    - "#@.....@...@.//...............//.@.....@....@###############"
+    - "#@@@@@@@...@.///////////////////.@.....@@@@@@###############"
+    - "#@@@@@@@...@.///////////////////.@.....@@@@@@###############"
+    - "#..........@.....................@...........###############"
+    - "#@@.@@@....@@@@@@@@@@@@@@@@@@@@@@@.b.........###############"
+    - "#@@.@@@....@@@@@@@@@@@@@@@@@@@@@@@..@@@@@@@@.###############"
+    - "#@....@...................@@@@@@....@@@@@@@@.###############"
+    - "#@.n..@@@.@@@.@@@@..@@@...@@@@@@....@....i.@.###############"
+    - "#@....@@@.@@@.@@@@..@@@........@....@......@.###############"
+    - "#@@@@@@.....@.@.......@........@....@@@.@@@@.###############"
+    - "#@@@@@@..g..@.@.......@...@....@....@@@.@@@@.###############"
+    - "#@@@@@@.....@.@.T...T.@...@@@@@@....@...@..@.###############"
+    - "#@@@@@@.....@.@.......@...@@@@@@....@...@..@.###############"
+    - "#@....@@@..@@.@.......@.................@..@.###############"
+    - "#@.n..@@@..@@.@...e...@@@@@@.@@@.@@@@......@.###############"
+    - "#@....@.......@.......@@@@@@.@@@.@@@@...@..@.###############"
+    - "#@@.@@@.......@..........u.@.@.....@@.r.@..@.###############"
+    - "#@@.@@@.......@............@.@.....@@...@..@.###############"
+    - "DG............@...C...@.k..@.@.....@@...@..@.###############"
+    - "DG............@.......@....@.@@@@@@@@@@@@@@@.###############"
+    - "##############@@@@@@@@@@@@@@#@@@@@@@@@@@@@@@################"
+    - "##############@@@@@@@@@@@@@@################################"
+    - "############################################################"
+    - "############################################################"
+  legend:
+    # F-1, the gates
+    D: {kind: stairs, to: ember_duct, at: C, up: true, sprite: none, label: "Up the ramp to the duct"}
+    G: {kind: locked, see: true, tn: 16, forceTn: 20, label: "The citadel's gates", text: "Iron gates three times a man's height, barred inside with a beam of iron. A barred window looks out over the ramp."}
+    g: {kind: monster, encounter: gate, label: "The gate's guards"}
+    # F-9a, the north gate onto the chasm
+    N: {kind: note, sprite: none, label: "The chasm", text: "Beyond the lattice the passage ends at a ledge over a black chasm strung with webs as thick as ropes. Something huge hangs in them, far off. (Not built yet.)"}
+    q: {kind: monster, encounter: lattice, label: "A giant on watch at the lattice"}
+    # F-2, common quarters
+    s: {kind: monster, encounter: sleeper, asleep: true, label: "A fire giant asleep"}
+    n: {kind: note, label: "Giants' quarters", text: "A stone bed under furs, a table the height of your chin, carvings of giants at war on every wall. Nobody home."}
+    c: {kind: chest, label: "A giant's chest", loot: relic_cache, rolls: 1, tn: 12}
+    # F-3, the grand hall, and F-4, the cookhouse
+    e: {kind: monster, encounter: hall, label: "Giants at table"}
+    T: {kind: prop, sprite: c_table, label: "A stone table eleven feet high"}
+    C: {kind: prop, sprite: c_chair, label: "The one true chair: worked stone lined with obsidian and lapis"}
+    k: {kind: monster, encounter: cook, label: "The cook"}
+    u: {kind: prop, sprite: c_cauldron, label: "A cauldron you could bathe in"}
+    # F-5, the arena
+    a: {kind: monster, encounter: arena, label: "Giants sparring in the pit"}
+    # F-6, the warlord's house
+    W: {kind: monster, encounter: warlord, label: "The warlord and his daughters"}
+    H: {kind: chest, label: "The warlord's strongbox", loot: relic_cache, rolls: 2, tn: 15}
+    # F-7, the giant forge, and F-8, the mines
+    f: {kind: monster, encounter: smith, label: "The smith at the forge"}
+    F: {kind: prop, sprite: c_forge, label: "A giant's forge, the coals white"}
+    A: {kind: prop, sprite: c_anvil, label: "An anvil the size of a cart"}
+    R: {kind: prop, sprite: c_rack, label: "Swords and spears awaiting owners"}
+    m: {kind: monster, encounter: miners, label: "Giants at work in the mine"}
+    # F-9, the courtyard
+    b: {kind: prop, sprite: c_brazier, label: "A brazier on an iron tripod"}
+    B: {kind: prop, sprite: c_bench, label: "A wrought-iron bench"}
+    # F-10, the temple of war
+    S: {kind: prop, sprite: c_statue, label: "A giant at war, in basalt"}
+    O: {kind: note, label: "The temple's carvings", text: "The architrave tells of a god's war against the other gods, fought for nothing but the glory of it, and lost. The giants carved the defeat as proudly as the war."}
+    # F-11, the jeweller's forge and kiln
+    j: {kind: monster, encounter: jeweller, label: "A jeweller at the kiln"}
+    J: {kind: chest, label: "A tray of giant-sized jewels", loot: relic_cache, rolls: 2, tn: 14}
+    # F-12, the magus's house
+    M: {kind: monster, encounter: magus, label: "The magus"}
+    X: {kind: prop, sprite: c_sphere, label: "A crystal sphere that burns with lava light"}
+    Y: {kind: chest, label: "The magus's study", loot: relic_cache, rolls: 2, tn: 16}
+    # F-13, the hall of wizardry
+    w: {kind: monster, encounter: wizard, label: "A giant at study"}
+    # F-14, the mausoleum
+    P: {kind: monster, encounter: shades, label: "Red mist between the coffins"}
+    o: {kind: prop, sprite: c_coffin, label: "A granite coffin, sized for a giant"}
+    E: {kind: chest, label: "The oldest tomb", loot: relic_cache, rolls: 2, tn: 14}
+    # F-15, the torture pit and the guest rooms
+    i: {kind: note, label: "A guest room, very cold", text: "Frost on the walls of a room in a city of fire. Whoever stays here comes from the far north, and serves another dragon."}
+    r: {kind: prop, sprite: pit_still, label: "The torture pit", text: "Bones at the bottom, of every kind."}
+    # F-16, the king's palace
+    h: {kind: monster, encounter: royalguard, label: "The king's guard"}
+    K: {kind: monster, encounter: king, label: "The king of the giants"}
+    U: {kind: prop, sprite: throne, label: "The king's throne"}
+    l: {kind: note, sets: [read_egg_letter], label: "A letter in white wax", text: "A letter in a cold, fine hand, from a dragon of the ice in the far north to the lord of the lair below. She is tired of fine words, she writes; their egg lies safe in her chamber and life stirs in it, but it will not hatch without him. She waits on his plan for his escape, and asks the king to send it on."}
+    z: {kind: chest, label: "The king's treasury", loot: relic_cache, rolls: 3, tn: 16}
+    # F-17, the vestibule
+    v: {kind: monster, encounter: vestibule, label: "The dragon's door wardens"}
+    y: {kind: prop, sprite: c_dragon, label: "A bronze dragon rearing, its eyes two rubies"}
+    x: {kind: prop, sprite: c_whitedragon, label: "An alabaster dragon, slender, its eyes two sapphires"}
+    L: {kind: stairs, to: ember_lair, at: V, sprite: none, label: "The tunnel to the dragon's lair"}
+  encounters:
+    gate: {foes: [{monster: fireGiantGuard}, {monster: fireGiantGuard}], text: "Two giants in black iron plate turn from the window and draw swords as long as you are tall."}
+    lattice: {foes: [{monster: fireGiantGuard}], text: "A young giant on the lattice watch, glad of something to do."}
+    sleeper: {foes: [{monster: fireGiant}], text: "A giant heaves up off its furs."}
+    hall: {foes: [{monster: fireGiant}, {monster: fireGiant}, {monster: fireGiantYoung}], text: "Giants at the long tables put down their cups."}
+    cook: {foes: [{monster: fireGiant}], text: "The cook comes round the cauldron with a ladle like a club."}
+    arena: {foes: [{monster: fireGiantYoung}, {monster: fireGiantYoung}, {monster: fireGiantGuard}], text: "The sparring stops. Here is better sport."}
+    warlord: {foes: [{monster: fireGiantWarlord}, {monster: fireGiantYoung}, {monster: fireGiantYoung}], text: "The warlord does not parley. His daughters hang back, feigning fear, until they see an opening."}
+    smith: {foes: [{monster: fireGiant}], text: "The smith turns from the anvil with the hammer still in his fist."}
+    miners: {foes: [{monster: fireGiant}, {monster: fireGiantYoung}, {monster: fireGiantYoung}, {monster: fireGiantYoung}], text: "The young giants drop their picks for their fists; the foreman wades in after them."}
+    jeweller: {foes: [{monster: fireGiant}], text: "The jeweller sets down something delicate and stands up, and up."}
+    magus: {foes: [{monster: fireGiantMagus}], text: "The old magus rises in a wash of coloured crystal light."}
+    wizard: {foes: [{monster: fireGiantWizard}], text: "A giant wizard looks up from a book of fire, delighted."}
+    shades: {foes: [{monster: giantShade}, {monster: giantShade}], text: "The red mist in the marble gathers itself into two dead giants, and they rise to serve."}
+    royalguard: {foes: [{monster: fireGiantGuard}, {monster: fireGiantGuard}], text: "The king's guard close the doors behind you."}
+    king: {foes: [{monster: fireGiantKing}, {monster: fireGiantGuard}], flags: [giant_king_dead], text: "The king of the giants takes up his maul."}
+    vestibule: {foes: [{monster: fireGiantGuard}, {monster: fireGiantWizard}], text: "The two wardens of the dragon's door, a warrior and a wizard, step out from between the statues."}
+  wandering:
+    - {w: 1, foes: [{monster: fireGiantGuard}], text: "A giant warrior on his rounds of the courtyard."}
+    - {w: 1, foes: [{monster: fireGiant}], text: "A giant crossing the courtyard."}
+    - {w: 4, nothing: true}
+  secrets: []
+
+ember_lair:
+  name: The Dragon's Lair
+  kind: dungeon
+  blurb: A domed cavern afire with lava light; a moat of molten rock round a ring of stone, one bridge across, and on the ring the great red dragon on its hoard.
+  level: 14
+  look: {wall: "#2a1e16", floor: "#3c2c22", ceiling: "#140604", fog: "#200604", torch: 1, tileset: ember_basalt, light: 12}
+  map:
+    - "##################################"
+    - "##################################"
+    - "##################################"
+    - "##################################"
+    - "###########...............########"
+    - "###########...............########"
+    - "#########.....$$$$$$$$$.....######"
+    - "#########...$$$$$$$$$$$$$...######"
+    - "#######....$$$$$$$$$$$$$$$....####"
+    - "#######.o.$$$$$$.....$$$$$$...####"
+    - "######...$$$$$.........$$$$$...###"
+    - "######..$$$$$...........$$$$$..###"
+    - "#####...$$$$..........H..$$$$...##"
+    - "#####...$$$...............$$$...##"
+    - "V....)))))))..............$$$$..##"
+    - "#....))))))).......d......$$$$..##"
+    - "#####..$$$$...............$$$$..##"
+    - "#####...$$$...............$$$...##"
+    - "#####...$$$$.............$$$$...##"
+    - "######..$$$$$...........$$$$$..###"
+    - "######...$$$$$.........$$$$$...###"
+    - "#######...$$$$$$.....$$$$$$...####"
+    - "########...$$$$$$$$$$$$$$$...#####"
+    - "#########...$$$$$$$$$$$$$...######"
+    - "##########....$$$$$$$$$....#######"
+    - "###########...............########"
+    - "##############.........###########"
+    - "##################################"
+    - "##################################"
+    - "##################################"
+  legend:
+    V: {kind: stairs, to: ember_citadel, at: L, up: true, sprite: none, label: "Back to the vestibule"}
+    o: {kind: note, label: "The dome", text: "The roof is a dome so high the lava light gives out before it does. Black smoke rolls along it. On the ring of stone across the fire, something breathes."}
+    d: {kind: monster, encounter: dragon, label: "The great red dragon"}
+    H: {kind: chest, label: "The dragon's hoard", loot: relic_cache, rolls: 5, tn: 0}
+  encounters:
+    dragon: {foes: [{monster: dragonLord}], flags: [dragon_lord_dead], text: "The dragon lifts its head off its gold. A roar shakes the whole of the deep, and then it speaks: it would like to know who you think you are."}
   secrets: []
 

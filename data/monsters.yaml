@@ -927,6 +927,188 @@ gnomeWarrior:
   traits: {}
   feats: {}
   keepUnarmed: true
+# The gnome fort's machines: they stand with the gnomes, and stand down once the gnomes trust you (peaceFlags).
+clockworkGnome:
+  name: Clockwork gnome
+  blurb: "A gnome-sized man of bronze plates and goggles, wound by a key in its back. It guards what it is told to and does not tire, and fire does not trouble it."
+  faction: deep_gnomes
+  xp: 40
+  glyph: "⚙"
+  sprite: {art: clockwork-gnome, kind: knight, scale: 0.7}
+  level: 2
+  attrs: {STR: 8, CON: 9, DEX: 5, SPD: 4, INT: 1, WIS: 1, CHA: 1}
+  skills: {melee: 2}
+  natural: [gorillaFists]
+  armorItem: {type: plate, coverage: full}
+  traits: {size: 0.8, tireless: true, golem: true, resist: {fire: 0.5, mind: 0, life: 0}}
+  feats: {}
+clockworkSpider:
+  name: Bronze clockwork spider
+  blurb: "A bronze spider the size of a dog, ticking. The gnomes built it to run the narrow seams; it bites like a pick."
+  faction: deep_gnomes
+  xp: 45
+  glyph: "🕷"
+  sprite: {art: clockwork-spider, kind: orc, scale: 0.8, tint: "#a07a3a"}
+  level: 2
+  attrs: {STR: 7, CON: 8, DEX: 8, SPD: 7, INT: 1, WIS: 1, CHA: 1}
+  skills: {melee: 2, athletics: 2}
+  natural: [spiderBite]
+  armorItem: {type: plate, coverage: full}
+  traits: {tireless: true, golem: true, resist: {fire: 0.5, mind: 0, life: 0}}
+  feats: {}
+# The deep mine (assets/ideas/ember-mine.md §5): the fire giants' basalt citadel round the dragon's lair. First guesses;
+# encounter tuning is deferred. The giants fight bare-fisted unless armed; every one of them shrugs off fire.
+fireGiant:
+  name: Fire giant
+  blurb: "Twice a man's height, skin like banked coals and a beard of flame. It fights with its fists and with boulders, and fire does not trouble it."
+  faction: fire_giants
+  xp: 280
+  glyph: "🔥"
+  sprite: {art: fire-giant, kind: orc_warrior, scale: 1.8, tint: "#e07030"}
+  loot: troll_hoard
+  level: 10
+  attrs: {STR: 26, CON: 24, DEX: 6, SPD: 5, INT: 7, WIL: 8, WIS: 6, CHA: 5}
+  skills: {melee: 5, athletics: 5, intimidation: 3}
+  natural: [trollFists, boulder]
+  armor: giantHide
+  keepUnarmed: true
+  traits: {grip: 5, size: 2.5, resist: {fire: 0}}
+  feats: {power_swing: 1, toughness: 2}
+fireGiantYoung:
+  name: Young fire giant
+  blurb: "A fire giant not yet grown: only half again a man's height, eager, and set to work in the mines."
+  faction: fire_giants
+  xp: 140
+  glyph: "🔥"
+  sprite: {art: fire-giant, artScale: 0.8, kind: orc_warrior, scale: 1.4, tint: "#e07030"}
+  loot: humanoid_purse
+  level: 6
+  attrs: {STR: 20, CON: 18, DEX: 6, SPD: 5, INT: 6, WIL: 6, WIS: 5, CHA: 5}
+  skills: {melee: 3, athletics: 4}
+  natural: [trollFists]
+  armor: giantHide
+  keepUnarmed: true
+  traits: {grip: 4, size: 2, resist: {fire: 0}}
+  feats: {toughness: 1}
+fireGiantGuard:
+  name: Fire giant warrior
+  blurb: "A fire giant in black iron plate under a horned helm, with a greatsword as long as a man. The citadel's gates and its king are kept by these."
+  faction: fire_giants
+  xp: 340
+  glyph: "🔥"
+  sprite: {art: fire-giant-armored, kind: orc_warrior, scale: 1.8, tint: "#5a5a5a"}
+  loot: troll_hoard
+  level: 11
+  attrs: {STR: 26, CON: 24, DEX: 7, SPD: 5, INT: 7, WIL: 9, WIS: 6, CHA: 5}
+  skills: {melee: 6, armor: 5, athletics: 4, intimidation: 3}
+  natural: [boulder]
+  armorItem: {type: plate, coverage: full}
+  weapons: [greatsword]
+  craft: master
+  keepUnarmed: true
+  traits: {grip: 5, size: 2.5, resist: {fire: 0}}
+  feats: {power_swing: 1, shield_breaker: 1, toughness: 2}
+fireGiantWarlord:
+  name: The giants' warlord
+  blurb: "The king's champion, who trains the citadel's young in the arena and does not parley with trespassers: he sees them as a lesson for his students."
+  faction: fire_giants
+  xp: 520
+  glyph: "🔥"
+  sprite: {art: fire-giant-armored, artScale: 1.1, kind: orc_warrior, scale: 2, tint: "#5a5a5a"}
+  loot: troll_hoard
+  level: 13
+  attrs: {STR: 28, CON: 26, DEX: 8, SPD: 6, INT: 8, WIL: 11, WIS: 7, CHA: 7}
+  skills: {melee: 8, armor: 6, anticipation: 5, athletics: 5, intimidation: 6}
+  natural: [boulder]
+  armorItem: {type: plate, coverage: full}
+  weapons: [greatsword]
+  craft: master
+  keepUnarmed: true
+  traits: {grip: 5, size: 2.6, resist: {fire: 0}}
+  feats: {power_swing: 1, shield_breaker: 1, toughness: 3}
+fireGiantWizard:
+  name: Fire giant wizard
+  blurb: "A fire giant in crimson robes with a staff of black iron and violet crystal: the giants' old fire magic, a shadow of what it was, and still enough."
+  faction: fire_giants
+  xp: 360
+  glyph: "🔥"
+  sprite: {art: fire-giant-wizard, kind: orc_shaman, scale: 1.8, tint: "#a03030"}
+  loot: troll_hoard
+  level: 10
+  attrs: {STR: 22, CON: 20, DEX: 6, SPD: 5, INT: 11, WIL: 11, WIS: 8, CHA: 6}
+  skills: {melee: 3, arcane: 6}
+  natural: []
+  armor: giantHide
+  weapons: [staff]
+  keepUnarmed: true
+  nouns: [fire]
+  traits: {size: 2.4, resist: {fire: 0}}
+  feats: {verb_strike: 1, mod_wide: 1, toughness: 1}
+fireGiantMagus:
+  name: The giants' magus
+  blurb: "The oldest of the giants' wizards, in a house of coloured crystal light, who remembers when their fire daunted the hosts of other worlds."
+  faction: fire_giants
+  xp: 560
+  glyph: "🔥"
+  sprite: {art: fire-giant-wizard, artScale: 1.1, kind: orc_shaman, scale: 2, tint: "#a03030"}
+  loot: troll_hoard
+  level: 13
+  attrs: {STR: 22, CON: 22, DEX: 7, SPD: 5, INT: 14, WIL: 14, WIS: 10, CHA: 8}
+  skills: {melee: 3, arcane: 9, anticipation: 4}
+  natural: []
+  armor: giantHide
+  weapons: [staff]
+  keepUnarmed: true
+  nouns: [fire, force]
+  traits: {size: 2.5, resist: {fire: 0, mind: 0.5}}
+  feats: {verb_strike: 1, mod_wide: 1, mod_strong: 1, mod_far: 1, toughness: 2}
+fireGiantKing:
+  name: The giant king
+  blurb: "The king of the fire giants in black and gold plate, a ruby crown and a maul hafted in gold. He keeps the dragon's peace, and waits on the dragon's promise."
+  faction: fire_giants
+  xp: 800
+  glyph: "👑"
+  sprite: {art: fire-giant-king, kind: orc_warrior, scale: 2.1, tint: "#c0a040"}
+  loot: troll_hoard
+  level: 15
+  attrs: {STR: 30, CON: 28, DEX: 8, SPD: 6, INT: 10, WIL: 13, WIS: 9, CHA: 11}
+  skills: {melee: 9, armor: 7, anticipation: 6, athletics: 6, intimidation: 8}
+  natural: [boulder]
+  armorItem: {type: plate, coverage: full}
+  weapons: [giantClub]
+  craft: master
+  keepUnarmed: true
+  traits: {grip: 6, size: 2.7, resist: {fire: 0}}
+  feats: {power_swing: 1, shield_breaker: 1, toughness: 3}
+giantShade:
+  name: Giant shade
+  blurb: "A dead fire giant risen as a spectral warrior from its granite coffin, red mist where its flesh was. Only spells and magical weapons touch it."
+  faction: fire_giants
+  xp: 380
+  glyph: "👻"
+  sprite: {art: spectre, artTint: "#e06040", artScale: 1.6, kind: skeleton_mage, scale: 1.8, tint: "#e06040"}
+  level: 11
+  attrs: {STR: 20, CON: 16, DEX: 8, SPD: 7, INT: 6, WIL: 12, WIS: 6, CHA: 6}
+  skills: {melee: 6, intimidation: 5}
+  natural: [trollFists]
+  keepUnarmed: true
+  traits: {size: 2.2, tireless: true, undead: true, incorporeal: true, resist: {fire: 0}}
+  feats: {toughness: 1}
+dragonLord:
+  name: The great red dragon
+  blurb: "A hundred feet from nose to tail, gold flecks on its belly, smoke from its nostrils. It rules the giants, the goblins and the deep from a ring of rock in a moat of fire, and it is clever, and it is old."
+  faction: fire_giants
+  xp: 2000
+  glyph: "🐉"
+  sprite: {art: dragon-lord, kind: orc_shaman, scale: 3, tint: "#b03020"}
+  level: 18
+  attrs: {STR: 34, CON: 32, DEX: 9, SPD: 9, INT: 14, WIL: 16, WIS: 12, CHA: 14}
+  skills: {melee: 10, arcane: 9, anticipation: 7, perception: 8, intimidation: 10}
+  natural: [drakeBite, drakeClaws, wingBuffet, tail]
+  armor: drakeScales
+  nouns: [fire]
+  traits: {size: 4, flying: true, dragon: true, grip: 6, resist: {fire: 0, mind: 0.5}}
+  feats: {verb_strike: 1, mod_wide: 1, mod_strong: 1, mod_far: 1, toughness: 4}
 # The orc valley (assets/ideas/orc-valley.md): the legion, its officers and its court. First guesses: encounter tuning
 # is deferred.
 orcLegionnaire:
@@ -1028,7 +1210,7 @@ orcWarlord:
   keepUnarmed: true
 orcEmperor:
   name: The orc emperor
-  blurb: "The emperor on his stone throne under the great gold coin: huge, blue-grey, armored in scale, a warhammer in his fist."
+  blurb: "The emperor on his stone throne under the great gold coin: huge, blue-grey, in mail and a crested war helm, a long barbed spear in both hands."
   faction: orc_legion
   xp: 300
   glyph: "👑"
@@ -1038,9 +1220,8 @@ orcEmperor:
   attrs: {STR: 11, CON: 10, DEX: 6, SPD: 5, INT: 6, WIL: 9, WIS: 6, CHA: 8}
   skills: {melee: 7, block: 5, armor: 5, intimidation: 5}
   natural: []
-  armorItem: {type: plate, coverage: half}
-  weapons: [warhammer]
-  shield: [heater, iron]
+  armorItem: {type: mail, coverage: full}
+  weapons: [heavySpear]
   craft: master
   feats: {toughness: 1}
   keepUnarmed: true
