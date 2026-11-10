@@ -7,9 +7,11 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
 `archive/docs/HANDOFF-to-2026-11-09.md` (the list up to that day, 1,070 lines) and in git.
 
 ## Now: tuning (begun 2026-11-09)
-- [ ] **The swing is a dead action.** Beren (the one hero with an edge) never swings in a crawl, under any of five
-  rule variants tried; nothing was changed. Evidence and the options are at the top of `sim/FINDINGS.md`. Needs a
-  ruling before more tuning: it decides what a sword is for.
+- [ ] **Weapon roles** (PROVISIONAL, 2026-11-10; top of `sim/FINDINGS.md`): a swung edge's blunt comes from its
+  weight, heavy points thrust slower (longsword 2.3 AP), the staff's jab is 3, a battle axe exists. The roles hold in
+  the table but not yet in play: the swing is still under 1% of blows, and a skeleton (CON 4, blunt straight to CON)
+  dies to a kick or a shield bash before anyone swings. Needs a ruling on blunt against tireless bodies. Against
+  mail the great axe now beats the hammers per AP. No hero or monster carries the battle axe.
 - [ ] Crawl baseline (`node sim/crawl.js`): a party of 3 clears the court 10/30, the mine hall 0/30, the orc valley
   2/30; a party of 4 26/30, 1/30, 10/30. All level-1 places. The hall's single foes kill a hero in one fight of
   three; the valley's third group pulls its neighbours (6.7 foes). The crawl has no recruiting and no growth yet
@@ -71,7 +73,7 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
 - [ ] Wanted, no art: the vampire; redo Beren, the Yuan-Ti, skeletons, rats; raptor, red drake, fae drake.
 
 ## Ask the user
-- [ ] The swing (above). An unbound summons: a third side? Spell bolts cannot be dodged: confirm.
+- [ ] Blunt against the undead: a floor, or weaker unarmed blows (above)? An unbound summons: a third side? Spell bolts cannot be dodged: confirm.
 - [ ] Put the mine's groups back when testing is done? The Lantern raises only friends: fine for testing?
 - [ ] A blank hero to build from scratch? A full padded suit for Cyrus? Give someone the wall of fire back?
 - [ ] What "slow" means in play: rounds, exchanges, or the AI's pauses. Narrow places (palace stairs, sewer walks).

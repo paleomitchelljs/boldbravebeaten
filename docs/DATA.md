@@ -16,7 +16,7 @@ No anchors or tags. Keys must be unique.
 | `origins.yaml` | Where and how gear was made (common, elven, dwarven, goblin): weight against protection, damage and durability. |
 | `crafts.yaml` | Craftsmanship (poor, average, masterwork): durability, wear taken, shield break threshold. |
 | `enchantments.yaml` | Rare enchantments: what they can be laid on, the multipliers, and the magic: `effects` (while worn or in hand), `strike` (on each blow that lands), `apLess`, `power`, `blockSpells`, `mitBonus`, `resistBonus`. See **Magic items** below. |
-| `weapons.yaml` | Weapons, including natural ones. `phys` (mass, length, point, edge, head…) generates damage, AP, STR scaling, wounds and punch through armor; `reach: {swing, thrust, min}`; `closeOK` (works in a clinch). |
+| `weapons.yaml` | Weapons, including natural ones. `phys` (mass, length, point, edge, head, `heft` for a head-heavy edge such as an axe…) generates damage, AP, STR scaling, wounds and punch through armor; `reach: {swing, thrust, min}`; `closeOK` (works in a clinch). |
 | `feats.yaml` | Trees of feats: a tree's `group` (setting) and `branches`; a feat's `branch`, `capstone` (one per tree a character), ranks, `requires`, effect line, `auto` (does the game implement it). |
 | `spells.yaml` | The magic grammar: verbs, nouns, modifiers, and each shape's base numbers. See **A spell word** below. |
 | `monsters.yaml` | Creatures and packs. |

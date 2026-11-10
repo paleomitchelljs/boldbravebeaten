@@ -1,5 +1,56 @@
 # Simulation findings
 
+## Weapon roles (2026-11-10; PROVISIONAL, `CONFIG.weaponPhysics`)
+
+**The ruling** (the user, 2026-11-09). Blunt swings are the best against armor and the undead; spear and rapier
+thrusts the best against the living (reach, speed, lethality); the longsword is the generalist: "light so not a lot
+of blunt damage on a swing (but non negligible) with good thrust reach and damage but heavier than a rapier so more
+AP"; axes are "heavier, slower sword swings with no effective thrust option".
+
+**What changed.** (1) A swung edge's blunt comes from its weight, `edgeBlunt` 2.2 × edge × √(mass × length × heft ×
+grip), not a seventh of the cut (claws and other natural edges keep the seventh). (2) `thrustHeavy`: a point over
+1.1 kg (÷ grip in two hands) with an edge behind it costs 0.6 × (mass/1.1 − 1) more; spears are exempt (held at the balance). (3) `buttDamage` 2.5: the staff's butt jab is 3 blunt,
+not 6. (4) `phys.heft` (a head-heavy edge) and a one-handed `battleAxe` (1.6 kg, 0.8 m, edge 1.3, heft 1.2).
+
+**The table** (STR 6, Melee 4; each cell is harm to CON c / attributes a / stamina s for a landed blow):
+
+| Weapon, action | AP | reach | damage P/S/B | bare | padded | mail | plate | skeleton |
+|---|---|---|---|---|---|---|---|---|
+| rapier thrust | 1.9 | 2 | 6/0/0 | 8c | 4c | 1c 2s | 0 | 0 |
+| short spear thrust | 1.7 | 3 | 6/0/0 | 8c | 4c | 1c 2s | 0 | 0 |
+| spear thrust | 2.0 | 4 | 8/0/0 | 10c | 5c | 1c 3s | 1s | 0 |
+| longsword thrust | 2.3 (was 2.0) | 2 | 6/0/0 | 8c | 4c | 1c 2s | 0 | 0 |
+| longsword swing | 4.0 | 1 | 0/6/3 (was 0/6/1) | 8a 4s | 3s | 4s | 0 | 4c 4a |
+| rapier swing | 3.8 | 1 | 0/2/1 | 3a 1s | 1s | 0 | 0 | 1c 1a |
+| battle axe swing (new) | 4.6 | 1 | 0/7/4 | 9a 5s | 5s | 5s | 1s | 5c 4a |
+| great axe, two hands | 8.0 | 2 | 0/14/8 (was 0/14/3) | 1c 18a 10s | 1c 9a 11s | 5c 18s | 6s | 10c 9a |
+| club swing | 3.4 | 1 | 0/0/5 | 6s | 3s | 5s | 3s | 6c |
+| warhammer head | 3.9 | 1 | 0/0/6 | 8s | 5s | 7s | 5s | 8c |
+| staff, two hands | 6.9 | 2 | 0/0/10 | 2c 13s | 1c 10s | 2c 12s | 1c 10s | 13c |
+| staff butt jab | 2.0 | 2 | 0/0/3 (was 0/0/6) | 4s | 1s | 3s | 1s | 4c |
+
+The roles hold on paper: against plate only the hammers, maces and staff do anything; a point does nothing to bone;
+the longsword's swing is worth about half a hammer's against bone and mail; the rapier and short spear give the
+longsword's wound for 0.4–0.6 AP less. One exception: against **mail** the great axe (5c 18s for 8 AP) beats the
+staff (2c 12s for 6.9) and the warhammer per AP, because mail turns a stopped cut into blunt and the axe now adds 8
+of its own. Left as is; lower `edgeBlunt` or cap the two-handed case if that is wrong.
+
+A blow's force (parry leverage, parry carry, wear) is the sum of its damage, so edged swings are now a little harder
+to parry and wear a little more: a longsword's swing 7 → 9.
+
+**In a crawl** (30 each, seed 4242; old → new): party of 3: temple_court 10 → 11, ember_hall 0 → 2, orc_valley 2 → 3,
+temple_court2 (level 3, skeletons) 0 → 0; party of 4: 26 → 29, 1 → 6, 10 → 11, 1 → 0. Only the hall with four moves
+by more than a few crawls (±9 points on a rate; cause not looked into). The heroes' swing is still at most 2% of
+blows landed.
+
+**Why the swing is still not used, even on bone.** Beren alone against one skeleton, 20 fights each: with his shield
+he kills it with a Shield bash every time (0/0/4, 2.3 AP, 5 CON to a CON-4 skeleton). Without the shield, whatever he
+holds (longsword, battle axe, rapier, warhammer) he punches and kicks it to death (Kick 0/0/3, 2.3 AP, 4 CON); one
+longsword swing in 20 fights. A tireless body takes every point of blunt straight to CON, and the skeleton has 4, so
+a boot does a warhammer's job for half the AP. The weapon roles cannot show against the undead until that changes:
+either blunt against a tireless body needs a floor to get through (bone shrugs off a kick), or unarmed blows count
+for less against it. Not changed; a ruling is wanted.
+
 ## The crawl baseline; the swing nobody uses (2026-11-09; `node sim/crawl.js`)
 
 **Method.** `sim/crawl.js` walks start.yaml's heroes (level 1, as a new game gives them) into a place and fights its

@@ -415,14 +415,19 @@
     const X = CONFIG.weaponPhysics, V = CONFIG.vital;
     const grip = def.hands === 2 ? X.grip : 1;
     const ml = ph.mass * ph.length;
+    // heft: how far out the weight sits (an axe's head): a harder, slower swing than the same mass as a blade.
+    const heft = ph.heft || 1;
     const faces = {}, wound = {};
     if (ph.point) {
       faces.point = [Math.round(ph.point.depth * X.pointDamage), 0, 0];
       wound.point = pointWound(ph.point);
     }
     if (ph.edge) {
-      const S = Math.round(ph.edge * (X.edgeDamage.base + X.edgeDamage.k * Math.sqrt(ml * grip)));
-      faces.edge = [0, S, Math.round(S / 7)];
+      const S = Math.round(ph.edge * (X.edgeDamage.base + X.edgeDamage.k * Math.sqrt(ml * heft * grip)));
+      // The blow behind the edge: the blade's weight (edgeBlunt × √(mass × length × grip)), so a longsword's cut
+      // carries some, a rapier's almost none, an axe's more; always under a hammer's. Claws keep a seventh.
+      const eb = def.natural || X.edgeBlunt == null ? S / 7 : ph.edge * X.edgeBlunt * Math.sqrt(ml * heft * grip);
+      faces.edge = [0, S, Math.round(eb)];
       wound.edge = { kind: 'S', vital: V.cut * ph.edge, bleed: 1, rounds: CONFIG.bleedRounds };
     }
     if (ph.head) {
@@ -437,7 +442,7 @@
     }
     // A jab with the blunt end (a staff): the mass behind it, no leverage, so weaker than the swung head.
     if (ph.butt) {
-      faces.butt = [0, 0, Math.round(1 + X.headDamage * Math.sqrt(ph.butt.mass * grip))];
+      faces.butt = [0, 0, Math.round(1 + (X.buttDamage == null ? X.headDamage : X.buttDamage) * Math.sqrt(ph.butt.mass * grip))];
       wound.butt = { kind: 'B', vital: 0, bleed: 1, rounds: CONFIG.bleedRounds };
     }
     if (ph.hilt) {
@@ -445,13 +450,15 @@
       wound.hilt = { kind: 'B', vital: 0, bleed: 1, rounds: CONFIG.bleedRounds };
     }
     const refMl = Math.sqrt(X.ref.mass * X.ref.length);
+    // thrustHeavy: a blade's weight sits ahead of the hand, so a heavy one is slow to drive point-first; a spear is
+    // held at its balance and is not.
     // Natural speed (no STR in it): lighter and shorter is quicker; heavier is a matter of strain
     // (Character.strikeOption), not of the weapon alone. Load: what the wielder must move.
     const speed = {
-      thrust: 1 + X.thrustSlope * (Math.min(1, ph.mass / grip / X.ref.mass) - 1),
-      swing: 1 + X.swingSlope * (Math.min(1, Math.sqrt(ml) / refMl) - 1) + (X.reachSlope || 0) * Math.max(0, ph.length / X.ref.length - 1),
+      thrust: 1 + X.thrustSlope * (Math.min(1, ph.mass / grip / X.ref.mass) - 1) + (X.thrustHeavy && ph.edge ? X.thrustHeavy.slope * Math.max(0, ph.mass / grip / X.thrustHeavy.ref - 1) : 0),
+      swing: heft * (1 + X.swingSlope * (Math.min(1, Math.sqrt(ml) / refMl) - 1) + (X.reachSlope || 0) * Math.max(0, ph.length / X.ref.length - 1)),
     };
-    const load = { thrust: ph.mass * ((X.strain && X.strain.thrustLoad) || 1), swing: ph.mass * ph.length / X.ref.length };
+    const load = { thrust: ph.mass * ((X.strain && X.strain.thrustLoad) || 1), swing: heft * ph.mass * ph.length / X.ref.length };
     const weight = X.weightClass.find(([max]) => ph.mass < max)[1];
     const width = (ph.point || ph.beak || {}).width || 0;
     const swingMult = (g) => Math.min(X.str.max, (ph.mass * g) / X.str.swingRefMass);
