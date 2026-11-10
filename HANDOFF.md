@@ -8,10 +8,10 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
 
 ## Now: tuning (begun 2026-11-09)
 - [ ] **Weapon roles** (PROVISIONAL, 2026-11-10; top of `sim/FINDINGS.md`): a swung edge's blunt comes from its
-  weight, heavy points thrust slower (longsword 2.3 AP), the staff's jab is 3, a battle axe exists. The roles hold in
-  the table but not yet in play: the swing is still under 1% of blows, and a skeleton (CON 4, blunt straight to CON)
-  dies to a kick or a shield bash before anyone swings. Needs a ruling on blunt against tireless bodies. Against
-  mail the great axe now beats the hammers per AP. No hero or monster carries the battle axe.
+  weight, heavy points thrust slower (longsword 2.3 AP), the staff's jab is 3, a battle axe exists. Punches and kicks
+  take stamina only without Heavy Hands (the user's ruling), so shieldless fighters now swing at bone. Still open: the
+  shield bash (5 CON to a skeleton at 2.3 AP) keeps the swing rare for anyone with a shield; against mail the great
+  axe beats the hammers per AP; no hero or monster carries the battle axe; the crawls are not re-run since.
 - [ ] Crawl baseline (`node sim/crawl.js`): a party of 3 clears the court 10/30, the mine hall 0/30, the orc valley
   2/30; a party of 4 26/30, 1/30, 10/30. All level-1 places. The hall's single foes kill a hero in one fight of
   three; the valley's third group pulls its neighbours (6.7 foes). The crawl has no recruiting and no growth yet
@@ -73,7 +73,7 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
 - [ ] Wanted, no art: the vampire; redo Beren, the Yuan-Ti, skeletons, rats; raptor, red drake, fae drake.
 
 ## Ask the user
-- [ ] Blunt against the undead: a floor, or weaker unarmed blows (above)? An unbound summons: a third side? Spell bolts cannot be dodged: confirm.
+- [ ] Should a shield bash break bone without its feat (above)? An unbound summons: a third side? Spell bolts cannot be dodged: confirm.
 - [ ] Put the mine's groups back when testing is done? The Lantern raises only friends: fine for testing?
 - [ ] A blank hero to build from scratch? A full padded suit for Cyrus? Give someone the wall of fire back?
 - [ ] What "slow" means in play: rounds, exchanges, or the AI's pauses. Narrow places (palace stairs, sewer walks).

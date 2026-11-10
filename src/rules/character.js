@@ -1035,6 +1035,8 @@
       kind: 'strike', unarmed: kind, motion: kind === 'shieldBash' ? 'swing' : 'unarmed', ap,
       stamina: staminaCost(c, a.stamina, null, red), reach: 1, minRange: 1, maxRange: CONFIG.range.maneuverMax,
       closePenalty: false, damage: dmg, label: a.name,
+      // A fist or a boot winds and bruises; it breaks nothing without the feat (CONFIG.unarmed).
+      staminaOnly: (kind === 'punch' || kind === 'kick') && !!(CONFIG.unarmed && CONFIG.unarmed.attrFeat) && !rank(c, CONFIG.unarmed.attrFeat),
     };
   }
 

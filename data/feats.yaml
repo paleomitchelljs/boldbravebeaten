@@ -113,7 +113,7 @@
       branch: striker
       ranks: [novice, apprentice]
       requires: []
-      effect: "+1 blunt on punches and kicks per rank"
+      effect: "Punches and kicks can break bones: they harm CON like any blunt blow (without this they take stamina only). +1 blunt per rank"
       auto: true
     trip: {name: Trip, ranks: [novice], requires: [], effect: Better knockdown chance, auto: true}
     disarm: {name: Disarm, ranks: [novice], requires: [], effect: Better disarm chance, auto: true}

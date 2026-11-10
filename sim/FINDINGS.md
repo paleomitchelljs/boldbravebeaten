@@ -43,13 +43,15 @@ temple_court2 (level 3, skeletons) 0 → 0; party of 4: 26 → 29, 1 → 6, 10 �
 by more than a few crawls (±9 points on a rate; cause not looked into). The heroes' swing is still at most 2% of
 blows landed.
 
-**Why the swing is still not used, even on bone.** Beren alone against one skeleton, 20 fights each: with his shield
-he kills it with a Shield bash every time (0/0/4, 2.3 AP, 5 CON to a CON-4 skeleton). Without the shield, whatever he
-holds (longsword, battle axe, rapier, warhammer) he punches and kicks it to death (Kick 0/0/3, 2.3 AP, 4 CON); one
-longsword swing in 20 fights. A tireless body takes every point of blunt straight to CON, and the skeleton has 4, so
-a boot does a warhammer's job for half the AP. The weapon roles cannot show against the undead until that changes:
-either blunt against a tireless body needs a floor to get through (bone shrugs off a kick), or unarmed blows count
-for less against it. Not changed; a ruling is wanted.
+**Unarmed blows take stamina only** (the user, 2026-11-10: "unarmed attacks shouldn't do attribute damage at all
+(even CON) without feats"; PROVISIONAL, `CONFIG.unarmed.attrFeat`). Before it, Beren without a shield kicked a
+skeleton apart (a kick is 0/0/3 at 2.3 AP, and blunt goes straight to a tireless body's CON 4) and nobody swung.
+Now a punch or kick without Heavy Hands does no CON harm and breaks nothing; a body with no stamina takes nothing
+from it. Shieldless Beren against one skeleton, 20 fights: longsword won 19 (swings 20 of the blows landed, kicks 13
+that did nothing), battle axe 18 (all swings), warhammer 19 (all head swings), rapier 9 (it swings, badly: the
+thrust is useless on bone). So the roles show against bone once the kick is out of the way. The shield bash is
+untouched (5 CON to a skeleton at 2.3 AP; it has its own feat) and is still what Beren does with a shield in hand:
+that keeps the swing rare in the crawls, and it is the next thing to look at.
 
 ## The crawl baseline; the swing nobody uses (2026-11-09; `node sim/crawl.js`)
 

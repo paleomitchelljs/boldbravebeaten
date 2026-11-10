@@ -902,6 +902,20 @@ test('arrows and armor: textile catches arrows; bodkins for metal, broadheads fo
   assert.deepStrictEqual(C.attackOptions(a).filter((o) => o.motion === 'shoot').map((o) => o.arrowHead), ['broadhead']);
 });
 
+test('unarmed: a punch or kick takes stamina only until Heavy Hands', () => {
+  const c = fighter('Fist');
+  const [bones] = Enemies.makeMonster('skeleton');
+  const soft = fighter('Soft');
+  const kick = () => C.attackOptions(c).find((o) => o.unarmed && o.staminaOnly !== undefined && !o.shield);
+  assert.ok(kick().staminaOnly, 'untrained');
+  assert.strictEqual(Combat.computeHit(c, bones, kick()).bluntToCON, 0, 'nothing off a body with no stamina to lose');
+  soft.stamina = 0;
+  assert.strictEqual(Combat.computeHit(c, soft, kick()).bluntToCON, 0, 'no broken bones on the spent either');
+  c.feats.heavy_hands = 1;
+  assert.ok(!kick().staminaOnly);
+  assert.ok(Combat.computeHit(c, bones, kick()).bluntToCON > 0, 'the feat breaks bone');
+});
+
 test('monsters: natural weapons are always ready; traits work', async () => {
   const [wolf] = Enemies.makeMonster('wolf');
   assert.ok(C.attackOptions(wolf).some((o) => o.natural && o.knockdown), 'a wolf bites, and the bite can drag you down');

@@ -690,6 +690,10 @@
       dodgeNegates: 1.0,
     },
 
+    // PROVISIONAL (the user, 2026-11-10): a punch or a kick harms no attribute, CON included, without this feat: it
+    // takes stamina only, so it does nothing to a tireless body (a skeleton) or to someone already out cold.
+    unarmed: { attrFeat: 'heavy_hands' },
+
     // ---- Impact (PROVISIONAL, the user's call) -----------------------------
     // Crushing: blunt that gets past armor beyond crushAt (× the target's size) breaks bones:
     //   1 CON per crushPer points over, on top of the stamina it takes.
@@ -841,6 +845,7 @@
     'Vigor (the user\'s idea, 2026-11-01): a weapon blow\'s damage × 1.25 from a fighter at full fresh stamina down to × 0.75 from one with none left. Spells and shots are untouched.',
     'Reading intent lasts 3 rounds (was 1; 2026-11-01): the AI read every round it could, half a duel\'s actions spent watching.',
     'A staff (the user, 2026-11-01: Jabiku starts with one): a caster\'s focus, so spells can be cast with it in both hands (weapons.yaml `focus`; elsewhere a two-handed weapon needs Battle Casting), and it jabs with its butt end (a blunt thrust, reach 2, from `phys.butt`: 3 against the swung head\'s 10; it was 6, a warhammer\'s blow for a thrust\'s AP, until 2026-11-10).',
+    'Unarmed blows (the user, 2026-11-10): a punch or a kick takes stamina only; it harms no attribute, CON included (no crushing, nothing against a tireless body such as a skeleton, nothing against the unconscious), unless the striker has Heavy Hands. A shield bash is its own feat and is unchanged. Before, a boot did 4 CON to a skeleton for 2.3 AP, a warhammer\'s work.',
     'Weapon roles (the user, 2026-11-09; the numbers are first guesses, crawled once: sim/FINDINGS.md): blunt swings are for armor and the undead, spear and rapier thrusts for the living, the longsword is the generalist, an axe is a heavier, slower sword swing with no thrust. A swung edge carries blunt by its weight (weaponPhysics.edgeBlunt × edge × √(mass × length × grip); it was a seventh of the cut): rapier 1, shortsword 2, longsword 3, battle axe 4, great axe 8, against a warhammer\'s 6 in one hand and a staff\'s 10 in two. A blade heavier than 1.1 kg is slower to drive point-first (thrustHeavy; spears, held at the balance, are not): a longsword thrust 2.3 AP against a rapier\'s 1.9 and a short spear\'s 1.7 for the same wound. `phys.heft` marks a head-heavy edge (the new battle axe, 1.2): a harder and slower swing than the same mass as a blade.',
     'The turn budget (the user\'s call): AP pool = 3.5 + SPD/2, unrounded (6 at SPD 5), costs in tenths. At level 1 a turn holds one big action, a step and a medium action, or three quick actions: base costs up to 2 (thrust, parry, dodge, block) stand, every Specifics AP above 2 costs 2 (a swing 3 → 4, a two-handed swing 4 → 6, a power swing 2 + 4, a shortbow 1 + 2, a longbow 2 + 4, trip and disarm 4, grapple, pin and throw 4); weapon speed multiplies the result (a dagger thrust 1.5). A move is a quick action: 2 AP for up to (1 + ⌊SPD/4⌋) × 2 squares. Someone who has spent nothing this round may take one action dearer than the whole pool as the whole turn.',
     'Armor makes actions dearer (the user\'s call): its SPD penalty no longer shrinks the pool; every action costs 1/6 AP more per point of it (plate +0.5, mail +0.2; the mobility feats lower it). The penalty still slows moving, initiative, dodging and fleeing.',

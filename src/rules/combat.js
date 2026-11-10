@@ -1272,6 +1272,8 @@
       res.bluntToStamina = 0;
       res.noBleed = true;
     } else if (G.Effects.has(target, 'noBleed')) res.noBleed = true;
+    // An untrained punch or kick takes stamina only: no broken bones, nothing off a body that has no stamina to lose.
+    if (option.staminaOnly) { res.bluntToCON = 0; res.crushed = 0; }
     // Wound roll odds (CONFIG.vital): deep points find vital spots; armor guards them.
     const w = option.wound;
     res.pierceVital = 0;
