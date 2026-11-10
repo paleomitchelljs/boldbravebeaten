@@ -249,7 +249,7 @@
   // opts: {cols, rows, scale, scene: () => scene, onCell(x, y, ev), onHover(x, y)}
   function create(opts) {
     const cols = opts.cols || 15, rows = opts.rows || 10, S = opts.scale || 3;
-    const canvas = h('canvas', { class: 'mapcanvas', width: cols * T * S, height: rows * T * S, role: 'img', 'aria-label': opts.label || 'Map' });
+    const canvas = h('canvas', { class: 'mapcanvas', width: cols * T * S, height: rows * T * S, style: { aspectRatio: `${cols} / ${rows}` }, role: 'img', 'aria-label': opts.label || 'Map' });
     const view = { el: canvas, cols, rows, S, cam: null, vis: {}, hover: null, stop: false, tick: 0, last: 0, fx: [] };
     // Short effects, timed from now (+ delay ms): text rising off a figure, a lunge toward a square, a bolt between two figures, a shudder.
     view.popup = (id, text, color, delay) => view.fx.push({ k: 'text', id, text, color: color || '#fff', t0: clock() + (delay || 0), dur: 1300 });
@@ -657,16 +657,17 @@
         const [dx, dy] = offsetOf(it.fig.a.id, clock());
         drawActor(ctx, it.fig.a, dx || dy ? { x: it.fig.v.x + dx, y: it.fig.v.y + dy, run: it.fig.v.run, travel: it.fig.v.travel, flip: it.fig.v.flip, dir: it.fig.v.dir } : it.fig.v, ox, oy, S, view.tick);
       }
-      // Fog: unlit squares fade; what has been seen but is out of the light is dim.
-      if (sc.light) {
-        const L = sc.light;
-        for (let y = y0; y <= y0 + rows; y++) for (let x = x0; x <= x0 + cols; x++) {
-          if (x < 0 || y < 0 || x >= sc.w || y >= sc.h) continue;
-          if (!plan.shown[x + ',' + y]) continue;
-          const d = Math.hypot(x - L.x, y - L.y);
-          const a = Math.max(0.0, Math.min(0.72, (d - L.r * 0.45) / (L.r * 1.1)));
-          if (a > 0.02) { ctx.fillStyle = `rgba(4,8,14,${a.toFixed(2)})`; ctx.fillRect(ox + x * size, oy + y * size, size, size); }
-        }
+      // Fog: unlit squares fade; what has been seen but is out of the light is dim. One radial gradient round the
+      // light, so the falloff has no square steps (it was filled square by square: bands a square wide). UI.noFog
+      // (tools/shot.sh) leaves the map fully lit.
+      if (sc.light && !UI.noFog) {
+        const L = sc.light, cx = ox + (L.x + 0.5) * size, cy = oy + (L.y + 0.5) * size;
+        const r0 = L.r * 0.45 * size, r1 = (L.r * 0.45 + 0.72 * L.r * 1.1) * size;
+        const g = ctx.createRadialGradient(cx, cy, r0, cx, cy, r1);
+        g.addColorStop(0, 'rgba(4,8,14,0)');
+        g.addColorStop(1, 'rgba(4,8,14,0.72)');
+        ctx.fillStyle = g;
+        ctx.fillRect(ox + (x0 - 1) * size, oy + (y0 - 1) * size, (cols + 3) * size, (rows + 3) * size);
       }
       // Icons over heads, bolts in flight and rising numbers sit above everything on the map.
       drawOver(ctx, sc, ox, oy, clock());

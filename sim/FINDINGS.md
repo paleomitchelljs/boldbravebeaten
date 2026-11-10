@@ -1,5 +1,65 @@
 # Simulation findings
 
+## The crawl baseline; the swing nobody uses (2026-11-09; `node sim/crawl.js`)
+
+**Method.** `sim/crawl.js` walks start.yaml's heroes (level 1, as a new game gives them) into a place and fights its
+groups nearest first on the dungeon map, joiners and all, resting between fights and never retreating, until the place
+is clear or the party is beaten. 30 crawls a cell (so about ±9 points on a rate), seed 4242. `--set path=value` tries a
+CONFIG number without editing it.
+
+**Baseline** (places cleared of 30):
+
+| Party | temple_court | ember_hall | orc_valley |
+|---|---|---|---|
+| 3 | 10 | 0 | 2 |
+| 4 | 26 | 1 | 10 |
+
+All three are level-1 places, and the target is that a level-1 party handles the first area of each dungeon. By
+this measure only the court does, and only with four. But the crawl is harsher than play: the dead stay dead for the
+rest of the crawl (in the game the fallen can be recruited again in the village), and nobody goes back to town. What
+it shows is attrition. In the hall a party of three wins each of its first four fights 85–97% of the time, almost all
+against a single foe, and loses a hero in about one fight in three doing it: one dead after four fights, and then it
+cannot win. In the valley the first two pairs fall (93%, 100%) and the third fight is 6.7 foes with joiners (29%).
+So: single foes in the hall kill too often for what they are, and the valley's third group pulls its neighbours.
+One hero more takes the court from a third to nearly always: numbers decide more than anything else measured here.
+
+**What kills.** Of killing blows in the court (party of 3): Thrust 56%, Shoot 18%, a beak's swing 17%, its two-handed
+swing 9%. In the hall and valley: Thrust 72–83%, Shoot the rest. Blows land on the head 41–58% of the time. Two
+cautions on reading that: the log's "Thrust" is every thrust (Beren's longsword, Cyrus's rapier, goblin and orc
+spears, and the butt of Jabiku's staff, whose swing costs 27.6 AP at STR 3), and only one hero of four, Beren, carries
+an edge at all. So the share of thrusts says more about who is in the fights than about the rules.
+
+**The finding that does hold:** Beren never swings. Not once in any run. Per AP against bare skin
+(STR 6 against CON 6, the AI's own value for a hit):
+
+| Longsword | AP | Damage | Bare | Padded | Mail |
+|---|---|---|---|---|---|
+| Thrust | 2 | 6 P | 8 CON (a kill), value 75/AP | 3.5 CON, 20 | 0.8, 4 |
+| Swing | 4 | 6 S + 1 B | 8 attribute points, 18 | nothing, 1 | nothing, 0 |
+
+A thrust goes to CON whole and rolls for a vital spot; a cut spreads over the location's attributes (about a third
+to CON) and any armor stops it. So the swing is worse bare and useless armored: it has no setting.
+
+**Tried, and not adopted** (party of 4, cleared of 30 unless noted):
+
+| Variant | court | hall | valley | Beren swings? |
+|---|---|---|---|---|
+| baseline | 26 | 1 | 10 | never |
+| A: `apCurve.knee` 3 (a swing back at 3 AP) | 25 | 1 | 10 | never |
+| B: `weaponPhysics.pointDamage` 0.18 | 27 | 3 | 5 | never |
+| C: A and B | 23 | 5 | 6 | never |
+| D: C and `edgeDamage.k` 6 (cuts ×1.6), of 20 | 13 | - | 4 | never |
+| E: A and `edgeDamage.k` 5, of 20 | 17 | - | 6 | never |
+
+None is distinguishable from the baseline on clears except that weaker points cost the party the valley (its own
+killers are thrusters and an archer), and none makes the swing worth choosing: at k 6 a longsword swing is still
+38/AP against 64. Numbers alone will not do it short of making cuts absurd. **No rule was changed.** What would
+change it is structural, and a ruling: (1) a thrust to a limb wounds the limb's attributes as a cut does, and only
+head and torso take it to CON (most realistic; but 70% of blows land there already, so a small effect); (2) the
+swing's own setting: several unarmored foes (a sweep through two squares), where the thrust takes one; (3) accept it:
+the point is what kills a man, the edge is for the unarmored and the fleeing, and a sword is carried for its thrust.
+I lean to (2) with (3): it is differentiation, not parity, and it leaves armor king.
+
 ## Monster tiers, bosses and their leg-ups (2026-11-09; `node tools/tiers.js`)
 
 The user (2026-11-09): heroes start at level 1; encounters fall in tiers, a rough continuous scale against heroes of the

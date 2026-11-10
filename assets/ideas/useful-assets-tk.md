@@ -26,6 +26,8 @@ figure).
 | Murder hole in a basalt wall | `ember_hall` `'` | a flat colour | tile |
 | Hewn-stone wall for built rooms inside the caves, joining the basalt at its ends (`underWalls: all`) | `ember_castle`: the gate (G-13), bar (G-14), prison pits (G-16), wizards' hall (G-19), audience chamber (G-23), king's rooms (G-24) | plain basalt | tile |
 | Hewn flagstone floor for those rooms | as above | basalt floor | tile |
+| A wall's foot standing in lava: a crust rim, as the floor has, to lay along a wall's sides and back (today the lava stops in a straight cut) | `ember_lake`, `ember_hall`, `ember_warrens`, `mine_approach`: every `~` beside `#` | nothing | decor (and a placement rule in `planTiles`) |
+| The same for water: a waterline (slime, a dark wet band) along a wall standing in the channel | `temple_sewer` (37 wall squares beside water) | nothing | decor |
 | A lava rivulet beside a path (a duct with lava down both sides) | `ember_hall` G-3, the duct from G-1 to G-11 | plain floor | tile or decor |
 
 ### Decor

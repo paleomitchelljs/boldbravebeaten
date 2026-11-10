@@ -214,6 +214,8 @@ instead; the `kind` is drawn wherever the art files are missing (they are git-ig
 dungeon map (`game.arena` in rules.yaml: the whole map with `whole: true`, else a 15x10 slice): walls and furniture
 block, a shut ordinary door does not. Each round, a group the fight comes near (`game.joinDistance`, with a clear line)
 joins it.
+The exploring view's shape follows the window (`game.view` in rules.yaml: `cell` the square's size in px, `minCols`–`maxCols`, `minRows`–`maxRows`, `chromeW`/`chromeH` the room the page keeps round the map, `maxW` the page's width): columns are kept odd so the party stands in the middle.
+
 `encounters:` map an id to `{foes, flags, loot, text, parley, peaceFlags, arena}`. `wandering:` is what comes along: it interrupts a camp, and it is drawn as time passes in the place (`game.wanderers`: a check every 20 minutes, noise counted as extra minutes).
 A town has `locations` (people and services: `inn`, `shop`, `healer`, `trainer`, `bounty`) and `exits` to dungeons;
 an exit with `requires` stays hidden until the player has heard of it. `look` colors the first-person view; in a dungeon

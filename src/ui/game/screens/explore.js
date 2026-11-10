@@ -444,6 +444,20 @@
 
   UI.ExploreBodies = drawBodies;
 
+  // The view's shape follows the window (rules.yaml game.view): squares about as large on screen as the art is drawn,
+  // as many as fit, within bounds; a narrow screen keeps `minCols` across with smaller squares and spends its height
+  // on more rows. Without a window (tests) it is the old 15 × 10.
+  function viewShape() {
+    const V = (G.CONFIG.game && G.CONFIG.game.view) || {};
+    if (typeof window === 'undefined' || !window.innerWidth || !V.cell) return { cols: 15, rows: 10 };
+    const availW = Math.min(window.innerWidth - (V.chromeW || 0), V.maxW || Infinity), availH = window.innerHeight - (V.chromeH || 0);
+    const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+    const cell = Math.min(V.cell, availW / V.minCols);
+    let cols = clamp(Math.floor(availW / cell), V.minCols, V.maxCols);
+    if (cols % 2 === 0) cols--; // odd: the party stands in the middle
+    return { cols, rows: clamp(Math.floor(availH / cell), V.minRows, V.maxRows) };
+  }
+
   UI.Screens.explore = function (game) {
     const w = game.world;
     if (!w.explore) return h('p', null, 'You are not in a dungeon.');
@@ -453,7 +467,9 @@
       UI.MapView.preload();
       // UI.wideView ({cols, rows, scale}): a bigger view, for screenshots of a whole map (tools/shot.sh).
       const wv = UI.wideView || {};
-      game.ui.mv = UI.MapView.create({ cols: wv.cols || 15, rows: wv.rows || 10, scale: wv.scale || UI.MapView.scaleFor(w.place, 3), label: `Map of ${p.name}`, scene: () => (game.ui.lastScene = scene(game)), onCell: (x, y) => onCell(game, x, y) });
+      const vs = viewShape();
+      game.ui.mvShape = vs.cols + 'x' + vs.rows;
+      game.ui.mv = UI.MapView.create({ cols: wv.cols || vs.cols, rows: wv.rows || vs.rows, scale: wv.scale || UI.MapView.scaleFor(w.place, 3), label: `Map of ${p.name}`, scene: () => (game.ui.lastScene = scene(game)), onCell: (x, y) => onCell(game, x, y) });
       game.ui.mv.start();
     }
     trail(game);
@@ -500,5 +516,22 @@
     });
   }
 
-  UI.ExploreActions = { step, walkTo, interact, search };
+  // A window that changes shape (a phone turned, a resized browser) gets a view to match.
+  if (typeof window !== 'undefined' && window.addEventListener && !UI._exploreResize) {
+    UI._exploreResize = true;
+    let t = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(t);
+      t = setTimeout(() => {
+        const game = UI.Game;
+        if (!game || game.screen !== 'explore' || !game.ui.mv || UI.wideView) return;
+        const vs = viewShape();
+        if (game.ui.mvShape === vs.cols + 'x' + vs.rows) return;
+        game.ui.mv.destroy(); game.ui.mv = null;
+        game.render();
+      }, 150);
+    });
+  }
+
+  UI.ExploreActions = { step, walkTo, interact, search, viewShape };
 })(globalThis.BBB);

@@ -33,7 +33,8 @@ Read `HANDOFF.md` first: it is the to-do list. **After every push, update it** (
   only so `index.html` can open from disk; when served, the loader reads the YAML directly.
 - **Before finishing a change:** `node --test` (rules, content, game, and every screen rendered in a fake DOM) and
   `node tools/validate.js`. **Tuning** (begun 2026-11-09): monsters by tier with `node tools/tiers.js` (M, the heroes
-  of its level at which it is an even fight; `--enc place/id` for an encounter as authored); a party is three for
+  of its level at which it is an even fight; `--enc place/id` for an encounter as authored); a whole place as a player meets it with
+  `node sim/crawl.js <place>` (`--set path=value` tries a CONFIG number); a party is three for
   tuning; numbers in `sim/FINDINGS.md`. The test suite takes about 8 minutes on idle cores: don't run it beside sims. After a map change run `node tools/pace.js` (time to
   explore; a thorough look at a dungeon should take about a day). The fake DOM catches
   exceptions, not bad layout: if you change CSS or the first-person view, say plainly that you could not look at it

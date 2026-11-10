@@ -1,9 +1,11 @@
 /* The feat trees, drawn: tabs for the trees (grouped by the setting each serves), the chosen tree as a graph (its root
  * across the top, a column for each branch, a row for each tier), lines from each feat to what it needs, and a card for
- * the feat picked. Used by the Training Yard and camp (to train), the sheet (to read) and character creation (to add).
+ * the feat picked. The tabs are two rows: the six settings, then the trees of the one chosen; a mark shows where
+ * there is something to train now. The graph narrows its cards to fit the window before it scrolls. Used by the Training Yard and camp (to train), the sheet (to read) and character creation (to add).
  *
  * UI.FeatTree.view(opts): opts = { c, tree, sel, onTree(id), onSel(id), feats(tree) → the feats to show,
- *   can(f) → {ok, reason} (whether it could be taken now), action(f) → an element for the card (a Train button) }. */
+ *   can(f) → {ok, reason} (whether it could be taken now), action(f) → an element for the card (a Train button),
+ *   room: the widest the graph may be, px (the modal's width; 760) }. */
 (function (G) {
   'use strict';
   const UI = G.UI;
@@ -13,7 +15,7 @@
 
   const GROUPS = [['body', 'Body'], ['combat', 'Combat'], ['sneaking', 'Sneaking'], ['talking', 'Talking'], ['exploring', 'Exploring'], ['magic', 'Magic']];
   const TIERS = ['novice', 'apprentice', 'adept', 'expert', 'master'];
-  const W = 132, H = 50, GX = 14, GY = 28, PAD = 10, HEAD = 34, AXIS = 22;
+  const WMAX = 132, WMIN = 92, H = 50, GX = 14, GY = 28, PAD = 10, HEAD = 34, AXIS = 22;
 
   const trees = () => G.DATA.TREES;
   const featsOf = (treeId) => Object.values(G.DATA.FEATS).filter((f) => f.tree === treeId);
@@ -45,7 +47,8 @@
 
   // Rows and columns. A feat's row is the tier its first rank needs, pushed down below anything in its branch it
   // requires; feats sharing a branch and a row sit side by side.
-  function layout(tree, feats) {
+  function layout(tree, feats, W) {
+    W = W || WMAX;
     const shown = new Set(feats.map((f) => f.id));
     const byId = {};
     for (const f of feats) byId[f.id] = f;
@@ -82,10 +85,10 @@
     }
     const width = Math.max(x - GX * 2 + PAD, AXIS + PAD * 2 + root.length * (W + GX));
     root.forEach((f, i) => { pos[f.id] = { x: AXIS + PAD + i * (W + GX), y: PAD }; });
-    return { pos, heads, top, rows, width, height: top + rows * (H + GY) - GY + PAD, shown, rootY: root.length ? PAD : null };
+    return { W, pos, heads, top, rows, width, height: top + rows * (H + GY) - GY + PAD, shown, rootY: root.length ? PAD : null };
   }
 
-  function line(svg, a, b, cls) {
+  function line(svg, a, b, cls, W) {
     const p = document.createElementNS(NS, 'path');
     const x1 = a.x + W / 2, y1 = a.y + H, x2 = b.x + W / 2, y2 = b.y, my = (y1 + y2) / 2;
     p.setAttribute('d', `M${x1} ${y1} C${x1} ${my} ${x2} ${my} ${x2} ${y2}`);
@@ -95,7 +98,12 @@
 
   function graph(o, tree, feats) {
     const c = o.c;
-    const L = layout(tree, feats);
+    // Narrow the cards until the tree fits what the window gives it (o.width, or the modal's share of the window).
+    const room = o.width || (typeof window !== 'undefined' && window.innerWidth ? Math.min(window.innerWidth * 0.96, o.room || 760) - 36 : 0);
+    let L = layout(tree, feats);
+    if (room && L.width > room) L = layout(tree, feats, Math.max(WMIN, Math.floor(WMAX * (room / L.width))));
+    if (room && L.width > room) L = layout(tree, feats, WMIN);
+    const W = L.W;
     const svg = document.createElementNS(NS, 'svg');
     svg.setAttribute('class', 'ft-lines');
     svg.setAttribute('width', L.width);
@@ -104,7 +112,7 @@
     for (const f of feats) for (const g of f.requires) for (const s of g) {
       const r = C.parseReq(s);
       if (!r.id || !L.pos[r.id] || !L.pos[f.id]) continue;
-      line(svg, L.pos[r.id], L.pos[f.id], 'ft-line' + (C.rank(c, r.id) >= r.rank ? ' met' : '') + (g.length > 1 ? ' alt' : ''));
+      line(svg, L.pos[r.id], L.pos[f.id], 'ft-line' + (C.rank(c, r.id) >= r.rank ? ' met' : '') + (g.length > 1 ? ' alt' : ''), W);
     }
     const nodes = feats.map((f) => {
       const p = L.pos[f.id];
@@ -152,17 +160,28 @@
       o.action ? o.action(f) : null);
   }
 
+  // Something in this tree could be trained now.
+  const ready = (o, t) => !!o.can && o.feats(t).some((f) => f.auto && C.rank(o.c, f.id) < f.ranks.length && !C.closedBy(o.c, f.id) && o.can(f).ok);
+
   function tabs(o, shown) {
     const c = o.c;
-    return h('div', { class: 'ft-tabs' }, GROUPS.map(([g, name]) => {
-      const ts = shown.filter((t) => (t.group || 'combat') === g);
+    const groupOf = (t) => t.group || 'combat';
+    const cur = groupOf(shown.find((t) => t.id === o.tree) || shown[0]);
+    const mark = () => h('span', { class: 'ft-ready', title: 'Something here can be trained now' }, '●');
+    const groups = GROUPS.map(([g, name]) => {
+      const ts = shown.filter((t) => groupOf(t) === g);
       if (!ts.length) return null;
-      return h('div', { class: 'ft-group' }, h('span', { class: 'label' }, name), h('div', { class: 'row wrap' }, ts.map((t) => {
-        const n = C.treeCount(c, t.id);
-        const tip = t.skill ? `${(G.Skills.skillDefs()[t.skill] || {}).name || t.skill} ${C.skill(c, t.skill)}` : `${C.tierName(C.tierCount(c, t.id))} tier`;
-        return h('button', { class: 'small ft-tab' + (o.tree === t.id ? ' selected' : '') + (n ? ' has' : ''), title: `${t.attrs} · ${tip}`, onclick: () => o.onTree(t.id) }, t.name, n ? h('span', { class: 'ft-count' }, String(n)) : null);
-      })));
-    }));
+      const n = ts.reduce((a, t) => a + C.treeCount(c, t.id), 0);
+      // Into a setting: the tree there the character has gone furthest in.
+      const first = ts.slice().sort((a, b) => C.treeCount(c, b.id) - C.treeCount(c, a.id))[0];
+      return h('button', { class: 'tab ft-gtab' + (cur === g ? ' active' : '') + (n ? ' has' : ''), onclick: () => o.onTree(first.id) }, name, n ? h('span', { class: 'ft-count' }, String(n)) : null, ts.some((t) => ready(o, t)) ? mark() : null);
+    });
+    const row = shown.filter((t) => groupOf(t) === cur).map((t) => {
+      const n = C.treeCount(c, t.id);
+      const tip = t.skill ? `${(G.Skills.skillDefs()[t.skill] || {}).name || t.skill} ${C.skill(c, t.skill)}` : `${C.tierName(C.tierCount(c, t.id))} tier`;
+      return h('button', { class: 'small ft-tab' + (o.tree === t.id ? ' selected' : '') + (n ? ' has' : ''), title: `${t.attrs} · ${tip}`, onclick: () => o.onTree(t.id) }, t.name, n ? h('span', { class: 'ft-count' }, String(n)) : null, ready(o, t) ? mark() : null);
+    });
+    return h('div', { class: 'ft-tabs' }, h('div', { class: 'tabs ft-groups' }, groups), h('div', { class: 'row wrap ft-trees' }, row));
   }
 
   function pathLine(c) {
@@ -175,7 +194,8 @@
   function view(o) {
     const shown = trees().filter((t) => o.feats(t).length);
     if (!shown.length) return h('p', { class: 'muted' }, 'No feats to show.');
-    const tree = shown.find((t) => t.id === o.tree) || shown[0];
+    // Nothing chosen yet: the tree the character has gone furthest in.
+    const tree = shown.find((t) => t.id === o.tree) || shown.slice().sort((a, b) => C.treeCount(o.c, b.id) - C.treeCount(o.c, a.id))[0];
     const feats = o.feats(tree);
     const sel = feats.find((f) => f.id === o.sel);
     return h('div', { class: 'feattree stack' },

@@ -121,6 +121,10 @@ game:
   # spill into the next room and draw in groups it comes near (joinDistance, checked every round); false, on a slice
   # of the map that size.
   arena: {w: 15, h: 10, whole: true}
+  # The exploring view (the user, 2026-11-09: "fix the explore view"): as many squares as the window fits at `cell`
+  # px a square (the art's own size), between the bounds; a screen too narrow for minCols at that size shrinks the
+  # squares instead and shows more rows. chromeW/chromeH: px of the window the map can't have (gutters; top bar and log); maxW: the page's own width (css .game).
+  view: {cell: 64, minCols: 11, maxCols: 21, minRows: 8, maxRows: 16, chromeW: 24, chromeH: 140, maxW: 1150}
   joinDistance: 6         # PROVISIONAL: an awake group this close to a fight (with a clear line) joins it
   # ---- Ground (PROVISIONAL, for the temple) ----------------------------------------------------------------------
   # Map letters with the same meaning on every map, besides # wall, . floor, + door and space (rock). A place's

@@ -186,11 +186,12 @@
     return h('div', { class: 'stack' },
       h('div', { class: 'row spread' }, h('div', { class: 'row' }, h('h3', null, s.name), UI.tip('Levels give feats; a feat\'s tier needs ranks in its tree\'s skill. Training is free, here, at camp or from the sheet.'))),
       h('div', { class: 'row train-bar' },
-        pick('Who', UI.select('train-who', cur.id, members.map((c) => [c.id, `${c.name} · L${c.level} · ${C.featBudget(c) - C.featCount(c)} to spend`]), (v) => { game.ui.trainer = v; game.render(); }))),
+        camp ? h('div', { class: 'tabs members' }, members.map((c) => { const n = C.featBudget(c) - C.featCount(c); return h('button', { class: `tab ${c.id === cur.id ? 'active' : ''}`, onclick: () => { game.ui.trainer = c.id; game.ui.trainTree = null; game.ui.trainFeat = null; game.render(); } }, UI.Art.portrait(c, 28), c.name, n > 0 ? h('span', { class: 'ft-count' }, String(n)) : null); }))
+          : pick('Who', UI.select('train-who', cur.id, members.map((c) => [c.id, `${c.name} · L${c.level} · ${C.featBudget(c) - C.featCount(c)} to spend`]), (v) => { game.ui.trainer = v; game.render(); }))),
       h('div', { class: 'row small muted' }, `${C.featCount(cur)} of ${C.featBudget(cur)} feats`, left <= 0 ? ` · next level at ${G.World.xpFor(cur.level + 1)} XP (has ${cur.xp || 0})` : ` · ${left} to spend`),
       UI.FeatTree.pathLine(cur),
       UI.FeatTree.view({
-        c: cur, tree: game.ui.trainTree, sel: game.ui.trainFeat,
+        c: cur, tree: game.ui.trainTree, sel: game.ui.trainFeat, room: camp ? 1040 : 760,
         onTree: (id) => { game.ui.trainTree = id; game.ui.trainFeat = null; game.render(); },
         onSel: (id) => { game.ui.trainFeat = id; game.render(); },
         feats: (t) => Object.values(G.DATA.FEATS).filter((f) => f.tree === t.id && (f.auto || dbg)),

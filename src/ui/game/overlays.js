@@ -10,7 +10,7 @@
 
   UI.Overlays = UI.Overlays || {};
 
-  const shell = (title, body, close, wide) => h('div', { class: `modal game-modal ${wide ? 'wide' : ''}`, role: 'dialog', 'aria-modal': 'true', onclick: (e) => e.stopPropagation() },
+  const shell = (title, body, close, wide) => h('div', { class: `modal game-modal ${wide === true ? 'wide' : wide || ''}`, role: 'dialog', 'aria-modal': 'true', onclick: (e) => e.stopPropagation() },
     h('div', { class: 'row spread' }, h('h2', null, title), UI.ibtn('close', 'Close', close, { size: 14 })), body);
 
   // ---- Pack ------------------------------------------------------------------------------------------------------------
@@ -204,7 +204,7 @@
   UI.Overlays.train = function (game) {
     const close = () => game.closeOverlay();
     return shell('Training at camp', h('div', { class: 'stack' }, UI.Bits.trainer(game, { name: 'Drill and practice' }, { camp: true }),
-      h('button', { class: 'primary', onclick: close }, 'Done')), close, true);
+      h('button', { class: 'primary', onclick: close }, 'Done')), close, 'wide train');
   };
 
   // A recruit (start.yaml recruits) asked to join: their word, their kit, and a place for them if one is free.

@@ -461,14 +461,15 @@ test('tilemap: 47-case floor shading; walls are a cap row over a face row, lit o
 });
 
 test('feat trees: every feat of every tree has a place on the graph, and no two nodes overlap', () => {
-  for (const t of B.DATA.TREES) {
+  // At full width, and with the cards narrowed to fit a small window.
+  for (const W of [132, 92]) for (const t of B.DATA.TREES) {
     const feats = Object.values(B.DATA.FEATS).filter((f) => f.tree === t.id);
-    const L = UI.FeatTree.layout(t, feats);
+    const L = UI.FeatTree.layout(t, feats, W);
     const ps = feats.map((f) => [f.id, L.pos[f.id]]);
     for (const [id, p] of ps) assert.ok(p && p.x >= 0 && p.y >= 0 && p.x < L.width && p.y < L.height, `${t.id}.${id}`);
     for (let i = 0; i < ps.length; i++) for (let j = i + 1; j < ps.length; j++) {
       const a = ps[i][1], b = ps[j][1];
-      assert.ok(Math.abs(a.x - b.x) >= 132 || Math.abs(a.y - b.y) >= 50, `${t.id}: ${ps[i][0]} overlaps ${ps[j][0]}`);
+      assert.ok(Math.abs(a.x - b.x) >= W || Math.abs(a.y - b.y) >= 50, `${t.id}: ${ps[i][0]} overlaps ${ps[j][0]}`);
     }
   }
 });
