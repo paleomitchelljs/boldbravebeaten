@@ -515,6 +515,19 @@ tail:
   motions: [swing]
   rarity: common
   trait: {knockdown: {bonus: 2, margin: 3}}
+gore:
+  phys: {mass: 4, length: 0.5, point: {depth: 9, width: 5}}
+  name: Gore
+  hands: 1
+  weight: medium
+  reach: {thrust: 1}
+  reachName: close
+  closeOK: true
+  natural: true
+  faces: {point: [5, 0, 3]}
+  motions: [thrust]
+  rarity: common
+  trait: {knockdown: {bonus: 2, margin: 3}}
 drakeBite:
   phys: {mass: 1.2, length: 0.45, point: {depth: 22, width: 5}}
   name: Bite

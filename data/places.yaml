@@ -650,7 +650,7 @@ tarn_plains_west:
   level: 2
   look: {wall: "#8aa04a", floor: "#8aa04a", ceiling: "#9ab8d6", fog: "#0c120a", torch: 0, tileset: grassland, light: 28}
   map:
-    - ",,,,,,,,,,,,,,,,,,,HH,,,,,,,,,,,,,,,"
+    - ",,,,,,,,,,,,,,,,NN,HH,,,,,,,,,,,,,,,"
     - ",H,J,H,,H,,,G,,,,,,,H,,H,,,,t,x,,,,,"
     - ",G,,JG,,,,,,H,,,,J,,,,,JH,b,,,aH,,b,"
     - ",,,,,,,,{,,,,G,HH,,,,,,,,G,J,,,,,,,,"
@@ -691,7 +691,8 @@ tarn_plains_west:
     h: {kind: prop, sprite: barricade, label: "A barricade", on: ","}
     Q: {kind: stairs, to: tarnvale_west, at: Z, sprite: none, label: "The road east, back through the gate"}
     Z: {kind: stairs, to: jungle_west, at: Q, sprite: none, label: "The road west, into the jungle"}
-    S: {kind: stairs, to: desert, at: N, sprite: none, label: "South, toward the desert"}
+    S: {kind: stairs, to: tarn_plains_south, at: N, sprite: none, label: "South, down the grassland"}
+    N: {kind: stairs, to: tarn_lake, at: S, sprite: none, label: "North, toward the lake"}
     G: {kind: prop, sprite: tallgrass_gold, solid: false, label: "Tall grass", on: ","}
     H: {kind: prop, sprite: tallgrass_seed, solid: false, label: "Tall grass", on: ","}
     J: {kind: prop, sprite: tallgrass_flower, solid: false, label: "Tall grass and wildflowers", on: ","}
@@ -700,6 +701,213 @@ tarn_plains_west:
     R: {kind: prop, sprite: boulder, label: "A boulder", on: ","}
   encounters: {}
   secrets: []
+
+# ---- The lake country north of the western grassland, its fortress's upper floor, and the southern grassland with
+# the clay canyon (the user, 2026-11-10). Laid out by assets/wip/west/layout.py, which rewrites everything between the
+# two marker lines; art by build.py there. Encounters are first numbers.
+# >>> west
+tarn_lake:
+  name: The Lake Country
+  kind: dungeon
+  open: true
+  blurb: Grassland round a broad lake; on its south shore a fortress of grey-green stone in two blocks, a rope bridge slung between them over the gate road.
+  level: 3
+  look: {wall: "#6a7466", floor: "#4f9a3c", ceiling: "#9ab8d6", fog: "#0c120a", torch: 0, tileset: lakeland, light: 28}
+  map:
+    - ",,,,,,,,,,,,,,~~~~~~~~~~~~~~~~~~~~~~~~~~~~~,,,,,,,,,,,,,"
+    - ",,,,,,,,,,,,,,~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~,,,,,,,,,R,,"
+    - ",,,,,,,,r~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~,JY,,,,,,,,"
+    - ",,,,,,,,~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~,,,,,,,,,,,"
+    - ",,,,,,r~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~,,,,,,,,,,"
+    - ",H,,,r~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~,,r~~~~~~~,,,,,,,,,"
+    - ",,J,,,~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~,o,o,~~~~~~r,,,,,,,,"
+    - ",G,,,r~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~,,,,,======,,J,,,,,,"
+    - ",,,,,,r~~~~~~~~~~~~~~~~~~~~~~~~~~~~~r,o,r~~~~~~r,,,,HG,,"
+    - ",,,G,,,~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~,,,~~~~~~~~,,,,,,,,"
+    - ",J,,,,,,~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~,,,,,,"
+    - ",,,,,,,,r~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~,,,,,"
+    - ",,,,O,,,,~~~~~~~~~~~~~~~~~~~X~~~~~~~~~~~~~~~~~~~~~~,,,,,"
+    - ",,,,,,,,,,,rr~~~~~~~~~~~~~~~=~~~~~~~~~~~~~~~~~~~~~~r,,,,"
+    - ",O,,G,,,,,,,,,~~~~~~~~~~~~~~=~~~~~~~~~~~~~~~~~~~~~,,,,,,"
+    - ",,,,G,,,,,,,,,,~~~~~~~~~~~~~j~~~~~~~~~~~~~~~~~~~~~,,,,,,"
+    - ",,,,,,,,,,,,,,,~~~~~~~~~~~~~=~~~~~~~~~~~~~~~~~~~~~,,,,,,"
+    - ",,,,,,,,,JH,H,r~~~~~~~~~~~~~=~~~~~~~~~~~~~~~~~~~~r,,,,,,"
+    - ",G,,G,,,H,,,,,,,,,,r,~~~~~~~=~~~~~~~~~~~~~~~~~~~,,,,,,,,"
+    - ",,,G,,,,,,,,,,,,,,,,,rr,,,r...~rrr,r,~~~~~~~~~,r,,,,,O,,"
+    - ",,,,,,,,,,,,,...............................,r,,,,,,,,,,"
+    - ",,,,,,,,,,,,,..@@@@@@@@@@@@...@@@@@@@@@@@@..,,,,,,O,,,,,"
+    - ",,G,,,,J,,,,,..@@@@@@@@@@@@...@@@@@@@@@@@@..,,,,,,,,,,,,"
+    - ",,,,,n,,,f,,,..@@@@@@@@@@@@...@@@@@@@@@@@@..,,O,,,,,,,,,"
+    - ",,,,,,,c,,,,,..@@@@@@@@@@@@...@@@@@@@@@@@@..,,,,,,,,,,,,"
+    - ",,,,G,,,,,,,,..@@@@@@@@@@@@BBB@@@@@@@@@@@@..,,,,,,,,J,,,"
+    - ",,,,,,e,,,,,,..@@@@@@@@@@@@...@@@@@@@@@@@@..,,,,p,,,,,,,"
+    - ",G,,,,,,,,,,,..@@@@@@@@@@@@...@@@@@@@@@@@@..,,,,,,,,,,,,"
+    - ",,,,,,,,,,,,,..@@@@@@@@@@@@...@@@@@@@@@@@@..,,,,,,,,,,,,"
+    - ",,,,,R,,,,,,,..@@@@@W@@@@@@...@@@@@@E@@@@@..,,G,,,,,,,,,"
+    - ",,,J,,,,H,,,,.............T...T.............,,,,,,,Y,J,,"
+    - ",,,,,,,,G,,,,.....n......f..g..f......n.....,,,,,,,,,,G,"
+    - ",,,,,,,,,,,,,...............................,,,,,,,,,,,,"
+    - ",,,J,,G,,,,,,,,,,o,,,,,,,,,≡≡,,,,,,,,,,o,,,,,,,,,,,,,,,,"
+    - ",,G,,,,H,,R,,,,,,,,,,,o,,,,≡≡,,J,,o,,H,,,,,,,,,H,,,,,,,,"
+    - ",,,,,G,H,,,,,,,,H,,J,,,,,,,≡≡,,,,,,,,,,,,,,,,,H,,,,,,,,,"
+    - ",,,,,,,,,,,,,,,,,,,,,,,,,,,≡≡,H,,,J,,,,,JO,,,,,,,,,,J,,,"
+    - ",,,,,,,,,,,,,,,,R,,JO,,,o,,≡≡,,,o,,,,J,,,,,O,,,,,,,,,,,,"
+    - ",,,,,,,,,,,,,,,,,,,,,,,,,,,≡≡,,,,,,,,,,,,,,,,,,G,,,,,,J,"
+    - ",,,O,O,,,O,,,,,,,,,,,,,,,,,≡≡,,,,,,,,,,,,,,,,,,,,,,,,,,,"
+    - ",,,,,,,H,,,,,,,,J,,,H,,,,,,≡≡,,,,,,,,,,,,,,,,,,,H,,,,,,,"
+    - ",,,,G,,,,,,,,,,,,,,,,,G,,,,≡≡,O,,,R,,,,,,,,,,Y,,,,,,,,,,"
+    - ",J,,,,,,,,,,,G,,,,,G,,,,,,,≡≡,,,,,,,,,,,,,,,,,,,,,,,Y,,,"
+    - ",,,,,,,,,,,,,,,,,,,,,,,,,,,SS,,,,,,,,,,,,,,,,,,,,,,,,,,,"
+  legend:
+    S: {kind: stairs, to: tarn_plains_west, at: N, sprite: none, label: "The road south, back to the grassland", on: "≡"}
+    W: {kind: stairs, to: sarnak_fort, at: W, up: true, sprite: door, wall: true, label: "A low door in the western block"}
+    E: {kind: stairs, to: sarnak_fort, at: E, up: true, sprite: door, wall: true, label: "A low door in the eastern block"}
+    T: {kind: prop, sprite: tusk_tower, label: "A round tower, its roof ringed with tusks"}
+    B: {kind: prop, sprite: ropebridge_over, solid: false, over: true, label: "A rope bridge, high overhead"}
+    X: {kind: chest, label: "A sea chest at the jetty's end", loot: relic_cache, rolls: 1, tn: 9, on: "="}
+    o: {kind: prop, sprite: standing_stone, label: "A standing stone cut with glyphs", on: ","}
+    f: {kind: prop, sprite: brazier, label: "A brazier"}
+    n: {kind: prop, sprite: tusk_standard, label: "A standard of tusks and hide"}
+    e: {kind: prop, sprite: egg_nest, label: "A clutch of big leathery eggs", on: ","}
+    g: {kind: monster, encounter: gate, label: "The gate guard"}
+    j: {kind: monster, encounter: jetty, label: "A sarnak fishing off the jetty", on: "="}
+    c: {kind: monster, encounter: camp, label: "Sarnaks at a shore camp", on: ","}
+    p: {kind: monster, encounter: patrol, label: "A patrol on the shore", on: ","}
+    r: {kind: prop, sprite: reeds, solid: false, label: "Reeds", on: ","}
+    G: {kind: prop, sprite: tallgrass_gold, solid: false, label: "Tall grass", on: ","}
+    H: {kind: prop, sprite: tallgrass_seed, solid: false, label: "Tall grass", on: ","}
+    J: {kind: prop, sprite: tallgrass_flower, solid: false, label: "Tall grass and wildflowers", on: ","}
+    O: {kind: prop, sprite: oak, label: "An oak", on: ","}
+    Y: {kind: prop, sprite: birch, label: "A birch", on: ","}
+    R: {kind: prop, sprite: boulder, label: "A boulder", on: ","}
+  encounters:
+    gate: {foes: [{monster: sarnak}, {monster: sarnak}], text: "Two sarnaks under the bridge lower their spears."}
+    jetty: {foes: [{monster: sarnak}], text: "The sarnak drops its line and takes up a spear."}
+    camp: {foes: [{monster: sarnak}, {monster: sarnak}], text: "Sarnaks rise from beside their clutch, hissing."}
+    patrol: {foes: [{monster: sarnak}, {monster: sarnakKnight}], text: "A patrol turns off the shore toward you."}
+  secrets: []
+
+sarnak_fort:
+  name: The Fortress on the Lake
+  kind: dungeon
+  blurb: The upper floor of the lake fortress: a hall in each block, and between them a rope bridge over the gate road.
+  level: 3
+  look: {wall: "#5a6458", floor: "#6f7868", ceiling: "#1a2224", fog: "#060a0a", torch: 1, tileset: lakeland, light: 18}
+  map:
+    - "@@@@@@@@@@@@xxx@@@@@@@@@@@@"
+    - "@.........n@xxx@n.......X.@"
+    - "@.@@.......@xxx@.........i@"
+    - "@.@@..a....@xxx@....k.....@"
+    - "@...........bbb...........@"
+    - "@..........@xxx@......@@..@"
+    - "@f......q..@xxx@...e..@@..@"
+    - "@....W...e.@xxx@.....E...f@"
+    - "@@@@@@@@@@@@xxx@@@@@@@@@@@@"
+  legend:
+    W: {kind: stairs, to: tarn_lake, at: W, label: "Stairs down to the western door"}
+    E: {kind: stairs, to: tarn_lake, at: E, label: "Stairs down to the eastern door"}
+    x: {kind: prop, sprite: passage_below, label: "The gate passage, far below"}
+    b: {kind: prop, sprite: ropebridge_span, solid: false, label: "The rope bridge"}
+    X: {kind: chest, label: "The warden's coffer", loot: relic_cache, rolls: 2, tn: 11}
+    f: {kind: prop, sprite: brazier, label: "A brazier"}
+    n: {kind: prop, sprite: tusk_standard, label: "A standard of tusks and hide"}
+    e: {kind: prop, sprite: egg_nest, label: "A clutch of big leathery eggs"}
+    i: {kind: prop, sprite: standing_stone, label: "A stone cut with glyphs"}
+    a: {kind: monster, encounter: hall, label: "Sarnaks in the western hall"}
+    q: {kind: monster, encounter: brood, asleep: true, label: "A sarnak dozing by the eggs"}
+    k: {kind: monster, encounter: warden, label: "The warden of the fortress"}
+  encounters:
+    hall: {foes: [{monster: sarnak}, {monster: sarnakKnight}], text: "Sarnaks snatch up spears from the wall."}
+    brood: {foes: [{monster: sarnak}], text: "The brood-keeper uncoils and comes at you."}
+    warden: {foes: [{monster: sarnakWarden}, {monster: sarnakKnight}], text: "The warden rises, a head taller than its guard, and levels its spear."}
+  secrets: []
+
+tarn_plains_south:
+  name: The Southern Grassland
+  kind: dungeon
+  open: true
+  blurb: Prairie running south toward the desert; on its east the mountains open in a canyon of red clay and tan rock, a labyrinth where minotaurs live.
+  level: 4
+  look: {wall: "#a8502c", floor: "#c8a878", ceiling: "#9ab8d6", fog: "#0c120a", torch: 0, tileset: clay_canyon, light: 28}
+  map:
+    - ",,,,,,,,,,,,,,,,NN,,,,,,,,,,,.##(?▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▂▂"
+    - ",,,,,,,H,G,,,,,,≡≡,,,,,,,,,J,..#(?????????????????????????????▁▂"
+    - ",,,,,,,,,,,,,,,,,≡≡,,,,,,,,,,,.#((((((((((((((((((((((((((((((?▁"
+    - ",,,,,,,,,,,,,,,,,≡≡,,J,,,,,,,,.##############################(?▁"
+    - ",,G,,,,,,,,,O,,,,,≡≡,,,,,,,O,,.##...........................#(?▁"
+    - ",,,,,,,,,,,,,,,,,,≡≡,,,,,,,,,..##.a.........d.........u.c.X.#(?▁"
+    - ",,Y,,,,,,,,,,,,,,,≡≡,,,,H,,,..###..###..###..###..###.......#(?▁"
+    - ",,,,,,,Y,,,,,J,,,,,≡≡,,,,G,,.##(#..#(#..#(#..#(#..#(#...K...#(?▁"
+    - ",,,,,,,,,,,,,,,Y,,,≡≡,,,,,,,.#((#..#(#..###..#(#..#(#.......#(?▁"
+    - ",,,,,,,,,,,,,,,,,,,≡≡,H,,,,,.#((#..#(#a......#(#..#(#.....n.#(?▁"
+    - ",,,H,,,,,,,,,,,,,,,≡≡,,,,,,,.#((#..#(#.......#(#..#(#.......#(?▁"
+    - ",,,J,,,HH,,,,,,,,J,≡≡,,,,,J,.##(####(#########(#..#(#..######(?▁"
+    - ",,,,,,,,,,,,,,,,,,,≡≡,,G,,,,..#((((((((((((((((#..#(#..#((((((?▁"
+    - ",,,,,,,,,,JO,,,,,,,≡≡,,,,,,,,.################(#..###..######(?▁"
+    - ",,,,J,,,J,,,,,,G,,,≡≡,,,,,,,,..##............#(#............#(?▁"
+    - ",,,,,,,O,,,,,,,,,,,≡≡,,,,,,,,,.##.n..........#(#...........d#(?▁"
+    - ",,,,,,,,,,,,,,,,,,≡≡,,,,,,,,,,.##..########..#(######..###..#(?▁"
+    - ",,R,,,,,,,,H,,,,,,≡≡,,,,,H,,,,.##..#((((((#..#((((((#..#(#..#(?▁"
+    - ",,,,,,,,Y,,,,,,,,,≡≡,,,,,G,,,..##..######(#..########..###..#(?▁"
+    - ",,,,,,,,,,,,,,,,,≡≡,,,,,,,,,..###.......#(#...............a.#(?▁"
+    - ",,,,,,,,G,,O,,,,,≡≡,,,,,,,,,.##(#.......#(#.................#(?▁"
+    - ",,,,,,,,,Y,,,,,,≡≡,,,,,d,,,,.#((######..#(#..xmx..########..#(?▁"
+    - ",,,,,,,,,,,,,,,,≡≡,,H,,,..D..#(((((((#..#(#.......#((((((#..#(?▁"
+    - ",,,,J,,,,,,,,,,,≡≡,,,,,......#######(#..###...M...######(#..#(?▁"
+    - ",,,,,,,,,,,,,,,≡≡,,,H,,..a.........#(#......n...s......#(#..#(?▁"
+    - ",,,,,,,,,H,,,,,≡≡,,,,,,............#(#.D...............#(#..#(?▁"
+    - ",,,,,,,,,,G,,,≡≡,,,,,,,........##..#(######..###..###..#(#..#(?▁"
+    - ",,,,,O,,,,H,,,≡≡,,G,,G,,D...D..##..#((((((#..#(#..#(#..#(#..#(?▁"
+    - ",,,,,,,,J,,,,,≡≡,,Y,,O,,,,,d...##..########..#(#..#(#..#(#..#(?▁"
+    - ",,,O,,,,,,HH,≡≡,,,,,,,,,G,,,,,.##............#(#..#(#..#(#..#(?▁"
+    - ",,,,,,G,,,H,,≡≡,,,,,,,,O,,,,,..##............#(#.D#(#..#(#.n#(?▁"
+    - ",,,,,,,,,H,,,≡≡,,,,,Y,,,,,,,,.################(####(#..#(#..#(?▁"
+    - ",,,Y,,H,,R,,,≡≡,,H,,,,,,J,,,..#(((((((((((((((((((((#..#(#..#(?▁"
+    - ",,,,,,,,,,,,,≡≡,,,,,,,,G,,,,.##(#########(###########..###..#(?▁"
+    - ",,,,,,,,,,,,,≡≡,,,J,,,,,,,,,.#((#......a#(#.................#(?▁"
+    - ",,,,G,,,,,,H,≡≡,,,,,,,,,,,,,.#((#.......#(#...........u.....#(?▁"
+    - ",,,,,,,,,,,,,≡≡,,,,,,,,,,,,,.#((#..######(#..###..###.....n.#(?▁"
+    - ",,G,,Y,,Y,,,,≡≡,,G,,,,,,,,,,.##(#..#((((((#..#(#..#(#...P...#(?▁"
+    - ",,,,,,,,,,,,,,≡≡,,,,,,,G,,J,..###..########..#(#..###.......#(?▁"
+    - ",,,,,,G,,G,,,,≡≡,,,,,,,,,,,,,..##............#(#.......s....#(?▁"
+    - ",,,O,,,,,,,,,,≡≡,,,,,,,,,,,,,,.##.D.........d#(#.a..........#(?▁"
+    - ",,,,,,,,,,,,,,,≡≡,,,,,,,,,,,,,.###############(##############(?▁"
+    - ",,,,,,,J,HH,,,,≡≡,,,,,,,,,JG,,.#((((((((((((((((((((((((((((((?▁"
+    - ",,,,,,,,,H,,,,,,≡≡,J,,,,,,,,,..#(?????????????????????????????▁▂"
+    - ",,,,Y,G,H,,G,,,,≡≡,,,H,,,,,,..##(?▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▂▂"
+    - ",,,,,,,,,H,,,,,,≡≡,,,,,,,,,,.##((?▁▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▂▃"
+    - ",,,,,,,,J,J,,,,,,≡≡,,,,,,G,,.#((?▁▂▂▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▃▄"
+    - ",,,,,,,,,,,,,,,,,SS,,,,,,,,,.#(?▁▂▂▃▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄"
+  legend:
+    N: {kind: stairs, to: tarn_plains_west, at: S, sprite: none, label: "The road north, to the grassland", on: "≡"}
+    S: {kind: stairs, to: desert, at: N, sprite: none, label: "South, toward the desert", on: "≡"}
+    K: {kind: monster, encounter: bull, label: "The lord of the labyrinth"}
+    M: {kind: monster, encounter: camp, label: "Minotaurs at their yurt"}
+    P: {kind: monster, encounter: herd, label: "Minotaurs about a totem"}
+    a: {kind: monster, encounter: lone, label: "A minotaur in the passage"}
+    X: {kind: chest, label: "A hide-bound chest", loot: troll_hoard, rolls: 1, tn: 10}
+    m: {kind: prop, sprite: tent_minotaur, label: "A great hide yurt, bull horns over its door"}
+    x: {kind: prop, sprite: none, label: "The yurt"}
+    u: {kind: prop, sprite: horn_totem, label: "A post crowned with a horned skull"}
+    n: {kind: prop, sprite: bone_heap, label: "A heap of gnawed bones and horned skulls"}
+    c: {kind: prop, sprite: bonfire, label: "A bonfire"}
+    s: {kind: prop, sprite: campfire_small, label: "A smoky fire"}
+    d: {kind: prop, sprite: dead_tree, label: "A dead tree, bleached white"}
+    D: {kind: prop, sprite: clay_boulder, label: "A boulder of red rock"}
+    G: {kind: prop, sprite: tallgrass_gold, solid: false, label: "Tall grass", on: ","}
+    H: {kind: prop, sprite: tallgrass_seed, solid: false, label: "Tall grass", on: ","}
+    J: {kind: prop, sprite: tallgrass_flower, solid: false, label: "Tall grass and wildflowers", on: ","}
+    O: {kind: prop, sprite: oak, label: "An oak", on: ","}
+    Y: {kind: prop, sprite: birch, label: "A birch", on: ","}
+    R: {kind: prop, sprite: boulder, label: "A boulder", on: ","}
+  encounters:
+    lone: {foes: [{monster: minotaur}], text: "A minotaur comes round the rock, snorting."}
+    camp: {foes: [{monster: minotaur}, {monster: minotaur}], text: "Two minotaurs duck out of the yurt with axes in their fists."}
+    herd: {foes: [{monster: minotaur}, {monster: minotaur}], text: "The minotaurs at the totem lower their horns."}
+    bull: {foes: [{monster: minotaurLord}], text: "The lord of the labyrinth bellows, and the walls throw it back."}
+  secrets: []
+
+# <<< west
 
 # ---- The jungle west of the grassland (the user, 2026-11-04). Laid out by assets/wip/jungle/layout.py; art and
 # prompts in assets/wip/jungle/. Props only: no foes placed (encounters wait for tuning).
@@ -767,7 +975,7 @@ desert:
     - "~~~~..........................................t.............`o`o#(?▁▂▃▄▄▄▄▄▄▄▄▄▄"
     - "~~~~..........................SS.............................```#(?▁▂▃▄▄▄▄▄▄▄▄▄▄"
   legend:
-    N: {kind: stairs, to: tarn_plains_west, at: S, sprite: none, label: "North, back to the grassland"}
+    N: {kind: stairs, to: tarn_plains_south, at: S, sprite: none, label: "North, back to the grassland"}
     S: {kind: note, sprite: none, label: "The desert south", text: "Sand and red rock run on south as far as you can see. (What lies beyond is not built yet.)"}
     A: {kind: prop, sprite: waterfall, label: "A stream falling out of the mountains", on: "~"}
     # the island and its tower

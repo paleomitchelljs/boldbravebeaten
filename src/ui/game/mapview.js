@@ -645,10 +645,11 @@
       for (const c of plan.decor) Tilemap.paint(ctx, c, env);
       for (const a of sc.actors || []) if (a.sleep && view.vis[a.id]) drawSleep(ctx, view.vis[a.id], ox, oy, S, view.tick);
       // Layer 5: furniture and figures, back to front by their feet.
-      const list = [];
+      const list = [], overhead = [];
       for (const c of plan.ground) {
         const cc = sc.cell(c.x, c.y);
-        if (['chest', 'shrine', 'prop'].includes(cc.kind)) list.push({ y: c.y + 0.99, prop: { c: cc, x: c.x, y: c.y } });
+        // A prop with `over: true` hangs overhead (a bridge between two towers): drawn after everyone, who walk beneath.
+        if (['chest', 'shrine', 'prop'].includes(cc.kind)) (cc.def && cc.def.over ? overhead : list).push({ y: c.y + 0.99, prop: { c: cc, x: c.x, y: c.y } });
       }
       for (const a of sc.actors || []) { const v = view.vis[a.id]; list.push({ y: v.y + 1, fig: { a, v } }); }
       list.sort((p, q) => p.y - q.y);
@@ -657,6 +658,7 @@
         const [dx, dy] = offsetOf(it.fig.a.id, clock());
         drawActor(ctx, it.fig.a, dx || dy ? { x: it.fig.v.x + dx, y: it.fig.v.y + dy, run: it.fig.v.run, travel: it.fig.v.travel, flip: it.fig.v.flip, dir: it.fig.v.dir } : it.fig.v, ox, oy, S, view.tick);
       }
+      for (const it of overhead) { const i = it.prop; drawObject(ctx, i.c, ox + i.x * size, oy + i.y * size, S, i.x, i.y); }
       // Fog: unlit squares fade; what has been seen but is out of the light is dim. One radial gradient round the
       // light, so the falloff has no square steps (it was filled square by square: bands a square wide). UI.noFog
       // (tools/shot.sh) leaves the map fully lit.

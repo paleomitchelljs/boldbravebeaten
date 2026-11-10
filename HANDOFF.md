@@ -12,6 +12,9 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
   take stamina only without Heavy Hands (the user's ruling), so shieldless fighters now swing at bone. Still open: the
   shield bash (5 CON to a skeleton at 2.3 AP) keeps the swing rare for anyone with a shield; against mail the great
   axe beats the hammers per AP; no hero or monster carries the battle axe; the crawls are not re-run since.
+- [ ] **Sarnaks and minotaurs** (first numbers, top of `sim/FINDINGS.md`): spears carry the sarnaks (the plain one
+  is M 1.3); a minotaur beats one hero and loses to two; only `apMult` made the lord a boss, and half mail made it
+  worse (not run down). Every fight in both places costs a party of three about 1.8 heroes. No crawl run there.
 - [ ] Crawl baseline (`node sim/crawl.js`): a party of 3 clears the court 10/30, the mine hall 0/30, the orc valley
   2/30; a party of 4 26/30, 1/30, 10/30. All level-1 places. The hall's single foes kill a hero in one fight of
   three; the valley's third group pulls its neighbours (6.7 foes). The crawl has no recruiting and no growth yet
@@ -59,6 +62,10 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
   piece per liquid (`assets/ideas/useful-assets-tk.md`) and a placement rule; not a code fix.
 - [ ] The sewer's wall tops are lighter than its floor, so a wall block reads as a paved yard. The lava surface's
   dark blobs repeat on a visible three-square grid when zoomed out.
+- [ ] **The lake country and the clay canyon** (`tarn_lake`, `sarnak_fort`, `tarn_plains_south`; 2026-11-10,
+  `assets/wip/west/README.md`): a flatter, more saturated style than the older landscape, on purpose; decide whether
+  the older sets follow it. The fortress's upper floor is a separate place (solid roofs seen from the ground); the
+  towers are small beside the walls; the road cannot join paving or soil cleanly.
 - [ ] Not reviewed for edges: ember_hall, ember_warrens, mine_approach, orc_valley, desert, tarnhold.
 - [ ] Sewer: the main channel's diagonal stair-steps. Court, pyramid, palace, ritual: the "still open" lists in the
   archived handoff. The citadel's floor is lighter than the black basalt asked for. A grey strip north of the south

@@ -2065,3 +2065,100 @@ desert:
     youngpalm: ["props.png", 4060, 129, 94, 100]
     deadpalm: ["props.png", 4289, 122, 79, 107]
     tower: ["props.png", 4441, 0, 220, 229]
+
+# ---- The lake country and the clay canyon (assets/wip/west/build.py; the user, 2026-11-10). A new key style, nearer
+# the characters': clean flat colour, bold shapes, no speckle. All pro, 64 px, chained from one water and one grass.
+lakeland:
+  cell: 64
+  dir: art/worldtiles/west/
+  floor: floor
+  wall: fort
+  doorsInWall: true
+  terrains:
+    water: {color: "#2a8a9a", tile: water.png}
+    grass: {color: "#4f9a3c", tile: grass.png, wang: shore.png, over: water}
+    trail: {color: "#9a6a44", wang: road.png, over: grass, corners: [LLUL, LULU, ULUU, LLUU, ULLU, LUUU, UUUU, UUUL, LULL, UULL, UULU, ULUL, LLLL, LLLU, LUUL, ULLL]}
+    floor: {color: "#7a8a78", wang: flag.png, over: grass, corners: [LLUL, LULU, ULUU, LLUU, ULLU, LUUU, UUUU, UUUL, LULL, UULL, UULU, ULUL, LLLL, LLLU, LUUL, ULLL]}
+    bridge: {color: "#6a5a44", wang: ../tarn/ropebridge.png, over: water, apart: true}
+    # The fortress: pale slab tops, a face of small mossy blocks under a band of glyphs.
+    fort:
+      color: "#c8d4bc"
+      wang: fort.png
+      over: floor
+      cliff:
+        - [2, 2, ".....00..00....."]
+        - [3, 2, ".....00..01....."]
+        - [1, 4, ".....00..11....."]
+        - [2, 4, ".....00..10....."]
+        - [3, 3, ".00..01..01....."]
+        - [3, 4, ".....01..01....."]
+        - [0, 6, ".....11..11....."]
+        - [1, 0, ".11..10..10....."]
+        - [1, 1, ".....10..10....."]
+        - [0, 4, ".....10..11....."]
+        - [3, 6, ".....01..11....."]
+        - [1, 6, ".....11..12...0."]
+        - [3, 0, ".....11..22..00."]
+        - [1, 2, ".....10..20..00."]
+        - [1, 7, ".1...12..10....."]
+        - [3, 1, ".11..22..00....."]
+        - [1, 3, ".....20..00....."]
+        - [2, 0, ".....01..02..00."]
+        - [0, 0, ".....11..21..0.."]
+        - [2, 6, ".....10..21..01."]
+        - [2, 1, ".....02..00....."]
+        - [0, 1, "..1..21..01....."]
+        - [2, 7, ".10..21..01....."]
+        - [0, 2, ".....01..12..10."]
+        - [0, 3, ".01..12..10....."]
+  props:
+    standing_stone: [props.png, 32, 83, 58, 90]
+    tusk_standard: [props.png, 164, 82, 38, 91]
+    brazier: [props.png, 286, 115, 38, 58]
+    reeds: [props.png, 399, 120, 55, 53]
+    egg_nest: [props.png, 518, 129, 61, 44]
+    tusk_tower: [props.png, 1099, 0, 120, 173]
+    door_south: ['props.png', 1261, 124, 39, 49, 12, 28]
+    # One square of rope bridge running east-west: walked on upstairs, hung overhead (a prop with over: true) below.
+    ropebridge_deck: ['props.png', 1371, 127, 64, 46, 0, 9]
+    ropebridge_over: ['props.png', 1371, 127, 64, 46, 0, 9]
+    passage_below: [props.png, 1493, 109, 64, 64, 0, 0]
+    ropebridge_span: [props.png, 1615, 109, 64, 64, 0, 0]
+    tallgrass_gold: [../tarn/props.png, 3513, 0, 61, 61, null, null, 8, 5]
+    tallgrass_seed: [../tarn/props.png, 4005, 0, 58, 60, null, null, 8, 5]
+    tallgrass_flower: [../tarn/props.png, 4473, 0, 59, 60, null, null, 8, 5]
+    oak: [../tarn/props.png, 1883, 0, 117, 112]
+    birch: [../tarn/props.png, 2004, 0, 66, 116]
+    boulder: [../tarn/props.png, 1097, 0, 60, 50]
+
+clay_canyon:
+  cell: 64
+  dir: art/worldtiles/west/
+  floor: floor
+  terrains:
+    grass: {color: "#4f9a3c", tile: grass.png}
+    trail: {color: "#9a6a44", wang: road.png, over: grass, corners: [LLUL, LULU, ULUU, LLUU, ULLU, LUUU, UUUU, UUUL, LULL, UULL, UULU, ULUL, LLLL, LLLU, LUUL, ULLL]}
+    floor: {color: "#c8a878", wang: soil.png, over: grass, corners: [LLUL, LULU, ULUU, LLUU, ULLU, LUUU, UUUU, UUUL, LULL, UULL, UULU, ULUL, LLLL, LLLU, LUUL, ULLL]}
+    # The labyrinth's walls: steep slopes of banded clay up from the soil, then shelf on shelf (build.py's rings),
+    # each paler and tanner than the last.
+    wall: {color: "#b8542c", wang: slope.png, over: floor}
+    ledge: {color: "#c0603a", wang: ring1.png, over: wall}
+    summit: {color: "#c87048", wang: ring2.png, over: ledge}
+    ridge3: {color: "#cf8058", wang: ring3.png, over: summit}
+    ridge4: {color: "#d69068", wang: ring4.png, over: ridge3}
+    ridge5: {color: "#dca078", wang: ring5.png, over: ridge4}
+    ridge6: {color: "#e2b088", wang: ring6.png, over: ridge5}
+  props:
+    clay_boulder: [props.png, 641, 119, 59, 54]
+    dead_tree: [props.png, 759, 62, 68, 111]
+    bone_heap: [props.png, 887, 133, 56, 40]
+    horn_totem: [props.png, 1014, 82, 46, 91]
+    tent_minotaur: [../front.png, 3565, 0, 143, 136]
+    campfire_small: [../fires.png, 0, 0, 57, 48, null, null, 8, 10]
+    bonfire: [../fires.png, 1168, 0, 110, 111, null, null, 8, 10]
+    tallgrass_gold: [../tarn/props.png, 3513, 0, 61, 61, null, null, 8, 5]
+    tallgrass_seed: [../tarn/props.png, 4005, 0, 58, 60, null, null, 8, 5]
+    tallgrass_flower: [../tarn/props.png, 4473, 0, 59, 60, null, null, 8, 5]
+    oak: [../tarn/props.png, 1883, 0, 117, 112]
+    birch: [../tarn/props.png, 2004, 0, 66, 116]
+    boulder: [../tarn/props.png, 1097, 0, 60, 50]

@@ -1,0 +1,10 @@
+tusk_tower f06462e5-1ef4-45a0-8986-e3b8a3efcfd8
+standing_stone ad2c569d-ab95-4355-9cdc-67250d952435
+tusk_standard 59368e71-d6a6-43a2-bb51-29bf9a86931f
+brazier 1654da54-afd0-46e3-82bf-77f82904ab7e
+reeds da191de3-e623-4de2-b889-33d3afec9f4f
+egg_nest 4803ef77-fa60-4006-8eab-d10bbb0e1b2e
+clay_boulder ecaee94f-dc5b-48ae-b598-9b60a3e905c3
+dead_tree c31a8def-3bbc-4dcc-8f45-658600203689
+bone_heap a33ba44b-3e4e-4d4a-9074-708a46dd0aa5
+horn_totem 64f6ed48-0636-41bb-bb3c-9becd5cd0e8f

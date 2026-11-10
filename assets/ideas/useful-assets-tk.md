@@ -96,3 +96,22 @@ figure).
 | The emperor: huge, blue-grey, scale armour, a hammer | `orc_castle` `E` | the orc at 1.35× |
 | The prophet (bones, a staff), the emissaries, the warlord | `orc_castle` | the orc tinted; the orc warrior |
 | Slaves (human, elf, dwarf), the gnome in the pits | `orc_valley`, `orc_mines` | notes, no figures |
+
+## The lake country and the clay canyon (2026-11-10; assets/wip/west/README.md)
+
+| What | Where | Now | Kind |
+|---|---|---|---|
+| A bigger tusk-roofed tower (two to three squares wide) | `tarn_lake` `T` | a 120-px tower, small beside the walls | prop |
+| Roof pieces for the fortress (a pitched or tusked roof, a parapet walk) | `tarn_lake` | the wall set's flat slab top, joints drawn by hand | tiles |
+| A rope bridge drawn east-west, with posts at each end | `tarn_lake` `B`, `sarnak_fort` `b` | Tarnhold's planks turned, rails drawn in build.py | prop |
+| A stair down, in the fortress's stone | `sarnak_fort` `W` `E` | the default stairs icon | prop |
+| A dirt road that joins paving and canyon soil without a grass fringe | `tarn_lake` gate, `tarn_plains_south` | the road stops short; the gate passage is paved | tiles |
+| A minotaur hide tent, front-on | `tarn_plains_south` | Tarnhold's yurt | prop |
+| Grass props (oak, birch, tall grass) in the new flat style | both | Tarnhold's, the older style | prop |
+| Lake details: lily pads, a rowing boat, a rock in the water | `tarn_lake` | reeds only | prop |
+
+### Figures (the user's)
+
+| What | Where | Now |
+|---|---|---|
+| Sarnak knight (mail, shield), the warden | `tarn_lake`, `sarnak_fort` | the sarnak, larger |

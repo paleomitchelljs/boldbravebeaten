@@ -1,5 +1,30 @@
 # Simulation findings
 
+## Sarnaks and minotaurs (2026-11-10; first numbers)
+
+`node tools/tiers.js` (M = heroes of the monster's level for an even fight; n 48–72):
+
+| Monster | Kit | M | tier |
+|---|---|---|---|
+| sarnak | scales, spear in two hands, Melee 2 | 1.34 | 3 |
+| sarnak knight | half mail, iron heater, spear | 1.50 | 4 |
+| sarnak warden | full mail, iron heater, spear, `apMult` 1.4, Toughness | 2.00 | 4 |
+| minotaur | ogre hide, great axe, gore, STR 15 | 1.56 | 4 |
+| lord of the labyrinth | the same, STR 19 CON 18, `apMult` 3 | 2.42 | 4 |
+
+What the tries showed. (1) The spear carries the sarnaks: with spear and hide shield the plain one was M 1.44, above
+a knight in mail with a longsword (0.95) and a warden with the battle axe and `apMult` 1.8 (1.08; two heroes beat it
+98%). All three now carry spears. The battle axe in one hand behind a shield is the weakest kit tried. (2) A minotaur
+beats one hero 4 times in 5 and loses to two 2 times in 3: hide does not keep two attackers off. STR 19 and CON 18
+added nothing (1.66 against 1.56), and half mail made the lord *worse* (1.28, no Armor skill or with Armor 3), which I did not
+run down. Only `apMult` moved it: 2 gave 1.65, 3 gave 2.42.
+
+Encounters as first written, three heroes / four (win %, dead per fight): gate (2 sarnaks) 63 / 58, 1.4 dead; patrol
+(sarnak + knight) 58 / 75; hall (2 sarnaks + knight) 29 / 42; warden + knight 50 / 67; minotaur pair 63 / 71; lord +
+minotaur 21 / 75. The hall was cut to sarnak + knight and the lord left alone (three heroes beat it 75%); the rest
+stand, not re-run. About 1.8 heroes die in every one of these, win or lose: both places are hard for a party of three at
+their level, like the rest of the game at present.
+
 ## Weapon roles (2026-11-10; PROVISIONAL, `CONFIG.weaponPhysics`)
 
 **The ruling** (the user, 2026-11-09). Blunt swings are the best against armor and the undead; spear and rapier

@@ -1602,3 +1602,98 @@ steamElemental:
   armor: golemBody
   traits: {size: 1.3, tireless: true, outsider: true, noBleed: true, resist: {P: 0.5, S: 0.5, fire: 0, mind: 0}}
   feats: {}
+
+# ---- The lake fortress and the clay labyrinth (the user, 2026-11-10; assets/wip/west/). Untuned first numbers.
+sarnak:
+  name: Sarnak
+  blurb: "A lean dragon-kin in its own scales, with a long spear in both hands; its tail takes your legs."
+  faction: wilds
+  xp: 60
+  tier: 3
+  level: 3
+  glyph: "🦎"
+  sprite: {art: sarnak, kind: orc_warrior, tint: "#8a9a6a"}
+  loot: humanoid_purse
+  attrs: {STR: 9, CON: 9, DEX: 6, SPD: 6, INT: 5, WIL: 6, WIS: 5, CHA: 3}
+  skills: {melee: 2, perception: 2}
+  natural: [tail]
+  armor: scalewardScales
+  weapons: [spear]
+  craft: average
+  keepUnarmed: true
+sarnakKnight:
+  name: Sarnak knight
+  blurb: "A sarnak in a mail shirt behind an iron shield, its spear over the rim: the fortress's picked guard."
+  faction: wilds
+  xp: 90
+  tier: 4
+  level: 3
+  glyph: "🦎"
+  sprite: {art: sarnak, artScale: 1.08, kind: orc_warrior, scale: 1.08, tint: "#8a9a6a"}
+  loot: humanoid_purse
+  attrs: {STR: 11, CON: 10, DEX: 6, SPD: 6, INT: 5, WIL: 7, WIS: 5, CHA: 4}
+  skills: {melee: 4, block: 4, armor: 3}
+  natural: [tail]
+  armorItem: {type: mail, coverage: half}
+  weapons: [spear]
+  shield: [heater, iron]
+  craft: average
+  keepUnarmed: true
+sarnakWarden:
+  name: Sarnak warden
+  blurb: "The fortress's master, a head taller than its guard, in mail to the knee, quicker with its spear than its size allows."
+  faction: wilds
+  xp: 160
+  tier: 4
+  level: 3
+  glyph: "🦎"
+  sprite: {art: sarnak, artScale: 1.2, kind: orc_warrior, scale: 1.2, tint: "#8a9a6a"}
+  loot: humanoid_purse
+  attrs: {STR: 13, CON: 13, DEX: 6, SPD: 6, INT: 6, WIL: 8, WIS: 6, CHA: 6}
+  skills: {melee: 5, block: 4, armor: 3, intimidation: 3}
+  natural: [tail]
+  armorItem: {type: mail, coverage: full}
+  weapons: [spear]
+  shield: [heater, iron]
+  craft: good
+  keepUnarmed: true
+  traits: {apMult: 1.4}
+  feats: {toughness: 1}
+minotaur:
+  name: Minotaur
+  blurb: "A bull-headed giant with a great axe; in a narrow passage it lowers its horns and comes through you."
+  faction: wilds
+  xp: 110
+  tier: 4
+  level: 4
+  glyph: "🐂"
+  sprite: {art: minotaur, kind: orc_warrior, scale: 1.3, tint: "#7a5a40"}
+  loot: troll_hoard
+  attrs: {STR: 15, CON: 14, DEX: 5, SPD: 6, INT: 4, WIL: 7, WIS: 5, CHA: 3}
+  skills: {melee: 3, athletics: 3, intimidation: 2, perception: 2}
+  natural: [gore]
+  armor: ogreHide
+  weapons: [greatAxe]
+  craft: poor
+  keepUnarmed: true
+  traits: {size: 1.25}
+  feats: {power_swing: 1}
+minotaurLord:
+  name: Lord of the labyrinth
+  blurb: "The oldest and biggest bull of the canyon, scarred grey, its axe as long as a man."
+  faction: wilds
+  xp: 220
+  tier: 4
+  level: 4
+  glyph: "🐂"
+  sprite: {art: minotaur-large, kind: orc_warrior, scale: 1.5, tint: "#5a4030"}
+  loot: troll_hoard
+  attrs: {STR: 19, CON: 18, DEX: 5, SPD: 6, INT: 5, WIL: 9, WIS: 6, CHA: 5}
+  skills: {melee: 5, athletics: 4, intimidation: 4, perception: 2}
+  natural: [gore]
+  armor: ogreHide
+  weapons: [greatAxe]
+  craft: average
+  keepUnarmed: true
+  traits: {size: 1.4, grip: 2, apMult: 3}
+  feats: {power_swing: 1, toughness: 1}
