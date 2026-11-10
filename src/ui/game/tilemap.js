@@ -437,6 +437,8 @@
     const upOf = (w) => (xx, yy) => {
       const t = T_(xx, yy).t, d = tdef(ts, t);
       if (d.rank < w.rank) return false;
+      // A deck (`apart`) is only its own squares and the wall it runs under: it is not the ground under what is listed later.
+      if (w.apart && !w.cliffTiles) return t === w.name || (t === ts.wall && !!d.cliffTiles);
       if (t === w.name || !w.cliffTiles) return t === w.name || t === ts.wall || !(d.cliffTiles || d.apart);
       // `solo` (a built wall among a mountain's tiers): no other cliff set counts as its upper ground, only the rock
       // it runs under (underWalls).
@@ -459,8 +461,18 @@
       for (let y = y0; y <= y1 + 1; y++) for (let x = x0; x <= x1 + 1; x++) {
         const up = upOf(w);
         const m = (up(x - 1, y - 1) ? 8 : 0) | (up(x, y - 1) ? 4 : 0) | (up(x - 1, y) ? 2 : 0) | (up(x, y) ? 1 : 0);
+        if (!m) continue;
         // A wall drawn as a slope (a corner set, not a cliff) takes its cut sheet where a built wall runs under it.
-        if (m) out.corner.push({ x, y, t: w.name, m, cut: !!(w.cut && w.name === ts.wall && cutAt(x, y)) });
+        const c = { x, y, t: w.name, m, cut: !!(w.cut && w.name === ts.wall && cutAt(x, y)) };
+        // A third ground in a lower quarter (oasis grass, drawn over sand, beside water): the sheet would lay its own
+        // lower ground there, so the corner comes from the cut sheet and what lies there shows. Without one it is
+        // named (`foreign`) for tools/joins.js.
+        if (m !== 15 && w.over && !w.apart) {
+          const low = [[x - 1, y - 1, 8], [x, y - 1, 4], [x - 1, y, 2], [x, y, 1]].filter((q) => !(m & q[2])).map((q) => T_(q[0], q[1]).t);
+          const odd = low.find((t) => t !== w.over && !(ts.terrains[t] || {}).cliffTiles);
+          if (odd) { if (w.cut) c.cut = true; else c.foreign = odd; }
+        }
+        out.corner.push(c);
       }
     }
     return out;

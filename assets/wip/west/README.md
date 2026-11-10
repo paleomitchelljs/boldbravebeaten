@@ -42,6 +42,7 @@ Seven tilesets and ten map objects; the balance was about 289 before the last th
 | slope | dry canyon floor of pale tan packed soil and sand, a few bold darker cracks and small pebbles | the top of a red clay rock mesa, warm terracotta and ochre sandstone in broad flat layered slabs with bold dark crevices | a steep slope of banded red clay and tan rock strata with fallen scree at its foot (0.25, step_slope 2) |
 | soil | the canyon floor (base tile) | the shore's grass | none |
 | ring | the mesa top (base tile) | a higher shelf of red clay rock, terracotta and pale ochre | a steep slope of banded red clay and tan rock strata (0.25, step_slope 2) |
+| rise | the shore's grass (base tile) | a low rise of lighter, sunlit meadow grass | a soft low bank of darker grass (0.25, step_slope 1.5) |
 
 Road, flag and soil have the ground as PixelLab's *lower*, so their tilesets.yaml entries carry a swapped `corners:`
 list. Objects: `tusk_tower` (128×192, after the user's reference: grey-green mossy blocks, a glyph frieze, a brown
@@ -58,3 +59,5 @@ conical roof ringed with bone tusks), `standing_stone`, `tusk_standard`, `brazie
   of the canyon and the gate passage is paved, not dirt.
 - The stairs down inside the fortress are the default icon. The minotaurs' tent is Tarnhold's yurt.
 - The ring corners show a small notch where two slopes meet (the set's own corner tile).
+- The two grasslands (`grassland` tileset) use this grass, road and the `rise` set since 2026-11-10; their props are
+  still the older style.

@@ -109,6 +109,9 @@ figure).
 | A minotaur hide tent, front-on | `tarn_plains_south` | Tarnhold's yurt | prop |
 | Grass props (oak, birch, tall grass) in the new flat style | both | Tarnhold's, the older style | prop |
 | Lake details: lily pads, a rowing boat, a rock in the water | `tarn_lake` | reeds only | prop |
+| Buildings at the heroes' scale (an inn four to five squares wide, a door a hero fits) | every settlement | `front.png`, about two squares wide | prop |
+| A river sheet per direction (east-west flow), and moving water round the ford stones | `tarnhold`, `desert`, the vales | one sheet sliding down-screen; the ford's water is still | tiles |
+| The older landscape sets redrawn in this style (gravel, road, slope, ring, pit mud, scree, forest wall; then jungle, cinder, swamp) | the older places | the older, busier style | tiles |
 
 ### Figures (the user's)
 

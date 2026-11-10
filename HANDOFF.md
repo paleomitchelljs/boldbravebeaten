@@ -62,11 +62,22 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
   piece per liquid (`assets/ideas/useful-assets-tk.md`) and a placement rule; not a code fix.
 - [ ] The sewer's wall tops are lighter than its floor, so a wall block reads as a paved yard. The lava surface's
   dark blobs repeat on a visible three-square grid when zoomed out.
-- [ ] **The lake country and the clay canyon** (`tarn_lake`, `sarnak_fort`, `tarn_plains_south`; 2026-11-10,
-  `assets/wip/west/README.md`): a flatter, more saturated style than the older landscape, on purpose; decide whether
-  the older sets follow it. The fortress's upper floor is a separate place (solid roofs seen from the ground); the
-  towers are small beside the walls; the road cannot join paving or soil cleanly.
-- [ ] Not reviewed for edges: ember_hall, ember_warrens, mine_approach, orc_valley, desert, tarnhold.
+- [ ] **Restyle to the lake country's look** (the user, 2026-11-10: the older art should follow it). Done: the two
+  grasslands (`grassland` tileset: west grass and road, a new rise). To do, a 25-generation PixelLab set each: Tarnhold
+  gravel/river, road, slope, ring; pit mud; scree; the forest wall (about 175 of the 181 left; resets 2026-11-24), then
+  jungle, cinder, mine approach, swamp, temple. Props (trees, tall grass) and buildings are still the older style.
+- [ ] **Buildings are out of scale** (the user's `house_not_to_scale`): every building in `front.png` is about two
+  squares wide beside heroes 73 px tall. Not changed: it needs larger buildings and the yards relaid, not a 2x blit.
+- [ ] **Moving water** (2026-11-10; `assets/wip/water/build.py`): rivers slide down-screen whatever way the river
+  runs (one sheet per tileset); lakes shimmer in place. Never watched moving, only still shots. The ford stones'
+  own water and the sewer do not move.
+- [ ] **Ground variants** (`assets/wip/ground/build.py`): sand, lake grass, road and canyon soil draw eight
+  variants of the plain tile with its marks moved. Rock (rings, slopes) has none: its facets do not survive moving.
+- [ ] Joins: `node tools/joins.js` lists corners laid over a third ground (0 now; `cut` sheets from
+  `tools/cutsheet.py`). `lift: false` on a cliff set whose face is not rock below the last row (forest trunks, the
+  mesa). Lake country leftovers: the fortress's upper floor is a separate place; the towers are small beside the
+  walls; the road cannot join paving or soil cleanly.
+- [ ] Not reviewed for edges: ember_hall, ember_warrens.
 - [ ] Sewer: the main channel's diagonal stair-steps. Court, pyramid, palace, ritual: the "still open" lists in the
   archived handoff. The citadel's floor is lighter than the black basalt asked for. A grey strip north of the south
   hills. The trail ends in a straight edge at the swamp's east exit. Tarnhold: overlook top close to the canyon floor.

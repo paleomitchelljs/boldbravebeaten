@@ -35,8 +35,11 @@
 #     underWalls  (a cliff set) runs on under a wall beside it, east or west: a pyramid built into a wall; `all`, on any side (a built
 #               wall running into natural rock at its ends)
 #     cut       (the wall) its sheet with the ground cut away, drawn where it meets an underWalls terrain; (a flat
-#               corner set over a moving terrain) its sheet with that terrain cut away, so it shows through
-#     anim      a moving terrain (lava), drawn every frame under the rest: {sheet, size, frames, cols, fps}, one
+#               corner set) its sheet with the lower ground cut away (python3 tools/cutsheet.py sheet.png), drawn
+#               over a moving terrain so it shows through, and wherever a third ground lies in a lower quarter
+#               (grass meeting water beside sand) so that ground shows and not the sheet's own. node tools/joins.js
+#               lists the corners that need one and have none
+#     anim      a moving terrain (lava, water: assets/wip/water/build.py makes a river or a lake), drawn every frame under the rest: {sheet, size, frames, cols, fps}, one
 #               seamless surface `size` art pixels a side, `frames` of them, `cols` to a row; each square draws the
 #               part of it under its position. spurt: [sheet, w, h, frames, fps] and every (seconds): a jet now and
 #               then from one square in five whose four neighbours are this terrain too
@@ -78,6 +81,7 @@ temple_court:
     rubble:
       color: "#bba57a"
       wang: court-paving.png
+      cut: court-paving-cut.png
       over: grass
       decor: {density: 1, edge: true, spread: 6, pieces: [[court-decor.png, 128, 0, 28, 24], [court-decor.png, 192, 0, 16, 10], [court-decor.png, 0, 0, 22, 23], [court-decor.png, 448, 0, 17, 32], [court-decor.png, 128, 0, 28, 24]]}
     water: {color: "#1f4450"}
@@ -330,6 +334,7 @@ temple_sewer:
     stone:
       color: "#3a4436"
       wang: sewer-water.png
+      cut: sewer-water-cut.png
       over: water
       # grime, a grate, bones
       decor: {density: 0.3, clump: 4, flip: true, pieces: [[sewer-decor.png, 192, 0, 26, 27], [sewer-decor.png, 256, 0, 24, 24], [maze-decor.png, 64, 0, 33, 21]]}
@@ -566,11 +571,12 @@ outside_swamp:
   dir: art/worldtiles/outside/
   floor: grass
   terrains:
-    water: {color: "#2a3824", tile: water.png}
+    water: {color: "#2a3824", tile: water.png, anim: {sheet: water-anim.png, size: 512, frames: 16, cols: 4, fps: 4}}
     grass:
       color: "#5f7d42"
       tile: grass.png
       wang: swamp-water.png
+      cut: swamp-water-cut.png
       over: water
       decor: {density: 1.2, clump: 5, flip: true, spread: 10, pieces: [[../temple/court-decor.png, 704, 0, 58, 56], [../temple/court-decor.png, 768, 0, 43, 44], [../temple/court-decor.png, 832, 0, 36, 38], [../temple/court-decor.png, 960, 0, 26, 32], [../temple/court-decor.png, 0, 0, 22, 23], [../temple/court-decor.png, 64, 0, 26, 24], [../temple/court-decor.png, 128, 0, 28, 24], [../temple/court-decor.png, 192, 0, 16, 10], [../temple/court-decor.png, 256, 0, 10, 11], [../temple/court-decor.png, 896, 0, 38, 36], [../temple/court-decor.png, 1024, 0, 34, 27]]}
     ferns:
@@ -892,10 +898,10 @@ cinder_hills:
       cut: lava-ash-cut.png
       # small rocks, pebbles, coal, a stone, bones, crust, low boulders, scree, a cracked lava rock
       decor: {density: 0.35, clump: 6, flip: true, spread: 10, pieces: [[cave-decor.png, 0, 0, 29, 23], [cave-decor.png, 192, 0, 32, 27], [cave-decor.png, 640, 0, 29, 26], [cave-decor.png, 768, 0, 30, 28], [cave-decor.png, 960, 0, 30, 27], [cave-decor.png, 1216, 0, 36, 35], [hills-props.png, 640, 0, 52, 27], [hills-props.png, 384, 0, 61, 38], [cave-decor.png, 1024, 0, 32, 34], [cave-decor.png, 0, 0, 29, 23]]}
-    trail: {color: "#7a5a3a", wang: path.png, over: ash}
+    trail: {color: "#7a5a3a", wang: path.png, over: ash, cut: path-cut.png}
     rubble: {color: "#5e5352", alpha: 0.3, decor: {density: 1.2, edge: true, spread: 10, pieces: [[hills-props.png, 384, 0, 61, 38], [cave-decor.png, 128, 0, 36, 31], [cave-decor.png, 0, 0, 29, 23]]}}
     # Old flows: low raised lobes of ropy black basalt you can walk over (ground `{`).
-    hill: {color: "#2a2426", wang: flow.png, over: ash, decor: {density: 0.2, clump: 4, spread: 6, pieces: [[cave-decor.png, 1216, 0, 36, 35], [cave-decor.png, 64, 0, 35, 30], [cave-decor.png, 1152, 0, 20, 20]]}}
+    hill: {color: "#2a2426", wang: flow.png, over: ash, decor: {density: 0.2, clump: 4, spread: 6, pieces: [[cave-decor.png, 1216, 0, 36, 35], [cave-decor.png, 64, 0, 35, 30], [cave-decor.png, 1152, 0, 20, 20]]}, cut: flow-cut.png}
     bridge: {color: "#4a4440"}
     wall:
       color: "#3a3234"
@@ -1196,13 +1202,15 @@ south_hills:
       wang: hills-road.png
       over: path
       decor: {density: 0.5, clump: 6, flip: true, spread: 10, pieces: [[../temple/court-decor.png, 0, 0, 22, 23], [../temple/court-decor.png, 192, 0, 16, 10], [../temple/court-decor.png, 256, 0, 10, 11], [../temple/court-decor.png, 128, 0, 28, 24]]}
-    hill: {color: "#5f8a46", wang: hill.png, over: grass}
-    scree: {color: "#8a8a84", wang: scree.png, over: grass}
+    hill: {color: "#5f8a46", wang: hill.png, over: grass, cut: hill-cut.png}
+    scree: {color: "#8a8a84", wang: scree.png, over: grass, cut: scree-cut.png}
     # Forest groves and the edge of the map: a cliff set of trunks and undergrowth under a canopy.
     forest:
       color: "#23401f"
       wang: forest-edge.png
       over: grass
+      # Trunks, not a rock face: raising the face would draw each trunk twice.
+      lift: false
       cliff:
         - [2, 2, ".....00..00....."]
         - [3, 2, ".....00..01....."]
@@ -1265,12 +1273,14 @@ south_hills:
     ledge: {like: wall, color: "#7a7a74", wang: mountain-ledge.png, over: wall, cut: null}
     summit: {like: wall, color: "#8a8a84", wang: mountain-summit.png, over: ledge, cut: null}
   props:
-    pine: [props.png, 0, 0, 44, 63]
-    fir: [props.png, 48, 0, 58, 63]
-    oak: [props.png, 110, 0, 62, 60]
-    birch: [props.png, 176, 0, 39, 62]
+    # The trees and the loose rocks are Tarnhold's: this set's own came as 64-px frames that cut the pines' trunks off
+    # and kept a pine's skirt for the rocks (the user, 2026-11-10).
+    pine: [../tarn/props.png, 1688, 0, 69, 118]
+    fir: [../tarn/props.png, 1761, 0, 118, 118]
+    oak: [../tarn/props.png, 1883, 0, 117, 112]
+    birch: [../tarn/props.png, 2004, 0, 66, 116]
     boulder: [props.png, 219, 0, 50, 41]
-    rocks: [props.png, 273, 0, 52, 18]
+    rocks: [../tarn/props.png, 1161, 0, 58, 38]
     stump: [props.png, 329, 0, 42, 35]
     log: [props.png, 375, 0, 54, 35]
     cairn: [props.png, 433, 0, 33, 43]
@@ -1379,12 +1389,14 @@ tarnvale:
     ledge: {like: wall, color: "#7a7a74", wang: mountain-ledge.png, over: wall, cut: null}
     summit: {like: wall, color: "#8a8a84", wang: mountain-summit.png, over: ledge, cut: null}
   props:
-    pine: [props.png, 0, 0, 44, 63]
-    fir: [props.png, 48, 0, 58, 63]
-    oak: [props.png, 110, 0, 62, 60]
-    birch: [props.png, 176, 0, 39, 62]
+    # The trees and the loose rocks are Tarnhold's: this set's own came as 64-px frames that cut the pines' trunks off
+    # and kept a pine's skirt for the rocks (the user, 2026-11-10).
+    pine: [../tarn/props.png, 1688, 0, 69, 118]
+    fir: [../tarn/props.png, 1761, 0, 118, 118]
+    oak: [../tarn/props.png, 1883, 0, 117, 112]
+    birch: [../tarn/props.png, 2004, 0, 66, 116]
     boulder: [props.png, 219, 0, 50, 41]
-    rocks: [props.png, 273, 0, 52, 18]
+    rocks: [../tarn/props.png, 1161, 0, 58, 38]
     stump: [props.png, 329, 0, 42, 35]
     log: [props.png, 375, 0, 54, 35]
     cairn: [props.png, 433, 0, 33, 43]
@@ -1419,17 +1431,18 @@ tarnhold:
   dir: art/worldtiles/tarn/
   floor: cobbles
   terrains:
-    water: {color: "#2f4a48", tile: ../highland/water.png}
+    water: {color: "#2f4a48", tile: ../highland/water.png, anim: {sheet: ../highland/water-anim.png, size: 512, frames: 16, cols: 4, fps: 6}}
     # The gravel is the river's upper ground; everything else is laid over the gravel.
     grass:
       color: "#6a5e4c"
       tile: ../highland/gravel.png
       wang: ../highland/river.png
+      cut: ../highland/river-cut.png
       over: water
       # The floor is plain; its variety is its own details (pebbles, tufts: assets/wip/orc/build.py bits), cut out
       # and scattered (the user, 2026-11-08: "plainer ground that is decorated would look less repetitive").
       decor: {density: 1.2, flip: true, spread: 4, pieces: [[../orc/gravel-bits.png, 0, 0, 7, 10], [../orc/gravel-bits.png, 9, 0, 7, 3], [../orc/gravel-bits.png, 18, 0, 13, 12], [../orc/gravel-bits.png, 33, 0, 11, 7], [../orc/gravel-bits.png, 46, 0, 11, 11], [../orc/gravel-bits.png, 59, 0, 7, 7], [../orc/gravel-bits.png, 68, 0, 5, 6]]}
-    cobbles: {color: "#8a7a5e", wang: ../highland/road2.png, over: grass, decor: {density: 1.4, flip: true, edge: true, pieces: [[../orc/road-bits.png, 0, 0, 14, 22], [../orc/road-bits.png, 16, 0, 6, 7], [../orc/road-bits.png, 24, 0, 9, 12], [../orc/road-bits.png, 35, 0, 6, 7], [../orc/road-bits.png, 43, 0, 9, 10], [../orc/road-bits.png, 54, 0, 18, 15], [../orc/road-bits.png, 74, 0, 9, 9], [../orc/road-bits.png, 85, 0, 12, 9], [../orc/road-bits.png, 99, 0, 6, 5], [../orc/road-bits.png, 107, 0, 12, 11], [../orc/road-bits.png, 121, 0, 3, 5], [../orc/road-bits.png, 126, 0, 9, 11], [../orc/road-bits.png, 137, 0, 5, 5], [../orc/road-bits.png, 144, 0, 11, 12], [../orc/road-bits.png, 157, 0, 12, 13], [../orc/road-bits.png, 171, 0, 5, 5], [../orc/road-bits.png, 178, 0, 10, 6], [../orc/road-bits.png, 190, 0, 5, 5], [../orc/road-bits.png, 197, 0, 5, 6], [../orc/road-bits.png, 204, 0, 4, 5], [../orc/road-bits.png, 210, 0, 6, 4], [../orc/road-bits.png, 218, 0, 7, 10], [../orc/road-bits.png, 227, 0, 9, 15]]}}
+    cobbles: {color: "#8a7a5e", wang: ../highland/road2.png, over: grass, decor: {density: 1.4, flip: true, edge: true, pieces: [[../orc/road-bits.png, 0, 0, 14, 22], [../orc/road-bits.png, 16, 0, 6, 7], [../orc/road-bits.png, 24, 0, 9, 12], [../orc/road-bits.png, 35, 0, 6, 7], [../orc/road-bits.png, 43, 0, 9, 10], [../orc/road-bits.png, 54, 0, 18, 15], [../orc/road-bits.png, 74, 0, 9, 9], [../orc/road-bits.png, 85, 0, 12, 9], [../orc/road-bits.png, 99, 0, 6, 5], [../orc/road-bits.png, 107, 0, 12, 11], [../orc/road-bits.png, 121, 0, 3, 5], [../orc/road-bits.png, 126, 0, 9, 11], [../orc/road-bits.png, 137, 0, 5, 5], [../orc/road-bits.png, 144, 0, 11, 12], [../orc/road-bits.png, 157, 0, 12, 13], [../orc/road-bits.png, 171, 0, 5, 5], [../orc/road-bits.png, 178, 0, 10, 6], [../orc/road-bits.png, 190, 0, 5, 5], [../orc/road-bits.png, 197, 0, 5, 6], [../orc/road-bits.png, 204, 0, 4, 5], [../orc/road-bits.png, 210, 0, 6, 4], [../orc/road-bits.png, 218, 0, 7, 10], [../orc/road-bits.png, 227, 0, 9, 15]]}, cut: ../highland/road2-cut.png}
     bridge: {color: "#6a5a44", wang: ropebridge.png, over: water, apart: true}
     shelf:
       color: "#7a6e5a"
@@ -1508,12 +1521,12 @@ tarnhold:
     wall: {color: "#55534e", wang: ../highland/slope20.png, over: grass, cut: ../highland/slope20-cut.png}
     # The rings above (assets/wip/orc/rings.py, one a square): the same steep slope again and again, each ring a step
     # lighter, so the mountains climb in slopes up to seven squares high.
-    ledge: {color: "#6e6c66", wang: ../highland/ring1.png, over: wall}
-    summit: {color: "#7a7872", wang: ../highland/ring2.png, over: ledge}
-    ridge3: {color: "#82827c", wang: ../highland/ring3.png, over: summit}
-    ridge4: {color: "#8a8a84", wang: ../highland/ring4.png, over: ridge3}
-    ridge5: {color: "#92928c", wang: ../highland/ring5.png, over: ridge4}
-    ridge6: {color: "#9a9a94", wang: ../highland/ring6.png, over: ridge5}
+    ledge: {color: "#6e6c66", wang: ../highland/ring1.png, over: wall, cut: ../highland/ring1-cut.png}
+    summit: {color: "#7a7872", wang: ../highland/ring2.png, over: ledge, cut: ../highland/ring2-cut.png}
+    ridge3: {color: "#82827c", wang: ../highland/ring3.png, over: summit, cut: ../highland/ring3-cut.png}
+    ridge4: {color: "#8a8a84", wang: ../highland/ring4.png, over: ridge3, cut: ../highland/ring4-cut.png}
+    ridge5: {color: "#92928c", wang: ../highland/ring5.png, over: ridge4, cut: ../highland/ring5-cut.png}
+    ridge6: {color: "#9a9a94", wang: ../highland/ring6.png, over: ridge5, cut: ../highland/ring6-cut.png}
   props:
     barricade: [../front.png, 2928, 0, 79, 58]
     palisade: [props.png, 64, 0, 50, 52]
@@ -1568,22 +1581,17 @@ tarnhold:
     hitch: [../south/props.png, 533, 0, 48, 48]
     well: [../front.png, 2019, 0, 67, 85]
 
-# The grassland beyond the vales' gates: prairie grass (PixelLab base 0c3bb2ec) over the village's dirt road, low
-# rolling rises, tall grass swaying (animated props).
+# The grassland beyond the vales' gates, in the lake country's style (2026-11-10): its grass (eight variants of the
+# one tile) and its road, and a low rise made to match (PixelLab 4a1cb538). The props are still the older ones.
 grassland:
   cell: 64
   dir: art/worldtiles/tarn/
   floor: path
   wall: grass
   terrains:
-    path: {color: "#7a5a3a", tile: path.png}
-    grass:
-      color: "#8aa04a"
-      tile: grass.png
-      wang: grassland-road.png
-      over: path
-      decor: {density: 0.35, clump: 6, flip: true, spread: 8, pieces: [[../temple/court-decor.png, 192, 0, 16, 10], [../temple/court-decor.png, 0, 0, 22, 23], [../temple/court-decor.png, 128, 0, 28, 24]]}
-    hill: {color: "#9ab05a", wang: grassland-rise.png, over: grass}
+    grass: {color: "#4f9a3c", tile: [../west/grass.png, ../west/grass-1.png, ../west/grass-2.png, ../west/grass-3.png, ../west/grass-4.png, ../west/grass-5.png, ../west/grass-6.png, ../west/grass-7.png, ../west/grass-8.png]}
+    path: {color: "#9a6a44", wang: ../west/road.png, over: grass, corners: [LLUL, LULU, ULUU, LLUU, ULLU, LUUU, UUUU, UUUL, LULL, UULL, UULU, ULUL, LLLL, LLLU, LUUL, ULLL, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU], vary: 0.85, cut: ../west/road-cut.png}
+    hill: {color: "#7ac052", wang: ../west/rise.png, over: grass, cut: ../west/rise-cut.png}
   props:
     barricade: [../front.png, 2928, 0, 79, 58]
     palisade: [props.png, 64, 0, 50, 52]
@@ -1653,15 +1661,18 @@ jungle:
     water:
       color: "#2a3824"
       tile: water.png
+      anim: {sheet: water-anim.png, size: 512, frames: 16, cols: 4, fps: 4}
       decor: {density: 0.25, flip: true, spread: 6, pieces: [[decor.png, 318, 0, 46, 32]]}
     shallows:
       color: "#2a3824"
       tile: water.png
+      anim: {sheet: water-anim.png, size: 512, frames: 16, cols: 4, fps: 4}
       decor: {density: 0.25, flip: true, spread: 6, edge: true, pieces: [[decor.png, 318, 0, 46, 32]]}
     marsh:
       color: "#3a3a26"
       tile: marsh.png
       wang: jungle-swamp.png
+      cut: jungle-swamp-cut.png
       over: water
       decor: {density: 0.45, clump: 4, flip: true, spread: 10, edge: true, pieces: [[decor.png, 494, 0, 58, 60], [decor.png, 65, 0, 39, 60], [decor.png, 686, 0, 62, 53], [decor.png, 686, 0, 62, 53]]}
     floor:
@@ -1675,6 +1686,7 @@ jungle:
       color: "#5a4030"
       tile: trail.png
       wang: jungle-trail.png
+      cut: jungle-trail-cut.png
       over: floor
       corners: [LLUL, LULU, ULUU, LLUU, ULLU, LUUU, UUUU, UUUL, LULL, UULL, UULU, ULUL, LLLL, LLLU, LUUL, ULLL]
     jungle:
@@ -1727,20 +1739,21 @@ orc_valley:
   dir: art/worldtiles/orc/
   floor: path
   terrains:
-    water: {color: "#2f4a48", tile: moat-water.png}
+    water: {color: "#2f4a48", tile: moat-water.png, anim: {sheet: moat-water-anim.png, size: 512, frames: 16, cols: 4, fps: 4}}
     grass:
       color: "#384a22"
       tile: grass.png
       wang: moat.png
+      cut: moat-cut.png
       over: water
       # Its own tufts, cut out and scattered, and now and then a flower, clover, a fern, mushrooms or a thistle.
       decor: {density: 1.0, flip: true, spread: 4, pieces: [[grass-bits.png, 0, 0, 5, 15], [grass-bits.png, 7, 0, 17, 12], [grass-bits.png, 26, 0, 17, 11], [grass-bits.png, 45, 0, 4, 3], [grass-bits.png, 51, 0, 13, 15], [grass-bits.png, 66, 0, 12, 11], [grass-bits.png, 0, 0, 5, 15], [grass-bits.png, 7, 0, 17, 12], [grass-bits.png, 26, 0, 17, 11], [grass-bits.png, 45, 0, 4, 3], [grass-bits.png, 51, 0, 13, 15], [grass-bits.png, 66, 0, 12, 11], [valley-decor.png, 315, 0, 49, 42], [valley-decor.png, 63, 0, 58, 39], [valley-decor.png, 441, 0, 53, 46], [valley-decor.png, 504, 0, 44, 36], [valley-decor.png, 756, 0, 53, 51]]}
-    path: {color: "#4a3424", wang: valley-path.png, over: grass, decor: {density: 0.6, flip: true, edge: true, pieces: [[gravel-bits.png, 0, 0, 7, 10], [gravel-bits.png, 9, 0, 7, 3], [gravel-bits.png, 18, 0, 13, 12], [gravel-bits.png, 33, 0, 11, 7], [gravel-bits.png, 46, 0, 11, 11], [gravel-bits.png, 59, 0, 7, 7], [gravel-bits.png, 68, 0, 5, 6]]}}
+    path: {color: "#4a3424", wang: valley-path.png, over: grass, decor: {density: 0.6, flip: true, edge: true, pieces: [[gravel-bits.png, 0, 0, 7, 10], [gravel-bits.png, 9, 0, 7, 3], [gravel-bits.png, 18, 0, 13, 12], [gravel-bits.png, 33, 0, 11, 7], [gravel-bits.png, 46, 0, 11, 11], [gravel-bits.png, 59, 0, 7, 7], [gravel-bits.png, 68, 0, 5, 6]]}, cut: valley-path-cut.png}
     # The slave pits' trodden mud: the path's, darker, its grass cut away so it lies over the path's own edges. Ranked
     # after the path (which takes it as its own ground) and before the bridge (whose planks it was drawn under).
-    rubble: {color: "#2e241a", wang: pit-mud.png, over: grass}
+    rubble: {color: "#2e241a", wang: pit-mud.png, over: grass, cut: pit-mud-cut.png}
     bridge: {color: "#6a5a44", wang: ../tarn/ropebridge.png, over: water, apart: true}
-    hill: {color: "#5a6e34", wang: trainer-hill.png, over: grass}
+    hill: {color: "#5a6e34", wang: trainer-hill.png, over: grass, cut: trainer-hill-cut.png}
     # The castle's outer wall: banners, torches, shields and arrow slits on its face.
     fort:
       color: "#3a4650"
@@ -1808,13 +1821,13 @@ orc_valley:
         - [0, 2, ".....01..12..10."]
         - [0, 3, ".01..12..10....."]
     # The valley's mountains: steep scree slopes up from the grass (as Tarnhold's).
-    wall: {color: "#55534e", wang: valley-slope.png, over: grass}
-    ledge: {color: "#6e6c66", wang: ../highland/ring1.png, over: wall}
-    summit: {color: "#7a7872", wang: ../highland/ring2.png, over: ledge}
-    ridge3: {color: "#82827c", wang: ../highland/ring3.png, over: summit}
-    ridge4: {color: "#8a8a84", wang: ../highland/ring4.png, over: ridge3}
-    ridge5: {color: "#92928c", wang: ../highland/ring5.png, over: ridge4}
-    ridge6: {color: "#9a9a94", wang: ../highland/ring6.png, over: ridge5}
+    wall: {color: "#55534e", wang: valley-slope.png, over: grass, cut: valley-slope-cut.png}
+    ledge: {color: "#6e6c66", wang: ../highland/ring1.png, over: wall, cut: ../highland/ring1-cut.png}
+    summit: {color: "#7a7872", wang: ../highland/ring2.png, over: ledge, cut: ../highland/ring2-cut.png}
+    ridge3: {color: "#82827c", wang: ../highland/ring3.png, over: summit, cut: ../highland/ring3-cut.png}
+    ridge4: {color: "#8a8a84", wang: ../highland/ring4.png, over: ridge3, cut: ../highland/ring4-cut.png}
+    ridge5: {color: "#92928c", wang: ../highland/ring5.png, over: ridge4, cut: ../highland/ring5-cut.png}
+    ridge6: {color: "#9a9a94", wang: ../highland/ring6.png, over: ridge5, cut: ../highland/ring6-cut.png}
   props:
     banner: [valley-props.png, 0, 0, 37, 62]
     tent: [valley-props.png, 66, 0, 62, 62]
@@ -1984,30 +1997,38 @@ desert:
   dir: art/worldtiles/desert/
   floor: sand
   terrains:
-    water: {color: "#2f4a48", tile: ../highland/water.png}
+    water: {color: "#2f4a48", tile: ../highland/water.png, anim: {sheet: ../highland/water-anim.png, size: 512, frames: 16, cols: 4, fps: 6}}
     # The fords: stepping stones in shallow water.
-    shallows: {color: "#4f7a70", wang: ford.png, over: water}
+    shallows: {color: "#4f7a70", wang: ford.png, cut: ford-cut.png, over: water}
     sand:
       color: "#d8b878"
       tile: sand.png
       wang: shore.png
+      cut: shore-cut.png
+      # Eight more all-sand tiles, its marks moved about (assets/wip/ground/build.py), so the sand is not a grid.
+      corners: [UULU, ULUL, LULL, UULL, LUUL, ULLL, LLLL, LLLU, ULUU, LLUU, LLUL, LULU, UUUU, UUUL, ULLU, LUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU]
+      vary: 0.85
       over: water
       decor: {density: 0.08, clump: 3, flip: true, spread: 8, pieces: [["props.png", 753, 192, 48, 37], ["props.png", 308, 181, 49, 48], ["props.png", 3417, 186, 48, 43]]}
     grass:
       color: "#3e8a3a"
       tile: grass.png
       wang: oasis.png
+      cut: oasis-cut.png
       over: sand
     scree:
       color: "#6a5e4c"
       tile: ../highland/gravel.png
       wang: foot.png
+      cut: foot-cut.png
       over: sand
     rubble: {color: "#b09060", alpha: 0.25, decor: {density: 1.0, edge: true, spread: 10, pieces: [["props.png", 753, 192, 48, 37], ["props.png", 1634, 179, 61, 50], ["props.png", 753, 192, 48, 37]]}}
     mesa:
       color: "#8a4a2a"
       wang: mesa.png
       over: sand
+      # Its face is drawn in the wall's last row, not below it: raising it would lay the sand in front over the face.
+      lift: false
       cliff:
         - [2, 2, ".....00..00....."]
         - [3, 2, ".....00..01....."]
@@ -2036,12 +2057,12 @@ desert:
         - [0, 3, ".01..12..10....."]
     # Tarnhold's mountains on the east, as there: a steep scree slope over the gravel, then a ring a square.
     wall: {color: "#55534e", wang: ../highland/slope20.png, over: scree, cut: ../highland/slope20-cut.png}
-    ledge: {color: "#6e6c66", wang: ../highland/ring1.png, over: wall}
-    summit: {color: "#7a7872", wang: ../highland/ring2.png, over: ledge}
-    ridge3: {color: "#82827c", wang: ../highland/ring3.png, over: summit}
-    ridge4: {color: "#8a8a84", wang: ../highland/ring4.png, over: ridge3}
-    ridge5: {color: "#92928c", wang: ../highland/ring5.png, over: ridge4}
-    ridge6: {color: "#9a9a94", wang: ../highland/ring6.png, over: ridge5}
+    ledge: {color: "#6e6c66", wang: ../highland/ring1.png, over: wall, cut: ../highland/ring1-cut.png}
+    summit: {color: "#7a7872", wang: ../highland/ring2.png, over: ledge, cut: ../highland/ring2-cut.png}
+    ridge3: {color: "#82827c", wang: ../highland/ring3.png, over: summit, cut: ../highland/ring3-cut.png}
+    ridge4: {color: "#8a8a84", wang: ../highland/ring4.png, over: ridge3, cut: ../highland/ring4-cut.png}
+    ridge5: {color: "#92928c", wang: ../highland/ring5.png, over: ridge4, cut: ../highland/ring5-cut.png}
+    ridge6: {color: "#9a9a94", wang: ../highland/ring6.png, over: ridge5, cut: ../highland/ring6-cut.png}
   props:
     waterfall: [../highland/waterfall.png, 0, 0, 96, 222, 16, -163, 8, 8]
     thornbush: ["props.png", 85, 183, 51, 46]
@@ -2075,10 +2096,10 @@ lakeland:
   wall: fort
   doorsInWall: true
   terrains:
-    water: {color: "#2a8a9a", tile: water.png}
-    grass: {color: "#4f9a3c", tile: grass.png, wang: shore.png, over: water}
-    trail: {color: "#9a6a44", wang: road.png, over: grass, corners: [LLUL, LULU, ULUU, LLUU, ULLU, LUUU, UUUU, UUUL, LULL, UULL, UULU, ULUL, LLLL, LLLU, LUUL, ULLL]}
-    floor: {color: "#7a8a78", wang: flag.png, over: grass, corners: [LLUL, LULU, ULUU, LLUU, ULLU, LUUU, UUUU, UUUL, LULL, UULL, UULU, ULUL, LLLL, LLLU, LUUL, ULLL]}
+    water: {color: "#2a8a9a", tile: water.png, anim: {sheet: water-anim.png, size: 512, frames: 16, cols: 4, fps: 4}}
+    grass: {color: "#4f9a3c", tile: grass.png, wang: shore.png, over: water, cut: shore-cut.png, corners: [UULU, ULUL, LULL, UULL, LUUL, ULLL, LLLL, LLLU, ULUU, LLUU, LLUL, LULU, UUUU, UUUL, ULLU, LUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU], vary: 0.85}
+    trail: {color: "#9a6a44", wang: road.png, over: grass, corners: [LLUL, LULU, ULUU, LLUU, ULLU, LUUU, UUUU, UUUL, LULL, UULL, UULU, ULUL, LLLL, LLLU, LUUL, ULLL, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU], vary: 0.85, cut: road-cut.png}
+    floor: {color: "#7a8a78", wang: flag.png, over: grass, corners: [LLUL, LULU, ULUU, LLUU, ULLU, LUUU, UUUU, UUUL, LULL, UULL, UULU, ULUL, LLLL, LLLU, LUUL, ULLL], cut: flag-cut.png}
     bridge: {color: "#6a5a44", wang: ../tarn/ropebridge.png, over: water, apart: true}
     # The fortress: pale slab tops, a face of small mossy blocks under a band of glyphs.
     fort:
@@ -2136,18 +2157,18 @@ clay_canyon:
   dir: art/worldtiles/west/
   floor: floor
   terrains:
-    grass: {color: "#4f9a3c", tile: grass.png}
-    trail: {color: "#9a6a44", wang: road.png, over: grass, corners: [LLUL, LULU, ULUU, LLUU, ULLU, LUUU, UUUU, UUUL, LULL, UULL, UULU, ULUL, LLLL, LLLU, LUUL, ULLL]}
-    floor: {color: "#c8a878", wang: soil.png, over: grass, corners: [LLUL, LULU, ULUU, LLUU, ULLU, LUUU, UUUU, UUUL, LULL, UULL, UULU, ULUL, LLLL, LLLU, LUUL, ULLL]}
+    grass: {color: "#4f9a3c", tile: [grass.png, grass-1.png, grass-2.png, grass-3.png, grass-4.png, grass-5.png, grass-6.png, grass-7.png, grass-8.png]}
+    trail: {color: "#9a6a44", wang: road.png, over: grass, corners: [LLUL, LULU, ULUU, LLUU, ULLU, LUUU, UUUU, UUUL, LULL, UULL, UULU, ULUL, LLLL, LLLU, LUUL, ULLL, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU], vary: 0.85}
+    floor: {color: "#c8a878", wang: soil.png, over: grass, corners: [LLUL, LULU, ULUU, LLUU, ULLU, LUUU, UUUU, UUUL, LULL, UULL, UULU, ULUL, LLLL, LLLU, LUUL, ULLL, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU], vary: 0.85, cut: soil-cut.png}
     # The labyrinth's walls: steep slopes of banded clay up from the soil, then shelf on shelf (build.py's rings),
     # each paler and tanner than the last.
-    wall: {color: "#b8542c", wang: slope.png, over: floor}
-    ledge: {color: "#c0603a", wang: ring1.png, over: wall}
-    summit: {color: "#c87048", wang: ring2.png, over: ledge}
-    ridge3: {color: "#cf8058", wang: ring3.png, over: summit}
-    ridge4: {color: "#d69068", wang: ring4.png, over: ridge3}
-    ridge5: {color: "#dca078", wang: ring5.png, over: ridge4}
-    ridge6: {color: "#e2b088", wang: ring6.png, over: ridge5}
+    wall: {color: "#b8542c", wang: slope.png, over: floor, cut: slope-cut.png}
+    ledge: {color: "#c0603a", wang: ring1.png, over: wall, cut: ring1-cut.png}
+    summit: {color: "#c87048", wang: ring2.png, over: ledge, cut: ring2-cut.png}
+    ridge3: {color: "#cf8058", wang: ring3.png, over: summit, cut: ring3-cut.png}
+    ridge4: {color: "#d69068", wang: ring4.png, over: ridge3, cut: ring4-cut.png}
+    ridge5: {color: "#dca078", wang: ring5.png, over: ridge4, cut: ring5-cut.png}
+    ridge6: {color: "#e2b088", wang: ring6.png, over: ridge5, cut: ring6-cut.png}
   props:
     clay_boulder: [props.png, 641, 119, 59, 54]
     dead_tree: [props.png, 759, 62, 68, 111]
