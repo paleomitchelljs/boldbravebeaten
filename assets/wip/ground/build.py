@@ -15,9 +15,11 @@ CELL, VARIANTS = 64, 8
 P16 = 'UULU ULUL LULL UULL LUUL ULLL LLLL LLLU ULUU LLUU LLUL LULU UUUU UUUL ULLU LUUU'.split()
 WEST = 'LLUL LULU ULUU LLUU ULLU LUUU UUUU UUUL LULL UULL UULU ULUL LLLL LLLU LUUL ULLL'.split()
 SHEETS = [  # sheet, its corner order, how far from the ground's colour a pixel is a mark
-    ('desert/shore.png', P16, 20), ('west/shore.png', P16, 8), ('west/soil.png', WEST, 10), ('west/road.png', WEST, 10)]
-# Not the canyon's shelves or slopes: faceted rock all over, with no marks to move.
-TILES = [('west/grass.png', 8)]
+    ('desert/shore.png', P16, 20), ('west/shore.png', P16, 8), ('west/soil.png', WEST, 10), ('west/road.png', WEST, 10),
+    ('vale/river.png', P16, 12), ('vale/mud.png', P16, 12), ('vale/scree.png', P16, 12)]
+# Not the canyon's shelves or slopes, nor the vale's granite or cobbles: faceted rock or a grid of joints all over,
+# with no marks to move.
+TILES = [('west/grass.png', 8), ('vale/gravel.png', 12), ('vale/mud-plain.png', 12), ('vale/scree-plain.png', 12)]
 
 def variants(tile, thr, seed):
     px = tile.load(); rnd = random.Random(seed)

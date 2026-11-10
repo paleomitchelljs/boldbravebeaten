@@ -20,6 +20,7 @@ WATER = [  # tile (under art/worldtiles/), kind
     ('west/water.png', 'lake'),
     ('outside/water.png', 'lake'),
     ('jungle/water.png', 'lake'),
+    ('vale/water.png', 'river'),
 ]
 
 def vnoise(x, y, grid):

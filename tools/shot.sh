@@ -2,7 +2,8 @@
 # Screenshot the game in headless Chrome, after running some JavaScript in the page (BBB is the game).
 #   tools/shot.sh out.png "Game.newGame(BBB.World.presetParty()); Game.travel({to: 'temple_court', arrive: '<'});"
 # SIZE=w,h sets the window (default 1280,900), e.g. SIZE=500,860 for a phone (headless Chrome will not go narrower than 500).
-# Serves this folder on port 8765 (starts a server if none is there) and writes _shot.html / _shot.js, removed after.
+# Serves this folder on port 8765 (starts a server if none is there) and writes _shot_<pid>.html / .js, removed after
+# (so shots can run side by side).
 # Inside the script: Game = BBB.UI.Game. To show the whole map, mark it seen:
 #   const ms = BBB.World.mapState(Game.world, Game.world.place); for (let y = 0; y < 40; y++) for (let x = 0; x < 40; x++) ms.seen[x + ',' + y] = 1; Game.render();
 set -e
@@ -10,9 +11,9 @@ out="$1"; js="$2"
 cd "$(dirname "$0")/.."
 CHROME="${CHROME:-/Applications/Google Chrome.app/Contents/MacOS/Google Chrome}"
 curl -s -o /dev/null http://localhost:8765/index.html || { python3 -m http.server 8765 >/dev/null 2>&1 & sleep 1; }
-printf 'setTimeout(() => { const Game = BBB.UI.Game; %s; Game.render(); }, 1500);\n' "$js" > _shot.js
-{ cat index.html; echo '<script src="_shot.js"></script>'; } > _shot.html
+printf 'setTimeout(() => { const Game = BBB.UI.Game; %s; Game.render(); }, 1500);\n' "$js" > _shot_$$.js
+{ cat index.html; echo "<script src=\"_shot_$$.js\"></script>"; } > _shot_$$.html
 prof="$(mktemp -d)"
-"$CHROME" --headless=new --disable-gpu --user-data-dir="$prof" --window-size="${SIZE:-1280,900}" --virtual-time-budget=6000 --screenshot="$out" "http://localhost:8765/_shot.html" 2>/dev/null
-rm -rf "$prof" _shot.html _shot.js
+"$CHROME" --headless=new --disable-gpu --user-data-dir="$prof" --window-size="${SIZE:-1280,900}" --virtual-time-budget=6000 --screenshot="$out" "http://localhost:8765/_shot_$$.html" 2>/dev/null
+rm -rf "$prof" _shot_$$.html _shot_$$.js
 echo "$out"
