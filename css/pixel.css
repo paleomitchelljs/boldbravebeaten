@@ -189,8 +189,8 @@ canvas.portrait { width: auto; max-width: 100%; height: auto; image-rendering: p
 .battle-screen .info-btn { width: 17px; min-height: 17px; }
 .battle-screen .badge { padding: 0 7px; font-size: 0.78rem; }
 /* A new round or turn: a band across the map that slides in and fades. */
-.turn-banner { position: absolute; z-index: 5; left: 0; right: 0; top: 36%; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 0 12px; pointer-events: none;
-  background: linear-gradient(90deg, transparent, rgba(5, 9, 12, 0.88) 20%, rgba(5, 9, 12, 0.88) 80%, transparent); animation: banner 1.3s ease-out forwards; }
+.turn-banner { position: absolute; z-index: 5; left: 0; right: 0; top: 2%; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 0 12px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(5, 9, 12, 0.88) 20%, rgba(5, 9, 12, 0.88) 80%, transparent); animation: banner 1.1s ease-out forwards; }
 .turn-banner .tb-round { font: 0.8rem var(--font-ui); letter-spacing: 0.2em; color: var(--brass); text-transform: uppercase; }
 .turn-banner .tb-who { font: 1.6rem var(--font-ui); color: #fff; text-shadow: 0 2px 0 #000; }
 .turn-banner .tb-sub { font: 0.75rem var(--font-ui); letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase; }

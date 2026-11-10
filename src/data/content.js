@@ -229,6 +229,9 @@
       (m.powers || []).forEach((p, i) => powerOk(`monsters.${id}.powers[${i}]`, p));
       if (m.faction && !has(factions, m.faction)) err(`monsters.${id}: faction "${m.faction}" is not in factions.yaml`);
       if (m.loot && !has(tables, m.loot)) err(`monsters.${id}: loot table "${m.loot}" is not in items.yaml`);
+      for (const g of Object.keys(m.parts || {})) if (!goodExists(g) || goods[g].kind !== 'part') err(`monsters.${id}: part "${g}" is not a good of kind part in items.yaml`);
+      if (m.tier != null && !(Number.isInteger(m.tier) && m.tier >= 1 && m.tier <= 6)) err(`monsters.${id}: tier must be 1 to 6 (tools/tiers.js)`);
+      if (m.level != null && !(Number.isInteger(m.level) && m.level >= 1)) err(`monsters.${id}: level must be a whole number from 1`);
     }
     const art = W.art || {};
     const artOk = (where, sp) => { if (sp && typeof sp === 'object' && sp.art && !has(art, sp.art)) err(`${where}: art "${sp.art}" is not in art.yaml`); };

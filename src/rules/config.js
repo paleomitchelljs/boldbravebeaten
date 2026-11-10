@@ -56,11 +56,13 @@
     // average, every point of SPD worth half an AP. (Specifics: 3 + ⌊SPD/2⌋.)
     // PROVISIONAL (the user, 2026-11-09): AP are rolled every round (d apDie, whole AP) and the round's
     // turns go in order of AP rolled, most first: going first means more to spend, and SPD, which feeds
-    // both, carries more weight against CON. apBase came down 3.5 → 1 so the mean pool (1 + 2.5 + SPD/2)
-    // is the old fixed one. Where a pool is wanted without a roll (the sheet, the AI's planning), the
-    // die counts at its mean. apDie null: no die (the Specifics' fixed pool, with initiativeDie).
+    // both, carries more weight against CON. TUNED the same day ("tighter and faster": the last to go should
+    // usually still have one solid action, a swing or a wind-up, or a step and a thrust): 1 + d3 + SPD/2,
+    // 4.5 to 6.5 at SPD 5 (mean 5.5), was d4 (4.5 to 7.5, mean 6) and the fixed 6 before that. Where a pool
+    // is wanted without a roll (the sheet, the AI's planning), the die counts at its mean. apDie null: no
+    // die (the Specifics' fixed pool, with initiativeDie).
     apBase: 1,
-    apDie: 4,
+    apDie: 3,
     apSpdDivisor: 2,
     apSpdContinuous: true,
     // PROVISIONAL (turn budget): base costs (the Specifics table) up to `knee` stand; every AP above it
@@ -402,7 +404,10 @@
       // PROVISIONAL (the user, 2026-11-07): a fight won while one of the party is still revivable leaves time to save
       // them: a living companion with a Life spell that calls back the dead, and the points for it, casts it; else
       // the best at `skill` rolls against `tn` (a check name in rules.yaml) to bring them back unconscious.
-      revive: { rounds: 3, con: 1, afterFight: { skill: 'medicine', tn: 'moderate' } },
+      // TUNED (the user, 2026-11-09: the CON hit is already a large lever against going down): the Medicine check is
+      // hard (11), was moderate (8). Jabiku (+5 at level 1, +7 at level 5) saves one in two, then seven in ten; was
+      // eight in ten, then always. Spells that call back the dead are untouched.
+      revive: { rounds: 3, con: 1, afterFight: { skill: 'medicine', tn: 'hard' } },
       // PROVISIONAL (the user's Transfer, 2026-11-01): what the target loses, the caster gains: each CON taken mends a
       // point of the caster's own lost CON, or, with none lost, gives this much stamina.
       // PROVISIONAL (the user, 2026-11-07): Transfer aimed at an ally gives instead: ceil(magnitude / 2) points of the
@@ -818,8 +823,10 @@
     'Raise (the user, 2026-11-08): Raise + Death on a corpse raises a skeleton; Raise the Flesh (necromancy feat) a zombie; Raise the Wrapped Dead a mummy. It fights for the caster for the rest of the fight and falls when the caster does. Raise + Life calls back an ally dead within the window (CONFIG.magic.revive); Give + Life no longer does. Raise + Earth, Fire, Frost, Storm or Force is a wall.',
     'Bind (the user, 2026-11-08): alone it paralyzes a foe for a round (CON resists); Bind + Mind charms the living (free, ends on harm); Bind + Death commands the undead and Bind + Outsider an outsider (the caster concentrates); Bind + a name holds one whose name the caster knows, +3 to the contest (CONFIG.magic.nameBonus). The old Name modifier, reaching anyone anywhere, is gone.',
     'Traditions (the user, 2026-11-08: no classes, specialization): feat trees whose feats strengthen spells by their words (feats.yaml `spell`): Necromancy (Take and Move Life, Give Death, Take on a foe; zombies, mummies, ghosts, Bind + Death), Devotion (Give Life, Wide Mercy to 2 squares, blessings, Take on an ally, Take Death, Raise Life), Summoning (binding, banishing, longer summons). Living Flame (fire affinity capstone) now brings fire elementals bound.',
-    'Saving the fallen after a fight (the user, 2026-11-07): when a fight is won while a party member is dead but still revivable, a companion with a Life spell that calls back the dead and the points for it casts it; failing that, the party\'s best healer makes a Medicine check (moderate) to bring them back unconscious.',
-    'AP rolled each round (the user, 2026-11-09): every fighter rolls their AP at the start of a round, 1 + d4 + SPD/2 less fatigue (the old fixed 3.5 + SPD/2 on average), and turns go in order of AP rolled, most first; gear that adds initiative breaks a tie. Going first means having more to spend, and SPD, feeding both, weighs more against CON. Armor no longer slows the order (it makes each action dearer instead).',
+    'Saving the fallen after a fight (the user, 2026-11-07): when a fight is won while a party member is dead but still revivable, a companion with a Life spell that calls back the dead and the points for it casts it; failing that, the party\'s best healer makes a Medicine check (hard, 11; TUNED 2026-11-09 from moderate) to bring them back unconscious.',
+    'Monster tiers (the user, 2026-11-09): every placed monster has a level (its place\'s) and a tier, measured by tools/tiers.js as M, the number of heroes of its level at which it is an even fight: 1 very weak (~0.35), 2 weak (~0.6), 3 moderate (1), 4 tough (2), 5 boss (~3.5: two heroes almost always lose, three have a very tough fight), 6 epic (6+). Encounters scale by numbers; a party is three for tuning. Each boss has a bane oil near it (a leg-up). sim/FINDINGS.md has the numbers.',
+    'Parties and the fallen (the user, 2026-11-09): a new game begins with 1 to 6 heroes at level 1, each growing along their own plan; a fallen hero is back in the village to be recruited again, at the party\'s level, and a party wiped out rises there (testing only).',
+    'AP rolled each round (the user, 2026-11-09): every fighter rolls their AP at the start of a round, 1 + d3 + SPD/2 less fatigue (4.5 to 6.5 at SPD 5; TUNED tighter from d4 the same day, so the last to go usually has one solid action left), and turns go in order of AP rolled, most first; gear that adds initiative breaks a tie. Going first means having more to spend, and SPD, feeding both, weighs more against CON. Armor no longer slows the order (it makes each action dearer instead).',
     'Defer (the user, 2026-11-07): on your turn, pay 1 AP to let the next one in the initiative order take their turn now; yours resumes after theirs, with what AP you have left. As often as the AP lasts.',
     'Wind-ups are released in the same turn if the AP is there (the user, 2026-11-01; was: not before the next round): a bow\'s draw and its loose, a power swing\'s wind-up and its blow, a Strong spell\'s gathering and its casting are two actions, both in one turn when the AP allows (Lorc: draw 2, loose 3 of her 6), or the first made ahead and carried into the next round (`windUp.sameTurn`).',
     'Movement (the user, 2026-11-01): a stretch of a move covers round(1 + SPD/4) squares (was (1 + ⌊SPD/4⌋) × 2), so a round spent only moving carries the presets 4 / 6 / 9 / 12 squares, not 4 / 12 / 12 / 24.',

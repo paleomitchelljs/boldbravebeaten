@@ -36,6 +36,13 @@
       outsider: 'a kind from outside the world: Bind + Outsider holds it, Take + Outsider banishes it',
       dragon: 'a kind: slay',
       golem: 'a kind: slay (golem-bane oil)',
+      // Kinds a bane oil is made against (items.yaml oils; the user, 2026-11-09: every boss has a leg-up somewhere).
+      suracayl: 'a kind: slay (scale-rot oil)',
+      orc: 'a kind: slay (orcbane oil)',
+      goblin: 'a kind: slay (goblin-bane oil)',
+      kobold: 'a kind: slay (kobold-bane oil)',
+      giant: 'a kind: slay (giantsbane oil)',
+      fireborn: 'a kind: slay (frost oil): made of or from fire',
       noBleed: 'wounds don\'t bleed',
     },
     // weapons.yaml `trait` (a natural or odd weapon's extra).

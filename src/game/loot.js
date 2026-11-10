@@ -46,6 +46,9 @@
       if (foe.inventory.arrows >= 10) out.goods.push({ id: 'arrows', n: Math.floor(foe.inventory.arrows / 10) });
     }
     if (foe.lootTable) merge(out, roll(foe.lootTable));
+    // Body parts (monsters.yaml parts: {good: n | [min, max]}): what can be cut from it, for crafts and spells later.
+    const M = foe.monster && G.Enemies.MONSTERS[foe.monster];
+    if (M && M.parts && !foe.conjured) for (const [id, n] of Object.entries(M.parts)) { const k = R.amount(n); if (k > 0) out.goods.push({ id, n: k }); }
     return out;
   }
 

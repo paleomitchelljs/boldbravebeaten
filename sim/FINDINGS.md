@@ -1,5 +1,56 @@
 # Simulation findings
 
+## Monster tiers, bosses and their leg-ups (2026-11-09; `node tools/tiers.js`)
+
+The user (2026-11-09): heroes start at level 1; encounters fall in tiers, a rough continuous scale against heroes of the
+same level; a party is three for tuning; one boss a place, each with a leg-up somewhere; a level-1 party handles the
+first area of each dungeon, the orc valley falls to level 3, the Avatar of Fear to level 5, the dragon to level 8+.
+
+**Method.** `tools/tiers.js` fights a monster against start.yaml's heroes grown along their plans to its level (a gear
+ladder for loot: steel weapons from 3, steel armor and shield from 5, master star iron from 7), AI on both sides, and
+finds M, the heroes at which it is an even fight (one hero against 1/M of them below one). Targets: 1 very weak ≈0.35,
+2 weak ≈0.6, 3 moderate 1, 4 tough 2, 5 boss ≈3.5, 6 epic 6+. 16–24 fights a point, so ±10 points on a rate; I took
+anything within ×1.5 of its target as on it. `--enc place/id` fights an encounter as authored.
+
+**What moved M.** Level barely does (a scaleward is M 1.05 against level-1 heroes and the same against level-3 ones):
+equipment and stats do. CON alone hardly moves a humanoid: hit locations end fights in one or two blows (the kobold
+king, CON 20 and twice the AP, died to one thrust to his bare head). A helm and a full coat did more than +10 CON.
+Bosses got `apMult` (1.5–3.5: they act like several fighters), the lever the Avatar already used. Casters (Venril, the
+dread shaman) stay near M 2 alone however much CON or AP they get, because three heroes focus them: they are bosses
+with their guard, which is how the encounter check measures them.
+
+**Bosses, as authored** (win rate; dead heroes a fight in brackets):
+
+| Boss (place level) | 2 heroes | 3 heroes | 3 with its oil |
+|---|---|---|---|
+| Dread shaman + varanus (pyramid court, 3) | 5% (1.6) | 80% (0.6) | 85% |
+| Venril + skeleton (palace, 4) | 0% (1.1) | 10% (1.4) | 30% |
+| Avatar of Fear (ritual chamber, 5) | 20% (0.8) | 45% (1.1) | 80% |
+| Orc emperor (castle, 3) | 20% (1.6) | 35% (2.5) | 50% |
+| Red drake (warrens, 2) | 5% (1.6) | 30% (1.9) | 40% |
+| Goblin king (castle, 3) | 25% (0.0) | 70% (0.0) | 45% (noise?) |
+| Kobold king + spearman (dens, 4) | 20% (1.0) | 45% (1.4) | 70% |
+| Efreet lord (pit, 6) | 15% (1.6) | 70% (1.4) | 80% |
+| Giant king (citadel, 7) | 0% (1.1) | 15% (1.0) | 20% |
+| Dragon (lair, 8) | — | 0% (2.4); 6 heroes 40% (3.5) | 10% |
+
+The dragon is epic as asked: six heroes of level 8 win 40%. Every giant measured M 2.5–4.9 at level 7 (all boss-tier);
+the citadel's encounters were cut to one or two giants each.
+
+**The golems don't fit yet.** One body, each immune to two of slash, blunt and fire (a tested design): clay 0% for
+three heroes even with the oil, iron 5%, stone 95%. Traced: the clay golem's blows to the arms disarm the heroes (25
+drops in 5 fights) and the AI then kicks a body immune to blunt; a cut on a tireless body goes to STR/DEX/SPD by
+location, so little reaches CON. The bane oils add to the blade's own damage type, so they do nothing to a golem
+immune to it: the sewer's leg-up is a masterwork warhammer in a chest, the palace's a Fire primer. Fixing the golems
+needs a rules decision (see HANDOFF).
+
+**First areas, three level-1 heroes:** temple court 90–100% (0.1 dead a fight), Cinder Hall 95–100% (0.3–0.6), orc
+valley 90–95% (0.9, after the legionnaire came down to a short spear). Fights are lethal by design; the after-fight
+Medicine check (now hard, 11) and the village's respawn are what keep a party going.
+
+**AP rolled each round** (1 + d3 + SPD/2, turns in order of AP rolled) was in place for every number above.
+
+
 ## Block, parry and dodge differ in kind (2026-11-03; `node sim/arena.js --n 20`, before and after)
 
 The user (2026-11-03): rebalance the greatsword against sword & shield by making the three defences differ, not by

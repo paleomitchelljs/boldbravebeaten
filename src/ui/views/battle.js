@@ -991,6 +991,8 @@
   }
 
   // ---- Computer-run turns and pass resolution ----------------------------
+  // ms before a computer-run fighter's first action in a turn (the turn banner plays for 1.1 s), and between the rest.
+  const AI_PACE = { first: 1250, next: 900 };
   function scheduleAI(app, enc) {
     const chars = app.state.characters;
     if (app.hooks && app.hooks.autoStart && (enc.phase === 'setup' || enc.phase === 'roundEnd') && !app.ui.starting) {
@@ -1009,12 +1011,17 @@
     const id = Combat.currentActor(enc);
     if (!id || !aiControlled(app, chars[id]) || app.ui.aiPending || bui(app).busy) return;
     app.ui.aiPending = true;
+    // Paced so it can be watched (the user, 2026-11-09): a computer-run turn's first action waits for the turn
+    // banner to clear (AI_PACE.first), each after it AI_PACE.next, so the banner never hides what they do.
+    const key = enc.round + ':' + enc.turn + ':' + id;
+    const first = app.ui.aiTurn !== key;
+    app.ui.aiTurn = key;
     setTimeout(async () => {
       if (app.state.encounter !== enc || enc.phase !== 'turn' || Combat.currentActor(enc) !== id) { app.ui.aiPending = false; return; }
       try { await Combat.submit(enc, chars, G.AI.choose(enc, chars, id), ioFor(app)); } finally { app.ui.aiPending = false; }
       app.save();
       app.render();
-    }, 450);
+    }, first ? AI_PACE.first : AI_PACE.next);
   }
 
   function view(app) {

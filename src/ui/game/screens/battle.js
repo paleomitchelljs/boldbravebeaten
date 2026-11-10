@@ -458,7 +458,7 @@
 
   // A banner across the map when a new round or a new turn begins. It is part of each render, so its animation is set
   // back by the time already gone and it simply stops being drawn once it has played.
-  const BANNER_MS = 1300;
+  const BANNER_MS = 1100; // the CSS animation's length (pixel.css .turn-banner); AI_PACE.first in views/battle.js waits it out
   function turnBanner(game, enc, chars) {
     const id = (enc.phase === 'turn' || enc.phase === 'acting') && enc.order[enc.turn];
     if (!id || !chars[id]) return null;

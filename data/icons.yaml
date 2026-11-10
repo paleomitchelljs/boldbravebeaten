@@ -9,7 +9,7 @@ armor: {padded: 19, leather: 20, mail: 21, plate: 22}
 # A piece that covers one place: its own picture (soft caps for padding and leather, a helm for mail and plate).
 pieces: {head: 23, headMetal: 24, hands: 25, feet: 26}
 shields: {buckler: 27, round: 28, heater: 29, tower: 30}
-goods: {bandage: 31, arrows: 32, bodkin_arrows: 33, salve: 34, tonic: 35, antidote: 36, repair_kit: 37, salt: 38, candle: 39, ink: 40, chalk: 41, herbs: 42, silverDust: 43, silver_chalice: 44, gem_small: 45, trade_bar: 46, golem_bane_oil: 47, maze_journal: 48, tome_ember: 49, tome_roots: 49, tome_stone: 49, tome_still: 49, sash_quick: 50, silk_sash: 50, ring_iron: 51, ring_of_dain: 51, charm_wolf: 52, circlet_of_shadow: 53, crown_of_rile: 54, froglok_crown: 54, necromancer_amulet: 55, sorcerer_skullcap: 56, zlandicar_heart: 57, velium_pendant: 58, orc_fang_earring: 59, ivandyr_hoop: 60}
-kinds: {supply: 31, potion: 35, oil: 47, key: 62, book: 48, trinket: 51, trade: 46, component: 42}
+goods: {bandage: 31, arrows: 32, bodkin_arrows: 33, salve: 34, tonic: 35, antidote: 36, repair_kit: 37, salt: 38, candle: 39, ink: 40, chalk: 41, herbs: 42, silverDust: 43, silver_chalice: 44, gem_small: 45, trade_bar: 46, golem_bane_oil: 47, scale_rot_oil: 47, warding_oil: 47, orcbane_oil: 47, goblin_bane_oil: 47, kobold_bane_oil: 47, frost_oil: 47, giantsbane_oil: 47, wyrmbane_oil: 47, maze_journal: 48, tome_ember: 49, tome_roots: 49, tome_stone: 49, tome_still: 49, sash_quick: 50, silk_sash: 50, ring_iron: 51, ring_of_dain: 51, charm_wolf: 52, circlet_of_shadow: 53, crown_of_rile: 54, froglok_crown: 54, necromancer_amulet: 55, sorcerer_skullcap: 56, zlandicar_heart: 57, velium_pendant: 58, orc_fang_earring: 59, ivandyr_hoop: 60}
+kinds: {supply: 31, potion: 35, oil: 47, key: 62, book: 48, trinket: 51, trade: 46, component: 42, part: 52}
 gold: 61
 scroll: 63

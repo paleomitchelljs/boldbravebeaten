@@ -4,6 +4,8 @@
 
 # faction: whose standing a kill costs; xp: per creature; glyph: how it shows in the first-person view;
 # loot: a table in items.yaml rolled when it dies (its carried gear is also left on the body).
+# level: the place it is made for; tier: what it is meant to be against heroes of that level (1 very weak … 5 boss,
+# 6 epic; docs/DATA.md, tools/tiers.js); parts: body parts cut from it (items.yaml goods of kind part).
 
 wolf:
   name: Wolf
@@ -38,6 +40,9 @@ rat:
   blurb: "A dog-sized rat: quick, weak, a nuisance alone."
   faction: wilds
   xp: 5
+  parts: {rat_tail: [0, 1]}
+  tier: 1
+  level: 1
   glyph: "🐀"
   sprite: {art: rat, kind: orc, scale: 0.55, tint: "#8a6a4a"}
   attrs: {STR: 3, CON: 3, DEX: 7, SPD: 7, INT: 1, WIS: 4, CHA: 1}
@@ -216,13 +221,15 @@ skeleton:
   blurb: "Bones and a rusty sword. Arrows and thrusts pass between the ribs; slashing chips; a mace breaks it. Never tires."
   faction: grave_cult
   xp: 22
+  parts: {bone_dust: [1, 2]}
+  tier: 3
+  level: 3
   glyph: "💀"
   sprite: {art: skeleton, kind: skeleton}
-  attrs: {STR: 5, CON: 10, DEX: 5, SPD: 5, INT: 1, WIS: 1, CHA: 1}
-  skills: {melee: 2, block: 2}
+  attrs: {STR: 5, CON: 4, DEX: 5, SPD: 5, INT: 1, WIS: 1, CHA: 1}
+  skills: {melee: 0, block: 2}
   natural: []
   weapons: [longsword]
-  shield: [round, wood]
   craft: poor
   traits: {tireless: true, undead: true, resist: {P: 0, S: 0.5}}
   feats: {}
@@ -283,9 +290,12 @@ clayGolem:
   blurb: "A construct of clay: blades bite deep, hammers and fire do nothing. Slow, tireless; its long fists crush shields. Mind and life magic don't touch it."
   faction: grave_cult
   xp: 120
+  parts: {golem_clay: [1, 2]}
+  tier: 5
+  level: 2
   glyph: "🗿"
   sprite: {art: clay-golem, kind: skeleton_warrior, scale: 1.5, tint: "#8a8a8a"}
-  attrs: {STR: 22, CON: 22, DEX: 3, SPD: 3, INT: 1, WIS: 1, CHA: 1}
+  attrs: {STR: 11, CON: 22, DEX: 3, SPD: 3, INT: 1, WIS: 1, CHA: 1}
   skills: {melee: 2}
   natural: [golemFists]
   armor: golemBody
@@ -296,10 +306,13 @@ stoneGolem:
   blurb: "A construct of stone: blades and fire do nothing, but hammers crack it. Slow, tireless; its long fists crush shields. Mind and life magic don't touch it."
   faction: grave_cult
   xp: 120
+  parts: {golem_stone: [1, 2]}
+  tier: 5
+  level: 2
   glyph: "🗿"
   sprite: {art: stone-golem, kind: skeleton_warrior, scale: 1.5, tint: "#8a8a8a"}
-  attrs: {STR: 22, CON: 22, DEX: 3, SPD: 3, INT: 1, WIS: 1, CHA: 1}
-  skills: {melee: 3}
+  attrs: {STR: 11, CON: 22, DEX: 3, SPD: 3, INT: 1, WIS: 1, CHA: 1}
+  skills: {melee: 5}
   natural: [golemFists]
   armor: golemBody
   traits: {size: 1.3, tireless: true, golem: true, resist: {S: 0, B: 1.5, fire: 0, mind: 0, life: 0}}
@@ -309,9 +322,12 @@ ironGolem:
   blurb: "A construct of iron: blades and hammers do nothing; fire softens it, and a point can find a seam. Slow, tireless; its long fists crush shields. Mind and life magic don't touch it."
   faction: grave_cult
   xp: 120
+  parts: {golem_core: 1}
+  tier: 5
+  level: 4
   glyph: "🗿"
   sprite: {art: iron-golem, kind: skeleton_warrior, scale: 1.5, tint: "#8a8a8a"}
-  attrs: {STR: 22, CON: 22, DEX: 3, SPD: 3, INT: 1, WIS: 1, CHA: 1}
+  attrs: {STR: 11, CON: 22, DEX: 3, SPD: 3, INT: 1, WIS: 1, CHA: 1}
   skills: {melee: 4}
   natural: [golemFists]
   armor: golemBody
@@ -351,9 +367,12 @@ constrictor:
   blurb: "A huge snake: it wraps one victim and crushes them every round, but while it holds one, the rest can cut at it."
   faction: wilds
   xp: 75
+  parts: {snake_skin: 1}
+  tier: 3
+  level: 2
   glyph: "🐍"
   sprite: {art: snake, kind: orc, scale: 0.8, tint: "#6a9a5a"}
-  attrs: {STR: 18, CON: 12, DEX: 7, SPD: 5, INT: 2, WIL: 6, WIS: 5, CHA: 2}
+  attrs: {STR: 18, CON: 15, DEX: 7, SPD: 5, INT: 2, WIL: 6, WIS: 5, CHA: 2}
   skills: {melee: 2, athletics: 6, stealth: 3}
   natural: [constrictorBite]
   armor: scaleHide
@@ -365,16 +384,19 @@ kobold:
   blurb: "Small, quick, scaly, cowardly alone and vicious in a pack. A short spear."
   faction: wilds
   xp: 10
+  parts: {kobold_scale: [0, 1]}
+  tier: 1
+  level: 4
   glyph: "🦎"
   sprite: {art: kobold-spear, kind: orc_rogue, scale: 0.75}
   loot: humanoid_purse
-  attrs: {STR: 3, CON: 4, DEX: 6, SPD: 7, INT: 4, WIS: 4, CHA: 3}
-  skills: {melee: 1, evasion: 1, stealth: 1}
+  attrs: {STR: 2, CON: 3, DEX: 6, SPD: 5, INT: 4, WIS: 4, CHA: 3}
+  skills: {melee: 0, evasion: 1, stealth: 1}
   natural: []
   armor: scaleHide
   weapons: [shortSpear]
   craft: poor
-  traits: {pack: 1, dodge: 1}
+  traits: {kobold: true, pack: 1, dodge: 1}
   feats: {}
   keepUnarmed: true
 koboldBand:
@@ -450,6 +472,9 @@ scaleward:
   blurb: A big scaled Suracayl warrior with a warhammer and a tail that sweeps legs.
   faction: suracayl
   xp: 55
+  parts: {suracayl_scale: [1, 2]}
+  tier: 3
+  level: 1
   glyph: "🦎"
   sprite: {art: lizardfolk-warrior, kind: orc_warrior, tint: "#6a9a8a"}
   loot: humanoid_purse
@@ -458,7 +483,7 @@ scaleward:
   natural: [tail]
   armor: scalewardScales
   weapons: [warhammer]
-  traits: {}
+  traits: {suracayl: true}
   feats: {heavy_weapon_training: 1, toughness: 1}
   keepUnarmed: true
 scalewardPair: {name: Suracayl warriors, blurb: Two Suracayl warriors., group: [scaleward, scaleward]}
@@ -467,14 +492,17 @@ suracaylSkink:
   blurb: "A slight, quick Suracayl of the labyrinth: raking claws, a nip, slick scales that slip a grip. Weak alone and against good armor; they come in threes and fours."
   faction: suracayl
   xp: 30
+  parts: {suracayl_scale: [0, 1]}
+  tier: 2
+  level: 2
   glyph: "🦎"
   sprite: {art: lizardfolk-alt, kind: rogue, tint: "#4a4a5a"}
   loot: humanoid_purse
-  attrs: {STR: 6, CON: 7, DEX: 8, SPD: 8, INT: 5, WIS: 6, CHA: 4}
-  skills: {melee: 2, evasion: 4, stealth: 2}
+  attrs: {STR: 6, CON: 8, DEX: 8, SPD: 8, INT: 5, WIS: 6, CHA: 4}
+  skills: {melee: 3, evasion: 4, stealth: 2}
   natural: [claws, monitorBite]
   armor: bogSkin
-  traits: {slippery: 2, moveMult: 1.5}
+  traits: {suracayl: true, slippery: 2, moveMult: 1.5}
   feats: {}
 suracaylSkinkPair: {name: Suracayl skinks, blurb: Two Suracayl skinks., group: [suracaylSkink, suracaylSkink]}
 suracaylVaranus:
@@ -482,6 +510,9 @@ suracaylVaranus:
   blurb: "A heavy monitor-folk of the pyramid. It carries nothing: a tearing bite, raking claws, a tail that sweeps legs, and thick scales."
   faction: suracayl
   xp: 60
+  parts: {suracayl_scale: [1, 2]}
+  tier: 3
+  level: 3
   glyph: "🦎"
   sprite: {art: lizardfolk-varanus, kind: orc_warrior, tint: "#5a7aa0"}
   loot: beast_leavings
@@ -489,7 +520,7 @@ suracaylVaranus:
   skills: {melee: 3}
   natural: [monitorBite, claws, tail]
   armor: scalewardScales
-  traits: {size: 1.1}
+  traits: {suracayl: true, size: 1.1}
   feats: {toughness: 1}
 suracaylVaranusPair: {name: Suracayl varanus pair, blurb: Two Suracayl varanus., group: [suracaylVaranus, suracaylVaranus]}
 templeGorilla:
@@ -497,6 +528,9 @@ templeGorilla:
   blurb: "A great ape the Suracayl keep to hold the palace door: long arms, a crushing grip, and blows that knock a man flat. Nothing on it but its hide."
   faction: suracayl
   xp: 70
+  parts: {gorilla_pelt: 1}
+  tier: 2
+  level: 1
   glyph: "🦍"
   sprite: {art: gorilla, kind: orc_warrior, scale: 1.2, tint: "#4a4a4a"}
   loot: beast_leavings
@@ -512,11 +546,15 @@ dreadShaman:
   blurb: "A Suracayl priest in a bone mask, keeping the top of the pyramid: bolts of decay that eat armor, a word that fills you with fear, and a staff for anyone who gets close."
   faction: suracayl
   xp: 150
+  armorItem: {type: padded, coverage: full}
+  traits: {apMult: 3, suracayl: true}
+  parts: {suracayl_scale: 2}
+  tier: 5
   glyph: "🦎"
   sprite: {art: dread-shaman, kind: orc_shaman, tint: "#c8b890"}
   loot: humanoid_purse
-  level: 5
-  attrs: {STR: 6, CON: 8, DEX: 6, SPD: 6, INT: 9, WIL: 10, WIS: 8, CHA: 8}
+  level: 3
+  attrs: {STR: 6, CON: 18, DEX: 6, SPD: 6, INT: 9, WIL: 10, WIS: 8, CHA: 8}
   skills: {melee: 1, evasion: 2, arcane: 4, deception: 2}
   natural: []
   weapons: [staff]
@@ -529,18 +567,21 @@ venril:
   blurb: "The master of the palace, a horned lizard in a dark robe floating above its throne. Skeletons stand guard for it, the fallen get up again at its word, and it fills the hall with fear."
   faction: suracayl
   xp: 250
+  traits: {apMult: 3.5, suracayl: true}
+  parts: {suracayl_scale: 3}
+  tier: 5
   glyph: "💀"
   sprite: {art: venril, kind: orc_shaman}
   loot: humanoid_purse
-  level: 6
-  attrs: {STR: 7, CON: 9, DEX: 6, SPD: 6, INT: 10, WIL: 11, WIS: 9, CHA: 10}
-  skills: {melee: 2, arcane: 6, anticipation: 3, deception: 3}
+  level: 4
+  attrs: {STR: 7, CON: 30, DEX: 6, SPD: 6, INT: 10, WIL: 11, WIS: 9, CHA: 10}
+  skills: {evasion: 4, melee: 2, arcane: 9, anticipation: 3, deception: 3}
   natural: []
   weapons: [staff]
   armor: bogSkin
   keepUnarmed: true
   nouns: [death, shadow, fear]
-  feats: {verb_raise: 1, verb_take: 1, verb_give: 1, toughness: 1}
+  feats: {mod_strong: 1, verb_raise: 1, verb_take: 1, verb_give: 1, toughness: 1}
 revenantKnight:
   name: Revenant knight
   blurb: "An end-game knight: masterwork dwarven steel plate, an adamant shield, a blade that drinks stamina and wounds, a withering burst, an aura of dread that saps everyone near him, a silk sash that quickens him, and the dead rise for him."
@@ -631,6 +672,9 @@ raptor:
   blurb: "A small, quick hunter in feathers: a sickle claw and a bite, never alone. Fast enough to get round the line; thin-skinned."
   faction: wilds
   xp: 25
+  parts: {raptor_claw: [0, 1]}
+  tier: 1
+  level: 2
   glyph: "🦖"
   sprite: {art: raptor, kind: orc, scale: 0.7, tint: "#8a6a4a"}
   loot: beast_leavings
@@ -645,9 +689,12 @@ alligator:
   blurb: "Lies still in the sewer water, then seizes one victim and rolls with it, crushing (as the constrictor). Thick hide; slow on land."
   faction: wilds
   xp: 60
+  parts: {gator_hide: 1}
+  tier: 3
+  level: 2
   glyph: "🐊"
   sprite: {art: alligator, kind: orc, scale: 0.9, tint: "#5a6a4a"}
-  attrs: {STR: 14, CON: 12, DEX: 4, SPD: 4, INT: 1, WIL: 5, WIS: 4, CHA: 1}
+  attrs: {STR: 14, CON: 11, DEX: 4, SPD: 4, INT: 1, WIL: 5, WIS: 4, CHA: 1}
   skills: {melee: 3, athletics: 4, stealth: 3}
   natural: [gatorJaws, tail]
   armor: gatorHide
@@ -659,14 +706,16 @@ avatarOfFear:
   blurb: "A hulking faceless thing, twice a man's height. Long arms strike from two squares away and every blow that lands drinks stamina; dread rolls off it (frightens those beside it unless they resist). Acts like one and a half fighters."
   faction: grave_cult
   xp: 400
+  parts: {avatar_ichor: 1}
+  tier: 5
   glyph: "👹"
   sprite: {art: avatar, kind: orc_warrior, scale: 1.8, tint: "#b05a2a"}
-  level: 10
-  attrs: {STR: 22, CON: 22, DEX: 6, SPD: 5, INT: 4, WIL: 14, WIS: 6, CHA: 2}
-  skills: {melee: 6, athletics: 4, intimidation: 8}
+  level: 5
+  attrs: {STR: 22, CON: 36, DEX: 6, SPD: 5, INT: 4, WIL: 14, WIS: 6, CHA: 2}
+  skills: {melee: 8, athletics: 4, intimidation: 8}
   natural: [avatarArms]
   armor: avatarHide
-  traits: {size: 1.8, apMult: 1.5, aura: {name: dread, radius: 1, cond: frightened, resisted: true}}
+  traits: {outsider: true, size: 1.8, apMult: 2.5, aura: {name: dread, radius: 1, cond: frightened, resisted: true}}
   feats: {power_swing: 1, toughness: 1}
 
 # ---- The fire-goblin mine (assets/ideas/ember-mine.md). Art is stand-in until the user makes the figures: the orange
@@ -677,18 +726,20 @@ fireGoblin:
   blurb: "A goblin of the deep mine, red-skinned and heat-hardened: a spear, rags, and no fear of the lava."
   faction: cinder_goblins
   xp: 18
+  parts: {goblin_blood: 1}
+  tier: 2
+  level: 1
   glyph: "👺"
   sprite: {art: goblin-orange, kind: orc, scale: 0.85}
   loot: humanoid_purse
-  attrs: {STR: 5, CON: 5, DEX: 7, SPD: 7, INT: 4, WIS: 4, CHA: 3}
+  attrs: {STR: 5, CON: 4, DEX: 7, SPD: 7, INT: 4, WIS: 4, CHA: 3}
   skills: {melee: 1, evasion: 1}
   natural: []
-  armorItem: {type: padded, coverage: half}
   origin: goblin
   weapons: [shortSpear]
   sidearm: dagger
   craft: poor
-  traits: {dodge: 2, resist: {fire: 0.5}}
+  traits: {goblin: true, dodge: 1, resist: {fire: 0.5}}
   feats: {}
   keepUnarmed: true
 fireGoblinArcher:
@@ -696,19 +747,21 @@ fireGoblinArcher:
   blurb: "A fire goblin with a shortbow. They like a wall between themselves and whoever they shoot."
   faction: cinder_goblins
   xp: 18
+  parts: {goblin_blood: 1}
+  tier: 2
+  level: 1
   glyph: "👺"
   sprite: {art: goblin-orange, kind: orc_rogue, scale: 0.85}
   loot: humanoid_purse
-  attrs: {STR: 4, CON: 5, DEX: 8, SPD: 7, INT: 4, WIS: 5, CHA: 3}
-  skills: {ranged: 2, evasion: 1}
+  attrs: {STR: 4, CON: 6, DEX: 8, SPD: 7, INT: 4, WIS: 5, CHA: 3}
+  skills: {ranged: 3, evasion: 1}
   natural: []
-  armorItem: {type: padded, coverage: half}
   origin: goblin
   weapons: [shortbow]
   sidearm: dagger
   craft: poor
   arrows: 20
-  traits: {dodge: 2, resist: {fire: 0.5}}
+  traits: {goblin: true, dodge: 2, resist: {fire: 0.5}}
   feats: {}
   keepUnarmed: true
 goblinMiner:
@@ -716,6 +769,9 @@ goblinMiner:
   blurb: "A green goblin worked half to death in the tunnels. A pick-heavy club and a grudge."
   faction: cinder_goblins
   xp: 12
+  parts: {goblin_blood: [0, 1]}
+  tier: 1
+  level: 1
   glyph: "👺"
   sprite: {art: goblin, kind: orc, scale: 0.85}
   loot: humanoid_purse
@@ -725,7 +781,7 @@ goblinMiner:
   origin: goblin
   weapons: [club]
   craft: poor
-  traits: {dodge: 1}
+  traits: {goblin: true, dodge: 1}
   feats: {}
   keepUnarmed: true
 goblinWarrior:
@@ -733,19 +789,20 @@ goblinWarrior:
   blurb: "A barracks goblin in a quilted jack with a short sword and a round shield: drilled, and it shows."
   faction: cinder_goblins
   xp: 30
+  parts: {goblin_blood: 1}
+  tier: 2
   glyph: "👺"
   sprite: {art: goblin-orange, artScale: 1.05, kind: orc_warrior, scale: 0.9}
   loot: humanoid_purse
-  level: 2
-  attrs: {STR: 6, CON: 6, DEX: 7, SPD: 6, INT: 4, WIS: 4, CHA: 3}
-  skills: {melee: 2, block: 2}
+  level: 1
+  attrs: {STR: 8, CON: 13, DEX: 7, SPD: 6, INT: 4, WIS: 4, CHA: 3}
+  skills: {melee: 5, block: 4}
   natural: []
-  armorItem: {type: padded, coverage: half}
   origin: goblin
   weapons: [shortsword]
   shield: [round, wood]
   craft: average
-  traits: {dodge: 1, resist: {fire: 0.5}}
+  traits: {goblin: true, dodge: 1, resist: {fire: 0.5}}
   feats: {}
   keepUnarmed: true
 goblinShaman:
@@ -753,36 +810,40 @@ goblinShaman:
   blurb: "A fire goblin with a bone staff who throws flame from a distance and keeps the warriors between you and it."
   faction: cinder_goblins
   xp: 40
+  parts: {goblin_blood: 1}
+  tier: 3
   glyph: "👺"
   sprite: {art: goblin-orange, artScale: 0.95, kind: orc_shaman, scale: 0.85}
   loot: humanoid_purse
-  level: 3
+  level: 1
   attrs: {STR: 4, CON: 5, DEX: 6, SPD: 6, INT: 7, WIL: 7, WIS: 6, CHA: 5}
   skills: {melee: 1, arcane: 2}
   natural: []
   weapons: [staff]
   keepUnarmed: true
   nouns: [fire]
-  traits: {resist: {fire: 0.25}}
+  traits: {goblin: true, resist: {fire: 0.25}}
   feats: {verb_strike: 1}
 goblinChampion:
   name: Goblin champion
   blurb: "One of the king's champions: bigger than any goblin has a right to be, in good mail, a falchion-heavy sword and a skull shield."
   faction: cinder_goblins
   xp: 90
+  parts: {goblin_blood: 2}
+  tier: 4
   glyph: "👹"
   sprite: {art: goblin-warlord, kind: orc_warrior, scale: 1.0}
   loot: humanoid_purse
-  level: 4
-  attrs: {STR: 9, CON: 8, DEX: 7, SPD: 6, INT: 4, WIL: 6, WIS: 5, CHA: 4}
-  skills: {melee: 5, block: 4, armor: 3, intimidation: 2}
+  level: 2
+  attrs: {STR: 11, CON: 13, DEX: 7, SPD: 6, INT: 4, WIL: 6, WIS: 5, CHA: 4}
+  skills: {melee: 6, block: 4, armor: 3, intimidation: 2}
   natural: []
   armorItem: {type: mail, coverage: full}
   origin: goblin
   weapons: [longsword]
   shield: [heater, iron]
   craft: average
-  traits: {resist: {fire: 0.5}}
+  traits: {apMult: 1.8, goblin: true, resist: {fire: 0.5}}
   feats: {toughness: 1}
   keepUnarmed: true
 goblinKing:
@@ -790,19 +851,21 @@ goblinKing:
   blurb: "The king of the mine on his basalt throne: old, fat, clever, armored like a champion and guarded like a miser."
   faction: cinder_goblins
   xp: 220
+  parts: {goblin_blood: 3}
+  tier: 5
   glyph: "👑"
   sprite: {art: goblin-king, kind: orc_warrior, scale: 1.1}
   loot: humanoid_purse
-  level: 6
-  attrs: {STR: 8, CON: 9, DEX: 7, SPD: 5, INT: 7, WIL: 8, WIS: 6, CHA: 8}
-  skills: {melee: 6, block: 5, armor: 5, persuasion: 3, intimidation: 4}
+  level: 3
+  attrs: {STR: 11, CON: 14, DEX: 7, SPD: 7, INT: 7, WIL: 8, WIS: 6, CHA: 8}
+  skills: {melee: 8, block: 5, armor: 5, persuasion: 3, intimidation: 4}
   natural: []
-  armorItem: {type: plate, coverage: half}
+  armorItem: {type: plate, coverage: full}
   origin: goblin
   weapons: [flangedMace]
   shield: [heater, iron]
   craft: master
-  traits: {resist: {fire: 0.5}}
+  traits: {apMult: 1.5, goblin: true, resist: {fire: 0.5}}
   feats: {toughness: 1}
   keepUnarmed: true
 goblinHighShaman:
@@ -810,26 +873,31 @@ goblinHighShaman:
   blurb: "The keeper of the goblins' fire. It burns whole rooms, fills its foes with fear, and the champions die for it gladly."
   faction: cinder_goblins
   xp: 200
+  armorItem: {type: padded, coverage: full}
+  parts: {goblin_blood: 2}
+  tier: 4
   glyph: "🔥"
   sprite: {art: goblin-shaman, kind: orc_shaman, scale: 1.0}
   loot: humanoid_purse
-  level: 6
-  attrs: {STR: 5, CON: 7, DEX: 6, SPD: 6, INT: 10, WIL: 10, WIS: 8, CHA: 7}
-  skills: {melee: 2, arcane: 6, anticipation: 3}
+  level: 3
+  attrs: {STR: 5, CON: 15, DEX: 6, SPD: 6, INT: 10, WIL: 10, WIS: 8, CHA: 7}
+  skills: {melee: 2, arcane: 8, anticipation: 3}
   natural: []
   weapons: [staff]
   keepUnarmed: true
   nouns: [fire, fear]
-  traits: {resist: {fire: 0}}
+  traits: {apMult: 2.2, goblin: true, resist: {fire: 0}}
   feats: {verb_strike: 1, mod_wide: 1, verb_give: 1, mod_strong: 1}
 redDrake:
   name: Red drake
   blurb: "A young red dragon that hunts the mine tunnels for goblins and anything else. It never goes into the barracks: the goblins learned to keep a fire in the gate."
   faction: wilds
   xp: 200
+  parts: {drake_scale: [1, 2]}
+  tier: 5
   glyph: "🐉"
   sprite: {art: singe, kind: orc_shaman, scale: 1.3, tint: "#9a4a3a"}
-  level: 8
+  level: 2
   attrs: {STR: 14, CON: 16, DEX: 8, SPD: 8, INT: 6, WIL: 8, WIS: 6, CHA: 6}
   skills: {melee: 5, evasion: 2, arcane: 4, perception: 3}
   natural: [drakeBite, drakeClaws, wingBuffet]
@@ -842,85 +910,96 @@ fireElemental:
   blurb: "Living flame in a man's shape. Its touch burns, blades pass half through it, and it can stand in the lava."
   faction: wilds
   xp: 80
+  parts: {fire_essence: 1}
+  tier: 3
   glyph: "🔥"
   sprite: {art: fire-elemental, kind: orc_shaman, scale: 1.1, tint: "#e06020"}
-  level: 4
+  level: 5
   attrs: {STR: 9, CON: 10, DEX: 7, SPD: 7, INT: 3, WIL: 8, WIS: 4, CHA: 2}
   skills: {melee: 3}
   natural: [elementalTouch]
   armor: golemBody
-  traits: {size: 1.2, tireless: true, element: fire, outsider: true, noBleed: true, resist: {P: 0.5, S: 0.5, fire: 0, mind: 0}}
+  traits: {fireborn: true, size: 1.2, tireless: true, element: fire, outsider: true, noBleed: true, resist: {P: 0.5, S: 0.5, fire: 0, mind: 0}}
   feats: {}
 efreeti:
   name: Efreeti
   blurb: "A lesser fire spirit in a man's shape, a servant of the pit. It fights with burning fists and throws fire."
   faction: wilds
   xp: 160
+  parts: {fire_essence: 2}
+  tier: 4
   glyph: "🔥"
   sprite: {art: efreeti, kind: orc_shaman, scale: 1.1, tint: "#e04010"}
-  level: 6
-  attrs: {STR: 11, CON: 11, DEX: 8, SPD: 8, INT: 7, WIL: 9, WIS: 6, CHA: 7}
-  skills: {melee: 3, arcane: 4}
+  level: 5
+  attrs: {STR: 11, CON: 16, DEX: 8, SPD: 8, INT: 7, WIL: 9, WIS: 6, CHA: 7}
+  skills: {melee: 4, arcane: 4}
   natural: [elementalTouch]
   nouns: [fire]
-  traits: {size: 1.1, element: fire, outsider: true, resist: {fire: 0, mind: 0.5}}
+  traits: {fireborn: true, size: 1.1, element: fire, outsider: true, resist: {fire: 0, mind: 0.5}}
   feats: {verb_strike: 1, mod_far: 1}
 imp:
   name: Imp
   blurb: "A small winged fiend of the deep mine, red as a coal: it hangs in the air over the lava and rakes with hot claws."
   faction: wilds
   xp: 30
+  parts: {imp_horn: [0, 1]}
+  tier: 1
   glyph: "😈"
   sprite: {art: imp, kind: orc, scale: 0.7, tint: "#c02020"}
-  level: 2
+  level: 5
   attrs: {STR: 4, CON: 5, DEX: 8, SPD: 8, INT: 5, WIL: 6, WIS: 5, CHA: 4}
   skills: {melee: 2, evasion: 3, perception: 2}
   natural: [impClaws]
   nouns: [fire]
-  traits: {flying: true, dodge: 2, element: fire, outsider: true, resist: {fire: 0}}
+  traits: {fireborn: true, flying: true, dodge: 2, element: fire, outsider: true, resist: {fire: 0}}
   feats: {}
 lavaBeetle:
   name: Lava beetle
   blurb: "A beetle the size of a dog, its shell aglow with the heat it lives in: hard to hurt, slow, and its bite burns."
   faction: wilds
   xp: 35
+  parts: {beetle_chitin: 1}
+  tier: 2
   glyph: "🪲"
   sprite: {art: lava-beetle, kind: orc, scale: 0.8, tint: "#d06020"}
   level: 2
-  attrs: {STR: 9, CON: 10, DEX: 5, SPD: 6, INT: 1, WIS: 4, CHA: 1}
+  attrs: {STR: 7, CON: 7, DEX: 5, SPD: 6, INT: 1, WIS: 4, CHA: 1}
   skills: {melee: 2}
   natural: [mandibles]
   armor: chitin
-  traits: {element: fire, resist: {fire: 0}}
+  traits: {fireborn: true, element: fire, resist: {fire: 0}}
   feats: {}
 efreetLord:
   name: The efreet lord
   blurb: "A great fire spirit bound at the bottom of a pit, with two elementals for company. It flies, it burns, and it is very bored."
   faction: wilds
   xp: 350
+  parts: {fire_essence: 3}
+  tier: 5
   glyph: "🔥"
   sprite: {art: efreet, kind: orc_shaman, scale: 1.6, tint: "#e04010"}
-  level: 9
+  level: 6
   attrs: {STR: 15, CON: 14, DEX: 8, SPD: 8, INT: 9, WIL: 12, WIS: 8, CHA: 9}
   skills: {melee: 6, arcane: 6, intimidation: 4}
   natural: [avatarArms]
   armor: avatarHide
   nouns: [fire]
-  traits: {size: 1.6, flying: true, element: fire, outsider: true, resist: {fire: 0, mind: 0.5}}
+  traits: {fireborn: true, size: 1.6, flying: true, element: fire, outsider: true, resist: {fire: 0, mind: 0.5}}
   feats: {verb_strike: 1, mod_wide: 1, mod_strong: 1, toughness: 1}
 gnomeWarrior:
   name: Gnome warrior
   blurb: "A gnome of the cut-off fort in boiled leather with a hammer. They fight the goblins for every yard of rock."
   faction: deep_gnomes
   xp: 25
+  tier: 3
   glyph: "🧔"
   sprite: {art: gnome-miner, kind: knight, scale: 0.7}
   loot: humanoid_purse
   level: 2
-  attrs: {STR: 5, CON: 7, DEX: 7, SPD: 5, INT: 7, WIS: 6, CHA: 5}
-  skills: {melee: 2, armor: 1, devices: 1}
+  attrs: {STR: 7, CON: 10, DEX: 7, SPD: 5, INT: 7, WIS: 6, CHA: 5}
+  skills: {melee: 4, armor: 1, devices: 1}
   natural: []
-  armorItem: {type: leather, coverage: half}
+  armorItem: {type: mail, coverage: full}
   origin: dwarven
   weapons: [warhammer]
   craft: average
@@ -933,13 +1012,15 @@ clockworkGnome:
   blurb: "A gnome-sized man of bronze plates and goggles, wound by a key in its back. It guards what it is told to and does not tire, and fire does not trouble it."
   faction: deep_gnomes
   xp: 40
+  parts: {clockwork_gear: [1, 2]}
+  tier: 3
   glyph: "⚙"
   sprite: {art: clockwork-gnome, kind: knight, scale: 0.7}
-  level: 2
-  attrs: {STR: 8, CON: 9, DEX: 5, SPD: 4, INT: 1, WIS: 1, CHA: 1}
+  level: 3
+  attrs: {STR: 8, CON: 10, DEX: 5, SPD: 4, INT: 1, WIS: 1, CHA: 1}
   skills: {melee: 2}
   natural: [gorillaFists]
-  armorItem: {type: plate, coverage: full}
+  armorItem: {type: plate, coverage: half}
   traits: {size: 0.8, tireless: true, golem: true, resist: {fire: 0.5, mind: 0, life: 0}}
   feats: {}
 clockworkSpider:
@@ -947,13 +1028,15 @@ clockworkSpider:
   blurb: "A bronze spider the size of a dog, ticking. The gnomes built it to run the narrow seams; it bites like a pick."
   faction: deep_gnomes
   xp: 45
+  parts: {clockwork_gear: 1}
+  tier: 2
   glyph: "🕷"
   sprite: {art: clockwork-spider, kind: orc, scale: 0.8, tint: "#a07a3a"}
-  level: 2
-  attrs: {STR: 7, CON: 8, DEX: 8, SPD: 7, INT: 1, WIS: 1, CHA: 1}
+  level: 3
+  attrs: {STR: 7, CON: 6, DEX: 8, SPD: 7, INT: 1, WIS: 1, CHA: 1}
   skills: {melee: 2, athletics: 2}
   natural: [spiderBite]
-  armorItem: {type: plate, coverage: full}
+  armorItem: {type: leather, coverage: full}
   traits: {tireless: true, golem: true, resist: {fire: 0.5, mind: 0, life: 0}}
   feats: {}
 # The deep mine (assets/ideas/ember-mine.md §5): the fire giants' basalt citadel round the dragon's lair. First guesses;
@@ -963,96 +1046,108 @@ fireGiant:
   blurb: "Twice a man's height, skin like banked coals and a beard of flame. It fights with its fists and with boulders, and fire does not trouble it."
   faction: fire_giants
   xp: 280
+  parts: {giant_blood: [1, 2]}
+  tier: 5
   glyph: "🔥"
   sprite: {art: fire-giant, kind: orc_warrior, scale: 1.8, tint: "#e07030"}
   loot: troll_hoard
-  level: 10
-  attrs: {STR: 26, CON: 24, DEX: 6, SPD: 5, INT: 7, WIL: 8, WIS: 6, CHA: 5}
+  level: 7
+  attrs: {STR: 28, CON: 30, DEX: 6, SPD: 5, INT: 7, WIL: 8, WIS: 6, CHA: 5}
   skills: {melee: 5, athletics: 5, intimidation: 3}
   natural: [trollFists, boulder]
   armor: giantHide
   keepUnarmed: true
-  traits: {grip: 5, size: 2.5, resist: {fire: 0}}
+  traits: {giant: true, grip: 5, size: 2.5, resist: {fire: 0}}
   feats: {power_swing: 1, toughness: 2}
 fireGiantYoung:
   name: Young fire giant
   blurb: "A fire giant not yet grown: only half again a man's height, eager, and set to work in the mines."
   faction: fire_giants
   xp: 140
+  parts: {giant_blood: 1}
+  tier: 5
   glyph: "🔥"
   sprite: {art: fire-giant, artScale: 0.8, kind: orc_warrior, scale: 1.4, tint: "#e07030"}
   loot: humanoid_purse
-  level: 6
-  attrs: {STR: 20, CON: 18, DEX: 6, SPD: 5, INT: 6, WIL: 6, WIS: 5, CHA: 5}
-  skills: {melee: 3, athletics: 4}
+  level: 7
+  attrs: {STR: 24, CON: 34, DEX: 6, SPD: 5, INT: 6, WIL: 6, WIS: 5, CHA: 5}
+  skills: {melee: 5, athletics: 4}
   natural: [trollFists]
   armor: giantHide
   keepUnarmed: true
-  traits: {grip: 4, size: 2, resist: {fire: 0}}
+  traits: {apMult: 1.6, giant: true, grip: 4, size: 2, resist: {fire: 0}}
   feats: {toughness: 1}
 fireGiantGuard:
   name: Fire giant warrior
   blurb: "A fire giant in black iron plate under a horned helm, with a greatsword as long as a man. The citadel's gates and its king are kept by these."
   faction: fire_giants
   xp: 340
+  parts: {giant_blood: [1, 2]}
+  tier: 5
   glyph: "🔥"
   sprite: {art: fire-giant-armored, kind: orc_warrior, scale: 1.8, tint: "#5a5a5a"}
   loot: troll_hoard
-  level: 11
-  attrs: {STR: 26, CON: 24, DEX: 7, SPD: 5, INT: 7, WIL: 9, WIS: 6, CHA: 5}
-  skills: {melee: 6, armor: 5, athletics: 4, intimidation: 3}
+  level: 7
+  attrs: {STR: 22, CON: 18, DEX: 7, SPD: 5, INT: 7, WIL: 9, WIS: 6, CHA: 5}
+  skills: {melee: 5, armor: 5, athletics: 4, intimidation: 3}
   natural: [boulder]
   armorItem: {type: plate, coverage: full}
   weapons: [greatsword]
   craft: master
   keepUnarmed: true
-  traits: {grip: 5, size: 2.5, resist: {fire: 0}}
+  traits: {giant: true, grip: 5, size: 2.5, resist: {fire: 0}}
   feats: {power_swing: 1, shield_breaker: 1, toughness: 2}
 fireGiantWarlord:
   name: The giants' warlord
   blurb: "The king's champion, who trains the citadel's young in the arena and does not parley with trespassers: he sees them as a lesson for his students."
   faction: fire_giants
   xp: 520
+  parts: {giant_blood: 2}
+  tier: 5
   glyph: "🔥"
   sprite: {art: fire-giant-armored, artScale: 1.1, kind: orc_warrior, scale: 2, tint: "#5a5a5a"}
   loot: troll_hoard
-  level: 13
-  attrs: {STR: 28, CON: 26, DEX: 8, SPD: 6, INT: 8, WIL: 11, WIS: 7, CHA: 7}
+  level: 7
+  attrs: {STR: 24, CON: 22, DEX: 8, SPD: 6, INT: 8, WIL: 11, WIS: 7, CHA: 7}
   skills: {melee: 8, armor: 6, anticipation: 5, athletics: 5, intimidation: 6}
   natural: [boulder]
   armorItem: {type: plate, coverage: full}
   weapons: [greatsword]
   craft: master
   keepUnarmed: true
-  traits: {grip: 5, size: 2.6, resist: {fire: 0}}
+  traits: {giant: true, grip: 5, size: 2.6, resist: {fire: 0}}
   feats: {power_swing: 1, shield_breaker: 1, toughness: 3}
 fireGiantWizard:
   name: Fire giant wizard
   blurb: "A fire giant in crimson robes with a staff of black iron and violet crystal: the giants' old fire magic, a shadow of what it was, and still enough."
   faction: fire_giants
   xp: 360
+  parts: {giant_blood: [1, 2]}
+  tier: 5
   glyph: "🔥"
   sprite: {art: fire-giant-wizard, kind: orc_shaman, scale: 1.8, tint: "#a03030"}
   loot: troll_hoard
-  level: 10
-  attrs: {STR: 22, CON: 20, DEX: 6, SPD: 5, INT: 11, WIL: 11, WIS: 8, CHA: 6}
-  skills: {melee: 3, arcane: 6}
+  level: 7
+  attrs: {STR: 22, CON: 30, DEX: 6, SPD: 5, INT: 11, WIL: 11, WIS: 8, CHA: 6}
+  skills: {melee: 3, arcane: 9}
   natural: []
   armor: giantHide
   weapons: [staff]
   keepUnarmed: true
   nouns: [fire]
-  traits: {size: 2.4, resist: {fire: 0}}
+  traits: {apMult: 1.6, giant: true, size: 2.4, resist: {fire: 0}}
   feats: {verb_strike: 1, mod_wide: 1, toughness: 1}
 fireGiantMagus:
   name: The giants' magus
   blurb: "The oldest of the giants' wizards, in a house of coloured crystal light, who remembers when their fire daunted the hosts of other worlds."
   faction: fire_giants
   xp: 560
+  parts: {giant_blood: 2}
+  tier: 5
   glyph: "🔥"
   sprite: {art: fire-giant-wizard, artScale: 1.1, kind: orc_shaman, scale: 2, tint: "#a03030"}
   loot: troll_hoard
-  level: 13
+  level: 7
   attrs: {STR: 22, CON: 22, DEX: 7, SPD: 5, INT: 14, WIL: 14, WIS: 10, CHA: 8}
   skills: {melee: 3, arcane: 9, anticipation: 4}
   natural: []
@@ -1060,54 +1155,60 @@ fireGiantMagus:
   weapons: [staff]
   keepUnarmed: true
   nouns: [fire, force]
-  traits: {size: 2.5, resist: {fire: 0, mind: 0.5}}
+  traits: {giant: true, size: 2.5, resist: {fire: 0, mind: 0.5}}
   feats: {verb_strike: 1, mod_wide: 1, mod_strong: 1, mod_far: 1, toughness: 2}
 fireGiantKing:
   name: The giant king
   blurb: "The king of the fire giants in black and gold plate, a ruby crown and a maul hafted in gold. He keeps the dragon's peace, and waits on the dragon's promise."
   faction: fire_giants
   xp: 800
+  parts: {giant_blood: 3}
+  tier: 5
   glyph: "👑"
   sprite: {art: fire-giant-king, kind: orc_warrior, scale: 2.1, tint: "#c0a040"}
   loot: troll_hoard
-  level: 15
-  attrs: {STR: 30, CON: 28, DEX: 8, SPD: 6, INT: 10, WIL: 13, WIS: 9, CHA: 11}
-  skills: {melee: 9, armor: 7, anticipation: 6, athletics: 6, intimidation: 8}
+  level: 7
+  attrs: {STR: 20, CON: 16, DEX: 8, SPD: 6, INT: 10, WIL: 13, WIS: 9, CHA: 11}
+  skills: {melee: 7, armor: 7, anticipation: 6, athletics: 6, intimidation: 8}
   natural: [boulder]
   armorItem: {type: plate, coverage: full}
   weapons: [giantClub]
   craft: master
   keepUnarmed: true
-  traits: {grip: 6, size: 2.7, resist: {fire: 0}}
+  traits: {giant: true, grip: 6, size: 2.7, resist: {fire: 0}}
   feats: {power_swing: 1, shield_breaker: 1, toughness: 3}
 giantShade:
   name: Giant shade
-  blurb: "A dead fire giant risen as a spectral warrior from its granite coffin, red mist where its flesh was. Only spells and magical weapons touch it."
+  blurb: "A dead fire giant risen as a spectral warrior from its granite coffin, red mist where its flesh was. Steel goes half through it; spells do not care."
   faction: fire_giants
   xp: 380
+  parts: {shade_ash: [1, 2]}
+  tier: 5
   glyph: "👻"
   sprite: {art: spectre, artTint: "#e06040", artScale: 1.6, kind: skeleton_mage, scale: 1.8, tint: "#e06040"}
-  level: 11
-  attrs: {STR: 20, CON: 16, DEX: 8, SPD: 7, INT: 6, WIL: 12, WIS: 6, CHA: 6}
+  level: 7
+  attrs: {STR: 22, CON: 32, DEX: 8, SPD: 7, INT: 6, WIL: 12, WIS: 6, CHA: 6}
   skills: {melee: 6, intimidation: 5}
   natural: [trollFists]
   keepUnarmed: true
-  traits: {size: 2.2, tireless: true, undead: true, incorporeal: true, resist: {fire: 0}}
+  traits: {apMult: 1.6, giant: true, size: 2.2, tireless: true, undead: true, resist: {fire: 0, P: 0.5, S: 0.5, B: 0.5}}
   feats: {toughness: 1}
 dragonLord:
   name: The great red dragon
   blurb: "A hundred feet from nose to tail, gold flecks on its belly, smoke from its nostrils. It rules the giants, the goblins and the deep from a ring of rock in a moat of fire, and it is clever, and it is old."
   faction: fire_giants
   xp: 2000
+  parts: {dragon_scale: [2, 4]}
+  tier: 6
   glyph: "🐉"
   sprite: {art: dragon-lord, kind: orc_shaman, scale: 3, tint: "#b03020"}
-  level: 18
-  attrs: {STR: 34, CON: 32, DEX: 9, SPD: 9, INT: 14, WIL: 16, WIS: 12, CHA: 14}
+  level: 8
+  attrs: {STR: 34, CON: 40, DEX: 9, SPD: 9, INT: 14, WIL: 16, WIS: 12, CHA: 14}
   skills: {melee: 10, arcane: 9, anticipation: 7, perception: 8, intimidation: 10}
   natural: [drakeBite, drakeClaws, wingBuffet, tail]
   armor: drakeScales
   nouns: [fire]
-  traits: {size: 4, flying: true, dragon: true, grip: 6, resist: {fire: 0, mind: 0.5}}
+  traits: {apMult: 1.8, size: 4, flying: true, dragon: true, grip: 6, resist: {fire: 0, mind: 0.5}}
   feats: {verb_strike: 1, mod_wide: 1, mod_strong: 1, mod_far: 1, toughness: 4}
 # The orc valley (assets/ideas/orc-valley.md): the legion, its officers and its court. First guesses: encounter tuning
 # is deferred.
@@ -1116,30 +1217,33 @@ orcLegionnaire:
   blurb: "A grey-green orc of the legion in a quilted jack, spear and round shield: it fights in line and holds it."
   faction: orc_legion
   xp: 35
+  traits: {orc: true}
+  parts: {orc_tusk: [0, 1]}
+  tier: 2
   glyph: "👹"
   sprite: {art: orc-brute, kind: orc_warrior, scale: 1}
   loot: humanoid_purse
-  level: 2
-  attrs: {STR: 8, CON: 7, DEX: 5, SPD: 5, INT: 4, WIL: 5, WIS: 4, CHA: 3}
-  skills: {melee: 2, block: 2}
+  level: 1
+  attrs: {STR: 7, CON: 6, DEX: 5, SPD: 5, INT: 4, WIL: 5, WIS: 4, CHA: 3}
+  skills: {melee: 1, block: 2}
   natural: []
-  armorItem: {type: padded, coverage: half}
-  weapons: [spear]
-  shield: [round, wood]
+  weapons: [shortSpear]
   craft: average
 orcSlaver:
   name: Orc slaver
   blurb: "An overseer with a club and a ring of keys, used to beating things that don't hit back."
   faction: orc_legion
   xp: 35
+  traits: {orc: true}
+  parts: {orc_tusk: [0, 1]}
+  tier: 1
   glyph: "👹"
   sprite: {art: orc-brute, kind: orc_warrior, scale: 1}
   loot: humanoid_purse
-  level: 2
-  attrs: {STR: 8, CON: 7, DEX: 5, SPD: 5, INT: 4, WIL: 5, WIS: 4, CHA: 3}
-  skills: {melee: 3, intimidation: 2}
+  level: 1
+  attrs: {STR: 9, CON: 12, DEX: 5, SPD: 5, INT: 4, WIL: 5, WIS: 4, CHA: 3}
+  skills: {melee: 6, intimidation: 2}
   natural: []
-  armorItem: {type: leather, coverage: half}
   weapons: [club]
   craft: average
 orcCenturion:
@@ -1147,10 +1251,13 @@ orcCenturion:
   blurb: "An officer of the legion in mail with a longsword and an iron shield, barking orders between blows."
   faction: orc_legion
   xp: 70
+  traits: {orc: true}
+  parts: {orc_tusk: 1}
+  tier: 3
   glyph: "👹"
   sprite: {art: orc-mail, artScale: 1.05, kind: orc_warrior, scale: 1.05}
   loot: humanoid_purse
-  level: 4
+  level: 2
   attrs: {STR: 9, CON: 8, DEX: 6, SPD: 5, INT: 5, WIL: 6, WIS: 5, CHA: 5}
   skills: {melee: 4, block: 4, armor: 3, intimidation: 2}
   natural: []
@@ -1164,12 +1271,15 @@ orcEmissary:
   blurb: "One of the emperor's envoys to the tribes beyond the mountains: silk over mail, a fine sword, and a long memory for slights."
   faction: orc_legion
   xp: 80
+  traits: {orc: true}
+  parts: {orc_tusk: 1}
+  tier: 3
   glyph: "👹"
   sprite: {art: ambassador, kind: orc_warrior, scale: 1}
   loot: humanoid_purse
-  level: 4
-  attrs: {STR: 7, CON: 7, DEX: 7, SPD: 6, INT: 7, WIL: 6, WIS: 6, CHA: 7}
-  skills: {melee: 4, anticipation: 3, persuasion: 3}
+  level: 3
+  attrs: {STR: 7, CON: 9, DEX: 7, SPD: 6, INT: 7, WIL: 6, WIS: 6, CHA: 7}
+  skills: {melee: 5, anticipation: 3, persuasion: 3}
   natural: []
   armorItem: {type: mail, coverage: half}
   weapons: [longsword]
@@ -1180,12 +1290,16 @@ orcProphet:
   blurb: "An old orc hung with bones who reads the emperor's fortunes in the fire, and makes them come true."
   faction: orc_legion
   xp: 140
+  armorItem: {type: padded, coverage: full}
+  traits: {apMult: 2.5, orc: true}
+  parts: {orc_tusk: 1}
+  tier: 4
   glyph: "🧙"
   sprite: {art: orc-brute, artTint: "#8a9a7a", kind: orc_shaman, scale: 1}
   loot: humanoid_purse
-  level: 5
-  attrs: {STR: 6, CON: 7, DEX: 5, SPD: 5, INT: 8, WIL: 9, WIS: 8, CHA: 7}
-  skills: {melee: 2, arcane: 4}
+  level: 3
+  attrs: {STR: 6, CON: 16, DEX: 5, SPD: 5, INT: 8, WIL: 9, WIS: 8, CHA: 7}
+  skills: {melee: 2, arcane: 7}
   natural: []
   weapons: [staff]
   keepUnarmed: true
@@ -1196,12 +1310,15 @@ orcWarlord:
   blurb: "The emperor's right hand and the legion's general: a scarred orc in heavy mail with a greatsword, who has never lost a battle he chose."
   faction: orc_legion
   xp: 200
+  traits: {apMult: 1.4, orc: true}
+  parts: {orc_tusk: 2}
+  tier: 4
   glyph: "👹"
   sprite: {art: orc-warrior, artScale: 1.15, kind: orc_warrior, scale: 1.1}
   loot: humanoid_purse
-  level: 6
-  attrs: {STR: 10, CON: 9, DEX: 7, SPD: 6, INT: 6, WIL: 8, WIS: 6, CHA: 7}
-  skills: {melee: 6, anticipation: 4, armor: 4, intimidation: 3}
+  level: 3
+  attrs: {STR: 10, CON: 12, DEX: 7, SPD: 6, INT: 6, WIL: 8, WIS: 6, CHA: 7}
+  skills: {melee: 7, anticipation: 4, armor: 4, intimidation: 3}
   natural: []
   armorItem: {type: mail, coverage: full}
   weapons: [greatsword]
@@ -1213,12 +1330,15 @@ orcEmperor:
   blurb: "The emperor on his stone throne under the great gold coin: huge, blue-grey, in mail and a crested war helm, a long barbed spear in both hands."
   faction: orc_legion
   xp: 300
+  traits: {apMult: 2.5, orc: true}
+  parts: {orc_tusk: 2}
+  tier: 5
   glyph: "👑"
   sprite: {art: orc-emperor, kind: orc_warrior, scale: 1.3}
   loot: humanoid_purse
-  level: 7
-  attrs: {STR: 11, CON: 10, DEX: 6, SPD: 5, INT: 6, WIL: 9, WIS: 6, CHA: 8}
-  skills: {melee: 7, block: 5, armor: 5, intimidation: 5}
+  level: 3
+  attrs: {STR: 11, CON: 26, DEX: 6, SPD: 5, INT: 6, WIL: 9, WIS: 6, CHA: 8}
+  skills: {melee: 9, block: 5, armor: 5, intimidation: 5}
   natural: []
   armorItem: {type: mail, coverage: full}
   weapons: [heavySpear]
@@ -1233,25 +1353,29 @@ koboldWorker:
   blurb: "A kobold of the miners' clan: a lean, scaled thing with claws like chisels, fast, and sure of its god."
   faction: kobolds
   xp: 16
+  parts: {kobold_scale: [0, 1]}
+  tier: 1
   glyph: "🦎"
   sprite: {art: kobold-claws, kind: orc_rogue, scale: 0.8}
   loot: humanoid_purse
-  level: 2
+  level: 4
   attrs: {STR: 5, CON: 6, DEX: 7, SPD: 7, INT: 4, WIS: 5, CHA: 3}
   skills: {melee: 2, evasion: 1, athletics: 2, perception: 2}
   natural: [claws]
   armor: scaleHide
-  traits: {pack: 1, dodge: 1, resist: {fire: 0.75}}
+  traits: {kobold: true, pack: 1, dodge: 1, resist: {fire: 0.75}}
   feats: {}
 koboldHunter:
   name: Kobold hunter
   blurb: "A hunter of the clan that watches the ways in and hunts the mountains: a bone bow, a keen nose, and patience."
   faction: kobolds
   xp: 22
+  parts: {kobold_scale: 1}
+  tier: 2
   glyph: "🦎"
   sprite: {art: kobold-bow, kind: orc_rogue, scale: 0.8}
   loot: humanoid_purse
-  level: 3
+  level: 4
   attrs: {STR: 5, CON: 6, DEX: 8, SPD: 7, INT: 4, WIS: 6, CHA: 3}
   skills: {ranged: 3, melee: 1, evasion: 2, perception: 4, stealth: 2, nature: 2}
   natural: [claws]
@@ -1259,7 +1383,7 @@ koboldHunter:
   weapons: [shortbow]
   arrows: 20
   craft: average
-  traits: {dodge: 1, resist: {fire: 0.75}}
+  traits: {kobold: true, dodge: 1, resist: {fire: 0.75}}
   feats: {}
   keepUnarmed: true
 koboldHuntLeader:
@@ -1267,19 +1391,20 @@ koboldHuntLeader:
   blurb: "An old hunter in a patchwork coat of hide and bone: the best shot of the clan, and the one who decides where the others stand."
   faction: kobolds
   xp: 40
+  parts: {kobold_scale: [1, 2]}
+  tier: 2
   glyph: "🦎"
   sprite: {art: kobold-warrior-bow, kind: orc_rogue, scale: 0.85}
   loot: humanoid_purse
   level: 4
-  attrs: {STR: 6, CON: 7, DEX: 9, SPD: 7, INT: 5, WIS: 7, CHA: 4}
-  skills: {ranged: 5, melee: 2, evasion: 2, perception: 5, stealth: 2, nature: 3}
+  attrs: {STR: 6, CON: 11, DEX: 9, SPD: 7, INT: 5, WIS: 7, CHA: 4}
+  skills: {ranged: 6, melee: 2, evasion: 2, perception: 5, stealth: 2, nature: 3}
   natural: [claws]
-  armorItem: {type: padded, coverage: half}
   armor: scaleHide
   weapons: [shortbow]
   arrows: 24
   craft: average
-  traits: {resist: {fire: 0.75}}
+  traits: {kobold: true, resist: {fire: 0.75}}
   feats: {}
   keepUnarmed: true
 koboldWarrior:
@@ -1287,34 +1412,37 @@ koboldWarrior:
   blurb: "A warrior of the guardian clan in a coat of patched hide and bone: it fights with its claws, and it does not give ground."
   faction: kobolds
   xp: 30
+  weapons: [club]
+  parts: {kobold_scale: 1}
+  tier: 2
   glyph: "🦎"
   sprite: {art: kobold-warrior, kind: orc_warrior, scale: 0.85}
   loot: humanoid_purse
-  level: 3
-  attrs: {STR: 7, CON: 7, DEX: 7, SPD: 7, INT: 4, WIL: 7, WIS: 5, CHA: 3}
-  skills: {melee: 4, evasion: 2, athletics: 2, perception: 2}
+  level: 4
+  attrs: {STR: 9, CON: 10, DEX: 7, SPD: 7, INT: 4, WIL: 7, WIS: 5, CHA: 3}
+  skills: {melee: 5, evasion: 2, athletics: 2, perception: 2}
   natural: [claws]
-  armorItem: {type: padded, coverage: half}
   armor: scaleHide
-  traits: {resist: {fire: 0.75}}
+  traits: {kobold: true, resist: {fire: 0.75}}
   feats: {riposte: 1}
 koboldSpearman:
   name: Kobold spear warrior
   blurb: "A guardian with a long spear, set at the head of a tunnel where the spear's reach is the whole of the fight."
   faction: kobolds
   xp: 30
+  parts: {kobold_scale: 1}
+  tier: 3
   glyph: "🦎"
   sprite: {art: kobold-warrior-spear, kind: orc_warrior, scale: 0.85}
   loot: humanoid_purse
-  level: 3
-  attrs: {STR: 7, CON: 7, DEX: 7, SPD: 6, INT: 4, WIL: 7, WIS: 5, CHA: 3}
-  skills: {melee: 4, evasion: 1, athletics: 2, perception: 2}
+  level: 4
+  attrs: {STR: 6, CON: 5, DEX: 7, SPD: 6, INT: 4, WIL: 7, WIS: 5, CHA: 3}
+  skills: {melee: 2, evasion: 1, athletics: 2, perception: 2}
   natural: [claws]
-  armorItem: {type: padded, coverage: half}
   armor: scaleHide
   weapons: [spear]
   craft: average
-  traits: {resist: {fire: 0.75}}
+  traits: {kobold: true, resist: {fire: 0.75}}
   feats: {}
   keepUnarmed: true
 koboldDuelist:
@@ -1322,18 +1450,19 @@ koboldDuelist:
   blurb: "A guardian in a wide hat and a jerkin of netted hide, with a bronze blade taken off some dead traveller: quick, and showy with it."
   faction: kobolds
   xp: 45
+  parts: {kobold_scale: [1, 2]}
+  tier: 3
   glyph: "🦎"
   sprite: {art: kobold-duelist, kind: orc_rogue, scale: 0.85}
   loot: humanoid_purse
   level: 4
-  attrs: {STR: 6, CON: 6, DEX: 9, SPD: 8, INT: 5, WIL: 6, WIS: 5, CHA: 5}
-  skills: {melee: 5, evasion: 3, anticipation: 3, deception: 2}
+  attrs: {STR: 6, CON: 10, DEX: 9, SPD: 8, INT: 5, WIL: 6, WIS: 5, CHA: 5}
+  skills: {melee: 6, evasion: 3, anticipation: 3, deception: 2}
   natural: [claws]
-  armorItem: {type: leather, coverage: half}
   armor: scaleHide
   weapons: [rapier]
   craft: average
-  traits: {dodge: 1, resist: {fire: 0.75}}
+  traits: {kobold: true, dodge: 1, resist: {fire: 0.75}}
   feats: {riposte: 1}
   keepUnarmed: true
 koboldChampion:
@@ -1341,18 +1470,20 @@ koboldChampion:
   blurb: "The king's champion in a red-plumed hat: the finest blade among the kobolds, and the first to die for the king."
   faction: kobolds
   xp: 110
+  parts: {kobold_scale: 2}
+  tier: 4
   glyph: "🦎"
   sprite: {art: kobold-champion, kind: orc_rogue, scale: 0.9}
   loot: humanoid_purse
-  level: 6
-  attrs: {STR: 7, CON: 8, DEX: 10, SPD: 8, INT: 6, WIL: 8, WIS: 6, CHA: 6}
-  skills: {melee: 7, evasion: 4, anticipation: 4, deception: 3, intimidation: 2}
+  level: 4
+  attrs: {STR: 9, CON: 14, DEX: 10, SPD: 8, INT: 6, WIL: 8, WIS: 6, CHA: 6}
+  skills: {melee: 8, evasion: 4, anticipation: 4, deception: 3, intimidation: 2}
   natural: [claws]
   armorItem: {type: leather, coverage: full}
   armor: scaleHide
   weapons: [rapier]
   craft: master
-  traits: {dodge: 1, resist: {fire: 0.75}}
+  traits: {apMult: 1.7, kobold: true, dodge: 1, resist: {fire: 0.75}}
   feats: {riposte: 1, toughness: 1}
   keepUnarmed: true
 koboldShaman:
@@ -1360,47 +1491,53 @@ koboldShaman:
   blurb: "A shaman of the dragon in a robe daubed with red: it calls frost and fever down on the enemy and mends the warriors that hold the line for it."
   faction: kobolds
   xp: 45
+  parts: {kobold_scale: 1}
+  tier: 2
   glyph: "🦎"
   sprite: {art: kobold-shaman, kind: orc_shaman, scale: 0.85}
   loot: humanoid_purse
   level: 4
-  attrs: {STR: 5, CON: 6, DEX: 6, SPD: 6, INT: 7, WIL: 8, WIS: 8, CHA: 4}
-  skills: {melee: 2, arcane: 4, medicine: 2}
+  attrs: {STR: 5, CON: 4, DEX: 6, SPD: 6, INT: 7, WIL: 8, WIS: 8, CHA: 4}
+  skills: {melee: 2, arcane: 2, medicine: 2}
   natural: [claws]
   armor: scaleHide
   weapons: [staff]
   keepUnarmed: true
   nouns: [frost, decay, life]
-  traits: {resist: {fire: 0.75}}
+  traits: {kobold: true, resist: {fire: 0.75}}
   feats: {verb_strike: 1, verb_give: 1}
 koboldElder:
   name: Kobold elder
   blurb: "One of the elder shamans, grey at the snout: it steels the warriors round it with strength not their own, and its fevers kill slowly."
   faction: kobolds
   xp: 110
+  parts: {kobold_scale: [1, 2]}
+  tier: 3
   glyph: "🦎"
   sprite: {art: kobold-shaman, artTint: "#b0a090", kind: orc_shaman, scale: 0.9}
   loot: humanoid_purse
-  level: 6
-  attrs: {STR: 5, CON: 7, DEX: 6, SPD: 6, INT: 9, WIL: 10, WIS: 10, CHA: 6}
-  skills: {melee: 2, arcane: 6, medicine: 4, anticipation: 2}
+  level: 4
+  attrs: {STR: 5, CON: 5, DEX: 6, SPD: 6, INT: 9, WIL: 10, WIS: 10, CHA: 6}
+  skills: {melee: 2, arcane: 5, medicine: 4, anticipation: 2}
   natural: [claws]
   armor: scaleHide
   weapons: [staff]
   keepUnarmed: true
   nouns: [frost, decay, life, might]
-  traits: {resist: {fire: 0.75}}
+  traits: {kobold: true, resist: {fire: 0.75}}
   feats: {verb_strike: 1, verb_give: 1, mod_wide: 1}
 koboldHighShaman:
   name: The high shaman of the kobolds
   blurb: "The dragon's voice among the kobolds, who waits for a king whose children fail the throne. Frost, plague, and a flock that would die for it."
   faction: kobolds
   xp: 220
+  parts: {kobold_scale: 2}
+  tier: 4
   glyph: "🦎"
   sprite: {art: kobold-shaman, artTint: "#d06050", kind: orc_shaman, scale: 1.0}
   loot: humanoid_purse
-  level: 7
-  attrs: {STR: 6, CON: 8, DEX: 6, SPD: 6, INT: 10, WIL: 11, WIS: 11, CHA: 8}
+  level: 4
+  attrs: {STR: 6, CON: 10, DEX: 6, SPD: 6, INT: 10, WIL: 11, WIS: 11, CHA: 8}
   skills: {melee: 3, arcane: 7, medicine: 5, anticipation: 3, persuasion: 3}
   natural: [claws]
   armorItem: {type: padded, coverage: half}
@@ -1409,32 +1546,36 @@ koboldHighShaman:
   craft: master
   keepUnarmed: true
   nouns: [frost, decay, life, might, fear]
-  traits: {resist: {fire: 0.5}}
+  traits: {apMult: 1.2, kobold: true, resist: {fire: 0.5}}
   feats: {verb_strike: 1, verb_give: 1, mod_wide: 1, mod_strong: 1}
 koboldKing:
   name: The kobold king
   blurb: "An old king in spiked bronze with a crown of black spines and a great bronze axe. By his throne the fire does not touch him."
   faction: kobolds
   xp: 240
+  parts: {kobold_scale: 3}
+  tier: 5
   glyph: "👑"
   sprite: {art: kobold-king, kind: orc_warrior, scale: 1.0}
   loot: humanoid_purse
-  level: 7
-  attrs: {STR: 9, CON: 9, DEX: 7, SPD: 6, INT: 6, WIL: 9, WIS: 7, CHA: 8}
-  skills: {melee: 7, armor: 4, anticipation: 3, intimidation: 4, persuasion: 2}
+  level: 4
+  attrs: {STR: 14, CON: 28, DEX: 7, SPD: 6, INT: 6, WIL: 9, WIS: 7, CHA: 8}
+  skills: {melee: 8, armor: 4, anticipation: 3, intimidation: 4, persuasion: 2}
   natural: [claws]
-  armorItem: {type: mail, coverage: half}
+  armorItem: {type: mail, coverage: full}
   armor: scaleHide
   weaponItems:
     - {type: greatAxe, material: bronze, craft: master, name: The king's axe}
   keepUnarmed: true
-  traits: {resist: {fire: 0.5}}
+  traits: {apMult: 2.5, kobold: true, resist: {fire: 0.5}}
   feats: {toughness: 1}
 gorgeHound:
   name: Gorge hound
   blurb: "A great rust-red hound of the mountain gorges, grown huge in the mine's heat: it drags its prey down and does not tire."
   faction: kobolds
   xp: 60
+  parts: {hound_pelt: 1}
+  tier: 3
   glyph: "🐺"
   sprite: {art: gray-wolf, artScale: 1.35, artTint: "#b06a40", kind: orc, scale: 1.1, tint: "#a0603a"}
   loot: beast_leavings
@@ -1450,10 +1591,12 @@ steamElemental:
   blurb: "A spirit of scalding steam risen from a hot spring: dull, slow to anger, and left alone by the kobolds, who take it for a messenger of their god."
   faction: wilds
   xp: 100
+  parts: {steam_essence: 1}
+  tier: 4
   glyph: "♨️"
   sprite: {art: fire-elemental, artTint: "#dfe8ee", kind: orc_shaman, scale: 1.1, tint: "#d8e4ea"}
-  level: 5
-  attrs: {STR: 9, CON: 11, DEX: 6, SPD: 6, INT: 2, WIL: 8, WIS: 4, CHA: 2}
+  level: 4
+  attrs: {STR: 9, CON: 18, DEX: 6, SPD: 6, INT: 2, WIL: 8, WIS: 4, CHA: 2}
   skills: {melee: 3}
   natural: [elementalTouch]
   armor: golemBody

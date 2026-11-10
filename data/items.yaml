@@ -1,6 +1,7 @@
 # Items other than the weapons, armor and shields in their own files, plus loot tables.
 #
-# goods: kind = supply | potion | oil | key | book | trinket | trade | component.
+# goods: kind = supply | potion | oil | key | book | trinket | trade | component | part.
+#   part: cut from a body (monsters.yaml parts), kept for crafting and spellcasting later (not built yet); sells as trade.
 #   value: base price in gold (falls back to rarity). use: what using it does (potion, supply).
 #   supply: engine: bandages | arrows | bodkins -> pooled in the party's supplies.
 #   oil: worked into the weapon in hand (Use), it lasts `coat.hits` landed blows: coat.slay [{trait, damage}] adds
@@ -51,6 +52,24 @@ goods:
   # Test items for the labyrinth (the user, 2026-10-29): lying on the floor inside its door.
   golem_bane_oil:
     {name: Golem-bane oil, kind: oil, value: 60, rarity: rare, coat: {slay: [{trait: golem, damage: 4}], hits: 5}, blurb: "Worked into a blade: +4 damage to golems for the next 5 blows that land."}
+  # Bane oils (the user, 2026-11-09: a leg-up against every boss, found somewhere near it): each bites a kind (a
+  # monster trait in src/rules/effects.js). Measure one with node tools/tiers.js <boss> --coat <oil>.
+  scale_rot_oil:
+    {name: Scale-rot oil, kind: oil, value: 80, rarity: rare, coat: {slay: [{trait: suracayl, damage: 4}], hits: 6}, blurb: "Worked into a blade: +4 damage to the Suracayl for the next 6 blows that land. It smells of a swamp in summer."}
+  warding_oil:
+    {name: Oil of warding, kind: oil, value: 150, rarity: rare, coat: {slay: [{trait: outsider, damage: 5}], hits: 6}, blurb: "Worked into a blade: +5 damage to things from outside the world for the next 6 blows that land."}
+  orcbane_oil:
+    {name: Orcbane oil, kind: oil, value: 80, rarity: rare, coat: {slay: [{trait: orc, damage: 4}], hits: 6}, blurb: "Worked into a blade: +4 damage to orcs for the next 6 blows that land."}
+  goblin_bane_oil:
+    {name: Goblin-bane oil, kind: oil, value: 60, rarity: rare, coat: {slay: [{trait: goblin, damage: 4}], hits: 6}, blurb: "Worked into a blade: +4 damage to goblins for the next 6 blows that land."}
+  kobold_bane_oil:
+    {name: Kobold-bane oil, kind: oil, value: 80, rarity: rare, coat: {slay: [{trait: kobold, damage: 4}], hits: 6}, blurb: "Worked into a blade: +4 damage to kobolds for the next 6 blows that land."}
+  frost_oil:
+    {name: Frost oil, kind: oil, value: 150, rarity: rare, coat: {slay: [{trait: fireborn, damage: 5}], hits: 6}, blurb: "Worked into a blade: it rimes over; +5 damage to things of fire for the next 6 blows that land."}
+  giantsbane_oil:
+    {name: Giantsbane oil, kind: oil, value: 250, rarity: rare, coat: {slay: [{trait: giant, damage: 6}], hits: 8}, blurb: "Worked into a blade: +6 damage to giants for the next 8 blows that land."}
+  wyrmbane_oil:
+    {name: Wyrmbane oil, kind: oil, value: 300, rarity: rare, coat: {slay: [{trait: dragon, damage: 6}], hits: 8}, blurb: "Worked into a blade: +6 damage to dragons and drakes for the next 8 blows that land."}
   maze_journal:
     {name: Water-stained journal, kind: book, value: 1, rarity: common, text: "Most pages have run. One line is still clear: \"This oil should help if we lose control of the golem.\"", blurb: "A few pages in a cramped hand."}
   tome_ember:
@@ -90,6 +109,60 @@ goods:
     {name: Orc Fang Earring, kind: trinket, slot: ear, attrs: {STR: 1}, effects: {stamina: 4}, value: 500, rarity: rare, blurb: "+1 STR, +4 stamina."}
   ivandyr_hoop:
     {name: Ivandyr's Hoop, kind: trinket, slot: ear, power: {verb: take, noun: death, aim: foe, name: Leech, charges: 3}, value: 900, rarity: very rare, blurb: "Three times a day: Take + Death — chills the living (stamina), sears the undead."}
+
+  # ---- Body parts (the user, 2026-11-09): cut from the fallen (monsters.yaml parts), for crafting and spells later.
+  rat_tail:
+    {name: Giant rat tail, kind: part, value: 1, rarity: common, blurb: "A long, bare tail."}
+  wolf_pelt:
+    {name: Wolf pelt, kind: part, value: 6, rarity: common, blurb: "Grey fur, a little torn."}
+  suracayl_scale:
+    {name: Suracayl scales, kind: part, value: 8, rarity: common, blurb: "Hard green-black scales cut from a Suracayl."}
+  gorilla_pelt:
+    {name: Great ape pelt, kind: part, value: 10, rarity: common, blurb: "Coarse black fur."}
+  raptor_claw:
+    {name: Raptor sickle claw, kind: part, value: 9, rarity: uncommon, blurb: "The hooked killing claw of a raptor."}
+  snake_skin:
+    {name: Great snake skin, kind: part, value: 14, rarity: uncommon, blurb: "A long, patterned shed of hide."}
+  gator_hide:
+    {name: Alligator hide, kind: part, value: 14, rarity: uncommon, blurb: "Ridged and heavy."}
+  golem_clay:
+    {name: Golem clay, kind: part, value: 12, rarity: uncommon, blurb: "Clay that still holds a shape it was told to."}
+  golem_stone:
+    {name: Golem stone, kind: part, value: 16, rarity: uncommon, blurb: "A shard of a stone body, carved with words."}
+  golem_core:
+    {name: Golem core, kind: part, value: 40, rarity: rare, blurb: "The iron heart that moved a golem."}
+  bone_dust:
+    {name: Bone dust, kind: part, value: 4, rarity: common, blurb: "Ground from the bones of the risen."}
+  ectoplasm:
+    {name: Ectoplasm, kind: part, value: 30, rarity: rare, blurb: "Cold, pale and slow to dry."}
+  avatar_ichor:
+    {name: Black ichor, kind: part, value: 120, rarity: very rare, blurb: "What ran in the Avatar of Fear. It is still afraid."}
+  goblin_blood:
+    {name: Fire goblin blood, kind: part, value: 5, rarity: common, blurb: "Warm in the vial long after it is drawn."}
+  beetle_chitin:
+    {name: Lava beetle chitin, kind: part, value: 8, rarity: common, blurb: "A plate of shell, still glowing faintly."}
+  imp_horn:
+    {name: Imp horn, kind: part, value: 12, rarity: uncommon, blurb: "Small, black, warm."}
+  fire_essence:
+    {name: Fire essence, kind: part, value: 25, rarity: uncommon, blurb: "A flame that burns on nothing, in a stoppered jar."}
+  steam_essence:
+    {name: Steam essence, kind: part, value: 25, rarity: uncommon, blurb: "Mist that will not leave its bottle."}
+  drake_scale:
+    {name: Drake scale, kind: part, value: 30, rarity: rare, blurb: "A red scale the size of a palm."}
+  clockwork_gear:
+    {name: Clockwork gears, kind: part, value: 15, rarity: uncommon, blurb: "Bronze teeth and springs, finely cut."}
+  kobold_scale:
+    {name: Kobold scales, kind: part, value: 4, rarity: common, blurb: "Small rust-red scales."}
+  hound_pelt:
+    {name: Gorge hound pelt, kind: part, value: 10, rarity: common, blurb: "Red fur, thick at the neck."}
+  orc_tusk:
+    {name: Orc tusk, kind: part, value: 5, rarity: common, blurb: "Yellow and chipped."}
+  giant_blood:
+    {name: Fire giant blood, kind: part, value: 45, rarity: rare, blurb: "It smokes in the cold."}
+  shade_ash:
+    {name: Shade ash, kind: part, value: 40, rarity: rare, blurb: "Red ash that drifts upward."}
+  dragon_scale:
+    {name: Dragon scale, kind: part, value: 400, rarity: very rare, blurb: "A scale like a black-red shield, warm to the touch."}
 
 tables:
   vermin_nest:
@@ -159,6 +232,9 @@ tables:
     - {w: 2, good: antidote}
     - {w: 1, good: sash_quick}
     - {w: 1, armor: mail, material: steel, coverage: full}
+    - {w: 1, weapon: warhammer, craft: master}
+  # The sewer's leg-up against the stone golem (stone cracks under a hammer; it shrugs off a cut).
+  mason_chest:
     - {w: 1, weapon: warhammer, craft: master}
   humanoid_purse:
     - {w: 4, gold: [2, 12]}

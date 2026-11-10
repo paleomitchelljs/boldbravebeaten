@@ -91,11 +91,12 @@ test('derived stats for an average starting character', () => asWritten(() => {
   assert.strictEqual(C.regen(c), -2, 'heavy armor regen can go negative');
 }));
 
-test('the turn budget: pool 6 at SPD 5 holds one big action, a step and a swing, or three quick actions', () => {
+test('the turn budget (the user, 2026-11-09, "tighter and faster"): at SPD 5 the worst roll still holds a swing, or a step and a thrust; the best a step and a swing, or three quick actions', () => {
   const c = armed('Budget', 'longsword');
   const AP = (n) => n * B.CONFIG.apScale;
-  const pool = C.apPool(c);
-  assert.strictEqual(C.fmtAP(pool), '6');
+  assert.strictEqual(C.fmtAP(C.apPool(c)), '5.5', 'the mean pool');
+  const low = C.apPool(c, 1), pool = C.apPool(c, B.CONFIG.apDie);
+  assert.deepStrictEqual([C.fmtAP(low), C.fmtAP(pool)], ['4.5', '6.5']);
   const cost = (motion) => C.attackOptions(c).find((o) => o.motion === motion).ap;
   const quick = [cost('thrust'), C.actionCost(c, 'parry').ap, C.actionCost(c, 'dodge').ap, C.moveCost(c, 2)];
   assert.deepStrictEqual(quick, [AP(2), AP(2), AP(2), AP(2)], 'thrust, parry, dodge and a 2-square move are quick');
@@ -104,8 +105,9 @@ test('the turn budget: pool 6 at SPD 5 holds one big action, a step and a swing,
   assert.strictEqual(C.moveCost(c, 3), AP(4), 'a longer move is two moves');
   assert.ok(3 * AP(2) <= pool && C.moveCost(c, 2) + cost('swing') <= pool && cost('twoHanded') <= pool);
   assert.ok(C.moveCost(c, 2) + cost('swing') + C.moveCost(c, 2) > pool, 'but not in, swing and out');
+  assert.ok(cost('swing') <= low && C.moveCost(c, 2) + cost('thrust') <= low, 'the last to go: one solid action, or a step and a thrust');
   c.base.SPD = 6;
-  assert.strictEqual(C.apPool(c), AP(6.5), 'every point of SPD is half an AP');
+  assert.strictEqual(C.apPool(c), AP(6), 'every point of SPD is half an AP');
   // Weapon speed shows: a dagger thrust is quicker than a sword thrust.
   assert.ok(opt(armed('D', 'dagger'), (o) => o.motion === 'thrust').ap < cost('thrust'));
 });

@@ -32,8 +32,9 @@ Read `HANDOFF.md` first: it is the to-do list. **After every push, update it** (
 - **No dependencies, no build step** for the game. `data/bundle.js` is optional (`node tools/bundle.js`) and exists
   only so `index.html` can open from disk; when served, the loader reads the YAML directly.
 - **Before finishing a change:** `node --test` (rules, content, game, and every screen rendered in a fake DOM) and
-  `node tools/validate.js`. **Encounter tuning is deferred** (the user, 2026-10-28: core changes first): don't run,
-  report or tune against `tools/encounters.js` win rates until asked. After a map change run `node tools/pace.js` (time to
+  `node tools/validate.js`. **Tuning** (begun 2026-11-09): monsters by tier with `node tools/tiers.js` (M, the heroes
+  of its level at which it is an even fight; `--enc place/id` for an encounter as authored); a party is three for
+  tuning; numbers in `sim/FINDINGS.md`. The test suite takes about 8 minutes on idle cores: don't run it beside sims. After a map change run `node tools/pace.js` (time to
   explore; a thorough look at a dungeon should take about a day). The fake DOM catches
   exceptions, not bad layout: if you change CSS or the first-person view, say plainly that you could not look at it
   unless you did. `tools/shot.sh out.png "<js>"` takes a headless-Chrome screenshot after running some JavaScript in

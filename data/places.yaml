@@ -711,7 +711,7 @@ desert:
   kind: dungeon
   open: true
   blurb: "Sand and red rock south of the grassland, under Tarnhold's mountains: a stream falls out of them into a great oasis lake ringed with palms, and a river runs from the lake west to the sea. A ruined tower stands on an island in the lake."
-  level: 3
+  level: 4
   look: {wall: "#8a4a2a", floor: "#d8b878", ceiling: "#9ab8d6", fog: "#1a140a", torch: 0, tileset: desert, light: 28}
   map:
     - "~~............................NN........................``````````#(?▁▂▃▄▄▄▄▄▄▄▄"
@@ -909,7 +909,7 @@ orc_valley:
   kind: dungeon
   open: true
   blurb: A green valley shut in by grey mountains, cut through by a moat; the orc legion's camps, its castle of grey-blue stone, a quarried hill where slaves cut stone, and pits where more are kept.
-  level: 3
+  level: 1
   look: {wall: "#55534e", floor: "#384a22", ceiling: "#7f9ab6", fog: "#0c120a", torch: 0, tileset: orc_valley, ground: ",", light: 24}
   map:
     - "▂▁???????????????????????????????????????????????????????▁▂▂"
@@ -1021,7 +1021,7 @@ orc_valley:
     centurion: {foes: [{monster: orcCenturion}, {monster: orcLegionnaire}], text: "A centurion ducks out of his tent, roaring for his men."}
     gate: {foes: [{monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "The gate guard levels their spears."}
     slaver: {foes: [{monster: orcSlaver}, {monster: orcLegionnaire}], text: "The slaver drops his club on the nearest slave's back and turns to you."}
-    drill: {foes: [{monster: orcCenturion}, {monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "The drill breaks off, and the line turns on you."}
+    drill: {foes: [{monster: orcCenturion}, {monster: orcLegionnaire}], text: "The drill breaks off, and the line turns on you."}
   wandering:
     - {w: 1, foes: [{monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "A patrol of the legion."}
     - {w: 3, nothing: true}
@@ -1033,14 +1033,14 @@ orc_castle:
   name: The Orc Castle
   kind: dungeon
   blurb: Halls of grey-blue stone floored with green marble, hung with the legion's banners; the emperor's throne under a great gold coin.
-  level: 5
+  level: 3
   look: {wall: "#283438", floor: "#24402f", ceiling: "#1a2224", fog: "#060a0a", torch: 1, tileset: orc_castle, light: 18}
   map:
     - "##################################"
     - "##################################"
     - "##.......##............##.......##"
     - "##.e...e.##...z|T||z...##.....e.##"
-    - "##..Y..........||||.........L...##"
+    - "##..Y..........||||....O....L...##"
     - "##.......##..o...E..o..##.......##"
     - "##....k..##............##.m...H.##"
     - "##.......##...g....g...##.......##"
@@ -1065,6 +1065,7 @@ orc_castle:
     - "##################################"
     - "##################################"
   legend:
+    O: {kind: pickup, good: orcbane_oil, text: "A flask in a slave's hiding place behind the pillar, marked with a broken tusk."}
     S: {kind: stairs, to: orc_valley, at: G, sprite: none, label: "Out through the gate to the valley"}
     T: {kind: prop, sprite: throne, label: "A stone throne heaped with furs, braziers either side; over it, set in the wall, a gold coin the size of a cartwheel", on: "|"}
     E: {kind: monster, encounter: emperor, label: "The emperor"}
@@ -1111,7 +1112,7 @@ orc_mines:
   name: The Slaver Caves
   kind: dungeon
   blurb: Galleries hacked out of grey stone, lit by torches; slaves at the rock face, overseers with clubs, pens where the slaves sleep.
-  level: 3
+  level: 2
   look: {wall: "#222426", floor: "#3a3c3e", ceiling: "#1a1b1c", fog: "#060606", torch: 1, tileset: orc_mine, light: 16}
   map:
     - "####################################"
@@ -1175,7 +1176,7 @@ temple_court:
   name: The Temple Court
   kind: dungeon
   blurb: A walled court of broken sandstone gone to grass and fern. Snakes and lizards are worked into the walls.
-  level: 2
+  level: 1
   look: {wall: "#cdb98a", floor: "#4d6a33", ceiling: "#2a3a22", fog: "#0c120a", torch: 1, tileset: temple_court, ground: ",", light: 20}
   map:
     - "################################"
@@ -1302,8 +1303,8 @@ temple_maze:
   encounters:
     snake: {foes: [{monster: constrictor}], text: "A great snake uncoils from the end of the passage."}
     pair: {foes: [{monster: suracaylSkink, n: 2}, {monster: suracaylSkink, sprite: {art: lizardfolk-alt-purple}}], text: "Three Suracayl skinks look up from their fire, and are on their feet before you are through the turn."}
-    raptors: {foes: [{monster: raptorPack}], text: "Three raptors come out of the dark at a run, spreading as they come."}
-    raptors2: {foes: [{monster: raptorPack}], text: "The hall is a hunting ground. Raptors fan out across it."}
+    raptors: {foes: [{monster: raptor, n: 4}], text: "Four raptors come out of the dark at a run, spreading as they come."}
+    raptors2: {foes: [{monster: raptor, n: 4}], text: "The hall is a hunting ground. Raptors fan out across it."}
     watch: {foes: [{monster: suracaylSkink, n: 2, sprite: {art: lizardfolk-alt-purple}}], text: "Two Suracayl skinks drop out of a side passage, claws out."}
     golem: {foes: [{monster: clayGolem}], text: "The clay figure at the end of the passage turns its head, and steps down off its plinth."}
   wandering:
@@ -1316,7 +1317,7 @@ temple_court2:
   name: The Pyramid Court
   kind: dungeon
   blurb: A second walled court, nearly filled by a stepped pyramid of four carved tiers with a small altar on top.
-  level: 2
+  level: 3
   look: {wall: "#cdb98a", floor: "#4d6a33", ceiling: "#2a3a22", fog: "#0c120a", torch: 1, tileset: temple_court, ground: ",", light: 20}
   # A 3-square rind of grass round a 28-square pyramid: four tiers, each a riser (^) and a terrace two squares wide
   # (- : * &), each 3 squares in from the last. One stair design, two squares wide, on the south face of every tier
@@ -1347,7 +1348,7 @@ temple_court2:
     - "##,,,^--^::^**^&&&&&&&&^**^::^--^%%,##"
     - "##,,,^--^::^**^&&&&&&&&^**^::^--^,,,##"
     - "##,,,^--^::^**^^^^de^^^^**^::^--^,,,##"
-    - "##,,,^--^::^**************^::^--^,,,##"
+    - "##,,,^--^::^*************ù^::^--^,,,##"
     - "##,,,^--^::^****s*********^::^--^,,,##"
     - "##;;,^--^::^^oq^^^^^^^^^^^^::^--^,,,##"
     - "##;,,^--^::::::::::::::::::::^--^,,,##"
@@ -1362,6 +1363,7 @@ temple_court2:
     - "###################S##################"
     - "######################################"
   legend:
+    ù: {kind: pickup, good: scale_rot_oil, on: "*", text: "A stoppered pot lies in the lee of the terrace wall, its seal marked with a crossed-out lizard."}
     S: {kind: stairs, to: temple_maze, at: E, sprite: door, wall: true, label: "Back into the labyrinth"}
     i: {kind: prop, sprite: pyr_stair_l1, solid: false, on: "^", label: "Steps up the first tier"}
     j: {kind: prop, sprite: pyr_stair_r1, solid: false, on: "^", label: "Steps up the first tier"}
@@ -1383,10 +1385,10 @@ temple_court2:
   encounters:
     door: {foes: [{monster: suracaylVaranus}, {monster: suracaylVaranus, sprite: {art: lizardfolk-varanus-brown}}], text: "Two heavy Suracayl varanus at the door turn as it opens, tongues flicking."}
     patrol: {foes: [{monster: suracaylVaranus, sprite: {art: lizardfolk-varanus-brown}}], text: "A Suracayl varanus comes round the corner of the pyramid."}
-    bones: {foes: [{monster: skeleton}], text: "Bones laid out on the terrace pull themselves together."}
+    bones: {foes: [{monster: skeleton, n: 2}], text: "Bones laid out on the terrace pull themselves together: two of them."}
     terrace: {foes: [{monster: suracaylVaranus, sprite: {art: lizardfolk-varanus-black}}], text: "A black varanus at the head of the steps lifts its head and opens its jaws."}
     snake: {foes: [{monster: constrictor}], text: "A great snake slides down the carved face."}
-    top: {foes: [{monster: dreadShaman}, {monster: suracaylVaranus, sprite: {art: lizardfolk-varanus-black}}, {monster: suracaylVaranus, sprite: {art: lizardfolk-varanus-brown}}], text: "A Suracayl in a bone mask turns from the altar and lifts its staff. The two varanus at its feet rise."}
+    top: {foes: [{monster: dreadShaman}, {monster: suracaylVaranus, sprite: {art: lizardfolk-varanus-black}}], text: "A Suracayl in a bone mask turns from the altar and lifts its staff. The two varanus at its feet rise."}
   wandering:
     - {w: 1, foes: [{monster: suracaylVaranus}], text: "A Suracayl varanus comes round the pyramid."}
     - {w: 4, nothing: true}
@@ -1419,7 +1421,7 @@ temple_sewer:
     - "#######............#...~~###~~~~......~~~...######"
     - "#######..~~.########...~~####~~~~...~~~~~...######"
     - "#######..~~.#######...~~~#####~~~~~~~~~~~~~..#####"
-    - "#######.a~~.#######...~~#######.~~~=======~..#####"
+    - "#######.a~~.#######...~~#######o~~~=======~..#####"
     - "######...~~...####...~~~#######..~~=======~~..####"
     - "######..==...C####...~~########..~~==~~~==~~..####"
     - "######..~~.#..###...~~~########.g=====X~====..####"
@@ -1438,6 +1440,7 @@ temple_sewer:
     - "##################################################"
     - "##################################################"
   legend:
+    o: {kind: chest, label: "A mason's chest, half sunk in the silt", loot: mason_chest, tn: 4}
     G: {kind: stairs, to: temple_wall, at: W, up: true, sprite: shaft, label: "Rungs and a rope up the well to the gatehouse"}
     L: {kind: note, on: "_", label: "Under the labyrinth's well", text: "A shaft of grey light falls from far above. There is no climbing back up it."}
     P: {kind: note, on: "_", label: "Under the pyramid's well", text: "The shaft above is too smooth and too far to climb."}
@@ -1464,7 +1467,7 @@ temple_ritual:
   name: The Ritual Chamber
   kind: dungeon
   blurb: A square chamber of rose stone deep under the temple, a shallow pool round a dais, and on the dais a great green orb with something in it.
-  level: 3
+  level: 5
   look: {wall: "#806062", floor: "#244440", ceiling: "#1a2e2c", fog: "#081210", torch: 1, tileset: temple_ritual, light: 8}
   # First laid out by assets/wip/temple-ritual/layout.js (the user's reference: assets/ideas/refs/ritual-chamber-reference.png),
   # then shrunk by hand to 11 by 10 (the user, 2026-10-25: tight round the Avatar, but room for a party to move). You
@@ -1481,10 +1484,11 @@ temple_ritual:
     - " #..._____...# "
     - " #...........# "
     - " #.y...A...y.# "
-    - " #...........# "
+    - " #...o.......# "
     - " ############# "
     - "               "
   legend:
+    o: {kind: pickup, good: warding_oil, text: "A pilgrim's flask lies by a dead pilgrim. The oil in it is warm and faintly bright."}
     D: {kind: note, on: "_", text: "Water roars down from the dark above and the pool takes you. It is only knee deep. In the middle of the chamber a green orb the size of a cart hangs over a dais, and something moves inside it."}
     O: {kind: prop, sprite: orb, label: "The orb on its dais. Something coiled inside it watches you."}
     y: {kind: prop, sprite: pyramid, label: "A small pyramid of dark stone"}
@@ -1499,7 +1503,7 @@ temple_palace:
   name: The Palace
   kind: dungeon
   blurb: The palace of the temple's masters, east of the court. A long gallery of statues, side chambers, and a great hall with a throne on a dais.
-  level: 2
+  level: 4
   look: {wall: "#b4a26a", floor: "#433d34", ceiling: "#2a2620", fog: "#0c0a08", torch: 1, tileset: temple_palace, light: 14}
   # assets/wip/temple-palace/layout.js. The user's references: assets/ideas/refs/palace-hall-reference.png (a raised
   # platform along the hall, a brazier, a great stone mask on the wall) and palace-throne-reference.png.
@@ -1518,7 +1522,7 @@ temple_palace:
     - "#####..#######..####..............|||||.##"
     - "##.s...s...s......##..............|||||.##"
     - "##................##..............|||||.##"
-    - "##................................|k|T|.##"
+    - "##................................|k|T|o##"
     - "#W........................h.......|||||.##"
     - "##................................|||||.##"
     - "##................##..............|||||.##"
@@ -1537,6 +1541,7 @@ temple_palace:
     - "##########################################"
     - "##########################################"
   legend:
+    o: {kind: pickup, good: scale_rot_oil, text: "Under a loose flagstone, a flask that smells of swamp rot."}
     W: {kind: stairs, to: temple_court, at: P, sprite: palace_gate, wall: true, label: "Back out to the court"}
     U: {kind: stairs, to: temple_palace_up, at: U, up: true, sprite: stair_up, label: "Stairs up to the living quarters"}
     D: {kind: stairs, to: temple_palace_stair, at: U, sprite: stair_down, label: "A stair down, in a niche off the great hall"}
@@ -1549,7 +1554,7 @@ temple_palace:
     k: {kind: monster, encounter: throne, on: "|", label: "Venril over its throne"}
     r: {kind: monster, encounter: rats, label: "Rats in a side chamber"}
   encounters:
-    hall: {foes: [{monster: scaleward}], text: "A Suracayl guard pacing the hall wheels about."}
+    hall: {foes: [{monster: scaleward, n: 2}], text: "Two Suracayl guards pacing the hall wheel about."}
     # One skeleton guard, not two: two of them alone beat the example level-1 party (13%, tools/encounters.js), and Venril
     # raises the fallen besides.
     throne: {foes: [{monster: venril}, {monster: skeleton}], text: "Above the throne a horned lizard in a dark robe drifts upright, its hands lifting. The skeleton at the foot of the dais steps down to meet you."}
@@ -1563,7 +1568,7 @@ temple_palace_up:
   name: The Palace, Upper Floor
   kind: dungeon
   blurb: The living quarters of the temple's masters, and the servants' hall and stores.
-  level: 2
+  level: 4
   look: {wall: "#b4a26a", floor: "#433d34", ceiling: "#2a2620", fog: "#0c0a08", torch: 1, tileset: temple_palace, light: 12}
   map:
     - "##################################"
@@ -1572,7 +1577,7 @@ temple_palace_up:
     - "##.B...B.##.B...B.##..B.......B.##"
     - "##......z##.......##......C.....##"
     - "##.......##.......##.....g......##"
-    - "##.......##.......##............##"
+    - "##.......##.......##O...........##"
     - "#####..#######..#########..#######"
     - "#####..#######..#########..#######"
     - "##..............................##"
@@ -1589,6 +1594,7 @@ temple_palace_up:
     - "##################################"
     - "##################################"
   legend:
+    O: {kind: pickup, good: tome_ember, text: "A charred book behind the wardrobe, its one readable page a lesson in fire. Someone underlined: iron runs."}
     U: {kind: stairs, to: temple_palace, at: U, sprite: stair_down, label: "Stairs down to the great hall"}
     B: {kind: prop, sprite: bed, label: "A bed"}
     o: {kind: prop, sprite: cot, label: "A cot"}
@@ -1609,7 +1615,7 @@ temple_palace_stair:
   name: The Stair Below the Palace
   kind: dungeon
   blurb: A long stair down from the palace, a few small rooms off it, and at the bottom the ritual chamber.
-  level: 3
+  level: 4
   look: {wall: "#b4a26a", floor: "#433d34", ceiling: "#2a2620", fog: "#0c0a08", torch: 1, tileset: temple_palace, light: 9}
   map:
     - "######################"
@@ -1647,7 +1653,7 @@ temple_palace_stair:
     C: {kind: chest, loot: strongbox, tn: 8, label: "A chest"}
     g: {kind: monster, encounter: stairguard, label: "A guard on the stair"}
   encounters:
-    stairguard: {foes: [{monster: scaleward}], text: "The Suracayl on the stair blocks the way down."}
+    stairguard: {foes: [{monster: suracaylVaranus}, {monster: scaleward}], text: "A Suracayl and a heavy varanus on the stair block the way down."}
   wandering: []
   secrets: []
 
@@ -1655,7 +1661,7 @@ temple_wall:
   name: On the Temple Wall
   kind: dungeon
   blurb: The walk along the top of the gate wall, and the little guardhouse beside it, over the gate, with a door out onto each pyramid.
-  level: 2
+  level: 1
   look: {wall: "#cdb98a", floor: "#bba57a", ceiling: "#2a3a22", fog: "#0c120a", torch: 1, tileset: temple_walltop, light: 20}
   map:
     - "             "
@@ -1696,7 +1702,7 @@ ember_hall:
   name: The Cinder Hall
   kind: dungeon
   blurb: The flame goblins' caves of black basalt: a stair down to a ledge round a lava pool, a bubbling cavern, warrens, storerooms, a fungus farm, the baron's seat, and a gate court at the south end.
-  level: 2
+  level: 1
   look: {wall: "#2a2624", floor: "#3c3632", ceiling: "#140c08", fog: "#120604", torch: 1, tileset: ember_basalt, light: 8}
   map:
     - "##############################################################################"
@@ -1822,7 +1828,7 @@ ember_warrens:
   name: The Warrens
   kind: dungeon
   blurb: The goblins' working mine: low winding tunnels of black rock, a few hidden doors, the barracks at the far end, and a drake that hunts in it.
-  level: 3
+  level: 2
   look: {wall: "#2a2624", floor: "#3c3632", ceiling: "#140c08", fog: "#120604", torch: 1, tileset: ember_basalt, light: 8}
   map:
     - "####################################################################"
@@ -1852,7 +1858,7 @@ ember_warrens:
     - "##..##..##..##..##########..##..######..######..#########$$$$$$$$$##"
     - "##..##..##..##..##########..##..######..######..#########$$$$$$$$$##"
     - "#J..##....e.....##......##....d.........######......#####$$$$$$$$$##"
-    - "##..##..........##......##..............z...##......#####$$$$$$$$$##"
+    - "##..##..........##......##O.............z...##......#####$$$$$$$$$##"
     - "##..##..;.......##..##..##################..######..#####$$$$$$$$$##"
     - "##..##..2.......##..##..##################..######..#####$$$$$$$$$##"
     - "##..................##..##...g..##.............f....#####$$$$$$$$$##"
@@ -1868,6 +1874,7 @@ ember_warrens:
     - "##############..##########..########################################"
     - "##############Y###########m#########################################"
   legend:
+    O: {kind: pickup, good: wyrmbane_oil, text: "A gnome's flask in a dead miner's pack, labelled in a tidy hand: for the drake."}
     # Goblin clutter (not solid, so it never closes a tunnel).
     a: {kind: prop, sprite: gob_cart, solid: false, label: "A mine cart full of glowing ore"}
     b: {kind: prop, sprite: gob_tools, solid: false, label: "A barrel of old picks and shovels"}
@@ -1904,7 +1911,7 @@ ember_warrens:
     archers: {foes: [{monster: fireGoblinArcher}], text: "An archer in the dead end, nocking an arrow."}
     drake: {foes: [{monster: redDrake}], text: "The red drake lifts its head from what it was eating."}
   wandering:
-    - {w: 1, foes: [{monster: redDrake}], text: "Wingbeats in the tunnel. The drake is hunting."}
+    - {w: 1, foes: [{monster: fireGoblin, n: 2}], text: "Two fire goblins with whips, looking for miners to drive."}
     - {w: 2, foes: [{monster: goblinMiner}], text: "A goblin miner with a cart."}
     - {w: 5, nothing: true}
   secrets: []
@@ -1913,7 +1920,7 @@ ember_lake:
   name: The Lava Lake
   kind: dungeon
   blurb: A great chamber of moving lava under a black roof, crossed only on a line of stones.
-  level: 3
+  level: 5
   look: {wall: "#2a2624", floor: "#3c3632", ceiling: "#140c08", fog: "#120604", torch: 1, tileset: ember_basalt, light: 8}
   map:
     - "############################################"
@@ -1955,7 +1962,7 @@ ember_lake:
     X: {kind: chest, label: "A chest on the island, its iron blackened", loot: relic_cache, tn: 10}
     e: {kind: monster, encounter: keepers, label: "Flame standing on the island"}
   encounters:
-    keepers: {foes: [{monster: fireElemental}], text: "The flames on the island stand up into the shape of a man."}
+    keepers: {foes: [{monster: fireElemental, n: 2}], text: "The flames on the island stand up into the shapes of two men."}
   wandering:
     - {w: 1, foes: [{monster: fireElemental}], text: "A figure of fire walks up out of the lava."}
     - {w: 1, foes: [{monster: efreeti}], text: "An efreeti steps out of the heat haze over the lava, fists alight."}
@@ -1967,7 +1974,7 @@ ember_pit:
   name: The Burning Pit
   kind: dungeon
   blurb: A round pit under the warrens, its floor cracked with lava. Something lives here.
-  level: 4
+  level: 6
   look: {wall: "#2a2624", floor: "#3c3632", ceiling: "#140c08", fog: "#120604", torch: 1, tileset: ember_basalt, light: 8}
   map:
     - "######################"
@@ -1978,7 +1985,7 @@ ember_pit:
     - "#####.............####"
     - "####.....$$$$$.....###"
     - "####....$$$$$$$....###"
-    - "###......$$$$$......##"
+    - "###.....o$$$$$......##"
     - "###........E........##"
     - "###.................##"
     - "###........t........##"
@@ -1991,6 +1998,7 @@ ember_pit:
     - "######################"
     - "######################"
   legend:
+    o: {kind: pickup, good: frost_oil, text: "A frosted flask, cold to the touch even here, stands on a ledge."}
     t: {kind: note, label: "Where you fell", text: "The hole you fell through is far overhead, and the walls are smooth with heat."}
     E: {kind: monster, encounter: efreet, label: "A great shape of fire"}
     z: {kind: secret, tn: 10, label: "A seam in the pit wall"}
@@ -2003,7 +2011,7 @@ ember_barracks:
   name: The Goblin Barracks
   kind: dungeon
   blurb: Built goblin masonry of grey mine stone at the north end of the warrens: a drill hall, bunks, a mess and an armory.
-  level: 3
+  level: 2
   look: {wall: "#6a6866", floor: "#57534f", ceiling: "#1a1614", fog: "#0e0a08", torch: 1, tileset: ember_masonry, light: 8}
   map:
     - "####################################"
@@ -2041,9 +2049,9 @@ ember_barracks:
     C: {kind: chest, label: "The captain's strongbox", loot: strongbox, tn: 10}
     r: {kind: pickup, good: repair_kit, text: "A whetstone and rivets on the armorer's bench."}
   encounters:
-    bunks: {foes: [{monster: goblinWarrior}], text: "A goblin rolls out of the bunks grabbing for a weapon."}
-    mess: {foes: [{monster: goblinWarrior}], text: "The mess goes over in a crash of bowls."}
-    drill: {foes: [{monster: goblinWarrior}], text: "A warrior at drill turns."}
+    bunks: {foes: [{monster: goblinWarrior, n: 2}], text: "Two goblins roll out of the bunks grabbing for weapons."}
+    mess: {foes: [{monster: goblinWarrior}, {monster: fireGoblin, n: 2}], text: "The mess goes over in a crash of bowls."}
+    drill: {foes: [{monster: goblinWarrior, n: 2}], text: "Two warriors at drill turn."}
     captain: {foes: [{monster: goblinChampion}], text: "A goblin as big as a man stands up from a table of maps."}
   wandering:
     - {w: 1, foes: [{monster: goblinWarrior}], text: "A warrior on its rounds."}
@@ -2112,7 +2120,7 @@ ember_castle:
   name: The Inferno Realm
   kind: dungeon
   blurb: The inferno goblins' half of the caves, behind the portcullis: hewn halls and warrens, the bar, the prison pits, the wizards' hall, the forge, the guard post on the way to the gnomes, and the king's audience chamber.
-  level: 4
+  level: 3
   look: {wall: "#2a2624", floor: "#3c3632", ceiling: "#140c08", fog: "#120604", torch: 1, tileset: ember_basalt, light: 8}
   map:
     - "##############################################################################"
@@ -2158,7 +2166,7 @@ ember_castle:
     - "###################..##########....###..#######......####...............######"
     - "###################..###########..####..######.......####.............########"
     - "###################..#################..######........................########"
-    - "###################..##############.......###....c...................#########"
+    - "###################..##############o......###....c...................#########"
     - "###################..#####....#####.......####.......##..............#########"
     - "###################......Z....#####.......####.......###.............#########"
     - "##########################e...#####...k...#####.....####.....##.###....#######"
@@ -2171,6 +2179,7 @@ ember_castle:
     - "##############################################################################"
     - "##############################################################################"
   legend:
+    o: {kind: pickup, good: goblin_bane_oil, text: "A flask hidden in a crack by a goblin who did not love his king."}
     # G-13, inside the gate
     S: {kind: stairs, to: ember_hall, at: K, sprite: door, wall: true, label: "Out through the portcullis to the gate court"}
     Q: {kind: stairs, to: ember_hall, at: Q, sprite: door, wall: true, label: "The secret passage back to the baron's seat"}
@@ -2208,13 +2217,13 @@ ember_castle:
     H: {kind: chest, label: "The king's hoard", loot: relic_cache, rolls: 2, tn: 12}
     q: {kind: monster, encounter: bodyguard, label: "The king's bodyguard"}
   encounters:
-    gateguard: {foes: [{monster: goblinWarrior}], text: "A goblin with a longspear steps across the corridor."}
-    bar: {foes: [{monster: fireGoblin}], text: "A drinker comes over the bar at you."}
-    sleepers: {foes: [{monster: fireGoblin}], text: "A goblin tumbles out of its blanket."}
+    gateguard: {foes: [{monster: goblinWarrior, n: 2}], text: "Two goblins with longspears step across the corridor."}
+    bar: {foes: [{monster: fireGoblin, n: 2}, {monster: fireGoblinArcher}], text: "The drinkers come over the bar at you; one grabs a bow off the wall."}
+    sleepers: {foes: [{monster: fireGoblin, n: 3}], text: "Goblins tumble out of their blankets."}
     patriarch: {foes: [{monster: goblinShaman}], text: "A tall, lean goblin with one milky eye pushes through the beads, and you find you want to like him."}
-    smiths: {foes: [{monster: goblinWarrior}], text: "A goblin smith turns from the anvil, the hammer's head still red."}
+    smiths: {foes: [{monster: goblinWarrior, n: 2}], text: "The goblin smiths turn from the anvil, the hammers' heads still red."}
     shaman: {foes: [{monster: goblinHighShaman}], text: "A goblin wizard looks up from its slates, and the torches lean towards it."}
-    guardpost: {foes: [{monster: goblinWarrior}], text: "A goblin painted all over like a broken clockwork man comes at you, to the others' delight."}
+    guardpost: {foes: [{monster: goblinWarrior, n: 2}], text: "A goblin painted all over like a broken clockwork man comes at you, to the others' delight."}
     champions: {foes: [{monster: goblinChampion}], text: "A champion rolls off its pallet of furs and takes up its blade."}
     throne: {foes: [{monster: goblinKing}], flags: [ember_king_dead], text: "The king heaves himself up from the throne."}
     bodyguard: {foes: [{monster: goblinChampion}], text: "A champion guarding the king's rooms turns, astonished, as the wall opens."}
@@ -2227,7 +2236,7 @@ ember_jail:
   name: The Goblin Jail
   kind: dungeon
   blurb: Cells and question rooms under the throne, and a stair that goes on down.
-  level: 4
+  level: 2
   look: {wall: "#6a6866", floor: "#57534f", ceiling: "#1a1614", fog: "#0e0a08", torch: 1, tileset: ember_masonry, light: 8}
   map:
     - "################################"
@@ -2271,7 +2280,7 @@ ember_duct:
   name: The Black Glass Duct
   kind: dungeon
   blurb: Below the goblins the rock turns to black glass. Three ways come down into one old lava duct, and the duct winds on down past a lake of magma to the giants' gate.
-  level: 6
+  level: 5
   look: {wall: "#1e1a1c", floor: "#2e2a2a", ceiling: "#0c0808", fog: "#100404", torch: 1, tileset: ember_basalt, light: 8}
   map:
     - "##############################j#####"
@@ -2326,9 +2335,9 @@ ember_duct:
     f: {kind: monster, encounter: flare, label: "A light in the dark that is not a torch"}
     i: {kind: monster, encounter: imps, label: "Shapes over the magma"}
   encounters:
-    crawlers: {foes: [{monster: lavaBeetle}, {monster: lavaBeetle}], text: "Two lava beetles back out of a side crack, mandibles open."}
-    flare: {foes: [{monster: fireElemental}], text: "A fire elemental drifts up the duct, lighting the glass."}
-    imps: {foes: [{monster: imp}, {monster: imp}], text: "Imps rise off the magma, laughing."}
+    crawlers: {foes: [{monster: lavaBeetle, n: 3}], text: "Three lava beetles back out of a side crack, mandibles open."}
+    flare: {foes: [{monster: fireElemental, n: 2}], text: "Two fire elementals drift up the duct, lighting the glass."}
+    imps: {foes: [{monster: imp, n: 4}], text: "Imps rise off the magma, laughing."}
   wandering:
     - {w: 1, foes: [{monster: lavaBeetle}], text: "A lava beetle, following the warmth."}
     - {w: 1, foes: [{monster: imp}], text: "An imp out hunting."}
@@ -2382,7 +2391,7 @@ ember_kobolds:
     - "###............###########....##..............##.........############"
     - "########.......###########....##..z......z...z##..........###########"
     - "########.......###.................K.......$$.##....##....###########"
-    - "########.......###.........................$$.###...##....###........"
+    - "########.......###.........................$$ù###...##....###........"
     - "########.......###............................###...###...###.......M"
     - "##............o###..V..x..##.........##.....#####...####.........##.M"
     - "##...####......####....#####.........###....#####...####......#######"
@@ -2432,6 +2441,7 @@ ember_kobolds:
     - "#################################################SS##################"
     - "#####################################################################"
   legend:
+    ù: {kind: pickup, good: kobold_bane_oil, text: "A flask of rank oil, kept by someone who meant to use it on the king."}
     # Ways out: the two tunnels north to the bridges and the goblins' hall (B west, A east), the lava duct to the gnomes
     # (D), the old tunnel down toward the deep (E), and two tunnels out to the mountains (east, and K-1's south).
     N: {kind: stairs, to: ember_hall, at: N, up: true, sprite: none, label: "The west tunnel, to the bridge and the goblins' hall"}
@@ -2505,7 +2515,7 @@ ember_kobolds:
     lessons: {foes: [{monster: koboldShaman}, {monster: koboldElder}], text: "The pups scatter. Two shamans step between you and them."}
     guardians: {foes: [{monster: koboldWarrior}, {monster: koboldWarrior}, {monster: koboldElder}], text: "Warriors come out of the dens on both sides; behind them an elder raises its staff, and their muscles swell."}
     sacredpool: {foes: [{monster: koboldHighShaman}, {monster: koboldElder}], text: "Two figures rise out of the steam: the high shaman, and an elder at its side."}
-    king: {foes: [{monster: koboldKing}, {monster: koboldChampion}, {monster: koboldSpearman}], flags: [kobold_king_dead], text: "The old king rises from his black throne and takes up a bronze axe. His champion is already moving."}
+    king: {foes: [{monster: koboldKing}, {monster: koboldSpearman}], flags: [kobold_king_dead], text: "The old king rises from his black throne and takes up a bronze axe. His champion is already moving."}
     howling: {foes: [{monster: koboldWarrior}, {monster: koboldWorker}], text: "Kobolds at the pool's edge stop their howling and turn on you."}
     keeper: {foes: [{monster: koboldElder}, {monster: koboldSpearman}], text: "The keeper of the hall comes out between its guards, beads clicking at the doorway."}
     spirit: {foes: [{monster: steamElemental}], text: "A shape of steam stands up out of the pool. It does not want you here."}
@@ -2524,7 +2534,7 @@ ember_citadel:
   name: The Giants' Citadel
   kind: dungeon
   blurb: A city of the fire giants under the bottom of the mine, built in dressed black basalt veined with glowing quartz round a cavern lit by braziers. Its gate faces the duct; past the king's palace a guard house keeps the way to the dragon.
-  level: 10
+  level: 7
   look: {wall: "#2b2731", floor: "#37323e", ceiling: "#0c0b0e", fog: "#0c0608", torch: 1, tileset: ember_citadel, light: 9}
   map:
     - "##################################################N#########"
@@ -2556,7 +2566,7 @@ ember_citadel:
     - "#...@@@@@@@........@@@.@@@.@..........@.....@@@@@@@@@@@@@@@#"
     - "#...@@@@@@@................@....h.....@.....@@@@@@@@@@@@@@@#"
     - "#...@.......@@@@@@@........@..........@..........o.o.o....@#"
-    - "#...@.......@@@@@@@........@@@@@.@@@@@@.................E.@#"
+    - "#...@.......@@@@@@@........@@@@@ù@@@@@@.................E.@#"
     - "#...@.....@.@..............@@@@@.@@@@@@.....@.........P...@#"
     - "#...@@@@@@@.@..n...........@........l.@.....@....o.o.o....@#"
     - "#...@@@@@@@.@.....@........@z...K.....@.....@@@@@@@@@@@@@@@#"
@@ -2604,6 +2614,7 @@ ember_citadel:
     - "############################################################"
     - "############################################################"
   legend:
+    ù: {kind: pickup, good: giantsbane_oil, text: "A flask hidden in a slave's bolt-hole, marked with a giant's head and a knife."}
     # F-1, the gates
     D: {kind: stairs, to: ember_duct, at: C, up: true, sprite: none, label: "Up the ramp to the duct"}
     G: {kind: locked, see: true, tn: 16, forceTn: 20, label: "The citadel's gates", text: "Iron gates three times a man's height, barred inside with a beam of iron. A barred window looks out over the ramp."}
@@ -2666,21 +2677,21 @@ ember_citadel:
     x: {kind: prop, sprite: c_whitedragon, label: "An alabaster dragon, slender, its eyes two sapphires"}
     L: {kind: stairs, to: ember_lair, at: V, sprite: none, label: "The tunnel to the dragon's lair"}
   encounters:
-    gate: {foes: [{monster: fireGiantGuard}, {monster: fireGiantGuard}], text: "Two giants in black iron plate turn from the window and draw swords as long as you are tall."}
+    gate: {foes: [{monster: fireGiantGuard}], text: "A giant in black iron plate turns from the window and draws a sword as long as you are tall."}
     lattice: {foes: [{monster: fireGiantGuard}], text: "A young giant on the lattice watch, glad of something to do."}
     sleeper: {foes: [{monster: fireGiant}], text: "A giant heaves up off its furs."}
-    hall: {foes: [{monster: fireGiant}, {monster: fireGiant}, {monster: fireGiantYoung}], text: "Giants at the long tables put down their cups."}
+    hall: {foes: [{monster: fireGiant}, {monster: fireGiantYoung}], text: "A giant and a young one at the long tables put down their cups."}
     cook: {foes: [{monster: fireGiant}], text: "The cook comes round the cauldron with a ladle like a club."}
-    arena: {foes: [{monster: fireGiantYoung}, {monster: fireGiantYoung}, {monster: fireGiantGuard}], text: "The sparring stops. Here is better sport."}
-    warlord: {foes: [{monster: fireGiantWarlord}, {monster: fireGiantYoung}, {monster: fireGiantYoung}], text: "The warlord does not parley. His daughters hang back, feigning fear, until they see an opening."}
+    arena: {foes: [{monster: fireGiantYoung, n: 2}], text: "The sparring stops. Here is better sport."}
+    warlord: {foes: [{monster: fireGiantWarlord}, {monster: fireGiantYoung}], text: "The warlord does not parley. His daughter hangs back, feigning fear, until she sees an opening."}
     smith: {foes: [{monster: fireGiant}], text: "The smith turns from the anvil with the hammer still in his fist."}
-    miners: {foes: [{monster: fireGiant}, {monster: fireGiantYoung}, {monster: fireGiantYoung}, {monster: fireGiantYoung}], text: "The young giants drop their picks for their fists; the foreman wades in after them."}
+    miners: {foes: [{monster: fireGiant}, {monster: fireGiantYoung}], text: "The young giant drops her pick for her fists; the foreman wades in after."}
     jeweller: {foes: [{monster: fireGiant}], text: "The jeweller sets down something delicate and stands up, and up."}
     magus: {foes: [{monster: fireGiantMagus}], text: "The old magus rises in a wash of coloured crystal light."}
     wizard: {foes: [{monster: fireGiantWizard}], text: "A giant wizard looks up from a book of fire, delighted."}
     shades: {foes: [{monster: giantShade}, {monster: giantShade}], text: "The red mist in the marble gathers itself into two dead giants, and they rise to serve."}
-    royalguard: {foes: [{monster: fireGiantGuard}, {monster: fireGiantGuard}], text: "The king's guard close the doors behind you."}
-    king: {foes: [{monster: fireGiantKing}, {monster: fireGiantGuard}], flags: [giant_king_dead], text: "The king of the giants takes up his maul."}
+    royalguard: {foes: [{monster: fireGiantGuard}], text: "The king's guard closes the doors behind you."}
+    king: {foes: [{monster: fireGiantKing}], flags: [giant_king_dead], text: "The king of the giants takes up his maul."}
     vestibule: {foes: [{monster: fireGiantGuard}, {monster: fireGiantWizard}], text: "The two wardens of the dragon's door, a warrior and a wizard, step out from between the statues."}
   wandering:
     - {w: 1, foes: [{monster: fireGiantGuard}], text: "A giant warrior on his rounds of the courtyard."}
@@ -2692,7 +2703,7 @@ ember_lair:
   name: The Dragon's Lair
   kind: dungeon
   blurb: A domed cavern afire with lava light; a moat of molten rock round a ring of stone, one bridge across, and on the ring the great red dragon on its hoard.
-  level: 14
+  level: 8
   look: {wall: "#2a1e16", floor: "#3c2c22", ceiling: "#140604", fog: "#200604", torch: 1, tileset: ember_basalt, light: 12}
   map:
     - "##################################"
@@ -2704,7 +2715,7 @@ ember_lair:
     - "#########.....$$$$$$$$$.....######"
     - "#########...$$$$$$$$$$$$$...######"
     - "#######....$$$$$$$$$$$$$$$....####"
-    - "#######.o.$$$$$$.....$$$$$$...####"
+    - "#######.o.$$$$$$....O$$$$$$...####"
     - "######...$$$$$.........$$$$$...###"
     - "######..$$$$$...........$$$$$..###"
     - "#####...$$$$..........H..$$$$...##"
@@ -2726,6 +2737,7 @@ ember_lair:
     - "##################################"
     - "##################################"
   legend:
+    O: {kind: pickup, good: wyrmbane_oil, text: "A flask in the bones of the last who came for the dragon. They didn't get to use it."}
     V: {kind: stairs, to: ember_citadel, at: L, up: true, sprite: none, label: "Back to the vestibule"}
     o: {kind: note, label: "The dome", text: "The roof is a dome so high the lava light gives out before it does. Black smoke rolls along it. On the ring of stone across the fire, something breathes."}
     d: {kind: monster, encounter: dragon, label: "The great red dragon"}

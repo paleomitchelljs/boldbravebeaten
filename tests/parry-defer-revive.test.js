@@ -128,7 +128,7 @@ test('after a fight won in time: with no spell for it, the best healer makes a M
     const r = Battle.finish(w);
     const line = r.lines.find((l) => /works over Beren/.test(l));
     assert.ok(line, r.lines.join('\n'));
-    assert.match(line, /Medicine \d+ \+ -?\d+ = -?\d+ against 8/);
+    assert.match(line, /Medicine \d+ \+ -?\d+ = -?\d+ against 11/, "hard (11) since 2026-11-09");
     if (/too late/.test(line)) { lost++; assert.ok(beren.status.dead); } else { saved++; assert.ok(!beren.status.dead); }
   }
   assert.ok(saved && lost, `saved ${saved}, lost ${lost}`);

@@ -4,6 +4,30 @@ Last updated at commit: e8b6d645
 
 Keep this a short list. Tick things off, add new ones, and refresh the commit line after every push (`git log -1 --format=%h`).
 
+## Parties, respawn, AP each round, and the first tuning pass (the user, 2026-11-09)
+- [x] New Game takes 1 to 6 heroes (rules.yaml party.size 6). Seen in headless Chrome: six on the map and in a fight,
+  desktop and phone widths.
+- [x] Heroes start at level 1; start.yaml `skills` (stages) and `feats` are plans to level 10 (World.settle); a recruit
+  joins at the party's level. A fallen hero is back in the village to recruit again; a wiped party rises there
+  (Town.riseAgain). Testing only.
+- [x] AP rolled each round: 1 + d3 + SPD/2 (4.5 to 6.5 at SPD 5), turns in order of AP rolled (CONFIG.apDie). The
+  turn banner moved to the map's top edge and a computer-run turn waits for it (views/battle.js AI_PACE: 1.25 s, then
+  0.9 s an action). Pacing not watched in a browser.
+- [x] Medicine after a fight: TN hard (11), was moderate.
+- [x] Monster `level`, `tier`, `parts` (26 body-part goods, kind `part`); kind traits for bane oils. Rank and file lost
+  their armor (one simple weapon); bosses and toughs got helms and full coats. `tools/tiers.js` (tiers, `--enc`,
+  `--coat`). Results and method in sim/FINDINGS.md. Place levels: temple 1-5, orc valley 1-3, mine 1-8.
+- [x] Encounters recomposed by count (a party is three); the citadel's down to one or two giants; the warrens' drake no
+  longer wanders. A bane oil (or the right weapon) near each boss.
+- [ ] The golems: clay unbeatable, iron nearly, stone easy (one shared body is a tested design). The clay golem disarms
+  and the AI then kicks what blunt can't hurt; cuts on a tireless body go to STR/DEX/SPD, little to CON. Needs a
+  ruling: cuts on constructs to CON, no disarm from fists, or per-golem bodies.
+- [ ] Desert spectres untouched (level 15, only magic hurts them): still the open question below.
+- [ ] Casters are weak alone (M ≈ 2 at any CON/AP); they are bosses only with guards.
+- [ ] Small tweaks across systems (the user's invitation): the attacker's stamina when a blow is blocked (now only AP
+  rebounds), and others. Not started; measure with sim/arena.js before keeping any.
+- [ ] Unplaced monsters (wolves, trolls, drakes, wyverns, revenants…) have no tier.
+
 ## The kobold dens and the desert (the user, 2026-11-08)
 - [x] The kobolds animated (assets/ideas/character-animation-plan.md, cycle 5): the user's ten figures (plain, spear and
   bow kobolds; the patchwork warrior, its spear and bow states; the red-hat and brown-hat fencers; the king; the
