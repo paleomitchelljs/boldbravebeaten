@@ -1,5 +1,134 @@
 # Simulation findings
 
+## Stamina as a pool (2026-11-11; step 2 of `docs/PLAN.md`, rulings R1 to R3; PROVISIONAL, `CONFIG.stamina`)
+
+What changed (each part is a key of `CONFIG.stamina`; null restores the old rule, and with all three null the crawls
+reproduce the baseline fight for fight):
+
+- **R1 `regen: {scale: 3, struck: 0.5}`**: regeneration every round, regen × 3 (action costs were already × staminaScale
+  3, regeneration was not), half of it (rounded up, at least 1) in a round a blow took stamina. Heavy armor's negative
+  regeneration is whole every round. A crush (a constrictor) counts as a blow.
+- **R2 `spent: {attack: 2, defense: 2}`** with `vigor.spent: 0.5`: an action the fighter can't pay for is taken spent,
+  leaving them at 1; a spent blow is 2 easier to meet and lands at × 0.5; a defence taken spent is 2 harder. The
+  command panel shows the stamina in the warning colour with a "!" and says why.
+- **R3 `collapse: {rounds: 1}`**: stamina 0 is a collapse: prone, out for the rest of the round and the next, then
+  round with a round's regeneration, on the ground. Rouse, healing and Rally bring them round at once.
+- **Second Wind** (was: regenerate after up to 2 blunt): full regeneration when struck, and a collapse lasts only its
+  own round. **Rally** (was: regenerate at the round's end though struck): a round's regeneration at once to the side
+  within 3, and the collapsed among them come round.
+- **AI**: a collapsed foe in reach is a target, weighed against a standing one (`stamina.ai.finish`: × 1.25 if they
+  come round at this round's end, × 0.95 if later; it can't be met, and the blow goes to the body). A spent blow is
+  thrown only if it could finish someone (`stamina.ai.spentWorth` 30, about a likely collapse); otherwise the fighter
+  steps out of reach to get its full regeneration back, or stands and keeps its AP for a defence.
+- Metrics: collapses now split into got up / died while down / still down when the fight ended (and of those, on the
+  winning side, who come round after it). `sim/crawl.js` and `sim/swarm.js` `--set` now read JSON: before, `null`
+  became the string "null".
+
+Seed 4242, the step-1 commands. "Before" is the step-1 baseline (re-run with the three keys null, which matches it
+exactly and adds the new columns).
+
+**Against the targets** (first areas, party of 3; before → after):
+
+| Goal | Measure | Target | Before | After | Met? |
+|---|---|---|---|---|---|
+| Fast | median rounds (90th) | 3 to 5 | court 4 (7), hall 4 (14), valley 5 (17); duels 2 | court 3 (7), hall 4 (11), valley 5 (13); duels 2 (5) | crawls yes; duels no (unchanged) |
+| Lethal but playable | heroes dead a fight | ≤ 0.5 | 0.21, 0.34, 0.81 | 0.33, 0.39, 0.89 | 2 of 3; all three worse |
+| | places cleared of 30 | ≥ 18 | 12, 0, 3 | 17, 2, 3 | no (court close) |
+| Death spiral | survivor with a STR/DEX/SPD wound | ≥ ⅓ | 0% | 0% | no (step 3) |
+| | wounded twin's win rate | < 50%, falling | STR yes; DEX barely; SPD rises | the same shape (table below) | no |
+| Stamina matters | someone under ½ | ≥ ⅓ | 68%, 42%, 63%; duels 24% | 70%, 42%, 51%; duels 20% | crawls yes; duels no |
+| | collapses that get up in the same fight | most | 5 of 55, 9 of 60, 2 of 37; duels 0 of 39 | 11 of 54, 24 of 80, 1 of 30; duels 0 of 41 | **no** |
+| Tactical depth | largest share of blows by one action | < ½ | thrust 36%, 56%, 58% | thrust 38%, 50%, 57% | court only (unchanged) |
+| | blows on the head | < ¼ | 47%, 49%, 46% | 45%, 49%, 45% | no (step 4) |
+| Action economy | level-8 hero against N level-1 foes | loses at about N = 4 | 87, 65, 46, 42, 33, 24% | 88, 68, 48, 43, 36, 26% | roughly (unchanged) |
+
+**Crawls** (30 each). Collapses: all / got up / died while down / down at the end (of those on the winning side);
+heroes' alone after the slash.
+
+| Run | cleared | rounds med / 90th | dead a fight | under ½ / ¼ | collapses | heroes' collapses | top action (all; heroes') | head | kills by thrust |
+|---|---|---|---|---|---|---|---|---|---|
+| court 3, before | 12 | 4 / 7 | 0.21 | 68% / 51% | 55 / 5 / 1 / 49 (15) | 52 / 5 / 1 / 46 (15) | thrust 36%; 50% | 47% | 61% |
+| court 3, after | 17 | 3 / 7 | 0.33 | 70% / 48% | 54 / 11 / 18 / 25 (8) | 48 / 11 / 16 / 21 (8) | thrust 38%; 52% | 45% | 56% |
+| hall 3, before | 0 | 4 / 14 | 0.34 | 42% / 34% | 60 / 9 / 10 / 41 (7) | 52 / 9 / 6 / 37 (7) | thrust 56%; 56% | 49% | 65% |
+| hall 3, after | 2 | 4 / 11 | 0.39 | 42% / 36% | 80 / 24 / 29 / 27 (5) | 79 / 24 / 28 / 27 (5) | thrust 50%; 50% | 49% | 65% |
+| valley 3, before | 3 | 5 / 17 | 0.81 | 63% / 54% | 37 / 2 / 11 / 24 (1) | 30 / 2 / 9 / 19 (1) | thrust 58%; 44% | 46% | 65% |
+| valley 3, after | 3 | 5 / 13 | 0.89 | 51% / 44% | 30 / 1 / 11 / 18 (0) | 20 / 1 / 9 / 10 (0) | thrust 57%; shoot 48% | 45% | 63% |
+| court 4, before | 29 | 3 / 5 | 0.10 | 69% / 50% | 48 / 18 | | thrust 46%; 56% | 53% | 67% |
+| court 4, after | 30 | 3 / 5 | 0.21 | 60% / 34% | 33 / 14 / 14 / 5 (5) | 30 / 14 / 11 / 5 (5) | thrust 48%; 57% | 55% | 61% |
+| hall 4, before | 6 | 4 / 10 | 0.36 | 55% / 39% | 81 / 11 | | thrust 56%; 61% | 51% | 70% |
+| hall 4, after | 3 | 4 / 13 | 0.57 | 52% / 41% | 114 / 49 / 27 / 38 (12) | 109 / 49 / 27 / 33 (12) | thrust 56%; 64% | 50% | 75% |
+| valley 4, before | 11 | 4 / 31 | 0.85 | 59% / 41% | 46 / 2 | | thrust 55%; 45% | 42% | 62% |
+| valley 4, after | 12 | 4 / 18 | 1.04 | 47% / 35% | 38 / 6 / 22 / 10 (0) | 33 / 4 / 20 / 9 (0) | thrust 59%; 46% | 48% | 64% |
+
+**The new numbers, tried with `--set`** (party of 3; court / hall / valley):
+
+| Setting | cleared | dead a fight | heroes' collapses: got up / died down / of | rounds med (90th) |
+|---|---|---|---|---|
+| as built (regen.scale 3, spent 2/2, collapse.rounds 1) | 17 / 2 / 3 | 0.33 / 0.39 / 0.89 | 11/16/48, 24/28/79, 1/9/20 | 3 (7), 4 (11), 5 (13) |
+| regen.scale 2 | 14 / 0 / 7 | 0.47 / 0.44 / 0.78 | 14/23/56, 24/23/73, 1/10/20 | 4 (8), 4 (11), 5 (18) |
+| regen.scale 4 | 19 / 3 / 6 | 0.31 / 0.37 / 0.81 | 12/15/38, 15/19/55, 1/13/27 | 4 (8), 4 (11), 5 (15) |
+| spent.attack and .defense 4 | 19 / 0 / 8 | 0.37 / 0.49 / 0.83 | 24/20/55, 15/27/67, 3/12/21 | 4 (9), 4 (11), 5 (12) |
+| collapse.rounds 0 (not R3 as ruled) | 23 / 4 / 8 | 0.32 / 0.44 / 0.97 | 163/12/177, 65/21/94, 27/10/39 | 4 (8), 4 (11), 6 (17) |
+| the AI never strikes the collapsed (ai.finish 0) | 22 / 2 / 10 | 0.28 / 0.37 / 0.70 | 38/1/49, 49/11/92, 20/3/39 | 3 (7), 4 (12), 5 (16) |
+
+**Duels** (`--n 40`): win rates within a fight or two of the baseline everywhere (Beren beats Jabiku 78%, was 93%; the
+rest unchanged or ±7). Median 2 rounds. 41 collapses, none got up: a duel ends the round its one fighter on a side
+collapses (see the ruling below). **Spiral**: the same shape as the baseline. Pooled STR 38, 34, 21, 11, 8% at k = 0..4
+(was 50, 45, 32, 12, 12), SPD 38, 43, 53, 53, 46% (still rises), DEX 38, 37, 33, 33, 33%. The Beren mirror times out in
+75% of even fights (was 65%). **Swarm**: 88, 68, 48, 43, 36, 26% at N = 1..6 (was 87, 65, 46, 42, 33, 24).
+
+**What this says.**
+
+1. *Regeneration and the spent action do what they are for, but they are not the "get up" lever.* Between regen scale
+   2 and 4 the share of heroes' collapses that get up hardly moves (a fifth to a third), and 30 crawls a place can't
+   tell 3 from 4 on clears (the valley swings 3 to 7 between neighbouring settings). Faster regeneration means fewer
+   collapses, not more recoveries. I kept the numbers as built: 3 is the one that matches costs to regeneration on
+   principle, and nothing measured here argues for another.
+2. *Two things decide whether a collapse gets up, and neither is a regeneration number.* One is the length of the
+   collapse: with collapse.rounds 0, 163 of 177 heroes' collapses in the court get up. That is not R3 as approved (out
+   for a full round), so I did not adopt it. It also produces a yo-yo: 177 collapses in 107 fights, the same heroes
+   down and up again. The other is that the AI now finishes the collapsed. With the AI told never to (ai.finish 0),
+   38 of 49 get up in the court, clears go to 22, and deaths fall to 0.28. Under R3 as approved, a body lying beside a
+   foe for a round and a half is killed, so "most collapses get up" can only be met if collapses happen where no foe
+   can reach them, or are shorter, or a foe would rather fight the standing. **This needs a ruling** (below).
+3. *Fights are not longer.* Median rounds stay at 3 to 5 in every crawl and the 90th centile fell (hall 14 → 11, valley
+   17 → 13, valley of 4 31 → 18): a fight no longer waits on unconscious bodies. No new number lengthens fights.
+4. *Deaths rose everywhere* (court of 3 0.21 → 0.33, court of 4 0.10 → 0.21, hall of 4 0.36 → 0.57), almost all of it
+   the AI finishing collapsed heroes ("died down"; 16, 28, 9 heroes in the three places of 3). Clears still rose in the
+   court (12 → 17) because collapsed heroes now come back when their friends hold on. Before, the old AI ignored the
+   unconscious, so a hero who dropped was out but alive.
+5. *Duels can't show a recovery.* A fight ends at the round's end when a side has nobody standing, and a duel side is
+   one fighter. Duels are unchanged in length and almost unchanged in result.
+6. *The sword-and-shield stalemate is plate against a sword, not the shield.* Two Berens in full plate find the thrust
+   turned every time, so they trade shield bashes and kicks, which plate takes 3 of every 4 or 5. Beren's plate gives
+   him 0 regeneration, so it is a slow drain to the 30-round cap (75% of even fights). Hit locations make no difference
+   here: a full harness is the same everywhere. What would: the AI wrestling or throwing a foe it can't otherwise hurt
+   (step 5), or the user's call that two plated swordsmen should struggle and the answer is a hammer.
+7. *Side effects worth knowing.* Holding a grapple costs 6 stamina a round and an unstruck holder now regains 6, so a
+   hold costs nothing at steady state. A level-1 knight template still beats a level-8 hero almost one time in three
+   (knights row of the swarm).
+
+**Rulings I made that the plan did not cover.**
+
+- A fight still ends at a round's end when one side has nobody standing; collapsed counts as down. (The alternative,
+  fighting on until the collapsed come round, lets the winners finish them; same outcome, longer logs.)
+- Unconscious (until roused or healed) is kept for two causes: hero mode's knockout (a CON blow past the last point)
+  and a body called back from death by Raise + Life. Everything else at stamina 0 is a collapse, and the log and UI say
+  "collapses" and "Collapsed".
+- An action that would leave exactly 0 is spent, not paid (as `exertionCanKnockOut: false` had it refused): you never
+  spend yourself into a collapse; only blows, armor's drain, auras and the like do that.
+- Spent blows with a missile or a spell are easier to meet but no softer (vigor never touched them).
+- A collapse that begins during the round's end (bleeding, heavy armor) lasts the next round, the same as one taken
+  during the round.
+- The AI's spent-blow threshold and finishing weights are AI judgement, put in `CONFIG.stamina.ai` only so sims can
+  `--set` them.
+
+**Ruling wanted.** "Most collapses get up" and "the AI finishes the collapsed" pull against each other under a full
+round out. My recommendation: keep R3's length and the AI finishing; drop or change that target. The death it brings is
+the point of the design (lethal, and the cost of running dry is real), and the counterplay exists: Rally, rouse,
+healing, standing over a fallen friend. If the user wants more recoveries, the cleanest number is `collapse.rounds: 0`
+(the rest of the round only).
+
 ## Baseline for the tuning plan (2026-11-11; step 1 of `docs/PLAN.md`, no rule changed)
 
 Seed 4242 throughout. `node sim/crawl.js <place> --party 3|4 --n 30 --metrics`, `node sim/duels.js --n 40 --seed 4242
