@@ -12,11 +12,11 @@ head). Step 5 fixes the AI so the sims can be trusted, and step 6 re-tunes on to
 UI, which should describe the rules as they will be, so it comes after them. Step 9 is feats, last, because several
 feats patch things steps 2 to 4 make ordinary rules.
 
-## Rulings to approve before starting
+## Rulings (approved by the user, 2026-11-11, all ten as written)
 
-Each has a default. Strike or change any; the prompts say "as approved in the plan's rulings table".
+The prompts say "as approved in the plan's rulings table": this is that table.
 
-| # | Ruling | Default (recommended) | Used in |
+| # | Ruling | Approved | Used in |
 |---|---|---|---|
 | R1 | Stamina comes back every round | Yes: full regeneration in a round you took no stamina loss, half (rounded up, at least 1) in a round you did | 2 |
 | R2 | An action you can't pay the stamina for | Allowed as a *spent* action: it costs the stamina you have left down to 1, damage and defence rolls take a penalty, never refused | 2 |

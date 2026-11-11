@@ -8,7 +8,7 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
 
 ## Now: tuning (begun 2026-11-09)
 - [ ] **The plan** (`docs/PLAN.md`, 2026-11-11): nine prompts in order (metrics, stamina, wounds, the head, AI, re-tune,
-  two UI steps, feats), with rulings R1 to R10 awaiting approval. Magic items and parley are out of scope for now.
+  two UI steps, feats), rulings R1 to R10 approved by the user 2026-11-11. Next: prompt 1. Magic items and parley are out of scope for now.
 - [ ] **Weapon roles** (PROVISIONAL, 2026-11-10; top of `sim/FINDINGS.md`): a swung edge's blunt comes from its
   weight, heavy points thrust slower (longsword 2.3 AP), the staff's jab is 3, a battle axe exists. Punches and kicks
   take stamina only without Heavy Hands (the user's ruling), so shieldless fighters now swing at bone. Still open: the
