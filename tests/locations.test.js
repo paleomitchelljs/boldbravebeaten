@@ -152,7 +152,7 @@ test('aimed blows: a location costs its penalty against a defence (less for a th
   assert.ok(blk('torso') > blk('legs') - 0.11 && blk('torso') >= blk('legs'));
 });
 
-test('aimed blows: a declared location goes where it is aimed, with no location roll', async () => {
+test('aimed blows: a declared location goes where it is aimed when the on-target roll holds, with no location roll', async () => {
   const a = armed('A', 'longsword');
   const t = body('Helmed', [Items.makeArmor('plate', null, 'average', { covers: ['head'] })]);
   const chars = { [a.id]: a, [t.id]: t };
@@ -163,7 +163,7 @@ test('aimed blows: a declared location goes where it is aimed, with no location 
   const asked = [];
   const err = await Combat.act(enc, chars, { actor: a.id, type: 'strike', option: cut, target: t.id, location: 'legs' }, { roller: roller([], 5, asked), react: () => null });
   assert.strictEqual(err, null);
-  assert.ok(!asked.includes('Hit location'));
+  assert.ok(asked.includes('On target') && !asked.includes('Hit location'), asked.join(', '));
   assert.ok(enc.log.some((l) => /on the legs \(bare\)/.test(l.text)), enc.log.map((l) => l.text).join('\n'));
   assert.strictEqual(await Combat.act(enc, chars, { actor: a.id, type: 'strike', option: cut, target: t.id, location: 'tail' }, { roller: roller(), react: () => null }), 'No such place to aim at');
 });
@@ -197,4 +197,34 @@ test('wounds by location: a cut takes from the location\'s attributes; a hand ma
   const L = CONFIG.locations;
   const mean = L.order.reduce((n, l) => n + L.share[l] * W.vital[l], 0);
   assert.ok(Math.abs(mean - 1) < 0.02, mean);
+});
+
+test('aimed blows land where aimed only so often (locations.aim.hold); otherwise where the body is open', async () => {
+  const H = CONFIG.locations.aim.hold;
+  const a = armed('A', 'longsword');
+  a.skills.melee = 2;
+  const t = body('Helmed', [Items.makeArmor('plate', null, 'average', { covers: ['head'] })]);
+  const cut = Object.assign({}, C.attackOptions(a).find((o) => o.motion === 'swing'), { aim: 'legs' });
+  const p = Combat.aimHold(a, t, cut);
+  assert.ok(Math.abs(p - Math.min(H.max, H.base + H.perSkill * 2)) < 1e-9);
+  // Down, held or prone: it lands where aimed.
+  t.status.prone = true;
+  assert.equal(Combat.aimHold(a, t, cut), 1);
+  t.status.prone = false;
+  // A missed on-target roll goes to the location roll.
+  const chars = { [a.id]: a, [t.id]: t };
+  const enc = Combat.createEncounter('t', [a.id, t.id], chars, 4, 1);
+  enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[t.id] = { x: 1, y: 0 };
+  await Combat.startRound(enc, chars, roller([10, 1]));
+  const asked = [];
+  enc.ap[a.id] = 500;
+  await Combat.act(enc, chars, { actor: a.id, type: 'strike', option: C.attackOptions(a).find((o) => o.motion === 'swing'), target: t.id, location: 'legs' }, { roller: roller([], 99, asked), react: () => null });
+  assert.ok(asked.includes('On target') && asked.includes('Hit location'), asked.join(', '));
+  // The AI's expectation is the blend: hold × there + (1 − hold) × the body by share.
+  const there = Combat.computeHit(a, t, cut, { location: 'legs' });
+  const plain = Object.assign({}, cut); delete plain.aim;
+  const mean = Combat.computeHit(a, t, plain);
+  const aimed = Combat.computeHit(a, t, cut);
+  assert.ok(Math.abs(aimed.slashToAttrs - (p * there.slashToAttrs + (1 - p) * mean.slashToAttrs)) < 1e-6);
+  assert.equal(aimed.aimHold, p);
 });

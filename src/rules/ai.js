@@ -65,13 +65,14 @@
     // What a wound does where it is aimed (CONFIG.locations.wounds.effects): a dropped weapon, a fall, a stun.
     const E = h.location && G.CONFIG.locations && G.CONFIG.locations.wounds && G.CONFIG.locations.wounds.effects;
     const fx = E ? E[h.location] : null;
+    const held = h.aimHold != null ? h.aimHold : 1; // an aimed blow lands there only so often
     if (fx) {
       const sz = (target.traits && target.traits.size) || 1;
       const p = (per, n) => Math.min(0.9, (per * n) / sz);
       const wound = h.toCON + h.slashToAttrs;
-      if (fx.disarm && C.wieldedWeapon(target) && !C.wieldedWeapon(target).natural) v += p(fx.disarm, wound) * 8;
-      if (fx.trip && !target.status.prone) v += p(fx.trip, wound) * 8;
-      if (fx.stun && !C.tireless(target)) v += p(fx.stun, h.bluntToStamina + h.bluntToCON) * 6;
+      if (fx.disarm && C.wieldedWeapon(target) && !C.wieldedWeapon(target).natural) v += held * p(fx.disarm, wound) * 8;
+      if (fx.trip && !target.status.prone) v += held * p(fx.trip, wound) * 8;
+      if (fx.stun && !C.tireless(target)) v += held * p(fx.stun, h.bluntToStamina + h.bluntToCON) * 6;
     }
     // A kill, at the odds of a point finding a gap when it has to (CONFIG.pierce).
     const con = C.attr(target, 'CON');

@@ -29,6 +29,11 @@ locations:
     penalty: {head: 2, torso: 0, arms: 1, hands: 2, legs: 1, feet: 3}
     thrustLess: 1
     shield: {covers: [torso, arms], block: 1}
+    # PROVISIONAL (the user, 2026-11-11: a blow lands where the body happens to be open more than where it is aimed):
+    # an aimed blow lands where it was aimed with chance base + perSkill × the attacker's skill (Melee, Ranged), at
+    # most max; otherwise it lands where the location roll puts it, as an unaimed blow does. Against a defender who
+    # can't move to cover it (prone, down, held, or not seeing the blow) it lands where aimed. null: always where aimed.
+    hold: {base: 0.4, perSkill: 0.05, max: 0.85}
   # wounds (step 3): what a wound does where it lands. Every blow at a body rolls its location once this is set
   # (a full harness too: the armor is the same everywhere, the body isn't).
   #   attrs   what each point of a cut takes, rolled among these (the old d4 was STR, CON, SPD, DEX everywhere);
