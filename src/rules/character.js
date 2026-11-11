@@ -561,6 +561,13 @@
     return Math.max(1, freshStamina(c) - (c.weary || 0));
   }
 
+  // Current stamina never above the maximum (which reads current attributes, conditions included).
+  function clampStamina(c) {
+    if (tireless(c) || c.stamina == null) return;
+    const m = maxStamina(c);
+    if (c.stamina > m) c.stamina = m;
+  }
+
   // Max stamina before weariness (CONFIG.weariness).
   function freshStamina(c) {
     let s = 0;
@@ -1224,7 +1231,7 @@
     newCharacter, normalize, freshStatus,
     rank, skill, skillBudget, skillsSpent, skillsLeft, canRaiseSkill, canLowerSkill, raiseSkill, lowerSkill, attackSkill, defenseSkill, featSkill, featCount, featBudget, treeCount, tierCount, tierName, canTakeFeat, closedBy, parseReq, reqMet, canRemoveFeat, addFeat, removeFeat, reqText, roman,
     conditioning, attr, attrMax, combatAttr, armorInfo, armorPieces, armorAt, armorUniform, shieldInfo, shieldReady, wieldedWeapon, offhandWeapon,
-    maxStamina, freshStamina, wearyRound, wearyTime, regen, fatiguePenalty, apPool, projectedPool, apScale, costScale, fmtAP, minAP, baseAP, armorAP, quickCut, moveCost, squaresFor, squaresPerAP, handsBusy, castingHands, weaponStrain, inRange, optionKey, needsWindUp, strOffset, staminaCost, effectiveWeight, isLightWeapon,
+    maxStamina, clampStamina, freshStamina, wearyRound, wearyTime, regen, fatiguePenalty, apPool, projectedPool, apScale, costScale, fmtAP, minAP, baseAP, armorAP, quickCut, moveCost, squaresFor, squaresPerAP, handsBusy, castingHands, weaponStrain, inRange, optionKey, needsWindUp, strOffset, staminaCost, effectiveWeight, isLightWeapon,
     strBonus, weaponDamage, mainIndex, attackOptions, actionCost, ammoLeft, gearWarnings, tireless, webTax,
     damageAttr, healAttr, totalDamage, updateCondition, isActive, bleedPerRound, collapsed, comeRound, roundRegen,
     grapple, holding, isHeld, isPinned, inClinch,

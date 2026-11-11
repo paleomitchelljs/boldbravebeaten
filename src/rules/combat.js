@@ -1028,7 +1028,7 @@
 
   // A hit result that does nothing (the base the special cases fill in).
   function blankHit() {
-    return { vec: [0, 0, 0], P: 0, S: 0, B: 0, armored: false, toCON: 0, slashToAttrs: 0, bluntToStamina: 0, bluntToCON: 0, converted: 0, durLoss: 0, mitigated: { P: 0, S: 0, B: 0 }, noBleed: true, pierceVital: 0, cutVital: 0, bleedFactor: 1, bleedRounds: CONFIG.bleedRounds };
+    return { vec: [0, 0, 0], P: 0, S: 0, B: 0, armored: false, toCON: 0, slashToAttrs: 0, bluntToStamina: 0, bluntToCON: 0, pointToAttrs: 0, crushToAttrs: 0, expCON: 0, expAttrs: 0, converted: 0, durLoss: 0, mitigated: { P: 0, S: 0, B: 0 }, noBleed: true, pierceVital: 0, cutVital: 0, bleedFactor: 1, bleedRounds: CONFIG.bleedRounds };
   }
 
   // What a spell of some element does to the target: its element's keyword times `magic` (every spell).
@@ -1135,7 +1135,8 @@
       return res;
     }
     const where = flags.location || option.aim || null;
-    if (where || !L || C.armorUniform(target)) return at(where);
+    // With wounds that differ by location (R4, R5) a body the same everywhere still differs underneath.
+    if (where || !L || (C.armorUniform(target) && !woundsByLocation())) return at(where);
     const parts = L.order.map((loc) => ({ loc, w: L.share[loc] || 0, h: at(loc) }));
     const res = blendMany(parts);
     res.byLocation = parts;
@@ -1172,12 +1173,19 @@
   // The expectation over several outcomes [{w, h}] (weights summing to 1): hit locations.
   function blendMany(parts) {
     const out = Object.assign({}, parts[0].h);
-    const keys = ['toCON', 'slashToAttrs', 'bluntToStamina', 'bluntToCON', 'durLoss', 'converted', 'pierceVital', 'cutVital'];
+    const keys = ['toCON', 'slashToAttrs', 'bluntToStamina', 'bluntToCON', 'durLoss', 'converted', 'pierceVital', 'cutVital', 'pointToAttrs', 'crushToAttrs', 'expCON', 'expAttrs'];
     for (const k of keys) out[k] = parts.reduce((n, p) => n + (p.h[k] || 0) * p.w, 0);
     out.mitigated = {};
     for (const k of ['P', 'S', 'B']) out.mitigated[k] = parts.reduce((n, p) => n + p.h.mitigated[k] * p.w, 0);
     out.armored = parts.some((p) => p.h.armored);
     out.pierce = null; out.gap = null; out.location = null; out.piece = null;
+    // Armor the same everywhere (wounds that differ by location blend it too): the point meets it the same way at
+    // every location, so keep how (burst, a gap at the same odds), with what a found gap and a turned point do blended.
+    const p0 = parts[0].h;
+    if (parts.every((p) => p.h.pierce === p0.pierce)) out.pierce = p0.pierce;
+    if (p0.gap && parts.every((p) => p.h.gap && p.h.gap.chance === p0.gap.chance)) {
+      out.gap = Object.assign({}, p0.gap, { got: blendMany(parts.map((p) => ({ w: p.w, h: p.h.gap.got }))), turned: blendMany(parts.map((p) => ({ w: p.w, h: p.h.gap.turned }))) });
+    }
     return out;
   }
 
@@ -1214,7 +1222,7 @@
   // The expectation of two outcomes (a gap found or the point turned) for the AI and the preview.
   function blendHits(a, b, p) {
     const out = Object.assign({}, a);
-    for (const k of ['toCON', 'slashToAttrs', 'bluntToStamina', 'bluntToCON', 'durLoss', 'converted']) out[k] = a[k] * p + b[k] * (1 - p);
+    for (const k of ['toCON', 'slashToAttrs', 'bluntToStamina', 'bluntToCON', 'durLoss', 'converted', 'pointToAttrs', 'crushToAttrs', 'expCON', 'expAttrs']) out[k] = (a[k] || 0) * p + (b[k] || 0) * (1 - p);
     out.mitigated = {};
     for (const k of ['P', 'S', 'B']) out.mitigated[k] = a.mitigated[k] * p + b.mitigated[k] * (1 - p);
     out.pierce = null;
@@ -1233,7 +1241,7 @@
     const toBlunt = C.damageMult(target, 'B');
     if (way === 'turned') { B += Math.round(P * CONFIG.pierce.deflectBlunt * toBlunt); P = 0; }
     const motion = option.motion === 'unarmed' ? 'swing' : option.motion;
-    const res = { vec: [P, S, B], P, S, B, armored: false, toCON: 0, slashToAttrs: 0, bluntToStamina: 0, bluntToCON: 0, converted: 0, durLoss: 0, mitigated: { P: 0, S: 0, B: 0 }, pierce: way };
+    const res = { vec: [P, S, B], P, S, B, armored: false, toCON: 0, slashToAttrs: 0, bluntToStamina: 0, bluntToCON: 0, crushToAttrs: 0, pointToAttrs: 0, converted: 0, durLoss: 0, mitigated: { P: 0, S: 0, B: 0 }, pierce: way };
 
     if (armored) {
       res.armored = true;
@@ -1295,10 +1303,18 @@
       else res.bluntToStamina = B;
     }
     // Crushing: blunt past the armor beyond a threshold breaks bones (CON) as well as winding.
+    // R5 (CONFIG.impact.crushBare): on a location with no armor, bone breaks sooner; with crushAttrs, a crush where
+    // the blow landed takes that location's attributes (rolled per point in applyHit), not CON alone.
     const I = CONFIG.impact;
     if (I && res.bluntToStamina > 0 && !C.tireless(target)) {
-      const crush = Math.floor(Math.max(0, res.bluntToStamina - I.crushAt * sizeOf(target)) / I.crushPer);
-      if (crush > 0) { res.bluntToCON += crush; res.crushed = crush; }
+      const bare = !(piece && piece.durability > 0);
+      const at = bare && I.crushBare != null ? I.crushBare : I.crushAt;
+      const crush = Math.floor(Math.max(0, res.bluntToStamina - at * sizeOf(target)) / I.crushPer);
+      if (crush > 0) {
+        if (I.crushAttrs && loc) res.crushToAttrs += crush;
+        else res.bluntToCON += crush;
+        res.crushed = crush;
+      }
     }
     // Tireless creatures have no stamina to absorb a blow: blunt goes to the body (CON), and
     // they neither bleed nor take venom.
@@ -1308,7 +1324,9 @@
       res.noBleed = true;
     } else if (G.Effects.has(target, 'noBleed')) res.noBleed = true;
     // An untrained punch or kick takes stamina only: no broken bones, nothing off a body that has no stamina to lose.
-    if (option.staminaOnly) { res.bluntToCON = 0; res.crushed = 0; }
+    if (option.staminaOnly) { res.bluntToCON = 0; res.crushToAttrs = 0; res.crushed = 0; }
+    // R4 (locations.wounds.pointToCON): a point into a limb takes the limb's attributes; the wound roll sends it to CON.
+    if (pointIntoLimb(target, loc)) { res.pointLimb = true; res.pointToAttrs = res.toCON; res.toCON = 0; }
     // Wound roll odds (CONFIG.vital): deep points find vital spots; armor guards them.
     const w = option.wound;
     res.pierceVital = 0;
@@ -1329,7 +1347,63 @@
       if (w.kind === 'S') res.cutVital = w.vital * guard;
       else res.pierceVital = w.vital * guard;
     }
+    expectWounds(target, res, loc);
     return res;
+  }
+
+  // CONFIG.locations.wounds: what one point of a wound takes where it lands, rolled among these. A tireless body
+  // (tirelessCON) has no strength or speed to lose, only its frame: CON wherever it lands. Nowhere in particular: the
+  // old d4 (STR, CON, SPD, DEX).
+  function woundTable(target, loc) {
+    const W = CONFIG.locations && CONFIG.locations.wounds;
+    if (W && W.tirelessCON && C.tireless(target)) return ['CON'];
+    if (loc && W && W.attrs && W.attrs[loc]) return W.attrs[loc];
+    return [1, 2, 3, 4].map((i) => CONFIG.slashAttributeTable[i]);
+  }
+
+  // R4: a point that goes in here takes the location's attributes rather than CON (not the head or the torso).
+  function pointIntoLimb(target, loc) {
+    const W = CONFIG.locations && CONFIG.locations.wounds;
+    if (!loc || !W || !W.pointToCON || !W.attrs || !W.attrs[loc] || W.pointToCON.includes(loc)) return false;
+    return !(W.tirelessCON && C.tireless(target));
+  }
+
+  // Do wounds differ by location beyond the vital odds (R4, R5)? Then the AI and the preview blend over locations
+  // even on a body whose armor is the same everywhere.
+  function woundsByLocation() {
+    const W = CONFIG.locations && CONFIG.locations.wounds, I = CONFIG.impact;
+    return !!(W && (W.pointToCON || (I && (I.crushAttrs || I.crushBare != null))));
+  }
+
+  // The expectation of what applyHit takes for this hit at this location (wound rolls, the vital roll, the attribute
+  // rolls), as res.expCON and res.expAttrs (every other attribute). Linear, so blends over gaps and locations stay
+  // exact. A carried cut is not in it (it is rolled where it carries).
+  function expectWounds(target, res, loc) {
+    const m = CONFIG.vital ? CONFIG.vital.mult : 1;
+    const pV = sizedVital(target, vitalNeed(res.pierceVital || 0)) / 10;
+    const cV = sizedVital(target, vitalNeed(res.cutVital || 0)) / 10;
+    const t = woundTable(target, loc);
+    const c = t.filter((a) => a === 'CON').length / t.length;
+    const pt = res.pointToAttrs || 0, sl = res.slashToAttrs || 0, cr = res.crushToAttrs || 0;
+    res.expCON = res.toCON * (1 + pV * (m - 1)) + res.bluntToCON + pt * (pV * m + (1 - pV) * c) + sl * (c + cV) + cr * c;
+    res.expAttrs = pt * (1 - pV) * (1 - c) + sl * (1 - c) + cr * (1 - c);
+    return res;
+  }
+
+  // Roll n points of a wound among the attributes of where it landed; returns {attr: points}.
+  async function rollWound(attacker, target, loc, n, label, roller) {
+    const table = woundTable(target, loc);
+    const tally = {};
+    if (n <= 0) return tally;
+    if (table.length === 1) { tally[table[0]] = n; C.damageAttr(target, table[0], n); return tally; }
+    const where = loc ? ` (${(CONFIG.locations.names[loc] || loc).toLowerCase()})` : '';
+    const rolls = await roller({ actorId: attacker.id, sides: table.length, count: n, label, detail: `${n}d${table.length} on ${target.name}${where}: ` + table.map((a, i) => `${i + 1} ${a}`).join(', ') });
+    for (const r of rolls) {
+      const a = table[Math.max(0, Math.min(table.length - 1, r - 1))];
+      tally[a] = (tally[a] || 0) + 1;
+      C.damageAttr(target, a, 1);
+    }
+    return tally;
   }
 
   // The d10 result at or under which a wound roll is vital (0: no roll).
@@ -1372,6 +1446,7 @@
       res.toCON = Math.floor(left / M.fireConPer);
       res.bluntToStamina = left - res.toCON;
     }
+    res.expCON = res.toCON;
     return res;
   }
 
@@ -1383,6 +1458,7 @@
     mag = Math.floor(mag * spellMult(target, 'life'));
     const res = blankHit();
     if (!C.tireless(target)) res.toCON = Math.floor(mag / 2);
+    res.expCON = res.toCON;
     return res;
   }
 
@@ -1521,7 +1597,7 @@
       if (h.durLoss) parts.push(`armor durability −${h.durLoss}`);
     }
     // What landed where it struck, for the location's wound effects (before a carried cut joins it).
-    const primary = { loc: h.location, toCON: h.toCON, slash: h.slashToAttrs, blunt: h.bluntToStamina + h.bluntToCON };
+    const primary = { loc: h.location, toCON: h.toCON + (h.pointToAttrs || 0), slash: h.slashToAttrs, blunt: h.bluntToStamina + h.bluntToCON + (h.crushToAttrs || 0) };
     // The carried part of a cut: its own armor, its own wear, then it counts with the rest of the blow.
     if (carried) {
       const cn = (CONFIG.locations.names[carried.location] || carried.location).toLowerCase();
@@ -1542,7 +1618,8 @@
     if (h.armored && h.pierce !== 'turned' && (h.pierce !== 'gap' || CONFIG.pierce.gapPass) && CONFIG.pierceMode === 'roll' && h.pierceLeft > 0 && h.pass < 1) {
       const need = Math.round(h.pass * 10);
       const rolls = await roller({ actorId: attacker.id, sides: 10, count: h.pierceLeft, label: 'Piercing through armor', detail: `${h.pierceLeft}d10 vs ${target.name}'s armor: each ${need} or less reaches CON` });
-      h.toCON = rolls.filter((r) => r <= need).length;
+      const n = rolls.filter((r) => r <= need).length;
+      if (h.pointLimb) h.pointToAttrs = n; else h.toCON = n;
     }
     let pierced = 0, vital = false, cutVital = false;
     if (h.toCON > 0) {
@@ -1561,23 +1638,31 @@
         }
       }
     }
+    if (h.pointToAttrs > 0) {
+      // R4: a point into a limb. The wound roll (weighted by location) finds an artery or a vital spot: CON × mult, as
+      // anywhere; otherwise each point takes one of the limb's attributes.
+      const n = h.pointToAttrs;
+      wound += n;
+      pierced += n;
+      const need = sizedVital(target, vitalNeed(h.pierceVital));
+      if (need > 0 && (await roller({ actorId: attacker.id, sides: 10, count: 1, label: 'Wound roll', detail: `d10: ${need} or less is a vital wound (${n} × ${CONFIG.vital.mult} CON); else the ${(CONFIG.locations.names[primary.loc] || primary.loc).toLowerCase()} takes it` }))[0] <= need) {
+        C.damageAttr(target, 'CON', n * CONFIG.vital.mult);
+        parts.push(`VITAL WOUND ${n * CONFIG.vital.mult} CON`);
+        vital = true;
+      } else {
+        const tally = await rollWound(attacker, target, primary.loc, n, 'Where the point goes in', roller);
+        parts.push(Object.keys(tally).map((a) => `${tally[a]} ${a}`).join(', '));
+      }
+    }
     if (h.slashToAttrs > 0) {
       // Each point of a cut takes an attribute: from the location's table (CONFIG.locations.wounds.attrs), else the
       // old d4 (1 STR, 2 CON, 3 SPD, 4 DEX). A carried cut's points take from where it carried to.
-      const WA = CONFIG.locations && CONFIG.locations.wounds && CONFIG.locations.wounds.attrs;
       const groups = [{ loc: primary.loc, n: h.slashToAttrs - (carried ? carried.slashToAttrs : 0) }];
       if (carried && carried.slashToAttrs > 0) groups.push({ loc: carried.location, n: carried.slashToAttrs });
       const tally = {};
       for (const g of groups) {
-        if (g.n <= 0) continue;
-        const table = g.loc && WA && WA[g.loc] ? WA[g.loc] : [1, 2, 3, 4].map((i) => CONFIG.slashAttributeTable[i]);
-        const where = g.loc ? ` (${(CONFIG.locations.names[g.loc] || g.loc).toLowerCase()})` : '';
-        const rolls = await roller({ actorId: attacker.id, sides: table.length, count: g.n, label: 'Slashing hit locations', detail: `${g.n}d${table.length} on ${target.name}${where}: ` + table.map((a, i) => `${i + 1} ${a}`).join(', ') });
-        for (const r of rolls) {
-          const a = table[Math.max(0, Math.min(table.length - 1, r - 1))];
-          tally[a] = (tally[a] || 0) + 1;
-          C.damageAttr(target, a, 1);
-        }
+        const got = await rollWound(attacker, target, g.loc, g.n, 'Slashing hit locations', roller);
+        for (const a in got) tally[a] = (tally[a] || 0) + got[a];
       }
       parts.push(Object.keys(tally).map((a) => `${tally[a]} ${a}`).join(', '));
       wound += h.slashToAttrs;
@@ -1594,6 +1679,11 @@
     if (h.bluntToCON > 0) {
       C.damageAttr(target, 'CON', h.bluntToCON);
       parts.push(`${h.bluntToCON} CON (blunt)`);
+    }
+    if (h.crushToAttrs > 0) {
+      // R5: bone breaks where the blow landed.
+      const tally = await rollWound(attacker, target, primary.loc, h.crushToAttrs, 'Broken bones', roller);
+      parts.push('bone breaks: ' + Object.keys(tally).map((a) => `${tally[a]} ${a}`).join(', '));
     }
     if (h.bluntToStamina > 0) {
       let amt = h.bluntToStamina;
@@ -1639,7 +1729,7 @@
       parts.push('bleeding');
     }
     // A blow that hurts wakes the mesmerized and ends a calm.
-    const harmed = h.toCON + h.slashToAttrs + h.bluntToCON + h.bluntToStamina > 0;
+    const harmed = h.toCON + (h.pointToAttrs || 0) + h.slashToAttrs + h.bluntToCON + (h.crushToAttrs || 0) + h.bluntToStamina > 0;
     if (harmed && G.Conditions) for (const x of G.Conditions.list(target).slice()) {
       if ((CONFIG.conditions[x.key] || {}).breakOnHarm) { G.Conditions.remove(target, x.key); parts.push(`${CONFIG.conditions[x.key].name.toLowerCase()} no more`); }
     }
@@ -1658,7 +1748,7 @@
     else if (st.unconscious && !wasDown) tail = ` ${target.name} ${downWord(target)}.`;
     // Impact: a hard blow throws its target back.
     if (harmed && CONFIG.impact) {
-      const landed = h.bluntToStamina + h.bluntToCON + (h.toCON + h.slashToAttrs) / 2;
+      const landed = h.bluntToStamina + h.bluntToCON + (h.crushToAttrs || 0) + (h.toCON + (h.pointToAttrs || 0) + h.slashToAttrs) / 2;
       const back = Math.min(CONFIG.impact.knockbackMax, Math.floor(landed / CONFIG.impact.knockbackPer / sizeOf(target)));
       if (back > 0 && !option.spell && !st.dead && attacker !== target && enc.pos[attacker.id] && enc.pos[target.id] && G.Magic) {
         await G.Magic.push(enc, chars, target, enc.pos[attacker.id], back, roller);
@@ -3018,6 +3108,6 @@
     foeSquares, fearSource, fleeSteps, mustFlee,
     unseenBy, strikeEffects, conditionForbids, ATTACK_TYPES, DEFENSE_TYPES, shoveReach, log, rollDie, castSpell, knockDown, stability, releaseAll: clearGrapple,
     createEncounter, autoPlace, startRound, currentActor, legalActions, act, validate, endTurn, defer, submit, describeDecl, apLeft, defenseOptions, coverOptions, opportunityOptions,
-    vitalNeed, aimHold, projectedPos, dist, comesRoundAt, collapseRounds, isSpent, canPay, defenseOdds, parryCarryShare, leverage, skillEdge, feintScore, readScore, blowForce, aimPenalty, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolveAction, finishRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
+    vitalNeed, woundTable, aimHold, projectedPos, dist, comesRoundAt, collapseRounds, isSpent, canPay, defenseOdds, parryCarryShare, leverage, skillEdge, feintScore, readScore, blowForce, aimPenalty, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolveAction, finishRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

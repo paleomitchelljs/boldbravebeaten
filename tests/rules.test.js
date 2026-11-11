@@ -30,6 +30,8 @@ function asWritten(fn) {
     // Stamina as the Specifics have it: no regeneration in a round struck, "too exhausted", unconscious at 0 (the
     // tuning plan's R1 to R3 off).
     stamina: Object.assign({}, C0.stamina, { regen: null, spent: null, collapse: null }),
+    // Crushing as the Specifics have it: one threshold, all to CON (the tuning plan's R5 off; R4 goes with wounds above).
+    impact: Object.assign({}, C0.impact, { crushBare: null, crushAttrs: false }),
   };
   const saved = {};
   for (const k of Object.keys(spec)) saved[k] = C0[k];
@@ -1751,7 +1753,7 @@ test('impact: heavy blunt crushes, a hard blow throws its target back, and big b
   man.base.CON = 10;
   man.stamina = C.maxStamina(man);
   const h = Combat.computeHit(giant, man, club, {});
-  assert.ok(h.crushed > 0 && h.bluntToCON >= h.crushed, 'bones break');
+  assert.ok(h.crushed > 0 && h.bluntToCON + (h.crushToAttrs || 0) > 0, 'bones break');
   // A troll's fist into a sturdy man: crushed a little, hurled back.
   const [troll] = B.Enemies.makeMonster('caveTroll');
   const fist = C.attackOptions(troll).find((o) => o.label === 'Fists');
@@ -2067,7 +2069,7 @@ test('the user\'s armor research: picks rupture plate, rondels burst mail, mail 
   assert.ok(hit('warhammer', 'swing', 'beak', 'plate').gap);
   const two = hit('warhammer', 'twoHanded', 'beak', 'plate');
   assert.strictEqual(two.pierce, 'burst');
-  assert.ok(two.toCON >= 1, 'and wounds through it');
+  assert.ok(two.toCON + two.pointToAttrs >= 1, 'and wounds through it');
   assert.ok(hit('warhammer', 'power', 'beak', 'plate', { material: 'steel' }, { STR: 6 }).gap, 'steel holds against an average arm');
   assert.strictEqual(hit('warhammer', 'power', 'beak', 'plate', { material: 'steel' }, { STR: 10 }).pierce, 'burst');
   // 2. The rondel bursts iron mail where the common dagger can't; plate it must find a gap in.
@@ -2077,8 +2079,8 @@ test('the user\'s armor research: picks rupture plate, rondels burst mail, mail 
   assert.ok(B.DATA.WEAPONS.rondel.dagger, 'it counts as a dagger (Coup de Grâce)');
   // 3. A greatsword power cut breaks bones through mail; plate spreads it; a sword swing on mail stays a bruise.
   const onMail = hit('greatsword', 'power', 'edge', 'mail', null, { STR: 7 });
-  assert.ok(onMail.crushed > 0 && onMail.bluntToCON > 0, 'collarbones');
-  assert.ok(!hit('greatsword', 'power', 'edge', 'plate', null, { STR: 7 }).bluntToCON);
+  assert.ok(onMail.crushed > 0 && onMail.bluntToCON + onMail.crushToAttrs > 0, 'collarbones');
+  { const p = hit('greatsword', 'power', 'edge', 'plate', null, { STR: 7 }); assert.ok(!p.bluntToCON && !p.crushToAttrs); }
   assert.ok(hit('longsword', 'swing', 'edge', 'mail').bluntToStamina <= 4); // 2 before the blade's weight counted (weaponPhysics.edgeBlunt)
   // 4. Padding stops a sword cut, not a greatsword chop.
   assert.strictEqual(hit('longsword', 'swing', 'edge', 'padded').slashToAttrs, 0);

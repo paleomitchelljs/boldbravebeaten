@@ -37,13 +37,20 @@ locations:
   # wounds (step 3): what a wound does where it lands. Every blow at a body rolls its location once this is set
   # (a full harness too: the armor is the same everywhere, the body isn't).
   #   attrs   what each point of a cut takes, rolled among these (the old d4 was STR, CON, SPD, DEX everywhere);
-  #           a point that goes in (piercing) still takes CON
+  #           (and of a crush, with CONFIG.impact.crushAttrs)
+  #   pointToCON  PROVISIONAL (docs/PLAN.md R4): where a point that goes in (piercing) takes CON; elsewhere its points
+  #           take the location's attrs, rolled as a cut's, unless the wound roll is vital (then CON × vital.mult).
+  #           null: CON everywhere (the old rule).
+  #   tirelessCON PROVISIONAL (step 3): a tireless body (no stamina; undead, constructs) takes every point that reaches
+  #           it to CON wherever it lands: it has no strength to lose, only a frame to break. false: by location.
   #   vital   × the wound roll's chance there (share-weighted to 1, so overall lethality stays put)
   #   effects per point of wound that reached the body there (÷ the target's size): disarm (drops what is in
   #           hand), trip (knocked down); stun: per point of blunt that lands on the head (CON resists, as a spell)
   wounds:
     attrs: {head: [CON, INT, WIL], torso: [CON, STR], arms: [STR, DEX, CON], hands: [DEX, STR], legs: [SPD, CON], feet: [SPD]}
     vital: {head: 2, torso: 1.5, arms: 0.4, hands: 0, legs: 0.7, feet: 0}
+    pointToCON: [head, torso]
+    tirelessCON: true
     effects:
       head: {stun: 0.1}
       arms: {disarm: 0.08}

@@ -58,15 +58,24 @@
       cur.rounds = Math.max(cur.rounds, rounds);
       cur.mag = Math.max(cur.mag, mag);
       Object.assign(cur, extra);
+      clamp(c);
       return cur;
     }
     const n = Object.assign({ key, rounds, mag, src: opts.src || null }, extra);
     conds.push(n);
+    clamp(c);
     return n;
   }
 
   function remove(c, key) {
     if (c.status && c.status.conds) c.status.conds = c.status.conds.filter((x) => x.key !== key);
+    clamp(c);
+  }
+
+  // A condition that moves STR, DEX or SPD moves maximum stamina (it reads current attributes): current stamina never
+  // stands above it, and is not raised when the maximum rises (docs/REVIEW.md §2.3, settled in step 3).
+  function clamp(c) {
+    if (G.Character && G.Character.clampStamina && c && c.base) G.Character.clampStamina(c);
   }
 
   function sum(c, field, sub, keep) {
@@ -106,6 +115,7 @@
     for (const x of conds) x.rounds -= 1;
     const gone = conds.filter((x) => x.rounds <= 0).map((x) => (defs()[x.key] || {}).name || x.key);
     c.status.conds = conds.filter((x) => x.rounds > 0);
+    clamp(c);
     if (gone.length) lines.push(`${c.name}: ${gone.join(', ')} wears off.`);
     return lines;
   }

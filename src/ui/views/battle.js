@@ -257,7 +257,7 @@
     const option = d.option || (req.options && req.options[0]);
     if (!atk || !tgt || !option || d.type && d.type !== 'strike') return null;
     const h = Combat.computeHit(atk, tgt, option, { distance: Combat.dist(enc.pos[atk.id], enc.pos[tgt.id]) });
-    const wound = Math.round(h.toCON + h.slashToAttrs + h.bluntToCON);
+    const wound = Math.round(h.toCON + (h.pointToAttrs || 0) + h.slashToAttrs + h.bluntToCON + (h.crushToAttrs || 0));
     const stamina = Math.round(h.bluntToStamina + (h.converted || 0));
     // A point against armor (CONFIG.pierce): it bursts through, or it must find a gap.
     const point = h.gap ? ` · ${Math.round((1 - h.gap.chance) * 100)}% miss` : '';

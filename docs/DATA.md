@@ -86,7 +86,9 @@ hands, legs, feet), or a `coverage` keyword (`full` = all six, `half` = torso, a
 not both. A piece protects fully where it is and carries its share of the type's weight, penalties, durability and
 price; one covering a single location takes the type's `pieces` name (a plate helm, mail chausses). A blow rolls its
 location (d100 by share) unless it is aimed, and an aimed blow lands there only with `aim.hold`'s chance; `rules.yaml locations` also holds the aim penalties (`aim`), the cut's
-carry-through (`carry`) and what a wound does where it lands (`wounds`: attributes, vital odds, disarm, trip, stun).
+carry-through (`carry`) and what a wound does where it lands (`wounds`: attributes, vital odds, disarm, trip, stun;
+`pointToCON`, where a point takes CON rather than the location's attributes; `tirelessCON`, a tireless body takes CON
+wherever).
 Shields have a `size`. Material and origin set protection, weight and damage; craftsmanship
 sets only how fast the item wears and how easily it breaks. A monster's carried gear: `craft` and `origin` for all
 of it, or items spelled out: `armorItem: {type: plate, material: steel, origin: dwarven}`,

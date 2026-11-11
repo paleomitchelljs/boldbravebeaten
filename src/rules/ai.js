@@ -31,7 +31,7 @@
   const DEFAULTS = { maneuverRate: 0.15, kickBias: 1, defendFloor: 1.5, cautious: true, windUp: 1, kite: true, grappler: null };
 
   function attrDmgOrStamina(h) {
-    return h.toCON + h.slashToAttrs + h.bluntToCON + h.bluntToStamina;
+    return h.toCON + (h.pointToAttrs || 0) + h.slashToAttrs + h.bluntToCON + (h.crushToAttrs || 0) + h.bluntToStamina;
   }
 
   // How much a hit is worth to the attacker, in stamina-equivalent points.
@@ -50,8 +50,12 @@
     const bleedV = h.noBleed ? 0 : 3;
     const pierceV = h.toCON * (5 + bleedV * h.bleedFactor);
     const pV = Combat.vitalNeed(h.pierceVital) / 10, cV = Combat.vitalNeed(h.cutVital) / 10;
-    let v = pierceV * (1 + pV * (G.CONFIG.vital.mult - 1)) + h.slashToAttrs * (5 + bleedV) * (1 + cV) + h.bluntToCON * 5 + h.bluntToStamina;
-    if (option.venom && h.toCON + h.slashToAttrs > 0) v += Math.min(option.venom.con, h.toCON + h.slashToAttrs) * option.venom.rounds * 6;
+    // A point into a limb (R4) and a crush (R5) take the location's attributes: a point of either is worth what a
+    // point of CON or of a cut is (it weakens), and only CON counts toward the kill below.
+    const limbP = (h.pointToAttrs || 0) * (5 + bleedV * h.bleedFactor);
+    let v = (pierceV + limbP) * (1 + pV * (G.CONFIG.vital.mult - 1)) + h.slashToAttrs * (5 + bleedV) * (1 + cV) + (h.bluntToCON + (h.crushToAttrs || 0)) * 5 + h.bluntToStamina;
+    const goesIn = h.toCON + (h.pointToAttrs || 0) + h.slashToAttrs;
+    if (option.venom && goesIn > 0) v += Math.min(option.venom.con, goesIn) * option.venom.rounds * 6;
     // A spell's after-effects (Magic: noun onHit), if anything got through.
     if (option.spell && option.spell.noun && attrDmgOrStamina(h) > 0) {
       const H = (G.CONFIG.magic.words[option.spell.noun] || {}).onHit || {};
@@ -69,7 +73,7 @@
     if (fx) {
       const sz = (target.traits && target.traits.size) || 1;
       const p = (per, n) => Math.min(0.9, (per * n) / sz);
-      const wound = h.toCON + h.slashToAttrs;
+      const wound = h.toCON + (h.pointToAttrs || 0) + h.slashToAttrs;
       if (fx.disarm && C.wieldedWeapon(target) && !C.wieldedWeapon(target).natural) v += held * p(fx.disarm, wound) * 8;
       if (fx.trip && !target.status.prone) v += held * p(fx.trip, wound) * 8;
       if (fx.stun && !C.tireless(target)) v += held * p(fx.stun, h.bluntToStamina + h.bluntToCON) * 6;
@@ -78,7 +82,7 @@
     const con = C.attr(target, 'CON');
     const k = h.gap ? h.gap.got : h, kp = h.gap ? h.gap.chance : 1;
     if (k.toCON + k.bluntToCON >= con) v += 60 * kp;
-    else if (k.toCON > 0 && k.toCON * G.CONFIG.vital.mult + k.bluntToCON >= con) v += 60 * pV * kp;
+    else if (k.toCON + (k.pointToAttrs || 0) > 0 && (k.toCON + (k.pointToAttrs || 0)) * G.CONFIG.vital.mult + k.bluntToCON >= con) v += 60 * pV * kp;
     else if (h.bluntToStamina >= target.stamina && target.stamina > 0) v += 40;
     return v;
   }
