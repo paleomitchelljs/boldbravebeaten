@@ -1,12 +1,14 @@
 # To do
 
-Last updated at commit: 265f59de
+Last updated at commit: cc7e4ad
 
 Keep this a short list: open items only, a line or two each. Tick things off, add new ones, and refresh the commit
 line after every push (`git log -1 --format=%h`). What was done, and the detail behind each item below, is in
 `archive/docs/HANDOFF-to-2026-11-09.md` (the list up to that day, 1,070 lines) and in git.
 
 ## Now: tuning (begun 2026-11-09)
+- [ ] **The plan** (`docs/PLAN.md`, 2026-11-11): nine prompts in order (metrics, stamina, wounds, the head, AI, re-tune,
+  two UI steps, feats), with rulings R1 to R10 awaiting approval. Magic items and parley are out of scope for now.
 - [ ] **Weapon roles** (PROVISIONAL, 2026-11-10; top of `sim/FINDINGS.md`): a swung edge's blunt comes from its
   weight, heavy points thrust slower (longsword 2.3 AP), the staff's jab is 3, a battle axe exists. Punches and kicks
   take stamina only without Heavy Hands (the user's ruling), so shieldless fighters now swing at bone. Still open: the
