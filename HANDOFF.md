@@ -43,6 +43,27 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
 - [ ] `tools/shot.sh` hangs in the cloud container (headless Chromium never ends its `--virtual-time-budget`, also with
   the old script); Playwright loads the same page fine. Use Playwright there, or a `timeout`.
 
+## Play notes (the user, 2026-11-11, from the game as it was on 2026-11-10; the plan wins where they conflict)
+- [ ] **Reach looks too long**: "orcs hit from very far away". Spears thrust 2–4 squares (`weapons.yaml` spear and heavy
+  spear, `reach: {thrust: 4, min: 2}`); a square is an arm and a step, so four reads as far on the map. Re-check the
+  scale (or how reach is drawn) in step 6 or 7.
+- [ ] **Healing feels broken; CON can't be restored in a fight**: Give + Life mends 1 CON (2 with Strong:
+  `CONFIG.magic.heal`, condMag), the rest is stamina; Move Life mends CON from a foe. The user wants Give/Move Life to
+  be able to prevent death and restore CON. Out of the plan's scope (magic) until ruled on.
+- [ ] Random encounters roll too often; foes should stand on the map unless the party rests. Monsters don't move or
+  patrol (also under Game below).
+- [ ] Defeat: the old "wake in Stone Bridge" text menu still shows instead of simply reappearing in the village. The whole
+  party should come back together (with an option to swap any hero), not be re-recruited one by one. Saving should
+  work at any village, with a way to set the place you return to.
+- [ ] Merchant and trainer NPCs can't be triggered in town.
+- [ ] Later: heroes scattered in the world (Arvir found in the orc slave pen unlocks his quest and becomes recruitable
+  when its conditions are met). Content and quest work; not now.
+- [ ] D-pad movement in exploring; in a fight, the camera should shift to show the whole of a move's reach (with
+  the plan's step 8, pan the battle view).
+- [ ] Maps: Kalavar's east and west walls are flipped; the kobold den is entered walking north and then you walk south
+  (a twisting tunnel should look like one).
+- [x] Kept as is: the circle of darkness ("I like it").
+
 ## Rules and AI
 - [ ] The AI uses none of the newer actions (Vanish, Rally, Command, To Your Feet, Demoralize, Name the Weakness,
   Feign…), never overchannels, drops a longsword for a dagger, reads intent every round, and can stand off for rounds.
