@@ -1,6 +1,6 @@
 # To do
 
-Last updated at commit: c2d0827
+Last updated at commit: 8c7d692
 
 Keep this a short list: open items only, a line or two each. Tick things off, add new ones, and refresh the commit
 line after every push (`git log -1 --format=%h`). What was done, and the detail behind each item below, is in
@@ -26,8 +26,15 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
     bodies take CON wherever `locations.wounds.tirelessCON`; stamina clamped to a lowered maximum, REVIEW §2.3 settled).
     FINDINGS "Wounds that weaken". Survivors carrying a STR/DEX/SPD wound 0% → 9–17% (target ⅓); party-of-3 clears down
     (court 17 → 15, valley 8 → 2), deaths a fight up a little; the thrust's kills did not fall reliably. Next: prompt 4.
-  - [ ] For step 4: with limb points weaker, the AI aims at the head more (hall and valley 25% → 32% of located blows).
-    Measure R6 from the step-3 numbers.
+  - [x] Step 4, the head (R6 `locations.aim.guarded` head 5 / hands 4 / feet 5 against a defender who can react, the AI's
+    AP guess from what it saw spent; R7 `halfHead`/`partialHead` coverage for foe templates and armored humanoid monsters
+    L2+, Cyrus's cap; the Aim line in the panel). FINDINGS "The head". Head 32–34% → 20–22% of located blows (duels
+    45 → 27%), deaths a fight about flat, no tier moved by more than one. Next: prompt 5.
+  - [ ] **From step 4**: party-of-3 clears fell (court 15 → 11, hall 2 → 0, valley 2 → 1) because the head was the heroes'
+    answer and the AI doesn't set it up on purpose (knock down, hold, drain AP, then aim high). Step 5 should teach it;
+    if clears aren't back by step 6, try guarded head 4 / hands 3 / feet 4 (court 13 clears, head 26%).
+  - [ ] R7 doesn't reach the first areas' level-1 foes (no armor to match): the kits were already helmed. Say whether
+    those foes should get caps.
   - [ ] For step 6: the clay golem is still unbeatable (six heroes win 46%, was 17%): its arm blows disarm, then the
     heroes kick a body immune to blunt. The tireless rule fixed what reaches its CON, not that.
   - [ ] The sword-and-shield standoff is two full plate harnesses against swords, not the shield (FINDINGS "Stamina as a
