@@ -1,5 +1,126 @@
 # Simulation findings
 
+## Baseline for the tuning plan (2026-11-11; step 1 of `docs/PLAN.md`, no rule changed)
+
+Seed 4242 throughout. `node sim/crawl.js <place> --party 3|4 --n 30 --metrics`, `node sim/duels.js --n 40 --seed 4242
+--metrics`, `node sim/spiral.js --n 40`, `node sim/swarm.js --n 8` (the metrics: `sim/metrics.js`, an observer on the
+existing `enc.onHit` hook, which now also carries the option and the location; with it unset nothing changes, and
+with it set the results are the same to the fight). "Heroes dead" is each fight's own deaths; the crawl's older
+column, now labelled "heroes dead so far", counts the party's dead including earlier fights (that is where the plan's
+"0.3 to 1.8" came from). Below-half and below-quarter count any fighter on either side who is not tireless.
+
+**Against the targets** (first areas, party of 3 unless said):
+
+| Goal | Measure | Target | Baseline | Met? |
+|---|---|---|---|---|
+| Fast | median rounds a fight | 3 to 5 | court 4, hall 4, valley 5 (90th: 7, 14, 17); duels 2 | yes (crawls); duels no |
+| Lethal but playable | heroes dead a fight | ≤ 0.5 | court 0.21, hall 0.34, valley 0.81 | 2 of 3 |
+| | places cleared of 30 | ≥ 18 | court 12, hall 0, valley 3 | no |
+| Death spiral | fights where a survivor ends with a STR/DEX/SPD wound | ≥ ⅓ | 0% in every crawl and duel | no |
+| | wounded twin against a fresh one | clearly < 50%, falling | STR yes; DEX barely; SPD rises (table below) | no |
+| Stamina matters | fights where someone drops under ½ | ≥ ⅓ | crawls 42–68%; duels 24% | yes (crawls); duels no |
+| | collapses that get up in the same fight | most | court 5 of 55, hall 9 of 60, valley 2 of 37; duels 0 of 39 | no |
+| Tactical depth | largest share of blows landed by one action | < ½ | thrust: court 36%, hall 56%, valley 58% (the heroes' own 50%, 56%, 44%); duels 59% | court only |
+| | blows on the head (of those with a location) | < ¼ | court 47%, hall 49%, valley 46%; duels 66% | no |
+| Action economy | level-8 hero against N level-1 foes | loses at about N = 4 | wins 87, 65, 46, 42, 33, 24% at N = 1..6 | roughly (crosses ½ near N = 3), with a huge spread by hero |
+
+**Crawls** (30 each):
+
+| Place | party | cleared | rounds median / 90th | dead a fight | under ½ / ¼ | collapses / got up | attr wound | top action (all; heroes') | head | kills by thrust |
+|---|---|---|---|---|---|---|---|---|---|---|
+| temple_court | 3 | 12 | 4 / 7 | 0.21 | 68% / 51% | 55 / 5 | 0% | thrust 36%; 50% | 47% | 61% |
+| ember_hall | 3 | 0 | 4 / 14 | 0.34 | 42% / 34% | 60 / 9 | 0% | thrust 56%; 56% | 49% | 65% |
+| orc_valley | 3 | 3 | 5 / 17 | 0.81 | 63% / 54% | 37 / 2 | 0% | thrust 58%; 44% | 46% | 65% |
+| temple_court | 4 | 29 | 3 / 5 | 0.10 | 69% / 50% | 48 / 18 | 0% | thrust 46%; 56% | 53% | 67% |
+| ember_hall | 4 | 6 | 4 / 10 | 0.36 | 55% / 39% | 81 / 11 | 0% | thrust 56%; 61% | 51% | 70% |
+| orc_valley | 4 | 11 | 4 / 31 | 0.85 | 59% / 41% | 46 / 2 | 0% | thrust 55%; 45% | 42% | 62% |
+
+Blows landed by action, party of 3 (all blows): court thrust 36, shoot 24, punch 11, spell 11, natural 10, kick 4,
+swing 2, two-handed 1; hall thrust 56, spell 19, shoot 18, kick 5, punch 2; valley thrust 58, shoot 27, spell 9, kick
+5, swing 1. Nobody's bash, power or two-handed blow reaches 1% except the court's beaked foes. By location (party of 3):
+head 46–49, torso 21–28, legs 11–12, arms 9–10, hands 2–9, feet 2–3.
+
+**Duels** (40 each, seed 4242; heroes dead counts only heroes, so a hero against a hero is about 1):
+
+| A vs B | A wins | rounds med / 90th | under ½ / ¼ | collapses / up | top action | head |
+|---|---|---|---|---|---|---|
+| Beren vs Cyrus | 100% | 1 / 4 | 38% / 28% | 2 / 0 | thrust 99% | 26% (hands 72%) |
+| Beren vs Jabiku | 93% | 2 / 4 | 18% / 10% | 4 / 0 | spell 56% | 64% |
+| Cyrus vs Jabiku | 83% | 2 / 2 | 3% / 0% | 0 / 0 | spell 60% | 90% |
+| Beren vs scaleward | 60% | 5 / 7 | 80% / 57% | 15 / 0 | thrust 60% | 78% |
+| Cyrus vs scaleward | 93% | 3 / 6 | 55% / 38% | 13 / 0 | thrust 82% | 88% |
+| Jabiku vs scaleward | 0% | 3 / 5 | 8% / 3% | 1 / 0 | spell 52% | 20% |
+| Beren vs fireGoblin | 100% | 2 / 3 | 3% / 0% | 0 / 0 | thrust 100% | 98% |
+| Cyrus vs fireGoblin | 0% | 1 / 4 | 15% / 13% | 2 / 0 | thrust 100% | 95% |
+| Cyrus vs goblinWarrior | 100% | 2 / 4 | 23% / 8% | 2 / 0 | thrust 100% | 100% |
+| Beren vs wolf | 100% | 1 / 3 | 3% / 0% | 0 / 0 | thrust 100% | 68% |
+| all 400 | | 2 / 5 | 24% / 16% | 39 / 0 | thrust 59% (heroes' 68%) | 66% |
+
+Killing blows in duels: thrust 86%, two-handed 9%. No duel ends with an attribute wound on the survivor.
+
+**Spiral** (`sim/spiral.js`: the wounded twin's wins of 40, the same seeds for every k; in brackets the share that
+ran 30 rounds without a result):
+
+| Hero | attr | k = 0 | 1 | 2 | 3 | 4 |
+|---|---|---|---|---|---|---|
+| Beren (sword, shield) | STR | 20% (65%) | 8% (55%) | 3% (45%) | 0% (55%) | 5% (85%) |
+| | SPD | 20% (65%) | 5% (80%) | 45% (50%) | 38% (55%) | 45% (48%) |
+| | DEX | 20% (65%) | 8% (75%) | 5% (83%) | 8% (80%) | 10% (73%) |
+| Lorc | STR | 48% | 43% | 30% | 35% | 33% |
+| | SPD | 48% | 50% | 40% | 45% | 30% |
+| | DEX | 48% | 45% | 40% | 38% | 40% |
+| Cyrus (spear) | STR | 50% | 50% | 40% | 8% | 0% |
+| | SPD | 50% | 68% | 88% | 88% | 98% |
+| | DEX | 50% | 50% | 50% | 50% | 50% |
+| Jabiku (caster) | STR | 40% (23%) | 45% (18%) | 33% (28%) | 0% | 0% |
+| | SPD | 40% (23%) | 40% (25%) | 20% (63%) | 20% (63%) | 18% (57%) |
+| | DEX | 40% (23%) | 40% (18%) | 35% (18%) | 33% (23%) | 33% (25%) |
+| pooled, of decided fights | STR | 50% | 45% | 32% | 12% | 12% |
+| | SPD | 50% | 56% | 68% | 68% | 64% |
+| | DEX | 50% | 47% | 43% | 43% | 44% |
+
+**Swarm** (`sim/swarm.js`: one level-8 hero against N level-1 foes of one foes.yaml template; 8 fights for each hero,
+template and N, so 576 a column):
+
+| Hero | N = 1 | 2 | 3 | 4 | 5 | 6 |
+|---|---|---|---|---|---|---|
+| Cyrus | 100% | 100% | 100% | 92% | 94% | 73% |
+| Spawnee | 100% | 100% | 95% | 88% | 47% | 16% |
+| The Crusader | 94% | 88% | 77% | 63% | 63% | 66% |
+| Beren | 94% | 83% | 67% | 66% | 50% | 41% |
+| Arvir | 95% | 84% | 44% | 50% | 41% | 19% |
+| Jadier | 78% | 42% | 23% | 17% | 0% | 3% |
+| Lorc | 92% | 38% | 6% | 2% | 0% | 0% |
+| Jabiku | 69% | 50% | 3% | 0% | 0% | 0% |
+| Kalavar | 64% | 5% | 0% | 2% | 0% | 0% |
+| **all** | 87% | 65% | 46% | 42% | 33% | 24% |
+| against knights only | 72% | 28% | 25% | 15% | 14% | 3% |
+| against bandits only | 93% | 83% | 57% | 60% | 49% | 40% |
+
+**What contradicts the plan's assumptions.**
+
+1. *Deaths are attrition, not lethal fights.* The plan's "0.3 to 1.8 dead a fight" was the crawl's cumulative column.
+   Each fight's own deaths are 0.21 (court), 0.34 (hall) and 0.81 (valley), so the per-fight target is already met in
+   two first areas, yet they are cleared 12 and 0 times in 30. The hall is six fights or so (186 fights in 30 crawls):
+   0.34 a fight is two of three heroes by the end. The valley's 0.81 is its third fight (7.1 foes with joiners, 1.79
+   dead). The two "lethal but playable" targets disagree: with no healing of the dead between fights, ≥ 18 clears needs
+   well under 0.5 a fight (about 0.1 in a six-fight place). Step 6 should pick which one rules.
+2. *Stamina already matters.* Someone drops under half in 42–69% of crawl fights; the target is met there. What is
+   missing is coming back: 5–38% of collapses get up (none in a duel), which is R3's job, not R1's.
+3. *A wounded SPD can win.* In the spear mirror the twin with less SPD wins more (98% at k = 4), and in Beren's from k
+   = 2 on: with fewer AP it waits, the other closes into its reach and takes the first thrust. DEX wounds hardly move
+   anything (Cyrus is flat at 50%). STR is the only attribute whose loss reliably costs fights. A spiral will need step
+   5's approach logic as well as step 3's wounds.
+4. *Sword and board against itself is a stalemate.* Two Berens run out of 30 rounds in 65% of fights (Jabiku 23%), so
+   "falling with wounds" can't be read from Beren's row; neither can cut through the other's shield.
+5. *The swarm target is about met on average and nowhere in particular.* The pooled rate crosses ½ near N = 3, but
+   heroes range from Kalavar (loses to two) to Cyrus (wins 73% against six), and a level-1 knight template beats a
+   level-8 hero one time in four. The spread is the AI and the kits more than the action economy.
+6. *What the plan assumed and holds:* the thrust carries the kills (61–70% in crawls, 86% in duels) and the head takes
+   about half of located blows (42–53% in crawls, 66% in duels); duels last 2 rounds; no fight leaves a survivor with
+   a STR/DEX/SPD wound (a shieldless Beren against the scaleward, 40 fights: every point of attribute harm on either
+   side went to CON).
+
 ## Sarnaks and minotaurs (2026-11-10; first numbers)
 
 `node tools/tiers.js` (M = heroes of the monster's level for an even fight; n 48–72):
