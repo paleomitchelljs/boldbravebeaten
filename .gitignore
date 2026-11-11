@@ -22,6 +22,12 @@ assets/packs/
 assets/wip/cliffs/
 assets/wip/temple-tileset/
 
+# Scratch: screenshots and temporaries at the root (tools/shot.sh writes to tmp/), sim output
+/_shot_*
+/_t_*
+/_a.png
+/tmp/
+
 # Local only: Claude settings, Dropbox conflict copies
 .claude/
 *conflicted copy*
