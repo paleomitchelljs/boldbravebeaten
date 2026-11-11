@@ -38,26 +38,8 @@ const JOBS = Number(opt('jobs', Math.max(1, os.cpus().length - 1)));
 const TIER_M = { 1: 0.35, 2: 0.6, 3: 1, 4: 2, 5: 3.5, 6: 6 };
 const tierOf = (m) => { let best = 1; for (const [t, v] of Object.entries(TIER_M)) if (Math.abs(Math.log(m) - Math.log(v)) < Math.abs(Math.log(m) - Math.log(TIER_M[best]))) best = Number(t); return best; };
 
-// The gear ladder (PROVISIONAL, sims only): steel weapons from level 3, steel armor and shield from 5, masterwork
-// star-iron weapons from 7. Wood stays wood, leather leather.
-function gear(spec, level) {
-  const B = require('../tests/load.js');
-  const D = B.DATA;
-  const metal = (m) => !!(D.MATERIALS[m] || {}).metal;
-  const s = JSON.parse(JSON.stringify(spec));
-  const kit = ((B.Content.world.start || {}).kits || []).find((k) => k.id === s.kit) || {};
-  if (!s.weaponItems) s.weaponItems = [kit.wield && { weapon: kit.wield }, kit.sidearm && { weapon: kit.sidearm }].filter(Boolean);
-  if (s.armorItem === undefined && kit.armor) s.armorItem = { armor: kit.armor };
-  if (s.shieldItem === undefined && kit.shield) s.shieldItem = { shield: kit.shield, material: 'wood' };
-  for (const w of s.weaponItems) {
-    if (!metal(D.WEAPONS[w.weapon].material)) continue;
-    if (level >= 7) { w.material = 'starIron'; w.craft = 'master'; } else if (level >= 3) w.material = 'steel';
-  }
-  if (level >= 5 && s.armorItem && metal(s.armorItem.material || D.ARMOR[s.armorItem.armor].material)) s.armorItem.material = 'steel';
-  if (level >= 5 && s.shieldItem) s.shieldItem.material = 'steel';
-  if (level >= 7 && s.armorItem) s.armorItem.craft = 'master';
-  return s;
-}
+// The gear ladder and the growth: sim/grow.js (shared with sim/swarm.js).
+const { gear } = require('../sim/grow.js');
 
 // ---- One monster (a worker) ----------------------------------------------------------------------------------------
 async function measure(key, n) {

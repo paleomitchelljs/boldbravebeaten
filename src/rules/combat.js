@@ -1627,8 +1627,9 @@
       }
       if (gotSt > 0 || healed) tail += ` ${Items.itemName(blade)} drinks: ${attacker.name} ${[gotSt ? `+${gotSt} stamina` : null, healed ? `+${healed} healed` : null].filter(Boolean).join(', ')}.`;
     }
-    // Sims attach enc.onHit to credit harm and knockdowns to whoever dealt them.
-    if (before) enc.onHit({ attacker, target, attrs: C.totalDamage(target) - before.dmg, stamina: Math.max(0, before.stamina - target.stamina), downed: before.up && !C.isActive(target), spell: !!option.spell });
+    // Sims attach enc.onHit to credit harm and knockdowns to whoever dealt them (sim/metrics.js reads the option and
+    // location too). Unset in play: nothing is built.
+    if (before) enc.onHit({ attacker, target, option, location: h.location || null, attrs: C.totalDamage(target) - before.dmg, stamina: Math.max(0, before.stamina - target.stamina), downed: before.up && !C.isActive(target), spell: !!option.spell });
     // Pinning Shot: an arrow in the legs or feet that draws blood roots them.
     if (option.ranged && attacker && C.rank(attacker, 'pinning_shot') && ['legs', 'feet'].includes(h.location) && C.isActive(target) && (C.totalDamage(target) > before0.dmg || target.bleeds.length) && G.Conditions) {
       G.Conditions.add(target, 'rooted', { rounds: 2, src: attacker.id });

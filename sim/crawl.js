@@ -5,25 +5,30 @@
  * until the place is clear or the party is beaten. tools/tiers.js and tools/encounters.js fight each group fresh
  * and alone; this is what a player meets.
  *
- *   node sim/crawl.js <place> [<place>…] [--n 30] [--party 3] [--arrive '<'] [--seed 4242] [--set path=value …]
+ *   node sim/crawl.js <place> [<place>…] [--n 30] [--party 3] [--arrive '<'] [--seed 4242] [--set path=value …] [--metrics]
  *
  *   --party   heroes taken from start.yaml's presets (picked at random when fewer than all)
  *   --arrive  the map letter the party comes in at (default '<', or 'S' where a map has none)
  *   --set     try a rule number without editing it: --set apCurve.knee=3 --set weaponPhysics.pointDamage=0.18
  *             (a path into CONFIG)
+ *   --metrics the tuning plan's metrics for each place (sim/metrics.js): rounds, deaths, stamina, collapses, wounds,
+ *             blows by action and location
  *
- * Reports how often the place is cleared, each fight in turn (reached, won, foes with joiners, rounds, heroes
- * dead), and what landed and what killed: the action and location of each blow, read from the fight log.
+ * Reports how often the place is cleared, each fight in turn (reached, won, foes with joiners, rounds, heroes dead so
+ * far: the party's dead after that fight, counting earlier fights' too; --metrics counts each fight's own), and what
+ * landed and what killed: the action and location of each blow, read from the fight log.
  */
 'use strict';
 const path = require('path');
 const B = require(path.join(__dirname, '..', 'tests', 'load.js'));
-const { World, Battle, Auto, Rand, Content, Explore, CONFIG } = B;
+const { World, Battle, Auto, Rand, Content, Explore, CONFIG, Combat } = B;
+const Metrics = require('./metrics');
 
 const argv = process.argv.slice(2);
 const flags = {}, sets = [], places = [];
 for (let i = 0; i < argv.length; i++) {
   if (argv[i] === '--set') sets.push(argv[++i]);
+  else if (argv[i] === '--metrics') flags.metrics = true;
   else if (argv[i].startsWith('--')) flags[argv[i].slice(2)] = argv[++i];
   else places.push(argv[i]);
 }
@@ -52,6 +57,26 @@ function open(world) {
   return out.sort((a, b) => cheb(a, world.explore) - cheb(b, world.explore));
 }
 
+// Auto.battle with the metrics watching: the same loop, polled after each action.
+async function watched(world, M, max) {
+  const b = world.battle;
+  const chars = Battle.table(world).characters;
+  const w = M.watch(b.enc, chars, World.party(world).map((c) => c.id));
+  while (b.enc.phase !== 'over' && b.enc.round < max) {
+    Battle.reinforce(world);
+    await Combat.startRound(b.enc, chars, B.Town.autoRoller);
+    let guard = 2000;
+    while (b.enc.phase === 'turn' && guard-- > 0) {
+      const id = Combat.currentActor(b.enc);
+      await Combat.submit(b.enc, chars, B.AI.choose(b.enc, chars, id, () => Rand.rng(), chars[id].policy), { roller: B.Town.autoRoller });
+      w.poll();
+    }
+    if (guard <= 0) throw new Error('round did not finish');
+  }
+  w.end();
+  return b.enc;
+}
+
 async function crawl(place, tally) {
   const specs = World.presetParty();
   const pick = SIZE >= specs.length ? specs : specs.slice().sort(() => Rand.rng() - 0.5).slice(0, SIZE);
@@ -61,7 +86,7 @@ async function crawl(place, tally) {
     const t = open(world)[0];
     if (!t) return true;
     Battle.start(world, Object.assign({ name: t.def.label }, Explore.encounterSpec(world, t.def)), { ctx: { x: t.x, y: t.y, back: true } });
-    const enc = await Auto.battle(world, { maxRounds: 40 });
+    const enc = tally.metrics ? await watched(world, tally.metrics, 40) : await Auto.battle(world, { maxRounds: 40 });
     const f = tally.fights[k] || (tally.fights[k] = { n: 0, won: 0, foes: 0, rounds: 0, dead: 0 });
     f.n++; f.foes += Object.keys(world.battle.foes).length; f.rounds += enc.round;
     for (const l of enc.log) {
@@ -87,15 +112,20 @@ async function crawl(place, tally) {
   for (const place of places) {
     if (!Content.world.places[place]) { console.error('no such place: ' + place); continue; }
     Rand.seed(SEED);
-    const tally = { fights: {}, blows: 0, kills: 0, landed: {}, by: {}, killedBy: {} };
+    const tally = { fights: {}, blows: 0, kills: 0, landed: {}, by: {}, killedBy: {}, metrics: flags.metrics ? Metrics.create() : null };
     let cleared = 0;
     for (let i = 0; i < N; i++) if (await crawl(place, tally)) cleared++;
     console.log(`${place}: party of ${SIZE}, cleared ${cleared}/${N}`);
     for (const [k, f] of Object.entries(tally.fights)) {
-      console.log(`  fight ${String(k).padStart(2)}: reached ${String(f.n).padStart(3)}, won ${pct(f.won, f.n).padStart(4)}, foes ${(f.foes / f.n).toFixed(1)}, rounds ${(f.rounds / f.n).toFixed(1)}, heroes dead ${(f.dead / f.n).toFixed(2)}`);
+      console.log(`  fight ${String(k).padStart(2)}: reached ${String(f.n).padStart(3)}, won ${pct(f.won, f.n).padStart(4)}, foes ${(f.foes / f.n).toFixed(1)}, rounds ${(f.rounds / f.n).toFixed(1)}, heroes dead so far ${(f.dead / f.n).toFixed(2)}`);
     }
     console.log(`  blows landed ${tally.blows}, killing ${pct(tally.kills, tally.blows)}; landed on: ${share(tally.landed)}`);
     console.log(`  landed by: ${share(tally.by)}`);
     console.log(`  killed by: ${share(tally.killedBy)}`);
+    if (tally.metrics) {
+      for (const l of Metrics.report(tally.metrics)) console.log(l);
+      console.log(`  cleared ${cleared}/${N}`);
+      if (flags.json) require('fs').appendFileSync(flags.json, JSON.stringify({ sim: 'crawl', place, party: SIZE, n: N, seed: SEED, cleared, sets, metrics: Metrics.summary(tally.metrics) }) + '\n');
+    }
   }
 })().catch((e) => { console.error(e); process.exit(1); });

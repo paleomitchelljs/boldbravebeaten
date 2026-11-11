@@ -139,6 +139,8 @@ async function fight(spec) {
   (spec.place || place)(enc, A.map((c) => c.id), Bs.map((c) => c.id));
   if (spec.setup) spec.setup(enc, chars);
   if (spec.onHit) enc.onHit = spec.onHit;
+  // spec.watch(enc, chars) → { poll, end }: an observer (sim/metrics.js), polled after each action.
+  const watcher = spec.watch ? spec.watch(enc, chars) : null;
   const roller = makeRoller(seed * 2654435761 % 4294967296);
   const rng = Enemies.makeRng(seed * 40503 + 17);
   const maxRounds = spec.maxRounds || 30;
@@ -146,7 +148,7 @@ async function fight(spec) {
   while (enc.phase !== 'over' && enc.round < maxRounds) {
     await Combat.startRound(enc, chars, roller);
     const before = enc.log.length;
-    await playRound(enc, chars, roller, rng);
+    await playRound(enc, chars, roller, rng, watcher);
     for (let i = before; i < enc.log.length; i++) {
       const t = enc.log[i].text || '';
       if (/ hits /.test(t)) {
@@ -155,6 +157,7 @@ async function fight(spec) {
       }
     }
   }
+  if (watcher) watcher.end();
   const down = (list) => list.filter((c) => !C.isActive(c)).length;
   const dead = (list) => list.filter((c) => c.status.dead).length;
   const winner = enc.phase !== 'over' ? 'timeout' : enc.winner === 'party' ? 'A' : enc.winner === 'enemy' ? 'B' : 'draw';
@@ -165,12 +168,13 @@ async function fight(spec) {
 }
 
 // Drive one round with the AI: each turn's actions resolve as taken; the AI answers every reaction.
-async function playRound(enc, chars, roller, rng) {
+async function playRound(enc, chars, roller, rng, watcher) {
   const io = { roller };
   let guard = 1000;
   while (enc.phase === 'turn' && guard-- > 0) {
     const id = Combat.currentActor(enc);
     await Combat.submit(enc, chars, AI.choose(enc, chars, id, rng, chars[id].policy), io);
+    if (watcher) watcher.poll();
   }
   if (guard <= 0) throw new Error('round did not finish');
 }
