@@ -8,7 +8,14 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
 
 ## Now: tuning (begun 2026-11-09)
 - [ ] **The plan** (`docs/PLAN.md`, 2026-11-11): nine prompts in order (metrics, stamina, wounds, the head, AI, re-tune,
-  two UI steps, feats), rulings R1 to R10 approved by the user 2026-11-11. Next: prompt 1. Magic items and parley are out of scope for now.
+  two UI steps, feats), rulings R1 to R10 approved by the user 2026-11-11. Magic items and parley are out of scope for now.
+  - [x] Step 1, metrics and baseline: `--metrics` on `sim/crawl.js` and `sim/duels.js` (`sim/metrics.js`), new
+    `sim/spiral.js` and `sim/swarm.js`; the baseline is the top section of `sim/FINDINGS.md`. Next: prompt 2.
+  - [ ] For step 6 (from the baseline): the two "lethal" targets disagree. Each fight's own deaths are 0.21 / 0.34 / 0.81
+    (court, hall, valley) yet clears are 12 / 0 / 3: deaths are attrition over a place, so ≥ 18 clears needs well under 0.5
+    a fight. The plan's "0.3 to 1.8" was the crawl's cumulative column (now labelled "dead so far").
+  - [ ] For step 5: an SPD wound *wins* the spear mirror (98% at k = 4: the slower one waits and takes the first thrust);
+    two sword-and-board Berens time out in 65% of fights. A level-1 `knight` template beats a level-8 hero 28% of the time.
 - [ ] **Weapon roles** (PROVISIONAL, 2026-11-10; top of `sim/FINDINGS.md`): a swung edge's blunt comes from its
   weight, heavy points thrust slower (longsword 2.3 AP), the staff's jab is 3, a battle axe exists. Punches and kicks
   take stamina only without Heavy Hands (the user's ruling), so shieldless fighters now swing at bone. Still open: the
@@ -17,8 +24,8 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
 - [ ] **Sarnaks and minotaurs** (first numbers, top of `sim/FINDINGS.md`): spears carry the sarnaks (the plain one
   is M 1.3); a minotaur beats one hero and loses to two; only `apMult` made the lord a boss, and half mail made it
   worse (not run down). Every fight in both places costs a party of three about 1.8 heroes. No crawl run there.
-- [ ] Crawl baseline (`node sim/crawl.js`): a party of 3 clears the court 10/30, the mine hall 0/30, the orc valley
-  2/30; a party of 4 26/30, 1/30, 10/30. All level-1 places. The hall's single foes kill a hero in one fight of
+- [ ] Crawl baseline (`node sim/crawl.js`, seed 4242, 2026-11-11): a party of 3 clears the court 12/30, the mine hall 0/30,
+  the orc valley 3/30; a party of 4 29/30, 6/30, 11/30. All level-1 places. The hall's single foes kill a hero in one fight of
   three; the valley's third group pulls its neighbours (6.7 foes). The crawl has no recruiting and no growth yet
   (`World.grantXP` raises level, not power): add both before trusting it past first areas.
 - [ ] The golems: clay unbeatable, iron nearly, stone easy. Desert spectres (level 15, only magic hurts them) kill
@@ -30,7 +37,11 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
 - [ ] Not simmed: the spell words (numbers are guesses), hit-location numbers, the strong magic items, an attribute
   sim (+1 to each in turn), weapon wear and weariness over a long crawl.
 - [ ] `sim/lib.js` and `dk-scaling.js` list retired feats and have no skills: fix or delete before using them.
-- [ ] `node --test` takes 5 minutes of CPU but 15 of wall time on this Mac; cause unknown.
+- [ ] `node --test` takes 5 minutes of CPU but 15 of wall time on this Mac; cause unknown. In the cloud container
+  `tests/ui-node.test.js` runs out of heap at the default 2.2 GB (before and after 2026-11-11's changes); it passes with
+  `NODE_OPTIONS=--max-old-space-size=8192` (7 minutes alone). Something in it holds a lot of memory.
+- [ ] `tools/shot.sh` hangs in the cloud container (headless Chromium never ends its `--virtual-time-budget`, also with
+  the old script); Playwright loads the same page fine. Use Playwright there, or a `timeout`.
 
 ## Rules and AI
 - [ ] The AI uses none of the newer actions (Vanish, Rally, Command, To Your Feet, Demoralize, Name the Weakness,
