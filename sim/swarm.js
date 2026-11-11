@@ -22,7 +22,8 @@ argv.forEach((a, i) => {
   const keys = p.split('.');
   let o = CONFIG;
   for (const k of keys.slice(0, -1)) o = o[k];
-  o[keys[keys.length - 1]] = isNaN(Number(raw)) ? raw : Number(raw);
+  let v; try { v = JSON.parse(raw); } catch (e) { v = raw; }
+  o[keys[keys.length - 1]] = v;
 });
 
 const pct = (x) => Math.round(100 * x) + '%';

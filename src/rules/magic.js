@@ -609,7 +609,7 @@
     const before = t.stamina;
     t.stamina = Math.min(C().maxStamina(t), t.stamina + Math.round((H.stamina + H.staminaPerMag * s.magnitude) * share));
     const woke = t.status.unconscious && !t.status.dead && t.stamina > 0;
-    if (woke) t.status.unconscious = false;
+    if (woke) C().comeRound(t);
     const bits = [stopped ? 'bleeding stops' : null, con ? `+${con} CON` : null, t.stamina > before ? `+${t.stamina - before} stamina` : null].filter(Boolean);
     return `${t.name}: ${bits.length ? bits.join(', ') : 'nothing to mend'}${woke ? `; ${t.name} comes to` : ''}.`;
   }
@@ -623,7 +623,7 @@
     const before = t.stamina;
     t.stamina = Math.min(C().maxStamina(t), t.stamina + (pts - con) * CONFIG.magic.transfer.staminaPerCON);
     const woke = t.status.unconscious && !t.status.dead && t.stamina > 0;
-    if (woke) t.status.unconscious = false;
+    if (woke) C().comeRound(t);
     C().updateCondition(t);
     const bits = [stopped ? 'bleeding stops' : null, con ? `+${con} CON` : null, t.stamina > before ? `+${t.stamina - before} stamina` : null].filter(Boolean);
     return `${t.name}: ${bits.length ? bits.join(', ') : 'nothing to mend'}${woke ? `; ${t.name} comes to` : ''}.`;
@@ -643,6 +643,7 @@
     t.stamina = 0;
     t.status.dead = false;
     t.status.unconscious = true;
+    t.status.collapsed = null; // called back by a spell: unconscious until roused or healed, not a collapse
     delete t.status.diedRound;
     return `${t.name} is called back from death, breathing but unconscious.`;
   }

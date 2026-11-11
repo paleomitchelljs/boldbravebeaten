@@ -40,7 +40,8 @@ for (const s of sets) {
   const keys = p.split('.');
   let o = CONFIG;
   for (const k of keys.slice(0, -1)) o = o[k];
-  o[keys[keys.length - 1]] = isNaN(Number(raw)) ? raw : Number(raw);
+  let v; try { v = JSON.parse(raw); } catch (e) { v = raw; } // numbers, null, true/false, {…}; else the text
+  o[keys[keys.length - 1]] = v;
 }
 
 const cheb = (a, b) => Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));

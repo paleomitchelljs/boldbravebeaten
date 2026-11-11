@@ -46,7 +46,7 @@
       h('input', { id: 'pick-' + c.id, type: 'checkbox', checked: !!su.picked[c.id], onchange: (e) => { su.picked[c.id] = e.target.checked; app.render(); } }),
       h('span', { class: 'chip ' + (c.side === 'party' ? 'party' : 'enemy') }, 'L' + c.level),
       h('span', null, c.name), h('span', { class: 'muted' }, UI.Cards.gearLine(c)),
-      !C.isActive(c) ? h('span', { class: 'chip bad' }, 'Unconscious') : null);
+      !C.isActive(c) ? h('span', { class: 'chip bad' }, C.collapsed(c) ? 'Collapsed' : 'Unconscious') : null);
     return h('div', { class: 'stack', style: { gap: '20px' } },
       h('div', { class: 'view-head' }, h('div', { class: 'stack tight' }, h('h1', null, 'Battle'),
         h('p', { class: 'muted' }, 'Pick who fights, then place them on the grid. Each round starts with initiative; players take turns in that order, and when everyone has had a turn the pass resolves. Players type in their own dice when asked; the platform does the arithmetic.'))),
@@ -309,7 +309,7 @@
       const prev = req.hidden ? null : blowPreview(enc, chars, req);
       return {
         title: `${a.name} → ${me.name}`, from: a.name, to: me.name, tag: what, sub: `${what}${prev ? ` · if it lands: ${prev.text}` : ''}`, ap,
-        choices: req.options.map((o) => ({ value: o.type, label: o.name, cost: C.fmtAP(o.ap), odds: o.odds != null ? `${Math.round(o.odds * 100)}%` : '?', hint: `${o.stamina ? `${o.stamina} stamina. ` : ''}${o.odds != null ? `${Math.round(o.odds * 100)}% to stop it.` : 'You can\'t read the blow.'}` })),
+        choices: req.options.map((o) => ({ value: o.type, label: o.name, cost: C.fmtAP(o.ap), odds: o.odds != null ? `${Math.round(o.odds * 100)}%` : '?', hint: `${o.stamina ? `${o.stamina} stamina${o.spent ? ' (spent: you haven\'t it; it leaves you at 1 and the roll is harder)' : ''}. ` : ''}${o.odds != null ? `${Math.round(o.odds * 100)}% to stop it.` : 'You can\'t read the blow.'}` })),
         none: { label: 'Take it', note: 'keep the AP' },
       };
     }
@@ -361,9 +361,12 @@
     return h('span', { class: 'ap-meter', 'aria-label': `${C.fmtAP(left)} of ${C.fmtAP(pool)} AP left this round` }, out);
   }
 
-  function costText(ap, st, sp) {
-    return [`${C.fmtAP(ap)} AP`, st ? `${st} st` : null, sp ? `${sp} SP` : null].filter(Boolean).join(' · ');
+  function costText(ap, st, sp, spent) {
+    return [`${C.fmtAP(ap)} AP`, st ? `${st} st${spent ? ' (spent)' : ''}` : null, sp ? `${sp} SP` : null].filter(Boolean).join(' · ');
   }
+
+  // A spent action (CONFIG.stamina.spent): more stamina than the fighter has; taken anyway, weaker.
+  const SPENT_HINT = 'Spent: you haven\'t the stamina. Taken anyway, it leaves you at 1, and a blow lands softer and is easier to meet (a defence is harder to make).';
 
   // A select with option groups: groups = [[label|null, [[value, label, disabled]]]].
   function selectGroups(id, value, groups, onchange, attrs) {
@@ -410,9 +413,9 @@
     bandage: 'Stops one bleed on yourself or someone adjacent.',
     vanish: 'Out of sight for 2 rounds: no foe beyond arm\'s reach can aim at you, and your blows are harder to meet. Striking ends it.',
     feign: 'Drop and lie still: no foe can aim at you until you act again.',
-    rally: 'You and allies within 3 squares get stamina back at the round\'s end even if struck.',
+    rally: 'You and allies within 3 squares get a round\'s regeneration at once, and the collapsed among them come round.',
     command: 'An ally within 4 squares gains AP this round.',
-    rouse: 'Haul an unconscious ally beside you to their feet with a quarter of their stamina. Once per ally a fight.',
+    rouse: 'Bring round a collapsed or unconscious ally beside you, with a quarter of their stamina (they are still on the ground). Once per ally a fight.',
     demoralize: 'STR or CHA against the foe\'s WIL. Won: they are frightened of you for a round.',
     nameWeakness: 'For 2 rounds everyone\'s blows ignore this creature\'s resistances.',
     windUp: 'Gathers a power swing or a Strong spell; release it next round.',
@@ -449,7 +452,7 @@
     const why = (o) => o.why || (o.affordable ? null : 'Not enough AP');
     const martial = [], maneuver = [], magic = [], other = [];
     for (const o of legal.attacks) {
-      const e = { key: 'a:' + C.optionKey(o), option: o, ap: o.ap, stamina: o.stamina, sp: o.spCost, affordable: o.affordable, why: why(o) };
+      const e = { key: 'a:' + C.optionKey(o), option: o, ap: o.ap, stamina: o.stamina, sp: o.spCost, affordable: o.affordable, why: why(o), spent: !!o.spent };
       if (o.spell) magic.push(Object.assign(e, { kind: 'strike', label: o.label, targets: sortTargets(o.targets, chars, c) }));
       else {
         const w = o.weaponId ? c.weapons.find((x) => x.id === o.weaponId) : null;
@@ -460,7 +463,7 @@
       }
     }
     for (const m of legal.maneuvers) {
-      const e = { key: 'm:' + m.type, kind: 'maneuver', type: m.type, label: D.ACTIONS[m.type].name, ap: m.ap, stamina: m.stamina, affordable: m.affordable, why: m.affordable ? null : m.targets.some((t) => t.inReach) ? 'Not enough AP' : 'No one in reach', targets: sortTargets(m.targets, chars, c) };
+      const e = { key: 'm:' + m.type, kind: 'maneuver', type: m.type, label: D.ACTIONS[m.type].name, ap: m.ap, stamina: m.stamina, spent: !!m.spent, affordable: m.affordable, why: m.affordable ? null : m.targets.some((t) => t.inReach) ? 'Not enough AP' : 'No one in reach', targets: sortTargets(m.targets, chars, c) };
       if (['bait', 'readIntent', 'demoralize', 'nameWeakness'].includes(m.type)) other.push(Object.assign(e, { group: 'Wits' }));
       else maneuver.push(Object.assign(e, { group: 'Maneuvers' }));
     }
@@ -470,7 +473,7 @@
     }
     legal.other.forEach((o) => {
       const e = { key: 'o:' + o.type + (o.option ? ':' + C.optionKey(o.option) : ''), group: o.type === 'windUp' ? 'Wind up' : 'Gear and self', kind: 'other', type: o.type, option: o.option,
-        label: o.name.replace(/^Wind up: /, '') + (o.note ? ` (${o.note})` : ''), ap: o.ap, stamina: o.stamina, affordable: o.affordable, why: why(o),
+        label: o.name.replace(/^Wind up: /, '') + (o.note ? ` (${o.note})` : ''), ap: o.ap, stamina: o.stamina, spent: !!o.spent, affordable: o.affordable, why: why(o),
         targets: o.targets ? sortTargets(o.targets, chars, c, true) : null };
       // A blow's wind-up (a power swing, a bow's draw) sits with its weapon's attacks, just before the blow it readies;
       // a spell's stays under Other.
@@ -490,7 +493,7 @@
         e.short = clash ? (e.short || e.label) : base;
       }
     }
-    const move = legal.move ? { key: 'move', kind: 'move', label: 'Move', ap: C.moveCost(c, 1), stamina: legal.move.stamina, affordable: true, move: legal.move } : null;
+    const move = legal.move ? { key: 'move', kind: 'move', label: 'Move', ap: C.moveCost(c, 1), stamina: legal.move.stamina, spent: !!legal.move.spent, affordable: true, move: legal.move } : null;
     // The tabs: [key, label, icon, any affordable].
     const types = [];
     const ok = (list) => list.some((e) => e.affordable);
@@ -575,7 +578,7 @@
 
   function entryInfo(app, enc, c, e) {
     const o = e.option;
-    const rows = [['Cost', costText(e.ap, e.stamina, e.sp)]];
+    const rows = [['Cost', costText(e.ap, e.stamina, e.sp, e.spent)]];
     const notes = [];
     if (e.kind === 'strike' && !o.spell) {
       const range = (o.minRange === o.maxRange ? `${o.maxRange}` : `${o.minRange}–${o.maxRange}`) + (o.closePenalty ? (G.CONFIG.range.closeRule === 'blunt' ? ' (half force, blunt, at 1)' : ' (half at 1)') : '');
@@ -712,9 +715,9 @@
       groups.map((g) => [
         named && g ? h('div', { class: 'act-group label' }, g) : null,
         list.filter((e) => e.group === g).map((e) =>
-          h('button', { class: 'act-line' + (e.key === cmd.act ? ' on' : '') + (e.affordable ? '' : ' dim'), 'data-hint': e.affordable ? e.label : `${e.label}: ${e.why}`, 'aria-pressed': e.key === cmd.act ? 'true' : 'false',
+          h('button', { class: 'act-line' + (e.key === cmd.act ? ' on' : '') + (e.affordable ? '' : ' dim') + (e.spent ? ' spent' : ''), 'data-hint': !e.affordable ? `${e.label}: ${e.why}` : e.spent ? `${e.label}. ${SPENT_HINT}` : e.label, 'aria-pressed': e.key === cmd.act ? 'true' : 'false',
             onclick: () => { cmd.act = e.key; cmd.castAt = null; rerender(); } },
-          h('span', { class: 'nm' }, e.short || e.label), h('span', { class: 'num' }, C.fmtAP(e.ap)), h('span', { class: 'num' }, e.stamina ? String(e.stamina) : '–'))),
+          h('span', { class: 'nm' }, e.short || e.label), h('span', { class: 'num' }, C.fmtAP(e.ap)), h('span', { class: 'num' + (e.spent ? ' spent' : ''), title: e.spent ? SPENT_HINT : null }, e.stamina ? `${e.stamina}${e.spent ? '!' : ''}` : '–'))),
       ]));
   }
 
@@ -765,7 +768,7 @@
     }
     const tired = entry ? fatigueRow(c, entry.stamina) : null;
     if (tired) rows.push(tired);
-    if (entry && cmd.type === 'magic') rows.push(h('div', { class: 'cmd-preview' }, h('span', { class: 'label' }, 'Cost'), h('span', null, costText(entry.ap, entry.stamina, entry.sp)), info));
+    if (entry && cmd.type === 'magic') rows.push(h('div', { class: 'cmd-preview' }, h('span', { class: 'label' }, 'Cost'), h('span', null, costText(entry.ap, entry.stamina, entry.sp, entry.spent)), info));
 
     // The button that does it, and End turn: always at the foot of the pane.
     // Moving: a square clicked on the map (a second click there, or this button, confirms).
@@ -780,13 +783,13 @@
       const name = entry.label.split(' · ')[0].replace(/\s*\(.*\)$/, '');
       go = entry.square && cmd.castAt
         ? h('button', { class: 'primary', onclick: () => declare(app, enc, { actor: id, type: 'cast', option: entry.option, at: cmd.castAt }) },
-          h('span', null, `${name} here`), h('span', { class: 'cost' }, costText(entry.ap, entry.stamina, entry.sp)))
+          h('span', null, `${name} here`), h('span', { class: 'cost' }, costText(entry.ap, entry.stamina, entry.sp, entry.spent)))
         : entry.square
         ? h('span', { class: 'tap-hint' }, 'Click a square on the map')
         : entry.targets && entry.targets.length && !target && app.hooks && app.hooks.choose
         ? h('span', { class: 'tap-hint' }, 'Click a target on the map')
         : h('button', { class: 'primary', disabled: blocked, title: entry.why || 'Enter', onclick: () => declareEntry(app, enc, id, entry, cmd) },
-          h('span', null, target ? `${name} → ${chars[target.id].name}` : name), h('span', { class: 'cost' }, costText(entry.ap, entry.stamina, entry.sp)));
+          h('span', null, target ? `${name} → ${chars[target.id].name}` : name), h('span', { class: 'cost' }, costText(entry.ap, entry.stamina, entry.sp, entry.spent)));
     }
     return pane('', h('div', null, head, tabs), rows, [
       go ? h('div', { class: 'cmd-go' }, go) : null,
@@ -864,7 +867,7 @@
     for (const f of fallen) {
       const items = [f.armor, f.shield].concat(f.weapons).filter((it) => it && !(G.DATA.ARMOR[it.type] && G.DATA.ARMOR[it.type].natural));
       rows.push(h('div', { class: 'stack tight' },
-        h('div', { class: 'row spread' }, h('b', null, f.name), h('span', { class: 'chip bad' }, f.status.dead ? 'Dead' : 'Unconscious')),
+        h('div', { class: 'row spread' }, h('b', null, f.name), h('span', { class: 'chip bad' }, f.status.dead ? 'Dead' : C.collapsed(f) ? 'Collapsed' : 'Unconscious')),
         items.map((it) => h('div', { class: 'row spread small' },
           h('span', null, Items.itemName(it), it.durability != null ? h('span', { class: 'muted num' }, ` · dur ${it.durability}`) : null, ' ', h('span', { class: 'chip' }, Items.itemRarity(it))),
           h('button', { class: 'small', disabled: !to, onclick: () => { take(f, it); app.save(); app.render(); } }, 'Take'))),

@@ -59,7 +59,7 @@
   }
 
   function freshStatus() {
-    return { prone: false, grapple: null, webbed: 0, unconscious: false, dead: false, dropped: [], windUp: null, conds: [] };
+    return { prone: false, grapple: null, webbed: 0, unconscious: false, collapsed: null, dead: false, dropped: [], windUp: null, conds: [] };
   }
 
   // Fill in whatever a character lacks (an old save, a hand-made one). Changes of shape between versions are not
@@ -636,7 +636,7 @@
   // comes in first, then the pool is set with its fatigue): { pool, fatigue }. Weariness is left out (a point of max).
   function projectedPool(c, spend) {
     const keep = c.stamina;
-    c.stamina = Math.max(0, Math.min(maxStamina(c), keep - (spend || 0) + regen(c)));
+    c.stamina = Math.max(0, Math.min(maxStamina(c), keep - (spend || 0) + roundRegen(c, false)));
     try { return { pool: apPool(c), fatigue: fatiguePenalty(c) }; } finally { c.stamina = keep; }
   }
 
@@ -1141,7 +1141,7 @@
     c.damage[a] = (c.damage[a] || 0) + n;
     const after = maxStamina(c);
     c.stamina = Math.max(0, Math.min(after, c.stamina - (before - after)));
-    if (knockout) c.stamina = 0;
+    if (knockout) { c.stamina = 0; c.status.unconscious = true; c.status.collapsed = null; }
   }
 
   function healAttr(c, a, n) {
@@ -1168,10 +1168,46 @@
     if (attr(c, 'CON') <= 0) {
       st.dead = true;
       st.unconscious = true;
-    } else if (c.stamina <= 0) {
+    } else if (c.stamina <= 0 && !st.unconscious) {
       st.unconscious = true;
+      // R3 (CONFIG.stamina.collapse): run dry and you collapse for a while, not for the fight. The fight stamps the
+      // round (Combat) and brings them round when it is up; a CON or spell cause (hero mode's knockout, a body called
+      // back from death) sets `unconscious` itself and stays down until roused.
+      if (collapseRule()) { st.collapsed = { round: null }; st.prone = true; }
     }
     return st;
+  }
+
+  function collapseRule() {
+    return (CONFIG.stamina && CONFIG.stamina.collapse) || null;
+  }
+
+  // Down from running out of stamina (R3), as against unconscious from a wound or a spell.
+  function collapsed(c) {
+    return !!(c && c.status.unconscious && !c.status.dead && c.status.collapsed);
+  }
+
+  // Back on their feet's worth of awake (rouse, healing, Rally, or the collapse running its course): `stamina` at least.
+  function comeRound(c, stamina) {
+    if (!c || c.status.dead) return false;
+    const was = c.status.unconscious;
+    if (stamina != null) c.stamina = Math.max(c.stamina, Math.min(maxStamina(c), stamina));
+    if (c.stamina <= 0) c.stamina = 1;
+    c.status.unconscious = false;
+    c.status.collapsed = null;
+    return was;
+  }
+
+  // One round's regeneration (R1, CONFIG.stamina.regen): regen() × scale, in full when the fighter lost no stamina to
+  // a blow this round, `struck` of it (rounded up, at least 1) when they did. Negative regeneration (heavy armor) is
+  // whole either way. Without the rule: regen() when not struck, else 0 (the caller handles the old exceptions).
+  function roundRegen(c, struck) {
+    const R = CONFIG.stamina && CONFIG.stamina.regen;
+    const r = regen(c);
+    if (!R) return struck ? Math.min(0, r) : r;
+    const full = Math.round(r * (R.scale || 1));
+    if (full <= 0 || !struck) return full;
+    return Math.max(1, Math.ceil(full * (R.struck != null ? R.struck : 1)));
   }
 
   function isActive(c) {
@@ -1190,7 +1226,7 @@
     conditioning, attr, attrMax, combatAttr, armorInfo, armorPieces, armorAt, armorUniform, shieldInfo, shieldReady, wieldedWeapon, offhandWeapon,
     maxStamina, freshStamina, wearyRound, wearyTime, regen, fatiguePenalty, apPool, projectedPool, apScale, costScale, fmtAP, minAP, baseAP, armorAP, quickCut, moveCost, squaresFor, squaresPerAP, handsBusy, castingHands, weaponStrain, inRange, optionKey, needsWindUp, strOffset, staminaCost, effectiveWeight, isLightWeapon,
     strBonus, weaponDamage, mainIndex, attackOptions, actionCost, ammoLeft, gearWarnings, tireless, webTax,
-    damageAttr, healAttr, totalDamage, updateCondition, isActive, bleedPerRound,
+    damageAttr, healAttr, totalDamage, updateCondition, isActive, bleedPerRound, collapsed, comeRound, roundRegen,
     grapple, holding, isHeld, isPinned, inClinch,
     gearSources, gearSum, damageMult, gearAP, weaponStrike, weaponApLess,
     TREES, ARMOR,

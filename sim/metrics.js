@@ -12,8 +12,10 @@
  *   heroes dead     heroes alive at the start and dead at the end (the crawl's own column counts the dead so far)
  *   below ½, ¼      any fighter (either side, not tireless) seen under half / a quarter of their maximum stamina,
  *                   seen after each blow and each action
- *   collapses       a fighter who goes down without dying (stamina 0 today: unconscious); "got up": later in the
- *                   same fight active again
+ *   collapses       a fighter who goes down without dying (stamina 0: a collapse, CONFIG.stamina.collapse); "got
+ *                   up": later in the same fight active again; "died down": killed while down; "down at the end":
+ *                   still down when the fight ended (the side with nobody standing loses at once), and of those, how
+ *                   many were on the side that won (they come round after it)
  *   attr wound      a fighter alive at the end with more damage to STR, DEX or SPD than at the start
  *   blows landed    each blow that reaches the body or armor (Combat.applyHit), by action and by location
  */
@@ -39,7 +41,7 @@ function actionOf(o) {
 function create() {
   return {
     fights: 0, rounds: [], heroesDead: 0, heroFights: 0,
-    half: 0, quarter: 0, collapses: 0, gotUp: 0, attrWound: 0, heroAttrWound: 0,
+    half: 0, quarter: 0, collapses: 0, gotUp: 0, downDied: 0, downAtEnd: 0, downWon: 0, hero: { collapses: 0, gotUp: 0, downDied: 0, downAtEnd: 0, downWon: 0 }, attrWound: 0, heroAttrWound: 0,
     blows: { all: {}, heroes: {} }, locs: { all: {}, heroes: {} }, kills: {},
     watch(enc, chars, heroIds) { return watch(this, enc, chars, heroIds); },
   };
@@ -53,6 +55,8 @@ function watch(M, enc, chars, heroIds) {
   const f = { half: false, quarter: false };
   const down = {}; // id → collapsed and not yet up
   const look = (c) => {
+    const H = c && heroes.has(c.id) ? M.hero : null;
+    if (c && c.status.dead && down[c.id]) { down[c.id] = false; M.downDied++; if (H) H.downDied++; }
     if (!c || c.status.dead) return;
     if (!C.tireless(c)) {
       const max = C.maxStamina(c) || 1;
@@ -60,8 +64,8 @@ function watch(M, enc, chars, heroIds) {
       if (c.stamina < max / 4) f.quarter = true;
     }
     const up = C.isActive(c);
-    if (!up && !down[c.id] && !(start[c.id] && start[c.id].down)) { down[c.id] = true; M.collapses++; }
-    else if (up && down[c.id]) { down[c.id] = false; M.gotUp++; }
+    if (!up && !down[c.id] && !(start[c.id] && start[c.id].down)) { down[c.id] = true; M.collapses++; if (H) H.collapses++; }
+    else if (up && down[c.id]) { down[c.id] = false; M.gotUp++; if (H) H.gotUp++; }
   };
   const prev = enc.onHit;
   enc.onHit = (ev) => {
@@ -82,6 +86,12 @@ function watch(M, enc, chars, heroIds) {
       enc.onHit = prev;
       M.fights++;
       M.rounds.push(enc.round);
+      for (const id of Object.keys(down)) {
+        if (!down[id]) continue;
+        const won = chars[id] && enc.winner === chars[id].side; // their side won: they come round after the fight
+        M.downAtEnd++; if (won) M.downWon++;
+        if (heroes.has(id)) { M.hero.downAtEnd++; if (won) M.hero.downWon++; }
+      }
       if (f.half) M.half++;
       if (f.quarter) M.quarter++;
       let wound = false, heroWound = false;
@@ -110,7 +120,7 @@ function summary(M) {
   return {
     fights: M.fights, medianRounds: q(M.rounds, 0.5), p90Rounds: q(M.rounds, 0.9),
     heroesDead: M.heroFights ? M.heroesDead / M.heroFights : null,
-    half: M.half / n, quarter: M.quarter / n, collapses: M.collapses, gotUp: M.gotUp,
+    half: M.half / n, quarter: M.quarter / n, collapses: M.collapses, gotUp: M.gotUp, downDied: M.downDied, downAtEnd: M.downAtEnd, downWon: M.downWon, hero: Object.assign({}, M.hero),
     attrWound: M.attrWound / n, heroAttrWound: M.heroFights ? M.heroAttrWound / M.heroFights : null,
     blows: shareOf(M.blows.all), heroBlows: shareOf(M.blows.heroes),
     locs: shareOf(M.locs.all), heroLocs: shareOf(M.locs.heroes), kills: shareOf(M.kills),
@@ -125,7 +135,7 @@ function report(M, indent) {
   const s = summary(M), I = indent == null ? '  ' : indent;
   return [
     `${I}metrics: ${s.fights} fights; rounds median ${s.medianRounds}, 90th ${s.p90Rounds}` + (s.heroesDead != null ? `; heroes dead a fight ${s.heroesDead.toFixed(2)}` : ''),
-    `${I}  stamina: someone under ½ in ${pc(s.half)} of fights, under ¼ in ${pc(s.quarter)}; collapses ${s.collapses}, got up ${s.gotUp}`,
+    `${I}  stamina: someone under ½ in ${pc(s.half)} of fights, under ¼ in ${pc(s.quarter)}; collapses ${s.collapses}, got up ${s.gotUp}, died down ${s.downDied}, down at the end ${s.downAtEnd} (${s.downWon} on the winning side)` + (s.hero.collapses ? `; heroes ${s.hero.collapses} / ${s.hero.gotUp} / ${s.hero.downDied} / ${s.hero.downAtEnd} (${s.hero.downWon})` : ''),
     `${I}  a survivor ends with a STR/DEX/SPD wound: ${pc(s.attrWound)} of fights` + (s.heroAttrWound != null ? ` (a hero: ${pc(s.heroAttrWound)})` : ''),
     `${I}  blows landed by action (${s.blows.total}): ${fmtShares(s.blows)}`,
     s.heroBlows.total ? `${I}    the heroes' (${s.heroBlows.total}): ${fmtShares(s.heroBlows)}` : null,

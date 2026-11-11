@@ -103,7 +103,7 @@
     return h('div', { class: 'stack' },
       h('div', { class: 'tiles' }, G.CONFIG.attributes.map(tile)),
       h('div', { class: 'tiles small' }, derived.map(([k, v, t]) => h('div', { class: 'tile', title: t }, h('span', { class: 'label' }, k), h('b', { class: 'num' }, v)))),
-      h('div', { class: 'row small' }, h('span', { class: 'muted' }, 'Bleeding'), h('span', null, c.bleeds.length ? `${C.bleedPerRound(c).toFixed(1)}/round` : 'none'), tip('CON is your life: at 0 you are dead. Stamina is how long you can keep fighting: at 0 you are unconscious. Armor decides how much of the first you keep.')));
+      h('div', { class: 'row small' }, h('span', { class: 'muted' }, 'Bleeding'), h('span', null, c.bleeds.length ? `${C.bleedPerRound(c).toFixed(1)}/round` : 'none'), tip('CON is your life: at 0 you are dead. Stamina is your breath: blocks, parries and blows spend it, and it comes back every round. At 0 you collapse for a round or so. Armor decides how much of the first you keep.')));
   }
 
   // Feats are trained here too, whenever the party isn't fighting, for no gold (the user, 2026-11-07).

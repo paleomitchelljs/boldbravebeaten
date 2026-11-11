@@ -294,14 +294,14 @@ test('battle: a fight plays out, pays XP and loot, sets the flag and settles the
   assert.ok(w.flags.cleared_rat_nest);
   assert.equal(w.battle, null);
   assert.equal(Explore.state(w, 9, 2).done, true);
-  assert.ok(World.party(w).every((c) => c.xp > 0));
+  assert.ok(World.party(w).every((c) => c.status.dead || c.xp > 0), 'XP to every living hero');
   // Stamina comes back only if the party stops: one click rests and mends (time passes, gear patched,
   // weariness stays until a long rest).
   const t0 = w.minutes;
   for (const c of World.party(w)) for (const x of c.weapons) if (Items.weaponMaxDurability(x)) x.durability = 1;
   const lines = World.restAndRepair(w);
   assert.equal(w.minutes - t0, B.CONFIG.afterBattle.minutes);
-  for (const c of World.party(w)) {
+  for (const c of World.party(w).filter((x) => !x.status.dead)) {
     assert.equal(c.stamina, C.maxStamina(c), 'rested');
     assert.ok(c.weapons.every((x) => !Items.weaponMaxDurability(x) || x.durability > 1), 'weapons patched');
     if (enc.round > 0 && !c.status.dead) assert.ok(C.maxStamina(c) < C.freshStamina(c), 'the fight wearied them');

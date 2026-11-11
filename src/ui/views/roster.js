@@ -10,7 +10,7 @@
     const st = c.status;
     const out = [];
     if (st.dead) out.push(h('span', { class: 'chip bad' }, 'Dead'));
-    else if (st.unconscious) out.push(h('span', { class: 'chip bad' }, 'Unconscious'));
+    else if (st.unconscious) out.push(st.collapsed ? h('span', { class: 'chip bad', title: 'Out of stamina: down for the rest of the round and the next, then they come round (on the ground)' }, 'Collapsed') : h('span', { class: 'chip bad' }, 'Unconscious'));
     if (st.prone) out.push(h('span', { class: 'chip warn' }, 'Prone'));
     if (st.webbed) out.push(h('span', { class: 'chip warn', title: 'Every action costs more AP and stamina' }, `Webbed ×${st.webbed}`));
     const L = st.grapple;

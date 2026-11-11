@@ -27,6 +27,9 @@ function asWritten(fn) {
     staminaScale: 1, pierceMode: 'floor', passThroughByArmor: null, pierce: null, moveScale: 1, moveSpdContinuous: false, armorAdjust: {}, standUp: null, grappling: null, weaponModel: 'table',
     // The Specifics had no hit locations: one d4 per point of a cut, wherever it lands.
     locations: Object.assign({}, C0.locations, { wounds: null }),
+    // Stamina as the Specifics have it: no regeneration in a round struck, "too exhausted", unconscious at 0 (the
+    // tuning plan's R1 to R3 off).
+    stamina: Object.assign({}, C0.stamina, { regen: null, spent: null, collapse: null }),
   };
   const saved = {};
   for (const k of Object.keys(spec)) saved[k] = C0[k];
@@ -777,9 +780,10 @@ test('grappling is exhausting: costly to start and to keep', async () => {
   const before = a.stamina;
   await closeRound(enc, chars);
   assert.ok(a.stamina < before, 'holding costs stamina at the end of the round');
+  // With nothing to come back first (a round's regeneration, CONFIG.stamina.regen, covers the upkeep), too spent to hold.
   a.stamina = 1;
   await Combat.startRound(enc, chars, roller(3, [10, 1]));
-  await closeRound(enc, chars);
+  await withConfig({ stamina: Object.assign({}, B.CONFIG.stamina, { regen: null }) }, () => closeRound(enc, chars));
   assert.strictEqual(a.status.grapple, null, 'too spent to keep the hold');
   assert.strictEqual(t.status.grapple, null);
 });
@@ -2091,7 +2095,7 @@ test('projected pool: next round\'s AP after spending stamina now, with regenera
   c.stamina = max;
   assert.deepEqual(C.projectedPool(c, 0), { pool: C.apPool(c), fatigue: 0 });
   // Spend down to just over a quarter: regeneration lifts it, but not past half.
-  const r = C.regen(c);
+  const r = C.roundRegen(c, false);
   const spend = max - Math.ceil(max * 0.3) ;
   const p = C.projectedPool(c, spend);
   const after = max - spend + r;

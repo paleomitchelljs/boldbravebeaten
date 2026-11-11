@@ -196,7 +196,8 @@
       let { ap, stamina } = C.actionCost(t, kind);
       if (kind === 'dodge' && free) { ap = 0; stamina = 0; }
       if (ap > apLeft(enc, t.id)) continue;
-      options.push({ type: kind, name: ACTIONS[kind].name, ap, stamina, odds: hidden ? null : defenseOdds(t, kind, motion, a, d.option) });
+      const spent = isSpent(t, stamina);
+      options.push(Object.assign({ type: kind, name: ACTIONS[kind].name, ap, stamina, odds: hidden ? null : defenseOdds(t, kind, motion, a, d.option, spent ? -CONFIG.stamina.spent.defense : 0) }, spent ? { spent } : {}));
     }
     return { hidden, options };
   }
@@ -231,7 +232,8 @@
       if (ap > apLeft(enc, id)) continue;
       const hidden = describeBare(enc, chars, d, id).hidden;
       const penalty = wall ? 0 : K.penalty;
-      out.push({ actor: id, type: 'cover', name: 'Cover', ap, stamina, penalty, odds: hidden ? null : defenseOdds(b, 'block', d.option.motion, a, d.option, -penalty), hidden });
+      const spent = isSpent(b, stamina);
+      out.push(Object.assign({ actor: id, type: 'cover', name: 'Cover', ap, stamina, penalty, odds: hidden ? null : defenseOdds(b, 'block', d.option.motion, a, d.option, -penalty - (spent ? CONFIG.stamina.spent.defense : 0)), hidden }, spent ? { spent } : {}));
     }
     return out;
   }
@@ -412,6 +414,8 @@
   function legalActions(enc, chars, id) {
     const out = legalActionsRaw(enc, chars, id);
     const c = chars[id];
+    // R2: what this fighter can't pay the stamina for is taken spent (weaker), not refused.
+    for (const o of out.attacks.concat(out.maneuvers, out.other, out.spells || [], out.move ? [out.move] : [])) if (isSpent(c, o.stamina)) o.spent = true;
     if (!G.Conditions) return out;
     // A foe beyond arm's reach who is unseen can't be aimed at.
     const hide = (t) => { if (t.inReach && unseenBy(enc, chars, chars[t.id], c)) { t.inReach = false; t.unseen = true; } };
@@ -862,7 +866,8 @@
       if (decl.type === 'move' || !wholeTurn(enc, id)) return { err: 'Not enough AP' };
       ap = apLeft(enc, id); // the whole turn
     }
-    if (stamina && !C.tireless(c) && !(CONFIG.exertionCanKnockOut ? c.stamina >= stamina : c.stamina > stamina)) return { err: 'Too exhausted' };
+    if (isSpent(c, stamina)) return { ap, stamina, spent: true };
+    if (!canPay(c, stamina)) return { err: 'Too exhausted' };
     return { ap, stamina };
   }
 
@@ -875,6 +880,7 @@
     const id = decl.actor;
     decl.ap = v.ap;
     decl.stamina = v.stamina;
+    if (v.spent) decl.spent = true;
     decl.n = ++enc.seq;
     decl.round = enc.round;
     if (decl.target) decl.targetWasDown = !C.isActive(chars[decl.target]);
@@ -1030,11 +1036,31 @@
     return C.damageMult(target, el) * C.damageMult(target, 'magic');
   }
 
+  // How a fighter going down is told: a collapse (R3) or, from a wound or a spell, unconscious.
+  function downWord(c) {
+    return C.collapsed(c) ? 'collapses' : 'falls unconscious';
+  }
+
+  // Rounds after the one it began in that a collapse lasts (CONFIG.stamina.collapse); Second Wind: none.
+  function collapseRounds(c) {
+    const K = CONFIG.stamina && CONFIG.stamina.collapse;
+    if (!K) return Infinity;
+    return C.rank(c, 'second_wind') ? 0 : K.rounds;
+  }
+
+  // The round a collapsed fighter comes round at the end of (what everyone can see), or null.
+  function comesRoundAt(enc, c) {
+    if (!C.collapsed(c)) return null;
+    const r = c.status.collapsed.round != null ? c.status.collapsed.round : enc.round;
+    return r + collapseRounds(c);
+  }
+
   // How hard a weapon blow lands for the striker's stamina left (of their fresh stamina, so weariness tells too):
   // CONFIG.vigor.full at full, .empty at none, straight between. Spells, shots and the tireless are untouched.
   function vigorMult(a, option) {
     const V = CONFIG.vigor;
     if (!V || !a || option.spell || option.ranged || C.tireless(a)) return 1;
+    if (option.spent && V.spent != null) return V.spent;
     const fresh = C.freshStamina(a);
     const f = fresh > 0 ? Math.max(0, Math.min(1, (a.stamina || 0) / fresh)) : 1;
     return V.empty + (V.full - V.empty) * f;
@@ -1599,7 +1625,7 @@
     C.updateCondition(target);
     let tail = '';
     if (st.dead) tail = ` ${target.name} is DEAD.`;
-    else if (st.unconscious && !wasDown) tail = ` ${target.name} collapses, unconscious.`;
+    else if (st.unconscious && !wasDown) tail = ` ${target.name} ${downWord(target)}.`;
     // Impact: a hard blow throws its target back.
     if (harmed && CONFIG.impact) {
       const landed = h.bluntToStamina + h.bluntToCON + (h.toCON + h.slashToAttrs) / 2;
@@ -1703,6 +1729,8 @@
     }
     // Gear that guides the blow (effects.hit); a blow from someone unseen is hard to meet.
     if (attacker) m.atk += G.Effects.sum(attacker, 'hit') + (G.Effects.has(attacker, 'unseen') ? 2 : 0);
+    // A spent blow (R2) is easier to meet.
+    if (atkOption && atkOption.spent && CONFIG.stamina && CONFIG.stamina.spent) m.atk -= CONFIG.stamina.spent.attack || 0;
     r.bonus += m.def;
     if (r.opposed) r.attack += m.atk;
     else r.tn += m.atk;
@@ -2032,9 +2060,17 @@
 
   // ---- Resolution --------------------------------------------------------
   // Resolve everything that lands this pass, then start the next pass or end the round.
+  // Pays an action's stamina: true, or 'spent' when the fighter couldn't pay and took it spent (R2,
+  // CONFIG.stamina.spent: stamina down to 1 at most, the action weaker), or false when it fails.
   function payStamina(enc, c, cost) {
     if (!cost || C.tireless(c)) return true;
-    const ok = CONFIG.exertionCanKnockOut ? c.stamina >= cost : c.stamina > cost;
+    if (isSpent(c, cost)) {
+      log(enc, `${c.name} acts spent (needs ${cost} stamina, has ${c.stamina}).`, 'fail');
+      c.stamina = Math.min(c.stamina, 1);
+      C.updateCondition(c);
+      return 'spent';
+    }
+    const ok = canPay(c, cost);
     if (!ok) {
       log(enc, `${c.name} is too exhausted (needs ${cost} stamina, has ${c.stamina}); the action fails.`, 'fizzle');
       return false;
@@ -2042,6 +2078,21 @@
     c.stamina -= cost;
     C.updateCondition(c);
     return true;
+  }
+
+  // The roll penalty a defence taken spent carries (R2).
+  function spentDefense(paid) {
+    return paid === 'spent' ? CONFIG.stamina.spent.defense || 0 : 0;
+  }
+
+  function canPay(c, cost) {
+    if (!cost || C.tireless(c)) return true;
+    return CONFIG.exertionCanKnockOut ? c.stamina >= cost : c.stamina > cost;
+  }
+
+  // An action this fighter can't pay for but may take spent (R2): any living fighter with stamina left.
+  function isSpent(c, cost) {
+    return !!(CONFIG.stamina && CONFIG.stamina.spent) && !canPay(c, cost) && c.stamina > 0;
   }
 
   // Resolve one action now. pos: where everyone stands as it is made (an opportunity strike sees
@@ -2092,7 +2143,9 @@
         }
         a.inventory[d.option.ammo || 'arrows'] -= 1;
       }
-      if (!payStamina(enc, a, d.stamina)) return;
+      const paid = payStamina(enc, a, d.stamina);
+      if (!paid) return;
+      if (paid === 'spent' && d.option) d.option = Object.assign({}, d.option, { spent: true });
       // Walls in the way: solid ones stop everything, others stop blades or missiles; swirling
       // winds carry missiles astray.
       // A shrouded target (Bless + Shadow) is hard to pick out at range.
@@ -2123,7 +2176,7 @@
         const r = await rollDie(roller, a.id, 10, `${a.name}: Find the real ${t.name}`, `d10: ${Math.round(chance * 10)} or less strikes only an illusion`);
         if (r <= Math.round(chance * 10)) return log(enc, `${a.name}'s ${name} passes through an illusion of ${t.name}.`, 'defend');
       }
-      let failedDodge = false, beatThrough = 0;
+      let failedDodge = false, beatThrough = 0, defPaid = false;
       // Human Shield: someone holding a foe turns the held body into the blow (a block's AP), if they can pay.
       const shieldBody = d.type === 'strike' && C.rank(t, 'human_shield') && C.holding(t) !== a.id ? chars[C.holding(t)] : null;
       if (shieldBody && C.isActive(shieldBody) && linkOf(t).level !== 'clinch' && C.actionCost(t, 'block').ap <= apLeft(enc, t.id)) {
@@ -2137,9 +2190,10 @@
       const def = await askDefense(enc, chars, t, a, d, io);
       // Nobody defends themselves: a shield beside them may.
       const cover = !def && C.isActive(t) ? await askCover(enc, chars, t, a, d, io) : null;
-      if (cover && payStamina(enc, cover.bearer, cover.o.stamina)) {
+      const coverPaid = cover ? payStamina(enc, cover.bearer, cover.o.stamina) : false;
+      if (coverPaid) {
         const b = cover.bearer;
-        const chk = await defenseCheck(enc, chars, b, 'block', d, roller, -cover.o.penalty);
+        const chk = await defenseCheck(enc, chars, b, 'block', d, roller, -cover.o.penalty - spentDefense(coverPaid));
         if (chk.ok) {
           log(enc, `${b.name} gets a shield in front of ${t.name} (${chk.total} vs ${chk.tn}).`, 'defend');
           await shieldAbsorb(enc, chars, a, b, d, roller);
@@ -2155,8 +2209,8 @@
         // Chosen blind (Feint): a defence that can't meet this blow is spent for nothing.
         const wrong = defenseUnavailable(t, def.type, d, chars, enc);
         if (wrong) log(enc, `${t.name}'s ${ACTIONS[def.type].name.toLowerCase()} is wasted (${wrong.toLowerCase()}).`, 'fail');
-        else if (payStamina(enc, t, def.stamina)) {
-          const chk = await defenseCheck(enc, chars, t, def.type, d, roller);
+        else if ((defPaid = payStamina(enc, t, def.stamina))) {
+          const chk = await defenseCheck(enc, chars, t, def.type, d, roller, -spentDefense(defPaid));
           if (chk.ok) {
             if (def.type === 'block') {
               await shieldAbsorb(enc, chars, a, t, d, roller);
@@ -2371,6 +2425,24 @@
         break;
       case 'rally': {
         enc.rallied = enc.rallied || {};
+        if (CONFIG.stamina && CONFIG.stamina.regen) {
+          // R1 gives everyone their breath back, struck or not; Rally gives it now: a round's regeneration at once to
+          // each of my side within 3 squares, and the collapsed among them come round.
+          const heard = enc.ids.filter((o) => chars[o].side === a.side && !chars[o].status.dead && !C.tireless(chars[o]) && (C.isActive(chars[o]) || C.collapsed(chars[o])) && dist(posAtStart[a.id], enc.pos[o]) <= 3);
+          const bits = [];
+          for (const o of heard) {
+            const f = chars[o];
+            const r = Math.max(1, C.roundRegen(f, false));
+            const before = f.stamina;
+            const woke = C.collapsed(f) && C.comeRound(f, r);
+            if (!woke) f.stamina = Math.min(C.maxStamina(f), f.stamina + r);
+            enc.rallied[o] = enc.round;
+            if (woke) bits.push(`${f.name} comes round`);
+            else if (f.stamina > before) bits.push(`${f.name} +${f.stamina - before}`);
+          }
+          log(enc, `${a.name} rallies ${heard.length > 1 ? 'their side' : 'themself'}${bits.length ? `: ${bits.join(', ')}` : ''}.`, 'defend');
+          break;
+        }
         const heard = enc.ids.filter((o) => chars[o].side === a.side && C.isActive(chars[o]) && dist(posAtStart[a.id], enc.pos[o]) <= 3);
         for (const o of heard) enc.rallied[o] = enc.round;
         log(enc, `${a.name} rallies ${heard.length > 1 ? 'their side' : 'themself'}: they will get their breath back this round, struck or not.`, 'defend');
@@ -2389,7 +2461,7 @@
           enc.roused = enc.roused || {};
           enc.roused[t.id] = true;
           t.stamina = Math.max(1, Math.floor(C.maxStamina(t) / 4));
-          t.status.unconscious = false;
+          C.comeRound(t);
           C.updateCondition(t);
           log(enc, `${a.name} hauls ${t.name} to their feet.`, 'defend');
         }
@@ -2756,11 +2828,15 @@
       const K = c && c.traits && c.traits.constrict;
       const held = K && C.isActive(c) && C.holding(c) ? chars[C.holding(c)] : null;
       if (!held || held.status.dead) continue;
-      if (K.stamina && !C.tireless(held)) held.stamina = Math.max(0, held.stamina - K.stamina);
+      if (K.stamina && !C.tireless(held)) {
+        const took = Math.min(held.stamina, K.stamina);
+        held.stamina -= took;
+        enc.hitThisRound[held.id] = (enc.hitThisRound[held.id] || 0) + took; // a crush is a blow: half regeneration (R1)
+      }
       if (K.con) C.damageAttr(held, 'CON', K.con);
       const wasDown = held.status.unconscious;
       C.updateCondition(held);
-      log(enc, `${c.name} crushes ${held.name} (${[K.stamina ? `−${K.stamina} stamina` : null, K.con ? `−${K.con} CON` : null].filter(Boolean).join(', ')}).${held.status.dead ? ` ${held.name} is DEAD.` : held.status.unconscious && !wasDown ? ` ${held.name} collapses, unconscious.` : ''}`, 'hit');
+      log(enc, `${c.name} crushes ${held.name} (${[K.stamina ? `−${K.stamina} stamina` : null, K.con ? `−${K.con} CON` : null].filter(Boolean).join(', ')}).${held.status.dead ? ` ${held.name} is DEAD.` : held.status.unconscious && !wasDown ? ` ${held.name} ${downWord(held)}.` : ''}`, 'hit');
     }
     for (const id of enc.ids) {
       const c = chars[id];
@@ -2801,15 +2877,31 @@
         c.bleeds = c.bleeds.filter((b) => b.poison);
         const before = c.stamina;
         c.stamina = Math.min(C.maxStamina(c), c.stamina + R.stamina);
-        if (c.status.unconscious && c.stamina > 0) { c.status.unconscious = false; log(enc, `${c.name} heaves itself back up.`, 'death'); }
+        if (c.status.unconscious && c.stamina > 0) { C.comeRound(c); log(enc, `${c.name} heaves itself back up.`, 'death'); }
         if (healed || c.stamina > before) log(enc, `${c.name} regenerates${healed ? ` ${healed} CON` : ''}${c.stamina > before ? `${healed ? ' and' : ''} ${c.stamina - before} stamina` : ''}.`);
       }
       // Weariness: the stamina a fighter spent or lost this round lowers the most it can come back to.
       if (C.isActive(c)) C.wearyRound(c, Math.max(0, ((enc.staminaAtStart || {})[id] ?? c.stamina) - c.stamina));
+      // A collapse (CONFIG.stamina.collapse) that began this round is stamped with it.
+      if (c.status.collapsed && c.status.collapsed.round == null) c.status.collapsed.round = enc.round;
       // Regeneration.
-      const r = C.regen(c);
       const conscious = !c.status.unconscious;
-      if (conscious || CONFIG.unconsciousRegenerates) {
+      const R1 = CONFIG.stamina && CONFIG.stamina.regen;
+      if ((conscious || CONFIG.unconsciousRegenerates) && R1) {
+        // R1: every round; a share of it in a round a blow took stamina, in full with Second Wind (or in hero mode).
+        const took = enc.hitThisRound[id] || 0;
+        const struck = took > 0 && !C.rank(c, 'second_wind') && !(c.hero && CONFIG.hero && CONFIG.hero.regenWhenHit);
+        const r = C.roundRegen(c, struck);
+        if (r < 0) {
+          c.stamina = Math.max(0, c.stamina + r);
+          log(enc, `${c.name} loses ${-r} stamina to heavy armor.`);
+        } else if (r > 0) {
+          const before = c.stamina;
+          c.stamina = Math.min(C.maxStamina(c), c.stamina + r);
+          if (c.stamina > before) log(enc, `${c.name} recovers ${c.stamina - before} stamina${struck ? ' (struck: a share)' : ''}.`);
+        }
+      } else if (conscious || CONFIG.unconsciousRegenerates) {
+        const r = C.regen(c);
         const took = enc.hitThisRound[id] || 0;
         const allowed = took === 0 || (C.rank(c, 'second_wind') && took <= 2) || (c.hero && CONFIG.hero && CONFIG.hero.regenWhenHit) || (enc.rallied || {})[id] === enc.round;
         if (r < 0 && CONFIG.negativeRegenAlwaysApplies) {
@@ -2821,10 +2913,16 @@
           if (c.stamina > before) log(enc, `${c.name} recovers ${c.stamina - before} stamina.`);
         }
       }
+      // R3: a collapse runs its course; they come round with a round's regeneration, still on the ground.
+      if (C.collapsed(c) && enc.round >= c.status.collapsed.round + collapseRounds(c)) {
+        C.comeRound(c, Math.max(1, C.roundRegen(c, false)));
+        log(enc, `${c.name} comes round (${c.stamina} stamina), still on the ground.`, 'death');
+      }
       const wasDown = c.status.unconscious;
       C.updateCondition(c);
+      if (c.status.collapsed && c.status.collapsed.round == null) c.status.collapsed.round = enc.round;
       if (c.status.dead) log(enc, `${c.name} has died.`, 'death');
-      else if (c.status.unconscious && !wasDown) log(enc, `${c.name} collapses, unconscious.`, 'death');
+      else if (c.status.unconscious && !wasDown) log(enc, `${c.name} ${downWord(c)}.`, 'death');
       if (c.status.unconscious) { releaseGrapples(chars, c); c.status.windUp = null; }
       // Webs loosen as you struggle: a layer comes off each round.
       if (c.status.webbed && CONFIG.web && CONFIG.web.wearOff) c.status.webbed = Math.max(0, c.status.webbed - CONFIG.web.wearOff);
@@ -2868,6 +2966,9 @@
       if (!c) continue;
       // Conjured creatures and the raised dead don't outlast the fight.
       if (c.conjured) { delete chars[id]; continue; }
+      // A collapse ends with the fight: they come round, winded.
+      if (C.collapsed(c)) C.comeRound(c, 1);
+      c.status.collapsed = null;
       c.status.prone = false;
       c.status.windUp = null;
       c.status.grapple = null;
@@ -2887,6 +2988,6 @@
     foeSquares, fearSource, fleeSteps, mustFlee,
     unseenBy, strikeEffects, conditionForbids, ATTACK_TYPES, DEFENSE_TYPES, shoveReach, log, rollDie, castSpell, knockDown, stability, releaseAll: clearGrapple,
     createEncounter, autoPlace, startRound, currentActor, legalActions, act, validate, endTurn, defer, submit, describeDecl, apLeft, defenseOptions, coverOptions, opportunityOptions,
-    vitalNeed, projectedPos, dist, defenseOdds, parryCarryShare, leverage, skillEdge, feintScore, readScore, blowForce, aimPenalty, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolveAction, finishRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
+    vitalNeed, projectedPos, dist, comesRoundAt, collapseRounds, isSpent, canPay, defenseOdds, parryCarryShare, leverage, skillEdge, feintScore, readScore, blowForce, aimPenalty, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolveAction, finishRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

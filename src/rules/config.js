@@ -40,6 +40,28 @@
     negativeRegenAlwaysApplies: true,
     // PROVISIONAL: unconscious characters do not regenerate during combat.
     unconsciousRegenerates: false,
+    // PROVISIONAL (the tuning plan's rulings R1 to R3, the user, 2026-11-11; sim/FINDINGS.md "Stamina as a pool"):
+    // stamina is the moment-to-moment pool. Each part is off with null/false, which restores the old rule.
+    //   regen       R1. Every round, struck or not: the full regeneration (regen() × scale; costs are already
+    //               × staminaScale, regeneration was not) in a round the fighter lost no stamina to a blow, `struck`
+    //               of it (rounded up, at least 1) in a round they did. null: none in a round struck (the old rule).
+    //               Heavy armor's negative regeneration is unchanged (× scale as well, whole every round).
+    //   spent       R2. An action whose stamina the fighter can't pay is taken spent instead of refused: it takes
+    //               stamina down to 1 at most, the defender gets `attack` on its roll against a spent blow (and the
+    //               blow lands at vigor.spent), and a defence taken spent is `defense` worse. null: refused.
+    //   collapse    R3. Stamina 0 is a collapse: prone, no actions or reactions for the rest of the round and
+    //               `rounds` more, then the fighter comes round with one round's regeneration (at least 1) and must
+    //               stand. null: unconscious until roused or healed (the old rule).
+    stamina: {
+      regen: { scale: 3, struck: 0.5 },
+      spent: { attack: 2, defense: 2 },
+      collapse: { rounds: 1 },
+      // The AI's weights for these rules (judgement, not rules; here so a sim can --set them). finish: a blow at a
+      // collapsed foe against the same at a standing one, `now` when they come round at this round's end, `later` when
+      // they stay down a round more. spentWorth: a spent blow is thrown only if it is worth this much (hitValue's
+      // units: a likely kill is 60, a likely collapse 40), else the fighter steps back or stands to get its breath.
+      ai: { finish: { now: 1.25, later: 0.95 }, spentWorth: 30 },
+    },
 
     // ---- Action points (Specifics, with the user's turn budget) ------------------------
     // AP are counted in tenths: apScale internal units are one AP (apDisplay divides them back for
@@ -808,7 +830,8 @@
     // `full` from a fighter at full fresh stamina down to × `empty` from one with none left. null: off.
     // 1.25 / 0.75 (sim/duels.js; FINDINGS 2026-11-01): it barely shortens duels (armor takes most of a blow), but a
     // fresh fighter hits a quarter harder and a spent one a quarter softer, so saving stamina pays.
-    vigor: { full: 1.25, empty: 0.75 },
+    // PROVISIONAL (R2, 2026-11-11): a spent blow (CONFIG.stamina.spent) lands at × `spent` whatever stamina is left.
+    vigor: { full: 1.25, empty: 0.75, spent: 0.5 },
     // PROVISIONAL (the user, 2026-10-29): there is no flee roll. The party gets away when, at the end of a round, no
     // foe can reach striking distance of any of them (a wall across the way, or held where it stands) or none could
     // in `outrun` rounds of running, and no foe with a missile or a spell has a clear line to them.
@@ -899,10 +922,11 @@
     'Block, parry and dodge differ in kind (the user, 2026-11-03). Block: the best odds (the shield\'s size), and the blow rebounds: the attacker loses a third of the AP the blow took. Parry: no shield, so worse odds, by leverage: + 3 × x / (1 + |x|), rounded, x = log2(my weapon\'s best blow ÷ the blow\'s force), 0 between equal weapons, toward +3 (a heater\'s worth) as mine outweighs the blow, toward −3 as it is outweighed (this replaces the force term); the blow rebounds a sixth of its AP (Beat, a new feat: another sixth per rank); and a successful parry opens a riposte, a blow of the parrying weapon at once for its AP, which the attacker may defend (the Riposte feat makes it cost no AP; before, only the feat, a free undefended thrust). Dodge: melee blows only (no arrows or bolts), pays the armor\'s SPD and DEX penalties again (−2 dropped), negates the blow and costs the attacker nothing. AP a rebound takes that the attacker hasn\'t got come off their next round, and a fighter who owes can\'t take an action dearer than the whole pool.',
     'Parrying dagger: held in the off hand (no shield, no two-handed weapon). It stabs (off-hand thrust) and gives an Off-hand parry (1 AP on the sheet ×2, +1 to the roll) that meets thrusts only.',
     'A successful parry or dodge negates the strike\'s damage completely (a parry still costs stamina, see blocks).',
-    'Actions cannot be paid if they would drop your own stamina to 0.',
-    'Unconscious characters do not regenerate in combat. Heavy-armor negative regen always applies.',
+    'Stamina as a pool (the tuning plan\'s rulings R1 to R3, the user, 2026-11-11; CONFIG.stamina; sim/FINDINGS.md "Stamina as a pool"). R1: regeneration every round, struck or not: regen (⌊(CON + WIL)/4⌋ − armor) × 3 (costs were already × staminaScale 3, regeneration was not), half of it (rounded up, at least 1) in a round a blow took stamina; heavy armor\'s negative regeneration whole every round. Before: about 2 a round and none in a round struck. R2: an action whose stamina the fighter can\'t pay is taken spent instead of refused: it leaves them at 1, a spent blow is 2 easier to meet and lands at × 0.5 (vigor.spent), a defence taken spent is 2 harder. R3: stamina 0 is a collapse, not unconsciousness: prone, no actions or reactions for the rest of the round and the next, then they come round with a round\'s regeneration (at least 1) and must stand; rouse, healing and Rally bring them round at once; a blow on a collapsed body goes to the body as on the unconscious; the tireless never collapse. A fight still ends when a side has nobody standing (collapsed counts as down). Unconscious (until roused or healed) is kept for hero mode\'s knockout and a body called back from death. Second Wind: regenerates in full when struck and a collapse lasts only its own round (was: regenerate after up to 2 blunt). Rally: a round\'s regeneration at once to your side within 3 and the collapsed among them come round (was: regenerate at the round\'s end though struck).',
+    'Actions cannot be paid if they would drop your own stamina to 0 (with CONFIG.stamina.spent they are taken spent instead, down to 1).',
+    'Heavy-armor negative regen always applies. With CONFIG.stamina.collapse null: unconscious characters do not regenerate in combat.',
     'Excess blunt beyond remaining stamina is lost; later hits go to attributes.',
-    'Blunt damage on an unconscious target goes to CON.',
+    'Blunt damage on an unconscious or collapsed target goes to CON.',
     'Items (the user\'s call): every weapon, armor piece and shield is a type plus a material (materials.yaml: cloth, leather, bronze, iron, steel; exotic spider silk, dragon hide, star iron, adamant), an origin (origins.yaml: common, elven, dwarven, goblin: how weight trades against durability, damage and protection), a craftsmanship (crafts.yaml: poor, average, masterwork: how fast it wears and how easily it breaks, never its damage or protection) and enchantments (enchantments.yaml; usually none). Armor tiers: padded, leather, mail, plate (scale is folded into steel mail). Old saves: quality crude → poor, standard and fine → average, masterwork and legendary → masterwork.',
     'Armor durability: padded 20, leather 25, mail 40, plate 60 (× material toughness, origin, craftsmanship and coverage; padding takes no wear).',
     'Parry carry-through (the user\'s idea, 2026-10-24): a parried swing whose force (its expected damage) beats the parrying weapon\'s own best blow carries through, weakened: (force − mine) / force of each face lands. A parried thrust is stopped. The overwhelm term left the parry odds (parryForce.over 2 → none), so a heavy blow isn\'t counted twice; force still makes a parry harder (parryForce.per). A rapier parrying a greatsword cut keeps off about half of it when the parry succeeds; a sword against a giant\'s club, almost none.',

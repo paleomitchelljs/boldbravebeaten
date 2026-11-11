@@ -95,6 +95,7 @@
       }
       b.stamina = C.maxStamina(b);
       b.status.unconscious = false;
+      b.status.collapsed = null;
       C.updateCondition(b);
     }
   }

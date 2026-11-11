@@ -85,8 +85,14 @@
   // Value per (scaled) AP of an attack against a target at a distance.
   function rate(c, target, opt, d) {
     if (!C.inRange(opt, d)) return 0;
-    if (opt.stamina && opt.stamina >= c.stamina) return 0; // can't pay for it
-    let v = (hitValue(c, target, opt, d) * C.costScale()) / Math.max(1, opt.ap);
+    // Can't pay for it: refused, or (R2) taken spent: softer (vigor.spent), easier to meet (about a fifth less often home).
+    let spent = false;
+    if (opt.stamina && !C.tireless(c) && !Combat.canPay(c, opt.stamina)) {
+      if (!Combat.isSpent(c, opt.stamina)) return 0;
+      spent = true;
+      opt = Object.assign({}, opt, { spent: true });
+    }
+    let v = (hitValue(c, target, opt, d) * C.costScale()) / Math.max(1, opt.ap) * (spent ? SPENT_LAND : 1);
     if (opt.unarmed === 'kick' || opt.unarmed === 'shieldBash') {
       const pDown = target.status.prone ? 0 : Combat.knockdownOdds(c, target, C.rank(c, 'trip') ? G.CONFIG.maneuver.tripFeatBonus : 0, G.CONFIG.maneuver.kickKnockdownMargin);
       v += (pDown * 10 * C.costScale()) / Math.max(1, opt.ap);
@@ -119,6 +125,27 @@
     }
     best.ratio = base > 0 ? best.v / base : 1;
     return best;
+  }
+
+  const SPENT_LAND = 0.8; // a spent blow lands about this much as often (CONFIG.stamina.spent.attack on a d10)
+  // A spent blow is worth throwing only if it could finish someone (a kill or a collapse, in hitValue's units):
+  // otherwise the fighter does better to step back, or stand, and get its breath at the round's end.
+  const spentWorth = () => ((G.CONFIG.stamina || {}).ai || {}).spentWorth || 30;
+
+  // Collapsed foes (R3) I can see: down for now, back at the end of a known round. Not a threat until then.
+  function downedFoesOf(enc, chars, id) {
+    return enc.ids.filter((o) => chars[o] && chars[o].side !== chars[id].side && C.collapsed(chars[o]) && !(Combat.unseenBy && Combat.unseenBy(enc, chars, chars[o], chars[id])));
+  }
+
+  // What a blow at a collapsed foe is worth against one at a standing foe (CONFIG.stamina.ai.finish): it can't be met
+  // (now 1.25, about what a standing foe's defences take off), and hitValue already sends it to the body; worth less
+  // the longer they stay down (later: there is time to come back to them). What it sees: that they are down, and the
+  // round they come round, as anyone watching could.
+  function finishWeight(enc, foe) {
+    const at = Combat.comesRoundAt(enc, foe);
+    const W = ((G.CONFIG.stamina || {}).ai || {}).finish || { now: 1.25, later: 0.95 };
+    if (at == null || !isFinite(at)) return 1;
+    return at <= enc.round ? W.now : W.later;
   }
 
   const MANEUVER_THREAT = { trip: 8, disarm: 6, shove: 3, clinch: 6, grapple: 8, pin: 10, throw: 10, break: 2 };
@@ -243,7 +270,11 @@
       let pick = null;
       for (const o of req.options) {
         // About even odds the mover answers it; still a free blow at someone walking away.
-        const v = hitValue(c, t, o, d) * 0.6 - per * o.ap - 0.3 * o.stamina;
+        // Out of breath (R2), a free blow is spent too: only if it could finish them.
+        const spent = o.stamina && !C.tireless(c) && !Combat.canPay(c, o.stamina);
+        const hv = spent ? hitValue(c, t, Object.assign({}, o, { spent: true }), d) : hitValue(c, t, o, d);
+        if (spent && hv < spentWorth()) continue;
+        const v = hv * 0.6 - per * o.ap - 0.3 * o.stamina;
         if (v >= P.defendFloor && (!pick || v > pick.v)) pick = { v, o };
       }
       return pick ? pick.o : null;
@@ -943,26 +974,42 @@
     }
     // The AI doesn't read intent (the user, 2026-11-01): it filled foes' turns with looks instead of blows.
 
-    // 8. Attack now, or wind up for a bigger blow next round.
+    // 8. Attack now, or wind up for a bigger blow next round. A collapsed foe (R3) in reach is a target too: finish it,
+    // or turn to one still standing, whichever is worth more.
+    let winded = false;
+    const downed = G.Conditions && (G.Effects.has(c, 'berserk') || G.Effects.has(c, 'confused')) ? [] : downedFoesOf(enc, chars, id);
     let best = null;
     for (const atk of usable) {
       if (!atk.affordable) continue;
       for (const t of atk.targets) {
-        if (!t.inReach || !foes.includes(t.id)) continue;
-        let v = rate(c, chars[t.id], atk, t.distance) * P.kickBias ** (atk.unarmed === 'kick' ? 1 : 0);
+        const down = downed.includes(t.id);
+        if (!t.inReach || !(foes.includes(t.id) || down)) continue;
+        let v = rate(c, chars[t.id], atk, t.distance) * P.kickBias ** (atk.unarmed === 'kick' ? 1 : 0) * (down ? finishWeight(enc, chars[t.id]) : 1);
         // Aim where it pays (a bare leg under a breastplate), if anywhere does.
         const aim = atk.unarmed ? null : bestAim(c, chars[t.id], atk, t.distance);
         if (aim && aim.loc) v *= aim.ratio;
         // Digging into the AP kept for defence: never after the first action of the turn; the first
         // blow is still worth something, a little less.
         if (la.ap - atk.ap < reserve) { if (acted) continue; v *= 0.85; }
-        if (!best || v > best.v) best = { v, decl: Object.assign({ actor: id, type: 'strike', option: atk, target: t.id }, aim && aim.loc ? { location: aim.loc } : {}) };
+        if (!best || v > best.v) best = { v, spent: !!atk.spent, worth: atk.spent ? hitValue(c, chars[t.id], Object.assign({}, atk, { spent: true }), t.distance) : 0, decl: Object.assign({ actor: id, type: 'strike', option: atk, target: t.id }, aim && aim.loc ? { location: aim.loc } : {}) };
       }
+    }
+    // Out of breath (R2): a spent blow only if it could finish someone; else step out of reach to get the breath back
+    // (no blow, so the round's full regeneration), or stand and keep the AP for a defence.
+    if (best && best.spent && best.worth < spentWorth()) {
+      const reach = threatReach(chars, foes);
+      if (la.move && !la.move.spent && leaveCost(enc, chars, id) <= 3 && near.d <= reach) {
+        const mv = planMove(enc, chars, id, la, near.id, reach + 1, foes, reach);
+        if (mv && Combat.dist(mv.to, Combat.projectedPos(enc, near.id)) > reach) return mv;
+      }
+      best = null;
+      winded = true;
     }
     const winds = la.other.filter((o) => o.type === 'windUp' && o.affordable);
     // Spells cast at squares, foes or friends, when one is worth more than the best blow.
     const castBest = castChoice(enc, chars, id, la, foes);
     if (castBest && castBest.v > (best ? best.v : 0)) return castBest.decl;
+    if (winded) return endTurn;
     if (winds.length && P.windUp > 0) {
       let bestW = null;
       for (const w of winds) {
@@ -998,5 +1045,5 @@
     return endTurn;
   }
 
-  G.AI = { choose, react, reserveAP, hitValue, perceivedThreat, preferredDistance, bestAim, DEFAULTS };
+  G.AI = { choose, react, reserveAP, hitValue, perceivedThreat, preferredDistance, bestAim, finishWeight, DEFAULTS };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

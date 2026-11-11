@@ -453,7 +453,7 @@
       capstone: true
       ranks: [adept]
       requires: [["mail_endurance:1"]]
-      effect: "Regenerate stamina even after taking ≤2 blunt last round"
+      effect: "Regenerate in full even in a round a blow took your stamina; a collapse lasts only the rest of its round"
       auto: true
     shield_wall:
       name: Shield Wall
@@ -1300,7 +1300,7 @@
       name: Rally
       ranks: [novice]
       requires: []
-      effect: "An action (2 AP): you and allies within 3 squares get stamina back at the round's end even if struck this round"
+      effect: "An action (2 AP): you and allies within 3 squares get a round's regeneration at once, and the collapsed among them come round"
       auto: true
     command:
       name: Command
@@ -1315,7 +1315,7 @@
       capstone: true
       ranks: [apprentice]
       requires: [["command:1"]]
-      effect: "An action (2 AP) beside an unconscious ally: they come to with a quarter of their stamina. Once per ally a fight"
+      effect: "An action (2 AP) beside a collapsed or unconscious ally: they come round with a quarter of their stamina. Once per ally a fight"
       auto: true
     demoralize:
       name: Demoralize

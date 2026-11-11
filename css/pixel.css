@@ -401,3 +401,5 @@ kbd { font: 600 0.72rem var(--font-mono); padding: 0 4px; border: 1px solid var(
 .ft-reqs li.met { color: var(--ok); }
 .ft-paths { gap: 6px; align-items: center; }
 .small.warn, p.warn { color: var(--warn); }
+/* A spent action (CONFIG.stamina.spent): the stamina it costs is more than the fighter has. */
+.battle-screen .act-line .num.spent { color: var(--warn); font-weight: bold; }
