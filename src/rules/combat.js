@@ -1125,6 +1125,15 @@
     // what the AI and the preview see. A full harness or a bare body is the same everywhere.
     const L = CONFIG.locations;
     const at = (loc) => hitAt(attacker, target, option, { v: v.slice(), prone, pinned, unconscious, weapon, coupDeGrace }, loc);
+    // An aimed blow lands there with aimHold's chance, else where the location roll puts it.
+    const hold = !flags.location && option.aim ? aimHold(attacker, target, option) : 1;
+    if (option.aim && !flags.location && hold < 1 && L && !(C.armorUniform(target) && !L.wounds)) {
+      const parts = [{ loc: option.aim, w: hold, h: at(option.aim) }].concat(L.order.map((loc) => ({ loc, w: (1 - hold) * (L.share[loc] || 0), h: at(loc) })));
+      const res = blendMany(parts);
+      res.location = option.aim; // aimed there; aimHold says how often it holds
+      res.aimHold = hold;
+      return res;
+    }
     const where = flags.location || option.aim || null;
     if (where || !L || C.armorUniform(target)) return at(where);
     const parts = L.order.map((loc) => ({ loc, w: L.share[loc] || 0, h: at(loc) }));
@@ -1397,6 +1406,17 @@
     return el !== 'life';
   }
 
+  // The chance an aimed blow lands where it was aimed (CONFIG.locations.aim.hold): a body that can still move covers
+  // what is aimed at and opens something else; one that can't (prone, down, held, or not seeing the blow) can't.
+  function aimHold(attacker, target, option) {
+    const H = CONFIG.locations && CONFIG.locations.aim && CONFIG.locations.aim.hold;
+    if (!H) return 1;
+    if (target.status.prone || !C.isActive(target) || C.isHeld(target) || C.isPinned(target)) return 1;
+    if (attacker && G.Effects.has(attacker, 'unseen')) return 1;
+    const sk = attacker ? C.attackSkill(attacker, option) : 0;
+    return Math.max(0, Math.min(H.max != null ? H.max : 1, (H.base || 0) + (H.perSkill || 0) * sk));
+  }
+
   // Roll where a blow lands (CONFIG.locations: d100 against the shares). Only against a body whose locations
   // differ; null otherwise.
   async function rollLocation(attacker, target, option, roller) {
@@ -1464,7 +1484,17 @@
 
   // Apply a hit, rolling d4s for slashing. Returns a short description.
   async function applyHit(enc, chars, attacker, target, option, roller, flags) {
-    const loc = (flags && flags.location) || (option.aim && bodyBlow(target, option) ? option.aim : null) || await rollLocation(attacker, target, option, roller);
+    let loc = flags && flags.location;
+    if (!loc && option.aim && bodyBlow(target, option)) {
+      // An aimed blow lands there only if the body doesn't close it (aimHold); else where it is open.
+      const p = aimHold(attacker, target, option);
+      if (p >= 1) loc = option.aim;
+      else {
+        const r = (await roller({ actorId: attacker.id, sides: 100, count: 1, label: 'On target', detail: `d100 ≤ ${Math.round(p * 100)}: lands on the ${(CONFIG.locations.names[option.aim] || option.aim).toLowerCase()} as aimed; else wherever ${target.name} is open` }))[0];
+        loc = r <= Math.round(p * 100) ? option.aim : null;
+      }
+    }
+    if (!loc) loc = await rollLocation(attacker, target, option, roller);
     let h = computeHit(attacker, target, option, Object.assign({}, flags, loc ? { location: loc } : {}));
     const parts = [];
     if (h.location) parts.push(`on the ${(CONFIG.locations.names[h.location] || h.location).toLowerCase()}${h.piece ? '' : ' (bare)'}`);
@@ -2988,6 +3018,6 @@
     foeSquares, fearSource, fleeSteps, mustFlee,
     unseenBy, strikeEffects, conditionForbids, ATTACK_TYPES, DEFENSE_TYPES, shoveReach, log, rollDie, castSpell, knockDown, stability, releaseAll: clearGrapple,
     createEncounter, autoPlace, startRound, currentActor, legalActions, act, validate, endTurn, defer, submit, describeDecl, apLeft, defenseOptions, coverOptions, opportunityOptions,
-    vitalNeed, projectedPos, dist, comesRoundAt, collapseRounds, isSpent, canPay, defenseOdds, parryCarryShare, leverage, skillEdge, feintScore, readScore, blowForce, aimPenalty, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolveAction, finishRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
+    vitalNeed, aimHold, projectedPos, dist, comesRoundAt, collapseRounds, isSpent, canPay, defenseOdds, parryCarryShare, leverage, skillEdge, feintScore, readScore, blowForce, aimPenalty, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolveAction, finishRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});
