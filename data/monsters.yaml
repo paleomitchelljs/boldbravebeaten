@@ -414,7 +414,7 @@ goblin:
   attrs: {STR: 4, CON: 4, DEX: 7, SPD: 7, INT: 4, WIS: 3, CHA: 3}
   skills: {melee: 1, evasion: 1, stealth: 2, devices: 1}
   natural: []
-  armorItem: {type: padded, coverage: half}
+  armorItem: {type: padded, coverage: halfHead}
   origin: goblin
   weapons: [club]
   sidearm: dagger
@@ -433,7 +433,7 @@ goblinArcher:
   attrs: {STR: 4, CON: 4, DEX: 7, SPD: 7, INT: 4, WIS: 3, CHA: 3}
   skills: {ranged: 2, evasion: 1, stealth: 2}
   natural: []
-  armorItem: {type: padded, coverage: half}
+  armorItem: {type: padded, coverage: halfHead}
   origin: goblin
   weapons: [shortbow]
   sidearm: dagger
@@ -1261,7 +1261,7 @@ orcCenturion:
   attrs: {STR: 9, CON: 8, DEX: 6, SPD: 5, INT: 5, WIL: 6, WIS: 5, CHA: 5}
   skills: {melee: 4, block: 4, armor: 3, intimidation: 2}
   natural: []
-  armorItem: {type: mail, coverage: half}
+  armorItem: {type: mail, coverage: halfHead}
   weapons: [longsword]
   shield: [heater, iron]
   craft: average
@@ -1281,7 +1281,7 @@ orcEmissary:
   attrs: {STR: 7, CON: 9, DEX: 7, SPD: 6, INT: 7, WIL: 6, WIS: 6, CHA: 7}
   skills: {melee: 5, anticipation: 3, persuasion: 3}
   natural: []
-  armorItem: {type: mail, coverage: half}
+  armorItem: {type: mail, coverage: halfHead}
   weapons: [longsword]
   craft: master
   keepUnarmed: true
@@ -1540,7 +1540,7 @@ koboldHighShaman:
   attrs: {STR: 6, CON: 10, DEX: 6, SPD: 6, INT: 10, WIL: 11, WIS: 11, CHA: 8}
   skills: {melee: 3, arcane: 7, medicine: 5, anticipation: 3, persuasion: 3}
   natural: [claws]
-  armorItem: {type: padded, coverage: half}
+  armorItem: {type: padded, coverage: halfHead}
   armor: scaleHide
   weapons: [staff]
   craft: master
@@ -1634,7 +1634,7 @@ sarnakKnight:
   attrs: {STR: 11, CON: 10, DEX: 6, SPD: 6, INT: 5, WIL: 7, WIS: 5, CHA: 4}
   skills: {melee: 4, block: 4, armor: 3}
   natural: [tail]
-  armorItem: {type: mail, coverage: half}
+  armorItem: {type: mail, coverage: halfHead}
   weapons: [spear]
   shield: [heater, iron]
   craft: average

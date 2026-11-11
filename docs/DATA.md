@@ -82,7 +82,7 @@ face, motion or trait still needs rules code; a new sword, mace or spear does no
 (loot, shop stock, monsters): `material` (materials.yaml; armor only those its type lists), `origin` (origins.yaml),
 `craft` (`poor | average | master`; an old `quality` is read as one) and `enchantments` (a list, usually absent).
 Armor adds where it is worn: `covers: [torso, arms]` (locations from `rules.yaml locations`: head, torso, arms,
-hands, legs, feet), or a `coverage` keyword (`full` = all six, `half` = torso, arms and legs, `partial` = the torso),
+hands, legs, feet), or a `coverage` keyword (`full` = all six, `half` = torso, arms and legs, `partial` = the torso, `halfHead` and `partialHead` = those and the head),
 not both. A piece protects fully where it is and carries its share of the type's weight, penalties, durability and
 price; one covering a single location takes the type's `pieces` name (a plate helm, mail chausses). A blow rolls its
 location (d100 by share) unless it is aimed, and an aimed blow lands there only with `aim.hold`'s chance; `rules.yaml locations` also holds the aim penalties (`aim`), the cut's

@@ -604,17 +604,23 @@
     const a = chars[id], t = targetId ? chars[targetId] : null;
     if (!L || !L.aim || !t || e.kind !== 'strike' || !e.option || e.option.spell || e.option.unarmed || (!L.wounds && C.armorUniform(t))) return null;
     const d = Combat.dist(enc.pos[id], enc.pos[targetId]);
-    const best = G.AI.bestAim(a, t, e.option, d);
+    const best = G.AI.bestAim(a, t, e.option, d, enc);
+    // R6: a small target costs more against someone who can still cover it (rules.yaml locations.aim.guarded).
+    const open = Combat.aimOpen(t, a, enc);
+    const pen = (loc) => (loc ? Combat.aimPenalty(Object.assign({}, e.option, { aim: loc }), loc, !open) : 0);
     const show = (loc) => {
       const o = Object.assign({}, e.option, loc ? { aim: loc } : {});
       const p = blowPreview(enc, chars, { decl: { actor: id, target: targetId, type: 'strike', option: o } });
-      const pen = loc ? Combat.aimPenalty(o, loc) : 0;
       const piece = loc ? C.armorAt(t, loc) : null;
       const what = !p ? '' : p.wound ? `~${p.wound} wound` : p.stamina ? `~${p.stamina} st` : 'stopped';
-      return `${loc ? L.names[loc] || loc : 'Unaimed'}${pen ? ` −${pen}` : ''}${loc && !piece ? ' (bare)' : ''}${what ? ` · ${what}` : ''}`;
+      return `${loc ? L.names[loc] || loc : 'Unaimed'}${pen(loc) ? ` −${pen(loc)}` : ''}${loc && !piece ? ' (bare)' : ''}${what ? ` · ${what}` : ''}`;
     };
-    const bestLabel = best && best.loc ? (L.names[best.loc] || best.loc) : 'unaimed';
-    return { best: best ? best.loc : null, rows: [['best', `Best (${bestLabel})`], ['unaimed', show(null)]].concat(L.order.map((l) => [l, show(l)])) };
+    const bestLabel = best && best.loc ? `${L.names[best.loc] || best.loc}${pen(best.loc) ? ` −${pen(best.loc)}` : ''}` : 'unaimed';
+    // Why the aim costs what it does, shown under the menu (no hover): they can still cover a small target, or can't.
+    const why = open ? `${t.name} is ${open}: can't cover a small target (head −${pen('head')})`
+      : best && best.drained ? `${t.name} looks spent: no defence left to beat`
+      : `${t.name} can still cover a small target: head −${pen('head')}, hands −${pen('hands')}, feet −${pen('feet')}`;
+    return { best: best ? best.loc : null, why, pen, rows: [['best', `Best (${bestLabel})`], ['unaimed', show(null)]].concat(L.order.map((l) => [l, show(l)])) };
   }
 
   // A move onto or across ground that hurts (lava, a pit, fire) takes one more confirmation: the first go names the
@@ -756,6 +762,9 @@
       if (ac) {
         if (!ac.rows.some((r) => r[0] === cmd.location)) cmd.location = 'best';
         rows.push(field('Aim', UI.select('cmd-location', cmd.location, ac.rows, (v) => { cmd.location = v; rerender(); })));
+        const at = cmd.location === 'best' ? ac.best : cmd.location === 'unaimed' ? null : cmd.location;
+        const cost = !at ? 'Unaimed: no cost.' : ac.pen(at) ? `${G.CONFIG.locations.names[at] || at}: −${ac.pen(at)} to beat a defence.` : `${G.CONFIG.locations.names[at] || at}: no cost.`;
+        rows.push(h('div', { class: 'cmd-preview nil aim-why' }, h('span', { class: 'label' }, 'Why'), h('span', null, `${cost} ${ac.why}.`)));
       }
       const loc = ac ? (cmd.location === 'best' ? ac.best : cmd.location === 'unaimed' ? null : cmd.location) : null;
       const prev = strikePreview(enc, chars, id, entry, cmd.target, loc);

@@ -21,12 +21,20 @@ locations:
   order: [head, torso, arms, hands, legs, feet]
   names: {head: Head, torso: Torso, arms: Arms, hands: Hands, legs: Legs, feet: Feet}
   share: {head: 0.08, torso: 0.40, arms: 0.18, hands: 0.05, legs: 0.24, feet: 0.05}
-  coverage: {full: [head, torso, arms, hands, legs, feet], half: [torso, arms, legs], partial: [torso]}
+  coverage: {full: [head, torso, arms, hands, legs, feet], half: [torso, arms, legs], partial: [torso], halfHead: [head, torso, arms, legs], partialHead: [head, torso]}
+  # halfHead, partialHead: PROVISIONAL (docs/PLAN.md R7, step 4): half and partial with head cover of the same
+  # type (a coif, a cap, a helm), for the foe templates and humanoid monsters that wear armor.
   # aim (step 2): a blow aimed at a location (decl.location; none = unaimed, rolled) pays `penalty` to beat the
   # defence (a thrust `thrustLess` less: a point is placed more easily); a shield blocks blows aimed at what it
   # covers more easily (+`block`).
+  # guarded: PROVISIONAL (docs/PLAN.md R6, step 4): what the aim costs against a defender who can still react
+  # (standing, free, aware: Combat.aimGuarded); small targets are markedly dearer, so the head is something you set
+  # up (a knockdown, a hold, an unseen blow, a foe whose AP is spent: with none there is no defence to pay against).
+  # `penalty` is the cost against one who can't (prone, collapsed, held, caught off guard, not seeing the blow).
+  # null: `penalty` against everyone (before step 4).
   aim:
     penalty: {head: 2, torso: 0, arms: 1, hands: 2, legs: 1, feet: 3}
+    guarded: {head: 5, torso: 0, arms: 1, hands: 4, legs: 1, feet: 5}
     thrustLess: 1
     shield: {covers: [torso, arms], block: 1}
     # PROVISIONAL (the user, 2026-11-11: a blow lands where the body happens to be open more than where it is aimed):

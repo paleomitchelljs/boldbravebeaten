@@ -1,5 +1,111 @@
 # Simulation findings
 
+## The head (2026-11-11; step 4 of `docs/PLAN.md`, rulings R6 and R7; PROVISIONAL)
+
+What changed:
+
+- **R6 `rules.yaml locations.aim.guarded: {head: 5, torso: 0, arms: 1, hands: 4, legs: 1, feet: 5}`**: what an aimed
+  blow pays to beat a defence when the one meeting it can still react: standing, free and aware
+  (`Combat.aimGuarded`). Against one prone, collapsed, held, caught off guard (the surprised side's first round) or not
+  seeing the blow, the old `penalty` (head 2, hands 2, feet 3). A thrust is one less either way. A defender out of AP
+  puts up no defence, so the aim costs nothing there: that half needed no new rule. null: the old numbers against everyone.
+- **The AI** sees the body (prone, held, collapsed, surprise, unseen) but not the AP. `AI.bestAim` now guesses: an
+  average round's pool for that body (`C.apPool` at the die's mean; a side caught off guard gets its share), less the
+  AP of everything it has watched the target do this round (`enc.decls`), against the target's cheapest defence. A
+  target it takes to be spent is taken to put up no defence, so every place lands and the head costs nothing.
+- **R7** (data only): coverage keywords `halfHead` and `partialHead` in `rules.yaml locations.coverage` (half and
+  partial plus the head, same type). The foe templates' half and partial picks use them; so do the humanoid monsters
+  of level 2 and up that wear armor and had a bare head (goblin, goblin archer, orc centurion, orc emissary, kobold
+  high shaman, sarnak knight). Cyrus's gambeson gets a padded cap (`covers: [head, torso]`). **The kits already gave
+  full padded armor, head included**, as did Beren's, Lorc's and Jabiku's presets: the heroes' bare head was only
+  Cyrus's. Left alone: the level-1 first-area foes (orc legionnaires and slavers, the fire goblins) wear no armor at
+  all, so there is no type to match; the clockwork gnome is a construct and its plating is its body; magic items and
+  loot tables untouched. So **R7 does almost nothing in the first areas**: the orc centurion and Cyrus.
+- **The panel**: under the Aim menu a line says the place, its cost and why ("Legs: no cost. Tamsin the bandit can
+  still cover a small target: head −4, hands −3, feet −4."; or "is prone", or "looks spent"). Seen in a Playwright
+  screenshot of a fight against a bandit.
+
+Seed 4242, the step-1 commands. "Before" is the step-3 section below (this commit's parent).
+
+**Against the targets** (first areas, party of 3; before → after):
+
+| Goal | Measure | Target | Before | After | Met? |
+|---|---|---|---|---|---|
+| Tactical depth | blows on the head | < ¼ | 34%, 32%, 32%; duels 45% | **22%, 21%, 20%; duels 27%** | crawls yes; duels close |
+| Lethal but playable | heroes dead a fight | ≤ 0.5 | 0.43, 0.35, 0.83 | 0.47, 0.41, 0.83 | 2 of 3, a little worse |
+| | places cleared of 30 | ≥ 18 | 15, 2, 2 | **11, 0, 1** | no; worse (see 2) |
+| Fast | median rounds (90th) | 3 to 5 | 4 (10), 4 (12), 6 (15) | 5 (9), 4 (12), 6 (13) | court and hall yes |
+| Death spiral | survivor with a STR/DEX/SPD wound | ≥ ⅓ | 15%, 9%, 12% | 21%, 6%, 34% | valley yes |
+| Tactical depth | largest share of blows by one action | < ½ | thrust 34%, 50%, 59% | thrust 33%, 51%, 62% | court only |
+| | kills by the thrust | (falls) | 45%, 65%, 73% | 37%, 64%, 70% | a little |
+
+**Crawls** (30 each):
+
+| Run | cleared | rounds med / 90th | dead a fight | head | torso | legs | arms | hands | feet | kills by thrust |
+|---|---|---|---|---|---|---|---|---|---|---|
+| court 3, before | 15 | 4 / 10 | 0.43 | 34% | | | | | | 45% |
+| court 3, after | 11 | 5 / 9 | 0.47 | 22% | 30% | 22% | 19% | 4% | 3% | 37% |
+| hall 3, before | 2 | 4 / 12 | 0.35 | 32% | | | | | | 65% |
+| hall 3, after | 0 | 4 / 12 | 0.41 | 21% | 37% | 20% | 14% | 5% | 4% | 64% |
+| valley 3, before | 2 | 6 / 15 | 0.83 | 32% | | | | | | 73% |
+| valley 3, after | 1 | 6 / 13 | 0.83 | 20% | 36% | 19% | 15% | 6% | 4% | 70% |
+| court 4, before | 29 | 3 / 5 | 0.08 | 40% | | | | | | 71% |
+| court 4, after | 29 | 4 / 7 | 0.22 | 22% | 31% | 21% | 18% | 4% | 4% | 47% |
+| hall 4, before | 6 | 4 / 11 | 0.41 | 35% | | | | | | 71% |
+| hall 4, after | 5 | 4 / 13 | 0.43 | 23% | 39% | 18% | 13% | 4% | 3% | 71% |
+| valley 4, before | 9 | 5 / 18 | 1.12 | 30% | | | | | | 76% |
+| valley 4, after | 8 | 6 / 17 | 1.01 | 19% | 34% | 21% | 15% | 7% | 5% | 71% |
+
+(The step-3 section printed only the head's share; the full split is in this run's output.) **Duels** (`--n 40`, 400
+fights): head 45% → 27% of located blows (the heroes' 35%), heroes dead 0.45 → 0.44, median 2 rounds (90th 5).
+
+**How much of it is R6** (party of 3, the court and the valley; `--set locations.aim.guarded=…`):
+
+| Guarded head / hands / feet | court cleared | court head | court dead | valley cleared | valley head | valley dead |
+|---|---|---|---|---|---|---|
+| step 3 (no R6, no R7, no AP guess) | 15 | 34% | 0.43 | 2 | 32% | 0.83 |
+| null (R7 and the AI's AP guess only) | 16 | 30% | 0.38 | 5 | 24% | 0.84 |
+| 4 / 3 / 4 | 13 | 26% | 0.44 | 2 | 23% | 0.90 |
+| **5 / 4 / 5 (adopted)** | 11 | 22% | 0.47 | 1 | 20% | 0.83 |
+
+**Tiers** (`node tools/tiers.js <the first areas' foes> --n 24`, before → after): scaleward M 1.15 → 1.15, temple
+gorilla pair 1.22 → 1.24, fire goblin archer 0.71 → 0.71, fire goblin 0.79 → 0.71 (tier 3 → 2, its target), goblin
+miner 0.18 → 0.18, goblin shaman 1.46 → 1.46, goblin warrior 0.50 → 0.48, lava beetle 0.89 → 0.89, orc centurion 1.22
+→ 1.26 (its new coif), orc legionnaire 1.00 → 1.00, orc slaver 0.48 → 0.46 (tier 2 → 1, its target). **No foe moved
+by more than one tier**; two moved by one, both onto their targets, on differences inside the ±10-point noise. The tier
+sim fights one hero at a time against each body in the open, where the heroes' preset armor was already helmed.
+
+**What this says.**
+
+1. *The head is under a quarter everywhere in the crawls (19–23%) and fell from 45% to 27% in duels.* It goes where
+   the body is open: torso and legs gained most. The duels stay above a quarter for the reason the aim section gave:
+   two fighters stand toe to toe and aim every blow, and a lone defender is seldom prone, held or spent.
+2. *The heroes lose clears: the head was their answer, and nothing yet replaces it.* Court of 3 15 → 11, hall 2 → 0,
+   valley 2 → 1; a party of 4 is about unchanged (29, 6 → 5, 9 → 8). The control table shows it is the price of the
+   head: each step of it costs the court about 2.5 clears, monotonically, while R7 and the AP guess alone left it at 16.
+   Deaths a fight hardly move (0.43 → 0.47, 0.35 → 0.41, 0.83 → 0.83), so the loss is in longer, wearier crawls, not
+   in deadlier fights. The plan's wager is that the head becomes something you set up. The AI sets it up only by
+   accident: it finishes the prone and the collapsed (where the head is cheap again) but does not yet knock down,
+   hold or drain a foe *in order to* aim at the head. That is step 5's work, and the clears should be judged after it.
+   If they are not back by step 6, the lever is the guarded head (4 / 3 / 4 keeps the court at 26% and 13 clears).
+3. *The kills by thrust fell a little* (court 45 → 37%, valley 73 → 70%); its share of blows did not. A thrust at the
+   torso is still the best answer to most things; R6 took away its best place, not its edge.
+4. *More survivors carry a limb wound* (court 15 → 21%, valley 12 → 34%): blows that used to end a fight at the head
+   now land on arms and legs first. The death-spiral target is met in the valley for the first time.
+5. *R7 changed little because there was little to change.* The kits and three of four presets were helmed already;
+   the first areas' level-1 foes wear nothing. The plan's "most bodies have a bare head" was true of the foes, not the
+   heroes, and R7 as ruled (armor's type, level 2 and up) does not reach the level-1 foes. That's left as it is.
+
+**Rulings I made that the plan did not cover.**
+
+- "Can still react" is judged on the one who meets the blow (a shield-bearer covering a prone friend pays the guarded
+  cost; it is their shield that has to be beaten).
+- Out of AP needs no rule: no AP, no defence, no penalty. It matters only to the AI's choice, through its guess.
+- The AI's AP guess uses the average roll; it can be wrong both ways, as a player's would be. A guessed-spent target
+  makes every place land, which also changes the AI's choice between aimed and unaimed blows, not just its price.
+- Arms and legs keep 1 (they are not small targets); the torso stays 0.
+- R7 for monsters only where they wear armor: a body with none has no type to match.
+
 ## Wounds that weaken (2026-11-11; step 3 of `docs/PLAN.md`, rulings R4 and R5; PROVISIONAL)
 
 What changed (each part is its own key; the four together off reproduce the step-2 and aim numbers fight for fight):

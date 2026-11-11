@@ -349,6 +349,11 @@ test('ui: a strike at someone in mixed armor offers a Location, defaulting to th
           assert.match(sel.textContent, /Best \(/, 'a best choice');
           assert.match(sel.textContent, /Legs/);
           assert.match(sel.textContent, /bare/);
+          // R6: the chosen place, its cost and why, without a hover.
+          const why = find('.aim-why');
+          assert.ok(why, 'the aim line');
+          assert.match(why.textContent, /no cost|−\d/);
+          assert.match(why.textContent, /cover a small target|spent|prone|collapsed|held|unseen|off guard|down/);
         } else { const end = find('.cmd-foot .end'); if (end) end.click(); }
       }
     }

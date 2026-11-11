@@ -197,7 +197,7 @@
       if (kind === 'dodge' && free) { ap = 0; stamina = 0; }
       if (ap > apLeft(enc, t.id)) continue;
       const spent = isSpent(t, stamina);
-      options.push(Object.assign({ type: kind, name: ACTIONS[kind].name, ap, stamina, odds: hidden ? null : defenseOdds(t, kind, motion, a, d.option, spent ? -CONFIG.stamina.spent.defense : 0) }, spent ? { spent } : {}));
+      options.push(Object.assign({ type: kind, name: ACTIONS[kind].name, ap, stamina, odds: hidden ? null : defenseOdds(t, kind, motion, a, d.option, spent ? -CONFIG.stamina.spent.defense : 0, enc) }, spent ? { spent } : {}));
     }
     return { hidden, options };
   }
@@ -233,7 +233,7 @@
       const hidden = describeBare(enc, chars, d, id).hidden;
       const penalty = wall ? 0 : K.penalty;
       const spent = isSpent(b, stamina);
-      out.push(Object.assign({ actor: id, type: 'cover', name: 'Cover', ap, stamina, penalty, odds: hidden ? null : defenseOdds(b, 'block', d.option.motion, a, d.option, -penalty - (spent ? CONFIG.stamina.spent.defense : 0)), hidden }, spent ? { spent } : {}));
+      out.push(Object.assign({ actor: id, type: 'cover', name: 'Cover', ap, stamina, penalty, odds: hidden ? null : defenseOdds(b, 'block', d.option.motion, a, d.option, -penalty - (spent ? CONFIG.stamina.spent.defense : 0), enc), hidden }, spent ? { spent } : {}));
     }
     return out;
   }
@@ -1832,20 +1832,42 @@
     return out;
   }
 
-  // What aiming a blow at a location costs it against a defence (CONFIG.locations.aim), and a shield's
-  // edge against a blow aimed at what it covers.
-  function aimPenalty(option, loc) {
-    const A = CONFIG.locations && CONFIG.locations.aim;
-    if (!A || !loc) return 0;
-    return Math.max(0, (A.penalty[loc] || 0) - (option && option.motion === 'thrust' ? A.thrustLess || 0 : 0));
+  // R6 (docs/PLAN.md; rules.yaml locations.aim.guarded): can the one meeting this blow still move to cover a small
+  // target? Not if prone, down or collapsed, held or pinned, caught off guard (the surprised side in its first round),
+  // or not seeing the blow. Out of AP is the other case, and needs no test here: a defender with none puts up no
+  // defence, so no aim penalty is paid at all.
+  // aimOpen says why not (a word for the panel), or null when they can.
+  function aimOpen(defender, attacker, enc) {
+    if (!defender || !defender.status) return null;
+    if (!C.isActive(defender)) return C.collapsed && C.collapsed(defender) ? 'collapsed' : 'down';
+    if (defender.status.prone) return 'prone';
+    if (C.isHeld(defender) || C.isPinned(defender)) return 'held';
+    if (attacker && G.Effects.has(attacker, 'unseen')) return 'unseen';
+    const sp = enc && enc.surprise;
+    if (sp && sp.round === enc.round && defender.side === sp.side) return 'caught off guard';
+    return null;
+  }
+  function aimGuarded(defender, attacker, enc) {
+    return !!defender && !aimOpen(defender, attacker, enc);
   }
 
-  function defenseNumbers(defender, kind, motion, attacker, atkOption) {
+  // What aiming a blow at a location costs it against a defence (CONFIG.locations.aim): `guarded` against a defender
+  // who can still react (aimGuarded), `penalty` against one who can't; a thrust `thrustLess` less either way.
+  function aimPenalty(option, loc, guarded) {
+    const A = CONFIG.locations && CONFIG.locations.aim;
+    if (!A || !loc) return 0;
+    const table = guarded && A.guarded ? A.guarded : A.penalty;
+    return Math.max(0, (table[loc] || 0) - (option && option.motion === 'thrust' ? A.thrustLess || 0 : 0));
+  }
+
+  function defenseNumbers(defender, kind, motion, attacker, atkOption, enc) {
     const r = defenseNumbersBase(defender, kind, motion, attacker, atkOption);
     const m = intentMods(defender, attacker);
     const aim = atkOption && atkOption.aim;
     if (aim) {
-      if (!(atkOption.ranged && attacker && C.rank(attacker, 'deadeye'))) m.atk -= aimPenalty(atkOption, aim);
+      // The AI weighs a blow it hasn't thrown with its own guess (atkOption.aimGuarded); a real defence reads the body.
+      const guarded = atkOption.aimGuarded != null ? atkOption.aimGuarded : aimGuarded(defender, attacker, enc);
+      if (!(atkOption.ranged && attacker && C.rank(attacker, 'deadeye'))) m.atk -= aimPenalty(atkOption, aim, guarded);
       const S = CONFIG.locations.aim.shield;
       if (kind === 'block' && S && (S.covers || []).includes(aim)) m.def += S.block || 0;
     }
@@ -1968,8 +1990,8 @@
   }
 
   // Chance a defense succeeds (the attacker's numbers when known).
-  function defenseOdds(defender, kind, motion, attacker, atkOption, extra) {
-    const n = defenseNumbers(defender, kind, motion, attacker, atkOption);
+  function defenseOdds(defender, kind, motion, attacker, atkOption, extra, enc) {
+    const n = defenseNumbers(defender, kind, motion, attacker, atkOption, enc);
     n.bonus += extra || 0;
     if (n.opposed) return opposedOdds(n.bonus, n.attack, 0);
     const die = CONFIG.defense.die;
@@ -1980,7 +2002,7 @@
     const D = CONFIG.defense;
     const motion = atkDecl.type === 'strike' ? atkDecl.option.motion : 'maneuver';
     const attacker = chars[atkDecl.actor];
-    const n = defenseNumbers(defender, kind, motion, attacker, atkDecl.type === 'strike' ? atkDecl.option : null);
+    const n = defenseNumbers(defender, kind, motion, attacker, atkDecl.type === 'strike' ? atkDecl.option : null, enc);
     n.bonus += extra || 0;
     const name = ACTIONS[kind].name;
     if (n.opposed) {
@@ -3110,6 +3132,6 @@
     foeSquares, fearSource, fleeSteps, mustFlee,
     unseenBy, strikeEffects, conditionForbids, ATTACK_TYPES, DEFENSE_TYPES, shoveReach, log, rollDie, castSpell, knockDown, stability, releaseAll: clearGrapple,
     createEncounter, autoPlace, startRound, currentActor, legalActions, act, validate, endTurn, defer, submit, describeDecl, apLeft, defenseOptions, coverOptions, opportunityOptions,
-    vitalNeed, woundTable, aimHold, projectedPos, dist, comesRoundAt, collapseRounds, isSpent, canPay, defenseOdds, parryCarryShare, leverage, skillEdge, feintScore, readScore, blowForce, aimPenalty, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolveAction, finishRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
+    vitalNeed, woundTable, aimHold, projectedPos, dist, comesRoundAt, collapseRounds, isSpent, canPay, defenseOdds, parryCarryShare, leverage, skillEdge, feintScore, readScore, blowForce, aimPenalty, aimGuarded, aimOpen, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolveAction, finishRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

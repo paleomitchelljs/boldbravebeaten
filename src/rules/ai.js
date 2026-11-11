@@ -114,12 +114,18 @@
   // half the time with its best defence (aiming makes that easier for it). Returns { loc (null: unaimed), v, ratio
   // (its worth over an unaimed blow's) }, or null when every location is the same (no wound tables, and a full
   // harness or bare skin).
-  function bestAim(c, target, opt, d) {
+  // With `enc` (R6, docs/PLAN.md step 4): what the attacker can see of whether the target can still react. Its body
+  // (prone, held, collapsed, caught off guard, not seeing the blow: Combat.aimGuarded) it sees; its AP it doesn't, so
+  // it guesses: the pool an average roll gives that body, less what it has watched it spend this round. A target it
+  // takes to be spent puts up no defence, so every place lands; one that can react pays the guarded aim.
+  function bestAim(c, target, opt, d, enc) {
     const L = G.CONFIG.locations;
     // With wound tables every place differs (a hand drops its sword); without them only mixed armor does.
     if (!L || !L.aim || opt.spell || (!L.wounds && C.armorUniform(target))) return null;
     const kinds = ['parry', 'dodge'].concat(C.shieldReady(target) ? ['block'] : []);
-    const land = (o) => 1 - 0.5 * Math.max(0, ...kinds.map((k) => (Combat.defenseUnavailable(target, k, { type: 'strike', option: o, actor: c.id }, { [c.id]: c }) ? 0 : Combat.defenseOdds(target, k, o.motion, c, o))));
+    const guarded = Combat.aimGuarded(target, c, enc);
+    const drained = !!enc && seemsSpent(enc, target, kinds);
+    const land = (o) => (drained ? 1 : 1 - 0.5 * Math.max(0, ...kinds.map((k) => (Combat.defenseUnavailable(target, k, { type: 'strike', option: o, actor: c.id }, { [c.id]: c }) ? 0 : Combat.defenseOdds(target, k, o.motion, c, Object.assign({}, o, { aimGuarded: guarded }))))));
     const plain = Object.assign({}, opt); delete plain.aim;
     const base = hitValue(c, target, plain, d) * land(plain);
     let best = { loc: null, v: base };
@@ -129,7 +135,20 @@
       if (v > best.v + 0.01) best = { loc, v };
     }
     best.ratio = base > 0 ? best.v / base : 1;
+    best.drained = drained;
     return best;
+  }
+
+  // The attacker's guess that a target has no AP left for a defence (R6): an average round's pool for that body
+  // (its SPD, armor, gear: what anyone can see; a side caught off guard gets its share) less the AP of what it has
+  // been seen to do this round, against the cheapest defence it has.
+  function seemsSpent(enc, target, kinds) {
+    let pool = C.apPool(target);
+    const sp = enc.surprise;
+    if (sp && sp.round === enc.round && target.side === sp.side) pool = Math.floor(pool * sp.factor);
+    const seen = (enc.decls || []).reduce((t, x) => t + (x.actor === target.id ? x.ap || 0 : 0), 0);
+    const cheapest = Math.min(...kinds.map((k) => C.actionCost(target, k).ap));
+    return pool - seen < cheapest;
   }
 
   const SPENT_LAND = 0.8; // a spent blow lands about this much as often (CONFIG.stamina.spent.attack on a d10)
@@ -991,7 +1010,7 @@
         if (!t.inReach || !(foes.includes(t.id) || down)) continue;
         let v = rate(c, chars[t.id], atk, t.distance) * P.kickBias ** (atk.unarmed === 'kick' ? 1 : 0) * (down ? finishWeight(enc, chars[t.id]) : 1);
         // Aim where it pays (a bare leg under a breastplate), if anywhere does.
-        const aim = atk.unarmed ? null : bestAim(c, chars[t.id], atk, t.distance);
+        const aim = atk.unarmed ? null : bestAim(c, chars[t.id], atk, t.distance, enc);
         if (aim && aim.loc) v *= aim.ratio;
         // Digging into the AP kept for defence: never after the first action of the turn; the first
         // blow is still worth something, a little less.

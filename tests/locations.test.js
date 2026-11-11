@@ -228,3 +228,49 @@ test('aimed blows land where aimed only so often (locations.aim.hold); otherwise
   assert.ok(Math.abs(aimed.slashToAttrs - (p * there.slashToAttrs + (1 - p) * mean.slashToAttrs)) < 1e-6);
   assert.equal(aimed.aimHold, p);
 });
+
+test('R6: a small target costs more against a defender who can still cover it (locations.aim.guarded)', async () => {
+  const A = CONFIG.locations.aim;
+  assert.ok(A.guarded, 'rules.yaml locations.aim.guarded');
+  const a = armed('A', 'longsword');
+  const t = armed('T', 'longsword'); t.side = 'enemy';
+  const thrust = Object.assign({}, C.attackOptions(a).find((o) => o.motion === 'thrust'), { aim: 'head' });
+  const chars = { [a.id]: a, [t.id]: t };
+  const enc = Combat.createEncounter('t', [a.id, t.id], chars, 4, 1);
+  enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[t.id] = { x: 1, y: 0 };
+  await Combat.startRound(enc, chars, roller([3, 3]));
+  // Standing, free, aware: the guarded table, a thrust one less.
+  assert.equal(Combat.aimOpen(t, a, enc), null);
+  assert.equal(Combat.aimPenalty(thrust, 'head', true), A.guarded.head - A.thrustLess);
+  const guardedOdds = Combat.defenseOdds(t, 'parry', 'thrust', a, thrust, 0, enc);
+  // Prone: the old numbers, and the parry is easier to beat.
+  t.status.prone = true;
+  assert.equal(Combat.aimOpen(t, a, enc), 'prone');
+  const openOdds = Combat.defenseOdds(t, 'parry', 'thrust', a, thrust, 0, enc);
+  assert.ok(openOdds < guardedOdds, `${openOdds} < ${guardedOdds}`);
+  t.status.prone = false;
+  // Caught off guard: the surprised side in its first round.
+  enc.surprise = { side: 'enemy', round: enc.round, factor: 0.5 };
+  assert.equal(Combat.aimOpen(t, a, enc), 'caught off guard');
+  enc.surprise = null;
+  // The torso costs nothing either way.
+  assert.equal(Combat.aimPenalty(Object.assign({}, thrust, { aim: 'torso' }), 'torso', true), 0);
+});
+
+test('R6: the AI judges a foe spent from what it has watched it spend this round, not from its AP', async () => {
+  const a = armed('A', 'longsword');
+  const t = armed('T', 'longsword'); t.side = 'enemy';
+  const chars = { [a.id]: a, [t.id]: t };
+  const enc = Combat.createEncounter('t', [a.id, t.id], chars, 4, 1);
+  enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[t.id] = { x: 1, y: 0 };
+  await Combat.startRound(enc, chars, roller([3, 3]));
+  const thrust = C.attackOptions(a).find((o) => o.motion === 'thrust');
+  enc.ap[t.id] = 0; // it really has none, but nobody saw it spent
+  const fresh = B.AI.bestAim(a, t, thrust, 1, enc);
+  assert.equal(fresh.drained, false);
+  enc.decls.push({ actor: t.id, type: 'strike', ap: C.apPool(t), done: true }); // seen to spend an average pool
+  const spent = B.AI.bestAim(a, t, thrust, 1, enc);
+  assert.equal(spent.drained, true);
+  // With no defence to beat, the head is no dearer than anywhere: worth at least as much, relative to the unaimed blow.
+  assert.ok(spent.ratio >= fresh.ratio - 1e-9);
+});

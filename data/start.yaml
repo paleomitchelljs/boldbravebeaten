@@ -71,7 +71,7 @@ presets:
     kit: rapier
     level: 1
     attrs: {STR: 4, CON: 5, DEX: 8, SPD: 8, INT: 4, WIL: 4, WIS: 4, CHA: 3}
-    armorItem: {armor: padded, covers: [torso]}
+    armorItem: {armor: padded, covers: [head, torso]}
     skills: [{melee: 5, evasion: 4, anticipation: 4, deception: 2, athletics: 1}, {melee: 7, evasion: 6, anticipation: 5}, {melee: 9, evasion: 7, anticipation: 7}, {deception: 4, melee: 10}, {evasion: 9, athletics: 4, perception: 3}]
     feats: [quick_thrust, riposte, quickness, feint, quick_parry, precision, precision, find_the_gap, quick_thrust, lunge, quick_parry, quick_thrust]
     look: {sprite: "art:cyrus"}
