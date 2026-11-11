@@ -1,5 +1,146 @@
 # Simulation findings
 
+## Wounds that weaken (2026-11-11; step 3 of `docs/PLAN.md`, rulings R4 and R5; PROVISIONAL)
+
+What changed (each part is its own key; the four together off reproduce the step-2 and aim numbers fight for fight):
+
+- **R4 `rules.yaml locations.wounds.pointToCON: [head, torso]`**: a point that goes into the head or torso takes CON as
+  before. Into an arm, a hand, a leg or a foot its points take that location's attributes (`wounds.attrs`), rolled one
+  by one as a cut's are, unless the wound roll (already weighted by location: arms 0.4, legs 0.7, hands and feet 0)
+  is vital, which sends the whole wound to CON × `vital.mult` (3) as anywhere. Bleeding is unchanged.
+- **R5 `CONFIG.impact.crushBare: 3`, `crushAttrs: true`**: blunt on a location with no armor breaks bone past 3 (under
+  armor, `crushAt` 8 as before), 1 point per `crushPer` 2 over. With `crushAttrs` every crush that lands on a known
+  location (armored too: a greatsword through mail at the collarbone) takes that location's attributes, rolled per
+  point. An untrained punch or kick still takes stamina only.
+- **Tireless bodies `rules.yaml locations.wounds.tirelessCON: true`** (the step's point 4): every point that reaches a
+  tireless body, cut, point or crush, takes CON wherever it lands. It has no strength or speed to lose, only a frame.
+  What it resists is unchanged, so a point still does nothing to bone (a skeleton resists P 0) and a golem still
+  shrugs off the two kinds it is immune to. Chosen because it is one sentence, needs no new number, and makes "what
+  destroys it" the same as "what gets through": a blade for clay, a hammer for stone, fire and a point for iron.
+- **The expectation** (`computeHit`): each location's hit now carries `expCON` and `expAttrs`, what `applyHit` takes on
+  average including the gap roll, the wound and vital rolls and the attribute rolls; they blend linearly, so the blend
+  over locations, gaps and the aim is exact. With R4 or R5 on, a body whose armor is the same everywhere is blended
+  over locations too (the wounds differ underneath). `tests/wounds.test.js` checks the expectation against 2,000–4,000
+  rolled blows each for a bare, padded and mailed thrust, a thrust aimed at the legs, a warhammer bare and padded, and
+  a tireless body: within 6% everywhere. The AI values a limb point as it valued a CON point (it weakens) and counts
+  only CON toward a kill. A carried cut is outside the expectation, as it was.
+- **Current attributes** (point 3): every formula reads `Character.attr` or `combatAttr`, which subtract damage: SPD
+  for the AP pool and squares a move, STR for strain, the STR offset on stamina costs and the weapon's damage, DEX for
+  parries, blocks, dodges and the gap roll, CON/STR/SPD/DEX for maximum stamina, CON/WIL for regeneration. Two reads
+  are not "at once", both intended: the AP pool is rolled at the start of the round, so an SPD wound takes AP from the
+  next round, not the turn in progress; and `attrMax` (the unwounded value) is read in one place, the AI's measure of
+  how far gone a foe is (CON left of CON whole), which is what it should read. **REVIEW §2.3 settled**: maximum
+  stamina reads current attributes, conditions included; a wound takes current stamina down by what it took off the
+  maximum (as before); a condition that lowers the maximum now clamps current stamina to it; a condition that ends
+  does not raise current stamina (regeneration fills it). `Character.clampStamina`, called from `Conditions`.
+
+Seed 4242, the step-1 commands; "before" is this commit with the four keys off, which reproduces the aim section below
+fight for fight (court 17, hall 1, valley 8 cleared; 0.35, 0.40, 0.73 dead a fight).
+
+**Against the targets** (first areas, party of 3; before → after):
+
+| Goal | Measure | Target | Before | After | Met? |
+|---|---|---|---|---|---|
+| Fast | median rounds (90th) | 3 to 5 | court 4 (8), hall 4 (11), valley 5 (15); duels 2 (4) | court 4 (10), hall 4 (12), valley 6 (15); duels 2 (5) | court and hall yes; valley just over |
+| Lethal but playable | heroes dead a fight | ≤ 0.5 | 0.35, 0.40, 0.73 | 0.43, 0.35, 0.83 | 2 of 3; court and valley worse, hall better |
+| | places cleared of 30 | ≥ 18 | 17, 1, 8 | 15, 2, 2 | no; court and valley down |
+| Death spiral | survivor with a STR/DEX/SPD wound | ≥ ⅓ | 0%, 0%, 0%; duels 0% | 15%, 9%, 12%; duels 6% | **no**, but no longer zero |
+| | wounded twin's win rate | < 50%, falling | STR yes; DEX barely; SPD rises | the same to a fight or two | no (unchanged: see 3) |
+| Stamina matters | someone under ½ | ≥ ⅓ | 68%, 43%, 66% | 72%, 44%, 63% | crawls yes |
+| | collapses that get up | most | heroes 23/55, 13/57, 2/27 | heroes 20/72, 26/90, 1/40 | no |
+| Tactical depth | largest share of blows by one action | < ½ | thrust 40%, 57%, 60% | thrust 34%, 50%, 59% | court only |
+| | blows on the head | < ¼ | 33%, 26%, 25% | 34%, 32%, 32% | **no; worse** (see 2) |
+| | kills by the thrust | (falls) | 54%, 71%, 71% | 45%, 65%, 73% | court and hall a little; valley no |
+| Action economy | level-8 hero against N level-1 foes | loses at about N = 4 | 88, 68, 47, 45, 33, 25% | 89, 66, 48, 43, 32, 23% | unchanged |
+
+**Crawls** (30 each; heroes' collapses: all / got up / died while down / down at the end):
+
+| Run | cleared | rounds med / 90th | dead a fight | survivor wounded (a hero) | heroes' collapses | top action (all; heroes') | head | kills by thrust |
+|---|---|---|---|---|---|---|---|---|
+| court 3, before | 17 | 4 / 8 | 0.35 | 0% (0%) | 55 / 23 / 11 / 21 | thrust 40%; 53% | 33% | 54% |
+| court 3, after | 15 | 4 / 10 | 0.43 | 15% (6%) | 72 / 20 / 34 / 18 | thrust 34%; 48% | 34% | 45% |
+| hall 3, before | 1 | 4 / 11 | 0.40 | 0% (0%) | 57 / 13 / 21 / 23 | thrust 57%; 60% | 26% | 71% |
+| hall 3, after | 2 | 4 / 12 | 0.35 | 9% (6%) | 90 / 26 / 36 / 28 | thrust 50%; 49% | 32% | 65% |
+| valley 3, before | 8 | 5 / 15 | 0.73 | 0% (0%) | 27 / 2 / 14 / 11 | thrust 60%; 55% | 25% | 71% |
+| valley 3, after | 2 | 6 / 15 | 0.83 | 12% (6%) | 40 / 1 / 20 / 19 | thrust 59%; 51% | 32% | 73% |
+| court 4, before | 27 | 3 / 5 | 0.13 | 0% (0%) | 32 / 16 / 7 / 9 | thrust 50%; 61% | 39% | 65% |
+| court 4, after | 29 | 3 / 5 | 0.08 | 17% (15%) | 40 / 27 / 6 / 7 | thrust 49%; 58% | 40% | 71% |
+| hall 4, before | 9 | 4 / 12 | 0.55 | 0% (0%) | 64 / 13 / 33 / 18 | thrust 59%; 65% | 33% | 74% |
+| hall 4, after | 6 | 4 / 11 | 0.41 | 10% (7%) | 121 / 35 / 53 / 33 | thrust 56%; 57% | 35% | 71% |
+| valley 4, before | 11 | 5 / 17 | 1.03 | 0% (0%) | 41 / 5 / 25 / 11 | thrust 60%; 49% | 26% | 67% |
+| valley 4, after | 9 | 5 / 18 | 1.12 | 14% (8%) | 53 / 5 / 39 / 9 | thrust 59%; 46% | 30% | 76% |
+
+**Duels** (`--n 40`, 400 fights): every pairing within two fights of before. Median 2 rounds (90th 4 → 5), heroes dead
+0.47 → 0.45, survivor wounded 0% → 6%, head 42% → 45%, kills by thrust 87% → 89% (the swing 2% → 7%, two-handed
+9% → 1%). **Spiral** (`--n 40`): the same to a fight or two in every cell; pooled STR 40, 38, 23, 15, 13% at k = 0..4,
+SPD 40, 44, 53, 55, 47%, DEX 40, 38, 34, 34, 35%. **Swarm**: 89, 66, 48, 43, 32, 23% (was 88, 68, 47, 45, 33, 25).
+
+**Tireless bodies** (`node tools/tiers.js skeleton clayGolem stoneGolem ironGolem --n 24`, tirelessCON off → on):
+skeleton M 1.56 → 1.52, stone golem 1.76 → 1.76, iron golem 5.48 → 5.53, clay golem > 6 → > 6 but six heroes win
+17% → 46%. The rule does what it should for clay (blades now reach its CON) and nothing else; the clay golem's
+real problem is still the one FINDINGS "Monster tiers" traced: its arm blows disarm the heroes, who then kick a body
+immune to blunt. No monster was tuned.
+
+**The thrust against the swing per AP** (as in "The swing nobody uses": longsword, STR 6, against CON 6, unaimed, so the
+expectation over where it lands; each cell is expected CON + other attributes, then the AI's value per AP):
+
+| Longsword | AP | Damage | Bare | Padded | Mail |
+|---|---|---|---|---|---|
+| Thrust, before | 2.3 | 6 P | 8.4 CON (a likely kill), 55/AP | 3.0 CON, 13/AP | 2.5 CON, 8.7/AP |
+| Thrust, after | 2.3 | 6 P | 6.5 CON + 1.9 other, 34/AP | 2.3 CON + 0.8 other, 13/AP | 1.9 CON + 0.9 other, 8.7/AP |
+| Swing, before | 4.0 | 6 S + 3 B | 2.1 CON + 4.5 other, 14/AP | nothing (padding stops the cut), 0.5/AP | nothing, 0.8/AP |
+| Swing, after | 4.0 | 6 S + 3 B | 2.8 CON + 3.6 other, 14/AP | nothing, 0.5/AP | nothing, 0.8/AP |
+
+(The swing's CON rises a little only because its expectation is now taken over the locations' own tables instead of the
+old d4; the dice were already rolling those.)
+
+**What this says.**
+
+1. *R4 takes a fifth to a quarter of the thrust's CON and none of its value against armor.* Bare, the thrust falls from
+   55 to 34 per AP, still 2.4 times the swing; padded and mailed it is unchanged to the AI (a limb point is worth what
+   a CON point was; only the kill bonus moved). The thrust's share of blows fell 1 to 9 points in every crawl, but its
+   share of kills did not fall reliably (court 54 → 45%, hall 71 → 65%, valley 71 → 73%; with four 65 → 71%, 74 → 71%,
+   67 → 76%). R4 does
+   not give the swing a setting; it was never going to (FINDINGS "The swing nobody uses" predicted a small effect).
+   That is R8's job (step 6).
+2. *The head's share rose* (hall 26% → 32%, valley 25% → 32%), undoing a third of what aim.hold won. The AI aims where a blow
+   is worth most, and a point in a limb is now worth less than one in the head or torso (no kill, smaller vital odds).
+   This is the AI reading the new rules correctly, and it is the case for step 4 (R6: the head harder to hit against a
+   defender who can react). Step 4 should measure from these numbers, not the aim section's.
+3. *The spiral sim can't see R4.* It starts the twin with k points already off STR, SPD or DEX; R4 changes how often a
+   fight leaves those points, not what they cost. What it shows is unchanged: STR loss costs fights, DEX loss hardly,
+   SPD loss wins the spear mirror. The crawl's "survivor wounded" is the measure R4 moves: 0% → 9–17%. It falls short
+   of a third because most limb points land in fights someone loses outright, and the torso and head (two thirds of
+   blows) still go to CON.
+4. *Fights are not much longer and kill a little more.* Medians are the same but for the valley (5 → 6); the 90th
+   centile moves by ±2. Deaths a fight rose in three runs of six (court of 3 0.35 → 0.43, valley 0.73 → 0.83, valley of
+   4 1.03 → 1.12) and fell in three (hall 0.40 → 0.35, hall of 4 0.55 → 0.41, court of 4). More collapses (court 55 → 72,
+   hall 57 → 90 heroes' collapses): a fighter bled and weakened in the limbs falls
+   by stamina rather than by CON, and the AI then finishes them ("died down" 11 → 34 in the court). So limb wounds kill
+   later but not less, through the collapse rule of step 2.
+5. *First-area clears fell* for a party of 3 in the court and the valley (court 17 → 15, hall 1 → 2, valley 8 → 2; the
+   valley's fall is beyond the noise of 30 crawls). A party of 4 is about unchanged (27 → 29, 9 → 6, 11 → 9). Reported, not fixed: attrition is step 6's.
+   The heroes now carry STR, DEX and SPD wounds into the next fight; the crawl rests between fights but attributes heal
+   slowly, as intended.
+6. *R5 has little to work on yet.* Blunt reaching bare skin above 3 is rare among first-area fighters (the kick and
+   punch take stamina only; the beaked court foes and the tail sweep are the main sources). The court's "kills by swing"
+   rose 19% → 26%, the beak's swing crushing through bare limbs; elsewhere too few blows to read.
+
+**Rulings I made that the plan did not cover.**
+
+- A vital limb point goes to CON × `vital.mult`, the same multiplier as a vital point anywhere; a non-vital one rolls the
+  location's table, which for arms and legs includes CON (a third and a half of the points), as a cut's does.
+- `crushAttrs` sends *every* crush on a known location to that location's attributes, armored or bare, not only the
+  new bare-skin crushes: one rule for broken bone. The head's table is CON, INT, WIL, so a crushed skull takes less CON
+  than it did. Off, armored crushes keep going to CON.
+- The AI's value of a point of a limb wound or a crush equals a point of CON (both weaken); only CON counts toward a kill.
+- A wound to a tireless body skips the attribute roll (one entry: CON), so the log reads "n CON".
+- With R4 or R5 on, the blend over locations keeps the gap odds when every location shares them (armor the same
+  everywhere, or pieces with the same gap number), so the AI's kill check sees "a found gap kills, at these odds" rather
+  than the diluted average. This is an AI change riding with the rules: it is part of every "after" above (my first
+  "before" runs had it on with the rules off, and the hall went 1 → 3 cleared on it alone; it is now gated so off
+  restores the old fight exactly).
+
 ## Aimed blows land where the body is open (2026-11-11; the user's note; PROVISIONAL, `rules.yaml locations.aim.hold`)
 
 The user: targeting should be decided more by what happens to be open than by aim. An aimed blow now lands where aimed

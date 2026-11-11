@@ -22,6 +22,14 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
     else where the location roll puts it; always where aimed on a prone, down, held or blind defender
     (`rules.yaml locations.aim.hold`). Head share 45–49% → 25–33% in crawls, 66% → 42% in duels; deaths flat.
     Step 4 still owes the dearer aim against a defender who can react, and helms (R7).
+  - [x] Step 3, wounds that weaken (R4 `locations.wounds.pointToCON`, R5 `impact.crushBare` 3 and `crushAttrs`, tireless
+    bodies take CON wherever `locations.wounds.tirelessCON`; stamina clamped to a lowered maximum, REVIEW §2.3 settled).
+    FINDINGS "Wounds that weaken". Survivors carrying a STR/DEX/SPD wound 0% → 9–17% (target ⅓); party-of-3 clears down
+    (court 17 → 15, valley 8 → 2), deaths a fight up a little; the thrust's kills did not fall reliably. Next: prompt 4.
+  - [ ] For step 4: with limb points weaker, the AI aims at the head more (hall and valley 25% → 32% of located blows).
+    Measure R6 from the step-3 numbers.
+  - [ ] For step 6: the clay golem is still unbeatable (six heroes win 46%, was 17%): its arm blows disarm, then the
+    heroes kick a body immune to blunt. The tireless rule fixed what reaches its CON, not that.
   - [ ] The sword-and-shield standoff is two full plate harnesses against swords, not the shield (FINDINGS "Stamina as a
     pool", point 6). For step 5: let the AI grapple or throw a foe it can't otherwise hurt.
   - [ ] Holding a grapple is now free at steady state (upkeep 6 = an unstruck holder's regeneration). Look at in step 6.

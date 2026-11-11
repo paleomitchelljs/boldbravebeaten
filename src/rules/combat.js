@@ -1181,6 +1181,8 @@
     out.pierce = null; out.gap = null; out.location = null; out.piece = null;
     // Armor the same everywhere (wounds that differ by location blend it too): the point meets it the same way at
     // every location, so keep how (burst, a gap at the same odds), with what a found gap and a turned point do blended.
+    // Only with R4/R5 on, so that off they restore the old fight exactly (the AI's kill check reads the gap).
+    if (!woundsByLocation()) return out;
     const p0 = parts[0].h;
     if (parts.every((p) => p.h.pierce === p0.pierce)) out.pierce = p0.pierce;
     if (p0.gap && parts.every((p) => p.h.gap && p.h.gap.chance === p0.gap.chance)) {
