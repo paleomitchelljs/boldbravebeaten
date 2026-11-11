@@ -1,5 +1,28 @@
 # Simulation findings
 
+## Aimed blows land where the body is open (2026-11-11; the user's note; PROVISIONAL, `rules.yaml locations.aim.hold`)
+
+The user: targeting should be decided more by what happens to be open than by aim. An aimed blow now lands where aimed
+with chance 0.4 + 0.05 × the attacker's Melee or Ranged (at most 0.85); otherwise the location roll decides, as for an
+unaimed blow. Against a defender who can't cover (prone, down, held or pinned, or not seeing the blow) it lands where
+aimed, as before. The aim's penalty to beat a defence is unchanged. The AI and the preview see the blend (a test checks
+it against the rolled outcome). This takes the "defender who can't react" half of R6 ahead of step 4.
+
+Seed 4242, on top of step 2 (party of 3; before → after):
+
+| Place | cleared | dead a fight | head (of located blows) | top location after | kills by thrust |
+|---|---|---|---|---|---|
+| court | 17 → 17 | 0.33 → 0.35 | 45% → 33% | head 33% | 56% → 54% |
+| hall | 2 → 1 | 0.39 → 0.40 | 49% → 26% | torso 30% | 65% → 71% |
+| valley | 3 → 8 | 0.89 → 0.73 | 45% → 25% | torso 32% | 63% → 71% |
+| duels (400) | | 0.46 → 0.47 heroes | 66% → 42% | | |
+
+The head's share falls to about a quarter in the hall and the valley (target: under a quarter) and to a third in the
+court; deaths a fight do not rise. Duels still go mostly to the head (42%): there both sides stand still and aim every
+blow. **The sword-and-shield standoff is untouched** and could not be touched by this: it is two full plate harnesses,
+the same everywhere (FINDINGS "Stamina as a pool", point 6). The spiral's Beren mirror timed out in 75% of even fights
+before and after.
+
 ## Stamina as a pool (2026-11-11; step 2 of `docs/PLAN.md`, rulings R1 to R3; PROVISIONAL, `CONFIG.stamina`)
 
 What changed (each part is a key of `CONFIG.stamina`; null restores the old rule, and with all three null the crawls

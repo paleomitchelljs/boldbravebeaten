@@ -18,11 +18,12 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
   - [ ] **Ruling wanted (step 2)**: "most collapses get up" is not met (11 of 54 in the court) because the AI now
     finishes a body that lies a full round beside it. Recommendation: keep R3 and the finishing, drop the target; or
     `stamina.collapse.rounds: 0` (163 of 177 get up). FINDINGS has both.
-  - [ ] Built ahead of step 4, not merged (branch `claude/aim-wip`, the user's note of 2026-11-11: targeting more by what
-    is open than by aim): an aimed blow lands where aimed with 0.4 + 0.05 × skill (max 0.85), else rolls; always where
-    aimed on a prone, down, held or blind defender (`rules.yaml locations.aim.hold`). Not measured yet. It does not touch
-    the sword-and-shield standoff, which is plate against a sword (FINDINGS, point 6): for step 5, let the AI grapple a
-    foe it can't hurt.
+  - [x] Ahead of step 4 (the user's note, 2026-11-11): an aimed blow lands where aimed with 0.4 + 0.05 × skill (max 0.85),
+    else where the location roll puts it; always where aimed on a prone, down, held or blind defender
+    (`rules.yaml locations.aim.hold`). Head share 45–49% → 25–33% in crawls, 66% → 42% in duels; deaths flat.
+    Step 4 still owes the dearer aim against a defender who can react, and helms (R7).
+  - [ ] The sword-and-shield standoff is two full plate harnesses against swords, not the shield (FINDINGS "Stamina as a
+    pool", point 6). For step 5: let the AI grapple or throw a foe it can't otherwise hurt.
   - [ ] Holding a grapple is now free at steady state (upkeep 6 = an unstruck holder's regeneration). Look at in step 6.
   - [ ] For step 6 (from the baseline): the two "lethal" targets disagree. Each fight's own deaths are 0.21 / 0.34 / 0.81
     (court, hall, valley) yet clears are 12 / 0 / 3: deaths are attrition over a place, so ≥ 18 clears needs well under 0.5
