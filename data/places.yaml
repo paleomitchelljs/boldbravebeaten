@@ -1225,7 +1225,7 @@ orc_valley:
     o: {kind: prop, sprite: rocks, solid: false, label: "Loose rocks", on: ","}
     A: {kind: prop, sprite: waterfall, label: "A waterfall into the lake", on: "~"}
   encounters:
-    legion: {foes: [{monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "Two legionnaires kick over their stools and come at you."}
+    legion: {foes: [{monster: orcLegionnaire}], text: "A legionnaire kicks over a stool and comes at you."}
     centurion: {foes: [{monster: orcCenturion}, {monster: orcLegionnaire}], text: "A centurion ducks out of his tent, roaring for his men."}
     gate: {foes: [{monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "The gate guard levels their spears."}
     slaver: {foes: [{monster: orcSlaver}, {monster: orcLegionnaire}], text: "The slaver drops his club on the nearest slave's back and turns to you."}

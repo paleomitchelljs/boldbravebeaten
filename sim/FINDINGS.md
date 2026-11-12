@@ -1,5 +1,177 @@
 # Simulation findings
 
+## Re-tuned on the new rules (2026-11-12; step 6 of `docs/PLAN.md`, ruling R8)
+
+Seed 4242 and the step-1 commands throughout. "Before" is the step-5 commit (a1b4f62) with only the new death
+metrics copied in; it reproduces step 5's numbers fight for fight. Every lever below was tried on a frozen copy of the
+tree with `--set`, party of three, 30 crawls a place (about ±9 points on a rate, ±0.08 on deaths a fight).
+
+**What changed.**
+
+1. **The crawl can be trusted past first areas** (`node sim/crawl.js <places…> --campaign [--tries 3]`): the places in
+   the order given as one run. Between places and after a beaten party: a night at the inn (`Town.sleep`), every
+   fallen hero recruited again at the party's level (`World.respawnAll`, the game's PROVISIONAL rule of 2026-11-09),
+   the living trained along their own start.yaml plans with the points their level gives, and kitted by the gear
+   ladder. The growth is the game's own code, now shared: `World.growAlongPlan` (what `World.build` used inline; a test
+   checks a hero trained at level 5 equals one made at level 5), and `sim/grow.js outfit` for the gear tiers.js uses.
+   A beaten party goes back into the same place with the groups it beat still beaten, up to `--tries`. XP is the game's.
+2. **What kills a hero** (`sim/metrics.js`, a "heroes killed" line): the action and place of the killing blow, whether
+   the hero was already down, standing with AP left, killed in round 1, and by what.
+3. **R8, the swing's setting** (`CONFIG.sweep: {force: 0.5, heavy: 0.75}`, PROVISIONAL): a weapon's swung edge or head
+   (swing, two-handed, power; not a fist, a bash or a natural weapon) that drops its target or passes it (dodged, or
+   already down when it lands) carries into one more standing foe within the blow's reach and a square from the first
+   (nearest the attacker first), at half force, three quarters for two-handed and power blows; that foe defends as
+   against any blow; it costs nothing and goes no further. The AI counts it (`AI.sweepWorth`: the sweep's blow × the
+   chance it carries, from the first's odds of dropping and of dodging). `tests/sweep.test.js`, `sim/sweep.js`.
+4. **Content**: the orc valley's `legion` groups are one legionnaire each, not two (data/places.yaml). No rule number
+   changed: none of the fundamentals tried moved attrition (below).
+
+**Against every target** (party of 3, first areas: court / hall / valley; before → after):
+
+| Goal | Measure | Target | Before | After | Met? |
+|---|---|---|---|---|---|
+| Fast | median rounds (90th) | 3 to 5 | 5 (11), 4 (11), 5 (12); duels 2 (5) | 5 (11), 4 (11), 5 (13); duels 2 (5) | crawls yes; duels no |
+| Lethal but playable | heroes dead a fight | ≤ 0.5 | 0.45, 0.38, 0.64 | 0.45, 0.38, **0.61** | court and hall; valley no |
+| | places cleared of 30, one go | ≥ 18 | 12, 1, 6 | 12, 1, **13** | no |
+| | the same, as the game allows (campaign: town between tries, at most 3) | | | court 18 of 20, hall 12 of 20, valley 17 of 20 | court and valley |
+| Death spiral | survivor with a STR/DEX/SPD wound | ≥ ⅓ | 36%, 9%, 19% | 36%, 9%, 25% | court only |
+| | wounded twin's win rate | < 50%, falling | STR 39 → 6%; SPD rises; DEX flat | unchanged | STR only |
+| Stamina matters | someone under ½ | ≥ ⅓ | 79%, 46%, 72%; duels 33% | 79%, 46%, 66%; duels 33% | yes |
+| | collapses that get up | most | heroes 71/136, 30/90, 5/50 | 71/136, 30/90, 5/36 | court about half; no |
+| Tactical depth | largest share of blows by one action | < ½ | shoot 35%, thrust 41%, 54% | 35%, 41%, 53% | court and hall |
+| | blows on the head | < ¼ | 20%, 21%, 17%; duels 24% | 20%, 21%, 19%; duels 24% | yes |
+| Action economy | level-8 hero against N level-1 foes | loses at about N = 4 | 94, 74, 42, 35, 23, 11% | the same | crosses ½ at N = 3 |
+
+A party of four, before → after: court 24 → 24 cleared (0.35 → 0.29 dead a fight), hall 5 → 5 (0.45), valley 11 → 11
+(0.99 → 0.89). Duels, spiral and swarm are the same to the fight: no hero in them swings an edge.
+
+**What kills** (party of 3, before, "heroes killed"): in the **court** 74% of the heroes who die were already
+collapsed when the blow came (the scaleward's beak and tail, the gorillas' fists finish them); in the **hall** 73% die
+to a thrust (goblin warriors and fire goblins) and 24% to the shaman's bolts, 42% of the killing blows at the head; in
+the **valley** every death is a legionnaire's or centurion's spear thrust, 53% at the head, 30% to a hero already down.
+Of the standing victims, nearly all had AP left: they met the blow and failed, or the blow came at a place they could
+not cover. One structural thing found and not changed: a body at stamina 0 has no armor (`computeHit`: an unconscious
+body's armor counts for nothing, a rule from before collapses were common). I built "a collapsed body keeps its armor
+(opened as a prone body)" and it changed nothing measurable (court 9, hall 2, valley 7 cleared; deaths 0.53, 0.34,
+0.67): spears burst padding and leather anyway. Removed again; worth a ruling only if collapses meet plate.
+
+**The levers, as the plan ordered them** (party of 3; cleared / heroes dead a fight; court, hall, valley):
+
+| Setting | court | hall | valley |
+|---|---|---|---|
+| as before (apDie 3, vital × 3, cover reach 1 penalty 1, joinDistance 6) | 12 / 0.45 | 1 / 0.38 | 6 / 0.64 |
+| R8 on (adopted) | 12 / 0.45 | 1 / 0.38 | 6 / 0.64 |
+| `apDie` 2 | 10 / 0.48 | 0 / 0.50 | 9 / 0.62 |
+| `apDie` 1 | 13 / 0.43 | 2 / 0.37 | 6 / 0.66 |
+| `vital.mult` 2 | 11 / 0.59 | 0 / 0.40 | 5 / 0.74 |
+| head's vital weight 2 → 1 (`locations.wounds.vital.head`) | 14 / 0.47 | 0 / 0.37 | 8 / 0.64 |
+| `defense.cover` reach 2, penalty 0 | 9 / 0.48 | 2 / 0.33 | 8 / 0.66 |
+| `game.joinDistance` 3 | 12 / 0.45 | 0 / 0.39 | 8 / 0.56 |
+| `stamina.collapse.rounds` 0 (not R3 as ruled) | 17 / 0.49 | 0 / 0.32 | 7 / 0.77 |
+| a collapsed body keeps its armor (built, not kept) | 9 / 0.53 | 2 / 0.34 | 7 / 0.67 |
+| the valley's `legion` groups one legionnaire each (adopted, content) | | | **13 / 0.61** |
+
+None of the fundamentals moves deaths a fight beyond the noise, and two that should have (a smaller AP die, a smaller
+vital multiplier) lengthen fights or shift deaths from the head to the collapsed. A smaller AP die (who goes first
+deciding less) makes fights longer (median 5 → 6, 90th to 16) and kills no fewer. **So no rule number was tuned.**
+I'd rather report that than adopt a setting that wins by a few crawls in one place and loses in another.
+
+**Why deaths a fight don't move.** First-area fights are near-even by design: the tier sims put a legionnaire, a
+fire goblin, a scaleward at M ≈ 0.7–1.2, so a group of two is worth two heroes against three, and a lethal, fast
+fight between near-equals costs someone about half the time whatever the dice. What does move it is how many come at
+once: the valley's fourth fight (the legion camp, centurion and two pairs within six squares: six foes) won 25% of the
+time and was where parties broke; one legionnaire a group makes it four foes, won 59%, and clears double (6 → 13).
+Deaths a fight hardly fall (0.64 → 0.61) because more parties now reach and fight the last groups. The court and hall
+are already under half a hero a fight; they fail the one-go clear because they are long (the hall is eleven fights
+of one foe each: 0.38 a fight is four heroes by the end), which is what a trip to town is for.
+
+**The two "lethal" targets.** As HANDOFF said, ≥ 18 clears in one go and ≤ 0.5 dead a fight cannot both hold in a
+place of more than a few fights. The campaign measures the second as the game plays it (the fallen come back in the
+village). The campaigns (`--campaign --party 3 --n 20`; cleared of those that reached it, tries a party, the party's
+level coming in, heroes dead a fight after the after-fight Medicine check):
+
+| Dungeon | 1st place | 2nd | 3rd |
+|---|---|---|---|
+| temple: court → maze → sewer → court2 | court 18/20, 1.8 tries, L1.0, 0.41 | maze 1/18, 2.9, L3.9, 0.86 (clay golem 66% of deaths) | sewer 0/1: fights run to the 40-round cap, nobody dies |
+| orc: valley → mines → castle | valley 17/20, 2.1, L1.0, 0.69 | mines 17/17, 1.2, L3.9, 0.33 | castle 0/17, 3.0, L5.0, 1.50 (the emperor 55% of deaths) |
+| ember: hall → warrens → barracks → jail | hall 12/20, 2.7, L1.0, 0.41 | warrens 1/12, 3.0, L2.9, 1.16 (the red drake 83%) | barracks 0/1: fights run to the cap |
+
+So every first area falls to a party of three as the game plays it (court and valley well past 18 in 30 at this rate,
+the hall at 12 in 20), and what stops each dungeon is one body further in: the clay golem, the red drake, the orc
+emperor. Those are the content items HANDOFF already lists. Two more things the campaign shows: **levels come fast**
+(a party leaves the level-1 court at level 3.9 and the hall at 2.9, every hero taking the full XP and retries adding
+more; HANDOFF's XP question), and **the sewer and barracks stall** (fights to the 40-round cap with no deaths:
+something there can't be hurt or can't reach; not run down). I recommend the per-fight number and the campaign rule, and dropping the one-go clear count.
+
+**R8: is the longsword's swing chosen now?** (`node sim/sweep.js --n 40`: Beren's kit at level 1 against 1–3 level-1
+bandits, armor set on every bandit; the hero's share of strikes that are swings, sweep on / off):
+
+| Longsword, AI's choice | N = 1 | 2 | 3 |
+|---|---|---|---|
+| bare foes | 0% / 0% | 0% / 0% | 0% / 0% |
+| padded | 0% / 0% | 5–8% / 5–9% | 2–5% / 2–4% |
+| mail | 0% / 0% | 0% / 0% | 0–2% / 0–2% |
+
+**No: the swing is still not chosen against two or three unarmored foes, and still not against armor.** The AI is
+right not to: forced to swing only, the same hero wins far less than forced to thrust only (bare, three bandits: 33% with
+the shield and 43% without, against 88% and 93%; padded 3% against 18%), sweeps and all. Even a full-force sweep (force
+and heavy 1) leaves swing-only at 50% against three bare bandits. The swing costs 4.0 AP to the thrust's 2.3 and is
+easier to dodge; a carry that comes only when the first blow drops or misses its target can't make up a factor of
+two. R8 is kept as built because it is right in kind and it does give the **battle axe** (no thrust) a setting: with
+the sweep a shieldless battle axe beats two bare bandits 53% (43% without) and three 30% (20%); against mail the same.
+For the longsword R8 confirms the earlier finding's option (3): a sword is carried for its point.
+
+**Weapon roles** (HANDOFF; each a blow that lands, STR 6, Melee 4, the current rules; c CON / a other attributes / s
+stamina, against a skeleton everything is CON):
+
+- *The shield bash against bone*: 4 CON for 2.0 AP (2.0 a AP); a warhammer's head 8 for 3.9 (2.05), a club 6 for 3.4
+  (1.8), the longsword's swing 8 for 4.0 (2.0). It needs the Shield Bash feat (Beren takes it at level 2). **Stands**:
+  per AP it equals a hammer, per blow it is half one, and it is the feat's large benefit; it is not why nobody swings
+  (above). The open question to the user stays: whether a bash should break bone without the feat. It can't now.
+- *The great axe against mail*: 6 a + 20 s for 8.0 AP against the warhammer's 7 s for 3.9 (14 s in two swings, no
+  attribute harm) and the two-handed hammer's 9 s for 5.8. **Stands**: it is a whole turn with nothing left to defend,
+  two hands, and against plate the hammer still wins 2 to 1 per AP (5 s for 3.9 against 6 s for 8.0). "Blunt is best
+  against armor" holds for plate; against mail the heavy cleaver is a real choice, as it was historically.
+- *Nobody carries the battle axe*: per AP it equals the longsword's swing (10 a 5 s for 4.6 bare; 9 for 4.6 against
+  bone) and has no thrust, so it can only lose to a longsword in a hero's hands. Its own kit is the hook (trips at
+  reach), `closeOK`, a power blow, and now the sweep. **Stands; content**: it belongs in a foe's hands or a cheap
+  shop, a matter for foes.yaml or the merchants, which I left alone.
+
+**The golems, the desert spectres, casters alone** (after steps 3, 5 and this one; `node tools/tiers.js … --n 24`):
+
+
+| Monster (level, meant tier) | step 3–4 M | now M | what decides it |
+|---|---|---|---|
+| clay golem (2, 5) | > 6, then 5.07 after step 5 | 5.07 (tier 6) | six heroes 71%, four 21%: its arm blows disarm (the wound rule); blades are what hurt it |
+| iron golem (4, 5) | 5.53 | > 6 (six heroes 42%) | immune to cut and blunt: only points and fire, and points do little to a body that size |
+| stone golem (2, 5) | 1.76 | 1.88 (tier 4) | a hammer kills it; easy, as before |
+| desert spectres (place 4; the monster is level 15) | | two of them: 3, 4 and 6 level-4 heroes all 0% (2.1, 3.1, 5.4 dead) | only spells and enchanted weapons touch it; nobody at level 4 carries either |
+| goblin shaman (1, 3) | 1.46 | 1.46 | |
+| dread shaman (3, 5) | 2.45 | 2.45 | |
+| Venril (4, 5) | 1.55 | 1.59 | |
+| kobold high shaman (4, 4) | 2.08 | 2.08 | on target |
+| orc prophet (3, 4) | 1.36 | 1.36 | |
+
+No rule here is wrong by what was measured: each golem dies to what its design says should kill it, and casters alone
+are three heroes focusing a body with CON 5 (unchanged since November). **Content that would fix them, left alone:**
+the clay golem's level or its place (M 5 is a boss; it stands in a level-2 maze as one of six groups), or put the
+maze's leg-up where the crawl's party would have it; the iron golem the same (its leg-up, the Fire primer, is in the
+palace); the spectres belong to a level-15 place, not the level-4 desert, or the desert needs a way to hurt them
+(an enchanted weapon or the Light word on its road); a caster meant as a boss needs its guard (the encounter check
+already measures them that way), so tier them by encounter, not alone.
+
+**Could not be brought to target, and why.**
+
+- *Deaths a fight in the valley* (0.61): the fights are near-even pairs of spearmen and that is the design; only fewer
+  foes a fight move it, and I cut only the one group that turned a fight into six. Cutting more is content and wants
+  the user.
+- *One-go clears*: see the two targets above.
+- *Collapses that get up* (court 71 of 136, hall 30 of 90, valley 5 of 36): the step-2 ruling stands (finishing the
+  collapsed is the lethal design; `collapse.rounds 0` is the lever and it didn't lower deaths here either).
+- *Survivors with a limb wound* in the hall (9%): its foes are thrusters at the head and torso, which go to CON.
+- *The duels' two rounds*: one on one, a thrust ends it; unchanged by every lever.
+- *The swing's setting for the longsword*: above.
+
 ## The AI plays the game (2026-11-12; step 5 of `docs/PLAN.md`; no rule changed)
 
 What changed, all in `src/rules/ai.js` (the rules are untouched; `Combat.passesThrough` is exported for the AI to read):

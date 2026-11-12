@@ -35,20 +35,32 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
     by skill only when blows are futile; `worth` on every condition. AI metrics in `sim/metrics.js`, `sim/styles.js`,
     `tests/ai.test.js`. FINDINGS "The AI plays the game". Valley of 3 clears 1 → 6 (0.83 → 0.64 dead a fight), court 11 → 12,
     hall 0 → 1; two-handed against sword & shield 68 → 61% open, 76 → 53% close; casters' tiers unmoved. Next: prompt 6.
+  - [x] Step 6, re-tune (FINDINGS "Re-tuned on the new rules"): `sim/crawl.js --campaign` (town between places and after a
+    wipe: the fallen recruited again, the living trained along their plans by `World.growAlongPlan`, the gear ladder);
+    "heroes killed" in the metrics; R8 `CONFIG.sweep` (`sim/sweep.js`); the valley's `legion` groups cut to one. No rule
+    number tuned: AP die, vital, cover, joins, head vital, collapse length all within noise. Party of 3: court 12, hall 1,
+    valley 6 → 13 cleared in one go (0.45, 0.38, 0.61 dead a fight); as a campaign 18/20, 12/20, 17/20. Next: prompt 7.
+  - [ ] **From step 6**: the longsword's swing is still never chosen (R8 can't close a factor of two per AP; it does give
+    the battle axe a setting). The two lethal targets: recommend ≤ 0.5 a fight plus the campaign, drop one-go clears.
+  - [ ] From step 6 (content, left alone): each dungeon stops at one body: the maze's clay golem (M 5), the warrens' red
+    drake, the castle's orc emperor (1.5 dead a fight at level 5). The sewer and barracks fights run to the 40-round cap
+    with nobody dead (not run down). Desert spectres: 0% for six level-4 heroes (a level-15 body, needs magic).
+  - [ ] From step 6: levels come fast: a party leaves the level-1 court at 3.9 and the hall at 2.9 (full XP each, retries).
+  - [ ] From step 6: a body at stamina 0 has no armor (`computeHit` `unconscious`), so every collapse is a bare body. Kept
+    (keeping the armor changed nothing measured: spears burst padding); rule on it if collapses in plate matter.
   - [ ] From step 5: two plate Berens still time out (the grapple can't finish: a longsword in the hand, no dagger);
     an opportunity strike ignores walls, so two spears with a corner between wait up to five rounds. Both want a rule.
   - [ ] From step 5: no hero or monster carries Rally, Command, To Your Feet, Demoralize, Name the Weakness, Vanish, Feign
     Death or Overchannel, so no sim measures them; the arena's mage (`sim/arena.js` magic) has no castable spell.
   - [ ] From step 5: a party of 4 in the court clears less (29 → 24): heroes now wait at the edge for the foe to come.
-  - [ ] **From step 4**: party-of-3 clears fell (court 15 → 11, hall 2 → 0, valley 2 → 1) because the head was the heroes'
+  - [x] **From step 4** (settled in step 6: the guarded head was not the lever; deaths are near-even fights): party-of-3 clears fell (court 15 → 11, hall 2 → 0, valley 2 → 1) because the head was the heroes'
     answer and the AI doesn't set it up on purpose (knock down, hold, drain AP, then aim high). Step 5 should teach it;
     if clears aren't back by step 6, try guarded head 4 / hands 3 / feet 4 (court 13 clears, head 26%).
   - [ ] R7 doesn't reach the first areas' level-1 foes (no armor to match): the kits were already helmed. Say whether
     those foes should get caps.
-  - [ ] For step 6: the clay golem (level 2, meant tier 5) is now M 5.07, tier 6: six heroes win 71%, four 21%. Since
-    step 5 nobody kicks it; its arm blows still disarm.
+  - [x] For step 6: the clay golem: still M 5.07 (iron > 6, stone 1.88); no rule found wrong, content listed in FINDINGS.
   - [ ] Holding a grapple is now free at steady state (upkeep 6 = an unstruck holder's regeneration). Look at in step 6.
-  - [ ] For step 6 (from the baseline): the two "lethal" targets disagree. Each fight's own deaths are 0.21 / 0.34 / 0.81
+  - [x] For step 6 (from the baseline; answered there with the campaign): the two "lethal" targets disagree. Each fight's own deaths are 0.21 / 0.34 / 0.81
     (court, hall, valley) yet clears are 12 / 0 / 3: deaths are attrition over a place, so ≥ 18 clears needs well under 0.5
     a fight. The plan's "0.3 to 1.8" was the crawl's cumulative column (now labelled "dead so far").
   - [ ] Still after step 5: an SPD wound *wins* the spear mirror (90% at k = 4: the slower one waits and takes the first
@@ -56,21 +68,20 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
 - [ ] **Weapon roles** (PROVISIONAL, 2026-11-10; top of `sim/FINDINGS.md`): a swung edge's blunt comes from its
   weight, heavy points thrust slower (longsword 2.3 AP), the staff's jab is 3, a battle axe exists. Punches and kicks
   take stamina only without Heavy Hands (the user's ruling), so shieldless fighters now swing at bone. Still open: the
-  shield bash (5 CON to a skeleton at 2.3 AP) keeps the swing rare for anyone with a shield; against mail the great
-  axe beats the hammers per AP; no hero or monster carries the battle axe; the crawls are not re-run since.
+  shield bash, the great axe against mail and the unused battle axe were settled in step 6 (FINDINGS): all three stand,
+  the battle axe's carrier being content.
 - [ ] **Sarnaks and minotaurs** (first numbers, top of `sim/FINDINGS.md`): spears carry the sarnaks (the plain one
   is M 1.3); a minotaur beats one hero and loses to two; only `apMult` made the lord a boss, and half mail made it
   worse (not run down). Every fight in both places costs a party of three about 1.8 heroes. No crawl run there.
-- [ ] Crawl baseline (`node sim/crawl.js`, seed 4242, 2026-11-11): a party of 3 clears the court 12/30, the mine hall 0/30,
-  the orc valley 3/30; a party of 4 29/30, 6/30, 11/30. All level-1 places. The hall's single foes kill a hero in one fight of
-  three; the valley's third group pulls its neighbours (6.7 foes). The crawl has no recruiting and no growth yet
-  (`World.grantXP` raises level, not power): add both before trusting it past first areas.
-- [ ] The golems: clay unbeatable, iron nearly, stone easy. Desert spectres (level 15, only magic hurts them) kill
-  any party there. Casters are weak alone (M ≈ 2). Unplaced monsters (wolves, trolls, drakes, wyverns…) have no tier.
+- [ ] Crawl numbers (seed 4242, 2026-11-12, step 6): a party of 3 clears the court 12/30, the hall 1/30, the valley 13/30
+  in one go (0.45, 0.38, 0.61 dead a fight); a party of 4 24, 5, 11. As a campaign (`--campaign`, town and up to three
+  tries a place, n 20) the first areas fall 18, 12, 17 of 20; the second places 1 (maze), 17 (mines), 1 (warrens).
+- [ ] The golems: clay M 5, iron > 6, stone 1.9 (step 6). Desert spectres: six level-4 heroes 0%. Casters alone M 1.4–2.5.
+  No rule wrong; content fixes listed in FINDINGS "Re-tuned on the new rules". Unplaced monsters (wolves, trolls, drakes, wyverns…) have no tier.
 - [ ] XP: every hero gets the full amount whatever the party's size; `maxLevel: 10` stands against the no-caps ruling.
 - [ ] Content mix: 128 monster squares against 6 asleep, 5 locked, 5 secret, 2 traps, 2 parleys, 1 quest. Sneaking
   and talking have almost nowhere to matter. No social sim (a bot that tries fight / parley / sneak).
-- [ ] Two-handed beats sword & shield 61% in the open, 53% in close quarters after step 5's AI (was 68%, 76%).
+- [ ] (Unchanged in step 6.) Two-handed beats sword & shield 61% in the open, 53% in close quarters after step 5's AI (was 68%, 76%).
 - [ ] Not simmed: the spell words (numbers are guesses), hit-location numbers, the strong magic items, an attribute
   sim (+1 to each in turn), weapon wear and weariness over a long crawl.
 - [ ] `sim/lib.js` and `dk-scaling.js` list retired feats and have no skills: fix or delete before using them.
@@ -83,7 +94,7 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
 ## Play notes (the user, 2026-11-11, from the game as it was on 2026-11-10; the plan wins where they conflict)
 - [ ] **Reach looks too long**: "orcs hit from very far away". Spears thrust 2–4 squares (`weapons.yaml` spear and heavy
   spear, `reach: {thrust: 4, min: 2}`); a square is an arm and a step, so four reads as far on the map. Re-check the
-  scale (or how reach is drawn) in step 6 or 7.
+  Not looked at in step 6 (the valley's killers are these spears: FINDINGS); left for step 7.
 - [ ] **Healing feels broken; CON can't be restored in a fight**: Give + Life mends 1 CON (2 with Strong:
   `CONFIG.magic.heal`, condMag), the rest is stamina; Move Life mends CON from a foe. The user wants Give/Move Life to
   be able to prevent death and restore CON. Out of the plan's scope (magic) until ruled on.
