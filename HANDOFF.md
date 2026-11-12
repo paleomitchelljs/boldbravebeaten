@@ -1,6 +1,6 @@
 # To do
 
-Last updated at commit: 9db6f11
+Last updated at commit: c26f296
 
 Keep this a short list: open items only, a line or two each. Tick things off, add new ones, and refresh the commit
 line after every push (`git log -1 --format=%h`). What was done, and the detail behind each item below, is in
