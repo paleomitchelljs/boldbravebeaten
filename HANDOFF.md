@@ -30,21 +30,29 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
     AP guess from what it saw spent; R7 `halfHead`/`partialHead` coverage for foe templates and armored humanoid monsters
     L2+, Cyrus's cap; the Aim line in the panel). FINDINGS "The head". Head 32–34% → 20–22% of located blows (duels
     45 → 27%), deaths a fight about flat, no tier moved by more than one. Next: prompt 5.
+  - [x] Step 5, the AI (`src/rules/ai.js`; no rule changed): approach budget and the blow a defence costs, no trading
+    down, no blows at the immune, the edge clock and lines of fire for stand-offs, the feat actions, overchannel, grappling
+    by skill only when blows are futile; `worth` on every condition. AI metrics in `sim/metrics.js`, `sim/styles.js`,
+    `tests/ai.test.js`. FINDINGS "The AI plays the game". Valley of 3 clears 1 → 6 (0.83 → 0.64 dead a fight), court 11 → 12,
+    hall 0 → 1; two-handed against sword & shield 68 → 61% open, 76 → 53% close; casters' tiers unmoved. Next: prompt 6.
+  - [ ] From step 5: two plate Berens still time out (the grapple can't finish: a longsword in the hand, no dagger);
+    an opportunity strike ignores walls, so two spears with a corner between wait up to five rounds. Both want a rule.
+  - [ ] From step 5: no hero or monster carries Rally, Command, To Your Feet, Demoralize, Name the Weakness, Vanish, Feign
+    Death or Overchannel, so no sim measures them; the arena's mage (`sim/arena.js` magic) has no castable spell.
+  - [ ] From step 5: a party of 4 in the court clears less (29 → 24): heroes now wait at the edge for the foe to come.
   - [ ] **From step 4**: party-of-3 clears fell (court 15 → 11, hall 2 → 0, valley 2 → 1) because the head was the heroes'
     answer and the AI doesn't set it up on purpose (knock down, hold, drain AP, then aim high). Step 5 should teach it;
     if clears aren't back by step 6, try guarded head 4 / hands 3 / feet 4 (court 13 clears, head 26%).
   - [ ] R7 doesn't reach the first areas' level-1 foes (no armor to match): the kits were already helmed. Say whether
     those foes should get caps.
-  - [ ] For step 6: the clay golem is still unbeatable (six heroes win 46%, was 17%): its arm blows disarm, then the
-    heroes kick a body immune to blunt. The tireless rule fixed what reaches its CON, not that.
-  - [ ] The sword-and-shield standoff is two full plate harnesses against swords, not the shield (FINDINGS "Stamina as a
-    pool", point 6). For step 5: let the AI grapple or throw a foe it can't otherwise hurt.
+  - [ ] For step 6: the clay golem (level 2, meant tier 5) is now M 5.07, tier 6: six heroes win 71%, four 21%. Since
+    step 5 nobody kicks it; its arm blows still disarm.
   - [ ] Holding a grapple is now free at steady state (upkeep 6 = an unstruck holder's regeneration). Look at in step 6.
   - [ ] For step 6 (from the baseline): the two "lethal" targets disagree. Each fight's own deaths are 0.21 / 0.34 / 0.81
     (court, hall, valley) yet clears are 12 / 0 / 3: deaths are attrition over a place, so ≥ 18 clears needs well under 0.5
     a fight. The plan's "0.3 to 1.8" was the crawl's cumulative column (now labelled "dead so far").
-  - [ ] For step 5: an SPD wound *wins* the spear mirror (98% at k = 4: the slower one waits and takes the first thrust);
-    two sword-and-board Berens time out in 65% of fights. A level-1 `knight` template beats a level-8 hero 28% of the time.
+  - [ ] Still after step 5: an SPD wound *wins* the spear mirror (90% at k = 4: the slower one waits and takes the first
+    thrust; the AI can't tell waiting from being slow). A level-1 `knight` beats a level-8 hero 11% of the time (was 28%).
 - [ ] **Weapon roles** (PROVISIONAL, 2026-11-10; top of `sim/FINDINGS.md`): a swung edge's blunt comes from its
   weight, heavy points thrust slower (longsword 2.3 AP), the staff's jab is 3, a battle axe exists. Punches and kicks
   take stamina only without Heavy Hands (the user's ruling), so shieldless fighters now swing at bone. Still open: the
@@ -62,7 +70,7 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
 - [ ] XP: every hero gets the full amount whatever the party's size; `maxLevel: 10` stands against the no-caps ruling.
 - [ ] Content mix: 128 monster squares against 6 asleep, 5 locked, 5 secret, 2 traps, 2 parleys, 1 quest. Sneaking
   and talking have almost nowhere to matter. No social sim (a bot that tries fight / parley / sneak).
-- [ ] Two-handed beats sword & shield 68% in the open (the swordsman's AI spends its pool on the approach).
+- [ ] Two-handed beats sword & shield 61% in the open, 53% in close quarters after step 5's AI (was 68%, 76%).
 - [ ] Not simmed: the spell words (numbers are guesses), hit-location numbers, the strong magic items, an attribute
   sim (+1 to each in turn), weapon wear and weariness over a long crawl.
 - [ ] `sim/lib.js` and `dk-scaling.js` list retired feats and have no skills: fix or delete before using them.
@@ -94,15 +102,12 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
 - [x] Kept as is: the circle of darkness ("I like it").
 
 ## Rules and AI
-- [ ] The AI uses none of the newer actions (Vanish, Rally, Command, To Your Feet, Demoralize, Name the Weakness,
-  Feign…), never overchannels, drops a longsword for a dagger, reads intent every round, and can stand off for rounds.
 - [ ] Not built: Shape, Ethereal, Counterspell and Reflect as reactions; crafting (alchemy, metalwork, carpentry do
   nothing); feats needing rules outside a fight (`auto: false`); Off-hand Dagger, Quick Donning; branch capstones
   (Striker, Fencer, Assassin, Reaper, Technique, Runner, Charmer, Menace, Wilds…); using an item in a fight; running
   off the edge of a fight; cover in the AI's footing; a companion-choice screen; keywords (bleeding, falls, sap).
 - [ ] Hero mode does not scale auras, constriction, traps or condition damage.
 - [ ] Only a single-target Restore calls back the dead; town priests raise at any time.
-- [ ] The AI's worth tables for conditions live in `ai.js`: move a `worth` into `CONFIG.conditions`.
 - [ ] Harm as a list of entries (`docs/TODO-FIXES.md` 4), deferred. Save format has a version but no migration.
 - [ ] Game: monsters do not move on the map; no hiring, restocking, torches or hunger; nouns are scarce and the
   Lore/ritual screen exists only in the GM table.

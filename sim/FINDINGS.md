@@ -1,5 +1,116 @@
 # Simulation findings
 
+## The AI plays the game (2026-11-12; step 5 of `docs/PLAN.md`; no rule changed)
+
+What changed, all in `src/rules/ai.js` (the rules are untouched; `Combat.passesThrough` is exported for the AI to read):
+
+1. **The approach budget.** A move that ends inside the reach of a foe who can still strike this round (it has its
+   turn to come, or AP the mover hasn't seen it spend) must leave AP for a defence, or it pays the worst blow waiting
+   there × 0.8 (`BARE`). Staying put is now weighed against moving (it keeps the AP), and standing where a foe
+   out-reaches me costs that foe's blow a round, so a sword doesn't wait at a spear's point. A defence that leaves too
+   little AP for the blow I'd strike on my own turn to come costs that blow too (× 0.6, `LOST_BLOW`): the sword and board
+   no longer blocks every thrust and never strikes back. The AP it judges by is a guess from what it watched the foe do
+   (`apGuess`, which `seemsSpent` now shares), never the foe's pool.
+2. **Weapon choice.** It never trades the weapon in hand down for the sidearm unless the foe is inside its reach.min
+   (a spear, a bow, a greatsword cramped at 1) or immune to everything it does. Broken weapons were already no weapon.
+3. **Immune bodies.** A blow at a body immune to every kind of harm it carries is worth nothing (`AI.immuneTo`), the
+   kick's chance of a fall included, and such a foe drops to the back of the target list.
+4. **Stand-offs.** The fear of the stop-thrust halved each round nobody struck *counting from round 1*, so a long walk
+   up left it careless, and two fighters already at the edge of each other's reach had no clock. It now counts from the
+   first round two foes stood within reach + 2. A shooter (or caster) with no line from where it stands moves for one
+   even at no gain in distance, and doesn't draw a bow with no foe in line (the archer in the mine hall drew, walked,
+   lost the draw, round after round). A blade whose reach is blocked by a wall's corner comes right up.
+5. **Feat actions.** Rally, To Your Feet, Command, Demoralize, Name the Weakness, Vanish and Feign Death are valued in
+   the same units as a blow and weighed against it (`featChoice`); one playing dead lies still while a friend fights.
+   **No hero or monster has these feats yet**, so the sims can't show them: `tests/ai.test.js` does.
+6. **Overchannel.** A spell the pool can't pay for is weighed with its CON (6 + 24 / CON left, a point), never below 3.
+   Nobody in the sims has the feat; a test shows it.
+7. **Grappling by skill.** Anyone with athletics 2+ clinched every foe beside them (found here: a level-8 Beren clinched
+   level-1 bandits and spent himself holding them). A grappler by policy (the arena's) still works the ladder; one only
+   by skill wrestles when its blows can't hurt the foe (under 3 a display AP) and it has half its stamina.
+8. **Worth of a condition.** Every entry of `CONFIG.conditions` has a `worth` (registered in `Effects.KEYS.condition`,
+   checked by `tests/effects.test.js`); the AI's four tables keyed by name are gone, and where a boon matters is read
+   from what it does (freedom, regen, shroud, mindWard…), not its name. A condition written without one gets a guess.
+
+**Measuring the AI** (`sim/metrics.js`, an "AI:" line under `--metrics`): moves that come into a foe's reach with less AP
+left than a defence while that foe can still deal a blow worth fearing (`AI.hitValue` ≥ 10); sidearms drawn and how
+many traded down; strikes at a body immune to them; idle rounds (nobody struck, cast or grappled while two foes stood
+within striking distance: in line of a shot, or a melee reach + 2) and stand-offs (three in a row); casts per caster a
+fight and the share of spell points still unspent at the end; feat actions. `sim/styles.js` runs two arena styles over
+every armor pair. "Before" is the step-4 commit (8c7d692) with the new metrics copied in. Seed 4242, the step-1 commands.
+
+**Against the targets** (party of 3: court, hall, valley; before → after):
+
+| Goal | Measure | Target | Before | After |
+|---|---|---|---|---|
+| Lethal but playable | heroes dead a fight | ≤ 0.5 | 0.47, 0.41, 0.83 | 0.45, 0.38, **0.64** |
+| | places cleared of 30 | ≥ 18 | 11, 0, 1 | 12, 1, **6** |
+| Fast | median rounds (90th) | 3 to 5 | 5 (9), 4 (12), 6 (13) | 5 (11), 4 (11), 5 (12) |
+| Death spiral | survivor with a STR/DEX/SPD wound | ≥ ⅓ | 21%, 6%, 34% | 36%, 9%, 19% |
+| Stamina matters | collapses that get up | most | 24 of 80, 13 of 74, 11 of 76 | 71 of 147, 30 of 97, 6 of 75 |
+| Tactical depth | largest share of blows | < ½ | thrust 33%, 51%, 62% | shoot 35%, thrust 41%, 54% |
+| | blows on the head | < ¼ | 22%, 21%, 20% | 20%, 21%, 17% |
+
+A party of 4: cleared 29, 5, 8 → 24, 5, 11; dead a fight 0.22, 0.43, 1.01 → 0.35, 0.45, 0.99.
+
+**The faults** (party of 3, court / hall / valley, before → after):
+
+| Fault | Before | After |
+|---|---|---|
+| came into reach with no defence left | 18 of 290, 25 of 215, 46 of 283 | **3 of 295, 7 of 96, 12 of 192** |
+| sidearm drawn trading down | 1, 0, 0 (duels 4; styles 33) | **0 everywhere** |
+| strikes at a body immune to them (clay golem fights, below) | 1–9 kicks a fight | **0** |
+| idle rounds a fight; stand-offs | 0.12, 0.87, 0.84; 1, 5, 3 | 0.23, **0.51**, 0.69; 3, 2, 1 |
+| casts a caster a fight; spell points unspent | 2.13, 0.99, 1.07; 25%, 61%, 33% | 2.12, 1.26, 1.22; 23%, 55%, 46% |
+| feat actions; overchannels | none | none (nobody has them) |
+
+**Two-handed against sword & shield** (`node sim/styles.js twoHanded shield --n 10`, 160 fights an arena): open
+**68% → 61%**, close quarters **76% → 53%**. The before reproduces the 68% the arena found in November. By armor the
+swordsman now wins from light and bare armor (light/light 100 → 80, unarmored/unarmored 100 → 60); plate beats the
+greatsword as before. The AI's first fix (keeping AP to defend when closing) moved it little; what moved it was the
+lost blow: the swordsman at 4.5 AP blocked the greatsword's thrust with 2.2 of them every round, leaving 2.3, short
+of his own thrust (2.5), and so never struck back.
+
+**Casters' tiers** (`node tools/tiers.js … --n 24`): goblin shaman M 1.46 → 1.46, dread shaman 2.45 → 2.45, Venril 1.78
+→ 1.55, kobold high shaman 2.09 → 2.08, orc prophet 1.26 → 1.36. **Unmoved**: they cast already (a goblin shaman burns
+a lone hero dead in round 1 with three bolts); M ≈ 2 alone is three heroes focusing a body with CON 5, as the tier
+section said. The clay golem: M > 6 → 5.07 (six heroes 25% → 71%, four 4% → 21%) once nobody kicks it.
+
+**Duels** (`--n 40`, 400): no change to speak of (median 2 rounds, thrust 60% of blows, heroes dead 0.44 → 0.43); bare
+entries 58 → 0, trading down 4 → 0. **Swarm** (level 8 against N level 1): 89, 66, 46, 39, 26, 16% → 94, 74, 42, 35,
+23, 11%; Beren 95/78/75/56/34/20 → 95/88/56/42/33/17, Kalavar 77/13/0 → 94/80/48 (he used to clinch too). Knights
+71% → 89% at N = 1. **Spiral**: Beren's and Cyrus's rows are the same to the fight; the pooled STR column falls faster
+(37, 21, 13, 13% → 24, 9, 9, 6% at k = 1..4).
+
+**What this says.**
+
+1. *The orc valley moved most* (clears 1 → 6, dead a fight 0.83 → 0.64): its fights are spears and bows, where walking
+   in bare and standing at a spear's point cost the most. The hall is still about lost (0 → 1): its single foes still
+   kill a hero in a third of fights. The court is flat. A party of 4 in the court lost 5 clears (29 → 24, 0.22 → 0.35
+   dead): heroes who used to throw themselves in and win by numbers now wait at the edge for the foe to come.
+2. *More collapses get up* in the court (24 of 80 → 71 of 147) and the hall: fewer blows land on someone who walked
+   in with nothing to block.
+3. *Two-handed against sword & shield was the AI*, as the arena section of 2026-11-03 guessed: 76% → 53% in close
+   quarters with no rule changed. The open field still favours the greatsword (61%): its reach is a real advantage.
+4. *Casters were not barely casting*: shamans empty their pools; Jabiku is a staff fighter with one transfer spell.
+   The hall's casters leave over half their points (55%) because its fights are short and the walls block lines;
+   the line-of-fire fix raised its casts a caster 0.99 → 1.26.
+5. *The AI may still be the clay golem's problem but not only*: six heroes now win 71%, four 21%. Its arm blows still
+   disarm (the rule), and the heroes' fists are now wasted on nothing rather than on it.
+
+**Not fixed, and why.**
+
+- **Two Berens in plate still time out** (85% of the spiral's k = 0). Neither's sword or bash hurts plate; wrestling
+  is the answer, and the ladder fails there: the pin wants a dagger in the hand, the hand holds a longsword, the throw
+  fails, and the hold costs 6 stamina a round. Teaching the AI to draw the dagger mid-grapple needs the rules of hands
+  in a hold settled first.
+- **A wall's corner between two spears** costs up to five rounds: an opportunity strike ignores walls (`opportunities`
+  has no line check), so the AI is right to fear stepping round it, and only the edge clock gets it moving. Whether a
+  wall should stop the stop-thrust is a rules question.
+- **The arena's mage has no spells** (`makeCombatant('unarmored','magic')` attacks with a dagger only): its feats don't
+  give it a verb it can cast. Not looked into (arena content, not the AI).
+- The feat actions and overchannel are in the AI but no character carries them, so no sim has measured them.
+
 ## The head (2026-11-11; step 4 of `docs/PLAN.md`, rulings R6 and R7; PROVISIONAL)
 
 What changed:
