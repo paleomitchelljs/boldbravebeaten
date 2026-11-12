@@ -410,7 +410,15 @@
     let v = m !== 1 ? Math.round(ap * m) : ap;
     const less = weaponApLess(weapon);
     if (less) v -= Math.round(less * costScale());
-    return Math.max(minAP(), v);
+    return Math.max(minAP(), quantAP(v));
+  }
+
+  // R9 (docs/PLAN.md step 8): a cost, after every multiplier, rounds to the nearest CONFIG.apStep sheet AP
+  // (half an AP), halves going up. Called last in the cost functions (gearAP, which every action's cost passes
+  // through). null: costs stay in tenths.
+  function quantAP(v) {
+    const step = CONFIG.apStep ? Math.round(CONFIG.apStep * apScale()) : 0;
+    return step > 1 ? Math.round(v / step + 1e-9) * step : v;
   }
 
   // ---- Armor & shield ----------------------------------------------------
@@ -1231,7 +1239,7 @@
     newCharacter, normalize, freshStatus,
     rank, skill, skillBudget, skillsSpent, skillsLeft, canRaiseSkill, canLowerSkill, raiseSkill, lowerSkill, attackSkill, defenseSkill, featSkill, featCount, featBudget, treeCount, tierCount, tierName, canTakeFeat, closedBy, parseReq, reqMet, canRemoveFeat, addFeat, removeFeat, reqText, roman,
     conditioning, attr, attrMax, combatAttr, armorInfo, armorPieces, armorAt, armorUniform, shieldInfo, shieldReady, wieldedWeapon, offhandWeapon,
-    maxStamina, clampStamina, freshStamina, wearyRound, wearyTime, regen, fatiguePenalty, apPool, projectedPool, apScale, costScale, fmtAP, minAP, baseAP, armorAP, quickCut, moveCost, squaresFor, squaresPerAP, handsBusy, castingHands, weaponStrain, inRange, optionKey, needsWindUp, strOffset, staminaCost, effectiveWeight, isLightWeapon,
+    maxStamina, clampStamina, freshStamina, wearyRound, wearyTime, regen, fatiguePenalty, apPool, projectedPool, apScale, costScale, quantAP, fmtAP, minAP, baseAP, armorAP, quickCut, moveCost, squaresFor, squaresPerAP, handsBusy, castingHands, weaponStrain, inRange, optionKey, needsWindUp, strOffset, staminaCost, effectiveWeight, isLightWeapon,
     strBonus, weaponDamage, mainIndex, attackOptions, actionCost, ammoLeft, gearWarnings, tireless, webTax,
     damageAttr, healAttr, totalDamage, updateCondition, isActive, bleedPerRound, collapsed, comeRound, roundRegen,
     grapple, holding, isHeld, isPinned, inClinch,

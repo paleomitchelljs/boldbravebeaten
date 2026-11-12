@@ -96,7 +96,7 @@ test('derived stats for an average starting character', () => asWritten(() => {
   assert.strictEqual(C.regen(c), -2, 'heavy armor regen can go negative');
 }));
 
-test('the turn budget (the user, 2026-11-09, "tighter and faster"): at SPD 5 the worst roll still holds a swing, or a step and a thrust; the best a step and a swing, or three quick actions', () => {
+test('the turn budget (the user, 2026-11-09, "tighter and faster"): at SPD 5 the worst roll still holds a swing, or a step and a thrust; the best a step and a swing, or three quick actions (in tenths: apStep is the next test)', () => withConfig({ apStep: null }, () => {
   const c = armed('Budget', 'longsword');
   const AP = (n) => n * B.CONFIG.apScale;
   assert.strictEqual(C.fmtAP(C.apPool(c)), '5.5', 'the mean pool');
@@ -115,9 +115,9 @@ test('the turn budget (the user, 2026-11-09, "tighter and faster"): at SPD 5 the
   assert.strictEqual(C.apPool(c), AP(6), 'every point of SPD is half an AP');
   // Weapon speed shows: a dagger thrust is quicker than a sword thrust.
   assert.ok(opt(armed('D', 'dagger'), (o) => o.motion === 'thrust').ap < cost('thrust'));
-});
+}));
 
-test('Quick feats take a share off every use: half at the top rank', () => {
+test('Quick feats take a share off every use: half at the top rank (in tenths)', () => withConfig({ apStep: null }, () => {
   const c = armed('Quick', 'longsword');
   const thrust = () => C.attackOptions(c).find((o) => o.motion === 'thrust').ap;
   const full = thrust();
@@ -125,6 +125,24 @@ test('Quick feats take a share off every use: half at the top rank', () => {
   assert.deepStrictEqual(cuts, [full - Math.round(full / 6), full - Math.round(full / 3), full - Math.round(full / 2)]);
   c.feats.quick_parry = 2;
   assert.strictEqual(C.actionCost(c, 'parry').ap, C.actionCost(fighter('X'), 'parry').ap / 2, 'Quick Parry II halves a parry');
+}));
+
+test('R9: costs come in half APs, and Quick feats still make a difference on a longsword', () => {
+  const half = B.CONFIG.apScale / 2;
+  const c = armed('Quick', 'longsword');
+  const thrust = () => C.attackOptions(c).find((o) => o.motion === 'thrust').ap;
+  const costs = [0, 1, 2, 3].map((r) => { c.feats.quick_thrust = r; return thrust(); });
+  assert.ok(costs.every((x) => x % half === 0), 'whole halves');
+  assert.deepStrictEqual(costs.map((x) => x / B.CONFIG.apScale), [2.5, 2, 1.5, 1], 'each rank of Quick Thrust is a visible half AP on a longsword');
+  c.feats.quick_parry = 2;
+  assert.strictEqual(C.actionCost(c, 'parry').ap, C.actionCost(fighter('X'), 'parry').ap / 2, 'Quick Parry II still halves a parry');
+  // Armor: plate's half AP an action shows, a pool is not rounded (5.5 stays).
+  const bare = armed('Bare', 'longsword');
+  const plated = armed('Plated', 'longsword');
+  plated.armor = Items.makeArmor('plate', 'full', 'standard');
+  assert.ok(C.actionCost(plated, 'parry').ap > C.actionCost(bare, 'parry').ap, 'plate makes a parry dearer');
+  assert.strictEqual(C.fmtAP(C.apPool(bare)), '5.5');
+  withConfig({ apStep: null }, () => assert.notStrictEqual(C.attackOptions(bare).find((o) => o.motion === 'thrust').ap % half, 0, 'off: tenths again'));
 });
 
 test('armor makes every action dearer instead of shrinking the pool', () => {

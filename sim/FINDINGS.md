@@ -1,5 +1,52 @@
 # Simulation findings
 
+## Costs in half APs (2026-11-12; step 8 of `docs/PLAN.md`, ruling R9; PROVISIONAL, `CONFIG.apStep`)
+
+Every action's AP cost, after the Quick feats, armor's per-action cost, gear, weapon speed and strain, rounds to the nearest
+half AP (halfway goes up): `Character.quantAP`, called last in `gearAP`, which every cost passes through. `apStep: 0.5` in
+`config.js`; `null` restores tenths. The pool is not rounded. Duels: `node sim/duels.js --n 40 --seed 4242 --metrics`; crawls:
+`node sim/crawl.js <place> --party 3 --n 30 --metrics --seed 4242|777`; each with `--set apStep=null` and as it now stands.
+The bonuses: `node sim/ap-rounding.js`.
+
+**Did anything move beyond noise? No, with a lean.** Duels (400 fights): median rounds 2 and 90th 5 either way, mean 2.8 → 2.7,
+heroes dead a fight 0.43 → 0.46, someone under half stamina 33% → 32%, strikes thrown 1,639 → 1,540. The pairings' win rates
+are the same to within 40 fights' noise (±8 points) except three, in both directions: Cyrus against Jabiku 88 → 100%, Cyrus
+against the goblin warrior 63 → 45%, against the fire goblin 40 → 45%. Crawls (party of 3, 30 each, two seeds):
+
+| Place | cleared, seed 4242 | cleared, seed 777 | both seeds (of 60) | median rounds (90th) | dead a fight |
+|---|---|---|---|---|---|
+| temple_court | 12 → 16 | 8 → 9 | 20 → 25 | 4 → 5 (9 → 10); 5 → 5 (10 → 11) | 0.44 → 0.43; 0.52 → 0.53 |
+| ember_hall | 2 → 1 | 0 → 1 | 2 → 2 | 3 → 3; 3 → 3 | 0.36 → 0.30; 0.38 → 0.33 |
+| orc_valley | 6 → 11 | 9 → 11 | 15 → 22 | 6 → 6; 6 → 6 | 0.64 → 0.53; 0.61 → 0.60 |
+
+Clears rise in two places in both seeds (court 33% → 42%, valley 25% → 37% of 60; each about 1 to 1.5 standard errors) and
+deaths a fight fall or hold. That is a lean toward easier fights, not a move: the rounding is symmetric (2.3 → 2.5 costs more,
+1.7 → 1.5 costs less) and the foes pay it as the heroes do, but a hero's 2-AP defences and 1.5-AP daggers sit on the round
+numbers while the swings and heavy blows (4.6 → 4.5, 6.8 → 7, 11.5 → 11.5) are where it moves. No rule number was
+retuned. Worth a third seed before step 9 leans on it; a re-run of `tools/tiers.js` was not done (the tiers' M values come from
+fights this small a shift would not reorder).
+
+**Which bonuses still show, and which round away** (sheet AP, tenths → halves; `node sim/ap-rounding.js`):
+
+| Bonus | Without → with, rank 0 to top | Rounds away |
+|---|---|---|
+| Quick Thrust, longsword thrust | 2.5 → 2 → 1.5 → 1 | none |
+| Quick Thrust, rapier thrust | 2 → 1.5 → 1.5 → 1 | **rank II** |
+| Quick Thrust, dagger thrust | 1.5 → 1 → 1 → 0.5 | **rank II** |
+| Quick Thrust, short spear thrust | 1.5 → 1.5 → 1 → 1 | **ranks I and III** |
+| Quick Hands, punch | 1 → 1 → 0.5 → 0.5 | **ranks I and III** |
+| Quick Parry, Dodge, Block (2 ranks) | 2 → 1.5 → 1 | none |
+| Heavy Tempo, great axe | 11.5 → 8.5 → 5.5 | none |
+| Armor's cost, plate (+0.5 an action) | thrust 2.5 → 3, parry 2 → 2.5 | none |
+| Armor's cost, mail (+0.2 an action) | thrust 2.5 → 2.5, parry 2.2 → 2, a 4-square move 4.2 → 4 | **almost always** |
+| Weapon strain (past the weapon's capacity) | longsword swing at STR 3 9.5 against 6 from STR 4; battle axe 20.5, 9, 7; great axe 32, 18, 11.5, 8, 6.5 at STR 3, 4, 5, 6, 8 | none |
+
+So: Quick Parry, Dodge and Block, Heavy Tempo, plate's cost and strain all still show. Quick Thrust and Quick Hands lose a rank
+on the cheap weapons (a dagger's, a spear's, a punch's cost is already a step or two from the half-AP floor), and mail's 0.2
+vanishes. Not fixed, as asked; the remedies are for a ruling: Quick feats that cut a whole half AP a rank (the top rank
+then takes a share of the cost, as `quickCut` does now), and a per-action armor cost counted in halves (plate 0.5, mail 0.5
+from SPD penalty 2 and up, nothing below).
+
 ## Re-tuned on the new rules (2026-11-12; step 6 of `docs/PLAN.md`, ruling R8)
 
 Seed 4242 and the step-1 commands throughout. "Before" is the step-5 commit (a1b4f62) with only the new death

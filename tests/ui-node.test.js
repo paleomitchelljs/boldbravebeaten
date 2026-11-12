@@ -280,6 +280,8 @@ test('ui: a battle plays through the real battle screen with the AI on both side
     check('battle');
     assert.ok(Game.ui.result, 'the battle ended and was settled');
     assert.match(text(), /Victory|Defeat|No one stands/);
+    assert.ok(find('.cost-panel'), 'the result card carries the account of what the fight cost');
+    assert.ok(find('.cost-panel').querySelectorAll('.cost-row').length >= 1, 'a row a hero');
     Game.afterBattle();
     check('after battle');
   } finally { globalThis.setTimeout = realTimeout; }
@@ -287,7 +289,8 @@ test('ui: a battle plays through the real battle screen with the AI on both side
 
 test('ui: a player-run party is asked to react when a foe attacks, on the map, and the fight goes on', async () => {
   const w = Game.world;
-  for (const c of World.party(w)) { c.control = 'manual'; c.status = G.Character.freshStatus(); c.stamina = G.Character.maxStamina(c); for (const k of Object.keys(c.damage)) c.damage[k] = 0; }
+  // Orders to be asked every time (the default asks only for a blow that could drop the hero: the next test).
+  for (const c of World.party(w)) { c.orders = { ask: 'every' }; c.control = 'manual'; c.status = G.Character.freshStatus(); c.stamina = G.Character.maxStamina(c); for (const k of Object.keys(c.damage)) c.damage[k] = 0; }
   const realTimeout = globalThis.setTimeout;
   globalThis.setTimeout = (f) => realTimeout(f, 0);
   let asked = 0, turns = 0;
@@ -478,4 +481,50 @@ test('feat trees: every feat of every tree has a place on the graph, and no two 
       assert.ok(Math.abs(a.x - b.x) >= W || Math.abs(a.y - b.y) >= 50, `${t.id}: ${ps[i][0]} overlaps ${ps[j][0]}`);
     }
   }
+});
+
+test('ui: standing orders answer for a hero, the pips show the pool in halves, and the view pans', async () => {
+  const w = Game.world;
+  for (const c of World.party(w)) { c.orders = null; c.control = 'manual'; c.status = G.Character.freshStatus(); c.stamina = G.Character.maxStamina(c); for (const k of Object.keys(c.damage)) c.damage[k] = 0; }
+  const realTimeout = globalThis.setTimeout;
+  globalThis.setTimeout = (f) => realTimeout(f, 0);
+  try {
+    Game.startBattle({ name: 'Orders', foes: [{ monster: 'koboldBand' }] });
+    const enc = w.battle.enc;
+    let human = null;
+    for (let i = 0; i < 3000 && Game.screen === 'battle' && !Game.ui.result && !human; i++) {
+      await new Promise((r) => realTimeout(r, 0));
+      if (Game.error) break;
+      if (Game.ui.reacting) { find('.popcard.react button.act.none').click(); continue; }
+      const cur = enc.phase === 'turn' && G.Combat.currentActor(enc);
+      if (cur && G.Battle.table(w).characters[cur].side === 'party') human = cur;
+    }
+    check('orders battle');
+    assert.ok(human, 'a party member has the turn');
+    Game.render();
+    // The pool in halves: two pips to an AP.
+    const pool = Math.ceil(enc.apStart[human] / (B.CONFIG.apScale / 2) - 1e-9);
+    assert.equal(find('.cmd-head .ap-meter').querySelectorAll('i').length, pool, 'a pip a half AP');
+    assert.ok(find('.cmd-head .ap-meter').querySelectorAll('i.will').length > 0, 'the chosen action is marked on the pips');
+    assert.ok(find('.cmd-head .ap-meter').querySelectorAll('i.keep').length > 0, 'what stays for reactions is marked');
+    // The overlay lists each hero's orders and sets them.
+    overlay('orders');
+    const root = fake.doc.getElementById('modal-root');
+    assert.match(root.textContent, /Reaction orders/);
+    assert.ok(root.querySelectorAll('select').length >= 5 * World.party(w).length - 5, 'a select an order a hero (the "ask every time" hero has none)');
+    G.Orders.set(World.party(w)[0], 'parry', 'all');
+    assert.equal(G.Orders.of(World.party(w)[0]).parry, 'all');
+    Game.closeOverlay();
+    // Panning by hand: the pad's offsets go back to the follow when the turn passes.
+    Game.ui.pan = { x: 3, y: -3 };
+    Game.render();
+    check('pan');
+    assert.deepEqual(Game.ui.pan, { x: 3, y: -3 }, 'the pan holds while the same one acts');
+    const end = find('.cmd-foot .end');
+    if (end) end.click();
+    for (let i = 0; i < 200 && Game.screen === 'battle' && enc.phase === 'turn' && G.Combat.currentActor(enc) === human; i++) await new Promise((r) => realTimeout(r, 0));
+    Game.render();
+    check('after the turn');
+    if (G.Combat.currentActor(enc) !== human) assert.deepEqual(Game.ui.pan, { x: 0, y: 0 }, 'a new turn recentres');
+  } finally { globalThis.setTimeout = realTimeout; }
 });

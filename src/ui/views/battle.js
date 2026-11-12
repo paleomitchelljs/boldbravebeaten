@@ -196,6 +196,9 @@
       react: (req, enc, chars) => {
         const c = chars[req.actor];
         if (aiControlled(app, c)) return G.AI.react(enc, chars, req);
+        // Standing orders answer for a hero unless the blow is one to ask about (src/game/orders.js).
+        const o = G.Orders ? G.Orders.decide(enc, chars, req) : null;
+        if (o && !o.ask) { if (o.note) Combat.log(enc, o.note, 'defend'); return o.answer; }
         return app.hooks && app.hooks.react ? app.hooks.react(req, enc, chars) : askReaction(app, req, enc, chars);
       },
     };
@@ -450,15 +453,44 @@
   // ---- Command panel -----------------------------------------------------
   // Under the map: the name, a type dropdown (Martial, Magic, Move, Other), the action
   // dropdown(s), a target and Declare. Numbers and rules sit behind ⓘ buttons and pop-ups.
-  // One pip per AP on the sheet; a part-spent AP shows as a half pip.
-  function apMeter(pool, left, flash, now) {
-    const D = G.CONFIG.apDisplay || 1, P = pool / D, L = left / D;
-    const out = [];
-    for (let i = 0; i < Math.ceil(P - 1e-9); i++) {
-      const just = flash && i + 1 > flash.to / D + 1e-9 && i < flash.from / D - 1e-9;
-      out.push(h('i', { class: (L >= i + 1 ? '' : L > i ? 'part' : 'spent') + (just ? ' just' : ''), style: just ? { animationDelay: `-${now - flash.at}ms` } : null }));
+  // The AP pool as pips in halves (R9: costs come in half APs), two to the AP with a gap between APs. A pip is full,
+  // part (a tenth-spent half, with apStep off) or spent; the ones just spent flash. markCost(cost) lays an action over
+  // the same pips: the pips it would spend are `will`, the pips still there for reactions after it are `keep`.
+  function apMeter(pool, left, flash, now, plan) {
+    const D = G.CONFIG.apDisplay || 1, hf = D / 2;
+    const n = Math.ceil(pool / hf - 1e-9);
+    const pips = [], base = [];
+    for (let j = 0; j < n; j++) {
+      const lo = j * hf, hi = (j + 1) * hf;
+      const just = flash && hi > flash.to + 1e-9 && lo < flash.from - 1e-9;
+      base.push((left >= hi - 1e-9 ? '' : left > lo + 1e-9 ? 'part' : 'spent') + (just ? ' just' : ''));
+      pips.push(h('i', { class: base[j], style: just ? { animationDelay: `-${now - flash.at}ms` } : null }));
     }
-    return h('span', { class: 'ap-meter', 'aria-label': `${C.fmtAP(left)} of ${C.fmtAP(pool)} AP left this round` }, out);
+    const note = h('span', { class: 'ap-note small num muted' }, '');
+    const el = h('span', { class: 'ap-meter', 'aria-label': `${C.fmtAP(left)} of ${C.fmtAP(pool)} AP left this round` }, pips);
+    // cost: internal units (null clears the marks).
+    el.markCost = (cost) => {
+      const after = cost != null ? left - cost : null;
+      pips.forEach((p, j) => {
+        const lo = j * hf, hi = (j + 1) * hf;
+        const spend = cost != null && hi > after + 1e-9 && lo < left - 1e-9;
+        const keep = cost != null && !spend && hi <= left + 1e-9 && lo < after - 1e-9;
+        p.className = base[j] + (spend ? ' will' : keep ? ' keep' : '');
+      });
+      // Short on the pane (the pips carry the rest); the sentence is the hover.
+      note.textContent = cost == null ? '' : after >= -1e-9 ? `−${C.fmtAP(cost)} → ${C.fmtAP(after)}` : `−${C.fmtAP(cost)}: short`;
+      note.title = cost == null ? '' : after >= -1e-9 ? `This costs ${C.fmtAP(cost)} AP (striped); ${C.fmtAP(after)} AP stay for reactions (blue)` : `This costs ${C.fmtAP(cost)} AP, ${C.fmtAP(-after)} more than you have left`;
+    };
+    el.planCost = plan != null ? plan : null;
+    if (plan != null) el.markCost(plan);
+    return h('span', { class: 'ap-pips' }, el, note);
+  }
+
+  // Hovering (or focusing) an action marks its cost on the pips; letting go goes back to the chosen action's.
+  function hoverCost(cost) {
+    if (typeof document === 'undefined') return;
+    const el = document.querySelector('.battle-screen .ap-meter');
+    if (el && el.markCost) el.markCost(cost != null ? cost : el.planCost);
   }
 
   function costText(ap, st, sp, spent) {
@@ -778,7 +810,7 @@
   }
 
   // The pane's head: who, their AP as pips (the ones just spent flash), stamina and SP.
-  function paneHead(app, enc, id, legal) {
+  function paneHead(app, enc, id, legal, plan) {
     const chars = app.state.characters;
     const c = chars[id];
     const ui = bui(app);
@@ -797,7 +829,7 @@
         h('button', { class: 'who linkish', onclick: () => openSheet(app, enc, id), title: 'Character sheet' }, c.name),
         h('div', { class: 'cmd-stats', title: `Stamina ${c.stamina}/${max}${sp != null ? ` · ${sp} SP` : ''}${C.fatiguePenalty(c) ? ` · tired: −${C.fatiguePenalty(c)} AP this round` : ''}` }, bar(c.stamina, max), h('span', { class: 'small num muted' }, `${c.stamina}`),
           sp != null ? h('div', { class: 'sp-bar', title: `${sp} of ${G.Magic.maxSP(c)} spell points` }, bar(sp, G.Magic.maxSP(c))) : null)),
-      pool != null ? h('div', { class: 'cmd-ap', title: `${C.fmtAP(left)} of ${C.fmtAP(pool)} AP left this round` }, apMeter(pool, left, fl, now), h('span', { class: 'num' }, C.fmtAP(left))) : null,
+      pool != null ? h('div', { class: 'cmd-ap', title: `${C.fmtAP(left)} of ${C.fmtAP(pool)} AP left this round` }, apMeter(pool, left, fl, now, plan), h('span', { class: 'num' }, C.fmtAP(left))) : null,
       gearWarn(c),
       woundText(c) ? h('span', { class: 'chip wound-chip num', title: `Wounds: ${woundText(c)} (attributes lost until healed)` }, woundText(c)) : null);
   }
@@ -832,6 +864,7 @@
         named && g ? h('div', { class: 'act-group label' }, g) : null,
         list.filter((e) => e.group === g).map((e) =>
           h('button', { class: 'act-line' + (e.key === cmd.act ? ' on' : '') + (e.affordable ? '' : ' dim') + (e.spent ? ' spent' : ''), 'data-hint': !e.affordable ? `${e.label}: ${e.why}` : e.spent ? `${e.label}. ${SPENT_HINT}` : e.label, 'aria-pressed': e.key === cmd.act ? 'true' : 'false',
+            onmouseenter: () => hoverCost(e.ap), onmouseleave: () => hoverCost(null), onfocus: () => hoverCost(e.ap), onblur: () => hoverCost(null),
             onclick: () => { cmd.act = e.key; cmd.castAt = null; rerender(); } },
           h('span', { class: 'nm' }, e.short || e.label), h('span', { class: 'num' }, C.fmtAP(e.ap)), h('span', { class: 'num' + (e.spent ? ' spent' : ''), title: e.spent ? SPENT_HINT : null }, e.stamina ? `${e.stamina}${e.spent ? '!' : ''}` : '–'))),
       ]));
@@ -858,10 +891,11 @@
     const c = chars[id];
     // A computer-run foe's AP stays hidden, as everywhere else.
     if (aiControlled(app, c)) return pane('waiting ' + (c.side === 'party' ? 'party' : 'enemy'), paneHead(app, enc, id, c.side === 'party' || app.state.settings.gmView ? legal : null), h('p', { class: 'muted small' }, c.side === 'party' ? 'Deciding…' : 'Their turn. You will be asked if one of yours can react.'));
-    const head = paneHead(app, enc, id, legal);
-
     const { model, entry } = sync;
     const cmd = ui.cmd;
+    // The cost on the pips: a square picked to move to, else the chosen action.
+    const planAP = cmd.moveTo && app.ui.lastReach && app.ui.lastReach[cmd.moveTo.x + ',' + cmd.moveTo.y] != null ? app.ui.lastReach[cmd.moveTo.x + ',' + cmd.moveTo.y] : entry && entry.affordable ? entry.ap : null;
+    const head = paneHead(app, enc, id, legal, planAP);
     const rerender = () => app.render();
     const tabs = model.types.length > 1 ? h('div', { class: 'cmd-tabs', role: 'tablist' }, model.types.map(([k, label, ic, can], i) =>
       h('button', { class: 'cmd-tab' + (cmd.type === k ? ' on' : '') + (can ? '' : ' dim'), role: 'tab', 'aria-selected': cmd.type === k ? 'true' : 'false', title: `${label} (${i + 1})`,

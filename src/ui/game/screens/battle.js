@@ -93,8 +93,40 @@
     other: { color: '#8fe3a8', icon: 'hand' }, guard: { color: '#8ab4ff', icon: 'shield' }, move: { color: '#7fdcff' }, far: { color: '#d9b055' },
   };
   const SELF_ICON = { windUp: 'sword', standUp: 'up', bandage: 'heart', drawSidearm: 'hand', pickUp: 'hand', drop: 'hand', vanish: 'eye', feign: 'eye', rally: 'up', command: 'up', rouse: 'heart' };
-  // The battlefield view's size in squares (rules.yaml game.arena).
-  const VIEW = () => G.CONFIG.game.arena || { w: 15, h: 10 };
+  // The battlefield view's size in squares: the window's, as the explore view's is (rules.yaml game.view, via
+  // UI.ExploreActions.viewShape); without a window (tests), rules.yaml game.arena's 15 × 10.
+  // The pane takes 330 px beside the map and the initiative bar a row above it; below 1000 px (css) the pane sits under
+  // the map, which then keeps the top half of the screen.
+  const VIEW = () => {
+    const wide = typeof window !== 'undefined' && window.innerWidth > 1000;
+    const vs = UI.ExploreActions && UI.ExploreActions.viewShape ? UI.ExploreActions.viewShape(wide ? { w: 342, h: 56 } : { w: 0, h: Math.round(((typeof window !== 'undefined' && window.innerHeight) || 0) * 0.5) + 60 }) : null;
+    return vs ? { w: vs.cols, h: vs.rows } : G.CONFIG.game.arena || { w: 15, h: 10 };
+  };
+  // The camera panned by hand (the pad over the map, the arrow keys): squares from the one it follows. It goes back to
+  // the follow when the turn passes to someone else.
+  const PAN_STEP = 3;
+  function panBy(game, dx, dy) {
+    const p = game.ui.pan || (game.ui.pan = { x: 0, y: 0 });
+    const bs = game.ui.bs;
+    const a = bs && bs.arena;
+    const lim = a ? { x: a.w, y: a.h } : { x: 15, y: 10 };
+    p.x = Math.max(-lim.x, Math.min(lim.x, p.x + dx));
+    p.y = Math.max(-lim.y, Math.min(lim.y, p.y + dy));
+    game.ui.panTouched = true;
+    game.render();
+  }
+  function recentre(game) {
+    game.ui.pan = { x: 0, y: 0 };
+    game.render();
+  }
+  function panPad(game) {
+    const p = game.ui.pan;
+    const moved = !!(p && (p.x || p.y));
+    const b = (label, aria, dx, dy, cls) => h('button', { class: 'pan-btn ' + (cls || ''), type: 'button', 'aria-label': aria, title: aria, onclick: () => (dx || dy ? panBy(game, dx, dy) : recentre(game)) }, label);
+    return h('div', { class: 'pan-pad' + (moved ? ' off' : ''), role: 'group', 'aria-label': 'Move the view' },
+      b('▲', 'Pan the view up (arrow key)', 0, -PAN_STEP, 'n'), b('◀', 'Pan the view left', -PAN_STEP, 0, 'w'),
+      b('◎', 'Back to the one whose turn it is (C)', 0, 0, 'c'), b('▶', 'Pan the view right', PAN_STEP, 0, 'e'), b('▼', 'Pan the view down', 0, PAN_STEP, 's'));
+  }
   const isSpell = (e) => !!(e && e.option && e.option.spell);
   const ranged = (e) => !!(e && e.option && (e.option.maxRange || 1) > 1.5);
 
@@ -112,7 +144,9 @@
     let focusId = (map && map.actor) || Combat.currentActor(enc) || enc.ids.find((id) => chars[id] && chars[id].side === 'party' && C.isActive(chars[id]) && enc.pos[id]);
     // A foe acting where the party cannot see is not followed: the camera stays on the party.
     if (whole && focusId && chars[focusId] && chars[focusId].side !== 'party' && enc.pos[focusId] && !ms.seen[(enc.pos[focusId].x + ox) + ',' + (enc.pos[focusId].y + oy)]) focusId = enc.ids.find((id) => chars[id] && chars[id].side === 'party' && C.isActive(chars[id]) && enc.pos[id]) || focusId;
-    const focus = focusId && enc.pos[focusId] ? enc.pos[focusId] : { x: 0, y: 0 };
+    const pan = game.ui.pan || { x: 0, y: 0 };
+    const at0 = focusId && enc.pos[focusId] ? enc.pos[focusId] : { x: 0, y: 0 };
+    const focus = { x: at0.x + pan.x, y: at0.y + pan.y };
     // On the whole map the party sees what its fighters see from where they stand now, after every move, not only at
     // the start of a round (Battle.reinforce); looked again only when one of them has moved.
     const partyAt = whole ? enc.ids.filter((id) => chars[id] && chars[id].side === 'party' && C.isActive(chars[id]) && enc.pos[id]) : [];
@@ -446,6 +480,26 @@
       })) : null);
   }
 
+  // What the fight cost, one panel before the rest-and-mend choice: a row a hero with their state, stamina (and what the
+  // fight took of it), weariness gained, the wounds that stay (new ones marked), where the blows landed, gear worn.
+  function costPanel(rows) {
+    const bar = (now, max) => UI.bar(now, max);
+    return h('div', { class: 'cost-panel', role: 'table', 'aria-label': 'What the fight cost' },
+      rows.map((r) => {
+        const spent = Math.round(r.stamina.was - r.stamina.now);
+        const weary = r.weary.now - r.weary.was;
+        return h('div', { class: 'cost-row ' + r.state, role: 'row' },
+          h('div', { class: 'cost-who' }, h('b', null, r.name), r.state !== 'standing' ? h('span', { class: 'chip bad' }, r.state) : null),
+          h('div', { class: 'cost-st', title: `Stamina ${r.stamina.now} of ${r.stamina.max} (was ${r.stamina.was})${weary > 0 ? `; weariness +${weary}` : ''}` },
+            bar(r.stamina.now, r.stamina.max), h('span', { class: 'small num' }, `${r.stamina.now}/${r.stamina.max}`, spent > 0 ? h('span', { class: 'muted' }, ` −${spent}`) : null,
+              weary > 0 ? h('span', { class: 'weary', title: 'Weariness: the maximum falls until a long rest' }, ` · weary +${weary}`) : null)),
+          h('div', { class: 'cost-wounds small' },
+            r.wounds.length ? r.wounds.map((x) => h('span', { class: 'chip wound-chip num' + (x.more ? ' new' : '') }, `−${x.lost} ${x.attr}`)) : h('span', { class: 'muted' }, 'unhurt'),
+            r.where.length ? h('span', { class: 'muted', title: 'Where the harm landed this fight' }, ' · hit: ' + r.where.map((x) => `${x.place.toLowerCase()} ${x.points}`).join(', ')) : null),
+          r.gear.length ? h('div', { class: 'cost-gear small muted' }, r.gear.map((g) => h('span', { title: `${g.name}: ${g.now} of ${g.max} (was ${g.was})`, class: g.now <= 0 ? 'bad' : '' }, `${g.name} ${g.now}/${g.max}${g.was > g.now ? ` (−${g.was - g.now})` : ''}`))) : null);
+      }));
+  }
+
   function resultCard(game) {
     const res = game.ui.result;
     const w = game.world;
@@ -454,6 +508,7 @@
     return h('section', { class: 'popcard result ' + res.result },
       h('div', { class: 'popcard-head' }, h('h2', { class: 'grow' }, title), game.ui.spec && game.ui.spec.name ? h('span', { class: 'label' }, game.ui.spec.name) : null),
       res.lines.length ? h('div', { class: 'stack tight' }, res.lines.map((l) => h('p', { class: 'small' }, l))) : null,
+      res.summary && res.summary.length ? costPanel(res.summary) : null,
       res.loot && res.loot.length ? h('div', { class: 'stack tight' }, h('span', { class: 'label' }, 'Loot'), h('ul', { class: 'loot-list' }, UI.Bits.tally(res.loot).map((l) => h('li', null, UI.itemIcon(l), l)))) : null,
       h('div', { class: 'row' },
         wiped || !G.CONFIG.afterBattle
@@ -508,16 +563,24 @@
       game.ui.bs = { app, enc, chars, legal, sync, arena: w.battle.arena, map: legal && human ? P().mapState(app, enc, legal) : null };
       app.ui.lastReach = game.ui.bs.map && game.ui.bs.map.reach;
       game.ui.spec = w.battle.spec;
+      // A turn passing sends the hand-panned view back to whoever acts.
+      const acting = enc.phase === 'turn' ? Combat.currentActor(enc) : null;
+      if (game.ui.panFor !== acting) { game.ui.panFor = acting; game.ui.pan = { x: 0, y: 0 }; }
+      // The party as the fight found it, and the harm it takes by place, for the account at the end.
+      if (!game.ui.fight || game.ui.fight.enc !== enc) game.ui.fight = { enc, snap: Battle.snapshot(w), tally: Battle.watch(enc, chars) };
       if (enc.phase === 'over') {
         game.ui.finalLog = enc.log.slice(-12);
         game.ui.result = Battle.finish(w);
+        game.ui.result.summary = Battle.summary(w, game.ui.fight.snap, game.ui.fight.tally);
       }
     }
     const bs = game.ui.bs;
     if (!game.ui.mv && bs) {
       UI.MapView.preload();
       const a = bs.arena;
-      game.ui.mv = UI.MapView.create({ cols: Math.min(VIEW().w, a ? a.w : bs.enc.grid.w), rows: Math.min(VIEW().h, a ? a.h : bs.enc.grid.h), scale: UI.MapView.scaleFor(a && a.place, 3), label: 'The battlefield', scene: () => scene(game), onCell: (x, y) => onCell(game, x, y) });
+      const vw = VIEW();
+      game.ui.mvShape = vw.w + 'x' + vw.h;
+      game.ui.mv = UI.MapView.create({ cols: Math.min(vw.w, a ? a.w : bs.enc.grid.w), rows: Math.min(vw.h, a ? a.h : bs.enc.grid.h), scale: UI.MapView.scaleFor(a && a.place, 3), label: 'The battlefield', scene: () => scene(game), onCell: (x, y) => onCell(game, x, y) });
       game.ui.mv.start();
     }
     if (bs && bs.enc) effects(game, bs.enc, bs.chars);
@@ -525,6 +588,7 @@
     const spec = game.ui.spec || {};
     const topExtra = live ? [
       h('span', { class: 'chip' }, enc.round ? `Round ${enc.round}` : 'Ready'),
+      ibtn('shield', 'Reaction orders: what each hero does when a blow comes', () => game.openOverlay('orders')),
       declaredPop(game, app, enc),
     ] : null;
     return h('div', { class: 'battle-screen' + (live ? '' : ' over') },
@@ -534,6 +598,7 @@
           live ? initiativeBar(game, app, enc) : null,
           h('div', { class: 'stage' },
             game.ui.mv ? game.ui.mv.el : null,
+            live && bs.map && game.ui.mv && bs.arena && (bs.arena.w > game.ui.mv.cols || bs.arena.h > game.ui.mv.rows) ? panPad(game) : null,
             live ? turnBanner(game, enc, bs.chars) : null,
             live && game.ui.reacting ? reactionCard(game) : null,
             !live ? resultCard(game) : null)),
@@ -556,6 +621,10 @@
       }
       if (e.key === 'Enter') { const b = document.querySelector('.battle-screen .cmd-go .primary'); if (b && !b.disabled) { e.preventDefault(); b.click(); } }
       if (e.key === 'v' || e.key === 'V') { e.preventDefault(); UI.Bits.toggleCleanMap(game); return; }
+      // Arrow keys pan the view by hand; C goes back to whoever's turn it is.
+      const arrow = { ArrowLeft: [-PAN_STEP, 0], ArrowRight: [PAN_STEP, 0], ArrowUp: [0, -PAN_STEP], ArrowDown: [0, PAN_STEP] }[e.key];
+      if (arrow) { e.preventDefault(); panBy(game, arrow[0], arrow[1]); return; }
+      if (e.key === 'c' || e.key === 'C') { e.preventDefault(); recentre(game); return; }
       if (e.key === 'e' || e.key === 'E') { const b = document.querySelector('.battle-screen .cmd-end .end'); if (b && !b.disabled) { e.preventDefault(); b.click(); } }
       if (e.key === 'd' || e.key === 'D') { const b = document.querySelector('.battle-screen .cmd-end .defer'); if (b && !b.disabled) { e.preventDefault(); b.click(); } }
       const n = Number(e.key);

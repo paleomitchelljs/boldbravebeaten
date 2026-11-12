@@ -145,6 +145,7 @@
           h('input', { id: 'hero-mode', type: 'checkbox', checked: !!w.hero, onchange: (e) => { w.hero = e.target.checked; World.syncHero(w); game.save(); toast(w.hero ? 'Hero mode on' : 'Hero mode off'); } }), 'Hero mode (easier: no one in the party can die)')),
       h('section', { class: 'stack tight' }, h('h3', null, 'Other'),
         h('div', { class: 'row' },
+          h('button', { onclick: () => game.openOverlay('orders') }, 'Reaction orders'),
           h('button', { onclick: () => { game.save(); game.closeOverlay(); game.go('title'); } }, 'Save and go to title'),
           h('a', { class: 'button', href: 'bench.html' }, 'Test bench'),
           h('button', { class: game.debug ? 'selected' : '', onclick: () => { game.debug = !game.debug; try { localStorage.setItem('bbb-debug', game.debug ? '1' : ''); } catch (e) { /* none */ } game.openOverlay('menu'); toast(game.debug ? 'Debug tools on' : 'Debug tools off'); } }, game.debug ? 'Debug tools: on' : 'Debug tools: off')),
@@ -198,6 +199,30 @@
     const close = () => game.closeOverlay();
     return shell(o.title || '', h('div', { class: 'stack' }, String(o.text).split('\n').map((p) => h('p', null, p)),
       h('div', { class: 'row' }, (o.actions || []).map((a) => h('button', { onclick: a.onclick }, a.label)), h('button', { class: 'primary', onclick: close }, 'Close'))), close);
+  };
+
+  // Standing orders for reactions (src/game/orders.js): one card a hero, set before a fight or in the middle of one.
+  UI.Overlays.orders = function (game, o) {
+    const w = game.world;
+    const O = G.Orders;
+    const close = () => game.closeOverlay();
+    const heroes = World.party(w).filter((c) => !c.status.dead);
+    const card = (c) => {
+      const cur = O.of(c);
+      const pick = (key) => h('label', { class: 'pick' }, h('span', { class: 'label' }, O.LABELS[key]),
+        UI.select(`ord-${c.id}-${key}`, String(cur[key]), O.CHOICES[key].map(([v, t]) => [String(v), t]), (v) => { O.set(c, key, v); game.save(); game.openOverlay('orders', o); }));
+      const every = cur.ask === 'every';
+      return h('section', { class: 'panel stack tight orders-card' },
+        h('div', { class: 'row spread' }, h('h3', null, c.name),
+          h('span', { class: 'row' },
+            h('button', { class: 'small' + (every ? ' selected' : ''), 'aria-pressed': every ? 'true' : 'false', title: 'A prompt for every blow, every foe that passes', onclick: () => { O.set(c, 'ask', every ? 'matters' : 'every'); game.save(); game.openOverlay('orders', o); } }, 'Ask every time'),
+            h('button', { class: 'small', title: 'Back to the party\'s starting orders', onclick: () => { O.reset(c, false); game.save(); game.openOverlay('orders', o); } }, 'Defaults'))),
+        h('p', { class: 'small muted' }, O.describe(c) + '.'),
+        every ? null : h('div', { class: 'orders-grid' }, ['block', 'parry', 'dodge', 'opportunity', 'ask'].map(pick), cur.ask === 'matters' ? pick('drop') : null));
+    };
+    return shell('Reaction orders', h('div', { class: 'stack' },
+      h('p', { class: 'small muted' }, 'What each hero does when a blow comes, so a fight does not stop at every swing. When more than one order fits, the best odds win. A blow that could drop the hero (the odds the party panel shows) still asks, unless set to never ask. Orders never spend AP the hero hasn\'t.'),
+      heroes.map(card)), close, 'wide');
   };
 
   // Training at camp: the Training Yard's panel, priced for a camp.

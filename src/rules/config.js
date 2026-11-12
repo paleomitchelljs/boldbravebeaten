@@ -80,6 +80,10 @@
     apDisplay: 10,
     // Multiplies every base action cost instead of apScale, if set (null = apScale).
     costScale: null,
+    // PROVISIONAL (docs/PLAN.md R9, step 8): every action's AP cost, after all multipliers (Quick feats, armor, gear,
+    // weapon speed and strain), rounds to the nearest half AP (sheet AP), halves up, so a turn can be planned in pips.
+    // The pool is not rounded. null: costs stay in tenths (2.3, 6.9).
+    apStep: 0.5,
     // PROVISIONAL (the user's turn budget): at level 1 a turn holds one big action (a two-handed or
     // power swing), a step and a medium action (a swing), or three quick actions (thrust, parry,
     // dodge, block, a step). Pool = apBase + SPD / apSpdDivisor + d(apDie), unrounded: 6 at SPD 5 on
@@ -865,6 +869,8 @@
 
   // Every PROVISIONAL choice, shown on the Rules tab so nothing is hidden.
   CONFIG.provisional = [
+    'Costs in half APs (docs/PLAN.md R9, step 8): every action\'s AP cost, after the Quick feats, armor, gear, weapon speed and strain, rounds to the nearest half AP, halfway up (CONFIG.apStep 0.5; null: tenths). The pool is not rounded. Some bonuses round away on cheap actions (Quick Thrust II on a rapier or dagger, mail\'s 0.2): sim/FINDINGS.md.',
+    'Standing orders for reactions (docs/PLAN.md step 8, src/game/orders.js, rules.yaml game.orders): each hero blocks with a shield, parries thrusts, dodges when unarmored and takes a free blow at a foe passing, and the player is asked only for a blow whose chance of dropping that hero is 10% or more. Heroes can be set to be asked every time or never.',
     'The swing\'s setting (docs/PLAN.md R8, step 6): a swung edge or head that drops its target, or passes it (dodged, or the target already down), carries on into one more foe in its reach beside the first, at half force (three quarters for a two-handed or power blow); that foe defends as against any blow (CONFIG.sweep).',
     'Aiming at what can still be covered (docs/PLAN.md R6, step 4): against a defender who can still react (standing, free, aware) a blow aimed at a small target costs more to land past a defence: head 5, hands 4, feet 5 (rules.yaml locations.aim.guarded; arms, legs and torso as before); against one prone, collapsed, held, caught off guard or not seeing the blow, the old head 2, hands 2, feet 3 (locations.aim.penalty). A thrust is one less either way. One out of AP puts up no defence, so pays nothing. The AI sees the body but not the AP: it guesses a foe spent from an average pool less what it has watched it spend this round. The command panel shows the aimed place, its cost and why under the Aim menu. null: the old numbers against everyone.',
     'Head cover (docs/PLAN.md R7, step 4): the foe templates (foes.yaml) wear half or partial armor with head cover of the same type (rules.yaml locations.coverage halfHead, partialHead), as do the humanoid monsters of level 2 and up that wear armor (goblins, goblin archers, the orc centurion and emissary, the kobold high shaman, the sarnak knight); Cyrus\'s gambeson has a padded cap. The kits already gave full padded armor, the head included. Magic items and loot tables are untouched; the clockwork gnome (a construct) is left as it is.',

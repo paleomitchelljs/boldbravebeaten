@@ -46,6 +46,25 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
     point). The pane's foot: "Lands 55% (they block) · 4 CON, 1 SPD · drops them 22%", breakdown on hover or the (i); the aim
     picker is a table of places (lands, on a hit, drops); reaction choices say odds, cost and what gets through; the init bar
     shows wounds (−n) and a collapse's round (up R2). Next: prompt 8.
+  - [x] Step 8, fewer clicks, rounder numbers: R9 `CONFIG.apStep` 0.5 (`Character.quantAP`, last in `gearAP`; null = tenths);
+    standing orders for reactions (`src/game/orders.js`, `rules.yaml game.orders`, `c.orders`; a Reaction orders overlay from
+    the battle bar and the menu; `tests/step8.test.js`); the AP pool as half pips with the hovered action's cost and what
+    stays for reactions marked on them; the battle view fits the window (`viewShape` with the pane taken out) and pans by
+    hand (pad over the map, arrow keys, C); an end-of-fight account on the result card (`Battle.snapshot/watch/summary`).
+    FINDINGS "Costs in half APs": nothing moved beyond noise, crawl clears lean up (court 20 → 25, valley 15 → 22 of 60).
+    Next: prompt 9.
+  - [ ] **Ruling wanted (step 8)**: half APs round some bonuses away: Quick Thrust II on a rapier or dagger, I and III on a
+    short spear, Quick Hands I and III, and mail's 0.2 an action (plate's 0.5 shows). Recommendation: Quick feats cut a
+    whole half AP a rank, and armor's cost counted in halves. FINDINGS has the table.
+  - [ ] From step 8: the plan said reactions were a "three-way choice of always ask, never ask"; the code had only
+    "always asked". Default orders (block, parry thrusts, dodge unarmored, ask when a blow could drop the hero, 10%) are
+    untuned: how many prompts a fight still raises, and whether 10% (`game.orders.drop`) is the right line, is not measured.
+    A sim of a manual party's prompts a fight under the defaults would settle it. The AI's own `react` is untouched.
+  - [ ] From step 8: the end-of-fight account says where blows landed by location, but wounds are kept by attribute, not
+    by place (an arm wound is STR/DEX/CON), so "wounded where" is the places hit this fight plus the attributes lost.
+  - [ ] From step 8: on a phone the orders selects cut their labels ("Block if I have a shield and t…"); looked at in
+    headless Chrome only (`tools/shot.sh`, 500 px and 1280 and 1600 wide), never touched. The pan pad sits over the map's
+    corner (smaller on a phone) and is hidden when the whole arena fits.
   - [ ] From step 7: `foresee` leaves out what it can't see or the engine adds outside applyHit: the defender's AP (it
     assumes their likeliest defence: the best odds), Living Fortress, Untouchable, Roll With It, a ward, displacement, pack
     bonus, bane gear and oils (the attacker's own: could be added), knockback into hazards, bleeding after. Say if any matter.
@@ -120,8 +139,8 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
 - [ ] Merchant and trainer NPCs can't be triggered in town.
 - [ ] Later: heroes scattered in the world (Arvir found in the orc slave pen unlocks his quest and becomes recruitable
   when its conditions are met). Content and quest work; not now.
-- [ ] D-pad movement in exploring; in a fight, the camera should shift to show the whole of a move's reach (with
-  the plan's step 8, pan the battle view).
+- [ ] D-pad movement in exploring; in a fight, the camera should shift to show the whole of a move's reach (step 8 made the
+  battle view pan by hand, pad and arrow keys; it does not yet move by itself to the reach).
 - [ ] Maps: Kalavar's east and west walls are flipped; the kobold den is entered walking north and then you walk south
   (a twisting tunnel should look like one).
 - [x] Kept as is: the circle of darkness ("I like it").
@@ -139,12 +158,10 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
 - [ ] The design docs (Mechanics Outline, Specifics) still describe passes, guards, the old reach.
 
 ## UI
-- [ ] The battle view is still 15×10 (the explore view now fits the window: `game.view` in rules.yaml). (The odds: step 7.)
 - [ ] Feat tree: a prerequisite line that skips a tier runs behind the cards between (Plate Mobility → Living
   Fortress); on a phone the graph still scrolls sideways at the narrowest card.
-- [ ] No way to pan the battle view by hand. "Always ask" puts a pop-up on every blow at the party.
 - [ ] Never clicked through in a real browser (headless shots only): the body as a target, the new-game editor,
-  touch (click-to-walk, prompts), moving lava, spurts, fires and traps, gm.html's reaction pop-up, fractional AP pips.
+  touch (click-to-walk, prompts), moving lava, spurts, fires and traps, gm.html's reaction pop-up, the AP pips in halves and the orders overlay.
 - [ ] Restyle parley, title, pack, journal and standing to the pixel theme. Then character creation, title, journal.
 - [ ] The Hollin Hills still drop a few frames on the iPhone. Followers cluster onto an exit square (drawn only).
 

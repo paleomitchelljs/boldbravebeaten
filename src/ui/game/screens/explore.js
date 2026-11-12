@@ -447,10 +447,12 @@
   // The view's shape follows the window (rules.yaml game.view): squares about as large on screen as the art is drawn,
   // as many as fit, within bounds; a narrow screen keeps `minCols` across with smaller squares and spends its height
   // on more rows. Without a window (tests) it is the old 15 × 10.
-  function viewShape() {
+  // `x` {w, h}: pixels more the screen takes (the battle's command pane beside the map, or under it).
+  function viewShape(x) {
     const V = (G.CONFIG.game && G.CONFIG.game.view) || {};
     if (typeof window === 'undefined' || !window.innerWidth || !V.cell) return { cols: 15, rows: 10 };
-    const availW = Math.min(window.innerWidth - (V.chromeW || 0), V.maxW || Infinity), availH = window.innerHeight - (V.chromeH || 0);
+    x = x || {};
+    const availW = Math.min(window.innerWidth - (V.chromeW || 0), V.maxW || Infinity) - (x.w || 0), availH = window.innerHeight - (V.chromeH || 0) - (x.h || 0);
     const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
     const cell = Math.min(V.cell, availW / V.minCols);
     let cols = clamp(Math.floor(availW / cell), V.minCols, V.maxCols);
@@ -524,7 +526,7 @@
       clearTimeout(t);
       t = setTimeout(() => {
         const game = UI.Game;
-        if (!game || game.screen !== 'explore' || !game.ui.mv || UI.wideView) return;
+        if (!game || (game.screen !== 'explore' && game.screen !== 'battle') || !game.ui.mv || UI.wideView) return;
         const vs = viewShape();
         if (game.ui.mvShape === vs.cols + 'x' + vs.rows) return;
         game.ui.mv.destroy(); game.ui.mv = null;

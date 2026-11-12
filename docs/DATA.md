@@ -217,6 +217,9 @@ dungeon map (`game.arena` in rules.yaml: the whole map with `whole: true`, else 
 block, a shut ordinary door does not. Each round, a group the fight comes near (`game.joinDistance`, with a clear line)
 joins it.
 The exploring view's shape follows the window (`game.view` in rules.yaml: `cell` the square's size in px, `minCols`–`maxCols`, `minRows`–`maxRows`, `chromeW`/`chromeH` the room the page keeps round the map, `maxW` the page's width): columns are kept odd so the party stands in the middle.
+The battle view uses the same shape less the room the command pane takes (342 px beside the map above 1000 px wide, half the screen's height under it); `game.arena` is then only the size of a slice when `whole` is false. Panning it by hand (the pad over the map, the arrow keys, C to recentre) is the screen's own and keeps nothing in the data.
+
+`game.orders` is the standing orders every hero starts with for reactions (`src/game/orders.js`): `block` (`"on"`, `"off"`: quote them, YAML reads a bare on or off as a boolean), `parry` (`thrusts`, `all`, `off`), `dodge` (`unarmored`, `always`, `off`), `opportunity` (`strike`, `ask`, `off`), `ask` (`matters`, `every`, `never`) and `drop`, the chance a blow, if nothing stops it, drops the hero, from which it matters. A hero's own `orders` override them key by key. `CONFIG.apStep` (config.js, sheet AP; null for tenths) rounds every action cost to the nearest half AP.
 
 `encounters:` map an id to `{foes, flags, loot, text, parley, peaceFlags, arena}`. `wandering:` is what comes along: it interrupts a camp, and it is drawn as time passes in the place (`game.wanderers`: a check every 20 minutes, noise counted as extra minutes).
 A town has `locations` (people and services: `inn`, `shop`, `healer`, `trainer`, `bounty`) and `exits` to dungeons;

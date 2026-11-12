@@ -75,7 +75,7 @@ test('items: the silk sash cuts every action by a fifth; a blade of speed takes 
   const swing = C.attackOptions(c).find((o) => o.motion === 'swing').ap;
   const move = C.moveCost(c, 1);
   wear(c, 'silk_sash');
-  assert.equal(C.attackOptions(c).find((o) => o.motion === 'swing').ap, Math.round(swing * 0.8));
+  assert.equal(C.attackOptions(c).find((o) => o.motion === 'swing').ap, C.quantAP(Math.round(swing * 0.8)));
   assert.ok(C.moveCost(c, 1) < move);
   const d = armed('D', 'longsword', 'party', { enchantments: ['speed'] });
   const plain = armed('P', 'longsword');

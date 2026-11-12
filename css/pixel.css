@@ -160,8 +160,15 @@ canvas.portrait { width: auto; max-width: 100%; height: auto; image-rendering: p
 .battle-screen .cmd-stats .sp-bar { flex: 1 0 100%; } .sp-bar .bar { height: 4px; } .sp-bar .bar > span, .sp-bar .bar.low > span, .sp-bar .bar.crit > span { background: #4a8fd9; }
 .battle-screen .cmd-ap { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex: 0 0 auto; }
 .battle-screen .cmd-ap .num { font-size: 0.95rem; color: var(--brass); }
-.battle-screen .ap-meter { flex-wrap: wrap; justify-content: flex-end; max-width: 112px; gap: 2px; }
-.battle-screen .ap-meter i { width: 11px; height: 11px; border-radius: 0; }
+.battle-screen .ap-pips { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.battle-screen .ap-meter { flex-wrap: wrap; justify-content: flex-end; max-width: 128px; gap: 1px; }
+/* Pips in halves (R9): two to an AP, a gap between APs. */
+.battle-screen .ap-meter i { width: 6px; height: 11px; border-radius: 0; }
+.battle-screen .ap-meter i:nth-child(2n) { margin-right: 3px; }
+/* The hovered action over the pips: what it spends (striped brass) and what stays for reactions (blue). */
+.battle-screen .ap-meter i.will { background: repeating-linear-gradient(135deg, #ffd166 0 2px, #9a6a1c 2px 4px); border: 1px solid #ffd166; }
+.battle-screen .ap-meter i.keep { background: #4a8fd9; border: 1px solid #8ab4ff; }
+.battle-screen .ap-note { font-size: 0.66rem; min-height: 1em; text-align: right; }
 .ap-meter i.just { animation: pip-spent 0.9s steps(6) forwards; }
 @keyframes pip-spent { 0% { background: #fff4c2; box-shadow: 0 0 6px #ffd166; transform: translateY(-2px); } 60% { background: var(--brass); box-shadow: 0 0 4px #ffd166; transform: none; } 100% { box-shadow: none; } }
 .cmd-tabs { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 3px; margin-top: 8px; }
@@ -431,3 +438,27 @@ kbd { font: 600 0.72rem var(--font-mono); padding: 0 4px; border: 1px solid var(
   .popcard.react .act { padding: 3px 6px; gap: 2px 6px; }
   .popcard.react .act .react-line { font-size: 0.64rem; }
 }
+
+/* The pad over the battle map: pan the view by hand (arrow keys too; the middle button goes back to whoever acts). */
+.pan-pad { position: absolute; right: 6px; bottom: 6px; z-index: 6; display: grid; grid-template-columns: repeat(3, 26px); grid-template-rows: repeat(3, 26px); gap: 2px; opacity: 0.5; }
+.pan-pad:hover, .pan-pad:focus-within, .pan-pad.off { opacity: 1; }
+.pan-pad .pan-btn { padding: 0; font-size: 0.8rem; line-height: 1; min-height: 0; background: rgba(10, 15, 19, 0.82); }
+.pan-pad .n { grid-column: 2; grid-row: 1; } .pan-pad .w { grid-column: 1; grid-row: 2; } .pan-pad .c { grid-column: 2; grid-row: 2; }
+.pan-pad .e { grid-column: 3; grid-row: 2; } .pan-pad .s { grid-column: 2; grid-row: 3; }
+.pan-pad.off .c { color: var(--brass); }
+.stage.clean .pan-pad { display: none; }
+
+/* The end-of-fight account (battle screen's result card). */
+.cost-panel { display: flex; flex-direction: column; gap: 4px; max-height: 46vh; overflow: auto; }
+.cost-row { display: grid; grid-template-columns: minmax(0, 7.5em) minmax(0, 1fr); gap: 2px 8px; padding: 5px 6px; background: #0e151a; border-left: 3px solid var(--line); }
+.cost-row.down { border-left-color: #d9a441; } .cost-row.dead { border-left-color: #d95a4a; }
+.cost-who { display: flex; flex-direction: column; gap: 2px; align-items: flex-start; }
+.cost-st { display: flex; align-items: center; gap: 6px; } .cost-st .bar { flex: 1 1 60px; height: 6px; }
+.cost-wounds, .cost-gear { grid-column: 2; display: flex; flex-wrap: wrap; gap: 3px 6px; align-items: center; }
+.cost-wounds .new { outline: 1px solid #d95a4a; } .cost-gear .bad { color: #d95a4a; } .cost-st .weary { color: #d9a441; }
+@media (max-width: 600px) { .cost-row { grid-template-columns: minmax(0, 1fr); } .cost-wounds, .cost-gear { grid-column: 1; } }
+@media (max-width: 600px) { .pan-pad { grid-template-columns: repeat(3, 20px); grid-template-rows: repeat(3, 20px); right: 4px; bottom: 4px; } .pan-pad .pan-btn { font-size: 0.65rem; } }
+
+/* Reaction orders: a hero's six choices in a grid, so the card is a few lines, not a column. */
+.orders-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 6px 10px; }
+.orders-grid .pick { display: flex; flex-direction: column; gap: 2px; min-width: 0; } .orders-grid select { width: 100%; min-width: 0; font-size: 0.78rem; }

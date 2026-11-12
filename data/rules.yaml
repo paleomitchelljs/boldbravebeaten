@@ -145,6 +145,11 @@ game:
   # px a square (the art's own size), between the bounds; a screen too narrow for minCols at that size shrinks the
   # squares instead and shows more rows. chromeW/chromeH: px of the window the map can't have (gutters; top bar and log); maxW: the page's own width (css .game).
   view: {cell: 64, minCols: 11, maxCols: 21, minRows: 8, maxRows: 16, chromeW: 24, chromeH: 140, maxW: 1150}
+  # Standing orders for reactions (docs/PLAN.md step 8, src/game/orders.js): every hero's start. A hero's own c.orders
+  # (set on the battle screen or the sheet) override these key by key. PROVISIONAL.
+  #   block "on"|"off" (quoted: YAML reads a bare on or off as a boolean) · parry thrusts|all|off · dodge unarmored|always|off · opportunity strike|ask|off
+  #   ask matters|every|never: a prompt only for a blow whose chance of dropping the hero, if nothing stops it, is `drop`
+  orders: {block: "on", parry: thrusts, dodge: unarmored, opportunity: strike, ask: matters, drop: 0.1}
   joinDistance: 6         # PROVISIONAL: an awake group this close to a fight (with a clear line) joins it
   # ---- Ground (PROVISIONAL, for the temple) ----------------------------------------------------------------------
   # Map letters with the same meaning on every map, besides # wall, . floor, + door and space (rock). A place's
