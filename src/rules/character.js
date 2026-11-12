@@ -873,6 +873,16 @@
         if (w && o.motion === 'thrust' && !o.halfSword && isLightWeapon(w)) opts.push(Object.assign({}, o, { flurry: true, label: 'Flurry', ap: Math.round(o.ap * 1.5), stamina: o.stamina * 2 }));
       }
     }
+    // Whirlwind (Reaper capstone, CONFIG.whirlwind): a two-handed weapon's swung edge or head, struck at every foe it reaches.
+    if (rank(c, 'whirlwind') && CONFIG.whirlwind) {
+      const K = CONFIG.whirlwind;
+      for (const o of opts.slice()) {
+        const w = o.weaponId && !o.offhand && c.weapons.find((x) => x.id === o.weaponId);
+        if (w && WEAPONS[w.type].hands === 2 && ['swing', 'twoHanded'].includes(o.motion) && (o.face === 'edge' || o.face === 'head') && !o.unarmed && !o.natural && !o.spell && !o.ranged) {
+          opts.push(Object.assign({}, o, { whirlwind: true, sweep: true, label: 'Whirlwind', ap: quantAP(Math.round(o.ap * K.ap)), stamina: Math.ceil(o.stamina * K.stamina) }));
+        }
+      }
+    }
     const t = webTax(c);
     if (t.ap || t.stamina) for (const o of opts) { o.ap += t.ap; o.stamina += t.stamina; }
     // A blow is named by its motion alone ("Thrust"); the striking part is added only where one weapon has two blows

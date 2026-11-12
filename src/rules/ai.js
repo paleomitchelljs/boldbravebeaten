@@ -118,6 +118,24 @@
     return v;
   }
 
+  // Whirlwind (CONFIG.whirlwind): the blow at every other foe it reaches, from where everyone stands (all in sight), each
+  // at the feat's force, in hitValue's units (the first foe's own blow is `rate`'s).
+  function whirlwindWorth(enc, chars, c, target, o) {
+    const K = G.CONFIG.whirlwind;
+    if (!enc || !K || !o.whirlwind || !enc.pos[c.id]) return 0;
+    const f = K.force == null ? 1 : K.force;
+    const wo = Object.assign({}, o, { damage: o.damage.map((x) => Math.floor(x * f)), punch: (o.punch || 0) * f });
+    let sum = 0;
+    for (const id of enc.ids) {
+      const b = chars[id];
+      if (!b || id === target.id || id === c.id || b.side === c.side || !C.isActive(b) || !enc.pos[id]) continue;
+      const d = Combat.dist(enc.pos[c.id], enc.pos[id]);
+      if (!C.inRange(o, d)) continue;
+      sum += hitValue(c, b, wo, d);
+    }
+    return sum;
+  }
+
   // R8 (CONFIG.sweep): what a swing that would carry on into a second foe adds, from where everyone stands (all of it
   // in sight): the blow at that foe, at the sweep's force, × the chance it carries (the first drops to it, or dodges it,
   // taking the target to dodge half the time it can). In hitValue's units.
@@ -1197,6 +1215,9 @@
     // 4. Bandage, re-arm.
     const band = la.other.find((o) => o.type === 'bandage' && o.affordable);
     if (band && C.bleedPerRound(c) >= 1.5 && band.targets.some((t) => t.id === id)) return { actor: id, type: 'bandage', target: id };
+    // Cauterize when there is no bandage to be had and the wound will cost more than the burn (more than 1 CON still to bleed).
+    const burn = la.other.find((o) => o.type === 'cauterize' && o.affordable && o.targets.some((t) => t.id === id));
+    if (burn && !band && c.bleeds.filter((b) => !b.poison).reduce((n, b) => n + b.remaining, 0) > 1) return { actor: id, type: 'cauterize', target: id };
     if (!C.wieldedWeapon(c)) {
       const draw = la.other.find((o) => (o.type === 'drawSidearm' || o.type === 'pickUp') && o.affordable);
       if (draw) return { actor: id, type: draw.type };
@@ -1299,6 +1320,7 @@
         if (!t.inReach || !(foes.includes(t.id) || down)) continue;
         let v = rate(c, chars[t.id], atk, t.distance) * P.kickBias ** (atk.unarmed === 'kick' ? 1 : 0) * (down ? finishWeight(enc, chars[t.id]) : 1);
         if (v > 0 && !down) v += (sweepWorth(enc, chars, c, chars[t.id], atk, t.distance) * C.costScale()) / Math.max(1, atk.ap);
+        if (v > 0 && !down && atk.whirlwind) v += (whirlwindWorth(enc, chars, c, chars[t.id], atk) * C.costScale()) / Math.max(1, atk.ap);
         if (atk.spell) v -= (overDebt(c, atk, keep) * S) / Math.max(1, atk.ap);
         // Aim where it pays (a bare leg under a breastplate), if anywhere does.
         const aim = atk.unarmed ? null : bestAim(c, chars[t.id], atk, t.distance, enc);
@@ -1367,5 +1389,5 @@
     return endTurn;
   }
 
-  G.AI = { choose, react, reserveAP, hitValue, perceivedThreat, preferredDistance, bestAim, finishWeight, conditionWorth, immuneTo, sweepWorth, DEFAULTS };
+  G.AI = { choose, react, reserveAP, hitValue, perceivedThreat, preferredDistance, bestAim, finishWeight, conditionWorth, immuneTo, sweepWorth, whirlwindWorth, DEFAULTS };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

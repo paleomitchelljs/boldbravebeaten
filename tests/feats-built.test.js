@@ -411,3 +411,63 @@ test('Deception in parley: Cover Story loses no disposition when caught; The Big
   assert.ok(r.check.ok, 'it lands');
   assert.equal(w.parley.willMod, m0 + 2);
 });
+
+test('Cauterize: with Fire, an action stops a bleeding wound for 1 CON; no feat, no Fire, no poison, no last CON, no action', async () => {
+  const mk = (feat, noun) => {
+    const a = armed('Burner', 'dagger', 'party');
+    if (feat) a.feats.cauterize = 1;
+    if (noun) a.nouns = ['fire'];
+    a.bleeds.push({ remaining: 6, rounds: 3 });
+    a.bleeds.push({ remaining: 4, rounds: 2, poison: true });
+    return a;
+  };
+  const offers = async (a) => {
+    const b = armed('Guard', 'longsword', 'enemy');
+    const { enc, chars } = await field([[a, 1, 1], [b, 6, 1]]);
+    return { enc, chars, other: Combat.legalActions(enc, chars, a.id).other.find((o) => o.type === 'cauterize') };
+  };
+  assert.equal((await offers(mk(false, true))).other, undefined, 'the feat is needed');
+  assert.equal((await offers(mk(true, false))).other, undefined, 'and the Fire noun');
+  const a = mk(true, true);
+  const { enc, chars, other } = await offers(a);
+  assert.ok(other && other.affordable, 'offered');
+  const con0 = C.attr(a, 'CON');
+  assert.equal(await Combat.act(enc, chars, { actor: a.id, type: 'cauterize', target: a.id }, io(recorder([]))), null);
+  assert.deepEqual(a.bleeds.map((b) => !!b.poison), [true], 'the wound is shut, the venom stays');
+  assert.equal(C.attr(a, 'CON'), con0 - 1, 'the burn costs a CON');
+  const last = mk(true, true);
+  last.damage.CON = C.attr(last, 'CON') - 1;
+  assert.equal((await offers(last)).other, undefined, 'never the last CON');
+});
+
+test('Whirlwind: a two-handed swing struck at every foe it reaches, for half again the stamina; the Reaper capstone closes Juggernaut', async () => {
+  const mk = (feat) => {
+    const a = armed('Reaper', 'greatsword', 'party');
+    if (feat) a.feats.whirlwind = 1;
+    return a;
+  };
+  const plain = C.attackOptions(mk(false)).filter((o) => o.motion === 'twoHanded' || o.motion === 'swing');
+  const withIt = C.attackOptions(mk(true));
+  const w = withIt.find((o) => o.whirlwind);
+  assert.ok(w, 'a Whirlwind option');
+  assert.equal(C.attackOptions(mk(false)).some((o) => o.whirlwind), false, 'not without the feat');
+  const swing = plain.find((o) => o.face === w.face && o.motion === w.motion);
+  assert.equal(w.ap, swing.ap, 'the same AP');
+  assert.ok(w.stamina > swing.stamina, 'dearer in stamina');
+  assert.ok(withIt.every((o) => !o.whirlwind || (o.motion !== 'thrust' && o.motion !== 'power')), 'swings only');
+  // Three foes around the Reaper: all three are struck.
+  const a = mk(true);
+  const f1 = armed('F1', 'dagger', 'enemy'), f2 = armed('F2', 'dagger', 'enemy'), f3 = armed('F3', 'dagger', 'enemy');
+  const { enc, chars } = await field([[a, 3, 1], [f1, 4, 1], [f2, 2, 1], [f3, 3, 2]], 8, 4);
+  const opt = C.attackOptions(a).find((o) => o.whirlwind && C.inRange(o, 1));
+  assert.ok(opt, 'in reach');
+  const r = recorder([]);
+  assert.equal(await Combat.act(enc, chars, { actor: a.id, type: 'strike', option: opt, target: f1.id }, io(r)), null);
+  const hit = (c) => enc.log.some((l) => (l.text || '').includes(`Whirlwind`) && (l.text || '').includes(c.name)) || enc.log.some((l) => (l.text || '').includes('comes round on ' + c.name));
+  assert.ok(hit(f2) && hit(f3), enc.log.map((l) => l.text).join('\n'));
+  // One capstone to a tree: Whirlwind closes Juggernaut.
+  const h = C.newCharacter({ name: 'H', starterGear: false });
+  h.level = 30; h.skills.melee = 10; h.feats = { heavy_weapon_training: 3, power_swing: 1, crushing_blow: 1, cleave: 1, sweep: 1, whirlwind: 1 };
+  assert.equal(C.canTakeFeat(h, 'juggernaut', true).ok, false);
+  assert.equal(C.canTakeFeat(mk(false), 'whirlwind', true).ok, false, 'needs Sweep and Cleave');
+});

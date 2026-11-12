@@ -110,7 +110,10 @@ game:
   # ---- Progression --------------------------------------------------------
   # XP needed to reach level n = xpBase * n * (n - 1) / 2 (so 60, 180, 360, 600…).
   xpBase: 60
-  maxLevel: 10
+  # PROVISIONAL (ruling R10, docs/PLAN.md, 2026-11-11): 20, up from 10; the cap is a ceiling on the XP curve (11,400 XP
+  # at level 20), not a cap on a build (skills stay 0-10, the cost of the points is the limit). The curve and the XP
+  # question are in docs/FEATS-AUDIT.md §5.
+  maxLevel: 20
   # Training costs no gold (the user, 2026-11-07): skills and feats are trained whenever the party isn't fighting;
   # levels are the only limit.
   # ---- Time and exploring -------------------------------------------------

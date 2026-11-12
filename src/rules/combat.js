@@ -24,7 +24,7 @@
   const Items = G.Items;
 
   const GRAPPLE_STEPS = ['clinch', 'grapple', 'pin', 'throw', 'break'];
-  const FEAT_OTHER = ['vanish', 'feign', 'rally', 'command', 'rouse'];
+  const FEAT_OTHER = ['vanish', 'feign', 'rally', 'command', 'rouse', 'cauterize'];
   const ATTACK_TYPES = ['strike', 'trip', 'disarm', 'shove'].concat(GRAPPLE_STEPS);
   // Defences are reactions: taken when a blow comes, paid from the defender's AP.
   const DEFENSE_TYPES = ['block', 'parry', 'dodge', 'offParry'];
@@ -609,6 +609,11 @@
       const patients = enc.ids.filter((o) => chars[o].bleeds.length > 0 && !chars[o].status.dead && (o === id || dist(me, enc.pos[o]) <= 1));
       if (patients.length) addOther('bandage', { targets: patients.map((o) => ({ id: o, inReach: true })) });
     }
+    // Cauterize (Fire): no bandage needed, and a poison's venom stays; the burn costs the patient a CON, never the last.
+    if (C.rank(c, 'cauterize') && (c.nouns || []).includes('fire')) {
+      const patients = enc.ids.filter((o) => chars[o].bleeds.some((b) => !b.poison) && !chars[o].status.dead && C.attr(chars[o], 'CON') > 1 && (o === id || dist(me, enc.pos[o]) <= 1));
+      if (patients.length) addOther('cauterize', { note: 'costs 1 CON', targets: patients.map((o) => ({ id: o, inReach: true })) });
+    }
     out.defer = deferOption(enc, chars, id);
     return out;
   }
@@ -918,7 +923,8 @@
           await resolveAction(enc, chars, sd, io, Object.assign({}, enc.pos));
           sd.done = true;
         }
-        if (decl.type === 'strike') await sweep(enc, chars, chars[id], decl, io);
+        if (decl.type === 'strike' && decl.option.whirlwind) await whirlwind(enc, chars, chars[id], decl, io);
+        else if (decl.type === 'strike') await sweep(enc, chars, chars[id], decl, io);
         if (decl.type === 'strike' && !decl.targetWasDown && !C.isActive(chars[decl.target])) await cleave(enc, chars, chars[id], decl, io);
       }
     } finally {
@@ -2665,6 +2671,13 @@
       case 'nameWeakness':
         if (t && G.Conditions) { G.Conditions.add(t, 'named', { rounds: 2, src: a.id }); log(enc, `${a.name} names ${t.name}'s weakness: its hide will not save it now.`, 'hit'); }
         break;
+      case 'cauterize':
+        if (t && !t.status.dead && t.bleeds.some((b) => !b.poison)) {
+          t.bleeds = t.bleeds.filter((b) => b.poison);
+          C.damageAttr(t, 'CON', 1);
+          log(enc, `${a.name} sears ${t === a ? 'their own' : t.name + "'s"} wound shut; the bleeding stops (−1 CON).`, 'defend');
+        }
+        break;
       case 'bandage':
         if (t && a.inventory.bandages > 0) {
           a.inventory.bandages -= 1;
@@ -2886,6 +2899,26 @@
     enc.decls.push(sd);
     await resolveAction(enc, chars, sd, io, Object.assign({}, enc.pos));
     sd.done = true;
+  }
+
+  // Whirlwind (CONFIG.whirlwind): after the blow on its target, the same swing at every other foe it reaches, free, each
+  // defending for itself. The blows carry no further (no sweep, no cleave).
+  async function whirlwind(enc, chars, a, d, io) {
+    const o = d.option, K = CONFIG.whirlwind;
+    if (!K || !C.isActive(a) || !enc.pos[a.id]) return;
+    const me = enc.pos[a.id];
+    const foes = enc.ids.filter((x) => x !== d.target && chars[x].side !== a.side && C.isActive(chars[x]) && enc.pos[x] && C.inRange(o, dist(me, enc.pos[x])))
+      .sort((x, y) => dist(me, enc.pos[x]) - dist(me, enc.pos[y]));
+    for (const x of foes) {
+      if (!C.isActive(a)) break;
+      const f = K.force == null ? 1 : K.force;
+      const wo = Object.assign({}, o, { whirlwind: false, sweep: true, windUp: false, label: 'Whirlwind', ap: 0, stamina: 0, damage: o.damage.map((v) => Math.floor(v * f)), punch: (o.punch || 0) * f });
+      log(enc, `${a.name}'s swing comes round on ${chars[x].name}.`, 'pass');
+      const sd = { actor: a.id, type: 'strike', option: wo, target: x, ap: 0, stamina: 0, n: ++enc.seq, opportunity: true, whirl: true, round: enc.round };
+      enc.decls.push(sd);
+      await resolveAction(enc, chars, sd, io, Object.assign({}, enc.pos));
+      sd.done = true;
+    }
   }
 
   // Cleave: a melee blow that drops its foe carries on, free, into another foe the same weapon can reach (the

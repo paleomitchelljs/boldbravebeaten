@@ -7,50 +7,60 @@ const B = require('../tests/load');
 const { Character: C, Combat, Items, Enemies, AI, CONFIG } = B;
 
 // ---- Builds ---------------------------------------------------------------
-// Every archetype spends the same 35 attribute points, so level and gear are
-// the only things that differ between equals.
+// Every archetype spends the same 35 attribute points, so level and gear are the only things that differ between
+// equals. Skills and feats are a plan to grow by, as start.yaml's heroes have (World.growAlongPlan, step 9 of
+// docs/PLAN.md): skills raised to each stage's ranks in order, then feats taken in order (the k-th mention of a feat is
+// rank k), while the level's points last. Feat and skill ids are checked by tests/lib-sim.test.js, so a retired one
+// fails loudly instead of being skipped (it was, until 2026-11-12).
 const ARCHETYPES = {
   militia: {
     label: 'Militia (padded, round shield, club)',
     attrs: { STR: 5, CON: 5, DEX: 5, SPD: 5, INT: 5, WIS: 5, CHA: 5 },
     armor: ['padded', 'full'], shield: ['round', 'wood'], weapon: 'club', sidearm: 'dagger',
-    feats: ['shield_training', 'toughness', 'quick_block', 'strength', 'light_armor_training', 'economical_block', 'heavy_hands', 'trip'],
+    skills: [{ melee: 3, block: 4, armor: 2 }, { block: 6, melee: 5, armor: 3 }, { melee: 7, block: 8 }],
+    feats: ['quick_block', 'toughness', 'strength', 'light_armor_training', 'economical_block', 'heavy_hands', 'trip', 'quick_block', 'toughness'],
   },
   duelist: {
     label: 'Duelist (unarmored, rapier)',
     attrs: { STR: 4, CON: 5, DEX: 7, SPD: 6, INT: 5, WIS: 4, CHA: 4 },
     armor: null, shield: null, weapon: 'rapier', sidearm: 'dagger',
-    feats: ['quick_thrust', 'parry_training', 'precision', 'riposte', 'quick_parry', 'light_touch', 'feint', 'dodge_training', 'find_the_gap', 'agility'],
+    skills: [{ melee: 5, evasion: 4, anticipation: 4, deception: 2 }, { melee: 7, evasion: 6, anticipation: 5 }, { melee: 9, evasion: 7, deception: 4 }],
+    feats: ['quick_thrust', 'riposte', 'quick_parry', 'precision', 'feint', 'quick_thrust', 'find_the_gap', 'light_touch', 'agility', 'lunge'],
   },
   sellsword: {
     label: 'Sellsword (mail, longsword, round shield)',
     attrs: { STR: 6, CON: 6, DEX: 5, SPD: 5, INT: 4, WIS: 5, CHA: 4 },
     armor: ['mail', 'full'], shield: ['round', 'iron'], weapon: 'longsword', sidearm: 'dagger',
-    feats: ['shield_training', 'mail_mobility', 'parry_training', 'mail_endurance', 'quick_block', 'half_swording', 'toughness', 'strength', 'economical_block'],
+    skills: [{ melee: 4, block: 4, armor: 4 }, { melee: 6, block: 6, armor: 6 }, { melee: 8, block: 8, armor: 7 }],
+    feats: ['mail_mobility', 'quick_block', 'mail_endurance', 'economical_block', 'half_swording', 'mail_mobility', 'toughness', 'strength', 'quick_parry'],
   },
   knight: {
     label: 'Knight (plate, longsword, heater)',
     attrs: { STR: 6, CON: 6, DEX: 5, SPD: 4, INT: 5, WIS: 5, CHA: 4 },
     armor: ['plate', 'full'], shield: ['heater', 'steel'], weapon: 'longsword', sidearm: 'dagger',
-    feats: ['plate_mobility', 'shield_training', 'plate_endurance', 'quick_block', 'half_swording', 'strength', 'toughness', 'iron_stance', 'plate_mobility'],
+    skills: [{ melee: 4, block: 5, armor: 5 }, { block: 7, armor: 7, melee: 6 }, { block: 9, armor: 9, melee: 7 }],
+    feats: ['plate_mobility', 'plate_endurance', 'quick_block', 'iron_stance', 'plate_mobility', 'half_swording', 'strength', 'toughness', 'plate_mobility'],
   },
   heavy: {
     label: 'Heavy (plate, greatsword)',
-    attrs: { STR: 7, CON: 6, DEX: 4, SPD: 4, INT: 4, WIS: 5, CHA: 5 },
+    attrs: { STR: 7, CON: 6, DEX: 4, SPD: 4, INT: 4, WIL: 5, WIS: 5, CHA: 5 },
     armor: ['plate', 'full'], shield: null, weapon: 'greatsword', sidearm: 'dagger',
-    feats: ['power_swing', 'heavy_weapon_training', 'plate_mobility', 'weight_of_the_blow', 'plate_endurance', 'heavy_tempo', 'strength', 'half_swording', 'toughness'],
+    skills: [{ melee: 5, armor: 5, athletics: 1 }, { melee: 7, armor: 7 }, { melee: 9, armor: 8, athletics: 3 }],
+    feats: ['power_swing', 'heavy_weapon_training', 'plate_mobility', 'weight_of_the_blow', 'plate_endurance', 'heavy_tempo', 'strength', 'toughness', 'plate_mobility'],
   },
   brute: {
     label: 'Brute (leather, warhammer)',
     attrs: { STR: 7, CON: 6, DEX: 5, SPD: 5, INT: 3, WIS: 5, CHA: 4 },
     armor: ['leather', 'full'], shield: null, weapon: 'warhammer', sidearm: null,
+    skills: [{ melee: 5, armor: 3, athletics: 1 }, { melee: 7, armor: 4 }, { melee: 9, athletics: 3 }],
     feats: ['power_swing', 'heavy_weapon_training', 'weight_of_the_blow', 'strength', 'heavy_tempo', 'light_armor_training', 'crushing_blow', 'toughness'],
   },
   brawler: {
     label: 'Brawler (padded, grapples, dagger)',
     attrs: { STR: 6, CON: 6, DEX: 6, SPD: 5, INT: 4, WIS: 4, CHA: 4 },
     armor: ['padded', 'full'], shield: null, weapon: null, sidearm: 'dagger',
-    feats: ['grappler', 'trip', 'quick_hands', 'heavy_hands', 'pin', 'grappler', 'takedown', 'coup_de_grace', 'brawlers_wind', 'strength'],
+    skills: [{ melee: 4, athletics: 4, armor: 2 }, { athletics: 6, melee: 6 }, { athletics: 8, melee: 7 }],
+    feats: ['trip', 'quick_hands', 'heavy_hands', 'pin', 'brawlers_wind', 'coup_de_grace', 'takedown', 'strength'],
     policy: { maneuverRate: 0.5 },
   },
 };
@@ -84,9 +94,9 @@ function build(arch, opts) {
   c.inventory.bandages = 1;
   if (opts.feats) {
     c.feats = Object.assign({}, opts.feats);
+    if (opts.skills) c.skills = Object.assign({}, opts.skills);
   } else {
-    // Deterministic feat choice: preference list only, then the generator's fill.
-    Enemies.chooseFeats(c, A.feats, Enemies.makeRng(level * 7919 + 1));
+    B.World.growAlongPlan(c, { skills: A.skills, feats: A.feats });
   }
   c.stamina = C.maxStamina(c);
   c.policy = Object.assign({}, A.policy || {}, opts.policy || {});

@@ -53,6 +53,23 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
     hand (pad over the map, arrow keys, C); an end-of-fight account on the result card (`Battle.snapshot/watch/summary`).
     FINDINGS "Costs in half APs": nothing moved beyond noise, crawl clears lean up (court 20 → 25, valley 15 → 22 of 60).
     Next: prompt 9.
+  - [x] Step 9, feats (`docs/FEATS-AUDIT.md`, `sim/feats.js`; FINDINGS "Feats measured"): 144 feats audited (58 only a number, 13 unbuilt);
+    the feat, attribute and skill sim with paired seeds; **Whirlwind** (Reaper capstone, `CONFIG.whirlwind`, PROVISIONAL) and **Cauterize**
+    built; `sim/lib.js` rebuilt on current feats and skills, `sim/dk-scaling.js` deleted; R10 `game.maxLevel` 20; the XP curve, the party-size
+    question and the cost of magic reported, nothing changed there. **The plan's nine steps are done.**
+  - [ ] **Rulings wanted (step 9)**: 13, in `docs/FEATS-AUDIT.md` §8, each with a recommendation. The ones that matter most: F1 Toughness
+    (+1 CON is the best or second best change for four of the seven heroes measured, and is a bigger pool), F3 the 58 number feats (fold the armor five and the
+    stamina savers into skills; keep the Quick feats), F5 designs for the five capstones written nowhere (Striker, Fencer, Assassin, Technique,
+    Runner), F10 `xpBase` 200 and XP by party size, F11 the cost of Arcane.
+  - [ ] From step 9: the sims' AI faults. One more Anticipation rank made Beren worse (−6.8 ± 1.9: read-intent and bait choices change with it);
+    Beren's SPD +1 is −9.9 at level 3 (he moves up for a blow he cannot afford); the AI's Rally on itself in a duel costs Cyrus 11.7 ± 4.2 points
+    (2 AP for a few stamina); a Rally, Command or To Your Feet in a crawl at 24 runs a variant cannot be told from zero (standard error 10 to 15
+    points): a feat for allies needs a party sim with hundreds of runs. Mages need a second noun and an AI that casts before any magic feat can be measured.
+  - [ ] From step 9: `sim/arena.js`, `sim/run.js` and `sim/gauntlet.js` still list retired feats (`parry_training`, `shield_training`, `casting`…) and retired verbs
+    (`verb_ward`, `verb_launch`…); `Enemies.chooseFeats` skips an unknown id without a word, so those sims fight with fewer feats and no skills. `sim/lib.js`'s
+    archetypes are fixed and tested (`tests/lib-sim.test.js`); the others were left.
+  - [ ] From step 9: a swarm crawl and a two-hander mirror for Whirlwind (its AP, stamina and force are first guesses); `--level 10` of `sim/feats.js` for the master-tier feats
+    (run once, `n 8`; see the audit's §7.5).
   - [ ] **Ruling wanted (step 8)**: half APs round some bonuses away: Quick Thrust II on a rapier or dagger, I and III on a
     short spear, Quick Hands I and III, and mail's 0.2 an action (plate's 0.5 shows). Recommendation: Quick feats cut a
     whole half AP a rank, and armor's cost counted in halves. FINDINGS has the table.
@@ -111,13 +128,11 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
   tries a place, n 20) the first areas fall 18, 12, 17 of 20; the second places 1 (maze), 17 (mines), 1 (warrens).
 - [ ] The golems: clay M 5, iron > 6, stone 1.9 (step 6). Desert spectres: six level-4 heroes 0%. Casters alone M 1.4–2.5.
   No rule wrong; content fixes listed in FINDINGS "Re-tuned on the new rules". Unplaced monsters (wolves, trolls, drakes, wyverns…) have no tier.
-- [ ] XP: every hero gets the full amount whatever the party's size; `maxLevel: 10` stands against the no-caps ruling.
+- [x] `maxLevel` is 20 (R10). [ ] XP: every hero still gets the full amount whatever the party's size, and at `xpBase` 60 the content ends in level 20 before the level-5 places. Recommendation in the audit §5: `xpBase` 200 and `3 ÷ party size` of the XP above a party of three (F10).
 - [ ] Content mix: 128 monster squares against 6 asleep, 5 locked, 5 secret, 2 traps, 2 parleys, 1 quest. Sneaking
   and talking have almost nowhere to matter. No social sim (a bot that tries fight / parley / sneak).
 - [ ] (Unchanged in step 6.) Two-handed beats sword & shield 61% in the open, 53% in close quarters after step 5's AI (was 68%, 76%).
-- [ ] Not simmed: the spell words (numbers are guesses), hit-location numbers, the strong magic items, an attribute
-  sim (+1 to each in turn), weapon wear and weariness over a long crawl.
-- [ ] `sim/lib.js` and `dk-scaling.js` list retired feats and have no skills: fix or delete before using them.
+- [ ] Not simmed: the spell words (numbers are guesses), hit-location numbers, the strong magic items, weapon wear and weariness over a long crawl. (The attribute sim is done: `sim/feats.js --attrs`.)
 - [ ] `node --test` takes 5 minutes of CPU but 15 of wall time on this Mac; cause unknown. In the cloud container
   `tests/ui-node.test.js` runs out of heap at the default 2.2 GB (before and after 2026-11-11's changes); it passes with
   `NODE_OPTIONS=--max-old-space-size=8192` (7 minutes alone). Something in it holds a lot of memory.
@@ -147,8 +162,8 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
 
 ## Rules and AI
 - [ ] Not built: Shape, Ethereal, Counterspell and Reflect as reactions; crafting (alchemy, metalwork, carpentry do
-  nothing); feats needing rules outside a fight (`auto: false`); Off-hand Dagger, Quick Donning; branch capstones
-  (Striker, Fencer, Assassin, Reaper, Technique, Runner, Charmer, Menace, Wilds…); using an item in a fight; running
+  nothing); feats needing rules outside a fight (`auto: false`); Off-hand Dagger, Quick Donning, Focus Bond, Shape, Swift (the audit says delete the first three); branch capstones
+  (Striker, Fencer, Assassin, Technique, Runner, Charmer, Menace, Wilds…; Reaper's Whirlwind is built); using an item in a fight; running
   off the edge of a fight; cover in the AI's footing; a companion-choice screen; keywords (bleeding, falls, sap).
 - [ ] Hero mode does not scale auras, constriction, traps or condition damage.
 - [ ] Only a single-target Restore calls back the dead; town priests raise at any time.

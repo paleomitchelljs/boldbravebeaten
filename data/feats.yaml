@@ -355,6 +355,14 @@
       requires: [["heavy_weapon_training:3"]]
       effect: "A two-handed swing carries on, free, into one more foe beside its target and in reach, at half its force (they may defend)"
       auto: true
+    whirlwind:
+      name: Whirlwind
+      branch: reaper
+      capstone: true
+      ranks: [master]
+      requires: [["sweep:1"], ["cleave:1"]]
+      effect: "A two-handed weapon's swing becomes a Whirlwind: the same AP and half again the stamina, and the blow lands on every foe it reaches (the others at three quarters of its force), each defending for itself (docs/PROPOSALS.md 3.2; CONFIG.whirlwind)"
+      auto: true
     juggernaut:
       name: Juggernaut
       branch: breaker
@@ -1096,8 +1104,8 @@
       branch: fire
       ranks: [apprentice]
       requires: [["fire_affinity:1"], ["field_dressing:1"]]
-      effect: "Stop bleeding with fire; costs 1 CON"
-      auto: false
+      effect: "An action (2 AP; needs the Fire noun, no bandage): stop a bleeding wound on yourself or someone beside you; the burn costs the patient 1 CON (never the last). A poison's venom stays"
+      auto: true
     firestorm:
       name: Firestorm
       branch: fire

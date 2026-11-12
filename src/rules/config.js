@@ -70,6 +70,12 @@
     // (`heavy` for a two-handed or power blow). That foe defends against it as against any blow; it costs nothing more
     // and carries no further. null: off.
     sweep: { force: 0.5, heavy: 0.75, motions: ['swing', 'twoHanded', 'power'] },
+    // PROVISIONAL (docs/PLAN.md step 9; the Reaper capstone, docs/PROPOSALS.md 3.2 "a swing at every foe in reach"): the
+    // Whirlwind feat adds to every swung edge or head of a two-handed weapon (a swing or two-handed blow, not a power
+    // blow) a Whirlwind option at `ap` times its AP (to the half) and `stamina` times its stamina: the blow lands as
+    // made on its target, then at `force` of its damage on every other foe the blow reaches, each defending for itself.
+    // null: the feat does nothing.
+    whirlwind: { ap: 1, stamina: 1.5, force: 0.75 },
 
     // ---- Action points (Specifics, with the user's turn budget) ------------------------
     // AP are counted in tenths: apScale internal units are one AP (apDisplay divides them back for
@@ -869,6 +875,7 @@
 
   // Every PROVISIONAL choice, shown on the Rules tab so nothing is hidden.
   CONFIG.provisional = [
+    'Whirlwind (docs/PLAN.md step 9, docs/PROPOSALS.md 3.2): the Reaper capstone. A two-handed weapon\'s swung edge or head gains a Whirlwind option at the same AP and 1.5 times the stamina that strikes every foe the blow reaches, the others at three quarters of its force, each defending for itself (CONFIG.whirlwind; null: the feat does nothing). The numbers are first guesses; sim/feats.js and a swarm crawl are the check.',
     'Costs in half APs (docs/PLAN.md R9, step 8): every action\'s AP cost, after the Quick feats, armor, gear, weapon speed and strain, rounds to the nearest half AP, halfway up (CONFIG.apStep 0.5; null: tenths). The pool is not rounded. Some bonuses round away on cheap actions (Quick Thrust II on a rapier or dagger, mail\'s 0.2): sim/FINDINGS.md.',
     'Standing orders for reactions (docs/PLAN.md step 8, src/game/orders.js, rules.yaml game.orders): each hero blocks with a shield, parries thrusts, dodges when unarmored and takes a free blow at a foe passing, and the player is asked only for a blow whose chance of dropping that hero is 10% or more. Heroes can be set to be asked every time or never.',
     'The swing\'s setting (docs/PLAN.md R8, step 6): a swung edge or head that drops its target, or passes it (dodged, or the target already down), carries on into one more foe in its reach beside the first, at half force (three quarters for a two-handed or power blow); that foe defends as against any blow (CONFIG.sweep).',

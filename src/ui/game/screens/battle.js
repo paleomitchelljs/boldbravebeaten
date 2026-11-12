@@ -92,7 +92,7 @@
     strike: { color: '#ff6b5e', icon: 'sword' }, spell: { color: '#c79bff', icon: 'star' }, maneuver: { color: '#ffb35c', icon: 'hand' },
     other: { color: '#8fe3a8', icon: 'hand' }, guard: { color: '#8ab4ff', icon: 'shield' }, move: { color: '#7fdcff' }, far: { color: '#d9b055' },
   };
-  const SELF_ICON = { windUp: 'sword', standUp: 'up', bandage: 'heart', drawSidearm: 'hand', pickUp: 'hand', drop: 'hand', vanish: 'eye', feign: 'eye', rally: 'up', command: 'up', rouse: 'heart' };
+  const SELF_ICON = { windUp: 'sword', standUp: 'up', bandage: 'heart', cauterize: 'heart', drawSidearm: 'hand', pickUp: 'hand', drop: 'hand', vanish: 'eye', feign: 'eye', rally: 'up', command: 'up', rouse: 'heart' };
   // The battlefield view's size in squares: the window's, as the explore view's is (rules.yaml game.view, via
   // UI.ExploreActions.viewShape); without a window (tests), rules.yaml game.arena's 15 × 10.
   // The pane takes 330 px beside the map and the initiative bar a row above it; below 1000 px (css) the pane sits under

@@ -1,5 +1,36 @@
 # Simulation findings
 
+## Feats measured, Whirlwind, the XP curve (2026-11-12; step 9 of `docs/PLAN.md`; PROVISIONAL: `CONFIG.whirlwind`, `game.maxLevel` 20)
+
+The full audit, with every feat's row, is `docs/FEATS-AUDIT.md`; this is the record of what was run and what it said.
+
+**The tool.** `sim/feats.js`: a start.yaml hero grown to a level along its plan (`World.settle`, the gear ladder of `sim/grow.js`) fights the other
+presets and three monsters for the level, on the same seeds with and without one change (a feat rank added or taken away, one attribute point,
+one skill rank, or, with `--lab`, a feat the hero's skills do not open, given with its prerequisites). Paired seeds, so the difference carries no luck of the draw
+beyond the fights that flip, and the standard error of the paired difference is printed. `--crawl <place>` does the same over a crawl. Runs:
+level 3 (Beren, Cyrus, Lorc, Jabiku; `--n 16`, 96 fights a variant; `--attrs --skills`), level 5 (the four, and Kalavar, Arvir, Jadier; `--n 12`, 72),
+`--lab` at level 5 (`--n 10`), a lab crawl of the court, and level 10 (`--n 8`). 376 feat changes at levels 3 and 5, 78 distinct feats; 34 beyond two standard errors,
+about twice what luck gives, so the small ones are leans. The big ones (10 points or more on win rate) are Jabiku's words and Quick Casting II, Half-swording
+for a sword (+14.3 and +18.5), Toughness (+11.5, +13.7, +8.9 for Cyrus, Arvir, Jadier), Find the Gap for Cyrus (+14.6), Quick Dodge (+9.4).
+
+**Attributes** (+1 in turn; the full table is `docs/FEATS-AUDIT.md` §7.1): CON is +3.6 to +11.5 for Beren, Cyrus and Lorc at level 3 and +7.6 for Cyrus at 5; SPD +7.8 to +10.4 for
+Cyrus, Lorc and Jabiku (+4 to +9 at 5) but **−9.9 ± 3.5 for Beren at 3** (an AI finding: plate and more SPD means he moves up for a blow he cannot then afford); STR +3 to +4 where the
+hero strikes; DEX 0 to +3; INT, WIL, WIS and CHA 0 for all four (Jabiku's CHA ±3, noise). The first run had Lorc at 0% because `World.create` leaves a hero's arrows in the party's
+pool until a fight deals them (`World.loadSupplies`); `sim/feats.js` now deals them, and Lorc is 29% at level 3 and 14% at 5.
+
+**A skill rank** (level 3): Arcane +7.3 ± 2.6\* (Jabiku), Evasion +4.7\* (Cyrus), Melee +3.6 (Beren) and +1.6 (Cyrus), Armor +1.6, Block 0.0. One Arcane rank is worth about
+twice the fighters' best (docs/FEATS-AUDIT.md §6). Anticipation +1 made Beren worse (−6.8 ± 1.9\*): the AI's reading and baiting change with it.
+
+**Whirlwind** (new, Reaper capstone; `CONFIG.whirlwind {ap: 1, stamina: 1.5, force: 0.75}`): a level-7 greatsword hero with Sweep, Cleave and Melee 10, ringed at two
+squares by four goblin warriors, 40 fights: **9 won without it, 23 with it**, 96 whirlwind blows struck, deaths 5 → 1. One goblin at a time (the same hero against three
+arriving in turn): the AI never chooses it (a thrust is worth more per AP) and the result is identical, 21 of 30. Its setting is a crowd. A first try at 1.5 times the AP made it
+unaffordable for a pool of 4 to 6 AP and the AI never used it. The numbers are guesses: a swarm crawl and a two-hander mirror are the check.
+
+**The XP curve** (every group's foes' `xp` summed over the places, each once, level order): the four level-1 places 995 XP, level-2 places 2,861 cumulative, level-3 7,017,
+level-4 12,459, the citadel alone 9,220, all 24,974. At `xpBase 60` that is level 6 after the first four places and level 20 (11,400) at the end of the level-4 places;
+`xpBase` 200 gives 3, 5, 8, 11, 15, 16. **By party size** (`node sim/crawl.js temple_court orc_valley --party N --n 30 --seed 4242`, 4 the most the presets give): court clears
+0, 1, 16, 24 of 30 for 1, 2, 3, 4 heroes; valley 1, 6, 11, 14. Recommendation in `docs/FEATS-AUDIT.md` §5: `xpBase` 200, and `3 ÷ party size` of the XP above a party of three.
+
 ## Costs in half APs (2026-11-12; step 8 of `docs/PLAN.md`, ruling R9; PROVISIONAL, `CONFIG.apStep`)
 
 Every action's AP cost, after the Quick feats, armor's per-action cost, gear, weapon speed and strain, rounds to the nearest

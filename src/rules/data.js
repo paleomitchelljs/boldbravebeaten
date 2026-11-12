@@ -90,6 +90,7 @@
     bait: { name: 'Bait', ap: 1, stamina: 1 },
     readIntent: { name: 'Read intent', ap: 0.5, stamina: 0 }, // cheap: a glance
     bandage: { name: 'Bandage', ap: 3, stamina: 0 },
+    cauterize: { name: 'Cauterize', ap: 2, stamina: 0 }, // Fire's feat (feats.yaml): no bandage, the burn costs the patient 1 CON
     // Feat actions (feats.yaml): Shadow, Leadership, Lore, Deception.
     vanish: { name: 'Vanish', ap: 2, stamina: 1 },
     rally: { name: 'Rally', ap: 2, stamina: 0 },
