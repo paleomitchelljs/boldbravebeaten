@@ -299,6 +299,84 @@
     return `${p.wound ? `~${p.wound} wound` : p.stamina ? `~${p.stamina} stamina` : 'stopped'}${gap ? ` · gap ${gap[1]}` : / bursts/.test(p.text) ? ' · bursts' : ''}`;
   }
 
+  // ---- The odds (docs/PLAN.md step 7): Combat.foresee in words ------------------------------------------------
+  const pct = (x) => `${Math.round(Math.max(0, Math.min(1, x)) * 100)}%`;
+  // A number of points: whole from one up, one decimal under it (".4"), nothing under .15.
+  const pts = (x) => (x >= 0.95 ? String(Math.round(x)) : x >= 0.15 ? x.toFixed(1).replace(/^0/, '') : null);
+  const THEY = { block: 'block', parry: 'parry', dodge: 'dodge', offParry: 'catch it' };
+
+  // What the attacker's character could know of this blow (null when it can't be read: no target, no harm by these rules).
+  function foreseeBlow(enc, chars, attackerId, targetId, option) {
+    const a = chars[attackerId], t = chars[targetId];
+    if (!a || !t || !option) return null;
+    try {
+      return Combat.foresee(a, t, option, { enc, chars, distance: enc.pos[attackerId] && enc.pos[targetId] ? Combat.dist(enc.pos[attackerId], enc.pos[targetId]) : undefined });
+    } catch (e) { return null; }
+  }
+
+  // The harm of a landed blow in a few words: CON first, then the attributes it takes most of; stamina when that is all.
+  function harmWords(hit, n) {
+    const parts = [];
+    if (pts(hit.CON)) parts.push(`${pts(hit.CON)} CON`);
+    for (const [a, v] of Object.entries(hit.attrs).sort((x, y) => y[1] - x[1])) if (pts(v) && parts.length < (n || 3)) parts.push(`${pts(v)} ${a}`);
+    if (!parts.length && hit.stamina >= 0.5) parts.push(`${Math.round(hit.stamina)} stamina`);
+    return parts.length ? parts.join(', ') : 'stopped';
+  }
+
+  // The one line: lands (against which defence), what a hit takes, and the chance it drops them.
+  function oddsText(f) {
+    const best = f.best ? f.defences.find((d) => d.kind === f.best) : null;
+    const lands = best ? `Lands ${pct(f.lands)} (they ${THEY[best.kind] || best.kind}${best.through ? '; beats through' : ''})` : `Lands ${pct(1)} (${f.down ? 'down' : 'no defence'})`;
+    const end = f.down ? `kills ${pct(f.kill)}` : `drops them ${pct(f.drop)}`;
+    return `${f.spent ? 'Spent: ' : ''}${lands} · ${harmWords(f.hit)} · ${end}`;
+  }
+
+  // The breakdown behind the line, a sentence a row.
+  function oddsBreakdown(f, t) {
+    const hit = f.hit;
+    const all = [['CON', hit.CON]].concat(Object.entries(hit.attrs).sort((x, y) => y[1] - x[1])).filter(([, v]) => v >= 0.05).map(([a, v]) => `${v.toFixed(1)} ${a}`);
+    const rows = [];
+    rows.push(`If it lands untouched: ${all.length ? all.join(', ') : 'no wound'}; ${hit.stamina.toFixed(1)} stamina; armor wear ${hit.wear.toFixed(1)}. A vital wound ${pct(hit.vital)}; ${f.down ? `kills ${pct(hit.kill)}` : `drops them ${pct(hit.drop)}${hit.kill > 0.005 ? ` (kills ${pct(hit.kill)})` : ''}`}.`);
+    if (hit.aimHold != null && hit.aimHold < 1) rows.push(`Lands where aimed ${pct(hit.aimHold)}; otherwise wherever they are open.`);
+    if (f.spent) rows.push('Spent: you haven\'t the stamina, so it lands softer and is easier to meet.');
+    for (const d of f.defences) {
+      const bits = [`${d.name}: stops it ${pct(d.odds)} (costs them ${C.fmtAP(d.ap)} AP${d.stamina ? `, ${d.stamina} stamina${d.spent ? ', spent' : ''}` : ''})`];
+      if (d.absorb) bits.push(`a stopped blow still jars ${d.absorb} stamina out of them`);
+      if (d.through) bits.push(d.kind === 'block' ? `the power drives ${harmWords(d.through)} through the shield` : `${pct(d.carry)} of its force beats through (${harmWords(d.through)})`);
+      if (d.shieldBreak) bits.push(`the shield breaks ${pct(d.shieldBreak)}`);
+      rows.push(`${bits.join('; ')}. Against it: drops them ${pct(d.drop)}.`);
+    }
+    if (!f.defences.length) rows.push(f.down ? `${t.name} is down: no defence.` : `${t.name} has no defence against this blow.`);
+    rows.push('Not counted: their AP (they may have none left to defend with), feats that don\'t show, wards and illusions.');
+    return rows;
+  }
+
+  // The odds as a row of the command panel: the line, the breakdown on hover (or tap the (i)).
+  function oddsRow(f, t) {
+    const rows = oddsBreakdown(f, t);
+    return h('div', { class: 'cmd-preview odds' + (f.drop >= 0.5 ? ' good' : '') },
+      h('span', { class: 'label' }, 'Odds'),
+      h('span', { class: 'odds-line', 'data-hint': rows.join(' ') }, oddsText(f)),
+      infoButton('The odds', () => rows.map((r) => h('p', null, r))));
+  }
+
+  // A wounded fighter's losses, e.g. "−2 STR, −1 DEX" (null when unhurt).
+  function woundText(c) {
+    const d = c.damage || {};
+    const list = G.CONFIG.attributes.filter((a) => d[a] > 0).map((a) => `−${d[a]} ${a}`);
+    return list.length ? list.join(', ') : null;
+  }
+
+  // A collapsed fighter: the round they come round at the end of.
+  function downText(enc, c) {
+    if (c.status.dead) return 'dead';
+    if (!C.isActive(c)) {
+      const r = C.collapsed(c) ? Combat.comesRoundAt(enc, c) : null;
+      return r != null && isFinite(r) ? `collapsed: up after round ${r}` : C.collapsed(c) ? 'collapsed' : 'unconscious';
+    }
+    return null;
+  }
+
   // The words for a reaction request: who, what, and each choice with its AP and odds.
   function reactionModel(app, req, enc, chars) {
     const me = chars[req.actor];
@@ -307,19 +385,37 @@
       const a = chars[req.attacker];
       const what = req.hidden ? 'a blow you can\'t read' : req.decl.type === 'strike' ? req.decl.option.label : D.ACTIONS[req.decl.type].name;
       const prev = req.hidden ? null : blowPreview(enc, chars, req);
+      // What each choice risks (Combat.foresee from the attacker's side: the same dice): the defence's odds are the
+      // engine's own (req.options); if it fails, what the blow does to you after you have paid for it.
+      const f = !req.hidden && req.decl.type === 'strike' ? foreseeBlow(enc, chars, a.id, me.id, req.decl.option) : null;
+      const out = (d) => (d ? `${harmWords(d.failed)}${d.failed.drop >= 0.005 ? `, drops you ${pct(d.failed.drop)}` : ''}` : '');
+      const choice = (o) => {
+        const d = f ? f.defences.find((x) => x.kind === o.type) : null;
+        const held = d ? [d.absorb ? `still jars ${d.absorb} stamina` : null, d.through ? `${pct(d.carry)} beats through (${harmWords(d.through)})` : null, d.shieldBreak ? `shield breaks ${pct(d.shieldBreak)}` : null].filter(Boolean) : [];
+        const cost = `${C.fmtAP(o.ap)} AP${o.stamina ? `, ${o.stamina} stamina${o.spent ? ' (spent)' : ''}` : ''}`;
+        return {
+          value: o.type, label: o.name, cost: C.fmtAP(o.ap), odds: o.odds != null ? pct(o.odds) : '?',
+          line: o.odds == null ? 'You can\'t read the blow' : `${o.stamina ? `${o.stamina} st · ` : ''}fails: ${d ? out(d) : prev ? prev.text : '?'}`,
+          hint: `${cost}${o.spent ? ': you haven\'t the stamina; it leaves you at 1 and the roll is harder' : ''}. ${o.odds != null ? `${pct(o.odds)} to stop it` : 'You can\'t read the blow'}${held.length ? ` (held: ${held.join('; ')})` : ''}.${d ? ` If it fails: ${out(d)}.` : ''}`,
+        };
+      };
+      const take = f ? `${harmWords(f.hit)}${f.hit.drop >= 0.005 ? `, drops you ${pct(f.hit.drop)}` : ''}` : prev ? prev.text : null;
       return {
-        title: `${a.name} → ${me.name}`, from: a.name, to: me.name, tag: what, sub: `${what}${prev ? ` · if it lands: ${prev.text}` : ''}`, ap,
-        choices: req.options.map((o) => ({ value: o.type, label: o.name, cost: C.fmtAP(o.ap), odds: o.odds != null ? `${Math.round(o.odds * 100)}%` : '?', hint: `${o.stamina ? `${o.stamina} stamina${o.spent ? ' (spent: you haven\'t it; it leaves you at 1 and the roll is harder)' : ''}. ` : ''}${o.odds != null ? `${Math.round(o.odds * 100)}% to stop it.` : 'You can\'t read the blow.'}` })),
-        none: { label: 'Take it', note: 'keep the AP' },
+        title: `${a.name} → ${me.name}`, from: a.name, to: me.name, tag: what, sub: `${what}${take ? ` · if it lands: ${take}` : ''}`, ap,
+        choices: req.options.map(choice),
+        none: { label: 'Take it', note: 'keep the AP', line: take ? `lands: ${take}` : null },
       };
     }
     if (req.kind === 'cover') {
       const a = chars[req.attacker], t = chars[req.target];
       const o = req.options[0];
+      // What gets through to them if the cover fails (or is not tried): the blow, untouched.
+      const f = !o.hidden && req.decl && req.decl.type === 'strike' ? foreseeBlow(enc, chars, a.id, t.id, req.decl.option) : null;
+      const lands = f ? `${harmWords(f.hit)}${f.hit.drop >= 0.005 ? `, drops ${t.name} ${pct(f.hit.drop)}` : ''}` : null;
       return {
-        title: `${me.name} covers ${t.name}`, from: me.name, to: t.name, sub: `${a.name} swings at ${t.name}, who isn't defending: block it for them with your shield (−${G.CONFIG.defense.cover.penalty})`, ap,
-        choices: [{ value: 'cover', label: 'Cover', cost: C.fmtAP(o.ap), odds: o.odds != null ? `${Math.round(o.odds * 100)}%` : '?', hint: `${o.stamina} stamina; the blow lands on your shield.` }],
-        none: { label: 'Let it land', note: 'keep the AP' },
+        title: `${me.name} covers ${t.name}`, from: me.name, to: t.name, sub: `${a.name} swings at ${t.name}, who isn't defending: block it for them with your shield (−${o.penalty != null ? o.penalty : G.CONFIG.defense.cover.penalty})`, ap,
+        choices: [{ value: 'cover', label: 'Cover', cost: C.fmtAP(o.ap), odds: o.odds != null ? pct(o.odds) : '?', line: `${o.stamina} st${lands ? ` · fails: ${lands}` : ''}`, hint: `${C.fmtAP(o.ap)} AP, ${o.stamina} stamina; the blow lands on your shield${o.odds != null ? ` ${pct(o.odds)} of the time` : ''}.${lands ? ` If it fails: ${lands}.` : ''}` }],
+        none: { label: 'Let it land', note: 'keep the AP', line: lands ? `${t.name} takes ${lands}` : null },
       };
     }
     const t = chars[req.target];
@@ -327,7 +423,11 @@
     const sub = req.why === 'riposte' ? `You parried ${t.name}: answer with a blow they may still defend.` : req.why === 'cleave' ? `Your blow dropped its foe: carry it on into ${t.name}, free.` : `${t.name} ${why} ${me.name}'s reach. A hit stops them.`;
     return {
       title: `${me.name} → ${t.name}`, from: me.name, to: t.name, tag: { closes: 'closing in', leaves: 'leaving', moves: 'moving', riposte: 'riposte', cleave: 'cleave' }[req.why] || 'leaving', sub, ap,
-      choices: req.options.map((o) => { const p = blowPreview(enc, chars, { decl: { actor: req.actor, target: req.target, type: 'strike', option: o } }); return { value: o, label: o.label, cost: C.fmtAP(o.ap), odds: '', hint: p ? p.text : '' }; }),
+      choices: req.options.map((o) => {
+        const f = foreseeBlow(enc, chars, req.actor, req.target, o);
+        const p = f ? null : blowPreview(enc, chars, { decl: { actor: req.actor, target: req.target, type: 'strike', option: o } });
+        return { value: o, label: o.label, cost: C.fmtAP(o.ap), odds: f ? pct(f.lands) : '', line: f ? `${harmWords(f.hit)} · ${f.down ? 'kills' : 'drops'} ${pct(f.down ? f.kill : f.drop)}` : p ? p.text : null, hint: f ? oddsBreakdown(f, t).join(' ') : p ? p.text : '' };
+      }),
       none: { label: 'Let go', note: 'keep the AP' },
     };
   }
@@ -339,8 +439,8 @@
       const done = (v) => { closeModal(); resolve(v); };
       const box = h('div', { class: 'modal info-pop', role: 'dialog', 'aria-modal': 'true', onclick: (e) => e.stopPropagation() },
         h('span', { class: 'label' }, `Reaction · ${C.fmtAP(m.ap)} AP left`), h('h2', null, m.title), h('p', { class: 'small muted' }, m.sub),
-        h('div', { class: 'stack tight' }, m.choices.map((c) => h('button', { class: 'act', onclick: () => done(c.value) }, h('span', null, c.label), h('span', { class: 'small muted num' }, `${c.cost} AP${c.odds ? ` · ${c.odds}` : ''}`))),
-          h('button', { class: 'act', onclick: () => done(null) }, h('span', null, m.none.label), h('span', { class: 'small muted' }, m.none.note))));
+        h('div', { class: 'stack tight' }, m.choices.map((c) => h('button', { class: 'act', title: c.hint || null, onclick: () => done(c.value) }, h('span', null, c.label), h('span', { class: 'small muted num' }, `${c.cost} AP${c.odds ? ` · ${c.odds}` : ''}`), c.line ? h('span', { class: 'small react-line' }, c.line) : null)),
+          h('button', { class: 'act', onclick: () => done(null) }, h('span', null, m.none.label), h('span', { class: 'small muted' }, m.none.note), m.none.line ? h('span', { class: 'small react-line' }, m.none.line) : null)));
       const root = document.getElementById('modal-root');
       root.innerHTML = '';
       root.appendChild(h('div', { class: 'modal-backdrop' }, box));
@@ -608,19 +708,28 @@
     // R6: a small target costs more against someone who can still cover it (rules.yaml locations.aim.guarded).
     const open = Combat.aimOpen(t, a, enc);
     const pen = (loc) => (loc ? Combat.aimPenalty(Object.assign({}, e.option, { aim: loc }), loc, !open) : 0);
-    const show = (loc) => {
+    // Each place as a line to compare (step 7): lands, what a hit there takes, drops them.
+    const cell = (loc) => {
       const o = Object.assign({}, e.option, loc ? { aim: loc } : {});
-      const p = blowPreview(enc, chars, { decl: { actor: id, target: targetId, type: 'strike', option: o } });
+      const f = foreseeBlow(enc, chars, id, targetId, o);
+      const p = f ? null : blowPreview(enc, chars, { decl: { actor: id, target: targetId, type: 'strike', option: o } });
       const piece = loc ? C.armorAt(t, loc) : null;
-      const what = !p ? '' : p.wound ? `~${p.wound} wound` : p.stamina ? `~${p.stamina} st` : 'stopped';
-      return `${loc ? L.names[loc] || loc : 'Unaimed'}${pen(loc) ? ` −${pen(loc)}` : ''}${loc && !piece ? ' (bare)' : ''}${what ? ` · ${what}` : ''}`;
+      const name = `${loc ? L.names[loc] || loc : 'Unaimed'}${pen(loc) ? ` −${pen(loc)}` : ''}${loc && !piece ? ' (bare)' : ''}`;
+      return f ? { name, lands: pct(f.lands), harm: harmWords(f.hit, 2), drop: pct(f.down ? f.kill : f.drop), f }
+        : { name, lands: '', harm: !p ? '' : p.wound ? `~${p.wound} wound` : p.stamina ? `~${p.stamina} st` : 'stopped', drop: '' };
+    };
+    const cells = {};
+    const show = (loc) => {
+      const c = cells[loc || 'unaimed'] || (cells[loc || 'unaimed'] = cell(loc));
+      return [c.name, c.lands, c.harm, c.drop].filter(Boolean).join(' · ');
     };
     const bestLabel = best && best.loc ? `${L.names[best.loc] || best.loc}${pen(best.loc) ? ` −${pen(best.loc)}` : ''}` : 'unaimed';
     // Why the aim costs what it does, shown under the menu (no hover): they can still cover a small target, or can't.
     const why = open ? `${t.name} is ${open}: can't cover a small target (head −${pen('head')})`
       : best && best.drained ? `${t.name} looks spent: no defence left to beat`
       : `${t.name} can still cover a small target: head −${pen('head')}, hands −${pen('hands')}, feet −${pen('feet')}`;
-    return { best: best ? best.loc : null, why, pen, rows: [['best', `Best (${bestLabel})`], ['unaimed', show(null)]].concat(L.order.map((l) => [l, show(l)])) };
+    const rows = [['best', `Suggested (${bestLabel})`], ['unaimed', show(null)]].concat(L.order.map((l) => [l, show(l)]));
+    return { best: best ? best.loc : null, why, pen, rows, cells, down: !C.isActive(t) };
   }
 
   // A move onto or across ground that hurts (lava, a pit, fire) takes one more confirmation: the first go names the
@@ -689,7 +798,8 @@
         h('div', { class: 'cmd-stats', title: `Stamina ${c.stamina}/${max}${sp != null ? ` · ${sp} SP` : ''}${C.fatiguePenalty(c) ? ` · tired: −${C.fatiguePenalty(c)} AP this round` : ''}` }, bar(c.stamina, max), h('span', { class: 'small num muted' }, `${c.stamina}`),
           sp != null ? h('div', { class: 'sp-bar', title: `${sp} of ${G.Magic.maxSP(c)} spell points` }, bar(sp, G.Magic.maxSP(c))) : null)),
       pool != null ? h('div', { class: 'cmd-ap', title: `${C.fmtAP(left)} of ${C.fmtAP(pool)} AP left this round` }, apMeter(pool, left, fl, now), h('span', { class: 'num' }, C.fmtAP(left))) : null,
-      gearWarn(c));
+      gearWarn(c),
+      woundText(c) ? h('span', { class: 'chip wound-chip num', title: `Wounds: ${woundText(c)} (attributes lost until healed)` }, woundText(c)) : null);
   }
 
   // A worn or broken weapon, or arrows running out: a chip in the pane's head, the details on hover.
@@ -727,6 +837,20 @@
       ]));
   }
 
+  // The aim picker as a table (step 7): a row a place (lands, what a hit there takes, drops them), so where to strike is
+  // a comparison of lines. 'Suggested' is the AI's pick for this blow (it weighs a dropped weapon, a fall or a stun too).
+  function aimTable(ac, cmd, rerender) {
+    const pickRow = (value, c, label) => h('button', { type: 'button', class: 'aim-row' + (cmd.location === value ? ' on' : ''), 'aria-pressed': cmd.location === value ? 'true' : 'false', 'data-hint': c && c.f ? oddsText(c.f) : null, onclick: () => { cmd.location = value; rerender(); } },
+      h('span', { class: 'nm' }, label || c.name), h('span', { class: 'num' }, c ? c.lands : ''), h('span', { class: 'hm' }, c ? c.harm : ''), h('span', { class: 'num' }, c ? c.drop : ''));
+    const bestKey = ac.best || 'unaimed';
+    const best = ac.cells[bestKey];
+    return h('div', { class: 'pick aim-pick' }, h('span', { class: 'label' }, 'Aim'),
+      h('div', { id: 'cmd-location', class: 'aim-table', role: 'group', 'aria-label': 'Where to aim' },
+        h('div', { class: 'aim-row head' }, h('span', null, 'Place'), h('span', null, 'Lands'), h('span', null, 'On a hit'), h('span', null, ac.down ? 'Kills' : 'Drops')),
+        h('div', { 'data-hint': 'The place the computer would pick: it also weighs a dropped weapon, a fall or a stun, which these columns leave out.' }, pickRow('best', best, ac.rows[0][1])),
+        ac.rows.slice(1).map(([v]) => pickRow(v, ac.cells[v]))));
+  }
+
   function declarePanel(app, enc, legal, sync) {
     const chars = app.state.characters;
     const ui = bui(app);
@@ -744,7 +868,7 @@
         onclick: () => { cmd.type = k; cmd.act = null; cmd.moveTo = null; cmd.castAt = null; rerender(); } },
       UI.icon ? UI.icon(ic, 16) : null, h('span', null, label)))) : null;
     const rows = [];
-    const field = (label, el, extra) => h('label', { class: 'pick' }, h('span', { class: 'label' }, label), el, extra || null);
+    const field = (label, el, extra, cls) => h('label', { class: 'pick' + (cls ? ' ' + cls : '') }, h('span', { class: 'label' }, label), el, extra || null);
     const info = entry ? infoButton(entry.label, () => entryInfo(app, enc, c, entry)) : null;
     if (cmd.type === 'magic') rows.push(magicPicker(app, model, cmd));
     else if (cmd.type) {
@@ -752,23 +876,35 @@
     }
     // What the action is aimed at.
     let target = null;
+    let oddsFoot = null; // the odds line, at the foot over the button that does it (always in view, a phone too)
     if (entry && entry.targets) {
       target = entry.targets.find((t) => t.id === cmd.target) || null;
       rows.push(field('Target', entry.targets.length
         ? UI.select('cmd-target', cmd.target || '', (cmd.target ? [] : [['', 'Choose a target…']]).concat(entry.targets.map((t) => [t.id, `${chars[t.id].name}${t.distance != null ? ` · ${t.distance}` : ''}${t.inReach ? '' : t.tooClose ? ' · close' : ' · far'}`])), (v) => { cmd.target = v || null; rerender(); })
-        : h('span', { class: 'muted small' }, 'No one in sight')));
+        : h('span', { class: 'muted small' }, 'No one in sight'), null, 'target-pick'));
       // Where to aim it (armor by location): the expected-best place by default.
       const ac = aimChoices(enc, chars, id, entry, cmd.target);
+      if (ac && !ac.rows.some((r) => r[0] === cmd.location)) cmd.location = 'best';
+      const loc = ac ? (cmd.location === 'best' ? ac.best : cmd.location === 'unaimed' ? null : cmd.location) : null;
+      const prev = strikePreview(enc, chars, id, entry, cmd.target, loc);
+      // The odds (step 7): lands, what a hit takes, drops them; the breakdown on hover or the (i). Shown at the foot.
+      const f = prev ? foreseeBlow(enc, chars, id, cmd.target, loc ? Object.assign({}, entry.option, { aim: loc }) : entry.option) : null;
+      if (f) oddsFoot = oddsRow(f, chars[cmd.target]);
+      else if (prev) rows.push(h('div', { class: 'cmd-preview hit' }, h('span', { class: 'label', 'data-hint': `If it lands, through their armor: ${prev.text}` }, 'On hit'), hitBoxes(prev)));
+      // After a choice (every render follows a click), bring the target and the aim table into view: the action list is
+      // a scroll up. The DOM is rebuilt on each render, so this is set again each time.
+      if (f && ac && typeof document !== 'undefined' && typeof setTimeout === 'function') {
+        setTimeout(() => {
+          const body = document.querySelector('.battle-screen .cmd-body'), at = body && body.querySelector('.pick.target-pick');
+          if (body && at && at.getBoundingClientRect && body.scrollHeight > body.clientHeight) body.scrollTop = Math.max(0, body.scrollTop + at.getBoundingClientRect().top - body.getBoundingClientRect().top - 4);
+        }, 0);
+      }
       if (ac) {
-        if (!ac.rows.some((r) => r[0] === cmd.location)) cmd.location = 'best';
-        rows.push(field('Aim', UI.select('cmd-location', cmd.location, ac.rows, (v) => { cmd.location = v; rerender(); })));
-        const at = cmd.location === 'best' ? ac.best : cmd.location === 'unaimed' ? null : cmd.location;
+        rows.push(aimTable(ac, cmd, rerender));
+        const at = loc;
         const cost = !at ? 'Unaimed: no cost.' : ac.pen(at) ? `${G.CONFIG.locations.names[at] || at}: −${ac.pen(at)} to beat a defence.` : `${G.CONFIG.locations.names[at] || at}: no cost.`;
         rows.push(h('div', { class: 'cmd-preview nil aim-why' }, h('span', { class: 'label' }, 'Why'), h('span', null, `${cost} ${ac.why}.`)));
       }
-      const loc = ac ? (cmd.location === 'best' ? ac.best : cmd.location === 'unaimed' ? null : cmd.location) : null;
-      const prev = strikePreview(enc, chars, id, entry, cmd.target, loc);
-      if (prev) rows.push(h('div', { class: 'cmd-preview hit' }, h('span', { class: 'label', 'data-hint': `If it lands, through their armor: ${prev.text}` }, 'On hit'), hitBoxes(prev)));
       const arm = prev ? armorLine(enc, chars, id, entry.option, cmd.target, loc) : null;
       if (arm) rows.push(h('div', { class: 'cmd-preview nil' }, h('span', { class: 'label' }, 'Armor'), h('span', null, arm)));
     } else if (entry && (entry.kind === 'guard' || entry.kind === 'ready')) {
@@ -801,6 +937,7 @@
           h('span', null, target ? `${name} → ${chars[target.id].name}` : name), h('span', { class: 'cost' }, costText(entry.ap, entry.stamina, entry.sp, entry.spent)));
     }
     return pane('', h('div', null, head, tabs), rows, [
+      oddsFoot,
       go ? h('div', { class: 'cmd-go' }, go) : null,
       h('div', { class: 'cmd-end' },
         h('button', { class: 'end', title: (legal.ap ? `Keep ${C.fmtAP(legal.ap)} AP to defend with until the round ends` : 'Nothing left this round') + ' (E)', onclick: () => finishTurn(app, enc, id) }, legal.ap ? `End turn · keep ${C.fmtAP(legal.ap)} AP` : 'End turn'),
@@ -922,6 +1059,8 @@
       },
       h('span', { class: 'nm' }, c.name),
       h('span', { class: 'sub num' }, `${c.stamina}/${max}`, enc.initiative[id] != null ? (G.CONFIG.apDie ? ` · ${C.fmtAP(enc.apStart[id] || 0)} AP rolled` : ` · init ${enc.initiative[id]}`) : ''),
+      downText(enc, c) ? h('span', { class: 'sub down-note' }, downText(enc, c)) : null,
+      woundText(c) ? h('span', { class: 'sub wound-note num' }, woundText(c)) : null,
       bar(c.stamina, max));
     }));
   }
@@ -1064,5 +1203,5 @@
 
   UI.Views.battle = view;
   // The pieces the game's own battle screen (src/ui/game/screens/battle.js) reuses.
-  UI.Views.battleParts = { bui, mapState, cellClick, declarePanel, phasePanel, scheduleAI, syncCommand, aiControlled, openInfo, closeModal, declare, declareMove, declareEntry, finishTurn, ioFor, reactionModel, blowPreview, aimChoices, TILE_GLYPH };
+  UI.Views.battleParts = { bui, mapState, cellClick, declarePanel, phasePanel, scheduleAI, syncCommand, aiControlled, openInfo, closeModal, declare, declareMove, declareEntry, finishTurn, ioFor, reactionModel, blowPreview, aimChoices, foreseeBlow, oddsText, woundText, downText, TILE_GLYPH };
 })(globalThis.BBB);

@@ -40,6 +40,20 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
     "heroes killed" in the metrics; R8 `CONFIG.sweep` (`sim/sweep.js`); the valley's `legion` groups cut to one. No rule
     number tuned: AP die, vital, cover, joins, head vital, collapse length all within noise. Party of 3: court 12, hall 1,
     valley 6 → 13 cleared in one go (0.45, 0.38, 0.61 dead a fight); as a campaign 18/20, 12/20, 17/20. Next: prompt 7.
+  - [x] Step 7, the panel tells you the odds (UI; no rule changed): `Combat.foresee(attacker, target, option, {enc})` lays out
+    applyHit's dice (aim hold, location, gap, carried cut, pass-through, vital, wound tables, stamina lost to a wound) on
+    computeHit and defenseOdds; `tests/odds.test.js` checks every number against 3,000 seeded resolutions (all within ~1
+    point). The pane's foot: "Lands 55% (they block) · 4 CON, 1 SPD · drops them 22%", breakdown on hover or the (i); the aim
+    picker is a table of places (lands, on a hit, drops); reaction choices say odds, cost and what gets through; the init bar
+    shows wounds (−n) and a collapse's round (up R2). Next: prompt 8.
+  - [ ] From step 7: `foresee` leaves out what it can't see or the engine adds outside applyHit: the defender's AP (it
+    assumes their likeliest defence: the best odds), Living Fortress, Untouchable, Roll With It, a ward, displacement, pack
+    bonus, bane gear and oils (the attacker's own: could be added), knockback into hazards, bleeding after. Say if any matter.
+  - [ ] From step 7: the aim table's "Suggested" row is the AI's `bestAim`, which also weighs disarms, falls and stuns and
+    guesses the target's AP, so it often contradicts the columns (hands at 2% to drop over torso at 39%). Rule whether
+    the suggestion should follow the table, or drop it.
+  - [ ] From step 7: on a phone the aim table is a scroll down in the pane (its cap raised 40vh → 50vh); the reaction card
+    with three defences reaches the top of the screen. Looked at in headless Chromium only (`tools/shot-pw.js`).
   - [ ] **From step 6**: the longsword's swing is still never chosen (R8 can't close a factor of two per AP; it does give
     the battle axe a setting). The two lethal targets: recommend ≤ 0.5 a fight plus the campaign, drop one-go clears.
   - [ ] From step 6 (content, left alone): each dungeon stops at one body: the maze's clay golem (M 5), the warrens' red
@@ -89,12 +103,12 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
   `tests/ui-node.test.js` runs out of heap at the default 2.2 GB (before and after 2026-11-11's changes); it passes with
   `NODE_OPTIONS=--max-old-space-size=8192` (7 minutes alone). Something in it holds a lot of memory.
 - [ ] `tools/shot.sh` hangs in the cloud container (headless Chromium never ends its `--virtual-time-budget`, also with
-  the old script); Playwright loads the same page fine. Use Playwright there, or a `timeout`.
+  the old script); `node tools/shot-pw.js out.png "<js>"` (Playwright, same page, SIZE=w,h) works there.
 
 ## Play notes (the user, 2026-11-11, from the game as it was on 2026-11-10; the plan wins where they conflict)
 - [ ] **Reach looks too long**: "orcs hit from very far away". Spears thrust 2–4 squares (`weapons.yaml` spear and heavy
   spear, `reach: {thrust: 4, min: 2}`); a square is an arm and a step, so four reads as far on the map. Re-check the
-  scale (or how reach is drawn) in step 7; not looked at in step 6 (the valley's killers are these spears: FINDINGS); left for step 7.
+  scale (or how reach is drawn) in step 7; not looked at in step 6 (the valley's killers are these spears: FINDINGS), nor in step 7 (its prompt left it out).
 - [ ] **Healing feels broken; CON can't be restored in a fight**: Give + Life mends 1 CON (2 with Strong:
   `CONFIG.magic.heal`, condMag), the rest is stamina; Move Life mends CON from a foe. The user wants Give/Move Life to
   be able to prevent death and restore CON. Out of the plan's scope (magic) until ruled on.
@@ -125,8 +139,7 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
 - [ ] The design docs (Mechanics Outline, Specifics) still describe passes, guards, the old reach.
 
 ## UI
-- [ ] The battle panel shows no chance to hit or expected harm for an action; the battle view is still 15×10 (the
-  explore view now fits the window: `game.view` in rules.yaml).
+- [ ] The battle view is still 15×10 (the explore view now fits the window: `game.view` in rules.yaml). (The odds: step 7.)
 - [ ] Feat tree: a prerequisite line that skips a tier runs behind the cards between (Plate Mobility → Living
   Fortress); on a phone the graph still scrolls sideways at the narrowest card.
 - [ ] No way to pan the battle view by hand. "Always ask" puts a pop-up on every blow at the party.

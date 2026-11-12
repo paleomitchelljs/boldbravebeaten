@@ -346,7 +346,8 @@ test('ui: a strike at someone in mixed armor offers a Location, defaulting to th
         const sel = find('#cmd-location');
         if (sel) {
           seen = true;
-          assert.match(sel.textContent, /Best \(/, 'a best choice');
+          assert.match(sel.textContent, /Suggested \(/, 'a suggested choice');
+          assert.match(sel.textContent, /Lands/, 'each place with its odds');
           assert.match(sel.textContent, /Legs/);
           assert.match(sel.textContent, /bare/);
           // R6: the chosen place, its cost and why, without a hover.

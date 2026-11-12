@@ -67,8 +67,10 @@
     return h('section', { class: 'popcard react' },
       h('div', { class: 'react-head', 'data-hint': tip }, h('h3', null, m.from), h('span', { class: 'ap-pill num' }, `${C.fmtAP(m.ap)} AP`), h('span', { class: 'to' }, m.to)),
       h('div', { class: 'react-list' },
-        m.choices.map((c, i) => h('button', { class: 'act', 'data-hint': c.hint || null, onclick: () => answer(game, c.value) }, h('kbd', null, String(i + 1)), h('span', { class: 'nm' }, c.label), h('span', { class: 'num muted' }, c.odds || ''), h('span', { class: 'num' }, c.cost))),
-        h('button', { class: 'act none', onclick: () => answer(game, null) }, h('kbd', null, 'Esc'), h('span', { class: 'nm' }, m.none.label), h('span', null, ''), h('span', null, ''))));
+        m.choices.map((c, i) => h('button', { class: 'act', 'data-hint': c.hint || null, onclick: () => answer(game, c.value) }, h('kbd', null, String(i + 1)), h('span', { class: 'nm' }, c.label), h('span', { class: 'num odds' }, c.odds || ''), h('span', { class: 'num' }, c.cost),
+          c.line ? h('span', { class: 'react-line' }, c.line) : null)),
+        h('button', { class: 'act none', onclick: () => answer(game, null) }, h('kbd', null, 'Esc'), h('span', { class: 'nm' }, m.none.label), h('span', null, ''), h('span', null, ''),
+          m.none.line ? h('span', { class: 'react-line' }, m.none.line) : null)));
   }
 
   // At the end of a round, a party no foe can come at has got away (Battle.disengaged).
@@ -404,9 +406,17 @@
       const max = C.maxStamina(c);
       const mine = c.side === 'party';
       const ap = enc.ap[id] != null ? Combat.apLeft(enc, id) : null;
+      const down = !C.isActive(c);
+      const up = down && C.collapsed(c) ? Combat.comesRoundAt(enc, c) : null;
+      const wounds = P().woundText(c);
+      const lost = G.CONFIG.attributes.reduce((n, a) => n + Math.max(0, (c.damage || {})[a] || 0), 0);
+      const state = P().downText(enc, c);
       return h('button', { class: `init ${mine ? 'party' : 'enemy'} ${C.isActive(c) ? '' : 'down'} ${id === actor || id === enc.order[enc.turn] ? 'current' : ''} ${enc.turnDone && enc.turnDone[id] ? 'done' : ''}`,
-        title: `${c.name} · stamina ${c.stamina}/${max}${enc.initiative[id] != null ? (G.CONFIG.apDie ? ` · rolled ${C.fmtAP(enc.apStart[id] || 0)} AP` : ` · initiative ${enc.initiative[id]}`) : ''}${mine && ap != null ? ` · ${C.fmtAP(ap)} AP left` : ''}${enc.turnDone && enc.turnDone[id] ? ' · turn taken' : ''}`, onclick: () => game.openOverlay('sheet', { id }) },
-      Sprites.portrait(c, 28), UI.bar(c.stamina, max), mine && ap != null ? h('span', { class: 'init-ap num' }, C.fmtAP(ap)) : null);
+        title: `${c.name} · stamina ${c.stamina}/${max}${enc.initiative[id] != null ? (G.CONFIG.apDie ? ` · rolled ${C.fmtAP(enc.apStart[id] || 0)} AP` : ` · initiative ${enc.initiative[id]}`) : ''}${mine && ap != null ? ` · ${C.fmtAP(ap)} AP left` : ''}${enc.turnDone && enc.turnDone[id] ? ' · turn taken' : ''}${state ? ` · ${state}` : ''}${wounds ? ` · wounds ${wounds}` : ''}`, onclick: () => game.openOverlay('sheet', { id }) },
+      Sprites.portrait(c, 28), UI.bar(c.stamina, max), mine && ap != null ? h('span', { class: 'init-ap num' }, C.fmtAP(ap)) : null,
+      // A collapsed fighter shows the round they come round after; a wounded one, what they have lost.
+      down && !c.status.dead && up != null ? h('span', { class: 'init-up num' }, `up R${up}`) : null,
+      wounds ? h('span', { class: 'init-wound num' }, `−${lost}`) : null);
     }));
   }
 

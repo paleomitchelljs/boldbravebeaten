@@ -3169,7 +3169,290 @@
     }
   }
 
+  // ---- What a blow will likely do (docs/PLAN.md step 7: the battle panel tells you the odds) -------------------
+  // The rolls applyHit makes, as a distribution rather than one throw: where it lands (the aim's hold, the location
+  // roll), the gap roll, the cut that carries on, the pass-through dice, the vital roll and the wound tables. Each
+  // landed blow is computeHit at that location; nothing here is a second model of the blow, only its dice laid out.
+  // Returns [{ p, dmg: {attr: points}, stamina, vital, wear }].
+  function locationBranches(attacker, target, option) {
+    const L = CONFIG.locations;
+    const rolled = () => {
+      if (!L || !bodyBlow(target, option) || (!L.wounds && C.armorUniform(target))) return [{ loc: null, w: 1 }];
+      let acc = 0;
+      return L.order.map((l, i) => {
+        const w = i === L.order.length - 1 ? 1 - acc : Math.round((L.share[l] || 0) * 100) / 100;
+        acc += w;
+        return { loc: l, w };
+      });
+    };
+    if (option.aim && bodyBlow(target, option)) {
+      const p = aimHold(attacker, target, option);
+      if (p >= 1) return [{ loc: option.aim, w: 1 }];
+      const hp = Math.round(p * 100) / 100;
+      return [{ loc: option.aim, w: hp }].concat(rolled().map((b) => ({ loc: b.loc, w: b.w * (1 - hp) })));
+    }
+    return rolled();
+  }
+
+  function hitOutcomes(attacker, target, option, flags) {
+    const out = new Map();
+    const add = (o) => {
+      const k = dmgKey(o.dmg) + '|' + o.stamina + '|' + o.vital;
+      const x = out.get(k);
+      if (x) { x.p += o.p; x.wear += o.wear; } else out.set(k, o);
+    };
+    const K = CONFIG.locations && CONFIG.locations.carry;
+    for (const b of locationBranches(attacker, target, option)) {
+      if (!(b.w > 0)) continue;
+      const h0 = computeHit(attacker, target, option, Object.assign({}, flags, b.loc ? { location: b.loc } : {}));
+      const gaps = h0.gap
+        ? [{ w: h0.gap.chance, h: Object.assign({}, h0.gap.got, { location: h0.location, piece: h0.piece }) }, { w: 1 - h0.gap.chance, h: Object.assign({}, h0.gap.turned, { location: h0.location, piece: h0.piece }) }]
+        : [{ w: 1, h: h0 }];
+      for (const g of gaps) {
+        if (!(g.w > 0)) continue;
+        const h = g.h;
+        // carryCut: the slashing past a limb's worth goes on into the next location (rolled among them).
+        const next = K && h.location && h.slashToAttrs > K.limb ? (K.next || {})[h.location] : null;
+        const carries = next && next.length
+          ? next.map((into) => ({ w: 1 / next.length, c: computeHit(attacker, target, Object.assign({}, option, { damage: [0, h.slashToAttrs - K.limb, 0], punch: 0 }), { location: into, carried: true }) }))
+          : [{ w: 1, c: null }];
+        for (const cy of carries) laidOut(target, h, cy.c, b.w * g.w * cy.w, add);
+      }
+    }
+    return Array.from(out.values());
+  }
+
+  // One landed blow's dice (applyHit's order), given where it landed and what carried on.
+  function laidOut(target, h0, carried, w, add) {
+    const K = CONFIG.locations && CONFIG.locations.carry;
+    const V = CONFIG.vital;
+    const loc = h0.location;
+    const h = Object.assign({}, h0);
+    let wear = (h.armored && h.piece ? h.durLoss || 0 : 0);
+    if (carried) {
+      h.slashToAttrs = K.limb + carried.slashToAttrs;
+      h.bluntToStamina += carried.bluntToStamina;
+      h.bluntToCON += carried.bluntToCON;
+      h.cutVital = Math.max(h.cutVital || 0, carried.cutVital || 0);
+      if (carried.armored && carried.piece) wear += carried.durLoss || 0;
+    }
+    // A list of { p, dmg, vital } that each die below splits.
+    let list = [{ p: w, dmg: {}, vital: false }];
+    const plus = (dmg, a, n) => { const d = Object.assign({}, dmg); if (n > 0) d[a] = (d[a] || 0) + n; return d; };
+    const split = (fn) => { const nx = []; for (const o of list) for (const r of fn(o)) if (r.p > 0) nx.push(r); list = nx; };
+    const table = (where, n) => split((o) => {
+      // n points, each one of the location's attributes at even odds.
+      const t = woundTable(target, where);
+      let ways = [{ p: o.p, dmg: o.dmg }];
+      for (let i = 0; i < n; i++) {
+        const m = new Map();
+        for (const x of ways) for (const a of t) {
+          const d = plus(x.dmg, a, 1), k = dmgKey(d);
+          const y = m.get(k);
+          if (y) y.p += x.p / t.length; else m.set(k, { p: x.p / t.length, dmg: d });
+        }
+        ways = Array.from(m.values());
+      }
+      return ways.map((x) => ({ p: x.p, dmg: x.dmg, vital: o.vital }));
+    });
+    const chance = (pc) => sizedVital(target, vitalNeed(pc || 0)) / 10;
+    // The pass-through dice: each point left over reaches the body on a d10 of round(pass × 10) or less.
+    const rolls = h.armored && h.pierce !== 'turned' && (h.pierce !== 'gap' || CONFIG.pierce.gapPass) && CONFIG.pierceMode === 'roll' && h.pierceLeft > 0 && h.pass < 1;
+    const pts = rolls ? binomial(h.pierceLeft, Math.round(h.pass * 10) / 10) : [{ n: h.pointLimb ? h.pointToAttrs || 0 : h.toCON, p: 1 }];
+    split((o) => pts.map((x) => ({ p: o.p * x.p, dmg: o.dmg, vital: o.vital, n: x.n })));
+    if (!h.pointLimb) {
+      const pv = chance(h.pierceVital);
+      split((o) => {
+        const n = o.n;
+        if (!(n > 0)) return [o];
+        const d = plus(o.dmg, 'CON', n);
+        return pv > 0 ? [{ p: o.p * pv, dmg: plus(d, 'CON', n * (V.mult - 1)), vital: true }, { p: o.p * (1 - pv), dmg: d, vital: o.vital }] : [{ p: o.p, dmg: d, vital: o.vital }];
+      });
+    } else {
+      const pv = chance(h.pierceVital);
+      // A point into a limb: vital (n × mult CON) or the limb's attributes, n points.
+      const groups = new Map();
+      for (const o of list) { const n = o.n || 0; if (!groups.has(n)) groups.set(n, []); groups.get(n).push(o); }
+      const keep = [];
+      for (const [n, os] of groups) {
+        if (!(n > 0)) { keep.push(...os); continue; }
+        const vit = os.map((o) => ({ p: o.p * pv, dmg: plus(o.dmg, 'CON', n * V.mult), vital: true }));
+        list = os.map((o) => ({ p: o.p * (1 - pv), dmg: o.dmg, vital: o.vital }));
+        table(loc, n);
+        keep.push(...vit, ...list);
+      }
+      list = keep;
+    }
+    if (h.slashToAttrs > 0) {
+      const own = h.slashToAttrs - (carried ? carried.slashToAttrs : 0);
+      table(loc, own);
+      if (carried && carried.slashToAttrs > 0) table(carried.location, carried.slashToAttrs);
+      const cv = chance(h.cutVital);
+      if (cv > 0) split((o) => [{ p: o.p * cv, dmg: plus(o.dmg, 'CON', h.slashToAttrs), vital: true }, { p: o.p * (1 - cv), dmg: o.dmg, vital: o.vital }]);
+    }
+    if (h.bluntToCON > 0) split((o) => [{ p: o.p, dmg: plus(o.dmg, 'CON', h.bluntToCON), vital: o.vital }]);
+    if (h.crushToAttrs > 0) table(loc, h.crushToAttrs);
+    for (const o of list) add({ p: o.p, dmg: o.dmg, stamina: h.bluntToStamina || 0, vital: o.vital, wear: o.p * wear });
+  }
+
+  // A wound tally's key, whatever order its attributes were added in.
+  function dmgKey(d) {
+    return Object.keys(d).sort().map((a) => a + d[a]).join(',');
+  }
+
+  function binomial(n, q) {
+    const out = [];
+    let c = 1;
+    for (let k = 0; k <= n; k++) {
+      out.push({ n: k, p: c * Math.pow(q, k) * Math.pow(1 - q, n - k) });
+      c = (c * (n - k)) / (k + 1);
+    }
+    return out;
+  }
+
+  // What the outcomes add up to on this target: the expected harm by kind, and the chance of a vital wound, of
+  // dropping them (dead, or collapsed: stamina gone, counting what a wound takes off its maximum) and of a kill.
+  function sumOutcomes(target, list) {
+    const res = { attrs: {}, CON: 0, stamina: 0, wear: 0, vital: 0, drop: 0, kill: 0 };
+    const con = C.attr(target, 'CON');
+    const down = !C.isActive(target);
+    const max0 = C.maxStamina(target);
+    for (const o of list) {
+      for (const a in o.dmg) { if (a === 'CON') res.CON += o.p * o.dmg[a]; else res.attrs[a] = (res.attrs[a] || 0) + o.p * o.dmg[a]; }
+      res.stamina += o.p * Math.min(Math.max(0, target.stamina), o.stamina);
+      res.wear += o.wear;
+      if (o.vital) res.vital += o.p;
+      if ((o.dmg.CON || 0) >= con) {
+        // Hero mode knocks a hero out rather than kill them (Character.damageAttr).
+        if (!target.hero) res.kill += o.p;
+        res.drop += o.p;
+        continue;
+      }
+      if (down || C.tireless(target)) continue;
+      // A wound lowers the stamina maximum, and stamina with it (Character.damageAttr), before the blunt lands.
+      const keep = target.damage;
+      target.damage = Object.assign({}, keep);
+      for (const a in o.dmg) target.damage[a] = (target.damage[a] || 0) + o.dmg[a];
+      const max1 = C.maxStamina(target);
+      target.damage = keep;
+      if (target.stamina - Math.max(0, max0 - max1) - o.stamina <= 0) res.drop += o.p;
+    }
+    return res;
+  }
+
+  // Run fn with a fighter's stamina set to s for the moment (what paying for an action leaves them).
+  function withStamina(c, s, fn) {
+    const keep = c.stamina;
+    c.stamina = s;
+    try { return fn(); } finally { c.stamina = keep; }
+  }
+
+  // What a fighter's stamina is after paying `cost` (payStamina): taken spent, down to 1.
+  function afterPaying(c, cost) {
+    if (!cost || C.tireless(c)) return c.stamina;
+    if (isSpent(c, cost)) return Math.min(c.stamina, 1);
+    return canPay(c, cost) ? c.stamina - cost : c.stamina;
+  }
+
+  // foresee(attacker, target, option, { enc, chars, distance }): what the attacker's character could know of this
+  // blow, from what it can see of the target: the shield and weapon in hand, the armor, whether they are prone, held
+  // or down, their stamina; not their AP, nor feats that don't show (Living Fortress, Untouchable, Roll With It).
+  // Returns null for a blow that does no harm by these rules (rust, web), else
+  //   hit: on a blow that lands untouched: CON, attrs {STR: n…} (expected points), stamina, wear (armor durability),
+  //        vital, drop, kill (chances), aimHold (an aimed blow: how often it lands where aimed);
+  //   defences: each the target could put up: { kind, name, odds (theirs, to stop it), ap, stamina, spent, absorb
+  //        (stamina a stopped blow still takes), carry (share that beats through a parry), shieldBreak, through (what
+  //        gets past a successful one), drop, kill (overall, if they choose it) };
+  //   best: the defence they are likeliest to stop it with (or null: none); lands: the chance it beats that one (1
+  //   with none); drop, kill: overall against that defence.
+  // The attacker pays for the blow before it lands (payStamina), so vigor and a spent blow are as they will be.
+  function foresee(attacker, target, option, ctx) {
+    ctx = ctx || {};
+    if (!attacker || !target || !option || option.rust || option.web) return null;
+    if (option.spell && !option.damage && !option.spell.magnitude) return null;
+    const enc = ctx.enc || null;
+    const distance = ctx.distance != null ? ctx.distance : enc && enc.pos[attacker.id] && enc.pos[target.id] ? dist(enc.pos[attacker.id], enc.pos[target.id]) : (option.minRange || 1) + (option.closePenalty ? 1 : 0);
+    let o = option;
+    if (o.stamina && !C.tireless(attacker) && !o.spent && isSpent(attacker, o.stamina)) o = Object.assign({}, o, { spent: true });
+    const paid = afterPaying(attacker, option.stamina);
+    return withStamina(attacker, paid, () => {
+      const flags = { distance };
+      const landed = (s) => withStamina(target, s, () => sumOutcomes(target, hitOutcomes(attacker, target, o, flags)));
+      const hit = landed(target.stamina);
+      if (o.aim) hit.aimHold = aimHold(attacker, target, o);
+      const motion = o.motion;
+      const decl = { type: 'strike', option: o, actor: attacker.id, target: target.id };
+      const chars = Object.assign({}, ctx.chars || {}, { [attacker.id]: attacker, [target.id]: target });
+      const defences = [];
+      if (C.isActive(target) && !C.isPinned(target)) {
+        for (const kind of DEFENSE_TYPES) {
+          if (kind === 'offParry' && !C.offhandWeapon(target)) continue;
+          if (defenseUnavailable(target, kind, decl, chars, enc)) continue;
+          if (enc && ctx.chars && conditionForbids(enc, chars, target, { type: kind, target: attacker.id })) continue;
+          defences.push(defenceOutlook(attacker, target, o, kind, motion, enc, flags, hit));
+        }
+      }
+      let best = null;
+      for (const d of defences) if (!best || d.odds > best.odds + 1e-9 || (Math.abs(d.odds - best.odds) < 1e-9 && d.ap < best.ap)) best = d;
+      return {
+        option: o, distance, spent: !!o.spent, hit, defences,
+        best: best ? best.kind : null,
+        lands: best ? 1 - best.odds : 1,
+        drop: best ? best.drop : hit.drop,
+        kill: best ? best.kill : hit.kill,
+        down: !C.isActive(target),
+      };
+    });
+  }
+
+  // One defence against this blow: its odds, its cost, and what the blow does if it fails (after the defender has paid
+  // for it) or if it holds (a stopped blow jars them; a heavy swing beats through a parry; a power blow drives through a
+  // shield, or breaks it).
+  function defenceOutlook(attacker, target, o, kind, motion, enc, flags, open) {
+    const cost = C.actionCost(target, kind);
+    const spent = isSpent(target, cost.stamina);
+    const odds = defenseOdds(target, kind, motion, attacker, o, spent ? -(CONFIG.stamina.spent.defense || 0) : 0, enc);
+    const s0 = afterPaying(target, cost.stamina);
+    const failed = withStamina(target, s0, () => sumOutcomes(target, hitOutcomes(attacker, target, o, flags)));
+    const share = CONFIG.defense.absorb && CONFIG.defense.absorb[kind];
+    const absorb = share && !C.tireless(target) ? Math.min(Math.max(0, s0), Math.round(blowForce(o) * share)) : 0;
+    const s1 = s0 - absorb;
+    let through = null, carry = 0, shieldBreak = 0;
+    if (kind === 'parry' || kind === 'offParry') {
+      carry = parryCarryShare(target, kind, o);
+      if (carry > 0 && o.damage.some((x) => Math.floor(x * carry) > 0)) {
+        const co = Object.assign({}, o, { damage: o.damage.map((x) => Math.floor(x * carry)), punch: (o.punch || 0) * carry });
+        through = withStamina(target, s1, () => sumOutcomes(target, hitOutcomes(attacker, target, co, flags)));
+      }
+    }
+    if (kind === 'block' && target.shield) {
+      const ss = Items.shieldStats(target.shield);
+      let force = blowForce(o);
+      if (C.rank(attacker, 'shield_breaker')) force *= 2;
+      const power = (CONFIG.powerMotions || []).includes(o.motion) || o.shieldCrush;
+      const weapon = o.weaponType ? WEAPONS[o.weaponType] : null;
+      const blade = weaponItem(attacker, o);
+      const mat = blade ? Items.weaponMaterial(blade) : weapon && weapon.material;
+      if (power && weapon && mat && !ss.unbreakable && Items.hardness(mat) >= Items.hardness(target.shield.material)) shieldBreak = 1;
+      else if (force > ss.threshold) shieldBreak = Math.min(100, (force - ss.threshold) * CONFIG.shieldBreakPerPoint) / 100;
+      if (power && CONFIG.powerPushThrough && force > ss.threshold) {
+        const excess = Math.round((force - ss.threshold) / (C.rank(attacker, 'shield_breaker') ? 2 : 1));
+        const push = { kind: 'strike', motion: 'swing', weaponType: o.weaponType, damage: [0, 0, excess], label: 'push-through' };
+        through = withStamina(target, s1, () => sumOutcomes(target, hitOutcomes(attacker, target, push, {})));
+      }
+    }
+    // Stopped, it may still knock the last of their stamina out of them.
+    const jarred = !C.tireless(target) && s1 <= 0 && target.stamina > 0 ? 1 : 0;
+    const held = through ? { drop: Math.max(jarred, through.drop), kill: through.kill } : { drop: jarred, kill: 0 };
+    return {
+      kind, name: ACTIONS[kind].name, odds, ap: cost.ap, stamina: cost.stamina, spent, absorb, carry, shieldBreak, failed, through,
+      drop: (1 - odds) * failed.drop + odds * held.drop,
+      kill: (1 - odds) * failed.kill + odds * held.kill,
+    };
+  }
+
   G.Combat = {
+    foresee, hitOutcomes,
     foeSquares, fearSource, fleeSteps, mustFlee,
     unseenBy, strikeEffects, conditionForbids, ATTACK_TYPES, DEFENSE_TYPES, shoveReach, log, rollDie, castSpell, knockDown, stability, releaseAll: clearGrapple,
     createEncounter, autoPlace, startRound, currentActor, legalActions, act, validate, endTurn, defer, submit, describeDecl, apLeft, defenseOptions, coverOptions, opportunityOptions,

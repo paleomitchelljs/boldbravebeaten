@@ -39,7 +39,8 @@ Read `HANDOFF.md` first: it is the to-do list. **After every push, update it** (
   explore; a thorough look at a dungeon should take about a day). The fake DOM catches
   exceptions, not bad layout: if you change CSS or the first-person view, say plainly that you could not look at it
   unless you did. `tools/shot.sh out.png "<js>"` takes a headless-Chrome screenshot after running some JavaScript in
-  the page (start a game, travel somewhere, start a fight); use it to look. `node tools/encounters.js --n 300` takes
+  the page (start a game, travel somewhere, start a fight); use it to look (in the cloud container, where it hangs,
+  `node tools/shot-pw.js out.png "<js>"` does the same with Playwright). `node tools/encounters.js --n 300` takes
   about 7 minutes. In sims, `World.grantXP` raises the level but not the party's power (feats come from training in
   town), so a "level 3" party fights like a level-1 one.
 - **Departures from the design docs** go in `data/rules.yaml` or `src/rules/config.js`, marked TUNED or PROVISIONAL and
