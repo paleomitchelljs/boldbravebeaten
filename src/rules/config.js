@@ -63,6 +63,14 @@
       ai: { finish: { now: 1.25, later: 0.95 }, spentWorth: 30 },
     },
 
+    // PROVISIONAL (the tuning plan's ruling R8, the user, 2026-11-11; sim/FINDINGS.md "Re-tuned on the new rules"): the
+    // swing's setting. A swung edge or head (a weapon's swing, two-handed or power blow; not a fist, a bash or a natural
+    // weapon) that drops its target, or passes it (dodged, or the target already down when it lands), carries on into
+    // one more foe within the blow's reach and beside the first (a square away), at `force` of its damage and punch
+    // (`heavy` for a two-handed or power blow). That foe defends against it as against any blow; it costs nothing more
+    // and carries no further. null: off.
+    sweep: { force: 0.5, heavy: 0.75, motions: ['swing', 'twoHanded', 'power'] },
+
     // ---- Action points (Specifics, with the user's turn budget) ------------------------
     // AP are counted in tenths: apScale internal units are one AP (apDisplay divides them back for
     // the sheet), so costs can be fractional (a dagger thrust 1.5) with no rounding drift. Rounds
@@ -857,6 +865,7 @@
 
   // Every PROVISIONAL choice, shown on the Rules tab so nothing is hidden.
   CONFIG.provisional = [
+    'The swing\'s setting (docs/PLAN.md R8, step 6): a swung edge or head that drops its target, or passes it (dodged, or the target already down), carries on into one more foe in its reach beside the first, at half force (three quarters for a two-handed or power blow); that foe defends as against any blow (CONFIG.sweep).',
     'Aiming at what can still be covered (docs/PLAN.md R6, step 4): against a defender who can still react (standing, free, aware) a blow aimed at a small target costs more to land past a defence: head 5, hands 4, feet 5 (rules.yaml locations.aim.guarded; arms, legs and torso as before); against one prone, collapsed, held, caught off guard or not seeing the blow, the old head 2, hands 2, feet 3 (locations.aim.penalty). A thrust is one less either way. One out of AP puts up no defence, so pays nothing. The AI sees the body but not the AP: it guesses a foe spent from an average pool less what it has watched it spend this round. The command panel shows the aimed place, its cost and why under the Aim menu. null: the old numbers against everyone.',
     'Head cover (docs/PLAN.md R7, step 4): the foe templates (foes.yaml) wear half or partial armor with head cover of the same type (rules.yaml locations.coverage halfHead, partialHead), as do the humanoid monsters of level 2 and up that wear armor (goblins, goblin archers, the orc centurion and emissary, the kobold high shaman, the sarnak knight); Cyrus\'s gambeson has a padded cap. The kits already gave full padded armor, the head included. Magic items and loot tables are untouched; the clockwork gnome (a construct) is left as it is.',
     'Wounds that weaken (docs/PLAN.md R4, step 3): a point that goes into the head or torso takes CON as before; into an arm, a hand, a leg or a foot it takes that location\'s attributes, rolled per point as a cut\'s are (rules.yaml locations.wounds.attrs: arms STR/DEX/CON, hands DEX/STR, legs SPD/CON, feet SPD), unless the wound roll (already weighted by location) is vital, which sends it to CON × the vital multiplier as anywhere. Bleeding is unchanged (rules.yaml locations.wounds.pointToCON; null: CON everywhere).',

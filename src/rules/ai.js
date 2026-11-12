@@ -118,6 +118,26 @@
     return v;
   }
 
+  // R8 (CONFIG.sweep): what a swing that would carry on into a second foe adds, from where everyone stands (all of it
+  // in sight): the blow at that foe, at the sweep's force, × the chance it carries (the first drops to it, or dodges it,
+  // taking the target to dodge half the time it can). In hitValue's units.
+  function sweepWorth(enc, chars, c, target, o, d) {
+    if (!enc || !Combat.sweeps || !Combat.sweeps(o)) return 0;
+    const b = Combat.sweepTarget(enc, chars, c, target, o);
+    if (!b) return 0;
+    const h = Combat.computeHit(c, target, o, { distance: d });
+    const con = C.attr(target, 'CON');
+    const k = h.gap ? h.gap.got : h, kp = h.gap ? h.gap.chance : 1;
+    let pDrop = 0;
+    if (!C.isActive(target)) pDrop = 0;
+    else if (k.toCON + k.bluntToCON >= con) pDrop = kp;
+    else if (h.bluntToStamina >= target.stamina && target.stamina > 0) pDrop = 0.7;
+    const dodge = Combat.defenseUnavailable(target, 'dodge', { type: 'strike', option: o, actor: c.id }, { [c.id]: c }) ? 0 : 0.5 * Combat.defenseOdds(target, 'dodge', o.motion, c, o);
+    const f = Combat.sweepForce(o);
+    const so = Object.assign({}, o, { sweep: true, damage: o.damage.map((x) => Math.floor(x * f)), punch: (o.punch || 0) * f });
+    return Math.min(1, pDrop + dodge) * hitValue(c, b, so, Combat.dist(enc.pos[c.id], enc.pos[b.id]));
+  }
+
   // Value per (scaled) AP of an attack against a target at a distance.
   function rate(c, target, opt, d) {
     if (!C.inRange(opt, d)) return 0;
@@ -1278,6 +1298,7 @@
         const down = downed.includes(t.id);
         if (!t.inReach || !(foes.includes(t.id) || down)) continue;
         let v = rate(c, chars[t.id], atk, t.distance) * P.kickBias ** (atk.unarmed === 'kick' ? 1 : 0) * (down ? finishWeight(enc, chars[t.id]) : 1);
+        if (v > 0 && !down) v += (sweepWorth(enc, chars, c, chars[t.id], atk, t.distance) * C.costScale()) / Math.max(1, atk.ap);
         if (atk.spell) v -= (overDebt(c, atk, keep) * S) / Math.max(1, atk.ap);
         // Aim where it pays (a bare leg under a breastplate), if anywhere does.
         const aim = atk.unarmed ? null : bestAim(c, chars[t.id], atk, t.distance, enc);
@@ -1346,5 +1367,5 @@
     return endTurn;
   }
 
-  G.AI = { choose, react, reserveAP, hitValue, perceivedThreat, preferredDistance, bestAim, finishWeight, conditionWorth, immuneTo, DEFAULTS };
+  G.AI = { choose, react, reserveAP, hitValue, perceivedThreat, preferredDistance, bestAim, finishWeight, conditionWorth, immuneTo, sweepWorth, DEFAULTS };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

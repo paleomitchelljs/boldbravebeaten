@@ -2239,6 +2239,42 @@
     return !!(CONFIG.stamina && CONFIG.stamina.spent) && !canPay(c, cost) && c.stamina > 0;
   }
 
+  // R8 (CONFIG.sweep): can this blow sweep on? A weapon's swung edge or head, not already a sweep.
+  function sweeps(o) {
+    const S = CONFIG.sweep;
+    return !!(S && o && !o.sweep && !o.unarmed && !o.natural && !o.spell && !o.ranged && o.weaponId && (S.motions || []).includes(o.motion) && (o.face === 'edge' || o.face === 'head'));
+  }
+  // The foe a sweep would carry into from `t`: within the blow's reach of the attacker and a square from `t`, standing;
+  // the nearest the attacker first, then the one with least stamina. pos: where everyone stood as the blow was made.
+  function sweepTarget(enc, chars, a, t, o, pos) {
+    pos = pos || enc.pos;
+    if (!sweeps(o) || !pos[a.id] || !pos[t.id]) return null;
+    let best = null;
+    for (const id of enc.ids) {
+      const b = chars[id];
+      if (!b || id === t.id || id === a.id || b.side === a.side || !C.isActive(b) || !pos[id]) continue;
+      const d = dist(pos[a.id], pos[id]);
+      if (d > (o.maxRange || 1) || d < (o.minRange || 1) || dist(pos[t.id], pos[id]) > 1) continue;
+      if (!best || d < best.d || (d === best.d && b.stamina < best.b.stamina)) best = { b, d };
+    }
+    return best ? best.b : null;
+  }
+  // The share of a blow's force a sweep carries (heavy for two-handed and power blows).
+  function sweepForce(o) {
+    const S = CONFIG.sweep;
+    return S ? (o.motion === 'twoHanded' || o.motion === 'power' ? S.heavy : S.force) : 0;
+  }
+  async function sweepOn(enc, chars, a, t, d, io, pos, how) {
+    if (!sweeps(d.option) || !C.isActive(a)) return;
+    const b = sweepTarget(enc, chars, a, t, d.option, pos);
+    if (!b) return;
+    const f = sweepForce(d.option);
+    const o = Object.assign({}, d.option, { sweep: true, windUp: false, label: `${d.option.label} (sweep)`, damage: d.option.damage.map((x) => Math.floor(x * f)), punch: (d.option.punch || 0) * f });
+    if (!o.damage.some((x) => x > 0)) return;
+    log(enc, `${a.name}'s ${d.option.label} ${how} ${t.name} into ${b.name}.`, 'hit');
+    await resolveAction(enc, chars, { actor: a.id, target: b.id, type: 'strike', option: o, stamina: 0, ap: 0 }, io, pos);
+  }
+
   // Resolve one action now. pos: where everyone stands as it is made (an opportunity strike sees
   // the mover still in the square they are leaving).
   async function resolveAction(enc, chars, d, io, pos) {
@@ -2251,6 +2287,7 @@
       if (!t) return;
       if (!d.targetWasDown && !C.isActive(t)) {
         log(enc, `${a.name}'s ${d.type === 'strike' ? d.option.label : d.type} fizzles — ${t.name} is already down.`, 'fizzle');
+        if (d.type === 'strike') await sweepOn(enc, chars, a, t, d, io, posAtStart, 'passes over');
         return;
       }
       let band = { minRange: 1, maxRange: CONFIG.range.maneuverMax };
@@ -2387,7 +2424,10 @@
               log(enc, `${t.name} binds ${a.name}'s blade.`, 'defend');
               await resolveManeuver(enc, chars, { actor: t.id, target: a.id, type: 'disarm' }, roller);
             }
-            if (!through) return;
+            if (!through) {
+              if (def.type === 'dodge' && d.type === 'strike') await sweepOn(enc, chars, a, t, d, io, posAtStart, 'carries past');
+              return;
+            }
           } else {
             log(enc, `${t.name}'s ${ACTIONS[def.type].name.toLowerCase()} fails (${chk.total} vs ${chk.tn}).`, 'fail');
             if (def.type === 'dodge') failedDodge = true;
@@ -2457,6 +2497,7 @@
           if (jar > 0) { a.stamina -= jar; log(enc, `The springy ${t.armor.type === 'chitin' ? 'chitin' : 'hide'} jars ${a.name}'s arms (−${jar} stamina).`, 'fail'); }
         }
         if (!C.isActive(t)) loseWindUp(enc, t, null);
+        if (!C.isActive(t)) await sweepOn(enc, chars, a, t, d, io, posAtStart, 'carries through');
         if ((d.option.unarmed === 'kick' || d.option.unarmed === 'shieldBash' || d.option.knockdown) && C.isActive(t) && !t.status.prone) {
           const kd = d.option.knockdown;
           const k = await knockdownCheck(roller, a, t, (C.rank(a, 'trip') ? CONFIG.maneuver.tripFeatBonus : 0) + (kd ? kd.bonus : 0), 'Knockdown');
@@ -3132,6 +3173,6 @@
     foeSquares, fearSource, fleeSteps, mustFlee,
     unseenBy, strikeEffects, conditionForbids, ATTACK_TYPES, DEFENSE_TYPES, shoveReach, log, rollDie, castSpell, knockDown, stability, releaseAll: clearGrapple,
     createEncounter, autoPlace, startRound, currentActor, legalActions, act, validate, endTurn, defer, submit, describeDecl, apLeft, defenseOptions, coverOptions, opportunityOptions,
-    vitalNeed, woundTable, aimHold, projectedPos, dist, comesRoundAt, collapseRounds, isSpent, canPay, defenseOdds, parryCarryShare, leverage, skillEdge, feintScore, readScore, blowForce, aimPenalty, aimGuarded, aimOpen, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, passesThrough, applyHit, resolveAction, finishRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
+    vitalNeed, woundTable, aimHold, projectedPos, dist, comesRoundAt, collapseRounds, isSpent, canPay, defenseOdds, parryCarryShare, leverage, skillEdge, feintScore, readScore, blowForce, aimPenalty, aimGuarded, aimOpen, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, passesThrough, sweeps, sweepTarget, sweepForce, applyHit, resolveAction, finishRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

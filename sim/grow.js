@@ -33,4 +33,17 @@ function heroesAt(level) {
   return B.World.heroes().map((h) => gear(B.World.settle(h, level), level));
 }
 
-module.exports = { gear, heroesAt };
+// A hero already made, trained and kitted for the level it has reached (sim/crawl.js --campaign, between places): the
+// plan grown as far as the level's points go (World.growAlongPlan, what training in town buys), and the gear ladder's
+// weapons, armor and shield in place of what it carries. Wounds, XP and status are kept.
+function outfit(c, spec, level) {
+  const B = require(path.join(__dirname, '..', 'tests', 'load.js'));
+  B.World.growAlongPlan(c, spec);
+  const kitted = B.World.makeCharacter(Object.assign(gear(Object.assign({}, spec, { feats: [], skills: {} }), level), { level: 1 }));
+  for (const k of ['armor', 'shield', 'weapons', 'wield', 'sidearm', 'offhand']) c[k] = kitted[k];
+  if (c.status && c.status.dropped) c.status.dropped = [];
+  c.stamina = Math.min(c.stamina, B.Character.maxStamina(c));
+  return c;
+}
+
+module.exports = { gear, heroesAt, outfit };

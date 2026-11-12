@@ -71,3 +71,17 @@ test('heroes: grown far enough, every one holds every feat in their plan (in ord
     assert.ok(h.id && h.blurb && h.place && h.at, `${h.name}: id, blurb, place and at`);
   }
 });
+
+test('heroes who level train along their plan (World.growAlongPlan, sim/crawl.js --campaign): the same as made at that level', () => {
+  for (const spec of World.heroes()) {
+    const c = World.makeCharacter(Object.assign({}, spec, { level: 1 }));
+    c.level = 5;
+    World.growAlongPlan(c, spec);
+    const made = World.makeCharacter(Object.assign({}, spec, { level: 5 }));
+    assert.deepStrictEqual(c.feats, made.feats, spec.name + ': feats');
+    assert.deepStrictEqual(c.skills, made.skills, spec.name + ': skills');
+    const again = JSON.stringify([c.feats, c.skills]);
+    World.growAlongPlan(c, spec); // nothing more to buy at the same level
+    assert.strictEqual(JSON.stringify([c.feats, c.skills]), again, spec.name + ': twice');
+  }
+});

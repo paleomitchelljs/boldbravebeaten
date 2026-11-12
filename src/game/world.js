@@ -55,17 +55,28 @@
     }
     if (spec.level > 1) { c.level = spec.level; c.xp = xpFor(spec.level); }
     if (spec.bonusFeats) c.bonusFeats = spec.bonusFeats;
-    // Skills first: they unlock the feats. A hero's lists are a plan to grow by (start.yaml): skills are raised to
-    // each stage's ranks in order (a map, or a list of maps), feats taken in order, while the level's points last.
-    for (const stage of [].concat(spec.skills || {})) for (const [k, n] of Object.entries(stage)) while (C.skill(c, k) < n && C.canRaiseSkill(c, k).ok) C.raiseSkill(c, k);
-    const taken = [];
-    for (const f of spec.feats || []) if (C.canTakeFeat(c, f).ok) { C.addFeat(c, f); taken.push(f); }
+    const taken = growAlongPlan(c, spec);
     c.nouns = (spec.nouns || []).slice();
     c.look = Object.assign({ skin: 1, hair: 1, cloth: 0, build: 1, sprite: null, tint: 0 }, spec.look || {}, { kit: spec.kit || (spec.look && spec.look.kit) || null });
     c.xp = xpFor(c.level || 1);
     c.control = 'manual';
     c.stamina = C.maxStamina(c);
     return { c, taken };
+  }
+
+  // Skills first: they unlock the feats. A hero's lists are a plan to grow by (start.yaml): skills are raised to
+  // each stage's ranks in order (a map, or a list of maps), feats taken in order, while the level's points last.
+  // Also what a hero who has levelled does in town along the same plan (sim/crawl.js --campaign). Returns the feats
+  // held from the plan, in order.
+  function growAlongPlan(c, spec) {
+    for (const stage of [].concat(spec.skills || {})) for (const [k, n] of Object.entries(stage)) while (C.skill(c, k) < n && C.canRaiseSkill(c, k).ok) C.raiseSkill(c, k);
+    const taken = [], seen = {};
+    for (const f of spec.feats || []) {
+      seen[f] = (seen[f] || 0) + 1; // the plan names a feat once a rank: its k-th mention is rank k
+      if (C.rank(c, f) >= seen[f]) { taken.push(f); continue; }
+      if (C.canTakeFeat(c, f).ok) { C.addFeat(c, f); taken.push(f); }
+    }
+    return taken;
   }
 
   // A hero's spec as they stand at their level (or `level`): the plan cut to the feats they hold, in order, and the
@@ -436,7 +447,7 @@
   }
 
   G.World = {
-    LOOKS, makeCharacter, settle, presetParty, heroes, trialParty, create, party, living, active,
+    LOOKS, makeCharacter, growAlongPlan, settle, presetParty, heroes, trialParty, create, party, living, active,
     logLine, advance, clockText, isNight,
     flag, setFlag,
     goodDef, goodCount, addGood, removeGood, loadSupplies, collectSupplies,

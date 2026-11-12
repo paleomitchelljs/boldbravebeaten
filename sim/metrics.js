@@ -43,6 +43,7 @@ function create() {
     fights: 0, rounds: [], heroesDead: 0, heroFights: 0,
     half: 0, quarter: 0, collapses: 0, gotUp: 0, downDied: 0, downAtEnd: 0, downWon: 0, hero: { collapses: 0, gotUp: 0, downDied: 0, downAtEnd: 0, downWon: 0 }, attrWound: 0, heroAttrWound: 0,
     blows: { all: {}, heroes: {} }, locs: { all: {}, heroes: {} }, kills: {},
+    heroDeaths: { n: 0, action: {}, loc: {}, apLeft: 0, down: 0, round1: 0, byFoe: {} },
     ai: { intoReach: 0, intoReachBare: 0, sidearm: 0, tradeDown: 0, strikes: 0, worthless: 0, immune: 0, idleRounds: 0, standOffs: 0, feat: {}, casts: 0, casterFights: 0, spLeft: 0, spMax: 0, overchannel: 0, spent: 0 },
     watch(enc, chars, heroIds) { return watch(this, enc, chars, heroIds); },
   };
@@ -55,6 +56,7 @@ function watch(M, enc, chars, heroIds) {
   for (const c of Object.values(chars)) start[c.id] = snap(c);
   const f = { half: false, quarter: false };
   const down = {}; // id → collapsed and not yet up
+  const killed = new Set();
   const look = (c) => {
     const H = c && heroes.has(c.id) ? M.hero : null;
     if (c && c.status.dead && down[c.id]) { down[c.id] = false; M.downDied++; if (H) H.downDied++; }
@@ -79,6 +81,20 @@ function watch(M, enc, chars, heroIds) {
     M.locs.all[loc] = (M.locs.all[loc] || 0) + 1;
     if (hero) { M.blows.heroes[a] = (M.blows.heroes[a] || 0) + 1; M.locs.heroes[loc] = (M.locs.heroes[loc] || 0) + 1; }
     if (ev.target && ev.target.status.dead) M.kills[a] = (M.kills[a] || 0) + 1;
+    // What kills a hero (step 6): the blow's action and place, whether they had AP left to meet it, were down already,
+    // and the round; the killer by name (the template or monster, not the individual).
+    if (ev.target && ev.target.status.dead && heroes.has(ev.target.id) && !(start[ev.target.id] || {}).dead && !killed.has(ev.target.id)) {
+      killed.add(ev.target.id);
+      const D = M.heroDeaths;
+      D.n++;
+      D.action[a] = (D.action[a] || 0) + 1;
+      D.loc[loc] = (D.loc[loc] || 0) + 1;
+      if (down[ev.target.id]) D.down++;
+      else if (B.Combat.apLeft(enc, ev.target.id) > 0) D.apLeft++; // standing, with AP it could have met the blow with
+      if (enc.round <= 1) D.round1++;
+      const who = ev.attacker ? String(ev.attacker.monster || ev.attacker.template || ev.attacker.name || '?') : '?';
+      D.byFoe[who] = (D.byFoe[who] || 0) + 1;
+    }
     look(ev.target);
   };
   return {
@@ -239,6 +255,7 @@ function summary(M) {
     fights: M.fights, medianRounds: q(M.rounds, 0.5), p90Rounds: q(M.rounds, 0.9),
     heroesDead: M.heroFights ? M.heroesDead / M.heroFights : null,
     half: M.half / n, quarter: M.quarter / n, collapses: M.collapses, gotUp: M.gotUp, downDied: M.downDied, downAtEnd: M.downAtEnd, downWon: M.downWon, hero: Object.assign({}, M.hero),
+    heroDeaths: M.heroDeaths,
     attrWound: M.attrWound / n, heroAttrWound: M.heroFights ? M.heroAttrWound / M.heroFights : null,
     blows: shareOf(M.blows.all), heroBlows: shareOf(M.blows.heroes),
     locs: shareOf(M.locs.all), heroLocs: shareOf(M.locs.heroes), kills: shareOf(M.kills),
@@ -261,6 +278,7 @@ function report(M, indent) {
     `${I}  blows landed by location (${s.locs.total - (M.locs.all.none || 0)} with a location; ${M.locs.all.none || 0} without, spells and bursts): ${fmtShares(located(M.locs.all))}`,
     s.heroLocs.total ? `${I}    the heroes': ${fmtShares(located(M.locs.heroes))}` : null,
     `${I}  killing blows by action (${s.kills.total}): ${fmtShares(s.kills)}`,
+    M.heroDeaths.n ? `${I}  heroes killed (${M.heroDeaths.n}): by ${fmtShares(shareOf(M.heroDeaths.action))}; at ${fmtShares(shareOf(M.heroDeaths.loc))}; down already ${pc(M.heroDeaths.down / M.heroDeaths.n)}, standing with AP left ${pc(M.heroDeaths.apLeft / M.heroDeaths.n)}, in round 1 ${pc(M.heroDeaths.round1 / M.heroDeaths.n)}; by ${fmtShares(shareOf(M.heroDeaths.byFoe))}` : null,
     `${I}  AI: moves into a foe's reach ${s.ai.intoReach}, with no defence left ${s.ai.intoReachBare} (${pc(s.ai.intoReach ? s.ai.intoReachBare / s.ai.intoReach : 0)}); sidearms drawn ${s.ai.sidearm}, trading down ${s.ai.tradeDown}; strikes ${s.ai.strikes}, at a body immune to them ${s.ai.immune}, that could do nothing else ${s.ai.worthless}`,
     `${I}    idle rounds ${s.ai.idleRounds} (${(s.ai.idleRounds / (s.fights || 1)).toFixed(2)} a fight), stand-offs ${s.ai.standOffs}; casts ${s.ai.casts} (${s.ai.casterFights ? (s.ai.casts / s.ai.casterFights).toFixed(2) : '-'} a caster a fight, ${s.ai.spMax ? pc(s.ai.spLeft / s.ai.spMax) : '-'} of spell points unspent at the end), overchannels ${s.ai.overchannel}; spent actions ${s.ai.spent}; feat actions ${Object.entries(s.ai.feat).map(([k, v]) => k + ' ' + v).join(', ') || 'none'}`,
   ].filter(Boolean);
