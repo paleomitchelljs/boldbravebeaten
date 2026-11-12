@@ -299,3 +299,15 @@ test('conditions: the AI\'s worth comes from CONFIG.conditions; one written with
   const named = Object.keys(CONFIG.conditions).filter((k) => new RegExp(`\\b${k}\\s*:\\s*\\d`).test(src));
   assert.deepEqual(named, [], 'a worth table keyed by condition is back in ai.js');
 });
+
+test('grappling: a fighter wrestles only by skill when its blows can\'t hurt the foe (a level-8 Beren clinched every bandit)', async () => {
+  const a = armed('Sword', 'longsword', 'party'); a.skills.athletics = 3;
+  const f = armed('Bandit', 'longsword', 'enemy');
+  const { enc, chars } = await field([[a, 2, 2], [f, 3, 2]]);
+  assert.notEqual(AI.choose(enc, chars, a.id, () => 0.99).type, 'clinch', 'clinched a foe its sword could cut');
+  // A grappler by policy still works the ladder.
+  const b = armed('Grappler', 'longsword', 'party', { policy: { grappler: true } });
+  const g = armed('Bandit', 'longsword', 'enemy');
+  const f2 = await field([[b, 2, 2], [g, 3, 2]]);
+  assert.equal(AI.choose(f2.enc, f2.chars, b.id, () => 0.99, b.policy).type, 'clinch');
+});

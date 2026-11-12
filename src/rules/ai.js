@@ -176,13 +176,9 @@
   // (its SPD, armor, gear: what anyone can see; a side caught off guard gets its share) less the AP of what it has
   // been seen to do this round, against the cheapest defence it has.
   function seemsSpent(enc, target, kinds) {
-    let pool = C.apPool(target);
-    const sp = enc.surprise;
-    if (sp && sp.round === enc.round && target.side === sp.side) pool = Math.floor(pool * sp.factor);
-    const seen = (enc.decls || []).reduce((t, x) => t + (x.actor === target.id ? x.ap || 0 : 0), 0);
-    const cheapest = Math.min(...kinds.map((k) => C.actionCost(target, k).ap));
-    return pool - seen < cheapest;
+    return apGuess(enc, target) < Math.min(...kinds.map((k) => C.actionCost(target, k).ap));
   }
+
 
   const SPENT_LAND = 0.8; // a spent blow lands about this much as often (CONFIG.stamina.spent.attack on a d10)
   // A spent blow is worth throwing only if it could finish someone (a kill or a collapse, in hitValue's units):
@@ -348,6 +344,7 @@
     return null;
   }
 
+  const FUTILE = 3; // a blow worth less than this a (display) AP can't hurt the foe to speak of: wrestle instead
   const LOST_BLOW = 0.6; // a blow given up for a defence, at about the odds it would have landed
 
   // For planning, an attack that needs a wind-up counts at its full two-round AP cost.
@@ -952,8 +949,8 @@
     return costs.length ? Math.min(...costs) : Infinity;
   }
 
-  // The AP a body seems to have left this round, from what anyone could see (as seemsSpent): an average round's pool,
-  // less what it has been seen to do.
+  // The AP a body seems to have left this round, from what anyone could see: an average round's pool for that body (its
+  // SPD, armor, gear; a side caught off guard gets its share), less what it has been seen to do.
   function apGuess(enc, t) {
     let pool = C.apPool(t);
     const sp = enc.surprise;
@@ -1106,6 +1103,10 @@
     const la = Combat.legalActions(enc, chars, id);
     const ap = la.ap;
     const endTurn = { actor: id, type: 'endTurn' };
+    // A grappler by policy (the arena's) always works the ladder; one only by skill (athletics 2+) takes it up when its
+    // blows can't hurt the foe and it has the breath for a hold (step 5: a level-8 Beren clinched every bandit and
+    // spent himself holding them).
+    const byPolicy = P.grappler === true;
     if (P.grappler == null) P.grappler = C.skill(c, 'athletics') >= 2;
     // AP to keep back for defences against foes still to act this round, and whether this turn
     // has already done something (after the first action, the reserve is not dipped into).
@@ -1167,7 +1168,9 @@
       }
     } else if (P.grappler) {
       const cl = gm('clinch');
-      const t = cl && cl.targets.find((x) => x.inReach && foes.includes(x.id));
+      const futile = (f) => bestRate(c, chars[f.id], la.attacks.filter((o) => o.affordable && !o.why && !o.unarmed), Combat.dist(enc.pos[id], enc.pos[f.id])) < FUTILE;
+      const breath = C.tireless(c) || c.stamina >= C.maxStamina(c) / 2;
+      const t = cl && cl.targets.find((x) => x.inReach && foes.includes(x.id) && (byPolicy || (breath && futile(x))));
       if (t) return { actor: id, type: 'clinch', target: t.id };
     }
 
