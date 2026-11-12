@@ -94,3 +94,12 @@ test('grapple: one link per fighter, written to both at once; an old save\'s fiv
   assert.ok(!('grappledBy' in old.status));
   assert.ok(C.isPinned(old) && C.isHeld(old) && !C.holding(old));
 });
+
+test('conditions: every condition says what the AI takes it to be worth (worth, a registered key), so the AI needs no table', () => {
+  assert.ok('worth' in Effects.KEYS.condition, 'worth is a registered condition field');
+  for (const [k, d] of Object.entries(CONFIG.conditions)) assert.equal(typeof d.worth, 'number', `conditions.${k} has no worth`);
+  // A misspelt one is caught as any other field is.
+  const K = CONFIG.conditions.slowed;
+  K.wroth = 3;
+  try { assert.match(Content.validate().join('\n'), /conditions\.slowed: "wroth"/); } finally { delete K.wroth; }
+});

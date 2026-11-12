@@ -3132,6 +3132,6 @@
     foeSquares, fearSource, fleeSteps, mustFlee,
     unseenBy, strikeEffects, conditionForbids, ATTACK_TYPES, DEFENSE_TYPES, shoveReach, log, rollDie, castSpell, knockDown, stability, releaseAll: clearGrapple,
     createEncounter, autoPlace, startRound, currentActor, legalActions, act, validate, endTurn, defer, submit, describeDecl, apLeft, defenseOptions, coverOptions, opportunityOptions,
-    vitalNeed, woundTable, aimHold, projectedPos, dist, comesRoundAt, collapseRounds, isSpent, canPay, defenseOdds, parryCarryShare, leverage, skillEdge, feintScore, readScore, blowForce, aimPenalty, aimGuarded, aimOpen, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, applyHit, resolveAction, finishRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
+    vitalNeed, woundTable, aimHold, projectedPos, dist, comesRoundAt, collapseRounds, isSpent, canPay, defenseOdds, parryCarryShare, leverage, skillEdge, feintScore, readScore, blowForce, aimPenalty, aimGuarded, aimOpen, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, passesThrough, applyHit, resolveAction, finishRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

@@ -502,80 +502,83 @@
     // condition, resisted by WIL, is 'mind' without saying). Values are per point of magnitude. resistedBy: the
     // attribute a target rolls to shake it off as it lands (d10 + ⌊attr/2⌋ against the caster's
     // d10 + ⌊INT/2⌋ + Casting); living: the tireless (undead, constructs) are immune.
+    // worth (the AI's, step 5 of docs/PLAN.md): what it takes the condition to be worth, in the units of a blow's value
+    // (AI.hitValue): on a foe for a harm, on a friend for a boon; where it matters is the AI's (a root on a foe closing in,
+    // a ward against what the foes throw), read from the condition's other fields, so a new condition needs no AI edit.
     // Every field is listed in src/rules/effects.js (KEYS.condition); the effect ones (ap, attrs, resist, moveMult,
     // regen, flags…) are read through Effects with the same keys as traits and gear.
     conditions: {
-      burning: { type: 'fire', name: 'Burning', dot: { CON: 1 } },
-      slowed: { name: 'Slowed', ap: -1, resistedBy: 'CON' },
-      hasted: { name: 'Hasted', ap: 1 },
-      shocked: { name: 'Shocked', ap: -1, resistedBy: 'CON' },
-      rooted: { name: 'Rooted', noMove: true, breakAttr: 'STR', resistedBy: 'STR' },
-      numbed: { name: 'Numbed', attrs: { DEX: -1, SPD: -1 }, resistedBy: 'CON' },
-      withering: { type: 'life', name: 'Withering', dot: { CON: 1 }, ap: -1, resistedBy: 'CON', living: true }, // Life bane (asystole)
-      innervated: { name: 'Innervated', regen: 2 },
-      kindled: { name: 'Kindled', kindled: true }, // blows set targets burning
-      frostWard: { name: 'Frost ward', resist: { fire: 0.5 } },
-      freedom: { name: 'Freedom', freedom: true },
-      stoneskin: { name: 'Stoneskin', mit: { B: 2 }, attrs: { SPD: -1 } },
-      barkskin: { name: 'Barkskin', mit: { P: 1, S: 1 } },
-      shielded: { name: 'Shielded', mit: { P: 1, S: 1, B: 1 } },
-      afflicted: { name: 'Lingering harm', dot: { CON: 1 } }, // a Lingering spell's after-burn
+      burning: { worth: 12, type: 'fire', name: 'Burning', dot: { CON: 1 } },
+      slowed: { worth: 14, name: 'Slowed', ap: -1, resistedBy: 'CON' },
+      hasted: { worth: 14, name: 'Hasted', ap: 1 },
+      shocked: { worth: 12, name: 'Shocked', ap: -1, resistedBy: 'CON' },
+      rooted: { worth: 14, name: 'Rooted', noMove: true, breakAttr: 'STR', resistedBy: 'STR' },
+      numbed: { worth: 10, name: 'Numbed', attrs: { DEX: -1, SPD: -1 }, resistedBy: 'CON' },
+      withering: { worth: 22, type: 'life', name: 'Withering', dot: { CON: 1 }, ap: -1, resistedBy: 'CON', living: true }, // Life bane (asystole)
+      innervated: { worth: 18, name: 'Innervated', regen: 2 },
+      kindled: { worth: 10, name: 'Kindled', kindled: true }, // blows set targets burning
+      frostWard: { worth: 6, name: 'Frost ward', resist: { fire: 0.5 } },
+      freedom: { worth: 20, name: 'Freedom', freedom: true },
+      stoneskin: { worth: 12, name: 'Stoneskin', mit: { B: 2 }, attrs: { SPD: -1 } },
+      barkskin: { worth: 12, name: 'Barkskin', mit: { P: 1, S: 1 } },
+      shielded: { worth: 12, name: 'Shielded', mit: { P: 1, S: 1, B: 1 } },
+      afflicted: { worth: 10, name: 'Lingering harm', dot: { CON: 1 } }, // a Lingering spell's after-burn
       // Ward (verb): kind 'magic' absorbs `pool` points of spell or missile damage; 'missiles'
       // turns aside half of the arrows and bolts; an element's ward halves that element and
       // keeps off its after-effects; 'mind' keeps off baits and the like.
-      warded: { name: 'Warded' },
+      warded: { worth: 10, name: 'Warded' },
       // Bait (CHA vs WIS) and Read intent (WIS vs CHA); Hex + Mind and Bless + Mind do the same.
-      baited: { name: 'Baited', resistedBy: 'WIL', defense: -2 }, // guards drawn out; −2 to defend
-      reading: { name: 'Reading', read: 2 }, // +2 to defend against and to beat the defense of `vs`
-      foresight: { name: 'Foresight', read: 2, all: true }, // reading every foe
+      baited: { worth: 6, name: 'Baited', resistedBy: 'WIL', defense: -2 }, // guards drawn out; −2 to defend
+      reading: { worth: 6, name: 'Reading', read: 2 }, // +2 to defend against and to beat the defense of `vs`
+      foresight: { worth: 12, name: 'Foresight', read: 2, all: true }, // reading every foe
       // ---- Phase 2 (draft) -------------------------------------------------------------
       // Mind (WIL resists). breakOnHarm: ends when the bearer takes damage.
-      calmed: { name: 'Calmed', resistedBy: 'WIL', noAttack: true, breakOnHarm: true },
-      mesmerized: { name: 'Mesmerized', resistedBy: 'WIL', ap: -99, breakOnHarm: true, noAct: true },
-      enraged: { name: 'Enraged', resistedBy: 'WIL', noGuard: true, berserk: true },
+      calmed: { worth: 20, name: 'Calmed', resistedBy: 'WIL', noAttack: true, breakOnHarm: true },
+      mesmerized: { worth: 30, name: 'Mesmerized', resistedBy: 'WIL', ap: -99, breakOnHarm: true, noAct: true },
+      enraged: { worth: 14, name: 'Enraged', resistedBy: 'WIL', noGuard: true, berserk: true },
       // The user (2026-11-08): can't come closer to the source, and must first step at least a square farther from it
       // each turn (Combat.mustFlee). It may still strike or shoot at it.
-      frightened: { name: 'Frightened', resistedBy: 'WIL', fearOf: true },
-      controlled: { name: 'Controlled', resistedBy: 'WIL', control: true }, // fights for the caster
+      frightened: { worth: 18, name: 'Frightened', resistedBy: 'WIL', fearOf: true },
+      controlled: { worth: 40, name: 'Controlled', resistedBy: 'WIL', control: true }, // fights for the caster
       // PROVISIONAL (the user's spell list): Charm — the bearer takes the caster's side without the caster holding
       // it (no concentration), but any harm breaks it at once.
-      enthralled: { name: 'Charmed', resistedBy: 'WIL', control: true, free: true, breakOnHarm: true },
-      confused: { name: 'Confused', resistedBy: 'WIL', confused: true, noGuard: true },
-      concentrating: { name: 'Concentrating', ap: -1 }, // holding a Will spell
-      steadied: { name: 'Steadied', mindWard: true },
-      emboldened: { name: 'Emboldened', attrs: { STR: 1 }, noFear: true },
-      resolute: { name: 'Resolute', mindWard: true, attrs: { WIL: 2 } },
+      enthralled: { worth: 34, name: 'Charmed', resistedBy: 'WIL', control: true, free: true, breakOnHarm: true },
+      confused: { worth: 24, name: 'Confused', resistedBy: 'WIL', confused: true, noGuard: true },
+      concentrating: { worth: 4, name: 'Concentrating', ap: -1 }, // holding a Will spell
+      steadied: { worth: 8, name: 'Steadied', mindWard: true },
+      emboldened: { worth: 8, name: 'Emboldened', attrs: { STR: 1 }, noFear: true },
+      resolute: { worth: 8, name: 'Resolute', mindWard: true, attrs: { WIL: 2 } },
       // Body (CON resists the banes).
-      enfeebled: { name: 'Enfeebled', resistedBy: 'CON', attrs: { STR: -2 } },
-      empowered: { name: 'Empowered', attrs: { STR: 2 } },
-      clumsy: { name: 'Clumsy', resistedBy: 'CON', attrs: { DEX: -2 } },
-      deft: { name: 'Deft', attrs: { DEX: 2 } },
+      enfeebled: { worth: 12, name: 'Enfeebled', resistedBy: 'CON', attrs: { STR: -2 } },
+      empowered: { worth: 10, name: 'Empowered', attrs: { STR: 2 } },
+      clumsy: { worth: 10, name: 'Clumsy', resistedBy: 'CON', attrs: { DEX: -2 } },
+      deft: { worth: 10, name: 'Deft', attrs: { DEX: 2 } },
       // Poison and disease. persist: outlasts the fight (until cured or run its course).
-      poisoned: { type: 'venom', name: 'Poisoned', resistedBy: 'CON', dot: { CON: 1 }, living: true },
-      antivenom: { name: 'Antivenom', immune: ['poisoned'] },
-      diseased: { type: 'plague', name: 'Diseased', resistedBy: 'CON', attrs: { STR: -1 }, regen: -2, living: true, persist: true },
+      poisoned: { worth: 16, type: 'venom', name: 'Poisoned', resistedBy: 'CON', dot: { CON: 1 }, living: true },
+      antivenom: { worth: 8, name: 'Antivenom', immune: ['poisoned'] },
+      diseased: { worth: 12, type: 'plague', name: 'Diseased', resistedBy: 'CON', attrs: { STR: -1 }, regen: -2, living: true, persist: true },
       // PROVISIONAL (the user's spell list and magic items).
-      chilled: { type: 'frost', name: 'Chilled', resistedBy: 'CON', moveMult: 0.5, attrs: { SPD: -1 }, living: true }, // frost: half the squares
+      chilled: { worth: 10, type: 'frost', name: 'Chilled', resistedBy: 'CON', moveMult: 0.5, attrs: { SPD: -1 }, living: true }, // frost: half the squares
       // PROVISIONAL (the user's spell list: Give + Frost, a curse that stacks): numb and losing stamina each round.
-      frostbite: { type: 'frost', name: 'Frostbite', resistedBy: 'CON', dot: { stamina: 2 }, attrs: { DEX: -1 }, living: true },
+      frostbite: { worth: 10, type: 'frost', name: 'Frostbite', resistedBy: 'CON', dot: { stamina: 2 }, attrs: { DEX: -1 }, living: true },
       // PROVISIONAL (Take + Earth on an ally): floats over pits and hazards, as a flier does.
-      levitating: { name: 'Levitating', flying: true },
-      paralyzed: { name: 'Paralyzed', resistedBy: 'CON', ap: -99, drainAP: 99, noAct: true, noGuard: true, helpless: true },
-      stunned: { name: 'Stunned', resistedBy: 'CON', drainAP: 2, noGuard: true }, // AP lost at once; no guard this round
-      riled: { name: 'Riled', mit: { P: 1, S: 1, B: 1 }, breakOnHarm: true }, // a goading blade: until the bearer is hurt
-      unseen: { name: 'Unseen', unseen: true }, // can't be picked out beyond arm's reach; striking ends it
+      levitating: { worth: 16, name: 'Levitating', flying: true },
+      paralyzed: { worth: 34, name: 'Paralyzed', resistedBy: 'CON', ap: -99, drainAP: 99, noAct: true, noGuard: true, helpless: true },
+      stunned: { worth: 12, name: 'Stunned', resistedBy: 'CON', drainAP: 2, noGuard: true }, // AP lost at once; no guard this round
+      riled: { worth: 8, name: 'Riled', mit: { P: 1, S: 1, B: 1 }, breakOnHarm: true }, // a goading blade: until the bearer is hurt
+      unseen: { worth: 16, name: 'Unseen', unseen: true }, // can't be picked out beyond arm's reach; striking ends it
       // Feat conditions (feats.yaml: Feign Death, Dirty Trick, Name the Weakness).
-      feigning: { name: 'Playing dead', unseen: true, feign: true }, // no foe can aim at them, near or far; acting ends it
-      exposed: { name: 'Exposed', noGuard: true }, // no defence this round
-      named: { name: 'Weakness named', named: true }, // blows ignore its resistances
-      corroded: { type: 'decay', name: 'Corroded', resistedBy: 'CON', dot: { stamina: 2 }, living: true },
+      feigning: { worth: 10, name: 'Playing dead', unseen: true, feign: true }, // no foe can aim at them, near or far; acting ends it
+      exposed: { worth: 10, name: 'Exposed', noGuard: true }, // no defence this round
+      named: { worth: 12, name: 'Weakness named', named: true }, // blows ignore its resistances
+      corroded: { worth: 8, type: 'decay', name: 'Corroded', resistedBy: 'CON', dot: { stamina: 2 }, living: true },
       // Mystic.
-      dread: { name: 'Dread', attrs: { STR: -1, DEX: -1, SPD: -1 }, defense: -1 }, // a revenant knight's aura
-      dazzled: { name: 'Dazzled', resistedBy: 'CON', defense: -1 },
-      blinded: { name: 'Blinded', resistedBy: 'CON', defense: -2, blind: true }, // strikes only at range 1
-      radiant: { name: 'Radiant', resist: { shadow: 0.5 } },
-      shrouded: { name: 'Shrouded', shroud: 0.5 }, // missiles at the bearer miss half the time
-      spiritShield: { name: 'Spirit shield', mit: { P: 1, S: 1, B: 1 }, vsUndead: true },
+      dread: { worth: 10, name: 'Dread', attrs: { STR: -1, DEX: -1, SPD: -1 }, defense: -1 }, // a revenant knight's aura
+      dazzled: { worth: 6, name: 'Dazzled', resistedBy: 'CON', defense: -1 },
+      blinded: { worth: 18, name: 'Blinded', resistedBy: 'CON', defense: -2, blind: true }, // strikes only at range 1
+      radiant: { worth: 6, name: 'Radiant', resist: { shadow: 0.5 } },
+      shrouded: { worth: 10, name: 'Shrouded', shroud: 0.5 }, // missiles at the bearer miss half the time
+      spiritShield: { worth: 10, name: 'Spirit shield', mit: { P: 1, S: 1, B: 1 }, vsUndead: true },
     },
 
     // ---- Terrain (PROVISIONAL, magic overhaul) ------------------------------------------

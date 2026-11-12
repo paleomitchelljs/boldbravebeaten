@@ -134,6 +134,7 @@
       read: '+n to defend against and to beat the defence of `vs`',
       shroud: 'chance a missile at the bearer misses',
       all: 'with read: against every foe, not only `vs`',
+      worth: 'what the AI takes it to be worth, in the units of a blow\'s value: on a foe for a harm, on a friend for a boon (AI.conditionWorth; without one the AI guesses from the other fields)',
     },
   };
 
