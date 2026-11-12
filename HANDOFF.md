@@ -94,7 +94,7 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
 ## Play notes (the user, 2026-11-11, from the game as it was on 2026-11-10; the plan wins where they conflict)
 - [ ] **Reach looks too long**: "orcs hit from very far away". Spears thrust 2–4 squares (`weapons.yaml` spear and heavy
   spear, `reach: {thrust: 4, min: 2}`); a square is an arm and a step, so four reads as far on the map. Re-check the
-  Not looked at in step 6 (the valley's killers are these spears: FINDINGS); left for step 7.
+  scale (or how reach is drawn) in step 7; not looked at in step 6 (the valley's killers are these spears: FINDINGS); left for step 7.
 - [ ] **Healing feels broken; CON can't be restored in a fight**: Give + Life mends 1 CON (2 with Strong:
   `CONFIG.magic.heal`, condMag), the rest is stamina; Move Life mends CON from a foe. The user wants Give/Move Life to
   be able to prevent death and restore CON. Out of the plan's scope (magic) until ruled on.
