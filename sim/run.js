@@ -399,18 +399,17 @@ SCENARIOS.stab = async () => {
       const thrust = C.attackOptions(atk).find((o) => o.motion === 'thrust');
       const tgt = build('heavy', { level: lvl, armor: null });
       const h = L.Combat.computeHit(atk, tgt, thrust);
-      const total = h.toCON * 2; // plus equal bleed
-      const con = C.attr(tgt, 'CON');
-      const pass = total >= con;
-      record('stab', `${wname} thrust vs unarmored L${lvl}`, 'con_loss_with_bleed', total, `≥ CON ${con}`, pass);
-      out.push([wname, 'L' + lvl, con, h.toCON, total + (pass ? '' : ' ✗')]);
+      const sev = Math.round(h.sev * 100) / 100;
+      const pass = h.downP >= 0.25;
+      record('stab', `${wname} thrust vs unarmored L${lvl}`, 'down_chance', Math.round(h.downP * 100) / 100, '≥ 0.25', pass);
+      out.push([wname, 'L' + lvl, sev, Math.round(h.downP * 100) + '%' + (pass ? '' : ' ✗')]);
     }
   }
   return {
     title: 'An unmitigated stab',
     question: 'Philosophy: "An unmitigated stab takes out anyone, at any level."',
-    body: 'A level-1 attacker\'s thrust against an unarmored target of each level (the heavy build, which takes Toughness). The stab plus its untreated bleed should reach the target\'s CON.\n\n' +
-      table(['Weapon', 'Target level', 'Target CON', 'CON from the hit', 'With bleed'], out),
+    body: 'A level-1 attacker\'s thrust against an unarmored target of each level (the heavy build, which takes Toughness). The stab should put the target down a good share of the time at any level (step E: wounds, not CON).\n\n' +
+      table(['Weapon', 'Target level', 'Wound severity (expected)', 'Down'], out),
   };
 };
 
