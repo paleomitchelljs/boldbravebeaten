@@ -64,7 +64,7 @@ Where the rules as of commit `b2671df4` fall short of them:
 | C | Traps as terrain | – | `explore.js`, `terrain.js`, `places.yaml`, `docs/DATA.md` |
 | D | Sims you can trust: stale sims, tempo and party-size measures | – | `sim/` only |
 | E | Wounds and life: fixed capacity, stamina as exertion, down before dead | A | `combat.js`, `character.js`, `recovery.js`, `monsters.yaml` |
-| F | Tempo: no AP die, whole costs, a reason to act first | A, D | `character.js`, `combat.js` turn loop, `ai.js`, battle UI |
+| F | Tempo: the clock (ticks, lead and recovery, beats; no rounds, turns or AP) | A, D | `character.js`, `combat.js` turn loop and every per-round rule, `ai.js`, battle UI, `CLAUDE.md` terminology |
 | G | Damage by role: cut, point, crush | A, E | `items.js` weaponStats, `weapons.yaml`, `armor.yaml` |
 | H | Armor's answers as gear and techniques anyone can use | G | `feats.yaml`, `weapons.yaml`, `character.js` attackOptions |
 | I | Attributes and skills: a job for each, the die | E, F | `character.js`, `skills.yaml`, `rules.yaml` |
@@ -231,28 +231,73 @@ armor.
 one go at least 18 times in 30; a survivor carries a wound in at least a third of fights; the wounded twin loses
 clearly for arm and leg wounds alike (`sim/spiral.js` rewritten on wounds).
 
-## Step F. Tempo (after A and D)
+## Step F. Tempo: the clock (after A and D)
 
-**Now.** AP = 1 + d3 + SPD/2, rolled each round; turns go in order of AP rolled; costs are in half APs on a curve
-(`apCurve`); reactions come from the same pool; closing provokes. Step D's measures say how much waiting wins.
+**Ruling (the user, 2026-11-14): straight to the clock.** No whole-number AP pool is tried first.
 
-**Decide by prototype, in this order.**
+**Now.** AP = 1 + d3 + SPD/2, rolled each round; turns go in order of AP rolled; a turn spends the whole pool; costs
+are in half APs on a curve (`apCurve`); reactions come from the same pool; unspent AP is lost; closing provokes.
+Step D's measures say how much waiting wins.
 
-1. **F1, the cheap version:** no AP die (pool = a whole number from SPD, 3 to 5), whole-number costs (quick 1,
-   standard 2, heavy 3; weapon speed moves a weapon between classes, not by fractions), `apCurve`, `apStep`,
-   `quickCut` and `armorActionAP` replaced by class shifts. Order of turns by SPD with a d10 tie-break, rolled once
-   a fight.
-2. **F2, a reason to act first:** try each, measured on step D's tempo measures, and keep what makes the first
-   blow worth having without making it decisive: (a) a fighter who has not yet acted this round reacts at +1 cost
-   (caught flat); (b) *pressing*: a defender who defended against you this turn defends your next blow this turn
-   at −1 (a chain rewards committing); (c) the first step into reach of a foe you attack this turn does not
-   provoke from that foe (a charge).
-3. **F3, the clock, only if F1 + F2 don't meet the targets:** each action costs ticks; the lowest clock acts
-   next; reactions push your clock back; no rounds, so every "per round" rule (regeneration, conditions, bleeding)
-   needs a period in ticks. Build it as a sim prototype first and report before touching the UI.
+**Change.** There are no rounds, turns or AP. Time is counted in ticks, and whoever's clock is lowest acts next.
 
-**Targets.** The first to strike wins 50–60% of even duels (not under 50); waiting rounds under 15%; AP lost
-unspent under 10%; the wounded-SPD twin loses; every Quick feat rank changes something a player can see.
+1. **The clock.** Every fighter has a clock, in ticks. The fighter with the lowest clock takes one action; its cost
+   is added to their clock; then the lowest clock acts. Ties: higher SPD, then a d10 rolled once at the fight's
+   start. A fight begins with clocks at 0 plus a start offset (surprise, WIS: step I), not an initiative roll.
+2. **Costs in whole ticks.** Scale: a standard action (a one-handed swing) is 10 ticks for SPD 5 with a reference
+   weapon. A cost is the action's base × the weapon's speed × a SPD factor × armor, rounded to a whole tick once,
+   at the end. Delete `apBase`, `apDie`, `apSpdDivisor`, `apCurve`, `apStep`, `apScale`, `quickCut`'s fractions,
+   `armorActionAP`, `wholeTurnAction`, `defer`, `initiativeDie`, `minActionAP`. At a 10-tick scale every Quick feat
+   rank, mail's weight and a point of SPD are each visible as whole ticks.
+3. **Lead and recovery.** An action's cost is split: `lead` ticks before it takes effect and `recover` after.
+   Quick actions (a thrust, a step, a dagger) are nearly all recovery: they happen now. Heavy ones (a two-handed
+   swing, a power blow, a longbow's draw, a Strong spell) have a real lead: the fighter is committed and visibly so,
+   the blow lands when the lead is up, and in between others act. A committed fighter can be struck, shoved or
+   stepped away from; being knocked down, grappled or disarmed spoils the action (what `windUp` did, generalised:
+   delete `windUp`). This is the reason to act first: a quick blow lands inside a slow one's lead.
+4. **Reactions push your clock.** A block, parry, dodge, riposte or opportunity strike is taken when the blow
+   comes and adds its ticks to the reactor's clock. A fighter whose clock is more than `overreach` ticks ahead of
+   now cannot react (the old "out of AP"); a fighter in the lead of their own action reacts only as that action
+   allows (the old "exposed"). So several attackers still wear a defender down, by pushing their clock out of
+   reach of their own next action, and a defender chooses between answering and acting.
+5. **Movement.** A step costs ticks a square by SPD and armor (the second-diagonal rule of step B applies).
+   Opportunity strikes are reactions as now. Waiting is an action: advance your clock to just after a named
+   fighter's, or by n ticks (replaces Defer and "end turn").
+6. **The beat.** Things that happened "each round" happen each beat, a fixed number of ticks (start at 20, about
+   two standard actions), kept by the timeline, not by any fighter: stamina regeneration, bleeding, conditions'
+   durations (in beats), terrain's per-round harm, hold upkeep, auras, groups joining a fight, the getting-away
+   check. Go through every use of `endRound`, `enc.round` and "this round" flags (once-a-round feats, `struck` this
+   round, reading intent) and give each a period in beats or a window in ticks; list them all in the report.
+7. **Stamina and fatigue.** Stamina costs stay per action. Fatigue (under half, under a quarter) adds ticks to
+   every action instead of taking AP from a pool.
+8. **Terminology.** `CLAUDE.md`'s table (Round, Turn, Reaction) is the user's standard and this replaces two of
+   its three terms. Propose: *tick* (the unit), *action* (one thing done, with a lead and a recovery), *reaction*
+   (as now, paid in ticks), *beat* (the period for regeneration, bleeding and durations). Use these in code, data
+   and UI, update the table in `CLAUDE.md`, and flag it at the top of the report for the user to confirm.
+
+**Build in this order.**
+
+- **F1, rules and AI in Node.** The clock, costs, lead and recovery, reactions, the beat; the AI choosing one
+  action at a time against the timeline it can see (it sees a foe's committed action and when it lands, never the
+  foe's intentions); every sim and metric ported (step D's tempo measures restated in ticks: first blow, time
+  spent waiting, share of ticks on actions, reactions and waiting). Measure against the targets before any UI work.
+- **F2, the battle screen.** A timeline in place of the initiative bar and AP pips: who acts next, each committed
+  action and when it lands, where the hovered action would put the hero's clock, and whether they could still
+  react after it. Reaction prompts and standing orders as now, their costs in ticks. Look at it with
+  `tools/shot.sh` at phone and desktop widths; say plainly what you could not look at.
+- **F3, the rest.** Exploring-layer callers of rounds (rest after a fight, weariness by effort, wanderers' noise
+  for a fight), saves (`Character.normalize` and the save version), `docs/DATA.md`.
+
+**Targets.** The first to strike wins 50–60% of even duels (not under 50); a fighter able to reach a foe spends
+under 15% of the fight waiting; the wounded-SPD twin loses, falling with the wound; a heavy blow's share of blows
+landed is no lower than now (the lead must not kill it: it should be what you do to a foe who has overreached);
+a level-8 hero against N level-1 foes still loses at about N = 4; median fight length in beats about what it was
+in rounds (3 to 5).
+
+**Risks to watch and report.** (a) Quick weapons interrupting every heavy lead, so nobody commits: tune lead
+against `overreach`, and let a successful block or parry add ticks to the attacker (the old rebound). (b) Ten
+bodies on one timeline being unreadable: group identical foes' markers. (c) Click count: one action per decision
+is more decisions than one turn per round; standing orders and a "repeat last action" key are part of F2.
 
 ## Step G. Damage by role (after A and E)
 
@@ -292,7 +337,7 @@ settings, and the roles named here are not the last ones they will have.
 | STR | force of a blow, strain, grapples, shoves, carrying armor | forcing, intimidation |
 | CON | shock, bleeding, poison, fatigue, regeneration (no life) | weariness over a day, disease, hunger when built |
 | DEX | precision: margin for placement and vitals, the parry | devices, stealth |
-| SPD | the AP pool, movement, the dodge | pace, getting away |
+| SPD | tick costs (how often you act), movement, the dodge | pace, getting away |
 | INT | knowing the foe: with Lore or a topic learned, the panel shows a creature's armor, weak places and habits, and blows at a known weakness gain margin; a caster's control | magic, lore, appraisal, plans in a parley |
 | WIL | acting through wounds, coming round, fear, spent actions, resisting magic | magic, resisting pressure in a parley, watch through the night |
 | WIS | surprise and ambush (who acts in the first round), reading a feint (Anticipation) | perception, traps, insight, nature |
@@ -300,7 +345,7 @@ settings, and the roles named here are not the last ones they will have.
 
 **Skills.** Dodging needs one skill, not two (Evasion; Anticipation keeps reading, surprise and insight). Arcane's
 unlocks are split as `docs/FEATS-AUDIT.md` F11 recommends once casters can be measured. The three craft skills
-stay as hooks for exploring. **The die:** on step A's margin report, choose between a d10 with skill gaps scaled
+stay as hooks for exploring. Step F's "AP pool" row above reads as SPD's factor on tick costs. **The die:** on step A's margin report, choose between a d10 with skill gaps scaled
 down and 2d10 (a bell, so a +1 matters most in an even fight), and re-derive the defence numbers once.
 
 ## Step J. Feats (after E to I)

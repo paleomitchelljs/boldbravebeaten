@@ -10,7 +10,7 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
 - [ ] **The plan** (`docs/OVERHAUL.md`, 2026-11-14): replaces rules where `docs/PLAN.md` tuned them. Steps A to K; reports
   land in `docs/overhaul/<step>-report.md`. First wave, each on its own branch and worktree (`overhaul/A-blow`,
   `B-space`, `C-traps`, `D-sims`): A one contest per blow and four locations, B distance, reach and flanking, C traps as
-  terrain, D sims (stale sims, tempo and party-size measures). Then E wounds and life, F tempo, G damage by role, H armor's
+  terrain, D sims (stale sims, tempo and party-size measures). Then E wounds and life, F tempo (straight to the tick clock: the user, 2026-11-14), G damage by role, H armor's
   answers as gear, I attributes and skills (all eight attributes stay: the user, 2026-11-14), J feats, K housekeeping.
   The open tuning items below stand until the step that replaces their rule lands.
 - [ ] **Git in Dropbox** (2026-11-14): Dropbox evicted two pack files (`pack-40ad4e04…`, `pack-d7b43d89…`) to online-only and
