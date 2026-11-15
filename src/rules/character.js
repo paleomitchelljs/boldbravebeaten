@@ -1258,8 +1258,9 @@
 
   // A wound lands: w { place, sev, kind, bleed, pts, vital }. shock: a d10 for a severity-3 wound's shock check (null:
   // no check, as for harm over time; the wound then downs only by the boxes). A wound on a body already down kills
-  // it (hero mode: no more than down). Returns { wound, down, dead, shock: {roll, need, held} | null }.
-  function addWound(c, w, shock) {
+  // it (hero mode: no more than down), unless sameBlow (a cut carried on from a wound of the same blow that downed
+  // it). Returns { wound, down, dead, shock: {roll, need, held} | null }.
+  function addWound(c, w, shock, sameBlow) {
     const out = { wound: null, down: false, dead: false, shock: null };
     if (!(w.sev > 0) || c.status.dead) return out;
     const wasDown = isDown(c);
@@ -1268,7 +1269,7 @@
     wounds(c).push(wd);
     out.wound = wd;
     if (wasDown) {
-      if (!c.hero) { c.status.dead = true; c.status.unconscious = true; out.dead = true; }
+      if (!c.hero && !sameBlow) { c.status.dead = true; c.status.unconscious = true; out.dead = true; }
       return out;
     }
     const P = WK().places[wd.place] || {};

@@ -334,7 +334,7 @@
   function oddsText(f) {
     const best = f.best ? f.defences.find((d) => d.kind === f.best) : null;
     const lands = best ? `Lands ${pct(f.lands)} (they ${THEY[best.kind] || best.kind}${best.through ? '; beats through' : ''})` : `Lands ${pct(1)} (${f.down ? 'down' : 'no defence'})`;
-    const end = f.down ? `kills ${pct(f.kill)}` : `down ${pct(best ? (1 - best.odds) * best.failed.down : f.hit.down)} · drops them ${pct(f.drop)}`;
+    const end = f.down ? `${f.downP > 0.005 ? `down ${pct(f.downP)} · ` : ''}kills ${pct(f.kill)}` : `down ${pct(f.downP)} · drops them ${pct(f.drop)}`;
     return `${f.spent ? 'Spent: ' : ''}${f.flank ? 'Flanked: ' : ''}${lands} · ${harmWords(f.hit)} · ${end}`;
   }
 

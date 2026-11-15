@@ -51,7 +51,7 @@ locations:
     thrustLess: 1
     shield: {covers: [torso, arms], block: 1}
   carry:
-    limb: 3
+    limb: 7     # step E: a limb takes a severity-3 wound's worth (wounds.severity) before a cut carries on
     from: [head, arms, legs]
 
 # ---- Wounds and life (PROVISIONAL, docs/OVERHAUL.md step E) -------------------------------------------------------

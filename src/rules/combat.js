@@ -1725,6 +1725,7 @@
     // The wounds (CONFIG.wounds): where it struck, and where a cut carried. A severity-3 wound that doesn't down the
     // body by itself calls for a shock check (d10 + CON).
     const landed = [];
+    const downBefore = C.isDown(target);
     for (const x of [h, carried]) {
       if (!x || !(x.sev > 0)) continue;
       const place = x.location || 'torso';
@@ -1735,7 +1736,7 @@
         continue;
       }
       const shock = needsShock(target, place, x.sev) ? await rollDie(roller, target.id, CONFIG.maneuver.die, `${target.name}: shock`, `d10 + CON ${C.attr(target, 'CON')} against ${CONFIG.wounds.shock}`) : null;
-      const r = C.addWound(target, { place, sev: x.sev, kind: x.kind, bleed: x.bleed, pts: x.pts, vital: x.vital }, shock);
+      const r = C.addWound(target, { place, sev: x.sev, kind: x.kind, bleed: x.bleed, pts: x.pts, vital: x.vital }, shock, !downBefore);
       if (!r.wound) continue;
       landed.push({ place, sev: x.sev });
       parts.push(`${x.vital ? 'VITAL ' : ''}${x.kind} wound ${x.sev} at the ${placeName(place)}${x.bleed ? `, bleeding ${x.bleed}` : ''}`);
@@ -3335,8 +3336,8 @@
       if (o.way) { res[o.way] = (res[o.way] || 0) + o.p; }
       const d = outcomeDown(target, o.wounds);
       res.kill += o.p * d.kill;
+      if (!C.isDown(target)) res.down += o.p * d.down;
       if (out) continue;
-      res.down += o.p * d.down;
       const winded = !C.tireless(target) && target.stamina - o.stamina <= 0 ? 1 - d.down : 0;
       res.collapse += o.p * winded;
       res.drop += o.p * (d.down + winded);
@@ -3373,7 +3374,7 @@
   //        blow's, given that it beats this defence), failed (what lands then), through (what gets past a successful
   //        one), drop, kill (overall, if they choose it) };
   //   best: the defence they are likeliest to stop it with (or null: none); lands: the chance it beats that one (1
-  //   with none); drop, kill: overall against that defence.
+  //   with none); drop, downP (down from wounds), kill: overall against that defence; down: the target is out now.
   // The attacker pays for the blow before it lands (payStamina), so vigor and a spent blow are as they will be.
   function foresee(attacker, target, option, ctx) {
     ctx = ctx || {};
@@ -3408,6 +3409,7 @@
         best: best ? best.kind : null,
         lands: best ? 1 - best.odds : 1,
         drop: best ? best.drop : hit.drop,
+        downP: best ? best.downP : hit.down,
         kill: best ? best.kill : hit.kill,
         down: !C.isActive(target),
       };
@@ -3457,10 +3459,11 @@
     }
     // Stopped, it may still knock the last of their stamina out of them.
     const jarred = !C.tireless(target) && s1 <= 0 && target.stamina > 0 ? 1 : 0;
-    const held = through ? { drop: Math.max(jarred, through.drop), kill: through.kill } : { drop: jarred, kill: 0 };
+    const held = through ? { drop: Math.max(jarred, through.drop), kill: through.kill, down: through.down } : { drop: jarred, kill: 0, down: 0 };
     return {
       kind, name: ACTIONS[kind].name, odds, ap: cost.ap, stamina: cost.stamina, spent, absorb, carry, shieldBreak, margins: fail, failed, through,
       drop: (1 - odds) * failed.drop + odds * held.drop,
+      downP: (1 - odds) * failed.down + odds * held.down,
       kill: (1 - odds) * failed.kill + odds * held.kill,
     };
   }
