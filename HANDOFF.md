@@ -6,7 +6,19 @@ Keep this a short list: open items only, a line or two each. Tick things off, ad
 line after every push (`git log -1 --format=%h`). What was done, and the detail behind each item below, is in
 `archive/docs/HANDOFF-to-2026-11-09.md` (the list up to that day, 1,070 lines) and in git.
 
-## Now: tuning (begun 2026-11-09)
+## Now: the core overhaul (begun 2026-11-14)
+- [ ] **The plan** (`docs/OVERHAUL.md`, 2026-11-14): replaces rules where `docs/PLAN.md` tuned them. Steps A to K; reports
+  land in `docs/overhaul/<step>-report.md`. First wave, each on its own branch and worktree (`overhaul/A-blow`,
+  `B-space`, `C-traps`, `D-sims`): A one contest per blow and four locations, B distance, reach and flanking, C traps as
+  terrain, D sims (stale sims, tempo and party-size measures). Then E wounds and life, F tempo, G damage by role, H armor's
+  answers as gear, I attributes and skills (all eight attributes stay: the user, 2026-11-14), J feats, K housekeeping.
+  The open tuning items below stand until the step that replaces their rule lands.
+- [ ] **Git in Dropbox** (2026-11-14): Dropbox evicted two pack files (`pack-40ad4e04…`, `pack-d7b43d89…`) to online-only and
+  would not serve them, so git failed. A fresh pack from GitHub (`pack-375cf930…`) was copied in beside them; git works but
+  prints "far too short to be a packfile" for the two. Fix for good: mark `.git` "available offline" in Dropbox (or move
+  the repo out of Dropbox), then `git gc`.
+
+## Tuning (begun 2026-11-09; superseded step by step by the overhaul)
 - [ ] **The plan** (`docs/PLAN.md`, 2026-11-11): nine prompts in order (metrics, stamina, wounds, the head, AI, re-tune,
   two UI steps, feats), rulings R1 to R10 approved by the user 2026-11-11. Magic items and parley are out of scope for now.
   - [x] Step 1, metrics and baseline: `--metrics` on `sim/crawl.js` and `sim/duels.js` (`sim/metrics.js`), new
