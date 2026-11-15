@@ -196,6 +196,7 @@ if (process.env.AICHECK_TASK) {
   const worker = async () => { while (next < tasks.length) { const i = next++; results[i] = await run(tasks[i]); process.stderr.write(`\r${++done}/${tasks.length} `); } };
   Promise.all(Array.from({ length: Math.min(JOBS, tasks.length) }, worker)).then(() => {
     process.stderr.write('\n');
+    const f2 = (x) => `${x.mean >= 0 ? '+' : ''}${x.mean.toFixed(2)} ± ${x.se.toFixed(2)}`;
     const pts = (x) => `${x.mean >= 0 ? '+' : ''}${(100 * x.mean).toFixed(1)} ± ${(100 * x.se).toFixed(1)}`;
     let failed = false;
     for (const c of checks) {
@@ -205,7 +206,7 @@ if (process.env.AICHECK_TASK) {
       if (!b0 || b0.error || !c0 || c0.error) { console.log('  ERROR ' + ((b0 && b0.error) || (c0 && c0.error))); failed = true; continue; }
       const asis = paired(diff(c0.win, b0.win));
       console.log(`  base, as is:      win ${(100 * mean(b0.win)).toFixed(1)}%`);
-      console.log(`  changed, as is:   win ${(100 * mean(c0.win)).toFixed(1)}%   Δ as is ${pts(asis)} points (harm taken ${pts(paired(diff(c0.taken, b0.taken))).replace(/(\d)\.(\d)/g, '$1.$2')} ×0.01 pt)`);
+      console.log(`  changed, as is:   win ${(100 * mean(c0.win)).toFixed(1)}%   Δ as is ${pts(asis)} points; Δ harm taken ${f2(paired(diff(c0.taken, b0.taken)))}, dealt ${f2(paired(diff(c0.dealt, b0.dealt)))} (attribute points + share of stamina)`);
       const usesLine = (r) => Object.entries(r.uses).filter(([k]) => !['move', 'strike', 'endTurn'].includes(k)).map(([k, v]) => `${k} ${v}`).join(', ');
       console.log(`    the hero's other actions, base: ${usesLine(b0) || 'none'}; changed: ${usesLine(c0) || 'none'}`);
       for (const p of c.pins) {
