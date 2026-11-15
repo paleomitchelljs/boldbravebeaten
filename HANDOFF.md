@@ -13,6 +13,12 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
   terrain, D sims (stale sims, tempo and party-size measures). Then E wounds and life, F tempo (straight to the tick clock: the user, 2026-11-14), G damage by role, H armor's
   answers as gear, I attributes and skills (all eight attributes stay: the user, 2026-11-14), J feats, K housekeeping.
   The open tuning items below stand until the step that replaces their rule lands.
+  - [x] Step D, sims (merged 2026-11-15; `docs/overhaul/D-report.md`, FINDINGS top): arena, run and gauntlet rebuilt; tempo
+    measures behind one adapter (`apClock`); `sim/partysize.js`; `sim/aicheck.js`. Beren's SPD loss is the rule (acting first is
+    a penalty); the Anticipation loss is the foes' AI overvaluing Bait; Cyrus's Rally loss is his AI.
+  - [ ] From step D: read step F's even-duel target per style, not pooled (59% pooled hides 92% and 28%); say whether a
+    deliberate wait counts as unused time on the clock; the AI overvalues Bait and Rallies in a duel (fix before step I);
+    the valley's deaths a fight rise with party size (0.54 to 0.98); plain `sim/duels.js` pairings deal no arrows or bandages.
 - [ ] **Git in Dropbox** (2026-11-14): Dropbox evicted two pack files (`pack-40ad4e04…`, `pack-d7b43d89…`) to online-only and
   would not serve them, so git failed. A fresh pack from GitHub (`pack-375cf930…`) was copied in beside them; git works but
   prints "far too short to be a packfile" for the two. Fix for good: mark `.git` "available offline" in Dropbox (or move
@@ -77,7 +83,7 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
     Beren's SPD +1 is −9.9 at level 3 (he moves up for a blow he cannot afford); the AI's Rally on itself in a duel costs Cyrus 11.7 ± 4.2 points
     (2 AP for a few stamina); a Rally, Command or To Your Feet in a crawl at 24 runs a variant cannot be told from zero (standard error 10 to 15
     points): a feat for allies needs a party sim with hundreds of runs. Mages need a second noun and an AI that casts before any magic feat can be measured.
-  - [ ] From step 9: `sim/arena.js`, `sim/run.js` and `sim/gauntlet.js` still list retired feats (`parry_training`, `shield_training`, `casting`…) and retired verbs
+  - [x] (Done in overhaul step D.) From step 9: `sim/arena.js`, `sim/run.js` and `sim/gauntlet.js` still list retired feats (`parry_training`, `shield_training`, `casting`…) and retired verbs
     (`verb_ward`, `verb_launch`…); `Enemies.chooseFeats` skips an unknown id without a word, so those sims fight with fewer feats and no skills. `sim/lib.js`'s
     archetypes are fixed and tested (`tests/lib-sim.test.js`); the others were left.
   - [ ] From step 9: a swarm crawl and a two-hander mirror for Whirlwind (its AP, stamina and force are first guesses); `--level 10` of `sim/feats.js` for the master-tier feats

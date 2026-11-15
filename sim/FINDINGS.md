@@ -1,5 +1,32 @@
 # Simulation findings
 
+## Overhaul step D: tempo baseline, party size, AI or rule (2026-11-15; `docs/overhaul/D-report.md`; no rule changed)
+
+The full tables, commands and standard errors are in the report. Seed 4242; mirrors are `node sim/duels.js --mirror --n 200`.
+
+| Setting | First blow landed, its side won | Waiting with a harmful blow in reach | Unused AP | Heavy blows |
+|---|---|---|---|---|
+| temple_court | 76% ± 4 | 9% | 24% | 31% (almost all drawn bows) |
+| ember_hall | 71% ± 3 | 11% | 25% | 24% |
+| orc_valley | 80% ± 4 | 9% | 24% | 30% |
+| duels (ten pairings) | 67% ± 2 | 4% | 14% | 0% |
+| even mirrors, pooled | 59% ± 2 | 6% | 30% | 16% |
+
+The pooled 59% hides Cyrus's mirror at 92% ± 2, Jabiku's at 28% ± 3 and Beren's timing out 74% of the time. This is step F's
+"before"; the measures read time through one adapter (`apClock` in `sim/metrics.js`), which step F swaps for ticks.
+
+**Party size** (`node sim/partysize.js`, 60 crawls a cell, level 1; cleared, heroes dead a fight): court 0%, 7%, 42%, 87%, 97%,
+100% for parties of 1 to 6; hall 0, 3, 5, 35, 63, 88%; valley 0, 17, 48, 62, 67, 85%, where deaths a fight *rise* with size
+(0.54 to 0.98).
+
+**AI or rule** (`node sim/aicheck.js`, 1,200 paired fights an arm): Beren's +1 SPD (−7.0 ± 1.1) is **the rule**: hidden from
+every AI decision it is still −6.7 ± 1.2; he goes first in 41% of rounds, not 21%, and loses for it. Beren's +1 Anticipation
+(−7.7 ± 0.8) is **the foes' AI**: they stop baiting him and do better, so the AI overvalues Bait. Cyrus's Rally (−9.2 ± 0.9)
+is **his AI**: it Rallies in 1,170 of 1,200 duels; never Rallying gives the base result.
+
+`sim/arena.js`, `sim/run.js` and `sim/gauntlet.js` are rebuilt on `sim/lib.js`; a sim that names a feat that does not exist now
+throws (`Enemies.strict`, set only by the sims).
+
 ## Feats measured, Whirlwind, the XP curve (2026-11-12; step 9 of `docs/PLAN.md`; PROVISIONAL: `CONFIG.whirlwind`, `game.maxLevel` 20)
 
 The full audit, with every feat's row, is `docs/FEATS-AUDIT.md`; this is the record of what was run and what it said.
