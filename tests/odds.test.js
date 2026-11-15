@@ -5,7 +5,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const B = require('./load');
-const { Character: C, Combat, Items, Enemies } = B;
+const { Character: C, Combat, Items, Enemies, CONFIG } = B;
 
 function roller(rng) {
   return async (req) => Array.from({ length: req.count }, () => 1 + Math.floor(rng() * req.sides));
@@ -130,7 +130,7 @@ test('a tired foe: a blunt blow that winds the last of their stamina out of them
   const { f } = await scenario('mace vs tired mail', () => body('A', 'party', 'flangedMace'), tired, swing, null);
   // Winding is fixed by the blunt's severity (wounds.winding): a mace's on mail is the same every time.
   assert.ok(f.hit.collapse > 0.8 && f.hit.stamina > 0, `collapse ${f.hit.collapse}`);
-  const fresher = () => { const t = tired(); t.stamina = f.hit.stamina + 1; return t; };
+  const fresher = () => { const t = tired(); t.stamina = CONFIG.wounds.winding[2] + 1; return t; };
   const g = await scenario('mace vs fresher mail', () => body('A', 'party', 'flangedMace'), fresher, swing, null);
   assert.ok(g.f.hit.collapse < 0.05, `collapse ${g.f.hit.collapse}`);
 });
