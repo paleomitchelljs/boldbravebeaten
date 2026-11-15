@@ -16,6 +16,24 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
   - [x] Step D, sims (merged 2026-11-15; `docs/overhaul/D-report.md`, FINDINGS top): arena, run and gauntlet rebuilt; tempo
     measures behind one adapter (`apClock`); `sim/partysize.js`; `sim/aicheck.js`. Beren's SPD loss is the rule (acting first is
     a penalty); the Anticipation loss is the foes' AI overvaluing Bait; Cyrus's Rally loss is his AI.
+  - [x] Steps A, B, C merged 2026-11-15 for play (reports in `docs/overhaul/`; FINDINGS top). A: one contest per blow, its
+    margin deciding penetration, vital wounds and a shift into a gap; four locations (hands in arms, feet in legs; saves
+    migrate). B: reach and range by rounded Euclidean distance, every second diagonal step costs two, reach 1-3, flanking
+    (-2, `CONFIG.flank`). C: traps with tells, found by degrees, several ways past, sprung as a real blow, live in fights;
+    eight placed. Merged with the Bait/Rally AI fix. Suite 353 tests; the one failure (AI baited instead of finishing a
+    collapsed foe) fixed and its file re-run, the whole suite not re-run after that fix.
+  - [ ] From step A: valley deaths 0.53 -> 0.61 a fight (a point through padding now goes in whole); survivors carrying a
+    STR/DEX/SPD wound fell (valley 37% -> 8%); hall kicks rose to 21% of blows landed (not checked: AI or rule); half-swording
+    does little against plate (step H); DEX lost its piercing role (step I). Recommendation for step I: keep d10 v d10 and
+    scale skill gaps by about half; not 2d10.
+  - [ ] From step B: valley deaths 0.53 -> 0.69 (not flanking: with it off, the same), Lorc's kills of legionnaires halved;
+    flanking at -2 does not measurably help numbers in the swarm, and a wall or corner at the back holds no better: the
+    user may want a stronger reading (any wall or ally behind cancels flanks) or a larger penalty. The reach and move rings
+    were not looked at.
+  - [ ] From step C: a goblin thrown onto its own trap walks it safely (a one-word fix in `combat.js`); the 18-point deadfall
+    breaks bone through a plate helm as through padding (crush rule, step G); hall fights 3-6 costlier (dead by fight 6,
+    0.50 -> 1.09); art wanted: sapling snare, deadfall, turf pit, markers for a marked trap and a tell.
+  - [ ] Steps A and B together, not yet measured: each was measured alone against the same base.
   - [ ] From step D: read step F's even-duel target per style, not pooled (59% pooled hides 92% and 28%); say whether a
     deliberate wait counts as unused time on the clock; the AI overvalues Bait and Rallies in a duel (fix before step I);
     the valley's deaths a fight rise with party size (0.54 to 0.98); plain `sim/duels.js` pairings deal no arrows or bandages.

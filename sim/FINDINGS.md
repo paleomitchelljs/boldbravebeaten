@@ -1,5 +1,24 @@
 # Simulation findings
 
+## Overhaul steps A, B, C (2026-11-15; `docs/overhaul/A-report.md`, `B-report.md`, `C-report.md`)
+
+Each measured alone against the same base (`bd310877`), seed 4242, party of 3, full n; not yet measured together.
+
+| Measure | Base | A (one contest, four places) | B (space, flanking) |
+|---|---|---|---|
+| cleared of 30, court / hall / valley | 16, 1, 11 | **27**, 3, 10 | 17, 1, 10 |
+| heroes dead a fight | 0.43, 0.30, 0.53 | 0.26, 0.33, **0.61** | 0.43, 0.35, **0.69** |
+| survivor with a STR/DEX/SPD wound | 26%, 11%, 37% | 23%, 5%, 8% | 28%, 8%, 29% |
+| head share of located blows | 22%, 21%, 16% | 18%, 16%, 11% | – |
+| kills by thrust | 42%, 53%, 63% | 55%, 66%, 64% | 39%, 56%, 72% |
+| swarm N = 1..6 | 92 75 44 36 24 11 | 93 81 56 45 31 20 | 93 76 45 37 25 13 |
+
+A: plate beats mail 65% to 13% (was 18% to 55%); margins run −5 to 17, modal 1 to 3; plate calibration: a level-1 spear
+thrust into steel plate needs a margin of 7. B: flanking −2 moves the swarm by 0 to 2 points (19% of the lone hero's
+defences were flanked); a wall at the back holds no better. C (traps, crawls): clears 16, 1, 11 → 16, 1, 14 (noise);
+level-1 harm from a trap: Beren in plate only from the fire vent and the deadfall; Cyrus, bare-limbed, 2.4 to 6.2
+attribute points.
+
 ## Overhaul step D: tempo baseline, party size, AI or rule (2026-11-15; `docs/overhaul/D-report.md`; no rule changed)
 
 The full tables, commands and standard errors are in the report. Seed 4242; mirrors are `node sim/duels.js --mirror --n 200`.
