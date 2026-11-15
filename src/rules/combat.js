@@ -1127,11 +1127,11 @@
     return C.collapsed(c) ? 'collapses' : 'falls unconscious';
   }
 
-  // Rounds after the one it began in that a collapse lasts (CONFIG.stamina.collapse); Second Wind: none.
+  // Rounds after the one it began in that a collapse lasts (CONFIG.stamina.collapse): fewer with WIL; Second Wind: none.
   function collapseRounds(c) {
-    const K = CONFIG.stamina && CONFIG.stamina.collapse;
-    if (!K) return Infinity;
-    return C.rank(c, 'second_wind') ? 0 : K.rounds;
+    const K = CONFIG.stamina.collapse;
+    if (C.rank(c, 'second_wind')) return 0;
+    return Math.max(0, K.rounds - Math.floor(C.attr(c, 'WIL') / K.perWil));
   }
 
   // The round a collapsed fighter comes round at the end of (what everyone can see), or null.
@@ -2614,7 +2614,7 @@
         // Springy armor (chitin): the blow rebounds and jars the attacker.
         const recoil = t.armor && t.armor.durability > 0 && (G.DATA.ARMOR[t.armor.type] || {}).recoil;
         if (recoil && !d.option.ranged && !d.option.spell && !C.tireless(a)) {
-          const jar = Math.min(a.stamina - 1, recoil * (CONFIG.staminaScale || 1));
+          const jar = Math.min(a.stamina - 1, recoil);
           if (jar > 0) { a.stamina -= jar; log(enc, `The springy ${t.armor.type === 'chitin' ? 'chitin' : 'hide'} jars ${a.name}'s arms (−${jar} stamina).`, 'fail'); }
         }
         if (!C.isActive(t)) loseWindUp(enc, t, null);
@@ -3217,11 +3217,9 @@
       if (C.isActive(c)) C.wearyRound(c, Math.max(0, ((enc.staminaAtStart || {})[id] ?? c.stamina) - c.stamina));
       // A collapse (CONFIG.stamina.collapse) that began this round is stamped with it.
       if (c.status.collapsed && c.status.collapsed.round == null) c.status.collapsed.round = enc.round;
-      // Regeneration.
-      const conscious = !c.status.unconscious;
-      const R1 = CONFIG.stamina && CONFIG.stamina.regen;
-      if ((conscious || CONFIG.unconsciousRegenerates) && R1) {
-        // R1: every round; a share of it in a round a blow took stamina, in full with Second Wind (or in hero mode).
+      // Regeneration (R1): every round; a share of it in a round a blow took stamina, in full with Second Wind (or in
+      // hero mode). The down and the collapsed don't regenerate.
+      if (!c.status.unconscious) {
         const took = enc.hitThisRound[id] || 0;
         const struck = took > 0 && !C.rank(c, 'second_wind') && !(c.hero && CONFIG.hero && CONFIG.hero.regenWhenHit);
         const r = C.roundRegen(c, struck);
@@ -3232,18 +3230,6 @@
           const before = c.stamina;
           c.stamina = Math.min(C.maxStamina(c), c.stamina + r);
           if (c.stamina > before) log(enc, `${c.name} recovers ${c.stamina - before} stamina${struck ? ' (struck: a share)' : ''}.`);
-        }
-      } else if (conscious || CONFIG.unconsciousRegenerates) {
-        const r = C.regen(c);
-        const took = enc.hitThisRound[id] || 0;
-        const allowed = took === 0 || (C.rank(c, 'second_wind') && took <= 2) || (c.hero && CONFIG.hero && CONFIG.hero.regenWhenHit) || (enc.rallied || {})[id] === enc.round;
-        if (r < 0 && CONFIG.negativeRegenAlwaysApplies) {
-          c.stamina = Math.max(0, c.stamina + r);
-          log(enc, `${c.name} loses ${-r} stamina to heavy armor.`);
-        } else if (r > 0 && allowed) {
-          const before = c.stamina;
-          c.stamina = Math.min(C.maxStamina(c), c.stamina + r);
-          if (c.stamina > before) log(enc, `${c.name} recovers ${c.stamina - before} stamina.`);
         }
       }
       // R3: a collapse runs its course; they come round with a round's regeneration, still on the ground.
@@ -3262,7 +3248,7 @@
       // Holding someone is exhausting: pay the upkeep or let go.
       const G2 = CONFIG.grappling;
       if (C.holding(c) && G2 && G2.holdUpkeep && !c.status.unconscious) {
-        const cost = G2.holdUpkeep * (CONFIG.staminaScale || 1);
+        const cost = G2.holdUpkeep;
         if (c.stamina > cost) {
           c.stamina -= cost;
           log(enc, `${c.name} spends ${cost} stamina holding ${chars[C.holding(c)] ? chars[C.holding(c)].name : 'their foe'}.`);

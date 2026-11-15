@@ -602,8 +602,7 @@
 
   // Max stamina before weariness (CONFIG.weariness).
   function freshStamina(c) {
-    let s = 0;
-    for (const a in CONFIG.staminaWeights) s += CONFIG.staminaWeights[a] * attr(c, a);
+    let s = CONFIG.stamina.base + attr(c, 'STR') + attr(c, 'SPD') + attr(c, 'DEX');
     s += G.Effects.sum(c, 'stamina');
     if (tireless(c)) return Math.max(1, s);
     // A big creature (a boss: staminaMult) has more to give.
@@ -639,9 +638,11 @@
     return c.weary - before;
   }
 
+  // A round's regeneration (CONFIG.stamina.regen): ⌊(CON + WIL) × per⌋ less the armor's penalty, plus gear,
+  // conditions and hero mode.
   function regen(c) {
     if (tireless(c)) return 0;
-    return Math.floor((attr(c, 'CON') + attr(c, 'WIL')) / CONFIG.regenDivisor) - armorInfo(c).regen + G.Effects.sum(c, 'regen') + (c.hero && CONFIG.hero ? CONFIG.hero.regen || 0 : 0);
+    return Math.floor((attr(c, 'CON') + attr(c, 'WIL')) * CONFIG.stamina.regen.per) - armorInfo(c).regen + G.Effects.sum(c, 'regen') + (c.hero && CONFIG.hero ? CONFIG.hero.regen || 0 : 0);
   }
 
   // Tireless (undead, constructs): no stamina at all. Damage goes straight to attributes,
@@ -760,7 +761,6 @@
   // with STR offsetting the weight and armor parts, then feat reductions.
   function staminaCost(c, base, weight, reduction) {
     if (tireless(c)) return 0;
-    base = base * (CONFIG.staminaScale || 1);
     const factor = weight ? CONFIG.weightFactor[weight] : 1;
     let penalty = base * (factor - 1) + armorInfo(c).stamina;
     penalty = Math.max(0, penalty - strOffset(c));
@@ -1169,7 +1169,7 @@
     const n = (c.status && c.status.webbed) || 0;
     if (!n) return { ap: 0, stamina: 0 };
     const W = CONFIG.web || { ap: 1, stamina: 1 };
-    return { ap: Math.round(n * W.ap * costScale()), stamina: tireless(c) ? 0 : n * W.stamina * (CONFIG.staminaScale || 1) };
+    return { ap: Math.round(n * W.ap * costScale()), stamina: tireless(c) ? 0 : n * W.stamina };
   }
 
   function actionCost(c, kind, extra) {
@@ -1247,16 +1247,13 @@
     return was;
   }
 
-  // One round's regeneration (R1, CONFIG.stamina.regen): regen() × scale, in full when the fighter lost no stamina to
-  // a blow this round, `struck` of it (rounded up, at least 1) when they did. Negative regeneration (heavy armor) is
-  // whole either way. Without the rule: regen() when not struck, else 0 (the caller handles the old exceptions).
+  // One round's regeneration (R1, CONFIG.stamina.regen): regen() in full when the fighter lost no stamina to a blow
+  // this round, `struck` of it (rounded up, at least 1) when they did. Negative regeneration (heavy armor) is whole
+  // either way.
   function roundRegen(c, struck) {
-    const R = CONFIG.stamina && CONFIG.stamina.regen;
-    const r = regen(c);
-    if (!R) return struck ? Math.min(0, r) : r;
-    const full = Math.round(r * (R.scale || 1));
+    const full = regen(c);
     if (full <= 0 || !struck) return full;
-    return Math.max(1, Math.ceil(full * (R.struck != null ? R.struck : 1)));
+    return Math.max(1, Math.ceil(full * CONFIG.stamina.regen.struck));
   }
 
   function isActive(c) {

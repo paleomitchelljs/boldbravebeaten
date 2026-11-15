@@ -82,7 +82,7 @@ locations:
 hero:
   dealt: 1.5
   taken: 0.5
-  regen: 2
+  regen: 6
   regenWhenHit: true
 
 game:

@@ -23,11 +23,10 @@
     // the raw number, so a STR-20 troll hits for +7 and grapples at +10.
     monsterAttrMax: 30,
 
-    // ---- Stamina (Specifics) ---------------------------------------------
-    // Max stamina = 4×CON + STR + SPD + DEX
-    staminaWeights: { CON: 4, STR: 1, SPD: 1, DEX: 1 },
-    // Regen = floor((CON + WIL)/4) − armor regen penalty (Specifics had WIS; WIL is resolve)
-    regenDivisor: 4,
+    // ---- Stamina (PROVISIONAL, docs/OVERHAUL.md step E) -------------------------------------------------
+    // Stamina is exertion: what a fighter spends on actions, and what blunt that breaks nothing winds (wounds.winding).
+    // It is no life pool. Max stamina = stamina.base + STR + SPD + DEX, the same order for everyone; CON and WIL set
+    // how fast it comes back (stamina.regen).
     // Fatigue: −1 AP below 50% stamina, −2 below 25%
     fatigueSteps: [
       { below: 0.5, ap: 1 },
@@ -36,26 +35,22 @@
     // PROVISIONAL: an action cannot be paid if it would take you to 0 stamina
     // (otherwise characters could exert themselves unconscious).
     exertionCanKnockOut: false,
-    // PROVISIONAL: negative regeneration (heavy armor) applies even on rounds you were hit.
-    negativeRegenAlwaysApplies: true,
-    // PROVISIONAL: unconscious characters do not regenerate during combat.
-    unconsciousRegenerates: false,
-    // PROVISIONAL (the tuning plan's rulings R1 to R3, the user, 2026-11-11; sim/FINDINGS.md "Stamina as a pool"):
-    // stamina is the moment-to-moment pool. Each part is off with null/false, which restores the old rule.
-    //   regen       R1. Every round, struck or not: the full regeneration (regen() × scale; costs are already
-    //               × staminaScale, regeneration was not) in a round the fighter lost no stamina to a blow, `struck`
-    //               of it (rounded up, at least 1) in a round they did. null: none in a round struck (the old rule).
-    //               Heavy armor's negative regeneration is unchanged (× scale as well, whole every round).
+    // PROVISIONAL (the tuning plan's rulings R1 to R3, the user, 2026-11-11; step E's plain numbers):
+    //   base        max stamina = base + STR + SPD + DEX (+ gear; × a creature's staminaMult).
+    //   regen       R1. Each round, struck or not: ⌊(CON + WIL) × per⌋ − the armor's regen penalty (+ gear, conditions,
+    //               hero mode) in a round the fighter lost no stamina to a blow, `struck` of it (rounded up, at least
+    //               1) in a round they did. Heavy armor's negative regeneration is whole every round.
     //   spent       R2. An action whose stamina the fighter can't pay is taken spent instead of refused: it takes
     //               stamina down to 1 at most, the defender gets `attack` on its roll against a spent blow (and the
     //               blow lands at vigor.spent), and a defence taken spent is `defense` worse. null: refused.
     //   collapse    R3. Stamina 0 is a collapse: prone, no actions or reactions for the rest of the round and
-    //               `rounds` more, then the fighter comes round with one round's regeneration (at least 1) and must
-    //               stand. null: unconscious until roused or healed (the old rule).
+    //               rounds − ⌊WIL / perWil⌋ more (WIL brings them round sooner; Second Wind: none), then the fighter
+    //               comes round with one round's regeneration (at least 1) and must stand.
     stamina: {
-      regen: { scale: 3, struck: 0.5 },
+      base: 20,
+      regen: { per: 0.75, struck: 0.5 },
       spent: { attack: 2, defense: 2 },
-      collapse: { rounds: 1 },
+      collapse: { rounds: 2, perWil: 5 },
       // The AI's weights for these rules (judgement, not rules; here so a sim can --set them). finish: a blow at a
       // collapsed foe against the same at a standing one, `now` when they come round at this round's end, `later` when
       // they stay down a round more. spentWorth: a spent blow is thrown only if it is worth this much (hitValue's
@@ -253,12 +248,6 @@
     },
 
     // ---- Weight (Specifics) ----------------------------------------------
-    // Multiplies the base stamina cost of every action (before weight and armor).
-    // TUNED (sim): 3. At ×1 an early unarmored fighter could attack flat out for 30+ rounds
-    // (Outline target: tires within a few rounds), fatigue never mattered, and plate mirrors
-    // ran 8–11 rounds. At ×3 the measured curve matches the Outline: early unarmored 4 rounds,
-    // mid-level with cost feats indefinitely, plate 3.
-    staminaScale: 3,
     weightFactor: { 'very light': 1.0, light: 1.0, medium: 1.25, heavy: 1.5 },
     weightOrder: ['very light', 'light', 'medium', 'heavy'],
     // STR offsets 1 point of armor/weight penalty per 2 STR above 5
@@ -291,12 +280,12 @@
 
     // ---- Getting up (PROVISIONAL, the user's call) ------------------------
     // Standing from prone gets steeply harder in heavier armor. Base AP and stamina by armor
-    // (× apScale and × staminaScale; plus the armor's usual stamina penalty). Specifics: 2 AP
+    // (AP × apScale; plus the armor's usual stamina penalty). Specifics: 2 AP
     // + 0/0/1/1/2 for padded/leather/mail/scale/plate (scale is now steel mail). The AP is capped at the character's
     // pool, so getting up is always possible, if it takes the whole round. Kip-Up: 1 base AP.
     standUp: {
       ap: { none: 1, padded: 1, leather: 1, mail: 2, plate: 4 },
-      stamina: { none: 1, padded: 1, leather: 1, mail: 2, plate: 5 },
+      stamina: { none: 3, padded: 3, leather: 3, mail: 6, plate: 15 },
     },
 
     // ---- Grappling (PROVISIONAL, designed with the user) -------------------
@@ -313,12 +302,12 @@
     // Armor (option 4, the user's choice): plate is easy to grab — `handles` adds to the attacker's
     // grapple and pin rolls — but hard to throw: footing (maneuver.armorStability) adds to the
     // defender's roll against throws.
-    // Grappling is exhausting: base stamina per step (× staminaScale), and holdUpkeep at the end
+    // Grappling is exhausting: base stamina per step, and holdUpkeep at the end
     // of every round you hold or pin someone; a holder who can't pay lets go.
     grappling: {
       jointLock: { attr: 'DEX', points: 1 }, // the Joint Lock feat: what a hold or pin that holds takes
-      stamina: { clinch: 3, grapple: 5, pin: 5, throw: 5, break: 3 },
-      holdUpkeep: 2,
+      stamina: { clinch: 9, grapple: 15, pin: 15, throw: 15, break: 9 },
+      holdUpkeep: 6,
       bigMargin: 5,
       handles: { mail: 1, plate: 2 },
       throwDamage: 3,
@@ -330,7 +319,7 @@
     // Each layer of sticky web adds base AP and stamina (× the scales) to every action. Up to
     // maxLayers. Tear free: d10 + ⌊STR/2⌋ ≥ tearTN clears them all. Fire burns them away.
     // wearOff layers come loose by themselves at the end of each round.
-    web: { ap: 1, stamina: 1, maxLayers: 2, tearTN: 8, wearOff: 1 },
+    web: { ap: 1, stamina: 3, maxLayers: 2, tearTN: 8, wearOff: 1 },
 
     // ---- Shove (PROVISIONAL) ----------------------------------------------
     // Opposed d10 + ⌊STR/2⌋ (+2 two-handed weapon) vs d10 + footing. A win pushes the
@@ -362,7 +351,7 @@
     windUp: {
       motions: ['power'],
       ap: 2,
-      stamina: 1,
+      stamina: 3,
       exposed: ['block', 'parry'],
       spells: true, // spells using the Strong modifier must be gathered the same way
       // After releasing in a round you may wind up again that round (a steady archer looses
@@ -514,7 +503,7 @@
       rooted: { worth: 14, name: 'Rooted', noMove: true, breakAttr: 'STR', resistedBy: 'STR' },
       numbed: { worth: 10, name: 'Numbed', attrs: { DEX: -1, SPD: -1 }, resistedBy: 'CON' },
       withering: { worth: 22, type: 'life', name: 'Withering', dot: { CON: 1 }, ap: -1, resistedBy: 'CON', living: true }, // Life bane (asystole)
-      innervated: { worth: 18, name: 'Innervated', regen: 2 },
+      innervated: { worth: 18, name: 'Innervated', regen: 6 },
       kindled: { worth: 10, name: 'Kindled', kindled: true }, // blows set targets burning
       frostWard: { worth: 6, name: 'Frost ward', resist: { fire: 0.5 } },
       freedom: { worth: 20, name: 'Freedom', freedom: true },
@@ -555,7 +544,7 @@
       // Poison and disease. persist: outlasts the fight (until cured or run its course).
       poisoned: { worth: 16, type: 'venom', name: 'Poisoned', resistedBy: 'CON', dot: { CON: 1 }, living: true },
       antivenom: { worth: 8, name: 'Antivenom', immune: ['poisoned'] },
-      diseased: { worth: 12, type: 'plague', name: 'Diseased', resistedBy: 'CON', attrs: { STR: -1 }, regen: -2, living: true, persist: true },
+      diseased: { worth: 12, type: 'plague', name: 'Diseased', resistedBy: 'CON', attrs: { STR: -1 }, regen: -6, living: true, persist: true },
       // PROVISIONAL (the user's spell list and magic items).
       chilled: { worth: 10, type: 'frost', name: 'Chilled', resistedBy: 'CON', moveMult: 0.5, attrs: { SPD: -1 }, living: true }, // frost: half the squares
       // PROVISIONAL (the user's spell list: Give + Frost, a curse that stacks): numb and losing stamina each round.
@@ -672,7 +661,7 @@
       absorb: { block: 0.5, parry: 0.25, offParry: 0.25, dodge: 0 },
       // PROVISIONAL: dodging costs 1 base stamina (Specifics: 2), so a dodge is the cheapest
       // defence in stamina when it works and the block the dearest.
-      dodgeStamina: 1,
+      dodgeStamina: 3,
       parry: { tn: 6 }, // (opposed: false) + Parry Training rank + floor((DEX−5)/2)
       dodge: { tn: 6 }, // (opposed: false) + Dodge Training rank + floor((SPD−5)/2) − armor DEX penalty
       // PROVISIONAL (the user's call): parries and dodges are opposed rolls. Defender d10 +
@@ -791,7 +780,7 @@
     // TUNED (arena, round 3): plate +1 stamina per action (was +2) and −3 regen (was −4).
     // Plate fighters were losing by exhaustion (0.6 collapses a fight); this brings heavy
     // armor from worst to about par in the open and best in close quarters.
-    armorAdjust: { plate: { stamina: 1, regen: 3 } },
+    armorAdjust: { plate: { stamina: 1, regen: 9 } },
     durabilityMitigationFloor: 0.75,
 
     // ---- Maneuvers: all PROVISIONAL (Outline: chances Open) ---------------

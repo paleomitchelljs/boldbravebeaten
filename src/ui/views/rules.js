@@ -41,7 +41,6 @@
             h('li', null, 'Power swings and longbow shots are wound up (drawn) the round before. While wound up you can\'t block or parry.'),
             h('li', null, 'End of round: bleeding ticks into CON, then stamina regenerates if you took no stamina damage.'))),
         h('section', { class: 'panel' }, h('h2', null, 'One hit'),
-          CONFIG.staminaScale > 1 ? h('p', { class: 'small muted' }, `Every action's base stamina cost is × ${CONFIG.staminaScale}, so exertion matters.`) : null,
           h('ol', { class: 'stack tight', style: { paddingLeft: '1.2em', margin: 0 } },
             h('li', null, 'Damage (P/S/B) = striking face × motion multiplier (× origin and enchantment), + STR bonus on the main type.'),
             h('li', null, 'One contest decides a blow: the attacker\'s d10 + ⌊(STR + SPD)/4⌋ + the motion against the defender\'s d10 + their defence (a blow nobody defends: a fixed number, lower for the prone, held, down or unaware). The margin is the attacker\'s total less the defender\'s; ties go to the defender.'),

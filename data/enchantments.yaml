@@ -59,10 +59,10 @@ enduring:
 bloodstone:
   name: Rubicite
   kinds: [armor]
-  effects: {regen: 1, heal: 1}
+  effects: {regen: 3, heal: 1}
   rarity: very rare
   value: 8
-  blurb: "Warm to the touch. +1 stamina regeneration; a long rest heals one more point."
+  blurb: "Warm to the touch. +3 stamina regeneration a round; a long rest heals one more point."
 sapping:
   name: Sapping
   kinds: [weapon]
