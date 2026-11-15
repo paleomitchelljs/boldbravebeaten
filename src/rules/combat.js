@@ -3212,16 +3212,19 @@
     }
   }
 
-  // A round of a body's wounds: bleeding costs stamina (wounds.bleed: stamina a point, less CON's share), and a torso
-  // wound its own (wounds.places.torso.stamina, by the torso's severity; pain doesn't touch it).
+  // A round of a body's wounds: bleeding is blood lost (wounds.bleed.harm a point of bleeding, less CON's share: harm on
+  // one wound of blood loss at the torso, which fills the boxes and can take the body down), and a torso wound costs
+  // stamina (wounds.places.torso.stamina, by the torso's severity; pain doesn't touch it). A body already down loses
+  // nothing more here: whether it bleeds out is settled when the fight ends (settleFallen).
   function bodyRound(enc, c) {
-    if (c.status.dead || C.tireless(c)) return;
-    const bleed = C.bleedLoss(c);
+    if (c.status.dead || C.tireless(c) || C.isDown(c)) return;
+    const blood = C.bleedLoss(c);
     const torso = C.woundEffect(c, 'torso', 'stamina', true);
-    const loss = bleed + torso;
-    if (!(loss > 0)) return;
-    c.stamina = Math.max(0, c.stamina - loss);
-    log(enc, `${c.name} ${[bleed ? `bleeds (−${bleed} stamina)` : null, torso ? `labours with the torso wound (−${torso})` : null].filter(Boolean).join(' and ')}.`, 'bleed');
+    if (torso > 0) c.stamina = Math.max(0, c.stamina - torso);
+    const was = C.isActive(c);
+    if (blood > 0) { C.harm(c, blood, 'torso', 'blood loss'); C.updateCondition(c); }
+    if (!(blood > 0 || torso > 0)) return;
+    log(enc, `${c.name} ${[blood ? `loses blood (${blood} harm)` : null, torso ? `labours with the torso wound (−${torso} stamina)` : null].filter(Boolean).join(' and ')}.${was && C.isDown(c) ? ` ${c.name} goes down.` : ''}`, 'bleed');
   }
 
   // The fight is over (CONFIG.wounds.bleed.survive): a body down and still bleeding is bound by its own side if one of

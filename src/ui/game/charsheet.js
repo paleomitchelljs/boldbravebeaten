@@ -111,7 +111,7 @@
     const list = C.describeWounds(c);
     return h('div', { class: 'stack tight wounds-panel' },
       h('div', { class: 'row small' }, h('span', { class: 'muted' }, 'Wounds'), h('span', { class: 'num' }, `${C.woundLoad(c)} of ${C.boxes(c)} boxes`),
-        C.bleeding(c) ? h('span', { class: 'chip bad' }, `bleeding ${C.bleeding(c)} (−${C.bleedLoss(c)} stamina a round)`) : null,
+        C.bleeding(c) ? h('span', { class: 'chip bad' }, `bleeding ${C.bleeding(c)} (${C.bleedLoss(c)} harm a round)`) : null,
         tip(`A wound has a place and a severity (1 to 3). ${C.boxes(c)} boxes of severity and you are down; a severity-3 wound can drop you on its own (CON resists the shock). Down is out of the fight, not dead: struck again, or left bleeding when the fight is lost, you die. WIL lets you act through ${C.grit(c)} point${C.grit(c) === 1 ? '' : 's'} of a place's wounds. Stamina is your breath: blocks, parries and blows spend it, and it comes back every round.`)),
       list.length ? list.map((w) => h('div', { class: 'row small wound-row' }, h('span', { class: 'chip wound-chip' + (w.sev >= 3 ? ' bad' : '') }, `${w.name} ${w.sev}`), h('span', { class: 'muted' }, `${w.kind}${w.bleed ? `, bleeding ${w.bleed}` : ''}${w.does ? `: ${w.does}` : ''}`)))
         : h('div', { class: 'small muted' }, 'Unhurt.'));

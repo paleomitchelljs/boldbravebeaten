@@ -73,7 +73,8 @@ locations:
 #   winding   stamina a blunt blow that breaks nothing costs, by the severity its blunt would be (not point for point)
 #   bleed     a cut bleeds `cut` per severity; a point by its width (Items.weaponStats wound.bleed) per severity,
 #             rounded up; a vital wound `vital` more; crushing and burning don't bleed; a big body bleeds bleed / size.
-#             Each round a bleeding body loses `stamina` stamina per point of bleeding, less floor(CON / conPer).
+#             Each round a bleeding body loses `harm` points of blood per point of bleeding, less floor(CON / conPer):
+#             harm on one wound of blood loss at the torso (it fills the boxes; a body already down loses no more).
 #             A body down and still bleeding when the fight ends, with no one of its side standing to bind it,
 #             rolls d10 + CON against `survive` + its bleeding: under, it dies.
 #   attrPlace where an old save's attribute damage, or harm named by an attribute, lands as a wound
@@ -84,15 +85,15 @@ wounds:
   boxes: 6
   severity: [1, 4, 7]
   vital: {head: 7, torso: 9, arms: 12, legs: 11}
-  shock: 12
+  shock: 11
   places:
     head: {stun: [1, 2], down: 3}
     torso: {stamina: [2, 4, 6]}
     arms: {ap: [0, 0.5, 1], damage: [1, 2, 3], drop: 3}
     legs: {move: [1, 2, 3], dodge: [1, 2, 3], fell: 3}
   pain: 4
-  winding: [3, 6, 10]
-  bleed: {cut: 1, vital: 1, stamina: 2, conPer: 5, survive: 10}
+  winding: [2, 4, 7]
+  bleed: {cut: 1, vital: 1, harm: 1, conPer: 5, survive: 10}
   attrPlace: {STR: arms, DEX: arms, SPD: legs, CON: torso, INT: head, WIL: head, WIS: head, CHA: head}
   tend: {tn: 6}
   cauterize: 2

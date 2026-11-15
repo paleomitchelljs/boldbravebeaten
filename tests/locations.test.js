@@ -70,10 +70,10 @@ test('locations: the AI sees the expectation over locations; aimed at one, it se
   const atLeg = Combat.computeHit(a, t, o, { location: 'legs' });
   const mean = Combat.computeHit(a, t, o);
   assert.ok(atTorso.armored && !atLeg.armored);
-  assert.ok(atLeg.slashToAttrs > atTorso.slashToAttrs);
-  assert.ok(mean.slashToAttrs > atTorso.slashToAttrs && mean.slashToAttrs < atLeg.slashToAttrs);
+  assert.ok(atLeg.cut > atTorso.cut);
+  assert.ok(mean.cut > atTorso.cut && mean.cut < atLeg.cut);
   assert.strictEqual(mean.location, null);
-  assert.strictEqual(Combat.computeHit(a, t, Object.assign({}, o, { aim: 'legs' })).slashToAttrs, atLeg.slashToAttrs, 'aimed, it lands there');
+  assert.strictEqual(Combat.computeHit(a, t, Object.assign({}, o, { aim: 'legs' })).cut, atLeg.cut, 'aimed, it lands there');
 });
 
 test('carry-through: a cut through a bare arm carries on into the worst-guarded place beside it, whose armor meets it', async () => {
@@ -84,15 +84,17 @@ test('carry-through: a cut through a bare arm carries on into the worst-guarded 
   // Mail on the torso, a plate helm: the torso is the worse-guarded place beside the arm.
   const bare = body('Bare arms', [Items.makeArmor('mail', null, 'average', { covers: ['torso'] }), Items.makeArmor('plate', null, 'average', { covers: ['head'] })]);
   const h = Combat.computeHit(a, bare, o, { location: 'arms' });
-  assert.ok(h.slashToAttrs > K.limb, `a cut big enough to carry (${h.slashToAttrs})`);
+  assert.ok(h.cut > K.limb, `a cut big enough to carry (${h.cut})`);
   assert.strictEqual(Combat.worstBeside(bare, 'arms', false), 'torso');
   const asked = [];
   const r = await Combat.applyHit(enc0(), { [a.id]: a, [bare.id]: bare }, a, bare, o, roller([], 1, asked), { location: 'arms' });
   assert.ok(!asked.includes('The cut carries on'), 'no die for where it carries');
   assert.match(r.text, /the cut carries \d+ into the torso/);
-  const intoMail = Combat.computeHit(a, bare, Object.assign({}, o, { damage: [0, h.slashToAttrs - K.limb, 0] }), { location: 'torso', carried: true });
-  assert.ok(r.hit.slashToAttrs <= K.limb + intoMail.slashToAttrs, 'the mail took its share of what carried');
-  assert.ok(r.hit.slashToAttrs < h.slashToAttrs, 'less reaches the body than if the torso were bare too');
+  // The arm keeps a limb's worth (a wound of its own); the mail takes its share of what carried into the torso.
+  const intoMail = Combat.computeHit(a, bare, Object.assign({}, o, { damage: [0, h.cut - K.limb, 0] }), { location: 'torso', carried: true });
+  assert.strictEqual(r.hit.cut, K.limb);
+  assert.ok(intoMail.cut < h.cut - K.limb, 'the mail took its share of what carried');
+  assert.ok(C.wounds(bare).some((w) => w.place === 'arms'), 'the arm is wounded');
   // Without the helm, the bare head is worse guarded: it carries there.
   const open = body('Open', [Items.makeArmor('mail', null, 'average', { covers: ['torso'] })]);
   const r1 = await Combat.applyHit(enc0(), { [a.id]: a, [open.id]: open }, a, open, o, roller([], 1), { location: 'arms' });
@@ -104,14 +106,14 @@ test('carry-through: a cut through a bare arm carries on into the worst-guarded 
   // Nor does a cut the mail on the arm stopped.
   const sleeved = body('Sleeved', [Items.makeArmor('mail', null, 'average', { covers: ['torso', 'arms'] }), Items.makeArmor('plate', null, 'average', { covers: ['head'] })]);
   const r3 = await Combat.applyHit(enc0(), { [a.id]: a, [sleeved.id]: sleeved }, a, sleeved, o, roller([], 1), { location: 'arms' });
-  if (Combat.computeHit(a, sleeved, o, { location: 'arms' }).slashToAttrs <= K.limb) assert.doesNotMatch(r3.text, /the cut carries/);
+  if (Combat.computeHit(a, sleeved, o, { location: 'arms' }).cut <= K.limb) assert.doesNotMatch(r3.text, /the cut carries/);
 });
 
 test('parry carry-through: a heavy swing beats through a light parry, weakened; a parried thrust stops dead', async () => {
   const atk = armed('A', 'greatsword');
   atk.base.STR = 14; atk.base.SPD = 1;
   const def = armed('D', 'rapier');
-  def.side = 'enemy'; def.base.SPD = 5; def.base.CON = 30; // slow enough that the greatsword, rolling high, goes first def.stamina = C.maxStamina(def);
+  def.side = 'enemy'; def.base.SPD = 4; // slow enough that the greatsword, rolling high, goes first def.stamina = C.maxStamina(def);
   const chars = { [atk.id]: atk, [def.id]: def };
   const enc = Combat.createEncounter('t', [atk.id, def.id], chars, 6, 1);
   enc.pos[atk.id] = { x: 0, y: 0 }; enc.pos[def.id] = { x: 2, y: 0 }; // the greatsword's own reach (cramped at 1)
@@ -121,11 +123,11 @@ test('parry carry-through: a heavy swing beats through a light parry, weakened; 
   assert.ok(share > 0.3, `a rapier meets little of a greatsword's cut (${share.toFixed(2)} carries)`);
   // The defender parries (and wins the roll: 10 against 1); the blow still lands, weakened.
   const io = { roller: roller([10, 1], 5), react: (req) => (req.kind === 'defend' ? 'parry' : null) };
-  const before = { stamina: def.stamina, dmg: C.totalDamage(def) };
+  const before = { stamina: def.stamina, dmg: C.woundLoad(def) };
   const err = await Combat.act(enc, chars, { actor: atk.id, type: 'strike', option: cut, target: def.id }, io);
   assert.strictEqual(err, null);
   assert.ok(enc.log.some((l) => /beats through the parry/.test(l.text)), enc.log.map((l) => l.text).join('\n'));
-  assert.ok(C.totalDamage(def) > before.dmg || def.stamina < before.stamina, 'some of it landed: ' + enc.log.map((l) => l.text).join(' / '));
+  assert.ok(C.woundLoad(def) > before.dmg || def.stamina < before.stamina, 'some of it landed: ' + enc.log.map((l) => l.text).join(' / '));
   const thrust = C.attackOptions(atk).find((o) => o.motion === 'thrust');
   assert.strictEqual(Combat.parryCarryShare(def, 'parry', thrust), 0);
 });
@@ -168,24 +170,26 @@ test('aimed blows: a declared location goes where it is aimed, with no location 
   assert.strictEqual(await Combat.act(enc, chars, { actor: a.id, type: 'strike', option: cut, target: t.id, location: 'tail' }, { roller: roller(), react: () => null }), 'No such place to aim at');
 });
 
-test('wounds by location: a cut takes from the location\'s attributes; an arm may drop its weapon, a leg go, a head be stunned', async () => {
+test('wounds by location: a cut leaves a wound where it lands; an arm at its `drop` lets go, a leg at `fell` goes, a head is stunned', async () => {
   const a = armed('A', 'longsword');
   a.base.STR = 12;
   const o = swing(a);
-  const W = CONFIG.locations.wounds;
-  // A cut to the bare legs takes SPD or CON only.
+  const P = CONFIG.wounds.places;
+  // A cut to the bare legs: a cut wound at the legs, nothing to the attributes.
   const t = body('Bare');
-  await Combat.applyHit(enc0(), { [a.id]: a, [t.id]: t }, a, t, o, roller([], 1), { location: 'legs' });
-  const hurt = Object.keys(t.damage).filter((k) => t.damage[k] > 0);
-  assert.ok(hurt.length && hurt.every((k) => W.attrs.legs.includes(k) || k === 'CON'), JSON.stringify(t.damage));
-  // A cut to the arm: d100 of 1 loses the grip.
-  const u = armed('U', 'longsword'); u.side = 'enemy'; u.base.CON = 30; u.stamina = C.maxStamina(u);
-  const r = await Combat.applyHit(enc0(), { [a.id]: a, [u.id]: u }, a, u, o, roller([], 1), { location: 'arms' });
+  const s0 = Object.assign({}, t.base);
+  await Combat.applyHit(enc0(), { [a.id]: a, [t.id]: t }, a, t, o, roller([], 10), { location: 'legs' });
+  assert.ok(C.wounds(t).some((w) => w.place === 'legs' && w.kind === 'cut'), JSON.stringify(t.wounds));
+  assert.deepEqual(t.base, s0);
+  // A cut to the arm big enough for its `drop` severity loses the grip.
+  const heavy = Object.assign({}, o, { damage: [0, CONFIG.wounds.severity[P.arms.drop - 1], 0] });
+  const u = armed('U', 'longsword'); u.side = 'enemy'; u.stamina = C.maxStamina(u);
+  const r = await Combat.applyHit(enc0(), { [a.id]: a, [u.id]: u }, a, u, heavy, roller([], 10), { location: 'arms', margin: 1 });
   assert.match(r.text, /hand opens/);
   assert.strictEqual(C.wieldedWeapon(u), null);
-  // A cut to the leg: a 1 takes the leg out.
+  // And to the leg: the leg goes.
   const v = body('V');
-  const r2 = await Combat.applyHit(enc0(), { [a.id]: a, [v.id]: v }, a, v, o, roller([], 1), { location: 'legs' });
+  const r2 = await Combat.applyHit(enc0(), { [a.id]: a, [v.id]: v }, a, v, heavy, roller([], 10), { location: 'legs', margin: 1 });
   assert.match(r2.text, /leg gives/);
   assert.ok(v.status.prone);
   // The margin a vital wound needs follows the location: least at the head, more at the torso, most on a limb; and

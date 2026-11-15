@@ -51,6 +51,7 @@ function create() {
     half: 0, quarter: 0, collapses: 0, gotUp: 0, downDied: 0, downAtEnd: 0, downWon: 0, hero: { collapses: 0, gotUp: 0, downDied: 0, downAtEnd: 0, downWon: 0 }, attrWound: 0, heroAttrWound: 0,
     blows: { all: {}, heroes: {} }, locs: { all: {}, heroes: {} }, kills: {},
     heroDeaths: { n: 0, action: {}, loc: {}, apLeft: 0, down: 0, round1: 0, byFoe: {} },
+    heroDowns: { n: 0, action: {}, loc: {}, byFoe: {}, sev: {} }, // blows that took a hero down (step E)
     tempo: newTempo(),
     ai: { intoReach: 0, intoReachBare: 0, sidearm: 0, tradeDown: 0, strikes: 0, worthless: 0, immune: 0, idleRounds: 0, standOffs: 0, feat: {}, casts: 0, casterFights: 0, spLeft: 0, spMax: 0, overchannel: 0, spent: 0 },
     watch(enc, chars, heroIds) { return watch(this, enc, chars, heroIds); },
@@ -93,6 +94,12 @@ function watch(M, enc, chars, heroIds) {
     M.locs.all[loc] = (M.locs.all[loc] || 0) + 1;
     if (hero) { M.blows.heroes[a] = (M.blows.heroes[a] || 0) + 1; M.locs.heroes[loc] = (M.locs.heroes[loc] || 0) + 1; }
     if (ev.target && ev.target.status.dead) M.kills[a] = (M.kills[a] || 0) + 1;
+    if (ev.downed && ev.target && heroes.has(ev.target.id) && C.isDown(ev.target)) {
+      const D = M.heroDowns, w = C.wounds(ev.target)[C.wounds(ev.target).length - 1];
+      const who = ev.attacker ? String(ev.attacker.monster || ev.attacker.template || ev.attacker.name || '?') : '?';
+      D.n++; D.action[a] = (D.action[a] || 0) + 1; D.loc[loc] = (D.loc[loc] || 0) + 1; D.byFoe[who] = (D.byFoe[who] || 0) + 1;
+      const k = w ? `${w.sev}` : '?'; D.sev[k] = (D.sev[k] || 0) + 1;
+    }
     // What kills a hero (step 6): the blow's action and place, whether they had AP left to meet it, were down already,
     // and the round; the killer by name (the template or monster, not the individual).
     if (ev.target && ev.target.status.dead && heroes.has(ev.target.id) && !(start[ev.target.id] || {}).dead && !killed.has(ev.target.id)) {
@@ -529,6 +536,7 @@ function report(M, indent) {
     `${I}  blows landed by location (${s.locs.total - (M.locs.all.none || 0)} with a location; ${M.locs.all.none || 0} without, spells and bursts): ${fmtShares(located(M.locs.all))}`,
     s.heroLocs.total ? `${I}    the heroes': ${fmtShares(located(M.locs.heroes))}` : null,
     `${I}  killing blows by action (${s.kills.total}): ${fmtShares(s.kills)}`,
+    M.heroDowns.n ? `${I}  heroes downed by a blow (${M.heroDowns.n}): by ${fmtShares(shareOf(M.heroDowns.action))}; at ${fmtShares(shareOf(M.heroDowns.loc))}; the last wound's severity ${fmtShares(shareOf(M.heroDowns.sev))}; by ${fmtShares(shareOf(M.heroDowns.byFoe))}` : null,
     M.heroDeaths.n ? `${I}  heroes killed (${M.heroDeaths.n}): by ${fmtShares(shareOf(M.heroDeaths.action))}; at ${fmtShares(shareOf(M.heroDeaths.loc))}; down already ${pc(M.heroDeaths.down / M.heroDeaths.n)}, standing with AP left ${pc(M.heroDeaths.apLeft / M.heroDeaths.n)}, in round 1 ${pc(M.heroDeaths.round1 / M.heroDeaths.n)}; by ${fmtShares(shareOf(M.heroDeaths.byFoe))}` : null,
     `${I}  AI: moves into a foe's reach ${s.ai.intoReach}, with no defence left ${s.ai.intoReachBare} (${pc(s.ai.intoReach ? s.ai.intoReachBare / s.ai.intoReach : 0)}); sidearms drawn ${s.ai.sidearm}, trading down ${s.ai.tradeDown}; strikes ${s.ai.strikes}, at a body immune to them ${s.ai.immune}, that could do nothing else ${s.ai.worthless}`,
     `${I}    idle rounds ${s.ai.idleRounds} (${(s.ai.idleRounds / (s.fights || 1)).toFixed(2)} a fight), stand-offs ${s.ai.standOffs}; casts ${s.ai.casts} (${s.ai.casterFights ? (s.ai.casts / s.ai.casterFights).toFixed(2) : '-'} a caster a fight, ${s.ai.spMax ? pc(s.ai.spLeft / s.ai.spMax) : '-'} of spell points unspent at the end), overchannels ${s.ai.overchannel}; spent actions ${s.ai.spent}; feat actions ${Object.entries(s.ai.feat).map(([k, v]) => k + ' ' + v).join(', ') || 'none'}`,

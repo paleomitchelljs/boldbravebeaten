@@ -149,10 +149,10 @@ test('winding: blunt that breaks nothing costs a fixed winding by its severity, 
   assert.strictEqual(p.pts, 0);
 });
 
-test('bleeding: each round costs stamina, less CON; at the fight\'s end the down are bound by a side that stands, else bleed out or not by d10 + CON', async () => {
+test('bleeding: each round is blood lost (harm), less CON; at the fight\'s end the down are bound by a side that stands, else bleed out or not by d10 + CON', async () => {
   const t = body();
   t.wounds.push(wound('torso', 1, { bleed: 2 }));
-  assert.strictEqual(C.bleedLoss(t), Math.max(0, 2 * W.bleed.stamina - Math.floor(C.attr(t, 'CON') / W.bleed.conPer)));
+  assert.strictEqual(C.bleedLoss(t), Math.max(0, 2 * W.bleed.harm - Math.floor(C.attr(t, 'CON') / W.bleed.conPer)));
   const ally = body(), foe = armed();
   ally.side = 'enemy';
   const down = () => { const c = body(); for (let i = 0; i < C.boxes(c) - 1; i++) c.wounds.push(wound('torso', 1)); C.addWound(c, wound('legs', 1, { bleed: 2 }), null); return c; };

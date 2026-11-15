@@ -180,8 +180,9 @@
   // takes to be spent puts up no defence, so every place lands; one that can react pays the guarded aim.
   function bestAim(c, target, opt, d, enc) {
     const L = G.CONFIG.locations;
-    // With wound tables every place differs (a hand drops its sword); without them only mixed armor does.
-    if (!L || !L.aim || opt.spell || (!L.wounds && C.armorUniform(target))) return null;
+    // Every place's wounds differ (CONFIG.wounds.places: an arm drops its sword, a leg fells), so there is always a
+    // choice, armor or no.
+    if (!L || !L.aim || opt.spell) return null;
     const kinds = ['parry', 'dodge'].concat(C.shieldReady(target) ? ['block'] : []);
     const guarded = Combat.aimGuarded(target, c, enc);
     const drained = !!enc && seemsSpent(enc, target, kinds);
@@ -1301,13 +1302,13 @@
 
     // 4. Bandage, re-arm.
     const band = la.other.find((o) => o.type === 'bandage' && o.affordable);
-    if (band && C.bleedLoss(c) >= 3 && band.targets.some((t) => t.id === id)) return { actor: id, type: 'bandage', target: id };
+    if (band && C.bleedLoss(c) >= 1 && band.targets.some((t) => t.id === id)) return { actor: id, type: 'bandage', target: id };
     // A friend down and bleeding beside me, with no foe in reach of me: bind them, so they live if we lose.
     const fallen = band && band.targets.find((t) => t.id !== id && chars[t.id] && chars[t.id].side === c.side && C.isDown(chars[t.id]) && C.bleeding(chars[t.id]) > 0);
     if (fallen && !foes.some((f) => enc.pos[f] && Combat.dist(enc.pos[f], enc.pos[id]) <= Math.max(1, meleeReach(chars[f])))) return { actor: id, type: 'bandage', target: fallen.id };
     // Cauterize when there is no bandage to be had and the bleeding costs more than the burn.
     const burn = la.other.find((o) => o.type === 'cauterize' && o.affordable && o.targets.some((t) => t.id === id));
-    if (burn && !band && C.bleedLoss(c) >= 3) return { actor: id, type: 'cauterize', target: id };
+    if (burn && !band && C.bleedLoss(c) >= 2) return { actor: id, type: 'cauterize', target: id };
     if (!C.wieldedWeapon(c)) {
       const draw = la.other.find((o) => (o.type === 'drawSidearm' || o.type === 'pickUp') && o.affordable);
       if (draw) return { actor: id, type: draw.type };

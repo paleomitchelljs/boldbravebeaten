@@ -17,7 +17,7 @@
     if (L) out.push(h('span', { class: L.role === 'holder' ? 'chip' : 'chip warn' }, L.level === 'clinch' ? 'Clinched' : L.role === 'holder' ? (L.level === 'pin' ? 'Pinning' : 'Holding') : L.level === 'pin' ? 'Pinned' : 'Held'));
     if (st.dropped && st.dropped.length) out.push(h('span', { class: 'chip warn' }, 'Weapon on the ground'));
     if (st.windUp) out.push(h('span', { class: 'chip warn', title: 'Cannot block or parry until the blow is released' }, 'Wound up: ' + st.windUp.label));
-    if (C.bleeding(c) && !st.dead) out.push(h('span', { class: 'chip bad' }, `Bleeding ${C.bleeding(c)} (−${C.bleedLoss(c)}/rd)`));
+    if (C.bleeding(c) && !st.dead) out.push(h('span', { class: 'chip bad' }, `Bleeding ${C.bleeding(c)} (${C.bleedLoss(c)} harm/rd)`));
     if (!st.dead) for (const w of C.describeWounds(c)) out.push(h('span', { class: 'chip ' + (w.sev >= 3 ? 'bad' : 'warn'), title: w.does }, `${w.name} ${w.sev}`));
     if (G.Conditions && !st.dead) for (const l of G.Conditions.labels(c)) out.push(h('span', { class: 'chip warn' }, l));
     if (c.conjured && !st.dead) out.push(h('span', { class: 'chip' }, `Conjured (${c.conjured.rounds} rd)`));

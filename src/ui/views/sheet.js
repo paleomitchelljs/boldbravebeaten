@@ -52,7 +52,7 @@
       // Wounds (CONFIG.wounds): each with its place, severity and what it does; the GM can mend one a step.
       C.wounds(c).length ? h('div', { class: 'stack tight' },
         h('div', { class: 'row small' }, h('span', { class: 'muted' }, `Wounds ${C.woundLoad(c)} of ${C.boxes(c)} boxes`),
-          C.bleeding(c) ? h('span', { class: 'chip bad' }, `Bleeding ${C.bleeding(c)} (−${C.bleedLoss(c)} stamina a round)`) : null,
+          C.bleeding(c) ? h('span', { class: 'chip bad' }, `Bleeding ${C.bleeding(c)} (${C.bleedLoss(c)} harm a round)`) : null,
           C.bleeding(c) ? h('button', { class: 'small', onclick: () => { C.bindWounds(c); app.save(); app.render(); toast('Bleeding stopped'); } }, 'Stop bleeding') : null),
         C.describeWounds(c).map((w) => h('div', { class: 'row small' }, h('span', { class: 'chip warn' }, `${w.name} ${w.sev}`), h('span', { class: 'muted' }, `${w.kind}${w.does ? `: ${w.does}` : ''}`)))
       ) : null,

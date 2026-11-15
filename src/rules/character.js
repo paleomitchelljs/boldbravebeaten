@@ -1209,13 +1209,14 @@
     for (let i = 0; i < T.length; i++) if (pts >= T[i] * z) s = i + 1;
     return s;
   }
-  // Bleeding, all wounds together (a round's loss is this × wounds.bleed.stamina, less CON's share).
+  // Bleeding, all wounds together; a round's blood loss is this × wounds.bleed.harm, less CON's share (points of harm
+  // on one wound of blood loss at the torso: Combat.bodyRound).
   function bleeding(c) {
     return wounds(c).reduce((t, w) => t + (w.bleed || 0), 0);
   }
   function bleedLoss(c) {
     const B = WK().bleed, n = bleeding(c);
-    return n > 0 ? Math.max(0, n * B.stamina - Math.floor(attr(c, 'CON') / B.conPer)) : 0;
+    return n > 0 ? Math.max(0, n * B.harm - Math.floor(attr(c, 'CON') / B.conPer)) : 0;
   }
   // Pain (wounds.pain): the severity points a fighter acts through, from WIL.
   function grit(c) {
