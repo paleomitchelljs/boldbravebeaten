@@ -62,6 +62,28 @@
     return { prone: false, grapple: null, webbed: 0, unconscious: false, collapsed: null, dead: false, dropped: [], windUp: null, conds: [] };
   }
 
+  // Worn pieces cover only places the body has (CONFIG.locations.order), and no two the same place: a piece that
+  // overlaps one worn before it (the torso piece first) comes off into the pack, as does one left covering nothing.
+  function normalizePieces(c) {
+    const L = CONFIG.locations;
+    if (!L) return;
+    const taken = new Set();
+    const keep = (p) => {
+      if (Array.isArray(p.covers)) p.covers = p.covers.filter((l) => L.order.includes(l));
+      const cv = Items.coversOf(p);
+      if (!cv.length || cv.some((l) => taken.has(l))) return false;
+      cv.forEach((l) => taken.add(l));
+      return true;
+    };
+    if (c.armor && !keep(c.armor)) { c.inventory.items.push(c.armor); c.armor = null; }
+    c.pieces = c.pieces.filter((p) => {
+      if (!p || p === c.armor) return !!p;
+      if (keep(p)) return true;
+      c.inventory.items.push(p);
+      return false;
+    });
+  }
+
   // Fill in whatever a character lacks (an old save, a hand-made one). Changes of shape between versions are not
   // here: they are steps in src/game/save.js, run before this.
   function normalize(c) {
@@ -78,6 +100,8 @@
     c.weapons = c.weapons || [];
     if (!Array.isArray(c.pieces)) c.pieces = [];
     for (const it of [c.armor, c.shield].concat(c.pieces, c.weapons)) if (it) Items.normalizeItem(it);
+    c.inventory = Object.assign({ bandages: 0, gold: 0, arrows: 0, bodkins: 0, items: [], components: {} }, c.inventory || {});
+    normalizePieces(c);
     c.bleeds = c.bleeds || [];
     if (c.offhand === undefined) c.offhand = null;
     c.inventory = Object.assign({ bandages: 0, gold: 0, arrows: 0, bodkins: 0, items: [], components: {} }, c.inventory || {});
@@ -445,7 +469,7 @@
     return L.order.every((l) => armorAt(c, l) === first);
   }
 
-  const NO_ARMOR = { type: 'none', mit: { P: 0, S: 0, B: 0 }, effMit: { P: 0, S: 0, B: 0 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, passThrough: 1, durability: 0, maxDurability: 0, pierce: null, passBurst: 1, transmit: 1, cutThrough: null, dissipate: null, metal: false, material: null, piece: null };
+  const NO_ARMOR = { type: 'none', mit: { P: 0, S: 0, B: 0 }, effMit: { P: 0, S: 0, B: 0 }, spd: 0, dex: 0, stamina: 0, regen: 0, standUp: 0, durability: 0, maxDurability: 0, pierce: null, transmit: 1, cutThrough: null, dissipate: null, metal: false, material: null, piece: null };
 
   // Feats that lighten a type of armor, on the penalties of every piece of that type together.
   function armorFeats(c, type, p) {
@@ -482,8 +506,8 @@
     for (const k of ['P', 'S', 'B']) effMit[k] = Math.round(b.mit[k] * scale);
     return {
       type: a.type, mit: b.mit, effMit, spd: pen.spd, dex: pen.dex, stamina: pen.stamina, regen: b.regen, standUp: b.standUp,
-      passThrough: b.passThrough, durability: a.durability, maxDurability: b.maxDurability,
-      pierce: b.pierce, metal: b.metal, material: b.material, passBurst: b.passBurst, transmit: b.transmit,
+      durability: a.durability, maxDurability: b.maxDurability,
+      pierce: b.pierce, metal: b.metal, material: b.material, transmit: b.transmit,
       cutThrough: b.cutThrough != null ? b.cutThrough * scale : null, // a worn coat gives way to a cut sooner
       // Like mitigation, it fades as the armor wears.
       dissipate: { glancing: b.dissipate.glancing * scale, crushing: b.dissipate.crushing * scale },

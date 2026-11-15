@@ -8,8 +8,8 @@
  * c.offhand and c.trinkets (each worn thing with `at`, the slot it is in), so nothing else needs to know the
  * slots exist.
  *
- * Armor (CONFIG.locations): the six locations are slots too: the torso, and the head, arms, hands, legs and
- * feet slots, which a worn thing may take instead (a crown or a helm, not both). A piece takes every slot it
+ * Armor (CONFIG.locations): the four locations are slots too: the torso, and the head, arms and legs slots,
+ * which a worn thing may take instead (a crown or a helm, not both). A piece takes every slot it
  * covers (a hauberk the torso and arms); putting it on takes off whatever was there.
  */
 (function (G) {
@@ -186,7 +186,7 @@
       const b = Items.armorBase(item);
       const L = G.CONFIG.locations;
       const where = L && b.covers.length < L.order.length ? `${L.order.filter((l) => b.covers.includes(l)).map((l) => L.names[l] || l).join(', ')} · ` : '';
-      return where + `P${b.mit.P} S${b.mit.S} B${b.mit.B}` + (b.pierce ? ` · points burst at ${b.pierce.resist}, gap ${b.pierce.gap}` : '') + (b.spd || b.dex ? ` · SPD−${b.spd} DEX−${b.dex}` : '') + (b.weight ? ` · ${b.weight} kg` : '') + ` · dur ${item.durability}/${b.maxDurability}`;
+      return where + `P${b.mit.P} S${b.mit.S} B${b.mit.B}` + (b.pierce ? ` · points through at ${b.pierce.resist}` : '') + (b.spd || b.dex ? ` · SPD−${b.spd} DEX−${b.dex}` : '') + (b.weight ? ` · ${b.weight} kg` : '') + ` · dur ${item.durability}/${b.maxDurability}`;
     }
     if (item.kind === 'shield') {
       const s = Items.shieldStats(item);

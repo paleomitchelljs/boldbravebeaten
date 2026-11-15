@@ -65,6 +65,13 @@
     return ['P', 'S', 'B'].every((k, i) => !v[i] || C.damageMult(target, k) === 0);
   }
 
+  // The chance a hit's CON kills: computeHit's killP over margins and places, or (a spell's hit, one outcome) whether
+  // what it takes reaches the CON left.
+  function killChance(h, target) {
+    if (h.killP != null) return h.killP;
+    return h.toCON + h.bluntToCON >= C.attr(target, 'CON') ? 1 : 0;
+  }
+
   // How much a hit is worth to the attacker, in stamina-equivalent points.
   // Attribute damage costs max stamina and bleeds; a hit that drops the target is worth most.
   function hitValue(attacker, target, option, distance) {
@@ -76,15 +83,15 @@
       return metal ? Math.min(option.rust, target.armor.durability) * 1.0 : 0;
     }
     const h = Combat.computeHit(attacker, target, option, { distance: distance || (option.minRange || 1) + (option.closePenalty ? 1 : 0) });
-    // A CON point now is worth 5, a point of bleeding later 3 (it can be bandaged). Piercing
-    // bleeds by the wound's width; a vital wound (wound roll) multiplies it.
+    // A CON point now is worth 5, a point of bleeding later 3 (it can be bandaged). Piercing bleeds by the wound's
+    // width. computeHit's expectation is over the contest's margins (a blow nobody defends) and the places it lands:
+    // vitalCON is what vital wounds add, expected.
     const bleedV = h.noBleed ? 0 : 3;
     const pierceV = h.toCON * (5 + bleedV * h.bleedFactor);
-    const pV = Combat.vitalNeed(h.pierceVital) / 10, cV = Combat.vitalNeed(h.cutVital) / 10;
     // A point into a limb (R4) and a crush (R5) take the location's attributes: a point of either is worth what a
     // point of CON or of a cut is (it weakens), and only CON counts toward the kill below.
     const limbP = (h.pointToAttrs || 0) * (5 + bleedV * h.bleedFactor);
-    let v = (pierceV + limbP) * (1 + pV * (G.CONFIG.vital.mult - 1)) + h.slashToAttrs * (5 + bleedV) * (1 + cV) + (h.bluntToCON + (h.crushToAttrs || 0)) * 5 + h.bluntToStamina;
+    let v = pierceV + limbP + (h.vitalCON || 0) * (5 + bleedV) + h.slashToAttrs * (5 + bleedV) + (h.bluntToCON + (h.crushToAttrs || 0)) * 5 + h.bluntToStamina;
     const goesIn = h.toCON + (h.pointToAttrs || 0) + h.slashToAttrs;
     if (option.venom && goesIn > 0) v += Math.min(option.venom.con, goesIn) * option.venom.rounds * 6;
     // A spell's after-effects (Magic: noun onHit), if anything got through.
@@ -100,21 +107,18 @@
     // What a wound does where it is aimed (CONFIG.locations.wounds.effects): a dropped weapon, a fall, a stun.
     const E = h.location && G.CONFIG.locations && G.CONFIG.locations.wounds && G.CONFIG.locations.wounds.effects;
     const fx = E ? E[h.location] : null;
-    const held = h.aimHold != null ? h.aimHold : 1; // an aimed blow lands there only so often
     if (fx) {
       const sz = (target.traits && target.traits.size) || 1;
       const p = (per, n) => Math.min(0.9, (per * n) / sz);
       const wound = h.toCON + (h.pointToAttrs || 0) + h.slashToAttrs;
-      if (fx.disarm && C.wieldedWeapon(target) && !C.wieldedWeapon(target).natural) v += held * p(fx.disarm, wound) * 8;
-      if (fx.trip && !target.status.prone) v += held * p(fx.trip, wound) * 8;
-      if (fx.stun && !C.tireless(target)) v += held * p(fx.stun, h.bluntToStamina + h.bluntToCON) * 6;
+      if (fx.disarm && C.wieldedWeapon(target) && !C.wieldedWeapon(target).natural) v += p(fx.disarm, wound) * 8;
+      if (fx.trip && !target.status.prone) v += p(fx.trip, wound) * 8;
+      if (fx.stun && !C.tireless(target)) v += p(fx.stun, h.bluntToStamina + h.bluntToCON) * 6;
     }
-    // A kill, at the odds of a point finding a gap when it has to (CONFIG.pierce).
-    const con = C.attr(target, 'CON');
-    const k = h.gap ? h.gap.got : h, kp = h.gap ? h.gap.chance : 1;
-    if (k.toCON + k.bluntToCON >= con) v += 60 * kp;
-    else if (k.toCON + (k.pointToAttrs || 0) > 0 && (k.toCON + (k.pointToAttrs || 0)) * G.CONFIG.vital.mult + k.bluntToCON >= con) v += 60 * pV * kp;
-    else if (h.bluntToStamina >= target.stamina && target.stamina > 0) v += 40;
+    // A kill, at the odds over the margins (a point that has to get through, a vital wound).
+    const kp = killChance(h, target);
+    v += 60 * kp;
+    if (h.bluntToStamina >= target.stamina && target.stamina > 0) v += 40 * (1 - kp);
     return v;
   }
 
@@ -144,12 +148,9 @@
     const b = Combat.sweepTarget(enc, chars, c, target, o);
     if (!b) return 0;
     const h = Combat.computeHit(c, target, o, { distance: d });
-    const con = C.attr(target, 'CON');
-    const k = h.gap ? h.gap.got : h, kp = h.gap ? h.gap.chance : 1;
     let pDrop = 0;
     if (!C.isActive(target)) pDrop = 0;
-    else if (k.toCON + k.bluntToCON >= con) pDrop = kp;
-    else if (h.bluntToStamina >= target.stamina && target.stamina > 0) pDrop = 0.7;
+    else { const kp = killChance(h, target); pDrop = kp + (h.bluntToStamina >= target.stamina && target.stamina > 0 ? 0.7 * (1 - kp) : 0); }
     const dodge = Combat.defenseUnavailable(target, 'dodge', { type: 'strike', option: o, actor: c.id }, { [c.id]: c }) ? 0 : 0.5 * Combat.defenseOdds(target, 'dodge', o.motion, c, o);
     const f = Combat.sweepForce(o);
     const so = Object.assign({}, o, { sweep: true, damage: o.damage.map((x) => Math.floor(x * f)), punch: (o.punch || 0) * f });

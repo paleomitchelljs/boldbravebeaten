@@ -84,7 +84,7 @@
       h('div', { class: 'chips' },
         c.armor ? h('span', { class: 'chip', title: 'Torso armor: mitigation by damage type once wear is counted. Other locations have their own piece, or none.' }, `Torso P${ai.effMit.P} S${ai.effMit.S} B${ai.effMit.B}`) : h('span', { class: 'chip' }, C.armorPieces(c).length ? 'Torso bare' : 'No armor'),
         c.armor ? h('span', { class: 'chip', title: 'Armor durability' }, `Dur ${ai.durability}/${ai.maxDurability}`) : null,
-        ai.pierce ? h('span', { class: 'chip', title: `Points: one with ${ai.pierce.resist}+ punch bursts through; a lighter one must find a gap (d10 + ⌊DEX/4⌋ + feats against ${ai.pierce.gap}) or is turned` }, `Pierce ${ai.pierce.resist}/${ai.pierce.gap}`) : null,
+        ai.pierce ? h('span', { class: 'chip', title: `Points: one with ${ai.pierce.resist}+ punch gets through; a lighter one needs a margin on the blow, or is turned` }, `Pierce ${ai.pierce.resist}`) : null,
         ai.spd || ai.dex ? h('span', { class: 'chip warn', title: 'Armor slows and stiffens you' }, `SPD −${ai.spd} · DEX −${ai.dex}`) : null,
         sh ? h('span', { class: 'chip', title: `Shield: a block costs ${C.fmtAP(C.actionCost(c, 'block').ap)} AP and holds blows up to ${sh.threshold}; durability ${c.shield.durability}/${sh.maxDurability}` }, `Shield ${C.fmtAP(C.actionCost(c, 'block').ap)} AP · ${sh.threshold}`) : null),
       editable ? h('div', { class: 'row small muted' }, 'Gear comes from the pack.', tip('Swapping is for town, camp and the quiet before a fight. Pick from a slot\'s list to put something on; "Take off" sends it to the pack.')) : null);

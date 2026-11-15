@@ -109,10 +109,12 @@ async function through(world, tally, P) {
     f.n++; f.foes += Object.keys(world.battle.foes).length; f.rounds += enc.round;
     for (const l of enc.log) {
       const text = String(l.text || l);
-      const m = text.match(/'s ([A-Z][A-Za-z\- ()]+?) hits .*?→ on the (\w+)/);
+      // The blow's line (Combat.applyHit): "→ by 3: through the mail at the arms" / "on the legs (bare)".
+      const m = text.match(/'s ([A-Z][A-Za-z\- ()]+?) hits .*?→ by -?\d+[^:]*: .*?(?:at the (\w+)|on the (\w+) \(bare\))/);
       if (!m) continue;
+      const where = m[2] || m[3];
       tally.blows++;
-      tally.landed[m[2]] = (tally.landed[m[2]] || 0) + 1;
+      tally.landed[where] = (tally.landed[where] || 0) + 1;
       tally.by[m[1]] = (tally.by[m[1]] || 0) + 1;
       if (/is DEAD/.test(text)) { tally.killedBy[m[1]] = (tally.killedBy[m[1]] || 0) + 1; tally.kills++; }
     }

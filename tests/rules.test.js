@@ -24,7 +24,7 @@ function asWritten(fn) {
     apScale: 1, apDisplay: 1, costScale: null, apBase: 3, apDie: null, apSpdContinuous: false, apCurve: null, moveAP: null, wholeTurnAction: false,
     armorActionAP: 0, quickCut: null, minActionAP: 1, minStrikeAP: 1, weaponWear: null, weariness: null, vigor: null, armorPierceWear: 0,
     defense: Object.assign({}, D0, { block: Object.assign({}, D0.block, { opposed: false }), dodgeBonus: 0, absorb: null, dodgeStamina: null }),
-    staminaScale: 1, pierceMode: 'floor', passThroughByArmor: null, pierce: null, moveScale: 1, moveSpdContinuous: false, armorAdjust: {}, standUp: null, grappling: null, weaponModel: 'table',
+    staminaScale: 1, moveScale: 1, moveSpdContinuous: false, armorAdjust: {}, standUp: null, grappling: null, weaponModel: 'table',
     // The Specifics had no hit locations: one d4 per point of a cut, wherever it lands.
     locations: Object.assign({}, C0.locations, { wounds: null }),
     // Stamina as the Specifics have it: no regeneration in a round struck, "too exhausted", unconscious at 0 (the
@@ -227,7 +227,7 @@ test('losing an attribute lowers max and current stamina', () => {
   assert.strictEqual(c.stamina, 26);
 });
 
-test('plate stops a thrust; a half-sword thrust finds the gaps', () => asWritten(() => {
+test('plate turns a thrust; a half-sword thrust gets through at a lower margin', () => asWritten(() => {
   const atk = fighter('Knight');
   atk.weapons.push(Items.makeWeapon('longsword'));
   atk.wield = atk.weapons[0].id;
@@ -238,31 +238,17 @@ test('plate stops a thrust; a half-sword thrust finds the gaps', () => asWritten
   const thrust = opts.find((o) => o.motion === 'thrust' && !o.halfSword);
   const half = opts.find((o) => o.halfSword);
   assert.strictEqual(half.ap, thrust.ap + 1);
-  assert.strictEqual(Combat.computeHit(atk, tgt, thrust).toCON, 0, '(5−4)×0.5 rounds down to 0');
-  const onFull = Combat.computeHit(atk, tgt, half).toCON;
+  const at = (o, loc, m) => Combat.computeHit(atk, tgt, o, { location: loc || 'torso', margin: m || 0 });
+  assert.strictEqual(at(thrust).pierce, 'turned');
+  assert.strictEqual(at(thrust).toCON, 0);
+  assert.ok(at(half).pierceNeed <= at(thrust).pierceNeed - B.CONFIG.pierce.halfSword, 'the half-sword thrust needs less margin');
+  assert.strictEqual(at(half, 'torso', at(half).pierceNeed).pierce, 'through', 'and gets through at it');
   // A half harness (torso, arms, legs: CONFIG.locations) is full plate where it is and bare where it isn't.
   tgt.armor = Items.makeArmor('plate', 'half', 'average');
-  assert.strictEqual(Combat.computeHit(atk, tgt, half, { location: 'torso' }).toCON, onFull);
-  assert.strictEqual(Combat.computeHit(atk, tgt, half, { location: 'head' }).toCON, half.damage[0], 'the bare head takes the whole point');
-  const mixed = Combat.computeHit(atk, tgt, half).toCON;
-  assert.ok(mixed > onFull && mixed < half.damage[0], 'the AI sees the expectation over the locations');
+  assert.strictEqual(at(half, 'head').toCON, half.damage[0], 'the bare head takes the whole point');
+  const plated = Combat.computeHit(atk, tgt, half, { location: 'torso' }).toCON, mixed = Combat.computeHit(atk, tgt, half).toCON;
+  assert.ok(mixed > plated && mixed < half.damage[0], 'the AI sees the expectation over the margins and the locations');
 }));
-
-test('roll mode (without CONFIG.pierce): each leftover piercing point has a chance to reach CON', () => noWounds(() => withConfig({ pierce: null }, async () => {
-  const atk = fighter('Stabber');
-  atk.weapons.push(Items.makeWeapon('rapier'));
-  atk.wield = atk.weapons[0].id;
-  const tgt = fighter('Mailed');
-  tgt.armor = Items.makeArmor('mail', 'full', 'standard'); // P mitigation 1, pass-through 0.5
-  const thrust = C.attackOptions(atk).find((o) => o.motion === 'thrust');
-  const h = Combat.computeHit(atk, tgt, thrust);
-  assert.strictEqual(h.pierceLeft, 5);
-  assert.strictEqual(h.toCON, 2.5, 'expectation used by the AI');
-  const enc = { hitThisRound: {}, fortressUsed: {} };
-  // d10s 1,5,6,9,10 → two of five are ≤ 5
-  await Combat.applyHit(enc, { [atk.id]: atk, [tgt.id]: tgt }, atk, tgt, thrust, roller(1, [1, 5, 6, 9, 10]));
-  assert.strictEqual(tgt.damage.CON, 2);
-})));
 
 test('feat tiers and prerequisites: the tree\'s skill unlocks its tiers; a requirement may be a skill', () => {
   const c = fighter('Learner');
@@ -895,8 +881,8 @@ test('grappling: guards never meet a grapple; pinned armor is pierced', async ()
   const pinned = Combat.computeHit(g.a, g.t, stab, { distance: 1 });
   g.t.status.grapple = Object.assign({}, g.t.status.grapple, { level: 'hold' });
   const held = Combat.computeHit(g.a, g.t, stab, { distance: 1 });
-  assert.strictEqual(pinned.pierce, 'gap', 'a pin opens the armor: the point goes in at a gap');
-  assert.ok(held.gap && pinned.toCON > held.toCON, 'held but not pinned, it must find one');
+  assert.strictEqual(pinned.pierce, 'through', 'a pin opens the armor: the point always gets through');
+  assert.ok(pinned.toCON > held.toCON, 'held but not pinned, the plate\'s mitigation still counts');
   // Guards never meet a grapple: no reaction is offered against one.
   g.enc.ap[g.t.id] = 10;
   assert.deepStrictEqual(Combat.defenseOptions(g.enc, g.chars, g.t, g.a, { actor: g.a.id, type: 'grapple', target: g.t.id }).options, []);
@@ -914,9 +900,9 @@ test('arrows and armor: textile catches arrows; bodkins for metal, broadheads fo
   assert.ok(con(broad, null) > con(bodkin, null), 'broadheads hit flesh harder');
   assert.ok(con(bodkin, 'mail') > con(broad, 'mail'), 'bodkins go through mail better');
   const hit = (o, armor) => Combat.computeHit(a, target(armor), o, { distance: 4 });
-  assert.strictEqual(hit(bodkin, 'mail').pierce, 'burst', 'a longbow bodkin bursts mail');
-  assert.ok(hit(broad, 'mail').gap, 'a broadhead must find a gap in it');
-  assert.ok(hit(bodkin, 'plate').gap && hit(broad, 'plate').gap, 'plate: every arrow must find a gap');
+  assert.ok(hit(bodkin, 'mail').pierceNeed <= 0, 'a longbow bodkin goes through mail at any margin');
+  assert.ok(hit(broad, 'mail').pierceNeed > 0, 'a broadhead needs a margin');
+  assert.ok(hit(bodkin, 'plate').pierceNeed > hit(bodkin, 'mail').pierceNeed && hit(broad, 'plate').pierceNeed > 4, 'plate: every arrow needs a big one');
   // Padded stops an arrow better than the same piercing from a thrust.
   const spear = opt(armed('S', 'spear'), (o) => o.motion === 'thrust');
   const pad = target('padded');
@@ -1047,26 +1033,26 @@ test('weapons from physics: deeper points hit harder, heavier weapons are slower
   assert.ok(gain('rapier') < gain('flangedMace'), 'STR adds more to a mace than to a rapier');
 });
 
-test('wound roll: armor guards the vitals; a vital stab triples its CON damage', () => noWounds(async () => {
+test('vital wounds: armor raises the margin one needs; a vital stab triples its CON damage', async () => {
   const a = armed('A', 'longsword');
   const thrust = opt(a, (o) => o.motion === 'thrust');
   const naked = fighter('N');
   const mailed = fighter('M'); mailed.armor = Items.makeArmor('mail', 'full', 'standard');
   const plated = fighter('P'); plated.armor = Items.makeArmor('plate', 'full', 'standard');
-  const v = (t) => Combat.computeHit(a, t, thrust).pierceVital;
-  assert.ok(v(naked) > v(mailed) && v(mailed) > v(plated));
+  const v = (t) => Combat.computeHit(a, t, thrust, { location: 'torso', margin: 0 }).vitalAt;
+  assert.ok(v(naked) < v(mailed) && v(mailed) < v(plated));
   // Pinned: the armor no longer guards the vitals.
   plated.status.grapple = { partner: 'A', level: 'pin', role: 'held' };
   assert.strictEqual(v(plated), v(naked));
-  // A wound roll of 1 is vital: ×3 CON.
+  // At the threshold it is vital: ×3 CON; below it, not.
   const t = fighter('T'); t.base.CON = 30; t.stamina = C.maxStamina(t);
   const enc = { hitThisRound: {}, fortressUsed: {} };
-  await Combat.applyHit(enc, { [a.id]: a, [t.id]: t }, a, t, thrust, roller(1, [1]));
+  await Combat.applyHit(enc, { [a.id]: a, [t.id]: t }, a, t, thrust, roller(1, []), { location: 'torso', margin: v(naked) });
   assert.strictEqual(t.damage.CON, thrust.damage[0] * B.CONFIG.vital.mult);
   const u = fighter('U'); u.base.CON = 30; u.stamina = C.maxStamina(u);
-  await Combat.applyHit(enc, { [a.id]: a, [u.id]: u }, a, u, thrust, roller(1, [10]));
+  await Combat.applyHit(enc, { [a.id]: a, [u.id]: u }, a, u, thrust, roller(1, []), { location: 'torso', margin: v(naked) - 1 });
   assert.strictEqual(u.damage.CON, thrust.damage[0]);
-}));
+});
 
 test('opportunity strikes: coming to the edge of a reach is free; stepping inside it, leaving it, or a second step within it draws a blow', async () => {
   const make = (weapon, h) => {
@@ -1836,7 +1822,7 @@ test('weapons wear on metal armor, not on flesh; a rapier wears fastest', async 
   assert.strictEqual(Items.weaponDurability(bare.w), Items.weaponMaxDurability(bare.w), 'flesh does not dull a blade');
   const sword = await blowAt('longsword', plate);
   const rapier = await blowAt('rapier', plate);
-  const lost = (r) => Items.weaponMaxDurability(r.w) - Items.weaponDurability(r.w);
+  const lost = (r) => Items.weaponMaxDurability(r.w) - Items.weaponDurability(r.w) + (r.w.wearCarry || 0);
   assert.ok(lost(sword) > 0, 'plate chews the sword');
   assert.ok(lost(rapier) / Items.weaponMaxDurability(rapier.w) > lost(sword) / Items.weaponMaxDurability(sword.w), 'and the rapier faster');
   const padded = await blowAt('longsword', (t) => { t.armor = Items.makeArmor('padded', 'full', 'standard'); });
@@ -1960,46 +1946,45 @@ test('item tags: material and origin scale protection and weight; craft only dur
   assert.ok(D.ENCHANTMENTS.keen && D.CRAFTS.master && D.ORIGINS.elven && D.MATERIALS.starIron);
 });
 
-test('a point against armor: it bursts through, finds a gap, or is turned (the user\'s rule)', () => noWounds(async () => {
-  const stab = (weapon, armorType, tags, attrs) => {
+test('a point against armor: through or turned by its punch and the margin (step A)', () => noWounds(async () => {
+  const stab = (weapon, armorType, tags, attrs, m) => {
     const a = armed('A', weapon);
     Object.assign(a.base, attrs || {});
     const t = fighter('T');
     if (armorType) t.armor = Items.makeArmor(armorType, 'full', 'average', tags);
     const o = opt(a, (x) => x.motion === 'thrust');
-    return Combat.computeHit(a, t, o, { distance: o.maxRange });
+    return Combat.computeHit(a, t, o, { distance: o.maxRange, location: 'torso', margin: m || 0 });
   };
-  // The user's anchors: a rapier bursts padding but not mail; a heavy spear any mail but not plate.
-  assert.strictEqual(stab('rapier', 'padded').pierce, 'burst');
-  assert.strictEqual(stab('rapier', 'leather').pierce, 'burst');
-  assert.ok(stab('rapier', 'mail').gap, 'mail: the rapier must find a gap');
-  assert.ok(stab('rapier', 'mail', null, { STR: 10 }).gap, 'however strong the arm: the blade bends');
-  assert.strictEqual(stab('longsword', 'mail').pierce, 'burst', 'a longsword thrust bursts iron mail');
-  assert.ok(stab('longsword', 'mail', { material: 'steel' }).gap, 'but not steel');
-  assert.strictEqual(stab('spear', 'mail').pierce, 'burst', 'a spear bursts iron mail');
-  assert.ok(stab('spear', 'mail', { material: 'steel' }).gap, 'hardened steel holds against an average spearman');
-  assert.strictEqual(stab('heavySpear', 'mail', { material: 'steel' }).pierce, 'burst');
-  assert.ok(stab('heavySpear', 'plate').gap, 'nothing bursts plate');
-  assert.strictEqual(stab('dagger', 'mail', { material: 'bronze' }).gap ? 'gap' : 'burst', 'gap', 'a dagger needs a gap even in bronze');
-  // Skill and feats find gaps: DEX and Find the Gap raise the odds; an average fighter finds none in plate.
-  const clumsy = stab('rapier', 'mail', null, { DEX: 3 }), deft = stab('rapier', 'mail', null, { DEX: 9 });
-  assert.ok(deft.gap.chance > clumsy.gap.chance);
-  assert.strictEqual(stab('rapier', 'plate').gap.chance, 0, 'no lucky 10');
-  assert.ok(stab('rapier', 'plate', null, { DEX: 10 }).gap.chance > 0, 'skill does it');
-  // Bows: a longbow bodkin bursts mail, a shortbow's doesn't.
+  const need = (...x) => stab(...x).pierceNeed;
+  // The user's anchors, as the margin a point needs: a rapier any against padding; a heavy spear little against
+  // steel mail, much against plate.
+  assert.ok(need('rapier', 'padded') <= 0 && need('rapier', 'leather') <= 0);
+  assert.ok(need('rapier', 'mail') > 0, 'mail: the rapier needs a margin');
+  assert.ok(need('rapier', 'mail', null, { STR: 10 }) > 0, 'however strong the arm: the blade bends');
+  assert.ok(need('longsword', 'mail') <= 0, 'a longsword thrust goes through iron mail at any margin');
+  assert.ok(need('longsword', 'mail', { material: 'steel' }) > 0, 'but not steel');
+  assert.ok(need('spear', 'mail') <= 0);
+  assert.ok(need('spear', 'mail', { material: 'steel' }) > 0, 'hardened steel holds against an average spearman');
+  assert.ok(need('heavySpear', 'mail', { material: 'steel' }) <= 0);
+  assert.ok(need('heavySpear', 'plate') > 0, 'plate holds a heavy spear without a margin');
+  assert.ok(need('dagger', 'mail', { material: 'bronze' }) > 0, 'a dagger needs one even in bronze');
+  assert.ok(need('rapier', 'plate') > need('rapier', 'mail'), 'plate needs more');
+  // Find the Gap is margin for this.
+  const ftg = (() => { const a = armed('A', 'rapier'); a.feats.find_the_gap = 1; const t = fighter('T'); t.armor = Items.makeArmor('mail', 'full', 'average'); const o = opt(a, (x) => x.motion === 'thrust'); return Combat.computeHit(a, t, o, { location: 'torso', margin: 0 }).pierceNeed; })();
+  assert.strictEqual(ftg, need('rapier', 'mail') - B.CONFIG.pierce.feats.find_the_gap);
+  // Bows: a longbow bodkin needs no margin against mail, a shortbow's does.
   const shot = (bow, armorType) => {
     const a = armed('A', bow);
     a.inventory.bodkins = 3;
     const t = fighter('T');
     t.armor = Items.makeArmor(armorType, 'full', 'average');
     const o = C.attackOptions(a).find((x) => x.arrowHead === 'bodkin');
-    return Combat.computeHit(a, t, o, { distance: 4 });
+    return Combat.computeHit(a, t, o, { distance: 4, location: 'torso', margin: 0 });
   };
-  assert.strictEqual(shot('longbow', 'mail').pierce, 'burst');
-  assert.ok(shot('shortbow', 'mail').gap);
-  // The roll: through a gap the piercing takes the pass-through roll (CONFIG.pierce.gapPass); failing, the
-  // point lands as a little blunt.
-  const run = async (die) => {
+  assert.ok(shot('longbow', 'mail').pierceNeed <= 0);
+  assert.ok(shot('shortbow', 'mail').pierceNeed > 0);
+  // Applied: at the margin it needs, the point goes in past the P mitigation, whole; below, it is turned to a bruise.
+  const run = async (m) => {
     const a = armed('A', 'rapier', { side: 'party' });
     const t = fighter('T', { side: 'enemy' });
     t.armor = Items.makeArmor('mail', 'full', 'average');
@@ -2007,25 +1992,25 @@ test('a point against armor: it bursts through, finds a gap, or is turned (the u
     const before = t.stamina;
     const enc = { hitThisRound: {}, fortressUsed: {}, log: [], round: 1 };
     const o = opt(a, (x) => x.motion === 'thrust');
-    // Dice: the gap roll (a DEX-5 rapier needs 9 against mail's 10), six pass-through d10s, the wound roll.
-    const r = await Combat.applyHit(enc, { [a.id]: a, [t.id]: t }, a, t, o, roller(1, [die, 1, 1, 1, 1, 1, 1, 10]));
+    const r = await Combat.applyHit(enc, { [a.id]: a, [t.id]: t }, a, t, o, roller(1, []), { location: 'torso', margin: m });
     const w = a.weapons[0];
-    return { r, con: t.damage.CON, stamina: before - t.stamina, wear: Items.weaponMaxDurability(w) - Items.weaponDurability(w) + (w.wearCarry || 0) };
+    return { r, o, con: t.damage.CON, stamina: before - t.stamina, wear: Items.weaponMaxDurability(w) - Items.weaponDurability(w) + (w.wearCarry || 0) };
   };
-  const found = await run(10);
-  assert.match(found.r.text, /finds a gap/);
-  assert.strictEqual(found.con, opt(armed('X', 'rapier'), (x) => x.motion === 'thrust').damage[0], 'every point that passes reaches the body');
-  const turned = await run(1);
+  const n = need('rapier', 'mail');
+  const found = await run(n);
+  assert.match(found.r.text, new RegExp(`by ${n}: through the mail at the torso`));
+  assert.strictEqual(found.con, found.o.damage[0] - C.armorInfo(fighter('X')).effMit.P - Items.armorBase(Items.makeArmor('mail', 'full', 'average')).mit.P, 'every point past the mitigation reaches the body');
+  const turned = await run(n - 1);
   assert.match(turned.r.text, /turns the point/);
   assert.strictEqual(turned.con, 0);
   assert.ok(turned.stamina > 0, 'a turned point still bruises');
   assert.ok(turned.wear > found.wear, 'and wears the blade harder');
-  // Pinned: the point goes in at a gap, no roll.
+  // Pinned: always through.
   const g = await grapplePair('mail');
   await step(g, 'clinch', [10, 1]);
   await step(g, 'pin', [10, 1]);
   const dagger = C.attackOptions(g.a).find((o) => o.motion === 'thrust');
-  assert.strictEqual(Combat.computeHit(g.a, g.t, dagger, { distance: 1 }).pierce, 'gap');
+  assert.strictEqual(Combat.computeHit(g.a, g.t, dagger, { distance: 1, location: 'torso', margin: -5 }).pierce, 'through');
 }));
 
 test('rust eats iron but not bronze; a masterwork shield shrugs off the shattering blow', async () => {
@@ -2058,11 +2043,12 @@ test('plate spreads a blow it turns: less of a cut\'s or a turned point\'s force
   const t = fighter('T');
   t.armor = Items.makeArmor('plate', 'full', 'average');
   const cut = opt(a, (o) => o.motion === 'twoHanded' && o.face === 'edge');
-  const spread = Combat.computeHit(a, t, cut, { distance: 2 });
+  const at = { distance: 2, location: 'torso', margin: 0 };
+  const spread = Combat.computeHit(a, t, cut, at);
   const saved = B.DATA.ARMOR.plate.dissipate;
   B.DATA.ARMOR.plate.dissipate = { glancing: 0, crushing: 0 };
   try {
-    const whole = Combat.computeHit(a, t, cut, { distance: 2 });
+    const whole = Combat.computeHit(a, t, cut, at);
     assert.ok(whole.bluntToStamina > 0 && spread.bluntToStamina < whole.bluntToStamina, 'plate keeps part of it off');
     assert.strictEqual(spread.dissipated + spread.bluntToStamina, whole.bluntToStamina);
   } finally { B.DATA.ARMOR.plate.dissipate = saved; }
@@ -2081,19 +2067,20 @@ test('the user\'s armor research: picks rupture plate, rondels burst mail, mail 
     const t = fighter('T');
     if (armorType) t.armor = Items.makeArmor(armorType, 'full', 'average', tags);
     const o = opt(a, (x) => x.motion === motion && (!face || x.face === face));
-    return Combat.computeHit(a, t, o, { distance: o.maxRange });
+    return Combat.computeHit(a, t, o, { distance: o.maxRange, location: 'torso', margin: 0 });
   };
-  // 1. The warhammer's beak: a two-handed blow bursts iron plate, a strong power blow steel; a one-handed one neither.
-  assert.ok(hit('warhammer', 'swing', 'beak', 'plate').gap);
+  // 1. The warhammer's beak: a two-handed blow needs no margin against iron plate, a strong power blow little against
+  // steel; a one-handed one more.
+  const at0 = (h) => h.pierceNeed;
+  assert.ok(at0(hit('warhammer', 'swing', 'beak', 'plate')) > 0);
   const two = hit('warhammer', 'twoHanded', 'beak', 'plate');
-  assert.strictEqual(two.pierce, 'burst');
+  assert.ok(at0(two) <= 0);
   assert.ok(two.toCON + two.pointToAttrs >= 1, 'and wounds through it');
-  assert.ok(hit('warhammer', 'power', 'beak', 'plate', { material: 'steel' }, { STR: 6 }).gap, 'steel holds against an average arm');
-  assert.strictEqual(hit('warhammer', 'power', 'beak', 'plate', { material: 'steel' }, { STR: 10 }).pierce, 'burst');
-  // 2. The rondel bursts iron mail where the common dagger can't; plate it must find a gap in.
-  assert.strictEqual(hit('rondel', 'thrust', null, 'mail').pierce, 'burst');
-  assert.ok(hit('dagger', 'thrust', null, 'mail').gap);
-  assert.ok(hit('rondel', 'thrust', null, 'plate').gap);
+  assert.ok(at0(hit('warhammer', 'power', 'beak', 'plate', { material: 'steel' }, { STR: 6 })) > at0(hit('warhammer', 'power', 'beak', 'plate', { material: 'steel' }, { STR: 10 })), 'a strong arm needs less');
+  // 2. The rondel goes through iron mail where the common dagger needs a margin; plate it needs one against.
+  assert.ok(at0(hit('rondel', 'thrust', null, 'mail')) <= 0);
+  assert.ok(at0(hit('dagger', 'thrust', null, 'mail')) > 0);
+  assert.ok(at0(hit('rondel', 'thrust', null, 'plate')) > 0);
   assert.ok(B.DATA.WEAPONS.rondel.dagger, 'it counts as a dagger (Coup de Grâce)');
   // 3. A greatsword power cut breaks bones through mail; plate spreads it; a sword swing on mail stays a bruise.
   const onMail = hit('greatsword', 'power', 'edge', 'mail', null, { STR: 7 });

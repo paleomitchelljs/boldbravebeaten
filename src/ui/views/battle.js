@@ -262,13 +262,13 @@
     const h = Combat.computeHit(atk, tgt, option, { distance: Combat.dist(enc.pos[atk.id], enc.pos[tgt.id]) });
     const wound = Math.round(h.toCON + (h.pointToAttrs || 0) + h.slashToAttrs + h.bluntToCON + (h.crushToAttrs || 0));
     const stamina = Math.round(h.bluntToStamina + (h.converted || 0));
-    // A point against armor (CONFIG.pierce): it bursts through, or it must find a gap.
-    const point = h.gap ? ` · ${Math.round((1 - h.gap.chance) * 100)}% miss` : '';
+    // A point against armor (CONFIG.pierce): how often the margin carries it through.
+    const point = h.throughP != null && h.throughP < 1 ? ` · ${Math.round((1 - h.throughP) * 100)}% turned` : '';
     return { wound, stamina, wear: Math.round(h.durLoss || 0), hit: h, text: (wound || stamina ? `${wound ? `~${wound} wound` : ''}${wound && stamina ? ', ' : ''}${stamina ? `~${stamina} stamina` : ''}` : 'armor stops it') + point };
   }
 
-  // The armor where a blow would land, in plain words: the piece, the odds a point finds a gap in it (or that it
-  // bursts it), and its state (Fine, Damaged, Broken by the share of durability left).
+  // The armor where a blow would land, in plain words: the piece, the odds a point gets through it (by the margin a
+  // blow nobody defends gets), and its state (Fine, Damaged, Broken by the share of durability left).
   function armorLine(enc, chars, id, option, targetId, loc) {
     const a = chars[id], t = chars[targetId];
     if (!a || !t || !option) return null;
@@ -283,7 +283,7 @@
     const max = (() => { try { return Items.armorMaxDurability(p); } catch (e) { return 0; } })();
     const frac = max ? p.durability / max : 1;
     const state = p.durability <= 0 ? 'Broken' : frac >= 2 / 3 ? 'Fine' : 'Damaged';
-    const gap = h.gap ? ` (${Math.round(h.gap.chance * 100)}% gap)` : h.pierce === 'burst' ? ' (pierced)' : '';
+    const gap = h.throughP == null ? '' : h.throughP >= 1 ? ' (pierced)' : ` (${Math.round(h.throughP * 100)}% through)`;
     return `${name}${gap}, ${state}`;
   }
 
@@ -334,13 +334,16 @@
     return `${f.spent ? 'Spent: ' : ''}${lands} · ${harmWords(f.hit)} · ${end}`;
   }
 
+  const marginMean = (ms) => ms.reduce((n, x) => n + x.m * x.p, 0);
+
   // The breakdown behind the line, a sentence a row.
   function oddsBreakdown(f, t) {
     const hit = f.hit;
     const all = [['CON', hit.CON]].concat(Object.entries(hit.attrs).sort((x, y) => y[1] - x[1])).filter(([, v]) => v >= 0.05).map(([a, v]) => `${v.toFixed(1)} ${a}`);
     const rows = [];
     rows.push(`If it lands untouched: ${all.length ? all.join(', ') : 'no wound'}; ${hit.stamina.toFixed(1)} stamina; armor wear ${hit.wear.toFixed(1)}. A vital wound ${pct(hit.vital)}; ${f.down ? `kills ${pct(hit.kill)}` : `drops them ${pct(hit.drop)}${hit.kill > 0.005 ? ` (kills ${pct(hit.kill)})` : ''}`}.`);
-    if (hit.aimHold != null && hit.aimHold < 1) rows.push(`Lands where aimed ${pct(hit.aimHold)}; otherwise wherever they are open.`);
+    if (hit.through != null) rows.push(`Untouched, the point gets through the armor ${pct(hit.through)}; otherwise it is turned.`);
+    if (hit.margins && hit.margins.length) rows.push(`Its margin untouched: ${hit.margins[0].m} to ${hit.margins[hit.margins.length - 1].m}, ${marginMean(hit.margins).toFixed(1)} on average (more gets a point through armor, a vital wound, a gap).`);
     if (f.spent) rows.push('Spent: you haven\'t the stamina, so it lands softer and is easier to meet.');
     for (const d of f.defences) {
       const bits = [`${d.name}: stops it ${pct(d.odds)} (costs them ${C.fmtAP(d.ap)} AP${d.stamina ? `, ${d.stamina} stamina${d.spent ? ', spent' : ''}` : ''})`];
@@ -759,7 +762,7 @@
     // Why the aim costs what it does, shown under the menu (no hover): they can still cover a small target, or can't.
     const why = open ? `${t.name} is ${open}: can't cover a small target (head −${pen('head')})`
       : best && best.drained ? `${t.name} looks spent: no defence left to beat`
-      : `${t.name} can still cover a small target: head −${pen('head')}, hands −${pen('hands')}, feet −${pen('feet')}`;
+      : `${t.name} can still cover a small target: ` + L.order.filter((l) => pen(l)).map((l) => `${(L.names[l] || l).toLowerCase()} −${pen(l)}`).join(', ');
     const rows = [['best', `Suggested (${bestLabel})`], ['unaimed', show(null)]].concat(L.order.map((l) => [l, show(l)]));
     return { best: best ? best.loc : null, why, pen, rows, cells, down: !C.isActive(t) };
   }

@@ -53,3 +53,22 @@ test('supplies: dealt out of the pool for a fight, added back after; something g
   assert.equal(w.supplies.bandages, 4 + gained);
   assert.equal(inHand(), 0);
 });
+
+test('save: a version-6 save folds hands into arms and feet into legs; two pieces on one place, the later comes off', () => {
+  const w = fresh();
+  const c = World.party(w)[0];
+  const I = B.Items;
+  c.armor = I.makeArmor('mail', null, 'average', { covers: ['torso'] });
+  const sleeves = I.makeArmor('mail', null, 'average', { covers: ['arms'] });
+  const gloves = I.makeArmor('plate', null, 'average', { covers: ['hands'] });
+  const boots = I.makeArmor('leather', null, 'average', { covers: ['feet'] });
+  c.pieces = [sleeves, gloves, boots];
+  w.pack.gear.push(Object.assign(I.makeArmor('plate', null, 'average', { covers: ['hands', 'arms'] }), { id: 'packed' }));
+  w.version = 6;
+  const back = Save.deserialize(Save.serialize(w));
+  const d = World.party(back)[0];
+  assert.deepEqual(d.pieces.map((p) => p.covers), [['arms'], ['legs']], 'the gauntlets overlap the sleeves and come off');
+  assert.ok(d.inventory.items.some((it) => it.id === gloves.id && it.covers[0] === 'arms'));
+  assert.deepEqual(back.pack.gear.find((it) => it.id === 'packed').covers, ['arms']);
+  for (const p of B.Character.armorPieces(d)) for (const l of B.Items.coversOf(p)) assert.ok(B.CONFIG.locations.order.includes(l));
+});

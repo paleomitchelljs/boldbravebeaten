@@ -10,7 +10,7 @@ No anchors or tags. Keys must be unique.
 | File | What it holds |
 |---|---|
 | `rules.yaml` | Numbers: party creation, XP, training prices, time, skill target numbers, faction spread, parley, economy, the gear foes roll (`enemyGear`). `game:` keys are read by the game layer; anything else is deep-merged over `src/rules/config.js`. |
-| `armor.yaml` | Armor types (padded, leather, mail, plate): mitigation per face (P pierce, S slash, B blunt), SPD/DEX penalties, stamina, regen, durability, usual and allowed materials, `pierce` (the punch that bursts it, the gap number), `transmit` (mail: more of a cut's force as blunt), `cutThrough` (padding and leather: how much cut they stop), `dissipate` (plate), rarity. Each piece is the whole harness: padding is assumed under mail and plate. `natural: true` for monster hides. |
+| `armor.yaml` | Armor types (padded, leather, mail, plate): mitigation per face (P pierce, S slash, B blunt), SPD/DEX penalties, stamina, regen, durability, usual and allowed materials, `pierce` (`resist`: the punch a point needs to get through it with no margin), `transmit` (mail: more of a cut's force as blunt), `cutThrough` (padding and leather: how much cut they stop), `dissipate` (plate), rarity. Each piece is the whole harness: padding is assumed under mail and plate. `natural: true` for monster hides. |
 | `shields.yaml` | `types` (block AP, threshold, durability) and `materials` (multiplier). |
 | `materials.yaml` | What gear is made of: hardness, toughness, weight, protection, `metal`, `rusts`, `organic` (a blade wears less on it), `exotic`. |
 | `origins.yaml` | Where and how gear was made (common, elven, dwarven, goblin): weight against protection, damage and durability. |
@@ -82,11 +82,11 @@ face, motion or trait still needs rules code; a new sword, mace or spear does no
 (loot, shop stock, monsters): `material` (materials.yaml; armor only those its type lists), `origin` (origins.yaml),
 `craft` (`poor | average | master`; an old `quality` is read as one) and `enchantments` (a list, usually absent).
 Armor adds where it is worn: `covers: [torso, arms]` (locations from `rules.yaml locations`: head, torso, arms,
-hands, legs, feet), or a `coverage` keyword (`full` = all six, `half` = torso, arms and legs, `partial` = the torso, `halfHead` and `partialHead` = those and the head),
+legs), or a `coverage` keyword (`full` = all four, `half` = torso, arms and legs, `partial` = the torso, `halfHead` and `partialHead` = those and the head),
 not both. A piece protects fully where it is and carries its share of the type's weight, penalties, durability and
 price; one covering a single location takes the type's `pieces` name (a plate helm, mail chausses). A blow rolls its
-location (d100 by share) unless it is aimed, and an aimed blow lands there only with `aim.hold`'s chance; `rules.yaml locations` also holds the aim penalties (`aim`), the cut's
-carry-through (`carry`) and what a wound does where it lands (`wounds`: attributes, vital odds, disarm, trip, stun;
+location (d100 by share) unless it is aimed (an aimed blow lands where aimed), and a blow whose contest margin reaches `contest.shift` lands on the worst-guarded place beside it (`next`); `rules.yaml locations` also holds the aim penalties (`aim`), the cut's
+carry-through (`carry`) and what a wound does where it lands (`wounds`: attributes, the margin a vital wound needs, disarm, trip, stun;
 `pointToCON`, where a point takes CON rather than the location's attributes; `tirelessCON`, a tireless body takes CON
 wherever).
 Shields have a `size`. Material and origin set protection, weight and damage; craftsmanship
