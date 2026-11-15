@@ -261,7 +261,7 @@ test('Feign Death: badly hurt, a friend still up, a foe beside me: lie still, an
   const b = armed('Friend', 'longsword', 'party');
   const f = armed('Foe', 'longsword', 'enemy');
   const { enc, chars } = await field([[a, 2, 2], [f, 3, 2], [b, 7, 2]]);
-  a.damage.CON = C.attr(a, 'CON') - 1;
+  for (let i = 0; i < C.boxes(a) - 1; i++) a.wounds.push({ place: 'torso', sev: 1, kind: 'cut', bleed: 0, pts: 1 }); // a box from down
   f.armor = Items.makeArmor('plate'); // nothing my blow could finish
   const d = AI.choose(enc, chars, a.id, () => 0.99);
   assert.equal(d.type, 'feign');
@@ -271,23 +271,25 @@ test('Feign Death: badly hurt, a friend still up, a foe beside me: lie still, an
 
 // ---- Overchannel -----------------------------------------------------------------------------------------------
 
-test('Overchannel: a caster with an empty pool and CON to spare pays CON for a bolt that finishes a foe, never under 3 CON', async () => {
+test('Overchannel: a caster with an empty pool and wound boxes to spare pays harm for a bolt that puts a foe down, never with under 2 boxes left', async () => {
   const m = Enemies.makeMonster('goblinShaman', {})[0];
   m.side = 'party'; m.base.CHA = 1; m.base.CON = 10; m.stamina = C.maxStamina(m);
   m.feats.overchannel = 1;
   const f = armed('Foe', 'longsword', 'enemy');
-  f.damage.CON = C.attr(f, 'CON') - 1; // a bolt finishes them
+  for (let i = 0; i < C.boxes(f) - 1; i++) f.wounds.push({ place: 'torso', sev: 1, kind: 'cut', bleed: 0, pts: 1 }); // a bolt puts them down
   const { enc, chars } = await field([[m, 2, 2], [f, 5, 2]]);
   const bolt = C.attackOptions(m).find((o) => o.spell);
   assert.ok(bolt, 'a fire bolt');
   m.spSpent = B.Magic.maxSP(m); // the pool is empty
   assert.ok(B.Magic.availableSP(m) < bolt.spCost);
-  const d = AI.choose(enc, chars, m.id, () => 0.99);
+  // It may step back first (a caster keeps its distance); within the turn it casts.
+  let d = AI.choose(enc, chars, m.id, () => 0.99);
+  for (let i = 0; i < 3 && d.type === 'move'; i++) { await Combat.submit(enc, chars, d, { roller: roller(2), react: async () => null }); d = AI.choose(enc, chars, m.id, () => 0.99); }
   assert.ok(d.type === 'strike' && d.option.spell, `took ${d.type}`);
-  // Down to its last few CON it doesn't.
-  m.damage.CON = C.attr(m, 'CON') - 2 + (m.damage.CON || 0);
+  // Down to its last box or two it doesn't.
+  for (let i = 0; i < C.boxes(m) - 2; i++) m.wounds.push({ place: 'torso', sev: 1, kind: 'cut', bleed: 0, pts: 1 });
   const d2 = AI.choose(enc, chars, m.id, () => 0.99);
-  assert.ok(!(d2.type === 'strike' && d2.option.spell), 'overchannelled below 3 CON');
+  assert.ok(!(d2.type === 'strike' && d2.option.spell), 'overchannelled with under 2 boxes left');
 });
 
 // ---- The worth of a condition ----------------------------------------------------------------------------------

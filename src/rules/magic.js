@@ -54,9 +54,12 @@
   }
 
   // Points the caster can draw on right now.
-  // Overchannel (feat): points beyond the pool, paid in CON, short of the last point of it.
+  // Overchannel (feat): points beyond the pool, paid as harm at the head (Character.harm, a strain wound): up to what
+  // would make that wound severity 3, and none with a box or less left.
   function overchannelSP(c) {
-    return C().rank(c, 'overchannel') ? Math.max(0, C().attr(c, 'CON') - 1) : 0;
+    if (!C().rank(c, 'overchannel') || C().woundLoad(c) >= C().boxes(c) - 1) return 0;
+    const strain = C().wounds(c).find((w) => w.kind === 'strain' && w.ongoing);
+    return Math.max(0, Math.floor(CONFIG.wounds.severity[2] * C().sizeOf(c)) - (strain ? strain.pts : 0));
   }
 
   function availableSP(c) {

@@ -82,11 +82,11 @@ test('drops: a well is one way; the fall can hurt', () => {
     const r = Explore.go(w, 1);
     const ev = r.events.find((e) => e.type === 'stairs');
     assert.ok(ev && ev.def.kind === 'drop', 'stepping on the well offers the drop');
-    const before = World.active(w).map((c) => B.Character.totalDamage(c));
+    const before = World.active(w).map((c) => B.Character.woundLoad(c));
     Explore.fall(w, ev.def);
     Explore.enter(w, ev.def.to, ev.def.at);
     assert.equal(w.place, 't_bottom');
-    World.active(w).forEach((c, i) => assert.equal(B.Character.totalDamage(c), before[i] + 1));
+    World.active(w).forEach((c, i) => assert.equal(B.Character.woundLoad(c), before[i] + 1, 'a point of harm: a wound of severity 1'));
     assert.ok(!Object.values(Content.world.places.t_bottom.legend).some((d) => d.kind === 'stairs'), 'no way back up');
   }));
 });

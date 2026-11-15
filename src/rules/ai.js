@@ -515,7 +515,7 @@
       const foe = chars[f];
       const d = Combat.dist(me, posFn(f));
       const engaged = allies.filter((a) => Combat.dist(posFn(a), posFn(f)) <= 2).length;
-      const conLeft = C.attr(foe, 'CON') / Math.max(1, C.attrMax(foe, 'CON'));
+      const conLeft = 1 - C.woundLoad(foe) / C.boxes(foe); // wound boxes left
       const stLeft = C.tireless(foe) ? 1 : foe.stamina / Math.max(1, C.maxStamina(foe));
       const hurt = 1 - conLeft * stLeft;
       // A body none of my blows can harm (immune to all of them) is someone else's to fight.
@@ -602,8 +602,11 @@
     if (have >= o.spCost) return Infinity; // only the reserve is short: keep it, as before
     const short = o.spCost - have;
     if (short > G.Magic.overchannelSP(c)) return Infinity;
-    const left = C.attr(c, 'CON') - short;
-    if (left < 3) return Infinity;
+    // What the strain leaves: wound boxes still free after it (Character.harm at the head).
+    const strain = C.wounds(c).find((w) => w.kind === 'strain' && w.ongoing);
+    const more = C.severityOf(c, (strain ? strain.pts : 0) + short) - (strain ? strain.sev : 0);
+    const left = C.boxes(c) - C.woundLoad(c) - more;
+    if (left < 2) return Infinity;
     return short * (6 + 24 / left);
   }
 
@@ -987,7 +990,7 @@
     // Feign Death: badly hurt, with a friend still up to win it, lie still where no foe can aim at me.
     const feign = other('feign');
     if (ok(feign) && !G.Effects.has(c, 'feign')) {
-      const conLeft = C.attr(c, 'CON') / Math.max(1, C.attrMax(c, 'CON'));
+      const conLeft = 1 - C.woundLoad(c) / C.boxes(c); // wound boxes left
       const friendUp = enc.ids.some((o) => o !== id && chars[o] && chars[o].side === c.side && C.isActive(chars[o]));
       const pressed = foes.some((f) => Combat.dist(me, enc.pos[f]) <= Math.max(1, meleeReach(chars[f])) + 1);
       if (conLeft <= 0.3 && friendUp && pressed) consider(30, { actor: id, type: 'feign' }, feign.ap);

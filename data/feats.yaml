@@ -34,7 +34,7 @@
       branch: body
       ranks: [novice, apprentice, adept]
       requires: []
-      effect: "+1 CON per rank"
+      effect: "+1 CON per rank (shock, bleeding, poison, regeneration; no more life: step E)"
       auto: true
       attr: CON
     agility:
@@ -113,7 +113,7 @@
       branch: striker
       ranks: [novice, apprentice]
       requires: []
-      effect: "Punches and kicks can break bones: they harm CON like any blunt blow (without this they take stamina only). +1 blunt per rank"
+      effect: "Punches and kicks can break bones: they wound like any blunt blow (without this they only wind). +1 blunt per rank"
       auto: true
     trip: {name: Trip, ranks: [novice], requires: [], effect: Better knockdown chance, auto: true}
     disarm: {name: Disarm, ranks: [novice], requires: [], effect: Better disarm chance, auto: true}
@@ -694,7 +694,7 @@
       name: Diagnose
       ranks: [novice]
       requires: []
-      effect: See a patient's attribute damage and bleed
+      effect: See a patient's wounds and bleeding
       auto: false
     wound_tending:
       name: Wound Tending
@@ -804,7 +804,7 @@
       capstone: true
       ranks: [master]
       requires: [["skill:arcane:10"]]
-      effect: "Cast past an empty pool: each point it lacks costs 1 CON (never the last)"
+      effect: "Cast past an empty pool: each point it lacks is a point of harm at the head (a strain wound; never past a severity-3 strain or with a box or less left)"
       auto: true
 - id: magicWords
   name: "Magic: words"
@@ -1104,7 +1104,7 @@
       branch: fire
       ranks: [apprentice]
       requires: [["fire_affinity:1"], ["field_dressing:1"]]
-      effect: "An action (2 AP; needs the Fire noun, no bandage): stop a bleeding wound on yourself or someone beside you; the burn costs the patient 1 CON (never the last). A poison's venom stays"
+      effect: "An action (2 AP; needs the Fire noun, no bandage): stop every bleeding wound on yourself or someone beside you; the burn is 2 points of harm at the torso. A poison's venom stays"
       auto: true
     firestorm:
       name: Firestorm

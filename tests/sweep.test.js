@@ -44,12 +44,12 @@ test('a swing that drops its target carries on into the foe beside it, at half f
   const o = swingOf(a);
   assert.ok(Combat.sweeps(o));
   assert.equal(Combat.sweepTarget(enc, chars, a, t, o).id, b.id);
-  const before = C.totalDamage(b) + (C.maxStamina(b) - b.stamina);
+  const before = C.woundLoad(b) + (C.maxStamina(b) - b.stamina);
   await Combat.resolveAction(enc, chars, { actor: a.id, target: t.id, type: 'strike', option: o }, { roller: roller(3) });
   const text = enc.log.map((l) => l.text || l).join('\n');
   assert.match(text, /carries through First into Second/);
   assert.match(text, /\(sweep\) hits Second/);
-  assert.ok(C.totalDamage(b) + (C.maxStamina(b) - b.stamina) > before);
+  assert.ok(C.woundLoad(b) + (C.maxStamina(b) - b.stamina) > before);
 });
 
 test('a sweep carries no further, a thrust does not sweep, and off means off', async () => {

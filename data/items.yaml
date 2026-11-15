@@ -24,7 +24,7 @@ goods:
   bodkin_arrows:
     {name: Bodkin bundle, kind: supply, engine: bodkins, per: 5, value: 12, rarity: uncommon, blurb: "Five armor-piercing heads."}
   salve:
-    {name: Healing salve, kind: potion, value: 30, rarity: uncommon, use: {heal: 1}, blurb: "Closes a wound: heals 1 point of attribute damage (CON first)."}
+    {name: Healing salve, kind: potion, value: 30, rarity: uncommon, use: {heal: 1}, blurb: "Closes a wound: the worst wound a step better."}
   tonic:
     {name: Steadying tonic, kind: potion, value: 18, rarity: common, use: {cure: bleeding}, blurb: "Stops all bleeding at once."}
   antidote:
