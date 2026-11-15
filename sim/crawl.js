@@ -76,6 +76,7 @@ async function watched(world, M, max) {
     let guard = 2000;
     while (b.enc.phase === 'turn' && guard-- > 0) {
       const id = Combat.currentActor(b.enc);
+      w.before(id);
       await Combat.submit(b.enc, chars, B.AI.choose(b.enc, chars, id, () => Rand.rng(), chars[id].policy), { roller: B.Town.autoRoller });
       w.poll();
     }

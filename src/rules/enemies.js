@@ -109,7 +109,13 @@
     return c;
   }
 
+  // An id that names no feat is skipped. With Enemies.strict set (the sims set it: sim/lib.js), it throws instead, so
+  // a sim's list that names a retired feat fails loudly. The game never sets it.
   function chooseFeats(c, prefs, rng) {
+    if (G.Enemies && G.Enemies.strict) {
+      const bad = prefs.filter((id) => !FEATS[id]);
+      if (bad.length) throw new Error(`Enemies.chooseFeats: no such feat: ${bad.join(', ')}`);
+    }
     const budget = C.featBudget(c);
     let progress = true;
     while (C.featCount(c) < budget && progress) {

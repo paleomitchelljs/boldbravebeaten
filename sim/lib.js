@@ -5,6 +5,16 @@
 'use strict';
 const B = require('../tests/load');
 const { Character: C, Combat, Items, Enemies, AI, CONFIG } = B;
+// A feat list that names a retired feat fails loudly in a sim (Enemies.chooseFeats skips it in the game).
+Enemies.strict = true;
+
+// Every feat and skill id a sim names must exist: throws with the ids that don't (docs/OVERHAUL.md step D).
+function checkIds(where, feats, skills) {
+  const SK = B.Content.world.skills.skills;
+  const badF = [...new Set([].concat(feats || []))].filter((id) => !B.DATA.FEATS[id]);
+  const badS = [...new Set([].concat(skills || []).flatMap((s) => (typeof s === 'string' ? [s] : Object.keys(s || {}))))].filter((id) => !SK[id]);
+  if (badF.length || badS.length) throw new Error(`${where}: ${badF.length ? 'no such feat: ' + badF.join(', ') : ''}${badF.length && badS.length ? '; ' : ''}${badS.length ? 'no such skill: ' + badS.join(', ') : ''}`);
+}
 
 // ---- Builds ---------------------------------------------------------------
 // Every archetype spends the same 35 attribute points, so level and gear are the only things that differ between
@@ -66,10 +76,12 @@ const ARCHETYPES = {
 };
 
 // opts: { level, quality (a craft; old quality names work), feats (explicit {id: rank}), attrs (overrides),
-//   armor [type, coverage, tags]/shield/weapon overrides, name }
+//   armor [type, coverage, tags]/shield/weapon/offhand/sidearm overrides, name }. An archetype may also carry nouns.
 function build(arch, opts) {
   opts = opts || {};
   const A = typeof arch === 'string' ? ARCHETYPES[arch] : arch;
+  if (!A) throw new Error('sim/lib build: no such archetype: ' + arch);
+  checkIds('sim/lib build ' + (opts.name || A.label || arch), opts.feats ? Object.keys(opts.feats) : A.feats, opts.feats ? (opts.skills ? [opts.skills] : []) : A.skills);
   const level = opts.level || 1;
   const q = opts.quality || 'average';
   const c = C.newCharacter({ name: opts.name || arch, starterGear: false, base: Object.assign({}, A.attrs, opts.attrs || {}) });
@@ -85,6 +97,12 @@ function build(arch, opts) {
     c.wield = w.id;
     if (G_WEAPON(weapon).hands === 2) c.shield = null;
   }
+  const off = opts.offhand !== undefined ? opts.offhand : A.offhand;
+  if (off) {
+    const o = Items.makeWeapon(off, q);
+    c.weapons.push(o);
+    c.offhand = o.id;
+  }
   const side = opts.sidearm !== undefined ? opts.sidearm : A.sidearm;
   if (side && side !== weapon) {
     const s = Items.makeWeapon(side, 'average');
@@ -92,9 +110,15 @@ function build(arch, opts) {
     c.sidearm = s.id;
   }
   c.inventory.bandages = 1;
+  if (A.nouns) c.nouns = A.nouns.slice();
+  if (A.arrows) c.inventory.arrows = A.arrows;
   if (opts.feats) {
-    c.feats = Object.assign({}, opts.feats);
+    // Explicit feats ({id: rank}) are held as given; skills are opts.skills, else the archetype's plan for the level
+    // (until 2026-11-14 they were none, so a build with explicit feats fought at skill 0).
+    for (const [id, r] of Object.entries(opts.feats)) if (r > B.DATA.FEATS[id].ranks.length) throw new Error(`sim/lib build: ${id} has ${B.DATA.FEATS[id].ranks.length} rank(s), not ${r}`);
     if (opts.skills) c.skills = Object.assign({}, opts.skills);
+    else B.World.growAlongPlan(c, { skills: A.skills, feats: [] });
+    c.feats = Object.fromEntries(Object.entries(opts.feats).filter(([, r]) => r > 0));
   } else {
     B.World.growAlongPlan(c, { skills: A.skills, feats: A.feats });
   }
@@ -149,7 +173,8 @@ async function fight(spec) {
   (spec.place || place)(enc, A.map((c) => c.id), Bs.map((c) => c.id));
   if (spec.setup) spec.setup(enc, chars);
   if (spec.onHit) enc.onHit = spec.onHit;
-  // spec.watch(enc, chars) → { poll, end }: an observer (sim/metrics.js), polled after each action.
+  // spec.watch(enc, chars) → { before(id)?, poll, end }: an observer (sim/metrics.js), told who acts before each action
+  // and polled after it. It must not change the fight (tests/metrics-tempo.test.js).
   const watcher = spec.watch ? spec.watch(enc, chars) : null;
   const roller = makeRoller(seed * 2654435761 % 4294967296);
   const rng = Enemies.makeRng(seed * 40503 + 17);
@@ -183,6 +208,7 @@ async function playRound(enc, chars, roller, rng, watcher) {
   let guard = 1000;
   while (enc.phase === 'turn' && guard-- > 0) {
     const id = Combat.currentActor(enc);
+    if (watcher && watcher.before) watcher.before(id);
     await Combat.submit(enc, chars, AI.choose(enc, chars, id, rng, chars[id].policy), io);
     if (watcher) watcher.poll();
   }
@@ -222,4 +248,4 @@ function summarize(results) {
 
 const pct = (x) => (100 * x).toFixed(0) + '%';
 
-module.exports = { B, C, Combat, Items, Enemies, AI, CONFIG, ARCHETYPES, build, fight, playRound, series, summarize, makeRoller, pct };
+module.exports = { checkIds, B, C, Combat, Items, Enemies, AI, CONFIG, ARCHETYPES, build, fight, playRound, series, summarize, makeRoller, pct };

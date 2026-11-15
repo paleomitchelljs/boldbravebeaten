@@ -13,6 +13,9 @@
  * Two modes: attrition (wounds carry on, with a camp partway) and reset (a fresh party for every
  * room, the dead restored, deaths still recorded).
  *
+ * Members are sim/arena.js's combatants (rebuilt on sim/lib.js's archetypes and start.yaml's plans, 2026-11-14): the
+ * mage is Spawnee's plan (fire), the cleric Jabiku's (Life); the old enchanter is gone (no plan names mind spells).
+ *
  * Lineups: a core trio (knight with shield, mail two-hander, archer) alone and with each fourth
  * member, and the mage party with each core member left out. Every lineup runs the same seeds,
  * so differences between lineups are paired. How useful a member is:
@@ -275,9 +278,8 @@ const MEMBERS = {
   knight: { key: 'heavy/shield', label: 'Knight (plate, sword and shield)' },
   twoHander: { key: 'medium/twoHanded', label: 'Two-hander (mail, greatsword)' },
   archer: { key: 'light/archery', label: 'Archer (leather, longbow)' },
-  mage: { key: 'unarmored/magic', label: 'Mage (fire, earth, vine, force)' },
-  enchanter: { key: 'unarmored/enchanter', label: 'Enchanter (mind spells)' },
-  cleric: { key: 'medium/cleric', label: 'Cleric (mail, mace, Life)' },
+  mage: { key: 'light/magic', label: 'Spellsword (leather, fire)' },
+  cleric: { key: 'light/cleric', label: 'Life mage (leather, staff, Life)' },
   grappler: { key: 'light/grappler', label: 'Grappler (leather)' },
   duelist: { key: 'light/duelist', label: 'Duelist (leather, rapier and dagger)' },
 };
@@ -285,7 +287,6 @@ const CORE = ['knight', 'twoHander', 'archer'];
 const LINEUPS = {
   core: { label: 'Core trio', members: CORE },
   mage: { label: '+ Mage', members: CORE.concat('mage') },
-  enchanter: { label: '+ Enchanter', members: CORE.concat('enchanter') },
   cleric: { label: '+ Cleric', members: CORE.concat('cleric') },
   grappler: { label: '+ Grappler', members: CORE.concat('grappler') },
   duelist: { label: '+ Duelist', members: CORE.concat('duelist') },
@@ -296,7 +297,7 @@ const LINEUPS = {
 // Marginal value of a member: [with, without].
 const MARGINAL = {
   knight: ['mage', 'noKnight'], twoHander: ['mage', 'noTwoHander'], archer: ['mage', 'noArcher'],
-  mage: ['mage', 'core'], enchanter: ['enchanter', 'core'], cleric: ['cleric', 'core'], grappler: ['grappler', 'core'], duelist: ['duelist', 'core'],
+  mage: ['mage', 'core'], cleric: ['cleric', 'core'], grappler: ['grappler', 'core'], duelist: ['duelist', 'core'],
 };
 const ONLY = arg('only', null);
 const RUN = ONLY ? Object.fromEntries(Object.entries(LINEUPS).filter(([k]) => ONLY.split(',').includes(k))) : LINEUPS;

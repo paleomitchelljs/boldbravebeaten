@@ -3,7 +3,10 @@
  * Arena: every armor class × fighting strategy against every other, in an open
  * field and in close quarters.
  *
- *   node sim/arena.js [--n 40] [--level 5] [--out sim/results/arena] [--set key=value ...]
+ *   node sim/arena.js [--n 40] [--level 5] [--out sim/results/arena] [--keys heavy/shield,…] [--no-magic] [--set key=value ...]
+ *
+ * Combatants are an armor class × a strategy; the strategies are sim/lib.js's archetypes and start.yaml heroes' plans
+ * (rebuilt 2026-11-14: the old lists named retired feats and verbs).
  *
  * Writes arena.json (everything the results page needs), report.md and
  * matchups.csv (one row per pairing per arena, for R).
@@ -12,7 +15,7 @@
 const fs = require('fs');
 const path = require('path');
 const L = require('./lib');
-const { C, CONFIG, Items } = L;
+const { C, CONFIG } = L;
 
 const argv = process.argv.slice(2);
 const arg = (k, d) => { const i = argv.indexOf('--' + k); return i >= 0 ? argv[i + 1] : d; };
@@ -33,112 +36,81 @@ const ARENAS = {
   close: { label: 'Close quarters', w: 6, h: 2 },
 };
 
+// The armor classes: what is worn, and what wearing it well costs (armor feats first, armor skill ranks by stage).
+// A strategy's own armor feats and armor ranks are dropped and these put in their place.
 const ARMOR = {
-  heavy: { label: 'Heavy', armor: 'plate', feats: ['plate_mobility', 'plate_mobility'] },
-  medium: { label: 'Medium', armor: 'mail', feats: ['mail_mobility', 'mail_endurance'] },
-  light: { label: 'Light', armor: 'leather', feats: ['light_armor_training'] },
-  unarmored: { label: 'Unarmored', armor: null, feats: [] },
+  heavy: { label: 'Heavy', armor: 'plate', feats: ['plate_mobility', 'plate_endurance', 'plate_mobility'], skills: [{ armor: 5 }, { armor: 7 }, { armor: 9 }] },
+  medium: { label: 'Medium', armor: 'mail', feats: ['mail_mobility', 'mail_endurance'], skills: [{ armor: 4 }, { armor: 6 }, { armor: 7 }] },
+  light: { label: 'Light', armor: 'leather', feats: ['light_armor_training'], skills: [{ armor: 2 }, { armor: 3 }] },
+  unarmored: { label: 'Unarmored', armor: null, feats: [], skills: [] },
+};
+const ARMOR_FEATS = new Set(['light_armor_training', 'mail_mobility', 'mail_endurance', 'plate_mobility', 'plate_endurance']);
+
+// The fighting strategies (rebuilt 2026-11-14, docs/OVERHAUL.md step D): each is one of sim/lib.js's archetypes, or a
+// start.yaml hero's plan (attributes, weapons, skills, feats, nouns), so it names only feats and skills that exist (the
+// old lists named retired ones and fought without them). The mind mage (Enchanter) is gone: no hero or archetype
+// plans one.
+const STRATEGY = {
+  twoHanded: { label: 'Two-handed', from: 'heavy' },
+  shield: { label: 'Sword & shield', from: 'sellsword' },
+  grappler: { label: 'Grappler', from: 'brawler', policy: { grappler: true } },
+  duelist: { label: 'Rapier & dagger', from: 'duelist', offhand: 'parryingDagger' },
+  archery: { label: 'Archery', hero: 'lorc' },
+  magic: { label: 'Spellsword (fire)', hero: 'spawnee' },
+  cleric: { label: 'Life mage', hero: 'jabiku' },
 };
 
-// Every strategy spends the same 35 attribute points.
-const STRATEGY = {
-  twoHanded: {
-    label: 'Two-handed', attrs: { STR: 7, CON: 6, DEX: 5, SPD: 5, INT: 3, WIL: 5, WIS: 5, CHA: 4 },
-    weapon: 'greatsword', shield: null,
-    feats: ['power_swing', 'heavy_weapon_training', 'weight_of_the_blow', 'heavy_tempo', 'heavy_weapon_training', 'weight_of_the_blow', 'strength', 'toughness'],
-  },
-  shield: {
-    label: 'Sword & shield', attrs: { STR: 6, CON: 6, DEX: 5, SPD: 5, INT: 4, WIL: 5, WIS: 5, CHA: 4 },
-    weapon: 'longsword', shield: ['round', 'iron'],
-    feats: ['shield_training', 'parry_training', 'shield_training', 'half_swording', 'quick_block', 'economical_block', 'toughness', 'strength'],
-  },
-  magic: {
-    label: 'Magic', attrs: { STR: 4, CON: 5, DEX: 5, SPD: 5, INT: 8, WIL: 5, WIS: 5, CHA: 3 },
-    // A battlefield mage: fire to burn, earth for walls and pits, vine to root, force to ward.
-    weapon: null, shield: null, nouns: ['fire', 'earth', 'vine', 'force'],
-    feats: ['casting', 'verb_strike', 'verb_ward', 'verb_launch', 'verb_build', 'verb_blink', 'casting', 'verb_hex', 'verb_open', 'control', 'mod_strong', 'quick_casting',
-      'casting', 'verb_burst', 'fire_affinity', 'casting', 'mod_wide', 'control', 'quick_casting', 'casting', 'fire_affinity', 'mod_far', 'battle_casting'],
-  },
-  enchanter: {
-    // A mind mage (magic phase 2): mesmerize, calm, enrage and confuse; a ward of force and a
-    // blink to get away.
-    label: 'Enchanter', attrs: { STR: 4, CON: 5, DEX: 5, SPD: 5, INT: 8, WIL: 5, WIS: 4, CHA: 3 },
-    weapon: null, shield: null, nouns: ['dream', 'rage', 'calm', 'fear', 'force'],
-    feats: ['casting', 'verb_hex', 'verb_beguile', 'verb_ward', 'casting', 'word_doubling', 'verb_blink', 'control', 'quick_casting',
-      'casting', 'mod_long', 'casting', 'mod_far', 'control', 'quick_casting', 'casting', 'verb_bless', 'mod_strong'],
-  },
-  cleric: {
-    // A healer: Restore + Life mends a friend (Wide: everyone around them; Name: anywhere on the
-    // field), Restore lifts what
-    // Light and Force inflict; a withering or searing bolt (Light burns the undead). Mail and a
-    // mace; one hand free to cast.
-    label: 'Cleric', attrs: { STR: 5, CON: 6, DEX: 4, SPD: 4, INT: 7, WIL: 5, WIS: 6, CHA: 3 },
-    weapon: 'flangedMace', shield: null, nouns: ['life', 'light', 'force'],
-    feats: ['casting', 'verb_restore', 'casting', 'mod_wide', 'mod_name', 'verb_strike', 'verb_ward', 'control', 'quick_casting',
-      'casting', 'mod_strong', 'casting', 'verb_bless', 'control', 'quick_casting', 'casting', 'verb_launch', 'battle_casting'],
-  },
-  grappler: {
-    label: 'Grappler', attrs: { STR: 7, CON: 6, DEX: 6, SPD: 5, INT: 3, WIL: 4, WIS: 4, CHA: 4 },
-    weapon: null, shield: null, policy: { grappler: true },
-    // Works the clinch → hold → pin ladder with a dagger in the free hand.
-    feats: ['grappler', 'pin', 'coup_de_grace', 'grappler', 'escape_artist', 'brawlers_wind', 'trip', 'takedown', 'toughness', 'strength'],
-  },
-  duelist: {
-    label: 'Rapier & dagger', attrs: { STR: 5, CON: 5, DEX: 7, SPD: 7, INT: 3, WIL: 4, WIS: 4, CHA: 4 },
-    weapon: 'rapier', shield: null, offhand: 'parryingDagger',
-    // A rapier with a parrying dagger in the off hand: thrusts, parries, ripostes.
-    feats: ['parry_training', 'quick_thrust', 'parry_training', 'riposte', 'quick_parry', 'lunge', 'precision', 'economical_parry', 'toughness'],
-  },
-  archery: {
-    label: 'Archery', attrs: { STR: 5, CON: 5, DEX: 7, SPD: 6, INT: 4, WIL: 4, WIS: 4, CHA: 4 },
-    weapon: 'longbow', shield: null, arrows: 20, bodkins: 10,
-    // There are no archery feats in the design docs; archers take mobility and evasion.
-    feats: ['fleet_foot', 'dodge_training', 'light_on_your_feet', 'fleet_foot', 'quickness', 'dodge_training', 'toughness'],
-  },
-};
+// A start.yaml hero's plan as an archetype.
+function heroPlan(id) {
+  const B = L.B;
+  const h = B.World.heroes().find((x) => x.id === id);
+  if (!h) throw new Error('sim/arena: no start.yaml hero ' + id);
+  const kit = ((B.Content.world.start || {}).kits || []).find((k) => k.id === h.kit) || {};
+  const wi = h.weaponItems || [];
+  return {
+    attrs: h.attrs, skills: h.skills, feats: h.feats, nouns: h.nouns, arrows: h.arrows || kit.arrows || 0,
+    weapon: wi[0] ? wi[0].weapon : kit.wield || null, sidearm: wi[1] ? wi[1].weapon : kit.sidearm || null,
+    shield: h.shieldItem ? [h.shieldItem.shield, h.shieldItem.material || 'wood'] : h.shieldItem === null ? null : kit.shield ? [kit.shield, 'wood'] : null,
+  };
+}
+
+// The strategy's plan in the armor class: armor feats and ranks swapped for the class's.
+function plan(armorKey, stratKey) {
+  const A = ARMOR[armorKey], S = STRATEGY[stratKey];
+  if (!A || !S) throw new Error(`sim/arena: no such combatant ${armorKey}/${stratKey}`);
+  const base = S.hero ? heroPlan(S.hero) : L.ARCHETYPES[S.from];
+  const stages = Math.max(base.skills.length, A.skills.length);
+  const skills = [];
+  for (let i = 0; i < stages; i++) {
+    const own = Object.assign({}, base.skills[i] || {});
+    delete own.armor;
+    skills.push(Object.assign({}, A.skills[i] || {}, own));
+  }
+  return Object.assign({}, base, {
+    label: `${A.label} ${S.label}`, armor: A.armor ? [A.armor, 'full'] : null, skills,
+    feats: A.feats.concat(base.feats.filter((f) => !ARMOR_FEATS.has(f))),
+    offhand: S.offhand || base.offhand || null, policy: Object.assign({}, base.policy || {}, S.policy || {}),
+  });
+}
 
 // opts: { level, quality (gear), magical (weapons carry an enchantment: they hurt the incorporeal) }.
 function makeCombatant(armorKey, stratKey, side, opts) {
   opts = opts || {};
-  const A = ARMOR[armorKey], S = STRATEGY[stratKey];
-  const q = opts.quality || 'standard';
-  const c = C.newCharacter({ name: `${A.label} ${S.label} [${side}]`, starterGear: false, base: Object.assign({}, S.attrs) });
-  c.level = opts.level || LEVEL;
-  if (A.armor) c.armor = Items.makeArmor(A.armor, 'full', q);
-  if (S.shield) c.shield = Items.makeShield(S.shield[0], S.shield[1], q);
-  if (S.weapon) {
-    const w = Items.makeWeapon(S.weapon, q);
-    if (opts.magical) w.magical = true;
-    c.weapons.push(w);
-    c.wield = w.id;
-  }
-  if (S.offhand) {
-    const off = Items.makeWeapon(S.offhand, q);
-    if (opts.magical) off.magical = true;
-    c.weapons.push(off);
-    c.offhand = off.id;
-  }
-  const d = Items.makeWeapon('dagger', q);
-  if (opts.magical) d.magical = true;
-  c.weapons.push(d);
-  c.sidearm = d.id;
-  if (!S.weapon) c.wield = d.id;
-  c.inventory.arrows = S.arrows || 0;
-  c.inventory.bodkins = S.bodkins || 0;
-  c.inventory.bandages = 1;
-  c.nouns = (S.nouns || []).slice();
-  L.Enemies.chooseFeats(c, A.feats.concat(S.feats), L.Enemies.makeRng(1));
-  c.stamina = C.maxStamina(c);
-  c.policy = Object.assign({}, S.policy || {});
+  const P = plan(armorKey, stratKey);
+  const c = L.build(P, { level: opts.level || LEVEL, quality: opts.quality || 'standard', name: `${P.label} [${side}]` });
+  if (!c.wield && c.sidearm) c.wield = c.sidearm;
+  if (opts.magical) for (const w of c.weapons) w.magical = true;
   return c;
 }
 
 // Magic users are back with the magic overhaul (they were left out while magic was a stub).
 // Pass --no-magic to leave them out.
-if (argv.includes('--no-magic')) { delete STRATEGY.magic; delete STRATEGY.enchanter; delete STRATEGY.cleric; }
+if (argv.includes('--no-magic')) { delete STRATEGY.magic; delete STRATEGY.cleric; }
 
 const KEYS = [];
 for (const a of Object.keys(ARMOR)) for (const s of Object.keys(STRATEGY)) KEYS.push(a + '/' + s);
+// --keys heavy/shield,light/archery: only those combatants (a quick look, or a test).
+if (arg('keys', null)) { const only = arg('keys').split(','); for (const k of only) if (!KEYS.includes(k)) throw new Error('sim/arena: no such combatant ' + k); KEYS.splice(0, KEYS.length, ...only); }
 
 // ---- Event counting from the fight log ---------------------------------------
 const EVENTS = {
@@ -172,7 +144,7 @@ function countEvents(log, nameA, nameB) {
 }
 
 if (require.main !== module) {
-  module.exports = { makeCombatant, ARENAS, KEYS };
+  module.exports = { makeCombatant, plan, ARENAS, KEYS, ARMOR, STRATEGY };
   return;
 }
 
@@ -294,7 +266,7 @@ if (require.main !== module) {
     md += '| | ' + S.map((s) => STRATEGY[s].label).join(' | ') + ' |\n|' + '---|'.repeat(S.length + 1) + '\n';
     for (const a of S) md += `| ${STRATEGY[a].label} | ` + S.map((b) => pct(rollups[ak].strategy[a][b])).join(' | ') + ' |\n';
     md += `\n### Average win rate by armor and strategy\n\n| | ` + S.map((s) => STRATEGY[s].label).join(' | ') + ' |\n|' + '---|'.repeat(S.length + 1) + '\n';
-    for (const a of Object.keys(ARMOR)) md += `| ${ARMOR[a].label} | ` + S.map((s) => pct(agg[ak][a + '/' + s].avgWin)).join(' | ') + ' |\n';
+    for (const a of Object.keys(ARMOR)) md += `| ${ARMOR[a].label} | ` + S.map((s) => pct(agg[ak][a + '/' + s] && agg[ak][a + '/' + s].avgWin)).join(' | ') + ' |\n';
   }
   fs.writeFileSync(path.join(OUT, 'report.md'), md);
   console.log(md);
