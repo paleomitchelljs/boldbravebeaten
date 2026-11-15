@@ -18,12 +18,15 @@
  * Pins (a scripted policy laid over the AI; the rules are untouched):
  *   hide              every AI decision (both sides': choose and react) is made as if the change were not there; the
  *                     rules apply it. What the change does by itself, with the decisions of the hero as planned.
+ *   hideSelf, hideFoes the same, for the hero's own decisions only, or for the foes' only (which side's AI it is)
  *   noBareApproach    the hero never ends a move inside a standing foe's reach without the AP left for a blow at it from
  *                     there; it holds its ground instead (ends its turn, keeping the AP for its defences).
  *
  * Verdict: "the AI" when Δ pinned − Δ as is is above two standard errors and Δ pinned is not below −2 SE; "the rule"
- * when Δ pinned is below −2 SE and the difference is within 2 SE; "both" when both are beyond 2 SE; "undetermined"
- * otherwise (the evidence doesn't separate them).
+ * when Δ pinned is below −2 SE and the difference is within 2 SE; "both" when Δ pinned is below −2 SE and the difference
+ * above +2 SE; "not this choice" when the difference is below −2 SE (pinning the suspect makes the change worse);
+ * "undetermined" otherwise (the evidence doesn't separate them). Also printed: the share of rounds the hero's turn came
+ * first, in each arm (today's order is by AP rolled).
  *
  *   node sim/aicheck.js spd|anticipation|rally [--n 40] [--seed 700] [--jobs 4] [--json file]
  *   node sim/aicheck.js --hero Beren --level 3 --change attr:SPD|skill:anticipation|feat:rally|lab:rally --pin hide|noBareApproach
@@ -42,9 +45,9 @@ const N = Number(opt('n', 40)), SEED = Number(opt('seed', 700));
 const JOBS = Number(opt('jobs', Math.max(1, Math.min(4, os.cpus().length - 1))));
 
 const NAMED = {
-  spd: { label: '+1 SPD on Beren at level 3', hero: 'Beren', level: 3, change: 'attr:SPD', pins: ['noBareApproach', 'hide'] },
-  anticipation: { label: '+1 Anticipation on Beren at level 3', hero: 'Beren', level: 3, change: 'skill:anticipation', pins: ['hide'] },
-  rally: { label: 'Rally held by Cyrus at level 5 (lab: the feat and the skill it needs)', hero: 'Cyrus', level: 5, change: 'lab:rally', pins: ['hide'] },
+  spd: { label: '+1 SPD on Beren at level 3', hero: 'Beren', level: 3, change: 'attr:SPD', pins: ['noBareApproach', 'hide', 'hideSelf', 'hideFoes'] },
+  anticipation: { label: '+1 Anticipation on Beren at level 3', hero: 'Beren', level: 3, change: 'skill:anticipation', pins: ['hide', 'hideSelf', 'hideFoes'] },
+  rally: { label: 'Rally held by Cyrus at level 5 (lab: the feat and the skill it needs)', hero: 'Cyrus', level: 5, change: 'lab:rally', pins: ['hide', 'hideSelf'] },
 };
 // Monsters that stand for a level (sim/feats.js's list).
 const MONSTERS = { 1: ['goblinWarrior', 'scaleward', 'fireGoblin'], 2: ['goblinWarrior', 'scaleward', 'orcCenturion'], 3: ['orcCenturion', 'gnomeWarrior', 'koboldSpearman'], 4: ['orcCenturion', 'koboldChampion', 'sarnak'], 5: ['koboldChampion', 'sarnakKnight', 'orcWarlord'] };
@@ -95,16 +98,18 @@ function makeHero(env, name, level) {
 function installPin(env, pin, ctx) {
   const { B } = env, AI = B.AI, C = B.Character, Combat = B.Combat;
   const choose0 = AI.choose, react0 = AI.react;
-  if (pin === 'hide') {
-    // Swap the hero's base, skills and feats for the planned ones while any AI decides.
-    const wrap = (fn) => function (...args) {
+  if (pin === 'hide' || pin === 'hideSelf' || pin === 'hideFoes') {
+    // Swap the hero's base, skills and feats for the planned ones while an AI decides: any AI (hide), the hero's own
+    // (hideSelf), or the foes' (hideFoes; what they read of the hero).
+    const mine = (args, isReact) => { const c = ctx.hero(); const who = isReact ? args[2] && args[2].actor : args[2]; return c && who === c.id; };
+    const wrap = (fn, isReact) => function (...args) {
       const c = ctx.hero(), plain = ctx.plain;
-      if (!c || !plain) return fn.apply(this, args);
+      if (!c || !plain || (pin === 'hideSelf' && !mine(args, isReact)) || (pin === 'hideFoes' && mine(args, isReact))) return fn.apply(this, args);
       const keep = { base: c.base, skills: c.skills, feats: c.feats };
       c.base = plain.base; c.skills = plain.skills; c.feats = plain.feats;
       try { return fn.apply(this, args); } finally { c.base = keep.base; c.skills = keep.skills; c.feats = keep.feats; }
     };
-    AI.choose = wrap(choose0); AI.react = wrap(react0);
+    AI.choose = wrap(choose0, false); AI.react = wrap(react0, true);
   } else if (pin === 'noBareApproach') {
     AI.choose = function (enc, chars, id, rng, policy) {
       const d = choose0.call(this, enc, chars, id, rng, policy);
@@ -132,7 +137,7 @@ async function runArm(task) {
   installPin(env, task.pin, ctx);
   const foes = B.World.heroes().filter((x) => ['Beren', 'Cyrus', 'Lorc', 'Jabiku'].includes(x.name) && x.name !== task.hero).map((h) => ({ hero: h.name }))
     .concat(MONSTERS[Math.min(5, Math.max(1, task.level))].map((m) => ({ monster: m })));
-  const out = { win: [], dead: [], rounds: [], taken: [], dealt: [], foe: [], pinned: 0, uses: {} };
+  const out = { win: [], dead: [], rounds: [], taken: [], dealt: [], foe: [], pinned: 0, uses: {}, rounds1: 0, first1: 0 };
   const harm = (c) => Object.values(c.damage || {}).reduce((t, x) => t + x, 0) + (B.Character.maxStamina(c) > 0 ? 1 - Math.max(0, c.stamina) / B.Character.maxStamina(c) : 0);
   let k = 0;
   for (const f of foes) {
@@ -144,7 +149,15 @@ async function runArm(task) {
       const Bc = f.hero ? makeHero(env, f.hero, task.level) : B.Enemies.makeMonster(f.monster, {})[0];
       const r = await L.fight({
         A: [A], B: [Bc], grid: { w: 12, h: 6 }, seed: SEED + k, maxRounds: 30,
-        watch: (enc) => ({ poll() { for (const d of enc.decls) if (d.actor === A.id && !d.reaction && !d._seen) { d._seen = true; out.uses[d.type] = (out.uses[d.type] || 0) + 1; } }, end() {} }),
+        watch: (enc) => {
+          let round = null;
+          return {
+            // Rounds in which the hero's turn came first (today's turn order: AP rolled, most first).
+            before() { if (enc.round !== round) { round = enc.round; out.rounds1++; if (enc.order[0] === A.id) out.first1++; } },
+            poll() { for (const d of enc.decls) if (d.actor === A.id && !d.reaction && !d._seen) { d._seen = true; out.uses[d.type] = (out.uses[d.type] || 0) + 1; } },
+            end() {},
+          };
+        },
       });
       out.win.push(r.winner === 'A' ? 1 : r.winner === 'B' ? 0 : 0.5);
       out.dead.push(r.deadA); out.rounds.push(r.rounds); out.taken.push(harm(A)); out.dealt.push(harm(Bc)); out.foe.push(f.hero || f.monster);
@@ -164,9 +177,10 @@ function paired(d) {
 const diff = (a, b) => a.map((x, i) => x - b[i]);
 function verdict(asis, pinned, did) {
   const sigDid = Math.abs(did.mean) > 2 * did.se, pinNeg = pinned.mean < -2 * pinned.se;
-  if (sigDid && did.mean > 0 && !pinNeg) return 'the AI';
+  if (sigDid && did.mean < 0) return 'not this choice (pinned, the change does worse still)';
+  if (sigDid && !pinNeg) return 'the AI';
   if (pinNeg && !sigDid) return 'the rule';
-  if (pinNeg && sigDid && did.mean > 0) return 'both (the AI makes it worse; the rule hurts too)';
+  if (pinNeg && sigDid) return 'both (the AI makes it worse; the rule hurts too)';
   return 'undetermined';
 }
 
@@ -205,8 +219,9 @@ if (process.env.AICHECK_TASK) {
       console.log(`${c.label}: ${c.hero}, level ${c.level}, change ${c.change}; ${N} seeds a foe (${b0 && b0.win ? b0.win.length : '?'} fights an arm), seed ${SEED}`);
       if (!b0 || b0.error || !c0 || c0.error) { console.log('  ERROR ' + ((b0 && b0.error) || (c0 && c0.error))); failed = true; continue; }
       const asis = paired(diff(c0.win, b0.win));
-      console.log(`  base, as is:      win ${(100 * mean(b0.win)).toFixed(1)}%`);
-      console.log(`  changed, as is:   win ${(100 * mean(c0.win)).toFixed(1)}%   Δ as is ${pts(asis)} points; Δ harm taken ${f2(paired(diff(c0.taken, b0.taken)))}, dealt ${f2(paired(diff(c0.dealt, b0.dealt)))} (attribute points + share of stamina)`);
+      const firstShare = (r) => (r.rounds1 ? `${(100 * r.first1 / r.rounds1).toFixed(1)}% of ${r.rounds1} rounds` : '-');
+      console.log(`  base, as is:      win ${(100 * mean(b0.win)).toFixed(1)}%; the hero's turn first in ${firstShare(b0)}`);
+      console.log(`  changed, as is:   win ${(100 * mean(c0.win)).toFixed(1)}%; turn first in ${firstShare(c0)}   Δ as is ${pts(asis)} points; Δ harm taken ${f2(paired(diff(c0.taken, b0.taken)))}, dealt ${f2(paired(diff(c0.dealt, b0.dealt)))} (attribute points + share of stamina)`);
       const usesLine = (r) => Object.entries(r.uses).filter(([k]) => !['move', 'strike', 'endTurn'].includes(k)).map(([k, v]) => `${k} ${v}`).join(', ');
       console.log(`    the hero's other actions, base: ${usesLine(b0) || 'none'}; changed: ${usesLine(c0) || 'none'}`);
       for (const p of c.pins) {
@@ -216,7 +231,7 @@ if (process.env.AICHECK_TASK) {
         const did = paired(diff(diff(cp.win, bp.win), diff(c0.win, b0.win)));
         console.log(`  pin ${p}:`);
         if (BASE_TOUCHING.has(p)) console.log(`    base, pinned:    win ${(100 * mean(bp.win)).toFixed(1)}% (the pin overrode ${bp.pinned} choices)`);
-        console.log(`    changed, pinned: win ${(100 * mean(cp.win)).toFixed(1)}%${BASE_TOUCHING.has(p) ? ` (overrode ${cp.pinned})` : ''}   Δ pinned ${pts(pinned)} points; Δ pinned − Δ as is ${pts(did)}`);
+        console.log(`    changed, pinned: win ${(100 * mean(cp.win)).toFixed(1)}%${BASE_TOUCHING.has(p) ? ` (overrode ${cp.pinned})` : ''}; turn first in ${firstShare(cp)}   Δ pinned ${pts(pinned)} points; Δ pinned − Δ as is ${pts(did)}`);
         console.log(`    verdict: ${verdict(asis, pinned, did)}`);
         // By foe: where the change's effect sits.
         const foes = [...new Set(b0.foe)];
