@@ -864,6 +864,29 @@
     return best;
   }
 
+  // Is a Bait worth its AP? The blows this turn's AP still buys after it, each landing more often against a baited
+  // defence (and as often as before if the bait is seen through), against the blows the same AP buys without it. A bait
+  // that costs a blow has to win that blow back in landing odds. BAIT_EDGE: it must pay by this much (the foe may be out
+  // of AP and not defend at all, which the actor can't see).
+  const BAIT_EDGE = 1.1;
+  // Rally's worth to a standing friend (hitValue's units): an AP won back from fatigue, and a point of breath otherwise.
+  const RALLY_STEP = 8, RALLY_BREATH = 0.1, RALLY_MIN = 10;
+  // One fighter's own fatigue step is under the minimum on purpose: Rally is for a side (two tired friends, or one down),
+  // and alone it lost duels (sim/aicheck.js rally).
+  function baitPays(enc, chars, c, t, bait, blows, budget) {
+    if (!t || !blows.length) return false;
+    const o = blows.reduce((a, b) => (b.ap < a.ap ? b : a));
+    const n0 = Math.floor(budget / o.ap), n1 = Math.floor((budget - bait.ap) / o.ap);
+    if (n1 < 1) return false;
+    const off = -((G.CONFIG.conditions.baited || {}).defense || 0);
+    const kinds = ['parry', 'dodge'].concat(C.shieldReady(t) ? ['block'] : []);
+    const meets = (extra) => Math.max(0, ...kinds.map((k) => (Combat.defenseUnavailable(t, k, { type: 'strike', option: o, actor: c.id }, chars, enc) ? 0 : Combat.defenseOdds(t, k, o.motion, c, o, extra, enc))));
+    const land0 = 1 - meets(0), land2 = 1 - meets(-off);
+    // The bait wins on a margin above 0 (Combat.resolveAction).
+    const p = Combat.opposedOdds(Math.floor(C.attr(c, 'CHA') / 2) + Combat.feintScore(c), Math.floor(C.attr(t, 'WIS') / 2) + Combat.readScore(t), 1);
+    return n1 * (p * land2 + (1 - p) * land0) > BAIT_EDGE * n0 * land0;
+  }
+
   // ---- Feat actions (feats.yaml): Rally, Command, To Your Feet, Demoralize, Name the Weakness, Vanish, Feign Death.
   // Each is valued in hitValue's units and returned per AP, as a blow's rate is, so the best of a blow, a spell and
   // these wins. What the actor sees: who is down or hurt on its own side, the foes' bodies and gear, what they have done.
@@ -890,9 +913,19 @@
         const f = chars[o];
         if (!f || f.side !== c.side || f.status.dead || C.tireless(f) || !enc.pos[o] || Combat.dist(me, enc.pos[o]) > 3) continue;
         if (C.collapsed(f)) v += 40;
-        else if (C.isActive(f)) v += Math.min(C.maxStamina(f) - f.stamina, Math.max(1, C.roundRegen(f, false))) * 0.6;
+        else if (C.isActive(f)) {
+          // Breath is worth an action only where it changes what the fighter can do: lifting them over a fatigue
+          // step (an AP back every round). A few points of stamina to someone who is not tired are worth next to nothing.
+          const gain = Math.min(C.maxStamina(f) - f.stamina, Math.max(1, C.roundRegen(f, false)));
+          const before = C.fatiguePenalty(f);
+          const keep = f.stamina;
+          let after = before;
+          try { f.stamina = keep + gain; after = C.fatiguePenalty(f); } finally { f.stamina = keep; }
+          v += before > after ? RALLY_STEP * (before - after) : gain * RALLY_BREATH;
+        }
       }
-      consider(v, { actor: id, type: 'rally' }, rally.ap);
+      // With no blow to compare it with (no foe in reach, or winded) any worth at all would win: it must be worth an action.
+      if (v >= RALLY_MIN) consider(v, { actor: id, type: 'rally' }, rally.ap);
     }
     // To Your Feet: a collapsed friend beside me up now, with a quarter of their stamina.
     const rouse = other('rouse');
@@ -1378,7 +1411,7 @@
     const blowAP = Math.min(...usable.filter((o) => !o.spell).map((o) => o.ap).concat([99]));
     if (bait && !acted && la.ap >= bait.ap + Math.min(blowAP, 99) + reserve && blowAP < 99) {
       const guarded = bait.targets.find((x) => x.inReach && foes.includes(x.id) && !enc.turnDone[x.id] && usable.some((o) => C.inRange(o, x.distance)));
-      if (guarded && Math.floor(C.attr(c, 'CHA') / 2) + Combat.feintScore(c) >= Math.floor(C.attr(chars[guarded.id], 'WIS') / 2) + Combat.readScore(chars[guarded.id])) return { actor: id, type: 'bait', target: guarded.id };
+      if (guarded && baitPays(enc, chars, c, chars[guarded.id], bait, usable.filter((o) => !o.spell && C.inRange(o, guarded.distance)), la.ap - reserve)) return { actor: id, type: 'bait', target: guarded.id };
     }
     // The AI doesn't read intent (the user, 2026-11-01): it filled foes' turns with looks instead of blows.
 
