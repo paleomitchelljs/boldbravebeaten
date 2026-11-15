@@ -345,7 +345,7 @@ settings, and the roles named here are not the last ones they will have.
 
 **Skills.** Dodging needs one skill, not two (Evasion; Anticipation keeps reading, surprise and insight). Arcane's
 unlocks are split as `docs/FEATS-AUDIT.md` F11 recommends once casters can be measured. The three craft skills
-stay as hooks for exploring. Step F's "AP pool" row above reads as SPD's factor on tick costs. **The die:** on step A's margin report, choose between a d10 with skill gaps scaled
+stay as hooks for exploring. **The die:** on step A's margin report, choose between a d10 with skill gaps scaled
 down and 2d10 (a bell, so a +1 matters most in an even fight), and re-derive the defence numbers once.
 
 ## Step J. Feats (after E to I)
