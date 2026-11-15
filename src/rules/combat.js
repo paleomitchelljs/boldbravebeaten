@@ -38,6 +38,7 @@
       spent: {}, turnDone: {},
       decls: [], seq: 0, log: [], hitThisRound: {}, fortressUsed: {}, startedAt: Date.now(),
     };
+    bind(enc, chars);
     autoPlace(enc, chars);
     return enc;
   }
@@ -62,8 +63,82 @@
     place(foes, enc.grid.w - 2);
   }
 
+  // Distance for reach, range, radii and every "within n squares" (the overhaul, step B): rounded Euclidean. Reach 1 is
+  // the eight squares around; reach 2 leaves out the far corners (2, 2); reach 3 the squares past (3, 2).
   function dist(a, b) {
-    return Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
+    return Math.round(Math.hypot(a.x - b.x, a.y - b.y));
+  }
+
+  // Squares walked from a to b on open ground: every second diagonal step counts two (Terrain.costMap and pathCost
+  // count a walk round walls the same way, so a straight walk there costs what this says).
+  function steps(a, b) {
+    const dx = Math.abs(a.x - b.x), dy = Math.abs(a.y - b.y);
+    return Math.max(dx, dy) + Math.floor(Math.min(dx, dy) / 2);
+  }
+
+  // The characters of an encounter, for rules that ask who stands where but are reached without them (a defence's
+  // numbers: flanked). Set wherever the engine is given both (createEncounter, startRound, legalActions, a defence).
+  const rosters = typeof WeakMap !== 'undefined' ? new WeakMap() : null;
+  function bind(enc, chars) {
+    if (rosters && enc && chars) rosters.set(enc, chars);
+  }
+
+  // ---- Flanking (the overhaul, step B; CONFIG.flank) ------------------------------------------------
+  // No facing. A defender meeting a blow is flanked when another foe on its feet that threatens them stands on the far
+  // side: the bearings from the defender to the attacker and to that foe more than 120° apart (three of the eight
+  // squares round them are "behind" any one). A foe whose way in is covered, the square beside the defender towards it
+  // holding a wall or a standing ally of theirs, doesn't count (a spear reaching over a friend's shoulder). A wall at
+  // the back covers by leaving no square there to stand on; a corner leaves no two squares far enough apart.
+
+  // Could foe f strike at someone standing at `at`, from where f stands? On its feet, free, a melee blow that reaches.
+  function threatens(enc, chars, f, at) {
+    if (!f || !C.isActive(f) || f.status.prone || isGrappled(f) || C.inClinch(f) || !enc.pos[f.id]) return false;
+    const d = dist(enc.pos[f.id], at);
+    if (!C.attackOptions(f).some((o) => !o.ranged && !o.spell && C.inRange(o, d))) return false;
+    return !(d >= 2 && G.Terrain && enc.tiles && G.Terrain.lineCheck(enc, enc.pos[f.id], at, 'melee').blocked);
+  }
+
+  // Bearings from `at` to p and to q more than 120° apart.
+  function opposite(at, p, q) {
+    const ux = p.x - at.x, uy = p.y - at.y, vx = q.x - at.x, vy = q.y - at.y;
+    return ux * vx + uy * vy < -0.5 * Math.hypot(ux, uy) * Math.hypot(vx, vy);
+  }
+
+  // Is the way from `at` towards p covered for someone of `side` (a wall, or a standing ally, on the square beside them)?
+  function covered(enc, chars, side, at, p, self) {
+    const q = G.Terrain ? G.Terrain.between(at, p)[0] : null;
+    if (!q) return false;
+    if (G.Terrain && enc.tiles && (G.Terrain.has(enc, q.x, q.y, 'wall') || G.Terrain.has(enc, q.x, q.y, 'solid'))) return true;
+    return enc.ids.some((o) => o !== self && chars[o] && chars[o].side === side && C.isActive(chars[o]) && enc.pos[o] && enc.pos[o].x === q.x && enc.pos[o].y === q.y);
+  }
+
+  // The foe who flanks `defender`, standing at `at`, against a blow from the square `from` (null: none). `skip`: ids that
+  // don't count (the attacker; a mover not yet where it is going).
+  function flankerAt(enc, chars, defender, at, from, skip) {
+    for (const o of enc.ids) {
+      const f = chars[o];
+      if (!f || o === defender.id || (skip && skip.includes(o)) || f.side === defender.side || !enc.pos[o]) continue;
+      const p = enc.pos[o];
+      if ((p.x === from.x && p.y === from.y) || !opposite(at, from, p)) continue;
+      if (!threatens(enc, chars, f, at) || covered(enc, chars, defender.side, at, p, defender.id)) continue;
+      return o;
+    }
+    return null;
+  }
+
+  // Would `c` be flanked standing at `at` by the foes about it (any two that threaten the square from far sides)?
+  function flankedAt(enc, chars, c, at) {
+    const near = enc.ids.filter((o) => chars[o] && chars[o].side !== c.side && o !== c.id && threatens(enc, chars, chars[o], at) && !covered(enc, chars, c.side, at, enc.pos[o], c.id));
+    for (let i = 0; i < near.length; i++) for (let j = i + 1; j < near.length; j++) if (opposite(at, enc.pos[near[i]], enc.pos[near[j]])) return true;
+    return false;
+  }
+
+  // What flanking takes off this defence against this attacker's blow, from where everyone stands (0: not flanked).
+  function flanked(enc, defender, attacker, chars) {
+    const K = CONFIG.flank;
+    chars = chars || (rosters && enc ? rosters.get(enc) : null);
+    if (!K || !K.penalty || !enc || !chars || !defender || !attacker || !enc.pos || !enc.pos[defender.id] || !enc.pos[attacker.id]) return 0;
+    return flankerAt(enc, chars, defender, enc.pos[defender.id], enc.pos[attacker.id], [attacker.id]) ? K.penalty : 0;
   }
 
   function log(enc, text, cls) {
@@ -104,6 +179,7 @@
   }
 
   async function startRound(enc, chars, roller) {
+    bind(enc, chars);
     enc.round += 1;
     // Stamina at the round's start, so its end can tell how much each fighter spent (CONFIG.weariness.perStamina).
     enc.staminaAtStart = {};
@@ -184,6 +260,7 @@
   // A hidden attack (Feint over Read Attack) offers every defence the defender could make in
   // general, with no odds: they choose blind, and a defence that can't meet the blow is wasted.
   function defenseOptions(enc, chars, t, a, d) {
+    bind(enc, chars);
     if (!C.isActive(t) || GRAPPLE_STEPS.includes(d.type)) return { hidden: false, options: [] };
     const hidden = describeBare(enc, chars, d, t.id).hidden;
     const free = C.rank(t, 'untouchable') && enc.dodged && enc.dodged[t.id];
@@ -412,6 +489,7 @@
   // Everything the current actor may declare now, for the UI — with what conditions forbid
   // (calmed, mesmerized, in a frenzy, afraid, blinded) marked unavailable.
   function legalActions(enc, chars, id) {
+    bind(enc, chars);
     const out = legalActionsRaw(enc, chars, id);
     const c = chars[id];
     // R2: what this fighter can't pay the stamina for is taken spent (weaker), not refused.
@@ -830,7 +908,7 @@
       ({ ap, stamina } = C.actionCost(c, 'windUp', { option: opt }));
     } else if (decl.type === 'move') {
       const from = enc.pos[id];
-      const d = dist(from, decl.to);
+      const d = steps(from, decl.to);
       if (d === 0) return { err: 'Pick a different square' };
       if (c.status.prone || isGrappled(c) || C.inClinch(c)) return { err: c.status.prone ? 'Prone: stand up first' : 'Held fast' };
       // Walls are walked around; rough ground, brambles and climbing out of a pit cost extra.
@@ -961,9 +1039,9 @@
     if (counter) a.status.counterStep = null;
     const dragged = C.holding(a) ? chars[C.holding(a)] : null;
     const start = { x: enc.pos[a.id].x, y: enc.pos[a.id].y };
-    const steps = dragged ? [d.to] : G.Terrain ? G.Terrain.path(enc, enc.pos[a.id], d.to, a, foeSquares(enc, chars, a)) : [d.to];
-    let walked = 0, why = '';
-    for (const q of steps) {
+    const route = dragged ? [d.to] : G.Terrain ? G.Terrain.path(enc, enc.pos[a.id], d.to, a, foeSquares(enc, chars, a)) : [d.to];
+    let walked = 0, why = '', diagonals = 0;
+    for (const q of route) {
       const from = enc.pos[a.id];
       state.free = counter && walked === 0;
       // Unstoppable: a blow that lands does not stop the move.
@@ -973,6 +1051,8 @@
       enc.pos[a.id] = { x: q.x, y: q.y };
       if (dragged) { enc.pos[dragged.id] = { x: from.x, y: from.y }; }
       walked += G.Terrain && enc.tiles ? G.Terrain.stepCost(enc, q.x, q.y, a) : 1;
+      // Every second diagonal step counts two (Combat.steps).
+      if (q.x !== from.x && q.y !== from.y && ++diagonals % 2 === 0) walked += 1;
       if (G.Terrain && enc.tiles && (await G.Terrain.enter(enc, chars, a, q.x, q.y, io && io.roller, (t) => log(enc, t, 'hit')))) { why = 'stops'; break; }
     }
     const at = enc.pos[a.id];
@@ -1869,6 +1949,7 @@
   function defenseNumbers(defender, kind, motion, attacker, atkOption, enc) {
     const r = defenseNumbersBase(defender, kind, motion, attacker, atkOption);
     const m = intentMods(defender, attacker);
+    m.def -= flanked(enc, defender, attacker); // step B: a foe on the far side
     const aim = atkOption && atkOption.aim;
     if (aim) {
       // The AI weighs a blow it hasn't thrown with its own guess (atkOption.aimGuarded); a real defence reads the body.
@@ -3428,7 +3509,7 @@
       let best = null;
       for (const d of defences) if (!best || d.odds > best.odds + 1e-9 || (Math.abs(d.odds - best.odds) < 1e-9 && d.ap < best.ap)) best = d;
       return {
-        option: o, distance, spent: !!o.spent, hit, defences,
+        option: o, distance, spent: !!o.spent, hit, defences, flank: enc ? flanked(enc, target, attacker) : 0,
         best: best ? best.kind : null,
         lands: best ? 1 - best.odds : 1,
         drop: best ? best.drop : hit.drop,
@@ -3489,6 +3570,6 @@
     foeSquares, fearSource, fleeSteps, mustFlee,
     unseenBy, strikeEffects, conditionForbids, ATTACK_TYPES, DEFENSE_TYPES, shoveReach, log, rollDie, castSpell, knockDown, stability, releaseAll: clearGrapple,
     createEncounter, autoPlace, startRound, currentActor, legalActions, act, validate, endTurn, defer, submit, describeDecl, apLeft, defenseOptions, coverOptions, opportunityOptions,
-    vitalNeed, woundTable, aimHold, projectedPos, dist, comesRoundAt, collapseRounds, isSpent, canPay, defenseOdds, parryCarryShare, leverage, skillEdge, feintScore, readScore, blowForce, aimPenalty, aimGuarded, aimOpen, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, passesThrough, sweeps, sweepTarget, sweepForce, applyHit, resolveAction, finishRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
+    vitalNeed, woundTable, aimHold, projectedPos, dist, steps, flanked, flankerAt, flankedAt, threatens, comesRoundAt, collapseRounds, isSpent, canPay, defenseOdds, parryCarryShare, leverage, skillEdge, feintScore, readScore, blowForce, aimPenalty, aimGuarded, aimOpen, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, passesThrough, sweeps, sweepTarget, sweepForce, applyHit, resolveAction, finishRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

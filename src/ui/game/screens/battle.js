@@ -279,7 +279,7 @@
       const aim = cmd.castAt || (hv && map.castable[hk] ? hv : null);
       if (aim) {
         const r = (entry.option.spell && entry.option.spell.radius) || 0;
-        for (let y = aim.y - r; y <= aim.y + r; y++) for (let x = aim.x - r; x <= aim.x + r; x++) if (x >= 0 && y >= 0 && x < enc.grid.w && y < enc.grid.h) sc.marks.push({ x: x + ox, y: y + oy, type: 'area' });
+        for (let y = aim.y - r; y <= aim.y + r; y++) for (let x = aim.x - r; x <= aim.x + r; x++) if (x >= 0 && y >= 0 && x < enc.grid.w && y < enc.grid.h && Combat.dist(aim, { x, y }) <= r) sc.marks.push({ x: x + ox, y: y + oy, type: 'area' });
         sc.lines.push({ pts: [at(me), at(aim)], color: INTENT.spell.color, style: 'dash', alpha: cmd.castAt ? 0.9 : 0.45 });
         sc.reticles.push({ x: aim.x + ox, y: aim.y + oy, color: INTENT.spell.color, strong: !!cmd.castAt });
       }
@@ -390,14 +390,14 @@
       const a = enc.pos[d.actor], b = enc.pos[d.target], ox = game.ui.bs.arena ? game.ui.bs.arena.ox : 0, oy = game.ui.bs.arena ? game.ui.bs.arena.oy : 0;
       // A spell flies; a shot plays the shooter's strike and then the arrow flies (released halfway through, quicker
       // than a spell, longer the farther); everything else, a reach weapon's thrust too, is a blow with a lunge.
-      const o = d.option || {}, dist = Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
+      const o = d.option || {}, dist = Combat.dist(a, b);
       // A wall in the way: the bolt or arrow stops against it.
       const lc = (o.spell || o.ranged) && dist >= 2 && G.Terrain && enc.tiles ? G.Terrain.lineCheck(enc, a, b, 'missile') : null;
       const stop = lc && lc.blocked ? { x: lc.at.x + ox, y: lc.at.y + oy } : null;
       let land = t0 + 140;
       if (o.spell) { mv.bolt(d.actor, d.target, '#d7b4ff', t0, o.spell.noun || o.noun || o.spell.element || 'force', { stop }); land = t0 + 200; }
       else if (o.ranged) {
-        const dur = Math.max(160, (stop ? Math.max(Math.abs(a.x - lc.at.x), Math.abs(a.y - lc.at.y)) : dist) * 45);
+        const dur = Math.max(160, (stop ? Combat.dist(a, lc.at) : dist) * 45);
         mv.lunge(d.actor, b.x + ox, b.y + oy, t0, true);
         mv.bolt(d.actor, d.target, '#ffe9a0', t0 + 200, null, { shape: o.natural ? null : 'arrow', dur, stop });
         land = t0 + 200 + dur;

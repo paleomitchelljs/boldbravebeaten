@@ -94,7 +94,7 @@
       const terrain = G.Terrain && enc.tiles && Object.keys(enc.tiles).length;
       const map = terrain ? G.Terrain.costMap(enc, m.from, chars[actor], null, Combat.foeSquares(enc, chars, chars[actor])) : null;
       for (let y = 0; y < enc.grid.h; y++) for (let x = 0; x < enc.grid.w; x++) {
-        const d = Combat.dist(m.from, { x, y });
+        const d = Combat.steps(m.from, { x, y });
         const squares = map ? map.cost[map.idx(x, y)] : d;
         if (!isFinite(squares)) continue;
         const need = C.moveCost(chars[actor], Math.round(squares));
@@ -331,7 +331,7 @@
     const best = f.best ? f.defences.find((d) => d.kind === f.best) : null;
     const lands = best ? `Lands ${pct(f.lands)} (they ${THEY[best.kind] || best.kind}${best.through ? '; beats through' : ''})` : `Lands ${pct(1)} (${f.down ? 'down' : 'no defence'})`;
     const end = f.down ? `kills ${pct(f.kill)}` : `drops them ${pct(f.drop)}`;
-    return `${f.spent ? 'Spent: ' : ''}${lands} · ${harmWords(f.hit)} · ${end}`;
+    return `${f.spent ? 'Spent: ' : ''}${f.flank ? 'Flanked: ' : ''}${lands} · ${harmWords(f.hit)} · ${end}`;
   }
 
   // The breakdown behind the line, a sentence a row.
@@ -342,6 +342,7 @@
     rows.push(`If it lands untouched: ${all.length ? all.join(', ') : 'no wound'}; ${hit.stamina.toFixed(1)} stamina; armor wear ${hit.wear.toFixed(1)}. A vital wound ${pct(hit.vital)}; ${f.down ? `kills ${pct(hit.kill)}` : `drops them ${pct(hit.drop)}${hit.kill > 0.005 ? ` (kills ${pct(hit.kill)})` : ''}`}.`);
     if (hit.aimHold != null && hit.aimHold < 1) rows.push(`Lands where aimed ${pct(hit.aimHold)}; otherwise wherever they are open.`);
     if (f.spent) rows.push('Spent: you haven\'t the stamina, so it lands softer and is easier to meet.');
+    if (f.flank) rows.push(`Flanked: with a foe of theirs on the far side, ${t.name} defends at −${f.flank}.`);
     for (const d of f.defences) {
       const bits = [`${d.name}: stops it ${pct(d.odds)} (costs them ${C.fmtAP(d.ap)} AP${d.stamina ? `, ${d.stamina} stamina${d.spent ? ', spent' : ''}` : ''})`];
       if (d.absorb) bits.push(`a stopped blow still jars ${d.absorb} stamina out of them`);

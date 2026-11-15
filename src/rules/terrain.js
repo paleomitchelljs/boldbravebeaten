@@ -78,27 +78,52 @@
   }
 
   // The cheapest way from `from` to `to`, step by step (8 directions; walls can't be entered;
-  // rough ground costs more). Without a way through, the path ends at the reachable square
-  // nearest the goal. `c` (optional) is the walker, for Freedom.
+  // rough ground costs more; every second diagonal step counts two, as Combat.steps). Without a way through, the path
+  // ends at the reachable square nearest the goal. `c` (optional) is the walker, for Freedom.
   // Cheapest cost from `from` to every square (Dijkstra; stops early at `to` if given). `block` (a Set of "x,y"):
   // squares that can't be walked through, the walker's foes (Combat.foeSquares): they have to be gone around.
   // Nobody walks onto deadly ground (lava) they can see; only a shove or a fall puts them there, and they can walk out.
   // Other hazards they can see (a pit, fire, a foe's rune) are crossed only when there is no way round. `cost` is the
   // true squares walked; the detours only steer which way is taken.
+  // The search runs over (square, diagonals so far odd or even), so a walk's second diagonal is charged wherever it falls.
   function costMap(enc, from, c, to, block) {
-    const W = enc.grid.w, H = enc.grid.h;
+    const W = enc.grid.w, H = enc.grid.h, N = W * H;
     const idx = (x, y) => y * W + x;
-    const cost = new Array(W * H).fill(Infinity);
-    const rank = new Array(W * H).fill(Infinity);
-    const prev = new Array(W * H).fill(-1);
-    const done = new Array(W * H).fill(false);
-    const shun = new Array(W * H);
-    cost[idx(from.x, from.y)] = rank[idx(from.x, from.y)] = 0;
-    for (;;) {
-      let u = -1, best = Infinity;
-      for (let i = 0; i < W * H; i++) if (!done[i] && rank[i] < best) { best = rank[i]; u = i; }
-      if (u < 0) break;
-      done[u] = true;
+    const cost = new Array(N).fill(Infinity);
+    const best = new Int32Array(N).fill(-1); // the state each square was first reached in
+    const rank = new Float64Array(2 * N).fill(Infinity);
+    const sCost = new Float64Array(2 * N).fill(Infinity);
+    const prevS = new Int32Array(2 * N).fill(-1);
+    const done = new Uint8Array(2 * N);
+    const shun = new Array(N);
+    const s0 = idx(from.x, from.y) * 2;
+    rank[s0] = sCost[s0] = 0;
+    const heap = [[0, s0]];
+    const push = (r, s) => {
+      heap.push([r, s]);
+      for (let i = heap.length - 1; i > 0;) { const p = (i - 1) >> 1; if (heap[p][0] <= heap[i][0]) break; [heap[p], heap[i]] = [heap[i], heap[p]]; i = p; }
+    };
+    const pop = () => {
+      const top = heap[0], last = heap.pop();
+      if (heap.length) {
+        heap[0] = last;
+        for (let i = 0; ;) {
+          const l = 2 * i + 1, r = l + 1;
+          let m = i;
+          if (l < heap.length && heap[l][0] < heap[m][0]) m = l;
+          if (r < heap.length && heap[r][0] < heap[m][0]) m = r;
+          if (m === i) break;
+          [heap[m], heap[i]] = [heap[i], heap[m]]; i = m;
+        }
+      }
+      return top;
+    };
+    while (heap.length) {
+      const [r, s] = pop();
+      if (done[s] || r > rank[s]) continue;
+      done[s] = 1;
+      const u = s >> 1, odd = s & 1;
+      if (best[u] < 0) { best[u] = s; cost[u] = sCost[s]; }
       const ux = u % W, uy = (u - ux) / W;
       if (to && ux === to.x && uy === to.y) break;
       for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
@@ -107,15 +132,17 @@
         if (!passable(enc, nx, ny) && !(flies(c) && inGrid(enc, nx, ny) && !has(enc, nx, ny, 'solid'))) continue;
         if (block && block.has(key(nx, ny))) continue;
         const v = idx(nx, ny);
-        // A hair's preference for straight steps keeps paths tidy.
-        const sc = stepCost(enc, nx, ny, c) + (dx && dy ? 0.001 : 0);
+        const diag = dx && dy;
+        // The second diagonal of a pair counts two; a hair's preference for straight steps keeps paths tidy.
+        const sc = stepCost(enc, nx, ny, c) + (diag ? (odd ? 1 : 0) + 0.001 : 0);
         if (shun[v] === undefined) shun[v] = avoid(enc, nx, ny, c);
         if (shun[v] === Infinity) continue;
-        const nr = rank[u] + sc + shun[v];
-        if (nr < rank[v]) { rank[v] = nr; cost[v] = cost[u] + sc; prev[v] = u; }
+        const t = v * 2 + (diag ? 1 - odd : odd);
+        const nr = rank[s] + sc + shun[v];
+        if (nr < rank[t]) { rank[t] = nr; sCost[t] = sCost[s] + sc; prevS[t] = s; push(nr, t); }
       }
     }
-    return { cost, prev, W, idx, shun };
+    return { cost, best, prevS, start: s0, W, idx, shun };
   }
 
   // How hard a walker steers clear of (x, y): Infinity for deadly ground it can see (never entered), a large detour for
@@ -146,7 +173,10 @@
   // The squares of the cheapest way to (x, y) in a cost map.
   function trace(map, from, x, y) {
     const out = [];
-    for (let v = map.idx(x, y); v !== map.idx(from.x, from.y) && v >= 0; v = map.prev[v]) out.unshift({ x: v % map.W, y: (v - (v % map.W)) / map.W });
+    for (let s = map.best[map.idx(x, y)]; s >= 0 && s !== map.start; s = map.prevS[s]) {
+      const v = s >> 1;
+      out.unshift({ x: v % map.W, y: (v - (v % map.W)) / map.W });
+    }
     return out;
   }
 
@@ -155,14 +185,14 @@
     const map = costMap(enc, from, c, to, block);
     const { cost, idx } = map;
     const W = enc.grid.w, H = enc.grid.h;
-    const cheb = (x, y) => Math.max(Math.abs(x - to.x), Math.abs(y - to.y));
+    const far = (x, y) => G.Combat.dist({ x, y }, to);
     let end = idx(to.x, to.y);
     if (cost[end] === Infinity) {
       // No way through: as close as can be reached.
       let bestD = Infinity;
       for (let i = 0; i < W * H; i++) {
         if (cost[i] === Infinity || map.shun[i]) continue;
-        const x = i % W, y = (i - x) / W, d = cheb(x, y);
+        const x = i % W, y = (i - x) / W, d = far(x, y);
         if (d < bestD || (d === bestD && cost[i] < cost[end])) { bestD = d; end = i; }
       }
     }
@@ -181,14 +211,16 @@
     return out;
   }
 
-  // Cost in squares to walk from `from` to `to`, and whether the path gets there.
+  // Cost in squares to walk from `from` to `to`, and whether the path gets there. Every second diagonal step counts two.
   function pathCost(enc, from, to, c, block) {
     const steps = path(enc, from, to, c, block);
-    let cost = 0;
+    let cost = 0, diagonals = 0, at = from;
     let climbing = has(enc, from.x, from.y, 'pit') && !(c && G.Effects.has(c, 'freedom'));
     for (const q of steps) {
       cost += stepCost(enc, q.x, q.y, c) + (climbing ? T().climbCost : 0);
+      if (q.x !== at.x && q.y !== at.y && ++diagonals % 2 === 0) cost += 1;
       climbing = false;
+      at = q;
     }
     const last = steps[steps.length - 1] || from;
     return { cost, steps, reaches: last.x === to.x && last.y === to.y };
@@ -294,7 +326,7 @@
       const p = enc.pos[id];
       const seen = {};
       for (const t of near) {
-        if (seen[t.f.kind] || Math.max(Math.abs(t.x - p.x), Math.abs(t.y - p.y)) !== 1) continue;
+        if (seen[t.f.kind] || G.Combat.dist(t, p) !== 1) continue;
         seen[t.f.kind] = 1;
         for (const [noun, mag] of Object.entries(t.def.near)) {
           if (G.Magic && G.Magic.elementBlow) await G.Magic.elementBlow(enc, chars, chars[t.f.owner] || c, c, noun, mag + (t.f.mag || 0), roller, t.def.name);

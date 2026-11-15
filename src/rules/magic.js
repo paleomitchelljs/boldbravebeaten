@@ -555,9 +555,16 @@
     return out;
   }
 
+  // The squares within `r` of a square (Combat.dist: a radius-2 area leaves out its far corners).
+  function area(at, r) {
+    const out = [];
+    for (let y = at.y - r; y <= at.y + r; y++) for (let x = at.x - r; x <= at.x + r; x++) if (G.Combat.dist(at, { x, y }) <= r) out.push({ x, y });
+    return out;
+  }
+
   // Characters within `r` squares of (x, y).
   function within(enc, chars, x, y, r) {
-    return enc.ids.filter((id) => chars[id] && !chars[id].status.dead && enc.pos[id] && Math.max(Math.abs(enc.pos[id].x - x), Math.abs(enc.pos[id].y - y)) <= r);
+    return enc.ids.filter((id) => chars[id] && !chars[id].status.dead && enc.pos[id] && G.Combat.dist(enc.pos[id], { x, y }) <= r);
   }
 
   function occupied(enc, chars, x, y) {
@@ -769,7 +776,7 @@
       case 'area': {
         if (s.delayed) {
           // Delayed: the area is marked for everyone to see and breaks at the end of the round (endRound).
-          for (let y = at.y - s.radius; y <= at.y + s.radius; y++) for (let x = at.x - s.radius; x <= at.x + s.radius; x++) G.Terrain.add(enc, x, y, 'gathering', { rounds: 1, owner: a.id, side, noun: s.noun });
+          for (const { x, y } of area(at, s.radius)) G.Terrain.add(enc, x, y, 'gathering', { rounds: 1, owner: a.id, side, noun: s.noun });
           (enc.delayed || (enc.delayed = [])).push({ caster: a.id, at: { x: at.x, y: at.y }, spell: s, label: o.label });
           return log(`${a.name} casts ${o.label}: the air over (${at.x + 1}, ${at.y + 1}) begins to gather; it breaks at the end of the round.`, 'hit');
         }
@@ -787,7 +794,7 @@
       case 'ground': {
         let n = 0;
         const grounds = [s.ground];
-        for (let y = at.y - s.radius; y <= at.y + s.radius; y++) for (let x = at.x - s.radius; x <= at.x + s.radius; x++) {
+        for (const { x, y } of area(at, s.radius)) {
           if (!G.Terrain.passable(enc, x, y)) continue;
           let any = false;
           for (const g of grounds) if (G.Terrain.add(enc, x, y, g, { rounds: s.rounds, mag: s.magnitude - 1, noun: s.noun, owner: a.id, side })) any = true;
@@ -942,7 +949,7 @@
           return log(`${a.name} casts ${o.label} on ${t.name}: ${gone.length ? gone.join(', ') + ' lifted' : 'nothing there to lift'}.`, gone.length ? 'hit' : 'fizzle');
         }
         let n = 0;
-        for (let y = at.y - s.radius; y <= at.y + s.radius; y++) for (let x = at.x - s.radius; x <= at.x + s.radius; x++) {
+        for (const { x, y } of area(at, s.radius)) {
           const before = G.Terrain.at(enc, x, y).length;
           G.Terrain.remove(enc, x, y, (f) => !!f.owner && !(CONFIG.terrain[f.kind] || {}).permanent);
           n += before - G.Terrain.at(enc, x, y).length;
@@ -974,7 +981,7 @@
         // See: hidden runes and traps round the square come to light for everyone, and the unseen are picked out;
         // See + Magic also names the spells on everyone there, See + Outsider the outsiders.
         let found = 0;
-        for (let y = at.y - s.radius; y <= at.y + s.radius; y++) for (let x = at.x - s.radius; x <= at.x + s.radius; x++) {
+        for (const { x, y } of area(at, s.radius)) {
           for (const f of G.Terrain.at(enc, x, y)) if (f.hidden) { f.hidden = false; found++; }
         }
         const near = within(enc, chars, at.x, at.y, s.radius).map((id) => chars[id]).filter((t) => C().isActive(t));

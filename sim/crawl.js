@@ -51,7 +51,7 @@ for (const s of sets) {
   o[keys[keys.length - 1]] = v;
 }
 
-const cheb = (a, b) => Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
+const howFar = (a, b) => B.Combat.dist(a, b);
 const pct = (n, d) => (d ? Math.round((100 * n) / d) + '%' : '-');
 const share = (o) => { const t = Object.values(o).reduce((a, b) => a + b, 0); return Object.entries(o).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${pct(v, t)}`).join(', ') || 'none'; };
 
@@ -62,7 +62,7 @@ function open(world) {
     const def = g.legend[g.rows[y][x]];
     if (def && def.kind === 'monster' && !Explore.state(world, x, y).done) out.push({ x, y, def });
   }
-  return out.sort((a, b) => cheb(a, world.explore) - cheb(b, world.explore));
+  return out.sort((a, b) => howFar(a, world.explore) - howFar(b, world.explore));
 }
 
 // Auto.battle with the metrics watching: the same loop, polled after each action.

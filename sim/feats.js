@@ -160,11 +160,11 @@ async function duels(env, name, level, change) {
 async function crawl(env, place, partyNames, name, level, change) {
   const { B, Metrics } = env;
   const { World, Battle, Auto, Explore, Character: C, Rand, Content } = B;
-  const cheb = (a, b) => Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
+  const howFar = (a, b) => B.Combat.dist(a, b);
   const open = (w) => {
     const g = Explore.here(w), out = [];
     for (let y = 0; y < g.h; y++) for (let x = 0; x < g.w; x++) { const d = g.legend[g.rows[y][x]]; if (d && d.kind === 'monster' && !Explore.state(w, x, y).done) out.push({ x, y, def: d }); }
-    return out.sort((a, b) => cheb(a, w.explore) - cheb(b, w.explore));
+    return out.sort((a, b) => howFar(a, w.explore) - howFar(b, w.explore));
   };
   const cleared = [], dead = [], fights = [];
   for (let i = 0; i < N; i++) {

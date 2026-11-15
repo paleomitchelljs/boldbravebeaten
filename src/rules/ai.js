@@ -275,7 +275,7 @@
       if (!G.Terrain.passable(enc, x, y) || (x === me.x && y === me.y)) continue;
       if (enc.ids.some((o) => o !== id && C.isActive(chars[o]) && enc.pos[o].x === x && enc.pos[o].y === y)) continue;
       const d = Combat.dist({ x, y }, from);
-      if (d <= bd) continue;
+      if (d <= bd || Combat.steps(me, { x, y }) > R) continue;
       if (enc.tiles) { const pc = G.Terrain.pathCost(enc, me, { x, y }, c, Combat.foeSquares(enc, chars, c)); if (!pc.reaches || pc.cost > R) continue; }
       const way = G.Terrain.path ? G.Terrain.path(enc, me, { x, y }, c, Combat.foeSquares(enc, chars, c)) : [{ x, y }];
       if (way.some((q) => Combat.dist(q, from) < Combat.dist(me, from))) continue;
@@ -998,6 +998,60 @@
 
   const BARE = 0.8; // what walking in with no defence left costs, × the worst blow waiting there
 
+  // Flanking (step B, CONFIG.flank), in planMove's units (10 a square off the distance wanted): a square from which an
+  // ally of mine is on the far side of my target is worth FLANK_SEEK; one where two foes would have me between them
+  // costs FLANK_GUARD (a back to a wall, a corner, a friend beside me: Combat.flankedAt).
+  const FLANK_SEEK = 6, FLANK_GUARD = 8;
+  // A target already flanked from where I stand: its defence is down by the flank, about this much more often home.
+  const FLANK_LAND = 1.25;
+  function flankTerms(enc, chars, c, targetId, tp, foes, myReach, avoid) {
+    const K = G.CONFIG.flank;
+    if (!K || !K.penalty) return () => 0;
+    const target = chars[targetId];
+    const near = foes.map((f) => ({ at: enc.pos[f], reach: meleeReach(chars[f]) })).filter((p) => p.at && p.reach);
+    const memo = {};
+    return (x, y) => {
+      const k = x + ',' + y;
+      if (memo[k] != null) return memo[k];
+      const at = { x, y };
+      let t = 0;
+      if (!avoid && myReach && target && Combat.dist(at, tp) <= myReach && Combat.flankerAt(enc, chars, target, tp, at, [c.id])) t -= FLANK_SEEK;
+      if (near.filter((p) => Combat.dist(at, p.at) <= p.reach).length >= 2 && Combat.flankedAt(enc, chars, c, at)) t += FLANK_GUARD;
+      return (memo[k] = t);
+    };
+  }
+
+  // One step before the blow (step B): to a square from which the blow still reaches its target and an ally of mine
+  // stands on the target's far side, or out from between two foes. Only a step that draws no opportunity strike
+  // (no nearer to, and still within, the reach of every foe whose reach I am in), on plain ground, once a turn, and
+  // with the blow and the defence I kept back still paid for after it.
+  function sidestep(enc, chars, id, la, decl, reserve) {
+    const K = G.CONFIG.flank;
+    const o = decl.option;
+    if (!K || !K.penalty || !la.move || la.move.drag || o.ranged || o.spell) return null;
+    if (enc.decls.some((d) => d.actor === id && d.round === enc.round && d.type === 'move')) return null;
+    const c = chars[id], me = enc.pos[id], tp = enc.pos[decl.target];
+    const need = C.actionCost(c, 'move', { ap: C.moveCost(c, 1) }).ap;
+    if (la.ap - need < o.ap || (la.ap - o.ap >= reserve && la.ap - need - o.ap < reserve)) return null;
+    const foes = enemiesOf(enc, chars, id);
+    const terms = flankTerms(enc, chars, c, decl.target, tp, foes, meleeReach(c), 0);
+    const here = terms(me.x, me.y);
+    const engaged = foes.filter((f) => Combat.opportunityOptions(enc, chars, chars[f], me).length);
+    let best = null;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      const q = { x: me.x + dx, y: me.y + dy };
+      if ((!dx && !dy) || !G.Terrain.passable(enc, q.x, q.y) || (enc.tiles && !G.Terrain.canStand(enc, q.x, q.y, c))) continue;
+      if (enc.ids.some((x) => x !== id && C.isActive(chars[x]) && enc.pos[x] && enc.pos[x].x === q.x && enc.pos[x].y === q.y)) continue;
+      const d = Combat.dist(q, tp);
+      if (!C.inRange(o, d) || (d >= 2 && enc.tiles && G.Terrain.lineCheck(enc, q, tp, 'melee').blocked)) continue;
+      if (enc.tiles && (G.Terrain.stepCost(enc, q.x, q.y, c) > 1 || G.Terrain.danger(enc, q.x, q.y, c.side, c) > 0)) continue;
+      if (engaged.some((f) => !Combat.opportunityOptions(enc, chars, chars[f], q).length || Combat.dist(q, enc.pos[f]) < Combat.dist(me, enc.pos[f]))) continue;
+      const v = terms(q.x, q.y);
+      if (v < here && (!best || v < best.v)) best = { v, q };
+    }
+    return best ? { actor: id, type: 'move', to: best.q } : null;
+  }
+
   function planMove(enc, chars, id, la, targetId, goal, foes, avoid) {
     if (!la.move) return null;
     const c = chars[id];
@@ -1053,6 +1107,7 @@
       return { at: Combat.projectedPos(enc, f), reach, worst };
     }).filter((p) => p.reach > myReach && p.worst > 0);
     const standAt = (x, y) => outreach.reduce((m, p) => { const d = Combat.dist({ x, y }, p.at); return d <= p.reach && d > myReach ? Math.max(m, p.worst) : m; }, 0);
+    const flankAt = flankTerms(enc, chars, c, targetId, tp, foes, myReach, avoid);
     // With terrain about: walk around walls (cost map), keep out of hazards this side can see.
     const terrain = G.Terrain && enc.tiles && Object.keys(enc.tiles).length;
     // Foes stand in the way: a route goes round them (Combat.foeSquares), and so does the reckoning of how far it is.
@@ -1076,7 +1131,7 @@
       for (let y = y0; y <= y1; y++) {
         const dx = x - from.x, dy = y - from.y;
         if ((!dx && !dy) || taken.has(x + ',' + y)) continue;
-        let squares = Math.max(Math.abs(dx), Math.abs(dy)), hazard = 0;
+        let squares = Combat.steps(from, { x, y }), hazard = 0;
         if (map) {
           const k = map.cost[map.idx(x, y)];
           if (k === Infinity) continue;
@@ -1096,6 +1151,7 @@
         }
         if (threats.length && la.ap - need < defAP) score += bareAt(x, y) * BARE * wary;
         if (outreach.length) score += standAt(x, y) * RISK;
+        score += flankAt(x, y);
         if (avoid) {
           // Stay out of every foe's reach if possible, and out of corners you can't leave.
           for (const fp of foePos) if (Combat.dist({ x, y }, fp) <= avoid) score += 25;
@@ -1116,10 +1172,13 @@
       const near = (p) => Math.min(...foePos.map((fp) => Combat.dist(p, fp)));
       if (!gainsLine && near({ x: best.x, y: best.y }) <= near(from) && Math.abs(best.dd - goal) >= Math.abs(cur - goal)) return null;
     } else {
-      if (!gainsLine && Math.abs(best.dd - goal) >= Math.abs(far(from.x, from.y) - goal)) return null;
       // Staying put keeps the AP: walk only if the square is worth more than where I stand (the approach budget).
-      const stay = Math.abs(far(from.x, from.y) - goal) * 10 + (blind ? 15 : 0) + (threats.length && la.ap < defAP ? bareAt(from.x, from.y) * BARE * wary : 0) + (outreach.length ? standAt(from.x, from.y) * RISK : 0);
-      if ((threats.length || outreach.length) && best.score >= stay) return null;
+      const stay = Math.abs(far(from.x, from.y) - goal) * 10 + (blind ? 15 : 0) + (threats.length && la.ap < defAP ? bareAt(from.x, from.y) * BARE * wary : 0) + (outreach.length ? standAt(from.x, from.y) * RISK : 0) + flankAt(from.x, from.y);
+      // No nearer the distance wanted: worth it only for a flank (step B) the square gains, and then only if it is
+      // worth more than where I stand.
+      const flankGain = flankAt(best.x, best.y) < flankAt(from.x, from.y);
+      if (!gainsLine && Math.abs(best.dd - goal) >= Math.abs(far(from.x, from.y) - goal) && !(flankGain && best.score < stay)) return null;
+      if ((threats.length || outreach.length || flankGain) && best.score >= stay) return null;
     }
     return { actor: id, type: 'move', to: { x: best.x, y: best.y } };
   }
@@ -1313,12 +1372,15 @@
     let winded = false;
     const downed = G.Conditions && (G.Effects.has(c, 'berserk') || G.Effects.has(c, 'confused')) ? [] : downedFoesOf(enc, chars, id);
     let best = null;
+    const flankedNow = {};
+    const isFlanked = (tid) => (flankedNow[tid] != null ? flankedNow[tid] : (flankedNow[tid] = Combat.flanked(enc, chars[tid], c, chars) > 0));
     for (const atk of usable) {
       if (!atk.affordable) continue;
       for (const t of atk.targets) {
         const down = downed.includes(t.id);
         if (!t.inReach || !(foes.includes(t.id) || down)) continue;
         let v = rate(c, chars[t.id], atk, t.distance) * P.kickBias ** (atk.unarmed === 'kick' ? 1 : 0) * (down ? finishWeight(enc, chars[t.id]) : 1);
+        if (v > 0 && !down && isFlanked(t.id)) v *= FLANK_LAND;
         if (v > 0 && !down) v += (sweepWorth(enc, chars, c, chars[t.id], atk, t.distance) * C.costScale()) / Math.max(1, atk.ap);
         if (v > 0 && !down && atk.whirlwind) v += (whirlwindWorth(enc, chars, c, chars[t.id], atk) * C.costScale()) / Math.max(1, atk.ap);
         if (atk.spell) v -= (overDebt(c, atk, keep) * S) / Math.max(1, atk.ap);
@@ -1378,7 +1440,7 @@
       const mv = planMove(enc, chars, id, la, near.id, pref.d, foes, 0);
       if (mv) return mv;
     }
-    if (best && best.v > 0.2) return best.decl;
+    if (best && best.v > 0.2) return sidestep(enc, chars, id, la, best.decl, reserve) || best.decl;
 
     // 9. Move toward the distance this loadout likes best. A blade's reach blocked from here (a pillar's corner, a
     // wall between: lineCheck) means coming right up to them, where nothing stands between.

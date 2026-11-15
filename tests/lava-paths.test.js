@@ -25,7 +25,10 @@ test('lava paths: a route goes round lava, never through it', () => {
   assert.deepEqual(steps[steps.length - 1], { x: 5, y: 1 }, 'gets there');
   assert.ok(!steps.some((q) => on(enc, q, 'lava')), 'not a step in the lava: ' + JSON.stringify(steps));
   const pc = Terrain.pathCost(enc, { x: 1, y: 1 }, { x: 5, y: 1 }, c);
-  assert.equal(Math.round(pc.cost), steps.length, 'the cost is the squares walked, not the detour weighting');
+  // Every second diagonal step counts two (Combat.steps).
+  let diag = 0, at = { x: 1, y: 1 }, walked = 0;
+  for (const q of steps) { walked += 1 + (q.x !== at.x && q.y !== at.y && ++diag % 2 === 0 ? 1 : 0); at = q; }
+  assert.equal(Math.round(pc.cost), walked, 'the cost is the squares walked, not the detour weighting');
 });
 
 test('lava paths: with no way round, the route stops short rather than wade in', () => {
