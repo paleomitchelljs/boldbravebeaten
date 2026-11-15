@@ -215,17 +215,17 @@ test('explore: hidden things stay hidden until found; a search finds them', () =
   assert.equal(Explore.cell(w, 22, 3).kind, 'door');
 });
 
-test('explore: an unseen trap springs on whoever steps on it, once', () => {
+test('explore: an unseen trap springs on whoever steps on it, once', async () => {
   const w = fresh(22);
   Explore.enter(w, 'undercroft_1', '<');
   Explore.state(w, 17, 3).sprung = false;
   w.explore.x = 16; w.explore.y = 3; w.explore.dir = 1;
-  const hp = () => World.party(w).reduce((t, c) => t + C.totalDamage(c), 0);
-  const before = hp();
-  Explore.state(w, 17, 3).passive = true; // not noticed
-  const evs = Explore.move(w, 0).events;
-  assert.ok(evs.some((e) => e.type === 'trap'));
-  assert.equal(hp(), before + 1);
+  Explore.state(w, 17, 3).passive = Explore.state(w, 17, 3).passiveNear = true; // not noticed
+  const r = Explore.move(w, 0);
+  assert.ok(r.events.some((e) => e.type === 'trap'));
+  const more = await r.pending;
+  assert.ok(more.some((e) => /Darts hits/.test(e.text)), 'the blow lands on the one in front');
+  assert.ok(Explore.state(w, 17, 3).found, 'sprung, it is known');
   w.explore.x = 16;
   const again = Explore.move(w, 0).events;
   assert.ok(!again.some((e) => e.type === 'trap'), 'a sprung trap is spent');

@@ -1259,6 +1259,20 @@
       }
     }
 
+    // 5a. Drive a foe onto ground I can see will hurt it: a pit, lava, or a live trap my side knows (docs/OVERHAUL.md
+    // step C). Worth more than a blow when the shove is likely to go.
+    const shoveOn = la.maneuvers.find((m) => m.type === 'shove' && m.affordable);
+    if (shoveOn && enc.tiles && !winding) {
+      const me = enc.pos[id];
+      for (const t of shoveOn.targets) {
+        if (!t.inReach || !foes.includes(t.id) || !enc.pos[t.id] || G.Terrain.flies(chars[t.id])) continue;
+        const tp = enc.pos[t.id], land = { x: tp.x + Math.sign(tp.x - me.x), y: tp.y + Math.sign(tp.y - me.y) };
+        if (!G.Terrain.passable(enc, land.x, land.y) || enc.ids.some((o) => o !== t.id && C.isActive(chars[o]) && enc.pos[o] && enc.pos[o].x === land.x && enc.pos[o].y === land.y)) continue;
+        const harm = G.Terrain.at(enc, land.x, land.y).some((f) => { const d = G.CONFIG.terrain[f.kind] || {}; return G.Terrain.visible(f, c.side) && (d.pit || d.deadly || (d.trap && !f.sprung)); });
+        if (harm && Combat.shoveOdds(c, chars[t.id]) >= 0.35) return { actor: id, type: 'shove', target: t.id };
+      }
+    }
+
     // 5b. Inside my reach with nothing that works there: shove them back out (or step away).
     const shove = la.maneuvers.find((m) => m.type === 'shove' && m.affordable);
     const armed = planBase.filter((o) => !o.unarmed);
@@ -1380,6 +1394,12 @@
       if (mv) return mv;
     }
     if (best && best.v > 0.2) return best.decl;
+
+    // 8b. A live trap of my side's lies between me and the foe, and the foe can't see it: wait for them to come over it.
+    if (enc.tiles && !rangedLoadout && near.d >= 2 && near.d <= 4 && enc.pos[near.id]) {
+      const bait = G.Terrain.between(enc.pos[id], enc.pos[near.id]).some((q) => G.Terrain.at(enc, q.x, q.y).some((f) => (G.CONFIG.terrain[f.kind] || {}).trap && !f.sprung && G.Terrain.visible(f, c.side) && !G.Terrain.visible(f, target.side)));
+      if (bait) return endTurn;
+    }
 
     // 9. Move toward the distance this loadout likes best. A blade's reach blocked from here (a pillar's corner, a
     // wall between: lineCheck) means coming right up to them, where nothing stands between.

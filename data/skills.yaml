@@ -28,7 +28,7 @@ skills:
   athletics:
     name: Athletics
     blurb: Climbing, leaping, forcing doors, shoving and wrestling.
-    used: "Forcing and leaping checks, grapple and shove rolls."
+    used: "Forcing, leaping and footwork checks (traps), grapple and shove rolls."
   perception:
     name: Perception
     blurb: Noticing things around you.
@@ -76,7 +76,7 @@ skills:
   devices:
     name: Devices
     blurb: Locks and traps.
-    used: "Picking locks and disarming traps."
+    used: "Picking locks and disarming traps (Trapcraft)."
   stealth:
     name: Stealth
     blurb: Moving unseen and unheard.
@@ -117,6 +117,18 @@ checks:
     attrs: [STR]
     skill: athletics
     blurb: Break a door or lid open, or leap a gap. Loud.
+  leap:
+    name: Leaping
+    attrs: [STR, SPD]
+    skill: athletics
+    armorPenalty: 1
+    blurb: Jump a trap or a gap. Heavy armor drags.
+  edge:
+    name: Footwork
+    attrs: [DEX, SPD]
+    skill: athletics
+    armorPenalty: 1
+    blurb: Edge round a trap along a wall without touching it.
   appraisal:
     name: Appraisal
     attrs: [INT, WIS]

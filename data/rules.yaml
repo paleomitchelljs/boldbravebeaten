@@ -217,6 +217,36 @@ game:
     # The desert south of the grassland (assets/wip/desert/): outcrops of red sandstone (a wall).
     "▩": {name: Sandstone, wall: true, tile: mesa, color: "#8a4a2a"}
   passivePenalty: 3          # passive perception is this much worse than a deliberate search
+  searchBonus: 3             # ...and a search this much better than a plain check
+  # ---- Traps (PROVISIONAL, docs/OVERHAUL.md step C; src/rules/traps.js, src/game/explore.js) ---------------------
+  # A trap is a legend entry (docs/DATA.md "A trap"): tell, trigger, effect, reset, knownTo, disarm, bypass.
+  #   notice   squares away, in sight, at which a passing party gets a first look at a trap (a second beside it)
+  #   find     the Perception margin (total - the trap's tn) each degree of finding needs: the tell (something is off
+  #            here, no square), the square, the square and its working (what it does and every way past). Knowing
+  #            (the trap's `reveal`: lore, a word from a parley) gives the last without a roll.
+  #   unknownDisarm  added to the disarm TN while the working is not made out
+  #   strike   the TN one who knows it is coming beats to get clear (a dodge) or take it on a shield (a block), when the
+  #            trap names none; `caught` comes off that roll when caught in the act (a fumbled disarm, a short leap)
+  #   triggers how each trigger reads to the player
+  #   bypass   the ways past a trap that names none (`spring` is any of pole, stone, shield that fits the trigger)
+  #   ways     each way past: minutes it takes, the check (skills.yaml checks) and its TN, the good it needs, loud (it
+  #            draws wanderers and wakes sleepers), the triggers it works on, block (a shield held over on purpose)
+  traps:
+    notice: 2
+    find: {tell: -3, square: 0, mechanism: 3}
+    unknownDisarm: 2
+    strike: 13
+    caught: 3
+    triggers: {step: "a loose stone underfoot", wire: "a tripwire", plate: "a pressure plate", lid: "lifting the lid"}
+    bypass: [leap, spring, mark]
+    ways:
+      disarm: {minutes: 10, check: trapcraft}
+      leap: {minutes: 1, check: leap, tn: 7}
+      edge: {minutes: 3, check: edge, tn: 6}
+      pole: {minutes: 2, good: pole, loud: true}
+      stone: {minutes: 1, loud: true, triggers: [wire]}
+      shield: {minutes: 1, loud: true, triggers: [step, plate, wire], block: 3}
+      mark: {minutes: 1}
   camp: {wanderingChance: 0.25, guardedChance: 0.5}
   # ---- Skill checks: d10 + floor(mean of attrs / 2) + feat ranks x weight vs a target number ------
   tn: {trivial: 4, easy: 6, moderate: 8, hard: 11, formidable: 14}

@@ -30,7 +30,7 @@ places:
       ">": {kind: stairs, to: undercroft_2, at: "<", label: "Down to the lower cellars"}
       r: {kind: monster, encounter: rat_nest, label: "Rat nest"}
       g: {kind: monster, encounter: guards_one, asleep: true, label: "Sleeping guards"}
-      T: {kind: trap, tn: 8, disarm: 8, label: "Dart trap", damage: {CON: 1}, text: "A tripwire. Darts hiss out of the wall."}
+      T: {kind: trap, tn: 8, disarm: 8, trigger: wire, label: "Dart trap", tell: "tiny holes in the wall at waist height", effect: {blow: {name: "Darts", damage: [4, 0, 0], motion: thrust, punch: 0.4, aim: torso}}, text: "A tripwire. Darts hiss out of the wall."}
       k: {kind: pickup, good: cellar_key, text: "A rusted key hangs on a nail by the cots."}
       C: {kind: chest, label: "Smugglers' cache", loot: smuggler_cache, tn: 6}
       c: {kind: chest, label: "Hidden strongbox", loot: strongbox, tn: 11}
@@ -77,7 +77,7 @@ places:
       - "#########################"
     legend:
       "<": {kind: stairs, to: undercroft_1, at: ">", label: "Up to the cellars"}
-      P: {kind: trap, tn: 6, disarm: 8, label: "Covered pit", damage: {CON: 1}, reveal: {flag: knows_lower}, text: "The boards give way. You fall onto old barrel staves."}
+      P: {kind: trap, tn: 6, disarm: 8, trigger: step, label: "Covered pit", tell: "boards laid over the floor where there should be stone", reveal: {flag: knows_lower}, effect: {blow: {name: "The fall", damage: [0, 0, 5], motion: swing}, block: false, terrain: pit}, text: "The boards give way. You fall onto old barrel staves."}
       R: {kind: monster, encounter: crew, label: "Rusk and his crew"}
       g: {kind: monster, encounter: store_guards, asleep: true, label: "Sleeping guards"}
       p: {kind: pickup, good: crate_goods, text: "A Guild crate, stamped and sealed. You can lift it, barely."}
@@ -125,7 +125,7 @@ places:
       K: {kind: monster, encounter: knight, label: "The knight under the hill"}
       C: {kind: chest, label: "Crypt chest", loot: barrow_hoard, tn: 11}
       H: {kind: chest, label: "The knight's hoard", loot: barrow_hoard, tn: 8}
-      T: {kind: trap, tn: 11, disarm: 11, label: "Crushing slab", damage: {CON: 2}, text: "A slab drops from the ceiling."}
+      T: {kind: trap, tn: 11, disarm: 11, trigger: plate, label: "Crushing slab", tell: "a seam in the ceiling", effect: {blow: {name: "The slab", damage: [0, 0, 12], motion: power, aim: head}}, text: "A slab drops from the ceiling."}
       "!": {kind: note, text: "Wall paintings of a knight kneeling before a closed eye. Someone has scratched out the eye."}
       D:
         kind: locked
@@ -171,7 +171,7 @@ places:
       O: {kind: monster, encounter: troll, label: "Cave troll"}
       H: {kind: chest, label: "Troll hoard", loot: troll_hoard, tn: 6}
       c: {kind: chest, label: "Dead traveller's pack", loot: strongbox, tn: 8}
-      P: {kind: trap, tn: 8, disarm: 8, label: "Sinkhole", damage: {CON: 1}, text: "The floor is thin here. You slide down a chute of wet rock."}
+      P: {kind: trap, tn: 8, disarm: 8, trigger: step, label: "Sinkhole", tell: "the floor dips and is wet", effect: {blow: {name: "The slide", damage: [0, 0, 4], motion: swing}, block: false, terrain: pit}, text: "The floor is thin here. You slide down a chute of wet rock."}
     encounters:
       wolves: {foes: [{monster: wolfPack}], text: "Eyes in the dark; a low growl, then several."}
       troll: {foes: [{monster: caveTroll}], flags: [troll_slain], text: "It fills the passage and it has seen you."}

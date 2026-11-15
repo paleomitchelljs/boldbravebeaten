@@ -220,7 +220,7 @@
       for (const k of Object.keys(map.ground)) {
         const [x, y] = k.split(',').map(Number);
         // The map's own ground (lava, water, bars) is drawn by the tiles; a fire burning on a square is a flame.
-        const list = map.ground[k].filter((t) => t.f.kind !== 'dungeonWall' && !(G.CONFIG.terrain[t.f.kind] || {}).permanent);
+        const list = map.ground[k].filter((t) => t.f.kind !== 'dungeonWall' && !(G.CONFIG.terrain[t.f.kind] || {}).permanent && !(t.f.kind === 'trap' && t.f.sprung));
         if (!list.length) continue;
         if (list.some((t) => t.f.kind === 'fireWall' || t.f.kind === 'hot')) { (sc.flames = sc.flames || []).push({ x: x + ox, y: y + oy }); continue; }
         sc.marks.push({ x: x + ox, y: y + oy, type: list.some((t) => /fire|hot|storm/i.test(t.f.kind)) ? 'target' : 'cast', text: P().TILE_GLYPH[list[list.length - 1].f.kind] || '·' });

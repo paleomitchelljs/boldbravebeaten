@@ -9,7 +9,7 @@
   const D = G.DATA;
 
   // A mark for each kind of terrain on the map.
-  const TILE_GLYPH = { stoneWall: '■', iceWall: '▦', brambleWall: '✶', forceWall: '▫', fireWall: '▲', windWall: '≋', stormWall: 'ϟ', hot: '♨', ice: '≈', charged: 'ϟ', winds: '~', rough: '∴', brambles: '✶', pit: '◯', rune: 'ᚱ' };
+  const TILE_GLYPH = { stoneWall: '■', iceWall: '▦', brambleWall: '✶', forceWall: '▫', fireWall: '▲', windWall: '≋', stormWall: 'ϟ', hot: '♨', ice: '≈', charged: 'ϟ', winds: '~', rough: '∴', brambles: '✶', pit: '◯', rune: 'ᚱ', trap: '⚠' };
 
   function bui(app) {
     return app.ui.battle || (app.ui.battle = { mode: null, pending: null, placeSel: null, lootTo: '', removeDefeated: true });

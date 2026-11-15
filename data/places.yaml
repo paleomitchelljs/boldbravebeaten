@@ -8,9 +8,10 @@
 #   stairs {to, at}                   at = the legend letter you arrive on in the other place
 #   locked {tn, forceTn, key, alt}    picking (lockpicking), forcing (loud), a key item, or alt actions
 #   secret {tn}                       looks like wall until found (perception; searching helps)
-#   trap   {tn, disarm, damage, text} hidden until noticed; springs if you walk onto it unseen
+#   trap   {tn, tell, trigger, effect, reset, knownTo, disarm, bypass, how, text, reveal, sprite}: found by degrees,
+#          sprung as a blow through the combat engine, hidden terrain in a fight (docs/DATA.md "A trap")
 #   monster {encounter, asleep}       a group; see encounters below
-#   chest  {loot, tn, trap}           tn = lockpicking to open without breaking it
+#   chest  {loot, tn, trap}           tn = lockpicking to open without breaking it; trap = a trap on its lid (trigger: lid)
 #   pickup {good} / note {text} / npc {npc} / shrine {heal}
 # Conditions (requires/hide/reveal): see src/game/conditions.js.
 
@@ -93,6 +94,7 @@ stonebridge:
             - {good: salve}
             - {good: tonic}
             - {good: repair_kit}
+            - {good: pole}
             - {good: salt}
             - {good: candle}
             - {good: ink}
@@ -1132,7 +1134,7 @@ orc_valley:
     - "(#,,,,,~~~~~~~~,,,U,,,.u,,,,k,,,,@@@@@@@@@@@@,,,,,#;z;;,,#(?"
     - "(#,,,,,,~~~~~~,,,,,,,,..,y,,,,,,,@@@@@@@@@@@@,p,,,#;;;;,,#(?"
     - "(#,,,,,,,~~,~~~,,,,,,,..,,,,,,,p,,,tb,G.,bt,,,,,,,#;;Q;,,#(?"
-    - "(#,,,,,,,~~,~~~~~~,,,,..,,,,,,,,,,,,g,..,,,,,,,,,,#;;;;,,#(?"
+    - "(#,,,,,,,~~,~~~~~~,,,,..,,,,,,,,,,,,g,D.,,,,,,,,,,#;;;;,,#(?"
     - "(#,,,,,,,~~,,,~~~~~~~~==~~~~~~~~~~~~~~==~~~~~~~~,,#,,,,,,#(?"
     - "(#,,,,,,,~~,,,,,,~~~~~==~~~~~~~~~~~~~~==~~~~~~~~~,#,,,,a,#(?"
     - "(#,,x,,,,~~,,,,,▤▤▤▤▤,..,,,,~~................,~~,#;;;;,,#(?"
@@ -1193,6 +1195,7 @@ orc_valley:
     t: {kind: prop, sprite: torchpost, label: "A torch on a post", on: ","}
     p: {kind: prop, sprite: skullpike, label: "A skull on a spike", on: ","}
     g: {kind: monster, encounter: gate, label: "The gate guard", on: ","}
+    D: {kind: trap, sprite: pit, tn: 9, trigger: step, knownTo: [orc_legion], label: "Turf laid too neatly at the bridge's end", tell: "the grass at the end of the bridge is a shade yellower than the rest, as if it were cut and laid", how: "A pit under hurdles and turf, stakes in the bottom.", effect: {blow: {name: "The stakes", damage: [5, 0, 2], motion: thrust, punch: 1.5, aim: legs, wound: {kind: P, vital: 0.15, bleed: 1, rounds: 3}}, block: false, terrain: pit}, bypass: [leap, edge, spring, mark], text: "The turf gives way over a pit of stakes."}
     # 3: the slave cabin
     C: {kind: prop, sprite: cabin, label: "A run-down log cabin, its window barred, its door barred from outside", on: ","}
     x: {kind: prop, sprite: chainpost, label: "A post with chains and shackles", on: ","}
@@ -1401,7 +1404,7 @@ temple_court:
     - "##,,,,,,,,,,,,,,,,,,,,,,%%%%,f##"
     - "##u,,,,,,,,,,,,,,,,,,,,,%%%%,,##"
     - "##,f,,,,,,,,,,,,,,,,,,,,,,,,,,##"
-    - "#<,,,,g,,,,,,,,,c,,,,,,,,,p,,,P#"
+    - "#<,,S,g,,,,,,,,,c,,,,,,,,,p,,,P#"
     - "##,f,,,,,,,,,,,,,,,,,,,,,,,,,,##"
     - "##v,,,,,,,,,,,,,,,,,,,,,,,,,,,##"
     - "##,,,,,,,,,,;;,,,,,,,,,,,,,,,,##"
@@ -1414,7 +1417,7 @@ temple_court:
     - "##,,,,,,,,,,,,,,,,,%%%%,,,,,,,##"
     - "##,,,;;;,,,,,,,l,,,,,,,,,,,,,,##"
     - "##,,;;;;,q,,,,,,,,r,,,,,,,;;,,##"
-    - "##,,;;,,,,,,,,,,,,,,,,,,,,;;,,##"
+    - "##,,;;,,,,,,,,,D,,,,,,,,,,;;,,##"
     - "##F,,,,f,,,,,,,,,,,,,,F,,,,,,F##"
     - "###############L################"
     - "################################"
@@ -1440,6 +1443,8 @@ temple_court:
     L: {kind: stairs, to: temple_maze, at: N, sprite: door, wall: true, label: "Door to the labyrinth"}
     P: {kind: stairs, to: temple_palace, at: W, sprite: door, wall: true, label: "The arched door to the palace"}
     g: {kind: monster, encounter: gate, label: "Guards at the gate"}
+    S: {kind: trap, tn: 9, disarm: 7, trigger: wire, knownTo: [suracayl], label: "A sapling bent back in the ferns", tell: "a sapling by the gate is bent further than any wind would bend it", how: "A vine across the path holds back a sapling with a sharpened stake lashed to it.", effect: {blow: {name: "A sharpened sapling", damage: [5, 0, 1], motion: thrust, punch: 1.6, aim: torso, wound: {kind: P, vital: 0.15, bleed: 1, rounds: 4}}}, text: "A sapling whips round out of the ferns, a stake lashed to it."}
+    D: {kind: trap, tn: 10, disarm: 9, trigger: plate, knownTo: [suracayl], label: "A loose flagstone under a leaning lintel", tell: "the stone of the arch above leans out further than it should", how: "A flagstone that sinks under a foot and lets a block fall from the arch.", effect: {blow: {name: "A falling block", damage: [0, 0, 18], motion: power, aim: head}}, text: "A block of sandstone drops from the arch."}
     c: {kind: monster, encounter: court, label: "Suracayl in the court"}
     l: {kind: monster, encounter: maze_door, label: "Guards at the labyrinth door"}
     p: {kind: monster, encounter: palace_door, label: "Gorillas at the palace door"}
@@ -1918,7 +1923,7 @@ ember_hall:
     - "#<///#....#####......###############..##...###################################"
     - "##/A/#....#####......#..############a.##..###################O################"
     - "###..........n.......#..#####..#..........##..##############...###############"
-    - "###..$$............h....#####..#........w.##..##############...###############"
+    - "###..$$........B...h....#####..#........w.##..##############...###############"
     - "####.$$..''g.....................$$$..........#############........###########"
     - "####....#''......................$$$$.......b.##############.......###########"
     - "######..####......................$$$$.......##########..###.....#############"
@@ -1941,7 +1946,7 @@ ember_hall:
     - "######..#######............$$..####...........############.....###############"
     - "######..#######.............$$..####.........k...##########......#############"
     - "######..######..................####.............#############...#############"
-    - "######..######..f................................##############..#############"
+    - "######..######..f..F.............................##############..#############"
     - "#######.#####..##....p.....................k.....###############...###########"
     - "#######..#####.##..............$$$$..............######....######..###########"
     - "#######..#####.##........i......$$$$$............######....#...##..###########"
@@ -1991,7 +1996,10 @@ ember_hall:
     o: {kind: prop, sprite: gob_timber, solid: false, label: "A timber frame shoring up the rock"}
     # The way in (north-west): a stair down to a ledge round a lava pool, under a murder hole.
     "<": {kind: stairs, to: mine_approach, at: M, sprite: door, wall: true, label: "Back up the stair and out"}
-    A: {kind: trap, sprite: blade, on: "/", tn: 9, disarm: 9, damage: {CON: 2}, label: "A slot in the rock across the stair", text: "A blade on a chain swings out of the slot at chest height."}
+    # Traps (docs/DATA.md "A trap"). The goblins know their own and step where it is safe.
+    A: {kind: trap, sprite: blade, on: "/", tn: 9, disarm: 9, trigger: wire, knownTo: [cinder_goblins], label: "A slot in the rock across the stair", tell: "a dark slot runs along the rock at chest height, its lip rubbed bright", how: "A wire across the step pulls a blade on a chain out of the slot.", effect: {blow: {name: "The blade", damage: [0, 10, 4], motion: swing, aim: torso, wound: {kind: S, vital: 0.1, bleed: 1, rounds: 3}}}, reset: {minutes: 10, rounds: 2}, text: "A blade on a chain swings out of the slot at chest height."}
+    B: {kind: trap, sprite: spiketrap, tn: 10, disarm: 8, trigger: plate, knownTo: [cinder_goblins], label: "A square of floor ringed with soot", tell: "one square of the cavern floor is cleaner than the rest, and the goblins' tracks go round it", how: "A plate in the floor drives a bed of iron spikes up through holes in it.", effect: {blow: {name: "Iron spikes", damage: [4, 0, 1], motion: thrust, punch: 1.2, aim: legs, wound: {kind: P, vital: 0.1, bleed: 1, rounds: 3}}, block: false}, reset: {minutes: 1, rounds: 1}, bypass: [leap, edge, spring, mark], text: "Iron spikes stab up through the floor."}
+    F: {kind: trap, sprite: vent, tn: 9, disarm: 11, trigger: plate, knownTo: [cinder_goblins], label: "A crack in the floor, warm to the touch", tell: "a crack in the floor breathes warm air that smells of sulphur", how: "A plate opens a vent onto the fire below: a jet of flame, and the floor round it burning for a while.", effect: {element: {noun: fire, mag: 4, name: "A jet of fire"}, radius: 1, terrain: hot, terrainRadius: 1, rounds: 3, block: false}, reset: {minutes: 30}, bypass: [leap, spring, mark], text: "Fire roars up out of the crack."}
     g: {kind: monster, encounter: murderhole, label: "Goblins at the murder hole"}
     H: {kind: stairs, to: mine_approach, at: M, sprite: door, wall: true, label: "A low side duct, out onto the slopes"}
     h: {kind: monster, encounter: hall, label: "Goblins in the bubbling cavern"}
@@ -2007,7 +2015,7 @@ ember_hall:
     m: {kind: monster, encounter: mines, label: "Picks ringing in the mines"}
     M: {kind: stairs, to: ember_warrens, at: m, sprite: door, wall: true, label: "On into the mine workings"}
     z: {kind: monster, encounter: baron, label: "The baron's seat"}
-    C: {kind: chest, label: "A chest of drake hide beside the throne", loot: strongbox, tn: 9}
+    C: {kind: chest, label: "A chest of drake hide beside the throne", loot: strongbox, tn: 9, trap: {tn: 10, disarm: 9, trigger: lid, label: "A needle in the lock", tell: "a smear of dark grease round the keyhole", how: "A spring in the lock drives out a needle wet with something.", effect: {blow: {name: "A needle", damage: [1, 0, 0], motion: thrust, punch: 0.3, aim: arms, venom: {con: 1, rounds: 2}}, block: false}, bypass: [spring], text: "A needle jabs out of the lock."}}
     S: {kind: secret, tn: 10, label: "A seam in the rock behind the throne"}
     Q: {kind: stairs, to: ember_castle, at: Q, up: true, sprite: door, wall: true, label: "A goblin door at the end of the secret passage"}
     G: {kind: monster, encounter: gate, label: "The gate guards"}
@@ -2094,7 +2102,7 @@ ember_warrens:
     q: {kind: prop, sprite: gob_pot, solid: false, label: "A dented cookpot, a rat on a skewer beside it"}
     m: {kind: stairs, to: ember_hall, at: M, sprite: door, wall: true, label: "Back over the bridge to the hall"}
     B: {kind: stairs, to: ember_barracks, at: b, sprite: door, wall: true, label: "The barracks gate"}
-    T: {kind: trap, sprite: pit, tn: 11, disarm: 10, damage: {CON: 1}, to: ember_pit, at: t, label: "A stretch of floor that rings hollow", text: "The floor tips under you, and you fall into heat and red light."}
+    T: {kind: trap, sprite: pit, tn: 11, disarm: 10, trigger: plate, knownTo: [cinder_goblins], label: "A stretch of floor that rings hollow", tell: "the dust lies thinner on one stretch of the tunnel floor, as if something swept it", how: "A slab on a pivot: weight on it tips it, and whoever is on it goes down a chute.", effect: {blow: {name: "The fall", damage: [0, 0, 6], motion: swing}, block: false, terrain: pit, to: ember_pit, at: t}, bypass: [leap, edge, spring, mark], text: "The floor tips under you, and you fall into heat and red light."}
     Z: {kind: secret, tn: 11, label: "A seam in the rock"}
     U: {kind: stairs, to: ember_pit, at: u, sprite: door, wall: true, label: "A narrow way down, warm air rising"}
     J: {kind: stairs, to: ember_lake, at: j, sprite: door, wall: true, label: "Steps down to the lava lake"}

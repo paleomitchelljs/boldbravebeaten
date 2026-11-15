@@ -487,7 +487,7 @@
       if (!free) break;
       enc.pos[t.id] = { x: nx, y: ny };
       moved++;
-      if (enc.tiles && roller) stop = await G.Terrain.enter(enc, chars, t, nx, ny, roller, logger(enc));
+      if (enc.tiles && roller) stop = await G.Terrain.enter(enc, chars, t, nx, ny, roller, logger(enc), 'driven');
     }
     if (moved && verb !== false) logger(enc)(`${t.name} is hurled back ${moved} square${moved > 1 ? 's' : ''}.`, 'hit');
     return moved;
