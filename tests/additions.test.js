@@ -188,7 +188,7 @@ test('spells: decay eats armor and gear; frost chills (half the squares); Bind p
   assert.equal(Combat.conditionForbids(enc, chars, t, { type: 'strike' }), 'Paralyzed');
   const stab = armed('K', 'dagger');
   const h = Combat.computeHit(stab, t, C.attackOptions(stab).find((o) => o.motion === 'thrust'), { distance: 1 });
-  assert.ok(!h.gap, 'no gap roll needed on the helpless');
+  assert.ok(!h.armored || h.throughP === 1 || h.throughP == null, 'the point always gets into the helpless');
 });
 
 test('spells: lightning (Storm) leaps to the nearest other body; charm (Bind + Mind) turns a foe until harmed', async () => {

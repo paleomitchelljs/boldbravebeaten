@@ -14,7 +14,7 @@
 
   const store = () => { try { return globalThis.localStorage || null; } catch (e) { return null; } };
 
-  const VERSION = 6;
+  const VERSION = 7;
 
   // An item from before version 3: quality became craft; scale armor (no longer a tier) became steel mail; a
   // drinking blade's own `enchant: {drain}` became the drinking enchantment; `magical` (from the testbed) is dropped,
@@ -30,6 +30,12 @@
     delete it.magical;
   }
 
+  // Four hit locations (docs/OVERHAUL.md step A): an armor piece's hands are its arms, its feet its legs.
+  const FOLD = { hands: 'arms', feet: 'legs' };
+  function foldCovers(it) {
+    if (it && it.kind === 'armor' && Array.isArray(it.covers)) it.covers = [...new Set(it.covers.map((l) => FOLD[l] || l))];
+  }
+
   // A worn thing's power in the spell words of 2026-11-08 (the goods that had one).
   const POWERS = { 'bless+veil': { verb: 'give', noun: 'shadow', aim: 'ally' }, 'beguile+rage': { verb: 'take', noun: 'mind' }, 'strike+spirit': { verb: 'take', noun: 'death', aim: 'foe' }, 'beguile+fear': { verb: 'give', noun: 'fear' }, 'hex+might': { verb: 'take', noun: 'might' } };
   function resayPower(t) {
@@ -39,6 +45,12 @@
 
   // Steps for one character (a party member, a companion, a foe in a saved fight), keyed by the version they leave.
   const CHAR_STEPS = {
+    // Four hit locations (step A): pieces fold hands into arms and feet into legs; where two worn pieces now cover the
+    // same place, Character.normalize takes the later one off into the pack.
+    6: (c) => {
+      for (const it of [c.armor].concat(c.pieces || [], (c.inventory && c.inventory.items) || [])) foldCovers(it);
+      if (c.companion) CHAR_STEPS[6](c.companion);
+    },
     // The spell words (the user, 2026-11-08): retired verbs and modifiers become the word that took their place
     // (verb_build, the older verb_bind, is now Raise; Beguile became Bind), retired nouns theirs, and worn powers are
     // said in the new words.
@@ -111,6 +123,7 @@
 
   // Steps for the world around the characters.
   const WORLD_STEPS = {
+    6: (w) => { for (const it of (w.pack && w.pack.gear) || []) foldCovers(it); },
     5: (w) => { for (const it of (w.pack && w.pack.gear) || []) resayPower(it); },
     2: (w) => {
       for (const it of (w.pack && w.pack.gear) || []) upgradeItem(it);

@@ -211,13 +211,13 @@ tables:
     - {w: 2, armor: mail, craft: master, name: Crafted Mail}
     - {w: 2, shield: heater, material: steel, enchantments: [spellcatching], name: Spellbreaker}
     - {w: 1, good: silk_sash}
-    - {w: 2, armor: leather, covers: [feet], craft: master, enchantments: [journeying], name: Journeyman's Boots}
+    - {w: 2, armor: leather, covers: [legs], craft: master, enchantments: [journeying], name: Journeyman's Boots}
     - {w: 1, good: circlet_of_shadow}
     - {w: 2, good: crown_of_rile}
     - {w: 2, good: froglok_crown}
     - {w: 2, good: necromancer_amulet}
     - {w: 2, good: sorcerer_skullcap}
-    - {w: 2, armor: plate, covers: [hands], material: steel, enchantments: [dragonslaying], name: Gauntlets of Dragonslaying}
+    - {w: 2, armor: plate, covers: [arms], material: steel, enchantments: [dragonslaying], name: Gauntlets of Dragonslaying}
     - {w: 1, good: zlandicar_heart}
     - {w: 2, good: velium_pendant}
     - {w: 1, good: ring_of_dain}

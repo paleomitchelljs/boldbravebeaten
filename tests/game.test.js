@@ -585,11 +585,11 @@ test('armor pieces: each takes the slots it covers; a crown and a helm share the
   assert.ok(Equip.equipTrinket(w, c, 'crown_of_rile').ok);
   assert.strictEqual(C.armorAt(c, 'head'), null);
   assert.ok(w.pack.gear.includes(helm));
-  // Journeyman's Boots are leather boots now, and still quicken a move.
-  const boots = Items.makeArmor('leather', null, 'master', { covers: ['feet'], enchantments: ['journeying'] });
+  // Journeyman's Boots are leather boots and leggings now (the legs take in the feet), and still quicken a move.
+  const boots = Items.makeArmor('leather', null, 'master', { covers: ['legs'], enchantments: ['journeying'] });
   w.pack.gear.push(boots);
   const before = C.squaresPerAP(c);
-  assert.ok(Equip.equip(w, c, boots, 'feet').ok);
+  assert.ok(Equip.equip(w, c, boots, 'legs').ok);
   assert.equal(C.squaresPerAP(c), before + 1);
   // Field repairs reach every piece.
   shirt.durability = 1; boots.durability = 1;

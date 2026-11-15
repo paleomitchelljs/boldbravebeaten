@@ -52,8 +52,8 @@ stonebridge:
             - {armor: leather, coverage: full}
             - {armor: leather, coverage: half}
             - {armor: leather, covers: [head]}
-            - {armor: leather, covers: [hands]}
-            - {armor: leather, covers: [feet]}
+            - {armor: leather, covers: [arms]}
+            - {armor: leather, covers: [legs]}
             - {armor: padded, covers: [torso, arms]}
             - {shield: buckler, material: wood}
             - {shield: round, material: wood}
@@ -67,7 +67,6 @@ stonebridge:
             - {armor: plate, covers: [torso], req: {flag: guild_stock}}
             - {armor: plate, covers: [legs], req: {flag: guild_stock}}
             - {armor: plate, covers: [arms], req: {flag: guild_stock}}
-            - {armor: plate, covers: [hands], req: {flag: guild_stock}}
             - {weapon: warhammer, req: {standing: {faction: merchants_guild, min: 10}}}
             - {weapon: rondel, req: {standing: {faction: merchants_guild, min: 10}}}
             - {weapon: longbow, req: {standing: {faction: merchants_guild, min: 10}}}

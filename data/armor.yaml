@@ -8,8 +8,8 @@
 #   weight      kg, for show (the penalties carry the weight in play)
 #   durability  base durability (× material toughness, origin, craft, coverage)
 #   material    the usual material; materials = what else it may be made of
-#   pierce      what a point must beat (CONFIG.pierce): resist = the punch that bursts through it (× material and
-#               origin protect); gap = the target number to find a gap instead (d10 + ⌊DEX/4⌋ + feats)
+#   pierce      what a point must beat (CONFIG.pierce): resist = the punch that goes through it (× material and
+#               origin protect); a blow's margin adds to its punch (CONFIG.pierce.perMargin)
 #   transmit    multiplies the share of a cut's leftover force that lands as blunt (CONFIG.conversion): flexible
 #               mail passes a heavy cut's force to the bone
 #   cutThrough  soft armor stops a cut unless the blow carries massive momentum: slashing left after mitigation
@@ -28,10 +28,10 @@
 
 padded:
   name: Padded
-  pieces: {head: arming cap, torso: gambeson, arms: padded sleeves, hands: padded mittens, legs: padded hose, feet: padded shoes}
+  pieces: {head: arming cap, torso: gambeson, arms: padded sleeves, legs: padded hose}
   material: cloth
   materials: [cloth, silk]
-  mit: {P: 1, S: 1, B: 3}
+  mit: {P: 2, S: 1, B: 3}   # PROVISIONAL (step A): P 1 → 2 for the deleted pass-through roll
   spd: 0
   dex: 0
   stamina: 0
@@ -39,15 +39,15 @@ padded:
   standUp: 0
   weight: 4
   durability: 20
-  pierce: {resist: 0.75, gap: 8}
+  pierce: {resist: 0.75}
   cutThrough: 8
   rarity: common
 leather:
   name: Leather
-  pieces: {head: leather cap, torso: leather jerkin, arms: leather bracers, hands: leather gloves, legs: leather leggings, feet: leather boots}
+  pieces: {head: leather cap, torso: leather jerkin, arms: leather bracers, legs: leather leggings}
   material: leather
   materials: [leather, dragonhide]
-  mit: {P: 1, S: 2, B: 1}
+  mit: {P: 2, S: 2, B: 1}   # PROVISIONAL (step A): P 1 → 2 for the deleted pass-through roll
   spd: 0
   dex: 1
   stamina: 0
@@ -55,15 +55,15 @@ leather:
   standUp: 0
   weight: 7
   durability: 25
-  pierce: {resist: 1.0, gap: 8}
+  pierce: {resist: 1.0}
   cutThrough: 8
   rarity: common
 mail:
   name: Mail
-  pieces: {head: coif, torso: mail shirt, arms: mail sleeves, hands: mail mittens, legs: chausses, feet: mail sabatons}
+  pieces: {head: coif, torso: mail shirt, arms: mail sleeves, legs: chausses}
   material: iron
   materials: [bronze, iron, steel, starIron, adamant]
-  mit: {P: 1, S: 4, B: 1}
+  mit: {P: 2, S: 4, B: 1}   # PROVISIONAL (step A): P 1 → 2 for the deleted pass-through roll
   spd: 1
   dex: 1
   stamina: 1
@@ -71,15 +71,15 @@ mail:
   standUp: 1
   weight: 12
   durability: 40
-  pierce: {resist: 1.3, gap: 10}   # TUNED (V4, sim/FINDINGS.md): a longsword thrust bursts iron mail; a rapier doesn't
+  pierce: {resist: 1.3}   # TUNED (V4, sim/FINDINGS.md): a longsword thrust bursts iron mail; a rapier doesn't
   transmit: 1.5
   rarity: uncommon
 plate:
   name: Plate
-  pieces: {head: helm, torso: breastplate, arms: vambraces, hands: gauntlets, legs: greaves, feet: sabatons}
+  pieces: {head: helm, torso: breastplate, arms: vambraces, legs: greaves}
   material: iron
   materials: [bronze, iron, steel, starIron, adamant]
-  mit: {P: 4, S: 6, B: 3}
+  mit: {P: 4.5, S: 6, B: 3}   # PROVISIONAL (step A): P 4 → 4.5 (iron 5, steel 7) for the deleted pass-through roll
   spd: 3
   dex: 2
   stamina: 2
@@ -87,7 +87,7 @@ plate:
   standUp: 2
   weight: 22
   durability: 60
-  pierce: {resist: 5, gap: 12}
+  pierce: {resist: 5}
   dissipate: {glancing: 0.5, crushing: 0}
   rarity: very rare
 fur:
@@ -100,7 +100,7 @@ fur:
   regen: 0
   standUp: 0
   durability: 30
-  pierce: {resist: 0.5, gap: 6}
+  pierce: {resist: 0.5}
   rarity: common
   natural: true
 chitin:
@@ -113,7 +113,7 @@ chitin:
   regen: 0
   standUp: 0
   durability: 40
-  pierce: {resist: 1.4, gap: 9}
+  pierce: {resist: 1.4}
   rarity: common
   natural: true
   recoil: 1
@@ -127,7 +127,7 @@ trollHide:
   regen: 0
   standUp: 0
   durability: 40
-  pierce: {resist: 1.0, gap: 7}
+  pierce: {resist: 1.0}
   rarity: common
   natural: true
 scaleHide:
@@ -140,7 +140,7 @@ scaleHide:
   regen: 0
   standUp: 0
   durability: 25
-  pierce: {resist: 0.8, gap: 7}
+  pierce: {resist: 0.8}
   rarity: common
   natural: true
 bogSkin:
@@ -153,7 +153,7 @@ bogSkin:
   regen: 0
   standUp: 0
   durability: 20
-  pierce: {resist: 0.4, gap: 6}
+  pierce: {resist: 0.4}
   rarity: common
   natural: true
 scalewardScales:
@@ -167,7 +167,7 @@ scalewardScales:
   regen: 0
   standUp: 0
   durability: 20
-  pierce: {resist: 0.75, gap: 8}
+  pierce: {resist: 0.75}
   cutThrough: 8
   rarity: common
   natural: true
@@ -181,7 +181,7 @@ drakeScales:
   regen: 0
   standUp: 0
   durability: 20
-  pierce: {resist: 2.5, gap: 10}
+  pierce: {resist: 2.5}
   rarity: common
   natural: true
 wyvernScales:
@@ -194,7 +194,7 @@ wyvernScales:
   regen: 0
   standUp: 0
   durability: 20
-  pierce: {resist: 3.5, gap: 11}
+  pierce: {resist: 3.5}
   rarity: common
   natural: true
 ogreHide:
@@ -207,7 +207,7 @@ ogreHide:
   regen: 0
   standUp: 0
   durability: 20
-  pierce: {resist: 1.0, gap: 7}
+  pierce: {resist: 1.0}
   rarity: common
   natural: true
 giantHide:
@@ -220,7 +220,7 @@ giantHide:
   regen: 0
   standUp: 0
   durability: 20
-  pierce: {resist: 1.5, gap: 7}
+  pierce: {resist: 1.5}
   rarity: common
   natural: true
 golemBody:
@@ -235,7 +235,7 @@ golemBody:
   regen: 0
   standUp: 0
   durability: 80
-  pierce: {resist: 6, gap: 13}
+  pierce: {resist: 6}
   rarity: common
   natural: true
 gatorHide:
@@ -248,7 +248,7 @@ gatorHide:
   regen: 0
   standUp: 0
   durability: 30
-  pierce: {resist: 1.5, gap: 8}
+  pierce: {resist: 1.5}
   rarity: common
   natural: true
 avatarHide:
@@ -261,6 +261,6 @@ avatarHide:
   regen: 0
   standUp: 0
   durability: 50
-  pierce: {resist: 1.5, gap: 8}
+  pierce: {resist: 1.5}
   rarity: common
   natural: true

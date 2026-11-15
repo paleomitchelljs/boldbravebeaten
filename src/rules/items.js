@@ -208,11 +208,7 @@
     for (const e of enchantsOf(a)) { for (const k of ['P', 'S', 'B']) bonus[k] += (e.mitBonus && e.mitBonus[k]) || 0; resistBonus += e.resistBonus || 0; }
     for (const k of ['P', 'S', 'B']) mit[k] = Math.max(0, Math.round(t.mit[k] * (k === 'B' ? 1 : protect)) + cov.mitigation + bonus[k]);
     const pen = (v) => Math.max(0, tenth(v * weight * share));
-    const PC = CONFIG.pierce;
-    const pierce = t.pierce ? {
-      resist: Math.round((t.pierce.resist * protect + resistBonus) * 100) / 100,
-      gap: t.pierce.gap,
-    } : null;
+    const pierce = t.pierce ? { resist: Math.round((t.pierce.resist * protect + resistBonus) * 100) / 100 } : null;
     return {
       mit,
       spd: pen(t.spd),
@@ -220,10 +216,8 @@
       stamina: pen(t.stamina),
       regen: Math.round(pen(t.regen)),
       standUp: t.standUp,
-      passThrough: cov.passThrough * ((CONFIG.passThroughByArmor && CONFIG.passThroughByArmor[a.type] != null) ? CONFIG.passThroughByArmor[a.type] : 1),
       maxDurability: armorMaxDurability(a),
       pierce,
-      passBurst: cov.passThrough, // a point that has burst the armor: coverage only, not plate's glancing factor
       transmit: t.transmit || 1,
       cutThrough: t.cutThrough != null ? t.cutThrough * protect : null,
       dissipate: { glancing: (t.dissipate && t.dissipate.glancing) || 0, crushing: (t.dissipate && t.dissipate.crushing) || 0 },

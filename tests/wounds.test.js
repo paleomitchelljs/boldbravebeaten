@@ -38,8 +38,8 @@ function harm(t) {
   return { con, other };
 }
 
-// The AI and the preview read computeHit's expectation (expCON, expAttrs: over locations, the gap roll, the wound and
-// vital rolls); applyHit rolls them. Over many blows the two agree.
+// The AI and the preview read computeHit's expectation (expCON, expAttrs: over the contest's margins, the locations
+// and the wound tables); applyHit rolls them. Over many blows the two agree.
 async function compare(name, mk, a, option, n) {
   const t0 = mk();
   const h = Combat.computeHit(a, t0, option, {});
@@ -74,7 +74,7 @@ test('wounds: the expectation the AI sees matches applyHit on average (points, g
   await compare('thrust, a tireless body', () => body(null, { tireless: true }), sword, thrust, 2000);
 });
 
-test('R4: a point into a limb takes its attributes unless the wound roll is vital; head and torso take CON', async () => {
+test('R4: a point into a limb takes its attributes unless the wound is vital; head and torso take CON', async () => {
   const a = armed('longsword');
   const thrust = opt(a, 'thrust');
   const at = (loc) => Combat.computeHit(a, body(), thrust, { location: loc });
@@ -83,16 +83,20 @@ test('R4: a point into a limb takes its attributes unless the wound roll is vita
   const leg = at('legs');
   assert.strictEqual(leg.toCON, 0);
   assert.ok(leg.pointToAttrs > 0);
-  // Rolled: the location (d100 80 is the legs), then the wound roll (10: not vital), then each point d2 (SPD, CON).
+  // Rolled: the contest (a d10 of 1: a small margin, no vital wound), the location (d100 80 is the legs), then each
+  // point d2 (SPD, CON).
   let t = body();
-  const r = await Combat.applyHit(enc0(), { [a.id]: a, [t.id]: t }, a, t, thrust, fixed([80, 10], 1), {});
+  const r = await Combat.applyHit(enc0(), { [a.id]: a, [t.id]: t }, a, t, thrust, fixed([1, 80], 1), {});
   assert.strictEqual(r.hit.location, 'legs');
+  assert.ok(!r.hit.vital);
   assert.strictEqual(t.damage.SPD, leg.pointToAttrs, r.text);
   assert.ok(!t.damage.CON, r.text);
   assert.ok(t.bleeds.length, 'it still bleeds');
-  // A vital roll sends it to CON × the vital multiplier.
+  // A margin at the leg's vital threshold sends it to CON × the vital multiplier.
   t = body();
-  await Combat.applyHit(enc0(), { [a.id]: a, [t.id]: t }, a, t, thrust, fixed([80, 1], 1), {});
+  const need = Combat.computeHit(a, t, thrust, { location: 'legs', margin: 0 }).vitalAt;
+  const v = await Combat.applyHit(enc0(), { [a.id]: a, [t.id]: t }, a, t, thrust, fixed([], 1), { location: 'legs', margin: need });
+  assert.ok(v.hit.vital, v.text);
   assert.strictEqual(t.damage.CON, leg.pointToAttrs * CONFIG.vital.mult);
   // Off (pointToCON null): CON wherever.
   const W = CONFIG.locations.wounds.pointToCON;

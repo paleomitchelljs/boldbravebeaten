@@ -1,6 +1,6 @@
 // The battle panel's odds (docs/PLAN.md step 7): Combat.foresee lays out the dice of one blow from what the attacker
 // can see. Each number it gives is checked here against many seeded resolutions of the same blow through the engine
-// (resolveAction: the defence roll, the location, the gap, pass-through, the vital roll, the wound tables).
+// (resolveAction: the contest and its margin, the location, a gap found, the vital wound, the wound tables).
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const B = require('./load');
@@ -23,7 +23,7 @@ const pick = (c, pred) => C.attackOptions(c).find((o) => !o.windUp && !o.halfSwo
 async function simulate(mkA, mkT, optFn, kind, n, dist, seed) {
   const rng = Enemies.makeRng(seed || 99);
   const io = { roller: roller(rng), react: async (req) => (req.kind === 'defend' && req.actor === 'T' ? kind : null) };
-  const s = { lands: 0, drop: 0, kill: 0, vital: 0, CON: 0, other: 0, stamina: 0, n };
+  const s = { lands: 0, drop: 0, kill: 0, vital: 0, CON: 0, other: 0, stamina: 0, turned: 0, n };
   for (let i = 0; i < n; i++) {
     const a = mkA(), t = mkT();
     const chars = { [a.id]: a, [t.id]: t };
@@ -36,12 +36,13 @@ async function simulate(mkA, mkT, optFn, kind, n, dist, seed) {
     const text = enc.log.map((l) => l.text || l).join('\n');
     if (/ hits T/.test(text)) s.lands++;
     if (/VITAL/.test(text)) s.vital++;
+    if (/turns the point/.test(text)) s.turned++;
     if (!C.isActive(t)) s.drop++;
     if (t.status.dead) s.kill++;
     for (const k in t.damage) if (k === 'CON') s.CON += t.damage[k]; else s.other += t.damage[k] || 0;
     s.stamina += st0 - t.stamina;
   }
-  for (const k of ['lands', 'drop', 'kill', 'vital', 'CON', 'other', 'stamina']) s[k] /= n;
+  for (const k of ['lands', 'drop', 'kill', 'vital', 'CON', 'other', 'stamina', 'turned']) s[k] /= n;
   return s;
 }
 
@@ -101,11 +102,21 @@ test('a heavy swing beats through a light parry, weakened', async () => {
 test('an aimed blow at the head of a dodging foe, and one at a prone foe who cannot cover it', async () => {
   const aimHead = (a) => Object.assign({}, pick(a, (o) => o.motion === 'thrust'), { aim: 'head' });
   const { f } = await scenario('aimed head thrust, dodged', () => body('A', 'party', 'spear'), () => body('T', 'enemy', 'shortsword', mailed), aimHead, 'dodge', 2);
-  assert.ok(f.hit.aimHold > 0 && f.hit.aimHold < 1);
+  const d = f.defences.find((x) => x.kind === 'dodge');
+  assert.ok(d.margins.every((x) => x.m >= 1), 'a blow that beats a dodge does so by 1 or more');
   const prone = () => body('T', 'enemy', 'shortsword', (c) => { mailed(c); c.status.prone = true; });
   const g = await scenario('aimed head thrust, prone', () => body('A', 'party', 'spear'), prone, aimHead, null, 2);
-  assert.equal(g.f.hit.aimHold, 1);
-  assert.ok(!g.f.defences.some((d) => d.kind === 'dodge'), 'no dodge from the ground');
+  assert.ok(!g.f.defences.some((x) => x.kind === 'dodge'), 'no dodge from the ground');
+  const mean = (ms) => ms.reduce((n, x) => n + x.m * x.p, 0);
+  assert.ok(mean(g.f.hit.margins) > mean(Combat.foresee(body('A', 'party', 'spear'), body('T', 'enemy', 'shortsword', mailed), aimHead(body('A', 'party', 'spear')), { distance: 2 }).hit.margins), 'the prone are easier to beat by much');
+});
+
+test('a thrust at plate: how often the point gets through, as the margins fall', async () => {
+  const plated = (c) => { c.armor = Items.makeArmor('plate', 'full', 'average'); };
+  const thrust = (a) => pick(a, (o) => o.motion === 'thrust');
+  const { f, s } = await scenario('spear vs plate, taken', () => body('A', 'party', 'spear'), () => body('T', 'enemy', 'shortsword', plated), thrust, null, 2);
+  assert.ok(f.hit.turned > 0 && f.hit.through > 0, 'some get through, some are turned');
+  assert.ok(Math.abs(s.turned - f.hit.turned) <= 0.035, `turned ${s.turned} rolled, ${f.hit.turned} foreseen`);
 });
 
 test('a tired foe: a blunt blow whose wounds lower their stamina, collapsing them, is foreseen as a drop', async () => {

@@ -87,7 +87,7 @@
         h('label', { class: 'inline', for: 'armor-dur' }, 'Durability', num('armor-dur', a.durability, (v) => { a.durability = Math.max(0, Math.min(ai.maxDurability, Math.round(v))); app.save(); app.render(); }, { min: 0, max: ai.maxDurability })),
         h('span', { class: 'muted num' }, `/ ${ai.maxDurability}`),
         h('span', { class: 'muted' }, `Mitigation P/S/B ${ai.effMit.P}/${ai.effMit.S}/${ai.effMit.B}`),
-        ai.pierce ? h('span', { class: 'muted', title: 'A point with this much punch bursts through; otherwise it must find a gap (d10 + ⌊DEX/4⌋ + feats against this number)' }, `Points burst at ${ai.pierce.resist} · gap ${ai.pierce.gap}`) : null,
+        ai.pierce ? h('span', { class: 'muted', title: 'A point with this much punch gets through; a lighter one needs a margin on the blow' }, `Points through at ${ai.pierce.resist}`) : null,
         h('span', { class: 'muted' }, `SPD −${ai.spd} · DEX −${ai.dex} · +${ai.stamina} stamina/action · regen −${ai.regen}`),
         enchantText(a) ? h('span', { class: 'chip' }, enchantText(a)) : null) : null);
   }
