@@ -326,6 +326,7 @@ function newTempo() {
     time: { all: zeroTime(), heroes: zeroTime(), foes: zeroTime() },
     first: { landed: { n: 0, won: 0, at: [], round1: 0, heroes: 0, heroesWon: 0 }, tried: { n: 0, won: 0, at: [], round1: 0 } },
     turns: { all: [0, 0], heroes: [0, 0], foes: [0, 0] }, // [turns with a foe in reach, of them with no attack]
+    turnsHarm: { all: [0, 0], heroes: [0, 0], foes: [0, 0] }, // the same, a harmful blow in reach
     landed: 0, heavy: 0, heavyBy: {},
     windUps: { started: 0, released: 0, spoiled: 0, cantStart: 0 },
     byRolled: {}, // BASELINE ONLY (the AP die goes in step F): AP rolled that round → [fighter-rounds, of them on the side that won]
@@ -345,7 +346,8 @@ const isHeavy = (o) => !!o && (!!o.windUp || o.motion === 'twoHanded' || o.motio
 //                   gone). Fights with no winner (timeouts) are left out.
 //   waiting         a fighter's turn that began with a standing foe in reach of an attack it could pay for (in range, a
 //                   shot or bolt in line), in which it made no attack (strike, wind-up, cast, grapple, trip, shove…):
-//                   of such turns, the share with none
+//                   of such turns, the share with none; and the same counting only turns with a blow in reach that could
+//                   harm the foe (a blow plate turns entirely is no reason to strike)
 //   heavy           the share of blows landed that are heavy (isHeavy)
 //   wind-ups        started (the log's "winds up" / "draws for"), released (a strike made from one), spoiled (lost
 //                   before release: knocked down, grappled, disarmed, not released in time)
@@ -357,25 +359,37 @@ function tempoWatch(R, enc, chars, heroes) {
   const ATTACK = new Set(['strike', 'windUp', 'cast', 'trip', 'disarm', 'shove', 'clinch', 'grapple', 'pin', 'throw', 'kick', 'bash']);
   const logStart = enc.log.length;
   let firstLanded = null, firstTried = null, mark = 0, markRound = null;
-  const pending = {}; // id → { inReach, attacked } for this period
+  const pending = {}; // id → { inReach: { any, harm }, attacked } for this period
   const rolled = []; // [id, AP rolled]
   const foeOf = (a, t) => a && t && a.side && t.side && a.side !== t.side;
+  // In reach: any attack it could pay for, in range (a shot or bolt in line); "harmful": one of those that could do
+  // the foe some harm (Combat.computeHit's expectation above 0, as aiWatch's "worthless" reads it; a spell counts).
+  const harmful = (c, f, o, d) => {
+    if (o.spell) return true;
+    const h = Combat.computeHit(c, f, o, { distance: d });
+    return h.toCON + (h.pointToAttrs || 0) + h.slashToAttrs + h.bluntToCON + (h.crushToAttrs || 0) + (C.tireless(f) ? 0 : h.bluntToStamina) > 0;
+  };
   const reach = (c) => {
+    const out = { any: false, harm: false };
     const p = enc.pos[c.id];
-    if (!p || !C.isActive(c)) return false;
+    if (!p || !C.isActive(c)) return out;
     const opts = C.attackOptions(c).filter((o) => clock.canPay(c.id, o));
-    return Object.values(chars).some((f) => {
-      if (!foeOf(c, f) || !C.isActive(f) || !enc.pos[f.id]) return false;
+    for (const f of Object.values(chars)) {
+      if (!foeOf(c, f) || !C.isActive(f) || !enc.pos[f.id]) continue;
       const d = Combat.dist(p, enc.pos[f.id]);
-      return opts.some((o) => C.inRange(o, d) && (!(o.ranged || o.spell) || !(B.Terrain && enc.tiles && B.Terrain.lineCheck(enc, p, enc.pos[f.id], 'missile').blocked)));
-    });
+      for (const o of opts) {
+        if (!C.inRange(o, d) || ((o.ranged || o.spell) && B.Terrain && enc.tiles && B.Terrain.lineCheck(enc, p, enc.pos[f.id], 'missile').blocked)) continue;
+        out.any = true;
+        if (harmful(c, f, o, d)) { out.harm = true; return out; }
+      }
+    }
+    return out;
   };
   const settle = () => {
     for (const [id, x] of Object.entries(pending)) {
-      if (!x.inReach) continue;
       const k = heroes.has(id) ? 'heroes' : 'foes';
-      R.turns.all[0]++; R.turns[k][0]++;
-      if (!x.attacked) { R.turns.all[1]++; R.turns[k][1]++; }
+      if (x.inReach.any) { R.turns.all[0]++; R.turns[k][0]++; if (!x.attacked) { R.turns.all[1]++; R.turns[k][1]++; } }
+      if (x.inReach.harm) { R.turnsHarm.all[0]++; R.turnsHarm[k][0]++; if (!x.attacked) { R.turnsHarm.all[1]++; R.turnsHarm[k][1]++; } }
     }
     for (const k of Object.keys(pending)) delete pending[k];
   };
@@ -449,6 +463,7 @@ function tempoSummary(R) {
     firstLanded: Object.assign(propSE(R.first.landed.won, R.first.landed.n), { meanAt: mean(R.first.landed.at), round1: R.first.landed.n ? R.first.landed.round1 / R.first.landed.n : null, byHeroes: R.first.landed.n ? R.first.landed.heroes / R.first.landed.n : null, heroesWon: propSE(R.first.landed.heroesWon, R.first.landed.heroes) }),
     firstTried: Object.assign(propSE(R.first.tried.won, R.first.tried.n), { meanAt: mean(R.first.tried.at), round1: R.first.tried.n ? R.first.tried.round1 / R.first.tried.n : null }),
     waiting: { all: propSE(R.turns.all[1], R.turns.all[0]), heroes: propSE(R.turns.heroes[1], R.turns.heroes[0]), foes: propSE(R.turns.foes[1], R.turns.foes[0]) },
+    waitingHarm: { all: propSE(R.turnsHarm.all[1], R.turnsHarm.all[0]), heroes: propSE(R.turnsHarm.heroes[1], R.turnsHarm.heroes[0]), foes: propSE(R.turnsHarm.foes[1], R.turnsHarm.foes[0]) },
     heavy: Object.assign(propSE(R.heavy, R.landed), { by: Object.assign({}, R.heavyBy) }),
     windUps: Object.assign({}, R.windUps, { spoiledShare: R.windUps.started ? R.windUps.spoiled / R.windUps.started : null }),
     byRolled: Object.entries(R.byRolled).sort((a, b) => Number(a[0]) - Number(b[0])).map(([k, [n, w]]) => Object.assign({ ap: Number(k) }, propSE(w, n))), // BASELINE ONLY
@@ -463,6 +478,7 @@ function tempoReport(R, I) {
     `${I}  tempo: first blow landed: its side won ${pe(t.firstLanded)}; landed at round ${t.firstLanded.meanAt == null ? '-' : t.firstLanded.meanAt.toFixed(2)} on average, in round 1 ${pc(t.firstLanded.round1)}` + (R.first.landed.heroes && R.first.landed.heroes < R.first.landed.n ? `; by the heroes ${pc(t.firstLanded.byHeroes)}, then won ${pe(t.firstLanded.heroesWon)}` : ''),
     `${I}    first blow tried: its side won ${pe(t.firstTried)}; tried at round ${t.firstTried.meanAt == null ? '-' : t.firstTried.meanAt.toFixed(2)} on average`,
     `${I}    waiting: turns begun with a foe in reach and no attack ${pe(t.waiting.all)}` + (R.turns.heroes[0] && R.turns.foes[0] ? `; heroes ${pe(t.waiting.heroes)}, foes ${pe(t.waiting.foes)}` : ''),
+    `${I}    waiting with a harmful blow in reach ${pe(t.waitingHarm.all)}` + (R.turnsHarm.heroes[0] && R.turnsHarm.foes[0] ? `; heroes ${pe(t.waitingHarm.heroes)}, foes ${pe(t.waitingHarm.foes)}` : ''),
     `${I}    time (${t.unit}): ` + ['all', 'heroes', 'foes'].map(tl).filter(Boolean).join('; '),
     `${I}    heavy blows ${pe(t.heavy)} of blows landed (${Object.entries(t.heavy.by).map(([k, v]) => k + ' ' + v).join(', ') || 'none'}); wind-ups started ${t.windUps.started}, released ${t.windUps.released}, spoiled ${t.windUps.spoiled} (${pc(t.windUps.spoiledShare)})${t.windUps.cantStart ? `, could not start ${t.windUps.cantStart}` : ''}`,
     t.byRolled.length ? `${I}    [baseline only] the side's win rate by AP rolled that round (AP: win, fighter-rounds): ` + t.byRolled.map((x) => `${x.ap}: ${Math.round(100 * x.p)}% (${x.n})`).join(', ') : null,

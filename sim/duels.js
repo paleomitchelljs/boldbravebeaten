@@ -28,6 +28,9 @@ argv.forEach((a, i) => {
 
 const hero = (name) => () => {
   const w = B.World.create(B.World.presetParty(), { log: false });
+  // --mirror deals the party's supplies (bandages, Lorc's arrows: World.loadSupplies); the pairings, as in the step-1
+  // baseline, fight without them (Lorc is not among them: without arrows he draws a bow he cannot loose).
+  if (argv.includes('--mirror')) B.World.loadSupplies(w);
   const c = B.World.party(w).find((x) => x.name === name);
   c.policy = undefined;
   return c;
