@@ -128,7 +128,7 @@
       if (!visible(f, c.side)) continue;
       const t = def(f);
       if (t.deadly) return Infinity;
-      if (t.pit || t.onEnter || t.perRound || (t.rune && f.side !== c.side)) a = DETOUR;
+      if (t.pit || t.onEnter || t.perRound || (t.rune && f.side !== c.side) || (t.trap && !f.sprung)) a = DETOUR;
     }
     return a;
   }
@@ -230,14 +230,16 @@
     return { blocked: false, miss };
   }
 
-  // Features a side can see (hidden runes belong to the side that laid them).
+  // Features a side can see (hidden runes belong to the side that laid them; a hidden trap shows to the sides in
+  // f.knownBy: its own people, a party that has found it).
   function visible(f, side) {
-    return !f.hidden || f.side === side;
+    return !f.hidden || f.side === side || !!(f.knownBy && f.knownBy.includes(side));
   }
 
-  // A character steps onto (x, y). Springs runes, falls into pits, slips on ice, takes the
-  // ground's blow. Returns true if the move ends here.
-  async function enter(enc, chars, c, x, y, roller, log) {
+  // A character steps onto (x, y). Springs runes and traps, falls into pits, slips on ice, takes the
+  // ground's blow. Returns true if the move ends here. how: 'driven' when shoved or hurled there (a trap's own
+  // people walk it safely, but not when driven onto it).
+  async function enter(enc, chars, c, x, y, roller, log, how) {
     if (flies(c)) return !C().isActive(c) || (G.Conditions && !G.Conditions.canMove(c));
     const free = G.Effects.has(c, 'freedom');
     for (const f of at(enc, x, y).slice()) {
@@ -247,6 +249,7 @@
         log(`${c.name} steps on a hidden rune of ${f.noun}!`);
         if (G.Magic && G.Magic.springRune) await G.Magic.springRune(enc, chars, f, x, y, roller);
       }
+      if (d.trap && !f.sprung && G.Traps) await G.Traps.springInFight(enc, chars, c, f, x, y, roller, how);
       if (d.pit) {
         c.status.prone = true;
         c.stamina = Math.max(0, c.stamina - T().pitDamage);
@@ -301,6 +304,7 @@
         }
       }
     }
+    if (G.Traps) G.Traps.rearm(enc);
     for (const k of Object.keys(enc.tiles)) {
       let list = enc.tiles[k];
       if (list.some((f) => def(f).burns)) {
@@ -335,7 +339,7 @@
       if (!visible(f, side)) continue;
       const t = def(f);
       if (t.rune && f.side !== side) d += 25;
-      if (t.pit) d += 30;
+      if (t.pit || (t.trap && !f.sprung)) d += 30;
       if (t.slick) d += 8;
       if (t.onEnter) d += 10;
       if (t.deadly) d += 100;

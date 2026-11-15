@@ -198,8 +198,8 @@ walks through it; fliers cross; it stops neither sight, missiles nor reach), `_`
 `=` a plank bridge over water, `^` a pyramid step (a wall, drawn as the tier it holds up), `-` `:` `*` `&` the four terraces of a stepped pyramid, lowest to highest (each a terrain of the tileset, drawn over the one below; a stair through a step is a `prop` with `solid: false` and `on: "^"`). Every other character is defined in the place's `legend`; the
 validator complains about a letter with no entry (or an entry not on the map, or one that is a ground letter).
 Legend kinds: `stairs {to, at, up}` (`up` sets the arrow when the default guess is wrong), `drop {to, at, damage, text,
-sprite}` (a well or a hole: one way down, no stairs back; the fall's `damage` hits everyone), `locked {tn, forceTn, key, alt[]}`, `secret {tn}`, `trap {tn, disarm, damage, text, reveal, sprite}` (`sprite`: blade, spiketrap, vent, pit; default the spike plate),
-`monster {encounter, asleep}`, `chest {loot, tn}`, `pickup {good}`, `note {text, sets}`, `npc {npc}`, `shrine {heal}`,
+sprite}` (a well or a hole: one way down, no stairs back; the fall's `damage` hits everyone), `locked {tn, forceTn, key, alt[]}`, `secret {tn}`, `trap` (see **A trap** below; `sprite`: blade, spiketrap, vent, pit; default the spike plate),
+`monster {encounter, asleep}`, `chest {loot, tn, trap}` (`trap`: a trap on its lid), `pickup {good}`, `note {text, sets}`, `npc {npc}`, `shrine {heal}`,
 `prop {sprite, scale, solid}` (scenery: a crate, bed, urn, candelabra… from the table in `src/ui/game/mapview.js` or a
 tileset's `props`; solid by default; a stone block until its art exists; `sprite: none` draws nothing, for the rest of a building's footprint; `over: true` with `solid: false` hangs it overhead, drawn above the figures, who walk beneath: a bridge between two towers). A `stairs` with `sprite: none` is drawn as nothing: a path running off the edge of the map. A `note` with `sprite: none` shows no scroll (words met at a road's end). Any legend entry may say `on: "<ground letter>"`
 for the ground under it.
@@ -229,6 +229,41 @@ letter for its plain floor and legend squares (the temple court is grass), and `
 court in daylight; default `game.lightRadius`).
 A fight on the map keeps the map's ground (water, shallows, rubble), and every other group that is awake, within
 `game.joinDistance` of the party or of the group fought, in sight, and inside the slice joins it from where it stood.
+
+**A trap** (a `trap` legend entry, or a chest's `trap`; PROVISIONAL, docs/OVERHAUL.md step C; numbers in `rules.yaml
+game.traps`). It is one object exploring and fighting:
+
+```yaml
+S: {kind: trap, tn: 9, disarm: 7, trigger: wire, knownTo: [suracayl],
+    label: "A sapling bent back in the ferns",
+    tell: "a sapling by the gate is bent further than any wind would bend it",
+    how: "A vine across the path holds back a sapling with a sharpened stake lashed to it.",
+    effect: {blow: {name: "A sharpened sapling", damage: [5, 0, 1], motion: thrust, punch: 1.6, aim: torso,
+                    wound: {kind: P, vital: 0.15, bleed: 1, rounds: 4}}},
+    reset: {minutes: 10, rounds: 2}, bypass: [leap, spring, mark],
+    text: "A sapling whips round out of the ferns, a stake lashed to it."}
+```
+
+| Key | What it is |
+|---|---|
+| `tn` | The Perception target. A passing party looks once from `game.traps.notice` squares off (in sight) and once more beside it, at −`passivePenalty`; a search looks at +`searchBonus`. The margin gives a degree (`game.traps.find`): the **tell** (the `tell` text, no square: the party walks on wary, and whoever sets it off gets a get-clear roll), the **square** (it stands in the way), the square and its **working** (`how`, and what the effect does, and every way past). |
+| `reveal` | A condition (a flag from lore or a parley topic): while it holds the party knows the trap to the last degree without a roll. |
+| `trigger` | `step`, `wire`, `plate` or `lid` (a chest's). Which ways of springing it from a distance work (`game.traps.ways.*.triggers`). |
+| `effect.blow` | A weapon option: `damage [P, S, B]`, `motion` (weapons' motions), `punch`, `aim` (a location; none = rolled), `wound {kind, vital, bleed, rounds}`, `venom {con, rounds}`, `name`. Resolved by `Combat.applyHit` on the victim, so armor and location count; `block: false` if a shield can't take it (a pit, spikes from below). |
+| `effect.element` | `{noun, mag, name}`: a spell noun's blow, as a hazard's (`Magic.elementBlow`). |
+| `effect.terrain` | What it leaves in a fight (`CONFIG.terrain`: `pit`, `hot`, `miasma`…), over `terrainRadius` squares for `rounds`. |
+| `effect.to`, `at` | A drop to another place (exploring; in a fight it is a pit). |
+| `effect.radius`, `who` | Radius 0: the one on the square in marching order (`who: lead`, the default; `next`, the one behind, for a trap that bites late). A radius: everyone near (exploring: the whole party). `dodge: false`: no getting clear of it. |
+| `strike` | The TN to get clear of it for one who knows it is coming (default `game.traps.strike`): the better of a dodge and a ready shield. |
+| `reset` | `{minutes, rounds}`: set again that long after it springs (exploring, a fight). None: spent once sprung. |
+| `knownTo` | Factions or monster ids who know it: they walk it safely and path round it, see it in a fight, may shove or wait for foes to come over it. Driven onto it, it springs on them too. |
+| `disarm` | Devices (Trapcraft) TN; + `unknownDisarm` while the working is not made out; a fumble springs it on the disarmer. Left out: it can't be disarmed. |
+| `bypass` | Ways past besides disarming (`game.traps.ways`; default `game.traps.bypass`): `leap`, `edge` (each member in marching order rolls; the first to fall short sets it off), `spring` (a `pole` carried, a thrown `stone` at a wire, a `shield` held over: loud), `mark` (leave it, marked). |
+| `text` | What is seen when it springs. |
+
+In a fight on the map a live trap is a `trap` terrain feature, hidden to every side not in its `knownBy` (the party once
+it has found it; the foes if any of them is in `knownTo`). Anyone stepping or driven onto it springs it; the AI shoves a
+foe onto a trap its side knows as onto a pit. What sprang is written back to the map when the fight ends.
 
 **The numbers** (`rules.yaml`): everything the game layer tunes. Anything outside `game:` is merged over the combat
 engine's `CONFIG`, so a combat number can be changed beside the content it affects.

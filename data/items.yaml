@@ -29,6 +29,8 @@ goods:
     {name: Steadying tonic, kind: potion, value: 18, rarity: common, use: {cure: bleeding}, blurb: "Stops all bleeding at once."}
   antidote:
     {name: Antidote, kind: potion, value: 40, rarity: uncommon, use: {cure: poison}, blurb: "Draws out venom and plague."}
+  pole:
+    {name: Ten-foot pole, kind: supply, value: 2, rarity: common, blurb: "Prods a trap you have found from two squares off, to set it off where it can't reach you. Loud."}
   repair_kit:
     {name: Repair kit, kind: supply, value: 25, rarity: common, use: {repair: 0.3}, blurb: "Restores 30% of an armor piece or shield's durability in the field."}
   salt:

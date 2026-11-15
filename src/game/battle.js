@@ -116,6 +116,39 @@
     return arena;
   }
 
+  // Live traps in the field become terrain (CONFIG.terrain.trap), hidden to every side but those who know them: the
+  // party if it has found it, the foes if any of them is of a group in its knownTo. f.def is the trap, f.at its
+  // square on the map (finish writes back what became of it).
+  function layTraps(world, enc, arena, foes) {
+    for (let y = 0; y < arena.h; y++) for (let x = 0; x < arena.w; x++) {
+      const mx = arena.ox + x, my = arena.oy + y;
+      const c = G.Explore.cell(world, mx, my);
+      if (c.kind !== 'trap' || !G.Explore.live(world, c.def, c.st)) continue;
+      const f = G.Terrain.add(enc, x, y, 'trap');
+      if (!f) continue;
+      f.def = c.def;
+      f.at = { x: mx, y: my };
+      f.key = arena.place + ':' + mx + ',' + my;
+      f.knownBy = [];
+      if (c.st.found) f.knownBy.push('party');
+      if (foes.some((fo) => G.Traps.knows(c.def, fo))) f.knownBy.push('enemy');
+    }
+  }
+  function trapsKnownBy(enc, foes) {
+    for (const t of G.Terrain.all(enc)) if (t.f.kind === 'trap' && t.f.def && foes.some((fo) => G.Traps.knows(t.f.def, fo)) && !t.f.knownBy.includes('enemy')) t.f.knownBy.push('enemy');
+  }
+  // After the fight: a trap that sprang is spent on the map (and found: everyone saw it), one the party saw or knew is found.
+  function writeBackTraps(world, b) {
+    if (!b.arena || b.arena.place !== world.place || !b.enc.tiles) return;
+    for (const t of G.Terrain.all(b.enc)) {
+      const f = t.f;
+      if (f.kind !== 'trap' || !f.at) continue;
+      const st = G.Explore.state(world, f.at.x, f.at.y);
+      if (f.sprung) { st.sprung = true; st.sprungAt = world.minutes; }
+      if (f.sprung || f.sprungRound != null || (f.knownBy || []).includes('party')) { st.found = true; st.wary = true; }
+    }
+  }
+
   // Other groups on the map that hear the fight and come: awake, not beaten or calmed, within game.joinDistance of the
   // party or of the group it fights (or of `from`: any fighter's square, mid-fight), with a clear line to that one, and
   // inside the slice. `skip`: squares already in the fight. Returns [{x, y, def, spec}] in map squares.
@@ -190,6 +223,7 @@
       for (const [k, kind] of Object.entries(arena.ground)) { const [x, y] = k.split(',').map(Number); G.Terrain.add(enc, x, y, kind); }
       const joinIds = new Set(joined.flatMap((j) => j.ids));
       placeOnArena(enc, arena, members.map((c) => c.id), foes.filter((f) => !joinIds.has(f.id)).map((f) => f.id), joined);
+      layTraps(world, enc, arena, foes);
     }
     if (opts.surprise) enc.surprise = { side: opts.surprise, factor: opts.factor == null ? 0.5 : opts.factor, round: 1 };
     world.battle = { enc, foes: foeMap, allies, spec, joined: joined.map((j) => ({ x: j.x, y: j.y, spec: j.spec })), arena: arena ? { place: arena.place, ox: arena.ox, oy: arena.oy, w: arena.w, h: arena.h } : null, ctx: opts.ctx || null, canFlee: opts.canFlee !== false, startedDay: world.day };
@@ -231,6 +265,7 @@
         enc.pos[f.id] = sq[i] || at;
       });
       b.joined.push({ x: j.x, y: j.y, spec: j.spec });
+      trapsKnownBy(enc, more);
       const line = `${j.def.label || 'More of them'} hear${j.def.label ? 's' : ''} the fighting and come${j.def.label ? 's' : ''} running.`;
       enc.log.push({ text: line, cls: 'fight', round: enc.round });
       lines.push(line);
@@ -371,6 +406,7 @@
     if (!out.result) out.result = alive('party') && !alive('enemy') ? 'won' : alive('enemy') && !alive('party') ? 'lost' : 'draw';
     if (out.result === 'won') out.lines.push(...saveFallen(enc, t.characters));
     Combat.cleanup(enc, t.characters);
+    writeBackTraps(world, b);
     const foes = Object.values(b.foes).filter((f) => !f.conjured);
     if (out.result === 'won') {
       const fallen = foes;

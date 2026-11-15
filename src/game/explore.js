@@ -111,7 +111,8 @@
       case 'shrine': return { ch, def, kind: 'shrine', solid: true, opaque: false, st };
       case 'monster': return { ch, def, kind: 'monster', solid: !st.done && !st.pacified && !world.peaceful, opaque: false, st };
       case 'prop': return { ch, def, kind: 'prop', solid: def.solid !== false, opaque: false, st };
-      case 'trap': return { ch, def, kind: 'trap', solid: !!(st.found && !st.disarmed && !st.sprung), opaque: false, st };
+      // A trap found and still live stands in the way: getting past it is a choice (describe, act).
+      case 'trap': return { ch, def, kind: 'trap', solid: !!(st.found && live(world, def, st)), opaque: false, st };
       default: return { ch, def, kind: def.kind, solid: false, opaque: false, st };
     }
   }
@@ -304,12 +305,12 @@
     }
     ex.x = nx; ex.y = ny;
     W.advance(world, minutesPerStep(world));
-    enterSquare(world, c, nx, ny, ev);
+    const pending = enterSquare(world, c, nx, ny, ev);
     markSeen(world);
     passive(world, ev);
     scan(world, ev);
     if (!met(ev)) wanderCheck(world, ev);
-    return { moved: true, events: ev };
+    return pending ? { moved: true, events: ev, pending } : { moved: true, events: ev };
   }
 
   // The compass steps from the party to (tx, ty) over squares it has seen and can walk (doors open as it goes).
@@ -323,7 +324,7 @@
       if (x < 0 || y < 0 || x >= g.w || y >= g.h || !ms.seen[posKey(x, y)]) return false;
       const c = peek(world, x, y);
       if (c.kind === 'door') return true;
-      if (c.kind === 'trap' && c.st.found && !c.st.disarmed && !c.st.sprung) return false;
+      if (c.kind === 'trap' && c.st.found && live(world, c.def, c.st)) return false;
       return !c.solid && c.kind !== 'wall' && c.kind !== 'rock';
     };
     if (!ok(tx, ty)) return [];
@@ -350,9 +351,12 @@
     return move(world, 0);
   }
 
+  // Returns a promise of more events when a trap springs (its blow is the combat engine's, which is async).
   function enterSquare(world, c, x, y, ev) {
-    if (c.kind === 'trap' && !c.st.sprung && !c.st.disarmed) { if (!world.peaceful) springTrap(world, c, ev); }
-    else if (c.kind === 'pickup' && !c.st.done) {
+    if (c.kind === 'trap' && live(world, c.def, c.st)) {
+      // A party that has seen the tell walks on wary: the one who sets it off may get clear.
+      if (!world.peaceful) return springTrap(world, { def: c.def, st: c.st }, x, y, ev, { aware: !!c.st.wary });
+    } else if (c.kind === 'pickup' && !c.st.done) {
       c.st.done = true;
       W.addGood(world, c.def.good, 1);
       ev.push({ type: 'log', text: `${c.def.text ? c.def.text + ' ' : ''}You take the ${W.goodDef(c.def.good).name}.`, cls: 'loot' });
@@ -379,6 +383,45 @@
     for (const t of W.updateQuests(world)) ev.push({ type: 'log', text: t, cls: 'quest' });
   }
 
+  // ---- Traps: what they are on a square ------------------------------------------------------------
+  const TK = () => cfg().traps || {};
+  // The trap on a square, if any: a trap square, or a chest's lid trap (its state kept under the chest's, st.trap).
+  function trapOf(c) {
+    if (!c || !c.def) return null;
+    if (c.kind === 'trap') return { def: c.def, st: c.st };
+    if (c.kind === 'chest' && c.def.trap && c.st) {
+      const st = c.st.trap || (Object.isFrozen(c.st) ? {} : (c.st.trap = {}));
+      return { def: c.def.trap, st, lid: true };
+    }
+    return null;
+  }
+  // Still able to spring: not disarmed, and not sprung (or sprung and set again: reset.minutes since).
+  function live(world, def, st) {
+    if (!st || st.disarmed) return false;
+    if (!st.sprung) return true;
+    const m = def && def.reset && def.reset.minutes;
+    return m != null && st.sprungAt != null && world.minutes - st.sprungAt >= m;
+  }
+  // How far the party has found a trap: 0 nothing, 1 the tell, 2 the square, 3 the square and its working.
+  const degreeOf = (st) => (st.known ? 3 : st.found ? 2 : st.wary ? 1 : 0);
+  // The degree a Perception check's margin gives (rules.yaml game.traps.find).
+  function degreeFor(margin) {
+    const F = TK().find || { tell: -3, square: 0, mechanism: 3 };
+    return margin >= F.mechanism ? 3 : margin >= F.square ? 2 : margin >= F.tell ? 1 : 0;
+  }
+  // The party comes to know a trap to degree d (never less than it knew). Logs what it now knows.
+  function learn(world, t, d, ev, how) {
+    if (d <= degreeOf(t.st)) return;
+    const label = (t.def.label || 'a trap');
+    if (d >= 1) t.st.wary = true;
+    if (d >= 2) t.st.found = true;
+    if (d >= 3) t.st.known = true;
+    const text = d === 1 ? `Something is off here: ${t.def.tell || 'you cannot say what'}`
+      : d === 2 ? `You spot a trap${t.lid ? ' on the chest' : ' ahead'}: ${label.toLowerCase()}. What sets it off, you cannot tell.`
+      : `${how === 'know' ? 'You know this one' : `You spot a trap${t.lid ? ' on the chest' : ' ahead'} and see how it works`}: ${label.toLowerCase()}. ${G.Traps.describe(t.def)}`;
+    ev.push({ type: 'log', text, cls: 'find' });
+  }
+
   // ---- Perception: hidden traps and doors ---------------------------------------
   function hiddenNear(world) {
     const ex = world.explore;
@@ -386,23 +429,46 @@
     for (let d = 0; d < 4; d++) {
       const x = ex.x + DIRS[d][0], y = ex.y + DIRS[d][1];
       const c = cell(world, x, y);
-      if (c.hidden || (c.kind === 'trap' && !c.st.found && !c.st.disarmed && !c.st.sprung)) out.push({ x, y, c });
+      if (c.hidden) out.push({ x, y, c });
     }
     return out;
   }
 
-  const revealed = (world, c) => c.def && c.def.reveal && G.Cond.test(world, c.def.reveal);
+  const revealed = (world, def) => def && def.reveal && G.Cond.test(world, def.reveal);
 
+  // The live traps within r squares the party has not fully made out: [{x, y, t, d}].
+  function trapsNear(world, r) {
+    const ex = world.explore, out = [];
+    for (let y = ex.y - r; y <= ex.y + r; y++) for (let x = ex.x - r; x <= ex.x + r; x++) {
+      const c = cell(world, x, y), t = trapOf(c);
+      if (!t || !live(world, t.def, t.st) || degreeOf(t.st) >= 3) continue;
+      out.push({ x, y, t, d: cheb(ex, { x, y }) });
+    }
+    return out;
+  }
+
+  // Walking past: hidden doors in the four squares around (one look each); traps in sight within game.traps.notice
+  // (one look from there, one more from beside it), each found to the degree the margin gives. Knowing beats looking.
   function passive(world, ev) {
     for (const h of hiddenNear(world)) {
       if (h.c.st.passive) continue;
-      if (revealed(world, h.c)) { h.c.st.found = true; ev.push({ type: 'log', text: `You know to look for it: ${h.c.def.label || 'something'}.`, cls: 'find' }); continue; }
+      if (revealed(world, h.c.def)) { h.c.st.found = true; ev.push({ type: 'log', text: `You know to look for it: ${h.c.def.label || 'something'}.`, cls: 'find' }); continue; }
       h.c.st.passive = true;
       const r = S.groupCheck(W.active(world), 'perception', h.c.def.tn || 8, -cfg().passivePenalty);
-      if (r.ok) { h.c.st.found = true; ev.push({ type: 'log', text: foundText(h.c), cls: 'find' }); }
+      if (r.ok) { h.c.st.found = true; ev.push({ type: 'log', text: 'A seam in the wall: a hidden door.', cls: 'find' }); }
+    }
+    const ex = world.explore;
+    for (const n of trapsNear(world, TK().notice || 1)) {
+      if (revealed(world, n.t.def)) { learn(world, n.t, 3, ev, 'know'); continue; }
+      const near = n.d <= 1;
+      if (near ? n.t.st.passiveNear : n.t.st.passive) continue;
+      if (!lineClear(world, ex.x, ex.y, n.x, n.y)) continue;
+      n.t.st.passive = true;
+      if (near) n.t.st.passiveNear = true;
+      const r = S.groupCheck(W.active(world), 'perception', n.t.def.tn || 8, -cfg().passivePenalty);
+      learn(world, n.t, degreeFor(r.margin), ev);
     }
   }
-  const foundText = (c) => c.kind === 'trap' ? `You spot a trap ahead: ${c.def.label.toLowerCase()}.` : 'A seam in the wall: a hidden door.';
 
   // An active search: slower, better, and covers a wider area.
   function search(world) {
@@ -410,35 +476,58 @@
     const ev = [];
     W.advance(world, cfg().searchMinutes);
     let found = 0;
+    const bonus = cfg().searchBonus == null ? 3 : cfg().searchBonus;
     for (let y = ex.y - 2; y <= ex.y + 2; y++) for (let x = ex.x - 2; x <= ex.x + 2; x++) {
       const c = cell(world, x, y);
-      const hidden = c.hidden || (c.kind === 'trap' && !c.st.found && !c.st.disarmed && !c.st.sprung);
-      if (!hidden || !lineClear(world, ex.x, ex.y, x, y) && cheb(ex, { x, y }) > 1) continue;
-      const r = S.groupCheck(W.active(world), 'perception', c.def.tn || 8, 3);
-      if (r.ok || revealed(world, c)) { c.st.found = true; found++; ev.push({ type: 'log', text: foundText(c), cls: 'find' }); }
+      if (!c.hidden || !lineClear(world, ex.x, ex.y, x, y) && cheb(ex, { x, y }) > 1) continue;
+      const r = S.groupCheck(W.active(world), 'perception', c.def.tn || 8, bonus);
+      if (r.ok || revealed(world, c.def)) { c.st.found = true; found++; ev.push({ type: 'log', text: 'A seam in the wall: a hidden door.', cls: 'find' }); }
+    }
+    for (const n of trapsNear(world, 2)) {
+      if (!lineClear(world, ex.x, ex.y, n.x, n.y) && n.d > 1) continue;
+      const before = degreeOf(n.t.st);
+      if (revealed(world, n.t.def)) learn(world, n.t, 3, ev, 'know');
+      else learn(world, n.t, degreeFor(S.groupCheck(W.active(world), 'perception', n.t.def.tn || 8, bonus).margin), ev);
+      if (degreeOf(n.t.st) > before) found++;
     }
     if (!found) ev.push({ type: 'log', text: 'You search carefully and find nothing new.' });
     wanderCheck(world, ev);
     return { events: ev };
   }
 
-  // ---- Traps ------------------------------------------------------------------------
-  function springTrap(world, c, ev) {
-    c.st.sprung = true;
-    const victims = W.active(world);
-    if (!victims.length) return;
-    const v = R.pick(victims.slice(0, Math.max(1, Math.min(2, victims.length)))); // the front rank takes it
-    const lines = [c.def.text || 'A trap springs.'];
-    for (const [a, n] of Object.entries(c.def.damage || {})) {
-      C.damageAttr(v, a, n);
-      lines.push(`${v.name} takes ${n} ${a} damage.`);
-    }
-    C.updateCondition(v);
-    for (const l of lines) ev.push({ type: 'log', text: l, cls: 'hurt' });
+  // ---- Traps: sprung ------------------------------------------------------------------------
+  // The trap t ({def, st}) at (x, y) springs. Its victims are the party's in marching order (Traps.victims), or
+  // opts.victims; opts.aware: they know it is coming (a get-clear roll), opts.extra: Traps.avoidBonus's extra.
+  // The blow goes through the combat engine on a scratch encounter, then the party binds its wounds (World.breather).
+  // Returns a promise of the log events of the harm (the rest are pushed on ev at once).
+  function springTrap(world, t, x, y, ev, opts) {
+    opts = opts || {};
+    const def = t.def, E = def.effect || {};
+    t.st.sprung = true;
+    t.st.sprungAt = world.minutes;
+    t.st.found = true; // everyone knows where it is now
+    ev.push({ type: 'log', text: def.text || 'A trap springs.', cls: 'hurt' });
     ev.push({ type: 'trap' });
     noise(world, 'trap');
-    // A pit trap (`to`, `at`): the floor gives way and the party goes down whether it likes it or not.
-    if (c.def.to) ev.push({ type: 'fall', def: { kind: 'drop', to: c.def.to, at: c.def.at, label: c.def.label } });
+    const party = W.active(world);
+    const victims = opts.victims || G.Traps.victims(def, party);
+    const pending = strikeParty(world, def, victims, opts, posKey(x, y));
+    // A pit that drops to another place: the floor gives way and the party goes down whether it likes it or not.
+    if (E.to) ev.push({ type: 'fall', def: { kind: 'drop', to: E.to, at: E.at, label: def.label } });
+    return pending;
+  }
+
+  const autoRoller = async (req) => Array.from({ length: req.count }, () => R.d(req.sides));
+  async function strikeParty(world, def, victims, opts, key) {
+    if (!victims.length) return [];
+    const chars = {};
+    for (const v of victims) { chars[v.id] = v; v.hero = !!world.hero; }
+    const enc = G.Combat.createEncounter(def.label || 'Trap', victims.map((v) => v.id), chars, 5, 5);
+    for (const v of victims) await G.Traps.strike(enc, chars, v, def, autoRoller, { aware: !!opts.aware, extra: opts.extra, key: world.place + ':' + key, from: { x: 2, y: 2 } });
+    G.Combat.cleanup(enc, chars);
+    W.breather(world);
+    const out = enc.log.map((l) => ({ type: 'log', text: l.text, cls: l.cls === 'defend' ? 'find' : 'hurt' }));
+    return out;
   }
 
   // ---- Awareness: sleeping and watching foes ----------------------------------------------
@@ -519,6 +608,39 @@
     return Object.assign({ x: f.x, y: f.y }, describe(world, c, f.x, f.y));
   }
 
+  // The ways past a found trap the party can take now (rules.yaml game.traps.ways; the trap's `bypass`, `disarm`):
+  // each an action with its check, or what it needs. `spring` is a pole, a stone or a shield, as the trigger allows.
+  function trapWays(world, t, x, y) {
+    const party = W.active(world), def = t.def, K = TK(), ways = K.ways || {};
+    const out = [];
+    const tnOf = (w, base) => (w && typeof w === 'object' && w.tn != null ? w.tn : base);
+    if (def.disarm != null) out.push({ id: 'disarm', label: t.st.known ? 'Disarm it' : 'Disarm it (working it out as you go)', skill: (ways.disarm || {}).check || 'trapcraft', tn: def.disarm + (t.st.known ? 0 : K.unknownDisarm || 0), who: S.best(party, (ways.disarm || {}).check || 'trapcraft') });
+    const list = (def.bypass || K.bypass || []).flatMap((w) => ((typeof w === 'string' ? w : w.way) === 'spring' ? ['pole', 'stone', 'shield'] : [w]));
+    const fits = (way) => !way.triggers || (t.st.known && way.triggers.includes(def.trigger));
+    const ex = world.explore;
+    const dir = DIRS[ex.dir];
+    const land = cell(world, x + dir[0], y + dir[1]);
+    const landOk = !t.lid && !land.solid && land.kind !== 'wall' && land.kind !== 'rock' && land.kind !== 'water';
+    const worst = (check) => able(party).slice().sort((a, b) => S.mod(a, check) - S.mod(b, check))[0];
+    for (const w of list) {
+      const id = typeof w === 'string' ? w : w.way;
+      const way = ways[id] || {};
+      if ((id === 'leap' || id === 'edge') && landOk) {
+        out.push({ id, label: id === 'leap' ? 'Leap it (each of you)' : 'Edge round it (each of you)', skill: way.check || id, tn: tnOf(w, way.tn || 7), who: worst(way.check || id) });
+      } else if (id === 'pole' && fits(way)) {
+        const have = !way.good || W.goodCount(world, way.good) > 0;
+        if (have) out.push({ id, label: t.lid ? 'Lift the lid with a pole (loud)' : 'Set it off with a pole (loud)' });
+      } else if (id === 'stone' && !t.lid && fits(way)) {
+        out.push({ id, label: 'Throw a stone to set it off (loud)' });
+      } else if (id === 'shield' && !t.lid && fits(way) && (def.effect || {}).blow) {
+        const bearer = party.find((m) => C.shieldReady(m));
+        if (bearer) out.push({ id, label: `${bearer.name} sets it off under a shield (loud)`, who: bearer });
+      } else if (id === 'mark' && !t.lid && !t.st.marked) out.push({ id, label: 'Mark it and leave it' });
+    }
+    return out;
+  }
+  const able = (chars) => chars.filter((c) => C.isActive(c));
+
   function describe(world, c, x, y) {
     const out = { kind: c.kind, label: (c.def && c.def.label) || c.kind, actions: [] };
     const party = W.active(world);
@@ -536,17 +658,23 @@
       case 'chest': {
         out.text = c.st.opened ? 'Empty.' : 'A chest.';
         if (c.st.opened) break;
+        const t = trapOf(c);
+        if (t && t.st.found && live(world, t.def, t.st)) {
+          out.text = `A chest, and a trap on it: ${(t.def.label || 'a trap').toLowerCase()}. ${t.st.known ? G.Traps.describe(t.def) : 'What it does, you cannot tell.'}`;
+          out.actions.push(...trapWays(world, t, x, y));
+        }
         if (c.def.tn && !c.st.unlocked) {
           out.actions.push({ id: 'pick', label: 'Pick the lock', skill: 'lockpicking', tn: c.def.tn, who: S.best(party, 'lockpicking') });
           out.actions.push({ id: 'force', label: 'Break it open (loud)', skill: 'forcing', tn: c.def.tn + 3, who: S.best(party, 'forcing') });
         } else out.actions.push({ id: 'open', label: 'Open it' });
         break;
       }
-      case 'trap':
-        out.text = 'You have found it. Walking onto it would spring it.';
-        out.actions.push({ id: 'disarm', label: 'Disarm it', skill: 'trapcraft', tn: c.def.disarm || 8, who: S.best(party, 'trapcraft') });
-        out.actions.push({ id: 'hop', label: 'Jump over it', skill: 'forcing', tn: 7 });
+      case 'trap': {
+        const t = trapOf(c);
+        out.text = (t.st.known ? `${c.def.how ? c.def.how + ' ' : ''}${G.Traps.describe(c.def)}` : 'You have found it, but not how it works. Walking onto it would spring it.') + (t.st.marked ? ' You have marked it.' : '');
+        out.actions.push(...trapWays(world, t, x, y));
         break;
+      }
       case 'npc': {
         if (c.def.npc) out.actions.push({ id: 'talk', label: `Talk to ${G.Content.world.npcs[c.def.npc].name}` });
         serviceList(c.def).forEach((s, i) => out.actions.push({ id: 'service', alt: i, label: s.name }));
@@ -572,6 +700,7 @@
     const c = cell(world, f.x, f.y);
     const ev = [];
     const party = W.active(world);
+    let pending = null;
     const open = (why) => { c.st.open = true; c.st.unlocked = true; ev.push({ type: 'log', text: why, cls: 'find' }); };
     const roll = (skill, tn, bonus) => {
       const who = S.best(party, skill);
@@ -579,6 +708,12 @@
       ev.push({ type: 'check', r });
       return r;
     };
+    // Opening, picking or forcing a chest with a live trap on its lid springs it on whoever does it.
+    const lid = c.kind === 'chest' && trapOf(c);
+    if (lid && live(world, lid.def, lid.st) && ['open', 'pick', 'force'].includes(action) && !world.peaceful) {
+      const who = action === 'open' ? party[0] : S.best(party, action === 'pick' ? 'lockpicking' : 'forcing');
+      if (who) pending = springTrap(world, lid, f.x, f.y, ev, { victims: [who], aware: !!lid.st.found });
+    }
     switch (action) {
       case 'key': open(`The ${W.goodDef(c.def.key).name} turns.`); break;
       case 'pick': {
@@ -620,18 +755,12 @@
         ev.push({ type: 'loot', title: c.def.label, lines });
         break;
       }
-      case 'disarm': {
-        W.advance(world, 10);
-        const r = roll('trapcraft', c.def.disarm || 8);
-        if (r.ok) { c.st.disarmed = true; ev.push({ type: 'log', text: 'You disarm it carefully.', cls: 'find' }); }
-        else if (r.fumble) { springTrap(world, c, ev); }
-        else ev.push({ type: 'log', text: 'You cannot find how it works.' });
-        break;
-      }
-      case 'hop': {
-        const r = roll('forcing', 7, C.attr(party[0] || {}, 'SPD') ? 0 : 0);
-        if (r.ok) { world.explore.x = f.x + DIRS[world.explore.dir][0]; world.explore.y = f.y + DIRS[world.explore.dir][1]; ev.push({ type: 'log', text: 'You leap the trap.' }); markSeen(world); }
-        else { world.explore.x = f.x; world.explore.y = f.y; springTrap(world, c, ev); }
+      case 'disarm': case 'leap': case 'edge': case 'pole': case 'stone': case 'shield': case 'mark': {
+        const t = trapOf(c);
+        if (!t || !live(world, t.def, t.st)) break;
+        const way = trapWays(world, t, f.x, f.y).find((a) => a.id === action);
+        if (!way) break;
+        pending = trapAct(world, t, f, way, ev, roll);
         break;
       }
       case 'pray': {
@@ -645,7 +774,51 @@
     }
     updateQuests(world, ev);
     wanderCheck(world, ev);
-    return { events: ev };
+    return pending ? { events: ev, pending } : { events: ev };
+  }
+
+  // One way past a trap (an action from trapWays) taken: time passes, the check is rolled, and a fumble, a short
+  // leap or a shield held over springs it on that one, who knew it was coming. Returns the springing's promise or null.
+  function trapAct(world, t, f, way, ev, roll) {
+    const K = TK(), W8 = (K.ways || {})[way.id] || {};
+    const party = W.active(world);
+    W.advance(world, W8.minutes || 1);
+    if (W8.loud) { noise(world, 'trap'); wake(world, f.x, f.y, 6, ev); }
+    const caught = { caught: K.caught || 0 };
+    const beyond = () => { const d = DIRS[world.explore.dir]; world.explore.x = f.x + d[0]; world.explore.y = f.y + d[1]; markSeen(world); };
+    switch (way.id) {
+      case 'disarm': {
+        const r = roll(way.skill, way.tn);
+        if (r.ok) { t.st.disarmed = true; t.st.found = true; ev.push({ type: 'log', text: 'You disarm it carefully.', cls: 'find' }); return null; }
+        if (r.fumble) { ev.push({ type: 'log', text: `${r.name}'s hand slips.`, cls: 'hurt' }); return springTrap(world, t, f.x, f.y, ev, { victims: [party.find((m) => m.id === r.who) || party[0]], aware: true, extra: caught }); }
+        ev.push({ type: 'log', text: 'You cannot get it to give. It is still set.' });
+        return null;
+      }
+      case 'leap': case 'edge': {
+        // Each in marching order; the first to fall short lands on it.
+        let short = null;
+        for (const m of party) {
+          const r = G.Skills.check(m, way.skill, way.tn);
+          ev.push({ type: 'check', r });
+          if (!r.ok) { short = m; break; }
+        }
+        beyond();
+        if (!short) { ev.push({ type: 'log', text: way.id === 'leap' ? 'You leap it, one by one.' : 'You edge round it, one by one.' }); return null; }
+        ev.push({ type: 'log', text: `${short.name} ${way.id === 'leap' ? 'comes down short' : 'puts a foot wrong'}.`, cls: 'hurt' });
+        return springTrap(world, t, f.x, f.y, ev, { victims: [short], aware: true, extra: caught });
+      }
+      case 'pole': case 'stone':
+        ev.push({ type: 'log', text: way.id === 'pole' ? 'You reach out with the pole from two squares off.' : 'You throw a stone at it.' });
+        return springTrap(world, t, f.x, f.y, ev, { victims: [] });
+      case 'shield':
+        ev.push({ type: 'log', text: `${way.who.name} walks onto it with the shield held over.` });
+        return springTrap(world, t, f.x, f.y, ev, { victims: [way.who], aware: true, extra: { block: W8.block || 0 } });
+      case 'mark':
+        t.st.marked = true;
+        ev.push({ type: 'log', text: 'You scratch a mark beside it and leave it be.' });
+        return null;
+      default: return null;
+    }
   }
 
   // Noise wakes sleepers within `r` squares.
@@ -697,6 +870,7 @@
 
   G.Explore = {
     serviceList,
+    trapOf, live, learn, springTrap,
     DIRS, DIR_NAMES, grid, groundOf, place, lightRadius, here, cell, state, tileKey, opaque, lineClear, cheb, markSeen, findChar, exits, beyond,
     enter, leave, fall, front, turn, move, go, peek, path, search, facing, describe, act, scan, wake,
     encounterSpec, foeAwareness, resolveSquare, wanderingFor, minutesPerStep, noise, settleClock, wanderCheck,

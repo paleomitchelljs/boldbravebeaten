@@ -304,6 +304,41 @@
       }
     }
 
+    // A trap (docs/DATA.md "A trap"; rules.yaml game.traps): its tell, trigger, effect, reset, knownTo, disarm, bypass.
+    const trapOk = (at, t, lid) => {
+      const K = (G.CONFIG.game || {}).traps || {};
+      const num = (v) => typeof v === 'number' && isFinite(v);
+      if (t.damage) err(`${at}: \`damage\` is the old one-roll trap; give an \`effect\` (a blow, an element, a terrain)`);
+      if (!lid && !num(t.tn)) err(`${at}: a trap needs a Perception tn`);
+      if (t.disarm != null && !num(t.disarm)) err(`${at}: disarm must be a number (or left out: it can't be disarmed)`);
+      if (t.strike != null && !num(t.strike)) err(`${at}: strike must be a number`);
+      if (!t.tell) err(`${at}: a trap needs a \`tell\` (what gives it away)`);
+      if (!(t.trigger in (K.triggers || {}))) err(`${at}: trigger "${t.trigger}" is not in rules.yaml game.traps.triggers`);
+      if (lid && t.trigger !== 'lid') err(`${at}: a chest's trap is set off by its lid (trigger: lid)`);
+      for (const k of t.knownTo || []) if (!has(factions, k) && !has(G.Enemies.MONSTERS, k)) err(`${at}: knownTo "${k}" is no faction or monster`);
+      for (const w of t.bypass || []) { const id = typeof w === 'string' ? w : w && w.way; if (id !== 'spring' && !has(K.ways || {}, id)) err(`${at}: bypass "${id}" is not a way in rules.yaml game.traps.ways`); }
+      if (t.reset != null && (typeof t.reset !== 'object' || ['minutes', 'rounds'].some((k) => t.reset[k] != null && !num(t.reset[k])))) err(`${at}: reset is {minutes, rounds}`);
+      if (t.reveal) condOk(at, t.reveal);
+      const E = t.effect;
+      if (!E || typeof E !== 'object') { err(`${at}: a trap needs an effect`); return; }
+      if (!E.blow && !E.element && !E.terrain && !E.to) err(`${at}: the effect does nothing (blow, element, terrain or to)`);
+      if (E.blow) {
+        const b = E.blow;
+        if (!Array.isArray(b.damage) || b.damage.length !== 3 || !b.damage.every(num)) err(`${at}: blow.damage is [P, S, B]`);
+        if (b.motion && !has(D.MOTIONS, b.motion)) err(`${at}: blow.motion "${b.motion}" unknown`);
+        if (b.aim && !((G.CONFIG.locations || {}).order || []).includes(b.aim)) err(`${at}: blow.aim "${b.aim}" is not a location (rules.yaml locations.order)`);
+        if (b.wound && !['P', 'S', 'B'].includes(b.wound.kind)) err(`${at}: blow.wound.kind is P, S or B`);
+      }
+      if (E.element) {
+        const w = G.CONFIG.magic.words[E.element.noun];
+        if (!w || w.kind !== 'noun') err(`${at}: element noun "${E.element.noun}" is not in spells.yaml`);
+        if (!num(E.element.mag)) err(`${at}: element.mag must be a number`);
+      }
+      if (E.terrain && !(G.CONFIG.terrain || {})[E.terrain]) err(`${at}: terrain "${E.terrain}" is not in CONFIG.terrain`);
+      if (E.who && !['lead', 'next'].includes(E.who)) err(`${at}: who is lead or next`);
+      if (E.to && (!has(places, E.to) || (E.at && places[E.to].map && !places[E.to].map.join('').includes(E.at)))) err(`${at}: pit leads to unknown place or arrival "${E.to}" "${E.at}"`);
+    };
+
     for (const [id, p] of Object.entries(places)) {
       for (const e of p.exits || []) {
         if (!has(places, e.to)) err(`places.${id}: exit to unknown place "${e.to}"`);
@@ -340,7 +375,8 @@
           if (def.on && !(def.on in ground)) err(`${at}: on "${def.on}" is not a ground letter`);
           if ((def.kind === 'stairs' || def.kind === 'drop') && !has(places, def.to)) err(`${at}: leads to unknown place "${def.to}"`);
           if ((def.kind === 'stairs' || def.kind === 'drop') && def.at && places[def.to] && places[def.to].map && !places[def.to].map.join('').includes(def.at)) err(`${at}: arrival "${def.at}" is not on ${def.to}'s map`);
-          if (def.kind === 'trap' && def.to && (!has(places, def.to) || (def.at && places[def.to].map && !places[def.to].map.join('').includes(def.at)))) err(`${at}: pit leads to unknown place or arrival "${def.to}" "${def.at}"`);
+          if (def.kind === 'trap') trapOk(at, def, false);
+          if (def.kind === 'chest' && def.trap) trapOk(at + '.trap', def.trap, true);
           if (def.opensWhen) condOk(at, def.opensWhen);
           if (def.kind === 'chest' && !has(tables, def.loot)) err(`${at}: loot table "${def.loot}" unknown`);
           if (def.kind === 'pickup' && !goodExists(def.good)) err(`${at}: good "${def.good}" unknown`);

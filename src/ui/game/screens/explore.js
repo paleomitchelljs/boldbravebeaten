@@ -31,7 +31,7 @@
         case 'fall': stopWalk(game); game.ui.prompt = null; game.takeStairs(e.def); return false;
         case 'note': game.openOverlay('text', { title: 'You read', text: e.text }); break;
         case 'loot': game.openOverlay('loot', { title: e.title, lines: e.lines }); break;
-        case 'trap': game.ui.hurt = Date.now(); break;
+        case 'trap': game.ui.hurt = Date.now(); stopWalk(game); break;
         case 'wander': wander = e; break;
         default: break;
       }
@@ -49,9 +49,11 @@
     return true;
   }
 
+  // A trap's blow is the combat engine's, which is async: its harm comes as `pending` events, shown when they land.
   function act(game, fn) {
     const out = fn();
     const events = out && out.events ? out.events : [];
+    if (out && out.pending) out.pending.then((more) => { if (more && more.length && handle(game, more)) game.render(); }).catch((e) => { game.error = e; });
     if (!handle(game, events)) return false;
     game.render();
     return true;
