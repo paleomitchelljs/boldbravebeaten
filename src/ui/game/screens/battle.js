@@ -364,7 +364,7 @@
     for (const id of enc.ids) {
       const c = chars[id];
       if (!c) continue;
-      s.st[id] = c.stamina; s.dmg[id] = Object.assign({}, c.damage); s.down[id] = !C.isActive(c); s.dead[id] = !!c.status.dead;
+      s.st[id] = c.stamina; s.dmg[id] = C.wounds(c).length; s.down[id] = !C.isActive(c); s.dead[id] = !!c.status.dead;
     }
     return s;
   }
@@ -421,9 +421,11 @@
       const t = delay[id] != null ? delay[id] : last;
       const lost = prev.st[id] - chars[id].stamina;
       if (struck.has(id) && lost > 0) { mv.popup(id, '−' + lost, '#ffd166', t); mv.shudder(id, t); if (mv.hurt) mv.hurt(id, t); }
-      for (const [k, v] of Object.entries(chars[id].damage || {})) {
-        const more = v - ((prev.dmg[id] || {})[k] || 0);
-        if (more > 0) { mv.popup(id, `−${more} ${k}`, '#ff6b6b', t + 260); mv.shudder(id, t); if (mv.hurt) mv.hurt(id, t, true); }
+      // A new wound: its place and severity ("Arms 2").
+      const names = (G.CONFIG.locations && G.CONFIG.locations.names) || {};
+      for (const w of C.wounds(chars[id]).slice(prev.dmg[id] || 0)) {
+        if (!(w.sev > 0)) continue;
+        mv.popup(id, `${names[w.place] || w.place} ${w.sev}`, '#ff6b6b', t + 260); mv.shudder(id, t); if (mv.hurt) mv.hurt(id, t, true);
       }
       if (chars[id].status.dead && !prev.dead[id]) mv.popup(id, 'Dead', '#ff4d4d', t + 520);
       else if (!C.isActive(chars[id]) && !prev.down[id]) mv.popup(id, 'Down', '#c8c8c8', t + 520);
@@ -443,14 +445,14 @@
       const down = !C.isActive(c);
       const up = down && C.collapsed(c) ? Combat.comesRoundAt(enc, c) : null;
       const wounds = P().woundText(c);
-      const lost = G.CONFIG.attributes.reduce((n, a) => n + Math.max(0, (c.damage || {})[a] || 0), 0);
+      const load = C.woundLoad(c);
       const state = P().downText(enc, c);
       return h('button', { class: `init ${mine ? 'party' : 'enemy'} ${C.isActive(c) ? '' : 'down'} ${id === actor || id === enc.order[enc.turn] ? 'current' : ''} ${enc.turnDone && enc.turnDone[id] ? 'done' : ''}`,
         title: `${c.name} · stamina ${c.stamina}/${max}${enc.initiative[id] != null ? (G.CONFIG.apDie ? ` · rolled ${C.fmtAP(enc.apStart[id] || 0)} AP` : ` · initiative ${enc.initiative[id]}`) : ''}${mine && ap != null ? ` · ${C.fmtAP(ap)} AP left` : ''}${enc.turnDone && enc.turnDone[id] ? ' · turn taken' : ''}${state ? ` · ${state}` : ''}${wounds ? ` · wounds ${wounds}` : ''}`, onclick: () => game.openOverlay('sheet', { id }) },
       Sprites.portrait(c, 28), UI.bar(c.stamina, max), mine && ap != null ? h('span', { class: 'init-ap num' }, C.fmtAP(ap)) : null,
-      // A collapsed fighter shows the round they come round after; a wounded one, what they have lost.
+      // A collapsed fighter shows the round they come round after; a wounded one, wound boxes filled of the boxes.
       down && !c.status.dead && up != null ? h('span', { class: 'init-up num' }, `up R${up}`) : null,
-      wounds ? h('span', { class: 'init-wound num' }, `−${lost}`) : null);
+      wounds ? h('span', { class: 'init-wound num', title: 'Wound boxes filled' }, `${load}/${C.boxes(c)}`) : null);
     }));
   }
 
@@ -494,8 +496,8 @@
             bar(r.stamina.now, r.stamina.max), h('span', { class: 'small num' }, `${r.stamina.now}/${r.stamina.max}`, spent > 0 ? h('span', { class: 'muted' }, ` −${spent}`) : null,
               weary > 0 ? h('span', { class: 'weary', title: 'Weariness: the maximum falls until a long rest' }, ` · weary +${weary}`) : null)),
           h('div', { class: 'cost-wounds small' },
-            r.wounds.length ? r.wounds.map((x) => h('span', { class: 'chip wound-chip num' + (x.more ? ' new' : '') }, `−${x.lost} ${x.attr}`)) : h('span', { class: 'muted' }, 'unhurt'),
-            r.where.length ? h('span', { class: 'muted', title: 'Where the harm landed this fight' }, ' · hit: ' + r.where.map((x) => `${x.place.toLowerCase()} ${x.points}`).join(', ')) : null),
+            r.wounds.length ? r.wounds.map((x) => h('span', { class: 'chip wound-chip num' + (x.fresh ? ' new' : ''), title: x.does || x.kind }, `${x.name} ${x.sev}${x.bleed ? ' · bleeding' : ''}`)) : h('span', { class: 'muted' }, 'unhurt'),
+            r.where.length ? h('span', { class: 'muted', title: 'Where the wounds landed this fight (severity)' }, ' · hit: ' + r.where.map((x) => `${x.place.toLowerCase()} ${x.points}`).join(', ')) : null),
           r.gear.length ? h('div', { class: 'cost-gear small muted' }, r.gear.map((g) => h('span', { title: `${g.name}: ${g.now} of ${g.max} (was ${g.was})`, class: g.now <= 0 ? 'bad' : '' }, `${g.name} ${g.now}/${g.max}${g.was > g.now ? ` (−${g.was - g.now})` : ''}`))) : null);
       }));
   }

@@ -17,7 +17,8 @@
     if (L) out.push(h('span', { class: L.role === 'holder' ? 'chip' : 'chip warn' }, L.level === 'clinch' ? 'Clinched' : L.role === 'holder' ? (L.level === 'pin' ? 'Pinning' : 'Holding') : L.level === 'pin' ? 'Pinned' : 'Held'));
     if (st.dropped && st.dropped.length) out.push(h('span', { class: 'chip warn' }, 'Weapon on the ground'));
     if (st.windUp) out.push(h('span', { class: 'chip warn', title: 'Cannot block or parry until the blow is released' }, 'Wound up: ' + st.windUp.label));
-    if (c.bleeds.length && !st.dead) out.push(h('span', { class: 'chip bad' }, `Bleeding ${C.bleedPerRound(c).toFixed(1)}/rd`));
+    if (C.bleeding(c) && !st.dead) out.push(h('span', { class: 'chip bad' }, `Bleeding ${C.bleeding(c)} (−${C.bleedLoss(c)}/rd)`));
+    if (!st.dead) for (const w of C.describeWounds(c)) out.push(h('span', { class: 'chip ' + (w.sev >= 3 ? 'bad' : 'warn'), title: w.does }, `${w.name} ${w.sev}`));
     if (G.Conditions && !st.dead) for (const l of G.Conditions.labels(c)) out.push(h('span', { class: 'chip warn' }, l));
     if (c.conjured && !st.dead) out.push(h('span', { class: 'chip' }, `Conjured (${c.conjured.rounds} rd)`));
     return out;
@@ -47,7 +48,7 @@
         h('span', null, 'CON ', h('b', null, `${C.attr(c, 'CON')}/${C.attrMax(c, 'CON')}`)),
         h('span', null, 'AP ', h('b', null, C.apPool(c))),
         h('span', null, 'Feats ', h('b', null, `${C.featCount(c)}/${C.featBudget(c)}`)),
-        C.totalDamage(c) ? h('span', null, 'Wounds ', h('b', null, C.totalDamage(c))) : null),
+        C.woundLoad(c) ? h('span', null, 'Wounds ', h('b', null, `${C.woundLoad(c)}/${C.boxes(c)}`)) : null),
       statusChips(c).length ? h('div', { class: 'row', style: { gap: '4px' } }, statusChips(c)) : null,
       extra || null);
   }

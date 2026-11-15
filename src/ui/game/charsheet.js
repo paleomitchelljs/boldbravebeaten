@@ -19,8 +19,8 @@
   const slotName = (slot) => (Equip.slotList().find((x) => x[0] === slot) || [slot, slot])[1];
   const ATTR_NAME = { STR: 'Strength', CON: 'Constitution', DEX: 'Dexterity', SPD: 'Speed', INT: 'Intellect', WIL: 'Will', WIS: 'Wisdom', CHA: 'Charisma' };
   const ATTR_INFO = {
-    STR: 'Force: damage, grappling, carrying heavy gear.', CON: 'Toughness: your wounds. At 0 you are dead.', DEX: 'Aim, parrying, locks and traps.',
-    SPD: 'Initiative, AP, movement, stealth.', INT: 'Magic, lore, deception.', WIL: 'Resolve: stamina regeneration and resisting magic.',
+    STR: 'Force: damage, grappling, carrying heavy gear.', CON: 'Toughness: staying up through a bad wound (shock), bleeding, poison and disease; with WIL, stamina regeneration.', DEX: 'Aim, parrying, locks and traps.',
+    SPD: 'Initiative, AP, movement, stealth.', INT: 'Magic, lore, deception.', WIL: 'Resolve: acting through wounds (pain), coming round, fear, stamina regeneration and resisting magic.',
     WIS: 'Perception and reading people.', CHA: 'Charm, appeal and bargaining.',
   };
 
@@ -94,8 +94,8 @@
     const max = C.maxStamina(c);
     const tile = (a) => {
       const now = C.attr(c, a), cap = C.attrMax(c, a);
-      const parts = [`Base ${c.base[a]}`, C.conditioning(c, a) ? `feats +${C.conditioning(c, a)}` : null, c.damage[a] ? `damage −${c.damage[a]}` : null].filter(Boolean).join(', ');
-      return h('div', { class: 'tile' + (c.damage[a] ? ' hurt' : ''), title: `${ATTR_NAME[a]}. ${ATTR_INFO[a]} ${parts}` },
+      const parts = [`Base ${c.base[a]}`, C.conditioning(c, a) ? `feats +${C.conditioning(c, a)}` : null].filter(Boolean).join(', ');
+      return h('div', { class: 'tile' + (now < cap ? ' hurt' : ''), title: `${ATTR_NAME[a]}. ${ATTR_INFO[a]} ${parts}` },
         h('span', { class: 'label' }, a), h('b', { class: 'num' }, now), now < cap ? h('span', { class: 'small muted num' }, `/${cap}`) : null);
     };
     const derived = [['AP', C.fmtAP(C.apPool(c)), 'Action points each round.'], ['Move', G.CONFIG.moveAP ? `${C.squaresPerAP(c)} sq` : `${C.squaresPerAP(c)} sq/AP`, G.CONFIG.moveAP ? `Squares one move covers, for ${C.fmtAP(C.moveCost(c, 1))} AP.` : 'Squares moved per AP.'], ['Init', 'd10+' + C.combatAttr(c, 'SPD'), 'Initiative roll.'],
@@ -103,7 +103,18 @@
     return h('div', { class: 'stack' },
       h('div', { class: 'tiles' }, G.CONFIG.attributes.map(tile)),
       h('div', { class: 'tiles small' }, derived.map(([k, v, t]) => h('div', { class: 'tile', title: t }, h('span', { class: 'label' }, k), h('b', { class: 'num' }, v)))),
-      h('div', { class: 'row small' }, h('span', { class: 'muted' }, 'Bleeding'), h('span', null, c.bleeds.length ? `${C.bleedPerRound(c).toFixed(1)}/round` : 'none'), tip('CON is your life: at 0 you are dead. Stamina is your breath: blocks, parries and blows spend it, and it comes back every round. At 0 you collapse for a round or so. Armor decides how much of the first you keep.')));
+      woundsPanel(c));
+  }
+
+  // Wounds: each one's place, severity and what it does, the boxes filled, bleeding. Shared with the battle screen.
+  function woundsPanel(c) {
+    const list = C.describeWounds(c);
+    return h('div', { class: 'stack tight wounds-panel' },
+      h('div', { class: 'row small' }, h('span', { class: 'muted' }, 'Wounds'), h('span', { class: 'num' }, `${C.woundLoad(c)} of ${C.boxes(c)} boxes`),
+        C.bleeding(c) ? h('span', { class: 'chip bad' }, `bleeding ${C.bleeding(c)} (−${C.bleedLoss(c)} stamina a round)`) : null,
+        tip(`A wound has a place and a severity (1 to 3). ${C.boxes(c)} boxes of severity and you are down; a severity-3 wound can drop you on its own (CON resists the shock). Down is out of the fight, not dead: struck again, or left bleeding when the fight is lost, you die. WIL lets you act through ${C.grit(c)} point${C.grit(c) === 1 ? '' : 's'} of a place's wounds. Stamina is your breath: blocks, parries and blows spend it, and it comes back every round.`)),
+      list.length ? list.map((w) => h('div', { class: 'row small wound-row' }, h('span', { class: 'chip wound-chip' + (w.sev >= 3 ? ' bad' : '') }, `${w.name} ${w.sev}`), h('span', { class: 'muted' }, `${w.kind}${w.bleed ? `, bleeding ${w.bleed}` : ''}${w.does ? `: ${w.does}` : ''}`)))
+        : h('div', { class: 'small muted' }, 'Unhurt.'));
   }
 
   // Feats are trained here too, whenever the party isn't fighting, for no gold (the user, 2026-11-07).

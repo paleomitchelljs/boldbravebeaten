@@ -129,11 +129,10 @@
       if (spec.kind === 'mend' && spec.patient) {
         const p = spec.patient;
         const heal = R().heals[outcome] + (outcome !== 'partial' ? C().rank(c, 'wound_tending') : 0);
-        const healed = Math.min(heal, p.damage.CON || 0);
-        if (healed) C().healAttr(p, 'CON', healed);
-        p.bleeds = p.bleeds.filter((b) => b.poison && outcome !== 'exceptional');
+        C().bindWounds(p);
+        const healed = C().mendWounds(p, 1, heal);
         if (outcome === 'exceptional' && G.Conditions) for (const key of ['poisoned', 'diseased']) G.Conditions.remove(p, key);
-        lines.push(`${p.name}: +${healed} CON, bleeding stopped${outcome === 'exceptional' ? ', poison and disease drawn out' : ''}.`);
+        lines.push(`${p.name}: wounds ${healed} better, bleeding stopped${outcome === 'exceptional' ? ', poison and disease drawn out' : ''}.`);
       }
       if (spec.kind === 'prepare' && spec.spell) {
         const rounds = Math.max(1, Math.round((spec.spell.spell.rounds || 3) * (outcome === 'partial' ? 1 : 2)));

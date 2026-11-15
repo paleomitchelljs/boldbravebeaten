@@ -375,7 +375,8 @@
   function fall(world, def) {
     if (def.text) W.logLine(world, def.text, 'info');
     for (const v of W.active(world)) {
-      for (const [a, n] of Object.entries(def.damage || {})) { C.damageAttr(v, a, n); W.logLine(world, `${v.name} takes ${n} ${a} damage from the fall.`, 'hurt'); }
+      // damage {ATTR: n}: n points of harm where wounds.attrPlace puts that attribute (CON: the torso).
+      for (const [a, n] of Object.entries(def.damage || {})) { C.harm(v, n, G.CONFIG.wounds.attrPlace[a] || 'torso', 'fall'); W.logLine(world, `${v.name} is hurt in the fall (${n} harm).`, 'hurt'); }
       C.updateCondition(v);
     }
   }
@@ -767,7 +768,7 @@
       case 'pray': {
         if (c.st.done) { ev.push({ type: 'log', text: 'The shrine is quiet.' }); break; }
         c.st.done = true;
-        for (const m of W.living(world)) { const a = G.Recovery.healTarget(m); if (a) C.healAttr(m, a, c.def.heal || 1); m.stamina = C.maxStamina(m); }
+        for (const m of W.living(world)) { C.mendWounds(m, 1, c.def.heal || 1); m.stamina = C.maxStamina(m); }
         ev.push({ type: 'log', text: c.def.text || 'Warmth. Something mends.', cls: 'find' });
         break;
       }

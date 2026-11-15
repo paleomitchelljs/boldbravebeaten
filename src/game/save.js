@@ -14,7 +14,7 @@
 
   const store = () => { try { return globalThis.localStorage || null; } catch (e) { return null; } };
 
-  const VERSION = 7;
+  const VERSION = 8;
 
   // An item from before version 3: quality became craft; scale armor (no longer a tier) became steel mail; a
   // drinking blade's own `enchant: {drain}` became the drinking enchantment; `magical` (from the testbed) is dropped,
@@ -45,6 +45,23 @@
 
   // Steps for one character (a party member, a companion, a foe in a saved fight), keyed by the version they leave.
   const CHAR_STEPS = {
+    // Wounds (step E): attribute damage becomes harm where wounds.attrPlace puts each attribute (STR and DEX the arms,
+    // SPD the legs, CON the torso, the rest the head), one wound a place by the severity thresholds; old bleeding is
+    // taken as stopped. A creature's traits: regrow's con is mend, constrict's con is harm.
+    7: (c) => {
+      const P = G.CONFIG.wounds.attrPlace;
+      const by = {};
+      for (const [a, n] of Object.entries(c.damage || {})) if (n > 0) by[P[a] || 'torso'] = (by[P[a] || 'torso'] || 0) + n;
+      c.wounds = Array.isArray(c.wounds) ? c.wounds : [];
+      for (const [place, n] of Object.entries(by)) G.Character.harm(c, n, place, 'old');
+      c.wounds = c.wounds.filter((w) => w.sev > 0).map((w) => { delete w.ongoing; return w; });
+      delete c.damage;
+      delete c.bleeds;
+      const T = c.traits;
+      if (T && T.regrow && T.regrow.con != null) { T.regrow.mend = T.regrow.con; delete T.regrow.con; }
+      if (T && T.constrict && T.constrict.con != null) { T.constrict.harm = T.constrict.con; delete T.constrict.con; }
+      if (c.companion) CHAR_STEPS[7](c.companion);
+    },
     // Four hit locations (step A): pieces fold hands into arms and feet into legs; where two worn pieces now cover the
     // same place, Character.normalize takes the later one off into the pack.
     6: (c) => {

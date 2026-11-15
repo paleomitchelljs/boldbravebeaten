@@ -605,34 +605,34 @@
     }
   }
 
-  // Life mends a living body: bleeding stops (poison doesn't), condMag CON back, and stamina
-  // back by the spell's magnitude (share < 1 for a burst), waking the unconscious. Returns a line.
+  // Life mends a living body (CONFIG.magic.heal): every wound stops bleeding, the worst wounds condMag severity steps
+  // better (1; 2 with Strong), and stamina back by the spell's magnitude (share < 1 for a burst). The collapsed come
+  // round; the down come to once their wounds are under their boxes. Returns a line.
   function mend(t, s, share) {
     const H = CONFIG.magic.heal;
-    const stopped = t.bleeds.some((b) => !b.poison);
-    t.bleeds = t.bleeds.filter((b) => b.poison);
-    const con = Math.min(s.condMag, t.damage.CON || 0);
-    if (con) C().healAttr(t, 'CON', con);
+    const was = !C().isActive(t);
+    const stopped = C().bindWounds(t) > 0;
+    const steps = C().mendWounds(t, 1, s.condMag);
     const before = t.stamina;
     t.stamina = Math.min(C().maxStamina(t), t.stamina + Math.round((H.stamina + H.staminaPerMag * s.magnitude) * share));
-    const woke = t.status.unconscious && !t.status.dead && t.stamina > 0;
-    if (woke) C().comeRound(t);
-    const bits = [stopped ? 'bleeding stops' : null, con ? `+${con} CON` : null, t.stamina > before ? `+${t.stamina - before} stamina` : null].filter(Boolean);
+    if (C().collapsed(t) && t.stamina > 0) C().comeRound(t);
+    const woke = was && C().isActive(t);
+    const bits = [stopped ? 'bleeding stops' : null, steps ? `wounds ${steps} better` : null, t.stamina > before ? `+${t.stamina - before} stamina` : null].filter(Boolean);
     return `${t.name}: ${bits.length ? bits.join(', ') : 'nothing to mend'}${woke ? `; ${t.name} comes to` : ''}.`;
   }
 
-  // What a given Transfer does: bleeding stopped, then each point a lost CON back, or with none lost, stamina.
+  // What a given Transfer does: bleeding stopped, then each point a severity step of the worst wound better, or with
+  // none left, stamina.
   function giveLife(t, pts) {
-    const stopped = t.bleeds.some((b) => !b.poison);
-    t.bleeds = t.bleeds.filter((b) => b.poison);
-    const con = Math.min(pts, t.damage.CON || 0);
-    if (con) C().healAttr(t, 'CON', con);
+    const was = !C().isActive(t);
+    const stopped = C().bindWounds(t) > 0;
+    const steps = C().mendWounds(t, 1, pts);
     const before = t.stamina;
-    t.stamina = Math.min(C().maxStamina(t), t.stamina + (pts - con) * CONFIG.magic.transfer.staminaPerCON);
-    const woke = t.status.unconscious && !t.status.dead && t.stamina > 0;
-    if (woke) C().comeRound(t);
+    t.stamina = Math.min(C().maxStamina(t), t.stamina + (pts - steps) * CONFIG.magic.transfer.staminaPerCON);
+    if (C().collapsed(t) && t.stamina > 0) C().comeRound(t);
     C().updateCondition(t);
-    const bits = [stopped ? 'bleeding stops' : null, con ? `+${con} CON` : null, t.stamina > before ? `+${t.stamina - before} stamina` : null].filter(Boolean);
+    const woke = was && C().isActive(t);
+    const bits = [stopped ? 'bleeding stops' : null, steps ? `wounds ${steps} better` : null, t.stamina > before ? `+${t.stamina - before} stamina` : null].filter(Boolean);
     return `${t.name}: ${bits.length ? bits.join(', ') : 'nothing to mend'}${woke ? `; ${t.name} comes to` : ''}.`;
   }
 
@@ -642,17 +642,18 @@
     return !!(R && c && c.status.dead && !c.vanished && !c.raised && !c.conjured && !C().tireless(c) && c.status.diedRound != null && enc && enc.round - c.status.diedRound <= R.rounds);
   }
 
-  // Called back from death: CON up to revive.con, bleeding stopped, alive but unconscious at 0 stamina.
+  // Called back from death: bleeding stopped, the worst wounds revive.mend steps better, alive but down at 0 stamina.
   function revive(t) {
-    // attr() reads 0 however far below a blow took CON, so mend a point at a time until it shows.
-    while (C().attr(t, 'CON') < CONFIG.magic.revive.con && (t.damage.CON || 0) > 0) C().healAttr(t, 'CON', 1);
-    t.bleeds = t.bleeds.filter((b) => b.poison);
-    t.stamina = 0;
+    C().bindWounds(t);
     t.status.dead = false;
+    t.status.down = true;
     t.status.unconscious = true;
-    t.status.collapsed = null; // called back by a spell: unconscious until roused or healed, not a collapse
+    t.status.collapsed = null;
+    t.stamina = 0;
     delete t.status.diedRound;
-    return `${t.name} is called back from death, breathing but unconscious.`;
+    C().mendWounds(t, 1, CONFIG.magic.revive.mend);
+    if (!C().isActive(t)) t.stamina = 0;
+    return `${t.name} is called back from death, breathing but ${C().isActive(t) ? 'weak' : 'down'}.`;
   }
 
   // Give + Life mends; a ward taken against a noun (Take + Fire on an ally) first lifts the conditions it inflicts
@@ -664,7 +665,7 @@
       if (s.heals && !C().tireless(t)) lines.push(mend(t, s, share));
       const lifted = (s.heals ? [] : curesOf(n)).concat(s.cures || []).filter((k) => G.Conditions.has(t, k));
       for (const k of lifted) G.Conditions.remove(t, k);
-      if (N.curesPoison && t.bleeds.some((b) => b.poison)) { t.bleeds = t.bleeds.filter((b) => !b.poison); lifted.push('poison'); }
+      if (N.curesPoison && G.Conditions.has(t, 'poisoned')) { G.Conditions.remove(t, 'poisoned'); lifted.push('poison'); }
       if (lifted.length) lines.push(`${t.name}: ${lifted.map((k) => (CONFIG.conditions[k] ? CONFIG.conditions[k].name : k).toLowerCase()).join(', ')} lifted.`);
     }
     return lines;
@@ -705,11 +706,11 @@
     return join(enc, chars, caster, c, enc.pos[body.id], { by: caster.id, rounds: null, bound: true });
   }
 
-  // Give + Death on the undead: as Life on the living (stamina back by magnitude; the tireless mend CON instead).
+  // Give + Death on the undead: as Life on the living (the tireless have no stamina: their wounds mend instead,
+  // ⌈magnitude / 2⌉ + condMag − 1 severity steps).
   function mendUndead(t, s) {
-    const con = Math.min(Math.max(1, Math.ceil(s.magnitude / 2)) + s.condMag - 1, t.damage.CON || 0);
-    if (con) C().healAttr(t, 'CON', con);
-    return `${t.name} drinks the death in: ${con ? `+${con} CON` : 'nothing to mend'}.`;
+    const steps = C().mendWounds(t, 1, Math.max(1, Math.ceil(s.magnitude / 2)) + s.condMag - 1);
+    return `${t.name} drinks the death in: ${steps ? `wounds ${steps} better` : 'nothing to mend'}.`;
   }
 
   // Conditions a spell can lay (any noun's or verb's effect), and wards: what Take + Magic lifts.
@@ -867,17 +868,16 @@
           const t = chars[id];
           if (!t || t.status.dead) continue;
           const k = await contest(roller, a, t, 'avoid', o.label);
-          const before = t.damage.CON || 0;
+          const before = C().woundLoad(t);
           await elementBlow(enc, chars, a, t, s.noun, s.magnitude, roller, o.label, { half: k.resisted, from: at, condMag: s.condMag });
-          taken += Math.max(0, (t.damage.CON || 0) - before);
+          taken += Math.max(0, C().woundLoad(t) - before);
         }
         if (!taken) return log(`${a.name} draws nothing back.`, 'fizzle');
-        const mend = Math.min(taken, a.damage.CON || 0);
-        if (mend) C().healAttr(a, 'CON', mend);
+        const mend = C().mendWounds(a, 1, taken);
         const st = (taken - mend) * CONFIG.magic.transfer.staminaPerCON;
         const was = a.stamina;
         if (st) a.stamina = Math.min(C().maxStamina(a), a.stamina + st);
-        const bits = [mend ? `+${mend} CON` : null, a.stamina > was ? `+${a.stamina - was} stamina` : null].filter(Boolean);
+        const bits = [mend ? `wounds ${mend} better` : null, a.stamina > was ? `+${a.stamina - was} stamina` : null].filter(Boolean);
         return log(`${a.name} draws in what was taken${bits.length ? ': ' + bits.join(', ') : ''}.`, 'defend');
       }
       case 'give': {

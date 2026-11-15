@@ -60,7 +60,7 @@ async function measure(key, n) {
       if (COAT) for (const c of World.party(w)) { const wpn = C.wieldedWeapon(c), g = World.goodDef(COAT); if (wpn) wpn.coat = { good: COAT, name: g.name, slay: g.coat.slay, hits: g.coat.hits }; }
       Battle.start(w, { foes: [{ monster: key, n: nm }] });
       const enc = await Auto.battle(w, { maxRounds: 30 });
-      if (enc.winner === 'party') { won++; con += World.party(w).reduce((t, c) => t + (c.damage.CON || 0), 0) / nh; }
+      if (enc.winner === 'party') { won++; con += World.party(w).reduce((t, c) => t + B.Character.woundLoad(c), 0) / nh; }
     }
     return { p: won / n, con: won ? con / won : null };
   }
@@ -137,7 +137,7 @@ if (process.env.TIERS_ENC) {
   const fmt = (r) => {
     const want = r.tier ? `tier ${r.tier} (M≈${TIER_M[r.tier]})` : 'no tier';
     const got = `M ${r.note}${r.m.toFixed(2)} → tier ${tierOf(r.m)}`;
-    const pts = r.pts.map((p) => `${p.nh}v${p.nm} ${Math.round(100 * p.p)}%${p.con != null ? ` (${p.con.toFixed(1)} CON)` : ''}`).join(', ');
+    const pts = r.pts.map((p) => `${p.nh}v${p.nm} ${Math.round(100 * p.p)}%${p.con != null ? ` (${p.con.toFixed(1)} wound severity)` : ''}`).join(', ');
     const flag = r.tier && tierOf(r.m) !== r.tier ? ' ✗' : '';
     return `${r.key.padEnd(20)} L${String(r.level).padEnd(3)} ${want.padEnd(18)} ${got.padEnd(20)}${flag}  ${pts}`;
   };

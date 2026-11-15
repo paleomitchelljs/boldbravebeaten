@@ -3,13 +3,13 @@
 # Any enchantment makes a weapon magical (it can strike the incorporeal).
 #   kinds       what it can be laid on: weapon, armor, shield
 #   weight, protect, damage, durability, wear   multipliers, as in origins.yaml and crafts.yaml
-#   drain       weapons: the wielder takes back this share of the stamina and of the attribute points each blow deals
+#   drain       weapons: the wielder takes back this share of the stamina each blow takes, and mends this share of the wounds' severity it deals
 #   value       price multiplier
 
 drinking:
   name: Drinking
   kinds: [weapon]
-  drain: {stamina: 0.5, attrs: 0.5}
+  drain: {stamina: 0.5, wounds: 0.5}
   rarity: unique
   value: 30
   blurb: "The blade drinks: its wielder takes back half of what each blow takes."
@@ -49,7 +49,7 @@ enduring:
 #             item's effects (Character.gearSources): attrs, ap, costMult, regen, stamina, sp, mag, init, hit,
 #             move, resist, aura, retaliate, standing, standingWith, heal, slay
 #   strike    weapons, on each blow that lands (Combat.strikeEffects): onHit {cond, rounds, chance}, element
-#             {noun, mag}, sap {attr, n, stamina}, armorWear, riled, slay [{trait, damage}], parrySpells
+#             {noun, mag}, sap {place, n, stamina}, armorWear, riled, slay [{trait, damage}], parrySpells
 #   apLess    weapons: sheet AP off every action made with it (its strikes and parries)
 #   power     a spell the item casts without spell points or a free hand: {verb, noun, mod, charges (a day;
 #             omit for at will), name}
@@ -66,10 +66,10 @@ bloodstone:
 sapping:
   name: Sapping
   kinds: [weapon]
-  strike: {sap: {attr: STR, n: 1, stamina: 4}, armorWear: 3}
+  strike: {sap: {place: arms, n: 1, stamina: 4}, armorWear: 3}
   rarity: unique
   value: 20
-  blurb: "Each blow that lands drains a point of STR and 4 stamina into the wielder and eats 3 from the armor."
+  blurb: "Each blow that lands wrenches the arm (a point of harm) and drains 4 stamina into the wielder and eats 3 from the armor."
 speed:
   name: Speed
   kinds: [weapon]

@@ -185,13 +185,11 @@
       c = JSON.parse(JSON.stringify(body));
       c.id = G.Items.uid('chr');
       c.name = `Revenant ${body.name}`;
-      c.damage = {};
-      for (const a of G.CONFIG.attributes) c.damage[a] = 0;
+      c.wounds = [];
       Object.assign(c.base, { INT: 1, WIS: 3, CHA: 1, WIL: Math.max(5, c.base.WIL || 5) });
       for (const f of Object.keys(c.feats || {})) if (G.DATA.FEATS[f] && /^magic/.test(G.DATA.FEATS[f].tree)) delete c.feats[f];
       c.nouns = [];
       c.spSpent = 0;
-      c.bleeds = [];
       c.traits = Object.assign({}, c.traits || {}, { tireless: true, undead: true });
       c.status = C.freshStatus();
       c.trinkets = [];

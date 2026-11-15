@@ -433,10 +433,10 @@
     return h('div', { class: 'dock' }, World.party(game.world).map((c) => {
       const max = G.Character.maxStamina(c);
       const down = c.status.dead || c.status.unconscious;
-      const hurt = G.Character.totalDamage(c);
+      const hurt = G.Character.describeWounds(c).map((x) => `${x.name.toLowerCase()} ${x.sev}`).join(', ');
       // Out of a fight the arrows are the party's (world.supplies).
       const warn = c.status.dead ? [] : G.Character.gearWarnings(c, (game.world.supplies.arrows || 0) + (game.world.supplies.bodkins || 0));
-      return h('button', { class: 'dock-member' + (down ? ' down' : ''), title: `${c.name} · L${c.level} · stamina ${c.stamina}/${max}${hurt ? ` · −${hurt} attributes` : ''}${c.status.dead ? ' · dead' : down ? ' · down' : ''}${warn.map((x) => ' · ' + x.text).join('')}. Click for the sheet.`, onclick: () => game.openOverlay('sheet', { id: c.id }) },
+      return h('button', { class: 'dock-member' + (down ? ' down' : ''), title: `${c.name} · L${c.level} · stamina ${c.stamina}/${max}${hurt ? ` · wounds: ${hurt}` : ''}${c.status.dead ? ' · dead' : down ? ' · down' : ''}${warn.map((x) => ' · ' + x.text).join('')}. Click for the sheet.`, onclick: () => game.openOverlay('sheet', { id: c.id }) },
         Sprites.portrait(c, 40),
         UI.bar(c.stamina, max),
         hurt ? h('span', { class: 'dock-hurt' }, '−' + hurt) : null,

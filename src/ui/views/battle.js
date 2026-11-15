@@ -260,11 +260,13 @@
     const option = d.option || (req.options && req.options[0]);
     if (!atk || !tgt || !option || d.type && d.type !== 'strike') return null;
     const h = Combat.computeHit(atk, tgt, option, { distance: Combat.dist(enc.pos[atk.id], enc.pos[tgt.id]) });
-    const wound = Math.round(h.toCON + (h.pointToAttrs || 0) + h.slashToAttrs + h.bluntToCON + (h.crushToAttrs || 0));
-    const stamina = Math.round(h.bluntToStamina + (h.converted || 0));
+    // The wound: its expected severity (0–3); stamina: winding and heat.
+    const wound = Math.round((h.sev || 0) * 10) / 10;
+    const stamina = Math.round((h.winding || 0) + (h.stamina || 0));
     // A point against armor (CONFIG.pierce): how often the margin carries it through.
     const point = h.throughP != null && h.throughP < 1 ? ` · ${Math.round((1 - h.throughP) * 100)}% turned` : '';
-    return { wound, stamina, wear: Math.round(h.durLoss || 0), hit: h, text: (wound || stamina ? `${wound ? `~${wound} wound` : ''}${wound && stamina ? ', ' : ''}${stamina ? `~${stamina} stamina` : ''}` : 'armor stops it') + point };
+    const down = h.downP >= 0.005 ? ` · down ${Math.round(h.downP * 100)}%` : '';
+    return { wound, stamina, wear: Math.round(h.durLoss || 0), hit: h, text: (wound >= 0.1 || stamina ? `${wound >= 0.1 ? `wound ~${wound}` : ''}${wound >= 0.1 && stamina ? ', ' : ''}${stamina ? `~${stamina} stamina` : ''}` : 'armor stops it') + down + point };
   }
 
   // The armor where a blow would land, in plain words: the piece, the odds a point gets through it (by the margin a
@@ -291,7 +293,7 @@
   function hitBoxes(prev) {
     const box = (n, label, hint) => h('span', { class: 'hit-box' + (n ? '' : ' nil'), 'data-hint': hint }, h('b', { class: 'num' }, n ? `~${n}` : '–'), h('small', null, label));
     return h('span', { class: 'hit-boxes' },
-      box(prev.wound, 'wound', 'Attribute damage that gets past the armor (expected)'),
+      box(prev.wound, 'wound', 'The severity of the wound that gets past the armor (expected, 0 to 3)'),
       box(prev.stamina, 'stam', 'Stamina the blow knocks out of them (expected)'),
       box(prev.wear, 'wear', 'Durability the armor loses (expected)'));
   }
@@ -299,7 +301,7 @@
   // A blow's preview in a few words: what lands, and a gap's odds when the point needs one.
   function shortHit(p) {
     const gap = / gap: (\d+%)/.exec(p.text);
-    return `${p.wound ? `~${p.wound} wound` : p.stamina ? `~${p.stamina} stamina` : 'stopped'}${gap ? ` · gap ${gap[1]}` : / bursts/.test(p.text) ? ' · bursts' : ''}`;
+    return `${p.wound >= 0.1 ? `wound ~${p.wound}` : p.stamina ? `~${p.stamina} stamina` : 'stopped'}${gap ? ` · gap ${gap[1]}` : / bursts/.test(p.text) ? ' · bursts' : ''}`;
   }
 
   // ---- The odds (docs/PLAN.md step 7): Combat.foresee in words ------------------------------------------------
@@ -317,12 +319,14 @@
     } catch (e) { return null; }
   }
 
-  // The harm of a landed blow in a few words: CON first, then the attributes it takes most of; stamina when that is all.
-  function harmWords(hit, n) {
+  // The harm of a landed blow in a few words: the likeliest worst wound (its severity's chance), then stamina.
+  function harmWords(hit) {
     const parts = [];
-    if (pts(hit.CON)) parts.push(`${pts(hit.CON)} CON`);
-    for (const [a, v] of Object.entries(hit.attrs).sort((x, y) => y[1] - x[1])) if (pts(v) && parts.length < (n || 3)) parts.push(`${pts(v)} ${a}`);
-    if (!parts.length && hit.stamina >= 0.5) parts.push(`${Math.round(hit.stamina)} stamina`);
+    const s = hit.sev || [1, 0, 0, 0];
+    let k = 1;
+    for (let i = 2; i <= 3; i++) if (s[i] > s[k]) k = i;
+    if (1 - s[0] >= 0.005) parts.push(`a wound ${pct(1 - s[0])} (severity ${k} ${pct(s[k])})`);
+    if (hit.stamina >= 0.5) parts.push(`${Math.round(hit.stamina)} stamina`);
     return parts.length ? parts.join(', ') : 'stopped';
   }
 
@@ -330,7 +334,7 @@
   function oddsText(f) {
     const best = f.best ? f.defences.find((d) => d.kind === f.best) : null;
     const lands = best ? `Lands ${pct(f.lands)} (they ${THEY[best.kind] || best.kind}${best.through ? '; beats through' : ''})` : `Lands ${pct(1)} (${f.down ? 'down' : 'no defence'})`;
-    const end = f.down ? `kills ${pct(f.kill)}` : `drops them ${pct(f.drop)}`;
+    const end = f.down ? `kills ${pct(f.kill)}` : `down ${pct(best ? (1 - best.odds) * best.failed.down : f.hit.down)} · drops them ${pct(f.drop)}`;
     return `${f.spent ? 'Spent: ' : ''}${f.flank ? 'Flanked: ' : ''}${lands} · ${harmWords(f.hit)} · ${end}`;
   }
 
@@ -339,9 +343,11 @@
   // The breakdown behind the line, a sentence a row.
   function oddsBreakdown(f, t) {
     const hit = f.hit;
-    const all = [['CON', hit.CON]].concat(Object.entries(hit.attrs).sort((x, y) => y[1] - x[1])).filter(([, v]) => v >= 0.05).map(([a, v]) => `${v.toFixed(1)} ${a}`);
+    const names = (G.CONFIG.locations && G.CONFIG.locations.names) || {};
+    const sev = [1, 2, 3].filter((i) => hit.sev[i] >= 0.005).map((i) => `severity ${i} ${pct(hit.sev[i])}`);
+    const where = Object.entries(hit.places || {}).sort((x, y) => y[1] - x[1]).filter(([, p]) => p >= 0.005).map(([l, p]) => `${(names[l] || l).toLowerCase()} ${pct(p)}`);
     const rows = [];
-    rows.push(`If it lands untouched: ${all.length ? all.join(', ') : 'no wound'}; ${hit.stamina.toFixed(1)} stamina; armor wear ${hit.wear.toFixed(1)}. A vital wound ${pct(hit.vital)}; ${f.down ? `kills ${pct(hit.kill)}` : `drops them ${pct(hit.drop)}${hit.kill > 0.005 ? ` (kills ${pct(hit.kill)})` : ''}`}.`);
+    rows.push(`If it lands untouched: ${sev.length ? `a wound: ${sev.join(', ')}` : 'no wound'}${where.length ? ` (at the ${where.join(', ')})` : ''}; bleeding ${hit.bleed.toFixed(1)}; ${hit.stamina.toFixed(1)} stamina; armor wear ${hit.wear.toFixed(1)}. A vital wound ${pct(hit.vital)}; ${f.down ? `kills ${pct(hit.kill)}` : `puts them down ${pct(hit.down)}${hit.collapse > 0.005 ? `, winds them to a collapse ${pct(hit.collapse)}` : ''}${hit.kill > 0.005 ? ` (kills ${pct(hit.kill)})` : ''}`}.`);
     if (hit.through != null) rows.push(`Untouched, the point gets through the armor ${pct(hit.through)}; otherwise it is turned.`);
     if (hit.margins && hit.margins.length) rows.push(`Its margin untouched: ${hit.margins[0].m} to ${hit.margins[hit.margins.length - 1].m}, ${marginMean(hit.margins).toFixed(1)} on average (more gets a point through armor, a vital wound, a gap).`);
     if (f.spent) rows.push('Spent: you haven\'t the stamina, so it lands softer and is easier to meet.');
@@ -367,11 +373,10 @@
       infoButton('The odds', () => rows.map((r) => h('p', null, r))));
   }
 
-  // A wounded fighter's losses, e.g. "−2 STR, −1 DEX" (null when unhurt).
+  // A wounded fighter's wounds, e.g. "torso 2, bleeding 2 (−4 stamina a round); arms 1" (null when unhurt).
   function woundText(c) {
-    const d = c.damage || {};
-    const list = G.CONFIG.attributes.filter((a) => d[a] > 0).map((a) => `−${d[a]} ${a}`);
-    return list.length ? list.join(', ') : null;
+    const list = C.describeWounds(c).map((w) => `${w.text}${w.does ? ` (${w.does})` : ''}`);
+    return list.length ? list.join('; ') : null;
   }
 
   // A collapsed fighter: the round they come round at the end of.
@@ -379,7 +384,7 @@
     if (c.status.dead) return 'dead';
     if (!C.isActive(c)) {
       const r = C.collapsed(c) ? Combat.comesRoundAt(enc, c) : null;
-      return r != null && isFinite(r) ? `collapsed: up after round ${r}` : C.collapsed(c) ? 'collapsed' : 'unconscious';
+      return r != null && isFinite(r) ? `collapsed: up after round ${r}` : C.collapsed(c) ? 'collapsed' : C.isDown(c) ? `down${C.bleeding(c) ? ', bleeding' : ''}` : 'unconscious';
     }
     return null;
   }

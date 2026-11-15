@@ -107,9 +107,10 @@
       for (const [what, per] of Object.entries(d.dot)) {
         const amt = per * x.mag;
         if (!amt) continue;
+        // harm: points on one wound of the condition's kind at the torso (a burn, poison, withering: Character.harm).
         if (what === 'stamina') c.stamina = Math.max(0, c.stamina - amt);
-        else G.Character.damageAttr(c, what, amt);
-        lines.push(`${d.name} costs ${c.name} ${amt} ${what === 'stamina' ? 'stamina' : what}.`);
+        else G.Character.harm(c, amt, 'torso', d.type || x.key);
+        lines.push(`${d.name} costs ${c.name} ${amt} ${what === 'stamina' ? 'stamina' : 'harm'}.`);
       }
     }
     for (const x of conds) x.rounds -= 1;

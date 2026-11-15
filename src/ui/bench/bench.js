@@ -126,7 +126,7 @@
       results[enc.winner === 'party' ? 'won' : enc.winner === 'enemy' ? 'lost' : 'draw']++;
       results.dead += party.filter((c) => c.status.dead).length;
       results.down += party.filter((c) => !C.isActive(c)).length;
-      results.hurt += party.reduce((t, c) => t + C.totalDamage(c), 0);
+      results.hurt += party.reduce((t, c) => t + C.woundLoad(c), 0);
       if (i % 3 === 2) { S.progress = (i + 1) / cfg.n; render(); await new Promise((r) => setTimeout(r, 0)); }
     }
     S.running = false;

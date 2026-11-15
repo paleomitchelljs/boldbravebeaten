@@ -174,13 +174,6 @@
       halfSword: 3,
       deflectBlunt: 0.5,
     },
-    // Slashing to an unarmored target: 1d4 per point → 1 STR, 2 CON, 3 SPD, 4 DEX
-    slashAttributeTable: { 1: 'STR', 2: 'CON', 3: 'SPD', 4: 'DEX' },
-    // Bleed: every 3 points of P/S reaching attributes = 1 bleed/round for 3 rounds.
-    // Implemented as "the wound bleeds its own damage again, spread over 3 rounds",
-    // which reproduces the Specifics worked example (7 slashing → 7 CON of bleed).
-    bleedRounds: 3,
-
     // ---- Weapons from physics (PROVISIONAL; the user asked for a weapon pass) ----------
     // 'physical': each weapon's damage, AP, weight class, STR scaling and wounds are worked out
     // from its mass, length, hands and point/edge/head (data.js `phys`; Items.weaponStats).
@@ -226,20 +219,18 @@
       // STR adds strBonus × this (rounded toward zero). A sharp point needs little force (rapier
       // ≈ 0.3, broad spearhead 0.5); a swing needs mass and grip (mace 1, greatsword 1.5).
       str: { thrustBase: 0.25, thrustWidth: 0.25, swingRefMass: 1.4, max: 1.5 },
-      // Bleeding: a piercing wound bleeds damage × width/bleedWidth over 2 + depth/15 rounds
-      // (deep wounds don't clot). Cuts bleed their damage over CONFIG.bleedRounds, as before.
+      // Bleeding: a piercing wound bleeds by its point's width / bleedWidth (CONFIG.wounds.bleed).
       bleedWidth: 4,
-      bleedRounds: { base: 2, perDepth: 15 },
     },
     // ---- Vital wounds (PROVISIONAL, docs/OVERHAUL.md step A) -------------------------------------------------
     // A point or a cut that reaches the body is a vital wound (neck, heart, a big artery) when the blow's margin is at
-    // least the threshold where it landed (rules.yaml locations.wounds.vital), + armor[type] of the piece there (a
+    // least the threshold where it landed (rules.yaml wounds.vital), + armor[type] of the piece there (a
     // pinned body's armor guards nothing: pinnedOpensArmor), − round(lower × the blow's wound.vital) (its depth or
-    // edge: Items.weaponStats), + round(perSize × (size − 1)) for a big body. A vital point does `mult` × its CON
-    // damage and bleeds twice as much; a vital cut takes its damage again from CON. Undead and constructs have none.
+    // edge: Items.weaponStats), + round(perSize × (size − 1)) for a big body. A vital wound is a step more severe and
+    // bleeds more (CONFIG.wounds). Undead and constructs have none.
     // wound.vital itself: piercing depth × perDepth (at most max), a cut cut × edge, a natural weapon natural.
     vital: {
-      perDepth: 0.01, max: 0.4, mult: 3, cut: 0.1, natural: 0.1,
+      perDepth: 0.01, max: 0.4, cut: 0.1, natural: 0.1,
       lower: 10,
       armor: { padded: 1, leather: 1, mail: 2, plate: 6, fur: 0, bogSkin: 0, chitin: 2, scaleHide: 1, scalewardScales: 1, trollHide: 1, golemStone: 99 },
       otherArmor: 1,
@@ -305,7 +296,7 @@
     // Grappling is exhausting: base stamina per step, and holdUpkeep at the end
     // of every round you hold or pin someone; a holder who can't pay lets go.
     grappling: {
-      jointLock: { attr: 'DEX', points: 1 }, // the Joint Lock feat: what a hold or pin that holds takes
+      jointLock: { place: 'arms', points: 2 }, // the Joint Lock feat: the harm a hold or pin that holds does (Character.harm)
       stamina: { clinch: 9, grapple: 15, pin: 15, throw: 15, break: 9 },
       holdUpkeep: 6,
       bigMargin: 5,
@@ -397,9 +388,9 @@
       // living beyond a chill (half, to stamina): a ghost's touch never harms attributes (the user, 2026-11-08).
       undeadBane: { light: 2, spirit: 2 },
       // Energies (fire, frost, lightning): armor stops this share of its blunt protection
-      // (lightning goes straight through metal); every fireConPer points left cost 1 CON, the
-      // rest stamina. Life withers the body: half its magnitude to CON, no armor; the dead and
-      // the made (tireless) are past withering.
+      // (lightning goes straight through metal); every fireConPer points left burn (a wound's point), the
+      // rest is stamina. Life withers the body: half its magnitude a withering wound's points, no armor; the dead
+      // and the made (tireless) are past withering.
       energyMitigation: { fire: 0.5, frost: 0.5, lightning: 0.5, light: 0.5, shadow: 0.5, spirit: 0, acid: 0, decay: 0 },
       // PROVISIONAL (the user's spell list): Decay goes past armor and eats it instead: each point of magnitude
       // takes `armor` durability from the armor and `gear` from the shield and the weapon in hand.
@@ -411,25 +402,25 @@
       // monsters.yaml template; revenant copies the body (no spell raises one now). Lasts the fight; falls if the
       // caster does.
       raise: { skeleton: 'skeleton', zombie: 'zombie', mummy: 'mummy' },
-      // Healing (Give + Life). PROVISIONAL. Mends one creature: bleeding stops (not poison),
-      // condMag CON back (1; 2 with Strong), stamina + staminaPerMag × magnitude stamina back (which
-      // wakes the unconscious). With Wide, every living creature within a square of the target,
-      // friend or foe, at areaShare of the stamina. The dead stay dead, but see revive.
+      // Healing (Give + Life). PROVISIONAL. Mends one creature: every wound stops bleeding, the worst condMag
+      // severity steps better (1; 2 with Strong), stamina + staminaPerMag × magnitude stamina back (the collapsed come
+      // round; the down come to once under their wound boxes). With Wide, every living creature within a square of
+      // the target, friend or foe, at areaShare of the stamina. The dead stay dead, but see revive.
       heal: { stamina: 4, staminaPerMag: 2, areaShare: 0.5 },
       // The user (2026-11-04): one who dies in a fight can be called back for `rounds` rounds after the one they died
-      // in (three more turns of their own): Raise + Life (or Move + Life given) brings CON back up to `con` and leaves
-      // them alive but unconscious, at 0 stamina. After that they are beyond saving there (a priest in town still can).
+      // in (three more turns of their own): Raise + Life (or Move + Life given) stops the bleeding, mends the worst
+      // wound `mend` steps and leaves them alive but down, at 0 stamina. After that they are beyond saving there (a priest in town still can).
       // PROVISIONAL (the user, 2026-11-07): a fight won while one of the party is still revivable leaves time to save
       // them: a living companion with a Life spell that calls back the dead, and the points for it, casts it; else
       // the best at `skill` rolls against `tn` (a check name in rules.yaml) to bring them back unconscious.
       // TUNED (the user, 2026-11-09: the CON hit is already a large lever against going down): the Medicine check is
       // hard (11), was moderate (8). Jabiku (+5 at level 1, +7 at level 5) saves one in two, then seven in ten; was
       // eight in ten, then always. Spells that call back the dead are untouched.
-      revive: { rounds: 3, con: 1, afterFight: { skill: 'medicine', tn: 'hard' } },
-      // PROVISIONAL (the user's Transfer, 2026-11-01): what the target loses, the caster gains: each CON taken mends a
-      // point of the caster's own lost CON, or, with none lost, gives this much stamina.
+      revive: { rounds: 3, mend: 1, afterFight: { skill: 'medicine', tn: 'hard' } },
+      // PROVISIONAL (the user's Transfer, 2026-11-01): what the target loses, the caster gains: each severity step it
+      // wounds mends a step of the caster's own wounds, or, with none, gives this much stamina.
       // PROVISIONAL (the user, 2026-11-07): Transfer aimed at an ally gives instead: ceil(magnitude / 2) points of the
-      // caster's own life, each mending a lost CON of theirs (else staminaPerCON stamina), each costing the caster
+      // caster's own life, each mending a severity step of their wounds (else staminaPerCON stamina), each costing the caster
       // staminaPerCON stamina. It stops bleeding and calls back the revivably dead.
       transfer: { staminaPerCON: 3 },
       castAP: 2, // base, × apScale. PROVISIONAL: at 3, a bolt cost 6 sheet AP for a third of a sword thrust
@@ -442,8 +433,8 @@
       spWeary: 0.15,
       // A tired caster can't draw as much power: usable points scale with stamina.
       staminaLimitsPoints: true,
-      // Fire: armor stops half its blunt mitigation; every 2 points left over cost 1 CON,
-      // the rest goes to stamina.
+      // Fire: armor stops half its blunt mitigation; every 2 points left over burn (a wound's point), the rest goes
+      // to stamina.
       fireMitigation: 0.5,
       fireConPer: 2,
       // Force: blunt, mitigated normally, with a knockdown check (INT/2 vs footing).
@@ -459,7 +450,7 @@
       // Margin over the tier for each outcome (below partial: fail).
       outcomes: { partial: 0, full: 3, exceptional: 6 },
       reveals: { partial: 1, full: 2, exceptional: 3 }, // secrets learned
-      heals: { partial: 1, full: 2, exceptional: 4 }, // Mend: CON (+ Wound Tending on full+)
+      heals: { partial: 1, full: 2, exceptional: 4 }, // Mend: severity steps (+ Wound Tending on full+)
       backlashAt: -5, // a failure this bad turns on the caster (2 stamina per point short)
       trueNameBonus: 3, // with True Naming, a true name used in the ritual
       // Components (inventory.components): rituals spend them, success or not.
@@ -496,13 +487,13 @@
     // Every field is listed in src/rules/effects.js (KEYS.condition); the effect ones (ap, attrs, resist, moveMult,
     // regen, flags…) are read through Effects with the same keys as traits and gear.
     conditions: {
-      burning: { worth: 12, type: 'fire', name: 'Burning', dot: { CON: 1 } },
+      burning: { worth: 12, type: 'fire', name: 'Burning', dot: { harm: 1 } },
       slowed: { worth: 14, name: 'Slowed', ap: -1, resistedBy: 'CON' },
       hasted: { worth: 14, name: 'Hasted', ap: 1 },
       shocked: { worth: 12, name: 'Shocked', ap: -1, resistedBy: 'CON' },
       rooted: { worth: 14, name: 'Rooted', noMove: true, breakAttr: 'STR', resistedBy: 'STR' },
       numbed: { worth: 10, name: 'Numbed', attrs: { DEX: -1, SPD: -1 }, resistedBy: 'CON' },
-      withering: { worth: 22, type: 'life', name: 'Withering', dot: { CON: 1 }, ap: -1, resistedBy: 'CON', living: true }, // Life bane (asystole)
+      withering: { worth: 22, type: 'life', name: 'Withering', dot: { harm: 1 }, ap: -1, resistedBy: 'CON', living: true }, // Life bane (asystole)
       innervated: { worth: 18, name: 'Innervated', regen: 6 },
       kindled: { worth: 10, name: 'Kindled', kindled: true }, // blows set targets burning
       frostWard: { worth: 6, name: 'Frost ward', resist: { fire: 0.5 } },
@@ -510,7 +501,7 @@
       stoneskin: { worth: 12, name: 'Stoneskin', mit: { B: 2 }, attrs: { SPD: -1 } },
       barkskin: { worth: 12, name: 'Barkskin', mit: { P: 1, S: 1 } },
       shielded: { worth: 12, name: 'Shielded', mit: { P: 1, S: 1, B: 1 } },
-      afflicted: { worth: 10, name: 'Lingering harm', dot: { CON: 1 } }, // a Lingering spell's after-burn
+      afflicted: { worth: 10, name: 'Lingering harm', dot: { harm: 1 } }, // a Lingering spell's after-burn
       // Ward (verb): kind 'magic' absorbs `pool` points of spell or missile damage; 'missiles'
       // turns aside half of the arrows and bolts; an element's ward halves that element and
       // keeps off its after-effects; 'mind' keeps off baits and the like.
@@ -542,7 +533,7 @@
       clumsy: { worth: 10, name: 'Clumsy', resistedBy: 'CON', attrs: { DEX: -2 } },
       deft: { worth: 10, name: 'Deft', attrs: { DEX: 2 } },
       // Poison and disease. persist: outlasts the fight (until cured or run its course).
-      poisoned: { worth: 16, type: 'venom', name: 'Poisoned', resistedBy: 'CON', dot: { CON: 1 }, living: true },
+      poisoned: { worth: 16, type: 'venom', name: 'Poisoned', resistedBy: 'CON', dot: { harm: 1 }, living: true },
       antivenom: { worth: 8, name: 'Antivenom', immune: ['poisoned'] },
       diseased: { worth: 12, type: 'plague', name: 'Diseased', resistedBy: 'CON', attrs: { STR: -1 }, regen: -6, living: true, persist: true },
       // PROVISIONAL (the user's spell list and magic items).
@@ -706,20 +697,18 @@
       dodgeNegates: 1.0,
     },
 
-    // PROVISIONAL (the user, 2026-11-10): a punch or a kick harms no attribute, CON included, without this feat: it
-    // takes stamina only, so it does nothing to a tireless body (a skeleton) or to someone already out cold.
+    // PROVISIONAL (the user, 2026-11-10): a punch or a kick breaks nothing without this feat: it winds only, so it
+    // does nothing to a tireless body (a skeleton) or to someone already out cold.
     unarmed: { attrFeat: 'heavy_hands' },
 
     // ---- Impact (PROVISIONAL, the user's call) -----------------------------
-    // Crushing: blunt that gets past armor beyond crushAt (× the target's size) breaks bones:
-    //   1 CON per crushPer points over, on top of the stamina it takes.
+    // Crushing: blunt that gets past armor beyond crushAt (× the target's size) breaks bone: a point of a crushing
+    //   wound (CONFIG.wounds) per crushPer points over, on top of the winding it costs.
     // PROVISIONAL (docs/PLAN.md R5, step 3): crushBare is crushAt where the blow lands on a location with no armor
-    //   (bare skin breaks sooner), and with crushAttrs a crush that lands on a known location takes that location's
-    //   attributes (rules.yaml locations.wounds.attrs, rolled per point as a cut's are), not CON alone.
-    //   null / false: the old rule (crushAt everywhere, all to CON). Unarmed blows without Heavy Hands still crush nothing.
+    //   (bare skin breaks sooner). Unarmed blows without Heavy Hands still crush nothing.
     // Knockback: a blow that lands throws its target back 1 square per knockbackPer points landed
     //   (blunt in full, cuts and stabs at half), ÷ the target's size, up to knockbackMax squares.
-    impact: { crushAt: 8, crushBare: 3, crushAttrs: true, crushPer: 2, knockbackPer: 8, knockbackMax: 3 },
+    impact: { crushAt: 8, crushBare: 3, crushPer: 2, knockbackPer: 8, knockbackMax: 3 },
 
     // ---- Shields ----------------------------------------------------------
     // PROVISIONAL: wear per block is multiplied by this (fewer hits before a shield fails).

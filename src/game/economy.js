@@ -145,7 +145,7 @@
   }
 
   function healCost(world, c, service) {
-    const pts = C.totalDamage(c);
+    const pts = C.woundLoad(c);
     const st = service && service.faction ? G.Factions.standing(world, service.faction) : 0;
     if (st >= G.CONFIG.game.economy.healerStandingFree) return 0;
     const f = st >= 10 ? 0.7 : 1;

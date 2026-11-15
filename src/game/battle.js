@@ -451,7 +451,7 @@
 
   function snapshot(world) {
     const out = {};
-    for (const c of World.party(world)) out[c.id] = { stamina: c.stamina, max: C.maxStamina(c), weary: c.weary || 0, damage: Object.assign({}, c.damage || {}), dead: !!c.status.dead, gear: gearOf(c) };
+    for (const c of World.party(world)) out[c.id] = { stamina: c.stamina, max: C.maxStamina(c), weary: c.weary || 0, wounds: C.wounds(c).map((w) => Object.assign({}, w)), dead: !!c.status.dead, gear: gearOf(c) };
     return out;
   }
 
@@ -462,23 +462,24 @@
     enc.onHit = (ev) => {
       if (prev) prev(ev);
       const t = ev && ev.target;
-      if (!t || !chars[t.id] || chars[t.id].side !== 'party' || !(ev.attrs > 0)) return;
+      if (!t || !chars[t.id] || chars[t.id].side !== 'party' || !(ev.sev > 0)) return;
       const k = ev.location || 'body';
       const row = tally[t.id] || (tally[t.id] = {});
-      row[k] = (row[k] || 0) + ev.attrs;
+      row[k] = (row[k] || 0) + ev.sev;
     };
     return tally;
   }
 
-  // One row a hero: { id, name, state, stamina {was, now, max}, weary {was, now}, wounds [{attr, lost, more}], where
-  // [{place, points}], gear [{name, was, now, max}] }.
+  // One row a hero: { id, name, state, stamina {was, now, max}, weary {was, now}, wounds [Character.describeWounds,
+  // with fresh: taken in this fight], where [{place, points}] (severity dealt there), gear [{name, was, now, max}] }.
   function summary(world, snap, tally) {
     snap = snap || {};
     tally = tally || {};
     const names = (G.CONFIG.locations && G.CONFIG.locations.names) || {};
     return World.party(world).map((c) => {
-      const was = snap[c.id] || { stamina: c.stamina, max: C.maxStamina(c), weary: c.weary || 0, damage: {}, gear: [] };
-      const wounds = G.CONFIG.attributes.filter((a) => (c.damage || {})[a] > 0).map((a) => ({ attr: a, lost: c.damage[a], more: Math.max(0, c.damage[a] - (was.damage[a] || 0)) }));
+      const was = snap[c.id] || { stamina: c.stamina, max: C.maxStamina(c), weary: c.weary || 0, wounds: [], gear: [] };
+      const old = (was.wounds || []).map((w) => `${w.place}${w.kind}${w.sev}`);
+      const wounds = C.describeWounds(c).map((w) => { const i = old.indexOf(`${w.place}${w.kind}${w.sev}`); if (i >= 0) old.splice(i, 1); return Object.assign(w, { fresh: i < 0 }); });
       const where = Object.entries(tally[c.id] || {}).filter(([, v]) => v >= 0.5).sort((a, b) => b[1] - a[1]).map(([k, v]) => ({ place: names[k] || k, points: Math.round(v) }));
       const now = gearOf(c);
       const gear = now.map((g) => { const b = was.gear.find((x) => x.name === g.name); return { name: g.name, was: b ? b.now : g.now, now: g.now, max: g.max }; }).filter((g) => g.now < g.max || g.was !== g.now);
