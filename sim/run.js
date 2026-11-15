@@ -243,7 +243,7 @@ SCENARIOS.builds = async () => {
 SCENARIOS.weapons = async () => {
   const T = TARGETS.dominance;
   const n = Math.max(30, Math.round(N / 2));
-  const feats = { toughness: 1, strength: 1, power_swing: 1, shield_training: 1, mail_mobility: 1, half_swording: 1 };
+  const feats = { toughness: 1, strength: 1, power_swing: 1, quick_parry: 1, mail_mobility: 1, half_swording: 1 };
   const entries = {};
   for (const w of ['club', 'spikedMace', 'flangedMace', 'dagger', 'rapier', 'longsword', 'greatsword', 'warhammer']) {
     entries[w] = () => build('sellsword', { level: 4, weapon: w, shield: null, feats, sidearm: null });
@@ -270,8 +270,7 @@ SCENARIOS.weapons = async () => {
 
 SCENARIOS.armor = async () => {
   const n = Math.max(30, Math.round(N / 2));
-  const feats = { toughness: 1, strength: 1, shield_training: 1, power_swing: 1, half_swording: 1, quick_block: 0 };
-  delete feats.quick_block;
+  const feats = { toughness: 1, strength: 1, quick_block: 1, power_swing: 1, half_swording: 1 };
   const entries = { none: () => build('sellsword', { level: 4, armor: null, feats }) };
   const ARMORS = { padded: ['padded'], leather: ['leather'], mail: ['mail'], steelMail: ['mail', 'full', { material: 'steel' }], plate: ['plate'] };
   for (const a of Object.keys(ARMORS)) entries[a] = () => build('sellsword', { level: 4, armor: ARMORS[a], feats });
@@ -282,7 +281,7 @@ SCENARIOS.armor = async () => {
     mail: { mail_mobility: 1, mail_endurance: 1 }, steelMail: { mail_mobility: 1, mail_endurance: 1 }, plate: { plate_mobility: 2 } };
   const trained = {};
   for (const k of Object.keys(entries)) {
-    const f = Object.assign({ strength: 1, shield_training: 1, power_swing: 1, half_swording: 1 }, train[k]);
+    const f = Object.assign({ strength: 1, quick_block: 1, power_swing: 1, half_swording: 1 }, train[k]);
     trained[k] = () => build('sellsword', { level: 4, armor: k === 'none' ? null : ARMORS[k], feats: f });
   }
   const rt = await roundRobin('armor-trained', trained, OPEN, n);
@@ -302,25 +301,28 @@ SCENARIOS.armor = async () => {
   };
 };
 
-// Feint vs Read Attack: is Read Attack effectively mandatory?
+// Feint vs Read Intent (was Read Attack): is it effectively mandatory?
 SCENARIOS.feint = async () => {
   const T = TARGETS.feint;
-  const base = { quick_thrust: 2, parry_training: 2, precision: 1, dodge_training: 1 };
-  const feinter = () => build('duelist', { level: 6, feats: Object.assign({ feint: 3 }, base, { agility: 1 }) });
-  const blind = () => build('duelist', { level: 6, feats: Object.assign({}, base, { riposte: 1, quick_parry: 1, light_touch: 1, agility: 1 }) });
-  const reader = () => build('duelist', { level: 6, feats: Object.assign({ read_attack: 3 }, base, { agility: 1 }) });
+  // Feint and Read Intent are one rank each since the skills overhaul; the reader needs Perception 2, so all three
+  // carry the same skills (the duelist's plan at level 6, with Perception 2 in place of two Deception ranks).
+  const base = { quick_thrust: 2, quick_parry: 2, precision: 1, quick_dodge: 1, agility: 1 };
+  const skills = { melee: 9, evasion: 7, anticipation: 5, deception: 2, perception: 2 };
+  const feinter = () => build('duelist', { level: 6, skills, feats: Object.assign({ feint: 1 }, base) });
+  const blind = () => build('duelist', { level: 6, skills, feats: Object.assign({ light_touch: 1 }, base) });
+  const reader = () => build('duelist', { level: 6, skills, feats: Object.assign({ read_intent: 1 }, base) });
   const out = [];
   const a = await series(N, feinter, blind, OPEN, { seed: 21 });
   const b = await series(N, feinter, reader, OPEN, { seed: 21 });
   const gap = a.winA - b.winA;
-  record('feint', 'Feint III vs no Read Attack', 'feinter_win', a.winA);
-  record('feint', 'Feint III vs Read Attack III', 'feinter_win', b.winA);
+  record('feint', 'Feint vs no Read Intent', 'feinter_win', a.winA);
+  record('feint', 'Feint vs Read Intent', 'feinter_win', b.winA);
   record('feint', 'gap', 'win_gap', gap, `≤ ${pct(T.maxGap)}`, gap <= T.maxGap);
-  out.push(['Feint III vs no Read Attack', pct(a.winA)], ['Feint III vs Read Attack III', pct(b.winA)], ['Gap', pct(gap) + (gap <= T.maxGap ? '' : ' ✗')]);
+  out.push(['Feint vs no Read Intent', pct(a.winA)], ['Feint vs Read Intent', pct(b.winA)], ['Gap', pct(gap) + (gap <= T.maxGap ? '' : ' ✗')]);
   return {
-    title: 'Feint and Read Attack',
-    question: 'Specifics: "With Feint in play, how large is the win-rate gap for fighters with vs. without Read Attack? A large gap means the feat is effectively mandatory."',
-    body: `Level-6 duelists with the same core feats. The opponent without Read Attack spends those 3 feats on other light-weapon feats. The AI only uses what it can see: a hidden strike is judged by the attacker's average option. Target gap ≤ ${pct(T.maxGap)}.\n\n` + table(['Matchup', 'Feinter wins'], out),
+    title: 'Feint and Read Intent',
+    question: 'Specifics: "With Feint in play, how large is the win-rate gap for fighters with vs. without Read Attack (now Read Intent)? A large gap means the feat is effectively mandatory."',
+    body: `Level-6 duelists with the same skills and core feats. The opponent without Read Intent takes Light Touch in its place. The AI only uses what it can see: a hidden strike is judged by the attacker's average option. Target gap ≤ ${pct(T.maxGap)}.\n\n` + table(['Matchup', 'Feinter wins'], out),
   };
 };
 

@@ -2,9 +2,10 @@
 // One-on-one fights: each preset hero against the others and against a few common foes, AI on both sides, in a
 // 12 x 6 room. How long they last (rounds), how they end (a death or a knockout), and how much of a fresh fighter's
 // stamina one landed blow takes. For the user's 2026-11-01 note: duels run slow, stamina and damage are spongy.
-//   node sim/duels.js [--n 40] [--seed 500] [--set key=value ...] [--metrics] [--json file]
+//   node sim/duels.js [--n 40] [--seed 500] [--mirror] [--set key=value ...] [--metrics] [--json file]
 //   (--set takes a JSON value, a dotted key into CONFIG; --metrics adds the tuning plan's metrics for each pairing and
-//   for all, from sim/metrics.js; --json appends them to a file, one line each)
+//   for all, from sim/metrics.js; --json appends them to a file, one line each; --mirror: each preset against its twin
+//   in place of the pairings)
 'use strict';
 const L = require('./lib');
 const { B, C, CONFIG, Enemies } = L;
@@ -38,6 +39,9 @@ const PAIRS = [
   ['Beren', 'scaleward'], ['Cyrus', 'scaleward'], ['Jabiku', 'scaleward'],
   ['Beren', 'fireGoblin'], ['Cyrus', 'fireGoblin'], ['Cyrus', 'goblinWarrior'], ['Beren', 'wolf'],
 ];
+// --mirror: each preset against its twin (even duels: step F's first-blow target is read on these).
+const MIRROR = B.World.presetParty().map((p) => [p.name, p.name]);
+if (argv.includes('--mirror')) PAIRS.splice(0, PAIRS.length, ...MIRROR);
 const make = (k) => (/^[A-Z]/.test(k) ? hero(k) : monster(k));
 
 (async () => {
@@ -58,7 +62,7 @@ const make = (k) => (/^[A-Z]/.test(k) ? hero(k) : monster(k));
         watch: M && ((enc) => {
           const heroes = [[A, a], [Bc, b]].filter(([, k]) => /^[A-Z]/.test(k)).map(([c]) => c.id);
           const w1 = M.watch(enc, { [A.id]: A, [Bc.id]: Bc }, heroes), w2 = total.watch(enc, { [A.id]: A, [Bc.id]: Bc }, heroes);
-          return { poll() { w1.poll(); w2.poll(); }, end() { w2.end(); w1.end(); } };
+          return { before(id) { w1.before(id); w2.before(id); }, poll() { w1.poll(); w2.poll(); }, end() { w2.end(); w1.end(); } };
         }),
         onHit: (ev) => { const t = ev && ev.target && (ev.target.id || ev.target); if (t && ev.stamina != null && !ev.spell) (t === Bc.id ? blows.A : blows.B).push(ev.stamina / fresh[t]); },
       });
