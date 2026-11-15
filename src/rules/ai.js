@@ -1411,7 +1411,9 @@
     const blowAP = Math.min(...usable.filter((o) => !o.spell).map((o) => o.ap).concat([99]));
     if (bait && !acted && la.ap >= bait.ap + Math.min(blowAP, 99) + reserve && blowAP < 99) {
       const guarded = bait.targets.find((x) => x.inReach && foes.includes(x.id) && !enc.turnDone[x.id] && usable.some((o) => C.inRange(o, x.distance)));
-      if (guarded && baitPays(enc, chars, c, chars[guarded.id], bait, usable.filter((o) => !o.spell && C.inRange(o, guarded.distance)), la.ap - reserve)) return { actor: id, type: 'bait', target: guarded.id };
+      // A foe in reach who can't defend (collapsed, down) is the blow to take: no bait first.
+      const open = enc.ids.some((o) => { const f = chars[o]; return f && f.side !== c.side && !f.status.dead && enc.pos[o] && (C.collapsed(f) || !C.isActive(f)) && usable.some((u) => !u.spell && C.inRange(u, Combat.dist(enc.pos[id], enc.pos[o]))); });
+      if (guarded && !open && baitPays(enc, chars, c, chars[guarded.id], bait, usable.filter((o) => !o.spell && C.inRange(o, guarded.distance)), la.ap - reserve)) return { actor: id, type: 'bait', target: guarded.id };
     }
     // The AI doesn't read intent (the user, 2026-11-01): it filled foes' turns with looks instead of blows.
 
