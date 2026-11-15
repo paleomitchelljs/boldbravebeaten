@@ -154,7 +154,7 @@
   // inside the slice. `skip`: squares already in the fight. Returns [{x, y, def, spec}] in map squares.
   function joiners(world, arena, anchor, from, skip) {
     const me = { x: world.explore.x, y: world.explore.y };
-    const near = (q) => (from || [me, anchor]).some((at) => at && G.Explore.cheb(at, q) <= r && G.Explore.lineClear(world, q.x, q.y, at.x, at.y));
+    const near = (q) => (from || [me, anchor]).some((at) => at && G.Combat.dist(at, q) <= r && G.Explore.lineClear(world, q.x, q.y, at.x, at.y));
     const r = G.CONFIG.game.joinDistance || 0;
     const g = G.Explore.here(world);
     const out = [];
@@ -183,7 +183,7 @@
       let best = null, bd = -1;
       for (let y = 0; y < arena.h; y++) for (let x = 0; x < arena.w; x++) {
         if (arena.wall[x + ',' + y]) continue;
-        const d = Math.max(Math.abs(x - arena.party.x), Math.abs(y - arena.party.y));
+        const d = G.Combat.dist({ x, y }, arena.party);
         if (d > bd && d <= 5) { bd = d; best = { x, y }; }
       }
       seed = best || arena.party;
@@ -305,7 +305,7 @@
     const theirs = enc.ids.filter((id) => chars[id] && chars[id].side !== 'party' && C.isActive(chars[id]) && enc.pos[id]);
     if (!mine.some((id) => C.isActive(chars[id])) || !theirs.length) return { ok: false };
     const D = G.CONFIG.disengage || { outrun: 2 };
-    const near = (p, q, r) => Math.max(Math.abs(p.x - q.x), Math.abs(p.y - q.y)) <= r;
+    const near = (p, q, r) => G.Combat.dist(p, q) <= r;
     for (const id of theirs) {
       const f = chars[id], at = enc.pos[id];
       const opts = C.attackOptions(f);

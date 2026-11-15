@@ -59,12 +59,13 @@ test('approach: a fighter does not walk into a spear\'s reach with no AP left to
   const s = armed('Spear', 'spear', 'enemy');
   const { enc, chars } = await field([[a, 0, 2], [s, 7, 2]], 12, 5);
   const def = Math.min(...['parry', 'dodge'].map((k) => C.actionCost(a, k).ap));
-  // Enough to walk three squares (into the spear's reach of 4) and nothing after.
-  enc.ap[a.id] = C.moveCost(a, 3);
+  // Enough to walk four squares (into the spear's reach of 3) and nothing after.
+  const reach = Math.max(...C.attackOptions(s).map((o) => o.maxRange || 1));
+  enc.ap[a.id] = C.moveCost(a, 7 - reach);
   const d = AI.choose(enc, chars, a.id, () => 0.99);
   if (d.type === 'move') {
-    const inReach = Combat.dist(d.to, enc.pos[s.id]) <= 4;
-    const left = enc.ap[a.id] - C.moveCost(a, Combat.dist(d.to, enc.pos[a.id]));
+    const inReach = Combat.dist(d.to, enc.pos[s.id]) <= reach;
+    const left = enc.ap[a.id] - C.moveCost(a, Combat.steps(d.to, enc.pos[a.id]));
     assert.ok(!inReach || left >= def, `walked in to ${Combat.dist(d.to, enc.pos[s.id])} with ${left} AP (a defence costs ${def})`);
   }
   // With a full round's AP it still comes on (it may wait at the edge for the spear to step in: that is a choice).

@@ -94,7 +94,7 @@
       const terrain = G.Terrain && enc.tiles && Object.keys(enc.tiles).length;
       const map = terrain ? G.Terrain.costMap(enc, m.from, chars[actor], null, Combat.foeSquares(enc, chars, chars[actor])) : null;
       for (let y = 0; y < enc.grid.h; y++) for (let x = 0; x < enc.grid.w; x++) {
-        const d = Combat.dist(m.from, { x, y });
+        const d = Combat.steps(m.from, { x, y });
         const squares = map ? map.cost[map.idx(x, y)] : d;
         if (!isFinite(squares)) continue;
         const need = C.moveCost(chars[actor], Math.round(squares));
@@ -331,7 +331,7 @@
     const best = f.best ? f.defences.find((d) => d.kind === f.best) : null;
     const lands = best ? `Lands ${pct(f.lands)} (they ${THEY[best.kind] || best.kind}${best.through ? '; beats through' : ''})` : `Lands ${pct(1)} (${f.down ? 'down' : 'no defence'})`;
     const end = f.down ? `kills ${pct(f.kill)}` : `drops them ${pct(f.drop)}`;
-    return `${f.spent ? 'Spent: ' : ''}${lands} · ${harmWords(f.hit)} · ${end}`;
+    return `${f.spent ? 'Spent: ' : ''}${f.flank ? 'Flanked: ' : ''}${lands} · ${harmWords(f.hit)} · ${end}`;
   }
 
   const marginMean = (ms) => ms.reduce((n, x) => n + x.m * x.p, 0);
@@ -345,6 +345,7 @@
     if (hit.through != null) rows.push(`Untouched, the point gets through the armor ${pct(hit.through)}; otherwise it is turned.`);
     if (hit.margins && hit.margins.length) rows.push(`Its margin untouched: ${hit.margins[0].m} to ${hit.margins[hit.margins.length - 1].m}, ${marginMean(hit.margins).toFixed(1)} on average (more gets a point through armor, a vital wound, a gap).`);
     if (f.spent) rows.push('Spent: you haven\'t the stamina, so it lands softer and is easier to meet.');
+    if (f.flank) rows.push(`Flanked: with a foe of theirs on the far side, ${t.name} defends at −${f.flank}.`);
     for (const d of f.defences) {
       const bits = [`${d.name}: stops it ${pct(d.odds)} (costs them ${C.fmtAP(d.ap)} AP${d.stamina ? `, ${d.stamina} stamina${d.spent ? ', spent' : ''}` : ''})`];
       if (d.absorb) bits.push(`a stopped blow still jars ${d.absorb} stamina out of them`);

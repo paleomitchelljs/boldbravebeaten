@@ -133,7 +133,8 @@
     return true;
   }
 
-  const cheb = (a, b) => Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
+  // Distance on the map: the fight's measure (Combat.dist, rounded Euclidean), for notice, waking and search.
+  const dist = (a, b) => G.Combat.dist(a, b);
 
   // What the party sees from where it stands (or from `at`: a fighter's square in a fight on the map).
   function markSeen(world, at) {
@@ -442,7 +443,7 @@
     for (let y = ex.y - r; y <= ex.y + r; y++) for (let x = ex.x - r; x <= ex.x + r; x++) {
       const c = cell(world, x, y), t = trapOf(c);
       if (!t || !live(world, t.def, t.st) || degreeOf(t.st) >= 3) continue;
-      out.push({ x, y, t, d: cheb(ex, { x, y }) });
+      out.push({ x, y, t, d: dist(ex, { x, y }) });
     }
     return out;
   }
@@ -479,7 +480,7 @@
     const bonus = cfg().searchBonus == null ? 3 : cfg().searchBonus;
     for (let y = ex.y - 2; y <= ex.y + 2; y++) for (let x = ex.x - 2; x <= ex.x + 2; x++) {
       const c = cell(world, x, y);
-      if (!c.hidden || !lineClear(world, ex.x, ex.y, x, y) && cheb(ex, { x, y }) > 1) continue;
+      if (!c.hidden || !lineClear(world, ex.x, ex.y, x, y) && dist(ex, { x, y }) > 1) continue;
       const r = S.groupCheck(W.active(world), 'perception', c.def.tn || 8, bonus);
       if (r.ok || revealed(world, c.def)) { c.st.found = true; found++; ev.push({ type: 'log', text: 'A seam in the wall: a hidden door.', cls: 'find' }); }
     }
@@ -568,7 +569,7 @@
         // An encounter whose peace flag is already set (the gnomes trust you, so their machines do) stands down unfought.
         const peace = encounterSpec(world, def);
         if (peace && peace.peaceFlags && peace.peaceFlags.some((f) => world.flags[f])) { st.pacified = true; continue; }
-        const d = cheb(me, { x, y });
+        const d = dist(me, { x, y });
         const sleeping = def.asleep && !st.woken;
         const range = sleeping ? cfg().sleepNoticeDistance : cfg().noticeDistance;
         if (d > range + 1) { st.unseen = false; st.alerted = false; st.closeRolled = false; continue; }
@@ -829,7 +830,7 @@
       if (!def || def.kind !== 'monster' || !def.asleep) continue;
       const st = state(world, xx, yy);
       if (st.woken || st.done) continue;
-      if (cheb({ x, y }, { x: xx, y: yy }) <= r) { st.woken = true; ev.push({ type: 'log', text: 'Something stirs in the dark.', cls: 'hurt' }); }
+      if (dist({ x, y }, { x: xx, y: yy }) <= r) { st.woken = true; ev.push({ type: 'log', text: 'Something stirs in the dark.', cls: 'hurt' }); }
     }
   }
 
@@ -871,7 +872,7 @@
   G.Explore = {
     serviceList,
     trapOf, live, learn, springTrap,
-    DIRS, DIR_NAMES, grid, groundOf, place, lightRadius, here, cell, state, tileKey, opaque, lineClear, cheb, markSeen, findChar, exits, beyond,
+    DIRS, DIR_NAMES, grid, groundOf, place, lightRadius, here, cell, state, tileKey, opaque, lineClear, dist, markSeen, findChar, exits, beyond,
     enter, leave, fall, front, turn, move, go, peek, path, search, facing, describe, act, scan, wake,
     encounterSpec, foeAwareness, resolveSquare, wanderingFor, minutesPerStep, noise, settleClock, wanderCheck,
   };

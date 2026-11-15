@@ -457,7 +457,7 @@ function armed(name, type, opts) {
 
 const opt = (c, pred) => C.attackOptions(c).find(pred);
 
-test('range bands (the user\'s reach): one-handers swing 1 and thrust 2, two-handers 2 and 3, spears to 4; inside a long weapon\'s reach or in a clinch its blows land half as hard, all blunt', () => tableWeapons(() => {
+test('range bands (the user\'s reach): one-handers swing 1 and thrust 2, two-handers 2 and 3, spears to 3 (step B: reach 1–3); inside a long weapon\'s reach or in a clinch its blows land half as hard, all blunt', () => tableWeapons(() => {
   const band = (type, motion) => { const o = opt(armed('X', type), (x) => x.motion === motion); return [o.minRange, o.maxRange, o.closePenalty]; };
   assert.deepStrictEqual(band('dagger', 'thrust'), [1, 1, false]);
   assert.deepStrictEqual(band('dagger', 'swing'), [1, 1, false]);
@@ -467,9 +467,9 @@ test('range bands (the user\'s reach): one-handers swing 1 and thrust 2, two-han
   assert.deepStrictEqual(band('flangedMace', 'swing'), [1, 1, false]);
   assert.deepStrictEqual(band('greatsword', 'twoHanded'), [1, 2, true], 'a two-hander swings to 2, cramped at 1');
   assert.deepStrictEqual(band('greatsword', 'thrust'), [1, 3, true]);
-  assert.deepStrictEqual(band('spear', 'thrust'), [1, 4, true], 'a spear thrusts to 4 and can jab with the shaft');
-  assert.deepStrictEqual(band('heavySpear', 'thrust'), [1, 4, true]);
-  assert.deepStrictEqual(band('warScythe', 'twoHanded'), [1, 3, true], 'a scythe sweeps to 3');
+  assert.deepStrictEqual(band('spear', 'thrust'), [1, 3, true], 'a spear thrusts to 3 and can jab with the shaft');
+  assert.deepStrictEqual(band('heavySpear', 'thrust'), [1, 3, true]);
+  assert.deepStrictEqual(band('warScythe', 'twoHanded'), [1, 2, true], 'a scythe sweeps at 2');
   assert.ok(!opt(armed('X', 'warScythe'), (x) => x.motion === 'thrust'), 'and does not thrust');
   const a = armed('L', 'longsword');
   const t = fighter('T');
