@@ -19,7 +19,7 @@ function body(name, side, weapon, kit) {
   c.stamina = C.maxStamina(c);
   return c;
 }
-const pick = (c, pred) => C.attackOptions(c).find((o) => !o.windUp && !o.halfSword && pred(o));
+const pick = (c, pred) => C.attackOptions(c).find((o) => !o.halfSword && pred(o));
 
 // n resolutions of a's blow at t, t meeting it with `kind` (null: taking it). Fresh bodies every time.
 async function simulate(mkA, mkT, optFn, kind, n, dist, seed) {
@@ -33,10 +33,10 @@ async function simulate(mkA, mkT, optFn, kind, n, dist, seed) {
     const chars = { [a.id]: a, [t.id]: t, U: u };
     const enc = Combat.createEncounter('t', [a.id, t.id, 'U'], chars, 12, 3);
     enc.pos[a.id] = { x: 1, y: 1 }; enc.pos[t.id] = { x: 1 + dist, y: 1 }; enc.pos.U = { x: 11, y: 2 };
-    enc.round = 1; Clock.free(enc, a.id); Clock.free(enc, t.id);
+    Clock.onClock(enc); Clock.free(enc, a.id); Clock.free(enc, t.id);
     const o = optFn(a);
     const st0 = t.stamina, w0 = C.wounds(t).length, up0 = C.isActive(t), down0 = C.isDown(t);
-    await Combat.resolveAction(enc, chars, { actor: a.id, target: t.id, type: 'strike', option: o, ap: o.ap, stamina: o.stamina, targetWasDown: !C.isActive(t) }, io);
+    await Combat.resolveAction(enc, chars, { actor: a.id, target: t.id, type: 'strike', option: o, ticks: o.ticks, stamina: o.stamina, targetWasDown: !C.isActive(t) }, io);
     const text = enc.log.map((l) => l.text || l).join('\n');
     if (/ hits T/.test(text)) s.lands++;
     if (/VITAL/.test(text)) s.vital++;
@@ -164,4 +164,20 @@ test('foresee leaves both fighters as it found them', () => {
   const before = JSON.stringify([a, t]);
   for (const o of C.attackOptions(a)) Combat.foresee(a, t, o, { distance: 1 });
   assert.equal(JSON.stringify([a, t]), before);
+});
+
+test('foresee (step F): the blow\'s ticks and lead, when it lands, whether the hero can still react after it, and a target too far ahead to react meets it with nothing', () => {
+  const a = body('A', 'party', 'greatsword'), t = body('T', 'enemy', 'longsword');
+  const chars = { A: a, T: t };
+  const enc = Clock.onClock(Combat.createEncounter('t', ['A', 'T'], chars, 6, 3));
+  enc.pos.A = { x: 1, y: 1 }; enc.pos.T = { x: 2, y: 1 };
+  const thrust = pick(a, (o) => o.motion === 'thrust'), two = pick(a, (o) => o.motion === 'twoHanded');
+  const f = Combat.foresee(a, t, two, { enc, chars });
+  assert.deepEqual([f.timing.ticks, f.timing.lead, f.timing.lands], [two.ticks, two.lead, enc.now + two.lead]);
+  assert.equal(f.timing.react, two.ticks <= CONFIG.clock.overreach, 'can react after it while within overreach');
+  assert.equal(Combat.foresee(a, t, thrust, { enc, chars }).timing.react, thrust.ticks <= CONFIG.clock.overreach);
+  assert.ok(f.defences.length > 0 && !f.timing.open, 'a target near on the clock defends');
+  Clock.far(enc, 'T');
+  const g = Combat.foresee(a, t, two, { enc, chars });
+  assert.ok(g.timing.open && g.defences.length === 0 && g.lands === 1, 'too far ahead: no defence, it lands');
 });
