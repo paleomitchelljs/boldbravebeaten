@@ -471,9 +471,8 @@
         title: `${n > 1 ? `${n} × ${c.name.replace(/\s+\d+$/, '')}` : c.name} · ${id === actor ? 'acts now' : `ready in ${it.ahead} ticks`}${it.ahead > G.CONFIG.clock.overreach ? ' (too far ahead to react)' : ''}${what ? ` · ${what} lands in ${lands}` : ''}${waits ? ' · waiting' : ''} · stamina ${c.stamina}/${max}${state ? ` · ${state}` : ''}${wounds ? ` · wounds ${wounds}` : ''}`,
         onclick: () => game.openOverlay('sheet', { id }) },
       Sprites.portrait(c, 28), UI.bar(c.stamina, max),
-      h('span', { class: 'init-ap num' }, id === actor ? 'now' : `+${it.ahead}`),
-      n > 1 ? h('span', { class: 'tl-n num' }, `×${n}`) : null,
-      it.d ? h('span', { class: 'tl-lands num', title: `${what} lands in ${lands}` }, `${UI.icon ? '' : ''}⚔+${lands}`) : null,
+      h('span', { class: 'init-ap num' }, (n > 1 ? `×${n} ` : '') + (id === actor ? 'now' : `+${it.ahead}`)),
+      it.d ? h('span', { class: 'tl-lands num', title: `${what} lands in ${lands}` }, `in ${lands}`) : null,
       waits ? h('span', { class: 'tl-wait', title: 'Waiting' }, '…') : null,
       !it.up && !c.status.dead && C.collapsed(c) ? h('span', { class: 'init-up num' }, `up b${(Combat.comesRoundAt(enc, c) || 0) + 1}`) : null,
       wounds ? h('span', { class: 'init-wound num', title: 'Wound boxes filled' }, `${C.woundLoad(c)}/${C.boxes(c)}`) : null));
