@@ -214,9 +214,9 @@
     for (const id of enc.ids) {
       if (!chars[id]) continue;
       enc.tie[id] = await rollDie(roller, id, K().die, 'Tie-break', `d${K().die}: who goes first when two clocks agree`);
-      enc.clock[id] = sp && chars[id].side === sp.side ? K().surprise : 0;
+      enc.clock[id] = sp && chars[id].side === sp.side ? (sp.ticks != null ? sp.ticks : K().surprise) : 0;
     }
-    if (sp) log(enc, `${sp.side === 'party' ? 'The party is' : 'The enemy is'} caught off guard (+${K().surprise} ticks).`, 'round');
+    if (sp) log(enc, `${sp.side === 'party' ? 'The party is' : 'The enemy is'} caught off guard (+${sp.ticks != null ? sp.ticks : K().surprise} ticks).`, 'round');
     log(enc, 'The fight begins.', 'round');
     await auras(enc, chars, roller);
     enc.phase = 'acting';

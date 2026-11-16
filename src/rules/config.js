@@ -116,7 +116,7 @@
       die: 10,
       rebound: { block: 1 / 3, parry: 1 / 6, offParry: 1 / 6, perRank: 1 / 6 },
       command: 3, // Command (a feat): ticks a friend's clock comes sooner
-      moveMax: 12, // a move is at most the squares this many ticks carry
+      moveMax: 14, // a move is at most the squares this many ticks carry (a beat's walk)
       veryLight: 2.5, // ticks off a very light weapon's thrust or swing (hand-set table weapons only: physics has speed)
     },
     minStrikeStamina: 0, // floor for weapon strikes' stamina

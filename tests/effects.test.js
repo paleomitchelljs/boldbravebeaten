@@ -62,10 +62,10 @@ test('lookup: one key adds up over traits, gear, conditions (per magnitude) and 
   c.trinkets = [{ name: 'Ring', effects: { dodge: 1, skills: { evasion: 2 } } }];
   assert.equal(Effects.sum(c, 'dodge'), 2, 'trait + ring');
   assert.equal(C.skill(c, 'evasion'), 2, 'a ring that adds to a skill');
-  const ap = C.apPool(c);
+  const t0 = C.actionCost(c, 'parry').ticks;
   Conditions.add(c, 'slowed', { beats: 2, mag: 2 });
-  assert.equal(Effects.sum(c, 'ap'), 2 * CONFIG.conditions.slowed.ap, 'a condition counts per magnitude');
-  assert.ok(C.apPool(c) < ap);
+  assert.equal(Effects.sum(c, 'ticks'), 2 * CONFIG.conditions.slowed.ticks, 'a condition counts per magnitude');
+  assert.ok(C.actionCost(c, 'parry').ticks > t0);
   assert.equal(Effects.has(c, 'noMove'), false);
   Conditions.add(c, 'rooted', { beats: 2 });
   assert.equal(Effects.has(c, 'noMove'), true);

@@ -98,12 +98,12 @@ test('shock: a severity-3 wound downs unless d10 + CON reaches wounds.shock; a h
 test('places: an arm wound weakens blows and makes them dearer and drops what is held at 3; a leg wound slows, fells and keeps the body down; a head wound stuns', async () => {
   const a = armed('longsword');
   const swing0 = opt(a, 'swing');
-  const parry0 = C.actionCost(a, 'parry').ap;
+  const parry0 = C.actionCost(a, 'parry').ticks;
   a.base.WIL = 1; // no grit: every severity tells
   a.wounds.push(wound('arms', 2));
   const swing2 = opt(a, 'swing');
   assert.strictEqual(swing2.damage[C.mainIndex(swing2.damage)], swing0.damage[C.mainIndex(swing0.damage)] - W.places.arms.damage[1]);
-  assert.ok(swing2.ap > swing0.ap && C.actionCost(a, 'parry').ap > parry0, 'dearer');
+  assert.ok(swing2.ticks > swing0.ticks && C.actionCost(a, 'parry').ticks > parry0, 'dearer');
   // Pain: WIL acts through floor(WIL / pain) of a place's severity.
   a.base.WIL = 2 * W.pain;
   assert.strictEqual(C.grit(a), 2);
@@ -111,9 +111,9 @@ test('places: an arm wound weakens blows and makes them dearer and drops what is
   // A leg: fewer squares, a worse dodge.
   const r = body();
   r.base.WIL = 1;
-  const sq = C.squaresPerAP(r);
+  const sq = C.pace(r);
   r.wounds.push(wound('legs', 1));
-  assert.strictEqual(C.squaresPerAP(r), Math.max(1, sq - W.places.legs.move[0]));
+  assert.strictEqual(C.pace(r), Math.max(1, sq - W.places.legs.move[0]));
   // Laid on by a blow: severity 3 at the arms drops the weapon; at the legs, down and can't stand.
   const t = armed('longsword');
   t.side = 'enemy';
@@ -185,17 +185,18 @@ test('healing: a bandage binds every wound and Medicine mends the worst a step; 
   C.addWound(t, wound('arms', 2, { bleed: 2 }), null);
   assert.ok(C.isDown(t));
   a.inventory.bandages = 1;
-  const chars = { [a.id]: a, [t.id]: t };
-  const enc = Combat.createEncounter('t', [a.id, t.id], chars, 6, 6);
-  enc.pos[a.id] = { x: 1, y: 1 }; enc.pos[t.id] = { x: 2, y: 1 };
+  const foe = body(); foe.side = 'enemy'; // a foe far off: the fight goes on
+  const chars = { [a.id]: a, [t.id]: t, [foe.id]: foe };
+  const enc = Combat.createEncounter('t', [a.id, t.id, foe.id], chars, 6, 6);
+  enc.pos[a.id] = { x: 1, y: 1 }; enc.pos[t.id] = { x: 2, y: 1 }; enc.pos[foe.id] = { x: 5, y: 5 };
   t.side = 'party';
   await Clock.start(enc, chars, fixed([], 6));
-  enc.turn = enc.order.indexOf(a.id); enc.phase = 'turn';
+  Clock.actNow(enc, a.id);
   const la = Combat.legalActions(enc, chars, a.id);
   assert.ok(la.other.some((o) => o.type === 'bandage' && o.targets.some((x) => x.id === t.id)));
   await Clock.act(enc, chars, { actor: a.id, type: 'bandage', target: t.id }, { roller: fixed([], 10) });
   assert.strictEqual(C.bleeding(t), 0);
-  assert.ok(C.wounds(t).some((w) => w.place === 'arms' && w.sev === 1), 'a step better');
+  assert.ok(C.wounds(t).some((w) => w.place === 'arms' && w.sev === 1), 'a step better: ' + enc.log.map((l) => l.text).join(' / '));
   assert.ok(C.isActive(t), 'under the boxes: they come to');
   // Give + Life mends condMag steps and binds.
   const u = body();
@@ -215,7 +216,7 @@ test('harm over time adds to one wound of its kind; a joint lock wrenches the ar
   // A condition's dot is harm of its kind.
   const u = body();
   B.Conditions.add(u, 'burning', { beats: 2, mag: 1 });
-  B.Conditions.endRound(u);
+  B.Conditions.beat(u);
   assert.ok(C.wounds(u).some((w) => w.kind === 'fire' && w.sev >= 1));
 });
 

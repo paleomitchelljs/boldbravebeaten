@@ -198,7 +198,7 @@
     partyIds.forEach((id, i) => { enc.pos[id] = partySq[i] || { x: 0, y: 0 }; });
   }
 
-  // opts: { surprise: the side caught off guard ('party' | 'enemy': it starts CONFIG.clock.surprise ticks late), ctx: {x, y}, canFlee (false: no getting away) }
+  // opts: { surprise: the side caught off guard ('party' | 'enemy': it starts late on the clock), factor (ambushFactor), ctx: {x, y}, canFlee (false: no getting away) }
   function start(world, spec, opts) {
     opts = opts || {};
     const foes = buildFoes(spec);
@@ -225,7 +225,9 @@
       placeOnArena(enc, arena, members.map((c) => c.id), foes.filter((f) => !joinIds.has(f.id)).map((f) => f.id), joined);
       layTraps(world, enc, arena, foes);
     }
-    if (opts.surprise) enc.surprise = { side: opts.surprise };
+    // The side caught off guard starts late: CONFIG.clock.surprise ticks, more against an ambusher (factor: what it
+    // keeps, ambushFactor: 0.5 → ×1, 0.25 → ×1.5, 0 → ×2).
+    if (opts.surprise) enc.surprise = { side: opts.surprise, ticks: Math.round(G.CONFIG.clock.surprise * (2 - 2 * (opts.factor == null ? 0.5 : opts.factor))) };
     world.battle = { enc, foes: foeMap, allies, spec, joined: joined.map((j) => ({ x: j.x, y: j.y, spec: j.spec })), arena: arena ? { place: arena.place, ox: arena.ox, oy: arena.oy, w: arena.w, h: arena.h } : null, ctx: opts.ctx || null, canFlee: opts.canFlee !== false, startedDay: world.day };
     world.stats.fights++;
     for (const line of monsterLore(world, foes)) Combat.log(enc, line, 'pass');
