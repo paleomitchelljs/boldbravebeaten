@@ -69,7 +69,7 @@
             })),
           CONFIG.weaponModel === 'physical' ? h('p', { class: 'small muted' }, 'Worked out from each weapon\'s mass, length and point, edge or head. Vital: a blow that reaches the body rolls a d10; at or under the number it is a vital wound (armor lowers the odds). STR ×: how much of the STR bonus the blow gets.') : null),
         h('section', { class: 'panel' }, h('h2', null, 'Shields'),
-          table(['Shield', 'Block AP', 'Break above', 'Durability'], Object.values(D.SHIELDS).map((s) => [s.name, s.blockAP, s.threshold, s.durability])),
+          table(['Shield', 'Block ticks', 'Break above', 'Durability'], Object.values(D.SHIELDS).map((s) => [s.name, s.blockTicks, s.threshold, s.durability])),
           h('p', { class: 'small muted' }, 'Material multiplies threshold and durability: wood ×1.0, hide-faced ×1.2, iron-rimmed ×1.5, steel ×2.0, adamant ×3.5. Craftsmanship multiplies durability and the break threshold (poor ×0.7, masterwork ×1.4); origin protection multiplies the threshold.'))),
       h('section', { class: 'panel' },
         h('div', { class: 'panel-head' }, h('h2', null, 'Placeholder rulings'), h('span', { class: 'small muted' }, 'Edit in src/rules/config.js')),

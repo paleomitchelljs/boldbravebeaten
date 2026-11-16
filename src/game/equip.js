@@ -190,7 +190,7 @@
     }
     if (item.kind === 'shield') {
       const s = Items.shieldStats(item);
-      return `block ${s.blockAP} AP · holds ${s.threshold} · dur ${item.durability}/${s.maxDurability}`;
+      return `block ${s.blockTicks} ticks · holds ${s.threshold} · dur ${item.durability}/${s.maxDurability}`;
     }
     if (item.kind === 'weapon') {
       const d = D.WEAPONS[item.type];

@@ -234,7 +234,7 @@
     const m = SHIELD_MATERIALS[s.material].mult;
     const c = craftOf(s);
     return {
-      blockAP: base.blockAP,
+      blockTicks: base.blockTicks,
       threshold: Math.round(base.threshold * m * tagMult(s, 'protect') * (c.break != null ? c.break : 1)),
       maxDurability: Math.round(base.durability * m * tagMult(s, 'durability') * (c.durability != null ? c.durability : 1)),
       unbreakable: !!c.unbreakable,

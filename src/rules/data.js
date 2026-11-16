@@ -10,7 +10,7 @@
   // armor.yaml: mit {P,S,B}, spd, dex, stamina, regen, standUp, weight, durability, material(s), pierce
   // {resist, gap}, rarity, natural, recoil.
   const ARMOR = {};
-  // shields.yaml: blockAP, threshold, durability, rarity (types); mult, rarity (materials).
+  // shields.yaml: blockTicks, threshold, durability, rarity (types); mult, rarity (materials).
   const SHIELDS = {};
   const SHIELD_MATERIALS = {};
   // The tags every weapon, armor piece and shield carries besides its type:
