@@ -59,11 +59,12 @@ Read `HANDOFF.md` first: it is the to-do list. **After every push, update it** (
 
 | Term | Meaning |
 |---|---|
-| Round | Starts with everyone rolling initiative. Ends when everyone has had their turn; unspent AP is lost. |
-| Turn | One character's go in initiative order: as many actions as their AP pays for, each resolving as it is taken. |
-| Reaction | Out of turn, paid from the same AP pool: a block, parry or dodge when a blow comes; an opportunity strike at a foe entering your reach, leaving it, or taking a second step within it. |
+| Tick | The unit of time in a fight. Every fighter has a clock in ticks; whoever's clock is lowest acts next (ties: SPD, then a d10 rolled once). |
+| Action | One thing done when your clock comes up; its ticks go on your clock (a one-handed swing is 10). Its *lead* passes before it takes effect (others act in between; you are committed), its recovery after. Waiting is an action too. |
+| Reaction | Out of turn, its ticks on the reactor's clock: a block, parry or dodge when a blow comes; an opportunity strike at a foe entering your reach, leaving it, or taking a second step within it; a riposte, a cover. More than `overreach` ticks ahead of now, you can't react. |
+| Beat | Every `beat` ticks (CONFIG.clock), kept by the timeline: bleeding, regeneration, conditions' durations, terrain, holds, auras, groups joining. |
 
-There are no passes (removed at the user's request): AP kept back from your turn is what you react with. In the
+There are no rounds, turns or AP (docs/OVERHAUL.md step F; the user has yet to confirm these four words). In the
 exploring and social layers the words are: *step* (one square), *move* (a social action, costing patience), *topic*
 (something you can ask).
 
