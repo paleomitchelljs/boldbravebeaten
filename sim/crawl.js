@@ -103,7 +103,7 @@ async function through(world, tally, P) {
     if (!t) return true;
     const dead0 = World.party(world).filter((c) => c.status.dead).length;
     Battle.start(world, Object.assign({ name: t.def.label }, Explore.encounterSpec(world, t.def)), { ctx: { x: t.x, y: t.y, back: true } });
-    const enc = tally.metrics ? await watched(world, tally.metrics, 27) : await Auto.battle(world, { maxBeats: 27 });
+    const enc = tally.metrics ? await watched(world, tally.metrics, 40) : await Auto.battle(world, { maxBeats: 40 });
     const f = tally.fights[k] || (tally.fights[k] = { n: 0, won: 0, foes: 0, beats: 0, dead: 0 });
     f.n++; f.foes += Object.keys(world.battle.foes).length; f.beats += Math.max(1, Math.ceil(enc.now / B.CONFIG.clock.beat));
     for (const l of enc.log) {

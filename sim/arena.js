@@ -115,7 +115,7 @@ if (arg('keys', null)) { const only = arg('keys').split(','); for (const k of on
 // ---- Event counting from the fight log ---------------------------------------
 const EVENTS = {
   // Tested against the text after the acting character's name.
-  windUps: /^ winds up /, windLost: /^ loses the wind-up|^ lost the wind-up/, powerHits: /^'s Power swing .* hits /,
+  windUps: /^ begins .*: it lands at tick/, windLost: /^'s .* is spoiled \(/, powerHits: /^'s Power swing .* hits /,
   shots: /^'s Shoot \(arrow\) /, shotHits: /^'s Shoot \(arrow\) hits /,
   spells: /^'s (Attack|Launch) \+ /, spellHits: /^'s (Attack|Launch) \+ .* hits /,
   noPower: /^ can't draw enough power/,
@@ -164,7 +164,7 @@ if (require.main !== module) {
           const seed = 7000 + f + 97 * i + 13 * j;
           const a = makeCombatant(...ka.split('/'), 'A');
           const b = makeCombatant(...kb.split('/'), 'B');
-          const r = await L.fight({ A: a, B: b, grid: { w: arena.w, h: arena.h }, seed, maxBeats: 20, keepLog: true });
+          const r = await L.fight({ A: a, B: b, grid: { w: arena.w, h: arena.h }, seed, maxBeats: 30, keepLog: true });
           agg.n++;
           if (r.winner === 'A') agg.winA++;
           else if (r.winner === 'B') agg.winB++;
@@ -241,9 +241,9 @@ if (require.main !== module) {
     const c = makeCombatant(a, s, 'A');
     return {
       key: k, armor: a, strategy: s, label: `${ARMOR[a].label} ${STRATEGY[s].label}`,
-      maxStamina: C.maxStamina(c), ap: C.apPool(c), con: C.attr(c, 'CON'), regen: C.regen(c), sp: L.B.Magic.maxSP(c),
+      maxStamina: C.maxStamina(c), con: C.attr(c, 'CON'), regen: C.regen(c), sp: L.B.Magic.maxSP(c),
       feats: Object.entries(c.feats).map(([f, r]) => (r > 1 ? `${L.B.DATA.FEATS[f].name} ${r}` : L.B.DATA.FEATS[f].name)),
-      attacks: C.attackOptions(c).filter((o) => !o.unarmed).map((o) => ({ label: o.label, ap: o.ap, stamina: o.stamina, range: [o.minRange, o.maxRange], damage: o.damage, windUp: !!o.windUp, sp: o.spCost || 0 })),
+      attacks: C.attackOptions(c).filter((o) => !o.unarmed).map((o) => ({ label: o.label, ticks: o.ticks, lead: o.lead, stamina: o.stamina, range: [o.minRange, o.maxRange], damage: o.damage, windUp: !!o.windUp, sp: o.spCost || 0 })),
     };
   });
 

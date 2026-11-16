@@ -326,6 +326,7 @@ function newTempo() {
     reachTime: { all: [0, 0], heroes: [0, 0], foes: [0, 0] }, // [ticks of decisions with a harmful blow in reach, of them waited]
     landed: 0, heavy: 0, heavyBy: {},
     committed: { started: 0, landed: 0, spoiled: 0, exposed: 0 },
+    waitWhy: {}, // the AI's reason for each wait taken with a harmful blow in reach (deliberate waits), by side
     mirror: {}, // a fighter's kind (its name) → [fights with a winner, of them won by the side that landed first] (duels --mirror)
   };
 }
@@ -407,7 +408,10 @@ function tempoWatch(R, enc, chars, heroes) {
         const a = chars[d.actor], t = chars[d.target];
         if (!a) continue;
         if (d.actor === me && !d.reaction && !d.opportunity) {
-          if (d.type === 'wait') waitStarts[me] = { at: d.tick, pending };
+          if (d.type === 'wait') {
+            waitStarts[me] = { at: d.tick, pending };
+            if (pending && pending.inReach.harm) { const k = `${heroes.has(me) ? 'heroes' : 'foes'}: ${d.why || (d.idle ? 'refused' : 'chosen')}`; R.waitWhy[k] = (R.waitWhy[k] || 0) + 1; }
+          }
           else book(me, false, d.ticks || 0);
           if (d.lead > 0) { R.committed.started++; if (d.option && d.option.exposes) R.committed.exposed++; }
         }
@@ -466,6 +470,7 @@ function tempoSummary(R) {
     heavy: Object.assign(propSE(R.heavy, R.landed), { by: Object.assign({}, R.heavyBy) }),
     committed: Object.assign({}, R.committed, { spoiledShare: R.committed.started ? R.committed.spoiled / R.committed.started : null }),
     mirror: Object.entries(R.mirror).map(([k, [n, w]]) => Object.assign({ kind: k }, propSE(w, n))),
+    waitWhy: Object.assign({}, R.waitWhy),
   };
 }
 
@@ -480,6 +485,7 @@ function tempoReport(R, I) {
     t.mirror.length ? `${I}    mirrors, first blow landed won: ` + t.mirror.map((m) => `${m.kind} ${pe(m)}`).join('; ') : null,
     `${I}    waiting: decisions with a foe in reach that were a wait ${pe(t.waiting.all)}` + (R.turns.heroes[0] && R.turns.foes[0] ? `; heroes ${pe(t.waiting.heroes)}, foes ${pe(t.waiting.foes)}` : ''),
     `${I}    waiting with a harmful blow in reach ${pe(t.waitingHarm.all)}` + (R.turnsHarm.heroes[0] && R.turnsHarm.foes[0] ? `; heroes ${pe(t.waitingHarm.heroes)}, foes ${pe(t.waitingHarm.foes)}` : '') + `; in time ${wt('all')} of ${t.waitingTime.all.ticks} ticks (heroes ${wt('heroes')}, foes ${wt('foes')})`,
+    Object.keys(t.waitWhy).length ? `${I}    waits with a harmful blow in reach, why: ` + Object.entries(t.waitWhy).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v}`).join('; ') : null,
     `${I}    time (${t.unit}): ` + ['all', 'heroes', 'foes'].map(tl).filter(Boolean).join('; '),
     `${I}    heavy blows ${pe(t.heavy)} of blows landed (${Object.entries(t.heavy.by).map(([k, v]) => k + ' ' + v).join(', ') || 'none'}); actions with a lead started ${t.committed.started} (exposed ${t.committed.exposed}), landed ${t.committed.landed}, spoiled ${t.committed.spoiled} (${pc(t.committed.spoiledShare)})`,
   ].filter(Boolean);

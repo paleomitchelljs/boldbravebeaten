@@ -120,7 +120,7 @@
         c.stamina = C.maxStamina(c);
       }
       G.Battle.start(w, spec);
-      const enc = await G.Auto.battle(w, { maxBeats: 27 });
+      const enc = await G.Auto.battle(w, { maxBeats: 40 });
       results.n++;
       results.beats += enc.round;
       results[enc.winner === 'party' ? 'won' : enc.winner === 'enemy' ? 'lost' : 'draw']++;

@@ -51,7 +51,7 @@ const ENCOUNTERS = arg('only', null) ? arg('only', '').split(',') : [
         for (let i = 0; i < N; i++) {
           const party = P.keys.map((k, j) => { const c = makeCombatant(...k.split('/'), 'P' + j); c.role = ROLE(k); return c; });
           const foes = Enemies.makeMonster(ek);
-          const r = await L.fight({ A: party, B: foes, grid: { w: A.w, h: A.h }, seed: seed++, maxBeats: 20 });
+          const r = await L.fight({ A: party, B: foes, grid: { w: A.w, h: A.h }, seed: seed++, maxBeats: 30 });
           agg.n++;
           if (r.winner === 'A') agg.partyWins++;
           agg.beats += r.beats;

@@ -56,7 +56,7 @@
   // lead: the share of the cost before the action takes effect (the rest is recovery after). Quick things are all
   // recovery: they happen now. Heavy ones commit the fighter for their lead, and others act in between.
   const MOTIONS = {
-    thrust: { name: 'Thrust', ticks: 5, lead: 0.2, stamina: 3, faces: ['point', 'butt'] },
+    thrust: { name: 'Thrust', ticks: 5, lead: 0, stamina: 3, faces: ['point', 'butt'] },
     swing: { name: 'Swing', ticks: 10, lead: 0.3, stamina: 6, faces: ['edge', 'head', 'beak', 'hilt'] },
     twoHanded: { name: 'Two-handed swing', ticks: 15, lead: 0.4, stamina: 9, faces: ['edge', 'head', 'beak', 'hilt'], twoHands: true },
     power: { name: 'Power swing', ticks: 15, lead: 0.5, stamina: 12, faces: ['edge', 'head', 'beak'], requiresFeat: 'power_swing' },
@@ -67,7 +67,7 @@
   // taken when the blow comes, and their ticks go on the reactor's clock.
   const ACTIONS = {
     punch: { name: 'Punch', ticks: 2.5, stamina: 0, damage: [0, 0, 1] },
-    kick: { name: 'Kick', ticks: 5, lead: 0.2, stamina: 3, damage: [0, 0, 2] },
+    kick: { name: 'Kick', ticks: 5, lead: 0, stamina: 3, damage: [0, 0, 2] },
     shieldBash: { name: 'Shield bash', ticks: 5, lead: 0.2, stamina: 3, damage: [0, 0, 3] },
     parry: { name: 'Parry', ticks: 5, stamina: 3 },
     // PROVISIONAL: a parry with the off-hand parrying dagger; meets thrusts only.
@@ -82,7 +82,7 @@
     pickUp: { name: 'Pick up weapon', ticks: 5, lead: 0.5, stamina: 3 },
     trip: { name: 'Trip', ticks: 10, lead: 0.3, stamina: 6 },
     disarm: { name: 'Disarm', ticks: 10, lead: 0.3, stamina: 6 },
-    shove: { name: 'Shove', ticks: 5, lead: 0.2, stamina: 3 },
+    shove: { name: 'Shove', ticks: 5, lead: 0, stamina: 3 },
     // The grappling ladder (PROVISIONAL; stamina in CONFIG.grappling): free → clinch → hold → pin.
     clinch: { name: 'Clinch', ticks: 5, lead: 0.2, stamina: 9 },
     grapple: { name: 'Grapple', ticks: 10, lead: 0.3, stamina: 15 },

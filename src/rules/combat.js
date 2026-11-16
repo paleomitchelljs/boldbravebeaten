@@ -596,7 +596,7 @@
     if (enc.clock[id] <= enc.now) enc.clock[id] = enc.now + 1;
     if (w.until == null && w.next) enc.clock[id] = Math.max(enc.clock[id], enc.now + 1);
     if (w.until != null && w.until <= enc.now) w.until = enc.now + 1;
-    enc.decls.push({ actor: id, type: 'wait', n: ++enc.seq, tick: enc.now, beat: enc.beat, done: true, wait: w, idle: !!d.idle, for: w.for || null, ticks: w.until != null ? w.until - enc.now : null });
+    enc.decls.push({ actor: id, type: 'wait', why: w.why, n: ++enc.seq, tick: enc.now, beat: enc.beat, done: true, wait: w, idle: !!d.idle, for: w.for || null, ticks: w.until != null ? w.until - enc.now : null });
   }
 
   // One entry point for a decision. An action that can't be taken returns the reason and the fighter waits for the

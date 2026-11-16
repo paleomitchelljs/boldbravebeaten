@@ -94,7 +94,11 @@
     //             cover, riposte or opportunity strike adds its ticks to the reactor's clock
     //   beat      everything that happens "each round" happens each beat, a fixed number of ticks kept by the
     //             timeline (Combat.beat): bleeding, regeneration, conditions' durations (in beats), terrain, holds,
-    //             auras, groups joining, the getting-away check
+    //             auras, groups joining, the getting-away check. TUNED (step F): 14, started at 20 as the plan says.
+    //             A round's AP was about 14 ticks of actions (5.5 AP at 2.5 ticks an AP), so 14 keeps every per-round
+    //             number (regeneration, bleeding, a condition's length) at the rate per action it was tuned at; at 20
+    //             heroes ran out of breath and waited a third of their time in reach of a foe, and the court was
+    //             cleared 3 times in 10 against 6 (docs/overhaul/F-report.md).
     //   surprise  a side caught off guard starts this many ticks late
     //   die       the tie-break die, rolled once at the start
     //   rebound   a blow blocked or parried costs the attacker this share of its ticks (block, parry; Beat adds
@@ -107,7 +111,7 @@
       min: 1,
       exposes: { motions: ['power'], bows: true, strongSpells: true, guards: ['block', 'parry'] },
       overreach: 10,
-      beat: 20,
+      beat: 14,
       surprise: 10,
       die: 10,
       rebound: { block: 1 / 3, parry: 1 / 6, offParry: 1 / 6, perRank: 1 / 6 },

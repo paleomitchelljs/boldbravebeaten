@@ -76,7 +76,7 @@ const EVENTS = {
         for (let i = 0; i < N; i++) {
           const fighter = makeCombatant(...fk.split('/'), 'A');
           const mons = Enemies.makeMonster(mk);
-          const r = await L.fight({ A: fighter, B: mons, grid: { w: ARENAS[ar].w, h: ARENAS[ar].h }, seed: seed++, keepLog: true, maxBeats: 20 });
+          const r = await L.fight({ A: fighter, B: mons, grid: { w: ARENAS[ar].w, h: ARENAS[ar].h }, seed: seed++, keepLog: true, maxBeats: 30 });
           agg.n++;
           if (r.winner === 'B') agg.monsterWins++;
           else if (r.winner === 'A') agg.fighterWins++;
@@ -99,7 +99,7 @@ const EVENTS = {
         let w = 0, dead = 0, rounds = 0;
         for (let i = 0; i < PARTY_N; i++) {
           const party = P.keys.map((k, j) => makeCombatant(...k.split('/'), 'P' + j));
-          const r = await L.fight({ A: party, B: Enemies.makeMonster(mk), grid: { w: ARENAS[ar].w, h: ARENAS[ar].h }, seed: seed++, maxBeats: 20 });
+          const r = await L.fight({ A: party, B: Enemies.makeMonster(mk), grid: { w: ARENAS[ar].w, h: ARENAS[ar].h }, seed: seed++, maxBeats: 30 });
           if (r.winner === 'B') w++;
           dead += r.deadA; rounds += r.beats;
         }

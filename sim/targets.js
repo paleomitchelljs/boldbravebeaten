@@ -4,7 +4,7 @@
  */
 module.exports = {
   // Philosophy: "Fights between rough equals end quickly at every level."
-  length: { medianRoundsMax: 4 },
+  length: { medianBeatsMax: 4 },
 
   // Philosophy: "Heavy armor and a big weapon in a confined space beat an
   // unarmored opponent across a large level gap." Graded for a level-1 plate
@@ -13,10 +13,10 @@ module.exports = {
 
   // Specifics: "Does 2v1 end quickly for every build, including the armored heavy?"
   // Outline: numbers counter the armored heavy.
-  twoOnOne: { pairMinWin: 0.7, medianRoundsMax: 5 },
+  twoOnOne: { pairMinWin: 0.7, medianBeatsMax: 5 },
 
   // Outline stamina curve, in rounds of all-out attacking with nobody hitting back.
-  stamina: { earlyMin: 2, earlyMax: 8, midMin: 15, indefinite: 30 },
+  stamina: { earlyMin: 2, earlyMax: 8, midMin: 15, indefinite: 30 }, // in beats since step F
 
   // Specifics: "Is any weapon, armor, or shield dominant?"
   dominance: { maxAvgWin: 0.7, maxWeaponAvgWin: 0.7 },

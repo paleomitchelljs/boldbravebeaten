@@ -1223,7 +1223,7 @@
     // 0. Playing dead (Feign Death): lie still while a friend fights on; get up when none does (or nobody is near).
     if (G.Effects.has(c, 'feign')) {
       const friendUp = enc.ids.some((o) => o !== id && chars[o] && chars[o].side === c.side && C.isActive(chars[o]) && !G.Effects.has(chars[o], 'feign'));
-      if (friendUp) return wait;
+      if (friendUp) return Object.assign({ why: 'feigning' }, wait);
     }
 
     // 1. Get up; tear free of webs.
@@ -1241,7 +1241,7 @@
       const partner = chars[link.partner];
       if (link.role === 'held') {
         const br = gm('break');
-        return br ? { actor: id, type: 'break', target: link.partner } : wait;
+        return br ? { actor: id, type: 'break', target: link.partner } : Object.assign({ why: 'held' }, wait);
       }
       if (link.role === 'holder') {
         if (P.grappler && link.level === 'hold' && gm('pin')) return { actor: id, type: 'pin', target: link.partner };
@@ -1421,7 +1421,7 @@
     const featBest = featChoice(enc, chars, id, la, foes);
     if (featBest && featBest.v > (best ? best.v : 0) && featBest.v >= (castBest ? castBest.v : 0)) return featBest.decl;
     if (castBest && castBest.v > (best ? best.v : 0)) return castBest.decl;
-    if (winded) return wait;
+    if (winded) return Object.assign({ why: 'winded' }, wait);
     // Step to a better distance when it is clearly better than fighting from here.
     const hereNet = (best ? best.v : 0) - RISK * foeRate(target, c, near.d);
     if (la.move && !rangedLoadout && pref.d !== near.d && pref.net > hereNet + Math.max(1, Math.abs(hereNet)) + leaveCost(enc, chars, id)) {
@@ -1433,7 +1433,7 @@
     // 8b. A live trap of my side's lies between me and the foe, and the foe can't see it: wait for them to come over it.
     if (enc.tiles && !rangedLoadout && near.d >= 2 && near.d <= 4 && enc.pos[near.id]) {
       const bait = G.Terrain.between(enc.pos[id], enc.pos[near.id]).some((q) => G.Terrain.at(enc, q.x, q.y).some((f) => (G.CONFIG.terrain[f.kind] || {}).trap && !f.sprung && G.Terrain.visible(f, c.side) && !G.Terrain.visible(f, target.side)));
-      if (bait) return wait;
+      if (bait) return Object.assign({ why: 'trap' }, wait);
     }
 
     // 9. Move toward the distance this loadout likes best. A blade's reach blocked from here (a pillar's corner, a
@@ -1442,7 +1442,7 @@
     const goal = lineBlocked ? 1 : pref.rate > 0 ? pref.d : 1;
     const mv = planMove(enc, chars, id, la, near.id, goal, foes, rangedLoadout && P.kite ? threatReach(chars, foes) : 0);
     if (mv) return mv;
-    return wait;
+    return Object.assign({ why: 'nothing better' }, wait);
   }
 
   G.AI = { choose, react, bareAfter, timing, cannotReact, hitValue, perceivedThreat, preferredDistance, bestAim, finishWeight, conditionWorth, immuneTo, sweepWorth, whirlwindWorth, DEFAULTS };

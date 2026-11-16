@@ -11,7 +11,7 @@
   // maxBeats beats have passed.
   async function play(enc, chars, io, maxBeats) {
     let guard = 20000;
-    while (enc.phase === 'act' && enc.beat < (maxBeats || 20) && guard-- > 0) {
+    while (enc.phase === 'act' && enc.beat < (maxBeats || 30) && guard-- > 0) {
       const id = Combat.currentActor(enc);
       await Combat.submit(enc, chars, G.AI.choose(enc, chars, id, () => R.rng(), chars[id].policy), io);
     }
@@ -25,7 +25,7 @@
     const chars = G.Battle.table(world).characters;
     const io = { roller: G.Town.autoRoller, onBeat: G.Battle.onBeat(world) };
     if (b.enc.phase === 'setup') await Combat.begin(b.enc, chars, io.roller, io);
-    await play(b.enc, chars, io, opts.maxBeats || 20);
+    await play(b.enc, chars, io, opts.maxBeats || 30);
     return b.enc;
   }
 

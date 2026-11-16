@@ -61,7 +61,7 @@ const make = (k) => (/^[A-Z]/.test(k) ? hero(k) : monster(k));
       const A = make(a)(i), Bc = make(b)(i);
       const fresh = { [A.id]: C.maxStamina(A) || 1, [Bc.id]: C.maxStamina(Bc) || 1 };
       const r = await L.fight({
-        A: [A], B: [Bc], grid: { w: 12, h: 6 }, seed: SEED + i, maxBeats: 20,
+        A: [A], B: [Bc], grid: { w: 12, h: 6 }, seed: SEED + i, maxBeats: 30,
         watch: M && ((enc) => {
           const heroes = [[A, a], [Bc, b]].filter(([, k]) => /^[A-Z]/.test(k)).map(([c]) => c.id);
           const w1 = M.watch(enc, { [A.id]: A, [Bc.id]: Bc }, heroes), w2 = total.watch(enc, { [A.id]: A, [Bc.id]: Bc }, heroes);

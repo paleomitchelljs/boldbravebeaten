@@ -10,8 +10,8 @@ CONFIG.weariness = { perBeat: 0, perStamina: 1, perHour: 0, cap: 100 };
     for (let i = 0; i < 4; i++) {
       const w = World.create(World.presetParty(), { log: false });
       Battle.start(w, e);
-      const enc = await Auto.battle(w, { maxBeats: 27 });
-      for (const c of World.party(w)) rows.push({ k: `${pid}/${eid}`, name: c.name, r: enc.round, spent: c.weary, fresh: C.freshStamina(c) });
+      const enc = await Auto.battle(w, { maxBeats: 40 });
+      for (const c of World.party(w)) rows.push({ k: `${pid}/${eid}`, name: c.name, r: Math.ceil(enc.now / B.CONFIG.clock.beat), spent: c.weary, fresh: C.freshStamina(c) });
     }
   }
   const by = {};

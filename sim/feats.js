@@ -145,7 +145,7 @@ async function duels(env, name, level, change) {
       const A = makeHero(env, name, level, change);
       const Bc = f.hero ? makeHero(env, f.hero, level, null) : B.Enemies.makeMonster(f.monster, {})[0];
       const r = await L.fight({
-        A: [A], B: [Bc], grid: { w: 12, h: 6 }, seed: SEED + k, maxBeats: 20,
+        A: [A], B: [Bc], grid: { w: 12, h: 6 }, seed: SEED + k, maxBeats: 30,
         watch: (enc) => M.watch(enc, { [A.id]: A, [Bc.id]: Bc }, [A.id]),
       });
       wins.push(r.winner === 'A' ? 1 : r.winner === 'B' ? 0 : 0.5);
@@ -180,7 +180,7 @@ async function crawl(env, place, partyNames, name, level, change) {
       if (!t) break;
       const before = World.party(w).filter((c) => c.status.dead).length;
       Battle.start(w, Object.assign({ name: t.def.label }, Explore.encounterSpec(w, t.def)), { ctx: { x: t.x, y: t.y, back: true } });
-      await Auto.battle(w, { maxBeats: 27 });
+      await Auto.battle(w, { maxBeats: 40 });
       const out = Battle.finish(w);
       nf++; nd += World.party(w).filter((c) => c.status.dead).length - before;
       if (out.result !== 'won' || !World.living(w).length) { ok = false; break; }

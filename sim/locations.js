@@ -45,7 +45,7 @@ const roller = async (req) => Array.from({ length: req.count }, () => Rand.d(req
   console.log(`Every blow lands, ${N} blows each, STR ${STR}. Wound severity / down % / stamina per blow; vital %.\n`);
   for (const [wt, motion] of WEAPONS) {
     const a = attacker(wt);
-    const opt = C.attackOptions(a).find((o) => (motion ? o.motion === motion : o.weaponId) && !o.power && !o.windUp && !o.halfSword);
+    const opt = C.attackOptions(a).find((o) => (motion ? o.motion === motion : o.weaponId) && !o.power && !o.exposes && !o.halfSword);
     console.log(`${opt.label} — ${Items.itemName(a.weapons[0])} [${opt.damage.join('/')}]`);
     for (const [name, make] of Object.entries(HARNESS)) {
       let sev = 0, down = 0, st = 0, vital = 0, carried = 0;

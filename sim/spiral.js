@@ -51,7 +51,7 @@ const hero = (name) => {
           if (k > 0) T.wounds.push({ place: at, sev: k, kind: 'cut', bleed: 0, pts: CONFIG.wounds.severity[k - 1] });
           C.updateCondition(T);
           left = C.describeWounds(T).map((w) => w.does).join('; ') || 'nothing';
-          const r = await L.fight({ A: [A], B: [T], grid: { w: 12, h: 6 }, seed: SEED + i, maxBeats: 20 });
+          const r = await L.fight({ A: [A], B: [T], grid: { w: 12, h: 6 }, seed: SEED + i, maxBeats: 30 });
           if (r.winner === 'B') won++;
           else if (r.winner !== 'A') draws++;
         }

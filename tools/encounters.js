@@ -10,7 +10,7 @@ const N = arg('n', 30), LEVEL = arg('level', 1);
 
 (async () => {
   console.log(`The default party (data/start.yaml presets${LEVEL > 1 ? `, raised to level ${LEVEL}` : ''}), ${N} fights each (fresh and at full strength)\n`);
-  console.log('encounter'.padEnd(34) + 'won   lost  rounds  dead/fight');
+  console.log('encounter'.padEnd(34) + 'won   lost  beats   dead/fight');
   for (const [pid, p] of Object.entries(Content.world.places)) {
     for (const [eid, e] of Object.entries(p.encounters || {})) {
       let won = 0, lost = 0, rounds = 0, dead = 0;
@@ -19,8 +19,8 @@ const N = arg('n', 30), LEVEL = arg('level', 1);
         const w = World.create(World.presetParty(), { log: false });
         if (LEVEL > 1) World.grantXP(w, World.xpFor(LEVEL));
         Battle.start(w, e);
-        const enc = await Auto.battle(w, { maxBeats: 27 });
-        rounds += enc.round;
+        const enc = await Auto.battle(w, { maxBeats: 40 });
+        rounds += Math.ceil(enc.now / B.CONFIG.clock.beat);
         if (enc.winner === 'party') won++; else if (enc.winner === 'enemy') lost++;
         dead += World.party(w).filter((c) => c.status.dead).length;
       }

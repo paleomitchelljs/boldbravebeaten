@@ -19,14 +19,14 @@
  *   hide              every AI decision (both sides': choose and react) is made as if the change were not there; the
  *                     rules apply it. What the change does by itself, with the decisions of the hero as planned.
  *   hideSelf, hideFoes the same, for the hero's own decisions only, or for the foes' only (which side's AI it is)
- *   noBareApproach    the hero never ends a move inside a standing foe's reach without the AP left for a blow at it from
- *                     there; it holds its ground instead (ends its turn, keeping the AP for its defences).
+ *   noBareApproach    the hero never ends a move inside a standing foe's reach when that foe's clock comes before the
+ *                     hero's after the move (it would strike first); it waits instead.
  *
  * Verdict: "the AI" when Δ pinned − Δ as is is above two standard errors and Δ pinned is not below −2 SE; "the rule"
  * when Δ pinned is below −2 SE and the difference is within 2 SE; "both" when Δ pinned is below −2 SE and the difference
  * above +2 SE; "not this choice" when the difference is below −2 SE (pinning the suspect makes the change worse);
- * "undetermined" otherwise (the evidence doesn't separate them). Also printed: the share of rounds the hero's turn came
- * first, in each arm (today's order is by AP rolled).
+ * "undetermined" otherwise (the evidence doesn't separate them). Also printed: the share of beats in which the hero acted
+ * before the foe, in each arm (the clock's order).
  *
  *   node sim/aicheck.js spd|anticipation|rally [--n 40] [--seed 700] [--jobs 4] [--json file]
  *   node sim/aicheck.js --hero Beren --level 3 --change attr:SPD|skill:anticipation|feat:rally|lab:rally --pin hide|noBareApproach
@@ -116,15 +116,16 @@ function installPin(env, pin, ctx) {
       const c = chars[id];
       if (!ctx.hero() || id !== ctx.hero().id || !d || d.type !== 'move' || !d.to) return d;
       const from = enc.pos[id];
-      const left = Combat.apLeft(enc, id) - C.moveCost(c, Combat.dist(from, d.to));
+      // On the clock: the move's ticks put me past the foe's next action (it acts before I can strike from there).
+      const ready = enc.now + C.moveTicks(c, Combat.steps(from, d.to));
       const reachOf = (f) => Math.max(0, ...C.attackOptions(f).filter((o) => !o.ranged && !o.spell).map((o) => o.maxRange || 1));
       const foes = Object.values(chars).filter((f) => f.side !== c.side && C.isActive(f) && enc.pos[f.id]);
       const into = foes.filter((f) => Combat.dist(d.to, enc.pos[f.id]) <= reachOf(f));
       if (!into.length) return d;
-      const canStrike = into.some((f) => C.attackOptions(c).some((o) => !o.windUp && C.inRange(o, Combat.dist(d.to, enc.pos[f.id])) && o.ap <= left));
+      const canStrike = into.some((f) => Combat.readyAt(enc, f.id) >= ready && C.attackOptions(c).some((o) => C.inRange(o, Combat.dist(d.to, enc.pos[f.id]))));
       if (canStrike) return d;
       ctx.pinned++;
-      return { actor: id, type: 'endTurn' };
+      return { actor: id, type: 'wait' };
     };
   } else if (pin !== 'none') throw new Error('no such pin ' + pin);
 }
@@ -148,12 +149,12 @@ async function runArm(task) {
       ctx.current = A; ctx.plain = plain;
       const Bc = f.hero ? makeHero(env, f.hero, task.level) : B.Enemies.makeMonster(f.monster, {})[0];
       const r = await L.fight({
-        A: [A], B: [Bc], grid: { w: 12, h: 6 }, seed: SEED + k, maxBeats: 20,
+        A: [A], B: [Bc], grid: { w: 12, h: 6 }, seed: SEED + k, maxBeats: 30,
         watch: (enc) => {
-          let round = null;
+          let beat = null;
           return {
-            // Rounds in which the hero's turn came first (today's turn order: AP rolled, most first).
-            before() { if (enc.round !== round) { round = enc.round; out.rounds1++; if (enc.order[0] === A.id) out.first1++; } },
+            // Beats in which the hero's first action came before the foe's (the clock's order).
+            before(id) { if (enc.beat !== beat) { beat = enc.beat; out.rounds1++; if (id === A.id) out.first1++; } },
             poll() { for (const d of enc.decls) if (d.actor === A.id && !d.reaction && !d._seen) { d._seen = true; out.uses[d.type] = (out.uses[d.type] || 0) + 1; } },
             end() {},
           };
@@ -219,10 +220,10 @@ if (process.env.AICHECK_TASK) {
       console.log(`${c.label}: ${c.hero}, level ${c.level}, change ${c.change}; ${N} seeds a foe (${b0 && b0.win ? b0.win.length : '?'} fights an arm), seed ${SEED}`);
       if (!b0 || b0.error || !c0 || c0.error) { console.log('  ERROR ' + ((b0 && b0.error) || (c0 && c0.error))); failed = true; continue; }
       const asis = paired(diff(c0.win, b0.win));
-      const firstShare = (r) => (r.rounds1 ? `${(100 * r.first1 / r.rounds1).toFixed(1)}% of ${r.rounds1} rounds` : '-');
-      console.log(`  base, as is:      win ${(100 * mean(b0.win)).toFixed(1)}%; the hero's turn first in ${firstShare(b0)}`);
-      console.log(`  changed, as is:   win ${(100 * mean(c0.win)).toFixed(1)}%; turn first in ${firstShare(c0)}   Δ as is ${pts(asis)} points; Δ harm taken ${f2(paired(diff(c0.taken, b0.taken)))}, dealt ${f2(paired(diff(c0.dealt, b0.dealt)))} (attribute points + share of stamina)`);
-      const usesLine = (r) => Object.entries(r.uses).filter(([k]) => !['move', 'strike', 'endTurn'].includes(k)).map(([k, v]) => `${k} ${v}`).join(', ');
+      const firstShare = (r) => (r.rounds1 ? `${(100 * r.first1 / r.rounds1).toFixed(1)}% of ${r.rounds1} beats` : '-');
+      console.log(`  base, as is:      win ${(100 * mean(b0.win)).toFixed(1)}%; the hero acted first in ${firstShare(b0)}`);
+      console.log(`  changed, as is:   win ${(100 * mean(c0.win)).toFixed(1)}%; acted first in ${firstShare(c0)}   Δ as is ${pts(asis)} points; Δ harm taken ${f2(paired(diff(c0.taken, b0.taken)))}, dealt ${f2(paired(diff(c0.dealt, b0.dealt)))} (attribute points + share of stamina)`);
+      const usesLine = (r) => Object.entries(r.uses).filter(([k]) => !['move', 'strike', 'wait'].includes(k)).map(([k, v]) => `${k} ${v}`).join(', ');
       console.log(`    the hero's other actions, base: ${usesLine(b0) || 'none'}; changed: ${usesLine(c0) || 'none'}`);
       for (const p of c.pins) {
         const bp = BASE_TOUCHING.has(p) ? get(false, p) : b0, cp = get(true, p);
@@ -231,7 +232,7 @@ if (process.env.AICHECK_TASK) {
         const did = paired(diff(diff(cp.win, bp.win), diff(c0.win, b0.win)));
         console.log(`  pin ${p}:`);
         if (BASE_TOUCHING.has(p)) console.log(`    base, pinned:    win ${(100 * mean(bp.win)).toFixed(1)}% (the pin overrode ${bp.pinned} choices)`);
-        console.log(`    changed, pinned: win ${(100 * mean(cp.win)).toFixed(1)}%${BASE_TOUCHING.has(p) ? ` (overrode ${cp.pinned})` : ''}; turn first in ${firstShare(cp)}   Δ pinned ${pts(pinned)} points; Δ pinned − Δ as is ${pts(did)}`);
+        console.log(`    changed, pinned: win ${(100 * mean(cp.win)).toFixed(1)}%${BASE_TOUCHING.has(p) ? ` (overrode ${cp.pinned})` : ''}; acted first in ${firstShare(cp)}   Δ pinned ${pts(pinned)} points; Δ pinned − Δ as is ${pts(did)}`);
         console.log(`    verdict: ${verdict(asis, pinned, did)}`);
         // By foe: where the change's effect sits.
         const foes = [...new Set(b0.foe)];

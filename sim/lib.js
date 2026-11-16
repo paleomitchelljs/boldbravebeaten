@@ -178,9 +178,8 @@ async function fight(spec) {
   const watcher = spec.watch ? spec.watch(enc, chars) : null;
   const roller = makeRoller(seed * 2654435761 % 4294967296);
   const rng = Enemies.makeRng(seed * 40503 + 17);
-  // A fight that runs past maxBeats beats (CONFIG.clock.beat ticks each) is a timeout. 20 beats is about the 30
-  // rounds the old limit allowed (a round's AP was about 14 ticks of actions).
-  const maxBeats = spec.maxBeats || 20;
+  // A fight that runs past maxBeats beats is a timeout (a beat is about the old round: CONFIG.clock.beat).
+  const maxBeats = spec.maxBeats || 30;
   const stats = { hitsA: 0, hitsB: 0, firstBloodRound: null, collapses: 0 };
   await Combat.begin(enc, chars, roller);
   await play(enc, chars, roller, rng, watcher, maxBeats);
@@ -211,7 +210,7 @@ function beatsOf(enc) {
 async function play(enc, chars, roller, rng, watcher, maxBeats) {
   const io = { roller };
   let guard = 20000;
-  while (enc.phase === 'act' && enc.beat < (maxBeats || 20) && guard-- > 0) {
+  while (enc.phase === 'act' && enc.beat < (maxBeats || 30) && guard-- > 0) {
     const id = Combat.currentActor(enc);
     if (watcher && watcher.before) watcher.before(id);
     await Combat.submit(enc, chars, AI.choose(enc, chars, id, rng, chars[id].policy), io);

@@ -363,7 +363,7 @@ async function runGauntlet(lineup, runIdx, mode) {
     const deadBefore = new Set(party.filter((c) => c.status.dead).map((c) => c.id));
     const credit = (c) => byId[c.id] || (c.conjured && byId[c.conjured.by]) || null;
     const res = await L.fight({
-      A: up, B: foes, grid: { w: room.map[0].length, h: room.map.length }, seed: 7919 * runIdx + 104729 * r + 1, maxBeats: 20,
+      A: up, B: foes, grid: { w: room.map[0].length, h: room.map.length }, seed: 7919 * runIdx + 104729 * r + 1, maxBeats: 30,
       place: placer(room), setup: setup(room), keepEnc: true,
       onHit: (e) => {
         const a = credit(e.attacker), t = byId[e.target.id];

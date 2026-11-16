@@ -25,7 +25,7 @@ test('metrics: watching a fight counts its blows and leaves the result as it was
   const run = async (watch) => {
     const M = Metrics.create();
     const A = hero('Beren'), Bc = hero('Cyrus');
-    const r = await L.fight({ A: [A], B: [Bc], grid: { w: 12, h: 6 }, seed: 7, maxBeats: 20, watch: watch && ((enc, chars) => M.watch(enc, chars, [A.id, Bc.id])) });
+    const r = await L.fight({ A: [A], B: [Bc], grid: { w: 12, h: 6 }, seed: 7, maxBeats: 30, watch: watch && ((enc, chars) => M.watch(enc, chars, [A.id, Bc.id])) });
     return { r, M };
   };
   const plain = await run(false), seen = await run(true);

@@ -44,7 +44,7 @@ async function watched(make, grid, seed, maxRounds) {
   const L = require(path.join(SIM, 'lib'));
   const M = require(path.join(SIM, 'metrics')).create();
   const { A, B: Bs } = make();
-  await L.fight({ A, B: Bs, grid, seed, maxBeats: maxBeats || 20, watch: (enc, chars) => M.watch(enc, chars, []) });
+  await L.fight({ A, B: Bs, grid, seed, maxBeats: maxBeats || 30, watch: (enc, chars) => M.watch(enc, chars, []) });
   return M.ai;
 }
 const styles = (a, b) => () => {

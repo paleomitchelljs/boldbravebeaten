@@ -55,15 +55,13 @@ async function fight(spec, armor, n) {
   const b = w.battle, enc = b.enc, chars = Battle.table(w).characters;
   const hero = World.party(w)[0].id;
   const out = { strikes: 0, swings: 0, sweeps: 0, sweptHome: 0 };
-  while (enc.phase !== 'over' && enc.round < 30) {
-    await Combat.startRound(enc, chars, B.Town.autoRoller);
-    let guard = 2000;
-    while (enc.phase === 'turn' && guard-- > 0) {
-      const id = Combat.currentActor(enc);
-      const d = AI.choose(enc, chars, id, () => Rand.rng(), chars[id].policy);
-      if (id === hero && d && d.type === 'strike' && d.option && !d.option.unarmed) { out.strikes++; if (SWINGS.has(d.option.motion)) out.swings++; }
-      await Combat.submit(enc, chars, d, { roller: B.Town.autoRoller });
-    }
+  await Combat.begin(enc, chars, B.Town.autoRoller);
+  let guard = 20000;
+  while (enc.phase === 'act' && enc.beat < 30 && guard-- > 0) {
+    const id = Combat.currentActor(enc);
+    const d = AI.choose(enc, chars, id, () => Rand.rng(), chars[id].policy);
+    if (id === hero && d && d.type === 'strike' && d.option && !d.option.unarmed) { out.strikes++; if (SWINGS.has(d.option.motion)) out.swings++; }
+    await Combat.submit(enc, chars, d, { roller: B.Town.autoRoller });
   }
   for (const l of enc.log) {
     const t = String(l.text || l);
