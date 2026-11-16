@@ -34,6 +34,15 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
     breaks bone through a plate helm as through padding (crush rule, step G); hall fights 3-6 costlier (dead by fight 6,
     0.50 -> 1.09); art wanted: sapling snare, deadfall, turf pit, markers for a marked trap and a tell.
   - [ ] Steps A and B together, not yet measured: each was measured alone against the same base.
+  - [x] Step E merged 2026-11-15 (`docs/overhaul/E-report.md`, FINDINGS top): named wounds {place, severity 1-3} replace
+    attribute damage, 6 x size boxes, shock d10 + CON >= 11 at severity 3, down before dead (a wound on the down kills;
+    `finishes: true` on 19 beasts, undead and cruel monsters), bleeding fills boxes, stamina 20 + STR + SPD + DEX and
+    regeneration from CON + WIL, monsters' CON cut to 10, save v8. Suite 357/357.
+  - [ ] From step E: the valley clears 15 -> 11 (dead 0.60 -> 0.31, down 0.97 a fight); swarm loses at N = 3, not 4; head
+    share 21-28% (target < 1/4); hall kicks 25% of blows landed (AI or rule untested); fights' tail longer (court 90th 6 -> 10
+    rounds); CON-resisted banes now land on golems; bosses lost their CON padding (`tools/tiers.js` not rerun); the spiral
+    is weak except for Cyrus. Rulings it made: the head drops at severity 3 and the torso takes the shock check; after a lost
+    fight, one d10 + CON roll; goblins and kobolds stay man-sized. The wound display was not looked at outside the fake DOM.
   - [ ] From step D: read step F's even-duel target per style, not pooled (59% pooled hides 92% and 28%); say whether a
     deliberate wait counts as unused time on the clock; the AI overvalues Bait and Rallies in a duel (fix before step I);
     the valley's deaths a fight rise with party size (0.54 to 0.98); plain `sim/duels.js` pairings deal no arrows or bandages.

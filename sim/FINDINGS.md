@@ -1,5 +1,19 @@
 # Simulation findings
 
+## Overhaul step E: wounds and life (2026-11-15; `docs/overhaul/E-report.md`; outputs in the session scratchpad `E-out/`)
+
+Party of 3, seed 4242, full n; before is main at 778db7a4 (A, B, C merged).
+
+| Measure (court, hall, valley) | Target | Before | After |
+|---|---|---|---|
+| heroes dead a fight | ≤ 0.15 | 0.24, 0.36, 0.60 | 0.00, 0.05, 0.31 |
+| heroes down a fight | about 0.5 | – | 0.20, 0.27, 0.97 |
+| cleared of 30 | ≥ 18 | 22, 4, 15 | 28, 12, 11 |
+| a surviving hero ends with a wound | ≥ ⅓ | 15%, 9%, 2% | 44%, 44%, 70% |
+
+Spiral (wounded twin, pooled): arms 24% → 18%, legs 24% → 18%; clear only for Cyrus (arms 48% → 20%). Swarm: a level-8 hero
+now loses near N = 3. Head share 21–28%. No setting tried cleared the valley more than 11 times.
+
 ## Overhaul steps A, B, C (2026-11-15; `docs/overhaul/A-report.md`, `B-report.md`, `C-report.md`)
 
 Each measured alone against the same base (`bd310877`), seed 4242, party of 3, full n; not yet measured together.
