@@ -79,3 +79,23 @@ test('save: a version-6 save folds hands into arms and feet into legs; two piece
   assert.deepEqual(back.pack.gear.find((it) => it.id === 'packed').covers, ['arms']);
   for (const p of B.Character.armorPieces(d)) for (const l of B.Items.coversOf(p)) assert.ok(B.CONFIG.locations.order.includes(l));
 });
+
+test('save: a version-8 save (rounds and AP) comes onto the clock: a fight in progress starts the clock afresh, conditions count beats', () => {
+  const w = World.create(World.presetParty(), { log: false });
+  B.Battle.start(w, { foes: [{ monster: 'wolf' }] });
+  const enc = w.battle.enc;
+  for (const k of ['clock', 'tie', 'pending', 'committed', 'waits', 'now', 'beat', 'nextBeat']) delete enc[k];
+  Object.assign(enc, { round: 3, phase: 'turn', order: enc.ids.slice(), turn: 1, ap: {}, apStart: {}, turnDone: {} });
+  const c = World.party(w)[0];
+  c.status.conds = [{ key: 'slowed', rounds: 2, mag: 1, src: null }];
+  c.status.windUp = { key: 'x', round: 3 };
+  w.version = 8;
+  const back = Save.deserialize(Save.serialize(w));
+  const e = back.battle.enc;
+  assert.equal(back.version, Save.VERSION);
+  assert.equal(e.phase, 'setup', 'the clock starts afresh');
+  assert.ok(e.clock && e.pending && e.round === undefined && e.ap === undefined);
+  const c2 = back.chars[c.id];
+  assert.deepEqual(c2.status.conds[0].beats, 2);
+  assert.equal(c2.status.windUp, undefined);
+});

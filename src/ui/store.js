@@ -110,19 +110,8 @@
     for (const id in s.characters) if (!s.order.includes(id)) s.order.push(id);
     if (s.encounter) {
       s.encounter.ids = s.encounter.ids.filter((id) => s.characters[id]);
-      if (s.encounter.phase === 'initiative') {
-        s.encounter.round -= 1;
-        s.encounter.phase = s.encounter.round ? 'roundEnd' : 'setup';
-      }
-      if (!s.encounter.spent) {
-        // Saved before passes resolved one at a time: pick up at the next round.
-        Object.assign(s.encounter, { spent: {}, turnDone: {} });
-        if (['declare', 'resolve', 'resolving'].includes(s.encounter.phase)) {
-          s.encounter.phase = s.encounter.round ? 'roundEnd' : 'setup';
-          s.encounter.decls = [];
-          s.encounter.log.push({ round: s.encounter.round, text: 'The round rules changed since this battle was saved; continue with the next round.', cls: 'fizzle' });
-        }
-      }
+      // Saved with rounds and AP (before the clock, docs/OVERHAUL.md step F): start the clock afresh where they stand.
+      if (!s.encounter.clock && G.Save) G.Save.toClock(s.encounter);
       // Saved with defenses tied to one strike (before guards): drop them.
       if (s.encounter.decls && s.encounter.decls.some((d) => d.answers != null)) {
         s.encounter.decls = s.encounter.decls.filter((d) => d.answers == null);

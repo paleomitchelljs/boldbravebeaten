@@ -62,7 +62,7 @@
     for (const [id, label] of TABS) {
       nav.appendChild(h('button', {
         class: 'tab', 'aria-current': app.state.tab === id ? 'page' : null, onclick: () => app.go(id),
-      }, label, id === 'battle' && enc ? h('span', { class: 'pip' }, enc.phase === 'over' ? '✓' : enc.round || '•') : null));
+      }, label, id === 'battle' && enc ? h('span', { class: 'pip' }, enc.phase === 'over' ? '✓' : enc.beat != null && enc.phase !== 'setup' ? enc.beat + 1 : '•') : null));
     }
   }
 

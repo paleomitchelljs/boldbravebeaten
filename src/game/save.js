@@ -14,7 +14,7 @@
 
   const store = () => { try { return globalThis.localStorage || null; } catch (e) { return null; } };
 
-  const VERSION = 8;
+  const VERSION = 9;
 
   // An item from before version 3: quality became craft; scale armor (no longer a tier) became steel mail; a
   // drinking blade's own `enchant: {drain}` became the drinking enchantment; `magical` (from the testbed) is dropped,
@@ -43,8 +43,33 @@
     if (p && POWERS[`${p.verb}+${p.noun}`]) Object.assign(p, POWERS[`${p.verb}+${p.noun}`]);
   }
 
+  // An encounter saved with rounds and AP (before version 9: docs/OVERHAUL.md step F) goes onto the clock where everyone
+  // stands: the old round's state dropped, phase 'setup' so the clock starts afresh (the game starts it by itself).
+  function toClock(enc) {
+    if (!enc || enc.clock) return enc;
+    for (const k of ['round', 'initiative', 'order', 'ap', 'apStart', 'conceded', 'pass', 'turn', 'step', 'spent', 'turnDone', 'owed', 'hitThisRound', 'staminaAtStart', 'awayChecked']) delete enc[k];
+    const beat = (G.CONFIG.clock && G.CONFIG.clock.beat) || 14;
+    Object.assign(enc, { now: 0, beat: 0, nextBeat: beat, clock: {}, tie: {}, pending: [], committed: {}, waits: {}, actor: null, struck: {}, decls: [] });
+    if (enc.phase !== 'over') enc.phase = 'setup';
+    (enc.log || (enc.log = [])).push({ tick: 0, beat: 0, text: 'This fight was saved with rounds and AP; it goes on by the clock from here.', cls: 'fizzle' });
+    return enc;
+  }
+
   // Steps for one character (a party member, a companion, a foe in a saved fight), keyed by the version they leave.
   const CHAR_STEPS = {
+    // The clock (step F): a wind-up is gone (an action's lead is the encounter's); conditions, prepared spells and a
+    // collapse or a death count beats, not rounds.
+    8: (c) => {
+      const st = c.status || {};
+      delete st.windUp;
+      for (const x of st.conds || []) if (x.rounds != null) { x.beats = x.rounds; delete x.rounds; }
+      for (const p of c.prepared || []) if (p.rounds != null) { p.beats = p.rounds; delete p.rounds; }
+      if (st.collapsed && st.collapsed.round != null) { st.collapsed.beat = 0; delete st.collapsed.round; }
+      if (st.diedRound != null) { st.diedBeat = 0; delete st.diedRound; }
+      if (typeof st.charging === 'number') st.charging = null;
+      if (typeof st.counterStep === 'number') st.counterStep = null;
+      if (c.conjured && c.conjured.rounds != null) { c.conjured.beats = c.conjured.rounds; delete c.conjured.rounds; }
+    },
     // Wounds (step E): attribute damage becomes harm where wounds.attrPlace puts each attribute (STR and DEX the arms,
     // SPD the legs, CON the torso, the rest the head), one wound a place by the severity thresholds; old bleeding is
     // taken as stopped. A creature's traits: regrow's con is mend, constrict's con is harm.
@@ -140,6 +165,7 @@
 
   // Steps for the world around the characters.
   const WORLD_STEPS = {
+    8: (w) => { if (w.battle) toClock(w.battle.enc); },
     6: (w) => { for (const it of (w.pack && w.pack.gear) || []) foldCovers(it); },
     5: (w) => { for (const it of (w.pack && w.pack.gear) || []) resayPower(it); },
     2: (w) => {
@@ -221,5 +247,5 @@
     if (s) try { s.removeItem(PREFIX + slot); } catch (e) { /* ignore */ }
   }
 
-  G.Save = { SLOTS, VERSION, upgrade, upgradeCharacter, serialize, deserialize, summary, write, read, list, remove };
+  G.Save = { SLOTS, VERSION, toClock, upgrade, upgradeCharacter, serialize, deserialize, summary, write, read, list, remove };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});
