@@ -1,5 +1,5 @@
 # Monsters. attrs may exceed the human cap. natural = natural weapons (weapons.yaml). group lists a pack.
-# traits are mechanical hooks: pack, regrow, resist, tireless, apMult, staminaMult, size, aura, and so on.
+# traits are mechanical hooks: pack, regrow, resist, tireless, tempo, staminaMult, size, aura, and so on.
 # resist is by damage keyword (docs/DATA.md, Damage keywords): {P, S, B, fire, mind, life, ...}; 0 immune, 1.5 weak.
 
 # faction: whose standing a kill costs; xp: per creature; glyph: how it shows in the first-person view;
@@ -174,7 +174,7 @@ trollChieftain:
   skills: {melee: 5, athletics: 3, intimidation: 4}
   natural: [trollFists, claws]
   armor: trollHide
-  traits: {size: 1.5, regrow: {mend: 1, stamina: 6}, apMult: 2, finishes: true}
+  traits: {size: 1.5, regrow: {mend: 1, stamina: 6}, tempo: 2, finishes: true}
   feats: {power_swing: 1, shield_breaker: 1, toughness: 1}
 ogre:
   name: Ogre
@@ -547,7 +547,7 @@ dreadShaman:
   faction: suracayl
   xp: 150
   armorItem: {type: padded, coverage: full}
-  traits: {apMult: 3, suracayl: true, finishes: true}
+  traits: {tempo: 3, suracayl: true, finishes: true}
   parts: {suracayl_scale: 2}
   tier: 5
   glyph: "🦎"
@@ -567,7 +567,7 @@ venril:
   blurb: "The master of the palace, a horned lizard in a dark robe floating above its throne. Skeletons stand guard for it, the fallen get up again at its word, and it fills the hall with fear."
   faction: suracayl
   xp: 250
-  traits: {apMult: 3.5, suracayl: true}
+  traits: {tempo: 3.5, suracayl: true}
   parts: {suracayl_scale: 3}
   tier: 5
   glyph: "💀"
@@ -604,7 +604,7 @@ revenantKnight:
       enchantments: [drinking, keen]
   sidearm: dagger
   shieldItem: {size: heater, material: adamant}
-  trinkets: [{name: Flowing black silk sash, attrs: {SPD: 1}, ap: 1}]
+  trinkets: [{name: Flowing black silk sash, attrs: {SPD: 1}, ticks: -2}]
   traits: {aura: {name: aura of dread, radius: 2, stamina: 3, cond: dread}, finishes: true}
   featPrefs:
     - verb_take
@@ -716,7 +716,7 @@ avatarOfFear:
   skills: {melee: 8, athletics: 4, intimidation: 8}
   natural: [avatarArms]
   armor: avatarHide
-  traits: {outsider: true, size: 1.8, apMult: 2.5, aura: {name: dread, radius: 1, cond: frightened, resisted: true}, finishes: true}
+  traits: {outsider: true, size: 1.8, tempo: 2.5, aura: {name: dread, radius: 1, cond: frightened, resisted: true}, finishes: true}
   feats: {power_swing: 1, toughness: 1}
 
 # ---- The fire-goblin mine (assets/ideas/ember-mine.md). Art is stand-in until the user makes the figures: the orange
@@ -844,7 +844,7 @@ goblinChampion:
   weapons: [longsword]
   shield: [heater, iron]
   craft: average
-  traits: {apMult: 1.8, goblin: true, resist: {fire: 0.5}}
+  traits: {tempo: 1.8, goblin: true, resist: {fire: 0.5}}
   feats: {toughness: 1}
   keepUnarmed: true
 goblinKing:
@@ -866,7 +866,7 @@ goblinKing:
   weapons: [flangedMace]
   shield: [heater, iron]
   craft: master
-  traits: {apMult: 1.5, goblin: true, resist: {fire: 0.5}}
+  traits: {tempo: 1.5, goblin: true, resist: {fire: 0.5}}
   feats: {toughness: 1}
   keepUnarmed: true
 goblinHighShaman:
@@ -887,7 +887,7 @@ goblinHighShaman:
   weapons: [staff]
   keepUnarmed: true
   nouns: [fire, fear]
-  traits: {apMult: 2.2, goblin: true, resist: {fire: 0}}
+  traits: {tempo: 2.2, goblin: true, resist: {fire: 0}}
   feats: {verb_strike: 1, mod_wide: 1, verb_give: 1, mod_strong: 1}
 redDrake:
   name: Red drake
@@ -1076,7 +1076,7 @@ fireGiantYoung:
   natural: [trollFists]
   armor: giantHide
   keepUnarmed: true
-  traits: {apMult: 1.6, giant: true, grip: 4, size: 2, resist: {fire: 0}}
+  traits: {tempo: 1.6, giant: true, grip: 4, size: 2, resist: {fire: 0}}
   feats: {toughness: 1}
 fireGiantGuard:
   name: Fire giant warrior
@@ -1136,7 +1136,7 @@ fireGiantWizard:
   weapons: [staff]
   keepUnarmed: true
   nouns: [fire]
-  traits: {apMult: 1.6, giant: true, size: 2.4, resist: {fire: 0}}
+  traits: {tempo: 1.6, giant: true, size: 2.4, resist: {fire: 0}}
   feats: {verb_strike: 1, mod_wide: 1, toughness: 1}
 fireGiantMagus:
   name: The giants' magus
@@ -1192,7 +1192,7 @@ giantShade:
   skills: {melee: 6, intimidation: 5}
   natural: [trollFists]
   keepUnarmed: true
-  traits: {apMult: 1.6, giant: true, size: 2.2, tireless: true, undead: true, resist: {fire: 0, P: 0.5, S: 0.5, B: 0.5}, finishes: true}
+  traits: {tempo: 1.6, giant: true, size: 2.2, tireless: true, undead: true, resist: {fire: 0, P: 0.5, S: 0.5, B: 0.5}, finishes: true}
   feats: {toughness: 1}
 dragonLord:
   name: The great red dragon
@@ -1209,7 +1209,7 @@ dragonLord:
   natural: [drakeBite, drakeClaws, wingBuffet, tail]
   armor: drakeScales
   nouns: [fire]
-  traits: {apMult: 1.8, size: 4, flying: true, dragon: true, grip: 6, resist: {fire: 0, mind: 0.5}}
+  traits: {tempo: 1.8, size: 4, flying: true, dragon: true, grip: 6, resist: {fire: 0, mind: 0.5}}
   feats: {verb_strike: 1, mod_wide: 1, mod_strong: 1, mod_far: 1, toughness: 4}
 # The orc valley (assets/ideas/orc-valley.md): the legion, its officers and its court. First guesses: encounter tuning
 # is deferred.
@@ -1292,7 +1292,7 @@ orcProphet:
   faction: orc_legion
   xp: 140
   armorItem: {type: padded, coverage: full}
-  traits: {apMult: 2.5, orc: true}
+  traits: {tempo: 2.5, orc: true}
   parts: {orc_tusk: 1}
   tier: 4
   glyph: "🧙"
@@ -1311,7 +1311,7 @@ orcWarlord:
   blurb: "The emperor's right hand and the legion's general: a scarred orc in heavy mail with a greatsword, who has never lost a battle he chose."
   faction: orc_legion
   xp: 200
-  traits: {apMult: 1.4, orc: true}
+  traits: {tempo: 1.4, orc: true}
   parts: {orc_tusk: 2}
   tier: 4
   glyph: "👹"
@@ -1331,7 +1331,7 @@ orcEmperor:
   blurb: "The emperor on his stone throne under the great gold coin: huge, blue-grey, in mail and a crested war helm, a long barbed spear in both hands."
   faction: orc_legion
   xp: 300
-  traits: {apMult: 2.5, orc: true}
+  traits: {tempo: 2.5, orc: true}
   parts: {orc_tusk: 2}
   tier: 5
   glyph: "👑"
@@ -1484,7 +1484,7 @@ koboldChampion:
   armor: scaleHide
   weapons: [rapier]
   craft: master
-  traits: {apMult: 1.7, kobold: true, dodge: 1, resist: {fire: 0.75}}
+  traits: {tempo: 1.7, kobold: true, dodge: 1, resist: {fire: 0.75}}
   feats: {riposte: 1, toughness: 1}
   keepUnarmed: true
 koboldShaman:
@@ -1547,7 +1547,7 @@ koboldHighShaman:
   craft: master
   keepUnarmed: true
   nouns: [frost, decay, life, might, fear]
-  traits: {apMult: 1.2, kobold: true, resist: {fire: 0.5}}
+  traits: {tempo: 1.2, kobold: true, resist: {fire: 0.5}}
   feats: {verb_strike: 1, verb_give: 1, mod_wide: 1, mod_strong: 1}
 koboldKing:
   name: The kobold king
@@ -1568,7 +1568,7 @@ koboldKing:
   weaponItems:
     - {type: greatAxe, material: bronze, craft: master, name: The king's axe}
   keepUnarmed: true
-  traits: {apMult: 2.5, kobold: true, resist: {fire: 0.5}}
+  traits: {tempo: 2.5, kobold: true, resist: {fire: 0.5}}
   feats: {toughness: 1}
 gorgeHound:
   name: Gorge hound
@@ -1658,7 +1658,7 @@ sarnakWarden:
   shield: [heater, iron]
   craft: good
   keepUnarmed: true
-  traits: {apMult: 1.4}
+  traits: {tempo: 1.4}
   feats: {toughness: 1}
 minotaur:
   name: Minotaur
@@ -1696,5 +1696,5 @@ minotaurLord:
   weapons: [greatAxe]
   craft: average
   keepUnarmed: true
-  traits: {size: 1.4, grip: 2, apMult: 3}
+  traits: {size: 1.4, grip: 2, tempo: 3}
   feats: {power_swing: 1, toughness: 1}

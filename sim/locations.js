@@ -54,7 +54,7 @@ const roller = async (req) => Array.from({ length: req.count }, () => Rand.d(req
         t.stamina = C.maxStamina(t);
         const st0 = t.stamina;
         const load = B.Character.woundLoad(t);
-        const enc = { hitThisRound: {}, fortressUsed: {}, log: [], pos: {} };
+        const enc = { struck: {}, fortressUsed: {}, log: [], pos: {} };
         const r = await Combat.applyHit(enc, { [a.id]: a, [t.id]: t }, a, t, opt, roller);
         sev += B.Character.woundLoad(t) - load;
         if (!B.Character.isActive(t)) down++;

@@ -14,5 +14,5 @@ const [ka = 'heavy/twoHanded', kb = 'light/archery', arena = 'open', seed = '1']
   const A = ARENAS[arena];
   const r = await L.fight({ A: a, B: b, grid: { w: A.w, h: A.h }, seed: Number(seed), keepLog: true });
   for (const l of r.log) console.log((l.cls === 'round' ? '\n' : '  ') + l.text);
-  console.log('\nwinner', r.winner, 'rounds', r.rounds);
+  console.log('\nwinner', r.winner, 'rounds', r.beats);
 })();

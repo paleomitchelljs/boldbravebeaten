@@ -9,33 +9,33 @@
 #   each is its own spell in the cast menu. Other fields of an effect set what it leaves: cond (a condition), ground,
 #   wall, terrain (rules.yaml terrain), ward (a ward's kind), raise, monster, stack (a curse that stacks), only
 #   (undead, living, outsider: who it works on), undead: mend (Give Death mends the undead), and any shape number
-#   (mag, range, rounds, radius, length, ap) to set it for this pair.
+#   (mag, range, beats, radius, length, ticks) to set it for this pair.
 # A verb's `alone` is what it does with no noun (Bind holds a body still; Move steps through space; See reveals).
 
 # ---- Shapes: the base numbers of what a spell does (a pair may set its own) ----------------------------------
 shapes:
   kind: shapes
   bolt: {mag: 6, range: [1, 6]}            # a blow at one target, through the combat engine
-  area: {mag: 4, range: [0, 6], ap: 3}     # a bolt made Wide: everyone within the radius (aimed at yourself: round you)
-  ground: {mag: 1, range: [1, 8], radius: 1, rounds: 3}
-  wall: {mag: 1, range: [1, 6], length: 3, rounds: 3, ap: 3}
-  terrain: {mag: 0, range: [1, 6], length: 1, ap: 3}
-  rune: {mag: 5, range: [0, 1], radius: 0, ap: 3}  # a ground or terrain spell made Hidden
-  bane: {mag: 1, range: [1, 8], rounds: 3}
-  boon: {mag: 1, range: [0, 2], rounds: 3, ap: 2}
-  mind: {mag: 1, range: [1, 6], rounds: 2}
-  restore: {mag: 1, range: [0, 2], ap: 2}
-  revive: {mag: 0, range: [0, 1], ap: 3}
+  area: {mag: 4, range: [0, 6], ticks: 10}     # a bolt made Wide: everyone within the radius (aimed at yourself: round you)
+  ground: {mag: 1, range: [1, 8], radius: 1, beats: 3}
+  wall: {mag: 1, range: [1, 6], length: 3, beats: 3, ticks: 10}
+  terrain: {mag: 0, range: [1, 6], length: 1, ticks: 10}
+  rune: {mag: 5, range: [0, 1], radius: 0, ticks: 10}  # a ground or terrain spell made Hidden
+  bane: {mag: 1, range: [1, 8], beats: 3}
+  boon: {mag: 1, range: [0, 2], beats: 3, ticks: 5}
+  mind: {mag: 1, range: [1, 6], beats: 2}
+  restore: {mag: 1, range: [0, 2], ticks: 5}
+  revive: {mag: 0, range: [0, 1], ticks: 10}
   drain: {mag: 4, range: [1, 1]}
   give: {mag: 4, range: [0, 1]}
-  ward: {mag: 2, range: [0, 2], rounds: 3, ap: 2}
-  blink: {mag: 0, range: [1, 4], ap: 2}
-  raise: {mag: 0, range: [1, 4], ap: 4}
-  summon: {mag: 3, range: [1, 4], rounds: 4, ap: 4}
-  dispel: {mag: 0, range: [0, 6], radius: 1, ap: 2}
-  banish: {mag: 0, range: [1, 6], ap: 3}
-  channel: {mag: 4, range: [0, 1], ap: 2}
-  see: {mag: 0, range: [0, 6], radius: 2, ap: 2}
+  ward: {mag: 2, range: [0, 2], beats: 3, ticks: 5}
+  blink: {mag: 0, range: [1, 4], ticks: 5}
+  raise: {mag: 0, range: [1, 4], ticks: 15}
+  summon: {mag: 3, range: [1, 4], beats: 4, ticks: 15}
+  dispel: {mag: 0, range: [0, 6], radius: 1, ticks: 5}
+  banish: {mag: 0, range: [1, 6], ticks: 10}
+  channel: {mag: 4, range: [0, 1], ticks: 5}
+  see: {mag: 0, range: [0, 6], radius: 2, ticks: 5}
 
 # ---- Verbs ---------------------------------------------------------------------------------------------
 strike: {kind: verb, cost: 2, feat: verb_strike, name: Strike}
@@ -53,7 +53,7 @@ bind:
   cost: 3
   feat: verb_bind
   name: Bind
-  alone: {shape: bane, aim: foe, cond: paralyzed, rounds: 1}
+  alone: {shape: bane, aim: foe, cond: paralyzed, beats: 1}
 # Summon: whatever comes is simply in the world. Unbound it is frenzied (strikes the nearest body, friend or foe) for
 # as long as it stays; Summon + Bind brings it bound to the caster.
 summon: {kind: verb, cost: 4, feat: verb_summon, name: Summon, pairs: [bind]}
@@ -72,7 +72,7 @@ fire:
   cost: 1
   element: fire
   name: Fire
-  onHit: {cond: burning, rounds: 2}
+  onHit: {cond: burning, beats: 2}
   does:
     strike: {shape: bolt}
     give: [{shape: bane, aim: foe, cond: burning, stack: true}, {shape: ground, ground: hot}]
@@ -84,7 +84,7 @@ frost:
   cost: 1
   element: frost
   name: Frost
-  onHit: {cond: chilled, rounds: 2}
+  onHit: {cond: chilled, beats: 2}
   does:
     strike: {shape: bolt}
     give: [{shape: bane, aim: foe, cond: frostbite, stack: true}, {shape: ground, ground: ice}]
@@ -97,7 +97,7 @@ storm:
   cost: 1
   element: lightning
   name: Storm
-  onHit: {cond: shocked, rounds: 1, chain: true}
+  onHit: {cond: shocked, beats: 1, chain: true}
   does:
     strike: {shape: bolt}
     give: [{shape: bane, aim: foe, cond: shocked, stack: true}, {shape: ground, ground: charged}]
@@ -110,7 +110,7 @@ decay:
   cost: 1
   element: decay
   name: Decay
-  onHit: {cond: poisoned, rounds: 3, corrode: true}
+  onHit: {cond: poisoned, beats: 3, corrode: true}
   curesPoison: true
   does:
     strike: {shape: bolt}
@@ -259,7 +259,7 @@ wide:
   cost: 2
   radius: 1
   length: 2
-  ap: 1
+  ticks: 2.5
   area: true
   feat: mod_wide
   name: Wide
@@ -274,11 +274,11 @@ far:
 long:
   kind: mod
   cost: 1
-  roundsMult: 2
+  beatsMult: 2
   feat: mod_long
   name: Long
   shapes: [ground, wall, terrain, bane, boon, summon, mind, ward]
-strong: {kind: mod, cost: 2, mag: 3, feat: mod_strong, name: Strong, windUp: true}
+strong: {kind: mod, cost: 2, mag: 3, feat: mod_strong, name: Strong, gather: true}  # gathered: a long lead, exposed (CONFIG.clock.exposes)
 # Hidden: a ground or terrain spell waits unseen on one square until someone steps on it (a rune or a trap).
 hidden:
   kind: mod

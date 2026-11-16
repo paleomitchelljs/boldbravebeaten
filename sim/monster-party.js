@@ -21,7 +21,7 @@ const MONS = (argv.includes('--only') ? argv[argv.indexOf('--only') + 1] : 'wolf
           const party = keys.map((k, j) => makeCombatant(...k.split('/'), 'P' + j));
           const r = await L.fight({ A: party, B: L.Enemies.makeMonster(mk), grid: { w: ARENAS[ar].w, h: ARENAS[ar].h }, seed: seed++ });
           if (r.winner === 'B') mw++;
-          deadParty += r.deadA; rounds += r.rounds;
+          deadParty += r.deadA; rounds += r.beats;
         }
         line.push(`${ARENAS[ar].label}: monster wins ${Math.round(100 * mw / N)}%, party deaths ${(deadParty / N).toFixed(2)}/fight, ${(rounds / N).toFixed(1)} rounds`);
       }

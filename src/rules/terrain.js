@@ -2,9 +2,9 @@
  * Terrain (PROVISIONAL): features on the grid — walls, pits, hazards, runes — and the rules
  * for moving through them square by square and seeing or shooting past them.
  *
- * enc.tiles maps "x,y" to a list of features { id, kind, rounds, mag, noun, owner, side,
- * hidden }. What a kind does lives in CONFIG.terrain. Features with `rounds` tick down at the
- * end of each round; null lasts the fight.
+ * enc.tiles maps "x,y" to a list of features { id, kind, beats, mag, noun, owner, side,
+ * hidden }. What a kind does lives in CONFIG.terrain. Features with `beats` count down at
+ * each beat; null lasts the fight.
  */
 (function (G) {
   'use strict';
@@ -31,7 +31,7 @@
   function add(enc, x, y, kind, opts) {
     if (!inGrid(enc, x, y) || !T()[kind]) return null;
     opts = opts || {};
-    const f = { id: 't' + nextId++, kind, rounds: opts.rounds == null ? null : opts.rounds, mag: opts.mag || 0, noun: opts.noun || null, owner: opts.owner || null, side: opts.side || null, hidden: !!(opts.hidden != null ? opts.hidden : T()[kind].hidden) };
+    const f = { id: 't' + nextId++, kind, beats: opts.beats == null ? null : opts.beats, mag: opts.mag || 0, noun: opts.noun || null, owner: opts.owner || null, side: opts.side || null, hidden: !!(opts.hidden != null ? opts.hidden : T()[kind].hidden) };
     const list = tiles(enc)[key(x, y)] || (tiles(enc)[key(x, y)] = []);
     // One ground or wall of a kind per square: a fresh one replaces the old.
     const i = list.findIndex((g) => g.kind === kind);
@@ -155,7 +155,7 @@
       if (!visible(f, c.side)) continue;
       const t = def(f);
       if (t.deadly) return Infinity;
-      if (t.pit || t.onEnter || t.perRound || (t.rune && f.side !== c.side) || (t.trap && !f.sprung)) a = DETOUR;
+      if (t.pit || t.onEnter || t.perBeat || (t.rune && f.side !== c.side) || (t.trap && !f.sprung)) a = DETOUR;
     }
     return a;
   }
@@ -306,8 +306,8 @@
     return !C().isActive(c) || c.status.prone || (G.Conditions && !G.Conditions.canMove(c));
   }
 
-  // End of round: standing in a hazard hurts; fire burns away what burns; everything ticks down.
-  async function endRound(enc, chars, roller, log) {
+  // A beat: standing in a hazard hurts; fire burns away what burns; everything counts down.
+  async function beat(enc, chars, roller, log) {
     if (!enc.tiles) return;
     for (const id of enc.ids) {
       const c = chars[id];
@@ -315,13 +315,13 @@
       const p = enc.pos[id];
       for (const f of at(enc, p.x, p.y)) {
         const d = def(f);
-        if (!d.perRound) continue;
-        for (const [noun, mag] of Object.entries(d.perRound)) {
+        if (!d.perBeat) continue;
+        for (const [noun, mag] of Object.entries(d.perBeat)) {
           if (G.Magic && G.Magic.elementBlow) await G.Magic.elementBlow(enc, chars, chars[f.owner] || c, c, noun, mag + (f.mag || 0), roller, d.name);
         }
       }
     }
-    // A wall of fire scorches whoever stands beside it: once a round for each kind of wall, however many squares of it.
+    // A wall of fire scorches whoever stands beside it: once a beat for each kind of wall, however many squares of it.
     const near = all(enc).filter((t) => t.def.near);
     if (near.length) for (const id of enc.ids) {
       const c = chars[id];
@@ -344,8 +344,8 @@
         if (burnt.length) log(`${burnt.map((f) => def(f).name).join(', ')} at (${k.split(',').map((n) => +n + 1).join(', ')}) ${burnt.length > 1 ? 'burn' : 'burns'} away.`);
         list = list.filter((f) => !(def(f).flammable || def(f).meltsInFire));
       }
-      for (const f of list) if (f.rounds != null) f.rounds -= 1;
-      list = list.filter((f) => f.rounds == null || f.rounds > 0);
+      for (const f of list) if (f.beats != null) f.beats -= 1;
+      list = list.filter((f) => f.beats == null || f.beats > 0);
       if (list.length) enc.tiles[k] = list;
       else delete enc.tiles[k];
     }
@@ -375,10 +375,10 @@
       if (t.slick) d += 8;
       if (t.onEnter) d += 10;
       if (t.deadly) d += 100;
-      if (t.perRound) d += 6;
+      if (t.perBeat) d += 6;
     }
     return d;
   }
 
-  G.Terrain = { flies, canStand, costMap, avoid, hazardsOn, trace, danger, tiles, at, add, remove, has, passable, stepCost, path, pathCost, between, lineCheck, visible, enter, endRound, all, inGrid };
+  G.Terrain = { flies, canStand, costMap, avoid, hazardsOn, trace, danger, tiles, at, add, remove, has, passable, stepCost, path, pathCost, between, lineCheck, visible, enter, beat, all, inGrid };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

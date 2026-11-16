@@ -106,7 +106,7 @@
     const S = bench.sim;
     if (S.running) return;
     S.running = true; S.progress = 0; render();
-    const results = { n: 0, won: 0, lost: 0, draw: 0, rounds: 0, dead: 0, down: 0, hurt: 0 };
+    const results = { n: 0, won: 0, lost: 0, draw: 0, beats: 0, dead: 0, down: 0, hurt: 0 };
     const spec = foeSpec(cfg.foe, cfg.level);
     G.Rand.seed(12345);
     for (let i = 0; i < cfg.n; i++) {
@@ -120,9 +120,9 @@
         c.stamina = C.maxStamina(c);
       }
       G.Battle.start(w, spec);
-      const enc = await G.Auto.battle(w, { maxRounds: 40 });
+      const enc = await G.Auto.battle(w, { maxBeats: 27 });
       results.n++;
-      results.rounds += enc.round;
+      results.beats += enc.round;
       results[enc.winner === 'party' ? 'won' : enc.winner === 'enemy' ? 'lost' : 'draw']++;
       results.dead += party.filter((c) => c.status.dead).length;
       results.down += party.filter((c) => !C.isActive(c)).length;
@@ -154,7 +154,7 @@
       S.rows.length ? h('table', { class: 'data' }, h('thead', null, h('tr', null, ['Foe', 'Party', 'Fights', 'Won', 'Lost', 'Draw', 'Rounds', 'Dead / fight', 'Wounds / fight'].map((t, i) => h('th', { class: i > 1 ? 'n' : '' }, t)))),
         h('tbody', null, S.rows.map((x) => h('tr', null,
           h('td', null, x.label), h('td', null, `L${x.plev}, ${x.armor} armor, ${x.shield}`), h('td', { class: 'n' }, x.r.n), h('td', { class: 'n' }, pct(x.r.won, x.r.n)), h('td', { class: 'n' }, pct(x.r.lost, x.r.n)), h('td', { class: 'n' }, pct(x.r.draw, x.r.n)),
-          h('td', { class: 'n' }, (x.r.rounds / x.r.n).toFixed(1)), h('td', { class: 'n' }, (x.r.dead / x.r.n).toFixed(2)), h('td', { class: 'n' }, (x.r.hurt / x.r.n).toFixed(1)))))) : null);
+          h('td', { class: 'n' }, (x.r.beats / x.r.n).toFixed(1)), h('td', { class: 'n' }, (x.r.dead / x.r.n).toFixed(2)), h('td', { class: 'n' }, (x.r.hurt / x.r.n).toFixed(1)))))) : null);
   }
 
   // ---- Tools ----------------------------------------------------------------------------------------------------------

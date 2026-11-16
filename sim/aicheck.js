@@ -137,7 +137,7 @@ async function runArm(task) {
   installPin(env, task.pin, ctx);
   const foes = B.World.heroes().filter((x) => ['Beren', 'Cyrus', 'Lorc', 'Jabiku'].includes(x.name) && x.name !== task.hero).map((h) => ({ hero: h.name }))
     .concat(MONSTERS[Math.min(5, Math.max(1, task.level))].map((m) => ({ monster: m })));
-  const out = { win: [], dead: [], rounds: [], taken: [], dealt: [], foe: [], pinned: 0, uses: {}, rounds1: 0, first1: 0 };
+  const out = { win: [], dead: [], beats: [], taken: [], dealt: [], foe: [], pinned: 0, uses: {}, rounds1: 0, first1: 0 };
   const harm = (c) => Object.values(c.damage || {}).reduce((t, x) => t + x, 0) + (B.Character.maxStamina(c) > 0 ? 1 - Math.max(0, c.stamina) / B.Character.maxStamina(c) : 0);
   let k = 0;
   for (const f of foes) {
@@ -148,7 +148,7 @@ async function runArm(task) {
       ctx.current = A; ctx.plain = plain;
       const Bc = f.hero ? makeHero(env, f.hero, task.level) : B.Enemies.makeMonster(f.monster, {})[0];
       const r = await L.fight({
-        A: [A], B: [Bc], grid: { w: 12, h: 6 }, seed: SEED + k, maxRounds: 30,
+        A: [A], B: [Bc], grid: { w: 12, h: 6 }, seed: SEED + k, maxBeats: 20,
         watch: (enc) => {
           let round = null;
           return {
@@ -160,7 +160,7 @@ async function runArm(task) {
         },
       });
       out.win.push(r.winner === 'A' ? 1 : r.winner === 'B' ? 0 : 0.5);
-      out.dead.push(r.deadA); out.rounds.push(r.rounds); out.taken.push(harm(A)); out.dealt.push(harm(Bc)); out.foe.push(f.hero || f.monster);
+      out.dead.push(r.deadA); out.beats.push(r.beats); out.taken.push(harm(A)); out.dealt.push(harm(Bc)); out.foe.push(f.hero || f.monster);
     }
   }
   out.pinned = ctx.pinned;

@@ -334,7 +334,7 @@ test('Lore: Bane Lore hits creatures harder (not people); Name the Weakness stri
   assert.equal(sum(Combat.computeHit(a, person, o, { location: 'torso' })), p0, 'not people');
   assert.ok(skel, 'a skeleton');
   const s0 = sum(Combat.computeHit(a, skel, o, { location: 'torso' }));
-  Cond.add(skel, 'named', { rounds: 2 });
+  Cond.add(skel, 'named', { beats: 2 });
   assert.ok(sum(Combat.computeHit(a, skel, o, { location: 'torso' })) > s0, 'piercing gets through once named');
   const w = World.create(World.presetParty(), { log: false });
   World.party(w)[0].feats.monster_lore = 1;

@@ -1024,7 +1024,7 @@ test('vital wounds: armor raises the margin one needs; a vital stab is a step mo
   assert.strictEqual(v(plated), v(naked));
   // At the threshold it is vital: a step more severe; below it, not.
   const t = fighter('T'); t.stamina = C.maxStamina(t);
-  const enc = { hitThisRound: {}, fortressUsed: {} };
+  const enc = { struck: {}, fortressUsed: {} };
   await Combat.applyHit(enc, { [a.id]: a, [t.id]: t }, a, t, thrust, roller(1, [10]), { location: 'torso', margin: v(naked) });
   const u = fighter('U'); u.stamina = C.maxStamina(u);
   await Combat.applyHit(enc, { [a.id]: a, [u.id]: u }, a, u, thrust, roller(1, [10]), { location: 'torso', margin: v(naked) - 1 });
@@ -1196,9 +1196,9 @@ test('conditions: slowed costs AP, rooted can\'t move, stoneskin turns blunt', (
   const Cn = B.Conditions;
   const c = armed('C', 'longsword');
   const ap = C.apPool(c);
-  Cn.add(c, 'slowed', { rounds: 2, mag: 1 });
+  Cn.add(c, 'slowed', { beats: 2, mag: 1 });
   assert.strictEqual(C.apPool(c), ap - C.apScale());
-  Cn.add(c, 'rooted', { rounds: 1 });
+  Cn.add(c, 'rooted', { beats: 1 });
   assert.ok(!Cn.canMove(c));
   Cn.endRound(c);
   assert.ok(Cn.canMove(c), 'rooted wears off');
@@ -1206,7 +1206,7 @@ test('conditions: slowed costs AP, rooted can\'t move, stoneskin turns blunt', (
   const atk = armed('A', 'club');
   const blow = opt(atk, (o) => o.motion === 'swing');
   const before = Combat.computeHit(atk, c, blow).B;
-  Cn.add(c, 'stoneskin', { rounds: 2, mag: 1 });
+  Cn.add(c, 'stoneskin', { beats: 2, mag: 1 });
   assert.strictEqual(Combat.computeHit(atk, c, blow).B, Math.max(0, before - 2));
 });
 
@@ -1325,7 +1325,7 @@ test('summon: a bound fire elemental joins the caster for a few rounds; Raise + 
   m.spSpent = 0;
   const r2 = await castAt(m, [f, corpse], 'raise+death', { at: { x: 3, y: 2 } }, [10]);
   const z = Object.values(r2.enc.extra || {})[0];
-  assert.ok(z && z.side === m.side && corpse.raised && z.monster === 'skeleton' && z.conjured.rounds == null);
+  assert.ok(z && z.side === m.side && corpse.raised && z.monster === 'skeleton' && z.conjured.beats == null);
 });
 
 test('Give + Force: a shell that soaks spells and missiles; Take + Fire on an ally puts out the fire and halves the next', async () => {
@@ -1342,7 +1342,7 @@ test('Give + Force: a shell that soaks spells and missiles; Take + Fire on an al
   const left = B.Conditions.get(ally, 'warded');
   assert.strictEqual(left ? left.pool : 0, Math.max(0, w.pool - bolt.spell.magnitude), 'what it soaked comes off the shell (gone at 0)');
   const other = armed('O', 'longsword'); other.at = { x: 2, y: 2 };
-  B.Conditions.add(other, 'burning', { rounds: 3 });
+  B.Conditions.add(other, 'burning', { beats: 3 });
   m.spSpent = 0;
   await castAt(m, [other], 'take+fire', { target: other.id }, [10]);
   assert.ok(!B.Conditions.has(other, 'burning'), 'the fire is put out');
@@ -1372,10 +1372,10 @@ test('bait leaves a foe off balance; reading intent gives +2 both ways', async (
   const chars = { [a.id]: a, [t.id]: t };
   const swing = opt(a, (o) => o.motion === 'thrust');
   const before = Combat.defenseOdds(t, 'parry', 'thrust', a, swing);
-  B.Conditions.add(t, 'baited', { rounds: 1 });
+  B.Conditions.add(t, 'baited', { beats: 1 });
   assert.ok(Combat.defenseOdds(t, 'parry', 'thrust', a, swing) < before);
   B.Conditions.remove(t, 'baited');
-  B.Conditions.add(a, 'reading', { rounds: 1, vs: t.id });
+  B.Conditions.add(a, 'reading', { beats: 1, vs: t.id });
   assert.ok(Combat.defenseOdds(t, 'parry', 'thrust', a, swing) < before, 'harder to parry one who reads you');
   const theirs = opt(t, (o) => o.motion === 'thrust');
   assert.ok(Combat.defenseOdds(a, 'parry', 'thrust', t, theirs) > Combat.defenseOdds(t, 'parry', 'thrust', a, swing));
@@ -1440,7 +1440,7 @@ test('mind: Take + Mind sends a foe into a frenzy at the nearest body; calmed fo
   await castAt(m, [f], 'take+mind', { target: f.id }, [10, 9, 1]);
   assert.ok(B.Conditions.has(f, 'enraged') && B.Effects.has(f, 'berserk'));
   const c = armed('C', 'longsword', { side: 'enemy' });
-  B.Conditions.add(c, 'calmed', { rounds: 2 });
+  B.Conditions.add(c, 'calmed', { beats: 2 });
   const chars = { [c.id]: c, [m.id]: m };
   const enc = Combat.createEncounter('t', [c.id, m.id], chars, 6, 1);
   enc.pos[c.id] = { x: 0, y: 0 }; enc.pos[m.id] = { x: 1, y: 0 };
@@ -1462,8 +1462,8 @@ test('phase 2: light sears the undead; darkness blocks sight; disease outlasts t
   B.Terrain.add(enc, 3, 1, 'darkness');
   assert.ok(B.Terrain.lineCheck(enc, { x: 1, y: 1 }, { x: 5, y: 1 }, 'missile').blocked);
   assert.ok(!B.Terrain.lineCheck(enc, { x: 2, y: 1 }, { x: 4, y: 1 }, 'melee').blocked, 'blades still reach through darkness');
-  B.Conditions.add(man, 'diseased', { rounds: 10 });
-  B.Conditions.add(man, 'slowed', { rounds: 2 });
+  B.Conditions.add(man, 'diseased', { beats: 10 });
+  B.Conditions.add(man, 'slowed', { beats: 2 });
   Combat.cleanup(enc, { [m.id]: m, [man.id]: man });
   assert.ok(B.Conditions.has(man, 'diseased') && !B.Conditions.has(man, 'slowed'));
 });
@@ -1513,7 +1513,7 @@ test('phase 3: mend heals far better than in a fight; prepared wards take hold w
   const enc = Combat.createEncounter('t', [m.id, p.id, f.id], chars, 8, 3);
   await Combat.startRound(enc, chars, roller(3, [5, 5, 5]));
   const w = B.Conditions.get(p, 'warded');
-  assert.ok(w && w.kind === 'magic' && w.rounds === 6);
+  assert.ok(w && w.kind === 'magic' && w.beats === 6);
   assert.strictEqual(m.prepared.length, 0);
 });
 
@@ -1534,7 +1534,7 @@ test('death: for three rounds after the one they died in, Raise + Life calls the
   late.status.diedRound = 0; // died a round earlier: its window closes at the end of round 3
   enc.round = 4;
   const R = B.CONFIG.magic.revive;
-  assert.ok(B.Magic.revivable(enc, ally) && !B.Magic.revivable(enc, late), `${R.rounds} rounds after the round of death, no more`);
+  assert.ok(B.Magic.revivable(enc, ally) && !B.Magic.revivable(enc, late), `${R.beats} rounds after the round of death, no more`);
   const la = Combat.legalActions(enc, chars, m.id);
   const ids = la.spells.find((x) => x.spellKey === 'raise+life').targets.map((t) => t.id);
   assert.ok(ids.includes(ally.id) && !ids.includes(late.id), 'Raise + Life can aim at the body still in reach of it');
@@ -1567,7 +1567,7 @@ test('Give + Life mends (bleeding, a severity step, stamina; the collapsed come 
   assert.equal(ally.stamina, H.stamina + H.staminaPerMag * o.spell.magnitude);
   assert.equal(C.isActive(ally), true, 'under the boxes again: the down come to');
   // Take + Decay on an ally lifts Poisoned and wards against more.
-  B.Conditions.add(ally, 'poisoned', { rounds: 3 });
+  B.Conditions.add(ally, 'poisoned', { beats: 3 });
   await castAt(m, [ally], 'take+decay', { target: ally.id });
   assert.ok(!B.Conditions.has(ally, 'poisoned'));
   assert.equal(B.Conditions.get(ally, 'warded').kind, 'decay');
@@ -1670,7 +1670,7 @@ test('golem is immune to magic; a constrictor crushes whoever it holds; fliers p
   golem.at = { x: 3, y: 2 };
   await castAt(m, [golem], 'strike+fire', { target: golem.id }, [1, 1, 1, 1]);
   assert.equal(C.woundLoad(golem), 0);
-  assert.equal(await B.Magic.afflict(Combat.createEncounter('t', [m.id, golem.id], { [m.id]: m, [golem.id]: golem }, 6, 3), m, golem, 'frightened', { rounds: 2 }, roller(10, [])), false, 'nothing of the mind lands on it');
+  assert.equal(await B.Magic.afflict(Combat.createEncounter('t', [m.id, golem.id], { [m.id]: m, [golem.id]: golem }, 6, 3), m, golem, 'frightened', { beats: 2 }, roller(10, [])), false, 'nothing of the mind lands on it');
   // (Step E: CON 22 is now 10, so a CON-resisted bane such as Slowed can land on a golem.)
   // The constrictor crushes the one it holds at the end of the round.
   const [snake] = B.Enemies.makeMonster('constrictor');
@@ -1828,7 +1828,7 @@ test('a blade wears less on organic armor than on metal as hard (materials.yaml 
     t.armor = Items.makeArmor('mail', 'full', 'average');
     t.armor.material = material;
     t.stamina = C.maxStamina(t);
-    const enc = { hitThisRound: {}, fortressUsed: {}, log: [], round: 1 };
+    const enc = { struck: {}, fortressUsed: {}, log: [], round: 1 };
     const w = a.weapons[0];
     for (let i = 0; i < 6; i++) await Combat.applyHit(enc, { [a.id]: a, [t.id]: t }, a, t, opt(a, (x) => x.motion === 'swing'), roller(1, Array(20).fill(5)));
     return Items.weaponMaxDurability(w) - Items.weaponDurability(w) + (w.wearCarry || 0);
@@ -1861,9 +1861,9 @@ test('weariness: stamina spent in a fight lowers max stamina until a long rest; 
   const enc = Combat.createEncounter('t', [a.id, b.id], chars, 6, 1);
   enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[b.id] = { x: 5, y: 0 };
   for (let r = 0; r < 3; r++) { await Combat.startRound(enc, chars, roller(3, [5, 5])); await closeRound(enc, chars); }
-  assert.strictEqual(C.maxStamina(a), fresh - Math.floor(3 * (W.perRound || 0)), 'idle rounds wear only perRound');
+  assert.strictEqual(C.maxStamina(a), fresh - Math.floor(3 * (W.perBeat || 0)), 'idle rounds wear only perBeat');
   for (let r = 0; r < 2; r++) { await Combat.startRound(enc, chars, roller(3, [5, 5])); a.stamina -= 10; b.stamina -= 2; await closeRound(enc, chars); }
-  assert.strictEqual(C.freshStamina(a) - C.maxStamina(a), Math.floor(5 * (W.perRound || 0) + 20 * W.perStamina), 'by effort');
+  assert.strictEqual(C.freshStamina(a) - C.maxStamina(a), Math.floor(5 * (W.perBeat || 0) + 20 * W.perStamina), 'by effort');
   assert.ok(a.weary > b.weary, 'the one who spent more is wearier');
   await Recovery.longRest(a, {}, roller(1, [5]));
   assert.strictEqual(C.maxStamina(a), fresh);
@@ -1970,7 +1970,7 @@ test('a point against armor: through or turned by its punch and the margin (step
     t.armor = Items.makeArmor('mail', 'full', 'average');
     t.stamina = C.maxStamina(t);
     const before = t.stamina;
-    const enc = { hitThisRound: {}, fortressUsed: {}, log: [], round: 1 };
+    const enc = { struck: {}, fortressUsed: {}, log: [], round: 1 };
     const o = opt(a, (x) => x.motion === 'thrust');
     const r = await Combat.applyHit(enc, { [a.id]: a, [t.id]: t }, a, t, o, roller(1, []), { location: 'torso', margin: m });
     const w = a.weapons[0];

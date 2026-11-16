@@ -1,6 +1,6 @@
 /*
  * Characters: creation, feats, and every derived number the sheet and the
- * combat engine need (effective attributes, stamina, AP, costs, damage).
+ * combat engine need (effective attributes, stamina, costs in ticks, damage).
  */
 (function (G) {
   'use strict';
@@ -56,7 +56,7 @@
   }
 
   function freshStatus() {
-    return { prone: false, grapple: null, webbed: 0, unconscious: false, collapsed: null, down: false, dead: false, dropped: [], windUp: null, conds: [] };
+    return { prone: false, grapple: null, webbed: 0, unconscious: false, collapsed: null, down: false, dead: false, dropped: [], conds: [] };
   }
 
   // Worn pieces cover only places the body has (CONFIG.locations.order), and no two the same place: a piece that
@@ -86,6 +86,7 @@
   function normalize(c) {
     c.status = Object.assign(freshStatus(), c.status || {});
     if (!Array.isArray(c.status.dropped)) c.status.dropped = [];
+    delete c.status.windUp; // the old wind-up (step F: an action's lead)
     c.base = c.base || {};
     ATTRS.forEach((a) => {
       if (c.base[a] == null) c.base[a] = 5;
@@ -356,9 +357,9 @@
 
   // ---- Gear effects (PROVISIONAL, magic items) ---------------------------------------------
   // What worn and wielded things do beyond their stats. Sources: worn items (c.trinkets: rings, a
-  // cape, boots…; each { attrs, ap, effects }), and the enchantments (enchantments.yaml `effects`) on
+  // cape, boots…; each { attrs, ticks, effects }), and the enchantments (enchantments.yaml `effects`) on
   // the armor, a ready shield and the weapons in hand. Effect keys (all optional):
-  //   attrs {STR: 1}   ap (sheet AP)   costMult (× every action's AP)   regen   stamina (max)   sp (spell points)
+  //   attrs {STR: 1}   ticks (added to every action)   costMult (× every action's ticks)   regen   stamina (max)   sp
   //   mag {noun: n, '*': n} (spell magnitude)   init   hit (to beat a defence)   move (squares per move)
   //   resist {fire: 0.5} (× harm of that damage keyword: damageMult)   aura {radius, stamina, cond, element, mag}
   //   retaliate {noun, mag} (an element's blow at whoever lands a melee blow on the wearer)
@@ -369,7 +370,7 @@
     for (const t of c.trinkets || []) {
       const e = Object.assign({}, t.effects || {});
       if (t.attrs) e.attrs = Object.assign({}, t.attrs, e.attrs || {});
-      if (t.ap) e.ap = (e.ap || 0) + t.ap;
+      if (t.ticks) e.ticks = (e.ticks || 0) + t.ticks;
       out.push({ item: t, effects: e });
     }
     const ench = (it) => { for (const x of Items.enchantsOf(it)) if (x.effects) out.push({ item: it, effects: x.effects }); };
@@ -410,33 +411,16 @@
     return gearSum(c, 'attrs', a);
   }
 
-  // A weapon's own enchantments: what its blows carry (enchantments.yaml `strike`) and how much AP it
-  // takes off every action made with it (`apLess`, sheet AP).
+  // A weapon's own enchantments: what its blows carry (enchantments.yaml `strike`) and how many ticks it
+  // takes off every action made with it (`ticksLess`).
   function weaponStrike(w) {
     const out = {};
     for (const x of Items.enchantsOf(w)) if (x.strike) for (const [k, v] of Object.entries(x.strike)) out[k] = Array.isArray(v) ? (out[k] || []).concat(v) : v;
     return out;
   }
 
-  function weaponApLess(w) {
-    return w ? Items.enchantsOf(w).reduce((n, x) => n + (x.apLess || 0), 0) : 0;
-  }
-
-  // Gear's cut on an action's AP: the product of every costMult, then a weapon's own apLess. Never below the floor.
-  function gearAP(c, ap, weapon) {
-    const m = G.Effects.mult(c, 'costMult');
-    let v = m !== 1 ? Math.round(ap * m) : ap;
-    const less = weaponApLess(weapon);
-    if (less) v -= Math.round(less * costScale());
-    return Math.max(minAP(), quantAP(v));
-  }
-
-  // R9 (docs/PLAN.md step 8): a cost, after every multiplier, rounds to the nearest CONFIG.apStep sheet AP
-  // (half an AP), halves going up. Called last in the cost functions (gearAP, which every action's cost passes
-  // through). null: costs stay in tenths.
-  function quantAP(v) {
-    const step = CONFIG.apStep ? Math.round(CONFIG.apStep * apScale()) : 0;
-    return step > 1 ? Math.round(v / step + 1e-9) * step : v;
+  function weaponTicksLess(w) {
+    return w ? Items.enchantsOf(w).reduce((n, x) => n + (x.ticksLess || 0), 0) : 0;
   }
 
   // ---- Armor & shield ----------------------------------------------------
@@ -581,7 +565,7 @@
     return Math.max(0, v);
   }
 
-  // ---- Stamina & AP ------------------------------------------------------
+  // ---- Stamina ----------------------------------------------------------
   function maxStamina(c) {
     if (tireless(c)) return freshStamina(c); // nominal: tireless creatures never spend or lose it
     return Math.max(1, freshStamina(c) - (c.weary || 0));
@@ -603,14 +587,14 @@
     return Math.round(s * G.Effects.mult(c, 'staminaMult'));
   }
 
-  // A round of combat wears a fighter down by the effort it took: each point of stamina spent or lost in it takes
+  // A beat of combat wears a fighter down by the effort it took: each point of stamina spent or lost in it takes
   // CONFIG.weariness.perStamina off the maximum until a long rest (fractions carry, as wearyTime's do).
-  function wearyRound(c, spent) {
+  function wearyBeat(c, spent) {
     const W = CONFIG.weariness;
     if (!W || tireless(c)) return 0;
     const cap = Math.floor(freshStamina(c) * W.cap);
     const before = c.weary || 0;
-    const due = (c.wearyCarry || 0) + (W.perRound || 0) + (W.perStamina || 0) * (spent || 0);
+    const due = (c.wearyCarry || 0) + (W.perBeat || 0) + (W.perStamina || 0) * (spent || 0);
     const whole = Math.floor(due);
     c.wearyCarry = due - whole;
     c.weary = Math.min(cap, before + whole);
@@ -632,126 +616,88 @@
     return c.weary - before;
   }
 
-  // A round's regeneration (CONFIG.stamina.regen): ⌊(CON + WIL) × per⌋ less the armor's penalty, plus gear,
+  // A beat's regeneration (CONFIG.stamina.regen): ⌊(CON + WIL) × per⌋ less the armor's penalty, plus gear,
   // conditions and hero mode.
   function regen(c) {
     if (tireless(c)) return 0;
     return Math.floor((attr(c, 'CON') + attr(c, 'WIL')) * CONFIG.stamina.regen.per) - armorInfo(c).regen + G.Effects.sum(c, 'regen') + (c.hero && CONFIG.hero ? CONFIG.hero.regen || 0 : 0);
   }
 
-  // Tireless (undead, constructs): no stamina at all. Damage goes straight to attributes,
-  // actions cost no stamina, and only AP limits them.
+  // Tireless (undead, constructs): no stamina at all. Actions cost no stamina, and only time limits them.
   function tireless(c) {
     return G.Effects.has(c, 'tireless');
   }
 
-  function fatiguePenalty(c) {
+  // ---- The clock (CONFIG.clock; docs/OVERHAUL.md step F) ---------------------------------------------------------
+  // What an action costs in ticks: its base (data.js) × the weapon's speed and strain × the SPD factor × gear's
+  // costMult ÷ the body's tempo; less a Quick feat's ticks and a weapon's ticksLess; plus armor, gear and conditions'
+  // ticks, webs and an arm wound; then fatigue's share of the whole. Rounded once, at the end; never under min.
+  // opts: { speed, quick (a feat id), weapon (its ticksLess), arms (an arm wound counts), free (may cost 0) }.
+  function spdFactor(c) {
+    const K = CONFIG.clock.spd;
+    return (K.base + 5 * K.per) / (K.base + attr(c, 'SPD') * K.per);
+  }
+  function armorTicks(c) {
+    return (CONFIG.clock.armor || 0) * armorInfo(c).spd;
+  }
+  function quickTicks(c, feat) {
+    return feat ? ((CONFIG.clock.quick || {})[feat] || 0) * rank(c, feat) : 0;
+  }
+  function tempo(c) {
+    return G.Effects.mult(c, 'tempo');
+  }
+  // An arm wound's ticks on weapon blows, parries and blocks (wounds.places.arms.ticks).
+  function armsTicks(c) {
+    return woundEffect(c, 'arms', 'ticks');
+  }
+  // Webs (monster ability): each layer adds ticks and stamina to every action.
+  function webTax(c) {
+    const n = (c.status && c.status.webbed) || 0;
+    if (!n) return { ticks: 0, stamina: 0 };
+    const W = CONFIG.web;
+    return { ticks: n * W.ticks, stamina: tireless(c) ? 0 : n * W.stamina };
+  }
+  // Fatigue (CONFIG.fatigueSteps): the share of an action's ticks added below half stamina, more below a quarter.
+  function fatigueShare(c) {
     if (tireless(c)) return 0;
     const max = maxStamina(c);
     if (max <= 0) return 0;
     const frac = c.stamina / max;
     let p = 0;
-    for (const step of CONFIG.fatigueSteps) if (frac < step.below) p = Math.max(p, step.ap);
+    for (const step of CONFIG.fatigueSteps) if (frac < step.below) p = Math.max(p, step.share);
     return p;
   }
-
-  // The round's pool. roll: the AP die's face (CONFIG.apDie); left out, the die counts at its mean.
-  function apPool(c, roll) {
-    const mult = G.Effects.mult(c, 'apMult'); // a boss acts like several fighters
-    const more = G.Effects.sum(c, 'ap'); // slowed, hasted, shocked; a ring
-    // With armorActionAP, armor makes each action dearer instead of shrinking the pool.
-    const spd = CONFIG.armorActionAP ? attr(c, 'SPD') : combatAttr(c, 'SPD');
-    const fromSpd = CONFIG.apSpdContinuous ? spd / CONFIG.apSpdDivisor : Math.floor(spd / CONFIG.apSpdDivisor);
-    const die = CONFIG.apDie ? (roll != null ? roll : (CONFIG.apDie + 1) / 2) : 0;
-    return Math.max(0, Math.round((CONFIG.apBase + fromSpd + die - fatiguePenalty(c) + more) * apScale() * mult));
+  function ticksFor(c, base, opts) {
+    opts = opts || {};
+    let v = base * (opts.speed || 1) * spdFactor(c) * G.Effects.mult(c, 'costMult') / Math.max(0.1, tempo(c));
+    v -= quickTicks(c, opts.quick) + weaponTicksLess(opts.weapon);
+    v += armorTicks(c) + G.Effects.sum(c, 'ticks') + webTax(c).ticks + (opts.arms ? armsTicks(c) : 0);
+    v *= 1 + fatigueShare(c);
+    return Math.max(opts.free ? 0 : CONFIG.clock.min, Math.round(v + 1e-9));
   }
-
-  // Next round's pool if this fighter spends `spend` stamina now and takes no blow before the round ends (regeneration
-  // comes in first, then the pool is set with its fatigue): { pool, fatigue }. Weariness is left out (a point of max).
-  function projectedPool(c, spend) {
-    const keep = c.stamina;
-    c.stamina = Math.max(0, Math.min(maxStamina(c), keep - (spend || 0) + roundRegen(c, false)));
-    try { return { pool: apPool(c), fatigue: fatiguePenalty(c) }; } finally { c.stamina = keep; }
+  // The lead of an action of `ticks` with lead share `share` (data.js), at least 0 and at most the whole.
+  function leadOf(ticks, share) {
+    return Math.max(0, Math.min(ticks, Math.round(ticks * (share || 0))));
   }
-
-  function apScale() {
-    return CONFIG.apScale || 1;
+  // Ticks a body takes to move d squares: a stretch's ticks for each `pace` squares, the armor's once.
+  function moveTicks(c, d) {
+    let v = (d * CONFIG.clock.stretch) / pace(c) * G.Effects.mult(c, 'costMult') / Math.max(0.1, tempo(c)) + armorTicks(c) + webTax(c).ticks;
+    v *= 1 + fatigueShare(c);
+    return Math.max(CONFIG.clock.min, Math.round(v + 1e-9));
   }
-
-  // Multiplies every base action cost, as apScale does the pool (CONFIG.costScale; defaults to apScale).
-  function costScale() {
-    return CONFIG.costScale || apScale();
+  // The most squares `ticks` carries this body in one move.
+  function squaresIn(c, ticks) {
+    let n = 0;
+    while (n < 60 && moveTicks(c, n + 1) <= ticks) n++;
+    return n;
   }
-
-  // AP as the sheet shows them: internal units over CONFIG.apDisplay (tenths of an AP), to one decimal.
-  function fmtAP(n) {
-    return String(Math.round((n / (CONFIG.apDisplay || 1)) * 10) / 10);
-  }
-
-  // The fewest AP an action costs (CONFIG.minActionAP is in sheet AP).
-  function minAP() {
-    return Math.max(1, Math.round(CONFIG.minActionAP * apScale()));
-  }
-
-  // A cost from the action tables (Specifics AP), in internal units. The turn-budget curve
-  // (CONFIG.apCurve) leaves quick actions as they are and makes every AP above its knee cost more.
-  function baseAP(x) {
-    const K = CONFIG.apCurve;
-    return (K && x > K.knee ? K.knee + (x - K.knee) * K.above : x) * costScale();
-  }
-
-  // What armor adds to every action: CONFIG.armorActionAP per point of its SPD penalty (which the
-  // mobility feats lower).
-  function armorAP(c) {
-    return Math.round((CONFIG.armorActionAP || 0) * armorInfo(c).spd * costScale());
-  }
-
-  // AP a Quick feat (Quick Thrust, Quick Parry, Heavy Tempo…) takes off an action whose cost is
-  // `full`. With CONFIG.quickCut the top rank takes that share of it and each rank its part;
-  // as written, a flat 1 per rank.
-  function quickCut(c, feat, full) {
-    const r = rank(c, feat);
-    if (!r || CONFIG.quickCut == null) return r;
-    const max = (G.DATA.FEATS[feat] && G.DATA.FEATS[feat].ranks.length) || r;
-    return Math.round((full * CONFIG.quickCut * Math.min(r, max)) / max);
-  }
-
-  // AP to move d squares. With CONFIG.moveAP, a move is a quick action: moveAP for each stretch of
-  // up to squaresPerAP squares (plus armor). As written, 1 AP per squaresPerAP squares.
-  function moveCost(c, d) {
-    const per = squaresPerAP(c);
-    if (CONFIG.moveAP) return gearAP(c, Math.ceil(d / per) * Math.round(CONFIG.moveAP * costScale()) + armorAP(c));
-    return gearAP(c, Math.max(minAP(), Math.ceil((d * costScale()) / per)));
-  }
-
-  // What an arm wound adds to a weapon blow, a parry or a block (wounds.places.arms.ap, sheet AP), rounded to the step.
-  function armsAP(c) {
-    const a = woundEffect(c, 'arms', 'ap');
-    return a ? quantAP(Math.round(a * apScale())) : 0;
-  }
-
-  // How far `ap` AP can carry this character in one move.
-  function squaresFor(c, ap) {
-    const per = squaresPerAP(c);
-    if (CONFIG.moveAP) {
-      // The most stretches whose cost (with armor and gear) fits in `ap`.
-      let n = 0;
-      while (n < 50 && moveCost(c, Math.floor((n + 1) * per)) <= ap) n++;
-      return Math.floor(n * per);
-    }
-    return Math.floor((ap * per) / costScale());
-  }
-
-  function squaresPerAP(c) {
-    const spd = combatAttr(c, 'SPD') / CONFIG.moveSpdDivisor;
-    let s = CONFIG.moveBase + (CONFIG.moveSpdContinuous ? spd : Math.floor(spd)) + rank(c, 'fleet_foot');
+  // Squares in a stretch: round(moveBase + SPD / moveSpdDivisor) (+ Fleet Foot, − a tower shield, × moveMult, − a leg
+  // wound, + boots' `move`), never under 1. Armor's SPD penalty counts here (combatAttr): it slows the feet.
+  function pace(c) {
+    let s = CONFIG.moveBase + combatAttr(c, 'SPD') / CONFIG.moveSpdDivisor + rank(c, 'fleet_foot');
     if (c.shield && c.shield.size === 'tower' && c.shield.durability > 0) s -= CONFIG.towerMovePenalty;
-    // moveMult: leapers (bogfolk) cover more ground per AP, chill halves it. move: boots add squares.
-    const per = Math.max(1, s) * (CONFIG.moveScale || 1) * G.Effects.mult(c, 'moveMult');
-    // Continuous SPD keeps the fraction (1.75 squares a stretch in plate, 2.25 at SPD 5): the squares a move reaches
-    // are rounded down at the end (squaresFor), so armor still slows the feet.
-    // A leg wound (wounds.places.legs.move) takes squares off each stretch.
-    return Math.max(1, (CONFIG.moveSpdContinuous ? Math.round(per * 4) / 4 : Math.round(per)) - woundEffect(c, 'legs', 'move')) + G.Effects.sum(c, 'move');
+    const per = Math.max(1, s) * G.Effects.mult(c, 'moveMult');
+    return Math.max(1, Math.round(per * 4) / 4 - woundEffect(c, 'legs', 'move')) + G.Effects.sum(c, 'move');
   }
 
   function strOffset(c) {
@@ -813,7 +759,7 @@
   }
 
   // ---- Action catalog for one character --------------------------------
-  // Returns every attack the character could declare right now (ignoring AP).
+  // Returns every attack the character could declare right now.
   function attackOptions(c) {
     const opts = [];
     const st = c.status || freshStatus();
@@ -849,9 +795,8 @@
         }
         if (def.sword && rank(c, 'half_swording') && !grappling) {
           // Gripping the blade shortens the sword: a close-range technique with no penalty.
-          const o = strikeOption(c, w, 'point', 'thrust');
+          const o = strikeOption(c, w, 'point', 'thrust', 2.5); // the grip shifted: dearer
           o.halfSword = true;
-          o.ap += Math.round(costScale());
           o.label = 'Half-sword thrust';
           o.minRange = 1;
           o.maxRange = o.reach = 1;
@@ -892,11 +837,11 @@
     // (Combat.legalActions). Steady Mind: a bolt even in a grapple, a hand free. (A monster with no unarmed blow, an
     // efreeti or a ghost, still has its bolts.)
     if (G.Magic && (!grappling || rank(c, 'steady_mind'))) for (const o of G.Magic.spellOptions(c)) if (o.kind === 'strike' && (o.power || castingHands(c))) opts.push(o);
-    // Flurry: a light weapon's thrust doubled into one action, at half again the AP and twice the stamina.
+    // Flurry: a light weapon's thrust doubled into one action, at half again the ticks and twice the stamina.
     if (rank(c, 'flurry')) {
       for (const o of opts.slice()) {
         const w = o.weaponId && !o.offhand && c.weapons.find((x) => x.id === o.weaponId);
-        if (w && o.motion === 'thrust' && !o.halfSword && isLightWeapon(w)) opts.push(Object.assign({}, o, { flurry: true, label: 'Flurry', ap: Math.round(o.ap * 1.5), stamina: o.stamina * 2 }));
+        if (w && o.motion === 'thrust' && !o.halfSword && isLightWeapon(w)) opts.push(Object.assign({}, o, { flurry: true, label: 'Flurry', ticks: Math.round(o.ticks * 1.5), stamina: o.stamina * 2 }));
       }
     }
     // Whirlwind (Reaper capstone, CONFIG.whirlwind): a two-handed weapon's swung edge or head, struck at every foe it reaches.
@@ -905,12 +850,13 @@
       for (const o of opts.slice()) {
         const w = o.weaponId && !o.offhand && c.weapons.find((x) => x.id === o.weaponId);
         if (w && WEAPONS[w.type].hands === 2 && ['swing', 'twoHanded'].includes(o.motion) && (o.face === 'edge' || o.face === 'head') && !o.unarmed && !o.natural && !o.spell && !o.ranged) {
-          opts.push(Object.assign({}, o, { whirlwind: true, sweep: true, label: 'Whirlwind', ap: quantAP(Math.round(o.ap * K.ap)), stamina: Math.ceil(o.stamina * K.stamina) }));
+          opts.push(Object.assign({}, o, { whirlwind: true, sweep: true, label: 'Whirlwind', ticks: Math.round(o.ticks * K.ticks), lead: Math.round(o.lead * K.ticks), stamina: Math.ceil(o.stamina * K.stamina) }));
         }
       }
     }
+    // Webs: their ticks are in every cost already (ticksFor); their stamina is added here.
     const t = webTax(c);
-    if (t.ap || t.stamina) for (const o of opts) { o.ap += t.ap; o.stamina += t.stamina; }
+    if (t.stamina) for (const o of opts) o.stamina += t.stamina;
     // A blow is named by its motion alone ("Thrust"); the striking part is added only where one weapon has two blows
     // of that name (a halberd's swing with the edge and with the head).
     for (const o of opts) {
@@ -938,13 +884,16 @@
     return d >= (opt.minRange || 1) && d <= (opt.maxRange != null ? opt.maxRange : opt.reach || 1);
   }
 
-  // Identifies the attack a wind-up is preparing.
+  // Names an attack option (to find it again: a declaration's option, the AI's "repeat").
   function optionKey(o) {
     return [o.weaponId || o.spellKey || o.unarmed || '', o.motion, o.face || '', o.label].join('|');
   }
 
-  function needsWindUp(motion) {
-    return ((CONFIG.windUp && CONFIG.windUp.motions) || []).includes(motion);
+  // A committed fighter can't block or parry while a power blow, a drawn bow or a gathered (Strong) spell is in its
+  // lead (CONFIG.clock.exposes).
+  function exposesMotion(motion, drawn) {
+    const E = CONFIG.clock.exposes || {};
+    return (E.motions || []).includes(motion) || (drawn && !!E.bows);
   }
 
   // How hard this weapon is for this wielder in this motion: load / capacity (1 = at the limit
@@ -959,32 +908,26 @@
     return (motion === 'thrust' ? def.load.thrust : def.load.swing) / cap;
   }
 
-  function strikeOption(c, w, face, motion) {
+  function strikeOption(c, w, face, motion, extra) {
     const def = Items.weaponStats(w);
     const m = MOTIONS[motion];
-    // A bow is drawn (its own share of the shot's cost, `draw`), then loosed; other wind-ups take CONFIG.windUp's.
+    // A bow's shot is drawn (its lead: `draw.ticks`, exposed), then loosed.
     const draw = motion === 'shoot' && def.draw ? def.draw : null;
-    const windUp = needsWindUp(motion) || !!draw;
-    const W = draw ? { ap: draw.ap, stamina: draw.stamina || 0 } : CONFIG.windUp || { ap: 0, stamina: 0 };
-    let base = motion === 'shoot' && def.shootAP ? def.shootAP : m.ap;
-    let baseSt = motion === 'shoot' && def.shootStamina != null ? def.shootStamina : m.stamina;
-    if (windUp) { base -= W.ap; baseSt -= W.stamina; }
-    let ap = baseAP(base);
-    let strain = 0, strainF = 1;
+    let base = motion === 'shoot' && def.shootTicks ? def.shootTicks : m.ticks;
+    const baseSt = motion === 'shoot' && def.shootStamina != null ? def.shootStamina : m.stamina;
+    let speed = 1, strain = 0, strainF = 1;
     if (def.model === 'physical') {
       // Natural speed, then strain: the weapon's load against this wielder's strength.
       if (motion !== 'shoot') {
         strain = weaponStrain(c, w, motion);
         strainF = strain > 1 ? Math.pow(strain, CONFIG.weaponPhysics.strain.exp) : 1;
-        ap = Math.round(ap * (motion === 'thrust' ? def.speed.thrust : def.speed.swing) * strainF);
+        speed = (motion === 'thrust' ? def.speed.thrust : def.speed.swing) * strainF;
       }
-    } else if (def.weight === 'very light' && (motion === 'thrust' || motion === 'swing')) ap -= CONFIG.veryLightApDiscount * costScale();
-    ap = Math.round(ap);
-    const floor = Math.max(minAP(), Math.round((CONFIG.minStrikeAP || 0) * apScale()));
-    const full = Math.max(floor, ap);
-    const quick = motion === 'thrust' ? 'quick_thrust' : motion === 'twoHanded' || motion === 'power' ? 'heavy_tempo' : null;
-    if (quick) ap -= quickCut(c, quick, full);
-    ap = gearAP(c, Math.max(floor, ap) + armorAP(c), w.natural ? null : w) + armsAP(c);
+    } else if (def.weight === 'very light' && (motion === 'thrust' || motion === 'swing')) base -= CONFIG.clock.veryLight;
+    base += extra || 0;
+    const quick = motion === 'thrust' ? 'quick_thrust' : motion === 'twoHanded' || motion === 'power' ? 'heavy_tempo' : draw ? 'quick_draw' : null;
+    const ticks = ticksFor(c, base, { speed, quick, weapon: w.natural ? null : w, arms: true });
+    const lead = leadOf(ticks, draw ? draw.ticks / base : m.lead);
     let red = 0;
     if (isLightWeapon(w) && (motion === 'thrust' || motion === 'swing')) red += rank(c, 'light_touch');
     const stamina = Math.round(strainF * Math.max(CONFIG.minStrikeStamina || 0, staminaCost(c, Math.max(0, baseSt), effectiveWeight(c, w), red)));
@@ -1018,11 +961,11 @@
       punch = Math.round(punch * Items.weaponEfficacy(w) * 100) / 100;
     }
     return {
-      kind: 'strike', weaponId: w.id, weaponType: w.type, face, motion, ap, stamina, punch, clinchPenalty,
+      kind: 'strike', weaponId: w.id, weaponType: w.type, face, motion, ticks, lead, exposes: exposesMotion(motion, !!draw), stamina, punch, clinchPenalty,
       natural: !!def.natural, knockdown: trait.knockdown || null, venom: trait.venom || null, sap: trait.sap || null, rust: trait.rust || null, shieldCrush: !!trait.shieldCrush, web: trait.web || null,
       reach: maxRange, minRange, maxRange, closePenalty, ranged, longRange: ranged ? def.ranged.long : null,
       strain: Math.round(strain * 100) / 100, tooHeavy: strain > CONFIG.weaponPhysics.strain.max,
-      windUp, windUpCost: draw ? W : null, damage: weaponDamage(c, w, face, motion), wound: def.wound[face] || null,
+      damage: weaponDamage(c, w, face, motion), wound: def.wound[face] || null,
       label: def.natural ? `${def.name}${motion === 'power' ? ' (power)' : ''}` : m.name,
     };
   }
@@ -1071,19 +1014,15 @@
 
   function unarmedOption(c, kind) {
     const a = ACTIONS[kind];
-    let ap = Math.round(baseAP(a.ap));
-    const full = Math.max(minAP(), ap);
     let red = 0;
-    if (kind === 'punch' || kind === 'kick') {
-      ap -= quickCut(c, 'quick_hands', full);
-      red += rank(c, 'brawlers_wind');
-    }
-    ap = gearAP(c, Math.max(minAP(), ap) + armorAP(c)) + (kind === 'kick' ? 0 : armsAP(c));
+    if (kind === 'punch' || kind === 'kick') red += rank(c, 'brawlers_wind');
+    const ticks = ticksFor(c, a.ticks, { quick: kind === 'punch' || kind === 'kick' ? 'quick_hands' : null, arms: kind !== 'kick' });
+    const lead = leadOf(ticks, a.lead);
     const dmg = a.damage.slice();
     if (kind === 'punch' || kind === 'kick') dmg[2] += rank(c, 'heavy_hands');
     dmg[2] = Math.max(0, dmg[2] + strBonus(c));
     return {
-      kind: 'strike', unarmed: kind, motion: kind === 'shieldBash' ? 'swing' : 'unarmed', ap,
+      kind: 'strike', unarmed: kind, motion: kind === 'shieldBash' ? 'swing' : 'unarmed', ticks, lead,
       stamina: staminaCost(c, a.stamina, null, red), reach: 1, minRange: 1, maxRange: CONFIG.range.maneuverMax,
       closePenalty: false, damage: dmg, label: a.name,
       // A fist or a boot winds and bruises; it breaks nothing without the feat (CONFIG.unarmed).
@@ -1091,25 +1030,28 @@
     };
   }
 
-  // AP and stamina for non-attack actions (before webs).
-  function baseActionCost(c, kind, extra) {
+  // Ticks, lead and stamina for an action other than a blow. extra: { ticks } for a move or a wait.
+  function actionCost(c, kind, extra) {
     const st = c.status || freshStatus();
     const a = ACTIONS[kind];
-    const S = costScale();
-    let ap = baseAP(a.ap), red = 0, quick = null, stBase = a.stamina;
-    const grappled = isHeld(c);
+    const M = CONFIG.maneuver;
+    let base = a.ticks || 0, red = 0, quick = null, stBase = a.stamina, arms = false, weapon = null, share = a.lead || 0;
+    const web = webTax(c).stamina;
     switch (kind) {
       case 'block': {
         const s = shieldInfo(c);
-        ap = baseAP(s ? s.blockAP : 2);
+        base = s ? s.blockTicks : 5;
         quick = 'quick_block';
         red = rank(c, 'economical_block');
+        arms = true;
         break;
       }
       case 'parry':
       case 'offParry':
         quick = 'quick_parry';
         red = rank(c, 'economical_parry');
+        arms = true;
+        weapon = kind === 'parry' ? wieldedWeapon(c) : offhandWeapon(c);
         break;
       case 'dodge':
         quick = 'quick_dodge';
@@ -1117,13 +1059,12 @@
         if (CONFIG.defense.dodgeStamina != null) stBase = CONFIG.defense.dodgeStamina;
         break;
       case 'standUp': {
-        const curve = CONFIG.standUp;
+        const K = CONFIG.standUp;
         const type = armorInfo(c).type;
-        const k = curve && curve.ap[type] != null ? type : 'none';
-        ap = rank(c, 'kip_up') ? baseAP(1) : curve ? baseAP(curve.ap[k]) : baseAP(a.ap + armorInfo(c).standUp);
-        ap = Math.min(gearAP(c, Math.round(ap) + armorAP(c)), Math.max(minAP(), apPool(c)));
-        if (curve) return { ap, stamina: staminaCost(c, curve.stamina[k], null, 0) };
-        break;
+        const k = K.ticks[type] != null ? type : 'none';
+        base = rank(c, 'kip_up') ? 3 : K.ticks[k];
+        const ticks = ticksFor(c, base);
+        return { ticks, lead: leadOf(ticks, share), stamina: staminaCost(c, K.stamina[k], null, 0) + web };
       }
       case 'clinch':
       case 'grapple':
@@ -1131,55 +1072,25 @@
       case 'throw':
       case 'break': {
         if (kind !== 'break') red = rank(c, 'brawlers_wind');
-        const g = CONFIG.grappling;
-        if (g) return { ap: gearAP(c, Math.max(minAP(), Math.round(ap)) + armorAP(c)), stamina: staminaCost(c, g.stamina[kind], null, red) };
-        break;
+        const ticks = ticksFor(c, base);
+        return { ticks, lead: leadOf(ticks, share), stamina: staminaCost(c, CONFIG.grappling.stamina[kind], null, red) + web };
       }
       case 'bandage':
-        ap = rank(c, 'field_dressing') ? baseAP(1) : baseAP(a.ap);
+        if (rank(c, 'field_dressing')) base = 2.5;
         break;
       case 'move':
-        ap = (extra && extra.ap) || moveCost(c, 1); // moveCost holds the armor's share
-        red = rank(c, 'light_on_your_feet');
-        break;
-      case 'windUp': {
-        const o = extra && extra.option;
-        const W = (o && o.windUpCost) || CONFIG.windUp;
-        const drawn = Math.round(baseAP(W.ap));
-        ap = gearAP(c, drawn - (o && o.ranged ? quickCut(c, 'quick_draw', drawn) : 0) + armorAP(c), o && o.weaponId ? c.weapons.find((x) => x.id === o.weaponId) : null);
-        if (o && o.spell) return { ap, stamina: 0 };
-        const wpn = o && o.weaponId ? c.weapons.find((x) => x.id === o.weaponId) : null;
-        return { ap, stamina: staminaCost(c, W.stamina, wpn ? effectiveWeight(c, wpn) : null, 0) };
-      }
+        return { ticks: (extra && extra.ticks) || moveTicks(c, 1), lead: 0, stamina: staminaCost(c, stBase, null, rank(c, 'light_on_your_feet')) + web };
+      case 'wait':
+        return { ticks: Math.max(0, Math.round((extra && extra.ticks) || 0)), lead: 0, stamina: 0 };
+      case 'dropWeapon':
+        return { ticks: 0, lead: 0, stamina: 0 };
     }
     if (kind === 'block' || kind === 'parry' || kind === 'dodge') {
-      if (st.prone) ap += CONFIG.maneuver.proneDefenseExtraAP * S;
-      if (grappled) ap += CONFIG.maneuver.grappledDefenseExtraAP * S;
+      if (st.prone) base += M.proneDefenseTicks;
+      if (isHeld(c)) base += M.grappledDefenseTicks;
     }
-    const stamina = staminaCost(c, stBase, null, red);
-    if (kind === 'dropWeapon') return { ap: 0, stamina };
-    if (kind === 'move') return { ap: Math.round(ap), stamina };
-    const full = Math.max(minAP(), Math.round(ap));
-    ap = Math.max(minAP(), full - (quick ? quickCut(c, quick, full) : 0)) + armorAP(c);
-    // Gear: a costMult on everything; a weapon's apLess on the parries made with it.
-    ap = gearAP(c, ap, kind === 'parry' ? wieldedWeapon(c) : kind === 'offParry' ? offhandWeapon(c) : null);
-    if (kind === 'block' || kind === 'parry' || kind === 'offParry') ap += armsAP(c);
-    return { ap, stamina };
-  }
-
-  // Webs (monster ability): each layer makes every action cost more AP and stamina.
-  function webTax(c) {
-    const n = (c.status && c.status.webbed) || 0;
-    if (!n) return { ap: 0, stamina: 0 };
-    const W = CONFIG.web || { ap: 1, stamina: 1 };
-    return { ap: Math.round(n * W.ap * costScale()), stamina: tireless(c) ? 0 : n * W.stamina };
-  }
-
-  function actionCost(c, kind, extra) {
-    const cost = baseActionCost(c, kind, extra);
-    if (kind === 'dropWeapon') return cost;
-    const t = webTax(c);
-    return { ap: cost.ap + t.ap, stamina: cost.stamina + t.stamina };
+    const ticks = ticksFor(c, base, { quick, weapon, arms });
+    return { ticks, lead: leadOf(ticks, share), stamina: staminaCost(c, stBase, null, red) + web };
   }
 
   // ---- Wounds and life (CONFIG.wounds; docs/OVERHAUL.md step E) -------------------------------------------------
@@ -1210,7 +1121,7 @@
     return s;
   }
   // Bleeding, all wounds together; a round's blood loss is this × wounds.bleed.harm, less CON's share (points of harm
-  // on one wound of blood loss at the torso: Combat.bodyRound).
+  // on one wound of blood loss at the torso: Combat.beatBody).
   function bleeding(c) {
     return wounds(c).reduce((t, w) => t + (w.bleed || 0), 0);
   }
@@ -1347,16 +1258,16 @@
     c.wounds = [];
   }
   // A few words for each wound, worst first, as the sheet and the battle screen show them: "torso 2 (bleeding 2):
-  // −4 stamina a round".
+  // −4 stamina a beat".
   function woundWords(c, w) {
     const P = WK().places[w.place] || {};
     const at = (k) => (Array.isArray(P[k]) ? P[k][Math.min(P[k].length, w.sev) - 1] : 0);
     const bits = [];
-    if (P.ap && at('ap')) bits.push(`+${at('ap')} AP to blows`);
+    if (P.ticks && at('ticks')) bits.push(`+${at('ticks')} ticks to blows`);
     if (P.damage && at('damage')) bits.push(`−${at('damage')} damage`);
     if (P.move && at('move')) bits.push(`−${at('move')} squares`);
     if (P.dodge && at('dodge')) bits.push(`−${at('dodge')} dodge`);
-    if (P.stamina && at('stamina')) bits.push(`−${at('stamina')} stamina a round`);
+    if (P.stamina && at('stamina')) bits.push(`−${at('stamina')} stamina a beat`);
     if (P.stun && w.sev <= P.stun.length) bits.push('stuns');
     if (P.drop != null && w.sev >= P.drop) bits.push('dropped what it held');
     if (P.fell != null && w.sev >= P.fell) bits.push("can't stand");
@@ -1409,10 +1320,10 @@
     return was;
   }
 
-  // One round's regeneration (R1, CONFIG.stamina.regen): regen() in full when the fighter lost no stamina to a blow
-  // this round, `struck` of it (rounded up, at least 1) when they did. Negative regeneration (heavy armor) is whole
+  // One beat's regeneration (R1, CONFIG.stamina.regen): regen() in full when the fighter lost no stamina to a blow
+  // this beat, `struck` of it (rounded up, at least 1) when they did. Negative regeneration (heavy armor) is whole
   // either way.
-  function roundRegen(c, struck) {
+  function beatRegen(c, struck) {
     const full = regen(c);
     if (full <= 0 || !struck) return full;
     return Math.max(1, Math.ceil(full * CONFIG.stamina.regen.struck));
@@ -1426,12 +1337,12 @@
     newCharacter, normalize, freshStatus,
     rank, skill, skillBudget, skillsSpent, skillsLeft, canRaiseSkill, canLowerSkill, raiseSkill, lowerSkill, attackSkill, defenseSkill, featSkill, featCount, featBudget, treeCount, tierCount, tierName, canTakeFeat, closedBy, parseReq, reqMet, canRemoveFeat, addFeat, removeFeat, reqText, roman,
     conditioning, attr, attrMax, combatAttr, armorInfo, armorPieces, armorAt, armorUniform, shieldInfo, shieldReady, wieldedWeapon, offhandWeapon,
-    maxStamina, clampStamina, freshStamina, wearyRound, wearyTime, regen, fatiguePenalty, apPool, projectedPool, apScale, costScale, quantAP, fmtAP, minAP, baseAP, armorAP, quickCut, moveCost, squaresFor, squaresPerAP, handsBusy, castingHands, weaponStrain, inRange, optionKey, needsWindUp, strOffset, staminaCost, effectiveWeight, isLightWeapon,
+    maxStamina, clampStamina, freshStamina, wearyBeat, wearyTime, regen, fatigueShare, spdFactor, armorTicks, quickTicks, tempo, ticksFor, leadOf, moveTicks, squaresIn, pace, exposesMotion, handsBusy, castingHands, weaponStrain, inRange, optionKey, strOffset, staminaCost, effectiveWeight, isLightWeapon,
     strBonus, weaponDamage, mainIndex, attackOptions, actionCost, ammoLeft, gearWarnings, tireless, webTax,
     sizeOf, wounds, boxes, woundLoad, severityOf, bleeding, bleedLoss, grit, painAt, woundEffect, worstAt, cannotStand, isDown, addWound, harm, mendWounds, bindWounds, healAll, describeWounds,
-    updateCondition, isActive, collapsed, comeRound, roundRegen,
+    updateCondition, isActive, collapsed, comeRound, beatRegen,
     grapple, holding, isHeld, isPinned, inClinch,
-    gearSources, gearSum, damageMult, gearAP, weaponStrike, weaponApLess,
+    gearSources, gearSum, damageMult, weaponStrike, weaponTicksLess,
     TREES, ARMOR,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

@@ -71,7 +71,7 @@ test('R1: at the round\'s end a fighter struck regains the share, one not struck
   const a = armed('A', null, 'party'), b = armed('B', null, 'enemy');
   const { enc, chars } = await field([[a, 1, 1], [b, 6, 1]]);
   a.stamina = 10; b.stamina = 10;
-  enc.hitThisRound[a.id] = 4; // a blow took 4 of A's stamina this round
+  enc.struck[a.id] = 4; // a blow took 4 of A's stamina this round
   await closeRound(enc, chars);
   assert.equal(b.stamina, 10 + C.roundRegen(b, false), 'B, not struck: the whole');
   assert.equal(a.stamina, 10 + C.roundRegen(a, true), 'A, struck: the share');
@@ -129,10 +129,10 @@ test('R3: stamina 0 is a collapse: prone and out for the rest of the round and r
   assert.ok(C.collapsed(b) && b.status.prone && !C.isActive(b));
   const r0 = enc.round;
   const K = CONFIG.stamina.collapse;
-  assert.equal(Combat.collapseRounds(b), Math.max(0, K.rounds - Math.floor(C.attr(b, 'WIL') / K.perWil)));
+  assert.equal(Combat.collapseRounds(b), Math.max(0, K.beats - Math.floor(C.attr(b, 'WIL') / K.perWil)));
   assert.equal(Combat.collapseRounds(b), 1, 'WIL 5: one round more');
   b.base.WIL = 10;
-  assert.equal(Combat.collapseRounds(b), Math.max(0, K.rounds - 2), 'more WIL, sooner');
+  assert.equal(Combat.collapseRounds(b), Math.max(0, K.beats - 2), 'more WIL, sooner');
   b.base.WIL = 5;
   assert.equal(Combat.comesRoundAt(enc, b), r0 + 1);
   await closeRound(enc, chars);
@@ -188,7 +188,7 @@ test('Second Wind: full regeneration when struck, and a collapse lasts only its 
   const a = armed('A', null, 'party'), b = armed('B', null, 'enemy'), c = armed('C', null, 'enemy');
   a.feats.second_wind = 1;
   const { enc, chars } = await field([[a, 1, 1], [b, 6, 1], [c, 7, 1]]);
-  a.stamina = 10; enc.hitThisRound[a.id] = 5;
+  a.stamina = 10; enc.struck[a.id] = 5;
   b.feats.second_wind = 1; b.stamina = 0; C.updateCondition(b);
   await closeRound(enc, chars);
   assert.equal(a.stamina, 10 + C.roundRegen(a, false), 'the whole, struck or not');

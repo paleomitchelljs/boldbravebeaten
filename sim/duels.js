@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // One-on-one fights: each preset hero against the others and against a few common foes, AI on both sides, in a
-// 12 x 6 room. How long they last (rounds), how they end (a death or a knockout), and how much of a fresh fighter's
+// 12 x 6 room. How long they last (beats), how they end (a death or a knockout), and how much of a fresh fighter's
 // stamina one landed blow takes. For the user's 2026-11-01 note: duels run slow, stamina and damage are spongy.
 //   node sim/duels.js [--n 40] [--seed 500] [--mirror] [--set key=value ...] [--metrics] [--json file]
 //   (--set takes a JSON value, a dotted key into CONFIG; --metrics adds the tuning plan's metrics for each pairing and
@@ -49,7 +49,7 @@ const make = (k) => (/^[A-Z]/.test(k) ? hero(k) : monster(k));
 
 (async () => {
   console.log(`${N} fights each, seed ${SEED}, 12 x 6 room\n`);
-  console.log('A vs B'.padEnd(26) + 'A wins  B wins  rounds (median, 90th)  deaths  blow / fresh stamina (A, B)');
+  console.log('A vs B'.padEnd(26) + 'A wins  B wins  beats (median, 90th)   deaths  blow / fresh stamina (A, B)');
   const all = [];
   const total = METRICS ? Metrics.create() : null;
   const reports = [];
@@ -61,7 +61,7 @@ const make = (k) => (/^[A-Z]/.test(k) ? hero(k) : monster(k));
       const A = make(a)(i), Bc = make(b)(i);
       const fresh = { [A.id]: C.maxStamina(A) || 1, [Bc.id]: C.maxStamina(Bc) || 1 };
       const r = await L.fight({
-        A: [A], B: [Bc], grid: { w: 12, h: 6 }, seed: SEED + i, maxRounds: 30,
+        A: [A], B: [Bc], grid: { w: 12, h: 6 }, seed: SEED + i, maxBeats: 20,
         watch: M && ((enc) => {
           const heroes = [[A, a], [Bc, b]].filter(([, k]) => /^[A-Z]/.test(k)).map(([c]) => c.id);
           const w1 = M.watch(enc, { [A.id]: A, [Bc.id]: Bc }, heroes), w2 = total.watch(enc, { [A.id]: A, [Bc.id]: Bc }, heroes);
@@ -74,7 +74,7 @@ const make = (k) => (/^[A-Z]/.test(k) ? hero(k) : monster(k));
     const s = L.summarize(res);
     all.push(...res);
     const m = (xs) => (xs.length ? (xs.reduce((t, x) => t + x, 0) / xs.length).toFixed(2) : '–');
-    console.log(`${a} vs ${b}`.padEnd(26) + L.pct(s.winA).padEnd(8) + L.pct(s.winB).padEnd(8) + `${s.medianRounds}, ${s.p90Rounds}`.padEnd(22) + s.deathRate.toFixed(2).padEnd(8) + `${m(blows.A)}, ${m(blows.B)}`);
+    console.log(`${a} vs ${b}`.padEnd(26) + L.pct(s.winA).padEnd(8) + L.pct(s.winB).padEnd(8) + `${s.medianBeats}, ${s.p90Beats}`.padEnd(22) + s.deathRate.toFixed(2).padEnd(8) + `${m(blows.A)}, ${m(blows.B)}`);
     if (M) {
       reports.push([`${a} vs ${b}`, M]);
       if (JSONOUT) require('fs').appendFileSync(JSONOUT, JSON.stringify({ sim: 'duels', pair: [a, b], n: N, winA: s.winA, winB: s.winB, deaths: s.deathRate, metrics: Metrics.summary(M) }) + '\n');
@@ -87,5 +87,5 @@ const make = (k) => (/^[A-Z]/.test(k) ? hero(k) : monster(k));
     for (const l of Metrics.report(total)) console.log(l);
     if (JSONOUT) require('fs').appendFileSync(JSONOUT, JSON.stringify({ sim: 'duels', pair: 'all', n: N, metrics: Metrics.summary(total) }) + '\n');
   }
-  console.log(`\nall: median ${s.medianRounds} rounds, mean ${s.meanRounds.toFixed(1)}, 90th ${s.p90Rounds}; deaths ${s.deathRate.toFixed(2)} a fight; timeouts ${L.pct(s.timeout)}`);
+  console.log(`\nall: median ${s.medianBeats} beats, mean ${s.meanBeats.toFixed(1)}, 90th ${s.p90Beats}; deaths ${s.deathRate.toFixed(2)} a fight; timeouts ${L.pct(s.timeout)}`);
 })();

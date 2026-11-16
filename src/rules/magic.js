@@ -139,10 +139,10 @@
     return [...new Set(out.filter((k) => k && CONFIG.conditions[k]))];
   }
 
-  // Tradition feats (feats.yaml `spell`: { match: [{verb, noun, aim, mod, shape}], mag, cost, radius, roundsMult,
+  // Tradition feats (feats.yaml `spell`: { match: [{verb, noun, aim, mod, shape}], mag, cost, radius, beatsMult,
   // contest, bound }): what the caster's feats add to a spell. A rule matches when every field it names agrees.
   function spellBonus(c, sp) {
-    const out = { mag: 0, cost: 0, radius: 0, roundsMult: 1, contest: 0, bound: false };
+    const out = { mag: 0, cost: 0, radius: 0, beatsMult: 1, contest: 0, bound: false };
     const F = G.DATA && G.DATA.FEATS;
     if (!F) return out;
     const agrees = (r) => (!r.verb || (sp.verbs || [sp.verb]).includes(r.verb)) && (!r.noun || [].concat(r.noun).includes(sp.noun)) &&
@@ -157,7 +157,7 @@
       out.cost += (S.cost || 0) * k;
       out.radius += S.radius || 0;
       out.contest += (S.contest || 0) * k;
-      if (S.roundsMult) out.roundsMult *= S.roundsMult;
+      if (S.beatsMult) out.beatsMult *= S.beatsMult;
       if (S.bound) out.bound = true;
     }
     return out;
@@ -298,17 +298,17 @@
     const storm = n === 'fire' && m === 'wide' && C().rank(c, 'firestorm') ? 1 : 0;
     const cost = Math.max(1, verbs.reduce((t, k) => t + (w[k].cost || 0), 0) + (N ? N.cost : 0) + (M ? M.cost : 0) + (e.cost || 0) + fb.cost - storm);
     const bolt = BOLT.includes(shape);
-    const windUp = !!(bolt && M && M.windUp && CONFIG.windUp && CONFIG.windUp.spells);
-    // Base AP (Specifics units) through the turn-budget curve, then Quick Casting and armor.
-    let baseAP = (e.ap || S.ap || CONFIG.magic.castAP) + (!bolt && M && M.windUp ? 1 : 0) + (M && M.ap ? M.ap : 0);
-    if (windUp) baseAP -= CONFIG.windUp.ap;
-    const full = Math.max(C().minAP(), Math.round(C().baseAP(baseAP)));
-    const ap = C().gearAP(c, Math.max(C().minAP(), full - C().quickCut(c, 'quick_casting', full)) + C().armorAP(c));
+    // A Strong spell is gathered: dearer, with a long lead in which the caster is committed and can't block or parry
+    // (CONFIG.clock.exposes.strongSpells); any other cast has a short one (CONFIG.magic.lead).
+    const gathered = !!(M && M.gather);
+    const ticks = C().ticksFor(c, (e.ticks || S.ticks || CONFIG.magic.castTicks) + (gathered ? CONFIG.magic.gather.ticks : 0) + (M && M.ticks ? M.ticks : 0), { quick: 'quick_casting' });
+    const lead = C().leadOf(ticks, gathered ? CONFIG.magic.gather.lead : CONFIG.magic.lead);
+    const exposes = gathered && !!(CONFIG.clock.exposes || {}).strongSpells;
     const far = M && M.rangeMult ? M.rangeMult : 1;
     // An area keeps its bolt's reach (Take Life Wide: round the caster or a square beside them).
     const reach = shape === 'area' ? [0, (e.range || S.range || [0, 6])[1]] : e.range || S.range || [1, 1];
     const range = [reach[0], reach[1] * far];
-    const rounds = e.rounds != null ? e.rounds : S.rounds;
+    const beats = e.beats != null ? e.beats : S.beats;
     const named = !!e.named;
     const verbLabel = verbs.map((k) => w[k].name).join(' + ');
     const nounName = opts.monsterName || (N ? N.name : null);
@@ -319,7 +319,7 @@
       nouns: n ? [n] : [], element: N ? N.element : null, magnitude: mag, cost,
       radius: (S.radius || 0) + (e.radius || 0) + (M && M.radius ? M.radius : 0) + (fb.radius || 0),
       length: (S.length || 1) + (M && M.length ? M.length : 0),
-      rounds: rounds == null ? null : Math.round(rounds * (M && M.roundsMult ? M.roundsMult : 1) * fb.roundsMult),
+      beats: beats == null ? null : Math.round(beats * (M && M.beatsMult ? M.beatsMult : 1) * fb.beatsMult),
       delayed: !!(M && M.delayed),
       condMag: 1 + (M && M.mag ? 1 : 0),
       named, contest: fb.contest + (named ? CONFIG.magic.nameBonus || 0 : 0),
@@ -329,18 +329,18 @@
       verbKey: verbs.join('+'), verbLabel, nounKey: (n || '') + (opts.monster ? ':' + opts.monster : '') + (twoAims ? '@' + e.aim : ''), nounLabel,
     });
     const base = {
-      spellKey: [verbs.join('+'), n, opts.monster, twoAims ? e.aim : null, m].filter(Boolean).join('+'), label, spell, ap, stamina: 0, spCost: cost,
+      spellKey: [verbs.join('+'), n, opts.monster, twoAims ? e.aim : null, m].filter(Boolean).join('+'), label, spell, ticks, lead, exposes, stamina: 0, spCost: cost,
       minRange: range[0], maxRange: range[1], reach: range[1], closePenalty: false,
     };
     if (bolt) {
       return Object.assign(base, {
-        kind: 'strike', motion: 'spell', windUp, ranged: range[0] > 1,
+        kind: 'strike', motion: 'spell', ranged: range[0] > 1,
         damage: damageVector(n, mag),
       });
     }
     // target: what the caster aims at — a square, a foe, an ally or themself, or anyone.
     const target = SQUARE.includes(shape) && !(shape === 'dispel' && e.aim === 'any') ? 'square' : shape === 'drain' ? (spell.radius ? 'square' : 'foe') : e.aim === 'ground' ? 'square' : e.aim;
-    return Object.assign(base, { kind: 'cast', target, windUp: false, ranged: true });
+    return Object.assign(base, { kind: 'cast', target, ranged: true });
   }
 
   // Backlash: d10 + Control vs the spell's cost; stamina lost per point short.
@@ -405,16 +405,16 @@
     const n = G.Conditions.add(target, key, Object.assign({ src: caster ? caster.id : null }, opts));
     // A curse cast again (stack) adds to the one already there.
     if (had && n) n.mag = before + (opts.mag || 1);
-    logger(enc)(`${target.name} is ${name.toLowerCase()} (${opts.rounds} round${opts.rounds > 1 ? 's' : ''}${n && n.mag > 1 && opts.stack ? `, ×${n.mag}` : ''}).`, 'hit');
-    // Stunned, paralyzed: AP lost at once, not only next round.
-    const drain = CONFIG.conditions[key].drainAP;
-    if (drain && enc.ap && enc.ap[target.id] != null) enc.ap[target.id] = Math.max(0, enc.ap[target.id] - Math.round(drain * (opts.mag || 1) * C().apScale()));
+    logger(enc)(`${target.name} is ${name.toLowerCase()} (${opts.beats} beat${opts.beats > 1 ? 's' : ''}${n && n.mag > 1 && opts.stack ? `, ×${n.mag}` : ''}).`, 'hit');
+    // Stunned: ticks on the clock at once (CONFIG.conditions stagger).
+    const stagger = CONFIG.conditions[key].stagger;
+    if (stagger && enc.clock && enc.clock[target.id] != null && G.Combat) G.Combat.pushClock(enc, target.id, Math.round(stagger * (opts.mag || 1)));
     // Controlled: fights for the caster while it lasts; the caster must hold it (unless it is free: a charm).
     if (CONFIG.conditions[key].control && caster) {
       if (!target.charmed) target.charmed = { side: target.side, control: target.control };
       target.side = caster.side;
       target.control = caster.control || 'auto';
-      if (!CONFIG.conditions[key].free) G.Conditions.add(caster, 'concentrating', { rounds: opts.rounds, src: caster.id });
+      if (!CONFIG.conditions[key].free) G.Conditions.add(caster, 'concentrating', { beats: opts.beats, src: caster.id });
     }
     return true;
   }
@@ -427,7 +427,7 @@
     const ward = G.Conditions && G.Conditions.get(target, 'warded');
     if (ward && ward.kind === n) return; // warded against this element
     const condMag = (opts && opts.condMag) || 1;
-    if (H.cond) await afflict(enc, caster, target, H.cond, { rounds: H.rounds || 1, mag: condMag }, roller);
+    if (H.cond) await afflict(enc, caster, target, H.cond, { beats: H.beats || 1, mag: condMag }, roller);
     if (H.corrode && opts && opts.mag) corrode(enc, target, opts.mag);
     if (H.push && opts && opts.from) await push(enc, chars, target, opts.from, H.push, roller);
     if (H.knockdown && !target.status.prone) {
@@ -520,7 +520,7 @@
     const s = option.spell;
     for (const n of s.nouns || [s.noun]) await onHit(enc, chars, a, t, n, roller, { from: enc.pos[a.id], condMag: s.condMag, mag: s.magnitude });
     // Kindling: a fire spell that lands sets its target burning.
-    if (s.element === 'fire' && C().rank(a, 'kindling') && G.Conditions && G.Character.isActive(t)) await afflict(enc, a, t, 'burning', { rounds: 2, mag: 1 }, roller);
+    if (s.element === 'fire' && C().rank(a, 'kindling') && G.Conditions && G.Character.isActive(t)) await afflict(enc, a, t, 'burning', { beats: 2, mag: 1 }, roller);
     for (const n of s.nouns || [s.noun]) if ((W()[n].onHit || {}).chain) await chainOn(enc, chars, a, t, n, s.magnitude, roller);
   }
 
@@ -604,7 +604,7 @@
       await elementBlow(enc, chars, caster || t, t, f.noun, f.mag, roller, `The rune of ${N.name.toLowerCase()}`, { from: { x, y }, condMag: f.condMag });
     }
     if (f.ground && CONFIG.terrain[f.ground]) for (let yy = y - 1; yy <= y + 1; yy++) for (let xx = x - 1; xx <= x + 1; xx++) {
-      if (G.Terrain.passable(enc, xx, yy)) G.Terrain.add(enc, xx, yy, f.ground, { rounds: 3, mag: Math.max(0, (f.mag || 1) - 4), noun: f.noun, owner: f.owner, side: f.side });
+      if (G.Terrain.passable(enc, xx, yy)) G.Terrain.add(enc, xx, yy, f.ground, { beats: 3, mag: Math.max(0, (f.mag || 1) - 4), noun: f.noun, owner: f.owner, side: f.side });
     }
   }
 
@@ -639,10 +639,10 @@
     return `${t.name}: ${bits.length ? bits.join(', ') : 'nothing to mend'}${woke ? `; ${t.name} comes to` : ''}.`;
   }
 
-  // Dead, but still within reach of a Life restore (CONFIG.magic.revive): the fight stamps the round they died in.
+  // Dead, but still within reach of a Life restore (CONFIG.magic.revive): the fight stamps the beat they died in.
   function revivable(enc, c) {
     const R = CONFIG.magic.revive;
-    return !!(R && c && c.status.dead && !c.vanished && !c.raised && !c.conjured && !C().tireless(c) && c.status.diedRound != null && enc && enc.round - c.status.diedRound <= R.rounds);
+    return !!(R && c && c.status.dead && !c.vanished && !c.raised && !c.conjured && !C().tireless(c) && c.status.diedBeat != null && enc && enc.beat - c.status.diedBeat <= R.beats);
   }
 
   // Called back from death: bleeding stopped, the worst wounds revive.mend steps better, alive but down at 0 stamina.
@@ -653,7 +653,7 @@
     t.status.unconscious = true;
     t.status.collapsed = null;
     t.stamina = 0;
-    delete t.status.diedRound;
+    delete t.status.diedBeat;
     C().mendWounds(t, 1, CONFIG.magic.revive.mend);
     if (!C().isActive(t)) t.stamina = 0;
     return `${t.name} is called back from death, breathing but ${C().isActive(t) ? 'weak' : 'down'}.`;
@@ -675,7 +675,7 @@
   }
 
   // Summon (verb): an elemental of the noun, a ghost (Death), or a kind of outsider called by name. It is simply in
-  // the world for its rounds: unbound, it is frenzied (strikes the nearest body, friend or foe) until a Bind takes
+  // the world for its beats: unbound, it is frenzied (strikes the nearest body, friend or foe) until a Bind takes
   // hold of it; Summon + Bind brings it bound to the caster. It stands with the caster's side either way, so the
   // caster's friends don't go for it unless it goes for them.
   function summon(enc, chars, caster, s, at) {
@@ -684,14 +684,14 @@
     const c = G.Enemies.makeConjured(kind, s.noun, s.magnitude);
     if (!c) return null;
     c.traits = Object.assign({}, c.traits, undead(c) ? {} : { outsider: true });
-    join(enc, chars, caster, c, at, { by: caster.id, rounds: s.rounds || 4, summoned: true, bound: !!s.bound });
-    if (!s.bound) frenzy(c, s.rounds || 4);
+    join(enc, chars, caster, c, at, { by: caster.id, beats: s.beats || 4, summoned: true, bound: !!s.bound });
+    if (!s.bound) frenzy(c, s.beats || 4);
     return c;
   }
 
   // An unbound summons: the frenzy lasts as long as it does (a Bind ends it).
-  function frenzy(c, rounds) {
-    G.Conditions.add(c, 'enraged', { rounds: rounds + 1, src: null });
+  function frenzy(c, beats) {
+    G.Conditions.add(c, 'enraged', { beats: beats + 1, src: null });
     c.conjured.bound = false;
   }
 
@@ -706,7 +706,7 @@
     if (!c) return null;
     body.raised = true;
     body.vanished = true; // the body is up and walking: it no longer lies there
-    return join(enc, chars, caster, c, enc.pos[body.id], { by: caster.id, rounds: null, bound: true });
+    return join(enc, chars, caster, c, enc.pos[body.id], { by: caster.id, beats: null, bound: true });
   }
 
   // Give + Death on the undead: as Life on the living (the tireless have no stamina: their wounds mend instead,
@@ -737,11 +737,11 @@
       t.side = t.charmed.side; t.control = t.charmed.control; delete t.charmed;
     }
     // A summons raging unbound stays unbound: its frenzy is what it is, not a spell on it.
-    if (t.conjured && t.conjured.summoned && !t.conjured.bound && gone.some((x) => x.key === 'enraged')) G.Conditions.add(t, 'enraged', { rounds: t.conjured.rounds + 1 });
+    if (t.conjured && t.conjured.summoned && !t.conjured.bound && gone.some((x) => x.key === 'enraged')) G.Conditions.add(t, 'enraged', { beats: t.conjured.beats + 1 });
     return gone.map((x) => CONFIG.conditions[x.key].name.toLowerCase());
   }
 
-  // A new fighter on the caster's side, acting from next round.
+  // A new fighter on the caster's side, acting a standard action's ticks from now.
   function join(enc, chars, caster, c, at, conjured) {
     c.side = caster.side;
     c.control = 'auto';
@@ -749,10 +749,7 @@
     chars[c.id] = c;
     (enc.extra || (enc.extra = {}))[c.id] = c;
     enc.ids.push(c.id);
-    enc.order.push(c.id);
-    enc.initiative[c.id] = 0;
-    enc.ap[c.id] = 0;
-    enc.conceded[c.id] = true; // acts from next round
+    if (G.Combat) G.Combat.enter(enc, c.id, CONFIG.magic.joins);
     enc.pos[c.id] = { x: at.x, y: at.y };
     return c;
   }
@@ -779,10 +776,10 @@
     switch (s.shape) {
       case 'area': {
         if (s.delayed) {
-          // Delayed: the area is marked for everyone to see and breaks at the end of the round (endRound).
-          for (const { x, y } of area(at, s.radius)) G.Terrain.add(enc, x, y, 'gathering', { rounds: 1, owner: a.id, side, noun: s.noun });
+          // Delayed: the area is marked for everyone to see and breaks at the next beat (Magic.breakDelayed).
+          for (const { x, y } of area(at, s.radius)) G.Terrain.add(enc, x, y, 'gathering', { beats: 1, owner: a.id, side, noun: s.noun });
           (enc.delayed || (enc.delayed = [])).push({ caster: a.id, at: { x: at.x, y: at.y }, spell: s, label: o.label });
-          return log(`${a.name} casts ${o.label}: the air over (${at.x + 1}, ${at.y + 1}) begins to gather; it breaks at the end of the round.`, 'hit');
+          return log(`${a.name} casts ${o.label}: the air over (${at.x + 1}, ${at.y + 1}) begins to gather; it breaks at the next beat.`, 'hit');
         }
         log(`${a.name} casts ${o.label} at (${at.x + 1}, ${at.y + 1}).`, 'hit');
         // Round the caster's own square (aimed at themself): the caster is spared.
@@ -801,7 +798,7 @@
         for (const { x, y } of area(at, s.radius)) {
           if (!G.Terrain.passable(enc, x, y)) continue;
           let any = false;
-          for (const g of grounds) if (G.Terrain.add(enc, x, y, g, { rounds: s.rounds, mag: s.magnitude - 1, noun: s.noun, owner: a.id, side })) any = true;
+          for (const g of grounds) if (G.Terrain.add(enc, x, y, g, { beats: s.beats, mag: s.magnitude - 1, noun: s.noun, owner: a.id, side })) any = true;
           if (any) n++;
         }
         return log(`${a.name} casts ${o.label}: ${grounds.map((g) => CONFIG.terrain[g].name.toLowerCase()).join(' and ')} cover${grounds.length > 1 ? '' : 's'} ${n} squares.`, 'hit');
@@ -809,13 +806,13 @@
       case 'wall': {
         const solid = !!CONFIG.terrain[s.wall].wall;
         const squares = lineAcross(from, at.x, at.y, s.length).filter((q) => G.Terrain.inGrid(enc, q.x, q.y) && !(solid && occupied(enc, chars, q.x, q.y)));
-        for (const q of squares) G.Terrain.add(enc, q.x, q.y, s.wall, { rounds: s.rounds, mag: Math.max(0, s.magnitude - 1), noun: s.noun, owner: a.id, side });
+        for (const q of squares) G.Terrain.add(enc, q.x, q.y, s.wall, { beats: s.beats, mag: Math.max(0, s.magnitude - 1), noun: s.noun, owner: a.id, side });
         return log(`${a.name} casts ${o.label}: a ${CONFIG.terrain[s.wall].name.toLowerCase()} rises across ${squares.length} square${squares.length === 1 ? '' : 's'}.`, 'hit');
       }
       case 'terrain': {
         const squares = lineAcross(from, at.x, at.y, s.length).filter((q) => G.Terrain.passable(enc, q.x, q.y));
         for (const q of squares) {
-          G.Terrain.add(enc, q.x, q.y, s.terrain, { rounds: s.rounds, noun: s.noun, owner: a.id, side });
+          G.Terrain.add(enc, q.x, q.y, s.terrain, { beats: s.beats, noun: s.noun, owner: a.id, side });
           const who = enc.ids.find((id) => chars[id] && C().isActive(chars[id]) && enc.pos[id].x === q.x && enc.pos[id].y === q.y);
           if (who) {
             const t = chars[who];
@@ -851,15 +848,15 @@
           return log(`${t.name} is bound to ${a.name}'s will (${k.a} vs ${k.b}).`, 'hit');
         }
         if (t.side === a.side) return log(`${a.name}'s ${o.label} finds no foe in ${t.name}.`, 'fizzle');
-        await afflict(enc, a, t, s.cond, { rounds: s.rounds, mag: s.condMag, stack: s.stack, contest: s.contest }, roller);
+        await afflict(enc, a, t, s.cond, { beats: s.beats, mag: s.condMag, stack: s.stack, contest: s.contest }, roller);
         return;
       }
       case 'boon': {
         const t = chars[d.target];
         if (!t || t.status.dead) return log(`${a.name}'s ${o.label} fizzles.`, 'fizzle');
         log(`${a.name} casts ${o.label} on ${t === a ? 'themself' : t.name}.`, 'defend');
-        G.Conditions.add(t, s.cond, { rounds: s.rounds, mag: s.condMag, src: a.id });
-        return log(`${t.name} is ${CONFIG.conditions[s.cond].name.toLowerCase()} (${s.rounds} rounds).`, 'defend');
+        G.Conditions.add(t, s.cond, { beats: s.beats, mag: s.condMag, src: a.id });
+        return log(`${t.name} is ${CONFIG.conditions[s.cond].name.toLowerCase()} (${s.beats} beats).`, 'defend');
       }
       case 'drain': {
         // Transfer: what each one hit loses of the noun (Life: CON), the caster gains (CONFIG.magic.transfer).
@@ -921,10 +918,10 @@
         if (s.noun && s.ward !== 'magic') for (const line of restore(t, Object.assign({}, s, { heals: false }), 1)) log(line, 'defend');
         const kind = s.ward;
         const pool = kind === 'magic' ? s.magnitude * 3 : null;
-        G.Conditions.add(t, 'warded', { rounds: s.rounds, mag: s.condMag, kind, pool, src: a.id });
+        G.Conditions.add(t, 'warded', { beats: s.beats, mag: s.condMag, kind, pool, src: a.id });
         const wname = ((W()[kind] || {}).name || kind).toLowerCase();
         const what = { magic: `a shell of force (${pool} points against spells and missiles)` }[kind] || `a ward against ${wname}`;
-        return log(`${a.name} casts ${o.label}: ${t === a ? 'themself' : t.name} is wrapped in ${what} (${s.rounds} rounds).`, 'defend');
+        return log(`${a.name} casts ${o.label}: ${t === a ? 'themself' : t.name} is wrapped in ${what} (${s.beats} beats).`, 'defend');
       }
       case 'blink': {
         if (!G.Terrain.passable(enc, at.x, at.y) || occupied(enc, chars, at.x, at.y)) return log(`${a.name}'s ${o.label} fizzles — no room there.`, 'fizzle');
@@ -940,7 +937,7 @@
         const c = summon(enc, chars, a, s, at);
         if (!c) return log(`${a.name}'s ${o.label} fizzles.`, 'fizzle');
         const p = enc.pos[c.id];
-        return log(`${a.name} casts ${o.label}: ${c.name} appears at (${p.x + 1}, ${p.y + 1}) for ${c.conjured.rounds} rounds${s.bound ? ', bound' : ', unbound and raging'}.`, 'hit');
+        return log(`${a.name} casts ${o.label}: ${c.name} appears at (${p.x + 1}, ${p.y + 1}) for ${c.conjured.beats} beats${s.bound ? ', bound' : ', unbound and raging'}.`, 'hit');
       }
       case 'dispel': {
         // Take + Magic: every spell on a creature (curses, charms, boons, wards), or every spell laid on the squares
@@ -1011,7 +1008,7 @@
     }
   }
 
-  // End of round, before wounds and conditions: Delayed spells break.
+  // At a beat, before wounds and conditions: Delayed spells break.
   async function breakDelayed(enc, chars, roller) {
     const due = enc.delayed || [];
     enc.delayed = [];
@@ -1028,19 +1025,19 @@
     }
   }
 
-  // End of round: conjured creatures fade; the raised fall when the one who raised them does.
-  function endRound(enc, chars) {
+  // At a beat: conjured creatures fade; the raised fall when the one who raised them does.
+  function beat(enc, chars) {
     const lines = [];
     for (const id of enc.ids) {
       const c = chars[id];
       if (!c || !c.conjured || c.status.dead) continue;
-      if (c.conjured.rounds == null) {
+      if (c.conjured.beats == null) {
         const by = chars[c.conjured.by];
         if (c.conjured.bound && (!by || !C().isActive(by))) { c.status.dead = true; c.vanished = true; lines.push(`${c.name} falls, its maker gone.`); }
         continue;
       }
-      c.conjured.rounds -= 1;
-      if (c.conjured.rounds <= 0) {
+      c.conjured.beats -= 1;
+      if (c.conjured.beats <= 0) {
         c.status.dead = true;
         c.vanished = true;
         lines.push(`${c.name} fades away.`);
@@ -1049,5 +1046,5 @@
     return lines;
   }
 
-  G.Magic = { effectsOf, spellBonus, fits, undead, outsider, summon, dispelOn, dispellable, namedOutsiders, revivable, revive, callsBack, giveLife, breakDelayed, raise, join, corrode, chainOn, powerOptions, castableOptions, usePower, rechargeAll, chargesLeft, mend, restore, curesOf, knowsName, wardAgainst, freshSP, maxSP, restSP, availableSP, overchannelSP, spellOptions, knows, combines, backlash, makeOption, contest, afflict, onHit, elementBlow, afterHit, springRune, resolveCast, lineAcross, endRound, push };
+  G.Magic = { effectsOf, spellBonus, fits, undead, outsider, summon, dispelOn, dispellable, namedOutsiders, revivable, revive, callsBack, giveLife, breakDelayed, raise, join, corrode, chainOn, powerOptions, castableOptions, usePower, rechargeAll, chargesLeft, mend, restore, curesOf, knowsName, wardAgainst, freshSP, maxSP, restSP, availableSP, overchannelSP, spellOptions, knows, combines, backlash, makeOption, contest, afflict, onHit, elementBlow, afterHit, springRune, resolveCast, lineAcross, beat, push };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

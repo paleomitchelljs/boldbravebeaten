@@ -135,9 +135,9 @@
         lines.push(`${p.name}: wounds ${healed} better, bleeding stopped${outcome === 'exceptional' ? ', poison and disease drawn out' : ''}.`);
       }
       if (spec.kind === 'prepare' && spec.spell) {
-        const rounds = Math.max(1, Math.round((spec.spell.spell.rounds || 3) * (outcome === 'partial' ? 1 : 2)));
-        (c.prepared || (c.prepared = [])).push({ spellKey: spec.spell.spellKey, target: spec.target ? spec.target.id : c.id, rounds, label: spec.spell.label });
-        lines.push(`${spec.spell.label} is laid ready: it takes hold when the next fight begins (${rounds} rounds).`);
+        const beats = Math.max(1, Math.round((spec.spell.spell.beats || 3) * (outcome === 'partial' ? 1 : 2)));
+        (c.prepared || (c.prepared = [])).push({ spellKey: spec.spell.spellKey, target: spec.target ? spec.target.id : c.id, beats, label: spec.spell.label });
+        lines.push(`${spec.spell.label} is laid ready: it takes hold when the next fight begins (${beats} beats).`);
       }
       if (spec.kind === 'summon') lines.push(`The binding circle holds what answers to ${spec.trueName} (the GM brings it).`);
       if (spec.kind === 'raise') lines.push('The dead stir and stand (the GM sets the servant).');
@@ -158,10 +158,10 @@
         const s = o.spell;
         const t = chars[p.target] && enc.ids.includes(p.target) ? chars[p.target] : c;
         if (s.shape === 'ward') {
-          G.Conditions.add(t, 'warded', { rounds: p.rounds, mag: s.condMag, kind: s.ward, pool: s.ward === 'magic' ? s.magnitude * 3 : null, src: c.id });
+          G.Conditions.add(t, 'warded', { beats: p.beats, mag: s.condMag, kind: s.ward, pool: s.ward === 'magic' ? s.magnitude * 3 : null, src: c.id });
           lines.push(`${c.name}'s prepared ${o.label} wraps ${t.name}.`);
         } else if (s.shape === 'boon') {
-          G.Conditions.add(t, s.cond, { rounds: p.rounds, mag: s.condMag, src: c.id });
+          G.Conditions.add(t, s.cond, { beats: p.beats, mag: s.condMag, src: c.id });
           lines.push(`${c.name}'s prepared ${o.label} takes hold on ${t.name}.`);
         } else if (s.shape === 'rune') {
           const pos = enc.pos[c.id];

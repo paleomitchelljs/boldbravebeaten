@@ -166,7 +166,7 @@
       h('div', { class: 'row small' }, h('span', { class: 'label' }, 'Components'),
         Object.entries(G.CONFIG.ritual.components).map(([id, comp]) => h('label', { class: 'inline', for: 'comp-' + id }, comp.name,
           num('comp-' + id, (c.inventory.components || {})[id] || 0, (v) => { c.inventory.components = c.inventory.components || {}; c.inventory.components[id] = Math.max(0, Math.round(v)); app.save(); app.render(); }, { min: 0 })))),
-      (c.prepared || []).length ? h('p', { class: 'small' }, h('b', null, 'Laid ready: '), c.prepared.map((p) => `${p.label} (${p.rounds} rd)`).join(', ')) : null,
+      (c.prepared || []).length ? h('p', { class: 'small' }, h('b', null, 'Laid ready: '), c.prepared.map((p) => `${p.label} (${p.beats} rd)`).join(', ')) : null,
       items.length ? h('div', { class: 'stack tight' }, h('span', { class: 'label' }, 'Pack'),
         items.map((it) => h('div', { class: 'row spread small' },
           h('span', null, Items.itemName(it), it.durability != null ? h('span', { class: 'muted num' }, ` · dur ${it.durability}`) : null, ' ', h('span', { class: 'chip' }, Items.itemRarity(it))),

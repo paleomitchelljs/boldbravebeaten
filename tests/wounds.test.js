@@ -30,7 +30,7 @@ function body(pieces, traits) {
   c.stamina = C.maxStamina(c);
   return c;
 }
-const enc0 = () => ({ hitThisRound: {}, fortressUsed: {}, log: [], pos: {} });
+const enc0 = () => ({ struck: {}, fortressUsed: {}, log: [], pos: {} });
 const opt = (a, motion) => C.attackOptions(a).find((o) => o.motion === motion && !o.power && !o.windUp && !o.halfSword && !o.unarmed);
 const wound = (place, sev, extra) => Object.assign({ place, sev, kind: 'cut', bleed: 0, pts: W.severity[sev - 1] }, extra || {});
 
@@ -213,7 +213,7 @@ test('harm over time adds to one wound of its kind; a joint lock wrenches the ar
   assert.strictEqual(C.wounds(t)[0].sev, C.severityOf(t, 3 + W.severity[1]));
   // A condition's dot is harm of its kind.
   const u = body();
-  B.Conditions.add(u, 'burning', { rounds: 2, mag: 1 });
+  B.Conditions.add(u, 'burning', { beats: 2, mag: 1 });
   B.Conditions.endRound(u);
   assert.ok(C.wounds(u).some((w) => w.kind === 'fire' && w.sev >= 1));
 });
@@ -256,7 +256,7 @@ test('maximum stamina reads current attributes; a condition that lowers it clamp
   const key = Object.keys(CONFIG.conditions).find((k) => CONFIG.conditions[k].attrs && Object.entries(CONFIG.conditions[k].attrs).some(([x, v]) => v < 0 && ['STR', 'SPD', 'DEX'].includes(x)));
   assert.ok(key, 'a condition that lowers an attribute');
   c.stamina = C.maxStamina(c);
-  B.Conditions.add(c, key, { rounds: 2 });
+  B.Conditions.add(c, key, { beats: 2 });
   assert.ok(c.stamina <= C.maxStamina(c) && C.maxStamina(c) < full, 'clamped');
   const low = c.stamina;
   B.Conditions.remove(c, key);

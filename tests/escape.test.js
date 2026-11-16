@@ -24,7 +24,7 @@ test('getting away: a wall of fire across the passage lets the party go; without
   const w = fresh(3);
   const { enc, golem } = corridor(w);
   assert.equal(Battle.disengaged(w).ok, false, 'nothing in the way: it can reach them');
-  for (const y of [1, 2]) Terrain.add(enc, 6, y, 'fireWall', { rounds: 3 });
+  for (const y of [1, 2]) Terrain.add(enc, 6, y, 'fireWall', { beats: 3 });
   assert.ok(!Terrain.passable(enc, 6, 1), 'a wall of fire cannot be walked through');
   assert.equal(Battle.disengaged(w).ok, true, 'the golem has no way round and nothing to throw');
   // Held fast but already in reach is not away.
@@ -50,13 +50,13 @@ test('getting away: the fight ends and the party stands where it was on the fiel
 test('wall of fire: scorches whoever ends the round beside it, once however many squares; not who stands off', async () => {
   const w = fresh(5);
   const { enc, b, mine } = corridor(w);
-  for (const y of [1, 2]) Terrain.add(enc, 2, y, 'fireWall', { rounds: 3 });
+  for (const y of [1, 2]) Terrain.add(enc, 2, y, 'fireWall', { beats: 3 });
   const chars = Battle.table(w).characters;
   await Terrain.endRound(enc, chars, roll(2), () => {});
   // Members 2 and 3 stand at x 1, beside the wall at x 2; 0 and 1 at x 0, a square farther.
   const hit = (c) => enc.log.filter((l) => l.text.startsWith(`Wall of fire hits ${c.name}`)).length;
   assert.deepEqual(mine.map(hit), [0, 0, 1, 1], 'once each, only those beside it (two squares of wall)');
-  assert.ok(b.enc.tiles['2,1'].some((f) => f.kind === 'fireWall' && f.rounds === 2), 'it burns down');
+  assert.ok(b.enc.tiles['2,1'].some((f) => f.kind === 'fireWall' && f.beats === 2), 'it burns down');
 });
 
 test('spell points: a rest brings them back, each spent point wears spWeary off the maximum; a night clears it', async () => {

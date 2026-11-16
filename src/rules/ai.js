@@ -1,15 +1,15 @@
 /*
  * The policy for computer-controlled combatants, also used by the simulator. It only uses
  * information the character could see: a blow hidden by Feint is judged by what the attacker
- * might be doing, not what they are doing, and nobody sees anyone else's AP.
+ * might be doing, not what they are doing. The timeline is in plain sight (docs/OVERHAUL.md step F): everyone's
+ * clock, and a foe's committed action and when it lands, but never what a foe means to do next.
  *
- * choose() is called again and again during a character's turn until it returns 'endTurn'.
- * Each action resolves at once. Each turn decision, in order:
- *   1. stand up; 2. release a wind-up if the target is in range; 3. grapple or get loose;
- *   4. bandage, re-arm; 5. switch weapons when another fits the distance better; 6. occasional
- *   trip/grapple; 7. keep a ranged weapon out of melee; 8. attack, or wind up when the delayed
- *   blow is worth more; 9. move toward the distance its weapons like best; 10. end the turn.
- * Throughout, it keeps AP back to defend with when foes still to act this round can reach it.
+ * choose() is called each time the fighter's clock comes up, for one action. Each decision, in order:
+ *   1. stand up; 2. grapple or get loose; 3. bandage, re-arm; 4. switch weapons when another fits the distance
+ *   better; 5. occasional trip/grapple; 6. keep a ranged weapon out of melee; 7. attack (a heavy blow's lead
+ *   weighed against the foe's clock: it pays against a foe who has overreached, and is a risk against one who acts
+ *   before it lands); 8. move toward the distance its weapons like best; 9. wait for the next thing to happen.
+ * Throughout, it is wary of an action that would leave it too far ahead to react while a foe who can reach it acts.
  *
  * react() answers out of turn: a defence when a blow comes, an opportunity strike when a foe
  * leaves its reach.
@@ -17,9 +17,8 @@
  * policy (all optional):
  *   maneuverRate  chance per action to try a trip/grapple when one is in reach (default 0.15)
  *   kickBias      multiplier on the value of kicks (default 1)
- *   defendFloor   minimum expected value before spending AP on a defence (default 1.5)
- *   cautious      keep AP back for defences against foes still to act (default true)
- *   windUp        willingness to wind up (multiplier on its value; 0 = never; default 1)
+ *   defendFloor   minimum expected value before spending ticks on a defence (default 1.5)
+ *   cautious      wary of actions that leave it unable to react while a foe can strike (default true)
  *   grappler      works up the grappling ladder: clinch, hold, pin, then stab or throw (default: has Grappler)
  *   kite          ranged characters back away from melee (default true)
  */
@@ -28,7 +27,17 @@
   const C = G.Character;
   const Combat = G.Combat;
 
-  const DEFAULTS = { maneuverRate: 0.15, kickBias: 1, defendFloor: 1.5, cautious: true, windUp: 1, kite: true, grappler: null };
+  const DEFAULTS = { maneuverRate: 0.15, kickBias: 1, defendFloor: 1.5, cautious: true, kite: true, grappler: null };
+  const K = () => G.CONFIG.clock;
+  // Values per action are put per RATE ticks (a quick action's worth: the old AP), so the AI's thresholds keep their size.
+  const RATE = 2.5;
+  // What a tick of my clock is worth when a reaction spends it, in hitValue's units.
+  const TICK = 0.4;
+  // A blow with a lead at a foe who acts before it lands (it may step away, strike first, or knock me down): worth
+  // this much. One at a foe who can't react when it lands: this much more.
+  const LEAD_RISK = 0.8, OPEN = 1.3;
+  // An action that leaves me too far ahead to react while a foe who can reach me acts: worth this much.
+  const BARE_MULT = 0.85;
 
   // Whether a hit does anything to the body: a wound, winding, or stamina taken.
   function harms(h) {
@@ -42,7 +51,7 @@
     if (!K) return 0;
     if (typeof K.worth === 'number') return K.worth;
     const sum = (o) => Object.values(o || {}).reduce((t, x) => t + Math.abs(x), 0);
-    let v = Math.abs(K.ap || 0) * 12 + sum(K.attrs) * 5 + sum(K.mit) * 4 + Math.abs(K.defense || 0) * 5 + Math.abs(K.regen || 0) * 4;
+    let v = Math.abs(K.ticks || 0) * 5 + sum(K.attrs) * 5 + sum(K.mit) * 4 + Math.abs(K.defense || 0) * 5 + Math.abs(K.regen || 0) * 4;
     if (K.dot) v += (K.dot.harm || 0) * 6 + (K.dot.stamina || 0) * 3;
     if (K.noAct || K.helpless) v += 30;
     if (K.control) v += 40;
@@ -83,7 +92,7 @@
     const h = Combat.computeHit(attacker, target, option, { distance: distance || (option.minRange || 1) + (option.closePenalty ? 1 : 0) });
     // computeHit's expectation is over the contest's margins (a blow nobody defends) and the places it lands.
     let v = (h.sev || 0) * WOUND_V + (h.bleed || 0) * BLEED_V + (h.winding || 0) + (h.stamina || 0);
-    if (option.venom && h.pts > 0 && !h.noBleed) v += Math.min(option.venom.con, 2) * option.venom.rounds * 3;
+    if (option.venom && h.pts > 0 && !h.noBleed) v += Math.min(option.venom.con, 2) * option.venom.beats * 3;
     // A spell's after-effects (Magic: noun onHit), if anything got through.
     if (option.spell && option.spell.noun && harms(h)) {
       const H = (G.CONFIG.magic.words[option.spell.noun] || {}).onHit || {};
@@ -145,7 +154,7 @@
     return Math.min(1, pDrop + dodge) * hitValue(c, b, so, Combat.dist(enc.pos[c.id], enc.pos[b.id]));
   }
 
-  // Value per (scaled) AP of an attack against a target at a distance.
+  // Value per RATE ticks of an attack against a target at a distance.
   function rate(c, target, opt, d) {
     if (!C.inRange(opt, d)) return 0;
     // Nothing to gain from a blow the body is immune to: not even the kick's chance of a fall.
@@ -157,10 +166,10 @@
       spent = true;
       opt = Object.assign({}, opt, { spent: true });
     }
-    let v = (hitValue(c, target, opt, d) * C.costScale()) / Math.max(1, opt.ap) * (spent ? SPENT_LAND : 1);
+    let v = (hitValue(c, target, opt, d) * RATE) / Math.max(1, opt.ticks) * (spent ? SPENT_LAND : 1);
     if (opt.unarmed === 'kick' || opt.unarmed === 'shieldBash') {
       const pDown = target.status.prone ? 0 : Combat.knockdownOdds(c, target, C.rank(c, 'trip') ? G.CONFIG.maneuver.tripFeatBonus : 0, G.CONFIG.maneuver.kickKnockdownMargin);
-      v += (pDown * 10 * C.costScale()) / Math.max(1, opt.ap);
+      v += (pDown * 10 * RATE) / Math.max(1, opt.ticks);
     }
     if (opt.spell) v *= 0.85; // spell points are finite and backlash is a risk
     if (opt.flurry) v *= 1.8; // two thrusts, the second only if the first leaves them up
@@ -175,9 +184,9 @@
   // (its worth over an unaimed blow's) }, or null when every location is the same (no wound tables, and a full
   // harness or bare skin).
   // With `enc` (R6, docs/PLAN.md step 4): what the attacker can see of whether the target can still react. Its body
-  // (prone, held, collapsed, caught off guard, not seeing the blow: Combat.aimGuarded) it sees; its AP it doesn't, so
-  // it guesses: the pool an average roll gives that body, less what it has watched it spend this round. A target it
-  // takes to be spent puts up no defence, so every place lands; one that can react pays the guarded aim.
+  // (prone, held, collapsed, caught off guard, not seeing the blow: Combat.aimGuarded) and its clock it sees: a target
+  // too far ahead to react when the blow lands puts up no defence, so every place lands; one that can react pays the
+  // guarded aim.
   function bestAim(c, target, opt, d, enc) {
     const L = G.CONFIG.locations;
     // Every place's wounds differ (CONFIG.wounds.places: an arm drops its sword, a leg fells), so there is always a
@@ -185,7 +194,7 @@
     if (!L || !L.aim || opt.spell) return null;
     const kinds = ['parry', 'dodge'].concat(C.shieldReady(target) ? ['block'] : []);
     const guarded = Combat.aimGuarded(target, c, enc);
-    const drained = !!enc && seemsSpent(enc, target, kinds);
+    const drained = !!enc && cannotReact(enc, target, enc.now + (opt.lead || 0));
     const land = (o) => (drained ? 1 : 1 - 0.5 * Math.max(0, ...kinds.map((k) => (Combat.defenseUnavailable(target, k, { type: 'strike', option: o, actor: c.id }, { [c.id]: c }) ? 0 : Combat.defenseOdds(target, k, o.motion, c, Object.assign({}, o, { aimGuarded: guarded }))))));
     const plain = Object.assign({}, opt); delete plain.aim;
     const base = hitValue(c, target, plain, d) * land(plain);
@@ -200,11 +209,38 @@
     return best;
   }
 
-  // The attacker's guess that a target has no AP left for a defence (R6): an average round's pool for that body
-  // (its SPD, armor, gear: what anyone can see; a side caught off guard gets its share) less the AP of what it has
-  // been seen to do this round, against the cheapest defence it has.
-  function seemsSpent(enc, target, kinds) {
-    return apGuess(enc, target) < Math.min(...kinds.map((k) => C.actionCost(target, k).ap));
+  // Can this target not react when a blow of mine lands (R6)? From the timeline: its clock too far past the landing
+  // (CONFIG.clock.overreach), or it is down. What anyone could see.
+  function cannotReact(enc, target, lands) {
+    if (!enc || !enc.clock || enc.clock[target.id] == null) return false;
+    if (!C.isActive(target)) return true;
+    return Combat.readyAt(enc, target.id) - (lands != null ? lands : enc.now) > K().overreach;
+  }
+
+  // What the timeline does to a blow's worth: its lead against the target's clock. A target that acts before it lands
+  // may step away, strike first or knock me down (LEAD_RISK, melee); one that can't react when it lands meets it with
+  // nothing (OPEN), and one committed to a power blow, a drawn bow or a gathered spell has no block or parry.
+  function timing(enc, c, target, opt) {
+    if (!enc || !enc.clock || enc.clock[target.id] == null || !C.isActive(target)) return 1;
+    const lands = enc.now + (opt.lead || 0);
+    let f = 1;
+    if ((opt.lead || 0) >= 2 && !opt.ranged && !opt.spell && Combat.readyAt(enc, target.id) < lands && !(enc.committed && enc.committed[target.id])) f *= LEAD_RISK;
+    if (cannotReact(enc, target, lands)) f *= OPEN;
+    else if (enc.committed && enc.committed[target.id] && enc.committed[target.id].option && enc.committed[target.id].option.exposes && enc.committed[target.id].lands > lands) f *= 1.1;
+    return f;
+  }
+
+  // Would this action leave me too far ahead to react (its ticks past overreach) while a foe who could reach me acts?
+  function bareAfter(enc, chars, id, ticks) {
+    if (!enc || !enc.clock || ticks <= K().overreach) return false;
+    const until = enc.now + ticks - K().overreach;
+    const me = enc.pos[id];
+    return enemiesOf(enc, chars, id).some((f) => {
+      const foe = chars[f];
+      if (!enc.pos[f] || Combat.readyAt(enc, f) >= until) return false;
+      const d = Combat.dist(me, enc.pos[f]);
+      return C.attackOptions(foe).some((o) => (o.ranged || o.spell ? d <= (o.maxRange || 1) : d <= (o.maxRange || 1) + 2));
+    });
   }
 
 
@@ -223,12 +259,12 @@
   // What a blow at a collapsed foe is worth against one at a standing foe (CONFIG.stamina.ai.finish): it can't be met
   // (now 1.25, about what a standing foe's defences take off), and hitValue already sends it to the body; worth less
   // the longer they stay down (later: there is time to come back to them). What it sees: that they are down, and the
-  // round they come round, as anyone watching could.
+  // beat they come round at, as anyone watching could.
   function finishWeight(enc, foe) {
     const at = Combat.comesRoundAt(enc, foe);
     const W = ((G.CONFIG.stamina || {}).ai || {}).finish || { now: 1.25, later: 0.95 };
     if (at == null || !isFinite(at)) return 1;
-    return at <= enc.round ? W.now : W.later;
+    return at <= enc.beat + 1 ? W.now : W.later;
   }
 
   const MANEUVER_THREAT = { trip: 8, disarm: 6, shove: 3, clinch: 6, grapple: 8, pin: 10, throw: 10, break: 2 };
@@ -252,15 +288,15 @@
     return enc.ids.filter((o) => chars[o].side !== chars[id].side && C.isActive(chars[o]) && !(Combat.unseenBy && Combat.unseenBy(enc, chars, chars[o], chars[id])));
   }
 
-  // Frightened (Fear, a wail): the turn must begin with a step away from what frightens you (Combat.mustFlee); after
-  // that, keep away while it is close. The farthest square the move reaches without coming closer on the way.
+  // Frightened (Fear, a wail): each beat's first action must be a step away from what frightens you (Combat.mustFlee);
+  // after that, keep away while it is close. The farthest square the move reaches without coming closer on the way.
   function fleeFrom(enc, chars, id, la) {
     const c = chars[id];
     const src = Combat.fearSource(enc, chars, c);
     if (!src || !la.move) return null;
     const me = enc.pos[id], from = enc.pos[src.id];
     const owed = Combat.mustFlee(enc, chars, c);
-    if (!owed && (Combat.dist(me, from) > 3 || enc.decls.some((d) => d.actor === id && d.round === enc.round && d.type === 'move'))) return null;
+    if (!owed && (Combat.dist(me, from) > 3 || enc.decls.some((d) => d.actor === id && d.beat === enc.beat && d.type === 'move'))) return null;
     let best = null, bd = Combat.dist(me, from);
     const R = la.move.maxSquares;
     for (let y = me.y - R; y <= me.y + R; y++) for (let x = me.x - R; x <= me.x + R; x++) {
@@ -277,61 +313,20 @@
     return best ? { actor: id, type: 'move', to: best } : null;
   }
 
-  // What an AP of mine is worth right now, in the units of hitValue: more while my own turn is
-  // still to come this round (it could be a blow), less once I have had it (it can only defend).
-  function apWorth(enc, id) {
-    const S = C.costScale();
-    const turnAhead = !enc.turnDone[id] && enc.order.indexOf(id) >= Math.max(0, enc.turn) && Combat.currentActor(enc) !== id;
-    return (turnAhead ? 1.0 : 0.45) / S;
-  }
-
-  // AP to keep back on my turn for defences: one cheapest defence for each foe still to act this
-  // round who could reach me and would hurt me (armor that shrugs off their blows needs no reserve).
-  function reserveAP(enc, chars, id, P) {
-    if (!P.cautious) return 0;
-    const c = chars[id];
-    const me = enc.pos[id];
-    const costs = Combat.DEFENSE_TYPES.filter((k) => !Combat.defenseUnavailable(c, k, null, chars, enc) && (k !== 'offParry' || C.offhandWeapon(c))).map((k) => C.actionCost(c, k).ap);
-    if (!costs.length) return 0;
-    const cheapest = Math.min(...costs);
-    const myTurn = enc.order.indexOf(id);
-    let n = 0;
-    for (const f of enemiesOf(enc, chars, id)) {
-      if (enc.turnDone[f] || enc.order.indexOf(f) <= myTurn) continue;
-      const foe = chars[f];
-      const d = Combat.dist(me, enc.pos[f]);
-      const walk = Math.floor(C.squaresFor(foe, Combat.apLeft(enc, f)) / 2);
-      let worst = 0;
-      for (const o of C.attackOptions(foe)) {
-        if (o.windUp && !(foe.status.windUp && foe.status.windUp.key === C.optionKey(o))) continue;
-        if (o.ranged && o.weaponId && C.ammoLeft(foe, o) <= 0) continue;
-        if (d - (o.ranged || o.spell ? 0 : walk) > (o.maxRange || 1)) continue;
-        worst = Math.max(worst, hitValue(foe, c, o, Math.max(o.minRange || 1, Math.min(d, o.maxRange || 1))));
-      }
-      if (worst >= 2) n++;
-    }
-    return Math.min(2, n) * cheapest;
-  }
-
-  // Out of turn. req.kind 'defend': { actor, attacker, decl, hidden, options: [{type, ap, stamina, odds}] }
+  // Out of turn. req.kind 'defend': { actor, attacker, decl, hidden, options: [{type, ticks, stamina, odds}] }
   // → a defence type or null. req.kind 'cover': { actor (the shield-bearer), attacker, target (the ally), decl, options:
   // [one cover offer] } → 'cover' or null. req.kind 'opportunity': { actor, target, options: [attack options] }
   // → an option or null.
   function react(enc, chars, req) {
     const c = chars[req.actor];
     const P = Object.assign({}, DEFAULTS, c.policy || {});
-    const per = apWorth(enc, req.actor);
+    const per = TICK;
     if (req.kind === 'defend') {
-      const atk = chars[req.attacker];
       const { threat, motion } = perceivedThreat(enc, chars, req.decl, req.actor);
-      // A defence that leaves too little for the blow I'd have struck on my turn to come costs that blow as well
-      // (step 5: a sword-and-board fighter blocked every thrust and never struck back).
-      const have = req.ap != null ? req.ap : Combat.apLeft(enc, req.actor);
-      const turnAhead = !enc.turnDone[req.actor] && Combat.currentActor(enc) !== req.actor;
-      const d0 = atk && enc.pos[atk.id] && enc.pos[req.actor] ? Combat.dist(enc.pos[atk.id], enc.pos[req.actor]) : 1;
-      const mine = turnAhead ? C.attackOptions(c).filter((o) => !o.windUp && !o.spell && C.inRange(o, d0) && o.ap <= have) : [];
-      const cheapBlow = mine.length ? Math.min(...mine.map((o) => o.ap)) : Infinity;
-      const myBlow = mine.length ? Math.max(...mine.map((o) => hitValue(c, atk, o, d0))) : 0;
+      // A defence puts its ticks on my clock: my own next action comes that much later, and a defence that takes me
+      // past overreach leaves me unable to meet the next blow (step 5: a sword-and-board fighter blocked every
+      // thrust and never struck back).
+      const ahead = req.ahead != null ? req.ahead : Combat.ahead(enc, req.actor);
       let pick = null;
       for (const o of req.options) {
         if (o.type === 'offParry' && (req.hidden || motion !== 'thrust')) continue;
@@ -340,11 +335,12 @@
         const carry = (o.type === 'parry' || o.type === 'offParry') && !req.hidden && req.decl && req.decl.option ? Combat.parryCarryShare(c, o.type, req.decl.option) : 0;
         let v = p * threat * (1 - carry);
         if (o.type === 'dodge' && C.rank(c, 'roll_with_it')) v += (1 - p) * 0.5 * threat;
-        // A blow blocked or parried rebounds: the attacker's lost AP is worth about what mine are (CONFIG.defense.rebound).
-        const R = G.CONFIG.defense.rebound;
-        if (R && R[o.type] && req.decl && req.decl.ap && !carry) v += p * per * req.decl.ap * (R[o.type] + (o.type === 'block' ? 0 : G.Effects.sum(c, 'recoil') * (R.perRank || 0)));
-        v -= per * o.ap + 0.3 * o.stamina;
-        if (have - o.ap < cheapBlow) v -= myBlow * LOST_BLOW;
+        // A blow blocked or parried rebounds: the attacker's lost ticks are worth about what mine are (CONFIG.clock.rebound).
+        const R = K().rebound;
+        if (R && R[o.type] && req.decl && req.decl.ticks && !carry) v += p * per * req.decl.ticks * (R[o.type] + (o.type === 'block' ? 0 : G.Effects.sum(c, 'recoil') * (R.perRank || 0)));
+        v -= per * o.ticks + 0.3 * o.stamina;
+        // Past overreach after it: the next blow before my clock comes round finds me with nothing.
+        if (ahead + o.ticks > K().overreach) v -= threat * 0.25 * LOST_BLOW;
         if (v >= P.defendFloor && (!pick || v > pick.v)) pick = { v, type: o.type };
       }
       return pick ? pick.type : null;
@@ -353,7 +349,7 @@
       // A blow at an ally beside me that they won't meet: what it would do to them, against what my AP is worth.
       const { threat } = perceivedThreat(enc, chars, req.decl, req.target);
       const o = req.options[0];
-      const v = (o.odds != null ? o.odds : 0.4) * threat - per * o.ap - 0.3 * o.stamina;
+      const v = (o.odds != null ? o.odds : 0.4) * threat - per * o.ticks - 0.3 * o.stamina;
       return v >= P.defendFloor ? 'cover' : null;
     }
     if (req.kind === 'opportunity') {
@@ -366,7 +362,7 @@
         const spent = o.stamina && !C.tireless(c) && !Combat.canPay(c, o.stamina);
         const hv = spent ? hitValue(c, t, Object.assign({}, o, { spent: true }), d) : hitValue(c, t, o, d);
         if (spent && hv < spentWorth()) continue;
-        const v = hv * 0.6 - per * o.ap - 0.3 * o.stamina;
+        const v = hv * 0.6 - per * o.ticks - 0.3 * o.stamina;
         if (v >= P.defendFloor && (!pick || v > pick.v)) pick = { v, o };
       }
       return pick ? pick.o : null;
@@ -374,21 +370,14 @@
     return null;
   }
 
-  const FUTILE = 3; // a blow worth less than this a (display) AP can't hurt the foe to speak of: wrestle instead
+  const FUTILE = 3; // a blow worth less than this a RATE ticks can't hurt the foe to speak of: wrestle instead
   const LOST_BLOW = 0.6; // a blow given up for a defence, at about the odds it would have landed
-
-  // For planning, an attack that needs a wind-up counts at its full two-round AP cost.
-  function forPlanning(c, o) {
-    return o.windUp ? Object.assign({}, o, { why: null, ap: o.ap + C.actionCost(c, 'windUp', { option: o }).ap }) : o;
-  }
-
-  const WIND_REASONS = ['Wind up first', 'Release next round', 'Already released'];
 
   // Attack options with a different weapon in hand (for weighing a switch).
   function optionsWith(c, wieldId) {
     const keep = c.wield;
     c.wield = wieldId;
-    const opts = C.attackOptions(c).filter((o) => !o.unarmed).map((o) => forPlanning(c, o));
+    const opts = C.attackOptions(c).filter((o) => !o.unarmed);
     c.wield = keep;
     return opts;
   }
@@ -406,7 +395,6 @@
   function foeRate(foe, me, d) {
     let best = 0;
     for (const o of C.attackOptions(foe)) {
-      if (o.windUp && !(foe.status.windUp && foe.status.windUp.key === C.optionKey(o))) continue;
       if (o.ranged && o.weaponId && C.ammoLeft(foe, o) <= 0) continue;
       if (o.spell && G.Magic && o.spCost > G.Magic.availableSP(foe)) continue;
       best = Math.max(best, rate(foe, me, o, d));
@@ -426,7 +414,7 @@
     let worst = 0;
     for (const o of C.attackOptions(target)) {
       const r = o.maxRange || 1;
-      if (o.ranged || o.spell || o.windUp || r <= d) continue;
+      if (o.ranged || o.spell || o.exposes || r <= d) continue;
       worst = Math.max(worst, hitValue(target, c, o, Math.min(from, o.maxRange)));
     }
     return worst * 0.5;
@@ -445,8 +433,8 @@
     return total;
   }
 
-  // How much the AI still fears the stop-thrust on its way in: in full at first, half after each round in which nobody
-  // struck while two foes stood at the edge of each other's reach (someone has to go in). The rounds of the approach,
+  // How much the AI still fears the stop-thrust on its way in: in full at first, half after each beat in which nobody
+  // struck while two foes stood at the edge of each other's reach (someone has to go in). The beats of the approach,
   // with the two sides still walking up, don't count (step 5: they used to, so a fighter came in careless by round 3).
   const edges = typeof WeakMap !== 'undefined' ? new WeakMap() : null;
   function edgeRound(enc, chars) {
@@ -457,17 +445,17 @@
     for (const a of up) {
       const r = Math.max(1, ...C.attackOptions(chars[a]).filter((o) => !o.ranged && !o.spell).map((o) => o.maxRange || 1));
       if (up.some((b) => chars[b].side !== chars[a].side && Combat.dist(enc.pos[a], enc.pos[b]) <= r + 2)) {
-        if (edges) edges.set(enc, enc.round);
-        return enc.round;
+        if (edges) edges.set(enc, enc.beat);
+        return enc.beat;
       }
     }
     return Infinity;
   }
   function wariness(enc, chars) {
     let last = 0;
-    for (const d of enc.decls) if (d.type === 'strike' && d.round > last) last = d.round;
+    for (const d of enc.decls) if (d.type === 'strike' && d.beat > last) last = d.beat;
     const from = Math.max(edgeRound(enc, chars), last + 1);
-    return isFinite(from) ? Math.pow(0.5, Math.max(0, enc.round - from)) : 1;
+    return isFinite(from) ? Math.pow(0.5, Math.max(0, enc.beat - from)) : 1;
   }
 
   function preferredDistance(c, target, opts, from, wary) {
@@ -585,11 +573,11 @@
     if (K.regen > 0) return C.bleedLoss(a) > 0 ? 1 : C.woundLoad(a) ? 0.33 : 0;
     if (K.shroud) return foes.some((f) => C.attackOptions(chars[f]).some((x) => x.ranged)) ? 1 : 0;
     if (K.mindWard) return foes.some((f) => G.Magic.maxSP(chars[f]) > 0) ? 1 : 0;
-    if (K.flying) return enc.tiles && G.Terrain.at(enc, posOf(tid).x, posOf(tid).y).some((f) => { const d = G.CONFIG.terrain[f.kind] || {}; return d.pit || d.perRound || d.slick; }) ? 1 : 0;
+    if (K.flying) return enc.tiles && G.Terrain.at(enc, posOf(tid).x, posOf(tid).y).some((f) => { const d = G.CONFIG.terrain[f.kind] || {}; return d.pit || d.perBeat || d.slick; }) ? 1 : 0;
     if (K.unseen) return tid === c.id && foes.some((f) => Combat.dist(posOf(f), me) <= Math.max(1, meleeReach(chars[f])) + 1) ? 1 : 0;
     if (K.resist) return foes.some((f) => C.attackOptions(chars[f]).some((x) => x.spell && K.resist[x.spell.element])) ? 1 : 0;
-    if (K.kindled || (K.attrs && Object.values(K.attrs).every((x) => x > 0) && !K.ap)) return fighting && tid !== c.id ? 1 : 0;
-    if (K.ap > 0) return fighting || tid === c.id ? 1 : 0.3;
+    if (K.kindled || (K.attrs && Object.values(K.attrs).every((x) => x > 0) && !K.ticks)) return fighting && tid !== c.id ? 1 : 0;
+    if (K.ticks < 0) return fighting || tid === c.id ? 1 : 0.3;
     return fighting ? 1 : 0;
   }
 
@@ -615,7 +603,6 @@
     if (!la.spells || !la.spells.length) return null;
     const keep = spReserve(enc, chars, id, la);
     const c = chars[id];
-    const S = C.costScale();
     const me = Combat.projectedPos(enc, id);
     const Cn = G.Conditions;
     const allies = enc.ids.filter((o) => chars[o] && chars[o].side === c.side && C.isActive(chars[o]));
@@ -626,7 +613,7 @@
     const conjuredUp = enc.ids.some((o) => chars[o] && chars[o].conjured && chars[o].conjured.by === id && !chars[o].status.dead);
     let best = null;
     const consider = (v, decl, o) => {
-      const r = ((v - overDebt(c, o, o.spell.shape === 'raise' ? 0 : keep)) * S) / Math.max(1, o.ap);
+      const r = ((v - overDebt(c, o, o.spell.shape === 'raise' ? 0 : keep)) * RATE) / Math.max(1, o.ticks);
       if (r > 0 && (!best || r > best.v)) best = { v: r, decl };
     };
     for (const o of la.spells) {
@@ -859,19 +846,20 @@
     return best;
   }
 
-  // Is a Bait worth its AP? The blows this turn's AP still buys after it, each landing more often against a baited
-  // defence (and as often as before if the bait is seen through), against the blows the same AP buys without it. A bait
-  // that costs a blow has to win that blow back in landing odds. BAIT_EDGE: it must pay by this much (the foe may be out
-  // of AP and not defend at all, which the actor can't see).
+  // Is a Bait worth its ticks? The blows I can strike before the next beat (when baited wears off) after it, each
+  // landing more often against a baited defence (and as often as before if the bait is seen through), against the
+  // blows the same time buys without it. A bait that costs a blow has to win that blow back in landing odds.
+  // BAIT_EDGE: it must pay by this much.
   const BAIT_EDGE = 1.1;
-  // Rally's worth to a standing friend (hitValue's units): an AP won back from fatigue, and a point of breath otherwise.
+  // Rally's worth to a standing friend (hitValue's units): a fatigue step lifted (its share of every action's ticks
+  // back), and a point of breath otherwise.
   const RALLY_STEP = 8, RALLY_BREATH = 0.1, RALLY_MIN = 10;
   // One fighter's own fatigue step is under the minimum on purpose: Rally is for a side (two tired friends, or one down),
   // and alone it lost duels (sim/aicheck.js rally).
-  function baitPays(enc, chars, c, t, bait, blows, budget) {
+  function baitPays(enc, chars, c, t, bait, blows, horizon) {
     if (!t || !blows.length) return false;
-    const o = blows.reduce((a, b) => (b.ap < a.ap ? b : a));
-    const n0 = Math.floor(budget / o.ap), n1 = Math.floor((budget - bait.ap) / o.ap);
+    const o = blows.reduce((a, b) => (b.ticks < a.ticks ? b : a));
+    const n0 = horizon / o.ticks, n1 = Math.floor((horizon - bait.ticks) / o.ticks);
     if (n1 < 1) return false;
     const off = -((G.CONFIG.conditions.baited || {}).defense || 0);
     const kinds = ['parry', 'dodge'].concat(C.shieldReady(t) ? ['block'] : []);
@@ -883,16 +871,17 @@
   }
 
   // ---- Feat actions (feats.yaml): Rally, Command, To Your Feet, Demoralize, Name the Weakness, Vanish, Feign Death.
-  // Each is valued in hitValue's units and returned per AP, as a blow's rate is, so the best of a blow, a spell and
-  // these wins. What the actor sees: who is down or hurt on its own side, the foes' bodies and gear, what they have done.
-  function featChoice(enc, chars, id, la, foes, reserve, acted) {
-    const c = chars[id], S = C.costScale(), me = enc.pos[id];
+  // Each is valued in hitValue's units and returned per RATE ticks, as a blow's rate is, so the best of a blow, a spell
+  // and these wins. What the actor sees: who is down or hurt on its own side, the foes' bodies and gear, what they have done.
+  function featChoice(enc, chars, id, la, foes) {
+    const c = chars[id], me = enc.pos[id];
     let best = null;
-    const consider = (v, decl, ap) => {
-      const r = (v * S) / Math.max(1, ap);
+    const consider = (v, decl, ticks) => {
+      const r = (v * RATE) / Math.max(1, ticks);
       if (r > 0 && (!best || r > best.v)) best = { v: r, decl };
     };
-    const ok = (o) => o && o.affordable && !(acted && la.ap - o.ap < reserve);
+    const ok = (o) => o && o.affordable;
+    const step = (f) => G.CONFIG.fatigueSteps.filter((x) => f.stamina / Math.max(1, C.maxStamina(f)) < x.below).length;
     const other = (t) => la.other.find((o) => o.type === t);
     const man = (t) => la.maneuvers.find((m) => m.type === t);
     const near = (a) => {
@@ -900,7 +889,7 @@
       for (const f of foes) { const d = Combat.dist(enc.pos[a.id], enc.pos[f]); if (!b || d < b.d) b = { f, d }; }
       return b;
     };
-    // Rally: a round's breath now to my side within 3; the collapsed among them come round.
+    // Rally: a beat's breath now to my side within 3; the collapsed among them come round.
     const rally = other('rally');
     if (ok(rally)) {
       let v = 0;
@@ -910,22 +899,24 @@
         if (C.collapsed(f)) v += 40;
         else if (C.isActive(f)) {
           // Breath is worth an action only where it changes what the fighter can do: lifting them over a fatigue
-          // step (an AP back every round). A few points of stamina to someone who is not tired are worth next to nothing.
-          const gain = Math.min(C.maxStamina(f) - f.stamina, Math.max(1, C.roundRegen(f, false)));
-          const before = C.fatiguePenalty(f);
+          // step (a share of every action's ticks back). A few points of stamina to someone who is not tired are worth
+          // next to nothing.
+          const gain = Math.min(C.maxStamina(f) - f.stamina, Math.max(1, C.beatRegen(f, false)));
+          const before = step(f);
           const keep = f.stamina;
           let after = before;
-          try { f.stamina = keep + gain; after = C.fatiguePenalty(f); } finally { f.stamina = keep; }
+          try { f.stamina = keep + gain; after = step(f); } finally { f.stamina = keep; }
           v += before > after ? RALLY_STEP * (before - after) : gain * RALLY_BREATH;
         }
       }
       // With no blow to compare it with (no foe in reach, or winded) any worth at all would win: it must be worth an action.
-      if (v >= RALLY_MIN) consider(v, { actor: id, type: 'rally' }, rally.ap);
+      if (v >= RALLY_MIN) consider(v, { actor: id, type: 'rally' }, rally.ticks);
     }
     // To Your Feet: a collapsed friend beside me up now, with a quarter of their stamina.
     const rouse = other('rouse');
-    if (ok(rouse)) for (const t of rouse.targets) if (chars[t.id] && chars[t.id].status.unconscious) consider(45, { actor: id, type: 'rouse', target: t.id }, rouse.ap);
-    // Command: an AP for a friend who still has a turn to use it on blows (a reaction's worth, a third, if not).
+    if (ok(rouse)) for (const t of rouse.targets) if (chars[t.id] && chars[t.id].status.unconscious) consider(45, { actor: id, type: 'rouse', target: t.id }, rouse.ticks);
+    // Command: a friend's clock a few ticks sooner, worth their best blow's rate for that time (a third, if they are
+    // waiting anyway).
     const cmd = other('command');
     if (ok(cmd)) for (const t of cmd.targets) {
       const a = chars[t.id];
@@ -933,8 +924,8 @@
       const n = near(a);
       if (!n) continue;
       const r = bestRate(a, chars[n.f], C.attackOptions(a), n.d);
-      const ahead = !enc.turnDone[t.id] && Combat.currentActor(enc) !== t.id;
-      consider(((ahead ? 1 : 0.3) * r * Math.round(C.baseAP(1))) / S, { actor: id, type: 'command', target: t.id }, cmd.ap);
+      const idle = !!(enc.waits && enc.waits[t.id]);
+      consider(((idle ? 0.3 : 1) * r * G.CONFIG.clock.command) / RATE, { actor: id, type: 'command', target: t.id }, cmd.ticks);
     }
     // Demoralize: a foe frightened of me for a round (it can't come closer and must first step away), at the odds of
     // my nerve against its will; most worth it on one about to strike.
@@ -951,9 +942,9 @@
         if (C.rank(c, 'dread')) v += w; else if (w > v) { v = w; pick = t.id; }
         if (!pick) pick = t.id;
       }
-      if (pick) consider(v, { actor: id, type: 'demoralize', target: pick }, dem.ap);
+      if (pick) consider(v, { actor: id, type: 'demoralize', target: pick }, dem.ticks);
     }
-    // Name the Weakness: for 2 rounds everyone's blows ignore its resistances. Worth what my side's blows gain on it.
+    // Name the Weakness: for 2 beats everyone's blows ignore its resistances. Worth what my side's blows gain on it.
     const nw = man('nameWeakness');
     if (ok(nw)) for (const t of nw.targets) {
       if (!t.inReach || !foes.includes(t.id)) continue;
@@ -965,13 +956,13 @@
       const gainOf = () => mine.reduce((tt, o) => tt + bestRate(chars[o], f, C.attackOptions(chars[o]), Math.max(1, Math.min(Combat.dist(enc.pos[o], fp), 2))), 0);
       const plain = gainOf();
       const saved = f.status.conds;
-      f.status.conds = (saved || []).concat([{ key: 'named', rounds: 2, mag: 1 }]);
+      f.status.conds = (saved || []).concat([{ key: 'named', beats: 2, mag: 1 }]);
       let named;
       try { named = gainOf(); } finally { f.status.conds = saved; }
-      // Two rounds of each friend's blows, about two blows' AP each.
-      consider(((named - plain) * 2 * 2 * C.baseAP(1)) / S, { actor: id, type: 'nameWeakness', target: t.id }, nw.ap);
+      // Two beats of each friend's blows, about two RATEs of blows a beat.
+      consider((named - plain) * 2 * 2, { actor: id, type: 'nameWeakness', target: t.id }, nw.ticks);
     }
-    // Vanish (no foe beside me): unseen for 2 rounds, so no foe beyond arm's reach can aim at me: not their shots or
+    // Vanish (no foe beside me): unseen for 2 beats, so no foe beyond arm's reach can aim at me: not their shots or
     // spells, nor a long reach's stop-thrust as I come in.
     const van = other('vanish');
     if (ok(van) && !G.Effects.has(c, 'unseen')) {
@@ -981,12 +972,11 @@
         if (d <= 1) continue;
         for (const o of C.attackOptions(foe)) {
           if (o.ranged && o.weaponId && C.ammoLeft(foe, o) <= 0) continue;
-          // A drawn bow counts at its draw and loose together (forPlanning).
-          if (o.ranged || o.spell) { if (d <= (o.maxRange || 1)) v = Math.max(v, rate(foe, c, forPlanning(foe, o), Math.max(o.minRange || 1, d)) * 2 * C.baseAP(1) / S); }
-          else if (!o.windUp && (o.maxRange || 1) >= 2 && d <= (o.maxRange || 1) + 3) v = Math.max(v, hitValue(foe, c, o, Math.min(o.maxRange, 2)) * 0.5);
+          if (o.ranged || o.spell) { if (d <= (o.maxRange || 1)) v = Math.max(v, rate(foe, c, o, Math.max(o.minRange || 1, d)) * 2); }
+          else if (!o.exposes && (o.maxRange || 1) >= 2 && d <= (o.maxRange || 1) + 3) v = Math.max(v, hitValue(foe, c, o, Math.min(o.maxRange, 2)) * 0.5);
         }
       }
-      consider(v, { actor: id, type: 'vanish' }, van.ap);
+      consider(v, { actor: id, type: 'vanish' }, van.ticks);
     }
     // Feign Death: badly hurt, with a friend still up to win it, lie still where no foe can aim at me.
     const feign = other('feign');
@@ -994,15 +984,15 @@
       const conLeft = 1 - C.woundLoad(c) / C.boxes(c); // wound boxes left
       const friendUp = enc.ids.some((o) => o !== id && chars[o] && chars[o].side === c.side && C.isActive(chars[o]));
       const pressed = foes.some((f) => Combat.dist(me, enc.pos[f]) <= Math.max(1, meleeReach(chars[f])) + 1);
-      if (conLeft <= 0.3 && friendUp && pressed) consider(30, { actor: id, type: 'feign' }, feign.ap);
+      if (conLeft <= 0.3 && friendUp && pressed) consider(30, { actor: id, type: 'feign' }, feign.ticks);
     }
     return best;
   }
 
-  // The walk from every square to a target's (terrain only: other fighters move), kept for the round.
+  // The walk from every square to a target's (terrain only: other fighters move), kept while nothing changes (the key).
   const fields = typeof WeakMap !== 'undefined' ? new WeakMap() : null;
   function walkField(enc, tp, c, block) {
-    const key = [enc.round, tp.x, tp.y, c.id, Object.keys(enc.tiles).length, [...block].sort().join(';')].join(',');
+    const key = [tp.x, tp.y, c.id, Object.keys(enc.tiles).length, [...block].sort().join(';')].join(',');
     const held = fields && fields.get(enc);
     if (held && held.key === key) return held.map;
     const map = G.Terrain.costMap(enc, tp, c, null, block);
@@ -1012,20 +1002,11 @@
 
   // My cheapest defence that I could put up now (Infinity: none).
   function cheapestDefence(enc, chars, c) {
-    const costs = Combat.DEFENSE_TYPES.filter((k) => !Combat.defenseUnavailable(c, k, null, chars, enc) && (k !== 'offParry' || C.offhandWeapon(c))).map((k) => C.actionCost(c, k).ap);
+    const costs = Combat.DEFENSE_TYPES.filter((k) => !Combat.defenseUnavailable(c, k, null, chars, enc) && (k !== 'offParry' || C.offhandWeapon(c))).map((k) => C.actionCost(c, k).ticks);
     return costs.length ? Math.min(...costs) : Infinity;
   }
 
-  // The AP a body seems to have left this round, from what anyone could see: an average round's pool for that body (its
-  // SPD, armor, gear; a side caught off guard gets its share), less what it has been seen to do.
-  function apGuess(enc, t) {
-    let pool = C.apPool(t);
-    const sp = enc.surprise;
-    if (sp && sp.round === enc.round && t.side === sp.side) pool = Math.floor(pool * sp.factor);
-    return pool - (enc.decls || []).reduce((s, x) => s + (x.actor === t.id ? x.ap || 0 : 0), 0);
-  }
-
-  const BARE = 0.8; // what walking in with no defence left costs, × the worst blow waiting there
+  const BARE = 0.8; // what walking in unable to react costs, × the worst blow waiting there
 
   // Flanking (step B, CONFIG.flank), in planMove's units (10 a square off the distance wanted): a square from which an
   // ally of mine is on the far side of my target is worth FLANK_SEEK; one where two foes would have me between them
@@ -1052,16 +1033,15 @@
 
   // One step before the blow (step B): to a square from which the blow still reaches its target and an ally of mine
   // stands on the target's far side, or out from between two foes. Only a step that draws no opportunity strike
-  // (no nearer to, and still within, the reach of every foe whose reach I am in), on plain ground, once a turn, and
-  // with the blow and the defence I kept back still paid for after it.
-  function sidestep(enc, chars, id, la, decl, reserve) {
+  // (no nearer to, and still within, the reach of every foe whose reach I am in), on plain ground, and not straight
+  // after a move of my own.
+  function sidestep(enc, chars, id, la, decl) {
     const K = G.CONFIG.flank;
     const o = decl.option;
     if (!K || !K.penalty || !la.move || la.move.drag || o.ranged || o.spell) return null;
-    if (enc.decls.some((d) => d.actor === id && d.round === enc.round && d.type === 'move')) return null;
+    const mine = enc.decls.filter((d) => d.actor === id && !d.reaction);
+    if (mine.length && mine[mine.length - 1].type === 'move') return null;
     const c = chars[id], me = enc.pos[id], tp = enc.pos[decl.target];
-    const need = C.actionCost(c, 'move', { ap: C.moveCost(c, 1) }).ap;
-    if (la.ap - need < o.ap || (la.ap - o.ap >= reserve && la.ap - need - o.ap < reserve)) return null;
     const foes = enemiesOf(enc, chars, id);
     const terms = flankTerms(enc, chars, c, decl.target, tp, foes, meleeReach(c), 0);
     const here = terms(me.x, me.y);
@@ -1092,34 +1072,31 @@
     for (const o of enc.ids) if (o !== id && C.isActive(chars[o])) { const q = Combat.projectedPos(enc, o); taken.add(q.x + ',' + q.y); }
     const foePos = foes.map((f) => Combat.projectedPos(enc, f));
     // Opportunity strikes: a route that steps inside a foe's reach (past its edge), leaves it, or takes two
-    // steps within it gives that foe a free blow (about half its worth; less from one who has had its turn).
+    // steps within it gives that foe a free blow (about half its worth; none from one too far ahead to react).
     const wary = wariness(enc, chars);
     const provokers = G.CONFIG.opportunityStrikes ? foes.map((f) => {
       const foe = chars[f];
       let reach = 0, worst = 0;
       for (const o of C.attackOptions(foe)) {
-        if (o.ranged || o.spell || o.windUp) continue;
+        if (o.ranged || o.spell || o.exposes) continue;
         reach = Math.max(reach, o.maxRange || 1);
         worst = Math.max(worst, hitValue(foe, c, o, Math.min(o.maxRange || 1, 2)));
       }
-      return { at: Combat.projectedPos(enc, f), reach, cost: worst * (enc.turnDone[f] ? 0.25 : 0.5) * wary };
+      return { at: Combat.projectedPos(enc, f), reach, cost: worst * (Combat.canReact(enc, chars, f) ? 0.5 : 0) * wary };
     }).filter((p) => p.reach) : [];
-    // The approach budget (docs/PLAN.md step 5): a move that ends inside the reach of a foe who can still strike this
-    // round (it has its turn to come, or AP the mover hasn't seen it spend: a stop-thrust as I come in) must leave AP
-    // for a defence, or the blow it walks into lands unmet. Short of that, stop at the edge and come in next round with
-    // the AP to meet it. What the mover sees: the foes' reach and what they have done this round, not their AP.
-    const defAP = cheapestDefence(enc, chars, c);
-    const threats = avoid || !isFinite(defAP) ? [] : foes.map((f) => {
+    // The approach budget (docs/PLAN.md step 5): a move that ends inside the reach of a foe leaves the mover its
+    // ticks ahead; past overreach, the blow it walks into lands unmet. Short of that, stop at the edge and come in with
+    // time to meet it. What the mover sees: the foes' reach and clocks.
+    const defT = cheapestDefence(enc, chars, c);
+    const threats = avoid || !isFinite(defT) ? [] : foes.map((f) => {
       const foe = chars[f];
-      let reach = 0, worst = 0, cheap = Infinity;
+      let reach = 0, worst = 0;
       for (const o of C.attackOptions(foe)) {
-        if (o.ranged || o.spell || o.windUp) continue;
+        if (o.ranged || o.spell || o.exposes) continue;
         reach = Math.max(reach, o.maxRange || 1);
-        cheap = Math.min(cheap, o.ap);
         worst = Math.max(worst, hitValue(foe, c, o, Math.min(o.maxRange || 1, 2)));
       }
-      const live = C.isActive(foe) && !(enc.turnDone[f] && apGuess(enc, foe) < cheap);
-      return { at: Combat.projectedPos(enc, f), reach, worst: live ? worst : 0 };
+      return { at: Combat.projectedPos(enc, f), reach, worst: C.isActive(foe) ? worst : 0 };
     }).filter((p) => p.reach && p.worst > 0);
     const bareAt = (x, y) => threats.reduce((m, p) => (Combat.dist({ x, y }, p.at) <= p.reach ? Math.max(m, p.worst) : m), 0);
     // Standing where a foe out-reaches me (in its reach, it out of mine) costs a blow a round I can't answer: weighed
@@ -1129,7 +1106,7 @@
       const foe = chars[f];
       let reach = 0, worst = 0;
       for (const o of C.attackOptions(foe)) {
-        if (o.ranged || o.spell || o.windUp) continue;
+        if (o.ranged || o.spell || o.exposes) continue;
         reach = Math.max(reach, o.maxRange || 1);
         worst = Math.max(worst, hitValue(foe, c, o, Math.min(o.maxRange || 1, Math.max(o.minRange || 1, myReach + 1))));
       }
@@ -1167,10 +1144,10 @@
           squares = Math.round(k);
           for (const q of G.Terrain.trace(map, from, x, y)) hazard += G.Terrain.danger(enc, q.x, q.y, c.side, c);
         }
-        const need = C.moveCost(c, squares);
-        if (need > la.ap) continue;
+        if (squares > step) continue;
+        const need = C.moveTicks(c, squares);
         const dd = far(x, y);
-        let score = Math.abs(dd - goal) * 10 + need / C.costScale() + hazard;
+        let score = Math.abs(dd - goal) * 10 + need / RATE + hazard;
         // Shooting from there (a goal past blade's reach): a square with no line to the target is worth little.
         if (sight && G.Terrain.lineCheck(enc, { x, y }, tp, 'missile').blocked) score += 15;
         for (const p of provokers) {
@@ -1178,7 +1155,7 @@
           const inFrom = dF <= p.reach, inTo = dT <= p.reach;
           if ((inFrom && !inTo) || (dT < p.reach && dT < dF) || (inFrom && squares >= 2)) score += p.cost * 2;
         }
-        if (threats.length && la.ap - need < defAP) score += bareAt(x, y) * BARE * wary;
+        if (threats.length && need > K().overreach) score += bareAt(x, y) * BARE * wary;
         if (outreach.length) score += standAt(x, y) * RISK;
         score += flankAt(x, y);
         if (avoid) {
@@ -1201,8 +1178,8 @@
       const near = (p) => Math.min(...foePos.map((fp) => Combat.dist(p, fp)));
       if (!gainsLine && near({ x: best.x, y: best.y }) <= near(from) && Math.abs(best.dd - goal) >= Math.abs(cur - goal)) return null;
     } else {
-      // Staying put keeps the AP: walk only if the square is worth more than where I stand (the approach budget).
-      const stay = Math.abs(far(from.x, from.y) - goal) * 10 + (blind ? 15 : 0) + (threats.length && la.ap < defAP ? bareAt(from.x, from.y) * BARE * wary : 0) + (outreach.length ? standAt(from.x, from.y) * RISK : 0) + flankAt(from.x, from.y);
+      // Staying put keeps the time: walk only if the square is worth more than where I stand (the approach budget).
+      const stay = Math.abs(far(from.x, from.y) - goal) * 10 + (blind ? 15 : 0) + (outreach.length ? standAt(from.x, from.y) * RISK : 0) + flankAt(from.x, from.y);
       // No nearer the distance wanted: worth it only for a flank (step B) the square gains, and then only if it is
       // worth more than where I stand.
       const flankGain = flankAt(best.x, best.y) < flankAt(from.x, from.y);
@@ -1212,10 +1189,10 @@
     return { actor: id, type: 'move', to: { x: best.x, y: best.y } };
   }
 
-  // Afraid, the turn can't end before its step away (Combat.mustFlee): if nothing else chose one, take it.
+  // Afraid, the fighter can't wait before its step away (Combat.mustFlee): if nothing else chose one, take it.
   function choose(enc, chars, id, rng, policy) {
     const d = decide(enc, chars, id, rng, policy);
-    if (d && (d.type === 'endTurn' || d.type === 'concede') && Combat.mustFlee && Combat.mustFlee(enc, chars, chars[id])) {
+    if (d && (d.type === 'wait' || d.type === 'concede') && Combat.mustFlee && Combat.mustFlee(enc, chars, chars[id])) {
       const to = Combat.fleeSteps(enc, chars, chars[id])[0];
       if (to) return { actor: id, type: 'move', to };
     }
@@ -1227,18 +1204,13 @@
     const P = Object.assign({}, DEFAULTS, policy || {});
     const c = chars[id];
     const la = Combat.legalActions(enc, chars, id);
-    const ap = la.ap;
-    const endTurn = { actor: id, type: 'endTurn' };
+    // Nothing worth doing now: wait for the next thing to happen (another's action, a blow landing, a beat).
+    const wait = { actor: id, type: 'wait' };
     // A grappler by policy (the arena's) always works the ladder; one only by skill (athletics 2+) takes it up when its
     // blows can't hurt the foe and it has the breath for a hold (step 5: a level-8 Beren clinched every bandit and
     // spent himself holding them).
     const byPolicy = P.grappler === true;
     if (P.grappler == null) P.grappler = C.skill(c, 'athletics') >= 2;
-    // AP to keep back for defences against foes still to act this round, and whether this turn
-    // has already done something (after the first action, the reserve is not dipped into).
-    const reserve = reserveAP(enc, chars, id, P);
-    const acted = enc.decls.some((d) => d.actor === id && d.round === enc.round && !d.reaction && !d.opportunity);
-    const S = C.costScale();
     let foes = enemiesOf(enc, chars, id);
     // In a frenzy (Rage) the nearest body is the foe, friend or not; confused, anyone near.
     if (G.Conditions && (G.Effects.has(c, 'berserk') || (G.Effects.has(c, 'confused') && rng() < 0.5))) {
@@ -1251,7 +1223,7 @@
     // 0. Playing dead (Feign Death): lie still while a friend fights on; get up when none does (or nobody is near).
     if (G.Effects.has(c, 'feign')) {
       const friendUp = enc.ids.some((o) => o !== id && chars[o] && chars[o].side === c.side && C.isActive(chars[o]) && !G.Effects.has(chars[o], 'feign'));
-      if (friendUp) return endTurn;
+      if (friendUp) return wait;
     }
 
     // 1. Get up; tear free of webs.
@@ -1262,13 +1234,6 @@
     const flee = fleeFrom(enc, chars, id, la);
     if (flee) return flee;
 
-    // 2. Release a wound-up blow at whoever is in range.
-    for (const atk of la.attacks) {
-      if (!atk.windUp || !atk.affordable) continue;
-      const t = atk.targets.filter((x) => x.inReach && foes.includes(x.id)).sort((x, y) => hitValue(c, chars[y.id], atk, y.distance) - hitValue(c, chars[x.id], atk, x.distance))[0];
-      if (t) return { actor: id, type: 'strike', option: atk, target: t.id };
-    }
-
     // 2b. Grappling: work the ladder (grapplers), or get loose (everyone else).
     const gm = (type) => la.maneuvers.find((m) => m.type === type && m.affordable);
     const link = la.grapple;
@@ -1276,7 +1241,7 @@
       const partner = chars[link.partner];
       if (link.role === 'held') {
         const br = gm('break');
-        return br ? { actor: id, type: 'break', target: link.partner } : endTurn;
+        return br ? { actor: id, type: 'break', target: link.partner } : wait;
       }
       if (link.role === 'holder') {
         if (P.grappler && link.level === 'hold' && gm('pin')) return { actor: id, type: 'pin', target: link.partner };
@@ -1317,14 +1282,13 @@
 
     const near = pickTarget(enc, chars, id, foes, at);
     const target = chars[near.id];
-    // Everything this loadout can do, counting wind-up attacks at their full cost.
-    const planBase = la.attacks.filter((o) => !o.why || (o.windUp && WIND_REASONS.includes(o.why))).map((o) => forPlanning(c, o));
+    // Everything this loadout can do.
+    const planBase = la.attacks.filter((o) => !o.why);
 
     // 5. Switch weapons when another fits the current distance much better.
     const primaryOnGround = c.status.dropped.includes((c.weapons.find((w) => w.id !== c.sidearm) || {}).id);
     const swap = la.other.find((o) => (o.type === 'drawSidearm' || o.type === 'readyPrimary' || (o.type === 'pickUp' && primaryOnGround)) && o.affordable);
-    const winding = c.status.windUp || enc.decls.some((d) => d.actor === id && d.type === 'windUp');
-    if (swap && !winding) {
+    if (swap) {
       const nowOpts = planBase.filter((o) => !o.unarmed);
       const altId = swap.type === 'drawSidearm' ? c.sidearm : c.weapons.find((w) => w.id !== c.sidearm).id;
       const alt = optionsWith(c, altId).filter((o) => !(o.ranged && C.ammoLeft(c, o) <= 0));
@@ -1352,7 +1316,7 @@
     // 5a. Drive a foe onto ground I can see will hurt it: a pit, lava, or a live trap my side knows (docs/OVERHAUL.md
     // step C). Worth more than a blow when the shove is likely to go.
     const shoveOn = la.maneuvers.find((m) => m.type === 'shove' && m.affordable);
-    if (shoveOn && enc.tiles && !winding) {
+    if (shoveOn && enc.tiles) {
       const me = enc.pos[id];
       for (const t of shoveOn.targets) {
         if (!t.inReach || !foes.includes(t.id) || !enc.pos[t.id] || G.Terrain.flies(chars[t.id])) continue;
@@ -1366,7 +1330,7 @@
     // 5b. Inside my reach with nothing that works there: shove them back out (or step away).
     const shove = la.maneuvers.find((m) => m.type === 'shove' && m.affordable);
     const armed = planBase.filter((o) => !o.unarmed);
-    if (shove && near.d === 1 && armed.length && bestRate(c, target, armed, 1) === 0 && !winding) {
+    if (shove && near.d === 1 && armed.length && bestRate(c, target, armed, 1) === 0) {
       const t = shove.targets.find((x) => x.id === near.id && x.inReach);
       if (t && Combat.shoveOdds(c, target) >= 0.4) return { actor: id, type: 'shove', target: near.id };
     }
@@ -1382,7 +1346,7 @@
     }
 
     const keep = spReserve(enc, chars, id, la);
-    const usable = la.attacks.filter((o) => !o.windUp && !o.why && !(o.spell && overDebt(c, o, keep) === Infinity));
+    const usable = la.attacks.filter((o) => !o.why && !(o.spell && overDebt(c, o, keep) === Infinity));
     // A ranged loadout kites only if its ranged blows are worth at least as much as its blade:
     // a knight with a bolt spell still closes in; a bowman or a mage backs away.
     const rangedOpts = planBase.filter((o) => o.ranged && !o.unarmed);
@@ -1396,27 +1360,27 @@
     // 7. Ranged characters step out of melee reach before shooting.
     if (P.kite && rangedLoadout && la.move) {
       const reach = threatReach(chars, foes);
-      if (near.d <= reach + 1 && ap >= C.moveCost(c, 2) + S) {
+      if (near.d <= reach + 1) {
         const mv = planMove(enc, chars, id, la, near.id, Math.max(pref.d, reach + 2), foes, reach);
         // Backing off draws a blow from every foe whose reach I'm in: only worth it against a light one.
         if (mv && Combat.dist(mv.to, Combat.projectedPos(enc, near.id)) > near.d && leaveCost(enc, chars, id) <= 3) return mv;
       }
     }
 
-    // 7a. Bait a foe who will defend (one still to take their turn, so likely with AP in hand), when there's AP left
-    // after it for a blow.
+    // 7a. Bait a foe who will defend (one that can still react), when there's time before the next beat for blows
+    // after it.
     const bait = la.maneuvers.find((m) => m.type === 'bait' && m.affordable);
-    const blowAP = Math.min(...usable.filter((o) => !o.spell).map((o) => o.ap).concat([99]));
-    if (bait && !acted && la.ap >= bait.ap + Math.min(blowAP, 99) + reserve && blowAP < 99) {
-      const guarded = bait.targets.find((x) => x.inReach && foes.includes(x.id) && !enc.turnDone[x.id] && usable.some((o) => C.inRange(o, x.distance)));
+    const horizon = enc.nextBeat - enc.now;
+    if (bait && usable.some((o) => !o.spell)) {
+      const guarded = bait.targets.find((x) => x.inReach && foes.includes(x.id) && Combat.canReact(enc, chars, x.id) && usable.some((o) => C.inRange(o, x.distance)));
       // A foe in reach who can't defend (collapsed, down) is the blow to take: no bait first.
       const open = enc.ids.some((o) => { const f = chars[o]; return f && f.side !== c.side && !f.status.dead && enc.pos[o] && (C.collapsed(f) || !C.isActive(f)) && usable.some((u) => !u.spell && C.inRange(u, Combat.dist(enc.pos[id], enc.pos[o]))); });
-      if (guarded && !open && baitPays(enc, chars, c, chars[guarded.id], bait, usable.filter((o) => !o.spell && C.inRange(o, guarded.distance)), la.ap - reserve)) return { actor: id, type: 'bait', target: guarded.id };
+      if (guarded && !open && baitPays(enc, chars, c, chars[guarded.id], bait, usable.filter((o) => !o.spell && C.inRange(o, guarded.distance)), horizon)) return { actor: id, type: 'bait', target: guarded.id };
     }
     // The AI doesn't read intent (the user, 2026-11-01): it filled foes' turns with looks instead of blows.
 
-    // 8. Attack now, or wind up for a bigger blow next round. A collapsed foe (R3) in reach is a target too: finish it,
-    // or turn to one still standing, whichever is worth more.
+    // 8. Attack. A heavy blow's lead is weighed against the target's clock (timing). A collapsed foe (R3) in reach is a
+    // target too: finish it, or turn to one still standing, whichever is worth more.
     let winded = false;
     const downed = G.Conditions && (G.Effects.has(c, 'berserk') || G.Effects.has(c, 'confused')) ? [] : downedFoesOf(enc, chars, id);
     let best = null;
@@ -1429,20 +1393,20 @@
         if (!t.inReach || !(foes.includes(t.id) || down)) continue;
         let v = rate(c, chars[t.id], atk, t.distance) * P.kickBias ** (atk.unarmed === 'kick' ? 1 : 0) * (down ? finishWeight(enc, chars[t.id]) : 1);
         if (v > 0 && !down && isFlanked(t.id)) v *= FLANK_LAND;
-        if (v > 0 && !down) v += (sweepWorth(enc, chars, c, chars[t.id], atk, t.distance) * C.costScale()) / Math.max(1, atk.ap);
-        if (v > 0 && !down && atk.whirlwind) v += (whirlwindWorth(enc, chars, c, chars[t.id], atk) * C.costScale()) / Math.max(1, atk.ap);
-        if (atk.spell) v -= (overDebt(c, atk, keep) * S) / Math.max(1, atk.ap);
+        if (v > 0 && !down) v *= timing(enc, c, chars[t.id], atk);
+        if (v > 0 && !down) v += (sweepWorth(enc, chars, c, chars[t.id], atk, t.distance) * RATE) / Math.max(1, atk.ticks);
+        if (v > 0 && !down && atk.whirlwind) v += (whirlwindWorth(enc, chars, c, chars[t.id], atk) * RATE) / Math.max(1, atk.ticks);
+        if (atk.spell) v -= (overDebt(c, atk, keep) * RATE) / Math.max(1, atk.ticks);
         // Aim where it pays (a bare leg under a breastplate), if anywhere does.
         const aim = atk.unarmed ? null : bestAim(c, chars[t.id], atk, t.distance, enc);
         if (aim && aim.loc) v *= aim.ratio;
-        // Digging into the AP kept for defence: never after the first action of the turn; the first
-        // blow is still worth something, a little less.
-        if (la.ap - atk.ap < reserve) { if (acted) continue; v *= 0.85; }
+        // An action that leaves me too far ahead to react while a foe can strike me: worth a little less.
+        if (P.cautious && bareAfter(enc, chars, id, atk.ticks)) v *= BARE_MULT;
         if (!best || v > best.v) best = { v, spent: !!atk.spent, worth: atk.spent ? hitValue(c, chars[t.id], Object.assign({}, atk, { spent: true }), t.distance) : 0, decl: Object.assign({ actor: id, type: 'strike', option: atk, target: t.id }, aim && aim.loc ? { location: aim.loc } : {}) };
       }
     }
     // Out of breath (R2): a spent blow only if it could finish someone; else step out of reach to get the breath back
-    // (no blow, so the round's full regeneration), or stand and keep the AP for a defence.
+    // (no blow, so the beat's full regeneration), or wait and keep ready for a defence.
     if (best && best.spent && best.worth < spentWorth()) {
       const reach = threatReach(chars, foes);
       if (la.move && !la.move.spent && leaveCost(enc, chars, id) <= 3 && near.d <= reach) {
@@ -1452,48 +1416,24 @@
       best = null;
       winded = true;
     }
-    const winds = la.other.filter((o) => o.type === 'windUp' && o.affordable);
     // Spells cast at squares, foes or friends, when one is worth more than the best blow.
     const castBest = castChoice(enc, chars, id, la, foes);
-    const featBest = featChoice(enc, chars, id, la, foes, reserve, acted);
+    const featBest = featChoice(enc, chars, id, la, foes);
     if (featBest && featBest.v > (best ? best.v : 0) && featBest.v >= (castBest ? castBest.v : 0)) return featBest.decl;
     if (castBest && castBest.v > (best ? best.v : 0)) return castBest.decl;
-    if (winded) return endTurn;
-    if (winds.length && P.windUp > 0) {
-      let bestW = null;
-      for (const w of winds) {
-        const release = la.attacks.find((o) => C.optionKey(o) === C.optionKey(w.option)) || w.option;
-        // After a first action, only a wind-up that can be released this turn too (windUp.sameTurn): a bow drawn
-        // after stepping back to range.
-        if (acted && !(G.CONFIG.windUp.sameTurn && la.ap >= w.ap + release.ap)) continue;
-        // Don't wind up a close-range blow you intend to kite away from.
-        if (rangedLoadout && P.kite && !release.ranged && near.d > (release.maxRange || 1)) continue;
-        // Nor draw a bow (or a Strong bolt) with no foe in the line of it from here: it is lost at the round's end
-        // (step 5: an archer in the mine hall drew, walked, and lost the draw round after round).
-        if ((release.ranged || release.spell) && release.targets && !release.targets.some((x) => x.inReach && foes.includes(x.id))) continue;
-        const d = C.inRange(release, near.d) ? near.d : Math.min(Math.max(near.d, release.minRange || 1), release.maxRange);
-        const dmg = hitValue(c, target, release, d);
-        // Spread over both rounds' AP, discounted for the risk of losing it.
-        const v = ((dmg * S) / (w.ap + release.ap)) * 0.8 * P.windUp;
-        // Close enough that the blow can land next round (the foe may be walking in now).
-        const soon = Math.min(near.d, Combat.dist(Combat.projectedPos(enc, id), Combat.projectedPos(enc, near.id)));
-        const reachable = soon <= release.maxRange + Math.floor(la.move ? la.move.maxSquares / 2 : 0);
-        if (reachable && (!bestW || v > bestW.v)) bestW = { v, decl: { actor: id, type: 'windUp', option: w.option } };
-      }
-      if (bestW && bestW.v > (best ? best.v : 0) * 1.15) return bestW.decl;
-    }
+    if (winded) return wait;
     // Step to a better distance when it is clearly better than fighting from here.
     const hereNet = (best ? best.v : 0) - RISK * foeRate(target, c, near.d);
-    if (la.move && !rangedLoadout && pref.d !== near.d && pref.net > hereNet + Math.max(1, Math.abs(hereNet)) + leaveCost(enc, chars, id) && ap >= C.moveCost(c, Math.abs(pref.d - near.d)) + S) {
+    if (la.move && !rangedLoadout && pref.d !== near.d && pref.net > hereNet + Math.max(1, Math.abs(hereNet)) + leaveCost(enc, chars, id)) {
       const mv = planMove(enc, chars, id, la, near.id, pref.d, foes, 0);
       if (mv) return mv;
     }
-    if (best && best.v > 0.2) return sidestep(enc, chars, id, la, best.decl, reserve) || best.decl;
+    if (best && best.v > 0.2) return sidestep(enc, chars, id, la, best.decl) || best.decl;
 
     // 8b. A live trap of my side's lies between me and the foe, and the foe can't see it: wait for them to come over it.
     if (enc.tiles && !rangedLoadout && near.d >= 2 && near.d <= 4 && enc.pos[near.id]) {
       const bait = G.Terrain.between(enc.pos[id], enc.pos[near.id]).some((q) => G.Terrain.at(enc, q.x, q.y).some((f) => (G.CONFIG.terrain[f.kind] || {}).trap && !f.sprung && G.Terrain.visible(f, c.side) && !G.Terrain.visible(f, target.side)));
-      if (bait) return endTurn;
+      if (bait) return wait;
     }
 
     // 9. Move toward the distance this loadout likes best. A blade's reach blocked from here (a pillar's corner, a
@@ -1502,8 +1442,8 @@
     const goal = lineBlocked ? 1 : pref.rate > 0 ? pref.d : 1;
     const mv = planMove(enc, chars, id, la, near.id, goal, foes, rangedLoadout && P.kite ? threatReach(chars, foes) : 0);
     if (mv) return mv;
-    return endTurn;
+    return wait;
   }
 
-  G.AI = { choose, react, reserveAP, hitValue, perceivedThreat, preferredDistance, bestAim, finishWeight, conditionWorth, immuneTo, sweepWorth, whirlwindWorth, DEFAULTS };
+  G.AI = { choose, react, bareAfter, timing, cannotReact, hitValue, perceivedThreat, preferredDistance, bestAim, finishWeight, conditionWorth, immuneTo, sweepWorth, whirlwindWorth, DEFAULTS };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

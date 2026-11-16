@@ -929,7 +929,7 @@
       effect: "Learn the modifier Delayed: a bolt becomes an area that breaks at the end of the round, +3 magnitude, its mark seen by all"
       auto: true
 # Traditions (the user, 2026-11-08): no classes, but feats that strengthen the spells whose words match theirs
-# (`spell`: { match: [{verb, noun, aim, mod, shape}], mag, cost, radius, roundsMult, contest, bound }). Necromancy
+# (`spell`: { match: [{verb, noun, aim, mod, shape}], mag, cost, radius, beatsMult, contest, bound }). Necromancy
 # takes and moves Life, gives and raises Death; Devotion gives to allies and calls back the dead.
 - id: magicNecromancy
   name: "Magic: necromancy"
@@ -978,7 +978,7 @@
       requires: [["verb_summon:1"]]
       effect: "Your ghosts (Summon Death) stay twice as long and come 2 magnitude stronger"
       auto: true
-      spell: {match: [{verb: summon, noun: death}], roundsMult: 2, mag: 2}
+      spell: {match: [{verb: summon, noun: death}], beatsMult: 2, mag: 2}
     raise_mummy:
       name: Raise the Wrapped Dead
       branch: grave
@@ -1027,7 +1027,7 @@
       requires: [["verb_take:1"]]
       effect: "Take on an ally (wards) costs 1 spell point less and lasts twice as long"
       auto: true
-      spell: {match: [{verb: take, aim: ally}], cost: -1, roundsMult: 2}
+      spell: {match: [{verb: take, aim: ally}], cost: -1, beatsMult: 2}
     turn_the_dead:
       name: Turn the Dead
       branch: warding
@@ -1076,7 +1076,7 @@
       requires: [["verb_summon:1"]]
       effect: "What you summon stays twice as long"
       auto: true
-      spell: {match: [{verb: summon}], roundsMult: 2}
+      spell: {match: [{verb: summon}], beatsMult: 2}
 - id: magicAffinity
   name: "Magic: affinity (fire)"
   attrs: INT

@@ -9,7 +9,7 @@
  *   Metrics.report(M) → lines of text;  Metrics.summary(M) → the numbers
  *
  * What counts:
- *   rounds          enc.round at the end
+ *   beats           the beat the fight ended in (enc.now / CONFIG.clock.beat, rounded up)
  *   heroes dead     heroes alive at the start and dead at the end (the crawl's own column counts the dead so far):
  *                   finished (killed by a blow while down) or bled out (Combat.settleFallen at the fight's end)
  *   heroes down     heroes up at the start who went down from wounds in the fight (dead or not: step E's "down")
@@ -47,7 +47,7 @@ function actionOf(o) {
 
 function create() {
   return {
-    fights: 0, rounds: [], heroesDead: 0, heroesDown: 0, heroesBled: 0, heroFights: 0, woundSev: [0, 0, 0, 0],
+    fights: 0, beats: [], heroesDead: 0, heroesDown: 0, heroesBled: 0, heroFights: 0, woundSev: [0, 0, 0, 0],
     half: 0, quarter: 0, collapses: 0, gotUp: 0, downDied: 0, downAtEnd: 0, downWon: 0, hero: { collapses: 0, gotUp: 0, downDied: 0, downAtEnd: 0, downWon: 0 }, attrWound: 0, heroAttrWound: 0,
     blows: { all: {}, heroes: {} }, locs: { all: {}, heroes: {} }, kills: {},
     heroDeaths: { n: 0, action: {}, loc: {}, apLeft: 0, down: 0, round1: 0, byFoe: {} },
@@ -109,8 +109,8 @@ function watch(M, enc, chars, heroIds) {
       D.action[a] = (D.action[a] || 0) + 1;
       D.loc[loc] = (D.loc[loc] || 0) + 1;
       if (down[ev.target.id]) D.down++;
-      else if (B.Combat.apLeft(enc, ev.target.id) > 0) D.apLeft++; // standing, with AP it could have met the blow with
-      if (enc.round <= 1) D.round1++;
+      else if (B.Combat.ahead(enc, ev.target.id) <= B.CONFIG.clock.overreach) D.apLeft++; // standing, near enough on the clock to have met the blow
+      if ((enc.beat || 0) === 0) D.round1++;
       const who = ev.attacker ? String(ev.attacker.monster || ev.attacker.template || ev.attacker.name || '?') : '?';
       D.byFoe[who] = (D.byFoe[who] || 0) + 1;
     }
@@ -125,7 +125,7 @@ function watch(M, enc, chars, heroIds) {
       tempo.end();
       enc.onHit = prev;
       M.fights++;
-      M.rounds.push(enc.round);
+      M.beats.push(Math.max(1, Math.ceil((enc.now || 0) / B.CONFIG.clock.beat)));
       for (const id of Object.keys(down)) {
         if (!down[id]) continue;
         const won = chars[id] && enc.winner === chars[id].side; // their side won: they come round after the fight
@@ -155,17 +155,17 @@ function watch(M, enc, chars, heroIds) {
 }
 
 // What the AI did (docs/PLAN.md step 5), read from the declarations as they are made: nothing here changes a fight.
-//   intoReach       moves that come in from outside a standing foe's melee reach to inside it; "bare": with less AP left than the mover's
-//                   cheapest defence while one of those foes still has the AP for a blow worth fearing there (AI.hitValue
-//                   10 or more): it walked in and can't meet it
+//   intoReach       moves that come in from outside a standing foe's melee reach to inside it; "bare": the mover too far
+//                   ahead on the clock to react (CONFIG.clock.overreach) while one of those foes has a blow worth fearing
+//                   there (AI.hitValue 10 or more): it walked in and can't meet it
 //   sidearm         sidearms drawn; "trade down": while the weapon in hand could still hurt the nearest foe from where
 //                   it stood (not inside its reach.min, not broken, the foe not immune to it)
 //   immune          strikes at a body immune to every kind of harm they carry (AI.immuneTo)
 //   worthless       other strikes that could do nothing to their target (the armor turns all of it; kicks and bashes,
 //                   thrown for the fall too, aside)
-//   idle rounds     rounds after the first in which nobody struck, cast or grappled while two foes stood within striking
-//                   distance at the round's end (the edge of a melee reach + 2, or in range and in line of a shot or bolt): the walk
-//                   up across a big map doesn't count; a stand-off: three such rounds in a row
+//   idle beats      beats after the first in which nobody struck, cast or grappled while two foes stood within striking
+//                   distance at the beat (the edge of a melee reach + 2, or in range and in line of a shot or bolt): the walk
+//                   up across a big map doesn't count; a stand-off: three such beats in a row
 //   feat actions    Vanish, Feign, Rally, Command, To Your Feet, Demoralize, Name the Weakness, by count
 //   casts           spells cast (a bolt or a cast), per fight of each fighter with spell points; the share of their
 //                   spell points still unspent at the fight's end; overchannels
@@ -176,7 +176,7 @@ function aiWatch(A, enc, chars) {
   for (const c of Object.values(chars)) { wield[c.id] = c.wield; if (enc.pos[c.id]) was[c.id] = { x: enc.pos[c.id].x, y: enc.pos[c.id].y }; }
   const FEAT = ['vanish', 'feign', 'rally', 'command', 'rouse', 'demoralize', 'nameWeakness'];
   const ACT = new Set(['strike', 'cast', 'trip', 'disarm', 'shove', 'clinch', 'grapple', 'pin', 'throw', 'demoralize', 'nameWeakness']);
-  let round = enc.round, busy = false, idleRun = 0, stood = false;
+  let round = enc.beat || 0, busy = false, idleRun = 0, stood = false;
   const casters = Object.values(chars).filter((c) => B.Magic && B.Magic.maxSP(c) > 0).length;
   const sides = () => new Set(Object.values(chars).filter((c) => C.isActive(c)).map((c) => c.side)).size > 1;
   // Within striking distance: two foes at the edge of a melee reach (+2), or one in range of the other's shot or bolt.
@@ -190,11 +190,10 @@ function aiWatch(A, enc, chars) {
     }));
   };
   const closeRound = () => {
-    if (round > 1 && !busy && sides() && engaged()) { A.idleRounds++; idleRun++; if (idleRun >= 3 && !stood) { A.standOffs++; stood = true; } }
+    if (round > 0 && !busy && sides() && engaged()) { A.idleRounds++; idleRun++; if (idleRun >= 3 && !stood) { A.standOffs++; stood = true; } }
     else if (busy) idleRun = 0;
   };
-  const meleeReach = (f) => Math.max(0, ...C.attackOptions(f).filter((o) => !o.ranged && !o.spell && !o.windUp).map((o) => o.maxRange || 1));
-  const cheapestDefence = (c) => Math.min(99, ...Combat.DEFENSE_TYPES.filter((k) => !Combat.defenseUnavailable(c, k, null, chars, enc) && (k !== 'offParry' || C.offhandWeapon(c))).map((k) => C.actionCost(c, k).ap));
+  const meleeReach = (f) => Math.max(0, ...C.attackOptions(f).filter((o) => !o.ranged && !o.spell && !o.exposes).map((o) => o.maxRange || 1));
   const nearestFoe = (c) => {
     let best = null;
     for (const f of Object.values(chars)) if (f.side !== c.side && C.isActive(f) && enc.pos[f.id]) { const d = Combat.dist(enc.pos[c.id], enc.pos[f.id]); if (!best || d < best.d) best = { f, d }; }
@@ -204,7 +203,7 @@ function aiWatch(A, enc, chars) {
   const could = (c, wid, f, d) => {
     const keep = c.wield, dropped = c.status.dropped;
     c.wield = wid; c.status.dropped = dropped.filter((x) => x !== wid);
-    const opts = C.attackOptions(c).filter((o) => !o.unarmed && !o.windUp && C.inRange(o, d) && !(o.closePenalty && d <= (o.minRange || 1)));
+    const opts = C.attackOptions(c).filter((o) => !o.unarmed && C.inRange(o, d) && !(o.closePenalty && d <= (o.minRange || 1)));
     const v = opts.reduce((m, o) => Math.max(m, AI.hitValue(c, f, o, d)), 0);
     const broken = (c.weapons.find((w) => w.id === wid) || {}).durability === 0;
     c.wield = keep; c.status.dropped = dropped;
@@ -219,7 +218,7 @@ function aiWatch(A, enc, chars) {
   };
   return {
     poll() {
-      if (enc.round !== round) { closeRound(); round = enc.round; busy = false; }
+      if ((enc.beat || 0) !== round) { closeRound(); round = enc.beat || 0; busy = false; }
       for (const d of enc.decls) {
         if (seen.has(d)) continue;
         seen.add(d);
@@ -232,14 +231,14 @@ function aiWatch(A, enc, chars) {
         if (d.type === 'move' && !d.reaction && enc.pos[c.id] && was[c.id]) {
           // Came in: from outside a standing foe's reach to inside it.
           const entered = Object.values(chars).filter((f) => f.side !== c.side && C.isActive(f) && enc.pos[f.id] && Combat.dist(enc.pos[c.id], enc.pos[f.id]) <= meleeReach(f) && Combat.dist(was[c.id], enc.pos[f.id]) > meleeReach(f));
-          // Bare: less AP left than a defence, and one of them with the AP for a blow (now, or on its turn to come).
-          // ...and a blow from it worth fearing (AI.hitValue 10 or more: plate shrugs off much of a greatsword's thrust).
+          // Bare: too far ahead on the clock to react, and one of them with a blow worth fearing (AI.hitValue 10 or
+          // more: plate shrugs off much of a greatsword's thrust).
           const armed = (f) => {
             const d = Combat.dist(enc.pos[c.id], enc.pos[f.id]);
-            const opts = C.attackOptions(f).filter((o) => !o.ranged && !o.spell && !o.windUp && C.inRange(o, d) && o.ap <= Combat.apLeft(enc, f.id));
+            const opts = C.attackOptions(f).filter((o) => !o.ranged && !o.spell && !o.exposes && C.inRange(o, d));
             return opts.some((o) => AI.hitValue(f, c, o, d) >= 10);
           };
-          if (entered.length) { A.intoReach++; if (Combat.apLeft(enc, c.id) < cheapestDefence(c) && entered.some(armed)) A.intoReachBare++; }
+          if (entered.length) { A.intoReach++; if (Combat.ahead(enc, c.id) > B.CONFIG.clock.overreach && entered.some(armed)) A.intoReachBare++; }
         }
         if (d.type === 'drawSidearm') {
           A.sidearm++;
@@ -270,115 +269,93 @@ function aiWatch(A, enc, chars) {
 }
 
 
-// ---- Tempo (docs/OVERHAUL.md step D, for step F) --------------------------------------------------------------------
-// The measures read time only through a clock adapter, so step F's tick clock needs a new adapter, not new measures.
-// An adapter answers, per fighter, "time available", "time spent on its own actions", "time spent on reactions" and
-// "time unused" (lost or waited away), in its own unit, and says when now is:
-//   clock.unit                      the unit's name ('AP' here; 'ticks' on step F's clock)
-//   clock.before(id) / clock.after() around each action the fighter `id` takes on its own time
-//   clock.newTurn(id)               true at a fighter's first action of a period (a round here): the start of its turn
-//   clock.now()                     { period, at, t }: the round, the share of its turns gone (0 to 1), and t = period + at
-//   clock.canPay(id, option)        whether the fighter could pay for the option now
-//   clock.rolled(id)                AP rolled this round (BASELINE ONLY: the AP die goes in step F; null on a clock without it)
-//   clock.close(final)              books the period's unused time; `final`: the fight ended in it (its leftover is
-//                                   "cut", not "unused": nobody lost it, the fight was over)
-//   clock.time                      id → { avail, own, react, unused, cut }
-//
-// The AP adapter (today's rules): a round's available AP is the AP rolled (enc.apStart); a fall in a fighter's AP during
-// its own action is its own spending, except the defences it declared as reactions (decls with reaction: true; a
-// riposte or opportunity strike it answers on its own turn is booked as its own); a fall in anyone else's is a
-// reaction; what is left when the round ends is unused. AP owed from last round's rebound is booked as own spending.
-function apClock(enc, chars) {
-  const C = B.Character;
-  const time = {}, prev = {}, rolledNow = {};
-  let round = null, order = [], actor = null, mark = 0, turns = new Set();
-  const T = (id) => time[id] || (time[id] = { avail: 0, own: 0, react: 0, unused: 0, cut: 0 });
-  const closeRound = (final) => {
-    for (const id of order) if (prev[id] != null) T(id)[final ? 'cut' : 'unused'] += Math.max(0, prev[id]);
-  };
-  const sync = () => {
-    if (enc.round === round) return;
-    if (round != null) closeRound(false);
-    round = enc.round; order = (enc.order || []).slice(); turns = new Set();
-    for (const k of Object.keys(prev)) delete prev[k];
-    for (const id of order) {
-      const start = enc.apStart[id] || 0;
-      T(id).avail += start;
-      rolledNow[id] = start;
-      if (start > (enc.ap[id] || 0)) T(id).own += start - (enc.ap[id] || 0); // owed from a rebound
-      prev[id] = enc.ap[id] || 0;
-    }
+// ---- Tempo (docs/OVERHAUL.md step D, restated in ticks for step F) --------------------------------------------------
+// The measures read time through a clock adapter. On step F's clock, per fighter, in ticks:
+//   own      the ticks of its own actions (an action's ticks, and what a block or parry rebounds onto it)
+//   react    the ticks of its reactions (defences, covers, opportunity strikes, ripostes)
+//   wait     ticks it chose to wait while a harmful blow was in reach (a deliberate wait: Combat.wait)
+//   idle     ticks it waited with nothing in reach worth doing (nothing useful could be done)
+//   cut      the part of a last action or wait still running when the fight ended (out of the shares)
+// A wait lasts from the decision to the fighter's next one, less the reactions it made meanwhile.
+function tickClock(enc, chars) {
+  const time = {};
+  const T = (id) => time[id] || (time[id] = { avail: 0, own: 0, react: 0, wait: 0, idle: 0, cut: 0 });
+  const waiting = {}; // id → { at, deliberate, react (reaction ticks since) }
+  let actor = null, mark = 0, before = null;
+  const closeWait = (id) => {
+    const w = waiting[id];
+    if (!w) return;
+    delete waiting[id];
+    const span = Math.max(0, enc.now - w.at - w.react);
+    T(id)[w.deliberate ? 'wait' : 'idle'] += span;
   };
   return {
-    unit: 'AP', scale: C.apScale(), time,
-    before(id) { sync(); actor = id; mark = enc.decls.length; },
-    newTurn(id) { sync(); if (turns.has(id)) return false; turns.add(id); return true; },
+    unit: 'ticks', scale: 1, time,
+    before(id, deliberate) { actor = id; closeWait(id); mark = enc.decls.length; before = enc.clock[id]; this.deliberate = deliberate; },
     after() {
-      if (enc.round !== round) return; // nothing booked before the first before()
       const fresh = enc.decls.slice(mark);
       mark = enc.decls.length;
-      for (const id of order) {
-        if (prev[id] == null) continue;
-        const cur = enc.ap[id] || 0, d = prev[id] - cur;
-        prev[id] = cur;
-        if (!d) continue;
-        if (id === actor) {
-          const r = fresh.filter((x) => x.actor === id && x.reaction).reduce((t, x) => t + (x.ap || 0), 0);
-          T(id).own += d - r; T(id).react += r;
-        } else T(id).react += d;
+      for (const d of fresh) {
+        if (!chars[d.actor]) continue;
+        if (d.reaction || (d.opportunity && d.actor !== actor)) { T(d.actor).react += d.ticks || 0; if (waiting[d.actor]) waiting[d.actor].react += d.ticks || 0; continue; }
+        if (d.actor !== actor || d.flurrySecond || d.sweep || d.whirl || d.cleave) continue;
+        if (d.type === 'wait') waiting[actor] = { at: d.tick, deliberate: !!this.deliberate, react: 0 };
+        else T(actor).own += d.ticks || 0;
       }
     },
-    now() { const n = (enc.order || []).length || 1; const at = Math.max(0, Math.min(1, (enc.turn < 0 ? 0 : enc.turn) / n)); return { period: enc.round, at, t: enc.round + at }; },
-    canPay(id, o) { return (o.ap || 0) <= B.Combat.apLeft(enc, id); },
-    rolled(id) { return B.CONFIG.apDie ? (rolledNow[id] != null ? rolledNow[id] : null) : null; },
-    close(final) { if (round != null) closeRound(final); round = null; },
+    now() { return { period: (enc.beat || 0) + 1, at: (enc.now % B.CONFIG.clock.beat) / B.CONFIG.clock.beat, t: enc.now / B.CONFIG.clock.beat, tick: enc.now }; },
+    canPay() { return true; },
+    close() {
+      for (const id of Object.keys(waiting)) {
+        const w = waiting[id];
+        delete waiting[id];
+        T(id).cut += Math.max(0, enc.now - w.at - w.react);
+      }
+      for (const id of Object.keys(time)) { const t = time[id]; t.avail = t.own + t.react + t.wait + t.idle; }
+    },
   };
 }
 
 function newTempo() {
   return {
-    unit: 'AP', scale: 1,
+    unit: 'ticks', scale: 1,
     time: { all: zeroTime(), heroes: zeroTime(), foes: zeroTime() },
     first: { landed: { n: 0, won: 0, at: [], round1: 0, heroes: 0, heroesWon: 0 }, tried: { n: 0, won: 0, at: [], round1: 0 } },
-    turns: { all: [0, 0], heroes: [0, 0], foes: [0, 0] }, // [turns with a foe in reach, of them with no attack]
+    turns: { all: [0, 0], heroes: [0, 0], foes: [0, 0] }, // [decisions with a foe in reach, of them a wait]
     turnsHarm: { all: [0, 0], heroes: [0, 0], foes: [0, 0] }, // the same, a harmful blow in reach
+    reachTime: { all: [0, 0], heroes: [0, 0], foes: [0, 0] }, // [ticks of decisions with a harmful blow in reach, of them waited]
     landed: 0, heavy: 0, heavyBy: {},
-    windUps: { started: 0, released: 0, spoiled: 0, cantStart: 0 },
-    byRolled: {}, // BASELINE ONLY (the AP die goes in step F): AP rolled that round → [fighter-rounds, of them on the side that won]
+    committed: { started: 0, landed: 0, spoiled: 0, exposed: 0 },
+    mirror: {}, // a fighter's kind (its name) → [fights with a winner, of them won by the side that landed first] (duels --mirror)
   };
 }
-const zeroTime = () => ({ avail: 0, own: 0, react: 0, unused: 0, cut: 0 });
+const zeroTime = () => ({ avail: 0, own: 0, react: 0, wait: 0, idle: 0, cut: 0 });
 
-// Heavy: an action with a lead before it lands: a wind-up (a power blow, a drawn bow, a gathered Strong spell) or a
-// two-handed motion.
-const isHeavy = (o) => !!o && (!!o.windUp || o.motion === 'twoHanded' || o.motion === 'power');
+// Heavy: a two-handed or power blow, or one that commits the fighter exposed (a drawn bow, a gathered spell).
+const isHeavy = (o) => !!o && (!!o.exposes || o.motion === 'twoHanded' || o.motion === 'power');
 
 // What tempo counts:
-//   time            per side, the clock's available time and the shares of it spent on own actions, on reactions and
-//                   left unused (the last round's leftover is "cut" and out of the shares: the fight ended)
+//   time            per side, the ticks of own actions, reactions, deliberate waits and idle waits (tickClock)
 //   first blow      the first blow landed in a fight (a hit through Combat.applyHit) and the first tried (a strike or
-//                   wind-up declared at a foe): whose side won the fight; when (round, and the share of the round's turns
-//                   gone). Fights with no winner (timeouts) are left out.
-//   waiting         a fighter's turn that began with a standing foe in reach of an attack it could pay for (in range, a
-//                   shot or bolt in line), in which it made no attack (strike, wind-up, cast, grapple, trip, shove…):
-//                   of such turns, the share with none; and the same counting only turns with a blow in reach that could
-//                   harm the foe (a blow plate turns entirely is no reason to strike)
+//                   cast declared at a foe): whose side won the fight; when (the beat, and the tick). Fights with no
+//                   winner (timeouts) are left out.
+//   waiting         decisions taken with a standing foe in reach of an attack (in range, a shot or bolt in line) that
+//                   were a wait: of such decisions, the share; and the same counting only decisions with a blow in reach
+//                   that could harm the foe. In time: of the ticks that followed decisions with a harmful blow in reach,
+//                   the share spent waiting (the plan's "under 15% of the fight waiting").
 //   heavy           the share of blows landed that are heavy (isHeavy)
-//   wind-ups        started (the log's "winds up" / "draws for"), released (a strike made from one), spoiled (lost
-//                   before release: knocked down, grappled, disarmed, not released in time)
-//   by AP rolled    BASELINE ONLY: each fighter-round's AP rolled, and whether that fighter's side won the fight
+//   committed       actions with a lead: started, landed, spoiled before they landed (knocked down, grappled,
+//                   disarmed, put down); exposed: of those, a power blow, a drawn bow or a gathered spell
 function tempoWatch(R, enc, chars, heroes) {
   const Combat = B.Combat, C = B.Character;
-  const clock = apClock(enc, chars);
+  const clock = tickClock(enc, chars);
   R.unit = clock.unit; R.scale = clock.scale;
-  const ATTACK = new Set(['strike', 'windUp', 'cast', 'trip', 'disarm', 'shove', 'clinch', 'grapple', 'pin', 'throw', 'kick', 'bash']);
-  const logStart = enc.log.length;
-  let firstLanded = null, firstTried = null, mark = 0, markRound = null;
-  const pending = {}; // id → { inReach: { any, harm }, attacked } for this period
-  const rolled = []; // [id, AP rolled]
+  const ATTACK = new Set(['strike', 'cast', 'trip', 'disarm', 'shove', 'clinch', 'grapple', 'pin', 'throw', 'kick', 'bash']);
+  let firstLanded = null, firstTried = null, mark = 0;
+  let pending = null; // the decision being taken: { id, inReach }
   const foeOf = (a, t) => a && t && a.side && t.side && a.side !== t.side;
-  // In reach: any attack it could pay for, in range (a shot or bolt in line); "harmful": one of those that could do
-  // the foe some harm (Combat.computeHit's expectation above 0, as aiWatch's "worthless" reads it; a spell counts).
+  // In reach: any attack in range (a shot or bolt in line); "harmful": one of those that could do the foe some harm
+  // (Combat.computeHit's expectation above 0, as aiWatch's "worthless" reads it; a spell counts).
   const harmful = (c, f, o, d) => {
     if (o.spell) return true;
     const h = Combat.computeHit(c, f, o, { distance: d });
@@ -388,7 +365,7 @@ function tempoWatch(R, enc, chars, heroes) {
     const out = { any: false, harm: false };
     const p = enc.pos[c.id];
     if (!p || !C.isActive(c)) return out;
-    const opts = C.attackOptions(c).filter((o) => clock.canPay(c.id, o));
+    const opts = C.attackOptions(c).filter((o) => !(o.ranged && o.weaponId && !o.natural && C.ammoLeft(c, o) <= 0));
     for (const f of Object.values(chars)) {
       if (!foeOf(c, f) || !C.isActive(f) || !enc.pos[f.id]) continue;
       const d = Combat.dist(p, enc.pos[f.id]);
@@ -400,50 +377,58 @@ function tempoWatch(R, enc, chars, heroes) {
     }
     return out;
   };
-  const settle = () => {
-    for (const [id, x] of Object.entries(pending)) {
-      const k = heroes.has(id) ? 'heroes' : 'foes';
-      if (x.inReach.any) { R.turns.all[0]++; R.turns[k][0]++; if (!x.attacked) { R.turns.all[1]++; R.turns[k][1]++; } }
-      if (x.inReach.harm) { R.turnsHarm.all[0]++; R.turnsHarm[k][0]++; if (!x.attacked) { R.turnsHarm.all[1]++; R.turnsHarm[k][1]++; } }
+  const book = (id, waited, ticks) => {
+    const x = pending;
+    if (!x) return;
+    const k = heroes.has(id) ? 'heroes' : 'foes';
+    if (x.inReach.any) { R.turns.all[0]++; R.turns[k][0]++; if (waited) { R.turns.all[1]++; R.turns[k][1]++; } }
+    if (x.inReach.harm) {
+      R.turnsHarm.all[0]++; R.turnsHarm[k][0]++; if (waited) { R.turnsHarm.all[1]++; R.turnsHarm[k][1]++; }
+      R.reachTime.all[0] += ticks; R.reachTime[k][0] += ticks; if (waited) { R.reachTime.all[1] += ticks; R.reachTime[k][1] += ticks; }
     }
-    for (const k of Object.keys(pending)) delete pending[k];
   };
+  const waitStarts = {}; // id → the tick and whether a harmful blow was in reach, for the time measure
   return {
     before(id) {
-      if (enc.round !== markRound) { settle(); markRound = enc.round; mark = 0; for (const x of enc.order || []) { const r = clock.rolled(x); if (r != null) rolled.push([x, r]); } }
-      if (clock.newTurn(id) && chars[id]) pending[id] = { inReach: reach(chars[id]), attacked: false };
-      clock.before(id);
+      const c = chars[id];
+      // A wait that ends now: its ticks go to the decision that began it.
+      const w = waitStarts[id];
+      if (w) { delete waitStarts[id]; pending = w.pending; book(id, true, Math.max(0, enc.now - w.at)); }
+      pending = c ? { id, inReach: reach(c) } : null;
+      clock.before(id, !!(pending && pending.inReach.harm));
+      mark = enc.decls.length;
     },
     after() {
+      const fresh = enc.decls.slice(mark);
       clock.after();
-      if (enc.round !== markRound) return;
-      for (const d of enc.decls.slice(mark)) {
-        const a = chars[d.actor], t = chars[d.target];
-        if (!a || !ATTACK.has(d.type) || d.reaction) continue;
-        if (pending[a.id]) pending[a.id].attacked = true;
-        if (!firstTried && (!t || foeOf(a, t)) && (t || d.type === 'cast')) firstTried = { side: a.side, now: clock.now() };
-        if (d.type === 'strike' && d.option && d.option.windUp) R.windUps.released++;
-      }
       mark = enc.decls.length;
+      const me = pending && pending.id;
+      for (const d of fresh) {
+        const a = chars[d.actor], t = chars[d.target];
+        if (!a) continue;
+        if (d.actor === me && !d.reaction && !d.opportunity) {
+          if (d.type === 'wait') waitStarts[me] = { at: d.tick, pending };
+          else book(me, false, d.ticks || 0);
+          if (d.lead > 0) { R.committed.started++; if (d.option && d.option.exposes) R.committed.exposed++; }
+        }
+        if (!ATTACK.has(d.type) || d.reaction) continue;
+        if (!firstTried && (!t || foeOf(a, t)) && (t || d.type === 'cast')) firstTried = { side: a.side, now: clock.now() };
+      }
+      pending = null;
     },
     hit(ev) {
       if (!ev || !ev.attacker || !ev.target || !foeOf(ev.attacker, ev.target)) return;
-      if (!firstLanded) firstLanded = { side: ev.attacker.side, hero: heroes.has(ev.attacker.id), now: clock.now() };
+      if (!firstLanded) firstLanded = { side: ev.attacker.side, hero: heroes.has(ev.attacker.id), name: ev.attacker.name, now: clock.now() };
       R.landed++;
       if (isHeavy(ev.option)) { R.heavy++; const a = actionOf(ev.option); R.heavyBy[a] = (R.heavyBy[a] || 0) + 1; }
     },
     end() {
-      settle();
-      clock.close(true);
+      for (const [id, w] of Object.entries(waitStarts)) { pending = w.pending; book(id, true, Math.max(0, enc.now - w.at)); }
+      clock.close();
       for (const [id, t] of Object.entries(clock.time)) {
         for (const k of ['all', heroes.has(id) ? 'heroes' : 'foes']) for (const f of Object.keys(t)) R.time[k][f] += t[f];
       }
-      for (const l of enc.log.slice(logStart)) {
-        const x = l.text || '';
-        if (/ winds up .* — exposed| draws for a .* — exposed/.test(x)) R.windUps.started++;
-        else if (/ can't wind up now\./.test(x)) R.windUps.cantStart++;
-        else if (/ loses the wind-up| lost the wind-up/.test(x)) R.windUps.spoiled++;
-      }
+      for (const d of enc.decls) if (d.lead > 0 && !d.reaction) { if (d.spoiled) R.committed.spoiled++; else if (d.done) R.committed.landed++; }
       const winner = enc.phase === 'over' && (enc.winner === 'party' || enc.winner === 'enemy') ? enc.winner : null;
       if (!winner) return;
       const F = R.first;
@@ -451,16 +436,13 @@ function tempoWatch(R, enc, chars, heroes) {
         F.landed.n++; if (firstLanded.side === winner) F.landed.won++;
         F.landed.at.push(firstLanded.now.t); if (firstLanded.now.period <= 1) F.landed.round1++;
         if (firstLanded.hero) { F.landed.heroes++; if (firstLanded.side === winner) F.landed.heroesWon++; }
+        // A mirror (both sides the same kind): the first landing blow's side won, by kind.
+        const kinds = new Set(Object.values(chars).filter((c) => !c.conjured).map((c) => String(c.name).replace(/\s*\(?\b(twin|B|2)\)?$/i, '')));
+        if (kinds.size === 1) { const k = [...kinds][0]; const m = R.mirror[k] || (R.mirror[k] = [0, 0]); m[0]++; if (firstLanded.side === winner) m[1]++; }
       }
       if (firstTried) {
         F.tried.n++; if (firstTried.side === winner) F.tried.won++;
         F.tried.at.push(firstTried.now.t); if (firstTried.now.period <= 1) F.tried.round1++;
-      }
-      for (const [id, r] of rolled) {
-        if (!chars[id]) continue;
-        const k = String(Math.round((r / clock.scale) * 2) / 2);
-        const b = R.byRolled[k] || (R.byRolled[k] = [0, 0]);
-        b[0]++; if (chars[id].side === winner) b[1]++;
       }
     },
   };
@@ -470,7 +452,8 @@ function tempoWatch(R, enc, chars, heroes) {
 const propSE = (k, n) => (n ? { p: k / n, se: Math.sqrt((k / n) * (1 - k / n) / n), n } : { p: null, se: null, n: 0 });
 
 function tempoSummary(R) {
-  const shares = (t) => { const a = t.own + t.react + t.unused; return { avail: t.avail / R.scale, own: t.own / R.scale, react: t.react / R.scale, unused: t.unused / R.scale, cut: t.cut / R.scale, ownShare: a ? t.own / a : null, reactShare: a ? t.react / a : null, unusedShare: a ? t.unused / a : null }; };
+  const shares = (t) => { const a = t.own + t.react + t.wait + t.idle; return { avail: a, own: t.own, react: t.react, wait: t.wait, idle: t.idle, cut: t.cut, ownShare: a ? t.own / a : null, reactShare: a ? t.react / a : null, waitShare: a ? t.wait / a : null, idleShare: a ? t.idle / a : null }; };
+  const tshare = (x) => ({ p: x[0] ? x[1] / x[0] : null, ticks: x[0] });
   const mean = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
   return {
     unit: R.unit,
@@ -479,24 +462,26 @@ function tempoSummary(R) {
     firstTried: Object.assign(propSE(R.first.tried.won, R.first.tried.n), { meanAt: mean(R.first.tried.at), round1: R.first.tried.n ? R.first.tried.round1 / R.first.tried.n : null }),
     waiting: { all: propSE(R.turns.all[1], R.turns.all[0]), heroes: propSE(R.turns.heroes[1], R.turns.heroes[0]), foes: propSE(R.turns.foes[1], R.turns.foes[0]) },
     waitingHarm: { all: propSE(R.turnsHarm.all[1], R.turnsHarm.all[0]), heroes: propSE(R.turnsHarm.heroes[1], R.turnsHarm.heroes[0]), foes: propSE(R.turnsHarm.foes[1], R.turnsHarm.foes[0]) },
+    waitingTime: { all: tshare(R.reachTime.all), heroes: tshare(R.reachTime.heroes), foes: tshare(R.reachTime.foes) },
     heavy: Object.assign(propSE(R.heavy, R.landed), { by: Object.assign({}, R.heavyBy) }),
-    windUps: Object.assign({}, R.windUps, { spoiledShare: R.windUps.started ? R.windUps.spoiled / R.windUps.started : null }),
-    byRolled: Object.entries(R.byRolled).sort((a, b) => Number(a[0]) - Number(b[0])).map(([k, [n, w]]) => Object.assign({ ap: Number(k) }, propSE(w, n))), // BASELINE ONLY
+    committed: Object.assign({}, R.committed, { spoiledShare: R.committed.started ? R.committed.spoiled / R.committed.started : null }),
+    mirror: Object.entries(R.mirror).map(([k, [n, w]]) => Object.assign({ kind: k }, propSE(w, n))),
   };
 }
 
 function tempoReport(R, I) {
   const t = tempoSummary(R);
   const pe = (x) => (x.p == null ? '-' : `${Math.round(100 * x.p)}% ± ${Math.round(100 * x.se)} (n ${x.n})`);
-  const tl = (k) => { const x = t.time[k]; return x.avail ? `${k} ${x.avail.toFixed(0)} ${t.unit}: own ${pc(x.ownShare)}, reactions ${pc(x.reactShare)}, unused ${pc(x.unusedShare)} (and ${x.cut.toFixed(0)} cut by the fight's end)` : null; };
+  const tl = (k) => { const x = t.time[k]; return x.avail ? `${k} ${x.avail.toFixed(0)} ${t.unit}: own ${pc(x.ownShare)}, reactions ${pc(x.reactShare)}, waits ${pc(x.waitShare)}, idle ${pc(x.idleShare)} (and ${x.cut.toFixed(0)} cut by the fight's end)` : null; };
+  const wt = (k) => (t.waitingTime[k].p == null ? '-' : pc(t.waitingTime[k].p));
   return [
-    `${I}  tempo: first blow landed: its side won ${pe(t.firstLanded)}; landed at round ${t.firstLanded.meanAt == null ? '-' : t.firstLanded.meanAt.toFixed(2)} on average, in round 1 ${pc(t.firstLanded.round1)}` + (R.first.landed.heroes && R.first.landed.heroes < R.first.landed.n ? `; by the heroes ${pc(t.firstLanded.byHeroes)}, then won ${pe(t.firstLanded.heroesWon)}` : ''),
-    `${I}    first blow tried: its side won ${pe(t.firstTried)}; tried at round ${t.firstTried.meanAt == null ? '-' : t.firstTried.meanAt.toFixed(2)} on average`,
-    `${I}    waiting: turns begun with a foe in reach and no attack ${pe(t.waiting.all)}` + (R.turns.heroes[0] && R.turns.foes[0] ? `; heroes ${pe(t.waiting.heroes)}, foes ${pe(t.waiting.foes)}` : ''),
-    `${I}    waiting with a harmful blow in reach ${pe(t.waitingHarm.all)}` + (R.turnsHarm.heroes[0] && R.turnsHarm.foes[0] ? `; heroes ${pe(t.waitingHarm.heroes)}, foes ${pe(t.waitingHarm.foes)}` : ''),
+    `${I}  tempo: first blow landed: its side won ${pe(t.firstLanded)}; landed at beat ${t.firstLanded.meanAt == null ? '-' : t.firstLanded.meanAt.toFixed(2)} on average, in beat 1 ${pc(t.firstLanded.round1)}` + (R.first.landed.heroes && R.first.landed.heroes < R.first.landed.n ? `; by the heroes ${pc(t.firstLanded.byHeroes)}, then won ${pe(t.firstLanded.heroesWon)}` : ''),
+    `${I}    first blow tried: its side won ${pe(t.firstTried)}; tried at beat ${t.firstTried.meanAt == null ? '-' : t.firstTried.meanAt.toFixed(2)} on average`,
+    t.mirror.length ? `${I}    mirrors, first blow landed won: ` + t.mirror.map((m) => `${m.kind} ${pe(m)}`).join('; ') : null,
+    `${I}    waiting: decisions with a foe in reach that were a wait ${pe(t.waiting.all)}` + (R.turns.heroes[0] && R.turns.foes[0] ? `; heroes ${pe(t.waiting.heroes)}, foes ${pe(t.waiting.foes)}` : ''),
+    `${I}    waiting with a harmful blow in reach ${pe(t.waitingHarm.all)}` + (R.turnsHarm.heroes[0] && R.turnsHarm.foes[0] ? `; heroes ${pe(t.waitingHarm.heroes)}, foes ${pe(t.waitingHarm.foes)}` : '') + `; in time ${wt('all')} of ${t.waitingTime.all.ticks} ticks (heroes ${wt('heroes')}, foes ${wt('foes')})`,
     `${I}    time (${t.unit}): ` + ['all', 'heroes', 'foes'].map(tl).filter(Boolean).join('; '),
-    `${I}    heavy blows ${pe(t.heavy)} of blows landed (${Object.entries(t.heavy.by).map(([k, v]) => k + ' ' + v).join(', ') || 'none'}); wind-ups started ${t.windUps.started}, released ${t.windUps.released}, spoiled ${t.windUps.spoiled} (${pc(t.windUps.spoiledShare)})${t.windUps.cantStart ? `, could not start ${t.windUps.cantStart}` : ''}`,
-    t.byRolled.length ? `${I}    [baseline only] the side's win rate by AP rolled that round (AP: win, fighter-rounds): ` + t.byRolled.map((x) => `${x.ap}: ${Math.round(100 * x.p)}% (${x.n})`).join(', ') : null,
+    `${I}    heavy blows ${pe(t.heavy)} of blows landed (${Object.entries(t.heavy.by).map(([k, v]) => k + ' ' + v).join(', ') || 'none'}); actions with a lead started ${t.committed.started} (exposed ${t.committed.exposed}), landed ${t.committed.landed}, spoiled ${t.committed.spoiled} (${pc(t.committed.spoiledShare)})`,
   ].filter(Boolean);
 }
 
@@ -508,7 +493,7 @@ const located = (o) => shareOf(Object.fromEntries(Object.entries(o).filter(([k])
 function summary(M) {
   const n = M.fights || 1;
   return {
-    fights: M.fights, medianRounds: q(M.rounds, 0.5), p90Rounds: q(M.rounds, 0.9),
+    fights: M.fights, medianBeats: q(M.beats, 0.5), p90Beats: q(M.beats, 0.9),
     heroesDead: M.heroFights ? M.heroesDead / M.heroFights : null,
     heroesDown: M.heroFights ? M.heroesDown / M.heroFights : null, heroesBled: M.heroFights ? M.heroesBled / M.heroFights : null, woundSev: M.woundSev.slice(),
     half: M.half / n, quarter: M.quarter / n, collapses: M.collapses, gotUp: M.gotUp, downDied: M.downDied, downAtEnd: M.downAtEnd, downWon: M.downWon, hero: Object.assign({}, M.hero),
@@ -528,7 +513,7 @@ const fmtShares = (s) => Object.entries(s.share).sort((a, b) => b[1] - a[1]).map
 function report(M, indent) {
   const s = summary(M), I = indent == null ? '  ' : indent;
   return [
-    `${I}metrics: ${s.fights} fights; rounds median ${s.medianRounds}, 90th ${s.p90Rounds}` + (s.heroesDead != null ? `; heroes down a fight ${s.heroesDown.toFixed(2)}, dead a fight ${s.heroesDead.toFixed(2)} (bled out ${s.heroesBled.toFixed(2)}, struck down ${(s.heroesDead - s.heroesBled).toFixed(2)})` : ''),
+    `${I}metrics: ${s.fights} fights; beats median ${s.medianBeats}, 90th ${s.p90Beats}` + (s.heroesDead != null ? `; heroes down a fight ${s.heroesDown.toFixed(2)}, dead a fight ${s.heroesDead.toFixed(2)} (bled out ${s.heroesBled.toFixed(2)}, struck down ${(s.heroesDead - s.heroesBled).toFixed(2)})` : ''),
     `${I}  stamina: someone under ½ in ${pc(s.half)} of fights, under ¼ in ${pc(s.quarter)}; collapses ${s.collapses}, got up ${s.gotUp}, died down ${s.downDied}, down at the end ${s.downAtEnd} (${s.downWon} on the winning side)` + (s.hero.collapses ? `; heroes ${s.hero.collapses} / ${s.hero.gotUp} / ${s.hero.downDied} / ${s.hero.downAtEnd} (${s.hero.downWon})` : ''),
     `${I}  a survivor ends with a wound: ${pc(s.attrWound)} of fights` + (s.heroAttrWound != null ? ` (a hero: ${pc(s.heroAttrWound)})` : '') + `; wounds dealt by severity 1/2/3: ${s.woundSev.slice(1).join(' / ')}`,
     `${I}  blows landed by action (${s.blows.total}): ${fmtShares(s.blows)}`,
@@ -537,10 +522,10 @@ function report(M, indent) {
     s.heroLocs.total ? `${I}    the heroes': ${fmtShares(located(M.locs.heroes))}` : null,
     `${I}  killing blows by action (${s.kills.total}): ${fmtShares(s.kills)}`,
     M.heroDowns.n ? `${I}  heroes downed by a blow (${M.heroDowns.n}): by ${fmtShares(shareOf(M.heroDowns.action))}; at ${fmtShares(shareOf(M.heroDowns.loc))}; the last wound's severity ${fmtShares(shareOf(M.heroDowns.sev))}; by ${fmtShares(shareOf(M.heroDowns.byFoe))}` : null,
-    M.heroDeaths.n ? `${I}  heroes killed (${M.heroDeaths.n}): by ${fmtShares(shareOf(M.heroDeaths.action))}; at ${fmtShares(shareOf(M.heroDeaths.loc))}; down already ${pc(M.heroDeaths.down / M.heroDeaths.n)}, standing with AP left ${pc(M.heroDeaths.apLeft / M.heroDeaths.n)}, in round 1 ${pc(M.heroDeaths.round1 / M.heroDeaths.n)}; by ${fmtShares(shareOf(M.heroDeaths.byFoe))}` : null,
-    `${I}  AI: moves into a foe's reach ${s.ai.intoReach}, with no defence left ${s.ai.intoReachBare} (${pc(s.ai.intoReach ? s.ai.intoReachBare / s.ai.intoReach : 0)}); sidearms drawn ${s.ai.sidearm}, trading down ${s.ai.tradeDown}; strikes ${s.ai.strikes}, at a body immune to them ${s.ai.immune}, that could do nothing else ${s.ai.worthless}`,
-    `${I}    idle rounds ${s.ai.idleRounds} (${(s.ai.idleRounds / (s.fights || 1)).toFixed(2)} a fight), stand-offs ${s.ai.standOffs}; casts ${s.ai.casts} (${s.ai.casterFights ? (s.ai.casts / s.ai.casterFights).toFixed(2) : '-'} a caster a fight, ${s.ai.spMax ? pc(s.ai.spLeft / s.ai.spMax) : '-'} of spell points unspent at the end), overchannels ${s.ai.overchannel}; spent actions ${s.ai.spent}; feat actions ${Object.entries(s.ai.feat).map(([k, v]) => k + ' ' + v).join(', ') || 'none'}`,
+    M.heroDeaths.n ? `${I}  heroes killed (${M.heroDeaths.n}): by ${fmtShares(shareOf(M.heroDeaths.action))}; at ${fmtShares(shareOf(M.heroDeaths.loc))}; down already ${pc(M.heroDeaths.down / M.heroDeaths.n)}, standing and able to react ${pc(M.heroDeaths.apLeft / M.heroDeaths.n)}, in beat 1 ${pc(M.heroDeaths.round1 / M.heroDeaths.n)}; by ${fmtShares(shareOf(M.heroDeaths.byFoe))}` : null,
+    `${I}  AI: moves into a foe's reach ${s.ai.intoReach}, unable to react ${s.ai.intoReachBare} (${pc(s.ai.intoReach ? s.ai.intoReachBare / s.ai.intoReach : 0)}); sidearms drawn ${s.ai.sidearm}, trading down ${s.ai.tradeDown}; strikes ${s.ai.strikes}, at a body immune to them ${s.ai.immune}, that could do nothing else ${s.ai.worthless}`,
+    `${I}    idle beats ${s.ai.idleRounds} (${(s.ai.idleRounds / (s.fights || 1)).toFixed(2)} a fight), stand-offs ${s.ai.standOffs}; casts ${s.ai.casts} (${s.ai.casterFights ? (s.ai.casts / s.ai.casterFights).toFixed(2) : '-'} a caster a fight, ${s.ai.spMax ? pc(s.ai.spLeft / s.ai.spMax) : '-'} of spell points unspent at the end), overchannels ${s.ai.overchannel}; spent actions ${s.ai.spent}; feat actions ${Object.entries(s.ai.feat).map(([k, v]) => k + ' ' + v).join(', ') || 'none'}`,
   ].filter(Boolean).concat(tempoReport(M.tempo, I));
 }
 
-module.exports = { ACTIONS, actionOf, isHeavy, create, summary, report, apClock, tempoSummary, propSE };
+module.exports = { ACTIONS, actionOf, isHeavy, create, summary, report, tickClock, tempoSummary, propSE };

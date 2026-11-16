@@ -132,7 +132,7 @@ Loot entries: `{w: 3, gold: [5, 20]}`, `{w: 2, good: salve, n: [1, 2]}`, `{w: 1,
 
 **A spell word** (`spells.yaml`; docs/PROPOSALS.md §4). A verb is `{kind: verb, cost, feat, name}`, plus `alone` (what
 it does with no noun) and `pairs` (a second verb it takes: Summon + Bind). A modifier is `{kind: mod, cost, feat, name,
-shapes}` with what it changes (`mag`, `radius`, `length`, `ap`, `rangeMult`, `roundsMult`, `area`, `hidden`,
+shapes}` with what it changes (`mag`, `radius`, `length`, `ap`, `rangeMult`, `beatsMult`, `area`, `hidden`,
 `delayed`). A noun is `{kind: noun, cost, element, name, onHit, does}`; `does` says what each verb makes of it:
 
 ```yaml
@@ -141,7 +141,7 @@ fire:
   cost: 1
   element: fire              # its damage keyword
   name: Fire
-  onHit: {cond: burning, rounds: 2}   # what its blow leaves
+  onHit: {cond: burning, beats: 2}   # what its blow leaves
   does:
     strike: {shape: bolt}
     give: [{shape: bane, aim: foe, cond: burning, stack: true}, {shape: ground, ground: hot}]
@@ -160,7 +160,7 @@ effect. A monster casts with `nouns` and the verb and modifier feats, or has `po
 `{verb, noun, mod, aim, charges, name}`, the ghost's touch).
 
 **A tradition feat** (`feats.yaml`, the magic trees): `spell: {match: [{verb, noun, aim, mod, shape}], mag, cost,
-radius, roundsMult, contest, bound}` strengthens every spell a rule matches (a rule matches when each field it names
+radius, beatsMult, contest, bound}` strengthens every spell a rule matches (a rule matches when each field it names
 agrees; `noun` may be a list).
 
 **Companions** (`rules.yaml game.companions`): which monsters answer the Familiar and Animal Companion feats, by rank.
@@ -241,7 +241,7 @@ S: {kind: trap, tn: 9, disarm: 7, trigger: wire, knownTo: [suracayl],
     how: "A vine across the path holds back a sapling with a sharpened stake lashed to it.",
     effect: {blow: {name: "A sharpened sapling", damage: [5, 0, 1], motion: thrust, punch: 1.6, aim: torso,
                     wound: {kind: P, vital: 0.15, bleed: 1}}},
-    reset: {minutes: 10, rounds: 2}, bypass: [leap, spring, mark],
+    reset: {minutes: 10, beats: 2}, bypass: [leap, spring, mark],
     text: "A sapling whips round out of the ferns, a stake lashed to it."}
 ```
 

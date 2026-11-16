@@ -180,7 +180,7 @@ test('spells: decay eats armor and gear; frost chills (half the squares); Bind p
   assert.ok(t.armor.durability <= dur - B.CONFIG.magic.words.shapes.bolt.mag);
   assert.ok(Items.weaponDurability(C.wieldedWeapon(t)) < wdur);
   const spd = C.squaresPerAP(t);
-  Conditions.add(t, 'chilled', { rounds: 2 });
+  Conditions.add(t, 'chilled', { beats: 2 });
   assert.ok(C.squaresPerAP(t) <= Math.ceil(spd / 2));
   const bind = Combat.legalActions(enc, chars, m.id).spells.find((o) => o.spellKey === 'bind');
   assert.equal(bind.spell.cond, 'paralyzed', 'Bind alone holds a body still');
@@ -203,7 +203,7 @@ test('spells: lightning (Storm) leaps to the nearest other body; charm (Bind + M
   assert.equal(Magic.spellOptions(m).find((o) => o.spellKey === 'bind+mind').spell.cond, 'enthralled');
   const r = await arena([mage('N', ['mind']), fighter('X', 'enemy')]);
   const [n, x] = Object.values(r.chars);
-  await Magic.afflict(r.enc, n, x, 'enthralled', { rounds: 3 }, roller([10, 1]));
+  await Magic.afflict(r.enc, n, x, 'enthralled', { beats: 3 }, roller([10, 1]));
   assert.equal(x.side, n.side, 'charmed: on the caster\'s side');
   assert.ok(!Conditions.has(n, 'concentrating'), 'a charm needs no holding');
   await Combat.applyHit(r.enc, r.chars, n, x, { kind: 'strike', motion: 'swing', damage: [0, 0, 3], label: 'slap' }, roller([]), {});
@@ -224,7 +224,7 @@ test('spells: Delayed marks an area that breaks at the end of the round; darknes
   while (enc.phase === 'turn' && guard--) await Combat.endTurn(enc, chars, Combat.currentActor(enc), { roller: roller([], 5), react: noReact });
   assert.ok(f.stamina < sf || C.woundLoad(f) > 0, 'caught in it');
   assert.ok(g.stamina >= sg - 1, 'outside it');
-  assert.ok(B.CONFIG.terrain.darkness.cost >= 1 && B.CONFIG.terrain.darkness.perRound.shadow >= 1);
+  assert.ok(B.CONFIG.terrain.darkness.cost >= 1 && B.CONFIG.terrain.darkness.perBeat.shadow >= 1);
 });
 
 test('fear: Give + Fear; the frightened can\'t come closer, and must first step away each turn (unless hemmed in)', async () => {
@@ -250,13 +250,13 @@ test('fear: Give + Fear; the frightened can\'t come closer, and must first step 
   const r = await arena([m, g], 3, 3);
   r.enc.pos[m.id] = { x: 1, y: 1 }; r.enc.pos[g.id] = { x: 1, y: 2 };
   for (const [x, y] of [[0, 2], [2, 2], [0, 1], [2, 1]]) Terrain.add(r.enc, x, y, 'stoneWall');
-  Conditions.add(g, 'frightened', { rounds: 2, src: m.id });
+  Conditions.add(g, 'frightened', { beats: 2, src: m.id });
   assert.ok(!Combat.mustFlee(r.enc, r.chars, g), 'no square farther to step to');
   // The AI, frightened, steps away before anything else.
   const h = armed('H', 'longsword', 'enemy'); h.at = { x: 3, y: 2 };
   const m2 = mage('M2', ['fear']); m2.at = { x: 2, y: 2 };
   const q = await arena([h, m2], 8, 5);
-  Conditions.add(h, 'frightened', { rounds: 2, src: m2.id });
+  Conditions.add(h, 'frightened', { beats: 2, src: m2.id });
   const d = B.AI.choose(q.enc, q.chars, h.id, () => 0.5);
   assert.equal(d.type, 'move');
   assert.ok(Combat.dist(d.to, q.enc.pos[m2.id]) > 1);
@@ -330,10 +330,10 @@ test('ghosts: Summon + Death; swords pass through, its touch passes armor and ta
   for (let i = 0; i < 6; i++) await Combat.applyHit(enc, chars, g, k, touch, roller([], 5), {});
   assert.ok(k.stamina < st && C.woundLoad(k) === dmg, 'worn down, never wounded');
   // A ward of Death (Take + Death on an ally) turns it aside; so does a shell of force (Give + Force) while it holds.
-  Conditions.add(k, 'warded', { rounds: 3, kind: 'death' });
+  Conditions.add(k, 'warded', { beats: 3, kind: 'death' });
   assert.ok(Magic.wardAgainst(enc, k, touch, false).blocked);
   Conditions.remove(k, 'warded');
-  Conditions.add(k, 'warded', { rounds: 3, kind: 'magic', pool: 20 });
+  Conditions.add(k, 'warded', { beats: 3, kind: 'magic', pool: 20 });
   assert.ok(Magic.wardAgainst(enc, k, touch, false).blocked);
   assert.equal(Magic.spellOptions(m).find((x) => x.spellKey === 'give+force').spell.ward, 'magic');
 });

@@ -159,29 +159,29 @@ if (require.main !== module) {
     for (let i = 0; i < KEYS.length; i++) {
       for (let j = i + 1; j < KEYS.length; j++) {
         const ka = KEYS[i], kb = KEYS[j];
-        const agg = { n: 0, winA: 0, winB: 0, draw: 0, timeout: 0, rounds: [], deadA: 0, deadB: 0, koA: 0, koB: 0, evA: {}, evB: {} };
+        const agg = { n: 0, winA: 0, winB: 0, draw: 0, timeout: 0, beats: [], deadA: 0, deadB: 0, koA: 0, koB: 0, evA: {}, evB: {} };
         for (let f = 0; f < N; f++) {
           const seed = 7000 + f + 97 * i + 13 * j;
           const a = makeCombatant(...ka.split('/'), 'A');
           const b = makeCombatant(...kb.split('/'), 'B');
-          const r = await L.fight({ A: a, B: b, grid: { w: arena.w, h: arena.h }, seed, maxRounds: 30, keepLog: true });
+          const r = await L.fight({ A: a, B: b, grid: { w: arena.w, h: arena.h }, seed, maxBeats: 20, keepLog: true });
           agg.n++;
           if (r.winner === 'A') agg.winA++;
           else if (r.winner === 'B') agg.winB++;
           else if (r.winner === 'draw') agg.draw++;
           else agg.timeout++;
-          agg.rounds.push(r.rounds);
+          agg.beats.push(r.beats);
           if (a.status.dead) agg.deadA++; else if (!C.isActive(a)) agg.koA++;
           if (b.status.dead) agg.deadB++; else if (!C.isActive(b)) agg.koB++;
           const ev = countEvents(r.log, a.name, b.name);
           for (const k of Object.keys(ev.A)) { agg.evA[k] = (agg.evA[k] || 0) + ev.A[k]; agg.evB[k] = (agg.evB[k] || 0) + ev.B[k]; }
         }
-        agg.rounds.sort((x, y) => x - y);
-        agg.medRounds = agg.rounds[Math.floor(agg.n / 2)];
-        agg.meanRounds = agg.rounds.reduce((t, x) => t + x, 0) / agg.n;
-        delete agg.rounds;
+        agg.beats.sort((x, y) => x - y);
+        agg.medRounds = agg.beats[Math.floor(agg.n / 2)];
+        agg.meanBeats = agg.beats.reduce((t, x) => t + x, 0) / agg.n;
+        delete agg.beats;
         results[arenaKey][ka + '|' + kb] = agg;
-        fightsRows.push([arenaKey, ka, kb, agg.n, agg.winA / agg.n, agg.winB / agg.n, agg.draw / agg.n, agg.timeout / agg.n, agg.medRounds, agg.meanRounds.toFixed(2)]);
+        fightsRows.push([arenaKey, ka, kb, agg.n, agg.winA / agg.n, agg.winB / agg.n, agg.draw / agg.n, agg.timeout / agg.n, agg.medRounds, agg.meanBeats.toFixed(2)]);
       }
       process.stderr.write('.');
     }
@@ -194,14 +194,14 @@ if (require.main !== module) {
   for (const arenaKey of Object.keys(ARENAS)) {
     view[arenaKey] = {};
     const per = {};
-    for (const k of KEYS) { view[arenaKey][k] = {}; per[k] = { wins: 0, games: 0, rounds: 0, deaths: 0, kos: 0, losses: 0, timeouts: 0, ev: {} }; }
+    for (const k of KEYS) { view[arenaKey][k] = {}; per[k] = { wins: 0, games: 0, beats: 0, deaths: 0, kos: 0, losses: 0, timeouts: 0, ev: {} }; }
     for (const [pair, r] of Object.entries(results[arenaKey])) {
       const [ka, kb] = pair.split('|');
       view[arenaKey][ka][kb] = r.winA / r.n;
       view[arenaKey][kb][ka] = r.winB / r.n;
       per[ka].wins += r.winA; per[kb].wins += r.winB;
       per[ka].games += r.n; per[kb].games += r.n;
-      per[ka].rounds += r.meanRounds * r.n; per[kb].rounds += r.meanRounds * r.n;
+      per[ka].beats += r.meanBeats * r.n; per[kb].beats += r.meanBeats * r.n;
       per[ka].deaths += r.deadA; per[kb].deaths += r.deadB;
       per[ka].kos += r.koA; per[kb].kos += r.koB;
       per[ka].losses += r.winB; per[kb].losses += r.winA;
@@ -213,7 +213,7 @@ if (require.main !== module) {
       const p = per[k];
       const ev = {};
       for (const e of Object.keys(p.ev)) ev[e] = p.ev[e] / p.games;
-      agg[arenaKey][k] = { avgWin: p.wins / p.games, meanRounds: p.rounds / p.games, deathRate: p.deaths / p.games, koRate: p.kos / p.games, timeoutRate: p.timeouts / p.games, perFight: ev };
+      agg[arenaKey][k] = { avgWin: p.wins / p.games, meanBeats: p.beats / p.games, deathRate: p.deaths / p.games, koRate: p.kos / p.games, timeoutRate: p.timeouts / p.games, perFight: ev };
     }
   }
   // Group rollups (strategy × strategy and armor × armor), each averaged over the other factor.

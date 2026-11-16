@@ -36,7 +36,7 @@ const ARMORS = ['heavy', 'medium', 'light', 'unarmored'];
       for (let f = 0; f < N; f++) {
         const a = makeCombatant(ARMORS[i], SA, 'A'), b = makeCombatant(ARMORS[j], SB, 'B');
         const seed = 7000 + f + 97 * i + 13 * j;
-        const r = await L.fight({ A: a, B: b, grid: { w: arena.w, h: arena.h }, seed, maxRounds: 30, watch: M && ((enc, chars) => M.watch(enc, chars, [])) });
+        const r = await L.fight({ A: a, B: b, grid: { w: arena.w, h: arena.h }, seed, maxBeats: 20, watch: M && ((enc, chars) => M.watch(enc, chars, [])) });
         n++;
         if (r.winner === 'A') { wins++; w++; } else if (r.winner === 'B') losses++; else timeouts++;
       }

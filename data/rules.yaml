@@ -15,7 +15,7 @@ enemyGear:
 # and the body: whether a point gets through (CONFIG.pierce.perMargin), whether the wound is vital (wounds
 # .vital), whether an unaimed blow finds the worst-guarded place beside where it fell (shift). Ties go to the defender.
 # A blow nobody defends always lands, and its margin is the attacker's d10 + strike bonus less `passive`, by what the
-# target can do about it: ready (standing, free, aware; out of AP or choosing not to defend), unaware (not seeing the
+# target can do about it: ready (standing, free, aware; too far ahead on the clock to react, or choosing not to defend), unaware (not seeing the
 # blow, or caught off guard), prone, held (held or pinned), down (collapsed or unconscious).
 contest:
   passive: {ready: 6, unaware: 3, prone: 3, held: 2, down: 0}
@@ -43,7 +43,7 @@ locations:
   # at what it covers more easily (+`block`).
   # guarded: PROVISIONAL (docs/PLAN.md R6, step 4): what the aim costs against a defender who can still react
   # (standing, free, aware: Combat.aimGuarded) and defends; small targets are markedly dearer, so the head is
-  # something you set up (a knockdown, a hold, an unseen blow, a foe whose AP is spent). `penalty` is the cost against
+  # something you set up (a knockdown, a hold, an unseen blow, a foe who has overreached). `penalty` is the cost against
   # one who can't (prone, collapsed, held, caught off guard, not seeing the blow) or doesn't defend.
   aim:
     penalty: {head: 3, torso: 0, arms: 1, legs: 1}   # head: TUNED (step A) 2 → 3, the head share back under a quarter (sim/duels.js 35% → 21%)
@@ -63,17 +63,17 @@ locations:
 #   shock     a severity-3 wound anywhere but the head (which drops outright): d10 + CON at least this, or down.
 #   places    what a wound there does, by severity (the index is the severity less one):
 #     head    stun: stunned on the blow (1: CON resists it; 2: no save); down: this severity drops outright
-#     torso   stamina: lost at each round's end
-#     arms    ap: sheet AP added to weapon blows, parries and blocks; damage: off a blow's main damage; drop: what
+#     torso   stamina: lost at each beat
+#     arms    ticks: added to weapon blows, parries and blocks; damage: off a blow's main damage; drop: what
 #             is in hand falls at this severity
 #     legs    move: squares off each move; dodge: off the dodge; fell: knocked down at this severity, and can't
 #             stand while it lasts
-#   pain      WIL acts through wounds: each place's penalties (ap, damage, move, dodge) read its severity less
+#   pain      WIL acts through wounds: each place's penalties (ticks, damage, move, dodge) read its severity less
 #             floor(WIL / pain)
 #   winding   stamina a blunt blow that breaks nothing costs, by the severity its blunt would be (not point for point)
 #   bleed     a cut bleeds `cut` per severity; a point by its width (Items.weaponStats wound.bleed) per severity,
 #             rounded up; a vital wound `vital` more; crushing and burning don't bleed; a big body bleeds bleed / size.
-#             Each round a bleeding body loses `harm` points of blood per point of bleeding, less floor(CON / conPer):
+#             Each beat a bleeding body loses `harm` points of blood per point of bleeding, less floor(CON / conPer):
 #             harm on one wound of blood loss at the torso (it fills the boxes; a body already down loses no more).
 #             A body down and still bleeding when the fight ends, with no one of its side standing to bind it,
 #             rolls d10 + CON against `survive` + its bleeding: under, it dies.
@@ -89,7 +89,7 @@ wounds:
   places:
     head: {stun: [1, 2], down: 3}
     torso: {stamina: [2, 4, 6]}
-    arms: {ap: [0, 0.5, 1], damage: [1, 2, 3], drop: 3}
+    arms: {ticks: [0, 1.25, 2.5], damage: [1, 2, 3], drop: 3}
     legs: {move: [1, 2, 3], dodge: [1, 2, 3], fell: 3}
   pain: 4
   winding: [2, 4, 7]
@@ -100,8 +100,8 @@ wounds:
 
 # ---- Hero mode (the menu's checkbox: testing, and an easy game) ----------------------------------------------------
 # Party members and their companions (a character with `hero` set; World.syncHero). dealt and taken multiply each
-# blow's damage before armor (a spell's magnitude); regen is added to stamina regeneration each round, and with
-# regenWhenHit a hero recovers even in a round they were struck. A hero never dies: wounds take them down, no more.
+# blow's damage before armor (a spell's magnitude); regen is added to stamina regeneration each beat, and with
+# regenWhenHit a hero recovers even in a beat they were struck. A hero never dies: wounds take them down, no more.
 hero:
   dealt: 1.5
   taken: 0.5
@@ -169,7 +169,7 @@ game:
   sleepNoticeDistance: 2     # ...and a sleeping one
   lightRadius: 7
   # The battlefield view, w × h squares. whole: true (the user, 2026-11-01) plays the fight on the whole map, so it can
-  # spill into the next room and draw in groups it comes near (joinDistance, checked every round); false, on a slice
+  # spill into the next room and draw in groups it comes near (joinDistance, checked every beat); false, on a slice
   # of the map that size.
   arena: {w: 15, h: 10, whole: true}
   # The exploring view (the user, 2026-11-09: "fix the explore view"): as many squares as the window fits at `cell`

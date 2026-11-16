@@ -20,7 +20,7 @@
     if (C.bleeding(c) && !st.dead) out.push(h('span', { class: 'chip bad' }, `Bleeding ${C.bleeding(c)} (${C.bleedLoss(c)} harm/rd)`));
     if (!st.dead) for (const w of C.describeWounds(c)) out.push(h('span', { class: 'chip ' + (w.sev >= 3 ? 'bad' : 'warn'), title: w.does }, `${w.name} ${w.sev}`));
     if (G.Conditions && !st.dead) for (const l of G.Conditions.labels(c)) out.push(h('span', { class: 'chip warn' }, l));
-    if (c.conjured && !st.dead) out.push(h('span', { class: 'chip' }, `Conjured (${c.conjured.rounds} rd)`));
+    if (c.conjured && !st.dead) out.push(h('span', { class: 'chip' }, `Conjured (${c.conjured.beats} rd)`));
     return out;
   }
 

@@ -16,5 +16,5 @@ const grid = ground === 'corridor' ? { w: 7, h: 1 } : { w: 8, h: 5 };
   }
   const r = await L.fight({ A: sideA, B: sideB, grid, seed: Number(seed), keepLog: true });
   for (const l of r.log) console.log((l.cls === 'round' ? '\n' : '  ') + l.text);
-  console.log('\nwinner', r.winner, 'rounds', r.rounds);
+  console.log('\nwinner', r.winner, 'rounds', r.beats);
 })();

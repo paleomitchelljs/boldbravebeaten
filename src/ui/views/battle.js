@@ -145,7 +145,7 @@
         const glyph = !token && !canMove && g.length ? h('span', { class: 'glyph', 'aria-hidden': 'true' }, TILE_GLYPH[g[g.length - 1].f.kind] || '·') : null;
         cells.push(h('button', {
           class: 'cell' + tileCls + (canMove ? ' can-move' + (late(reach[key]) ? ' late' : '') : '') + (canCast ? ' can-cast' : '') + (ghosts[key] && !c ? ' ghost' : '') + (c ? ' has-token' : ''),
-          title: g.length ? g.map((t) => `${t.def.name}${t.f.rounds != null ? ` (${t.f.rounds} rd)` : ''}`).join(', ') : null,
+          title: g.length ? g.map((t) => `${t.def.name}${t.f.beats != null ? ` (${t.f.beats} rd)` : ''}`).join(', ') : null,
           'aria-label': (c ? `${c.name} at ${x + 1}, ${y + 1}` : `Square ${x + 1}, ${y + 1}${canMove ? `, move for ${C.fmtAP(reach[key])} AP` : ''}`) + (g.length ? ` — ${g.map((t) => t.def.name).join(', ')}` : ''),
           onclick: () => cellClick(app, enc, legal, x, y, id, reach, castable),
         }, token || (canMove ? C.fmtAP(reach[key]) : glyph)));
@@ -552,7 +552,7 @@
     bait: 'CHA against the foe\'s WIS. Won: they commit too early and defend worse for the round.',
     readIntent: 'A cheap glance: WIS against the foe\'s CHA. Read right, you gain on guarding against them and on hitting through their guards. You can misread, and a misread costs you.',
     bandage: 'Stops one bleed on yourself or someone adjacent.',
-    vanish: 'Out of sight for 2 rounds: no foe beyond arm\'s reach can aim at you, and your blows are harder to meet. Striking ends it.',
+    vanish: 'Out of sight for 2 beats: no foe beyond arm\'s reach can aim at you, and your blows are harder to meet. Striking ends it.',
     feign: 'Drop and lie still: no foe can aim at you until you act again.',
     rally: 'You and allies within 3 squares get a round\'s regeneration at once, and the collapsed among them come round.',
     command: 'An ally within 4 squares gains AP this round.',
@@ -728,7 +728,7 @@
       if (o.windUp) notes.push('Needs a wind-up the round before (Wind up, with the attacks).');
     } else if (o && o.spell) {
       const s = o.spell;
-      const shape = { area: `radius ${s.radius}`, ground: `radius ${s.radius}, ${s.rounds} rounds`, wall: `${s.length} squares, ${s.rounds} rounds`, terrain: `${s.length} square${s.length > 1 ? 's' : ''}`, bane: `${s.rounds} rounds`, boon: `${s.rounds} rounds`, summon: `${s.rounds} rounds${s.bound ? ', bound' : ', unbound'}`, ward: `${s.rounds} rounds`, mind: `${s.rounds} rounds`, dispel: `radius ${s.radius}`, see: `radius ${s.radius}` }[s.shape];
+      const shape = { area: `radius ${s.radius}`, ground: `radius ${s.radius}, ${s.beats} rounds`, wall: `${s.length} squares, ${s.beats} rounds`, terrain: `${s.length} square${s.length > 1 ? 's' : ''}`, bane: `${s.beats} rounds`, boon: `${s.beats} rounds`, summon: `${s.beats} rounds${s.bound ? ', bound' : ', unbound'}`, ward: `${s.beats} rounds`, mind: `${s.beats} rounds`, dispel: `radius ${s.radius}`, see: `radius ${s.radius}` }[s.shape];
       rows.unshift(['Power', `${s.magnitude}${s.element ? ' ' + s.element : ''}`], ['Range', `${o.minRange}–${o.maxRange}${s.named ? ', only one whose name you know' : ''}`], shape ? ['Reach', shape] : null);
       notes.push(SHAPE_INFO[s.shape] || '');
       if (e.square) notes.push('Tap a highlighted square on the map to cast.');

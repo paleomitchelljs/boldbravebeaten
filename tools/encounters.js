@@ -19,7 +19,7 @@ const N = arg('n', 30), LEVEL = arg('level', 1);
         const w = World.create(World.presetParty(), { log: false });
         if (LEVEL > 1) World.grantXP(w, World.xpFor(LEVEL));
         Battle.start(w, e);
-        const enc = await Auto.battle(w, { maxRounds: 40 });
+        const enc = await Auto.battle(w, { maxBeats: 27 });
         rounds += enc.round;
         if (enc.winner === 'party') won++; else if (enc.winner === 'enemy') lost++;
         dead += World.party(w).filter((c) => c.status.dead).length;

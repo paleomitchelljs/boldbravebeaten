@@ -198,7 +198,7 @@
     partyIds.forEach((id, i) => { enc.pos[id] = partySq[i] || { x: 0, y: 0 }; });
   }
 
-  // opts: { surprise: the side caught off guard ('party' | 'enemy'), factor (share of AP it keeps), ctx: {x, y}, canFlee (false: no getting away) }
+  // opts: { surprise: the side caught off guard ('party' | 'enemy': it starts CONFIG.clock.surprise ticks late), ctx: {x, y}, canFlee (false: no getting away) }
   function start(world, spec, opts) {
     opts = opts || {};
     const foes = buildFoes(spec);
@@ -225,7 +225,7 @@
       placeOnArena(enc, arena, members.map((c) => c.id), foes.filter((f) => !joinIds.has(f.id)).map((f) => f.id), joined);
       layTraps(world, enc, arena, foes);
     }
-    if (opts.surprise) enc.surprise = { side: opts.surprise, factor: opts.factor == null ? 0.5 : opts.factor, round: 1 };
+    if (opts.surprise) enc.surprise = { side: opts.surprise };
     world.battle = { enc, foes: foeMap, allies, spec, joined: joined.map((j) => ({ x: j.x, y: j.y, spec: j.spec })), arena: arena ? { place: arena.place, ox: arena.ox, oy: arena.oy, w: arena.w, h: arena.h } : null, ctx: opts.ctx || null, canFlee: opts.canFlee !== false, startedDay: world.day };
     world.stats.fights++;
     for (const line of monsterLore(world, foes)) Combat.log(enc, line, 'pass');
@@ -240,9 +240,9 @@
     return best >= 2 ? 0 : best === 1 ? 0.25 : 0.5;
   }
 
-  // A fight spills over: at the start of each round, the party sees what its fighters see from where they stand, and
+  // A fight spills over: at its start and each beat, the party sees what its fighters see from where they stand, and
   // any group the fight has come near (Battle.joiners, from every fighter's square) comes running, around its own
-  // square. Returns the log lines.
+  // square, onto the timeline half a beat from now. Returns the log lines.
   function reinforce(world) {
     const b = world.battle;
     if (!b || !b.arena || !world.explore || b.arena.place !== world.place) return [];
@@ -263,11 +263,12 @@
         b.foes[f.id] = f; chars[f.id] = f; t.order.push(f.id);
         enc.ids.push(f.id);
         enc.pos[f.id] = sq[i] || at;
+        if (enc.clock && enc.now != null && G.Combat.enter) G.Combat.enter(enc, f.id);
       });
       b.joined.push({ x: j.x, y: j.y, spec: j.spec });
       trapsKnownBy(enc, more);
       const line = `${j.def.label || 'More of them'} hear${j.def.label ? 's' : ''} the fighting and come${j.def.label ? 's' : ''} running.`;
-      enc.log.push({ text: line, cls: 'fight', round: enc.round });
+      G.Combat.log(enc, line, 'fight');
       lines.push(line);
     }
     for (const l of lines) World.logLine(world, l, 'fight');
@@ -291,9 +292,9 @@
     return out;
   }
 
-  // Has the party got away? Asked at the end of a round (CONFIG.disengage). Every foe still standing either can't reach
+  // Has the party got away? Asked at each beat (CONFIG.disengage). Every foe still standing either can't reach
   // striking distance of anyone in the party (a wall across the way, or held where it stands) or couldn't in `outrun`
-  // rounds of running, and none has a missile or a spell with a clear line to them. The fallen count: a foe that can
+  // beats of running, and none has a missile or a spell with a clear line to them. The fallen count: a foe that can
   // reach one of yours lying on the floor keeps the fight going. Returns { ok, why }.
   function disengaged(world) {
     const b = world.battle;
@@ -314,7 +315,7 @@
       const reach = Math.max(1, ...opts.filter((o) => !o.ranged).map((o) => o.maxRange || 1));
       if (mine.some((m) => near(at, enc.pos[m], reach))) return { ok: false, why: `${f.name} is on you` };
       if (G.Conditions && !G.Conditions.canMove(f)) continue;
-      const run = D.outrun * C.squaresFor(f, C.apPool(f));
+      const run = C.squaresIn(f, D.outrun * G.CONFIG.clock.beat);
       const map = T.costMap(enc, at, f);
       for (let y = 0; y < enc.grid.h; y++) for (let x = 0; x < enc.grid.w; x++) {
         if (map.cost[map.idx(x, y)] > run || !T.canStand(enc, x, y, f)) continue;
@@ -491,5 +492,16 @@
     });
   }
 
-  G.Battle = { dungeonArena, joiners, reinforce, buildFoes, table, start, ambushFactor, disengaged, getAway, finish, snapshot, watch, summary };
+  // The game's hook on the timeline (Combat.begin's io.onBeat): at the start and each beat, groups the fight comes near
+  // join (reinforce); with `away`, at each beat a party no foe can come at has got away (the fight stops, phase
+  // 'away', for the screen to end it with getAway).
+  function onBeat(world, opts) {
+    opts = opts || {};
+    return (enc, chars, when) => {
+      reinforce(world);
+      if (opts.away && when === 'beat' && enc.phase !== 'over' && disengaged(world).ok) enc.phase = 'away';
+    };
+  }
+
+  G.Battle = { dungeonArena, joiners, reinforce, onBeat, buildFoes, table, start, ambushFactor, disengaged, getAway, finish, snapshot, watch, summary };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

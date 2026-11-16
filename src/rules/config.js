@@ -27,30 +27,30 @@
     // Stamina is exertion: what a fighter spends on actions, and what blunt that breaks nothing winds (wounds.winding).
     // It is no life pool. Max stamina = stamina.base + STR + SPD + DEX, the same order for everyone; CON and WIL set
     // how fast it comes back (stamina.regen).
-    // Fatigue: −1 AP below 50% stamina, −2 below 25%
+    // PROVISIONAL (step F): fatigue adds a share of an action's ticks below half stamina, more below a quarter.
     fatigueSteps: [
-      { below: 0.5, ap: 1 },
-      { below: 0.25, ap: 2 },
+      { below: 0.5, share: 0.2 },
+      { below: 0.25, share: 0.4 },
     ],
     // PROVISIONAL: an action cannot be paid if it would take you to 0 stamina
     // (otherwise characters could exert themselves unconscious).
     exertionCanKnockOut: false,
     // PROVISIONAL (the tuning plan's rulings R1 to R3, the user, 2026-11-11; step E's plain numbers):
     //   base        max stamina = base + STR + SPD + DEX (+ gear; × a creature's staminaMult).
-    //   regen       R1. Each round, struck or not: ⌊(CON + WIL) × per⌋ − the armor's regen penalty (+ gear, conditions,
-    //               hero mode) in a round the fighter lost no stamina to a blow, `struck` of it (rounded up, at least
-    //               1) in a round they did. Heavy armor's negative regeneration is whole every round.
+    //   regen       R1. Each beat, struck or not: ⌊(CON + WIL) × per⌋ − the armor's regen penalty (+ gear, conditions,
+    //               hero mode) in a beat the fighter lost no stamina to a blow, `struck` of it (rounded up, at least
+    //               1) in a beat they did. Heavy armor's negative regeneration is whole every beat.
     //   spent       R2. An action whose stamina the fighter can't pay is taken spent instead of refused: it takes
     //               stamina down to 1 at most, the defender gets `attack` on its roll against a spent blow (and the
     //               blow lands at vigor.spent), and a defence taken spent is `defense` worse. null: refused.
-    //   collapse    R3. Stamina 0 is a collapse: prone, no actions or reactions for the rest of the round and
-    //               rounds − ⌊WIL / perWil⌋ more (WIL brings them round sooner; Second Wind: none), then the fighter
-    //               comes round with one round's regeneration (at least 1) and must stand.
+    //   collapse    R3. Stamina 0 is a collapse: prone, no actions or reactions until the beat ends and
+    //               beats − ⌊WIL / perWil⌋ more (WIL brings them round sooner; Second Wind: none), then the fighter
+    //               comes round with one beat's regeneration (at least 1) and must stand.
     stamina: {
       base: 20,
       regen: { per: 0.75, struck: 0.5 },
       spent: { attack: 2, defense: 2 },
-      collapse: { rounds: 2, perWil: 5 },
+      collapse: { beats: 2, perWil: 5 },
       // The AI's weights for these rules (judgement, not rules; here so a sim can --set them). finish: a blow at a
       // collapsed foe against the same at a standing one, `now` when they come round at this round's end, `later` when
       // they stay down a round more. spentWorth: a spent blow is thrown only if it is worth this much (hitValue's
@@ -67,84 +67,60 @@
     sweep: { force: 0.5, heavy: 0.75, motions: ['swing', 'twoHanded', 'power'] },
     // PROVISIONAL (docs/PLAN.md step 9; the Reaper capstone, docs/PROPOSALS.md 3.2 "a swing at every foe in reach"): the
     // Whirlwind feat adds to every swung edge or head of a two-handed weapon (a swing or two-handed blow, not a power
-    // blow) a Whirlwind option at `ap` times its AP (to the half) and `stamina` times its stamina: the blow lands as
+    // blow) a Whirlwind option at `ticks` times its ticks and `stamina` times its stamina: the blow lands as
     // made on its target, then at `force` of its damage on every other foe the blow reaches, each defending for itself.
     // null: the feat does nothing.
-    whirlwind: { ap: 1, stamina: 1.5, force: 0.75 },
+    whirlwind: { ticks: 1, stamina: 1.5, force: 0.75 },
 
-    // ---- Action points (Specifics, with the user's turn budget) ------------------------
-    // AP are counted in tenths: apScale internal units are one AP (apDisplay divides them back for
-    // the sheet), so costs can be fractional (a dagger thrust 1.5) with no rounding drift. Rounds
-    // 1–8 ran at 2 (pool 10) to keep −1 AP feats from halving a 2-AP thrust; Quick feats now cut a
-    // share instead (quickCut).
-    apScale: 10,
-    apDisplay: 10,
-    // Multiplies every base action cost instead of apScale, if set (null = apScale).
-    costScale: null,
-    // PROVISIONAL (docs/PLAN.md R9, step 8): every action's AP cost, after all multipliers (Quick feats, armor, gear,
-    // weapon speed and strain), rounds to the nearest half AP (sheet AP), halves up, so a turn can be planned in pips.
-    // The pool is not rounded. null: costs stay in tenths (2.3, 6.9).
-    apStep: 0.5,
-    // PROVISIONAL (the user's turn budget): at level 1 a turn holds one big action (a two-handed or
-    // power swing), a step and a medium action (a swing), or three quick actions (thrust, parry,
-    // dodge, block, a step). Pool = apBase + SPD / apSpdDivisor + d(apDie), unrounded: 6 at SPD 5 on
-    // average, every point of SPD worth half an AP. (Specifics: 3 + ⌊SPD/2⌋.)
-    // PROVISIONAL (the user, 2026-11-09): AP are rolled every round (d apDie, whole AP) and the round's
-    // turns go in order of AP rolled, most first: going first means more to spend, and SPD, which feeds
-    // both, carries more weight against CON. TUNED the same day ("tighter and faster": the last to go should
-    // usually still have one solid action, a swing or a wind-up, or a step and a thrust): 1 + d3 + SPD/2,
-    // 4.5 to 6.5 at SPD 5 (mean 5.5), was d4 (4.5 to 7.5, mean 6) and the fixed 6 before that. Where a pool
-    // is wanted without a roll (the sheet, the AI's planning), the die counts at its mean. apDie null: no
-    // die (the Specifics' fixed pool, with initiativeDie).
-    apBase: 1,
-    apDie: 3,
-    apSpdDivisor: 2,
-    apSpdContinuous: true,
-    // PROVISIONAL (turn budget): base costs (the Specifics table) up to `knee` stand; every AP above it
-    // costs `above`. Thrust, parry, dodge, a step 2; a swing 3 → 4; a two-handed swing 4 → 6; a power
-    // swing 2 to wind up + 3 → 4 to release. Weapon speed and strain multiply the result.
-    apCurve: { knee: 2, above: 2 },
-    // PROVISIONAL (turn budget): a move is a quick action, moveAP for each stretch of up to
-    // (1 + ⌊SPD/4⌋) × moveScale squares (4 at SPD 5). null: the Specifics' 1 AP per stretch.
-    moveAP: 2,
-    // PROVISIONAL: someone who has spent nothing this round may take one action that costs more than
-    // their whole pool, as their whole turn, so a tired or armored fighter can always make one big swing.
-    wholeTurnAction: true,
-    // PROVISIONAL (the user, 2026-11-07): Defer. On your turn, pay `ap` (sheet AP) to let the next one in the initiative
-    // order take their turn now; yours resumes after theirs. As often as the AP lasts.
-    defer: { ap: 1 },
-    // PROVISIONAL (the user's call: armor makes actions dearer): armor's SPD penalty no longer
-    // shrinks the pool; every action costs this many AP more per point of it (plate 3 → +0.5,
-    // mail 1 → +0.2; the mobility feats lower it). It still slows moving and dodging (and, with
-    // apDie null, initiative). 0: as written (the penalty lowers the pool).
-    armorActionAP: 1 / 6,
-    // PROVISIONAL: a Quick feat (Quick Thrust, Parry, Block, Dodge, Hands, Heavy Tempo, Casting) at its
-    // top rank takes this share off the action's cost, each rank its part (Quick Thrust I–III: −1/6,
-    // −1/3, −1/2). null: as written (−1 AP per rank).
-    quickCut: 0.5,
-    moveBase: 1, // squares per AP = (1 + floor(SPD/4)) × moveScale
-    // PROVISIONAL: squares are about an arm's length and a step (the user's reach scale: daggers and
-    // one-handed swings 1, one-handed thrusts and two-handed swings 2, two-handed thrusts and spears 3), so
-    // movement covers twice as many of them as the Specifics formula gives. A move counts every second diagonal
-    // step as two squares (Combat.steps); reach and range are rounded Euclidean (Combat.dist).
-    // TUNED (the user, 2026-11-01: Cyrus crossed a courtyard in one round): ×1 and SPD counted unrounded
-    // (squares a stretch = round(1 + SPD/4)), was ×2 and ⌊SPD/4⌋. A round spent only moving now carries the
-    // presets 4 / 6 / 9 / 12 squares (Beren in plate, Jabiku, Lorc, Cyrus), was 4 / 12 / 12 / 24.
-    moveScale: 1,
-    moveSpdDivisor: 4,
-    moveSpdContinuous: true,
-    // PROVISIONAL (the user's turn model): a turn spends as much of the AP pool as the character
-    // likes; each action resolves at once; AP kept back pays for reactions (block, parry, dodge, an
-    // opportunity strike) on others' turns. No per-pass cap, no passes.
-    minActionAP: 0.5, // sheet AP: costs never drop below half an AP (as written: 1) or 0 stamina
-    minStrikeAP: 0.5, // floor for weapon strikes specifically (tunable separately)
+    // ---- The clock (docs/OVERHAUL.md step F; PROVISIONAL) --------------------------------------------------
+    // There are no rounds, turns or AP. Time is counted in ticks; every fighter has a clock, and whoever's clock is
+    // lowest takes one action, whose cost is added to their clock. Ties: higher SPD, then gear's `init`, then a d10
+    // rolled once at the fight's start. An action's cost is its base (data.js MOTIONS and ACTIONS `ticks`: a one-handed
+    // swing is 10, the standard action) × the weapon's speed and strain × the SPD factor × gear's costMult ÷ a body's
+    // tempo, plus armor, Quick feats (minus), webs, an arm wound and fatigue (a share of the rest), rounded once at
+    // the end, never under `min`.
+    //   spd       the SPD factor: (base + 5 × per) / (base + SPD × per): SPD 4 ×1.1, SPD 6 ×0.92, SPD 8 ×0.79
+    //   armor     ticks added to every action a point of the armor's SPD penalty (mail +0.5, plate +1.5)
+    //   quick     ticks a Quick feat takes off its actions a rank (Quick Thrust I–III: a thrust 5 → 4, 3, 2)
+    //   stretch   a move: ticks for each stretch of `pace` squares (round(1 + SPD/4), the mobility and leg wounds),
+    //             plus the armor's ticks once (Character.moveTicks): about 2 a square at SPD 5
+    //   lead      an action's ticks are split: `lead` before it takes effect and the rest (recovery) after. The share
+    //             is data.js's (`lead` on a motion or an action; a bow's draw; a Strong spell's gathering). A committed
+    //             fighter can be struck, shoved or stepped away from; knocked down, grappled, disarmed or put down,
+    //             the action is spoiled (Combat.spoil).
+    //   exposes   a power blow, a drawn bow and a Strong spell leave the fighter unable to block or parry while
+    //             they are committed (the lead)
+    //   overreach a fighter whose clock is more than this many ticks past now can't react: a block, parry, dodge,
+    //             cover, riposte or opportunity strike adds its ticks to the reactor's clock
+    //   beat      everything that happens "each round" happens each beat, a fixed number of ticks kept by the
+    //             timeline (Combat.beat): bleeding, regeneration, conditions' durations (in beats), terrain, holds,
+    //             auras, groups joining, the getting-away check
+    //   surprise  a side caught off guard starts this many ticks late
+    //   die       the tie-break die, rolled once at the start
+    //   rebound   a blow blocked or parried costs the attacker this share of its ticks (block, parry; Beat adds
+    //             perRank a rank to a parry's), added to their clock
+    clock: {
+      spd: { base: 3, per: 0.5 },
+      armor: 0.5,
+      quick: { quick_thrust: 1, quick_parry: 1, quick_block: 1, quick_dodge: 1, quick_hands: 1, heavy_tempo: 2, quick_casting: 1, quick_draw: 1 },
+      stretch: 5,
+      min: 1,
+      exposes: { motions: ['power'], bows: true, strongSpells: true, guards: ['block', 'parry'] },
+      overreach: 10,
+      beat: 20,
+      surprise: 10,
+      die: 10,
+      rebound: { block: 1 / 3, parry: 1 / 6, offParry: 1 / 6, perRank: 1 / 6 },
+      command: 3, // Command (a feat): ticks a friend's clock comes sooner
+      moveMax: 12, // a move is at most the squares this many ticks carry
+      veryLight: 2.5, // ticks off a very light weapon's thrust or swing (hand-set table weapons only: physics has speed)
+    },
     minStrikeStamina: 0, // floor for weapon strikes' stamina
-    // PROVISIONAL: very light weapons (dagger) get −1 AP on thrust/swing ("lowest AP").
-    veryLightApDiscount: 1,
-
-    // ---- Initiative -------------------------------------------------------
-    // With apDie null only: initiative = d10 + effective SPD (otherwise the order is the AP rolled).
-    initiativeDie: 10,
+    // Squares in a stretch of a move = round(moveBase + SPD / moveSpdDivisor) (+ Fleet Foot, − a tower shield, ×
+    // moveMult, − a leg wound, + boots). Squares are about an arm's length and a step (the user's reach scale); a move
+    // counts every second diagonal step as two (Combat.steps); reach and range are rounded Euclidean (Combat.dist).
+    moveBase: 1,
+    moveSpdDivisor: 4,
 
     // ---- Damage (Specifics) ----------------------------------------------
     motionMultiplier: { thrust: 1.0, swing: 1.0, twoHanded: 1.3, power: 1.6 },
@@ -270,12 +246,10 @@
     grappledWeaponsCramped: true,
 
     // ---- Getting up (PROVISIONAL, the user's call) ------------------------
-    // Standing from prone gets steeply harder in heavier armor. Base AP and stamina by armor
-    // (AP × apScale; plus the armor's usual stamina penalty). Specifics: 2 AP
-    // + 0/0/1/1/2 for padded/leather/mail/scale/plate (scale is now steel mail). The AP is capped at the character's
-    // pool, so getting up is always possible, if it takes the whole round. Kip-Up: 1 base AP.
+    // Standing from prone gets steeply harder in heavier armor. Base ticks and stamina by armor (plus the armor's
+    // usual stamina penalty); half of it is the lead (still on the ground until it is done). Kip-Up: 3 ticks.
     standUp: {
-      ap: { none: 1, padded: 1, leather: 1, mail: 2, plate: 4 },
+      ticks: { none: 3, padded: 3, leather: 3, mail: 5, plate: 15 },
       stamina: { none: 3, padded: 3, leather: 3, mail: 6, plate: 15 },
     },
 
@@ -307,10 +281,9 @@
     },
 
     // ---- Webs (PROVISIONAL, monster draft) ---------------------------------
-    // Each layer of sticky web adds base AP and stamina (× the scales) to every action. Up to
-    // maxLayers. Tear free: d10 + ⌊STR/2⌋ ≥ tearTN clears them all. Fire burns them away.
-    // wearOff layers come loose by themselves at the end of each round.
-    web: { ap: 1, stamina: 3, maxLayers: 2, tearTN: 8, wearOff: 1 },
+    // Each layer of sticky web adds ticks and stamina to every action. Up to maxLayers. Tear free: d10 + ⌊STR/2⌋ ≥
+    // tearTN clears them all. Fire burns them away. wearOff layers come loose by themselves each beat.
+    web: { ticks: 3, stamina: 3, maxLayers: 2, tearTN: 8, wearOff: 1 },
 
     // ---- Shove (PROVISIONAL) ----------------------------------------------
     // Opposed d10 + ⌊STR/2⌋ (+2 two-handed weapon) vs d10 + footing. A win pushes the
@@ -327,31 +300,13 @@
     // foe's true intent and, for the round, +2 to defend against them and to beat their defenses.
     // Missed by less than misreadBy: nothing to go on. Missed by misreadBy or more: a confident
     // misread — a false intent and −2 — that looks just like a true read. Range: in sight.
-    social: { bait: { range: 3 }, readIntent: { range: 4, tn: 5, misreadBy: 4, rounds: 3 }, readBonus: 2 },
+    social: { bait: { range: 3 }, readIntent: { range: 4, tn: 5, misreadBy: 4, beats: 2 }, readBonus: 2 },
     // PROVISIONAL (the user's rulings, 2026-10-24 and 2026-11-02: docs/PROPOSALS.md §1): coming up to the edge
     // of a foe's melee reach is free; the foe may strike at a mover who steps from there to closer still,
     // leaves its reach, or takes a second step within it in one move that brings them no closer (one guarded
     // step is free). Once per foe per move, paid from the foe's AP; a hit stops the mover where they were. At
     // equal reach the one who steps in strikes first; a longer weapon holds a shorter one at its edge.
     opportunityStrikes: true,
-
-    // ---- Wind-up (PROVISIONAL) --------------------------------------------
-    // Motions that must be wound up before they can be released: the wind-up costs part of the AP and stamina, the
-    // release the rest. While wound up you cannot block or parry. The wind-up is lost if you are knocked prone,
-    // grappled, disarmed or drop, or if you haven't released it by the end of the next round.
-    windUp: {
-      motions: ['power'],
-      ap: 2,
-      stamina: 3,
-      exposed: ['block', 'parry'],
-      spells: true, // spells using the Strong modifier must be gathered the same way
-      // After releasing in a round you may wind up again that round (a steady archer looses
-      // and redraws; a swinger chains blows). Either way you stay exposed.
-      rewindAfterRelease: true,
-      // PROVISIONAL (the user, 2026-11-01): a wind-up may be released in the same turn, AP allowing (false: not
-      // before the next round). Two actions either way; a wind-up made ahead carries over into the next round.
-      sameTurn: true,
-    },
 
     // ---- Archery (PROVISIONAL; nothing in the design docs yet) -----------
     archery: {
@@ -374,8 +329,8 @@
     // Spells are a verb and a noun (the user's spell words, 2026-11-08; docs/PROPOSALS.md §4); cost = sum of word costs.
     magic: {
       // PROVISIONAL. The verb says what happens, the noun what to; each noun's `does` names the shape for each verb
-      // (spells.yaml), and spells.yaml `shapes` holds each shape's numbers: mag (magnitude), range [min, max], ap
-      // (base AP, else castAP), radius / length / rounds. A modifier scales it: shapes (the shapes it goes on), area
+      // (spells.yaml), and spells.yaml `shapes` holds each shape's numbers: mag (magnitude), range [min, max], ticks
+      // (base ticks, else castTicks), radius / length / beats. A modifier scales it: shapes (the shapes it goes on), area
       // (a bolt becomes an area: Wide, Delayed), hidden (a ground spell becomes a rune).
       words: {}, // spells.yaml,
       affinity: { fire: 'fire_affinity' }, // +magnitude per rank
@@ -407,8 +362,8 @@
       // round; the down come to once under their wound boxes). With Wide, every living creature within a square of
       // the target, friend or foe, at areaShare of the stamina. The dead stay dead, but see revive.
       heal: { stamina: 4, staminaPerMag: 2, areaShare: 0.5 },
-      // The user (2026-11-04): one who dies in a fight can be called back for `rounds` rounds after the one they died
-      // in (three more turns of their own): Raise + Life (or Move + Life given) stops the bleeding, mends the worst
+      // The user (2026-11-04): one who dies in a fight can be called back for `beats` beats after the one they died
+      // in: Raise + Life (or Move + Life given) stops the bleeding, mends the worst
       // wound `mend` steps and leaves them alive but down, at 0 stamina. After that they are beyond saving there (a priest in town still can).
       // PROVISIONAL (the user, 2026-11-07): a fight won while one of the party is still revivable leaves time to save
       // them: a living companion with a Life spell that calls back the dead, and the points for it, casts it; else
@@ -416,14 +371,19 @@
       // TUNED (the user, 2026-11-09: the CON hit is already a large lever against going down): the Medicine check is
       // hard (11), was moderate (8). Jabiku (+5 at level 1, +7 at level 5) saves one in two, then seven in ten; was
       // eight in ten, then always. Spells that call back the dead are untouched.
-      revive: { rounds: 3, mend: 1, afterFight: { skill: 'medicine', tn: 'hard' } },
+      revive: { beats: 2, mend: 1, afterFight: { skill: 'medicine', tn: 'hard' } },
       // PROVISIONAL (the user's Transfer, 2026-11-01): what the target loses, the caster gains: each severity step it
       // wounds mends a step of the caster's own wounds, or, with none, gives this much stamina.
       // PROVISIONAL (the user, 2026-11-07): Transfer aimed at an ally gives instead: ceil(magnitude / 2) points of the
       // caster's own life, each mending a severity step of their wounds (else staminaPerCON stamina), each costing the caster
       // staminaPerCON stamina. It stops bleeding and calls back the revivably dead.
       transfer: { staminaPerCON: 3 },
-      castAP: 2, // base, × apScale. PROVISIONAL: at 3, a bolt cost 6 sheet AP for a third of a sword thrust
+      castTicks: 5, // base ticks of a cast, before Quick Casting, armor and the SPD factor (PROVISIONAL)
+      // PROVISIONAL (step F): a cast's lead share; a Strong spell is gathered, `gather.ticks` dearer with a lead of
+      // `gather.lead` of the whole, exposed. A summons or a raised body acts `joins` ticks after it comes.
+      lead: 0.2,
+      gather: { ticks: 2.5, lead: 0.5 },
+      joins: 10,
       poolPerCasting: 3, // spell points = INT + 3 × Casting rank
       // PROVISIONAL (the user, 2026-10-29): a rest after a fight brings spent points back, but each point spent takes
       // this much off the maximum until a long rest, as weariness does stamina. A caster can go hard in a fight and
@@ -484,16 +444,16 @@
     // worth (the AI's, step 5 of docs/PLAN.md): what it takes the condition to be worth, in the units of a blow's value
     // (AI.hitValue): on a foe for a harm, on a friend for a boon; where it matters is the AI's (a root on a foe closing in,
     // a ward against what the foes throw), read from the condition's other fields, so a new condition needs no AI edit.
-    // Every field is listed in src/rules/effects.js (KEYS.condition); the effect ones (ap, attrs, resist, moveMult,
+    // Every field is listed in src/rules/effects.js (KEYS.condition); the effect ones (ticks, attrs, resist, moveMult,
     // regen, flags…) are read through Effects with the same keys as traits and gear.
     conditions: {
       burning: { worth: 12, type: 'fire', name: 'Burning', dot: { harm: 1 } },
-      slowed: { worth: 14, name: 'Slowed', ap: -1, resistedBy: 'CON' },
-      hasted: { worth: 14, name: 'Hasted', ap: 1 },
-      shocked: { worth: 12, name: 'Shocked', ap: -1, resistedBy: 'CON' },
+      slowed: { worth: 14, name: 'Slowed', ticks: 2, resistedBy: 'CON' },
+      hasted: { worth: 14, name: 'Hasted', ticks: -2 },
+      shocked: { worth: 12, name: 'Shocked', ticks: 2, resistedBy: 'CON' },
       rooted: { worth: 14, name: 'Rooted', noMove: true, breakAttr: 'STR', resistedBy: 'STR' },
       numbed: { worth: 10, name: 'Numbed', attrs: { DEX: -1, SPD: -1 }, resistedBy: 'CON' },
-      withering: { worth: 22, type: 'life', name: 'Withering', dot: { harm: 1 }, ap: -1, resistedBy: 'CON', living: true }, // Life bane (asystole)
+      withering: { worth: 22, type: 'life', name: 'Withering', dot: { harm: 1 }, ticks: 2, resistedBy: 'CON', living: true }, // Life bane (asystole)
       innervated: { worth: 18, name: 'Innervated', regen: 6 },
       kindled: { worth: 10, name: 'Kindled', kindled: true }, // blows set targets burning
       frostWard: { worth: 6, name: 'Frost ward', resist: { fire: 0.5 } },
@@ -513,7 +473,7 @@
       // ---- Phase 2 (draft) -------------------------------------------------------------
       // Mind (WIL resists). breakOnHarm: ends when the bearer takes damage.
       calmed: { worth: 20, name: 'Calmed', resistedBy: 'WIL', noAttack: true, breakOnHarm: true },
-      mesmerized: { worth: 30, name: 'Mesmerized', resistedBy: 'WIL', ap: -99, breakOnHarm: true, noAct: true },
+      mesmerized: { worth: 30, name: 'Mesmerized', resistedBy: 'WIL', breakOnHarm: true, noAct: true },
       enraged: { worth: 14, name: 'Enraged', resistedBy: 'WIL', noGuard: true, berserk: true },
       // The user (2026-11-08): can't come closer to the source, and must first step at least a square farther from it
       // each turn (Combat.mustFlee). It may still strike or shoot at it.
@@ -523,7 +483,7 @@
       // it (no concentration), but any harm breaks it at once.
       enthralled: { worth: 34, name: 'Charmed', resistedBy: 'WIL', control: true, free: true, breakOnHarm: true },
       confused: { worth: 24, name: 'Confused', resistedBy: 'WIL', confused: true, noGuard: true },
-      concentrating: { worth: 4, name: 'Concentrating', ap: -1 }, // holding a Will spell
+      concentrating: { worth: 4, name: 'Concentrating', ticks: 1 }, // holding a Will spell
       steadied: { worth: 8, name: 'Steadied', mindWard: true },
       emboldened: { worth: 8, name: 'Emboldened', attrs: { STR: 1 }, noFear: true },
       resolute: { worth: 8, name: 'Resolute', mindWard: true, attrs: { WIL: 2 } },
@@ -542,13 +502,13 @@
       frostbite: { worth: 10, type: 'frost', name: 'Frostbite', resistedBy: 'CON', dot: { stamina: 2 }, attrs: { DEX: -1 }, living: true },
       // PROVISIONAL (Take + Earth on an ally): floats over pits and hazards, as a flier does.
       levitating: { worth: 16, name: 'Levitating', flying: true },
-      paralyzed: { worth: 34, name: 'Paralyzed', resistedBy: 'CON', ap: -99, drainAP: 99, noAct: true, noGuard: true, helpless: true },
-      stunned: { worth: 12, name: 'Stunned', resistedBy: 'CON', drainAP: 2, noGuard: true }, // AP lost at once; no guard this round
+      paralyzed: { worth: 34, name: 'Paralyzed', resistedBy: 'CON', noAct: true, noGuard: true, helpless: true },
+      stunned: { worth: 12, name: 'Stunned', resistedBy: 'CON', stagger: 5, noGuard: true }, // ticks on the clock at once; no guard for the beat
       riled: { worth: 8, name: 'Riled', mit: { P: 1, S: 1, B: 1 }, breakOnHarm: true }, // a goading blade: until the bearer is hurt
       unseen: { worth: 16, name: 'Unseen', unseen: true }, // can't be picked out beyond arm's reach; striking ends it
       // Feat conditions (feats.yaml: Feign Death, Dirty Trick, Name the Weakness).
       feigning: { worth: 10, name: 'Playing dead', unseen: true, feign: true }, // no foe can aim at them, near or far; acting ends it
-      exposed: { worth: 10, name: 'Exposed', noGuard: true }, // no defence this round
+      exposed: { worth: 10, name: 'Exposed', noGuard: true }, // no defence for the beat
       named: { worth: 12, name: 'Weakness named', named: true }, // blows ignore its resistances
       corroded: { worth: 8, type: 'decay', name: 'Corroded', resistedBy: 'CON', dot: { stamina: 2 }, living: true },
       // Mystic.
@@ -564,7 +524,7 @@
     // Features on tiles (src/rules/terrain.js). wall: can't be entered; solid: blocks sight and
     // missiles; blocksMissiles: arrows and bolts can't pass; cost: extra squares of movement to
     // enter; slick: a footing roll on entering or fall; pit: fall in (prone, the move ends, and
-    // climbing out costs climbCost extra); onEnter/perRound: an element's blow with that
+    // climbing out costs climbCost extra); onEnter/perBeat: an element's blow with that
     // magnitude to whoever enters / stands there at the end of the round; flammable: fire burns
     // it away; hidden: unseen by the other side until it springs.
     terrain: {
@@ -578,7 +538,7 @@
       // PROVISIONAL (the fire-goblin mine, 2026-10-31; the user, 2026-11-02): nobody walks into lava (`deadly`: a move
       // can't end in or cross it; fliers pass over). A shove or a fall into it is a Fire 6 blow, and again at each
       // round's end while still in it; whoever is in it can walk out.
-      lava: { name: 'Lava', onEnter: { fire: 6 }, perRound: { fire: 6 }, deadly: true, burns: true, permanent: true },
+      lava: { name: 'Lava', onEnter: { fire: 6 }, perBeat: { fire: 6 }, deadly: true, burns: true, permanent: true },
       // A murder hole or a portcullis: nobody passes, but sight, missiles, spells and a spear's reach go through.
       bars: { name: 'Bars', wall: true, permanent: true },
       iceWall: { name: 'Ice wall', wall: true, solid: true, meltsInFire: true },
@@ -589,7 +549,7 @@
       fireWall: { name: 'Wall of fire', wall: true, near: { fire: 2 }, burns: true },
       windWall: { name: 'Wind wall', blocksMissiles: true, cost: 2 },
       stormWall: { name: 'Storm wall', onEnter: { storm: 3 } },
-      hot: { name: 'Hot ground', onEnter: { fire: 1 }, perRound: { fire: 1 }, burns: true },
+      hot: { name: 'Hot ground', onEnter: { fire: 1 }, perBeat: { fire: 1 }, burns: true },
       ice: { name: 'Ice', slick: true, cost: 1 },
       charged: { name: 'Charged ground', onEnter: { storm: 2 } },
       winds: { name: 'Swirling winds', cost: 1, missileMiss: 0.5 },
@@ -600,12 +560,12 @@
       // PROVISIONAL (docs/OVERHAUL.md step C): a trap laid on the map (places.yaml kind trap), carried into a fight on it.
       // Hidden to every side not in the feature's knownBy; stepping or being driven onto it springs it (src/rules/traps.js).
       trap: { name: 'Trap', trap: true, hidden: true },
-      miasma: { name: 'Miasma', perRound: { decay: 1 }, onEnter: { decay: 1 } },
-      radiance: { name: 'Radiance', reveals: true, perRound: { light: 1 } },
+      miasma: { name: 'Miasma', perBeat: { decay: 1 }, onEnter: { decay: 1 } },
+      radiance: { name: 'Radiance', reveals: true, perBeat: { light: 1 } },
       lightWall: { name: 'Wall of light', onEnter: { light: 3 } },
       // PROVISIONAL (the user's spell list): darkness hurts and drags at the feet as well as hiding.
-      darkness: { name: 'Darkness', blocksSight: true, cost: 1, perRound: { shadow: 1 } },
-      acidPool: { name: 'Acid pool', onEnter: { decay: 2 }, perRound: { decay: 1 } },
+      darkness: { name: 'Darkness', blocksSight: true, cost: 1, perBeat: { shadow: 1 } },
+      acidPool: { name: 'Acid pool', onEnter: { decay: 2 }, perBeat: { decay: 1 } },
       gathering: { name: 'Gathering spell', warn: true }, // where a Delayed spell will break
       shadowWall: { name: 'Wall of shadow', blocksSight: true, cost: 1 },
       slickFootingTN: 6, // d10 + ⌊(DEX + SPD)/4⌋ ≥ this, or fall
@@ -637,15 +597,9 @@
       dodgeBonus: 0,
       dodgeArmor: 1,
       dodgeMeleeOnly: true,
-      // PROVISIONAL (the user, 2026-11-03): a blow that is blocked or parried rebounds, and the attacker loses this
-      // share of the blow's AP cost getting their weapon back: a blocked two-handed swing (6 AP) costs 2, a parried
-      // one 1. Recoil feats (Beat) add `perRank` to a parry's share each rank. AP the attacker hasn't got this round
-      // comes off their next (`carry`; owed AP count as spent, so a fighter who owes can't take an action dearer than
-      // their whole pool). A dodge costs the attacker nothing; a parry beaten through, nothing.
-      rebound: { block: 1 / 3, parry: 1 / 6, offParry: 1 / 6, perRank: 1 / 6, carry: true },
       // PROVISIONAL (the user, 2026-11-03): a successful parry opens the attacker to a riposte. Anyone may answer a
-      // parry they made with a blow of the parrying weapon at once (a reaction, its AP from their pool, a blow the
-      // attacker may defend). The Riposte feat makes it cost no AP. false: only the feat, as a free thrust.
+      // parry they made with a blow of the parrying weapon at once (a reaction, its ticks on their clock, a blow the
+      // attacker may defend). The Riposte feat makes it cost no ticks. false: only the feat, as a free thrust.
       riposteOpen: true,
       // PROVISIONAL (the user's call): a defence that works still costs stamina, this share of the
       // blow's force: a block most (the arm takes it), a parry some, a dodge none. null: nothing.
@@ -725,7 +679,7 @@
     shieldBreakPerPoint: 10,
     // PROVISIONAL: shield wear from a blocked hit = 0.5×P + 0.5×S + 1×B ("blunt wears it most")
     shieldWear: { P: 0.5, S: 0.5, B: 1.0 },
-    // PROVISIONAL: tower shields cost 1 square of movement per AP ("slows movement")
+    // PROVISIONAL: a tower shield takes a square off each stretch of a move ("slows movement")
     towerMovePenalty: 1,
 
     // ---- Armor ------------------------------------------------------------
@@ -785,8 +739,8 @@
       ironStanceBonus: 3,
       escapeArtistBonus: 2,
       proneDamageBonus: 1, // "attacks against the target gain a bonus"
-      proneDefenseExtraAP: 1, // "defensive actions cost more"
-      grappledDefenseExtraAP: 1,
+      proneDefenseTicks: 3, // "defensive actions cost more"
+      grappledDefenseTicks: 3,
       dogpileFraction: 0.5, // extra grapplers add half their STR without the Dogpile feat
     },
 
@@ -800,8 +754,8 @@
     // null: the old automatic breather (stamina refilled for free).
     // (the user, 2026-10-28: an hour, so stopping to rest and mend costs time in the dungeon.)
     afterBattle: { minutes: 60 },
-    // PROVISIONAL (the user's idea, on trial): every round of combat lowers each fighter's
-    // maximum stamina by perRound (up to `cap` of it); only a long rest (camp, inn) clears it.
+    // PROVISIONAL (the user's idea, on trial): every beat of combat lowers each fighter's
+    // maximum stamina by perBeat (up to `cap` of it); only a long rest (camp, inn) clears it.
     // Long fights cost more than their wounds, and the party has a reason to camp. null: off.
     // PROVISIONAL (the user, 2026-10-28): time awake wears too: perHour of fresh stamina each hour (half of it after
     // a 16-hour day: game.exploreDay), sleep excepted, so a day in a dungeon ends in a camp. The cap covers both
@@ -810,18 +764,17 @@
     // round takes perStamina off the maximum (was a flat 1 a round, so a fight won in one blow wore the whole party as
     // much as a hard one). In sim/FINDINGS.md: a preset fighter spends 8-14 stamina in a median fight and 30-50 in
     // a hard one, so 0.25 costs about what the flat rate did on average (2-3 points), nothing for standing by.
-    weariness: { perRound: 0, perStamina: 0.25, perHour: 1 / 32, cap: 0.75 },
+    weariness: { perBeat: 0, perStamina: 0.25, perHour: 1 / 32, cap: 0.75 },
     // PROVISIONAL (the user, 2026-11-01: duels too spongy; "more energy = harder swing"): a weapon blow's damage ×
     // `full` from a fighter at full fresh stamina down to × `empty` from one with none left. null: off.
     // 1.25 / 0.75 (sim/duels.js; FINDINGS 2026-11-01): it barely shortens duels (armor takes most of a blow), but a
     // fresh fighter hits a quarter harder and a spent one a quarter softer, so saving stamina pays.
     // PROVISIONAL (R2, 2026-11-11): a spent blow (CONFIG.stamina.spent) lands at × `spent` whatever stamina is left.
     vigor: { full: 1.25, empty: 0.75, spent: 0.5 },
-    // PROVISIONAL (the user, 2026-10-29): there is no flee roll. The party gets away when, at the end of a round, no
-    // foe can reach striking distance of any of them (a wall across the way, or held where it stands) or none could
-    // in `outrun` rounds of running, and no foe with a missile or a spell has a clear line to them.
-    // TUNED (2026-11-01, with movement halved): 4 rounds (was 2), so the gap to open is as many squares as before.
-    disengage: { outrun: 4 },
+    // PROVISIONAL (the user, 2026-10-29): there is no flee roll. The party gets away when, at a beat, no foe can reach
+    // striking distance of any of them (a wall across the way, or held where it stands) or none could in `outrun`
+    // beats of running, and no foe with a missile or a spell has a clear line to them.
+    disengage: { outrun: 3 },
 
     // ---- Progression (Outline Lean) --------------------------------------
     startingFeats: 3,
@@ -855,7 +808,7 @@
     'Skills (the user, 2026-11-07): twenty skills, 0–10, +1 a rank to the rolls they govern; 10 points at level 1 and 3 a level, spent whenever the party isn\'t fighting. Skills give numbers, feats large benefits; a tree\'s skill unlocks its feats (novice 1, apprentice 3, adept 5, expert 7, master 9). Feats that were only a number became skills. Defences add the gap between the defender\'s skill and the attacker\'s: parry Melee, dodge Evasion + Anticipation, block half of Block; against Melee, Ranged or Arcane.',
     'The spell words (the user, 2026-11-08; docs/PROPOSALS.md §4): a spell is a verb and a noun, 1 to 3 words: a verb alone (Bind holds a foe still, Move steps through space, See reveals), a verb and a noun, either with one modifier, or Summon + Bind + a noun. Verbs: Strike, Give, Take, Move, Raise, Bind, Summon, Shape (not built), See. Nouns: Fire, Frost, Storm, Decay, Force, Earth, Life, Death, Speed, Might, Grace, Mind, Shadow, Magic, Outsider, and a Name you know. Modifiers: Wide, Far, Long, Strong, Hidden, Delayed. Each noun says what each verb makes of it (spells.yaml `does`), and where a verb does two things (Give Fire on a foe burns, on the ground covers it) each is its own spell. Retired: Hex, Bless, Restore, Cover, Ward, Increase, Decrease, Transfer, Launch, Build, Open, Inscribe, Blink, Burst, Beguile, Conjure; Lightning (now Storm), Venom, Acid, Plague (now Decay), Wind, Vine, Light, Bone, Spirit, Veil, Stillness, Calm, Dream, Rage, Fear, Will, Charm; the modifiers Launch, Burst, Lingering and Name, and Word Doubling. Numbers: each shape\'s base in spells.yaml `shapes` (a bolt magnitude 6 at 1–6; a Wide bolt an area of magnitude 4).',
     'Give, Take, Move (the user, 2026-11-01 as Increase, Decrease, Transfer; renamed 2026-11-08): Give puts the noun into a creature or onto the ground (Give Life heals; Give Fire, Frost, Storm or Decay on a foe is a curse that stacks; on the ground a hazard), Take removes it or keeps it off (Take Life harms at arm\'s reach; Take Speed, Might, Grace slow, weaken, make clumsy; Take + an element on an ally lifts what it left and wards against it, halving it; Take Earth opens a pit or makes an ally float; Take Magic lifts every spell on a creature or the ground), Move shifts a creature or a noun (Move Life drains a foe to mend the caster or, aimed at an ally, gives the caster\'s own life: half the magnitude in points, each a lost CON mended or 3 stamina, each costing the caster 3 stamina).',
-    'Summoning (the user, 2026-11-08): Summon + an element (Fire, Frost, Storm, Earth) brings an elemental; Summon + Death a ghost; Summon + an outsider\'s name that kind of outsider; nothing else is summoned, and animals and people never are. What comes is simply in the world for 4 rounds: unbound it is frenzied (strikes the nearest body, friend or foe) until a Bind (Bind + Outsider, + Death, + its name) takes hold; Summon + Bind brings it bound. It stands with the caster\'s side, so the caster\'s friends leave it be unless it goes for them. Take + Outsider banishes one (WIL resists).',
+    'Summoning (the user, 2026-11-08): Summon + an element (Fire, Frost, Storm, Earth) brings an elemental; Summon + Death a ghost; Summon + an outsider\'s name that kind of outsider; nothing else is summoned, and animals and people never are. What comes is simply in the world for 4 beats: unbound it is frenzied (strikes the nearest body, friend or foe) until a Bind (Bind + Outsider, + Death, + its name) takes hold; Summon + Bind brings it bound. It stands with the caster\'s side, so the caster\'s friends leave it be unless it goes for them. Take + Outsider banishes one (WIL resists).',
     'Ghosts (the user, 2026-11-08): only spells and magical weapons touch one; its touch (Take + Death, a power of its own) passes armor and takes stamina only, half the magnitude, never an attribute: it can exhaust you, not kill you. A shell of force (Give + Force: 3 × magnitude points against spells and missiles) soaks it; a ward of Death (Take + Death on an ally) keeps it off altogether. A named ghost is not built.',
     'Raise (the user, 2026-11-08): Raise + Death on a corpse raises a skeleton; Raise the Flesh (necromancy feat) a zombie; Raise the Wrapped Dead a mummy. It fights for the caster for the rest of the fight and falls when the caster does. Raise + Life calls back an ally dead within the window (CONFIG.magic.revive); Give + Life no longer does. Raise + Earth, Fire, Frost, Storm or Force is a wall.',
     'Bind (the user, 2026-11-08): alone it paralyzes a foe for a round (CON resists); Bind + Mind charms the living (free, ends on harm); Bind + Death commands the undead and Bind + Outsider an outsider (the caster concentrates); Bind + a name holds one whose name the caster knows, +3 to the contest (CONFIG.magic.nameBonus). The old Name modifier, reaching anyone anywhere, is gone.',

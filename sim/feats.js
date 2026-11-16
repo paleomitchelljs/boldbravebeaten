@@ -145,15 +145,15 @@ async function duels(env, name, level, change) {
       const A = makeHero(env, name, level, change);
       const Bc = f.hero ? makeHero(env, f.hero, level, null) : B.Enemies.makeMonster(f.monster, {})[0];
       const r = await L.fight({
-        A: [A], B: [Bc], grid: { w: 12, h: 6 }, seed: SEED + k, maxRounds: 30,
+        A: [A], B: [Bc], grid: { w: 12, h: 6 }, seed: SEED + k, maxBeats: 20,
         watch: (enc) => M.watch(enc, { [A.id]: A, [Bc.id]: Bc }, [A.id]),
       });
       wins.push(r.winner === 'A' ? 1 : r.winner === 'B' ? 0 : 0.5);
-      deaths.push(r.deadA); rounds.push(r.rounds); taken.push(harm(A)); dealt.push(harm(Bc));
+      deaths.push(r.deadA); rounds.push(r.beats); taken.push(harm(A)); dealt.push(harm(Bc));
     }
   }
   const s = Metrics.summary(M);
-  return { wins, deaths, rounds, taken, dealt, med: s.medianRounds, half: s.half, collapsed: s.hero.collapses / (s.fights || 1) };
+  return { wins, deaths, rounds, taken, dealt, med: s.medianBeats, half: s.half, collapsed: s.hero.collapses / (s.fights || 1) };
 }
 
 // ---- A crawl run: a party of those heroes, the hero with the change, n crawls ---------------------------------------
@@ -180,7 +180,7 @@ async function crawl(env, place, partyNames, name, level, change) {
       if (!t) break;
       const before = World.party(w).filter((c) => c.status.dead).length;
       Battle.start(w, Object.assign({ name: t.def.label }, Explore.encounterSpec(w, t.def)), { ctx: { x: t.x, y: t.y, back: true } });
-      await Auto.battle(w, { maxRounds: 40 });
+      await Auto.battle(w, { maxBeats: 27 });
       const out = Battle.finish(w);
       nf++; nd += World.party(w).filter((c) => c.status.dead).length - before;
       if (out.result !== 'won' || !World.living(w).length) { ok = false; break; }
@@ -189,7 +189,7 @@ async function crawl(env, place, partyNames, name, level, change) {
     }
     cleared.push(ok ? 1 : 0); dead.push(nd); fights.push(nf);
   }
-  return { wins: cleared, deaths: dead, rounds: fights, taken: [], dealt: [], med: null, half: null, collapsed: null, crawl: true };
+  return { wins: cleared, deaths: dead, beats: fights, taken: [], dealt: [], med: null, half: null, collapsed: null, crawl: true };
 }
 
 // ---- Worker: one task, JSON out ---------------------------------------------------------------------------------------
@@ -247,7 +247,7 @@ if (process.env.FEATS_TASK) {
         if (r.error) { rows.push({ label: tasks[i].change.label, err: r.error }); continue; }
         const d = r.wins.map((x, j) => x - base.wins[j]);
         const md = mean(d), sd = Math.sqrt(mean(d.map((x) => (x - md) ** 2)) * d.length / Math.max(1, d.length - 1));
-        rows.push({ label: tasks[i].change.label, kind: tasks[i].change.kind, delta: 100 * md, se: 100 * sd / Math.sqrt(d.length), win: pc(mean(r.wins)), dead: mean(r.deaths) - mean(base.deaths), rounds: r.crawl ? mean(r.rounds) : mean(r.rounds) - mean(base.rounds), taken: r.crawl ? 0 : mean(r.taken) - mean(base.taken), dealt: r.crawl ? 0 : mean(r.dealt) - mean(base.dealt), half: r.half != null ? r.half - base.half : null });
+        rows.push({ label: tasks[i].change.label, kind: tasks[i].change.kind, delta: 100 * md, se: 100 * sd / Math.sqrt(d.length), win: pc(mean(r.wins)), dead: mean(r.deaths) - mean(base.deaths), beats: r.crawl ? mean(r.beats) : mean(r.beats) - mean(base.beats), taken: r.crawl ? 0 : mean(r.taken) - mean(base.taken), dealt: r.crawl ? 0 : mean(r.dealt) - mean(base.dealt), half: r.half != null ? r.half - base.half : null });
         if (jsonOut) require('fs').appendFileSync(jsonOut, JSON.stringify({ sim: 'feats', hero: h, level: LEVEL, crawl: CRAWL, n: N, seed: SEED, change: tasks[i].change, base: mean(base.wins), win: mean(r.wins), delta: md, se: sd / Math.sqrt(d.length), deadDelta: mean(r.deaths) - mean(base.deaths) }) + '\n');
       }
       rows.sort((a, b) => (b.delta || 0) - (a.delta || 0));
@@ -255,7 +255,7 @@ if (process.env.FEATS_TASK) {
       for (const r of rows) {
         if (r.err) { console.log('  ' + r.label.padEnd(32) + 'ERROR ' + r.err.split('\n')[0]); continue; }
         const sig = Math.abs(r.delta) > 2 * r.se ? '*' : ' ';
-        console.log(('  ' + r.label).padEnd(34) + `${r.delta >= 0 ? '+' : ''}${f1(r.delta)} ±${f1(r.se)}${sig}`.padEnd(14) + (r.win + '%').padEnd(6) + `${r.dead >= 0 ? '+' : ''}${r.dead.toFixed(2)}`.padEnd(14) + (CRAWL ? f1(r.rounds) : (r.rounds >= 0 ? '+' : '') + r.rounds.toFixed(2).padEnd(10 - (r.rounds >= 0 ? 1 : 0)) + ((r.taken >= 0 ? '+' : '') + r.taken.toFixed(2)).padEnd(14) + (r.dealt >= 0 ? '+' : '') + r.dealt.toFixed(2)));
+        console.log(('  ' + r.label).padEnd(34) + `${r.delta >= 0 ? '+' : ''}${f1(r.delta)} ±${f1(r.se)}${sig}`.padEnd(14) + (r.win + '%').padEnd(6) + `${r.dead >= 0 ? '+' : ''}${r.dead.toFixed(2)}`.padEnd(14) + (CRAWL ? f1(r.beats) : (r.beats >= 0 ? '+' : '') + r.beats.toFixed(2).padEnd(10 - (r.beats >= 0 ? 1 : 0)) + ((r.taken >= 0 ? '+' : '') + r.taken.toFixed(2)).padEnd(14) + (r.dealt >= 0 ? '+' : '') + r.dealt.toFixed(2)));
       }
       console.log('');
     }

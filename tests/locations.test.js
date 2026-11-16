@@ -24,7 +24,7 @@ function body(name, pieces) {
   c.stamina = C.maxStamina(c);
   return c;
 }
-const enc0 = () => ({ hitThisRound: {}, fortressUsed: {}, log: [], pos: {} });
+const enc0 = () => ({ struck: {}, fortressUsed: {}, log: [], pos: {} });
 const swing = (c) => C.attackOptions(c).find((o) => o.damage[1] > 0 && !o.power && !o.windUp);
 
 test('locations: shares sum to 1; a full harness keeps its old numbers; a half one is full plate where it is', () => {

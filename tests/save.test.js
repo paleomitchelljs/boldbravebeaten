@@ -25,7 +25,7 @@ test('save: a version-2 save comes up to the current shape', () => {
   // Attribute damage and bleeding from before step E.
   delete c.wounds;
   c.damage = { STR: 2, DEX: 3, CON: 1, SPD: 0, INT: 0, WIL: 0, WIS: 0, CHA: 0 };
-  c.bleeds = [{ remaining: 4, rounds: 2 }];
+  c.bleeds = [{ remaining: 4, beats: 2 }];
   w.supplies.bandages = 4;
   w.version = 2;
   const back = Save.deserialize(Save.serialize(w));

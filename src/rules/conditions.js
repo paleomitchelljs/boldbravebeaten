@@ -1,21 +1,22 @@
 /*
  * Conditions (PROVISIONAL): timed effects on a character — slowed, rooted, burning, hasted…
  *
- * c.status.conds is a list of { key, rounds, mag, src }. What each key does lives in
+ * c.status.conds is a list of { key, beats, mag, src }. What each key does lives in
  * CONFIG.conditions:
- *   ap        AP pool change per magnitude (base AP; × apScale)
+ *   ticks     ticks added to every action per magnitude (slowed +2, hasted −2)
  *   attrs     combat attribute changes per magnitude, e.g. { DEX: -1, SPD: -1 }
  *   mit       mitigation per magnitude, e.g. { B: 2 }, also for the unarmored
- *   dot       loss at the end of each round per magnitude, e.g. { CON: 1 } or { stamina: 2 }
+ *   dot       loss at each beat per magnitude, e.g. { CON: 1 } or { stamina: 2 }
  *   regen     stamina regeneration per magnitude
  *   noMove    can't move (rooted); `breakAttr` is what breaks free (the Break free action)
  *   freedom   ignores difficult ground, slick ice and roots
  *   kindled   the bearer's melee blows set the target burning
  *   resist    damage keyword multipliers, as on a monster or gear (a frost ward: { fire: 0.5 })
- *   moveMult  × squares per move (chilled: 0.5); drainAP: AP lost at once when it lands (stunned)
+ *   moveMult  × squares per move (chilled: 0.5); stagger: ticks on the bearer's clock at once when it lands (stunned)
  *   noAct     no actions at all (mesmerized, paralyzed); helpless: blows find the gaps as on the pinned
  *   unseen    can't be picked out beyond arm's reach; ends when the bearer attacks
- * A condition lasts `rounds` round ends. Applying one that is already there keeps the longer
+ * A condition lasts `beats` beats (CONFIG.clock.beat): it counts down at each beat, so one given 1 lasts until the
+ * next beat. Applying one that is already there keeps the longer
  * duration and the larger magnitude.
  */
 (function (G) {
@@ -50,18 +51,18 @@
     opts = opts || {};
     const conds = c.status.conds || (c.status.conds = []);
     const cur = conds.find((x) => x.key === key);
-    const rounds = opts.rounds || 1, mag = opts.mag || 1;
+    const beats = opts.beats || 1, mag = opts.mag || 1;
     // Extra details some conditions carry: vs (whom it concerns), kind (a ward's kind), pool.
     const extra = {};
     for (const k of ['vs', 'kind', 'pool', 'truth', 'note']) if (opts[k] != null) extra[k] = opts[k];
     if (cur) {
-      cur.rounds = Math.max(cur.rounds, rounds);
+      cur.beats = Math.max(cur.beats, beats);
       cur.mag = Math.max(cur.mag, mag);
       Object.assign(cur, extra);
       clamp(c);
       return cur;
     }
-    const n = Object.assign({ key, rounds, mag, src: opts.src || null }, extra);
+    const n = Object.assign({ key, beats, mag, src: opts.src || null }, extra);
     conds.push(n);
     clamp(c);
     return n;
@@ -88,7 +89,7 @@
     return t;
   }
 
-  // AP, regeneration, squares per move and flags are read through G.Effects with traits and gear.
+  // Ticks, regeneration, squares per move and flags are read through G.Effects with traits and gear.
   const attrMod = (c, a) => sum(c, 'attrs', a);
   // Protection that isn't armor; a vsUndead one (a spirit shield) only against an undead attacker.
   const mitigation = (c, k, attacker) => sum(c, 'mit', k, (d) => !d.vsUndead || !!(attacker && G.Effects.has(attacker, 'undead')));
@@ -96,8 +97,8 @@
   // The condition that makes the bearer afraid of its source (fearOf), if any.
   const fear = (c) => list(c).find((x) => (defs()[x.key] || {}).fearOf) || null;
 
-  // End of round: damage over time, then every condition ticks down a round.
-  function endRound(c) {
+  // A beat: damage over time, then every condition counts down a beat.
+  function beat(c) {
     const lines = [];
     const conds = list(c);
     if (!conds.length) return lines;
@@ -113,9 +114,9 @@
         lines.push(`${d.name} costs ${c.name} ${amt} ${what === 'stamina' ? 'stamina' : 'harm'}.`);
       }
     }
-    for (const x of conds) x.rounds -= 1;
-    const gone = conds.filter((x) => x.rounds <= 0).map((x) => (defs()[x.key] || {}).name || x.key);
-    c.status.conds = conds.filter((x) => x.rounds > 0);
+    for (const x of conds) x.beats -= 1;
+    const gone = conds.filter((x) => x.beats <= 0).map((x) => (defs()[x.key] || {}).name || x.key);
+    c.status.conds = conds.filter((x) => x.beats > 0);
     clamp(c);
     if (gone.length) lines.push(`${c.name}: ${gone.join(', ')} wears off.`);
     return lines;
@@ -123,8 +124,8 @@
 
   // Short labels for the roster.
   function labels(c) {
-    return list(c).map((x) => `${(defs()[x.key] || {}).name || x.key}${x.kind ? ': ' + x.kind : ''}${x.pool != null ? ' ' + x.pool : x.mag > 1 ? ' ' + x.mag : ''} (${x.rounds})`);
+    return list(c).map((x) => `${(defs()[x.key] || {}).name || x.key}${x.kind ? ': ' + x.kind : ''}${x.pool != null ? ' ' + x.pool : x.mag > 1 ? ' ' + x.mag : ''} (${x.beats})`);
   }
 
-  G.Conditions = { list, get, has, add, typeOf, remove, attrMod, mitigation, canMove, fear, endRound, labels };
+  G.Conditions = { list, get, has, add, typeOf, remove, attrMod, mitigation, canMove, fear, beat, labels };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

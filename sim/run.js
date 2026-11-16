@@ -67,12 +67,12 @@ SCENARIOS.length = async () => {
     for (const lvl of LEVELS) {
       for (const [gname, grid] of [['open', OPEN], ['corridor', CORRIDOR]]) {
         const s = await series(N, mk(arch, lvl), mk(arch, lvl), grid, { seed: 1 });
-        const pass = s.medianRounds <= T.medianRoundsMax;
-        record('length', `${arch} L${lvl} ${gname}`, 'median_rounds', s.medianRounds, `≤ ${T.medianRoundsMax}`, pass);
-        record('length', `${arch} L${lvl} ${gname}`, 'p90_rounds', s.p90Rounds);
+        const pass = s.medianBeats <= T.medianRoundsMax;
+        record('length', `${arch} L${lvl} ${gname}`, 'median_rounds', s.medianBeats, `≤ ${T.medianRoundsMax}`, pass);
+        record('length', `${arch} L${lvl} ${gname}`, 'p90_rounds', s.p90Beats);
         record('length', `${arch} L${lvl} ${gname}`, 'draw_rate', s.draw);
         record('length', `${arch} L${lvl} ${gname}`, 'deaths_per_fight', s.deathRate);
-        out.push([arch, 'L' + lvl, gname, s.medianRounds + (pass ? '' : ' ✗'), s.p90Rounds, pct(s.draw), pct(s.timeout), s.deathRate.toFixed(2)]);
+        out.push([arch, 'L' + lvl, gname, s.medianBeats + (pass ? '' : ' ✗'), s.p90Beats, pct(s.draw), pct(s.timeout), s.deathRate.toFixed(2)]);
       }
     }
   }
@@ -96,7 +96,7 @@ SCENARIOS.gap = async () => {
           const graded = gname === 'corridor' && foeLvl >= T.gapLevel && armored !== 'sellsword';
           const pass = graded ? s.winA >= T.minWin : null;
           record('gap', `${armored} L1 vs ${foe} L${foeLvl} ${gname}`, 'armored_win', s.winA, graded ? `≥ ${pct(T.minWin)}` : '', pass);
-          out.push([`${armored} L1`, `${foe} L${foeLvl}`, gname, pct(s.winA) + (pass === false ? ' ✗' : ''), s.medianRounds]);
+          out.push([`${armored} L1`, `${foe} L${foeLvl}`, gname, pct(s.winA) + (pass === false ? ' ✗' : ''), s.medianBeats]);
         }
       }
     }
@@ -117,10 +117,10 @@ SCENARIOS.twoOnOne = async () => {
     for (const lvl of [4, 8]) {
       const s = await series(N, (i) => [build('sellsword', { level: lvl, name: 'sellsword A' }), build('sellsword', { level: lvl, name: 'sellsword B' })], () => [build(solo, { level: lvl })], OPEN, { seed: 11 })
         .catch((e) => { throw e; });
-      const pass = s.winA >= T.pairMinWin && s.medianRounds <= T.medianRoundsMax;
+      const pass = s.winA >= T.pairMinWin && s.medianBeats <= T.medianRoundsMax;
       record('twoOnOne', `2 sellswords vs ${solo} L${lvl}`, 'pair_win', s.winA, `≥ ${pct(T.pairMinWin)}`, s.winA >= T.pairMinWin);
-      record('twoOnOne', `2 sellswords vs ${solo} L${lvl}`, 'median_rounds', s.medianRounds, `≤ ${T.medianRoundsMax}`, s.medianRounds <= T.medianRoundsMax);
-      out.push([solo, 'L' + lvl, pct(s.winA) + (s.winA >= T.pairMinWin ? '' : ' ✗'), s.medianRounds + (s.medianRounds <= T.medianRoundsMax ? '' : ' ✗'), s.deadA.toFixed(2)]);
+      record('twoOnOne', `2 sellswords vs ${solo} L${lvl}`, 'median_rounds', s.medianBeats, `≤ ${T.medianRoundsMax}`, s.medianBeats <= T.medianRoundsMax);
+      out.push([solo, 'L' + lvl, pct(s.winA) + (s.winA >= T.pairMinWin ? '' : ' ✗'), s.medianBeats + (s.medianBeats <= T.medianRoundsMax ? '' : ' ✗'), s.deadA.toFixed(2)]);
     }
   }
   return {
@@ -146,11 +146,11 @@ function endurance(c, maxRounds) {
       c.stamina -= o.stamina;
       acted = true;
     }
-    if (!acted) return { rounds: r - 1, fatiguedAt: c.fatiguedAt || null };
+    if (!acted) return { beats: r - 1, fatiguedAt: c.fatiguedAt || null };
     c.stamina = Math.max(0, Math.min(C.maxStamina(c), c.stamina + C.regen(c)));
     if (!c.fatiguedAt && C.fatiguePenalty(c) > 0) c.fatiguedAt = r;
   }
-  return { rounds: maxRounds, fatiguedAt: c.fatiguedAt || null };
+  return { beats: maxRounds, fatiguedAt: c.fatiguedAt || null };
 }
 
 SCENARIOS.stamina = async () => {
@@ -173,10 +173,10 @@ SCENARIOS.stamina = async () => {
   for (const [label, arch, lvl, extra] of cases) {
     const c = build(arch, Object.assign({ level: lvl }, extra));
     const e = endurance(c, T.indefinite);
-    res[label] = e.rounds;
+    res[label] = e.beats;
     const fresh = build(arch, Object.assign({ level: lvl }, extra));
-    out.push([label, C.maxStamina(fresh), (C.regen(fresh) >= 0 ? '+' : '') + C.regen(fresh), C.apPool(fresh), e.rounds >= T.indefinite ? `${T.indefinite}+` : e.rounds, e.fatiguedAt || '—']);
-    record('stamina', label, 'rounds_full_effort', e.rounds);
+    out.push([label, C.maxStamina(fresh), (C.regen(fresh) >= 0 ? '+' : '') + C.regen(fresh), C.apPool(fresh), e.beats >= T.indefinite ? `${T.indefinite}+` : e.beats, e.fatiguedAt || '—']);
+    record('stamina', label, 'rounds_full_effort', e.beats);
   }
   const v = [
     ['Early unarmored tires within a few rounds', res['Unarmored L1 (sellsword stats, no armor)'], `${T.earlyMin}–${T.earlyMax}`, res['Unarmored L1 (sellsword stats, no armor)'] >= T.earlyMin && res['Unarmored L1 (sellsword stats, no armor)'] <= T.earlyMax],
@@ -333,7 +333,7 @@ SCENARIOS.kick = async () => {
   for (const arch of ['militia', 'sellsword', 'duelist', 'knight']) {
     const s = await series(N, () => build(arch, { level: 4, policy: { kickBias: 20 } }), mk(arch, 4), OPEN, { seed: 31 });
     record('kick', `${arch} L4 kicker vs normal`, 'kicker_win', s.winA, `≤ ${pct(T.maxWin)}`, s.winA <= T.maxWin);
-    out.push([arch, pct(s.winA) + (s.winA <= T.maxWin ? '' : ' ✗'), s.medianRounds]);
+    out.push([arch, pct(s.winA) + (s.winA <= T.maxWin ? '' : ' ✗'), s.medianBeats]);
   }
   return {
     title: 'Kick spam',
@@ -357,7 +357,7 @@ SCENARIOS.party = async () => {
     const pass = s.winA >= T.minWin && s.winA <= T.maxWin;
     record('party', label, 'party_win', s.winA, `${pct(T.minWin)}–${pct(T.maxWin)}`, pass);
     record('party', label, 'party_deaths', s.deadA);
-    out.push([label, pct(s.winA) + (pass ? '' : ' ✗'), s.deadA.toFixed(2), s.medianRounds]);
+    out.push([label, pct(s.winA) + (pass ? '' : ' ✗'), s.deadA.toFixed(2), s.medianBeats]);
   }
   return {
     title: 'Starting party against a plate-and-tower knight',
@@ -377,9 +377,9 @@ SCENARIOS.fatigue = async () => {
     CONFIG.fatigueSteps = [];
     const noF = await series(N, mk(arch, 4), mk(arch, 4), OPEN, { seed: 51 });
     CONFIG.fatigueSteps = saved;
-    record('fatigue', arch, 'mean_rounds_with', withF.meanRounds);
-    record('fatigue', arch, 'mean_rounds_without', noF.meanRounds);
-    out.push([arch, withF.meanRounds.toFixed(2), noF.meanRounds.toFixed(2)]);
+    record('fatigue', arch, 'mean_rounds_with', withF.meanBeats);
+    record('fatigue', arch, 'mean_rounds_without', noF.meanBeats);
+    out.push([arch, withF.meanBeats.toFixed(2), noF.meanBeats.toFixed(2)]);
   }
   return {
     title: 'Fatigue and fight length',
