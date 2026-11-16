@@ -21,8 +21,8 @@ function approach(skinkAt, archerAt) {
   enc.pos[archer.id] = archerAt;
   enc.pos[skink.id] = skinkAt;
   for (let t = 1; t <= 8; t++) {
-    enc.round = t; enc.phase = 'turn'; enc.order = [skink.id, archer.id]; enc.turn = 0; enc.decls = []; enc.turnDone = {};
-    for (const id of enc.order) { Clock.free(enc, id); enc.apStart[id] = enc.ap[id]; }
+    Clock.onClock(enc); enc.beat = t; enc.decls = [];
+    Clock.actNow(enc, skink.id);
     const d = AI.choose(enc, chars, skink.id, () => 0.9);
     if (d.type === 'strike' || d.type === 'bait') return t;
     if (d.type !== 'move') return Infinity;

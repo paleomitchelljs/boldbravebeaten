@@ -71,18 +71,18 @@ test('rule: an ordinary shield cannot block a spell bolt; a Spellcatcher can', a
   assert.ok(Combat.defenseOptions(enc, chars, s, m, decl).options.some((o) => o.type === 'block'));
 });
 
-test('items: the silk sash cuts every action by a fifth; a blade of speed takes AP off its own strikes and parries', () => {
+test('items: the silk sash cuts every action by a fifth; a blade of speed takes a tick off its own strikes and parries', () => {
   const c = armed('C', 'longsword');
-  const swing = C.attackOptions(c).find((o) => o.motion === 'swing').ap;
-  const move = C.moveCost(c, 1);
+  const swing = C.attackOptions(c).find((o) => o.motion === 'swing').ticks;
+  const move = C.moveTicks(c, 3);
   wear(c, 'silk_sash');
-  assert.equal(C.attackOptions(c).find((o) => o.motion === 'swing').ap, C.quantAP(Math.round(swing * 0.8)));
-  assert.ok(C.moveCost(c, 1) < move);
+  assert.ok(Math.abs(C.attackOptions(c).find((o) => o.motion === 'swing').ticks - swing * 0.8) <= 0.5 + 1e-9);
+  assert.ok(C.moveTicks(c, 3) < move);
   const d = armed('D', 'longsword', 'party', { enchantments: ['speed'] });
   const plain = armed('P', 'longsword');
-  const sw = (x) => C.attackOptions(x).find((o) => o.motion === 'swing').ap;
-  assert.equal(sw(plain) - sw(d), Math.round(0.5 * C.costScale()));
-  assert.equal(C.actionCost(plain, 'parry').ap - C.actionCost(d, 'parry').ap, Math.round(0.5 * C.costScale()));
+  const sw = (x) => C.attackOptions(x).find((o) => o.motion === 'swing').ticks;
+  assert.equal(sw(plain) - sw(d), 1);
+  assert.equal(C.actionCost(plain, 'parry').ticks - C.actionCost(d, 'parry').ticks, 1);
 });
 
 test('items: a sapping blade wrenches the arm, drains stamina and eats armor; a goading blade riles; a thunder blade can stun', async () => {
@@ -105,12 +105,12 @@ test('items: a sapping blade wrenches the arm, drains stamina and eats armor; a 
   const s = armed('S', 'shortsword', 'party', { enchantments: ['stunning'] }); s.at = { x: 1, y: 2 };
   const v = fighter('V', 'enemy'); v.at = { x: 2, y: 2 };
   const r3 = await arena([s, v]);
-  const apBefore = r3.enc.ap[v.id];
+  const apBefore = r3.enc.clock[v.id];
   const strikeRolls = [];
   const rr = async (req) => { strikeRolls.push(req.label); if (/resist/.test(req.label)) return [1]; if (/: stunned$/.test(req.label)) return [10]; if (/: Stunned$/.test(req.detail || '')) return [1]; return Array.from({ length: req.count }, () => 3); };
   await Clock.act(r3.enc, r3.chars, { actor: s.id, type: 'strike', option: C.attackOptions(s).find((o) => o.motion === 'swing'), target: v.id }, { roller: rr, react: noReact });
   assert.ok(Conditions.has(v, 'stunned'), strikeRolls.join(' | '));
-  assert.ok(r3.enc.ap[v.id] < apBefore, 'AP lost at once');
+  assert.ok(r3.enc.clock[v.id] > apBefore, 'ticks on the clock at once');
 });
 
 test('items: ebon mail is as hard as plate, halves fire and breathes poison on foes beside the wearer', async () => {
@@ -180,9 +180,9 @@ test('spells: decay eats armor and gear; frost chills (half the squares); Bind p
   await Clock.act(enc, chars, { actor: m.id, type: 'strike', option: C.attackOptions(m).find((o) => o.spellKey === 'strike+decay'), target: t.id }, { roller: roller([10], 5), react: noReact });
   assert.ok(t.armor.durability <= dur - B.CONFIG.magic.words.shapes.bolt.mag);
   assert.ok(Items.weaponDurability(C.wieldedWeapon(t)) < wdur);
-  const spd = C.squaresPerAP(t);
+  const spd = C.pace(t);
   Conditions.add(t, 'chilled', { beats: 2 });
-  assert.ok(C.squaresPerAP(t) <= Math.ceil(spd / 2));
+  assert.ok(C.pace(t) <= Math.ceil(spd / 2));
   const bind = Combat.legalActions(enc, chars, m.id).spells.find((o) => o.spellKey === 'bind');
   assert.equal(bind.spell.cond, 'paralyzed', 'Bind alone holds a body still');
   await Clock.act(enc, chars, { actor: m.id, type: 'cast', option: bind, target: t.id }, { roller: roller([10, 10, 1], 10), react: noReact });
@@ -211,7 +211,7 @@ test('spells: lightning (Storm) leaps to the nearest other body; charm (Bind + M
   assert.equal(x.side, 'enemy', 'harm breaks it at once');
 });
 
-test('spells: Delayed marks an area that breaks at the end of the round; darkness hurts and slows', async () => {
+test('spells: Delayed marks an area that breaks at the next beat; darkness hurts and slows', async () => {
   const m = mage('M', ['fire', 'shadow']); m.at = { x: 0, y: 2 };
   const f = fighter('F', 'enemy'); f.at = { x: 4, y: 2 };
   const g = fighter('G', 'enemy'); g.at = { x: 6, y: 2 };
@@ -281,7 +281,7 @@ test('Raise: Death raises a skeleton, with the feats a zombie or a mummy; Life c
   const risen = Object.values(enc.extra || {})[0];
   assert.ok(risen && risen.side === m.side && risen.monster === 'mummy' && risen.traits.undead);
   m.status.unconscious = true;
-  const lines = Magic.endRound(enc, chars);
+  const lines = Magic.beat(enc, chars);
   assert.ok(risen.status.dead && lines.some((l) => /falls/.test(l)));
   // Raise + Life is for an ally just dead, and only them.
   const o = Magic.spellOptions(m).find((x) => x.spellKey === 'raise+life');
@@ -305,7 +305,7 @@ test('summon: an elemental comes unbound and raging, or bound with Summon + Bind
   m.nouns.push('outsider');
   const bind = Combat.legalActions(enc, chars, m.id).spells.find((x) => x.spellKey === 'bind+outsider');
   assert.ok(bind.targets.some((t) => t.id === e.id && t.inReach), 'it can be bound where it stands');
-  // (Resolved straight away: the summoning spent this turn's AP.)
+  // (Resolved straight away.)
   await Magic.resolveCast(enc, chars, { actor: m.id, type: 'cast', option: bind, target: e.id }, roller([10, 10, 1], 5), enc.pos);
   assert.ok(e.conjured.bound && !Conditions.has(e, 'enraged'), enc.log.map((l) => l.text).join(' | '));
 });

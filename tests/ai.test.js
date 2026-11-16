@@ -41,7 +41,7 @@ async function field(list, w, h) {
 
 // A seeded fight from the sims, with the step-5 metrics watching it.
 const SIM = path.join(__dirname, '..', 'sim');
-async function watched(make, grid, seed, maxRounds) {
+async function watched(make, grid, seed, maxBeats) {
   const L = require(path.join(SIM, 'lib'));
   const M = require(path.join(SIM, 'metrics')).create();
   const { A, B: Bs } = make();
@@ -55,22 +55,19 @@ const styles = (a, b) => () => {
 
 // ---- The approach budget ---------------------------------------------------------------------------------------
 
-test('approach: a fighter does not walk into a spear\'s reach with no AP left to meet its thrust', async () => {
+test('approach: a fighter does not walk into a spear\'s reach too far ahead on the clock to meet its thrust', async () => {
   const a = armed('Sword', 'longsword', 'party');
   const s = armed('Spear', 'spear', 'enemy');
   const { enc, chars } = await field([[a, 0, 2], [s, 7, 2]], 12, 5);
-  const def = Math.min(...['parry', 'dodge'].map((k) => C.actionCost(a, k).ap));
-  // Enough to walk four squares (into the spear's reach of 3) and nothing after.
+  // A move into the spear's reach (3) must leave it near enough on the clock to meet the thrust.
   const reach = Math.max(...C.attackOptions(s).map((o) => o.maxRange || 1));
-  Clock.free(enc, a.id);
   const d = AI.choose(enc, chars, a.id, () => 0.99);
   if (d.type === 'move') {
     const inReach = Combat.dist(d.to, enc.pos[s.id]) <= reach;
-    const left = enc.ap[a.id] - C.moveCost(a, Combat.steps(d.to, enc.pos[a.id]));
-    assert.ok(!inReach || left >= def, `walked in to ${Combat.dist(d.to, enc.pos[s.id])} with ${left} AP (a defence costs ${def})`);
+    const ticks = C.moveTicks(a, Combat.steps(d.to, enc.pos[a.id]));
+    assert.ok(!inReach || ticks <= B.CONFIG.clock.overreach, `walked in to ${Combat.dist(d.to, enc.pos[s.id])} for ${ticks} ticks`);
   }
-  // With a full round's AP it still comes on (it may wait at the edge for the spear to step in: that is a choice).
-  Clock.free(enc, a.id);
+  // It still comes on (it may wait at the edge for the spear to step in: that is a choice).
   const d2 = AI.choose(enc, chars, a.id, () => 0.99);
   assert.equal(d2.type, 'move');
   assert.ok(Combat.dist(d2.to, enc.pos[s.id]) < 7);
@@ -81,29 +78,31 @@ test('approach (seeded): the sword-and-shield fighter no longer walks in bare (a
   assert.equal(ai.intoReachBare, 0);
 });
 
-test('approach: what it guesses of a foe\'s AP comes from what it saw, not the foe\'s pool', async () => {
-  const a = armed('Sword', 'longsword', 'party');
-  const s = armed('Spear', 'spear', 'enemy');
-  const { enc, chars } = await field([[a, 0, 2], [s, 7, 2]], 12, 5);
-  Clock.free(enc, a.id);
-  const pick = (foeAP) => { enc.ap[s.id] = foeAP; return JSON.stringify(AI.choose(enc, chars, a.id, () => 0.99)); };
-  assert.equal(pick(0), pick(999), 'the foe\'s true AP changed the choice');
+test('timing: a heavy blow is worth more at a foe who has overreached, less at one who acts before it lands', async () => {
+  const a = armed('Heavy', 'greatsword', 'party'); a.feats.power_swing = 1;
+  const f = armed('Foe', 'longsword', 'enemy');
+  const { enc, chars } = await field([[a, 2, 2], [f, 3, 2]]);
+  const two = C.attackOptions(a).find((o) => o.motion === 'twoHanded');
+  enc.clock[f.id] = enc.now + 1;
+  const early = AI.timing(enc, a, f, two);
+  Clock.far(enc, f.id);
+  const open = AI.timing(enc, a, f, two);
+  assert.ok(early < 1 && open > 1, `early ${early}, open ${open}`);
 });
 
-test('defence: a block that leaves no AP for the blow I\'d strike on my turn costs that blow too', async () => {
+test('defence: a block that takes me past overreach is worth less', async () => {
   const t = armed('Shield', 'longsword', 'party');
   t.shield = Items.makeShield('round', 'iron');
   const a = armed('Axe', 'longsword', 'enemy');
   const { enc, chars } = await field([[a, 2, 2], [t, 3, 2]]);
   const thrust = C.attackOptions(a).find((o) => o.motion === 'thrust');
-  const decl = { actor: a.id, type: 'strike', option: thrust, target: t.id, ap: thrust.ap };
+  const decl = { actor: a.id, type: 'strike', option: thrust, target: t.id, ticks: thrust.ticks };
   const block = Combat.defenseOptions(enc, chars, t, a, decl).options.find((o) => o.type === 'block');
   assert.ok(block);
-  const mine = Math.min(...C.attackOptions(t).filter((o) => !o.unarmed).map((o) => o.ap));
-  const ask = (ap) => AI.react(enc, chars, { kind: 'defend', actor: t.id, attacker: a.id, decl, hidden: false, options: [block], ap });
-  // With AP for a block and a blow, it blocks; the cost of losing the blow can only make it less keen when short.
-  assert.equal(ask(block.ap + mine + 5), 'block');
-  const short = ask(block.ap + mine - 1);
+  const ask = (ahead) => AI.react(enc, chars, { kind: 'defend', actor: t.id, attacker: a.id, decl, hidden: false, options: [block], ahead });
+  // Near on the clock, it blocks; a block that takes it past overreach can only make it less keen.
+  assert.equal(ask(0), 'block');
+  const short = ask(B.CONFIG.clock.overreach);
   assert.ok(short === null || short === 'block');
 });
 
@@ -177,7 +176,7 @@ test('stand-off: two spears with a wall between wait at most five rounds, then o
   AI.choose(enc, chars, a.id, () => 0.99);
   // Each round at the edge with nobody striking halves that (it used to count from the fight's first round, so a
   // fighter came in careless by round 3 of a long walk up, and two waiting at the edge never did).
-  const moved = [2, 3, 4, 5, 6].find((r) => { enc.round = r; return AI.choose(enc, chars, a.id, () => 0.99).type === 'move'; });
+  const moved = [2, 3, 4, 5, 6].find((r) => { enc.beat = r; return AI.choose(enc, chars, a.id, () => 0.99).type === 'move'; });
   assert.ok(moved, 'never came round the wall');
 });
 
@@ -217,7 +216,7 @@ test('To Your Feet: a collapsed friend beside me is hauled up', async () => {
   assert.equal(d.target, b.id);
 });
 
-test('Command: an AP for a hard-hitting friend in reach of a foe, from one who can\'t strike', async () => {
+test('Command: a few ticks sooner for a hard-hitting friend in reach of a foe, from one who can\'t strike', async () => {
   const a = armed('Captain', null, 'party'); a.feats.rally = 1; a.feats.command = 1;
   const b = armed('Axe', 'greatsword', 'party'); b.base.STR = 8;
   const f = armed('Foe', 'longsword', 'enemy');
@@ -267,7 +266,7 @@ test('Feign Death: badly hurt, a friend still up, a foe beside me: lie still, an
   const d = AI.choose(enc, chars, a.id, () => 0.99);
   assert.equal(d.type, 'feign');
   await Combat.submit(enc, chars, d, { roller: roller(2), react: async () => null });
-  if (Combat.currentActor(enc) === a.id) assert.equal(AI.choose(enc, chars, a.id, () => 0.99).type, 'endTurn');
+  if (Combat.currentActor(enc) === a.id) assert.equal(AI.choose(enc, chars, a.id, () => 0.99).type, 'wait');
 });
 
 // ---- Overchannel -----------------------------------------------------------------------------------------------

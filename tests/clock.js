@@ -16,16 +16,15 @@ function actNow(enc, id) {
   enc.actor = id;
   enc.phase = 'act';
 }
-// An action by decl.actor, made the one to act now first.
+// An action by decl.actor, made the one to act now first; it lands within the call (actLand).
 async function act(enc, chars, decl, io) {
-  actNow(enc, decl.actor);
-  return Combat.act(enc, chars, decl, io);
+  return actLand(enc, chars, decl, io);
 }
 // An action that lands within the call: the others' clocks just past its lead (they can still react to it).
 async function actLand(enc, chars, decl, io) {
   actNow(enc, decl.actor);
   const o = decl.option || {};
-  const lead = o.lead != null ? o.lead : (C.actionCost(chars[decl.actor], decl.type).lead || 0);
+  const lead = o.lead != null ? o.lead : decl.type === 'move' || decl.type === 'cast' ? 0 : (C.actionCost(chars[decl.actor], decl.type).lead || 0);
   for (const id of enc.ids) if (id !== decl.actor && enc.clock[id] <= enc.now + lead) enc.clock[id] = enc.now + lead + 1;
   return Combat.act(enc, chars, decl, io);
 }
