@@ -462,3 +462,19 @@ kbd { font: 600 0.72rem var(--font-mono); padding: 0 4px; border: 1px solid var(
 /* Reaction orders: a hero's six choices in a grid, so the card is a few lines, not a column. */
 .orders-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 6px 10px; }
 .orders-grid .pick { display: flex; flex-direction: column; gap: 2px; min-width: 0; } .orders-grid select { width: 100%; min-width: 0; font-size: 0.78rem; }
+
+/* ---- The timeline and the clock meter (docs/OVERHAUL.md step F) ---- */
+.initbar.timeline { align-items: flex-end; }
+.initbar .init.tl.committed { outline: 1px dashed #ffb35c; outline-offset: 1px; }
+.initbar .tl-n { position: absolute; left: 1px; top: 1px; font-size: 0.6rem; line-height: 1; padding: 1px 2px; background: rgba(5, 8, 11, 0.85); color: #f0e6c8; }
+.initbar .tl-lands { font-size: 0.6rem; line-height: 1; color: #ffb35c; text-align: center; }
+.initbar .tl-wait { position: absolute; left: 1px; bottom: 9px; font-size: 0.7rem; line-height: 1; color: #9fd1ff; }
+.initbar .tl-beat { align-self: center; font-size: 0.62rem; color: #c8b98a; padding: 0 4px; border-left: 2px solid #c8b98a; border-right: 2px solid #c8b98a; white-space: nowrap; }
+.battle-screen .ap-meter.clk { display: inline-block; max-width: none; }
+.ap-meter.clk .clk-bar { position: relative; display: block; width: 120px; height: 10px; background: rgba(10, 15, 19, 0.86); border: 1px solid #3a4652; }
+.ap-meter.clk .clk-bar i { position: absolute; top: 0; bottom: 0; width: auto; height: auto; margin: 0; border: 0; }
+.ap-meter.clk .clk-bar i.reach { background: rgba(74, 143, 217, 0.35); }
+.ap-meter.clk .clk-bar i.will { background: repeating-linear-gradient(135deg, #ffd166 0 2px, #9a6a1c 2px 4px); opacity: 0.85; }
+.ap-meter.clk .clk-bar i.will.over { background: repeating-linear-gradient(135deg, #ff6b5e 0 2px, #7a2a22 2px 4px); }
+.ap-meter.clk .clk-bar i.lead { width: 2px; background: #fff; }
+@media (max-width: 560px) { .ap-meter.clk .clk-bar { width: 84px; } .initbar .tl-beat { font-size: 0.55rem; } }

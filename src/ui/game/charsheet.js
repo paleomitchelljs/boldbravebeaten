@@ -20,7 +20,7 @@
   const ATTR_NAME = { STR: 'Strength', CON: 'Constitution', DEX: 'Dexterity', SPD: 'Speed', INT: 'Intellect', WIL: 'Will', WIS: 'Wisdom', CHA: 'Charisma' };
   const ATTR_INFO = {
     STR: 'Force: damage, grappling, carrying heavy gear.', CON: 'Toughness: staying up through a bad wound (shock), bleeding, poison and disease; with WIL, stamina regeneration.', DEX: 'Aim, parrying, locks and traps.',
-    SPD: 'Initiative, AP, movement, stealth.', INT: 'Magic, lore, deception.', WIL: 'Resolve: acting through wounds (pain), coming round, fear, stamina regeneration and resisting magic.',
+    SPD: 'How fast you act (every action\'s ticks), movement, stealth.', INT: 'Magic, lore, deception.', WIL: 'Resolve: acting through wounds (pain), coming round, fear, stamina regeneration and resisting magic.',
     WIS: 'Perception and reading people.', CHA: 'Charm, appeal and bargaining.',
   };
 
@@ -86,7 +86,7 @@
         c.armor ? h('span', { class: 'chip', title: 'Armor durability' }, `Dur ${ai.durability}/${ai.maxDurability}`) : null,
         ai.pierce ? h('span', { class: 'chip', title: `Points: one with ${ai.pierce.resist}+ punch gets through; a lighter one needs a margin on the blow, or is turned` }, `Pierce ${ai.pierce.resist}`) : null,
         ai.spd || ai.dex ? h('span', { class: 'chip warn', title: 'Armor slows and stiffens you' }, `SPD −${ai.spd} · DEX −${ai.dex}`) : null,
-        sh ? h('span', { class: 'chip', title: `Shield: a block costs ${C.fmtAP(C.actionCost(c, 'block').ap)} AP and holds blows up to ${sh.threshold}; durability ${c.shield.durability}/${sh.maxDurability}` }, `Shield ${C.fmtAP(C.actionCost(c, 'block').ap)} AP · ${sh.threshold}`) : null),
+        sh ? h('span', { class: 'chip', title: `Shield: a block takes ${C.actionCost(c, 'block').ticks} ticks and holds blows up to ${sh.threshold}; durability ${c.shield.durability}/${sh.maxDurability}` }, `Shield ${C.fmtAP(C.actionCost(c, 'block').ap)} AP · ${sh.threshold}`) : null),
       editable ? h('div', { class: 'row small muted' }, 'Gear comes from the pack.', tip('Swapping is for town, camp and the quiet before a fight. Pick from a slot\'s list to put something on; "Take off" sends it to the pack.')) : null);
   }
 
@@ -98,8 +98,10 @@
       return h('div', { class: 'tile' + (now < cap ? ' hurt' : ''), title: `${ATTR_NAME[a]}. ${ATTR_INFO[a]} ${parts}` },
         h('span', { class: 'label' }, a), h('b', { class: 'num' }, now), now < cap ? h('span', { class: 'small muted num' }, `/${cap}`) : null);
     };
-    const derived = [['AP', C.fmtAP(C.apPool(c)), 'Action points each round.'], ['Move', G.CONFIG.moveAP ? `${C.squaresPerAP(c)} sq` : `${C.squaresPerAP(c)} sq/AP`, G.CONFIG.moveAP ? `Squares one move covers, for ${C.fmtAP(C.moveCost(c, 1))} AP.` : 'Squares moved per AP.'], ['Init', 'd10+' + C.combatAttr(c, 'SPD'), 'Initiative roll.'],
-      ['Regen', (C.regen(c) >= 0 ? '+' : '') + C.regen(c), 'Stamina regained each round.'], ['Dmg', (C.strBonus(c) >= 0 ? '+' : '') + C.strBonus(c), 'Strength damage bonus.']];
+    const swing = C.attackOptions(c).find((o) => !o.unarmed && !o.spell);
+    const derived = [['Speed', `×${C.spdFactor(c).toFixed(2)}`, 'The SPD factor on every action\'s ticks (SPD 5: ×1).'], ['Move', `${C.pace(c)} sq`, `Squares a stretch of a move covers, for ${G.CONFIG.clock.stretch} ticks (${C.moveTicks(c, 1)} for one square).`],
+      ['Blow', swing ? `${swing.ticks}t` : '–', swing ? `${swing.label}: ${swing.ticks} ticks${swing.lead ? `, landing after ${swing.lead}` : ''}.` : 'No weapon blow.'],
+      ['Regen', (C.regen(c) >= 0 ? '+' : '') + C.regen(c), 'Stamina regained each beat.'], ['Dmg', (C.strBonus(c) >= 0 ? '+' : '') + C.strBonus(c), 'Strength damage bonus.']];
     return h('div', { class: 'stack' },
       h('div', { class: 'tiles' }, G.CONFIG.attributes.map(tile)),
       h('div', { class: 'tiles small' }, derived.map(([k, v, t]) => h('div', { class: 'tile', title: t }, h('span', { class: 'label' }, k), h('b', { class: 'num' }, v)))),
@@ -190,7 +192,7 @@
     const tabBtn = (id, label) => h('button', { class: `tab ${tab === id ? 'active' : ''}`, onclick: () => { o.tab = id; game.openOverlay('sheet', o); } }, label);
     const L = UI.Sprites.look(c);
     const enc = w.battle && w.battle.enc;
-    const apLine = enc && enc.ap && enc.ap[c.id] != null && (mine || enc.phase !== 'declare') ? `${C.fmtAP(enc.ap[c.id])} AP left` : null;
+    const apLine = enc && enc.clock && enc.clock[c.id] != null ? `ready in ${G.Combat.ahead(enc, c.id)} ticks` : null;
     const body = tab === 'gear' ? gearTab(game, o, c, editable) : tab === 'stats' ? statsTab(c) : tab === 'feats' ? featsTab(game, c, editable) : tab === 'skills' ? skillsTab(game, c, editable)
       : h('textarea', { 'aria-label': 'Notes', value: c.notes || '', placeholder: 'Notes about this character', onchange: (e) => { c.notes = e.target.value; } });
     const tabs = mine ? ['gear', 'Gear', 'stats', 'Stats', 'feats', 'Feats', 'skills', 'Skills', 'notes', 'Notes'] : ['gear', 'Gear', 'stats', 'Stats', 'feats', 'Feats', 'skills', 'Skills'];

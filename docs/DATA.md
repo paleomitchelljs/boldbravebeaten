@@ -11,12 +11,12 @@ No anchors or tags. Keys must be unique.
 |---|---|
 | `rules.yaml` | Numbers: party creation, XP, training prices, time, skill target numbers, faction spread, parley, economy, the gear foes roll (`enemyGear`). `game:` keys are read by the game layer; anything else is deep-merged over `src/rules/config.js`. |
 | `armor.yaml` | Armor types (padded, leather, mail, plate): mitigation per face (P pierce, S slash, B blunt), SPD/DEX penalties, stamina, regen, durability, usual and allowed materials, `pierce` (`resist`: the punch a point needs to get through it with no margin), `transmit` (mail: more of a cut's force as blunt), `cutThrough` (padding and leather: how much cut they stop), `dissipate` (plate), rarity. Each piece is the whole harness: padding is assumed under mail and plate. `natural: true` for monster hides. |
-| `shields.yaml` | `types` (block AP, threshold, durability) and `materials` (multiplier). |
+| `shields.yaml` | `types` (`blockTicks`, threshold, durability) and `materials` (multiplier). |
 | `materials.yaml` | What gear is made of: hardness, toughness, weight, protection, `metal`, `rusts`, `organic` (a blade wears less on it), `exotic`. |
 | `origins.yaml` | Where and how gear was made (common, elven, dwarven, goblin): weight against protection, damage and durability. |
 | `crafts.yaml` | Craftsmanship (poor, average, masterwork): durability, wear taken, shield break threshold. |
-| `enchantments.yaml` | Rare enchantments: what they can be laid on, the multipliers, and the magic: `effects` (while worn or in hand), `strike` (on each blow that lands), `apLess`, `power`, `blockSpells`, `mitBonus`, `resistBonus`. See **Magic items** below. |
-| `weapons.yaml` | Weapons, including natural ones. `phys` (mass, length, point, edge, head, `heft` for a head-heavy edge such as an axe…) generates damage, AP, STR scaling, wounds and punch through armor; `reach: {swing, thrust, min}`; `closeOK` (works in a clinch). |
+| `enchantments.yaml` | Rare enchantments: what they can be laid on, the multipliers, and the magic: `effects` (while worn or in hand), `strike` (on each blow that lands), `ticksLess`, `power`, `blockSpells`, `mitBonus`, `resistBonus`. See **Magic items** below. |
+| `weapons.yaml` | Weapons, including natural ones. `phys` (mass, length, point, edge, head, `heft` for a head-heavy edge such as an axe…) generates damage, ticks, STR scaling, wounds and punch through armor; `reach: {swing, thrust, min}`; `closeOK` (works in a clinch). |
 | `feats.yaml` | Trees of feats: a tree's `group` (setting) and `branches`; a feat's `branch`, `capstone` (one per tree a character), ranks, `requires`, effect line, `auto` (does the game implement it). |
 | `spells.yaml` | The magic grammar: verbs, nouns, modifiers, and each shape's base numbers. See **A spell word** below. |
 | `monsters.yaml` | Creatures and packs. |
@@ -113,19 +113,19 @@ Loot entries: `{w: 3, gold: [5, 20]}`, `{w: 2, good: salve, n: [1, 2]}`, `{w: 1,
 
 | Key | Where | What it does |
 |---|---|---|
-| `effects.attrs`, `ap`, `stamina`, `regen`, `sp` | worn, or an enchantment's `effects` | + attributes, AP a round, max stamina, regeneration, spell points |
-| `effects.costMult` | same | × the AP of every action (a sash at 0.8). A monster's `traits.apMult` is a different thing: × its AP pool |
+| `effects.attrs`, `ticks`, `stamina`, `regen`, `sp` | worn, or an enchantment's `effects` | + attributes, ticks added to every action (negative: quicker), max stamina, regeneration, spell points |
+| `effects.costMult` | same | × the ticks of every action (a sash at 0.8). A monster's `traits.tempo` divides every action's ticks (a boss acts like several fighters) |
 | `effects.mag: {noun: n, '*': n}` | same | + spell magnitude for one noun or all |
 | `effects.init`, `hit`, `move` | same | + initiative; + to beat a defence; + squares on every move |
 | `effects.resist: {fire: 0.5}` | same | × harm of that damage keyword (see **Damage keywords**) |
-| `effects.aura: {name, radius, cond, stamina, resisted, rounds}` | same | each round, on every foe within the radius |
+| `effects.aura: {name, radius, cond, stamina, resisted, beats}` | same | each beat, on every foe within the radius |
 | `effects.retaliate: {noun, mag, name}` | same | an element's blow at whoever lands a melee blow on the wearer |
 | `effects.slay: [{trait, damage}]` | same | + damage with any blow to a creature with that trait (`undead`, `dragon`) |
 | `effects.standing`, `standingWith: {faction: n}` | same | + disposition in talks, with everyone or one faction |
 | `effects.heal` | same | + attribute points healed each long rest |
-| `strike.onHit: {cond, rounds, chance}` | weapon enchantment | a condition on a blow that lands (resisted like a spell) |
+| `strike.onHit: {cond, beats, chance}` | weapon enchantment | a condition on a blow that lands (resisted like a spell) |
 | `strike.element: {noun, mag}`, `sap: {place, n, stamina}`, `armorWear`, `riled`, `slay`, `parrySpells` | weapon enchantment | a burning blow; drain into the wielder; eat armor; Riled; bane damage; parry spell bolts |
-| `apLess` | weapon enchantment | sheet AP off every strike and parry made with it |
+| `ticksLess` | weapon enchantment | ticks off every strike and parry made with it |
 | `power: {verb, noun, mod, aim, charges, name}` | either | casts that spell with no spell points, free hand or backlash; `aim` picks one where the verb does two things with the noun; `charges` a day (omit: at will) |
 | `blockSpells` | shield enchantment | can block spell bolts (ordinary shields can't) |
 | `mitBonus: {P, S, B}`, `resistBonus` | armor enchantment | + mitigation, + the punch a point needs to burst it |
@@ -150,7 +150,7 @@ fire:
     summon: {shape: summon, monster: elemental}
 ```
 
-An effect names a `shape` (its numbers in `shapes`, which the effect may override: `mag`, `range`, `rounds`, `radius`)
+An effect names a `shape` (its numbers in `shapes`, which the effect may override: `mag`, `range`, `beats`, `radius`, `ticks`)
 and an `aim` (`foe`, `ally`, `any`, `ground`; a square by default for ground, wall, terrain, raise, summon, see). The
 rest says what it leaves: `cond`, `ground`, `wall`, `terrain` (config.js conditions and terrain), `ward` (a noun, or
 `magic` for a shell of force), `raise` and `better: [{feat, raise}]` (CONFIG.magic.raise), `monster` (`elemental`, or a
@@ -215,12 +215,12 @@ or colour-wash one. Add `art: <key>` (an entry in `art.yaml`, with optional `art
 instead; the `kind` is drawn wherever the art files are missing (they are git-ignored). A party member's `look.sprite` /
 `look.tint` work the same way, and `look.sprite: art:<key>` picks an art entry marked `party: true`. `art.html` shows them all. Fights are played on the
 dungeon map (`game.arena` in rules.yaml: the whole map with `whole: true`, else a 15x10 slice): walls and furniture
-block, a shut ordinary door does not. Each round, a group the fight comes near (`game.joinDistance`, with a clear line)
+block, a shut ordinary door does not. Each beat, a group the fight comes near (`game.joinDistance`, with a clear line)
 joins it.
 The exploring view's shape follows the window (`game.view` in rules.yaml: `cell` the square's size in px, `minCols`–`maxCols`, `minRows`–`maxRows`, `chromeW`/`chromeH` the room the page keeps round the map, `maxW` the page's width): columns are kept odd so the party stands in the middle.
 The battle view uses the same shape less the room the command pane takes (342 px beside the map above 1000 px wide, half the screen's height under it); `game.arena` is then only the size of a slice when `whole` is false. Panning it by hand (the pad over the map, the arrow keys, C to recentre) is the screen's own and keeps nothing in the data.
 
-`game.orders` is the standing orders every hero starts with for reactions (`src/game/orders.js`): `block` (`"on"`, `"off"`: quote them, YAML reads a bare on or off as a boolean), `parry` (`thrusts`, `all`, `off`), `dodge` (`unarmored`, `always`, `off`), `opportunity` (`strike`, `ask`, `off`), `ask` (`matters`, `every`, `never`) and `drop`, the chance a blow, if nothing stops it, drops the hero, from which it matters. A hero's own `orders` override them key by key. `CONFIG.apStep` (config.js, sheet AP; null for tenths) rounds every action cost to the nearest half AP.
+`game.orders` is the standing orders every hero starts with for reactions (`src/game/orders.js`): `block` (`"on"`, `"off"`: quote them, YAML reads a bare on or off as a boolean), `parry` (`thrusts`, `all`, `off`), `dodge` (`unarmored`, `always`, `off`), `opportunity` (`strike`, `ask`, `off`), `ask` (`matters`, `every`, `never`) and `drop`, the chance a blow, if nothing stops it, drops the hero, from which it matters. A hero's own `orders` override them key by key.
 
 `encounters:` map an id to `{foes, flags, loot, text, parley, peaceFlags, arena}`. `wandering:` is what comes along: it interrupts a camp, and it is drawn as time passes in the place (`game.wanderers`: a check every 20 minutes, noise counted as extra minutes).
 A town has `locations` (people and services: `inn`, `shop`, `healer`, `trainer`, `bounty`) and `exits` to dungeons;
@@ -250,13 +250,13 @@ S: {kind: trap, tn: 9, disarm: 7, trigger: wire, knownTo: [suracayl],
 | `tn` | The Perception target. A passing party looks once from `game.traps.notice` squares off (in sight) and once more beside it, at −`passivePenalty`; a search looks at +`searchBonus`. The margin gives a degree (`game.traps.find`): the **tell** (the `tell` text, no square: the party walks on wary, and whoever sets it off gets a get-clear roll), the **square** (it stands in the way), the square and its **working** (`how`, and what the effect does, and every way past). |
 | `reveal` | A condition (a flag from lore or a parley topic): while it holds the party knows the trap to the last degree without a roll. |
 | `trigger` | `step`, `wire`, `plate` or `lid` (a chest's). Which ways of springing it from a distance work (`game.traps.ways.*.triggers`). |
-| `effect.blow` | A weapon option: `damage [P, S, B]`, `motion` (weapons' motions), `punch`, `aim` (a location; none = rolled), `wound {kind, vital, bleed}`, `venom {con, rounds}`, `name`. Resolved by `Combat.applyHit` on the victim, so armor and location count; `block: false` if a shield can't take it (a pit, spikes from below). |
+| `effect.blow` | A weapon option: `damage [P, S, B]`, `motion` (weapons' motions), `punch`, `aim` (a location; none = rolled), `wound {kind, vital, bleed}`, `venom {con, beats}`, `name`. Resolved by `Combat.applyHit` on the victim, so armor and location count; `block: false` if a shield can't take it (a pit, spikes from below). |
 | `effect.element` | `{noun, mag, name}`: a spell noun's blow, as a hazard's (`Magic.elementBlow`). |
-| `effect.terrain` | What it leaves in a fight (`CONFIG.terrain`: `pit`, `hot`, `miasma`…), over `terrainRadius` squares for `rounds`. |
+| `effect.terrain` | What it leaves in a fight (`CONFIG.terrain`: `pit`, `hot`, `miasma`…), over `terrainRadius` squares for `beats`. |
 | `effect.to`, `at` | A drop to another place (exploring; in a fight it is a pit). |
 | `effect.radius`, `who` | Radius 0: the one on the square in marching order (`who: lead`, the default; `next`, the one behind, for a trap that bites late). A radius: everyone near (exploring: the whole party). `dodge: false`: no getting clear of it. |
 | `strike` | The TN to get clear of it for one who knows it is coming (default `game.traps.strike`): the better of a dodge and a ready shield. |
-| `reset` | `{minutes, rounds}`: set again that long after it springs (exploring, a fight). None: spent once sprung. |
+| `reset` | `{minutes, beats}`: set again that long after it springs (exploring, a fight). None: spent once sprung. |
 | `knownTo` | Factions or monster ids who know it: they walk it safely and path round it, see it in a fight, may shove or wait for foes to come over it. Driven onto it, it springs on them too. |
 | `disarm` | Devices (Trapcraft) TN; + `unknownDisarm` while the working is not made out; a fumble springs it on the disarmer. Left out: it can't be disarmed. |
 | `bypass` | Ways past besides disarming (`game.traps.ways`; default `game.traps.bypass`): `leap`, `edge` (each member in marching order rolls; the first to fall short sets it off), `spring` (a `pole` carried, a thrown `stone` at a wire, a `shield` held over: loud), `mark` (leave it, marked). |

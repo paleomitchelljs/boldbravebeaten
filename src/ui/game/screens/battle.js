@@ -67,7 +67,7 @@
     // ahead on the clock the hero already is.
     const tip = `${m.sub}. A reaction's ticks go on your clock: your next action comes that much later. More than ${G.CONFIG.clock.overreach} ticks ahead, you can't react at all.`;
     return h('section', { class: 'popcard react' },
-      h('div', { class: 'react-head', 'data-hint': tip }, h('h3', null, m.from), h('span', { class: 'ap-pill num' }, `+${m.ap}`), h('span', { class: 'to' }, m.to)),
+      h('div', { class: 'react-head', 'data-hint': tip }, h('h3', null, m.from), h('span', { class: 'ap-pill num' }, `+${m.ahead}`), h('span', { class: 'to' }, m.to)),
       h('div', { class: 'react-list' },
         m.choices.map((c, i) => h('button', { class: 'act', 'data-hint': c.hint || null, onclick: () => answer(game, c.value) }, h('kbd', null, String(i + 1)), h('span', { class: 'nm' }, c.label), h('span', { class: 'num odds' }, c.odds || ''), h('span', { class: 'num' }, c.cost),
           c.line ? h('span', { class: 'react-line' }, c.line) : null)),

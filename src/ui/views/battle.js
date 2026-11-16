@@ -49,7 +49,7 @@
       !C.isActive(c) ? h('span', { class: 'chip bad' }, C.collapsed(c) ? 'Collapsed' : 'Unconscious') : null);
     return h('div', { class: 'stack', style: { gap: '20px' } },
       h('div', { class: 'view-head' }, h('div', { class: 'stack tight' }, h('h1', null, 'Battle'),
-        h('p', { class: 'muted' }, 'Pick who fights, then place them on the grid. The fight runs on a clock: whoever's clock is lowest acts next, one action at a time. Players type in their own dice when asked; the platform does the arithmetic.'))),
+        h('p', { class: 'muted' }, 'Pick who fights, then place them on the grid. The fight runs on a clock: whoever\'s clock is lowest acts next, one action at a time. Players type in their own dice when asked; the platform does the arithmetic.'))),
       h('div', { class: 'grid-2' },
         h('section', { class: 'panel' }, h('h2', null, 'Party'), all.filter((c) => c.side === 'party').map(row)),
         h('section', { class: 'panel' },
@@ -405,7 +405,7 @@
       };
       const take = f ? `${harmWords(f.hit)}${f.hit.drop >= 0.005 ? `, drops you ${pct(f.hit.drop)}` : ''}` : prev ? prev.text : null;
       return {
-        title: `${a.name} → ${me.name}`, from: a.name, to: me.name, tag: what, sub: `${what}${take ? ` · if it lands: ${take}` : ''}`, ap,
+        title: `${a.name} → ${me.name}`, from: a.name, to: me.name, tag: what, sub: `${what}${take ? ` · if it lands: ${take}` : ''}`, ahead: ap,
         choices: req.options.map(choice),
         none: { label: 'Take it', note: 'keep the time', line: take ? `lands: ${take}` : null },
       };
@@ -417,7 +417,7 @@
       const f = !o.hidden && req.decl && req.decl.type === 'strike' ? foreseeBlow(enc, chars, a.id, t.id, req.decl.option) : null;
       const lands = f ? `${harmWords(f.hit)}${f.hit.drop >= 0.005 ? `, drops ${t.name} ${pct(f.hit.drop)}` : ''}` : null;
       return {
-        title: `${me.name} covers ${t.name}`, from: me.name, to: t.name, sub: `${a.name} swings at ${t.name}, who isn't defending: block it for them with your shield (−${o.penalty != null ? o.penalty : G.CONFIG.defense.cover.penalty})`, ap,
+        title: `${me.name} covers ${t.name}`, from: me.name, to: t.name, sub: `${a.name} swings at ${t.name}, who isn't defending: block it for them with your shield (−${o.penalty != null ? o.penalty : G.CONFIG.defense.cover.penalty})`, ahead: ap,
         choices: [{ value: 'cover', label: 'Cover', cost: `${o.ticks}t`, odds: o.odds != null ? pct(o.odds) : '?', line: `${o.stamina} st${lands ? ` · fails: ${lands}` : ''}`, hint: `${o.ticks} ticks, ${o.stamina} stamina; the blow lands on your shield${o.odds != null ? ` ${pct(o.odds)} of the time` : ''}.${lands ? ` If it fails: ${lands}.` : ''}` }],
         none: { label: 'Let it land', note: 'keep the time', line: lands ? `${t.name} takes ${lands}` : null },
       };
@@ -426,7 +426,7 @@
     const why = { closes: 'presses inside', leaves: 'leaves', moves: 'moves about in' }[req.why] || 'leaves';
     const sub = req.why === 'riposte' ? `You parried ${t.name}: answer with a blow they may still defend.` : req.why === 'cleave' ? `Your blow dropped its foe: carry it on into ${t.name}, free.` : `${t.name} ${why} ${me.name}'s reach. A hit stops them.`;
     return {
-      title: `${me.name} → ${t.name}`, from: me.name, to: t.name, tag: { closes: 'closing in', leaves: 'leaving', moves: 'moving', riposte: 'riposte', cleave: 'cleave' }[req.why] || 'leaving', sub, ap,
+      title: `${me.name} → ${t.name}`, from: me.name, to: t.name, tag: { closes: 'closing in', leaves: 'leaving', moves: 'moving', riposte: 'riposte', cleave: 'cleave' }[req.why] || 'leaving', sub, ahead: ap,
       choices: req.options.map((o) => {
         const f = foreseeBlow(enc, chars, req.actor, req.target, o);
         const p = f ? null : blowPreview(enc, chars, { decl: { actor: req.actor, target: req.target, type: 'strike', option: o } });
@@ -442,7 +442,7 @@
       const m = reactionModel(app, req, enc, chars);
       const done = (v) => { closeModal(); resolve(v); };
       const box = h('div', { class: 'modal info-pop', role: 'dialog', 'aria-modal': 'true', onclick: (e) => e.stopPropagation() },
-        h('span', { class: 'label' }, `Reaction · ${m.ap} ticks ahead`), h('h2', null, m.title), h('p', { class: 'small muted' }, m.sub),
+        h('span', { class: 'label' }, `Reaction · ${m.ahead} ticks ahead`), h('h2', null, m.title), h('p', { class: 'small muted' }, m.sub),
         h('div', { class: 'stack tight' }, m.choices.map((c) => h('button', { class: 'act', title: c.hint || null, onclick: () => done(c.value) }, h('span', null, c.label), h('span', { class: 'small muted num' }, `${c.cost}${c.odds ? ` · ${c.odds}` : ''}`), c.line ? h('span', { class: 'small react-line' }, c.line) : null)),
           h('button', { class: 'act', onclick: () => done(null) }, h('span', null, m.none.label), h('span', { class: 'small muted' }, m.none.note), m.none.line ? h('span', { class: 'small react-line' }, m.none.line) : null)));
       const root = document.getElementById('modal-root');
