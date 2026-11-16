@@ -6,6 +6,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('path');
 const B = require('./load');
+const Clock = require('./clock');
 const { Character: C, Combat, Items, Enemies, AI, Terrain, CONFIG } = B;
 
 function roller(seed, queue) {
@@ -33,7 +34,7 @@ async function field(list, w, h) {
   for (const [c] of list) chars[c.id] = c;
   const enc = Combat.createEncounter('t', list.map(([c]) => c.id), chars, w || 10, h || 5);
   for (const [c, x, y] of list) enc.pos[c.id] = { x, y };
-  await Combat.startRound(enc, chars, roller(1, [10].concat(list.slice(1).map(() => 1))));
+  await Clock.start(enc, chars, roller(1, [10].concat(list.slice(1).map(() => 1))), list[0][0] ? list[0][0].id : list[0].id);
   assert.equal(Combat.currentActor(enc), list[0][0].id);
   return { enc, chars };
 }
@@ -61,7 +62,7 @@ test('approach: a fighter does not walk into a spear\'s reach with no AP left to
   const def = Math.min(...['parry', 'dodge'].map((k) => C.actionCost(a, k).ap));
   // Enough to walk four squares (into the spear's reach of 3) and nothing after.
   const reach = Math.max(...C.attackOptions(s).map((o) => o.maxRange || 1));
-  enc.ap[a.id] = C.moveCost(a, 7 - reach);
+  Clock.free(enc, a.id);
   const d = AI.choose(enc, chars, a.id, () => 0.99);
   if (d.type === 'move') {
     const inReach = Combat.dist(d.to, enc.pos[s.id]) <= reach;
@@ -69,7 +70,7 @@ test('approach: a fighter does not walk into a spear\'s reach with no AP left to
     assert.ok(!inReach || left >= def, `walked in to ${Combat.dist(d.to, enc.pos[s.id])} with ${left} AP (a defence costs ${def})`);
   }
   // With a full round's AP it still comes on (it may wait at the edge for the spear to step in: that is a choice).
-  enc.ap[a.id] = 99;
+  Clock.free(enc, a.id);
   const d2 = AI.choose(enc, chars, a.id, () => 0.99);
   assert.equal(d2.type, 'move');
   assert.ok(Combat.dist(d2.to, enc.pos[s.id]) < 7);
@@ -84,7 +85,7 @@ test('approach: what it guesses of a foe\'s AP comes from what it saw, not the f
   const a = armed('Sword', 'longsword', 'party');
   const s = armed('Spear', 'spear', 'enemy');
   const { enc, chars } = await field([[a, 0, 2], [s, 7, 2]], 12, 5);
-  enc.ap[a.id] = C.moveCost(a, 3);
+  Clock.free(enc, a.id);
   const pick = (foeAP) => { enc.ap[s.id] = foeAP; return JSON.stringify(AI.choose(enc, chars, a.id, () => 0.99)); };
   assert.equal(pick(0), pick(999), 'the foe\'s true AP changed the choice');
 });
@@ -129,7 +130,7 @@ test('weapons: a spear with the foe inside its reach.min may go to the dagger; a
   for (let i = 0; i < 4; i++) {
     const d = AI.choose(g2.enc, g2.chars, ls.id, () => 0.99);
     assert.notEqual(d.type, 'drawSidearm', 'traded the longsword down');
-    if (d.type === 'endTurn') break;
+    if (d.type === 'wait') break;
     await Combat.submit(g2.enc, g2.chars, d, { roller: roller(5), react: async () => null });
     if (Combat.currentActor(g2.enc) !== ls.id) break;
   }
@@ -221,7 +222,7 @@ test('Command: an AP for a hard-hitting friend in reach of a foe, from one who c
   const b = armed('Axe', 'greatsword', 'party'); b.base.STR = 8;
   const f = armed('Foe', 'longsword', 'enemy');
   const { enc, chars } = await field([[a, 0, 0], [b, 3, 2], [f, 5, 2]]);
-  enc.ap[a.id] = C.actionCost(a, 'command').ap; // a Command's worth: no walking anywhere useful
+  Clock.free(enc, a.id); // a Command's worth: no walking anywhere useful
   const d = AI.choose(enc, chars, a.id, () => 0.99);
   assert.equal(d.type, 'command');
   assert.equal(d.target, b.id);
@@ -232,7 +233,7 @@ test('Demoralize: a foe in reach of a friend frightened, by one with no blow tha
   const f = armed('Foe', 'longsword', 'enemy'); f.base.WIL = 1;
   const b = armed('Friend', 'longsword', 'party');
   const { enc, chars } = await field([[a, 2, 2], [f, 5, 2], [b, 6, 2]]);
-  enc.ap[a.id] = C.actionCost(a, 'demoralize').ap;
+  Clock.free(enc, a.id);
   const d = AI.choose(enc, chars, a.id, () => 0.99);
   assert.equal(d.type, 'demoralize');
 });
@@ -251,7 +252,7 @@ test('Vanish: out of the archers\' sight when they have me in range and I can\'t
   const a = armed('Hider', 'longsword', 'party'); a.feats.vanish = 1;
   const f = armed('Archer', 'longbow', 'enemy'); f.inventory.arrows = 20;
   const { enc, chars } = await field([[a, 0, 2], [f, 9, 2]], 12, 5);
-  enc.ap[a.id] = C.actionCost(a, 'vanish').ap;
+  Clock.free(enc, a.id);
   const d = AI.choose(enc, chars, a.id, () => 0.99);
   assert.equal(d.type, 'vanish');
 });

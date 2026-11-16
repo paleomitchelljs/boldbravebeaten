@@ -5,6 +5,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const B = require('./load');
+const Clock = require('./clock');
 const { Character: C, Combat, Items, Enemies, CONFIG } = B;
 
 function roller(rng) {
@@ -32,7 +33,7 @@ async function simulate(mkA, mkT, optFn, kind, n, dist, seed) {
     const chars = { [a.id]: a, [t.id]: t, U: u };
     const enc = Combat.createEncounter('t', [a.id, t.id, 'U'], chars, 12, 3);
     enc.pos[a.id] = { x: 1, y: 1 }; enc.pos[t.id] = { x: 1 + dist, y: 1 }; enc.pos.U = { x: 11, y: 2 };
-    enc.round = 1; enc.ap[a.id] = 999; enc.ap[t.id] = 999;
+    enc.round = 1; Clock.free(enc, a.id); Clock.free(enc, t.id);
     const o = optFn(a);
     const st0 = t.stamina, w0 = C.wounds(t).length, up0 = C.isActive(t), down0 = C.isDown(t);
     await Combat.resolveAction(enc, chars, { actor: a.id, target: t.id, type: 'strike', option: o, ap: o.ap, stamina: o.stamina, targetWasDown: !C.isActive(t) }, io);

@@ -3,6 +3,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const B = require('./load');
+const Clock = require('./clock');
 const { Character: C, Combat, Items, Enemies, AI, Terrain, CONFIG, DATA } = B;
 
 function roller(seed, queue) {
@@ -28,7 +29,7 @@ async function field(list, w, h) {
   for (const [c] of list) chars[c.id] = c;
   const enc = Combat.createEncounter('t', list.map(([c]) => c.id), chars, w || 10, h || 7);
   for (const [c, x, y] of list) enc.pos[c.id] = { x, y };
-  await Combat.startRound(enc, chars, roller(1, [10].concat(list.slice(1).map(() => 1))));
+  await Clock.start(enc, chars, roller(1, [10].concat(list.slice(1).map(() => 1))), list[0][0] ? list[0][0].id : list[0].id);
   return { enc, chars };
 }
 
@@ -133,7 +134,7 @@ test('flanking (AI): a fighter in reach takes a free step to put the foe between
   const foe = armed('Foe', 'longsword', 'enemy');
   // Foe at (4,3); ally west of it at (3,3); I stand north of it at (4,2) (90° from the ally: no flank).
   const { enc, chars } = await field([[me, 4, 2], [ally, 3, 3], [foe, 4, 3]], 10, 7);
-  enc.ap[me.id] = 99;
+  Clock.free(enc, me.id);
   assert.equal(Combat.flanked(enc, foe, me), 0);
   const d = AI.choose(enc, chars, me.id, () => 0.99);
   assert.equal(d.type, 'move', JSON.stringify(d));
@@ -145,7 +146,7 @@ test('flanking (AI): a fighter caught between two foes steps out from between th
   const f1 = armed('F1', 'club', 'enemy');
   const f2 = armed('F2', 'club', 'enemy');
   const { enc, chars } = await field([[me, 4, 3], [f1, 3, 3], [f2, 5, 3]], 10, 7);
-  enc.ap[me.id] = 99;
+  Clock.free(enc, me.id);
   assert.ok(Combat.flankedAt(enc, chars, me, enc.pos[me.id]));
   const d = AI.choose(enc, chars, me.id, () => 0.99);
   assert.equal(d.type, 'move', JSON.stringify(d));

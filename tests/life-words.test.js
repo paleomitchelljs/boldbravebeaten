@@ -4,6 +4,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const B = require('./load.js');
+const Clock = require('./clock');
 const { World, Combat, Enemies, Magic, AI, Character: C } = B;
 
 const noReact = async () => null;
@@ -24,7 +25,7 @@ async function table(foeAt, opts) {
   enc.pos[jab.id] = { x: 4, y: 2 };
   enc.pos[ally.id] = (opts && opts.allyAt) || { x: 0, y: 0 };
   foeAt.forEach((p, i) => { enc.pos[foes[i].id] = p; });
-  await Combat.startRound(enc, chars, async (req) => Array.from({ length: req.count }, () => (req.actorId === jab.id ? 10 : 1)));
+  await Clock.start(enc, chars, async (req) => Array.from({ length: req.count }, () => (req.actorId === jab.id ? 10 : 1)));
   enc.order = ids; enc.turn = 0;
   return { enc, chars, jab, ally, foes };
 }
@@ -82,7 +83,7 @@ test('life words: a given Move calls back an ally newly dead, and the AI reaches
   const d = AI.choose(enc, chars, jab.id, () => 0.9);
   assert.equal(d.type, 'cast');
   assert.equal(d.option.spell.shape, 'give');
-  assert.equal(await Combat.act(enc, chars, d, io(jab.id)), null);
+  assert.equal(await Clock.act(enc, chars, d, io(jab.id)), null);
   assert.ok(!ally.status.dead && !C.isActive(ally), 'alive, and down still');
 });
 

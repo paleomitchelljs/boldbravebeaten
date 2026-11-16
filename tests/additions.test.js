@@ -2,6 +2,7 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const B = require('./load');
+const Clock = require('./clock');
 // Blows here land at a fixed force (vigor has its own test in rules.test.js).
 B.CONFIG.vigor = null;
 const { Character: C, Combat, Items, Enemies, Magic, Terrain, Conditions } = B;
@@ -38,7 +39,7 @@ async function arena(list, w, h, rolls) {
   for (const c of list) chars[c.id] = c;
   const enc = Combat.createEncounter('t', Object.keys(chars), chars, w || 8, h || 5);
   list.forEach((c) => { if (c.at) enc.pos[c.id] = c.at; });
-  await Combat.startRound(enc, chars, roller(rolls || list.map((_, i) => 10 - i)));
+  await Clock.start(enc, chars, roller(rolls || list.map((_, i) => 10 - i)));
   return { enc, chars };
 }
 
@@ -47,7 +48,7 @@ test('fixes: a shove stops at a wall; knockback and shoves drop a body into a pi
   const t = fighter('T', 'enemy'); t.at = { x: 3, y: 2 };
   const { enc, chars } = await arena([a, t]);
   Terrain.add(enc, 4, 2, 'dungeonWall');
-  await Combat.act(enc, chars, { actor: a.id, type: 'shove', target: t.id }, { roller: roller([10, 1]), react: noReact });
+  await Clock.act(enc, chars, { actor: a.id, type: 'shove', target: t.id }, { roller: roller([10, 1]), react: noReact });
   assert.deepStrictEqual(enc.pos[t.id], { x: 3, y: 2 }, 'no shoving into stone');
   assert.ok(t.status.prone, 'a hard shove against the wall knocks them down');
   const p = fighter('P', 'enemy');
@@ -91,14 +92,14 @@ test('items: a sapping blade wrenches the arm, drains stamina and eats armor; a 
   a.stamina -= 10;
   const dur = t.armor.durability, st = a.stamina;
   const swing = C.attackOptions(a).find((o) => o.motion === 'swing');
-  await Combat.act(enc, chars, { actor: a.id, type: 'strike', option: swing, target: t.id }, { roller: roller([], 3), react: noReact });
+  await Clock.act(enc, chars, { actor: a.id, type: 'strike', option: swing, target: t.id }, { roller: roller([], 3), react: noReact });
   assert.ok(C.wounds(t).some((w) => w.kind === 'sapped' && w.place === 'arms'), 'the arm wrenched');
   assert.ok(t.armor.durability <= dur - 3, 'armor eaten');
   assert.ok(a.stamina > st - swing.stamina, 'stamina drunk');
   const g = armed('G', 'longsword', 'party', { enchantments: ['goading'] }); g.at = { x: 1, y: 2 };
   const u = fighter('U', 'enemy'); u.at = { x: 2, y: 2 };
   const r2 = await arena([g, u]);
-  await Combat.act(r2.enc, r2.chars, { actor: g.id, type: 'strike', option: C.attackOptions(g).find((o) => o.motion === 'swing'), target: u.id }, { roller: roller([], 3), react: noReact });
+  await Clock.act(r2.enc, r2.chars, { actor: g.id, type: 'strike', option: C.attackOptions(g).find((o) => o.motion === 'swing'), target: u.id }, { roller: roller([], 3), react: noReact });
   assert.ok(Conditions.has(g, 'riled') && Conditions.mitigation(g, 'B') === 2);
   // Stun: the chance roll 1, the contest caster 10 vs target 1.
   const s = armed('S', 'shortsword', 'party', { enchantments: ['stunning'] }); s.at = { x: 1, y: 2 };
@@ -107,7 +108,7 @@ test('items: a sapping blade wrenches the arm, drains stamina and eats armor; a 
   const apBefore = r3.enc.ap[v.id];
   const strikeRolls = [];
   const rr = async (req) => { strikeRolls.push(req.label); if (/resist/.test(req.label)) return [1]; if (/: stunned$/.test(req.label)) return [10]; if (/: Stunned$/.test(req.detail || '')) return [1]; return Array.from({ length: req.count }, () => 3); };
-  await Combat.act(r3.enc, r3.chars, { actor: s.id, type: 'strike', option: C.attackOptions(s).find((o) => o.motion === 'swing'), target: v.id }, { roller: rr, react: noReact });
+  await Clock.act(r3.enc, r3.chars, { actor: s.id, type: 'strike', option: C.attackOptions(s).find((o) => o.motion === 'swing'), target: v.id }, { roller: rr, react: noReact });
   assert.ok(Conditions.has(v, 'stunned'), strikeRolls.join(' | '));
   assert.ok(r3.enc.ap[v.id] < apBefore, 'AP lost at once');
 });
@@ -125,7 +126,7 @@ test('items: ebon mail is as hard as plate, halves fire and breathes poison on f
   const chars = { [w.id]: w, [f.id]: f };
   const enc = Combat.createEncounter('a', [w.id, f.id], chars, 8, 5);
   enc.pos[w.id] = w.at; enc.pos[f.id] = f.at;
-  await Combat.startRound(enc, chars, roller([10, 1, 10, 1]));
+  await Clock.start(enc, chars, roller([10, 1, 10, 1]));
   assert.ok(Conditions.has(f, 'poisoned'), enc.log.map((l) => l.text).join('\n'));
 });
 
@@ -158,14 +159,14 @@ test('items: bane blades and gauntlets bite into their prey; the veil hides the 
   const opt = C.attackOptions(a).find((o) => o.motion === 'swing');
   a.at = { x: 1, y: 2 }; zed.at = { x: 2, y: 2 };
   const { enc, chars } = await arena([a, zed]);
-  await Combat.act(enc, chars, { actor: a.id, type: 'strike', option: opt, target: zed.id }, { roller: roller([], 3), react: noReact });
+  await Clock.act(enc, chars, { actor: a.id, type: 'strike', option: opt, target: zed.id }, { roller: roller([], 3), react: noReact });
   assert.ok(enc.log.some((l) => new RegExp(`\\d+/${opt.damage[1] + 4}/\\d+ P/S/B`).test(l.text)), 'four more slashing: ' + enc.log.map((l) => l.text).join(' | '));
   const v = fighter('V'); wear(v, 'circlet_of_shadow'); v.at = { x: 1, y: 2 };
   const archer = armed('R', 'shortbow', 'enemy'); archer.inventory.arrows = 5; archer.at = { x: 5, y: 2 };
   const r = await arena([v, archer]);
   const veil = Combat.legalActions(r.enc, r.chars, v.id).spells.find((o) => o.power && o.spell.noun === 'shadow');
   assert.ok(veil, 'the circlet veils at will');
-  await Combat.act(r.enc, r.chars, { actor: v.id, type: 'cast', option: veil, target: v.id }, { roller: roller([], 5), react: noReact });
+  await Clock.act(r.enc, r.chars, { actor: v.id, type: 'cast', option: veil, target: v.id }, { roller: roller([], 5), react: noReact });
   assert.ok(Conditions.has(v, 'unseen'));
   assert.ok(Combat.unseenBy(r.enc, r.chars, v, archer));
   assert.ok(!B.AI || !B.AI.choose || true);
@@ -176,7 +177,7 @@ test('spells: decay eats armor and gear; frost chills (half the squares); Bind p
   const t = armed('T', 'longsword', 'enemy'); t.armor = Items.makeArmor('mail', 'full', 'average'); t.at = { x: 2, y: 2 };
   const { enc, chars } = await arena([m, t]);
   const dur = t.armor.durability, wdur = Items.weaponDurability(C.wieldedWeapon(t));
-  await Combat.act(enc, chars, { actor: m.id, type: 'strike', option: C.attackOptions(m).find((o) => o.spellKey === 'strike+decay'), target: t.id }, { roller: roller([10], 5), react: noReact });
+  await Clock.act(enc, chars, { actor: m.id, type: 'strike', option: C.attackOptions(m).find((o) => o.spellKey === 'strike+decay'), target: t.id }, { roller: roller([10], 5), react: noReact });
   assert.ok(t.armor.durability <= dur - B.CONFIG.magic.words.shapes.bolt.mag);
   assert.ok(Items.weaponDurability(C.wieldedWeapon(t)) < wdur);
   const spd = C.squaresPerAP(t);
@@ -184,7 +185,7 @@ test('spells: decay eats armor and gear; frost chills (half the squares); Bind p
   assert.ok(C.squaresPerAP(t) <= Math.ceil(spd / 2));
   const bind = Combat.legalActions(enc, chars, m.id).spells.find((o) => o.spellKey === 'bind');
   assert.equal(bind.spell.cond, 'paralyzed', 'Bind alone holds a body still');
-  await Combat.act(enc, chars, { actor: m.id, type: 'cast', option: bind, target: t.id }, { roller: roller([10, 10, 1], 10), react: noReact });
+  await Clock.act(enc, chars, { actor: m.id, type: 'cast', option: bind, target: t.id }, { roller: roller([10, 10, 1], 10), react: noReact });
   assert.equal(Combat.conditionForbids(enc, chars, t, { type: 'strike' }), 'Paralyzed');
   const stab = armed('K', 'dagger');
   const h = Combat.computeHit(stab, t, C.attackOptions(stab).find((o) => o.motion === 'thrust'), { distance: 1 });
@@ -197,7 +198,7 @@ test('spells: lightning (Storm) leaps to the nearest other body; charm (Bind + M
   const b = fighter('B', 'enemy'); b.at = { x: 3, y: 2 };
   const { enc, chars } = await arena([m, a, b]);
   const sb = b.stamina;
-  await Combat.act(enc, chars, { actor: m.id, type: 'strike', option: C.attackOptions(m).find((o) => o.spellKey === 'strike+storm'), target: a.id }, { roller: roller([10], 1), react: noReact });
+  await Clock.act(enc, chars, { actor: m.id, type: 'strike', option: C.attackOptions(m).find((o) => o.spellKey === 'strike+storm'), target: a.id }, { roller: roller([10], 1), react: noReact });
   assert.ok(enc.log.some((l) => /leaps from A to B/.test(l.text)));
   assert.ok(b.stamina < sb || C.woundLoad(b) > 0);
   assert.equal(Magic.spellOptions(m).find((o) => o.spellKey === 'bind+mind').spell.cond, 'enthralled');
@@ -217,11 +218,11 @@ test('spells: Delayed marks an area that breaks at the end of the round; darknes
   const { enc, chars } = await arena([m, f, g], 9, 5);
   const o = Combat.legalActions(enc, chars, m.id).spells.find((x) => x.spellKey === 'strike+fire+delayed');
   assert.ok(o && o.spell.shape === 'area' && o.spell.magnitude === B.CONFIG.magic.words.shapes.area.mag + 3);
-  await Combat.act(enc, chars, { actor: m.id, type: 'cast', option: o, at: { x: 4, y: 2 } }, { roller: roller([10], 5), react: noReact });
+  await Clock.act(enc, chars, { actor: m.id, type: 'cast', option: o, at: { x: 4, y: 2 } }, { roller: roller([10], 5), react: noReact });
   assert.ok(Terrain.at(enc, 4, 2).some((t) => t.kind === 'gathering'));
   const sf = f.stamina, sg = g.stamina;
   let guard = 20;
-  while (enc.phase === 'turn' && guard--) await Combat.endTurn(enc, chars, Combat.currentActor(enc), { roller: roller([], 5), react: noReact });
+  while (enc.phase === 'act' && guard--) await Combat.submit(enc, chars, { actor: Combat.currentActor(enc), type: 'wait' }, { roller: roller([], 5), react: noReact });
   assert.ok(f.stamina < sf || C.woundLoad(f) > 0, 'caught in it');
   assert.ok(g.stamina >= sg - 1, 'outside it');
   assert.ok(B.CONFIG.terrain.darkness.cost >= 1 && B.CONFIG.terrain.darkness.perBeat.shadow >= 1);
@@ -233,16 +234,16 @@ test('fear: Give + Fear; the frightened can\'t come closer, and must first step 
   const { enc, chars } = await arena([m, f], 8, 5);
   const o = Combat.legalActions(enc, chars, m.id).spells.find((x) => x.spellKey === 'give+fear');
   assert.equal(o.spell.cond, 'frightened');
-  await Combat.act(enc, chars, { actor: m.id, type: 'cast', option: o, target: f.id }, { roller: roller([10, 10, 1], 5), react: noReact });
+  await Clock.act(enc, chars, { actor: m.id, type: 'cast', option: o, target: f.id }, { roller: roller([10, 10, 1], 5), react: noReact });
   assert.ok(Conditions.has(f, 'frightened') && Conditions.fear(f).src === m.id);
   // F's turn: nothing but a step away first; no step closer, not even by a roundabout way.
-  while (Combat.currentActor(enc) !== f.id) await Combat.endTurn(enc, chars, Combat.currentActor(enc), { roller: roller([], 5), react: noReact });
+  while (Combat.currentActor(enc) !== f.id) await Combat.submit(enc, chars, { actor: Combat.currentActor(enc), type: 'wait' }, { roller: roller([], 5), react: noReact });
   const swing = C.attackOptions(f).find((x) => x.motion === 'swing');
   assert.ok(Combat.mustFlee(enc, chars, f));
   assert.match(Combat.validate(enc, chars, { actor: f.id, type: 'strike', option: swing, target: m.id }).err, /first step away from M/);
-  assert.match(await Combat.submit(enc, chars, { actor: f.id, type: 'endTurn' }, { roller: roller([], 5), react: noReact }), /first step away/);
+  assert.match(await Combat.submit(enc, chars, { actor: f.id, type: 'wait' }, { roller: roller([], 5), react: noReact }), /first step away/);
   assert.equal(Combat.currentActor(enc), f.id, 'the turn goes on');
-  assert.equal(await Combat.act(enc, chars, { actor: f.id, type: 'move', to: { x: 4, y: 2 } }, { roller: roller([], 5), react: noReact }), null);
+  assert.equal(await Clock.act(enc, chars, { actor: f.id, type: 'move', to: { x: 4, y: 2 } }, { roller: roller([], 5), react: noReact }), null);
   assert.ok(!Combat.mustFlee(enc, chars, f), 'the step is taken');
   assert.match(Combat.validate(enc, chars, { actor: f.id, type: 'move', to: { x: 3, y: 2 } }).err, /Too afraid to close/);
   // Hemmed in (walls all round but towards the caster): nothing owed.
@@ -276,7 +277,7 @@ test('Raise: Death raises a skeleton, with the feats a zombie or a mummy; Life c
   assert.equal(raise().spell.raise, 'zombie');
   m.feats.raise_mummy = 1;
   assert.equal(raise().spell.raise, 'mummy');
-  await Combat.act(enc, chars, { actor: m.id, type: 'cast', option: raise(), at: { x: 3, y: 2 } }, { roller: roller([10], 5), react: noReact });
+  await Clock.act(enc, chars, { actor: m.id, type: 'cast', option: raise(), at: { x: 3, y: 2 } }, { roller: roller([10], 5), react: noReact });
   const risen = Object.values(enc.extra || {})[0];
   assert.ok(risen && risen.side === m.side && risen.monster === 'mummy' && risen.traits.undead);
   m.status.unconscious = true;
@@ -298,7 +299,7 @@ test('summon: an elemental comes unbound and raging, or bound with Summon + Bind
   assert.ok(wild && tame && !wild.spell.bound && tame.spell.bound);
   assert.equal(tame.spCost, B.CONFIG.magic.words.summon.cost + B.CONFIG.magic.words.bind.cost + B.CONFIG.magic.words.fire.cost);
   assert.ok(!spells().some((x) => /^summon\+(mind|life)/.test(x.spellKey)), 'only elementals, ghosts and named outsiders');
-  await Combat.act(enc, chars, { actor: m.id, type: 'cast', option: wild, at: { x: 3, y: 2 } }, { roller: roller([10], 5), react: noReact });
+  await Clock.act(enc, chars, { actor: m.id, type: 'cast', option: wild, at: { x: 3, y: 2 } }, { roller: roller([10], 5), react: noReact });
   const e = Object.values(enc.extra || {})[0];
   assert.ok(e && e.side === m.side && Conditions.has(e, 'enraged') && !e.conjured.bound && Magic.outsider(e));
   m.nouns.push('outsider');
@@ -314,7 +315,7 @@ test('ghosts: Summon + Death; swords pass through, its touch passes armor and ta
   const k = armed('K', 'longsword', 'enemy'); k.armor = Items.makeArmor('plate', 'full', 'average'); k.at = { x: 4, y: 2 };
   const { enc, chars } = await arena([m, k]);
   const o = Combat.legalActions(enc, chars, m.id).spells.find((x) => x.spellKey === 'summon+bind+death');
-  await Combat.act(enc, chars, { actor: m.id, type: 'cast', option: o, at: { x: 3, y: 2 } }, { roller: roller([10], 5), react: noReact });
+  await Clock.act(enc, chars, { actor: m.id, type: 'cast', option: o, at: { x: 3, y: 2 } }, { roller: roller([10], 5), react: noReact });
   const g = Object.values(enc.extra || {})[0];
   assert.ok(g && g.monster === 'ghost' && g.conjured.bound && Magic.undead(g) && !Magic.outsider(g));
   // A plain sword passes through it.

@@ -3,6 +3,7 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const B = require('./load');
+const Clock = require('./clock');
 const { Character: C, Combat, Items, Enemies, CONFIG } = B;
 // Blows here land at a fixed force (vigor has its own test).
 CONFIG.vigor = null;
@@ -188,11 +189,11 @@ test('healing: a bandage binds every wound and Medicine mends the worst a step; 
   const enc = Combat.createEncounter('t', [a.id, t.id], chars, 6, 6);
   enc.pos[a.id] = { x: 1, y: 1 }; enc.pos[t.id] = { x: 2, y: 1 };
   t.side = 'party';
-  await Combat.startRound(enc, chars, fixed([], 6));
+  await Clock.start(enc, chars, fixed([], 6));
   enc.turn = enc.order.indexOf(a.id); enc.phase = 'turn';
   const la = Combat.legalActions(enc, chars, a.id);
   assert.ok(la.other.some((o) => o.type === 'bandage' && o.targets.some((x) => x.id === t.id)));
-  await Combat.act(enc, chars, { actor: a.id, type: 'bandage', target: t.id }, { roller: fixed([], 10) });
+  await Clock.act(enc, chars, { actor: a.id, type: 'bandage', target: t.id }, { roller: fixed([], 10) });
   assert.strictEqual(C.bleeding(t), 0);
   assert.ok(C.wounds(t).some((w) => w.place === 'arms' && w.sev === 1), 'a step better');
   assert.ok(C.isActive(t), 'under the boxes: they come to');

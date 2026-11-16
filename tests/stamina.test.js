@@ -4,6 +4,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const B = require('./load');
+const Clock = require('./clock');
 const { Character: C, Combat, Items, Enemies, CONFIG } = B;
 
 function roller(seed, queue) {
@@ -30,13 +31,13 @@ async function field(list, w, h) {
   for (const [c] of list) chars[c.id] = c;
   const enc = Combat.createEncounter('t', list.map(([c]) => c.id), chars, w || 8, h || 3);
   for (const [c, x, y] of list) enc.pos[c.id] = { x, y };
-  await Combat.startRound(enc, chars, roller(1, [10].concat(list.slice(1).map(() => 1))));
+  await Clock.start(enc, chars, roller(1, [10].concat(list.slice(1).map(() => 1))), list[0][0] ? list[0][0].id : list[0].id);
   return { enc, chars };
 }
 
 async function closeRound(enc, chars) {
   let guard = 50;
-  while (enc.phase === 'turn' && guard-- > 0) await Combat.endTurn(enc, chars, Combat.currentActor(enc), io());
+  while (enc.phase === 'act' && guard-- > 0) await Combat.submit(enc, chars, { actor: Combat.currentActor(enc), type: 'wait' }, io());
 }
 
 function withStamina(over, fn) {
@@ -92,8 +93,8 @@ test('R2: an action the fighter can\'t pay for is taken spent: stamina down to 1
   assert.ok(spent > plain, `parry odds ${plain} → ${spent}`);
   const h0 = Combat.computeHit(a, b, o, { distance: 1 }), h1 = Combat.computeHit(a, b, Object.assign({}, o, { spent: true }), { distance: 1 });
   assert.ok(h1.P + h1.S + h1.B < h0.P + h0.S + h0.B, 'softer');
-  enc.ap[a.id] = 500;
-  assert.equal(await Combat.act(enc, chars, { actor: a.id, type: 'strike', option: o, target: b.id }, io()), null);
+  Clock.free(enc, a.id);
+  assert.equal(await Clock.act(enc, chars, { actor: a.id, type: 'strike', option: o, target: b.id }, io()), null);
   assert.equal(a.stamina, 1, 'down to 1, not 0');
   assert.ok(C.isActive(a));
   assert.ok(enc.log.some((l) => /acts spent/.test(l.text || l)), 'the log says so');
@@ -137,7 +138,7 @@ test('R3: stamina 0 is a collapse: prone and out for the rest of the round and r
   assert.equal(Combat.comesRoundAt(enc, b), r0 + 1);
   await closeRound(enc, chars);
   assert.ok(C.collapsed(b), 'still down at the end of the round it fell in');
-  await Combat.startRound(enc, chars, roller(2));
+  await Clock.start(enc, chars, roller(2));
   assert.ok(!Combat.legalActions(enc, chars, a.id).attacks.length || true);
   assert.notEqual(Combat.currentActor(enc), b.id, 'no turn while collapsed');
   await closeRound(enc, chars);
@@ -158,12 +159,12 @@ test('R3: rouse, healing and Rally bring the collapsed round at once; a blow on 
   const o = C.attackOptions(foe).find((x) => x.weaponId && C.inRange(x, 1));
   const h = Combat.computeHit(foe, ally, o, { distance: 1, location: 'torso', margin: 1 });
   assert.ok(h.armored && h.mitigated.B > 0, 'the mail still takes the blow');
-  enc.ap[cap.id] = 500;
-  assert.equal(await Combat.act(enc, chars, { actor: cap.id, type: 'rally' }, io()), null);
+  Clock.free(enc, cap.id);
+  assert.equal(await Clock.act(enc, chars, { actor: cap.id, type: 'rally' }, io()), null);
   assert.ok(C.isActive(ally) && ally.stamina >= 1, 'Rally brings them round');
   ally.stamina = 0; ally.status.unconscious = false; C.updateCondition(ally);
   assert.ok(C.collapsed(ally));
-  assert.equal(await Combat.act(enc, chars, { actor: cap.id, type: 'rouse', target: ally.id }, io()), null);
+  assert.equal(await Clock.act(enc, chars, { actor: cap.id, type: 'rouse', target: ally.id }, io()), null);
   assert.ok(C.isActive(ally) && !ally.status.collapsed, 'rouse');
 });
 
@@ -172,7 +173,7 @@ test('R3: down from wounds is not a collapse: it never runs out in the fight', a
   const { enc, chars } = await field([[a, 1, 1], [b, 5, 1], [c, 2, 2]]);
   for (let i = 0; i < C.boxes(c); i++) C.addWound(c, { place: 'torso', sev: 1, kind: 'cut', bleed: 0, pts: 1 }, null);
   assert.ok(C.isDown(c) && !C.collapsed(c));
-  for (let i = 0; i < 3; i++) { await closeRound(enc, chars); await Combat.startRound(enc, chars, roller(4 + i)); }
+  for (let i = 0; i < 3; i++) { await closeRound(enc, chars); await Clock.start(enc, chars, roller(4 + i)); }
   assert.ok(C.isDown(c), 'stays down');
 });
 
@@ -201,7 +202,7 @@ test('the AI: finishes a collapsed foe in reach rather than strike a fresh one, 
   const { enc, chars } = await field([[a, 2, 1], [down, 1, 1], [up, 3, 1]]);
   down.stamina = 0; C.updateCondition(down);
   for (let i = 0; i < C.boxes(down) - 1; i++) down.wounds.push({ place: 'torso', sev: 1, kind: 'cut', bleed: 0, pts: 1 }); // a box from down
-  enc.ap[a.id] = 500;
+  Clock.free(enc, a.id);
   a.base.CHA = 1; // no Bait
   const d = B.AI.choose(enc, chars, a.id, () => 0.99);
   assert.equal(d.type, 'strike');
@@ -211,7 +212,7 @@ test('the AI: finishes a collapsed foe in reach rather than strike a fresh one, 
   const g = await field([[b2, 2, 1], [f2, 3, 1]], 10, 3);
   b2.stamina = 1; b2.base.CHA = 1;
   f2.armor = Items.makeArmor('plate'); // nothing a spent blow could finish
-  g.enc.ap[b2.id] = 500;
+  Clock.free(g.enc, b2.id);
   const d2 = B.AI.choose(g.enc, g.chars, b2.id, () => 0.99);
   assert.ok(!(d2.type === 'strike' && Combat.isSpent(b2, d2.option.stamina)), `took ${d2.type}`);
 });

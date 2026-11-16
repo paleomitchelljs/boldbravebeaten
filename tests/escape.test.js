@@ -3,6 +3,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const B = require('./load.js');
+const Clock = require('./clock');
 const { World, Battle, Rand, Combat, Terrain, Magic, Town, Explore, Character: C, Enemies, CONFIG } = B;
 
 const fresh = (seed) => { Rand.seed(seed || 1); return World.create(World.presetParty(), { log: false }); };
@@ -106,11 +107,11 @@ test('golem-bane oil: worked into the blade in hand, it bites golems a landed bl
   enc.pos[c.id] = { x: 1, y: 1 }; enc.pos[golem.id] = { x: 2, y: 1 };
   const x = { roller: roll(9), react: () => null };
   for (let guard = 0; guard < 40 && blade.coat; guard++) {
-    if (enc.phase !== 'turn') await Combat.startRound(enc, chars, x.roller);
+    if (enc.phase !== 'turn') await Clock.start(enc, chars, x.roller);
     const id = Combat.currentActor(enc);
     const opt = id === c.id && Combat.legalActions(enc, chars, c.id).attacks.find((o) => o.weaponId === blade.id && o.affordable);
-    if (opt && C.isActive(golem)) await Combat.act(enc, chars, { actor: c.id, type: 'strike', option: opt, target: golem.id }, x);
-    else await Combat.endTurn(enc, chars, id, x);
+    if (opt && C.isActive(golem)) await Clock.act(enc, chars, { actor: c.id, type: 'strike', option: opt, target: golem.id }, x);
+    else await Combat.submit(enc, chars, { actor: id, type: 'wait' }, x);
   }
   assert.equal(enc.log.filter((l) => /golem-bane oil \+4/.test(l.text)).length, 5);
   assert.ok(!blade.coat && enc.log.some((l) => /oil on .* is spent/.test(l.text)));

@@ -3,6 +3,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const B = require('./load.js');
+const Clock = require('./clock');
 const { World, Explore, Skills, Traps, Terrain, Combat, Character: C, Enemies, Items, AI, Battle, Rand, Content } = B;
 
 const fresh = (seed) => { Rand.seed(seed || 1); return World.create(World.presetParty(), { log: false }); };
@@ -212,7 +213,7 @@ test('traps in a fight: a foe shoved onto a trap the party has found springs it;
   const g = field({ base: Object.assign({}, Enemies.makeMonster('fireGoblin')[0].base, { STR: 9 }) }, ['enemy']);
   g.enc.pos[g.gob.id] = { x: 1, y: 2 }; g.enc.pos[g.hero.id] = { x: 2, y: 2 };
   g.hero.skills.athletics = 0;
-  await Combat.startRound(g.enc, g.chars, async (req) => Array.from({ length: req.count }, () => (req.label || '').includes(g.gob.name) ? 10 : 1));
+  await Clock.start(g.enc, g.chars, async (req) => Array.from({ length: req.count }, () => (req.label || '').includes(g.gob.name) ? 10 : 1));
   const d = AI.choose(g.enc, g.chars, g.gob.id, () => 0.99);
   assert.equal(d.type, 'shove', JSON.stringify(d));
   g.f.knownBy = [];

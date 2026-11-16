@@ -3,6 +3,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const B = require('./load.js');
+const Clock = require('./clock');
 const { World, Battle, Combat, Enemies, Magic, Rand, Character: C, CONFIG } = B;
 
 // The presets as they stand at level 3 (their plan's first stage: the numbers below).
@@ -66,7 +67,7 @@ async function fight() {
   const ids = Object.keys(chars);
   const enc = Combat.createEncounter('t', ids, chars, 9, 5);
   ids.forEach((id, i) => { enc.pos[id] = { x: i, y: id === g.id ? 4 : 0 }; });
-  await Combat.startRound(enc, chars, async (req) => Array.from({ length: req.count }, () => 5));
+  await Clock.start(enc, chars, async (req) => Array.from({ length: req.count }, () => 5));
   enc.order = ps.map((c) => c.id).concat([g.id]);
   enc.phase = 'turn'; enc.turn = 0;
   return { enc, chars, ps, g };
@@ -81,14 +82,14 @@ test('defer: 1 AP lets the next one go now; my turn picks up after theirs, and a
   assert.equal(await Combat.submit(enc, chars, { actor: a.id, type: 'defer' }, {}), null);
   assert.equal(Combat.currentActor(enc), b.id);
   assert.equal(Combat.apLeft(enc, a.id), ap - Math.round(CONFIG.defer.ap * (CONFIG.apDisplay || 1)));
-  await Combat.endTurn(enc, chars, b.id);
-  assert.equal(Combat.currentActor(enc), a.id, 'back to the one who deferred');
+  await Combat.submit(enc, chars, { actor: b.id);
+  assert.equal(Combat.currentActor(enc), type: 'wait' }, a.id, 'back to the one who deferred');
   await Combat.submit(enc, chars, { actor: a.id, type: 'defer' }, {});
   assert.equal(Combat.currentActor(enc), c.id, 'past the next one');
-  await Combat.endTurn(enc, chars, c.id);
-  assert.equal(Combat.currentActor(enc), a.id);
-  await Combat.endTurn(enc, chars, a.id);
-  assert.equal(Combat.currentActor(enc), ps[3].id, 'and on in order');
+  await Combat.submit(enc, chars, { actor: c.id);
+  assert.equal(Combat.currentActor(enc), type: 'wait' }, a.id);
+  await Combat.submit(enc, chars, { actor: a.id);
+  assert.equal(Combat.currentActor(enc), type: 'wait' }, ps[3].id, 'and on in order');
   // The last in the order has no one to defer to.
   enc.turn = enc.order.length - 1;
   assert.equal(Combat.legalActions(enc, chars, enc.order[enc.turn]).defer, null);

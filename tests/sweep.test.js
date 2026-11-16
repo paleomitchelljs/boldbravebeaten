@@ -3,6 +3,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const B = require('./load');
+const Clock = require('./clock');
 const { Character: C, Combat, Items, Enemies, AI, CONFIG } = B;
 
 function roller(seed, queue) {
@@ -28,7 +29,7 @@ async function field(list) {
   for (const [c] of list) chars[c.id] = c;
   const enc = Combat.createEncounter('t', list.map(([c]) => c.id), chars, 10, 5);
   for (const [c, x, y] of list) enc.pos[c.id] = { x, y };
-  await Combat.startRound(enc, chars, roller(1, [10].concat(list.slice(1).map(() => 1))));
+  await Clock.start(enc, chars, roller(1, [10].concat(list.slice(1).map(() => 1))), list[0][0] ? list[0][0].id : list[0].id);
   return { enc, chars };
 }
 
@@ -40,7 +41,7 @@ test('a swing that drops its target carries on into the foe beside it, at half f
   const b = body('Second', 'enemy');
   const { enc, chars } = await field([[a, 2, 2], [t, 3, 2], [b, 3, 3]]);
   t.stamina = 1; // the blow drops it
-  enc.ap[t.id] = 0; enc.ap[b.id] = 0; // nobody can meet it
+  Clock.far(enc, t.id); Clock.far(enc, b.id); // nobody can meet it
   const o = swingOf(a);
   assert.ok(Combat.sweeps(o));
   assert.equal(Combat.sweepTarget(enc, chars, a, t, o).id, b.id);

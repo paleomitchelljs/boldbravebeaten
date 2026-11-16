@@ -2,6 +2,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const B = require('./legacy.js');
+const Clock = require('./clock');
 const { World, Explore, Battle, Auto, Parley, Factions, Skills, Economy, Equip, Town, Save, Loot, Rand, Content, Character: C, Items } = B;
 
 const fresh = (seed) => { Rand.seed(seed || 1); return World.create(World.presetParty(), { log: false }); };
@@ -323,7 +324,7 @@ test('battle: an ambush costs the enemy AP in the first round, and an ambusher c
   const w = fresh(43);
   Battle.start(w, { foes: [{ monster: 'wolf', n: 2 }] }, { surprise: 'enemy', factor: Battle.ambushFactor(w) });
   const t = Battle.table(w);
-  await B.Combat.startRound(w.battle.enc, t.characters, Town.autoRoller);
+  await Clock.start(w.battle.enc, t.characters, Town.autoRoller);
   const wolf = Object.values(w.battle.foes)[0];
   assert.ok(w.battle.enc.ap[wolf.id] <= Math.floor(C.apPool(wolf) / 2));
   const mate = World.party(w)[0];
