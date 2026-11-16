@@ -1670,7 +1670,8 @@ test('golem is immune to magic; a constrictor crushes whoever it holds; fliers p
   golem.at = { x: 3, y: 2 };
   await castAt(m, [golem], 'strike+fire', { target: golem.id }, [1, 1, 1, 1]);
   assert.equal(C.woundLoad(golem), 0);
-  assert.equal(await B.Magic.afflict(Combat.createEncounter('t', [m.id, golem.id], { [m.id]: m, [golem.id]: golem }, 6, 3), m, golem, 'slowed', { rounds: 2 }, roller(10, [])), false);
+  assert.equal(await B.Magic.afflict(Combat.createEncounter('t', [m.id, golem.id], { [m.id]: m, [golem.id]: golem }, 6, 3), m, golem, 'frightened', { rounds: 2 }, roller(10, [])), false, 'nothing of the mind lands on it');
+  // (Step E: CON 22 is now 10, so a CON-resisted bane such as Slowed can land on a golem.)
   // The constrictor crushes the one it holds at the end of the round.
   const [snake] = B.Enemies.makeMonster('constrictor');
   const victim = fighter('Victim');
@@ -1681,7 +1682,7 @@ test('golem is immune to magic; a constrictor crushes whoever it holds; fliers p
   victim.status.grapple = { partner: snake.id, level: 'hold', role: 'held' };
   const st = victim.stamina;
   Combat.endRound(enc, chars);
-  assert.ok(victim.stamina <= st - snake.traits.constrict.stamina, 'crushed');
+  assert.ok(victim.stamina <= st - snake.traits.constrict.stamina + C.roundRegen(victim, true), 'crushed (less the share of regeneration a struck body gets)');
   assert.ok(C.wounds(victim).some((w) => w.kind === 'crush' && w.pts === snake.traits.constrict.harm), 'and a crushing wound');
   // A drake flies over a pit and a hidden rune; a walker falls in.
   const [drake] = B.Enemies.makeMonster('drake');
