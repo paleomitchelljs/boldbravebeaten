@@ -189,15 +189,20 @@ is a share of decisions and, the plan's measure, a share of time.
 | | actions with a lead spoiled | wind-ups 5, 8, 2% | 3, 5, 3% |
 | Median fight length in beats about the old rounds (3–5) | court, hall, valley; duels | rounds 3, 4, 6; 3 | **beats 3, 3, 4; 2** |
 | | 90th percentile | 10, 13, 14; 5 | 7, 11, 12; 4 |
-| Wounded-SPD twin loses, falling with the wound | `sim/spiral.js` legs | see below | see below |
-| Level 8 vs N level-1 loses at about N = 4 | `sim/swarm.js` all heroes | 87 62 38 22 11 10% | see below |
-| Beren's +1 SPD no longer a penalty | `aicheck spd` Δ as is | −0.4 ± 2.1 | see below |
+| Wounded-SPD twin loses, falling with the wound | `sim/spiral.js` legs, pooled, k = 0/1/2/3 | 24, 25, 24, 18% | 26, 26, 31, 16% |
+| Level 8 vs N level-1 loses at about N = 4 | `sim/swarm.js` all heroes, N = 1..6 | 87 62 38 22 11 10% | 94 64 35 21 13 6% |
+| Beren's +1 SPD no longer a penalty | `aicheck spd` (40 seeds a foe) Δ as is | −0.4 ± 2.1 (turn first 17 → 30%) | +0.6 ± 1.7 (acted first 14 → 33% of beats) |
 | (context) cleared of 30 | court, hall, valley | 28, 12, 11 | 23, 17, 11 |
 | (context) heroes down / dead a fight | court, hall, valley | 0.20/0.00, 0.27/0.05, 0.97/0.31 | 0.27/0.02, 0.12/0.02, 0.69/0.26 |
 | (context) duels: deaths a fight; timeouts | | 0.65; 0% | 0.58; 2% |
 | (context) mirrors timing out | | 41% | 39% |
 
-SPIRAL_SWARM_AICHECK
+**Spiral.** The wounded twin still loses about as before: a leg wound of 3 drops the pooled win rate to 16% (18% before);
+1 and 2 do little, as before (the mirrors at k = 0 are already 26%, not 50%, because Beren's and Jabiku's time out).
+Arms are flat at 26% (they fell 24 → 18 before; the arm's +2.5 ticks a blow costs less than its +1 AP did).
+**Swarm.** A level-8 hero still loses at about N = 4 (21%, was 22%); Cyrus holds out longer (89% at N = 4, was 78%:
+his 2-tick thrusts), Lorc less. **+1 SPD on Beren** is now +0.6 ± 1.7 (was −0.4 ± 2.1 here after step E, −7.0 in step
+D): not a penalty, though not yet a measurable gain either; the hero now acts first in a third of beats with it.
 
 **Reading the first-blow numbers.** The pooled mirror is 75%, outside 50–60%, but it is not the clock's doing on the
 whole: it is Cyrus. In his mirror the first thrust that lands decides the fight 100% of the time (195 of 195; it was 98%
@@ -294,4 +299,11 @@ node sim/swarm.js --n 8
 node sim/aicheck.js spd --jobs 2
 ```
 
-VERIFICATION
+## Verification
+
+`NODE_OPTIONS=--max-old-space-size=8192 node --test` (the whole suite, at the end): 358 tests, 358 pass, 0 fail (202 s).
+`node tools/validate.js`: data/ is consistent. `node tools/bundle.js`: bundled 23 files. New test files and tests:
+`tests/clock.js` (helpers), the clock tests at the head of `tests/rules.test.js` (costs, lead, armor, fatigue, the clock,
+the beat, reactions and overreach, a committed blow spoiled, waiting), `tests/odds.test.js` (foresee's timing),
+`tests/save.test.js` (a version-8 save onto the clock), `tests/ui-node.test.js` (the timeline and the clock meter).
+
