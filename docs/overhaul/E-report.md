@@ -5,7 +5,21 @@ the same day from a frozen copy; "after" is the branch head run the same way. Cr
 (after: rewritten on wounds, see below), swarm n 8, party size n 20 (cut from step D's 60 to save time, the same n
 before and after).
 
-AFTER_NUMBERS_PENDING
+## Headline
+
+| Target (OVERHAUL.md step E) | Before | After |
+|---|---|---|
+| heroes dead a fight ≤ 0.15 (court, hall, valley) | 0.24, 0.36, 0.60 | **0.00, 0.05, 0.31** |
+| heroes down a fight about 0.5 | – (collapses 62, 77, 18 in 111/221/106 fights) | 0.20, 0.27, 0.97 |
+| a party of 3 clears a first area ≥ 18 of 30 | 22, 4, 15 | **28, 12, 11** |
+| a survivor carries a wound in ≥ ⅓ of fights (any / a hero) | 18/15%, 10/9%, 11/2% (STR/DEX/SPD wound) | 86/44%, 68/44%, 88/70% |
+| the wounded twin loses clearly, arm and leg alike | (old spiral: STR 38→1%, SPD 38→57%, DEX 38→29%) | arms 24→18%, legs 24→18% pooled; see the spiral |
+
+Met: deaths in the court and the hall, the survivor's wound everywhere, the court's clears. Not met: the valley
+(deaths 0.31, clears 11, down 0.97), the hall's clears (12, though up from 4), and the spiral (the wounded twin loses,
+but not clearly, and mirrors of Beren and Jabiku mostly time out). The hall improved most because its goblin warrior
+lost his CON 13 padding.
+
 
 ## What changed
 
@@ -184,4 +198,136 @@ All in `src/rules/combat.js`:
 
 Step F can move `bodyRound`, regeneration and the collapse count to its beat by calling them from the timeline.
 
-REST_PENDING
+## Before and after against the baseline table (party of 3, seed 4242)
+
+| Goal | Measure | Before | After |
+|---|---|---|---|
+| Fast | median rounds (court, hall, valley; duels) | 4, 3, 5; 2 | 3, 4, 6; 3 |
+| | 90th percentile rounds | 6, 11, 14; 4 | 10, 13, 14; 5 |
+| Lethal but playable | heroes dead a fight | 0.24, 0.36, 0.60; duels 0.48 | 0.00, 0.05, 0.31; duels 0.37 |
+| | heroes down a fight | – | 0.20, 0.27, 0.97; duels 0.45 |
+| | cleared of 30 | 22, 4, 15 | 28, 12, 11 |
+| Death spiral | survivor with a wound | 18%, 10%, 11% (STR/DEX/SPD) | 86%, 68%, 88% (any wound) |
+| Stamina matters | someone under ½ | 49%, 37%, 53%; duels 17% | 52%, 48%, 82%; duels 26% |
+| | heroes out (collapse or down) / got up | 62/41, 77/38, 18/3 | 98/61, 160/77, 119/16 |
+| Depth | top action share of blows landed | thrust 38, 45, 64%; duels 60% | thrust 37, 37, 62%; duels 60% |
+| | head share of located blows | 16, 17, 13%; duels 22% | **25, 22, 21%; duels 28%** |
+| | kicks of blows landed (hall) | 6% | **25%** |
+| Action economy | swarm, all heroes, N = 1..6 | 95 84 60 48 33 19 | **87 62 38 22 11 10** |
+
+Wounds dealt by severity 1/2/3: court 410/374/76, hall 293/331/278, valley 252/379/219; duels 217/639/294. Heroes taken
+down by a blow (the last wound): court 20 (templeGorilla and scaleward; severity 3 95%), hall 40 (goblin warrior 50%,
+fire goblin 40%; at the arms 53%), valley 80 (orc legionnaire 75%; severity 2 53%, 3 39%; at the arms 43%). No hero
+was struck dead while down anywhere: no foe in these places finishes; every death is a bleed-out after a lost fight.
+
+Duels by pair (A wins %, before → after): Beren v Cyrus 100 → 100, Beren v Jabiku 90 → 95, Cyrus v Jabiku 100 → 100,
+Beren v scaleward 88 → 63, Cyrus v scaleward 75 → 100, Jabiku v scaleward 0 → 0, Beren v fireGoblin 100 → 100, Cyrus
+v fireGoblin 48 → 48, Cyrus v goblinWarrior 48 → 83, Beren v wolf 100 → 100.
+
+Party size (n 20 a cell, cleared / heroes dead a fight):
+
+| Place | 1 | 2 | 3 | 4 | 5 | 6 |
+|---|---|---|---|---|---|---|
+| court before | 1 / 0.17 | 8 / 0.23 | 14 / 0.27 | 20 / 0.07 | 20 / 0.04 | 20 / 0.01 |
+| court after | 0 / 0.11 | 4 / 0.07 | 18 / 0.01 | 20 / 0.00 | 20 / 0.00 | 20 / 0.00 |
+| hall before | 0 / 0.13 | 0 / 0.25 | 1 / 0.28 | 9 / 0.26 | 18 / 0.16 | 19 / 0.24 |
+| hall after | 0 / 0.09 | 0 / 0.06 | 4 / 0.05 | 17 / 0.00 | 20 / 0.00 | 20 / 0.00 |
+| valley before | 0 / 0.41 | 1 / 0.55 | 8 / 0.62 | 10 / 0.77 | 18 / 0.78 | 18 / 0.71 |
+| valley after | 0 / 0.33 | 2 / 0.51 | 5 / 0.51 | 7 / 0.45 | 17 / 0.12 | 15 / 0.35 |
+
+The valley's deaths no longer rise with party size (step D's open question): from five heroes they fall, because a
+side that holds the field binds its fallen.
+
+## Down against dead
+
+Down is now the common outcome and death the rare one, which is the step's intent. Court: 0.20 down, 0.00 dead. Hall:
+0.27 down, 0.05 dead. Valley: 0.97 down, 0.31 dead. Duels (no ally to bind the loser): 0.45 down, 0.37 dead. Every
+hero death in the crawls is a bleed-out (`settleFallen`) after a lost fight; none was finished (no foe in the three
+places has `finishes`). Before, 48% (court), 19% (hall) and 16% (valley) of hero deaths were blows on a body already
+down; that path is now the trait's only.
+
+## The spiral by wound (`sim/spiral.js --n 40`, rewritten)
+
+The twin starts with one bound wound at the arms or the legs, severity k. The wounded twin's win rate (timeouts in
+brackets):
+
+| Hero | place | k=0 | 1 | 2 | 3 |
+|---|---|---|---|---|---|
+| Beren | arms | 18% (70%) | 18% (70%) | 15% (73%) | 13% (75%) |
+| Beren | legs | 18% (70%) | 18% (70%) | 20% (65%) | 28% (73%) |
+| Lorc | arms | 33% | 33% | 33% | 40% |
+| Lorc | legs | 33% | 33% | 38% | 5% (95%) |
+| Cyrus | arms | 48% | 43% | 23% | 20% |
+| Cyrus | legs | 48% | 48% | 40% | 40% |
+| Jabiku | arms | 0% (100%) | 3% (98%) | 0% (100%) | 0% (88%) |
+| Jabiku | legs | 0% (100%) | 3% (98%) | 0% (100%) | 0% (100%) |
+| pooled | arms | 24% (43%) | 24% (43%) | 18% (43%) | 18% (41%) |
+| pooled | legs | 24% (43%) | 25% (42%) | 24% (41%) | 18% (67%) |
+
+Only Cyrus shows the spiral clearly (arms 48 → 20%). Severity 1 does nothing for anyone with WIL 4+ (pain takes it),
+which is the rule working, but it means k=1 is a mirror. Beren's and Jabiku's mirrors mostly time out at every k, as
+they did before (plate on plate; two casters of Life who wither each other a point at a time), so their columns say
+little. Lorc's arm wound does nothing to a bow: arms penalise weapon blows' AP and damage, and the shot's damage is
+the bow's (I did not check why the arm wound's damage penalty does not tell on the shot). Lorc's leg 3 keeps him down and the fight times out.
+
+## What moved the wrong way
+
+- **The valley.** Clears 15 → 11, heroes down 0.97 a fight. Deaths fell (0.60 → 0.31) but stay over the 0.15 target,
+  all bleed-outs after a lost fight. I tried shock 11 vs 12, boxes 5 and 7, thresholds [1,3,6] and [1,4,8], survive 8,
+  and winding [2,4,7] vs [3,6,10]: every variant cleared 5–11 of 30 (n 30: ±2.5). The valley's third fight (three
+  heroes against four spearmen) is long (14 rounds at the 90th percentile) and the numbers tell.
+- **Swarm.** A level-8 hero against N level-1 foes now loses near N = 3 (38%), was near N = 4 (48%). A hero's CON no
+  longer carries them through many small wounds, and a lone hero has no one to bind them.
+- **Head share** rose to 21–28% (court and duels at or over the ¼ target). The AI's aim (`bestAim`) now weighs every
+  place, armor or no, since every place's wound does something different, and a head wound of 3 drops outright and a
+  head wound of 1–2 stuns. Step A tuned the head's aim cost for the old wounds.
+- **Kicks** are 25% of blows landed in the hall (6% before). Not tested whether this is the AI: a kick's winding is a
+  fixed 2–4 stamina and its knockdown is now worth more against goblins who no longer have padding CON.
+- **Collapses and long tails.** Collapses (stamina 0) are 2–7 times as many, and the 90th-percentile fight is longer
+  (court 6 → 10 rounds). A collapsed body keeps its armor and gets up, and bleeding no longer kills mid-fight, so fights
+  that once ended in a kill on a collapsed foe go on.
+- **Golems and CON-resisted banes**: CON 22 → 10, so Slowed and the other CON-resisted banes now land on golems.
+- **Bosses lost their padding** (venril, the orc emperor, the kobold king, the dread shaman: CON 18–30 → 10). They
+  are bosses by apMult and gear; `tools/tiers.js` was not rerun.
+
+## Decisions the plan did not settle
+
+1. **Head and torso at 3.** The plan says both "drop" at 3, and also that shock resists a severity-3 wound. I made the
+   head drop outright and gave the torso (and the limbs) the shock check, so CON matters somewhere.
+2. **Bleeding during a fight is blood loss, not stamina.** First built as stamina (2 a point a round): collapses
+   tripled and fights dragged. Blood loss as harm (filling boxes) brings a heavy bleeder down in a few rounds; a body
+   already down is settled only when the fight ends.
+3. **Death after the fight** is a roll (d10 + CON against 10 + bleeding) for a down body whose side has no one
+   standing; a side that holds the field binds its own. Sims and the game see the same rule (`Combat.settleFallen`,
+   from `finishRound`).
+4. **Spells that land nowhere** (fire, Life) and harm over time add to one wound of their kind, so a run of small
+   burns does not fill a box each. Blows are each their own wound.
+5. **Carry-through limb** raised 3 → 7 points so a cut can make a limb wound of severity 3 before carrying on.
+6. **Pain** reduces a place's penalties, not its drops, falls or the shock check.
+7. **Small animals** got sizes under 1 (rat, bat, fae drake, fire sprite). Goblins and kobolds stay 1; making them
+   0.8 would mirror their old frailty but changes the first areas more than this step should.
+8. **Medicine after a fight** is free (a skill check per wound, once); bleeding needs a bandage or the wound worsens.
+9. **Old saves** (VERSION 8): each attribute's damage becomes harm where `wounds.attrPlace` puts it (STR and DEX the
+   arms, SPD the legs, CON the torso, the rest the head), one wound a place; old bleeding is dropped as stopped.
+10. **WIL's "fear, spent actions"** were left as they are (fear already uses WIL; R2's spent action has no WIL term).
+    Step I can give WIL the spent action.
+11. Not looked at: the battle screen and the sheet were rendered only in the fake DOM (the UI tests pass); I did not
+    take a screenshot, so the layout of the wound panel and chips is unseen.
+
+## Verification
+
+`NODE_OPTIONS=--max-old-space-size=8192 node --test`: 357 tests, 357 pass, 0 fail (188 s). `node tools/validate.js`:
+data/ is consistent. `node tools/bundle.js` run (data/bundle.js is gitignored).
+
+## Commands
+
+```
+node sim/crawl.js temple_court|ember_hall|orc_valley --party 3 --n 30 --metrics
+node sim/duels.js --n 40 --seed 4242 --metrics
+node sim/spiral.js --n 40
+node sim/swarm.js --n 8
+node sim/partysize.js --n 20 --seed 4242 --jobs 2
+```
+
+`sim/metrics.js` now reports heroes down and dead a fight (bled out and struck down), the wound severities dealt, and
+the blows that took a hero down (action, place, severity, foe).
