@@ -63,12 +63,12 @@ test('Counter Step: after a good dodge, the next move\'s first square is free an
   a.status.counterStep = null;
   const b = armed('Guard', 'longsword', 'enemy');
   const { enc, chars } = await field([[a, 2, 1], [b, 1, 1]]);
-  a.status.counterStep = enc.round; // as a successful dodge leaves it
+  a.status.counterStep = enc.now; // as a successful dodge leaves it
   const r = recorder([]);
-  const ap0 = enc.ap[a.id];
+  const t0 = enc.now;
   assert.equal(await Clock.act(enc, chars, { actor: a.id, type: 'move', to: { x: 3, y: 1 } }, io(r)), null);
   assert.equal(r.asked.filter((q) => q.kind === 'opportunity').length, 0);
-  assert.equal(enc.ap[a.id], ap0, 'one square, free');
+  assert.equal(enc.clock[a.id], t0, 'one square, free');
   assert.equal(a.status.counterStep, null, 'used up');
 });
 
@@ -148,13 +148,13 @@ async function held(level, first) {
   return Object.assign(f, { h, v });
 }
 
-test('Iron Grip: a held foe cannot break free while the holder pays a step\'s AP; Joint Lock bites when it holds', async () => {
+test('Iron Grip: a held foe cannot break free while the holder can react and spends a few ticks; Joint Lock bites when it holds', async () => {
   const { enc, chars, h, v } = await held('hold', 'held');
   h.feats.iron_grip = 1; h.feats.joint_lock = 1;
-  const ap0 = enc.ap[h.id], dex0 = C.attr(v, 'DEX');
+  const dex0 = C.attr(v, 'DEX');
   assert.equal(await Clock.act(enc, chars, { actor: v.id, type: 'break', target: h.id }, io(recorder([]), [10, 10, 1, 1])), null);
   assert.equal(C.holding(h), v.id, 'still held');
-  assert.equal(enc.ap[h.id], ap0 - C.minAP());
+  assert.ok(enc.decls.length && enc.log.some((l) => /grip does not give/.test(l.text)));
   assert.ok(C.wounds(v).some((w) => w.kind === 'wrench' && w.place === B.CONFIG.grappling.jointLock.place), 'the joint wrenched');
 });
 
@@ -164,23 +164,21 @@ test('Human Shield: a blow at a holder lands on the one they hold', async () => 
   const atk = armed('Raider', 'longsword', 'enemy');
   chars[atk.id] = atk; enc.ids.push(atk.id); enc.pos[atk.id] = { x: 0, y: 1 };
   Clock.free(enc, atk.id);
-  const o = C.attackOptions(atk).find((x) => x.weaponId && !x.windUp && C.inRange(x, 1));
+  const o = C.attackOptions(atk).find((x) => x.weaponId && !x.exposes && C.inRange(x, 1));
   const before = { h: [h.stamina, C.woundLoad(h)], v: [v.stamina, C.woundLoad(v)] };
-  enc.turn = enc.order.indexOf(atk.id) >= 0 ? enc.order.indexOf(atk.id) : enc.turn;
-  if (!enc.order.includes(atk.id)) { enc.order.splice(enc.turn, 0, atk.id); }
   assert.equal(await Clock.act(enc, chars, { actor: atk.id, type: 'strike', option: o, target: h.id }, io(recorder([]), [10, 10, 10, 10])), null);
   assert.deepEqual([h.stamina, C.woundLoad(h)], before.h, 'the holder untouched');
   assert.ok(v.stamina < before.v[0] || C.woundLoad(v) > before.v[1], 'the held one hurt');
 });
 
-test('Flurry: a light thrust doubled, for half again the AP; struck twice', async () => {
+test('Flurry: a light thrust doubled, for half again the ticks; struck twice', async () => {
   const a = armed('Duelist', 'rapier', 'party');
   const t0 = C.attackOptions(a).find((x) => x.motion === 'thrust' && x.weaponId);
   assert.ok(!C.attackOptions(a).some((x) => x.flurry));
   a.feats.flurry = 1;
   const f = C.attackOptions(a).find((x) => x.flurry);
   assert.ok(f);
-  assert.equal(f.ap, Math.round(t0.ap * 1.5));
+  assert.equal(f.ticks, Math.round(t0.ticks * 1.5));
   const foe = armed('Foe', null, 'enemy');
   foe.traits = Object.assign({}, foe.traits, { size: 6 }); foe.stamina = 200; // a body the first thrust can't put down
   const { enc, chars } = await field([[a, 1, 1], [foe, 2, 1]]);
@@ -253,10 +251,10 @@ const shot = (c) => C.attackOptions(c).find((x) => x.ranged && x.motion === 'sho
 test('Archery: Point Blank shoots at 1; Quick Draw draws cheaper; Far Shot loses nothing at long range; Deadeye aims free', () => {
   const a = bow('Archer');
   assert.equal(shot(a).minRange, 2);
-  const draw0 = C.actionCost(a, 'windUp', { option: shot(a) }).ap;
+  const draw0 = shot(a).ticks;
   a.feats.point_blank = 1; a.feats.quick_draw = 2;
   assert.equal(shot(a).minRange, 1);
-  assert.ok(C.actionCost(a, 'windUp', { option: shot(a) }).ap < draw0);
+  assert.ok(shot(a).ticks < draw0);
   const t = armed('Mark', null, 'enemy');
   const o = shot(a);
   const far = (o.longRange || 8) + 2;
@@ -298,7 +296,7 @@ test('Shadow: Vanish (no foe beside) makes you unseen; Shadow Step moves unanswe
   assert.ok(!Cond.has(a, 'unseen'), 'striking gives it away');
 });
 
-test('Leadership: Rally lets the struck regenerate; Command gives AP; To Your Feet wakes; Demoralize and Dread frighten', async () => {
+test('Leadership: Rally lets the struck regenerate; Command hurries a friend; To Your Feet wakes; Demoralize and Dread frighten', async () => {
   const cap = armed('Captain', null, 'party'), ally = armed('Ally', null, 'party');
   const f1 = armed('Foe1', null, 'enemy'), f2 = armed('Foe2', null, 'enemy');
   for (const k of ['rally', 'command', 'to_your_feet', 'demoralize']) cap.feats[k] = 1;
@@ -307,10 +305,11 @@ test('Leadership: Rally lets the struck regenerate; Command gives AP; To Your Fe
   Clock.free(f.enc, cap.id);
   const x = io(recorder([]), [10, 1, 10, 1, 10, 1]);
   assert.equal(await Clock.act(f.enc, f.chars, { actor: cap.id, type: 'rally' }, x), null);
-  assert.equal(f.enc.rallied[ally.id], f.enc.round);
-  const ap0 = f.enc.ap[ally.id];
+  assert.equal(f.enc.rallied[ally.id], f.enc.beat);
+  f.enc.clock[ally.id] = f.enc.now + 20;
+  const ap0 = f.enc.clock[ally.id];
   assert.equal(await Clock.act(f.enc, f.chars, { actor: cap.id, type: 'command', target: ally.id }, x), null);
-  assert.ok(f.enc.ap[ally.id] > ap0);
+  assert.ok(f.enc.clock[ally.id] < ap0, 'sooner on the clock');
   Clock.free(f.enc, cap.id);
   ally.stamina = 0; C.updateCondition(ally); // collapsed
   assert.equal(await Clock.act(f.enc, f.chars, { actor: cap.id, type: 'rouse', target: ally.id }, x), null);
@@ -362,7 +361,7 @@ test('Athletics: Bull Rush follows the shove; Charge adds to the next blow; Unst
   c.feats.charge = 1;
   const g = await field([[c, 0, 1], [t, 4, 1]]);
   assert.equal(await Clock.act(g.enc, g.chars, { actor: c.id, type: 'move', to: { x: 3, y: 1 } }, io(recorder([]))), null);
-  assert.equal(c.status.charging, g.enc.round);
+  assert.equal(c.status.charging, true);
   const o = C.attackOptions(c).find((x) => x.weaponId && C.inRange(x, 1));
   const decl = { actor: c.id, type: 'strike', option: o, target: t.id };
   Clock.free(g.enc, c.id);
@@ -451,7 +450,7 @@ test('Whirlwind: a two-handed swing struck at every foe it reaches, for half aga
   assert.ok(w, 'a Whirlwind option');
   assert.equal(C.attackOptions(mk(false)).some((o) => o.whirlwind), false, 'not without the feat');
   const swing = plain.find((o) => o.face === w.face && o.motion === w.motion);
-  assert.equal(w.ap, swing.ap, 'the same AP');
+  assert.equal(w.ticks, swing.ticks, 'the same ticks');
   assert.ok(w.stamina > swing.stamina, 'dearer in stamina');
   assert.ok(withIt.every((o) => !o.whirlwind || (o.motion !== 'thrust' && o.motion !== 'power')), 'swings only');
   // Three foes around the Reaper: all three are struck.

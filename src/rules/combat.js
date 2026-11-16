@@ -404,13 +404,14 @@
     return f && w && !WEAPONS[w.type].ranged && Items.longestReach(WEAPONS[w.type]) >= 3 ? Math.max(CONFIG.range.maneuverMax, f) : CONFIG.range.maneuverMax;
   }
 
-  // Who acts first of these at the same tick: the earlier clock, then a released wait last, higher SPD, gear's init,
+  // Who acts first of these at the same tick: the earlier clock, a wait just released first and one still waiting last, higher SPD, gear's init,
   // the tie-break die, the order of the fight.
   function order(enc, chars, a, b) {
     const ca = enc.clock[a] != null ? enc.clock[a] : enc.now, cb = enc.clock[b] != null ? enc.clock[b] : enc.now;
     if (ca !== cb) return ca - cb;
-    const waiting = (x) => ((enc.waits && enc.waits[x]) || (enc.released && enc.released[x]) ? 1 : 0);
-    if (waiting(a) !== waiting(b)) return waiting(a) - waiting(b);
+    // Still waiting: after the others at its tick. Just released by what it waited for: before them (just after it).
+    const rank = (x) => (enc.waits && enc.waits[x] ? 1 : enc.released && enc.released[x] ? -1 : 0);
+    if (rank(a) !== rank(b)) return rank(a) - rank(b);
     const s = C.combatAttr(chars[b], 'SPD') - C.combatAttr(chars[a], 'SPD');
     if (s) return s;
     const g = G.Effects.sum(chars[b], 'init') - G.Effects.sum(chars[a], 'init');

@@ -237,15 +237,15 @@ test('R6: a small target costs more against a defender who can still cover it (l
   const openOdds = Combat.defenseOdds(t, 'parry', 'thrust', a, thrust, 0, enc);
   assert.ok(openOdds < guardedOdds, `${openOdds} < ${guardedOdds}`);
   t.status.prone = false;
-  // Caught off guard: the surprised side in its first round.
-  enc.surprise = { side: 'enemy', round: enc.round, factor: 0.5 };
+  // Caught off guard: the surprised side before its first action.
+  enc.surprise = { side: 'enemy' };
   assert.equal(Combat.aimOpen(t, a, enc), 'caught off guard');
   enc.surprise = null;
   // The torso costs nothing either way.
   assert.equal(Combat.aimPenalty(Object.assign({}, thrust, { aim: 'torso' }), 'torso', true), 0);
 });
 
-test('R6: the AI judges a foe spent from what it has watched it spend this round, not from its AP', async () => {
+test('R6: the AI judges a foe unable to react from its clock, in plain sight (step F)', async () => {
   const a = armed('A', 'longsword');
   const t = armed('T', 'longsword'); t.side = 'enemy';
   const chars = { [a.id]: a, [t.id]: t };
@@ -253,10 +253,10 @@ test('R6: the AI judges a foe spent from what it has watched it spend this round
   enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[t.id] = { x: 1, y: 0 };
   await Clock.start(enc, chars, roller([3, 3]));
   const thrust = C.attackOptions(a).find((o) => o.motion === 'thrust');
-  Clock.far(enc, t.id); // it really has none, but nobody saw it spent
+  Clock.free(enc, t.id);
   const fresh = B.AI.bestAim(a, t, thrust, 1, enc);
   assert.equal(fresh.drained, false);
-  enc.decls.push({ actor: t.id, type: 'strike', ap: C.apPool(t), done: true }); // seen to spend an average pool
+  Clock.far(enc, t.id); // too far ahead on the clock to meet it
   const spent = B.AI.bestAim(a, t, thrust, 1, enc);
   assert.equal(spent.drained, true);
   // With no defence to beat, the head is no dearer than anywhere: worth at least as much, relative to the unaimed blow.

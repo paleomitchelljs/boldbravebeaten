@@ -26,12 +26,12 @@ async function table(foeAt, opts) {
   enc.pos[ally.id] = (opts && opts.allyAt) || { x: 0, y: 0 };
   foeAt.forEach((p, i) => { enc.pos[foes[i].id] = p; });
   await Clock.start(enc, chars, async (req) => Array.from({ length: req.count }, () => (req.actorId === jab.id ? 10 : 1)));
-  enc.order = ids; enc.turn = 0;
+  Clock.actNow(enc, jab.id);
   return { enc, chars, jab, ally, foes };
 }
 const spell = (c, label) => Magic.spellOptions(c).find((o) => o.label === label);
 const teach = (c) => Object.assign(c.feats, { verb_give: 1, verb_take: 1 });
-const cast = (enc, chars, jab, o, where) => Combat.act(enc, chars, Object.assign({ actor: jab.id, type: o.kind === 'strike' ? 'strike' : 'cast', option: o }, where), io(jab.id));
+const cast = (enc, chars, jab, o, where) => Clock.act(enc, chars, Object.assign({ actor: jab.id, type: o.kind === 'strike' ? 'strike' : 'cast', option: o }, where), io(jab.id));
 
 test('life words: Jabiku knows Move + Life alone, with Far and Wide, on a foe to drain and on an ally to give', () => {
   const w = World.create(World.presetParty(), { log: false });
@@ -75,7 +75,7 @@ test('life words: a given Move calls back an ally newly dead, and the AI reaches
   const { enc, chars, jab, ally } = await table([{ x: 0, y: 4 }], { allyAt: { x: 5, y: 2 } });
   for (let i = 0; i <= C.boxes(ally); i++) C.addWound(ally, { place: 'torso', sev: 1, kind: 'cut', bleed: 0, pts: 1 }, null);
   assert.ok(ally.status.dead);
-  ally.status.diedRound = enc.round;
+  ally.status.diedBeat = enc.beat;
   const legal = Combat.legalActions(enc, chars, jab.id);
   const give = legal.spells.find((o) => o.label === 'Move + Life (on an ally)');
   assert.ok(give.targets.some((t) => t.id === ally.id && t.inReach), 'the body is a target');
@@ -97,7 +97,7 @@ test('life words: Take + Life + Wide aimed at the caster\'s own square withers a
 });
 
 test('life words: Give + Life + Wide heals all round an ally; Far reaches one twice as far', async () => {
-  const { enc, chars, jab, ally } = await table([], { allyAt: { x: 3, y: 2 } });
+  const { enc, chars, jab, ally } = await table([{ x: 8, y: 4 }], { allyAt: { x: 3, y: 2 } }); // a foe far off: the fight goes on
   teach(jab);
   ally.stamina = 5; jab.stamina -= 10;
   const mine = jab.stamina;
