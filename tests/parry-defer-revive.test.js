@@ -1,8 +1,9 @@
-// The user, 2026-11-07: skill tells in a parry (CONFIG.defense.skill), Defer (CONFIG.defer), and a fight won in time
+// The user, 2026-11-07: skill tells in a parry (CONFIG.defense.skill), waiting (step F; it replaced Defer), and a fight won in time
 // leaves the party a chance to save one who has just fallen (CONFIG.magic.revive.afterFight).
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const B = require('./load.js');
+const Clock = require('./clock');
 const { World, Battle, Combat, Enemies, Magic, Rand, Character: C, CONFIG } = B;
 
 // The presets as they stand at level 3 (their plan's first stage: the numbers below).
@@ -59,39 +60,22 @@ test('skills: an old save\'s number-only feats become skill ranks', () => {
   assert.deepEqual(c.feats, { feint: 1, riposte: 1 });
 });
 
-async function fight() {
+test('wait (replaces defer, step F): letting the next one go first, then acting just after them', async () => {
   const ps = party();
   const [g] = Enemies.makeMonster('goblin');
   const chars = Object.fromEntries(ps.concat([g]).map((c) => [c.id, c]));
   const ids = Object.keys(chars);
   const enc = Combat.createEncounter('t', ids, chars, 9, 5);
   ids.forEach((id, i) => { enc.pos[id] = { x: i, y: id === g.id ? 4 : 0 }; });
-  await Combat.startRound(enc, chars, async (req) => Array.from({ length: req.count }, () => 5));
-  enc.order = ps.map((c) => c.id).concat([g.id]);
-  enc.phase = 'turn'; enc.turn = 0;
-  return { enc, chars, ps, g };
-}
-
-test('defer: 1 AP lets the next one go now; my turn picks up after theirs, and again as long as the AP lasts', async () => {
-  const { enc, chars, ps } = await fight();
-  const [a, b, c] = ps;
-  const ap = Combat.apLeft(enc, a.id);
-  const legal = Combat.legalActions(enc, chars, a.id);
-  assert.equal(legal.defer.next, b.id);
-  assert.equal(await Combat.submit(enc, chars, { actor: a.id, type: 'defer' }, {}), null);
-  assert.equal(Combat.currentActor(enc), b.id);
-  assert.equal(Combat.apLeft(enc, a.id), ap - Math.round(CONFIG.defer.ap * (CONFIG.apDisplay || 1)));
-  await Combat.endTurn(enc, chars, b.id);
-  assert.equal(Combat.currentActor(enc), a.id, 'back to the one who deferred');
-  await Combat.submit(enc, chars, { actor: a.id, type: 'defer' }, {});
-  assert.equal(Combat.currentActor(enc), c.id, 'past the next one');
-  await Combat.endTurn(enc, chars, c.id);
-  assert.equal(Combat.currentActor(enc), a.id);
-  await Combat.endTurn(enc, chars, a.id);
-  assert.equal(Combat.currentActor(enc), ps[3].id, 'and on in order');
-  // The last in the order has no one to defer to.
-  enc.turn = enc.order.length - 1;
-  assert.equal(Combat.legalActions(enc, chars, enc.order[enc.turn]).defer, null);
+  await Clock.start(enc, chars, async (req) => Array.from({ length: req.count }, () => 5));
+  const [a, b] = ps;
+  Clock.actNow(enc, a.id);
+  enc.clock[b.id] = enc.now + 2;
+  assert.ok(Combat.legalActions(enc, chars, a.id).wait.for.includes(b.id));
+  assert.equal(await Combat.submit(enc, chars, { actor: a.id, type: 'wait', for: b.id }, {}), null);
+  while (Combat.currentActor(enc) !== b.id) await Combat.submit(enc, chars, { actor: Combat.currentActor(enc), type: 'wait', ticks: 1 }, {});
+  await Combat.submit(enc, chars, { actor: b.id, type: 'move', to: { x: 1, y: 1 } }, {});
+  assert.equal(Combat.currentActor(enc), a.id, 'back to the one who waited, just after');
 });
 
 function wonWithOneDown(seed) {
@@ -105,8 +89,8 @@ function wonWithOneDown(seed) {
   // Down, then finished: dead, with a revive window open.
   for (let i = 0; i <= C.boxes(beren); i++) C.addWound(beren, { place: 'torso', sev: 1, kind: 'point', bleed: 1, pts: 2 }, null);
   C.updateCondition(beren);
-  beren.status.diedRound = enc.round;
-  for (const id of enc.ids) if (chars[id].side !== 'party') { chars[id].status.dead = true; chars[id].status.diedRound = enc.round; }
+  beren.status.diedBeat = enc.beat;
+  for (const id of enc.ids) if (chars[id].side !== 'party') { chars[id].status.dead = true; chars[id].status.diedBeat = enc.beat; }
   return { w, beren, jab };
 }
 

@@ -35,8 +35,9 @@
         over: () => null,
         sheet: (id) => game.openOverlay('sheet', { id }),
         react: (req, enc, chars) => askOnMap(game, req, enc, chars),
-        // The fight spills over: groups it comes near join (Battle.reinforce).
-        beforeRound: () => Battle.reinforce(w),
+        // At the start and each beat: groups the fight comes near join (Battle.reinforce), and a party no foe can come
+        // at has got away (the fight stops, phase 'away').
+        onBeat: Battle.onBeat(w, { away: true }),
       },
     };
     game.ui.battleApp = app;
@@ -62,10 +63,11 @@
   function reactionCard(game) {
     const r = game.ui.reacting;
     const m = r.model;
-    // The card: who strikes whom (and how, on hover), each choice with its AP (and a defence's odds), and the AP left.
-    const tip = `${m.sub}. ${r.req.kind !== 'opportunity' ? 'AP spent now is gone from this round; a defence that fails still costs it.' : 'A strike costs its AP now.'}`;
+    // The card: who strikes whom (and how, on hover), each choice with its ticks (and a defence's odds), and how far
+    // ahead on the clock the hero already is.
+    const tip = `${m.sub}. A reaction's ticks go on your clock: your next action comes that much later. More than ${G.CONFIG.clock.overreach} ticks ahead, you can't react at all.`;
     return h('section', { class: 'popcard react' },
-      h('div', { class: 'react-head', 'data-hint': tip }, h('h3', null, m.from), h('span', { class: 'ap-pill num' }, `${C.fmtAP(m.ap)} AP`), h('span', { class: 'to' }, m.to)),
+      h('div', { class: 'react-head', 'data-hint': tip }, h('h3', null, m.from), h('span', { class: 'ap-pill num' }, `+${m.ahead}`), h('span', { class: 'to' }, m.to)),
       h('div', { class: 'react-list' },
         m.choices.map((c, i) => h('button', { class: 'act', 'data-hint': c.hint || null, onclick: () => answer(game, c.value) }, h('kbd', null, String(i + 1)), h('span', { class: 'nm' }, c.label), h('span', { class: 'num odds' }, c.odds || ''), h('span', { class: 'num' }, c.cost),
           c.line ? h('span', { class: 'react-line' }, c.line) : null)),
@@ -73,12 +75,10 @@
           m.none.line ? h('span', { class: 'react-line' }, m.none.line) : null)));
   }
 
-  // At the end of a round, a party no foe can come at has got away (Battle.disengaged).
+  // At a beat, a party no foe can come at has got away (Battle.onBeat stops the fight: phase 'away').
   function getAway(game, enc) {
     const w = game.world;
-    if (enc.phase !== 'roundEnd' || enc.awayChecked === enc.round) return false;
-    enc.awayChecked = enc.round;
-    if (!Battle.disengaged(w).ok) return false;
+    if (enc.phase !== 'away') return false;
     game.ui.finalLog = enc.log.slice(-12);
     const res = Battle.getAway(w);
     for (const l of res.lines) World.logLine(w, l, 'fight');
@@ -92,10 +92,10 @@
     strike: { color: '#ff6b5e', icon: 'sword' }, spell: { color: '#c79bff', icon: 'star' }, maneuver: { color: '#ffb35c', icon: 'hand' },
     other: { color: '#8fe3a8', icon: 'hand' }, guard: { color: '#8ab4ff', icon: 'shield' }, move: { color: '#7fdcff' }, far: { color: '#d9b055' },
   };
-  const SELF_ICON = { windUp: 'sword', standUp: 'up', bandage: 'heart', cauterize: 'heart', drawSidearm: 'hand', pickUp: 'hand', drop: 'hand', vanish: 'eye', feign: 'eye', rally: 'up', command: 'up', rouse: 'heart' };
+  const SELF_ICON = { standUp: 'up', bandage: 'heart', cauterize: 'heart', drawSidearm: 'hand', pickUp: 'hand', drop: 'hand', vanish: 'eye', feign: 'eye', rally: 'up', command: 'up', rouse: 'heart' };
   // The battlefield view's size in squares: the window's, as the explore view's is (rules.yaml game.view, via
   // UI.ExploreActions.viewShape); without a window (tests), rules.yaml game.arena's 15 × 10.
-  // The pane takes 330 px beside the map and the initiative bar a row above it; below 1000 px (css) the pane sits under
+  // The pane takes 330 px beside the map and the timeline a row above it; below 1000 px (css) the pane sits under
   // the map, which then keeps the top half of the screen.
   const VIEW = () => {
     const wide = typeof window !== 'undefined' && window.innerWidth > 1000;
@@ -226,7 +226,7 @@
         sc.marks.push({ x: x + ox, y: y + oy, type: list.some((t) => /fire|hot|storm/i.test(t.f.kind)) ? 'target' : 'cast', text: P().TILE_GLYPH[list[list.length - 1].f.kind] || '·' });
       }
     }
-    // Where the party has already said it will go this round: a faint ghost of each mover at the end of the move.
+    // A move not yet made: a faint ghost of each mover at the end of the move.
     for (const d of enc.decls) {
       if (d.type !== 'move' || d.done || !chars[d.actor] || chars[d.actor].side !== 'party' || !d.to) continue;
       const L = Sprites.look(chars[d.actor]);
@@ -252,7 +252,7 @@
       for (const k of Object.keys(map.reach)) {
         const [x, y] = k.split(',').map(Number);
         const pick = cmd.moveTo && cmd.moveTo.x === x && cmd.moveTo.y === y;
-        sc.marks.push({ x: x + ox, y: y + oy, type: map.late(map.reach[k]) ? 'reachLate' : 'reach', text: pick || k === hk ? C.fmtAP(map.reach[k]) : null });
+        sc.marks.push({ x: x + ox, y: y + oy, type: map.late(map.reach[k]) ? 'reachLate' : 'reach', text: pick || k === hk ? String(map.reach[k]) : null });
       }
       const hoverMove = hv && map.reach[hk] != null && !occupant(enc, chars, hv.x, hv.y) ? hv : null;
       const dest = cmd.moveTo || hoverMove;
@@ -268,10 +268,11 @@
       }
     }
     if (!entry) return sc;
-    // What the active character has already declared this round, faintly: lines to its targets.
-    for (const d of enc.decls) {
-      if (d.actor !== actor || d.done || !d.target || !enc.pos[d.target]) continue;
-      sc.lines.push({ pts: [at(me), at(enc.pos[d.target])], color: d.option && d.option.spell ? INTENT.spell.color : INTENT.strike.color, style: 'dash', alpha: 0.3 });
+    // Committed actions still in their lead (anyone's: the timeline is in plain sight), faintly: lines to their targets.
+    for (const p of enc.pending || []) {
+      const d = p.decl;
+      if (!d.target || !enc.pos[d.target] || !enc.pos[d.actor]) continue;
+      sc.lines.push({ pts: [at(enc.pos[d.actor]), at(enc.pos[d.target])], color: d.option && d.option.spell ? INTENT.spell.color : INTENT.strike.color, style: 'dash', alpha: 0.45 });
     }
     // The choice being made now.
     if (entry.square && map.castable) {
@@ -433,27 +434,51 @@
   }
 
   // ---- Pieces around the map ----------------------------------------------------------------------------------
-  function initiativeBar(game, app, enc) {
+  // The timeline (step F), in place of an initiative bar: everyone in the order their clocks come up, with how many
+  // ticks from now; a committed action shown with when it lands (an icon, "lands +N"); a waiting fighter marked.
+  // Identical foes (the same kind, side and state, ready within a few ticks of each other) share one marker with a
+  // count, so ten goblins are not ten chips. The beat is marked where it falls. Each marker opens the sheet.
+  function timeline(game, app, enc) {
     const chars = app.state.characters;
     const actor = Combat.currentActor(enc);
-    const ids = enc.order.length ? enc.order.concat(enc.ids.filter((id) => !enc.order.includes(id))) : enc.ids;
-    return h('nav', { class: 'initbar', 'aria-label': 'Initiative order' }, ids.filter((id) => chars[id]).map((id) => {
+    const ids = Combat.byClock(enc, chars, enc.ids).filter((id) => chars[id] && !chars[id].status.dead);
+    const kind = (c) => c.monster || c.template || c.name.replace(/\s+\d+$/, '');
+    const items = [];
+    for (const id of ids) {
       const c = chars[id];
+      const ahead = Combat.ahead(enc, id);
+      const d = enc.committed && enc.committed[id];
+      const up = C.isActive(c);
+      const prev = items[items.length - 1];
+      const same = prev && !prev.mine && c.side !== 'party' && prev.side === c.side && prev.kind === kind(c) && prev.up === up && !d && !prev.d && Math.abs(prev.ahead - ahead) <= 3 && id !== actor && prev.ids[0] !== actor;
+      if (same) { prev.ids.push(id); continue; }
+      items.push({ ids: [id], side: c.side, mine: c.side === 'party', kind: kind(c), up, ahead, d });
+    }
+    const beatAt = enc.nextBeat - enc.now;
+    let beatShown = false;
+    const out = [];
+    for (const it of items) {
+      if (!beatShown && it.ahead >= beatAt) { out.push(h('span', { class: 'tl-beat', title: `The beat at tick ${enc.nextBeat}: bleeding, breath, conditions` }, `beat +${beatAt}`)); beatShown = true; }
+      const id = it.ids[0], c = chars[id];
       const max = C.maxStamina(c);
-      const mine = c.side === 'party';
-      const ap = enc.ap[id] != null ? Combat.apLeft(enc, id) : null;
-      const down = !C.isActive(c);
-      const up = down && C.collapsed(c) ? Combat.comesRoundAt(enc, c) : null;
       const wounds = P().woundText(c);
-      const load = C.woundLoad(c);
       const state = P().downText(enc, c);
-      return h('button', { class: `init ${mine ? 'party' : 'enemy'} ${C.isActive(c) ? '' : 'down'} ${id === actor || id === enc.order[enc.turn] ? 'current' : ''} ${enc.turnDone && enc.turnDone[id] ? 'done' : ''}`,
-        title: `${c.name} · stamina ${c.stamina}/${max}${enc.initiative[id] != null ? (G.CONFIG.apDie ? ` · rolled ${C.fmtAP(enc.apStart[id] || 0)} AP` : ` · initiative ${enc.initiative[id]}`) : ''}${mine && ap != null ? ` · ${C.fmtAP(ap)} AP left` : ''}${enc.turnDone && enc.turnDone[id] ? ' · turn taken' : ''}${state ? ` · ${state}` : ''}${wounds ? ` · wounds ${wounds}` : ''}`, onclick: () => game.openOverlay('sheet', { id }) },
-      Sprites.portrait(c, 28), UI.bar(c.stamina, max), mine && ap != null ? h('span', { class: 'init-ap num' }, C.fmtAP(ap)) : null,
-      // A collapsed fighter shows the round they come round after; a wounded one, wound boxes filled of the boxes.
-      down && !c.status.dead && up != null ? h('span', { class: 'init-up num' }, `up R${up}`) : null,
-      wounds ? h('span', { class: 'init-wound num', title: 'Wound boxes filled' }, `${load}/${C.boxes(c)}`) : null);
-    }));
+      const waits = enc.waits && enc.waits[id];
+      const lands = it.d ? it.d.lands - enc.now : null;
+      const what = it.d ? Combat.describeAction(it.d) : null;
+      const n = it.ids.length;
+      out.push(h('button', { class: `init tl ${it.mine ? 'party' : 'enemy'} ${it.up ? '' : 'down'} ${id === actor ? 'current' : ''} ${it.d ? 'committed' : ''}`,
+        title: `${n > 1 ? `${n} × ${c.name.replace(/\s+\d+$/, '')}` : c.name} · ${id === actor ? 'acts now' : `ready in ${it.ahead} ticks`}${it.ahead > G.CONFIG.clock.overreach ? ' (too far ahead to react)' : ''}${what ? ` · ${what} lands in ${lands}` : ''}${waits ? ' · waiting' : ''} · stamina ${c.stamina}/${max}${state ? ` · ${state}` : ''}${wounds ? ` · wounds ${wounds}` : ''}`,
+        onclick: () => game.openOverlay('sheet', { id }) },
+      Sprites.portrait(c, 28), UI.bar(c.stamina, max),
+      h('span', { class: 'init-ap num' }, (n > 1 ? `×${n} ` : '') + (id === actor ? 'now' : `+${it.ahead}`)),
+      it.d ? h('span', { class: 'tl-lands num', title: `${what} lands in ${lands}` }, `in ${lands}`) : null,
+      waits ? h('span', { class: 'tl-wait', title: 'Waiting' }, '…') : null,
+      !it.up && !c.status.dead && C.collapsed(c) ? h('span', { class: 'init-up num' }, `up b${(Combat.comesRoundAt(enc, c) || 0) + 1}`) : null,
+      wounds ? h('span', { class: 'init-wound num', title: 'Wound boxes filled' }, `${C.woundLoad(c)}/${C.boxes(c)}`) : null));
+    }
+    if (!beatShown) out.push(h('span', { class: 'tl-beat', title: `The beat at tick ${enc.nextBeat}` }, `beat +${beatAt}`));
+    return h('nav', { class: 'initbar timeline', 'aria-label': 'Timeline: who acts next' }, out);
   }
 
   // The fight's log, under the command pane: always scrollable, kept at the newest line unless you have scrolled up
@@ -470,12 +495,12 @@
 
   function declaredPop(game, app, enc) {
     const chars = app.state.characters;
-    const live = enc.decls.filter((d) => chars[d.actor]);
+    const live = enc.decls.filter((d) => chars[d.actor] && d.type !== 'wait').slice(-30);
     if (!live.length) return null;
     const viewer = app.state.settings.gmView ? null : Combat.currentActor(enc);
     const openIt = !!game.ui.declOpen;
     return h('div', { class: 'declwrap' },
-      ibtn('scroll', `This round so far: ${live.length} actions`, () => { game.ui.declOpen = !openIt; game.render(); }, { on: openIt, text: String(live.length) }),
+      ibtn('scroll', `The last ${live.length} actions`, () => { game.ui.declOpen = !openIt; game.render(); }, { on: openIt, text: String(live.length) }),
       openIt ? h('div', { class: 'declpop' }, live.map((d) => {
         const desc = viewer === null ? Combat.describeDecl(enc, chars, d, d.actor) : Combat.describeDecl(enc, chars, d, viewer);
         return h('div', { class: 'decl' + (desc.hidden ? ' hidden' : '') }, h('span', { class: 'p' }, d.reaction || d.opportunity ? '↺' : '•'), h('span', null, desc.text));
@@ -523,24 +548,24 @@
         game.ui.finalLog ? ibtn('scroll', 'The last of it', () => game.openOverlay('text', { title: 'The last of it', text: game.ui.finalLog.map((l) => l.text).join('\n') })) : null));
   }
 
-  // A banner across the map when a new round or a new turn begins. It is part of each render, so its animation is set
+  // A banner across the map when a new beat begins or another fighter comes up to act. It is part of each render, so its animation is set
   // back by the time already gone and it simply stops being drawn once it has played.
   const BANNER_MS = 1100; // the CSS animation's length (pixel.css .turn-banner); AI_PACE.first in views/battle.js waits it out
   function turnBanner(game, enc, chars) {
-    const id = (enc.phase === 'turn' || enc.phase === 'acting') && enc.order[enc.turn];
+    const id = (enc.phase === 'act' || enc.phase === 'acting') && enc.actor;
     if (!id || !chars[id]) return null;
-    const key = enc.round + ':' + enc.turn + ':' + id;
+    const key = id;
     const b = game.ui.banner;
     const now = Date.now();
-    if (!b || b.key !== key) game.ui.banner = { key, at: now, round: !b || b.inRound !== enc.round ? enc.round : null, inRound: enc.round };
+    if (!b || b.key !== key) game.ui.banner = { key, at: now, round: !b || b.inRound !== enc.beat ? enc.beat + 1 : null, inRound: enc.beat };
     const cur = game.ui.banner;
     const gone = now - cur.at;
     if (gone > BANNER_MS) return null;
     if (gone < BANNER_MS) setTimeout(() => { if (game.ui.banner === cur && game.screen === 'battle') game.render(); }, BANNER_MS - gone + 20);
     const c = chars[id];
     return h('div', { class: 'turn-banner ' + (c.side === 'party' ? 'party' : 'enemy'), style: { animationDelay: `-${gone}ms` }, 'aria-live': 'polite' },
-      cur.round ? h('span', { class: 'tb-round' }, `Round ${cur.round}`) : null,
-      h('span', { class: 'tb-who' }, c.name), h('span', { class: 'tb-sub' }, c.side === 'party' ? 'your turn' : 'their turn'));
+      cur.round ? h('span', { class: 'tb-round' }, `Beat ${cur.round}`) : null,
+      h('span', { class: 'tb-who' }, c.name), h('span', { class: 'tb-sub' }, c.side === 'party' ? 'you act' : 'they act'));
   }
 
   // ---- The screen ------------------------------------------------------------------------------------------------------
@@ -556,7 +581,7 @@
       app = battleApp(game);
       enc = w.battle.enc;
       const chars = app.state.characters;
-      legal = enc.phase === 'turn' ? Combat.legalActions(enc, chars, Combat.currentActor(enc)) : null;
+      legal = enc.phase === 'act' ? Combat.legalActions(enc, chars, Combat.currentActor(enc)) : null;
       if (enc.phase !== 'over') P().scheduleAI(app, enc);
       human = !!(legal && !P().aiControlled(app, chars[Combat.currentActor(enc)]));
       sync = human ? P().syncCommand(app, enc, legal) : null;
@@ -565,8 +590,8 @@
       game.ui.bs = { app, enc, chars, legal, sync, arena: w.battle.arena, map: legal && human ? P().mapState(app, enc, legal) : null };
       app.ui.lastReach = game.ui.bs.map && game.ui.bs.map.reach;
       game.ui.spec = w.battle.spec;
-      // A turn passing sends the hand-panned view back to whoever acts.
-      const acting = enc.phase === 'turn' ? Combat.currentActor(enc) : null;
+      // Another fighter coming up sends the hand-panned view back to whoever acts.
+      const acting = enc.phase === 'act' ? Combat.currentActor(enc) : null;
       if (game.ui.panFor !== acting) { game.ui.panFor = acting; game.ui.pan = { x: 0, y: 0 }; }
       // The party as the fight found it, and the harm it takes by place, for the account at the end.
       if (!game.ui.fight || game.ui.fight.enc !== enc) game.ui.fight = { enc, snap: Battle.snapshot(w), tally: Battle.watch(enc, chars) };
@@ -589,7 +614,7 @@
     const live = !game.ui.result;
     const spec = game.ui.spec || {};
     const topExtra = live ? [
-      h('span', { class: 'chip' }, enc.round ? `Round ${enc.round}` : 'Ready'),
+      h('span', { class: 'chip num', title: `Tick ${enc.now}; the next beat at ${enc.nextBeat}` }, enc.phase !== 'setup' ? `Beat ${enc.beat + 1} · t${enc.now}` : 'Ready'),
       ibtn('shield', 'Reaction orders: what each hero does when a blow comes', () => game.openOverlay('orders')),
       declaredPop(game, app, enc),
     ] : null;
@@ -597,7 +622,7 @@
       UI.Bits.topBar(game, { title: spec.name || 'Battle', extra: topExtra, mapToggle: true }),
       h('div', { class: 'battle-body' },
         h('div', { class: 'battle-main' },
-          live ? initiativeBar(game, app, enc) : null,
+          live ? timeline(game, app, enc) : null,
           h('div', { class: 'stage' },
             game.ui.mv ? game.ui.mv.el : null,
             live && bs.map && game.ui.mv && bs.arena && (bs.arena.w > game.ui.mv.cols || bs.arena.h > game.ui.mv.rows) ? panPad(game) : null,
@@ -628,7 +653,7 @@
       if (arrow) { e.preventDefault(); panBy(game, arrow[0], arrow[1]); return; }
       if (e.key === 'c' || e.key === 'C') { e.preventDefault(); recentre(game); return; }
       if (e.key === 'e' || e.key === 'E') { const b = document.querySelector('.battle-screen .cmd-end .end'); if (b && !b.disabled) { e.preventDefault(); b.click(); } }
-      if (e.key === 'd' || e.key === 'D') { const b = document.querySelector('.battle-screen .cmd-end .defer'); if (b && !b.disabled) { e.preventDefault(); b.click(); } }
+      if (e.key === 'r' || e.key === 'R') { const b = document.querySelector('.battle-screen .cmd-end .repeat'); if (b && !b.disabled) { e.preventDefault(); b.click(); } }
       const n = Number(e.key);
       if (n >= 1 && n <= 9) { const tabs = document.querySelectorAll('.battle-screen .cmd-tab'); if (tabs[n - 1]) { e.preventDefault(); tabs[n - 1].click(); } }
       if (e.key === 'Escape') {

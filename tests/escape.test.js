@@ -3,6 +3,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const B = require('./load.js');
+const Clock = require('./clock');
 const { World, Battle, Rand, Combat, Terrain, Magic, Town, Explore, Character: C, Enemies, CONFIG } = B;
 
 const fresh = (seed) => { Rand.seed(seed || 1); return World.create(World.presetParty(), { log: false }); };
@@ -24,7 +25,7 @@ test('getting away: a wall of fire across the passage lets the party go; without
   const w = fresh(3);
   const { enc, golem } = corridor(w);
   assert.equal(Battle.disengaged(w).ok, false, 'nothing in the way: it can reach them');
-  for (const y of [1, 2]) Terrain.add(enc, 6, y, 'fireWall', { rounds: 3 });
+  for (const y of [1, 2]) Terrain.add(enc, 6, y, 'fireWall', { beats: 3 });
   assert.ok(!Terrain.passable(enc, 6, 1), 'a wall of fire cannot be walked through');
   assert.equal(Battle.disengaged(w).ok, true, 'the golem has no way round and nothing to throw');
   // Held fast but already in reach is not away.
@@ -47,16 +48,16 @@ test('getting away: the fight ends and the party stands where it was on the fiel
   assert.deepEqual({ x: w.explore.x, y: w.explore.y }, { x: 10 + at.x, y: 5 + at.y });
 });
 
-test('wall of fire: scorches whoever ends the round beside it, once however many squares; not who stands off', async () => {
+test('wall of fire: scorches whoever stands beside it at a beat, once however many squares; not who stands off', async () => {
   const w = fresh(5);
   const { enc, b, mine } = corridor(w);
-  for (const y of [1, 2]) Terrain.add(enc, 2, y, 'fireWall', { rounds: 3 });
+  for (const y of [1, 2]) Terrain.add(enc, 2, y, 'fireWall', { beats: 3 });
   const chars = Battle.table(w).characters;
-  await Terrain.endRound(enc, chars, roll(2), () => {});
+  await Terrain.beat(enc, chars, roll(2), () => {});
   // Members 2 and 3 stand at x 1, beside the wall at x 2; 0 and 1 at x 0, a square farther.
   const hit = (c) => enc.log.filter((l) => l.text.startsWith(`Wall of fire hits ${c.name}`)).length;
   assert.deepEqual(mine.map(hit), [0, 0, 1, 1], 'once each, only those beside it (two squares of wall)');
-  assert.ok(b.enc.tiles['2,1'].some((f) => f.kind === 'fireWall' && f.rounds === 2), 'it burns down');
+  assert.ok(b.enc.tiles['2,1'].some((f) => f.kind === 'fireWall' && f.beats === 2), 'it burns down');
 });
 
 test('spell points: a rest brings them back, each spent point wears spWeary off the maximum; a night clears it', async () => {
@@ -106,11 +107,11 @@ test('golem-bane oil: worked into the blade in hand, it bites golems a landed bl
   enc.pos[c.id] = { x: 1, y: 1 }; enc.pos[golem.id] = { x: 2, y: 1 };
   const x = { roller: roll(9), react: () => null };
   for (let guard = 0; guard < 40 && blade.coat; guard++) {
-    if (enc.phase !== 'turn') await Combat.startRound(enc, chars, x.roller);
+    if (enc.phase !== 'turn') await Clock.start(enc, chars, x.roller);
     const id = Combat.currentActor(enc);
     const opt = id === c.id && Combat.legalActions(enc, chars, c.id).attacks.find((o) => o.weaponId === blade.id && o.affordable);
-    if (opt && C.isActive(golem)) await Combat.act(enc, chars, { actor: c.id, type: 'strike', option: opt, target: golem.id }, x);
-    else await Combat.endTurn(enc, chars, id, x);
+    if (opt && C.isActive(golem)) await Clock.act(enc, chars, { actor: c.id, type: 'strike', option: opt, target: golem.id }, x);
+    else await Combat.submit(enc, chars, { actor: id, type: 'wait' }, x);
   }
   assert.equal(enc.log.filter((l) => /golem-bane oil \+4/.test(l.text)).length, 5);
   assert.ok(!blade.coat && enc.log.some((l) => /oil on .* is spent/.test(l.text)));

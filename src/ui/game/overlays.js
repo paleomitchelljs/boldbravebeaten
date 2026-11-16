@@ -221,7 +221,7 @@
         every ? null : h('div', { class: 'orders-grid' }, ['block', 'parry', 'dodge', 'opportunity', 'ask'].map(pick), cur.ask === 'matters' ? pick('drop') : null));
     };
     return shell('Reaction orders', h('div', { class: 'stack' },
-      h('p', { class: 'small muted' }, 'What each hero does when a blow comes, so a fight does not stop at every swing. When more than one order fits, the best odds win. A blow that could drop the hero (the odds the party panel shows) still asks, unless set to never ask. Orders never spend AP the hero hasn\'t.'),
+      h('p', { class: 'small muted' }, 'What each hero does when a blow comes, so a fight does not stop at every swing. When more than one order fits, the best odds win. A blow that could drop the hero (the odds the party panel shows) still asks, unless set to never ask. A reaction\'s ticks go on the hero\'s clock.'),
       heroes.map(card)), close, 'wide');
   };
 

@@ -2,6 +2,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const B = require('./legacy.js');
+const Clock = require('./clock');
 const { World, Explore, Battle, Auto, Parley, Factions, Skills, Economy, Equip, Town, Save, Loot, Rand, Content, Character: C, Items } = B;
 
 const fresh = (seed) => { Rand.seed(seed || 1); return World.create(World.presetParty(), { log: false }); };
@@ -304,7 +305,7 @@ test('battle: a fight plays out, pays XP and loot, sets the flag and settles the
   for (const c of World.party(w).filter((x) => !x.status.dead)) {
     assert.equal(c.stamina, C.maxStamina(c), 'rested');
     assert.ok(c.weapons.every((x) => !Items.weaponMaxDurability(x) || x.durability > 1), 'weapons patched');
-    if (enc.round > 0 && !c.status.dead) assert.ok(C.maxStamina(c) < C.freshStamina(c), 'the fight wearied them');
+    if (enc.beat > 0 && !c.status.dead) assert.ok(C.maxStamina(c) < C.freshStamina(c), 'the fight wearied them');
   }
   assert.ok(lines.some((l) => /repaired/.test(l)));
 });
@@ -319,19 +320,20 @@ test('battle: killing a faction\'s people costs standing; sparing them (knocked 
   assert.equal(Factions.standing(w, 'cutthroats'), before - 3 * dead);
 });
 
-test('battle: an ambush costs the enemy AP in the first round, and an ambusher costs them more', async () => {
+test('battle: an ambush puts the enemy late on the clock; an ambusher makes it worse', async () => {
   const w = fresh(43);
   Battle.start(w, { foes: [{ monster: 'wolf', n: 2 }] }, { surprise: 'enemy', factor: Battle.ambushFactor(w) });
   const t = Battle.table(w);
-  await B.Combat.startRound(w.battle.enc, t.characters, Town.autoRoller);
+  await Clock.start(w.battle.enc, t.characters, Town.autoRoller);
   const wolf = Object.values(w.battle.foes)[0];
-  assert.ok(w.battle.enc.ap[wolf.id] <= Math.floor(C.apPool(wolf) / 2));
+  assert.ok(w.battle.enc.clock[wolf.id] >= B.CONFIG.clock.surprise, 'the wolves start late');
   const mate = World.party(w)[0];
-  assert.equal(w.battle.enc.ap[mate.id], w.battle.enc.apStart[mate.id], 'the ambushers keep their AP');
-  assert.ok(w.battle.enc.ap[mate.id] >= C.apPool(mate, 1), 'all the AP they rolled');
+  assert.ok(w.battle.enc.clock[mate.id] < w.battle.enc.clock[wolf.id] || w.battle.enc.decls.length, 'the ambushers go first');
   Battle.finish(w, 'fled');
   mate.feats.ambusher = 2;
   assert.equal(Battle.ambushFactor(w), 0);
+  Battle.start(w, { foes: [{ monster: 'wolf', n: 2 }] }, { surprise: 'enemy', factor: Battle.ambushFactor(w) });
+  assert.equal(w.battle.enc.surprise.ticks, 2 * B.CONFIG.clock.surprise, 'an ambusher: twice as late');
 });
 
 test('battle: a bandit has a price on his gear, and plate armor is a prize', async () => {
@@ -588,9 +590,9 @@ test('armor pieces: each takes the slots it covers; a crown and a helm share the
   // Journeyman's Boots are leather boots and leggings now (the legs take in the feet), and still quicken a move.
   const boots = Items.makeArmor('leather', null, 'master', { covers: ['legs'], enchantments: ['journeying'] });
   w.pack.gear.push(boots);
-  const before = C.squaresPerAP(c);
+  const before = C.pace(c);
   assert.ok(Equip.equip(w, c, boots, 'legs').ok);
-  assert.equal(C.squaresPerAP(c), before + 1);
+  assert.equal(C.pace(c), before + 1);
   // Field repairs reach every piece.
   shirt.durability = 1; boots.durability = 1;
   B.Recovery.mendGear(c, 0.5);

@@ -116,8 +116,8 @@
     const E = effect(def);
     f.sprung = true;
     f.hidden = false;
-    f.sprungRound = enc.round;
-    if (def.reset && def.reset.rounds) f.rearm = enc.round + def.reset.rounds;
+    f.sprungBeat = enc.beat;
+    if (def.reset && def.reset.beats) f.rearm = enc.beat + def.reset.beats;
     log(enc, `${c.name} ${how === 'driven' ? 'is driven onto' : 'steps on'} ${(def.label || 'a trap').replace(/^A /, 'a ')}! ${def.text || ''}`.trim());
     const r = E.radius || 0;
     const caught = enc.ids.filter((id) => chars[id] && !chars[id].status.dead && enc.pos[id] && Math.max(Math.abs(enc.pos[id].x - x), Math.abs(enc.pos[id].y - y)) <= r);
@@ -130,18 +130,18 @@
       const R = E.terrainRadius || 0;
       for (let yy = y - R; yy <= y + R; yy++) for (let xx = x - R; xx <= x + R; xx++) {
         if (!G.Terrain.passable(enc, xx, yy)) continue;
-        G.Terrain.add(enc, xx, yy, E.terrain, { rounds: E.rounds == null ? null : E.rounds, mag: E.mag || 0 });
+        G.Terrain.add(enc, xx, yy, E.terrain, { beats: E.beats == null ? null : E.beats, mag: E.mag || 0 });
       }
       if (G.CONFIG.terrain[E.terrain].pit && C().isActive(c)) { c.status.prone = true; log(enc, `${c.name} goes down into the pit.`); }
     }
     return !C().isActive(c) || c.status.prone;
   }
 
-  // End of a round: a trap that resets (`reset.rounds`) is set again, and everyone who saw it spring knows it now.
+  // At a beat: a trap that resets (`reset.beats`) is set again, and everyone who saw it spring knows it now.
   function rearm(enc) {
     for (const t of G.Terrain.all(enc)) {
       const f = t.f;
-      if (!t.def.trap || !f.sprung || f.rearm == null || enc.round < f.rearm) continue;
+      if (!t.def.trap || !f.sprung || f.rearm == null || enc.beat < f.rearm) continue;
       f.sprung = false;
       f.rearm = null;
       f.hidden = true;

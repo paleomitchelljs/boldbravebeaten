@@ -7,31 +7,27 @@
   const Combat = G.Combat;
   const R = G.Rand;
 
-  // Every turn and every reaction decided by the AI; actions resolve as they are taken.
-  async function playRound(enc, chars, roller) {
-    const io = { roller };
-    let guard = 2000;
-    while (enc.phase === 'turn' && guard-- > 0) {
+  // Every action and every reaction decided by the AI, one at a time, until the fight is over, stops (got away) or
+  // maxBeats beats have passed.
+  async function play(enc, chars, io, maxBeats) {
+    let guard = 20000;
+    while (enc.phase === 'act' && enc.beat < (maxBeats || 30) && guard-- > 0) {
       const id = Combat.currentActor(enc);
       await Combat.submit(enc, chars, G.AI.choose(enc, chars, id, () => R.rng(), chars[id].policy), io);
     }
-    if (guard <= 0) throw new Error('round did not finish');
+    if (guard <= 0) throw new Error('the fight did not finish');
   }
 
-  // Play the current world.battle to its end (or maxRounds). Returns the encounter.
+  // Play the current world.battle to its end (or maxBeats). Returns the encounter.
   async function battle(world, opts) {
     opts = opts || {};
     const b = world.battle;
     const chars = G.Battle.table(world).characters;
-    const roller = G.Town.autoRoller;
-    const max = opts.maxRounds || 30;
-    while (b.enc.phase !== 'over' && b.enc.round < max) {
-      G.Battle.reinforce(world);
-      await Combat.startRound(b.enc, chars, roller);
-      await playRound(b.enc, chars, roller);
-    }
+    const io = { roller: G.Town.autoRoller, onBeat: G.Battle.onBeat(world) };
+    if (b.enc.phase === 'setup') await Combat.begin(b.enc, chars, io.roller, io);
+    await play(b.enc, chars, io, opts.maxBeats || 30);
     return b.enc;
   }
 
-  G.Auto = { playRound, battle };
+  G.Auto = { play, battle };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

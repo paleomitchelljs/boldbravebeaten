@@ -25,14 +25,14 @@ test('metrics: watching a fight counts its blows and leaves the result as it was
   const run = async (watch) => {
     const M = Metrics.create();
     const A = hero('Beren'), Bc = hero('Cyrus');
-    const r = await L.fight({ A: [A], B: [Bc], grid: { w: 12, h: 6 }, seed: 7, maxRounds: 30, watch: watch && ((enc, chars) => M.watch(enc, chars, [A.id, Bc.id])) });
+    const r = await L.fight({ A: [A], B: [Bc], grid: { w: 12, h: 6 }, seed: 7, maxBeats: 30, watch: watch && ((enc, chars) => M.watch(enc, chars, [A.id, Bc.id])) });
     return { r, M };
   };
   const plain = await run(false), seen = await run(true);
-  assert.deepStrictEqual([seen.r.winner, seen.r.rounds, seen.r.hitsA, seen.r.hitsB], [plain.r.winner, plain.r.rounds, plain.r.hitsA, plain.r.hitsB]);
+  assert.deepStrictEqual([seen.r.winner, seen.r.beats, seen.r.hitsA, seen.r.hitsB], [plain.r.winner, plain.r.beats, plain.r.hitsA, plain.r.hitsB]);
   const s = Metrics.summary(seen.M);
   assert.strictEqual(s.fights, 1);
-  assert.strictEqual(s.medianRounds, seen.r.rounds);
+  assert.strictEqual(s.medianBeats, seen.r.beats);
   assert.ok(s.blows.total >= seen.r.hitsA + seen.r.hitsB, 'every logged hit is a landed blow');
   assert.ok(Object.keys(s.locs.share).length > 0);
   assert.strictEqual(s.heroesDead, seen.r.deadA + seen.r.deadB);

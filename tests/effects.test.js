@@ -44,12 +44,12 @@ test('effects: every trait and effect key the code reads is in the registry', ()
 
 test('conditions: a spirit shield guards only against the undead; frightened is read through fearOf', () => {
   const t = C.newCharacter({ name: 'T', starterGear: false });
-  Conditions.add(t, 'spiritShield', { rounds: 3 });
+  Conditions.add(t, 'spiritShield', { beats: 3 });
   const living = C.newCharacter({ name: 'L', side: 'enemy', starterGear: false });
   const dead = Enemies.makeMonster(Object.keys(Enemies.MONSTERS).find((k) => (Enemies.MONSTERS[k].traits || {}).undead))[0];
   assert.equal(Conditions.mitigation(t, 'S', living), 0);
   assert.ok(Conditions.mitigation(t, 'S', dead) > 0);
-  Conditions.add(t, 'frightened', { rounds: 2, src: 'x' });
+  Conditions.add(t, 'frightened', { beats: 2, src: 'x' });
   assert.equal(Conditions.fear(t).key, 'frightened');
 });
 
@@ -62,12 +62,12 @@ test('lookup: one key adds up over traits, gear, conditions (per magnitude) and 
   c.trinkets = [{ name: 'Ring', effects: { dodge: 1, skills: { evasion: 2 } } }];
   assert.equal(Effects.sum(c, 'dodge'), 2, 'trait + ring');
   assert.equal(C.skill(c, 'evasion'), 2, 'a ring that adds to a skill');
-  const ap = C.apPool(c);
-  Conditions.add(c, 'slowed', { rounds: 2, mag: 2 });
-  assert.equal(Effects.sum(c, 'ap'), 2 * CONFIG.conditions.slowed.ap, 'a condition counts per magnitude');
-  assert.ok(C.apPool(c) < ap);
+  const t0 = C.actionCost(c, 'parry').ticks;
+  Conditions.add(c, 'slowed', { beats: 2, mag: 2 });
+  assert.equal(Effects.sum(c, 'ticks'), 2 * CONFIG.conditions.slowed.ticks, 'a condition counts per magnitude');
+  assert.ok(C.actionCost(c, 'parry').ticks > t0);
   assert.equal(Effects.has(c, 'noMove'), false);
-  Conditions.add(c, 'rooted', { rounds: 2 });
+  Conditions.add(c, 'rooted', { beats: 2 });
   assert.equal(Effects.has(c, 'noMove'), true);
   assert.equal(Conditions.canMove(c), false);
 });
@@ -77,7 +77,7 @@ test('lookup: a frost ward halves a fire bolt through the resist keyword; magic:
   const t = C.newCharacter({ name: 'T', starterGear: false });
   const bolt = { kind: 'strike', motion: 'spell', spell: { element: 'fire', magnitude: 12 }, damage: [0, 0, 0] };
   const plain = B.Combat.computeHit(a, t, bolt, {}).fire;
-  Conditions.add(t, 'frostWard', { rounds: 3 });
+  Conditions.add(t, 'frostWard', { beats: 3 });
   assert.equal(C.damageMult(t, 'fire'), 0.5);
   assert.ok(B.Combat.computeHit(a, t, bolt, {}).fire < plain);
   t.traits = { resist: { magic: 0 } };

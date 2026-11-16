@@ -12,15 +12,14 @@
     if (st.dead) out.push(h('span', { class: 'chip bad' }, 'Dead'));
     else if (st.unconscious) out.push(st.collapsed ? h('span', { class: 'chip bad', title: 'Out of stamina: down for the rest of the round and the next, then they come round (on the ground)' }, 'Collapsed') : h('span', { class: 'chip bad' }, 'Unconscious'));
     if (st.prone) out.push(h('span', { class: 'chip warn' }, 'Prone'));
-    if (st.webbed) out.push(h('span', { class: 'chip warn', title: 'Every action costs more AP and stamina' }, `Webbed ×${st.webbed}`));
+    if (st.webbed) out.push(h('span', { class: 'chip warn', title: 'Every action takes more ticks and stamina' }, `Webbed ×${st.webbed}`));
     const L = st.grapple;
     if (L) out.push(h('span', { class: L.role === 'holder' ? 'chip' : 'chip warn' }, L.level === 'clinch' ? 'Clinched' : L.role === 'holder' ? (L.level === 'pin' ? 'Pinning' : 'Holding') : L.level === 'pin' ? 'Pinned' : 'Held'));
     if (st.dropped && st.dropped.length) out.push(h('span', { class: 'chip warn' }, 'Weapon on the ground'));
-    if (st.windUp) out.push(h('span', { class: 'chip warn', title: 'Cannot block or parry until the blow is released' }, 'Wound up: ' + st.windUp.label));
     if (C.bleeding(c) && !st.dead) out.push(h('span', { class: 'chip bad' }, `Bleeding ${C.bleeding(c)} (${C.bleedLoss(c)} harm/rd)`));
     if (!st.dead) for (const w of C.describeWounds(c)) out.push(h('span', { class: 'chip ' + (w.sev >= 3 ? 'bad' : 'warn'), title: w.does }, `${w.name} ${w.sev}`));
     if (G.Conditions && !st.dead) for (const l of G.Conditions.labels(c)) out.push(h('span', { class: 'chip warn' }, l));
-    if (c.conjured && !st.dead) out.push(h('span', { class: 'chip' }, `Conjured (${c.conjured.rounds} rd)`));
+    if (c.conjured && !st.dead) out.push(h('span', { class: 'chip' }, `Conjured (${c.conjured.beats} rd)`));
     return out;
   }
 
@@ -46,7 +45,7 @@
         bar(c.stamina, max)),
       h('div', { class: 'stat-line' },
         h('span', null, 'CON ', h('b', null, `${C.attr(c, 'CON')}/${C.attrMax(c, 'CON')}`)),
-        h('span', null, 'AP ', h('b', null, C.apPool(c))),
+        h('span', null, 'Speed ', h('b', null, '×' + C.spdFactor(c).toFixed(2))),
         h('span', null, 'Feats ', h('b', null, `${C.featCount(c)}/${C.featBudget(c)}`)),
         C.woundLoad(c) ? h('span', null, 'Wounds ', h('b', null, `${C.woundLoad(c)}/${C.boxes(c)}`)) : null),
       statusChips(c).length ? h('div', { class: 'row', style: { gap: '4px' } }, statusChips(c)) : null,

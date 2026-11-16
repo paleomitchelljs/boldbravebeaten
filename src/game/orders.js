@@ -3,7 +3,7 @@
  * free strike at a foe passing, covering an ally) were each a pop-up. Now each hero carries orders (c.orders), set
  * before or during a fight, that answer for them; the player is asked only for a blow that matters.
  *
- *   block        'on' | 'off'                  block with a shield, if there is one and AP for it
+ *   block        'on' | 'off'                  block with a shield, if there is one
  *   parry        'thrusts' | 'all' | 'off'     parry thrusts (a blow you can read), or every blow
  *   dodge        'unarmored' | 'always' | 'off'
  *   opportunity  'strike' | 'ask' | 'off'      the free blow at a foe closing, leaving or passing (and a riposte)
@@ -11,8 +11,9 @@
  *                                              at all
  *   drop         the chance a blow, if nothing stops it, drops you, from which it matters (step 7's odds: Combat.foresee)
  *
- * Several orders may fit a blow: the one with the best odds is taken. An order never spends AP the hero hasn't, nor a
- * defence they can only make spent (out of stamina). Defaults are rules.yaml game.orders. DOM-free (Node runs it).
+ * Several orders may fit a blow: the one with the best odds is taken. Each reaction's ticks go on the hero's clock (the
+ * engine offers none to a hero too far ahead to react). An order never takes a defence they can only make spent (out of
+ * stamina). Defaults are rules.yaml game.orders. DOM-free (Node runs it).
  */
 (function (G) {
   'use strict';
@@ -24,7 +25,7 @@
 
   // What each order may be, in the words the screens show.
   const CHOICES = {
-    block: [['on', 'Block if I have a shield and the AP'], ['off', 'Never block']],
+    block: [['on', 'Block if I have a shield'], ['off', 'Never block']],
     parry: [['thrusts', 'Parry thrusts'], ['all', 'Parry every blow'], ['off', 'Never parry']],
     dodge: [['unarmored', 'Dodge only when unarmored'], ['always', 'Always dodge'], ['off', 'Never dodge']],
     opportunity: [['strike', 'Strike a foe passing, if I can'], ['ask', 'Ask me'], ['off', 'Let them go']],
@@ -74,7 +75,6 @@
     if (!c || c.side !== 'party') return { ask: true };
     const O = of(c);
     if (O.ask === 'every') return { ask: true };
-    const have = req.ap != null ? req.ap : Combat.apLeft(enc, req.actor);
     const never = O.ask === 'never';
     const first = c.name.split(' ')[0];
     if (req.kind === 'defend') {
@@ -86,7 +86,7 @@
       const motion = readable ? req.decl.option.motion : null;
       let pick = null;
       for (const o of req.options) {
-        if (o.spent || o.ap > have + 1e-9 || !permits(c, O, o, motion)) continue;
+        if (o.spent || !permits(c, O, o, motion)) continue;
         const p = o.odds != null ? o.odds : 0.4;
         if (!pick || p > pick.p) pick = { p, type: o.type, name: o.name };
       }
@@ -98,7 +98,7 @@
       const matters = readable ? !!(f && f.hit.drop >= O.drop) : true;
       if (matters && !never) return { ask: true };
       const o = req.options[0];
-      const take = matters && o && !o.spent && o.ap <= have + 1e-9;
+      const take = matters && o && !o.spent;
       return { answer: take ? 'cover' : null, note: take ? `${first}'s orders: cover ${chars[req.target].name.split(' ')[0]}.` : null };
     }
     if (req.kind === 'opportunity') {
@@ -106,7 +106,7 @@
       if (O.opportunity === 'off') return { answer: null, note: null };
       let pick = null;
       for (const o of req.options) {
-        if (o.spent || o.ap > have + 1e-9) continue;
+        if (o.spent) continue;
         const f = foresee(enc, chars, req.actor, req.target, o);
         const v = f ? f.lands : 0.3;
         if (!pick || v > pick.v) pick = { v, o };

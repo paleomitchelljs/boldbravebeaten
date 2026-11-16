@@ -49,7 +49,7 @@
       !C.isActive(c) ? h('span', { class: 'chip bad' }, C.collapsed(c) ? 'Collapsed' : 'Unconscious') : null);
     return h('div', { class: 'stack', style: { gap: '20px' } },
       h('div', { class: 'view-head' }, h('div', { class: 'stack tight' }, h('h1', null, 'Battle'),
-        h('p', { class: 'muted' }, 'Pick who fights, then place them on the grid. Each round starts with initiative; players take turns in that order, and when everyone has had a turn the pass resolves. Players type in their own dice when asked; the platform does the arithmetic.'))),
+        h('p', { class: 'muted' }, 'Pick who fights, then place them on the grid. The fight runs on a clock: whoever\'s clock is lowest acts next, one action at a time. Players type in their own dice when asked; the platform does the arithmetic.'))),
       h('div', { class: 'grid-2' },
         h('section', { class: 'panel' }, h('h2', null, 'Party'), all.filter((c) => c.side === 'party').map(row)),
         h('section', { class: 'panel' },
@@ -97,8 +97,8 @@
         const d = Combat.steps(m.from, { x, y });
         const squares = map ? map.cost[map.idx(x, y)] : d;
         if (!isFinite(squares)) continue;
-        const need = C.moveCost(chars[actor], Math.round(squares));
-        if (d > 0 && need <= m.maxAP && !blocked[x + ',' + y]) reach[x + ',' + y] = need;
+        const need = C.moveTicks(chars[actor], Math.round(squares));
+        if (d > 0 && Math.round(squares) <= m.maxSquares && !blocked[x + ',' + y]) reach[x + ',' + y] = need;
       }
     }
     // Casting at a square: those in range with a clear line.
@@ -145,10 +145,10 @@
         const glyph = !token && !canMove && g.length ? h('span', { class: 'glyph', 'aria-hidden': 'true' }, TILE_GLYPH[g[g.length - 1].f.kind] || '·') : null;
         cells.push(h('button', {
           class: 'cell' + tileCls + (canMove ? ' can-move' + (late(reach[key]) ? ' late' : '') : '') + (canCast ? ' can-cast' : '') + (ghosts[key] && !c ? ' ghost' : '') + (c ? ' has-token' : ''),
-          title: g.length ? g.map((t) => `${t.def.name}${t.f.rounds != null ? ` (${t.f.rounds} rd)` : ''}`).join(', ') : null,
-          'aria-label': (c ? `${c.name} at ${x + 1}, ${y + 1}` : `Square ${x + 1}, ${y + 1}${canMove ? `, move for ${C.fmtAP(reach[key])} AP` : ''}`) + (g.length ? ` — ${g.map((t) => t.def.name).join(', ')}` : ''),
+          title: g.length ? g.map((t) => `${t.def.name}${t.f.beats != null ? ` (${t.f.beats} rd)` : ''}`).join(', ') : null,
+          'aria-label': (c ? `${c.name} at ${x + 1}, ${y + 1}` : `Square ${x + 1}, ${y + 1}${canMove ? `, move for ${reach[key]} ticks` : ''}`) + (g.length ? ` — ${g.map((t) => t.def.name).join(', ')}` : ''),
           onclick: () => cellClick(app, enc, legal, x, y, id, reach, castable),
-        }, token || (canMove ? C.fmtAP(reach[key]) : glyph)));
+        }, token || (canMove ? String(reach[key]) : glyph)));
       }
     }
     return h('div', { class: 'map-wrap' }, h('div', { class: 'map', style: { gridTemplateColumns: `repeat(${enc.grid.w}, auto)`, '--cols': enc.grid.w } }, cells));
@@ -193,6 +193,7 @@
   function ioFor(app) {
     return {
       roller: UI.Dice.makeRoller(app),
+      onBeat: app.hooks && app.hooks.onBeat ? app.hooks.onBeat : null,
       react: (req, enc, chars) => {
         const c = chars[req.actor];
         if (aiControlled(app, c)) return G.AI.react(enc, chars, req);
@@ -207,11 +208,14 @@
   // Take an action: it resolves at once (with any reactions it draws), then the screen redraws.
   async function declare(app, enc, decl) {
     const ui = bui(app);
-    if (enc.phase !== 'turn' || ui.busy) return;
+    if (enc.phase !== 'act' || ui.busy) return;
     ui.busy = true;
     app.render();
     let err;
+    const sent = Object.assign({}, decl);
     try { err = await Combat.act(enc, app.state.characters, decl, ioFor(app)); } finally { ui.busy = false; }
+    // The last action each fighter took, for the repeat key (R).
+    if (!err) (ui.lastDecl || (ui.lastDecl = {}))[decl.actor] = sent;
     // Remember whom each fighter last went for: their next command defaults to them (syncCommand).
     const chars = app.state.characters;
     if (!err && decl.target && chars[decl.target] && chars[decl.actor] && chars[decl.target].side !== chars[decl.actor].side) (ui.lastTarget || (ui.lastTarget = {}))[decl.actor] = decl.target;
@@ -225,28 +229,15 @@
     app.render();
   }
 
-  // Defer: the next in the initiative order goes now, and this turn resumes after theirs.
-  async function deferTurn(app, enc, id) {
+  // Wait (an action): until the next thing happens, or just after a named fighter has acted (opts.for).
+  async function finishTurn(app, enc, id, opts) {
     const ui = bui(app);
     if (ui.busy) return;
-    ui.busy = true;
-    let err;
-    try { err = await Combat.defer(enc, app.state.characters, id, ioFor(app)); } finally { ui.busy = false; }
-    if (err) toast(err);
-    ui.mode = null;
-    ui.pending = null;
-    app.save();
-    app.render();
-  }
-
-  async function finishTurn(app, enc, id) {
-    const ui = bui(app);
-    if (ui.busy) return;
-    // Afraid: the turn owes a step away from what frightens them first (Combat.mustFlee).
+    // Afraid: a step away from what frightens them is owed first (Combat.mustFlee).
     const chars = app.state.characters;
     if (Combat.mustFlee(enc, chars, chars[id])) { toast(`Afraid: first step away from ${Combat.fearSource(enc, chars, chars[id]).name}`); return; }
     ui.busy = true;
-    try { await Combat.endTurn(enc, app.state.characters, id, ioFor(app)); } finally { ui.busy = false; }
+    try { await Combat.submit(enc, app.state.characters, Object.assign({ actor: id, type: 'wait' }, opts || {}), ioFor(app)); } finally { ui.busy = false; }
     ui.mode = null;
     ui.pending = null;
     app.save();
@@ -353,14 +344,14 @@
     if (f.spent) rows.push('Spent: you haven\'t the stamina, so it lands softer and is easier to meet.');
     if (f.flank) rows.push(`Flanked: with a foe of theirs on the far side, ${t.name} defends at −${f.flank}.`);
     for (const d of f.defences) {
-      const bits = [`${d.name}: stops it ${pct(d.odds)} (costs them ${C.fmtAP(d.ap)} AP${d.stamina ? `, ${d.stamina} stamina${d.spent ? ', spent' : ''}` : ''})`];
+      const bits = [`${d.name}: stops it ${pct(d.odds)} (costs them ${d.ticks} ticks${d.stamina ? `, ${d.stamina} stamina${d.spent ? ', spent' : ''}` : ''})`];
       if (d.absorb) bits.push(`a stopped blow still jars ${d.absorb} stamina out of them`);
       if (d.through) bits.push(d.kind === 'block' ? `the power drives ${harmWords(d.through)} through the shield` : `${pct(d.carry)} of its force beats through (${harmWords(d.through)})`);
       if (d.shieldBreak) bits.push(`the shield breaks ${pct(d.shieldBreak)}`);
       rows.push(`${bits.join('; ')}. Against it: drops them ${pct(d.drop)}.`);
     }
     if (!f.defences.length) rows.push(f.down ? `${t.name} is down: no defence.` : `${t.name} has no defence against this blow.`);
-    rows.push('Not counted: their AP (they may have none left to defend with), feats that don\'t show, wards and illusions.');
+    rows.push('Not counted: feats that don\'t show, wards and illusions.');
     return rows;
   }
 
@@ -373,26 +364,27 @@
       infoButton('The odds', () => rows.map((r) => h('p', null, r))));
   }
 
-  // A wounded fighter's wounds, e.g. "torso 2, bleeding 2 (−4 stamina a round); arms 1" (null when unhurt).
+  // A wounded fighter's wounds, e.g. "torso 2, bleeding 2 (−4 stamina a beat); arms 1" (null when unhurt).
   function woundText(c) {
     const list = C.describeWounds(c).map((w) => `${w.text}${w.does ? ` (${w.does})` : ''}`);
     return list.length ? list.join('; ') : null;
   }
 
-  // A collapsed fighter: the round they come round at the end of.
+  // A collapsed fighter: the beat they come round at.
   function downText(enc, c) {
     if (c.status.dead) return 'dead';
     if (!C.isActive(c)) {
       const r = C.collapsed(c) ? Combat.comesRoundAt(enc, c) : null;
-      return r != null && isFinite(r) ? `collapsed: up after round ${r}` : C.collapsed(c) ? 'collapsed' : C.isDown(c) ? `down${C.bleeding(c) ? ', bleeding' : ''}` : 'unconscious';
+      return r != null && isFinite(r) ? `collapsed: up at beat ${r + 1}` : C.collapsed(c) ? 'collapsed' : C.isDown(c) ? `down${C.bleeding(c) ? ', bleeding' : ''}` : 'unconscious';
     }
     return null;
   }
 
-  // The words for a reaction request: who, what, and each choice with its AP and odds.
+  // The words for a reaction request: who, what, and each choice with its ticks and odds. ahead: how far the reactor's
+  // clock is past now (CONFIG.clock.overreach is as far as they may be and still react).
   function reactionModel(app, req, enc, chars) {
     const me = chars[req.actor];
-    const ap = Combat.apLeft(enc, req.actor);
+    const ap = Combat.ahead(enc, req.actor);
     if (req.kind === 'defend') {
       const a = chars[req.attacker];
       const what = req.hidden ? 'a blow you can\'t read' : req.decl.type === 'strike' ? req.decl.option.label : D.ACTIONS[req.decl.type].name;
@@ -404,18 +396,18 @@
       const choice = (o) => {
         const d = f ? f.defences.find((x) => x.kind === o.type) : null;
         const held = d ? [d.absorb ? `still jars ${d.absorb} stamina` : null, d.through ? `${pct(d.carry)} beats through (${harmWords(d.through)})` : null, d.shieldBreak ? `shield breaks ${pct(d.shieldBreak)}` : null].filter(Boolean) : [];
-        const cost = `${C.fmtAP(o.ap)} AP${o.stamina ? `, ${o.stamina} stamina${o.spent ? ' (spent)' : ''}` : ''}`;
+        const cost = `${o.ticks} ticks${o.stamina ? `, ${o.stamina} stamina${o.spent ? ' (spent)' : ''}` : ''}`;
         return {
-          value: o.type, label: o.name, cost: C.fmtAP(o.ap), odds: o.odds != null ? pct(o.odds) : '?',
+          value: o.type, label: o.name, cost: `${o.ticks}t`, odds: o.odds != null ? pct(o.odds) : '?',
           line: o.odds == null ? 'You can\'t read the blow' : `${o.stamina ? `${o.stamina} st · ` : ''}fails: ${d ? out(d) : prev ? prev.text : '?'}`,
           hint: `${cost}${o.spent ? ': you haven\'t the stamina; it leaves you at 1 and the roll is harder' : ''}. ${o.odds != null ? `${pct(o.odds)} to stop it` : 'You can\'t read the blow'}${held.length ? ` (held: ${held.join('; ')})` : ''}.${d ? ` If it fails: ${out(d)}.` : ''}`,
         };
       };
       const take = f ? `${harmWords(f.hit)}${f.hit.drop >= 0.005 ? `, drops you ${pct(f.hit.drop)}` : ''}` : prev ? prev.text : null;
       return {
-        title: `${a.name} → ${me.name}`, from: a.name, to: me.name, tag: what, sub: `${what}${take ? ` · if it lands: ${take}` : ''}`, ap,
+        title: `${a.name} → ${me.name}`, from: a.name, to: me.name, tag: what, sub: `${what}${take ? ` · if it lands: ${take}` : ''}`, ahead: ap,
         choices: req.options.map(choice),
-        none: { label: 'Take it', note: 'keep the AP', line: take ? `lands: ${take}` : null },
+        none: { label: 'Take it', note: 'keep the time', line: take ? `lands: ${take}` : null },
       };
     }
     if (req.kind === 'cover') {
@@ -425,22 +417,22 @@
       const f = !o.hidden && req.decl && req.decl.type === 'strike' ? foreseeBlow(enc, chars, a.id, t.id, req.decl.option) : null;
       const lands = f ? `${harmWords(f.hit)}${f.hit.drop >= 0.005 ? `, drops ${t.name} ${pct(f.hit.drop)}` : ''}` : null;
       return {
-        title: `${me.name} covers ${t.name}`, from: me.name, to: t.name, sub: `${a.name} swings at ${t.name}, who isn't defending: block it for them with your shield (−${o.penalty != null ? o.penalty : G.CONFIG.defense.cover.penalty})`, ap,
-        choices: [{ value: 'cover', label: 'Cover', cost: C.fmtAP(o.ap), odds: o.odds != null ? pct(o.odds) : '?', line: `${o.stamina} st${lands ? ` · fails: ${lands}` : ''}`, hint: `${C.fmtAP(o.ap)} AP, ${o.stamina} stamina; the blow lands on your shield${o.odds != null ? ` ${pct(o.odds)} of the time` : ''}.${lands ? ` If it fails: ${lands}.` : ''}` }],
-        none: { label: 'Let it land', note: 'keep the AP', line: lands ? `${t.name} takes ${lands}` : null },
+        title: `${me.name} covers ${t.name}`, from: me.name, to: t.name, sub: `${a.name} swings at ${t.name}, who isn't defending: block it for them with your shield (−${o.penalty != null ? o.penalty : G.CONFIG.defense.cover.penalty})`, ahead: ap,
+        choices: [{ value: 'cover', label: 'Cover', cost: `${o.ticks}t`, odds: o.odds != null ? pct(o.odds) : '?', line: `${o.stamina} st${lands ? ` · fails: ${lands}` : ''}`, hint: `${o.ticks} ticks, ${o.stamina} stamina; the blow lands on your shield${o.odds != null ? ` ${pct(o.odds)} of the time` : ''}.${lands ? ` If it fails: ${lands}.` : ''}` }],
+        none: { label: 'Let it land', note: 'keep the time', line: lands ? `${t.name} takes ${lands}` : null },
       };
     }
     const t = chars[req.target];
     const why = { closes: 'presses inside', leaves: 'leaves', moves: 'moves about in' }[req.why] || 'leaves';
     const sub = req.why === 'riposte' ? `You parried ${t.name}: answer with a blow they may still defend.` : req.why === 'cleave' ? `Your blow dropped its foe: carry it on into ${t.name}, free.` : `${t.name} ${why} ${me.name}'s reach. A hit stops them.`;
     return {
-      title: `${me.name} → ${t.name}`, from: me.name, to: t.name, tag: { closes: 'closing in', leaves: 'leaving', moves: 'moving', riposte: 'riposte', cleave: 'cleave' }[req.why] || 'leaving', sub, ap,
+      title: `${me.name} → ${t.name}`, from: me.name, to: t.name, tag: { closes: 'closing in', leaves: 'leaving', moves: 'moving', riposte: 'riposte', cleave: 'cleave' }[req.why] || 'leaving', sub, ahead: ap,
       choices: req.options.map((o) => {
         const f = foreseeBlow(enc, chars, req.actor, req.target, o);
         const p = f ? null : blowPreview(enc, chars, { decl: { actor: req.actor, target: req.target, type: 'strike', option: o } });
-        return { value: o, label: o.label, cost: C.fmtAP(o.ap), odds: f ? pct(f.lands) : '', line: f ? `${harmWords(f.hit)} · ${f.down ? 'kills' : 'drops'} ${pct(f.down ? f.kill : f.drop)}` : p ? p.text : null, hint: f ? oddsBreakdown(f, t).join(' ') : p ? p.text : '' };
+        return { value: o, label: o.label, cost: `${o.ticks}t`, odds: f ? pct(f.lands) : '', line: f ? `${harmWords(f.hit)} · ${f.down ? 'kills' : 'drops'} ${pct(f.down ? f.kill : f.drop)}` : p ? p.text : null, hint: f ? oddsBreakdown(f, t).join(' ') : p ? p.text : '' };
       }),
-      none: { label: 'Let go', note: 'keep the AP' },
+      none: { label: 'Let go', note: 'keep the time' },
     };
   }
 
@@ -450,8 +442,8 @@
       const m = reactionModel(app, req, enc, chars);
       const done = (v) => { closeModal(); resolve(v); };
       const box = h('div', { class: 'modal info-pop', role: 'dialog', 'aria-modal': 'true', onclick: (e) => e.stopPropagation() },
-        h('span', { class: 'label' }, `Reaction · ${C.fmtAP(m.ap)} AP left`), h('h2', null, m.title), h('p', { class: 'small muted' }, m.sub),
-        h('div', { class: 'stack tight' }, m.choices.map((c) => h('button', { class: 'act', title: c.hint || null, onclick: () => done(c.value) }, h('span', null, c.label), h('span', { class: 'small muted num' }, `${c.cost} AP${c.odds ? ` · ${c.odds}` : ''}`), c.line ? h('span', { class: 'small react-line' }, c.line) : null)),
+        h('span', { class: 'label' }, `Reaction · ${m.ahead} ticks ahead`), h('h2', null, m.title), h('p', { class: 'small muted' }, m.sub),
+        h('div', { class: 'stack tight' }, m.choices.map((c) => h('button', { class: 'act', title: c.hint || null, onclick: () => done(c.value) }, h('span', null, c.label), h('span', { class: 'small muted num' }, `${c.cost}${c.odds ? ` · ${c.odds}` : ''}`), c.line ? h('span', { class: 'small react-line' }, c.line) : null)),
           h('button', { class: 'act', onclick: () => done(null) }, h('span', null, m.none.label), h('span', { class: 'small muted' }, m.none.note), m.none.line ? h('span', { class: 'small react-line' }, m.none.line) : null)));
       const root = document.getElementById('modal-root');
       root.innerHTML = '';
@@ -462,48 +454,41 @@
   // ---- Command panel -----------------------------------------------------
   // Under the map: the name, a type dropdown (Martial, Magic, Move, Other), the action
   // dropdown(s), a target and Declare. Numbers and rules sit behind ⓘ buttons and pop-ups.
-  // The AP pool as pips in halves (R9: costs come in half APs), two to the AP with a gap between APs. A pip is full,
-  // part (a tenth-spent half, with apStep off) or spent; the ones just spent flash. markCost(cost) lays an action over
-  // the same pips: the pips it would spend are `will`, the pips still there for reactions after it are `keep`.
-  function apMeter(pool, left, flash, now, plan) {
-    const D = G.CONFIG.apDisplay || 1, hf = D / 2;
-    const n = Math.ceil(pool / hf - 1e-9);
-    const pips = [], base = [];
-    for (let j = 0; j < n; j++) {
-      const lo = j * hf, hi = (j + 1) * hf;
-      const just = flash && hi > flash.to + 1e-9 && lo < flash.from - 1e-9;
-      base.push((left >= hi - 1e-9 ? '' : left > lo + 1e-9 ? 'part' : 'spent') + (just ? ' just' : ''));
-      pips.push(h('i', { class: base[j], style: just ? { animationDelay: `-${now - flash.at}ms` } : null }));
-    }
+  // The fighter's clock, for the pane: now, where the chosen (or hovered) action would put their clock, its lead (when
+  // it lands), and whether they could still react after it (CONFIG.clock.overreach). markCost({ticks, lead}) redraws
+  // it for a hovered action; null goes back to the chosen one.
+  function clockMeter(enc, id, plan) {
+    const O = G.CONFIG.clock.overreach;
+    const scale = Math.max(30, O + 12);
+    const at = (t) => `${Math.max(0, Math.min(100, (100 * t) / scale))}%`;
+    const bar = h('span', { class: 'clk-bar' });
     const note = h('span', { class: 'ap-note small num muted' }, '');
-    const el = h('span', { class: 'ap-meter', 'aria-label': `${C.fmtAP(left)} of ${C.fmtAP(pool)} AP left this round` }, pips);
-    // cost: internal units (null clears the marks).
+    const el = h('span', { class: 'ap-meter clk', 'aria-label': `Clock: tick ${enc.now}` }, bar);
     el.markCost = (cost) => {
-      const after = cost != null ? left - cost : null;
-      pips.forEach((p, j) => {
-        const lo = j * hf, hi = (j + 1) * hf;
-        const spend = cost != null && hi > after + 1e-9 && lo < left - 1e-9;
-        const keep = cost != null && !spend && hi <= left + 1e-9 && lo < after - 1e-9;
-        p.className = base[j] + (spend ? ' will' : keep ? ' keep' : '');
-      });
-      // Short on the pane (the pips carry the rest); the sentence is the hover.
-      note.textContent = cost == null ? '' : after >= -1e-9 ? `−${C.fmtAP(cost)} → ${C.fmtAP(after)}` : `−${C.fmtAP(cost)}: short`;
-      note.title = cost == null ? '' : after >= -1e-9 ? `This costs ${C.fmtAP(cost)} AP (striped); ${C.fmtAP(after)} AP stay for reactions (blue)` : `This costs ${C.fmtAP(cost)} AP, ${C.fmtAP(-after)} more than you have left`;
+      const c = cost == null ? null : typeof cost === 'number' ? { ticks: cost, lead: 0 } : cost;
+      bar.innerHTML = '';
+      bar.appendChild(h('i', { class: 'reach', style: { left: '0%', width: at(O) }, title: `Within ${O} ticks of now you can still react` }));
+      if (c) {
+        bar.appendChild(h('i', { class: 'will' + (c.ticks > O ? ' over' : ''), style: { left: '0%', width: at(c.ticks) } }));
+        if (c.lead) bar.appendChild(h('i', { class: 'lead', style: { left: at(c.lead) }, title: `Lands at +${c.lead}` }));
+      }
+      note.textContent = c ? `+${c.ticks}${c.lead ? ` · lands +${c.lead}` : ''} · ${c.ticks > O ? 'no reaction till +' + (c.ticks - O) : 'can react'}` : `tick ${enc.now}`;
+      note.title = c ? `This takes ${c.ticks} ticks${c.lead ? `, landing after ${c.lead} (committed till then)` : ''}: your next action at tick ${enc.now + c.ticks}. ${c.ticks > O ? `More than ${O} ahead: you can't block, parry or dodge for ${c.ticks - O} ticks.` : 'You can still react after it.'}` : '';
     };
     el.planCost = plan != null ? plan : null;
-    if (plan != null) el.markCost(plan);
+    el.markCost(plan);
     return h('span', { class: 'ap-pips' }, el, note);
   }
 
-  // Hovering (or focusing) an action marks its cost on the pips; letting go goes back to the chosen action's.
+  // Hovering (or focusing) an action marks its ticks on the clock; letting go goes back to the chosen action's.
   function hoverCost(cost) {
     if (typeof document === 'undefined') return;
     const el = document.querySelector('.battle-screen .ap-meter');
     if (el && el.markCost) el.markCost(cost != null ? cost : el.planCost);
   }
 
-  function costText(ap, st, sp, spent) {
-    return [`${C.fmtAP(ap)} AP`, st ? `${st} st${spent ? ' (spent)' : ''}` : null, sp ? `${sp} SP` : null].filter(Boolean).join(' · ');
+  function costText(ticks, st, sp, spent, lead) {
+    return [`${ticks}t${lead ? ` (lands +${lead})` : ''}`, st ? `${st} st${spent ? ' (spent)' : ''}` : null, sp ? `${sp} SP` : null].filter(Boolean).join(' · ');
   }
 
   // A spent action (CONFIG.stamina.spent): more stamina than the fighter has; taken anyway, weaker.
@@ -549,23 +534,23 @@
     pin: 'From a hold to a pin: the pinned can only try to break free, and armor no longer guards their vitals.',
     throw: 'Throws a held foe to the ground.',
     break: 'Breaks free of a hold.',
-    bait: 'CHA against the foe\'s WIS. Won: they commit too early and defend worse for the round.',
+    bait: 'CHA against the foe\'s WIS. Won: they commit too early and defend worse until the next beat.',
     readIntent: 'A cheap glance: WIS against the foe\'s CHA. Read right, you gain on guarding against them and on hitting through their guards. You can misread, and a misread costs you.',
     bandage: 'Stops one bleed on yourself or someone adjacent.',
-    vanish: 'Out of sight for 2 rounds: no foe beyond arm\'s reach can aim at you, and your blows are harder to meet. Striking ends it.',
+    vanish: 'Out of sight for 2 beats: no foe beyond arm\'s reach can aim at you, and your blows are harder to meet. Striking ends it.',
     feign: 'Drop and lie still: no foe can aim at you until you act again.',
-    rally: 'You and allies within 3 squares get a round\'s regeneration at once, and the collapsed among them come round.',
-    command: 'An ally within 4 squares gains AP this round.',
+    rally: 'You and allies within 3 squares get a beat\'s regeneration at once, and the collapsed among them come round.',
+    command: 'An ally within 4 squares acts a few ticks sooner.',
     rouse: 'Bring round a collapsed or unconscious ally beside you, with a quarter of their stamina (they are still on the ground). Once per ally a fight.',
-    demoralize: 'STR or CHA against the foe\'s WIL. Won: they are frightened of you for a round.',
-    nameWeakness: 'For 2 rounds everyone\'s blows ignore this creature\'s resistances.',
-    windUp: 'Gathers a power swing or a Strong spell; release it next round.',
+    demoralize: 'STR or CHA against the foe\'s WIL. Won: they are frightened of you until the next beat.',
+    nameWeakness: 'For 2 beats everyone\'s blows ignore this creature\'s resistances.',
+    wait: 'Let time pass: until the next thing happens, or just after a fighter of your choice has acted. You can still react while you wait.',
   };
 
   const SHAPE_INFO = {
     bolt: 'A bolt at one target.',
     area: 'Bursts over every square within the radius. Friends too. Aimed at your own square, round you (you are spared).',
-    ground: 'Covers the ground for some rounds. Friends too.',
+    ground: 'Covers the ground for some beats. Friends too.',
     wall: 'Raises a wall across squares, square by square from the one you tap.',
     terrain: 'Opens or changes the ground.',
     rune: 'A hidden rune that springs on the first foe to step on it.',
@@ -575,7 +560,7 @@
     drain: 'Takes from a foe and gives it to you.', give: 'Gives your own to an ally.',
     blink: 'Steps through space, through walls and out of any hold.',
     raise: 'A body gets up and fights for you until the fight ends or you fall.',
-    summon: 'Something appears for some rounds. Unbound, it rages at whatever is nearest, friend or foe.',
+    summon: 'Something appears for some beats. Unbound, it rages at whatever is nearest, friend or foe.',
     dispel: 'Lifts every spell on a creature, or every spell laid on the ground.',
     banish: 'Sends an outsider out of the world; WIL resists.',
     channel: 'Your stamina becomes spell points, yours or an ally\'s.',
@@ -590,10 +575,10 @@
   // Every choice open to the actor, by type. Each entry knows how to declare and explain itself.
   function commandModel(app, enc, legal, c) {
     const chars = app.state.characters;
-    const why = (o) => o.why || (o.affordable ? null : 'Not enough AP');
+    const why = (o) => o.why || (o.affordable ? null : 'Not possible now');
     const martial = [], maneuver = [], magic = [], other = [];
     for (const o of legal.attacks) {
-      const e = { key: 'a:' + C.optionKey(o), option: o, ap: o.ap, stamina: o.stamina, sp: o.spCost, affordable: o.affordable, why: why(o), spent: !!o.spent };
+      const e = { key: 'a:' + C.optionKey(o), option: o, ticks: o.ticks, lead: o.lead, stamina: o.stamina, sp: o.spCost, affordable: o.affordable, why: why(o), spent: !!o.spent };
       if (o.spell) magic.push(Object.assign(e, { kind: 'strike', label: o.label, targets: sortTargets(o.targets, chars, c) }));
       else {
         const w = o.weaponId ? c.weapons.find((x) => x.id === o.weaponId) : null;
@@ -604,27 +589,18 @@
       }
     }
     for (const m of legal.maneuvers) {
-      const e = { key: 'm:' + m.type, kind: 'maneuver', type: m.type, label: D.ACTIONS[m.type].name, ap: m.ap, stamina: m.stamina, spent: !!m.spent, affordable: m.affordable, why: m.affordable ? null : m.targets.some((t) => t.inReach) ? 'Not enough AP' : 'No one in reach', targets: sortTargets(m.targets, chars, c) };
+      const e = { key: 'm:' + m.type, kind: 'maneuver', type: m.type, label: D.ACTIONS[m.type].name, ticks: m.ticks, lead: m.lead, stamina: m.stamina, spent: !!m.spent, affordable: m.affordable, why: m.affordable ? null : 'No one in reach', targets: sortTargets(m.targets, chars, c) };
       if (['bait', 'readIntent', 'demoralize', 'nameWeakness'].includes(m.type)) other.push(Object.assign(e, { group: 'Wits' }));
       else maneuver.push(Object.assign(e, { group: 'Maneuvers' }));
     }
     for (const o of legal.spells || []) {
-      magic.push({ key: 's:' + o.spellKey, kind: 'cast', option: o, label: o.label, ap: o.ap, stamina: 0, sp: o.spCost, affordable: o.affordable, why: why(o),
+      magic.push({ key: 's:' + o.spellKey, kind: 'cast', option: o, label: o.label, ticks: o.ticks, lead: o.lead, stamina: 0, sp: o.spCost, affordable: o.affordable, why: why(o),
         square: o.target === 'square', targets: o.target === 'square' ? null : sortTargets(o.targets || [], chars, c, o.target === 'ally') });
     }
     legal.other.forEach((o) => {
-      const e = { key: 'o:' + o.type + (o.option ? ':' + C.optionKey(o.option) : ''), group: o.type === 'windUp' ? 'Wind up' : 'Gear and self', kind: 'other', type: o.type, option: o.option,
-        label: o.name.replace(/^Wind up: /, '') + (o.note ? ` (${o.note})` : ''), ap: o.ap, stamina: o.stamina, spent: !!o.spent, affordable: o.affordable, why: why(o),
-        targets: o.targets ? sortTargets(o.targets, chars, c, true) : null };
-      // A blow's wind-up (a power swing, a bow's draw) sits with its weapon's attacks, just before the blow it readies;
-      // a spell's stays under Other.
-      const release = o.type === 'windUp' && o.option && !o.option.spell ? martial.findIndex((m) => m.option && C.optionKey(m.option) === C.optionKey(o.option)) : -1;
-      if (release < 0) { other.push(e); return; }
-      const m = martial[release];
-      e.group = m.group;
-      e.label = `${o.option.ranged ? 'Draw' : 'Wind up'}: ${o.name.replace(/^Wind up: /, '')}${o.note ? ` (${o.note})` : ''}`;
-      e.short = o.option.ranged ? 'Draw' : 'Wind up';
-      martial.splice(release, 0, e);
+      other.push({ key: 'o:' + o.type + (o.option ? ':' + C.optionKey(o.option) : ''), group: 'Gear and self', kind: 'other', type: o.type, option: o.option,
+        label: o.name + (o.note ? ` (${o.note})` : ''), ticks: o.ticks, lead: o.lead, stamina: o.stamina, spent: !!o.spent, affordable: o.affordable, why: why(o),
+        targets: o.targets ? sortTargets(o.targets, chars, c, true) : null });
     });
     // Short names on the buttons: the bracketed part (point, edge) only where two blows of one group share a name.
     for (const list of [martial, maneuver, other]) {
@@ -634,7 +610,7 @@
         e.short = clash ? (e.short || e.label) : base;
       }
     }
-    const move = legal.move ? { key: 'move', kind: 'move', label: 'Move', ap: C.moveCost(c, 1), stamina: legal.move.stamina, spent: !!legal.move.spent, affordable: true, move: legal.move } : null;
+    const move = legal.move ? { key: 'move', kind: 'move', label: 'Move', ticks: C.moveTicks(c, 1), lead: 0, stamina: legal.move.stamina, spent: !!legal.move.spent, affordable: true, move: legal.move } : null;
     // The tabs: [key, label, icon, any affordable].
     const types = [];
     const ok = (list) => list.some((e) => e.affordable);
@@ -719,16 +695,16 @@
 
   function entryInfo(app, enc, c, e) {
     const o = e.option;
-    const rows = [['Cost', costText(e.ap, e.stamina, e.sp, e.spent)]];
+    const rows = [['Cost', costText(e.ticks, e.stamina, e.sp, e.spent, e.lead)]];
     const notes = [];
     if (e.kind === 'strike' && !o.spell) {
       const range = (o.minRange === o.maxRange ? `${o.maxRange}` : `${o.minRange}–${o.maxRange}`) + (o.closePenalty ? (G.CONFIG.range.closeRule === 'blunt' ? ' (half force, blunt, at 1)' : ' (half at 1)') : '');
       rows.unshift(['Weapon', e.weapon ? Items.itemName(e.weapon) : 'Unarmed'], ['Damage', `P/S/B ${o.damage.join('/')}`], ['Range', range]);
-      if (o.strain > 1) rows.push(['Strain', `${o.strain.toFixed(1)}× your strength: slow and tiring (AP and stamina ×${(o.strain * o.strain).toFixed(1)})`]);
-      if (o.windUp) notes.push('Needs a wind-up the round before (Wind up, with the attacks).');
+      if (o.strain > 1) rows.push(['Strain', `${o.strain.toFixed(1)}× your strength: slow and tiring (ticks and stamina ×${(o.strain * o.strain).toFixed(1)})`]);
+      if (o.lead) notes.push(`Committed for ${o.lead} ticks before it lands${o.exposes ? ', with no block or parry till then' : ''}: a foe may strike first, step away, or knock you down and spoil it.`);
     } else if (o && o.spell) {
       const s = o.spell;
-      const shape = { area: `radius ${s.radius}`, ground: `radius ${s.radius}, ${s.rounds} rounds`, wall: `${s.length} squares, ${s.rounds} rounds`, terrain: `${s.length} square${s.length > 1 ? 's' : ''}`, bane: `${s.rounds} rounds`, boon: `${s.rounds} rounds`, summon: `${s.rounds} rounds${s.bound ? ', bound' : ', unbound'}`, ward: `${s.rounds} rounds`, mind: `${s.rounds} rounds`, dispel: `radius ${s.radius}`, see: `radius ${s.radius}` }[s.shape];
+      const shape = { area: `radius ${s.radius}`, ground: `radius ${s.radius}, ${s.beats} beats`, wall: `${s.length} squares, ${s.beats} beats`, terrain: `${s.length} square${s.length > 1 ? 's' : ''}`, bane: `${s.beats} beats`, boon: `${s.beats} beats`, summon: `${s.beats} beats${s.bound ? ', bound' : ', unbound'}`, ward: `${s.beats} beats`, mind: `${s.beats} beats`, dispel: `radius ${s.radius}`, see: `radius ${s.radius}` }[s.shape];
       rows.unshift(['Power', `${s.magnitude}${s.element ? ' ' + s.element : ''}`], ['Range', `${o.minRange}–${o.maxRange}${s.named ? ', only one whose name you know' : ''}`], shape ? ['Reach', shape] : null);
       notes.push(SHAPE_INFO[s.shape] || '');
       if (e.square) notes.push('Tap a highlighted square on the map to cast.');
@@ -805,40 +781,32 @@
     return declare(app, enc, e.targets ? { actor: id, type: e.type, target: t } : { actor: id, type: e.type, option: e.option });
   }
 
-  // Fatigue sets next round's pool (CONFIG.fatigueSteps): shown when this action would leave the fighter tired, or more
-  // tired than they already will be, assuming no blow lands before the round ends.
+  // Fatigue (CONFIG.fatigueSteps) adds a share to every action's ticks: shown when this action would leave the fighter
+  // tired, or more tired than they are.
   function fatigueRow(c, stamina) {
-    if (!stamina || C.maxStamina(c) <= 0) return null;
-    const base = C.projectedPool(c, 0), after = C.projectedPool(c, stamina);
-    if (!after.fatigue) return null;
-    const steps = G.CONFIG.fatigueSteps.map((s) => `below ${Math.round(s.below * 100)}% stamina −${s.ap} AP`).join(', ');
-    const worse = after.fatigue > base.fatigue;
-    return h('div', { class: 'cmd-preview' + (worse ? ' warn' : ''), title: `Fatigue is taken when a round's AP is set: ${steps}. Assumes nothing hits you first.` },
-      h('span', { class: 'label' }, 'Next round'),
-      h('span', null, `${C.fmtAP(after.pool)} AP (tired −${after.fatigue}${worse ? `; this costs you ${after.fatigue - base.fatigue}` : ''})`));
+    if (!stamina || C.maxStamina(c) <= 0 || C.tireless(c)) return null;
+    const share = (st) => G.CONFIG.fatigueSteps.reduce((n, x) => (st / C.maxStamina(c) < x.below ? Math.max(n, x.share) : n), 0);
+    const now = share(c.stamina), after = share(Math.max(0, c.stamina - stamina));
+    if (!after) return null;
+    const steps = G.CONFIG.fatigueSteps.map((x) => `below ${Math.round(x.below * 100)}% stamina +${Math.round(x.share * 100)}%`).join(', ');
+    return h('div', { class: 'cmd-preview' + (after > now ? ' warn' : ''), title: `Tired, every action takes longer: ${steps}.` },
+      h('span', { class: 'label' }, 'Tired'),
+      h('span', null, `every action +${Math.round(after * 100)}% ticks${after > now ? ' (this makes it worse)' : ''}`));
   }
 
-  // The pane's head: who, their AP as pips (the ones just spent flash), stamina and SP.
+  // The pane's head: who, their clock (the chosen action's ticks on it), stamina and SP.
   function paneHead(app, enc, id, legal, plan) {
     const chars = app.state.characters;
     const c = chars[id];
-    const ui = bui(app);
-    const pool = legal ? legal.pool : null, left = legal ? legal.ap : enc.ap[id] != null ? Combat.apLeft(enc, id) : null;
-    // Pips spent since the last look flash for a moment (the flash outlives re-renders: its delay is set back by the time gone).
-    const now = Date.now();
-    const seen = ui.apSeen;
-    if (left != null && seen && seen.id === id && seen.round === enc.round && left < seen.ap - 1e-9) ui.apFlash = { id, from: seen.ap, to: left, at: now };
-    if (left != null) ui.apSeen = { id, ap: left, round: enc.round };
-    const fl = ui.apFlash && ui.apFlash.id === id && now - ui.apFlash.at < 900 ? ui.apFlash : null;
     const sp = G.Magic && G.Magic.maxSP(c) ? G.Magic.availableSP(c) : null;
     const max = C.maxStamina(c);
     return h('div', { class: 'cmd-head' },
       UI.Sprites ? h('button', { class: 'cmd-face', title: 'Character sheet', 'aria-label': `${c.name}: character sheet`, onclick: () => openSheet(app, enc, id) }, UI.Sprites.portrait(c, 40)) : null,
       h('div', { class: 'cmd-id' },
         h('button', { class: 'who linkish', onclick: () => openSheet(app, enc, id), title: 'Character sheet' }, c.name),
-        h('div', { class: 'cmd-stats', title: `Stamina ${c.stamina}/${max}${sp != null ? ` · ${sp} SP` : ''}${C.fatiguePenalty(c) ? ` · tired: −${C.fatiguePenalty(c)} AP this round` : ''}` }, bar(c.stamina, max), h('span', { class: 'small num muted' }, `${c.stamina}`),
+        h('div', { class: 'cmd-stats', title: `Stamina ${c.stamina}/${max}${sp != null ? ` · ${sp} SP` : ''}${C.fatigueShare(c) ? ` · tired: actions +${Math.round(100 * C.fatigueShare(c))}% ticks` : ''}` }, bar(c.stamina, max), h('span', { class: 'small num muted' }, `${c.stamina}`),
           sp != null ? h('div', { class: 'sp-bar', title: `${sp} of ${G.Magic.maxSP(c)} spell points` }, bar(sp, G.Magic.maxSP(c))) : null)),
-      pool != null ? h('div', { class: 'cmd-ap', title: `${C.fmtAP(left)} of ${C.fmtAP(pool)} AP left this round` }, apMeter(pool, left, fl, now, plan), h('span', { class: 'num' }, C.fmtAP(left))) : null,
+      legal ? h('div', { class: 'cmd-ap', title: `Tick ${enc.now}: beat ${enc.beat + 1}, the next beat at ${enc.nextBeat}` }, clockMeter(enc, id, plan)) : null,
       gearWarn(c),
       woundText(c) ? h('span', { class: 'chip wound-chip num', title: `Wounds: ${woundText(c)} (attributes lost until healed)` }, woundText(c)) : null);
   }
@@ -861,21 +829,21 @@
     return blowPreview(enc, chars, { decl: { actor: id, target: targetId, type: 'strike', option: loc ? Object.assign({}, entry.option, { aim: loc }) : entry.option } });
   }
 
-  // The actions of a tab as a table, a block per group (a weapon, Maneuvers): the short name, then AP and stamina in
+  // The actions of a tab as a table, a block per group (a weapon, Maneuvers): the short name, then ticks and stamina in
   // their own columns. One that can't be taken now is dimmed, with why on hover. A click picks it; the Do-it button at
   // the foot takes it.
   function actionButtons(list, cmd, rerender, info) {
     const groups = [...new Set(list.map((e) => e.group))];
     const named = groups.length > 1 || list.length > 4;
     return h('div', { class: 'acts' },
-      h('div', { class: 'act-head' }, h('span', null, info || ''), h('span', null, 'AP'), h('span', null, 'St')),
+      h('div', { class: 'act-head' }, h('span', null, info || ''), h('span', null, 'Ticks'), h('span', null, 'St')),
       groups.map((g) => [
         named && g ? h('div', { class: 'act-group label' }, g) : null,
         list.filter((e) => e.group === g).map((e) =>
           h('button', { class: 'act-line' + (e.key === cmd.act ? ' on' : '') + (e.affordable ? '' : ' dim') + (e.spent ? ' spent' : ''), 'data-hint': !e.affordable ? `${e.label}: ${e.why}` : e.spent ? `${e.label}. ${SPENT_HINT}` : e.label, 'aria-pressed': e.key === cmd.act ? 'true' : 'false',
-            onmouseenter: () => hoverCost(e.ap), onmouseleave: () => hoverCost(null), onfocus: () => hoverCost(e.ap), onblur: () => hoverCost(null),
+            onmouseenter: () => hoverCost(e), onmouseleave: () => hoverCost(null), onfocus: () => hoverCost(e), onblur: () => hoverCost(null),
             onclick: () => { cmd.act = e.key; cmd.castAt = null; rerender(); } },
-          h('span', { class: 'nm' }, e.short || e.label), h('span', { class: 'num' }, C.fmtAP(e.ap)), h('span', { class: 'num' + (e.spent ? ' spent' : ''), title: e.spent ? SPENT_HINT : null }, e.stamina ? `${e.stamina}${e.spent ? '!' : ''}` : '–'))),
+          h('span', { class: 'nm' }, e.short || e.label), h('span', { class: 'num', title: e.lead ? `lands after ${e.lead}` : null }, e.lead ? `${e.ticks}·${e.lead}` : String(e.ticks)), h('span', { class: 'num' + (e.spent ? ' spent' : ''), title: e.spent ? SPENT_HINT : null }, e.stamina ? `${e.stamina}${e.spent ? '!' : ''}` : '–'))),
       ]));
   }
 
@@ -898,12 +866,11 @@
     const ui = bui(app);
     const id = Combat.currentActor(enc);
     const c = chars[id];
-    // A computer-run foe's AP stays hidden, as everywhere else.
-    if (aiControlled(app, c)) return pane('waiting ' + (c.side === 'party' ? 'party' : 'enemy'), paneHead(app, enc, id, c.side === 'party' || app.state.settings.gmView ? legal : null), h('p', { class: 'muted small' }, c.side === 'party' ? 'Deciding…' : 'Their turn. You will be asked if one of yours can react.'));
+    if (aiControlled(app, c)) return pane('waiting ' + (c.side === 'party' ? 'party' : 'enemy'), paneHead(app, enc, id, c.side === 'party' || app.state.settings.gmView ? legal : null), h('p', { class: 'muted small' }, c.side === 'party' ? 'Deciding…' : 'Their move. You will be asked if one of yours can react.'));
     const { model, entry } = sync;
     const cmd = ui.cmd;
-    // The cost on the pips: a square picked to move to, else the chosen action.
-    const planAP = cmd.moveTo && app.ui.lastReach && app.ui.lastReach[cmd.moveTo.x + ',' + cmd.moveTo.y] != null ? app.ui.lastReach[cmd.moveTo.x + ',' + cmd.moveTo.y] : entry && entry.affordable ? entry.ap : null;
+    // The cost on the clock: a square picked to move to, else the chosen action.
+    const planAP = cmd.moveTo && app.ui.lastReach && app.ui.lastReach[cmd.moveTo.x + ',' + cmd.moveTo.y] != null ? { ticks: app.ui.lastReach[cmd.moveTo.x + ',' + cmd.moveTo.y], lead: 0 } : entry && entry.affordable ? { ticks: entry.ticks, lead: entry.lead } : null;
     const head = paneHead(app, enc, id, legal, planAP);
     const rerender = () => app.render();
     const tabs = model.types.length > 1 ? h('div', { class: 'cmd-tabs', role: 'tablist' }, model.types.map(([k, label, ic, can], i) =>
@@ -956,76 +923,88 @@
     }
     const tired = entry ? fatigueRow(c, entry.stamina) : null;
     if (tired) rows.push(tired);
-    if (entry && cmd.type === 'magic') rows.push(h('div', { class: 'cmd-preview' }, h('span', { class: 'label' }, 'Cost'), h('span', null, costText(entry.ap, entry.stamina, entry.sp, entry.spent)), info));
+    if (entry && cmd.type === 'magic') rows.push(h('div', { class: 'cmd-preview' }, h('span', { class: 'label' }, 'Cost'), h('span', null, costText(entry.ticks, entry.stamina, entry.sp, entry.spent, entry.lead)), info));
 
-    // The button that does it, and End turn: always at the foot of the pane.
+    // The button that does it, and Wait: always at the foot of the pane.
     // Moving: a square clicked on the map (a second click there, or this button, confirms).
     let go = null;
     const moveAP = cmd.moveTo && app.ui.lastReach ? app.ui.lastReach[cmd.moveTo.x + ',' + cmd.moveTo.y] : null;
     if (cmd.moveTo && moveAP != null) {
       const risky = moveHazards(app, enc, id, cmd.moveTo).length && cmd.hazardOk !== cmd.moveTo.x + ',' + cmd.moveTo.y;
       go = h('button', { class: 'primary', onclick: () => declareMove(app, enc, id, cmd.moveTo, cmd, rerender) },
-        h('span', null, risky ? 'Move here (hazard)' : cmd.hazardOk ? 'Move here anyway' : 'Move here'), h('span', { class: 'cost' }, `${C.fmtAP(moveAP)} AP`));
+        h('span', null, risky ? 'Move here (hazard)' : cmd.hazardOk ? 'Move here anyway' : 'Move here'), h('span', { class: 'cost' }, `${moveAP}t`));
     } else if (entry) {
       const blocked = !entry.affordable || (entry.targets && !target);
       const name = entry.label.split(' · ')[0].replace(/\s*\(.*\)$/, '');
       go = entry.square && cmd.castAt
         ? h('button', { class: 'primary', onclick: () => declare(app, enc, { actor: id, type: 'cast', option: entry.option, at: cmd.castAt }) },
-          h('span', null, `${name} here`), h('span', { class: 'cost' }, costText(entry.ap, entry.stamina, entry.sp, entry.spent)))
+          h('span', null, `${name} here`), h('span', { class: 'cost' }, costText(entry.ticks, entry.stamina, entry.sp, entry.spent, entry.lead)))
         : entry.square
         ? h('span', { class: 'tap-hint' }, 'Click a square on the map')
         : entry.targets && entry.targets.length && !target && app.hooks && app.hooks.choose
         ? h('span', { class: 'tap-hint' }, 'Click a target on the map')
         : h('button', { class: 'primary', disabled: blocked, title: entry.why || 'Enter', onclick: () => declareEntry(app, enc, id, entry, cmd) },
-          h('span', null, target ? `${name} → ${chars[target.id].name}` : name), h('span', { class: 'cost' }, costText(entry.ap, entry.stamina, entry.sp, entry.spent)));
+          h('span', null, target ? `${name} → ${chars[target.id].name}` : name), h('span', { class: 'cost' }, costText(entry.ticks, entry.stamina, entry.sp, entry.spent, entry.lead)));
     }
     return pane('', h('div', null, head, tabs), rows, [
       oddsFoot,
       go ? h('div', { class: 'cmd-go' }, go) : null,
       h('div', { class: 'cmd-end' },
-        h('button', { class: 'end', title: (legal.ap ? `Keep ${C.fmtAP(legal.ap)} AP to defend with until the round ends` : 'Nothing left this round') + ' (E)', onclick: () => finishTurn(app, enc, id) }, legal.ap ? `End turn · keep ${C.fmtAP(legal.ap)} AP` : 'End turn'),
-        legal.defer ? h('button', { class: 'end defer', disabled: !legal.defer.affordable, title: `Let ${chars[legal.defer.next].name} take their turn now; yours resumes after theirs (D)`, onclick: () => deferTurn(app, enc, id) }, `Defer → ${chars[legal.defer.next].name} · ${C.fmtAP(legal.defer.ap)} AP`) : null,
-        infoButton('Turns and AP', () => [
-          model.move ? h('p', null, `To move, click a square on the map (up to ${model.move.move.maxSquares} with your AP): a silhouette shows where you would stand and the AP it costs; click it again to go. Walls are walked around; rough ground costs more. Stepping into a foe's reach, out of it, or twice within it lets them strike at you; one step within it is free.`) : null,
-          h('p', null, 'Spend as much AP as you like on your turn; each action resolves as you take it.'),
-          h('p', null, 'Defer pays 1 AP to let the next one in the turn order go now; your turn picks up again after theirs, with what you have left. You may defer again, past the next one, as long as the AP lasts.'),
-          h('p', null, 'AP you keep pays for reactions: a block, parry or dodge when a blow comes, or a strike at a foe who enters your reach, leaves it, or steps twice in it. AP left when the round ends is lost.')])),
+        h('button', { class: 'end', title: 'Let time pass until the next thing happens; you can still react (E)', onclick: () => finishTurn(app, enc, id) }, 'Wait'),
+        repeatButton(app, enc, id),
+        infoButton('The clock', () => [
+          model.move ? h('p', null, `To move, click a square on the map (up to ${model.move.move.maxSquares} squares in one move): a silhouette shows where you would stand and the ticks it takes; click it again to go. Walls are walked around; rough ground costs more. Stepping into a foe's reach, out of it, or twice within it lets them strike at you; one step within it is free.`) : null,
+          h('p', null, 'Every fighter has a clock. Whoever\'s clock is lowest acts next, one action at a time; its ticks go on your clock. A heavy action (a two-handed or power blow, a drawn bow, a gathered spell) lands only when its lead is up, and others act in between.'),
+          h('p', null, `A reaction (a block, parry or dodge when a blow comes, a strike at a foe entering your reach, leaving it or stepping twice in it) puts its ticks on your clock too. More than ${G.CONFIG.clock.overreach} ticks ahead of now, you can't react at all.`),
+          h('p', null, 'Wait lets time pass until the next thing happens (another\'s action, a blow landing, a beat); R repeats your last action.')])),
     ]);
+  }
+
+  // Repeat the fighter's last action (the R key), if it can still be taken as it was.
+  function repeatDecl(app, enc, id) {
+    const ui = bui(app);
+    const d = ui.lastDecl && ui.lastDecl[id];
+    if (!d || d.type === 'move') return null;
+    const copy = Object.assign({}, d);
+    delete copy.ticks; delete copy.lead; delete copy.n; delete copy.tick; delete copy.beat; delete copy.done; delete copy.stamina;
+    return Combat.validate(enc, app.state.characters, Object.assign({}, copy)).err ? null : copy;
+  }
+  function repeatButton(app, enc, id) {
+    const d = repeatDecl(app, enc, id);
+    if (!d) return null;
+    const chars = app.state.characters;
+    const what = d.type === 'strike' || d.type === 'cast' ? d.option.label : (D.ACTIONS[d.type] || { name: d.type }).name;
+    return h('button', { class: 'end repeat', title: 'Repeat the last action (R)', onclick: () => declare(app, enc, repeatDecl(app, enc, id)) }, `Again: ${what}${d.target && chars[d.target] ? ' → ' + chars[d.target].name : ''}`);
   }
 
   function phasePanel(app, enc, legal, sync) {
     const chars = app.state.characters;
     const ui = bui(app);
     const roller = UI.Dice.makeRoller(app);
-    if ((enc.phase === 'setup' || enc.phase === 'roundEnd') && app.hooks) {
-      // Inside the game: rounds begin by themselves. Getting away is a matter of putting something between you and them.
-      return pane('waiting', h('div', { class: 'who' }, `Round ${enc.round + 1}`), null);
+    if (enc.phase === 'setup' && app.hooks) {
+      // Inside the game: the clock starts by itself.
+      return pane('waiting', h('div', { class: 'who' }, 'The fight begins'), null);
     }
-    if (enc.phase === 'setup' || enc.phase === 'roundEnd') {
+    if (enc.phase === 'setup') {
       return h('section', { class: 'panel cmd' },
-        h('span', { class: 'label' }, enc.phase === 'setup' ? 'Ready' : `Round ${enc.round} done`),
-        h('div', { class: 'who' }, `Round ${enc.round + 1}`),
-        h('p', { class: 'muted small' }, ui.mode === 'place' ? 'Tap a token, then a square.' : 'Everyone rolls initiative to start the round.'),
+        h('span', { class: 'label' }, 'Ready'),
+        h('div', { class: 'who' }, 'Start the clock'),
+        h('p', { class: 'muted small' }, ui.mode === 'place' ? 'Tap a token, then a square.' : 'Everyone starts at tick 0 (a side caught off guard later); ties go to SPD, then a d10.'),
         h('div', { class: 'row' },
           h('button', { class: 'primary', onclick: async () => {
             ui.mode = null; ui.placeSel = null;
-            if (app.hooks && app.hooks.beforeRound) app.hooks.beforeRound(enc);
-            await Combat.startRound(enc, chars, roller);
+            await Combat.begin(enc, chars, roller, ioFor(app));
             app.save(); app.render();
-          } }, 'Roll initiative'),
+          } }, 'Begin'),
           h('button', { class: ui.mode === 'place' ? 'selected' : '', onclick: () => { ui.mode = ui.mode === 'place' ? null : 'place'; ui.placeSel = null; app.render(); } }, ui.mode === 'place' ? 'Done placing' : 'Move tokens')));
     }
-    if (enc.phase === 'initiative') {
-      return h('section', { class: 'panel cmd' }, h('span', { class: 'label' }, `Round ${enc.round}`), h('div', { class: 'who' }, 'Rolling initiative'),
-        h('p', { class: 'muted small' }, 'Each player rolls d10; their SPD in armor is added.'));
-    }
-    if (enc.phase === 'turn' && legal && !ui.busy) return declarePanel(app, enc, legal, sync);
-    if (enc.phase === 'turn' || enc.phase === 'acting') {
-      const id = Combat.currentActor(enc) || enc.order[enc.turn];
+    if (enc.phase === 'act' && legal && !ui.busy) return declarePanel(app, enc, legal, sync);
+    if (enc.phase === 'act' || enc.phase === 'acting') {
+      const id = Combat.currentActor(enc) || enc.actor;
       if (!id || !chars[id]) return pane('waiting', h('div', { class: 'who' }, 'Resolving'), null);
       const mine = chars[id].side === 'party';
-      return pane('waiting ' + (mine ? 'party' : 'enemy'), paneHead(app, enc, id, (mine || app.state.settings.gmView) && enc.ap[id] != null ? { pool: enc.apStart[id] || Combat.apLeft(enc, id), ap: Combat.apLeft(enc, id) } : null),
-        h('p', { class: 'muted small' }, mine ? 'Acting…' : 'Their turn. You will be asked if one of yours can react.'));
+      return pane('waiting ' + (mine ? 'party' : 'enemy'), paneHead(app, enc, id, null),
+        h('p', { class: 'muted small' }, mine ? 'Acting…' : 'Their move. You will be asked if one of yours can react.'));
     }
     if (enc.phase === 'over') return app.hooks && app.hooks.over ? app.hooks.over(app, enc) : lootPanel(app, enc);
     return null;
@@ -1066,7 +1045,7 @@
         !items.length && !f.inventory.gold && !f.inventory.bandages ? h('span', { class: 'small muted' }, 'Nothing left.') : null));
     }
     return h('section', { class: 'panel cmd' },
-      h('span', { class: 'label' }, `After ${enc.round} rounds`),
+      h('span', { class: 'label' }, `After ${enc.beat} beats (tick ${enc.now})`),
       h('div', { class: 'who' }, enc.winner === 'party' ? 'Victory' : enc.winner ? 'Defeat' : 'No one stands'),
       fallen.length && party.length ? h('div', { class: 'stack' },
         h('label', { class: 'inline', for: 'loot-to' }, h('span', { class: 'label' }, 'Loot goes to'), UI.select('loot-to', ui.lootTo, party.map((c) => [c.id, c.name]), (v) => { ui.lootTo = v; app.render(); })),
@@ -1086,13 +1065,13 @@
 
   // ---- Combatants: a slim list of names; a name opens that character's sheet ----
   function canSeeAP(app, enc, id) {
-    return app.state.settings.gmView || id === Combat.currentActor(enc) || enc.phase === 'roundEnd' || enc.phase === 'over';
+    return true; // the timeline is in plain sight
   }
 
   function rosterView(app, enc) {
     const chars = app.state.characters;
     const actor = Combat.currentActor(enc);
-    const ids = enc.order.length ? enc.order.concat(enc.ids.filter((id) => !enc.order.includes(id))) : enc.ids;
+    const ids = enc.clock && Object.keys(enc.clock).length ? Combat.byClock(enc, chars, enc.ids) : enc.ids;
     return h('nav', { class: 'roster-strip', 'aria-label': 'Combatants' }, ids.map((id) => {
       const c = chars[id];
       const max = C.maxStamina(c);
@@ -1101,7 +1080,7 @@
         onclick: () => openSheet(app, enc, id), title: 'Open character sheet',
       },
       h('span', { class: 'nm' }, c.name),
-      h('span', { class: 'sub num' }, `${c.stamina}/${max}`, enc.initiative[id] != null ? (G.CONFIG.apDie ? ` · ${C.fmtAP(enc.apStart[id] || 0)} AP rolled` : ` · init ${enc.initiative[id]}`) : ''),
+      h('span', { class: 'sub num' }, `${c.stamina}/${max}`, enc.clock && enc.clock[id] != null ? ` · +${Combat.ahead(enc, id)}` : ''),
       downText(enc, c) ? h('span', { class: 'sub down-note' }, downText(enc, c)) : null,
       woundText(c) ? h('span', { class: 'sub wound-note num' }, woundText(c)) : null,
       bar(c.stamina, max));
@@ -1129,7 +1108,7 @@
     const w = C.wieldedWeapon(c);
     const attrs = G.CONFIG.attributes.map((a) => h('div', { class: 'd' }, h('span', { class: 'label' }, a), h('b', null, `${C.attr(c, a)}`), C.attr(c, a) < C.attrMax(c, a) ? h('span', { class: 'small muted num' }, `of ${C.attrMax(c, a)}`) : null));
     const feats = Object.keys(c.feats).filter((f) => c.feats[f] > 0 && D.FEATS[f]).map((f) => `${D.FEATS[f].name}${D.FEATS[f].ranks.length > 1 ? ' ' + C.roman(c.feats[f]) : ''}`);
-    const seeAP = canSeeAP(app, enc, id) && enc.ap[id] != null;
+    const seeAP = enc.clock && enc.clock[id] != null;
     const box = h('div', { class: 'modal sheet-pop', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'pop-title', onclick: (e) => e.stopPropagation() },
       h('div', { class: 'row spread' },
         h('div', { class: 'stack tight' },
@@ -1137,7 +1116,7 @@
           h('h2', { id: 'pop-title' }, c.name)),
         h('button', { class: 'small', onclick: closeModal, 'aria-label': 'Close' }, 'Close')),
       h('div', { class: 'stack tight' },
-        h('div', { class: 'row spread small' }, h('span', { class: 'num' }, `Stamina ${c.stamina}/${max} · regen ${C.regen(c)}`), seeAP ? h('span', { class: 'num' }, `${C.fmtAP(enc.ap[id])} AP left this round`) : h('span', { class: 'muted' }, 'AP hidden')),
+        h('div', { class: 'row spread small' }, h('span', { class: 'num' }, `Stamina ${c.stamina}/${max} · regen ${C.regen(c)}`), seeAP ? h('span', { class: 'num' }, `ready at tick ${Combat.readyAt(enc, id)}`) : h('span', { class: 'muted' }, '')),
         bar(c.stamina, max)),
       UI.Cards.statusChips(c).length ? h('div', { class: 'row', style: { gap: '4px' } }, UI.Cards.statusChips(c)) : null,
       h('div', { class: 'derived attrs' }, attrs),
@@ -1184,34 +1163,33 @@
       enc.log.length ? box : null);
   }
 
-  // ---- Computer-run turns and pass resolution ----------------------------
-  // ms before a computer-run fighter's first action in a turn (the turn banner plays for 1.1 s), and between the rest.
+  // ---- Computer-run actions -------------------------------------------------
+  // ms before a computer-run fighter's action when it follows another fighter's (the banner plays for 1.1 s), and when
+  // it follows its own.
   const AI_PACE = { first: 1250, next: 900 };
   function scheduleAI(app, enc) {
     const chars = app.state.characters;
-    if (app.hooks && app.hooks.autoStart && (enc.phase === 'setup' || enc.phase === 'roundEnd') && !app.ui.starting) {
+    if (app.hooks && app.hooks.autoStart && enc.phase === 'setup' && !app.ui.starting) {
       app.ui.starting = true;
       setTimeout(async () => {
         app.ui.starting = false;
-        if (app.state.encounter !== enc || !(enc.phase === 'setup' || enc.phase === 'roundEnd')) return;
-        if (app.hooks.beforeRound) app.hooks.beforeRound(enc);
-        await Combat.startRound(enc, chars, UI.Dice.makeRoller(app));
+        if (app.state.encounter !== enc || enc.phase !== 'setup') return;
+        await Combat.begin(enc, chars, UI.Dice.makeRoller(app), ioFor(app));
         app.save();
         app.render();
-      }, enc.phase === 'setup' ? 500 : 1100);
+      }, 500);
       return;
     }
-    if (enc.phase !== 'turn') return;
+    if (enc.phase !== 'act') return;
     const id = Combat.currentActor(enc);
     if (!id || !aiControlled(app, chars[id]) || app.ui.aiPending || bui(app).busy) return;
     app.ui.aiPending = true;
     // Paced so it can be watched (the user, 2026-11-09): a computer-run turn's first action waits for the turn
     // banner to clear (AI_PACE.first), each after it AI_PACE.next, so the banner never hides what they do.
-    const key = enc.round + ':' + enc.turn + ':' + id;
-    const first = app.ui.aiTurn !== key;
-    app.ui.aiTurn = key;
+    const first = app.ui.aiTurn !== id;
+    app.ui.aiTurn = id;
     setTimeout(async () => {
-      if (app.state.encounter !== enc || enc.phase !== 'turn' || Combat.currentActor(enc) !== id) { app.ui.aiPending = false; return; }
+      if (app.state.encounter !== enc || enc.phase !== 'act' || Combat.currentActor(enc) !== id) { app.ui.aiPending = false; return; }
       try { await Combat.submit(enc, chars, G.AI.choose(enc, chars, id), ioFor(app)); } finally { app.ui.aiPending = false; }
       app.save();
       app.render();
@@ -1222,15 +1200,15 @@
     const enc = app.state.encounter;
     if (!enc) return setupView(app);
     const chars = app.state.characters;
-    const legal = enc.phase === 'turn' ? Combat.legalActions(enc, chars, Combat.currentActor(enc)) : null;
+    const legal = enc.phase === 'act' ? Combat.legalActions(enc, chars, Combat.currentActor(enc)) : null;
     scheduleAI(app, enc);
     const human = legal && !aiControlled(app, chars[Combat.currentActor(enc)]);
     const sync = human ? syncCommand(app, enc, legal) : null;
     if (legal && !human && bui(app).mode !== 'place') { bui(app).mode = null; bui(app).pending = null; }
-    const status = enc.phase === 'turn' || enc.phase === 'acting' ? `${(app.state.characters[enc.order[enc.turn]] || {}).name || ''}'s turn` : enc.phase === 'over' ? 'The fight is over' : '';
+    const status = enc.phase === 'act' || enc.phase === 'acting' ? `${(app.state.characters[enc.actor] || {}).name || ''} acts` : enc.phase === 'over' ? 'The fight is over' : '';
     return h('div', { class: 'battle-view' },
       h('div', { class: 'battle-head' },
-        h('h1', null, enc.round ? `Round ${enc.round}` : 'Battle'),
+        h('h1', null, enc.phase !== 'setup' ? `Tick ${enc.now} · beat ${enc.beat + 1}` : 'Battle'),
         h('span', { class: 'small muted' }, status),
         enc.phase !== 'over' && !app.hooks ? UI.confirmButton('Abandon', 'Abandon? Wounds stay', () => {
           Combat.cleanup(enc, chars);
@@ -1246,5 +1224,5 @@
 
   UI.Views.battle = view;
   // The pieces the game's own battle screen (src/ui/game/screens/battle.js) reuses.
-  UI.Views.battleParts = { bui, mapState, cellClick, declarePanel, phasePanel, scheduleAI, syncCommand, aiControlled, openInfo, closeModal, declare, declareMove, declareEntry, finishTurn, ioFor, reactionModel, blowPreview, aimChoices, foreseeBlow, oddsText, woundText, downText, TILE_GLYPH };
+  UI.Views.battleParts = { bui, mapState, cellClick, declarePanel, phasePanel, scheduleAI, syncCommand, aiControlled, openInfo, closeModal, declare, declareMove, declareEntry, finishTurn, repeatDecl, clockMeter, ioFor, reactionModel, blowPreview, aimChoices, foreseeBlow, oddsText, woundText, downText, TILE_GLYPH };
 })(globalThis.BBB);

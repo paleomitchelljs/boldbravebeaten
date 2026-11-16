@@ -59,7 +59,7 @@ async function measure(key, n) {
       // --coat <oil>: every hero's weapon worked with a bane oil (the boss's leg-up), as Use does in town.
       if (COAT) for (const c of World.party(w)) { const wpn = C.wieldedWeapon(c), g = World.goodDef(COAT); if (wpn) wpn.coat = { good: COAT, name: g.name, slay: g.coat.slay, hits: g.coat.hits }; }
       Battle.start(w, { foes: [{ monster: key, n: nm }] });
-      const enc = await Auto.battle(w, { maxRounds: 30 });
+      const enc = await Auto.battle(w, { maxBeats: 30 });
       if (enc.winner === 'party') { won++; con += World.party(w).reduce((t, c) => t + B.Character.woundLoad(c), 0) / nh; }
     }
     return { p: won / n, con: won ? con / won : null };
@@ -112,7 +112,7 @@ async function encounter(spec, sizes, n) {
       w.supplies.bandages = 0;
       if (COAT) for (const c of World.party(w)) { const wpn = C.wieldedWeapon(c), g = World.goodDef(COAT); if (wpn) wpn.coat = { good: COAT, name: g.name, slay: g.coat.slay, hits: g.coat.hits }; }
       Battle.start(w, e);
-      const enc = await Auto.battle(w, { maxRounds: 30 });
+      const enc = await Auto.battle(w, { maxBeats: 30 });
       if (enc.winner === 'party') won++;
       dead += World.party(w).filter((c) => c.status.dead).length;
     }

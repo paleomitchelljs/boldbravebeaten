@@ -32,10 +32,9 @@
     const max = C.maxStamina(c);
     const items = [
       ['Max stamina', max, '4×CON + STR + SPD + DEX'],
-      ['Regen / round', (C.regen(c) >= 0 ? '+' : '') + C.regen(c), '⌊(CON+WIL)/4⌋ − armor'],
-      ['AP pool', C.fmtAP(C.apPool(c)), `${G.CONFIG.apBase} + ${G.CONFIG.apDie ? `d${G.CONFIG.apDie} (each round; ${(G.CONFIG.apDie + 1) / 2} on average) + ` : ''}${G.CONFIG.apSpdContinuous ? '' : '⌊'}SPD/${G.CONFIG.apSpdDivisor}${G.CONFIG.apSpdContinuous ? '' : '⌋'}${C.fatiguePenalty(c) ? ' − ' + C.fatiguePenalty(c) + ' fatigue' : ''}`],
-      ['Movement', `${C.squaresPerAP(c)} sq`, `per move (${C.fmtAP(C.moveCost(c, 1))} AP) · (1 + ⌊SPD/4⌋) × ${G.CONFIG.moveScale || 1}`],
-      ['Initiative', 'd10+' + C.combatAttr(c, 'SPD'), 'SPD in armor'],
+      ['Regen / beat', (C.regen(c) >= 0 ? '+' : '') + C.regen(c), '⌊(CON+WIL)/4⌋ − armor'],
+      ['Speed', `×${C.spdFactor(c).toFixed(2)}`, `every action's ticks × (3 + 2.5) / (3 + SPD/2)${C.fatigueShare(c) ? ` + ${Math.round(100 * C.fatigueShare(c))}% tired` : ''}`],
+      ['Movement', `${C.pace(c)} sq`, `a stretch of a move, ${G.CONFIG.clock.stretch} ticks (${C.moveTicks(c, 1)} for one square) · 1 + SPD/4`],
       ['STR damage', (C.strBonus(c) >= 0 ? '+' : '') + C.strBonus(c), '⌊(STR−5)/2⌋'],
     ];
     return h('div', { class: 'derived' }, items.map(([k, v, f]) => h('div', { class: 'd', title: f }, h('span', { class: 'label' }, k), h('b', null, v), h('span', { class: 'small muted' }, f))));
@@ -106,7 +105,7 @@
       s ? h('div', { class: 'row small' },
         h('label', { class: 'inline', for: 'shield-dur' }, 'Durability', num('shield-dur', s.durability, (v) => { s.durability = Math.max(0, Math.min(si.maxDurability, Math.round(v))); app.save(); app.render(); }, { min: 0, max: si.maxDurability })),
         h('span', { class: 'muted num' }, `/ ${si.maxDurability}`),
-        h('span', { class: 'muted' }, `Block ${C.fmtAP(C.actionCost(c, 'block').ap)} AP · breaks above ${si.threshold}`),
+        h('span', { class: 'muted' }, `Block ${C.actionCost(c, 'block').ticks} ticks · breaks above ${si.threshold}`),
         !si.ready ? h('span', { class: 'chip warn' }, s.durability <= 0 ? 'Broken' : 'Slung (two-handed weapon)') : null) : null);
   }
 
@@ -166,7 +165,7 @@
       h('div', { class: 'row small' }, h('span', { class: 'label' }, 'Components'),
         Object.entries(G.CONFIG.ritual.components).map(([id, comp]) => h('label', { class: 'inline', for: 'comp-' + id }, comp.name,
           num('comp-' + id, (c.inventory.components || {})[id] || 0, (v) => { c.inventory.components = c.inventory.components || {}; c.inventory.components[id] = Math.max(0, Math.round(v)); app.save(); app.render(); }, { min: 0 })))),
-      (c.prepared || []).length ? h('p', { class: 'small' }, h('b', null, 'Laid ready: '), c.prepared.map((p) => `${p.label} (${p.rounds} rd)`).join(', ')) : null,
+      (c.prepared || []).length ? h('p', { class: 'small' }, h('b', null, 'Laid ready: '), c.prepared.map((p) => `${p.label} (${p.beats} rd)`).join(', ')) : null,
       items.length ? h('div', { class: 'stack tight' }, h('span', { class: 'label' }, 'Pack'),
         items.map((it) => h('div', { class: 'row spread small' },
           h('span', null, Items.itemName(it), it.durability != null ? h('span', { class: 'muted num' }, ` · dur ${it.durability}`) : null, ' ', h('span', { class: 'chip' }, Items.itemRarity(it))),
@@ -182,18 +181,18 @@
     const others = ['block', 'parry', 'offParry', 'dodge', 'trip', 'disarm', 'shove', 'clinch', 'grapple', 'break', 'standUp', 'drawSidearm', 'pickUp', 'bandage', 'bait', 'readIntent'].filter((k) => D.ACTIONS[k]);
     return h('div', { class: 'grid-2' },
       h('div', { class: 'scroll-x' }, h('table', { class: 'data' },
-        h('thead', null, h('tr', null, h('th', null, 'Attack'), h('th', { class: 'n' }, 'AP'), h('th', { class: 'n' }, 'Stam.'), h('th', { class: 'n' }, 'Damage'), h('th', { class: 'n' }, 'Range'))),
+        h('thead', null, h('tr', null, h('th', null, 'Attack'), h('th', { class: 'n' }, 'Ticks'), h('th', { class: 'n' }, 'Stam.'), h('th', { class: 'n' }, 'Damage'), h('th', { class: 'n' }, 'Range'))),
         h('tbody', null, atks.map((o) => h('tr', null,
-          h('td', null, o.label, o.windUp ? h('span', { class: 'chip warn', style: { marginLeft: '6px' }, title: 'Wind up the round before; you cannot block or parry while wound up' }, 'wind-up') : null),
-          h('td', { class: 'n' }, o.windUp ? `${C.fmtAP(C.actionCost(c, 'windUp', { option: o }).ap)} + ${C.fmtAP(o.ap)}` : C.fmtAP(o.ap)),
-          h('td', { class: 'n' }, o.spell ? `${o.spCost} SP` : o.windUp ? `${C.actionCost(c, 'windUp', { option: o }).stamina} + ${o.stamina}` : o.stamina),
+          h('td', null, o.label, o.exposes ? h('span', { class: 'chip warn', style: { marginLeft: '6px' }, title: 'Committed for its lead: no block or parry until it lands' }, 'exposed') : null),
+          h('td', { class: 'n' }, o.lead ? `${o.ticks} (lead ${o.lead})` : String(o.ticks)),
+          h('td', { class: 'n' }, o.spell ? `${o.spCost} SP` : o.stamina),
           h('td', { class: 'n' }, o.spell ? `${o.spell.magnitude} ${o.spell.element}` : fmt(o.damage)),
           h('td', { class: 'n' }, rangeText(o))))))),
       h('div', { class: 'scroll-x' }, h('table', { class: 'data' },
-        h('thead', null, h('tr', null, h('th', null, 'Action'), h('th', { class: 'n' }, 'AP'), h('th', { class: 'n' }, 'Stam.'))),
+        h('thead', null, h('tr', null, h('th', null, 'Action'), h('th', { class: 'n' }, 'Ticks'), h('th', { class: 'n' }, 'Stam.'))),
         h('tbody', null,
-          h('tr', null, h('td', null, `Move (${C.squaresPerAP(c)} sq)`), h('td', { class: 'n' }, C.fmtAP(C.moveCost(c, 1))), h('td', { class: 'n' }, C.actionCost(c, 'move').stamina)),
-          others.map((k) => { const cost = C.actionCost(c, k); return h('tr', null, h('td', null, D.ACTIONS[k].name), h('td', { class: 'n' }, C.fmtAP(cost.ap)), h('td', { class: 'n' }, cost.stamina)); })))));
+          h('tr', null, h('td', null, `Move (a square; ${C.pace(c)} a stretch)`), h('td', { class: 'n' }, String(C.moveTicks(c, 1))), h('td', { class: 'n' }, C.actionCost(c, 'move').stamina)),
+          others.map((k) => { const cost = C.actionCost(c, k); return h('tr', null, h('td', null, D.ACTIONS[k].name), h('td', { class: 'n' }, String(cost.ticks)), h('td', { class: 'n' }, cost.stamina)); })))));
   }
 
   function rangeText(o) {

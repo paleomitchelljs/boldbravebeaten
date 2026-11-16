@@ -15,10 +15,10 @@
  *             beaten party, a night in town, the fallen recruited again at the party's level, the living trained along
  *             their start.yaml plans and kitted by the gear ladder (sim/grow.js); a beaten party tries a place again
  *             (--tries 3), the groups it beat staying beaten
- *   --metrics the tuning plan's metrics for each place (sim/metrics.js): rounds, deaths, stamina, collapses, wounds,
+ *   --metrics the tuning plan's metrics for each place (sim/metrics.js): beats, deaths, stamina, collapses, wounds,
  *             blows by action and location
  *
- * Reports how often the place is cleared, each fight in turn (reached, won, foes with joiners, rounds, heroes dead so
+ * Reports how often the place is cleared, each fight in turn (reached, won, foes with joiners, beats, heroes dead so
  * far: the party's dead after that fight, counting earlier fights' too; --metrics counts each fight's own), and what
  * landed and what killed: the action and location of each blow, read from the fight log.
  */
@@ -70,18 +70,16 @@ async function watched(world, M, max) {
   const b = world.battle;
   const chars = Battle.table(world).characters;
   const w = M.watch(b.enc, chars, World.party(world).map((c) => c.id));
-  while (b.enc.phase !== 'over' && b.enc.round < max) {
-    Battle.reinforce(world);
-    await Combat.startRound(b.enc, chars, B.Town.autoRoller);
-    let guard = 2000;
-    while (b.enc.phase === 'turn' && guard-- > 0) {
-      const id = Combat.currentActor(b.enc);
-      w.before(id);
-      await Combat.submit(b.enc, chars, B.AI.choose(b.enc, chars, id, () => Rand.rng(), chars[id].policy), { roller: B.Town.autoRoller });
-      w.poll();
-    }
-    if (guard <= 0) throw new Error('round did not finish');
+  const io = { roller: B.Town.autoRoller, onBeat: Battle.onBeat(world) };
+  if (b.enc.phase === 'setup') await Combat.begin(b.enc, chars, io.roller, io);
+  let guard = 20000;
+  while (b.enc.phase === 'act' && b.enc.beat < max && guard-- > 0) {
+    const id = Combat.currentActor(b.enc);
+    w.before(id);
+    await Combat.submit(b.enc, chars, B.AI.choose(b.enc, chars, id, () => Rand.rng(), chars[id].policy), io);
+    w.poll();
   }
+  if (guard <= 0) throw new Error('the fight did not finish');
   w.end();
   return b.enc;
 }
@@ -105,9 +103,9 @@ async function through(world, tally, P) {
     if (!t) return true;
     const dead0 = World.party(world).filter((c) => c.status.dead).length;
     Battle.start(world, Object.assign({ name: t.def.label }, Explore.encounterSpec(world, t.def)), { ctx: { x: t.x, y: t.y, back: true } });
-    const enc = tally.metrics ? await watched(world, tally.metrics, 40) : await Auto.battle(world, { maxRounds: 40 });
-    const f = tally.fights[k] || (tally.fights[k] = { n: 0, won: 0, foes: 0, rounds: 0, dead: 0 });
-    f.n++; f.foes += Object.keys(world.battle.foes).length; f.rounds += enc.round;
+    const enc = tally.metrics ? await watched(world, tally.metrics, 40) : await Auto.battle(world, { maxBeats: 40 });
+    const f = tally.fights[k] || (tally.fights[k] = { n: 0, won: 0, foes: 0, beats: 0, dead: 0 });
+    f.n++; f.foes += Object.keys(world.battle.foes).length; f.beats += Math.max(1, Math.ceil(enc.now / B.CONFIG.clock.beat));
     for (const l of enc.log) {
       const text = String(l.text || l);
       // The blow's line (Combat.applyHit): "→ by 3: through the mail at the arms" / "on the legs (bare)".
@@ -196,7 +194,7 @@ async function campaign(tally) {
     for (let i = 0; i < N; i++) if (await crawl(place, tally)) cleared++;
     console.log(`${place}: party of ${SIZE}, cleared ${cleared}/${N}`);
     for (const [k, f] of Object.entries(tally.fights)) {
-      console.log(`  fight ${String(k).padStart(2)}: reached ${String(f.n).padStart(3)}, won ${pct(f.won, f.n).padStart(4)}, foes ${(f.foes / f.n).toFixed(1)}, rounds ${(f.rounds / f.n).toFixed(1)}, heroes dead so far ${(f.dead / f.n).toFixed(2)}`);
+      console.log(`  fight ${String(k).padStart(2)}: reached ${String(f.n).padStart(3)}, won ${pct(f.won, f.n).padStart(4)}, foes ${(f.foes / f.n).toFixed(1)}, beats ${(f.beats / f.n).toFixed(1)}, heroes dead so far ${(f.dead / f.n).toFixed(2)}`);
     }
     console.log(`  blows landed ${tally.blows}, killing ${pct(tally.kills, tally.blows)}; landed on: ${share(tally.landed)}`);
     console.log(`  landed by: ${share(tally.by)}`);

@@ -54,7 +54,7 @@ async function runCell(place, size) {
       const t = open(world)[0];
       if (!t) { cleared = true; break; }
       Battle.start(world, Object.assign({ name: t.def.label }, Explore.encounterSpec(world, t.def)), { ctx: { x: t.x, y: t.y, back: true } });
-      await Auto.battle(world, { maxRounds: 40 });
+      await Auto.battle(world, { maxBeats: 40 });
       const out = Battle.finish(world);
       fights++;
       if (out.result !== 'won' || !World.living(world).length) break;

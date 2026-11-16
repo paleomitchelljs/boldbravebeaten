@@ -2,6 +2,7 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const B = require('./load');
+const Clock = require('./clock');
 const { Character: C, Combat, Items, CONFIG } = B;
 
 // A roller that records what was asked and answers from a queue (then `fill`).
@@ -24,7 +25,7 @@ function body(name, pieces) {
   c.stamina = C.maxStamina(c);
   return c;
 }
-const enc0 = () => ({ hitThisRound: {}, fortressUsed: {}, log: [], pos: {} });
+const enc0 = () => ({ struck: {}, fortressUsed: {}, log: [], pos: {} });
 const swing = (c) => C.attackOptions(c).find((o) => o.damage[1] > 0 && !o.power && !o.windUp);
 
 test('locations: shares sum to 1; a full harness keeps its old numbers; a half one is full plate where it is', () => {
@@ -117,14 +118,14 @@ test('parry carry-through: a heavy swing beats through a light parry, weakened; 
   const chars = { [atk.id]: atk, [def.id]: def };
   const enc = Combat.createEncounter('t', [atk.id, def.id], chars, 6, 1);
   enc.pos[atk.id] = { x: 0, y: 0 }; enc.pos[def.id] = { x: 2, y: 0 }; // the greatsword's own reach (cramped at 1)
-  await Combat.startRound(enc, chars, roller([10, 1]));
+  await Clock.start(enc, chars, roller([10, 1]));
   const cut = C.attackOptions(atk).find((o) => o.motion === 'twoHanded');
   const share = Combat.parryCarryShare(def, 'parry', cut);
   assert.ok(share > 0.3, `a rapier meets little of a greatsword's cut (${share.toFixed(2)} carries)`);
   // The defender parries (and wins the roll: 10 against 1); the blow still lands, weakened.
   const io = { roller: roller([10, 1], 5), react: (req) => (req.kind === 'defend' ? 'parry' : null) };
   const before = { stamina: def.stamina, dmg: C.woundLoad(def) };
-  const err = await Combat.act(enc, chars, { actor: atk.id, type: 'strike', option: cut, target: def.id }, io);
+  const err = await Clock.act(enc, chars, { actor: atk.id, type: 'strike', option: cut, target: def.id }, io);
   assert.strictEqual(err, null);
   assert.ok(enc.log.some((l) => /beats through the parry/.test(l.text)), enc.log.map((l) => l.text).join('\n'));
   assert.ok(C.woundLoad(def) > before.dmg || def.stamina < before.stamina, 'some of it landed: ' + enc.log.map((l) => l.text).join(' / '));
@@ -159,15 +160,15 @@ test('aimed blows: a declared location goes where it is aimed, with no location 
   const chars = { [a.id]: a, [t.id]: t };
   const enc = Combat.createEncounter('t', [a.id, t.id], chars, 4, 1);
   enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[t.id] = { x: 1, y: 0 };
-  await Combat.startRound(enc, chars, roller([10, 1]));
+  await Clock.start(enc, chars, roller([10, 1]));
   const cut = C.attackOptions(a).find((o) => o.motion === 'swing');
   const asked = [];
-  const err = await Combat.act(enc, chars, { actor: a.id, type: 'strike', option: cut, target: t.id, location: 'legs' }, { roller: roller([], 5, asked), react: () => null });
+  const err = await Clock.act(enc, chars, { actor: a.id, type: 'strike', option: cut, target: t.id, location: 'legs' }, { roller: roller([], 5, asked), react: () => null });
   assert.strictEqual(err, null);
   assert.ok(!asked.includes('On target') && !asked.includes('Hit location'), asked.join(', '));
   assert.ok(enc.log.some((l) => /on the legs \(bare\)/.test(l.text)), enc.log.map((l) => l.text).join('\n'));
   assert.ok(enc.log.some((l) => /by -?\d+: on the legs/.test(l.text)), 'the log says the margin');
-  assert.strictEqual(await Combat.act(enc, chars, { actor: a.id, type: 'strike', option: cut, target: t.id, location: 'tail' }, { roller: roller(), react: () => null }), 'No such place to aim at');
+  assert.strictEqual(await Clock.act(enc, chars, { actor: a.id, type: 'strike', option: cut, target: t.id, location: 'tail' }, { roller: roller(), react: () => null }), 'No such place to aim at');
 });
 
 test('wounds by location: a cut leaves a wound where it lands; an arm at its `drop` lets go, a leg at `fell` goes, a head is stunned', async () => {
@@ -225,7 +226,7 @@ test('R6: a small target costs more against a defender who can still cover it (l
   const chars = { [a.id]: a, [t.id]: t };
   const enc = Combat.createEncounter('t', [a.id, t.id], chars, 4, 1);
   enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[t.id] = { x: 1, y: 0 };
-  await Combat.startRound(enc, chars, roller([3, 3]));
+  await Clock.start(enc, chars, roller([3, 3]));
   // Standing, free, aware: the guarded table, a thrust one less.
   assert.equal(Combat.aimOpen(t, a, enc), null);
   assert.equal(Combat.aimPenalty(thrust, 'head', true), A.guarded.head - A.thrustLess);
@@ -236,26 +237,26 @@ test('R6: a small target costs more against a defender who can still cover it (l
   const openOdds = Combat.defenseOdds(t, 'parry', 'thrust', a, thrust, 0, enc);
   assert.ok(openOdds < guardedOdds, `${openOdds} < ${guardedOdds}`);
   t.status.prone = false;
-  // Caught off guard: the surprised side in its first round.
-  enc.surprise = { side: 'enemy', round: enc.round, factor: 0.5 };
+  // Caught off guard: the surprised side before its first action.
+  enc.surprise = { side: 'enemy' };
   assert.equal(Combat.aimOpen(t, a, enc), 'caught off guard');
   enc.surprise = null;
   // The torso costs nothing either way.
   assert.equal(Combat.aimPenalty(Object.assign({}, thrust, { aim: 'torso' }), 'torso', true), 0);
 });
 
-test('R6: the AI judges a foe spent from what it has watched it spend this round, not from its AP', async () => {
+test('R6: the AI judges a foe unable to react from its clock, in plain sight (step F)', async () => {
   const a = armed('A', 'longsword');
   const t = armed('T', 'longsword'); t.side = 'enemy';
   const chars = { [a.id]: a, [t.id]: t };
   const enc = Combat.createEncounter('t', [a.id, t.id], chars, 4, 1);
   enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[t.id] = { x: 1, y: 0 };
-  await Combat.startRound(enc, chars, roller([3, 3]));
+  await Clock.start(enc, chars, roller([3, 3]));
   const thrust = C.attackOptions(a).find((o) => o.motion === 'thrust');
-  enc.ap[t.id] = 0; // it really has none, but nobody saw it spent
+  Clock.free(enc, t.id);
   const fresh = B.AI.bestAim(a, t, thrust, 1, enc);
   assert.equal(fresh.drained, false);
-  enc.decls.push({ actor: t.id, type: 'strike', ap: C.apPool(t), done: true }); // seen to spend an average pool
+  Clock.far(enc, t.id); // too far ahead on the clock to meet it
   const spent = B.AI.bestAim(a, t, thrust, 1, enc);
   assert.equal(spent.drained, true);
   // With no defence to beat, the head is no dearer than anywhere: worth at least as much, relative to the unaimed blow.

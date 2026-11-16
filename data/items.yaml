@@ -90,7 +90,7 @@ goods:
     {name: Wolf-tooth charm, kind: trinket, slot: neck, attrs: {WIS: 1}, value: 120, rarity: uncommon, blurb: "+1 WIS."}
   # ---- Worn magic (PROVISIONAL, the user's list) -------------------------------------------------------
   silk_sash:
-    {name: Flowing Black Silk Sash, kind: trinket, slot: waist, effects: {costMult: 0.8}, value: 4000, rarity: unique, blurb: "Every action costs a fifth less AP."}
+    {name: Flowing Black Silk Sash, kind: trinket, slot: waist, effects: {costMult: 0.8}, value: 4000, rarity: unique, blurb: "Every action takes a fifth fewer ticks."}
   circlet_of_shadow:
     {name: Circlet of Shadow, kind: trinket, slot: head, power: {verb: give, noun: shadow, aim: ally, name: Veil}, value: 3000, rarity: unique, blurb: "At will: Give + Shadow — unseen beyond arm's reach for 3 rounds; striking gives you away."}
   crown_of_rile:

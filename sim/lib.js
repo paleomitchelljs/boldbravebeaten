@@ -157,7 +157,7 @@ function place(enc, idsA, idsB) {
 }
 
 /*
- * fight({ A: [chars], B: [chars], grid: {w, h}, seed, maxRounds })
+ * fight({ A: [chars], B: [chars], grid: {w, h}, seed, maxBeats })
  * Characters are used as-is (pass fresh builds). Sides alternate which one is
  * listed first by seed, so ties and placement don't favor a side.
  */
@@ -178,18 +178,16 @@ async function fight(spec) {
   const watcher = spec.watch ? spec.watch(enc, chars) : null;
   const roller = makeRoller(seed * 2654435761 % 4294967296);
   const rng = Enemies.makeRng(seed * 40503 + 17);
-  const maxRounds = spec.maxRounds || 30;
+  // A fight that runs past maxBeats beats is a timeout (a beat is about the old round: CONFIG.clock.beat).
+  const maxBeats = spec.maxBeats || 30;
   const stats = { hitsA: 0, hitsB: 0, firstBloodRound: null, collapses: 0 };
-  while (enc.phase !== 'over' && enc.round < maxRounds) {
-    await Combat.startRound(enc, chars, roller);
-    const before = enc.log.length;
-    await playRound(enc, chars, roller, rng, watcher);
-    for (let i = before; i < enc.log.length; i++) {
-      const t = enc.log[i].text || '';
-      if (/ hits /.test(t)) {
-        const actor = Object.values(chars).find((c) => t.startsWith(c.name + "'s"));
-        if (actor) actor.side === 'party' ? stats.hitsA++ : stats.hitsB++;
-      }
+  await Combat.begin(enc, chars, roller);
+  await play(enc, chars, roller, rng, watcher, maxBeats);
+  for (let i = 0; i < enc.log.length; i++) {
+    const t = enc.log[i].text || '';
+    if (/ hits /.test(t)) {
+      const actor = Object.values(chars).find((c) => t.startsWith(c.name + "'s"));
+      if (actor) actor.side === 'party' ? stats.hitsA++ : stats.hitsB++;
     }
   }
   if (watcher) watcher.end();
@@ -197,22 +195,28 @@ async function fight(spec) {
   const dead = (list) => list.filter((c) => c.status.dead).length;
   const winner = enc.phase !== 'over' ? 'timeout' : enc.winner === 'party' ? 'A' : enc.winner === 'enemy' ? 'B' : 'draw';
   return {
-    winner, rounds: enc.round, downA: down(A), downB: down(Bs), deadA: dead(A), deadB: dead(Bs),
+    winner, beats: beatsOf(enc), ticks: enc.now, downA: down(A), downB: down(Bs), deadA: dead(A), deadB: dead(Bs),
     hitsA: stats.hitsA, hitsB: stats.hitsB, log: spec.keepLog ? enc.log : null, enc: spec.keepEnc ? enc : null,
   };
 }
 
-// Drive one round with the AI: each turn's actions resolve as taken; the AI answers every reaction.
-async function playRound(enc, chars, roller, rng, watcher) {
+// The beat a fight ended in (1 for one over inside the first beat): the measure fights are counted in.
+function beatsOf(enc) {
+  return Math.max(1, Math.ceil((enc.now || 0) / CONFIG.clock.beat));
+}
+
+// Drive a fight with the AI, one action at a time, until it is over or maxBeats beats have passed; the AI answers
+// every reaction.
+async function play(enc, chars, roller, rng, watcher, maxBeats) {
   const io = { roller };
-  let guard = 1000;
-  while (enc.phase === 'turn' && guard-- > 0) {
+  let guard = 20000;
+  while (enc.phase === 'act' && enc.beat < (maxBeats || 30) && guard-- > 0) {
     const id = Combat.currentActor(enc);
     if (watcher && watcher.before) watcher.before(id);
     await Combat.submit(enc, chars, AI.choose(enc, chars, id, rng, chars[id].policy), io);
     if (watcher) watcher.poll();
   }
-  if (guard <= 0) throw new Error('round did not finish');
+  if (guard <= 0) throw new Error('fight did not finish');
 }
 
 // Run n fights of a matchup; factories make fresh characters each time.
@@ -221,7 +225,7 @@ async function series(n, makeA, makeB, grid, opts) {
   const results = [];
   for (let i = 0; i < n; i++) {
     const seed = (opts.seed || 1000) + i;
-    results.push(await fight({ A: makeA(i), B: makeB(i), grid, seed, maxRounds: opts.maxRounds }));
+    results.push(await fight({ A: makeA(i), B: makeB(i), grid, seed, maxBeats: opts.maxBeats }));
   }
   return summarize(results);
 }
@@ -229,16 +233,16 @@ async function series(n, makeA, makeB, grid, opts) {
 function summarize(results) {
   const n = results.length;
   const count = (f) => results.filter(f).length;
-  const rounds = results.map((r) => r.rounds).sort((a, b) => a - b);
-  const q = (p) => rounds[Math.min(n - 1, Math.floor(p * n))];
+  const beats = results.map((r) => r.beats).sort((a, b) => a - b);
+  const q = (p) => beats[Math.min(n - 1, Math.floor(p * n))];
   return {
     n,
     winA: count((r) => r.winner === 'A') / n,
     winB: count((r) => r.winner === 'B') / n,
     draw: count((r) => r.winner === 'draw') / n,
     timeout: count((r) => r.winner === 'timeout') / n,
-    medianRounds: q(0.5), p90Rounds: q(0.9),
-    meanRounds: rounds.reduce((t, x) => t + x, 0) / n,
+    medianBeats: q(0.5), p90Beats: q(0.9),
+    meanBeats: beats.reduce((t, x) => t + x, 0) / n,
     deathRate: results.reduce((t, r) => t + r.deadA + r.deadB, 0) / n,
     deadA: results.reduce((t, r) => t + r.deadA, 0) / n,
     deadB: results.reduce((t, r) => t + r.deadB, 0) / n,
@@ -248,4 +252,4 @@ function summarize(results) {
 
 const pct = (x) => (100 * x).toFixed(0) + '%';
 
-module.exports = { checkIds, B, C, Combat, Items, Enemies, AI, CONFIG, ARCHETYPES, build, fight, playRound, series, summarize, makeRoller, pct };
+module.exports = { checkIds, B, C, Combat, Items, Enemies, AI, CONFIG, ARCHETYPES, build, fight, play, beatsOf, series, summarize, makeRoller, pct };

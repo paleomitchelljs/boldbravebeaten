@@ -67,20 +67,20 @@ SCENARIOS.length = async () => {
     for (const lvl of LEVELS) {
       for (const [gname, grid] of [['open', OPEN], ['corridor', CORRIDOR]]) {
         const s = await series(N, mk(arch, lvl), mk(arch, lvl), grid, { seed: 1 });
-        const pass = s.medianRounds <= T.medianRoundsMax;
-        record('length', `${arch} L${lvl} ${gname}`, 'median_rounds', s.medianRounds, `≤ ${T.medianRoundsMax}`, pass);
-        record('length', `${arch} L${lvl} ${gname}`, 'p90_rounds', s.p90Rounds);
+        const pass = s.medianBeats <= T.medianBeatsMax;
+        record('length', `${arch} L${lvl} ${gname}`, 'median_beats', s.medianBeats, `≤ ${T.medianBeatsMax}`, pass);
+        record('length', `${arch} L${lvl} ${gname}`, 'p90_beats', s.p90Beats);
         record('length', `${arch} L${lvl} ${gname}`, 'draw_rate', s.draw);
         record('length', `${arch} L${lvl} ${gname}`, 'deaths_per_fight', s.deathRate);
-        out.push([arch, 'L' + lvl, gname, s.medianRounds + (pass ? '' : ' ✗'), s.p90Rounds, pct(s.draw), pct(s.timeout), s.deathRate.toFixed(2)]);
+        out.push([arch, 'L' + lvl, gname, s.medianBeats + (pass ? '' : ' ✗'), s.p90Beats, pct(s.draw), pct(s.timeout), s.deathRate.toFixed(2)]);
       }
     }
   }
   return {
     title: 'Fight length between equals',
     question: 'Philosophy: "Fights between rough equals end quickly at every level." Specifics: fight length at early vs late level; how often mutual kills happen.',
-    body: `Mirror matches, ${N} fights each. Target: median ≤ ${T.medianRoundsMax} rounds. A draw is both sides down at once.\n\n` +
-      table(['Build', 'Level', 'Ground', 'Median rounds', '90th pct', 'Draws', 'Timeouts', 'Deaths/fight'], out),
+    body: `Mirror matches, ${N} fights each. Target: median ≤ ${T.medianBeatsMax} beats. A draw is both sides down at once.\n\n` +
+      table(['Build', 'Level', 'Ground', 'Median beats', '90th pct', 'Draws', 'Timeouts', 'Deaths/fight'], out),
   };
 };
 
@@ -96,7 +96,7 @@ SCENARIOS.gap = async () => {
           const graded = gname === 'corridor' && foeLvl >= T.gapLevel && armored !== 'sellsword';
           const pass = graded ? s.winA >= T.minWin : null;
           record('gap', `${armored} L1 vs ${foe} L${foeLvl} ${gname}`, 'armored_win', s.winA, graded ? `≥ ${pct(T.minWin)}` : '', pass);
-          out.push([`${armored} L1`, `${foe} L${foeLvl}`, gname, pct(s.winA) + (pass === false ? ' ✗' : ''), s.medianRounds]);
+          out.push([`${armored} L1`, `${foe} L${foeLvl}`, gname, pct(s.winA) + (pass === false ? ' ✗' : ''), s.medianBeats]);
         }
       }
     }
@@ -105,7 +105,7 @@ SCENARIOS.gap = async () => {
     title: 'Armor across a level gap',
     question: 'Philosophy: "Heavy armor and a big weapon in a confined space beat an unarmored opponent across a large level gap."',
     body: `A level-1 armored fighter against an unarmored duelist of higher level. Graded: plate builds in the corridor against level ${T.gapLevel}+; target win rate ≥ ${pct(T.minWin)}.\n\n` +
-      table(['Armored', 'Unarmored foe', 'Ground', 'Armored wins', 'Median rounds'], out),
+      table(['Armored', 'Unarmored foe', 'Ground', 'Armored wins', 'Median beats'], out),
   };
 };
 
@@ -117,40 +117,44 @@ SCENARIOS.twoOnOne = async () => {
     for (const lvl of [4, 8]) {
       const s = await series(N, (i) => [build('sellsword', { level: lvl, name: 'sellsword A' }), build('sellsword', { level: lvl, name: 'sellsword B' })], () => [build(solo, { level: lvl })], OPEN, { seed: 11 })
         .catch((e) => { throw e; });
-      const pass = s.winA >= T.pairMinWin && s.medianRounds <= T.medianRoundsMax;
+      const pass = s.winA >= T.pairMinWin && s.medianBeats <= T.medianBeatsMax;
       record('twoOnOne', `2 sellswords vs ${solo} L${lvl}`, 'pair_win', s.winA, `≥ ${pct(T.pairMinWin)}`, s.winA >= T.pairMinWin);
-      record('twoOnOne', `2 sellswords vs ${solo} L${lvl}`, 'median_rounds', s.medianRounds, `≤ ${T.medianRoundsMax}`, s.medianRounds <= T.medianRoundsMax);
-      out.push([solo, 'L' + lvl, pct(s.winA) + (s.winA >= T.pairMinWin ? '' : ' ✗'), s.medianRounds + (s.medianRounds <= T.medianRoundsMax ? '' : ' ✗'), s.deadA.toFixed(2)]);
+      record('twoOnOne', `2 sellswords vs ${solo} L${lvl}`, 'median_beats', s.medianBeats, `≤ ${T.medianBeatsMax}`, s.medianBeats <= T.medianBeatsMax);
+      out.push([solo, 'L' + lvl, pct(s.winA) + (s.winA >= T.pairMinWin ? '' : ' ✗'), s.medianBeats + (s.medianBeats <= T.medianBeatsMax ? '' : ' ✗'), s.deadA.toFixed(2)]);
     }
   }
   return {
     title: 'Two against one',
     question: 'Specifics: "Does 2v1 end quickly for every build, including the armored heavy?" Outline: numbers are a counter to the armored heavy.',
-    body: `Two same-level sellswords against one fighter, open ground. Targets: pair wins ≥ ${pct(T.pairMinWin)}, median ≤ ${T.medianRoundsMax} rounds.\n\n` +
-      table(['Lone fighter', 'Level', 'Pair wins', 'Median rounds', 'Pair deaths/fight'], out),
+    body: `Two same-level sellswords against one fighter, open ground. Targets: pair wins ≥ ${pct(T.pairMinWin)}, median ≤ ${T.medianBeatsMax} beats.\n\n` +
+      table(['Lone fighter', 'Level', 'Pair wins', 'Median beats', 'Pair deaths/fight'], out),
   };
 };
 
-// Stamina curve: rounds of all-out effort before a character can no longer attack.
-function endurance(c, maxRounds) {
+// Stamina curve: beats of all-out effort before a character can no longer attack. Each beat it strikes its best blow
+// (damage per tick) back to back for the beat's ticks, then regenerates.
+function endurance(c, maxBeats) {
   const opts = () => C.attackOptions(c).filter((o) => !o.unarmed);
-  for (let r = 1; r <= maxRounds; r++) {
-    let ap = C.apPool(c);
+  const beat = B.CONFIG.clock.beat;
+  let carry = 0;
+  for (let r = 1; r <= maxBeats; r++) {
+    let t = carry;
     let acted = false;
-    for (;;) {
-      const choices = opts().filter((o) => o.ap <= ap && c.stamina > o.stamina);
+    while (t < beat) {
+      const choices = opts().filter((o) => c.stamina > o.stamina);
       if (!choices.length) break;
-      choices.sort((a, b) => b.damage.reduce((t, x) => t + x, 0) / b.ap - a.damage.reduce((t, x) => t + x, 0) / a.ap);
+      choices.sort((a, b) => b.damage.reduce((s, x) => s + x, 0) / b.ticks - a.damage.reduce((s, x) => s + x, 0) / a.ticks);
       const o = choices[0];
-      ap -= o.ap;
+      t += o.ticks;
       c.stamina -= o.stamina;
       acted = true;
     }
-    if (!acted) return { rounds: r - 1, fatiguedAt: c.fatiguedAt || null };
+    carry = Math.max(0, t - beat);
+    if (!acted) return { beats: r - 1, fatiguedAt: c.fatiguedAt || null };
     c.stamina = Math.max(0, Math.min(C.maxStamina(c), c.stamina + C.regen(c)));
-    if (!c.fatiguedAt && C.fatiguePenalty(c) > 0) c.fatiguedAt = r;
+    if (!c.fatiguedAt && C.fatigueShare(c) > 0) c.fatiguedAt = r;
   }
-  return { rounds: maxRounds, fatiguedAt: c.fatiguedAt || null };
+  return { beats: maxBeats, fatiguedAt: c.fatiguedAt || null };
 }
 
 SCENARIOS.stamina = async () => {
@@ -173,22 +177,22 @@ SCENARIOS.stamina = async () => {
   for (const [label, arch, lvl, extra] of cases) {
     const c = build(arch, Object.assign({ level: lvl }, extra));
     const e = endurance(c, T.indefinite);
-    res[label] = e.rounds;
+    res[label] = e.beats;
     const fresh = build(arch, Object.assign({ level: lvl }, extra));
-    out.push([label, C.maxStamina(fresh), (C.regen(fresh) >= 0 ? '+' : '') + C.regen(fresh), C.apPool(fresh), e.rounds >= T.indefinite ? `${T.indefinite}+` : e.rounds, e.fatiguedAt || '—']);
-    record('stamina', label, 'rounds_full_effort', e.rounds);
+    out.push([label, C.maxStamina(fresh), (C.regen(fresh) >= 0 ? '+' : '') + C.regen(fresh), C.attackOptions(fresh).filter((o) => !o.unarmed).map((o) => o.ticks).sort((a, b) => a - b)[0], e.beats >= T.indefinite ? `${T.indefinite}+` : e.beats, e.fatiguedAt || '—']);
+    record('stamina', label, 'beats_full_effort', e.beats);
   }
   const v = [
-    ['Early unarmored tires within a few rounds', res['Unarmored L1 (sellsword stats, no armor)'], `${T.earlyMin}–${T.earlyMax}`, res['Unarmored L1 (sellsword stats, no armor)'] >= T.earlyMin && res['Unarmored L1 (sellsword stats, no armor)'] <= T.earlyMax],
+    ['Early unarmored tires within a few beats', res['Unarmored L1 (sellsword stats, no armor)'], `${T.earlyMin}–${T.earlyMax}`, res['Unarmored L1 (sellsword stats, no armor)'] >= T.earlyMin && res['Unarmored L1 (sellsword stats, no armor)'] <= T.earlyMax],
     ['Mid-level unarmored acts almost indefinitely', res['Unarmored L5'], `≥ ${T.midMin}`, res['Unarmored L5'] >= T.midMin],
     ['Armored tires much faster (plate L5 ≤ half of unarmored L5)', res['Plate + greatsword L5'], `≤ ${Math.floor(res['Unarmored L5'] / 2)}`, res['Plate + greatsword L5'] <= res['Unarmored L5'] / 2],
   ];
-  for (const [t, val, tgt, pass] of v) record('stamina', t, 'rounds', val, tgt, pass);
+  for (const [t, val, tgt, pass] of v) record('stamina', t, 'beats', val, tgt, pass);
   return {
     title: 'Stamina curve',
-    question: 'Outline target curve: an unarmored mid-level character can act almost indefinitely; an early-level unarmored character tires within a few rounds; a fully armored character tires much faster. Specifics: how many rounds does plate + two-hander last?',
-    body: `Each character spends every AP on its best attack each round with no one hitting back, regenerating at round end. "Rounds" = rounds until it can no longer afford any attack (capped at ${T.indefinite}).\n\n` +
-      table(['Character', 'Max stamina', 'Regen', 'AP', 'Rounds of full effort', 'First fatigued'], out) + '\n\n' +
+    question: 'Outline target curve: an unarmored mid-level character can act almost indefinitely; an early-level unarmored character tires within a few beats; a fully armored character tires much faster. Specifics: how many beats does plate + two-hander last?',
+    body: `Each character strikes its best blow back to back with no one hitting back, regenerating at each beat. "Beats" = beats until it can no longer afford any attack (capped at ${T.indefinite}).\n\n` +
+      table(['Character', 'Max stamina', 'Regen', 'Quickest blow (ticks)', 'Beats of full effort', 'First fatigued'], out) + '\n\n' +
       table(['Target', 'Measured', 'Target', 'Verdict'], v.map(([t, val, tgt, pass]) => [t, val, tgt, pass ? 'pass' : '**FAIL**'])),
   };
 };
@@ -333,12 +337,12 @@ SCENARIOS.kick = async () => {
   for (const arch of ['militia', 'sellsword', 'duelist', 'knight']) {
     const s = await series(N, () => build(arch, { level: 4, policy: { kickBias: 20 } }), mk(arch, 4), OPEN, { seed: 31 });
     record('kick', `${arch} L4 kicker vs normal`, 'kicker_win', s.winA, `≤ ${pct(T.maxWin)}`, s.winA <= T.maxWin);
-    out.push([arch, pct(s.winA) + (s.winA <= T.maxWin ? '' : ' ✗'), s.medianRounds]);
+    out.push([arch, pct(s.winA) + (s.winA <= T.maxWin ? '' : ' ✗'), s.medianBeats]);
   }
   return {
     title: 'Kick spam',
     question: 'Specifics: "Does cheap kick spam for knockdowns dominate?"',
-    body: `Mirror matches where one side kicks whenever it can. Target: the kicker wins ≤ ${pct(T.maxWin)}.\n\n` + table(['Build', 'Kicker wins', 'Median rounds'], out),
+    body: `Mirror matches where one side kicks whenever it can. Target: the kicker wins ≤ ${pct(T.maxWin)}.\n\n` + table(['Build', 'Kicker wins', 'Median beats'], out),
   };
 };
 
@@ -357,13 +361,13 @@ SCENARIOS.party = async () => {
     const pass = s.winA >= T.minWin && s.winA <= T.maxWin;
     record('party', label, 'party_win', s.winA, `${pct(T.minWin)}–${pct(T.maxWin)}`, pass);
     record('party', label, 'party_deaths', s.deadA);
-    out.push([label, pct(s.winA) + (pass ? '' : ' ✗'), s.deadA.toFixed(2), s.medianRounds]);
+    out.push([label, pct(s.winA) + (pass ? '' : ' ✗'), s.deadA.toFixed(2), s.medianBeats]);
   }
   return {
     title: 'Starting party against a plate-and-tower knight',
     question: 'Specifics: "Can a starting party (padded, wooden shields) beat a plate-and-tower-shield enemy with numbers, grapples, and knockdowns, and at what cost?" Philosophy: such an enemy is both deadly and a huge prize.',
     body: `Level-1 starters (alternating militia and brawler) against a level-6 knight in plate with a steel tower shield. Target: the party wins sometimes but not easily (${pct(T.minWin)}–${pct(T.maxWin)}).\n\n` +
-      table(['Party', 'Party wins', 'Party deaths/fight', 'Median rounds'], out),
+      table(['Party', 'Party wins', 'Party deaths/fight', 'Median beats'], out),
   };
 };
 
@@ -377,9 +381,9 @@ SCENARIOS.fatigue = async () => {
     CONFIG.fatigueSteps = [];
     const noF = await series(N, mk(arch, 4), mk(arch, 4), OPEN, { seed: 51 });
     CONFIG.fatigueSteps = saved;
-    record('fatigue', arch, 'mean_rounds_with', withF.meanRounds);
-    record('fatigue', arch, 'mean_rounds_without', noF.meanRounds);
-    out.push([arch, withF.meanRounds.toFixed(2), noF.meanRounds.toFixed(2)]);
+    record('fatigue', arch, 'mean_rounds_with', withF.meanBeats);
+    record('fatigue', arch, 'mean_rounds_without', noF.meanBeats);
+    out.push([arch, withF.meanBeats.toFixed(2), noF.meanBeats.toFixed(2)]);
   }
   return {
     title: 'Fatigue and fight length',

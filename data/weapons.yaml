@@ -323,11 +323,11 @@ shortbow:
   faces: {arrow: [5, 0, 0]}
   motions: [shoot]
   rarity: common
-  shootAP: 3
+  shootTicks: 8
   shootStamina: 3
-  draw: {ap: 1, stamina: 3}
+  draw: {ticks: 3, stamina: 3}
   material: steel
-  notes: "A light draw: drawn (1 AP), then loosed (2 AP). Arrows can be blocked or dodged, not parried. −2 damage beyond 8 squares."
+  notes: "A light draw: 8 ticks, 3 of them drawing (committed, no block or parry), then loosed. Arrows can be blocked or dodged, not parried. −2 damage beyond 8 squares."
 longbow:
   phys: {arrow: {depth: 25, width: 2.5, punch: 1.8}}
   name: Longbow
@@ -338,11 +338,11 @@ longbow:
   faces: {arrow: [7, 0, 0]}
   motions: [shoot]
   rarity: uncommon
-  shootAP: 5
+  shootTicks: 15
   shootStamina: 6
   material: steel
-  draw: {ap: 2, stamina: 3}
-  notes: "Heavy draw: drawn (2 AP), then loosed (3 AP), the same turn if the AP is there or held into the next round. −2 damage beyond 10 squares."
+  draw: {ticks: 5, stamina: 3}
+  notes: "Heavy draw: 15 ticks, 5 of them drawing (committed, no block or parry), then loosed. −2 damage beyond 10 squares."
 ratBite:
   phys: {mass: 0.12, length: 0.1, point: {depth: 7, width: 2.5}}
   name: Bite
@@ -397,7 +397,7 @@ spiderBite:
   faces: {point: [3, 0, 0]}
   motions: [thrust]
   rarity: common
-  trait: {venom: {con: 2, rounds: 3}}
+  trait: {venom: {con: 2, beats: 3}}
 webSpinner:
   name: Spit web
   hands: 1
@@ -408,7 +408,7 @@ webSpinner:
   faces: {arrow: [0, 0, 0]}
   motions: [shoot]
   rarity: common
-  shootAP: 2
+  shootTicks: 5
   shootStamina: 3
   trait: {web: 1}
 boulder:
@@ -421,7 +421,7 @@ boulder:
   faces: {arrow: [0, 0, 14]}
   motions: [shoot]
   rarity: common
-  shootAP: 4
+  shootTicks: 15
   shootStamina: 9
   trait: {knockdown: {bonus: 3, margin: 2}, shieldCrush: true}
 antennae:
@@ -593,7 +593,7 @@ wyvernSting:
   faces: {point: [5, 0, 0]}
   motions: [thrust]
   rarity: common
-  trait: {venom: {con: 3, rounds: 4}}
+  trait: {venom: {con: 3, beats: 4}}
 wyvernWings:
   phys: {mass: 4, length: 2.2, head: {mass: 1.2}}
   name: Wing beat

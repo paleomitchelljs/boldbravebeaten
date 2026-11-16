@@ -4,6 +4,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const B = require('./load.js');
+const Clock = require('./clock');
 const { World, Battle, Rand, Explore, AI, Combat, Character: C } = B;
 
 // A skink against Lorc alone in the sewer; returns the turns the skink takes to get a blow in (Infinity: never).
@@ -20,8 +21,8 @@ function approach(skinkAt, archerAt) {
   enc.pos[archer.id] = archerAt;
   enc.pos[skink.id] = skinkAt;
   for (let t = 1; t <= 8; t++) {
-    enc.round = t; enc.phase = 'turn'; enc.order = [skink.id, archer.id]; enc.turn = 0; enc.decls = []; enc.turnDone = {};
-    for (const id of enc.order) { enc.ap[id] = C.apPool(chars[id]); enc.apStart[id] = enc.ap[id]; }
+    Clock.onClock(enc); enc.beat = t; enc.decls = [];
+    Clock.actNow(enc, skink.id);
     const d = AI.choose(enc, chars, skink.id, () => 0.9);
     if (d.type === 'strike' || d.type === 'bait') return t;
     if (d.type !== 'move') return Infinity;

@@ -72,16 +72,16 @@ const EVENTS = {
     for (const ar of Object.keys(ARENAS)) {
       const rows = {};
       for (const fk of KEYS) {
-        const agg = { n: 0, monsterWins: 0, fighterWins: 0, draws: 0, rounds: 0, fighterDead: 0, monstersDown: 0, ev: {} };
+        const agg = { n: 0, monsterWins: 0, fighterWins: 0, draws: 0, beats: 0, fighterDead: 0, monstersDown: 0, ev: {} };
         for (let i = 0; i < N; i++) {
           const fighter = makeCombatant(...fk.split('/'), 'A');
           const mons = Enemies.makeMonster(mk);
-          const r = await L.fight({ A: fighter, B: mons, grid: { w: ARENAS[ar].w, h: ARENAS[ar].h }, seed: seed++, keepLog: true, maxRounds: 30 });
+          const r = await L.fight({ A: fighter, B: mons, grid: { w: ARENAS[ar].w, h: ARENAS[ar].h }, seed: seed++, keepLog: true, maxBeats: 30 });
           agg.n++;
           if (r.winner === 'B') agg.monsterWins++;
           else if (r.winner === 'A') agg.fighterWins++;
           else agg.draws++;
-          agg.rounds += r.rounds;
+          agg.beats += r.beats;
           agg.fighterDead += r.deadA;
           agg.monstersDown += r.downB;
           for (const l of r.log) for (const [k, re] of Object.entries(EVENTS)) if (re.test(l.text)) agg.ev[k] = (agg.ev[k] || 0) + 1;
@@ -99,11 +99,11 @@ const EVENTS = {
         let w = 0, dead = 0, rounds = 0;
         for (let i = 0; i < PARTY_N; i++) {
           const party = P.keys.map((k, j) => makeCombatant(...k.split('/'), 'P' + j));
-          const r = await L.fight({ A: party, B: Enemies.makeMonster(mk), grid: { w: ARENAS[ar].w, h: ARENAS[ar].h }, seed: seed++, maxRounds: 30 });
+          const r = await L.fight({ A: party, B: Enemies.makeMonster(mk), grid: { w: ARENAS[ar].w, h: ARENAS[ar].h }, seed: seed++, maxBeats: 30 });
           if (r.winner === 'B') w++;
-          dead += r.deadA; rounds += r.rounds;
+          dead += r.deadA; rounds += r.beats;
         }
-        res.party[pk][ar] = { n: PARTY_N, monsterWin: w / PARTY_N, partyDeaths: dead / PARTY_N, rounds: rounds / PARTY_N };
+        res.party[pk][ar] = { n: PARTY_N, monsterWin: w / PARTY_N, partyDeaths: dead / PARTY_N, beats: rounds / PARTY_N };
       }
     }
     out.monsters[mk] = res;
@@ -135,7 +135,7 @@ const EVENTS = {
       const n = all.reduce((t, a) => t + a.n, 0);
       const w = all.reduce((t, a) => t + a.monsterWins, 0);
       const ga = group(rows, 0), gs = group(rows, 1);
-      const rounds = all.reduce((t, a) => t + a.rounds, 0) / n;
+      const rounds = all.reduce((t, a) => t + a.beats, 0) / n;
       md.push(`| ${ARENAS[ar].label} | **${pct(w / n)}** | ${['heavy', 'medium', 'light', 'unarmored'].map((k) => pct(ga[k].w / ga[k].n)).join(' | ')} | ${['twoHanded', 'shield', 'grappler', 'archery'].map((k) => pct(gs[k].w / gs[k].n)).join(' | ')} | ${rounds.toFixed(1)} |`);
     }
     const ev = {};

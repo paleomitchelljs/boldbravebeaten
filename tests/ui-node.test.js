@@ -312,11 +312,11 @@ test('ui: a player-run party is asked to react when a foe attacks, on the map, a
         continue;
       }
       const end = find('.cmd-foot .end');
-      if (end && w.battle && w.battle.enc.phase === 'turn') { turns++; end.click(); }
+      if (end && w.battle && w.battle.enc.phase === 'act') { turns++; end.click(); }
     }
     check('reaction battle');
     assert.ok(asked > 0, 'at least one reaction was asked of the party');
-    assert.ok(turns > 0, 'the party took turns');
+    assert.ok(turns > 0, 'the party acted (waited)');
   } finally { globalThis.setTimeout = realTimeout; }
 });
 
@@ -334,7 +334,7 @@ test('ui: a strike at someone in mixed armor offers a Location, defaulting to th
       await new Promise((r) => realTimeout(r, 0));
       if (Game.error) break;
       if (Game.ui.reacting) { find('.popcard.react button.act.none').click(); continue; }
-      const cur = enc.phase === 'turn' && G.Combat.currentActor(enc);
+      const cur = enc.phase === 'act' && G.Combat.currentActor(enc);
       if (cur && chars[cur].side === 'party') {
         // Bring the foe next to whoever's turn it is, and render the command panel.
         const foe = enc.ids.find((id) => chars[id].side !== 'party' && G.Character.isActive(chars[id]));
@@ -483,7 +483,7 @@ test('feat trees: every feat of every tree has a place on the graph, and no two 
   }
 });
 
-test('ui: standing orders answer for a hero, the pips show the pool in halves, and the view pans', async () => {
+test('ui: standing orders answer for a hero, the clock meter and the timeline show, and the view pans', async () => {
   const w = Game.world;
   for (const c of World.party(w)) { c.orders = null; c.control = 'manual'; c.status = G.Character.freshStatus(); c.stamina = G.Character.maxStamina(c); c.wounds = []; }
   const realTimeout = globalThis.setTimeout;
@@ -496,17 +496,20 @@ test('ui: standing orders answer for a hero, the pips show the pool in halves, a
       await new Promise((r) => realTimeout(r, 0));
       if (Game.error) break;
       if (Game.ui.reacting) { find('.popcard.react button.act.none').click(); continue; }
-      const cur = enc.phase === 'turn' && G.Combat.currentActor(enc);
+      const cur = enc.phase === 'act' && G.Combat.currentActor(enc);
       if (cur && G.Battle.table(w).characters[cur].side === 'party') human = cur;
     }
     check('orders battle');
     assert.ok(human, 'a party member has the turn');
     Game.render();
-    // The pool in halves: two pips to an AP.
-    const pool = Math.ceil(enc.apStart[human] / (B.CONFIG.apScale / 2) - 1e-9);
-    assert.equal(find('.cmd-head .ap-meter').querySelectorAll('i').length, pool, 'a pip a half AP');
-    assert.ok(find('.cmd-head .ap-meter').querySelectorAll('i.will').length > 0, 'the chosen action is marked on the pips');
-    assert.ok(find('.cmd-head .ap-meter').querySelectorAll('i.keep').length > 0, 'what stays for reactions is marked');
+    // The clock meter: the overreach band, and the chosen action's ticks on it.
+    assert.ok(find('.cmd-head .ap-meter').querySelectorAll('i.reach').length === 1, 'the band within which the hero can react');
+    assert.ok(find('.cmd-head .ap-meter').querySelectorAll('i.will').length > 0, 'the chosen action is marked on the clock');
+    assert.match(find('.cmd-head .ap-note').textContent, /\+\d+/);
+    // The timeline: who acts next, ticks from now, the beat.
+    assert.ok(find('.initbar.timeline'), 'the timeline');
+    assert.match(find('.initbar.timeline').textContent, /now/);
+    assert.match(find('.initbar.timeline').textContent, /beat \+\d+/);
     // The overlay lists each hero's orders and sets them.
     overlay('orders');
     const root = fake.doc.getElementById('modal-root');
@@ -522,7 +525,7 @@ test('ui: standing orders answer for a hero, the pips show the pool in halves, a
     assert.deepEqual(Game.ui.pan, { x: 3, y: -3 }, 'the pan holds while the same one acts');
     const end = find('.cmd-foot .end');
     if (end) end.click();
-    for (let i = 0; i < 200 && Game.screen === 'battle' && enc.phase === 'turn' && G.Combat.currentActor(enc) === human; i++) await new Promise((r) => realTimeout(r, 0));
+    for (let i = 0; i < 200 && Game.screen === 'battle' && enc.phase === 'act' && G.Combat.currentActor(enc) === human; i++) await new Promise((r) => realTimeout(r, 0));
     Game.render();
     check('after the turn');
     if (G.Combat.currentActor(enc) !== human) assert.deepEqual(Game.ui.pan, { x: 0, y: 0 }, 'a new turn recentres');

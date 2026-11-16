@@ -47,7 +47,7 @@ const templates = Object.keys(Enemies.TEMPLATES);
           const w = World.create([h], { log: false });
           w.supplies.bandages = 0;
           Battle.start(w, { foes: [{ template: t, level: 1, n }] });
-          const enc = await Auto.battle(w, { maxRounds: 30 });
+          const enc = await Auto.battle(w, { maxBeats: 30 });
           const win = enc.winner === 'party';
           won += win; fights++;
           const bt = ((byT[t] = byT[t] || Array.from({ length: MAX }, () => [0, 0]))[n - 1]);

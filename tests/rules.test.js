@@ -21,10 +21,9 @@ function asWritten(fn) {
   const C0 = B.CONFIG;
   const D0 = C0.defense;
   const spec = {
-    apScale: 1, apDisplay: 1, costScale: null, apBase: 3, apDie: null, apSpdContinuous: false, apCurve: null, moveAP: null, wholeTurnAction: false,
-    armorActionAP: 0, quickCut: null, minActionAP: 1, minStrikeAP: 1, weaponWear: null, weariness: null, vigor: null, armorPierceWear: 0,
+    weaponWear: null, weariness: null, vigor: null, armorPierceWear: 0,
     defense: Object.assign({}, D0, { block: Object.assign({}, D0.block, { opposed: false }), dodgeBonus: 0, absorb: null, dodgeStamina: null }),
-    moveScale: 1, moveSpdContinuous: false, armorAdjust: {}, standUp: null, grappling: null, weaponModel: 'table',
+    armorAdjust: {}, weaponModel: 'table',
     // "Too exhausted" as the Specifics have it (the tuning plan's R2 off). Wounds and stamina are step E's either way:
     // the Specifics' attribute damage and its × 3 are gone, not switched off.
     stamina: Object.assign({}, C0.stamina, { spent: null }),
@@ -71,11 +70,45 @@ function withConfig(patch, fn) {
 function noWounds(fn) { return withConfig({ locations: Object.assign({}, B.CONFIG.locations, { wounds: null }) }, fn); }
 
 function io(seed, queue, react) { return { roller: roller(seed, queue), react: react || noReact }; }
-// Everyone still to take a turn ends it: the round closes (bleeding, regeneration, wind-ups lapse).
-async function closeRound(enc, chars, x) {
-  let guard = 50;
-  while (enc.phase === 'turn' && guard-- > 0) await Combat.endTurn(enc, chars, Combat.currentActor(enc), x || io(99));
+// Start the clock (Combat.begin): a d10 tie-break each, clocks at 0.
+async function start(enc, chars, x) {
+  x = x || io(99);
+  await Combat.begin(enc, chars, x.roller, x);
 }
+// Make `id` the one who acts now: everyone else's clock a tick later at least, no one waiting.
+function actNow(enc, id) {
+  for (const o of enc.ids) if (o !== id && (enc.clock[o] == null || enc.clock[o] <= enc.now)) enc.clock[o] = enc.now + 1;
+  enc.clock[id] = enc.now;
+  enc.waits = {};
+  enc.actor = id;
+  enc.phase = 'act';
+}
+// Everyone waits until the next beat (bleeding, regeneration, conditions counting down).
+async function closeRound(enc, chars, x) {
+  const b = enc.beat;
+  let guard = 50;
+  while (enc.phase === 'act' && enc.beat === b && guard-- > 0) await Combat.submit(enc, chars, { actor: Combat.currentActor(enc), type: 'wait', ticks: Math.max(1, enc.nextBeat - enc.now) }, x || io(99));
+}
+// Let committed actions land: whoever acts meanwhile waits a tick at a time.
+async function land(enc, chars, x) {
+  let guard = 100;
+  while (enc.pending.length && enc.phase === 'act' && guard-- > 0) await Combat.submit(enc, chars, { actor: Combat.currentActor(enc), type: 'wait', ticks: 1 }, x || io(99));
+}
+// An action by `decl.actor`, made the one to act now first.
+async function act(enc, chars, decl, x) {
+  actNow(enc, decl.actor);
+  return Combat.act(enc, chars, decl, x);
+}
+// An action that lands within the call: the others' clocks just past its lead (they can still react to it).
+async function actLand(enc, chars, decl, x) {
+  actNow(enc, decl.actor);
+  const o = decl.option || {};
+  const lead = o.lead != null ? o.lead : C.actionCost(chars[decl.actor], decl.type).lead || 0;
+  for (const id of enc.ids) if (id !== decl.actor && enc.clock[id] <= enc.now + lead) enc.clock[id] = enc.now + lead + 1;
+  return Combat.act(enc, chars, decl, x);
+}
+// A fighter too far ahead on the clock to react (CONFIG.clock.overreach).
+function spent(enc, id) { enc.clock[id] = (enc.now || 0) + B.CONFIG.clock.overreach + 20; }
 
 function fighter(name, opts) {
   const c = C.newCharacter({ name, side: opts && opts.side, starterGear: false });
@@ -85,101 +118,172 @@ function fighter(name, opts) {
 test('derived stats for an average starting character', () => asWritten(() => {
   const c = fighter('Avg');
   assert.strictEqual(C.maxStamina(c), B.CONFIG.stamina.base + 5 + 5 + 5, 'step E: no CON in it');
-  assert.strictEqual(C.apPool(c), 3 + 2);
-  assert.strictEqual(C.squaresPerAP(c), 1 + 1);
+  assert.strictEqual(C.spdFactor(c), 1, 'SPD 5 is the standard');
+  assert.strictEqual(C.pace(c), 2.25, 'round(1 + SPD/4) squares a stretch, to the quarter');
   assert.strictEqual(C.regen(c), Math.floor(10 * B.CONFIG.stamina.regen.per), 'CON 5, WIL 5 unarmored');
   c.armor = Items.makeArmor('plate', 'full', 'standard');
   assert.strictEqual(C.combatAttr(c, 'SPD'), 2);
-  assert.strictEqual(C.apPool(c), 4);
+  assert.ok(C.pace(c) < 2.25, 'plate slows the feet');
   assert.ok(C.regen(c) < 0, 'heavy armor regen can go negative');
 }));
 
-test('the turn budget (the user, 2026-11-09, "tighter and faster"): at SPD 5 the worst roll still holds a swing, or a step and a thrust; the best a step and a swing, or three quick actions (in tenths: apStep is the next test)', () => withConfig({ apStep: null }, () => {
-  const c = armed('Budget', 'longsword');
-  const AP = (n) => n * B.CONFIG.apScale;
-  assert.strictEqual(C.fmtAP(C.apPool(c)), '5.5', 'the mean pool');
-  const low = C.apPool(c, 1), pool = C.apPool(c, B.CONFIG.apDie);
-  assert.deepStrictEqual([C.fmtAP(low), C.fmtAP(pool)], ['4.5', '6.5']);
-  const cost = (motion) => C.attackOptions(c).find((o) => o.motion === motion).ap;
-  const quick = [cost('thrust'), C.actionCost(c, 'parry').ap, C.actionCost(c, 'dodge').ap, C.moveCost(c, 2)];
-  assert.deepStrictEqual(quick, [AP(2.3), AP(2), AP(2), AP(2)], 'thrust (a longsword is a heavy point: 2.3), parry, dodge and a 2-square move are quick');
-  assert.strictEqual(cost('swing'), AP(4), 'a swing is medium');
-  assert.strictEqual(cost('twoHanded'), AP(6), 'a two-handed swing is big');
-  assert.strictEqual(C.moveCost(c, 3), AP(4), 'a longer move is two moves');
-  assert.ok(3 * AP(2) <= pool && C.moveCost(c, 2) + cost('swing') <= pool && cost('twoHanded') <= pool);
-  assert.ok(C.moveCost(c, 2) + cost('swing') + C.moveCost(c, 2) > pool, 'but not in, swing and out');
-  assert.ok(cost('swing') <= low && C.moveCost(c, 2) + cost('thrust') <= low, 'the last to go: one solid action, or a step and a thrust');
-  c.base.SPD = 6;
-  assert.strictEqual(C.apPool(c), AP(6), 'every point of SPD is half an AP');
-  // Weapon speed shows: a dagger thrust is quicker than a sword thrust.
-  assert.ok(opt(armed('D', 'dagger'), (o) => o.motion === 'thrust').ap < cost('thrust'));
-}));
-
-test('Quick feats take a share off every use: half at the top rank (in tenths)', () => withConfig({ apStep: null }, () => {
-  const c = armed('Quick', 'longsword');
-  const thrust = () => C.attackOptions(c).find((o) => o.motion === 'thrust').ap;
-  const full = thrust();
-  const cuts = [1, 2, 3].map((r) => { c.feats.quick_thrust = r; return thrust(); });
-  assert.deepStrictEqual(cuts, [full - Math.round(full / 6), full - Math.round(full / 3), full - Math.round(full / 2)]);
-  c.feats.quick_parry = 2;
-  assert.strictEqual(C.actionCost(c, 'parry').ap, C.actionCost(fighter('X'), 'parry').ap / 2, 'Quick Parry II halves a parry');
-}));
-
-test('R9: costs come in half APs, and Quick feats still make a difference on a longsword', () => {
-  const half = B.CONFIG.apScale / 2;
-  const c = armed('Quick', 'longsword');
-  const thrust = () => C.attackOptions(c).find((o) => o.motion === 'thrust').ap;
-  const costs = [0, 1, 2, 3].map((r) => { c.feats.quick_thrust = r; return thrust(); });
-  assert.ok(costs.every((x) => x % half === 0), 'whole halves');
-  assert.deepStrictEqual(costs.map((x) => x / B.CONFIG.apScale), [2.5, 2, 1.5, 1], 'each rank of Quick Thrust is a visible half AP on a longsword');
-  c.feats.quick_parry = 2;
-  assert.strictEqual(C.actionCost(c, 'parry').ap, C.actionCost(fighter('X'), 'parry').ap / 2, 'Quick Parry II still halves a parry');
-  // Armor: plate's half AP an action shows, a pool is not rounded (5.5 stays).
-  const bare = armed('Bare', 'longsword');
-  const plated = armed('Plated', 'longsword');
-  plated.armor = Items.makeArmor('plate', 'full', 'standard');
-  assert.ok(C.actionCost(plated, 'parry').ap > C.actionCost(bare, 'parry').ap, 'plate makes a parry dearer');
-  assert.strictEqual(C.fmtAP(C.apPool(bare)), '5.5');
-  withConfig({ apStep: null }, () => assert.notStrictEqual(C.attackOptions(bare).find((o) => o.motion === 'thrust').ap % half, 0, 'off: tenths again'));
+test('costs in ticks (step F): a one-handed swing is 10 at SPD 5; a point of SPD, mail and each Quick rank show as whole ticks', () => {
+  const c = armed('Std', 'longsword');
+  const cost = (x, motion) => C.attackOptions(x).find((o) => o.motion === motion).ticks;
+  const sword = armed('Sword', 'longsword');
+  assert.strictEqual(cost(sword, 'swing'), Math.round(10 * Items.weaponStats(sword.weapons[0]).speed.swing), 'the standard action × the weapon');
+  assert.strictEqual(C.actionCost(c, 'parry').ticks, 5);
+  assert.strictEqual(C.actionCost(c, 'dodge').ticks, 5);
+  assert.ok(cost(sword, 'twoHanded') > cost(sword, 'swing') && cost(sword, 'swing') > cost(sword, 'thrust'));
+  // SPD: a point either way is a tick on a swing.
+  const fast = armed('Fast', 'longsword'); fast.base.SPD = 6;
+  const slow = armed('Slow', 'longsword'); slow.base.SPD = 4;
+  assert.ok(cost(fast, 'swing') < cost(sword, 'swing') && cost(slow, 'swing') > cost(sword, 'swing'), 'SPD 6 quicker, SPD 4 slower');
+  // Mail: half a tick an action, which rounds up into a whole one on a swing.
+  const mailed = armed('Mailed', 'longsword'); mailed.armor = Items.makeArmor('mail', 'full', 'standard');
+  assert.ok(cost(mailed, 'swing') > cost(sword, 'swing'), 'mail shows');
+  // Quick Thrust: a tick a rank.
+  const q = armed('Quick', 'longsword');
+  const ranks = [0, 1, 2, 3].map((r) => { q.feats.quick_thrust = r; return cost(q, 'thrust'); });
+  assert.deepStrictEqual(ranks.slice(1).map((x, i) => ranks[i] - x), [1, 1, 1], 'each rank of Quick Thrust a tick');
+  q.feats.quick_parry = 2;
+  assert.strictEqual(C.actionCost(q, 'parry').ticks, C.actionCost(fighter('X'), 'parry').ticks - 2, 'Quick Parry II: two ticks');
+  // A dagger thrust is quicker than a sword thrust (weapon speed).
+  assert.ok(opt(armed('D', 'dagger'), (o) => o.motion === 'thrust').ticks < cost(sword, 'thrust'));
 });
 
-test('armor makes every action dearer instead of shrinking the pool', () => {
+test('lead and recovery: quick things happen now, heavy ones commit the fighter for a lead (step F)', () => {
+  const c = armed('Heavy', 'greatsword');
+  c.feats.power_swing = 1;
+  const o = (m) => opt(c, (x) => x.motion === m);
+  assert.strictEqual(o('thrust').lead, 0, 'a thrust happens now');
+  assert.ok(o('twoHanded').lead > 0 && o('twoHanded').lead < o('twoHanded').ticks, 'a two-handed swing has a real lead');
+  assert.ok(o('power').lead >= o('twoHanded').lead && o('power').exposes, 'a power blow leads longest and leaves block and parry closed');
+  assert.ok(!o('twoHanded').exposes);
+  const archer = armed('Archer', 'longbow');
+  const shot = opt(archer, (x) => x.motion === 'shoot');
+  assert.ok(shot.exposes && shot.lead === Math.round(shot.ticks * 5 / 15), 'a bow\'s draw is its lead');
+});
+
+test('armor adds ticks to every action and slows the feet', () => {
   const c = armed('Plated', 'longsword');
-  const before = { pool: C.apPool(c), thrust: opt(c, (o) => o.motion === 'thrust').ap, move: C.moveCost(c, 1), spa: C.squaresPerAP(c) };
+  const before = { thrust: opt(c, (o) => o.motion === 'thrust').ticks, move: C.moveTicks(c, 1), pace: C.pace(c) };
   c.armor = Items.makeArmor('plate', 'full', 'standard');
-  const plate = Math.round(3 * B.CONFIG.armorActionAP * B.CONFIG.apScale);
-  assert.strictEqual(C.apPool(c), before.pool, 'the pool stays');
-  assert.strictEqual(opt(c, (o) => o.motion === 'thrust').ap, before.thrust + plate);
-  assert.strictEqual(C.moveCost(c, 1), before.move + plate);
-  assert.ok(C.squaresPerAP(c) < before.spa, 'and it still slows the feet');
+  assert.strictEqual(C.armorTicks(c), 3 * B.CONFIG.clock.armor);
+  assert.ok(opt(c, (o) => o.motion === 'thrust').ticks >= before.thrust + 1, 'plate shows on a thrust');
+  assert.ok(C.moveTicks(c, 1) > before.move);
+  assert.ok(C.pace(c) < before.pace, 'and it still slows the feet');
   c.feats.plate_mobility = 1;
-  assert.ok(opt(c, (o) => o.motion === 'thrust').ap < before.thrust + plate, 'Plate Mobility eases it');
+  assert.ok(C.armorTicks(c) < 3 * B.CONFIG.clock.armor, 'Plate Mobility eases it');
 });
 
-test('fatigue lowers the AP pool', () => {
-  const S = B.CONFIG.apScale;
-  const c = fighter('Tired');
-  const full = C.apPool(c);
+test('fatigue adds ticks to every action (step F)', () => {
+  const c = armed('Tired', 'longsword');
+  const swing = () => opt(c, (o) => o.motion === 'swing').ticks;
+  const full = swing();
   const max = C.maxStamina(c);
   c.stamina = Math.floor(max * 0.49);
-  assert.strictEqual(C.apPool(c), full - S);
+  assert.strictEqual(swing(), Math.round(full * (1 + B.CONFIG.fatigueSteps[0].share)));
   c.stamina = Math.floor(max * 0.24);
-  assert.strictEqual(C.apPool(c), full - 2 * S);
+  assert.strictEqual(swing(), Math.round(full * (1 + B.CONFIG.fatigueSteps[1].share)));
 });
 
-test('one big action: with nothing spent, an action dearer than the pool takes the whole turn', async () => {
-  const a = armed('Big', 'greatsword', { side: 'party' });
+test('the clock: the lowest clock acts; an action\'s ticks go on it; ties to SPD (step F)', async () => {
+  const a = armed('A', 'longsword', { side: 'party' });
   const b = armed('B', 'longsword', { side: 'enemy' });
-  a.base.STR = 8; a.base.SPD = 3; b.base.CON = 14;
-  for (const x of [a, b]) x.stamina = C.maxStamina(x);
+  a.base.SPD = 6;
+  const chars = { [a.id]: a, [b.id]: b };
+  const enc = Combat.createEncounter('t', [a.id, b.id], chars, 6, 1);
+  enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[b.id] = { x: 4, y: 0 };
+  await start(enc, chars, io(3, [1, 10]));
+  assert.strictEqual(enc.phase, 'act');
+  assert.strictEqual(Combat.currentActor(enc), a.id, 'clocks at 0: the higher SPD first, whatever the die');
+  assert.strictEqual(await Combat.submit(enc, chars, { actor: a.id, type: 'move', to: { x: 2, y: 0 } }, io(4)), null);
+  assert.ok(enc.clock[a.id] > 0, 'the move\'s ticks on A\'s clock');
+  assert.strictEqual(Combat.currentActor(enc), b.id, 'B is lowest now');
+  assert.strictEqual(enc.now, 0);
+  // A wait: B lets A go first, and comes up again after A's next action.
+  assert.strictEqual(await Combat.submit(enc, chars, { actor: b.id, type: 'wait', for: a.id }, io(4)), null);
+  assert.strictEqual(Combat.currentActor(enc), a.id);
+  const t = enc.now;
+  const thrust = Combat.legalActions(enc, chars, a.id).attacks.find((o) => o.motion === 'thrust');
+  await Combat.submit(enc, chars, { actor: a.id, type: 'strike', option: thrust, target: b.id }, io(4));
+  assert.strictEqual(Combat.currentActor(enc), b.id, 'B comes up just after A has acted');
+  assert.strictEqual(enc.now, t);
+});
+
+test('the beat: every CONFIG.clock.beat ticks, regeneration, bleeding and conditions, kept by the timeline (step F)', async () => {
+  const a = armed('A', 'longsword', { side: 'party' });
+  const b = armed('B', 'longsword', { side: 'enemy' });
+  const chars = { [a.id]: a, [b.id]: b };
+  const enc = Combat.createEncounter('t', [a.id, b.id], chars, 8, 1);
+  enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[b.id] = { x: 7, y: 0 };
+  await start(enc, chars);
+  a.stamina = 5;
+  B.Conditions.add(b, 'slowed', { beats: 1 });
+  await closeRound(enc, chars);
+  assert.strictEqual(enc.beat, 1);
+  assert.strictEqual(enc.now, B.CONFIG.clock.beat);
+  assert.ok(a.stamina > 5, 'A got some breath back');
+  assert.ok(!B.Conditions.has(b, 'slowed'), 'a one-beat condition wore off at the beat');
+});
+
+test('reactions push the clock; past overreach a fighter cannot react (step F)', async () => {
+  const a = armed('A', 'club', { side: 'party' });
+  const c = armed('C', 'longsword', { side: 'enemy' });
+  c.base.CON = 14;
+  const chars = { [a.id]: a, [c.id]: c };
+  const enc = Combat.createEncounter('t', [a.id, c.id], chars, 4, 1);
+  enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[c.id] = { x: 1, y: 0 };
+  await start(enc, chars);
+  actNow(enc, a.id);
+  const x = io(4, [], (req) => (req.kind === 'defend' ? 'parry' : null));
+  const before = enc.clock[c.id];
+  const parry = C.actionCost(c, 'parry').ticks;
+  const swing = Combat.legalActions(enc, chars, a.id).attacks.find((o) => o.motion === 'swing');
+  await Combat.submit(enc, chars, { actor: a.id, type: 'strike', option: swing, target: c.id }, x);
+  const waited = enc.now;
+  await land(enc, chars, x);
+  assert.ok(enc.log.some((l) => /C parries A's|C's parry fails/.test(l.text)), 'C reacted');
+  assert.ok(enc.clock[c.id] >= Math.max(before, waited) + parry, 'the parry\'s ticks on C\'s clock');
+  // Far ahead: no defence offered.
+  spent(enc, c.id);
+  const d = { actor: a.id, type: 'strike', option: swing, target: c.id };
+  assert.strictEqual(Combat.defenseOptions(enc, chars, c, a, d).options.length, 0, 'past overreach: nothing to react with');
+});
+
+test('a committed heavy blow lands when its lead is up; a quick blow lands inside it; knocked down, it is spoiled', async () => {
+  const a = armed('Heavy', 'greatsword', { side: 'party' });
+  const b = armed('Quick', 'dagger', { side: 'enemy' });
+  a.feats.power_swing = 1;
   const chars = { [a.id]: a, [b.id]: b };
   const enc = Combat.createEncounter('t', [a.id, b.id], chars, 4, 1);
   enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[b.id] = { x: 1, y: 0 };
-  await Combat.startRound(enc, chars, roller(3, [10, 1]));
-  const big = Combat.legalActions(enc, chars, a.id).attacks.find((o) => o.motion === 'twoHanded');
-  assert.ok(big.ap > enc.ap[a.id] && big.affordable, 'dearer than the pool, but allowed');
-  assert.strictEqual(await Combat.act(enc, chars, { actor: a.id, type: 'strike', option: big, target: b.id }, io(4)), null);
-  assert.strictEqual(enc.ap[a.id], 0, 'it took the whole turn');
+  await start(enc, chars);
+  actNow(enc, a.id);
+  const power = Combat.legalActions(enc, chars, a.id).attacks.find((o) => o.motion === 'power');
+  await Combat.submit(enc, chars, { actor: a.id, type: 'strike', option: power, target: b.id }, io(4));
+  assert.ok(enc.committed[a.id], 'committed');
+  assert.ok(enc.log.some((l) => /Heavy begins power swing at Quick: it lands at tick \d+, no block or parry/.test(l.text)));
+  assert.strictEqual(Combat.defenseUnavailable(a, 'parry', null, chars, enc), 'Committed', 'exposed while it leads');
+  assert.strictEqual(Combat.currentActor(enc), b.id, 'the quick one acts inside the lead');
+  // B knocks A down (scripted): the blow is spoiled.
+  Combat.knockDown(enc, a);
+  assert.ok(!enc.committed[a.id] && enc.pending.length === 0, 'spoiled');
+  assert.ok(enc.log.some((l) => /power swing is spoiled \(knocked down\)/.test(l.text)));
+});
+
+test('waiting is an action: by a number of ticks, or until a named fighter has acted (step F)', async () => {
+  const a = armed('A', 'longsword', { side: 'party' });
+  const b = armed('B', 'longsword', { side: 'enemy' });
+  const chars = { [a.id]: a, [b.id]: b };
+  const enc = Combat.createEncounter('t', [a.id, b.id], chars, 8, 1);
+  enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[b.id] = { x: 7, y: 0 };
+  await start(enc, chars);
+  actNow(enc, a.id);
+  await Combat.submit(enc, chars, { actor: a.id, type: 'wait', ticks: 7 }, io(4));
+  assert.strictEqual(enc.clock[a.id], 7);
+  assert.ok(Combat.canReact(enc, chars, a.id), 'a waiting fighter can still react');
 });
 
 test('Specifics worked example: longsword swing vs mail = 1 blunt, which winds (step E)', () => tableWeapons(() => {
@@ -209,7 +313,7 @@ test('plate turns a thrust; a half-sword thrust gets through at a lower margin',
   const opts = C.attackOptions(atk);
   const thrust = opts.find((o) => o.motion === 'thrust' && !o.halfSword);
   const half = opts.find((o) => o.halfSword);
-  assert.strictEqual(half.ap, thrust.ap + 1);
+  assert.ok(half.ticks > thrust.ticks, 'the grip shifted: dearer');
   const at = (o, loc, m) => Combat.computeHit(atk, tgt, o, { location: loc || 'torso', margin: m || 0 });
   assert.strictEqual(at(thrust).pierce, 'turned');
   assert.strictEqual(at(thrust).point, 0);
@@ -249,8 +353,7 @@ test('two-handed swings are unavailable while carrying a shield', () => {
   assert.ok(!C.attackOptions(c).some((o) => o.motion === 'twoHanded'));
 });
 
-test('turns (the user\'s example): actions resolve at once; parries are paid from the defender\'s pool; the round ends when everyone has gone', async () => {
-  // Clubs: blows that wind C, so C is still standing for its turn.
+test('the user\'s example on the clock: A and B strike C, whose parries go on C\'s clock; C acts when its clock comes up', async () => {
   const a = armed('A', 'club', { side: 'party' });
   const b = armed('B', 'club', { side: 'party' });
   const c = armed('C', 'longsword', { side: 'enemy' });
@@ -259,39 +362,23 @@ test('turns (the user\'s example): actions resolve at once; parries are paid fro
   for (const x of [a, b, c]) x.stamina = C.maxStamina(x);
   const chars = { [a.id]: a, [b.id]: b, [c.id]: c };
   const enc = Combat.createEncounter('t', [a.id, b.id, c.id], chars, 6, 3);
-  enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[b.id] = { x: 0, y: 2 }; enc.pos[c.id] = { x: 3, y: 1 };
-  await Combat.startRound(enc, chars, roller(3, [5, 5, 5]));
-  assert.deepStrictEqual(enc.order, [a.id, b.id, c.id], 'initiative order A, B, C');
-  assert.strictEqual(enc.phase, 'turn');
-  assert.strictEqual(Combat.currentActor(enc), a.id);
-  // C parries everything it can; A and B never react.
+  enc.pos[a.id] = { x: 2, y: 0 }; enc.pos[b.id] = { x: 2, y: 2 }; enc.pos[c.id] = { x: 3, y: 1 };
+  await start(enc, chars, io(3, [5, 5, 5]));
+  assert.strictEqual(Combat.currentActor(enc), a.id, 'all at 0: the fastest first');
   const x = io(4, [], (req) => (req.kind === 'defend' && req.actor === c.id ? 'parry' : null));
-  enc.ap[c.id] = 6 * B.CONFIG.apScale; // enough for two parries and a turn
-  const pool = enc.ap[c.id];
-  const parry = C.actionCost(c, 'parry').ap;
-  // A moves up to C and swings: the blow resolves at once, and C's parry comes out of C's AP.
-  assert.strictEqual(await Combat.act(enc, chars, { actor: a.id, type: 'move', to: { x: 2, y: 0 } }, x), null);
-  assert.deepStrictEqual(enc.pos[a.id], { x: 2, y: 0 }, 'the move happened already');
-  const thrust = Combat.legalActions(enc, chars, a.id).attacks.find((o) => o.motion === 'swing');
-  assert.strictEqual(await Combat.act(enc, chars, { actor: a.id, type: 'strike', option: thrust, target: c.id }, x), null);
-  assert.ok(enc.log.some((l) => /C parries A's|C's parry fails/.test(l.text)), 'C reacted');
-  assert.strictEqual(enc.ap[c.id], pool - parry);
-  await Combat.endTurn(enc, chars, a.id, x);
-  // B does the same; C parries again.
-  assert.strictEqual(Combat.currentActor(enc), b.id);
-  assert.strictEqual(await Combat.act(enc, chars, { actor: b.id, type: 'move', to: { x: 2, y: 2 } }, x), null);
-  const thrustB = Combat.legalActions(enc, chars, b.id).attacks.find((o) => o.motion === 'swing');
-  assert.strictEqual(await Combat.act(enc, chars, { actor: b.id, type: 'strike', option: thrustB, target: c.id }, x), null);
-  assert.strictEqual(enc.ap[c.id], pool - 2 * parry, 'two parries, paid before C ever had a turn');
-  await Combat.endTurn(enc, chars, b.id, x);
-  // C's turn comes with what is left; when C is done the round ends.
+  const parry = C.actionCost(c, 'parry').ticks;
+  const swing = (id) => Combat.legalActions(enc, chars, id).attacks.find((o) => o.motion === 'swing');
+  await Combat.submit(enc, chars, { actor: a.id, type: 'strike', option: swing(a.id), target: c.id }, x);
+  assert.strictEqual(Combat.currentActor(enc), b.id, 'A\'s swing is in its lead; B acts');
+  await Combat.submit(enc, chars, { actor: b.id, type: 'strike', option: swing(b.id), target: c.id }, x);
   assert.strictEqual(Combat.currentActor(enc), c.id);
-  assert.strictEqual(Combat.legalActions(enc, chars, c.id).ap, pool - 2 * parry);
-  await Combat.endTurn(enc, chars, c.id, x);
-  assert.strictEqual(enc.phase, 'roundEnd');
+  await land(enc, chars, x);
+  const parries = enc.decls.filter((d) => d.actor === c.id && d.type === 'parry').length;
+  assert.ok(parries >= 1 && enc.log.some((l) => /C parries A's|C's parry fails/.test(l.text)), 'C reacted');
+  assert.ok(enc.clock[c.id] >= parries * parry, 'each parry on C\'s clock');
 });
 
-test('a turn may spend the whole pool; a fighter out of AP takes the blow on the armor', async () => {
+test('a fighter too far ahead to react takes the blow on the armor', async () => {
   const a = armed('A', 'longsword', { side: 'party' });
   const b = armed('B', 'longsword', { side: 'enemy' });
   a.base.SPD = 9; b.base.SPD = 1; b.base.CON = 14;
@@ -300,26 +387,15 @@ test('a turn may spend the whole pool; a fighter out of AP takes the blow on the
   const chars = { [a.id]: a, [b.id]: b };
   const enc = Combat.createEncounter('t', [a.id, b.id], chars, 6, 1);
   enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[b.id] = { x: 1, y: 0 };
-  await Combat.startRound(enc, chars, roller(3, [5, 5]));
+  await start(enc, chars, io(3, [5, 5]));
   const asked = [];
   const x = io(4, [], (req) => { asked.push(req.actor); return null; });
-  enc.ap[b.id] = 0; // B spent everything already
-  const swing = Combat.legalActions(enc, chars, a.id).attacks.find((o) => o.motion === 'swing' && o.affordable);
-  assert.ok(swing.ap > B.CONFIG.apScale * 2, 'a heavy blow, more than the old per-pass cap');
-  assert.strictEqual(await Combat.act(enc, chars, { actor: a.id, type: 'strike', option: swing, target: b.id }, x), null);
-  assert.deepStrictEqual(asked, [], 'no AP, no reaction offered');
+  spent(enc, b.id);
+  const thrust = Combat.legalActions(enc, chars, a.id).attacks.find((o) => o.motion === 'thrust');
+  assert.strictEqual(await act(enc, chars, { actor: a.id, type: 'strike', option: thrust, target: b.id }, x), null);
+  assert.deepStrictEqual(asked, [], 'too far ahead: no reaction offered');
   assert.ok(enc.log.some((l) => /A's .* hits B/.test(l.text)));
-  // A keeps going until the pool is spent; then the turn passes by itself.
-  while (Combat.currentActor(enc) === a.id) {
-    const la = Combat.legalActions(enc, chars, a.id);
-    const any = la.attacks.find((o) => o.affordable && o.targets.some((t) => t.id === b.id && t.inReach));
-    if (!any) { await Combat.endTurn(enc, chars, a.id, x); break; }
-    await Combat.act(enc, chars, { actor: a.id, type: 'strike', option: any, target: b.id }, x);
-  }
-  assert.notStrictEqual(Combat.currentActor(enc), a.id);
 });
-
-
 
 test('reactions: the AI defends a blow worth stopping and lets armor take one that is not', () => tableWeapons(async () => {
   const atk = armed('Atk', 'dagger', { side: 'enemy' });
@@ -329,10 +405,9 @@ test('reactions: the AI defends a blow worth stopping and lets armor take one th
   const chars = { [atk.id]: atk, [bare.id]: bare, [plated.id]: plated };
   const enc = Combat.createEncounter('t', Object.keys(chars), chars, 6, 3);
   enc.pos[atk.id] = { x: 1, y: 1 }; enc.pos[bare.id] = { x: 2, y: 1 }; enc.pos[plated.id] = { x: 0, y: 1 };
-  await Combat.startRound(enc, chars, roller(1, [10, 1, 1]));
+  await start(enc, chars, io(1, [10, 1, 1]));
   // A dagger's slash: plate stops all of it (a stab might still find a gap, CONFIG.pierce).
   const stab = C.attackOptions(atk).find((o) => o.motion === 'swing');
-  for (const t of [bare, plated]) enc.ap[t.id] = 5 * B.CONFIG.apScale;
   const ask = (t) => {
     const d = { actor: atk.id, type: 'strike', option: stab, target: t.id };
     const { options } = Combat.defenseOptions(enc, chars, t, atk, d);
@@ -355,7 +430,6 @@ test('Feint hides a blow from a defender whose Anticipation is below the Decepti
   const enc = Combat.createEncounter('t', [a.id, b.id], chars, 4, 3);
   const d = { actor: a.id, type: 'strike', option: C.attackOptions(a)[0], target: b.id, ap: 1 };
   assert.ok(Combat.describeDecl(enc, chars, d, b.id).hidden);
-  enc.ap[b.id] = 5 * B.CONFIG.apScale;
   const blind = Combat.defenseOptions(enc, chars, b, a, d);
   assert.ok(blind.hidden && blind.options.length && blind.options.every((o) => o.odds === null), 'no odds when you cannot read it');
   b.skills = { anticipation: 2 };
@@ -400,23 +474,21 @@ test('AI-vs-AI encounters always finish without errors', async () => {
     const chars = { [a.id]: a, [b.id]: b, [c2.id]: c2 };
     const enc = Combat.createEncounter('sim', ids, chars, 8, 6);
     const roll = roller(i + 5);
-    while (enc.phase !== 'over' && enc.round < 60) {
-      await Combat.startRound(enc, chars, roll);
-      let guard = 1000;
-      while (enc.phase === 'turn' && guard-- > 0) {
-        const id = Combat.currentActor(enc);
-        await Combat.submit(enc, chars, AI.choose(enc, chars, id, rng), { roller: roll });
-      }
-      assert.ok(guard > 0, 'round loop terminates');
+    await Combat.begin(enc, chars, roll);
+    let guard = 5000;
+    while (enc.phase === 'act' && enc.beat < 60 && guard-- > 0) {
+      const id = Combat.currentActor(enc);
+      await Combat.submit(enc, chars, AI.choose(enc, chars, id, rng), { roller: roll });
     }
-    rounds += enc.round;
+    assert.ok(guard > 0, 'the fight loop terminates');
+    rounds += enc.beat;
     if (enc.phase === 'over') finished++;
     for (const id of ids) {
       const c = chars[id];
       assert.ok(c.stamina >= 0 && Number.isFinite(c.stamina), 'stamina stays a finite non-negative number');
     }
   }
-  assert.ok(finished >= 110, `most fights end (finished ${finished}/120, avg ${(rounds / 120).toFixed(1)} rounds)`);
+  assert.ok(finished >= 110, `most fights end (finished ${finished}/120, avg ${(rounds / 120).toFixed(1)} beats)`);
 });
 
 // ---- Range bands, wind-up, archery, magic --------------------------------
@@ -471,13 +543,13 @@ test('weapons in hand: drop is free, a draw is cheap and drops what you hold', a
   const enc = Combat.createEncounter('t', [a.id, b.id], chars, 6, 1);
   enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[b.id] = { x: 3, y: 0 };
   a.base.SPD = 9;
-  await Combat.startRound(enc, chars, roller(1, [10, 1]));
+  await start(enc, chars, io(1, [10, 1]));
   const la = Combat.legalActions(enc, chars, a.id);
-  assert.strictEqual(la.other.find((o) => o.type === 'dropWeapon').ap, 0);
+  assert.strictEqual(la.other.find((o) => o.type === 'dropWeapon').ticks, 0);
   const draw = la.other.find((o) => o.type === 'drawSidearm');
-  assert.strictEqual(draw.ap, Math.max(C.minAP(), Math.round(C.baseAP(0.5))));
+  assert.ok(draw.ticks <= 2, 'a draw is a tick or two');
   assert.match(draw.note, /drops/);
-  assert.strictEqual(await Combat.act(enc, chars, { actor: a.id, type: 'drawSidearm' }, io(2)), null);
+  assert.strictEqual(await act(enc, chars, { actor: a.id, type: 'drawSidearm' }, io(2)), null);
   assert.ok(Combat.legalActions(enc, chars, a.id).attacks.some((o) => o.weaponType === 'dagger'), 'fights with the dagger at once');
   assert.strictEqual(C.wieldedWeapon(a).type, 'dagger');
   assert.deepStrictEqual(a.status.dropped, [a.weapons[0].id], 'the longsword is on the ground');
@@ -517,58 +589,10 @@ async function duel(a, b, seedQueue) {
   const enc = Combat.createEncounter('t', [a.id, b.id], chars, 6, 1);
   enc.pos[a.id] = { x: 0, y: 0 };
   enc.pos[b.id] = { x: 2, y: 0 };
-  await Combat.startRound(enc, chars, roller(1, seedQueue || [10, 1]));
+  await start(enc, chars, io(1, seedQueue || [10, 1]));
+  actNow(enc, a.id);
   return { enc, chars };
 }
-
-test('a power swing must be wound up first (released then or carried over), and the swinger is exposed', () => tableWeapons(async () => {
-  const a = armed('Heavy', 'greatsword');
-  a.feats.power_swing = 1;
-  a.base.CON = 10; // survive the foe's thrust so the wind-up isn't lost
-  a.stamina = C.maxStamina(a);
-  const b = armed('Foe', 'longsword');
-  b.shield = null;
-  const { enc, chars } = await duel(a, b);
-  assert.strictEqual(Combat.currentActor(enc), a.id);
-  let la = Combat.legalActions(enc, chars, a.id);
-  const power = la.attacks.find((o) => o.motion === 'power');
-  assert.strictEqual(power.why, 'Wind up first');
-  const wind = la.other.find((o) => o.type === 'windUp');
-  assert.ok(wind, 'wind-up offered');
-  assert.strictEqual(await Combat.act(enc, chars, { actor: a.id, type: 'windUp', option: wind.option }, io(2)), null);
-  assert.ok(a.status.windUp, 'wound up at once');
-  la = Combat.legalActions(enc, chars, a.id);
-  assert.strictEqual(la.attacks.find((o) => o.motion === 'power').why, null, 'may swing now (windUp.sameTurn)');
-  // Held over instead: the turn ends wound up.
-  await Combat.endTurn(enc, chars, a.id, io(2));
-  // Foe strikes; the winding heavy is offered no parry.
-  assert.strictEqual(Combat.currentActor(enc), b.id);
-  const thrust = Combat.legalActions(enc, chars, b.id).attacks.find((o) => o.motion === 'thrust');
-  const offered = [];
-  const x = io(3, [], (req) => { offered.push(...req.options.map((o) => o.type)); return null; });
-  await Combat.act(enc, chars, { actor: b.id, type: 'strike', option: thrust, target: a.id }, x);
-  assert.ok(!offered.includes('parry'), 'no parry while winding up');
-  await closeRound(enc, chars);
-  assert.ok(a.status.windUp, 'still wound up for next round');
-  await Combat.startRound(enc, chars, roller(3, [10, 1]));
-  la = Combat.legalActions(enc, chars, a.id);
-  const ready = la.attacks.find((o) => o.motion === 'power');
-  assert.strictEqual(ready.why, null);
-  assert.strictEqual(await Combat.act(enc, chars, { actor: a.id, type: 'strike', option: ready, target: b.id }, io(4)), null);
-}));
-
-test('an unreleased wind-up is lost at the end of the next round', async () => {
-  const a = armed('Heavy', 'greatsword');
-  a.feats.power_swing = 1;
-  const b = armed('Foe', 'longsword');
-  const { enc, chars } = await duel(a, b);
-  const wind = Combat.legalActions(enc, chars, a.id).other.find((o) => o.type === 'windUp');
-  await Combat.act(enc, chars, { actor: a.id, type: 'windUp', option: wind.option }, io(2));
-  await closeRound(enc, chars);
-  await Combat.startRound(enc, chars, roller(3, [10, 1]));
-  await closeRound(enc, chars);
-  assert.strictEqual(a.status.windUp, null);
-});
 
 test('arrows: range 2+, use ammunition, cannot be parried', async () => {
   const a = armed('Archer', 'shortbow');
@@ -577,14 +601,14 @@ test('arrows: range 2+, use ammunition, cannot be parried', async () => {
   assert.deepStrictEqual([shot.minRange, shot.maxRange, shot.ranged], [2, 12, true]);
   const b = armed('Foe', 'longsword');
   const { enc, chars } = await duel(a, b);
-  // Every bow is drawn first (1 AP for a shortbow), then loosed.
-  const draw = Combat.legalActions(enc, chars, a.id).other.find((o) => o.type === 'windUp');
-  assert.strictEqual(await Combat.act(enc, chars, { actor: a.id, type: 'windUp', option: draw.option }, io(2)), null);
+  // Every bow is drawn (the shot's lead), then loosed.
   const la = Combat.legalActions(enc, chars, a.id);
   const s = la.attacks.find((o) => o.motion === 'shoot');
+  assert.ok(s.lead > 0 && s.exposes, 'drawn: a lead, exposed');
   const offered = [];
   const x = io(2, [], (req) => { offered.push(...req.options.map((o) => o.type)); return null; });
-  assert.strictEqual(await Combat.act(enc, chars, { actor: a.id, type: 'strike', option: s, target: b.id }, x), null);
+  assert.strictEqual(await act(enc, chars, { actor: a.id, type: 'strike', option: s, target: b.id }, x), null);
+  await land(enc, chars, x);
   assert.ok(!offered.includes('parry'), 'no parry is offered against an arrow');
   assert.ok(enc.log.some((l) => /hits Foe/.test(l.text)), 'the arrow lands');
   assert.strictEqual(a.inventory.arrows, 0);
@@ -603,7 +627,8 @@ test('magic: words make spells; spell points, fire through armor, backlash', asy
   const bolt = opt(m, (o) => o.label === 'Strike + Fire + Far');
   assert.strictEqual(bolt.spCost, 4);
   assert.strictEqual(bolt.maxRange, 2 * opt(m, (o) => o.label === 'Strike + Fire').maxRange);
-  assert.strictEqual(opt(m, (o) => o.label === 'Strike + Fire + Strong').windUp, true);
+  const strong = opt(m, (o) => o.label === 'Strike + Fire + Strong');
+  assert.ok(strong.exposes && strong.lead > opt(m, (o) => o.label === 'Strike + Fire').lead, 'a Strong spell is gathered: a long lead, exposed');
   const knight = fighter('Knight');
   knight.armor = Items.makeArmor('plate', 'full', 'standard'); // B mitigation 3 → stops 2 fire
   const h = Combat.computeHit(m, knight, bolt, {});
@@ -649,65 +674,27 @@ test('shove pushes an enemy back out to range', async () => {
   const sh = Combat.legalActions(enc, chars, a.id).maneuvers.find((m) => m.type === 'shove');
   assert.ok(sh.targets.find((t) => t.id === b.id).inReach);
   // 13 vs 3: a margin of 5+ pushes 2 squares.
-  assert.strictEqual(await Combat.act(enc, chars, { actor: a.id, type: 'shove', target: b.id }, io(2, [9, 1])), null);
+  assert.strictEqual(await act(enc, chars, { actor: a.id, type: 'shove', target: b.id }, io(2, [9, 1])), null);
   assert.strictEqual(enc.pos[b.id].x, 3);
 });
 
-test('a bow must be drawn first, a longbow dearer than a shortbow; held over a round; an archer can redraw after loosing', () => tableWeapons(async () => {
+test('a bow is drawn and loosed: the draw is the lead, a longbow\'s longer than a shortbow\'s', () => tableWeapons(async () => {
   const a = armed('Archer', 'longbow');
   a.inventory.arrows = 5;
   const shot = opt(a, (o) => o.motion === 'shoot');
-  assert.strictEqual(shot.windUp, true);
   const sb = armed('S', 'shortbow'), sbShot = opt(sb, (o) => o.motion === 'shoot');
-  assert.strictEqual(sbShot.windUp, true, 'a shortbow is drawn too');
-  assert.ok(C.actionCost(sb, 'windUp', { option: sbShot }).ap < C.actionCost(a, 'windUp', { option: shot }).ap, 'a lighter draw');
+  assert.ok(shot.exposes && sbShot.exposes, 'both drawn, exposed while drawing');
+  assert.ok(sbShot.lead < shot.lead && sbShot.ticks < shot.ticks, 'a lighter draw');
   const b = armed('Foe', 'longsword');
   b.base.CON = 12;
   b.stamina = C.maxStamina(b);
   const { enc, chars } = await duel(a, b);
   enc.pos[b.id] = { x: 5, y: 0 };
-  let la = Combat.legalActions(enc, chars, a.id);
-  assert.strictEqual(la.attacks.find((o) => o.motion === 'shoot').why, 'Wind up first');
-  await Combat.act(enc, chars, { actor: a.id, type: 'windUp', option: la.other.find((o) => o.type === 'windUp').option }, io(2));
-  await closeRound(enc, chars);
-  await Combat.startRound(enc, chars, roller(3, [10, 1]));
-  la = Combat.legalActions(enc, chars, a.id);
-  const loose = la.attacks.find((o) => o.motion === 'shoot');
+  const loose = Combat.legalActions(enc, chars, a.id).attacks.find((o) => o.motion === 'shoot');
   assert.strictEqual(loose.why, null);
-  assert.strictEqual(await Combat.act(enc, chars, { actor: a.id, type: 'strike', option: loose, target: b.id }, io(4)), null);
-  la = Combat.legalActions(enc, chars, a.id);
-  assert.ok(la.other.find((o) => o.type === 'windUp'), 'can redraw after loosing');
-}));
-
-test('a wind-up is released in the same turn when the AP allows: a longbow drawn and loosed, a power swing', () => tableWeapons(async () => {
-  const a = armed('Archer', 'longbow');
-  a.inventory.arrows = 5;
-  const b = armed('Foe', 'longsword');
-  b.base.CON = 12;
-  b.stamina = C.maxStamina(b);
-  const { enc, chars } = await duel(a, b);
-  enc.pos[b.id] = { x: 5, y: 0 };
-  let la = Combat.legalActions(enc, chars, a.id);
-  const draw = la.other.find((o) => o.type === 'windUp');
-  await Combat.act(enc, chars, { actor: a.id, type: 'windUp', option: draw.option }, io(2));
-  la = Combat.legalActions(enc, chars, a.id);
-  const loose = la.attacks.find((o) => o.motion === 'shoot');
-  assert.strictEqual(loose.why, null, 'drawn: loose now');
-  assert.ok(Combat.apLeft(enc, a.id) >= loose.ap, `AP ${Combat.apLeft(enc, a.id)} for a loose of ${loose.ap}`);
-  assert.strictEqual(await Combat.act(enc, chars, { actor: a.id, type: 'strike', option: loose, target: b.id }, io(4)), null);
-  assert.strictEqual(a.status.windUp, null, 'the draw is spent');
-  // A power swing the same; with windUp.sameTurn off, it waits for the next round.
-  const h = armed('Heavy', 'greatsword');
-  h.base.STR = 7;
-  h.feats.power_swing = 1;
-  const d2 = await duel(h, armed('Foe2', 'longsword'));
-  const wind = Combat.legalActions(d2.enc, d2.chars, h.id).other.find((o) => o.type === 'windUp');
-  await Combat.act(d2.enc, d2.chars, { actor: h.id, type: 'windUp', option: wind.option }, io(2));
-  const power = Combat.legalActions(d2.enc, d2.chars, h.id).attacks.find((o) => o.motion === 'power');
-  assert.strictEqual(power.why, null, 'wound up: swing now');
-  B.CONFIG.windUp.sameTurn = false;
-  try { assert.strictEqual(Combat.legalActions(d2.enc, d2.chars, h.id).attacks.find((o) => o.motion === 'power').why, 'Release next round'); }
-  finally { B.CONFIG.windUp.sameTurn = true; }
+  assert.strictEqual(await act(enc, chars, { actor: a.id, type: 'strike', option: loose, target: b.id }, io(4)), null);
+  await land(enc, chars);
+  assert.strictEqual(a.inventory.arrows, 4, 'loosed when the draw was done');
 }));
 
 test('a blocked power swing breaks a shield of equal or softer material and drives through', async () => {
@@ -715,18 +702,17 @@ test('a blocked power swing breaks a shield of equal or softer material and driv
     const a = armed('Heavy', 'greatsword');
     a.base.STR = 7; // a greatsword wants a strong wielder (weapon strain)
     a.feats.power_swing = 1;
-    a.status.windUp = null;
     const b = armed('Shield', 'longsword');
     b.base.CON = 12;
     b.shield = Items.makeShield('round', material, quality);
     b.stamina = C.maxStamina(b);
     const { enc, chars } = await duel(a, b);
     const power = C.attackOptions(a).find((o) => o.motion === 'power');
-    a.status.windUp = { key: C.optionKey(power), label: power.label, round: 0 };
     const staminaBefore = b.stamina;
     // B blocks (d10 = 10 holds it), and the blow still breaks or drives through.
     const x = io(2, [10], (req) => (req.kind === 'defend' && req.actor === b.id ? 'block' : null));
-    assert.strictEqual(await Combat.act(enc, chars, { actor: a.id, type: 'strike', option: power, target: b.id }, x), null);
+    assert.strictEqual(await act(enc, chars, { actor: a.id, type: 'strike', option: power, target: b.id }, x), null);
+    await land(enc, chars, x);
     return { shield: b.shield.durability, lost: staminaBefore - b.stamina, log: enc.log.map((l) => l.text).join('\n') };
   };
   const wood = await run('wood', 'standard');
@@ -742,11 +728,9 @@ test('getting up gets steeply harder in heavier armor', () => {
   c.base.SPD = 6;
   const cost = (armor) => { c.armor = armor ? Items.makeArmor(armor, 'full', 'standard') : null; return C.actionCost(c, 'standUp'); };
   const none = cost(null), mail = cost('mail'), plate = cost('plate');
-  assert.ok(none.ap < mail.ap && mail.ap < plate.ap, 'AP climbs with armor');
+  assert.ok(none.ticks < mail.ticks && mail.ticks < plate.ticks, 'ticks climb with armor');
   assert.ok(plate.stamina >= 4 * none.stamina, 'plate stamina is several times unarmored');
-  assert.ok(plate.ap <= C.apPool(c), 'never more than the pool');
-  const spec = asWritten(() => cost('plate'));
-  assert.strictEqual(spec.ap, 2 + 2, 'Specifics: 2 AP + 2 for plate');
+  assert.ok(plate.lead > 0, 'still on the ground until it is done');
 });
 
 test('grappling is exhausting: costly to start and to keep', async () => {
@@ -757,15 +741,14 @@ test('grappling is exhausting: costly to start and to keep', async () => {
   const chars = { [a.id]: a, [t.id]: t };
   const enc = Combat.createEncounter('t', [a.id, t.id], chars, 4, 1);
   enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[t.id] = { x: 1, y: 0 };
-  await Combat.startRound(enc, chars, roller(1, [10, 1]));
+  await start(enc, chars, io(1, [10, 1]));
   a.status.grapple = { partner: t.id, level: 'hold', role: 'holder' }; t.status.grapple = { partner: a.id, level: 'hold', role: 'held' };
   const before = a.stamina;
   await closeRound(enc, chars);
-  assert.ok(a.stamina < before, 'holding costs stamina at the end of the round');
-  // With little to come back first (a round's regeneration, CONFIG.stamina.regen, would cover the upkeep), too spent
+  assert.ok(a.stamina < before, 'holding costs stamina at the beat');
+  // With little to come back first (a beat's regeneration, CONFIG.stamina.regen, would cover the upkeep), too spent
   // to hold.
   a.stamina = 1; a.base.CON = 1; a.base.WIL = 1;
-  await Combat.startRound(enc, chars, roller(3, [10, 1]));
   await closeRound(enc, chars);
   assert.strictEqual(a.status.grapple, null, 'too spent to keep the hold');
   assert.strictEqual(t.status.grapple, null);
@@ -786,8 +769,11 @@ async function grapplePair(armor) {
 }
 
 async function step(g, type, rolls) {
-  await Combat.startRound(g.enc, g.chars, roller(1, [10, 1]));
+  await start(g.enc, g.chars, io(1, [10, 1]));
   assert.strictEqual(Combat.currentActor(g.enc), g.a.id);
+  // The step lands within this call: the other's clock is out past its lead.
+  actNow(g.enc, g.a.id);
+  g.enc.clock[g.t.id] = g.enc.now + 12;
   const err = await Combat.act(g.enc, g.chars, { actor: g.a.id, type, target: g.t.id }, io(2, rolls));
   assert.strictEqual(err, null, type + ': ' + err);
   await closeRound(g.enc, g.chars);
@@ -798,7 +784,7 @@ test('grappling ladder: clinch, hold, pin, each a directly opposed roll', async 
   const g = await grapplePair(null);
   const la = Combat.legalActions(g.enc, g.chars, g.a.id);
   // Free: only a clinch is offered from the ladder.
-  await Combat.startRound(g.enc, g.chars, roller(1, [10, 1]));
+  await start(g.enc, g.chars, io(1, [10, 1]));
   assert.deepStrictEqual(Combat.legalActions(g.enc, g.chars, g.a.id).maneuvers.filter((m) => Combat.GRAPPLE_STEPS.includes(m.type)).map((m) => m.type), ['clinch']);
   await closeRound(g.enc, g.chars);
   // Clinch: 6+5=11 vs 4+3=7 → win by 4: a clinch, not yet a hold.
@@ -861,7 +847,6 @@ test('grappling: guards never meet a grapple; pinned armor is pierced', async ()
   assert.strictEqual(pinned.pierce, 'through', 'a pin opens the armor: the point always gets through');
   assert.ok(pinned.point > held.point, 'held but not pinned, the plate\'s mitigation still counts');
   // Guards never meet a grapple: no reaction is offered against one.
-  g.enc.ap[g.t.id] = 10;
   assert.deepStrictEqual(Combat.defenseOptions(g.enc, g.chars, g.t, g.a, { actor: g.a.id, type: 'grapple', target: g.t.id }).options, []);
 });
 
@@ -921,10 +906,11 @@ test('monsters: natural weapons are always ready; traits work', async () => {
   const [beetle] = Enemies.makeMonster('rustBeetle');
   const touch = C.attackOptions(beetle).find((o) => o.rust);
   assert.ok(touch && touch.rust > 0);
-  // Bosses: more AP than their attributes alone give.
+  // Bosses: a tempo, acting more often than their attributes alone give.
   const [boss] = Enemies.makeMonster('trollChieftain');
   const [troll] = Enemies.makeMonster('caveTroll');
-  assert.ok(C.apPool(boss) >= C.apPool(troll) * 2);
+  assert.ok(C.tempo(boss) >= C.tempo(troll) * 2);
+  assert.ok(opt(boss, (o) => !o.unarmed).ticks < opt(troll, (o) => !o.unarmed).ticks);
   assert.ok(C.maxStamina(boss) > C.maxStamina(troll));
   // Big monsters are stronger than any human can be (10 base + 3 Conditioning), and tougher by their size (step E:
   // more wound boxes, each severity needing more).
@@ -945,15 +931,13 @@ test('monster fights finish without errors', async () => {
     const enc = Combat.createEncounter('t', Object.keys(chars), chars, 8, 4);
     const roll = roller(9);
     const rng = Enemies.makeRng(3);
-    while (enc.phase !== 'over' && enc.round < 30) {
-      await Combat.startRound(enc, chars, roll);
-      let guard = 2000;
-      while (enc.phase === 'turn' && guard-- > 0) {
-        const id = Combat.currentActor(enc);
-        await Combat.submit(enc, chars, AI.choose(enc, chars, id, rng, chars[id].policy), { roller: roll });
-      }
-      assert.ok(guard > 0, mk + ': round loop terminates');
+    await Combat.begin(enc, chars, roll);
+    let guard = 5000;
+    while (enc.phase === 'act' && enc.beat < 30 && guard-- > 0) {
+      const id = Combat.currentActor(enc);
+      await Combat.submit(enc, chars, AI.choose(enc, chars, id, rng, chars[id].policy), { roller: roll });
     }
+    assert.ok(guard > 0, mk + ': the fight loop terminates');
   }
 });
 
@@ -961,7 +945,7 @@ test('tireless undead: no stamina, damage to the body, no bleeding; skeletons sh
   const [sk] = Enemies.makeMonster('skeleton');
   assert.ok(C.tireless(sk));
   assert.strictEqual(C.actionCost(sk, 'parry').stamina, 0, 'actions cost no stamina');
-  assert.strictEqual(C.fatiguePenalty(sk), 0);
+  assert.strictEqual(C.fatigueShare(sk), 0);
   const a = armed('Hero', 'longsword');
   const thrust = C.attackOptions(a).find((o) => o.motion === 'thrust');
   const swing = C.attackOptions(a).find((o) => o.motion === 'swing' && o.face === 'edge');
@@ -984,12 +968,12 @@ test('sticky webs: every action costs more until torn free', async () => {
   const spit = C.attackOptions(spider).find((o) => o.web);
   assert.ok(spit && spit.ranged && spit.minRange === 2);
   const t = armed('Hero', 'longsword', { side: 'party' });
-  const before = { thrust: C.attackOptions(t).find((o) => o.motion === 'thrust').ap, parry: C.actionCost(t, 'parry') };
+  const before = { thrust: C.attackOptions(t).find((o) => o.motion === 'thrust').ticks, parry: C.actionCost(t, 'parry') };
   t.status.webbed = 1;
-  const after = { thrust: C.attackOptions(t).find((o) => o.motion === 'thrust').ap, parry: C.actionCost(t, 'parry') };
-  assert.strictEqual(after.thrust, before.thrust + Math.round(B.CONFIG.web.ap * C.costScale()));
+  const after = { thrust: C.attackOptions(t).find((o) => o.motion === 'thrust').ticks, parry: C.actionCost(t, 'parry') };
+  assert.strictEqual(after.thrust, before.thrust + B.CONFIG.web.ticks);
   assert.strictEqual(after.parry.stamina, before.parry.stamina + B.CONFIG.web.stamina);
-  assert.strictEqual(C.actionCost(t, 'dropWeapon').ap, 0, 'dropping is still free');
+  assert.strictEqual(C.actionCost(t, 'dropWeapon').ticks, 0, 'dropping is still free');
 });
 
 test('weapons from physics: deeper points hit harder, heavier weapons are slower, STR needs mass', () => {
@@ -1001,8 +985,8 @@ test('weapons from physics: deeper points hit harder, heavier weapons are slower
   assert.ok(S('dagger').wound.point.vital < S('longsword').wound.point.vital);
   assert.ok(S('rapier').wound.point.bleed < S('longsword').wound.point.bleed);
   // Swing cost rises with mass × length; thrust cost with mass.
-  const swingAP = (t) => opt(armed('X', t), (o) => o.motion === 'swing').ap;
-  const thrustAP = (t) => opt(armed('X', t), (o) => o.motion === 'thrust').ap;
+  const swingAP = (t) => opt(armed('X', t), (o) => o.motion === 'swing').ticks;
+  const thrustAP = (t) => opt(armed('X', t), (o) => o.motion === 'thrust').ticks;
   assert.ok(swingAP('dagger') < swingAP('club') && swingAP('club') <= swingAP('longsword'));
   assert.ok(thrustAP('dagger') < thrustAP('longsword'));
   // STR: a rapier thrust barely cares; a mace swing depends on it.
@@ -1024,7 +1008,7 @@ test('vital wounds: armor raises the margin one needs; a vital stab is a step mo
   assert.strictEqual(v(plated), v(naked));
   // At the threshold it is vital: a step more severe; below it, not.
   const t = fighter('T'); t.stamina = C.maxStamina(t);
-  const enc = { hitThisRound: {}, fortressUsed: {} };
+  const enc = { struck: {}, fortressUsed: {} };
   await Combat.applyHit(enc, { [a.id]: a, [t.id]: t }, a, t, thrust, roller(1, [10]), { location: 'torso', margin: v(naked) });
   const u = fighter('U'); u.stamina = C.maxStamina(u);
   await Combat.applyHit(enc, { [a.id]: a, [u.id]: u }, a, u, thrust, roller(1, [10]), { location: 'torso', margin: v(naked) - 1 });
@@ -1047,10 +1031,10 @@ test('opportunity strikes: coming to the edge of a reach is free; stepping insid
   const strikeIfAsked = (asked) => (req) => { if (req.kind === 'opportunity') { asked.push(req); return req.options[0]; } return null; };
   const run = async (f, sAt, dAt, to, rolls) => {
     f.enc.pos[f.s.id] = sAt; f.enc.pos[f.d.id] = dAt;
-    await Combat.startRound(f.enc, f.chars, roller(3, [1, 9]));
+    await start(f.enc, f.chars, io(3, [1, 9]));
     assert.strictEqual(Combat.currentActor(f.enc), f.d.id);
     const asked = [];
-    await Combat.act(f.enc, f.chars, { actor: f.d.id, type: 'move', to }, io(4, rolls || [10, 10, 10, 10], strikeIfAsked(asked)));
+    await act(f.enc, f.chars, { actor: f.d.id, type: 'move', to }, io(4, rolls || [10, 10, 10, 10], strikeIfAsked(asked)));
     return asked;
   };
   const reachOf = (c) => Math.max(...C.attackOptions(c).filter((o) => !o.ranged).map((o) => o.maxRange));
@@ -1108,10 +1092,10 @@ test('fend off: a long weapon shoves at range 2', async () => {
   const chars = { [s.id]: s, [d.id]: d };
   const enc = Combat.createEncounter('t', [s.id, d.id], chars, 8, 1);
   enc.pos[s.id] = { x: 0, y: 0 }; enc.pos[d.id] = { x: 2, y: 0 };
-  await Combat.startRound(enc, chars, roller(3, [5, 5]));
+  await start(enc, chars, io(3, [5, 5]));
   const shove = Combat.legalActions(enc, chars, s.id).maneuvers.find((m) => m.type === 'shove');
   assert.ok(shove.targets.find((t) => t.id === d.id).inReach, 'the spear reaches 2 squares');
-  assert.strictEqual(await Combat.act(enc, chars, { actor: s.id, type: 'shove', target: d.id }, io(4, [5, 5])), null);
+  assert.strictEqual(await act(enc, chars, { actor: s.id, type: 'shove', target: d.id }, io(4, [5, 5])), null);
   assert.match(enc.log.map((l) => l.text).join('\n'), /S shoves D back 1 square/);
   assert.deepStrictEqual(enc.pos[d.id], { x: 3, y: 0 });
 });
@@ -1185,28 +1169,28 @@ test('terrain: walls are walked around or block, pits catch, solid walls stop ar
   // A pit: stepping in ends the move, prone.
   T.remove(enc, 3, 2, () => true);
   T.add(enc, 3, 2, 'pit');
-  await Combat.startRound(enc, chars, roller(3, [9, 1]));
+  await start(enc, chars, io(3, [9, 1]));
   assert.strictEqual(Combat.currentActor(enc), a.id);
-  assert.strictEqual(await Combat.act(enc, chars, { actor: a.id, type: 'move', to: { x: 4, y: 2 } }, io(4)), null);
+  assert.strictEqual(await act(enc, chars, { actor: a.id, type: 'move', to: { x: 4, y: 2 } }, io(4)), null);
   assert.deepStrictEqual(enc.pos[a.id], { x: 3, y: 2 });
   assert.ok(a.status.prone);
 });
 
-test('conditions: slowed costs AP, rooted can\'t move, stoneskin turns blunt', () => {
+test('conditions: slowed adds ticks, rooted can\'t move, stoneskin turns blunt', () => {
   const Cn = B.Conditions;
   const c = armed('C', 'longsword');
-  const ap = C.apPool(c);
-  Cn.add(c, 'slowed', { rounds: 2, mag: 1 });
-  assert.strictEqual(C.apPool(c), ap - C.apScale());
-  Cn.add(c, 'rooted', { rounds: 1 });
+  const t0 = C.actionCost(c, 'parry').ticks;
+  Cn.add(c, 'slowed', { beats: 2, mag: 1 });
+  assert.strictEqual(C.actionCost(c, 'parry').ticks, t0 + B.CONFIG.conditions.slowed.ticks);
+  Cn.add(c, 'rooted', { beats: 1 });
   assert.ok(!Cn.canMove(c));
-  Cn.endRound(c);
+  Cn.beat(c);
   assert.ok(Cn.canMove(c), 'rooted wears off');
   assert.ok(Cn.has(c, 'slowed'));
   const atk = armed('A', 'club');
   const blow = opt(atk, (o) => o.motion === 'swing');
   const before = Combat.computeHit(atk, c, blow).B;
-  Cn.add(c, 'stoneskin', { rounds: 2, mag: 1 });
+  Cn.add(c, 'stoneskin', { beats: 2, mag: 1 });
   assert.strictEqual(Combat.computeHit(atk, c, blow).B, Math.max(0, before - 2));
 });
 
@@ -1325,7 +1309,7 @@ test('summon: a bound fire elemental joins the caster for a few rounds; Raise + 
   m.spSpent = 0;
   const r2 = await castAt(m, [f, corpse], 'raise+death', { at: { x: 3, y: 2 } }, [10]);
   const z = Object.values(r2.enc.extra || {})[0];
-  assert.ok(z && z.side === m.side && corpse.raised && z.monster === 'skeleton' && z.conjured.rounds == null);
+  assert.ok(z && z.side === m.side && corpse.raised && z.monster === 'skeleton' && z.conjured.beats == null);
 });
 
 test('Give + Force: a shell that soaks spells and missiles; Take + Fire on an ally puts out the fire and halves the next', async () => {
@@ -1342,7 +1326,7 @@ test('Give + Force: a shell that soaks spells and missiles; Take + Fire on an al
   const left = B.Conditions.get(ally, 'warded');
   assert.strictEqual(left ? left.pool : 0, Math.max(0, w.pool - bolt.spell.magnitude), 'what it soaked comes off the shell (gone at 0)');
   const other = armed('O', 'longsword'); other.at = { x: 2, y: 2 };
-  B.Conditions.add(other, 'burning', { rounds: 3 });
+  B.Conditions.add(other, 'burning', { beats: 3 });
   m.spSpent = 0;
   await castAt(m, [other], 'take+fire', { target: other.id }, [10]);
   assert.ok(!B.Conditions.has(other, 'burning'), 'the fire is put out');
@@ -1356,7 +1340,7 @@ test('blink: a caster held in a grapple steps out of it to a square', async () =
   m.status.grapple = { partner: g.id, level: 'hold', role: 'held' }; g.status.grapple = { partner: m.id, level: 'hold', role: 'holder' };
   const enc = Combat.createEncounter('t', [m.id, g.id], chars, 10, 5);
   enc.pos[m.id] = { x: 1, y: 2 }; enc.pos[g.id] = { x: 2, y: 2 };
-  await Combat.startRound(enc, chars, roller(1, [9, 1]));
+  await start(enc, chars, io(1, [9, 1]));
   const la = Combat.legalActions(enc, chars, m.id);
   const blink = la.spells.find((o) => o.spell.shape === 'blink');
   assert.ok(blink && blink.affordable, 'blink is open even while held');
@@ -1372,10 +1356,10 @@ test('bait leaves a foe off balance; reading intent gives +2 both ways', async (
   const chars = { [a.id]: a, [t.id]: t };
   const swing = opt(a, (o) => o.motion === 'thrust');
   const before = Combat.defenseOdds(t, 'parry', 'thrust', a, swing);
-  B.Conditions.add(t, 'baited', { rounds: 1 });
+  B.Conditions.add(t, 'baited', { beats: 1 });
   assert.ok(Combat.defenseOdds(t, 'parry', 'thrust', a, swing) < before);
   B.Conditions.remove(t, 'baited');
-  B.Conditions.add(a, 'reading', { rounds: 1, vs: t.id });
+  B.Conditions.add(a, 'reading', { beats: 1, vs: t.id });
   assert.ok(Combat.defenseOdds(t, 'parry', 'thrust', a, swing) < before, 'harder to parry one who reads you');
   const theirs = opt(t, (o) => o.motion === 'thrust');
   assert.ok(Combat.defenseOdds(a, 'parry', 'thrust', t, theirs) > Combat.defenseOdds(t, 'parry', 'thrust', a, swing));
@@ -1384,9 +1368,9 @@ test('bait leaves a foe off balance; reading intent gives +2 both ways', async (
   const enc = Combat.createEncounter('t', [a.id, t.id], chars, 6, 1);
   enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[t.id] = { x: 2, y: 0 };
   a.base.SPD = 9;
-  await Combat.startRound(enc, chars, roller(1, [9, 5]));
+  await start(enc, chars, io(1, [9, 5]));
   assert.strictEqual(Combat.currentActor(enc), a.id);
-  assert.strictEqual(await Combat.act(enc, chars, { actor: a.id, type: 'bait', target: t.id }, io(2, [9, 1])), null);
+  assert.strictEqual(await act(enc, chars, { actor: a.id, type: 'bait', target: t.id }, io(2, [9, 1])), null);
   assert.ok(B.Conditions.has(t, 'baited'));
 });
 
@@ -1397,10 +1381,10 @@ test('read intent: a true read shows their real plan (+2); a bad roll misreads i
   const enc = Combat.createEncounter('t', [a.id, t.id], chars, 6, 1);
   enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[t.id] = { x: 2, y: 0 };
   a.base.SPD = 9;
-  await Combat.startRound(enc, chars, roller(1, [9, 5]));
-  assert.strictEqual(C.actionCost(a, 'readIntent').ap, Math.max(C.minAP(), Math.round(C.baseAP(0.5))), 'cheap');
+  await start(enc, chars, io(1, [9, 5]));
+  assert.strictEqual(C.actionCost(a, 'readIntent').ticks, 1, 'cheap: a glance');
   // TN = 5 + 2 = 7; WIS 6 → +3. Roll 9: 12, a true read.
-  assert.strictEqual(await Combat.act(enc, chars, { actor: a.id, type: 'readIntent', target: t.id }, io(2, [9])), null);
+  assert.strictEqual(await act(enc, chars, { actor: a.id, type: 'readIntent', target: t.id }, io(2, [9])), null);
   const r = B.Conditions.get(a, 'reading');
   assert.ok(r && r.truth === true && r.note, r && r.note);
   const tt = opt(t, (o) => o.motion === 'thrust');
@@ -1430,7 +1414,7 @@ test('mind: Give + Mind calms; Bind + Death commands the undead while the caster
   assert.strictEqual(g.side, m.side, 'fights for the caster');
   assert.ok(B.Conditions.has(m, 'concentrating'));
   B.Conditions.remove(g, 'controlled');
-  Combat.endRound(r.enc, r.chars);
+  Combat.beatBodies(r.enc, r.chars);
   assert.strictEqual(g.side, 'enemy', 'back to itself');
 });
 
@@ -1440,15 +1424,15 @@ test('mind: Take + Mind sends a foe into a frenzy at the nearest body; calmed fo
   await castAt(m, [f], 'take+mind', { target: f.id }, [10, 9, 1]);
   assert.ok(B.Conditions.has(f, 'enraged') && B.Effects.has(f, 'berserk'));
   const c = armed('C', 'longsword', { side: 'enemy' });
-  B.Conditions.add(c, 'calmed', { rounds: 2 });
+  B.Conditions.add(c, 'calmed', { beats: 2 });
   const chars = { [c.id]: c, [m.id]: m };
   const enc = Combat.createEncounter('t', [c.id, m.id], chars, 6, 1);
   enc.pos[c.id] = { x: 0, y: 0 }; enc.pos[m.id] = { x: 1, y: 0 };
   c.base.SPD = 9;
-  await Combat.startRound(enc, chars, roller(1, [9, 1]));
+  await start(enc, chars, io(1, [9, 1]));
   const th = Combat.legalActions(enc, chars, c.id).attacks.find((o) => o.motion === 'thrust');
   assert.strictEqual(th.affordable, false);
-  assert.match(await Combat.act(enc, chars, { actor: c.id, type: 'strike', option: th, target: m.id }, io(2)), /Calmed/);
+  assert.match(await act(enc, chars, { actor: c.id, type: 'strike', option: th, target: m.id }, io(2)), /Calmed/);
 });
 
 test('phase 2: light sears the undead; darkness blocks sight; disease outlasts the fight', async () => {
@@ -1462,8 +1446,8 @@ test('phase 2: light sears the undead; darkness blocks sight; disease outlasts t
   B.Terrain.add(enc, 3, 1, 'darkness');
   assert.ok(B.Terrain.lineCheck(enc, { x: 1, y: 1 }, { x: 5, y: 1 }, 'missile').blocked);
   assert.ok(!B.Terrain.lineCheck(enc, { x: 2, y: 1 }, { x: 4, y: 1 }, 'melee').blocked, 'blades still reach through darkness');
-  B.Conditions.add(man, 'diseased', { rounds: 10 });
-  B.Conditions.add(man, 'slowed', { rounds: 2 });
+  B.Conditions.add(man, 'diseased', { beats: 10 });
+  B.Conditions.add(man, 'slowed', { beats: 2 });
   Combat.cleanup(enc, { [m.id]: m, [man.id]: man });
   assert.ok(B.Conditions.has(man, 'diseased') && !B.Conditions.has(man, 'slowed'));
 });
@@ -1511,13 +1495,13 @@ test('phase 3: mend heals far better than in a fight; prepared wards take hold w
   const f = armed('F', 'club', { side: 'enemy' });
   const chars = { [m.id]: m, [p.id]: p, [f.id]: f };
   const enc = Combat.createEncounter('t', [m.id, p.id, f.id], chars, 8, 3);
-  await Combat.startRound(enc, chars, roller(3, [5, 5, 5]));
+  await start(enc, chars, io(3, [5, 5, 5]));
   const w = B.Conditions.get(p, 'warded');
-  assert.ok(w && w.kind === 'magic' && w.rounds === 6);
+  assert.ok(w && w.kind === 'magic' && w.beats === 6);
   assert.strictEqual(m.prepared.length, 0);
 });
 
-test('death: for three rounds after the one they died in, Raise + Life calls the fallen back, down', async () => {
+test('death: for a few beats after the one they died in, Raise + Life calls the fallen back, down', async () => {
   const m = mage('Cleric', ['life', 'decay']);
   const ally = fighter('Ally'), late = fighter('Late'), foe = fighter('Foe');
   ally.side = late.side = m.side;
@@ -1525,16 +1509,16 @@ test('death: for three rounds after the one they died in, Raise + Life calls the
   const chars = { [m.id]: m, [ally.id]: ally, [late.id]: late, [foe.id]: foe };
   const enc = Combat.createEncounter('t', Object.keys(chars), chars, 10, 5);
   Object.assign(enc.pos, { [m.id]: { x: 1, y: 2 }, [ally.id]: { x: 2, y: 2 }, [late.id]: { x: 2, y: 3 }, [foe.id]: { x: 8, y: 2 } });
-  enc.round = 1;
+  enc.beat = 1;
   // Down, then finished (a wound on the down): dead.
   for (const c of [ally, late]) { for (let i = 0; i <= C.boxes(c); i++) C.addWound(c, { place: 'torso', sev: 1, kind: 'cut', bleed: 1, pts: 1 }, null); C.updateCondition(c); }
   assert.ok(ally.status.dead && late.status.dead);
-  Combat.endRound(enc, chars); // stamps both as dead in round 1
-  assert.equal(ally.status.diedRound, 1);
-  late.status.diedRound = 0; // died a round earlier: its window closes at the end of round 3
-  enc.round = 4;
+  Combat.beatBodies(enc, chars); // stamps both as dead in beat 1
+  assert.equal(ally.status.diedBeat, 1);
   const R = B.CONFIG.magic.revive;
-  assert.ok(B.Magic.revivable(enc, ally) && !B.Magic.revivable(enc, late), `${R.rounds} rounds after the round of death, no more`);
+  late.status.diedBeat = 0; // died a beat earlier: its window has closed by beat 1 + R.beats
+  enc.beat = 1 + R.beats;
+  assert.ok(B.Magic.revivable(enc, ally) && !B.Magic.revivable(enc, late), `${R.beats} beats after the beat of death, no more`);
   const la = Combat.legalActions(enc, chars, m.id);
   const ids = la.spells.find((x) => x.spellKey === 'raise+life').targets.map((t) => t.id);
   assert.ok(ids.includes(ally.id) && !ids.includes(late.id), 'Raise + Life can aim at the body still in reach of it');
@@ -1567,7 +1551,7 @@ test('Give + Life mends (bleeding, a severity step, stamina; the collapsed come 
   assert.equal(ally.stamina, H.stamina + H.staminaPerMag * o.spell.magnitude);
   assert.equal(C.isActive(ally), true, 'under the boxes again: the down come to');
   // Take + Decay on an ally lifts Poisoned and wards against more.
-  B.Conditions.add(ally, 'poisoned', { rounds: 3 });
+  B.Conditions.add(ally, 'poisoned', { beats: 3 });
   await castAt(m, [ally], 'take+decay', { target: ally.id });
   assert.ok(!B.Conditions.has(ally, 'poisoned'));
   assert.equal(B.Conditions.get(ally, 'warded').kind, 'decay');
@@ -1623,10 +1607,10 @@ test('revenant knight: Battle Casting casts with sword and shield; Soulreaver dr
   assert.ok(C.woundLoad(dk) < 2 || dk.stamina > 10, 'healed or refreshed');
 });
 
-test('revenant knight: his aura of dread saps foes near him each round; the silk sash quickens him', async () => {
+test('revenant knight: his aura of dread saps foes near him each beat; the silk sash quickens him', async () => {
   const [dk] = B.Enemies.makeMonster('revenantKnight');
   const plain = Object.assign(JSON.parse(JSON.stringify(dk)), { trinkets: [] });
-  assert.ok(C.apPool(dk) > C.apPool(plain), 'the sash adds AP');
+  assert.ok(C.actionCost(dk, 'parry').ticks < C.actionCost(plain, 'parry').ticks, 'the sash: every action quicker');
   assert.equal(C.attr(dk, 'SPD'), C.attr(plain, 'SPD') + 1);
   const near = fighter('Near'), far = fighter('Far');
   near.side = far.side = 'party';
@@ -1634,7 +1618,7 @@ test('revenant knight: his aura of dread saps foes near him each round; the silk
   const enc = Combat.createEncounter('t', Object.keys(chars), chars, 12, 3);
   enc.pos[dk.id] = { x: 5, y: 1 }; enc.pos[near.id] = { x: 3, y: 1 }; enc.pos[far.id] = { x: 10, y: 1 };
   const st = near.stamina, st2 = far.stamina;
-  await Combat.startRound(enc, chars, roller(5, []));
+  await start(enc, chars, io(5, []));
   assert.equal(near.stamina, st - dk.traits.aura.stamina);
   assert.ok(B.Conditions.has(near, 'dread'));
   assert.equal(far.stamina, st2);
@@ -1670,7 +1654,7 @@ test('golem is immune to magic; a constrictor crushes whoever it holds; fliers p
   golem.at = { x: 3, y: 2 };
   await castAt(m, [golem], 'strike+fire', { target: golem.id }, [1, 1, 1, 1]);
   assert.equal(C.woundLoad(golem), 0);
-  assert.equal(await B.Magic.afflict(Combat.createEncounter('t', [m.id, golem.id], { [m.id]: m, [golem.id]: golem }, 6, 3), m, golem, 'frightened', { rounds: 2 }, roller(10, [])), false, 'nothing of the mind lands on it');
+  assert.equal(await B.Magic.afflict(Combat.createEncounter('t', [m.id, golem.id], { [m.id]: m, [golem.id]: golem }, 6, 3), m, golem, 'frightened', { beats: 2 }, roller(10, [])), false, 'nothing of the mind lands on it');
   // (Step E: CON 22 is now 10, so a CON-resisted bane such as Slowed can land on a golem.)
   // The constrictor crushes the one it holds at the end of the round.
   const [snake] = B.Enemies.makeMonster('constrictor');
@@ -1681,8 +1665,8 @@ test('golem is immune to magic; a constrictor crushes whoever it holds; fliers p
   snake.status.grapple = { partner: victim.id, level: 'hold', role: 'holder' };
   victim.status.grapple = { partner: snake.id, level: 'hold', role: 'held' };
   const st = victim.stamina;
-  Combat.endRound(enc, chars);
-  assert.ok(victim.stamina <= st - snake.traits.constrict.stamina + C.roundRegen(victim, true), 'crushed (less the share of regeneration a struck body gets)');
+  Combat.beatBodies(enc, chars);
+  assert.ok(victim.stamina <= st - snake.traits.constrict.stamina + C.beatRegen(victim, true), 'crushed (less the share of regeneration a struck body gets)');
   assert.ok(C.wounds(victim).some((w) => w.kind === 'crush' && w.pts === snake.traits.constrict.harm), 'and a crushing wound');
   // A drake flies over a pit and a hidden rune; a walker falls in.
   const [drake] = B.Enemies.makeMonster('drake');
@@ -1720,7 +1704,7 @@ test('weapon strain: strength never speeds a light weapon, makes a heavy one fun
     c.weapons.push(w);
     c.wield = w.id;
     const o = C.attackOptions(c).find((x) => x.weaponId === w.id && (x.motion === 'swing' || x.motion === 'twoHanded'));
-    return o ? o.ap : null;
+    return o ? o.ticks : null;
   };
   assert.equal(swingAP('rapier', 5), swingAP('rapier', 15), 'no faster with more STR');
   assert.ok(swingAP('greatsword', 4) > swingAP('greatsword', 7), 'a weak wielder strains');
@@ -1788,11 +1772,10 @@ async function blowAt(atkWeapon, setupTarget, react) {
   const chars = { [a.id]: a, [b.id]: b };
   const enc = Combat.createEncounter('t', [a.id, b.id], chars, 4, 1);
   enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[b.id] = { x: 1, y: 0 };
-  await Combat.startRound(enc, chars, roller(3, [10, 1]));
-  enc.ap[b.id] = 6 * B.CONFIG.apScale;
+  await start(enc, chars, io(3, [10, 1]));
   const thrust = Combat.legalActions(enc, chars, a.id).attacks.find((o) => o.motion === 'thrust');
   // Rolls: B's defence roll 10 against A's 1 when B reacts; otherwise the blow lands.
-  await Combat.act(enc, chars, { actor: a.id, type: 'strike', option: thrust, target: b.id }, io(5, [10, 1], react || noReact));
+  await actLand(enc, chars, { actor: a.id, type: 'strike', option: thrust, target: b.id }, io(5, [10, 1], react || noReact));
   return { a, b, w: a.weapons[0], bw: b.weapons[0] };
 }
 
@@ -1828,7 +1811,7 @@ test('a blade wears less on organic armor than on metal as hard (materials.yaml 
     t.armor = Items.makeArmor('mail', 'full', 'average');
     t.armor.material = material;
     t.stamina = C.maxStamina(t);
-    const enc = { hitThisRound: {}, fortressUsed: {}, log: [], round: 1 };
+    const enc = { struck: {}, fortressUsed: {}, log: [], round: 1 };
     const w = a.weapons[0];
     for (let i = 0; i < 6; i++) await Combat.applyHit(enc, { [a.id]: a, [t.id]: t }, a, t, opt(a, (x) => x.motion === 'swing'), roller(1, Array(20).fill(5)));
     return Items.weaponMaxDurability(w) - Items.weaponDurability(w) + (w.wearCarry || 0);
@@ -1860,10 +1843,10 @@ test('weariness: stamina spent in a fight lowers max stamina until a long rest; 
   const chars = { [a.id]: a, [b.id]: b };
   const enc = Combat.createEncounter('t', [a.id, b.id], chars, 6, 1);
   enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[b.id] = { x: 5, y: 0 };
-  for (let r = 0; r < 3; r++) { await Combat.startRound(enc, chars, roller(3, [5, 5])); await closeRound(enc, chars); }
-  assert.strictEqual(C.maxStamina(a), fresh - Math.floor(3 * (W.perRound || 0)), 'idle rounds wear only perRound');
-  for (let r = 0; r < 2; r++) { await Combat.startRound(enc, chars, roller(3, [5, 5])); a.stamina -= 10; b.stamina -= 2; await closeRound(enc, chars); }
-  assert.strictEqual(C.freshStamina(a) - C.maxStamina(a), Math.floor(5 * (W.perRound || 0) + 20 * W.perStamina), 'by effort');
+  for (let r = 0; r < 3; r++) { await start(enc, chars, io(3, [5, 5])); await closeRound(enc, chars); }
+  assert.strictEqual(C.maxStamina(a), fresh - Math.floor(3 * (W.perBeat || 0)), 'idle rounds wear only perBeat');
+  for (let r = 0; r < 2; r++) { await start(enc, chars, io(3, [5, 5])); a.stamina -= 10; b.stamina -= 2; await closeRound(enc, chars); }
+  assert.strictEqual(C.freshStamina(a) - C.maxStamina(a), Math.floor(5 * (W.perBeat || 0) + 20 * W.perStamina), 'by effort');
   assert.ok(a.weary > b.weary, 'the one who spent more is wearier');
   await Recovery.longRest(a, {}, roller(1, [5]));
   assert.strictEqual(C.maxStamina(a), fresh);
@@ -1970,7 +1953,7 @@ test('a point against armor: through or turned by its punch and the margin (step
     t.armor = Items.makeArmor('mail', 'full', 'average');
     t.stamina = C.maxStamina(t);
     const before = t.stamina;
-    const enc = { hitThisRound: {}, fortressUsed: {}, log: [], round: 1 };
+    const enc = { struck: {}, fortressUsed: {}, log: [], round: 1 };
     const o = opt(a, (x) => x.motion === 'thrust');
     const r = await Combat.applyHit(enc, { [a.id]: a, [t.id]: t }, a, t, o, roller(1, []), { location: 'torso', margin: m });
     const w = a.weapons[0];
@@ -2001,10 +1984,10 @@ test('rust eats iron but not bronze; a masterwork shield shrugs off the shatteri
     const chars = { [beetle.id]: beetle, [t.id]: t };
     const enc = Combat.createEncounter('t', [beetle.id, t.id], chars, 4, 1);
     enc.pos[beetle.id] = { x: 0, y: 0 }; enc.pos[t.id] = { x: 1, y: 0 };
-    await Combat.startRound(enc, chars, roller(1, [10, 1]));
+    await start(enc, chars, io(1, [10, 1]));
     const touch = C.attackOptions(beetle).find((o) => o.rust);
     const before = t.armor.durability;
-    assert.strictEqual(await Combat.act(enc, chars, { actor: beetle.id, type: 'strike', option: touch, target: t.id }, io(1, [10, 10, 10])), null);
+    assert.strictEqual(await actLand(enc, chars, { actor: beetle.id, type: 'strike', option: touch, target: t.id }, io(1, [10, 10, 10])), null);
     return { lost: before - t.armor.durability, t, log: enc.log.map((l) => l.text).join('\n') };
   };
   const bronze = await touchWith('bronze');
@@ -2076,24 +2059,7 @@ test('the user\'s armor research: picks rupture plate, rondels burst mail, mail 
   assert.strictEqual(steel.pierce.resist, iron.pierce.resist * 1.5);
 });
 
-test('projected pool: next round\'s AP after spending stamina now, with regeneration first and fatigue after', () => {
-  const c = fighter('Tired');
-  const max = C.maxStamina(c);
-  c.stamina = max;
-  assert.deepEqual(C.projectedPool(c, 0), { pool: C.apPool(c), fatigue: 0 });
-  // Spend down to just over a quarter: regeneration lifts it, but not past half.
-  const r = C.roundRegen(c, false);
-  const spend = max - Math.ceil(max * 0.2);
-  const p = C.projectedPool(c, spend);
-  const after = max - spend + r;
-  const expect = B.CONFIG.fatigueSteps.reduce((n, s) => (after / max < s.below ? Math.max(n, s.ap) : n), 0);
-  assert.equal(p.fatigue, expect);
-  assert.ok(p.fatigue >= 1);
-  assert.equal(c.stamina, max, 'the projection leaves stamina as it was');
-  assert.equal(p.pool, C.apPool(c) - p.fatigue * C.apScale());
-});
-
-test('cover: a shield-bearer beside an undefended ally blocks the blow for them, from the bearer\'s own AP', async () => {
+test('cover: a shield-bearer beside an undefended ally blocks the blow for them, on the bearer\'s own clock', async () => {
   const a = armed('A', 'longsword', { side: 'enemy' });
   const t = fighter('T', { side: 'party' });
   const s = armed('S', 'longsword', { side: 'party' });
@@ -2103,7 +2069,7 @@ test('cover: a shield-bearer beside an undefended ally blocks the blow for them,
   const chars = { [a.id]: a, [t.id]: t, [s.id]: s };
   const enc = Combat.createEncounter('t', [a.id, t.id, s.id], chars, 6, 3);
   enc.pos[a.id] = { x: 1, y: 1 }; enc.pos[t.id] = { x: 2, y: 1 }; enc.pos[s.id] = { x: 2, y: 2 };
-  await Combat.startRound(enc, chars, roller(3, [9, 1, 1]));
+  await start(enc, chars, io(3, [9, 1, 1]));
   assert.strictEqual(Combat.currentActor(enc), a.id);
   const swing = Combat.legalActions(enc, chars, a.id).attacks.find((o) => o.motion === 'swing');
   const d = { actor: a.id, type: 'strike', option: swing, target: t.id };
@@ -2115,12 +2081,14 @@ test('cover: a shield-bearer beside an undefended ally blocks the blow for them,
   assert.ok(offers[0].odds < Combat.defenseOdds(s, 'block', 'swing', a, swing));
   const asked = [];
   const x = io(4, [10, 1], (req) => { asked.push(req.kind); return req.kind === 'cover' ? 'cover' : null; });
-  const sAP = enc.ap[s.id], tAP = enc.ap[t.id], dur = s.shield.durability;
+  const dur = s.shield.durability;
   const before = { stamina: t.stamina, dmg: C.woundLoad(t) };
-  assert.strictEqual(await Combat.act(enc, chars, d, x), null);
+  const lead = swing.lead;
+  assert.strictEqual(await actLand(enc, chars, d, x), null);
+  const tAt = enc.clock[t.id];
   assert.deepStrictEqual(asked, ['defend', 'cover'], 'the target first, then the bearer');
-  assert.strictEqual(enc.ap[s.id], sAP - C.actionCost(s, 'block').ap, 'the bearer pays');
-  assert.strictEqual(enc.ap[t.id], tAP, 'the target keeps its AP');
+  assert.strictEqual(enc.clock[s.id], lead + 1 + C.actionCost(s, 'block').ticks, 'the block on the bearer\'s clock');
+  assert.strictEqual(tAt, lead + 1, 'the target\'s clock untouched');
   assert.deepStrictEqual({ stamina: t.stamina, dmg: C.woundLoad(t) }, before, 'the blow never reaches the target');
   assert.ok(s.shield.durability < dur, 'the shield takes it');
   assert.ok(enc.log.some((l) => /S gets a shield in front of T/.test(l.text)));
@@ -2140,36 +2108,23 @@ async function defended(atkWeapon, setupB, react) {
   const chars = { [a.id]: a, [b.id]: b };
   const enc = Combat.createEncounter('t', [a.id, b.id], chars, 4, 1);
   enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[b.id] = { x: 1, y: 0 };
-  await Combat.startRound(enc, chars, roller(3, [10, 1]));
-  enc.ap[b.id] = 6 * B.CONFIG.apScale;
+  await start(enc, chars, io(3, [10, 1]));
   const swing = Combat.legalActions(enc, chars, a.id).attacks.find((o) => o.motion === 'swing' || o.motion === 'twoHanded');
-  const before = enc.ap[a.id];
-  await Combat.act(enc, chars, { actor: a.id, type: 'strike', option: swing, target: b.id }, io(5, [10, 1, 10, 1], react));
-  return { enc, a, b, swing, spent: before - enc.ap[a.id] };
+  const before = enc.now;
+  await actLand(enc, chars, { actor: a.id, type: 'strike', option: swing, target: b.id }, io(5, [10, 1, 10, 1], react));
+  return { enc, a, b, swing, spent: enc.clock[a.id] - before };
 }
 
-test('a block rebounds: the attacker loses a third of the blow\'s AP, the rest owed into next round', async () => {
+test('a block rebounds: a third of the blow\'s ticks go on the attacker\'s clock', async () => {
   const shield = (b) => { b.shield = Items.makeShield('round', 'iron', 'standard'); };
   const r = await defended('longsword', shield, (req) => (req.kind === 'defend' ? 'block' : null));
-  assert.strictEqual(r.spent, r.swing.ap + Math.round(r.swing.ap / 3), 'the swing and a third of it');
-  // A greatsword swing that empties the pool: the rebound comes off the next round, and the fighter who owes can't
-  // take a whole-turn action.
-  const g = await defended('greatsword', shield, (req) => (req.kind === 'defend' ? 'block' : null));
-  // A whole-turn swing takes the whole pool; the rebound is a third of what it took.
-  const took = g.enc.decls.find((d) => d.actor === g.a.id && d.type === 'strike').ap;
-  const owe = Math.round(took / 3) - Math.max(0, g.enc.apStart[g.a.id] - took);
-  assert.ok(owe > 0, `owes ${owe}`);
-  assert.ok(g.enc.log.some((l) => /rebounds off the shield/.test(l.text) && /next round/.test(l.text)), 'owed into next round');
-  const gc = { [g.a.id]: g.a, [g.b.id]: g.b };
-  await closeRound(g.enc, gc);
-  if (g.enc.round === 1) await Combat.startRound(g.enc, gc, roller(4, [10, 1]));
-  assert.strictEqual(g.enc.ap[g.a.id], Math.max(0, g.enc.apStart[g.a.id] - owe), 'paid at the start of the next');
-  assert.ok(!Combat.legalActions(g.enc, gc, g.a.id).attacks.some((o) => o.motion === 'twoHanded' && o.affordable), 'no whole-turn swing while owing');
+  assert.strictEqual(r.spent, r.swing.ticks + Math.round(r.swing.ticks / 3), 'the swing and a third of it');
+  assert.ok(r.enc.log.some((l) => /rebounds off the shield: \+\d+ ticks/.test(l.text)));
 });
 
 test('a dodge costs the attacker nothing, meets only melee blows, and pays for armor twice', async () => {
   const r = await defended('longsword', () => {}, (req) => (req.kind === 'defend' ? 'dodge' : null));
-  assert.strictEqual(r.spent, r.swing.ap);
+  assert.strictEqual(r.spent, r.swing.ticks);
   const d = armed('D', 'longsword');
   const bow = armed('Archer', 'longbow');
   const shot = { type: 'strike', actor: bow.id, option: opt(bow, (o) => o.ranged) };
@@ -2194,12 +2149,12 @@ test('a parry is worse than a block, nearing it as the parrying weapon outweighs
   assert.strictEqual(levT('rapier'), 0, 'an equal blade has no leverage');
   assert.ok(lev('dagger') < 0, 'a dagger against a sword\'s swing is outweighed');
   const p = await defended('longsword', () => {}, (req) => (req.kind === 'defend' ? 'parry' : null));
-  assert.strictEqual(p.spent, p.swing.ap + Math.round(p.swing.ap / 6), 'a sixth');
+  assert.strictEqual(p.spent, p.swing.ticks + Math.round(p.swing.ticks / 6), 'a sixth');
   const beat = await defended('longsword', (b) => { b.skills.melee = 2; b.feats.beat = 2; }, (req) => (req.kind === 'defend' ? 'parry' : null));
-  assert.strictEqual(beat.spent, beat.swing.ap + Math.round(beat.swing.ap / 2), 'a sixth and two more with Beat II');
+  assert.strictEqual(beat.spent, beat.swing.ticks + Math.round(beat.swing.ticks / 2), 'a sixth and two more with Beat II');
 });
 
-test('a successful parry opens a riposte: anyone may answer for its AP, the Riposte feat for none', async () => {
+test('a successful parry opens a riposte: anyone may answer for its ticks, the Riposte feat for none', async () => {
   let asked = null;
   const react = (req) => {
     if (req.kind === 'defend') return 'parry';
@@ -2208,11 +2163,11 @@ test('a successful parry opens a riposte: anyone may answer for its AP, the Ripo
   };
   const r = await defended('longsword', () => {}, react);
   assert.ok(asked && asked.actor === r.b.id && asked.target === r.a.id, 'the parrier is offered a riposte');
-  assert.ok(asked.options[0].ap > 0, 'paid for');
+  assert.ok(asked.options[0].ticks > 0, 'paid for');
   assert.ok(r.enc.decls.some((d) => d.riposte && d.actor === r.b.id), 'and makes it');
   asked = null;
   const f = await defended('longsword', (b) => { b.skills.melee = 2; b.feats.riposte = 1; }, react);
-  assert.ok(asked && asked.options.every((o) => o.ap === 0), 'free with the feat');
+  assert.ok(asked && asked.options.every((o) => o.ticks === 0), 'free with the feat');
   asked = null;
   await defended('longsword', () => {}, (req) => (req.kind === 'defend' ? 'dodge' : react(req)));
   assert.strictEqual(asked, null, 'a dodge opens nothing');

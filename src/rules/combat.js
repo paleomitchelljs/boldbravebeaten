@@ -1,17 +1,19 @@
 /*
- * Combat engine: round structure, actions, reactions, resolution, damage.
+ * Combat engine: the clock, actions, reactions, resolution, damage.
  *
- * Terms:
- *   Round     starts with everyone rolling their AP (f(SPD) + a die − fatigue; the order is the AP rolled) and ends when
- *             everyone has had their turn; then bleed, regeneration, fatigue. Unspent AP is lost.
- *   Turn      one character's go, in initiative order: as many actions as their AP pays for.
- *             Each action resolves as it is taken.
- *   Reaction  something done out of turn, paid from the same AP pool: a block, parry or dodge
- *             when a blow comes at you, or an opportunity strike at a foe who leaves your reach.
- *             AP kept back from your turn is AP to react with; AP spent reacting is gone from it.
+ * Terms (docs/OVERHAUL.md step F; CONFIG.clock):
+ *   Tick      the unit of time. Every fighter has a clock, in ticks; whoever's clock is lowest acts next.
+ *   Action    one thing done: its ticks go on the actor's clock. Its lead passes before it takes effect (a quick
+ *             thrust has next to none; a power blow, a drawn bow, a gathered spell a real one, in which others act and
+ *             the fighter is committed), its recovery after.
+ *   Reaction  something done out of turn, its ticks on the reactor's clock: a block, parry or dodge when a blow comes,
+ *             an opportunity strike at a foe entering, leaving or stepping within your reach, a riposte, a cover. A
+ *             fighter more than `overreach` ticks ahead of now can't react.
+ *   Beat      every `beat` ticks the timeline (no fighter) runs what happens over time: bleeding, regeneration,
+ *             conditions' durations, terrain, holds, auras, groups joining, getting away.
  *
- * So the faster side sets the rhythm: whoever acts first makes the others spend their pool
- * answering, and a fighter who has spent theirs takes what comes on their armor.
+ * So answering costs time: several attackers wear a defender down by pushing their clock out of reach of their own
+ * next action, and a defender chooses between answering and acting.
  *
  * Every die roll goes through an async io.roller(request) and every reaction through an async
  * io.react(request), so the UI can ask the player, or the AI can decide.
@@ -34,9 +36,8 @@
     const enc = {
       id: Items.uid('enc'), name: name || 'Encounter', round: 0, phase: 'setup',
       ids: ids.slice(), grid: { w: w || 10, h: h || 8 }, pos: {},
-      initiative: {}, order: [], ap: {}, apStart: {}, conceded: {}, pass: 1, turn: 0, step: 'turns',
-      spent: {}, turnDone: {},
-      decls: [], seq: 0, log: [], hitThisRound: {}, fortressUsed: {}, startedAt: Date.now(),
+      now: 0, beat: 0, nextBeat: CONFIG.clock.beat, clock: {}, tie: {}, pending: [], committed: {}, waits: {}, actor: null,
+      decls: [], seq: 0, log: [], struck: {}, fortressUsed: {}, startedAt: Date.now(),
     };
     bind(enc, chars);
     autoPlace(enc, chars);
@@ -77,7 +78,7 @@
   }
 
   // The characters of an encounter, for rules that ask who stands where but are reached without them (a defence's
-  // numbers: flanked). Set wherever the engine is given both (createEncounter, startRound, legalActions, a defence).
+  // numbers: flanked). Set wherever the engine is given both (createEncounter, begin, legalActions, a defence).
   const rosters = typeof WeakMap !== 'undefined' ? new WeakMap() : null;
   function bind(enc, chars) {
     if (rosters && enc && chars) rosters.set(enc, chars);
@@ -142,7 +143,7 @@
   }
 
   function log(enc, text, cls) {
-    enc.log.push({ round: enc.round, text, cls: cls || '' });
+    enc.log.push({ tick: enc.now || 0, beat: enc.beat || 0, text, cls: cls || '' });
   }
 
   async function rollDie(roller, actorId, sides, label, detail) {
@@ -150,9 +151,9 @@
     return Math.max(1, Math.min(sides, r[0]));
   }
 
-  // ---- Round start -------------------------------------------------------
-  // Auras (trait aura: { radius, stamina, cond }): at the start of each round every foe within
-  // the radius loses stamina and takes the condition for the round.
+  // ---- Auras -------------------------------------------------------------
+  // Auras (trait aura: { radius, stamina, cond }): at the fight's start and each beat every foe within
+  // the radius loses stamina and takes the condition until the next beat.
   async function auras(enc, chars, roller) {
     for (const id of enc.ids) {
       const c = chars[id];
@@ -171,81 +172,92 @@
       if (A.cond && G.Conditions) {
         // A resisted aura (a spectre's wail) is contested like a spell; otherwise it simply takes hold.
         if (A.resisted && G.Magic && t === chars[hit[0]]) log(enc, `${c.name}'s ${A.name || 'aura'} rises over ${hit.map((o) => chars[o].name).join(', ')}.`, 'hit');
-        if (A.resisted && G.Magic) await G.Magic.afflict(enc, c, t, A.cond, { rounds: A.rounds || 1, mag: A.mag || 1 }, roller);
-        else G.Conditions.add(t, A.cond, { rounds: A.rounds || 1, src: id });
+        if (A.resisted && G.Magic) await G.Magic.afflict(enc, c, t, A.cond, { beats: A.beats || 1, mag: A.mag || 1 }, roller);
+        else G.Conditions.add(t, A.cond, { beats: A.beats || 1, src: id });
       }
     }
     if (hit.length && !A.resisted) log(enc, `${c.name}'s ${A.name || 'aura'} falls on ${hit.map((o) => chars[o].name).join(', ')}${A.stamina ? ` (−${A.stamina} stamina` : ' ('}${A.cond ? `${A.stamina ? ', ' : ''}${CONFIG.conditions[A.cond].name.toLowerCase()}` : ''}).`, 'hit');
   }
 
-  async function startRound(enc, chars, roller) {
+  // ---- The clock (CONFIG.clock; docs/OVERHAUL.md step F) ------------------------------------------------
+  // Every fighter has a clock, in ticks: the tick at which it next chooses an action. Whoever's clock is lowest acts
+  // next (ties: higher SPD, gear's `init`, then a d10 rolled once at the start). An action's ticks go on the actor's
+  // clock; its lead (Character.leadOf) passes before it takes effect, and others act in between (enc.pending). A
+  // reaction's ticks go on the reactor's clock, and a fighter more than `overreach` ticks ahead of now can't react.
+  // Every `beat` ticks, the timeline (not any fighter) runs what happens "each beat" (beat()).
+  //
+  // enc: now (the tick), clock {id: tick}, tie {id: d10}, beat (beats passed), nextBeat (the tick of the next),
+  //   pending [{ decl, at }] (committed actions and when they land), committed {id: decl}, waits {id: wait},
+  //   actor (who chooses now, phase 'act').
+  function K() {
+    return CONFIG.clock;
+  }
+
+  // Fighters' places on the timeline, before anyone acts: 0, or a side caught off guard `surprise` ticks late.
+  // io (optional): { roller, react, onBeat(enc, chars, when) } — the game's hook at the start and at each beat (groups
+  // joining, the getting-away check; it may set enc.phase 'away' to stop the fight there).
+  async function begin(enc, chars, roller, io) {
+    io = Object.assign({ roller }, io || {});
     bind(enc, chars);
-    enc.round += 1;
-    // Stamina at the round's start, so its end can tell how much each fighter spent (CONFIG.weariness.perStamina).
-    enc.staminaAtStart = {};
-    for (const id of enc.ids) if (chars[id]) enc.staminaAtStart[id] = chars[id].stamina;
-    // The first round: wards, boons and runes laid in advance by ritual take hold.
-    if (enc.round === 1 && G.Ritual) for (const line of G.Ritual.applyPrepared(enc, chars)) log(enc, line, 'pass');
-    await auras(enc, chars, roller);
-    enc.phase = 'initiative';
-    enc.decls = [];
-    enc.conceded = {};
-    enc.hitThisRound = {};
-    enc.burned = {};
-    enc.fortressUsed = {};
-    enc.turnDone = {};
-    enc.dodged = {};
-    enc.fled = {};
-    enc.turn = -1;
-    enc.initiative = {};
-    const active = enc.ids.filter((id) => C.isActive(chars[id]));
+    enc.now = 0;
+    enc.beat = 0;
+    enc.nextBeat = K().beat;
+    enc.clock = enc.clock || {};
+    enc.tie = enc.tie || {};
+    enc.pending = [];
+    enc.committed = {};
+    enc.waits = {};
+    resetBeat(enc, chars);
+    // Wards, boons and runes laid in advance by ritual take hold.
+    if (G.Ritual) for (const line of G.Ritual.applyPrepared(enc, chars)) log(enc, line, 'pass');
     const sp = enc.surprise;
-    const rolled = {};
-    for (const id of active) {
-      const c = chars[id];
-      const spd = C.combatAttr(c, 'SPD');
-      const gear = G.Effects.sum(c, 'init');
-      if (CONFIG.apDie) {
-        // The round's AP (CONFIG.apDie): rolled, and the order is the AP rolled, most first. Surprise (an ambush, a
-        // trap sprung) leaves that side part of its AP, and so later in the order.
-        const r = await rollDie(roller, id, CONFIG.apDie, 'AP', `d${CONFIG.apDie} + ${CONFIG.apBase} + SPD/${CONFIG.apSpdDivisor}`);
-        rolled[id] = C.apPool(c, r);
-        if (sp && sp.round === enc.round && c.side === sp.side) rolled[id] = Math.floor(rolled[id] * sp.factor);
-        enc.initiative[id] = rolled[id] + gear * C.apScale() / 100; // gear's `init` breaks a tie
-      } else {
-        const r = await rollDie(roller, id, CONFIG.initiativeDie, 'Initiative', `d${CONFIG.initiativeDie} + SPD ${spd}${gear ? ` + ${gear} (gear)` : ''}`);
-        enc.initiative[id] = r + spd + gear;
-      }
+    for (const id of enc.ids) {
+      if (!chars[id]) continue;
+      enc.tie[id] = await rollDie(roller, id, K().die, 'Tie-break', `d${K().die}: who goes first when two clocks agree`);
+      enc.clock[id] = sp && chars[id].side === sp.side ? (sp.ticks != null ? sp.ticks : K().surprise) : 0;
     }
-    enc.order = active.slice().sort((a, b) => {
-      const d = enc.initiative[b] - enc.initiative[a];
-      if (d) return d;
-      return C.combatAttr(chars[b], 'SPD') - C.combatAttr(chars[a], 'SPD');
-    });
-    for (const id of enc.order) {
-      if (CONFIG.apDie) enc.ap[id] = rolled[id];
-      else {
-        enc.ap[id] = C.apPool(chars[id]);
-        if (sp && sp.round === enc.round && chars[id].side === sp.side) enc.ap[id] = Math.floor(enc.ap[id] * sp.factor);
-      }
-      enc.apStart[id] = enc.ap[id];
-      // AP owed from a blow that rebounded last round (CONFIG.defense.rebound.carry): already spent.
-      const owed = enc.owed && enc.owed[id];
-      if (owed) enc.ap[id] = Math.max(0, enc.ap[id] - owed);
-    }
-    enc.owed = {};
-    if (enc.surprise && enc.surprise.round === enc.round) log(enc, `${enc.surprise.side === 'party' ? 'The party is' : 'The enemy is'} caught off guard.`, 'round');
-    log(enc, CONFIG.apDie
-      ? `Round ${enc.round} — AP rolled: ` + enc.order.map((id) => `${chars[id].name} ${C.fmtAP(enc.apStart[id])}`).join(', ')
-      : `Round ${enc.round} — initiative: ` + enc.order.map((id) => `${chars[id].name} ${enc.initiative[id]}`).join(', '), 'round');
-    await advance(enc, chars, { roller });
+    if (sp) log(enc, `${sp.side === 'party' ? 'The party is' : 'The enemy is'} caught off guard (+${sp.ticks != null ? sp.ticks : K().surprise} ticks).`, 'round');
+    log(enc, 'The fight begins.', 'round');
+    await auras(enc, chars, roller);
+    enc.phase = 'acting';
+    if (io.onBeat) await io.onBeat(enc, chars, 'start');
+    if (enc.phase === 'acting') await advance(enc, chars, io);
     return enc;
   }
 
-  // ---- Turns and reactions --------------------------------------------------
-  // AP this character has left this round (for their turn, and for reactions on anyone's turn).
-  function apLeft(enc, id) {
-    return Math.max(0, enc.ap[id] || 0);
+  // One who comes round, or back up, mid-fight takes up from now.
+  function upAgain(enc, c) {
+    if (enc.clock && enc.now != null) enc.clock[c.id] = Math.max(enc.clock[c.id] != null ? enc.clock[c.id] : enc.now, enc.now);
+  }
+
+  // Put a fighter who comes in mid-fight (a summons, a group joining) on the timeline, `delay` ticks from now.
+  function enter(enc, id, delay) {
+    enc.clock = enc.clock || {};
+    enc.tie = enc.tie || {};
+    enc.clock[id] = (enc.now || 0) + (delay == null ? K().beat / 2 : delay);
+    if (enc.tie[id] == null) enc.tie[id] = 0;
+  }
+
+  // When this fighter is ready again: its clock, or now while it waits (a waiting fighter is idle, and can react).
+  function readyAt(enc, id) {
+    return enc.waits && enc.waits[id] ? enc.now : enc.clock[id] != null ? enc.clock[id] : enc.now;
+  }
+
+  // Ticks this fighter is ahead of now (what reacting would have to wait on).
+  function ahead(enc, id) {
+    return Math.max(0, readyAt(enc, id) - (enc.now || 0));
+  }
+
+  // Can this fighter react now? On its feet (or down to its knees: a prone fighter still guards), not too far ahead.
+  function canReact(enc, chars, id) {
+    const c = chars[id];
+    return !!c && C.isActive(c) && ahead(enc, id) <= K().overreach;
+  }
+
+  // A reaction's ticks go on the reactor's clock; a wait is broken by it (the fighter answered, and goes on from now).
+  function pushClock(enc, id, ticks) {
+    if (enc.waits && enc.waits[id]) { delete enc.waits[id]; enc.clock[id] = enc.now; }
+    enc.clock[id] = Math.max(enc.clock[id] != null ? enc.clock[id] : enc.now, enc.now) + (ticks || 0);
   }
 
   // Ask the reactor what they do: the host's react(req) (a player prompt, or the AI for
@@ -261,7 +273,7 @@
   // general, with no odds: they choose blind, and a defence that can't meet the blow is wasted.
   function defenseOptions(enc, chars, t, a, d) {
     bind(enc, chars);
-    if (!C.isActive(t) || GRAPPLE_STEPS.includes(d.type)) return { hidden: false, options: [] };
+    if (!C.isActive(t) || GRAPPLE_STEPS.includes(d.type) || !canReact(enc, chars, t.id)) return { hidden: false, options: [] };
     const hidden = describeBare(enc, chars, d, t.id).hidden;
     const free = C.rank(t, 'untouchable') && enc.dodged && enc.dodged[t.id];
     const motion = d.type === 'strike' ? d.option.motion : 'maneuver';
@@ -270,47 +282,45 @@
       if (kind === 'offParry' && !C.offhandWeapon(t)) continue;
       if (conditionForbids(enc, chars, t, { type: kind, target: a.id })) continue;
       if (defenseUnavailable(t, kind, hidden ? null : d, chars, enc)) continue;
-      let { ap, stamina } = C.actionCost(t, kind);
-      if (kind === 'dodge' && free) { ap = 0; stamina = 0; }
-      if (ap > apLeft(enc, t.id)) continue;
+      let { ticks, stamina } = C.actionCost(t, kind);
+      if (kind === 'dodge' && free) { ticks = 0; stamina = 0; }
       const spent = isSpent(t, stamina);
-      options.push(Object.assign({ type: kind, name: ACTIONS[kind].name, ap, stamina, odds: hidden ? null : defenseOdds(t, kind, motion, a, d.option, spent ? -CONFIG.stamina.spent.defense : 0, enc) }, spent ? { spent } : {}));
+      options.push(Object.assign({ type: kind, name: ACTIONS[kind].name, ticks, stamina, odds: hidden ? null : defenseOdds(t, kind, motion, a, d.option, spent ? -CONFIG.stamina.spent.defense : 0, enc) }, spent ? { spent } : {}));
     }
     return { hidden, options };
   }
 
-  // The defender's reaction to an attack about to land: pays its AP and returns the defence, or null.
+  // The defender's reaction to an attack about to land: puts its ticks on their clock and returns the defence, or null.
   async function askDefense(enc, chars, t, a, d, io) {
     const { hidden, options } = defenseOptions(enc, chars, t, a, d);
     if (!options.length) return null;
-    const pick = await react(enc, chars, { kind: 'defend', actor: t.id, attacker: a.id, decl: d, hidden, options, ap: apLeft(enc, t.id) }, io);
+    const pick = await react(enc, chars, { kind: 'defend', actor: t.id, attacker: a.id, decl: d, hidden, options, ahead: ahead(enc, t.id) }, io);
     const o = options.find((x) => x.type === pick);
     if (!o) return null;
-    enc.ap[t.id] -= o.ap;
+    pushClock(enc, t.id, o.ticks);
     if (o.type === 'dodge' && C.rank(t, 'untouchable')) (enc.dodged || (enc.dodged = {}))[t.id] = true;
-    enc.decls.push({ actor: t.id, type: o.type, against: a.id, reaction: true, ap: o.ap, stamina: o.stamina, n: ++enc.seq, done: true });
+    enc.decls.push({ actor: t.id, type: o.type, against: a.id, reaction: true, ticks: o.ticks, stamina: o.stamina, n: ++enc.seq, tick: enc.now, beat: enc.beat, done: true });
     return o;
   }
 
   // Cover (CONFIG.defense.cover): allies with a ready shield within reach of the target who could block this blow for
   // them now, each with the block's cost and odds (none when the blow can't be read).
   function coverOptions(enc, chars, t, a, d) {
-    const K = CONFIG.defense.cover;
-    if (!K || d.type !== 'strike' || GRAPPLE_STEPS.includes(d.type)) return [];
+    const KC = CONFIG.defense.cover;
+    if (!KC || d.type !== 'strike' || GRAPPLE_STEPS.includes(d.type)) return [];
     const out = [];
-    for (const id of enc.order.concat(enc.ids.filter((x) => !enc.order.includes(x)))) {
+    for (const id of byClock(enc, chars, enc.ids)) {
       const b = chars[id];
-      if (!b || id === t.id || id === a.id || b.side !== t.side || !C.isActive(b)) continue;
+      if (!b || id === t.id || id === a.id || b.side !== t.side || !C.isActive(b) || !canReact(enc, chars, id)) continue;
       // Shield Wall: a square farther, and no harder than a block of your own.
       const wall = C.rank(b, 'shield_wall') > 0;
-      if (dist(enc.pos[id], enc.pos[t.id]) > K.reach + (wall ? 1 : 0) || isGrappled(b)) continue;
+      if (dist(enc.pos[id], enc.pos[t.id]) > KC.reach + (wall ? 1 : 0) || isGrappled(b)) continue;
       if (defenseUnavailable(b, 'block', d, chars, enc) || conditionForbids(enc, chars, b, { type: 'block', target: a.id })) continue;
-      const { ap, stamina } = C.actionCost(b, 'block');
-      if (ap > apLeft(enc, id)) continue;
+      const { ticks, stamina } = C.actionCost(b, 'block');
       const hidden = describeBare(enc, chars, d, id).hidden;
-      const penalty = wall ? 0 : K.penalty;
+      const penalty = wall ? 0 : KC.penalty;
       const spent = isSpent(b, stamina);
-      out.push(Object.assign({ actor: id, type: 'cover', name: 'Cover', ap, stamina, penalty, odds: hidden ? null : defenseOdds(b, 'block', d.option.motion, a, d.option, -penalty - (spent ? CONFIG.stamina.spent.defense : 0), enc), hidden }, spent ? { spent } : {}));
+      out.push(Object.assign({ actor: id, type: 'cover', name: 'Cover', ticks, stamina, penalty, odds: hidden ? null : defenseOdds(b, 'block', d.option.motion, a, d.option, -penalty - (spent ? CONFIG.stamina.spent.defense : 0), enc), hidden }, spent ? { spent } : {}));
     }
     return out;
   }
@@ -319,32 +329,34 @@
   // and the offer, or null.
   async function askCover(enc, chars, t, a, d, io) {
     for (const o of coverOptions(enc, chars, t, a, d)) {
-      const pick = await react(enc, chars, { kind: 'cover', actor: o.actor, attacker: a.id, target: t.id, decl: d, hidden: o.hidden, options: [o], ap: apLeft(enc, o.actor) }, io);
+      const pick = await react(enc, chars, { kind: 'cover', actor: o.actor, attacker: a.id, target: t.id, decl: d, hidden: o.hidden, options: [o], ahead: ahead(enc, o.actor) }, io);
       if (pick !== 'cover') continue;
-      enc.ap[o.actor] -= o.ap;
-      enc.decls.push({ actor: o.actor, type: 'block', cover: t.id, against: a.id, reaction: true, ap: o.ap, stamina: o.stamina, n: ++enc.seq, done: true });
+      pushClock(enc, o.actor, o.ticks);
+      enc.decls.push({ actor: o.actor, type: 'block', cover: t.id, against: a.id, reaction: true, ticks: o.ticks, stamina: o.stamina, n: ++enc.seq, tick: enc.now, beat: enc.beat, done: true });
       return { bearer: chars[o.actor], o };
     }
     return null;
   }
 
-  // Melee blows this fighter could aim at a square right now (an opportunity strike).
+  // Melee blows this fighter could aim at a square right now (an opportunity strike): on its feet, free, not committed
+  // to an action of its own, and not too far ahead to react.
   function opportunityOptions(enc, chars, f, from) {
     if (!C.isActive(f) || f.status.prone || isGrappled(f) || C.inClinch(f)) return [];
+    if (enc.committed && enc.committed[f.id]) return [];
+    if (enc.clock && !canReact(enc, chars || rosters.get(enc) || { [f.id]: f }, f.id)) return [];
     const dd = dist(from, enc.pos[f.id]);
-    // Snap Shot: a bow already drawn may loose too.
+    // Snap Shot: a bow may loose too.
     const snap = C.rank(f, 'snap_shot') > 0;
-    return C.attackOptions(f).filter((o) => (snap && o.ranged && !o.spell ? true : !o.ranged && !o.spell && !o.windUp) && C.inRange(o, dd) && o.ap <= apLeft(enc, f.id) && !attackUnavailable(enc, f, o));
+    return C.attackOptions(f).filter((o) => (snap && o.ranged && !o.spell ? true : !o.ranged && !o.spell && !o.exposes) && C.inRange(o, dd) && !attackUnavailable(enc, f, o));
   }
 
   // A mover's step from `from` to `to` past foes' reach (CONFIG.opportunityStrikes, the user's ruling,
   // 2026-11-02): coming up to the edge of a foe's reach is free; a foe strikes at a mover who steps from within
   // its reach to closer still, leaves it, or takes a second step within it that brings them no closer. Each foe
-  // strikes once per move, paying from its own AP, with the mover still at `from`: a hit stops them there.
+  // strikes once per move, the blow's ticks on its own clock, with the mover still at `from`: a hit stops them there.
   // Returns true if a blow lands and stops the move.
   async function opportunities(enc, chars, m, from, to, state, io) {
-    const foes = enc.order.concat(enc.ids.filter((x) => !enc.order.includes(x)))
-      .filter((f) => f !== m.id && chars[f] && chars[f].side !== m.side && !state.provoked[f]);
+    const foes = byClock(enc, chars, enc.ids).filter((f) => f !== m.id && chars[f] && chars[f].side !== m.side && !state.provoked[f]);
     for (const f of foes) {
       const reactor = chars[f];
       if (conditionForbids(enc, chars, reactor, { type: 'strike', target: m.id })) continue;
@@ -366,13 +378,13 @@
       if (C.rank(m, 'shadow_step') && G.Effects.has(m, 'unseen')) continue;
       const options = opportunityOptions(enc, chars, reactor, at);
       state.provoked[f] = true;
-      const pick = await react(enc, chars, { kind: 'opportunity', actor: f, target: m.id, options, ap: apLeft(enc, f), why }, io);
+      const pick = await react(enc, chars, { kind: 'opportunity', actor: f, target: m.id, options, ahead: ahead(enc, f), why }, io);
       const opt = options.find((o) => o === pick || C.optionKey(o) === pick || (pick && C.optionKey(o) === C.optionKey(pick)));
       if (!opt) continue;
-      enc.ap[f] -= opt.ap;
+      pushClock(enc, f, opt.ticks);
       const before = { stamina: m.stamina, load: C.woundLoad(m), active: C.isActive(m) };
       log(enc, `${reactor.name} strikes at ${m.name} as they ${why === 'closes' ? 'close in' : why === 'leaves' ? 'go' : 'move'}.`, 'pass');
-      const sd = { actor: f, type: 'strike', option: opt, target: m.id, ap: opt.ap, stamina: opt.stamina, n: ++enc.seq, opportunity: true, round: enc.round };
+      const sd = { actor: f, type: 'strike', option: opt, target: m.id, ticks: opt.ticks, stamina: opt.stamina, n: ++enc.seq, opportunity: true, reaction: true, tick: enc.now, beat: enc.beat };
       enc.decls.push(sd);
       await resolveAction(enc, chars, sd, io, Object.assign({}, enc.pos, { [m.id]: at }));
       sd.done = true;
@@ -392,59 +404,221 @@
     return f && w && !WEAPONS[w.type].ranged && Items.longestReach(WEAPONS[w.type]) >= 3 ? Math.max(CONFIG.range.maneuverMax, f) : CONFIG.range.maneuverMax;
   }
 
-  // CONFIG.wholeTurnAction: someone who has spent nothing this round may take one action that costs
-  // more than their whole pool, as their whole turn (a tired or armored fighter can always make one
-  // big swing).
-  function wholeTurn(enc, id) {
-    return !!CONFIG.wholeTurnAction && apLeft(enc, id) > 0 && apLeft(enc, id) >= (enc.apStart[id] || 0);
+  // Who acts first of these at the same tick: the earlier clock, a wait just released first and one still waiting last, higher SPD, gear's init,
+  // the tie-break die, the order of the fight.
+  function order(enc, chars, a, b) {
+    const ca = enc.clock[a] != null ? enc.clock[a] : enc.now, cb = enc.clock[b] != null ? enc.clock[b] : enc.now;
+    if (ca !== cb) return ca - cb;
+    // Still waiting: after the others at its tick. Just released by what it waited for: before them (just after it).
+    const rank = (x) => (enc.waits && enc.waits[x] ? 1 : enc.released && enc.released[x] ? -1 : 0);
+    if (rank(a) !== rank(b)) return rank(a) - rank(b);
+    const s = C.combatAttr(chars[b], 'SPD') - C.combatAttr(chars[a], 'SPD');
+    if (s) return s;
+    const g = G.Effects.sum(chars[b], 'init') - G.Effects.sum(chars[a], 'init');
+    if (g) return g;
+    const t = (enc.tie[b] || 0) - (enc.tie[a] || 0);
+    if (t) return t;
+    return enc.ids.indexOf(a) - enc.ids.indexOf(b);
+  }
+  function byClock(enc, chars, ids) {
+    return ids.filter((x) => chars[x] && enc.clock && enc.clock[x] != null).sort((a, b) => order(enc, chars, a, b)).concat(ids.filter((x) => chars[x] && !(enc.clock && enc.clock[x] != null)));
   }
 
-  function eligible(enc, chars, id) {
-    return id != null && !enc.turnDone[id] && C.isActive(chars[id]) && apLeft(enc, id) >= C.minAP();
+  // Who chooses an action next, and when: the lowest clock among the fighters on their feet who aren't committed.
+  // A wait for the next thing to happen holds until something does (release), or the next beat.
+  function nextChooser(enc, chars) {
+    let best = null;
+    for (const id of enc.ids) {
+      const c = chars[id];
+      if (!c || !C.isActive(c) || enc.clock[id] == null || (enc.committed && enc.committed[id])) continue;
+      const w = enc.waits[id];
+      const t = w ? waitEnd(enc, chars, id, w) : enc.clock[id];
+      if (!best || t < best.t || (t === best.t && order(enc, chars, id, best.id) < 0)) best = { id, t };
+    }
+    return best;
   }
-
-  function currentActor(enc) {
-    return enc.phase === 'turn' ? enc.order[enc.turn] : null;
+  // When a wait ends if nothing releases it first: n ticks waited out; for the next thing, the next beat; for a named
+  // fighter, when that fighter is next ready (it acts first: order()).
+  function waitEnd(enc, chars, id, w) {
+    if (w.until != null) return w.until;
+    if (w.for && chars[w.for] && C.isActive(chars[w.for]) && enc.clock[w.for] != null) return Math.max(enc.now + 1, enc.clock[w.for]);
+    return enc.nextBeat;
   }
-
-  // On to the next character with a turn to take this round, in initiative order. When no one
-  // is left, the round ends.
-  async function advance(enc, chars, io) {
-    if (enc.phase === 'over') return;
-    const n = enc.order.length;
-    for (;;) {
-      enc.turn += 1;
-      if (enc.turn >= n) return finishRound(enc, chars, io);
-      if (eligible(enc, chars, enc.order[enc.turn])) { enc.phase = 'turn'; return; }
+  // Something happened (another's action, a blow landing, a beat): waits for the next thing end now, and a wait for a
+  // named fighter ends when that fighter has acted (or fallen).
+  function release(enc, chars, who) {
+    for (const [id, w] of Object.entries(enc.waits)) {
+      if (id === who) continue;
+      const named = w.for && (w.for === who || !chars[w.for] || !C.isActive(chars[w.for]));
+      if (w.next || named) {
+        delete enc.waits[id];
+        enc.clock[id] = enc.now;
+        (enc.released || (enc.released = {}))[id] = true;
+      }
     }
   }
 
-  // End of the round: hazards, spells and conditions tick, wounds bleed, the winded recover.
-  async function finishRound(enc, chars, io) {
+  function currentActor(enc) {
+    return enc.phase === 'act' ? enc.actor : null;
+  }
+
+  // On to whatever happens next on the timeline: a committed action landing, a beat, or a fighter choosing (phase
+  // 'act', enc.actor). At one tick: landings first, then the beat, then choices.
+  async function advance(enc, chars, io) {
+    for (let guard = 0; guard < 10000; guard++) {
+      if (enc.phase === 'over' || enc.phase === 'away') return;
+      if (endIfDecided(enc, chars)) { await settleFallen(enc, chars, io && io.roller); return; }
+      const who = nextChooser(enc, chars);
+      const land = enc.pending.reduce((m, p) => (!m || p.at < m.at ? p : m), null);
+      const tc = who ? Math.max(enc.now, who.t) : Infinity;
+      const tl = land ? Math.max(enc.now, land.at) : Infinity;
+      const tb = enc.nextBeat;
+      if (tl <= tb && tl <= tc) {
+        enc.now = tl;
+        await landAction(enc, chars, land, io);
+        continue;
+      }
+      if (tb <= tc) {
+        enc.now = tb;
+        await beat(enc, chars, io);
+        continue;
+      }
+      enc.now = tc;
+      if (enc.waits[who.id]) { delete enc.waits[who.id]; enc.clock[who.id] = tc; }
+      enc.actor = who.id;
+      enc.phase = 'act';
+      return;
+    }
+    throw new Error('Combat.advance: the timeline did not move');
+  }
+
+  // A side with no one on its feet: the fight is over.
+  function endIfDecided(enc, chars) {
+    if (enc.phase === 'over') return false;
+    const sides = {};
+    for (const id of enc.ids) if (chars[id] && C.isActive(chars[id])) sides[chars[id].side] = true;
+    const left = Object.keys(sides);
+    if (left.length > 1) return false;
+    enc.phase = 'over';
+    enc.actor = null;
+    enc.winner = left[0] || null;
+    log(enc, left.length ? `The ${left[0] === 'party' ? 'party' : 'enemy'} side wins.` : 'No one is left standing.', 'round');
+    return true;
+  }
+
+  // A committed action's lead is up: it takes effect, if the fighter is still able.
+  async function landAction(enc, chars, p, io) {
+    enc.pending = enc.pending.filter((x) => x !== p);
+    const d = p.decl;
+    if (enc.committed[d.actor] === d) delete enc.committed[d.actor];
+    const a = chars[d.actor];
+    if (!a || !C.isActive(a) || d.spoiled) { d.done = true; return; }
+    enc.phase = 'acting';
+    await perform(enc, chars, d, io);
+    afterAction(enc, chars);
+    release(enc, chars, d.actor);
+  }
+
+  // Bookkeeping after anything that might have put someone down: grapples settle, deaths are stamped, the down lose
+  // what they were committed to.
+  function afterAction(enc, chars) {
+    settleGrapples(enc, chars);
+    markDeaths(enc, chars);
+    for (const id of enc.ids) if (chars[id] && !C.isActive(chars[id])) spoil(enc, chars[id], null);
+  }
+
+  // A committed action is lost: knocked down, grappled, disarmed or put down before it lands (why: a few words, or
+  // null to say nothing).
+  function spoil(enc, c, why) {
+    const d = enc.committed && enc.committed[c.id];
+    if (!d) return false;
+    d.spoiled = true;
+    delete enc.committed[c.id];
+    enc.pending = enc.pending.filter((p) => p.decl !== d);
+    if (why) log(enc, `${c.name}'s ${describeAction(d)} is spoiled (${why}).`, 'fizzle');
+    return true;
+  }
+
+  // A short name for an action ("power swing", "longbow shot", "bandage").
+  function describeAction(d) {
+    if (d.type === 'strike') return d.option.label.toLowerCase();
+    if (d.type === 'cast') return d.option.label;
+    return (ACTIONS[d.type] ? ACTIONS[d.type].name : d.type).toLowerCase();
+  }
+
+  // ---- The beat ---------------------------------------------------------------------------------
+  // What happens "each beat", kept by the timeline: Delayed spells break, terrain harms, conjured things fade, the
+  // body bleeds and breathes (beatBody), conditions count down, a collapse runs its course, holds cost, webs loosen,
+  // traps reset, auras fall, groups join and the getting-away check (enc.onBeat, the game's). Then the beat's flags
+  // reset (struck this beat, burned, Living Fortress, Untouchable, a fear's step).
+  async function beat(enc, chars, io) {
     const roller = io && io.roller;
+    enc.beat += 1;
+    enc.nextBeat += K().beat;
+    enc.phase = 'acting';
     if (G.Magic && enc.delayed && enc.delayed.length) await G.Magic.breakDelayed(enc, chars, roller);
-    if (G.Terrain && enc.tiles) await G.Terrain.endRound(enc, chars, roller, (t) => log(enc, t, 'hit'));
-    if (G.Magic && G.Magic.endRound) for (const line of G.Magic.endRound(enc, chars)) log(enc, line, 'pass');
-    endRound(enc, chars);
-    if (enc.phase === 'over') await settleFallen(enc, chars, roller);
+    if (G.Terrain && enc.tiles) await G.Terrain.beat(enc, chars, roller, (t) => log(enc, t, 'hit'));
+    if (G.Magic && G.Magic.beat) for (const line of G.Magic.beat(enc, chars)) log(enc, line, 'pass');
+    beatBodies(enc, chars);
+    afterAction(enc, chars);
+    resetBeat(enc, chars);
+    if (!endIfDecided(enc, chars)) {
+      await auras(enc, chars, roller);
+      if (io && io.onBeat) await io.onBeat(enc, chars, 'beat');
+    }
+    release(enc, chars, null);
   }
 
-  // Done with this turn: any AP left stays in hand for reactions until the round ends.
-  async function endTurn(enc, chars, id, io) {
-    if (currentActor(enc) !== id) return;
-    enc.turnDone[id] = true;
-    await advance(enc, chars, io);
+  // The flags that last a beat: who was struck (regeneration), who burned (regrowth), Living Fortress, Untouchable's
+  // free dodge, a fear's owed step; and stamina at the beat's start (weariness by effort).
+  function resetBeat(enc, chars) {
+    enc.struck = {};
+    enc.burned = {};
+    enc.fortressUsed = {};
+    enc.dodged = {};
+    enc.fled = {};
+    enc.staminaAtBeat = {};
+    for (const id of enc.ids) if (chars[id]) enc.staminaAtBeat[id] = chars[id].stamina;
   }
 
-  // One entry point for a decision: an action, or 'endTurn'. An action that can't be taken
-  // ends the turn and returns the reason (so a confused AI can't loop).
+  // Wait (an action): to just after a named fighter's next action (`for`), by a number of ticks (`ticks`), or, with
+  // neither, until the next thing happens (another's action, a blow landing, a beat). A waiting fighter can react;
+  // a reaction ends the wait.
+  function waitFor(enc, chars, d) {
+    const id = d.actor;
+    const w = {};
+    if (d.ticks != null) w.until = enc.now + Math.max(1, Math.round(d.ticks));
+    else if (d.for && chars[d.for] && C.isActive(chars[d.for])) w.for = d.for;
+    else w.next = true;
+    w.from = enc.now;
+    w.why = d.why || (d.idle ? 'idle' : 'wait');
+    enc.waits[id] = w;
+    enc.clock[id] = waitEnd(enc, chars, id, w);
+    if (enc.clock[id] <= enc.now) enc.clock[id] = enc.now + 1;
+    if (w.until == null && w.next) enc.clock[id] = Math.max(enc.clock[id], enc.now + 1);
+    if (w.until != null && w.until <= enc.now) w.until = enc.now + 1;
+    enc.decls.push({ actor: id, type: 'wait', why: w.why, n: ++enc.seq, tick: enc.now, beat: enc.beat, done: true, wait: w, idle: !!d.idle, for: w.for || null, ticks: w.until != null ? w.until - enc.now : null });
+  }
+
+  // One entry point for a decision. An action that can't be taken returns the reason and the fighter waits for the
+  // next thing to happen instead (so a confused AI can't loop).
   async function submit(enc, chars, d, io) {
-    // Afraid: the turn can't end (or be put off) before the step away it owes, while one can be taken.
-    if ((d.type === 'endTurn' || d.type === 'concede') && currentActor(enc) === d.actor && mustFlee(enc, chars, chars[d.actor])) return `Afraid: first step away from ${fearSource(enc, chars, chars[d.actor]).name}`;
-    if (d.type === 'endTurn' || d.type === 'concede') { await endTurn(enc, chars, d.actor, io); return null; }
-    if (d.type === 'defer') return defer(enc, chars, d.actor, io);
+    if (enc.phase !== 'act' || currentActor(enc) !== d.actor) return 'Not now';
+    // Afraid: a fighter can't wait before the step away it owes, while one can be taken.
+    if ((d.type === 'wait' || d.type === 'concede') && mustFlee(enc, chars, chars[d.actor])) return `Afraid: first step away from ${fearSource(enc, chars, chars[d.actor]).name}`;
+    if (d.type === 'wait' || d.type === 'concede') {
+      waitFor(enc, chars, d);
+      enc.released && delete enc.released[d.actor];
+      enc.phase = 'acting';
+      await advance(enc, chars, io);
+      return null;
+    }
     const err = await act(enc, chars, d, io);
-    if (err) await endTurn(enc, chars, d.actor, io);
+    if (err) {
+      waitFor(enc, chars, { actor: d.actor, idle: true });
+      enc.phase = 'acting';
+      await advance(enc, chars, io);
+    }
     return err;
   }
 
@@ -511,20 +685,19 @@
 
   function legalActionsRaw(enc, chars, id) {
     const c = chars[id];
-    const ap = apLeft(enc, id);
-    const fits = (cost) => cost <= ap && ap >= C.minAP();
-    const whole = wholeTurn(enc, id);
-    const can = (cost) => fits(cost) || (whole && ap >= C.minAP());
+    // There is no budget: any action can be taken; its ticks go on the clock. `affordable` says only that nothing else
+    // (a reason, a missing target) stands in the way.
+    const can = () => true;
     const me = enc.pos[id];
     const others = enc.ids.filter((o) => o !== id && !chars[o].status.dead);
     // Defences are not taken on your turn any more: they are reactions, asked for when a blow comes.
-    const out = { ap, pool: enc.apStart[id] || ap, attacks: [], defenses: [], maneuvers: [], other: [], move: null };
+    const out = { now: enc.now, clock: enc.clock ? enc.clock[id] : 0, attacks: [], defenses: [], maneuvers: [], other: [], move: null };
 
     const planned = C.attackOptions(c);
     for (const opt of planned) {
       const why = attackUnavailable(enc, c, opt);
       out.attacks.push(Object.assign({}, opt, {
-        affordable: can(opt.ap) && !why,
+        affordable: !why,
         why,
         targets: others.map((o) => {
           const op = enc.pos[o];
@@ -564,7 +737,7 @@
           const fits = !opt.spell.only || G.Magic.fits(chars[o], opt.spell.only);
           return { id: o, distance: dd, inReach: named && fits && dd <= opt.maxRange && dd >= (opt.target === 'ally' || opt.target === 'any' ? 0 : opt.minRange) && !(line && line.blocked) };
         });
-        out.spells.push(Object.assign({}, opt, { affordable: can(opt.ap) && !why, why, targets }));
+        out.spells.push(Object.assign({}, opt, { affordable: !why, why, targets }));
       }
     }
 
@@ -576,7 +749,7 @@
       const cost = C.actionCost(c, kind);
       // Nothing to grab, trip or shove on the incorporeal (bait and reading still work).
       if (kind !== 'bait' && kind !== 'readIntent') for (const t of targets) if (chars[t.id] && G.Effects.has(chars[t.id], 'incorporeal')) t.inReach = false;
-      out.maneuvers.push({ type: kind, ap: cost.ap, stamina: cost.stamina, affordable: can(cost.ap) && targets.some((t) => t.inReach), targets });
+      out.maneuvers.push({ type: kind, ticks: cost.ticks, lead: cost.lead, stamina: cost.stamina, affordable: targets.some((t) => t.inReach), targets });
     };
     const near = (o) => ({ id: o, inReach: dist(me, enc.pos[o]) <= reach });
     // Trips, disarms and shoves: free, or a trip or disarm from a clinch.
@@ -629,23 +802,23 @@
     }
 
     // Moving: not while prone, held or clinched. A holder drags the held fighter one square.
-    if (!c.status.prone && !grappled && !C.inClinch(c) && fits(C.moveCost(c, 1)) && (!G.Conditions || G.Conditions.canMove(c))) {
-      const spa = C.squaresPerAP(c);
-      const cost1 = C.actionCost(c, 'move', { ap: 1 });
+    if (!c.status.prone && !grappled && !C.inClinch(c) && (!G.Conditions || G.Conditions.canMove(c))) {
+      const cost1 = C.actionCost(c, 'move');
       const drag = !!C.holding(c);
       out.move = {
-        squaresPerAP: spa, maxAP: ap, stamina: cost1.stamina, from: enc.pos[id],
-        maxSquares: drag ? 1 : C.squaresFor(c, ap),
+        pace: C.pace(c), stamina: cost1.stamina, from: enc.pos[id],
+        maxSquares: drag ? 1 : Math.max(1, C.squaresIn(c, CONFIG.clock.moveMax)),
         drag,
       };
     }
 
     const addOther = (type, extra) => {
       const cost = C.actionCost(c, type);
-      out.other.push(Object.assign({ type, name: ACTIONS[type].name, ap: cost.ap, stamina: cost.stamina, affordable: can(cost.ap) }, extra || {}));
+      out.other.push(Object.assign({ type, name: ACTIONS[type].name, ticks: cost.ticks, lead: cost.lead, stamina: cost.stamina, affordable: true }, extra || {}));
     };
-    const declared = (type) => enc.decls.some((d) => d.actor === id && d.type === type);
-    if (c.status.prone && !declared('standUp') && !C.cannotStand(c)) addOther('standUp'); // a leg wound at its `fell` keeps them down
+    // Once a beat (Rally).
+    const thisBeat = (type) => enc.decls.some((d) => d.actor === id && d.type === type && d.beat === enc.beat);
+    if (c.status.prone && !C.cannotStand(c)) addOther('standUp'); // a leg wound at its `fell` keeps them down
     const hands = { wield: C.wieldedWeapon(c) ? c.wield : null, dropped: c.status.dropped.slice() };
     const sidearm = c.weapons.find((w) => w.id === c.sidearm);
     const primary = primaryWeaponId(c);
@@ -653,29 +826,16 @@
     const dropNote = heldW && Items.weaponStats(heldW).weight !== 'very light' ? { note: `drops ${Items.itemName(heldW)}` } : {};
     if (sidearm && hands.wield !== c.sidearm && !hands.dropped.includes(c.sidearm)) addOther('drawSidearm', dropNote);
     if (primary && hands.wield !== primary && !hands.dropped.includes(primary)) addOther('readyPrimary', dropNote);
-    if (hands.dropped.length && !declared('pickUp')) addOther('pickUp', dropNote);
+    if (hands.dropped.length) addOther('pickUp', dropNote);
     if (hands.wield) addOther('dropWeapon', { note: Items.itemName(heldW) });
-    if (C.holding(c) && !declared('release')) addOther('release');
-    if (c.status.webbed && !declared('tearFree')) addOther('tearFree', { note: `${c.status.webbed} layer${c.status.webbed > 1 ? 's' : ''}` });
-    else if (G.Conditions && !G.Conditions.canMove(c) && !declared('tearFree')) addOther('tearFree', { name: 'Break free', note: 'rooted' });
-    // Wind-ups for attacks that need one (power swings, Strong spells).
-    if (canWindUp(enc, c) && !c.status.prone && !grappled) {
-      const seen = {};
-      for (const opt of planned) {
-        if (!opt.windUp) continue;
-        const key = C.optionKey(opt);
-        if (seen[key]) continue;
-        seen[key] = true;
-        const cost = C.actionCost(c, 'windUp', { option: opt });
-        const why = opt.spell ? spellShort(c, opt) : null;
-        out.other.push({ type: 'windUp', option: opt, name: `Wind up: ${opt.label}`, ap: cost.ap, stamina: cost.stamina, affordable: can(cost.ap) && !why, why });
-      }
-    }
+    if (C.holding(c)) addOther('release');
+    if (c.status.webbed) addOther('tearFree', { note: `${c.status.webbed} layer${c.status.webbed > 1 ? 's' : ''}` });
+    else if (G.Conditions && !G.Conditions.canMove(c)) addOther('tearFree', { name: 'Break free', note: 'rooted' });
     // Feat actions for yourself and your side (feats.yaml).
     const friends = enc.ids.filter((o) => o !== id && chars[o] && chars[o].side === c.side && !chars[o].status.dead && enc.pos[o]);
     if (C.rank(c, 'vanish') && !grappled && !others.some((o) => chars[o].side !== c.side && C.isActive(chars[o]) && dist(me, enc.pos[o]) <= 1)) addOther('vanish');
-    if (C.rank(c, 'feign_death') && !declared('feign')) addOther('feign');
-    if (C.rank(c, 'rally') && !declared('rally')) addOther('rally');
+    if (C.rank(c, 'feign_death') && !G.Effects.has(c, 'feign')) addOther('feign');
+    if (C.rank(c, 'rally') && !thisBeat('rally')) addOther('rally');
     if (C.rank(c, 'command')) {
       const t = friends.filter((o) => C.isActive(chars[o]) && dist(me, enc.pos[o]) <= 4);
       if (t.length) addOther('command', { targets: t.map((o) => ({ id: o, inReach: true })) });
@@ -694,46 +854,9 @@
       const patients = enc.ids.filter((o) => C.bleeding(chars[o]) > 0 && !chars[o].status.dead && (o === id || dist(me, enc.pos[o]) <= 1));
       if (patients.length) addOther('cauterize', { note: 'a burn', targets: patients.map((o) => ({ id: o, inReach: true })) });
     }
-    out.defer = deferOption(enc, chars, id);
+    // Waiting (an action): until the next thing happens, until a named fighter has acted, or by a number of ticks.
+    out.wait = { for: enc.ids.filter((o) => o !== id && chars[o] && C.isActive(chars[o])) };
     return out;
-  }
-
-  // Defer (CONFIG.defer): pay the AP to let the next one in the initiative order take their turn now; mine resumes
-  // after theirs. { ap, next, affordable } on my turn, or null when there is no one left to go.
-  function deferAP() {
-    return Math.round(((CONFIG.defer && CONFIG.defer.ap) || 0) * (CONFIG.apDisplay || 1));
-  }
-  function deferOption(enc, chars, id) {
-    if (!CONFIG.defer || currentActor(enc) !== id) return null;
-    let j = enc.turn + 1;
-    while (j < enc.order.length && !eligible(enc, chars, enc.order[j])) j++;
-    if (j >= enc.order.length) return null;
-    return { ap: deferAP(), next: enc.order[j], affordable: apLeft(enc, id) >= deferAP() };
-  }
-  async function defer(enc, chars, id, io) {
-    if (mustFlee(enc, chars, chars[id])) return `Afraid: first step away from ${fearSource(enc, chars, chars[id]).name}`;
-    const o = deferOption(enc, chars, id);
-    if (!o) return 'No one left to defer to';
-    if (!o.affordable) return 'Not enough AP';
-    enc.ap[id] -= o.ap;
-    // Step back behind the next one: they go now (enc.turn points at them), and I come up again after.
-    const j = enc.order.indexOf(o.next);
-    enc.order.splice(enc.turn, 1);
-    enc.order.splice(j, 0, id);
-    enc.turn = j - 1;
-    log(enc, `${chars[id].name} holds back and lets ${chars[o.next].name} go first.`, 'pass');
-    enc.phase = 'turn';
-    return null;
-  }
-
-  // A new wind-up needs no wind-up held, or (with rewindAfterRelease) the held one
-  // already released this round. Only one wind-up may be declared per round.
-  function canWindUp(enc, c) {
-    if (enc.decls.some((d) => d.actor === c.id && d.type === 'windUp')) return false;
-    if (!c.status.windUp) return true;
-    if (!CONFIG.windUp.rewindAfterRelease) return false;
-    const key = c.status.windUp.key;
-    return enc.decls.some((d) => d.actor === c.id && d.type === 'strike' && d.option.windUp && C.optionKey(d.option) === key);
   }
 
   function primaryWeaponId(c) {
@@ -746,20 +869,9 @@
     return G.Magic && opt.spCost > G.Magic.availableSP(c) + G.Magic.overchannelSP(c) ? 'Not enough spell points' : null;
   }
 
-  // Why an attack can't be made right now (beyond AP), or null.
+  // Why an attack can't be made right now, or null.
   function attackUnavailable(enc, c, opt) {
     if (opt.ranged && opt.weaponId && !opt.natural && C.ammoLeft(c, opt) <= 0) return opt.arrowHead ? `No ${opt.arrowHead}s` : 'No arrows';
-    if (opt.windUp) {
-      const w = c.status.windUp;
-      const key = C.optionKey(opt);
-      // Released at once if the AP is there (windUp.sameTurn), else not before the next round.
-      const now = !!CONFIG.windUp.sameTurn;
-      if (!now && enc.decls.some((d) => d.actor === c.id && d.type === 'windUp' && C.optionKey(d.option) === key)) return 'Release next round';
-      // Released already this round: again only after winding up again (then AP is the only limit).
-      if (!w && enc.decls.some((d) => d.actor === c.id && d.type === 'strike' && d.option.windUp && C.optionKey(d.option) === key)) return 'Already released';
-      if (!w || w.key !== key) return 'Wind up first';
-      if (w.round >= enc.round && !now) return 'Release next round';
-    }
     if (opt.spell) return spellShort(c, opt);
     return null;
   }
@@ -771,8 +883,9 @@
 
   function defenseUnavailable(c, kind, attackDecl, chars, enc) {
     if (C.isPinned(c)) return 'Pinned';
-    const winding = c.status.windUp || (enc && enc.decls.some((d) => d.actor === c.id && d.type === 'windUp'));
-    if (winding && (CONFIG.windUp.exposed || []).includes(kind)) return 'Winding up';
+    // Committed to a power blow, a drawn bow or a gathered spell (CONFIG.clock.exposes): no block or parry until it lands.
+    const held = enc && enc.committed && enc.committed[c.id];
+    if (held && held.option && held.option.exposes && (CONFIG.clock.exposes.guards || []).includes(kind)) return 'Committed';
     const opt = attackDecl ? attackDecl.option : null;
     const parry = kind === 'parry' || kind === 'offParry';
     // A spell bolt can't be parried or blocked (PROVISIONAL, the user's call), except with gear made for it
@@ -798,8 +911,8 @@
   }
 
   // Fear (the user, 2026-11-08): the frightened can't come closer to what frightens them (Conditions.fear: the
-  // condition's src), and on their turn must first step at least a square farther from it, unless no step can (down,
-  // held, out of AP, hemmed in). The source must still be up and on the field.
+  // condition's src), and each beat their first action must be a step at least a square farther from it, unless no
+  // step can (down, held, hemmed in). The source must still be up and on the field.
   function fearSource(enc, chars, c) {
     const f = G.Conditions && c && G.Conditions.fear(c);
     const s = f && f.src && chars[f.src];
@@ -823,13 +936,12 @@
         if (!pc.reaches) continue;
         squares = pc.cost;
       }
-      if (C.actionCost(c, 'move', { ap: C.moveCost(c, squares) }).ap > apLeft(enc, c.id)) continue;
       out.push(q);
     }
     return out;
   }
 
-  // Must this character still step away from its fear before anything else this turn?
+  // Must this character still step away from its fear before anything else this beat?
   function mustFlee(enc, chars, c) {
     return !!c && !(enc.fled || {})[c.id] && fleeSteps(enc, chars, c).length > 0;
   }
@@ -838,7 +950,7 @@
   function conditionForbids(enc, chars, c, decl) {
     if (!G.Conditions) return null;
     const F = (f) => G.Effects.has(c, f);
-    if (F('noAct') && decl.type !== 'endTurn' && decl.type !== 'concede') return G.Conditions.has(c, 'paralyzed') ? 'Paralyzed' : 'Mesmerized';
+    if (F('noAct') && decl.type !== 'wait' && decl.type !== 'concede') return G.Conditions.has(c, 'paralyzed') ? 'Paralyzed' : 'Mesmerized';
     const attack = decl.type === 'strike' || (ATTACK_TYPES.includes(decl.type) && decl.type !== 'strike') || (decl.type === 'cast' && decl.option && decl.option.target === 'foe');
     if (attack && F('noAttack')) return 'Calmed: won\'t attack';
     if (DEFENSE_TYPES.includes(decl.type) && F('noGuard')) return 'In a frenzy: no guards';
@@ -860,15 +972,15 @@
     return dist(enc.pos[t.id], enc.pos[viewer.id]) > 1;
   }
 
-  // Check an action and work out its cost. Returns { err } or { ap, stamina }; fills in decl.option.
+  // Check an action and work out its cost. Returns { err } or { ticks, lead, stamina }; fills in decl.option.
   function validate(enc, chars, decl) {
     const id = currentActor(enc);
-    if (decl.actor !== id) return { err: 'Not your turn' };
+    if (decl.actor !== id) return { err: 'Not their time to act' };
     const c = chars[id];
     const forbid = conditionForbids(enc, chars, c, decl);
     if (forbid) return { err: forbid };
     if (decl.type === 'standUp' && C.cannotStand(c)) return { err: 'The leg will not hold them' };
-    let ap, stamina;
+    let ticks, lead, stamina;
     if (DEFENSE_TYPES.includes(decl.type)) return { err: 'Defences are reactions: they are offered when a blow comes' };
     if (decl.type === 'strike') {
       const key = C.optionKey(decl.option);
@@ -884,7 +996,7 @@
       const L = CONFIG.locations;
       if (decl.location && !(L && L.order.includes(decl.location))) return { err: 'No such place to aim at' };
       decl.option = decl.location && !opt.spell ? Object.assign({}, opt, { aim: decl.location }) : opt;
-      ({ ap, stamina } = opt);
+      ({ ticks, lead, stamina } = opt);
     } else if (decl.type === 'cast') {
       if (!G.Magic || !decl.option) return { err: 'Choose a spell' };
       const key = decl.option.spellKey;
@@ -899,16 +1011,8 @@
         if (dd > opt.maxRange || dd < opt.minRange) return { err: 'Out of range' };
       } else if (!decl.target || !chars[decl.target]) return { err: 'Choose a target' };
       decl.option = opt;
-      ap = opt.ap;
+      ({ ticks, lead } = opt);
       stamina = 0;
-    } else if (decl.type === 'windUp') {
-      if (!decl.option) return { err: 'Choose what to wind up' };
-      const key = C.optionKey(decl.option);
-      const opt = C.attackOptions(c).find((o) => C.optionKey(o) === key && o.windUp);
-      if (!opt) return { err: 'Nothing to wind up' };
-      if (!canWindUp(enc, c)) return { err: 'Already winding up' };
-      decl.option = opt;
-      ({ ap, stamina } = C.actionCost(c, 'windUp', { option: opt }));
     } else if (decl.type === 'move') {
       const from = enc.pos[id];
       const d = steps(from, decl.to);
@@ -930,13 +1034,13 @@
       // Afraid: no square of the way may come closer to the fear than where the move began.
       const fear = fearSource(enc, chars, c);
       if (fear && route.some((q) => dist(q, enc.pos[fear.id]) < dist(from, enc.pos[fear.id]))) return { err: 'Too afraid to close' };
-      const need = C.moveCost(c, squares);
-      ({ ap, stamina } = C.actionCost(c, 'move', { ap: need }));
+      if (squares > C.squaresIn(c, CONFIG.clock.moveMax) && squares > 1) return { err: 'Too far for one move' };
+      ({ ticks, lead, stamina } = C.actionCost(c, 'move', { ticks: C.moveTicks(c, squares) }));
       decl.from = from;
       decl.squares = squares;
     } else {
-      if (!ACTIONS[decl.type]) return { err: 'Unknown action' };
-      ({ ap, stamina } = C.actionCost(c, decl.type));
+      if (!ACTIONS[decl.type] || decl.type === 'wait') return { err: 'Unknown action' };
+      ({ ticks, lead, stamina } = C.actionCost(c, decl.type));
       if (['trip', 'disarm', 'shove', 'bandage', 'bait', 'readIntent'].concat(GRAPPLE_STEPS).includes(decl.type) && !decl.target) return { err: 'Choose a target' };
       if (ATTACK_TYPES.includes(decl.type) || decl.type === 'bait' || decl.type === 'readIntent' || decl.type === 'demoralize' || decl.type === 'nameWeakness') {
         const m = legalActions(enc, chars, id).maneuvers.find((x) => x.type === decl.type);
@@ -948,50 +1052,67 @@
         if (o.targets && !o.targets.some((t) => t.id === decl.target)) return { err: 'Choose a target' };
       }
     }
-    if (ap > apLeft(enc, id)) {
-      if (decl.type === 'move' || !wholeTurn(enc, id)) return { err: 'Not enough AP' };
-      ap = apLeft(enc, id); // the whole turn
-    }
-    if (isSpent(c, stamina)) return { ap, stamina, spent: true };
+    if (isSpent(c, stamina)) return { ticks, lead, stamina, spent: true };
     if (!canPay(c, stamina)) return { err: 'Too exhausted' };
-    return { ap, stamina };
+    return { ticks, lead, stamina };
   }
 
-  // Take an action on your turn: it is paid for and resolves at once, with whatever reactions it
-  // draws (defences, opportunity strikes). io: { roller, react }. Returns an error string or null.
+  // Take an action: its ticks go on the clock; with no lead it resolves at once, with whatever reactions it draws
+  // (defences, opportunity strikes), else it lands when the lead is up (landAction) and others act in between. Then
+  // the timeline moves on. io: { roller, react }. Returns an error string or null.
   async function act(enc, chars, decl, io) {
-    if (enc.phase !== 'turn') return 'Not now';
+    if (enc.phase !== 'act') return 'Not now';
     const v = validate(enc, chars, decl);
     if (v.err) return v.err;
     const id = decl.actor;
-    decl.ap = v.ap;
+    const me = chars[id];
+    decl.ticks = v.ticks;
+    decl.lead = v.lead || 0;
     decl.stamina = v.stamina;
     if (v.spent) decl.spent = true;
     decl.n = ++enc.seq;
-    decl.round = enc.round;
+    decl.tick = enc.now;
+    decl.beat = enc.beat;
     if (decl.target) decl.targetWasDown = !C.isActive(chars[decl.target]);
     // Playing dead ends with any action; striking or casting gives the unseen away.
-    if (G.Conditions && G.Conditions.has(chars[id], 'feigning') && decl.type !== 'feign') { G.Conditions.remove(chars[id], 'feigning'); log(enc, `${chars[id].name} is not dead after all.`, 'pass'); }
-    // Backstab (unseen) and Charge (the move before it): a melee blow made heavier, before the unseen is given away.
+    if (G.Conditions && G.Conditions.has(me, 'feigning') && decl.type !== 'feign') { G.Conditions.remove(me, 'feigning'); log(enc, `${me.name} is not dead after all.`, 'pass'); }
+    // Backstab (unseen) and Charge (the move just before it): a melee blow made heavier, before the unseen is given away.
     if (decl.type === 'strike' && !decl.option.ranged && !decl.option.spell) {
-      const me = chars[id];
-      const extra = (C.rank(me, 'backstab') && G.Effects.has(me, 'unseen') ? 3 : 0) + (me.status.charging === enc.round ? 2 : 0);
+      const extra = (C.rank(me, 'backstab') && G.Effects.has(me, 'unseen') ? 3 : 0) + (me.status.charging ? 2 : 0);
       if (extra) {
         const dmg = decl.option.damage.slice();
         dmg[C.mainIndex(dmg)] += extra;
         decl.option = Object.assign({}, decl.option, { damage: dmg });
-        log(enc, `${me.name} ${me.status.charging === enc.round ? 'charges in' : 'strikes from the shadows'} (+${extra}).`, 'pass');
+        log(enc, `${me.name} ${me.status.charging ? 'charges in' : 'strikes from the shadows'} (+${extra}).`, 'pass');
       }
     }
-    if (decl.type !== 'move') chars[id].status.charging = null;
-    // Striking or casting gives the unseen away.
-    if (G.Conditions && G.Conditions.has(chars[id], 'unseen') && (ATTACK_TYPES.includes(decl.type) || (decl.type === 'cast' && decl.option.target !== 'ally'))) {
-      G.Conditions.remove(chars[id], 'unseen');
-      log(enc, `${chars[id].name} is seen again.`, 'pass');
+    if (decl.type !== 'move') me.status.charging = null;
+    if (G.Conditions && G.Conditions.has(me, 'unseen') && (ATTACK_TYPES.includes(decl.type) || (decl.type === 'cast' && decl.option.target !== 'ally'))) {
+      G.Conditions.remove(me, 'unseen');
+      log(enc, `${me.name} is seen again.`, 'pass');
     }
-    enc.ap[id] -= v.ap;
+    enc.clock[id] = enc.now + v.ticks;
+    if (enc.released) delete enc.released[id];
     enc.decls.push(decl);
     enc.phase = 'acting';
+    if (decl.lead > 0) {
+      decl.lands = enc.now + decl.lead;
+      enc.pending.push({ decl, at: decl.lands });
+      enc.committed[id] = decl;
+      const t = decl.target && chars[decl.target] ? ` at ${chars[decl.target].name}` : '';
+      log(enc, `${me.name} begins ${describeAction(decl)}${t}: it lands at tick ${decl.lands}${decl.option && decl.option.exposes ? ', no block or parry till then' : ''}.`, 'pass');
+    } else {
+      await perform(enc, chars, decl, io);
+      afterAction(enc, chars);
+    }
+    release(enc, chars, id);
+    await advance(enc, chars, io);
+    return null;
+  }
+
+  // What an action does when it takes effect (at once, or when its lead is up).
+  async function perform(enc, chars, decl, io) {
+    const id = decl.actor;
     try {
       if (decl.type === 'move') await resolveMove(enc, chars, decl, io);
       else {
@@ -999,33 +1120,20 @@
         // Flurry: the second thrust of the pair, at once, if the first left them standing.
         if (decl.type === 'strike' && decl.option.flurry && C.isActive(chars[id]) && C.isActive(chars[decl.target])) {
           log(enc, `${chars[id].name} thrusts again.`, 'pass');
-          const sd = Object.assign({}, decl, { n: ++enc.seq, ap: 0, stamina: 0, flurrySecond: true });
+          const sd = Object.assign({}, decl, { n: ++enc.seq, ticks: 0, stamina: 0, flurrySecond: true });
           enc.decls.push(sd);
           await resolveAction(enc, chars, sd, io, Object.assign({}, enc.pos));
           sd.done = true;
         }
         if (decl.type === 'strike' && decl.option.whirlwind) await whirlwind(enc, chars, chars[id], decl, io);
         else if (decl.type === 'strike') await sweep(enc, chars, chars[id], decl, io);
-        if (decl.type === 'strike' && !decl.targetWasDown && !C.isActive(chars[decl.target])) await cleave(enc, chars, chars[id], decl, io);
+        if (decl.type === 'strike' && !decl.targetWasDown && chars[decl.target] && !C.isActive(chars[decl.target])) await cleave(enc, chars, chars[id], decl, io);
       }
     } finally {
       decl.done = true;
     }
-    settleGrapples(enc, chars);
-    markDeaths(enc, chars);
-    for (const o of enc.order) if (!C.isActive(chars[o])) enc.turnDone[o] = true;
-    // A side wiped out mid-turn ends the round, and the fight, at once.
-    const sides = {};
-    for (const o of enc.ids) if (C.isActive(chars[o])) sides[chars[o].side] = true;
-    if (Object.keys(sides).length < 2) { await finishRound(enc, chars, io); return null; }
-    enc.phase = 'turn';
-    if (!eligible(enc, chars, id)) { enc.turnDone[id] = true; await advance(enc, chars, io); }
-    return null;
   }
 
-  // A move, square by square: around walls, past allies (not foes), into and out of foes' reach (see
-  // opportunities(); a hit stops the move), into runes, pits and hazards. AP for squares not walked is
-  // given back.
   // The squares of c's foes still standing, as "x,y": a walk goes around them.
   function foeSquares(enc, chars, c) {
     const out = new Set();
@@ -1033,12 +1141,14 @@
     return out;
   }
 
+  // A move, square by square: around walls, past allies (not foes), into and out of foes' reach (see
+  // opportunities(); a hit stops the move), into runes, pits and hazards. Ticks for squares not walked are given back.
   async function resolveMove(enc, chars, d, io) {
     const a = chars[d.actor];
     if (!payStamina(enc, a, d.stamina)) return;
     const state = { provoked: {}, within: {} };
-    // Counter Step: a good dodge this round makes the next move's first square free and unanswered.
-    const counter = a.status.counterStep === enc.round && !C.holding(a);
+    // Counter Step: a good dodge in the last beat's worth of ticks makes the next move's first square free and unanswered.
+    const counter = a.status.counterStep != null && enc.now - a.status.counterStep <= CONFIG.clock.beat && !C.holding(a);
     if (counter) a.status.counterStep = null;
     const dragged = C.holding(a) ? chars[C.holding(a)] : null;
     const start = { x: enc.pos[a.id].x, y: enc.pos[a.id].y };
@@ -1059,23 +1169,23 @@
       if (G.Terrain && enc.tiles && (await G.Terrain.enter(enc, chars, a, q.x, q.y, io && io.roller, (t) => log(enc, t, 'hit')))) { why = 'stops'; break; }
     }
     const at = enc.pos[a.id];
-    // Fear: a step farther from it is the step the turn owed (Combat.mustFlee).
+    // Fear: a step farther from it is the step the beat owed (Combat.mustFlee).
     const fear = fearSource(enc, chars, a);
     if (fear && walked && dist(at, enc.pos[fear.id]) > dist(start, enc.pos[fear.id])) (enc.fled || (enc.fled = {}))[a.id] = true;
     if (dragged && walked) log(enc, `${a.name} drags ${dragged.name} to (${at.x + 1}, ${at.y + 1}).`);
     else if (walked) log(enc, `${a.name} moves to (${at.x + 1}, ${at.y + 1})${at.x !== d.to.x || at.y !== d.to.y ? ' and gets no farther' : ''}.`);
     else if (why === 'blocked') log(enc, `${a.name}'s way is blocked.`, 'fizzle');
     if ((why || (counter && walked)) && C.isActive(a)) {
-      // Stopped short: the squares not walked are given back, but a move always costs its first AP. After a Counter
-      // Step the first square is free.
+      // Stopped short: the ticks of the squares not walked are given back, but a move always costs a tick. After a
+      // Counter Step the first square is free.
       const paid = counter ? Math.max(0, walked - 1) : walked;
-      const used = Math.max(counter ? 0 : C.minAP(), paid ? C.actionCost(a, 'move', { ap: C.moveCost(a, paid) }).ap : 0);
-      const back = Math.max(0, d.ap - used);
-      if (back) { enc.ap[a.id] += back; d.ap -= back; }
+      const used = paid ? C.moveTicks(a, paid) : counter ? 0 : CONFIG.clock.min;
+      const back = Math.max(0, d.ticks - used);
+      if (back) { enc.clock[a.id] -= back; d.ticks -= back; }
       if (counter && walked) log(enc, `${a.name} steps off the dodge.`, 'pass');
     }
     // Charge: two squares or more, ending beside a foe.
-    if (C.rank(a, 'charge') && walked >= 2 && C.isActive(a) && enc.ids.some((o) => chars[o].side !== a.side && C.isActive(chars[o]) && dist(enc.pos[a.id], enc.pos[o]) <= 1)) a.status.charging = enc.round;
+    if (C.rank(a, 'charge') && walked >= 2 && C.isActive(a) && enc.ids.some((o) => chars[o].side !== a.side && C.isActive(chars[o]) && dist(enc.pos[a.id], enc.pos[o]) <= 1)) a.status.charging = true;
     d.to = { x: at.x, y: at.y };
   }
 
@@ -1092,16 +1202,16 @@
       const hidden = viewerId !== d.actor && C.rank(a, 'feint') > 0 && feintScore(a) > (viewerId ? readScore(chars[viewerId]) : 0);
       if (hidden) return { text: `${a.name}: strike at ${tn}`, hidden: true };
       const w = d.option.weaponId ? a.weapons.find((x) => x.id === d.option.weaponId) : null;
-      return { text: `${a.name}: ${d.option.label}${w ? ' — ' + Items.itemName(w) : ''} at ${tn} [${C.fmtAP(d.ap)} AP]` };
+      return { text: `${a.name}: ${d.option.label}${w ? ' — ' + Items.itemName(w) : ''} at ${tn} [${d.ticks} ticks]` };
     }
     if (DEFENSE_TYPES.includes(d.type)) {
       const vs = d.against && chars[d.against] ? ` ${chars[d.against].name}` : '';
-      return { text: `${a.name}: ${ACTIONS[d.type].name.toLowerCase()} against${vs} [${C.fmtAP(d.ap)} AP]` };
+      return { text: `${a.name}: ${ACTIONS[d.type].name.toLowerCase()} against${vs} [${d.ticks} ticks]` };
     }
-    if (d.type === 'move') return { text: `${a.name}: move to (${d.to.x + 1}, ${d.to.y + 1}) [${C.fmtAP(d.ap)} AP]` };
-    if (d.type === 'windUp') return { text: `${a.name}: winds up ${d.option.label} [${C.fmtAP(d.ap)} AP]` };
-    if (d.type === 'cast') return { text: `${a.name}: casts ${d.option.label} ${d.at ? `at (${d.at.x + 1}, ${d.at.y + 1})` : `on ${tn}`} [${C.fmtAP(d.ap)} AP]` };
-    return { text: `${a.name}: ${ACTIONS[d.type].name.toLowerCase()}${tn ? ' ' + tn : ''} [${C.fmtAP(d.ap)} AP]` };
+    if (d.type === 'move') return { text: `${a.name}: move to (${d.to.x + 1}, ${d.to.y + 1}) [${d.ticks} ticks]` };
+    if (d.type === 'wait') return { text: `${a.name}: waits` };
+    if (d.type === 'cast') return { text: `${a.name}: casts ${d.option.label} ${d.at ? `at (${d.at.x + 1}, ${d.at.y + 1})` : `on ${tn}`} [${d.ticks} ticks]` };
+    return { text: `${a.name}: ${ACTIONS[d.type].name.toLowerCase()}${tn ? ' ' + tn : ''} [${d.ticks} ticks]` };
   }
 
   // ---- Damage pipeline ---------------------------------------------------
@@ -1132,18 +1242,18 @@
     return C.collapsed(c) ? 'collapses' : 'goes down';
   }
 
-  // Rounds after the one it began in that a collapse lasts (CONFIG.stamina.collapse): fewer with WIL; Second Wind: none.
-  function collapseRounds(c) {
+  // Beats after the one it began in that a collapse lasts (CONFIG.stamina.collapse): fewer with WIL; Second Wind: none.
+  function collapseBeats(c) {
     const K = CONFIG.stamina.collapse;
     if (C.rank(c, 'second_wind')) return 0;
-    return Math.max(0, K.rounds - Math.floor(C.attr(c, 'WIL') / K.perWil));
+    return Math.max(0, K.beats - Math.floor(C.attr(c, 'WIL') / K.perWil));
   }
 
-  // The round a collapsed fighter comes round at the end of (what everyone can see), or null.
+  // The beat at which a collapsed fighter comes round (what everyone can see), or null.
   function comesRoundAt(enc, c) {
     if (!C.collapsed(c)) return null;
-    const r = c.status.collapsed.round != null ? c.status.collapsed.round : enc.round;
-    return r + collapseRounds(c);
+    const r = c.status.collapsed.beat != null ? c.status.collapsed.beat : enc.beat;
+    return r + 1 + collapseBeats(c);
   }
 
   // How hard a weapon blow lands for the striker's stamina left (of their fresh stamina, so weariness tells too):
@@ -1647,7 +1757,7 @@
     if (!C.isActive(target)) return;
     if (P.drop != null && sev >= P.drop && C.wieldedWeapon(target) && !C.wieldedWeapon(target).natural) {
       const w = dropHeld(target);
-      if (w) { loseWindUp(enc, target, null); parts.push(`${target.name}'s hand opens: ${Items.itemName(w)} falls`); }
+      if (w) { spoil(enc, target, null); parts.push(`${target.name}'s hand opens: ${Items.itemName(w)} falls`); }
     }
     if (P.fell != null && sev >= P.fell && !target.status.prone && !G.Effects.has(target, 'flying')) {
       knockDown(enc, target);
@@ -1655,7 +1765,7 @@
     }
     if (Array.isArray(P.stun) && sev <= P.stun.length && G.Magic && G.Conditions && !C.tireless(target)) {
       const save = sev < P.stun.length;
-      const got = save ? await G.Magic.afflict(enc, attacker, target, 'stunned', { rounds: 1 }, roller) : G.Conditions.add(target, 'stunned', { rounds: 1, src: attacker ? attacker.id : null });
+      const got = save ? await G.Magic.afflict(enc, attacker, target, 'stunned', { beats: 1 }, roller) : G.Conditions.add(target, 'stunned', { beats: 1, src: attacker ? attacker.id : null });
       if (got !== false && got !== null) parts.push(`${target.name} is stunned`);
     }
   }
@@ -1753,14 +1863,14 @@
       }
       if (wind > 0) {
         target.stamina = Math.max(0, target.stamina - wind);
-        enc.hitThisRound[target.id] = (enc.hitThisRound[target.id] || 0) + wind;
+        enc.struck[target.id] = (enc.struck[target.id] || 0) + wind;
         parts.push(`${h.winding ? 'winded: ' : ''}${wind} stamina`);
       }
     }
     for (const x of landed) await placeEffects(enc, attacker, target, x.place, x.sev, roller, parts);
     if (option.venom && landed.length && !h.noBleed && C.damageMult(target, 'venom') > 0 && G.Conditions) {
       // The deeper the bite, the more venom: up to `con` a round, never more than the wound's severity.
-      G.Conditions.add(target, 'poisoned', { rounds: option.venom.rounds, mag: Math.min(option.venom.con, h.sev || 1), src: attacker ? attacker.id : null });
+      G.Conditions.add(target, 'poisoned', { beats: option.venom.beats, mag: Math.min(option.venom.con, h.sev || 1), src: attacker ? attacker.id : null });
       parts.push('poisoned');
     }
     if (option.spell && option.spell.element === 'fire') {
@@ -1812,7 +1922,7 @@
     if (before) enc.onHit({ attacker, target, option, location: h.location || null, margin: margin == null ? null : margin, way: h.pierce || null, vital: !!h.vital, sev: C.woundLoad(target) - before.load, stamina: Math.max(0, before.stamina - target.stamina), downed: before.up && !C.isActive(target), spell: !!option.spell });
     // Pinning Shot: an arrow in the legs that draws blood roots them.
     if (option.ranged && attacker && C.rank(attacker, 'pinning_shot') && h.location === 'legs' && C.isActive(target) && C.woundLoad(target) > before0.load && G.Conditions) {
-      G.Conditions.add(target, 'rooted', { rounds: 2, src: attacker.id });
+      G.Conditions.add(target, 'rooted', { beats: 2, src: attacker.id });
       log(enc, `The arrow pins ${target.name} where they stand.`, 'hit');
     }
     return { text: `${h.P}/${h.S}/${h.B} P/S/B → ${parts.join(', ')}.${tail}`, hit: h };
@@ -1865,9 +1975,9 @@
   }
 
   // R6 (docs/PLAN.md; rules.yaml locations.aim.guarded): can the one meeting this blow still move to cover a small
-  // target? Not if prone, down or collapsed, held or pinned, caught off guard (the surprised side in its first round),
-  // or not seeing the blow. Out of AP is the other case, and needs no test here: a defender with none puts up no
-  // defence, so no aim penalty is paid at all.
+  // target? Not if prone, down or collapsed, held or pinned, caught off guard (the surprised side before its first
+  // action), or not seeing the blow. Too far ahead to react is the other case, and needs no test here: a defender who
+  // can't react puts up no defence, so no aim penalty is paid at all.
   // aimOpen says why not (a word for the panel), or null when they can.
   function aimOpen(defender, attacker, enc) {
     if (!defender || !defender.status) return null;
@@ -1876,7 +1986,7 @@
     if (C.isHeld(defender) || C.isPinned(defender)) return 'held';
     if (attacker && G.Effects.has(attacker, 'unseen')) return 'unseen';
     const sp = enc && enc.surprise;
-    if (sp && sp.round === enc.round && defender.side === sp.side) return 'caught off guard';
+    if (sp && defender.side === sp.side && !(enc.decls || []).some((d) => d.actor === defender.id && !d.reaction)) return 'caught off guard';
     return null;
   }
   function aimGuarded(defender, attacker, enc) {
@@ -2159,8 +2269,8 @@
     if (d.type === 'clinch') {
       if (L || linkOf(t)) return fizzle('someone is already tangled up');
       const o = await opposed(roller, a, grappleScore(a) + dogpileBonus(enc, chars, a, t), 'Clinch', t, grappleScore(t) + slippery(t), 'Keep clear');
-      if (o.margin >= big) { setGrapple(chars, a, t, 'hold'); loseWindUp(enc, t, 'grappled'); return log(enc, `${a.name} closes and seizes ${t.name} in a hold ${show(o)}.`, 'hit'); }
-      if (o.margin > 0) { setGrapple(chars, a, t, 'clinch'); loseWindUp(enc, t, 'clinched'); loseWindUp(enc, a, null); return log(enc, `${a.name} clinches with ${t.name} ${show(o)}.`, 'hit'); }
+      if (o.margin >= big) { setGrapple(chars, a, t, 'hold'); spoil(enc, t, 'grappled'); return log(enc, `${a.name} closes and seizes ${t.name} in a hold ${show(o)}.`, 'hit'); }
+      if (o.margin > 0) { setGrapple(chars, a, t, 'clinch'); spoil(enc, t, 'clinched'); spoil(enc, a, null); return log(enc, `${a.name} clinches with ${t.name} ${show(o)}.`, 'hit'); }
       return log(enc, `${t.name} keeps ${a.name} off ${show(o)}.`, 'fail');
     }
     if (!withT) return fizzle(`not grappling ${t.name}`);
@@ -2169,7 +2279,7 @@
       const o = await opposed(roller, a, grappleScore(a) + handles(t) + dogpileBonus(enc, chars, a, t), 'Grapple', t, grappleScore(t) + slippery(t), 'Resist');
       if (o.margin >= big) { setGrapple(chars, a, t, 'pin'); return log(enc, `${a.name} drives ${t.name} down into a pin ${show(o)}.`, 'hit'); }
       if (o.margin > 0) { setGrapple(chars, a, t, 'hold'); return log(enc, `${a.name} takes hold of ${t.name} ${show(o)}.`, 'hit'); }
-      if (o.margin <= -big) { setGrapple(chars, t, a, 'hold'); loseWindUp(enc, a, 'grappled'); return log(enc, `${t.name} reverses and holds ${a.name} ${show(o)}.`, 'hit'); }
+      if (o.margin <= -big) { setGrapple(chars, t, a, 'hold'); spoil(enc, a, 'grappled'); return log(enc, `${t.name} reverses and holds ${a.name} ${show(o)}.`, 'hit'); }
       return log(enc, `${a.name} can't get a hold on ${t.name} ${show(o)}.`, 'fail');
     }
     if (d.type === 'pin') {
@@ -2199,9 +2309,9 @@
       return;
     }
     if (d.type === 'break') {
-      // Iron Grip: a holder who pays a step's AP is not broken out of a hold or a pin.
-      if (L.level !== 'clinch' && C.rank(t, 'iron_grip') && C.isActive(t) && apLeft(enc, t.id) >= C.minAP()) {
-        enc.ap[t.id] -= C.minAP();
+      // Iron Grip: a holder who can still react, and puts a few ticks on their clock, is not broken out of a hold or a pin.
+      if (L.level !== 'clinch' && C.rank(t, 'iron_grip') && canReact(enc, rosters.get(enc) || { [t.id]: t }, t.id)) {
+        pushClock(enc, t.id, C.actionCost(t, 'release').ticks);
         log(enc, `${t.name}'s grip does not give: ${a.name} stays held.`, 'defend');
         return jointLock(enc, t, a);
       }
@@ -2210,7 +2320,7 @@
       if (o.margin <= 0) { log(enc, `${a.name} can't break ${t.name}'s grip ${show(o)}.`, 'fail'); return L.level !== 'clinch' ? jointLock(enc, t, a) : undefined; }
       if (L.level === 'clinch') { setGrapple(chars, a, t, null); return log(enc, `${a.name} breaks the clinch with ${t.name} ${show(o)}.`, 'defend'); }
       if (L.level === 'hold') {
-        if (o.margin >= big) { setGrapple(chars, a, t, 'hold'); loseWindUp(enc, t, 'grappled'); return log(enc, `${a.name} reverses ${t.name}'s hold ${show(o)}.`, 'defend'); }
+        if (o.margin >= big) { setGrapple(chars, a, t, 'hold'); spoil(enc, t, 'grappled'); return log(enc, `${a.name} reverses ${t.name}'s hold ${show(o)}.`, 'defend'); }
         setGrapple(chars, a, t, 'clinch');
         return log(enc, `${a.name} works out of the hold into a clinch ${show(o)}.`, 'defend');
       }
@@ -2309,7 +2419,7 @@
     const b = sweepTarget(enc, chars, a, t, d.option, pos);
     if (!b) return;
     const f = sweepForce(d.option);
-    const o = Object.assign({}, d.option, { sweep: true, windUp: false, label: `${d.option.label} (sweep)`, damage: d.option.damage.map((x) => Math.floor(x * f)), punch: (d.option.punch || 0) * f });
+    const o = Object.assign({}, d.option, { sweep: true, exposes: false, label: `${d.option.label} (sweep)`, damage: d.option.damage.map((x) => Math.floor(x * f)), punch: (d.option.punch || 0) * f });
     if (!o.damage.some((x) => x > 0)) return;
     log(enc, `${a.name}'s ${d.option.label} ${how} ${t.name} into ${b.name}.`, 'hit');
     await resolveAction(enc, chars, { actor: a.id, target: b.id, type: 'strike', option: o, stamina: 0, ap: 0 }, io, pos);
@@ -2349,14 +2459,6 @@
         log(enc, `${a.name} no longer holds that weapon; the strike fizzles.`, 'fizzle');
         return;
       }
-      if (d.type === 'strike' && d.option.windUp) {
-        const w = a.status.windUp;
-        if (!w || w.key !== C.optionKey(d.option)) {
-          log(enc, `${a.name} lost the wind-up; the ${label} fizzles.`, 'fizzle');
-          return;
-        }
-        a.status.windUp = null;
-      }
       if (d.type === 'strike' && d.option.ranged && d.option.weaponId && !d.option.natural) {
         if (C.ammoLeft(a, d.option) <= 0) {
           log(enc, `${a.name} is out of ${d.option.arrowHead ? d.option.arrowHead + 's' : 'arrows'}.`, 'fizzle');
@@ -2388,7 +2490,7 @@
         if (!(await castSpell(enc, a, d.option, roller))) return;
       }
 
-      // The target may react: spend AP from their pool to block, parry or dodge (they see it coming).
+      // The target may react: block, parry or dodge, the ticks on their clock (they see it coming).
       const name = d.type === 'strike' ? d.option.label : ACTIONS[d.type].name;
       // Displacement (monster trait): the target isn't quite where it appears to be.
       const disp = d.type === 'strike' && t.traits && t.traits.displacement && !C.rank(a, 'truesight');
@@ -2399,10 +2501,10 @@
       }
       // margin: the contest's, once a defence has been rolled (else applyHit rolls the blow against the passive number).
       let failedDodge = false, beatThrough = 0, defPaid = false, margin = null;
-      // Human Shield: someone holding a foe turns the held body into the blow (a block's AP), if they can pay.
+      // Human Shield: someone holding a foe turns the held body into the blow (a block's ticks), if they can react.
       const shieldBody = d.type === 'strike' && C.rank(t, 'human_shield') && C.holding(t) !== a.id ? chars[C.holding(t)] : null;
-      if (shieldBody && C.isActive(shieldBody) && linkOf(t).level !== 'clinch' && C.actionCost(t, 'block').ap <= apLeft(enc, t.id)) {
-        enc.ap[t.id] -= C.actionCost(t, 'block').ap;
+      if (shieldBody && C.isActive(shieldBody) && linkOf(t).level !== 'clinch' && canReact(enc, chars, t.id)) {
+        pushClock(enc, t.id, C.actionCost(t, 'block').ticks);
         log(enc, `${t.name} hauls ${shieldBody.name} into the way of ${a.name}'s ${name}.`, 'defend');
         const r = await applyHit(enc, chars, a, shieldBody, d.option, roller, { distance: dist(posAtStart[a.id], posAtStart[t.id]) });
         log(enc, `${shieldBody.name} takes it: ${r.text}`, 'hit');
@@ -2441,7 +2543,7 @@
             } else {
               const verb = { parry: 'parries', offParry: 'catches on the parrying dagger', dodge: 'dodges' }[def.type];
               log(enc, `${t.name} ${verb} ${a.name}'s ${name} (${chk.total} vs ${chk.tn}).`, 'defend');
-              if (def.type === 'dodge' && C.rank(t, 'counter_step')) t.status.counterStep = enc.round;
+              if (def.type === 'dodge' && C.rank(t, 'counter_step')) t.status.counterStep = enc.now;
             }
             absorbImpact(enc, t, def.type, d);
             const parried = def.type === 'parry' || def.type === 'offParry';
@@ -2522,7 +2624,7 @@
         if (coat && !blade.coat) log(enc, `The ${coat.name.toLowerCase()} on ${a.name}'s ${Items.itemName(blade)} is spent.`, 'info');
         // Kindled (Bless + Fire): a blade wreathed in flame sets what it strikes burning.
         if (G.Effects.has(a, 'kindled') && !d.option.ranged && !d.option.spell && C.isActive(t) && !C.tireless(t)) {
-          G.Conditions.add(t, 'burning', { rounds: 2, mag: 1, src: a.id });
+          G.Conditions.add(t, 'burning', { beats: 2, mag: 1, src: a.id });
           log(enc, `${t.name} catches fire.`, 'hit');
         }
         if (d.option.spell && G.Magic && G.Magic.afterHit) await G.Magic.afterHit(enc, chars, a, t, d.option, r.hit, roller);
@@ -2539,7 +2641,7 @@
           const jar = Math.min(a.stamina - 1, recoil);
           if (jar > 0) { a.stamina -= jar; log(enc, `The springy ${t.armor.type === 'chitin' ? 'chitin' : 'hide'} jars ${a.name}'s arms (−${jar} stamina).`, 'fail'); }
         }
-        if (!C.isActive(t)) loseWindUp(enc, t, null);
+        if (!C.isActive(t)) spoil(enc, t, null);
         if (!C.isActive(t)) await sweepOn(enc, chars, a, t, d, io, posAtStart, 'carries through');
         if ((d.option.unarmed === 'kick' || d.option.unarmed === 'shieldBash' || d.option.knockdown) && C.isActive(t) && !t.status.prone) {
           const kd = d.option.knockdown;
@@ -2560,15 +2662,6 @@
       case 'standUp':
         a.status.prone = false;
         log(enc, `${a.name} stands up.`);
-        break;
-      case 'windUp':
-        const armed = !d.option.weaponId || d.option.natural || (C.wieldedWeapon(a) && C.wieldedWeapon(a).id === d.option.weaponId);
-        if (a.status.prone || isGrappled(a) || !armed) {
-          log(enc, `${a.name} can't wind up now.`, 'fizzle');
-          break;
-        }
-        a.status.windUp = { key: C.optionKey(d.option), label: d.option.label, round: enc.round };
-        log(enc, d.option.motion === 'shoot' ? `${a.name} draws for a ${d.option.label} — exposed until it is loosed.` : `${a.name} winds up a ${d.option.label} — exposed until it lands.`);
         break;
       case 'readyPrimary':
       case 'drawSidearm':
@@ -2597,8 +2690,8 @@
           const o = await opposed(roller, a, Math.floor(C.attr(a, 'CHA') / 2) + feintScore(a), 'Bait', t, Math.floor(C.attr(t, 'WIS') / 2) + readScore(t), 'See through it');
           if (o.margin > 0) {
             // The bait leaves them off balance: they defend worse for the round.
-            if (G.Conditions) G.Conditions.add(t, 'baited', { rounds: 1, src: a.id });
-            if (G.Conditions && C.rank(a, 'dirty_trick')) { G.Conditions.add(t, 'exposed', { rounds: 1, src: a.id }); log(enc, `${t.name} is left wide open.`, 'hit'); }
+            if (G.Conditions) G.Conditions.add(t, 'baited', { beats: 1, src: a.id });
+            if (G.Conditions && C.rank(a, 'dirty_trick')) { G.Conditions.add(t, 'exposed', { beats: 1, src: a.id }); log(enc, `${t.name} is left wide open.`, 'hit'); }
             log(enc, `${a.name} baits ${t.name}, who commits too early and is off balance (${o.a} vs ${o.b}).`, 'hit');
           } else log(enc, `${t.name} sees through ${a.name}'s bait (${o.a} vs ${o.b}).`, 'fail');
         } else {
@@ -2615,7 +2708,7 @@
           }
           const truth = margin >= 0;
           const note = intentNote(enc, chars, t, truth, r);
-          if (G.Conditions) G.Conditions.add(a, 'reading', { rounds: RI.rounds || 1, vs: t.id, src: a.id, truth, note });
+          if (G.Conditions) G.Conditions.add(a, 'reading', { beats: RI.beats || 1, vs: t.id, src: a.id, truth, note });
           log(enc, `${a.name} reads ${t.name}: ${note}`, 'defend');
         }
         break;
@@ -2644,27 +2737,27 @@
         }
         break;
       case 'vanish':
-        if (G.Conditions) { G.Conditions.add(a, 'unseen', { rounds: 2, src: a.id }); log(enc, `${a.name} slips out of sight.`, 'defend'); }
+        if (G.Conditions) { G.Conditions.add(a, 'unseen', { beats: 2, src: a.id }); log(enc, `${a.name} slips out of sight.`, 'defend'); }
         break;
       case 'feign':
         knockDown(enc, a);
-        if (G.Conditions) G.Conditions.add(a, 'feigning', { rounds: 99, src: a.id });
+        if (G.Conditions) G.Conditions.add(a, 'feigning', { beats: 99, src: a.id });
         log(enc, `${a.name} crumples and lies still.`, 'death');
         break;
       case 'rally': {
         enc.rallied = enc.rallied || {};
         if (CONFIG.stamina && CONFIG.stamina.regen) {
-          // R1 gives everyone their breath back, struck or not; Rally gives it now: a round's regeneration at once to
-          // each of my side within 3 squares, and the collapsed among them come round.
+          // R1 gives everyone their breath back each beat, struck or not; Rally gives it now: a beat's regeneration at
+          // once to each of my side within 3 squares, and the collapsed among them come round.
           const heard = enc.ids.filter((o) => chars[o].side === a.side && !chars[o].status.dead && !C.tireless(chars[o]) && (C.isActive(chars[o]) || C.collapsed(chars[o])) && dist(posAtStart[a.id], enc.pos[o]) <= 3);
           const bits = [];
           for (const o of heard) {
             const f = chars[o];
-            const r = Math.max(1, C.roundRegen(f, false));
+            const r = Math.max(1, C.beatRegen(f, false));
             const before = f.stamina;
             const woke = C.collapsed(f) && C.comeRound(f, r);
             if (!woke) f.stamina = Math.min(C.maxStamina(f), f.stamina + r);
-            enc.rallied[o] = enc.round;
+            enc.rallied[o] = enc.beat;
             if (woke) bits.push(`${f.name} comes round`);
             else if (f.stamina > before) bits.push(`${f.name} +${f.stamina - before}`);
           }
@@ -2672,16 +2765,17 @@
           break;
         }
         const heard = enc.ids.filter((o) => chars[o].side === a.side && C.isActive(chars[o]) && dist(posAtStart[a.id], enc.pos[o]) <= 3);
-        for (const o of heard) enc.rallied[o] = enc.round;
-        log(enc, `${a.name} rallies ${heard.length > 1 ? 'their side' : 'themself'}: they will get their breath back this round, struck or not.`, 'defend');
+        for (const o of heard) enc.rallied[o] = enc.beat;
+        log(enc, `${a.name} rallies ${heard.length > 1 ? 'their side' : 'themself'}: they will get their breath back this beat, struck or not.`, 'defend');
         break;
       }
       case 'command':
         if (t && C.isActive(t)) {
-          const gift = Math.round(C.baseAP(1));
-          enc.ap[t.id] = (enc.ap[t.id] || 0) + gift;
-          if (enc.turnDone[t.id] && eligible(enc, chars, t.id)) log(enc, `${t.name} has had their turn; the AP will serve for reactions.`, 'pass');
-          log(enc, `${a.name} commands ${t.name}: +${C.fmtAP(gift)} AP.`, 'defend');
+          // A word that hurries a friend: their clock comes `command` ticks sooner (never before now).
+          const gift = Math.min(CONFIG.clock.command, Math.max(0, (enc.clock[t.id] || 0) - enc.now));
+          if (enc.waits[t.id]) { delete enc.waits[t.id]; enc.clock[t.id] = enc.now; }
+          else enc.clock[t.id] -= gift;
+          log(enc, `${a.name} commands ${t.name}: ${gift} ticks sooner.`, 'defend');
         }
         break;
       case 'rouse':
@@ -2700,13 +2794,13 @@
         for (const o of targets) {
           const f = chars[o];
           const r = await opposed(roller, a, bonus, 'Demoralize', f, Math.floor(C.attr(f, 'WIL') / 2), 'Hold their nerve');
-          if (r.margin > 0 && G.Conditions) { G.Conditions.add(f, 'frightened', { rounds: 1, src: a.id }); log(enc, `${f.name} quails before ${a.name} (${r.a} vs ${r.b}).`, 'hit'); }
+          if (r.margin > 0 && G.Conditions) { G.Conditions.add(f, 'frightened', { beats: 1, src: a.id }); log(enc, `${f.name} quails before ${a.name} (${r.a} vs ${r.b}).`, 'hit'); }
           else log(enc, `${f.name} holds their nerve against ${a.name} (${r.a} vs ${r.b}).`, 'fail');
         }
         break;
       }
       case 'nameWeakness':
-        if (t && G.Conditions) { G.Conditions.add(t, 'named', { rounds: 2, src: a.id }); log(enc, `${a.name} names ${t.name}'s weakness: its hide will not save it now.`, 'hit'); }
+        if (t && G.Conditions) { G.Conditions.add(t, 'named', { beats: 2, src: a.id }); log(enc, `${a.name} names ${t.name}'s weakness: its hide will not save it now.`, 'hit'); }
         break;
       case 'cauterize':
         if (t && !t.status.dead && C.bleeding(t) > 0) {
@@ -2756,7 +2850,7 @@
   async function strikeEffects(enc, chars, a, t, blade, fx, roller, landed, pos) {
     const name = Items.itemName(blade);
     if (fx.riled && C.isActive(a) && G.Conditions) {
-      G.Conditions.add(a, 'riled', { rounds: 99, mag: fx.riled, src: a.id });
+      G.Conditions.add(a, 'riled', { beats: 99, mag: fx.riled, src: a.id });
       log(enc, `${name} rouses ${a.name}: riled (+${fx.riled} to all mitigation until hurt).`, 'defend');
     }
     if (fx.element && G.Magic && !t.status.dead) await G.Magic.elementBlow(enc, chars, a, t, fx.element.noun, fx.element.mag, roller, name, { from: pos[a.id] });
@@ -2779,7 +2873,7 @@
       const H = fx.onHit;
       const need = Math.round((H.chance == null ? 1 : H.chance) * 10);
       const r = need >= 10 ? 1 : await rollDie(roller, a.id, 10, `${a.name}: ${name}`, `d10 ≤ ${need}: ${(CONFIG.conditions[H.cond] || {}).name || H.cond}`);
-      if (r <= need) await G.Magic.afflict(enc, a, t, H.cond, { rounds: H.rounds || 1, mag: H.mag || 1 }, roller);
+      if (r <= need) await G.Magic.afflict(enc, a, t, H.cond, { beats: H.beats || 1, mag: H.mag || 1 }, roller);
     }
   }
 
@@ -2805,7 +2899,7 @@
     const lost = await G.Magic.backlash(a, opt.spCost, roller);
     if (lost > 0) {
       a.stamina = Math.max(0, a.stamina - lost);
-      enc.hitThisRound[a.id] = (enc.hitThisRound[a.id] || 0) + lost;
+      enc.struck[a.id] = (enc.struck[a.id] || 0) + lost;
       C.updateCondition(a);
       log(enc, `Backlash: ${a.name} loses ${lost} stamina.`, 'fail');
       if (!C.isActive(a)) {
@@ -2818,13 +2912,7 @@
 
   function knockDown(enc, t) {
     t.status.prone = true;
-    loseWindUp(enc, t, 'knocked down');
-  }
-
-  function loseWindUp(enc, c, why) {
-    if (!c.status.windUp) return;
-    c.status.windUp = null;
-    if (why) log(enc, `${c.name} loses the wind-up (${why}).`, 'fizzle');
+    spoil(enc, t, 'knocked down');
   }
 
   // Rust (monster trait): no wound, but iron and steel armor corrodes (bronze doesn't rust).
@@ -2922,24 +3010,22 @@
     const loss = Math.min(t.stamina, Math.round(blowForce(d.option) * share));
     if (loss <= 0) return;
     t.stamina -= loss;
-    enc.hitThisRound[t.id] = (enc.hitThisRound[t.id] || 0) + loss;
+    enc.struck[t.id] = (enc.struck[t.id] || 0) + loss;
     C.updateCondition(t);
     log(enc, `The blow jars ${t.name} (−${loss} stamina).`, 'hit');
   }
 
-  // CONFIG.defense.rebound: a blow blocked or parried costs the attacker a share of its AP getting the weapon back
-  // (more for a parry with Beat). What they haven't got this round comes off the next (`carry`).
+  // CONFIG.clock.rebound: a blow blocked or parried costs the attacker a share of its ticks getting the weapon back
+  // (more for a parry with Beat), on their clock.
   function rebound(enc, a, d, kind, t) {
-    const R = CONFIG.defense.rebound;
-    if (!R || !d.ap || !(kind in R)) return;
+    const R = CONFIG.clock.rebound;
+    if (!R || !d.ticks || !(kind in R) || !enc.clock || enc.clock[a.id] == null) return;
     const share = R[kind] + (kind === 'block' ? 0 : G.Effects.sum(t, 'recoil') * (R.perRank || 0));
-    const lose = Math.round(d.ap * share);
+    const lose = Math.round(d.ticks * share);
     if (lose <= 0) return;
-    const now = Math.min(apLeft(enc, a.id), lose), owe = R.carry ? lose - now : 0;
-    enc.ap[a.id] = (enc.ap[a.id] || 0) - now;
-    if (owe) (enc.owed || (enc.owed = {}))[a.id] = (enc.owed[a.id] || 0) + owe;
+    enc.clock[a.id] += lose;
     const what = kind === 'block' ? 'off the shield' : 'off the parry';
-    log(enc, `${a.name}'s blow rebounds ${what}: −${C.fmtAP(lose)} AP${owe ? ` (${C.fmtAP(owe)} of it next round)` : ''}.`, 'defend');
+    log(enc, `${a.name}'s blow rebounds ${what}: +${lose} ticks.`, 'defend');
   }
 
   // Sweep: a two-handed swing carries on into one more foe beside its target and in reach, free, at half its force
@@ -2954,7 +3040,7 @@
     if (!next) return;
     const half = Object.assign({}, o, { damage: o.damage.map((v) => Math.floor(v / 2)), ap: 0, label: 'Sweep' });
     log(enc, `${a.name}'s swing sweeps on into ${chars[next].name}.`, 'pass');
-    const sd = { actor: a.id, type: 'strike', option: half, target: next, ap: 0, stamina: 0, n: ++enc.seq, opportunity: true, sweep: true, round: enc.round };
+    const sd = { actor: a.id, type: 'strike', option: half, target: next, ticks: 0, stamina: 0, n: ++enc.seq, opportunity: true, sweep: true, tick: enc.now, beat: enc.beat };
     enc.decls.push(sd);
     await resolveAction(enc, chars, sd, io, Object.assign({}, enc.pos));
     sd.done = true;
@@ -2971,9 +3057,9 @@
     for (const x of foes) {
       if (!C.isActive(a)) break;
       const f = K.force == null ? 1 : K.force;
-      const wo = Object.assign({}, o, { whirlwind: false, sweep: true, windUp: false, label: 'Whirlwind', ap: 0, stamina: 0, damage: o.damage.map((v) => Math.floor(v * f)), punch: (o.punch || 0) * f });
+      const wo = Object.assign({}, o, { whirlwind: false, sweep: true, exposes: false, label: 'Whirlwind', ticks: 0, lead: 0, stamina: 0, damage: o.damage.map((v) => Math.floor(v * f)), punch: (o.punch || 0) * f });
       log(enc, `${a.name}'s swing comes round on ${chars[x].name}.`, 'pass');
-      const sd = { actor: a.id, type: 'strike', option: wo, target: x, ap: 0, stamina: 0, n: ++enc.seq, opportunity: true, whirl: true, round: enc.round };
+      const sd = { actor: a.id, type: 'strike', option: wo, target: x, ticks: 0, stamina: 0, n: ++enc.seq, opportunity: true, whirl: true, tick: enc.now, beat: enc.beat };
       enc.decls.push(sd);
       await resolveAction(enc, chars, sd, io, Object.assign({}, enc.pos));
       sd.done = true;
@@ -2990,14 +3076,14 @@
     for (const o of foes) {
       const dd = dist(me, enc.pos[o]);
       const options = C.attackOptions(a)
-        .filter((x) => x.weaponId === d.option.weaponId && !x.ranged && !x.spell && !x.windUp && C.inRange(x, dd) && !attackUnavailable(enc, a, x))
+        .filter((x) => x.weaponId === d.option.weaponId && !x.ranged && !x.spell && !x.exposes && C.inRange(x, dd) && !attackUnavailable(enc, a, x))
         .map((x) => Object.assign({}, x, { ap: 0 }));
       if (!options.length) continue;
-      const pick = await react(enc, chars, { kind: 'opportunity', actor: a.id, target: o, options, ap: apLeft(enc, a.id), why: 'cleave' }, io);
+      const pick = await react(enc, chars, { kind: 'opportunity', actor: a.id, target: o, options, ahead: ahead(enc, a.id), why: 'cleave' }, io);
       const opt = options.find((x) => x === pick || (pick && C.optionKey(x) === (typeof pick === 'string' ? pick : C.optionKey(pick))));
       if (!opt) continue;
       log(enc, `${a.name} cleaves on into ${chars[o].name}.`, 'pass');
-      const sd = { actor: a.id, type: 'strike', option: opt, target: o, ap: 0, stamina: opt.stamina, n: ++enc.seq, opportunity: true, cleave: true, round: enc.round };
+      const sd = { actor: a.id, type: 'strike', option: opt, target: o, ticks: 0, stamina: opt.stamina, n: ++enc.seq, opportunity: true, cleave: true, tick: enc.now, beat: enc.beat };
       enc.decls.push(sd);
       await resolveAction(enc, chars, sd, io, Object.assign({}, enc.pos));
       sd.done = true;
@@ -3021,18 +3107,17 @@
       const r = await applyHit(enc, chars, t, a, opt, io && io.roller);
       return log(enc, `${t.name} ripostes: ${r.text}`, 'hit');
     }
-    if (t.status.prone || isGrappled(t) || C.inClinch(t)) return;
+    if (t.status.prone || isGrappled(t) || C.inClinch(t) || !canReact(enc, chars, t.id)) return;
     const options = C.attackOptions(t)
-      .filter((o) => o.weaponId === w.id && !o.ranged && !o.spell && !o.windUp && o.motion !== 'power' && C.inRange(o, d0) && !attackUnavailable(enc, t, o))
-      .map((o) => (free ? Object.assign({}, o, { ap: 0 }) : o))
-      .filter((o) => o.ap <= apLeft(enc, t.id));
+      .filter((o) => o.weaponId === w.id && !o.ranged && !o.spell && !o.exposes && o.motion !== 'power' && C.inRange(o, d0) && !attackUnavailable(enc, t, o))
+      .map((o) => (free ? Object.assign({}, o, { ticks: 0 }) : o));
     if (!options.length) return;
-    const pick = await react(enc, chars, { kind: 'opportunity', actor: t.id, target: a.id, options, ap: apLeft(enc, t.id), why: 'riposte' }, io);
+    const pick = await react(enc, chars, { kind: 'opportunity', actor: t.id, target: a.id, options, ahead: ahead(enc, t.id), why: 'riposte' }, io);
     const opt = options.find((o) => o === pick || (pick && C.optionKey(o) === (typeof pick === 'string' ? pick : C.optionKey(pick))));
     if (!opt) return;
-    enc.ap[t.id] -= opt.ap;
+    pushClock(enc, t.id, opt.ticks);
     log(enc, `${t.name} ripostes.`, 'pass');
-    const sd = { actor: t.id, type: 'strike', option: opt, target: a.id, ap: opt.ap, stamina: opt.stamina, n: ++enc.seq, opportunity: true, riposte: true, round: enc.round };
+    const sd = { actor: t.id, type: 'strike', option: opt, target: a.id, ticks: opt.ticks, stamina: opt.stamina, n: ++enc.seq, opportunity: true, riposte: true, reaction: true, tick: enc.now, beat: enc.beat };
     enc.decls.push(sd);
     await resolveAction(enc, chars, sd, io, posAtStart);
     sd.done = true;
@@ -3082,27 +3167,26 @@
       const o = await opposed(roller, a, aB, 'Disarm', t, bB, 'Keep grip');
       if (o.margin > 0) {
         dropHeld(t);
-        loseWindUp(enc, t, 'disarmed');
+        spoil(enc, t, 'disarmed');
         log(enc, `${a.name} disarms ${t.name}; ${Items.itemName(w)} falls (${o.a} vs ${o.b}).`, 'hit');
       } else log(enc, `${a.name}'s disarm fails (${o.a} vs ${o.b}).`, 'fail');
     }
   }
 
-  // ---- End of round ------------------------------------------------------
-  // The round each death happened in, for the window in which a Life restore can still call them back.
+  // The beat each death happened in, for the window in which a Life restore can still call them back.
   function markDeaths(enc, chars) {
     for (const id of enc.ids) {
       const c = chars[id];
-      if (c && c.status.dead && c.status.diedRound == null && !c.conjured && !c.vanished) c.status.diedRound = enc.round;
+      if (c && c.status.dead && c.status.diedBeat == null && !c.conjured && !c.vanished) c.status.diedBeat = enc.beat;
     }
   }
 
-  // ---- What happens each round (step F moves these to its beat) ---------------------------------------------
-  // endRound is the one place: constriction, bleeding and a torso wound's drain (bodyRound), conditions' harm over
-  // time and their countdown (Conditions.endRound), regrowth, weariness, regeneration, a collapse running its course,
-  // hold upkeep, webs loosening, wind-ups lapsing. When the fight ends, settleFallen decides who bleeds out.
-  function endRound(enc, chars) {
-    log(enc, 'End of round', 'pass');
+  // ---- What happens to bodies each beat ------------------------------------------------------------------
+  // beatBodies is the one place: constriction, bleeding and a torso wound's drain (beatBody), conditions' harm over
+  // time and their countdown (Conditions.beat), regrowth, weariness, regeneration, a collapse running its course,
+  // hold upkeep, webs loosening, the revive window. When the fight ends, settleFallen decides who bleeds out.
+  function beatBodies(enc, chars) {
+    log(enc, `Beat ${enc.beat}`, 'round');
     // Constrictors (trait constrict: { stamina, harm }) crush whoever they hold.
     for (const id of enc.ids) {
       const c = chars[id];
@@ -3112,7 +3196,7 @@
       if (K.stamina && !C.tireless(held)) {
         const took = Math.min(held.stamina, K.stamina);
         held.stamina -= took;
-        enc.hitThisRound[held.id] = (enc.hitThisRound[held.id] || 0) + took; // a crush is a blow: half regeneration (R1)
+        enc.struck[held.id] = (enc.struck[held.id] || 0) + took; // a crush is a blow: a share of regeneration (R1)
       }
       if (K.harm) C.harm(held, K.harm, 'torso', 'crush');
       const wasDown = held.status.unconscious;
@@ -3122,9 +3206,9 @@
     for (const id of enc.ids) {
       const c = chars[id];
       if (c.status.dead) continue;
-      bodyRound(enc, c);
-      // Conditions: damage over time, then each ticks down a round.
-      if (G.Conditions) for (const line of G.Conditions.endRound(c)) log(enc, line, 'bleed');
+      beatBody(enc, c);
+      // Conditions: damage over time, then each counts down a beat.
+      if (G.Conditions) for (const line of G.Conditions.beat(c)) log(enc, line, 'bleed');
       // A controlled fighter comes back to themselves when the spell ends or its caster falls.
       if (c.charmed) {
         const ctl = G.Conditions.get(c, 'controlled');
@@ -3135,7 +3219,7 @@
         }
       }
       // Regrowth (monster trait regrow: { mend, stamina }): wounds close a step at a time and the bleeding stops, unless
-      // burned this round; a regrower down under its boxes again heaves itself up.
+      // burned this beat; a regrower down under its boxes again heaves itself up.
       const R = c.traits && c.traits.regrow;
       if (R && !(enc.burned || {})[id] && !c.status.dead) {
         const wasOut = c.status.unconscious;
@@ -3143,20 +3227,20 @@
         const healed = R.mend ? C.mendWounds(c, 1, R.mend) : 0;
         const before = c.stamina;
         c.stamina = Math.min(C.maxStamina(c), c.stamina + R.stamina);
-        if (C.collapsed(c) && c.stamina > 0) C.comeRound(c);
-        if (wasOut && !c.status.unconscious) log(enc, `${c.name} heaves itself back up.`, 'death');
+        if (C.collapsed(c) && c.stamina > 0) { C.comeRound(c); upAgain(enc, c); }
+        if (wasOut && !c.status.unconscious) { upAgain(enc, c); log(enc, `${c.name} heaves itself back up.`, 'death'); }
         if (healed || c.stamina > before) log(enc, `${c.name} regenerates${healed ? `: wounds ${healed} better` : ''}${c.stamina > before ? `${healed ? ' and' : ':'} ${c.stamina - before} stamina` : ''}.`);
       }
-      // Weariness: the stamina a fighter spent or lost this round lowers the most it can come back to.
-      if (C.isActive(c)) C.wearyRound(c, Math.max(0, ((enc.staminaAtStart || {})[id] ?? c.stamina) - c.stamina));
-      // A collapse (CONFIG.stamina.collapse) that began this round is stamped with it.
-      if (c.status.collapsed && c.status.collapsed.round == null) c.status.collapsed.round = enc.round;
-      // Regeneration (R1): every round; a share of it in a round a blow took stamina, in full with Second Wind (or in
+      // Weariness: the stamina a fighter spent or lost this beat lowers the most it can come back to.
+      if (C.isActive(c)) C.wearyBeat(c, Math.max(0, ((enc.staminaAtBeat || {})[id] ?? c.stamina) - c.stamina));
+      // A collapse (CONFIG.stamina.collapse) that began in the beat now ending is stamped with it.
+      if (c.status.collapsed && c.status.collapsed.beat == null) c.status.collapsed.beat = enc.beat - 1;
+      // Regeneration (R1): every beat; a share of it in a beat a blow took stamina, in full with Second Wind (or in
       // hero mode). The down and the collapsed don't regenerate.
       if (!c.status.unconscious) {
-        const took = enc.hitThisRound[id] || 0;
+        const took = enc.struck[id] || 0;
         const struck = took > 0 && !C.rank(c, 'second_wind') && !(c.hero && CONFIG.hero && CONFIG.hero.regenWhenHit);
-        const r = C.roundRegen(c, struck);
+        const r = C.beatRegen(c, struck);
         if (r < 0) {
           c.stamina = Math.max(0, c.stamina + r);
           log(enc, `${c.name} loses ${-r} stamina to heavy armor.`);
@@ -3166,18 +3250,19 @@
           if (c.stamina > before) log(enc, `${c.name} recovers ${c.stamina - before} stamina${struck ? ' (struck: a share)' : ''}.`);
         }
       }
-      // R3: a collapse runs its course; they come round with a round's regeneration, still on the ground.
-      if (C.collapsed(c) && enc.round >= c.status.collapsed.round + collapseRounds(c)) {
-        C.comeRound(c, Math.max(1, C.roundRegen(c, false)));
+      // R3: a collapse runs its course; they come round with a beat's regeneration, still on the ground.
+      if (C.collapsed(c) && enc.beat >= comesRoundAt(enc, c)) {
+        C.comeRound(c, Math.max(1, C.beatRegen(c, false)));
+        upAgain(enc, c);
         log(enc, `${c.name} comes round (${c.stamina} stamina), still on the ground.`, 'death');
       }
       const wasDown = c.status.unconscious;
       C.updateCondition(c);
-      if (c.status.collapsed && c.status.collapsed.round == null) c.status.collapsed.round = enc.round;
+      if (c.status.collapsed && c.status.collapsed.beat == null) c.status.collapsed.beat = enc.beat;
       if (c.status.dead) log(enc, `${c.name} has died.`, 'death');
       else if (c.status.unconscious && !wasDown) log(enc, `${c.name} ${downWord(c)}.`, 'death');
-      if (c.status.unconscious) { releaseGrapples(chars, c); c.status.windUp = null; }
-      // Webs loosen as you struggle: a layer comes off each round.
+      if (c.status.unconscious) releaseGrapples(chars, c);
+      // Webs loosen as you struggle: a layer comes off each beat.
       if (c.status.webbed && CONFIG.web && CONFIG.web.wearOff) c.status.webbed = Math.max(0, c.status.webbed - CONFIG.web.wearOff);
       // Holding someone is exhausting: pay the upkeep or let go.
       const G2 = CONFIG.grappling;
@@ -3191,32 +3276,20 @@
           log(enc, `${c.name} is too spent to keep the hold and lets go.`, 'fizzle');
         }
       }
-      // A wind-up must be released by the end of the round after it is made.
-      if (c.status.windUp && c.status.windUp.round < enc.round) loseWindUp(enc, c, 'not released in time');
     }
     markDeaths(enc, chars);
     const R = CONFIG.magic && CONFIG.magic.revive;
     for (const id of enc.ids) {
       const c = chars[id];
-      if (R && c && c.status.dead && c.status.diedRound != null && !c.conjured && !c.vanished && !C.tireless(c) && enc.round - c.status.diedRound === R.rounds) log(enc, `${c.name} is beyond saving now.`, 'death');
-    }
-    const sides = {};
-    for (const id of enc.ids) if (C.isActive(chars[id])) sides[chars[id].side] = true;
-    const left = Object.keys(sides);
-    if (left.length <= 1) {
-      enc.phase = 'over';
-      enc.winner = left[0] || null;
-      log(enc, left.length ? `The ${left[0] === 'party' ? 'party' : 'enemy'} side wins.` : 'No one is left standing.', 'round');
-    } else {
-      enc.phase = 'roundEnd';
+      if (R && c && c.status.dead && c.status.diedBeat != null && !c.conjured && !c.vanished && !C.tireless(c) && enc.beat - c.status.diedBeat === R.beats + 1) log(enc, `${c.name} is beyond saving now.`, 'death');
     }
   }
 
-  // A round of a body's wounds: bleeding is blood lost (wounds.bleed.harm a point of bleeding, less CON's share: harm on
+  // A beat of a body's wounds: bleeding is blood lost (wounds.bleed.harm a point of bleeding, less CON's share: harm on
   // one wound of blood loss at the torso, which fills the boxes and can take the body down), and a torso wound costs
   // stamina (wounds.places.torso.stamina, by the torso's severity; pain doesn't touch it). A body already down loses
   // nothing more here: whether it bleeds out is settled when the fight ends (settleFallen).
-  function bodyRound(enc, c) {
+  function beatBody(enc, c) {
     if (c.status.dead || C.tireless(c) || C.isDown(c)) return;
     const blood = C.bleedLoss(c);
     const torso = C.woundEffect(c, 'torso', 'stamina', true);
@@ -3242,7 +3315,7 @@
       const roll = roller ? await rollDie(roller, c.id, CONFIG.maneuver.die, `${c.name}: bleeding out`, `d10 + CON ${C.attr(c, 'CON')} against ${need}`) : 1 + Math.floor(Math.random() * CONFIG.maneuver.die);
       if (roll + C.attr(c, 'CON') >= need) { C.bindWounds(c); log(enc, `${c.name}'s bleeding slows and stops (${roll} + ${C.attr(c, 'CON')} against ${need}).`, 'defend'); continue; }
       c.status.dead = true;
-      c.status.diedRound = enc.round;
+      c.status.diedBeat = enc.beat;
       log(enc, `${c.name} bleeds out where they lie (${roll} + ${C.attr(c, 'CON')} against ${need}).`, 'death');
     }
   }
@@ -3258,7 +3331,6 @@
       if (C.collapsed(c)) C.comeRound(c, 1);
       c.status.collapsed = null;
       c.status.prone = false;
-      c.status.windUp = null;
       c.status.grapple = null;
       c.status.webbed = 0;
       // Diseases and the like outlast the fight; everything else ends with it.
@@ -3367,7 +3439,11 @@
 
   // foresee(attacker, target, option, { enc, chars, distance }): what the attacker's character could know of this
   // blow, from what it can see of the target: the shield and weapon in hand, the armor, whether they are prone, held
-  // or down, their stamina; not their AP, nor feats that don't show (Living Fortress, Untouchable, Roll With It).
+  // or down, their stamina, their clock (the timeline is in plain sight); not feats that don't show (Living Fortress,
+  // Untouchable, Roll With It).
+  //   ticks, lead: the blow's cost and how long before it lands; lands (the tick); after: how far ahead of now the
+  //        attacker's clock will be, and react: whether they could still react then (CONFIG.clock.overreach);
+  //   open: the target can't react when it lands (too far ahead of it), so it lands undefended.
   // Returns null for a blow that does no harm by these rules (rust, web), else
   //   hit: on a blow nobody defends: sumOutcomes' sev (the chance of each severity, 0–3), sevMean, bleed, stamina,
   //        wear (armor durability), places, and the chances vital, down, collapse, drop, kill, through, turned;
@@ -3384,6 +3460,12 @@
     if (!attacker || !target || !option || option.rust || option.web) return null;
     if (option.spell && !option.damage && !option.spell.magnitude) return null;
     const enc = ctx.enc || null;
+    const clockOn = !!(enc && enc.clock && enc.clock[target.id] != null);
+    const lead = option.lead || 0, ticks = option.ticks || 0;
+    const landsAt = enc && enc.now != null ? enc.now + lead : lead;
+    const targetAhead = clockOn ? Math.max(0, readyAt(enc, target.id) - landsAt) : 0;
+    const open = clockOn && targetAhead > CONFIG.clock.overreach;
+    const timing = { ticks, lead, lands: landsAt, after: ticks - lead, react: ticks <= CONFIG.clock.overreach, targetAhead, open };
     const distance = ctx.distance != null ? ctx.distance : enc && enc.pos[attacker.id] && enc.pos[target.id] ? dist(enc.pos[attacker.id], enc.pos[target.id]) : (option.minRange || 1) + (option.closePenalty ? 1 : 0);
     let o = option;
     if (o.stamina && !C.tireless(attacker) && !o.spent && isSpent(attacker, o.stamina)) o = Object.assign({}, o, { spent: true });
@@ -3397,7 +3479,7 @@
       const decl = { type: 'strike', option: o, actor: attacker.id, target: target.id };
       const chars = Object.assign({}, ctx.chars || {}, { [attacker.id]: attacker, [target.id]: target });
       const defences = [];
-      if (C.isActive(target) && !C.isPinned(target)) {
+      if (C.isActive(target) && !C.isPinned(target) && !open) {
         for (const kind of DEFENSE_TYPES) {
           if (kind === 'offParry' && !C.offhandWeapon(target)) continue;
           if (defenseUnavailable(target, kind, decl, chars, enc)) continue;
@@ -3406,9 +3488,9 @@
         }
       }
       let best = null;
-      for (const d of defences) if (!best || d.odds > best.odds + 1e-9 || (Math.abs(d.odds - best.odds) < 1e-9 && d.ap < best.ap)) best = d;
+      for (const d of defences) if (!best || d.odds > best.odds + 1e-9 || (Math.abs(d.odds - best.odds) < 1e-9 && d.ticks < best.ticks)) best = d;
       return {
-        option: o, distance, spent: !!o.spent, hit, defences, flank: enc ? flanked(enc, target, attacker) : 0,
+        option: o, distance, spent: !!o.spent, hit, defences, flank: enc ? flanked(enc, target, attacker) : 0, timing,
         best: best ? best.kind : null,
         lands: best ? 1 - best.odds : 1,
         drop: best ? best.drop : hit.drop,
@@ -3464,7 +3546,7 @@
     const jarred = !C.tireless(target) && s1 <= 0 && target.stamina > 0 ? 1 : 0;
     const held = through ? { drop: Math.max(jarred, through.drop), kill: through.kill, down: through.down } : { drop: jarred, kill: 0, down: 0 };
     return {
-      kind, name: ACTIONS[kind].name, odds, ap: cost.ap, stamina: cost.stamina, spent, absorb, carry, shieldBreak, margins: fail, failed, through,
+      kind, name: ACTIONS[kind].name, odds, ticks: cost.ticks, stamina: cost.stamina, spent, absorb, carry, shieldBreak, margins: fail, failed, through,
       drop: (1 - odds) * failed.drop + odds * held.drop,
       downP: (1 - odds) * failed.down + odds * held.down,
       kill: (1 - odds) * failed.kill + odds * held.kill,
@@ -3475,7 +3557,8 @@
     foresee, hitOutcomes, sumOutcomes, outcomeDown,
     foeSquares, fearSource, fleeSteps, mustFlee,
     unseenBy, strikeEffects, conditionForbids, ATTACK_TYPES, DEFENSE_TYPES, shoveReach, log, rollDie, castSpell, knockDown, stability, releaseAll: clearGrapple,
-    createEncounter, autoPlace, startRound, currentActor, legalActions, act, validate, endTurn, defer, submit, describeDecl, apLeft, defenseOptions, coverOptions, opportunityOptions,
-    vitalLower, vitalThreshold, pierceNeed, marginDist, marginsUndefended, passiveNumber, passiveKey, worstBeside, woundOutcome, downChance, needsShock, settleFallen, projectedPos, dist, steps, flanked, flankerAt, flankedAt, threatens, comesRoundAt, collapseRounds, isSpent, canPay, defenseOdds, parryCarryShare, leverage, skillEdge, feintScore, readScore, blowForce, aimPenalty, aimGuarded, aimOpen, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, passesThrough, sweeps, sweepTarget, sweepForce, applyHit, resolveAction, finishRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
+    createEncounter, autoPlace, begin, enter, upAgain, currentActor, legalActions, act, validate, submit, describeDecl, describeAction, defenseOptions, coverOptions, opportunityOptions,
+    readyAt, ahead, canReact, pushClock, spoil, beat, nextChooser, byClock, waitEnd,
+    vitalLower, vitalThreshold, pierceNeed, marginDist, marginsUndefended, passiveNumber, passiveKey, worstBeside, woundOutcome, downChance, needsShock, settleFallen, projectedPos, dist, steps, flanked, flankerAt, flankedAt, threatens, comesRoundAt, collapseBeats, isSpent, canPay, defenseOdds, parryCarryShare, leverage, skillEdge, feintScore, readScore, blowForce, aimPenalty, aimGuarded, aimOpen, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, passesThrough, sweeps, sweepTarget, sweepForce, applyHit, resolveAction, beatBodies, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

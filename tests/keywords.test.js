@@ -2,6 +2,7 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const B = require('./load');
+const Clock = require('./clock');
 const { Character: C, Combat, Items, Enemies, Magic, Conditions } = B;
 
 function roller(queue, fill) {
@@ -51,12 +52,12 @@ test('golems: mind and life magic do nothing; a fire-immune one does not catch f
   const g = golem('ironGolem'), c = golem('clayGolem');
   const chars = { [caster.id]: caster, [g.id]: g };
   const enc = Combat.createEncounter('t', Object.keys(chars), chars, 8, 5);
-  assert.equal(await Magic.afflict(enc, caster, g, 'frightened', { rounds: 3 }, roller([10, 1])), false);
+  assert.equal(await Magic.afflict(enc, caster, g, 'frightened', { beats: 3 }, roller([10, 1])), false);
   assert.equal(Conditions.has(g, 'frightened'), false);
   const life = { kind: 'strike', motion: 'spell', spell: { element: 'life', magnitude: 10 }, damage: [0, 0, 0] };
   assert.ok(Combat.computeHit(caster, g, life, {}).magicImmune);
-  assert.equal(Conditions.add(c, 'burning', { rounds: 2 }), null, 'clay does not burn');
-  assert.ok(Conditions.add(g, 'burning', { rounds: 2 }), 'iron does');
+  assert.equal(Conditions.add(c, 'burning', { beats: 2 }), null, 'clay does not burn');
+  assert.ok(Conditions.add(g, 'burning', { beats: 2 }), 'iron does');
 });
 
 test('avatar of fear: reach-2 claws whose landed blows sap stamina into it', async () => {
@@ -67,10 +68,10 @@ test('avatar of fear: reach-2 claws whose landed blows sap stamina into it', asy
   const chars = { [av.id]: av, [t.id]: t };
   const enc = Combat.createEncounter('t', Object.keys(chars), chars, 8, 5);
   enc.pos[av.id] = { x: 1, y: 2 }; enc.pos[t.id] = { x: 3, y: 2 };
-  await Combat.startRound(enc, chars, roller([10, 1]));
+  await Clock.start(enc, chars, roller([10, 1]));
   av.stamina -= 20;
   const before = av.stamina;
-  await Combat.act(enc, chars, { actor: av.id, type: 'strike', option: claws, target: t.id }, { roller: roller([], 3), react: noReact });
+  await Clock.act(enc, chars, { actor: av.id, type: 'strike', option: claws, target: t.id }, { roller: roller([], 3), react: noReact });
   assert.ok(enc.log.some((l) => /saps/.test(l.text)), enc.log.map((l) => l.text).join('\n'));
   assert.ok(av.stamina > before - claws.stamina, 'stamina drunk back');
 });

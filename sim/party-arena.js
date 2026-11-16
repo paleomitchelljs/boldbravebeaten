@@ -47,21 +47,21 @@ const ENCOUNTERS = arg('only', null) ? arg('only', '').split(',') : [
     for (const [pk, P] of Object.entries(PARTIES)) {
       enc.results[pk] = {};
       for (const [ak, A] of Object.entries(ARENAS)) {
-        const agg = { n: 0, partyWins: 0, rounds: 0, partyDead: 0, partyDown: 0, foesDead: 0, roleDead: {} };
+        const agg = { n: 0, partyWins: 0, beats: 0, partyDead: 0, partyDown: 0, foesDead: 0, roleDead: {} };
         for (let i = 0; i < N; i++) {
           const party = P.keys.map((k, j) => { const c = makeCombatant(...k.split('/'), 'P' + j); c.role = ROLE(k); return c; });
           const foes = Enemies.makeMonster(ek);
-          const r = await L.fight({ A: party, B: foes, grid: { w: A.w, h: A.h }, seed: seed++, maxRounds: 30 });
+          const r = await L.fight({ A: party, B: foes, grid: { w: A.w, h: A.h }, seed: seed++, maxBeats: 30 });
           agg.n++;
           if (r.winner === 'A') agg.partyWins++;
-          agg.rounds += r.rounds;
+          agg.beats += r.beats;
           agg.partyDead += r.deadA;
           agg.partyDown += r.downA;
           agg.foesDead += r.downB;
           for (const c of party) if (c.status.dead) agg.roleDead[c.role] = (agg.roleDead[c.role] || 0) + 1;
         }
         enc.results[pk][ak] = {
-          partyWin: agg.partyWins / agg.n, rounds: agg.rounds / agg.n, partyDeaths: agg.partyDead / agg.n,
+          partyWin: agg.partyWins / agg.n, beats: agg.beats / agg.n, partyDeaths: agg.partyDead / agg.n,
           partyDown: agg.partyDown / agg.n, roleDeaths: Object.fromEntries(Object.entries(agg.roleDead).map(([k, v]) => [k, v / agg.n])),
         };
       }

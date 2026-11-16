@@ -363,7 +363,7 @@ async function runGauntlet(lineup, runIdx, mode) {
     const deadBefore = new Set(party.filter((c) => c.status.dead).map((c) => c.id));
     const credit = (c) => byId[c.id] || (c.conjured && byId[c.conjured.by]) || null;
     const res = await L.fight({
-      A: up, B: foes, grid: { w: room.map[0].length, h: room.map.length }, seed: 7919 * runIdx + 104729 * r + 1, maxRounds: 30,
+      A: up, B: foes, grid: { w: room.map[0].length, h: room.map.length }, seed: 7919 * runIdx + 104729 * r + 1, maxBeats: 30,
       place: placer(room), setup: setup(room), keepEnc: true,
       onHit: (e) => {
         const a = credit(e.attacker), t = byId[e.target.id];
@@ -376,7 +376,7 @@ async function runGauntlet(lineup, runIdx, mode) {
     if (cleared && mode === 'attrition') breather(party);
     const died = party.filter((c) => c.status.dead && !deadBefore.has(c.id)).map((c) => c.role);
     for (const m of died) stat[m].deaths.push(r);
-    rooms.push({ cleared, rounds: res.rounds, deaths: died.length, died, timeout: res.winner === 'timeout' });
+    rooms.push({ cleared, beats: res.beats, deaths: died.length, died, timeout: res.winner === 'timeout' });
     if (!cleared && mode === 'attrition') break;
   }
   const won = rooms.filter((x) => x.cleared).length;
@@ -399,7 +399,7 @@ async function runMode(mode, csv) {
     const roomStats = ROOMS.map((_, r) => {
       const at = runs.map((x) => x.rooms[r]).filter(Boolean);
       const memberDeaths = Object.fromEntries(lineup.members.map((m) => [m, at.length ? at.filter((x) => x.died.includes(m)).length / at.length : null]));
-      return { reached: at.length, cleared: at.filter((x) => x.cleared).length, timeouts: at.filter((x) => x.timeout).length, rounds: at.length ? at.reduce((t, x) => t + x.rounds, 0) / at.length : null, deaths: at.length ? at.reduce((t, x) => t + x.deaths, 0) / at.length : null, memberDeaths };
+      return { reached: at.length, cleared: at.filter((x) => x.cleared).length, timeouts: at.filter((x) => x.timeout).length, beats: at.length ? at.reduce((t, x) => t + x.beats, 0) / at.length : null, deaths: at.length ? at.reduce((t, x) => t + x.deaths, 0) / at.length : null, memberDeaths };
     });
     const members = {};
     for (const m of lineup.members) {
