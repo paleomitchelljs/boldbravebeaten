@@ -1,5 +1,22 @@
 # Simulation findings
 
+## Overhaul step F: the clock (2026-11-16; `docs/overhaul/F-report.md`)
+
+Seed 4242, party of 3; before is main at 5e30e958 (A to E merged).
+
+| Measure | Target | Before | After |
+|---|---|---|---|
+| first blow landed, its side won (mirrors pooled) | 50–60% | 77% | 75% (56% without Cyrus) |
+| mirrors: Beren, Lorc, Cyrus | per style | 58, 60, 98% | 67, 50, 100% (Jabiku's all time out) |
+| waiting with a harmful blow in reach (court, hall, valley, duels) | < 15% | – | 12, 13, 7, 0% |
+| heavy blows' share (court, hall, valley) | no lower | 25, 14, 18% | 27, 15, 16% |
+| median fight length (court, hall, valley) | 3–5 | 3, 4, 6 rounds | 3, 3, 4 beats |
+| swarm N = 1..6 | loses near N = 4 | 87 62 38 22 11 10 | 94 64 35 21 13 6 |
+| Beren +1 SPD (`sim/aicheck.js spd`) | a gain | −0.4 ± 2.1 | +0.6 ± 1.7 |
+| cleared of 30 (court, hall, valley) | ≥ 18 | 28, 12, 11 | 23, 17, 11 |
+
+Beat 14 against 20: the court cleared 6 of 10 against 3, and heroes waited in reach 6% against 19%.
+
 ## Overhaul step E: wounds and life (2026-11-15; `docs/overhaul/E-report.md`; outputs in the session scratchpad `E-out/`)
 
 Party of 3, seed 4242, full n; before is main at 778db7a4 (A, B, C merged).

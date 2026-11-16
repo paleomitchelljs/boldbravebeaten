@@ -43,6 +43,17 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
     rounds); CON-resisted banes now land on golems; bosses lost their CON padding (`tools/tiers.js` not rerun); the spiral
     is weak except for Cyrus. Rulings it made: the head drops at severity 3 and the torso takes the shock check; after a lost
     fight, one d10 + CON roll; goblins and kobolds stay man-sized. The wound display was not looked at outside the fake DOM.
+  - [x] Step F merged 2026-11-16 (`docs/overhaul/F-report.md`, FINDINGS top): the tick clock. Lowest clock acts next; a
+    one-handed swing is 10 ticks at SPD 5; heavy actions have a lead (replacing wind-ups); reactions push the reactor's
+    clock, none past `overreach` 10; waiting is an action; the beat (14 ticks) carries every former "each round" effect;
+    fatigue adds ticks; the battle screen has a timeline, a clock meter, Wait (E) and Repeat (R); save v9. Suite 358/358.
+  - [ ] **Ruling wanted (step F)**: the words tick, action, reaction, beat (CLAUDE.md updated); beat 14 not the plan's 20
+    (20 cleared the court 3 of 10, 14 cleared 6); Quick feats at a whole tick a rank (Cyrus thrusts every 2 ticks;
+    `clock.quick` 0.5 restores the old share); leads, overreach 10, moves capped at 14 ticks, surprise a 10-tick start.
+  - [ ] From step F: first blow wins 75% of mirrors pooled (target 50-60%), 56% without Cyrus, whose mirror is 100% (one rapier
+    thrust into padding is a severity-3 wound: steps G and E, not tempo); court cleared 28 -> 23; heroes wait winded on 39% of
+    court decisions with a blow in reach; arm wounds no longer tell in the spiral, leg wounds only at severity 3; Beren's +1 SPD
+    is no longer a penalty (+0.6 +- 1.7). Not looked at: the reaction card, hover states, the GM table, ten or more foes.
   - [ ] From step D: read step F's even-duel target per style, not pooled (59% pooled hides 92% and 28%); say whether a
     deliberate wait counts as unused time on the clock; the AI overvalues Bait and Rallies in a duel (fix before step I);
     the valley's deaths a fight rise with party size (0.54 to 0.98); plain `sim/duels.js` pairings deal no arrows or bandages.
