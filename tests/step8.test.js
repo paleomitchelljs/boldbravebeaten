@@ -1,8 +1,9 @@
-// Step 8 of docs/PLAN.md: costs in half APs (R9), standing orders for reactions, the end-of-fight account.
+// Step 8 of docs/PLAN.md (costs now in ticks: step F), standing orders for reactions, the end-of-fight account.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const B = require('./load');
 const { Character: C, Combat, Items, Enemies, CONFIG, Orders, Battle, World } = B;
+const Clock = require('./clock');
 
 const hero = (name, kit) => {
   const c = C.newCharacter({ name, side: 'party', starterGear: false });
@@ -13,32 +14,17 @@ const hero = (name, kit) => {
 };
 const armed = (c, type) => { const w = Items.makeWeapon(type); c.weapons.push(w); c.wield = w.id; return c; };
 
-test('R9: every cost is a whole number of half APs, and apStep null restores tenths', () => {
-  const step = CONFIG.apStep * CONFIG.apScale;
-  assert.equal(CONFIG.apStep, 0.5);
+test('step F: every cost is a whole number of ticks, never under the floor', () => {
   const world = World.create(World.presetParty(), { log: false });
   const costs = [];
   for (const c of World.party(world)) {
-    for (const o of C.attackOptions(c)) costs.push(o.ap);
-    for (const k of ['block', 'parry', 'dodge', 'standUp', 'bandage', 'clinch', 'windUp']) costs.push(C.actionCost(c, k, k === 'windUp' ? { option: C.attackOptions(c)[0] } : undefined).ap);
-    for (const d of [1, 2, 3, 5, 8]) costs.push(C.moveCost(c, d));
+    for (const o of C.attackOptions(c)) costs.push(o.ticks, o.lead);
+    for (const k of ['block', 'parry', 'dodge', 'standUp', 'bandage', 'clinch']) { const x = C.actionCost(c, k); costs.push(x.ticks, x.lead); }
+    for (const d of [1, 2, 3, 5, 8]) costs.push(C.moveTicks(c, d));
   }
   assert.ok(costs.length > 40);
-  for (const ap of costs) assert.equal(ap % step, 0, `${ap} is a half AP multiple`);
-  assert.ok(costs.every((ap) => ap >= step), 'never under half an AP');
-  // To the nearest half; a halfway value (1.25 AP) goes up.
-  assert.equal(C.quantAP(12), 10);
-  assert.equal(C.quantAP(13), 15);
-  assert.equal(C.quantAP(12.5), 15);
-  assert.equal(C.quantAP(28), 30);
-  const saved = CONFIG.apStep;
-  try {
-    CONFIG.apStep = null;
-    assert.equal(C.quantAP(13), 13);
-    const odd = [];
-    for (const c of World.party(world)) for (const o of C.attackOptions(c)) odd.push(o.ap % step);
-    assert.ok(odd.some((x) => x !== 0), 'with it off, some strikes still cost tenths');
-  } finally { CONFIG.apStep = saved; }
+  for (const t of costs) assert.ok(Number.isInteger(t) && t >= 0, `${t} is a whole tick`);
+  for (const c of World.party(world)) for (const o of C.attackOptions(c)) assert.ok(o.ticks >= CONFIG.clock.min && o.lead <= o.ticks);
 });
 
 // A defence request as the engine builds it, for a hero (T) meeting a blow from A.
@@ -48,12 +34,12 @@ function fixture(mkT, mkA) {
   const chars = { A: a, T: t };
   const enc = Combat.createEncounter('t', ['A', 'T'], chars, 8, 3);
   enc.pos.A = { x: 1, y: 1 }; enc.pos.T = { x: 2, y: 1 };
-  enc.round = 1; enc.ap.A = 99; enc.ap.T = 60;
-  const option = (motion) => C.attackOptions(a).find((o) => !o.windUp && !o.spell && (!motion || o.motion === motion));
-  const req = (opt, options) => ({ kind: 'defend', actor: 'T', attacker: 'A', decl: { type: 'strike', actor: 'A', target: 'T', option: opt }, hidden: false, options, ap: 60 });
+  Clock.onClock(enc);
+  const option = (motion) => C.attackOptions(a).find((o) => !o.spell && (!motion || o.motion === motion));
+  const req = (opt, options) => ({ kind: 'defend', actor: 'T', attacker: 'A', decl: { type: 'strike', actor: 'A', target: 'T', option: opt }, hidden: false, options, ahead: 0 });
   return { a, t, chars, enc, option, req };
 }
-const OPTS = [{ type: 'block', name: 'Block', ap: 20, stamina: 2, odds: 0.6 }, { type: 'parry', name: 'Parry', ap: 20, stamina: 2, odds: 0.5 }, { type: 'dodge', name: 'Dodge', ap: 20, stamina: 2, odds: 0.4 }];
+const OPTS = [{ type: 'block', name: 'Block', ticks: 5, stamina: 2, odds: 0.6 }, { type: 'parry', name: 'Parry', ticks: 5, stamina: 2, odds: 0.5 }, { type: 'dodge', name: 'Dodge', ticks: 5, stamina: 2, odds: 0.4 }];
 
 test('orders: asks only for a blow that could drop the hero, and answers the rest by the orders', () => {
   const f = fixture(() => armed(hero('Tam'), 'longsword'), () => armed(hero('Ash'), 'longsword'));
@@ -90,16 +76,15 @@ test('orders: which defence the orders pick', () => {
   f.t.armor = Items.makeArmor('mail');
   assert.equal(take(swing, OPTS, { block: 'off' }).answer, null);
   assert.equal(take(swing, OPTS, { block: 'off', dodge: 'always' }).answer, 'dodge');
-  // Never spends AP the hero hasn't, nor a spent defence.
-  assert.equal(take(thrust, [Object.assign({}, OPTS[0], { ap: 90 })]).answer, null);
+  // Never a spent defence.
   assert.equal(take(thrust, [Object.assign({}, OPTS[0], { spent: true })]).answer, null);
 });
 
 test('orders: the free blow at a foe passing', () => {
   const f = fixture(() => armed(hero('Tam'), 'longsword'), () => armed(hero('Ash'), 'longsword'));
-  const options = C.attackOptions(f.t).filter((o) => !o.windUp && !o.spell && o.ap <= 60);
+  const options = C.attackOptions(f.t).filter((o) => !o.exposes && !o.spell);
   assert.ok(options.length);
-  const req = { kind: 'opportunity', actor: 'T', target: 'A', options, ap: 60, why: 'leaves' };
+  const req = { kind: 'opportunity', actor: 'T', target: 'A', options, ahead: 0, why: 'leaves' };
   f.t.orders = { opportunity: 'ask' };
   assert.equal(Orders.decide(f.enc, f.chars, req).ask, true);
   f.t.orders = { opportunity: 'off' };
