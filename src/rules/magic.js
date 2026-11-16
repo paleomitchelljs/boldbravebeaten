@@ -615,9 +615,9 @@
     const H = CONFIG.magic.heal;
     const was = !C().isActive(t);
     const stopped = C().bindWounds(t) > 0;
-    const steps = C().mendWounds(t, 1, s.condMag);
     const before = t.stamina;
     t.stamina = Math.min(C().maxStamina(t), t.stamina + Math.round((H.stamina + H.staminaPerMag * s.magnitude) * share));
+    const steps = C().mendWounds(t, 1, s.condMag);
     if (C().collapsed(t) && t.stamina > 0) C().comeRound(t);
     const woke = was && C().isActive(t);
     const bits = [stopped ? 'bleeding stops' : null, steps ? `wounds ${steps} better` : null, t.stamina > before ? `+${t.stamina - before} stamina` : null].filter(Boolean);

@@ -24,14 +24,12 @@ function asWritten(fn) {
     apScale: 1, apDisplay: 1, costScale: null, apBase: 3, apDie: null, apSpdContinuous: false, apCurve: null, moveAP: null, wholeTurnAction: false,
     armorActionAP: 0, quickCut: null, minActionAP: 1, minStrikeAP: 1, weaponWear: null, weariness: null, vigor: null, armorPierceWear: 0,
     defense: Object.assign({}, D0, { block: Object.assign({}, D0.block, { opposed: false }), dodgeBonus: 0, absorb: null, dodgeStamina: null }),
-    staminaScale: 1, moveScale: 1, moveSpdContinuous: false, armorAdjust: {}, standUp: null, grappling: null, weaponModel: 'table',
-    // The Specifics had no hit locations: one d4 per point of a cut, wherever it lands.
-    locations: Object.assign({}, C0.locations, { wounds: null }),
-    // Stamina as the Specifics have it: no regeneration in a round struck, "too exhausted", unconscious at 0 (the
-    // tuning plan's R1 to R3 off).
-    stamina: Object.assign({}, C0.stamina, { regen: null, spent: null, collapse: null }),
-    // Crushing as the Specifics have it: one threshold, all to CON (the tuning plan's R5 off; R4 goes with wounds above).
-    impact: Object.assign({}, C0.impact, { crushBare: null, crushAttrs: false }),
+    moveScale: 1, moveSpdContinuous: false, armorAdjust: {}, standUp: null, grappling: null, weaponModel: 'table',
+    // "Too exhausted" as the Specifics have it (the tuning plan's R2 off). Wounds and stamina are step E's either way:
+    // the Specifics' attribute damage and its × 3 are gone, not switched off.
+    stamina: Object.assign({}, C0.stamina, { spent: null }),
+    // Crushing as the Specifics have it: one threshold (the tuning plan's R5 off).
+    impact: Object.assign({}, C0.impact, { crushBare: null }),
   };
   const saved = {};
   for (const k of Object.keys(spec)) saved[k] = C0[k];
@@ -86,14 +84,14 @@ function fighter(name, opts) {
 
 test('derived stats for an average starting character', () => asWritten(() => {
   const c = fighter('Avg');
-  assert.strictEqual(C.maxStamina(c), 4 * 5 + 5 + 5 + 5);
+  assert.strictEqual(C.maxStamina(c), B.CONFIG.stamina.base + 5 + 5 + 5, 'step E: no CON in it');
   assert.strictEqual(C.apPool(c), 3 + 2);
   assert.strictEqual(C.squaresPerAP(c), 1 + 1);
-  assert.strictEqual(C.regen(c), 2, 'CON 5, WIL 5 regenerates 2 unarmored');
+  assert.strictEqual(C.regen(c), Math.floor(10 * B.CONFIG.stamina.regen.per), 'CON 5, WIL 5 unarmored');
   c.armor = Items.makeArmor('plate', 'full', 'standard');
   assert.strictEqual(C.combatAttr(c, 'SPD'), 2);
   assert.strictEqual(C.apPool(c), 4);
-  assert.strictEqual(C.regen(c), -2, 'heavy armor regen can go negative');
+  assert.ok(C.regen(c) < 0, 'heavy armor regen can go negative');
 }));
 
 test('the turn budget (the user, 2026-11-09, "tighter and faster"): at SPD 5 the worst roll still holds a swing, or a step and a thrust; the best a step and a swing, or three quick actions (in tenths: apStep is the next test)', () => withConfig({ apStep: null }, () => {
@@ -184,7 +182,7 @@ test('one big action: with nothing spent, an action dearer than the pool takes t
   assert.strictEqual(enc.ap[a.id], 0, 'it took the whole turn');
 });
 
-test('Specifics worked example: longsword swing vs mail = 1 stamina', () => tableWeapons(() => {
+test('Specifics worked example: longsword swing vs mail = 1 blunt, which winds (step E)', () => tableWeapons(() => {
   const atk = fighter('Swordsman');
   atk.weapons.push(Items.makeWeapon('longsword'));
   atk.wield = atk.weapons[0].id;
@@ -194,38 +192,12 @@ test('Specifics worked example: longsword swing vs mail = 1 stamina', () => tabl
   assert.deepStrictEqual(swing.damage, [0, 7, 1]);
   const h = Combat.computeHit(atk, tgt, swing);
   assert.strictEqual(h.converted, 1);
-  assert.strictEqual(h.bluntToStamina, 1);
-  assert.strictEqual(h.toCON, 0);
+  assert.strictEqual(h.blunt, 1);
+  assert.strictEqual(h.point, 0);
+  // Step E: blunt that breaks nothing winds by its severity, not point for point.
+  assert.strictEqual(h.winding, B.CONFIG.wounds.winding[0]);
+  assert.strictEqual(h.sev, 0, 'no wound');
 }));
-
-test('Specifics worked example: same swing unarmored = 7 slashing + 7 CON of bleed', () => noWounds(() => tableWeapons(async () => {
-  const enc = { hitThisRound: {}, fortressUsed: {} };
-  const atk = fighter('Swordsman');
-  atk.weapons.push(Items.makeWeapon('longsword'));
-  atk.wield = atk.weapons[0].id;
-  const tgt = fighter('Naked');
-  tgt.base.CON = 10; // survive the bleed so we can measure it
-  tgt.stamina = C.maxStamina(tgt);
-  const swing = C.attackOptions(atk).find((o) => o.motion === 'swing' && o.face === 'edge');
-  // d4s: 1,1,3,3,4,4,4 → 2 STR, 2 SPD, 3 DEX (no CON so we can isolate bleed)
-  await Combat.applyHit(enc, { [atk.id]: atk, [tgt.id]: tgt }, atk, tgt, swing, roller(1, [1, 1, 3, 3, 4, 4, 4]));
-  assert.strictEqual(tgt.damage.STR, 2);
-  assert.strictEqual(tgt.damage.SPD, 2);
-  assert.strictEqual(tgt.damage.DEX, 3);
-  assert.strictEqual(tgt.bleeds.length, 1);
-  const chars = { [tgt.id]: tgt };
-  const e = { ids: [tgt.id], hitThisRound: { [tgt.id]: 1 }, log: [], round: 1 };
-  for (let i = 0; i < 3; i++) Combat.endRound(e, chars);
-  assert.strictEqual(tgt.damage.CON, 7, 'an untreated cut costs its damage again in CON');
-})));
-
-test('losing an attribute lowers max and current stamina', () => {
-  const c = fighter('Hurt');
-  c.stamina = 30;
-  C.damageAttr(c, 'CON', 1);
-  assert.strictEqual(C.maxStamina(c), 31);
-  assert.strictEqual(c.stamina, 26);
-});
 
 test('plate turns a thrust; a half-sword thrust gets through at a lower margin', () => asWritten(() => {
   const atk = fighter('Knight');
@@ -240,13 +212,13 @@ test('plate turns a thrust; a half-sword thrust gets through at a lower margin',
   assert.strictEqual(half.ap, thrust.ap + 1);
   const at = (o, loc, m) => Combat.computeHit(atk, tgt, o, { location: loc || 'torso', margin: m || 0 });
   assert.strictEqual(at(thrust).pierce, 'turned');
-  assert.strictEqual(at(thrust).toCON, 0);
+  assert.strictEqual(at(thrust).point, 0);
   assert.ok(at(half).pierceNeed <= at(thrust).pierceNeed - B.CONFIG.pierce.halfSword, 'the half-sword thrust needs less margin');
   assert.strictEqual(at(half, 'torso', at(half).pierceNeed).pierce, 'through', 'and gets through at it');
   // A half harness (torso, arms, legs: CONFIG.locations) is full plate where it is and bare where it isn't.
   tgt.armor = Items.makeArmor('plate', 'half', 'average');
-  assert.strictEqual(at(half, 'head').toCON, half.damage[0], 'the bare head takes the whole point');
-  const plated = Combat.computeHit(atk, tgt, half, { location: 'torso' }).toCON, mixed = Combat.computeHit(atk, tgt, half).toCON;
+  assert.strictEqual(at(half, 'head').point, half.damage[0], 'the bare head takes the whole point');
+  const plated = Combat.computeHit(atk, tgt, half, { location: 'torso' }).point, mixed = Combat.computeHit(atk, tgt, half).point;
   assert.ok(mixed > plated && mixed < half.damage[0], 'the AI sees the expectation over the margins and the locations');
 }));
 
@@ -393,12 +365,15 @@ test('Feint hides a blow from a defender whose Anticipation is below the Decepti
 
 test('long rest restores stamina and rolls healing', async () => {
   const c = fighter('Patient');
-  c.damage.CON = 2;
+  c.wounds.push({ place: 'torso', sev: 2, kind: 'cut', bleed: 0, pts: 4 });
   c.stamina = 3;
   const lines = await Recovery.longRest(c, {}, roller(1, [5]));
-  assert.strictEqual(c.damage.CON, 1);
+  assert.strictEqual(C.woundLoad(c), 1, 'the wound a step better');
   assert.strictEqual(c.stamina, C.maxStamina(c));
-  assert.ok(lines.some((l) => /\+1 CON/.test(l)));
+  assert.ok(lines.some((l) => /mends a step/.test(l)));
+  // A 1 worsens it.
+  await Recovery.longRest(c, {}, roller(1, [1]));
+  assert.strictEqual(C.woundLoad(c), 2);
 });
 
 test('generated enemies are legal characters', () => {
@@ -634,7 +609,8 @@ test('magic: words make spells; spell points, fire through armor, backlash', asy
   const h = Combat.computeHit(m, knight, bolt, {});
   const mag = B.CONFIG.magic.words.shapes.bolt.mag;
   assert.strictEqual(h.fire, mag);
-  assert.strictEqual(h.toCON + h.bluntToStamina, mag - 2, 'plate stops 2 of the fire');
+  assert.strictEqual(h.fireStopped, 2, 'plate stops 2 of the fire');
+  assert.strictEqual(h.pts + h.stamina, mag - 2, 'the rest burns (a wound) or heats (stamina)');
   // Tired casters draw less power.
   m.stamina = Math.floor(C.maxStamina(m) / 2);
   assert.strictEqual(B.Magic.availableSP(m), 6);
@@ -777,7 +753,7 @@ test('grappling is exhausting: costly to start and to keep', async () => {
   const a = armed('A', 'dagger', { side: 'party' });
   const t = armed('T', 'dagger', { side: 'enemy' });
   const g = C.actionCost(a, 'grapple');
-  assert.ok(g.stamina >= 5 * B.CONFIG.staminaScale, 'grapple costs a lot of stamina');
+  assert.ok(g.stamina >= 15, 'grapple costs a lot of stamina');
   const chars = { [a.id]: a, [t.id]: t };
   const enc = Combat.createEncounter('t', [a.id, t.id], chars, 4, 1);
   enc.pos[a.id] = { x: 0, y: 0 }; enc.pos[t.id] = { x: 1, y: 0 };
@@ -786,10 +762,11 @@ test('grappling is exhausting: costly to start and to keep', async () => {
   const before = a.stamina;
   await closeRound(enc, chars);
   assert.ok(a.stamina < before, 'holding costs stamina at the end of the round');
-  // With nothing to come back first (a round's regeneration, CONFIG.stamina.regen, covers the upkeep), too spent to hold.
-  a.stamina = 1;
+  // With little to come back first (a round's regeneration, CONFIG.stamina.regen, would cover the upkeep), too spent
+  // to hold.
+  a.stamina = 1; a.base.CON = 1; a.base.WIL = 1;
   await Combat.startRound(enc, chars, roller(3, [10, 1]));
-  await withConfig({ stamina: Object.assign({}, B.CONFIG.stamina, { regen: null }) }, () => closeRound(enc, chars));
+  await closeRound(enc, chars);
   assert.strictEqual(a.status.grapple, null, 'too spent to keep the hold');
   assert.strictEqual(t.status.grapple, null);
 });
@@ -882,7 +859,7 @@ test('grappling: guards never meet a grapple; pinned armor is pierced', async ()
   g.t.status.grapple = Object.assign({}, g.t.status.grapple, { level: 'hold' });
   const held = Combat.computeHit(g.a, g.t, stab, { distance: 1 });
   assert.strictEqual(pinned.pierce, 'through', 'a pin opens the armor: the point always gets through');
-  assert.ok(pinned.toCON > held.toCON, 'held but not pinned, the plate\'s mitigation still counts');
+  assert.ok(pinned.point > held.point, 'held but not pinned, the plate\'s mitigation still counts');
   // Guards never meet a grapple: no reaction is offered against one.
   g.enc.ap[g.t.id] = 10;
   assert.deepStrictEqual(Combat.defenseOptions(g.enc, g.chars, g.t, g.a, { actor: g.a.id, type: 'grapple', target: g.t.id }).options, []);
@@ -896,7 +873,7 @@ test('arrows and armor: textile catches arrows; bodkins for metal, broadheads fo
   const bodkin = shots.find((o) => o.arrowHead === 'bodkin');
   assert.ok(broad && bodkin, 'one shot per arrowhead carried');
   const target = (armor) => { const t = fighter('T'); if (armor) t.armor = Items.makeArmor(armor, 'full', 'standard'); return t; };
-  const con = (o, armor) => Combat.computeHit(a, target(armor), o, { distance: 4 }).toCON;
+  const con = (o, armor) => Combat.computeHit(a, target(armor), o, { distance: 4 }).point;
   assert.ok(con(broad, null) > con(bodkin, null), 'broadheads hit flesh harder');
   assert.ok(con(bodkin, 'mail') > con(broad, 'mail'), 'bodkins go through mail better');
   const hit = (o, armor) => Combat.computeHit(a, target(armor), o, { distance: 4 });
@@ -918,12 +895,12 @@ test('unarmed: a punch or kick takes stamina only until Heavy Hands', () => {
   const soft = fighter('Soft');
   const kick = () => C.attackOptions(c).find((o) => o.unarmed && o.staminaOnly !== undefined && !o.shield);
   assert.ok(kick().staminaOnly, 'untrained');
-  assert.strictEqual(Combat.computeHit(c, bones, kick()).bluntToCON, 0, 'nothing off a body with no stamina to lose');
+  assert.strictEqual(Combat.computeHit(c, bones, kick()).crush, 0, 'nothing off a body with no stamina to lose');
   soft.stamina = 0;
-  assert.strictEqual(Combat.computeHit(c, soft, kick()).bluntToCON, 0, 'no broken bones on the spent either');
+  assert.strictEqual(Combat.computeHit(c, soft, kick()).crush, 0, 'no broken bones on the spent either');
   c.feats.heavy_hands = 1;
   assert.ok(!kick().staminaOnly);
-  assert.ok(Combat.computeHit(c, bones, kick()).bluntToCON > 0, 'the feat breaks bone');
+  assert.ok(Combat.computeHit(c, bones, kick()).crush > 0, 'the feat breaks bone');
 });
 
 test('monsters: natural weapons are always ready; traits work', async () => {
@@ -938,8 +915,8 @@ test('monsters: natural weapons are always ready; traits work', async () => {
   t.stamina = C.maxStamina(t);
   const chars = { [spider.id]: spider, [t.id]: t };
   const enc = Combat.createEncounter('t', [spider.id, t.id], chars, 4, 1);
-  await Combat.applyHit(enc, chars, spider, t, bite, roller(1), {});
-  assert.ok(t.bleeds.some((b) => b.poison), 'poisoned');
+  await Combat.applyHit(enc, chars, spider, t, bite, roller(1, [10]), { location: 'torso' });
+  assert.ok(C.wounds(t).length && B.Conditions.has(t, 'poisoned'), 'wounded and poisoned');
   // Rust: corrodes metal armor and does nothing else.
   const [beetle] = Enemies.makeMonster('rustBeetle');
   const touch = C.attackOptions(beetle).find((o) => o.rust);
@@ -949,9 +926,10 @@ test('monsters: natural weapons are always ready; traits work', async () => {
   const [troll] = Enemies.makeMonster('caveTroll');
   assert.ok(C.apPool(boss) >= C.apPool(troll) * 2);
   assert.ok(C.maxStamina(boss) > C.maxStamina(troll));
-  // Big monsters are stronger and tougher than any human can be (10 base + 3 Conditioning).
+  // Big monsters are stronger than any human can be (10 base + 3 Conditioning), and tougher by their size (step E:
+  // more wound boxes, each severity needing more).
   const human = B.CONFIG.attrMax + B.CONFIG.conditioningCap;
-  assert.ok(C.attr(troll, 'STR') > human && C.attr(troll, 'CON') > human);
+  assert.ok(C.attr(troll, 'STR') > human && C.boxes(troll) > C.boxes(t) && C.severityOf(troll, 4) < C.severityOf(t, 4));
   assert.ok(C.strBonus(troll) > Math.floor((human - B.CONFIG.strBonusPivot) / B.CONFIG.strBonusDivisor));
 });
 
@@ -989,11 +967,11 @@ test('tireless undead: no stamina, damage to the body, no bleeding; skeletons sh
   const swing = C.attackOptions(a).find((o) => o.motion === 'swing' && o.face === 'edge');
   const mace = C.attackOptions(armed('M', 'flangedMace')).find((o) => o.motion === 'swing');
   const hT = Combat.computeHit(a, sk, thrust, { distance: 2 });
-  assert.deepStrictEqual([hT.P, hT.toCON], [0, 0], 'a thrust passes between the ribs');
+  assert.deepStrictEqual([hT.P, hT.point], [0, 0], 'a thrust passes between the ribs');
   const hS = Combat.computeHit(a, sk, swing, { distance: 2 });
   assert.ok(hS.S < Combat.computeHit(a, fighter('Living'), swing, { distance: 2 }).S, 'slashing is reduced');
   const hB = Combat.computeHit(armed('M', 'flangedMace'), sk, mace, { distance: 2 });
-  assert.ok(hB.bluntToCON > 0 && hB.bluntToStamina === 0, 'blunt goes straight to the bones');
+  assert.ok(hB.crush > 0 && hB.blunt === 0, 'blunt goes straight to the bones');
   assert.ok(hB.noBleed);
   // It never passes out: only destroying its body stops it.
   sk.stamina = 0;
@@ -1010,7 +988,7 @@ test('sticky webs: every action costs more until torn free', async () => {
   t.status.webbed = 1;
   const after = { thrust: C.attackOptions(t).find((o) => o.motion === 'thrust').ap, parry: C.actionCost(t, 'parry') };
   assert.strictEqual(after.thrust, before.thrust + Math.round(B.CONFIG.web.ap * C.costScale()));
-  assert.strictEqual(after.parry.stamina, before.parry.stamina + B.CONFIG.web.stamina * B.CONFIG.staminaScale);
+  assert.strictEqual(after.parry.stamina, before.parry.stamina + B.CONFIG.web.stamina);
   assert.strictEqual(C.actionCost(t, 'dropWeapon').ap, 0, 'dropping is still free');
 });
 
@@ -1033,7 +1011,7 @@ test('weapons from physics: deeper points hit harder, heavier weapons are slower
   assert.ok(gain('rapier') < gain('flangedMace'), 'STR adds more to a mace than to a rapier');
 });
 
-test('vital wounds: armor raises the margin one needs; a vital stab triples its CON damage', async () => {
+test('vital wounds: armor raises the margin one needs; a vital stab is a step more severe and bleeds more', async () => {
   const a = armed('A', 'longsword');
   const thrust = opt(a, (o) => o.motion === 'thrust');
   const naked = fighter('N');
@@ -1044,14 +1022,16 @@ test('vital wounds: armor raises the margin one needs; a vital stab triples its 
   // Pinned: the armor no longer guards the vitals.
   plated.status.grapple = { partner: 'A', level: 'pin', role: 'held' };
   assert.strictEqual(v(plated), v(naked));
-  // At the threshold it is vital: ×3 CON; below it, not.
-  const t = fighter('T'); t.base.CON = 30; t.stamina = C.maxStamina(t);
+  // At the threshold it is vital: a step more severe; below it, not.
+  const t = fighter('T'); t.stamina = C.maxStamina(t);
   const enc = { hitThisRound: {}, fortressUsed: {} };
-  await Combat.applyHit(enc, { [a.id]: a, [t.id]: t }, a, t, thrust, roller(1, []), { location: 'torso', margin: v(naked) });
-  assert.strictEqual(t.damage.CON, thrust.damage[0] * B.CONFIG.vital.mult);
-  const u = fighter('U'); u.base.CON = 30; u.stamina = C.maxStamina(u);
-  await Combat.applyHit(enc, { [a.id]: a, [u.id]: u }, a, u, thrust, roller(1, []), { location: 'torso', margin: v(naked) - 1 });
-  assert.strictEqual(u.damage.CON, thrust.damage[0]);
+  await Combat.applyHit(enc, { [a.id]: a, [t.id]: t }, a, t, thrust, roller(1, [10]), { location: 'torso', margin: v(naked) });
+  const u = fighter('U'); u.stamina = C.maxStamina(u);
+  await Combat.applyHit(enc, { [a.id]: a, [u.id]: u }, a, u, thrust, roller(1, [10]), { location: 'torso', margin: v(naked) - 1 });
+  const base = C.severityOf(u, thrust.damage[0]);
+  assert.strictEqual(u.wounds[0].sev, base);
+  assert.strictEqual(t.wounds[0].sev, Math.min(3, base + 1));
+  assert.ok(t.wounds[0].bleed > u.wounds[0].bleed);
 });
 
 test('opportunity strikes: coming to the edge of a reach is free; stepping inside it, leaving it, or a second step within it draws a blow', async () => {
@@ -1082,7 +1062,7 @@ test('opportunity strikes: coming to the edge of a reach is free; stepping insid
   assert.strictEqual(asked.length, 1, 'one chance, from the swordsman');
   assert.strictEqual(asked[0].why, 'leaves');
   assert.ok(f.enc.log.some((l) => /S strikes at D as they go/.test(l.text)));
-  if (C.totalDamage(f.d) > 0 || !C.isActive(f.d)) assert.deepStrictEqual(f.enc.pos[f.d.id], { x: reach, y: 0 }, 'a hit stops the move');
+  if (C.woundLoad(f.d) > 0 || !C.isActive(f.d)) assert.deepStrictEqual(f.enc.pos[f.d.id], { x: reach, y: 0 }, 'a hit stops the move');
   // Walking up to the edge of a sword's reach from far off is free: D gets there and may strike first.
   f = make('longsword');
   asked = await run(f, { x: 0, y: 0 }, { x: 6, y: 0 }, { x: reach, y: 0 });
@@ -1094,7 +1074,7 @@ test('opportunity strikes: coming to the edge of a reach is free; stepping insid
   assert.strictEqual(asked.length, 1, 'stepping inside the reach provokes, once');
   assert.strictEqual(asked[0].why, 'closes');
   assert.ok(f.enc.log.some((l) => /S strikes at D as they close in/.test(l.text)));
-  if (C.totalDamage(f.d) > 0 || !C.isActive(f.d)) assert.deepStrictEqual(f.enc.pos[f.d.id], { x: reach, y: 0 }, 'a hit stops him at the edge');
+  if (C.woundLoad(f.d) > 0 || !C.isActive(f.d)) assert.deepStrictEqual(f.enc.pos[f.d.id], { x: reach, y: 0 }, 'a hit stops him at the edge');
   // One guarded step within reach (a sidestep) is free.
   f = make('longsword', 3);
   asked = await run(f, { x: 0, y: 1 }, { x: 1, y: 0 }, { x: 1, y: 1 });
@@ -1293,11 +1273,10 @@ test('Take + Speed slows a foe unless they resist; Give + Speed hastens an ally 
   assert.ok(!B.Conditions.has(g, 'slowed'), 'resisted');
   const ally = armed('A', 'longsword');
   ally.at = { x: 2, y: 2 };
-  ally.damage.CON = 2;
-  ally.bleeds = [{ remaining: 4, rounds: 3 }];
+  ally.wounds.push({ place: 'torso', sev: 2, kind: 'cut', bleed: 2, pts: 4 });
   await castAt(m, [ally], 'give+speed', { target: ally.id }, [10]);
-  assert.strictEqual(ally.bleeds.length, 1, 'a boon: no mending');
-  assert.strictEqual(ally.damage.CON, 2);
+  assert.strictEqual(C.bleeding(ally), 2, 'a boon: no mending');
+  assert.strictEqual(C.woundLoad(ally), 2);
   assert.ok(B.Conditions.has(ally, 'hasted'));
 });
 
@@ -1305,7 +1284,7 @@ test('Strike + Wide bursts on everyone in the area, friend or foe; dodging aside
   const m = mage('M', ['fire']);
   const f = armed('F', 'longsword', { side: 'enemy' }); f.at = { x: 6, y: 2 };
   const pal = armed('P', 'longsword'); pal.at = { x: 6, y: 3 };
-  for (const c of [f, pal]) c.base.CON = 20;
+  for (const c of [f, pal]) c.traits = { size: 3 }; // bodies one burst won't put down
   // backlash 10; F: caster 9 vs 1 (full); P: caster 1 vs 9 (half)
   const { enc } = await castAt(m, [f, pal], 'strike+fire+wide', { at: { x: 6, y: 2 } }, [10, 9, 1, 1, 9]);
   const text = enc.log.map((l) => l.text).join('\n');
@@ -1478,7 +1457,7 @@ test('phase 2: light sears the undead; darkness blocks sight; disease outlasts t
   const man = armed('Man', 'longsword', { side: 'enemy' });
   const bolt = { kind: 'strike', motion: 'spell', spell: { element: 'light', magnitude: 4 }, damage: [0, 0, 0] };
   const hs = Combat.computeHit(m, skel, bolt, {}), hm = Combat.computeHit(m, man, bolt, {});
-  assert.ok(hs.toCON + hs.bluntToCON + hs.bluntToStamina > hm.toCON + hm.bluntToStamina);
+  assert.ok(hs.point + hs.crush + hs.blunt > hm.point + hm.blunt);
   const enc = Combat.createEncounter('t', [m.id, man.id], { [m.id]: m, [man.id]: man }, 8, 3);
   B.Terrain.add(enc, 3, 1, 'darkness');
   assert.ok(B.Terrain.lineCheck(enc, { x: 1, y: 1 }, { x: 5, y: 1 }, 'missile').blocked);
@@ -1520,11 +1499,11 @@ test('phase 3: mend heals far better than in a fight; prepared wards take hold w
   m.feats.ritualist = 1; m.feats.rite_of_healing = 1; m.feats.warding = 1;
   m.inventory.components = { herbs: 2, chalk: 1 };
   const p = armed('P', 'club');
-  p.damage.CON = 4; p.bleeds = [{ remaining: 3, rounds: 3 }];
+  p.wounds.push({ place: 'torso', sev: 3, kind: 'cut', bleed: 3, pts: 7 }, { place: 'arms', sev: 1, kind: 'cut', bleed: 1, pts: 1 });
   const res = await R.perform(m, { kind: 'mend', patient: p, tier: 'moderate' }, roller(1, [7]), []);
   assert.strictEqual(res.outcome, 'full');
-  assert.strictEqual(p.damage.CON, 2);
-  assert.strictEqual(p.bleeds.length, 0);
+  assert.strictEqual(C.woundLoad(p), 4 - B.CONFIG.ritual.heals.full, 'severity steps mended');
+  assert.strictEqual(C.bleeding(p), 0);
   const ward = R.preparable(m).find((o) => o.spellKey === 'give+force');
   assert.ok(ward);
   await R.perform(m, { kind: 'prepare', spell: ward, target: p, tier: 'easy' }, roller(2, [8]), []);
@@ -1538,7 +1517,7 @@ test('phase 3: mend heals far better than in a fight; prepared wards take hold w
   assert.strictEqual(m.prepared.length, 0);
 });
 
-test('death: for three rounds after the one they died in, Raise + Life calls the fallen back, unconscious', async () => {
+test('death: for three rounds after the one they died in, Raise + Life calls the fallen back, down', async () => {
   const m = mage('Cleric', ['life', 'decay']);
   const ally = fighter('Ally'), late = fighter('Late'), foe = fighter('Foe');
   ally.side = late.side = m.side;
@@ -1547,7 +1526,9 @@ test('death: for three rounds after the one they died in, Raise + Life calls the
   const enc = Combat.createEncounter('t', Object.keys(chars), chars, 10, 5);
   Object.assign(enc.pos, { [m.id]: { x: 1, y: 2 }, [ally.id]: { x: 2, y: 2 }, [late.id]: { x: 2, y: 3 }, [foe.id]: { x: 8, y: 2 } });
   enc.round = 1;
-  for (const c of [ally, late]) { C.damageAttr(c, 'CON', C.attr(c, 'CON') + 4); C.updateCondition(c); c.bleeds.push({ remaining: 4, rounds: 3 }); }
+  // Down, then finished (a wound on the down): dead.
+  for (const c of [ally, late]) { for (let i = 0; i <= C.boxes(c); i++) C.addWound(c, { place: 'torso', sev: 1, kind: 'cut', bleed: 1, pts: 1 }, null); C.updateCondition(c); }
+  assert.ok(ally.status.dead && late.status.dead);
   Combat.endRound(enc, chars); // stamps both as dead in round 1
   assert.equal(ally.status.diedRound, 1);
   late.status.diedRound = 0; // died a round earlier: its window closes at the end of round 3
@@ -1561,35 +1542,33 @@ test('death: for three rounds after the one they died in, Raise + Life calls the
   const o = B.Magic.spellOptions(m).find((x) => x.spellKey === 'raise+life');
   await B.Magic.resolveCast(enc, chars, { actor: m.id, type: 'cast', option: o, target: ally.id, pass: 1, n: 1 }, roller(5, []), JSON.parse(JSON.stringify(enc.pos)));
   assert.equal(ally.status.dead, false, 'alive again');
-  assert.equal(ally.status.unconscious, true, 'but unconscious');
-  assert.equal(C.attr(ally, 'CON'), R.con);
+  assert.equal(C.isDown(ally), true, 'but down');
+  assert.equal(C.woundLoad(ally), C.boxes(ally) + 1 - R.mend, 'the worst wound mended');
   assert.equal(ally.stamina, 0);
-  assert.equal(ally.bleeds.length, 0, 'bleeding stopped');
+  assert.equal(C.bleeding(ally), 0, 'bleeding stopped');
   await B.Magic.resolveCast(enc, chars, { actor: m.id, type: 'cast', option: o, target: late.id, pass: 1, n: 1 }, roller(5, []), JSON.parse(JSON.stringify(enc.pos)));
   assert.equal(late.status.dead, true, 'beyond saving');
 });
 
-test('Give + Life mends (bleeding, CON, stamina; wakes the downed); Wide reaches all around; Take + Decay drains poison', async () => {
+test('Give + Life mends (bleeding, a severity step, stamina; the collapsed come round, the down come to under their boxes); Wide reaches all around; Take + Decay drains poison', async () => {
   const m = mage('Cleric', ['life', 'decay']);
   const ally = fighter('Ally');
   ally.side = m.side;
   ally.at = { x: 2, y: 2 };
-  C.damageAttr(ally, 'CON', 2);
-  ally.bleeds.push({ remaining: 4, rounds: 3 }, { remaining: 3, rounds: 3, poison: true });
+  // Down: wound boxes full, the worst wound bleeding.
+  for (let i = 0; i < C.boxes(ally) - 2; i++) ally.wounds.push({ place: 'arms', sev: 1, kind: 'cut', bleed: 0, pts: 1 });
+  C.addWound(ally, { place: 'torso', sev: 2, kind: 'cut', bleed: 2, pts: 4 }, null);
   ally.stamina = 0;
-  ally.status.unconscious = true;
-  const maxBefore = C.maxStamina(ally);
+  assert.ok(C.isDown(ally));
   const { o } = await castAt(m, [ally], 'give+life', { target: ally.id });
   const H = B.CONFIG.magic.heal;
-  assert.equal(ally.damage.CON, 1, 'one CON back');
-  assert.deepEqual(ally.bleeds.map((b) => !!b.poison), [true], 'bleeding stops, poison stays');
-  // A point of CON back raises max stamina, and that comes back too (Character.healAttr).
-  assert.equal(ally.stamina, (C.maxStamina(ally) - maxBefore) + H.stamina + H.staminaPerMag * o.spell.magnitude);
-  assert.equal(ally.status.unconscious, false, 'the downed come to');
-  // Take + Decay on an ally drains the poison, lifts Poisoned and wards against more.
+  assert.equal(C.woundLoad(ally), C.boxes(ally) - 1, 'a severity step better');
+  assert.equal(C.bleeding(ally), 0, 'bleeding stops');
+  assert.equal(ally.stamina, H.stamina + H.staminaPerMag * o.spell.magnitude);
+  assert.equal(C.isActive(ally), true, 'under the boxes again: the down come to');
+  // Take + Decay on an ally lifts Poisoned and wards against more.
   B.Conditions.add(ally, 'poisoned', { rounds: 3 });
   await castAt(m, [ally], 'take+decay', { target: ally.id });
-  assert.equal(ally.bleeds.length, 0);
   assert.ok(!B.Conditions.has(ally, 'poisoned'));
   assert.equal(B.Conditions.get(ally, 'warded').kind, 'decay');
   // Wide: everyone within a square of the target, friend or foe, at a share of the stamina.
@@ -1632,7 +1611,7 @@ test('revenant knight: Battle Casting casts with sword and shield; Soulreaver dr
   const blade = dk.weapons.find((w) => (w.enchantments || []).includes('drinking'));
   assert.equal(Items.itemName(blade), 'Soulreaver');
   // A thrust that wounds: the knight, worn and wounded, takes some back.
-  C.damageAttr(dk, 'CON', 3);
+  dk.wounds.push({ place: 'torso', sev: 2, kind: 'cut', bleed: 0, pts: 4 });
   dk.stamina = 10;
   const t = fighter('Victim');
   t.side = 'party';
@@ -1641,7 +1620,7 @@ test('revenant knight: Battle Casting casts with sword and shield; Soulreaver dr
   const opt = C.attackOptions(dk).find((o) => o.weaponId === blade.id && o.motion === 'thrust');
   const r = await Combat.applyHit(enc, chars, dk, t, opt, roller(10, []), {});
   assert.match(r.text, /Soulreaver drinks/);
-  assert.ok(dk.damage.CON < 3 || dk.stamina > 10, 'healed or refreshed');
+  assert.ok(C.woundLoad(dk) < 2 || dk.stamina > 10, 'healed or refreshed');
 });
 
 test('revenant knight: his aura of dread saps foes near him each round; the silk sash quickens him', async () => {
@@ -1674,10 +1653,10 @@ test('spectre: ordinary weapons pass through; magical weapons and spells hurt it
   const enc = Combat.createEncounter('t', Object.keys(chars), chars, 6, 3);
   const plain = await Combat.applyHit(enc, chars, swordsman, sp, thrust, roller(10, []), {});
   assert.match(plain.text, /passes through/);
-  assert.equal(C.totalDamage(sp), 0);
+  assert.equal(C.woundLoad(sp), 0);
   w.enchantments = ['keen'];
   await Combat.applyHit(enc, chars, swordsman, sp, thrust, roller(1, []), {});
-  assert.ok(C.totalDamage(sp) > 0, 'a magical blade bites');
+  assert.ok(C.woundLoad(sp) > 0, 'a magical blade bites');
   // No grabbing or tripping a ghost.
   enc.pos[sp.id] = { x: 2, y: 1 }; enc.pos[swordsman.id] = { x: 1, y: 1 };
   const la = Combat.legalActions(enc, chars, swordsman.id);
@@ -1690,7 +1669,7 @@ test('golem is immune to magic; a constrictor crushes whoever it holds; fliers p
   const m = mage('Mage', ['fire']);
   golem.at = { x: 3, y: 2 };
   await castAt(m, [golem], 'strike+fire', { target: golem.id }, [1, 1, 1, 1]);
-  assert.equal(C.totalDamage(golem), 0);
+  assert.equal(C.woundLoad(golem), 0);
   assert.equal(await B.Magic.afflict(Combat.createEncounter('t', [m.id, golem.id], { [m.id]: m, [golem.id]: golem }, 6, 3), m, golem, 'slowed', { rounds: 2 }, roller(10, [])), false);
   // The constrictor crushes the one it holds at the end of the round.
   const [snake] = B.Enemies.makeMonster('constrictor');
@@ -1702,8 +1681,8 @@ test('golem is immune to magic; a constrictor crushes whoever it holds; fliers p
   victim.status.grapple = { partner: snake.id, level: 'hold', role: 'held' };
   const st = victim.stamina;
   Combat.endRound(enc, chars);
-  assert.ok(victim.stamina <= st - snake.traits.constrict.stamina, 'crushed (a CON wound costs some stamina too)');
-  assert.equal(victim.damage.CON, snake.traits.constrict.con);
+  assert.ok(victim.stamina <= st - snake.traits.constrict.stamina, 'crushed');
+  assert.ok(C.wounds(victim).some((w) => w.kind === 'crush' && w.pts === snake.traits.constrict.harm), 'and a crushing wound');
   // A drake flies over a pit and a hidden rune; a walker falls in.
   const [drake] = B.Enemies.makeMonster('drake');
   const e2 = Combat.createEncounter('t', [drake.id], { [drake.id]: drake }, 6, 3);
@@ -1728,7 +1707,7 @@ test('size: a man-sized wound bleeds a giant less, and its vitals are harder to 
   const enc = Combat.createEncounter('t', Object.keys(chars), chars, 6, 3);
   await Combat.applyHit(enc, chars, man, plain, thrust, roller(10, []), {});
   await Combat.applyHit(enc, chars, man, giant, thrust, roller(10, []), {});
-  const bled = (c) => c.bleeds.reduce((t, b) => t + b.remaining, 0);
+  const bled = (c) => C.bleeding(c);
   assert.ok(bled(giant) < bled(plain), `giant bleeds ${bled(giant)}, a man ${bled(plain)}`);
 });
 
@@ -1757,7 +1736,7 @@ test('impact: heavy blunt crushes, a hard blow throws its target back, and big b
   man.base.CON = 10;
   man.stamina = C.maxStamina(man);
   const h = Combat.computeHit(giant, man, club, {});
-  assert.ok(h.crushed > 0 && h.bluntToCON + (h.crushToAttrs || 0) > 0, 'bones break');
+  assert.ok(h.crushed > 0 && h.crush + (h.crush || 0) > 0, 'bones break');
   // A troll's fist into a sturdy man: crushed a little, hurled back.
   const [troll] = B.Enemies.makeMonster('caveTroll');
   const fist = C.attackOptions(troll).find((o) => o.label === 'Fists');
@@ -1902,7 +1881,7 @@ test('vigor: a fresh fighter hits harder than a spent one; spells and shots do n
     const spent = Combat.computeHit(a, t, swing, {});
     const f = JSON.stringify(fresh), s2 = JSON.stringify(spent);
     assert.notStrictEqual(f, s2, 'the same blow lands differently');
-    const sum = (h) => (h.toCON || 0) + (h.slashToAttrs || 0) + (h.bluntToStamina || 0) + (h.bluntToCON || 0);
+    const sum = (h) => (h.point || 0) + (h.cut || 0) + (h.blunt || 0) + (h.crush || 0);
     assert.ok(sum(fresh) > sum(spent), `fresh ${sum(fresh)} > spent ${sum(spent)}`);
   } finally { B.CONFIG.vigor = saved; }
 });
@@ -1994,7 +1973,7 @@ test('a point against armor: through or turned by its punch and the margin (step
     const o = opt(a, (x) => x.motion === 'thrust');
     const r = await Combat.applyHit(enc, { [a.id]: a, [t.id]: t }, a, t, o, roller(1, []), { location: 'torso', margin: m });
     const w = a.weapons[0];
-    return { r, o, con: t.damage.CON, stamina: before - t.stamina, wear: Items.weaponMaxDurability(w) - Items.weaponDurability(w) + (w.wearCarry || 0) };
+    return { r, o, con: r.hit.point, stamina: before - t.stamina, wear: Items.weaponMaxDurability(w) - Items.weaponDurability(w) + (w.wearCarry || 0) };
   };
   const n = need('rapier', 'mail');
   const found = await run(n);
@@ -2049,8 +2028,8 @@ test('plate spreads a blow it turns: less of a cut\'s or a turned point\'s force
   B.DATA.ARMOR.plate.dissipate = { glancing: 0, crushing: 0 };
   try {
     const whole = Combat.computeHit(a, t, cut, at);
-    assert.ok(whole.bluntToStamina > 0 && spread.bluntToStamina < whole.bluntToStamina, 'plate keeps part of it off');
-    assert.strictEqual(spread.dissipated + spread.bluntToStamina, whole.bluntToStamina);
+    assert.ok(whole.blunt > 0 && spread.blunt < whole.blunt, 'plate keeps part of it off');
+    assert.strictEqual(spread.dissipated + spread.blunt, whole.blunt);
   } finally { B.DATA.ARMOR.plate.dissipate = saved; }
   const m = armed('M', 'flangedMace');
   const blow = opt(m, (o) => o.motion === 'swing');
@@ -2075,7 +2054,7 @@ test('the user\'s armor research: picks rupture plate, rondels burst mail, mail 
   assert.ok(at0(hit('warhammer', 'swing', 'beak', 'plate')) > 0);
   const two = hit('warhammer', 'twoHanded', 'beak', 'plate');
   assert.ok(at0(two) <= 0);
-  assert.ok(two.toCON + two.pointToAttrs >= 1, 'and wounds through it');
+  assert.ok(two.point >= 1 && two.sev >= 1, 'and wounds through it');
   assert.ok(at0(hit('warhammer', 'power', 'beak', 'plate', { material: 'steel' }, { STR: 6 })) > at0(hit('warhammer', 'power', 'beak', 'plate', { material: 'steel' }, { STR: 10 })), 'a strong arm needs less');
   // 2. The rondel goes through iron mail where the common dagger needs a margin; plate it needs one against.
   assert.ok(at0(hit('rondel', 'thrust', null, 'mail')) <= 0);
@@ -2084,13 +2063,13 @@ test('the user\'s armor research: picks rupture plate, rondels burst mail, mail 
   assert.ok(B.DATA.WEAPONS.rondel.dagger, 'it counts as a dagger (Coup de Grâce)');
   // 3. A greatsword power cut breaks bones through mail; plate spreads it; a sword swing on mail stays a bruise.
   const onMail = hit('greatsword', 'power', 'edge', 'mail', null, { STR: 7 });
-  assert.ok(onMail.crushed > 0 && onMail.bluntToCON + onMail.crushToAttrs > 0, 'collarbones');
-  { const p = hit('greatsword', 'power', 'edge', 'plate', null, { STR: 7 }); assert.ok(!p.bluntToCON && !p.crushToAttrs); }
-  assert.ok(hit('longsword', 'swing', 'edge', 'mail').bluntToStamina <= 4); // 2 before the blade's weight counted (weaponPhysics.edgeBlunt)
+  assert.ok(onMail.crushed > 0 && onMail.crush + onMail.crush > 0, 'collarbones');
+  { const p = hit('greatsword', 'power', 'edge', 'plate', null, { STR: 7 }); assert.ok(!p.crush && !p.crush); }
+  assert.ok(hit('longsword', 'swing', 'edge', 'mail').blunt <= 4); // 2 before the blade's weight counted (weaponPhysics.edgeBlunt)
   // 4. Padding stops a sword cut, not a greatsword chop.
-  assert.strictEqual(hit('longsword', 'swing', 'edge', 'padded').slashToAttrs, 0);
-  assert.ok(hit('greatsword', 'twoHanded', 'edge', 'padded').slashToAttrs > 0, 'massive momentum cuts through');
-  assert.strictEqual(hit('greatsword', 'twoHanded', 'edge', 'mail').slashToAttrs, 0, 'never through mail');
+  assert.strictEqual(hit('longsword', 'swing', 'edge', 'padded').cut, 0);
+  assert.ok(hit('greatsword', 'twoHanded', 'edge', 'padded').cut > 0, 'massive momentum cuts through');
+  assert.strictEqual(hit('greatsword', 'twoHanded', 'edge', 'mail').cut, 0, 'never through mail');
   // 5. Hardened steel: half again iron's protection.
   const iron = Items.armorBase(Items.makeArmor('plate', 'full')), steel = Items.armorBase(Items.makeArmor('plate', 'full', 'average', { material: 'steel' }));
   assert.strictEqual(steel.pierce.resist, iron.pierce.resist * 1.5);
@@ -2103,7 +2082,7 @@ test('projected pool: next round\'s AP after spending stamina now, with regenera
   assert.deepEqual(C.projectedPool(c, 0), { pool: C.apPool(c), fatigue: 0 });
   // Spend down to just over a quarter: regeneration lifts it, but not past half.
   const r = C.roundRegen(c, false);
-  const spend = max - Math.ceil(max * 0.3) ;
+  const spend = max - Math.ceil(max * 0.2);
   const p = C.projectedPool(c, spend);
   const after = max - spend + r;
   const expect = B.CONFIG.fatigueSteps.reduce((n, s) => (after / max < s.below ? Math.max(n, s.ap) : n), 0);
@@ -2136,12 +2115,12 @@ test('cover: a shield-bearer beside an undefended ally blocks the blow for them,
   const asked = [];
   const x = io(4, [10, 1], (req) => { asked.push(req.kind); return req.kind === 'cover' ? 'cover' : null; });
   const sAP = enc.ap[s.id], tAP = enc.ap[t.id], dur = s.shield.durability;
-  const before = { stamina: t.stamina, dmg: C.totalDamage(t) };
+  const before = { stamina: t.stamina, dmg: C.woundLoad(t) };
   assert.strictEqual(await Combat.act(enc, chars, d, x), null);
   assert.deepStrictEqual(asked, ['defend', 'cover'], 'the target first, then the bearer');
   assert.strictEqual(enc.ap[s.id], sAP - C.actionCost(s, 'block').ap, 'the bearer pays');
   assert.strictEqual(enc.ap[t.id], tAP, 'the target keeps its AP');
-  assert.deepStrictEqual({ stamina: t.stamina, dmg: C.totalDamage(t) }, before, 'the blow never reaches the target');
+  assert.deepStrictEqual({ stamina: t.stamina, dmg: C.woundLoad(t) }, before, 'the blow never reaches the target');
   assert.ok(s.shield.durability < dur, 'the shield takes it');
   assert.ok(enc.log.some((l) => /S gets a shield in front of T/.test(l.text)));
   // Too far away: no offer.
