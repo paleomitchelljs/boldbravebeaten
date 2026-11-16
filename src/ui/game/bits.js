@@ -50,7 +50,7 @@
         UI.Art.portrait(c, 48),
         h('span', { class: 'stack tight grow' },
           h('b', { class: 'nm' }, c.name),
-          h('span', { class: 'small muted num' }, `L${c.level} · ${c.stamina}/${max}${C.totalDamage(c) ? ` · −${C.totalDamage(c)} attr` : ''}`),
+          h('span', { class: 'small muted num' }, `L${c.level} · ${c.stamina}/${max}${C.woundLoad(c) ? ` · wounds ${C.woundLoad(c)}/${C.boxes(c)}` : ''}`),
           bar(c.stamina, max),
           UI.Cards.statusChips(c).length ? h('span', { class: 'row chips', style: { gap: '3px' } }, UI.Cards.statusChips(c)) : null));
     }));

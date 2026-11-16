@@ -290,7 +290,7 @@ test('ui: a battle plays through the real battle screen with the AI on both side
 test('ui: a player-run party is asked to react when a foe attacks, on the map, and the fight goes on', async () => {
   const w = Game.world;
   // Orders to be asked every time (the default asks only for a blow that could drop the hero: the next test).
-  for (const c of World.party(w)) { c.orders = { ask: 'every' }; c.control = 'manual'; c.status = G.Character.freshStatus(); c.stamina = G.Character.maxStamina(c); for (const k of Object.keys(c.damage)) c.damage[k] = 0; }
+  for (const c of World.party(w)) { c.orders = { ask: 'every' }; c.control = 'manual'; c.status = G.Character.freshStatus(); c.stamina = G.Character.maxStamina(c); c.wounds = []; }
   const realTimeout = globalThis.setTimeout;
   globalThis.setTimeout = (f) => realTimeout(f, 0);
   let asked = 0, turns = 0;
@@ -322,7 +322,7 @@ test('ui: a player-run party is asked to react when a foe attacks, on the map, a
 
 test('ui: a strike at someone in mixed armor offers a Location, defaulting to the best place', async () => {
   const w = Game.world;
-  for (const c of World.party(w)) { c.control = 'manual'; c.status = G.Character.freshStatus(); c.stamina = G.Character.maxStamina(c); for (const k of Object.keys(c.damage)) c.damage[k] = 0; }
+  for (const c of World.party(w)) { c.control = 'manual'; c.status = G.Character.freshStatus(); c.stamina = G.Character.maxStamina(c); c.wounds = []; }
   const realTimeout = globalThis.setTimeout;
   globalThis.setTimeout = (f) => realTimeout(f, 0);
   try {
@@ -485,7 +485,7 @@ test('feat trees: every feat of every tree has a place on the graph, and no two 
 
 test('ui: standing orders answer for a hero, the pips show the pool in halves, and the view pans', async () => {
   const w = Game.world;
-  for (const c of World.party(w)) { c.orders = null; c.control = 'manual'; c.status = G.Character.freshStatus(); c.stamina = G.Character.maxStamina(c); for (const k of Object.keys(c.damage)) c.damage[k] = 0; }
+  for (const c of World.party(w)) { c.orders = null; c.control = 'manual'; c.status = G.Character.freshStatus(); c.stamina = G.Character.maxStamina(c); c.wounds = []; }
   const realTimeout = globalThis.setTimeout;
   globalThis.setTimeout = (f) => realTimeout(f, 0);
   try {

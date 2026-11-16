@@ -12,7 +12,7 @@ enemyGear:
 # ---- The contest (PROVISIONAL, docs/OVERHAUL.md step A) -------------------------------------------------------
 # One opposed roll decides a blow: the attacker's d10 + strike bonus against the defender's d10 + defence bonus
 # (Combat.defenseNumbers). Its margin (the attacker's total less the defender's) is what the blow does with the armor
-# and the body: whether a point gets through (CONFIG.pierce.perMargin), whether the wound is vital (locations.wounds
+# and the body: whether a point gets through (CONFIG.pierce.perMargin), whether the wound is vital (wounds
 # .vital), whether an unaimed blow finds the worst-guarded place beside where it fell (shift). Ties go to the defender.
 # A blow nobody defends always lands, and its margin is the attacker's d10 + strike bonus less `passive`, by what the
 # target can do about it: ready (standing, free, aware; out of AP or choosing not to defend), unaware (not seeing the
@@ -50,39 +50,62 @@ locations:
     guarded: {head: 5, torso: 0, arms: 1, legs: 1}
     thrustLess: 1
     shield: {covers: [torso, arms], block: 1}
-  # wounds (step 3): what a wound does where it lands.
-  #   attrs   what each point of a cut takes, rolled among these (and of a crush, with CONFIG.impact.crushAttrs)
-  #   pointToCON  PROVISIONAL (docs/PLAN.md R4): where a point that goes in (piercing) takes CON; elsewhere its points
-  #           take the location's attrs, rolled as a cut's, unless the wound is vital (then CON × vital.mult).
-  #   tirelessCON PROVISIONAL (step 3): a tireless body (no stamina; undead, constructs) takes every point that reaches
-  #           it to CON wherever it lands: it has no strength to lose, only a frame to break.
-  #   vital   PROVISIONAL (step A): the margin at or above which a point or a cut that reaches the body there is a
-  #           vital wound (null: never), before the armor there, the blow's depth or edge and the body's size
-  #           (CONFIG.vital).
-  #   effects per point of wound that reached the body there (÷ the target's size): disarm (drops what is in
-  #           hand), trip (knocked down); stun: per point of blunt that lands on the head (CON resists, as a spell)
-  wounds:
-    attrs: {head: [CON, INT, WIL], torso: [CON, STR], arms: [STR, DEX, CON], legs: [SPD, CON]}
-    vital: {head: 7, torso: 9, arms: 12, legs: 11}
-    pointToCON: [head, torso]
-    tirelessCON: true
-    effects:
-      head: {stun: 0.1}
-      arms: {disarm: 0.1}
-      legs: {trip: 0.08}
   carry:
-    limb: 3
+    limb: 7     # step E: a limb takes a severity-3 wound's worth (wounds.severity) before a cut carries on
     from: [head, arms, legs]
+
+# ---- Wounds and life (PROVISIONAL, docs/OVERHAUL.md step E) -------------------------------------------------------
+# A blow that gets past the armor leaves a wound: {place, severity 1-3, kind, bleed}. No rolls per point.
+#   boxes     the severity a man-sized body holds; filling them takes it down. A big body holds boxes x size.
+#   severity  points past the armor (piercing, cutting, bone broken) for severity 1, 2, 3; x size for a big body.
+#   vital     the margin at or above which a point or a cut that reaches the body there is vital (step A: before the
+#             armor there, the blow's depth or edge and the body's size: CONFIG.vital). A vital wound is a step worse.
+#   shock     a severity-3 wound anywhere but the head (which drops outright): d10 + CON at least this, or down.
+#   places    what a wound there does, by severity (the index is the severity less one):
+#     head    stun: stunned on the blow (1: CON resists it; 2: no save); down: this severity drops outright
+#     torso   stamina: lost at each round's end
+#     arms    ap: sheet AP added to weapon blows, parries and blocks; damage: off a blow's main damage; drop: what
+#             is in hand falls at this severity
+#     legs    move: squares off each move; dodge: off the dodge; fell: knocked down at this severity, and can't
+#             stand while it lasts
+#   pain      WIL acts through wounds: each place's penalties (ap, damage, move, dodge) read its severity less
+#             floor(WIL / pain)
+#   winding   stamina a blunt blow that breaks nothing costs, by the severity its blunt would be (not point for point)
+#   bleed     a cut bleeds `cut` per severity; a point by its width (Items.weaponStats wound.bleed) per severity,
+#             rounded up; a vital wound `vital` more; crushing and burning don't bleed; a big body bleeds bleed / size.
+#             Each round a bleeding body loses `harm` points of blood per point of bleeding, less floor(CON / conPer):
+#             harm on one wound of blood loss at the torso (it fills the boxes; a body already down loses no more).
+#             A body down and still bleeding when the fight ends, with no one of its side standing to bind it,
+#             rolls d10 + CON against `survive` + its bleeding: under, it dies.
+#   attrPlace where an old save's attribute damage, or harm named by an attribute, lands as a wound
+#   tend      a bandage's Medicine: d10 + Medicine + floor((INT + WIS) / 4) against tn + the wound's severity mends
+#             the worst untended wound a step (each wound is tended once)
+#   cauterize the burn Cauterize leaves (points of harm at the torso)
+wounds:
+  boxes: 6
+  severity: [1, 4, 7]
+  vital: {head: 7, torso: 9, arms: 12, legs: 11}
+  shock: 11
+  places:
+    head: {stun: [1, 2], down: 3}
+    torso: {stamina: [2, 4, 6]}
+    arms: {ap: [0, 0.5, 1], damage: [1, 2, 3], drop: 3}
+    legs: {move: [1, 2, 3], dodge: [1, 2, 3], fell: 3}
+  pain: 4
+  winding: [2, 4, 7]
+  bleed: {cut: 1, vital: 1, harm: 1, conPer: 5, survive: 10}
+  attrPlace: {STR: arms, DEX: arms, SPD: legs, CON: torso, INT: head, WIL: head, WIS: head, CHA: head}
+  tend: {tn: 6}
+  cauterize: 2
 
 # ---- Hero mode (the menu's checkbox: testing, and an easy game) ----------------------------------------------------
 # Party members and their companions (a character with `hero` set; World.syncHero). dealt and taken multiply each
 # blow's damage before armor (a spell's magnitude); regen is added to stamina regeneration each round, and with
-# regenWhenHit a hero recovers even in a round they were struck. A hero's CON never falls below 1: a blow that would
-# kill knocks them out instead.
+# regenWhenHit a hero recovers even in a round they were struck. A hero never dies: wounds take them down, no more.
 hero:
   dealt: 1.5
   taken: 0.5
-  regen: 2
+  regen: 6
   regenWhenHit: true
 
 game:
@@ -267,7 +290,7 @@ game:
     bargainRank: 0.05        # per Bargain rank
     repairPerPoint: 0.06     # of the item's value per durability point restored
     innPerHead: 6
-    healCostPerPoint: 25     # temple healing, per attribute point healed
+    healCostPerPoint: 25     # temple healing, per severity step of the wounds healed
     healerStandingFree: 60   # at this standing healing is free of charge
 
 # ---- Skills (the user, 2026-11-07; data/skills.yaml lists them) -----------------------------------------------------

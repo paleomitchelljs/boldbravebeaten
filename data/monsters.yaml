@@ -19,7 +19,7 @@ wolf:
   skills: {melee: 2, evasion: 2, perception: 3, stealth: 2}
   natural: [wolfBite]
   armor: fur
-  traits: {pack: 2}
+  traits: {pack: 2, finishes: true}
   feats: {}
 alphaWolf:
   name: Alpha wolf
@@ -33,7 +33,7 @@ alphaWolf:
   skills: {melee: 3, evasion: 2, perception: 3, stealth: 2, intimidation: 2}
   natural: [alphaBite]
   armor: fur
-  traits: {pack: 2}
+  traits: {pack: 2, finishes: true}
   feats: {toughness: 1}
 rat:
   name: Giant rat
@@ -48,7 +48,7 @@ rat:
   attrs: {STR: 3, CON: 3, DEX: 7, SPD: 7, INT: 1, WIS: 4, CHA: 1}
   skills: {melee: 1, evasion: 1, stealth: 2, perception: 2}
   natural: [ratBite]
-  traits: {pack: 1, staminaMult: 0.35}
+  traits: {size: 0.5, pack: 1, staminaMult: 0.35, finishes: true}
   feats: {}
 duskBat:
   name: Dusk bat
@@ -60,7 +60,7 @@ duskBat:
   attrs: {STR: 2, CON: 3, DEX: 8, SPD: 9, INT: 3, WIS: 7, CHA: 2}
   skills: {melee: 1, evasion: 4, perception: 3}
   natural: [ratBite]
-  traits: {flying: true, dodge: 2, staminaMult: 0.5}
+  traits: {size: 0.4, flying: true, dodge: 2, staminaMult: 0.5}
   feats: {}
 faeDrake:
   name: Fae drake
@@ -72,7 +72,7 @@ faeDrake:
   attrs: {STR: 3, CON: 4, DEX: 8, SPD: 9, INT: 6, WIS: 6, CHA: 5}
   skills: {melee: 2, evasion: 4, perception: 3}
   natural: [ratBite]
-  traits: {flying: true, dodge: 2, staminaMult: 0.6}
+  traits: {size: 0.4, flying: true, dodge: 2, staminaMult: 0.6}
   feats: {}
 fireSprite:
   name: Fire sprite
@@ -84,7 +84,7 @@ fireSprite:
   attrs: {STR: 3, CON: 4, DEX: 7, SPD: 8, INT: 4, WIS: 5, CHA: 3}
   skills: {melee: 1, evasion: 2}
   natural: [elementalTouch]
-  traits: {flying: true, tireless: true, element: fire, outsider: true, dodge: 1}
+  traits: {size: 0.5, flying: true, tireless: true, element: fire, outsider: true, dodge: 1}
   feats: {}
 ratPack:
   name: Rat swarm
@@ -101,7 +101,7 @@ rustBeetle:
   xp: 40
   glyph: "🪲"
   sprite: {kind: orc, scale: 0.8, tint: "#b0603a"}
-  attrs: {STR: 10, CON: 12, DEX: 5, SPD: 6, INT: 1, WIS: 5, CHA: 1}
+  attrs: {STR: 10, CON: 10, DEX: 5, SPD: 6, INT: 1, WIS: 5, CHA: 1}
   skills: {melee: 1}
   natural: [antennae, mandibles]
   armor: chitin
@@ -114,7 +114,7 @@ mirageCat:
   xp: 70
   glyph: "🐈"
   sprite: {kind: orc_rogue, scale: 0.8, tint: "#7a6aa0"}
-  attrs: {STR: 12, CON: 11, DEX: 7, SPD: 8, INT: 3, WIS: 6, CHA: 3}
+  attrs: {STR: 12, CON: 10, DEX: 7, SPD: 8, INT: 3, WIS: 6, CHA: 3}
   skills: {melee: 3, evasion: 3, stealth: 4, perception: 3}
   natural: [tentacles]
   armor: fur
@@ -131,7 +131,7 @@ giantSpider:
   skills: {melee: 2, athletics: 2, stealth: 3, perception: 2}
   natural: [spiderBite, webSpinner]
   armor: chitin
-  traits: {}
+  traits: {finishes: true}
   feats: {}
   policy: {kite: false}
 beakbear:
@@ -141,11 +141,11 @@ beakbear:
   xp: 90
   glyph: "🐻"
   sprite: {art: girallon, kind: orc_warrior, scale: 1.2, tint: "#9a7a4a"}
-  attrs: {STR: 18, CON: 16, DEX: 5, SPD: 5, INT: 2, WIS: 5, CHA: 2}
+  attrs: {STR: 18, CON: 10, DEX: 5, SPD: 5, INT: 2, WIS: 5, CHA: 2}
   skills: {melee: 3, athletics: 4}
   natural: [claws, beak]
   armor: fur
-  traits: {size: 1.3}
+  traits: {size: 1.3, finishes: true}
   feats: {pin: 1}
   policy: {grappler: true}
 caveTroll:
@@ -156,11 +156,11 @@ caveTroll:
   glyph: "👹"
   sprite: {art: avatar-of-fear, kind: orc_warrior, scale: 1.4, tint: "#7aa08a"}
   loot: troll_hoard
-  attrs: {STR: 20, CON: 18, DEX: 4, SPD: 4, INT: 2, WIS: 4, CHA: 2}
+  attrs: {STR: 20, CON: 10, DEX: 4, SPD: 4, INT: 2, WIS: 4, CHA: 2}
   skills: {melee: 3, athletics: 2}
   natural: [trollFists, claws]
   armor: trollHide
-  traits: {size: 1.3, regrow: {con: 1, stamina: 6}}
+  traits: {size: 1.3, regrow: {mend: 1, stamina: 6}, finishes: true}
   feats: {power_swing: 1, shield_breaker: 1}
 trollChieftain:
   name: Troll chieftain
@@ -170,11 +170,11 @@ trollChieftain:
   glyph: "👹"
   sprite: {art: avatar-of-fear, artTint: "#c0a080", artScale: 1.15, kind: orc_warrior, scale: 1.55, tint: "#9a8a6a"}
   loot: troll_hoard
-  attrs: {STR: 24, CON: 24, DEX: 4, SPD: 4, INT: 3, WIS: 4, CHA: 3}
+  attrs: {STR: 24, CON: 10, DEX: 4, SPD: 4, INT: 3, WIS: 4, CHA: 3}
   skills: {melee: 5, athletics: 3, intimidation: 4}
   natural: [trollFists, claws]
   armor: trollHide
-  traits: {size: 1.5, regrow: {con: 1, stamina: 6}, apMult: 2}
+  traits: {size: 1.5, regrow: {mend: 1, stamina: 6}, apMult: 2, finishes: true}
   feats: {power_swing: 1, shield_breaker: 1, toughness: 1}
 ogre:
   name: Ogre
@@ -185,7 +185,7 @@ ogre:
   sprite: {art: ogre, kind: orc_warrior, scale: 1.4, tint: "#b0a080"}
   loot: troll_hoard
   level: 8
-  attrs: {STR: 23, CON: 21, DEX: 4, SPD: 5, INT: 3, WIL: 5, WIS: 4, CHA: 3}
+  attrs: {STR: 23, CON: 10, DEX: 4, SPD: 5, INT: 3, WIL: 5, WIS: 4, CHA: 3}
   skills: {melee: 3, athletics: 3, intimidation: 2}
   natural: [trollFists]
   armor: ogreHide
@@ -203,7 +203,7 @@ hillGiant:
   sprite: {art: ogre, artScale: 1.35, kind: orc_warrior, scale: 1.7, tint: "#a0b0c0"}
   loot: troll_hoard
   level: 12
-  attrs: {STR: 28, CON: 26, DEX: 4, SPD: 5, INT: 4, WIL: 6, WIS: 5, CHA: 4}
+  attrs: {STR: 28, CON: 10, DEX: 4, SPD: 5, INT: 4, WIL: 6, WIS: 5, CHA: 4}
   skills: {melee: 4, athletics: 6, intimidation: 3}
   natural: [boulder]
   armor: giantHide
@@ -231,7 +231,7 @@ skeleton:
   natural: []
   weapons: [longsword]
   craft: poor
-  traits: {tireless: true, undead: true, resist: {P: 0, S: 0.5}}
+  traits: {tireless: true, undead: true, resist: {P: 0, S: 0.5}, finishes: true}
   feats: {}
   keepUnarmed: true
 skeletonSquad:
@@ -245,10 +245,10 @@ zombie:
   xp: 25
   glyph: "🧟"
   sprite: {art: froglok-zombie, kind: skeleton, tint: "#7aa070"}
-  attrs: {STR: 9, CON: 12, DEX: 3, SPD: 3, INT: 1, WIS: 1, CHA: 1}
+  attrs: {STR: 9, CON: 10, DEX: 3, SPD: 3, INT: 1, WIS: 1, CHA: 1}
   skills: {melee: 1, athletics: 2}
   natural: [claws, zombieBite]
-  traits: {tireless: true, undead: true, resist: {P: 0.5}}
+  traits: {tireless: true, undead: true, resist: {P: 0.5}, finishes: true}
   feats: {}
   policy: {grappler: true}
 zombieHorde: {name: Zombie horde, blurb: Four zombies., group: [zombie, zombie, zombie, zombie]}
@@ -266,7 +266,7 @@ ghost:
   attrs: {STR: 2, CON: 6, DEX: 7, SPD: 7, INT: 6, WIL: 8, WIS: 5, CHA: 4}
   skills: {evasion: 3, arcane: 3}
   natural: []
-  traits: {tireless: true, undead: true, incorporeal: true, flying: true}
+  traits: {tireless: true, undead: true, incorporeal: true, flying: true, finishes: true}
   powers: [{verb: take, noun: death, aim: foe, name: Chill touch}]
   feats: {}
 # PROVISIONAL (the user, 2026-11-08): the best of the raised (Raise + Death with Raise the Wrapped Dead).
@@ -277,10 +277,10 @@ mummy:
   xp: 60
   glyph: "🧟"
   sprite: {art: froglok-zombie, kind: skeleton, tint: "#c8b890"}
-  attrs: {STR: 12, CON: 14, DEX: 4, SPD: 4, INT: 1, WIS: 1, CHA: 1}
+  attrs: {STR: 12, CON: 10, DEX: 4, SPD: 4, INT: 1, WIS: 1, CHA: 1}
   skills: {melee: 3, athletics: 3}
   natural: [claws]
-  traits: {tireless: true, undead: true, resist: {P: 0.5, S: 0.5, fire: 1.5}}
+  traits: {tireless: true, undead: true, resist: {P: 0.5, S: 0.5, fire: 1.5}, finishes: true}
   feats: {}
   policy: {grappler: true}
 # The three golems are one body; only what harms them differs (the user, 2026-10-25). Each is immune to two of fire,
@@ -295,7 +295,7 @@ clayGolem:
   level: 2
   glyph: "🗿"
   sprite: {art: clay-golem, kind: skeleton_warrior, scale: 1.5, tint: "#8a8a8a"}
-  attrs: {STR: 11, CON: 22, DEX: 3, SPD: 3, INT: 1, WIS: 1, CHA: 1}
+  attrs: {STR: 11, CON: 10, DEX: 3, SPD: 3, INT: 1, WIS: 1, CHA: 1}
   skills: {melee: 2}
   natural: [golemFists]
   armor: golemBody
@@ -311,7 +311,7 @@ stoneGolem:
   level: 2
   glyph: "🗿"
   sprite: {art: stone-golem, kind: skeleton_warrior, scale: 1.5, tint: "#8a8a8a"}
-  attrs: {STR: 11, CON: 22, DEX: 3, SPD: 3, INT: 1, WIS: 1, CHA: 1}
+  attrs: {STR: 11, CON: 10, DEX: 3, SPD: 3, INT: 1, WIS: 1, CHA: 1}
   skills: {melee: 5}
   natural: [golemFists]
   armor: golemBody
@@ -327,7 +327,7 @@ ironGolem:
   level: 4
   glyph: "🗿"
   sprite: {art: iron-golem, kind: skeleton_warrior, scale: 1.5, tint: "#8a8a8a"}
-  attrs: {STR: 11, CON: 22, DEX: 3, SPD: 3, INT: 1, WIS: 1, CHA: 1}
+  attrs: {STR: 11, CON: 10, DEX: 3, SPD: 3, INT: 1, WIS: 1, CHA: 1}
   skills: {melee: 4}
   natural: [golemFists]
   armor: golemBody
@@ -341,7 +341,7 @@ drake:
   glyph: "🐉"
   sprite: {art: dragon, kind: orc_shaman, scale: 1.3, tint: "#9a4a3a"}
   level: 8
-  attrs: {STR: 14, CON: 16, DEX: 8, SPD: 8, INT: 6, WIL: 8, WIS: 6, CHA: 6}
+  attrs: {STR: 14, CON: 10, DEX: 8, SPD: 8, INT: 6, WIL: 8, WIS: 6, CHA: 6}
   skills: {melee: 4, evasion: 2, arcane: 4, perception: 3}
   natural: [drakeBite, drakeClaws, wingBuffet]
   armor: drakeScales
@@ -356,7 +356,7 @@ wyvern:
   glyph: "🐉"
   sprite: {art: coatl, kind: orc_shaman, scale: 1.4, tint: "#4a7a5a"}
   level: 10
-  attrs: {STR: 17, CON: 16, DEX: 6, SPD: 7, INT: 3, WIL: 7, WIS: 5, CHA: 3}
+  attrs: {STR: 17, CON: 10, DEX: 6, SPD: 7, INT: 3, WIL: 7, WIS: 5, CHA: 3}
   skills: {melee: 4, evasion: 2, perception: 3}
   natural: [wyvernBite, wyvernSting, wyvernWings]
   armor: wyvernScales
@@ -372,11 +372,11 @@ constrictor:
   level: 2
   glyph: "🐍"
   sprite: {art: snake, kind: orc, scale: 0.8, tint: "#6a9a5a"}
-  attrs: {STR: 18, CON: 15, DEX: 7, SPD: 5, INT: 2, WIL: 6, WIS: 5, CHA: 2}
+  attrs: {STR: 18, CON: 10, DEX: 7, SPD: 5, INT: 2, WIL: 6, WIS: 5, CHA: 2}
   skills: {melee: 2, athletics: 6, stealth: 3}
   natural: [constrictorBite]
   armor: scaleHide
-  traits: {size: 1.2, constrict: {stamina: 8, con: 1}, slippery: 2}
+  traits: {size: 1.2, constrict: {stamina: 8, harm: 1}, slippery: 2, finishes: true}
   feats: {pin: 1, takedown: 1, brawlers_wind: 1}
   policy: {grappler: true}
 kobold:
@@ -478,7 +478,7 @@ scaleward:
   glyph: "🦎"
   sprite: {art: lizardfolk-warrior, kind: orc_warrior, tint: "#6a9a8a"}
   loot: humanoid_purse
-  attrs: {STR: 12, CON: 11, DEX: 5, SPD: 5, INT: 4, WIS: 4, CHA: 3}
+  attrs: {STR: 12, CON: 10, DEX: 5, SPD: 5, INT: 4, WIS: 4, CHA: 3}
   skills: {melee: 3, armor: 1}
   natural: [tail]
   armor: scalewardScales
@@ -516,7 +516,7 @@ suracaylVaranus:
   glyph: "🦎"
   sprite: {art: lizardfolk-varanus, kind: orc_warrior, tint: "#5a7aa0"}
   loot: beast_leavings
-  attrs: {STR: 12, CON: 12, DEX: 5, SPD: 5, INT: 3, WIS: 5, CHA: 2}
+  attrs: {STR: 12, CON: 10, DEX: 5, SPD: 5, INT: 3, WIS: 5, CHA: 2}
   skills: {melee: 3}
   natural: [monitorBite, claws, tail]
   armor: scalewardScales
@@ -534,7 +534,7 @@ templeGorilla:
   glyph: "🦍"
   sprite: {art: gorilla, kind: orc_warrior, scale: 1.2, tint: "#4a4a4a"}
   loot: beast_leavings
-  attrs: {STR: 15, CON: 12, DEX: 6, SPD: 6, INT: 3, WIS: 6, CHA: 3}
+  attrs: {STR: 15, CON: 10, DEX: 6, SPD: 6, INT: 3, WIS: 6, CHA: 3}
   skills: {melee: 3, athletics: 3}
   natural: [gorillaFists]
   armor: fur
@@ -547,14 +547,14 @@ dreadShaman:
   faction: suracayl
   xp: 150
   armorItem: {type: padded, coverage: full}
-  traits: {apMult: 3, suracayl: true}
+  traits: {apMult: 3, suracayl: true, finishes: true}
   parts: {suracayl_scale: 2}
   tier: 5
   glyph: "🦎"
   sprite: {art: dread-shaman, kind: orc_shaman, tint: "#c8b890"}
   loot: humanoid_purse
   level: 3
-  attrs: {STR: 6, CON: 18, DEX: 6, SPD: 6, INT: 9, WIL: 10, WIS: 8, CHA: 8}
+  attrs: {STR: 6, CON: 10, DEX: 6, SPD: 6, INT: 9, WIL: 10, WIS: 8, CHA: 8}
   skills: {melee: 1, evasion: 2, arcane: 4, deception: 2}
   natural: []
   weapons: [staff]
@@ -574,7 +574,7 @@ venril:
   sprite: {art: venril, kind: orc_shaman}
   loot: humanoid_purse
   level: 4
-  attrs: {STR: 7, CON: 30, DEX: 6, SPD: 6, INT: 10, WIL: 11, WIS: 9, CHA: 10}
+  attrs: {STR: 7, CON: 10, DEX: 6, SPD: 6, INT: 10, WIL: 11, WIS: 9, CHA: 10}
   skills: {evasion: 4, melee: 2, arcane: 9, anticipation: 3, deception: 3}
   natural: []
   weapons: [staff]
@@ -605,7 +605,7 @@ revenantKnight:
   sidearm: dagger
   shieldItem: {size: heater, material: adamant}
   trinkets: [{name: Flowing black silk sash, attrs: {SPD: 1}, ap: 1}]
-  traits: {aura: {name: aura of dread, radius: 2, stamina: 3, cond: dread}}
+  traits: {aura: {name: aura of dread, radius: 2, stamina: 3, cond: dread}, finishes: true}
   featPrefs:
     - verb_take
     - mod_wide
@@ -637,7 +637,7 @@ spectre:
   glyph: "👻"
   sprite: {art: spectre, kind: skeleton_mage, tint: "#8ab4d9"}
   level: 15
-  attrs: {STR: 10, CON: 14, DEX: 9, SPD: 9, INT: 9, WIL: 12, WIS: 8, CHA: 10}
+  attrs: {STR: 10, CON: 10, DEX: 9, SPD: 9, INT: 9, WIL: 12, WIS: 8, CHA: 10}
   skills: {melee: 8, evasion: 6, anticipation: 5, intimidation: 6}
   natural: []
   keepUnarmed: false
@@ -651,6 +651,7 @@ spectre:
     undead: true
     incorporeal: true
     aura: {name: wail, radius: 2, cond: frightened, resisted: true}
+    finishes: true
   featPrefs:
     - heavy_weapon_training
     - power_swing
@@ -681,7 +682,7 @@ raptor:
   attrs: {STR: 5, CON: 6, DEX: 9, SPD: 10, INT: 2, WIS: 6, CHA: 1}
   skills: {melee: 3, evasion: 2, perception: 3}
   natural: [sickleClaw, zombieBite]
-  traits: {pack: 2, moveMult: 1.5, size: 0.7}
+  traits: {pack: 2, moveMult: 1.5, size: 0.7, finishes: true}
   feats: {}
 raptorPack: {name: Raptor pack, blurb: Three raptors., group: [raptor, raptor, raptor]}
 alligator:
@@ -694,11 +695,11 @@ alligator:
   level: 2
   glyph: "🐊"
   sprite: {art: alligator, kind: orc, scale: 0.9, tint: "#5a6a4a"}
-  attrs: {STR: 14, CON: 11, DEX: 4, SPD: 4, INT: 1, WIL: 5, WIS: 4, CHA: 1}
+  attrs: {STR: 14, CON: 10, DEX: 4, SPD: 4, INT: 1, WIL: 5, WIS: 4, CHA: 1}
   skills: {melee: 3, athletics: 4, stealth: 3}
   natural: [gatorJaws, tail]
   armor: gatorHide
-  traits: {size: 1.2, constrict: {stamina: 6, con: 1}, slippery: 1}
+  traits: {size: 1.2, constrict: {stamina: 6, harm: 1}, slippery: 1, finishes: true}
   feats: {pin: 1}
   policy: {grappler: true}
 avatarOfFear:
@@ -711,11 +712,11 @@ avatarOfFear:
   glyph: "👹"
   sprite: {art: avatar, kind: orc_warrior, scale: 1.8, tint: "#b05a2a"}
   level: 5
-  attrs: {STR: 22, CON: 36, DEX: 6, SPD: 5, INT: 4, WIL: 14, WIS: 6, CHA: 2}
+  attrs: {STR: 22, CON: 10, DEX: 6, SPD: 5, INT: 4, WIL: 14, WIS: 6, CHA: 2}
   skills: {melee: 8, athletics: 4, intimidation: 8}
   natural: [avatarArms]
   armor: avatarHide
-  traits: {outsider: true, size: 1.8, apMult: 2.5, aura: {name: dread, radius: 1, cond: frightened, resisted: true}}
+  traits: {outsider: true, size: 1.8, apMult: 2.5, aura: {name: dread, radius: 1, cond: frightened, resisted: true}, finishes: true}
   feats: {power_swing: 1, toughness: 1}
 
 # ---- The fire-goblin mine (assets/ideas/ember-mine.md). Art is stand-in until the user makes the figures: the orange
@@ -795,7 +796,7 @@ goblinWarrior:
   sprite: {art: goblin-orange, artScale: 1.05, kind: orc_warrior, scale: 0.9}
   loot: humanoid_purse
   level: 1
-  attrs: {STR: 8, CON: 13, DEX: 7, SPD: 6, INT: 4, WIS: 4, CHA: 3}
+  attrs: {STR: 8, CON: 10, DEX: 7, SPD: 6, INT: 4, WIS: 4, CHA: 3}
   skills: {melee: 5, block: 4}
   natural: []
   origin: goblin
@@ -835,7 +836,7 @@ goblinChampion:
   sprite: {art: goblin-warlord, kind: orc_warrior, scale: 1.0}
   loot: humanoid_purse
   level: 2
-  attrs: {STR: 11, CON: 13, DEX: 7, SPD: 6, INT: 4, WIL: 6, WIS: 5, CHA: 4}
+  attrs: {STR: 11, CON: 10, DEX: 7, SPD: 6, INT: 4, WIL: 6, WIS: 5, CHA: 4}
   skills: {melee: 6, block: 4, armor: 3, intimidation: 2}
   natural: []
   armorItem: {type: mail, coverage: full}
@@ -857,7 +858,7 @@ goblinKing:
   sprite: {art: goblin-king, kind: orc_warrior, scale: 1.1}
   loot: humanoid_purse
   level: 3
-  attrs: {STR: 11, CON: 14, DEX: 7, SPD: 7, INT: 7, WIL: 8, WIS: 6, CHA: 8}
+  attrs: {STR: 11, CON: 10, DEX: 7, SPD: 7, INT: 7, WIL: 8, WIS: 6, CHA: 8}
   skills: {melee: 8, block: 5, armor: 5, persuasion: 3, intimidation: 4}
   natural: []
   armorItem: {type: plate, coverage: full}
@@ -880,7 +881,7 @@ goblinHighShaman:
   sprite: {art: goblin-shaman, kind: orc_shaman, scale: 1.0}
   loot: humanoid_purse
   level: 3
-  attrs: {STR: 5, CON: 15, DEX: 6, SPD: 6, INT: 10, WIL: 10, WIS: 8, CHA: 7}
+  attrs: {STR: 5, CON: 10, DEX: 6, SPD: 6, INT: 10, WIL: 10, WIS: 8, CHA: 7}
   skills: {melee: 2, arcane: 8, anticipation: 3}
   natural: []
   weapons: [staff]
@@ -898,7 +899,7 @@ redDrake:
   glyph: "🐉"
   sprite: {art: singe, kind: orc_shaman, scale: 1.3, tint: "#9a4a3a"}
   level: 2
-  attrs: {STR: 14, CON: 16, DEX: 8, SPD: 8, INT: 6, WIL: 8, WIS: 6, CHA: 6}
+  attrs: {STR: 14, CON: 10, DEX: 8, SPD: 8, INT: 6, WIL: 8, WIS: 6, CHA: 6}
   skills: {melee: 5, evasion: 2, arcane: 4, perception: 3}
   natural: [drakeBite, drakeClaws, wingBuffet]
   armor: drakeScales
@@ -931,7 +932,7 @@ efreeti:
   glyph: "🔥"
   sprite: {art: efreeti, kind: orc_shaman, scale: 1.1, tint: "#e04010"}
   level: 5
-  attrs: {STR: 11, CON: 16, DEX: 8, SPD: 8, INT: 7, WIL: 9, WIS: 6, CHA: 7}
+  attrs: {STR: 11, CON: 10, DEX: 8, SPD: 8, INT: 7, WIL: 9, WIS: 6, CHA: 7}
   skills: {melee: 4, arcane: 4}
   natural: [elementalTouch]
   nouns: [fire]
@@ -979,7 +980,7 @@ efreetLord:
   glyph: "🔥"
   sprite: {art: efreet, kind: orc_shaman, scale: 1.6, tint: "#e04010"}
   level: 6
-  attrs: {STR: 15, CON: 14, DEX: 8, SPD: 8, INT: 9, WIL: 12, WIS: 8, CHA: 9}
+  attrs: {STR: 15, CON: 10, DEX: 8, SPD: 8, INT: 9, WIL: 12, WIS: 8, CHA: 9}
   skills: {melee: 6, arcane: 6, intimidation: 4}
   natural: [avatarArms]
   armor: avatarHide
@@ -1052,7 +1053,7 @@ fireGiant:
   sprite: {art: fire-giant, kind: orc_warrior, scale: 1.8, tint: "#e07030"}
   loot: troll_hoard
   level: 7
-  attrs: {STR: 28, CON: 30, DEX: 6, SPD: 5, INT: 7, WIL: 8, WIS: 6, CHA: 5}
+  attrs: {STR: 28, CON: 10, DEX: 6, SPD: 5, INT: 7, WIL: 8, WIS: 6, CHA: 5}
   skills: {melee: 5, athletics: 5, intimidation: 3}
   natural: [trollFists, boulder]
   armor: giantHide
@@ -1070,7 +1071,7 @@ fireGiantYoung:
   sprite: {art: fire-giant, artScale: 0.8, kind: orc_warrior, scale: 1.4, tint: "#e07030"}
   loot: humanoid_purse
   level: 7
-  attrs: {STR: 24, CON: 34, DEX: 6, SPD: 5, INT: 6, WIL: 6, WIS: 5, CHA: 5}
+  attrs: {STR: 24, CON: 10, DEX: 6, SPD: 5, INT: 6, WIL: 6, WIS: 5, CHA: 5}
   skills: {melee: 5, athletics: 4}
   natural: [trollFists]
   armor: giantHide
@@ -1088,7 +1089,7 @@ fireGiantGuard:
   sprite: {art: fire-giant-armored, kind: orc_warrior, scale: 1.8, tint: "#5a5a5a"}
   loot: troll_hoard
   level: 7
-  attrs: {STR: 22, CON: 18, DEX: 7, SPD: 5, INT: 7, WIL: 9, WIS: 6, CHA: 5}
+  attrs: {STR: 22, CON: 10, DEX: 7, SPD: 5, INT: 7, WIL: 9, WIS: 6, CHA: 5}
   skills: {melee: 5, armor: 5, athletics: 4, intimidation: 3}
   natural: [boulder]
   armorItem: {type: plate, coverage: full}
@@ -1108,7 +1109,7 @@ fireGiantWarlord:
   sprite: {art: fire-giant-armored, artScale: 1.1, kind: orc_warrior, scale: 2, tint: "#5a5a5a"}
   loot: troll_hoard
   level: 7
-  attrs: {STR: 24, CON: 22, DEX: 8, SPD: 6, INT: 8, WIL: 11, WIS: 7, CHA: 7}
+  attrs: {STR: 24, CON: 10, DEX: 8, SPD: 6, INT: 8, WIL: 11, WIS: 7, CHA: 7}
   skills: {melee: 8, armor: 6, anticipation: 5, athletics: 5, intimidation: 6}
   natural: [boulder]
   armorItem: {type: plate, coverage: full}
@@ -1128,7 +1129,7 @@ fireGiantWizard:
   sprite: {art: fire-giant-wizard, kind: orc_shaman, scale: 1.8, tint: "#a03030"}
   loot: troll_hoard
   level: 7
-  attrs: {STR: 22, CON: 30, DEX: 6, SPD: 5, INT: 11, WIL: 11, WIS: 8, CHA: 6}
+  attrs: {STR: 22, CON: 10, DEX: 6, SPD: 5, INT: 11, WIL: 11, WIS: 8, CHA: 6}
   skills: {melee: 3, arcane: 9}
   natural: []
   armor: giantHide
@@ -1148,7 +1149,7 @@ fireGiantMagus:
   sprite: {art: fire-giant-wizard, artScale: 1.1, kind: orc_shaman, scale: 2, tint: "#a03030"}
   loot: troll_hoard
   level: 7
-  attrs: {STR: 22, CON: 22, DEX: 7, SPD: 5, INT: 14, WIL: 14, WIS: 10, CHA: 8}
+  attrs: {STR: 22, CON: 10, DEX: 7, SPD: 5, INT: 14, WIL: 14, WIS: 10, CHA: 8}
   skills: {melee: 3, arcane: 9, anticipation: 4}
   natural: []
   armor: giantHide
@@ -1168,7 +1169,7 @@ fireGiantKing:
   sprite: {art: fire-giant-king, kind: orc_warrior, scale: 2.1, tint: "#c0a040"}
   loot: troll_hoard
   level: 7
-  attrs: {STR: 20, CON: 16, DEX: 8, SPD: 6, INT: 10, WIL: 13, WIS: 9, CHA: 11}
+  attrs: {STR: 20, CON: 10, DEX: 8, SPD: 6, INT: 10, WIL: 13, WIS: 9, CHA: 11}
   skills: {melee: 7, armor: 7, anticipation: 6, athletics: 6, intimidation: 8}
   natural: [boulder]
   armorItem: {type: plate, coverage: full}
@@ -1187,11 +1188,11 @@ giantShade:
   glyph: "👻"
   sprite: {art: spectre, artTint: "#e06040", artScale: 1.6, kind: skeleton_mage, scale: 1.8, tint: "#e06040"}
   level: 7
-  attrs: {STR: 22, CON: 32, DEX: 8, SPD: 7, INT: 6, WIL: 12, WIS: 6, CHA: 6}
+  attrs: {STR: 22, CON: 10, DEX: 8, SPD: 7, INT: 6, WIL: 12, WIS: 6, CHA: 6}
   skills: {melee: 6, intimidation: 5}
   natural: [trollFists]
   keepUnarmed: true
-  traits: {apMult: 1.6, giant: true, size: 2.2, tireless: true, undead: true, resist: {fire: 0, P: 0.5, S: 0.5, B: 0.5}}
+  traits: {apMult: 1.6, giant: true, size: 2.2, tireless: true, undead: true, resist: {fire: 0, P: 0.5, S: 0.5, B: 0.5}, finishes: true}
   feats: {toughness: 1}
 dragonLord:
   name: The great red dragon
@@ -1203,7 +1204,7 @@ dragonLord:
   glyph: "🐉"
   sprite: {art: dragon-lord, kind: orc_shaman, scale: 3, tint: "#b03020"}
   level: 8
-  attrs: {STR: 34, CON: 40, DEX: 9, SPD: 9, INT: 14, WIL: 16, WIS: 12, CHA: 14}
+  attrs: {STR: 34, CON: 10, DEX: 9, SPD: 9, INT: 14, WIL: 16, WIS: 12, CHA: 14}
   skills: {melee: 10, arcane: 9, anticipation: 7, perception: 8, intimidation: 10}
   natural: [drakeBite, drakeClaws, wingBuffet, tail]
   armor: drakeScales
@@ -1241,7 +1242,7 @@ orcSlaver:
   sprite: {art: orc-brute, kind: orc_warrior, scale: 1}
   loot: humanoid_purse
   level: 1
-  attrs: {STR: 9, CON: 12, DEX: 5, SPD: 5, INT: 4, WIL: 5, WIS: 4, CHA: 3}
+  attrs: {STR: 9, CON: 10, DEX: 5, SPD: 5, INT: 4, WIL: 5, WIS: 4, CHA: 3}
   skills: {melee: 6, intimidation: 2}
   natural: []
   weapons: [club]
@@ -1298,7 +1299,7 @@ orcProphet:
   sprite: {art: orc-brute, artTint: "#8a9a7a", kind: orc_shaman, scale: 1}
   loot: humanoid_purse
   level: 3
-  attrs: {STR: 6, CON: 16, DEX: 5, SPD: 5, INT: 8, WIL: 9, WIS: 8, CHA: 7}
+  attrs: {STR: 6, CON: 10, DEX: 5, SPD: 5, INT: 8, WIL: 9, WIS: 8, CHA: 7}
   skills: {melee: 2, arcane: 7}
   natural: []
   weapons: [staff]
@@ -1317,7 +1318,7 @@ orcWarlord:
   sprite: {art: orc-warrior, artScale: 1.15, kind: orc_warrior, scale: 1.1}
   loot: humanoid_purse
   level: 3
-  attrs: {STR: 10, CON: 12, DEX: 7, SPD: 6, INT: 6, WIL: 8, WIS: 6, CHA: 7}
+  attrs: {STR: 10, CON: 10, DEX: 7, SPD: 6, INT: 6, WIL: 8, WIS: 6, CHA: 7}
   skills: {melee: 7, anticipation: 4, armor: 4, intimidation: 3}
   natural: []
   armorItem: {type: mail, coverage: full}
@@ -1337,7 +1338,7 @@ orcEmperor:
   sprite: {art: orc-emperor, kind: orc_warrior, scale: 1.3}
   loot: humanoid_purse
   level: 3
-  attrs: {STR: 11, CON: 26, DEX: 6, SPD: 5, INT: 6, WIL: 9, WIS: 6, CHA: 8}
+  attrs: {STR: 11, CON: 10, DEX: 6, SPD: 5, INT: 6, WIL: 9, WIS: 6, CHA: 8}
   skills: {melee: 9, block: 5, armor: 5, intimidation: 5}
   natural: []
   armorItem: {type: mail, coverage: full}
@@ -1397,7 +1398,7 @@ koboldHuntLeader:
   sprite: {art: kobold-warrior-bow, kind: orc_rogue, scale: 0.85}
   loot: humanoid_purse
   level: 4
-  attrs: {STR: 6, CON: 11, DEX: 9, SPD: 7, INT: 5, WIS: 7, CHA: 4}
+  attrs: {STR: 6, CON: 10, DEX: 9, SPD: 7, INT: 5, WIS: 7, CHA: 4}
   skills: {ranged: 6, melee: 2, evasion: 2, perception: 5, stealth: 2, nature: 3}
   natural: [claws]
   armor: scaleHide
@@ -1476,7 +1477,7 @@ koboldChampion:
   sprite: {art: kobold-champion, kind: orc_rogue, scale: 0.9}
   loot: humanoid_purse
   level: 4
-  attrs: {STR: 9, CON: 14, DEX: 10, SPD: 8, INT: 6, WIL: 8, WIS: 6, CHA: 6}
+  attrs: {STR: 9, CON: 10, DEX: 10, SPD: 8, INT: 6, WIL: 8, WIS: 6, CHA: 6}
   skills: {melee: 8, evasion: 4, anticipation: 4, deception: 3, intimidation: 2}
   natural: [claws]
   armorItem: {type: leather, coverage: full}
@@ -1559,7 +1560,7 @@ koboldKing:
   sprite: {art: kobold-king, kind: orc_warrior, scale: 1.0}
   loot: humanoid_purse
   level: 4
-  attrs: {STR: 14, CON: 28, DEX: 7, SPD: 6, INT: 6, WIL: 9, WIS: 7, CHA: 8}
+  attrs: {STR: 14, CON: 10, DEX: 7, SPD: 6, INT: 6, WIL: 9, WIS: 7, CHA: 8}
   skills: {melee: 8, armor: 4, anticipation: 3, intimidation: 4, persuasion: 2}
   natural: [claws]
   armorItem: {type: mail, coverage: full}
@@ -1596,7 +1597,7 @@ steamElemental:
   glyph: "♨️"
   sprite: {art: fire-elemental, artTint: "#dfe8ee", kind: orc_shaman, scale: 1.1, tint: "#d8e4ea"}
   level: 4
-  attrs: {STR: 9, CON: 18, DEX: 6, SPD: 6, INT: 2, WIL: 8, WIS: 4, CHA: 2}
+  attrs: {STR: 9, CON: 10, DEX: 6, SPD: 6, INT: 2, WIL: 8, WIS: 4, CHA: 2}
   skills: {melee: 3}
   natural: [elementalTouch]
   armor: golemBody
@@ -1649,7 +1650,7 @@ sarnakWarden:
   glyph: "🦎"
   sprite: {art: sarnak, artScale: 1.2, kind: orc_warrior, scale: 1.2, tint: "#8a9a6a"}
   loot: humanoid_purse
-  attrs: {STR: 13, CON: 13, DEX: 6, SPD: 6, INT: 6, WIL: 8, WIS: 6, CHA: 6}
+  attrs: {STR: 13, CON: 10, DEX: 6, SPD: 6, INT: 6, WIL: 8, WIS: 6, CHA: 6}
   skills: {melee: 5, block: 4, armor: 3, intimidation: 3}
   natural: [tail]
   armorItem: {type: mail, coverage: full}
@@ -1669,7 +1670,7 @@ minotaur:
   glyph: "🐂"
   sprite: {art: minotaur, kind: orc_warrior, scale: 1.3, tint: "#7a5a40"}
   loot: troll_hoard
-  attrs: {STR: 15, CON: 14, DEX: 5, SPD: 6, INT: 4, WIL: 7, WIS: 5, CHA: 3}
+  attrs: {STR: 15, CON: 10, DEX: 5, SPD: 6, INT: 4, WIL: 7, WIS: 5, CHA: 3}
   skills: {melee: 3, athletics: 3, intimidation: 2, perception: 2}
   natural: [gore]
   armor: ogreHide
@@ -1688,7 +1689,7 @@ minotaurLord:
   glyph: "🐂"
   sprite: {art: minotaur-large, kind: orc_warrior, scale: 1.5, tint: "#5a4030"}
   loot: troll_hoard
-  attrs: {STR: 19, CON: 18, DEX: 5, SPD: 6, INT: 5, WIL: 9, WIS: 6, CHA: 5}
+  attrs: {STR: 19, CON: 10, DEX: 5, SPD: 6, INT: 5, WIL: 9, WIS: 6, CHA: 5}
   skills: {melee: 5, athletics: 4, intimidation: 4, perception: 2}
   natural: [gore]
   armor: ogreHide

@@ -159,7 +159,7 @@ test('traps: a sprung trap is a blow through the combat engine: plate turns what
       const v = byName(w, name), chars = { [v.id]: v };
       const enc = Combat.createEncounter('t', [v.id], chars, 5, 5);
       await Traps.strike(enc, chars, v, sapling(), roller, {});
-      t += C.totalDamage(v) + v.bleeds.reduce((n, b) => n + b.remaining, 0);
+      t += C.woundLoad(v) + C.bleeding(v);
     }
     return t / N;
   };

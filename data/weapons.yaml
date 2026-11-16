@@ -324,8 +324,8 @@ shortbow:
   motions: [shoot]
   rarity: common
   shootAP: 3
-  shootStamina: 1
-  draw: {ap: 1, stamina: 1}
+  shootStamina: 3
+  draw: {ap: 1, stamina: 3}
   material: steel
   notes: "A light draw: drawn (1 AP), then loosed (2 AP). Arrows can be blocked or dodged, not parried. −2 damage beyond 8 squares."
 longbow:
@@ -339,9 +339,9 @@ longbow:
   motions: [shoot]
   rarity: uncommon
   shootAP: 5
-  shootStamina: 2
+  shootStamina: 6
   material: steel
-  draw: {ap: 2, stamina: 1}
+  draw: {ap: 2, stamina: 3}
   notes: "Heavy draw: drawn (2 AP), then loosed (3 AP), the same turn if the AP is there or held into the next round. −2 damage beyond 10 squares."
 ratBite:
   phys: {mass: 0.12, length: 0.1, point: {depth: 7, width: 2.5}}
@@ -409,7 +409,7 @@ webSpinner:
   motions: [shoot]
   rarity: common
   shootAP: 2
-  shootStamina: 1
+  shootStamina: 3
   trait: {web: 1}
 boulder:
   name: Hurl boulder
@@ -422,7 +422,7 @@ boulder:
   motions: [shoot]
   rarity: common
   shootAP: 4
-  shootStamina: 3
+  shootStamina: 9
   trait: {knockdown: {bonus: 3, margin: 2}, shieldCrush: true}
 antennae:
   name: Rusting antennae

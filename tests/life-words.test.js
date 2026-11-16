@@ -51,28 +51,30 @@ test('life words: Jabiku knows Move + Life alone, with Far and Wide, on a foe to
 
 test('life words: Move withers the target and mends the caster by what it took', async () => {
   const { enc, chars, jab, foes } = await table([{ x: 5, y: 2 }]);
-  jab.damage.CON = 1;
-  const before = foes[0].damage.CON || 0;
+  jab.wounds.push({ place: 'torso', sev: 1, kind: 'cut', bleed: 0, pts: 1 });
+  const before = C.woundLoad(foes[0]);
   assert.equal(await cast(enc, chars, jab, spell(jab, 'Move + Life (on a foe)'), { target: foes[0].id }), null);
-  assert.ok((foes[0].damage.CON || 0) > before, 'the target loses CON');
-  assert.equal(jab.damage.CON || 0, 0, 'the caster\'s lost CON comes back');
+  assert.ok(C.woundLoad(foes[0]) > before, 'the target withers (a wound)');
+  assert.equal(C.woundLoad(jab), 0, 'the caster\'s wound mends');
   assert.ok(enc.log.some((l) => /draws in what was taken/.test(l.text)));
 });
 
-test('life words: Move at an ally gives the caster\'s own life: their CON mended, the caster\'s stamina paid', async () => {
+test('life words: Move at an ally gives the caster\'s own life: their wound mended, the caster\'s stamina paid', async () => {
   const { enc, chars, jab, ally } = await table([{ x: 0, y: 4 }], { allyAt: { x: 5, y: 2 } });
-  ally.damage.CON = 1;
-  ally.stamina = 0; ally.status.unconscious = true;
+  ally.wounds.push({ place: 'torso', sev: 1, kind: 'cut', bleed: 0, pts: 1 });
+  ally.stamina = 0; C.updateCondition(ally); // collapsed
   const st = jab.stamina;
   assert.equal(await cast(enc, chars, jab, spell(jab, 'Move + Life (on an ally)'), { target: ally.id }), null);
-  assert.equal(ally.damage.CON || 0, 0, 'the lost CON comes back');
+  assert.equal(C.woundLoad(ally), 0, 'the wound mends');
   assert.ok(ally.stamina > 0 && !ally.status.unconscious, 'the rest is stamina, which wakes them');
   assert.equal(st - jab.stamina, 2 * B.CONFIG.magic.transfer.staminaPerCON, 'two points of life, paid in the caster\'s stamina');
 });
 
 test('life words: a given Move calls back an ally newly dead, and the AI reaches for it', async () => {
   const { enc, chars, jab, ally } = await table([{ x: 0, y: 4 }], { allyAt: { x: 5, y: 2 } });
-  ally.status.dead = true; ally.status.diedRound = enc.round; ally.damage.CON = C.attr(ally, 'CON') + 2;
+  for (let i = 0; i <= C.boxes(ally); i++) C.addWound(ally, { place: 'torso', sev: 1, kind: 'cut', bleed: 0, pts: 1 }, null);
+  assert.ok(ally.status.dead);
+  ally.status.diedRound = enc.round;
   const legal = Combat.legalActions(enc, chars, jab.id);
   const give = legal.spells.find((o) => o.label === 'Move + Life (on an ally)');
   assert.ok(give.targets.some((t) => t.id === ally.id && t.inReach), 'the body is a target');
@@ -81,16 +83,16 @@ test('life words: a given Move calls back an ally newly dead, and the AI reaches
   assert.equal(d.type, 'cast');
   assert.equal(d.option.spell.shape, 'give');
   assert.equal(await Combat.act(enc, chars, d, io(jab.id)), null);
-  assert.ok(!ally.status.dead && ally.status.unconscious);
+  assert.ok(!ally.status.dead && !C.isActive(ally), 'alive, and down still');
 });
 
 test('life words: Take + Life + Wide aimed at the caster\'s own square withers all round, the caster spared', async () => {
   const { enc, chars, jab, foes } = await table([{ x: 3, y: 2 }, { x: 5, y: 2 }]);
   teach(jab);
-  const conJ = jab.damage.CON || 0;
+  const conJ = C.woundLoad(jab);
   assert.equal(await cast(enc, chars, jab, spell(jab, 'Take + Life + Wide'), { at: { x: 4, y: 2 } }), null);
-  assert.ok(foes.every((f) => (f.damage.CON || 0) > 0), 'both foes beside the caster wither');
-  assert.equal(jab.damage.CON || 0, conJ, 'the caster is spared');
+  assert.ok(foes.every((f) => C.woundLoad(f) > 0), 'both foes beside the caster wither');
+  assert.equal(C.woundLoad(jab), conJ, 'the caster is spared');
 });
 
 test('life words: Give + Life + Wide heals all round an ally; Far reaches one twice as far', async () => {
@@ -105,7 +107,7 @@ test('life words: Give + Life + Wide heals all round an ally; Far reaches one tw
 
 test('life words: the AI, hurt and beside a foe, drains it', async () => {
   const { enc, chars, jab, foes } = await table([{ x: 5, y: 2 }]);
-  jab.damage.CON = 2;
+  jab.wounds.push({ place: 'torso', sev: 2, kind: 'cut', bleed: 0, pts: 4 });
   jab.stamina = Math.floor(C.maxStamina(jab) / 3);
   const d = AI.choose(enc, chars, jab.id, () => 0.9);
   assert.equal(d.type, 'cast');

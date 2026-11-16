@@ -48,7 +48,7 @@ bogHag:
   attrs: {STR: 6, CON: 8, DEX: 5, SPD: 5, INT: 7, WIL: 9, WIS: 8, CHA: 3}   # may exceed 10
   natural: [claws]        # natural weapons, from weapons.yaml
   armor: fur              # natural armor, from armor.yaml
-  traits: {regen: {con: 1, stamina: 4}}   # the keys are listed in src/rules/effects.js
+  traits: {regrow: {mend: 1, stamina: 4}}   # the keys are listed in src/rules/effects.js (size, finishes, ...)
   feats: {dodge_training: 1}
   level: 3                # the level of the place it is made for (and its featPrefs' budget); 5 if left out
   tier: 3                 # what it is meant to be against heroes of that level (below); tools/tiers.js measures it
@@ -86,9 +86,10 @@ legs), or a `coverage` keyword (`full` = all four, `half` = torso, arms and legs
 not both. A piece protects fully where it is and carries its share of the type's weight, penalties, durability and
 price; one covering a single location takes the type's `pieces` name (a plate helm, mail chausses). A blow rolls its
 location (d100 by share) unless it is aimed (an aimed blow lands where aimed), and a blow whose contest margin reaches `contest.shift` lands on the worst-guarded place beside it (`next`); `rules.yaml locations` also holds the aim penalties (`aim`), the cut's
-carry-through (`carry`) and what a wound does where it lands (`wounds`: attributes, the margin a vital wound needs, disarm, trip, stun;
-`pointToCON`, where a point takes CON rather than the location's attributes; `tirelessCON`, a tireless body takes CON
-wherever).
+carry-through (`carry`). What a wound is and does is `rules.yaml wounds` (step E): wound boxes, the points past the
+armor for each severity, the margin a vital wound needs at each place, the shock check, each place's effects by
+severity (`places`), pain (WIL), winding, bleeding, `attrPlace` (where harm named by an attribute lands), `tend`
+(Medicine) and `cauterize`.
 Shields have a `size`. Material and origin set protection, weight and damage; craftsmanship
 sets only how fast the item wears and how easily it breaks. A monster's carried gear: `craft` and `origin` for all
 of it, or items spelled out: `armorItem: {type: plate, material: steel, origin: dwarven}`,
@@ -123,7 +124,7 @@ Loot entries: `{w: 3, gold: [5, 20]}`, `{w: 2, good: salve, n: [1, 2]}`, `{w: 1,
 | `effects.standing`, `standingWith: {faction: n}` | same | + disposition in talks, with everyone or one faction |
 | `effects.heal` | same | + attribute points healed each long rest |
 | `strike.onHit: {cond, rounds, chance}` | weapon enchantment | a condition on a blow that lands (resisted like a spell) |
-| `strike.element: {noun, mag}`, `sap: {attr, n, stamina}`, `armorWear`, `riled`, `slay`, `parrySpells` | weapon enchantment | a burning blow; drain into the wielder; eat armor; Riled; bane damage; parry spell bolts |
+| `strike.element: {noun, mag}`, `sap: {place, n, stamina}`, `armorWear`, `riled`, `slay`, `parrySpells` | weapon enchantment | a burning blow; drain into the wielder; eat armor; Riled; bane damage; parry spell bolts |
 | `apLess` | weapon enchantment | sheet AP off every strike and parry made with it |
 | `power: {verb, noun, mod, aim, charges, name}` | either | casts that spell with no spell points, free hand or backlash; `aim` picks one where the verb does two things with the noun; `charges` a day (omit: at will) |
 | `blockSpells` | shield enchantment | can block spell bolts (ordinary shields can't) |
@@ -239,7 +240,7 @@ S: {kind: trap, tn: 9, disarm: 7, trigger: wire, knownTo: [suracayl],
     tell: "a sapling by the gate is bent further than any wind would bend it",
     how: "A vine across the path holds back a sapling with a sharpened stake lashed to it.",
     effect: {blow: {name: "A sharpened sapling", damage: [5, 0, 1], motion: thrust, punch: 1.6, aim: torso,
-                    wound: {kind: P, vital: 0.15, bleed: 1, rounds: 4}}},
+                    wound: {kind: P, vital: 0.15, bleed: 1}}},
     reset: {minutes: 10, rounds: 2}, bypass: [leap, spring, mark],
     text: "A sapling whips round out of the ferns, a stake lashed to it."}
 ```
@@ -249,7 +250,7 @@ S: {kind: trap, tn: 9, disarm: 7, trigger: wire, knownTo: [suracayl],
 | `tn` | The Perception target. A passing party looks once from `game.traps.notice` squares off (in sight) and once more beside it, at −`passivePenalty`; a search looks at +`searchBonus`. The margin gives a degree (`game.traps.find`): the **tell** (the `tell` text, no square: the party walks on wary, and whoever sets it off gets a get-clear roll), the **square** (it stands in the way), the square and its **working** (`how`, and what the effect does, and every way past). |
 | `reveal` | A condition (a flag from lore or a parley topic): while it holds the party knows the trap to the last degree without a roll. |
 | `trigger` | `step`, `wire`, `plate` or `lid` (a chest's). Which ways of springing it from a distance work (`game.traps.ways.*.triggers`). |
-| `effect.blow` | A weapon option: `damage [P, S, B]`, `motion` (weapons' motions), `punch`, `aim` (a location; none = rolled), `wound {kind, vital, bleed, rounds}`, `venom {con, rounds}`, `name`. Resolved by `Combat.applyHit` on the victim, so armor and location count; `block: false` if a shield can't take it (a pit, spikes from below). |
+| `effect.blow` | A weapon option: `damage [P, S, B]`, `motion` (weapons' motions), `punch`, `aim` (a location; none = rolled), `wound {kind, vital, bleed}`, `venom {con, rounds}`, `name`. Resolved by `Combat.applyHit` on the victim, so armor and location count; `block: false` if a shield can't take it (a pit, spikes from below). |
 | `effect.element` | `{noun, mag, name}`: a spell noun's blow, as a hazard's (`Magic.elementBlow`). |
 | `effect.terrain` | What it leaves in a fight (`CONFIG.terrain`: `pit`, `hot`, `miasma`…), over `terrainRadius` squares for `rounds`. |
 | `effect.to`, `at` | A drop to another place (exploring; in a fight it is a pit). |

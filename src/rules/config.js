@@ -23,11 +23,10 @@
     // the raw number, so a STR-20 troll hits for +7 and grapples at +10.
     monsterAttrMax: 30,
 
-    // ---- Stamina (Specifics) ---------------------------------------------
-    // Max stamina = 4×CON + STR + SPD + DEX
-    staminaWeights: { CON: 4, STR: 1, SPD: 1, DEX: 1 },
-    // Regen = floor((CON + WIL)/4) − armor regen penalty (Specifics had WIS; WIL is resolve)
-    regenDivisor: 4,
+    // ---- Stamina (PROVISIONAL, docs/OVERHAUL.md step E) -------------------------------------------------
+    // Stamina is exertion: what a fighter spends on actions, and what blunt that breaks nothing winds (wounds.winding).
+    // It is no life pool. Max stamina = stamina.base + STR + SPD + DEX, the same order for everyone; CON and WIL set
+    // how fast it comes back (stamina.regen).
     // Fatigue: −1 AP below 50% stamina, −2 below 25%
     fatigueSteps: [
       { below: 0.5, ap: 1 },
@@ -36,26 +35,22 @@
     // PROVISIONAL: an action cannot be paid if it would take you to 0 stamina
     // (otherwise characters could exert themselves unconscious).
     exertionCanKnockOut: false,
-    // PROVISIONAL: negative regeneration (heavy armor) applies even on rounds you were hit.
-    negativeRegenAlwaysApplies: true,
-    // PROVISIONAL: unconscious characters do not regenerate during combat.
-    unconsciousRegenerates: false,
-    // PROVISIONAL (the tuning plan's rulings R1 to R3, the user, 2026-11-11; sim/FINDINGS.md "Stamina as a pool"):
-    // stamina is the moment-to-moment pool. Each part is off with null/false, which restores the old rule.
-    //   regen       R1. Every round, struck or not: the full regeneration (regen() × scale; costs are already
-    //               × staminaScale, regeneration was not) in a round the fighter lost no stamina to a blow, `struck`
-    //               of it (rounded up, at least 1) in a round they did. null: none in a round struck (the old rule).
-    //               Heavy armor's negative regeneration is unchanged (× scale as well, whole every round).
+    // PROVISIONAL (the tuning plan's rulings R1 to R3, the user, 2026-11-11; step E's plain numbers):
+    //   base        max stamina = base + STR + SPD + DEX (+ gear; × a creature's staminaMult).
+    //   regen       R1. Each round, struck or not: ⌊(CON + WIL) × per⌋ − the armor's regen penalty (+ gear, conditions,
+    //               hero mode) in a round the fighter lost no stamina to a blow, `struck` of it (rounded up, at least
+    //               1) in a round they did. Heavy armor's negative regeneration is whole every round.
     //   spent       R2. An action whose stamina the fighter can't pay is taken spent instead of refused: it takes
     //               stamina down to 1 at most, the defender gets `attack` on its roll against a spent blow (and the
     //               blow lands at vigor.spent), and a defence taken spent is `defense` worse. null: refused.
     //   collapse    R3. Stamina 0 is a collapse: prone, no actions or reactions for the rest of the round and
-    //               `rounds` more, then the fighter comes round with one round's regeneration (at least 1) and must
-    //               stand. null: unconscious until roused or healed (the old rule).
+    //               rounds − ⌊WIL / perWil⌋ more (WIL brings them round sooner; Second Wind: none), then the fighter
+    //               comes round with one round's regeneration (at least 1) and must stand.
     stamina: {
-      regen: { scale: 3, struck: 0.5 },
+      base: 20,
+      regen: { per: 0.75, struck: 0.5 },
       spent: { attack: 2, defense: 2 },
-      collapse: { rounds: 1 },
+      collapse: { rounds: 2, perWil: 5 },
       // The AI's weights for these rules (judgement, not rules; here so a sim can --set them). finish: a blow at a
       // collapsed foe against the same at a standing one, `now` when they come round at this round's end, `later` when
       // they stay down a round more. spentWorth: a spent blow is thrown only if it is worth this much (hitValue's
@@ -179,13 +174,6 @@
       halfSword: 3,
       deflectBlunt: 0.5,
     },
-    // Slashing to an unarmored target: 1d4 per point → 1 STR, 2 CON, 3 SPD, 4 DEX
-    slashAttributeTable: { 1: 'STR', 2: 'CON', 3: 'SPD', 4: 'DEX' },
-    // Bleed: every 3 points of P/S reaching attributes = 1 bleed/round for 3 rounds.
-    // Implemented as "the wound bleeds its own damage again, spread over 3 rounds",
-    // which reproduces the Specifics worked example (7 slashing → 7 CON of bleed).
-    bleedRounds: 3,
-
     // ---- Weapons from physics (PROVISIONAL; the user asked for a weapon pass) ----------
     // 'physical': each weapon's damage, AP, weight class, STR scaling and wounds are worked out
     // from its mass, length, hands and point/edge/head (data.js `phys`; Items.weaponStats).
@@ -231,20 +219,18 @@
       // STR adds strBonus × this (rounded toward zero). A sharp point needs little force (rapier
       // ≈ 0.3, broad spearhead 0.5); a swing needs mass and grip (mace 1, greatsword 1.5).
       str: { thrustBase: 0.25, thrustWidth: 0.25, swingRefMass: 1.4, max: 1.5 },
-      // Bleeding: a piercing wound bleeds damage × width/bleedWidth over 2 + depth/15 rounds
-      // (deep wounds don't clot). Cuts bleed their damage over CONFIG.bleedRounds, as before.
+      // Bleeding: a piercing wound bleeds by its point's width / bleedWidth (CONFIG.wounds.bleed).
       bleedWidth: 4,
-      bleedRounds: { base: 2, perDepth: 15 },
     },
     // ---- Vital wounds (PROVISIONAL, docs/OVERHAUL.md step A) -------------------------------------------------
     // A point or a cut that reaches the body is a vital wound (neck, heart, a big artery) when the blow's margin is at
-    // least the threshold where it landed (rules.yaml locations.wounds.vital), + armor[type] of the piece there (a
+    // least the threshold where it landed (rules.yaml wounds.vital), + armor[type] of the piece there (a
     // pinned body's armor guards nothing: pinnedOpensArmor), − round(lower × the blow's wound.vital) (its depth or
-    // edge: Items.weaponStats), + round(perSize × (size − 1)) for a big body. A vital point does `mult` × its CON
-    // damage and bleeds twice as much; a vital cut takes its damage again from CON. Undead and constructs have none.
+    // edge: Items.weaponStats), + round(perSize × (size − 1)) for a big body. A vital wound is a step more severe and
+    // bleeds more (CONFIG.wounds). Undead and constructs have none.
     // wound.vital itself: piercing depth × perDepth (at most max), a cut cut × edge, a natural weapon natural.
     vital: {
-      perDepth: 0.01, max: 0.4, mult: 3, cut: 0.1, natural: 0.1,
+      perDepth: 0.01, max: 0.4, cut: 0.1, natural: 0.1,
       lower: 10,
       armor: { padded: 1, leather: 1, mail: 2, plate: 6, fur: 0, bogSkin: 0, chitin: 2, scaleHide: 1, scalewardScales: 1, trollHide: 1, golemStone: 99 },
       otherArmor: 1,
@@ -253,12 +239,6 @@
     },
 
     // ---- Weight (Specifics) ----------------------------------------------
-    // Multiplies the base stamina cost of every action (before weight and armor).
-    // TUNED (sim): 3. At ×1 an early unarmored fighter could attack flat out for 30+ rounds
-    // (Outline target: tires within a few rounds), fatigue never mattered, and plate mirrors
-    // ran 8–11 rounds. At ×3 the measured curve matches the Outline: early unarmored 4 rounds,
-    // mid-level with cost feats indefinitely, plate 3.
-    staminaScale: 3,
     weightFactor: { 'very light': 1.0, light: 1.0, medium: 1.25, heavy: 1.5 },
     weightOrder: ['very light', 'light', 'medium', 'heavy'],
     // STR offsets 1 point of armor/weight penalty per 2 STR above 5
@@ -291,12 +271,12 @@
 
     // ---- Getting up (PROVISIONAL, the user's call) ------------------------
     // Standing from prone gets steeply harder in heavier armor. Base AP and stamina by armor
-    // (× apScale and × staminaScale; plus the armor's usual stamina penalty). Specifics: 2 AP
+    // (AP × apScale; plus the armor's usual stamina penalty). Specifics: 2 AP
     // + 0/0/1/1/2 for padded/leather/mail/scale/plate (scale is now steel mail). The AP is capped at the character's
     // pool, so getting up is always possible, if it takes the whole round. Kip-Up: 1 base AP.
     standUp: {
       ap: { none: 1, padded: 1, leather: 1, mail: 2, plate: 4 },
-      stamina: { none: 1, padded: 1, leather: 1, mail: 2, plate: 5 },
+      stamina: { none: 3, padded: 3, leather: 3, mail: 6, plate: 15 },
     },
 
     // ---- Grappling (PROVISIONAL, designed with the user) -------------------
@@ -313,12 +293,12 @@
     // Armor (option 4, the user's choice): plate is easy to grab — `handles` adds to the attacker's
     // grapple and pin rolls — but hard to throw: footing (maneuver.armorStability) adds to the
     // defender's roll against throws.
-    // Grappling is exhausting: base stamina per step (× staminaScale), and holdUpkeep at the end
+    // Grappling is exhausting: base stamina per step, and holdUpkeep at the end
     // of every round you hold or pin someone; a holder who can't pay lets go.
     grappling: {
-      jointLock: { attr: 'DEX', points: 1 }, // the Joint Lock feat: what a hold or pin that holds takes
-      stamina: { clinch: 3, grapple: 5, pin: 5, throw: 5, break: 3 },
-      holdUpkeep: 2,
+      jointLock: { place: 'arms', points: 2 }, // the Joint Lock feat: the harm a hold or pin that holds does (Character.harm)
+      stamina: { clinch: 9, grapple: 15, pin: 15, throw: 15, break: 9 },
+      holdUpkeep: 6,
       bigMargin: 5,
       handles: { mail: 1, plate: 2 },
       throwDamage: 3,
@@ -330,7 +310,7 @@
     // Each layer of sticky web adds base AP and stamina (× the scales) to every action. Up to
     // maxLayers. Tear free: d10 + ⌊STR/2⌋ ≥ tearTN clears them all. Fire burns them away.
     // wearOff layers come loose by themselves at the end of each round.
-    web: { ap: 1, stamina: 1, maxLayers: 2, tearTN: 8, wearOff: 1 },
+    web: { ap: 1, stamina: 3, maxLayers: 2, tearTN: 8, wearOff: 1 },
 
     // ---- Shove (PROVISIONAL) ----------------------------------------------
     // Opposed d10 + ⌊STR/2⌋ (+2 two-handed weapon) vs d10 + footing. A win pushes the
@@ -362,7 +342,7 @@
     windUp: {
       motions: ['power'],
       ap: 2,
-      stamina: 1,
+      stamina: 3,
       exposed: ['block', 'parry'],
       spells: true, // spells using the Strong modifier must be gathered the same way
       // After releasing in a round you may wind up again that round (a steady archer looses
@@ -408,9 +388,9 @@
       // living beyond a chill (half, to stamina): a ghost's touch never harms attributes (the user, 2026-11-08).
       undeadBane: { light: 2, spirit: 2 },
       // Energies (fire, frost, lightning): armor stops this share of its blunt protection
-      // (lightning goes straight through metal); every fireConPer points left cost 1 CON, the
-      // rest stamina. Life withers the body: half its magnitude to CON, no armor; the dead and
-      // the made (tireless) are past withering.
+      // (lightning goes straight through metal); every fireConPer points left burn (a wound's point), the
+      // rest is stamina. Life withers the body: half its magnitude a withering wound's points, no armor; the dead
+      // and the made (tireless) are past withering.
       energyMitigation: { fire: 0.5, frost: 0.5, lightning: 0.5, light: 0.5, shadow: 0.5, spirit: 0, acid: 0, decay: 0 },
       // PROVISIONAL (the user's spell list): Decay goes past armor and eats it instead: each point of magnitude
       // takes `armor` durability from the armor and `gear` from the shield and the weapon in hand.
@@ -422,25 +402,25 @@
       // monsters.yaml template; revenant copies the body (no spell raises one now). Lasts the fight; falls if the
       // caster does.
       raise: { skeleton: 'skeleton', zombie: 'zombie', mummy: 'mummy' },
-      // Healing (Give + Life). PROVISIONAL. Mends one creature: bleeding stops (not poison),
-      // condMag CON back (1; 2 with Strong), stamina + staminaPerMag × magnitude stamina back (which
-      // wakes the unconscious). With Wide, every living creature within a square of the target,
-      // friend or foe, at areaShare of the stamina. The dead stay dead, but see revive.
+      // Healing (Give + Life). PROVISIONAL. Mends one creature: every wound stops bleeding, the worst condMag
+      // severity steps better (1; 2 with Strong), stamina + staminaPerMag × magnitude stamina back (the collapsed come
+      // round; the down come to once under their wound boxes). With Wide, every living creature within a square of
+      // the target, friend or foe, at areaShare of the stamina. The dead stay dead, but see revive.
       heal: { stamina: 4, staminaPerMag: 2, areaShare: 0.5 },
       // The user (2026-11-04): one who dies in a fight can be called back for `rounds` rounds after the one they died
-      // in (three more turns of their own): Raise + Life (or Move + Life given) brings CON back up to `con` and leaves
-      // them alive but unconscious, at 0 stamina. After that they are beyond saving there (a priest in town still can).
+      // in (three more turns of their own): Raise + Life (or Move + Life given) stops the bleeding, mends the worst
+      // wound `mend` steps and leaves them alive but down, at 0 stamina. After that they are beyond saving there (a priest in town still can).
       // PROVISIONAL (the user, 2026-11-07): a fight won while one of the party is still revivable leaves time to save
       // them: a living companion with a Life spell that calls back the dead, and the points for it, casts it; else
       // the best at `skill` rolls against `tn` (a check name in rules.yaml) to bring them back unconscious.
       // TUNED (the user, 2026-11-09: the CON hit is already a large lever against going down): the Medicine check is
       // hard (11), was moderate (8). Jabiku (+5 at level 1, +7 at level 5) saves one in two, then seven in ten; was
       // eight in ten, then always. Spells that call back the dead are untouched.
-      revive: { rounds: 3, con: 1, afterFight: { skill: 'medicine', tn: 'hard' } },
-      // PROVISIONAL (the user's Transfer, 2026-11-01): what the target loses, the caster gains: each CON taken mends a
-      // point of the caster's own lost CON, or, with none lost, gives this much stamina.
+      revive: { rounds: 3, mend: 1, afterFight: { skill: 'medicine', tn: 'hard' } },
+      // PROVISIONAL (the user's Transfer, 2026-11-01): what the target loses, the caster gains: each severity step it
+      // wounds mends a step of the caster's own wounds, or, with none, gives this much stamina.
       // PROVISIONAL (the user, 2026-11-07): Transfer aimed at an ally gives instead: ceil(magnitude / 2) points of the
-      // caster's own life, each mending a lost CON of theirs (else staminaPerCON stamina), each costing the caster
+      // caster's own life, each mending a severity step of their wounds (else staminaPerCON stamina), each costing the caster
       // staminaPerCON stamina. It stops bleeding and calls back the revivably dead.
       transfer: { staminaPerCON: 3 },
       castAP: 2, // base, × apScale. PROVISIONAL: at 3, a bolt cost 6 sheet AP for a third of a sword thrust
@@ -453,8 +433,8 @@
       spWeary: 0.15,
       // A tired caster can't draw as much power: usable points scale with stamina.
       staminaLimitsPoints: true,
-      // Fire: armor stops half its blunt mitigation; every 2 points left over cost 1 CON,
-      // the rest goes to stamina.
+      // Fire: armor stops half its blunt mitigation; every 2 points left over burn (a wound's point), the rest goes
+      // to stamina.
       fireMitigation: 0.5,
       fireConPer: 2,
       // Force: blunt, mitigated normally, with a knockdown check (INT/2 vs footing).
@@ -470,7 +450,7 @@
       // Margin over the tier for each outcome (below partial: fail).
       outcomes: { partial: 0, full: 3, exceptional: 6 },
       reveals: { partial: 1, full: 2, exceptional: 3 }, // secrets learned
-      heals: { partial: 1, full: 2, exceptional: 4 }, // Mend: CON (+ Wound Tending on full+)
+      heals: { partial: 1, full: 2, exceptional: 4 }, // Mend: severity steps (+ Wound Tending on full+)
       backlashAt: -5, // a failure this bad turns on the caster (2 stamina per point short)
       trueNameBonus: 3, // with True Naming, a true name used in the ritual
       // Components (inventory.components): rituals spend them, success or not.
@@ -507,21 +487,21 @@
     // Every field is listed in src/rules/effects.js (KEYS.condition); the effect ones (ap, attrs, resist, moveMult,
     // regen, flags…) are read through Effects with the same keys as traits and gear.
     conditions: {
-      burning: { worth: 12, type: 'fire', name: 'Burning', dot: { CON: 1 } },
+      burning: { worth: 12, type: 'fire', name: 'Burning', dot: { harm: 1 } },
       slowed: { worth: 14, name: 'Slowed', ap: -1, resistedBy: 'CON' },
       hasted: { worth: 14, name: 'Hasted', ap: 1 },
       shocked: { worth: 12, name: 'Shocked', ap: -1, resistedBy: 'CON' },
       rooted: { worth: 14, name: 'Rooted', noMove: true, breakAttr: 'STR', resistedBy: 'STR' },
       numbed: { worth: 10, name: 'Numbed', attrs: { DEX: -1, SPD: -1 }, resistedBy: 'CON' },
-      withering: { worth: 22, type: 'life', name: 'Withering', dot: { CON: 1 }, ap: -1, resistedBy: 'CON', living: true }, // Life bane (asystole)
-      innervated: { worth: 18, name: 'Innervated', regen: 2 },
+      withering: { worth: 22, type: 'life', name: 'Withering', dot: { harm: 1 }, ap: -1, resistedBy: 'CON', living: true }, // Life bane (asystole)
+      innervated: { worth: 18, name: 'Innervated', regen: 6 },
       kindled: { worth: 10, name: 'Kindled', kindled: true }, // blows set targets burning
       frostWard: { worth: 6, name: 'Frost ward', resist: { fire: 0.5 } },
       freedom: { worth: 20, name: 'Freedom', freedom: true },
       stoneskin: { worth: 12, name: 'Stoneskin', mit: { B: 2 }, attrs: { SPD: -1 } },
       barkskin: { worth: 12, name: 'Barkskin', mit: { P: 1, S: 1 } },
       shielded: { worth: 12, name: 'Shielded', mit: { P: 1, S: 1, B: 1 } },
-      afflicted: { worth: 10, name: 'Lingering harm', dot: { CON: 1 } }, // a Lingering spell's after-burn
+      afflicted: { worth: 10, name: 'Lingering harm', dot: { harm: 1 } }, // a Lingering spell's after-burn
       // Ward (verb): kind 'magic' absorbs `pool` points of spell or missile damage; 'missiles'
       // turns aside half of the arrows and bolts; an element's ward halves that element and
       // keeps off its after-effects; 'mind' keeps off baits and the like.
@@ -553,9 +533,9 @@
       clumsy: { worth: 10, name: 'Clumsy', resistedBy: 'CON', attrs: { DEX: -2 } },
       deft: { worth: 10, name: 'Deft', attrs: { DEX: 2 } },
       // Poison and disease. persist: outlasts the fight (until cured or run its course).
-      poisoned: { worth: 16, type: 'venom', name: 'Poisoned', resistedBy: 'CON', dot: { CON: 1 }, living: true },
+      poisoned: { worth: 16, type: 'venom', name: 'Poisoned', resistedBy: 'CON', dot: { harm: 1 }, living: true },
       antivenom: { worth: 8, name: 'Antivenom', immune: ['poisoned'] },
-      diseased: { worth: 12, type: 'plague', name: 'Diseased', resistedBy: 'CON', attrs: { STR: -1 }, regen: -2, living: true, persist: true },
+      diseased: { worth: 12, type: 'plague', name: 'Diseased', resistedBy: 'CON', attrs: { STR: -1 }, regen: -6, living: true, persist: true },
       // PROVISIONAL (the user's spell list and magic items).
       chilled: { worth: 10, type: 'frost', name: 'Chilled', resistedBy: 'CON', moveMult: 0.5, attrs: { SPD: -1 }, living: true }, // frost: half the squares
       // PROVISIONAL (the user's spell list: Give + Frost, a curse that stacks): numb and losing stamina each round.
@@ -672,7 +652,7 @@
       absorb: { block: 0.5, parry: 0.25, offParry: 0.25, dodge: 0 },
       // PROVISIONAL: dodging costs 1 base stamina (Specifics: 2), so a dodge is the cheapest
       // defence in stamina when it works and the block the dearest.
-      dodgeStamina: 1,
+      dodgeStamina: 3,
       parry: { tn: 6 }, // (opposed: false) + Parry Training rank + floor((DEX−5)/2)
       dodge: { tn: 6 }, // (opposed: false) + Dodge Training rank + floor((SPD−5)/2) − armor DEX penalty
       // PROVISIONAL (the user's call): parries and dodges are opposed rolls. Defender d10 +
@@ -717,20 +697,18 @@
       dodgeNegates: 1.0,
     },
 
-    // PROVISIONAL (the user, 2026-11-10): a punch or a kick harms no attribute, CON included, without this feat: it
-    // takes stamina only, so it does nothing to a tireless body (a skeleton) or to someone already out cold.
+    // PROVISIONAL (the user, 2026-11-10): a punch or a kick breaks nothing without this feat: it winds only, so it
+    // does nothing to a tireless body (a skeleton) or to someone already out cold.
     unarmed: { attrFeat: 'heavy_hands' },
 
     // ---- Impact (PROVISIONAL, the user's call) -----------------------------
-    // Crushing: blunt that gets past armor beyond crushAt (× the target's size) breaks bones:
-    //   1 CON per crushPer points over, on top of the stamina it takes.
+    // Crushing: blunt that gets past armor beyond crushAt (× the target's size) breaks bone: a point of a crushing
+    //   wound (CONFIG.wounds) per crushPer points over, on top of the winding it costs.
     // PROVISIONAL (docs/PLAN.md R5, step 3): crushBare is crushAt where the blow lands on a location with no armor
-    //   (bare skin breaks sooner), and with crushAttrs a crush that lands on a known location takes that location's
-    //   attributes (rules.yaml locations.wounds.attrs, rolled per point as a cut's are), not CON alone.
-    //   null / false: the old rule (crushAt everywhere, all to CON). Unarmed blows without Heavy Hands still crush nothing.
+    //   (bare skin breaks sooner). Unarmed blows without Heavy Hands still crush nothing.
     // Knockback: a blow that lands throws its target back 1 square per knockbackPer points landed
     //   (blunt in full, cuts and stabs at half), ÷ the target's size, up to knockbackMax squares.
-    impact: { crushAt: 8, crushBare: 3, crushAttrs: true, crushPer: 2, knockbackPer: 8, knockbackMax: 3 },
+    impact: { crushAt: 8, crushBare: 3, crushPer: 2, knockbackPer: 8, knockbackMax: 3 },
 
     // ---- Shields ----------------------------------------------------------
     // PROVISIONAL: wear per block is multiplied by this (fewer hits before a shield fails).
@@ -791,7 +769,7 @@
     // TUNED (arena, round 3): plate +1 stamina per action (was +2) and −3 regen (was −4).
     // Plate fighters were losing by exhaustion (0.6 collapses a fight); this brings heavy
     // armor from worst to about par in the open and best in close quarters.
-    armorAdjust: { plate: { stamina: 1, regen: 3 } },
+    armorAdjust: { plate: { stamina: 1, regen: 9 } },
     durabilityMitigationFloor: 0.75,
 
     // ---- Maneuvers: all PROVISIONAL (Outline: chances Open) ---------------
@@ -858,18 +836,22 @@
   // Every PROVISIONAL choice, shown on the Rules tab so nothing is hidden.
   CONFIG.provisional = [
     'One contest per blow (docs/OVERHAUL.md step A): one opposed roll decides a blow, the attacker\'s d10 + ⌊(STR + SPD)/4⌋ + the motion (− the aim) against the defender\'s d10 + their defence, ties to the defender. Its margin (the attacker\'s total less the defender\'s) settles what the gap roll, the pass-through dice, the vital roll and the on-target roll did: whether a point gets through armor (CONFIG.pierce), whether a wound is vital (CONFIG.vital) and whether an unaimed blow finds the worst-guarded place beside where it fell (margin 6 or more: rules.yaml contest.shift). A blow nobody defends always lands, its margin the attacker\'s d10 + bonus less a passive number: 6 ready (standing, aware, out of AP or not defending), 3 unaware or prone, 2 held, 0 down (rules.yaml contest.passive). A blow rolls the contest and its location and nothing else before the wound tables.',
-    'Vital wounds by margin (step A): a point or a cut that reaches the body is vital when the margin reaches the place\'s threshold (head 7, torso 9, arms 12, legs 11: rules.yaml locations.wounds.vital), + the armor there (padded and leather 1, mail 2, plate 6; a pinned body\'s armor none), − round(10 × the blow\'s wound.vital) (a spear, a rapier or a longsword thrust 3, a rondel 2, a dagger or a cut 1), + 4 × (size − 1). A vital point triples its CON, a vital cut takes its damage again, as before.',
+    'Vital wounds by margin (step A; step E): a point or a cut that reaches the body is vital when the margin reaches the place\'s threshold (head 7, torso 9, arms 12, legs 11: rules.yaml wounds.vital), + the armor there (padded and leather 1, mail 2, plate 6; a pinned body\'s armor none), − round(10 × the blow\'s wound.vital) (a spear, a rapier or a longsword thrust 3, a rondel 2, a dagger or a cut 1), + 4 × (size − 1). A vital wound is a step more severe and bleeds 1 more.',
     'Armor for the deleted pass-through roll (step A): the pass-through dice (every point past the armor reached the body on a d10 of 5 or less, 2 against plate) are gone, and a point that gets through goes in whole. P mitigation rises in their place: padded, leather and mail 1 → 2, plate 4 → 4.5 (iron 5, steel 7). A level-1 spear into steel plate needs a margin of 7 and then does about 1 CON: about 0.1 CON a thrust that lands undefended, as before (0.09).',
+    'Wounds and life (docs/OVERHAUL.md step E; rules.yaml wounds): a blow that gets past the armor leaves a named wound {place, severity 1–3, kind, bleeding}; no rolls per point. Severity: points past the armor 1+, 4+, 7+ (× size), a step more if vital. A body holds 6 × size wound boxes of severity; filling them, a head wound of 3, or a severity-3 wound whose shock check fails (d10 + CON under 12) takes it down. What a wound does, by severity: arms +0/0.5/1 AP to blows, parries and blocks and −1/2/3 damage, at 3 drops what is held; legs −1/2/3 squares a stretch and −1/2/3 dodge, at 3 fells and the body can\'t stand; head stuns (1: CON resists; 2: no save), at 3 down; torso −2/4/6 stamina a round. WIL acts through ⌊WIL/4⌋ of each place\'s severity (pain).',
+    'Down before dead (step E): down is out of the fight, keeping its armor. A wound on a body already down kills it (a finishing blow); the AI strikes the down only with the trait finishes (beasts that feed, the cruel, the undead). When the fight ends, a body down and still bleeding is bound by its own side if one of them stands; else d10 + CON against 10 + its bleeding, or it bleeds out. Hero mode: a hero is only ever down. Medicine (a bandage) and Give + Life stop bleeding and mend a severity step; a down body mended under its boxes comes to.',
+    'Bleeding and harm (step E): a cut bleeds 1 a severity, a point by its width (rounded up), a vital wound 1 more, ÷ size; each point of bleeding costs 2 stamina a round, less ⌊CON/5⌋. Harm without a blow (burning, poison, withering, a joint lock, a squeeze, a fall, overchannelling) adds points to one wound of its kind at its place (the torso unless named) and reads its severity again; no shock check. After a fight a bleeding wound takes a bandage or is a step worse, and the party\'s best at Medicine tends each wound once.',
+    'Stamina is exertion (step E): it is spent on actions and wound by blunt that breaks nothing: a fixed winding by the severity the blunt would be (3, 6, 10), not point for point. Heat and a ghost\'s chill still take stamina point for point.',
+    'Monsters\' CON (step E): every CON above 10 was cut to 10; big bodies keep their size (wound boxes and severity × size), hides their armor; the rest was padding. Small animals have a size under 1 (rat 0.5, dusk bat and fae drake 0.4, fire sprite 0.5). Regrowth mends a severity step a round; a constrictor\'s squeeze is a point of harm.',
     'Whirlwind (docs/PLAN.md step 9, docs/PROPOSALS.md 3.2): the Reaper capstone. A two-handed weapon\'s swung edge or head gains a Whirlwind option at the same AP and 1.5 times the stamina that strikes every foe the blow reaches, the others at three quarters of its force, each defending for itself (CONFIG.whirlwind; null: the feat does nothing). The numbers are first guesses; sim/feats.js and a swarm crawl are the check.',
     'Costs in half APs (docs/PLAN.md R9, step 8): every action\'s AP cost, after the Quick feats, armor, gear, weapon speed and strain, rounds to the nearest half AP, halfway up (CONFIG.apStep 0.5; null: tenths). The pool is not rounded. Some bonuses round away on cheap actions (Quick Thrust II on a rapier or dagger, mail\'s 0.2): sim/FINDINGS.md.',
     'Standing orders for reactions (docs/PLAN.md step 8, src/game/orders.js, rules.yaml game.orders): each hero blocks with a shield, parries thrusts, dodges when unarmored and takes a free blow at a foe passing, and the player is asked only for a blow whose chance of dropping that hero is 10% or more. Heroes can be set to be asked every time or never.',
     'The swing\'s setting (docs/PLAN.md R8, step 6): a swung edge or head that drops its target, or passes it (dodged, or the target already down), carries on into one more foe in its reach beside the first, at half force (three quarters for a two-handed or power blow); that foe defends as against any blow (CONFIG.sweep).',
     'Aiming at what can still be covered (docs/PLAN.md R6, step 4): against a defender who can still react (standing, free, aware) and defends, a blow aimed at the head costs 5 off the contest (rules.yaml locations.aim.guarded; arms and legs 1, the torso 0); against one prone, collapsed, held, caught off guard, not seeing the blow, or not defending, 3 (locations.aim.penalty; TUNED in step A from 2, when an aimed blow stopped missing its place: the head was 35% of located blows in sim/duels.js, now 21%). A thrust is one less either way. The AI sees the body but not the AP: it guesses a foe spent from an average pool less what it has watched it spend this round. The command panel shows the aimed place, its cost and why under the Aim menu.',
     'Head cover (docs/PLAN.md R7, step 4): the foe templates (foes.yaml) wear half or partial armor with head cover of the same type (rules.yaml locations.coverage halfHead, partialHead), as do the humanoid monsters of level 2 and up that wear armor (goblins, goblin archers, the orc centurion and emissary, the kobold high shaman, the sarnak knight); Cyrus\'s gambeson has a padded cap. The kits already gave full padded armor, the head included. Magic items and loot tables are untouched; the clockwork gnome (a construct) is left as it is.',
-    'Wounds that weaken (docs/PLAN.md R4, step 3): a point that goes into the head or torso takes CON as before; into an arm or a leg it takes that location\'s attributes, rolled per point as a cut\'s are (rules.yaml locations.wounds.attrs: arms STR/DEX/CON, legs SPD/CON), unless the wound is vital, which sends it to CON × the vital multiplier as anywhere. Bleeding is unchanged (rules.yaml locations.wounds.pointToCON).',
-    'Blunt on bare skin (docs/PLAN.md R5, step 3): blunt that lands on a location with no armor breaks bone from 3 (CONFIG.impact.crushBare; armored, still crushAt 8), and the points a crush takes go to the location\'s attributes, rolled per point (CONFIG.impact.crushAttrs). An untrained punch or kick still takes stamina only (the user, 2026-11-10).',
-    'Tireless bodies (step 3): a skeleton, a golem, a construct has no strength or speed to lose: every point that reaches it, cut, point or crush, takes CON wherever it lands (rules.yaml locations.wounds.tirelessCON). What its body resists (a skeleton: no piercing, half slashing; each golem two of slashing, blunt and fire) is unchanged, so a point still does nothing to bone. Before, a cut on a golem went to STR/DEX/SPD by location and little reached CON.',
-    'Maximum stamina reads current attributes (step 3; docs/REVIEW.md §2.3 settled): a wound or a condition that lowers STR, DEX, SPD or CON lowers it at once, and current stamina is clamped to the new maximum; a condition that ends or a bonus that raises the maximum does not raise current stamina (regeneration fills it). A wound healed gives back what it took, as before.',
+    'Blunt on bare skin (docs/PLAN.md R5, step 3): blunt that lands on a location with no armor breaks bone from 3 (CONFIG.impact.crushBare; armored, still crushAt 8): a point of a crushing wound per 2 over. An untrained punch or kick still only winds (the user, 2026-11-10).',
+    'Tireless bodies (step 3; step E): a skeleton, a golem, a construct has no stamina: blunt that would wind it breaks its frame (a crushing wound) wherever it lands; it neither bleeds nor feels shock, and down is broken for good. What its body resists (a skeleton: no piercing, half slashing; each golem two of slashing, blunt and fire) is unchanged, so a point still does nothing to bone.',
+    'Maximum stamina reads current attributes (step 3; docs/REVIEW.md §2.3 settled): a condition that lowers STR, DEX or SPD lowers it at once, and current stamina with it. Wounds don\'t touch attributes (step E).',
     'Skills (the user, 2026-11-07): twenty skills, 0–10, +1 a rank to the rolls they govern; 10 points at level 1 and 3 a level, spent whenever the party isn\'t fighting. Skills give numbers, feats large benefits; a tree\'s skill unlocks its feats (novice 1, apprentice 3, adept 5, expert 7, master 9). Feats that were only a number became skills. Defences add the gap between the defender\'s skill and the attacker\'s: parry Melee, dodge Evasion + Anticipation, block half of Block; against Melee, Ranged or Arcane.',
     'The spell words (the user, 2026-11-08; docs/PROPOSALS.md §4): a spell is a verb and a noun, 1 to 3 words: a verb alone (Bind holds a foe still, Move steps through space, See reveals), a verb and a noun, either with one modifier, or Summon + Bind + a noun. Verbs: Strike, Give, Take, Move, Raise, Bind, Summon, Shape (not built), See. Nouns: Fire, Frost, Storm, Decay, Force, Earth, Life, Death, Speed, Might, Grace, Mind, Shadow, Magic, Outsider, and a Name you know. Modifiers: Wide, Far, Long, Strong, Hidden, Delayed. Each noun says what each verb makes of it (spells.yaml `does`), and where a verb does two things (Give Fire on a foe burns, on the ground covers it) each is its own spell. Retired: Hex, Bless, Restore, Cover, Ward, Increase, Decrease, Transfer, Launch, Build, Open, Inscribe, Blink, Burst, Beguile, Conjure; Lightning (now Storm), Venom, Acid, Plague (now Decay), Wind, Vine, Light, Bone, Spirit, Veil, Stillness, Calm, Dream, Rage, Fear, Will, Charm; the modifiers Launch, Burst, Lingering and Name, and Word Doubling. Numbers: each shape\'s base in spells.yaml `shapes` (a bolt magnitude 6 at 1–6; a Wide bolt an area of magnitude 4).',
     'Give, Take, Move (the user, 2026-11-01 as Increase, Decrease, Transfer; renamed 2026-11-08): Give puts the noun into a creature or onto the ground (Give Life heals; Give Fire, Frost, Storm or Decay on a foe is a curse that stacks; on the ground a hazard), Take removes it or keeps it off (Take Life harms at arm\'s reach; Take Speed, Might, Grace slow, weaken, make clumsy; Take + an element on an ally lifts what it left and wards against it, halving it; Take Earth opens a pit or makes an ally float; Take Magic lifts every spell on a creature or the ground), Move shifts a creature or a noun (Move Life drains a foe to mend the caster or, aimed at an ally, gives the caster\'s own life: half the magnitude in points, each a lost CON mended or 3 stamina, each costing the caster 3 stamina).',
@@ -878,7 +860,7 @@
     'Raise (the user, 2026-11-08): Raise + Death on a corpse raises a skeleton; Raise the Flesh (necromancy feat) a zombie; Raise the Wrapped Dead a mummy. It fights for the caster for the rest of the fight and falls when the caster does. Raise + Life calls back an ally dead within the window (CONFIG.magic.revive); Give + Life no longer does. Raise + Earth, Fire, Frost, Storm or Force is a wall.',
     'Bind (the user, 2026-11-08): alone it paralyzes a foe for a round (CON resists); Bind + Mind charms the living (free, ends on harm); Bind + Death commands the undead and Bind + Outsider an outsider (the caster concentrates); Bind + a name holds one whose name the caster knows, +3 to the contest (CONFIG.magic.nameBonus). The old Name modifier, reaching anyone anywhere, is gone.',
     'Traditions (the user, 2026-11-08: no classes, specialization): feat trees whose feats strengthen spells by their words (feats.yaml `spell`): Necromancy (Take and Move Life, Give Death, Take on a foe; zombies, mummies, ghosts, Bind + Death), Devotion (Give Life, Wide Mercy to 2 squares, blessings, Take on an ally, Take Death, Raise Life), Summoning (binding, banishing, longer summons). Living Flame (fire affinity capstone) now brings fire elementals bound.',
-    'Saving the fallen after a fight (the user, 2026-11-07): when a fight is won while a party member is dead but still revivable, a companion with a Life spell that calls back the dead and the points for it casts it; failing that, the party\'s best healer makes a Medicine check (hard, 11; TUNED 2026-11-09 from moderate) to bring them back unconscious.',
+    'Saving the fallen after a fight (the user, 2026-11-07): when a fight is won while a party member is dead but still revivable, a companion with a Life spell that calls back the dead and the points for it casts it; failing that, the party\'s best healer makes a Medicine check (hard, 11; TUNED 2026-11-09 from moderate) to bring them back, down. Since step E the dead are few: those finished while down, and those who bled out with no one of their side standing.',
     'Traps as terrain (docs/OVERHAUL.md step C, 2026-11-14): a trap is a places.yaml legend entry with a tell, a trigger, an effect (a blow as a weapon option through Combat.applyHit, an element, a terrain, a drop), a reset, knownTo and ways past (rules.yaml game.traps). Finding is by the Perception margin: the tell (-3), the square (0), the working (+3); knowing (reveal) gives the last without a roll. Ways past: disarm (Trapcraft; a fumble springs it on the disarmer), leap or edge round (each member, Athletics), a pole, a stone or a shield (loud), mark it. Whoever is on the square by marching order takes it; one who knew it was coming gets clear on d10 + the better of dodge and shield against strike 13. In a fight on the map a live trap is hidden terrain (CONFIG.terrain.trap), seen by the sides that know it; its own people walk it safely; the AI shoves foes onto a trap it knows.',
     'Monster tiers (the user, 2026-11-09): every placed monster has a level (its place\'s) and a tier, measured by tools/tiers.js as M, the number of heroes of its level at which it is an even fight: 1 very weak (~0.35), 2 weak (~0.6), 3 moderate (1), 4 tough (2), 5 boss (~3.5: two heroes almost always lose, three have a very tough fight), 6 epic (6+). Encounters scale by numbers; a party is three for tuning. Each boss has a bane oil near it (a leg-up). sim/FINDINGS.md has the numbers.',
     'Parties and the fallen (the user, 2026-11-09): a new game begins with 1 to 6 heroes at level 1, each growing along their own plan; a fallen hero is back in the village to be recruited again, at the party\'s level, and a party wiped out rises there (testing only).',
@@ -889,7 +871,7 @@
     'Vigor (the user\'s idea, 2026-11-01): a weapon blow\'s damage × 1.25 from a fighter at full fresh stamina down to × 0.75 from one with none left. Spells and shots are untouched.',
     'Reading intent lasts 3 rounds (was 1; 2026-11-01): the AI read every round it could, half a duel\'s actions spent watching.',
     'A staff (the user, 2026-11-01: Jabiku starts with one): a caster\'s focus, so spells can be cast with it in both hands (weapons.yaml `focus`; elsewhere a two-handed weapon needs Battle Casting), and it jabs with its butt end (a blunt thrust, reach 2, from `phys.butt`: 3 against the swung head\'s 10; it was 6, a warhammer\'s blow for a thrust\'s AP, until 2026-11-10).',
-    'Unarmed blows (the user, 2026-11-10): a punch or a kick takes stamina only; it harms no attribute, CON included (no crushing, nothing against a tireless body such as a skeleton, nothing against the unconscious), unless the striker has Heavy Hands. A shield bash is its own feat and is unchanged. Before, a boot did 4 CON to a skeleton for 2.3 AP, a warhammer\'s work.',
+    'Unarmed blows (the user, 2026-11-10): a punch or a kick only winds; it breaks nothing (no crushing, nothing against a tireless body such as a skeleton), unless the striker has Heavy Hands. A shield bash is its own feat and is unchanged.',
     'Weapon roles (the user, 2026-11-09; the numbers are first guesses, crawled once: sim/FINDINGS.md): blunt swings are for armor and the undead, spear and rapier thrusts for the living, the longsword is the generalist, an axe is a heavier, slower sword swing with no thrust. A swung edge carries blunt by its weight (weaponPhysics.edgeBlunt × edge × √(mass × length × grip); it was a seventh of the cut): rapier 1, shortsword 2, longsword 3, battle axe 4, great axe 8, against a warhammer\'s 6 in one hand and a staff\'s 10 in two. A blade heavier than 1.1 kg is slower to drive point-first (thrustHeavy; spears, held at the balance, are not): a longsword thrust 2.3 AP against a rapier\'s 1.9 and a short spear\'s 1.7 for the same wound. `phys.heft` marks a head-heavy edge (the new battle axe, 1.2): a harder and slower swing than the same mass as a blade.',
     'The turn budget (the user\'s call): AP pool = 3.5 + SPD/2, unrounded (6 at SPD 5), costs in tenths. At level 1 a turn holds one big action, a step and a medium action, or three quick actions: base costs up to 2 (thrust, parry, dodge, block) stand, every Specifics AP above 2 costs 2 (a swing 3 → 4, a two-handed swing 4 → 6, a power swing 2 + 4, a shortbow 1 + 2, a longbow 2 + 4, trip and disarm 4, grapple, pin and throw 4); weapon speed multiplies the result (a dagger thrust 1.5). A move is a quick action: 2 AP for up to (1 + ⌊SPD/4⌋) × 2 squares. Someone who has spent nothing this round may take one action dearer than the whole pool as the whole turn.',
     'Armor makes actions dearer (the user\'s call): its SPD penalty no longer shrinks the pool; every action costs 1/6 AP more per point of it (plate +0.5, mail +0.2; the mobility feats lower it). The penalty still slows moving, initiative, dodging and fleeing.',
@@ -905,7 +887,6 @@
     'Ground on the map (for the temple, 2026-10-24): map letters with a fixed meaning (rules.yaml game.ground): grass and rubble to walk on, deep water no one can walk through (fliers cross it; it stops neither sight, missiles nor reach), shallow water that costs an extra square, plank bridges over the water. A fight on the map keeps its water. A well can be a one-way drop.',
     'Fights draw in their neighbours (for the open courtyard, 2026-10-24): when a fight starts on the map, every other group that is awake, within game.joinDistance (6) squares of the party or of the group it fights (with a clear line), and inside the slice the fight is played on joins it from where it stood. Sleepers sleep on. Beating them settles their squares too. Not simulated: set for the courtyard, to be tried in play.',
     'Opportunity strikes (the user\'s rulings, 2026-10-24 and 2026-11-02): coming up to the edge of a foe\'s melee reach is free; a foe may strike at a mover who steps from there to closer still, leaves its reach, or takes a second step within it in one move that brings them no closer (one guarded step is free). Once per foe per move, from the foe\'s AP; a hit stops the mover at the square they stepped from (AP for squares not walked is refunded). So two swordsmen meet at thrust range (2) and the one who steps in strikes first; closing from there to arm\'s length (1) provokes; a spearman holds a swordsman at 3, and each step nearer provokes again; nobody can step inside a dagger\'s or a fist\'s reach of 1, so coming up to one is free.',
-    'Stamina scale ×3: every base stamina cost is tripled. Chosen by simulation so the stamina curve matches the Outline.',
     'Points against armor (the user\'s call; reworked in docs/OVERHAUL.md step A): punch = the mass behind the point (two hands ×1.5; a swung beak or spikes, the head\'s mass × the haft × 2.5) × the motion × (1 + 0.1 × STR bonus); a dagger 0.9, a rondel 1.4, a rapier 1.1 (its flexible blade bends past 1.2), a longsword 1.4, a spear 1.7, a greatsword thrust 3.75, a heavy spear 3.9, a warhammer beak 4 (5.2 two-handed, 6.4 a power blow); arrows by the bow (shortbow 0.8, longbow 1.8) × the head (bodkin 1.5, broadhead 0.7). Resistance: padded 0.75, leather 1, mail 1.3, plate 5 (× material and origin protection: bronze 0.85, steel 1.5, dwarven 1.2). A point gets through when punch ÷ resist + 0.13 × the blow\'s margin (+ Find the Gap 2, Spot Weakness 1, a prone target 3, a half-sword thrust 3) reaches 1, and the piercing past the P mitigation then goes in whole; otherwise the armor turns it (half its piercing as blunt, the weapon wears hard). A pinned or helpless body: always through, past the mitigation. So a rapier needs no margin against padding or leather and 2 against iron mail; a longsword none against iron mail, 2 against steel; a level-1 spear 7 against steel plate.',
     'The user\'s armor research (2026-10-20): flexible mail passes 1.5× as much of a cut\'s leftover force as blunt (armor.yaml transmit), so a greatsword power cut breaks bones through it; padding and leather stop a cut unless it carries massive momentum: slashing left after their mitigation beyond 8 (× protection) cuts through (armor.yaml cutThrough); hardened steel protects ×1.5 (was 1.25). Padding is assumed under mail and plate (one piece, no layering).',
     'Plate spreads a blow it turns (the user\'s call): half of the blunt left after its mitigation from a cut or a point (converted cuts, turned points) never reaches stamina; a crushing blow (a mace, a hammer, a club, a fist) carries as before (armor.yaml dissipate {glancing: 0.5, crushing: 0}; less as the plate wears). Spreading crushing blows too left maces 2–13% against plate in the weapon sweep (sim/FINDINGS.md).',
@@ -923,33 +904,30 @@
     'Weapons from physics: each weapon has a mass, a length, hands and a point (depth, width), an edge or a head. Damage: point depth/4 piercing; edge (2 + 3√(mass × length × grip)) slashing; head 1 + 6√(head mass × length × grip) blunt. Speed: thrusts cost more with mass, swings with √(mass × length), the longsword costing what the motion table lists. STR adds strBonus × 0.25–0.5 to a thrust (by wound width) and × mass/1.4 (× 1.5 two-handed, up to 1.5) to a swing. A piercing wound bleeds damage × width/4 over 2 + depth/15 rounds.',
     'Fend off and push back: with a long weapon (reaching 3 or more) a shove reaches 2 squares; a ready shield adds +1.',
     'Bait and Read intent (in-combat charm and wisdom): Bait (1 AP, within 3 squares) is d10 + ⌊CHA/2⌋ + Feint against d10 + ⌊WIS/2⌋ + Read Attack: they are drawn off balance and defend at −2 for the rest of the round. Read intent (half an AP, within 4, in sight): the reader rolls d10 + ⌊WIS/2⌋ + Read Attack against 5 + the foe\'s ⌊CHA/2⌋ + Feint, a number they don\'t see. Made it: the foe\'s true intent (what they have committed to this round, feints seen through) and +2 to defend against them and to beat their defenses. Missed by 1–3: nothing to go on. Missed by 4 or more: a confident misread — a false intent and −2 — reported just like a true read. Hex + Mind baits by magic (WIL resists); Bless + Mind gives foresight (true reads of every foe).',
-    'Impact: blunt past armor beyond 8 points breaks bones (1 CON per 2 points over, ÷ size for big bodies) as well as winding; a blow that lands throws its target back 1 square per 8 points landed (blunt in full, cuts and stabs at half; ÷ size; up to 3); A parry meets force with force: the attacker adds ⌊(blow − half my weapon\'s blow)/4⌋ + ⌊(blow − my weapon\'s blow)/2⌋ (+ motion) against my d10 + agility + Parry Training — equal weapons parry as before or a little easier; a giant\'s club against a sword is hopeless, against a strong two-hander with Parry Training a chance. Shields already wear by force, shatter past their threshold, and break outright under a power blow from as hard a material.',
+    'Impact: blunt past armor beyond 8 points breaks bone (a point of a crushing wound per 2 over, the threshold × size for big bodies) as well as winding; a blow that lands throws its target back a square per 8 points landed (blunt in full, cuts and points at half), ÷ size, up to 3.',
     'Weapon weight and strength (TUNED): a weapon has a natural speed strength can\'t beat (light and short is quick; long travels farther), and a strain: its load (mass for a thrust; mass with the leverage of its length for a swing) over the wielder\'s capacity (0.3 kg per STR point, ×1.5 two-handed, +10% per Heavy Weapon Training rank). Within capacity it swings at its natural speed; past it AP and stamina rise with strain²; past 3× it is too ungainly to use. A man (STR 7) can barely lift a giant\'s club; an ogre swings it like a sword.',
-    'Ogre and hill giant; size and grip: big creatures (trait size: ogre 1.5, giant 2.5) take vital wounds less often (+4 × (size − 1) to the margin one needs: CONFIG.vital.perSize) and bleed less per wound (÷ size): a man-sized wound is shallow in a big body. Grip (giant 5, ogre 2) adds to grapple rolls: a giant seizes a man in one hand. The ogre (level 8, STR 23, CON 21) swings a crude giant club and its fists; no regeneration. The hill giant (level 12, STR 28, CON 26) swings a giant club one-handed, hurls boulders (range 2–10, 14 blunt, can knock down) and grapples.',
+    'Ogre and hill giant; size and grip: big creatures (trait size: ogre 1.5, giant 2.5) take vital wounds less often (+4 × (size − 1) to the margin one needs: CONFIG.vital.perSize) and bleed less per wound (÷ size): a man-sized wound is shallow in a big body. Grip (giant 5, ogre 2) adds to grapple rolls: a giant seizes a man in one hand. A big body holds wound boxes × size and needs points × size for each severity (step E: where an ogre\'s toughness comes from). The ogre (level 8, STR 23, CON 10) swings a crude giant club and its fists; no regeneration. The hill giant (level 12, STR 28, CON 10) swings a giant club one-handed, hurls boulders (range 2–10, 14 blunt, can knock down) and grapples.',
     'Drakes, wyverns, the constrictor and the golem: fliers (drake, wyvern) pass over rough ground, pits, traps, hazards and walls that aren\'t solid (solid walls still stop them) and are slippery to grab. The drake (level 8) has drake scales (P4 S4 B2), a bite, claws, a reach-2 wing buffet that can knock you down, 1.5× movement and fire breath (Burst + Fire, Strong for a bigger one). The wyvern (level 10) has heavier scales (P5 S5 B3), a reach-2 bite, a venomous stinger (3 CON a round over 4 rounds at full depth) and a crushing wing beat. The giant constrictor grapples beyond any human (Grappler III, STR 18) and crushes whoever it holds every round (−8 stamina, −1 CON), but it has one victim at a time and thin scales. The golems (clay, stone, iron) share one body and reach-2 fists and never tire; each is immune to two of fire, slashing and blunt and weak (×1.5) to the third, and all three are immune to mind and life magic (resist by damage keyword).',
     'Rats and the spectre: giant rats are weak (STR 3, a third of the stamina) and come alone or as a swarm of six. The spectre is a level-15 undead: incorporeal (weapons without an enchantment pass through; nothing to grab, trip or shove), a legendary war scythe that drinks half the stamina and wounds it deals, and a wail each round that frightens every foe within 2 squares unless they resist (WIL). Magical weapons (high-level gear) and spells hurt it.',
     'Aura of dread and trinkets: at the start of each round, every foe within the aura (2 squares of the revenant knight) loses 3 stamina and is in Dread for the round (−1 STR, DEX and SPD, −1 to guard). Trinkets are worn items that shift attributes or AP: the revenant knight\'s flowing black silk sash gives +1 SPD and +1 AP.',
     'End-game gear and the revenant knight (test build): masterwork dwarven steel plate, a masterwork adamant heater (×3.5) and Soulreaver, a masterwork longsword enchanted with Drinking and Keenness. Battle Casting (feat, adept, needs Casting II): cast with both hands full. Drinking: the wielder takes back half the stamina and half the attribute points each blow deals. The revenant knight is a level-20 character at the human cap (22 feats: Casting IV, Burst, Conjure, Strong, Battle Casting, plate and shield training); Burst + Life + Strong withers a whole area through armor, and Conjure + Life raises the fallen.',
     'Rituals (magic phase 3 draft): Read, Seek, Divine, Speak, Mend, Prepare, Summon, Raise. Each takes time (shortened by Ritualist), spell points (−1 per Ritualist rank) and components (spent win or lose). Roll d10 + ⌊INT/2⌋ + Ritualist (+3 with True Naming and a true name) against the GM\'s tier (easy 6, moderate 8, hard 10, very hard 12, legendary 14): margin 0+ partial, 3+ full, 6+ exceptional; −5 or worse turns on the caster. Information rituals reveal the GM\'s secrets about the subject that the roll could reach (1 / 2 / 3 by outcome). Mend heals 1 / 2 / 4 CON and stops bleeding (exceptional draws out poison and disease). Prepare lays a ward, boon or rune that takes hold when the next fight starts, twice as long.',
-    'WIL split from WIS (the user\'s call): eight attributes. WIL is resolve: magic defense, resisting fear and compulsion, and stamina regeneration (⌊(CON + WIL)/4⌋ − armor). WIS stays judgment and perception. Older characters get WIL = their WIS.',
-    'Monster attributes go past the human range (1–10, 13 with Conditioning feats), up to 30: bears and trolls STR 16–20, a stone golem 22, a troll chieftain 24. The usual formulas apply to the raw number (damage bonus ⌊(STR−5)/2⌋, grappling ⌊STR/2⌋, stamina, death at CON 0).',
-    'Monsters (draft): natural weapons are always ready and can\'t be dropped; natural armor can\'t be looted. Traits: knockdown bites, pack bonus (+1 damage per packmate beside the target), venom (poison up to 2 CON a round for 3 rounds, no more than the wound; bandages don\'t stop it), rust (corrodes metal armor and shields), displacement (each attack first rolls a d10 to find the real creature: arrows miss on 1–5, blows on 1–2), springy chitin (a blow that lands costs the attacker 3 stamina), sticky webs (each layer adds 2 AP and 3 stamina to every action, up to two layers; one layer comes loose each round; tear free with d10 + ⌊STR/2⌋ ≥ 8, or burn them), shield-crushing blows, regeneration (unless burned), tireless (undead and constructs: no stamina, damage to attributes, no bleeding or venom), resistances (skeletons: no piercing, half slashing), nimble, slippery, leaping, and boss multipliers on AP and stamina.',
+    'WIL split from WIS (the user\'s call): eight attributes. WIL is resolve: magic defense, resisting fear and compulsion, acting through wounds (step E: pain), coming round from a collapse sooner, and with CON stamina regeneration (⌊(CON + WIL) × 0.75⌋ − armor). WIS stays judgment and perception. Older characters get WIL = their WIS.',
+    'Monster attributes go past the human range (1–10, 13 with Conditioning feats), up to 30: bears and trolls STR 16–20, a troll chieftain 24. The usual formulas apply to the raw number (damage bonus ⌊(STR−5)/2⌋, grappling ⌊STR/2⌋, stamina). CON stays in the human range (step E): what a monster\'s high CON stood for is its size (wound boxes), its hide (armor) or nothing.',
+    'Monsters (draft): natural weapons are always ready and can\'t be dropped; natural armor can\'t be looted. Traits: knockdown bites, pack bonus (+1 damage per packmate beside the target), venom (Poisoned: up to 2 points of harm a round for 3 rounds, no more than the wound\'s severity; bandages don\'t stop it), rust (corrodes metal armor and shields), displacement (each attack first rolls a d10 to find the real creature: arrows miss on 1–5, blows on 1–2), springy chitin (a blow that lands costs the attacker 3 stamina), sticky webs (each layer adds 2 AP and 3 stamina to every action, up to two layers; one layer comes loose each round; tear free with d10 + ⌊STR/2⌋ ≥ 8, or burn them), shield-crushing blows, regeneration (unless burned), tireless (undead and constructs: no stamina, blunt breaks the frame, no bleeding, shock or venom), finishes (the AI strikes foes that are down: beasts that feed, the cruel, the undead), resistances (skeletons: no piercing, half slashing), nimble, slippery, leaping, and boss multipliers on AP and stamina.',
     'Magic feat tiers count feats across all four magic sub-trees (otherwise Casting and Fire Affinity can never pass rank I).',
-    'Plate: +1 stamina per action and −3 regeneration (Specifics: +2 and −4), tuned in the arena.',
+    'Plate: +1 stamina per action and −9 regeneration a round (Specifics: +2 and −4, before the ×3 was folded in), tuned in the arena.',
     'Initiative: d10 + effective SPD.',
     'Defense checks: parry and dodge are opposed rolls: defender d10 + Training + ⌊(DEX + SPD)/4⌋ (armor lowers both) against attacker d10 + ⌊(STR + SPD)/4⌋, +1 for a two-handed swing, +2 for a power swing. Ties go to the defender. A power blow can\'t be parried, only dodged or blocked. Blocks: see above.',
     'Block, parry and dodge differ in kind (the user, 2026-11-03). Block: the best odds (the shield\'s size), and the blow rebounds: the attacker loses a third of the AP the blow took. Parry: no shield, so worse odds, by leverage: + 3 × x / (1 + |x|), rounded, x = log2(my weapon\'s best blow ÷ the blow\'s force), 0 between equal weapons, toward +3 (a heater\'s worth) as mine outweighs the blow, toward −3 as it is outweighed (this replaces the force term); the blow rebounds a sixth of its AP (Beat, a new feat: another sixth per rank); and a successful parry opens a riposte, a blow of the parrying weapon at once for its AP, which the attacker may defend (the Riposte feat makes it cost no AP; before, only the feat, a free undefended thrust). Dodge: melee blows only (no arrows or bolts), pays the armor\'s SPD and DEX penalties again (−2 dropped), negates the blow and costs the attacker nothing. AP a rebound takes that the attacker hasn\'t got come off their next round, and a fighter who owes can\'t take an action dearer than the whole pool.',
     'Parrying dagger: held in the off hand (no shield, no two-handed weapon). It stabs (off-hand thrust) and gives an Off-hand parry (1 AP on the sheet ×2, +1 to the roll) that meets thrusts only.',
     'A successful parry or dodge negates the strike\'s damage completely (a parry still costs stamina, see blocks).',
-    'Stamina as a pool (the tuning plan\'s rulings R1 to R3, the user, 2026-11-11; CONFIG.stamina; sim/FINDINGS.md "Stamina as a pool"). R1: regeneration every round, struck or not: regen (⌊(CON + WIL)/4⌋ − armor) × 3 (costs were already × staminaScale 3, regeneration was not), half of it (rounded up, at least 1) in a round a blow took stamina; heavy armor\'s negative regeneration whole every round. Before: about 2 a round and none in a round struck. R2: an action whose stamina the fighter can\'t pay is taken spent instead of refused: it leaves them at 1, a spent blow is 2 easier to meet and lands at × 0.5 (vigor.spent), a defence taken spent is 2 harder. R3: stamina 0 is a collapse, not unconsciousness: prone, no actions or reactions for the rest of the round and the next, then they come round with a round\'s regeneration (at least 1) and must stand; rouse, healing and Rally bring them round at once; a blow on a collapsed body goes to the body as on the unconscious; the tireless never collapse. A fight still ends when a side has nobody standing (collapsed counts as down). Unconscious (until roused or healed) is kept for hero mode\'s knockout and a body called back from death. Second Wind: regenerates in full when struck and a collapse lasts only its own round (was: regenerate after up to 2 blunt). Rally: a round\'s regeneration at once to your side within 3 and the collapsed among them come round (was: regenerate at the round\'s end though struck).',
+    'Stamina as a pool (the tuning plan\'s rulings R1 to R3, the user, 2026-11-11; CONFIG.stamina; step E\'s plain numbers). Max stamina = 20 + STR + SPD + DEX. R1: regeneration every round, struck or not: ⌊(CON + WIL) × 0.75⌋ − armor, half of it (rounded up, at least 1) in a round a blow took stamina; heavy armor\'s negative regeneration whole every round. R2: an action whose stamina the fighter can\'t pay is taken spent instead of refused: it leaves them at 1, a spent blow is 2 easier to meet and lands at × 0.5 (vigor.spent), a defence taken spent is 2 harder. R3: stamina 0 is a collapse: prone, no actions or reactions for the rest of the round and 2 − ⌊WIL/5⌋ more (WIL 5: one), then they come round with a round\'s regeneration (at least 1) and must stand; rouse, healing and Rally bring them round at once; a collapsed body keeps its armor; the tireless never collapse. A fight still ends when a side has nobody standing (collapsed counts as down). Second Wind: regenerates in full when struck and a collapse lasts only its own round. Rally: a round\'s regeneration at once to your side within 3 and the collapsed among them come round.',
     'Actions cannot be paid if they would drop your own stamina to 0 (with CONFIG.stamina.spent they are taken spent instead, down to 1).',
-    'Heavy-armor negative regen always applies. With CONFIG.stamina.collapse null: unconscious characters do not regenerate in combat.',
-    'Excess blunt beyond remaining stamina is lost; later hits go to attributes.',
-    'Blunt damage on an unconscious or collapsed target goes to CON.',
+    'Heavy-armor negative regeneration applies every round, struck or not. The down and the collapsed don\'t regenerate.',
     'Items (the user\'s call): every weapon, armor piece and shield is a type plus a material (materials.yaml: cloth, leather, bronze, iron, steel; exotic spider silk, dragon hide, star iron, adamant), an origin (origins.yaml: common, elven, dwarven, goblin: how weight trades against durability, damage and protection), a craftsmanship (crafts.yaml: poor, average, masterwork: how fast it wears and how easily it breaks, never its damage or protection) and enchantments (enchantments.yaml; usually none). Armor tiers: padded, leather, mail, plate (scale is folded into steel mail). Old saves: quality crude → poor, standard and fine → average, masterwork and legendary → masterwork.',
     'Armor durability: padded 20, leather 25, mail 40, plate 60 (× material toughness, origin, craftsmanship and coverage; padding takes no wear).',
     'Parry carry-through (the user\'s idea, 2026-10-24): a parried swing whose force (its expected damage) beats the parrying weapon\'s own best blow carries through, weakened: (force − mine) / force of each face lands. A parried thrust is stopped. The overwhelm term left the parry odds (parryForce.over 2 → none), so a heavy blow isn\'t counted twice; force still makes a parry harder (parryForce.per). A rapier parrying a greatsword cut keeps off about half of it when the parry succeeds; a sword against a giant\'s club, almost none.',
-    'Wounds by location (armor by location, step 3; rules.yaml locations.wounds): every blow at a body rolls where it lands (d100 by share) unless aimed. A cut\'s points take attributes from the location: head CON/INT/WIL, torso CON/STR, arms STR/DEX/CON, legs SPD/CON (a point that goes in still takes CON). Per point of wound there: arms 10% to drop the weapon in hand, legs 8% to fall; per point of blunt on the head 10% to be stunned (CON resists). The AI counts these when it chooses where to aim; aiming is offered against anyone.',
     'Aimed blows (armor by location, step 2; step A): a strike may name a location (a Location menu beside the attack; the AI and the menu default to the place worth most: the blow\'s value there × the chance it lands against the target\'s best defence). Aiming costs off the contest: head 3, arms 1, legs 1, torso 0 (guarded, head 5: R6); a thrust one less; a shield blocks blows aimed at the torso or arms 1 more easily. An aimed blow that lands, lands where aimed (step A: the on-target roll, locations.aim.hold, is gone).',
     'Armor by hit location (the user\'s choice, 2026-10-24; docs/PROPOSALS.md §2, step 1; four since step A): four locations (head 8%, torso 40%, arms 23%, legs 29% of the body: rules.yaml locations; the arms take in the hands and the legs the feet), which are also the armor slots. A piece covers some of them, protects fully there, and carries that share of its type\'s weight, penalties, durability and price; a coverage keyword reads as locations (half = torso, arms, legs; partial = torso). A blow against a body rolls d100 for where it lands; the AI sees the expectation over them. A cut that gets through a limb or the head (bare, or cutting through cloth or leather) carries the slashing beyond 3 into the worst-guarded place beside it (locations.next), whose armor meets it. An old save\'s pieces fold hands into arms and feet into legs (src/game/save.js); a piece that then overlaps another comes off into the pack.',
     'Shield wear per block = ½P + ½S + B.',
@@ -960,7 +938,7 @@
     'Grappling ladder: free → clinch → hold → pin, each step a directly opposed d10 roll (⌊STR/2⌋ + Grappler; breaking free may use ⌊max(STR, DEX)/2⌋ + Escape Artist). Win by 5+ for two steps; lose by 5+ and it can reverse. Clinch: both cramped with long weapons, no two-handed swings or bows, no stepping away without a break. Hold: the held fighter can\'t move and fights cramped with every weapon, dagger included; the holder keeps a dagger hand and can drag them a square. Pin: the pinned fighter can only try to break; a point always gets through their armor, past its mitigation, and a Coup de Grâce dagger ignores it. Throw: from a hold or pin, prone a square away. Armor is easy to grab (+1 mail, +2 plate to grapple and pin) but hard to throw (footing +1 / +2). Costs in base AP / stamina: clinch 2 / 3, grapple, pin and throw 3 / 5, break 2 / 3, and 2 stamina a round to keep a hold.',
     'Getting up from prone, base AP / stamina by armor: none, padded or leather 1 / 1; mail 2 / 2; plate 4 / 5 (on the turn-budget curve: plate is 6 AP, the whole of an SPD-5 turn). Never more AP than your pool. Kip-Up: 1 AP.',
     'Movement costs only the armor stamina penalty, once per move action.',
-    'Bandage: 4 AP (1 AP with Field Dressing) and uses one bandage.',
+    'Bandage: 4 AP (1 AP with Field Dressing) and uses one bandage: every wound stops bleeding, and Medicine (d10 + Medicine + ⌊(INT + WIS)/4⌋ against 6 + severity) mends the worst wound not yet tended a step (step E, CONFIG.wounds.tend).',
     'Long rest repairs 25% of max armor and shield durability (+25% with Field Repair).',
     'Daggers get −1 AP on thrusts and swings ("lowest AP").',
     'Spell bolts and shields (the user\'s magic items, 2026-10): an ordinary shield can\'t block a spell bolt (and since 2026-11-03 it can\'t be dodged either: dodging is for melee blows); a shield enchanted with Spellcatching can, and a weapon with parrySpells can parry one. Before, any shield stopped a fire bolt whole and took no wear from it.',

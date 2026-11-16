@@ -339,26 +339,35 @@
     for (const c of party(world)) { c.hero = on; if (c.companion) c.companion.hero = on; }
   }
 
-  // Stamina back, bleeding settled, bandages used. Between fights, not a night's rest.
+  // Stamina back, bleeding settled, bandages used, wounds tended. Between fights, not a night's rest. A bleeding
+  // wound takes a bandage (one a member) or is a step worse before it clots; then the party's best at Medicine tends
+  // each wound not yet tended (wounds.tend), which can bring one who is down to.
   function breather(world) {
     loadSupplies(world);
     const members = living(world);
     let bandages = members.reduce((t, c) => t + (c.inventory.bandages || 0), 0);
+    const T = CONFIG.wounds.tend;
     for (const c of members) {
-      if (!c.bleeds.length) continue;
-      if (bandages > 0) {
-        const holder = members.find((x) => x.inventory.bandages > 0);
-        holder.inventory.bandages--; bandages--;
-        c.bleeds = c.bleeds.filter((b) => b.poison);
+      if (C.bleeding(c) > 0) {
+        if (bandages > 0) {
+          const holder = members.find((x) => x.inventory.bandages > 0);
+          holder.inventory.bandages--; bandages--;
+        } else for (const w of C.wounds(c)) if (w.bleed > 0) w.sev = Math.min(3, w.sev + 1);
+        C.bindWounds(c);
       }
-      const left = c.bleeds.reduce((t, b) => t + b.remaining, 0);
-      if (left) C.damageAttr(c, 'CON', left);
-      c.bleeds = [];
+      const helpers = members.filter((x) => C.isActive(x) && G.Skills);
+      for (const w of C.wounds(c).filter((x) => x.sev > 0 && !x.tended)) {
+        w.tended = true;
+        if (!helpers.length) continue;
+        const r = G.Skills.bestCheck(helpers, 'medicine', T.tn + w.sev);
+        if (r.ok) { w.sev -= 1; w.bleed = 0; }
+      }
+      c.wounds = C.wounds(c).filter((w) => w.sev > 0);
+      for (const w of c.wounds) delete w.ongoing;
       C.updateCondition(c);
     }
     for (const c of party(world)) {
       if (c.status.dead) continue;
-      if (C.attr(c, 'CON') <= 0) { c.status.dead = true; world.stats.deaths++; continue; }
       // With CONFIG.afterBattle, stamina comes back only if the party stops to rest (restAndRepair).
       if (!CONFIG.afterBattle) c.stamina = C.maxStamina(c);
       c.status = Object.assign(C.freshStatus(), { dead: false });

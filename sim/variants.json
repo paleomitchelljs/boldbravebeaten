@@ -16,7 +16,6 @@
     "defense.dodgeBonus=0",
     "defense.absorb=null",
     "defense.dodgeStamina=null",
-    "staminaScale=1",
     "pierceMode=\"floor\"",
     "passThroughByArmor=null",
     "armorWearScale=1",
@@ -25,9 +24,6 @@
     "weaponWear=null",
     "weariness=null",
     "armorPierceWear=0"
-  ],
-  "-staminaScale": [
-    "staminaScale=1"
   ],
   "old AP (pool 10, flat feat cuts)": [
     "apScale=2",

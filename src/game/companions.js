@@ -75,8 +75,9 @@
       const b = c.companion;
       if (!b || !b.status.dead || b.mourned) continue;
       b.mourned = true;
-      if (b.familiar) for (const [a, n] of Object.entries(D)) C.damageAttr(c, a, n);
-      lines.push(b.familiar ? `${b.name} is dead; the torn bond costs ${c.name} ${Object.entries(D).map(([a, n]) => `${n} ${a}`).join(', ')}.` : `${b.name} is dead.`);
+      // An attribute named in `death` is harm where wounds.attrPlace puts it (WIL: the head).
+      if (b.familiar) for (const [a, n] of Object.entries(D)) { C.harm(c, n, G.CONFIG.wounds.attrPlace[a] || 'torso', 'bond'); C.updateCondition(c); }
+      lines.push(b.familiar ? `${b.name} is dead; the torn bond costs ${c.name} ${Object.values(D).reduce((t, n) => t + n, 0)} harm.` : `${b.name} is dead.`);
     }
     return lines;
   }
@@ -88,10 +89,10 @@
       if (!b || b.status.dead) continue;
       if (long) {
         b.weary = 0;
-        const a = G.Recovery.healTarget(b);
-        if (a) C.healAttr(b, a, 1);
-        b.bleeds = [];
+        C.bindWounds(b);
+        C.mendWounds(b, 1, 1);
         b.status = C.freshStatus();
+        C.updateCondition(b);
       }
       b.stamina = C.maxStamina(b);
       b.status.unconscious = false;

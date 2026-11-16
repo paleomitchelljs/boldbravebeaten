@@ -77,8 +77,8 @@
     world.place = home; world.explore = null; world.location = null; world.battle = null; world.parley = null;
     for (const c of survivors) {
       c.status = C.freshStatus();
-      c.bleeds = [];
-      C.damageAttr(c, 'CON', 1);
+      C.bindWounds(c);
+      C.harm(c, 1, 'torso', 'beaten');
       c.stamina = C.maxStamina(c);
       C.updateCondition(c);
     }
@@ -103,11 +103,10 @@
   // ---- Temple ---------------------------------------------------------------------------
   function heal(world, c, service) {
     const cost = E.healCost(world, c, service);
-    if (!C.totalDamage(c) && !c.bleeds.length && c.stamina >= C.maxStamina(c)) return { ok: false, reason: 'Nothing to heal.' };
+    if (!C.woundLoad(c) && c.stamina >= C.maxStamina(c)) return { ok: false, reason: 'Nothing to heal.' };
     if (world.gold < cost) return { ok: false, reason: `That costs ${cost} gold.` };
     world.gold -= cost;
-    for (const a of G.CONFIG.attributes) c.damage[a] = 0;
-    c.bleeds = [];
+    C.healAll(c);
     c.stamina = C.maxStamina(c);
     c.status = Object.assign(C.freshStatus(), { dead: c.status.dead });
     C.updateCondition(c);
@@ -123,9 +122,7 @@
     if (world.gold < cost) return { ok: false, reason: `That costs ${cost} gold.` };
     world.gold -= cost;
     c.status = C.freshStatus();
-    for (const a of G.CONFIG.attributes) c.damage[a] = 0;
-    c.damage.CON = 3; // the price: they come back barely
-    c.bleeds = [];
+    c.wounds = [{ place: 'torso', sev: 2, kind: 'raised', bleed: 0, pts: 4 }]; // the price: they come back barely
     c.stamina = Math.max(1, Math.floor(C.maxStamina(c) / 2));
     C.updateCondition(c);
     W.logLine(world, `${c.name} is called back (${cost} gold).`, 'info');
@@ -156,9 +153,9 @@
     const lines = [];
     if (g.kind === 'potion' || (g.kind === 'supply' && g.use)) {
       const u = g.use || {};
-      if (u.heal) { const a = G.Recovery.healTarget(c); if (!a) return { ok: false, reason: `${c.name} is unhurt.` }; C.healAttr(c, a, u.heal); lines.push(`${c.name} heals ${u.heal} ${a}.`); }
-      if (u.cure === 'bleeding') { if (!c.bleeds.length) return { ok: false, reason: 'Not bleeding.' }; c.bleeds = []; lines.push(`${c.name}'s bleeding stops.`); }
-      if (u.cure === 'poison') { c.bleeds = c.bleeds.filter((b) => !b.poison); c.status.conds = (c.status.conds || []).filter((x) => !['venom', 'plague', 'poisoned', 'diseased'].includes(x.key)); lines.push(`${c.name} is cleansed.`); }
+      if (u.heal) { if (!C.woundLoad(c)) return { ok: false, reason: `${c.name} is unhurt.` }; const n = C.mendWounds(c, 1, u.heal); lines.push(`${c.name}'s wounds mend ${n} step${n === 1 ? '' : 's'}.`); }
+      if (u.cure === 'bleeding') { if (!C.bleeding(c)) return { ok: false, reason: 'Not bleeding.' }; C.bindWounds(c); lines.push(`${c.name}'s bleeding stops.`); }
+      if (u.cure === 'poison') { c.status.conds = (c.status.conds || []).filter((x) => !['venom', 'plague', 'poisoned', 'diseased'].includes(x.key)); lines.push(`${c.name} is cleansed.`); }
       if (u.repair) {
         const items = [c.shield].filter(Boolean).concat(G.Character.armorPieces(c)).concat(c.weapons.filter((x) => G.Items.weaponMaxDurability(x) && !G.Items.weaponBroken(x)));
         if (!items.length) return { ok: false, reason: 'Nothing to repair.' };

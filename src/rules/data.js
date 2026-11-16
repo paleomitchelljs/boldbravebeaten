@@ -52,55 +52,55 @@
   const WEAPONS = {}; // weapons.yaml
 
   const MOTIONS = {
-    thrust: { name: 'Thrust', ap: 2, stamina: 1, faces: ['point', 'butt'] },
-    swing: { name: 'Swing', ap: 3, stamina: 2, faces: ['edge', 'head', 'beak', 'hilt'] },
-    twoHanded: { name: 'Two-handed swing', ap: 4, stamina: 3, faces: ['edge', 'head', 'beak', 'hilt'], twoHands: true },
-    power: { name: 'Power swing', ap: 5, stamina: 4, faces: ['edge', 'head', 'beak'], requiresFeat: 'power_swing' },
-    shoot: { name: 'Shoot', ap: 3, stamina: 1, faces: ['arrow'] },
+    thrust: { name: 'Thrust', ap: 2, stamina: 3, faces: ['point', 'butt'] },
+    swing: { name: 'Swing', ap: 3, stamina: 6, faces: ['edge', 'head', 'beak', 'hilt'] },
+    twoHanded: { name: 'Two-handed swing', ap: 4, stamina: 9, faces: ['edge', 'head', 'beak', 'hilt'], twoHands: true },
+    power: { name: 'Power swing', ap: 5, stamina: 12, faces: ['edge', 'head', 'beak'], requiresFeat: 'power_swing' },
+    shoot: { name: 'Shoot', ap: 3, stamina: 3, faces: ['arrow'] },
   };
 
   // Other actions (Specifics: Action points table; PROVISIONAL rows noted in config)
   const ACTIONS = {
     punch: { name: 'Punch', ap: 1, stamina: 0, damage: [0, 0, 1] },
-    kick: { name: 'Kick', ap: 2, stamina: 1, damage: [0, 0, 2] },
-    shieldBash: { name: 'Shield bash', ap: 2, stamina: 1, damage: [0, 0, 3] },
-    parry: { name: 'Parry', ap: 2, stamina: 1 },
+    kick: { name: 'Kick', ap: 2, stamina: 3, damage: [0, 0, 2] },
+    shieldBash: { name: 'Shield bash', ap: 2, stamina: 3, damage: [0, 0, 3] },
+    parry: { name: 'Parry', ap: 2, stamina: 3 },
     // PROVISIONAL: a parry with the off-hand parrying dagger; meets thrusts only.
-    offParry: { name: 'Off-hand parry', ap: 1, stamina: 1 },
-    dodge: { name: 'Dodge', ap: 2, stamina: 2 },
-    block: { name: 'Block', ap: null, stamina: 1 }, // AP by shield size
-    standUp: { name: 'Stand up', ap: 2, stamina: 1 },
+    offParry: { name: 'Off-hand parry', ap: 1, stamina: 3 },
+    dodge: { name: 'Dodge', ap: 2, stamina: 6 },
+    block: { name: 'Block', ap: null, stamina: 3 }, // AP by shield size
+    standUp: { name: 'Stand up', ap: 2, stamina: 3 },
     // PROVISIONAL: drawing is quick; dropping is free. Drawing while holding a weapon drops it
     // (a dagger is sheathed instead).
     drawSidearm: { name: 'Draw sidearm', ap: 0.5, stamina: 0 },
     dropWeapon: { name: 'Drop weapon', ap: 0, stamina: 0 },
-    pickUp: { name: 'Pick up weapon', ap: 2, stamina: 1 },
-    trip: { name: 'Trip', ap: 3, stamina: 2 },
-    disarm: { name: 'Disarm', ap: 3, stamina: 2 },
-    shove: { name: 'Shove', ap: 2, stamina: 1 },
+    pickUp: { name: 'Pick up weapon', ap: 2, stamina: 3 },
+    trip: { name: 'Trip', ap: 3, stamina: 6 },
+    disarm: { name: 'Disarm', ap: 3, stamina: 6 },
+    shove: { name: 'Shove', ap: 2, stamina: 3 },
     // The grappling ladder (PROVISIONAL; stamina in CONFIG.grappling): free → clinch → hold → pin.
-    clinch: { name: 'Clinch', ap: 2, stamina: 3 },
-    grapple: { name: 'Grapple', ap: 3, stamina: 5 },
-    pin: { name: 'Pin', ap: 3, stamina: 5 },
-    throw: { name: 'Throw', ap: 3, stamina: 5 },
-    break: { name: 'Break grapple', ap: 2, stamina: 3 },
+    clinch: { name: 'Clinch', ap: 2, stamina: 9 },
+    grapple: { name: 'Grapple', ap: 3, stamina: 15 },
+    pin: { name: 'Pin', ap: 3, stamina: 15 },
+    throw: { name: 'Throw', ap: 3, stamina: 15 },
+    break: { name: 'Break grapple', ap: 2, stamina: 9 },
     release: { name: 'Release hold', ap: 1, stamina: 0 },
-    tearFree: { name: 'Tear free of webs', ap: 2, stamina: 1 },
+    tearFree: { name: 'Tear free of webs', ap: 2, stamina: 3 },
     // PROVISIONAL: in-combat charm and wisdom actions (CONFIG.social).
-    bait: { name: 'Bait', ap: 1, stamina: 1 },
+    bait: { name: 'Bait', ap: 1, stamina: 3 },
     readIntent: { name: 'Read intent', ap: 0.5, stamina: 0 }, // cheap: a glance
     bandage: { name: 'Bandage', ap: 3, stamina: 0 },
-    cauterize: { name: 'Cauterize', ap: 2, stamina: 0 }, // Fire's feat (feats.yaml): no bandage, the burn costs the patient 1 CON
+    cauterize: { name: 'Cauterize', ap: 2, stamina: 0 }, // Fire's feat (feats.yaml): no bandage; the burn is a small wound (CONFIG.wounds.cauterize)
     // Feat actions (feats.yaml): Shadow, Leadership, Lore, Deception.
-    vanish: { name: 'Vanish', ap: 2, stamina: 1 },
+    vanish: { name: 'Vanish', ap: 2, stamina: 3 },
     rally: { name: 'Rally', ap: 2, stamina: 0 },
     command: { name: 'Command', ap: 2, stamina: 0 },
     rouse: { name: 'To your feet!', ap: 2, stamina: 0 },
-    demoralize: { name: 'Demoralize', ap: 2, stamina: 1 },
+    demoralize: { name: 'Demoralize', ap: 2, stamina: 3 },
     nameWeakness: { name: 'Name the weakness', ap: 2, stamina: 0 },
     feign: { name: 'Feign death', ap: 2, stamina: 0 },
     move: { name: 'Move', ap: 1, stamina: 0 },
-    windUp: { name: 'Wind up', ap: 2, stamina: 1 }, // costs set in CONFIG.windUp
+    windUp: { name: 'Wind up', ap: 2, stamina: 3 }, // costs set in CONFIG.windUp
     readyPrimary: { name: 'Draw main weapon', ap: 0.5, stamina: 0 },
   };
 

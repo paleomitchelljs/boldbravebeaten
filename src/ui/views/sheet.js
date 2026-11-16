@@ -19,19 +19,11 @@
   function attrTable(app, c) {
     const change = () => { c.stamina = Math.min(c.stamina, C.maxStamina(c)); app.save(); app.render(); };
     return h('div', { class: 'scroll-x' }, h('table', { class: 'data' },
-      h('thead', null, h('tr', null, h('th', null, 'Attribute'), h('th', { class: 'n' }, 'Base'), h('th', { class: 'n' }, 'Cond.'), h('th', { class: 'n' }, 'Damage'), h('th', { class: 'n' }, 'Current'), h('th', { class: 'n' }, 'In armor'))),
+      h('thead', null, h('tr', null, h('th', null, 'Attribute'), h('th', { class: 'n' }, 'Base'), h('th', { class: 'n' }, 'Cond.'), h('th', { class: 'n' }, 'Current'), h('th', { class: 'n' }, 'In armor'))),
       h('tbody', null, CONFIG.attributes.map((a) => h('tr', null,
         h('th', { scope: 'row' }, a),
         h('td', { class: 'n' }, num('base-' + a, c.base[a], (v) => { c.base[a] = Math.max(CONFIG.attrMin, Math.min(c.monster ? CONFIG.monsterAttrMax : CONFIG.attrMax, Math.round(v))); change(); }, { min: CONFIG.attrMin, max: c.monster ? CONFIG.monsterAttrMax : CONFIG.attrMax, 'aria-label': a + ' base' })),
         h('td', { class: 'n' }, C.conditioning(c, a) ? '+' + C.conditioning(c, a) : '—'),
-        h('td', { class: 'n' }, num('dmg-' + a, c.damage[a], (v) => {
-          const before = C.maxStamina(c);
-          c.damage[a] = Math.max(0, Math.round(v));
-          const after = C.maxStamina(c);
-          c.stamina = Math.max(0, Math.min(after, c.stamina + (after - before)));
-          C.updateCondition(c);
-          app.save(); app.render();
-        }, { min: 0, 'aria-label': a + ' damage' })),
         h('td', { class: 'n' }, h('b', null, C.attr(c, a))),
         h('td', { class: 'n muted' }, a === 'SPD' || a === 'DEX' ? C.combatAttr(c, a) : ''))))));
   }
@@ -57,9 +49,13 @@
           num('cur-stamina', c.stamina, (v) => { c.stamina = Math.max(0, Math.min(max, Math.round(v))); if (c.stamina > 0 && !c.status.dead) { c.status.unconscious = false; c.status.collapsed = null; } C.updateCondition(c); app.save(); app.render(); }, { min: 0, max })),
         h('span', { class: 'num' }, `${c.stamina} / ${max}`)),
       bar(c.stamina, max),
-      c.bleeds.length ? h('div', { class: 'row small' },
-        h('span', { class: 'chip bad' }, `Bleeding: ${c.bleeds.reduce((t, b) => t + b.remaining, 0)} CON over ${Math.max(...c.bleeds.map((b) => b.rounds))} rounds`),
-        h('button', { class: 'small', onclick: () => { c.bleeds = []; app.save(); app.render(); toast('Bleeding stopped'); } }, 'Stop bleeding')) : null,
+      // Wounds (CONFIG.wounds): each with its place, severity and what it does; the GM can mend one a step.
+      C.wounds(c).length ? h('div', { class: 'stack tight' },
+        h('div', { class: 'row small' }, h('span', { class: 'muted' }, `Wounds ${C.woundLoad(c)} of ${C.boxes(c)} boxes`),
+          C.bleeding(c) ? h('span', { class: 'chip bad' }, `Bleeding ${C.bleeding(c)} (${C.bleedLoss(c)} harm a round)`) : null,
+          C.bleeding(c) ? h('button', { class: 'small', onclick: () => { C.bindWounds(c); app.save(); app.render(); toast('Bleeding stopped'); } }, 'Stop bleeding') : null),
+        C.describeWounds(c).map((w) => h('div', { class: 'row small' }, h('span', { class: 'chip warn' }, `${w.name} ${w.sev}`), h('span', { class: 'muted' }, `${w.kind}${w.does ? `: ${w.does}` : ''}`)))
+      ) : null,
       (c.status.unconscious || c.status.dead) ? h('div', { class: 'row small' }, UI.Cards.statusChips(c),
         h('button', { class: 'small', onclick: () => { c.status = C.freshStatus(); C.updateCondition(c); app.save(); app.render(); } }, 'Clear status')) : null);
   }

@@ -55,7 +55,7 @@
         K.nouns ? field('Noun', 'r-noun', nouns.length ? select('r-noun', ui.noun, nouns.map((n) => [n, CONFIG.magic.words[n].name]), set('noun')) : h('span', { class: 'muted small' }, 'None known that fits')) : null,
         K.reveals ? field('Subject', 'r-subject', h('input', { id: 'r-subject', list: 'r-subjects', value: ui.subject, placeholder: K.subject, oninput: (e) => { ui.subject = e.target.value; } })) : null,
         K.reveals ? h('datalist', { id: 'r-subjects' }, subjects.map((x) => h('option', { value: x }))) : null,
-        ui.kind === 'mend' ? field('Patient', 'r-patient', select('r-patient', ui.patient || c.id, party(app).map((x) => [x.id, `${x.name}${x.damage.CON ? ` (−${x.damage.CON} CON)` : ''}`]), set('patient'))) : null,
+        ui.kind === 'mend' ? field('Patient', 'r-patient', select('r-patient', ui.patient || c.id, party(app).map((x) => [x.id, `${x.name}${C.woundLoad(x) ? ` (wounds ${C.woundLoad(x)})` : ''}`]), set('patient'))) : null,
         ui.kind === 'prepare' ? field('Spell to lay ready', 'r-spell', spells.length ? select('r-spell', ui.spell, spells.map((o) => [o.spellKey, o.label]), set('spell')) : h('span', { class: 'muted small' }, 'No ward, boon or rune known')) : null,
         ui.kind === 'prepare' && spell && spell.spell.shape !== 'rune' ? field('On', 'r-target', select('r-target', ui.target || c.id, party(app).map((x) => [x.id, x.name]), set('target'))) : null,
         K.needsName ? field('True name', 'r-name', h('input', { id: 'r-name', value: ui.trueName, oninput: (e) => { ui.trueName = e.target.value; } })) : null,

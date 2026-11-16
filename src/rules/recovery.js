@@ -1,8 +1,9 @@
 /*
- * Recovery (Mechanics Outline + Specifics):
+ * Recovery (Mechanics Outline + Specifics, on step E's wounds):
  *   - A long rest restores stamina fully and partly repairs armor and shields.
- *   - Daily heal roll (d6): 1 = −1 CON, 2 = no change, 3–6 = +1 (one point total).
- *   - Tending: reroll 1s, +1 per Wound Tending rank. Town rest: two rolls a day.
+ *   - Daily heal roll (d6) for one wounded: 1 = the worst wound a step worse, 2 = no change, 3–6 = a step better.
+ *   - Tending: reroll 1s, +1 per Wound Tending rank. Town rest: two rolls a day. Untended bleeding: each bleeding
+ *     wound a step worse before it clots.
  */
 (function (G) {
   'use strict';
@@ -10,12 +11,22 @@
   const C = G.Character;
   const Items = G.Items;
 
-  // Which damaged attribute heals first: CON, then the most damaged.
+  // The worst wound (the one healing works on), or null.
   function healTarget(c) {
-    if (c.damage.CON > 0) return 'CON';
-    let best = null;
-    for (const a of CONFIG.attributes) if (c.damage[a] > 0 && (!best || c.damage[a] > c.damage[best])) best = a;
-    return best;
+    return C.wounds(c).filter((w) => w.sev > 0).sort((a, b) => b.sev - a.sev)[0] || null;
+  }
+  const placeOf = (w) => ((CONFIG.locations.names || {})[w.place] || w.place).toLowerCase();
+
+  // A wound a step worse; dies of their wounds once the boxes are full (hero mode: never).
+  function worsen(c, w, lines, why) {
+    w.sev = Math.min(3, w.sev + 1);
+    lines.push(`${why}: the ${placeOf(w)} wound worsens (${w.sev}).`);
+    if (C.woundLoad(c) >= C.boxes(c) && !c.hero) {
+      c.status.dead = true;
+      lines.push(`${c.name} dies of their wounds.`);
+      return true;
+    }
+    return false;
   }
 
   async function longRest(c, opts, roller) {
@@ -24,66 +35,47 @@
     const lines = [];
     if (c.status.dead) return [`${c.name} is dead.`];
 
-    // Untreated bleeding runs its course; tending stops it.
-    if (c.bleeds.length) {
-      if (tender) {
-        lines.push(`${tender.name} stops ${c.name}'s bleeding.`);
-      } else {
-        let total = 0;
-        for (const b of c.bleeds) total += b.remaining;
-        C.damageAttr(c, 'CON', total);
-        lines.push(`Untended wounds bleed ${total} CON.`);
-      }
-      c.bleeds = [];
+    // Untreated bleeding: each bleeding wound a step worse before it clots; tending stops it.
+    if (C.bleeding(c) > 0) {
+      if (tender) lines.push(`${tender.name} stops ${c.name}'s bleeding.`);
+      else for (const w of C.wounds(c).filter((x) => x.bleed > 0)) if (worsen(c, w, lines, 'Untended, it bleeds')) return lines;
+      C.bindWounds(c);
     }
-
-    if (C.attr(c, 'CON') <= 0) {
-      c.status.dead = true;
-      lines.push(`${c.name} dies of their wounds.`);
-      return lines;
-    }
+    c.wounds = C.wounds(c).filter((w) => w.sev > 0).map((w) => { delete w.ongoing; delete w.tended; return w; });
 
     const tendRank = tender ? C.rank(tender, 'wound_tending') : 0;
     const surgeon = tender && C.rank(tender, 'surgeon');
     const physician = tender && C.rank(tender, 'physician');
     const rolls = opts.town || physician ? 2 : 1;
     for (let i = 0; i < rolls; i++) {
-      if (C.totalDamage(c) === 0) break;
+      const w = healTarget(c);
+      if (!w) break;
       let r = (await roller({ actorId: c.id, sides: CONFIG.healDie, count: 1, label: `${c.name}: daily heal roll`, detail: tender ? `d6 (tended: 1s reroll, +${tendRank})` : 'd6: 1 worsen, 2 nothing, 3–6 heal' }))[0];
       if (tender && r === 1) {
         r = (await roller({ actorId: c.id, sides: CONFIG.healDie, count: 1, label: `${c.name}: reroll 1 (tended)`, detail: 'd6' }))[0];
       }
       if (r !== 1) r += tendRank;
       if (r === 1 && !surgeon) {
-        C.damageAttr(c, 'CON', 1);
-        lines.push(`Heal roll 1: the wounds worsen (−1 CON).`);
+        if (worsen(c, w, lines, 'Heal roll 1')) return lines;
       } else if (r <= 2) {
         lines.push(`Heal roll ${r}: no change.`);
       } else {
-        const a = healTarget(c);
-        C.healAttr(c, a, 1);
-        lines.push(`Heal roll ${r}: +1 ${a}.`);
+        C.mendWounds(c, 1, 1);
+        lines.push(`Heal roll ${r}: the ${placeOf(w)} wound mends a step.`);
       }
-      if (surgeon && C.totalDamage(c) > 0) {
-        let worst = null;
-        for (const a of CONFIG.attributes) if (c.damage[a] > 0 && (!worst || c.damage[a] > c.damage[worst])) worst = a;
-        C.healAttr(c, worst, 1);
-        lines.push(`Surgeon: +1 ${worst}.`);
+      if (surgeon && healTarget(c)) {
+        const x = healTarget(c);
+        C.mendWounds(c, 1, 1);
+        lines.push(`Surgeon: the ${placeOf(x)} wound mends a step.`);
       }
     }
 
-    if (C.attr(c, 'CON') <= 0) {
-      c.status.dead = true;
-      lines.push(`${c.name} dies of their wounds.`);
-      return lines;
-    }
-
-    // Gear that heals (a bloodstone breastplate: effects.heal): more points back each night.
+    // Gear that heals (a bloodstone breastplate: effects.heal): more steps back each night.
     for (let i = 0; i < G.Effects.sum(c, 'heal'); i++) {
-      const a = healTarget(c);
-      if (!a) break;
-      C.healAttr(c, a, 1);
-      lines.push(`Healing gear: +1 ${a}.`);
+      const x = healTarget(c);
+      if (!x) break;
+      C.mendWounds(c, 1, 1);
+      lines.push(`Healing gear: the ${placeOf(x)} wound mends a step.`);
     }
     // Items' powers come back with the night.
     if (G.Magic && G.Magic.rechargeAll) G.Magic.rechargeAll(c);
@@ -93,6 +85,7 @@
     c.spSpent = 0;
     c.spWeary = 0;
     c.status = C.freshStatus();
+    C.updateCondition(c); // still over their wound boxes: down until mended
 
     const repairer = [c, tender].some((x) => x && C.rank(x, 'field_repair'));
     lines.push(...mendGear(c, CONFIG.restRepairFraction * (repairer || opts.town ? 2 : 1)));

@@ -17,7 +17,7 @@ function fighter(name, side) {
 const golem = (id) => Enemies.makeMonster(id)[0];
 const blow = (v) => ({ kind: 'strike', motion: 'swing', damage: v, label: 'test' });
 const fire = (m) => ({ kind: 'strike', motion: 'spell', spell: { element: 'fire', magnitude: m }, damage: [0, 0, 0] });
-const harm = (h) => h.toCON + h.bluntToStamina + h.slashToAttrs + (h.bluntToCON || 0) + (h.pierceVital || 0) + (h.cutVital || 0);
+const harm = (h) => (h.pts || 0) + (h.winding || 0) + (h.stamina || 0);
 
 test('keywords: damageMult multiplies a monster trait and worn gear for one keyword; unknown keywords are 1', () => {
   const c = fighter('C');

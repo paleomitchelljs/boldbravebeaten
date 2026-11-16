@@ -22,6 +22,10 @@ test('save: a version-2 save comes up to the current shape', () => {
   w.pack.gear.push({ id: 'old1', kind: 'weapon', type: 'longsword', quality: 'masterwork', enchant: { drain: { stamina: 0.5 } } });
   w.battle = { foes: { t1: Object.assign(B.Enemies.makeMonster('caveTroll')[0], { id: 't1' }) } };
   w.battle.foes.t1.traits = { regen: { con: 1, stamina: 6 }, nimble: 1, magicImmune: true };
+  // Attribute damage and bleeding from before step E.
+  delete c.wounds;
+  c.damage = { STR: 2, DEX: 3, CON: 1, SPD: 0, INT: 0, WIL: 0, WIS: 0, CHA: 0 };
+  c.bleeds = [{ remaining: 4, rounds: 2 }];
   w.supplies.bandages = 4;
   w.version = 2;
   const back = Save.deserialize(Save.serialize(w));
@@ -35,7 +39,10 @@ test('save: a version-2 save comes up to the current shape', () => {
   assert.equal(sword.craft, 'master');
   assert.deepEqual(sword.enchantments, ['drinking']);
   assert.ok(!('enchant' in sword) && !('quality' in sword));
-  assert.deepEqual(back.battle.foes.t1.traits, { regrow: { con: 1, stamina: 6 }, dodge: 1, resist: { magic: 0 } });
+  assert.deepEqual(back.battle.foes.t1.traits, { regrow: { mend: 1, stamina: 6 }, dodge: 1, resist: { magic: 0 } });
+  // Attribute damage became harm by place (wounds.attrPlace): STR and DEX the arms (5 points), CON the torso (1).
+  assert.ok(!('damage' in d) && !('bleeds' in d));
+  assert.deepEqual(d.wounds.map((x) => [x.place, x.sev]).sort(), [['arms', B.Character.severityOf(d, 5)], ['torso', 1]]);
   assert.equal(back.supplies.bandages, 0, 'a mid-fight save held the dealt bandages in hand, not in the pool too');
 });
 

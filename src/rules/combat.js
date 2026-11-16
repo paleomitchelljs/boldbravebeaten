@@ -370,13 +370,13 @@
       const opt = options.find((o) => o === pick || C.optionKey(o) === pick || (pick && C.optionKey(o) === C.optionKey(pick)));
       if (!opt) continue;
       enc.ap[f] -= opt.ap;
-      const before = { stamina: m.stamina, dmg: C.totalDamage(m), active: C.isActive(m), bleeds: m.bleeds.length };
+      const before = { stamina: m.stamina, load: C.woundLoad(m), active: C.isActive(m) };
       log(enc, `${reactor.name} strikes at ${m.name} as they ${why === 'closes' ? 'close in' : why === 'leaves' ? 'go' : 'move'}.`, 'pass');
       const sd = { actor: f, type: 'strike', option: opt, target: m.id, ap: opt.ap, stamina: opt.stamina, n: ++enc.seq, opportunity: true, round: enc.round };
       enc.decls.push(sd);
       await resolveAction(enc, chars, sd, io, Object.assign({}, enc.pos, { [m.id]: at }));
       sd.done = true;
-      const hit = m.stamina < before.stamina || C.totalDamage(m) > before.dmg || m.bleeds.length > before.bleeds || !C.isActive(m);
+      const hit = m.stamina < before.stamina || C.woundLoad(m) > before.load || !C.isActive(m);
       if (hit) {
         if (C.isActive(m)) log(enc, `${reactor.name}'s blow stops ${m.name} where they stand.`, 'hit');
         return true;
@@ -426,6 +426,7 @@
     if (G.Terrain && enc.tiles) await G.Terrain.endRound(enc, chars, roller, (t) => log(enc, t, 'hit'));
     if (G.Magic && G.Magic.endRound) for (const line of G.Magic.endRound(enc, chars)) log(enc, line, 'pass');
     endRound(enc, chars);
+    if (enc.phase === 'over') await settleFallen(enc, chars, roller);
   }
 
   // Done with this turn: any AP left stays in hand for reactions until the round ends.
@@ -644,7 +645,7 @@
       out.other.push(Object.assign({ type, name: ACTIONS[type].name, ap: cost.ap, stamina: cost.stamina, affordable: can(cost.ap) }, extra || {}));
     };
     const declared = (type) => enc.decls.some((d) => d.actor === id && d.type === type);
-    if (c.status.prone && !declared('standUp')) addOther('standUp');
+    if (c.status.prone && !declared('standUp') && !C.cannotStand(c)) addOther('standUp'); // a leg wound at its `fell` keeps them down
     const hands = { wield: C.wieldedWeapon(c) ? c.wield : null, dropped: c.status.dropped.slice() };
     const sidearm = c.weapons.find((w) => w.id === c.sidearm);
     const primary = primaryWeaponId(c);
@@ -680,17 +681,18 @@
       if (t.length) addOther('command', { targets: t.map((o) => ({ id: o, inReach: true })) });
     }
     if (C.rank(c, 'to_your_feet')) {
-      const t = friends.filter((o) => chars[o].status.unconscious && !(enc.roused || {})[o] && dist(me, enc.pos[o]) <= 1);
+      const t = friends.filter((o) => C.collapsed(chars[o]) && !(enc.roused || {})[o] && dist(me, enc.pos[o]) <= 1);
       if (t.length) addOther('rouse', { targets: t.map((o) => ({ id: o, inReach: true })) });
     }
+    // A bandage binds every bleeding wound, and Medicine may mend one wound a step (each wound once).
     if (c.inventory.bandages > 0) {
-      const patients = enc.ids.filter((o) => chars[o].bleeds.length > 0 && !chars[o].status.dead && (o === id || dist(me, enc.pos[o]) <= 1));
+      const patients = enc.ids.filter((o) => C.wounds(chars[o]).some((w) => w.bleed > 0 || !w.tended) && !chars[o].status.dead && (o === id || dist(me, enc.pos[o]) <= 1));
       if (patients.length) addOther('bandage', { targets: patients.map((o) => ({ id: o, inReach: true })) });
     }
-    // Cauterize (Fire): no bandage needed, and a poison's venom stays; the burn costs the patient a CON, never the last.
+    // Cauterize (Fire): no bandage needed; the burn is a small wound of its own at the torso.
     if (C.rank(c, 'cauterize') && (c.nouns || []).includes('fire')) {
-      const patients = enc.ids.filter((o) => chars[o].bleeds.some((b) => !b.poison) && !chars[o].status.dead && C.attr(chars[o], 'CON') > 1 && (o === id || dist(me, enc.pos[o]) <= 1));
-      if (patients.length) addOther('cauterize', { note: 'costs 1 CON', targets: patients.map((o) => ({ id: o, inReach: true })) });
+      const patients = enc.ids.filter((o) => C.bleeding(chars[o]) > 0 && !chars[o].status.dead && (o === id || dist(me, enc.pos[o]) <= 1));
+      if (patients.length) addOther('cauterize', { note: 'a burn', targets: patients.map((o) => ({ id: o, inReach: true })) });
     }
     out.defer = deferOption(enc, chars, id);
     return out;
@@ -865,6 +867,7 @@
     const c = chars[id];
     const forbid = conditionForbids(enc, chars, c, decl);
     if (forbid) return { err: forbid };
+    if (decl.type === 'standUp' && C.cannotStand(c)) return { err: 'The leg will not hold them' };
     let ap, stamina;
     if (DEFENSE_TYPES.includes(decl.type)) return { err: 'Defences are reactions: they are offered when a blow comes' };
     if (decl.type === 'strike') {
@@ -1113,8 +1116,10 @@
   }
 
   // A hit result that does nothing (the base the special cases fill in).
+  // point, cut, crush: the points past the armor (pts, their sum, makes the wound); blunt: what winds; stamina: taken
+  // point for point (a spell's chill or a burn's heat).
   function blankHit() {
-    return { vec: [0, 0, 0], P: 0, S: 0, B: 0, armored: false, toCON: 0, slashToAttrs: 0, bluntToStamina: 0, bluntToCON: 0, pointToAttrs: 0, crushToAttrs: 0, expCON: 0, expAttrs: 0, converted: 0, durLoss: 0, mitigated: { P: 0, S: 0, B: 0 }, noBleed: true, pierceVital: 0, cutVital: 0, bleedFactor: 1, bleedRounds: CONFIG.bleedRounds };
+    return { vec: [0, 0, 0], P: 0, S: 0, B: 0, armored: false, point: 0, cut: 0, crush: 0, blunt: 0, stamina: 0, pts: 0, kind: null, sev: 0, bleed: 0, winding: 0, downP: 0, killP: 0, converted: 0, durLoss: 0, mitigated: { P: 0, S: 0, B: 0 }, noBleed: true, bleedFactor: 1 };
   }
 
   // What a spell of some element does to the target: its element's keyword times `magic` (every spell).
@@ -1122,16 +1127,16 @@
     return C.damageMult(target, el) * C.damageMult(target, 'magic');
   }
 
-  // How a fighter going down is told: a collapse (R3) or, from a wound or a spell, unconscious.
+  // How a fighter going down is told: a collapse (R3) or, from wounds, down.
   function downWord(c) {
-    return C.collapsed(c) ? 'collapses' : 'falls unconscious';
+    return C.collapsed(c) ? 'collapses' : 'goes down';
   }
 
-  // Rounds after the one it began in that a collapse lasts (CONFIG.stamina.collapse); Second Wind: none.
+  // Rounds after the one it began in that a collapse lasts (CONFIG.stamina.collapse): fewer with WIL; Second Wind: none.
   function collapseRounds(c) {
-    const K = CONFIG.stamina && CONFIG.stamina.collapse;
-    if (!K) return Infinity;
-    return C.rank(c, 'second_wind') ? 0 : K.rounds;
+    const K = CONFIG.stamina.collapse;
+    if (C.rank(c, 'second_wind')) return 0;
+    return Math.max(0, K.rounds - Math.floor(C.attr(c, 'WIL') / K.perWil));
   }
 
   // The round a collapsed fighter comes round at the end of (what everyone can see), or null.
@@ -1203,10 +1208,9 @@
     // Stoneskin, barkskin, a shield of force: protection that isn't armor.
     if (G.Conditions) ['P', 'S', 'B'].forEach((k, i) => { v[i] = Math.max(0, v[i] - G.Conditions.mitigation(target, k, attacker)); });
 
-    const unconscious = target.stamina <= 0;
     const weapon = option.weaponType ? WEAPONS[option.weaponType] : null;
     const coupDeGrace = weapon && weapon.dagger && C.rank(attacker, 'coup_de_grace') && (prone || pinned);
-    const base = { v: v.slice(), prone, pinned, unconscious, weapon, coupDeGrace };
+    const base = { v: v.slice(), prone, pinned, weapon, coupDeGrace };
     const memo = flags.memo || new Map();
     const at = (loc, m) => hitAt(attacker, target, option, base, loc, m, memo);
     // One margin and one place (applyHit, and each branch of hitOutcomes): the blow as it falls.
@@ -1268,12 +1272,13 @@
   // piece over all of it. m: the blow's margin. memo keeps armorHit's work for a place and a way (through or turned)
   // within one computeHit or hitOutcomes.
   function hitAt(attacker, target, option, base, loc, m, memo) {
-    const { v, prone, pinned, unconscious, weapon, coupDeGrace } = base;
+    const { v, prone, pinned, weapon, coupDeGrace } = base;
     const L = CONFIG.locations;
     const armorLoc = loc || (L ? L.order[0] : null);
     const piece = armorLoc ? C.armorAt(target, armorLoc) : target.armor;
-    const armored = !!(piece && piece.durability > 0 && !unconscious && !coupDeGrace);
-    const ctx = { v, prone, pinned, unconscious, weapon, armored, piece, loc, ai: armorLoc ? C.armorInfo(target, armorLoc) : C.armorInfo(target) };
+    // A body down or collapsed keeps its armor; Coup de Grace finds the gap in it.
+    const armored = !!(piece && piece.durability > 0 && !coupDeGrace);
+    const ctx = { v, prone, pinned, weapon, armored, piece, loc, ai: armorLoc ? C.armorInfo(target, armorLoc) : C.armorInfo(target) };
     const need = pierceNeed(attacker, option, ctx);
     const way = need == null ? null : m >= need ? 'through' : 'turned';
     const key = (loc || '') + '|' + way;
@@ -1288,45 +1293,38 @@
     const res = Object.assign({}, r);
     res.margin = m;
     res.vitalAt = vitalThreshold(target, option, res, loc, pinned);
-    const reach = res.vitalKind === 'S' ? res.slashToAttrs : res.toCON + (res.pointToAttrs || 0);
+    const reach = res.vitalKind === 'S' ? res.cut : res.point;
     res.vital = reach > 0 && m >= res.vitalAt;
-    return expectWounds(target, res, loc);
+    return woundOutcome(target, option, res, loc);
   }
 
-  // The expectation over several outcomes [{w, h}] (weights summing to 1): margins and places. Besides the
-  // expected points: vitalP (the chance of a vital wound), vitalCON (the CON it adds, expected), killP (the chance the
-  // blow's CON alone kills: the wound tables' share of CON aside), throughP (the chance a point gets through armor).
+  // The expectation over several outcomes [{w, h}] (weights summing to 1): margins and places. The points, the
+  // severity, bleeding, winding, downP and killP are expected values; besides them sevP (the chance of each severity,
+  // 0 to 3), vitalP (the chance of a vital wound) and throughP (the chance a point gets through armor).
   function blendMany(parts, target) {
     const out = Object.assign({}, parts[0].h);
-    const keys = ['toCON', 'slashToAttrs', 'bluntToStamina', 'bluntToCON', 'durLoss', 'converted', 'pointToAttrs', 'crushToAttrs', 'expCON', 'expAttrs'];
+    const keys = ['point', 'cut', 'crush', 'blunt', 'stamina', 'pts', 'sev', 'bleed', 'winding', 'downP', 'killP', 'durLoss', 'converted'];
     // (Rounded to a billionth: forty-odd branches leave float dust on a number every branch agrees on.)
     const sum = (f) => Math.round(parts.reduce((n, p) => n + f(p.h) * p.w, 0) * 1e9) / 1e9;
     for (const k of keys) out[k] = sum((h) => h[k] || 0);
     out.mitigated = {};
     for (const k of ['P', 'S', 'B']) out.mitigated[k] = sum((h) => h.mitigated[k]);
     out.armored = parts.some((p) => p.h.armored);
-    const con = target ? C.attr(target, 'CON') : Infinity;
-    out.vitalP = 0; out.vitalCON = 0; out.killP = 0; out.throughP = 0;
+    out.sevP = [0, 0, 0, 0]; out.vitalP = 0; out.throughP = 0;
     let pointed = 0;
     for (const p of parts) {
       const h = p.h;
-      const extra = vitalExtra(h);
-      if (h.vital) { out.vitalP += p.w; out.vitalCON += p.w * extra; }
-      if (h.toCON + h.bluntToCON + (h.vital ? extra : 0) >= con && con > 0) out.killP += p.w;
+      out.sevP[h.sev || 0] += p.w;
+      if (h.vital) out.vitalP += p.w;
       if (h.pierce) { pointed += p.w; if (h.pierce === 'through') out.throughP += p.w; }
     }
+    out.sevP = out.sevP.map((x) => Math.round(x * 1e9) / 1e9);
     out.throughP = pointed > 0 ? out.throughP / pointed : null;
     const p0 = parts[0].h;
     out.pierce = parts.every((p) => p.h.pierce === p0.pierce) ? p0.pierce : null;
+    out.kind = parts.every((p) => p.h.kind === p0.kind) ? p0.kind : null;
     out.vital = false; out.location = null; out.piece = null; out.margin = null;
     return out;
-  }
-
-  // What a vital wound adds, in CON: a point's (mult − 1) × what went in (a point into a limb: all of it to CON), a
-  // cut's damage again.
-  function vitalExtra(h) {
-    if (h.vitalKind === 'S') return h.slashToAttrs;
-    return (h.toCON + (h.pointToAttrs || 0)) * ((CONFIG.vital.mult || 1) - 1);
   }
 
   // Cramped: inside the weapon's reach.min (a spear's point at range 1), in a clinch with a weapon that
@@ -1356,14 +1354,14 @@
   // What a blow does to this target, armored or not. way (CONFIG.pierce): 'through' — the piercing past the armor's P
   // mitigation reaches the body whole; 'turned' — it lands as blunt instead; null — no point, or no armor.
   function armorHit(attacker, target, option, ctx, way) {
-    const { v, unconscious, weapon, armored, ai, piece, loc } = ctx;
+    const { v, weapon, armored, ai, piece } = ctx;
     let [P, S, B] = v;
     // Force that changes form on the armor (a turned point, a cut's force through mail) lands as blunt, and answers
     // to the blunt keyword (C.damageMult): a golem immune to blunt takes nothing from an arrow its body turns.
     const toBlunt = C.damageMult(target, 'B');
     if (way === 'turned') { B += Math.round(P * CONFIG.pierce.deflectBlunt * toBlunt); P = 0; }
     const motion = option.motion === 'unarmed' ? 'swing' : option.motion;
-    const res = { vec: [P, S, B], P, S, B, armored: false, toCON: 0, slashToAttrs: 0, bluntToStamina: 0, bluntToCON: 0, crushToAttrs: 0, pointToAttrs: 0, converted: 0, durLoss: 0, mitigated: { P: 0, S: 0, B: 0 }, pierce: way };
+    const res = { vec: [P, S, B], P, S, B, armored: false, point: 0, cut: 0, crush: 0, blunt: 0, stamina: 0, converted: 0, durLoss: 0, mitigated: { P: 0, S: 0, B: 0 }, pierce: way };
 
     if (armored) {
       res.armored = true;
@@ -1386,69 +1384,60 @@
       // it by more than that cuts through to the body; the rest lands as blunt.
       let Sc = Sr;
       if (ai.cutThrough != null && Sr > ai.cutThrough) {
-        res.slashToAttrs = Math.round(Sr - ai.cutThrough);
-        res.cutThrough = res.slashToAttrs;
-        Sc = Sr - res.slashToAttrs;
+        res.cut = Math.round(Sr - ai.cutThrough);
+        res.cutThrough = res.cut;
+        Sc = Sr - res.cut;
       }
-      res.toCON = Pr;
+      res.point = Pr;
       // Flexible armor (mail: armor.yaml transmit) passes more of a cut's force to the bone.
       res.converted = Math.round(Sc * Math.min(1, (CONFIG.conversion[motion] || 0) * (ai.transmit || 1)) * toBlunt);
-      res.bluntToStamina = Br + res.converted;
+      res.blunt = Br + res.converted;
       // Plate spreads what is left of a blow over the whole body (armor.yaml dissipate): a cut or a point it
       // turns (glancing), less or nothing of a crushing blow (a mace, a hammer, a fist).
       const spread = ai.dissipate && (C.mainIndex(option.damage) === 2 ? ai.dissipate.crushing : ai.dissipate.glancing);
-      if (spread > 0 && res.bluntToStamina > 0) {
-        const kept = Math.floor(res.bluntToStamina * (1 - spread));
-        res.dissipated = res.bluntToStamina - kept;
-        res.bluntToStamina = kept;
+      if (spread > 0 && res.blunt > 0) {
+        const kept = Math.floor(res.blunt * (1 - spread));
+        res.dissipated = res.blunt - kept;
+        res.blunt = kept;
       }
       // Wear: blunt, converted cuts and piercing.
       const pierceWear = P * (CONFIG.armorPierceWear || 0);
       res.durLoss = piece.type === 'padded' ? 0 : Math.round((B + res.converted + pierceWear) * (CONFIG.armorWearScale == null ? 1 : CONFIG.armorWearScale) * Items.wearMult(piece));
     } else {
-      res.toCON = P;
-      res.slashToAttrs = S;
-      if (unconscious) res.bluntToCON = B;
-      else res.bluntToStamina = B;
+      res.point = P;
+      res.cut = S;
+      res.blunt = B;
     }
-    // Crushing: blunt past the armor beyond a threshold breaks bones (CON) as well as winding.
-    // R5 (CONFIG.impact.crushBare): on a location with no armor, bone breaks sooner; with crushAttrs, a crush where
-    // the blow landed takes that location's attributes (rolled per point in applyHit), not CON alone.
+    // Crushing: blunt past the armor beyond a threshold breaks bone as well as winding (on bare skin, crushBare).
     const I = CONFIG.impact;
-    if (I && res.bluntToStamina > 0 && !C.tireless(target)) {
+    if (I && res.blunt > 0 && !C.tireless(target)) {
       const bare = !(piece && piece.durability > 0);
       const at = bare && I.crushBare != null ? I.crushBare : I.crushAt;
-      const crush = Math.floor(Math.max(0, res.bluntToStamina - at * sizeOf(target)) / I.crushPer);
-      if (crush > 0) {
-        if (I.crushAttrs && loc) res.crushToAttrs += crush;
-        else res.bluntToCON += crush;
-        res.crushed = crush;
-      }
+      const crush = Math.floor(Math.max(0, res.blunt - at * sizeOf(target)) / I.crushPer);
+      if (crush > 0) { res.crush += crush; res.crushed = crush; }
     }
-    // Tireless creatures have no stamina to absorb a blow: blunt goes to the body (CON), and
-    // they neither bleed nor take venom.
+    // Tireless creatures have no stamina to wind: blunt breaks the frame, and they neither bleed nor take venom.
     if (C.tireless(target)) {
-      res.bluntToCON += res.bluntToStamina;
-      res.bluntToStamina = 0;
+      res.crush += res.blunt;
+      res.blunt = 0;
       res.noBleed = true;
     } else if (G.Effects.has(target, 'noBleed')) res.noBleed = true;
-    // An untrained punch or kick takes stamina only: no broken bones, nothing off a body that has no stamina to lose.
-    if (option.staminaOnly) { res.bluntToCON = 0; res.crushToAttrs = 0; res.crushed = 0; }
-    // R4 (locations.wounds.pointToCON): a point into a limb takes the limb's attributes, unless it is vital.
-    if (pointIntoLimb(target, loc)) { res.pointLimb = true; res.pointToAttrs = res.toCON; res.toCON = 0; }
+    // An untrained punch or kick winds only: no broken bones, nothing off a body that has no stamina to lose.
+    if (option.staminaOnly) { res.crush = 0; res.crushed = 0; }
     const w = option.wound;
     res.vitalKind = w && w.kind === 'S' ? 'S' : 'P';
     res.bleedFactor = w ? w.bleed : 1;
-    res.bleedRounds = w ? w.rounds : CONFIG.bleedRounds;
+    res.pts = res.point + res.cut + res.crush;
+    res.kind = res.pts > 0 ? (res.point >= res.cut && res.point >= res.crush ? 'point' : res.cut >= res.crush ? 'cut' : 'crush') : null;
     return res;
   }
 
   // CONFIG.vital: the margin at or above which a wound here is vital (Infinity: never). The place's threshold
-  // (locations.wounds.vital; nowhere in particular, the share-weighted mean), + the armor there, − the blow's depth or
+  // (wounds.vital; nowhere in particular, the share-weighted mean), + the armor there, − the blow's depth or
   // edge, + the body's size. Only a blow with a wound that can be vital (a point, an edge) on a body that has vitals.
   function vitalThreshold(target, option, res, loc, pinned) {
     const V = CONFIG.vital, w = option.wound;
-    const W = CONFIG.locations && CONFIG.locations.wounds && CONFIG.locations.wounds.vital;
+    const W = CONFIG.wounds && CONFIG.wounds.vital;
     if (!V || !W || !w || !(w.vital > 0) || C.tireless(target)) return Infinity;
     let base;
     if (loc) base = W[loc];
@@ -1466,52 +1455,55 @@
     return w && w.vital > 0 ? Math.round(CONFIG.vital.lower * w.vital) : 0;
   }
 
-  // CONFIG.locations.wounds: what one point of a wound takes where it lands, rolled among these. A tireless body
-  // (tirelessCON) has no strength or speed to lose, only its frame: CON wherever it lands. Nowhere in particular: the
-  // old d4 (STR, CON, SPD, DEX).
-  function woundTable(target, loc) {
-    const W = CONFIG.locations && CONFIG.locations.wounds;
-    if (W && W.tirelessCON && C.tireless(target)) return ['CON'];
-    if (loc && W && W.attrs && W.attrs[loc]) return W.attrs[loc];
-    return [1, 2, 3, 4].map((i) => CONFIG.slashAttributeTable[i]);
-  }
-
-  // R4: a point that goes in here takes the location's attributes rather than CON (not the head or the torso).
-  function pointIntoLimb(target, loc) {
-    const W = CONFIG.locations && CONFIG.locations.wounds;
-    if (!loc || !W || !W.pointToCON || !W.attrs || !W.attrs[loc] || W.pointToCON.includes(loc)) return false;
-    return !(W.tirelessCON && C.tireless(target));
-  }
-
-  // The expectation of what applyHit takes for this hit at this location (the attribute rolls; the vital wound is
-  // already settled by the margin), as res.expCON and res.expAttrs (every other attribute). Linear, so blends over
-  // margins and locations stay exact. A carried cut is not in it (it lands where it carries).
-  function expectWounds(target, res, loc) {
-    const m = CONFIG.vital ? CONFIG.vital.mult : 1;
-    const pV = res.vital && res.vitalKind !== 'S' ? 1 : 0;
-    const cV = res.vital && res.vitalKind === 'S' ? 1 : 0;
-    const t = woundTable(target, loc);
-    const c = t.filter((a) => a === 'CON').length / t.length;
-    const pt = res.pointToAttrs || 0, sl = res.slashToAttrs || 0, cr = res.crushToAttrs || 0;
-    res.expCON = res.toCON * (1 + pV * (m - 1)) + res.bluntToCON + pt * (pV * m + (1 - pV) * c) + sl * (c + cV) + cr * c;
-    res.expAttrs = pt * (1 - pV) * (1 - c) + sl * (1 - c) + cr * (1 - c);
+  // What a hit leaves (CONFIG.wounds): a wound whose severity comes from the points past the armor (a vital wound a
+  // step worse), its bleeding, the winding of blunt that broke nothing (by the severity its blunt would be), and the
+  // chances it takes the target down (downP) or, on a body already down, kills it (killP). loc: where it landed
+  // (a spell that lands nowhere in particular wounds the torso).
+  function woundOutcome(target, option, res, loc) {
+    const K = CONFIG.wounds;
+    let sev = res.pts > 0 ? C.severityOf(target, res.pts) : 0;
+    if (res.vital && res.pts > 0) sev = Math.min(3, sev + 1);
+    res.sev = sev;
+    res.bleed = sev > 0 && !res.noBleed ? bleedOf(target, option, res, sev) : 0;
+    const ws = res.blunt > 0 && !C.tireless(target) ? C.severityOf(target, res.blunt) : 0;
+    res.winding = ws > 0 ? K.winding[Math.min(K.winding.length, ws) - 1] : 0;
+    res.downP = downChance(target, loc || 'torso', sev);
+    res.killP = sev > 0 && C.isDown(target) && !target.hero ? 1 : 0;
     return res;
   }
 
-  // Roll n points of a wound among the attributes of where it landed; returns {attr: points}.
-  async function rollWound(attacker, target, loc, n, label, roller) {
-    const table = woundTable(target, loc);
-    const tally = {};
-    if (n <= 0) return tally;
-    if (table.length === 1) { tally[table[0]] = n; C.damageAttr(target, table[0], n); return tally; }
-    const where = loc ? ` (${(CONFIG.locations.names[loc] || loc).toLowerCase()})` : '';
-    const rolls = await roller({ actorId: attacker.id, sides: table.length, count: n, label, detail: `${n}d${table.length} on ${target.name}${where}: ` + table.map((a, i) => `${i + 1} ${a}`).join(', ') });
-    for (const r of rolls) {
-      const a = table[Math.max(0, Math.min(table.length - 1, r - 1))];
-      tally[a] = (tally[a] || 0) + 1;
-      C.damageAttr(target, a, 1);
-    }
-    return tally;
+  // A wound's bleeding (wounds.bleed): a cut by its severity, a point by its width; a vital wound more; a broadhead
+  // half as much again; a big body bleeds less of itself.
+  function bleedOf(target, option, res, sev) {
+    const B = CONFIG.wounds.bleed;
+    let n = 0;
+    if (res.kind === 'cut') n = sev * B.cut;
+    else if (res.kind === 'point') n = Math.ceil(sev * (res.bleedFactor || 1));
+    if (n > 0 && res.vital) n += B.vital;
+    const hd = option.arrowHead && CONFIG.archery.heads[option.arrowHead];
+    if (hd && hd.bleed) n = Math.round(n * hd.bleed);
+    return Math.max(0, Math.round(n / sizeOf(target)));
+  }
+
+  // Would a wound of this severity here call for a shock check (a severity-3 wound not already down by itself)?
+  function needsShock(target, place, sev) {
+    if (!(sev >= 3) || C.tireless(target) || C.isDown(target) || target.status.dead) return false;
+    if (C.woundLoad(target) + sev >= C.boxes(target)) return false;
+    const P = CONFIG.wounds.places[place] || {};
+    return !(P.down != null && sev >= P.down);
+  }
+
+  // The chance a wound of this severity here takes the target down: by the boxes, the place (a head wound at its
+  // `down`), or a failed shock check (d10 + CON under wounds.shock). A tireless body goes down broken.
+  function downChance(target, place, sev) {
+    if (!(sev > 0) || target.status.dead) return 0;
+    if (C.isDown(target)) return 1;
+    if (C.woundLoad(target) + sev >= C.boxes(target)) return 1;
+    const P = CONFIG.wounds.places[place] || {};
+    if (P.down != null && sev >= P.down) return 1;
+    if (!needsShock(target, place, sev)) return 0;
+    const die = CONFIG.maneuver.die;
+    return Math.max(0, Math.min(1, (CONFIG.wounds.shock - C.attr(target, 'CON') - 1) / die));
   }
 
   // Fire (magic stub): armor stops part of it; every few points left over cost 1 CON,
@@ -1526,7 +1518,6 @@
     const hm = heroMult(attacker, target);
     if (hm !== 1) mag = Math.round(mag * hm);
     const res = Object.assign(blankHit(), { fire: mag });
-    const unconscious = target.stamina <= 0;
     let left = mag;
     const el = option.spell.element;
     const share = M.energyMitigation ? M.energyMitigation[el] : M.fireMitigation;
@@ -1541,16 +1532,15 @@
     const bane = (M.undeadBane || {})[el];
     if (bane && G.Effects.has(target, 'undead')) left *= bane;
     if (el === 'spirit' && !G.Effects.has(target, 'undead')) {
-      res.bluntToStamina = Math.floor(left / 2);
+      res.stamina = C.tireless(target) ? 0 : Math.floor(left / 2);
       return res;
     }
-    if (unconscious) res.toCON = left;
-    else {
-      res.toCON = Math.floor(left / M.fireConPer);
-      res.bluntToStamina = left - res.toCON;
-    }
-    res.expCON = res.toCON;
-    return res;
+    // Every fireConPer points left burn (a wound); the rest is heat, taken from stamina point for point.
+    res.crush = Math.floor(left / M.fireConPer);
+    res.stamina = C.tireless(target) ? 0 : left - res.crush;
+    res.pts = res.crush;
+    res.kind = res.pts > 0 ? 'burn' : null;
+    return woundOutcome(target, option, res, null);
   }
 
   // Life withers the living body: half its magnitude to CON, no armor stops it. The tireless
@@ -1560,9 +1550,10 @@
     if (flags.half) mag = Math.floor(mag / 2);
     mag = Math.floor(mag * spellMult(target, 'life'));
     const res = blankHit();
-    if (!C.tireless(target)) res.toCON = Math.floor(mag / 2);
-    res.expCON = res.toCON;
-    return res;
+    if (!C.tireless(target)) res.crush = Math.floor(mag / 2);
+    res.pts = res.crush;
+    res.kind = res.pts > 0 ? 'wither' : null;
+    return woundOutcome(target, option, res, null);
   }
 
   // Size (monster trait, 1 = a person): a blade's reach into a big body is shallow; its vitals
@@ -1639,43 +1630,33 @@
   // it, where that place's armor meets it. The place, or null.
   function carryInto(target, h) {
     const K = CONFIG.locations && CONFIG.locations.carry;
-    if (!K || !h.location || !(h.slashToAttrs > K.limb) || !(K.from || []).includes(h.location)) return null;
+    if (!K || !h.location || !(h.cut > K.limb) || !(K.from || []).includes(h.location)) return null;
     return worstBeside(target, h.location, false);
   }
   function carryHit(attacker, target, option, h, into, margin) {
     const K = CONFIG.locations.carry;
-    const h2 = computeHit(attacker, target, Object.assign({}, option, { damage: [0, h.slashToAttrs - K.limb, 0], punch: 0 }), { location: into, carried: true, margin });
-    h2.carried = h.slashToAttrs - K.limb;
+    const h2 = computeHit(attacker, target, Object.assign({}, option, { damage: [0, h.cut - K.limb, 0], punch: 0 }), { location: into, carried: true, margin });
+    h2.carried = h.cut - K.limb;
     return h2;
   }
 
-  // What a wound does where it lands (CONFIG.locations.wounds.effects): a hand or arm may lose its grip, a leg go
-  // out from under, a blow to the head stun. Odds per point that reached the body there (blunt for a stun), ÷ size.
-  async function woundEffects(enc, attacker, target, option, primary, roller, parts) {
-    const E = CONFIG.locations && CONFIG.locations.wounds && CONFIG.locations.wounds.effects;
-    const fx = E && primary.loc ? E[primary.loc] : null;
-    if (!fx || !C.isActive(target)) return;
-    const wound = primary.toCON + primary.slash;
-    const sz = sizeOf(target);
-    const chance = (per, n) => Math.min(0.9, (per * n) / sz);
-    const roll = async (p, label) => p > 0 && (await rollDie(roller, attacker.id, 100, label, `d100: ${Math.round(p * 100)} or less`)) <= Math.round(p * 100);
-    if (fx.disarm && wound > 0 && C.wieldedWeapon(target) && !C.wieldedWeapon(target).natural) {
-      if (await roll(chance(fx.disarm, wound), `${target.name}: keep hold`)) {
-        const w = dropHeld(target);
-        if (w) parts.push(`${target.name}'s hand opens: ${Items.itemName(w)} falls`);
-      }
+  // What a wound does as it lands (wounds.places): an arm wound at `drop` lets go of what is in hand, a leg wound at
+  // `fell` knocks the body down, a head wound stuns (at severity 1 CON resists it, as a spell; at 2 no save).
+  async function placeEffects(enc, attacker, target, place, sev, roller, parts) {
+    const P = CONFIG.wounds.places[place] || {};
+    if (!C.isActive(target)) return;
+    if (P.drop != null && sev >= P.drop && C.wieldedWeapon(target) && !C.wieldedWeapon(target).natural) {
+      const w = dropHeld(target);
+      if (w) { loseWindUp(enc, target, null); parts.push(`${target.name}'s hand opens: ${Items.itemName(w)} falls`); }
     }
-    if (fx.trip && wound > 0 && !target.status.prone && !G.Effects.has(target, 'flying')) {
-      if (await roll(chance(fx.trip, wound), `${target.name}: keep footing`)) {
-        knockDown(enc, target);
-        parts.push(`${target.name}'s leg gives: down`);
-      }
+    if (P.fell != null && sev >= P.fell && !target.status.prone && !G.Effects.has(target, 'flying')) {
+      knockDown(enc, target);
+      parts.push(`${target.name}'s leg gives: down`);
     }
-    if (fx.stun && primary.blunt > 0 && G.Magic && G.Conditions && !C.tireless(target)) {
-      if (await roll(chance(fx.stun, primary.blunt), `${target.name}: a blow to the head`)) {
-        const got = await G.Magic.afflict(enc, attacker, target, 'stunned', { rounds: 1 }, roller);
-        if (got !== false) parts.push(`${target.name} is stunned`);
-      }
+    if (Array.isArray(P.stun) && sev <= P.stun.length && G.Magic && G.Conditions && !C.tireless(target)) {
+      const save = sev < P.stun.length;
+      const got = save ? await G.Magic.afflict(enc, attacker, target, 'stunned', { rounds: 1 }, roller) : G.Conditions.add(target, 'stunned', { rounds: 1, src: attacker ? attacker.id : null });
+      if (got !== false && got !== null) parts.push(`${target.name} is stunned`);
     }
   }
 
@@ -1710,13 +1691,18 @@
     } else if (margin != null && h.pierce) parts.push(`by ${margin}: ${h.pierce === 'through' ? 'the point goes through' : 'the armor turns the point'}`);
     const into = carryInto(target, h);
     const carried = into ? carryHit(attacker, target, option, h, into, margin) : null;
-    if (carried) h.slashToAttrs = CONFIG.locations.carry.limb;
+    if (carried) {
+      // The cut leaves a limb's worth where it struck; the rest is the carried wound's.
+      h = Object.assign({}, h, { cut: CONFIG.locations.carry.limb });
+      h.pts = h.point + h.cut + h.crush;
+      woundOutcome(target, option, h, h.location);
+    }
     // The blade meets the armor: metal chews an edge, cloth and leather barely touch it, flesh not at all.
     // A turned point takes it worst.
     const piece = h.piece || (h.location ? null : target.armor);
     if (h.armored && piece) wearWeapon(enc, attacker, weaponItem(attacker, option), blowForce(option), h.pierce === 'turned' ? 'deflected' : 'hit', armorMaterial(piece));
     const st = target.status;
-    const before0 = { dmg: C.totalDamage(target), stamina: target.stamina, up: C.isActive(target) };
+    const before0 = { load: C.woundLoad(target), stamina: target.stamina, up: C.isActive(target) };
     const before = enc.onHit ? before0 : null;
 
     if (h.fire != null && h.fireStopped) parts.push(`armor stops ${h.fireStopped} ${option.spell ? option.spell.element : 'fire'}`);
@@ -1728,123 +1714,61 @@
       if (h.cutThrough) parts.push('the blade cuts through');
       if (h.durLoss) parts.push(`armor durability −${h.durLoss}`);
     }
-    // What landed where it struck, for the location's wound effects (before a carried cut joins it).
-    const primary = { loc: h.location, toCON: h.toCON + (h.pointToAttrs || 0), slash: h.slashToAttrs, blunt: h.bluntToStamina + h.bluntToCON + (h.crushToAttrs || 0) };
-    // The carried part of a cut: its own armor, its own wear, then it counts with the rest of the blow.
-    let cutVital = h.vital && h.vitalKind === 'S';
     if (carried) {
       parts.push(`the cut carries ${carried.carried} into the ${placeName(carried.location)}${carried.piece ? '' : ' (bare)'}`);
       if (carried.armored && carried.piece) {
         carried.piece.durability = Math.max(0, carried.piece.durability - carried.durLoss);
         if (carried.mitigated.S + carried.mitigated.B > 0) parts.push(`armor there stops ${carried.mitigated.S}`);
       }
-      if (carried.vital && carried.vitalKind === 'S') cutVital = true;
-      h = Object.assign({}, h, {
-        slashToAttrs: h.slashToAttrs + carried.slashToAttrs,
-        bluntToStamina: h.bluntToStamina + carried.bluntToStamina,
-        bluntToCON: h.bluntToCON + carried.bluntToCON,
-      });
     }
 
-    let wound = 0;
-    let pierced = 0;
-    const vital = h.vital && h.vitalKind !== 'S';
-    if (h.toCON > 0) {
-      C.damageAttr(target, 'CON', h.toCON);
-      parts.push(`${h.toCON} CON`);
-      wound += h.toCON;
-      pierced = h.toCON;
-      if (vital) {
-        const extra = h.toCON * (CONFIG.vital.mult - 1);
-        C.damageAttr(target, 'CON', extra);
-        parts.push(`VITAL WOUND +${extra} CON`);
+    // The wounds (CONFIG.wounds): where it struck, and where a cut carried. A severity-3 wound that doesn't down the
+    // body by itself calls for a shock check (d10 + CON).
+    const landed = [];
+    const downBefore = C.isDown(target);
+    for (const x of [h, carried]) {
+      if (!x || !(x.sev > 0)) continue;
+      const place = x.location || 'torso';
+      // A spell's energy that lands nowhere in particular (a burn, a withering) adds to the one wound of its kind.
+      if (!x.location && option.spell) {
+        const r = C.harm(target, x.pts, place, x.kind);
+        if (r.wound) { landed.push({ place, sev: r.wound.sev }); parts.push(`${x.kind} wound ${r.wound.sev} at the ${placeName(place)}`); }
+        continue;
       }
+      const shock = needsShock(target, place, x.sev) ? await rollDie(roller, target.id, CONFIG.maneuver.die, `${target.name}: shock`, `d10 + CON ${C.attr(target, 'CON')} against ${CONFIG.wounds.shock}`) : null;
+      const r = C.addWound(target, { place, sev: x.sev, kind: x.kind, bleed: x.bleed, pts: x.pts, vital: x.vital }, shock, !downBefore);
+      if (!r.wound) continue;
+      landed.push({ place, sev: x.sev });
+      parts.push(`${x.vital ? 'VITAL ' : ''}${x.kind} wound ${x.sev} at the ${placeName(place)}${x.bleed ? `, bleeding ${x.bleed}` : ''}`);
+      if (r.shock) parts.push(`shock ${r.shock.roll} + ${C.attr(target, 'CON')} against ${r.shock.need}: ${r.shock.held ? 'stays up' : 'goes down'}`);
     }
-    if (h.pointToAttrs > 0) {
-      // R4: a point into a limb. A vital one (an artery) takes CON × mult, as anywhere; otherwise each point takes one
-      // of the limb's attributes.
-      const n = h.pointToAttrs;
-      wound += n;
-      pierced += n;
-      if (vital) {
-        C.damageAttr(target, 'CON', n * CONFIG.vital.mult);
-        parts.push(`VITAL WOUND ${n * CONFIG.vital.mult} CON`);
-      } else {
-        const tally = await rollWound(attacker, target, primary.loc, n, 'Where the point goes in', roller);
-        parts.push(Object.keys(tally).map((a) => `${tally[a]} ${a}`).join(', '));
-      }
-    }
-    if (h.slashToAttrs > 0) {
-      // Each point of a cut takes an attribute: from the location's table (CONFIG.locations.wounds.attrs). A carried
-      // cut's points take from where it carried to.
-      const groups = [{ loc: primary.loc, n: h.slashToAttrs - (carried ? carried.slashToAttrs : 0) }];
-      if (carried && carried.slashToAttrs > 0) groups.push({ loc: carried.location, n: carried.slashToAttrs });
-      const tally = {};
-      for (const g of groups) {
-        const got = await rollWound(attacker, target, g.loc, g.n, 'Slashing hit locations', roller);
-        for (const a in got) tally[a] = (tally[a] || 0) + got[a];
-      }
-      parts.push(Object.keys(tally).map((a) => `${tally[a]} ${a}`).join(', '));
-      wound += h.slashToAttrs;
-      if (cutVital) {
-        C.damageAttr(target, 'CON', h.slashToAttrs);
-        parts.push(`VITAL CUT +${h.slashToAttrs} CON`);
-      }
-    }
-    if (h.bluntToCON > 0) {
-      C.damageAttr(target, 'CON', h.bluntToCON);
-      parts.push(`${h.bluntToCON} CON (blunt)`);
-    }
-    if (h.crushToAttrs > 0) {
-      // R5: bone breaks where the blow landed.
-      const tally = await rollWound(attacker, target, primary.loc, h.crushToAttrs, 'Broken bones', roller);
-      parts.push('bone breaks: ' + Object.keys(tally).map((a) => `${tally[a]} ${a}`).join(', '));
-    }
-    if (h.bluntToStamina > 0) {
-      let amt = h.bluntToStamina;
+    // Winding (wounds.winding): blunt that broke nothing costs a fixed share of stamina by its severity; heat and a
+    // chill take theirs point for point.
+    let wind = (h.winding || 0) + (carried ? carried.winding || 0 : 0) + (h.stamina || 0);
+    if (wind > 0 && !C.tireless(target)) {
       if (h.armored && C.rank(target, 'living_fortress') && !enc.fortressUsed[target.id]) {
         enc.fortressUsed[target.id] = true;
         parts.push('Living Fortress absorbs the blow');
-        amt = 0;
+        wind = 0;
       }
-      if (amt > 0) {
-        target.stamina = Math.max(0, target.stamina - amt);
-        enc.hitThisRound[target.id] = (enc.hitThisRound[target.id] || 0) + amt;
-        parts.push(`${amt} stamina`);
+      if (wind > 0) {
+        target.stamina = Math.max(0, target.stamina - wind);
+        enc.hitThisRound[target.id] = (enc.hitThisRound[target.id] || 0) + wind;
+        parts.push(`${h.winding ? 'winded: ' : ''}${wind} stamina`);
       }
     }
-    await woundEffects(enc, attacker, target, option, primary, roller, parts);
-    if (option.venom && wound > 0 && !h.noBleed && C.damageMult(target, 'venom') > 0) {
-      // The deeper the bite, the more venom: up to `con` a round, never more than the wound.
-      const per = Math.min(option.venom.con, wound);
-      target.bleeds.push({ remaining: per * option.venom.rounds, rounds: option.venom.rounds, poison: true });
+    for (const x of landed) await placeEffects(enc, attacker, target, x.place, x.sev, roller, parts);
+    if (option.venom && landed.length && !h.noBleed && C.damageMult(target, 'venom') > 0 && G.Conditions) {
+      // The deeper the bite, the more venom: up to `con` a round, never more than the wound's severity.
+      G.Conditions.add(target, 'poisoned', { rounds: option.venom.rounds, mag: Math.min(option.venom.con, h.sev || 1), src: attacker ? attacker.id : null });
       parts.push('poisoned');
     }
     if (option.spell && option.spell.element === 'fire') {
       (enc.burned || (enc.burned = {}))[target.id] = true;
       if (target.status.webbed) { target.status.webbed = 0; parts.push('the webs burn away'); }
     }
-    if (wound > 0 && !h.noBleed) {
-      // A piercing wound bleeds by its width, for longer the deeper it goes (a vital one twice
-      // as much); a cut bleeds its own damage again. A broadhead's wide cut bleeds worse.
-      const hd = option.arrowHead && CONFIG.archery.heads[option.arrowHead];
-      const hdMult = hd ? hd.bleed : 1;
-      const cut = h.slashToAttrs * (cutVital ? 2 : 1);
-      const pierceBleed = pierced * h.bleedFactor * (vital ? 2 : 1);
-      if (h.bleedRounds === CONFIG.bleedRounds) {
-        target.bleeds.push({ remaining: Math.round((pierceBleed + cut) * hdMult), rounds: CONFIG.bleedRounds });
-      } else {
-        if (pierceBleed > 0) target.bleeds.push({ remaining: Math.round(pierceBleed * hdMult), rounds: h.bleedRounds });
-        if (cut > 0) target.bleeds.push({ remaining: Math.round(cut * hdMult), rounds: CONFIG.bleedRounds });
-      }
-      // A big body (trait size) loses less of itself to a man-sized wound.
-      const sz = sizeOf(target);
-      if (sz > 1) for (const b of target.bleeds) if (!b.sized) { b.remaining = Math.round(b.remaining / sz); b.sized = true; }
-      target.bleeds = target.bleeds.filter((b) => b.remaining > 0);
-      parts.push('bleeding');
-    }
     // A blow that hurts wakes the mesmerized and ends a calm.
-    const harmed = h.toCON + (h.pointToAttrs || 0) + h.slashToAttrs + h.bluntToCON + (h.crushToAttrs || 0) + h.bluntToStamina > 0;
+    const harmed = landed.length > 0 || wind > 0;
     if (harmed && G.Conditions) for (const x of G.Conditions.list(target).slice()) {
       if ((CONFIG.conditions[x.key] || {}).breakOnHarm) { G.Conditions.remove(target, x.key); parts.push(`${CONFIG.conditions[x.key].name.toLowerCase()} no more`); }
     }
@@ -1856,43 +1780,38 @@
     if (passesThrough(attacker, target, option)) parts.push('it passes through');
     if (h.magicImmune) parts.push('the magic washes off it');
     if (!parts.length) parts.push('no effect');
-    const wasDown = st.unconscious;
+    const wasOut = !C.isActive(target);
     C.updateCondition(target);
     let tail = '';
     if (st.dead) tail = ` ${target.name} is DEAD.`;
-    else if (st.unconscious && !wasDown) tail = ` ${target.name} ${downWord(target)}.`;
+    else if (!C.isActive(target) && !wasOut) tail = ` ${target.name} ${downWord(target)}.`;
+    else if (!C.isActive(target) && before0.up) tail = ` ${target.name} ${downWord(target)}.`;
     // Impact: a hard blow throws its target back.
     if (harmed && CONFIG.impact) {
-      const landed = h.bluntToStamina + h.bluntToCON + (h.crushToAttrs || 0) + (h.toCON + (h.pointToAttrs || 0) + h.slashToAttrs) / 2;
-      const back = Math.min(CONFIG.impact.knockbackMax, Math.floor(landed / CONFIG.impact.knockbackPer / sizeOf(target)));
+      const landedF = h.blunt + h.crush + (h.point + h.cut) / 2;
+      const back = Math.min(CONFIG.impact.knockbackMax, Math.floor(landedF / CONFIG.impact.knockbackPer / sizeOf(target)));
       if (back > 0 && !option.spell && !st.dead && attacker !== target && enc.pos[attacker.id] && enc.pos[target.id] && G.Magic) {
         await G.Magic.push(enc, chars, target, enc.pos[attacker.id], back, roller);
       }
     }
-    // An enchanted blade that drinks (enchantments.yaml drain): the wielder
-    // takes back a share of the stamina and attribute points the blow dealt.
+    // An enchanted blade that drinks (enchantments.yaml drain): the wielder takes back a share of the stamina the
+    // blow took, and mends a share of the severity it dealt.
     const blade = option.weaponId && attacker.weapons ? attacker.weapons.find((w) => w.id === option.weaponId) : null;
     const drain = blade && (Items.enchantsOf(blade).find((e) => e.drain) || {}).drain;
     if (drain && before0) {
-      const took = { attrs: C.totalDamage(target) - before0.dmg, stamina: Math.max(0, before0.stamina - target.stamina) };
-      const st = Math.round(took.stamina * (drain.stamina || 0));
-      let heal = Math.round(took.attrs * (drain.attrs || 0));
-      const gotSt = Math.min(st, C.maxStamina(attacker) - attacker.stamina);
+      const took = { sev: C.woundLoad(target) - before0.load, stamina: Math.max(0, before0.stamina - target.stamina) };
+      const stm = Math.round(took.stamina * (drain.stamina || 0));
+      const heal = Math.round(took.sev * (drain.wounds || 0));
+      const gotSt = Math.min(stm, C.maxStamina(attacker) - attacker.stamina);
       if (gotSt > 0) attacker.stamina += gotSt;
-      let healed = 0;
-      while (heal > 0) {
-        const a = G.Recovery ? G.Recovery.healTarget(attacker) : (attacker.damage.CON ? 'CON' : null);
-        if (!a) break;
-        C.healAttr(attacker, a, 1);
-        heal--; healed++;
-      }
-      if (gotSt > 0 || healed) tail += ` ${Items.itemName(blade)} drinks: ${attacker.name} ${[gotSt ? `+${gotSt} stamina` : null, healed ? `+${healed} healed` : null].filter(Boolean).join(', ')}.`;
+      const healed = heal > 0 ? C.mendWounds(attacker, 1, heal) : 0;
+      if (gotSt > 0 || healed) tail += ` ${Items.itemName(blade)} drinks: ${attacker.name} ${[gotSt ? `+${gotSt} stamina` : null, healed ? `wounds ${healed} better` : null].filter(Boolean).join(', ')}.`;
     }
     // Sims attach enc.onHit to credit harm and knockdowns to whoever dealt them (sim/metrics.js reads the option and
-    // location too; the margin, the way a point met the armor and a vital wound are there for step A's report). Unset in play: nothing is built.
-    if (before) enc.onHit({ attacker, target, option, location: h.location || null, margin: margin == null ? null : margin, way: h.pierce || null, vital: !!h.vital, attrs: C.totalDamage(target) - before.dmg, stamina: Math.max(0, before.stamina - target.stamina), downed: before.up && !C.isActive(target), spell: !!option.spell });
+    // location too, the margin, the way a point met the armor, a vital wound, and the severity dealt). Unset in play: nothing is built.
+    if (before) enc.onHit({ attacker, target, option, location: h.location || null, margin: margin == null ? null : margin, way: h.pierce || null, vital: !!h.vital, sev: C.woundLoad(target) - before.load, stamina: Math.max(0, before.stamina - target.stamina), downed: before.up && !C.isActive(target), spell: !!option.spell });
     // Pinning Shot: an arrow in the legs that draws blood roots them.
-    if (option.ranged && attacker && C.rank(attacker, 'pinning_shot') && h.location === 'legs' && C.isActive(target) && (C.totalDamage(target) > before0.dmg || target.bleeds.length) && G.Conditions) {
+    if (option.ranged && attacker && C.rank(attacker, 'pinning_shot') && h.location === 'legs' && C.isActive(target) && C.woundLoad(target) > before0.load && G.Conditions) {
       G.Conditions.add(target, 'rooted', { rounds: 2, src: attacker.id });
       log(enc, `The arrow pins ${target.name} where they stand.`, 'hit');
     }
@@ -2023,6 +1942,8 @@
         const ai = C.armorInfo(defender);
         bonus -= Math.round((ai.spd + ai.dex) * D.dodgeArmor);
       }
+      // A leg wound (wounds.places.legs.dodge).
+      if (kind === 'dodge') bonus -= C.woundEffect(defender, 'legs', 'dodge');
       let atk = D.motionPenalty[motion] || 0;
       bonus += skillEdge(defender, attacker, kind, atkOption);
       if (parry && D.leverage) {
@@ -2300,12 +2221,13 @@
     }
   }
 
-  // Joint Lock: a hold or pin that holds wrenches a joint (CONFIG.grappling.jointLock: the attribute and points).
+  // Joint Lock: a hold or pin that holds wrenches a joint (CONFIG.grappling.jointLock: the place and points of harm).
   function jointLock(enc, holder, held) {
     if (!C.rank(holder, 'joint_lock') || !C.isActive(holder)) return;
-    const J = CONFIG.grappling.jointLock || { attr: 'DEX', points: 1 };
-    C.damageAttr(held, J.attr, J.points);
-    log(enc, `${holder.name} wrenches ${held.name}'s joint (−${J.points} ${J.attr}).`, 'hit');
+    const J = CONFIG.grappling.jointLock;
+    C.harm(held, J.points, J.place, 'wrench');
+    C.updateCondition(held);
+    log(enc, `${holder.name} wrenches ${held.name}'s ${(CONFIG.locations.names[J.place] || J.place).toLowerCase()} (${J.points} harm).`, 'hit');
   }
 
   // Grapples come apart when the fighters are no longer adjacent or one goes down; a clinch
@@ -2592,7 +2514,7 @@
         if (coat && --coat.hits <= 0) delete blade.coat;
         // What beat through a parry lands with that share of its force (and of its punch into armor).
         if (beatThrough) hitOpt = Object.assign({}, hitOpt, { damage: hitOpt.damage.map((x) => Math.floor(x * beatThrough)), punch: (hitOpt.punch || 0) * beatThrough });
-        const pre = { stamina: t.stamina, dmg: C.totalDamage(t) };
+        const pre = { stamina: t.stamina, load: C.woundLoad(t) };
         const r = await applyHit(enc, chars, a, t, hitOpt, roller, { half, distance, pack, margin: margin == null ? undefined : margin });
         const note = isCramped(a, d.option, distance)
           ? (CONFIG.range.closeRule === 'blunt' ? ' (cramped: blunt, half force)' : ' (cramped: half damage)') : d.option.ranged && d.option.longRange && distance > d.option.longRange ? ' (long range)' : '';
@@ -2604,9 +2526,9 @@
           log(enc, `${t.name} catches fire.`, 'hit');
         }
         if (d.option.spell && G.Magic && G.Magic.afterHit) await G.Magic.afterHit(enc, chars, a, t, d.option, r.hit, roller);
-        if (blade && Object.keys(fx).length) await strikeEffects(enc, chars, a, t, blade, fx, roller, t.stamina < pre.stamina || C.totalDamage(t) > pre.dmg, posAtStart);
+        if (blade && Object.keys(fx).length) await strikeEffects(enc, chars, a, t, blade, fx, roller, t.stamina < pre.stamina || C.woundLoad(t) > pre.load, posAtStart);
         // A natural weapon that saps (weapons.yaml trait.sap: the Avatar's claws), as an enchanted blade's strike does.
-        else if (!blade && d.option.sap) await strikeEffects(enc, chars, a, t, { name: d.option.label || 'The blow' }, { sap: d.option.sap }, roller, t.stamina < pre.stamina || C.totalDamage(t) > pre.dmg, posAtStart);
+        else if (!blade && d.option.sap) await strikeEffects(enc, chars, a, t, { name: d.option.label || 'The blow' }, { sap: d.option.sap }, roller, t.stamina < pre.stamina || C.woundLoad(t) > pre.load, posAtStart);
         // Gear that bites back (effects.retaliate): whoever lands a melee blow on the wearer takes an element's blow.
         if (!d.option.ranged && !d.option.spell && G.Magic && C.isActive(a)) for (const x of G.Effects.list(t, 'retaliate')) await G.Magic.elementBlow(enc, chars, t, a, x.noun, x.mag, roller, x.name || `${Items.itemName(x.from) || x.from.name}`, { from: posAtStart[t.id] });
         // A conjured elemental's blows carry its element.
@@ -2614,7 +2536,7 @@
         // Springy armor (chitin): the blow rebounds and jars the attacker.
         const recoil = t.armor && t.armor.durability > 0 && (G.DATA.ARMOR[t.armor.type] || {}).recoil;
         if (recoil && !d.option.ranged && !d.option.spell && !C.tireless(a)) {
-          const jar = Math.min(a.stamina - 1, recoil * (CONFIG.staminaScale || 1));
+          const jar = Math.min(a.stamina - 1, recoil);
           if (jar > 0) { a.stamina -= jar; log(enc, `The springy ${t.armor.type === 'chitin' ? 'chitin' : 'hide'} jars ${a.name}'s arms (−${jar} stamina).`, 'fail'); }
         }
         if (!C.isActive(t)) loseWindUp(enc, t, null);
@@ -2787,20 +2709,41 @@
         if (t && G.Conditions) { G.Conditions.add(t, 'named', { rounds: 2, src: a.id }); log(enc, `${a.name} names ${t.name}'s weakness: its hide will not save it now.`, 'hit'); }
         break;
       case 'cauterize':
-        if (t && !t.status.dead && t.bleeds.some((b) => !b.poison)) {
-          t.bleeds = t.bleeds.filter((b) => b.poison);
-          C.damageAttr(t, 'CON', 1);
-          log(enc, `${a.name} sears ${t === a ? 'their own' : t.name + "'s"} wound shut; the bleeding stops (−1 CON).`, 'defend');
+        if (t && !t.status.dead && C.bleeding(t) > 0) {
+          C.bindWounds(t);
+          C.harm(t, CONFIG.wounds.cauterize, 'torso', 'burn');
+          C.updateCondition(t);
+          log(enc, `${a.name} sears ${t === a ? 'their own' : t.name + "'s"} wounds shut; the bleeding stops (a burn).`, 'defend');
         }
         break;
       case 'bandage':
         if (t && a.inventory.bandages > 0) {
           a.inventory.bandages -= 1;
-          t.bleeds = t.bleeds.filter((b) => b.poison); // a bandage doesn't draw out venom
-          log(enc, `${a.name} bandages ${t === a ? 'themself' : t.name}; the bleeding stops.`, 'defend');
+          const bound = C.bindWounds(t);
+          const m = await tendWound(roller, a, t);
+          log(enc, `${a.name} bandages ${t === a ? 'themself' : t.name}${bound ? '; the bleeding stops' : ''}${m}.`, 'defend');
         }
         break;
     }
+  }
+
+  // Medicine on a wound (CONFIG.wounds.tend): the worst wound not yet tended, d10 + Medicine + ⌊(INT + WIS) / 4⌋
+  // against tn + its severity; made, it is a step better. Each wound is tended once. Returns the log's words.
+  async function tendWound(roller, a, t) {
+    const T = CONFIG.wounds.tend;
+    const w = C.wounds(t).filter((x) => x.sev > 0 && !x.tended).sort((x, y) => y.sev - x.sev)[0];
+    if (!w) return '';
+    w.tended = true;
+    const bonus = C.skill(a, 'medicine') + Math.floor((C.attr(a, 'INT') + C.attr(a, 'WIS')) / 4);
+    const need = T.tn + w.sev;
+    const r = await rollDie(roller, a.id, CONFIG.maneuver.die, `${a.name}: Medicine`, `d10 + ${bonus} against ${need}`);
+    if (r + bonus < need) return ` (Medicine ${r + bonus} against ${need}: no better)`;
+    const place = (CONFIG.locations.names[w.place] || w.place).toLowerCase();
+    w.sev -= 1;
+    w.bleed = Math.min(w.bleed || 0, w.sev);
+    t.wounds = C.wounds(t).filter((x) => x.sev > 0);
+    if (C.isDown(t)) C.mendWounds(t, 0, 0); // under the boxes again: they come to
+    return ` (Medicine ${r + bonus} against ${need}: the ${place} wound a step better)`;
   }
 
   // What an enchanted weapon's blow carries (enchantments.yaml `strike`), once it has landed:
@@ -2824,13 +2767,13 @@
     }
     if (fx.sap && !t.status.dead) {
       const S = fx.sap;
-      if (S.attr && S.n) C.damageAttr(t, S.attr, S.n);
+      if (S.place && S.n) C.harm(t, S.n, S.place, 'sapped');
       const took = C.tireless(t) ? 0 : Math.min(t.stamina, S.stamina || 0);
       t.stamina -= took;
       const got = Math.min(took, C.maxStamina(a) - a.stamina);
       if (got > 0) a.stamina += got;
       C.updateCondition(t);
-      log(enc, `${name} saps ${t.name}${S.attr ? ` (−${S.n} ${S.attr}` : ' ('}${took ? `, −${took} stamina` : ''})${got ? `; ${a.name} +${got} stamina` : ''}.`, 'hit');
+      log(enc, `${name} saps ${t.name} (${[S.place ? `${S.n} harm at the ${(CONFIG.locations.names[S.place] || S.place).toLowerCase()}` : null, took ? `−${took} stamina` : null].filter(Boolean).join(', ')})${got ? `; ${a.name} +${got} stamina` : ''}.`, 'hit');
     }
     if (fx.onHit && C.isActive(t) && G.Magic) {
       const H = fx.onHit;
@@ -2853,10 +2796,11 @@
       return false;
     }
     a.spSpent = (a.spSpent || 0) + Math.min(avail, opt.spCost);
-    // Overchannel: the points the pool lacks are paid from the body, a point of CON each.
+    // Overchannel: the points the pool lacks are paid from the body, a point of harm each (Character.harm).
     if (opt.spCost > avail) {
-      C.damageAttr(a, 'CON', opt.spCost - avail);
-      log(enc, `${a.name} overchannels: ${opt.spCost - avail} CON for the points the pool lacks.`, 'hit');
+      C.harm(a, opt.spCost - avail, 'head', 'strain');
+      C.updateCondition(a);
+      log(enc, `${a.name} overchannels: ${opt.spCost - avail} harm for the points the pool lacks.`, 'hit');
     }
     const lost = await G.Magic.backlash(a, opt.spCost, roller);
     if (lost > 0) {
@@ -3153,9 +3097,13 @@
     }
   }
 
+  // ---- What happens each round (step F moves these to its beat) ---------------------------------------------
+  // endRound is the one place: constriction, bleeding and a torso wound's drain (bodyRound), conditions' harm over
+  // time and their countdown (Conditions.endRound), regrowth, weariness, regeneration, a collapse running its course,
+  // hold upkeep, webs loosening, wind-ups lapsing. When the fight ends, settleFallen decides who bleeds out.
   function endRound(enc, chars) {
     log(enc, 'End of round', 'pass');
-    // Constrictors (trait constrict: { stamina, con }) crush whoever they hold.
+    // Constrictors (trait constrict: { stamina, harm }) crush whoever they hold.
     for (const id of enc.ids) {
       const c = chars[id];
       const K = c && c.traits && c.traits.constrict;
@@ -3166,31 +3114,15 @@
         held.stamina -= took;
         enc.hitThisRound[held.id] = (enc.hitThisRound[held.id] || 0) + took; // a crush is a blow: half regeneration (R1)
       }
-      if (K.con) C.damageAttr(held, 'CON', K.con);
+      if (K.harm) C.harm(held, K.harm, 'torso', 'crush');
       const wasDown = held.status.unconscious;
       C.updateCondition(held);
-      log(enc, `${c.name} crushes ${held.name} (${[K.stamina ? `−${K.stamina} stamina` : null, K.con ? `−${K.con} CON` : null].filter(Boolean).join(', ')}).${held.status.dead ? ` ${held.name} is DEAD.` : held.status.unconscious && !wasDown ? ` ${held.name} ${downWord(held)}.` : ''}`, 'hit');
+      log(enc, `${c.name} crushes ${held.name} (${[K.stamina ? `−${K.stamina} stamina` : null, K.harm ? `${K.harm} harm` : null].filter(Boolean).join(', ')}).${held.status.dead ? ` ${held.name} is DEAD.` : held.status.unconscious && !wasDown ? ` ${held.name} ${downWord(held)}.` : ''}`, 'hit');
     }
     for (const id of enc.ids) {
       const c = chars[id];
       if (c.status.dead) continue;
-      // Bleed: each wound bleeds its damage again over its remaining rounds.
-      let bleed = 0, poison = 0;
-      for (const b of c.bleeds) {
-        const loss = Math.round(b.remaining / b.rounds);
-        b.remaining -= loss;
-        b.rounds -= 1;
-        if (b.poison) poison += loss; else bleed += loss;
-      }
-      c.bleeds = c.bleeds.filter((b) => b.rounds > 0 && b.remaining > 0);
-      if (bleed > 0) {
-        C.damageAttr(c, 'CON', bleed);
-        log(enc, `${c.name} bleeds ${bleed} CON.`, 'bleed');
-      }
-      if (poison > 0) {
-        C.damageAttr(c, 'CON', poison);
-        log(enc, `Venom costs ${c.name} ${poison} CON.`, 'bleed');
-      }
+      bodyRound(enc, c);
       // Conditions: damage over time, then each ticks down a round.
       if (G.Conditions) for (const line of G.Conditions.endRound(c)) log(enc, line, 'bleed');
       // A controlled fighter comes back to themselves when the spell ends or its caster falls.
@@ -3202,26 +3134,26 @@
           log(enc, `${c.name} comes back to themselves.`, 'pass');
         }
       }
-      // Regrowth (monster trait): wounds close and strength returns, unless burned this round.
+      // Regrowth (monster trait regrow: { mend, stamina }): wounds close a step at a time and the bleeding stops, unless
+      // burned this round; a regrower down under its boxes again heaves itself up.
       const R = c.traits && c.traits.regrow;
-      if (R && !(enc.burned || {})[id] && C.attr(c, 'CON') > 0) {
-        const healed = Math.min(R.con, c.damage.CON || 0);
-        if (healed) C.healAttr(c, 'CON', healed);
-        c.bleeds = c.bleeds.filter((b) => b.poison);
+      if (R && !(enc.burned || {})[id] && !c.status.dead) {
+        const wasOut = c.status.unconscious;
+        C.bindWounds(c);
+        const healed = R.mend ? C.mendWounds(c, 1, R.mend) : 0;
         const before = c.stamina;
         c.stamina = Math.min(C.maxStamina(c), c.stamina + R.stamina);
-        if (c.status.unconscious && c.stamina > 0) { C.comeRound(c); log(enc, `${c.name} heaves itself back up.`, 'death'); }
-        if (healed || c.stamina > before) log(enc, `${c.name} regenerates${healed ? ` ${healed} CON` : ''}${c.stamina > before ? `${healed ? ' and' : ''} ${c.stamina - before} stamina` : ''}.`);
+        if (C.collapsed(c) && c.stamina > 0) C.comeRound(c);
+        if (wasOut && !c.status.unconscious) log(enc, `${c.name} heaves itself back up.`, 'death');
+        if (healed || c.stamina > before) log(enc, `${c.name} regenerates${healed ? `: wounds ${healed} better` : ''}${c.stamina > before ? `${healed ? ' and' : ':'} ${c.stamina - before} stamina` : ''}.`);
       }
       // Weariness: the stamina a fighter spent or lost this round lowers the most it can come back to.
       if (C.isActive(c)) C.wearyRound(c, Math.max(0, ((enc.staminaAtStart || {})[id] ?? c.stamina) - c.stamina));
       // A collapse (CONFIG.stamina.collapse) that began this round is stamped with it.
       if (c.status.collapsed && c.status.collapsed.round == null) c.status.collapsed.round = enc.round;
-      // Regeneration.
-      const conscious = !c.status.unconscious;
-      const R1 = CONFIG.stamina && CONFIG.stamina.regen;
-      if ((conscious || CONFIG.unconsciousRegenerates) && R1) {
-        // R1: every round; a share of it in a round a blow took stamina, in full with Second Wind (or in hero mode).
+      // Regeneration (R1): every round; a share of it in a round a blow took stamina, in full with Second Wind (or in
+      // hero mode). The down and the collapsed don't regenerate.
+      if (!c.status.unconscious) {
         const took = enc.hitThisRound[id] || 0;
         const struck = took > 0 && !C.rank(c, 'second_wind') && !(c.hero && CONFIG.hero && CONFIG.hero.regenWhenHit);
         const r = C.roundRegen(c, struck);
@@ -3232,18 +3164,6 @@
           const before = c.stamina;
           c.stamina = Math.min(C.maxStamina(c), c.stamina + r);
           if (c.stamina > before) log(enc, `${c.name} recovers ${c.stamina - before} stamina${struck ? ' (struck: a share)' : ''}.`);
-        }
-      } else if (conscious || CONFIG.unconsciousRegenerates) {
-        const r = C.regen(c);
-        const took = enc.hitThisRound[id] || 0;
-        const allowed = took === 0 || (C.rank(c, 'second_wind') && took <= 2) || (c.hero && CONFIG.hero && CONFIG.hero.regenWhenHit) || (enc.rallied || {})[id] === enc.round;
-        if (r < 0 && CONFIG.negativeRegenAlwaysApplies) {
-          c.stamina = Math.max(0, c.stamina + r);
-          log(enc, `${c.name} loses ${-r} stamina to heavy armor.`);
-        } else if (r > 0 && allowed) {
-          const before = c.stamina;
-          c.stamina = Math.min(C.maxStamina(c), c.stamina + r);
-          if (c.stamina > before) log(enc, `${c.name} recovers ${c.stamina - before} stamina.`);
         }
       }
       // R3: a collapse runs its course; they come round with a round's regeneration, still on the ground.
@@ -3262,7 +3182,7 @@
       // Holding someone is exhausting: pay the upkeep or let go.
       const G2 = CONFIG.grappling;
       if (C.holding(c) && G2 && G2.holdUpkeep && !c.status.unconscious) {
-        const cost = G2.holdUpkeep * (CONFIG.staminaScale || 1);
+        const cost = G2.holdUpkeep;
         if (c.stamina > cost) {
           c.stamina -= cost;
           log(enc, `${c.name} spends ${cost} stamina holding ${chars[C.holding(c)] ? chars[C.holding(c)].name : 'their foe'}.`);
@@ -3289,6 +3209,41 @@
       log(enc, left.length ? `The ${left[0] === 'party' ? 'party' : 'enemy'} side wins.` : 'No one is left standing.', 'round');
     } else {
       enc.phase = 'roundEnd';
+    }
+  }
+
+  // A round of a body's wounds: bleeding is blood lost (wounds.bleed.harm a point of bleeding, less CON's share: harm on
+  // one wound of blood loss at the torso, which fills the boxes and can take the body down), and a torso wound costs
+  // stamina (wounds.places.torso.stamina, by the torso's severity; pain doesn't touch it). A body already down loses
+  // nothing more here: whether it bleeds out is settled when the fight ends (settleFallen).
+  function bodyRound(enc, c) {
+    if (c.status.dead || C.tireless(c) || C.isDown(c)) return;
+    const blood = C.bleedLoss(c);
+    const torso = C.woundEffect(c, 'torso', 'stamina', true);
+    if (torso > 0) c.stamina = Math.max(0, c.stamina - torso);
+    const was = C.isActive(c);
+    if (blood > 0) { C.harm(c, blood, 'torso', 'blood loss'); C.updateCondition(c); }
+    if (!(blood > 0 || torso > 0)) return;
+    log(enc, `${c.name} ${[blood ? `loses blood (${blood} harm)` : null, torso ? `labours with the torso wound (−${torso} stamina)` : null].filter(Boolean).join(' and ')}.${was && C.isDown(c) ? ` ${c.name} goes down.` : ''}`, 'bleed');
+  }
+
+  // The fight is over (CONFIG.wounds.bleed.survive): a body down and still bleeding is bound by its own side if one of
+  // them stands, else it bleeds out unless d10 + CON reaches survive + its bleeding. Hero mode: a hero never dies.
+  async function settleFallen(enc, chars, roller) {
+    const B = CONFIG.wounds.bleed;
+    const standing = {};
+    for (const id of enc.ids) if (chars[id] && C.isActive(chars[id])) standing[chars[id].side] = true;
+    for (const id of enc.ids) {
+      const c = chars[id];
+      if (!c || !C.isDown(c) || c.conjured || !(C.bleeding(c) > 0)) continue;
+      if (standing[c.side]) { C.bindWounds(c); log(enc, `${c.name}'s wounds are bound where they lie.`, 'defend'); continue; }
+      if (c.hero) continue;
+      const need = B.survive + C.bleeding(c);
+      const roll = roller ? await rollDie(roller, c.id, CONFIG.maneuver.die, `${c.name}: bleeding out`, `d10 + CON ${C.attr(c, 'CON')} against ${need}`) : 1 + Math.floor(Math.random() * CONFIG.maneuver.die);
+      if (roll + C.attr(c, 'CON') >= need) { C.bindWounds(c); log(enc, `${c.name}'s bleeding slows and stops (${roll} + ${C.attr(c, 'CON')} against ${need}).`, 'defend'); continue; }
+      c.status.dead = true;
+      c.status.diedRound = enc.round;
+      log(enc, `${c.name} bleeds out where they lie (${roll} + ${C.attr(c, 'CON')} against ${need}).`, 'death');
     }
   }
 
@@ -3319,13 +3274,13 @@
 
   // ---- What a blow will likely do (docs/PLAN.md step 7: the battle panel tells you the odds) -------------------
   // The rolls applyHit makes, as a distribution rather than one throw: the contest's margin (given), where it lands
-  // (the location roll, a gap found at a high margin), the cut that carries on and the wound tables. Each landed blow
-  // is computeHit at that place and margin; nothing here is a second model of the blow, only its dice laid out.
-  // Returns [{ p, dmg: {attr: points}, stamina, vital, way, wear }].
+  // (the location roll, a gap found at a high margin) and the cut that carries on. Each landed blow is computeHit at
+  // that place and margin; nothing here is a second model of the blow, only its dice laid out. The shock check is
+  // left as a chance (sumOutcomes). Returns [{ p, wounds: [{place, sev, bleed}], stamina, vital, way, wear }].
   function hitOutcomes(attacker, target, option, flags, margins) {
     const out = new Map();
     const add = (o) => {
-      const k = dmgKey(o.dmg) + '|' + o.stamina + '|' + o.vital + '|' + o.way;
+      const k = o.wounds.map((w) => `${w.place}${w.sev}b${w.bleed}`).join(',') + '|' + o.stamina + '|' + o.vital + '|' + o.way;
       const x = out.get(k);
       if (x) { x.p += o.p; x.wear += o.wear; } else out.set(k, o);
     };
@@ -3333,101 +3288,66 @@
     const memo = new Map();
     for (const b of blowBranches(attacker, target, option, f)) {
       if (!(b.w > 0)) continue;
-      const h = computeHit(attacker, target, option, Object.assign({}, flags, { location: b.loc || undefined, margin: b.m, memo }));
+      let h = computeHit(attacker, target, option, Object.assign({}, flags, { location: b.loc || undefined, margin: b.m, memo }));
       const into = carryInto(target, h);
       const c = into ? carryHit(attacker, target, option, h, into, b.m) : null;
-      laidOut(target, h, c, b.w, add);
+      if (c) {
+        h = Object.assign({}, h, { cut: CONFIG.locations.carry.limb });
+        h.pts = h.point + h.cut + h.crush;
+        woundOutcome(target, option, h, h.location);
+      }
+      const wounds = [h, c].filter((x) => x && x.sev > 0).map((x) => ({ place: x.location || 'torso', sev: x.sev, bleed: x.bleed || 0 }));
+      const wear = (h.armored && h.piece ? h.durLoss || 0 : 0) + (c && c.armored && c.piece ? c.durLoss || 0 : 0);
+      const stamina = C.tireless(target) ? 0 : (h.winding || 0) + (c ? c.winding || 0 : 0) + (h.stamina || 0);
+      add({ p: b.w, wounds, stamina, vital: !!(h.vital || (c && c.vital)), way: h.pierce || null, wear: b.w * wear });
     }
     return Array.from(out.values());
   }
 
-  // One landed blow's dice (applyHit's order), given where it landed, its margin and what carried on.
-  function laidOut(target, h0, carried, w, add) {
-    const K = CONFIG.locations && CONFIG.locations.carry;
-    const V = CONFIG.vital;
-    const loc = h0.location;
-    const h = Object.assign({}, h0);
-    let wear = (h.armored && h.piece ? h.durLoss || 0 : 0);
-    let cutVital = h.vital && h.vitalKind === 'S';
-    if (carried) {
-      h.slashToAttrs = K.limb + carried.slashToAttrs;
-      h.bluntToStamina += carried.bluntToStamina;
-      h.bluntToCON += carried.bluntToCON;
-      if (carried.vital && carried.vitalKind === 'S') cutVital = true;
-      if (carried.armored && carried.piece) wear += carried.durLoss || 0;
+  // One outcome's wounds on this body, in applyHit's order: the chance it goes down (the boxes, a place that drops
+  // it, a shock check failed), and whether a body already down is killed (any wound: hero mode, never).
+  function outcomeDown(target, wounds) {
+    if (!wounds.length || target.status.dead) return { down: 0, kill: 0 };
+    if (C.isDown(target)) return { down: 1, kill: target.hero ? 0 : 1 };
+    let load = C.woundLoad(target), up = 1;
+    for (const w of wounds) {
+      const P = CONFIG.wounds.places[w.place] || {};
+      if (load + w.sev >= C.boxes(target) || (P.down != null && w.sev >= P.down)) { up = 0; break; }
+      if (w.sev >= 3 && !C.tireless(target)) up *= 1 - Math.max(0, Math.min(1, (CONFIG.wounds.shock - C.attr(target, 'CON') - 1) / CONFIG.maneuver.die));
+      load += w.sev;
     }
-    const pointVital = h.vital && h.vitalKind !== 'S';
-    // A list of { p, dmg, vital } that each die below splits.
-    let list = [{ p: w, dmg: {}, vital: pointVital || cutVital }];
-    const plus = (dmg, a, n) => { const d = Object.assign({}, dmg); if (n > 0) d[a] = (d[a] || 0) + n; return d; };
-    const split = (fn) => { const nx = []; for (const o of list) for (const r of fn(o)) if (r.p > 0) nx.push(r); list = nx; };
-    const table = (where, n) => split((o) => {
-      // n points, each one of the location's attributes at even odds.
-      const t = woundTable(target, where);
-      let ways = [{ p: o.p, dmg: o.dmg }];
-      for (let i = 0; i < n; i++) {
-        const m = new Map();
-        for (const x of ways) for (const a of t) {
-          const d = plus(x.dmg, a, 1), k = dmgKey(d);
-          const y = m.get(k);
-          if (y) y.p += x.p / t.length; else m.set(k, { p: x.p / t.length, dmg: d });
-        }
-        ways = Array.from(m.values());
-      }
-      return ways.map((x) => ({ p: x.p, dmg: x.dmg, vital: o.vital }));
-    });
-    if (h.toCON > 0) split((o) => [{ p: o.p, dmg: plus(o.dmg, 'CON', h.toCON * (pointVital ? V.mult : 1)), vital: o.vital }]);
-    if (h.pointToAttrs > 0) {
-      // A point into a limb: vital (n × mult CON) or the limb's attributes, n points.
-      if (pointVital) split((o) => [{ p: o.p, dmg: plus(o.dmg, 'CON', h.pointToAttrs * V.mult), vital: o.vital }]);
-      else table(loc, h.pointToAttrs);
-    }
-    if (h.slashToAttrs > 0) {
-      const own = h.slashToAttrs - (carried ? carried.slashToAttrs : 0);
-      table(loc, own);
-      if (carried && carried.slashToAttrs > 0) table(carried.location, carried.slashToAttrs);
-      if (cutVital) split((o) => [{ p: o.p, dmg: plus(o.dmg, 'CON', h.slashToAttrs), vital: o.vital }]);
-    }
-    if (h.bluntToCON > 0) split((o) => [{ p: o.p, dmg: plus(o.dmg, 'CON', h.bluntToCON), vital: o.vital }]);
-    if (h.crushToAttrs > 0) table(loc, h.crushToAttrs);
-    for (const o of list) add({ p: o.p, dmg: o.dmg, stamina: h.bluntToStamina || 0, vital: o.vital, way: h.pierce || null, wear: o.p * wear });
+    // A tireless body that goes down is broken past use.
+    return { down: 1 - up, kill: C.tireless(target) ? 1 - up : 0 };
   }
 
-  // A wound tally's key, whatever order its attributes were added in.
-  function dmgKey(d) {
-    return Object.keys(d).sort().map((a) => a + d[a]).join(',');
-  }
-
-  // What the outcomes add up to on this target: the expected harm by kind, and the chance of a vital wound, of
-  // dropping them (dead, or collapsed: stamina gone, counting what a wound takes off its maximum) and of a kill;
-  // through and turned: the chances a point gets through the armor or is turned (null for a blow with no point
-  // against armor).
+  // What the outcomes add up to on this target: sev (the chance of each severity of the worst wound the blow leaves,
+  // 0 to 3), the expected bleeding and stamina (winding), wear, the chances of a vital wound, of putting them down
+  // (wounds), of a collapse (stamina gone, standing), of dropping them (either) and of a kill; through and turned: the
+  // chances a point gets through the armor or is turned (null for a blow with no point against armor); places: the
+  // chance a wound lands at each place.
   function sumOutcomes(target, list) {
-    const res = { attrs: {}, CON: 0, stamina: 0, wear: 0, vital: 0, drop: 0, kill: 0, through: null, turned: null };
-    const con = C.attr(target, 'CON');
-    const down = !C.isActive(target);
-    const max0 = C.maxStamina(target);
+    const res = { sev: [0, 0, 0, 0], sevMean: 0, bleed: 0, stamina: 0, wear: 0, vital: 0, down: 0, collapse: 0, drop: 0, kill: 0, places: {}, through: null, turned: null };
+    const out = !C.isActive(target);
     for (const o of list) {
-      for (const a in o.dmg) { if (a === 'CON') res.CON += o.p * o.dmg[a]; else res.attrs[a] = (res.attrs[a] || 0) + o.p * o.dmg[a]; }
+      const worst = o.wounds.reduce((m, w) => Math.max(m, w.sev), 0);
+      res.sev[worst] += o.p;
+      res.sevMean += o.p * worst;
+      for (const w of o.wounds) { res.bleed += o.p * w.bleed; res.places[w.place] = (res.places[w.place] || 0) + o.p; }
       res.stamina += o.p * Math.min(Math.max(0, target.stamina), o.stamina);
       res.wear += o.wear;
       if (o.vital) res.vital += o.p;
       if (o.way) { res[o.way] = (res[o.way] || 0) + o.p; }
-      if ((o.dmg.CON || 0) >= con) {
-        // Hero mode knocks a hero out rather than kill them (Character.damageAttr).
-        if (!target.hero) res.kill += o.p;
-        res.drop += o.p;
-        continue;
-      }
-      if (down || C.tireless(target)) continue;
-      // A wound lowers the stamina maximum, and stamina with it (Character.damageAttr), before the blunt lands.
-      const keep = target.damage;
-      target.damage = Object.assign({}, keep);
-      for (const a in o.dmg) target.damage[a] = (target.damage[a] || 0) + o.dmg[a];
-      const max1 = C.maxStamina(target);
-      target.damage = keep;
-      if (target.stamina - Math.max(0, max0 - max1) - o.stamina <= 0) res.drop += o.p;
+      const d = outcomeDown(target, o.wounds);
+      res.kill += o.p * d.kill;
+      if (!C.isDown(target)) res.down += o.p * d.down;
+      if (out) continue;
+      const winded = !C.tireless(target) && target.stamina - o.stamina <= 0 ? 1 - d.down : 0;
+      res.collapse += o.p * winded;
+      res.drop += o.p * (d.down + winded);
     }
+    const r9 = (x) => Math.round(x * 1e9) / 1e9;
+    res.sev = res.sev.map(r9);
+    for (const k of ['sevMean', 'bleed', 'stamina', 'down', 'collapse', 'drop', 'kill']) res[k] = r9(res[k]);
     return res;
   }
 
@@ -3449,14 +3369,15 @@
   // blow, from what it can see of the target: the shield and weapon in hand, the armor, whether they are prone, held
   // or down, their stamina; not their AP, nor feats that don't show (Living Fortress, Untouchable, Roll With It).
   // Returns null for a blow that does no harm by these rules (rust, web), else
-  //   hit: on a blow nobody defends: CON, attrs {STR: n…} (expected points), stamina, wear (armor durability),
-  //        vital, drop, kill, through, turned (chances), margins [{m, p}] (the contest against the passive number);
+  //   hit: on a blow nobody defends: sumOutcomes' sev (the chance of each severity, 0–3), sevMean, bleed, stamina,
+  //        wear (armor durability), places, and the chances vital, down, collapse, drop, kill, through, turned;
+  //        margins [{m, p}] (the contest against the passive number);
   //   defences: each the target could put up: { kind, name, odds (theirs, to stop it), ap, stamina, spent, absorb
   //        (stamina a stopped blow still takes), carry (share that beats through a parry), shieldBreak, margins (the
   //        blow's, given that it beats this defence), failed (what lands then), through (what gets past a successful
   //        one), drop, kill (overall, if they choose it) };
   //   best: the defence they are likeliest to stop it with (or null: none); lands: the chance it beats that one (1
-  //   with none); drop, kill: overall against that defence.
+  //   with none); drop, downP (down from wounds), kill: overall against that defence; down: the target is out now.
   // The attacker pays for the blow before it lands (payStamina), so vigor and a spent blow are as they will be.
   function foresee(attacker, target, option, ctx) {
     ctx = ctx || {};
@@ -3491,6 +3412,7 @@
         best: best ? best.kind : null,
         lands: best ? 1 - best.odds : 1,
         drop: best ? best.drop : hit.drop,
+        downP: best ? best.downP : hit.down,
         kill: best ? best.kill : hit.kill,
         down: !C.isActive(target),
       };
@@ -3540,19 +3462,20 @@
     }
     // Stopped, it may still knock the last of their stamina out of them.
     const jarred = !C.tireless(target) && s1 <= 0 && target.stamina > 0 ? 1 : 0;
-    const held = through ? { drop: Math.max(jarred, through.drop), kill: through.kill } : { drop: jarred, kill: 0 };
+    const held = through ? { drop: Math.max(jarred, through.drop), kill: through.kill, down: through.down } : { drop: jarred, kill: 0, down: 0 };
     return {
       kind, name: ACTIONS[kind].name, odds, ap: cost.ap, stamina: cost.stamina, spent, absorb, carry, shieldBreak, margins: fail, failed, through,
       drop: (1 - odds) * failed.drop + odds * held.drop,
+      downP: (1 - odds) * failed.down + odds * held.down,
       kill: (1 - odds) * failed.kill + odds * held.kill,
     };
   }
 
   G.Combat = {
-    foresee, hitOutcomes,
+    foresee, hitOutcomes, sumOutcomes, outcomeDown,
     foeSquares, fearSource, fleeSteps, mustFlee,
     unseenBy, strikeEffects, conditionForbids, ATTACK_TYPES, DEFENSE_TYPES, shoveReach, log, rollDie, castSpell, knockDown, stability, releaseAll: clearGrapple,
     createEncounter, autoPlace, startRound, currentActor, legalActions, act, validate, endTurn, defer, submit, describeDecl, apLeft, defenseOptions, coverOptions, opportunityOptions,
-    vitalLower, vitalThreshold, pierceNeed, marginDist, marginsUndefended, passiveNumber, passiveKey, worstBeside, woundTable, projectedPos, dist, steps, flanked, flankerAt, flankedAt, threatens, comesRoundAt, collapseRounds, isSpent, canPay, defenseOdds, parryCarryShare, leverage, skillEdge, feintScore, readScore, blowForce, aimPenalty, aimGuarded, aimOpen, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, passesThrough, sweeps, sweepTarget, sweepForce, applyHit, resolveAction, finishRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
+    vitalLower, vitalThreshold, pierceNeed, marginDist, marginsUndefended, passiveNumber, passiveKey, worstBeside, woundOutcome, downChance, needsShock, settleFallen, projectedPos, dist, steps, flanked, flankerAt, flankedAt, threatens, comesRoundAt, collapseRounds, isSpent, canPay, defenseOdds, parryCarryShare, leverage, skillEdge, feintScore, readScore, blowForce, aimPenalty, aimGuarded, aimOpen, knockdownOdds, opposedOdds, shoveOdds, defenseUnavailable, computeHit, passesThrough, sweeps, sweepTarget, sweepForce, applyHit, resolveAction, finishRound, endRound, cleanup, linkOf, grappleScore, breakScore, GRAPPLE_STEPS,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

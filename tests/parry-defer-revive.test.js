@@ -102,7 +102,8 @@ function wonWithOneDown(seed) {
   const enc = w.battle.enc;
   const beren = World.party(w).find((c) => c.name === 'Beren');
   const jab = World.party(w).find((c) => c.name === 'Jabiku');
-  C.damageAttr(beren, 'CON', C.attr(beren, 'CON') + 2);
+  // Down, then finished: dead, with a revive window open.
+  for (let i = 0; i <= C.boxes(beren); i++) C.addWound(beren, { place: 'torso', sev: 1, kind: 'point', bleed: 1, pts: 2 }, null);
   C.updateCondition(beren);
   beren.status.diedRound = enc.round;
   for (const id of enc.ids) if (chars[id].side !== 'party') { chars[id].status.dead = true; chars[id].status.diedRound = enc.round; }

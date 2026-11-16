@@ -308,11 +308,10 @@ function breather(party) {
   let bandages = living.reduce((t, c) => t + (c.inventory.bandages || 0), 0);
   const take = () => { const holder = living.find((c) => c.inventory.bandages > 0); holder.inventory.bandages--; bandages--; };
   for (const c of living) {
-    if (!c.bleeds.length) continue;
-    if (bandages > 0) { take(); c.bleeds = c.bleeds.filter((b) => b.poison); }
-    const left = c.bleeds.reduce((t, b) => t + b.remaining, 0);
-    if (left) C.damageAttr(c, 'CON', left);
-    c.bleeds = [];
+    if (!C.bleeding(c)) continue;
+    if (bandages > 0) take();
+    else for (const w of C.wounds(c)) if (w.bleed > 0) w.sev = Math.min(3, w.sev + 1);
+    C.bindWounds(c);
     C.updateCondition(c);
   }
   for (const c of party) {

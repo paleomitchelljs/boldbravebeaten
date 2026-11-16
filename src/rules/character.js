@@ -14,8 +14,6 @@
     opts = opts || {};
     const base = {};
     ATTRS.forEach((a) => (base[a] = 5));
-    const damage = {};
-    ATTRS.forEach((a) => (damage[a] = 0));
     const c = {
       id: Items.uid('chr'),
       name: opts.name || 'New adventurer',
@@ -25,9 +23,8 @@
       control: opts.side === 'enemy' ? 'auto' : 'manual',
       notes: '',
       base: Object.assign(base, opts.base || {}),
-      damage,
+      wounds: [], // CONFIG.wounds: { place, sev, kind, bleed, pts }
       stamina: 0,
-      bleeds: [],
       feats: {},
       skills: {}, // skills.yaml: id → rank 0–10
       armor: null,
@@ -59,7 +56,7 @@
   }
 
   function freshStatus() {
-    return { prone: false, grapple: null, webbed: 0, unconscious: false, collapsed: null, dead: false, dropped: [], windUp: null, conds: [] };
+    return { prone: false, grapple: null, webbed: 0, unconscious: false, collapsed: null, down: false, dead: false, dropped: [], windUp: null, conds: [] };
   }
 
   // Worn pieces cover only places the body has (CONFIG.locations.order), and no two the same place: a piece that
@@ -89,10 +86,8 @@
   function normalize(c) {
     c.status = Object.assign(freshStatus(), c.status || {});
     if (!Array.isArray(c.status.dropped)) c.status.dropped = [];
-    c.damage = c.damage || {};
     c.base = c.base || {};
     ATTRS.forEach((a) => {
-      if (c.damage[a] == null) c.damage[a] = 0;
       if (c.base[a] == null) c.base[a] = 5;
     });
     c.feats = c.feats || {};
@@ -102,7 +97,7 @@
     for (const it of [c.armor, c.shield].concat(c.pieces, c.weapons)) if (it) Items.normalizeItem(it);
     c.inventory = Object.assign({ bandages: 0, gold: 0, arrows: 0, bodkins: 0, items: [], components: {} }, c.inventory || {});
     normalizePieces(c);
-    c.bleeds = c.bleeds || [];
+    if (!Array.isArray(c.wounds)) c.wounds = [];
     if (c.offhand === undefined) c.offhand = null;
     c.inventory = Object.assign({ bandages: 0, gold: 0, arrows: 0, bodkins: 0, items: [], components: {} }, c.inventory || {});
     if (!c.inventory.components) c.inventory.components = {};
@@ -349,11 +344,10 @@
     return 0;
   }
 
-  // Natural attribute: base + Conditioning − damage. Used for stamina and death.
+  // Natural attribute: base + Conditioning + gear, and conditions (enfeebled, deft, resolute…) on all but CON.
   function attr(c, a) {
-    // Conditions (enfeebled, deft, resolute…) shift every attribute but CON, the body's life.
     const cond = a !== 'CON' && G.Conditions ? G.Conditions.attrMod(c, a) : 0;
-    return Math.max(0, c.base[a] + conditioning(c, a) + trinketMod(c, a) - (c.damage[a] || 0) + cond);
+    return Math.max(0, c.base[a] + conditioning(c, a) + trinketMod(c, a) + cond);
   }
 
   function attrMax(c, a) {
@@ -602,8 +596,7 @@
 
   // Max stamina before weariness (CONFIG.weariness).
   function freshStamina(c) {
-    let s = 0;
-    for (const a in CONFIG.staminaWeights) s += CONFIG.staminaWeights[a] * attr(c, a);
+    let s = CONFIG.stamina.base + attr(c, 'STR') + attr(c, 'SPD') + attr(c, 'DEX');
     s += G.Effects.sum(c, 'stamina');
     if (tireless(c)) return Math.max(1, s);
     // A big creature (a boss: staminaMult) has more to give.
@@ -639,9 +632,11 @@
     return c.weary - before;
   }
 
+  // A round's regeneration (CONFIG.stamina.regen): ⌊(CON + WIL) × per⌋ less the armor's penalty, plus gear,
+  // conditions and hero mode.
   function regen(c) {
     if (tireless(c)) return 0;
-    return Math.floor((attr(c, 'CON') + attr(c, 'WIL')) / CONFIG.regenDivisor) - armorInfo(c).regen + G.Effects.sum(c, 'regen') + (c.hero && CONFIG.hero ? CONFIG.hero.regen || 0 : 0);
+    return Math.floor((attr(c, 'CON') + attr(c, 'WIL')) * CONFIG.stamina.regen.per) - armorInfo(c).regen + G.Effects.sum(c, 'regen') + (c.hero && CONFIG.hero ? CONFIG.hero.regen || 0 : 0);
   }
 
   // Tireless (undead, constructs): no stamina at all. Damage goes straight to attributes,
@@ -729,6 +724,12 @@
     return gearAP(c, Math.max(minAP(), Math.ceil((d * costScale()) / per)));
   }
 
+  // What an arm wound adds to a weapon blow, a parry or a block (wounds.places.arms.ap, sheet AP), rounded to the step.
+  function armsAP(c) {
+    const a = woundEffect(c, 'arms', 'ap');
+    return a ? quantAP(Math.round(a * apScale())) : 0;
+  }
+
   // How far `ap` AP can carry this character in one move.
   function squaresFor(c, ap) {
     const per = squaresPerAP(c);
@@ -749,7 +750,8 @@
     const per = Math.max(1, s) * (CONFIG.moveScale || 1) * G.Effects.mult(c, 'moveMult');
     // Continuous SPD keeps the fraction (1.75 squares a stretch in plate, 2.25 at SPD 5): the squares a move reaches
     // are rounded down at the end (squaresFor), so armor still slows the feet.
-    return Math.max(1, CONFIG.moveSpdContinuous ? Math.round(per * 4) / 4 : Math.round(per)) + G.Effects.sum(c, 'move');
+    // A leg wound (wounds.places.legs.move) takes squares off each stretch.
+    return Math.max(1, (CONFIG.moveSpdContinuous ? Math.round(per * 4) / 4 : Math.round(per)) - woundEffect(c, 'legs', 'move')) + G.Effects.sum(c, 'move');
   }
 
   function strOffset(c) {
@@ -760,7 +762,6 @@
   // with STR offsetting the weight and armor parts, then feat reductions.
   function staminaCost(c, base, weight, reduction) {
     if (tireless(c)) return 0;
-    base = base * (CONFIG.staminaScale || 1);
     const factor = weight ? CONFIG.weightFactor[weight] : 1;
     let penalty = base * (factor - 1) + armorInfo(c).stamina;
     penalty = Math.max(0, penalty - strOffset(c));
@@ -804,7 +805,8 @@
     let bonus = motion === 'shoot' && !CONFIG.archery.strBonus ? 0 : str;
     if (isLightWeapon(weapon) && motion !== 'shoot') bonus += rank(c, 'precision');
     if (motion === 'twoHanded' || motion === 'power') bonus += rank(c, 'weight_of_the_blow');
-    v[main] = Math.max(0, v[main] + bonus);
+    // An arm wound (wounds.places.arms.damage) weakens the blow.
+    v[main] = Math.max(0, v[main] + bonus - woundEffect(c, 'arms', 'damage'));
     // A worn weapon (CONFIG.weaponWear) hits softer: a dull edge, a bent point, a loose head.
     const eff = weapon.natural ? 1 : Items.weaponEfficacy(weapon);
     return eff < 1 ? v.map((x) => Math.round(x * eff)) : v;
@@ -982,7 +984,7 @@
     const full = Math.max(floor, ap);
     const quick = motion === 'thrust' ? 'quick_thrust' : motion === 'twoHanded' || motion === 'power' ? 'heavy_tempo' : null;
     if (quick) ap -= quickCut(c, quick, full);
-    ap = gearAP(c, Math.max(floor, ap) + armorAP(c), w.natural ? null : w);
+    ap = gearAP(c, Math.max(floor, ap) + armorAP(c), w.natural ? null : w) + armsAP(c);
     let red = 0;
     if (isLightWeapon(w) && (motion === 'thrust' || motion === 'swing')) red += rank(c, 'light_touch');
     const stamina = Math.round(strainF * Math.max(CONFIG.minStrikeStamina || 0, staminaCost(c, Math.max(0, baseSt), effectiveWeight(c, w), red)));
@@ -1076,7 +1078,7 @@
       ap -= quickCut(c, 'quick_hands', full);
       red += rank(c, 'brawlers_wind');
     }
-    ap = gearAP(c, Math.max(minAP(), ap) + armorAP(c));
+    ap = gearAP(c, Math.max(minAP(), ap) + armorAP(c)) + (kind === 'kick' ? 0 : armsAP(c));
     const dmg = a.damage.slice();
     if (kind === 'punch' || kind === 'kick') dmg[2] += rank(c, 'heavy_hands');
     dmg[2] = Math.max(0, dmg[2] + strBonus(c));
@@ -1161,6 +1163,7 @@
     ap = Math.max(minAP(), full - (quick ? quickCut(c, quick, full) : 0)) + armorAP(c);
     // Gear: a costMult on everything; a weapon's apLess on the parries made with it.
     ap = gearAP(c, ap, kind === 'parry' ? wieldedWeapon(c) : kind === 'offParry' ? offhandWeapon(c) : null);
+    if (kind === 'block' || kind === 'parry' || kind === 'offParry') ap += armsAP(c);
     return { ap, stamina };
   }
 
@@ -1169,7 +1172,7 @@
     const n = (c.status && c.status.webbed) || 0;
     if (!n) return { ap: 0, stamina: 0 };
     const W = CONFIG.web || { ap: 1, stamina: 1 };
-    return { ap: Math.round(n * W.ap * costScale()), stamina: tireless(c) ? 0 : n * W.stamina * (CONFIG.staminaScale || 1) };
+    return { ap: Math.round(n * W.ap * costScale()), stamina: tireless(c) ? 0 : n * W.stamina };
   }
 
   function actionCost(c, kind, extra) {
@@ -1179,59 +1182,217 @@
     return { ap: cost.ap + t.ap, stamina: cost.stamina + t.stamina };
   }
 
-  // ---- Health ------------------------------------------------------------
-  // Apply attribute damage, lowering current stamina by the drop in max stamina.
-  // Hero mode (CONFIG.hero): a hero's CON stops at 1, and what would have gone past it knocks them out.
-  function damageAttr(c, a, n) {
-    if (n <= 0) return;
-    let knockout = false;
-    if (c.hero && a === 'CON' && n >= attr(c, 'CON')) { n = Math.max(0, attr(c, 'CON') - 1); knockout = true; }
-    const before = maxStamina(c);
-    c.damage[a] = (c.damage[a] || 0) + n;
-    const after = maxStamina(c);
-    c.stamina = Math.max(0, Math.min(after, c.stamina - (before - after)));
-    if (knockout) { c.stamina = 0; c.status.unconscious = true; c.status.collapsed = null; }
+  // ---- Wounds and life (CONFIG.wounds; docs/OVERHAUL.md step E) -------------------------------------------------
+  // A wound is { place, sev 1–3, kind, bleed, pts }: pts the points past the armor it stands for. A body holds
+  // wounds.boxes × size of severity; filling them, a head wound at its `down` severity, or a severity-3 wound that
+  // shock doesn't resist takes it down: out of the fight, keeping its armor. Struck again while down, it dies; left
+  // bleeding when the fight ends with no one of its side to bind it, it may (Combat.settleFallen). CON resists shock
+  // and bleeding; WIL acts through the penalties (pain).
+  const WK = () => CONFIG.wounds;
+  function sizeOf(c) {
+    return (c && c.traits && c.traits.size) || 1;
+  }
+  function wounds(c) {
+    return c.wounds || (c.wounds = []);
+  }
+  // Wound boxes: the severity this body holds before it goes down.
+  function boxes(c) {
+    return Math.max(1, Math.round(WK().boxes * sizeOf(c)));
+  }
+  function woundLoad(c) {
+    return wounds(c).reduce((t, w) => t + w.sev, 0);
+  }
+  // The severity `pts` points past the armor make in this body (0: a scratch).
+  function severityOf(c, pts) {
+    const T = WK().severity, z = sizeOf(c);
+    let s = 0;
+    for (let i = 0; i < T.length; i++) if (pts >= T[i] * z) s = i + 1;
+    return s;
+  }
+  // Bleeding, all wounds together; a round's blood loss is this × wounds.bleed.harm, less CON's share (points of harm
+  // on one wound of blood loss at the torso: Combat.bodyRound).
+  function bleeding(c) {
+    return wounds(c).reduce((t, w) => t + (w.bleed || 0), 0);
+  }
+  function bleedLoss(c) {
+    const B = WK().bleed, n = bleeding(c);
+    return n > 0 ? Math.max(0, n * B.harm - Math.floor(attr(c, 'CON') / B.conPer)) : 0;
+  }
+  // Pain (wounds.pain): the severity points a fighter acts through, from WIL.
+  function grit(c) {
+    return Math.floor(attr(c, 'WIL') / WK().pain);
+  }
+  // The severity a place's penalties read: its wounds' severities summed (at most 3), less grit.
+  function painAt(c, place) {
+    const s = Math.min(3, wounds(c).filter((w) => w.place === place).reduce((t, w) => t + w.sev, 0));
+    return Math.max(0, s - grit(c));
+  }
+  // A place's penalty (wounds.places[place][key], by the severity it reads; raw: before pain).
+  function woundEffect(c, place, key, raw) {
+    const t = (WK().places[place] || {})[key];
+    if (!Array.isArray(t) || !c || !c.wounds || !c.wounds.length) return 0;
+    const s = raw ? Math.min(3, wounds(c).filter((w) => w.place === place).reduce((n, w) => n + w.sev, 0)) : painAt(c, place);
+    return s > 0 ? t[Math.min(t.length, s) - 1] || 0 : 0;
+  }
+  // The worst severity of one wound at a place (for the drops, falls and down that pain doesn't touch).
+  function worstAt(c, place) {
+    return wounds(c).reduce((m, w) => (w.place === place && w.sev > m ? w.sev : m), 0);
+  }
+  // A leg wound at its `fell` severity: down, and can't stand while it lasts.
+  function cannotStand(c) {
+    const f = (WK().places.legs || {}).fell;
+    return f != null && worstAt(c, 'legs') >= f;
   }
 
-  function healAttr(c, a, n) {
-    const before = maxStamina(c);
-    c.damage[a] = Math.max(0, (c.damage[a] || 0) - n);
-    const after = maxStamina(c);
-    if (after > before) c.stamina = Math.min(after, c.stamina + (after - before));
+  // Down: out of the fight from wounds (not a collapse, which the body comes round from).
+  function isDown(c) {
+    return !!(c && c.status.down && !c.status.dead);
+  }
+  function goDown(c) {
+    const st = c.status;
+    if (tireless(c)) { st.dead = true; st.unconscious = true; st.down = false; return; } // a frame broken past use
+    st.down = true;
+    st.unconscious = true;
+    st.collapsed = null;
+    st.prone = true;
   }
 
-  function totalDamage(c) {
-    let n = 0;
-    ATTRS.forEach((a) => (n += c.damage[a] || 0));
+  // A wound lands: w { place, sev, kind, bleed, pts, vital }. shock: a d10 for a severity-3 wound's shock check (null:
+  // no check, as for harm over time; the wound then downs only by the boxes). A wound on a body already down kills
+  // it (hero mode: no more than down), unless sameBlow (a cut carried on from a wound of the same blow that downed
+  // it). Returns { wound, down, dead, shock: {roll, need, held} | null }.
+  function addWound(c, w, shock, sameBlow) {
+    const out = { wound: null, down: false, dead: false, shock: null };
+    if (!(w.sev > 0) || c.status.dead) return out;
+    const wasDown = isDown(c);
+    const wd = { place: w.place || 'torso', sev: Math.min(3, w.sev), kind: w.kind || 'harm', bleed: tireless(c) ? 0 : Math.max(0, w.bleed || 0), pts: w.pts || 0 };
+    if (w.vital) wd.vital = true;
+    wounds(c).push(wd);
+    out.wound = wd;
+    if (wasDown) {
+      if (!c.hero && !sameBlow) { c.status.dead = true; c.status.unconscious = true; out.dead = true; }
+      return out;
+    }
+    const P = WK().places[wd.place] || {};
+    let down = woundLoad(c) >= boxes(c) || (P.down != null && wd.sev >= P.down);
+    if (!down && wd.sev >= 3 && shock != null && !tireless(c)) {
+      const need = WK().shock;
+      const held = shock + attr(c, 'CON') >= need;
+      out.shock = { roll: shock, need, held };
+      if (!held) down = true;
+    }
+    if (down) {
+      goDown(c);
+      out.down = !c.status.dead;
+      out.dead = c.status.dead;
+    }
+    return out;
+  }
+
+  // Harm with no blow behind it (a burn or poison over time, a wrenched joint, a squeeze, a fall, an old save's
+  // attribute damage): `pts` more on the one wound of that kind at that place, its severity read again from all of
+  // them. No shock check; the boxes still count. Returns addWound's result for a new or worse wound.
+  function harm(c, pts, place, kind) {
+    if (!(pts > 0) || c.status.dead) return { wound: null, down: false, dead: false, shock: null };
+    place = place || 'torso';
+    kind = kind || 'harm';
+    const w = wounds(c).find((x) => x.place === place && x.kind === kind && x.ongoing);
+    const total = (w ? w.pts : 0) + pts;
+    const sev = Math.min(3, severityOf(c, total));
+    if (w) {
+      const more = sev - w.sev;
+      w.pts = total;
+      if (more <= 0) return { wound: w, down: false, dead: false, shock: null };
+      w.sev = sev;
+      const out = { wound: w, down: false, dead: false, shock: null };
+      if (isDown(c)) { if (!c.hero) { c.status.dead = true; c.status.unconscious = true; out.dead = true; } return out; }
+      if (woundLoad(c) >= boxes(c)) { goDown(c); out.down = !c.status.dead; out.dead = c.status.dead; }
+      return out;
+    }
+    const out = addWound(c, { place, sev, kind, bleed: 0, pts: total }, null);
+    if (out.wound) out.wound.ongoing = true;
+    else wounds(c).push({ place, sev: 0, kind, bleed: 0, pts: total, ongoing: true });
+    return out;
+  }
+
+  // Mend: the worst wound `steps` severity better (gone at 0), `n` times over; returns the severity mended. A down
+  // body mended under its boxes, with no wound that drops it on its own, comes to (on the ground).
+  function mendWounds(c, steps, n) {
+    let mended = 0;
+    for (let i = 0; i < (n || 1); i++) {
+      const list = wounds(c).filter((w) => w.sev > 0).sort((a, b) => b.sev - a.sev || (b.bleed || 0) - (a.bleed || 0));
+      const w = list[0];
+      if (!w) break;
+      const by = Math.min(steps, w.sev);
+      w.sev -= by;
+      mended += by;
+      if (w.bleed) w.bleed = Math.min(w.bleed, w.sev);
+      w.pts = w.sev > 0 ? WK().severity[w.sev - 1] * sizeOf(c) : 0;
+    }
+    c.wounds = wounds(c).filter((w) => w.sev > 0);
+    if (isDown(c) && woundLoad(c) < boxes(c) && !downedByPlace(c)) comeRound(c);
+    return mended;
+  }
+  // A wound that keeps the body down whatever the boxes say (a head wound at its `down` severity).
+  function downedByPlace(c) {
+    return Object.entries(WK().places).some(([p, P]) => P.down != null && worstAt(c, p) >= P.down);
+  }
+  // Bind: every wound stops bleeding. Returns the bleeding stopped.
+  function bindWounds(c) {
+    const n = bleeding(c);
+    for (const w of wounds(c)) w.bleed = 0;
     return n;
+  }
+  function healAll(c) {
+    c.wounds = [];
+  }
+  // A few words for each wound, worst first, as the sheet and the battle screen show them: "torso 2 (bleeding 2):
+  // −4 stamina a round".
+  function woundWords(c, w) {
+    const P = WK().places[w.place] || {};
+    const at = (k) => (Array.isArray(P[k]) ? P[k][Math.min(P[k].length, w.sev) - 1] : 0);
+    const bits = [];
+    if (P.ap && at('ap')) bits.push(`+${at('ap')} AP to blows`);
+    if (P.damage && at('damage')) bits.push(`−${at('damage')} damage`);
+    if (P.move && at('move')) bits.push(`−${at('move')} squares`);
+    if (P.dodge && at('dodge')) bits.push(`−${at('dodge')} dodge`);
+    if (P.stamina && at('stamina')) bits.push(`−${at('stamina')} stamina a round`);
+    if (P.stun && w.sev <= P.stun.length) bits.push('stuns');
+    if (P.drop != null && w.sev >= P.drop) bits.push('dropped what it held');
+    if (P.fell != null && w.sev >= P.fell) bits.push("can't stand");
+    if (P.down != null && w.sev >= P.down) bits.push('down');
+    return bits.join(', ');
+  }
+  function describeWounds(c) {
+    const names = (CONFIG.locations && CONFIG.locations.names) || {};
+    return wounds(c).filter((w) => w.sev > 0).slice().sort((a, b) => b.sev - a.sev).map((w) => ({
+      place: w.place, name: names[w.place] || w.place, sev: w.sev, kind: w.kind, bleed: w.bleed || 0,
+      text: `${(names[w.place] || w.place).toLowerCase()} ${w.sev}${w.bleed ? `, bleeding ${w.bleed}` : ''}`,
+      does: woundWords(c, w),
+    }));
   }
 
   function updateCondition(c) {
     const st = c.status;
     if (tireless(c)) {
-      // No stamina to run out of: a tireless creature fights until its body is destroyed.
+      // No stamina to run out of: a tireless creature fights until its body is broken.
       c.stamina = maxStamina(c);
-      if (attr(c, 'CON') <= 0) { st.dead = true; st.unconscious = true; }
+      if (!st.dead && woundLoad(c) >= boxes(c)) goDown(c);
       return st;
     }
-    if (attr(c, 'CON') <= 0) {
-      st.dead = true;
-      st.unconscious = true;
-    } else if (c.stamina <= 0 && !st.unconscious) {
-      st.unconscious = true;
+    if (st.dead) { st.unconscious = true; return st; }
+    if (!st.down && woundLoad(c) >= boxes(c)) goDown(c);
+    else if (c.stamina <= 0 && !st.unconscious) {
       // R3 (CONFIG.stamina.collapse): run dry and you collapse for a while, not for the fight. The fight stamps the
-      // round (Combat) and brings them round when it is up; a CON or spell cause (hero mode's knockout, a body called
-      // back from death) sets `unconscious` itself and stays down until roused.
-      if (collapseRule()) { st.collapsed = { round: null }; st.prone = true; }
+      // round (Combat) and brings them round when it is up.
+      st.unconscious = true;
+      st.collapsed = { round: null };
+      st.prone = true;
     }
     return st;
   }
 
-  function collapseRule() {
-    return (CONFIG.stamina && CONFIG.stamina.collapse) || null;
-  }
-
-  // Down from running out of stamina (R3), as against unconscious from a wound or a spell.
+  // Down from running out of stamina (R3), as against down from wounds.
   function collapsed(c) {
     return !!(c && c.status.unconscious && !c.status.dead && c.status.collapsed);
   }
@@ -1244,29 +1405,21 @@
     if (c.stamina <= 0) c.stamina = 1;
     c.status.unconscious = false;
     c.status.collapsed = null;
+    c.status.down = false;
     return was;
   }
 
-  // One round's regeneration (R1, CONFIG.stamina.regen): regen() × scale, in full when the fighter lost no stamina to
-  // a blow this round, `struck` of it (rounded up, at least 1) when they did. Negative regeneration (heavy armor) is
-  // whole either way. Without the rule: regen() when not struck, else 0 (the caller handles the old exceptions).
+  // One round's regeneration (R1, CONFIG.stamina.regen): regen() in full when the fighter lost no stamina to a blow
+  // this round, `struck` of it (rounded up, at least 1) when they did. Negative regeneration (heavy armor) is whole
+  // either way.
   function roundRegen(c, struck) {
-    const R = CONFIG.stamina && CONFIG.stamina.regen;
-    const r = regen(c);
-    if (!R) return struck ? Math.min(0, r) : r;
-    const full = Math.round(r * (R.scale || 1));
+    const full = regen(c);
     if (full <= 0 || !struck) return full;
-    return Math.max(1, Math.ceil(full * (R.struck != null ? R.struck : 1)));
+    return Math.max(1, Math.ceil(full * CONFIG.stamina.regen.struck));
   }
 
   function isActive(c) {
     return !c.status.dead && !c.status.unconscious;
-  }
-
-  function bleedPerRound(c) {
-    let n = 0;
-    for (const b of c.bleeds) n += b.remaining / b.rounds;
-    return n;
   }
 
   G.Character = {
@@ -1275,7 +1428,8 @@
     conditioning, attr, attrMax, combatAttr, armorInfo, armorPieces, armorAt, armorUniform, shieldInfo, shieldReady, wieldedWeapon, offhandWeapon,
     maxStamina, clampStamina, freshStamina, wearyRound, wearyTime, regen, fatiguePenalty, apPool, projectedPool, apScale, costScale, quantAP, fmtAP, minAP, baseAP, armorAP, quickCut, moveCost, squaresFor, squaresPerAP, handsBusy, castingHands, weaponStrain, inRange, optionKey, needsWindUp, strOffset, staminaCost, effectiveWeight, isLightWeapon,
     strBonus, weaponDamage, mainIndex, attackOptions, actionCost, ammoLeft, gearWarnings, tireless, webTax,
-    damageAttr, healAttr, totalDamage, updateCondition, isActive, bleedPerRound, collapsed, comeRound, roundRegen,
+    sizeOf, wounds, boxes, woundLoad, severityOf, bleeding, bleedLoss, grit, painAt, woundEffect, worstAt, cannotStand, isDown, addWound, harm, mendWounds, bindWounds, healAll, describeWounds,
+    updateCondition, isActive, collapsed, comeRound, roundRegen,
     grapple, holding, isHeld, isPinned, inClinch,
     gearSources, gearSum, damageMult, gearAP, weaponStrike, weaponApLess,
     TREES, ARMOR,

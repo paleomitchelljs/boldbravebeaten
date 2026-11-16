@@ -316,7 +316,7 @@
   //
   // Returns the catalog entry plus:
   //   faces   {face: [P, S, B]}      weight  weight class      speed {thrust, swing} AP factors
-  //   strMult {motion: ×STR bonus}   wound   {face: {vital, bleed, rounds, kind}}
+  //   strMult {motion: ×STR bonus}   wound   {face: {vital, bleed, kind}}
   //   punch   {face: force a point drives into armor (CONFIG.pierce), one-handed motion}
   const statCache = {};
   function weaponStats(item) {
@@ -361,7 +361,7 @@
     const wound = {};
     for (const f of Object.keys(def.faces)) {
       const kind = mainKind(def.faces[f]);
-      wound[f] = { kind, vital: 0, bleed: 1, rounds: CONFIG.bleedRounds };
+      wound[f] = { kind, vital: 0, bleed: 1 };
       if (def.natural && CONFIG.weaponModel === 'physical' && kind !== 'B') wound[f].vital = kind === 'P' ? CONFIG.vital.natural : CONFIG.vital.natural / 2;
       if (def.phys && def.phys.arrow && CONFIG.weaponModel === 'physical') Object.assign(wound[f], pointWound(def.phys.arrow));
     }
@@ -381,7 +381,6 @@
       kind: 'P',
       vital: Math.min(V.max, pt.depth * V.perDepth),
       bleed: pt.width / X.bleedWidth,
-      rounds: Math.round(X.bleedRounds.base + pt.depth / X.bleedRounds.perDepth),
     };
   }
 
@@ -422,13 +421,13 @@
       // carries some, a rapier's almost none, an axe's more; always under a hammer's. Claws keep a seventh.
       const eb = def.natural || X.edgeBlunt == null ? S / 7 : ph.edge * X.edgeBlunt * Math.sqrt(ml * heft * grip);
       faces.edge = [0, S, Math.round(eb)];
-      wound.edge = { kind: 'S', vital: V.cut * ph.edge, bleed: 1, rounds: CONFIG.bleedRounds };
+      wound.edge = { kind: 'S', vital: V.cut * ph.edge, bleed: 1 };
     }
     if (ph.head) {
       const B = Math.round(1 + X.headDamage * Math.sqrt(ph.head.mass * ph.length * grip));
       const sp = ph.head.spikes;
       faces.head = [sp ? Math.round(sp.depth * X.pointDamage) : 0, ph.head.cut || 0, B];
-      wound.head = sp ? pointWound(sp) : { kind: 'B', vital: 0, bleed: 1, rounds: CONFIG.bleedRounds };
+      wound.head = sp ? pointWound(sp) : { kind: 'B', vital: 0, bleed: 1 };
     }
     if (ph.beak) {
       faces.beak = [Math.round(ph.beak.depth * X.pointDamage), 0, 1];
@@ -437,11 +436,11 @@
     // A jab with the blunt end (a staff): the mass behind it, no leverage, so weaker than the swung head.
     if (ph.butt) {
       faces.butt = [0, 0, Math.round(1 + (X.buttDamage == null ? X.headDamage : X.buttDamage) * Math.sqrt(ph.butt.mass * grip))];
-      wound.butt = { kind: 'B', vital: 0, bleed: 1, rounds: CONFIG.bleedRounds };
+      wound.butt = { kind: 'B', vital: 0, bleed: 1 };
     }
     if (ph.hilt) {
       faces.hilt = [0, 0, Math.round(X.hiltDamage.base + X.hiltDamage.k * Math.sqrt(ml))];
-      wound.hilt = { kind: 'B', vital: 0, bleed: 1, rounds: CONFIG.bleedRounds };
+      wound.hilt = { kind: 'B', vital: 0, bleed: 1 };
     }
     const refMl = Math.sqrt(X.ref.mass * X.ref.length);
     // thrustHeavy: a blade's weight sits ahead of the hand, so a heavy one is slow to drive point-first; a spear is

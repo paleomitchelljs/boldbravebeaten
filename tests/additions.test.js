@@ -84,7 +84,7 @@ test('items: the silk sash cuts every action by a fifth; a blade of speed takes 
   assert.equal(C.actionCost(plain, 'parry').ap - C.actionCost(d, 'parry').ap, Math.round(0.5 * C.costScale()));
 });
 
-test('items: a sapping blade drains STR and stamina and eats armor; a goading blade riles; a thunder blade can stun', async () => {
+test('items: a sapping blade wrenches the arm, drains stamina and eats armor; a goading blade riles; a thunder blade can stun', async () => {
   const a = armed('A', 'longsword', 'party', { enchantments: ['sapping'] }); a.at = { x: 1, y: 2 };
   const t = fighter('T', 'enemy'); t.armor = Items.makeArmor('leather', 'full', 'average'); t.at = { x: 2, y: 2 };
   const { enc, chars } = await arena([a, t]);
@@ -92,7 +92,7 @@ test('items: a sapping blade drains STR and stamina and eats armor; a goading bl
   const dur = t.armor.durability, st = a.stamina;
   const swing = C.attackOptions(a).find((o) => o.motion === 'swing');
   await Combat.act(enc, chars, { actor: a.id, type: 'strike', option: swing, target: t.id }, { roller: roller([], 3), react: noReact });
-  assert.equal(t.damage.STR >= 1, true, 'STR drained');
+  assert.ok(C.wounds(t).some((w) => w.kind === 'sapped' && w.place === 'arms'), 'the arm wrenched');
   assert.ok(t.armor.durability <= dur - 3, 'armor eaten');
   assert.ok(a.stamina > st - swing.stamina, 'stamina drunk');
   const g = armed('G', 'longsword', 'party', { enchantments: ['goading'] }); g.at = { x: 1, y: 2 };
@@ -199,7 +199,7 @@ test('spells: lightning (Storm) leaps to the nearest other body; charm (Bind + M
   const sb = b.stamina;
   await Combat.act(enc, chars, { actor: m.id, type: 'strike', option: C.attackOptions(m).find((o) => o.spellKey === 'strike+storm'), target: a.id }, { roller: roller([10], 1), react: noReact });
   assert.ok(enc.log.some((l) => /leaps from A to B/.test(l.text)));
-  assert.ok(b.stamina < sb || C.totalDamage(b) > 0);
+  assert.ok(b.stamina < sb || C.woundLoad(b) > 0);
   assert.equal(Magic.spellOptions(m).find((o) => o.spellKey === 'bind+mind').spell.cond, 'enthralled');
   const r = await arena([mage('N', ['mind']), fighter('X', 'enemy')]);
   const [n, x] = Object.values(r.chars);
@@ -222,7 +222,7 @@ test('spells: Delayed marks an area that breaks at the end of the round; darknes
   const sf = f.stamina, sg = g.stamina;
   let guard = 20;
   while (enc.phase === 'turn' && guard--) await Combat.endTurn(enc, chars, Combat.currentActor(enc), { roller: roller([], 5), react: noReact });
-  assert.ok(f.stamina < sf || C.totalDamage(f) > 0, 'caught in it');
+  assert.ok(f.stamina < sf || C.woundLoad(f) > 0, 'caught in it');
   assert.ok(g.stamina >= sg - 1, 'outside it');
   assert.ok(B.CONFIG.terrain.darkness.cost >= 1 && B.CONFIG.terrain.darkness.perRound.shadow >= 1);
 });
@@ -320,15 +320,15 @@ test('ghosts: Summon + Death; swords pass through, its touch passes armor and ta
   // A plain sword passes through it.
   const swing = C.attackOptions(k).find((x) => x.motion === 'swing');
   await Combat.applyHit(enc, chars, k, g, swing, roller([], 10), {});
-  assert.equal(C.totalDamage(g), 0, 'the sword passes through');
-  // Its touch: stamina only, through plate; never an attribute.
+  assert.equal(C.woundLoad(g), 0, 'the sword passes through');
+  // Its touch: stamina only, through plate; never a wound.
   const touch = C.attackOptions(g).find((x) => x.power);
   assert.ok(touch && touch.spell.element === 'spirit');
-  const st = k.stamina, dmg = C.totalDamage(k);
+  const st = k.stamina, dmg = C.woundLoad(k);
   const h = Combat.computeHit(g, k, touch, { distance: 1 });
-  assert.ok(h.bluntToStamina > 0 && !h.toCON && !h.slashToAttrs, JSON.stringify(h));
+  assert.ok(h.stamina > 0 && !h.pts && !h.sev, JSON.stringify(h));
   for (let i = 0; i < 6; i++) await Combat.applyHit(enc, chars, g, k, touch, roller([], 5), {});
-  assert.ok(k.stamina < st && C.totalDamage(k) === dmg, 'worn down, never wounded');
+  assert.ok(k.stamina < st && C.woundLoad(k) === dmg, 'worn down, never wounded');
   // A ward of Death (Take + Death on an ally) turns it aside; so does a shell of force (Give + Force) while it holds.
   Conditions.add(k, 'warded', { rounds: 3, kind: 'death' });
   assert.ok(Magic.wardAgainst(enc, k, touch, false).blocked);
@@ -355,7 +355,7 @@ test('companions: a familiar adds spell points and fights; its death tears at it
   assert.ok(b.enc.ids.includes(ysolde.companion.id) && b.enc.ids.includes(corin.companion.id));
   ysolde.companion.status.dead = true;
   const lines = B.Companions.afterFight(w);
-  assert.ok(lines.length && ysolde.damage.WIL === 2);
+  assert.ok(lines.length && C.wounds(ysolde).some((w) => w.kind === 'bond' && w.place === 'head'), 'the torn bond is a wound at the head');
   assert.equal(B.Magic.maxSP(ysolde), sp, 'no familiar points');
   B.Companions.ensure(w, { town: true });
   assert.ok(!ysolde.companion.status.dead, 'a new one answers in town');

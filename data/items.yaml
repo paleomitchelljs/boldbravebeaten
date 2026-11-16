@@ -24,7 +24,7 @@ goods:
   bodkin_arrows:
     {name: Bodkin bundle, kind: supply, engine: bodkins, per: 5, value: 12, rarity: uncommon, blurb: "Five armor-piercing heads."}
   salve:
-    {name: Healing salve, kind: potion, value: 30, rarity: uncommon, use: {heal: 1}, blurb: "Closes a wound: heals 1 point of attribute damage (CON first)."}
+    {name: Healing salve, kind: potion, value: 30, rarity: uncommon, use: {heal: 1}, blurb: "Closes a wound: the worst wound a step better."}
   tonic:
     {name: Steadying tonic, kind: potion, value: 18, rarity: common, use: {cure: bleeding}, blurb: "Stops all bleeding at once."}
   antidote:
@@ -106,7 +106,7 @@ goods:
   velium_pendant:
     {name: Ornate Velium Pendant, kind: trinket, slot: neck, effects: {standing: 1}, value: 1200, rarity: very rare, blurb: "+1 disposition with everyone you talk to."}
   ring_of_dain:
-    {name: Ring of the Dain, kind: trinket, slot: ring, effects: {regen: 1, hit: 1, retaliate: {noun: frost, mag: 2, name: Frost of the Dain}}, value: 2500, rarity: unique, blurb: "+1 stamina regeneration, +1 to beat a defence; whoever lands a blade on you takes Frost 2."}
+    {name: Ring of the Dain, kind: trinket, slot: ring, effects: {regen: 3, hit: 1, retaliate: {noun: frost, mag: 2, name: Frost of the Dain}}, value: 2500, rarity: unique, blurb: "+3 stamina regeneration, +1 to beat a defence; whoever lands a blade on you takes Frost 2."}
   orc_fang_earring:
     {name: Orc Fang Earring, kind: trinket, slot: ear, attrs: {STR: 1}, effects: {stamina: 4}, value: 500, rarity: rare, blurb: "+1 STR, +4 stamina."}
   ivandyr_hoop:

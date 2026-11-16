@@ -35,7 +35,7 @@ padded:
   spd: 0
   dex: 0
   stamina: 0
-  regen: 1
+  regen: 3
   standUp: 0
   weight: 4
   durability: 20
@@ -51,7 +51,7 @@ leather:
   spd: 0
   dex: 1
   stamina: 0
-  regen: 1
+  regen: 3
   standUp: 0
   weight: 7
   durability: 25
@@ -67,7 +67,7 @@ mail:
   spd: 1
   dex: 1
   stamina: 1
-  regen: 2
+  regen: 6
   standUp: 1
   weight: 12
   durability: 40
@@ -83,7 +83,7 @@ plate:
   spd: 3
   dex: 2
   stamina: 2
-  regen: 4
+  regen: 12
   standUp: 2
   weight: 22
   durability: 60
@@ -116,7 +116,7 @@ chitin:
   pierce: {resist: 1.4}
   rarity: common
   natural: true
-  recoil: 1
+  recoil: 3
 trollHide:
   name: Troll hide
   material: hide

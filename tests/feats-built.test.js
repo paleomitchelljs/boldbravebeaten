@@ -109,7 +109,7 @@ test('Cleave: a blow that drops its foe carries on into another in reach', async
   assert.ok(enc.decls.some((d) => d.cleave && d.target === f2.id), 'the cleave was struck');
 });
 
-test('Overchannel: a spell beyond the pool is paid in CON', async () => {
+test('Overchannel: a spell beyond the pool is paid in harm (a strain wound at the head)', async () => {
   const m = C.newCharacter({ name: 'Mage', side: 'party', starterGear: false });
   m.skills.arcane = 2; m.feats.verb_strike = 1; m.nouns = ['fire'];
   m.feats.overchannel = 1;
@@ -118,12 +118,12 @@ test('Overchannel: a spell beyond the pool is paid in CON', async () => {
   assert.ok(o, 'a fire bolt');
   m.spSpent = B.Magic.maxSP(m); // pool empty
   assert.ok(B.Magic.overchannelSP(m) >= o.spCost);
-  const con0 = C.attr(m, 'CON');
   const foe = armed('Target', null, 'enemy');
   const { enc, chars } = await field([[m, 1, 1], [foe, 2, 1]]);
   const r = recorder([]);
   assert.equal(await Combat.act(enc, chars, { actor: m.id, type: 'strike', option: o, target: foe.id }, io(r, [10, 10])), null);
-  assert.equal(C.attr(m, 'CON'), con0 - o.spCost);
+  const strain = C.wounds(m).find((w) => w.kind === 'strain');
+  assert.ok(strain && strain.place === 'head' && strain.pts === o.spCost && strain.sev === C.severityOf(m, o.spCost));
 });
 
 test('Steady Mind: bolts can be cast in a grapple', () => {
@@ -154,7 +154,7 @@ test('Iron Grip: a held foe cannot break free while the holder pays a step\'s AP
   assert.equal(await Combat.act(enc, chars, { actor: v.id, type: 'break', target: h.id }, io(recorder([]), [10, 10, 1, 1])), null);
   assert.equal(C.holding(h), v.id, 'still held');
   assert.equal(enc.ap[h.id], ap0 - C.minAP());
-  assert.equal(C.attr(v, 'DEX'), dex0 - 1, 'the joint wrenched');
+  assert.ok(C.wounds(v).some((w) => w.kind === 'wrench' && w.place === B.CONFIG.grappling.jointLock.place), 'the joint wrenched');
 });
 
 test('Human Shield: a blow at a holder lands on the one they hold', async () => {
@@ -164,12 +164,12 @@ test('Human Shield: a blow at a holder lands on the one they hold', async () => 
   chars[atk.id] = atk; enc.ids.push(atk.id); enc.pos[atk.id] = { x: 0, y: 1 };
   enc.ap[atk.id] = 10;
   const o = C.attackOptions(atk).find((x) => x.weaponId && !x.windUp && C.inRange(x, 1));
-  const before = { h: [h.stamina, C.totalDamage(h)], v: [v.stamina, C.totalDamage(v)] };
+  const before = { h: [h.stamina, C.woundLoad(h)], v: [v.stamina, C.woundLoad(v)] };
   enc.turn = enc.order.indexOf(atk.id) >= 0 ? enc.order.indexOf(atk.id) : enc.turn;
   if (!enc.order.includes(atk.id)) { enc.order.splice(enc.turn, 0, atk.id); }
   assert.equal(await Combat.act(enc, chars, { actor: atk.id, type: 'strike', option: o, target: h.id }, io(recorder([]), [10, 10, 10, 10])), null);
-  assert.deepEqual([h.stamina, C.totalDamage(h)], before.h, 'the holder untouched');
-  assert.ok(v.stamina < before.v[0] || C.totalDamage(v) > before.v[1], 'the held one hurt');
+  assert.deepEqual([h.stamina, C.woundLoad(h)], before.h, 'the holder untouched');
+  assert.ok(v.stamina < before.v[0] || C.woundLoad(v) > before.v[1], 'the held one hurt');
 });
 
 test('Flurry: a light thrust doubled, for half again the AP; struck twice', async () => {
@@ -181,7 +181,7 @@ test('Flurry: a light thrust doubled, for half again the AP; struck twice', asyn
   assert.ok(f);
   assert.equal(f.ap, Math.round(t0.ap * 1.5));
   const foe = armed('Foe', null, 'enemy');
-  foe.base.CON = 99; foe.stamina = 200;
+  foe.traits = Object.assign({}, foe.traits, { size: 6 }); foe.stamina = 200; // a body the first thrust can't put down
   const { enc, chars } = await field([[a, 1, 1], [foe, 2, 1]]);
   assert.equal(await Combat.act(enc, chars, { actor: a.id, type: 'strike', option: f, target: foe.id }, io(recorder([]))), null);
   assert.equal(enc.decls.filter((d) => d.actor === a.id && d.type === 'strike').length, 2);
@@ -259,7 +259,7 @@ test('Archery: Point Blank shoots at 1; Quick Draw draws cheaper; Far Shot loses
   const t = armed('Mark', null, 'enemy');
   const o = shot(a);
   const far = (o.longRange || 8) + 2;
-  const sum = (h) => h.toCON + h.slashToAttrs + h.bluntToStamina + h.bluntToCON;
+  const sum = (h) => h.pts + h.blunt;
   const before = sum(Combat.computeHit(a, t, o, { distance: far, location: 'torso' }));
   a.feats.far_shot = 1;
   assert.ok(sum(Combat.computeHit(a, t, o, { distance: far, location: 'torso' })) > before);
@@ -311,7 +311,7 @@ test('Leadership: Rally lets the struck regenerate; Command gives AP; To Your Fe
   assert.equal(await Combat.act(f.enc, f.chars, { actor: cap.id, type: 'command', target: ally.id }, x), null);
   assert.ok(f.enc.ap[ally.id] > ap0);
   f.enc.ap[cap.id] = 500;
-  ally.stamina = 0; ally.status.unconscious = true;
+  ally.stamina = 0; C.updateCondition(ally); // collapsed
   assert.equal(await Combat.act(f.enc, f.chars, { actor: cap.id, type: 'rouse', target: ally.id }, x), null);
   assert.ok(C.isActive(ally) && ally.stamina === Math.floor(C.maxStamina(ally) / 4));
   assert.ok(!Combat.legalActions(f.enc, f.chars, cap.id).other.some((o) => o.type === 'rouse'), 'once a fight');
@@ -328,7 +328,7 @@ test('Lore: Bane Lore hits creatures harder (not people); Name the Weakness stri
   const [skel] = B.Enemies.makeMonster('skeleton');
   const person = armed('Bandit', null, 'enemy');
   const o = C.attackOptions(a).find((x) => x.motion === 'thrust');
-  const sum = (h) => h.toCON + h.slashToAttrs + h.bluntToStamina + h.bluntToCON;
+  const sum = (h) => h.pts + h.blunt;
   const p0 = sum(Combat.computeHit(a, person, o, { location: 'torso' }));
   a.feats.bane_lore = 2;
   assert.equal(sum(Combat.computeHit(a, person, o, { location: 'torso' })), p0, 'not people');
@@ -412,13 +412,12 @@ test('Deception in parley: Cover Story loses no disposition when caught; The Big
   assert.equal(w.parley.willMod, m0 + 2);
 });
 
-test('Cauterize: with Fire, an action stops a bleeding wound for 1 CON; no feat, no Fire, no poison, no last CON, no action', async () => {
+test('Cauterize: with Fire, an action stops every bleeding wound for a burn; no feat, no Fire, no bleeding: no action', async () => {
   const mk = (feat, noun) => {
     const a = armed('Burner', 'dagger', 'party');
     if (feat) a.feats.cauterize = 1;
     if (noun) a.nouns = ['fire'];
-    a.bleeds.push({ remaining: 6, rounds: 3 });
-    a.bleeds.push({ remaining: 4, rounds: 2, poison: true });
+    a.wounds.push({ place: 'arms', sev: 2, kind: 'cut', bleed: 2, pts: 4 });
     return a;
   };
   const offers = async (a) => {
@@ -431,13 +430,12 @@ test('Cauterize: with Fire, an action stops a bleeding wound for 1 CON; no feat,
   const a = mk(true, true);
   const { enc, chars, other } = await offers(a);
   assert.ok(other && other.affordable, 'offered');
-  const con0 = C.attr(a, 'CON');
   assert.equal(await Combat.act(enc, chars, { actor: a.id, type: 'cauterize', target: a.id }, io(recorder([]))), null);
-  assert.deepEqual(a.bleeds.map((b) => !!b.poison), [true], 'the wound is shut, the venom stays');
-  assert.equal(C.attr(a, 'CON'), con0 - 1, 'the burn costs a CON');
-  const last = mk(true, true);
-  last.damage.CON = C.attr(last, 'CON') - 1;
-  assert.equal((await offers(last)).other, undefined, 'never the last CON');
+  assert.equal(C.bleeding(a), 0, 'the wound is shut');
+  assert.ok(C.wounds(a).some((w) => w.kind === 'burn' && w.place === 'torso'), 'the burn is a wound of its own');
+  const dry = mk(true, true);
+  C.bindWounds(dry);
+  assert.equal((await offers(dry)).other, undefined, 'nothing bleeding: nothing to sear');
 });
 
 test('Whirlwind: a two-handed swing struck at every foe it reaches, for half again the stamina; the Reaper capstone closes Juggernaut', async () => {

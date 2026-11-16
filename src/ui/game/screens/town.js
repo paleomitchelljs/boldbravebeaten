@@ -150,9 +150,9 @@
       h('div', { class: 'ledger' }, World.party(w).map((c) => {
         const dead = c.status.dead;
         const cost = dead ? Econ.raiseCost(c) : Econ.healCost(w, c, s);
-        const hurt = C.totalDamage(c) || c.bleeds.length || c.stamina < C.maxStamina(c);
+        const hurt = C.woundLoad(c) || c.stamina < C.maxStamina(c);
         return h('div', { class: 'ledger-row' },
-          h('span', { class: 'row' }, UI.Art.portrait(c, 36), h('span', { class: 'stack tight' }, h('b', null, c.name), h('span', { class: 'small muted' }, dead ? 'Dead' : C.totalDamage(c) ? `−${C.totalDamage(c)} attributes` : hurt ? 'Tired' : 'Well'))),
+          h('span', { class: 'row' }, UI.Art.portrait(c, 36), h('span', { class: 'stack tight' }, h('b', null, c.name), h('span', { class: 'small muted' }, dead ? 'Dead' : C.woundLoad(c) ? `wounds ${C.describeWounds(c).map((x) => `${x.name.toLowerCase()} ${x.sev}`).join(', ')}` : hurt ? 'Tired' : 'Well'))),
           h('span', { class: 'num' }, dead || hurt ? `${cost} ◈` : ''),
           dead ? h('button', { class: 'small', disabled: w.gold < cost, onclick: () => { const r = G.Town.raise(w, c, s); toast(r.ok ? `${c.name} breathes.` : r.reason); game.render(); } }, 'Raise')
             : h('button', { class: 'small', disabled: !hurt || w.gold < cost, onclick: () => { const r = G.Town.heal(w, c, s); if (!r.ok) toast(r.reason); game.render(); } }, 'Tend'));

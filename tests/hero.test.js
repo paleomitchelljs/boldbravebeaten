@@ -4,21 +4,19 @@ const assert = require('node:assert/strict');
 const B = require('./load.js');
 const { World, Battle, Auto, Rand, Combat, Character: C, CONFIG } = B;
 
-test('hero mode: CON stops at 1 and the blow that would have killed knocks out instead', () => {
+test('hero mode: wounds take a hero down, never dead; off again, a wound on the down kills', () => {
   const w = World.create(World.presetParty(), { log: false });
   w.hero = true;
   World.syncHero(w);
   const c = World.party(w)[0];
-  C.damageAttr(c, 'CON', 99);
-  C.updateCondition(c);
-  assert.equal(C.attr(c, 'CON'), 1);
+  const cut = { place: 'torso', sev: 3, kind: 'cut', bleed: 3, pts: 7 };
+  for (let i = 0; i < 4; i++) C.addWound(c, Object.assign({}, cut), null);
   assert.equal(c.status.dead, false);
-  assert.equal(c.status.unconscious, true);
-  // Off again: the same blow kills.
+  assert.equal(C.isDown(c), true);
+  // Off again: the next wound on the down kills.
   w.hero = false;
   World.syncHero(w);
-  C.damageAttr(c, 'CON', 99);
-  C.updateCondition(c);
+  C.addWound(c, Object.assign({}, cut), null);
   assert.equal(c.status.dead, true);
 });
 
@@ -27,7 +25,7 @@ test('hero mode: blows by a hero land harder, blows on a hero softer, and a hero
   const [a, b] = World.party(w);
   const opt = { damage: [0, 30, 0] };
   const base = Combat.computeHit(a, b, opt, { location: 'torso' });
-  const sum = (h) => h.toCON + h.slashToAttrs + h.bluntToStamina + h.bluntToCON + h.converted;
+  const sum = (h) => h.pts + h.blunt + h.converted;
   const r0 = C.regen(a);
   a.hero = true;
   const harder = Combat.computeHit(a, b, opt, { location: 'torso' });
@@ -44,10 +42,10 @@ test('hero mode: a lost fight leaves no one dead', async () => {
     Rand.seed(seed);
     const w = World.create(World.presetParty(), { log: false });
     w.hero = true;
-    Battle.start(w, { name: 'Too much', foes: [{ monster: 'ogre' }, { monster: 'ogre' }, { monster: 'ogre' }] });
+    Battle.start(w, { name: 'Too much', foes: [{ monster: 'hillGiant' }, { monster: 'hillGiant' }, { monster: 'ogre' }] });
     await Auto.battle(w);
     if (Battle.finish(w).result === 'lost') lost++;
     assert.ok(World.party(w).every((c) => !c.status.dead), `seed ${seed}`);
   }
-  assert.ok(lost, 'three ogres beat a hero party at least once');
+  assert.ok(lost, 'two hill giants and an ogre beat a hero party at least once');
 });

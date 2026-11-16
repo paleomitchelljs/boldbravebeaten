@@ -1,6 +1,6 @@
-// Stamina as a pool you manage (docs/PLAN.md step 2; rulings R1 to R3): regeneration every round, spent actions
-// instead of "too exhausted", and a collapse that ends instead of unconsciousness until roused. Each part is behind a
-// key of CONFIG.stamina; with the key null the old rule stands, and that is checked here too.
+// Stamina as a pool you manage (docs/PLAN.md step 2; rulings R1 to R3; step E's plain numbers): regeneration every
+// round, spent actions instead of "too exhausted" (with CONFIG.stamina.spent null, refused), and a collapse that ends,
+// sooner with WIL.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const B = require('./load');
@@ -50,36 +50,31 @@ function withStamina(over, fn) {
   return out;
 }
 
-test('R1: a round\'s regeneration is regen × scale, a share (rounded up, at least 1) when struck; heavy armor\'s stays whole', () => {
+test('R1: a round\'s regeneration is ⌊(CON + WIL) × per⌋ less the armor\'s, a share (rounded up, at least 1) when struck; heavy armor\'s stays whole', () => {
   const c = armed('Runner', null, 'party');
   const R = CONFIG.stamina.regen;
-  const full = Math.round(C.regen(c) * R.scale);
-  assert.ok(full > 0);
+  const full = Math.floor((C.attr(c, 'CON') + C.attr(c, 'WIL')) * R.per);
+  assert.equal(C.regen(c), full);
   assert.equal(C.roundRegen(c, false), full);
   assert.equal(C.roundRegen(c, true), Math.max(1, Math.ceil(full * R.struck)));
-  c.armor = Items.makeArmor ? Items.makeArmor('plate') : c.armor;
+  c.armor = Items.makeArmor('plate');
   const r = C.regen(c);
+  assert.ok(r < full, 'plate costs regeneration');
   if (r < 0) assert.equal(C.roundRegen(c, true), C.roundRegen(c, false), 'negative regeneration is the same struck or not');
-  withStamina({ regen: null }, () => {
-    const d = armed('Old', null, 'party');
-    assert.equal(C.roundRegen(d, false), C.regen(d));
-    assert.equal(C.roundRegen(d, true), 0, 'the old rule: nothing in a round you were struck');
-  });
+  // Max stamina is the same order for everyone: no CON in it.
+  const d = armed('Tough', null, 'party');
+  d.base.CON = 10;
+  assert.equal(C.maxStamina(d), C.maxStamina(armed('Plain', null, 'party')));
 });
 
-test('R1: at the round\'s end a fighter struck regains the share, one not struck the whole; the old rule gave the struck nothing', async () => {
-  for (const on of [true, false]) {
-    await withStamina(on ? {} : { regen: null }, async () => {
-      const a = armed('A', null, 'party'), b = armed('B', null, 'enemy');
-      const { enc, chars } = await field([[a, 1, 1], [b, 6, 1]]);
-      a.stamina = 10; b.stamina = 10;
-      enc.hitThisRound[a.id] = 4; // a blow took 4 of A's stamina this round
-      await closeRound(enc, chars);
-      const fullB = on ? C.roundRegen(b, false) : C.regen(b);
-      assert.equal(b.stamina, 10 + fullB, 'B, not struck: the whole');
-      assert.equal(a.stamina, 10 + (on ? C.roundRegen(a, true) : 0), on ? 'A, struck: the share' : 'A, struck: nothing (old rule)');
-    });
-  }
+test('R1: at the round\'s end a fighter struck regains the share, one not struck the whole', async () => {
+  const a = armed('A', null, 'party'), b = armed('B', null, 'enemy');
+  const { enc, chars } = await field([[a, 1, 1], [b, 6, 1]]);
+  a.stamina = 10; b.stamina = 10;
+  enc.hitThisRound[a.id] = 4; // a blow took 4 of A's stamina this round
+  await closeRound(enc, chars);
+  assert.equal(b.stamina, 10 + C.roundRegen(b, false), 'B, not struck: the whole');
+  assert.equal(a.stamina, 10 + C.roundRegen(a, true), 'A, struck: the share');
 });
 
 test('R2: an action the fighter can\'t pay for is taken spent: stamina down to 1, the blow softer and easier to meet', async () => {
@@ -126,14 +121,20 @@ test('R2: a defence taken spent is offered with worse odds', async () => {
   assert.ok(tired.odds < fresh.odds, `${fresh.odds} → ${tired.odds}`);
 });
 
-test('R3: stamina 0 is a collapse: prone and out for the rest of the round and the next, then round with a round\'s regeneration', async () => {
+test('R3: stamina 0 is a collapse: prone and out for the rest of the round and rounds − ⌊WIL/perWil⌋ more, then round with a round\'s regeneration', async () => {
   const a = armed('A', 'longsword', 'party'), b = armed('B', 'longsword', 'enemy'), c = armed('C', 'longsword', 'enemy');
   const { enc, chars } = await field([[a, 1, 1], [b, 5, 1], [c, 6, 1]]);
   b.stamina = 0;
   C.updateCondition(b);
   assert.ok(C.collapsed(b) && b.status.prone && !C.isActive(b));
   const r0 = enc.round;
-  assert.equal(Combat.comesRoundAt(enc, b), r0 + CONFIG.stamina.collapse.rounds);
+  const K = CONFIG.stamina.collapse;
+  assert.equal(Combat.collapseRounds(b), Math.max(0, K.rounds - Math.floor(C.attr(b, 'WIL') / K.perWil)));
+  assert.equal(Combat.collapseRounds(b), 1, 'WIL 5: one round more');
+  b.base.WIL = 10;
+  assert.equal(Combat.collapseRounds(b), Math.max(0, K.rounds - 2), 'more WIL, sooner');
+  b.base.WIL = 5;
+  assert.equal(Combat.comesRoundAt(enc, b), r0 + 1);
   await closeRound(enc, chars);
   assert.ok(C.collapsed(b), 'still down at the end of the round it fell in');
   await Combat.startRound(enc, chars, roller(2));
@@ -152,11 +153,11 @@ test('R3: rouse, healing and Rally bring the collapsed round at once; a blow on 
   const { enc, chars } = await field([[cap, 1, 1], [ally, 2, 1], [foe, 3, 1], [foe2, 6, 1]]);
   ally.stamina = 0; C.updateCondition(ally);
   assert.ok(C.collapsed(ally));
-  // Blunt on a collapsed body goes to CON, as on the unconscious.
+  // A collapsed body keeps its armor (step E).
+  ally.armor = Items.makeArmor('mail');
   const o = C.attackOptions(foe).find((x) => x.weaponId && C.inRange(x, 1));
-  const h = Combat.computeHit(foe, ally, o, { distance: 1 });
-  assert.equal(h.bluntToStamina, 0);
-  assert.ok(h.bluntToCON > 0 || h.toCON > 0);
+  const h = Combat.computeHit(foe, ally, o, { distance: 1, location: 'torso', margin: 1 });
+  assert.ok(h.armored && h.mitigated.B > 0, 'the mail still takes the blow');
   enc.ap[cap.id] = 500;
   assert.equal(await Combat.act(enc, chars, { actor: cap.id, type: 'rally' }, io()), null);
   assert.ok(C.isActive(ally) && ally.stamina >= 1, 'Rally brings them round');
@@ -166,17 +167,13 @@ test('R3: rouse, healing and Rally bring the collapsed round at once; a blow on 
   assert.ok(C.isActive(ally) && !ally.status.collapsed, 'rouse');
 });
 
-test('R3: with the rule off, stamina 0 is unconscious until roused; a spell\'s or CON\'s unconsciousness never runs out', async () => {
-  await withStamina({ collapse: null }, () => {
-    const a = armed('A', null, 'party');
-    a.stamina = 0; C.updateCondition(a);
-    assert.ok(a.status.unconscious && !C.collapsed(a));
-  });
+test('R3: down from wounds is not a collapse: it never runs out in the fight', async () => {
   const a = armed('A', 'longsword', 'party'), b = armed('B', 'longsword', 'enemy'), c = armed('C', 'longsword', 'party');
   const { enc, chars } = await field([[a, 1, 1], [b, 5, 1], [c, 2, 2]]);
-  c.stamina = 0; c.status.unconscious = true; c.status.collapsed = null; // as a body called back from death
+  for (let i = 0; i < C.boxes(c); i++) C.addWound(c, { place: 'torso', sev: 1, kind: 'cut', bleed: 0, pts: 1 }, null);
+  assert.ok(C.isDown(c) && !C.collapsed(c));
   for (let i = 0; i < 3; i++) { await closeRound(enc, chars); await Combat.startRound(enc, chars, roller(4 + i)); }
-  assert.ok(c.status.unconscious, 'not a collapse: stays down');
+  assert.ok(C.isDown(c), 'stays down');
 });
 
 test('R3: the tireless are unaffected', () => {
@@ -203,7 +200,7 @@ test('the AI: finishes a collapsed foe in reach rather than strike a fresh one, 
   const down = armed('Down', 'longsword', 'enemy'), up = armed('Up', 'longsword', 'enemy');
   const { enc, chars } = await field([[a, 2, 1], [down, 1, 1], [up, 3, 1]]);
   down.stamina = 0; C.updateCondition(down);
-  down.damage.CON = C.attr(down, 'CON') - 1; // one point from death
+  for (let i = 0; i < C.boxes(down) - 1; i++) down.wounds.push({ place: 'torso', sev: 1, kind: 'cut', bleed: 0, pts: 1 }); // a box from down
   enc.ap[a.id] = 500;
   a.base.CHA = 1; // no Bait
   const d = B.AI.choose(enc, chars, a.id, () => 0.99);

@@ -464,7 +464,7 @@ test('town: training spends a feat and gold; only implemented feats are taught',
 test('town: the inn costs gold and restores everyone; healers are cheaper to friends', async () => {
   const w = fresh(51);
   const c = World.party(w)[0];
-  c.stamina = 3; c.damage.CON = 2; C.updateCondition(c);
+  c.stamina = 3; c.wounds.push({ place: 'torso', sev: 2, kind: 'cut', bleed: 0, pts: 4 }); C.updateCondition(c);
   w.gold = 3;
   assert.equal((await Town.innRest(w)).ok, false);
   w.gold = 50;
@@ -473,14 +473,14 @@ test('town: the inn costs gold and restores everyone; healers are cheaper to fri
   assert.ok(r.ok);
   assert.equal(c.stamina, C.maxStamina(c));
   assert.ok(w.day > day);
-  c.damage.CON = 2;
+  c.wounds = [{ place: 'torso', sev: 2, kind: 'cut', bleed: 0, pts: 4 }];
   const temple = place('stonebridge').locations.find((l) => l.id === 'lantern_house').services[0];
   const full = Economy.healCost(w, c, temple);
   Factions.change(w, 'lantern_order', 30);
   assert.ok(Economy.healCost(w, c, temple) < full);
   w.gold = 1000;
   assert.ok(Town.heal(w, c, temple).ok);
-  assert.equal(C.totalDamage(c), 0);
+  assert.equal(C.woundLoad(c), 0);
 });
 
 test('town: the dead are raised for a price, and come back hurt', () => {
@@ -493,7 +493,7 @@ test('town: the dead are raised for a price, and come back hurt', () => {
   Factions.change(w, 'lantern_order', 30);
   assert.ok(Town.raise(w, c, temple).ok);
   assert.equal(c.status.dead, false);
-  assert.equal(c.damage.CON, 3);
+  assert.ok(C.woundLoad(c) > 0 && C.isActive(c), 'back, wounded');
 });
 
 test('town: potions and books do what they say', () => {
@@ -501,9 +501,9 @@ test('town: potions and books do what they say', () => {
   const c = World.party(w)[0];
   World.addGood(w, 'salve');
   assert.equal(Town.useGood(w, 'salve', c).ok, false, 'unhurt');
-  c.damage.CON = 2;
+  c.wounds.push({ place: 'torso', sev: 2, kind: 'cut', bleed: 0, pts: 4 });
   assert.ok(Town.useGood(w, 'salve', c).ok);
-  assert.equal(c.damage.CON, 1);
+  assert.equal(C.woundLoad(c), 2 - 1, 'a step better');
   World.addGood(w, 'tome_stone');
   const mage = World.party(w)[3];
   assert.ok(Town.useGood(w, 'tome_stone', mage).ok);
