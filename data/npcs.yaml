@@ -15,11 +15,11 @@
 
 marta_quill:
   name: Marta Quill
-  title: Innkeeper of the Tilted Cask
+  title: Innkeeper
   faction: merchants_guild
   sprite: wizard
   glyph: "🍺"
-  look: A broad woman with ink on her cuffs from keeping everyone's tab.
+  look: Broad, ink-stained cuffs, the kind of face that has heard every excuse and believed none of them.
   attrs: {WIS: 7, WIL: 5, CHA: 6, INT: 6}
   disposition: 1
   willingness: 3
@@ -27,12 +27,45 @@ marta_quill:
   patience: 6
   temperament: [venal]
   interests: [business, quiet]
-  greeting: "Sit, sit. Ale's fair and the beds are dry. What can I do for you?"
+  greeting: "Ale's fair and the beds are dry. Sit down before you fall down."
   topics:
-    - {id: rumors, label: "What's the talk in town?", need: 1, kind: info, text: "Smuggled goods are turning up again. The Watch blames the cellars under the old mill; the Guild blames the Watch. The wolves are bolder this winter, too."}
-    - {id: mill, label: "What do you know about the old mill?", need: 3, kind: info, tag: business, sets: [knows_mill], text: "It burned years ago. But there's a cellar door round the back that's oiled. Somebody walks in and out of there at night, and they don't pay the toll at the gate."}
-    - {id: who, label: "Who matters in Stonebridge?", need: 2, kind: info, sets: [knows_factions], text: "Captain Hollis keeps the peace, Pell keeps the ledgers, and Ysa at the Lantern keeps the dead from becoming a nuisance. Cross one and the others hear by supper."}
-    - {id: tab, label: "Could you put a room on a tab?", need: 6, kind: favor, once: true, tag: business, sets: [inn_tab], text: "For someone I trust? Rooms are half price. Pay me back with interest, and don't make me regret it."}
+    - id: rumors
+      label: "What's the talk?"
+      need: 1
+      kind: info
+      text: "Smuggled goods turning up again. The Watch blames the cellars, the Guild blames the Watch, and I pour for both and say nothing. Wolves are bolder this winter, too — came right up to the fence last week."
+    - id: mill
+      label: "The old mill?"
+      need: 3
+      kind: info
+      tag: business
+      sets: [knows_mill]
+      text: "Burned years ago. But somebody oils that cellar door, and they come and go at night without paying the toll. I don't ask. Asking is how you stop getting answers."
+    - id: who
+      label: "Who runs this town?"
+      need: 2
+      kind: info
+      sets: [knows_factions]
+      text: "Hollis keeps the peace, Pell keeps the books, Ysa keeps the dead polite. Cross one and the others know by supper."
+    - id: tab
+      label: "Could you put a room on a tab?"
+      need: 6
+      kind: favor
+      once: true
+      tag: business
+      sets: [inn_tab]
+      text: "Half price, and you pay it back with interest. Break my trust and I'll break something you use more often than a room."
+    - id: south
+      label: "What's south of here?"
+      need: 2
+      kind: info
+      text: "Tarnhold. A river town wedged into the pass — or what's left of it. The orcs raid the vales, the vales raid back, and the people in between drink to forget. Good trade road, though, if you survive it."
+    - id: temple
+      label: "Anyone been to the temple?"
+      need: 3
+      kind: info
+      tag: quiet
+      text: "The lizardfolk don't welcome visitors, and visitors don't come back to explain why. Ysa says they were here before the town was. That's not an argument I'd make to their faces."
 
 captain_hollis:
   name: Captain Hollis
@@ -40,7 +73,7 @@ captain_hollis:
   faction: town_watch
   sprite: knight
   glyph: "🛡"
-  look: Grey at the temples, mail polished, a scar through one eyebrow.
+  look: Grey temples, polished mail, a scar through one eyebrow that he never explains.
   attrs: {WIS: 7, WIL: 7, CHA: 5, INT: 5}
   disposition: 0
   willingness: 2
@@ -48,10 +81,34 @@ captain_hollis:
   patience: 4
   temperament: [loyal, moral]
   interests: [order, safety]
-  greeting: "State your business. I've a gate to run."
+  greeting: "State your business. I haven't slept."
   topics:
-    - {id: gate, label: "Can I come and go after dark?", need: 7, kind: pass, once: true, tag: order, sets: [gate_pass], text: "You've earned a lantern at the gate. Don't make me sorry."}
-    - {id: bounty, label: "Is there a bounty on anything?", need: 3, kind: info, requires: {standing: {faction: town_watch, min: 10}}, text: "Cutthroats in the cellar: two crowns each. Bring a name, not a body."}
+    - id: gate
+      label: "Can we come and go after dark?"
+      need: 7
+      kind: pass
+      once: true
+      tag: order
+      sets: [gate_pass]
+      text: "You've earned it. Take a lantern at the gate and don't make me regret this."
+    - id: bounty
+      label: "Any bounties?"
+      need: 3
+      kind: info
+      requires: {standing: {faction: town_watch, min: 10}}
+      text: "Cutthroats in the cellars. Two crowns a head — I want names, not bodies."
+    - id: orcs
+      label: "What's the trouble in the south?"
+      need: 2
+      kind: info
+      tag: safety
+      text: "Orcs in the valley beyond Tarnhold. They raid the vales for slaves and stone. The vales asked for help. I sent four men. I have forty. Work out the arithmetic yourself."
+    - id: arvir
+      label: "A man named Arvir?"
+      need: 4
+      kind: info
+      requires: {flag: knows_arvir}
+      text: "Came through here a season ago. Good sword arm, bad company. Asked questions about the mine and the orc valley and didn't wait for answers he didn't like. If he's alive he's in one of those two places, and if he's dead it's because he deserved to be."
 
 guildmaster_pell:
   name: Guildmaster Pell
@@ -59,7 +116,7 @@ guildmaster_pell:
   faction: merchants_guild
   sprite: wizard
   glyph: "⚖"
-  look: Neat, soft-spoken, with rings he never takes off.
+  look: Neat, soft-spoken, rings he never takes off and a smile that never reaches them.
   attrs: {WIS: 8, WIL: 6, CHA: 7, INT: 8}
   disposition: 0
   willingness: 2
@@ -67,9 +124,22 @@ guildmaster_pell:
   patience: 5
   temperament: [venal]
   interests: [business, profit]
-  greeting: "Everything has a price. Let us find out what yours is."
+  greeting: "Everything has a price. Yours is what I'm working out."
   topics:
-    - {id: stock, label: "Is there better stock than the market shows?", need: 6, kind: favor, once: true, tag: profit, sets: [guild_stock], text: "For friends: yes. I'll open the back room for you at the smith's and the market."}
+    - id: stock
+      label: "Better stock than the stalls?"
+      need: 6
+      kind: favor
+      once: true
+      tag: profit
+      sets: [guild_stock]
+      text: "For friends of the Guild, yes. I'll open the back room at the forge and the market. Don't tell me what you use it for."
+    - id: tarnhold
+      label: "Is Tarnhold still trading?"
+      need: 3
+      kind: info
+      tag: business
+      text: "After a fashion. The orcs squeeze the east vale, bandits the west, and the road between is thick with both. Goods get through. Fewer merchants do. That's why the margins are so good."
 
 warden_ysa:
   name: Warden Ysa
@@ -77,7 +147,7 @@ warden_ysa:
   faction: lantern_order
   sprite: wizard
   glyph: "🏮"
-  look: Calm, tall, a lamp-wick behind one ear for luck. Her robe is stained at the cuffs.
+  look: Tall, calm, a lamp-wick behind one ear. Stains on her cuffs that could be ink or could be blood.
   attrs: {WIS: 8, WIL: 8, CHA: 6, INT: 7}
   disposition: 1
   willingness: 3
@@ -85,9 +155,28 @@ warden_ysa:
   patience: 6
   temperament: [moral]
   interests: [mercy, rest]
-  greeting: "Light and quiet to you. Are you hurt, or just tired?"
+  greeting: "Light and quiet to you. Hurt, or just tired?"
   topics:
-    - {id: rites, label: "Will you teach me the old rites?", need: 8, kind: favor, once: true, tag: mercy, gives: {good: tome_still}, text: "These words were written for the keepers of the lamp. You are not a keeper. But you listen. Take it."}
+    - id: rites
+      label: "Will you teach me the old rites?"
+      need: 8
+      kind: favor
+      once: true
+      tag: mercy
+      gives: {good: tome_still}
+      text: "These words were written for the keepers of the lamp. You are not a keeper. But you listen — and that matters more than the title. Take it."
+    - id: temple
+      label: "What do you know about the Suracayl?"
+      need: 2
+      kind: info
+      tag: mercy
+      text: "They were here before we were. The temple was theirs when this was swamp and nothing else. Then someone dammed the rivers and drowned their nesting grounds, and they retreated to the last place they could hold. I don't blame them for the welcome they give us."
+    - id: dead
+      label: "The barrow — what's down there?"
+      need: 4
+      kind: info
+      tag: rest
+      text: "Something that should sleep and doesn't. The Order has watched it for three generations. We don't go in. We don't let things out. That is the whole of our job."
 
 brannock:
   name: Brannock
@@ -95,7 +184,7 @@ brannock:
   faction: merchants_guild
   sprite: knight
   glyph: "🔨"
-  look: Forearms like cordwood, a leather apron burned black along the front.
+  look: Forearms like cordwood. The apron is burned black; the hands are steady.
   attrs: {WIS: 5, WIL: 7, CHA: 4, INT: 6}
   disposition: 0
   willingness: 2
@@ -105,9 +194,25 @@ brannock:
   interests: [craft, honest work]
   greeting: "Armor, blades, or a dent you can't hammer out yourself?"
   topics:
-    - {id: steel, label: "What makes armor worth wearing?", need: 1, kind: info, text: "Plate stops nearly everything and is worth a king's ransom. Mail turns a blade. Leather and padding turn a bad day into a bruise. Most folk die in whatever they could afford."}
-    - {id: weak, label: "What kills a man in plate?", need: 4, kind: info, tag: craft, text: "A hammer. Or a man who gets his arms around you and puts you in the mud. Or waiting for him to wear himself out. Heavy armor tires you."}
-    - {id: discount, label: "Anything for a regular?", need: 5, kind: favor, once: true, tag: craft, sets: [smith_discount], text: "Bring me a coin and honest work and I'll take a tenth off. Don't haggle after."}
+    - id: steel
+      label: "What armor's worth wearing?"
+      need: 1
+      kind: info
+      text: "Plate stops everything and costs everything. Mail turns a blade. Leather turns a bad day into a bruise. Most folk die in what they could afford."
+    - id: weak
+      label: "What kills a man in plate?"
+      need: 4
+      kind: info
+      tag: craft
+      text: "A hammer. A wrestler. Time. Heavy armor tires you, and a tired man makes mistakes. The plate doesn't fail — the man inside it does."
+    - id: discount
+      label: "Anything for a regular?"
+      need: 5
+      kind: favor
+      once: true
+      tag: craft
+      sets: [smith_discount]
+      text: "A tenth off, and you don't haggle after. Bring me honest coin for honest work and we'll get on fine."
 
 wren_urchin:
   name: Wren
@@ -115,7 +220,7 @@ wren_urchin:
   faction: ~
   sprite: rogue
   glyph: "🧣"
-  look: Twelve or so, quick-eyed, knows every wall in town that can be climbed.
+  look: Twelve or so. Quick eyes, scraped knuckles, knows every wall in town that can be climbed.
   attrs: {WIS: 6, WIL: 3, CHA: 5, INT: 5}
   disposition: 0
   willingness: 3
@@ -123,8 +228,21 @@ wren_urchin:
   patience: 4
   temperament: [venal, fearful]
   interests: [coin, safety]
-  greeting: "Got a coin? I've got a map in my head."
+  greeting: "Coin first. Then I'll tell you what I know, and it's more than you'd think."
   topics:
+    - id: cellars
+      label: "How do I get into the cellars?"
+      need: 4
+      kind: info
+      tag: coin
+      sets: [knows_cellar_way]
+      text: "Round the back of the old mill, there's a door with a new lock on it. The lock faces out, which tells you everything. I can get you there after dark. Don't tell Hollis."
+    - id: corvin
+      label: "What's Corvin's story?"
+      need: 3
+      kind: info
+      tag: safety
+      text: "He smiles a lot and nobody smiles back. He knows the people who move things through the cellars. I run errands for him sometimes. I don't like him, but he pays, and liking isn't eating."
 
 old_dagmar:
   name: Old Dagmar
@@ -132,7 +250,7 @@ old_dagmar:
   faction: town_watch
   sprite: wizard
   glyph: "🍺"
-  look: Missing two fingers, most of his hearing and none of his opinions.
+  look: Two fingers short, mostly deaf, and none of his opinions have dimmed.
   attrs: {WIS: 5, WIL: 5, CHA: 5, INT: 5}
   disposition: 1
   willingness: 4
@@ -140,10 +258,25 @@ old_dagmar:
   patience: 5
   temperament: [starstruck, fearful]
   interests: [old days, drink]
-  greeting: "Pull up a chair, lad. I've seen things."
+  greeting: "Pull up a chair. I've seen things you haven't, and that's worth a drink."
   topics:
-    - {id: wolves, label: "How do you handle wolves?", need: 1, kind: info, text: "Back to a wall and keep a shield up. Never fight in the open; they go around you."}
-    - {id: sleeve, label: "Do you have anything left from the old days?", need: 7, kind: favor, once: true, gives: {good: charm_wolf}, text: "Here. Wore it a dozen winters. Keeps the cold out of your thinking."}
+    - id: wolves
+      label: "Wolves?"
+      need: 1
+      kind: info
+      text: "Back to a wall and keep the shield up. Never fight in the open — they go around."
+    - id: sleeve
+      label: "Anything left from the old days?"
+      need: 7
+      kind: favor
+      once: true
+      gives: {good: charm_wolf}
+      text: "Wore this a dozen winters. Keeps the cold out of your thinking. Take it. I'm past the age where thinking helps."
+    - id: mine
+      label: "What's in the mine?"
+      need: 3
+      kind: info
+      text: "Goblins, deeper than goblins should be. The old timers said there were gnomes down there once, good folk, but that was before the goblins pushed them out — or in, depending on how you see it. And below all of that, something that smokes."
 
 sly_corvin:
   name: Corvin
@@ -159,8 +292,22 @@ sly_corvin:
   patience: 4
   temperament: [provincial, loyal]
   interests: [coin, discretion]
-  greeting: "Sit. Don't stare. Everyone's watching, so smile."
+  greeting: "Sit. Don't stare. Smile — everyone's watching."
   topics:
+    - id: work
+      label: "Any work for quiet hands?"
+      need: 4
+      kind: info
+      tag: coin
+      requires: {standing: {faction: cutthroats, min: 10}}
+      text: "There's always something that needs moving and someone who'd rather not be seen moving it. Come back when the Watch isn't looking this way."
+    - id: arvir
+      label: "A man named Arvir?"
+      need: 3
+      kind: info
+      tag: discretion
+      sets: [knows_arvir]
+      text: "Passed through. Asked about the mine, the orcs, and what was worth taking from both. Smart enough to be dangerous, and not smart enough to know when to stop. Last I heard he went south."
 
 # ---- The fire-goblin mine: the gnomes of the cut-off fort ----
 gnome_sergeant:
@@ -169,7 +316,7 @@ gnome_sergeant:
   faction: deep_gnomes
   sprite: {art: gnome-miner, kind: knight, scale: 0.7}
   glyph: "🧔"
-  look: A gnome in soot-black mail, a hammer on his shoulder and a lamp on his helm, very sure you are a goblin trick.
+  look: Soot-black mail, a hammer on his shoulder, a lamp on his helm, and the absolute certainty that you are a goblin trick.
   attrs: {WIS: 7, WIL: 7, CHA: 5, INT: 7}
   disposition: -1
   willingness: 2
@@ -177,18 +324,18 @@ gnome_sergeant:
   patience: 5
   temperament: [loyal, provincial]
   interests: [goblins, surface, mining]
-  greeting: "Not one step more. Who sent you down here, and how did you get past the stair?"
+  greeting: "Not one step more. Who sent you, and how did you get past the stair?"
   topics:
-    - {id: who, label: "Who are you?", need: 1, kind: info, text: "The fort's patrol. We hold the bridge and the tunnels either side of it, and the goblins hold the rest. We've held it a long time."}
-    - {id: goblins, label: "We're no friends of the goblins.", need: 3, kind: pass, tag: goblins, sets: [gnomes_trust], standing: {deep_gnomes: 5}, text: "No, you're not, are you. Goblins don't bleed like that. Go on over. Tell the Warden I let you by."}
-    - {id: surface, label: "We came down from the surface.", need: 4, kind: info, tag: surface, text: "From up top? Then the stair's open again. The Warden will want to hear that from your own mouths."}
+    - {id: who, label: "Who are you?", need: 1, kind: info, text: "The fort's patrol. We hold the bridge and the tunnels either side. The goblins hold the rest. We've held it a long time."}
+    - {id: goblins, label: "We're no friends of the goblins.", need: 3, kind: pass, tag: goblins, sets: [gnomes_trust], standing: {deep_gnomes: 5}, text: "No. You're not, are you. Go on over. Tell the Warden I let you by — and tell her I wasn't wrong."}
+    - {id: surface, label: "We came down from the surface.", need: 4, kind: info, tag: surface, text: "From up top? Then the stair's open. The Warden will want that from your own mouths."}
 gnome_eastwatch:
   name: Watchman Tibb
   title: The east gate's watch
   faction: deep_gnomes
   sprite: {art: gnome-miner, kind: knight, scale: 0.7}
   glyph: "🧔"
-  look: A gnome in a crossbowman's leather coat, the bolt never quite off you, a burn scar down one side of his face.
+  look: Leather crossbow coat, the bolt never quite off you, a burn scar down one side of his face.
   attrs: {WIS: 8, WIL: 6, CHA: 4, INT: 7}
   disposition: -1
   willingness: 2
@@ -196,18 +343,18 @@ gnome_eastwatch:
   patience: 4
   temperament: [wary, dry]
   interests: [goblins, surface, mining]
-  greeting: "Stop there. Nothing good has ever come down that tunnel. What are you, and how did you get through their guard post?"
+  greeting: "Stop. Nothing good comes down that tunnel. What are you?"
   topics:
-    - {id: who, label: "Who are you?", need: 1, kind: info, text: "The east gate's watch. Their guard post is at the other end of that tunnel. They come down it two or three times a month, and they go back up it fewer."}
-    - {id: goblins, label: "We're no friends of the goblins.", need: 3, kind: pass, tag: goblins, sets: [gnomes_trust], standing: {deep_gnomes: 5}, text: "No. You've their blood on you, not their paint. Come in, then, quick, before the gate's open long enough to be noticed. The Warden is in the east hall."}
-    - {id: surface, label: "We came down from the surface.", need: 4, kind: info, tag: surface, text: "Through all of that? Then there's more of a way up than we thought. Tell the Warden. That's news worth hearing twice."}
+    - {id: who, label: "Who are you?", need: 1, kind: info, text: "The east gate's watch. Their guard post is at the other end. They come down two or three times a month. Fewer go back up."}
+    - {id: goblins, label: "We're no friends of the goblins.", need: 3, kind: pass, tag: goblins, sets: [gnomes_trust], standing: {deep_gnomes: 5}, text: "No. You've their blood on you, not their paint. Come in, quick, before the gate's open long enough to notice."}
+    - {id: surface, label: "We came down from the surface.", need: 4, kind: info, tag: surface, text: "Through all of that? Then there's more of a way up than we thought. The Warden needs to hear this."}
 gnome_warden:
   name: Warden Odda
   title: Warden of the gnome fort
   faction: deep_gnomes
   sprite: {art: gnome-surveyor, kind: wizard, scale: 0.7}
   glyph: "🧔"
-  look: An old gnome with burn scars up both arms and a map of the mine inked on the back of one hand.
+  look: Old. Burn scars up both arms. A map of the mine inked on the back of one hand, eleven years out of date.
   attrs: {WIS: 9, WIL: 8, CHA: 7, INT: 9}
   disposition: 1
   willingness: 3
@@ -215,21 +362,63 @@ gnome_warden:
   patience: 6
   temperament: [loyal, moral]
   interests: [goblins, surface, mining]
-  greeting: "Sit. Brask says you came down the stair. Nobody has come down the stair in eleven years."
+  greeting: "Sit. Brask says you came down the stair. Nobody's come down the stair in eleven years."
   topics:
-    - {id: fort, label: "How long have you been cut off?", need: 1, kind: info, text: "Eleven years. The goblins took the hall and the stair, and we took the far side of the chasm and walled it. We mine, we eat what grows in the warm caves, and we bury our dead in the rock."}
-    - {id: king, label: "What would it take to free you?", need: 3, kind: quest, starts: ember_king, hide: {quest: ember_king}, tag: goblins, text: "Their king. While he sits on that throne the goblins hold together. Kill him, and they'll fall to fighting over the chair, and we can walk out up the stair."}
-    - {id: secret, label: "Is there another way into their castle?", need: 5, kind: info, tag: mining, sets: [knows_castle_seam], text: "There is. Their baron sits in the far south-west of the caves, and the rock behind his throne is a goblin door. It comes out inside their portcullis. And inside, in the southern warrens, there's a passage that seems to end in nothing. It ends in another such door, into the king's own rooms."}
-    - {id: pit, label: "What is in the warrens?", need: 4, kind: info, tag: mining, text: "A drake that eats goblins, and anything else it finds. And mind the floor on the way to the barracks: there's a stretch of it laid over a pit, and what lives in the pit is worse than the drake."}
-    - {id: kingdead, label: "The goblin king is dead.", need: 1, kind: info, once: true, requires: {flag: ember_king_dead}, sets: [told_odda_king], text: "Then it's done. Listen: you can hear them already, fighting over the chair. We'll go up the stair when they're through. You'll always have a door here."}
-    - {id: prisoner, label: "Your Fennick is alive. He's free.", need: 2, kind: favor, once: true, requires: {flag: freed_fennick}, gives: {gold: 60, xp: 80}, standing: {deep_gnomes: 15}, text: "Fennick! We said the words for him two winters ago. Take this, it's what we have. And our thanks, which is worth more down here."}
+    - id: fort
+      label: "How long have you been cut off?"
+      need: 1
+      kind: info
+      text: "Eleven years. The goblins took the hall and the stair, and we took the far side of the chasm and walled it. We mine. We eat what grows in the warm caves. We bury our dead in the rock. It is not a life I would have chosen, but it is ours."
+    - id: king
+      label: "What would it take to free you?"
+      need: 3
+      kind: quest
+      starts: ember_king
+      hide: {quest: ember_king}
+      tag: goblins
+      text: "Their king. While he sits on that throne the goblins hold together. Kill him, and they fall to fighting each other, and we walk out up the stair. I know what I am asking. I am asking it anyway."
+    - id: secret
+      label: "Is there another way in?"
+      need: 5
+      kind: info
+      tag: mining
+      sets: [knows_castle_seam]
+      text: "Their baron sits in the far south-west. The rock behind his throne is a goblin door — it comes out inside their portcullis. And deeper in, in the southern warrens, there's a passage that seems to end in nothing. It ends in another such door, into the king's own rooms. I would not have told you this if you had not asked."
+    - id: pit
+      label: "What's in the warrens?"
+      need: 4
+      kind: info
+      tag: mining
+      text: "A drake that eats whatever it finds. And mind the floor on the way to the barracks — there's a stretch laid over a pit, and what lives in the pit is worse."
+    - id: goblins_nature
+      label: "Are the goblins all like this?"
+      need: 3
+      kind: info
+      text: "The miners? No. Half-starved, worked to nothing, terrified of their king and terrified of the dark without him. It is the king and his champions who hold the mine. The miners just survive in it. I have thought about that more than is comfortable."
+    - id: kingdead
+      label: "The goblin king is dead."
+      need: 1
+      kind: info
+      once: true
+      requires: {flag: ember_king_dead}
+      sets: [told_odda_king]
+      text: "Then it's done. Listen — you can hear them already, fighting over the chair. We'll go up the stair when they're through. You'll always have a door here."
+    - id: prisoner
+      label: "Fennick is alive. He's free."
+      need: 2
+      kind: favor
+      once: true
+      requires: {flag: freed_fennick}
+      gives: {gold: 60, xp: 80}
+      standing: {deep_gnomes: 15}
+      text: "Fennick. We said the words for him two winters ago. Take this — it's what we have. And our thanks, which is worth more down here than gold."
 gnome_surveyor:
   name: Surveyor Wila
   title: The fort's surveyor
   faction: deep_gnomes
   sprite: {art: gnome-surveyor-f, kind: wizard, scale: 0.7}
   glyph: "🧓"
-  look: An old gnome in a red coat with chalk on her cuffs and a knotted measuring cord wound round one wrist.
+  look: Red coat, chalk on her cuffs, a knotted measuring cord wound round one wrist — eleven years of the mine tied in string.
   attrs: {WIS: 8, WIL: 7, CHA: 6, INT: 10}
   disposition: 1
   willingness: 3
@@ -237,17 +426,23 @@ gnome_surveyor:
   patience: 8
   temperament: [curious]
   interests: [mining, surface]
-  greeting: "Mind the cord. That's eleven years of the mine on it, knot by knot."
+  greeting: "Mind the cord. That's eleven years on it, knot by knot."
   topics:
-    - {id: clocks, label: "What are the bronze things?", need: 1, kind: info, text: "Ours. We've hands enough to dig or to watch, not both, so we built watchers. They know a friend of the fort when the Warden has said so; until then, keep your hands where they can see them."}
-    - {id: deep, label: "What lies below the goblins?", need: 3, kind: info, tag: mining, sets: [knows_citadel], text: "Below their jail the rock turns to black glass, and below that the giants built. A castle of basalt, cut fine as any gnome would cut it, round a cavern where something breathes. The giants keep the gate and the giants keep the dragon. I have measured the heat on that stair and I have not gone further."}
+    - {id: clocks, label: "The bronze things?", need: 1, kind: info, text: "Ours. We've hands enough to dig or to watch, not both, so we built watchers. They know a friend of the fort when the Warden says so. Until then, keep your hands where they can see them."}
+    - id: deep
+      label: "What lies below the goblins?"
+      need: 3
+      kind: info
+      tag: mining
+      sets: [knows_citadel]
+      text: "Below their jail the rock turns to black glass, and below that the giants built. A castle of basalt around a cavern where something breathes. The giants keep the gate and the giants keep the dragon. I have measured the heat on that stair. I have not gone further. There are things I would rather know than see."
 gnome_prisoner:
   name: Fennick
-  title: A gnome in the goblins' jail
+  title: A gnome prisoner
   faction: deep_gnomes
   sprite: {art: gnome-miner, kind: wizard, scale: 0.7}
   glyph: "🧔"
-  look: A thin gnome in a cage, chained at the ankle, who has been asked the same questions for two years.
+  look: Thin, chained at the ankle, with the eyes of someone who has been asked the same questions for two years and answered none of them.
   attrs: {WIS: 6, WIL: 9, CHA: 5, INT: 8}
   disposition: 2
   willingness: 4
@@ -255,7 +450,61 @@ gnome_prisoner:
   patience: 6
   temperament: [loyal]
   interests: [goblins, surface]
-  greeting: "You're not goblins. Are you real? Say something a goblin wouldn't."
+  greeting: "You're not goblins. Say something a goblin wouldn't."
   topics:
-    - {id: free, label: "We'll get you out. Go to the fort.", need: 2, kind: favor, once: true, sets: [freed_fennick], standing: {deep_gnomes: 5}, text: "I know the way in the dark. Tell the Warden it was Fennick that didn't talk."}
-    - {id: deep, label: "Where does the stair beyond go?", need: 3, kind: info, text: "Down, to where the drake's mother sleeps. The goblins feed her their prisoners. They were saving me for it."}
+    - {id: free, label: "We'll get you out.", need: 2, kind: favor, once: true, sets: [freed_fennick], standing: {deep_gnomes: 5}, text: "I know the way in the dark. Tell the Warden it was Fennick that didn't talk."}
+    - {id: deep, label: "Where does the stair go?", need: 3, kind: info, text: "Down, to where the drake's mother sleeps. The goblins feed her their prisoners. They were saving me for it."}
+
+# ---- Arvir: a Nietzschean anti-hero encountered in the field ----
+arvir_npc:
+  name: Arvir
+  title: A man with his own plans
+  faction: ~
+  sprite: {art: arvir, kind: knight}
+  glyph: "⚔"
+  look: Mail and a round shield, both well-kept. Cold eyes in a watchful face. He looks like he's measuring you for something.
+  attrs: {WIS: 6, WIL: 7, CHA: 6, INT: 7}
+  disposition: -1
+  willingness: 2
+  courage: 8
+  patience: 4
+  temperament: [provincial]
+  interests: [strength, freedom, the mine]
+  greeting: "Still alive. That puts you ahead of most people I've met down here."
+  topics:
+    - id: who
+      label: "Who are you?"
+      need: 1
+      kind: info
+      sets: [knows_arvir]
+      text: "A man who goes where the strong things are, because that is how you stop being weak. I came south looking for the mine and found the orcs first. They put me in this cage. That was their mistake, not mine — I learned more from their slavers in a month than your town taught me in a season."
+    - id: free
+      label: "We'll get you out."
+      need: 2
+      kind: favor
+      once: true
+      sets: [freed_arvir]
+      standing: {orc_legion: -5}
+      text: "I'll remember that. Not because I owe you — debts are chains with better names. But because you are useful, and I respect that more than charity. I am going to the mine. If you get there first, don't get in my way."
+    - id: philosophy
+      label: "What are you after?"
+      need: 3
+      kind: info
+      text: "What everyone's after, if they're honest. To become more than I am. Your Warden lights her lamp and tends the dying and calls it virtue — I call it surrendering to gravity. The world pulls you down. The only answer is to climb."
+    - id: party
+      label: "Come with us."
+      need: 5
+      kind: info
+      text: "For now. Our roads go the same way. When they don't, I'll go mine and you'll go yours, and neither of us should pretend that's a betrayal. It's just honesty."
+    - id: orcs
+      label: "What did you learn from the orcs?"
+      need: 3
+      kind: info
+      tag: strength
+      text: "That they're dying and they know it. The emperor drills his legion because if he stops they'll see there's nothing left to fight for. The warlord knows. The prophet knows. The emperor knows and does it anyway. There's something almost admirable in that — building your coffin with the same discipline you built your house."
+    - id: mine
+      label: "What's in the mine worth having?"
+      need: 4
+      kind: info
+      tag: the mine
+      text: "The dragon. Not to kill — that would be stupid and wasteful. To understand. It has ruled for centuries by making itself necessary. The goblins serve it, the giants serve it, the kobolds worship it, and all of them think they have no choice. That is power worth studying."

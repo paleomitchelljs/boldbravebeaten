@@ -36,11 +36,11 @@ test('ui: title, the heroes\' portraits, editing the chosen, and a new game', ()
   Game.draft = null;
   show('heroes');
   const all = World.heroes();
-  assert.equal(all.length, 9, 'the four presets and the five recruits');
+  assert.equal(all.length, 8, 'the four presets and the four recruits');
   for (const hero of all) assert.match(text(), new RegExp(hero.name));
   // Pick seven: the seventh is refused (a party is 1 to 6).
   const card = (id) => fake.doc.querySelector(`[data-hero=${id}]`);
-  for (const id of ['beren', 'kalavar', 'cyrus', 'spawnee', 'lorc', 'jabiku', 'arvir']) { card(id).click(); }
+  for (const id of ['beren', 'kalavar', 'cyrus', 'spawnee', 'lorc', 'jabiku', 'jadier']) { card(id).click(); }
   assert.deepEqual(Game.draft.picked, ['beren', 'kalavar', 'cyrus', 'spawnee', 'lorc', 'jabiku']);
   for (const id of ['cyrus', 'lorc', 'jabiku']) card(id).click();
   assert.deepEqual(Game.draft.picked, ['beren', 'kalavar', 'spawnee'], 'a second click takes one out');
@@ -75,7 +75,7 @@ test('ui: title, the heroes\' portraits, editing the chosen, and a new game', ()
   const party = World.party(Game.world);
   assert.deepEqual(party.map((c) => c.name), ['Beren the Bold', 'Kalavar', 'Spawnee', 'Jadier']);
   assert.equal(B.Character.wieldedWeapon(party[0]).type, 'warhammer');
-  assert.deepEqual(World.recruits(Game.world, 'village').map((r) => r.id).sort(), ['arvir', 'crusader', 'cyrus', 'jabiku', 'lorc']);
+  assert.deepEqual(World.recruits(Game.world, 'village').map((r) => r.id).sort(), ['crusader', 'cyrus', 'jabiku', 'lorc']);
   check('explore after new game');
   Explore.leave(Game.world, 'stonebridge');
   // Begin, with the default four.

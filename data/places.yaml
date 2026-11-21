@@ -18,7 +18,7 @@
 stonebridge:
   name: Stonebridge
   kind: town
-  blurb: A river town on a trade road, with a toll gate, a market, a temple and a long list of things people do not discuss.
+  blurb: A river town on a trade road, with a toll gate, a market, a temple and a long list of things nobody discusses.
   look: {sky: "#6f8aa6", ground: "#7a6a52", accent: "#c8a05a"}
   start: tilted_cask
   locations:
@@ -136,7 +136,7 @@ village:
   name: Stonebridge
   kind: dungeon
   open: true
-  blurb: A small village in a clearing in the jungle, a green before the inn, a road north into the black hills, one east and one south.
+  blurb: A clearing in the jungle. The inn, the green, three roads out.
   level: 1
   look: {wall: "#2f4a2a", floor: "#7a5a3a", ceiling: "#6f8aa6", fog: "#0c120a", torch: 0, tileset: outside_village, light: 24}
   map:
@@ -203,7 +203,7 @@ temple_approach:
   name: The Temple Swamp
   kind: dungeon
   open: true
-  blurb: Swamp and jungle east of the village. A paved causeway runs east between two small stepped pyramids to the gate in the temple's great sandstone wall.
+  blurb: Swamp and jungle east of the village. A causeway runs between two stepped pyramids to the temple gate.
   level: 1
   look: {wall: "#cdb98a", floor: "#4d6a33", ceiling: "#2a3a22", fog: "#0c120a", torch: 0, tileset: outside_swamp, ground: ",", light: 20}
   # Laid out by assets/wip/outside/layout.py: the temple's outer wall (#, the court's own tiles) down the east side
@@ -261,7 +261,7 @@ mine_approach:
   name: The Black Hills
   kind: dungeon
   open: true
-  blurb: Blasted ash and old black flows north of the village, among hills of basalt, split by a channel of lava; the goblins' mine opens in the hill beyond.
+  blurb: Ash and basalt north of the village, split by a lava channel. The mine opens in the hill beyond.
   level: 1
   look: {wall: "#2a2624", floor: "#3c3632", ceiling: "#3a2a24", fog: "#120604", torch: 0, tileset: cinder_hills, light: 20}
   map:
@@ -314,7 +314,7 @@ south_hills:
   name: The Hollin Hills
   kind: dungeon
   open: true
-  blurb: Rolling hills and old forest south of the village, rising to grey mountains; the road winds up to a narrow pass at the far end.
+  blurb: Old forest and grey hills south of the village, rising to a mountain pass.
   level: 1
   look: {wall: "#6a6a66", floor: "#3f7a3a", ceiling: "#7f9ab6", fog: "#0c120a", torch: 0, tileset: south_hills, light: 24}
   map:
@@ -403,7 +403,7 @@ tarnhold:
   name: Tarnhold
   kind: dungeon
   open: true
-  blurb: Where the pass comes down out of the mountains, a junction of canyon roads; a river falls from the heights past it, a fortress stands over the east road, and an overlook looks down on a mountain lake.
+  blurb: A canyon junction where the pass comes down. A waterfall, a fortress over the east road, an overlook above a mountain lake.
   level: 2
   look: {wall: "#6a6a66", floor: "#7a6a58", ceiling: "#7f9ab6", fog: "#0c120a", torch: 0, tileset: tarnhold, light: 24}
   map:
@@ -485,7 +485,7 @@ tarnvale_west:
   name: The West Tarnvale
   kind: dungeon
   open: true
-  blurb: A narrow canyon road winding west from Tarnhold, crossed by a river on a rope bridge, scarred by raids; an inn and a tavern in its glades; at its end a fortified gate, barricaded, and beyond it the grassland.
+  blurb: Canyon road west from Tarnhold. A rope bridge, raid scars, an inn in the glades. A barricaded gate at the far end, and grassland beyond.
   level: 2
   look: {wall: "#6a6a66", floor: "#7a6a58", ceiling: "#7f9ab6", fog: "#0c120a", torch: 0, tileset: tarnhold, light: 24}
   map:
@@ -566,7 +566,7 @@ tarnvale_east:
   name: The East Tarnvale
   kind: dungeon
   open: true
-  blurb: A narrow canyon road winding east from Tarnhold, crossed by a river on a rope bridge, scarred by raids; a tavern and an inn in its glades; at its end a fortified gate, barricaded, and beyond it the grassland.
+  blurb: Canyon road east from Tarnhold. Rope bridge, siege damage, a tavern in the glades. The barricaded gate at the end opens onto grassland.
   level: 2
   look: {wall: "#6a6a66", floor: "#7a6a58", ceiling: "#7f9ab6", fog: "#0c120a", torch: 0, tileset: tarnhold, light: 24}
   map:
@@ -647,7 +647,7 @@ tarn_plains_west:
   name: The Western Grassland
   kind: dungeon
   open: true
-  blurb: Rolling prairie west of the Tarnvale's gate, tall grass moving in the wind; the road runs on west into the jungle.
+  blurb: Prairie west of the vale gate. Tall grass, wind, and the road running on toward the jungle.
   level: 2
   look: {wall: "#8aa04a", floor: "#8aa04a", ceiling: "#9ab8d6", fog: "#0c120a", torch: 0, tileset: grassland, light: 28}
   map:
@@ -711,7 +711,7 @@ tarn_lake:
   name: The Lake Country
   kind: dungeon
   open: true
-  blurb: Grassland round a broad lake; on its south shore a fortress of grey-green stone in two blocks, a rope bridge slung between them over the gate road.
+  blurb: Grassland round a broad lake. On the south shore, a fortress of grey-green stone — two blocks, a rope bridge between them over the road.
   level: 3
   look: {wall: "#6a7466", floor: "#4f9a3c", ceiling: "#9ab8d6", fog: "#0c120a", torch: 0, tileset: lakeland, light: 28}
   map:
@@ -782,16 +782,16 @@ tarn_lake:
     Y: {kind: prop, sprite: birch, label: "A birch", on: ","}
     R: {kind: prop, sprite: boulder, label: "A boulder", on: ","}
   encounters:
-    gate: {foes: [{monster: sarnak}, {monster: sarnak}], text: "Two sarnaks under the bridge lower their spears."}
-    jetty: {foes: [{monster: sarnak}], text: "The sarnak drops its line and takes up a spear."}
-    camp: {foes: [{monster: sarnak}, {monster: sarnak}], text: "Sarnaks rise from beside their clutch, hissing."}
-    patrol: {foes: [{monster: sarnak}, {monster: sarnakKnight}], text: "A patrol turns off the shore toward you."}
+    gate: {foes: [{monster: sarnak}, {monster: sarnak}], text: "Two sarnaks under the bridge lower their spears. They look tired."}
+    jetty: {foes: [{monster: sarnak}], text: "The sarnak drops its fishing line and picks up a spear."}
+    camp: {foes: [{monster: sarnak}, {monster: sarnak}], text: "Sarnaks rise from beside a clutch of leathery eggs, hissing."}
+    patrol: {foes: [{monster: sarnak}, {monster: sarnakKnight}], text: "A patrol turns off the shore. The knight puts itself between you and the camp."}
   secrets: []
 
 sarnak_fort:
   name: The Fortress on the Lake
   kind: dungeon
-  blurb: The upper floor of the lake fortress: a hall in each block, and between them a rope bridge over the gate road.
+  blurb: The upper floor of the fortress. A hall in each block, a rope bridge between them. Nesting materials line every wall.
   level: 3
   look: {wall: "#5a6458", floor: "#6f7868", ceiling: "#1a2224", fog: "#060a0a", torch: 1, tileset: lakeland, light: 18}
   map:
@@ -818,16 +818,16 @@ sarnak_fort:
     q: {kind: monster, encounter: brood, asleep: true, label: "A sarnak dozing by the eggs"}
     k: {kind: monster, encounter: warden, label: "The warden of the fortress"}
   encounters:
-    hall: {foes: [{monster: sarnak}, {monster: sarnakKnight}], text: "Sarnaks snatch up spears from the wall."}
-    brood: {foes: [{monster: sarnak}], text: "The brood-keeper uncoils and comes at you."}
-    warden: {foes: [{monster: sarnakWarden}, {monster: sarnakKnight}], text: "The warden rises, a head taller than its guard, and levels its spear."}
+    hall: {foes: [{monster: sarnak}, {monster: sarnakKnight}], text: "Sarnaks snatch spears from the wall. This was a dining hall, once."}
+    brood: {foes: [{monster: sarnak}], text: "The brood-keeper uncoils between you and the eggs."}
+    warden: {foes: [{monster: sarnakWarden}, {monster: sarnakKnight}], text: "The warden rises, a head taller than its guard. It has been expecting you."}
   secrets: []
 
 tarn_plains_south:
   name: The Southern Grassland
   kind: dungeon
   open: true
-  blurb: Prairie running south toward the desert; on its east the mountains open in a canyon of red clay and tan rock, a labyrinth where minotaurs live.
+  blurb: Prairie running south toward the desert. The mountains open east in a canyon of red clay — a labyrinth, and minotaurs in it.
   level: 4
   look: {wall: "#a8502c", floor: "#c8a878", ceiling: "#9ab8d6", fog: "#0c120a", torch: 0, tileset: clay_canyon, light: 28}
   map:
@@ -919,7 +919,7 @@ desert:
   name: The Desert
   kind: dungeon
   open: true
-  blurb: "Sand and red rock south of the grassland, under Tarnhold's mountains: a stream falls out of them into a great oasis lake ringed with palms, and a river runs from the lake west to the sea. A ruined tower stands on an island in the lake."
+  blurb: "Sand and red rock under the mountains. A stream falls into an oasis lake ringed with palms, and a ruined tower stands on an island in it."
   level: 4
   look: {wall: "#8a4a2a", floor: "#d8b878", ceiling: "#9ab8d6", fog: "#1a140a", torch: 0, tileset: desert, light: 28}
   map:
@@ -977,7 +977,7 @@ desert:
     - "~~~~..........................SS.............................```#(?▁▂▃▄▄▄▄▄▄▄▄▄▄"
   legend:
     N: {kind: stairs, to: tarn_plains_south, at: S, sprite: none, label: "North, back to the grassland"}
-    S: {kind: note, sprite: none, label: "The desert south", text: "Sand and red rock run on south as far as you can see. (What lies beyond is not built yet.)"}
+    S: {kind: note, sprite: none, label: "The desert south", text: "Sand and red rock run south as far as you can see. The horizon shimmers."}
     A: {kind: prop, sprite: waterfall, label: "A stream falling out of the mountains", on: "~"}
     # the island and its tower
     T: {kind: prop, sprite: tower, label: "A ruined tower", text: "A round tower of pale sandstone, its top broken open to the sky. Its doorway is dark, and the air round it is cold.", on: ","}
@@ -1013,7 +1013,7 @@ jungle_west:
   name: The Mire Wood
   kind: dungeon
   open: true
-  blurb: Jungle west of the grassland, dark under the canopy; a trail winds between great gnarled trees hung with moss, past a marsh of black pools in the south.
+  blurb: Dark jungle west of the grassland. A trail between gnarled trees hung with moss, a marsh of black pools in the south.
   level: 2
   look: {wall: "#24381f", floor: "#4a3a28", ceiling: "#2a3a22", fog: "#0c120a", torch: 0, tileset: jungle, light: 20}
   map:
@@ -1045,7 +1045,7 @@ jungle_west:
     - "####################################"
   legend:
     Q: {kind: stairs, to: tarn_plains_west, at: Z, sprite: none, label: "The trail east, out onto the grassland"}
-    Z: {kind: note, sprite: none, label: "The trail west", text: "The trail runs on west under the trees. (What lies beyond is not built yet.)"}
+    Z: {kind: note, sprite: none, label: "The trail west", text: "The trail runs on west under the canopy. The air is thick and still."}
     K: {kind: prop, sprite: kapok, label: "A kapok tree on great buttress roots"}
     M: {kind: prop, sprite: mangrove, label: "A mangrove standing on its roots", on: "≈"}
     F: {kind: prop, sprite: strangler, label: "A strangler fig, its trunk a lattice of roots"}
@@ -1061,7 +1061,7 @@ tarn_plains_east:
   name: The Eastern Grassland
   kind: dungeon
   open: true
-  blurb: Rolling prairie east of the Tarnvale's gate, tall grass moving in the wind; the road runs on east.
+  blurb: Prairie east of the vale gate. Tall grass and the road running east.
   level: 2
   look: {wall: "#8aa04a", floor: "#8aa04a", ceiling: "#9ab8d6", fog: "#0c120a", torch: 0, tileset: grassland, light: 28}
   map:
@@ -1102,7 +1102,7 @@ tarn_plains_east:
     u: {kind: prop, sprite: totem, label: "A totem of lashed timbers and a horned skull", on: ","}
     c: {kind: prop, sprite: bonfire, label: "A bonfire", on: ","}
     E: {kind: stairs, to: tarnvale_east, at: Z, sprite: none, label: "The road west, back through the gate"}
-    Z: {kind: note, sprite: none, label: "The road east", text: "The road runs on east over the grassland. (What lies beyond is not built yet.)"}
+    Z: {kind: note, sprite: none, label: "The road east", text: "The road runs east over the grassland. Something has beaten the grass flat ahead."}
     G: {kind: prop, sprite: tallgrass_gold, solid: false, label: "Tall grass", on: ","}
     H: {kind: prop, sprite: tallgrass_seed, solid: false, label: "Tall grass", on: ","}
     J: {kind: prop, sprite: tallgrass_flower, solid: false, label: "Tall grass and wildflowers", on: ","}
@@ -1117,7 +1117,7 @@ orc_valley:
   name: The Orc Valley
   kind: dungeon
   open: true
-  blurb: A green valley shut in by grey mountains, cut through by a moat; the orc legion's camps, its castle of grey-blue stone, a quarried hill where slaves cut stone, and pits where more are kept.
+  blurb: A green valley shut in by mountains. The orc legion's camps, its castle, a quarry where slaves cut stone. The last province of an empire that once stretched east beyond the peaks.
   level: 1
   look: {wall: "#55534e", floor: "#384a22", ceiling: "#7f9ab6", fog: "#0c120a", torch: 0, tileset: orc_valley, ground: ",", light: 24}
   map:
@@ -1201,7 +1201,7 @@ orc_valley:
     x: {kind: prop, sprite: chainpost, label: "A post with chains and shackles", on: ","}
     j: {kind: prop, sprite: woodpile, label: "Firewood", on: ","}
     l: {kind: prop, sprite: palisade, label: "A short palisade of sharpened logs", on: ","}
-    Y: {kind: note, label: "The cabin door", text: "The bar across the door is heavy, and there are voices inside: tired ones, speaking low in several tongues. Slaves, kept here between shifts at the quarry. (Who they are and what they want is not written yet.)", on: ","}
+    Y: {kind: note, label: "The cabin door", text: "The bar across the door is heavy, and there are voices inside: tired ones, speaking low in several tongues. Slaves, kept between shifts at the quarry.", on: ","}
     # 4: the slaver caves, slaves outside
     m: {kind: prop, sprite: minecart, label: "A cart of cut stone", on: ","}
     q: {kind: prop, sprite: stoneblocks, label: "Cut blocks of grey stone", on: ","}
@@ -1210,13 +1210,13 @@ orc_valley:
     d: {kind: prop, sprite: cage, label: "An empty cage", on: ","}
     e: {kind: prop, sprite: woodpile, label: "Firewood", on: ","}
     s: {kind: monster, encounter: slaver, label: "A slaver watching the work", on: ","}
-    N: {kind: note, label: "Slaves at work", text: "Humans, elves, a dwarf or two, all in rags and ankle-chains, hauling blocks to the carts. None of them look up.", on: ","}
+    N: {kind: note, label: "Slaves at work", text: "Humans, elves, a dwarf or two, in rags and ankle-chains, hauling blocks. None look up.", on: ","}
     # 5: the slave pits
     z: {kind: prop, sprite: cage, label: "A cage of thick bars", on: ";"}
     K: {kind: prop, sprite: chainpost, label: "A post with chains", on: ";"}
     Q: {kind: prop, sprite: gibbet, label: "An iron cage hung from a gallows post, empty", on: ";"}
     a: {kind: prop, sprite: torchpost, label: "A torch on a post", on: ","}
-    Z: {kind: note, label: "A gnome in a cage", text: "A gnome, filthy and furious, rattles the bars at you, then sees you are not orcs and goes very quiet. (What he has to say is not written yet.)", on: ";"}
+    Z: {kind: npc, npc: arvir_npc, sprite: {art: arvir, kind: knight}, label: "A man in a cage, watching you", on: ";"}
     # 6: the trainer hill
     v: {kind: prop, sprite: dummy, label: "A training dummy, hacked to straw", on: "{"}
     i: {kind: prop, sprite: bigtent, label: "The drillmaster's tent", on: "{"}
@@ -1227,11 +1227,11 @@ orc_valley:
     o: {kind: prop, sprite: rocks, solid: false, label: "Loose rocks", on: ","}
     A: {kind: prop, sprite: waterfall, label: "A waterfall into the lake", on: "~"}
   encounters:
-    legion: {foes: [{monster: orcLegionnaire}], text: "A legionnaire kicks over a stool and comes at you."}
-    centurion: {foes: [{monster: orcCenturion}, {monster: orcLegionnaire}], text: "A centurion ducks out of his tent, roaring for his men."}
-    gate: {foes: [{monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "The gate guard levels their spears."}
+    legion: {foes: [{monster: orcLegionnaire}], text: "A legionnaire sees you and doesn't hesitate. Training."}
+    centurion: {foes: [{monster: orcCenturion}, {monster: orcLegionnaire}], text: "A centurion ducks out of his tent, already in formation. His men follow."}
+    gate: {foes: [{monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "The gate guard levels their spears. They were expecting someone."}
     slaver: {foes: [{monster: orcSlaver}, {monster: orcLegionnaire}], text: "The slaver drops his club on the nearest slave's back and turns to you."}
-    drill: {foes: [{monster: orcCenturion}, {monster: orcLegionnaire}], text: "The drill breaks off, and the line turns on you."}
+    drill: {foes: [{monster: orcCenturion}, {monster: orcLegionnaire}], text: "The drill breaks off, and the line turns on you. They are very good at this."}
   wandering:
     - {w: 1, foes: [{monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "A patrol of the legion."}
     - {w: 3, nothing: true}
@@ -1242,7 +1242,7 @@ orc_valley:
 orc_castle:
   name: The Orc Castle
   kind: dungeon
-  blurb: Halls of grey-blue stone floored with green marble, hung with the legion's banners; the emperor's throne under a great gold coin.
+  blurb: Grey-blue stone, green marble, the legion's banners on every wall. The emperor's throne sits under a gold coin the size of a shield.
   level: 3
   look: {wall: "#283438", floor: "#24402f", ceiling: "#1a2224", fog: "#060a0a", torch: 1, tileset: orc_castle, light: 18}
   map:
@@ -1306,11 +1306,11 @@ orc_castle:
     patrol: {foes: [{monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "A patrol rounds the corner."}
     mess: {foes: [{monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "Orcs come up from the benches, knives still in their hands."}
     barracks: {foes: [{monster: orcLegionnaire}, {monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "A sleeper wakes and bellows the rest awake."}
-    prophet: {foes: [{monster: orcProphet}], text: "The prophet turns from the green flame and says your name, which he should not know."}
-    emissaries: {foes: [{monster: orcEmissary}, {monster: orcEmissary}], text: "The emissaries draw their fine swords with some regret."}
-    warlord: {foes: [{monster: orcWarlord}], text: "The warlord looks up from his maps and reaches for the greatsword."}
+    prophet: {foes: [{monster: orcProphet}], text: "The prophet turns from the green flame and says your name, which he should not know. He looks sorry about what comes next."}
+    emissaries: {foes: [{monster: orcEmissary}, {monster: orcEmissary}], text: "The emissaries draw their fine swords with genuine regret. They were the ones who argued for negotiation."}
+    warlord: {foes: [{monster: orcWarlord}], text: "The warlord looks up from his maps. He knows what the maps say. He reaches for the greatsword."}
     throneguard: {foes: [{monster: orcCenturion}, {monster: orcCenturion}], text: "The throne guard close in from the pillars."}
-    emperor: {foes: [{monster: orcEmperor}], flags: [orc_emperor_dead], text: "The emperor rises from his throne and takes up the spear."}
+    emperor: {foes: [{monster: orcEmperor}], flags: [orc_emperor_dead], text: "The emperor rises from his throne and takes up the spear. He has been waiting for this his whole life."}
   wandering:
     - {w: 1, foes: [{monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "A patrol of the castle."}
     - {w: 4, nothing: true}
@@ -1321,7 +1321,7 @@ orc_castle:
 orc_mines:
   name: The Slaver Caves
   kind: dungeon
-  blurb: Galleries hacked out of grey stone, lit by torches; slaves at the rock face, overseers with clubs, pens where the slaves sleep.
+  blurb: Galleries hacked from grey stone. Slaves at the rock face, overseers with clubs. The empire runs on this.
   level: 2
   look: {wall: "#222426", floor: "#3a3c3e", ceiling: "#1a1b1c", fog: "#060606", torch: 1, tileset: orc_mine, light: 16}
   map:
@@ -1356,7 +1356,7 @@ orc_mines:
   legend:
     S: {kind: stairs, to: orc_valley, at: M, sprite: none, label: "Out to the quarry and the valley"}
     z: {kind: prop, sprite: pallet, label: "A straw pallet"}
-    G: {kind: note, label: "The slave pens", text: "Slaves asleep on straw in a pen of stakes, too tired to wake for you. (Who they are is not written yet.)"}
+    G: {kind: note, label: "The slave pens", text: "Slaves asleep on straw in a pen of stakes, too exhausted to wake for you."}
     q: {kind: prop, sprite: bucket, label: "A bucket of water"}
     o: {kind: monster, encounter: overseers, label: "The overseers' room"}
     t: {kind: prop, sprite: maptable, label: "A table with a tally of stone and slaves"}
@@ -1370,7 +1370,7 @@ orc_mines:
     v: {kind: prop, sprite: rubble, label: "Spoil from the face"}
     x: {kind: prop, sprite: ladder, label: "A ladder"}
     g: {kind: monster, encounter: gallery, label: "A slaver in the first gallery"}
-    D: {kind: note, label: "An old shaft", text: "A shaft going straight down, a rope ladder rotted to its last rungs. Cold air comes up it. (Where it goes is not built yet.)"}
+    D: {kind: note, label: "An old shaft", text: "A shaft going straight down, a rope ladder rotted to its last rungs. Cold air rises from below."}
   encounters:
     gallery: {foes: [{monster: orcSlaver}], text: "A slaver turns from the slaves with his club raised."}
     cut: {foes: [{monster: orcSlaver}, {monster: orcLegionnaire}], text: "The slavers at the cut leave off their shouting and come at you."}
@@ -1385,7 +1385,7 @@ orc_mines:
 temple_court:
   name: The Temple Court
   kind: dungeon
-  blurb: A walled court of broken sandstone gone to grass and fern. Snakes and lizards are worked into the walls.
+  blurb: A walled court of broken sandstone, gone to grass. Snakes and lizards worked into every surface.
   level: 1
   look: {wall: "#cdb98a", floor: "#4d6a33", ceiling: "#2a3a22", fog: "#0c120a", torch: 1, tileset: temple_court, ground: ",", light: 20}
   map:
@@ -1449,10 +1449,10 @@ temple_court:
     l: {kind: monster, encounter: maze_door, label: "Guards at the labyrinth door"}
     p: {kind: monster, encounter: palace_door, label: "Gorillas at the palace door"}
   encounters:
-    gate: {foes: [{monster: scaleward}], text: "A Suracayl warrior by the gate turns, hammer up."}
-    court: {foes: [{monster: scaleward}, {monster: scaleward, sprite: {art: lizardfolk-warrior-tan}}], text: "Two Suracayl in the middle of the court break off and come at you."}
-    maze_door: {foes: [{monster: scaleward, sprite: {art: lizardfolk-warrior-tan}}], text: "The Suracayl at the south door hisses and sets its feet."}
-    palace_door: {foes: [{monster: templeGorillaPair}], text: "The two great apes squatting under the palace arch come up off their knuckles."}
+    gate: {foes: [{monster: scaleward}], text: "A Suracayl warrior by the gate turns. It was sleeping. It doesn't look surprised."}
+    court: {foes: [{monster: scaleward}, {monster: scaleward, sprite: {art: lizardfolk-warrior-tan}}], text: "Two Suracayl in the court turn to face you. They were painting the wall."}
+    maze_door: {foes: [{monster: scaleward, sprite: {art: lizardfolk-warrior-tan}}], text: "The Suracayl at the south door hisses and sets its feet. Behind it, children's voices."}
+    palace_door: {foes: [{monster: templeGorillaPair}], text: "The two great apes under the palace arch come up off their knuckles."}
   wandering:
     - {w: 1, foes: [{monster: scaleward, sprite: {art: lizardfolk-warrior-tan}}], text: "A Suracayl patrol comes along the wall."}
     - {w: 4, nothing: true}
@@ -1461,7 +1461,7 @@ temple_court:
 temple_maze:
   name: The Labyrinth
   kind: dungeon
-  blurb: Worked passages of damp sandstone, winding and doubling back on themselves. The temple's people live in here.
+  blurb: Damp sandstone passages, winding back on themselves. The Suracayl live here.
   level: 2
   look: {wall: "#a8926c", floor: "#8a7656", ceiling: "#2a3a22", fog: "#0c120a", torch: 1, tileset: temple_maze, light: 14}
   # Laid out by tools/labyrinth.js --seed 7 --cols 10 --rows 6 --loops 0.05 --wide 3 (three-square passages, the user,
@@ -1528,7 +1528,7 @@ temple_maze:
 temple_court2:
   name: The Pyramid Court
   kind: dungeon
-  blurb: A second walled court, nearly filled by a stepped pyramid of four carved tiers with a small altar on top.
+  blurb: A second court, nearly filled by a stepped pyramid with an altar on top.
   level: 3
   look: {wall: "#cdb98a", floor: "#4d6a33", ceiling: "#2a3a22", fog: "#0c120a", torch: 1, tileset: temple_court, ground: ",", light: 20}
   # A 3-square rind of grass round a 28-square pyramid: four tiers, each a riser (^) and a terrace two squares wide
@@ -1609,7 +1609,7 @@ temple_court2:
 temple_sewer:
   name: The Sewers
   kind: dungeon
-  blurb: Channels of rank green water under the whole temple, walkways of slimed stone, and plank bridges the only way across.
+  blurb: Rank green water under the temple. Slimed walkways, plank bridges.
   level: 2
   look: {wall: "#46503f", floor: "#3a4436", ceiling: "#101810", fog: "#060a06", torch: 1, tileset: temple_sewer, light: 7}
   # A main channel from under the gatehouse east to a cistern, where a ring of planks runs round the drain down to the
@@ -1678,7 +1678,7 @@ temple_sewer:
 temple_ritual:
   name: The Ritual Chamber
   kind: dungeon
-  blurb: A square chamber of rose stone deep under the temple, a shallow pool round a dais, and on the dais a great green orb with something in it.
+  blurb: Rose stone deep under the temple. A shallow pool, a dais, and on the dais a great green orb with something in it.
   level: 5
   look: {wall: "#806062", floor: "#244440", ceiling: "#1a2e2c", fog: "#081210", torch: 1, tileset: temple_ritual, light: 8}
   # First laid out by assets/wip/temple-ritual/layout.js (the user's reference: assets/ideas/refs/ritual-chamber-reference.png),
@@ -1714,7 +1714,7 @@ temple_ritual:
 temple_palace:
   name: The Palace
   kind: dungeon
-  blurb: The palace of the temple's masters, east of the court. A long gallery of statues, side chambers, and a great hall with a throne on a dais.
+  blurb: The palace east of the court. A gallery of statues, side chambers, a great hall with a throne.
   level: 4
   look: {wall: "#b4a26a", floor: "#433d34", ceiling: "#2a2620", fog: "#0c0a08", torch: 1, tileset: temple_palace, light: 14}
   # assets/wip/temple-palace/layout.js. The user's references: assets/ideas/refs/palace-hall-reference.png (a raised
@@ -1779,7 +1779,7 @@ temple_palace:
 temple_palace_up:
   name: The Palace, Upper Floor
   kind: dungeon
-  blurb: The living quarters of the temple's masters, and the servants' hall and stores.
+  blurb: Quarters, servants' hall, stores.
   level: 4
   look: {wall: "#b4a26a", floor: "#433d34", ceiling: "#2a2620", fog: "#0c0a08", torch: 1, tileset: temple_palace, light: 12}
   map:
@@ -1826,7 +1826,7 @@ temple_palace_up:
 temple_palace_stair:
   name: The Stair Below the Palace
   kind: dungeon
-  blurb: A long stair down from the palace, a few small rooms off it, and at the bottom the ritual chamber.
+  blurb: A long stair down from the palace. Small rooms off it, and the ritual chamber at the bottom.
   level: 4
   look: {wall: "#b4a26a", floor: "#433d34", ceiling: "#2a2620", fog: "#0c0a08", torch: 1, tileset: temple_palace, light: 9}
   map:
@@ -1872,7 +1872,7 @@ temple_palace_stair:
 temple_wall:
   name: On the Temple Wall
   kind: dungeon
-  blurb: The walk along the top of the gate wall, and the little guardhouse beside it, over the gate, with a door out onto each pyramid.
+  blurb: The wall walk over the gate. A guardhouse, a door onto each pyramid.
   level: 1
   look: {wall: "#cdb98a", floor: "#bba57a", ceiling: "#2a3a22", fog: "#0c120a", torch: 1, tileset: temple_walltop, light: 20}
   map:
@@ -1913,7 +1913,7 @@ temple_wall:
 ember_hall:
   name: The Cinder Hall
   kind: dungeon
-  blurb: The flame goblins' caves of black basalt: a stair down to a ledge round a lava pool, a bubbling cavern, warrens, storerooms, a fungus farm, the baron's seat, and a gate court at the south end.
+  blurb: Black basalt caves. A stair down to a lava ledge, warrens, storerooms, a fungus farm, and a gate court at the south end.
   level: 1
   look: {wall: "#2a2624", floor: "#3c3632", ceiling: "#140c08", fog: "#120604", torch: 1, tileset: ember_basalt, light: 8}
   map:
@@ -2042,7 +2042,7 @@ ember_hall:
 ember_warrens:
   name: The Warrens
   kind: dungeon
-  blurb: The goblins' working mine: low winding tunnels of black rock, a few hidden doors, the barracks at the far end, and a drake that hunts in it.
+  blurb: Low winding tunnels of black rock. Hidden doors, the barracks at the far end, and a drake that hunts in the dark.
   level: 2
   look: {wall: "#2a2624", floor: "#3c3632", ceiling: "#140c08", fog: "#120604", torch: 1, tileset: ember_basalt, light: 8}
   map:
@@ -2134,7 +2134,7 @@ ember_warrens:
 ember_lake:
   name: The Lava Lake
   kind: dungeon
-  blurb: A great chamber of moving lava under a black roof, crossed only on a line of stones.
+  blurb: A cavern of moving lava under a black roof. The only way across is a line of stones.
   level: 5
   look: {wall: "#2a2624", floor: "#3c3632", ceiling: "#140c08", fog: "#120604", torch: 1, tileset: ember_basalt, light: 8}
   map:
@@ -2188,7 +2188,7 @@ ember_lake:
 ember_pit:
   name: The Burning Pit
   kind: dungeon
-  blurb: A round pit under the warrens, its floor cracked with lava. Something lives here.
+  blurb: A round pit under the warrens, floor cracked with lava. Something lives here.
   level: 6
   look: {wall: "#2a2624", floor: "#3c3632", ceiling: "#140c08", fog: "#120604", torch: 1, tileset: ember_basalt, light: 8}
   map:
@@ -2225,7 +2225,7 @@ ember_pit:
 ember_barracks:
   name: The Goblin Barracks
   kind: dungeon
-  blurb: Built goblin masonry of grey mine stone at the north end of the warrens: a drill hall, bunks, a mess and an armory.
+  blurb: Goblin masonry at the north end of the warrens. Drill hall, bunks, mess, armory.
   level: 2
   look: {wall: "#6a6866", floor: "#57534f", ceiling: "#1a1614", fog: "#0e0a08", torch: 1, tileset: ember_masonry, light: 8}
   map:
@@ -2276,7 +2276,7 @@ ember_barracks:
 ember_gnomes:
   name: The Gnome Fort
   kind: dungeon
-  blurb: A walled fort of dark mottled stone, held by gnome miners cut off from the surface: one gate faces the lava chasm and the warrens, the other the goblins' guard post.
+  blurb: A fort of dark stone, held by gnome miners cut off from the surface for eleven years. One gate faces the lava chasm, the other the goblins.
   level: 3
   look: {wall: "#3e4044", floor: "#4a4a4c", ceiling: "#14141a", fog: "#0a0a0e", torch: 1, tileset: ember_gnome, light: 9}
   map:
@@ -2334,7 +2334,7 @@ ember_gnomes:
 ember_castle:
   name: The Inferno Realm
   kind: dungeon
-  blurb: The inferno goblins' half of the caves, behind the portcullis: hewn halls and warrens, the bar, the prison pits, the wizards' hall, the forge, the guard post on the way to the gnomes, and the king's audience chamber.
+  blurb: Behind the portcullis. Hewn halls, a bar, prison pits, the forge, and the king's audience chamber.
   level: 3
   look: {wall: "#2a2624", floor: "#3c3632", ceiling: "#140c08", fog: "#120604", torch: 1, tileset: ember_basalt, light: 8}
   map:
@@ -2435,13 +2435,13 @@ ember_castle:
     gateguard: {foes: [{monster: goblinWarrior, n: 2}], text: "Two goblins with longspears step across the corridor."}
     bar: {foes: [{monster: fireGoblin, n: 2}, {monster: fireGoblinArcher}], text: "The drinkers come over the bar at you; one grabs a bow off the wall."}
     sleepers: {foes: [{monster: fireGoblin, n: 3}], text: "Goblins tumble out of their blankets."}
-    patriarch: {foes: [{monster: goblinShaman}], text: "A tall, lean goblin with one milky eye pushes through the beads, and you find you want to like him."}
-    smiths: {foes: [{monster: goblinWarrior, n: 2}], text: "The goblin smiths turn from the anvil, the hammers' heads still red."}
-    shaman: {foes: [{monster: goblinHighShaman}], text: "A goblin wizard looks up from its slates, and the torches lean towards it."}
-    guardpost: {foes: [{monster: goblinWarrior, n: 2}], text: "A goblin painted all over like a broken clockwork man comes at you, to the others' delight."}
-    champions: {foes: [{monster: goblinChampion}], text: "A champion rolls off its pallet of furs and takes up its blade."}
-    throne: {foes: [{monster: goblinKing}], flags: [ember_king_dead], text: "The king heaves himself up from the throne."}
-    bodyguard: {foes: [{monster: goblinChampion}], text: "A champion guarding the king's rooms turns, astonished, as the wall opens."}
+    patriarch: {foes: [{monster: goblinShaman}], text: "A tall, lean goblin with one milky eye pushes through the beads. He looks tired of all of this."}
+    smiths: {foes: [{monster: goblinWarrior, n: 2}], text: "The goblin smiths turn from the anvil, hammers still red."}
+    shaman: {foes: [{monster: goblinHighShaman}], text: "The high shaman looks up from its slates, and the torches lean toward it."}
+    guardpost: {foes: [{monster: goblinWarrior, n: 2}], text: "A goblin painted like a broken clockwork man comes at you, to the others' delight."}
+    champions: {foes: [{monster: goblinChampion}], text: "A champion rolls off its furs and takes up its blade."}
+    throne: {foes: [{monster: goblinKing}], flags: [ember_king_dead], text: "The king heaves himself up from the throne. He has been king a long time and does not intend to stop."}
+    bodyguard: {foes: [{monster: goblinChampion}], text: "A champion turns, astonished, as the wall opens."}
   wandering:
     - {w: 1, foes: [{monster: goblinWarrior}], text: "An inferno goblin on its rounds."}
     - {w: 4, nothing: true}
@@ -2450,7 +2450,7 @@ ember_castle:
 ember_jail:
   name: The Goblin Jail
   kind: dungeon
-  blurb: Cells and question rooms under the throne, and a stair that goes on down.
+  blurb: Cells and question rooms under the throne. A stair goes on down.
   level: 2
   look: {wall: "#6a6866", floor: "#57534f", ceiling: "#1a1614", fog: "#0e0a08", torch: 1, tileset: ember_masonry, light: 8}
   map:
@@ -2494,7 +2494,7 @@ ember_jail:
 ember_duct:
   name: The Black Glass Duct
   kind: dungeon
-  blurb: Below the goblins the rock turns to black glass. Three ways come down into one old lava duct, and the duct winds on down past a lake of magma to the giants' gate.
+  blurb: Below the goblins the rock turns to black glass. Three ways down into one lava duct, winding past a magma lake to the giants' gate.
   level: 5
   look: {wall: "#1e1a1c", floor: "#2e2a2a", ceiling: "#0c0808", fog: "#100404", torch: 1, tileset: ember_basalt, light: 8}
   map:
@@ -2565,7 +2565,7 @@ ember_duct:
 ember_kobolds:
   name: The Kobold Dens
   kind: dungeon
-  blurb: "The kobolds' caves on the mine's mountain side: guard rooms at the ways in, clan dens hung with trophies, steaming pools, a hall of howling, the king's fire-pit hall, and the obsidian workings."
+  blurb: "The kobolds' caves on the mountainside. Guard rooms, clan dens, steaming pools, the hall of howling, the king's fire-pit, and obsidian workings."
   level: 4
   look: {wall: "#2a2624", floor: "#3c3632", ceiling: "#140c08", fog: "#120604", torch: 1, tileset: ember_basalt, light: 8}
   map:
@@ -2748,7 +2748,7 @@ ember_kobolds:
 ember_citadel:
   name: The Giants' Citadel
   kind: dungeon
-  blurb: A city of the fire giants under the bottom of the mine, built in dressed black basalt veined with glowing quartz round a cavern lit by braziers. Its gate faces the duct; past the king's palace a guard house keeps the way to the dragon.
+  blurb: A city of fire giants at the bottom of the mine. Black basalt veined with glowing quartz, a cavern lit by braziers. Past the king's palace, a guardhouse keeps the way to the dragon.
   level: 7
   look: {wall: "#2b2731", floor: "#37323e", ceiling: "#0c0b0e", fog: "#0c0608", torch: 1, tileset: ember_citadel, light: 9}
   map:
@@ -2835,7 +2835,7 @@ ember_citadel:
     G: {kind: locked, see: true, tn: 16, forceTn: 20, label: "The citadel's gates", text: "Iron gates three times a man's height, barred inside with a beam of iron. A barred window looks out over the ramp."}
     g: {kind: monster, encounter: gate, label: "The gate's guards"}
     # F-9a, the north gate onto the chasm
-    N: {kind: note, sprite: none, label: "The chasm", text: "Beyond the lattice the passage ends at a ledge over a black chasm strung with webs as thick as ropes. Something huge hangs in them, far off. (Not built yet.)"}
+    N: {kind: note, sprite: none, label: "The chasm", text: "Beyond the lattice the passage ends at a ledge over a black chasm strung with webs as thick as ropes. Something huge hangs in them, far off."}
     q: {kind: monster, encounter: lattice, label: "A giant on watch at the lattice"}
     # F-2, common quarters
     s: {kind: monster, encounter: sleeper, asleep: true, label: "A fire giant asleep"}
@@ -2898,15 +2898,15 @@ ember_citadel:
     hall: {foes: [{monster: fireGiant}, {monster: fireGiantYoung}], text: "A giant and a young one at the long tables put down their cups."}
     cook: {foes: [{monster: fireGiant}], text: "The cook comes round the cauldron with a ladle like a club."}
     arena: {foes: [{monster: fireGiantYoung, n: 2}], text: "The sparring stops. Here is better sport."}
-    warlord: {foes: [{monster: fireGiantWarlord}, {monster: fireGiantYoung}], text: "The warlord does not parley. His daughter hangs back, feigning fear, until she sees an opening."}
+    warlord: {foes: [{monster: fireGiantWarlord}, {monster: fireGiantYoung}], text: "The warlord does not parley. He has not parlayed in a hundred years. His daughter feigns fear, until she sees an opening."}
     smith: {foes: [{monster: fireGiant}], text: "The smith turns from the anvil with the hammer still in his fist."}
     miners: {foes: [{monster: fireGiant}, {monster: fireGiantYoung}], text: "The young giant drops her pick for her fists; the foreman wades in after."}
     jeweller: {foes: [{monster: fireGiant}], text: "The jeweller sets down something delicate and stands up, and up."}
-    magus: {foes: [{monster: fireGiantMagus}], text: "The old magus rises in a wash of coloured crystal light."}
-    wizard: {foes: [{monster: fireGiantWizard}], text: "A giant wizard looks up from a book of fire, delighted."}
+    magus: {foes: [{monster: fireGiantMagus}], text: "The old magus rises in a wash of crystal light. Its magic was stronger once. It remembers."}
+    wizard: {foes: [{monster: fireGiantWizard}], text: "A giant wizard looks up from a book of fire, delighted. It has been a long time since anything interesting happened."}
     shades: {foes: [{monster: giantShade}, {monster: giantShade}], text: "The red mist in the marble gathers itself into two dead giants, and they rise to serve."}
     royalguard: {foes: [{monster: fireGiantGuard}], text: "The king's guard closes the doors behind you."}
-    king: {foes: [{monster: fireGiantKing}], flags: [giant_king_dead], text: "The king of the giants takes up his maul."}
+    king: {foes: [{monster: fireGiantKing}], flags: [giant_king_dead], text: "The king of the giants takes up his maul. He has kept the dragon's peace for two centuries. He is very tired of it."}
     vestibule: {foes: [{monster: fireGiantGuard}, {monster: fireGiantWizard}], text: "The two wardens of the dragon's door, a warrior and a wizard, step out from between the statues."}
   wandering:
     - {w: 1, foes: [{monster: fireGiantGuard}], text: "A giant warrior on his rounds of the courtyard."}
@@ -2917,7 +2917,7 @@ ember_citadel:
 ember_lair:
   name: The Dragon's Lair
   kind: dungeon
-  blurb: A domed cavern afire with lava light; a moat of molten rock round a ring of stone, one bridge across, and on the ring the great red dragon on its hoard.
+  blurb: A domed cavern afire with lava light. A moat of molten rock, one bridge across, and the great red dragon on its hoard.
   level: 8
   look: {wall: "#2a1e16", floor: "#3c2c22", ceiling: "#140604", fog: "#200604", torch: 1, tileset: ember_basalt, light: 12}
   map:
@@ -2958,6 +2958,6 @@ ember_lair:
     d: {kind: monster, encounter: dragon, label: "The great red dragon"}
     H: {kind: chest, label: "The dragon's hoard", loot: relic_cache, rolls: 5, tn: 0}
   encounters:
-    dragon: {foes: [{monster: dragonLord}], flags: [dragon_lord_dead], text: "The dragon lifts its head off its gold. A roar shakes the whole of the deep, and then it speaks: it would like to know who you think you are."}
+    dragon: {foes: [{monster: dragonLord}], flags: [dragon_lord_dead], text: "The dragon lifts its head off its gold. The roar shakes the deep. Then it speaks, almost gently: it wants to know who you think you are, and what you think will be different when you are dead."}
   secrets: []
 

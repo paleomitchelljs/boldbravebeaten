@@ -6,8 +6,8 @@ const { World } = B;
 
 test('recruits: one takes a fallen member\'s place, not a living one\'s; a full party has no room', () => {
   const w = World.create(World.presetParty(), { log: false });
-  assert.deepEqual(World.recruits(w, 'village').map((r) => r.id), ['kalavar', 'arvir', 'jadier', 'crusader', 'spawnee']);
-  assert.ok(World.recruit(w, 'arvir').ok && World.recruit(w, 'jadier').ok, 'four of six: room for two');
+  assert.deepEqual(World.recruits(w, 'village').map((r) => r.id), ['kalavar', 'jadier', 'crusader', 'spawnee']);
+  assert.ok(World.recruit(w, 'jadier').ok && World.recruit(w, 'crusader').ok, 'four of six: room for two');
   assert.equal(World.recruit(w, 'kalavar').ok, false, 'six alive: no room');
   const lorc = w.partyIds[1];
   assert.equal(World.recruit(w, 'kalavar', lorc).ok, false, 'Lorc lives');
@@ -17,7 +17,7 @@ test('recruits: one takes a fallen member\'s place, not a living one\'s; a full 
   assert.equal(w.partyIds[1], r.char.id, 'in the fallen member\'s slot');
   assert.equal(w.partyIds.length, 6);
   assert.ok(w.fallen.includes(lorc));
-  assert.equal(World.recruits(w, 'village').length, 3, 'Kalavar no longer waiting; the fallen Lorc is back in the village');
+  assert.equal(World.recruits(w, 'village').length, 2, 'Kalavar no longer waiting; the fallen Lorc is back in the village');
   assert.ok(World.recruits(w, 'village').some((x) => x.id === 'lorc'));
   assert.equal(World.recruit(w, 'kalavar', lorc).ok, false, 'already joined');
 });

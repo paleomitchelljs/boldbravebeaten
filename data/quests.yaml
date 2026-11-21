@@ -7,8 +7,55 @@ ember_king:
   name: The Goblin King
   giver: gnome_warden
   faction: deep_gnomes
-  summary: The gnomes of the fort have been walled up across the lava for eleven years. Their warden wants the goblin king dead.
+  summary: The gnomes have been walled up for eleven years. Their warden says the king is the keystone — kill him and the goblins fall apart.
   stages:
-    - {text: "Kill the goblin king on his throne in the castle beyond the gate court.", done_when: {flag: ember_king_dead}}
+    - {text: "Kill the goblin king in the castle beyond the gate court.", done_when: {flag: ember_king_dead}}
     - {text: "Tell Warden Odda in the gnome fort.", done_when: {flag: told_odda_king}}
   reward: {gold: 150, xp: 300, standing: {deep_gnomes: 20}, renown: 3}
+
+lost_miner:
+  name: Fennick
+  giver: gnome_warden
+  faction: deep_gnomes
+  summary: A gnome prisoner in the goblin jail. The fort said the words for him two winters ago.
+  stages:
+    - {text: "Find Fennick in the goblin jail and free him.", done_when: {flag: freed_fennick}}
+    - {text: "Tell Warden Odda that Fennick is alive.", done_when: {flag: told_odda_fennick}}
+  reward: {gold: 60, xp: 80, standing: {deep_gnomes: 15}, renown: 1}
+
+smuggler_cellar:
+  name: The Cellars
+  giver: captain_hollis
+  faction: town_watch
+  summary: Goods move through the old mill cellars after dark. Hollis wants it stopped. Corvin wants it left alone. Both have their reasons.
+  stages:
+    - {text: "Clear the smugglers from the cellars beneath the old mill.", done_when: {flag: cellars_cleared}}
+  reward: {gold: 80, xp: 120, standing: {town_watch: 15, cutthroats: -20}, renown: 2}
+
+temple_waters:
+  name: The Drowned Banks
+  giver: warden_ysa
+  faction: lantern_order
+  summary: "The Suracayl hold the temple because their nesting grounds were drowned when the rivers were dammed. Ysa says the dam could be broken — but someone built it for a reason."
+  stages:
+    - {text: "Find the dam in the swamp east of the temple approach.", done_when: {flag: found_dam}}
+    - {text: "Break the dam, or find another way to restore the banks.", done_when: {flag: banks_restored}}
+  reward: {xp: 250, standing: {suracayl: 30}, renown: 3}
+
+slave_road:
+  name: The Slave Road
+  giver: captain_hollis
+  faction: town_watch
+  summary: The orcs raid the vales for labour. Hollis sent four men and has forty. The arithmetic is not in his favour.
+  stages:
+    - {text: "Free the slaves in the orc quarry.", done_when: {flag: slaves_freed}}
+  reward: {xp: 400, standing: {orc_legion: -25}, renown: 4}
+
+arvir_bargain:
+  name: Arvir's Bargain
+  giver: arvir_npc
+  summary: "Arvir wants the dragon's secret — how it makes itself necessary. He'll trade what he knows about the orc valley for safe passage through the mine. What he does with the knowledge is his business."
+  stages:
+    - {text: "Free Arvir from the orc slave pen.", done_when: {flag: freed_arvir}}
+    - {text: "Reach the dragon's lair with Arvir.", done_when: {flag: arvir_at_dragon}}
+  reward: {xp: 200, renown: 2}

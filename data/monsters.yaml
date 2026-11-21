@@ -88,7 +88,7 @@ fireSprite:
   feats: {}
 ratPack:
   name: Rat swarm
-  blurb: "Six giant rats: each bite is nothing; a dozen a round is something."
+  blurb: "Six giant rats. Each bite is nothing; a dozen is something."
   group: [rat, rat, rat, rat, rat, rat]
 wolfPack:
   name: Wolf pack
@@ -96,7 +96,7 @@ wolfPack:
   group: [alphaWolf, wolf, wolf]
 rustBeetle:
   name: Rust beetle
-  blurb: "Its antennae turn metal armor to flaking rust. Meant to beat plate; harmless-looking to the unarmored."
+  blurb: "Its antennae turn metal armor to flaking rust. Harmless-looking to the unarmored."
   faction: wilds
   xp: 40
   glyph: "🪲"
@@ -109,7 +109,7 @@ rustBeetle:
   feats: {toughness: 1}
 mirageCat:
   name: Mirage cat
-  blurb: "Seen where it isn't: arrows mostly strike an illusion. Fast, with reach-2 tentacles. Meant to beat archers."
+  blurb: "Seen where it isn't. Arrows mostly strike an illusion. Fast, with long tentacles."
   faction: wilds
   xp: 70
   glyph: "🐈"
@@ -122,7 +122,7 @@ mirageCat:
   feats: {}
 giantSpider:
   name: Giant spider
-  blurb: "Spits sticky webs that make every action cost more, then closes for venomous bites. Armor keeps the fangs out; bare skin doesn't. Meant to beat the unarmored."
+  blurb: "Spits webs, then closes for venomous bites. Armor keeps the fangs out; bare skin doesn't."
   faction: wilds
   xp: 55
   glyph: "🕷"
@@ -136,7 +136,7 @@ giantSpider:
   policy: {kite: false}
 beakbear:
   name: Beakbear
-  blurb: "Hugs and won't let go: no room for a greatsword or a bow. Meant to beat two-handers."
+  blurb: "Hugs and won't let go. No room for a greatsword or a bow."
   faction: wilds
   xp: 90
   glyph: "🐻"
@@ -150,7 +150,7 @@ beakbear:
   policy: {grappler: true}
 caveTroll:
   name: Cave troll
-  blurb: "Regenerates unless burned; wound-up slams break shields and knock you flat. Meant to beat sword and shield."
+  blurb: "Regenerates unless burned. Wound-up slams break shields and knock you flat."
   faction: wilds
   xp: 110
   glyph: "👹"
@@ -164,7 +164,7 @@ caveTroll:
   feats: {power_swing: 1, shield_breaker: 1}
 trollChieftain:
   name: Troll chieftain
-  blurb: "A boss for a whole party: acts like two fighters (AP and per-pass allowance ×2) on a STR-24, CON-24 body."
+  blurb: "Big enough to fight the whole party at once."
   faction: wilds
   xp: 300
   glyph: "👹"
@@ -178,7 +178,7 @@ trollChieftain:
   feats: {power_swing: 1, shield_breaker: 1, toughness: 1}
 ogre:
   name: Ogre
-  blurb: "Like a troll but bigger and stronger: a club and fists that knock you flat. It doesn't regenerate."
+  blurb: "Bigger and meaner than a troll. A club and fists that knock you flat."
   faction: wilds
   xp: 140
   glyph: "👹"
@@ -196,7 +196,7 @@ ogre:
   feats: {power_swing: 1, shield_breaker: 1, toughness: 1}
 hillGiant:
   name: Hill giant
-  blurb: "Bigger and stronger than an ogre: a tree-trunk club, boulders hurled from afar, and a hand big enough to seize a man and hold him."
+  blurb: "A tree-trunk club, boulders hurled from afar, and a hand big enough to seize a man."
   faction: wilds
   xp: 260
   glyph: "🗿"
@@ -214,7 +214,7 @@ hillGiant:
   feats: {power_swing: 1, shield_breaker: 1, pin: 1, toughness: 2}
 mirageCatPair:
   name: Mirage cat pair
-  blurb: "Two mirage cats: arrows mostly strike illusions, so the archers have to close while the beasts maul the front line."
+  blurb: "Two mirage cats. Arrows mostly strike illusions."
   group: [mirageCat, mirageCat]
 skeleton:
   name: Skeleton
@@ -469,7 +469,7 @@ bogPatrol: {name: Bogfolk patrol, blurb: Three bogfolk., group: [bogfolk, bogfol
 # An encounter picks the colour: {monster: scaleward, sprite: {art: lizardfolk-warrior-tan}}.
 scaleward:
   name: Suracayl warrior
-  blurb: A big scaled Suracayl warrior with a warhammer and a tail that sweeps legs.
+  blurb: A Suracayl warrior with a warhammer and a tail that sweeps legs. It was here before you were.
   faction: suracayl
   xp: 55
   parts: {suracayl_scale: [1, 2]}
@@ -489,7 +489,7 @@ scaleward:
 scalewardPair: {name: Suracayl warriors, blurb: Two Suracayl warriors., group: [scaleward, scaleward]}
 suracaylSkink:
   name: Suracayl skink
-  blurb: "A slight, quick Suracayl of the labyrinth: raking claws, a nip, slick scales that slip a grip. Weak alone and against good armor; they come in threes and fours."
+  blurb: "Quick Suracayl of the labyrinth. Raking claws, slick scales. Weak alone; they come in threes."
   faction: suracayl
   xp: 30
   parts: {suracayl_scale: [0, 1]}
@@ -507,7 +507,7 @@ suracaylSkink:
 suracaylSkinkPair: {name: Suracayl skinks, blurb: Two Suracayl skinks., group: [suracaylSkink, suracaylSkink]}
 suracaylVaranus:
   name: Suracayl varanus
-  blurb: "A heavy monitor-folk of the pyramid. It carries nothing: a tearing bite, raking claws, a tail that sweeps legs, and thick scales."
+  blurb: "Heavy monitor-folk of the pyramid. Claws, bite, tail. Carries nothing; needs nothing."
   faction: suracayl
   xp: 60
   parts: {suracayl_scale: [1, 2]}
@@ -525,7 +525,7 @@ suracaylVaranus:
 suracaylVaranusPair: {name: Suracayl varanus pair, blurb: Two Suracayl varanus., group: [suracaylVaranus, suracaylVaranus]}
 templeGorilla:
   name: Temple gorilla
-  blurb: "A great ape the Suracayl keep to hold the palace door: long arms, a crushing grip, and blows that knock a man flat. Nothing on it but its hide."
+  blurb: "A great ape the Suracayl keep to guard the palace. Long arms, a crushing grip. Nothing on it but its hide."
   faction: suracayl
   xp: 70
   parts: {gorilla_pelt: 1}
@@ -543,7 +543,7 @@ templeGorilla:
 templeGorillaPair: {name: Temple gorillas, blurb: Two temple gorillas., group: [templeGorilla, templeGorilla]}
 dreadShaman:
   name: Dread shaman
-  blurb: "A Suracayl priest in a bone mask, keeping the top of the pyramid: bolts of decay that eat armor, a word that fills you with fear, and a staff for anyone who gets close."
+  blurb: "A Suracayl priest in a bone mask. Bolts of decay, a word of fear, a staff for anyone who gets close."
   faction: suracayl
   xp: 150
   armorItem: {type: padded, coverage: full}
@@ -564,7 +564,7 @@ dreadShaman:
   feats: {verb_strike: 1, mod_far: 1, verb_give: 1}
 venril:
   name: Venril
-  blurb: "The master of the palace, a horned lizard in a dark robe floating above its throne. Skeletons stand guard for it, the fallen get up again at its word, and it fills the hall with fear."
+  blurb: "The master of the palace, floating above its throne. The dead rise at its word."
   faction: suracayl
   xp: 250
   traits: {tempo: 3.5, suracayl: true}
@@ -584,7 +584,7 @@ venril:
   feats: {mod_strong: 1, verb_raise: 1, verb_take: 1, verb_give: 1, toughness: 1}
 revenantKnight:
   name: Revenant knight
-  blurb: "An end-game knight: masterwork dwarven steel plate, an adamant shield, a blade that drinks stamina and wounds, a withering burst, an aura of dread that saps everyone near him, a silk sash that quickens him, and the dead rise for him."
+  blurb: "Dwarven steel plate, an adamant shield, a blade that drinks life. The dead rise for him."
   faction: grave_cult
   xp: 400
   glyph: "⚔"
@@ -631,7 +631,7 @@ revenantKnight:
     - half_swording
 spectre:
   name: Spectre
-  blurb: "A high-level undead. Only spells and magical weapons hurt it; its scythe drinks life; its wail panics the living near it."
+  blurb: "Only spells and enchanted weapons hurt it. Its scythe drinks life; its wail panics the living."
   faction: grave_cult
   xp: 320
   glyph: "👻"
@@ -724,7 +724,7 @@ avatarOfFear:
 # the elementals, the avatar in fire colours for the efreet, the old man for gnomes, Singe for the drake.
 fireGoblin:
   name: Fire goblin
-  blurb: "A goblin of the deep mine, red-skinned and heat-hardened: a spear, rags, and no fear of the lava."
+  blurb: "Red-skinned, heat-hardened. A spear, rags, and no fear of the lava."
   faction: cinder_goblins
   xp: 18
   parts: {goblin_blood: 1}
@@ -767,7 +767,7 @@ fireGoblinArcher:
   keepUnarmed: true
 goblinMiner:
   name: Goblin miner
-  blurb: "A green goblin worked half to death in the tunnels. A pick-heavy club and a grudge."
+  blurb: "A goblin miner with a pick and a grudge."
   faction: cinder_goblins
   xp: 12
   parts: {goblin_blood: [0, 1]}
@@ -787,7 +787,7 @@ goblinMiner:
   keepUnarmed: true
 goblinWarrior:
   name: Goblin warrior
-  blurb: "A barracks goblin in a quilted jack with a short sword and a round shield: drilled, and it shows."
+  blurb: "Quilted jack, short sword, round shield. Drilled, and it shows."
   faction: cinder_goblins
   xp: 30
   parts: {goblin_blood: 1}
@@ -808,7 +808,7 @@ goblinWarrior:
   keepUnarmed: true
 goblinShaman:
   name: Goblin shaman
-  blurb: "A fire goblin with a bone staff who throws flame from a distance and keeps the warriors between you and it."
+  blurb: "Bone staff, thrown flame, and the warriors between you and it."
   faction: cinder_goblins
   xp: 40
   parts: {goblin_blood: 1}
@@ -827,7 +827,7 @@ goblinShaman:
   feats: {verb_strike: 1}
 goblinChampion:
   name: Goblin champion
-  blurb: "One of the king's champions: bigger than any goblin has a right to be, in good mail, a falchion-heavy sword and a skull shield."
+  blurb: "Bigger than any goblin has a right to be. Good mail, a heavy sword, a skull shield."
   faction: cinder_goblins
   xp: 90
   parts: {goblin_blood: 2}
@@ -849,7 +849,7 @@ goblinChampion:
   keepUnarmed: true
 goblinKing:
   name: The goblin king
-  blurb: "The king of the mine on his basalt throne: old, fat, clever, armored like a champion and guarded like a miser."
+  blurb: "Old, fat, clever, armored like a champion. The mine holds together because he sits on the throne."
   faction: cinder_goblins
   xp: 220
   parts: {goblin_blood: 3}
@@ -871,7 +871,7 @@ goblinKing:
   keepUnarmed: true
 goblinHighShaman:
   name: The high shaman
-  blurb: "The keeper of the goblins' fire. It burns whole rooms, fills its foes with fear, and the champions die for it gladly."
+  blurb: "Keeper of the goblins' fire. Burns whole rooms. The champions die for it gladly."
   faction: cinder_goblins
   xp: 200
   armorItem: {type: padded, coverage: full}
@@ -891,7 +891,7 @@ goblinHighShaman:
   feats: {verb_strike: 1, mod_wide: 1, verb_give: 1, mod_strong: 1}
 redDrake:
   name: Red drake
-  blurb: "A young red dragon that hunts the mine tunnels for goblins and anything else. It never goes into the barracks: the goblins learned to keep a fire in the gate."
+  blurb: "A young red dragon that hunts the tunnels for goblins and anything else. The goblins learned to keep a fire in the gate."
   faction: wilds
   xp: 200
   parts: {drake_scale: [1, 2]}
@@ -908,7 +908,7 @@ redDrake:
   feats: {verb_strike: 1, mod_wide: 1, mod_strong: 1, toughness: 1}
 fireElemental:
   name: Fire elemental
-  blurb: "Living flame in a man's shape. Its touch burns, blades pass half through it, and it can stand in the lava."
+  blurb: "Living flame. Blades pass half through it."
   faction: wilds
   xp: 80
   parts: {fire_essence: 1}
@@ -924,7 +924,7 @@ fireElemental:
   feats: {}
 efreeti:
   name: Efreeti
-  blurb: "A lesser fire spirit in a man's shape, a servant of the pit. It fights with burning fists and throws fire."
+  blurb: "A lesser fire spirit. Burning fists, thrown fire."
   faction: wilds
   xp: 160
   parts: {fire_essence: 2}
@@ -940,7 +940,7 @@ efreeti:
   feats: {verb_strike: 1, mod_far: 1}
 imp:
   name: Imp
-  blurb: "A small winged fiend of the deep mine, red as a coal: it hangs in the air over the lava and rakes with hot claws."
+  blurb: "Small, winged, red as a coal. Hangs over the lava and rakes with hot claws."
   faction: wilds
   xp: 30
   parts: {imp_horn: [0, 1]}
@@ -956,7 +956,7 @@ imp:
   feats: {}
 lavaBeetle:
   name: Lava beetle
-  blurb: "A beetle the size of a dog, its shell aglow with the heat it lives in: hard to hurt, slow, and its bite burns."
+  blurb: "Dog-sized, shell aglow. Hard to hurt, slow, and its bite burns."
   faction: wilds
   xp: 35
   parts: {beetle_chitin: 1}
@@ -972,7 +972,7 @@ lavaBeetle:
   feats: {}
 efreetLord:
   name: The efreet lord
-  blurb: "A great fire spirit bound at the bottom of a pit, with two elementals for company. It flies, it burns, and it is very bored."
+  blurb: "Bound at the bottom of a pit with two elementals. It flies, it burns, and it is very bored."
   faction: wilds
   xp: 350
   parts: {fire_essence: 3}
@@ -989,7 +989,7 @@ efreetLord:
   feats: {verb_strike: 1, mod_wide: 1, mod_strong: 1, toughness: 1}
 gnomeWarrior:
   name: Gnome warrior
-  blurb: "A gnome of the cut-off fort in boiled leather with a hammer. They fight the goblins for every yard of rock."
+  blurb: "Boiled leather, a hammer. Eleven years fighting for every yard of rock."
   faction: deep_gnomes
   xp: 25
   tier: 3
@@ -1010,7 +1010,7 @@ gnomeWarrior:
 # The gnome fort's machines: they stand with the gnomes, and stand down once the gnomes trust you (peaceFlags).
 clockworkGnome:
   name: Clockwork gnome
-  blurb: "A gnome-sized man of bronze plates and goggles, wound by a key in its back. It guards what it is told to and does not tire, and fire does not trouble it."
+  blurb: "Bronze plates, goggles, wound by a key. Guards what it is told to and does not tire."
   faction: deep_gnomes
   xp: 40
   parts: {clockwork_gear: [1, 2]}
@@ -1026,7 +1026,7 @@ clockworkGnome:
   feats: {}
 clockworkSpider:
   name: Bronze clockwork spider
-  blurb: "A bronze spider the size of a dog, ticking. The gnomes built it to run the narrow seams; it bites like a pick."
+  blurb: "Bronze, dog-sized, ticking. Built to run the narrow seams; bites like a pick."
   faction: deep_gnomes
   xp: 45
   parts: {clockwork_gear: 1}
@@ -1044,7 +1044,7 @@ clockworkSpider:
 # encounter tuning is deferred. The giants fight bare-fisted unless armed; every one of them shrugs off fire.
 fireGiant:
   name: Fire giant
-  blurb: "Twice a man's height, skin like banked coals and a beard of flame. It fights with its fists and with boulders, and fire does not trouble it."
+  blurb: "Twice a man's height, skin like banked coals, a beard of flame. Fire does not trouble it."
   faction: fire_giants
   xp: 280
   parts: {giant_blood: [1, 2]}
@@ -1062,7 +1062,7 @@ fireGiant:
   feats: {power_swing: 1, toughness: 2}
 fireGiantYoung:
   name: Young fire giant
-  blurb: "A fire giant not yet grown: only half again a man's height, eager, and set to work in the mines."
+  blurb: "Not yet grown. Half again a man's height, eager, and set to work."
   faction: fire_giants
   xp: 140
   parts: {giant_blood: 1}
@@ -1080,7 +1080,7 @@ fireGiantYoung:
   feats: {toughness: 1}
 fireGiantGuard:
   name: Fire giant warrior
-  blurb: "A fire giant in black iron plate under a horned helm, with a greatsword as long as a man. The citadel's gates and its king are kept by these."
+  blurb: "Black iron plate, horned helm, a greatsword as long as a man. The citadel's gates are kept by these."
   faction: fire_giants
   xp: 340
   parts: {giant_blood: [1, 2]}
@@ -1100,7 +1100,7 @@ fireGiantGuard:
   feats: {power_swing: 1, shield_breaker: 1, toughness: 2}
 fireGiantWarlord:
   name: The giants' warlord
-  blurb: "The king's champion, who trains the citadel's young in the arena and does not parley with trespassers: he sees them as a lesson for his students."
+  blurb: "The king's champion. Trains the citadel's young and sees you as a lesson for them."
   faction: fire_giants
   xp: 520
   parts: {giant_blood: 2}
@@ -1120,7 +1120,7 @@ fireGiantWarlord:
   feats: {power_swing: 1, shield_breaker: 1, toughness: 3}
 fireGiantWizard:
   name: Fire giant wizard
-  blurb: "A fire giant in crimson robes with a staff of black iron and violet crystal: the giants' old fire magic, a shadow of what it was, and still enough."
+  blurb: "Crimson robes, a staff of black iron and violet crystal. The old fire magic — a shadow of what it was, and still enough."
   faction: fire_giants
   xp: 360
   parts: {giant_blood: [1, 2]}
@@ -1140,7 +1140,7 @@ fireGiantWizard:
   feats: {verb_strike: 1, mod_wide: 1, toughness: 1}
 fireGiantMagus:
   name: The giants' magus
-  blurb: "The oldest of the giants' wizards, in a house of coloured crystal light, who remembers when their fire daunted the hosts of other worlds."
+  blurb: "The oldest wizard, in a house of crystal light. Remembers when their fire daunted the hosts of other worlds."
   faction: fire_giants
   xp: 560
   parts: {giant_blood: 2}
@@ -1160,7 +1160,7 @@ fireGiantMagus:
   feats: {verb_strike: 1, mod_wide: 1, mod_strong: 1, mod_far: 1, toughness: 2}
 fireGiantKing:
   name: The giant king
-  blurb: "The king of the fire giants in black and gold plate, a ruby crown and a maul hafted in gold. He keeps the dragon's peace, and waits on the dragon's promise."
+  blurb: "Black and gold plate, a ruby crown, a golden maul. He has kept the dragon's peace for two centuries and waits on a promise that will never come."
   faction: fire_giants
   xp: 800
   parts: {giant_blood: 3}
@@ -1180,7 +1180,7 @@ fireGiantKing:
   feats: {power_swing: 1, shield_breaker: 1, toughness: 3}
 giantShade:
   name: Giant shade
-  blurb: "A dead fire giant risen as a spectral warrior from its granite coffin, red mist where its flesh was. Steel goes half through it; spells do not care."
+  blurb: "A dead giant risen from its coffin, red mist where its flesh was. Steel goes half through it."
   faction: fire_giants
   xp: 380
   parts: {shade_ash: [1, 2]}
@@ -1196,7 +1196,7 @@ giantShade:
   feats: {toughness: 1}
 dragonLord:
   name: The great red dragon
-  blurb: "A hundred feet from nose to tail, gold flecks on its belly, smoke from its nostrils. It rules the giants, the goblins and the deep from a ring of rock in a moat of fire, and it is clever, and it is old."
+  blurb: "A hundred feet, gold flecks on its belly, smoke from its nostrils. It rules by making itself necessary. It is clever, and it is old, and it is amused."
   faction: fire_giants
   xp: 2000
   parts: {dragon_scale: [2, 4]}
@@ -1215,7 +1215,7 @@ dragonLord:
 # is deferred.
 orcLegionnaire:
   name: Orc legionnaire
-  blurb: "A grey-green orc of the legion in a quilted jack, spear and round shield: it fights in line and holds it."
+  blurb: "Quilted jack, spear, round shield. Fights in line and holds it."
   faction: orc_legion
   xp: 35
   traits: {orc: true}
@@ -1232,7 +1232,7 @@ orcLegionnaire:
   craft: average
 orcSlaver:
   name: Orc slaver
-  blurb: "An overseer with a club and a ring of keys, used to beating things that don't hit back."
+  blurb: "A club and a ring of keys. Used to things that don't hit back."
   faction: orc_legion
   xp: 35
   traits: {orc: true}
@@ -1249,7 +1249,7 @@ orcSlaver:
   craft: average
 orcCenturion:
   name: Orc centurion
-  blurb: "An officer of the legion in mail with a longsword and an iron shield, barking orders between blows."
+  blurb: "Mail, longsword, iron shield. Barks orders between blows."
   faction: orc_legion
   xp: 70
   traits: {orc: true}
@@ -1269,7 +1269,7 @@ orcCenturion:
   keepUnarmed: true
 orcEmissary:
   name: Orc emissary
-  blurb: "One of the emperor's envoys to the tribes beyond the mountains: silk over mail, a fine sword, and a long memory for slights."
+  blurb: "Silk over mail, a fine sword, and a long memory for slights. The one who argued for negotiation."
   faction: orc_legion
   xp: 80
   traits: {orc: true}
@@ -1288,7 +1288,7 @@ orcEmissary:
   keepUnarmed: true
 orcProphet:
   name: The orc prophet
-  blurb: "An old orc hung with bones who reads the emperor's fortunes in the fire, and makes them come true."
+  blurb: "Hung with bones, reads the fire. Knows your name before you give it."
   faction: orc_legion
   xp: 140
   armorItem: {type: padded, coverage: full}
@@ -1308,7 +1308,7 @@ orcProphet:
   feats: {verb_strike: 1, verb_give: 1}
 orcWarlord:
   name: The warlord
-  blurb: "The emperor's right hand and the legion's general: a scarred orc in heavy mail with a greatsword, who has never lost a battle he chose."
+  blurb: "Scarred, heavy mail, greatsword. Has never lost a battle he chose. Knows which battles to choose."
   faction: orc_legion
   xp: 200
   traits: {tempo: 1.4, orc: true}
@@ -1328,7 +1328,7 @@ orcWarlord:
   keepUnarmed: true
 orcEmperor:
   name: The orc emperor
-  blurb: "The emperor on his stone throne under the great gold coin: huge, blue-grey, in mail and a crested war helm, a long barbed spear in both hands."
+  blurb: "Huge, blue-grey, a crested war helm and a barbed spear. He has been emperor a long time and will not stop now."
   faction: orc_legion
   xp: 300
   traits: {tempo: 2.5, orc: true}
@@ -1351,7 +1351,7 @@ orcEmperor:
 # do. First guesses: encounter tuning is deferred.
 koboldWorker:
   name: Kobold
-  blurb: "A kobold of the miners' clan: a lean, scaled thing with claws like chisels, fast, and sure of its god."
+  blurb: "Lean, scaled, claws like chisels. Sure of its god."
   faction: kobolds
   xp: 16
   parts: {kobold_scale: [0, 1]}
@@ -1368,7 +1368,7 @@ koboldWorker:
   feats: {}
 koboldHunter:
   name: Kobold hunter
-  blurb: "A hunter of the clan that watches the ways in and hunts the mountains: a bone bow, a keen nose, and patience."
+  blurb: "Bone bow, keen nose, patience."
   faction: kobolds
   xp: 22
   parts: {kobold_scale: 1}
@@ -1389,7 +1389,7 @@ koboldHunter:
   keepUnarmed: true
 koboldHuntLeader:
   name: Kobold hunt leader
-  blurb: "An old hunter in a patchwork coat of hide and bone: the best shot of the clan, and the one who decides where the others stand."
+  blurb: "Patchwork coat of hide and bone. The best shot, and the one who decides where the others stand."
   faction: kobolds
   xp: 40
   parts: {kobold_scale: [1, 2]}
@@ -1410,7 +1410,7 @@ koboldHuntLeader:
   keepUnarmed: true
 koboldWarrior:
   name: Kobold warrior
-  blurb: "A warrior of the guardian clan in a coat of patched hide and bone: it fights with its claws, and it does not give ground."
+  blurb: "Patched hide and bone. Fights with its claws and does not give ground."
   faction: kobolds
   xp: 30
   weapons: [club]
@@ -1428,7 +1428,7 @@ koboldWarrior:
   feats: {riposte: 1}
 koboldSpearman:
   name: Kobold spear warrior
-  blurb: "A guardian with a long spear, set at the head of a tunnel where the spear's reach is the whole of the fight."
+  blurb: "Long spear, set at the head of a tunnel. The spear's reach is the whole of the fight."
   faction: kobolds
   xp: 30
   parts: {kobold_scale: 1}
@@ -1448,7 +1448,7 @@ koboldSpearman:
   keepUnarmed: true
 koboldDuelist:
   name: Kobold duelist
-  blurb: "A guardian in a wide hat and a jerkin of netted hide, with a bronze blade taken off some dead traveller: quick, and showy with it."
+  blurb: "Wide hat, netted hide, a bronze blade taken off some dead traveller. Quick, and showy with it."
   faction: kobolds
   xp: 45
   parts: {kobold_scale: [1, 2]}
@@ -1468,7 +1468,7 @@ koboldDuelist:
   keepUnarmed: true
 koboldChampion:
   name: Kobold champion
-  blurb: "The king's champion in a red-plumed hat: the finest blade among the kobolds, and the first to die for the king."
+  blurb: "Red-plumed hat, the finest blade among the kobolds. The first to die for the king."
   faction: kobolds
   xp: 110
   parts: {kobold_scale: 2}
@@ -1489,7 +1489,7 @@ koboldChampion:
   keepUnarmed: true
 koboldShaman:
   name: Kobold shaman
-  blurb: "A shaman of the dragon in a robe daubed with red: it calls frost and fever down on the enemy and mends the warriors that hold the line for it."
+  blurb: "Red-daubed robe, frost and fever. Mends the warriors who hold the line."
   faction: kobolds
   xp: 45
   parts: {kobold_scale: 1}
@@ -1509,7 +1509,7 @@ koboldShaman:
   feats: {verb_strike: 1, verb_give: 1}
 koboldElder:
   name: Kobold elder
-  blurb: "One of the elder shamans, grey at the snout: it steels the warriors round it with strength not their own, and its fevers kill slowly."
+  blurb: "Grey at the snout. Steels the warriors with strength not their own."
   faction: kobolds
   xp: 110
   parts: {kobold_scale: [1, 2]}
@@ -1529,7 +1529,7 @@ koboldElder:
   feats: {verb_strike: 1, verb_give: 1, mod_wide: 1}
 koboldHighShaman:
   name: The high shaman of the kobolds
-  blurb: "The dragon's voice among the kobolds, who waits for a king whose children fail the throne. Frost, plague, and a flock that would die for it."
+  blurb: "The dragon's voice. Waits for a king worthy of the throne. Frost, plague, and a flock that would die for it."
   faction: kobolds
   xp: 220
   parts: {kobold_scale: 2}
@@ -1551,7 +1551,7 @@ koboldHighShaman:
   feats: {verb_strike: 1, verb_give: 1, mod_wide: 1, mod_strong: 1}
 koboldKing:
   name: The kobold king
-  blurb: "An old king in spiked bronze with a crown of black spines and a great bronze axe. By his throne the fire does not touch him."
+  blurb: "Old, spiked bronze, a crown of black spines. By his throne the fire does not touch him."
   faction: kobolds
   xp: 240
   parts: {kobold_scale: 3}
@@ -1572,7 +1572,7 @@ koboldKing:
   feats: {toughness: 1}
 gorgeHound:
   name: Gorge hound
-  blurb: "A great rust-red hound of the mountain gorges, grown huge in the mine's heat: it drags its prey down and does not tire."
+  blurb: "Rust-red, huge, grown in the mine's heat. Drags its prey down and does not tire."
   faction: kobolds
   xp: 60
   parts: {hound_pelt: 1}
@@ -1589,7 +1589,7 @@ gorgeHound:
   feats: {}
 steamElemental:
   name: Steam spirit
-  blurb: "A spirit of scalding steam risen from a hot spring: dull, slow to anger, and left alone by the kobolds, who take it for a messenger of their god."
+  blurb: "Scalding steam risen from a spring. Slow to anger. The kobolds take it for a messenger of their god."
   faction: wilds
   xp: 100
   parts: {steam_essence: 1}
@@ -1607,7 +1607,7 @@ steamElemental:
 # ---- The lake fortress and the clay labyrinth (the user, 2026-11-10; assets/wip/west/). Untuned first numbers.
 sarnak:
   name: Sarnak
-  blurb: "A lean dragon-kin in its own scales, with a long spear in both hands; its tail takes your legs."
+  blurb: "Lean dragon-kin, a long spear in both hands. It was fishing this morning."
   faction: wilds
   xp: 60
   tier: 3
@@ -1624,7 +1624,7 @@ sarnak:
   keepUnarmed: true
 sarnakKnight:
   name: Sarnak knight
-  blurb: "A sarnak in a mail shirt behind an iron shield, its spear over the rim: the fortress's picked guard."
+  blurb: "Mail, iron shield, spear over the rim. The fortress's picked guard."
   faction: wilds
   xp: 90
   tier: 4
@@ -1642,7 +1642,7 @@ sarnakKnight:
   keepUnarmed: true
 sarnakWarden:
   name: Sarnak warden
-  blurb: "The fortress's master, a head taller than its guard, in mail to the knee, quicker with its spear than its size allows."
+  blurb: "A head taller than its guard. Mail to the knee, quicker than its size allows. It has been defending things for a long time."
   faction: wilds
   xp: 160
   tier: 4

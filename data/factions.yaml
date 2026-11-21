@@ -8,7 +8,7 @@
 
 town_watch:
   name: Stonebridge Watch
-  blurb: Keeps the gate and the peace, and pays bounties on the people who don't.
+  blurb: The gate, the peace, and the bounties on people who threaten both.
   start: 0
   kos: -60
   allies: [merchants_guild, lantern_order]
@@ -17,7 +17,7 @@ town_watch:
   perks: [[10, Bounty board access], [30, Watch armory stock], [60, Free passage after dark]]
 merchants_guild:
   name: Merchants' Guild
-  blurb: Controls the market, the scales and most of the credit in town. Dislikes smugglers and unpaid debts.
+  blurb: The scales, the credit, and the quiet expectation that debts are paid.
   start: 0
   kos: -70
   allies: [town_watch]
@@ -26,7 +26,7 @@ merchants_guild:
   perks: [[10, Better prices], [30, Rare goods in stock], [60, Guild contracts]]
 cutthroats:
   name: The Cutthroats
-  blurb: Smugglers, fences and the knives that protect them. Run the cellars under the old mill.
+  blurb: Smugglers, fences, and the knives that keep the cellars under the old mill quiet.
   start: -5
   kos: -40
   allies: []
@@ -35,7 +35,7 @@ cutthroats:
   perks: [[10, Back-door buyer], [30, Fence stock], [60, Safe passage in the cellars]]
 lantern_order:
   name: Order of the Lantern
-  blurb: Keeps the temple, tends the sick and watches the graves. Wants the dead to stay dead.
+  blurb: Tenders of the sick, watchers of graves, keepers of a light they say was old before the town.
   start: 5
   kos: -80
   allies: [town_watch]
@@ -44,7 +44,7 @@ lantern_order:
   perks: [[10, Discounted healing], [60, Free healing]]
 grave_cult:
   name: The Hollow Court
-  blurb: Worshippers of what lies under the barrow. They do not trade. They rise.
+  blurb: What sleeps under the barrow has worshippers. They do not trade. They rise.
   start: -30
   kos: 0
   allies: []
@@ -53,7 +53,7 @@ grave_cult:
   perks: []
 wilds:
   name: The wild things
-  blurb: Beasts and monsters. No politics; they are hungry.
+  blurb: Beasts and monsters. No grievances; only hunger.
   start: 0
   kos: 100
   allies: []
@@ -62,7 +62,7 @@ wilds:
   perks: []
 suracayl:
   name: The Suracayl
-  blurb: The lizardfolk of the jungle temple. They keep its courts, its labyrinth, its pyramid and its palace, and suffer no one in them.
+  blurb: The lizardfolk who hold the jungle temple — their last sacred ground, taken after the lowland rivers were dammed and the old nesting banks drowned. They remember who did it.
   start: -20
   kos: 0
   allies: []
@@ -71,7 +71,7 @@ suracayl:
   perks: []
 cinder_goblins:
   name: The fire goblins
-  blurb: The goblins of the deep mine, its castle and its barracks. They mine the hot rock, and they suffer no one in it.
+  blurb: Miners, soldiers, and servants of a king who serves the dragon. Most of them have never seen daylight.
   start: -20
   kos: 0
   allies: []
@@ -80,7 +80,7 @@ cinder_goblins:
   perks: []
 deep_gnomes:
   name: The gnomes of the fort
-  blurb: Gnome miners walled up in a fort across the lava, at war with the goblins and cut off from the surface for longer than they like to say.
+  blurb: Miners walled up across the lava for eleven years, too stubborn to die and too proud to ask for help until now.
   start: 0
   kos: -40
   allies: []
@@ -89,7 +89,7 @@ deep_gnomes:
   perks: [[10, The fort's gate opens to you]]
 kobolds:
   name: The kobolds
-  blurb: The kobolds of the mine's outer caves, sworn guardians of the dragon below. At war with the goblins; they kill any intruder without a word.
+  blurb: Guardians of the dragon they call a god, and the only people in the mine who chose their servitude. They kill intruders without a word because every stranger is a threat to the one thing that gives their lives meaning.
   start: -20
   kos: 0
   allies: []
@@ -98,7 +98,7 @@ kobolds:
   perks: []
 fire_giants:
   name: The fire giants
-  blurb: The giants of the basalt citadel at the bottom of the mine, who keep the great dragon's gate and its peace. They suffer no one in their city.
+  blurb: The last of a civilization that once spanned worlds, penned now in a basalt citadel at the bottom of a mine, keeping the dragon's peace because the alternative is oblivion. Their magic is a shadow of what it was. They know it.
   start: -20
   kos: 0
   allies: []
@@ -108,7 +108,7 @@ fire_giants:
 # The orc valley off the East Tarnvale (assets/ideas/orc-valley.md).
 orc_legion:
   name: The orc legion
-  blurb: The orcs of the valley, drilled in legions under an emperor in his castle; they keep slaves in their quarry and pits, and raid the vales for more.
+  blurb: The last province of an empire that once stretched beyond the eastern mountains. They drill, they build, they raid the vales for labour — not from cruelty but from a conviction that order must be maintained, even as the thing they are maintaining crumbles.
   start: -20
   kos: 0
   allies: []
