@@ -1,6 +1,6 @@
 # To do
 
-Last updated at commit: 8e57c289
+Last updated at commit: eee797af
 
 Keep this a short list: open items only, a line or two each. Tick things off, add new ones, and refresh the commit
 line after every push (`git log -1 --format=%h`). What was done, and the detail behind each item below, is in
@@ -185,7 +185,7 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
 - [ ] The golems: clay M 5, iron > 6, stone 1.9 (step 6). Desert spectres: six level-4 heroes 0%. Casters alone M 1.4–2.5.
   No rule wrong; content fixes listed in FINDINGS "Re-tuned on the new rules". Unplaced monsters (wolves, trolls, drakes, wyverns…) have no tier.
 - [x] `maxLevel` is 20 (R10). [ ] XP: every hero still gets the full amount whatever the party's size, and at `xpBase` 60 the content ends in level 20 before the level-5 places. Recommendation in the audit §5: `xpBase` 200 and `3 ÷ party size` of the XP above a party of three (F10).
-- [ ] Content mix: 128 monster squares against 6 asleep, 5 locked, 5 secret, 2 traps, 2 parleys, 1 quest. Sneaking
+- [ ] Content mix: 129 monster squares against 6 asleep, 5 locked, 5 secret, 2 traps, 2 parleys, 1 quest. Sneaking
   and talking have almost nowhere to matter. No social sim (a bot that tries fight / parley / sneak).
 - [ ] (Unchanged in step 6.) Two-handed beats sword & shield 61% in the open, 53% in close quarters after step 5's AI (was 68%, 76%).
 - [ ] Not simmed: the spell words (numbers are guesses), hit-location numbers, the strong magic items, weapon wear and weariness over a long crawl. (The attribute sim is done: `sim/feats.js --attrs`.)
@@ -269,6 +269,18 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
   `create_character`). Stand-ins still in use: the efreet lord, the avatar of fear, the legionnaire, slaver, warlord
   and prophet. The user's newer figures are not wired to monsters. Floating figures have no bob.
 - [ ] Wanted, no art: the vampire; redo Beren, the Yuan-Ti, skeletons, rats; raptor, red drake, fae drake.
+
+## Content (eee797af, 2026-11-21)
+- [x] Text pass on all NPC dialogue and hero pitches (show don't tell). 19 philosophical NPC topics.
+- [x] Mill cellars dungeon (smuggler encounters, `cellars_cleared` flag). Cartographer's legacy quest.
+- [x] 3 bounty quests: The Pack (wolf alpha, south hills), The Fortress on the Lake (sarnak warden),
+  The Throne in the Temple (Venril). Wolf encounter placed in south hills.
+- [x] Epic quest "The Old Wound" (5 stages: sarnak glyphs → palace frieze → citadel tablet → avatar of fear → Ysa).
+  The sarnaks and Suracayl were one people; the faceless thing split them; the dragon kept it sleeping.
+  Defeat flags added to sarnak warden, avatar of fear, Venril. Notes placed in sarnak fort, temple palace, citadel.
+- [ ] `node tools/pace.js` not rerun after south hills wolf placement. Wolf encounter not tiered (`tools/tiers.js`).
+- [ ] The epic quest requires visiting the citadel (level 7) but opens at the sarnak fort (level 3). Ysa's topic
+  requires either the glyph or the frieze flag, so a player who hasn't been to the fort or the palace can't start it.
 
 ## Ask the user
 - [ ] Should a shield bash break bone without its feat (above)? An unbound summons: a third side? Spell bolts cannot be dodged: confirm.
