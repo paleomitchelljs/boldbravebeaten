@@ -28,8 +28,9 @@ assets/wip/temple-tileset/
 /_a.png
 /tmp/
 
-# Local only: Claude settings, Dropbox conflict copies
+# Local only: Claude settings, Dropbox conflict copies, personal notes
 .claude/
+notes/
 *conflicted copy*
 
 # Reference adventures (published PDFs, not ours to redistribute)

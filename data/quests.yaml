@@ -30,6 +30,7 @@ smuggler_cellar:
   summary: Goods move through the old mill cellars after dark. Hollis wants it stopped. Corvin wants it left alone. Both have their reasons.
   stages:
     - {text: "Clear the smugglers from the cellars beneath the old mill.", done_when: {flag: cellars_cleared}}
+    - {text: "Tell Captain Hollis the cellars are clear.", done_when: {flag: told_hollis_cellars}}
   reward: {gold: 80, xp: 120, standing: {town_watch: 15, cutthroats: -20}, renown: 2}
 
 temple_waters:
@@ -40,6 +41,7 @@ temple_waters:
   stages:
     - {text: "Find the dam in the swamp east of the temple approach.", done_when: {flag: found_dam}}
     - {text: "Break the dam, or find another way to restore the banks.", done_when: {flag: banks_restored}}
+    - {text: "Tell Warden Ysa the banks are restored.", done_when: {flag: told_ysa_banks}}
   reward: {xp: 250, standing: {suracayl: 30}, renown: 3}
 
 slave_road:
@@ -49,6 +51,7 @@ slave_road:
   summary: The orcs raid the vales for labour. Hollis sent four men and has forty. The arithmetic is not in his favour.
   stages:
     - {text: "Free the slaves in the orc quarry.", done_when: {flag: slaves_freed}}
+    - {text: "Tell Captain Hollis the slaves are free.", done_when: {flag: told_hollis_slaves}}
   reward: {xp: 400, standing: {orc_legion: -25}, renown: 4}
 
 arvir_bargain:
@@ -59,3 +62,57 @@ arvir_bargain:
     - {text: "Free Arvir from the orc slave pen.", done_when: {flag: freed_arvir}}
     - {text: "Reach the dragon's lair with Arvir.", done_when: {flag: arvir_at_dragon}}
   reward: {xp: 200, renown: 2}
+
+cartographers_legacy:
+  name: The Cartographer's Legacy
+  giver: gnome_surveyor
+  faction: deep_gnomes
+  summary: "Surveyor Wila's knotted cord holds eleven years of the mine's shape. She wants it carried to the surface — not for rescue, but so someone knows the shape of what they lived through."
+  stages:
+    - {text: "Bring Wila's cord to Warden Ysa at the Lantern House in Stonebridge.", done_when: {flag: cord_delivered}}
+  reward: {xp: 100, standing: {deep_gnomes: 10}, renown: 1}
+
+# ---- Bounty quests: simple kill missions from town NPCs ----
+wolf_pack:
+  name: The Pack
+  giver: old_dagmar
+  faction: town_watch
+  summary: "Wolves bold enough to kill within sight of the road. Dagmar wants the alpha brought down before they learn the village fence is shorter than it looks."
+  stages:
+    - {text: "Kill the alpha wolf in the south hills.", done_when: {flag: alpha_wolf_dead}}
+    - {text: "Tell Dagmar in the inn.", done_when: {flag: told_dagmar_wolves}}
+  reward: {gold: 30, xp: 60, standing: {town_watch: 5}, renown: 1}
+
+sarnak_scouts:
+  name: The Fortress on the Lake
+  giver: captain_hollis
+  faction: town_watch
+  summary: "Something is building in the fortress on the lake south of Tarnhold. Hollis wants its warden dead before whatever it is finishes."
+  stages:
+    - {text: "Kill the sarnak warden in the fortress on the lake.", done_when: {flag: sarnak_warden_dead}}
+    - {text: "Tell Captain Hollis.", done_when: {flag: told_hollis_sarnaks}}
+  reward: {gold: 60, xp: 120, standing: {town_watch: 10}, renown: 2}
+
+palace_throne:
+  name: The Throne in the Temple
+  giver: warden_ysa
+  faction: lantern_order
+  summary: "A dead shaman sits the throne in the temple palace and raises the fallen to serve it. Ysa has watched its light from the wall for years."
+  stages:
+    - {text: "Kill the shaman Venril in the temple palace.", done_when: {flag: venril_dead}}
+    - {text: "Tell Warden Ysa.", done_when: {flag: told_ysa_venril}}
+  reward: {gold: 40, xp: 150, standing: {suracayl: 10}, renown: 2}
+
+# ---- Epic quest: the Faceless Thing ----
+old_wound:
+  name: The Old Wound
+  giver: warden_ysa
+  faction: lantern_order
+  summary: "The sarnaks and the Suracayl were one people once. Something split them. The same something sleeps under the temple in a green orb, and the dragon in the mine keeps it asleep — for a price. Three places, three visits, and the shape of what happened."
+  stages:
+    - {text: "Read the glyph stone in the sarnak fortress on the lake.", done_when: {flag: read_sarnak_glyphs}}
+    - {text: "Find the frieze in the temple palace that tells the same story.", done_when: {flag: read_palace_frieze}}
+    - {text: "Find proof of the bargain in the fire giant citadel.", done_when: {flag: read_citadel_tablet}}
+    - {text: "Kill the faceless thing in the ritual chamber beneath the temple.", done_when: {flag: avatar_dead}}
+    - {text: "Tell Warden Ysa what you found.", done_when: {flag: told_ysa_old_wound}}
+  reward: {xp: 500, standing: {suracayl: 20}, renown: 5}

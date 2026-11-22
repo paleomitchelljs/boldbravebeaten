@@ -30,10 +30,10 @@ presets:
   # Beren: heavy armor, sword and shield. He blocks: plate he can move in, a shield he is quick and sure with.
   - id: beren
     name: Beren
-    blurb: "Plate and shield. Stands in front."
+    blurb: "Three winters in plate. Quiet, steady, still standing."
     place: village
     at: [16, 14]
-    pitch: "Plate on my back and a shield on my arm. Point me at the trouble."
+    pitch: "I've slept in this plate three winters. The dents are mine. Everything that put them there is dead."
     kit: sword
     level: 1
     attrs: {STR: 7, CON: 7, DEX: 5, SPD: 5, INT: 3, WIL: 5, WIS: 4, CHA: 4}
@@ -46,10 +46,10 @@ presets:
   # Lorc: an archer. There are no archery feats yet, so he is built on a high DEX, his eyes and staying out of reach.
   - id: lorc
     name: Lorc
-    blurb: "Bow. Keen eyes, quick feet, keeps distance."
+    blurb: "Longbow, keen eye, a keeper's quiet. Keeps his distance."
     place: village
     at: [9, 20]
-    pitch: "Give me a sightline and a quiver. I'll thin them before they reach you."
+    pitch: "I was a keeper on the hill estates before the wolves came down. Same eye I always had. Different things in it now."
     kit: bow
     level: 1
     attrs: {STR: 5, CON: 5, DEX: 8, SPD: 6, INT: 4, WIL: 4, WIS: 5, CHA: 3}
@@ -64,10 +64,10 @@ presets:
   # least), rapier and parrying dagger, quick thrusts, parry and riposte.
   - id: cyrus
     name: Cyrus
-    blurb: "Rapier and dagger. Parry, riposte, nothing heavy."
+    blurb: "Quick hands, light feet, sharp tongue. Nothing heavy."
     place: village
     at: [24, 19]
-    pitch: "Anything heavier than a gambeson is for people who can't get out of the way."
+    pitch: "I owe three men money and two of them are dead, so the debt situation is improving. Anything heavier than a gambeson is for people who can't get out of the way."
     kit: rapier
     level: 1
     attrs: {STR: 4, CON: 5, DEX: 8, SPD: 8, INT: 4, WIL: 4, WIS: 4, CHA: 3}
@@ -78,10 +78,10 @@ presets:
   # The mage: Life, to heal, wither and drain, at arm's reach, at range and over an area. The staff is a casting focus.
   - id: jabiku
     name: Jabiku
-    blurb: "Life mage. Drains foes, mends allies."
+    blurb: "Life mage. Drains what won't die, mends what shouldn't."
     place: village
     at: [10, 11]
-    pitch: "I mend what breaks and drain what won't fall. Walk with me."
+    pitch: "I've held three people together who should have been dead. Two of them stayed that way. Your odds are better with me than without."
     kit: staff
     level: 1
     attrs: {STR: 3, CON: 5, DEX: 5, SPD: 5, INT: 8, WIL: 8, WIS: 3, CHA: 3}
@@ -101,10 +101,10 @@ recruits:
   # An orc sellsword: a heavy chopping blade (a short sword until there is a falchion) behind a heater shield.
   - id: kalavar
     name: Kalavar
-    blurb: "Orc sellsword. Chopping blade, heater shield, mail."
+    blurb: "Orc sellsword. Heavy blade, mail, no apologies."
     place: village
     at: [11, 13]
-    pitch: "Coin's thin and the road south is thick with trouble. Short a blade? Mine's heavy and I don't run."
+    pitch: "The road south is thick with things that kill people, and I'm better at it than most of them. If your coin's good, so am I."
     kit: sword
     level: 1
     attrs: {STR: 8, CON: 7, DEX: 4, SPD: 4, INT: 3, WIL: 5, WIS: 4, CHA: 5}
@@ -117,10 +117,10 @@ recruits:
   # A dragonkin duellist: quick, light, a blade in each hand.
   - id: jadier
     name: Jadier
-    blurb: "Dragonkin duellist. Two blades, light feet."
+    blurb: "Dragonkin. Two blades, restless, spoiling for a fight."
     place: village
     at: [23, 15]
-    pitch: "Two blades and light feet. I'm bored of this green, and you look like trouble worth following."
+    pitch: "I've been sitting in this village since the rains, and if I fight one more rat I'll start biting back. Take me somewhere that bleeds."
     kit: rapier
     level: 1
     attrs: {STR: 5, CON: 5, DEX: 7, SPD: 7, INT: 4, WIL: 4, WIS: 4, CHA: 4}
@@ -134,10 +134,10 @@ recruits:
   # longsword in both hands). Where Beren blocks, he knocks them down with the shield and walks on in the plate.
   - id: crusader
     name: The Crusader
-    blurb: "Plate knight. Sword and heater. Sworn to something he won't name."
+    blurb: "Plate, heater, a longsword, and an oath he won't explain."
     place: village
     at: [14, 17]
-    pitch: "My oath brought me south. It will carry me further, if you have need of steel."
+    pitch: "I was given a name and told to walk south until I found it. I haven't. The road goes on and so do I."
     kit: sword
     level: 1
     attrs: {STR: 7, CON: 7, DEX: 5, SPD: 4, INT: 3, WIL: 6, WIS: 4, CHA: 4}
@@ -150,10 +150,10 @@ recruits:
   # A spellsword: a curved blade, a buckler, and fire to throw.
   - id: spawnee
     name: Spawnee
-    blurb: "Spellsword. Short blade and buckler, fire at range."
+    blurb: "Spellsword. Fire at range, a blade up close, practical about both."
     place: village
     at: [7, 19]
-    pitch: "Steel when they're close, fire when they're not. I've been waiting for someone worth the walk."
+    pitch: "I burned a man's shield off his arm at twenty paces last month. Up close I use the sword. Something always works."
     kit: sword
     level: 1
     attrs: {STR: 5, CON: 5, DEX: 6, SPD: 5, INT: 7, WIL: 6, WIS: 3, CHA: 3}

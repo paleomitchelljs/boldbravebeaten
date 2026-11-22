@@ -18,14 +18,14 @@
 stonebridge:
   name: Stonebridge
   kind: town
-  blurb: A river town on a trade road, with a toll gate, a market, a temple and a long list of things nobody discusses.
+  blurb: A river town on the trade road. A toll gate, a market, a temple, and a long list of things nobody discusses over drinks.
   look: {sky: "#6f8aa6", ground: "#7a6a52", accent: "#c8a05a"}
   start: tilted_cask
   locations:
     - id: tilted_cask
       name: The Tilted Cask
       glyph: "🍺"
-      blurb: The inn and the common room. Everyone passes through; most of them talk.
+      blurb: The common room. Everyone passes through, and most of them talk more than they should.
       npcs: [marta_quill, old_dagmar, sly_corvin]
       services: [{kind: inn, name: "A room for the night"}]
     - id: forge
@@ -108,13 +108,13 @@ stonebridge:
     - id: lantern_house
       name: The Lantern House
       glyph: "🏮"
-      blurb: The temple. Quiet, lamp-lit, and always short of beds.
+      blurb: Quiet, lamp-lit, and always short of beds. The smell of tallow and clean linen.
       npcs: [warden_ysa]
       services: [{kind: healer, name: "Tending the hurt", faction: lantern_order}]
     - id: yard
       name: The Training Yard
       glyph: "🎯"
-      blurb: Between adventures, you can learn. Not during.
+      blurb: Packed earth and a fence. Between adventures, you can learn.
       npcs: []
       services: [{kind: trainer, name: "Instruction"}]
     - id: gatehouse
@@ -127,6 +127,51 @@ stonebridge:
     - {to: village, label: "Out to the village green", arrive: I}
     - {to: temple_court, label: "The temple in the jungle", arrive: "<"}
     - {to: ember_hall, label: "The fire-goblin mine", arrive: "<"}
+    - {to: mill_cellars, label: "The old mill cellars", arrive: "<", requires: {flag: knows_mill}}
+  secrets: []
+
+# The cellars beneath the old mill (the user's smuggler cellar quest). A small dungeon in Stonebridge.
+mill_cellars:
+  name: The Old Mill Cellars
+  kind: dungeon
+  blurb: Damp stone under the old mill. Crates, barrels, and people who would rather you hadn't come.
+  level: 1
+  look: {wall: "#3a3634", floor: "#4a4640", ceiling: "#2a2826", fog: "#0a0908", torch: 1, tileset: orc_mine, light: 10}
+  map:
+    - "######################"
+    - "######################"
+    - "##..................##"
+    - "##.g..........b.....##"
+    - "##..................##"
+    - "##..b.......c.......##"
+    - "##..................##"
+    - "##..c.......g.......##"
+    - "##..................##"
+    - "##..####..####......##"
+    - "##..####..####......##"
+    - "##..##......##..B...##"
+    - "##..##..H...##......##"
+    - "##..##......##......##"
+    - "##..##..b.r.##......##"
+    - "##..##......##......##"
+    - "##..##......##..<...##"
+    - "######################"
+    - "######################"
+  legend:
+    "<": {kind: stairs, to: stonebridge, sprite: none, label: "Up to the street"}
+    c: {kind: prop, sprite: stoneblocks, solid: false, label: "Crates stacked against the wall"}
+    b: {kind: prop, sprite: barrels, label: "Barrels"}
+    g: {kind: monster, encounter: guards, label: "A smuggler on watch"}
+    r: {kind: monster, encounter: storeroom, label: "Smugglers in the storeroom"}
+    B: {kind: monster, encounter: boss, label: "The captain at his ledger"}
+    H: {kind: chest, label: "A heavy chest with a new lock", loot: smuggler_cache, tn: 8}
+  encounters:
+    guards: {foes: [{monster: smuggler}], text: "A smuggler drops what he's carrying and pulls a club."}
+    storeroom: {foes: [{monster: smuggler}, {monster: smuggler}], text: "Two smugglers sorting crates look up and reach for weapons."}
+    boss: {foes: [{monster: smugglerBoss}, {monster: smuggler}], flags: [cellars_cleared], text: "The captain puts down his ledger and draws his sword. The other one grabs a club. Neither of them looks surprised."}
+  wandering:
+    - {w: 1, foes: [{monster: smuggler}], text: "A smuggler carrying a crate drops it and pulls a knife."}
+    - {w: 4, nothing: true}
   secrets: []
 
 # ---- Outside (the user, 2026-11-01): the village the party starts in, and the ground before the temple and the mine.
@@ -236,7 +281,7 @@ temple_approach:
     - "]],~~~~~~~,,,~~~~~~~,,~~~~,^--^:::::::##"
     - "]],~~~~~~~,,,~~~~~~~,,~~~~,^--^:::::::B#"
     - "]],~~~~~~~,,,~~~~~~~,,~~~~,^--^:::::::##"
-    - "]],~~~~~~,,,,~~~~~~~,,~~~~,^--^^mn^^^^##"
+    - "]],~~~~~~,D,X~~~~~~~,,~~~~,^--^^mn^^^^##"
     - "]],,,,,,,,,,,~~~~~~~,,~~~,,^----------##"
     - "]],,,,,,,,,,,~~~~~~,,,,,,,,^----------##"
     - "]],,,,F,,,,,,,,,,,,,,,F,,,,^^^^^ij^^^^##"
@@ -254,6 +299,8 @@ temple_approach:
     n: {kind: prop, sprite: pyr_stair_r2, solid: false, on: "^", label: "Steps up to the top"}
     F: {kind: prop, sprite: fern_large, solid: false, label: "Ferns"}
     f: {kind: prop, sprite: fern_small, solid: false, label: "Ferns"}
+    D: {kind: note, sets: [found_dam], label: "An earth dam across the stream", text: "A wall of packed earth and timber between the pools, holding back the water that should flow east to the nesting grounds. It is old work, cracked and green with moss, but still sound. It could be broken."}
+    X: {kind: note, sets: [banks_restored], label: "Break the dam", text: "You pull the timbers loose. The earth gives, then the water does the rest — a brown flood pouring east through the gap, filling channels that have been dry for years. Somewhere below, something croaks. It sounds like a greeting."}
   encounters: {}
   secrets: []
 
@@ -340,7 +387,7 @@ south_hills:
     - "}},,,}}}}},,,,,,,,,{{{{,...,,,}}}}}}},,,,,}}"
     - "}},,,,}}},,,,,Y,,,,{{{{,..,,,,}}}}}}},,,,,}}"
     - "}},Y,,}}},,,P,,,,w,,{{,...,,,,,,,,,,,,},,,}}"
-    - "}},,,,,,,,,,s,P,F,,,M,...,wY,,,{{{,,}}}}},}}"
+    - "}},,,,W,,,,,s,P,F,,,M,...,wY,,,{{{,,}}}}},}}"
     - "}},,,,,,,,,,,,,,,,,,,...,,,,,,{{{{{,}}}}},}}"
     - ",,,,P,,F,,{,,P,,,,P,,..,,,O,s{{{{{{{}}}}},,,"
     - ",,,,,,w,{{{{{,,,,,,,...,},,,,,{{{{{,,,,,,,,,"
@@ -396,7 +443,9 @@ south_hills:
     C: {kind: prop, sprite: cairn, label: "A cairn at the mouth of the pass", on: ","}
     X: {kind: prop, sprite: crag, scale: 1.3, label: "A crag of grey granite", on: ","}
     K: {kind: prop, sprite: campfire, solid: false, label: "The ashes of a campfire", on: ","}
-  encounters: {}
+    W: {kind: monster, encounter: wolves, label: "Wolves by a kill", on: ","}
+  encounters:
+    wolves: {foes: [{monster: alphaWolf}, {monster: wolf, n: 2}], flags: [alpha_wolf_dead], text: "The pack is on a deer carcass. The big one lifts its head, red to the ears, and the others fan out without a sound."}
   secrets: []
 
 tarnhold:
@@ -813,14 +862,14 @@ sarnak_fort:
     f: {kind: prop, sprite: brazier, label: "A brazier"}
     n: {kind: prop, sprite: tusk_standard, label: "A standard of tusks and hide"}
     e: {kind: prop, sprite: egg_nest, label: "A clutch of big leathery eggs"}
-    i: {kind: prop, sprite: standing_stone, label: "A stone cut with glyphs"}
+    i: {kind: note, sprite: standing_stone, sets: [read_sarnak_glyphs], label: "A stone cut with glyphs", text: "The stone is old — older than the fortress. The glyphs are not sarnak: they are Suracayl, the same script cut into the temple walls to the north. A map of rivers, a clutch of eggs, and a line dividing them. Below it, a shape like a coiled shadow with no face."}
     a: {kind: monster, encounter: hall, label: "Sarnaks in the western hall"}
     q: {kind: monster, encounter: brood, asleep: true, label: "A sarnak dozing by the eggs"}
     k: {kind: monster, encounter: warden, label: "The warden of the fortress"}
   encounters:
     hall: {foes: [{monster: sarnak}, {monster: sarnakKnight}], text: "Sarnaks snatch spears from the wall. This was a dining hall, once."}
     brood: {foes: [{monster: sarnak}], text: "The brood-keeper uncoils between you and the eggs."}
-    warden: {foes: [{monster: sarnakWarden}, {monster: sarnakKnight}], text: "The warden rises, a head taller than its guard. It has been expecting you."}
+    warden: {foes: [{monster: sarnakWarden}, {monster: sarnakKnight}], flags: [sarnak_warden_dead], text: "The warden rises, a head taller than its guard. It has been expecting you."}
   secrets: []
 
 tarn_plains_south:
@@ -902,7 +951,7 @@ tarn_plains_south:
     Y: {kind: prop, sprite: birch, label: "A birch", on: ","}
     R: {kind: prop, sprite: boulder, label: "A boulder", on: ","}
   encounters:
-    lone: {foes: [{monster: minotaur}], text: "A minotaur comes round the rock, snorting."}
+    lone: {foes: [{monster: minotaur}], text: "A minotaur rounds the red rock and lowers its head. It doesn't charge yet. It's deciding where to put you."}
     camp: {foes: [{monster: minotaur}, {monster: minotaur}], text: "Two minotaurs duck out of the yurt with axes in their fists."}
     herd: {foes: [{monster: minotaur}, {monster: minotaur}], text: "The minotaurs at the totem lower their horns."}
     bull: {foes: [{monster: minotaurLord}], text: "The lord of the labyrinth bellows, and the walls throw it back."}
@@ -1233,7 +1282,7 @@ orc_valley:
     slaver: {foes: [{monster: orcSlaver}, {monster: orcLegionnaire}], text: "The slaver drops his club on the nearest slave's back and turns to you."}
     drill: {foes: [{monster: orcCenturion}, {monster: orcLegionnaire}], text: "The drill breaks off, and the line turns on you. They are very good at this."}
   wandering:
-    - {w: 1, foes: [{monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "A patrol of the legion."}
+    - {w: 1, foes: [{monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "Two legionnaires marching in step. They break into a run when they see you."}
     - {w: 3, nothing: true}
   secrets: []
 
@@ -1302,17 +1351,17 @@ orc_castle:
     G: {kind: monster, encounter: gatehall, label: "Guards inside the gate"}
     r: {kind: monster, encounter: patrol, label: "A patrol in the passage"}
   encounters:
-    gatehall: {foes: [{monster: orcCenturion}, {monster: orcLegionnaire}], text: "The guards inside the gate bar your way."}
-    patrol: {foes: [{monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "A patrol rounds the corner."}
+    gatehall: {foes: [{monster: orcCenturion}, {monster: orcLegionnaire}], text: "The guards inside the gate step together, spears crossing. They've drilled this."}
+    patrol: {foes: [{monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "A patrol turns the corner at a jog, shields already up."}
     mess: {foes: [{monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "Orcs come up from the benches, knives still in their hands."}
-    barracks: {foes: [{monster: orcLegionnaire}, {monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "A sleeper wakes and bellows the rest awake."}
+    barracks: {foes: [{monster: orcLegionnaire}, {monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "A sleeper wakes, bellows, and the other two roll out of their cots reaching for shields."}
     prophet: {foes: [{monster: orcProphet}], text: "The prophet turns from the green flame and says your name, which he should not know. He looks sorry about what comes next."}
     emissaries: {foes: [{monster: orcEmissary}, {monster: orcEmissary}], text: "The emissaries draw their fine swords with genuine regret. They were the ones who argued for negotiation."}
     warlord: {foes: [{monster: orcWarlord}], text: "The warlord looks up from his maps. He knows what the maps say. He reaches for the greatsword."}
-    throneguard: {foes: [{monster: orcCenturion}, {monster: orcCenturion}], text: "The throne guard close in from the pillars."}
+    throneguard: {foes: [{monster: orcCenturion}, {monster: orcCenturion}], text: "The throne guard close in from behind the green pillars, unhurried. They have done this before."}
     emperor: {foes: [{monster: orcEmperor}], flags: [orc_emperor_dead], text: "The emperor rises from his throne and takes up the spear. He has been waiting for this his whole life."}
   wandering:
-    - {w: 1, foes: [{monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "A patrol of the castle."}
+    - {w: 1, foes: [{monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "Castle guards round the corner at a march, spears levelled."}
     - {w: 4, nothing: true}
   secrets: []
 
@@ -1356,7 +1405,7 @@ orc_mines:
   legend:
     S: {kind: stairs, to: orc_valley, at: M, sprite: none, label: "Out to the quarry and the valley"}
     z: {kind: prop, sprite: pallet, label: "A straw pallet"}
-    G: {kind: note, label: "The slave pens", text: "Slaves asleep on straw in a pen of stakes, too exhausted to wake for you."}
+    G: {kind: note, sets: [slaves_freed], label: "The slave pens", text: "Slaves asleep on straw in a pen of stakes, too exhausted to wake for you. You pull the stakes loose. Some of them wake, blinking. One says thank you; the rest just walk toward the light."}
     q: {kind: prop, sprite: bucket, label: "A bucket of water"}
     o: {kind: monster, encounter: overseers, label: "The overseers' room"}
     t: {kind: prop, sprite: maptable, label: "A table with a tally of stone and slaves"}
@@ -1372,12 +1421,12 @@ orc_mines:
     g: {kind: monster, encounter: gallery, label: "A slaver in the first gallery"}
     D: {kind: note, label: "An old shaft", text: "A shaft going straight down, a rope ladder rotted to its last rungs. Cold air rises from below."}
   encounters:
-    gallery: {foes: [{monster: orcSlaver}], text: "A slaver turns from the slaves with his club raised."}
+    gallery: {foes: [{monster: orcSlaver}], text: "A slaver turns from the slaves he was counting, club already raised."}
     cut: {foes: [{monster: orcSlaver}, {monster: orcLegionnaire}], text: "The slavers at the cut leave off their shouting and come at you."}
-    store: {foes: [{monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "Two guards over the stone get up."}
-    overseers: {foes: [{monster: orcCenturion}, {monster: orcSlaver}], text: "The overseers look up from their tally."}
+    store: {foes: [{monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "Two guards by the stone pile get to their feet, reaching for spears."}
+    overseers: {foes: [{monster: orcCenturion}, {monster: orcSlaver}], text: "The overseers look up from their tally of stones and slaves. One reaches for his whip, the other for his sword."}
   wandering:
-    - {w: 1, foes: [{monster: orcSlaver}], text: "A slaver on his rounds."}
+    - {w: 1, foes: [{monster: orcSlaver}], text: "A slaver with a whip coiled at his belt spots you and reaches for his club."}
     - {w: 3, nothing: true}
   secrets: []
 
@@ -1454,7 +1503,7 @@ temple_court:
     maze_door: {foes: [{monster: scaleward, sprite: {art: lizardfolk-warrior-tan}}], text: "The Suracayl at the south door hisses and sets its feet. Behind it, children's voices."}
     palace_door: {foes: [{monster: templeGorillaPair}], text: "The two great apes under the palace arch come up off their knuckles."}
   wandering:
-    - {w: 1, foes: [{monster: scaleward, sprite: {art: lizardfolk-warrior-tan}}], text: "A Suracayl patrol comes along the wall."}
+    - {w: 1, foes: [{monster: scaleward, sprite: {art: lizardfolk-warrior-tan}}], text: "A Suracayl rounds the wall at a crouch, spear-point first."}
     - {w: 4, nothing: true}
   secrets: []
 
@@ -1520,8 +1569,8 @@ temple_maze:
     watch: {foes: [{monster: suracaylSkink, n: 2, sprite: {art: lizardfolk-alt-purple}}], text: "Two Suracayl skinks drop out of a side passage, claws out."}
     golem: {foes: [{monster: clayGolem}], text: "The clay figure at the end of the passage turns its head, and steps down off its plinth."}
   wandering:
-    - {w: 1, foes: [{monster: suracaylSkink}, {monster: suracaylSkink, sprite: {art: lizardfolk-alt-purple}}], text: "Two Suracayl skinks round the bend at a run."}
-    - {w: 1, foes: [{monster: raptor, n: 2}], text: "Two raptors, hunting."}
+    - {w: 1, foes: [{monster: suracaylSkink}, {monster: suracaylSkink, sprite: {art: lizardfolk-alt-purple}}], text: "Two Suracayl skinks drop from a side passage, claws out and clicking."}
+    - {w: 1, foes: [{monster: raptor, n: 2}], text: "Two raptors come round the corner at a sprint, fanning apart."}
     - {w: 5, nothing: true}
   secrets: []
 
@@ -1602,14 +1651,14 @@ temple_court2:
     snake: {foes: [{monster: constrictor}], text: "A great snake slides down the carved face."}
     top: {foes: [{monster: dreadShaman}, {monster: suracaylVaranus, sprite: {art: lizardfolk-varanus-black}}], text: "A Suracayl in a bone mask turns from the altar and lifts its staff. The two varanus at its feet rise."}
   wandering:
-    - {w: 1, foes: [{monster: suracaylVaranus}], text: "A Suracayl varanus comes round the pyramid."}
+    - {w: 1, foes: [{monster: suracaylVaranus}], text: "A heavy varanus rounds the pyramid, tongue tasting the air."}
     - {w: 4, nothing: true}
   secrets: []
 
 temple_sewer:
   name: The Sewers
   kind: dungeon
-  blurb: Rank green water under the temple. Slimed walkways, plank bridges.
+  blurb: Rank water under the temple. Slimed walkways, plank bridges, and things that live in both.
   level: 2
   look: {wall: "#46503f", floor: "#3a4436", ceiling: "#101810", fog: "#060a06", torch: 1, tileset: temple_sewer, light: 7}
   # A main channel from under the gatehouse east to a cistern, where a ring of planks runs round the drain down to the
@@ -1670,7 +1719,7 @@ temple_sewer:
     gators: {foes: [{monster: alligator, n: 2}], text: "Two alligators slide up out of the water onto the walkway."}
     hunter: {foes: [{monster: suracaylSkink}, {monster: suracaylSkink, sprite: {art: lizardfolk-alt-purple}}], text: "Two Suracayl skinks crouched over a dead rat look up, and come at you along the walkway."}
   wandering:
-    - {w: 1, foes: [{monster: ratPack}], text: "Rats pour along the walkway."}
+    - {w: 1, foes: [{monster: ratPack}], text: "Rats pour along the walkway in a tide of teeth and scratching claws."}
     - {w: 1, foes: [{monster: alligator}], text: "Something heavy comes up out of the water."}
     - {w: 4, nothing: true}
   secrets: []
@@ -1707,7 +1756,7 @@ temple_ritual:
     S: {kind: stairs, to: temple_palace_stair, at: R, up: true, sprite: stair_up, label: "A narrow stair up toward the palace"}
     A: {kind: monster, encounter: avatar, label: "The avatar of fear"}
   encounters:
-    avatar: {foes: [{monster: avatarOfFear}], text: "The orb clouds, and what was inside it is outside it: a hunched, faceless thing that has to stoop under the ceiling."}
+    avatar: {foes: [{monster: avatarOfFear}], flags: [avatar_dead], text: "The orb clouds, and what was inside it is outside it: a hunched, faceless thing that has to stoop under the ceiling."}
   wandering: []
   secrets: []
 
@@ -1733,7 +1782,7 @@ temple_palace:
     - "#####..#######..####..............|||||.##"
     - "#####..#######..####..............|||||.##"
     - "##.s...s...s......##..............|||||.##"
-    - "##................##..............|||||.##"
+    - "##......v.........##..............|||||.##"
     - "##................................|k|T|o##"
     - "#W........................h.......|||||.##"
     - "##................................|||||.##"
@@ -1762,15 +1811,16 @@ temple_palace:
     b: {kind: prop, sprite: brazier, label: "A brazier, burning"}
     T: {kind: prop, sprite: throne, on: "|", label: "The throne"}
     C: {kind: chest, loot: strongbox, tn: 8, label: "A chest"}
+    v: {kind: note, sets: [read_palace_frieze], label: "A frieze above the gallery", text: "Carved along the gallery's lintel: Suracayl splitting into two columns — one marching north toward a lake, the other staying. Between them a faceless shape, coiled, with hands raised over both. The column that left has its eggs in a fortress; the column that stayed kneels before the shape. The last panel is defaced."}
     h: {kind: monster, encounter: hall, label: "A guard in the great hall"}
     k: {kind: monster, encounter: throne, on: "|", label: "Venril over its throne"}
     r: {kind: monster, encounter: rats, label: "Rats in a side chamber"}
   encounters:
-    hall: {foes: [{monster: scaleward, n: 2}], text: "Two Suracayl guards pacing the hall wheel about."}
+    hall: {foes: [{monster: scaleward, n: 2}], text: "Two Suracayl guards pacing the hall wheel about, spear-points dropping to level."}
     # One skeleton guard, not two: two of them alone beat the example level-1 party (13%, tools/encounters.js), and Venril
     # raises the fallen besides.
-    throne: {foes: [{monster: venril}, {monster: skeleton}], text: "Above the throne a horned lizard in a dark robe drifts upright, its hands lifting. The skeleton at the foot of the dais steps down to meet you."}
-    rats: {foes: [{monster: ratPack}], text: "The chamber is full of rats."}
+    throne: {foes: [{monster: venril}, {monster: skeleton}], flags: [venril_dead], text: "Above the throne a horned lizard in a dark robe drifts upright, its hands lifting. The skeleton at the foot of the dais steps down to meet you."}
+    rats: {foes: [{monster: ratPack}], text: "The chamber is alive with rats, boiling over each other in the dark."}
   wandering:
     - {w: 1, foes: [{monster: scaleward, sprite: {art: lizardfolk-warrior-tan}}], text: "A Suracayl guard comes through the gallery."}
     - {w: 4, nothing: true}
@@ -1818,7 +1868,7 @@ temple_palace_up:
     g: {kind: monster, encounter: golem, label: "An iron figure by the chest"}
   encounters:
     sleeper: {foes: [{monster: scaleward, sprite: {art: lizardfolk-warrior-tan}}], text: "The sleeper rolls off the bed with a hammer already in hand."}
-    servants: {foes: [{monster: koboldBand}], text: "The servants drop their bowls and grab knives."}
+    servants: {foes: [{monster: koboldBand}], text: "The servants drop their bowls and grab knives. They're faster than they look."}
     golem: {foes: [{monster: ironGolem}], text: "The iron figure at the foot of the bed grinds round to face you."}
   wandering: []
   secrets: []
@@ -2029,12 +2079,12 @@ ember_hall:
     patrol: {foes: [{monster: fireGoblin}], text: "A goblin on patrol comes round a stack of barrels."}
     priests: {foes: [{monster: goblinShaman}], text: "A goblin shaman looks up from its painted wall and starts to chant."}
     riverpost: {foes: [{monster: goblinWarrior}], text: "The guard by the river comes off its stool, shield up."}
-    guards: {foes: [{monster: fireGoblin}], text: "A guard in the side cave comes out at a run."}
-    mines: {foes: [{monster: goblinMiner}], text: "A goblin miner drops its pick and picks up a club."}
+    guards: {foes: [{monster: fireGoblin}], text: "A guard in the side cave scrambles out, spear first."}
+    mines: {foes: [{monster: goblinMiner}], text: "A goblin miner drops its pick and comes at you with a hand-axe, more afraid of its overseer than of you."}
     baron: {foes: [{monster: goblinShaman}], text: "An old goblin on a throne of black rock lifts a staff topped with a glowing crystal."}
-    gate: {foes: [{monster: goblinWarrior}], flags: [ember_gate_won], text: "The gate guard steps in front of the portcullis."}
+    gate: {foes: [{monster: goblinWarrior}], flags: [ember_gate_won], text: "The gate guard steps in front of the portcullis and sets its feet. It knows it won't be relieved."}
   wandering:
-    - {w: 1, foes: [{monster: fireGoblin}], text: "A fire goblin comes along the cave."}
+    - {w: 1, foes: [{monster: fireGoblin}], text: "A goblin rounds the stalagmites at a trot, spear low, keeping to the ground it knows."}
     - {w: 1, foes: [{monster: lavaBeetle}], text: "A lava beetle scuttles out of a crack, its shell aglow."}
     - {w: 4, nothing: true}
   secrets: []
@@ -2120,14 +2170,14 @@ ember_warrens:
     c: {kind: chest, label: "An ore cart with a false bottom", loot: smuggler_cache, tn: 8}
   encounters:
     gnomes: {foes: [{monster: gnomeWarrior}], parley: gnome_sergeant, peaceFlags: [gnomes_trust], text: "A gnome in black mail steps out of the bridgehead, hammer up."}
-    miners: {foes: [{monster: goblinMiner}], text: "A goblin miner drops its pick and picks up a club."}
+    miners: {foes: [{monster: goblinMiner}], text: "A goblin miner swings round with its pick still in its hands. It knows how to use it."}
     miners2: {foes: [{monster: fireGoblin}], text: "A fire goblin with a whip, looking for miners to drive."}
     overseer: {foes: [{monster: goblinShaman}], text: "A goblin with a bone staff shrieks for the miners, then comes at you alone."}
     archers: {foes: [{monster: fireGoblinArcher}], text: "An archer in the dead end, nocking an arrow."}
     drake: {foes: [{monster: redDrake}], text: "The red drake lifts its head from what it was eating."}
   wandering:
     - {w: 1, foes: [{monster: fireGoblin, n: 2}], text: "Two fire goblins with whips, looking for miners to drive."}
-    - {w: 2, foes: [{monster: goblinMiner}], text: "A goblin miner with a cart."}
+    - {w: 2, foes: [{monster: goblinMiner}], text: "A goblin miner behind a cart sees you and grabs for its pick."}
     - {w: 5, nothing: true}
   secrets: []
 
@@ -2264,12 +2314,12 @@ ember_barracks:
     C: {kind: chest, label: "The captain's strongbox", loot: strongbox, tn: 10}
     r: {kind: pickup, good: repair_kit, text: "A whetstone and rivets on the armorer's bench."}
   encounters:
-    bunks: {foes: [{monster: goblinWarrior, n: 2}], text: "Two goblins roll out of the bunks grabbing for weapons."}
-    mess: {foes: [{monster: goblinWarrior}, {monster: fireGoblin, n: 2}], text: "The mess goes over in a crash of bowls."}
-    drill: {foes: [{monster: goblinWarrior, n: 2}], text: "Two warriors at drill turn."}
+    bunks: {foes: [{monster: goblinWarrior, n: 2}], text: "Two goblins roll out of the bunks grabbing for whatever's nearest. They sleep in their mail."}
+    mess: {foes: [{monster: goblinWarrior}, {monster: fireGoblin, n: 2}], text: "The mess goes over in a crash of bowls. Three goblins come up with knives."}
+    drill: {foes: [{monster: goblinWarrior, n: 2}], text: "Two warriors at drill turn, still warm and loose from sparring."}
     captain: {foes: [{monster: goblinChampion}], text: "A goblin as big as a man stands up from a table of maps."}
   wandering:
-    - {w: 1, foes: [{monster: goblinWarrior}], text: "A warrior on its rounds."}
+    - {w: 1, foes: [{monster: goblinWarrior}], text: "A warrior on its rounds catches your scent and comes at a trot."}
     - {w: 4, nothing: true}
   secrets: []
 
@@ -2434,16 +2484,16 @@ ember_castle:
   encounters:
     gateguard: {foes: [{monster: goblinWarrior, n: 2}], text: "Two goblins with longspears step across the corridor."}
     bar: {foes: [{monster: fireGoblin, n: 2}, {monster: fireGoblinArcher}], text: "The drinkers come over the bar at you; one grabs a bow off the wall."}
-    sleepers: {foes: [{monster: fireGoblin, n: 3}], text: "Goblins tumble out of their blankets."}
+    sleepers: {foes: [{monster: fireGoblin, n: 3}], text: "Three goblins tumble out of their blankets, cursing. One grabs a spear; the others go for whatever's nearest."}
     patriarch: {foes: [{monster: goblinShaman}], text: "A tall, lean goblin with one milky eye pushes through the beads. He looks tired of all of this."}
     smiths: {foes: [{monster: goblinWarrior, n: 2}], text: "The goblin smiths turn from the anvil, hammers still red."}
     shaman: {foes: [{monster: goblinHighShaman}], text: "The high shaman looks up from its slates, and the torches lean toward it."}
     guardpost: {foes: [{monster: goblinWarrior, n: 2}], text: "A goblin painted like a broken clockwork man comes at you, to the others' delight."}
-    champions: {foes: [{monster: goblinChampion}], text: "A champion rolls off its furs and takes up its blade."}
+    champions: {foes: [{monster: goblinChampion}], text: "A champion rolls off its furs and takes up its blade. It's been waiting for something worth killing."}
     throne: {foes: [{monster: goblinKing}], flags: [ember_king_dead], text: "The king heaves himself up from the throne. He has been king a long time and does not intend to stop."}
     bodyguard: {foes: [{monster: goblinChampion}], text: "A champion turns, astonished, as the wall opens."}
   wandering:
-    - {w: 1, foes: [{monster: goblinWarrior}], text: "An inferno goblin on its rounds."}
+    - {w: 1, foes: [{monster: goblinWarrior}], text: "An inferno goblin rounds the bend, torch guttering. It spots you and snarls."}
     - {w: 4, nothing: true}
   secrets: []
 
@@ -2555,7 +2605,7 @@ ember_duct:
     imps: {foes: [{monster: imp, n: 4}], text: "Imps rise off the magma, laughing."}
   wandering:
     - {w: 1, foes: [{monster: lavaBeetle}], text: "A lava beetle, following the warmth."}
-    - {w: 1, foes: [{monster: imp}], text: "An imp out hunting."}
+    - {w: 1, foes: [{monster: imp}], text: "An imp drops from the smoke overhead, grinning wider than its face."}
     - {w: 3, nothing: true}
   secrets: []
 
@@ -2741,7 +2791,7 @@ ember_kobolds:
     watchleader: {foes: [{monster: koboldDuelist}, {monster: koboldWarrior}, {monster: koboldWarrior}], text: "The sparring stops. The watch's leader points its blade at you."}
   wandering:
     - {w: 1, foes: [{monster: koboldHunter}, {monster: koboldWarrior}], text: "A kobold patrol, noses up."}
-    - {w: 1, foes: [{monster: koboldWarrior}, {monster: koboldShaman}], text: "Two kobolds on the way between the dens."}
+    - {w: 1, foes: [{monster: koboldWarrior}, {monster: koboldShaman}], text: "Two kobolds between the dens stop dead, nostrils wide, and snarl."}
     - {w: 4, nothing: true}
   secrets: []
 
@@ -2812,7 +2862,7 @@ ember_citadel:
     - "#@@.@@@....@@@@@@@@@@@@@@@@@@@@@@@..@@@@@@@@.###############"
     - "#@....@...................@@@@@@....@@@@@@@@.###############"
     - "#@.n..@@@.@@@.@@@@..@@@...@@@@@@....@....i.@.###############"
-    - "#@....@@@.@@@.@@@@..@@@........@....@......@.###############"
+    - "#@....@@@.@@@.@@@@..@@@........@....@..p...@.###############"
     - "#@@@@@@.....@.@.......@........@....@@@.@@@@.###############"
     - "#@@@@@@..g..@.@.......@...@....@....@@@.@@@@.###############"
     - "#@@@@@@.....@.@.T...T.@...@@@@@@....@...@..@.###############"
@@ -2879,6 +2929,7 @@ ember_citadel:
     E: {kind: chest, label: "The oldest tomb", loot: relic_cache, rolls: 2, tn: 14}
     # F-15, the torture pit and the guest rooms
     i: {kind: note, label: "A guest room, very cold", text: "Frost on the walls of a room in a city of fire. Whoever stays here comes from the far north, and serves another dragon."}
+    p: {kind: note, sets: [read_citadel_tablet], label: "A basalt tablet on the wall", text: "A tablet in the giant tongue and in the old Suracayl script, side by side. It records a bargain: the dragon will keep the faceless thing asleep in its orb beneath the temple, and the giants will keep the dragon fed. Dated by a calendar you cannot read. The stone is very old."}
     r: {kind: prop, sprite: pit_still, label: "The torture pit", text: "Bones at the bottom, of every kind."}
     # F-16, the king's palace
     h: {kind: monster, encounter: royalguard, label: "The king's guard"}
@@ -2893,11 +2944,11 @@ ember_citadel:
     L: {kind: stairs, to: ember_lair, at: V, sprite: none, label: "The tunnel to the dragon's lair"}
   encounters:
     gate: {foes: [{monster: fireGiantGuard}], text: "A giant in black iron plate turns from the window and draws a sword as long as you are tall."}
-    lattice: {foes: [{monster: fireGiantGuard}], text: "A young giant on the lattice watch, glad of something to do."}
-    sleeper: {foes: [{monster: fireGiant}], text: "A giant heaves up off its furs."}
-    hall: {foes: [{monster: fireGiant}, {monster: fireGiantYoung}], text: "A giant and a young one at the long tables put down their cups."}
+    lattice: {foes: [{monster: fireGiantGuard}], text: "A young giant on the lattice watch straightens up, glad of something to do at last."}
+    sleeper: {foes: [{monster: fireGiant}], text: "A giant heaves up off its furs, blinking. It was dreaming of something better."}
+    hall: {foes: [{monster: fireGiant}, {monster: fireGiantYoung}], text: "A giant and a young one at the long tables put down their cups. The young one reaches for her axe first."}
     cook: {foes: [{monster: fireGiant}], text: "The cook comes round the cauldron with a ladle like a club."}
-    arena: {foes: [{monster: fireGiantYoung, n: 2}], text: "The sparring stops. Here is better sport."}
+    arena: {foes: [{monster: fireGiantYoung, n: 2}], text: "The sparring stops. The two young giants look at each other, then at you, and grin."}
     warlord: {foes: [{monster: fireGiantWarlord}, {monster: fireGiantYoung}], text: "The warlord does not parley. He has not parlayed in a hundred years. His daughter feigns fear, until she sees an opening."}
     smith: {foes: [{monster: fireGiant}], text: "The smith turns from the anvil with the hammer still in his fist."}
     miners: {foes: [{monster: fireGiant}, {monster: fireGiantYoung}], text: "The young giant drops her pick for her fists; the foreman wades in after."}
@@ -2905,12 +2956,12 @@ ember_citadel:
     magus: {foes: [{monster: fireGiantMagus}], text: "The old magus rises in a wash of crystal light. Its magic was stronger once. It remembers."}
     wizard: {foes: [{monster: fireGiantWizard}], text: "A giant wizard looks up from a book of fire, delighted. It has been a long time since anything interesting happened."}
     shades: {foes: [{monster: giantShade}, {monster: giantShade}], text: "The red mist in the marble gathers itself into two dead giants, and they rise to serve."}
-    royalguard: {foes: [{monster: fireGiantGuard}], text: "The king's guard closes the doors behind you."}
+    royalguard: {foes: [{monster: fireGiantGuard}], text: "The king's guard steps forward and closes the doors behind you. No one leaves."}
     king: {foes: [{monster: fireGiantKing}], flags: [giant_king_dead], text: "The king of the giants takes up his maul. He has kept the dragon's peace for two centuries. He is very tired of it."}
     vestibule: {foes: [{monster: fireGiantGuard}, {monster: fireGiantWizard}], text: "The two wardens of the dragon's door, a warrior and a wizard, step out from between the statues."}
   wandering:
-    - {w: 1, foes: [{monster: fireGiantGuard}], text: "A giant warrior on his rounds of the courtyard."}
-    - {w: 1, foes: [{monster: fireGiant}], text: "A giant crossing the courtyard."}
+    - {w: 1, foes: [{monster: fireGiantGuard}], text: "A giant in black iron turns from the courtyard wall, hand already on his sword."}
+    - {w: 1, foes: [{monster: fireGiant}], text: "A giant pauses in the courtyard, looks down at you, and changes direction."}
     - {w: 4, nothing: true}
   secrets: []
 
@@ -2954,7 +3005,7 @@ ember_lair:
   legend:
     O: {kind: pickup, good: wyrmbane_oil, text: "A flask in the bones of the last who came for the dragon. They didn't get to use it."}
     V: {kind: stairs, to: ember_citadel, at: L, up: true, sprite: none, label: "Back to the vestibule"}
-    o: {kind: note, label: "The dome", text: "The roof is a dome so high the lava light gives out before it does. Black smoke rolls along it. On the ring of stone across the fire, something breathes."}
+    o: {kind: note, sets: [arvir_at_dragon], label: "The dome", text: "The roof is a dome so high the lava light gives out before it does. Black smoke rolls along it. On the ring of stone across the fire, something breathes."}
     d: {kind: monster, encounter: dragon, label: "The great red dragon"}
     H: {kind: chest, label: "The dragon's hoard", loot: relic_cache, rolls: 5, tn: 0}
   encounters:

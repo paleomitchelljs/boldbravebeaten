@@ -251,7 +251,7 @@
     return shell(r.name, h('div', { class: 'stack' },
       h('div', { class: 'row' }, UI.Sprites.portrait({ look: r.look, name: r.name }, 72), h('p', null, `“${r.pitch}”`)),
       h('p', { class: 'small muted' }, `Level ${r.level}. ${gear.join(', ')}.`),
-      choices.length ? null : h('p', { class: 'muted' }, 'Your party is whole. If someone falls, come back and ask again.'),
+      choices.length ? null : h('p', { class: 'muted' }, 'Your company is full. Come back when you need someone.'),
       h('div', { class: 'row' }, ...choices, h('button', { onclick: close }, 'Not now'))), close);
   };
 

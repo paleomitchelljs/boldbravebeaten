@@ -23,7 +23,7 @@ wolf:
   feats: {}
 alphaWolf:
   name: Alpha wolf
-  blurb: "The pack leader: bigger, harder bite."
+  blurb: "The pack leader. Bigger, harder bite, and the others follow where it lunges."
   faction: wilds
   xp: 30
   glyph: "🐺"
@@ -136,7 +136,7 @@ giantSpider:
   policy: {kite: false}
 beakbear:
   name: Beakbear
-  blurb: "Hugs and won't let go. No room for a greatsword or a bow."
+  blurb: "Part bear, part beak, all grip. It pins one and crushes. No room for a bow or a greatsword in those arms."
   faction: wilds
   xp: 90
   glyph: "🐻"
@@ -164,7 +164,7 @@ caveTroll:
   feats: {power_swing: 1, shield_breaker: 1}
 trollChieftain:
   name: Troll chieftain
-  blurb: "Big enough to fight the whole party at once."
+  blurb: "Twice a troll's size and twice as mean. Regenerates, fights three at once, and enjoys it."
   faction: wilds
   xp: 300
   glyph: "👹"
@@ -178,7 +178,7 @@ trollChieftain:
   feats: {power_swing: 1, shield_breaker: 1, toughness: 1}
 ogre:
   name: Ogre
-  blurb: "Bigger and meaner than a troll. A club and fists that knock you flat."
+  blurb: "Bigger than a troll and smarter about it. A tree-trunk club and a hand that pins a man to the ground."
   faction: wilds
   xp: 140
   glyph: "👹"
@@ -214,7 +214,7 @@ hillGiant:
   feats: {power_swing: 1, shield_breaker: 1, pin: 1, toughness: 2}
 mirageCatPair:
   name: Mirage cat pair
-  blurb: "Two mirage cats. Arrows mostly strike illusions."
+  blurb: "Two mirage cats, each seen where it isn't. Good luck choosing which arrow to loose."
   group: [mirageCat, mirageCat]
 skeleton:
   name: Skeleton
@@ -718,6 +718,46 @@ avatarOfFear:
   armor: avatarHide
   traits: {outsider: true, size: 1.8, tempo: 2.5, aura: {name: dread, radius: 1, cond: frightened, resisted: true}, finishes: true}
   feats: {power_swing: 1, toughness: 1}
+
+# ---- Stonebridge: the cutthroats in the cellars beneath the old mill.
+smuggler:
+  name: Smuggler
+  blurb: "Leather jack, a club, and a strong preference for not being caught."
+  faction: cutthroats
+  xp: 20
+  tier: 2
+  level: 1
+  glyph: "🗡"
+  sprite: {kind: rogue, tint: "#6a5a4a"}
+  loot: humanoid_purse
+  attrs: {STR: 5, CON: 5, DEX: 6, SPD: 6, INT: 5, WIS: 5, CHA: 4}
+  skills: {melee: 1, evasion: 1, stealth: 2, deception: 1}
+  natural: []
+  armorItem: {type: leather, coverage: half}
+  weapons: [club]
+  sidearm: dagger
+  traits: {dodge: 1}
+  feats: {}
+  keepUnarmed: true
+smugglerBoss:
+  name: Smuggler captain
+  blurb: "Mail under a good coat, a sword he knows how to use, and nothing to lose."
+  faction: cutthroats
+  xp: 50
+  tier: 3
+  level: 1
+  glyph: "🗡"
+  sprite: {kind: rogue, tint: "#4a3a3a"}
+  loot: humanoid_purse
+  attrs: {STR: 6, CON: 6, DEX: 7, SPD: 6, INT: 6, WIS: 6, CHA: 5}
+  skills: {melee: 3, evasion: 2, stealth: 2, deception: 2, intimidation: 2}
+  natural: []
+  armorItem: {type: mail, material: iron, coverage: half}
+  weapons: [longsword]
+  sidearm: dagger
+  traits: {dodge: 1}
+  feats: {quick_thrust: 1, riposte: 1}
+  keepUnarmed: true
 
 # ---- The fire-goblin mine (assets/ideas/ember-mine.md). Art is stand-in until the user makes the figures: the orange
 # goblin for fire goblins, the green one for miners, the orc warrior for the champions, the golem in fire colours for

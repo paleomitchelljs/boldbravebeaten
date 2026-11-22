@@ -66,6 +66,12 @@ marta_quill:
       kind: info
       tag: quiet
       text: "The lizardfolk don't welcome visitors, and visitors don't come back to explain why. Ysa says they were here before the town was. That's not an argument I'd make to their faces."
+    - id: believe
+      label: "What do you believe in?"
+      need: 4
+      kind: info
+      tag: quiet
+      text: "I keep the taps clean and the beds dry. Last week two men who'd have killed each other on the road sat three stools apart and drank the same ale and neither one said a word. That's as close to holy ground as this town gets."
 
 captain_hollis:
   name: Captain Hollis
@@ -97,18 +103,80 @@ captain_hollis:
       kind: info
       requires: {standing: {faction: town_watch, min: 10}}
       text: "Cutthroats in the cellars. Two crowns a head — I want names, not bodies."
+    - id: cellars
+      label: "What about the cellars?"
+      need: 3
+      kind: quest
+      starts: smuggler_cellar
+      hide: {quest: smuggler_cellar}
+      tag: order
+      requires: {flag: knows_mill}
+      text: "Somebody is running goods through the old mill cellar and not paying the toll. That means they're not paying me, which means I can't pay the men who keep the gate shut at night. Clear them out. I don't care what you do with what you find — I care that it stops."
+    - id: cellars_done
+      label: "The cellars are clear."
+      need: 1
+      kind: info
+      once: true
+      requires: {flag: cellars_cleared}
+      sets: [told_hollis_cellars]
+      text: "Good. The Guild will be unhappy, Corvin will be unhappy, and I will sleep better. That's the right order of things."
     - id: orcs
       label: "What's the trouble in the south?"
       need: 2
       kind: info
       tag: safety
       text: "Orcs in the valley beyond Tarnhold. They raid the vales for slaves and stone. The vales asked for help. I sent four men. I have forty. Work out the arithmetic yourself."
+    - id: slaves
+      label: "Can anything be done about the slaves?"
+      need: 3
+      kind: quest
+      starts: slave_road
+      hide: {quest: slave_road}
+      tag: safety
+      requires: {any: [{flag: knows_mill}, {standing: {faction: town_watch, min: 5}}]}
+      text: "The orcs work them in a quarry in the valley. I've lost men trying. You look harder to kill than my men were. Free them and there's no gold in it — the Watch is broke — but you'll have done something worth doing."
+    - id: slaves_done
+      label: "The slaves are free."
+      need: 1
+      kind: info
+      once: true
+      requires: {flag: slaves_freed}
+      sets: [told_hollis_slaves]
+      text: "I'll send a patrol to bring them in. How many made it? ... That many. Good. The Watch owes you more than I can pay. I won't forget it."
+    - id: sarnaks_quest
+      label: "What about the lake fortress?"
+      need: 3
+      kind: quest
+      starts: sarnak_scouts
+      hide: {quest: sarnak_scouts}
+      tag: safety
+      text: "Dragon-kin in the fortress on the lake, south of Tarnhold. They've been digging in and breeding. Their warden runs the place. Kill it and the rest are just lizards with spears."
+    - id: sarnaks_done
+      label: "The sarnak warden is dead."
+      need: 1
+      kind: info
+      once: true
+      requires: {flag: sarnak_warden_dead}
+      sets: [told_hollis_sarnaks]
+      text: "One less thing. The lake road will be quieter. I'll put a patrol on it before something else moves in."
     - id: arvir
       label: "A man named Arvir?"
       need: 4
       kind: info
       requires: {flag: knows_arvir}
       text: "Came through here a season ago. Good sword arm, bad company. Asked questions about the mine and the orc valley and didn't wait for answers he didn't like. If he's alive he's in one of those two places, and if he's dead it's because he deserved to be."
+    - id: cost
+      label: "Is it worth it — the Watch, all of it?"
+      need: 4
+      kind: info
+      tag: order
+      text: "I lost six men this year. Two to orcs, one to wolves, three to their own bad judgment. Their widows are inside the wall I keep standing. That's the arithmetic. I do it every night."
+    - id: orcs_nature
+      label: "What are the orcs really like?"
+      need: 4
+      kind: info
+      tag: safety
+      text: "They build walls. They dig wells. They argue over whose child gets the best cut. I've watched their camps through a glass and seen a mother teach her boy to sharpen a blade the same way my father taught me. And then at dawn they come down the hill."
 
 guildmaster_pell:
   name: Guildmaster Pell
@@ -140,6 +208,12 @@ guildmaster_pell:
       kind: info
       tag: business
       text: "After a fashion. The orcs squeeze the east vale, bandits the west, and the road between is thick with both. Goods get through. Fewer merchants do. That's why the margins are so good."
+    - id: truth
+      label: "Is there anything you won't sell?"
+      need: 5
+      kind: info
+      tag: profit
+      text: "Information. Goods change hands and everyone moves on. A secret, once sold, belongs to the buyer and there's no getting it back. I know what moves through this town — who buys, who owes, who lies about both. That knowledge is worth more kept than spent. Corvin hasn't learned that yet. It's why he'll always work for someone else."
 
 warden_ysa:
   name: Warden Ysa
@@ -171,12 +245,82 @@ warden_ysa:
       kind: info
       tag: mercy
       text: "They were here before we were. The temple was theirs when this was swamp and nothing else. Then someone dammed the rivers and drowned their nesting grounds, and they retreated to the last place they could hold. I don't blame them for the welcome they give us."
+    - id: dam
+      label: "Could the dam be broken?"
+      need: 4
+      kind: quest
+      starts: temple_waters
+      hide: {quest: temple_waters}
+      tag: mercy
+      text: "It could. The dam is east of the causeway, in the deep swamp. I don't know who built it or why — but I know what it did. The Suracayl lost their breeding grounds and went to war over the temple because it was the only high ground left. Break the dam and the water goes back where it was. Whether they forgive us for the years between is another question."
+    - id: banks_done
+      label: "The banks are restored."
+      need: 1
+      kind: info
+      once: true
+      requires: {flag: banks_restored}
+      sets: [told_ysa_banks]
+      text: "The water is finding its way back. I can see it from the wall — the mud is wet where it hasn't been wet in years. Whether the Suracayl will treat with us now ... I think they might. You've given them a reason to."
+    - id: throne_quest
+      label: "What holds the temple palace?"
+      need: 3
+      kind: quest
+      starts: palace_throne
+      hide: {quest: palace_throne}
+      tag: mercy
+      text: "A shaman called Venril. Dead — or should be. It sits the throne and raises what it kills to stand guard. The Suracayl avoid the palace now. Even they are afraid of it."
+    - id: throne_done
+      label: "Venril is dead."
+      need: 1
+      kind: info
+      once: true
+      requires: {flag: venril_dead}
+      sets: [told_ysa_venril]
+      text: "The palace is quiet? Then maybe the Suracayl will use it again. They built it for their dead — not for one of them to stay."
+    - id: wound_quest
+      label: "The sarnaks and the Suracayl — are they related?"
+      need: 4
+      kind: quest
+      starts: old_wound
+      hide: {quest: old_wound}
+      tag: mercy
+      requires: {any: [{flag: read_sarnak_glyphs}, {flag: read_palace_frieze}]}
+      text: "One people, long ago — before the temple, before the fortress on the lake. Something broke them apart. I've seen the carvings on the temple walls: a shape with no face, coiled between two columns of the same folk going different ways. The sarnaks have a stone at their fortress. The temple has a frieze. And the giants in the mine — they know something about it too. If you're asking the question, follow it."
+    - id: wound_done
+      label: "I know what the faceless thing is."
+      need: 1
+      kind: info
+      once: true
+      requires: {flag: avatar_dead}
+      sets: [told_ysa_old_wound]
+      text: "A fear old enough to split a people in two. And the dragon kept it sleeping — not out of kindness, but because frightened things are easy to rule. You've undone a very old bargain. I don't know what comes next. But the Suracayl and the sarnaks will have to find out for themselves, without that thing between them."
     - id: dead
       label: "The barrow — what's down there?"
       need: 4
       kind: info
       tag: rest
       text: "Something that should sleep and doesn't. The Order has watched it for three generations. We don't go in. We don't let things out. That is the whole of our job."
+    - id: lantern
+      label: "What does the lantern mean?"
+      need: 3
+      kind: info
+      tag: mercy
+      text: "I keep it lit. If it goes out, I light it again. The first warden did the same and so will the next. Beyond that I haven't got an explanation for you, and the ones who did are in the ground."
+    - id: forgive
+      label: "Can we undo what was done to the Suracayl?"
+      need: 5
+      kind: info
+      tag: mercy
+      requires: {flag: banks_restored}
+      text: "I brought them salt and clean linen last spring. Left it at the edge of the water where their scouts would find it. When I came back the salt was taken and the linen was folded on a stone. That's not peace. But someone folded it."
+    - id: cord
+      label: "A gnome sent us with a knotted cord."
+      need: 1
+      kind: info
+      once: true
+      requires: {quest: cartographers_legacy}
+      sets: [cord_delivered]
+      text: "Eleven years. Each knot is a measurement — distance, depth, bearing. I'll keep it where the lamp is. When they come up, it should be the first thing they see."
 
 brannock:
   name: Brannock
@@ -213,6 +357,12 @@ brannock:
       tag: craft
       sets: [smith_discount]
       text: "A tenth off, and you don't haggle after. Bring me honest coin for honest work and we'll get on fine."
+    - id: worth
+      label: "Does good steel outlast the hand that makes it?"
+      need: 5
+      kind: info
+      tag: craft
+      text: "Every time. I've buried three apprentices and the swords they made are still on the wall. A blade doesn't get tired. It doesn't make a bad call in the rain. Draw your own conclusions."
 
 wren_urchin:
   name: Wren
@@ -243,6 +393,12 @@ wren_urchin:
       kind: info
       tag: safety
       text: "He smiles a lot and nobody smiles back. He knows the people who move things through the cellars. I run errands for him sometimes. I don't like him, but he pays, and liking isn't eating."
+    - id: grown
+      label: "What will you do when you're older?"
+      need: 3
+      kind: info
+      tag: safety
+      text: "Leave. Everyone says that. Nobody does. The ones who try come back or they don't, and the ones who stay pretend they chose it. I'll be different. I'm already different. Ask me again in five years."
 
 old_dagmar:
   name: Old Dagmar
@@ -272,11 +428,33 @@ old_dagmar:
       once: true
       gives: {good: charm_wolf}
       text: "Wore this a dozen winters. Keeps the cold out of your thinking. Take it. I'm past the age where thinking helps."
+    - id: wolves_quest
+      label: "You mentioned wolves?"
+      need: 2
+      kind: quest
+      starts: wolf_pack
+      hide: {quest: wolf_pack}
+      tag: old days
+      text: "An alpha and its pack, denned up south of the road. Bold enough to take a deer in daylight. I'd go myself but the leg won't carry me past the bridge. Kill the big one and the rest scatter."
+    - id: wolves_done
+      label: "The alpha is dead."
+      need: 1
+      kind: info
+      once: true
+      requires: {flag: alpha_wolf_dead}
+      sets: [told_dagmar_wolves]
+      text: "Good. I'll drink to that, and so should you. The pups will learn to hunt further out. That's all you can do — push the line back and hope it holds."
     - id: mine
       label: "What's in the mine?"
       need: 3
       kind: info
       text: "Goblins, deeper than goblins should be. The old timers said there were gnomes down there once, good folk, but that was before the goblins pushed them out — or in, depending on how you see it. And below all of that, something that smokes."
+    - id: regrets
+      label: "Any regrets?"
+      need: 4
+      kind: info
+      tag: old days
+      text: "I had a boy once. Put him in the Watch because I thought it would straighten him out. It did. Then it killed him, same way it kills all the men it makes."
 
 sly_corvin:
   name: Corvin
@@ -308,6 +486,12 @@ sly_corvin:
       tag: discretion
       sets: [knows_arvir]
       text: "Passed through. Asked about the mine, the orcs, and what was worth taking from both. Smart enough to be dangerous, and not smart enough to know when to stop. Last I heard he went south."
+    - id: fair
+      label: "Don't you care what happens to this town?"
+      need: 4
+      kind: info
+      tag: coin
+      text: "I care about the people in it. Not the wall and not the tax. Hollis keeps the gate and skims the toll. I skip the gate and skip the toll. His people eat. My people eat. The only difference is the paperwork."
 
 # ---- The fire-goblin mine: the gnomes of the cut-off fort ----
 gnome_sergeant:
@@ -395,6 +579,11 @@ gnome_warden:
       need: 3
       kind: info
       text: "The miners? No. Half-starved, worked to nothing, terrified of their king and terrified of the dark without him. It is the king and his champions who hold the mine. The miners just survive in it. I have thought about that more than is comfortable."
+    - id: years
+      label: "Eleven years. How do you bear it?"
+      need: 4
+      kind: info
+      text: "You stop counting after the first winter. Not because you forget — because counting makes the walls closer. We tell the children about the sun. They listen the way you'd listen to a story about a country you'll never visit. One of them drew it on the wall last year. She drew it square."
     - id: kingdead
       label: "The goblin king is dead."
       need: 1
@@ -403,15 +592,28 @@ gnome_warden:
       requires: {flag: ember_king_dead}
       sets: [told_odda_king]
       text: "Then it's done. Listen — you can hear them already, fighting over the chair. We'll go up the stair when they're through. You'll always have a door here."
+    - id: fennick
+      label: "Anyone else down here?"
+      need: 2
+      kind: quest
+      starts: lost_miner
+      hide: {quest: lost_miner}
+      tag: goblins
+      text: "Fennick. A miner. The goblins took him two years back and we said the words for him. But Brask says there's a jail in the lower caves, and sometimes you hear voices. If he's alive, bring him home. If he's dead — well. We've said the words already."
     - id: prisoner
       label: "Fennick is alive. He's free."
       need: 2
-      kind: favor
+      kind: info
       once: true
       requires: {flag: freed_fennick}
-      gives: {gold: 60, xp: 80}
-      standing: {deep_gnomes: 15}
+      sets: [told_odda_fennick]
       text: "Fennick. We said the words for him two winters ago. Take this — it's what we have. And our thanks, which is worth more down here than gold."
+    - id: goblin_child
+      label: "What about the goblin miners?"
+      need: 3
+      kind: info
+      requires: {flag: told_odda_king}
+      text: "A miner came to the wall with a child the day the king fell. Said they had nothing to do with any of it — they just dug. I let them through. I don't know if that was right. I know I'd have done it again. Eleven years hating what was on the other side of that wall, and it turns out some of it was just people. That is harder than the siege was."
 gnome_surveyor:
   name: Surveyor Wila
   title: The fort's surveyor
@@ -436,6 +638,26 @@ gnome_surveyor:
       tag: mining
       sets: [knows_citadel]
       text: "Below their jail the rock turns to black glass, and below that the giants built. A castle of basalt around a cavern where something breathes. The giants keep the gate and the giants keep the dragon. I have measured the heat on that stair. I have not gone further. There are things I would rather know than see."
+    - id: measure
+      label: "Why keep measuring?"
+      need: 3
+      kind: info
+      tag: mining
+      text: "Because the rock doesn't know we're losing. A measurement is true whether we survive or not. Someone will find this cord after us and know the shape of the place, even if they never learn who tied the knots."
+    - id: clocks_soul
+      label: "Could one of the bronze ones think?"
+      need: 5
+      kind: info
+      tag: mining
+      text: "One of them has started leaving its patrol to stack firewood by the bunks. I didn't tell it to do that. I've been watching it for a month and I still don't know what I'm looking at."
+    - id: cord
+      label: "Can we carry anything to the surface?"
+      need: 4
+      kind: quest
+      starts: cartographers_legacy
+      hide: {quest: cartographers_legacy}
+      tag: surface
+      text: "This cord. Eleven years, knot by knot — every tunnel, every seam, every room the goblins dug while we listened through the wall. If we don't come up, somebody should have it. The Warden of the Lantern in Stonebridge will know what to do with it."
 gnome_prisoner:
   name: Fennick
   title: A gnome prisoner
@@ -454,6 +676,11 @@ gnome_prisoner:
   topics:
     - {id: free, label: "We'll get you out.", need: 2, kind: favor, once: true, sets: [freed_fennick], standing: {deep_gnomes: 5}, text: "I know the way in the dark. Tell the Warden it was Fennick that didn't talk."}
     - {id: deep, label: "Where does the stair go?", need: 3, kind: info, text: "Down, to where the drake's mother sleeps. The goblins feed her their prisoners. They were saving me for it."}
+    - id: dark
+      label: "How did you hold on?"
+      need: 3
+      kind: info
+      text: "I counted. Meals, footsteps, heartbeats when there was nothing else. A number is a number whether anyone hears you say it. The goblins asked me things and I didn't answer — not because I'm brave. Because I'd started counting, and stopping felt like losing."
 
 # ---- Arvir: a Nietzschean anti-hero encountered in the field ----
 arvir_npc:
@@ -494,8 +721,10 @@ arvir_npc:
     - id: party
       label: "Come with us."
       need: 5
-      kind: info
-      text: "For now. Our roads go the same way. When they don't, I'll go mine and you'll go yours, and neither of us should pretend that's a betrayal. It's just honesty."
+      kind: quest
+      starts: arvir_bargain
+      hide: {quest: arvir_bargain}
+      text: "For now. Our roads go the same way. When they don't, I'll go mine and you'll go yours, and neither of us should pretend that's a betrayal. It's just honesty. Get me to the dragon and I'll tell you what I know about the orc valley. That's the bargain."
     - id: orcs
       label: "What did you learn from the orcs?"
       need: 3
@@ -508,3 +737,15 @@ arvir_npc:
       kind: info
       tag: the mine
       text: "The dragon. Not to kill — that would be stupid and wasteful. To understand. It has ruled for centuries by making itself necessary. The goblins serve it, the giants serve it, the kobolds worship it, and all of them think they have no choice. That is power worth studying."
+    - id: weakness
+      label: "What about the ones who can't climb?"
+      need: 3
+      kind: info
+      tag: strength
+      text: "They find someone who can and hold on. That's what the gnomes did. Odda climbed, and the rest held on, and here they are. Nobody pitied them out of that mine."
+    - id: afraid
+      label: "Are you afraid of the dragon?"
+      need: 4
+      kind: info
+      tag: the mine
+      text: "No. I've seen what it does. The goblins bring it food and call it a god. The giants guard its door and call it a king. The kobolds tend its scales and call it the sun. None of them have ever asked what it calls itself. I'd like to."
