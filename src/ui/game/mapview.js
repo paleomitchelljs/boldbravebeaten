@@ -698,7 +698,8 @@
       const x = ox + (v.x + 0.5) * size, y = oy + (v.y + 1) * size - S * 1.5;
       const idleFrame = Math.floor(tick / 2) + (a.phase || 0);
       const moving = v.run || (a.art && Sprites.floats(a.art));
-      const anim = moving ? 'run' : 'idle';
+      // In a fight (`a.fight`) a figure whose art has a `leap` clip hops when it moves; exploring, it walks.
+      const anim = moving ? (v.run && a.fight && a.art && Sprites.hasClip(a.art, 'leap') ? 'leap' : 'run') : 'idle';
       const frame = v.run ? tick : moving ? tick + (a.phase || 0) : idleFrame;
       if (a.ring) {
         ctx.strokeStyle = a.ring; ctx.lineWidth = Math.max(2, S * 0.8);

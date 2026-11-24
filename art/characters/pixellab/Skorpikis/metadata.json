@@ -194,10 +194,148 @@
           "west": "Whole_body_pale_pear/rotations/west.png",
           "south-west": "Whole_body_pale_pear/rotations/south-west.png"
         },
-        "animations": {}
+        "animations": {
+          "Death": {
+            "south": [
+              "Whole_body_pale_pear/animations/Death/south/frame_000.png",
+              "Whole_body_pale_pear/animations/Death/south/frame_001.png",
+              "Whole_body_pale_pear/animations/Death/south/frame_002.png",
+              "Whole_body_pale_pear/animations/Death/south/frame_003.png",
+              "Whole_body_pale_pear/animations/Death/south/frame_004.png",
+              "Whole_body_pale_pear/animations/Death/south/frame_005.png",
+              "Whole_body_pale_pear/animations/Death/south/frame_006.png"
+            ]
+          },
+          "Strike": {
+            "south": [
+              "Whole_body_pale_pear/animations/Strike/south/frame_000.png",
+              "Whole_body_pale_pear/animations/Strike/south/frame_001.png",
+              "Whole_body_pale_pear/animations/Strike/south/frame_002.png",
+              "Whole_body_pale_pear/animations/Strike/south/frame_003.png",
+              "Whole_body_pale_pear/animations/Strike/south/frame_004.png",
+              "Whole_body_pale_pear/animations/Strike/south/frame_005.png",
+              "Whole_body_pale_pear/animations/Strike/south/frame_006.png"
+            ],
+            "north": [
+              "Whole_body_pale_pear/animations/Strike/north/frame_000.png",
+              "Whole_body_pale_pear/animations/Strike/north/frame_001.png",
+              "Whole_body_pale_pear/animations/Strike/north/frame_002.png",
+              "Whole_body_pale_pear/animations/Strike/north/frame_003.png",
+              "Whole_body_pale_pear/animations/Strike/north/frame_004.png",
+              "Whole_body_pale_pear/animations/Strike/north/frame_005.png",
+              "Whole_body_pale_pear/animations/Strike/north/frame_006.png"
+            ],
+            "east": [
+              "Whole_body_pale_pear/animations/Strike/east/frame_000.png",
+              "Whole_body_pale_pear/animations/Strike/east/frame_001.png",
+              "Whole_body_pale_pear/animations/Strike/east/frame_002.png",
+              "Whole_body_pale_pear/animations/Strike/east/frame_003.png",
+              "Whole_body_pale_pear/animations/Strike/east/frame_004.png",
+              "Whole_body_pale_pear/animations/Strike/east/frame_005.png",
+              "Whole_body_pale_pear/animations/Strike/east/frame_006.png"
+            ],
+            "south-east": [
+              "Whole_body_pale_pear/animations/Strike/south-east/frame_000.png",
+              "Whole_body_pale_pear/animations/Strike/south-east/frame_001.png",
+              "Whole_body_pale_pear/animations/Strike/south-east/frame_002.png",
+              "Whole_body_pale_pear/animations/Strike/south-east/frame_003.png",
+              "Whole_body_pale_pear/animations/Strike/south-east/frame_004.png",
+              "Whole_body_pale_pear/animations/Strike/south-east/frame_005.png",
+              "Whole_body_pale_pear/animations/Strike/south-east/frame_006.png"
+            ],
+            "north-east": [
+              "Whole_body_pale_pear/animations/Strike/north-east/frame_000.png",
+              "Whole_body_pale_pear/animations/Strike/north-east/frame_001.png",
+              "Whole_body_pale_pear/animations/Strike/north-east/frame_002.png",
+              "Whole_body_pale_pear/animations/Strike/north-east/frame_003.png",
+              "Whole_body_pale_pear/animations/Strike/north-east/frame_004.png",
+              "Whole_body_pale_pear/animations/Strike/north-east/frame_005.png",
+              "Whole_body_pale_pear/animations/Strike/north-east/frame_006.png"
+            ]
+          },
+          "Idle": {
+            "south-east": [
+              "Whole_body_pale_pear/animations/Idle/south-east/frame_000.png",
+              "Whole_body_pale_pear/animations/Idle/south-east/frame_001.png",
+              "Whole_body_pale_pear/animations/Idle/south-east/frame_002.png",
+              "Whole_body_pale_pear/animations/Idle/south-east/frame_003.png",
+              "Whole_body_pale_pear/animations/Idle/south-east/frame_004.png"
+            ],
+            "south": [
+              "Whole_body_pale_pear/animations/Idle/south/frame_000.png",
+              "Whole_body_pale_pear/animations/Idle/south/frame_001.png",
+              "Whole_body_pale_pear/animations/Idle/south/frame_002.png",
+              "Whole_body_pale_pear/animations/Idle/south/frame_003.png",
+              "Whole_body_pale_pear/animations/Idle/south/frame_004.png"
+            ],
+            "north": [
+              "Whole_body_pale_pear/animations/Idle/north/frame_000.png",
+              "Whole_body_pale_pear/animations/Idle/north/frame_001.png",
+              "Whole_body_pale_pear/animations/Idle/north/frame_002.png",
+              "Whole_body_pale_pear/animations/Idle/north/frame_003.png",
+              "Whole_body_pale_pear/animations/Idle/north/frame_004.png"
+            ],
+            "north-east": [
+              "Whole_body_pale_pear/animations/Idle/north-east/frame_000.png",
+              "Whole_body_pale_pear/animations/Idle/north-east/frame_001.png",
+              "Whole_body_pale_pear/animations/Idle/north-east/frame_002.png",
+              "Whole_body_pale_pear/animations/Idle/north-east/frame_003.png",
+              "Whole_body_pale_pear/animations/Idle/north-east/frame_004.png"
+            ],
+            "east": [
+              "Whole_body_pale_pear/animations/Idle/east/frame_000.png",
+              "Whole_body_pale_pear/animations/Idle/east/frame_001.png",
+              "Whole_body_pale_pear/animations/Idle/east/frame_002.png",
+              "Whole_body_pale_pear/animations/Idle/east/frame_003.png",
+              "Whole_body_pale_pear/animations/Idle/east/frame_004.png"
+            ]
+          },
+          "Walk": {
+            "east": [
+              "Whole_body_pale_pear/animations/Walk/east/frame_000.png",
+              "Whole_body_pale_pear/animations/Walk/east/frame_001.png",
+              "Whole_body_pale_pear/animations/Walk/east/frame_002.png",
+              "Whole_body_pale_pear/animations/Walk/east/frame_003.png",
+              "Whole_body_pale_pear/animations/Walk/east/frame_004.png",
+              "Whole_body_pale_pear/animations/Walk/east/frame_005.png"
+            ],
+            "south": [
+              "Whole_body_pale_pear/animations/Walk/south/frame_000.png",
+              "Whole_body_pale_pear/animations/Walk/south/frame_001.png",
+              "Whole_body_pale_pear/animations/Walk/south/frame_002.png",
+              "Whole_body_pale_pear/animations/Walk/south/frame_003.png",
+              "Whole_body_pale_pear/animations/Walk/south/frame_004.png",
+              "Whole_body_pale_pear/animations/Walk/south/frame_005.png"
+            ],
+            "north": [
+              "Whole_body_pale_pear/animations/Walk/north/frame_000.png",
+              "Whole_body_pale_pear/animations/Walk/north/frame_001.png",
+              "Whole_body_pale_pear/animations/Walk/north/frame_002.png",
+              "Whole_body_pale_pear/animations/Walk/north/frame_003.png",
+              "Whole_body_pale_pear/animations/Walk/north/frame_004.png",
+              "Whole_body_pale_pear/animations/Walk/north/frame_005.png"
+            ],
+            "south-east": [
+              "Whole_body_pale_pear/animations/Walk/south-east/frame_000.png",
+              "Whole_body_pale_pear/animations/Walk/south-east/frame_001.png",
+              "Whole_body_pale_pear/animations/Walk/south-east/frame_002.png",
+              "Whole_body_pale_pear/animations/Walk/south-east/frame_003.png",
+              "Whole_body_pale_pear/animations/Walk/south-east/frame_004.png",
+              "Whole_body_pale_pear/animations/Walk/south-east/frame_005.png"
+            ],
+            "north-east": [
+              "Whole_body_pale_pear/animations/Walk/north-east/frame_000.png",
+              "Whole_body_pale_pear/animations/Walk/north-east/frame_001.png",
+              "Whole_body_pale_pear/animations/Walk/north-east/frame_002.png",
+              "Whole_body_pale_pear/animations/Walk/north-east/frame_003.png",
+              "Whole_body_pale_pear/animations/Walk/north-east/frame_004.png",
+              "Whole_body_pale_pear/animations/Walk/north-east/frame_005.png"
+            ]
+          }
+        }
       }
     }
   ],
   "export_version": "3.1",
-  "export_date": "2026-11-24T17:47:16.572785"
+  "export_date": "2026-11-24T18:43:39.832204"
 }

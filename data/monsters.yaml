@@ -448,18 +448,19 @@ goblinBand:
   group: [goblin, goblin, goblinArcher]
 bogfolk:
   name: Bogfolk
-  blurb: "Frog-folk with spear and shield: they leap into the fight and slip out of any grip."
+  blurb: "Frog-folk in mail shirts: they hop into the fight bare-fisted and slip out of any grip."
   faction: wilds
   xp: 20
   glyph: "🐸"
-  sprite: {art: froglok, kind: orc, tint: "#7a9aa0"}
+  # Fitted to its figure (froglok-plain: unarmed, a mail shirt, bare arms and legs; the user, 2026-11-24: change the
+  # placeholder enemy, not the sprite). It had a spear, a shield and slick skin for armour.
+  sprite: {art: froglok-plain, kind: orc, tint: "#7a9aa0"}
   loot: humanoid_purse
   attrs: {STR: 5, CON: 5, DEX: 6, SPD: 6, INT: 4, WIS: 5, CHA: 4}
-  skills: {melee: 2, block: 2, stealth: 2, nature: 2}
+  skills: {melee: 2, evasion: 2, athletics: 2, stealth: 2, nature: 2}
   natural: []
-  armor: bogSkin
-  weapons: [spear]
-  shield: [round, wood]
+  armorItem: {type: mail, coverage: partial}
+  weapons: []
   traits: {slippery: 2, moveMult: 1.5}
   feats: {}
   keepUnarmed: true

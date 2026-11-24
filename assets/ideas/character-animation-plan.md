@@ -484,3 +484,16 @@ widow's E `Strike` frame 6 and the Tylo's south view. **Before any re-pull, copy
 
 Left for the user: what was listed above, plus Lizardfolk_Alt2 missing from the account (deleted, or made under another
 login?).
+
+The user's answers: "Krump's unarmed state is important to animate as a generic froglok, Tevax can wait"; "Yes to
+animating both recolors"; the Nagafen skeleton waits (more figures are planned, and the world tiles come first). The
+long-legged widow: asked whether it is wanted at all (nothing uses it).
+
+| Figure | What | Notes | Gens |
+|---|---|---|---|
+| Froglok (Krump's `No_sword` state; art `froglok-plain`) | leaping punch ×5, walk ×8 (template walking-6), death (south: falls on its belly), idle ×5 | the N punch drew a sparkle by the fist in frame 5: removed in the repo (a re-pull brings it back) | 5 + 8 + 1 + 5 |
+| Pale Skorpikis (`skorpikis-pale`) | pincer snap ×5, scuttle ×5, death (south, toward its south view on its side), idle ×5 | its colours do not map one-to-one onto the base's (13% agree), so the base clips could not be recoloured for free | 5 + 5 + 1 + 5 |
+| Dark Clannfear (`clannfear-dark`) | jaw snap ×5, walk ×8 (v3), death (south), idle ×5 | good | 5 + 8 + 1 + 5 |
+| | | balance 8373 (1357 spent this cycle) | |
+| Froglok | waddle ×8 (v3, `Waddle`: now its walk), two-footed hop ×8 (template `two-footed-jump`, `Leap`: played for moves in a fight) | the user: "Frogloks can have an awkward walk-waddle and a two-legged leaping movement". The template drew blades in its hands facing SE, NE, N, NW; one re-roll fixed SE only. Frames 3-5 of N and NE are its frame 0 lifted 3, 7 and 5 px, made in the repo (a re-pull brings the blades back); NW plays NE mirrored. A v3 hop (south) barely left the ground: deleted | 8 + 8 + 4 + 1 |
+| | | balance 8352 (1378 spent this cycle) | |

@@ -15,7 +15,7 @@ for (const [id, a] of Object.entries(B.Content.world.art || {})) {
   const missing = [];
   const want = (f) => { if (!fs.existsSync(path.join(ROOT, f))) missing.push(f); };
   for (const d of a.rotations || DIRS) want(`${a.dir}/rotations/${d}.png`);
-  for (const which of ['walk', 'idle', 'attack', 'thrust', 'death']) {
+  for (const which of ['walk', 'idle', 'attack', 'thrust', 'death', 'leap']) {
     const v = typeof a[which] === 'string' ? { anim: a[which] } : a[which];
     const c = which === 'walk' ? Object.assign({ dir: a.dir, anim: 'Walking', frames: a.walkFrames || 4, dirs: a.walks || ['east', 'west'] }, v)
       : v ? Object.assign({ dir: a.dir, frames: 4, dirs: DIRS }, v) : null;

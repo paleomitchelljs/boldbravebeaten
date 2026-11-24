@@ -267,14 +267,21 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
   remaining furniture, the slaves and the slave-cabin quest, people in the desert, the inns and Tarnhold.
 - [ ] Characters: `assets/ideas/character-animation-plan.md` is the ledger (fixes, strikes, deaths, idles; never
   `create_character`). Stand-ins still in use: the efreet lord, the avatar of fear, the legionnaire, slaver, warlord
-  and prophet. The user's newer figures are not wired to monsters. Floating figures have no bob.
+  and prophet. Most of the user's newer figures are not wired to monsters: wire them, rewriting the placeholder
+  monster to fit the figure (the user, 2026-11-24: enemies are cheaper to change than sprites). Floating figures have no bob.
   Cycle of 2026-11-24 (1303 spent of the user's 2000; paused to reassess): 34 new figures plus the snake person
   animated and in `art.yaml`; idles for 50 entries (heroes ×8, monsters ×5); deaths for the guar, Skorpikis, both
   snakes and the spider demon (each laid on its side by an end frame); the Tylo's south views fixed (it is a
-  quadruped). Wired to monsters: only the cave troll (`troll-warrior`) and troll chieftain (`troll-knight`). Open
-  questions at the end of the plan's 2026-11-24 section (Krump's and Tevax's unarmed states, recolour states, the
-  long-legged widow, the Nagafen skeleton, Lizardfolk_Alt2 missing from the account). A re-pull overwrites hand-patched
+  quadruped). Then (1378 spent): a generic froglok from Krump's unarmed state (`froglok-plain`: waddles exploring,
+  hops in a fight through the new art.yaml `leap` clip; now the bogfolk, refitted bare-fisted in a mail shirt: tier 3
+  → 1, M 1.30 → 0.25), and the pale
+  Skorpikis and dark Clannfear (`skorpikis-pale`, `clannfear-dark`). Wired to monsters: only the cave troll
+  (`troll-warrior`), troll chieftain (`troll-knight`) and bogfolk (`froglok-plain`). Waiting: Tevax's unarmed state and the Nagafen skeleton (the
+  user: later); the long-legged widow (wanted at all?); Lizardfolk_Alt2 missing from the account. A re-pull overwrites hand-patched
   frames in five folders (listed there): copy first. `tools/validate.js` checks every clip file exists.
+- [ ] Gear trial (`assets/ideas/gear_trial.md`): a shortsword layer from PixelLab's Equipment creator (website, the
+  user) on the bare froglok; Claude checks the seat, draws it in fights and decides go or no go for heroes. Waiting
+  on the user's step 1a (8 standing views + the south punch).
 - [ ] Wanted, no art: the vampire; redo Beren, the Yuan-Ti, skeletons, rats; raptor, red drake, fae drake.
 
 ## W1 open world (2026-11-24)

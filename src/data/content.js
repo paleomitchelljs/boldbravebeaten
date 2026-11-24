@@ -243,7 +243,7 @@
       const size = (v) => v > 0 || (Array.isArray(v) && v.length === 2 && v.every((x) => x > 0));
       if (!a.dir || !size(a.size)) err(`art.${id}: a pixellab entry needs dir and size (a number, or [width, height])`);
       for (const f of ['walks', 'rotations']) for (const d of a[f] || []) if (!COMPASS.includes(d)) err(`art.${id}.${f}: "${d}" is not a compass direction`);
-      for (const f of ['walk', 'idle', 'attack', 'thrust']) {
+      for (const f of ['walk', 'idle', 'attack', 'thrust', 'leap']) {
         const c = a[f];
         if (c == null || typeof c === 'string') continue;
         if (typeof c !== 'object' || (f !== 'walk' && !c.anim)) { err(`art.${id}.${f}: want an animation name, or {anim, dir, frames, dirs}`); continue; }

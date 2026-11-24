@@ -3,6 +3,8 @@
 Status: **idea, not started** (first version, 2026-11-20). A guide, not a commitment. Nothing here has been tested;
 the PixelLab behaviour it relies on is unverified.
 
+Next step (2026-11-24): `gear_trial.md`, one weapon layer from PixelLab's Equipment creator on the bare froglok.
+
 ## The problem
 
 Today a PixelLab figure is baked: `Sprites.drawArt` (`src/ui/game/sprites.js`) draws one picture per frame, gear

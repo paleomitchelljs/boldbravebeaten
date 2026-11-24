@@ -218,10 +218,172 @@
           "west": "Dark_green_with_ligh/rotations/west.png",
           "south-west": "Dark_green_with_ligh/rotations/south-west.png"
         },
-        "animations": {}
+        "animations": {
+          "Strike": {
+            "south-east": [
+              "Dark_green_with_ligh/animations/Strike/south-east/frame_000.png",
+              "Dark_green_with_ligh/animations/Strike/south-east/frame_001.png",
+              "Dark_green_with_ligh/animations/Strike/south-east/frame_002.png",
+              "Dark_green_with_ligh/animations/Strike/south-east/frame_003.png",
+              "Dark_green_with_ligh/animations/Strike/south-east/frame_004.png",
+              "Dark_green_with_ligh/animations/Strike/south-east/frame_005.png",
+              "Dark_green_with_ligh/animations/Strike/south-east/frame_006.png"
+            ],
+            "east": [
+              "Dark_green_with_ligh/animations/Strike/east/frame_000.png",
+              "Dark_green_with_ligh/animations/Strike/east/frame_001.png",
+              "Dark_green_with_ligh/animations/Strike/east/frame_002.png",
+              "Dark_green_with_ligh/animations/Strike/east/frame_003.png",
+              "Dark_green_with_ligh/animations/Strike/east/frame_004.png",
+              "Dark_green_with_ligh/animations/Strike/east/frame_005.png",
+              "Dark_green_with_ligh/animations/Strike/east/frame_006.png"
+            ],
+            "south": [
+              "Dark_green_with_ligh/animations/Strike/south/frame_000.png",
+              "Dark_green_with_ligh/animations/Strike/south/frame_001.png",
+              "Dark_green_with_ligh/animations/Strike/south/frame_002.png",
+              "Dark_green_with_ligh/animations/Strike/south/frame_003.png",
+              "Dark_green_with_ligh/animations/Strike/south/frame_004.png",
+              "Dark_green_with_ligh/animations/Strike/south/frame_005.png",
+              "Dark_green_with_ligh/animations/Strike/south/frame_006.png"
+            ],
+            "north-east": [
+              "Dark_green_with_ligh/animations/Strike/north-east/frame_000.png",
+              "Dark_green_with_ligh/animations/Strike/north-east/frame_001.png",
+              "Dark_green_with_ligh/animations/Strike/north-east/frame_002.png",
+              "Dark_green_with_ligh/animations/Strike/north-east/frame_003.png",
+              "Dark_green_with_ligh/animations/Strike/north-east/frame_004.png",
+              "Dark_green_with_ligh/animations/Strike/north-east/frame_005.png",
+              "Dark_green_with_ligh/animations/Strike/north-east/frame_006.png"
+            ],
+            "north": [
+              "Dark_green_with_ligh/animations/Strike/north/frame_000.png",
+              "Dark_green_with_ligh/animations/Strike/north/frame_001.png",
+              "Dark_green_with_ligh/animations/Strike/north/frame_002.png",
+              "Dark_green_with_ligh/animations/Strike/north/frame_003.png",
+              "Dark_green_with_ligh/animations/Strike/north/frame_004.png",
+              "Dark_green_with_ligh/animations/Strike/north/frame_005.png",
+              "Dark_green_with_ligh/animations/Strike/north/frame_006.png"
+            ]
+          },
+          "Walk": {
+            "south": [
+              "Dark_green_with_ligh/animations/Walk/south/frame_000.png",
+              "Dark_green_with_ligh/animations/Walk/south/frame_001.png",
+              "Dark_green_with_ligh/animations/Walk/south/frame_002.png",
+              "Dark_green_with_ligh/animations/Walk/south/frame_003.png",
+              "Dark_green_with_ligh/animations/Walk/south/frame_004.png",
+              "Dark_green_with_ligh/animations/Walk/south/frame_005.png"
+            ],
+            "south-east": [
+              "Dark_green_with_ligh/animations/Walk/south-east/frame_000.png",
+              "Dark_green_with_ligh/animations/Walk/south-east/frame_001.png",
+              "Dark_green_with_ligh/animations/Walk/south-east/frame_002.png",
+              "Dark_green_with_ligh/animations/Walk/south-east/frame_003.png",
+              "Dark_green_with_ligh/animations/Walk/south-east/frame_004.png",
+              "Dark_green_with_ligh/animations/Walk/south-east/frame_005.png"
+            ],
+            "east": [
+              "Dark_green_with_ligh/animations/Walk/east/frame_000.png",
+              "Dark_green_with_ligh/animations/Walk/east/frame_001.png",
+              "Dark_green_with_ligh/animations/Walk/east/frame_002.png",
+              "Dark_green_with_ligh/animations/Walk/east/frame_003.png",
+              "Dark_green_with_ligh/animations/Walk/east/frame_004.png",
+              "Dark_green_with_ligh/animations/Walk/east/frame_005.png"
+            ],
+            "north-west": [
+              "Dark_green_with_ligh/animations/Walk/north-west/frame_000.png",
+              "Dark_green_with_ligh/animations/Walk/north-west/frame_001.png",
+              "Dark_green_with_ligh/animations/Walk/north-west/frame_002.png",
+              "Dark_green_with_ligh/animations/Walk/north-west/frame_003.png",
+              "Dark_green_with_ligh/animations/Walk/north-west/frame_004.png",
+              "Dark_green_with_ligh/animations/Walk/north-west/frame_005.png"
+            ],
+            "north-east": [
+              "Dark_green_with_ligh/animations/Walk/north-east/frame_000.png",
+              "Dark_green_with_ligh/animations/Walk/north-east/frame_001.png",
+              "Dark_green_with_ligh/animations/Walk/north-east/frame_002.png",
+              "Dark_green_with_ligh/animations/Walk/north-east/frame_003.png",
+              "Dark_green_with_ligh/animations/Walk/north-east/frame_004.png",
+              "Dark_green_with_ligh/animations/Walk/north-east/frame_005.png"
+            ],
+            "north": [
+              "Dark_green_with_ligh/animations/Walk/north/frame_000.png",
+              "Dark_green_with_ligh/animations/Walk/north/frame_001.png",
+              "Dark_green_with_ligh/animations/Walk/north/frame_002.png",
+              "Dark_green_with_ligh/animations/Walk/north/frame_003.png",
+              "Dark_green_with_ligh/animations/Walk/north/frame_004.png",
+              "Dark_green_with_ligh/animations/Walk/north/frame_005.png"
+            ],
+            "south-west": [
+              "Dark_green_with_ligh/animations/Walk/south-west/frame_000.png",
+              "Dark_green_with_ligh/animations/Walk/south-west/frame_001.png",
+              "Dark_green_with_ligh/animations/Walk/south-west/frame_002.png",
+              "Dark_green_with_ligh/animations/Walk/south-west/frame_003.png",
+              "Dark_green_with_ligh/animations/Walk/south-west/frame_004.png",
+              "Dark_green_with_ligh/animations/Walk/south-west/frame_005.png"
+            ],
+            "west": [
+              "Dark_green_with_ligh/animations/Walk/west/frame_000.png",
+              "Dark_green_with_ligh/animations/Walk/west/frame_001.png",
+              "Dark_green_with_ligh/animations/Walk/west/frame_002.png",
+              "Dark_green_with_ligh/animations/Walk/west/frame_003.png",
+              "Dark_green_with_ligh/animations/Walk/west/frame_004.png",
+              "Dark_green_with_ligh/animations/Walk/west/frame_005.png"
+            ]
+          },
+          "Death": {
+            "south": [
+              "Dark_green_with_ligh/animations/Death/south/frame_000.png",
+              "Dark_green_with_ligh/animations/Death/south/frame_001.png",
+              "Dark_green_with_ligh/animations/Death/south/frame_002.png",
+              "Dark_green_with_ligh/animations/Death/south/frame_003.png",
+              "Dark_green_with_ligh/animations/Death/south/frame_004.png",
+              "Dark_green_with_ligh/animations/Death/south/frame_005.png",
+              "Dark_green_with_ligh/animations/Death/south/frame_006.png"
+            ]
+          },
+          "Idle": {
+            "east": [
+              "Dark_green_with_ligh/animations/Idle/east/frame_000.png",
+              "Dark_green_with_ligh/animations/Idle/east/frame_001.png",
+              "Dark_green_with_ligh/animations/Idle/east/frame_002.png",
+              "Dark_green_with_ligh/animations/Idle/east/frame_003.png",
+              "Dark_green_with_ligh/animations/Idle/east/frame_004.png"
+            ],
+            "north-east": [
+              "Dark_green_with_ligh/animations/Idle/north-east/frame_000.png",
+              "Dark_green_with_ligh/animations/Idle/north-east/frame_001.png",
+              "Dark_green_with_ligh/animations/Idle/north-east/frame_002.png",
+              "Dark_green_with_ligh/animations/Idle/north-east/frame_003.png",
+              "Dark_green_with_ligh/animations/Idle/north-east/frame_004.png"
+            ],
+            "north": [
+              "Dark_green_with_ligh/animations/Idle/north/frame_000.png",
+              "Dark_green_with_ligh/animations/Idle/north/frame_001.png",
+              "Dark_green_with_ligh/animations/Idle/north/frame_002.png",
+              "Dark_green_with_ligh/animations/Idle/north/frame_003.png",
+              "Dark_green_with_ligh/animations/Idle/north/frame_004.png"
+            ],
+            "south": [
+              "Dark_green_with_ligh/animations/Idle/south/frame_000.png",
+              "Dark_green_with_ligh/animations/Idle/south/frame_001.png",
+              "Dark_green_with_ligh/animations/Idle/south/frame_002.png",
+              "Dark_green_with_ligh/animations/Idle/south/frame_003.png",
+              "Dark_green_with_ligh/animations/Idle/south/frame_004.png"
+            ],
+            "south-east": [
+              "Dark_green_with_ligh/animations/Idle/south-east/frame_000.png",
+              "Dark_green_with_ligh/animations/Idle/south-east/frame_001.png",
+              "Dark_green_with_ligh/animations/Idle/south-east/frame_002.png",
+              "Dark_green_with_ligh/animations/Idle/south-east/frame_003.png",
+              "Dark_green_with_ligh/animations/Idle/south-east/frame_004.png"
+            ]
+          }
+        }
       }
     }
   ],
   "export_version": "3.1",
-  "export_date": "2026-11-24T17:46:04.580775"
+  "export_date": "2026-11-24T18:43:43.565064"
 }

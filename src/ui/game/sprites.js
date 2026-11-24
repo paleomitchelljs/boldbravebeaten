@@ -213,8 +213,11 @@
       // Anything else (no clip, no such direction, frames missing) shows the standing view.
       // A thrust plays its own clip (art.yaml `thrust`) where there is one, else the strike.
       if (anim === 'thrust' && !clip(def, 'thrust')) anim = 'attack';
-      let c = anim === 'run' ? clip(def, 'walk') : anim === 'idle' || anim === 'attack' || anim === 'thrust' || anim === 'death' ? clip(def, anim) : null;
-      let d = c && clipDir(want, c.dirs, anim === 'run');
+      // A move in a fight plays the `leap` clip where there is one (a hop for leapers), else the walk.
+      if (anim === 'leap' && !clip(def, 'leap')) anim = 'run';
+      let c = anim === 'run' ? clip(def, 'walk') : anim === 'idle' || anim === 'attack' || anim === 'thrust' || anim === 'death' || anim === 'leap' ? clip(def, anim) : null;
+      let d = c && clipDir(want, c.dirs, anim === 'run' || anim === 'leap');
+      if (!d && anim === 'leap') { anim = 'run'; c = clip(def, 'walk'); d = clipDir(want, c.dirs, true); }
       // A death is one picture (the clip's last frame), drawn whichever way the figure faced: a body lies as it fell.
       if (c && anim === 'death') { d = d || [c.dirs[0], !!flip]; frame = c.frames - 1; }
       // No walk this way: its standing animation, if it has one there.
@@ -223,13 +226,15 @@
       // An idle plays forward then back (`pingpong`), so a clip that drifts from its first pose never jumps back to it.
       const n = c.frames, m = c.pingpong && n > 2 ? 2 * n - 2 : n, k = ((frame % m) + m) % m;
       // A walk steps with the ground: one cycle every `stride` squares walked (the feet stay put rather than paddle).
-      const walking = anim === 'run' && travel != null && c.anim === clip(def, 'walk').anim;
+      // A leap too: one hop every `stride` squares.
+      const walking = (anim === 'run' || anim === 'leap') && travel != null && c.anim === clip(def, anim === 'leap' ? 'leap' : 'walk').anim;
       const i = (anim === 'attack' || anim === 'thrust') && progress != null ? Math.min(n - 1, Math.floor(progress * n))
         : walking ? Math.floor((travel / (def.stride || STRIDE)) * n) % n : k < n ? k : m - k;
       const s = artSheet(key, `${c.dir}/animations/${c.anim}/${d[0]}/frame_${String(i).padStart(3, '0')}.png`);
       return s.ok ? framed(def, s, d[1]) : stand();  // the standing view until the frame loads, or if it is missing
     }
     if (anim === 'thrust') anim = 'attack';
+    if (anim === 'leap') anim = 'run';
     const anims = def.anims || ['idle'];
     const want = anim === 'run' ? (anims.includes('walk') ? 'walk' : anims.includes('fly') ? 'fly' : 'idle') : anims.includes(anim) ? anim : 'idle';
     const s = artSheet(key, want);
@@ -255,7 +260,7 @@
     const def = artCat()[key];
     if (!def || def.type !== 'pixellab') return;
     if (!fight) for (const d of def.rotations || DIRS) artSheet(key, `${def.dir}/rotations/${d}.png`);
-    for (const which of fight ? ['attack', 'thrust', 'death'] : ['walk', 'idle']) {
+    for (const which of fight ? ['attack', 'thrust', 'death', 'leap'] : ['walk', 'idle']) {
       const c = clip(def, which);
       if (!c) continue;
       for (const d of c.dirs) for (let i = 0; i < c.frames; i++) artSheet(key, `${c.dir}/animations/${c.anim}/${d}/frame_${String(i).padStart(3, '0')}.png`);

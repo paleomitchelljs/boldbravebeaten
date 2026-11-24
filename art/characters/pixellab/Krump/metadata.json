@@ -189,10 +189,312 @@
           "west": "No_sword/rotations/west.png",
           "south-west": "No_sword/rotations/south-west.png"
         },
-        "animations": {}
+        "animations": {
+          "Strike": {
+            "north": [
+              "No_sword/animations/Strike/north/frame_000.png",
+              "No_sword/animations/Strike/north/frame_001.png",
+              "No_sword/animations/Strike/north/frame_002.png",
+              "No_sword/animations/Strike/north/frame_003.png",
+              "No_sword/animations/Strike/north/frame_004.png",
+              "No_sword/animations/Strike/north/frame_005.png",
+              "No_sword/animations/Strike/north/frame_006.png"
+            ],
+            "north-east": [
+              "No_sword/animations/Strike/north-east/frame_000.png",
+              "No_sword/animations/Strike/north-east/frame_001.png",
+              "No_sword/animations/Strike/north-east/frame_002.png",
+              "No_sword/animations/Strike/north-east/frame_003.png",
+              "No_sword/animations/Strike/north-east/frame_004.png",
+              "No_sword/animations/Strike/north-east/frame_005.png",
+              "No_sword/animations/Strike/north-east/frame_006.png"
+            ],
+            "south-east": [
+              "No_sword/animations/Strike/south-east/frame_000.png",
+              "No_sword/animations/Strike/south-east/frame_001.png",
+              "No_sword/animations/Strike/south-east/frame_002.png",
+              "No_sword/animations/Strike/south-east/frame_003.png",
+              "No_sword/animations/Strike/south-east/frame_004.png",
+              "No_sword/animations/Strike/south-east/frame_005.png",
+              "No_sword/animations/Strike/south-east/frame_006.png"
+            ],
+            "south": [
+              "No_sword/animations/Strike/south/frame_000.png",
+              "No_sword/animations/Strike/south/frame_001.png",
+              "No_sword/animations/Strike/south/frame_002.png",
+              "No_sword/animations/Strike/south/frame_003.png",
+              "No_sword/animations/Strike/south/frame_004.png",
+              "No_sword/animations/Strike/south/frame_005.png",
+              "No_sword/animations/Strike/south/frame_006.png"
+            ],
+            "east": [
+              "No_sword/animations/Strike/east/frame_000.png",
+              "No_sword/animations/Strike/east/frame_001.png",
+              "No_sword/animations/Strike/east/frame_002.png",
+              "No_sword/animations/Strike/east/frame_003.png",
+              "No_sword/animations/Strike/east/frame_004.png",
+              "No_sword/animations/Strike/east/frame_005.png",
+              "No_sword/animations/Strike/east/frame_006.png"
+            ]
+          },
+          "Leap": {
+            "north-west": [
+              "No_sword/animations/Leap/north-west/frame_000.png",
+              "No_sword/animations/Leap/north-west/frame_001.png",
+              "No_sword/animations/Leap/north-west/frame_002.png",
+              "No_sword/animations/Leap/north-west/frame_003.png",
+              "No_sword/animations/Leap/north-west/frame_004.png",
+              "No_sword/animations/Leap/north-west/frame_005.png",
+              "No_sword/animations/Leap/north-west/frame_006.png"
+            ],
+            "south-west": [
+              "No_sword/animations/Leap/south-west/frame_000.png",
+              "No_sword/animations/Leap/south-west/frame_001.png",
+              "No_sword/animations/Leap/south-west/frame_002.png",
+              "No_sword/animations/Leap/south-west/frame_003.png",
+              "No_sword/animations/Leap/south-west/frame_004.png",
+              "No_sword/animations/Leap/south-west/frame_005.png",
+              "No_sword/animations/Leap/south-west/frame_006.png"
+            ],
+            "north": [
+              "No_sword/animations/Leap/north/frame_000.png",
+              "No_sword/animations/Leap/north/frame_001.png",
+              "No_sword/animations/Leap/north/frame_002.png",
+              "No_sword/animations/Leap/north/frame_003.png",
+              "No_sword/animations/Leap/north/frame_004.png",
+              "No_sword/animations/Leap/north/frame_005.png",
+              "No_sword/animations/Leap/north/frame_006.png"
+            ],
+            "west": [
+              "No_sword/animations/Leap/west/frame_000.png",
+              "No_sword/animations/Leap/west/frame_001.png",
+              "No_sword/animations/Leap/west/frame_002.png",
+              "No_sword/animations/Leap/west/frame_003.png",
+              "No_sword/animations/Leap/west/frame_004.png",
+              "No_sword/animations/Leap/west/frame_005.png",
+              "No_sword/animations/Leap/west/frame_006.png"
+            ],
+            "north-east": [
+              "No_sword/animations/Leap/north-east/frame_000.png",
+              "No_sword/animations/Leap/north-east/frame_001.png",
+              "No_sword/animations/Leap/north-east/frame_002.png",
+              "No_sword/animations/Leap/north-east/frame_003.png",
+              "No_sword/animations/Leap/north-east/frame_004.png",
+              "No_sword/animations/Leap/north-east/frame_005.png",
+              "No_sword/animations/Leap/north-east/frame_006.png"
+            ],
+            "south-east": [
+              "No_sword/animations/Leap/south-east/frame_000.png",
+              "No_sword/animations/Leap/south-east/frame_001.png",
+              "No_sword/animations/Leap/south-east/frame_002.png",
+              "No_sword/animations/Leap/south-east/frame_003.png",
+              "No_sword/animations/Leap/south-east/frame_004.png",
+              "No_sword/animations/Leap/south-east/frame_005.png",
+              "No_sword/animations/Leap/south-east/frame_006.png"
+            ],
+            "south": [
+              "No_sword/animations/Leap/south/frame_000.png",
+              "No_sword/animations/Leap/south/frame_001.png",
+              "No_sword/animations/Leap/south/frame_002.png",
+              "No_sword/animations/Leap/south/frame_003.png",
+              "No_sword/animations/Leap/south/frame_004.png",
+              "No_sword/animations/Leap/south/frame_005.png",
+              "No_sword/animations/Leap/south/frame_006.png"
+            ],
+            "east": [
+              "No_sword/animations/Leap/east/frame_000.png",
+              "No_sword/animations/Leap/east/frame_001.png",
+              "No_sword/animations/Leap/east/frame_002.png",
+              "No_sword/animations/Leap/east/frame_003.png",
+              "No_sword/animations/Leap/east/frame_004.png",
+              "No_sword/animations/Leap/east/frame_005.png",
+              "No_sword/animations/Leap/east/frame_006.png"
+            ]
+          },
+          "Idle": {
+            "north": [
+              "No_sword/animations/Idle/north/frame_000.png",
+              "No_sword/animations/Idle/north/frame_001.png",
+              "No_sword/animations/Idle/north/frame_002.png",
+              "No_sword/animations/Idle/north/frame_003.png",
+              "No_sword/animations/Idle/north/frame_004.png"
+            ],
+            "south": [
+              "No_sword/animations/Idle/south/frame_000.png",
+              "No_sword/animations/Idle/south/frame_001.png",
+              "No_sword/animations/Idle/south/frame_002.png",
+              "No_sword/animations/Idle/south/frame_003.png",
+              "No_sword/animations/Idle/south/frame_004.png"
+            ],
+            "south-east": [
+              "No_sword/animations/Idle/south-east/frame_000.png",
+              "No_sword/animations/Idle/south-east/frame_001.png",
+              "No_sword/animations/Idle/south-east/frame_002.png",
+              "No_sword/animations/Idle/south-east/frame_003.png",
+              "No_sword/animations/Idle/south-east/frame_004.png"
+            ],
+            "north-east": [
+              "No_sword/animations/Idle/north-east/frame_000.png",
+              "No_sword/animations/Idle/north-east/frame_001.png",
+              "No_sword/animations/Idle/north-east/frame_002.png",
+              "No_sword/animations/Idle/north-east/frame_003.png",
+              "No_sword/animations/Idle/north-east/frame_004.png"
+            ],
+            "east": [
+              "No_sword/animations/Idle/east/frame_000.png",
+              "No_sword/animations/Idle/east/frame_001.png",
+              "No_sword/animations/Idle/east/frame_002.png",
+              "No_sword/animations/Idle/east/frame_003.png",
+              "No_sword/animations/Idle/east/frame_004.png"
+            ]
+          },
+          "Waddle": {
+            "south": [
+              "No_sword/animations/Waddle/south/frame_000.png",
+              "No_sword/animations/Waddle/south/frame_001.png",
+              "No_sword/animations/Waddle/south/frame_002.png",
+              "No_sword/animations/Waddle/south/frame_003.png",
+              "No_sword/animations/Waddle/south/frame_004.png",
+              "No_sword/animations/Waddle/south/frame_005.png"
+            ],
+            "west": [
+              "No_sword/animations/Waddle/west/frame_000.png",
+              "No_sword/animations/Waddle/west/frame_001.png",
+              "No_sword/animations/Waddle/west/frame_002.png",
+              "No_sword/animations/Waddle/west/frame_003.png",
+              "No_sword/animations/Waddle/west/frame_004.png",
+              "No_sword/animations/Waddle/west/frame_005.png"
+            ],
+            "north-west": [
+              "No_sword/animations/Waddle/north-west/frame_000.png",
+              "No_sword/animations/Waddle/north-west/frame_001.png",
+              "No_sword/animations/Waddle/north-west/frame_002.png",
+              "No_sword/animations/Waddle/north-west/frame_003.png",
+              "No_sword/animations/Waddle/north-west/frame_004.png",
+              "No_sword/animations/Waddle/north-west/frame_005.png"
+            ],
+            "south-east": [
+              "No_sword/animations/Waddle/south-east/frame_000.png",
+              "No_sword/animations/Waddle/south-east/frame_001.png",
+              "No_sword/animations/Waddle/south-east/frame_002.png",
+              "No_sword/animations/Waddle/south-east/frame_003.png",
+              "No_sword/animations/Waddle/south-east/frame_004.png",
+              "No_sword/animations/Waddle/south-east/frame_005.png"
+            ],
+            "east": [
+              "No_sword/animations/Waddle/east/frame_000.png",
+              "No_sword/animations/Waddle/east/frame_001.png",
+              "No_sword/animations/Waddle/east/frame_002.png",
+              "No_sword/animations/Waddle/east/frame_003.png",
+              "No_sword/animations/Waddle/east/frame_004.png",
+              "No_sword/animations/Waddle/east/frame_005.png"
+            ],
+            "north": [
+              "No_sword/animations/Waddle/north/frame_000.png",
+              "No_sword/animations/Waddle/north/frame_001.png",
+              "No_sword/animations/Waddle/north/frame_002.png",
+              "No_sword/animations/Waddle/north/frame_003.png",
+              "No_sword/animations/Waddle/north/frame_004.png",
+              "No_sword/animations/Waddle/north/frame_005.png"
+            ],
+            "north-east": [
+              "No_sword/animations/Waddle/north-east/frame_000.png",
+              "No_sword/animations/Waddle/north-east/frame_001.png",
+              "No_sword/animations/Waddle/north-east/frame_002.png",
+              "No_sword/animations/Waddle/north-east/frame_003.png",
+              "No_sword/animations/Waddle/north-east/frame_004.png",
+              "No_sword/animations/Waddle/north-east/frame_005.png"
+            ],
+            "south-west": [
+              "No_sword/animations/Waddle/south-west/frame_000.png",
+              "No_sword/animations/Waddle/south-west/frame_001.png",
+              "No_sword/animations/Waddle/south-west/frame_002.png",
+              "No_sword/animations/Waddle/south-west/frame_003.png",
+              "No_sword/animations/Waddle/south-west/frame_004.png",
+              "No_sword/animations/Waddle/south-west/frame_005.png"
+            ]
+          },
+          "Walk": {
+            "west": [
+              "No_sword/animations/Walk/west/frame_000.png",
+              "No_sword/animations/Walk/west/frame_001.png",
+              "No_sword/animations/Walk/west/frame_002.png",
+              "No_sword/animations/Walk/west/frame_003.png",
+              "No_sword/animations/Walk/west/frame_004.png",
+              "No_sword/animations/Walk/west/frame_005.png"
+            ],
+            "east": [
+              "No_sword/animations/Walk/east/frame_000.png",
+              "No_sword/animations/Walk/east/frame_001.png",
+              "No_sword/animations/Walk/east/frame_002.png",
+              "No_sword/animations/Walk/east/frame_003.png",
+              "No_sword/animations/Walk/east/frame_004.png",
+              "No_sword/animations/Walk/east/frame_005.png"
+            ],
+            "north-west": [
+              "No_sword/animations/Walk/north-west/frame_000.png",
+              "No_sword/animations/Walk/north-west/frame_001.png",
+              "No_sword/animations/Walk/north-west/frame_002.png",
+              "No_sword/animations/Walk/north-west/frame_003.png",
+              "No_sword/animations/Walk/north-west/frame_004.png",
+              "No_sword/animations/Walk/north-west/frame_005.png"
+            ],
+            "north-east": [
+              "No_sword/animations/Walk/north-east/frame_000.png",
+              "No_sword/animations/Walk/north-east/frame_001.png",
+              "No_sword/animations/Walk/north-east/frame_002.png",
+              "No_sword/animations/Walk/north-east/frame_003.png",
+              "No_sword/animations/Walk/north-east/frame_004.png",
+              "No_sword/animations/Walk/north-east/frame_005.png"
+            ],
+            "south": [
+              "No_sword/animations/Walk/south/frame_000.png",
+              "No_sword/animations/Walk/south/frame_001.png",
+              "No_sword/animations/Walk/south/frame_002.png",
+              "No_sword/animations/Walk/south/frame_003.png",
+              "No_sword/animations/Walk/south/frame_004.png",
+              "No_sword/animations/Walk/south/frame_005.png"
+            ],
+            "south-west": [
+              "No_sword/animations/Walk/south-west/frame_000.png",
+              "No_sword/animations/Walk/south-west/frame_001.png",
+              "No_sword/animations/Walk/south-west/frame_002.png",
+              "No_sword/animations/Walk/south-west/frame_003.png",
+              "No_sword/animations/Walk/south-west/frame_004.png",
+              "No_sword/animations/Walk/south-west/frame_005.png"
+            ],
+            "north": [
+              "No_sword/animations/Walk/north/frame_000.png",
+              "No_sword/animations/Walk/north/frame_001.png",
+              "No_sword/animations/Walk/north/frame_002.png",
+              "No_sword/animations/Walk/north/frame_003.png",
+              "No_sword/animations/Walk/north/frame_004.png",
+              "No_sword/animations/Walk/north/frame_005.png"
+            ],
+            "south-east": [
+              "No_sword/animations/Walk/south-east/frame_000.png",
+              "No_sword/animations/Walk/south-east/frame_001.png",
+              "No_sword/animations/Walk/south-east/frame_002.png",
+              "No_sword/animations/Walk/south-east/frame_003.png",
+              "No_sword/animations/Walk/south-east/frame_004.png",
+              "No_sword/animations/Walk/south-east/frame_005.png"
+            ]
+          },
+          "Death": {
+            "south": [
+              "No_sword/animations/Death/south/frame_000.png",
+              "No_sword/animations/Death/south/frame_001.png",
+              "No_sword/animations/Death/south/frame_002.png",
+              "No_sword/animations/Death/south/frame_003.png",
+              "No_sword/animations/Death/south/frame_004.png",
+              "No_sword/animations/Death/south/frame_005.png",
+              "No_sword/animations/Death/south/frame_006.png"
+            ]
+          }
+        }
       }
     }
   ],
   "export_version": "3.1",
-  "export_date": "2026-11-24T17:45:00.228093"
+  "export_date": "2026-11-24T18:54:27.411881"
 }
