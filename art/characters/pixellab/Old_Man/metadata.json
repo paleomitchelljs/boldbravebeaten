@@ -101,11 +101,48 @@
               "old_man_bald/animations/The_character_walks_forward_with_a_steady_rhythmic/south-east/frame_005.png",
               "old_man_bald/animations/The_character_walks_forward_with_a_steady_rhythmic/south-east/frame_006.png"
             ]
+          },
+          "Idle": {
+            "south": [
+              "old_man_bald/animations/Idle/south/frame_000.png",
+              "old_man_bald/animations/Idle/south/frame_001.png",
+              "old_man_bald/animations/Idle/south/frame_002.png",
+              "old_man_bald/animations/Idle/south/frame_003.png",
+              "old_man_bald/animations/Idle/south/frame_004.png"
+            ],
+            "south-east": [
+              "old_man_bald/animations/Idle/south-east/frame_000.png",
+              "old_man_bald/animations/Idle/south-east/frame_001.png",
+              "old_man_bald/animations/Idle/south-east/frame_002.png",
+              "old_man_bald/animations/Idle/south-east/frame_003.png",
+              "old_man_bald/animations/Idle/south-east/frame_004.png"
+            ],
+            "north": [
+              "old_man_bald/animations/Idle/north/frame_000.png",
+              "old_man_bald/animations/Idle/north/frame_001.png",
+              "old_man_bald/animations/Idle/north/frame_002.png",
+              "old_man_bald/animations/Idle/north/frame_003.png",
+              "old_man_bald/animations/Idle/north/frame_004.png"
+            ],
+            "east": [
+              "old_man_bald/animations/Idle/east/frame_000.png",
+              "old_man_bald/animations/Idle/east/frame_001.png",
+              "old_man_bald/animations/Idle/east/frame_002.png",
+              "old_man_bald/animations/Idle/east/frame_003.png",
+              "old_man_bald/animations/Idle/east/frame_004.png"
+            ],
+            "north-east": [
+              "old_man_bald/animations/Idle/north-east/frame_000.png",
+              "old_man_bald/animations/Idle/north-east/frame_001.png",
+              "old_man_bald/animations/Idle/north-east/frame_002.png",
+              "old_man_bald/animations/Idle/north-east/frame_003.png",
+              "old_man_bald/animations/Idle/north-east/frame_004.png"
+            ]
           }
         }
       }
     }
   ],
   "export_version": "3.1",
-  "export_date": "2026-10-28T14:39:49.885076"
+  "export_date": "2026-11-24T17:47:49.981254"
 }

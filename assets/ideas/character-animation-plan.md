@@ -333,3 +333,154 @@ the armed, which keeps the weapon; template for the two unarmed), idle (v3 ×8 a
 
 Also this cycle (not characters): the dens' 16 props (10), the desert's five tilesets (5 × 25), its 16 props, palms
 and tower (30).
+
+## Cycle of 2026-11-24: W1 tiles and the user's newer figures
+
+The user: tiles for the W1 open world, then animations for the new characters and monsters that lack clips; stop and
+check in at 1000 generations spent. Balance at the start: 9730 of 10000 (Tier 3; 270 used since the refill before this
+session; resets 2026-12-24). Pause at 8730.
+
+Tiles: seventeen pro sets, 64 px, high top-down, 25 each (`assets/wip/w1/ids.txt`): 425.
+
+Figures, in order: the W1 sites' first (Sarnak, its skeleton and ghost; the minotaur's double-axe state), then the
+user's newer figures with no clips. Walk ×8, strike (south first, then the rest: 5 for monsters, 8 for heroes),
+death (south); idles last if generations are left.
+
+| Character | Clip | How | Receipt |
+|---|---|---|---|
+| Sarnak | walk ×8 | template walking-6 added to its south walk's group (7) | 7 |
+| | claw strike ×5 (`Strike2`) | v3; the first (`Strike`, a lunge) hunched without a blow: deleted, re-rolled as a sideways sweep | 1 + 1 + 4 |
+| | death (south) | v3 | 1 |
+| Sarnak skeleton | walk ×8 | template walking-6 (west timed out, not charged, redone) | 8 |
+| | claw strike ×5 (`Strike2`) | as the Sarnak's; its last frames trail a cyan smear | 1 + 1 + 4 |
+| | death (south, into a heap of bones) | v3 | 1 |
+| Sarnak ghost (floating state) | float ×5 | v3 (112 px canvas, 2 a direction); walks and stands | 2 + 8 |
+| | claw strike ×5 | v3 | 2 + 8 |
+| | death (south, fades into mist) | v3 | 2 |
+| Minotaur, double-axe state | walk ×8 | v3 (keeps the axe) | 8 |
+| | axe chop ×5 | v3 | 1 + 4 |
+| | death (south) | v3 | 1 |
+| Goat | walk ×8, attack ×5, dying (south) | quadruped templates | 8 + 5 + 1 |
+| Eolambia (120 px) | walk ×8, attack (south) | quadruped templates, 2 batches a direction | 16 + 2 |
+| | death (south) | template `dying` came out garbled (magenta eyes, black streaks): deleted; v3 | 2 + 2 |
+| Spider Demon | strike ×5 | v3, 108 px canvas; the first barely moved (deleted), the re-roll little better: kept | 2 + 2 + 7 |
+| | death | v3 left it standing (as the clockwork spider's did): deleted, none kept | 2 |
+| | scuttle ×5 | v3 | 9 |
+| Bison | walk ×8, attack ×5, dying (south) | quadruped templates | 8 + 5 + 1 |
+| Horse | walk ×8, attack ×5, dying (south) | quadruped templates | 8 + 5 + 1 |
+| Glyptodon | walk ×8, attack-right ×5 | bear templates (no attack or dying of its own) | 8 + 5 |
+| | death (south) | v3 put prongs on its tail: deleted, none kept (a dead glyptodon is its standing view on its side) | 1 |
+| Cyclops | walk ×8 | template walking-6 | 8 |
+| | fist hammer ×5 | v3; its east strike sprouts a mallet | 1 + 4 |
+| | death (south) | v3 | 1 |
+| Eolambia | attack SE, E, NE, N | quadruped template, 2 a direction | 8 |
+| Griffon | walk ×8 | no skeleton: v3 (two directions on a larger canvas, 2 each) | 10 |
+| | wing-and-talon strike ×5 | v3 | 1 + 5 |
+| | death (south) | v3 | 1 |
+| Chokidai | walk ×8 | dog template `walk-6-frames` (dogs have no walking-6) | 8 |
+| | beak stab ×5 | v3 | 1 + 4 |
+| | death (south) | v3 | 1 |
+| Troll warrior | walk ×8 | template walking-6 | 8 |
+| | overhand fist ×5 | v3 | 1 + 4 |
+| | death (south) | v3 | 1 |
+| Hag | walk ×8 | template walking-6 | 8 |
+| | claw rake ×5 | v3 | 1 + 4 |
+| | death (south) | v3 | 1 |
+| Clannfear | walk ×8 | no skeleton: v3 | 8 |
+| | beak snap ×5 | v3 | 1 + 4 |
+| | death (south) | v3 | 1 |
+| | (its dark-green state) | not animated: a recolour, which art.yaml `recolor` can give the animated figure | — |
+| Aela | walk ×8 | v3 (keeps the bow) | 8 |
+| | draw and loose ×8 | v3 | 1 + 7 |
+| | death (south) | v3 | 1 |
+| Kaladin | walk ×8 | v3 (keeps the spear) | 8 |
+| | spear thrust ×8 | v3 | 1 + 7 |
+| | death (south) | v3 | 1 |
+| Dovahkiin | walk ×8 | template walking-6 | 8 |
+| | punches ×8 | v3. East turned to face the viewer mid-punch, and again on a re-roll ("never turning toward the viewer"): deleted, so east plays as west mirrored | 1 + 7 + 1 |
+| | death (south) | v3 | 1 |
+| Kregon | walk ×8 | v3 (keeps the hammer) | 8 |
+| | hammer blow ×8 | v3. N, NE and E turned toward the viewer: re-rolled with the same rider; N and NE came good, E did not and was deleted (plays as W mirrored) | 1 + 7 + 3 |
+| | death (south) | v3 | 1 |
+| Sorkvild | walk ×8 | template walking-6 | 8 |
+| | spell cast ×8 | v3. W flashed pale blue for a frame; the re-roll turned to the viewer: deleted (plays as E mirrored) | 1 + 7 + 1 |
+| | death (south) | v3 | 1 |
+| Vivec, seated | float ×5 | v3; hovers, so it plays standing too | 1 + 4 |
+| | cast ×8 | v3 | 1 + 7 |
+| | death (south: drops out of the air) | v3 | 1 |
+| Troll knight | walk ×8 | template walking-6 | 8 |
+| | armored fist ×5 | v3 | 1 + 4 |
+| | death (south) | v3 | 1 |
+| Daedroth | walk ×8 | template walking-6 | 8 |
+| | claw strike ×5 (`Strike2`) | v3. The first (`Strike`) barely moved: deleted. In the repo, S frames 5-6 and N frames 5-6 are copies of frames 4 and 0 (S 5 was a green smear, N 5-6 turned to the viewer) | 1 + 1 + 4 |
+| | death (south, `Death2`) | the first ended crouched on all fours: deleted; re-rolled ("falls flat on its face") | 1 + 1 |
+| Guar | walk ×8 | no skeleton: v3 | 8 |
+| | head butt ×5 | v3 (more a gaping bite than a butt) | 1 + 4 |
+| | death | v3 only sat it down: deleted, none kept | 1 |
+| Werewolf | walk ×8 | template walking-6 | 8 |
+| | claw rake ×5 | v3 | 1 + 4 |
+| | death (south) | v3 | 1 |
+| Skorpikis | scuttle ×5 | no skeleton: v3 (104 px canvas, still 1 a direction) | 5 |
+| | pincer snap ×5 | v3; faint but kept, as the Spider Demon's | 1 + 4 |
+| | death | v3 left it standing: deleted, none kept | 1 |
+| Burynai | walk ×8 | template walking-6 | 8 |
+| | claw swipe ×5 (`Strike2`) | the first (`Strike`) barely moved: deleted; re-rolled as a swipe across the body | 1 + 1 + 4 |
+| | death (south) | v3 | 1 |
+| Burynai warrior | walk ×8 | template walking-6 (refused once for want of job slots, not charged) | 8 |
+| | claw swipe ×5 (`Strike2`) | as the Burynai's | 1 + 1 + 4 |
+| | death (south) | v3 | 1 |
+| Black widow, long-legged state | bite (south) | v3 broke up (a red blob, then a purple glow): deleted. Not animated | 1 |
+| Gnoll, white state | walk ×8 | template walking-6 | 3 + 5 |
+| | punch ×5 | v3 | 1 + 4 |
+| | death (south) | v3 | 1 |
+| Spear snake | slither ×5 | v3 | 1 + 4 |
+| | spear thrust ×5 | v3 | 1 + 4 |
+| | death | v3 left it upright: deleted, none kept | 1 |
+| Charcia | slither ×5 | v3 | 1 + 4 |
+| | axe chop ×5 (`Strike2`) | the first washed the body white: deleted; the re-roll is a fire burst that keeps its colours | 1 + 1 + 4 |
+| | death (south: sinks onto its coils) | v3 | 1 |
+| Short dragonfolk | walk ×8 | template walking-6 | 8 |
+| | claw slash ×5 | v3 | 1 + 4 |
+| | death (south) | v3 | 1 |
+| Tylo | crawl ×5 | no skeleton: v3 | 5 |
+| | bite ×5 | v3 | 1 + 4 |
+| | death (south: rolls onto its back) | v3 | 1 |
+| Snake person (party) | slither ×5 | v3 (E and N on a 108 px canvas, 2 each) | 1 + 6 |
+| | sword slash ×8 | v3 (E, N 2 each). W turned to the viewer: deleted (plays as E mirrored) | 1 + 9 |
+| | death | v3 left it upright: deleted, none kept | 1 |
+| | | balance 8772 (958 spent: 425 tiles, 533 figures) | |
+
+Paused at 958 spent (the user's check-in at 1000). What v3 taught this round: heroes' side and back strikes drift to
+face the viewer (a rider "never turning toward the viewer" fixed two of five), so a bad side is cheaper deleted and
+played mirrored; snakes, spiders, the skorpikis and the guar will not lie down, so they keep no death.
+
+Not done, for the user to decide: Krump's and Tevax's unarmed states (for what: a walk without the weapon vanishing,
+or fist fighters?); the brown velociraptor (it is the retired `Raptor`); the Skorpikis' pale and the Clannfear's
+dark-green states (recolours); the long-legged black widow (v3 broke it); the Nagafen skeleton (large, so costly);
+idles for all of the above.
+
+### The second thousand (the user: "Double the budget to 2k spend then reassess")
+
+Also from the user: "Tylo turns bipedal only when southfacing which isn't right--it's a quadraped", and "Cave troll?"
+(the cave troll now draws as `troll-warrior`, the troll chieftain as `troll-knight`). Idles are v3, 4 frames plus the
+standing view, played ping-pong: heroes 8 directions, monsters 5 (mirrored).
+
+| Figure / asset | What | Notes | Gens |
+|---|---|---|---|
+| Tylo | south crawl and bite redrawn (v3, from its north view flipped); death (east) | PixelLab's south view stood the quadruped up like a biped. The south.png in the repo is the north view flipped (a re-pull brings the biped back). A south death only wriggled: deleted; the east one rolls it over | 1 + 1 + 1 + 1 |
+| Guar, Skorpikis, spear snake, snake person, spider demon | death (south), v3 with an end frame: the figure's own south view laid on its side | every one now topples onto its side (before, v3 left them standing, so they had none) | 1 + 1 + 1 + 1 + 2 |
+| Cities (TILES_TO_GET W1 item 7) | Zhomelonga, Muawi, Burbuma, Barjiy, Emagshir from outside: `create_1_direction_object`, 256 px | all kept. Muawi's and Emagshir's water came out transparent: painted under by hand (`assets/wip/w1/cities/README.md`) | 50 |
+| Aela, Dovahkiin, Hooded knight, Kaladin, Kregon, Krump, snake person, Sorkvild, Tevax | idle ×8 | Sorkvild's E grew smoke: re-rolled. The Hooded knight's export also holds an older template `Idle` (4 frames, drops the sword and shield facing south); the v3 one is `Idle-8f4ffa66` | 72 + 1 |
+| Lizardfolk_Alt2 | idle ×8 | its id (418cefa3) is not in the PixelLab account: refused, not charged | 0 |
+| Troll warrior, troll knight, black widow, orc, minotaur (both states), Sarnak, Sarnak skeleton, Burynai, Burynai warrior, Clannfear, cyclops, Daedroth, Chokidai, short dragonfolk | idle ×5 | re-rolled: the Sarnak's S (sprayed blood), the Chokidai's N (reared up at the viewer), the dragonfolk's E (a puff of white breath) | 75 + 3 |
+| Gray wolf, lava beetle | idle ×5 | re-rolled: the wolf's N (white specks), the beetle's S (went dark) | 10 + 2 |
+| Charcia, Eolambia, glyptodon, gnoll (both states), goat, griffon, grizzly, guar, hag, hill giant, horse, lion, lizardfolk skeleton, mummy lord, Skorpikis, spear snake, spider demon, werewolf, Xalgoz, bison, bear, old man | idle ×5 | Eolambia's side views are 152-160 px (2 a direction). The griffon's and grizzly's tails flicker a pixel or two (kept) | 23 × 5 + 3 |
+| Tylo | idle SE, E, NE, N | its S idle is the N idle flipped, made in the repo (a re-pull drops it) | 4 |
+| | | balance 8427 (1303 spent this cycle: 958 + 345) | |
+
+Every figure above was re-pulled. The pull overwrote hand patches in five folders, and these were put back from a copy
+taken first: the Daedroth's `Strike2` (S, N), the grizzly's `Strike` (S, SW), the Xalgoz's `Strike` (S, SE, N), the black
+widow's E `Strike` frame 6 and the Tylo's south view. **Before any re-pull, copy the folder and put changed frames back.**
+
+Left for the user: what was listed above, plus Lizardfolk_Alt2 missing from the account (deleted, or made under another
+login?).

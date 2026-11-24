@@ -2216,6 +2216,12 @@ w1_wild:
         - [0, 2, ".....01..12..10."]
         - [0, 3, ".01..12..10....."]
   props:
+    # The five cities seen from outside (assets/wip/w1/cities; PixelLab objects, 256 px: four squares wide).
+    city_zhomelonga: [../cities.png, 0, 0, 256, 256]
+    city_muawi: [../cities.png, 256, 0, 256, 256]
+    city_burbuma: [../cities.png, 512, 0, 256, 245]
+    city_barjiy: [../cities.png, 768, 0, 256, 243]
+    city_emagshir: [../cities.png, 1024, 0, 256, 240]
     pit: [../traps.png, 4512, 0, 46, 46]
     pine: [../tarn/props.png, 1688, 0, 69, 118]
     fir: [../tarn/props.png, 1761, 0, 118, 118]
@@ -2345,6 +2351,12 @@ w1_jungle:
         - [0, 2, ".....01..12..10."]
         - [0, 3, ".01..12..10....."]
   props:
+    # The five cities seen from outside (assets/wip/w1/cities; PixelLab objects, 256 px: four squares wide).
+    city_zhomelonga: [../cities.png, 0, 0, 256, 256]
+    city_muawi: [../cities.png, 256, 0, 256, 256]
+    city_burbuma: [../cities.png, 512, 0, 256, 245]
+    city_barjiy: [../cities.png, 768, 0, 256, 243]
+    city_emagshir: [../cities.png, 1024, 0, 256, 240]
     kapok: [props.png, 0, 0, 109, 113]
     mangrove: [props.png, 113, 0, 91, 113]
     strangler: [props.png, 208, 0, 111, 113]
@@ -2447,6 +2459,12 @@ w1_desert:
     ridge5: {color: "#b6bdc5", wang: ../vale/ring5.png, over: ridge4, cut: ../vale/ring5-cut.png}
     ridge6: {color: "#bcc2ca", wang: ../vale/ring6.png, over: ridge5, cut: ../vale/ring6-cut.png}
   props:
+    # The five cities seen from outside (assets/wip/w1/cities; PixelLab objects, 256 px: four squares wide).
+    city_zhomelonga: [../cities.png, 0, 0, 256, 256]
+    city_muawi: [../cities.png, 256, 0, 256, 256]
+    city_burbuma: [../cities.png, 512, 0, 256, 245]
+    city_barjiy: [../cities.png, 768, 0, 256, 243]
+    city_emagshir: [../cities.png, 1024, 0, 256, 240]
     thornbush: ["props.png", 85, 183, 51, 46]
     drygrass: ["props.png", 308, 181, 49, 48]
     aloe: ["props.png", 525, 174, 60, 55]

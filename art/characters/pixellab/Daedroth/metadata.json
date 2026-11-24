@@ -1,0 +1,256 @@
+{
+  "group_id": "aa85f1a0-3dfa-4f78-8b86-840f04f4f3b8",
+  "states": [
+    {
+      "character": {
+        "id": "aa998ea1-a7a9-48f3-959b-e53ee8a6272b",
+        "name": "Idle",
+        "prompt": "Long snouted reptilian humanoid with long interlocking teeth, glowing red eyes, and long raking arms that end in therizinosaur like claws",
+        "size": {
+          "width": 80,
+          "height": 80
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-08T18:41:16.776058+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {
+          "Death2": {
+            "south": [
+              "Idle/animations/Death2/south/frame_000.png",
+              "Idle/animations/Death2/south/frame_001.png",
+              "Idle/animations/Death2/south/frame_002.png",
+              "Idle/animations/Death2/south/frame_003.png",
+              "Idle/animations/Death2/south/frame_004.png",
+              "Idle/animations/Death2/south/frame_005.png",
+              "Idle/animations/Death2/south/frame_006.png"
+            ]
+          },
+          "Strike2": {
+            "south-east": [
+              "Idle/animations/Strike2/south-east/frame_000.png",
+              "Idle/animations/Strike2/south-east/frame_001.png",
+              "Idle/animations/Strike2/south-east/frame_002.png",
+              "Idle/animations/Strike2/south-east/frame_003.png",
+              "Idle/animations/Strike2/south-east/frame_004.png",
+              "Idle/animations/Strike2/south-east/frame_005.png",
+              "Idle/animations/Strike2/south-east/frame_006.png"
+            ],
+            "north": [
+              "Idle/animations/Strike2/north/frame_000.png",
+              "Idle/animations/Strike2/north/frame_001.png",
+              "Idle/animations/Strike2/north/frame_002.png",
+              "Idle/animations/Strike2/north/frame_003.png",
+              "Idle/animations/Strike2/north/frame_004.png",
+              "Idle/animations/Strike2/north/frame_005.png",
+              "Idle/animations/Strike2/north/frame_006.png"
+            ],
+            "north-east": [
+              "Idle/animations/Strike2/north-east/frame_000.png",
+              "Idle/animations/Strike2/north-east/frame_001.png",
+              "Idle/animations/Strike2/north-east/frame_002.png",
+              "Idle/animations/Strike2/north-east/frame_003.png",
+              "Idle/animations/Strike2/north-east/frame_004.png",
+              "Idle/animations/Strike2/north-east/frame_005.png",
+              "Idle/animations/Strike2/north-east/frame_006.png"
+            ],
+            "east": [
+              "Idle/animations/Strike2/east/frame_000.png",
+              "Idle/animations/Strike2/east/frame_001.png",
+              "Idle/animations/Strike2/east/frame_002.png",
+              "Idle/animations/Strike2/east/frame_003.png",
+              "Idle/animations/Strike2/east/frame_004.png",
+              "Idle/animations/Strike2/east/frame_005.png",
+              "Idle/animations/Strike2/east/frame_006.png"
+            ],
+            "south": [
+              "Idle/animations/Strike2/south/frame_000.png",
+              "Idle/animations/Strike2/south/frame_001.png",
+              "Idle/animations/Strike2/south/frame_002.png",
+              "Idle/animations/Strike2/south/frame_003.png",
+              "Idle/animations/Strike2/south/frame_004.png",
+              "Idle/animations/Strike2/south/frame_005.png",
+              "Idle/animations/Strike2/south/frame_006.png"
+            ]
+          },
+          "Walk": {
+            "north": [
+              "Idle/animations/Walk/north/frame_000.png",
+              "Idle/animations/Walk/north/frame_001.png",
+              "Idle/animations/Walk/north/frame_002.png",
+              "Idle/animations/Walk/north/frame_003.png",
+              "Idle/animations/Walk/north/frame_004.png",
+              "Idle/animations/Walk/north/frame_005.png"
+            ],
+            "south-west": [
+              "Idle/animations/Walk/south-west/frame_000.png",
+              "Idle/animations/Walk/south-west/frame_001.png",
+              "Idle/animations/Walk/south-west/frame_002.png",
+              "Idle/animations/Walk/south-west/frame_003.png",
+              "Idle/animations/Walk/south-west/frame_004.png",
+              "Idle/animations/Walk/south-west/frame_005.png"
+            ],
+            "east": [
+              "Idle/animations/Walk/east/frame_000.png",
+              "Idle/animations/Walk/east/frame_001.png",
+              "Idle/animations/Walk/east/frame_002.png",
+              "Idle/animations/Walk/east/frame_003.png",
+              "Idle/animations/Walk/east/frame_004.png",
+              "Idle/animations/Walk/east/frame_005.png"
+            ],
+            "north-west": [
+              "Idle/animations/Walk/north-west/frame_000.png",
+              "Idle/animations/Walk/north-west/frame_001.png",
+              "Idle/animations/Walk/north-west/frame_002.png",
+              "Idle/animations/Walk/north-west/frame_003.png",
+              "Idle/animations/Walk/north-west/frame_004.png",
+              "Idle/animations/Walk/north-west/frame_005.png"
+            ],
+            "west": [
+              "Idle/animations/Walk/west/frame_000.png",
+              "Idle/animations/Walk/west/frame_001.png",
+              "Idle/animations/Walk/west/frame_002.png",
+              "Idle/animations/Walk/west/frame_003.png",
+              "Idle/animations/Walk/west/frame_004.png",
+              "Idle/animations/Walk/west/frame_005.png"
+            ],
+            "south": [
+              "Idle/animations/Walk/south/frame_000.png",
+              "Idle/animations/Walk/south/frame_001.png",
+              "Idle/animations/Walk/south/frame_002.png",
+              "Idle/animations/Walk/south/frame_003.png",
+              "Idle/animations/Walk/south/frame_004.png",
+              "Idle/animations/Walk/south/frame_005.png"
+            ],
+            "north-east": [
+              "Idle/animations/Walk/north-east/frame_000.png",
+              "Idle/animations/Walk/north-east/frame_001.png",
+              "Idle/animations/Walk/north-east/frame_002.png",
+              "Idle/animations/Walk/north-east/frame_003.png",
+              "Idle/animations/Walk/north-east/frame_004.png",
+              "Idle/animations/Walk/north-east/frame_005.png"
+            ],
+            "south-east": [
+              "Idle/animations/Walk/south-east/frame_000.png",
+              "Idle/animations/Walk/south-east/frame_001.png",
+              "Idle/animations/Walk/south-east/frame_002.png",
+              "Idle/animations/Walk/south-east/frame_003.png",
+              "Idle/animations/Walk/south-east/frame_004.png",
+              "Idle/animations/Walk/south-east/frame_005.png"
+            ]
+          },
+          "Idle": {
+            "east": [
+              "Idle/animations/Idle/east/frame_000.png",
+              "Idle/animations/Idle/east/frame_001.png",
+              "Idle/animations/Idle/east/frame_002.png",
+              "Idle/animations/Idle/east/frame_003.png",
+              "Idle/animations/Idle/east/frame_004.png"
+            ],
+            "south-east": [
+              "Idle/animations/Idle/south-east/frame_000.png",
+              "Idle/animations/Idle/south-east/frame_001.png",
+              "Idle/animations/Idle/south-east/frame_002.png",
+              "Idle/animations/Idle/south-east/frame_003.png",
+              "Idle/animations/Idle/south-east/frame_004.png"
+            ],
+            "north": [
+              "Idle/animations/Idle/north/frame_000.png",
+              "Idle/animations/Idle/north/frame_001.png",
+              "Idle/animations/Idle/north/frame_002.png",
+              "Idle/animations/Idle/north/frame_003.png",
+              "Idle/animations/Idle/north/frame_004.png"
+            ],
+            "north-east": [
+              "Idle/animations/Idle/north-east/frame_000.png",
+              "Idle/animations/Idle/north-east/frame_001.png",
+              "Idle/animations/Idle/north-east/frame_002.png",
+              "Idle/animations/Idle/north-east/frame_003.png",
+              "Idle/animations/Idle/north-east/frame_004.png"
+            ],
+            "south": [
+              "Idle/animations/Idle/south/frame_000.png",
+              "Idle/animations/Idle/south/frame_001.png",
+              "Idle/animations/Idle/south/frame_002.png",
+              "Idle/animations/Idle/south/frame_003.png",
+              "Idle/animations/Idle/south/frame_004.png"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "character": {
+        "id": "9702f39b-caa0-4ca0-bfcc-0b9003c54547",
+        "name": "Leaned forward mouth",
+        "prompt": "Long snouted reptilian humanoid with long interlocking teeth, glowing red eyes, and long raking arms that end in therizinosaur like claws",
+        "size": {
+          "width": 80,
+          "height": 80
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-08T18:44:27.864644+00:00"
+      },
+      "folder": "Leaned_forward_mouth",
+      "frames": {
+        "rotations": {
+          "south": "Leaned_forward_mouth/rotations/south.png",
+          "south-east": "Leaned_forward_mouth/rotations/south-east.png",
+          "east": "Leaned_forward_mouth/rotations/east.png",
+          "north-east": "Leaned_forward_mouth/rotations/north-east.png",
+          "north": "Leaned_forward_mouth/rotations/north.png",
+          "north-west": "Leaned_forward_mouth/rotations/north-west.png",
+          "west": "Leaned_forward_mouth/rotations/west.png",
+          "south-west": "Leaned_forward_mouth/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "aeec61ad-6c73-41ca-8827-3eebedaae060",
+        "name": "Bent far forward wit",
+        "prompt": "Long snouted reptilian humanoid with long interlocking teeth, glowing red eyes, and long raking arms that end in therizinosaur like claws",
+        "size": {
+          "width": 80,
+          "height": 80
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-08T18:49:56.091931+00:00"
+      },
+      "folder": "Bent_far_forward_wit",
+      "frames": {
+        "rotations": {
+          "south": "Bent_far_forward_wit/rotations/south.png",
+          "south-east": "Bent_far_forward_wit/rotations/south-east.png",
+          "east": "Bent_far_forward_wit/rotations/east.png",
+          "north-east": "Bent_far_forward_wit/rotations/north-east.png",
+          "north": "Bent_far_forward_wit/rotations/north.png",
+          "north-west": "Bent_far_forward_wit/rotations/north-west.png",
+          "west": "Bent_far_forward_wit/rotations/west.png",
+          "south-west": "Bent_far_forward_wit/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-11-24T17:46:10.405425"
+}

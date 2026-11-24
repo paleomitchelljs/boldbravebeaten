@@ -154,7 +154,7 @@ caveTroll:
   faction: wilds
   xp: 110
   glyph: "👹"
-  sprite: {art: avatar-of-fear, kind: orc_warrior, scale: 1.4, tint: "#7aa08a"}
+  sprite: {art: troll-warrior, kind: orc_warrior, scale: 1.4, tint: "#7aa08a"}
   loot: troll_hoard
   attrs: {STR: 20, CON: 10, DEX: 4, SPD: 4, INT: 2, WIS: 4, CHA: 2}
   skills: {melee: 3, athletics: 2}
@@ -168,7 +168,7 @@ trollChieftain:
   faction: wilds
   xp: 300
   glyph: "👹"
-  sprite: {art: avatar-of-fear, artTint: "#c0a080", artScale: 1.15, kind: orc_warrior, scale: 1.55, tint: "#9a8a6a"}
+  sprite: {art: troll-knight, artScale: 1.15, kind: orc_warrior, scale: 1.55, tint: "#9a8a6a"}
   loot: troll_hoard
   attrs: {STR: 24, CON: 10, DEX: 4, SPD: 4, INT: 3, WIS: 4, CHA: 3}
   skills: {melee: 5, athletics: 3, intimidation: 4}

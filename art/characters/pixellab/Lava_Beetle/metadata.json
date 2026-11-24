@@ -86,6 +86,43 @@
               "Idle/animations/Walk/south/frame_006.png"
             ]
           },
+          "Idle": {
+            "north-east": [
+              "Idle/animations/Idle/north-east/frame_000.png",
+              "Idle/animations/Idle/north-east/frame_001.png",
+              "Idle/animations/Idle/north-east/frame_002.png",
+              "Idle/animations/Idle/north-east/frame_003.png",
+              "Idle/animations/Idle/north-east/frame_004.png"
+            ],
+            "east": [
+              "Idle/animations/Idle/east/frame_000.png",
+              "Idle/animations/Idle/east/frame_001.png",
+              "Idle/animations/Idle/east/frame_002.png",
+              "Idle/animations/Idle/east/frame_003.png",
+              "Idle/animations/Idle/east/frame_004.png"
+            ],
+            "south-east": [
+              "Idle/animations/Idle/south-east/frame_000.png",
+              "Idle/animations/Idle/south-east/frame_001.png",
+              "Idle/animations/Idle/south-east/frame_002.png",
+              "Idle/animations/Idle/south-east/frame_003.png",
+              "Idle/animations/Idle/south-east/frame_004.png"
+            ],
+            "south": [
+              "Idle/animations/Idle/south/frame_000.png",
+              "Idle/animations/Idle/south/frame_001.png",
+              "Idle/animations/Idle/south/frame_002.png",
+              "Idle/animations/Idle/south/frame_003.png",
+              "Idle/animations/Idle/south/frame_004.png"
+            ],
+            "north": [
+              "Idle/animations/Idle/north/frame_000.png",
+              "Idle/animations/Idle/north/frame_001.png",
+              "Idle/animations/Idle/north/frame_002.png",
+              "Idle/animations/Idle/north/frame_003.png",
+              "Idle/animations/Idle/north/frame_004.png"
+            ]
+          },
           "Strike": {
             "north-east": [
               "Idle/animations/Strike/north-east/frame_000.png",
@@ -138,5 +175,5 @@
     }
   ],
   "export_version": "3.1",
-  "export_date": "2026-11-08T04:40:47.044235"
+  "export_date": "2026-11-24T17:45:32.837575"
 }

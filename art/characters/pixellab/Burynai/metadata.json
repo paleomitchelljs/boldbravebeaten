@@ -1,0 +1,198 @@
+{
+  "group_id": "14dd98fa-9571-4b3c-897b-4e964f4ca23c",
+  "states": [
+    {
+      "character": {
+        "id": "f0d3f3ed-69ca-4949-9b32-8eb340257c20",
+        "name": "Unarmored",
+        "prompt": "A bipedal badger-man with ferocious claws and a snarling face wearing red armor",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-08T04:44:21.656579+00:00"
+      },
+      "folder": "Unarmored",
+      "frames": {
+        "rotations": {
+          "south": "Unarmored/rotations/south.png",
+          "south-east": "Unarmored/rotations/south-east.png",
+          "east": "Unarmored/rotations/east.png",
+          "north-east": "Unarmored/rotations/north-east.png",
+          "north": "Unarmored/rotations/north.png",
+          "north-west": "Unarmored/rotations/north-west.png",
+          "west": "Unarmored/rotations/west.png",
+          "south-west": "Unarmored/rotations/south-west.png"
+        },
+        "animations": {
+          "Idle": {
+            "south": [
+              "Unarmored/animations/Idle/south/frame_000.png",
+              "Unarmored/animations/Idle/south/frame_001.png",
+              "Unarmored/animations/Idle/south/frame_002.png",
+              "Unarmored/animations/Idle/south/frame_003.png",
+              "Unarmored/animations/Idle/south/frame_004.png"
+            ],
+            "north": [
+              "Unarmored/animations/Idle/north/frame_000.png",
+              "Unarmored/animations/Idle/north/frame_001.png",
+              "Unarmored/animations/Idle/north/frame_002.png",
+              "Unarmored/animations/Idle/north/frame_003.png",
+              "Unarmored/animations/Idle/north/frame_004.png"
+            ],
+            "south-east": [
+              "Unarmored/animations/Idle/south-east/frame_000.png",
+              "Unarmored/animations/Idle/south-east/frame_001.png",
+              "Unarmored/animations/Idle/south-east/frame_002.png",
+              "Unarmored/animations/Idle/south-east/frame_003.png",
+              "Unarmored/animations/Idle/south-east/frame_004.png"
+            ],
+            "east": [
+              "Unarmored/animations/Idle/east/frame_000.png",
+              "Unarmored/animations/Idle/east/frame_001.png",
+              "Unarmored/animations/Idle/east/frame_002.png",
+              "Unarmored/animations/Idle/east/frame_003.png",
+              "Unarmored/animations/Idle/east/frame_004.png"
+            ],
+            "north-east": [
+              "Unarmored/animations/Idle/north-east/frame_000.png",
+              "Unarmored/animations/Idle/north-east/frame_001.png",
+              "Unarmored/animations/Idle/north-east/frame_002.png",
+              "Unarmored/animations/Idle/north-east/frame_003.png",
+              "Unarmored/animations/Idle/north-east/frame_004.png"
+            ]
+          },
+          "Death": {
+            "south": [
+              "Unarmored/animations/Death/south/frame_000.png",
+              "Unarmored/animations/Death/south/frame_001.png",
+              "Unarmored/animations/Death/south/frame_002.png",
+              "Unarmored/animations/Death/south/frame_003.png",
+              "Unarmored/animations/Death/south/frame_004.png",
+              "Unarmored/animations/Death/south/frame_005.png",
+              "Unarmored/animations/Death/south/frame_006.png"
+            ]
+          },
+          "Strike2": {
+            "north-east": [
+              "Unarmored/animations/Strike2/north-east/frame_000.png",
+              "Unarmored/animations/Strike2/north-east/frame_001.png",
+              "Unarmored/animations/Strike2/north-east/frame_002.png",
+              "Unarmored/animations/Strike2/north-east/frame_003.png",
+              "Unarmored/animations/Strike2/north-east/frame_004.png",
+              "Unarmored/animations/Strike2/north-east/frame_005.png",
+              "Unarmored/animations/Strike2/north-east/frame_006.png"
+            ],
+            "south": [
+              "Unarmored/animations/Strike2/south/frame_000.png",
+              "Unarmored/animations/Strike2/south/frame_001.png",
+              "Unarmored/animations/Strike2/south/frame_002.png",
+              "Unarmored/animations/Strike2/south/frame_003.png",
+              "Unarmored/animations/Strike2/south/frame_004.png",
+              "Unarmored/animations/Strike2/south/frame_005.png",
+              "Unarmored/animations/Strike2/south/frame_006.png"
+            ],
+            "south-east": [
+              "Unarmored/animations/Strike2/south-east/frame_000.png",
+              "Unarmored/animations/Strike2/south-east/frame_001.png",
+              "Unarmored/animations/Strike2/south-east/frame_002.png",
+              "Unarmored/animations/Strike2/south-east/frame_003.png",
+              "Unarmored/animations/Strike2/south-east/frame_004.png",
+              "Unarmored/animations/Strike2/south-east/frame_005.png",
+              "Unarmored/animations/Strike2/south-east/frame_006.png"
+            ],
+            "north": [
+              "Unarmored/animations/Strike2/north/frame_000.png",
+              "Unarmored/animations/Strike2/north/frame_001.png",
+              "Unarmored/animations/Strike2/north/frame_002.png",
+              "Unarmored/animations/Strike2/north/frame_003.png",
+              "Unarmored/animations/Strike2/north/frame_004.png",
+              "Unarmored/animations/Strike2/north/frame_005.png",
+              "Unarmored/animations/Strike2/north/frame_006.png"
+            ],
+            "east": [
+              "Unarmored/animations/Strike2/east/frame_000.png",
+              "Unarmored/animations/Strike2/east/frame_001.png",
+              "Unarmored/animations/Strike2/east/frame_002.png",
+              "Unarmored/animations/Strike2/east/frame_003.png",
+              "Unarmored/animations/Strike2/east/frame_004.png",
+              "Unarmored/animations/Strike2/east/frame_005.png",
+              "Unarmored/animations/Strike2/east/frame_006.png"
+            ]
+          },
+          "Walk": {
+            "north-east": [
+              "Unarmored/animations/Walk/north-east/frame_000.png",
+              "Unarmored/animations/Walk/north-east/frame_001.png",
+              "Unarmored/animations/Walk/north-east/frame_002.png",
+              "Unarmored/animations/Walk/north-east/frame_003.png",
+              "Unarmored/animations/Walk/north-east/frame_004.png",
+              "Unarmored/animations/Walk/north-east/frame_005.png"
+            ],
+            "west": [
+              "Unarmored/animations/Walk/west/frame_000.png",
+              "Unarmored/animations/Walk/west/frame_001.png",
+              "Unarmored/animations/Walk/west/frame_002.png",
+              "Unarmored/animations/Walk/west/frame_003.png",
+              "Unarmored/animations/Walk/west/frame_004.png",
+              "Unarmored/animations/Walk/west/frame_005.png"
+            ],
+            "north-west": [
+              "Unarmored/animations/Walk/north-west/frame_000.png",
+              "Unarmored/animations/Walk/north-west/frame_001.png",
+              "Unarmored/animations/Walk/north-west/frame_002.png",
+              "Unarmored/animations/Walk/north-west/frame_003.png",
+              "Unarmored/animations/Walk/north-west/frame_004.png",
+              "Unarmored/animations/Walk/north-west/frame_005.png"
+            ],
+            "south": [
+              "Unarmored/animations/Walk/south/frame_000.png",
+              "Unarmored/animations/Walk/south/frame_001.png",
+              "Unarmored/animations/Walk/south/frame_002.png",
+              "Unarmored/animations/Walk/south/frame_003.png",
+              "Unarmored/animations/Walk/south/frame_004.png",
+              "Unarmored/animations/Walk/south/frame_005.png"
+            ],
+            "north": [
+              "Unarmored/animations/Walk/north/frame_000.png",
+              "Unarmored/animations/Walk/north/frame_001.png",
+              "Unarmored/animations/Walk/north/frame_002.png",
+              "Unarmored/animations/Walk/north/frame_003.png",
+              "Unarmored/animations/Walk/north/frame_004.png",
+              "Unarmored/animations/Walk/north/frame_005.png"
+            ],
+            "south-east": [
+              "Unarmored/animations/Walk/south-east/frame_000.png",
+              "Unarmored/animations/Walk/south-east/frame_001.png",
+              "Unarmored/animations/Walk/south-east/frame_002.png",
+              "Unarmored/animations/Walk/south-east/frame_003.png",
+              "Unarmored/animations/Walk/south-east/frame_004.png",
+              "Unarmored/animations/Walk/south-east/frame_005.png"
+            ],
+            "south-west": [
+              "Unarmored/animations/Walk/south-west/frame_000.png",
+              "Unarmored/animations/Walk/south-west/frame_001.png",
+              "Unarmored/animations/Walk/south-west/frame_002.png",
+              "Unarmored/animations/Walk/south-west/frame_003.png",
+              "Unarmored/animations/Walk/south-west/frame_004.png",
+              "Unarmored/animations/Walk/south-west/frame_005.png"
+            ],
+            "east": [
+              "Unarmored/animations/Walk/east/frame_000.png",
+              "Unarmored/animations/Walk/east/frame_001.png",
+              "Unarmored/animations/Walk/east/frame_002.png",
+              "Unarmored/animations/Walk/east/frame_003.png",
+              "Unarmored/animations/Walk/east/frame_004.png",
+              "Unarmored/animations/Walk/east/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-11-24T17:45:57.699018"
+}

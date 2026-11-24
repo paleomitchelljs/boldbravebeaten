@@ -16,6 +16,17 @@ set with the vale's mountains). `assets/world/w1-gaps.md` counts every square dr
 known kludges; regenerate it after new art with `node tools/worldgen.js assets/world/w1-layout.yaml`. To use a new
 sheet: add its terrain to the family's tileset and its class to the family's `chars` in the layout.
 
+**Generated 2026-11-24, not yet wired:** items 1-6 and 8 (seventeen sets: beach, sea, jungle shore, dunes, jungle
+canopy over grass and grass over jungle floor, forest over jungle floor, jungle hill, slope and ring, ford, reedy bank,
+savanna, marsh, red rock, basalt). Ids, faults and the wiring plan (an engine change for sand over three waters, new
+generator classes, tileset entries): `assets/wip/w1/README.md`.
+
+**Item 7 done** (2026-11-24): the five cities seen from outside, one 256-px PixelLab picture each, wired as the C
+prop of every city stamp (`art/worldtiles/cities.png`; sources `assets/wip/w1/cities/`). **Item 9 needs no
+generation**: the court tier sets could be wired as the temple's terrain. **The forest wang sets below are obsolete**:
+the generated places draw forest with `w1_wild`'s and `w1_jungle`'s canopies, and the only place still on an old
+outdoor tileset is the Sarnak fort's upper floor (`lakeland`, a dungeon with no forest).
+
 In order of how much of the map each would fix:
 
 1. **Coast** (HIGH): a beach or shingle shore over the lake-country water, and a mud or sand shore for the jungle. Every
@@ -31,7 +42,8 @@ In order of how much of the map each would fix:
 5. **Savanna** (MEDIUM): dry, gold grass over lake-country grass. Half the continent is grassland, drawn as green
    lake-country grass with patches of the canyon's bare soil.
 6. **Marsh over grass** (MEDIUM): grassland swamp is drawn as pools of deep water and reeds.
-7. **City exteriors** (HIGH for play, few squares): see section 2 below; each city is one prop for now.
+7. ~~**City exteriors**~~ (done 2026-11-24: one picture per city, see above). Section 2 below (streets and
+   buildings to walk) is still open.
 8. **Rock colours** (LOW): red sandstone over grass for the labyrinth, black volcanic rock for Exeomo's rim, desert-toned
    mountains. All are the vale's grey granite now.
 9. **Temple exterior** (LOW): the lizardfolk temple's pyramids as walkable terrain rather than props.
@@ -43,6 +55,8 @@ lays them that way; a new cliff set has the same limit, a corner set (like the m
 ---
 
 ## Tileset terrain gaps (discovered during buildout; before the open world)
+
+*Obsolete since the W1 places replaced these zones (2026-11-24): kept for the record.*
 
 The ground character `}` (forest wall) maps to a `forest` terrain in the tileset. Only **south_hills**
 and **ember_gnome** have forest corner tiles. Every other tileset that might want dense tree borders

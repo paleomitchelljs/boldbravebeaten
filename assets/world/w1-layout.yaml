@@ -268,41 +268,42 @@ sites:
     encounters:
       spectres: {foes: [{monster: spectre}, {monster: spectre}], text: "Two pale shapes come round the tower without touching the ground. The air goes cold as a cellar, and they lift their scythes."}
 
-  # The cities: a gate into each town (the town's exit arrives on C).
+  # The cities: a gate into each town (the town's exit arrives on C). Each city is one picture four squares wide
+  # (art/worldtiles/cities.png), its feet on C; the x squares are the rest of its walls.
   - id: zhomelonga
     at: [-80.2, 13.6]
     road: [muawea, exeomo]
-    stamp: ["·····", "·xxx·", "·xCx·", "··+··"]
+    stamp: ["·······", "·xxxxx·", "·xxxxx·", "·xxCxx·", "···+···"]
     legend:
-      C: {kind: stairs, to: zhomelonga_city, sprite: pyramid, label: "The great gate of Zhomelonga", on: "."}
+      C: {kind: stairs, to: zhomelonga_city, sprite: city_zhomelonga, label: "The great gate of Zhomelonga", on: "."}
       x: {kind: prop, sprite: none, on: "."}
   - id: muawea
     at: [-93.6, 10.0]
     road: [iitanii]
-    stamp: ["·····", "·xxx·", "·xCx·", "··+··"]
+    stamp: ["·······", "·xxxxx·", "·xxxxx·", "·xxCxx·", "···+···"]
     legend:
-      C: {kind: stairs, to: muawi_city, sprite: pyramid, label: "The causeway into Muawea", on: "."}
+      C: {kind: stairs, to: muawi_city, sprite: city_muawi, label: "The causeway into Muawea", on: "."}
       x: {kind: prop, sprite: none, on: "."}
   - id: iitanii
     at: [-102.6, -4.8]
     road: [emagshir]
-    stamp: ["·····", "·xxx·", "·xCx·", "··+··"]
+    stamp: ["·······", "·xxxxx·", "·xxxxx·", "·xxCxx·", "···+···"]
     legend:
-      C: {kind: stairs, to: burbuma_city, sprite: gatehouse, label: "The gate of Iitanii", on: ","}
+      C: {kind: stairs, to: burbuma_city, sprite: city_burbuma, label: "The gate of Iitanii", on: ","}
       x: {kind: prop, sprite: none, on: ","}
   - id: isdi
     at: [-73.8, -19.6]
     road: []
-    stamp: ["·····", "·xxx·", "·xCx·", "··+··"]
+    stamp: ["·······", "·xxxxx·", "·xxxxx·", "·xxCxx·", "···+···"]
     legend:
-      C: {kind: stairs, to: barjiy_city, sprite: gatehouse, label: "The gates of Isdi", on: ","}
+      C: {kind: stairs, to: barjiy_city, sprite: city_barjiy, label: "The gates of Isdi", on: ","}
       x: {kind: prop, sprite: none, on: ","}
   - id: emagshir
     at: [-107.6, -23.4]
     road: [spectres]
-    stamp: ["·····", "·xxx·", "·xCx·", "··+··"]
+    stamp: ["·······", "·xxxxx·", "·xxxxx·", "·xxCxx·", "···+···"]
     legend:
-      C: {kind: stairs, to: emagshir_city, sprite: tower, label: "The walls of Emagshir", on: "."}
+      C: {kind: stairs, to: emagshir_city, sprite: city_emagshir, label: "The walls of Emagshir", on: "."}
       x: {kind: prop, sprite: none, on: "."}
 
 # What the families draw badly that the generator cannot count (copied into the gap report), for the next art pass.
@@ -316,7 +317,7 @@ gaps:
   - "Swamp in grassland places: pools of deep water with reeds; no marsh set over grass (the jungle's marsh ≈ is over jungle floor only)."
   - "Mountains: the vale's grey granite slope, ledge and summit everywhere (also the desert's), and for the red labyrinth's red rock (no sandstone over grass); no snow, no volcanic black for Exeomo's rim."
   - "Hills and mountains in jungle places are drawn as floor or canopy: no jungle hills, no jungle mountain."
-  - "Towns: Shiwgoiwo is village props on the green; each city is a single prop (pyramid, gatehouse, tower) standing in for walls, gates and districts."
+  - "Towns: Shiwgoiwo is village props on the green; each city is one picture of the whole walled city from outside (no streets to walk outside its gate)."
   - "The temple's pyramids are props, not walkable terrain; the sarnak blocks use the orc castle's fort wall, with door props in front (a door drawn in the wall would draw the mountain behind it)."
   - "Labyrinth walls are mountain squares (#) drawn as grey slope, two squares thick."
   - "Generated places carry no encounters or wandering monsters of their own yet: only the sites' (Shiwgoiwo's wolves, the temple, the sarnaks, the orcs, the labyrinth, the spectres)."

@@ -1,0 +1,227 @@
+{
+  "group_id": "3efc75ed-1902-46aa-b2ba-499589b28888",
+  "states": [
+    {
+      "character": {
+        "id": "cfb65b97-d824-4fd8-bd11-2dc2cab2eeb4",
+        "name": "Idle",
+        "prompt": "A small raptor-like creature with a beak and Triceratops-like frill and long thing arms ending in claws, with a thin tail and stout short digitigrade hind limbs standing in a stooped posture with back parallel to the ground ",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "custom",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-24T13:37:51.118345+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {
+          "Strike": {
+            "north": [
+              "Idle/animations/Strike/north/frame_000.png",
+              "Idle/animations/Strike/north/frame_001.png",
+              "Idle/animations/Strike/north/frame_002.png",
+              "Idle/animations/Strike/north/frame_003.png",
+              "Idle/animations/Strike/north/frame_004.png",
+              "Idle/animations/Strike/north/frame_005.png",
+              "Idle/animations/Strike/north/frame_006.png"
+            ],
+            "south-east": [
+              "Idle/animations/Strike/south-east/frame_000.png",
+              "Idle/animations/Strike/south-east/frame_001.png",
+              "Idle/animations/Strike/south-east/frame_002.png",
+              "Idle/animations/Strike/south-east/frame_003.png",
+              "Idle/animations/Strike/south-east/frame_004.png",
+              "Idle/animations/Strike/south-east/frame_005.png",
+              "Idle/animations/Strike/south-east/frame_006.png"
+            ],
+            "east": [
+              "Idle/animations/Strike/east/frame_000.png",
+              "Idle/animations/Strike/east/frame_001.png",
+              "Idle/animations/Strike/east/frame_002.png",
+              "Idle/animations/Strike/east/frame_003.png",
+              "Idle/animations/Strike/east/frame_004.png",
+              "Idle/animations/Strike/east/frame_005.png",
+              "Idle/animations/Strike/east/frame_006.png"
+            ],
+            "south": [
+              "Idle/animations/Strike/south/frame_000.png",
+              "Idle/animations/Strike/south/frame_001.png",
+              "Idle/animations/Strike/south/frame_002.png",
+              "Idle/animations/Strike/south/frame_003.png",
+              "Idle/animations/Strike/south/frame_004.png",
+              "Idle/animations/Strike/south/frame_005.png",
+              "Idle/animations/Strike/south/frame_006.png"
+            ],
+            "north-east": [
+              "Idle/animations/Strike/north-east/frame_000.png",
+              "Idle/animations/Strike/north-east/frame_001.png",
+              "Idle/animations/Strike/north-east/frame_002.png",
+              "Idle/animations/Strike/north-east/frame_003.png",
+              "Idle/animations/Strike/north-east/frame_004.png",
+              "Idle/animations/Strike/north-east/frame_005.png",
+              "Idle/animations/Strike/north-east/frame_006.png"
+            ]
+          },
+          "Death": {
+            "south": [
+              "Idle/animations/Death/south/frame_000.png",
+              "Idle/animations/Death/south/frame_001.png",
+              "Idle/animations/Death/south/frame_002.png",
+              "Idle/animations/Death/south/frame_003.png",
+              "Idle/animations/Death/south/frame_004.png",
+              "Idle/animations/Death/south/frame_005.png",
+              "Idle/animations/Death/south/frame_006.png"
+            ]
+          },
+          "Idle": {
+            "north-east": [
+              "Idle/animations/Idle/north-east/frame_000.png",
+              "Idle/animations/Idle/north-east/frame_001.png",
+              "Idle/animations/Idle/north-east/frame_002.png",
+              "Idle/animations/Idle/north-east/frame_003.png",
+              "Idle/animations/Idle/north-east/frame_004.png"
+            ],
+            "south": [
+              "Idle/animations/Idle/south/frame_000.png",
+              "Idle/animations/Idle/south/frame_001.png",
+              "Idle/animations/Idle/south/frame_002.png",
+              "Idle/animations/Idle/south/frame_003.png",
+              "Idle/animations/Idle/south/frame_004.png"
+            ],
+            "south-east": [
+              "Idle/animations/Idle/south-east/frame_000.png",
+              "Idle/animations/Idle/south-east/frame_001.png",
+              "Idle/animations/Idle/south-east/frame_002.png",
+              "Idle/animations/Idle/south-east/frame_003.png",
+              "Idle/animations/Idle/south-east/frame_004.png"
+            ],
+            "east": [
+              "Idle/animations/Idle/east/frame_000.png",
+              "Idle/animations/Idle/east/frame_001.png",
+              "Idle/animations/Idle/east/frame_002.png",
+              "Idle/animations/Idle/east/frame_003.png",
+              "Idle/animations/Idle/east/frame_004.png"
+            ],
+            "north": [
+              "Idle/animations/Idle/north/frame_000.png",
+              "Idle/animations/Idle/north/frame_001.png",
+              "Idle/animations/Idle/north/frame_002.png",
+              "Idle/animations/Idle/north/frame_003.png",
+              "Idle/animations/Idle/north/frame_004.png"
+            ]
+          },
+          "Walk": {
+            "north-west": [
+              "Idle/animations/Walk/north-west/frame_000.png",
+              "Idle/animations/Walk/north-west/frame_001.png",
+              "Idle/animations/Walk/north-west/frame_002.png",
+              "Idle/animations/Walk/north-west/frame_003.png",
+              "Idle/animations/Walk/north-west/frame_004.png",
+              "Idle/animations/Walk/north-west/frame_005.png"
+            ],
+            "east": [
+              "Idle/animations/Walk/east/frame_000.png",
+              "Idle/animations/Walk/east/frame_001.png",
+              "Idle/animations/Walk/east/frame_002.png",
+              "Idle/animations/Walk/east/frame_003.png",
+              "Idle/animations/Walk/east/frame_004.png",
+              "Idle/animations/Walk/east/frame_005.png"
+            ],
+            "west": [
+              "Idle/animations/Walk/west/frame_000.png",
+              "Idle/animations/Walk/west/frame_001.png",
+              "Idle/animations/Walk/west/frame_002.png",
+              "Idle/animations/Walk/west/frame_003.png",
+              "Idle/animations/Walk/west/frame_004.png",
+              "Idle/animations/Walk/west/frame_005.png"
+            ],
+            "north-east": [
+              "Idle/animations/Walk/north-east/frame_000.png",
+              "Idle/animations/Walk/north-east/frame_001.png",
+              "Idle/animations/Walk/north-east/frame_002.png",
+              "Idle/animations/Walk/north-east/frame_003.png",
+              "Idle/animations/Walk/north-east/frame_004.png",
+              "Idle/animations/Walk/north-east/frame_005.png"
+            ],
+            "south-west": [
+              "Idle/animations/Walk/south-west/frame_000.png",
+              "Idle/animations/Walk/south-west/frame_001.png",
+              "Idle/animations/Walk/south-west/frame_002.png",
+              "Idle/animations/Walk/south-west/frame_003.png",
+              "Idle/animations/Walk/south-west/frame_004.png",
+              "Idle/animations/Walk/south-west/frame_005.png"
+            ],
+            "south-east": [
+              "Idle/animations/Walk/south-east/frame_000.png",
+              "Idle/animations/Walk/south-east/frame_001.png",
+              "Idle/animations/Walk/south-east/frame_002.png",
+              "Idle/animations/Walk/south-east/frame_003.png",
+              "Idle/animations/Walk/south-east/frame_004.png",
+              "Idle/animations/Walk/south-east/frame_005.png"
+            ],
+            "south": [
+              "Idle/animations/Walk/south/frame_000.png",
+              "Idle/animations/Walk/south/frame_001.png",
+              "Idle/animations/Walk/south/frame_002.png",
+              "Idle/animations/Walk/south/frame_003.png",
+              "Idle/animations/Walk/south/frame_004.png",
+              "Idle/animations/Walk/south/frame_005.png"
+            ],
+            "north": [
+              "Idle/animations/Walk/north/frame_000.png",
+              "Idle/animations/Walk/north/frame_001.png",
+              "Idle/animations/Walk/north/frame_002.png",
+              "Idle/animations/Walk/north/frame_003.png",
+              "Idle/animations/Walk/north/frame_004.png",
+              "Idle/animations/Walk/north/frame_005.png"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "character": {
+        "id": "b1bbde0c-30e6-4d20-bbb8-ff7aa9224c16",
+        "name": "Dark green with ligh",
+        "prompt": "A small raptor-like creature with dark green scales and light green scale highlights, with a beak and Triceratops-like frill and longer arms ending in claws, with a thin tail and stout short digitigrade hind limbs standing in a stooped posture with back parallel to the ground",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "custom",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-24T13:41:29.417660+00:00"
+      },
+      "folder": "Dark_green_with_ligh",
+      "frames": {
+        "rotations": {
+          "south": "Dark_green_with_ligh/rotations/south.png",
+          "south-east": "Dark_green_with_ligh/rotations/south-east.png",
+          "east": "Dark_green_with_ligh/rotations/east.png",
+          "north-east": "Dark_green_with_ligh/rotations/north-east.png",
+          "north": "Dark_green_with_ligh/rotations/north.png",
+          "north-west": "Dark_green_with_ligh/rotations/north-west.png",
+          "west": "Dark_green_with_ligh/rotations/west.png",
+          "south-west": "Dark_green_with_ligh/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-11-24T17:46:04.580775"
+}

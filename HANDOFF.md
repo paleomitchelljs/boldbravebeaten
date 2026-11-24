@@ -268,6 +268,13 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
 - [ ] Characters: `assets/ideas/character-animation-plan.md` is the ledger (fixes, strikes, deaths, idles; never
   `create_character`). Stand-ins still in use: the efreet lord, the avatar of fear, the legionnaire, slaver, warlord
   and prophet. The user's newer figures are not wired to monsters. Floating figures have no bob.
+  Cycle of 2026-11-24 (1303 spent of the user's 2000; paused to reassess): 34 new figures plus the snake person
+  animated and in `art.yaml`; idles for 50 entries (heroes ×8, monsters ×5); deaths for the guar, Skorpikis, both
+  snakes and the spider demon (each laid on its side by an end frame); the Tylo's south views fixed (it is a
+  quadruped). Wired to monsters: only the cave troll (`troll-warrior`) and troll chieftain (`troll-knight`). Open
+  questions at the end of the plan's 2026-11-24 section (Krump's and Tevax's unarmed states, recolour states, the
+  long-legged widow, the Nagafen skeleton, Lizardfolk_Alt2 missing from the account). A re-pull overwrites hand-patched
+  frames in five folders (listed there): copy first. `tools/validate.js` checks every clip file exists.
 - [ ] Wanted, no art: the vampire; redo Beren, the Yuan-Ti, skeletons, rats; raptor, red drake, fae drake.
 
 ## W1 open world (2026-11-24)
@@ -281,6 +288,11 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
 - [x] Map page republished: https://claude.ai/artifact/PndLzWQm8YhdDx1c34ev1z (places, blend to the raster, art gaps).
 - [x] Fixed a leak the bigger world exposed: `Sprites` kept every waiting portrait callback (the UI test ran out of heap).
 - [ ] **Art** for the open world: `TILES_TO_GET.md` top section; counts and kludges in `assets/world/w1-gaps.md`.
+  Seventeen sets generated 2026-11-24 (items 1-6, 8), **not wired**: `assets/wip/w1/README.md` has the ids, two
+  faults to fix by hand, and the plan (sand over sea, lake and swamp water needs a per-neighbour sheet in planTiles, or
+  the generator keeps those coasts apart; new generator classes; tileset entries). Item 7 done: each city drawn
+  from outside as one 256-px picture (`assets/wip/w1/cities/README.md`). Item 9 needs no generation (the court tier
+  sets). The forest wang sets are obsolete (no generated place uses the old tilesets).
 - [ ] Encounters and wandering monsters for the generated places (only the sites have any). Levels are distance x 0.6,
   untested: no `tools/tiers.js` / `sim/crawl.js` on them yet.
 - [ ] Decide how hand-crafted places survive regeneration (a `keep` slot copied through is the simple way).

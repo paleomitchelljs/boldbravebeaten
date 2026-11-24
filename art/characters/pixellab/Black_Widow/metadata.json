@@ -75,6 +75,43 @@
               "Idle/animations/Walk/south/frame_006.png"
             ]
           },
+          "Idle": {
+            "south": [
+              "Idle/animations/Idle/south/frame_000.png",
+              "Idle/animations/Idle/south/frame_001.png",
+              "Idle/animations/Idle/south/frame_002.png",
+              "Idle/animations/Idle/south/frame_003.png",
+              "Idle/animations/Idle/south/frame_004.png"
+            ],
+            "south-east": [
+              "Idle/animations/Idle/south-east/frame_000.png",
+              "Idle/animations/Idle/south-east/frame_001.png",
+              "Idle/animations/Idle/south-east/frame_002.png",
+              "Idle/animations/Idle/south-east/frame_003.png",
+              "Idle/animations/Idle/south-east/frame_004.png"
+            ],
+            "east": [
+              "Idle/animations/Idle/east/frame_000.png",
+              "Idle/animations/Idle/east/frame_001.png",
+              "Idle/animations/Idle/east/frame_002.png",
+              "Idle/animations/Idle/east/frame_003.png",
+              "Idle/animations/Idle/east/frame_004.png"
+            ],
+            "north-east": [
+              "Idle/animations/Idle/north-east/frame_000.png",
+              "Idle/animations/Idle/north-east/frame_001.png",
+              "Idle/animations/Idle/north-east/frame_002.png",
+              "Idle/animations/Idle/north-east/frame_003.png",
+              "Idle/animations/Idle/north-east/frame_004.png"
+            ],
+            "north": [
+              "Idle/animations/Idle/north/frame_000.png",
+              "Idle/animations/Idle/north/frame_001.png",
+              "Idle/animations/Idle/north/frame_002.png",
+              "Idle/animations/Idle/north/frame_003.png",
+              "Idle/animations/Idle/north/frame_004.png"
+            ]
+          },
           "Strike": {
             "east": [
               "Idle/animations/Strike/east/frame_000.png",
@@ -135,8 +172,37 @@
           }
         }
       }
+    },
+    {
+      "character": {
+        "id": "f16e68fc-163b-4513-8fda-99cd7d219d8d",
+        "name": "Longer legs and smal",
+        "prompt": "A giant black widow spider",
+        "size": {
+          "width": 56,
+          "height": 56
+        },
+        "template_id": "custom",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-08T17:59:44.402043+00:00"
+      },
+      "folder": "Longer_legs_and_smal",
+      "frames": {
+        "rotations": {
+          "south": "Longer_legs_and_smal/rotations/south.png",
+          "south-east": "Longer_legs_and_smal/rotations/south-east.png",
+          "east": "Longer_legs_and_smal/rotations/east.png",
+          "north-east": "Longer_legs_and_smal/rotations/north-east.png",
+          "north": "Longer_legs_and_smal/rotations/north.png",
+          "north-west": "Longer_legs_and_smal/rotations/north-west.png",
+          "west": "Longer_legs_and_smal/rotations/west.png",
+          "south-west": "Longer_legs_and_smal/rotations/south-west.png"
+        },
+        "animations": {}
+      }
     }
   ],
   "export_version": "3.1",
-  "export_date": "2026-11-08T04:49:35.369386"
+  "export_date": "2026-11-24T17:45:20.235941"
 }

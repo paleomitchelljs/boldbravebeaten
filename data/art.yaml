@@ -85,6 +85,7 @@ tevax:
   type: pixellab
   dir: art/characters/pixellab/Tevax_Thaukori/Idle
   walks: [north, east, south, west, south-east, south-west]
+  idle: {anim: Idle, frames: 5, pingpong: true}
   name: Scaled warrior
   size: 64
   box: [8, 1, 59, 63]
@@ -140,6 +141,7 @@ krump:
   # Idle only. The export's one animation is a two-footed jump (in the folder, unused): the greatsword vanishes in
   # several frames, so it is not used as the walk.
   walks: []
+  idle: {anim: Idle, frames: 5, pingpong: true}
   party: true
 spawnee:
   type: pixellab
@@ -518,7 +520,14 @@ snake-person:
   box: [2, 10, 77, 78]
   height: 1.4
   maxWidth: 2
-  walks: []
+  # Slither and slash made 2026-11-24. The west slash turned to the viewer and was deleted: it plays as the east one
+  # mirrored. The death was drawn toward its own south view laid on its side (v3 alone left it upright).
+  walk: Slither
+  walkFrames: 6
+  walks: [south, south-east, east, north-east, north]
+  idle: {anim: Idle, frames: 5, pingpong: true}
+  attack: {anim: Strike, frames: 7, dirs: [east, south-east, south, south-west, north-west, north, north-east]}
+  death: {anim: Death, frames: 7, dirs: [south]}
   party: true
 warrior-woman:
   type: pixellab
@@ -556,6 +565,7 @@ old-man:
   walk: The_character_walks_forward_with_a_steady_rhythmic
   walkFrames: 7
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
 bear:
   type: pixellab
   dir: art/characters/pixellab/Bear/flat_shaded_light_brown_bear
@@ -567,6 +577,7 @@ bear:
   walk: Walk
   walkFrames: 6
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
   attack: {anim: Attack, frames: 9}
 # The user's four new characters (2026-10-31): standing views until their clips are made
 # (assets/ideas/character-animation-plan.md, cycle 2).
@@ -579,6 +590,7 @@ hooded-knight:
   height: 1.35
   walkFrames: 6
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle-8f4ffa66, frames: 5, pingpong: true}  # the plain `Idle` is a template clip that drops the sword and shield
   attack: {anim: Strike, frames: 7}
   death: {anim: Death, frames: 7, dirs: [south]}
   party: true
@@ -617,6 +629,7 @@ mummy-lord:
   height: 1.45
   walkFrames: 6
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
   attack: {anim: Strike2, frames: 7}
   death: {anim: Death, frames: 7, dirs: [south]}
 # The fire-goblin mine's fire spirits. The efreet lord is still a stand-in: the avatar in fire colours.
@@ -671,6 +684,7 @@ xalgoz:
   height: 1.45
   walkFrames: 6
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
   attack: {anim: Strike, frames: 7}
   death: {anim: Death, frames: 7, dirs: [south]}
 minotaur-large:
@@ -682,6 +696,7 @@ minotaur-large:
   height: 1.6
   walkFrames: 6
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
   attack: {anim: Strike, frames: 7}
   death: {anim: Death, frames: 7, dirs: [south]}
 hill-giant:
@@ -693,6 +708,7 @@ hill-giant:
   height: 1.9
   walkFrames: 6
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
   maxWidth: 2.2
   attack: {anim: Sweep, frames: 7}
   death: {anim: Death, frames: 7, dirs: [south]}
@@ -705,6 +721,7 @@ lizardfolk-skeleton:
   height: 1.35
   walkFrames: 6
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
   attack: {anim: Strike, frames: 7}
   death: {anim: Death, frames: 7, dirs: [south]}
 gray-wolf:
@@ -716,6 +733,7 @@ gray-wolf:
   height: 1.0
   walkFrames: 6
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
   maxWidth: 1.6
   attack: {anim: Strike, frames: 7}
   death: {anim: Death, frames: 7, dirs: [south]}
@@ -728,6 +746,7 @@ lion:
   height: 1.1
   walkFrames: 6
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
   maxWidth: 1.8
   attack: {anim: Strike, frames: 7}
   death: {anim: Death, frames: 7, dirs: [south]}
@@ -740,6 +759,7 @@ grizzly:
   height: 1.25
   walkFrames: 6
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
   maxWidth: 1.9
   attack: {anim: Strike, frames: 7}
   death: {anim: Death, frames: 7, dirs: [south]}
@@ -752,6 +772,7 @@ orc-brute:
   height: 1.4
   walkFrames: 6
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
   attack: {anim: Strike, frames: 7}
   death: {anim: Death, frames: 7, dirs: [south]}
 gnoll:
@@ -763,6 +784,7 @@ gnoll:
   height: 1.4
   walkFrames: 6
   walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
   attack: {anim: Strike, frames: 7}
   death: {anim: Death, frames: 7, dirs: [south]}
 
@@ -788,8 +810,10 @@ lava-beetle:
   box: [3, 3, 61, 58]
   height: 0.8
   maxWidth: 1.3
+  walk: Walk
   walkFrames: 7
   walks: [south, south-east, east, north-east, north]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
   attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
   death: {anim: Death, frames: 7, dirs: [south]}
 # The user's bat and black widow (2026-11-07): the dusk bat's and the giant spider's figures.
@@ -815,8 +839,10 @@ black-widow:
   box: [5, 8, 51, 51]
   height: 0.7
   maxWidth: 1.4
+  walk: Walk
   walkFrames: 7
   walks: [south, south-east, east, north-east, north]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
   attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
   death: {anim: Death, frames: 7, dirs: [south]}
 # ---- The mine's and the orc valley's own figures (the user's, animated 2026-11-08) ----
@@ -1153,3 +1179,471 @@ kobold-king:
   idle: {anim: Idle, frames: 4, pingpong: true}
   attack: {anim: Strike, frames: 7}
   death: {anim: Death, frames: 7, dirs: [south]}
+# The W1 sites' figures (cycle of 2026-11-24, assets/ideas/character-animation-plan.md).
+sarnak-figure:
+  type: pixellab
+  dir: art/characters/pixellab/Sarnak/Idle
+  name: Sarnak
+  size: 80
+  box: [11, 6, 69, 69]
+  height: 1.5
+  walk: walking-6
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  attack: {anim: Strike2, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+sarnak-skeleton:
+  type: pixellab
+  dir: art/characters/pixellab/Sarnak_Skeleton/Skeleton
+  name: Sarnak skeleton
+  size: 80
+  box: [11, 6, 69, 69]
+  height: 1.5
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  attack: {anim: Strike2, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+minotaur-axe:
+  type: pixellab
+  dir: art/characters/pixellab/Minotaur_Large/Holding_a_great_doub
+  name: Minotaur (double axe)
+  size: 68
+  box: [0, 0, 68, 68]
+  height: 1.6
+  maxWidth: 1.6
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+goat:
+  type: pixellab
+  dir: art/characters/pixellab/Goat/Idle
+  name: Goat
+  size: 56
+  box: [4, 4, 52, 52]
+  height: 0.8
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  attack: {anim: Strike, frames: 8, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 6, dirs: [south]}
+sarnak-ghost:
+  type: pixellab
+  dir: art/characters/pixellab/Sarnak_Ghost/Floating_in_the_air
+  name: Sarnak ghost
+  size: 80
+  box: [0, 1, 80, 80]
+  height: 1.5
+  maxWidth: 1.6
+  # It floats: the hover plays moving and standing, forward and back.
+  walk: {anim: Float, pingpong: true}
+  walkFrames: 7
+  walks: [east, south-east, south, north-east, north]
+  floats: true
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+bison:
+  type: pixellab
+  dir: art/characters/pixellab/Bison/Idle
+  name: Bison
+  size: 64
+  box: [1, 1, 63, 62]
+  height: 1.1
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  attack: {anim: Strike, frames: 8, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 6, dirs: [south]}
+horse:
+  type: pixellab
+  dir: art/characters/pixellab/Horse/Idle
+  name: Horse
+  size: 64
+  box: [1, 1, 63, 63]
+  height: 1.3
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  attack: {anim: Strike, frames: 8, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 6, dirs: [south]}
+cyclops:
+  type: pixellab
+  dir: art/characters/pixellab/Cyclops/Idle
+  name: Cyclops
+  size: 80
+  box: [13, 9, 67, 71]
+  height: 1.9
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+glyptodon:
+  type: pixellab
+  dir: art/characters/pixellab/Glyptodon/Idle
+  name: Glyptodon
+  size: 80
+  box: [1, 5, 79, 75]
+  height: 1.1
+  maxWidth: 1.6
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+spider-demon:
+  type: pixellab
+  dir: art/characters/pixellab/Spider_Demon/Idle
+  name: Spider demon
+  size: 80
+  box: [3, 2, 77, 77]
+  height: 1.3
+  maxWidth: 1.6
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, north-east, north]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  # The death was drawn toward its own south view laid on its side.
+  death: {anim: Death, frames: 7, dirs: [south]}
+griffon:
+  type: pixellab
+  dir: art/characters/pixellab/Griffon/Idle
+  name: Griffon
+  size: 80
+  box: [2, 6, 78, 73]
+  height: 1.4
+  maxWidth: 1.6
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+eolambia:
+  type: pixellab
+  dir: art/characters/pixellab/Eolambia/Idle
+  name: Eolambia
+  size: 120
+  box: [3, 21, 117, 99]
+  height: 1.8
+  maxWidth: 2.4
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  attack: {anim: Strike, frames: 8, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+troll-warrior:
+  type: pixellab
+  dir: art/characters/pixellab/Troll_Warrior/Idle
+  name: Troll warrior
+  size: 72
+  box: [1, 4, 71, 68]
+  height: 1.8
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+clannfear:
+  type: pixellab
+  dir: art/characters/pixellab/Clannfear/Idle
+  name: Clannfear
+  size: 64
+  box: [2, 1, 62, 62]
+  height: 1.2
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+chokidai:
+  type: pixellab
+  dir: art/characters/pixellab/Chokidai/Idle
+  name: Chokidai
+  size: 64
+  box: [1, 1, 63, 63]
+  height: 1.0
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+hag:
+  type: pixellab
+  dir: art/characters/pixellab/Hag/Idle
+  name: Hag
+  size: 64
+  box: [11, 1, 53, 62]
+  height: 1.3
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+# The newer heroes (same cycle). A strike direction left out drifted toward the viewer; it plays as its mirror twin.
+aela:
+  type: pixellab
+  dir: art/characters/pixellab/Aela/Idle
+  name: Aela
+  size: 64
+  box: [2, 3, 62, 60]
+  height: 1.4
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true}
+  attack: {anim: Strike, frames: 7}
+  death: {anim: Death, frames: 7, dirs: [south]}
+  party: true
+kaladin:
+  type: pixellab
+  dir: art/characters/pixellab/Kaladin/Idle
+  name: Kaladin
+  size: 64
+  box: [4, 3, 62, 60]
+  height: 1.4
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true}
+  attack: {anim: Strike, frames: 7}
+  death: {anim: Death, frames: 7, dirs: [south]}
+  party: true
+dovahkiin:
+  type: pixellab
+  dir: art/characters/pixellab/Dovahkiin/Idle
+  name: Dovahkiin
+  size: 64
+  box: [11, 4, 53, 60]
+  height: 1.4
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true}
+  attack: {anim: Strike, frames: 7, dirs: [south-east, south, south-west, west, north-west, north, north-east]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+  party: true
+kregon:
+  type: pixellab
+  dir: art/characters/pixellab/Kregon/Idle
+  name: Kregon
+  size: 56
+  box: [1, 5, 55, 52]
+  height: 1.1
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true}
+  attack: {anim: Strike, frames: 7, dirs: [south-east, south, south-west, west, north-west, north, north-east]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+  party: true
+sorkvild:
+  type: pixellab
+  dir: art/characters/pixellab/Sorkvild/Idle
+  name: Sorkvild
+  size: 64
+  box: [7, 3, 57, 62]
+  height: 1.4
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true}
+  attack: {anim: Strike, frames: 7, dirs: [east, south-east, south, south-west, north-west, north, north-east]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+  party: true
+vivec-alt:
+  type: pixellab
+  dir: art/characters/pixellab/Vivec_Alt/Idle
+  name: Vivec (seated)
+  size: 64
+  box: [7, 2, 57, 62]
+  height: 1.2
+  walk: {anim: Float, pingpong: true}
+  walkFrames: 7
+  walks: [east, south-east, south, north-east, north]
+  floats: true
+  attack: {anim: Strike, frames: 7}
+  death: {anim: Death, frames: 7, dirs: [south]}
+  party: true
+# The rest of the newer monsters (same cycle).
+troll-knight:
+  type: pixellab
+  dir: art/characters/pixellab/Troll_Knight/Idle
+  name: Troll knight
+  size: 76
+  box: [12, 7, 64, 68]
+  height: 1.9
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+daedroth:
+  type: pixellab
+  dir: art/characters/pixellab/Daedroth/Idle
+  name: Daedroth
+  size: 80
+  box: [3, 12, 77, 74]
+  height: 1.7
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  # Strike2 S and N frames 5-6 are copies of frames 4 and 0 (S 5 was a green smear, N 5-6 turned to the viewer), so
+  # a fresh pull brings the faults back.
+  attack: {anim: Strike2, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death2, frames: 7, dirs: [south]}
+werewolf:
+  type: pixellab
+  dir: art/characters/pixellab/Werewolf/Idle
+  name: Werewolf
+  size: 64
+  box: [3, 5, 61, 63]
+  height: 1.6
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+guar:
+  type: pixellab
+  dir: art/characters/pixellab/Guar/Idle
+  name: Guar
+  size: 64
+  box: [1, 2, 63, 63]
+  height: 1.1
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  # v3's first death only sat it down; this one was drawn toward its own south view laid on its side.
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+skorpikis:
+  type: pixellab
+  dir: art/characters/pixellab/Skorpikis/Idle
+  name: Skorpikis
+  size: 80
+  box: [3, 3, 77, 77]
+  height: 1.2
+  maxWidth: 1.8
+  walk: Walk
+  walkFrames: 6
+  walks: [south, south-east, east, north-east, north]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  # v3 alone left it standing; the death was drawn toward its own south view laid on its side.
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+burynai:
+  type: pixellab
+  dir: art/characters/pixellab/Burynai/Unarmored
+  name: Burynai
+  size: 64
+  box: [6, 4, 58, 63]
+  height: 1.2
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  attack: {anim: Strike2, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+burynai-warrior:
+  type: pixellab
+  dir: art/characters/pixellab/Burynai_Warrior/Armored
+  name: Burynai warrior
+  size: 64
+  box: [5, 4, 59, 63]
+  height: 1.25
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  attack: {anim: Strike2, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+gnoll-white:
+  type: pixellab
+  dir: art/characters/pixellab/Gnoll/White_furred_and_cla
+  name: White gnoll
+  size: 64
+  box: [7, 2, 57, 62]
+  height: 1.4
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+charcia:
+  type: pixellab
+  dir: art/characters/pixellab/Charcia/Idle
+  name: Charcia
+  size: 64
+  box: [2, 1, 62, 62]
+  height: 1.4
+  walk: Slither
+  walkFrames: 6
+  walks: [south, south-east, east, north-east, north]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  attack: {anim: Strike2, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+dragonfolk-short:
+  type: pixellab
+  dir: art/characters/pixellab/Dragonfolk_Short/Idle
+  name: Short dragonfolk
+  size: 48
+  box: [4, 1, 44, 47]
+  height: 1.0
+  walk: Walk
+  walkFrames: 6
+  walks: [east, south-east, south, south-west, west, north-west, north, north-east]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+snake-spear:
+  type: pixellab
+  dir: art/characters/pixellab/Snake_Spear/Idle
+  name: Spear snake
+  size: 64
+  box: [8, 2, 56, 61]
+  height: 1.4
+  walk: Slither
+  walkFrames: 6
+  walks: [south, south-east, east, north-east, north]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  # v3 alone left it upright; the death was drawn toward its own south view laid on its side.
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [south]}
+tylo:
+  type: pixellab
+  dir: art/characters/pixellab/Tylo/Idle
+  name: Tylo
+  size: 48
+  box: [1, 1, 47, 46]
+  height: 0.5
+  maxWidth: 1.2
+  # A quadruped seen from above. PixelLab's south view stood it up like a biped: the south.png here is its north view
+  # flipped (a re-pull brings the biped back), and the south crawl and bite were redrawn from it. The death is a side
+  # view (east), shown for every facing.
+  walk: Walk
+  walkFrames: 6
+  walks: [south, south-east, east, north-east, north]
+  idle: {anim: Idle, frames: 5, pingpong: true, dirs: [south, south-east, east, north-east, north]}
+  attack: {anim: Strike, frames: 7, dirs: [south, south-east, east, north-east, north]}
+  death: {anim: Death, frames: 7, dirs: [east]}

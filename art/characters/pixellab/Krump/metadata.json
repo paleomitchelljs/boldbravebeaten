@@ -101,11 +101,98 @@
               "Idle/animations/Two-Footed_Jump/south-west/frame_005.png",
               "Idle/animations/Two-Footed_Jump/south-west/frame_006.png"
             ]
+          },
+          "Idle": {
+            "west": [
+              "Idle/animations/Idle/west/frame_000.png",
+              "Idle/animations/Idle/west/frame_001.png",
+              "Idle/animations/Idle/west/frame_002.png",
+              "Idle/animations/Idle/west/frame_003.png",
+              "Idle/animations/Idle/west/frame_004.png"
+            ],
+            "north-east": [
+              "Idle/animations/Idle/north-east/frame_000.png",
+              "Idle/animations/Idle/north-east/frame_001.png",
+              "Idle/animations/Idle/north-east/frame_002.png",
+              "Idle/animations/Idle/north-east/frame_003.png",
+              "Idle/animations/Idle/north-east/frame_004.png"
+            ],
+            "north-west": [
+              "Idle/animations/Idle/north-west/frame_000.png",
+              "Idle/animations/Idle/north-west/frame_001.png",
+              "Idle/animations/Idle/north-west/frame_002.png",
+              "Idle/animations/Idle/north-west/frame_003.png",
+              "Idle/animations/Idle/north-west/frame_004.png"
+            ],
+            "east": [
+              "Idle/animations/Idle/east/frame_000.png",
+              "Idle/animations/Idle/east/frame_001.png",
+              "Idle/animations/Idle/east/frame_002.png",
+              "Idle/animations/Idle/east/frame_003.png",
+              "Idle/animations/Idle/east/frame_004.png"
+            ],
+            "south-west": [
+              "Idle/animations/Idle/south-west/frame_000.png",
+              "Idle/animations/Idle/south-west/frame_001.png",
+              "Idle/animations/Idle/south-west/frame_002.png",
+              "Idle/animations/Idle/south-west/frame_003.png",
+              "Idle/animations/Idle/south-west/frame_004.png"
+            ],
+            "south": [
+              "Idle/animations/Idle/south/frame_000.png",
+              "Idle/animations/Idle/south/frame_001.png",
+              "Idle/animations/Idle/south/frame_002.png",
+              "Idle/animations/Idle/south/frame_003.png",
+              "Idle/animations/Idle/south/frame_004.png"
+            ],
+            "south-east": [
+              "Idle/animations/Idle/south-east/frame_000.png",
+              "Idle/animations/Idle/south-east/frame_001.png",
+              "Idle/animations/Idle/south-east/frame_002.png",
+              "Idle/animations/Idle/south-east/frame_003.png",
+              "Idle/animations/Idle/south-east/frame_004.png"
+            ],
+            "north": [
+              "Idle/animations/Idle/north/frame_000.png",
+              "Idle/animations/Idle/north/frame_001.png",
+              "Idle/animations/Idle/north/frame_002.png",
+              "Idle/animations/Idle/north/frame_003.png",
+              "Idle/animations/Idle/north/frame_004.png"
+            ]
           }
         }
+      }
+    },
+    {
+      "character": {
+        "id": "eb924330-047c-4549-a3bb-5983a706671a",
+        "name": "No sword",
+        "prompt": "A froglok knight wielding a rune-etched two handed greatsword",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-08T18:06:12.372906+00:00"
+      },
+      "folder": "No_sword",
+      "frames": {
+        "rotations": {
+          "south": "No_sword/rotations/south.png",
+          "south-east": "No_sword/rotations/south-east.png",
+          "east": "No_sword/rotations/east.png",
+          "north-east": "No_sword/rotations/north-east.png",
+          "north": "No_sword/rotations/north.png",
+          "north-west": "No_sword/rotations/north-west.png",
+          "west": "No_sword/rotations/west.png",
+          "south-west": "No_sword/rotations/south-west.png"
+        },
+        "animations": {}
       }
     }
   ],
   "export_version": "3.1",
-  "export_date": "2026-10-28T14:39:39.708896"
+  "export_date": "2026-11-24T17:45:00.228093"
 }

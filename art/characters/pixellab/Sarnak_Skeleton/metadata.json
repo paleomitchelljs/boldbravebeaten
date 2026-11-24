@@ -1,0 +1,198 @@
+{
+  "group_id": "865818a9-2f58-4eae-9ca1-027c537ab694",
+  "states": [
+    {
+      "character": {
+        "id": "29d05620-5479-49e5-a07b-ed4e5294e78d",
+        "name": "Skeleton",
+        "prompt": "Lanky & tall dragon-lizard folk hybrid with brown scales, a long winding tail, and loose bronze plate armor. Three horns extend backwards from the head, and the long narrow snout ends in a sharp beak. Digitigrade feet.",
+        "size": {
+          "width": 80,
+          "height": 80
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-08T17:54:30.386117+00:00"
+      },
+      "folder": "Skeleton",
+      "frames": {
+        "rotations": {
+          "south": "Skeleton/rotations/south.png",
+          "south-east": "Skeleton/rotations/south-east.png",
+          "east": "Skeleton/rotations/east.png",
+          "north-east": "Skeleton/rotations/north-east.png",
+          "north": "Skeleton/rotations/north.png",
+          "north-west": "Skeleton/rotations/north-west.png",
+          "west": "Skeleton/rotations/west.png",
+          "south-west": "Skeleton/rotations/south-west.png"
+        },
+        "animations": {
+          "Idle": {
+            "south": [
+              "Skeleton/animations/Idle/south/frame_000.png",
+              "Skeleton/animations/Idle/south/frame_001.png",
+              "Skeleton/animations/Idle/south/frame_002.png",
+              "Skeleton/animations/Idle/south/frame_003.png",
+              "Skeleton/animations/Idle/south/frame_004.png"
+            ],
+            "north-east": [
+              "Skeleton/animations/Idle/north-east/frame_000.png",
+              "Skeleton/animations/Idle/north-east/frame_001.png",
+              "Skeleton/animations/Idle/north-east/frame_002.png",
+              "Skeleton/animations/Idle/north-east/frame_003.png",
+              "Skeleton/animations/Idle/north-east/frame_004.png"
+            ],
+            "east": [
+              "Skeleton/animations/Idle/east/frame_000.png",
+              "Skeleton/animations/Idle/east/frame_001.png",
+              "Skeleton/animations/Idle/east/frame_002.png",
+              "Skeleton/animations/Idle/east/frame_003.png",
+              "Skeleton/animations/Idle/east/frame_004.png"
+            ],
+            "south-east": [
+              "Skeleton/animations/Idle/south-east/frame_000.png",
+              "Skeleton/animations/Idle/south-east/frame_001.png",
+              "Skeleton/animations/Idle/south-east/frame_002.png",
+              "Skeleton/animations/Idle/south-east/frame_003.png",
+              "Skeleton/animations/Idle/south-east/frame_004.png"
+            ],
+            "north": [
+              "Skeleton/animations/Idle/north/frame_000.png",
+              "Skeleton/animations/Idle/north/frame_001.png",
+              "Skeleton/animations/Idle/north/frame_002.png",
+              "Skeleton/animations/Idle/north/frame_003.png",
+              "Skeleton/animations/Idle/north/frame_004.png"
+            ]
+          },
+          "Strike2": {
+            "east": [
+              "Skeleton/animations/Strike2/east/frame_000.png",
+              "Skeleton/animations/Strike2/east/frame_001.png",
+              "Skeleton/animations/Strike2/east/frame_002.png",
+              "Skeleton/animations/Strike2/east/frame_003.png",
+              "Skeleton/animations/Strike2/east/frame_004.png",
+              "Skeleton/animations/Strike2/east/frame_005.png",
+              "Skeleton/animations/Strike2/east/frame_006.png"
+            ],
+            "north": [
+              "Skeleton/animations/Strike2/north/frame_000.png",
+              "Skeleton/animations/Strike2/north/frame_001.png",
+              "Skeleton/animations/Strike2/north/frame_002.png",
+              "Skeleton/animations/Strike2/north/frame_003.png",
+              "Skeleton/animations/Strike2/north/frame_004.png",
+              "Skeleton/animations/Strike2/north/frame_005.png",
+              "Skeleton/animations/Strike2/north/frame_006.png"
+            ],
+            "south-east": [
+              "Skeleton/animations/Strike2/south-east/frame_000.png",
+              "Skeleton/animations/Strike2/south-east/frame_001.png",
+              "Skeleton/animations/Strike2/south-east/frame_002.png",
+              "Skeleton/animations/Strike2/south-east/frame_003.png",
+              "Skeleton/animations/Strike2/south-east/frame_004.png",
+              "Skeleton/animations/Strike2/south-east/frame_005.png",
+              "Skeleton/animations/Strike2/south-east/frame_006.png"
+            ],
+            "south": [
+              "Skeleton/animations/Strike2/south/frame_000.png",
+              "Skeleton/animations/Strike2/south/frame_001.png",
+              "Skeleton/animations/Strike2/south/frame_002.png",
+              "Skeleton/animations/Strike2/south/frame_003.png",
+              "Skeleton/animations/Strike2/south/frame_004.png",
+              "Skeleton/animations/Strike2/south/frame_005.png",
+              "Skeleton/animations/Strike2/south/frame_006.png"
+            ],
+            "north-east": [
+              "Skeleton/animations/Strike2/north-east/frame_000.png",
+              "Skeleton/animations/Strike2/north-east/frame_001.png",
+              "Skeleton/animations/Strike2/north-east/frame_002.png",
+              "Skeleton/animations/Strike2/north-east/frame_003.png",
+              "Skeleton/animations/Strike2/north-east/frame_004.png",
+              "Skeleton/animations/Strike2/north-east/frame_005.png",
+              "Skeleton/animations/Strike2/north-east/frame_006.png"
+            ]
+          },
+          "Death": {
+            "south": [
+              "Skeleton/animations/Death/south/frame_000.png",
+              "Skeleton/animations/Death/south/frame_001.png",
+              "Skeleton/animations/Death/south/frame_002.png",
+              "Skeleton/animations/Death/south/frame_003.png",
+              "Skeleton/animations/Death/south/frame_004.png",
+              "Skeleton/animations/Death/south/frame_005.png",
+              "Skeleton/animations/Death/south/frame_006.png"
+            ]
+          },
+          "Walk": {
+            "south-east": [
+              "Skeleton/animations/Walk/south-east/frame_000.png",
+              "Skeleton/animations/Walk/south-east/frame_001.png",
+              "Skeleton/animations/Walk/south-east/frame_002.png",
+              "Skeleton/animations/Walk/south-east/frame_003.png",
+              "Skeleton/animations/Walk/south-east/frame_004.png",
+              "Skeleton/animations/Walk/south-east/frame_005.png"
+            ],
+            "north-west": [
+              "Skeleton/animations/Walk/north-west/frame_000.png",
+              "Skeleton/animations/Walk/north-west/frame_001.png",
+              "Skeleton/animations/Walk/north-west/frame_002.png",
+              "Skeleton/animations/Walk/north-west/frame_003.png",
+              "Skeleton/animations/Walk/north-west/frame_004.png",
+              "Skeleton/animations/Walk/north-west/frame_005.png"
+            ],
+            "south-west": [
+              "Skeleton/animations/Walk/south-west/frame_000.png",
+              "Skeleton/animations/Walk/south-west/frame_001.png",
+              "Skeleton/animations/Walk/south-west/frame_002.png",
+              "Skeleton/animations/Walk/south-west/frame_003.png",
+              "Skeleton/animations/Walk/south-west/frame_004.png",
+              "Skeleton/animations/Walk/south-west/frame_005.png"
+            ],
+            "north": [
+              "Skeleton/animations/Walk/north/frame_000.png",
+              "Skeleton/animations/Walk/north/frame_001.png",
+              "Skeleton/animations/Walk/north/frame_002.png",
+              "Skeleton/animations/Walk/north/frame_003.png",
+              "Skeleton/animations/Walk/north/frame_004.png",
+              "Skeleton/animations/Walk/north/frame_005.png"
+            ],
+            "south": [
+              "Skeleton/animations/Walk/south/frame_000.png",
+              "Skeleton/animations/Walk/south/frame_001.png",
+              "Skeleton/animations/Walk/south/frame_002.png",
+              "Skeleton/animations/Walk/south/frame_003.png",
+              "Skeleton/animations/Walk/south/frame_004.png",
+              "Skeleton/animations/Walk/south/frame_005.png"
+            ],
+            "east": [
+              "Skeleton/animations/Walk/east/frame_000.png",
+              "Skeleton/animations/Walk/east/frame_001.png",
+              "Skeleton/animations/Walk/east/frame_002.png",
+              "Skeleton/animations/Walk/east/frame_003.png",
+              "Skeleton/animations/Walk/east/frame_004.png",
+              "Skeleton/animations/Walk/east/frame_005.png"
+            ],
+            "north-east": [
+              "Skeleton/animations/Walk/north-east/frame_000.png",
+              "Skeleton/animations/Walk/north-east/frame_001.png",
+              "Skeleton/animations/Walk/north-east/frame_002.png",
+              "Skeleton/animations/Walk/north-east/frame_003.png",
+              "Skeleton/animations/Walk/north-east/frame_004.png",
+              "Skeleton/animations/Walk/north-east/frame_005.png"
+            ],
+            "west": [
+              "Skeleton/animations/Walk/west/frame_000.png",
+              "Skeleton/animations/Walk/west/frame_001.png",
+              "Skeleton/animations/Walk/west/frame_002.png",
+              "Skeleton/animations/Walk/west/frame_003.png",
+              "Skeleton/animations/Walk/west/frame_004.png",
+              "Skeleton/animations/Walk/west/frame_005.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-11-24T17:45:54.951623"
+}

@@ -25,7 +25,7 @@
 - Swamp in grassland places: pools of deep water with reeds; no marsh set over grass (the jungle's marsh ≈ is over jungle floor only).
 - Mountains: the vale's grey granite slope, ledge and summit everywhere (also the desert's), and for the red labyrinth's red rock (no sandstone over grass); no snow, no volcanic black for Exeomo's rim.
 - Hills and mountains in jungle places are drawn as floor or canopy: no jungle hills, no jungle mountain.
-- Towns: Shiwgoiwo is village props on the green; each city is a single prop (pyramid, gatehouse, tower) standing in for walls, gates and districts.
+- Towns: Shiwgoiwo is village props on the green; each city is one picture of the whole walled city from outside (no streets to walk outside its gate).
 - The temple's pyramids are props, not walkable terrain; the sarnak blocks use the orc castle's fort wall, with door props in front (a door drawn in the wall would draw the mountain behind it).
 - Labyrinth walls are mountain squares (#) drawn as grey slope, two squares thick.
 - Generated places carry no encounters or wandering monsters of their own yet: only the sites' (Shiwgoiwo's wolves, the temple, the sarnaks, the orcs, the labyrinth, the spectres).

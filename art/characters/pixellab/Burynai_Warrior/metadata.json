@@ -1,0 +1,198 @@
+{
+  "group_id": "bf64735a-abe5-4b98-8d91-1181ad10fe52",
+  "states": [
+    {
+      "character": {
+        "id": "a796dedb-4af9-4f9b-889b-4083167b40a8",
+        "name": "Armored",
+        "prompt": "A bipedal badger-man with ferocious claws and a snarling face wearing red armor",
+        "size": {
+          "width": 64,
+          "height": 64
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-08T04:41:03.789483+00:00"
+      },
+      "folder": "Armored",
+      "frames": {
+        "rotations": {
+          "south": "Armored/rotations/south.png",
+          "south-east": "Armored/rotations/south-east.png",
+          "east": "Armored/rotations/east.png",
+          "north-east": "Armored/rotations/north-east.png",
+          "north": "Armored/rotations/north.png",
+          "north-west": "Armored/rotations/north-west.png",
+          "west": "Armored/rotations/west.png",
+          "south-west": "Armored/rotations/south-west.png"
+        },
+        "animations": {
+          "Death": {
+            "south": [
+              "Armored/animations/Death/south/frame_000.png",
+              "Armored/animations/Death/south/frame_001.png",
+              "Armored/animations/Death/south/frame_002.png",
+              "Armored/animations/Death/south/frame_003.png",
+              "Armored/animations/Death/south/frame_004.png",
+              "Armored/animations/Death/south/frame_005.png",
+              "Armored/animations/Death/south/frame_006.png"
+            ]
+          },
+          "Strike2": {
+            "north": [
+              "Armored/animations/Strike2/north/frame_000.png",
+              "Armored/animations/Strike2/north/frame_001.png",
+              "Armored/animations/Strike2/north/frame_002.png",
+              "Armored/animations/Strike2/north/frame_003.png",
+              "Armored/animations/Strike2/north/frame_004.png",
+              "Armored/animations/Strike2/north/frame_005.png",
+              "Armored/animations/Strike2/north/frame_006.png"
+            ],
+            "north-east": [
+              "Armored/animations/Strike2/north-east/frame_000.png",
+              "Armored/animations/Strike2/north-east/frame_001.png",
+              "Armored/animations/Strike2/north-east/frame_002.png",
+              "Armored/animations/Strike2/north-east/frame_003.png",
+              "Armored/animations/Strike2/north-east/frame_004.png",
+              "Armored/animations/Strike2/north-east/frame_005.png",
+              "Armored/animations/Strike2/north-east/frame_006.png"
+            ],
+            "south": [
+              "Armored/animations/Strike2/south/frame_000.png",
+              "Armored/animations/Strike2/south/frame_001.png",
+              "Armored/animations/Strike2/south/frame_002.png",
+              "Armored/animations/Strike2/south/frame_003.png",
+              "Armored/animations/Strike2/south/frame_004.png",
+              "Armored/animations/Strike2/south/frame_005.png",
+              "Armored/animations/Strike2/south/frame_006.png"
+            ],
+            "east": [
+              "Armored/animations/Strike2/east/frame_000.png",
+              "Armored/animations/Strike2/east/frame_001.png",
+              "Armored/animations/Strike2/east/frame_002.png",
+              "Armored/animations/Strike2/east/frame_003.png",
+              "Armored/animations/Strike2/east/frame_004.png",
+              "Armored/animations/Strike2/east/frame_005.png",
+              "Armored/animations/Strike2/east/frame_006.png"
+            ],
+            "south-east": [
+              "Armored/animations/Strike2/south-east/frame_000.png",
+              "Armored/animations/Strike2/south-east/frame_001.png",
+              "Armored/animations/Strike2/south-east/frame_002.png",
+              "Armored/animations/Strike2/south-east/frame_003.png",
+              "Armored/animations/Strike2/south-east/frame_004.png",
+              "Armored/animations/Strike2/south-east/frame_005.png",
+              "Armored/animations/Strike2/south-east/frame_006.png"
+            ]
+          },
+          "Walk": {
+            "south-east": [
+              "Armored/animations/Walk/south-east/frame_000.png",
+              "Armored/animations/Walk/south-east/frame_001.png",
+              "Armored/animations/Walk/south-east/frame_002.png",
+              "Armored/animations/Walk/south-east/frame_003.png",
+              "Armored/animations/Walk/south-east/frame_004.png",
+              "Armored/animations/Walk/south-east/frame_005.png"
+            ],
+            "east": [
+              "Armored/animations/Walk/east/frame_000.png",
+              "Armored/animations/Walk/east/frame_001.png",
+              "Armored/animations/Walk/east/frame_002.png",
+              "Armored/animations/Walk/east/frame_003.png",
+              "Armored/animations/Walk/east/frame_004.png",
+              "Armored/animations/Walk/east/frame_005.png"
+            ],
+            "south": [
+              "Armored/animations/Walk/south/frame_000.png",
+              "Armored/animations/Walk/south/frame_001.png",
+              "Armored/animations/Walk/south/frame_002.png",
+              "Armored/animations/Walk/south/frame_003.png",
+              "Armored/animations/Walk/south/frame_004.png",
+              "Armored/animations/Walk/south/frame_005.png"
+            ],
+            "south-west": [
+              "Armored/animations/Walk/south-west/frame_000.png",
+              "Armored/animations/Walk/south-west/frame_001.png",
+              "Armored/animations/Walk/south-west/frame_002.png",
+              "Armored/animations/Walk/south-west/frame_003.png",
+              "Armored/animations/Walk/south-west/frame_004.png",
+              "Armored/animations/Walk/south-west/frame_005.png"
+            ],
+            "north-west": [
+              "Armored/animations/Walk/north-west/frame_000.png",
+              "Armored/animations/Walk/north-west/frame_001.png",
+              "Armored/animations/Walk/north-west/frame_002.png",
+              "Armored/animations/Walk/north-west/frame_003.png",
+              "Armored/animations/Walk/north-west/frame_004.png",
+              "Armored/animations/Walk/north-west/frame_005.png"
+            ],
+            "north-east": [
+              "Armored/animations/Walk/north-east/frame_000.png",
+              "Armored/animations/Walk/north-east/frame_001.png",
+              "Armored/animations/Walk/north-east/frame_002.png",
+              "Armored/animations/Walk/north-east/frame_003.png",
+              "Armored/animations/Walk/north-east/frame_004.png",
+              "Armored/animations/Walk/north-east/frame_005.png"
+            ],
+            "west": [
+              "Armored/animations/Walk/west/frame_000.png",
+              "Armored/animations/Walk/west/frame_001.png",
+              "Armored/animations/Walk/west/frame_002.png",
+              "Armored/animations/Walk/west/frame_003.png",
+              "Armored/animations/Walk/west/frame_004.png",
+              "Armored/animations/Walk/west/frame_005.png"
+            ],
+            "north": [
+              "Armored/animations/Walk/north/frame_000.png",
+              "Armored/animations/Walk/north/frame_001.png",
+              "Armored/animations/Walk/north/frame_002.png",
+              "Armored/animations/Walk/north/frame_003.png",
+              "Armored/animations/Walk/north/frame_004.png",
+              "Armored/animations/Walk/north/frame_005.png"
+            ]
+          },
+          "Idle": {
+            "north": [
+              "Armored/animations/Idle/north/frame_000.png",
+              "Armored/animations/Idle/north/frame_001.png",
+              "Armored/animations/Idle/north/frame_002.png",
+              "Armored/animations/Idle/north/frame_003.png",
+              "Armored/animations/Idle/north/frame_004.png"
+            ],
+            "south": [
+              "Armored/animations/Idle/south/frame_000.png",
+              "Armored/animations/Idle/south/frame_001.png",
+              "Armored/animations/Idle/south/frame_002.png",
+              "Armored/animations/Idle/south/frame_003.png",
+              "Armored/animations/Idle/south/frame_004.png"
+            ],
+            "east": [
+              "Armored/animations/Idle/east/frame_000.png",
+              "Armored/animations/Idle/east/frame_001.png",
+              "Armored/animations/Idle/east/frame_002.png",
+              "Armored/animations/Idle/east/frame_003.png",
+              "Armored/animations/Idle/east/frame_004.png"
+            ],
+            "north-east": [
+              "Armored/animations/Idle/north-east/frame_000.png",
+              "Armored/animations/Idle/north-east/frame_001.png",
+              "Armored/animations/Idle/north-east/frame_002.png",
+              "Armored/animations/Idle/north-east/frame_003.png",
+              "Armored/animations/Idle/north-east/frame_004.png"
+            ],
+            "south-east": [
+              "Armored/animations/Idle/south-east/frame_000.png",
+              "Armored/animations/Idle/south-east/frame_001.png",
+              "Armored/animations/Idle/south-east/frame_002.png",
+              "Armored/animations/Idle/south-east/frame_003.png",
+              "Armored/animations/Idle/south-east/frame_004.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-11-24T17:46:00.418576"
+}

@@ -28,6 +28,43 @@
           "south-west": "Idle/rotations/south-west.png"
         },
         "animations": {
+          "Idle": {
+            "north-east": [
+              "Idle/animations/Idle/north-east/frame_000.png",
+              "Idle/animations/Idle/north-east/frame_001.png",
+              "Idle/animations/Idle/north-east/frame_002.png",
+              "Idle/animations/Idle/north-east/frame_003.png",
+              "Idle/animations/Idle/north-east/frame_004.png"
+            ],
+            "south-east": [
+              "Idle/animations/Idle/south-east/frame_000.png",
+              "Idle/animations/Idle/south-east/frame_001.png",
+              "Idle/animations/Idle/south-east/frame_002.png",
+              "Idle/animations/Idle/south-east/frame_003.png",
+              "Idle/animations/Idle/south-east/frame_004.png"
+            ],
+            "north": [
+              "Idle/animations/Idle/north/frame_000.png",
+              "Idle/animations/Idle/north/frame_001.png",
+              "Idle/animations/Idle/north/frame_002.png",
+              "Idle/animations/Idle/north/frame_003.png",
+              "Idle/animations/Idle/north/frame_004.png"
+            ],
+            "east": [
+              "Idle/animations/Idle/east/frame_000.png",
+              "Idle/animations/Idle/east/frame_001.png",
+              "Idle/animations/Idle/east/frame_002.png",
+              "Idle/animations/Idle/east/frame_003.png",
+              "Idle/animations/Idle/east/frame_004.png"
+            ],
+            "south": [
+              "Idle/animations/Idle/south/frame_000.png",
+              "Idle/animations/Idle/south/frame_001.png",
+              "Idle/animations/Idle/south/frame_002.png",
+              "Idle/animations/Idle/south/frame_003.png",
+              "Idle/animations/Idle/south/frame_004.png"
+            ]
+          },
           "Strike": {
             "south-east": [
               "Idle/animations/Strike/south-east/frame_000.png",
@@ -208,10 +245,172 @@
           "west": "White_furred_and_cla/rotations/west.png",
           "south-west": "White_furred_and_cla/rotations/south-west.png"
         },
-        "animations": {}
+        "animations": {
+          "Idle": {
+            "north-east": [
+              "White_furred_and_cla/animations/Idle/north-east/frame_000.png",
+              "White_furred_and_cla/animations/Idle/north-east/frame_001.png",
+              "White_furred_and_cla/animations/Idle/north-east/frame_002.png",
+              "White_furred_and_cla/animations/Idle/north-east/frame_003.png",
+              "White_furred_and_cla/animations/Idle/north-east/frame_004.png"
+            ],
+            "south-east": [
+              "White_furred_and_cla/animations/Idle/south-east/frame_000.png",
+              "White_furred_and_cla/animations/Idle/south-east/frame_001.png",
+              "White_furred_and_cla/animations/Idle/south-east/frame_002.png",
+              "White_furred_and_cla/animations/Idle/south-east/frame_003.png",
+              "White_furred_and_cla/animations/Idle/south-east/frame_004.png"
+            ],
+            "north": [
+              "White_furred_and_cla/animations/Idle/north/frame_000.png",
+              "White_furred_and_cla/animations/Idle/north/frame_001.png",
+              "White_furred_and_cla/animations/Idle/north/frame_002.png",
+              "White_furred_and_cla/animations/Idle/north/frame_003.png",
+              "White_furred_and_cla/animations/Idle/north/frame_004.png"
+            ],
+            "south": [
+              "White_furred_and_cla/animations/Idle/south/frame_000.png",
+              "White_furred_and_cla/animations/Idle/south/frame_001.png",
+              "White_furred_and_cla/animations/Idle/south/frame_002.png",
+              "White_furred_and_cla/animations/Idle/south/frame_003.png",
+              "White_furred_and_cla/animations/Idle/south/frame_004.png"
+            ],
+            "east": [
+              "White_furred_and_cla/animations/Idle/east/frame_000.png",
+              "White_furred_and_cla/animations/Idle/east/frame_001.png",
+              "White_furred_and_cla/animations/Idle/east/frame_002.png",
+              "White_furred_and_cla/animations/Idle/east/frame_003.png",
+              "White_furred_and_cla/animations/Idle/east/frame_004.png"
+            ]
+          },
+          "Death": {
+            "south": [
+              "White_furred_and_cla/animations/Death/south/frame_000.png",
+              "White_furred_and_cla/animations/Death/south/frame_001.png",
+              "White_furred_and_cla/animations/Death/south/frame_002.png",
+              "White_furred_and_cla/animations/Death/south/frame_003.png",
+              "White_furred_and_cla/animations/Death/south/frame_004.png",
+              "White_furred_and_cla/animations/Death/south/frame_005.png",
+              "White_furred_and_cla/animations/Death/south/frame_006.png"
+            ]
+          },
+          "Walk": {
+            "south-east": [
+              "White_furred_and_cla/animations/Walk/south-east/frame_000.png",
+              "White_furred_and_cla/animations/Walk/south-east/frame_001.png",
+              "White_furred_and_cla/animations/Walk/south-east/frame_002.png",
+              "White_furred_and_cla/animations/Walk/south-east/frame_003.png",
+              "White_furred_and_cla/animations/Walk/south-east/frame_004.png",
+              "White_furred_and_cla/animations/Walk/south-east/frame_005.png"
+            ],
+            "north-east": [
+              "White_furred_and_cla/animations/Walk/north-east/frame_000.png",
+              "White_furred_and_cla/animations/Walk/north-east/frame_001.png",
+              "White_furred_and_cla/animations/Walk/north-east/frame_002.png",
+              "White_furred_and_cla/animations/Walk/north-east/frame_003.png",
+              "White_furred_and_cla/animations/Walk/north-east/frame_004.png",
+              "White_furred_and_cla/animations/Walk/north-east/frame_005.png"
+            ],
+            "north-west": [
+              "White_furred_and_cla/animations/Walk/north-west/frame_000.png",
+              "White_furred_and_cla/animations/Walk/north-west/frame_001.png",
+              "White_furred_and_cla/animations/Walk/north-west/frame_002.png",
+              "White_furred_and_cla/animations/Walk/north-west/frame_003.png",
+              "White_furred_and_cla/animations/Walk/north-west/frame_004.png",
+              "White_furred_and_cla/animations/Walk/north-west/frame_005.png"
+            ],
+            "north": [
+              "White_furred_and_cla/animations/Walk/north/frame_000.png",
+              "White_furred_and_cla/animations/Walk/north/frame_001.png",
+              "White_furred_and_cla/animations/Walk/north/frame_002.png",
+              "White_furred_and_cla/animations/Walk/north/frame_003.png",
+              "White_furred_and_cla/animations/Walk/north/frame_004.png",
+              "White_furred_and_cla/animations/Walk/north/frame_005.png"
+            ],
+            "south-west": [
+              "White_furred_and_cla/animations/Walk/south-west/frame_000.png",
+              "White_furred_and_cla/animations/Walk/south-west/frame_001.png",
+              "White_furred_and_cla/animations/Walk/south-west/frame_002.png",
+              "White_furred_and_cla/animations/Walk/south-west/frame_003.png",
+              "White_furred_and_cla/animations/Walk/south-west/frame_004.png",
+              "White_furred_and_cla/animations/Walk/south-west/frame_005.png"
+            ],
+            "south": [
+              "White_furred_and_cla/animations/Walk/south/frame_000.png",
+              "White_furred_and_cla/animations/Walk/south/frame_001.png",
+              "White_furred_and_cla/animations/Walk/south/frame_002.png",
+              "White_furred_and_cla/animations/Walk/south/frame_003.png",
+              "White_furred_and_cla/animations/Walk/south/frame_004.png",
+              "White_furred_and_cla/animations/Walk/south/frame_005.png"
+            ],
+            "east": [
+              "White_furred_and_cla/animations/Walk/east/frame_000.png",
+              "White_furred_and_cla/animations/Walk/east/frame_001.png",
+              "White_furred_and_cla/animations/Walk/east/frame_002.png",
+              "White_furred_and_cla/animations/Walk/east/frame_003.png",
+              "White_furred_and_cla/animations/Walk/east/frame_004.png",
+              "White_furred_and_cla/animations/Walk/east/frame_005.png"
+            ],
+            "west": [
+              "White_furred_and_cla/animations/Walk/west/frame_000.png",
+              "White_furred_and_cla/animations/Walk/west/frame_001.png",
+              "White_furred_and_cla/animations/Walk/west/frame_002.png",
+              "White_furred_and_cla/animations/Walk/west/frame_003.png",
+              "White_furred_and_cla/animations/Walk/west/frame_004.png",
+              "White_furred_and_cla/animations/Walk/west/frame_005.png"
+            ]
+          },
+          "Strike": {
+            "north": [
+              "White_furred_and_cla/animations/Strike/north/frame_000.png",
+              "White_furred_and_cla/animations/Strike/north/frame_001.png",
+              "White_furred_and_cla/animations/Strike/north/frame_002.png",
+              "White_furred_and_cla/animations/Strike/north/frame_003.png",
+              "White_furred_and_cla/animations/Strike/north/frame_004.png",
+              "White_furred_and_cla/animations/Strike/north/frame_005.png",
+              "White_furred_and_cla/animations/Strike/north/frame_006.png"
+            ],
+            "south": [
+              "White_furred_and_cla/animations/Strike/south/frame_000.png",
+              "White_furred_and_cla/animations/Strike/south/frame_001.png",
+              "White_furred_and_cla/animations/Strike/south/frame_002.png",
+              "White_furred_and_cla/animations/Strike/south/frame_003.png",
+              "White_furred_and_cla/animations/Strike/south/frame_004.png",
+              "White_furred_and_cla/animations/Strike/south/frame_005.png",
+              "White_furred_and_cla/animations/Strike/south/frame_006.png"
+            ],
+            "east": [
+              "White_furred_and_cla/animations/Strike/east/frame_000.png",
+              "White_furred_and_cla/animations/Strike/east/frame_001.png",
+              "White_furred_and_cla/animations/Strike/east/frame_002.png",
+              "White_furred_and_cla/animations/Strike/east/frame_003.png",
+              "White_furred_and_cla/animations/Strike/east/frame_004.png",
+              "White_furred_and_cla/animations/Strike/east/frame_005.png",
+              "White_furred_and_cla/animations/Strike/east/frame_006.png"
+            ],
+            "south-east": [
+              "White_furred_and_cla/animations/Strike/south-east/frame_000.png",
+              "White_furred_and_cla/animations/Strike/south-east/frame_001.png",
+              "White_furred_and_cla/animations/Strike/south-east/frame_002.png",
+              "White_furred_and_cla/animations/Strike/south-east/frame_003.png",
+              "White_furred_and_cla/animations/Strike/south-east/frame_004.png",
+              "White_furred_and_cla/animations/Strike/south-east/frame_005.png",
+              "White_furred_and_cla/animations/Strike/south-east/frame_006.png"
+            ],
+            "north-east": [
+              "White_furred_and_cla/animations/Strike/north-east/frame_000.png",
+              "White_furred_and_cla/animations/Strike/north-east/frame_001.png",
+              "White_furred_and_cla/animations/Strike/north-east/frame_002.png",
+              "White_furred_and_cla/animations/Strike/north-east/frame_003.png",
+              "White_furred_and_cla/animations/Strike/north-east/frame_004.png",
+              "White_furred_and_cla/animations/Strike/north-east/frame_005.png",
+              "White_furred_and_cla/animations/Strike/north-east/frame_006.png"
+            ]
+          }
+        }
       }
     }
   ],
   "export_version": "3.1",
-  "export_date": "2026-11-02T04:47:24.662454"
+  "export_date": "2026-11-24T17:46:22.743062"
 }

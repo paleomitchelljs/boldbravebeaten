@@ -1,0 +1,171 @@
+{
+  "group_id": "216f7975-49c4-4cae-87ad-306d008794ab",
+  "states": [
+    {
+      "character": {
+        "id": "4d25d8de-1fdf-4dc1-b015-f85f540c8f80",
+        "name": "Body horizontally fl",
+        "prompt": "Lanky & tall dragon-lizard folk hybrid with brown scales, a long winding tail, and loose bronze plate armor. Three horns extend backwards from the head, and the long narrow snout ends in a sharp beak. Digitigrade feet.",
+        "size": {
+          "width": 80,
+          "height": 80
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-08T22:45:35.448814+00:00"
+      },
+      "folder": "Body_horizontally_fl",
+      "frames": {
+        "rotations": {
+          "south": "Body_horizontally_fl/rotations/south.png",
+          "south-east": "Body_horizontally_fl/rotations/south-east.png",
+          "east": "Body_horizontally_fl/rotations/east.png",
+          "north-east": "Body_horizontally_fl/rotations/north-east.png",
+          "north": "Body_horizontally_fl/rotations/north.png",
+          "north-west": "Body_horizontally_fl/rotations/north-west.png",
+          "west": "Body_horizontally_fl/rotations/west.png",
+          "south-west": "Body_horizontally_fl/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "5774a17b-de11-47ec-ba45-57f8e441416a",
+        "name": "Floating in the air",
+        "prompt": "Lanky & tall dragon-lizard folk hybrid with brown scales, a long winding tail, and loose bronze plate armor. Three horns extend backwards from the head, and the long narrow snout ends in a sharp beak. Digitigrade feet.",
+        "size": {
+          "width": 80,
+          "height": 80
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-11-08T23:43:12.578454+00:00"
+      },
+      "folder": "Floating_in_the_air",
+      "frames": {
+        "rotations": {
+          "south": "Floating_in_the_air/rotations/south.png",
+          "south-east": "Floating_in_the_air/rotations/south-east.png",
+          "east": "Floating_in_the_air/rotations/east.png",
+          "north-east": "Floating_in_the_air/rotations/north-east.png",
+          "north": "Floating_in_the_air/rotations/north.png",
+          "north-west": "Floating_in_the_air/rotations/north-west.png",
+          "west": "Floating_in_the_air/rotations/west.png",
+          "south-west": "Floating_in_the_air/rotations/south-west.png"
+        },
+        "animations": {
+          "Float": {
+            "south-east": [
+              "Floating_in_the_air/animations/Float/south-east/frame_000.png",
+              "Floating_in_the_air/animations/Float/south-east/frame_001.png",
+              "Floating_in_the_air/animations/Float/south-east/frame_002.png",
+              "Floating_in_the_air/animations/Float/south-east/frame_003.png",
+              "Floating_in_the_air/animations/Float/south-east/frame_004.png",
+              "Floating_in_the_air/animations/Float/south-east/frame_005.png",
+              "Floating_in_the_air/animations/Float/south-east/frame_006.png"
+            ],
+            "north": [
+              "Floating_in_the_air/animations/Float/north/frame_000.png",
+              "Floating_in_the_air/animations/Float/north/frame_001.png",
+              "Floating_in_the_air/animations/Float/north/frame_002.png",
+              "Floating_in_the_air/animations/Float/north/frame_003.png",
+              "Floating_in_the_air/animations/Float/north/frame_004.png",
+              "Floating_in_the_air/animations/Float/north/frame_005.png",
+              "Floating_in_the_air/animations/Float/north/frame_006.png"
+            ],
+            "south": [
+              "Floating_in_the_air/animations/Float/south/frame_000.png",
+              "Floating_in_the_air/animations/Float/south/frame_001.png",
+              "Floating_in_the_air/animations/Float/south/frame_002.png",
+              "Floating_in_the_air/animations/Float/south/frame_003.png",
+              "Floating_in_the_air/animations/Float/south/frame_004.png",
+              "Floating_in_the_air/animations/Float/south/frame_005.png",
+              "Floating_in_the_air/animations/Float/south/frame_006.png"
+            ],
+            "east": [
+              "Floating_in_the_air/animations/Float/east/frame_000.png",
+              "Floating_in_the_air/animations/Float/east/frame_001.png",
+              "Floating_in_the_air/animations/Float/east/frame_002.png",
+              "Floating_in_the_air/animations/Float/east/frame_003.png",
+              "Floating_in_the_air/animations/Float/east/frame_004.png",
+              "Floating_in_the_air/animations/Float/east/frame_005.png",
+              "Floating_in_the_air/animations/Float/east/frame_006.png"
+            ],
+            "north-east": [
+              "Floating_in_the_air/animations/Float/north-east/frame_000.png",
+              "Floating_in_the_air/animations/Float/north-east/frame_001.png",
+              "Floating_in_the_air/animations/Float/north-east/frame_002.png",
+              "Floating_in_the_air/animations/Float/north-east/frame_003.png",
+              "Floating_in_the_air/animations/Float/north-east/frame_004.png",
+              "Floating_in_the_air/animations/Float/north-east/frame_005.png",
+              "Floating_in_the_air/animations/Float/north-east/frame_006.png"
+            ]
+          },
+          "Death": {
+            "south": [
+              "Floating_in_the_air/animations/Death/south/frame_000.png",
+              "Floating_in_the_air/animations/Death/south/frame_001.png",
+              "Floating_in_the_air/animations/Death/south/frame_002.png",
+              "Floating_in_the_air/animations/Death/south/frame_003.png",
+              "Floating_in_the_air/animations/Death/south/frame_004.png",
+              "Floating_in_the_air/animations/Death/south/frame_005.png",
+              "Floating_in_the_air/animations/Death/south/frame_006.png"
+            ]
+          },
+          "Strike": {
+            "south-east": [
+              "Floating_in_the_air/animations/Strike/south-east/frame_000.png",
+              "Floating_in_the_air/animations/Strike/south-east/frame_001.png",
+              "Floating_in_the_air/animations/Strike/south-east/frame_002.png",
+              "Floating_in_the_air/animations/Strike/south-east/frame_003.png",
+              "Floating_in_the_air/animations/Strike/south-east/frame_004.png",
+              "Floating_in_the_air/animations/Strike/south-east/frame_005.png",
+              "Floating_in_the_air/animations/Strike/south-east/frame_006.png"
+            ],
+            "south": [
+              "Floating_in_the_air/animations/Strike/south/frame_000.png",
+              "Floating_in_the_air/animations/Strike/south/frame_001.png",
+              "Floating_in_the_air/animations/Strike/south/frame_002.png",
+              "Floating_in_the_air/animations/Strike/south/frame_003.png",
+              "Floating_in_the_air/animations/Strike/south/frame_004.png",
+              "Floating_in_the_air/animations/Strike/south/frame_005.png",
+              "Floating_in_the_air/animations/Strike/south/frame_006.png"
+            ],
+            "east": [
+              "Floating_in_the_air/animations/Strike/east/frame_000.png",
+              "Floating_in_the_air/animations/Strike/east/frame_001.png",
+              "Floating_in_the_air/animations/Strike/east/frame_002.png",
+              "Floating_in_the_air/animations/Strike/east/frame_003.png",
+              "Floating_in_the_air/animations/Strike/east/frame_004.png",
+              "Floating_in_the_air/animations/Strike/east/frame_005.png",
+              "Floating_in_the_air/animations/Strike/east/frame_006.png"
+            ],
+            "north-east": [
+              "Floating_in_the_air/animations/Strike/north-east/frame_000.png",
+              "Floating_in_the_air/animations/Strike/north-east/frame_001.png",
+              "Floating_in_the_air/animations/Strike/north-east/frame_002.png",
+              "Floating_in_the_air/animations/Strike/north-east/frame_003.png",
+              "Floating_in_the_air/animations/Strike/north-east/frame_004.png",
+              "Floating_in_the_air/animations/Strike/north-east/frame_005.png",
+              "Floating_in_the_air/animations/Strike/north-east/frame_006.png"
+            ],
+            "north": [
+              "Floating_in_the_air/animations/Strike/north/frame_000.png",
+              "Floating_in_the_air/animations/Strike/north/frame_001.png",
+              "Floating_in_the_air/animations/Strike/north/frame_002.png",
+              "Floating_in_the_air/animations/Strike/north/frame_003.png",
+              "Floating_in_the_air/animations/Strike/north/frame_004.png",
+              "Floating_in_the_air/animations/Strike/north/frame_005.png",
+              "Floating_in_the_air/animations/Strike/north/frame_006.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-11-24T15:48:37.227480"
+}

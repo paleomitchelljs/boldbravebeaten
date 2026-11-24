@@ -200,6 +200,43 @@
               "flat_shaded_light_brown_bear/animations/Jump_Attack/south-west/frame_007.png"
             ]
           },
+          "Idle": {
+            "east": [
+              "flat_shaded_light_brown_bear/animations/Idle/east/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Idle/east/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Idle/east/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Idle/east/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Idle/east/frame_004.png"
+            ],
+            "south": [
+              "flat_shaded_light_brown_bear/animations/Idle/south/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Idle/south/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Idle/south/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Idle/south/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Idle/south/frame_004.png"
+            ],
+            "north": [
+              "flat_shaded_light_brown_bear/animations/Idle/north/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Idle/north/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Idle/north/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Idle/north/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Idle/north/frame_004.png"
+            ],
+            "south-east": [
+              "flat_shaded_light_brown_bear/animations/Idle/south-east/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Idle/south-east/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Idle/south-east/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Idle/south-east/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Idle/south-east/frame_004.png"
+            ],
+            "north-east": [
+              "flat_shaded_light_brown_bear/animations/Idle/north-east/frame_000.png",
+              "flat_shaded_light_brown_bear/animations/Idle/north-east/frame_001.png",
+              "flat_shaded_light_brown_bear/animations/Idle/north-east/frame_002.png",
+              "flat_shaded_light_brown_bear/animations/Idle/north-east/frame_003.png",
+              "flat_shaded_light_brown_bear/animations/Idle/north-east/frame_004.png"
+            ]
+          },
           "Walk": {
             "north": [
               "flat_shaded_light_brown_bear/animations/Walk/north/frame_000.png",
@@ -353,5 +390,5 @@
     }
   ],
   "export_version": "3.1",
-  "export_date": "2026-10-28T14:39:14.390739"
+  "export_date": "2026-11-24T17:47:45.701631"
 }

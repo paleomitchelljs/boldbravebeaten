@@ -28,6 +28,56 @@
           "south-west": "Idle/rotations/south-west.png"
         },
         "animations": {
+          "Idle": {
+            "east": [
+              "Idle/animations/Idle/east/frame_000.png",
+              "Idle/animations/Idle/east/frame_001.png",
+              "Idle/animations/Idle/east/frame_002.png",
+              "Idle/animations/Idle/east/frame_003.png"
+            ],
+            "south-east": [
+              "Idle/animations/Idle/south-east/frame_000.png",
+              "Idle/animations/Idle/south-east/frame_001.png",
+              "Idle/animations/Idle/south-east/frame_002.png",
+              "Idle/animations/Idle/south-east/frame_003.png"
+            ],
+            "north-west": [
+              "Idle/animations/Idle/north-west/frame_000.png",
+              "Idle/animations/Idle/north-west/frame_001.png",
+              "Idle/animations/Idle/north-west/frame_002.png",
+              "Idle/animations/Idle/north-west/frame_003.png"
+            ],
+            "west": [
+              "Idle/animations/Idle/west/frame_000.png",
+              "Idle/animations/Idle/west/frame_001.png",
+              "Idle/animations/Idle/west/frame_002.png",
+              "Idle/animations/Idle/west/frame_003.png"
+            ],
+            "south": [
+              "Idle/animations/Idle/south/frame_000.png",
+              "Idle/animations/Idle/south/frame_001.png",
+              "Idle/animations/Idle/south/frame_002.png",
+              "Idle/animations/Idle/south/frame_003.png"
+            ],
+            "north-east": [
+              "Idle/animations/Idle/north-east/frame_000.png",
+              "Idle/animations/Idle/north-east/frame_001.png",
+              "Idle/animations/Idle/north-east/frame_002.png",
+              "Idle/animations/Idle/north-east/frame_003.png"
+            ],
+            "south-west": [
+              "Idle/animations/Idle/south-west/frame_000.png",
+              "Idle/animations/Idle/south-west/frame_001.png",
+              "Idle/animations/Idle/south-west/frame_002.png",
+              "Idle/animations/Idle/south-west/frame_003.png"
+            ],
+            "north": [
+              "Idle/animations/Idle/north/frame_000.png",
+              "Idle/animations/Idle/north/frame_001.png",
+              "Idle/animations/Idle/north/frame_002.png",
+              "Idle/animations/Idle/north/frame_003.png"
+            ]
+          },
           "Walking": {
             "east": [
               "Idle/animations/Walking/east/frame_000.png",
@@ -92,6 +142,64 @@
               "Idle/animations/Walking/north-east/frame_003.png",
               "Idle/animations/Walking/north-east/frame_004.png",
               "Idle/animations/Walking/north-east/frame_005.png"
+            ]
+          },
+          "Idle-8f4ffa66": {
+            "north-west": [
+              "Idle/animations/Idle-8f4ffa66/north-west/frame_000.png",
+              "Idle/animations/Idle-8f4ffa66/north-west/frame_001.png",
+              "Idle/animations/Idle-8f4ffa66/north-west/frame_002.png",
+              "Idle/animations/Idle-8f4ffa66/north-west/frame_003.png",
+              "Idle/animations/Idle-8f4ffa66/north-west/frame_004.png"
+            ],
+            "north-east": [
+              "Idle/animations/Idle-8f4ffa66/north-east/frame_000.png",
+              "Idle/animations/Idle-8f4ffa66/north-east/frame_001.png",
+              "Idle/animations/Idle-8f4ffa66/north-east/frame_002.png",
+              "Idle/animations/Idle-8f4ffa66/north-east/frame_003.png",
+              "Idle/animations/Idle-8f4ffa66/north-east/frame_004.png"
+            ],
+            "north": [
+              "Idle/animations/Idle-8f4ffa66/north/frame_000.png",
+              "Idle/animations/Idle-8f4ffa66/north/frame_001.png",
+              "Idle/animations/Idle-8f4ffa66/north/frame_002.png",
+              "Idle/animations/Idle-8f4ffa66/north/frame_003.png",
+              "Idle/animations/Idle-8f4ffa66/north/frame_004.png"
+            ],
+            "east": [
+              "Idle/animations/Idle-8f4ffa66/east/frame_000.png",
+              "Idle/animations/Idle-8f4ffa66/east/frame_001.png",
+              "Idle/animations/Idle-8f4ffa66/east/frame_002.png",
+              "Idle/animations/Idle-8f4ffa66/east/frame_003.png",
+              "Idle/animations/Idle-8f4ffa66/east/frame_004.png"
+            ],
+            "west": [
+              "Idle/animations/Idle-8f4ffa66/west/frame_000.png",
+              "Idle/animations/Idle-8f4ffa66/west/frame_001.png",
+              "Idle/animations/Idle-8f4ffa66/west/frame_002.png",
+              "Idle/animations/Idle-8f4ffa66/west/frame_003.png",
+              "Idle/animations/Idle-8f4ffa66/west/frame_004.png"
+            ],
+            "south": [
+              "Idle/animations/Idle-8f4ffa66/south/frame_000.png",
+              "Idle/animations/Idle-8f4ffa66/south/frame_001.png",
+              "Idle/animations/Idle-8f4ffa66/south/frame_002.png",
+              "Idle/animations/Idle-8f4ffa66/south/frame_003.png",
+              "Idle/animations/Idle-8f4ffa66/south/frame_004.png"
+            ],
+            "south-west": [
+              "Idle/animations/Idle-8f4ffa66/south-west/frame_000.png",
+              "Idle/animations/Idle-8f4ffa66/south-west/frame_001.png",
+              "Idle/animations/Idle-8f4ffa66/south-west/frame_002.png",
+              "Idle/animations/Idle-8f4ffa66/south-west/frame_003.png",
+              "Idle/animations/Idle-8f4ffa66/south-west/frame_004.png"
+            ],
+            "south-east": [
+              "Idle/animations/Idle-8f4ffa66/south-east/frame_000.png",
+              "Idle/animations/Idle-8f4ffa66/south-east/frame_001.png",
+              "Idle/animations/Idle-8f4ffa66/south-east/frame_002.png",
+              "Idle/animations/Idle-8f4ffa66/south-east/frame_003.png",
+              "Idle/animations/Idle-8f4ffa66/south-east/frame_004.png"
             ]
           },
           "Death": {
@@ -184,5 +292,5 @@
     }
   ],
   "export_version": "3.1",
-  "export_date": "2026-11-01T04:14:13.150402"
+  "export_date": "2026-11-24T17:44:49.015044"
 }
