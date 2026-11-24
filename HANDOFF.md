@@ -277,7 +277,11 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
   temple/healer, trainer, armory, bounty/guard post. 25 new factions across 5 cities (law-abiding + underworld per city).
 - [x] Existing dungeons kept: ember complex at the caldera, temple in the jungle, orc/sarnak in the tarn highlands.
   New connections: village W→savanna_west, mine_approach N→caldera_rim, jungle_west Z→mire_deep.
-- [x] Art tile needs catalogued in `TILES_TO_GET.md` (~63 assets, 3 priorities).
+- [x] Art tile needs catalogued in `TILES_TO_GET.md` (~63 assets + ~96 wang tiles, 3 priorities).
+- [ ] **Forest wang gap**: only `south_hills` and `ember_gnome` have `}` (forest wall) tiles. The
+  lakeland, grassland, jungle, cinder_hills and desert tilesets all lack it. Maps on those tilesets
+  can't use `}` without broken corners. `TILES_TO_GET.md` §"Tileset terrain gaps" has the full table
+  and prompt guidance. Similarly `lakeland` has no `{` hillside — lake shores are flat.
 - [x] Suite 358/358, `validate.js` clean, `pace.js` all reachable.
 - [ ] **Not visually inspected.** No headless screenshot taken; the new zones use existing tilesets (`grassland`,
   `jungle`, `cinder_hills`, `lakeland`, `desert`) but layout, proportions and tile fit have not been seen.

@@ -7,6 +7,48 @@ All tiles are 64×64 px to match the existing PixelLab pipeline.
 
 ---
 
+## Tileset terrain gaps (discovered during buildout)
+
+The ground character `}` (forest wall) maps to a `forest` terrain in the tileset. Only **south_hills**
+and **ember_gnome** have forest corner tiles. Every other tileset that might want dense tree borders
+— `lakeland`, `grassland`, `jungle`, `desert`, `cinder_hills` — does not.
+
+During the continental buildout, `muawi_lakes` and `eastern_lakes` (both `lakeland`) originally used
+`}` for forested lake shores. The walls test caught these: the lakeland tileset has no forest wang
+corners, so those cells drew broken. The workaround was to drop `}` entirely from those maps
+(replaced with `,` or `~`), losing the visual density of a forested shore.
+
+| Tileset | Has `}` forest? | Has `#` wall? | Has `(` mountain? | Has `{` hill? | Notes |
+|---|---|---|---|---|---|
+| `lakeland` | **No** | Yes (fort) | No | No | Lake zones can't show forested or hilly shores |
+| `grassland` | **No** | No | No | Yes (rise) | Savanna/plains zones can't show tree lines |
+| `jungle` | **No** | Yes (canopy) | No | No | Jungle wall `]` exists but `}` forest does not |
+| `cinder_hills` | **No** | Yes | Yes (ledge) | No | Volcanic zones have no forest fringe |
+| `desert` | **No** | Yes (mesa) | No | No | Arid zones have no tree borders |
+| `south_hills` | Yes | Yes | Yes | Yes | Full terrain coverage |
+| `ember_gnome` | Yes | Yes | No | No | Interior dungeon with mushroom forest |
+
+**What to generate:** A `forest` wang corner set (16 tiles) for each outdoor tileset that lacks it.
+The forest wall is the dense tree line a player can't walk through — big trunks, canopy shadow,
+undergrowth. Each tileset needs its own version matching its palette:
+
+| Tileset | Forest style | Prompt guidance |
+|---|---|---|
+| `lakeland` | Temperate lakeside forest: birch, willow, reeds at water's edge | "Top-down forest wall, birch and willow trees, dense canopy, lakeside, pixel art, 64px" |
+| `grassland` | Scattered acacia/savanna tree line giving way to dense wood | "Top-down forest edge, mixed savanna trees, dense tree line, golden grass border, pixel art" |
+| `jungle` | Already has `]` canopy; a `}` variant for mixed jungle-forest transitions | "Top-down dense jungle wall, tall trees, thick undergrowth, pixel art" |
+| `cinder_hills` | Charred/dead forest on volcanic slopes | "Top-down dead forest wall, charred trunks, ash-covered, volcanic, pixel art" |
+| `desert` | Thorny scrub / dry woodland edge | "Top-down dry scrub wall, thorny bushes, dry trees, desert edge, pixel art" |
+
+This is **MEDIUM priority** — the workaround (no forest walls in those zones) is functional but
+visually flat. The forest wang set is the same 16-corner pattern used for every other wang terrain.
+
+Similarly, `lakeland` has no `{` hillside or `(` mountainside terrain, so lake-district zones can't
+show hills rising from the shore. A hill wang set for `lakeland` would let maps like `muawi_lakes`
+show the terrain rising away from the water.
+
+---
+
 ## Available tilesets (what we have)
 
 | Tileset | Dir | Covers |
@@ -215,13 +257,16 @@ For Emagshir and any future coastal zones.
 |---|---|---|---|
 | **HIGH** | Continental road | ~6 assets | Yes — every zone uses roads |
 | **HIGH** | City buildings (all 3 styles) | ~18 assets | Yes — cities need buildings |
+| **MEDIUM** | Forest wang per tileset | ~5 sets (80 tiles) | Maps can't show tree lines without them |
 | **MEDIUM** | Savanna grassland | ~6 assets | Recolour of grassland works as placeholder |
 | **MEDIUM** | Lake shore | ~5 assets | Lakeland tileset works partially |
 | **MEDIUM** | Marsh / deep swamp | ~5 assets | Jungle marsh works as placeholder |
 | **MEDIUM** | Ruins | ~6 assets | Temple court works partially |
 | **MEDIUM** | River | ~5 assets | Lake water works as placeholder |
+| **MEDIUM** | Hill wang for lakeland | ~1 set (16 tiles) | Lake zones can't show rising terrain |
 | **LOW** | Volcanic / caldera | ~5 assets | Existing cinder_hills/ember covers most |
 | **LOW** | Desert / arid | ~3 assets | Existing desert tileset covers most |
 | **LOW** | Port / coastal | ~4 assets | Emagshir can use lakeland initially |
 
-**Total new assets needed: ~63** (many can share sheets or be variants of existing art).
+**Total new assets needed: ~63 unique + ~96 wang tiles** (5 forest sets × 16 + 1 hill set × 16;
+many can share sheets or be variants of existing art).
