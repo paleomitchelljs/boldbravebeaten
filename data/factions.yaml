@@ -115,3 +115,238 @@ orc_legion:
   enemies: []
   ranks: [[-20, Trespasser]]
   perks: []
+
+# --- Muawi (Lizardfolk lake city) ---
+muawi_elders:
+  name: Council of Elders
+  blurb: The old blood of Muawi — three clans who have held the lakeside since before the Hegemony existed, and who intend to hold it after.
+  start: 0
+  kos: -60
+  allies: [muawi_temple, muawi_fishers]
+  enemies: [muawi_smugglers, hegemony_court]
+  ranks: [[0, Stranger], [10, Lake-friend], [30, Sworn guest], [60, Elder-kin]]
+  perks: [[10, Passage in Muawi], [30, Elder audience], [60, Clan protection]]
+muawi_temple:
+  name: Temple of the Deep
+  blurb: Keepers of the lake-shrines and the drowned offerings. They say the lake remembers every promise made above it.
+  start: 0
+  kos: -70
+  allies: [muawi_elders]
+  enemies: [hegemony_temple, muawi_smugglers]
+  ranks: [[0, Outsider], [10, Pilgrim], [30, Lake-touched], [60, Depthtender]]
+  perks: [[10, Temple healing], [30, Water-blessing rites], [60, Deep oracle access]]
+muawi_fishers:
+  name: Fishers' Circle
+  blurb: The nets, the boats, and the market stalls. They feed Muawi and they know who comes and goes by water.
+  start: 5
+  kos: -60
+  allies: [muawi_elders, hegemony_traders, merchants_guild]
+  enemies: [muawi_smugglers]
+  ranks: [[0, Landwalker], [10, Dockhand], [30, Boatswain], [60, Netmaster]]
+  perks: [[10, Boat passage on the lake], [30, Fisher prices], [60, Lake route maps]]
+muawi_smugglers:
+  name: The Reed Runners
+  blurb: The lake has a thousand channels through the reeds, and the Runners know every one. Tariffs are for people who lack imagination.
+  start: -5
+  kos: -40
+  allies: [muawi_spies, burbuma_fences]
+  enemies: [muawi_elders, muawi_fishers]
+  ranks: [[-5, Unknown], [10, Reed-wise], [30, Channel-runner], [60, Tidecaller]]
+  perks: [[10, Smuggled goods], [30, Hidden lake routes], [60, Safe houses in Muawi]]
+muawi_spies:
+  name: The Still Water
+  blurb: The Hegemony's eyes in Muawi. They watch the Elders, the Humans, the temple — everyone. The surface is calm; underneath, the current runs north to Zhomelonga.
+  start: -10
+  kos: -30
+  allies: [hegemony_court, hegemony_shadow, muawi_smugglers]
+  enemies: [muawi_elders, barjiy_rebels]
+  ranks: [[-10, Watched], [10, Useful], [30, Asset], [60, Handler]]
+  perks: [[10, Hegemony intelligence], [30, Forged documents], [60, Hegemony safe passage]]
+
+# --- Zhomelonga (Muzhumewe Hegemony capital) ---
+hegemony_court:
+  name: The Hegemon's Court
+  blurb: Twenty-three cities, seven hundred cells, and one will. The Court rules because the alternative is what came before — a hundred clans bleeding each other dry in the jungle.
+  start: -10
+  kos: -50
+  allies: [hegemony_temple, hegemony_traders, hegemony_shadow]
+  enemies: [hegemony_dissidents, barjiy_crown, barjiy_rebels]
+  ranks: [[-10, Outlander], [10, Tolerated], [30, Acknowledged], [60, Court-friend]]
+  perks: [[10, Passage in Hegemony lands], [30, Court audience], [60, Hegemony trade license]]
+hegemony_temple:
+  name: Temple of the Fire-Tongue
+  blurb: The state faith of the Hegemony. The Fire-Tongue devoured the old gods one by one; now there is only the Tongue, and its priests speak for the Hegemon's divine mandate.
+  start: -5
+  kos: -60
+  allies: [hegemony_court]
+  enemies: [muawi_temple, hegemony_dissidents, lantern_order]
+  ranks: [[-5, Heathen], [10, Penitent], [30, Supplicant], [60, Flame-sworn]]
+  perks: [[10, Temple rites], [30, Fire-blessing], [60, Sacred flame magic]]
+hegemony_traders:
+  name: The Copper Scale
+  blurb: The merchant houses of Zhomelonga, named for the copper tokens they stamp. They trade in everything the jungle grows and the mines yield, and their ledgers are more feared than the Court's soldiers.
+  start: 0
+  kos: -70
+  allies: [hegemony_court, muawi_fishers, merchants_guild, burbuma_traders]
+  enemies: [hegemony_dissidents, emagshir_pirates]
+  ranks: [[0, Outsider], [10, Counter], [30, Scale-bearer], [60, Copper Lord]]
+  perks: [[10, Hegemony market access], [30, Bulk trade prices], [60, Copper Scale contracts]]
+hegemony_dissidents:
+  name: The Broken Fang
+  blurb: They remember the old clans — the ones the Hegemony swallowed. Some want independence. Some want revenge. All of them are willing to die for it, which makes them dangerous and hard to negotiate with.
+  start: -15
+  kos: -30
+  allies: [barjiy_rebels]
+  enemies: [hegemony_court, hegemony_temple, hegemony_shadow]
+  ranks: [[-15, Outsider], [10, Sympathiser], [30, Fang-brother], [60, Fang-captain]]
+  perks: [[10, Dissident safe houses], [30, Jungle hideout access], [60, Rebel intelligence]]
+hegemony_shadow:
+  name: The Coiled Shadow
+  blurb: The Hegemon's other hand — the one that works in the dark. Spies, poisoners, and the quiet removal of problems the Court cannot be seen to solve.
+  start: -20
+  kos: -20
+  allies: [hegemony_court, muawi_spies]
+  enemies: [hegemony_dissidents, barjiy_crown, barjiy_rebels]
+  ranks: [[-20, Target], [10, Contact], [30, Agent], [60, Fang of the Shadow]]
+  perks: [[10, Shadow contacts], [30, Poison access], [60, Assassination contracts]]
+
+# --- Barjiy (Human principality, southeast) ---
+barjiy_crown:
+  name: The Prince's Court
+  blurb: Eight cities, iron and faith, and a dynasty that has held the southeast against Lizardfolk expansion for three centuries. The Prince rules because the alternative is the Hegemony.
+  start: 0
+  kos: -50
+  allies: [barjiy_cathedral, barjiy_guild, town_watch]
+  enemies: [hegemony_court, hegemony_shadow]
+  ranks: [[0, Foreigner], [10, Subject], [30, Retainer], [60, Knight of Barjiy]]
+  perks: [[10, Passage in Barjiy], [30, Court audience], [60, Land grant]]
+barjiy_cathedral:
+  name: Cathedral of Light
+  blurb: The Human faith of the southeast, raised on the bones of older gods. Its priests preach that the light was here before the jungle, and will be here after.
+  start: 5
+  kos: -70
+  allies: [barjiy_crown, lantern_order]
+  enemies: [hegemony_temple, grave_cult]
+  ranks: [[0, Seeker], [10, Congregant], [30, Deacon], [60, Lightbearer]]
+  perks: [[10, Cathedral healing], [30, Light-blessing], [60, Cathedral sanctuary]]
+barjiy_guild:
+  name: Ironworkers' Guild
+  blurb: The forges of Barjiy work the best iron on Burazese. The Guild controls the ore, the smelters, and the prices — and the Prince lets them, because without iron there is no principality.
+  start: 0
+  kos: -60
+  allies: [barjiy_crown, merchants_guild, burbuma_traders, hegemony_traders]
+  enemies: [barjiy_knives]
+  ranks: [[0, Outsider], [10, Apprentice-friend], [30, Journeyman-friend], [60, Guildmaster's peer]]
+  perks: [[10, Guild shop access], [30, Iron at cost], [60, Master-forged commissions]]
+barjiy_knives:
+  name: The Night Market
+  blurb: After the cathedral bells ring curfew, Barjiy has a second economy. The Night Market deals in everything the Guild and the Crown tax too heavily — or forbid outright.
+  start: -5
+  kos: -40
+  allies: [burbuma_fences, emagshir_pirates, cutthroats]
+  enemies: [barjiy_crown, barjiy_guild]
+  ranks: [[-5, Unknown], [10, Buyer], [30, Dealer], [60, Night Lord]]
+  perks: [[10, Black market goods], [30, Smuggler contacts], [60, Contraband commissions]]
+barjiy_rebels:
+  name: The Free Swords
+  blurb: Veterans, deserters, and idealists who believe the Prince is too soft on the Hegemony. They want the Lizardfolk pushed back to the jungle. Some of them mean all Lizardfolk, everywhere.
+  start: -10
+  kos: -30
+  allies: [hegemony_dissidents]
+  enemies: [hegemony_court, hegemony_shadow, muawi_spies, barjiy_crown]
+  ranks: [[-10, Civilian], [10, Sympathiser], [30, Free Sword], [60, Sword-captain]]
+  perks: [[10, Rebel safe houses], [30, Frontier weapons], [60, Free Sword contracts]]
+
+# --- Burbuma (Human frontier city) ---
+burbuma_militia:
+  name: Frontier Militia
+  blurb: Part garrison, part posse. Burbuma sits where Human and Lizardfolk territory blur together, and the militia keeps both sides honest — or tries to.
+  start: 0
+  kos: -50
+  allies: [burbuma_chapel, burbuma_traders, town_watch]
+  enemies: [burbuma_fences]
+  ranks: [[0, Stranger], [10, Vouched], [30, Auxiliary], [60, Militiaman]]
+  perks: [[10, Militia bounty board], [30, Frontier armory], [60, Militia contracts]]
+burbuma_chapel:
+  name: Wayfarers' Chapel
+  blurb: A crossroads shrine that grew into a chapel. The Wayfarers bless travellers, tend wounds, and ask no questions about which side of the border you came from.
+  start: 5
+  kos: -80
+  allies: [burbuma_militia, lantern_order, barjiy_cathedral]
+  enemies: [grave_cult]
+  ranks: [[0, Traveller], [10, Wayfarer], [30, Sheltered], [60, Chapel warden]]
+  perks: [[10, Free rest and water], [30, Chapel healing], [60, Frontier blessing]]
+burbuma_traders:
+  name: Border Traders' League
+  blurb: The only people in Burbuma who smile at both Lizardfolk and Human merchants. They deal in everything that crosses the frontier, take a cut, and call it diplomacy.
+  start: 0
+  kos: -60
+  allies: [burbuma_militia, merchants_guild, hegemony_traders, barjiy_guild, muawi_fishers]
+  enemies: [burbuma_fences]
+  ranks: [[0, Outsider], [10, Trader], [30, League member], [60, Border-master]]
+  perks: [[10, Frontier goods], [30, Cross-border prices], [60, League trade contracts]]
+burbuma_fences:
+  name: The Back Door
+  blurb: Every frontier town has one. Burbuma's handles the goods that neither the militia nor the League want to know about — and a few that the militia does want to know about, which is why the Back Door pays them too.
+  start: -5
+  kos: -40
+  allies: [muawi_smugglers, barjiy_knives, cutthroats]
+  enemies: [burbuma_militia, burbuma_traders]
+  ranks: [[-5, Unknown], [10, Customer], [30, Regular], [60, Back-door man]]
+  perks: [[10, Stolen goods], [30, Fence network], [60, Frontier smuggling routes]]
+burbuma_scouts:
+  name: The Long Eyes
+  blurb: Scouts, rangers, and freelance spies who sell what they see to whoever pays. They know every trail between Burbuma and the jungle, and they know who is moving on them.
+  start: -5
+  kos: -40
+  allies: []
+  enemies: []
+  ranks: [[-5, Blind], [10, Informed], [30, Spotter], [60, Long Eye]]
+  perks: [[10, Trail intelligence], [30, Scout maps], [60, Spy network access]]
+
+# --- Emagshir (Human southern port) ---
+emagshir_harbor:
+  name: Harbor Authority
+  blurb: The docks, the tariffs, and the naval patrols. Emagshir lives by its port, and the Harbor Authority decides who trades and who waits.
+  start: 0
+  kos: -50
+  allies: [emagshir_temple, emagshir_merchants]
+  enemies: [emagshir_pirates]
+  ranks: [[0, Stranger], [10, Registered], [30, Licensed captain], [60, Harbormaster's friend]]
+  perks: [[10, Dock access], [30, Reduced tariffs], [60, Priority berth and naval escort]]
+emagshir_temple:
+  name: Temple of the Tide
+  blurb: Sailors pray here before they leave and give thanks here if they return. The Tide-priests bless ships, read storms, and sometimes — it is said — call them.
+  start: 5
+  kos: -70
+  allies: [emagshir_harbor, barjiy_cathedral]
+  enemies: [emagshir_pirates, grave_cult]
+  ranks: [[0, Landsman], [10, Tide-blessed], [30, Storm-reader], [60, Sea-priest]]
+  perks: [[10, Tide-blessing], [30, Storm warnings], [60, Sea magic rites]]
+emagshir_merchants:
+  name: Maritime Guild
+  blurb: The trading houses of Emagshir, whose ships run the coast from Barjiy to the Hegemony and sometimes further. They deal in spice, iron, hides, and anything else that fits in a hold.
+  start: 0
+  kos: -60
+  allies: [emagshir_harbor, merchants_guild, hegemony_traders, barjiy_guild, burbuma_traders]
+  enemies: [emagshir_pirates, emagshir_spies]
+  ranks: [[0, Outsider], [10, Trader], [30, Guild captain], [60, Maritime Lord]]
+  perks: [[10, Coastal trade prices], [30, Ship passage], [60, Maritime Guild contracts]]
+emagshir_pirates:
+  name: The Salt Dogs
+  blurb: Pirates, wreckers, and the captains who laugh at the Harbor Authority's patrols. They raid the coast, fence the take in a dozen ports, and drink the rest.
+  start: -10
+  kos: -30
+  allies: [barjiy_knives, burbuma_fences, cutthroats]
+  enemies: [emagshir_harbor, emagshir_merchants]
+  ranks: [[-10, Lubber], [10, Mate], [30, Salt Dog], [60, Captain]]
+  perks: [[10, Pirate fence], [30, Smuggling runs], [60, Pirate fleet contacts]]
+emagshir_spies:
+  name: Foreign Agents
+  blurb: Emagshir's port draws spies the way a lamp draws moths — agents of Uvue, the Hegemony, and states that have no name in this tongue. They watch the ships and count the soldiers.
+  start: -15
+  kos: -20
+  allies: [hegemony_shadow, muawi_spies]
+  enemies: [emagshir_harbor, emagshir_merchants, barjiy_crown]
+  ranks: [[-15, Watched], [10, Useful], [30, Informant], [60, Case officer]]
+  perks: [[10, Foreign intelligence], [30, Forged papers], [60, Overseas contacts]]

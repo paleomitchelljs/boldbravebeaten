@@ -270,6 +270,25 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
   and prophet. The user's newer figures are not wired to monsters. Floating figures have no bob.
 - [ ] Wanted, no art: the vampire; redo Beren, the Yuan-Ti, skeletons, rats; raptor, red drake, fae drake.
 
+## Burazese continental overhaul (2026-11-23)
+- [x] 19 outdoor zones covering the continent: savanna, jungle, lakes, caldera, river, grasslands, marsh, desert,
+  frontier, siege belt, lowlands. Each 24×18, `open: true`, `light: 24`. Design doc: `docs/BURAZESE_DESIGN.md`.
+- [x] 5 cities (muawi_city, zhomelonga_city, barjiy_city, burbuma_city, emagshir_city), each with inn, market/shop,
+  temple/healer, trainer, armory, bounty/guard post. 25 new factions across 5 cities (law-abiding + underworld per city).
+- [x] Existing dungeons kept: ember complex at the caldera, temple in the jungle, orc/sarnak in the tarn highlands.
+  New connections: village W→savanna_west, mine_approach N→caldera_rim, jungle_west Z→mire_deep.
+- [x] Art tile needs catalogued in `TILES_TO_GET.md` (~63 assets, 3 priorities).
+- [x] Suite 358/358, `validate.js` clean, `pace.js` all reachable.
+- [ ] **Not visually inspected.** No headless screenshot taken; the new zones use existing tilesets (`grassland`,
+  `jungle`, `cinder_hills`, `lakeland`, `desert`) but layout, proportions and tile fit have not been seen.
+- [ ] Cities are placeholder shells: 6 locations each with stock descriptions, no unique NPCs, quests, or dialogue.
+  Factions defined but have no standing changes, kos thresholds, perks, or quests wired to them.
+- [ ] Encounters not placed in any new outdoor zone. No `tools/tiers.js` or `sim/crawl.js` run on the new zones.
+- [ ] Zone levels are guesses (2–6); no sim evidence for the progression.
+- [ ] The connection graph (`docs/BURAZESE_DESIGN.md`) has no link from savanna_west to central_jungle's S exit
+  through to the village's existing E chain. The village is connected W→savanna_west; central_jungle S↔savanna_west
+  completes the loop. The mire_deep zone connects only E↔jungle_west.
+
 ## Content (eee797af, 2026-11-21)
 - [x] Text pass on all NPC dialogue and hero pitches (show don't tell). 19 philosophical NPC topics.
 - [x] Mill cellars dungeon (smuggler encounters, `cellars_cleared` flag). Cartographer's legacy quest.

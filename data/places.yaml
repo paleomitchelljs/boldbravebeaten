@@ -198,7 +198,7 @@ village:
     - "##,,xxx,,,,,,........,,,,,,,,,,,##"
     - "##,,xcx,,,,,,.....w..,,xxx,,,,,,##"
     - "##,,,,,,,,Pl,........l,xhx,,,,,,##"
-    - "##,,,,,,.........................E"
+    - "W,,,,,,,.........................E"
     - "##,u,,,,.........................#"
     - "##,,ffff..,,n,,p,,,sMs,,,,,,,,,,##"
     - "##,,,,,,..,,,,T,,,,,,,,,bo,,,u,,##"
@@ -216,6 +216,7 @@ village:
     N: {kind: stairs, to: mine_approach, at: S, sprite: none, label: "The road north, up into the black hills"}
     E: {kind: stairs, to: temple_approach, at: W, sprite: none, label: "The road east, into the swamp"}
     S: {kind: stairs, to: south_hills, at: N, sprite: none, label: "The road south, into the hills"}
+    W: {kind: stairs, to: savanna_west, at: E, sprite: none, label: "The road west, out onto the savanna"}
     I: {kind: stairs, to: stonebridge, at: ~, sprite: inn, scale: 1.2, label: "The Tilted Cask (the inn)", on: ","}
     k: {kind: prop, sprite: smithy, label: "The smithy", on: ","}
     h: {kind: prop, sprite: shop, label: "The shop", on: ","}
@@ -223,7 +224,7 @@ village:
     x: {kind: prop, sprite: none, on: ","}
     w: {kind: prop, sprite: well, label: "The well", on: ","}
     s: {kind: prop, sprite: stall, label: "A market stall", on: ","}
-    p: {kind: prop, sprite: signpost, solid: false, label: "A signpost: north to the mine, east to the temple, south to the hills", on: ","}
+    p: {kind: prop, sprite: signpost, solid: false, label: "A signpost: north to the mine, east to the temple, south to the hills, west to the savanna", on: ","}
     g: {kind: prop, sprite: garden, solid: false, label: "A cabbage patch", on: ","}
     r: {kind: prop, sprite: scarecrow, label: "A scarecrow", on: ","}
     b: {kind: prop, sprite: barrels, label: "Barrels", on: ","}
@@ -312,9 +313,9 @@ mine_approach:
   level: 1
   look: {wall: "#2a2624", floor: "#3c3632", ceiling: "#3a2a24", fog: "#120604", torch: 0, tileset: cinder_hills, light: 20}
   map:
-    - "(((((((##################((((("
-    - "(((((((##################((((("
-    - "((((#####################((((("
+    - "(((((((######VV##########((((("
+    - "(((((((######..##########((((("
+    - "((((#########..##########((((("
     - "((((##......d≡≡M≡≡c....#####(("
     - "((####........≡≡≡......#####(("
     - "((####...{{{..≡≡..t......s##(("
@@ -337,6 +338,7 @@ mine_approach:
     - "((((((#########≡≡.########(((("
     - "((((((##########S#########(((("
   legend:
+    V: {kind: stairs, to: caldera_rim, at: S, sprite: none, label: "A trail north through the cinders, toward the caldera"}
     K: {kind: stairs, to: ember_kobolds, at: S, sprite: minemouth, label: "A cave mouth in the hillside, kobold tracks worn deep into the ash before it"}
     S: {kind: stairs, to: village, at: N, sprite: none, label: "The road south, back to the village"}
     M: {kind: stairs, to: ember_hall, at: "<", sprite: minemouth, label: "The mine"}
@@ -1094,7 +1096,7 @@ jungle_west:
     - "####################################"
   legend:
     Q: {kind: stairs, to: tarn_plains_west, at: Z, sprite: none, label: "The trail east, out onto the grassland"}
-    Z: {kind: note, sprite: none, label: "The trail west", text: "The trail runs on west under the canopy. The air is thick and still."}
+    Z: {kind: stairs, to: mire_deep, at: E, sprite: none, label: "The trail west, deeper into the mire"}
     K: {kind: prop, sprite: kapok, label: "A kapok tree on great buttress roots"}
     M: {kind: prop, sprite: mangrove, label: "A mangrove standing on its roots", on: "≈"}
     F: {kind: prop, sprite: strangler, label: "A strangler fig, its trunk a lattice of roots"}
@@ -3012,3 +3014,1023 @@ ember_lair:
     dragon: {foes: [{monster: dragonLord}], flags: [dragon_lord_dead], text: "The dragon lifts its head off its gold. The roar shakes the deep. Then it speaks, almost gently: it wants to know who you think you are, and what you think will be different when you are dead."}
   secrets: []
 
+
+# ---- Burazese continental zones: the savanna, jungle, lakes, caldera, rivers and southern plateau radiating
+# from the village/Stonebridge area. Draft maps (24x18); art needs in TILES_TO_GET.md.
+
+savanna_west:
+  name: The Western Savanna
+  kind: dungeon
+  open: true
+  blurb: Open grassland stretching west from the village. A trail cuts through the tall grass between stands of acacia.
+  level: 2
+  look: {wall: "#6a6a60", floor: "#7a6a52", ceiling: "#7f9ab6", fog: "#0c120a", torch: 0, tileset: grassland, light: 24}
+  map:
+    - "}},,,,,,,,NN,,,,,,,,,,}}"
+    - "}},,,,,,,,..,,,,,,,,,,}}"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,},,,,≡≡,,,,,,,},,,,,,"
+    - ",,}}},,,,≡≡,,,,,,,,}},,,"
+    - ",,,}},,,,≡≡,,,,,,}}},,,,"
+    - ",,,,,,,,,≡≡,,,,,,,,,,,},"
+    - ",,,,,,,,≡≡,,,,,,,,,,,,},"
+    - ",,,,,,,,,≡≡≡≡≡≡≡≡≡≡≡≡≡,E"
+    - ",,,,,,,,,,≡≡≡≡≡≡≡≡≡≡≡≡,E"
+    - ",,,,,,,,≡≡,,,,,,,,,,,,},"
+    - ",,,,,,,≡≡,,,,,,,}}},,,,,"
+    - ",,,,,,,,≡≡,,,,,,,}}},,,,"
+    - ",,,},,,,≡≡,,,,,,,,}},,,,"
+    - ",,,,,,,,≡≡,,,,,,,,,,,,},"
+    - ",,,,,,,,≡≡,,,,,,,,,,,,,,"
+    - "}},,,,,,,,..,,,,,,,,,,}}"
+    - "}},,,,,,,,SS,,,,,,,,,,}}"
+  legend:
+    N: {kind: stairs, to: central_jungle, at: S, sprite: none, label: "The trail north, into the jungle"}
+    S: {kind: stairs, to: burbuma_frontier, at: N, sprite: none, label: "The road south, toward the frontier"}
+    E: {kind: stairs, to: village, at: W, sprite: none, label: "The road east, back to the village"}
+  encounters: {}
+  secrets: []
+
+central_jungle:
+  name: The Central Jungle
+  kind: dungeon
+  open: true
+  blurb: Dense jungle north of the savanna. The canopy closes overhead and the trail narrows between great roots.
+  level: 2
+  look: {wall: "#24381f", floor: "#4a3a28", ceiling: "#2a3a22", fog: "#0c120a", torch: 0, tileset: jungle, light: 18}
+  map:
+    - "]],,,,,,,,NN,,,,,,,,,,]]"
+    - "]],,,,,,,,..,,,,,,,,,,]]"
+    - "]],,,,,,,≡≡,,,,,,,,,,,]]"
+    - "]],,,,,,,,≡≡,,,,,,,,,,]]"
+    - "]],,,≈≈,,,≡≡,,,,,,,,,,]]"
+    - "]],,≈≈≈≈,,≡≡,,,,≈≈,,,,]]"
+    - "]],,≈≈≈,,,≡≡,,,≈≈≈≈,,,]]"
+    - "]],,,≈,,,,≡≡,,,,≈≈,,,,]]"
+    - "]],,,,,,,,≡≡,,,,,,,,,,]]"
+    - "]],,,,,,,,≡≡,,,,,,,,,,]]"
+    - "]],,,,,,,≡≡,,,,,,,,,,,]]"
+    - "]],,,,,,,,≡≡,,≈≈,,,,,,]]"
+    - "]],,≈≈,,,,≡≡,,≈≈≈≈,,,,]]"
+    - "]],,≈≈≈,,,≡≡,,,≈≈,,,,,]]"
+    - "]],,,≈,,,,≡≡,,,,,,,,,,]]"
+    - "]],,,,,,,,≡≡,,,,,,,,,,]]"
+    - "]],,,,,,,,..,,,,,,,,,,]]"
+    - "]],,,,,,,,SS,,,,,,,,,,]]"
+  legend:
+    N: {kind: stairs, to: muawi_road, at: S, sprite: none, label: "The trail north, deeper into the jungle"}
+    S: {kind: stairs, to: savanna_west, at: N, sprite: none, label: "The trail south, back to the savanna"}
+  encounters: {}
+  secrets: []
+
+muawi_road:
+  name: The Muawi Road
+  kind: dungeon
+  open: true
+  blurb: The jungle road toward the lake city of Muawi. The canopy thins and the air smells of water.
+  level: 3
+  look: {wall: "#24381f", floor: "#4a3a28", ceiling: "#2a3a22", fog: "#0c120a", torch: 0, tileset: jungle, light: 18}
+  map:
+    - "]],,,,,,,,NN,,,,,,,,,,]]"
+    - "]],,,,,,,,..,,,,,,,,,,]]"
+    - "]],,,,,,,,≡≡,,,,,,,,,,]]"
+    - "]],,,,,,,≡≡,,,,,,,,,,,]]"
+    - "]],,,,,,,,≡≡,,,,,,,,,,]]"
+    - "]],,,,,,,,≡≡,,,≈≈,,,,,]]"
+    - "]],,,,,,,≡≡,,,,≈≈≈,,,,]]"
+    - "]],,≈≈,,,,≡≡,,,,≈≈,,,,]]"
+    - "]],,≈≈≈,,,≡≡,,,,,,,,,,]]"
+    - "]],,,≈,,,,≡≡,,,,,,,,,,]]"
+    - "]],,,,,,,,≡≡,,,,,,,,,,]]"
+    - "]],,,,,,,,≡≡,,≈≈,,,,,,]]"
+    - "]],,,,,,,≡≡,,,≈≈≈,,,,,]]"
+    - "]],,,,,,,,≡≡,,,,,,,,,,]]"
+    - "]],,,,,,,,≡≡,,,,,,,,,,]]"
+    - "]],,,,,,,,≡≡,,,,,,,,,,]]"
+    - "]],,,,,,,,..,,,,,,,,,,]]"
+    - "]],,,,,,,,SS,,,,,,,,,,]]"
+  legend:
+    N: {kind: stairs, to: muawi_lakes, at: S, sprite: none, label: "North to the lakes"}
+    S: {kind: stairs, to: central_jungle, at: N, sprite: none, label: "The trail south"}
+  encounters: {}
+  secrets: []
+
+muawi_lakes:
+  name: The Muawi Lakes
+  kind: dungeon
+  open: true
+  blurb: A lake district of reed beds and causeways. The city of Muawi rises on the far shore.
+  level: 3
+  look: {wall: "#5a7a5a", floor: "#4a6a40", ceiling: "#7f9ab6", fog: "#0c120a", torch: 0, tileset: lakeland, light: 24}
+  map:
+    - ",,,,,,,,,,NN,,,,,,,,,,,,"
+    - ",,,,,,,,,,..,,,,,,,,,,,,"
+    - ",,,,,,,,,≡≡,,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,~~,,,,,,,"
+    - ",,,~~,,,,≡≡,,,~~~~,,,,,,"
+    - ",,~~~~,,,≡≡,,~~~~~,,,,,,"
+    - ",,~~~~,,,≡≡,,,~~~~,,,,,,"
+    - ",,,~~,,,,≡≡,,,,~~,,,,,,,"
+    - ",,,,,,C,,≡≡≡≡≡≡≡≡≡≡≡≡≡,E"
+    - ",,,,,,,,,,≡≡≡≡≡≡≡≡≡≡≡≡,E"
+    - ",,,~~,,,,≡≡,,,,,,,,,,,,,"
+    - ",,~~~~,,≡≡,,,,,,~~,,,,,,"
+    - ",,~~~~,,≡≡,,,,,~~~~,,,,,"
+    - ",,,~~,,,,≡≡,,,,~~~~,,,,,"
+    - ",,,,,,,,≡≡,,,,,,~~,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,..,,,,,,,,,,,,"
+    - ",,,,,,,,,,SS,,,,,,,,,,,,"
+  legend:
+    N: {kind: stairs, to: hegemony_road, at: S, sprite: none, label: "The road north, into Hegemony lands"}
+    S: {kind: stairs, to: muawi_road, at: N, sprite: none, label: "The road south, back through the jungle"}
+    E: {kind: stairs, to: iaza_crossroads, at: W, sprite: none, label: "The road east, toward the crossroads"}
+    C: {kind: stairs, to: muawi_city, at: ~, sprite: none, label: "The causeways to Muawi", on: ","}
+  encounters: {}
+  secrets: []
+
+hegemony_road:
+  name: The Hegemony Road
+  kind: dungeon
+  open: true
+  blurb: "A broad road through Hegemony jungle. Stone mile-markers bear the Hegemon's crest."
+  level: 4
+  look: {wall: "#24381f", floor: "#4a3a28", ceiling: "#2a3a22", fog: "#0c120a", torch: 0, tileset: jungle, light: 18}
+  map:
+    - "]],,,,,,,,NN,,,,,,,,,,]]"
+    - "]],,,,,,,,..,,,,,,,,,,]]"
+    - "]],,,,,,,,≡≡,,,,,,,,,,]]"
+    - "]],,,,,,,,≡≡,,,,,,,,,,]]"
+    - "]],,,,,,,,≡≡,,,,,,,,,,]]"
+    - "]],,,,,,,,≡≡,,,,,,,,,,]]"
+    - "]],,,,,,,,≡≡,,,,,,,,,,]]"
+    - "]],,,,,,,,≡≡,,,,,,,,,,]]"
+    - "]],,,,,,,,≡≡,,,,,,,,,,]]"
+    - "]],,,,,,,,≡≡,,,,,,,,,,]]"
+    - "]],,,,,,,,≡≡,,,,,,,,,,]]"
+    - "]],,,,,,,,≡≡,,,,,,,,,,]]"
+    - "]],,,,,,,,≡≡,,,,,,,,,,]]"
+    - "]],,,,,,,,≡≡,,,,,,,,,,]]"
+    - "]],,,,,,,,≡≡,,,,,,,,,,]]"
+    - "]],,,,,,,,≡≡,,,,,,,,,,]]"
+    - "]],,,,,,,,..,,,,,,,,,,]]"
+    - "]],,,,,,,,SS,,,,,,,,,,]]"
+  legend:
+    N: {kind: stairs, to: hegemony_jungle, at: S, sprite: none, label: "North, deeper into the Hegemony"}
+    S: {kind: stairs, to: muawi_lakes, at: N, sprite: none, label: "South, back to the lakes"}
+  encounters: {}
+  secrets: []
+
+hegemony_jungle:
+  name: The Hegemony Heartland
+  kind: dungeon
+  open: true
+  blurb: The jungle thickens around the stone causeways of the Muzhumewe Hegemony. Carved pillars mark the road to the capital.
+  level: 5
+  look: {wall: "#24381f", floor: "#4a3a28", ceiling: "#2a3a22", fog: "#0c120a", torch: 0, tileset: jungle, light: 18}
+  map:
+    - "]]]]]]]]]]]]]]]]]]]]]]]]"
+    - "]]]]]]]]]]]]]]]]]]]]]]]]"
+    - "]],,,,,,,,,,,,,,,,,,,,]]"
+    - "]],,,,,,,,≡≡,,,,,,,,,,]]"
+    - "]],,,,,,,,≡≡,,,,,,,,,,]]"
+    - "]],,,,,,,,≡≡,,,,,,,,,,]]"
+    - "]],,≈≈,,,,≡≡,,,,≈≈,,,,]]"
+    - "]],,≈≈≈,,,≡≡,,,≈≈≈,,,,]]"
+    - "]],,,≈,,,,≡≡,,,,≈≈,,,,]]"
+    - "]],,,,,,,,≡≡,,,,,,,,,,]]"
+    - "]],,,,,,,,≡≡,,C,,,,,,,]]"
+    - "]],,,,,,,,≡≡,,,,,,,,,,]]"
+    - "]],,≈≈,,,,≡≡,,,,,,,,,,]]"
+    - "]],,≈≈≈,,,≡≡,,,,≈≈,,,,]]"
+    - "]],,,≈,,,,≡≡,,,≈≈≈,,,,]]"
+    - "]],,,,,,,,≡≡,,,,,,,,,,]]"
+    - "]],,,,,,,,..,,,,,,,,,,]]"
+    - "]],,,,,,,,SS,,,,,,,,,,]]"
+  legend:
+    S: {kind: stairs, to: hegemony_road, at: N, sprite: none, label: "The road south"}
+    C: {kind: stairs, to: zhomelonga_city, at: ~, sprite: none, label: "The great gate of Zhomelonga", on: ","}
+  encounters: {}
+  secrets: []
+
+iaza_crossroads:
+  name: The Iaza Crossroads
+  kind: dungeon
+  open: true
+  blurb: A crossroads on the savanna where the jungle thins. Roads run east to the caldera, south to the river, west to the lakes.
+  level: 3
+  look: {wall: "#6a6a60", floor: "#7a6a52", ceiling: "#7f9ab6", fog: "#0c120a", torch: 0, tileset: grassland, light: 24}
+  map:
+    - ",,,,,,,,,,,,,,,,,,,,,,}}"
+    - ",,,,,,,,,,,,,,,,,,,,,,}}"
+    - ",,,,,,,,,,,,,,,,,,,,,,,,"
+    - ",,,,},,,,,,,,,,,,,},,,,,"
+    - ",,,}}},,,,,,,,,,,,}},,,}"
+    - ",,}}},,,,,,,,,,,,,},,,,,"
+    - ",,,},,,,,,,,,,,,,,,,,,,,"
+    - ",,,,,,,,,,,,,,,,,,,,,,,,"
+    - "W≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡E"
+    - "W≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡E"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,≡≡,,,,,,,,,,,},"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,},"
+    - ",,,},,,,,,≡≡,,,,,,,,,,},"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,..,,,,,,,,,,}}"
+    - ",,,,,,,,,,SS,,,,,,,,,,}}"
+  legend:
+    W: {kind: stairs, to: muawi_lakes, at: E, sprite: none, label: "The road west, to the lakes"}
+    E: {kind: stairs, to: caldera_road, at: W, sprite: none, label: "The road east, toward the caldera"}
+    S: {kind: stairs, to: naalda_river, at: N, sprite: none, label: "The road south, to the river crossing"}
+  encounters: {}
+  secrets: []
+
+caldera_road:
+  name: The Caldera Road
+  kind: dungeon
+  open: true
+  blurb: The road east toward Exeomo. The grass gives way to ash and the air smells of sulfur.
+  level: 4
+  look: {wall: "#2a2624", floor: "#3c3632", ceiling: "#3a2a24", fog: "#120604", torch: 0, tileset: cinder_hills, light: 20}
+  map:
+    - "(((((((((((((((((((((((("
+    - "(((((((((((((((((((((((("
+    - "((,,,,,,,,,,,,,,;;,,,,(("
+    - "((,,,,,,,,,,;,,,,,;;;,(("
+    - "((,,;,,,,,,,;;;,,,,;;,(("
+    - "((,,;;,,,,,,,,;;,,,,;,(("
+    - "((,,,;,,,,,,,,,,,,,,;;(("
+    - "((,,,,,,,,,,,,,,,,,,,,;;"
+    - "W≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡E"
+    - "W≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡E"
+    - "((,,,,,,,,,,;,,,,,,,;,;("
+    - "((,,,;,,,,$,,,;;,,,,;;;("
+    - "((,,;;,,$$$$,,,,;,,,;;(("
+    - "((,,,;,,$$$,,,,,,,;;,,(("
+    - "((,,,,,,,,$,,,,,,,,,;;(("
+    - "((,,,,,,,,,,,,,,,,,,;;(("
+    - "(((((((((((((((((((((((("
+    - "(((((((((((((((((((((((("
+  legend:
+    W: {kind: stairs, to: iaza_crossroads, at: E, sprite: none, label: "The road west, back to the crossroads"}
+    E: {kind: stairs, to: caldera_rim, at: W, sprite: none, label: "East, toward the rim of Exeomo"}
+  encounters: {}
+  secrets: []
+
+caldera_rim:
+  name: The Caldera Rim
+  kind: dungeon
+  open: true
+  blurb: The rim of Exeomo. Lava rivers cut through black basalt. The air shimmers with heat. A trail drops south to the black hills.
+  level: 5
+  look: {wall: "#2a2624", floor: "#3c3632", ceiling: "#3a2a24", fog: "#120604", torch: 0, tileset: cinder_hills, light: 20}
+  map:
+    - "((,,,,,,,,NN,,,,,,,,,,(("
+    - "((,,,,,,,,..,,,,,,,,,,(("
+    - ";;,,,;,,,,≡≡,,,,,,,,,,;;"
+    - ";;;,,;;,,,≡≡,,$$,,,;;,;;"
+    - ";;,,,;,,,,≡≡,$$$$,,;;,;;"
+    - ";;,,,,,,,,≡≡,,$$,,,,,,;;"
+    - ";;,,$$,,,,≡≡,,,,,,,,,,;;"
+    - ";;,$$$,,,,≡≡,,,,,,;,,,;;"
+    - "W≡≡≡≡≡≡≡≡≡≡,,,,,,;;,,,;;"
+    - "W≡≡≡≡≡≡≡≡≡≡,;,,,,,;,,,;;"
+    - ";;,,$$,,,,≡≡,,;;,,,,,,,;"
+    - ";;,$$$,,,,≡≡,,,,,,,,,,;;"
+    - ";;,,$$,,,,≡≡,,,,$$,,;,;;"
+    - ";;,,,,,,,,≡≡,,,$$$$,;,;;"
+    - ";;,,,;,,,,≡≡,,,,$$,,,,;;"
+    - ";;,,;;,,,,≡≡,,,,,,,,,,;;"
+    - "((,,,,,,,,..,,,,,,,,,,(("
+    - "((,,,,,,,,SS,,,,,,,,,,(("
+  legend:
+    N: {kind: stairs, to: caldera_basin, at: S, sprite: none, label: "Down into the caldera"}
+    S: {kind: stairs, to: mine_approach, at: V, sprite: none, label: "The trail south, down to the black hills"}
+    W: {kind: stairs, to: caldera_road, at: E, sprite: none, label: "The road west"}
+  encounters: {}
+  secrets: []
+
+caldera_basin:
+  name: The Caldera Basin
+  kind: dungeon
+  open: true
+  blurb: Inside the caldera. Lava fills the floor. Narrow ridges of cooled stone are the only footing. Something vast sleeps in the deep.
+  level: 6
+  look: {wall: "#2a2624", floor: "#3c3632", ceiling: "#3a2a24", fog: "#200604", torch: 0, tileset: cinder_hills, light: 16}
+  map:
+    - "(((((((((((((((((((((((("
+    - "(((((((((((((((((((((((("
+    - "((;;,,$$$$$$,,,,$$$$,,;;"
+    - "((;,,,$$$$$$;,,,$$$$,,;;"
+    - "((;,,;$$$$,,;;,,,,$$,,;;"
+    - "((;,,;;,,,,,,;,,,,,,,;;("
+    - "((;,,;,,,,,,,;,,,,,,,;;("
+    - "((;,,,,,,,,,,,;$$$$,,;;("
+    - "((;,,$$$,,,,,,,$$$$,,;;("
+    - "((;,,$$$$,,,,,,,,,,,,,,("
+    - "((;,,,$$,,,,,,;,,,,,,,,("
+    - "((;,,,,,,,,,,;;,$$$$,,,("
+    - "((;,,,;,,,,;;,,,$$$$,,,("
+    - "((;,,,;;,,;;,,,,,,,,,;;("
+    - "((;,,,,;;;;;,,,,,,,,,;;("
+    - "((;;,,,,,,,,,,,,,,,,,;;("
+    - "((,,,,,,,,..,,,,,,,,,,(("
+    - "((,,,,,,,,SS,,,,,,,,,,(("
+  legend:
+    S: {kind: stairs, to: caldera_rim, at: N, sprite: none, label: "The trail back up to the rim"}
+  encounters: {}
+  secrets: []
+
+naalda_river:
+  name: The Naalda Crossing
+  kind: dungeon
+  open: true
+  blurb: The Naalda river, wide and brown. A stone bridge spans the main channel. Reeds crowd the banks.
+  level: 3
+  look: {wall: "#6a6a60", floor: "#7a6a52", ceiling: "#7f9ab6", fog: "#0c120a", torch: 0, tileset: grassland, light: 24}
+  map:
+    - ",,,,,,,,,,NN,,,,,,,,,,,,"
+    - ",,,,,,,,,,..,,,,,,,,,,}}"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,}}"
+    - ",,,},,,,,,≡≡,,,,,,,,}}},"
+    - ",,,}},,,,,≡≡,,,,,,,,,},,"
+    - ",,,},,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - "~~~~~~~~~~==~~~~~~~~~~,E"
+    - "~~~~~~~~~~==~~~~~~~~~~,E"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,≡≡,,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,},,,,},"
+    - ",,,},,,,,≡≡,,,,,,}},,,,,"
+    - ",,,,,,,,,,≡≡,,,,,},,,,},"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,..,,,,,,,,,,}}"
+    - ",,,,,,,,,,SS,,,,,,,,,,}}"
+  legend:
+    N: {kind: stairs, to: iaza_crossroads, at: S, sprite: none, label: "The road north, to the crossroads"}
+    S: {kind: stairs, to: barjiy_road, at: N, sprite: none, label: "The road south, toward Barjiy"}
+    E: {kind: stairs, to: eastern_lakes, at: W, sprite: none, label: "East along the river, toward the great lake"}
+  encounters: {}
+  secrets: []
+
+barjiy_road:
+  name: The Barjiy Road
+  kind: dungeon
+  open: true
+  blurb: Grassland south of the river. The road runs straight through rolling country toward the walled city.
+  level: 3
+  look: {wall: "#6a6a60", floor: "#7a6a52", ceiling: "#7f9ab6", fog: "#0c120a", torch: 0, tileset: grassland, light: 24}
+  map:
+    - "}},,,,,,,,NN,,,,,,,,,,}}"
+    - "}},,,,,,,,..,,,,,,,,,,}}"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,},,,,,,≡≡,,,,,,,,},,,"
+    - ",,}}},,,,,≡≡,,,,,,,}},,,"
+    - ",,,}},,,,,≡≡,,,,,,,},,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,{{{,,,,≡≡,,,,,{{{,,,,"
+    - ",,,{{{,,,,≡≡,,,,,{{{,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,}},,,,,≡≡,,,,,,,}},},"
+    - ",,}}},,,,,≡≡,,,,,,}}},,,"
+    - ",,,}},,,,,≡≡,,,,,,,}},},"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - "}},,,,,,,,..,,,,,,,,,,}}"
+    - "}},,,,,,,,SS,,,,,,,,,,}}"
+  legend:
+    N: {kind: stairs, to: naalda_river, at: S, sprite: none, label: "The road north, to the river crossing"}
+    S: {kind: stairs, to: barjiy_outskirts, at: N, sprite: none, label: "South, toward Barjiy"}
+  encounters: {}
+  secrets: []
+
+barjiy_outskirts:
+  name: The Barjiy Outskirts
+  kind: dungeon
+  open: true
+  blurb: "Farmland and low walls outside the city of Barjiy. The prince's banner flies from every watchtower."
+  level: 4
+  look: {wall: "#6a6a60", floor: "#7a6a52", ceiling: "#7f9ab6", fog: "#0c120a", torch: 0, tileset: grassland, light: 24}
+  map:
+    - "}},,,,,,,,NN,,,,,,,,,,}}"
+    - "}},,,,,,,,..,,,,,,,,,,}}"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,C,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,,,,,,,,,,,,,,,"
+    - ",,,,,,,,,,,,,,,,,,,,,,,,"
+  legend:
+    N: {kind: stairs, to: barjiy_road, at: S, sprite: none, label: "The road north, back to the river country"}
+    C: {kind: stairs, to: barjiy_city, at: ~, sprite: none, label: "The gates of Barjiy", on: ","}
+  encounters: {}
+  secrets: []
+
+eastern_lakes:
+  name: The Great Lake
+  kind: dungeon
+  open: true
+  blurb: The shore of Eyenome, the great lake. Water stretches to the horizon. Reed beds and fishing camps line the banks.
+  level: 4
+  look: {wall: "#5a7a5a", floor: "#4a6a40", ceiling: "#7f9ab6", fog: "#0c120a", torch: 0, tileset: lakeland, light: 24}
+  map:
+    - ",,,,,,,,,,NN,,,,,,,,,,,,"
+    - ",,,,,,,,,,..,,,,,,,,,,~~"
+    - ",,,,,,,,,,≡≡,,,,,,,,~~~~"
+    - ",,,,,,,,,≡≡,,,,,~~~~~~~~"
+    - ",,,,,,,,≡≡,,,,~~~~~~~~~~"
+    - ",,,,,,,,≡≡,,,~~~~~~~~~~~"
+    - ",,,,,,,≡≡,,,,~~~~~~~~~~~"
+    - ",,_,,,≡≡,,,,,~~~~~~~~~~~"
+    - "W≡≡≡≡≡,,,,,,~~~~~~~~~~~~"
+    - "W≡≡≡≡,,,,_,,~~~~~~~~~~~~"
+    - ",,,,,,,,,,,,,~~~~~~~~~~~"
+    - ",,,,,,,,,,,,,,~~~~~~~~~~"
+    - ",,,,,,,,,,,,,,,~~~~~~~~~"
+    - ",,,,,,,,,,,,,,,,~~~~~~~~"
+    - ",,,,,,,,,,,,,,,,~~~~~~~~"
+    - ",,,,,,,,,,,,,,,,,~~~~~~~"
+    - ",,,,,,,,,,,,,,,,,,,,,~~~"
+    - ",,,,,,,,,,,,,,,,,,,,,~~~"
+  legend:
+    N: {kind: stairs, to: eseumbu_marsh, at: S, sprite: none, label: "North along the shore, into the marshes"}
+    W: {kind: stairs, to: naalda_river, at: E, sprite: none, label: "West, back to the river crossing"}
+  encounters: {}
+  secrets: []
+
+eseumbu_marsh:
+  name: The Eseumbu Marsh
+  kind: dungeon
+  open: true
+  blurb: "A vast marsh at the lake's northern end. The water is black and still. Things move under the surface."
+  level: 4
+  look: {wall: "#24381f", floor: "#4a3a28", ceiling: "#2a3a22", fog: "#0c120a", torch: 0, tileset: jungle, light: 18}
+  map:
+    - "]]]]]]]]]]]]]]]]]]]]]]]]"
+    - "]]]]]]]]]]]]]]]]]]]]]]]]"
+    - "]],,≈≈≈,,,,,,,,,≈≈≈,,,]]"
+    - "]],,≈≈≈≈≈,,,,≈≈≈≈≈≈,,,]]"
+    - "]],≈≈_≈≈≈≈,,,≈≈≈_≈≈,,,]]"
+    - "]],,≈≈≈≈≈≈,,,≈≈≈≈≈,,,,]]"
+    - "]],,,,≈≈≈,,,,,,≈≈≈,,,,]]"
+    - "]],,,,,,,,,,,,,,,,,,,,]]"
+    - "]],,≈≈,,,,,,,,,,,,≈≈,,]]"
+    - "]],,≈≈≈≈,,,,,,,,≈≈≈≈,,]]"
+    - "]],≈≈≈_≈≈,,,,,≈≈≈_≈≈,,]]"
+    - "]],,≈≈≈≈≈,,,,,,≈≈≈≈,,,]]"
+    - "]],,,,≈≈,,,,,,,,,≈≈,,,]]"
+    - "]],,,,,,,,,,,,,,,,,,,,]]"
+    - "]],,,,,,,,,,,,,,,,,,,,]]"
+    - "]],,,,,,,,,,,,,,,,,,,,]]"
+    - "]],,,,,,,,..,,,,,,,,,,]]"
+    - "]],,,,,,,,SS,,,,,,,,,,]]"
+  legend:
+    S: {kind: stairs, to: eastern_lakes, at: N, sprite: none, label: "South along the shore, back to the lake"}
+  encounters: {}
+  secrets: []
+
+burbuma_frontier:
+  name: The Burbuma Frontier
+  kind: dungeon
+  open: true
+  blurb: Grassland at the Human frontier. Half-built walls and watchtowers. The border city of Burbuma sprawls behind its palisade.
+  level: 3
+  look: {wall: "#6a6a60", floor: "#7a6a52", ceiling: "#7f9ab6", fog: "#0c120a", torch: 0, tileset: grassland, light: 24}
+  map:
+    - "}},,,,,,,,NN,,,,,,,,,,}}"
+    - "}},,,,,,,,..,,,,,,,,,,}}"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,C,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - "}},,,,,,,,..,,,,,,,,,,}}"
+    - "}},,,,,,,,SS,,,,,,,,,,}}"
+  legend:
+    N: {kind: stairs, to: savanna_west, at: S, sprite: none, label: "North, back to the savanna"}
+    S: {kind: stairs, to: siege_belt, at: N, sprite: none, label: "South, into contested land"}
+    C: {kind: stairs, to: burbuma_city, at: ~, sprite: none, label: "The gates of Burbuma", on: ","}
+  encounters: {}
+  secrets: []
+
+siege_belt:
+  name: The Siege Belt
+  kind: dungeon
+  open: true
+  blurb: Scorched land between the Human and Lizardfolk frontiers. Old trenches and ruined walls. The grass grows back over bones.
+  level: 4
+  look: {wall: "#6a6a60", floor: "#7a6a52", ceiling: "#7f9ab6", fog: "#0c120a", torch: 0, tileset: grassland, light: 24}
+  map:
+    - "}},,,,,,,,NN,,,,,,,,,,}}"
+    - "}},,,,,,,,..,,,,,,,,,,}}"
+    - ",,,;,,,,,,≡≡,,,,;,,,,,,,"
+    - ",,;;,,,,,,≡≡,,,,;;,,,,,,"
+    - ",,,;,,,,,,≡≡,,,,;,,;,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,;,,,"
+    - ",,,,;,,,,,≡≡,,,,,,,,,,;,"
+    - ",,,,;;,,,,≡≡,,,,,,;,,,;,"
+    - ",,,,,;,,,,≡≡,,,,,;;,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,;,,,,,"
+    - ",,;,,,,,,,≡≡,,,,,,,,,;,,"
+    - ",,;;,,,,,,≡≡,,,,,,,,;;,,"
+    - ",,,;,,,,,,≡≡,,,,,,,,;,,,"
+    - ",,,,,,,,,,≡≡,,,,;,,,,,,,"
+    - ",,,,,;,,,,≡≡,,,,;;,,,,,,"
+    - ",,,,;;,,,,≡≡,,,,,;,,,,,,"
+    - "}},,,,,,,,..,,,,,,,,,,}}"
+    - "}},,,,,,,,SS,,,,,,,,,,}}"
+  legend:
+    N: {kind: stairs, to: burbuma_frontier, at: S, sprite: none, label: "North, back to the frontier"}
+    S: {kind: stairs, to: muulau_lowlands, at: N, sprite: none, label: "South, into the lowlands"}
+  encounters: {}
+  secrets: []
+
+muulau_lowlands:
+  name: The Muulau Lowlands
+  kind: dungeon
+  open: true
+  blurb: Southern lowlands where grassland gives way to scrub. The road runs south toward the coast.
+  level: 4
+  look: {wall: "#6a6a60", floor: "#7a6a52", ceiling: "#7f9ab6", fog: "#0c120a", torch: 0, tileset: grassland, light: 24}
+  map:
+    - "}},,,,,,,,NN,,,,,,,,,,}}"
+    - "}},,,,,,,,..,,,,,,,,,,}}"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,},,,,,≡≡,,,,,,,,},,,"
+    - ",,,}}},,,,≡≡,,,,,,,,},},"
+    - ",,,,}},,,,≡≡,,,,,,},,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,}},,,,,≡≡,,,,,,,}},},"
+    - ",,}}},,,,,≡≡,,,,,,}}},},"
+    - ",,,}},,,,,≡≡,,,,,,,}},},"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - "}},,,,,,,,..,,,,,,,,,,}}"
+    - "}},,,,,,,,SS,,,,,,,,,,}}"
+  legend:
+    N: {kind: stairs, to: siege_belt, at: S, sprite: none, label: "North, back through the siege belt"}
+    S: {kind: stairs, to: emagshir_south, at: N, sprite: none, label: "South, toward Emagshir"}
+  encounters: {}
+  secrets: []
+
+emagshir_south:
+  name: The Southern Coast
+  kind: dungeon
+  open: true
+  blurb: "Dry scrubland at the continent's southern tip. Salt wind off the sea. The port city of Emagshir bakes in the sun."
+  level: 5
+  look: {wall: "#8a7a60", floor: "#a08a60", ceiling: "#8a9aaa", fog: "#0c120a", torch: 0, tileset: desert, light: 28}
+  map:
+    - "▩▩,,,,,,,,NN,,,,,,,,,,▩▩"
+    - "▩▩,,,,,,,,..,,,,,,,,,,▩▩"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,C,,,,,,}}"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,}}"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - ",,,,,,,,,,≡≡,,,,,,,,,,,,"
+    - "~~~~~~~~~~~~~~~~~~~~~~~~"
+    - "~~~~~~~~~~~~~~~~~~~~~~~~"
+  legend:
+    N: {kind: stairs, to: muulau_lowlands, at: S, sprite: none, label: "The road north, back to the lowlands"}
+    C: {kind: stairs, to: emagshir_city, at: ~, sprite: none, label: "The docks of Emagshir", on: ","}
+  encounters: {}
+  secrets: []
+
+mire_deep:
+  name: The Deep Mire
+  kind: dungeon
+  open: true
+  blurb: Deeper into the mire. The trees press close and the water rises to the knees. The air is thick and green.
+  level: 3
+  look: {wall: "#24381f", floor: "#4a3a28", ceiling: "#2a3a22", fog: "#0c120a", torch: 0, tileset: jungle, light: 16}
+  map:
+    - "]]]]]]]]]]]]]]]]]]]]]]]]"
+    - "]]]]]]]]]]]]]]]]]]]]]]]]"
+    - "]],,≈≈≈,,,,,,,,,,≈≈≈,,]]"
+    - "]],,≈≈≈≈≈,,,,,,,≈≈≈≈,,]]"
+    - "]],,≈≈_≈≈≈,,,,,,≈_≈≈,,]]"
+    - "]],,≈≈≈≈≈,,,,,,,,≈≈≈,,]]"
+    - "]],,,,≈≈,,,,,,,,,,≈≈,,]]"
+    - "]],,,,,,,,,,,,,,,,,,,,]]"
+    - "]],,≈≈,,≡≡≡≡≡≡≡≡≡≡≡≡≡≡,E"
+    - "]],,≈≈,,≡≡≡≡≡≡≡≡≡≡≡≡≡≡,E"
+    - "]],,,,,,,,,,,,,,,,,,,,]]"
+    - "]],,,,≈≈,,,,,,,,,,≈≈,,]]"
+    - "]],,≈≈≈≈≈,,,,,,,,≈≈≈≈,]]"
+    - "]],,≈≈_≈≈≈,,,,,,,≈_≈≈,]]"
+    - "]],,≈≈≈≈≈,,,,,,,,,≈≈≈,]]"
+    - "]],,,,≈≈,,,,,,,,,,,,≈,]]"
+    - "]]]]]]]]]]]]]]]]]]]]]]]]"
+    - "]]]]]]]]]]]]]]]]]]]]]]]]"
+  legend:
+    E: {kind: stairs, to: jungle_west, at: Z, sprite: none, label: "East, back toward the mire wood"}
+  encounters: {}
+  secrets: []
+
+# ---- Burazese cities: draft towns with basic services. Each has an inn, a shop, a healer, a trainer, an armory
+# and a bounty board.
+
+muawi_city:
+  name: Muawi
+  kind: town
+  blurb: A Lizardfolk lake city of reed houses and stone causeways. The water market floats on pontoons.
+  look: {sky: "#5a7a8a", ground: "#4a6a50", accent: "#7a9a6a"}
+  start: scaled_hall
+  locations:
+    - id: scaled_hall
+      name: The Scaled Hall
+      glyph: "🍺"
+      blurb: A long hall of woven reed and carved stone. Lizardfolk share bowls of spiced fish.
+      npcs: []
+      services: [{kind: inn, name: "A mat by the fire"}]
+    - id: lakemarket
+      name: The Lakemarket
+      glyph: "⚖"
+      blurb: Pontoons roped together on the lake. Fish, reed-work, and shells change hands.
+      npcs: []
+      services:
+        - kind: shop
+          id: muawi_market
+          name: Lake goods
+          buys: [good]
+          stock:
+            - {good: bandage}
+            - {good: arrows}
+            - {good: salve}
+            - {good: tonic}
+            - {good: herbs}
+    - id: deep_temple
+      name: Temple of the Deep
+      glyph: "🏮"
+      blurb: A stone shrine half-submerged in the lake. The priests tend the sick in the shallows.
+      npcs: []
+      services: [{kind: healer, name: "The lake's mercy"}]
+    - id: reed_yard
+      name: The Reed Yard
+      glyph: "🎯"
+      blurb: A training ground on a wide causeway. The drillmaster is a scarred Lizardfolk veteran.
+      npcs: []
+      services: [{kind: trainer, name: "Instruction"}]
+    - id: scale_forge
+      name: The Scale Forge
+      glyph: "🔨"
+      blurb: A forge built on a stone platform. Bronze and bone tools hang from racks.
+      npcs: []
+      services:
+        - kind: shop
+          id: muawi_forge
+          name: Arms and armor
+          buys: [weapon, armor, shield]
+          stock:
+            - {weapon: club}
+            - {weapon: dagger}
+            - {weapon: shortSpear}
+            - {weapon: spikedMace}
+            - {armor: padded, coverage: full}
+            - {armor: leather, coverage: full}
+            - {armor: leather, coverage: half}
+            - {shield: buckler, material: wood}
+            - {shield: round, material: wood}
+    - id: wardens_dock
+      name: The Warden's Dock
+      glyph: "🛡"
+      blurb: A stone dock where the lake wardens moor. A board of bounties nailed to the post.
+      npcs: []
+      services: [{kind: bounty, name: "Lake wardens' board"}]
+  exits:
+    - {to: muawi_lakes, label: "Out to the lake district", arrive: C}
+  secrets: []
+
+zhomelonga_city:
+  name: Zhomelonga
+  kind: town
+  blurb: River-Fortress, seat of the Muzhumewe Hegemony. Stone walls, stepped plazas, and the smell of smelted copper.
+  look: {sky: "#5a6a7a", ground: "#6a6050", accent: "#b8905a"}
+  start: sovereigns_rest
+  locations:
+    - id: sovereigns_rest
+      name: The Sovereign's Rest
+      glyph: "🍺"
+      blurb: A grand inn in the shadow of the Hegemon's palace. The beds are clean and the walls are thick.
+      npcs: []
+      services: [{kind: inn, name: "A room in the capital"}]
+    - id: grand_market
+      name: The Grand Market
+      glyph: "⚖"
+      blurb: The largest market on the continent. Copper, jade, hides, and spice from every Hegemony city.
+      npcs: []
+      services:
+        - kind: shop
+          id: zhomelonga_market
+          name: Grand market goods
+          buys: [good]
+          stock:
+            - {good: bandage}
+            - {good: arrows}
+            - {good: salve}
+            - {good: tonic}
+            - {good: herbs}
+            - {good: antidote}
+            - {good: repair_kit}
+    - id: fire_tongue_temple
+      name: Temple of the Fire-Tongue
+      glyph: "🏮"
+      blurb: A stepped pyramid in the city's heart. Smoke rises from braziers at every tier.
+      npcs: []
+      services: [{kind: healer, name: "The fire's cleansing"}]
+    - id: hegemons_yard
+      name: The Hegemon's Yard
+      glyph: "🎯"
+      blurb: The military yard where the Hegemony's legions train. Open to those with standing.
+      npcs: []
+      services: [{kind: trainer, name: "Instruction"}]
+    - id: master_forge
+      name: The Master Forge
+      glyph: "🔨"
+      blurb: The finest smiths on Burazese work here. Bronze, copper, and rare steel.
+      npcs: []
+      services:
+        - kind: shop
+          id: zhomelonga_forge
+          name: Arms and armor
+          buys: [weapon, armor, shield]
+          stock:
+            - {weapon: club}
+            - {weapon: dagger}
+            - {weapon: shortSpear}
+            - {weapon: spikedMace}
+            - {weapon: rapier}
+            - {weapon: longsword}
+            - {weapon: warhammer}
+            - {armor: padded, coverage: full}
+            - {armor: leather, coverage: full}
+            - {armor: leather, coverage: half}
+            - {armor: mail, material: bronze, coverage: full}
+            - {armor: mail, material: bronze, coverage: half}
+            - {shield: buckler, material: wood}
+            - {shield: round, material: wood}
+            - {shield: round, material: iron}
+    - id: gate_of_laws
+      name: The Gate of Laws
+      glyph: "🛡"
+      blurb: The Hegemony's court of justice. Bounties posted for threats to the state.
+      npcs: []
+      services: [{kind: bounty, name: "Hegemony bounties"}]
+  exits:
+    - {to: hegemony_jungle, label: "Out through the great gate", arrive: C}
+  secrets: []
+
+barjiy_city:
+  name: Barjiy
+  kind: town
+  blurb: A walled Human city on the southern plateau. Iron-shod gates, a cathedral of dark stone, and the prince's banner on every tower.
+  look: {sky: "#7f8a96", ground: "#6a5a4a", accent: "#a0784a"}
+  start: iron_crown
+  locations:
+    - id: iron_crown
+      name: The Iron Crown
+      glyph: "🍺"
+      blurb: A solid inn near the gate. Iron chandeliers and a fireplace you could stand in.
+      npcs: []
+      services: [{kind: inn, name: "A room at the Crown"}]
+    - id: bazaar
+      name: The Bazaar
+      glyph: "⚖"
+      blurb: A covered market in the old quarter. Human merchants and a few Lizardfolk traders.
+      npcs: []
+      services:
+        - kind: shop
+          id: barjiy_market
+          name: Bazaar goods
+          buys: [good]
+          stock:
+            - {good: bandage}
+            - {good: arrows}
+            - {good: salve}
+            - {good: tonic}
+            - {good: herbs}
+            - {good: repair_kit}
+    - id: cathedral
+      name: Cathedral of Light
+      glyph: "🏮"
+      blurb: A tall cathedral of dark basalt. The priests tend the wounded and pray for the prince.
+      npcs: []
+      services: [{kind: healer, name: "The Light's mercy"}]
+    - id: princes_yard
+      name: The Prince's Yard
+      glyph: "🎯"
+      blurb: A training yard inside the castle walls. The prince's men-at-arms drill here.
+      npcs: []
+      services: [{kind: trainer, name: "Instruction"}]
+    - id: ironworks
+      name: The Ironworks
+      glyph: "🔨"
+      blurb: The city's forge district. Iron and some steel, worked by Human smiths.
+      npcs: []
+      services:
+        - kind: shop
+          id: barjiy_forge
+          name: Arms and armor
+          buys: [weapon, armor, shield]
+          stock:
+            - {weapon: club}
+            - {weapon: dagger}
+            - {weapon: shortSpear}
+            - {weapon: spikedMace}
+            - {weapon: rapier}
+            - {weapon: longsword}
+            - {armor: padded, coverage: full}
+            - {armor: leather, coverage: full}
+            - {armor: mail, coverage: half}
+            - {armor: mail, coverage: full}
+            - {shield: buckler, material: wood}
+            - {shield: round, material: wood}
+            - {shield: round, material: iron}
+    - id: barracks
+      name: The Barracks
+      glyph: "🛡"
+      blurb: The city guard's post. A board of bounties and a captain who does not smile.
+      npcs: []
+      services: [{kind: bounty, name: "Prince's bounties"}]
+  exits:
+    - {to: barjiy_outskirts, label: "Out through the gates", arrive: C}
+  secrets: []
+
+burbuma_city:
+  name: Burbuma
+  kind: town
+  blurb: A frontier city where Human farmers and Lizardfolk traders share a nervous peace. The wall is half-built and the inns are full.
+  look: {sky: "#6f8a96", ground: "#7a6a52", accent: "#b8905a"}
+  start: broken_yoke
+  locations:
+    - id: broken_yoke
+      name: The Broken Yoke
+      glyph: "🍺"
+      blurb: A rough inn at the crossroads. Farmers, traders, and soldiers all drinking together.
+      npcs: []
+      services: [{kind: inn, name: "A room at the Yoke"}]
+    - id: border_market
+      name: The Border Market
+      glyph: "⚖"
+      blurb: An open-air market where Human grain meets Lizardfolk fish. Prices change with the news.
+      npcs: []
+      services:
+        - kind: shop
+          id: burbuma_market
+          name: Border goods
+          buys: [good]
+          stock:
+            - {good: bandage}
+            - {good: arrows}
+            - {good: salve}
+            - {good: tonic}
+            - {good: herbs}
+    - id: wayfarers_chapel
+      name: The Wayfarers' Chapel
+      glyph: "🏮"
+      blurb: A small chapel where a tired priest tends the frontier's wounds.
+      npcs: []
+      services: [{kind: healer, name: "The wayfarer's care"}]
+    - id: militia_yard
+      name: The Militia Yard
+      glyph: "🎯"
+      blurb: A muddy yard behind the palisade. The militia drills when it is not farming.
+      npcs: []
+      services: [{kind: trainer, name: "Instruction"}]
+    - id: smiths_row
+      name: Smith's Row
+      glyph: "🔨"
+      blurb: Two smiths on a muddy lane. Basic arms and what armor they can patch together.
+      npcs: []
+      services:
+        - kind: shop
+          id: burbuma_forge
+          name: Arms and armor
+          buys: [weapon, armor, shield]
+          stock:
+            - {weapon: club}
+            - {weapon: dagger}
+            - {weapon: shortSpear}
+            - {armor: padded, coverage: full}
+            - {armor: leather, coverage: full}
+            - {armor: leather, coverage: half}
+            - {shield: buckler, material: wood}
+            - {shield: round, material: wood}
+    - id: frontier_post
+      name: The Frontier Post
+      glyph: "🛡"
+      blurb: A wooden post at the gate. The captain pins bounties to the wall with a knife.
+      npcs: []
+      services: [{kind: bounty, name: "Frontier bounties"}]
+  exits:
+    - {to: burbuma_frontier, label: "Out to the frontier", arrive: C}
+  secrets: []
+
+emagshir_city:
+  name: Emagshir
+  kind: town
+  blurb: A sun-baked port at the continent's southern tip. Ships from Uvue ride at anchor in the bay. The air smells of salt and spice.
+  look: {sky: "#8a9aaa", ground: "#a08a60", accent: "#c8a05a"}
+  start: salt_wind
+  locations:
+    - id: salt_wind
+      name: The Salt Wind
+      glyph: "🍺"
+      blurb: A dockside inn. The floor tilts with the tide. The beer is warm but the company is interesting.
+      npcs: []
+      services: [{kind: inn, name: "A hammock at the Salt Wind"}]
+    - id: harbor_market
+      name: The Harbor Market
+      glyph: "⚖"
+      blurb: A market on the quay. Goods from Uvue, spice from the interior, and fish still flopping.
+      npcs: []
+      services:
+        - kind: shop
+          id: emagshir_market
+          name: Harbor goods
+          buys: [good]
+          stock:
+            - {good: bandage}
+            - {good: arrows}
+            - {good: salve}
+            - {good: tonic}
+            - {good: herbs}
+            - {good: antidote}
+    - id: tide_temple
+      name: Temple of the Tide
+      glyph: "🏮"
+      blurb: A whitewashed temple on the headland. The priests watch the sea and tend the drowned.
+      npcs: []
+      services: [{kind: healer, name: "The tide's mercy"}]
+    - id: marine_yard
+      name: The Marine Yard
+      glyph: "🎯"
+      blurb: A yard on the docks where marines and sellswords train between voyages.
+      npcs: []
+      services: [{kind: trainer, name: "Instruction"}]
+    - id: dockside_forge
+      name: The Dockside Forge
+      glyph: "🔨"
+      blurb: A forge that smells of salt and coal. The smith mends anchors and swords alike.
+      npcs: []
+      services:
+        - kind: shop
+          id: emagshir_forge
+          name: Arms and armor
+          buys: [weapon, armor, shield]
+          stock:
+            - {weapon: club}
+            - {weapon: dagger}
+            - {weapon: shortSpear}
+            - {weapon: spikedMace}
+            - {weapon: rapier}
+            - {armor: padded, coverage: full}
+            - {armor: leather, coverage: full}
+            - {armor: leather, coverage: half}
+            - {armor: mail, material: bronze, coverage: half}
+            - {shield: buckler, material: wood}
+            - {shield: round, material: wood}
+    - id: harbor_watch
+      name: The Harbor Watch
+      glyph: "🛡"
+      blurb: The harbor master's office. Bounties for pirates and smugglers.
+      npcs: []
+      services: [{kind: bounty, name: "Harbor bounties"}]
+  exits:
+    - {to: emagshir_south, label: "Out to the docks", arrive: C}
+  secrets: []
