@@ -1,9 +1,9 @@
 # New game: where the party begins, what it carries, and the starter kits to choose from.
 # place is home: the town the party wakes in when left for dead, and where leaving a dungeon leads. go: where a new
-# game begins (a place and its arrival square, as a trial's go; the village, the hub for both dungeons); leave it
+# game begins (a place and its arrival square, as a trial's go; the green before Shiwgoiwo's inn, in the open world); leave it
 # out to begin in the town.
 place: stonebridge
-go: {to: village, arrive: I}
+go: {to: bz_6_8, arrive: I}
 day: 1
 gold: 60
 supplies: {bandages: 4, arrows: 0, bodkins: 0}
@@ -31,8 +31,8 @@ presets:
   - id: beren
     name: Beren
     blurb: "Three winters in plate. Quiet, steady, still standing."
-    place: village
-    at: [16, 14]
+    place: bz_6_8
+    at: [9, 14]
     pitch: "I've slept in this plate three winters. The dents are mine. Everything that put them there is dead."
     kit: sword
     level: 1
@@ -47,8 +47,8 @@ presets:
   - id: lorc
     name: Lorc
     blurb: "Longbow, keen eye, a keeper's quiet. Keeps his distance."
-    place: village
-    at: [9, 20]
+    place: bz_6_8
+    at: [16, 14]
     pitch: "I was a keeper on the hill estates before the wolves came down. Same eye I always had. Different things in it now."
     kit: bow
     level: 1
@@ -65,8 +65,8 @@ presets:
   - id: cyrus
     name: Cyrus
     blurb: "Quick hands, light feet, sharp tongue. Nothing heavy."
-    place: village
-    at: [24, 19]
+    place: bz_6_8
+    at: [10, 16]
     pitch: "I owe three men money and two of them are dead, so the debt situation is improving. Anything heavier than a gambeson is for people who can't get out of the way."
     kit: rapier
     level: 1
@@ -79,8 +79,8 @@ presets:
   - id: jabiku
     name: Jabiku
     blurb: "Life mage. Drains what won't die, mends what shouldn't."
-    place: village
-    at: [10, 11]
+    place: bz_6_8
+    at: [16, 16]
     pitch: "I've held three people together who should have been dead. Two of them stayed that way. Your odds are better with me than without."
     kit: staff
     level: 1
@@ -102,8 +102,8 @@ recruits:
   - id: kalavar
     name: Kalavar
     blurb: "Orc sellsword. Heavy blade, mail, no apologies."
-    place: village
-    at: [11, 13]
+    place: bz_6_8
+    at: [9, 18]
     pitch: "The road south is thick with things that kill people, and I'm better at it than most of them. If your coin's good, so am I."
     kit: sword
     level: 1
@@ -118,8 +118,8 @@ recruits:
   - id: jadier
     name: Jadier
     blurb: "Dragonkin. Two blades, restless, spoiling for a fight."
-    place: village
-    at: [23, 15]
+    place: bz_6_8
+    at: [17, 18]
     pitch: "I've been sitting in this village since the rains, and if I fight one more rat I'll start biting back. Take me somewhere that bleeds."
     kit: rapier
     level: 1
@@ -135,8 +135,8 @@ recruits:
   - id: crusader
     name: The Crusader
     blurb: "Plate, heater, a longsword, and an oath he won't explain."
-    place: village
-    at: [14, 17]
+    place: bz_6_8
+    at: [16, 19]
     pitch: "I was given a name and told to walk south until I found it. I haven't. The road goes on and so do I."
     kit: sword
     level: 1
@@ -151,8 +151,8 @@ recruits:
   - id: spawnee
     name: Spawnee
     blurb: "Spellsword. Fire at range, a blade up close, practical about both."
-    place: village
-    at: [7, 19]
+    place: bz_6_8
+    at: [23, 19]
     pitch: "I burned a man's shield off his arm at twenty paces last month. Up close I use the sword. Something always works."
     kit: sword
     level: 1

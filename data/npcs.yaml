@@ -657,7 +657,7 @@ gnome_surveyor:
       starts: cartographers_legacy
       hide: {quest: cartographers_legacy}
       tag: surface
-      text: "This cord. Eleven years, knot by knot — every tunnel, every seam, every room the goblins dug while we listened through the wall. If we don't come up, somebody should have it. The Warden of the Lantern in Stonebridge will know what to do with it."
+      text: "This cord. Eleven years, knot by knot — every tunnel, every seam, every room the goblins dug while we listened through the wall. If we don't come up, somebody should have it. The Warden of the Lantern in Shiwgoiwo will know what to do with it."
 gnome_prisoner:
   name: Fennick
   title: A gnome prisoner

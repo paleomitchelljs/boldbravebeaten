@@ -4,7 +4,7 @@
  * A crawl as sim/crawl.js does it (the place's groups nearest first, on the dungeon map, groups in earshot joining,
  * rest and repair between fights, never retreating) for each size.
  *
- *   node sim/partysize.js [temple_court,ember_hall,orc_valley] [--sizes 1,2,3,4,5,6] [--n 30] [--seed 4242] [--jobs 3] [--json file]
+ *   node sim/partysize.js [temple_court,ember_hall,bz_7_9] [--sizes 1,2,3,4,5,6] [--n 30] [--seed 4242] [--jobs 3] [--json file]
  *
  * The party: up to four, drawn at random from start.yaml's presets (as sim/crawl.js --party does); five and six, the four
  * presets and one or two recruits drawn from start.yaml's recruits. Level 1, as they start. Crawl i of every size and
@@ -21,7 +21,7 @@ const { execFile } = require('child_process');
 
 const argv = process.argv.slice(2);
 const opt = (k, d) => { const i = argv.indexOf('--' + k); return i >= 0 ? argv[i + 1] : d; };
-const PLACES = (argv[0] && !argv[0].startsWith('--') ? argv[0] : 'temple_court,ember_hall,orc_valley').split(',');
+const PLACES = (argv[0] && !argv[0].startsWith('--') ? argv[0] : 'temple_court,ember_hall,bz_7_9').split(',');
 const SIZES = opt('sizes', '1,2,3,4,5,6').split(',').map(Number);
 const N = Number(opt('n', 30)), SEED = Number(opt('seed', 4242));
 const JOBS = Number(opt('jobs', Math.max(1, Math.min(3, os.cpus().length - 1))));

@@ -1,0 +1,322 @@
+# The open world of the first continent (W1), laid out by tools/worldgen.js into data/outdoors.yaml.
+#   node tools/worldgen.js assets/world/w1-layout.yaml [--preview out.ppm]
+# The continent's terrain comes from `cells` (an extract of the reference world's 0.5-degree raster: biome, elevation,
+# relief, rivers by Strahler order, lakes, swamp). Every land slot of the grid becomes one outdoor place, `size`
+# squares a side; walkable squares that meet across a shared edge are a way across (the exits run the whole edge).
+# Sites are stamped over the terrain: towns' gates, dungeons' doors and what stood round them, with their legend
+# entries and encounters. A first draft (2026-11-24): the terrain is a scaffold to craft over, not finished maps.
+
+cells: assets/world/w1-cells.csv
+seed: 103
+prefix: bz_                 # place ids: bz_<row>_<col>
+grid: {lon0: -117.5, lat0: 22.5, step: 5, cols: 13, rows: 11, size: 40}
+continent: [-86.25, -0.25]  # a land cell on the continent: its connected land is the continent
+minLand: 8                  # a slot with fewer land cells than this is left out (unless a site is in it)
+home: stonebridge           # levels rise with the distance in places from this site
+level: {base: 1, per: 0.6, max: 10}
+
+# How each family draws the abstract terrain classes. A class missing from a family falls back along `stand`, and the
+# fallback is written to the gap report (assets/world/w1-gaps.md) as a kludge to make art for.
+families:
+  w1_wild:
+    tileset: w1_wild
+    look: {wall: "#4a5a3a", floor: "#4f9a3c", ceiling: "#9ab8d6", fog: "#0c120a", torch: 0, ground: ",", light: 28}
+    chars: {ocean: "~", lake: "~", river: "~", ground: ",", dry: "∴", forest: "}", hill: "{", scree: "`", mountain: "#", ledge: "(", summit: "?", road: ".", bridge: "="}
+    stand: {jungle: forest, swamp: pools, sand: ground, shallows: bridge}
+    props:
+      t: {sprite: oak, label: "An oak"}
+      i: {sprite: birch, label: "A birch"}
+      p: {sprite: pine, label: "A pine"}
+      g: {sprite: tallgrass_gold, solid: false, label: "Tall grass"}
+      o: {sprite: boulder, label: "A boulder"}
+      r: {sprite: reeds, solid: false, label: "Reeds"}
+      k: {sprite: kapok, label: "A jungle tree"}
+    scatter: {ground: {t: 0.012, i: 0.006, g: 0.02, o: 0.004}, dry: {g: 0.02, o: 0.01}, forestEdge: {p: 0.03}, jungleAsForest: {k: 0.02}, pools: {r: 0.25}}
+  w1_jungle:
+    tileset: w1_jungle
+    look: {wall: "#24381f", floor: "#4a3a28", ceiling: "#2a3a22", fog: "#0c120a", torch: 0, ground: ".", light: 24}
+    chars: {ocean: "~", lake: "~", river: "~", ground: ".", jungle: "]", swamp: "≈", shallows: "_", road: "≡", bridge: "_"}
+    stand: {forest: jungle, dry: ground, hill: ground, scree: ground, mountain: jungle, ledge: jungle, summit: jungle, sand: swamp}
+    props:
+      k: {sprite: kapok, label: "A kapok tree"}
+      m: {sprite: mangrove, label: "A mangrove"}
+      s: {sprite: strangler, label: "A strangler fig"}
+      c: {sprite: cypress, label: "A cypress"}
+    scatter: {ground: {k: 0.01, s: 0.006}, swamp: {m: 0.03, c: 0.02}, grassAsFloor: {k: 0.004}}
+  w1_desert:
+    tileset: w1_desert
+    look: {wall: "#8a4a2a", floor: "#d8b878", ceiling: "#9ab8d6", fog: "#1a140a", torch: 0, ground: ".", light: 28}
+    chars: {ocean: "~", lake: "~", river: "~", ground: ".", dry: ".", forest: ",", hill: "`", scree: "`", mountain: "#", ledge: "(", summit: "?", shallows: "_", road: "`", bridge: "_", oasis: ","}
+    stand: {jungle: forest, swamp: oasis}
+    props:
+      a: {sprite: palm, label: "A palm"}
+      b: {sprite: thornbush, label: "A thornbush"}
+      d: {sprite: drygrass, solid: false, label: "Dry grass"}
+      o: {sprite: boulder, label: "A boulder"}
+    scatter: {ground: {b: 0.01, d: 0.03, o: 0.006}, oasis: {a: 0.08}}
+
+# Families by the slot's land: the biome most of it is (G grassland, F temperate forest, J jungle, D desert).
+familyOf: {G: w1_wild, F: w1_wild, J: w1_jungle, D: w1_desert}
+# Slot overrides: [row, col]: {family, name, blurb}
+slots:
+  "5,8": {family: w1_wild, name: "Exeomo", blurb: "High grassland round the caldera of Exeomo: a ring of black peaks, jungle in the crater, a mine cut into the rim."}
+  "6,8": {name: "Shiwgoiwo", blurb: "Grassland and jungle edge round the frontier village of Shiwgoiwo, roads out to every side."}
+  "6,9": {name: "The Temple Swamp", blurb: "Jungle and swamp east of Shiwgoiwo, and the old temple of the lizardfolk in it."}
+  "6,10": {name: "Lake Eyenuma", blurb: "Forest down to a great lake, and a fortress of grey-green stone on its shore."}
+  "7,9": {name: "The Orc Valley", blurb: "Forested highlands, and in them a valley where the orc legion keeps its castle and works its slaves in a quarry."}
+  "6,6": {name: "The Red Labyrinth", blurb: "Dry plateau broken by a maze of red rock, and minotaurs in it."}
+  "6,0": {name: "The Western Desert", blurb: "Sand and red rock on the western coast, an oasis lake and a ruined tower on an island in it."}
+  "1,7": {name: "Zhomelonga", blurb: "Jungle and rivers round the capital of the Hegemony."}
+  "2,4": {name: "Muawea", blurb: "Jungle coast round the lizardfolk city of Muawea."}
+  "5,2": {name: "Iitanii", blurb: "The Naalda's grassland round the frontier city of Iitanii."}
+  "8,8": {name: "Isdi", blurb: "Forest and coast round Isdi, the seat of Barjiy."}
+  "9,1": {name: "Emagshir", blurb: "The dry southwestern tip and the port of Emagshir."}
+
+# Sites: a stamp laid with its centre at `at` (lon, lat). In a stamp, a letter in its `legend` is that entry; a ground
+# letter is that ground; `·` is the family's plain ground, `+` its road, a space leaves the terrain as it is; digits
+# 1-8 are recruits' home squares (reported, laid as ground).
+# `road: [site...]` joins it by road. `ring` raises a caldera round the centre (inner, rim, outer radii in squares).
+sites:
+  - id: stonebridge
+    at: [-75.6, -9.4]
+    road: [exeomo, temple, sarnak, orcs, isdi, labyrinth]
+    stamp:
+      - "······················"
+      - "·xxx····xxx·····xxx···"
+      - "·xIx····xkx·····xhx···"
+      - "··+······+·······+····"
+      - "··++++++++++++++++++··"
+      - "··+··1·w·+··2····+····"
+      - "·P+l·····+······l+M···"
+      - "··+···3··+··4····+····"
+      - "··+++++++a++++++++++··"
+      - "··+··5·T·+···6···+····"
+      - "·xxx····xxx·7···xxx8··"
+      - "·xcx····xcx·····xcx···"
+      - "······················"
+    legend:
+      I: {kind: stairs, to: stonebridge, sprite: inn, scale: 1.2, label: "The Tilted Cask (the inn)", on: ","}
+      k: {kind: prop, sprite: smithy, label: "The smithy", on: ","}
+      h: {kind: prop, sprite: shop, label: "The shop", on: ","}
+      c: {kind: prop, sprite: cottage, label: "A cottage", on: ","}
+      x: {kind: prop, sprite: none, on: ","}
+      w: {kind: prop, sprite: well, label: "The well", on: ","}
+      l: {kind: prop, sprite: lamppost, label: "A lamp post", on: ","}
+      a: {kind: prop, sprite: signpost, solid: false, label: "A signpost: the roads to the mine, the temple, the lake, the valley, Isdi and the plateau", on: "."}
+      P: {kind: npc, npc: warden_ysa, sprite: wizard, label: "Warden Ysa, priest of the Lantern", services: {place: stonebridge, location: lantern_house}, on: ","}
+      M: {kind: npc, npc: guildmaster_pell, sprite: rogue, label: "Guildmaster Pell, merchant", services: {place: stonebridge, location: market}, on: ","}
+      T: {kind: npc, sprite: knight, label: "The drillmaster", services: {place: stonebridge, location: yard}, on: ","}
+
+  - id: wolves
+    at: [-77.0, -11.6]
+    stamp:
+      - "·····"
+      - "·····"
+      - "··F··"
+      - "·····"
+    legend:
+      F: {kind: monster, encounter: wolves, label: "Wolves by a kill", on: ","}
+    encounters:
+      wolves: {foes: [{monster: alphaWolf}, {monster: wolf, n: 2}], flags: [alpha_wolf_dead], text: "The pack is on a deer carcass. The big one lifts its head, red to the ears, and the others fan out without a sound."}
+
+  - id: exeomo
+    at: [-76.25, -5.75]
+    ring: {inner: 4, rim: 7, outer: 11}
+    road: []
+    marks:
+      # entrances on the rim's outer foot, south and east (offsets in squares from the centre)
+      - {at: [0, 12], char: M}
+      - {at: [12, 2], char: K}
+    legend:
+      M: {kind: stairs, to: ember_hall, at: "<", sprite: minemouth, label: "The mine, cut into the foot of the rim", on: ","}
+      K: {kind: stairs, to: ember_kobolds, at: S, sprite: minemouth, label: "A cave mouth in the rim, kobold tracks worn deep before it", on: ","}
+
+  - id: temple
+    at: [-70.4, -9.8]
+    road: []
+    stamp:
+      - "               "
+      - "  ···········  "
+      - " ··xxx···xxx·· "
+      - " ··xAx···xBx·· "
+      - " ······G······ "
+      - " ······+······ "
+      - "  ·····+·····  "
+      - "      ·+·      "
+    legend:
+      G: {kind: stairs, to: temple_court, at: "<", sprite: arch, label: "The temple gate", on: "."}
+      A: {kind: stairs, to: temple_wall, at: N, sprite: pyramid, label: "The north pyramid: a door at its top", on: "."}
+      B: {kind: stairs, to: temple_wall, at: S, sprite: pyramid, label: "The south pyramid: a door at its top", on: "."}
+      x: {kind: prop, sprite: none, on: "."}
+
+  - id: dam
+    at: [-68.9, -10.4]
+    stamp:
+      - "≈≈≈≈≈"
+      - "≈·D·≈"
+      - "≈·X·≈"
+      - "≈≈≈≈≈"
+    legend:
+      D: {kind: note, sets: [found_dam], label: "An earth dam across the stream", text: "A wall of packed earth and timber between the pools, holding back the water that should flow east to the nesting grounds. It is old work, cracked and green with moss, but still sound. It could be broken.", on: "."}
+      X: {kind: note, sets: [banks_restored], label: "Break the dam", text: "You pull the timbers loose. The earth gives, then the water does the rest — a brown flood pouring east through the gap, filling channels that have been dry for years. Somewhere below, something croaks. It sounds like a greeting.", on: "."}
+
+  - id: sarnak
+    at: [-66.6, -10.9]
+    stamp:
+      - "·················"
+      - "·@@@@@·····@@@@@·"
+      - "·@@@@@··g··@@@@@·"
+      - "·@@@@@··+··@@@@@·"
+      - "···Q····+···R····"
+      - "··c·····+·····p··"
+      - "········+········"
+      - "~~~~~~~=j=~~~~~~~"
+      - "~~~~~~~=X=~~~~~~~"
+      - "~~~~~~~~~~~~~~~~~"
+    legend:
+      Q: {kind: stairs, to: sarnak_fort, at: W, up: true, sprite: door_south, label: "A low door in the western block", on: ","}
+      R: {kind: stairs, to: sarnak_fort, at: E, up: true, sprite: door_south, label: "A low door in the eastern block", on: ","}
+      X: {kind: chest, label: "A sea chest at the jetty's end", loot: relic_cache, rolls: 1, tn: 9, on: "="}
+      g: {kind: monster, encounter: gate, label: "The gate guard", on: "."}
+      j: {kind: monster, encounter: jetty, label: "A sarnak fishing off the jetty", on: "="}
+      c: {kind: monster, encounter: camp, label: "Sarnaks at a shore camp", on: ","}
+      p: {kind: monster, encounter: patrol, label: "A patrol on the shore", on: ","}
+    encounters:
+      gate: {foes: [{monster: sarnak}, {monster: sarnak}], text: "Two sarnaks between the blocks lower their spears. They look tired."}
+      jetty: {foes: [{monster: sarnak}], text: "The sarnak drops its fishing line and picks up a spear."}
+      camp: {foes: [{monster: sarnak}, {monster: sarnak}], text: "Sarnaks rise from beside a clutch of leathery eggs, hissing."}
+      patrol: {foes: [{monster: sarnak}, {monster: sarnakKnight}], text: "A patrol turns off the shore. The knight puts itself between you and the camp."}
+
+  - id: orcs
+    at: [-70.6, -14.6]
+    stamp:
+      - "################······"
+      - "################······"
+      - "##@@@@@@@@@@##····U···"
+      - "##@@@@@@@@@@##··L·····"
+      - "##@@@@@@@@@@##········"
+      - "·····G················"
+      - "·····g········T·······"
+      - "·····+D···············"
+      - "·····+++++++++++++++++"
+      - "··Y··+················"
+      - "·····+··s·V···Z·······"
+      - "·····++++·············"
+      - "########M#########····"
+      - "##################····"
+    legend:
+      G: {kind: stairs, to: orc_castle, at: S, sprite: gate, label: "The castle gate: green marble, the legion's banners either side", on: ","}
+      M: {kind: stairs, to: orc_mines, at: S, sprite: minemouth, label: "The slaver caves, cut into the quarried hill", on: ","}
+      L: {kind: monster, encounter: legion, label: "Legionnaires about their fire", on: ","}
+      U: {kind: monster, encounter: centurion, label: "A centurion's tent", on: ","}
+      g: {kind: monster, encounter: gate, label: "The gate guard", on: ","}
+      D: {kind: trap, sprite: pit, tn: 9, trigger: step, knownTo: [orc_legion], label: "Turf laid too neatly at the road's end", tell: "the grass at the end of the road is a shade yellower than the rest, as if it were cut and laid", how: "A pit under hurdles and turf, stakes in the bottom.", effect: {blow: {name: "The stakes", damage: [5, 0, 2], motion: thrust, punch: 1.5, aim: legs, wound: {kind: P, vital: 0.15, bleed: 1}}, block: false, terrain: pit}, bypass: [leap, edge, spring, mark], text: "The turf gives way over a pit of stakes.", on: ","}
+      Y: {kind: note, label: "The cabin door", text: "The bar across the door is heavy, and there are voices inside: tired ones, speaking low in several tongues. Slaves, kept between shifts at the quarry.", on: ","}
+      s: {kind: monster, encounter: slaver, label: "A slaver watching the work", on: ","}
+      V: {kind: note, label: "Slaves at work", text: "Humans, elves, a dwarf or two, in rags and ankle-chains, hauling blocks. None look up.", on: ","}
+      Z: {kind: npc, npc: arvir_npc, sprite: {art: arvir, kind: knight}, label: "A man in a cage, watching you", on: ","}
+      T: {kind: monster, encounter: drill, label: "Legionnaires at drill", on: ","}
+    encounters:
+      legion: {foes: [{monster: orcLegionnaire}], text: "A legionnaire sees you and doesn't hesitate. Training."}
+      centurion: {foes: [{monster: orcCenturion}, {monster: orcLegionnaire}], text: "A centurion ducks out of his tent, already in formation. His men follow."}
+      gate: {foes: [{monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "The gate guard levels their spears. They were expecting someone."}
+      slaver: {foes: [{monster: orcSlaver}, {monster: orcLegionnaire}], text: "The slaver drops his club on the nearest slave's back and turns to you."}
+      drill: {foes: [{monster: orcCenturion}, {monster: orcLegionnaire}], text: "The drill breaks off, and the line turns on you. They are very good at this."}
+    wandering:
+      - {w: 1, foes: [{monster: orcLegionnaire}, {monster: orcLegionnaire}], text: "Two legionnaires marching in step. They break into a run when they see you."}
+      - {w: 3, nothing: true}
+
+  - id: labyrinth
+    at: [-85.0, -9.8]
+    road: [iitanii]
+    stamp:
+      - "################"
+      - "##∴∴∴∴∴##∴∴∴∴∴##"
+      - "##∴a∴∴∴##∴∴K∴∴##"
+      - "##∴∴####∴∴∴∴∴∴##"
+      - "##∴∴####∴∴##∴∴##"
+      - "++∴∴∴∴∴∴∴∴##∴∴##"
+      - "##∴∴∴∴∴∴∴∴∴∴∴∴##"
+      - "##∴∴∴M∴∴∴∴P∴∴∴##"
+      - "##∴∴∴∴∴∴∴∴∴∴X∴##"
+      - "##########∴∴####"
+    legend:
+      K: {kind: monster, encounter: bull, label: "The lord of the labyrinth", on: "∴"}
+      M: {kind: monster, encounter: camp, label: "Minotaurs at their yurt", on: "∴"}
+      P: {kind: monster, encounter: herd, label: "Minotaurs about a totem", on: "∴"}
+      a: {kind: monster, encounter: lone, label: "A minotaur in the passage", on: "∴"}
+      X: {kind: chest, label: "A hide-bound chest", loot: troll_hoard, rolls: 1, tn: 10, on: "∴"}
+    encounters:
+      lone: {foes: [{monster: minotaur}], text: "A minotaur rounds the red rock and lowers its head. It doesn't charge yet. It's deciding where to put you."}
+      camp: {foes: [{monster: minotaur}, {monster: minotaur}], text: "Two minotaurs duck out of the yurt with axes in their fists."}
+      herd: {foes: [{monster: minotaur}, {monster: minotaur}], text: "The minotaurs at the totem lower their horns."}
+      bull: {foes: [{monster: minotaurLord}], text: "The lord of the labyrinth bellows, and the walls throw it back."}
+
+  - id: spectres
+    at: [-114.0, -10.0]
+    stamp:
+      - "~~~~~~~~~"
+      - "~~~,,,~~~"
+      - "~~,,s,,~~"
+      - "~~,,X,,~~"
+      - "~~~,,,~~~"
+      - "~~~~_~~~~"
+      - "~~~~_~~~~"
+    legend:
+      s: {kind: monster, encounter: spectres, label: "Something pale beside the tower", on: ","}
+      X: {kind: chest, label: "What is left in the tower's doorway", loot: relic_cache, rolls: 2, tn: 10, on: ","}
+    encounters:
+      spectres: {foes: [{monster: spectre}, {monster: spectre}], text: "Two pale shapes come round the tower without touching the ground. The air goes cold as a cellar, and they lift their scythes."}
+
+  # The cities: a gate into each town (the town's exit arrives on C).
+  - id: zhomelonga
+    at: [-80.2, 13.6]
+    road: [muawea, exeomo]
+    stamp: ["·····", "·xxx·", "·xCx·", "··+··"]
+    legend:
+      C: {kind: stairs, to: zhomelonga_city, sprite: pyramid, label: "The great gate of Zhomelonga", on: "."}
+      x: {kind: prop, sprite: none, on: "."}
+  - id: muawea
+    at: [-93.6, 10.0]
+    road: [iitanii]
+    stamp: ["·····", "·xxx·", "·xCx·", "··+··"]
+    legend:
+      C: {kind: stairs, to: muawi_city, sprite: pyramid, label: "The causeway into Muawea", on: "."}
+      x: {kind: prop, sprite: none, on: "."}
+  - id: iitanii
+    at: [-102.6, -4.8]
+    road: [emagshir]
+    stamp: ["·····", "·xxx·", "·xCx·", "··+··"]
+    legend:
+      C: {kind: stairs, to: burbuma_city, sprite: gatehouse, label: "The gate of Iitanii", on: ","}
+      x: {kind: prop, sprite: none, on: ","}
+  - id: isdi
+    at: [-73.8, -19.6]
+    road: []
+    stamp: ["·····", "·xxx·", "·xCx·", "··+··"]
+    legend:
+      C: {kind: stairs, to: barjiy_city, sprite: gatehouse, label: "The gates of Isdi", on: ","}
+      x: {kind: prop, sprite: none, on: ","}
+  - id: emagshir
+    at: [-107.6, -23.4]
+    road: [spectres]
+    stamp: ["·····", "·xxx·", "·xCx·", "··+··"]
+    legend:
+      C: {kind: stairs, to: emagshir_city, sprite: tower, label: "The walls of Emagshir", on: "."}
+      x: {kind: prop, sprite: none, on: "."}
+
+# What the families draw badly that the generator cannot count (copied into the gap report), for the next art pass.
+gaps:
+  - "Coast: no beach. Grass (lake country) and jungle floor run straight into deep water; only the desert has sand over water."
+  - "Sea: drawn with the lake country's lake water, the same as rivers and lakes; no surf, no shallows offshore, no deep-water tone."
+  - "Rivers: one water terrain, no banks or reeds edge; the lake-country set has no ford, so roads cross on plank bridges (=); in jungle and desert places bridges are drawn as shallows (_)."
+  - "Biome edges fall on place edges: a place is one family, so plateau grass meets jungle floor abruptly where two places meet. Needs a jungle-over-grass and a grass-over-jungle-floor set so a place can hold both."
+  - "Jungle in grassland places is drawn as the vale's temperate forest (}); forest in jungle places as jungle canopy (])."
+  - "Savanna: the plateau is lake-country grass with patches of the canyon's bare soil (∴); no dry-grass or savanna ground."
+  - "Swamp in grassland places: pools of deep water with reeds; no marsh set over grass (the jungle's marsh ≈ is over jungle floor only)."
+  - "Mountains: the vale's grey granite slope, ledge and summit everywhere (also the desert's), and for the red labyrinth's red rock (no sandstone over grass); no snow, no volcanic black for Exeomo's rim."
+  - "Hills and mountains in jungle places are drawn as floor or canopy: no jungle hills, no jungle mountain."
+  - "Towns: Shiwgoiwo is village props on the green; each city is a single prop (pyramid, gatehouse, tower) standing in for walls, gates and districts."
+  - "The temple's pyramids are props, not walkable terrain; the sarnak blocks use the orc castle's fort wall, with door props in front (a door drawn in the wall would draw the mountain behind it)."
+  - "Labyrinth walls are mountain squares (#) drawn as grey slope, two squares thick."
+  - "Generated places carry no encounters or wandering monsters of their own yet: only the sites' (Shiwgoiwo's wolves, the temple, the sarnaks, the orcs, the labyrinth, the spectres)."

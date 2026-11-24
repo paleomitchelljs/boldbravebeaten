@@ -75,7 +75,7 @@ test('ui: title, the heroes\' portraits, editing the chosen, and a new game', ()
   const party = World.party(Game.world);
   assert.deepEqual(party.map((c) => c.name), ['Beren the Bold', 'Kalavar', 'Spawnee', 'Jadier']);
   assert.equal(B.Character.wieldedWeapon(party[0]).type, 'warhammer');
-  assert.deepEqual(World.recruits(Game.world, 'village').map((r) => r.id).sort(), ['crusader', 'cyrus', 'jabiku', 'lorc']);
+  assert.deepEqual(World.recruits(Game.world, 'bz_6_8').map((r) => r.id).sort(), ['crusader', 'cyrus', 'jabiku', 'lorc']);
   check('explore after new game');
   Explore.leave(Game.world, 'stonebridge');
   // Begin, with the default four.

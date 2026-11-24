@@ -673,7 +673,7 @@
         h('h1', null, survivors.length ? 'The company falls' : 'None are left'),
         h('p', { class: 'muted' }, survivors.length ? 'Everyone who could stand is down. The dead wait in the village to be recruited again. Whatever walks away from a fight like this does not always take its time.' : 'There is no one to carry the dead home. For now, the dead do not stay dead.'),
         h('div', { class: 'row' },
-          survivors.length ? h('button', { class: 'primary', onclick: () => { const r = G.Town.leftForDead(w); if (r.ok) { game.save(); game.go('town'); } } }, 'Wake in Stonebridge (lose half your gold)') : null,
+          survivors.length ? h('button', { class: 'primary', onclick: () => { const r = G.Town.leftForDead(w); if (r.ok) { game.save(); game.go('town'); } } }, `Wake in ${((G.Content.world.places || {})[(G.Content.world.start || {}).place || 'stonebridge'] || {}).name || 'town'} (lose half your gold)`) : null,
           !survivors.length ? h('button', { class: 'primary', onclick: () => { const r = G.Town.riseAgain(w); if (r.ok) game.travel((G.Content.world.start || {}).go || { to: (G.Content.world.start || {}).place || 'stonebridge' }); } }, 'Rise again in the village (lose half your gold)') : null,
           auto ? h('button', { onclick: () => game.loadWorld(auto.world) }, 'Reload the last autosave') : null,
           h('button', { onclick: () => game.go('title') }, 'Title screen'))));

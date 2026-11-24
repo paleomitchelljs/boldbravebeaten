@@ -69,7 +69,7 @@ cartographers_legacy:
   faction: deep_gnomes
   summary: "Surveyor Wila's knotted cord holds eleven years of the mine's shape. She wants it carried to the surface — not for rescue, but so someone knows the shape of what they lived through."
   stages:
-    - {text: "Bring Wila's cord to Warden Ysa at the Lantern House in Stonebridge.", done_when: {flag: cord_delivered}}
+    - {text: "Bring Wila's cord to Warden Ysa at the Lantern House in Shiwgoiwo.", done_when: {flag: cord_delivered}}
   reward: {xp: 100, standing: {deep_gnomes: 10}, renown: 1}
 
 # ---- Bounty quests: simple kill missions from town NPCs ----

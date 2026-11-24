@@ -82,7 +82,8 @@
       c.stamina = C.maxStamina(c);
       C.updateCondition(c);
     }
-    W.logLine(world, `You wake in Stonebridge three days later. Someone took ${lost} gold for the trouble.`, 'hurt');
+    const where = (G.Content.world.places[home] || {}).name || 'town';
+    W.logLine(world, `You wake in ${where} three days later. Someone took ${lost} gold for the trouble.`, 'hurt');
     return { ok: true, lost };
   }
 

@@ -270,7 +270,23 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
   and prophet. The user's newer figures are not wired to monsters. Floating figures have no bob.
 - [ ] Wanted, no art: the vampire; redo Beren, the Yuan-Ti, skeletons, rats; raptor, red drake, fae drake.
 
-## Burazese continental overhaul (2026-11-23)
+## W1 open world (2026-11-24)
+- [x] All 34 old outdoor zones removed (the prototype chain and the 19 of e008101b): they existed to make tilesets.
+  74 places generated from the W1 raster instead (`tools/worldgen.js assets/world/w1-layout.yaml` -> `data/outdoors.yaml`,
+  merged over places.yaml by the loader). Plan and method: `docs/W1_MAP_PLAN.md`; schema: `docs/DATA.md` "The open world".
+- [x] Dungeon doors and city gates stamped into the places as sites; new game starts at `bz_6_8` (Shiwgoiwo's green),
+  recruits on its squares. Edge squares are ways across; `Explore.enter(..., from)` lands you across from where you left.
+- [x] Three composite tilesets (`w1_wild`, `w1_jungle`, `w1_desert`) from existing sheets; `∴` dry ground letter.
+  Forest and jungle laid in whole 2x2 blocks: walls.js and diagonals.js clean on every place.
+- [x] Map page republished: https://claude.ai/artifact/PndLzWQm8YhdDx1c34ev1z (places, blend to the raster, art gaps).
+- [x] Fixed a leak the bigger world exposed: `Sprites` kept every waiting portrait callback (the UI test ran out of heap).
+- [ ] **Art** for the open world: `TILES_TO_GET.md` top section; counts and kludges in `assets/world/w1-gaps.md`.
+- [ ] Encounters and wandering monsters for the generated places (only the sites have any). Levels are distance x 0.6,
+  untested: no `tools/tiers.js` / `sim/crawl.js` on them yet.
+- [ ] Decide how hand-crafted places survive regeneration (a `keep` slot copied through is the simple way).
+- [ ] `docs/BURAZESE_DESIGN.md` zone graph and the faction/city notes that name the 19 old zones are out of date.
+
+## Burazese continental overhaul (2026-11-23; its outdoor zones replaced by the open world above)
 - [x] 19 outdoor zones covering the continent: savanna, jungle, lakes, caldera, river, grasslands, marsh, desert,
   frontier, siege belt, lowlands. Each 24×18, `open: true`, `light: 24`. Design doc: `docs/BURAZESE_DESIGN.md`.
 - [x] 5 cities (muawi_city, zhomelonga_city, barjiy_city, burbuma_city, emagshir_city), each with inn, market/shop,
@@ -310,4 +326,4 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
 - [ ] Put the mine's groups back when testing is done? The Lantern raises only friends: fine for testing?
 - [ ] A blank hero to build from scratch? A full padded suit for Cyrus? Give someone the wall of fire back?
 - [ ] What "slow" means in play: rounds, exchanges, or the AI's pauses. Narrow places (palace stairs, sewer walks).
-- [ ] The hall's side duct is a way out only: give `mine_approach` a way in? Stonebridge stays as home?
+- [ ] The hall's side duct is a way out only: give `mine_approach` a way in? Shiwgoiwo (was Stonebridge) stays as home?

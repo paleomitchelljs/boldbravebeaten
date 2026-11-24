@@ -719,7 +719,7 @@ avatarOfFear:
   traits: {outsider: true, size: 1.8, tempo: 2.5, aura: {name: dread, radius: 1, cond: frightened, resisted: true}, finishes: true}
   feats: {power_swing: 1, toughness: 1}
 
-# ---- Stonebridge: the cutthroats in the cellars beneath the old mill.
+# ---- Shiwgoiwo: the cutthroats in the cellars beneath the old mill.
 smuggler:
   name: Smuggler
   blurb: "Leather jack, a club, and a strong preference for not being caught."

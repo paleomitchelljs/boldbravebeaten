@@ -199,13 +199,39 @@
     return null;
   }
 
+  // Where you come in. Off one place's edge into the next (`from`: the place and square you left by), the square across
+  // from it: of the ways back on the facing edge, the one nearest the same distance along. Else the first `arrive`.
+  function arrival(placeId, arrive, from) {
+    const g = grid(placeId), fg = from && from.place && grid(from.place);
+    if (g && fg) {
+      const d = from.x === 0 ? 'W' : from.x === fg.w - 1 ? 'E' : from.y === 0 ? 'N' : from.y === fg.h - 1 ? 'S' : null;
+      if (d) {
+        const across = d === 'W' || d === 'E', n = across ? g.h : g.w;
+        const want = (across ? from.y / Math.max(1, fg.h - 1) : from.x / Math.max(1, fg.w - 1)) * (n - 1);
+        let best = null, bd = Infinity;
+        for (let k = 0; k < n; k++) {
+          const x = across ? (d === 'W' ? g.w - 1 : 0) : k, y = across ? k : (d === 'N' ? g.h - 1 : 0);
+          const def = g.legend[g.rows[y][x]];
+          if (!def || def.kind !== 'stairs' || def.to !== from.place) continue;
+          if (Math.abs(k - want) < bd) { bd = Math.abs(k - want); best = { x, y }; }
+        }
+        if (best) return best;
+      }
+    }
+    const at = findChar(placeId, arrive || '<');
+    if (at || !g) return at;
+    // No such square (a debug jump to a place with no '<'): its first way in or out.
+    for (let y = 0; y < g.h; y++) for (let x = 0; x < g.w; x++) { const def = g.legend[g.rows[y][x]]; if (def && def.kind === 'stairs') return { x, y }; }
+    return null;
+  }
+
   // Walk out of the entry stairs facing into the map.
-  function enter(world, placeId, arrive) {
+  function enter(world, placeId, arrive, from) {
     const p = places()[placeId];
     world.place = placeId;
     world.location = null;
     if (!p || !p.map) { world.explore = null; return; }
-    const at = findChar(placeId, arrive || '<') || { x: 1, y: 1 };
+    const at = arrival(placeId, arrive, from) || { x: 1, y: 1 };
     let dir = 0;
     for (let d = 0; d < 4; d++) {
       const nx = at.x + DIRS[d][0], ny = at.y + DIRS[d][1];

@@ -1,5 +1,8 @@
 # Burazese Continental Design
 
+> Superseded for the outdoors (2026-11-24): the zone graph below was replaced by the open world generated from the
+> W1 raster (`docs/W1_MAP_PLAN.md`). The cities and factions still stand.
+
 Draft layout for the game map of Burazese (W1), the Western Jungle Continent.
 Compressed game scale: ~15 min walking between distant cities.
 
@@ -64,7 +67,7 @@ Compressed game scale: ~15 min walking between distant cities.
 | **Temple complex** (temple_court → temple_palace_stair) | Lizardfolk ruins in jungle E of village | temple_approach (swamp approach) |
 | **Orc complex** (orc_valley, orc_castle, orc_mines) | Highland mountains S of Tarnhold | south_hills → tarnhold chain |
 | **Sarnak fort** | Tarn highlands, old Lizardfolk border fort | tarn_plains chain |
-| **Mill cellars** | Under Stonebridge | stonebridge (town) |
+| **Mill cellars** | Under Shiwgoiwo | stonebridge (town) |
 
 ---
 
@@ -72,11 +75,14 @@ Compressed game scale: ~15 min walking between distant cities.
 
 Each city has two nexuses: **law-abiding** (surface politics) and **underworld** (shadow politics).
 
-### Stonebridge (existing, Human frontier town)
+### Shiwgoiwo (existing, Human frontier town; was Stonebridge)
+
+The name is 'Rock-Bridge' in Mozashi: the reference world has no state here, and the people round it are
+Mozashi-speaking Lizardfolk (lineage 84). The humans kept the local name, as the bible's cities do when they change hands.
 
 **Law-abiding:**
-- **Stonebridge Watch** (existing: `town_watch`) — the garrison; loyal to the distant Barjiy crown but practically autonomous
-- **Merchants' Guild** (existing: `merchants_guild`) — traders linking Stonebridge to the wider continent
+- **Shiwgoiwo Watch** (existing: `town_watch`) — the garrison; loyal to the distant Barjiy crown but practically autonomous
+- **Merchants' Guild** (existing: `merchants_guild`) — traders linking Shiwgoiwo to the wider continent
 - **Lantern Order** (existing: `lantern_order`) — temple scholars, keepers of old knowledge; politically moderate
 - **Common Folk** — tradesfolk, farmers, smiths; want stability and protection from monsters
 

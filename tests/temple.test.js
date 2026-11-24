@@ -176,20 +176,32 @@ test('a fight spills over: it is played on the whole map, and a group it comes n
   } finally { CONFIG.game.joinDistance = saved; CONFIG.game.arena = savedArena; }
 });
 
-test('outside: a new game starts in the village; its roads lead to the swamp and the hills, and through them to the temple and the mine', () => {
+test('outside: a new game starts on the green before the home village; the open world leads to the mine and the temple', () => {
   const start = Content.world.start;
-  assert.deepEqual(start.go, { to: 'village', arrive: 'I' });
+  assert.deepEqual(start.go, { to: 'bz_6_8', arrive: 'I' });
   const w = fresh(8);
-  const here = () => w.place;
+  const go = (def, from) => { if (Content.world.places[def.to].kind === 'town') Explore.leave(w, def.to); else Explore.enter(w, def.to, def.at || '<', from); };
   const take = (ch) => {
-    const g = Explore.here(w), def = Object.values(g.legend).find((d, i) => Object.keys(g.legend)[i] === ch);
+    const g = Explore.here(w), def = g.legend[ch];
     assert.ok(def && def.kind === 'stairs', `${w.place} has stairs ${ch}`);
-    if (Content.world.places[def.to].kind === 'town') Explore.leave(w, def.to); else Explore.enter(w, def.to, def.at || '<');
+    go(def);
   };
-  Explore.enter(w, 'village', 'I');
-  for (const [ch, to] of [['N', 'mine_approach'], ['M', 'ember_hall'], ['<', 'mine_approach'], ['S', 'village'], ['E', 'temple_approach'], ['G', 'temple_court'], ['<', 'temple_approach'], ['W', 'village'], ['I', 'stonebridge']]) {
-    take(ch);
-    assert.equal(here(), to, `${ch} leads to ${to}`);
+  // Off the edge into the place next door: you come in on the square across from the one you left by.
+  const cross = (to) => {
+    const ex = Explore.exits(w.place).filter((e) => { const g = Explore.here(w), d = g.legend[g.rows[e.y][e.x]]; return d.to === to; });
+    assert.ok(ex.length, `${w.place} has a way across to ${to}`);
+    const e = ex[Math.floor(ex.length / 2)], g = Explore.here(w);
+    go(g.legend[g.rows[e.y][e.x]], { place: w.place, x: e.x, y: e.y });
+    const h = Explore.here(w), a = w.explore;
+    assert.equal(e.dx ? a.y : a.x, e.dx ? e.y : e.x, 'came in across from where it left');
+    assert.equal(e.dx ? a.x : a.y, e.dx === 1 || e.dy === 1 ? 0 : (e.dx ? h.w : h.h) - 1, 'on the facing edge');
+  };
+  Explore.enter(w, 'bz_6_8', 'I');
+  const steps = [[cross, 'bz_5_8'], [take, 'M', 'ember_hall'], [take, '<', 'bz_5_8'], [cross, 'bz_6_8'], [cross, 'bz_6_9'], [take, 'G', 'temple_court'], [take, '<', 'bz_6_9'], [cross, 'bz_6_8'], [take, 'I', 'stonebridge']];
+  for (const [f, a, b] of steps) {
+    f(a);
+    const to = b || a;
+    assert.equal(w.place, to, `leads to ${to}`);
     if (w.explore) assert.ok(!Explore.cell(w, w.explore.x, w.explore.y).solid || Explore.cell(w, w.explore.x, w.explore.y).kind === 'stairs', `arrived on a square one can stand on in ${to}`);
   }
 });

@@ -239,6 +239,8 @@ game:
     "▤": {name: Quarried rock, wall: true, tile: quarry, color: "#4e5154"}
     # The desert south of the grassland (assets/wip/desert/): outcrops of red sandstone (a wall).
     "▩": {name: Sandstone, wall: true, tile: mesa, color: "#8a4a2a"}
+    # The open world (assets/world/w1-layout.yaml): dry, bare ground on the plateau (the canyon's soil).
+    "∴": {name: Dry ground, tile: soil, color: "#c8a878"}
   passivePenalty: 3          # passive perception is this much worse than a deliberate search
   searchBonus: 3             # ...and a search this much better than a plain check
   # ---- Traps (PROVISIONAL, docs/OVERHAUL.md step C; src/rules/traps.js, src/game/explore.js) ---------------------

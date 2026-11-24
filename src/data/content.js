@@ -37,6 +37,8 @@
     { file: 'factions.yaml', key: 'factions' },
     { file: 'npcs.yaml', key: 'npcs' },
     { file: 'places.yaml', key: 'places' },
+    // The open world's outdoor places, generated (tools/worldgen.js): merged over places.yaml's.
+    { file: 'outdoors.yaml', key: 'places', merge: true, optional: true },
     { file: 'quests.yaml', key: 'quests' },
     { file: 'start.yaml', key: 'start' },
     { file: 'art.yaml', key: 'art' },
@@ -84,7 +86,7 @@
     for (const r of REGISTRY) {
       if (!(r.file in parsed)) continue;
       sources[r.file] = texts[r.file];
-      if (r.key) world[r.key] = parsed[r.file];
+      if (r.key) world[r.key] = r.merge ? Object.assign(world[r.key] || {}, parsed[r.file]) : parsed[r.file];
       else if (r.install) r.install(parsed[r.file]);
     }
     return { ok: true, errors: [], warnings: validate() };

@@ -7,7 +7,7 @@
 #   style: how members read your reputation (see npcs.yaml temperament).
 
 town_watch:
-  name: Stonebridge Watch
+  name: Shiwgoiwo Watch
   blurb: The gate, the peace, and the bounties on people who threaten both.
   start: 0
   kos: -60

@@ -26,6 +26,10 @@
   const sheets = {};       // `${kind}_${anim}` -> { img, tinted: {color: canvas}, ok }
   const ART_DIR = 'art/characters/creatures/';
   const waiting = [];      // callbacks to run when something finishes loading
+  // Only the newest wait: a portrait drawn anew on every frame queues a callback each time, and a sheet that never loads
+  // (missing art, or no images at all under the tests' fake page) would keep every old canvas alive.
+  const WAIT_KEPT = 256;
+  const wait = (f) => { waiting.push(f); if (waiting.length > WAIT_KEPT) waiting.splice(0, waiting.length - WAIT_KEPT); };
 
   function sheet(kind, anim) {
     const key = kind + '_' + anim;
@@ -440,7 +444,7 @@
       x.drawImage(tinted(s, L.tint), sx, sy, sw, sh, 0, 0, size, size);
       return true;
     };
-    const retry = () => { if (!paint()) waiting.push(retry); };
+    const retry = () => { if (!paint()) wait(retry); };
     retry();
     return cv;
   }
@@ -462,14 +466,14 @@
     };
     paint();
     if (HAS_IMG) {
-      waiting.push(paint);
+      wait(paint);
       const timer = setInterval(() => { if (!cv.isConnected) { if (cv._seen) clearInterval(timer); return; } cv._seen = true; t++; paint(); }, 220);
     }
     return cv;
   }
 
   UI.Art = UI.Art || {};
-  UI.Sprites = { DIRS, dirOf, hasClip, forEncounter, encounterLooks, crowd, KINDS, PARTY_KINDS, partyKinds, TINTS, KIT_KIND, draw, drawArt, warm, floats, artReady, pending, ownArt, artSheet, look, lookFor, portrait, figure, sheet, whenReady: (f) => waiting.push(f), preload: () => { KINDS.forEach((k) => { sheet(k, 'idle'); sheet(k, 'run'); }); for (const k of Object.keys(artCat())) artProbe(k); } };
+  UI.Sprites = { DIRS, dirOf, hasClip, forEncounter, encounterLooks, crowd, KINDS, PARTY_KINDS, partyKinds, TINTS, KIT_KIND, draw, drawArt, warm, floats, artReady, pending, ownArt, artSheet, look, lookFor, portrait, figure, sheet, whenReady: wait, preload: () => { KINDS.forEach((k) => { sheet(k, 'idle'); sheet(k, 'run'); }); for (const k of Object.keys(artCat())) artProbe(k); } };
   // Portraits everywhere in the game are now the sprite's face.
   UI.Art.portrait = (c, px) => portrait(c, px);
 })(globalThis.BBB);

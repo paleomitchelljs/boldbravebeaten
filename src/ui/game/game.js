@@ -123,7 +123,9 @@
     const to = G.Content.world.places[def.to];
     if (to.kind === 'town') { Explore.leave(w, def.to); save(); go('town'); return; }
     if (def.kind === 'drop') { Explore.fall(w, def); if (World.wiped(w)) { save(); go('gameover'); return; } }
-    Explore.enter(w, def.to, def.at || '<');
+    // Off an edge, you come in across from where you left.
+    const from = w.explore ? { place: w.place, x: w.explore.x, y: w.explore.y } : null;
+    Explore.enter(w, def.to, def.at || '<', from);
     save();
     go('explore');
   }

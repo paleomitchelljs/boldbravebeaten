@@ -7,7 +7,42 @@ All tiles are 64×64 px to match the existing PixelLab pipeline.
 
 ---
 
-## Tileset terrain gaps (discovered during buildout)
+## W1 open world (2026-11-24): what the generated places need first
+
+The outdoor places are now generated from the world raster (`tools/worldgen.js`, `assets/world/w1-layout.yaml`) and
+drawn by three composite tilesets made only of existing sheets: `w1_wild` (lake-country water, grass, road and soil;
+the vale's forest, scree and granite; the orc castle's wall), `w1_jungle` (the jungle set) and `w1_desert` (the desert
+set with the vale's mountains). `assets/world/w1-gaps.md` counts every square drawn with a stand-in and lists the
+known kludges; regenerate it after new art with `node tools/worldgen.js assets/world/w1-layout.yaml`. To use a new
+sheet: add its terrain to the family's tileset and its class to the family's `chars` in the layout.
+
+In order of how much of the map each would fix:
+
+1. **Coast** (HIGH): a beach or shingle shore over the lake-country water, and a mud or sand shore for the jungle. Every
+   coast now runs grass or jungle floor straight into deep water. The sea is the lakes' water too: a darker sea tone
+   (or surf corners) would tell them apart.
+2. **Jungle and grassland in one place** (HIGH): jungle canopy over lake-country grass, and grass over jungle floor.
+   A place is one family, so the plateau meets the jungle at a place's edge, and jungle inside grassland places is
+   drawn as temperate forest (about 2,200 squares), forest inside jungle places as canopy (about 1,500).
+3. **Jungle relief** (MEDIUM): hills and a mountain set over jungle floor. The jungle's hills (about 1,400 squares) are
+   drawn as floor and its mountains (about 1,650) as canopy.
+4. **Rivers** (MEDIUM): a ford or shallows and a reedy bank for the lake-country set. Roads cross rivers on plank
+   bridges; the jungle and desert draw bridges as shallows.
+5. **Savanna** (MEDIUM): dry, gold grass over lake-country grass. Half the continent is grassland, drawn as green
+   lake-country grass with patches of the canyon's bare soil.
+6. **Marsh over grass** (MEDIUM): grassland swamp is drawn as pools of deep water and reeds.
+7. **City exteriors** (HIGH for play, few squares): see section 2 below; each city is one prop for now.
+8. **Rock colours** (LOW): red sandstone over grass for the labyrinth, black volcanic rock for Exeomo's rim, desert-toned
+   mountains. All are the vale's grey granite now.
+9. **Temple exterior** (LOW): the lizardfolk temple's pyramids as walkable terrain rather than props.
+
+What exists that the old notes below miss: a forest over lake-country grass (`art/worldtiles/vale/forest.png`), used by
+`w1_wild`. Forest and jungle are cliff sets: their tiles fit only shapes built of whole 2x2 blocks, so the generator
+lays them that way; a new cliff set has the same limit, a corner set (like the mountains) none.
+
+---
+
+## Tileset terrain gaps (discovered during buildout; before the open world)
 
 The ground character `}` (forest wall) maps to a `forest` terrain in the tileset. Only **south_hills**
 and **ember_gnome** have forest corner tiles. Every other tileset that might want dense tree borders
