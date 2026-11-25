@@ -2385,3 +2385,82 @@ w1:
     flowerbush: [props.png, 596, 0, 44, 40]
     wildflowers: [props.png, 644, 0, 41, 36]
 
+# The towns' streets (tools/citygen.js, assets/world/cities.yaml). Zhomelonga: paving and planks are the building
+# kits' floors; the lawn and the pyramid's tiers are the temple court's; water is the open world's. The buildings are
+# drawn by tools/buildings.py, which rewrites the props between its marks.
+zhomelonga:
+  cell: 64
+  dir: art/towns/zhomelonga/
+  floor: paving
+  terrains:
+    paving: {color: "#7a7468", tile: paving.png, decor: {density: 0.35, clump: 3, flip: true, pieces: [[../../worldtiles/temple/court-decor.png, 128, 0, 28, 24], [../../worldtiles/temple/court-decor.png, 192, 0, 16, 10], [../../worldtiles/temple/court-decor.png, 0, 0, 22, 23]]}}
+    grass:
+      color: "#5f7d42"
+      tile: ../../worldtiles/temple/court-grass.png
+      # tuft, fern, broken bricks, pebbles, flowers, feathery fern, ground cover
+      decor: {density: 1.1, clump: 5, flip: true, pieces: [[../../worldtiles/temple/court-decor.png, 0, 0, 22, 23], [../../worldtiles/temple/court-decor.png, 64, 0, 26, 24], [../../worldtiles/temple/court-decor.png, 256, 0, 10, 11], [../../worldtiles/temple/court-decor.png, 896, 0, 38, 36], [../../worldtiles/temple/court-decor.png, 1024, 0, 34, 27]]}
+    water: {color: "#2a8a9a", tile: ../../worldtiles/west/water.png, anim: {sheet: ../../worldtiles/west/water-anim.png, size: 512, frames: 16, cols: 4, fps: 4}}
+    bridge: {color: "#8a7a5a", tile: planks.png}
+    tier1:
+      color: "#bab286"
+      wang: ../../worldtiles/temple/pyramid-tier1.png
+      over: grass
+      cliff:
+        - [2, 2, ".....00..00....."]
+        - [3, 2, ".....00..01....."]
+        - [1, 4, ".....00..11....."]
+        - [2, 4, ".....00..10....."]
+        - [3, 3, ".00..01..01....."]
+        - [3, 4, ".....01..01....."]
+        - [0, 6, ".....11..11....."]
+        - [1, 0, ".11..10..10....."]
+        - [1, 1, ".....10..10....."]
+        - [0, 4, ".....10..11....."]
+        - [3, 6, ".....01..11....."]
+        - [1, 6, ".....11..12...0."]
+        - [3, 0, ".....11..22..00."]
+        - [1, 2, ".....10..20..00."]
+        - [1, 7, ".1...12..10....."]
+        - [3, 1, ".11..22..00....."]
+        - [1, 3, ".....20..00....."]
+        - [2, 0, ".....01..02..00."]
+        - [0, 0, ".....11..21..0.."]
+        - [2, 6, ".....10..21..01."]
+        - [2, 1, ".....02..00....."]
+        - [0, 1, "..1..21..01....."]
+        - [2, 7, ".10..21..01....."]
+        - [0, 2, ".....01..12..10."]
+        - [0, 3, ".01..12..10....."]
+      decor: {density: 0.3, clump: 4, pieces: [[../../worldtiles/temple/court-decor.png, 384, 0, 24, 20], [../../worldtiles/temple/court-decor.png, 512, 0, 20, 22], [../../worldtiles/temple/court-decor.png, 448, 0, 17, 32]]}
+    tier2: {like: tier1, wang: ../../worldtiles/temple/pyramid-tier2.png, over: tier1}
+    tier3: {like: tier1, wang: ../../worldtiles/temple/pyramid-tier3.png, over: tier1}
+    tier4: {like: tier1, wang: ../../worldtiles/temple/pyramid-tier4.png, over: tier1}
+  props:
+    # >>> tools/buildings.py zhomelonga_city
+    zh_elf_hall: [zh_elf_hall.png, 0, 0, 320, 280, 0, -205]
+    zh_elf_m: [zh_elf_m.png, 0, 0, 256, 280, 0, -205]
+    zh_elf_m_1: [zh_elf_m_1.png, 0, 0, 256, 280, 0, -205]
+    zh_elf_m_2: [zh_elf_m_2.png, 0, 0, 256, 280, 0, -205]
+    zh_elf_s: [zh_elf_s.png, 0, 0, 192, 280, 0, -205]
+    zh_hall: [zh_hall.png, 0, 0, 384, 280, 0, -205]
+    zh_hall_l: [zh_hall_l.png, 0, 0, 448, 344, 0, -269]
+    zh_house_l: [zh_house_l.png, 0, 0, 320, 290, 0, -215]
+    zh_house_l_1: [zh_house_l_1.png, 0, 0, 320, 290, 0, -215]
+    zh_house_m: [zh_house_m.png, 0, 0, 256, 290, 0, -215]
+    zh_house_m_1: [zh_house_m_1.png, 0, 0, 256, 290, 0, -215]
+    zh_house_m_2: [zh_house_m_2.png, 0, 0, 256, 290, 0, -215]
+    zh_house_s: [zh_house_s.png, 0, 0, 192, 290, 0, -215]
+    zh_house_s_1: [zh_house_s_1.png, 0, 0, 192, 290, 0, -215]
+    zh_house_s_2: [zh_house_s_2.png, 0, 0, 192, 290, 0, -215]
+    zh_inn: [zh_inn.png, 0, 0, 384, 290, 0, -215]
+    zh_office: [zh_office.png, 0, 0, 256, 280, 0, -205]
+    zh_shed_2: [zh_shed_2.png, 0, 0, 294, 226, -19, -151]
+    zh_shrine: [zh_shrine.png, 0, 0, 294, 216, -19, -141]
+    zh_tower: [zh_tower.png, 0, 0, 128, 280, 0, -205]
+    zh_wall_h_l: [zh_wall_h_l.png, 0, 0, 64, 192, 0, -124]
+    zh_wall_h_m: [zh_wall_h_m.png, 0, 0, 64, 192, 0, -124]
+    zh_wall_h_r: [zh_wall_h_r.png, 0, 0, 64, 192, 0, -124]
+    zh_wall_v_m: [zh_wall_v_m.png, 0, 0, 64, 64, 0, 4]
+    zh_wall_v_n: [zh_wall_v_n.png, 0, 0, 64, 64, 0, 4]
+    zh_workshop: [zh_workshop.png, 0, 0, 320, 354, 0, -279]
+    # <<< tools/buildings.py

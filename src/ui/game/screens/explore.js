@@ -28,6 +28,8 @@
           if (e.check) World.logLine(w, Bits.checkText(e.check), 'find');
           break;
         case 'stairs': game.ui.prompt = { type: 'stairs', def: e.def }; break;
+        // A door in a town's streets: straight in.
+        case 'enter': stopWalk(game); game.ui.prompt = null; game.enterLocation(e.def.location); return false;
         // Off the edge of an open-world place: straight into the next, no question asked.
         case 'cross': stopWalk(game); game.ui.prompt = null; game.takeStairs(e.def, { cross: true }); return false;
         case 'fall': stopWalk(game); game.ui.prompt = null; game.takeStairs(e.def); return false;
@@ -234,7 +236,7 @@
       h('div', { class: 'popcard-head' }, icon('door', 18), h('h3', { class: 'grow' }, p.def.label || (drop ? 'A drop' : 'Stairs'))),
       drop ? h('p', { class: 'muted small' }, 'There is no climbing back up.') : null,
       h('div', { class: 'row' },
-        h('button', { class: 'primary', onclick: () => game.takeStairs(p.def) }, to.kind === 'town' ? `Leave for ${to.name}` : drop ? `Drop down to ${to.name}` : `Go to ${to.name}`),
+        h('button', { class: 'primary', onclick: () => game.takeStairs(p.def) }, to.kind === 'town' && !to.map ? `Leave for ${to.name}` : drop ? `Drop down to ${to.name}` : `Go to ${to.name}`),
         h('button', { onclick: () => { game.ui.prompt = null; game.render(); } }, 'Stay')));
   }
 
@@ -411,8 +413,10 @@
       if (best && !walkTo(game, best.x, best.y, out)) toast('No way through to there.');
       return;
     }
+    // A door the party stands in (just come out of it): back in.
+    if (Explore.peek(w, x, y).kind === 'enter' && w.explore.x === x && w.explore.y === y) { stopWalk(game); game.enterLocation(Explore.peek(w, x, y).def.location); return; }
     // A way out with one of the party standing on it (or just below it) is walked to, not the sheet of who is there.
-    const way = Explore.peek(w, x, y).kind === 'stairs' || Explore.exits(w.place).some((e) => e.x === x && e.y === y);
+    const way = Explore.peek(w, x, y).kind === 'stairs' || Explore.peek(w, x, y).kind === 'enter' || Explore.exits(w.place).some((e) => e.x === x && e.y === y);
     const who = way ? null : memberAt(game, x, y);
     if (who) { game.openOverlay('sheet', { id: who }); return; }
     const ex = w.explore;

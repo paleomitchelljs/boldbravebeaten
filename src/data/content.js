@@ -36,9 +36,14 @@
     { file: 'skills.yaml', key: 'skills' },
     { file: 'factions.yaml', key: 'factions' },
     { file: 'npcs.yaml', key: 'npcs' },
+    // The townsfolk of the generated towns (tools/citygen.js), placeholders: merged over npcs.yaml's.
+    { file: 'citizens.yaml', key: 'npcs', merge: true, optional: true },
     { file: 'places.yaml', key: 'places' },
     // The open world's outdoor places, generated (tools/worldgen.js): merged over places.yaml's.
     { file: 'outdoors.yaml', key: 'places', merge: true, optional: true },
+    // The towns' streets, generated (tools/citygen.js): each entry's fields (map, legend, look…) laid over the town of
+    // that id in places.yaml, which keeps its name, locations and services.
+    { file: 'cities.yaml', key: 'places', merge: 'fields', optional: true },
     { file: 'quests.yaml', key: 'quests' },
     { file: 'start.yaml', key: 'start' },
     { file: 'art.yaml', key: 'art' },
@@ -86,7 +91,10 @@
     for (const r of REGISTRY) {
       if (!(r.file in parsed)) continue;
       sources[r.file] = texts[r.file];
-      if (r.key) world[r.key] = r.merge ? Object.assign(world[r.key] || {}, parsed[r.file]) : parsed[r.file];
+      if (r.key && r.merge === 'fields') {
+        const into = world[r.key] = world[r.key] || {};
+        for (const [id, v] of Object.entries(parsed[r.file] || {})) into[id] = Object.assign(into[id] || {}, v);
+      } else if (r.key) world[r.key] = r.merge ? Object.assign(world[r.key] || {}, parsed[r.file]) : parsed[r.file];
       else if (r.install) r.install(parsed[r.file]);
     }
     return { ok: true, errors: [], warnings: validate() };
@@ -294,6 +302,7 @@
 
     for (const [id, n] of Object.entries(npcs)) {
       if (n.faction && !has(factions, n.faction)) err(`npcs.${id}: faction "${n.faction}" is not in factions.yaml`);
+      if (n.home && !((places[n.home.place] || {}).locations || []).some((l) => l.id === n.home.location)) err(`npcs.${id}.home: ${n.home.place}/${n.home.location} is not a location`);
       const seen = new Set();
       for (const t of n.topics || []) {
         if (seen.has(t.id)) err(`npcs.${id}: duplicate topic id "${t.id}"`);
@@ -370,6 +379,7 @@
           const at = `places.${id}.legend.${ch}`;
           if (def.kind === 'monster' && !(p.encounters && def.encounter in p.encounters) && !has(G.Enemies.MONSTERS, def.encounter)) err(`${at}: encounter "${def.encounter}" unknown`);
           if (def.kind === 'npc' && (def.npc != null || !def.services) && !has(npcs, def.npc)) err(`${at}: npc "${def.npc}" unknown`);
+          if (def.kind === 'enter' && (p.kind !== 'town' || !(p.locations || []).some((l) => l.id === def.location))) err(`${at}: a door into "${def.location}", which is not a location of this town`);
           if (def.kind === 'npc' && def.services && !Array.isArray(def.services)) {
             const sp = places[def.services.place], sl = sp && (sp.locations || []).find((l) => l.id === def.services.location);
             if (!sl || !(sl.services || []).length) err(`${at}: services ${def.services.place}/${def.services.location} not found`);

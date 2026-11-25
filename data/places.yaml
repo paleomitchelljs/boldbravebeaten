@@ -1940,7 +1940,7 @@ ember_lair:
 # ---- Burazese cities (inside the walls). Their gates stand in the open world (data/outdoors.yaml, tools/worldgen.js).
 
 muawi_city:
-  name: Muawi
+  name: Muawea
   kind: town
   blurb: A Lizardfolk lake city of reed houses and stone causeways. The water market floats on pontoons.
   look: {sky: "#5a7a8a", ground: "#4a6a50", accent: "#7a9a6a"}
@@ -2090,7 +2090,7 @@ zhomelonga_city:
   secrets: []
 
 barjiy_city:
-  name: Barjiy
+  name: Isdi
   kind: town
   blurb: A walled Human city on the southern plateau. Iron-shod gates, a cathedral of dark stone, and the prince's banner on every tower.
   look: {sky: "#7f8a96", ground: "#6a5a4a", accent: "#a0784a"}
@@ -2166,7 +2166,7 @@ barjiy_city:
   secrets: []
 
 burbuma_city:
-  name: Burbuma
+  name: Iitanii
   kind: town
   blurb: A frontier city where Human farmers and Lizardfolk traders share a nervous peace. The wall is half-built and the inns are full.
   look: {sky: "#6f8a96", ground: "#7a6a52", accent: "#b8905a"}

@@ -32,14 +32,23 @@
   }
 
   // ---- A location ----------------------------------------------------------------------------------------
+  // Who is in a location: its own list, and the townsfolk whose `home` it is (generated towns: data/citizens.yaml).
+  function peopleIn(game, loc) {
+    const id = game.world.place;
+    const homed = Object.entries(G.Content.world.npcs).filter(([, n]) => n.home && n.home.place === id && n.home.location === loc.id).map(([k]) => k);
+    return (loc.npcs || []).concat(homed.filter((k) => !(loc.npcs || []).includes(k)));
+  }
+
   function location(game, loc) {
     const w = game.world;
+    const people = peopleIn(game, loc);
     return h('div', { class: 'stack' },
       h('div', { class: 'row spread' },
         h('div', { class: 'stack tight' }, h('span', { class: 'label' }, place(game).name), h('h1', null, `${loc.glyph || ''} ${loc.name}`), h('p', { class: 'muted' }, loc.blurb)),
-        h('button', { onclick: () => { game.ui.loc = null; game.ui.svc = null; game.render(); } }, '← Back to the street')),
-      loc.npcs.length ? h('section', { class: 'panel stack' }, h('h3', null, 'People'),
-        h('div', { class: 'npcs' }, loc.npcs.map((id) => npcCard(game, id)))) : null,
+        // In a walked town the street is its map: back out through the door.
+        h('button', { onclick: () => { if (place(game).map && w.explore) { game.go('explore'); return; } game.ui.loc = null; game.ui.svc = null; game.render(); } }, '← Back to the street')),
+      people.length ? h('section', { class: 'panel stack' }, h('h3', null, 'People'),
+        h('div', { class: 'npcs' }, people.map((id) => npcCard(game, id)))) : null,
       (loc.services || []).map((s, i) => h('section', { class: 'panel stack', key: i }, service(game, s))));
   }
 
@@ -52,7 +61,7 @@
       h('div', { class: 'stack tight grow' },
         h('b', { title: n.look }, n.name), h('span', { class: 'small muted' }, n.title),
         n.faction ? h('span', { class: 'small muted' }, `${G.Factions.defs()[n.faction].name}: ${G.Factions.tier(w, n.faction).toLowerCase()}`) : null),
-      h('button', { class: 'primary', onclick: () => game.talk(id, { type: 'town' }) }, 'Talk'));
+      h('button', { class: 'primary', onclick: () => game.talk(id, { type: 'town', loc: game.ui.loc }) }, 'Talk'));
   }
 
   // ---- Services (also opened from a person on the map: UI.TownService) ---------------------------------------
@@ -217,6 +226,12 @@
       p = place(game);
     }
     const loc = game.ui.loc ? p.locations.find((l) => l.id === game.ui.loc) : null;
+    // A town with streets (tools/citygen.js) has no menu street: outside a building you are on its map.
+    if (p.map && !loc) {
+      if (!w.explore) G.Explore.enter(w, w.place);
+      game.go('explore');
+      return h('div');
+    }
     return h('div', { class: 'town stack' },
       UI.Bits.topBar(game),
       h('div', { class: 'town-main' },

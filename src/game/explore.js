@@ -108,6 +108,9 @@
       case 'locked': return st.open || (def.opensWhen && G.Cond.test(world, def.opensWhen)) ? { ch, def, kind: 'floor', solid: false, opaque: false, st } : { ch, def, kind: 'locked', solid: true, opaque: !def.see, st };
       case 'chest': return { ch, def, kind: 'chest', solid: true, opaque: false, st };
       case 'npc': return { ch, def, kind: 'npc', solid: true, opaque: false, st };
+      // A building's door in a town's streets: step in and you are in that location of the town (its people, its
+      // services), shown as the town's menu shows it; out again, you stand in the doorway.
+      case 'enter': return { ch, def, kind: 'enter', solid: false, opaque: false, st };
       case 'shrine': return { ch, def, kind: 'shrine', solid: true, opaque: false, st };
       case 'monster': return { ch, def, kind: 'monster', solid: !st.done && !st.pacified && !world.peaceful, opaque: false, st };
       case 'prop': return { ch, def, kind: 'prop', solid: def.solid !== false, opaque: false, st };
@@ -244,7 +247,8 @@
 
   function leave(world, toPlace, arrive) {
     const p = places()[toPlace];
-    if (p && p.kind === 'town') { world.place = toPlace; world.explore = null; world.location = null; W.logLine(world, `You return to ${p.name}.`, 'info'); }
+    // A town without streets is its menu; one with a map (tools/citygen.js) is walked like anywhere else.
+    if (p && p.kind === 'town' && !p.map) { world.place = toPlace; world.explore = null; world.location = null; W.logLine(world, `You return to ${p.name}.`, 'info'); }
     else enter(world, toPlace, arrive);
   }
 
@@ -400,6 +404,8 @@
       if (c.def.sets) for (const f of c.def.sets) W.setFlag(world, f);
     } else if ((c.kind === 'stairs' && !edgeWay(world.place, x, y)) || c.kind === 'drop') {
       ev.push({ type: 'stairs', def: c.def, x, y });
+    } else if (c.kind === 'enter') {
+      ev.push({ type: 'enter', def: c.def, x, y });
     }
   }
 

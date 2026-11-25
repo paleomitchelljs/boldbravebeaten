@@ -344,6 +344,19 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
 - [ ] Decide how hand-crafted places survive regeneration (a `keep` slot copied through is the simple way).
 - [ ] `docs/BURAZESE_DESIGN.md` zone graph and the faction/city notes that name the 19 old zones are out of date.
 
+## Walked towns (2026-11-24; plan approved by the user: menus behind doors, capitals' names, about 700 generations of art, Zhomelonga first)
+- [x] Zhomelonga walked (uncommitted at writing): `tools/citygen.js` (`assets/world/cities.yaml` -> `data/cities.yaml`,
+  `data/citizens.yaml`), `tools/buildings.py` (PixelLab building kits -> `art/towns/zhomelonga/`, tileset props). Doors
+  (`enter {location}`) open the town's menu locations; townsfolk placeholders, `home` ones inside; `tests/towns.test.js`.
+  Kits and settings (ground square at view 90, walls two squares at 48.19 degrees): `assets/wip/cities/README.md`.
+- [ ] The user to look at Zhomelonga in play. Open: roofs are flat-topped mats (the kit's roof shape: only one-deep
+  roofs peak); no ships at the piers; the palace is small; one-deep ridge roofs show a seam at the east end.
+- [ ] The other four: Muawea (terraced hill port; its picture and blurb say lake island, the bible says Hill-Port),
+  Isdi (concentric hill fortress, a lizardfolk lower town), Iitanii (an old human core with a lizardfolk citadel; its
+  picture and blurb say half-built frontier), Emagshir (harbour grid, the Hegemony's tribute house). Each about three
+  kits (30 generations) and its plan in cities.yaml. Then villages (Shiwgoiwo, the high pass's hamlets).
+- [ ] citygen has one plan style so far (hand-placed walls, streets and districts; rows of buildings facing south).
+
 ## Burazese continental overhaul (2026-11-23; its outdoor zones replaced by the open world above)
 - [x] 19 outdoor zones covering the continent: savanna, jungle, lakes, caldera, river, grasslands, marsh, desert,
   frontier, siege belt, lowlands. Each 24×18, `open: true`, `light: 24`. Design doc: `docs/BURAZESE_DESIGN.md`.

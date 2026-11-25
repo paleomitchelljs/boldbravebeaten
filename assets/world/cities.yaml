@@ -1,0 +1,157 @@
+# The towns' streets: what tools/citygen.js builds into data/cities.yaml (each town's map, laid over its entry in
+# data/places.yaml, which keeps its name, locations and services) and data/citizens.yaml (placeholder townsfolk), and
+# what tools/buildings.py draws (art/towns/<town>/, the props of its tileset in data/tilesets.yaml).
+#
+# Squares are [x, y] from the map's top-left; rects are [x0, y0, x1, y1], inclusive. The map is drawn as the party
+# sees it: a building is the squares its picture covers, its roof above and its front wall (two squares high) below,
+# its door in the bottom row; doors face south, onto the street below. Everything a building covers is solid but its
+# door.
+#
+# Building kits (PixelLab create_building_kit: square_topdown, 64 px, tile_view_angle 90 so the ground is square,
+# wall_tiles 3 at wall_angle 48.19 so a wall stands exactly two squares, materials layout): one per material, the
+# pieces unpacked as p<index>.png in `dir` (tools/buildings.py names the roles).
+kits:
+  saurian_house: {dir: assets/wip/cities/saurian/house/z, windows: slit}    # grey-green stone, jade band, reed thatch
+  saurian_civic: {dir: assets/wip/cities/saurian/civic/z, windows: slit}    # dressed stone, serpent frieze, green tiles
+  elven: {dir: assets/wip/cities/saurian/elven/z, windows: arch}            # lime plaster on timber, mossy shingles
+
+# Name roots for placeholder townsfolk, per people: two are joined, a syllable or two of each (Muzhumewe word list,
+# story bible gen_lang: water, river, sea, mountain, red, white, sun, moon, fire, iron, gold, horse, wolf, snake,
+# dragon, king, god, house, town, port, fortress, temple, market, new, old, three, blood, salt; and its rulers' names).
+peoples:
+  saurian:
+    roots: [mazhe, mulonga, eyanzha, thawa, mutluzhu, muelu, lezhuwa, mueze, mulelo, erzira, bulalezhuwa, eshwesa, buawele, enoga, yozhazhulu, malkha, mongo, yumba, muzhe, mualo, zhome, yumbazemu, sozho, muwea, muuze, suma, mazhaze, munyo, lahalelo, buzhedzema, julujungo, nggawomsa]
+  elvish:
+    join: true      # two whole syllables, run together (Shenwi, Giyvi)
+    roots: [thor, giy, mi, jewa, the, bi, ni, we, miy, ri, are, ka, ra, raya, shen, ninga, win, la, ki, kongi, shomi, mo, kasi, tonga, wi, vi, sowe, rim, khur]
+  western:
+    roots: [may, naar, jamm, javar, aro, rava, sarm, shamsh, ishat, farzil, daap, kas, shelemu, naash, ara, mark, betir, moelo, jome, arat, ari, tarat, majare, mir, enmoglo, irivta]
+
+towns:
+  # Zhomelonga, `River-Fortress', seat of the Muzhumewe Hegemony (story bible, gen_majors statecard 1). A lizardfolk
+  # capital of a literate bureaucracy and a single rite: the avenue runs from the great gate to the stepped pyramid of
+  # the Fire-Tongue; scribes, tribute and the law along the way. Steel, copper, glass and dye are worked downstream by
+  # the river mouth, where the sea-going ships tie up. A third of the city is elves, kept in their own walled quarter
+  # across the river: outsiders are tolerated only as tributaries.
+  zhomelonga_city:
+    size: [60, 50]
+    seed: 7
+    tileset: zhomelonga
+    prefix: zh_                    # the town's sprites in its tileset: zh_<building type>
+    art: art/towns/zhomelonga      # where tools/buildings.py draws them
+    light: 30
+    people: saurian
+    exit: {at: [21, 49], to: bz_1_7, arrive: C, label: "The road out of the great gate"}
+    paint:
+      - {rect: [0, 44, 59, 49], ground: ","}        # outside the walls
+      - {rect: [8, 3, 33, 21], ground: ","}         # the precinct's lawn round the pyramid
+      - {rect: [1, 3, 7, 21], ground: ","}          # the palace garden
+      - {rect: [51, 37, 59, 40], ground: ","}        # the elves' garden, inside their wall
+    sea: {side: north, depth: 3}
+    rivers:
+      - {path: [[47, 49], [47, 0]], width: 3}
+    streets:
+      - {path: [[20, 49], [20, 22]], width: 4}      # the avenue, from the great gate to the pyramid's stair
+      - {path: [[1, 23], [49, 23]], width: 2}       # the cross street, over the river to the elves' gate
+      - {path: [[1, 42], [45, 42]], width: 2}       # the road inside the south wall
+      - {path: [[1, 36], [45, 36]], width: 2}       # a lane between the rows of houses
+      - {path: [[1, 29], [45, 29]], width: 3}       # the market
+      - {path: [[34, 3], [34, 22]], width: 1}       # the path down the lawn's east side
+    walls:
+      - {kit: saurian_civic, from: [0, 44], to: [46, 44], gates: [[20, 4]], towers: tower, label: "The city wall"}
+      - {kit: saurian_civic, from: [0, 3], to: [0, 43], label: "The city wall"}
+      - {kit: saurian_civic, from: [50, 3], to: [50, 40], gates: [[23, 2]], label: "The wall of the elves' quarter"}
+      - {kit: saurian_civic, from: [50, 41], to: [59, 41], label: "The wall of the elves' quarter"}
+    pyramid: {rect: [12, 4, 31, 21], stairs: 21, label: "The pyramid of the Fire-Tongue"}
+    # Building types, drawn once each and used wherever they fit: kit, width, depth in squares (the roof; the front
+    # wall adds two rows), and the door (`single`, `double`, `none`).
+    types:
+      house_s: {kit: saurian_house, w: 3, d: 2, variants: 3, label: "A house"}
+      house_m: {kit: saurian_house, w: 4, d: 2, variants: 3, label: "A house"}
+      house_l: {kit: saurian_house, w: 5, d: 2, variants: 3, label: "A house"}
+      shed: {kit: saurian_house, w: 4, d: 1, variants: 3, label: "A storehouse"}
+      shed_l: {kit: saurian_house, w: 6, d: 1, label: "A warehouse"}
+      workshop: {kit: saurian_house, w: 5, d: 3, door: double, label: "A workshop"}
+      inn: {kit: saurian_house, w: 6, d: 2, door: double}
+      hall: {kit: saurian_civic, w: 6, d: 2, door: double}
+      hall_l: {kit: saurian_civic, w: 7, d: 3, door: double}
+      office: {kit: saurian_civic, w: 4, d: 2, label: "An office of the Hegemony"}
+      shrine: {kit: saurian_civic, w: 4, d: 1, door: double}
+      tower: {kit: saurian_civic, w: 2, d: 2, door: none, label: "A gate tower"}
+      elf_s: {kit: elven, w: 3, d: 2, variants: 3, label: "An elven house"}
+      elf_m: {kit: elven, w: 4, d: 2, variants: 3, label: "An elven house"}
+      elf_hall: {kit: elven, w: 5, d: 2, door: double, label: "The elves' meeting house"}
+    # Placed first: bottom-left square (the door's row), and a door into a location of the town.
+    buildings:
+      - {type: shrine, at: [20, 13], location: fire_tongue_temple}
+      - {type: hall_l, at: [1, 13], label: "The Hegemon's palace"}
+      - {type: hall, at: [1, 28], location: grand_market}
+      - {type: inn, at: [13, 28], location: sovereigns_rest}
+      - {type: hall, at: [25, 28], location: gate_of_laws}
+      - {type: hall, at: [37, 28], location: hegemons_yard}
+      - {type: workshop, at: [36, 21], location: master_forge}
+      - {type: office, at: [8, 28], label: "The tribute office"}
+      - {type: office, at: [32, 28], label: "The scribes' archive"}
+      - {type: elf_hall, at: [53, 22], label: "The elves' meeting house"}
+    # Filled with rows of buildings facing south: the bottom row of each band stands on `rows` (each the row above a
+    # street), types drawn by weight, gaps between them sometimes holding a prop.
+    districts:
+      - {rect: [1, 32, 19, 41], rows: [35, 41], types: {house_s: 3, house_m: 3, house_l: 2}, gaps: [palm, liz_urns, null, null], label: houses}
+      - {rect: [26, 32, 45, 41], rows: [35, 41], types: {house_s: 3, house_m: 3, house_l: 2}, gaps: [palm, liz_urns, null, null], label: houses}
+      - {rect: [35, 4, 45, 21], rows: [8, 14, 21], types: {shed: 2, shed_l: 1, workshop: 1}, gaps: [crates, barrels, liz_fishrack, null], label: crafts}
+      - {rect: [51, 3, 59, 34], rows: [8, 14, 22, 28, 34], types: {elf_s: 3, elf_m: 2}, gaps: [kapok, flowerbush, null], label: elves}
+    # Things set down: a sprite (a prop from any tileset) and where.
+    props:
+      - {sprite: fire_brazier, at: [[19, 14], [24, 14], [18, 22], [25, 22]], label: "A brazier of the Fire-Tongue"}
+      - {sprite: stakes, at: [[28, 22]], label: "The stake where heresy is answered"}
+      - {sprite: statue, at: [[10, 10], [33, 10]], label: "A carved serpent-king"}
+      - {sprite: liz_totem, at: [[16, 22]], label: "A totem of the Hegemony"}
+      - {sprite: stall, at: [[6, 30], [10, 30], [15, 30], [26, 30], [30, 30], [35, 30], [40, 30]], label: "A market stall"}
+      - {sprite: cauldron, at: [[38, 22], [43, 22]], label: "A vat of dye"}
+      - {sprite: palm, at: [[2, 4], [6, 4], [9, 18], [33, 17], [2, 19], [20, 33], [23, 33], [20, 39], [23, 39], [9, 4], [32, 4], [9, 21], [32, 21]]}
+      - {sprite: forge, at: [[41, 22]], label: "A smelter's hearth, glowing copper-red"}
+      - {sprite: ore, at: [[37, 9], [44, 15]], label: "Copper ore from the hills"}
+      - {sprite: crates, at: [[44, 3], [40, 3]]}
+      - {sprite: barrels, at: [[38, 3], [53, 3]]}
+      - {sprite: liz_fishrack, at: [[46, 9], [46, 16]], label: "Fish drying on a rack"}
+      - {sprite: ropepost, at: [[37, 3], [42, 3], [55, 3]], label: "A mooring post"}
+    # Where the piers run out into the sea: [x, y0, y1] columns of planks.
+    piers: [[37, 0, 2], [42, 0, 2], [55, 0, 2]]
+    # The townsfolk (placeholders): a role, how many, where they stand (a rect), their look, their side, and who they
+    # are; `serves` lends them a location's services (a stall-keeper sells the market's goods); `home` puts them inside a
+    # location (its people) instead of on the street.
+    roles:
+      - {title: Innkeeper, home: sovereigns_rest, sprite: lizardfolk-varanus-brown, faction: hegemony_traders, temper: venal}
+      - {title: Stall-keeper, n: 3, rect: [4, 31, 42, 31], sprite: lizardfolk, faction: hegemony_traders, temper: venal, serves: grand_market}
+      - {title: Priest of the Fire-Tongue, n: 2, rect: [17, 12, 26, 14], sprite: venril, faction: hegemony_temple, temper: moral}
+      - {title: Scribe of the Hegemony, n: 2, rect: [8, 24, 32, 24], sprite: venril, faction: hegemony_court, temper: loyal}
+      - {title: Gate guard, n: 2, rect: [19, 43, 24, 43], sprite: lizardfolk-knight, faction: hegemony_court, temper: loyal}
+      - {title: Palace guard, n: 2, rect: [2, 14, 8, 15], sprite: lizardfolk-knight, faction: hegemony_court, temper: loyal}
+      - {title: Smelter, n: 2, rect: [36, 9, 45, 22], sprite: lizardfolk-varanus, faction: hegemony_traders, temper: provincial}
+      - {title: Sailor, n: 2, rect: [36, 3, 45, 3], sprite: lizardfolk-varanus-black, temper: provincial}
+      - {title: Townsfolk, n: 5, rect: [1, 30, 45, 43], sprite: lizardfolk, temper: provincial}
+      - {title: Foreign merchant, n: 1, rect: [36, 3, 45, 3], sprite: old-man, people: western, faction: hegemony_traders, temper: venal}
+      - {title: Elder of the elves, n: 1, rect: [51, 23, 59, 24], sprite: ambassador, people: elvish, temper: fearful}
+      - {title: Elf, n: 4, rect: [51, 3, 59, 40], sprite: aela, people: elvish, temper: fearful}
+    # What the townsfolk say (placeholders, from the story bible's statecard): a greeting per title, and rumours shared
+    # out among them.
+    greetings:
+      Innkeeper: "A room within the walls is a privilege. The Court keeps a list of who sleeps where."
+      Stall-keeper: "Copper, glass, dye from the river works. Fixed prices; the Copper Scale stamps them."
+      Priest of the Fire-Tongue: "There is one rite. Kneel in it, or keep walking."
+      Scribe of the Hegemony: "Name, people, business, and the tribute your lord pays. Slowly."
+      Gate guard: "Outsiders keep to the avenue and the market. Wander, and you'll be asked why."
+      Palace guard: "The Hegemon sees no one today. Move along."
+      Smelter: "Mind the slag. Copper doesn't care whose feet it lands on."
+      Sailor: "Off the open sea a week ago. The Hegemony's ships go where others' won't."
+      Townsfolk: "You're not from a tribute city. I can tell by the way you look at the pyramid."
+      Foreign merchant: "They let us keep a post here, and they count every coin of it."
+      Elder of the elves: "Across the river you are a guest. Here you are a guest of guests."
+      Elf: "We were here when this was another name. We keep to our side of the water."
+    rumors:
+      - "Lahalelo has reigned since 9988. They say he is his father's heir in everything but patience."
+      - "Emagshir still pays its tribute, copper by the shipload, thirty years after the holy war."
+      - "Three cities broke away in ten years. The Court calls it a pruning."
+      - "Shegambea was cleared, a long time ago. Nobody says by whom, which tells you."
+      - "Iron ore comes in by sea. Fine steel goes out. The difference is what pays for the walls."
+      - "The elves were here before the city had this name. The Court would rather you didn't say so."

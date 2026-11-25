@@ -60,12 +60,13 @@
 
   UI.Overlays = UI.Overlays || {};
 
-  function go(screen) {
+  // `ui`: the new screen's view state to start from (a town's location: { loc }).
+  function go(screen, ui) {
     if (Game.ui && Game.ui.mv) Game.ui.mv.destroy();
     if (Game.ui && Game.ui.walk) clearTimeout(Game.ui.walk.timer);
     Game.screen = screen;
     Game.overlay = null;
-    Game.ui = {};
+    Game.ui = Object.assign({}, ui);
     render();
     window.scrollTo(0, 0);
   }
@@ -122,7 +123,7 @@
   function takeStairs(def, opts) {
     const w = Game.world;
     const to = G.Content.world.places[def.to];
-    if (to.kind === 'town') { Explore.leave(w, def.to); save(); go('town'); return; }
+    if (to.kind === 'town' && !to.map) { Explore.leave(w, def.to); save(); go('town'); return; }
     if (def.kind === 'drop') { Explore.fall(w, def); if (World.wiped(w)) { save(); go('gameover'); return; } }
     // Off an edge, you come in across from where you left.
     const from = w.explore ? { place: w.place, x: w.explore.x, y: w.explore.y } : null;
@@ -130,6 +131,12 @@
     save();
     go('explore');
     if (opts && opts.cross && UI.toast) UI.toast(to.name);
+  }
+
+  // Through a door in a town's streets: the location's people and services, the party still standing in the doorway.
+  function enterLocation(id) {
+    save();
+    go('town', { loc: id });
   }
 
   function startBattle(spec, opts) {
@@ -161,6 +168,8 @@
       }
       return;
     }
+    // Talk begun inside a building of a walked town goes back inside.
+    if (ctx && ctx.type === 'town' && ctx.loc) { go('town', { loc: ctx.loc }); return; }
     go(w.explore ? 'explore' : 'town');
   }
 
@@ -177,6 +186,6 @@
     if (typeof window !== 'undefined' && window.addEventListener) window.addEventListener('pagehide', () => save());
   }
 
-  Object.assign(Game, { render, go, openOverlay, closeOverlay, save, say, newGame, loadWorld, travel, takeStairs, startBattle, talk, endParley, afterBattle });
+  Object.assign(Game, { render, go, openOverlay, closeOverlay, save, say, newGame, loadWorld, travel, takeStairs, enterLocation, startBattle, talk, endParley, afterBattle });
   UI.Game = Game;
 })(globalThis.BBB);

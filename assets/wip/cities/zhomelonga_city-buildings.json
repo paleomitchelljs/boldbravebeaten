@@ -1,0 +1,188 @@
+{
+ "town": "zhomelonga_city",
+ "tileset": "zhomelonga",
+ "art": "art/towns/zhomelonga",
+ "kits": {
+  "saurian_civic": {
+   "dir": "assets/wip/cities/saurian/civic/z",
+   "windows": "slit"
+  },
+  "saurian_house": {
+   "dir": "assets/wip/cities/saurian/house/z",
+   "windows": "slit"
+  },
+  "elven": {
+   "dir": "assets/wip/cities/saurian/elven/z",
+   "windows": "arch"
+  }
+ },
+ "sprites": {
+  "zh_wall_h_l": {
+   "kit": "saurian_civic",
+   "wall": "wall_h_l"
+  },
+  "zh_wall_h_m": {
+   "kit": "saurian_civic",
+   "wall": "wall_h_m"
+  },
+  "zh_wall_h_r": {
+   "kit": "saurian_civic",
+   "wall": "wall_h_r"
+  },
+  "zh_tower": {
+   "kit": "saurian_civic",
+   "w": 2,
+   "d": 2,
+   "door": "none",
+   "variant": 0
+  },
+  "zh_wall_v_n": {
+   "kit": "saurian_civic",
+   "wall": "wall_v_n"
+  },
+  "zh_wall_v_m": {
+   "kit": "saurian_civic",
+   "wall": "wall_v_m"
+  },
+  "zh_shrine": {
+   "kit": "saurian_civic",
+   "w": 4,
+   "d": 1,
+   "door": "double",
+   "variant": 0
+  },
+  "zh_hall_l": {
+   "kit": "saurian_civic",
+   "w": 7,
+   "d": 3,
+   "door": "double",
+   "variant": 0
+  },
+  "zh_hall": {
+   "kit": "saurian_civic",
+   "w": 6,
+   "d": 2,
+   "door": "double",
+   "variant": 0
+  },
+  "zh_inn": {
+   "kit": "saurian_house",
+   "w": 6,
+   "d": 2,
+   "door": "double",
+   "variant": 0
+  },
+  "zh_workshop": {
+   "kit": "saurian_house",
+   "w": 5,
+   "d": 3,
+   "door": "double",
+   "variant": 0
+  },
+  "zh_office": {
+   "kit": "saurian_civic",
+   "w": 4,
+   "d": 2,
+   "door": "single",
+   "variant": 0
+  },
+  "zh_elf_hall": {
+   "kit": "elven",
+   "w": 5,
+   "d": 2,
+   "door": "double",
+   "variant": 0
+  },
+  "zh_house_s": {
+   "kit": "saurian_house",
+   "w": 3,
+   "d": 2,
+   "door": "single",
+   "variant": 0
+  },
+  "zh_house_m_1": {
+   "kit": "saurian_house",
+   "w": 4,
+   "d": 2,
+   "door": "single",
+   "variant": 1
+  },
+  "zh_house_m_2": {
+   "kit": "saurian_house",
+   "w": 4,
+   "d": 2,
+   "door": "single",
+   "variant": 2
+  },
+  "zh_house_l_1": {
+   "kit": "saurian_house",
+   "w": 5,
+   "d": 2,
+   "door": "single",
+   "variant": 1
+  },
+  "zh_house_s_1": {
+   "kit": "saurian_house",
+   "w": 3,
+   "d": 2,
+   "door": "single",
+   "variant": 1
+  },
+  "zh_house_s_2": {
+   "kit": "saurian_house",
+   "w": 3,
+   "d": 2,
+   "door": "single",
+   "variant": 2
+  },
+  "zh_house_l": {
+   "kit": "saurian_house",
+   "w": 5,
+   "d": 2,
+   "door": "single",
+   "variant": 0
+  },
+  "zh_house_m": {
+   "kit": "saurian_house",
+   "w": 4,
+   "d": 2,
+   "door": "single",
+   "variant": 0
+  },
+  "zh_shed_2": {
+   "kit": "saurian_house",
+   "w": 4,
+   "d": 1,
+   "door": "single",
+   "variant": 2
+  },
+  "zh_elf_m_1": {
+   "kit": "elven",
+   "w": 4,
+   "d": 2,
+   "door": "single",
+   "variant": 1
+  },
+  "zh_elf_m_2": {
+   "kit": "elven",
+   "w": 4,
+   "d": 2,
+   "door": "single",
+   "variant": 2
+  },
+  "zh_elf_s": {
+   "kit": "elven",
+   "w": 3,
+   "d": 2,
+   "door": "single",
+   "variant": 0
+  },
+  "zh_elf_m": {
+   "kit": "elven",
+   "w": 4,
+   "d": 2,
+   "door": "single",
+   "variant": 0
+  }
+ }
+}

@@ -201,7 +201,7 @@ walks through it; fliers cross; it stops neither sight, missiles nor reach), `_`
 validator complains about a letter with no entry (or an entry not on the map, or one that is a ground letter).
 Legend kinds: `stairs {to, at, up}` (`up` sets the arrow when the default guess is wrong), `drop {to, at, damage, text,
 sprite}` (a well or a hole: one way down, no stairs back; the fall's `damage` hits everyone), `locked {tn, forceTn, key, alt[]}`, `secret {tn}`, `trap` (see **A trap** below; `sprite`: blade, spiketrap, vent, pit; default the spike plate),
-`monster {encounter, asleep}`, `chest {loot, tn, trap}` (`trap`: a trap on its lid), `pickup {good}`, `note {text, sets}`, `npc {npc}`, `shrine {heal}`,
+`monster {encounter, asleep}`, `chest {loot, tn, trap}` (`trap`: a trap on its lid), `pickup {good}`, `note {text, sets}`, `npc {npc}`, `shrine {heal}`, `enter {location}` (a door in a walked town; see towns, below),
 `prop {sprite, scale, solid}` (scenery: a crate, bed, urn, candelabra… from the table in `src/ui/game/mapview.js` or a
 tileset's `props`; solid by default; a stone block until its art exists; `sprite: none` draws nothing, for the rest of a building's footprint; `over: true` with `solid: false` hangs it overhead, drawn above the figures, who walk beneath: a bridge between two towers). A `stairs` with `sprite: none` is drawn as nothing: a path running off the edge of the map. A `note` with `sprite: none` shows no scroll (words met at a road's end). Any legend entry may say `on: "<ground letter>"`
 for the ground under it.
@@ -253,7 +253,13 @@ The battle view uses the same shape less the room the command pane takes (342 px
 
 `encounters:` map an id to `{foes, flags, loot, text, parley, peaceFlags, arena}`. `wandering:` is what comes along: it interrupts a camp, and it is drawn as time passes in the place (`game.wanderers`: a check every 20 minutes, noise counted as extra minutes).
 A town has `locations` (people and services: `inn`, `shop`, `healer`, `trainer`, `bounty`) and `exits` to dungeons;
-an exit with `requires` stays hidden until the player has heard of it. `look` colors the first-person view; in a dungeon
+an exit with `requires` stays hidden until the player has heard of it. A town with a `map` is walked like any place
+(its menu street is not shown): its buildings' doors are legend entries `enter {location}`, a step into one opens that
+location (its people and services) and leaving it puts the party back in the doorway. The generated towns' maps are
+`data/cities.yaml` (tools/citygen.js from `assets/world/cities.yaml`, whose comments are the reference), laid field by
+field over the town's entry here; their buildings are drawn from PixelLab building kits by tools/buildings.py, which
+writes the town tileset's props between its marks in `tilesets.yaml`. Their townsfolk are `data/citizens.yaml`
+(placeholders, merged over `npcs.yaml`); a person with `home: {place, location}` is among that location's people. `look` colors the first-person view; in a dungeon
 it may also name a `tileset` (the map is then drawn flat from `tilesets.yaml`, at the scale of its cell size), a `ground`
 letter for its plain floor and legend squares (the temple court is grass), and `light`, how far the party sees (an open
 court in daylight; default `game.lightRadius`).
