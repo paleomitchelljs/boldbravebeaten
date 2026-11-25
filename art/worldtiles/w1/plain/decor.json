@@ -63,85 +63,85 @@
     "plain/decor.png",
     86,
     0,
-    7,
-    6
-   ],
-   [
-    "plain/decor.png",
-    95,
-    0,
-    6,
-    6
-   ],
-   [
-    "plain/decor.png",
-    103,
-    0,
     4,
-    4
-   ],
-   [
-    "plain/decor.png",
-    109,
-    0,
-    6,
     6
    ],
    [
     "plain/decor.png",
-    117,
-    0,
-    2,
-    3
-   ],
-   [
-    "plain/decor.png",
-    121,
-    0,
-    4,
-    5
-   ],
-   [
-    "plain/decor.png",
-    127,
-    0,
-    3,
-    2
-   ],
-   [
-    "plain/decor.png",
-    132,
-    0,
-    7,
-    6
-   ],
-   [
-    "plain/decor.png",
-    141,
+    92,
     0,
     5,
     5
    ],
    [
     "plain/decor.png",
-    148,
+    99,
     0,
-    4,
+    7,
     6
    ],
    [
     "plain/decor.png",
-    154,
+    108,
+    0,
+    3,
+    2
+   ],
+   [
+    "plain/decor.png",
+    113,
+    0,
+    4,
+    4
+   ],
+   [
+    "plain/decor.png",
+    119,
     0,
     6,
     6
    ],
    [
     "plain/decor.png",
-    162,
+    127,
     0,
     4,
     3
+   ],
+   [
+    "plain/decor.png",
+    133,
+    0,
+    7,
+    6
+   ],
+   [
+    "plain/decor.png",
+    142,
+    0,
+    4,
+    5
+   ],
+   [
+    "plain/decor.png",
+    148,
+    0,
+    6,
+    6
+   ],
+   [
+    "plain/decor.png",
+    156,
+    0,
+    2,
+    3
+   ],
+   [
+    "plain/decor.png",
+    160,
+    0,
+    6,
+    6
    ],
    [
     "plain/decor.png",
@@ -823,6 +823,90 @@
     580,
     69,
     46
+   ]
+  ]
+ },
+ "stream": {
+  "pieces": [
+   [
+    "plain/decor.png",
+    0,
+    657,
+    12,
+    7
+   ],
+   [
+    "plain/decor.png",
+    14,
+    657,
+    7,
+    7
+   ],
+   [
+    "plain/decor.png",
+    23,
+    657,
+    6,
+    6
+   ],
+   [
+    "plain/decor.png",
+    31,
+    657,
+    11,
+    3
+   ],
+   [
+    "plain/decor.png",
+    44,
+    657,
+    10,
+    3
+   ],
+   [
+    "plain/decor.png",
+    56,
+    657,
+    10,
+    3
+   ],
+   [
+    "plain/decor.png",
+    68,
+    657,
+    9,
+    3
+   ],
+   [
+    "plain/decor.png",
+    79,
+    657,
+    9,
+    3
+   ]
+  ],
+  "extra": [],
+  "patches": [
+   [
+    "plain/decor.png",
+    90,
+    657,
+    71,
+    68
+   ],
+   [
+    "plain/decor.png",
+    163,
+    657,
+    72,
+    70
+   ],
+   [
+    "plain/decor.png",
+    237,
+    657,
+    65,
+    51
    ]
   ]
  }

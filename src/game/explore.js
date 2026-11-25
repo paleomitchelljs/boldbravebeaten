@@ -619,6 +619,19 @@
     return { foes: [{ monster: def.encounter }] };
   }
 
+  // A group that never starts a fight (grazing beasts: every foe a `docile` monster, or the encounter marked so). It
+  // stands its ground until attacked.
+  function docile(spec) {
+    if (!spec) return false;
+    if (spec.docile) return true;
+    const foes = spec.foes || [];
+    return foes.length > 0 && foes.every((f) => {
+      const m = f.monster && G.Enemies.MONSTERS[f.monster];
+      if (!m) return false;
+      return m.group ? m.group.every((k) => (G.Enemies.MONSTERS[k] || {}).docile) : !!m.docile;
+    });
+  }
+
   // The perception target number of a group (from the foes' WIS).
   function foeAwareness(spec) {
     let best = 4;
@@ -649,6 +662,7 @@
         // An encounter whose peace flag is already set (the gnomes trust you, so their machines do) stands down unfought.
         const peace = encounterSpec(world, def);
         if (peace && peace.peaceFlags && peace.peaceFlags.some((f) => world.flags[f])) { st.pacified = true; continue; }
+        if (docile(peace) && !st.alerted) continue;
         const d = dist(me, { x, y });
         const sleeping = def.asleep && !st.woken;
         const range = sleeping ? cfg().sleepNoticeDistance : cfg().noticeDistance;
@@ -954,6 +968,6 @@
     trapOf, live, learn, springTrap,
     DIRS, DIR_NAMES, grid, groundOf, place, lightRadius, here, cell, state, tileKey, opaque, lineClear, dist, markSeen, findChar, exits, beyond, edgeWay, across, placeAt,
     enter, leave, fall, front, turn, move, go, peek, path, search, facing, describe, act, scan, wake,
-    encounterSpec, foeAwareness, resolveSquare, wanderingFor, minutesPerStep, noise, settleClock, wanderCheck,
+    encounterSpec, docile, foeAwareness, resolveSquare, wanderingFor, minutesPerStep, noise, settleClock, wanderCheck,
   };
 })(typeof globalThis !== 'undefined' ? (globalThis.BBB = globalThis.BBB || {}) : {});

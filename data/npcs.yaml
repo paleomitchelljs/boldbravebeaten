@@ -417,10 +417,10 @@ old_dagmar:
   greeting: "Pull up a chair. I've seen things you haven't, and that's worth a drink."
   topics:
     - id: wolves
-      label: "Wolves?"
+      label: "Chokidai?"
       need: 1
       kind: info
-      text: "Back to a wall and keep the shield up. Never fight in the open — they go around."
+      text: "Back to a wall and keep the shield up. Never fight in the open — they go around. And they go for the legs."
     - id: sleeve
       label: "Anything left from the old days?"
       need: 7
@@ -429,21 +429,21 @@ old_dagmar:
       gives: {good: charm_wolf}
       text: "Wore this a dozen winters. Keeps the cold out of your thinking. Take it. I'm past the age where thinking helps."
     - id: wolves_quest
-      label: "You mentioned wolves?"
+      label: "You mentioned chokidai?"
       need: 2
       kind: quest
       starts: wolf_pack
       hide: {quest: wolf_pack}
       tag: old days
-      text: "An alpha and its pack, denned up south of the road. Bold enough to take a deer in daylight. I'd go myself but the leg won't carry me past the bridge. Kill the big one and the rest scatter."
+      text: "An old matriarch and her brood, denned up north of the green. Bold enough to take a guar in daylight. I'd go myself but the leg won't carry me past the bridge. Kill the big one and the rest scatter."
     - id: wolves_done
-      label: "The alpha is dead."
+      label: "The matriarch is dead."
       need: 1
       kind: info
       once: true
       requires: {flag: alpha_wolf_dead}
       sets: [told_dagmar_wolves]
-      text: "Good. I'll drink to that, and so should you. The pups will learn to hunt further out. That's all you can do — push the line back and hope it holds."
+      text: "Good. I'll drink to that, and so should you. The young ones will learn to hunt further out. That's all you can do — push the line back and hope it holds."
     - id: mine
       label: "What's in the mine?"
       need: 3

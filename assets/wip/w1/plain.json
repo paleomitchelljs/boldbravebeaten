@@ -118,6 +118,14 @@
     192
    ],
    "thr": 60
+  },
+  "stream": {
+   "from": "art/worldtiles/w1/streamgrass.png",
+   "tile": [
+    128,
+    64
+   ],
+   "thr": 50
   }
  },
  "sheets": {
@@ -157,6 +165,13 @@
   "jforest.png": "art/worldtiles/w1/jforest.png",
   "jungle-canopy.png": "art/worldtiles/w1/jungle-canopy.png",
   "jcanopy.png": "art/worldtiles/w1/jcanopy.png",
-  "vale-orc-fort.png": "art/worldtiles/vale/orc-fort.png"
+  "vale-orc-fort.png": "art/worldtiles/vale/orc-fort.png",
+  "streamgrass.png": "art/worldtiles/w1/streamgrass.png",
+  "streamfloor.png": "art/worldtiles/w1/streamfloor.png",
+  "streamlake.png": "art/worldtiles/w1/streamlake.png",
+  "streamswamp.png": "art/worldtiles/w1/streamswamp.png",
+  "swamplake.png": "art/worldtiles/w1/swamplake.png",
+  "gcliff.png": "art/worldtiles/w1/gcliff.png",
+  "jcliff.png": "art/worldtiles/w1/jcliff.png"
  }
 }

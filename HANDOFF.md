@@ -332,6 +332,28 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
   valley gate to the orc castle; the labyrinth is in the high block south of it (bz_7_7), loops round two crag islands
   and a hook to the lord's den, open only west. joinPlaces now leaves any piece reached from Shiwgoiwo's across the
   edges (a canyon floor is a piece of its place of its own). The wolves moved north clear of the pass. No PixelLab spend.
+- [x] Art overhaul and reptile fauna (2026-11-25, the user's screenshots and art critique). Wolves give way to chokidai
+  (a pack, a matriarch; the quest, Dagmar and the beast companion follow); guar and eolambia graze the grassland in
+  herds, `docile` (no ambush; Attack still offered when faced). Sarnaks wear the sarnak-figure art, refitted to it
+  (claws, tail, bronze plate; M 1.06 / 1.50 / 2.29). Streams: banks of their own per ground (stream-grass,
+  stream-floor), stream-lake and stream-swamp joins, swamp water blends into lake water; a spring pond at each source
+  that has no hill or lake near; jungle rivers run murky (pools, marsh banks). Tall 25-tile cliffs for open mountains
+  (gcliff, jcliff; `builtOnly` in the tileset so only ledges and summits count as their upper ground), tiers redone
+  after the outline settles. Ranges a canyon is cut into are canyon rock throughout (▨ ◫ ⊞, low terraces). Bridges
+  (a plank deck, `deck` in a terrain) wherever a road crosses a stream (≠), a river or lake (=) or jungle pool (⋕).
+  Cities outside their gates: a walled block of front.png buildings round a gatehouse (`sealed` legend squares) in
+  place of the one-picture city. Greens graded (`tools/grade.py`), road speckle calmed. No hover outline on the
+  party's own square or on touch screens. 177 generations (`assets/wip/w1/README.md`): past the 7730 check-in.
+- [x] Canyon walls stacked (2026-11-25, the user's suggestion): the canyon's rock is squared to 2x2 blocks
+  (`alignCanyon` in tools/worldgen.js: filled toward open land, opened toward the floor, never over roads, water,
+  sites or edge crossings; open-only while the map settles) and tiered by block depth, each tier the tall granite cliff
+  stacked on the one below (`paints: grass` in the tileset takes the cut sheet where it stands on rock). The orc stamp's
+  rock moved onto even rows; its mine mouth stands at the cliff's foot. 0 misfits. Bank squares beside rivers in the
+  rock open to water (483 flooded, was 361).
+- [ ] Cities' outer wall is the orc fort's, its banners the legion's; a city wall set of its own is wanted.
+- [ ] The repeated band across a coast at a place's edge (the user's IMG_7111) was not reproduced; unexplained.
+- [ ] Terrain pairs with no join sheet, by count (scratch script, not in the repo): hill|savanna, path|savanna,
+  crag|hill, crag|floor, marsh|sand, floor|water, sand|savanna. Each meets through its base ground or not at all.
 - [ ] The pass's hamlets are props only: no one lives in them yet (no NPCs, shop or inn that works), and the gorge and
   pass have no encounters beyond the labyrinth's minotaurs. The 7,7 place holds both; its wandering list is empty.
 - [ ] Physiography left: falls only where the river flows south (the art falls down the screen); a river through a

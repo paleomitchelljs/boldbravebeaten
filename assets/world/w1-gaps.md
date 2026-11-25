@@ -6,8 +6,9 @@
 
 - Sea: drawn with the lake water, the same as lakes; the deep-navy sea set (assets/wip/w1/sheets/sea.png) is fetched but not wired (its hue wants shifting first, assets/wip/w1/README.md).
 - Rivers: the lake water with reedy banks; roads cross on fords (_), lakes on rope bridges (=); no current.
-- Mountains: the grassland's are granite, boulder crags and snowy summits (gslope, gledge, gsummit); the jungle's are mossy crags with no snow on their heights; the desert's are the red cliff.
+- Mountains: open ranges rise on a tall cliff (gcliff in the grassland, jcliff in the jungle; 2x2-squared rock), then boulder ledges and snowy summits. Ranges a canyon is cut into (the high pass, the labyrinth) are the canyon's low terraces throughout (gslope, gledge, gsummit): a figure stands taller than their first step. The tall cliff there wants the canyon carved on the 2x2 blocks.
+- Edges seen and not found: a band repeated across a coast at a place's edge (a screenshot of the user's); not reproduced on bz_1_6's south edge.
 - Desert: two places of sand and red rock; one sand texture, no dunes.
-- Towns: Shiwgoiwo is village props on the green; each city is one picture of the whole walled city from outside (no streets to walk outside its gate).
+- Towns: Shiwgoiwo is village props on the green; each city outside its gate is a placeholder: a walled block of generic buildings (the orc castle's wall, front.png's houses) round a gatehouse; the walked city is inside.
 - The temple's pyramids are props, not walkable terrain; the sarnak blocks use the orc castle's fort wall, with door props in front.
 - Generated places carry no encounters or wandering monsters of their own yet: only the sites' (Shiwgoiwo's wolves, the temple, the sarnaks, the orcs, the labyrinth, the spectres).

@@ -54,6 +54,7 @@ bogHag:
   level: 3                # the level of the place it is made for (and its featPrefs' budget); 5 if left out
   tier: 3                 # what it is meant to be against heroes of that level (below); tools/tiers.js measures it
   parts: {suracayl_scale: [1, 2]}   # body parts (items.yaml goods of kind part) cut from it: n or [min, max]
+  docile: true            # a grazer: never springs on the party unless alerted; still fought by choosing Attack
 ```
 **Tiers** (the user, 2026-11-09; a rough, continuous scale). `node tools/tiers.js <ids…>|--all` fights each monster
 against start.yaml's heroes grown to its `level` (with a gear ladder for what they'd have looted) and finds M, the
@@ -216,14 +217,17 @@ temperature a half-degree cell, extracted by `tools/w1cells.py`), the grid (`gri
 `size` squares a side), the one `tileset` every place draws from, how the figures become ground (`terrain`: `upland`, the
 height above which land is highland; `scarp`, the rock and hillside along the upland's rim where it rises steeply;
 `swamp`, only on low, flat, wet land; `arid`, dry grass and no trees by how dry the land is; `streams`, the Strahler
-order from which rivers are drawn, the first order a wadeable stream; `falls`, a waterfall where a river drops steeply
+order from which rivers are drawn, the first order a wadeable stream, `spring` the radius of the pond at a source with
+no hill or lake near; `falls`, a waterfall where a river drops steeply
 flowing south), the `regions` (grassland, jungle, desert, highland: each square's by the raster's biome or its height,
 its edge wandering by noise; `chars` the
 letter for each terrain class, `look` a place's light by the region most of it is, `scatter` props by class, `shore` and
-`edge` by what lies near, `moss`/`mossBand` the band between jungle floor and grass), the `props` the scatter lays, the
+`edge` by what lies near, `moss`/`mossBand` the band between jungle floor and grass, `murky` rivers drawn as pools with marsh banks, `herds`
+grazing beasts laid `per` place, `gap` apart and `clear` of roads and sites, from a weighted `list` of encounters), the `props` the scatter lays, the
 slots' names and blurbs (`slots`, the land's own words from the story bible), and the sites stamped on the terrain
 (`sites`: a `stamp` or a `maze` at `at` [lon, lat], with its `legend`, `encounters`, `road: [site...]`, a caldera `ring`,
-door `marks`, `parity` for a stamp with cliff letters; in a stamp `·` is the region's ground, `+` its road, a space keeps
+door `marks`, `parity` for a stamp with cliff letters, a legend `sealed: true` for scenery nobody reaches (a city's
+buildings behind its wall: not walked by the generator's joins nor the reachability test); in a stamp `·` is the region's ground, `+` its road, a space keeps
 the terrain, `1`-`8` are recruits' squares; a legend `on: "·"` stands on the region's ground). A `pass` or a `gorge` is a
 canyon that may run through several places, in the world's squares ([gx, gy]): a floor along its `routes` (smoothed
 lines, a loop where one ends where it began) and round its `rooms` (widenings, their `marks` offsets from the centre)

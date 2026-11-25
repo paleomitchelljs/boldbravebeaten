@@ -415,14 +415,17 @@
     const out = { base: [], corner: [], decor: [], over: [], misfit: sc.misfits ? [] : null };
     for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
       let t = tdef(ts, T_(x, y).t);
-      // A wang terrain's square is covered by its corners; under them lies what it is drawn over.
-      while (t.wang && t.over && ts.terrains[t.over]) t = ts.terrains[t.over];
+      // A wang terrain's square is covered by its corners; under them lies what it is drawn over. A moving terrain
+      // (water with a blend sheet over other water) is its own ground: it moves under its edges' cut corners.
+      while (t.wang && !t.anim && t.over && ts.terrains[t.over]) t = ts.terrains[t.over];
       out.base.push({ x, y, t: t.name });
       const o = T_(x, y).over;
       if (o) {
-        // Water to the east or west: the bridge runs north-south.
+        // Water to the east or west: the bridge runs north-south. `start`, `end`: the run's first and last squares
+        // (north or west first), where a deck lands on the bank.
         const wet = (xx, yy) => { const n = T_(xx, yy); return !n.over && n.t === T_(x, y).t; };
-        out.over.push({ x, y, g: o, vertical: wet(x - 1, y) || wet(x + 1, y) });
+        const vertical = wet(x - 1, y) || wet(x + 1, y), [dx, dy] = vertical ? [0, 1] : [1, 0];
+        out.over.push({ x, y, g: o, vertical, start: !T_(x - dx, y - dy).over, end: !T_(x + dx, y + dy).over });
       }
     }
     // Decor: small pieces scattered over plain squares, so a plain tile need not carry the variety itself. A terrain's
@@ -455,6 +458,9 @@
       // A deck (`apart`) is only its own squares and the wall it runs under: it is not the ground under what is listed later.
       if (w.apart && !w.cliffTiles) return t === w.name || (t === ts.wall && !!d.cliffTiles);
       if (t === w.name || !w.cliffTiles) return t === w.name || t === ts.wall || !(d.cliffTiles || d.apart);
+      // `builtOnly` (a mountain's outer cliff): only the tiers built on it count as its upper ground, not every flat
+      // ground listed after it (a caldera's basalt beside the granite).
+      if (w.builtOnly) return builtOn(d, w);
       // `solo` (a built wall among a mountain's tiers): no other cliff set counts as its upper ground, only the rock
       // it runs under (underWalls).
       if (w.solo && t !== ts.wall && !builtOn(d, w)) return false;
@@ -485,9 +491,12 @@
         const up = upOf(w), wallCut = w.cut && w.name === ts.wall ? cutAt : null;
         // A cliff's corner over a ground its sheet doesn't draw (forest beside water): the sheet with its lower ground
         // cut away, so what lies there shows, rather than a square of the sheet's own grass.
+        // `paints` (a cliff stacked on another, with a sheet drawn over grass): the ground its sheet lays in its lower
+        // quarters; anything else there, the cliff below included, takes the cut sheet.
         const pick = (x, y) => {
           const low = lowOf(up, x, y), k = pickSheet(w, low), s = w.sheets[k];
-          return { s: k, cut: !!((wallCut && wallCut(x, y)) || (s.cut && low.some((t) => t !== s.over))) };
+          const under = s.paints ? [[x - 1, y - 1], [x, y - 1], [x - 1, y], [x, y]].filter(([a, b]) => !up(a, b)).map(([a, b]) => T_(a, b).t) : low;
+          return { s: k, cut: !!((wallCut && wallCut(x, y)) || (s.cut && under.some((t) => t !== (s.paints || s.over)))) };
         };
         cliffCorners(out, w, up, x0, y0, x1, y1, pick);
         continue;
@@ -500,6 +509,8 @@
         const up = upOf(w);
         const m = (up(x - 1, y - 1) ? 8 : 0) | (up(x, y - 1) ? 4 : 0) | (up(x - 1, y) ? 2 : 0) | (up(x, y) ? 1 : 0);
         if (!m) continue;
+        // A moving terrain's own inside is its ground, moving; only its edges are corners.
+        if (m === 15 && w.anim) continue;
         if (strict && T_(x - 1, y - 1).t !== w.name && T_(x, y - 1).t !== w.name && T_(x - 1, y).t !== w.name && T_(x, y).t !== w.name) continue;
         // A wall drawn as a slope (a corner set, not a cliff) takes its cut sheet where a built wall runs under it.
         const c = { x, y, t: w.name, m, cut: !!(w.cut && w.name === ts.wall && cutAt(x, y)) };
@@ -633,6 +644,18 @@
       if (!p.flip) { ctx.drawImage(im.el, pc[1], pc[2], pc[3], pc[4], X, Y, w, pc[4] * k); return; }
       ctx.save(); ctx.translate(X + w, Y); ctx.scale(-1, 1);
       ctx.drawImage(im.el, pc[1], pc[2], pc[3], pc[4], 0, 0, w, pc[4] * k);
+      ctx.restore();
+    } else if (kind === 'over' && ts.terrains[p.g.tile] && ts.terrains[p.g.tile].deck) {
+      // A plank deck (`deck: {sheet, tile, start, end}`, each [x, y, w, h] in art pixels, drawn running north-south and
+      // turned for a bridge running east-west): the tile on each square, a cap past each end landing on the bank.
+      const d = ts.terrains[p.g.tile].deck, im = env.imgAt(ts.dir + d.sheet), k = size / cell;
+      if (!im.ok) return;
+      const cx = env.ox + (p.x + 0.5) * size, cy = env.oy + (p.y + 0.5) * size;
+      const piece = (r, y) => ctx.drawImage(im.el, r[0], r[1], r[2], r[3], Math.round(-r[2] * k / 2), Math.round(y), Math.round(r[2] * k), Math.round(r[3] * k));
+      ctx.save(); ctx.translate(cx, cy); if (!p.vertical) ctx.rotate(-Math.PI / 2);
+      piece(d.tile, -size / 2);
+      if (p.start && d.start) piece(d.start, -size / 2 - d.start[3] * k);
+      if (p.end && d.end) piece(d.end, size / 2);
       ctx.restore();
     } else if (kind === 'over') {
       const X = env.ox + p.x * size, Y = env.oy + p.y * size;

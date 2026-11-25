@@ -33,3 +33,13 @@ obj_wildflowers2 03ebf925-9280-46c4-b998-6aa764f7250c
 gslope 8e2537c8-aa42-4aff-b891-672cf9711a98
 gledge 7659b4cb-9c35-4f07-b34f-a1f934a3bd37
 gsummit 9788cee6-8c34-46a0-be58-b5b5823bdf35
+# third art pass (2026-11-25): streams with banks, tall rock cliffs, water blends
+streamgrass 79f111d2-8339-46f9-a44e-7c50a12b4577
+gcliff e488bc0f-ff12-4f3b-99ca-6caaade43acf
+jcliff e57552b2-fe25-4059-ac30-8e6fe52d6961
+swamplake bd57c2c1-09b8-44ce-90be-6931234f9991
+streamfloor 11b6478e-654f-4d1e-8e83-55ae9beb9caf
+streamlake 8347666e-0011-4bc9-b2ee-4a0de98fb430
+streamswamp b54cf28a-fe3f-420c-9b37-b1d7566f2e86
+obj_bridge_h a3900e28-c03f-461a-8247-bf16984f9e86
+obj_bridge_v 72df8a12-2ae0-4b61-8f88-a9495f364a72

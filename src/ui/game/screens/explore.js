@@ -320,6 +320,8 @@
       margin: p.world ? { l: 9, r: 9, t: 9, b: 9 } : Explore.exits(w.place).reduce((m, e) => { if (e.dx < 0) m.l = 3; if (e.dx > 0) m.r = 3; if (e.dy < 0) m.t = 3; if (e.dy > 0) m.b = 3; return m; }, {}),
       light: { x: ex.x, y: ex.y, r: Explore.lightRadius(w) },
       cam: { x: ex.x, y: ex.y },
+      // No hover outline on the party's own square (it framed the lead like a selection).
+      self: { x: ex.x, y: ex.y },
       actors: [], marks: [],
       describe: (x, y) => {
         const c = Explore.peek(w, x, y);

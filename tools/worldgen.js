@@ -228,9 +228,12 @@ for (let pass = 0; pass < 2; pass++) {
 }
 // Rivers: each reach of Strahler order `terrain.streams.strahler` and up (the first order a stream a square wide), and
 // each lake's outlet, from its cell's centre to the next downstream, wider as it grows.
+const drawnFrom = new Set(), drawnInto = new Set(), heads = [];
 for (const k of continent) {
   const c = cells.get(k); if ((c.strahler < (STREAM.strahler ?? 2) && !c.lake) || c.flow_to < 0) continue;
   const d = cells.get(c.flow_to); if (!d || (c.lake && d.lake)) continue;
+  drawnFrom.add(k); drawnInto.add(c.flow_to);
+  if (!c.lake) heads.push([k, (c.lon - lon0) * spd, (lat0 - c.lat) * spd]);
   const [x0, y0] = [(c.lon - lon0) * spd, (lat0 - c.lat) * spd], [x1, y1] = [(d.lon - lon0) * spd, (lat0 - d.lat) * spd];
   const so = Math.max(c.strahler, c.lake ? d.strahler : 0, 1), w = so >= 4 ? 1.6 : so >= 3 ? 1.1 : so >= 2 ? 0.55 : (STREAM.width ?? 0.35);
   const steps = Math.ceil(Math.hypot(x1 - x0, y1 - y0) * 3) + 1;
@@ -244,6 +247,20 @@ for (const k of continent) {
       const cl = CLS[I(gx, gy)]; if (cl === 'ocean' || cl === 'lake' || (cl === 'river' && so < 2)) continue;
       CLS[I(gx, gy)] = so < 2 ? 'stream' : 'river';   // a first-order stream: shallow water, waded
     }
+  }
+}
+// A river's head (a reach no other reach runs into) out on open land rises from a spring pond, not from nowhere; one in
+// hills or mountains needs none (it comes down off the high ground).
+for (const [k, x, y] of heads) {
+  if (drawnInto.has(k)) continue;
+  let high = false;
+  for (let dy = -3; dy <= 3 && !high; dy++) for (let dx = -3; dx <= 3; dx++) { const cl = CLS[I(Math.floor(x) + dx, Math.floor(y) + dy)]; if (['hill', 'mountain', 'ledge', 'summit', 'lake', 'ocean'].includes(cl)) { high = true; break; } }
+  if (high) continue;
+  const r = (STREAM.spring ?? 1.6) + vnoise(x / 3, y / 3, 47) * 0.8;
+  for (let gy = Math.floor(y - r - 1); gy <= Math.ceil(y + r + 1); gy++) for (let gx = Math.floor(x - r - 1); gx <= Math.ceil(x + r + 1); gx++) {
+    if (!zoneAt(gx, gy)) continue;
+    const d = Math.hypot(gx + 0.5 - x, gy + 0.5 - y) + (vnoise(gx / 1.5, gy / 1.5, 49) - 0.5) * 0.9;
+    if (d <= r && CLS[I(gx, gy)] !== 'ocean') CLS[I(gx, gy)] = 'lake';
   }
 }
 // Calderas: a ring of peaks round a crater (forest and a lake in it); the ring is the rim's own rock.
@@ -401,7 +418,7 @@ function carveCanyon(s, m, isPass) {
   }
   // The road (a ford where it crosses a river or a stream); at each gate the road alone for a square either side of it,
   // rock to its left and right.
-  for (const i of road) CLS[i] = ['river', 'stream'].includes(CLS[i]) ? 'ford' : WET.has(CLS[i]) ? 'bridge' : 'road';
+  for (const i of road) CLS[i] = CLS[i] === 'stream' ? 'ford' : WET.has(CLS[i]) ? 'bridge' : 'road';
   const placed = [], bad = [], mark = (x, y, ch) => {
     const i = I(x, y), ex = x % N, ey = y % N;
     if (ROCKC.has(CLS[i]) || WET.has(CLS[i]) || ['road', 'ford', 'bridge'].includes(CLS[i]) || ex === 0 || ey === 0 || ex === N - 1 || ey === N - 1) bad.push(`${ch} at ${x},${y} (${CLS[i]}${ex === 0 || ey === 0 || ex === N - 1 || ey === N - 1 ? ', a place\'s edge' : ''})`);
@@ -486,9 +503,33 @@ function letter(i, gx, gy) {
   if (RIM[i]) return RG[REG[i]].chars.rim;
   // A jungle swamp is marsh with pools of dark water in it.
   if (k === 'swamp' && RG[REG[i]].chars.pool && vnoise(gx / 2, gy / 2, 41) > 0.6) return RG[REG[i]].chars.pool;
+  // A region with `murky` rivers (the jungle's) runs them as its swamp water: dark water among the marsh, not the
+  // lakes' blue (where one meets the other, the swamp water's blend sheet joins them).
+  if (k === 'river' && RG[REG[i]].murky && RG[REG[i]].chars.pool) return RG[REG[i]].chars.pool;
+  // A canyon's walls (sealed rock) keep the low granite slope (`crag`), the open mountains rise as tall cliffs.
+  if (SEAL[i] && RG[REG[i]].chars.crag) { const c = { mountain: 'crag', ledge: 'cledge', summit: 'csummit' }[k]; if (c && RG[REG[i]].chars[c]) return RG[REG[i]].chars[c]; }
   return chOf(i, k);
 }
 for (let gy = 0; gy < GH; gy++) for (let gx = 0; gx < GW; gx++) { if (zoneAt(gx, gy)) CH[I(gx, gy)] = letter(I(gx, gy), gx, gy); }
+// A range a canyon is cut into is the canyon's rock throughout (the low slopes, tiered as they are): its walls and the
+// open mountain would otherwise meet inside the rock, a cliff's face drawn where no ground is open.
+{
+  const CANYON = { mountain: 'crag', ledge: 'cledge', summit: 'csummit' };
+  const canyonCh = (i) => { const R = RG[REG[i]].chars; return [R.crag, R.cledge, R.csummit].includes(CH[i]); };
+  const q = []; for (let i = 0; i < GW * GH; i++) if (canyonCh(i)) q.push(i);
+  let n = 0;
+  while (q.length) {
+    const i = q.pop(), x = i % GW;
+    for (const d of [1, -1, GW, -GW, GW + 1, GW - 1, -GW + 1, -GW - 1]) {
+      const j = i + d; if (j < 0 || j >= GW * GH || Math.abs((j % GW) - x) > 1 || !zoneAt(j % GW, Math.floor(j / GW))) continue;
+      // By its letter, not its class: a fall's lip is open mountain too.
+      const R = RG[REG[j]].chars, c = CANYON[CLS[j]] || { [R.mountain]: 'crag', [R.ledge]: 'cledge', [R.summit]: 'csummit' }[CH[j]];
+      if (!c || !R[c] || RIM[j] || ![R.mountain, R.ledge, R.summit].includes(CH[j])) continue;
+      CH[j] = R[c]; q.push(j); n++;
+    }
+  }
+  console.log(`${n} squares of open mountain joined to a canyon's rock`);
+}
 
 // Where the jungle meets the grassland, a band of mossy grass between them (`moss`, the region's letter for it): two
 // squares deep on the jungle's side, one on the grass's, so the brown floor and the bright grass never touch.
@@ -509,28 +550,62 @@ for (let gy = 0; gy < GH; gy++) for (let gx = 0; gx < GW; gx++) { if (zoneAt(gx,
     if (nearDesert(i, R.dryBand)) { CLS[i] = 'dry'; CH[i] = R.chars.dry; }
   }
 }
+// Banks: water is edged by its region's plain ground. In the grassland and highland, no dry grass, hillside or moss
+// beside a stream, a river or a lake (a strip of green along water, and the grass's own bank sheets); in the jungle, a
+// lake is ringed with sand, its swamp water (pools and murky rivers) with marsh, a stream with the floor.
+{
+  const near = (gx, gy, test) => { for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { if (!dx && !dy) continue; const x = gx + dx, y = gy + dy; if (zoneAt(x, y) && test(I(x, y))) return true; } return false; };
+  const soft = (i) => ['ground', 'dry', 'woods', 'hill', 'swamp'].includes(CLS[i]) && !RIM[i] && !SEAL[i];
+  const pool = (i) => { const R = RG[REG[i]]; return !!R.chars.pool && CH[i] === R.chars.pool; };
+  const blue = (i) => ['lake', 'river', 'stream'].includes(CLS[i]) && !pool(i);
+  const nb = [];
+  for (let gy = 0; gy < GH; gy++) for (let gx = 0; gx < GW; gx++) {
+    const i = I(gx, gy), R = RG[REG[i]]; if (!zoneAt(gx, gy) || !soft(i)) continue;
+    if (REG[i] === 'J') {
+      if (near(gx, gy, (j) => CLS[j] === 'stream')) { if (CH[i] !== R.chars.ground) nb.push([i, 'ground', R.chars.ground]); }
+      else if (near(gx, gy, (j) => CLS[j] === 'lake')) nb.push([i, 'sand', chOf(i, 'sand')]);
+      else if (near(gx, gy, pool)) nb.push([i, 'swamp', R.chars.swamp]);
+    } else if (R.chars.ground === ',' && near(gx, gy, blue) && CH[i] !== ',') nb.push([i, 'ground', ',']);
+  }
+  for (const [i, k, ch] of nb) { CLS[i] = k; CH[i] = ch; }
+}
 // Walkable by letter (as tests/game.test.js and tools/diagonals.js read it).
 const groundOf = (ch) => GROUND[ch];
 const walkCh = (ch) => { if (ch == null || ch === '#' || ch === ' ') return false; const g = groundOf(ch); return !(g && (g.wall || g.walk === false)); };
 const wetCh = (ch) => { const g = groundOf(ch); return !!(g && g.walk === false); };
 const legendOf = {};                           // zone key -> { letter: def }
 const isLegend = (gx, gy) => { const z = zoneAt(gx, gy); return !!(z && legendOf[z.key] && legendOf[z.key][CH[I(gx, gy)]]); };
-const walk = (gx, gy) => { const z = zoneAt(gx, gy); if (!z) return false; const c = CH[I(gx, gy)]; if (legendOf[z.key] && legendOf[z.key][c]) return true; return walkCh(c); };
+// A legend square is walkable for the joins (a door, a monster, a prop one walks round), unless it is `sealed` (a city's
+// buildings behind its wall: scenery nobody reaches).
+const walk = (gx, gy) => { const z = zoneAt(gx, gy); if (!z) return false; const c = CH[I(gx, gy)]; if (legendOf[z.key] && legendOf[z.key][c]) return !legendOf[z.key][c].sealed; return walkCh(c); };
 
 // Cliff sets (forest, jungle, red rock, a fort) draw only shapes made of whole 2x2 blocks on the even grid: no one-row
 // steps, no one-square spurs or strips. So a block is all one cliff letter or none: a block mostly cliff over plain
 // ground is filled, the rest cleared. Every later cut clears whole blocks (layPath), and nothing later lays a cliff
 // letter.
-const cliffLetters = new Set(['}', ']', '▧', '@']);
+// The open mountains are cliff sets too (the rock rises as a face): their higher tiers count as the rock they stand on
+// (CG), and a canyon's sealed walls are left as they are (a canyon's floor is its own shape).
+const cliffLetters = new Set(['}', ']', '▧', '@', '#', '▵']);
+const TIERS = { '(': '#', '?': '#', '▴': '▵' };
+const CG = (ch) => TIERS[ch] || ch;
+const isCliff = (i) => cliffLetters.has(CG(CH[i])) && !SEAL[i];
 const blockOf = (i) => { const x = (i % GW) & ~1, y = Math.floor(i / GW) & ~1; return [I(x, y), I(x + 1, y), I(x, y + 1), I(x + 1, y + 1)]; };
-const clearSq = (i) => { CH[i] = groundCh(i); CLS[i] = CLS[i] === 'forest' ? 'woods' : 'ground'; };
+// A cleared square takes the plain ground most of the open squares round it are on (rock of the grassland's region
+// cleared in the jungle is jungle floor, not a patch of grass).
+const clearSq = (i) => {
+  const x = i % GW, cnt = {};
+  for (const d of [1, -1, GW, -GW, GW + 1, GW - 1, -GW + 1, -GW - 1]) { const j = i + d; if (j < 0 || j >= GW * GH || Math.abs((j % GW) - x) > 1) continue; const g = groundCh(j); if (CH[j] === g) cnt[g] = (cnt[g] || 0) + 1; }
+  const best = Object.entries(cnt).sort((a, b) => b[1] - a[1])[0];
+  CH[i] = best ? best[0] : groundCh(i); CLS[i] = CLS[i] === 'forest' ? 'woods' : 'ground';
+};
 const sameZoneXY = (x0, y0, x1, y1) => Math.floor(x0 / N) === Math.floor(x1 / N) && Math.floor(y0 / N) === Math.floor(y1 / N);
 for (let by = 0; by < GH; by += 2) for (let bx = 0; bx < GW; bx += 2) {
   if (!zoneAt(bx, by)) continue;
-  const q = blockOf(I(bx, by)), c = q.map((i) => CH[i]).find((ch) => cliffLetters.has(ch));
+  const q = blockOf(I(bx, by)); if (q.some((i) => SEAL[i] || FLOOR[i])) continue;
+  const c = q.map((i) => CG(CH[i])).find((ch) => cliffLetters.has(ch));
   if (!c) continue;
-  const n = q.filter((i) => CH[i] === c).length, plain = q.every((i) => CH[i] === c || walkCh(CH[i]));
-  for (const i of q) if (n >= 2 && plain) CH[i] = c; else if (cliffLetters.has(CH[i])) clearSq(i);
+  const n = q.filter((i) => CG(CH[i]) === c).length, plain = q.every((i) => CG(CH[i]) === c || (walkCh(CH[i]) && !['stream', 'ford', 'bridge', 'road'].includes(CLS[i])));
+  for (const i of q) if (n >= 2 && plain) { if (CG(CH[i]) !== c) { CH[i] = c; if (c === '#' || c === '▵') CLS[i] = 'mountain'; } } else if (isCliff(i)) clearSq(i);
 }
 // Clear (to plain ground) every cliff square not in a whole block of it, and one of two whole blocks that meet only at
 // a corner. Stamped squares stay. Returns how many squares it cleared.
@@ -538,13 +613,14 @@ function alignCliffs() {
   let n = 0;
   for (let by = 0; by < GH; by += 2) for (let bx = 0; bx < GW; bx += 2) {
     if (!zoneAt(bx, by)) continue;
-    const q = blockOf(I(bx, by)), c = CH[q[0]];
+    const q = blockOf(I(bx, by)), c = CG(CH[q[0]]);
+    if (q.some((i) => SEAL[i])) continue;
     // A whole block stays unless another cliff set (a stamped fort) touches it: each counts the other as its own.
-    const touches = () => { for (let y = by - 1; y <= by + 2; y++) for (let x = bx - 1; x <= bx + 2; x++) { const k = CH[I(x, y)]; if (zoneAt(x, y) && sameZoneXY(bx, by, x, y) && cliffLetters.has(k) && k !== c) return true; } return false; };
-    if (cliffLetters.has(c) && q.every((i) => CH[i] === c) && !touches()) continue;
-    for (const i of q) if (cliffLetters.has(CH[i]) && !FIX[i]) { clearSq(i); n++; }
+    const touches = () => { for (let y = by - 1; y <= by + 2; y++) for (let x = bx - 1; x <= bx + 2; x++) { const k = CG(CH[I(x, y)]); if (zoneAt(x, y) && sameZoneXY(bx, by, x, y) && cliffLetters.has(k) && k !== c && !SEAL[I(x, y)]) return true; } return false; };
+    if (cliffLetters.has(c) && q.every((i) => CG(CH[i]) === c) && !touches()) continue;
+    for (const i of q) if (isCliff(i) && !FIX[i]) { clearSq(i); n++; }
   }
-  const whole = (bx, by) => { const q = blockOf(I(bx, by)), c = CH[q[0]]; return cliffLetters.has(c) && q.every((i) => CH[i] === c) ? c : null; };
+  const whole = (bx, by) => { const q = blockOf(I(bx, by)), c = CG(CH[q[0]]); return cliffLetters.has(c) && q.every((i) => CG(CH[i]) === c && !SEAL[i]) ? c : null; };
   for (let by = 0; by + 2 < GH; by += 2) for (let bx = 0; bx + 2 < GW; bx += 2) {
     if (bx % N === N - 2 || by % N === N - 2 || !zoneAt(bx, by)) continue;   // the four blocks in one place
     const a = whole(bx, by), b = whole(bx + 2, by), c = whole(bx, by + 2), d = whole(bx + 2, by + 2);
@@ -774,15 +850,18 @@ function search(starts, isGoal, costFn) {
   }
   return null;
 }
+// The bridge letter for each water letter (rules.yaml game.ground: a bridge's `under`).
+const BRIDGE_OVER = {};
+for (const [ch, g] of Object.entries(GROUND)) if (g.under && g.tile === 'bridge' && !BRIDGE_OVER[g.under]) BRIDGE_OVER[g.under] = ch;
 // Lay a path: a road (its region's road letter; a ford over a river, a bridge over a lake) or a way cut ('ground').
 function layPath(p, how) {
   for (const i of p) {
     if (FIX[i]) continue;
-    if (cliffLetters.has(CH[i])) for (const j of blockOf(i)) if (!FIX[j] && cliffLetters.has(CH[j])) clearSq(j);
+    if (isCliff(i)) for (const j of blockOf(i)) if (!FIX[j] && isCliff(j)) clearSq(j);
     const was = CLS[i];
     RIM[i] = 0;
-    if (was === 'river') { CH[i] = chOf(i, 'ford'); CLS[i] = 'ford'; }
-    else if (['lake', 'ocean'].includes(was) || wetCh(CH[i])) { CH[i] = chOf(i, 'bridge'); CLS[i] = 'bridge'; }
+    if (['river', 'lake', 'ocean'].includes(was) || wetCh(CH[i])) { CH[i] = BRIDGE_OVER[CH[i]] || chOf(i, 'bridge'); CLS[i] = 'bridge'; }
+    else if (was === 'stream' && how === 'road') { CH[i] = chOf(i, 'ford'); CLS[i] = 'ford'; }
     else if (how === 'road') { CH[i] = chOf(i, 'road'); CLS[i] = 'road'; }
     else if (!walkCh(CH[i])) { CH[i] = groundCh(i); CLS[i] = 'ground'; }
   }
@@ -903,14 +982,102 @@ function joinWorld() {
   layPath(p, 'ground'); carved++;
   return 1;
 }
+// A canyon's rock on whole 2x2 blocks, so the tall cliff fits it: a block part rock is filled where the rest is open
+// land outside (the wall thickens) or a single square of floor, and opened where the rest is the canyon's floor; never
+// over a road, water, a site's square or a mark. Two blocks meeting only at a corner: one of the others filled, else one
+// opened. Returns how many squares changed. `openOnly` (while the map settles): only opens, so it never shuts a way the
+// joins have just cut.
+// The canyon's letters, whichever region the square is in (the rock runs on over a region's edge).
+const CANYON3 = (() => { const R = Object.values(RG).map((r) => r.chars).find((c) => c.crag); return R ? [R.crag, R.cledge, R.csummit] : []; })();
+const canyonCh = (i) => CANYON3.includes(CH[i]);
+function alignCanyon(openOnly) {
+  let n = 0;
+  const edge = (i) => { const x = (i % GW) % N, y = Math.floor(i / GW) % N; return x === 0 || y === 0 || x === N - 1 || y === N - 1; };
+  const needed = (i) => FIX[i] || (edge(i) && walkCh(CH[i])) || isLegend(i % GW, Math.floor(i / GW)) || ['road', 'ford', 'bridge', 'stream', 'river', 'lake', 'ocean', 'pool'].includes(CLS[i]);
+  const fill = (q) => { const seal = q.some((i) => SEAL[i] && canyonCh(i)), crag = CANYON3[0]; for (const i of q) if (!canyonCh(i)) { CH[i] = crag; CLS[i] = 'mountain'; FLOOR[i] = 0; RIM[i] = 0; if (seal) SEAL[i] = 1; n++; } };
+  const open = (q) => { for (const i of q) if (canyonCh(i) && !FIX[i]) { SEAL[i] = 0; CLS[i] = 'mountain'; clearSq(i); n++; } };
+  for (let by = 0; by < GH; by += 2) for (let bx = 0; bx < GW; bx += 2) {
+    if (!zoneAt(bx, by)) continue;
+    const q = blockOf(I(bx, by)), rock = q.filter(canyonCh), rest = q.filter((i) => !canyonCh(i));
+    if (!rock.length || !rest.length) continue;
+    if (!RG[REG[q[0]]].chars.crag && !rock.length) continue;
+    if (openOnly || rest.some(needed)) open(q);
+    else if (rock.length >= 3 || !rest.some((i) => FLOOR[i])) fill(q);
+    else open(q);
+  }
+  const whole = (bx, by) => zoneAt(bx, by) && blockOf(I(bx, by)).every(canyonCh);
+  for (let by = 0; by + 2 < GH; by += 2) for (let bx = 0; bx + 2 < GW; bx += 2) {
+    if (bx % N === N - 2 || by % N === N - 2 || !zoneAt(bx, by)) continue;
+    const a = whole(bx, by), b = whole(bx + 2, by), c = whole(bx, by + 2), d = whole(bx + 2, by + 2);
+    const fix = (o1, o2, r1) => {
+      const f = [o1, o2].map(([x, y]) => blockOf(I(x, y))).find((q) => !q.some(needed));
+      if (f && !openOnly) fill(f); else open(blockOf(I(...r1)));
+    };
+    if (a && d && !b && !c) fix([bx + 2, by], [bx, by + 2], [bx + 2, by + 2]);
+    if (b && c && !a && !d) fix([bx, by], [bx + 2, by + 2], [bx, by + 2]);
+  }
+  return n;
+}
+alignCanyon();
 alignCliffs();
 // Each step can undo another's work (opening a block makes a corner elsewhere; a way cut leaves a piece): until still.
 let settle = 0;
 for (; settle < 30; settle++) {
-  const n = fixDiagonals() + joinPlaces() + joinWorld() + alignCliffs();
+  const n = fixDiagonals() + joinPlaces() + joinWorld() + alignCliffs() + alignCanyon(true);
   if (!n) break;
 }
 if (settle === 30) console.warn('the map did not settle: some corners or pieces may be left');
+// The open mountains' tiers again, now their outline is settled: a ledge only two squares in from open ground, a summit
+// three (cutting ways and squaring blocks leaves some tiers at the very edge, where the cliff's face belongs).
+{
+  const grp = (i) => CG(CH[i]) === '#' || CG(CH[i]) === '▵';
+  const D = new Int16Array(GW * GH).fill(99), q = [];
+  for (let i = 0; i < GW * GH; i++) if (!grp(i) && zoneAt(i % GW, Math.floor(i / GW))) { D[i] = 0; q.push(i); }
+  for (let h = 0; h < q.length; h++) { const i = q[h], x = i % GW; for (const d of [1, -1, GW, -GW, GW + 1, GW - 1, -GW + 1, -GW - 1]) { const j = i + d; if (j < 0 || j >= GW * GH || Math.abs((j % GW) - x) > 1 || D[j] <= D[i] + 1) continue; D[j] = D[i] + 1; q.push(j); } }
+  const UP = { '#': ['#', '(', '?'], '▵': ['▵', '▴', '▴'] };
+  for (let i = 0; i < GW * GH; i++) if (grp(i) && !FIX[i]) { const t = UP[CG(CH[i])], k = t.indexOf(CH[i]); const want = Math.min(k, D[i] - 1); if (want < k) CH[i] = t[Math.max(0, want)]; }
+}
+// Open mountain the settling squared up against a canyon's rock (beside a fall) joins that rock, as before settling.
+{
+  let n = 0; const q = [];
+  const isC = canyonCh;
+  for (let i = 0; i < GW * GH; i++) if (isC(i)) q.push(i);
+  while (q.length) {
+    const i = q.pop(), x = i % GW;
+    for (const d of [1, -1, GW, -GW, GW + 1, GW - 1, -GW + 1, -GW - 1]) {
+      const j = i + d; if (j < 0 || j >= GW * GH || Math.abs((j % GW) - x) > 1 || !zoneAt(j % GW, Math.floor(j / GW)) || FIX[j]) continue;
+      const R = RG[REG[j]].chars, c = { [R.mountain]: 'crag', [R.ledge]: 'cledge', [R.summit]: 'csummit' }[CH[j]];
+      if (!c || !R[c]) continue;
+      CH[j] = R[c]; q.push(j); n++;
+    }
+  }
+  if (n) console.log(`${n} squares of settled mountain joined to a canyon's rock`);
+  if (n) alignCanyon();
+}
+// The canyon's tiers by depth in whole blocks: the outer block of rock the cliff, the next in a ledge, then the heights
+// (each a tall cliff stacked on the one below, so a canyon's wall rises a face a tier).
+{
+  const D = new Int16Array(GW * GH).fill(99), q = [];
+  for (let i = 0; i < GW * GH; i++) if (!canyonCh(i)) { D[i] = 0; q.push(i); }
+  for (let h = 0; h < q.length; h++) { const i = q[h], x = i % GW; for (const d of [1, -1, GW, -GW, GW + 1, GW - 1, -GW + 1, -GW - 1]) { const j = i + d; if (j < 0 || j >= GW * GH || Math.abs((j % GW) - x) > 1 || D[j] <= D[i] + 1) continue; D[j] = D[i] + 1; q.push(j); } }
+  for (let by = 0; by < GH; by += 2) for (let bx = 0; bx < GW; bx += 2) {
+    const b = blockOf(I(bx, by)); if (!b.every(canyonCh) || b.some((i) => FIX[i])) continue;
+    const m = Math.min(...b.map((i) => D[i]));
+    const ch = CANYON3[m >= 5 ? 2 : m >= 3 ? 1 : 0];
+    for (const i of b) CH[i] = ch;
+  }
+  // Two blocks of a tier that meet only at a corner (the others lower): the second steps down a tier.
+  const tier = (bx, by) => (zoneAt(bx, by) ? CANYON3.indexOf(CH[I(bx, by)]) : -1);
+  for (let k = 2; k >= 1; k--) for (let again = 1; again;) {
+    again = 0;
+    for (let by = 0; by + 2 < GH; by += 2) for (let bx = 0; bx + 2 < GW; bx += 2) {
+      const a = tier(bx, by) >= k, b = tier(bx + 2, by) >= k, c = tier(bx, by + 2) >= k, d = tier(bx + 2, by + 2) >= k;
+      const down = (x, y) => { const q = blockOf(I(x, y)); if (q.some((i) => FIX[i])) return; for (const i of q) CH[i] = CANYON3[k - 1]; again = 1; };
+      if (a && d && !b && !c) down(bx + 2, by + 2);
+      else if (b && c && !a && !d) down(bx, by + 2);
+    }
+  }
+}
 
 // ---- Looks: a place's light and colours by the region most of it is ----------------------------------------------------
 for (const z of Object.values(zones)) {
@@ -938,12 +1105,46 @@ const misfits = {};
 for (const z of Object.values(zones)) { const m = Tm.planTiles(zoneScene(z), TS, 0, 0, N - 1, N - 1).misfit || []; if (m.length) misfits[z.id] = m; }
 const misfitLeft = Object.values(misfits).reduce((t, m) => t + m.length, 0);
 
+const POOL = [...'ŧɨƥǥǿʀƙϻƨçαβδεζηθικλμνξπρστυφχψωϐϑϒϕϖϗϙϛϝϟϡϣϥϧϩϫϭϯбгджзийклмнптфцчшщъыьэюяђѓєѕіїјљњћќўџѡѣѥѧѩѫѭѯѱѳѵѷѹѻѽѿ'];
+// ---- Herds: grazing beasts on the open ground of a region (the layout's `herds` for it) -------------------------------
+// About `per` herds a place where the whole place is open ground of the region (fewer as less of it is), each at least
+// `gap` squares from the next and `clear` from a road or a site, on a square whose eight neighbours are open. Each is a
+// monster square with its own encounter; docile beasts (monsters.yaml `docile`) stand until attacked.
+{
+  const nearFix = (gx, gy, r) => { for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) { const j = I(gx + dx, gy + dy); if (FIX[j] || CLS[j] === 'road' || CLS[j] === 'bridge' || CLS[j] === 'ford') return true; } return false; };
+  for (const z of Object.values(zones)) {
+    const zx0 = z.c * N, zy0 = z.r * N, byReg = {};
+    for (let y = 3; y < N - 3; y++) for (let x = 3; x < N - 3; x++) {
+      const gx = zx0 + x, gy = zy0 + y, i = I(gx, gy), H = RG[REG[i]].herds;
+      if (!H || !['ground', 'dry'].includes(CLS[i]) || FIX[i]) continue;
+      let open = true; for (let dy = -1; dy <= 1 && open; dy++) for (let dx = -1; dx <= 1; dx++) if (!walkCh(CH[I(gx + dx, gy + dy)])) { open = false; break; }
+      if (open && !nearFix(gx, gy, H.clear || 3)) (byReg[REG[i]] = byReg[REG[i]] || []).push([gx, gy]);
+    }
+    let k = 0;
+    for (const [reg, cand] of Object.entries(byReg)) {
+      const H = RG[reg].herds, want = H.per * cand.length / (N * N), n = Math.floor(want) + (hash(z.r, z.c, 401) < want % 1 ? 1 : 0);
+      cand.sort((a, b) => hash(a[0], a[1], 403) - hash(b[0], b[1], 403));
+      const placed = [];
+      for (const [gx, gy] of cand) {
+        if (placed.length >= n) break;
+        if (placed.some(([px, py]) => Math.max(Math.abs(px - gx), Math.abs(py - gy)) < (H.gap || 8))) continue;
+        const tot = H.list.reduce((a, e) => a + (e.w || 1), 0); let r = hash(gx, gy, 405) * tot, pick = H.list[0];
+        for (const e of H.list) { r -= e.w || 1; if (r < 0) { pick = e; break; } }
+        const id = 'herd' + (++k), lg = (legendOf[z.key] = legendOf[z.key] || {}), i = I(gx, gy);
+        const ch = POOL.find((x) => !lg[x]); if (!ch) break;
+        lg[ch] = { kind: 'monster', encounter: id, label: pick.label, on: CH[i] };
+        z.encounters = Object.assign(z.encounters || {}, { [id]: { foes: pick.foes, text: pick.text } });
+        CH[i] = ch; FIX[i] = 1; placed.push([gx, gy]);
+      }
+    }
+  }
+}
+
 // ---- Scattered props: trees, bushes, rocks, reeds ---------------------------------------------------------------------------
 // By the square's region and class (the layout's `scatter`); `shore` for squares beside a lake or a river, `edge` for
 // a square of one region within three of another's (the jungle's ferns out onto the grass). A solid prop only where
 // enough of its neighbours are open and none is laid (see below).
 const propsUsed = {};
-const POOL = [...'ŧɨƥǥǿʀƙϻƨçαβδεζηθικλμνξπρστυφχψωϐϑϒϕϖϗϙϛϝϟϡϣϥϧϩϫϭϯбгджзийклмнптфцчшщъыьэюяђѓєѕіїјљњћќўџѡѣѥѧѩѫѭѯѱѳѵѷѹѻѽѿ'];
 const nearOther = (gx, gy) => { const r = REG[I(gx, gy)]; for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) { const x = gx + dx, y = gy + dy; if (zoneAt(x, y) && walkCh(CH[I(x, y)]) && REG[I(x, y)] !== r && CLS[I(x, y)] !== 'road') return REG[I(x, y)]; } return null; };
 const byWaterSq = (gx, gy) => [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => ['lake', 'river', 'stream'].includes(CLS[I(gx + dx, gy + dy)]));
 for (let gy = 1; gy < GH - 1; gy++) for (let gx = 1; gx < GW - 1; gx++) {

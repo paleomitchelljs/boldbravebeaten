@@ -349,7 +349,7 @@ test('companions: a familiar adds spell points and fights; its death tears at it
   B.Companions.ensure(w);
   assert.ok(ysolde.companion && ysolde.companion.familiar && ysolde.companion.side === 'party');
   assert.equal(B.Magic.maxSP(ysolde), sp + 2);
-  assert.equal(corin.companion.monster, 'wolf');
+  assert.equal(corin.companion.monster, 'chokidai');
   assert.ok(!brenna.companion);
   w.explore = null;
   const b = B.Battle.start(w, { foes: [{ monster: 'rat' }], arena: { w: 9, h: 5 } });

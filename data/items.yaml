@@ -87,7 +87,7 @@ goods:
   ring_iron:
     {name: Iron signet ring, kind: trinket, slot: ring, attrs: {CON: 1}, value: 200, rarity: rare, blurb: "+1 CON."}
   charm_wolf:
-    {name: Wolf-tooth charm, kind: trinket, slot: neck, attrs: {WIS: 1}, value: 120, rarity: uncommon, blurb: "+1 WIS."}
+    {name: Chokidai-tooth charm, kind: trinket, slot: neck, attrs: {WIS: 1}, value: 120, rarity: uncommon, blurb: "+1 WIS."}
   # ---- Worn magic (PROVISIONAL, the user's list) -------------------------------------------------------
   silk_sash:
     {name: Flowing Black Silk Sash, kind: trinket, slot: waist, effects: {costMult: 0.8}, value: 4000, rarity: unique, blurb: "Every action takes a fifth fewer ticks."}
@@ -117,6 +117,12 @@ goods:
     {name: Giant rat tail, kind: part, value: 1, rarity: common, blurb: "A long, bare tail."}
   wolf_pelt:
     {name: Wolf pelt, kind: part, value: 6, rarity: common, blurb: "Grey fur, a little torn."}
+  chokidai_hide:
+    {name: Chokidai hide, kind: part, value: 6, rarity: common, blurb: "Green scaled hide, the back plates still on it."}
+  guar_hide:
+    {name: Guar hide, kind: part, value: 8, rarity: common, blurb: "Tough, pebbled hide. Saddlers want it."}
+  eolambia_hide:
+    {name: Eolambia hide, kind: part, value: 14, rarity: common, blurb: "A broad sheet of thick brown hide, striped down the tail."}
   suracayl_scale:
     {name: Suracayl scales, kind: part, value: 8, rarity: common, blurb: "Hard green-black scales cut from a Suracayl."}
   gorilla_pelt:

@@ -278,6 +278,8 @@
       return { x: Math.floor(px / (T * S) + ox), y: Math.floor(py / (T * S) + oy) };
     }
     canvas.addEventListener('click', (ev) => { if (!opts.onCell) return; const c = cellAt(ev); opts.onCell(c.x, c.y, ev); });
+    // A tap fires a mousemove too, and the outline then stays on the tapped square: none on a touch screen.
+    canvas.addEventListener('pointerdown', (ev) => { view.touched = ev.pointerType === 'touch'; });
     canvas.addEventListener('mousemove', (ev) => {
       const c = cellAt(ev);
       if (view.hover && view.hover.x === c.x && view.hover.y === c.y) return;
@@ -680,7 +682,7 @@
       // Icons over heads, bolts in flight and rising numbers sit above everything on the map.
       drawOver(ctx, sc, ox, oy, clock());
       // Hover outline.
-      if (view.hover && sc.hoverable !== false) {
+      if (view.hover && sc.hoverable !== false && !(sc.self && sc.self.x === view.hover.x && sc.self.y === view.hover.y) && !view.touched) {
         const X = ox + view.hover.x * size, Y = oy + view.hover.y * size;
         ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = Math.max(1, S * 0.5);
         ctx.strokeRect(X + 0.5, Y + 0.5, size - 1, size - 1);

@@ -35,6 +35,82 @@ alphaWolf:
   armor: fur
   traits: {pack: 2, finishes: true}
   feats: {toughness: 1}
+# ---- The continent's fauna (the user, 2026-11-25: reptilian; chokidai hunt where wolves would, guar and Eolambia graze
+# the grasslands and fight only if attacked: a `docile` creature never starts a fight, tools/worldgen.js scatters herds).
+chokidai:
+  name: Chokidai
+  blurb: "A dog-sized lizard with a ridge of plates down its back. Fast; its bite drags you down. Hunts in packs."
+  faction: wilds
+  xp: 18
+  parts: {chokidai_hide: [0, 1]}
+  tier: 1
+  level: 1
+  glyph: "🦎"
+  sprite: {art: chokidai, kind: orc, scale: 0.7, tint: "#5a8a3a"}
+  loot: beast_leavings
+  attrs: {STR: 5, CON: 5, DEX: 7, SPD: 8, INT: 2, WIS: 6, CHA: 2}
+  skills: {melee: 2, evasion: 2, perception: 3, stealth: 2}
+  natural: [wolfBite]
+  armor: scaleHide
+  traits: {pack: 2, finishes: true}
+  feats: {}
+chokidaiAlpha:
+  name: Chokidai matriarch
+  blurb: "The pack's old female: longer, darker, a harder bite. The others go where she lunges."
+  faction: wilds
+  xp: 30
+  parts: {chokidai_hide: 1}
+  tier: 2
+  level: 1
+  glyph: "🦎"
+  sprite: {art: chokidai, artScale: 1.25, artTint: "#3a5a2a", kind: orc, scale: 0.85, tint: "#3a5a2a"}
+  loot: beast_leavings
+  attrs: {STR: 6, CON: 6, DEX: 7, SPD: 8, INT: 3, WIS: 6, CHA: 3}
+  skills: {melee: 3, evasion: 2, perception: 3, stealth: 2, intimidation: 2}
+  natural: [alphaBite]
+  armor: scaleHide
+  traits: {pack: 2, finishes: true}
+  feats: {toughness: 1}
+chokidaiPack:
+  name: Chokidai pack
+  blurb: "A matriarch and two of her brood. Surround, drag down, tear."
+  group: [chokidaiAlpha, chokidai, chokidai]
+guar:
+  name: Guar
+  blurb: "A squat, two-legged grazing lizard, kept as a pack beast where it is tame. Placid until cornered; then it bites and kicks."
+  faction: wilds
+  xp: 20
+  docile: true
+  parts: {guar_hide: 1}
+  tier: 3
+  level: 1
+  glyph: "🦎"
+  sprite: {art: guar, kind: orc, scale: 0.9, tint: "#b0905a"}
+  loot: beast_leavings
+  attrs: {STR: 8, CON: 8, DEX: 4, SPD: 5, INT: 2, WIS: 4, CHA: 2}
+  skills: {melee: 1, perception: 2}
+  natural: [alphaBite]
+  armor: scaleHide
+  traits: {size: 1.2}
+  feats: {}
+eolambia:
+  name: Eolambia
+  blurb: "A long-tailed grazer twice a man's height at the hip, in herds on the open grass. It ignores you unless you give it reason; its tail can break a leg."
+  faction: wilds
+  xp: 45
+  docile: true
+  parts: {eolambia_hide: 1}
+  tier: 3
+  level: 1
+  glyph: "🦕"
+  sprite: {art: eolambia, kind: orc, scale: 1.4, tint: "#6a5040"}
+  loot: beast_leavings
+  attrs: {STR: 14, CON: 12, DEX: 3, SPD: 5, INT: 1, WIS: 4, CHA: 1}
+  skills: {melee: 2, perception: 3}
+  natural: [tail]
+  armor: scaleHide
+  traits: {size: 2}
+  feats: {}
 rat:
   name: Giant rat
   blurb: "A dog-sized rat: quick, weak, a nuisance alone."
@@ -1648,57 +1724,49 @@ steamElemental:
 # ---- The lake fortress and the clay labyrinth (the user, 2026-11-10; assets/wip/west/). Untuned first numbers.
 sarnak:
   name: Sarnak
-  blurb: "Lean dragon-kin, a long spear in both hands. It was fishing this morning."
+  blurb: "Lanky dragon-kin in loose bronze plates, horns swept back, a beak for a mouth. It fights with its claws and its tail."
   faction: wilds
   xp: 60
   tier: 3
   level: 3
   glyph: "🦎"
-  sprite: {art: sarnak, kind: orc_warrior, tint: "#8a9a6a"}
+  sprite: {art: sarnak-figure, kind: orc_warrior, tint: "#8a6a4a"}
   loot: humanoid_purse
   attrs: {STR: 9, CON: 9, DEX: 6, SPD: 6, INT: 5, WIL: 6, WIS: 5, CHA: 3}
   skills: {melee: 2, perception: 2}
-  natural: [tail]
-  armor: scalewardScales
-  weapons: [spear]
+  natural: [claws, tail]
+  armorItem: {type: plate, material: bronze, coverage: halfHead}
   craft: average
-  keepUnarmed: true
 sarnakKnight:
   name: Sarnak knight
-  blurb: "Mail, iron shield, spear over the rim. The fortress's picked guard."
+  blurb: "Bronze plate to the knee, its claws filed to points. The fortress's picked guard."
   faction: wilds
   xp: 90
   tier: 4
   level: 3
   glyph: "🦎"
-  sprite: {art: sarnak, artScale: 1.08, kind: orc_warrior, scale: 1.08, tint: "#8a9a6a"}
+  sprite: {art: sarnak-figure, artScale: 1.08, kind: orc_warrior, scale: 1.08, tint: "#8a6a4a"}
   loot: humanoid_purse
   attrs: {STR: 11, CON: 10, DEX: 6, SPD: 6, INT: 5, WIL: 7, WIS: 5, CHA: 4}
-  skills: {melee: 4, block: 4, armor: 3}
-  natural: [tail]
-  armorItem: {type: mail, coverage: halfHead}
-  weapons: [spear]
-  shield: [heater, iron]
+  skills: {melee: 4, evasion: 2, armor: 3}
+  natural: [claws, tail]
+  armorItem: {type: plate, material: bronze, coverage: halfHead}
   craft: average
-  keepUnarmed: true
 sarnakWarden:
   name: Sarnak warden
-  blurb: "A head taller than its guard. Mail to the knee, quicker than its size allows. It has been defending things for a long time."
+  blurb: "A head taller than its guard, its bronze plate green with age, quicker than its size allows. It has been defending things for a long time."
   faction: wilds
   xp: 160
   tier: 4
   level: 3
   glyph: "🦎"
-  sprite: {art: sarnak, artScale: 1.2, kind: orc_warrior, scale: 1.2, tint: "#8a9a6a"}
+  sprite: {art: sarnak-figure, artScale: 1.2, artTint: "#7a8a6a", kind: orc_warrior, scale: 1.2, tint: "#7a8a6a"}
   loot: humanoid_purse
   attrs: {STR: 13, CON: 10, DEX: 6, SPD: 6, INT: 6, WIL: 8, WIS: 6, CHA: 6}
-  skills: {melee: 5, block: 4, armor: 3, intimidation: 3}
-  natural: [tail]
-  armorItem: {type: mail, coverage: full}
-  weapons: [spear]
-  shield: [heater, iron]
+  skills: {melee: 5, evasion: 2, armor: 3, intimidation: 3}
+  natural: [claws, tail]
+  armorItem: {type: plate, material: bronze, coverage: full}
   craft: good
-  keepUnarmed: true
   traits: {tempo: 1.4}
   feats: {toughness: 1}
 minotaur:

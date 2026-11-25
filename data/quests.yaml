@@ -77,9 +77,9 @@ wolf_pack:
   name: The Pack
   giver: old_dagmar
   faction: town_watch
-  summary: "Wolves bold enough to kill within sight of the road. Dagmar wants the alpha brought down before they learn the village fence is shorter than it looks."
+  summary: "Chokidai bold enough to kill within sight of the road. Dagmar wants the matriarch brought down before they learn the village fence is shorter than it looks."
   stages:
-    - {text: "Kill the alpha wolf in the south hills.", done_when: {flag: alpha_wolf_dead}}
+    - {text: "Kill the chokidai matriarch north of the village.", done_when: {flag: alpha_wolf_dead}}
     - {text: "Tell Dagmar in the inn.", done_when: {flag: told_dagmar_wolves}}
   reward: {gold: 30, xp: 60, standing: {town_watch: 5}, renown: 1}
 

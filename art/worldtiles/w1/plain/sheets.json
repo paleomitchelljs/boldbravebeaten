@@ -59,5 +59,17 @@
  "jungle-canopy-cut.png": "plain/jungle-canopy-cut.png",
  "jcanopy.png": "plain/jcanopy.png",
  "jcanopy-cut.png": "plain/jcanopy-cut.png",
- "../vale/orc-fort.png": "plain/vale-orc-fort.png"
+ "../vale/orc-fort.png": "plain/vale-orc-fort.png",
+ "streamgrass.png": "plain/streamgrass.png",
+ "streamgrass-cut.png": "plain/streamgrass-cut.png",
+ "streamfloor.png": "plain/streamfloor.png",
+ "streamfloor-cut.png": "plain/streamfloor-cut.png",
+ "streamlake.png": "plain/streamlake.png",
+ "streamlake-cut.png": "plain/streamlake-cut.png",
+ "streamswamp.png": "plain/streamswamp.png",
+ "streamswamp-cut.png": "plain/streamswamp-cut.png",
+ "gcliff.png": "plain/gcliff.png",
+ "gcliff-cut.png": "plain/gcliff-cut.png",
+ "jcliff.png": "plain/jcliff.png",
+ "jcliff-cut.png": "plain/jcliff-cut.png"
 }

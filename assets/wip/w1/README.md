@@ -64,3 +64,20 @@ labyrinth and the desert's outcrops are `redcliff` (a 2x2-block cliff over sand)
 Free pixel edits in the same pass: `savanna` toned from saturated gold to olive-gold (see its row above).
 
 The moss band: brown floor -> moss -> bright grass, two squares of moss on the jungle's side and one on the grass's.
+
+## The art pass of 2026-11-25 (spent 177 by the balance: 7905 -> 7728)
+
+| What | Id | Generations |
+|---|---|---|
+| `streamgrass`: stream -> grass, a narrow bank (the shallows' banks in the grassland) | 79f111d2 | 25 |
+| `streamfloor`: stream -> jungle floor | 11b6478e | 25 |
+| `streamlake`: lake -> stream (a stream running into a lake) | 8347666e | 25 |
+| `streamswamp`: swamp water -> stream | b54cf28a | 25 |
+| `swamplake`: swamp water -> lake (no hard join between the two waters) | bd57c2c1 | 25 |
+| `gcliff`: grass -> granite, tall (25 tiles; the open mountains' first rise, `#`) | e488bc0f | 25 |
+| `jcliff`: jungle floor -> mossy rock, tall (`▵`) | e57552b2 | 25 |
+| Bridge map objects (`objects/bridge_v.png` used, cut into `art/worldtiles/w1/bridge.png`; `bridge_h.png` unused, its wood is another colour) | a3900e28, 72df8a12 | 2 |
+
+Free edits in the same pass: `python tools/grade.py art/worldtiles/w1` (greens desaturated and pulled to olive, every
+sheet alike; `graded.json` keeps what is done) and `--calm` on the road and jungle-trail sheets (speckle softened).
+Rerun both after `tools/plaingrounds.py` remakes a sheet.

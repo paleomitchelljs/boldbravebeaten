@@ -29,7 +29,8 @@ terrain:
                                           # `river`; in patches (`noise`)
   arid: {dry: [0.25, 0.65], trees: 0.6}   # dry grass everywhere drier than the first figure, in shrinking patches up to
                                           # the second; no trees drier than `trees`
-  streams: {strahler: 1, width: 0.35}     # rivers from this order up (the first order a stream a square wide)
+  streams: {strahler: 1, width: 0.35, spring: 1.6}   # rivers from this order up (the first order a stream a square wide);
+                                          # a head out on open land rises from a spring pond about `spring` squares across
   falls: {drop: 0.4, char: "≀", label: "A waterfall, loud over the rim"}   # a waterfall where a river drops this much (km)
                                           # from one cell to the next, flowing south
 
@@ -44,7 +45,7 @@ regions:
     look: {wall: "#4a5a3a", floor: "#4f9a3c", ceiling: "#9ab8d6", fog: "#0c120a", torch: 0, light: 28}
     mossBand: 1
     dryBand: 2          # squares of dry grass where the grassland meets the desert
-    chars: {ocean: "~", lake: "~", river: "∽", stream: "_", swamp: "≃", ground: ",", moss: "∻", dry: "∵", woods: ",", forest: "}", hill: "{", mountain: "#", ledge: "(", summit: "?", sand: "░", road: ".", bridge: "=", ford: "_", rim: "▪", gorge: ","}
+    chars: {ocean: "~", lake: "~", river: "∽", stream: "_", swamp: "≃", ground: ",", moss: "∻", dry: "∵", woods: ",", forest: "}", hill: "{", mountain: "#", ledge: "(", summit: "?", sand: "░", road: ".", bridge: "=", ford: "≠", rim: "▪", gorge: ",", crag: "▨", cledge: "◫", csummit: "⊞"}
     scatter:
       ground: {oak: 0.003, broadleaf: 0.002, gbush: 0.006, grass_tuft: 0.03, meadow: 0.02, wildflowers: 0.015, flowerbush: 0.004, boulder: 0.002}
       dry: {tallgrass_gold: 0.05, drygrass: 0.02, acacia: 0.008, boulder: 0.004}
@@ -55,10 +56,21 @@ regions:
       gorge: {grass_tuft: 0.05, boulder: 0.02, rocks: 0.012, gbush: 0.008, dead_tree: 0.004}   # a ravine's floor (a gorge, a pass)
       shore: {reeds: 0.2}
       edge: {J: {kapok: 0.025, gbush: 0.04, ferns: 0.04}, D: {drygrass: 0.05, thornbush: 0.01}}
+    # Grazing herds on the open grass (tools/worldgen.js "Herds"): docile, they fight only if attacked.
+    herds:
+      per: 4
+      gap: 9
+      clear: 3
+      list:
+        - {w: 3, label: "Guar grazing", foes: [{monster: guar, n: 2}], text: "The guar lift their heads, chewing. One hisses and stamps; neither runs."}
+        - {w: 1, label: "A guar", foes: [{monster: guar}], text: "The guar stops chewing and backs off a step, hissing."}
+        - {w: 2, label: "An Eolambia grazing", foes: [{monster: eolambia}], text: "The Eolambia swings round, tail low, and bellows."}
+        - {w: 1, label: "Eolambia grazing", foes: [{monster: eolambia, n: 2}], text: "The pair bellow and turn to face you, tails sweeping the grass."}
   J:
     look: {wall: "#24381f", floor: "#4a3a28", ceiling: "#2a3a22", fog: "#0c120a", torch: 0, light: 24}
     mossBand: 2
-    chars: {ocean: "~", lake: "~", river: "∽", stream: "_", swamp: "≈", pool: "≋", ground: "∷", moss: "∻", dry: "∷", woods: "∷", forest: "]", hill: "∩", mountain: "▵", ledge: "▴", summit: "▴", sand: "░", road: "≡", bridge: "=", ford: "_", rim: "▪"}
+    murky: true         # its rivers run as swamp water, ringed with marsh
+    chars: {ocean: "~", lake: "~", river: "∽", stream: "_", swamp: "≈", pool: "≋", ground: "∷", moss: "∻", dry: "∷", woods: "∷", forest: "]", hill: "∩", mountain: "▵", ledge: "▴", summit: "▴", sand: "░", road: "≡", bridge: "=", ford: "≠", rim: "▪"}
     scatter:
       ground: {kapok: 0.02, strangler: 0.01, bush: 0.025, ferns: 0.03}
       woods: {kapok: 0.14, strangler: 0.07, mossoak: 0.04, mossleaning: 0.03, ferns: 0.05}
@@ -70,7 +82,7 @@ regions:
   H:
     look: {wall: "#4a5560", floor: "#5a9a48", ceiling: "#a8c0d8", fog: "#0e1418", torch: 0, light: 28}
     mossBand: 1
-    chars: {ocean: "~", lake: "~", river: "∽", stream: "_", swamp: ",", ground: ",", moss: "∻", dry: "∵", woods: ",", forest: "}", hill: "{", mountain: "#", ledge: "(", summit: "?", sand: "░", road: ".", bridge: "=", ford: "_", rim: "▪", gorge: ","}
+    chars: {ocean: "~", lake: "~", river: "∽", stream: "_", swamp: ",", ground: ",", moss: "∻", dry: "∵", woods: ",", forest: "}", hill: "{", mountain: "#", ledge: "(", summit: "?", sand: "░", road: ".", bridge: "=", ford: "≠", rim: "▪", gorge: ",", crag: "▨", cledge: "◫", csummit: "⊞"}
     scatter:
       ground: {pine: 0.004, birch: 0.003, boulder: 0.006, rocks: 0.003, grass_tuft: 0.03, meadow: 0.012, wildflowers: 0.006, standing_stone: 0.0004}
       dry: {tallgrass_seed: 0.03, drygrass: 0.02, boulder: 0.008, rocks: 0.006, pine: 0.002}
@@ -82,7 +94,7 @@ regions:
       edge: {J: {mossoak: 0.03, ferns: 0.04}, G: {oak: 0.01, grass_tuft: 0.03}}
   D:
     look: {wall: "#8a4a2a", floor: "#d8b878", ceiling: "#9ab8d6", fog: "#1a140a", torch: 0, light: 28}
-    chars: {ocean: "~", lake: "~", river: "∽", stream: "_", swamp: ",", ground: "░", dry: "░", woods: "░", forest: "░", hill: "░", mountain: "▧", ledge: "▧", summit: "▧", sand: "░", road: "░", bridge: "=", ford: "_", rim: "▧"}
+    chars: {ocean: "~", lake: "~", river: "∽", stream: "_", swamp: ",", ground: "░", dry: "░", woods: "░", forest: "░", hill: "░", mountain: "▧", ledge: "▧", summit: "▧", sand: "░", road: "░", bridge: "=", ford: "≠", rim: "▧"}
     scatter:
       ground: {thornbush: 0.01, drygrass: 0.03, aloe: 0.006, pebbles: 0.012, boulder: 0.004, skull: 0.001, deadtree: 0.003}
       swamp: {palm: 0.1, palms: 0.04, grass_tuft: 0.04}
@@ -255,9 +267,9 @@ sites:
       - "··F··"
       - "·····"
     legend:
-      F: {kind: monster, encounter: wolves, label: "Wolves by a kill", on: ","}
+      F: {kind: monster, encounter: wolves, label: "Chokidai at a kill", on: ","}
     encounters:
-      wolves: {foes: [{monster: alphaWolf}, {monster: wolf, n: 2}], flags: [alpha_wolf_dead], text: "The pack is on a deer carcass. The big one lifts its head, red to the ears, and the others fan out without a sound."}
+      wolves: {foes: [{monster: chokidaiAlpha}, {monster: chokidai, n: 2}], flags: [alpha_wolf_dead], text: "The pack is on a guar carcass. The big one lifts her head, red to the frill, and the others fan out without a sound."}
 
   - id: exeomo
     at: [-76.25, -5.75]
@@ -348,8 +360,9 @@ sites:
       - "··Y··+················"
       - "·····+··s·V···Z·······"
       - "·····++++·············"
-      - "########M#########····"
-      - "##################····"
+      - "········M·············"
+      - "▨▨▨▨▨▨▨▨▨▨▨▨▨▨▨▨▨▨····"
+      - "▨▨▨▨▨▨▨▨▨▨▨▨▨▨▨▨▨▨····"
     legend:
       G: {kind: stairs, to: orc_castle, at: S, sprite: gate, label: "The castle gate: green marble, the legion's banners either side", on: ","}
       M: {kind: stairs, to: orc_mines, at: S, sprite: minemouth, label: "The slaver caves, cut into the quarried hill", on: ","}
@@ -475,45 +488,78 @@ sites:
   - id: zhomelonga
     at: [-80.2, 13.6]
     road: [muawea, exeomo]
-    stamp: ["·······", "·xxxxx·", "·xxxxx·", "·xxCxx·", "···+···"]
+    parity: 0
+    stamp: ["@@@@@@@@@@@@", "@@@@@@@@@@@@", "@@xxxxxxxx@@", "@@xkxxxixx@@", "@@xxxxxxxx@@", "@@xsxxxtxx@@", "@@@@@@@@@@@@", "@@@@@@@@@@@@", "·····C······", "·····+······"]
     legend:
-      C: {kind: stairs, to: zhomelonga_city, sprite: city_zhomelonga, label: "The great gate of Zhomelonga", on: "·"}
-      x: {kind: prop, sprite: none, on: "·"}
+      C: {kind: stairs, to: zhomelonga_city, sprite: gatehouse, label: "The great gate of Zhomelonga", on: "·"}
+      x: {kind: prop, sprite: none, sealed: true, on: "."}
+      k: {kind: prop, sprite: keep, label: "The city, behind its wall", sealed: true, on: "."}
+      i: {kind: prop, sprite: inn, label: "The city, behind its wall", sealed: true, on: "."}
+      h: {kind: prop, sprite: cottage, label: "The city, behind its wall", sealed: true, on: "."}
+      s: {kind: prop, sprite: shop, label: "The city, behind its wall", sealed: true, on: "."}
+      t: {kind: prop, sprite: tavern, label: "The city, behind its wall", sealed: true, on: "."}
+      c: {kind: prop, sprite: cabin, label: "The city, behind its wall", sealed: true, on: "."}
   - id: muawea
     at: [-93.6, 10.0]
     road: [iitanii]
-    stamp: ["·······", "·xxxxx·", "·xxxxx·", "·xxCxx·", "···+···"]
+    parity: 0
+    stamp: ["@@@@@@@@@@@@", "@@@@@@@@@@@@", "@@xxxxxxxx@@", "@@xixxxcxx@@", "@@xxxxxxxx@@", "@@xsxxxkxx@@", "@@@@@@@@@@@@", "@@@@@@@@@@@@", "·····C······", "·····+······"]
     legend:
-      C: {kind: stairs, to: muawi_city, sprite: city_muawi, label: "The causeway into Muawea", on: "·"}
-      x: {kind: prop, sprite: none, on: "·"}
+      C: {kind: stairs, to: muawi_city, sprite: gatehouse, label: "The causeway into Muawea", on: "·"}
+      x: {kind: prop, sprite: none, sealed: true, on: "."}
+      k: {kind: prop, sprite: keep, label: "The city, behind its wall", sealed: true, on: "."}
+      i: {kind: prop, sprite: inn, label: "The city, behind its wall", sealed: true, on: "."}
+      h: {kind: prop, sprite: cottage, label: "The city, behind its wall", sealed: true, on: "."}
+      s: {kind: prop, sprite: shop, label: "The city, behind its wall", sealed: true, on: "."}
+      c: {kind: prop, sprite: cabin, label: "The city, behind its wall", sealed: true, on: "."}
   - id: iitanii
     at: [-102.6, -4.8]
     road: [emagshir]
-    stamp: ["·······", "·xxxxx·", "·xxxxx·", "·xxCxx·", "···+···"]
+    parity: 0
+    stamp: ["@@@@@@@@@@@@", "@@@@@@@@@@@@", "@@xxxxxxxx@@", "@@xkxxxhxx@@", "@@xxxxxxxx@@", "@@xixxxsxx@@", "@@@@@@@@@@@@", "@@@@@@@@@@@@", "·····C······", "·····+······"]
     legend:
-      C: {kind: stairs, to: burbuma_city, sprite: city_burbuma, label: "The gate of Iitanii", on: "·"}
-      x: {kind: prop, sprite: none, on: "·"}
+      C: {kind: stairs, to: burbuma_city, sprite: gatehouse, label: "The gate of Iitanii", on: "·"}
+      x: {kind: prop, sprite: none, sealed: true, on: "."}
+      k: {kind: prop, sprite: keep, label: "The city, behind its wall", sealed: true, on: "."}
+      i: {kind: prop, sprite: inn, label: "The city, behind its wall", sealed: true, on: "."}
+      h: {kind: prop, sprite: cottage, label: "The city, behind its wall", sealed: true, on: "."}
+      s: {kind: prop, sprite: shop, label: "The city, behind its wall", sealed: true, on: "."}
+      c: {kind: prop, sprite: cabin, label: "The city, behind its wall", sealed: true, on: "."}
   - id: isdi
     at: [-73.8, -19.6]
     road: []
-    stamp: ["·······", "·xxxxx·", "·xxxxx·", "·xxCxx·", "···+···"]
+    parity: 0
+    stamp: ["@@@@@@@@@@@@", "@@@@@@@@@@@@", "@@xxxxxxxx@@", "@@xkxxxtxx@@", "@@xxxxxxxx@@", "@@xhxxxsxx@@", "@@@@@@@@@@@@", "@@@@@@@@@@@@", "·····C······", "·····+······"]
     legend:
-      C: {kind: stairs, to: barjiy_city, sprite: city_barjiy, label: "The gates of Isdi", on: "·"}
-      x: {kind: prop, sprite: none, on: "·"}
+      C: {kind: stairs, to: barjiy_city, sprite: gatehouse, label: "The gates of Isdi", on: "·"}
+      x: {kind: prop, sprite: none, sealed: true, on: "."}
+      k: {kind: prop, sprite: keep, label: "The city, behind its wall", sealed: true, on: "."}
+      i: {kind: prop, sprite: inn, label: "The city, behind its wall", sealed: true, on: "."}
+      h: {kind: prop, sprite: cottage, label: "The city, behind its wall", sealed: true, on: "."}
+      s: {kind: prop, sprite: shop, label: "The city, behind its wall", sealed: true, on: "."}
+      t: {kind: prop, sprite: tavern, label: "The city, behind its wall", sealed: true, on: "."}
   - id: emagshir
     at: [-107.6, -23.4]
     road: [spectres]
-    stamp: ["·······", "·xxxxx·", "·xxxxx·", "·xxCxx·", "···+···"]
+    parity: 0
+    stamp: ["@@@@@@@@@@@@", "@@@@@@@@@@@@", "@@xxxxxxxx@@", "@@xixxxhxx@@", "@@xxxxxxxx@@", "@@xsxxxcxx@@", "@@@@@@@@@@@@", "@@@@@@@@@@@@", "·····C······", "·····+······"]
     legend:
-      C: {kind: stairs, to: emagshir_city, sprite: city_emagshir, label: "The walls of Emagshir", on: "·"}
-      x: {kind: prop, sprite: none, on: "·"}
+      C: {kind: stairs, to: emagshir_city, sprite: gatehouse, label: "The walls of Emagshir", on: "·"}
+      x: {kind: prop, sprite: none, sealed: true, on: "."}
+      k: {kind: prop, sprite: keep, label: "The city, behind its wall", sealed: true, on: "."}
+      i: {kind: prop, sprite: inn, label: "The city, behind its wall", sealed: true, on: "."}
+      h: {kind: prop, sprite: cottage, label: "The city, behind its wall", sealed: true, on: "."}
+      s: {kind: prop, sprite: shop, label: "The city, behind its wall", sealed: true, on: "."}
+      t: {kind: prop, sprite: tavern, label: "The city, behind its wall", sealed: true, on: "."}
+      c: {kind: prop, sprite: cabin, label: "The city, behind its wall", sealed: true, on: "."}
 
 # What the tiles still draw badly that the generator cannot count (copied into the gap report), for the next art pass.
 gaps:
   - "Sea: drawn with the lake water, the same as lakes; the deep-navy sea set (assets/wip/w1/sheets/sea.png) is fetched but not wired (its hue wants shifting first, assets/wip/w1/README.md)."
   - "Rivers: the lake water with reedy banks; roads cross on fords (_), lakes on rope bridges (=); no current."
-  - "Mountains: the grassland's are granite, boulder crags and snowy summits (gslope, gledge, gsummit); the jungle's are mossy crags with no snow on their heights; the desert's are the red cliff."
+  - "Mountains: open ranges rise on a tall cliff (gcliff in the grassland, jcliff in the jungle; 2x2-squared rock), then boulder ledges and snowy summits. Ranges a canyon is cut into (the high pass, the labyrinth) are the canyon's rock throughout, on 2x2 blocks: three tall granite cliffs stacked by depth (no snow on them)."
+  - "Edges seen and not found: a band repeated across a coast at a place's edge (a screenshot of the user's); not reproduced on bz_1_6's south edge."
   - "Desert: two places of sand and red rock; one sand texture, no dunes."
-  - "Towns: Shiwgoiwo is village props on the green; each city is one picture of the whole walled city from outside (no streets to walk outside its gate)."
+  - "Towns: Shiwgoiwo is village props on the green; each city outside its gate is a placeholder: a walled block of generic buildings (the orc castle's wall, front.png's houses) round a gatehouse; the walked city is inside."
   - "The temple's pyramids are props, not walkable terrain; the sarnak blocks use the orc castle's fort wall, with door props in front."
   - "Generated places carry no encounters or wandering monsters of their own yet: only the sites' (Shiwgoiwo's wolves, the temple, the sarnaks, the orcs, the labyrinth, the spectres)."

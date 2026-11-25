@@ -104,7 +104,9 @@ test('the open world: no cliff set (a canopy, the red cliff) is drawn under anot
     const g = Explore.here(w), sc = { w: g.w, h: g.h, cell: (x, y) => Explore.peek(w, x, y) }, ts = Tm.tileset(pl.look.tileset);
     for (const c of Tm.planTiles(sc, ts, 0, 0, g.w - 1, g.h - 1).corner) {
       if (!ts.terrains[c.t].cliffTiles) continue;
-      if (![[-1, -1], [0, -1], [-1, 0], [0, 0]].some(([dx, dy]) => Tm.terrainAt(sc, ts, c.x + dx, c.y + dy) === c.t)) under[`${id} ${c.t}`] = (under[`${id} ${c.t}`] || 0) + 1;
+      // A tier built on the cliff (a ledge `over` it) has the cliff under it, as it should.
+      const on = (t) => { for (let d = ts.terrains[t]; d; d = d.over && ts.terrains[d.over]) if (d.over === c.t || d.name === c.t) return true; return t === c.t; };
+      if (![[-1, -1], [0, -1], [-1, 0], [0, 0]].some(([dx, dy]) => on(Tm.terrainAt(sc, ts, c.x + dx, c.y + dy)))) under[`${id} ${c.t}`] = (under[`${id} ${c.t}`] || 0) + 1;
     }
   }
   assert.deepEqual(under, {});

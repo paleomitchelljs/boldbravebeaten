@@ -36,6 +36,12 @@
 #               tile; tiles that tie are variants, picked by position.
 #     solo      (a cliff set) counts only its own squares (and cliff sets built on it, by `over`) as its upper ground,
 #               not the other cliff sets ranked above it
+#     builtOnly (a cliff set) counts only its own squares and the terrains built on it (`over`, a ledge, a summit) as
+#               its upper ground: not flat ground listed after it (a caldera's basalt beside a mountain's cliff)
+#     paints    (a cliff set stacked on another) the ground its sheet lays under its face (grass): over anything else, the
+#               cut sheet, so the cliff below shows
+#     deck      {sheet, tile, start, end: [x, y, w, h]} a bridge drawn as one deck along its run: `tile` repeated
+#               (laid north-south; turned for east-west), `start` capping its north/west end, `end` its south/east
 #     lift      (a cliff set) false: its face is not raised half a square as walls' faces are (a low ledge)
 #     underWalls  (a cliff set) runs on under a wall beside it, east or west: a pyramid built into a wall; `all`, on any side (a built
 #               wall running into natural rock at its ends)
@@ -2154,9 +2160,29 @@ w1:
       color: "#2a3824"
       tile: ../jungle/water.png
       anim: {sheet: ../jungle/water-anim.png, size: 512, frames: 16, cols: 4, fps: 4}
+      # Where it meets the lakes' blue water (a jungle river into a lake): a blend, not a cut (swamplake: PixelLab's
+      # lower is the swamp water, so the corners are read the other way up).
+      wang: swamplake.png
+      cut: swamplake-cut.png
+      corners: [LLUL, LULU, ULUU, LLUU, ULLU, LUUU, UUUU, UUUL, LULL, UULL, UULU, ULUL, LLLL, LLLU, LUUL, ULLL]
+      over: water
+      also: [{over: river, wang: swamplake.png, cut: swamplake-cut.png, corners: [LLUL, LULU, ULUU, LLUU, ULLU, LUUU, UUUU, UUUL, LULL, UULL, UULU, ULUL, LLLL, LLLU, LUUL, ULLL]}]
       decor: {density: 0.25, flip: true, spread: 6, pieces: [[../jungle/decor.png, 318, 0, 46, 32]]}
-    shallows: {color: "#4f7a70", wang: ford.png, cut: ford-cut.png, over: river, also: [{over: water, wang: ford.png, cut: ford-cut.png}]}
-    bridge: {color: "#6a5a44", wang: ../tarn/ropebridge.png, over: water, apart: true}
+    # A shallow stream (2026-11-25: its own PixelLab sets, chained to the grass, the jungle floor and both waters): its
+    # banks are the grass's and the floor's sheets over it; it runs into the blue water and the swamp water through a
+    # blend. Its stones and ripples are scattered (plaingrounds took them out of the tile).
+    shallows:
+      color: "#6ab0a8"
+      wang: plain/streamlake.png
+      cut: plain/streamlake-cut.png
+      over: river
+      also: [{over: water, wang: plain/streamlake.png, cut: plain/streamlake-cut.png}, {over: swampwater, wang: plain/streamswamp.png, cut: plain/streamswamp-cut.png}]
+      decor:
+        - {density: 0.6, clump: 5, spread: 20, flip: true, pieces: [[plain/decor.png, 90, 657, 71, 68], [plain/decor.png, 163, 657, 72, 70], [plain/decor.png, 237, 657, 65, 51]]}
+        - {density: 2, clump: 3, margin: 10, flip: true, pieces: [[plain/decor.png, 0, 657, 12, 7], [plain/decor.png, 14, 657, 7, 7], [plain/decor.png, 23, 657, 6, 6], [plain/decor.png, 31, 657, 11, 3], [plain/decor.png, 44, 657, 10, 3], [plain/decor.png, 56, 657, 10, 3], [plain/decor.png, 68, 657, 9, 3], [plain/decor.png, 79, 657, 9, 3]]}
+    # A plank deck over any water (a road's bridge or footbridge): bridge.png, cut from a PixelLab bridge (run
+    # north-south; turned for east-west), a cap landing on each bank.
+    bridge: {color: "#6a5a44", deck: {sheet: bridge.png, tile: [0, 0, 67, 64], start: [70, 0, 67, 35], end: [140, 0, 67, 16]}}
     marsh:
       color: "#3a3a26"
       tile: plain/jungle-marsh-tile.png
@@ -2175,7 +2201,7 @@ w1:
       wang: plain/jungle-marsh.png
       cut: plain/jungle-marsh-cut.png
       over: marsh
-      also: [{over: sand, wang: plain/jdune.png, cut: plain/jdune-cut.png}]
+      also: [{over: sand, wang: plain/jdune.png, cut: plain/jdune-cut.png}, {over: shallows, wang: plain/streamfloor.png, cut: plain/streamfloor-cut.png}]
       decor:
         - {density: 0.6, clump: 6, spread: 24, flip: true, pieces: [[plain/decor.png, 112, 76, 83, 61], [plain/decor.png, 197, 76, 77, 77], [plain/decor.png, 276, 76, 73, 50]]}
         - {density: 4, clump: 3, edge: true, margin: 8, flip: true, pieces: [[plain/decor.png, 0, 76, 28, 16], [plain/decor.png, 30, 76, 14, 11], [plain/decor.png, 46, 76, 12, 10], [plain/decor.png, 60, 76, 11, 10], [plain/decor.png, 73, 76, 9, 9], [plain/decor.png, 84, 76, 7, 7], [plain/decor.png, 93, 76, 7, 7], [plain/decor.png, 102, 76, 8, 6]]}
@@ -2197,10 +2223,11 @@ w1:
         - {over: floor, wang: plain/floorgrass.png, cut: plain/floorgrass-cut.png}
         - {over: bog, wang: plain/marsh.png, cut: plain/marsh-cut.png}
         - {over: moss, wang: plain/grassmoss.png, cut: plain/grassmoss-cut.png}
+        - {over: shallows, wang: plain/streamgrass.png, cut: plain/streamgrass-cut.png}
       decor:
         - {density: 0.6, clump: 6, spread: 24, flip: true, pieces: [[plain/decor.png, 186, 0, 70, 57], [plain/decor.png, 258, 0, 82, 74], [plain/decor.png, 342, 0, 76, 49]]}
         - {density: 2.5, clump: 3, edge: true, margin: 8, flip: true, pieces: [[plain/decor.png, 0, 0, 9, 5], [plain/decor.png, 11, 0, 9, 5], [plain/decor.png, 22, 0, 9, 5], [plain/decor.png, 33, 0, 9, 5], [plain/decor.png, 44, 0, 9, 5], [plain/decor.png, 55, 0, 9, 5], [plain/decor.png, 66, 0, 8, 5], [plain/decor.png, 76, 0, 8, 5]]}
-        - {density: 1.5, clump: 1.5, edge: true, margin: 8, flip: true, pieces: [[plain/decor.png, 86, 0, 7, 6], [plain/decor.png, 95, 0, 6, 6], [plain/decor.png, 103, 0, 4, 4], [plain/decor.png, 109, 0, 6, 6], [plain/decor.png, 117, 0, 2, 3], [plain/decor.png, 121, 0, 4, 5], [plain/decor.png, 127, 0, 3, 2], [plain/decor.png, 132, 0, 7, 6], [plain/decor.png, 141, 0, 5, 5], [plain/decor.png, 148, 0, 4, 6], [plain/decor.png, 154, 0, 6, 6], [plain/decor.png, 162, 0, 4, 3], [plain/decor.png, 168, 0, 4, 5], [plain/decor.png, 174, 0, 10, 11]]}
+        - {density: 1.5, clump: 1.5, edge: true, margin: 8, flip: true, pieces: [[plain/decor.png, 86, 0, 4, 6], [plain/decor.png, 92, 0, 5, 5], [plain/decor.png, 99, 0, 7, 6], [plain/decor.png, 108, 0, 3, 2], [plain/decor.png, 113, 0, 4, 4], [plain/decor.png, 119, 0, 6, 6], [plain/decor.png, 127, 0, 4, 3], [plain/decor.png, 133, 0, 7, 6], [plain/decor.png, 142, 0, 4, 5], [plain/decor.png, 148, 0, 6, 6], [plain/decor.png, 156, 0, 2, 3], [plain/decor.png, 160, 0, 6, 6], [plain/decor.png, 168, 0, 4, 5], [plain/decor.png, 174, 0, 10, 11]]}
     savanna: {color: "#b8a848", wang: plain/savanna.png, cut: plain/savanna-cut.png, over: grass, decor: [{density: 0.6, clump: 6, spread: 24, flip: true, pieces: [[plain/decor.png, 80, 291, 73, 62], [plain/decor.png, 155, 291, 76, 75], [plain/decor.png, 233, 291, 81, 50]]}, {density: 2.5, clump: 3, edge: true, margin: 8, flip: true, pieces: [[plain/decor.png, 0, 291, 8, 4], [plain/decor.png, 10, 291, 8, 4], [plain/decor.png, 20, 291, 8, 4], [plain/decor.png, 30, 291, 8, 4], [plain/decor.png, 40, 291, 8, 3], [plain/decor.png, 50, 291, 8, 3], [plain/decor.png, 60, 291, 8, 3], [plain/decor.png, 70, 291, 8, 3]]}]}
     path: {color: "#9a6a44", wang: plain/west-road.png, over: grass, corners: [LLUL, LULU, ULUU, LLUU, ULLU, LUUU, UUUU, UUUL, LULL, UULL, UULU, ULUL, LLLL, LLLU, LUUL, ULLL, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU], vary: 0.85, cut: plain/west-road-cut.png}
     soil: {color: "#c8a878", wang: plain/west-soil.png, over: grass, corners: [LLUL, LULU, ULUU, LLUU, ULLU, LUUU, UUUU, UUUL, LULL, UULL, UULU, ULUL, LLLL, LLLU, LUUL, ULLL, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU], vary: 0.85, cut: plain/west-soil-cut.png}
@@ -2208,10 +2235,17 @@ w1:
     jhill: {color: "#a06a3a", wang: plain/jhill.png, over: floor, cut: plain/jhill-cut.png, decor: [{density: 0.6, clump: 6, spread: 24, flip: true, pieces: [[plain/decor.png, 90, 580, 64, 47], [plain/decor.png, 156, 580, 77, 75], [plain/decor.png, 235, 580, 69, 46]]}, {density: 3, clump: 3, edge: true, margin: 8, flip: true, pieces: [[plain/decor.png, 0, 580, 10, 8], [plain/decor.png, 12, 580, 10, 7], [plain/decor.png, 24, 580, 10, 7], [plain/decor.png, 36, 580, 9, 7], [plain/decor.png, 47, 580, 9, 7], [plain/decor.png, 58, 580, 9, 7], [plain/decor.png, 69, 580, 9, 7], [plain/decor.png, 80, 580, 8, 7]]}]}
     scree: {color: "#a3a6ac", wang: plain/vale-scree.png, over: grass, cut: plain/vale-scree-cut.png, corners: [UULU, ULUL, LULL, UULL, LUUL, ULLL, LLLL, LLLU, ULUU, LLUU, LLUL, LULU, UUUU, UUUL, ULLU, LUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU], vary: 0.85}
     # The grassland's mountains in three tiers (the art pass, 2026-11-24): rough granite, boulder crags, a snowy summit.
-    wall: {color: "#808078", wang: plain/gslope.png, over: grass, cut: plain/gslope-cut.png}
+    # The open mountains' outer rock rises as a tall granite cliff (gcliff, 2026-11-25: taller than the figures beside it);
+    # a canyon's walls (crag) keep the low slope, so a pass's and a gorge's floors keep their own shapes.
+    # A canyon's wall: the tall granite cliff three times over, each tier stacked on the one below (its sheet's grass
+    # cut away where it stands on rock), so the wall rises a face a tier.
+    crag: {like: forest, color: "#808078", wang: plain/gcliff.png, cut: plain/gcliff-cut.png, over: grass, also: [], lift: true, solo: false, builtOnly: true}
+    cledge: {like: forest, color: "#838c96", wang: plain/gcliff.png, cut: plain/gcliff-cut.png, over: crag, paints: grass, also: [], lift: true, solo: false, builtOnly: true}
+    csummit: {like: forest, color: "#9a9a92", wang: plain/gcliff.png, cut: plain/gcliff-cut.png, over: cledge, paints: grass, also: [], lift: true, solo: false, builtOnly: true}
+    wall: {like: forest, color: "#808078", wang: plain/gcliff.png, cut: plain/gcliff-cut.png, over: grass, also: [], lift: true, solo: false, builtOnly: true}
     ledge: {color: "#838c96", wang: gledge.png, over: wall, cut: gledge-cut.png}
     summit: {color: "#dfe0df", wang: gsummit.png, over: ledge, cut: gsummit-cut.png}
-    jslope: {color: "#5a6a4a", wang: plain/jslope.png, over: floor, cut: plain/jslope-cut.png}
+    jslope: {like: forest, color: "#5a6a4a", wang: plain/jcliff.png, cut: plain/jcliff-cut.png, over: floor, also: [], lift: true, solo: false, builtOnly: true}
     jring: {color: "#8a9a7a", wang: plain/jring.png, over: jslope, cut: plain/jring-cut.png}
     basalt: {color: "#2a2a30", wang: plain/basalt.png, over: grass, cut: plain/basalt-cut.png}
     # The labyrinth's walls and the desert's outcrops: a tall cliff of red sandstone over the beach's sand.

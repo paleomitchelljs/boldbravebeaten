@@ -28,7 +28,8 @@ test('content: each map is rectangular, and everything on it can be reached from
     assert.ok(starts.length, `${id} has a way in`);
     // Walk everything that isn't rock, wall or deep water: doors, locks and secrets are passable for this purpose.
     const ground = B.CONFIG.game.ground || {};
-    const closed = (ch) => ch === '#' || ch === ' ' || (ground[ch] && (ground[ch].wall || ground[ch].walk === false));
+    // A `sealed` legend square is scenery behind a wall (a city's buildings seen from outside its gate).
+    const closed = (ch) => ch === '#' || ch === ' ' || (ground[ch] && (ground[ch].wall || ground[ch].walk === false)) || !!((p.legend || {})[ch] || {}).sealed;
     const seen = new Set(starts.map((s0) => s0.x + ',' + s0.y));
     const q = starts.slice();
     while (q.length) {

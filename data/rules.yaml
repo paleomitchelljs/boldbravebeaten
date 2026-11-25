@@ -131,7 +131,7 @@ game:
   # among those on offer; otherwise the last (strongest) is taken. death: attribute points a familiar's death costs.
   companions:
     familiar: {ranks: [[duskBat, rat, faeDrake], [fireSprite]], death: {WIL: 2}}
-    beast: {ranks: [[wolf], [alphaWolf]]}
+    beast: {ranks: [[chokidai], [chokidaiAlpha]]}
   # ---- Starting a game ----------------------------------------------------
   # size: the most heroes in a party; a new game begins with 1 to size of them (the user, 2026-11-09: 1 to 6).
   party: {size: 6, attrPool: 40, attrMin: 3, attrMax: 8, startGold: 60}
@@ -200,6 +200,8 @@ game:
     "~": {name: Deep water, walk: false, fight: deepWater, tile: water, color: "#1f4450"}
     "_": {name: Shallow water, fight: shallows, tile: shallows, color: "#36616a"}
     "=": {name: Plank bridge, under: "~", tile: bridge, color: "#7a5a36"}
+    "≠": {name: Footbridge, under: "_", tile: bridge, color: "#7a5a36"}       # a road over a stream
+    "⋕": {name: Plank bridge, under: "≋", tile: bridge, color: "#7a5a36"}     # over swamp water (a jungle river)
     "^": {name: Pyramid step, wall: true, rise: true, color: "#a89468"}
     "-": {name: First terrace, tile: tier1, color: "#bab286"}
     ":": {name: Second terrace, tile: tier2, color: "#bab286"}
@@ -252,6 +254,9 @@ game:
     "∵": {name: Dry grass, tile: savanna, color: "#b8a848"}
     "∩": {name: Rise, tile: jhill, color: "#a06a3a"}
     "▵": {name: Mossy crags, wall: true, tile: jslope, color: "#5a6a4a"}
+    "◫": {name: Canyon crags, wall: true, tile: cledge, color: "#838c96"}
+    "⊞": {name: Canyon heights, wall: true, tile: csummit, color: "#dfe0df"}
+    "▨": {name: Canyon rock, wall: true, tile: crag, color: "#808078"}     # a pass's or gorge's walls (a low slope, not a cliff)
     "▴": {name: Mossy heights, wall: true, tile: jring, color: "#8a9a7a"}
     "▪": {name: Black basalt, wall: true, tile: basalt, color: "#2a2a30"}
     "▧": {name: Red rock, wall: true, tile: redcliff, color: "#b0502a"}
