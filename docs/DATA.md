@@ -211,15 +211,32 @@ names its own picture for each side (`portcullis` -> `portcullis_north`, ...).
 A place with `open: true` (outdoors) hides nothing: the whole map is seen the first time the party is there.
 
 **The open world** (`outdoors.yaml`, generated; regenerating overwrites it). The layout (`assets/world/w1-layout.yaml`)
-names the raster it reads (`cells`: the reference world's biome, relief, rivers, lakes and swamp a half-degree cell), the
-grid (`grid`: a slot of `step` degrees is a place `size` squares a side), the families of tilesets and how each draws
-the terrain classes (`families`: `chars` a class's letter, `stand` the class it borrows when it has none, written to the
-gap report), the slots' names (`slots`), and the sites stamped on the terrain (`sites`: a `stamp` at `at` [lon, lat],
-with its `legend`, `encounters`, `road: [site...]`, a caldera `ring`, door `marks`; in a stamp `·` is the family's ground,
-`+` its road, a space keeps the terrain, `1`-`8` are recruits' squares). An edge square leads into the place across
-(`stairs` with `sprite: none`); you come in on the square across from the one you left by (Explore.enter's `from`).
-Forest and jungle (cliff sets) come in whole 2x2 blocks on the even grid, the only shapes their tiles fit. What a family
-draws with a stand-in, and the known kludges (the layout's `gaps`), go to `assets/world/w1-gaps.md`.
+names the raster it reads (`cells`: the reference world's biome, elevation, relief, rivers, lakes, aridity and
+temperature a half-degree cell, extracted by `tools/w1cells.py`), the grid (`grid`: a slot of `step` degrees is a place
+`size` squares a side), the one `tileset` every place draws from, how the figures become ground (`terrain`: `upland`, the
+height above which land is highland; `scarp`, the rock and hillside along the upland's rim where it rises steeply;
+`swamp`, only on low, flat, wet land; `arid`, dry grass and no trees by how dry the land is; `streams`, the Strahler
+order from which rivers are drawn, the first order a wadeable stream; `falls`, a waterfall where a river drops steeply
+flowing south), the `regions` (grassland, jungle, desert, highland: each square's by the raster's biome or its height,
+its edge wandering by noise; `chars` the
+letter for each terrain class, `look` a place's light by the region most of it is, `scatter` props by class, `shore` and
+`edge` by what lies near, `moss`/`mossBand` the band between jungle floor and grass), the `props` the scatter lays, the
+slots' names and blurbs (`slots`, the land's own words from the story bible), and the sites stamped on the terrain
+(`sites`: a `stamp` or a `maze` at `at` [lon, lat], with its `legend`, `encounters`, `road: [site...]`, a caldera `ring`,
+door `marks`, `parity` for a stamp with cliff letters; in a stamp `·` is the region's ground, `+` its road, a space keeps
+the terrain, `1`-`8` are recruits' squares; a legend `on: "·"` stands on the region's ground). A `pass` or a `gorge` is a
+canyon that may run through several places, in the world's squares ([gx, gy]): a floor along its `routes` (smoothed
+lines, a loop where one ends where it began) and round its `rooms` (widenings, their `marks` offsets from the centre)
+and `ponds`, walled by rock `walls` squares deep over the open land round it, open at its `mouths`; a pass's routes carry
+a road, narrowing to it at each of its `gates`. Nothing later cuts a road or a way through the walls, and a canyon's
+legend letters go into each place its marks land in. A `maze` is two-square
+passages between two-square walls (`wall`, `floor`, `ring`, `doors`, `rooms` with `marks`, `ends` laid in the dead ends
+farthest from the doors, `litter`). An edge square leads into the place across (`stairs` with `edge: true` and `sprite:
+none`): stepping onto it asks nothing, a step on off the map crosses, and you come in on the square across from the one
+you left by (Explore.enter's `from`). Past a place's edge the map draws the next place's land (`Explore.across`). Cliff
+sets (forest, jungle canopy, red rock, a fort) come in whole 2x2 blocks on the even grid, the only shapes their tiles
+fit. Places with no name, sprites with no picture, and the known kludges (the layout's `gaps`) go to
+`assets/world/w1-gaps.md`.
 
 **Looks.** `sprite:` on a monster, a foe template or an NPC names a sheet in `art/characters/pixelcrawler/` (knight, rogue, wizard, orc,
 orc_rogue, orc_shaman, orc_warrior, skeleton, skeleton_mage, skeleton_rogue, skeleton_warrior) or is `{kind, scale, tint}` to resize

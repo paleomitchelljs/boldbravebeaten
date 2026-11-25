@@ -5,6 +5,8 @@
 #   dir       the folder of the sheets
 #   floor     the terrain plain floor ('.'), doors and legend squares are drawn as (default: the first terrain)
 #   wall      the terrain of walls and rock (default: wall)
+#   strict    (a tileset of many grounds, the open world's) a flat ground draws a corner only where one of its four
+#             squares is that ground, so a ground ranked between two others draws no edge where they meet
 #   doorsInWall  doorways (and legend squares with `wall: true`) are drawn as wall, with the door prop for the side
 #             they open on laid over them: door_south (a door in the face), door_east, door_west, door_north (a way
 #             through the wall top seen from above), else door; a locked door takes door_locked_south... first
@@ -23,6 +25,9 @@
 #     apart     flat ground listed before this one doesn't count it as its own: it draws its own edge where it meets
 #               this (a plank deck over water, its sheet's lower ground transparent, lies over the walkway's lip).
 #               A bridge (ground with `under`) whose terrain has a wang sheet is drawn as that terrain, not laid over
+#     also      more sheets of this terrain over other lower grounds: [{over, wang, cut, corners}, ...]. Each corner
+#               draws with the sheet whose `over` most of its lower squares are (grass over water, a river, sand, the
+#               jungle floor); a cliff set's alternative sheets share its cliff list
 #     like      another terrain to copy every field from (its cliff list, decor); fields given here win. It keeps its
 #               own rank, so a pyramid's tiers can share one layout and each draw over the last
 #     cliff     instead of corners: a PixelLab cliff set (transition_size 1, 25 tiles) as [col, row, pattern], the
@@ -48,7 +53,10 @@
 #               swell of a noise that gathers them in drifts; spread: art pixels a piece may hang over its square;
 #               edge: also on squares bordering a terrain drawn under this one (default: only where all eight
 #               neighbours are the same); flip: pieces may mirror left to right. A square never takes the piece its
-#               west and north neighbours would take first, so identical sprites don't stand side by side
+#               west and north neighbours would take first, so identical sprites don't stand side by side. A list of
+#               these is layers, each laid over the one before everywhere (w1: soft patches of shade, then tufts cut
+#               from the ground's own tile, then flowers or ferns); tools/plaingrounds.py makes the plain grounds and
+#               the pieces
 #     faces     (a wall) pieces on its south face where it runs straight: {density, band: [top, height], pieces, drop},
 #               drop: art pixels a piece may hang lower than its set height
 #               band and a piece's optional sixth number (its height) are measured from the top of the square in front
@@ -2130,31 +2138,93 @@ clay_canyon:
 
 # ---- The open world of the first continent (assets/world/w1-layout.yaml, tools/worldgen.js; 2026-11-24). Composites of
 # the sheets above, one per family of places: no new art. What each family cannot draw is in assets/world/w1-gaps.md.
-# The lake country: its water, grass, road, soil and rise; the vale's scree, forest and granite slopes (restyled to
-# this grass); the orc castle's wall for forts; props from the village, the hills, the valley and the lake country.
-w1_wild:
+# The open world (tools/worldgen.js, assets/world/w1-layout.yaml): one tileset for every outdoor place, so grassland,
+# jungle and desert run into each other inside a place and across its edges (the 17 sets of assets/wip/w1/README.md).
+# A terrain's `also` sheets draw it over other grounds: grass over water (a shore), a river (reeds), sand (a dune), the
+# jungle floor and bog; the forest over grass or the jungle floor; the jungle canopy over the floor or grass.
+w1:
   cell: 64
-  dir: art/worldtiles/west/
+  dir: art/worldtiles/w1/
   floor: path
+  strict: true
   terrains:
-    water: {color: "#2a8a9a", tile: water.png, anim: {sheet: water-anim.png, size: 512, frames: 16, cols: 4, fps: 4}}
-    grass: {color: "#4f9a3c", tile: grass.png, wang: shore.png, over: water, cut: shore-cut.png, corners: [UULU, ULUL, LULL, UULL, LUUL, ULLL, LLLL, LLLU, ULUU, LLUU, LLUL, LULU, UUUU, UUUL, ULLU, LUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU], vary: 0.85}
-    path: {color: "#9a6a44", wang: road.png, over: grass, corners: [LLUL, LULU, ULUU, LLUU, ULLU, LUUU, UUUU, UUUL, LULL, UULL, UULU, ULUL, LLLL, LLLU, LUUL, ULLL, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU], vary: 0.85, cut: road-cut.png}
-    soil: {color: "#c8a878", wang: soil.png, over: grass, corners: [LLUL, LULU, ULUU, LLUU, ULLU, LUUU, UUUU, UUUL, LULL, UULL, UULU, ULUL, LLLL, LLLU, LUUL, ULLL, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU], vary: 0.85, cut: soil-cut.png}
+    water: {color: "#2a8a9a", tile: ../west/water.png, anim: {sheet: ../west/water-anim.png, size: 512, frames: 16, cols: 4, fps: 4}}
+    river: {color: "#2a8a9a", tile: ../west/water.png, anim: {sheet: ../west/water-anim.png, size: 512, frames: 16, cols: 4, fps: 4}}
+    swampwater:
+      color: "#2a3824"
+      tile: ../jungle/water.png
+      anim: {sheet: ../jungle/water-anim.png, size: 512, frames: 16, cols: 4, fps: 4}
+      decor: {density: 0.25, flip: true, spread: 6, pieces: [[../jungle/decor.png, 318, 0, 46, 32]]}
+    shallows: {color: "#4f7a70", wang: ford.png, cut: ford-cut.png, over: river, also: [{over: water, wang: ford.png, cut: ford-cut.png}]}
     bridge: {color: "#6a5a44", wang: ../tarn/ropebridge.png, over: water, apart: true}
-    hill: {color: "#7ac052", wang: rise.png, over: grass, cut: rise-cut.png}
-    scree: {color: "#a3a6ac", wang: ../vale/scree.png, over: grass, cut: ../vale/scree-cut.png, corners: [UULU, ULUL, LULL, UULL, LUUL, ULLL, LLLL, LLLU, ULUU, LLUU, LLUL, LULU, UUUU, UUUL, ULLU, LUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU], vary: 0.85}
-    wall: {color: "#778695", wang: ../vale/orc-slope.png, over: grass, cut: ../vale/slope-cut.png}
-    ledge: {color: "#a1a6ae", wang: ../vale/ring1.png, over: wall, cut: ../vale/ring1-cut.png}
-    summit: {color: "#a7acb4", wang: ../vale/ring2.png, over: ledge, cut: ../vale/ring2-cut.png}
-    ridge3: {color: "#acb2b9", wang: ../vale/ring3.png, over: summit, cut: ../vale/ring3-cut.png}
-    ridge4: {color: "#b1b7bf", wang: ../vale/ring4.png, over: ridge3, cut: ../vale/ring4-cut.png}
-    ridge5: {color: "#b6bdc5", wang: ../vale/ring5.png, over: ridge4, cut: ../vale/ring5-cut.png}
-    ridge6: {color: "#bcc2ca", wang: ../vale/ring6.png, over: ridge5, cut: ../vale/ring6-cut.png}
+    marsh:
+      color: "#3a3a26"
+      tile: plain/jungle-marsh-tile.png
+      wang: plain/jungle-jungle-swamp.png
+      cut: plain/jungle-jungle-swamp-cut.png
+      over: swampwater
+      decor:
+        - {density: 0.6, clump: 6, spread: 24, flip: true, pieces: [[plain/decor.png, 86, 155, 75, 65], [plain/decor.png, 163, 155, 77, 60], [plain/decor.png, 242, 155, 61, 56]]}
+        - {density: 3, clump: 3, edge: true, margin: 8, flip: true, pieces: [[plain/decor.png, 0, 155, 16, 14], [plain/decor.png, 18, 155, 13, 16], [plain/decor.png, 33, 155, 7, 8], [plain/decor.png, 42, 155, 9, 6], [plain/decor.png, 53, 155, 8, 6], [plain/decor.png, 63, 155, 5, 8], [plain/decor.png, 70, 155, 6, 6], [plain/decor.png, 78, 155, 6, 6]]}
+        - {density: 0.45, clump: 4, flip: true, spread: 10, edge: true, pieces: [[../jungle/decor.png, 494, 0, 58, 60], [../jungle/decor.png, 65, 0, 39, 60], [../jungle/decor.png, 686, 0, 62, 53], [../jungle/decor.png, 686, 0, 62, 53]]}
+    bog: {color: "#4a5a3a"}
+    sand: {color: "#e0c890", wang: plain/beach.png, cut: plain/beach-cut.png, over: water, also: [{over: swampwater, wang: plain/jbeach.png, cut: plain/jbeach-cut.png}], decor: [{density: 0.6, clump: 6, spread: 24, flip: true, pieces: [[plain/decor.png, 27, 368, 68, 51], [plain/decor.png, 97, 368, 74, 69], [plain/decor.png, 173, 368, 68, 54]]}, {density: 0.6, clump: 4, edge: true, margin: 8, flip: true, pieces: [[plain/decor.png, 0, 368, 6, 6], [plain/decor.png, 8, 368, 6, 4], [plain/decor.png, 16, 368, 4, 3], [plain/decor.png, 22, 368, 3, 2]]}]}
+    floor:
+      color: "#4a3a28"
+      tile: plain/jungle-floor-tile.png
+      wang: plain/jungle-marsh.png
+      cut: plain/jungle-marsh-cut.png
+      over: marsh
+      also: [{over: sand, wang: plain/jdune.png, cut: plain/jdune-cut.png}]
+      decor:
+        - {density: 0.6, clump: 6, spread: 24, flip: true, pieces: [[plain/decor.png, 112, 76, 83, 61], [plain/decor.png, 197, 76, 77, 77], [plain/decor.png, 276, 76, 73, 50]]}
+        - {density: 4, clump: 3, edge: true, margin: 8, flip: true, pieces: [[plain/decor.png, 0, 76, 28, 16], [plain/decor.png, 30, 76, 14, 11], [plain/decor.png, 46, 76, 12, 10], [plain/decor.png, 60, 76, 11, 10], [plain/decor.png, 73, 76, 9, 9], [plain/decor.png, 84, 76, 7, 7], [plain/decor.png, 93, 76, 7, 7], [plain/decor.png, 102, 76, 8, 6]]}
+        - {density: 0.3, clump: 5, flip: true, spread: 10, pieces: [[../jungle/decor.png, 108, 0, 62, 60], [../jungle/decor.png, 174, 0, 29, 30], [../jungle/decor.png, 0, 0, 61, 60], [../jungle/decor.png, 752, 0, 49, 51], [../jungle/decor.png, 433, 0, 57, 53], [../jungle/decor.png, 368, 0, 61, 43], [../jungle/decor.png, 556, 0, 61, 53], [../jungle/decor.png, 870, 0, 51, 44], [../jungle/decor.png, 621, 0, 61, 60], [../jungle/decor.png, 254, 0, 60, 36], [../jungle/decor.png, 805, 0, 61, 49], [../jungle/decor.png, 207, 0, 43, 45]]}
+    trail: {color: "#5a4030", tile: plain/jungle-trail-tile.png, wang: plain/jungle-jungle-trail.png, cut: plain/jungle-jungle-trail-cut.png, over: floor, corners: [LLUL, LULU, ULUU, LLUU, ULLU, LUUU, UUUU, UUUL, LULL, UULL, UULU, ULUL, LLLL, LLLU, LUUL, ULLL], decor: [{density: 0.6, clump: 6, spread: 24, flip: true, pieces: [[plain/decor.png, 60, 439, 62, 58], [plain/decor.png, 124, 439, 77, 71], [plain/decor.png, 203, 439, 59, 53]]}, {density: 1, clump: 4, edge: true, margin: 8, flip: true, pieces: [[plain/decor.png, 0, 439, 7, 6], [plain/decor.png, 9, 439, 6, 6], [plain/decor.png, 17, 439, 6, 5], [plain/decor.png, 25, 439, 6, 4], [plain/decor.png, 33, 439, 6, 4], [plain/decor.png, 41, 439, 4, 6], [plain/decor.png, 47, 439, 5, 4], [plain/decor.png, 54, 439, 4, 4]]}]}
+    # Between the jungle floor and the grassland: shady mossy grass (over the floor; the meadow grass over it).
+    moss: {color: "#4a6a2a", wang: plain/moss.png, cut: plain/moss-cut.png, over: floor, decor: [{density: 0.6, clump: 6, spread: 24, flip: true, pieces: [[plain/decor.png, 87, 222, 73, 59], [plain/decor.png, 162, 222, 76, 67], [plain/decor.png, 240, 222, 76, 52]]}, {density: 3, clump: 3, edge: true, margin: 8, flip: true, pieces: [[plain/decor.png, 0, 222, 14, 7], [plain/decor.png, 16, 222, 10, 8], [plain/decor.png, 28, 222, 9, 8], [plain/decor.png, 39, 222, 8, 8], [plain/decor.png, 49, 222, 8, 7], [plain/decor.png, 59, 222, 9, 6], [plain/decor.png, 70, 222, 6, 8], [plain/decor.png, 78, 222, 7, 6]]}]}
+    grass:
+      color: "#4f9a3c"
+      tile: plain/west-grass-tile.png
+      wang: plain/west-shore.png
+      over: water
+      cut: plain/west-shore-cut.png
+      corners: [UULU, ULUL, LULL, UULL, LUUL, ULLL, LLLL, LLLU, ULUU, LLUU, LLUL, LULU, UUUU, UUUL, ULLU, LUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU]
+      vary: 0
+      also:
+        - {over: river, wang: plain/reeds.png, cut: plain/reeds-cut.png}
+        - {over: sand, wang: plain/dune.png, cut: plain/dune-cut.png}
+        - {over: floor, wang: plain/floorgrass.png, cut: plain/floorgrass-cut.png}
+        - {over: bog, wang: plain/marsh.png, cut: plain/marsh-cut.png}
+        - {over: moss, wang: plain/grassmoss.png, cut: plain/grassmoss-cut.png}
+      decor:
+        - {density: 0.6, clump: 6, spread: 24, flip: true, pieces: [[plain/decor.png, 186, 0, 70, 57], [plain/decor.png, 258, 0, 82, 74], [plain/decor.png, 342, 0, 76, 49]]}
+        - {density: 2.5, clump: 3, edge: true, margin: 8, flip: true, pieces: [[plain/decor.png, 0, 0, 9, 5], [plain/decor.png, 11, 0, 9, 5], [plain/decor.png, 22, 0, 9, 5], [plain/decor.png, 33, 0, 9, 5], [plain/decor.png, 44, 0, 9, 5], [plain/decor.png, 55, 0, 9, 5], [plain/decor.png, 66, 0, 8, 5], [plain/decor.png, 76, 0, 8, 5]]}
+        - {density: 1.5, clump: 1.5, edge: true, margin: 8, flip: true, pieces: [[plain/decor.png, 86, 0, 7, 6], [plain/decor.png, 95, 0, 6, 6], [plain/decor.png, 103, 0, 4, 4], [plain/decor.png, 109, 0, 6, 6], [plain/decor.png, 117, 0, 2, 3], [plain/decor.png, 121, 0, 4, 5], [plain/decor.png, 127, 0, 3, 2], [plain/decor.png, 132, 0, 7, 6], [plain/decor.png, 141, 0, 5, 5], [plain/decor.png, 148, 0, 4, 6], [plain/decor.png, 154, 0, 6, 6], [plain/decor.png, 162, 0, 4, 3], [plain/decor.png, 168, 0, 4, 5], [plain/decor.png, 174, 0, 10, 11]]}
+    savanna: {color: "#b8a848", wang: plain/savanna.png, cut: plain/savanna-cut.png, over: grass, decor: [{density: 0.6, clump: 6, spread: 24, flip: true, pieces: [[plain/decor.png, 80, 291, 73, 62], [plain/decor.png, 155, 291, 76, 75], [plain/decor.png, 233, 291, 81, 50]]}, {density: 2.5, clump: 3, edge: true, margin: 8, flip: true, pieces: [[plain/decor.png, 0, 291, 8, 4], [plain/decor.png, 10, 291, 8, 4], [plain/decor.png, 20, 291, 8, 4], [plain/decor.png, 30, 291, 8, 4], [plain/decor.png, 40, 291, 8, 3], [plain/decor.png, 50, 291, 8, 3], [plain/decor.png, 60, 291, 8, 3], [plain/decor.png, 70, 291, 8, 3]]}]}
+    path: {color: "#9a6a44", wang: plain/west-road.png, over: grass, corners: [LLUL, LULU, ULUU, LLUU, ULLU, LUUU, UUUU, UUUL, LULL, UULL, UULU, ULUL, LLLL, LLLU, LUUL, ULLL, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU], vary: 0.85, cut: plain/west-road-cut.png}
+    soil: {color: "#c8a878", wang: plain/west-soil.png, over: grass, corners: [LLUL, LULU, ULUU, LLUU, ULLU, LUUU, UUUU, UUUL, LULL, UULL, UULU, ULUL, LLLL, LLLU, LUUL, ULLL, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU], vary: 0.85, cut: plain/west-soil-cut.png}
+    hill: {color: "#7ac052", wang: plain/west-rise.png, over: grass, cut: plain/west-rise-cut.png, decor: [{density: 0.6, clump: 6, spread: 24, flip: true, pieces: [[plain/decor.png, 70, 512, 64, 61], [plain/decor.png, 136, 512, 74, 66], [plain/decor.png, 212, 512, 64, 53]]}, {density: 2, clump: 3, edge: true, margin: 8, flip: true, pieces: [[plain/decor.png, 0, 512, 7, 6], [plain/decor.png, 9, 512, 7, 6], [plain/decor.png, 18, 512, 7, 6], [plain/decor.png, 27, 512, 7, 6], [plain/decor.png, 36, 512, 7, 6], [plain/decor.png, 45, 512, 7, 6], [plain/decor.png, 54, 512, 6, 6], [plain/decor.png, 62, 512, 6, 5]]}]}
+    jhill: {color: "#a06a3a", wang: plain/jhill.png, over: floor, cut: plain/jhill-cut.png, decor: [{density: 0.6, clump: 6, spread: 24, flip: true, pieces: [[plain/decor.png, 90, 580, 64, 47], [plain/decor.png, 156, 580, 77, 75], [plain/decor.png, 235, 580, 69, 46]]}, {density: 3, clump: 3, edge: true, margin: 8, flip: true, pieces: [[plain/decor.png, 0, 580, 10, 8], [plain/decor.png, 12, 580, 10, 7], [plain/decor.png, 24, 580, 10, 7], [plain/decor.png, 36, 580, 9, 7], [plain/decor.png, 47, 580, 9, 7], [plain/decor.png, 58, 580, 9, 7], [plain/decor.png, 69, 580, 9, 7], [plain/decor.png, 80, 580, 8, 7]]}]}
+    scree: {color: "#a3a6ac", wang: plain/vale-scree.png, over: grass, cut: plain/vale-scree-cut.png, corners: [UULU, ULUL, LULL, UULL, LUUL, ULLL, LLLL, LLLU, ULUU, LLUU, LLUL, LULU, UUUU, UUUL, ULLU, LUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU], vary: 0.85}
+    # The grassland's mountains in three tiers (the art pass, 2026-11-24): rough granite, boulder crags, a snowy summit.
+    wall: {color: "#808078", wang: plain/gslope.png, over: grass, cut: plain/gslope-cut.png}
+    ledge: {color: "#838c96", wang: gledge.png, over: wall, cut: gledge-cut.png}
+    summit: {color: "#dfe0df", wang: gsummit.png, over: ledge, cut: gsummit-cut.png}
+    jslope: {color: "#5a6a4a", wang: plain/jslope.png, over: floor, cut: plain/jslope-cut.png}
+    jring: {color: "#8a9a7a", wang: plain/jring.png, over: jslope, cut: plain/jring-cut.png}
+    basalt: {color: "#2a2a30", wang: plain/basalt.png, over: grass, cut: plain/basalt-cut.png}
+    # The labyrinth's walls and the desert's outcrops: a tall cliff of red sandstone over the beach's sand.
+    redcliff: {like: forest, color: "#b0502a", wang: plain/redcliff.png, cut: plain/redcliff-cut.png, over: sand, also: [], lift: true}
     forest:
       color: "#1c5923"
-      wang: ../vale/forest.png
+      wang: plain/forest.png
+      cut: plain/forest-cut.png
       over: grass
+      also: [{over: floor, wang: plain/jforest.png, cut: plain/jforest-cut.png}]
+      # Its own ground only: the canopies after it (jungle) and the red cliff (like: forest) are not built on one another,
+      # so none draws its cliff under another's squares (the red cliff's face showed at the canopy's corners).
+      solo: true
       # Trunks, not a rock face: raising the face would draw each trunk twice.
       lift: false
       cliff:
@@ -2183,9 +2253,10 @@ w1_wild:
         - [2, 7, ".10..21..01....."]
         - [0, 2, ".....01..12..10."]
         - [0, 3, ".01..12..10....."]
+    jungle: {like: forest, color: "#24381f", wang: plain/jungle-canopy.png, cut: plain/jungle-canopy-cut.png, over: floor, also: [{over: grass, wang: plain/jcanopy.png, cut: plain/jcanopy-cut.png}]}
     fort:
       color: "#3a4650"
-      wang: ../vale/orc-fort.png
+      wang: plain/vale-orc-fort.png
       over: grass
       solo: true
       faces: {density: 0.45, drop: 2, band: [-60, 56], pieces: [[../orc/wall-decor.png, 0, 0, 46, 62, -64], [../orc/wall-decor.png, 66, 0, 16, 61, -63], [../orc/wall-decor.png, 132, 0, 52, 52, -54], [../orc/window.png, 0, 0, 18, 30, -50], [../orc/wall-decor.png, 0, 0, 46, 62, -64], [../orc/wall-decor.png, 66, 0, 16, 61, -63], [../orc/window.png, 0, 0, 18, 30, -50], [../orc/wall-decor.png, 924, 0, 48, 53, -55]]}
@@ -2223,14 +2294,16 @@ w1_wild:
     city_barjiy: [../cities.png, 768, 0, 256, 243]
     city_emagshir: [../cities.png, 1024, 0, 256, 240]
     pit: [../traps.png, 4512, 0, 46, 46]
-    pine: [../tarn/props.png, 1688, 0, 69, 118]
+    pine: [props.png, 111, 0, 62, 115]
     fir: [../tarn/props.png, 1761, 0, 118, 118]
-    oak: [../tarn/props.png, 1883, 0, 117, 112]
+    oak: [props.png, 0, 0, 107, 106]
     birch: [../tarn/props.png, 2004, 0, 66, 116]
     rocks: [../tarn/props.png, 1161, 0, 58, 38]
     stump: [../south/props.png, 329, 0, 42, 35]
     log: [../south/props.png, 375, 0, 54, 35]
     cairn: [../south/props.png, 433, 0, 33, 43]
+    # Falls where a river drops over the upland's rim (the highland set's, an 8-frame cascade hung from the square).
+    waterfall: [../highland/waterfall.png, 0, 0, 96, 222, -16, -163, 8, 8]
     milestone: [../south/props.png, 470, 0, 24, 42]
     roadsign: [../south/props.png, 498, 0, 31, 49]
     campfire: [../fires.png, 460, 0, 88, 73, null, null, 8, 10]
@@ -2267,236 +2340,48 @@ w1_wild:
     longhut: [../orc/props2.png, 308, 0, 150, 140]
     cabin: [../orc/props2.png, 462, 0, 138, 149]
     boulder: [../tarn/props.png, 1097, 0, 60, 50]
-    standing_stone: [props.png, 32, 83, 58, 90]
-    reeds: [props.png, 399, 120, 55, 53]
-    egg_nest: [props.png, 518, 129, 61, 44]
-    door_south: ['props.png', 1261, 124, 39, 49, 12, 28]
+    standing_stone: [../west/props.png, 32, 83, 58, 90]
+    reeds: [../west/props.png, 399, 120, 55, 53]
+    egg_nest: [../west/props.png, 518, 129, 61, 44]
+    door_south: ['../west/props.png', 1261, 124, 39, 49, 12, 28]
     tallgrass_gold: [../tarn/props.png, 3513, 0, 61, 61, null, null, 8, 5]
     tallgrass_seed: [../tarn/props.png, 4005, 0, 58, 60, null, null, 8, 5]
     tallgrass_flower: [../tarn/props.png, 4473, 0, 59, 60, null, null, 8, 5]
     tent_minotaur: [../front.png, 3565, 0, 143, 136]
-    horn_totem: [props.png, 1014, 82, 46, 91]
-    dead_tree: [props.png, 759, 62, 68, 111]
+    horn_totem: [../west/props.png, 1014, 82, 46, 91]
+    dead_tree: [../west/props.png, 759, 62, 68, 111]
     kapok: [../jungle/props.png, 0, 0, 109, 113]
     mangrove: [../jungle/props.png, 113, 0, 91, 113]
     tower: ["../desert/props.png", 4441, 0, 220, 229]
     palm: ["../desert/props.png", 3621, 109, 83, 120]
 
-# The jungle: its water, marsh, floor, trail and canopy, with the village's and the temple swamp's props for towns and ruins.
-w1_jungle:
-  cell: 64
-  dir: art/worldtiles/jungle/
-  floor: floor
-  wall: jungle
-  terrains:
-    water:
-      color: "#2a3824"
-      tile: water.png
-      anim: {sheet: water-anim.png, size: 512, frames: 16, cols: 4, fps: 4}
-      decor: {density: 0.25, flip: true, spread: 6, pieces: [[decor.png, 318, 0, 46, 32]]}
-    shallows:
-      color: "#2a3824"
-      tile: water.png
-      anim: {sheet: water-anim.png, size: 512, frames: 16, cols: 4, fps: 4}
-      decor: {density: 0.25, flip: true, spread: 6, edge: true, pieces: [[decor.png, 318, 0, 46, 32]]}
-    marsh:
-      color: "#3a3a26"
-      tile: marsh.png
-      wang: jungle-swamp.png
-      cut: jungle-swamp-cut.png
-      over: water
-      decor: {density: 0.45, clump: 4, flip: true, spread: 10, edge: true, pieces: [[decor.png, 494, 0, 58, 60], [decor.png, 65, 0, 39, 60], [decor.png, 686, 0, 62, 53], [decor.png, 686, 0, 62, 53]]}
-    floor:
-      color: "#4a3a28"
-      tile: floor.png
-      wang: jungle-marsh.png
-      over: marsh
-      # ferns, toadstools, a mossy rock, a log, roots, a stump (assets/wip/jungle/decor/)
-      decor: {density: 0.3, clump: 5, flip: true, spread: 10, pieces: [[decor.png, 108, 0, 62, 60], [decor.png, 174, 0, 29, 30], [decor.png, 0, 0, 61, 60], [decor.png, 752, 0, 49, 51], [decor.png, 433, 0, 57, 53], [decor.png, 368, 0, 61, 43], [decor.png, 556, 0, 61, 53], [decor.png, 870, 0, 51, 44], [decor.png, 621, 0, 61, 60], [decor.png, 254, 0, 60, 36], [decor.png, 805, 0, 61, 49], [decor.png, 207, 0, 43, 45], [decor.png, 108, 0, 62, 60], [decor.png, 174, 0, 29, 30], [decor.png, 254, 0, 60, 36]]}
-    trail:
-      color: "#5a4030"
-      tile: trail.png
-      wang: jungle-trail.png
-      cut: jungle-trail-cut.png
-      over: floor
-      corners: [LLUL, LULU, ULUU, LLUU, ULLU, LUUU, UUUU, UUUL, LULL, UULL, UULU, ULUL, LLLL, LLLU, LUUL, ULLL]
-    jungle:
-      color: "#24381f"
-      wang: jungle-canopy.png
-      over: floor
-      cliff:
-        - [2, 2, ".....00..00....."]
-        - [3, 2, ".....00..01....."]
-        - [1, 4, ".....00..11....."]
-        - [2, 4, ".....00..10....."]
-        - [3, 3, ".00..01..01....."]
-        - [3, 4, ".....01..01....."]
-        - [0, 6, ".....11..11....."]
-        - [1, 0, ".11..10..10....."]
-        - [1, 1, ".....10..10....."]
-        - [0, 4, ".....10..11....."]
-        - [3, 6, ".....01..11....."]
-        - [1, 6, ".....11..12...0."]
-        - [3, 0, ".....11..22..00."]
-        - [1, 2, ".....10..20..00."]
-        - [1, 7, ".1...12..10....."]
-        - [3, 1, ".11..22..00....."]
-        - [1, 3, ".....20..00....."]
-        - [2, 0, ".....01..02..00."]
-        - [0, 0, ".....11..21..0.."]
-        - [2, 6, ".....10..21..01."]
-        - [2, 1, ".....02..00....."]
-        - [0, 1, "..1..21..01....."]
-        - [2, 7, ".10..21..01....."]
-        - [0, 2, ".....01..12..10."]
-        - [0, 3, ".01..12..10....."]
-  props:
-    # The five cities seen from outside (assets/wip/w1/cities; PixelLab objects, 256 px: four squares wide).
-    city_zhomelonga: [../cities.png, 0, 0, 256, 256]
-    city_muawi: [../cities.png, 256, 0, 256, 256]
-    city_burbuma: [../cities.png, 512, 0, 256, 245]
-    city_barjiy: [../cities.png, 768, 0, 256, 243]
-    city_emagshir: [../cities.png, 1024, 0, 256, 240]
-    kapok: [props.png, 0, 0, 109, 113]
-    mangrove: [props.png, 113, 0, 91, 113]
-    strangler: [props.png, 208, 0, 111, 113]
-    cypress: [props.png, 323, 0, 93, 109]
-    mossoak: [props.png, 533, 0, 115, 110, null, null, 8, 5]
-    mossdead: [props.png, 1457, 0, 97, 110, null, null, 8, 5]
-    mossleaning: [props.png, 420, 0, 109, 111]
-    cottage: [../front.png, 0, 0, 136, 121]
-    inn: [../front.png, 253, 0, 147, 146]
-    smithy: [../front.png, 402, 0, 121, 119]
-    shop: [../front.png, 525, 0, 117, 142]
-    arch: [../front.png, 1571, 0, 128, 126]
-    minemouth: [../front.png, 1387, 0, 122, 147]
-    pyramid: [../outside/props.png, 776, 0, 140, 106]
-    totem: [../front.png, 1511, 0, 58, 121]
-    well: [../front.png, 2019, 0, 67, 85]
-    stall: [../front.png, 2088, 0, 84, 66]
-    fence: [../front.png, 2174, 0, 117, 85]
-    signpost: [../front.png, 2293, 0, 71, 84]
-    woodpile: [../front.png, 2366, 0, 92, 73]
-    handcart: [../front.png, 2540, 0, 76, 54]
-    barrels: [../outside/props.png, 1514, 0, 58, 49]
-    crates: [../front.png, 2618, 0, 74, 68]
-    bench: [../front.png, 2694, 0, 85, 44]
-    lamppost: [../front.png, 2781, 0, 57, 92]
-    gatehouse: [../front.png, 1241, 0, 144, 136]
-    watchtower: [../south/props.png, 1348, 0, 62, 129]
-    reeds: [../west/props.png, 399, 120, 55, 53]
-    door_south: ['../west/props.png', 1261, 124, 39, 49, 12, 28]
+    strangler: [../jungle/props.png, 208, 0, 111, 113]
+    cypress: [../jungle/props.png, 323, 0, 93, 109]
+    mossoak: [../jungle/props.png, 533, 0, 115, 110, null, null, 8, 5]
+    mossdead: [../jungle/props.png, 1457, 0, 97, 110, null, null, 8, 5]
+    mossleaning: [../jungle/props.png, 420, 0, 109, 111]
+    # the desert's
+    thornbush: ["../desert/props.png", 85, 183, 51, 46]
+    drygrass: ["../desert/props.png", 308, 181, 49, 48]
+    aloe: ["../desert/props.png", 525, 174, 60, 55]
+    pebbles: ["../desert/props.png", 753, 192, 48, 37]
+    skull: ["../desert/props.png", 1195, 188, 52, 41]
+    column: ["../desert/props.png", 1414, 173, 58, 56]
+    rubble: ["../desert/props.png", 1634, 179, 61, 50]
+    deadtree: ["../desert/props.png", 1861, 166, 51, 63]
+    desert_reeds: ["../desert/props.png", 2081, 168, 55, 61]
+    bush: ["../desert/props.png", 2744, 183, 61, 46]
+    ruinwall: ["../desert/props.png", 2968, 175, 57, 54]
+    palms: ["../desert/props.png", 3825, 114, 120, 115]
+    youngpalm: ["../desert/props.png", 4060, 129, 94, 100]
+    # the open world's own (assets/wip/w1/objects, PixelLab map objects, 2026-11-24)
+    gbush: [props.png, 177, 0, 53, 52]
+    meadow: [props.png, 234, 0, 41, 38]
+    broadleaf: [props.png, 279, 0, 88, 90]
+    acacia: [props.png, 371, 0, 88, 80]
+    ferns: [props.png, 463, 0, 54, 51]
+    bones: [props.png, 521, 0, 41, 35]
+    grass_tuft: [props.png, 566, 0, 26, 25]
+    flowerbush: [props.png, 596, 0, 44, 40]
+    wildflowers: [props.png, 644, 0, 41, 36]
 
-# The desert: sand over water, oasis grass, gravel, sandstone and the vale's mountains, with its own props.
-w1_desert:
-  cell: 64
-  dir: art/worldtiles/desert/
-  floor: sand
-  terrains:
-    water: {color: "#094e51", tile: ../vale/water.png, anim: {sheet: ../vale/water-anim.png, size: 512, frames: 16, cols: 4, fps: 6}}
-    shallows: {color: "#4f7a70", wang: ford.png, cut: ford-cut.png, over: water}
-    sand:
-      color: "#d8b878"
-      tile: sand.png
-      wang: shore.png
-      cut: shore-cut.png
-      # Eight more all-sand tiles, its marks moved about (assets/wip/ground/build.py), so the sand is not a grid.
-      corners: [UULU, ULUL, LULL, UULL, LUUL, ULLL, LLLL, LLLU, ULUU, LLUU, LLUL, LULU, UUUU, UUUL, ULLU, LUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU]
-      vary: 0.85
-      over: water
-      decor: {density: 0.08, clump: 3, flip: true, spread: 8, pieces: [["props.png", 753, 192, 48, 37], ["props.png", 308, 181, 49, 48], ["props.png", 3417, 186, 48, 43]]}
-    grass:
-      color: "#3e8a3a"
-      tile: grass.png
-      wang: oasis.png
-      cut: oasis-cut.png
-      over: sand
-    scree:
-      color: "#806d59"
-      tile: [../vale/gravel.png, ../vale/gravel-1.png, ../vale/gravel-2.png, ../vale/gravel-3.png, ../vale/gravel-4.png, ../vale/gravel-5.png, ../vale/gravel-6.png, ../vale/gravel-7.png, ../vale/gravel-8.png]
-      wang: ../vale/desert-foot.png
-      cut: ../vale/desert-foot-cut.png
-      corners: [UULU, ULUL, LULL, UULL, LUUL, ULLL, LLLL, LLLU, ULUU, LLUU, LLUL, LULU, UUUU, UUUL, ULLU, LUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU, UUUU]
-      vary: 0.85
-      over: sand
-    mesa:
-      color: "#8a4a2a"
-      wang: mesa.png
-      over: sand
-      # Its face is drawn in the wall's last row, not below it: raising it would lay the sand in front over the face.
-      lift: false
-      cliff:
-        - [2, 2, ".....00..00....."]
-        - [3, 2, ".....00..01....."]
-        - [1, 4, ".....00..11....."]
-        - [2, 4, ".....00..10....."]
-        - [3, 3, ".00..01..01....."]
-        - [3, 4, ".....01..01....."]
-        - [0, 6, ".....11..11....."]
-        - [1, 0, ".11..10..10....."]
-        - [1, 1, ".....10..10....."]
-        - [0, 4, ".....10..11....."]
-        - [3, 6, ".....01..11....."]
-        - [1, 6, ".....11..12...0."]
-        - [3, 0, ".....11..22..00."]
-        - [1, 2, ".....10..20..00."]
-        - [1, 7, ".1...12..10....."]
-        - [3, 1, ".11..22..00....."]
-        - [1, 3, ".....20..00....."]
-        - [2, 0, ".....01..02..00."]
-        - [0, 0, ".....11..21..0.."]
-        - [2, 6, ".....10..21..01."]
-        - [2, 1, ".....02..00....."]
-        - [0, 1, "..1..21..01....."]
-        - [2, 7, ".10..21..01....."]
-        - [0, 2, ".....01..12..10."]
-        - [0, 3, ".01..12..10....."]
-    wall: {color: "#778695", wang: ../vale/slope.png, over: scree, cut: ../vale/slope-cut.png}
-    ledge: {color: "#a1a6ae", wang: ../vale/ring1.png, over: wall, cut: ../vale/ring1-cut.png}
-    summit: {color: "#a7acb4", wang: ../vale/ring2.png, over: ledge, cut: ../vale/ring2-cut.png}
-    ridge3: {color: "#acb2b9", wang: ../vale/ring3.png, over: summit, cut: ../vale/ring3-cut.png}
-    ridge4: {color: "#b1b7bf", wang: ../vale/ring4.png, over: ridge3, cut: ../vale/ring4-cut.png}
-    ridge5: {color: "#b6bdc5", wang: ../vale/ring5.png, over: ridge4, cut: ../vale/ring5-cut.png}
-    ridge6: {color: "#bcc2ca", wang: ../vale/ring6.png, over: ridge5, cut: ../vale/ring6-cut.png}
-  props:
-    # The five cities seen from outside (assets/wip/w1/cities; PixelLab objects, 256 px: four squares wide).
-    city_zhomelonga: [../cities.png, 0, 0, 256, 256]
-    city_muawi: [../cities.png, 256, 0, 256, 256]
-    city_burbuma: [../cities.png, 512, 0, 256, 245]
-    city_barjiy: [../cities.png, 768, 0, 256, 243]
-    city_emagshir: [../cities.png, 1024, 0, 256, 240]
-    thornbush: ["props.png", 85, 183, 51, 46]
-    drygrass: ["props.png", 308, 181, 49, 48]
-    aloe: ["props.png", 525, 174, 60, 55]
-    pebbles: ["props.png", 753, 192, 48, 37]
-    boulder: ["props.png", 969, 175, 60, 54]
-    skull: ["props.png", 1195, 188, 52, 41]
-    column: ["props.png", 1414, 173, 58, 56]
-    rubble: ["props.png", 1634, 179, 61, 50]
-    deadtree: ["props.png", 1861, 166, 51, 63]
-    reeds: ["props.png", 2081, 168, 55, 61]
-    bush: ["props.png", 2744, 183, 61, 46]
-    ruinwall: ["props.png", 2968, 175, 57, 54]
-    cairn: ["props.png", 3197, 177, 44, 52]
-    palm: ["props.png", 3621, 109, 83, 120]
-    palms: ["props.png", 3825, 114, 120, 115]
-    youngpalm: ["props.png", 4060, 129, 94, 100]
-    tower: ["props.png", 4441, 0, 220, 229]
-    cottage: [../front.png, 0, 0, 136, 121]
-    inn: [../front.png, 253, 0, 147, 146]
-    smithy: [../front.png, 402, 0, 121, 119]
-    shop: [../front.png, 525, 0, 117, 142]
-    arch: [../front.png, 1571, 0, 128, 126]
-    minemouth: [../front.png, 1387, 0, 122, 147]
-    pyramid: [../outside/props.png, 776, 0, 140, 106]
-    totem: [../front.png, 1511, 0, 58, 121]
-    well: [../front.png, 2019, 0, 67, 85]
-    stall: [../front.png, 2088, 0, 84, 66]
-    fence: [../front.png, 2174, 0, 117, 85]
-    signpost: [../front.png, 2293, 0, 71, 84]
-    woodpile: [../front.png, 2366, 0, 92, 73]
-    handcart: [../front.png, 2540, 0, 76, 54]
-    crates: [../front.png, 2618, 0, 74, 68]
-    bench: [../front.png, 2694, 0, 85, 44]
-    lamppost: [../front.png, 2781, 0, 57, 92]
-    gatehouse: [../front.png, 1241, 0, 144, 136]

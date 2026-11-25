@@ -1,0 +1,162 @@
+{
+ "out": "art/worldtiles/w1/plain",
+ "decor": "art/worldtiles/w1/plain/decor.png",
+ "dir": "art/worldtiles/w1",
+ "grounds": {
+  "grass": {
+   "from": "art/worldtiles/west/shore.png",
+   "tile": [
+    0,
+    192
+   ],
+   "thr": 60,
+   "extra": [
+    [
+     "art/worldtiles/w1/props.png",
+     644,
+     0,
+     41,
+     36
+    ],
+    [
+     "art/worldtiles/temple/court-decor.png",
+     256,
+     0,
+     10,
+     11
+    ]
+   ]
+  },
+  "floor": {
+   "from": "art/worldtiles/w1/jungle-marsh.png",
+   "tile": [
+    0,
+    192
+   ],
+   "thr": 70
+  },
+  "marsh": {
+   "from": "art/worldtiles/jungle/jungle-swamp.png",
+   "tile": [
+    0,
+    192
+   ],
+   "thr": 60,
+   "patches": [
+    [
+     0.6,
+     0.25
+    ],
+    [
+     1.4,
+     0.12
+    ],
+    [
+     1.3,
+     0.14
+    ]
+   ]
+  },
+  "moss": {
+   "from": "art/worldtiles/w1/moss.png",
+   "tile": [
+    0,
+    192
+   ],
+   "thr": 70
+  },
+  "savanna": {
+   "from": "art/worldtiles/w1/savanna.png",
+   "tile": [
+    0,
+    192
+   ],
+   "thr": 60
+  },
+  "sand": {
+   "from": "art/worldtiles/w1/beach.png",
+   "tile": [
+    0,
+    192
+   ],
+   "thr": 50,
+   "patches": [
+    [
+     0.85,
+     0.14
+    ],
+    [
+     0.9,
+     0.12
+    ],
+    [
+     1.1,
+     0.14
+    ]
+   ]
+  },
+  "trail": {
+   "from": "art/worldtiles/jungle/jungle-trail.png",
+   "tile": [
+    128,
+    64
+   ],
+   "thr": 60
+  },
+  "hill": {
+   "from": "art/worldtiles/west/rise.png",
+   "tile": [
+    0,
+    192
+   ],
+   "thr": 60
+  },
+  "jhill": {
+   "from": "art/worldtiles/w1/jhill.png",
+   "tile": [
+    0,
+    192
+   ],
+   "thr": 60
+  }
+ },
+ "sheets": {
+  "ford.png": "art/worldtiles/w1/ford.png",
+  "tarn-ropebridge.png": "art/worldtiles/tarn/ropebridge.png",
+  "jungle-jungle-swamp.png": "art/worldtiles/jungle/jungle-swamp.png",
+  "jungle-marsh-tile.png": "art/worldtiles/jungle/marsh.png",
+  "beach.png": "art/worldtiles/w1/beach.png",
+  "jbeach.png": "art/worldtiles/w1/jbeach.png",
+  "jungle-marsh.png": "art/worldtiles/w1/jungle-marsh.png",
+  "jdune.png": "art/worldtiles/w1/jdune.png",
+  "jungle-floor-tile.png": "art/worldtiles/jungle/floor.png",
+  "jungle-jungle-trail.png": "art/worldtiles/jungle/jungle-trail.png",
+  "jungle-trail-tile.png": "art/worldtiles/jungle/trail.png",
+  "moss.png": "art/worldtiles/w1/moss.png",
+  "west-shore.png": "art/worldtiles/west/shore.png",
+  "reeds.png": "art/worldtiles/w1/reeds.png",
+  "dune.png": "art/worldtiles/w1/dune.png",
+  "floorgrass.png": "art/worldtiles/w1/floorgrass.png",
+  "marsh.png": "art/worldtiles/w1/marsh.png",
+  "grassmoss.png": "art/worldtiles/w1/grassmoss.png",
+  "west-grass-tile.png": "art/worldtiles/west/grass.png",
+  "savanna.png": "art/worldtiles/w1/savanna.png",
+  "west-road.png": "art/worldtiles/west/road.png",
+  "west-soil.png": "art/worldtiles/west/soil.png",
+  "west-rise.png": "art/worldtiles/west/rise.png",
+  "jhill.png": "art/worldtiles/w1/jhill.png",
+  "vale-scree.png": "art/worldtiles/vale/scree.png",
+  "gslope.png": "art/worldtiles/w1/gslope.png",
+  "gledge.png": "art/worldtiles/w1/gledge.png",
+  "gsummit.png": "art/worldtiles/w1/gsummit.png",
+  "jslope.png": "art/worldtiles/w1/jslope.png",
+  "jring.png": "art/worldtiles/w1/jring.png",
+  "basalt.png": "art/worldtiles/w1/basalt.png",
+  "redcliff.png": "art/worldtiles/w1/redcliff.png",
+  "forest.png": "art/worldtiles/w1/forest.png",
+  "jforest.png": "art/worldtiles/w1/jforest.png",
+  "jungle-canopy.png": "art/worldtiles/w1/jungle-canopy.png",
+  "jcanopy.png": "art/worldtiles/w1/jcanopy.png",
+  "vale-orc-fort.png": "art/worldtiles/vale/orc-fort.png"
+ }
+}

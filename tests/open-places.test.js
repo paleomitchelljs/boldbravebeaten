@@ -61,3 +61,51 @@ test('the open world: off an edge you come in across from where you left, not at
   Explore.enter(w, def.to, def.at);
   assert.deepEqual([w.explore.x, w.explore.y], [Explore.findChar(def.to, def.at).x, Explore.findChar(def.to, def.at).y]);
 });
+
+test('the open world: stepping onto a way across asks nothing; a step on off the edge crosses', () => {
+  const w = World.create(World.presetParty(), { log: false });
+  Explore.enter(w, home, 'I');
+  const g = Explore.here(w), e = Explore.exits(home).find((q) => q.dx === 1);
+  // Stand one square in from the way across, facing it.
+  Explore.enter(w, home, 'I');
+  Object.assign(w.explore, { x: e.x - 1, y: e.y, dir: 1 });
+  assert.equal(Explore.DIRS[1][0], 1, 'direction 1 is east');
+  const on = Explore.move(w, 0);
+  assert.ok(on.moved, 'onto the way across');
+  assert.ok(!on.events.some((v) => v.type === 'stairs'), 'no prompt on the edge');
+  const off = Explore.move(w, 0);
+  assert.equal(off.moved, false);
+  const cross = off.events.find((v) => v.type === 'cross');
+  assert.ok(cross, 'a step off the edge crosses');
+  assert.equal(cross.def.to, g.legend[g.rows[e.y][e.x]].to);
+});
+
+test('the open world: past a place\'s edge lies the next place\'s land, as that place has it', () => {
+  const p = Content.world.places[home], g = Explore.grid(home);
+  const east = Explore.placeAt(p.world[0], p.world[1] + 1), o = Explore.grid(east);
+  for (let y = 0; y < g.h; y += 7) {
+    const c = Explore.across(home, g.w + 2, y), ch = o.rows[y][2], def = o.legend[ch];
+    if (def) { if (def.kind === 'prop' && def.sprite !== 'none') assert.equal(c.kind, 'prop'); continue; }
+    assert.equal(c.ch, ch, `square 2,${y} of ${east}`);
+  }
+  // Off the open world altogether: the sea.
+  assert.equal(Explore.across(home, -1000, 0).kind, 'water');
+});
+
+test('the open world: no cliff set (a canopy, the red cliff) is drawn under another terrain\'s squares', () => {
+  // A cliff set counts the squares of terrains ranked after it as its own upper ground (so stacked tiers run under one
+  // another). Unrelated ones must not: the red cliff drew its face under the jungle canopy, showing at its corners.
+  const G = globalThis.BBB; G.UI = G.UI || {}; require('../src/ui/game/tilemap.js');
+  const Tm = G.UI.Tilemap, under = {};
+  for (const [id, pl] of Object.entries(Content.world.places)) {
+    if (!pl.world) continue;
+    const w = World.create(World.presetParty(), { log: false });
+    Explore.enter(w, id, Object.keys(pl.legend).find((k) => pl.legend[k].kind === 'stairs'));
+    const g = Explore.here(w), sc = { w: g.w, h: g.h, cell: (x, y) => Explore.peek(w, x, y) }, ts = Tm.tileset(pl.look.tileset);
+    for (const c of Tm.planTiles(sc, ts, 0, 0, g.w - 1, g.h - 1).corner) {
+      if (!ts.terrains[c.t].cliffTiles) continue;
+      if (![[-1, -1], [0, -1], [-1, 0], [0, 0]].some(([dx, dy]) => Tm.terrainAt(sc, ts, c.x + dx, c.y + dy) === c.t)) under[`${id} ${c.t}`] = (under[`${id} ${c.t}`] || 0) + 1;
+    }
+  }
+  assert.deepEqual(under, {});
+});

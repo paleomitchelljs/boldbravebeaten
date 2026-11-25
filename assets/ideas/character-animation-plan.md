@@ -497,3 +497,5 @@ long-legged widow: asked whether it is wanted at all (nothing uses it).
 | | | balance 8373 (1357 spent this cycle) | |
 | Froglok | waddle ×8 (v3, `Waddle`: now its walk), two-footed hop ×8 (template `two-footed-jump`, `Leap`: played for moves in a fight) | the user: "Frogloks can have an awkward walk-waddle and a two-legged leaping movement". The template drew blades in its hands facing SE, NE, N, NW; one re-roll fixed SE only. Frames 3-5 of N and NE are its frame 0 lifted 3, 7 and 5 px, made in the repo (a re-pull brings the blades back); NW plays NE mirrored. A v3 hop (south) barely left the ground: deleted | 8 + 8 + 4 + 1 |
 | | | balance 8352 (1378 spent this cycle) | |
+| World art pass (the user: up to 1000 for it) | tiles `redcliff`, `moss`, `grassmoss`, `gslope`, `gledge`, `gsummit`; eleven map objects (grassland props, bones) | ledger in `assets/wip/w1/README.md` | 25 × 6 + 11 |
+| | | balance 8191 (1539 spent this cycle; 161 of the art pass's 1000) | |

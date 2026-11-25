@@ -312,6 +312,12 @@
     const d = (ex.dir + rel) % 4;
     const nx = ex.x + DIRS[d][0], ny = ex.y + DIRS[d][1];
     const ev = [];
+    // Off the map's edge from a way across: into the next place.
+    const way = edgeWay(world.place, ex.x, ex.y);
+    if (way && way.dx === DIRS[d][0] && way.dy === DIRS[d][1]) {
+      const g = here(world);
+      if (nx < 0 || ny < 0 || nx >= g.w || ny >= g.h) return { moved: false, events: [{ type: 'cross', def: g.legend[g.rows[ex.y][ex.x]] }] };
+    }
     const c = cell(world, nx, ny);
     if (c.kind === 'wall' || c.kind === 'rock') return { moved: false, events: [{ type: 'bump', text: c.ground ? `${c.ground.name}.` : 'A wall.' }] };
     if (c.kind === 'water') return { moved: false, events: [{ type: 'bump', text: `${c.ground.name}: no way across here.` }] };
@@ -392,9 +398,50 @@
       c.st.done = true;
       ev.push({ type: 'note', text: c.def.text });
       if (c.def.sets) for (const f of c.def.sets) W.setFlag(world, f);
-    } else if (c.kind === 'stairs' || c.kind === 'drop') {
+    } else if ((c.kind === 'stairs' && !edgeWay(world.place, x, y)) || c.kind === 'drop') {
       ev.push({ type: 'stairs', def: c.def, x, y });
     }
+  }
+
+  // An open world's way across (a stairs square on the map's edge drawn as nothing, `edge: true`): no prompt on
+  // stepping onto it; a step on, off the map, crosses. Returns the way off the map it leads ({dx, dy}), or null.
+  function edgeWay(placeId, x, y) {
+    const g = grid(placeId), def = g && x >= 0 && y >= 0 && x < g.w && y < g.h ? g.legend[g.rows[y][x]] : null;
+    if (!def || def.kind !== 'stairs' || !(def.edge || def.sprite === 'none')) return null;
+    const to = places()[def.to];
+    if (!to || !to.open || !(places()[placeId] || {}).open) return null;
+    return x === 0 ? { dx: -1, dy: 0 } : x === g.w - 1 ? { dx: 1, dy: 0 } : y === 0 ? { dx: 0, dy: -1 } : y === g.h - 1 ? { dx: 0, dy: 1 } : null;
+  }
+
+  // ---- The open world: the places round this one ----------------------------------------------------------
+  // Places with `world: [row, col]` lie side by side; past one's edge is the next one's map. A square off the map
+  // (x, y in this place's squares) as the place beside it has it, for drawing: {ch, kind, ground}; the sea where no
+  // place is; null if this place is not in the open world.
+  let worldIndex = null, worldFor = null;
+  function placeAt(r, c) {
+    const all = places();
+    if (worldFor !== all) { worldIndex = {}; worldFor = all; for (const [id, p] of Object.entries(all)) if (p.world) worldIndex[p.world[0] + ',' + p.world[1]] = id; }
+    return worldIndex[r + ',' + c] || null;
+  }
+  function across(placeId, x, y) {
+    const p = places()[placeId];
+    if (!p || !p.world) return null;
+    const g = grid(placeId);
+    const dc = Math.floor(x / g.w), dr = Math.floor(y / g.h);
+    const sea = { ch: '~', kind: 'water', ground: groundOf('~') };
+    const id = placeAt(p.world[0] + dr, p.world[1] + dc), o = id && grid(id);
+    if (!o) return sea;
+    const ox = x - dc * g.w, oy = y - dr * g.h;
+    if (ox < 0 || oy < 0 || ox >= o.w || oy >= o.h) return sea;
+    const ch = o.rows[oy][ox];
+    if (ch === '#') return { ch, kind: 'wall', ground: groundOf(ch) };
+    const gr = groundOf(ch);
+    if (gr) return { ch, kind: gr.wall ? 'wall' : gr.walk === false ? 'water' : 'floor', ground: gr };
+    const def = o.legend[ch];
+    const on = def && def.on ? groundOf(def.on) : o.under;
+    // A tree or a boulder there is drawn too (not monsters, people or doors: only what stands still in the land).
+    if (def && def.kind === 'prop' && def.sprite && def.sprite !== 'none') return { ch, kind: 'prop', def, ground: on || null, st: {} };
+    return { ch: '.', kind: 'floor', ground: on || null };
   }
 
   // A one-way drop (a well, a hole): its text, and any harm from the fall, before the party arrives below.
@@ -899,7 +946,7 @@
   G.Explore = {
     serviceList,
     trapOf, live, learn, springTrap,
-    DIRS, DIR_NAMES, grid, groundOf, place, lightRadius, here, cell, state, tileKey, opaque, lineClear, dist, markSeen, findChar, exits, beyond,
+    DIRS, DIR_NAMES, grid, groundOf, place, lightRadius, here, cell, state, tileKey, opaque, lineClear, dist, markSeen, findChar, exits, beyond, edgeWay, across, placeAt,
     enter, leave, fall, front, turn, move, go, peek, path, search, facing, describe, act, scan, wake,
     encounterSpec, foeAwareness, resolveSquare, wanderingFor, minutesPerStep, noise, settleClock, wanderCheck,
   };

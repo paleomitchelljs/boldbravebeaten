@@ -241,6 +241,21 @@ game:
     "▩": {name: Sandstone, wall: true, tile: mesa, color: "#8a4a2a"}
     # The open world (assets/world/w1-layout.yaml): dry, bare ground on the plateau (the canyon's soil).
     "∴": {name: Dry ground, tile: soil, color: "#c8a878"}
+    # The open world's own grounds (data/tilesets.yaml w1): rivers apart from lakes (reeds along their banks), the
+    # jungle's dark swamp water, bog in the grassland, beach and desert sand, the jungle floor, dry grass, the jungle's
+    # rises and mossy crags, the black basalt of a caldera's rim and the red rock of the labyrinth and the desert.
+    "∽": {name: River, walk: false, fight: deepWater, tile: river, color: "#2a7a8a"}
+    "≋": {name: Swamp water, walk: false, fight: deepWater, tile: swampwater, color: "#2a3824"}
+    "≃": {name: Bog, tile: bog, fight: rough, color: "#4a5a3a"}
+    "░": {name: Sand, tile: sand, color: "#e0c890"}
+    "∷": {name: Jungle floor, tile: floor, color: "#5a4030"}
+    "∵": {name: Dry grass, tile: savanna, color: "#b8a848"}
+    "∩": {name: Rise, tile: jhill, color: "#a06a3a"}
+    "▵": {name: Mossy crags, wall: true, tile: jslope, color: "#5a6a4a"}
+    "▴": {name: Mossy heights, wall: true, tile: jring, color: "#8a9a7a"}
+    "▪": {name: Black basalt, wall: true, tile: basalt, color: "#2a2a30"}
+    "▧": {name: Red rock, wall: true, tile: redcliff, color: "#b0502a"}
+    "∻": {name: Mossy grass, tile: moss, color: "#4a6a2a"}      # between the jungle floor and the grassland
   passivePenalty: 3          # passive perception is this much worse than a deliberate search
   searchBonus: 3             # ...and a search this much better than a plain check
   # ---- Traps (PROVISIONAL, docs/OVERHAUL.md step C; src/rules/traps.js, src/game/explore.js) ---------------------

@@ -35,3 +35,6 @@ notes/
 
 # Reference adventures (published PDFs, not ours to redistribute)
 docs/reference-adventures/
+
+# The reference world (GIS raster, story bible, sims): 446 MB, local only; tools/w1cells.py extracts what the game reads.
+/docs/reference_world/

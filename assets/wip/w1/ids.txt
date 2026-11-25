@@ -15,3 +15,21 @@ jdune 420a5e06-0e06-4164-b71b-45d66e6afdb6
 jring ddf52533-2f0e-4eb6-b261-1a14372935bf
 sea 345676bd-b323-48f9-b624-de534473528f
 reeds a489e0fb-33c4-4894-8ef4-f27f77d839e7
+redcliff 8936ed17-5131-4d22-abdf-1de1c01a8b02
+moss 58e04ddd-caae-4a12-846c-961cb74049ff
+grassmoss 609b31f9-b2d5-422c-ab64-6c78e0a97b82
+# map objects (2026-11-24 art pass): the grassland's own props
+obj_oak 4713e7b4-8ef0-4fc7-8503-7ecf1b58d632
+obj_pine 35a4c874-4f24-47d7-b3c8-6e378bddefd2
+obj_bush edd611f5-701a-45df-a75d-fbaac611fc9c
+obj_grass_clump eb13f3d2-5fab-48a2-af12-460857f8fbd1
+obj_wildflowers 0e02037a-f648-4705-a6bb-8e8470515fb1
+obj_acacia c00ff0fc-98b6-4ccc-8543-6abcfda1e03e
+obj_ferns fadfb9cd-3d03-4e29-a4b8-bfee2742cead
+obj_bones 78d43c9b-92f0-4d62-99af-0ced546d4dad
+obj_grass_tuft 624a7d4e-3b1d-418f-929f-2c48aee5ebba
+obj_acacia2 8db8bf43-3e8c-4d0e-abc7-0d7f75e9ae93
+obj_wildflowers2 03ebf925-9280-46c4-b998-6aa764f7250c
+gslope 8e2537c8-aa42-4aff-b891-672cf9711a98
+gledge 7659b4cb-9c35-4f07-b34f-a1f934a3bd37
+gsummit 9788cee6-8c34-46a0-be58-b5b5823bdf35

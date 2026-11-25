@@ -23,6 +23,8 @@ test('content: each map is rectangular, and everything on it can be reached from
     if (!p.map) continue;
     const g = Explore.grid(id);
     const starts = ['<', ...(arrivals[id] || [])].map((ch) => Explore.findChar(id, ch)).filter(Boolean);
+    // In the open world every square of a way across an edge is a way in (you arrive on the one across from where you left).
+    for (let y = 0; y < g.h; y++) for (let x = 0; x < g.w; x++) { const d = (p.legend || {})[g.rows[y][x]]; if (d && d.edge) starts.push({ x, y }); }
     assert.ok(starts.length, `${id} has a way in`);
     // Walk everything that isn't rock, wall or deep water: doors, locks and secrets are passable for this purpose.
     const ground = B.CONFIG.game.ground || {};

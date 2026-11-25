@@ -651,6 +651,12 @@
         // A prop with `over: true` hangs overhead (a bridge between two towers): drawn after everyone, who walk beneath.
         if (['chest', 'shrine', 'prop'].includes(cc.kind)) (cc.def && cc.def.over ? overhead : list).push({ y: c.y + 0.99, prop: { c: cc, x: c.x, y: c.y } });
       }
+      // Past the map's edge in the open world: the next place's trees and rocks (sc.outside gives its squares).
+      if (sc.outside && ts) for (let y = y0 - 1; y <= y0 + rows + 2; y++) for (let x = x0 - 1; x <= x0 + cols + 1; x++) {
+        if (x >= 0 && y >= 0 && x < sc.w && y < sc.h) continue;
+        const cc = sc.outside(x, y);
+        if (cc && cc.kind === 'prop') list.push({ y: y + 0.99, prop: { c: cc, x, y } });
+      }
       for (const a of sc.actors || []) { const v = view.vis[a.id]; list.push({ y: v.y + 1, fig: { a, v } }); }
       list.sort((p, q) => p.y - q.y);
       for (const it of list) {

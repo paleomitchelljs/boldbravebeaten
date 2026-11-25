@@ -338,21 +338,33 @@
       const chain = [];
       for (let d = raw.terrains[n]; d && chain.length < 8; d = d.like ? raw.terrains[d.like] : null) chain.unshift(d);
       const t = Object.assign({ name: n, rank: i }, ...chain);
+      // A corner sheet's tiles indexed by their corner masks (NW 8, NE 4, SW 2, SE 1).
+      const indexSheet = (s) => {
+        const cols = s.cols || 4;
+        s.index = {};
+        s.variants = {};
+        (s.corners || PIXELLAB16).forEach((code, k) => {
+          const m = [...code].reduce((a, ch, b) => a | (ch === 'U' ? 8 >> b : 0), 0);
+          const at = [k % cols, Math.floor(k / cols)];
+          // The first tile for a mask is the plain one; later tiles with the same corners are variants (a mosaic).
+          if (!(m in s.index)) s.index[m] = at;
+          else (s.variants[m] = s.variants[m] || []).push(at);
+        });
+      };
       if (t.cliff) {
         // A PixelLab cliff set (25 tiles): each tile is [col, row, pattern], the pattern 16 letters, row by row, of the
         // 4x4 squares around its corner (0 lower, 1 upper, 2 the face row, . any).
         t.cliffTiles = t.cliff.map(([cx, cy, pat]) => ({ at: [cx, cy], p: [...pat].map((ch) => (ch === '.' ? -1 : +ch)) }));
-      } else if (t.wang) {
-        const cols = t.cols || 4;
-        t.index = {};
-        t.variants = {};
-        (t.corners || PIXELLAB16).forEach((code, k) => {
-          const m = [...code].reduce((a, ch, b) => a | (ch === 'U' ? 8 >> b : 0), 0);
-          const at = [k % cols, Math.floor(k / cols)];
-          // The first tile for a mask is the plain one; later tiles with the same corners are variants (a mosaic).
-          if (!(m in t.index)) t.index[m] = at;
-          else (t.variants[m] = t.variants[m] || []).push(at);
-        });
+      } else if (t.wang) indexSheet(t);
+      // `also`: the same terrain drawn over other grounds, a sheet each ({over, wang, cut, corners, vary}): grass over
+      // sand (a dune) as well as over water (a shore). Each corner takes the sheet for the ground in its lower quarters.
+      // A cliff set's other sheets share its tile layout (`cliff`) unless they give their own.
+      t.sheets = [t];
+      for (const a of t.also || []) {
+        const s = Object.assign({}, a);
+        if (t.cliff) s.cliffTiles = s.cliff ? s.cliff.map(([cx, cy, pat]) => ({ at: [cx, cy], p: [...pat].map((ch) => (ch === '.' ? -1 : +ch)) })) : t.cliffTiles;
+        else indexSheet(s);
+        t.sheets.push(s);
       }
       terrains[n] = t;
     });
@@ -416,18 +428,21 @@
     // Decor: small pieces scattered over plain squares, so a plain tile need not carry the variety itself. A terrain's
     // `decor` goes on squares whose eight neighbours are the same terrain (clear of every edge); a wall's `faces` go on
     // the face it shows the square south of it, where the wall runs straight on both sides.
+    const layers = [];
     for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
       const me = T_(x, y).t, t = tdef(ts, me);
-      if (t.decor && !T_(x, y).over) {
+      // `decor` may be a list of layers, each laid over the one before everywhere (soft patches, then tufts, then ferns).
+      if (t.decor && !T_(x, y).over) [].concat(t.decor).forEach((d, li) => {
         let clear = true;
         // With `edge`, the pieces may also lie where it meets anything drawn under it (ferns spilling onto grass).
-        const ok = (q) => !q.over && (q.t === me || (t.decor.edge && tdef(ts, q.t).rank < t.rank));
+        const ok = (q) => !q.over && (q.t === me || (d.edge && tdef(ts, q.t).rank < t.rank));
         for (let dy = -1; dy <= 1 && clear; dy++) for (let dx = -1; dx <= 1; dx++) if (!ok(T_(x + dx, y + dy))) { clear = false; break; }
-        if (clear) scatter(out.decor, t.decor, x, y, 'square', ts.cell);
-      }
+        if (clear) scatter(layers[li] = layers[li] || [], d, x, y, 'square', ts.cell, li * 100);
+      });
       const n = tdef(ts, T_(x, y - 1).t);
       if (n.faces && t.rank < n.rank && [-1, 1].every((d) => tdef(ts, T_(x + d, y - 1).t).rank >= n.rank && tdef(ts, T_(x + d, y).t).rank < n.rank)) scatter(out.decor, n.faces, x, y, 'face', ts.cell);
     }
+    for (const l of layers) if (l) out.decor.push(...l);
     // A wang terrain's upper squares: it and every terrain listed after it, except a raised terrain (a cliff set, or
     // one marked `apart`, a plank deck) over flat ground, and the walls under another cliff set: those draw themselves on top, so fern beds draw nothing
     // under a pyramid and a tier nothing under the walls. Flat ground does count the walls, so it runs on under them
@@ -455,22 +470,48 @@
     // The wall corners to draw from its cut sheet (the ground cut away): a square of the four round it is a terrain
     // that runs under walls.
     const cutAt = (x, y) => [[-1, -1], [0, -1], [-1, 0], [0, 0]].some(([dx, dy]) => { const d = tdef(ts, T_(x + dx, y + dy).t); return d.underWalls && d.name !== ts.wall; });
+    // Of a terrain's sheets (its own and its `also`), the one drawn over the ground most of a corner's lower quarters
+    // are (ties: the first listed). `low`: the terrains of those quarters, cliff sets left out (they draw themselves).
+    const pickSheet = (w, low) => {
+      if (w.sheets.length < 2 || !low.length) return 0;
+      let best = 0, bn = -1;
+      w.sheets.forEach((s, k) => { const n = low.filter((t) => t === s.over).length; if (n > bn) { bn = n; best = k; } });
+      return best;
+    };
+    const lowOf = (up, x, y) => [[x - 1, y - 1], [x, y - 1], [x - 1, y], [x, y]].filter(([a, b]) => !up(a, b)).map(([a, b]) => T_(a, b).t).filter((t) => !(ts.terrains[t] || {}).cliffTiles);
     for (const w of Object.values(ts.terrains)) {
       if (!w.wang) continue;
-      if (w.cliffTiles) { cliffCorners(out, w, upOf(w), x0, y0, x1, y1, w.cut && w.name === ts.wall ? cutAt : null); continue; }
+      if (w.cliffTiles) {
+        const up = upOf(w), wallCut = w.cut && w.name === ts.wall ? cutAt : null;
+        // A cliff's corner over a ground its sheet doesn't draw (forest beside water): the sheet with its lower ground
+        // cut away, so what lies there shows, rather than a square of the sheet's own grass.
+        const pick = (x, y) => {
+          const low = lowOf(up, x, y), k = pickSheet(w, low), s = w.sheets[k];
+          return { s: k, cut: !!((wallCut && wallCut(x, y)) || (s.cut && low.some((t) => t !== s.over))) };
+        };
+        cliffCorners(out, w, up, x0, y0, x1, y1, pick);
+        continue;
+      }
+      // `strict` (a tileset of many grounds, the open world's): a flat ground draws a corner only where one of its four
+      // squares is that ground, so the sand and the jungle floor ranked between water and grass don't draw their own
+      // edge along every grass shore.
+      const strict = !!ts.raw.strict && !w.apart;
       for (let y = y0; y <= y1 + 1; y++) for (let x = x0; x <= x1 + 1; x++) {
         const up = upOf(w);
         const m = (up(x - 1, y - 1) ? 8 : 0) | (up(x, y - 1) ? 4 : 0) | (up(x - 1, y) ? 2 : 0) | (up(x, y) ? 1 : 0);
         if (!m) continue;
+        if (strict && T_(x - 1, y - 1).t !== w.name && T_(x, y - 1).t !== w.name && T_(x - 1, y).t !== w.name && T_(x, y).t !== w.name) continue;
         // A wall drawn as a slope (a corner set, not a cliff) takes its cut sheet where a built wall runs under it.
         const c = { x, y, t: w.name, m, cut: !!(w.cut && w.name === ts.wall && cutAt(x, y)) };
         // A third ground in a lower quarter (oasis grass, drawn over sand, beside water): the sheet would lay its own
         // lower ground there, so the corner comes from the cut sheet and what lies there shows. Without one it is
-        // named (`foreign`) for tools/joins.js.
+        // named (`foreign`) for tools/joins.js. A terrain with sheets over several grounds (`also`) takes the one for
+        // the ground there first.
         if (m !== 15 && w.over && !w.apart) {
-          const low = [[x - 1, y - 1, 8], [x, y - 1, 4], [x - 1, y, 2], [x, y, 1]].filter((q) => !(m & q[2])).map((q) => T_(q[0], q[1]).t);
-          const odd = low.find((t) => t !== w.over && !(ts.terrains[t] || {}).cliffTiles);
-          if (odd) { if (w.cut) c.cut = true; else c.foreign = odd; }
+          const low = lowOf(up, x, y), k = pickSheet(w, low), s = w.sheets[k];
+          if (k) c.s = k;
+          const odd = low.find((t) => t !== s.over);
+          if (odd) { if (s.cut) c.cut = true; else c.foreign = odd; }
         }
         out.corner.push(c);
       }
@@ -490,17 +531,19 @@
   // (1), so the face hangs from the middle of the wall's last row over the top half of the square in front, as 3/4
   // walls do. Each corner takes the tile whose pattern scores best over the 4x4 squares around it (the middle four
   // count most), since the 25 tiles don't cover every shape.
-  function cliffCorners(out, w, up, x0, y0, x1, y1, cutAt) {
+  // `pick(x, y)`: the sheet ({s, cut}) for a corner (a terrain's `also` sheets share its tile layout unless they give one).
+  function cliffCorners(out, w, up, x0, y0, x1, y1, pick) {
     const v = (x, y) => (up(x, y) ? (up(x, y + 1) ? 1 : 2) : 0);
     for (let y = y0; y <= y1 + 1; y++) for (let x = x0; x <= x1 + 1; x++) {
       const g = [];
       for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) g.push(v(x - 2 + j, y - 2 + i));
       if (!(g[5] || g[6] || g[9] || g[10])) continue;
+      const pk = pick ? pick(x, y) : { s: 0, cut: false }, tiles = (w.sheets[pk.s] || w).cliffTiles || w.cliffTiles;
       // Of tiles that score the same, the one that gets fewer squares wrong: a wall's end tile also scores as much as its
       // straight tile partway along it (one outer square right, one wrong), and drew a lip there. Ties left (a tile and
       // its variants) are broken by position.
       let best = null, bs = -Infinity, bm = 0, ties = 0;
-      for (const tl of w.cliffTiles) {
+      for (const tl of tiles) {
         let sc = 0, miss = 0;
         for (let k = 0; k < 16; k++) {
           const want = tl.p[k];
@@ -512,7 +555,7 @@
         if (sc > bs || (sc === bs && miss < bm)) { bs = sc; bm = miss; best = tl; ties = 1; }
         else if (sc === bs && miss === bm && hash(x, y, 13 + ties++) % ties === 0) best = tl;
       }
-      if (best) out.corner.push({ x, y, t: w.name, at: best.at, cut: !!(cutAt && cutAt(x, y)) });
+      if (best) out.corner.push(Object.assign({ x, y, t: w.name, at: best.at, cut: pk.cut }, pk.s ? { s: pk.s } : null));
       // A corner no tile fits exactly (some square the tile cares about differs): tools/walls.js lists these.
       if (best && out.misfit) {
         const full = best.p.reduce((a, want, k) => a + (want < 0 ? 0 : k === 5 || k === 6 || k === 9 || k === 10 ? 10 : 1), 0);
@@ -526,11 +569,12 @@
   // measured from the top of the square in front of the wall, so its top is negative).
   // `clump` (squares) scales the density by a smooth noise of that size, none where it is low, so pieces gather in
   // drifts with bare ground between; `spread` (art pixels) lets a piece hang that far over its square's edge.
-  function scatter(out, d, x, y, where, cell) {
+  // `salt` sets a layer apart (its pieces fall elsewhere than the layer under it).
+  function scatter(out, d, x, y, where, cell, salt = 0) {
     const pieces = d.pieces || [], tries = Math.max(1, Math.ceil(d.density == null ? 0.4 : d.density));
     if (!pieces.length) return;
-    const dens = (d.density == null ? 0.4 : d.density) * (d.clump ? 3 * Math.max(0, noise(x / d.clump, y / d.clump) - 0.35) : 1);
-    for (let i = 0; i < tries; i++) {
+    const dens = (d.density == null ? 0.4 : d.density) * (d.clump ? 3 * Math.max(0, noise(x / d.clump + salt * 0.37, y / d.clump) - 0.35) : 1);
+    for (let i = salt; i < salt + tries; i++) {
       if (hash(x, y, 31 + i) % 1000 >= (dens / tries) * 1000) continue;
       // Not the piece the squares to the west and north took first, so the same sprite doesn't stand side by side.
       const pick = (xx, yy) => hash(xx, yy, 41 + i) % pieces.length, near = [pick(x - 1, y), pick(x, y - 1)];
@@ -558,7 +602,7 @@
       const im = t.tile ? env.imgAt(ts.dir + (Array.isArray(t.tile) ? t.tile[hash(p.x, p.y) % t.tile.length] : t.tile)) : null;
       if (im && im.ok) { ctx.drawImage(im.el, 0, 0, cell, cell, X, Y, size, size); return; }
       // Plain ground under a wang set: its all-lower tile.
-      const w = Object.values(ts.terrains).find((q) => q.wang && q.over === p.t && q.index && q.index[0]);
+      const w = Object.values(ts.terrains).flatMap((q) => q.sheets || []).find((q) => q.wang && q.over === p.t && q.index && q.index[0]);
       const wi = w ? env.imgAt(ts.dir + w.wang) : null;
       if (wi && wi.ok) { const [cx, cy] = w.index[0]; ctx.drawImage(wi.el, cx * cell, cy * cell, cell, cell, X, Y, size, size); return; }
       // No art: the colour, laid over the floor at the terrain's alpha (a patch of rubble in the grass).
@@ -567,12 +611,13 @@
       ctx.fillStyle = t.color || '#555'; ctx.fillRect(X, Y, size, size);
       ctx.restore();
     } else if (kind === 'corner') {
-      const t = ts.terrains[p.t], X = env.ox + (p.x - 0.5) * size, Y = env.oy + (p.y - 0.5) * size;
+      const t = ts.terrains[p.t], sh = (p.s && t.sheets && t.sheets[p.s]) || t, X = env.ox + (p.x - 0.5) * size, Y = env.oy + (p.y - 0.5) * size;
       // Over a moving terrain the corner tiles come from `cut`, the sheet with that terrain cut away, so it shows through.
-      const overAnim = env.animGround && !t.cliffTiles && t.cut && ts.terrains[t.over] && ts.terrains[t.over].anim;
-      const im = env.imgAt(ts.dir + (p.cut || overAnim ? t.cut : t.wang)), vs = t.variants && t.variants[p.m];
+      const overAnim = env.animGround && !t.cliffTiles && sh.cut && ts.terrains[sh.over] && ts.terrains[sh.over].anim;
+      const im = env.imgAt(ts.dir + (p.cut || overAnim ? sh.cut : sh.wang)), vs = sh.variants && sh.variants[p.m];
       // A variant at a share `vary` (default 0.25) of the corners that have one, picked by position.
-      const at = p.at || (vs && hash(p.x, p.y, 11) % 100 < (t.vary == null ? 0.25 : t.vary) * 100 ? vs[hash(p.x, p.y, 12) % vs.length] : t.index[p.m]);
+      const vary = sh.vary != null ? sh.vary : t.vary != null ? t.vary : 0.25;
+      const at = p.at || (vs && hash(p.x, p.y, 11) % 100 < vary * 100 ? vs[hash(p.x, p.y, 12) % vs.length] : sh.index[p.m]);
       if (im.ok && at) { ctx.drawImage(im.el, at[0] * cell, at[1] * cell, cell, cell, X, Y, size, size); return; }
       // No art yet: the upper quarters in the terrain's colour.
       ctx.fillStyle = t.color || '#888';

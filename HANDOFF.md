@@ -290,16 +290,55 @@ line after every push (`git log -1 --format=%h`). What was done, and the detail 
   merged over places.yaml by the loader). Plan and method: `docs/W1_MAP_PLAN.md`; schema: `docs/DATA.md` "The open world".
 - [x] Dungeon doors and city gates stamped into the places as sites; new game starts at `bz_6_8` (Shiwgoiwo's green),
   recruits on its squares. Edge squares are ways across; `Explore.enter(..., from)` lands you across from where you left.
-- [x] Three composite tilesets (`w1_wild`, `w1_jungle`, `w1_desert`) from existing sheets; `∴` dry ground letter.
-  Forest and jungle laid in whole 2x2 blocks: walls.js and diagonals.js clean on every place.
+- [x] Forest and jungle laid in whole 2x2 blocks: walls.js and diagonals.js clean on every place.
 - [x] Map page republished: https://claude.ai/artifact/PndLzWQm8YhdDx1c34ev1z (places, blend to the raster, art gaps).
 - [x] Fixed a leak the bigger world exposed: `Sprites` kept every waiting portrait callback (the UI test ran out of heap).
-- [ ] **Art** for the open world: `TILES_TO_GET.md` top section; counts and kludges in `assets/world/w1-gaps.md`.
-  Seventeen sets generated 2026-11-24 (items 1-6, 8), **not wired**: `assets/wip/w1/README.md` has the ids, two
-  faults to fix by hand, and the plan (sand over sea, lake and swamp water needs a per-neighbour sheet in planTiles, or
-  the generator keeps those coasts apart; new generator classes; tileset entries). Item 7 done: each city drawn
-  from outside as one 256-px picture (`assets/wip/w1/cities/README.md`). Item 9 needs no generation (the court tier
-  sets). The forest wang sets are obsolete (no generated place uses the old tilesets).
+- [x] **Art pass, 2026-11-24** (the user: zone names, grassy grassland, a real labyrinth, broken features, graded
+  biomes, edges that match the next place, no popup at every edge). One tileset `w1` for every place, with `also` sheets
+  (a terrain over several lower grounds, picked per corner) and `strict` corners; the generator rewritten by region
+  (grassland, jungle, desert per square, the jungle's edge wandering by noise; moss between jungle floor and grass);
+  canopy only in large masses; grassland is grass, dry-grass patches and few trees; beaches; rivers apart from lakes;
+  the labyrinth a generated maze of red-rock cliffs on sand; names for all 74 places from the story bible; edge squares
+  cross without a prompt (a toast names the place) and the map draws the next place's land past the edge; roads drawn
+  (a place's `look.ground` had turned every road into grass). Then, place by place: the grassland's mountains a new
+  chain (rough granite, boulder crags, snowy summits; the vale's flagstones read as paving), dry grass toned from
+  yellow to straw, a dry-grass band between the grass and the desert, roads that bend (a noise on their cost), lakes
+  rounded (the lake share interpolated), coasts ragged (a finer warp for land and sea) and a coast on a place's edge
+  no longer flooded back to it (a piece reached across the edge is left be; the reachability test counts every
+  edge-way square as a way in), desert specks in the grass dropped, a range's outcrops one rock, trees up to the
+  canopy's edge and the canopy's outline notched. Spend: 161 generations (`assets/wip/w1/README.md`).
+- [x] **Second art pass, 2026-11-24** (the user: grounds too repetitive, plainer with scattered decor; the labyrinth a
+  whole place of twisting valleys against a range, after the Gorge of King Xorbb, and passes after Highpass; blips at
+  the canopy's corners). Plain grounds: `tools/plaingrounds.py` (config `assets/wip/w1/plain.json`) takes each
+  ground's repeating motifs out of every w1 sheet that carries it (`art/worldtiles/w1/plain/`) and cuts them into
+  sprites; `decor` takes a list of layers (soft patches of shade, the tufts, flowers or ferns), each over the one
+  before. The labyrinth is bz_7_6 (`gorge`: ravines in a maze about a bowl, a broad way along the range's foot, the
+  lord in the deepest dead end); bz_8_7 has the high pass (`pass`: a defile through the range, a gate in each narrows,
+  the keep, a tower, a cottage and a well on the hold's shelf), which replaced the one-square slots cut through it.
+  Blips: the red cliff and the forest drew their cliff under the jungle canopy (w1 `forest` is `solo` now; a test
+  checks no cliff set draws under another terrain's squares), and trees stood right below a canopy, in front of its
+  face (not now). The wildflowers prop's flowers no longer stand in a grid. Scree as talus along the gorge walls was
+  tried and dropped (its edges are hard and square). No PixelLab spend.
+- [x] **Physiography and the pass, 2026-11-24** (the user: swamp can't lie in the highlands, the west is desert; then
+  the pass after Highpass apart from the minotaurs' gorge after Xorbb, the orc valley a branch off the pass). The cells
+  extract (`tools/w1cells.py`) gains aridity and temperature. A `terrain` block in the layout: land above 0.75 km is
+  highland (region H, the eastern plateau: grass, pines, stony lake shores), its rim rock or hillside where it rises
+  steeply; swamp only below 0.2 km, flat and wet (the cells' swamp flag was every lake, and ringed the plateau's lakes
+  with marsh); dry grass by aridity across the west; Strahler-1 streams as wadeable shallows (the ford set) and lakes'
+  outlets; nine waterfalls (the highland set's cascade) where a river drops 0.4 km flowing south. The old whole-place
+  maze and the 8,7 defile are gone: one canyon carver (`pass`/`gorge`: routes in world squares across places, rooms,
+  ponds, gates, walls sealed against later roads and cuts). The high pass runs up the Oumombo from bz_7_6 to below
+  Shiwgoiwo (plains gate, ford hamlet and pond, the hub, the junction, the upper gate), a branch east through the old
+  valley gate to the orc castle; the labyrinth is in the high block south of it (bz_7_7), loops round two crag islands
+  and a hook to the lord's den, open only west. joinPlaces now leaves any piece reached from Shiwgoiwo's across the
+  edges (a canyon floor is a piece of its place of its own). The wolves moved north clear of the pass. No PixelLab spend.
+- [ ] The pass's hamlets are props only: no one lives in them yet (no NPCs, shop or inn that works), and the gorge and
+  pass have no encounters beyond the labyrinth's minotaurs. The 7,7 place holds both; its wandering list is empty.
+- [ ] Physiography left: falls only where the river flows south (the art falls down the screen); a river through a
+  canyon wall is water through rock; temperature is extracted but unused.
+- [ ] Open world art still wanted: the sea set (fetched, its hue to fix), dune variety; canopy masses are notched but
+  still 2x2-stepped; a long straight raster coast (the south, row 8) still reads fairly straight; the gap report
+  lists the rest (`assets/world/w1-gaps.md`).
 - [ ] Encounters and wandering monsters for the generated places (only the sites have any). Levels are distance x 0.6,
   untested: no `tools/tiers.js` / `sim/crawl.js` on them yet.
 - [ ] Decide how hand-crafted places survive regeneration (a `keep` slot copied through is the simple way).

@@ -118,7 +118,8 @@
     go('explore');
   }
 
-  function takeStairs(def) {
+  // opts.cross: off an open-world place's edge into the next (its name shown as you come in).
+  function takeStairs(def, opts) {
     const w = Game.world;
     const to = G.Content.world.places[def.to];
     if (to.kind === 'town') { Explore.leave(w, def.to); save(); go('town'); return; }
@@ -128,6 +129,7 @@
     Explore.enter(w, def.to, def.at || '<', from);
     save();
     go('explore');
+    if (opts && opts.cross && UI.toast) UI.toast(to.name);
   }
 
   function startBattle(spec, opts) {

@@ -28,6 +28,8 @@
           if (e.check) World.logLine(w, Bits.checkText(e.check), 'find');
           break;
         case 'stairs': game.ui.prompt = { type: 'stairs', def: e.def }; break;
+        // Off the edge of an open-world place: straight into the next, no question asked.
+        case 'cross': stopWalk(game); game.ui.prompt = null; game.takeStairs(e.def, { cross: true }); return false;
         case 'fall': stopWalk(game); game.ui.prompt = null; game.takeStairs(e.def); return false;
         case 'note': game.openOverlay('text', { title: 'You read', text: e.text }); break;
         case 'loot': game.openOverlay('loot', { title: e.title, lines: e.lines }); break;
@@ -89,10 +91,12 @@
   const STEP_MS = 220, GLIDE = 5;
 
   // Click to walk: one step at a time, stopping at anything that needs an answer.
-  function walkTo(game, x, y) {
+  // `then`: a last step (off the map's edge, into the next place).
+  function walkTo(game, x, y, then) {
     stopWalk(game);
     const dirs = Explore.path(game.world, x, y);
     if (!dirs.length) return false;
+    if (then != null) dirs.push(then);
     const run = { dirs, timer: null };
     game.ui.walk = run;
     const next = () => {
@@ -292,6 +296,8 @@
       // Past a way out on the map's edge, its ground runs on a few squares, so the road visibly leaves the map.
       // Elsewhere outdoors the edge's own wall runs on (the swamp's jungle, not the temple wall the tileset is named for).
       outside: (x, y) => {
+        // The open world: past the edge lies the next place, drawn as it is there (the sea where there is none).
+        if (p.world) return Explore.across(w.place, x, y);
         const e = Explore.beyond(w.place, x, y);
         if (e) { const c = Explore.peek(w, e.x, e.y); return { ch: '.', kind: 'floor', ground: c.ground, st: {} }; }
         if (!p.open) return null;
@@ -308,7 +314,8 @@
         return !!e && !!ms.seen[e.x + ',' + e.y];
       },
       // The camera may look three squares past an edge with a way out on it, to show the road leaving.
-      margin: Explore.exits(w.place).reduce((m, e) => { if (e.dx < 0) m.l = 3; if (e.dx > 0) m.r = 3; if (e.dy < 0) m.t = 3; if (e.dy > 0) m.b = 3; return m; }, {}),
+      // In the open world the camera keeps the party in the middle up to the edge: the next place shows past it.
+      margin: p.world ? { l: 9, r: 9, t: 9, b: 9 } : Explore.exits(w.place).reduce((m, e) => { if (e.dx < 0) m.l = 3; if (e.dx > 0) m.r = 3; if (e.dy < 0) m.t = 3; if (e.dy > 0) m.b = 3; return m; }, {}),
       light: { x: ex.x, y: ex.y, r: Explore.lightRadius(w) },
       cam: { x: ex.x, y: ex.y },
       actors: [], marks: [],
@@ -397,7 +404,11 @@
       const cx = Math.max(0, Math.min(g.w - 1, x)), cy = Math.max(0, Math.min(g.h - 1, y));
       let best = Explore.beyond(w.place, x, y), bd = best ? 0 : 4;
       if (!best) for (const e of Explore.exits(w.place)) { const d = Math.abs(e.x - cx) + Math.abs(e.y - cy); if (d < bd) { bd = d; best = e; } }
-      if (best && !walkTo(game, best.x, best.y)) toast('No way through to there.');
+      // In the open world, on along the way off the edge into the next place.
+      const on = best && Explore.edgeWay(w.place, best.x, best.y);
+      const out = on ? (on.dx === 1 ? 1 : on.dx === -1 ? 3 : on.dy === 1 ? 2 : 0) : null;
+      if (best && w.explore.x === best.x && w.explore.y === best.y) { if (out != null) step(game, out); return; }
+      if (best && !walkTo(game, best.x, best.y, out)) toast('No way through to there.');
       return;
     }
     // A way out with one of the party standing on it (or just below it) is walked to, not the sheet of who is there.

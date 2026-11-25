@@ -15,71 +15,211 @@ minLand: 8                  # a slot with fewer land cells than this is left out
 home: stonebridge           # levels rise with the distance in places from this site
 level: {base: 1, per: 0.6, max: 10}
 
-# How each family draws the abstract terrain classes. A class missing from a family falls back along `stand`, and the
-# fallback is written to the gap report (assets/world/w1-gaps.md) as a kludge to make art for.
-families:
-  w1_wild:
-    tileset: w1_wild
-    look: {wall: "#4a5a3a", floor: "#4f9a3c", ceiling: "#9ab8d6", fog: "#0c120a", torch: 0, ground: ",", light: 28}
-    chars: {ocean: "~", lake: "~", river: "~", ground: ",", dry: "∴", forest: "}", hill: "{", scree: "`", mountain: "#", ledge: "(", summit: "?", road: ".", bridge: "="}
-    stand: {jungle: forest, swamp: pools, sand: ground, shallows: bridge}
-    props:
-      t: {sprite: oak, label: "An oak"}
-      i: {sprite: birch, label: "A birch"}
-      p: {sprite: pine, label: "A pine"}
-      g: {sprite: tallgrass_gold, solid: false, label: "Tall grass"}
-      o: {sprite: boulder, label: "A boulder"}
-      r: {sprite: reeds, solid: false, label: "Reeds"}
-      k: {sprite: kapok, label: "A jungle tree"}
-    scatter: {ground: {t: 0.012, i: 0.006, g: 0.02, o: 0.004}, dry: {g: 0.02, o: 0.01}, forestEdge: {p: 0.03}, jungleAsForest: {k: 0.02}, pools: {r: 0.25}}
-  w1_jungle:
-    tileset: w1_jungle
-    look: {wall: "#24381f", floor: "#4a3a28", ceiling: "#2a3a22", fog: "#0c120a", torch: 0, ground: ".", light: 24}
-    chars: {ocean: "~", lake: "~", river: "~", ground: ".", jungle: "]", swamp: "≈", shallows: "_", road: "≡", bridge: "_"}
-    stand: {forest: jungle, dry: ground, hill: ground, scree: ground, mountain: jungle, ledge: jungle, summit: jungle, sand: swamp}
-    props:
-      k: {sprite: kapok, label: "A kapok tree"}
-      m: {sprite: mangrove, label: "A mangrove"}
-      s: {sprite: strangler, label: "A strangler fig"}
-      c: {sprite: cypress, label: "A cypress"}
-    scatter: {ground: {k: 0.01, s: 0.006}, swamp: {m: 0.03, c: 0.02}, grassAsFloor: {k: 0.004}}
-  w1_desert:
-    tileset: w1_desert
-    look: {wall: "#8a4a2a", floor: "#d8b878", ceiling: "#9ab8d6", fog: "#1a140a", torch: 0, ground: ".", light: 28}
-    chars: {ocean: "~", lake: "~", river: "~", ground: ".", dry: ".", forest: ",", hill: "`", scree: "`", mountain: "#", ledge: "(", summit: "?", shallows: "_", road: "`", bridge: "_", oasis: ","}
-    stand: {jungle: forest, swamp: oasis}
-    props:
-      a: {sprite: palm, label: "A palm"}
-      b: {sprite: thornbush, label: "A thornbush"}
-      d: {sprite: drygrass, solid: false, label: "Dry grass"}
-      o: {sprite: boulder, label: "A boulder"}
-    scatter: {ground: {b: 0.01, d: 0.03, o: 0.006}, oasis: {a: 0.08}}
+tileset: w1                 # every place draws from it, so land runs on across a place's edge as it lies
 
-# Families by the slot's land: the biome most of it is (G grassland, F temperate forest, J jungle, D desert).
-familyOf: {G: w1_wild, F: w1_wild, J: w1_jungle, D: w1_desert}
-# Slot overrides: [row, col]: {family, name, blurb}
+# How the cells' figures become ground (tools/worldgen.js "Terrain classes"). Heights in km; `arid` is the cells'
+# rainfall over what the sun could take up (below 0.2 desert, 0.2-0.5 semi-arid, above 1 wet).
+terrain:
+  upland: {elev: 0.75, noise: 0.1}        # land above this height is highland (region H); its edge wanders by `noise`
+  scarp: {band: 0.07, wide: 1.8, hill: 0.035, rock: 0.07}   # the upland's rim: within `band` km of its height (or
+                                          # `wide` squares' rise, if more), hillside where the land rises `hill` km a
+                                          # square or more, rock from `rock`; where it rises less, a way up
+  swamp: {below: 0.2, relief: 0.3, wet: 1.0, river: 3, noise: 0.52}   # swamp only on land below `below` with local
+                                          # relief under `relief`, wet (`arid` over `wet`) or by a river of order
+                                          # `river`; in patches (`noise`)
+  arid: {dry: [0.25, 0.65], trees: 0.6}   # dry grass everywhere drier than the first figure, in shrinking patches up to
+                                          # the second; no trees drier than `trees`
+  streams: {strahler: 1, width: 0.35}     # rivers from this order up (the first order a stream a square wide)
+  falls: {drop: 0.4, char: "≀", label: "A waterfall, loud over the rim"}   # a waterfall where a river drops this much (km)
+                                          # from one cell to the next, flowing south
+
+# Regions: each square's is the raster's biome there (grassland and temperate forest G, jungle J, desert D; above
+# `terrain.upland` the highland H, save the desert), its edge
+# wandering a few squares by noise so one runs into the next in tongues and islands, not along a place's edge. A
+# mountain, hill, canopy or swamp takes the region most of it lies in. `chars`: the letters for each terrain class
+# (rules.yaml game.ground); `look`: a place's light and colours, by the region most of it is; `scatter`: props by class
+# (`shore` beside a lake or river; `edge` within three squares of another region, by that region).
+regions:
+  G:
+    look: {wall: "#4a5a3a", floor: "#4f9a3c", ceiling: "#9ab8d6", fog: "#0c120a", torch: 0, light: 28}
+    mossBand: 1
+    dryBand: 2          # squares of dry grass where the grassland meets the desert
+    chars: {ocean: "~", lake: "~", river: "∽", stream: "_", swamp: "≃", ground: ",", moss: "∻", dry: "∵", woods: ",", forest: "}", hill: "{", mountain: "#", ledge: "(", summit: "?", sand: "░", road: ".", bridge: "=", ford: "_", rim: "▪", gorge: ","}
+    scatter:
+      ground: {oak: 0.003, broadleaf: 0.002, gbush: 0.006, grass_tuft: 0.03, meadow: 0.02, wildflowers: 0.015, flowerbush: 0.004, boulder: 0.002}
+      dry: {tallgrass_gold: 0.05, drygrass: 0.02, acacia: 0.008, boulder: 0.004}
+      woods: {oak: 0.14, broadleaf: 0.06, birch: 0.06, pine: 0.04, gbush: 0.05, grass_tuft: 0.04}
+      hill: {boulder: 0.02, pine: 0.012, grass_tuft: 0.03}
+      swamp: {reeds: 0.12, mossdead: 0.02}
+      sand: {pebbles: 0.01, drygrass: 0.01}
+      gorge: {grass_tuft: 0.05, boulder: 0.02, rocks: 0.012, gbush: 0.008, dead_tree: 0.004}   # a ravine's floor (a gorge, a pass)
+      shore: {reeds: 0.2}
+      edge: {J: {kapok: 0.025, gbush: 0.04, ferns: 0.04}, D: {drygrass: 0.05, thornbush: 0.01}}
+  J:
+    look: {wall: "#24381f", floor: "#4a3a28", ceiling: "#2a3a22", fog: "#0c120a", torch: 0, light: 24}
+    mossBand: 2
+    chars: {ocean: "~", lake: "~", river: "∽", stream: "_", swamp: "≈", pool: "≋", ground: "∷", moss: "∻", dry: "∷", woods: "∷", forest: "]", hill: "∩", mountain: "▵", ledge: "▴", summit: "▴", sand: "░", road: "≡", bridge: "=", ford: "_", rim: "▪"}
+    scatter:
+      ground: {kapok: 0.02, strangler: 0.01, bush: 0.025, ferns: 0.03}
+      woods: {kapok: 0.14, strangler: 0.07, mossoak: 0.04, mossleaning: 0.03, ferns: 0.05}
+      swamp: {mangrove: 0.06, cypress: 0.04}
+      hill: {mossoak: 0.02, ferns: 0.03}
+      sand: {palm: 0.03, youngpalm: 0.02}
+      shore: {reeds: 0.12}
+      edge: {G: {oak: 0.015, grass_tuft: 0.04}}
+  H:
+    look: {wall: "#4a5560", floor: "#5a9a48", ceiling: "#a8c0d8", fog: "#0e1418", torch: 0, light: 28}
+    mossBand: 1
+    chars: {ocean: "~", lake: "~", river: "∽", stream: "_", swamp: ",", ground: ",", moss: "∻", dry: "∵", woods: ",", forest: "}", hill: "{", mountain: "#", ledge: "(", summit: "?", sand: "░", road: ".", bridge: "=", ford: "_", rim: "▪", gorge: ","}
+    scatter:
+      ground: {pine: 0.004, birch: 0.003, boulder: 0.006, rocks: 0.003, grass_tuft: 0.03, meadow: 0.012, wildflowers: 0.006, standing_stone: 0.0004}
+      dry: {tallgrass_seed: 0.03, drygrass: 0.02, boulder: 0.008, rocks: 0.006, pine: 0.002}
+      woods: {pine: 0.12, fir: 0.08, birch: 0.05, mossoak: 0.03, boulder: 0.01, ferns: 0.02}
+      hill: {boulder: 0.025, pine: 0.015, rocks: 0.01, grass_tuft: 0.03}
+      sand: {pebbles: 0.01}
+      gorge: {grass_tuft: 0.05, boulder: 0.02, rocks: 0.012, gbush: 0.008, dead_tree: 0.004}
+      shore: {rocks: 0.05, boulder: 0.03, reeds: 0.04}                  # stony shores: a highland lake has no marsh
+      edge: {J: {mossoak: 0.03, ferns: 0.04}, G: {oak: 0.01, grass_tuft: 0.03}}
+  D:
+    look: {wall: "#8a4a2a", floor: "#d8b878", ceiling: "#9ab8d6", fog: "#1a140a", torch: 0, light: 28}
+    chars: {ocean: "~", lake: "~", river: "∽", stream: "_", swamp: ",", ground: "░", dry: "░", woods: "░", forest: "░", hill: "░", mountain: "▧", ledge: "▧", summit: "▧", sand: "░", road: "░", bridge: "=", ford: "_", rim: "▧"}
+    scatter:
+      ground: {thornbush: 0.01, drygrass: 0.03, aloe: 0.006, pebbles: 0.012, boulder: 0.004, skull: 0.001, deadtree: 0.003}
+      swamp: {palm: 0.1, palms: 0.04, grass_tuft: 0.04}
+      shore: {desert_reeds: 0.25, palm: 0.06}
+      edge: {G: {drygrass: 0.05, bush: 0.02}}
+
+# Props the scatter lays (each a legend entry in the places it stands in).
+props:
+  oak: {sprite: oak, label: "An oak"}
+  birch: {sprite: birch, label: "A birch"}
+  pine: {sprite: pine, label: "A pine"}
+  fir: {sprite: fir, label: "A fir"}
+  standing_stone: {sprite: standing_stone, label: "A standing stone, lichened and leaning"}
+  tallgrass_seed: {sprite: tallgrass_seed, solid: false, label: "Seeding grass"}
+  broadleaf: {sprite: broadleaf, label: "A spreading tree"}
+  gbush: {sprite: gbush, label: "A thicket"}
+  bush: {sprite: bush, label: "A dry thicket"}
+  acacia: {sprite: acacia, label: "A thorn tree"}
+  meadow: {sprite: meadow, solid: false, label: "Long grass and flowers"}
+  flowerbush: {sprite: flowerbush, solid: false, label: "A flowering shrub"}
+  boulder: {sprite: boulder, label: "A boulder"}
+  grass_tuft: {sprite: grass_tuft, solid: false, label: "Long grass"}
+  wildflowers: {sprite: wildflowers, solid: false, label: "Wildflowers"}
+  tallgrass_gold: {sprite: tallgrass_gold, solid: false, label: "Tall grass"}
+  drygrass: {sprite: drygrass, solid: false, label: "Dry grass"}
+  reeds: {sprite: reeds, solid: false, label: "Reeds"}
+  desert_reeds: {sprite: desert_reeds, solid: false, label: "Reeds"}
+  ferns: {sprite: ferns, solid: false, label: "Ferns"}
+  pebbles: {sprite: pebbles, solid: false, label: "Stones"}
+  skull: {sprite: skull, solid: false, label: "A skull, bleached"}
+  thornbush: {sprite: thornbush, label: "A thornbush"}
+  aloe: {sprite: aloe, solid: false, label: "Aloes"}
+  deadtree: {sprite: deadtree, label: "A dead tree"}
+  palm: {sprite: palm, label: "A palm"}
+  palms: {sprite: palms, label: "Palms"}
+  youngpalm: {sprite: youngpalm, label: "A young palm"}
+  kapok: {sprite: kapok, label: "A kapok tree"}
+  strangler: {sprite: strangler, label: "A strangler fig"}
+  mossoak: {sprite: mossoak, label: "A mossy oak"}
+  mossleaning: {sprite: mossleaning, label: "A leaning tree, hung with moss"}
+  mossdead: {sprite: mossdead, label: "A dead tree, hung with moss"}
+  mangrove: {sprite: mangrove, label: "A mangrove"}
+  cypress: {sprite: cypress, label: "A swamp cypress"}
+  rocks: {sprite: rocks, label: "Fallen rock"}
+  dead_tree: {sprite: dead_tree, label: "A dead tree, split by frost"}
+
+# Each place's name and blurb, by [row, col]; a place with no name here is named by its neighbour, and listed in the gap
+# report. Names are the land's own words (the reference world's story bible: its rivers, lakes and the tongue spoken
+# there), glossed in the blurb.
 slots:
-  "5,8": {family: w1_wild, name: "Exeomo", blurb: "High grassland round the caldera of Exeomo: a ring of black peaks, jungle in the crater, a mine cut into the rim."}
+  "1,5": {name: "Lake Shezedzendze", blurb: "Jungle round Shezedzendze, the Deep Lake of the lizardfolk, and the Mulozhaze, the Blood River, running out of it."}
+  "1,6": {name: "Lake Shezeshee", blurb: "The Fish Lake in the jungle west of Zhomelonga, and the Rain and Snake rivers that feed it."}
+  "1,7": {name: "Zhomelonga", blurb: "Jungle and rivers round the capital of the Hegemony."}
+  "2,4": {name: "Muawea", blurb: "Jungle coast round the lizardfolk city of Muawea."}
+  "2,5": {name: "Muloewu", blurb: "Jungle along the Muloewu, the Rock River, east of Muawea."}
+  "2,6": {name: "Lake Sheze", blurb: "The Moon Lake in the jungle, and the Tomb Water flowing out of it past old graves."}
+  "2,7": {name: "Mulomule", blurb: "Jungle along the Mulomule, the Honey River, south of the capital."}
+  "2,8": {name: "Muruvure", blurb: "The basin of the Muruvure, the Jungle River, southeast of Zhomelonga."}
+  "3,3": {name: "Paanemulefu", blurb: "The Long Coast: jungle down to the western sea."}
+  "3,4": {name: "Mulua", blurb: "Jungle where the Mulua, the Flower River, meets the Nihirsus, the Horse River of the plains folk."}
+  "3,5": {name: "Iyenovo", blurb: "Jungle round Iyenovo, the Iron Sea of the frogloks, a lake so wide its far shore is lost in haze."}
+  "3,6": {name: "Mulomuwole", blurb: "Deep jungle along the Mulomuwole, a jungle river."}
+  "3,7": {name: "Umuenggem", blurb: "Jungle along the Umuenggem, the Bull River of the frogloks."}
+  "3,8": {name: "Umueshe", blurb: "Jungle and the Umueshe, the frogloks' Jungle River, with the Rain River joining it."}
+  "3,9": {name: "Umxisi", blurb: "Jungle along the Umxisi and the dark Jungle Water."}
+  "3,10": {name: "Oumleilo", blurb: "The frogloks' Forest: jungle at the head of the Spring River."}
+  "4,2": {name: "Siufa Downs", blurb: "The Yellow Plain north of Iitanii: open grass to the sky."}
+  "4,3": {name: "Ni'isi", blurb: "Grassland along the Ni'isi, the Grass River."}
+  "4,4": {name: "Muluwule", blurb: "Grassland where the jungle's Muluwule runs out onto the plains."}
+  "4,5": {name: "Nashri", blurb: "Grassland along the Nashri, the Eagle River."}
+  "4,6": {name: "Lake Eseumbu", blurb: "The Rain Lake, between the plains and the jungle, and the Yellow Water running into it."}
+  "4,7": {name: "Omoishi", blurb: "Jungle edge along the Omoishi, the Frog River."}
+  "4,8": {name: "Omonyoga", blurb: "Grassland north of the caldera, along the Omonyoga, the Snake River."}
+  "4,9": {name: "Omxongoma", blurb: "Jungle along the Omxongoma, the Flower River."}
+  "4,10": {name: "Eilleioumlei", blurb: "Jungle round Eilleioumlei, the Old Lake, and the Rain Lake beside it."}
+  "4,11": {name: "Iisiina Wood", blurb: "Forest round Iisiina, the Snake Lake, and the Frog River out of it."}
+  "5,1": {name: "Oumaiinyo", blurb: "Jungle along the Oumaiinyo, the Bird Water, west of Iitanii."}
+  "5,2": {name: "Iitanii", blurb: "The Naalda's grassland round the frontier city of Iitanii."}
+  "5,3": {name: "Nira", blurb: "Grassland along the Nira, the Grass River, and the Morngamonru, the lizardfolk's Human River."}
+  "5,4": {name: "Saubiqae", blurb: "The Yellow Plain east of Iitanii."}
+  "5,5": {name: "Langaba", blurb: "Grassland along the Langaba, the goblins' Yellow River."}
+  "5,6": {name: "Longava", blurb: "Grassland at the head of the Longava, another Yellow River."}
+  "5,7": {name: "Zhuwenda", blurb: "The frogloks' Yellow Plain, west of the caldera."}
+  "5,8": {name: "Exeomo", blurb: "High grassland round the caldera of Exeomo: a ring of black peaks, jungle in the crater, a mine cut into the rim."}
+  "5,9": {name: "Uumaumbu", blurb: "Jungle along the Uumaumbu, the Rain Water, north of the temple."}
+  "5,10": {name: "Eyenome", blurb: "Jungle down to Eyenome, the Ruin Sea, the greatest lake of the frogloks."}
+  "5,11": {name: "Iisiuuma", blurb: "Jungle round Iisiuuma, the Flower Lake, and Eshenyo, the Bird Lake."}
+  "6,0": {name: "The Western Desert", blurb: "Sand and red rock on the western coast, an oasis lake and a ruined tower on an island in it."}
+  "6,1": {name: "Muulangmuuel", blurb: "Grassland along the Muulangmuuel, the War River, at the desert's edge."}
+  "6,2": {name: "Lake Birkelib", blurb: "Grassland round Birkelib, the Lion Lake, south of Iitanii."}
+  "6,3": {name: "Naarar", blurb: "Grassland where the Naarar, the Sword River, and the Naalda, the Blood River, meet."}
+  "6,4": {name: "Naershen", blurb: "Grassland along the Naershen, the Ivory River."}
+  "6,5": {name: "Lake Birasah", blurb: "Grassland round Birasah, the Yellow Lake."}
+  "6,6": {name: "Bii'isaah", blurb: "The Yellow Plain, running south to the range's foot, where the high pass and the labyrinth come out onto it."}
+  "6,7": {name: "Umuisi", blurb: "Grassland along the Umuisi, the Frog River, west of Shiwgoiwo."}
   "6,8": {name: "Shiwgoiwo", blurb: "Grassland and jungle edge round the frontier village of Shiwgoiwo, roads out to every side."}
   "6,9": {name: "The Temple Swamp", blurb: "Jungle and swamp east of Shiwgoiwo, and the old temple of the lizardfolk in it."}
   "6,10": {name: "Lake Eyenuma", blurb: "Forest down to a great lake, and a fortress of grey-green stone on its shore."}
-  "7,9": {name: "The Orc Valley", blurb: "Forested highlands, and in them a valley where the orc legion keeps its castle and works its slaves in a quarry."}
-  "6,6": {name: "The Red Labyrinth", blurb: "Dry plateau broken by a maze of red rock, and minotaurs in it."}
-  "6,0": {name: "The Western Desert", blurb: "Sand and red rock on the western coast, an oasis lake and a ruined tower on an island in it."}
-  "1,7": {name: "Zhomelonga", blurb: "Jungle and rivers round the capital of the Hegemony."}
-  "2,4": {name: "Muawea", blurb: "Jungle coast round the lizardfolk city of Muawea."}
-  "5,2": {name: "Iitanii", blurb: "The Naalda's grassland round the frontier city of Iitanii."}
+  "7,0": {name: "Muusang", blurb: "The Sand: desert down to the southwestern sea."}
+  "7,1": {name: "Muuzmaand", blurb: "The Old Plain, between the desert and the grass."}
+  "7,2": {name: "Meitour", blurb: "Grassland along the Meitour, the Bull Water."}
+  "7,3": {name: "Beqaat", blurb: "The Plain: grass as far as the eye goes."}
+  "7,4": {name: "Mojowanda", blurb: "The lizardfolk's Yellow Plain."}
+  "7,5": {name: "Molodigo", blurb: "Grassland along the Molodigo, the Oak River, and the Naahernes, the Eagle River."}
+  "7,6": {name: "The Range's Foot", blurb: "Grassland at the foot of the southern range: the high pass comes down out of it here, and a little south the mouth of the minotaurs' labyrinth opens onto the plain."}
+  "7,7": {name: "The High Pass", blurb: "The Oumombo's valley, walled into a pass climbing from the plain toward Shiwgoiwo, hamlets in its widenings; in the high block south of it, the minotaurs' labyrinth of ravines."}
+  "7,8": {name: "Oumiina", blurb: "Jungle south of Shiwgoiwo along the Oumiina, the Snake Water, and the Honey River, where the high pass turns up to the village and a branch of it runs east through the old gate to the orc valley."}
+  "7,9": {name: "The Orc Valley", blurb: "Forested highlands, and in them a valley where the orc legion keeps its castle and works its slaves in a quarry, reached from the high pass through the old valley gate."}
+  "7,10": {name: "Meije", blurb: "Forest along the Meije, the Forest Water."}
+  "8,1": {name: "Arimoanda", blurb: "The Old Plain north of Emagshir."}
+  "8,2": {name: "Varmoanda", blurb: "The Green Plain northeast of Emagshir."}
+  "8,3": {name: "Ale'aat", blurb: "The High Plain east of Emagshir."}
+  "8,4": {name: "Kagongo", blurb: "The Hills: grassland broken by rises."}
+  "8,5": {name: "Naaherwer", blurb: "Jungle along the Naaherwer, the Green River, and the Dark River."}
+  "8,6": {name: "Chiboli", blurb: "The Jungle, south of the plains."}
+  "8,7": {name: "Jiynaash", blurb: "The southern range above the Jiynaash, the Snake River, west of Isdi."}
   "8,8": {name: "Isdi", blurb: "Forest and coast round Isdi, the seat of Barjiy."}
+  "8,9": {name: "Iyinumbu", blurb: "Forest down to Iyinumbu, the Rain Sea."}
   "9,1": {name: "Emagshir", blurb: "The dry southwestern tip and the port of Emagshir."}
+  "9,2": {name: "Mayomo", blurb: "Grassland along the Mayomo, the Field Water."}
+  "9,3": {name: "Mojovenda", blurb: "The Yellow Plain on the southern coast."}
+  "9,4": {name: "Chizinshimba", blurb: "Grassland round Chizinshimba, the Lion Lake."}
+  "9,5": {name: "Iyinumi", blurb: "Jungle down to Iyinumi, the Old Sea."}
+  "9,6": {name: "Umiinda", blurb: "The frogloks' Plain, on the southern coast."}
 
 # Sites: a stamp laid with its centre at `at` (lon, lat). In a stamp, a letter in its `legend` is that entry; a ground
-# letter is that ground; `·` is the family's plain ground, `+` its road, a space leaves the terrain as it is; digits
+# letter is that ground; `·` is the region's plain ground, `+` its road, a space leaves the terrain as it is; digits
 # 1-8 are recruits' home squares (reported, laid as ground).
 # `road: [site...]` joins it by road. `ring` raises a caldera round the centre (inner, rim, outer radii in squares).
+# `pass` and `gorge` carve a canyon into raised rock across as many places as it runs through (tools/worldgen.js
+# "Canyons"; highpass and the labyrinth below show the keys): `routes` (lines through the world's squares), `rooms` with
+# `marks`, `ponds`, `walls` (squares deep), `mouths` (where it opens onto the land round it), `top` (the highest tier of
+# its rock); a pass's routes carry a road, through its `gates`. Their marks are legend letters as in a stamp.
 sites:
   - id: stonebridge
     at: [-75.6, -9.4]
-    road: [exeomo, temple, sarnak, orcs, isdi, labyrinth]
+    road: [highpass, exeomo, temple, sarnak, orcs, isdi, labyrinth]
     stamp:
       - "······················"
       - "·xxx····xxx·····xxx···"
@@ -108,7 +248,7 @@ sites:
       T: {kind: npc, sprite: knight, label: "The drillmaster", services: {place: stonebridge, location: yard}, on: ","}
 
   - id: wolves
-    at: [-77.0, -11.6]
+    at: [-76.9, -10.75]
     stamp:
       - "·····"
       - "·····"
@@ -121,7 +261,7 @@ sites:
 
   - id: exeomo
     at: [-76.25, -5.75]
-    ring: {inner: 4, rim: 7, outer: 11}
+    ring: {inner: 5, rim: 8, outer: 11, crest: 1.6}
     road: []
     marks:
       # entrances on the rim's outer foot, south and east (offsets in squares from the centre)
@@ -144,35 +284,39 @@ sites:
       - "  ·····+·····  "
       - "      ·+·      "
     legend:
-      G: {kind: stairs, to: temple_court, at: "<", sprite: arch, label: "The temple gate", on: "."}
-      A: {kind: stairs, to: temple_wall, at: N, sprite: pyramid, label: "The north pyramid: a door at its top", on: "."}
-      B: {kind: stairs, to: temple_wall, at: S, sprite: pyramid, label: "The south pyramid: a door at its top", on: "."}
-      x: {kind: prop, sprite: none, on: "."}
+      G: {kind: stairs, to: temple_court, at: "<", sprite: arch, label: "The temple gate", on: "·"}
+      A: {kind: stairs, to: temple_wall, at: N, sprite: pyramid, label: "The north pyramid: a door at its top", on: "·"}
+      B: {kind: stairs, to: temple_wall, at: S, sprite: pyramid, label: "The south pyramid: a door at its top", on: "·"}
+      x: {kind: prop, sprite: none, on: "·"}
 
   - id: dam
     at: [-68.9, -10.4]
+    # A dam of earth and timber across a stream: the pond behind it, the dry bed below.
     stamp:
-      - "≈≈≈≈≈"
-      - "≈·D·≈"
-      - "≈·X·≈"
-      - "≈≈≈≈≈"
+      - " ··~~~·· "
+      - "··~~~~~··"
+      - "·~~~~~~~·"
+      - "···D·X···"
+      - " ······· "
     legend:
-      D: {kind: note, sets: [found_dam], label: "An earth dam across the stream", text: "A wall of packed earth and timber between the pools, holding back the water that should flow east to the nesting grounds. It is old work, cracked and green with moss, but still sound. It could be broken.", on: "."}
-      X: {kind: note, sets: [banks_restored], label: "Break the dam", text: "You pull the timbers loose. The earth gives, then the water does the rest — a brown flood pouring east through the gap, filling channels that have been dry for years. Somewhere below, something croaks. It sounds like a greeting.", on: "."}
+      D: {kind: note, sets: [found_dam], label: "An earth dam across the stream", text: "A wall of packed earth and timber between the pools, holding back the water that should flow east to the nesting grounds. It is old work, cracked and green with moss, but still sound. It could be broken.", on: "·"}
+      X: {kind: note, sets: [banks_restored], label: "Break the dam", text: "You pull the timbers loose. The earth gives, then the water does the rest — a brown flood pouring east through the gap, filling channels that have been dry for years. Somewhere below, something croaks. It sounds like a greeting.", on: "·"}
 
   - id: sarnak
     at: [-66.6, -10.9]
+    parity: 1                 # the fort's blocks start at the stamp's column and row 1 (cliff tiles need 2x2 blocks)
     stamp:
-      - "·················"
-      - "·@@@@@·····@@@@@·"
-      - "·@@@@@··g··@@@@@·"
-      - "·@@@@@··+··@@@@@·"
-      - "···Q····+···R····"
-      - "··c·····+·····p··"
-      - "········+········"
-      - "~~~~~~~=j=~~~~~~~"
-      - "~~~~~~~=X=~~~~~~~"
-      - "~~~~~~~~~~~~~~~~~"
+      - "··················"
+      - "·@@@@······@@@@···"
+      - "·@@@@··g···@@@@···"
+      - "·@@@@··+···@@@@···"
+      - "·@@@@··+···@@@@···"
+      - "···Q···+····R·····"
+      - "··c····+········p·"
+      - "·······+··········"
+      - "~~~~~~=j=~~~~~~~~~"
+      - "~~~~~~=X=~~~~~~~~~"
+      - "~~~~~~~~~~~~~~~~~~"
     legend:
       Q: {kind: stairs, to: sarnak_fort, at: W, up: true, sprite: door_south, label: "A low door in the western block", on: ","}
       R: {kind: stairs, to: sarnak_fort, at: E, up: true, sprite: door_south, label: "A low door in the eastern block", on: ","}
@@ -189,11 +333,13 @@ sites:
 
   - id: orcs
     at: [-70.6, -14.6]
+    parity: 0
     stamp:
       - "################······"
       - "################······"
       - "##@@@@@@@@@@##····U···"
       - "##@@@@@@@@@@##··L·····"
+      - "##@@@@@@@@@@##········"
       - "##@@@@@@@@@@##········"
       - "·····G················"
       - "·····g········T·······"
@@ -227,31 +373,87 @@ sites:
       - {w: 3, nothing: true}
 
   - id: labyrinth
-    at: [-85.0, -9.8]
+    at: [-81.19, -15.81]
     road: [iitanii]
-    stamp:
-      - "################"
-      - "##∴∴∴∴∴##∴∴∴∴∴##"
-      - "##∴a∴∴∴##∴∴K∴∴##"
-      - "##∴∴####∴∴∴∴∴∴##"
-      - "##∴∴####∴∴##∴∴##"
-      - "++∴∴∴∴∴∴∴∴##∴∴##"
-      - "##∴∴∴∴∴∴∴∴∴∴∴∴##"
-      - "##∴∴∴M∴∴∴∴P∴∴∴##"
-      - "##∴∴∴∴∴∴∴∴∴∴X∴##"
-      - "##########∴∴####"
+    # The minotaurs' gorge (after the Gorge of King Xorbb), cut into the high block south of the high pass and parallel
+    # to it, opening only west onto the plain: a stem from its mouth to a fork, a ravine looping round the whole block,
+    # a cross ravine dividing it into two islands of crag, the herd's camp in a widening on the loop, and in the eastern
+    # island a ravine hooking in to the den of the lord of the labyrinth. Squares are the world's ([gx, gy]).
+    gorge:
+      seed: 11
+      floor: gorge
+      top: ledge           # the islands rise to crag, not snow
+      width: [0.9, 1.4]    # a ravine's half-width, squares (by a noise along it)
+      walls: [3, 6]
+      mouths: [[258, 306]]
+      routes:
+        - {path: [[258, 306], [263, 306], [268, 305]]}
+        - {path: [[268, 305], [270, 299], [277, 296], [287, 295], [298, 295], [308, 297], [314, 302], [315, 309], [310, 315], [300, 317], [289, 317], [278, 316], [271, 311], [268, 305]]}
+        - {path: [[287, 295], [288, 302], [290, 309], [289, 317]]}
+        - {path: [[300, 317], [299, 312], [303, 309], [305, 305], [302, 302]]}
+      rooms:
+        - {at: [275, 298], radius: 3.5, marks: {y: [[-2, -1], [2, -2]], M: [1, 0], h: [-1, 1], P: [1, 2]}}
+        - {at: [300, 303], radius: 2.4, marks: {K: [0, 0]}}
+        - {at: [288, 310], radius: 1.6, marks: {X: [0, 0]}}
+      marks: {a: [[297, 295], [314, 309], [283, 317]]}
+      litter: {s: 0.012, r: 0.02}
     legend:
-      K: {kind: monster, encounter: bull, label: "The lord of the labyrinth", on: "∴"}
-      M: {kind: monster, encounter: camp, label: "Minotaurs at their yurt", on: "∴"}
-      P: {kind: monster, encounter: herd, label: "Minotaurs about a totem", on: "∴"}
-      a: {kind: monster, encounter: lone, label: "A minotaur in the passage", on: "∴"}
-      X: {kind: chest, label: "A hide-bound chest", loot: troll_hoard, rolls: 1, tn: 10, on: "∴"}
+      K: {kind: monster, encounter: bull, label: "The lord of the labyrinth", on: "·"}
+      M: {kind: monster, encounter: camp, label: "Minotaurs at their yurt", on: "·"}
+      P: {kind: monster, encounter: herd, label: "Minotaurs about a totem", on: "·"}
+      a: {kind: monster, encounter: lone, label: "A minotaur in the passage", on: "·"}
+      X: {kind: chest, label: "A hide-bound chest", loot: troll_hoard, rolls: 1, tn: 10, on: "·"}
+      y: {kind: prop, sprite: tent_minotaur, label: "A yurt of hides", on: "·"}
+      h: {kind: prop, sprite: horn_totem, label: "A totem of horns", on: "·"}
+      s: {kind: prop, sprite: skull, solid: false, label: "A skull, gnawed", on: "·"}
+      r: {kind: prop, sprite: bones, solid: false, label: "Bones", on: "·"}
     encounters:
       lone: {foes: [{monster: minotaur}], text: "A minotaur rounds the red rock and lowers its head. It doesn't charge yet. It's deciding where to put you."}
       camp: {foes: [{monster: minotaur}, {monster: minotaur}], text: "Two minotaurs duck out of the yurt with axes in their fists."}
       herd: {foes: [{monster: minotaur}, {monster: minotaur}], text: "The minotaurs at the totem lower their horns."}
       bull: {foes: [{monster: minotaurLord}], text: "The lord of the labyrinth bellows, and the walls throw it back."}
 
+  - id: highpass
+    at: [-79.06, -11.44]
+    # The high pass (after Highpass Hold): the Oumombo's valley walled into a canyon from the plain up to Shiwgoiwo, the
+    # river along it. The plains gate in the narrows where it leaves the plain; hamlets in its widenings (a ford hamlet
+    # by a pond, the hub with its tavern, smithy and shop, the junction); the upper gate below the village; and from the
+    # junction a branch east through the old valley gate to the orc castle. Squares are the world's ([gx, gy]); a gate
+    # stands on its route, the route straight through it.
+    pass:
+      seed: 5
+      floor: gorge
+      top: ledge
+      width: [1.4, 2.4]
+      walls: [4, 8]
+      mouths: [[258, 277], [343, 264], [366, 297]]
+      routes:
+        - {path: [[258, 277], [262, 279], [266, 281], [270, 282], [274, 283], [280, 285], [286, 282], [292, 281], [298, 277], [304, 277], [310, 276], [316, 279], [322, 283], [328, 283], [334, 284], [340, 283], [343, 278], [344, 274], [344, 271], [344, 268], [343, 264]]}
+        - {path: [[340, 283], [346, 285], [351, 288], [353, 291], [357, 291], [361, 291], [364, 294], [366, 297]], width: [1.1, 1.8]}
+      gates: [{at: [270, 282], ch: Q}, {at: [344, 271], ch: J}, {at: [357, 291], ch: O}]
+      rooms:
+        - {at: [276, 281], radius: 2.5, marks: {q: [-1, 0], d: [2, 0]}}
+        - {at: [290, 276], radius: 3.5, marks: {n: [0, -2], o: [[-3, 0], [3, -1]], u: [-1, 1], j: [2, 2]}}
+        - {at: [307, 271], radius: 4.5, marks: {v: [-3, -2], b: [3, -2], e: [0, -3], u: [0, 0], z: [[-2, 2], [2, 2]], p: [4, 3]}}
+        - {at: [337, 286], radius: 3, marks: {o: [-2, 1], j: [2, 1], p: [0, 2]}}
+        - {at: [342, 266], radius: 2.5, marks: {q: [-2, 0], B: [-1, -2]}}
+      ponds: [{at: [295, 273], radius: 1.6}]
+    legend:
+      Q: {kind: prop, sprite: gatehouse, solid: false, label: "The plains gate, shut across the narrows where the pass leaves the plain"}
+      J: {kind: prop, sprite: gatehouse, solid: false, label: "The upper gate of the pass, below Shiwgoiwo"}
+      O: {kind: prop, sprite: gatetower, solid: false, label: "The old gate of the orc valley, its bar long gone"}
+      q: {kind: prop, sprite: watchtower, label: "A watchtower over the pass", on: "·"}
+      d: {kind: prop, sprite: woodpile, label: "A woodpile", on: "·"}
+      n: {kind: prop, sprite: roadinn, label: "A roadside inn", on: "·"}
+      o: {kind: prop, sprite: cottage, label: "A cottage of the pass", on: "·"}
+      u: {kind: prop, sprite: well, label: "A well", on: "·"}
+      j: {kind: prop, sprite: stall, label: "A stall by the road", on: "·"}
+      v: {kind: prop, sprite: tavern, label: "The pass's tavern, loud of an evening", on: "·"}
+      b: {kind: prop, sprite: smithy, label: "A smithy, shoeing the drovers' beasts", on: "·"}
+      e: {kind: prop, sprite: shop, label: "A trader's shop", on: "·"}
+      z: {kind: prop, sprite: lamppost, label: "A lamp on a post", on: "·"}
+      p: {kind: prop, sprite: signpost, label: "A signpost", on: "·"}
+      B: {kind: prop, sprite: banner, label: "A banner on the wall", on: "·"}
   - id: spectres
     at: [-114.0, -10.0]
     stamp:
@@ -275,49 +477,43 @@ sites:
     road: [muawea, exeomo]
     stamp: ["·······", "·xxxxx·", "·xxxxx·", "·xxCxx·", "···+···"]
     legend:
-      C: {kind: stairs, to: zhomelonga_city, sprite: city_zhomelonga, label: "The great gate of Zhomelonga", on: "."}
-      x: {kind: prop, sprite: none, on: "."}
+      C: {kind: stairs, to: zhomelonga_city, sprite: city_zhomelonga, label: "The great gate of Zhomelonga", on: "·"}
+      x: {kind: prop, sprite: none, on: "·"}
   - id: muawea
     at: [-93.6, 10.0]
     road: [iitanii]
     stamp: ["·······", "·xxxxx·", "·xxxxx·", "·xxCxx·", "···+···"]
     legend:
-      C: {kind: stairs, to: muawi_city, sprite: city_muawi, label: "The causeway into Muawea", on: "."}
-      x: {kind: prop, sprite: none, on: "."}
+      C: {kind: stairs, to: muawi_city, sprite: city_muawi, label: "The causeway into Muawea", on: "·"}
+      x: {kind: prop, sprite: none, on: "·"}
   - id: iitanii
     at: [-102.6, -4.8]
     road: [emagshir]
     stamp: ["·······", "·xxxxx·", "·xxxxx·", "·xxCxx·", "···+···"]
     legend:
-      C: {kind: stairs, to: burbuma_city, sprite: city_burbuma, label: "The gate of Iitanii", on: ","}
-      x: {kind: prop, sprite: none, on: ","}
+      C: {kind: stairs, to: burbuma_city, sprite: city_burbuma, label: "The gate of Iitanii", on: "·"}
+      x: {kind: prop, sprite: none, on: "·"}
   - id: isdi
     at: [-73.8, -19.6]
     road: []
     stamp: ["·······", "·xxxxx·", "·xxxxx·", "·xxCxx·", "···+···"]
     legend:
-      C: {kind: stairs, to: barjiy_city, sprite: city_barjiy, label: "The gates of Isdi", on: ","}
-      x: {kind: prop, sprite: none, on: ","}
+      C: {kind: stairs, to: barjiy_city, sprite: city_barjiy, label: "The gates of Isdi", on: "·"}
+      x: {kind: prop, sprite: none, on: "·"}
   - id: emagshir
     at: [-107.6, -23.4]
     road: [spectres]
     stamp: ["·······", "·xxxxx·", "·xxxxx·", "·xxCxx·", "···+···"]
     legend:
-      C: {kind: stairs, to: emagshir_city, sprite: city_emagshir, label: "The walls of Emagshir", on: "."}
-      x: {kind: prop, sprite: none, on: "."}
+      C: {kind: stairs, to: emagshir_city, sprite: city_emagshir, label: "The walls of Emagshir", on: "·"}
+      x: {kind: prop, sprite: none, on: "·"}
 
-# What the families draw badly that the generator cannot count (copied into the gap report), for the next art pass.
+# What the tiles still draw badly that the generator cannot count (copied into the gap report), for the next art pass.
 gaps:
-  - "Coast: no beach. Grass (lake country) and jungle floor run straight into deep water; only the desert has sand over water."
-  - "Sea: drawn with the lake country's lake water, the same as rivers and lakes; no surf, no shallows offshore, no deep-water tone."
-  - "Rivers: one water terrain, no banks or reeds edge; the lake-country set has no ford, so roads cross on plank bridges (=); in jungle and desert places bridges are drawn as shallows (_)."
-  - "Biome edges fall on place edges: a place is one family, so plateau grass meets jungle floor abruptly where two places meet. Needs a jungle-over-grass and a grass-over-jungle-floor set so a place can hold both."
-  - "Jungle in grassland places is drawn as the vale's temperate forest (}); forest in jungle places as jungle canopy (])."
-  - "Savanna: the plateau is lake-country grass with patches of the canyon's bare soil (∴); no dry-grass or savanna ground."
-  - "Swamp in grassland places: pools of deep water with reeds; no marsh set over grass (the jungle's marsh ≈ is over jungle floor only)."
-  - "Mountains: the vale's grey granite slope, ledge and summit everywhere (also the desert's), and for the red labyrinth's red rock (no sandstone over grass); no snow, no volcanic black for Exeomo's rim."
-  - "Hills and mountains in jungle places are drawn as floor or canopy: no jungle hills, no jungle mountain."
+  - "Sea: drawn with the lake water, the same as lakes; the deep-navy sea set (assets/wip/w1/sheets/sea.png) is fetched but not wired (its hue wants shifting first, assets/wip/w1/README.md)."
+  - "Rivers: the lake water with reedy banks; roads cross on fords (_), lakes on rope bridges (=); no current."
+  - "Mountains: the grassland's are granite, boulder crags and snowy summits (gslope, gledge, gsummit); the jungle's are mossy crags with no snow on their heights; the desert's are the red cliff."
+  - "Desert: two places of sand and red rock; one sand texture, no dunes."
   - "Towns: Shiwgoiwo is village props on the green; each city is one picture of the whole walled city from outside (no streets to walk outside its gate)."
-  - "The temple's pyramids are props, not walkable terrain; the sarnak blocks use the orc castle's fort wall, with door props in front (a door drawn in the wall would draw the mountain behind it)."
-  - "Labyrinth walls are mountain squares (#) drawn as grey slope, two squares thick."
+  - "The temple's pyramids are props, not walkable terrain; the sarnak blocks use the orc castle's fort wall, with door props in front."
   - "Generated places carry no encounters or wandering monsters of their own yet: only the sites' (Shiwgoiwo's wolves, the temple, the sarnaks, the orcs, the labyrinth, the spectres)."

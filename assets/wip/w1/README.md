@@ -1,7 +1,7 @@
 # W1 open world: the first tiles (2026-11-24)
 
 Seventeen PixelLab pro top-down sets (64 px, high top-down, 25 generations each) for the gaps in `TILES_TO_GET.md`'s
-W1 section, in its order. Generated and fetched; **none is wired into a tileset yet** (see the end).
+W1 section, in its order. Generated, fetched and wired into the `w1` tileset (see the end).
 
     sh fetch.sh [name...]    # sets in ids.txt -> sheets/<name>.png and .meta.json
 
@@ -26,7 +26,7 @@ sand 2ae2c281 and jungle mountain rock 5c9bf4aa.
 | jring | ddf52533 | mountain rock -> a higher, paler shelf | cliff | 3, the mountain's next ring |
 | ford | 4e18a9bf | lake water -> a shallow ford over sand and stones | flat | 4, rivers |
 | reeds | a489e0fb | lake water -> grass, a reedy bank | flat | 4, river banks |
-| savanna | ba5400d0 | grass -> dry gold grass | flat | 5 |
+| savanna | ba5400d0 | grass -> dry gold grass | flat; toned to olive-gold in the repo (2026-11-24: saturation ×0.8, hue +0.03, value ×0.86, so it reads as dry grass, not a yellow mat; a re-pull undoes it) | 5 |
 | marsh | 703c117b | bog moss and pools -> grass | flat | 6 |
 | redrock | 754b4f69 | grass -> red clay mesa, a banded slope | cliff | 8, the labyrinth's rock |
 | basalt | 16725d75 | grass -> black basalt, a cinder slope | cliff | 8, Exeomo's rim |
@@ -40,12 +40,27 @@ tones, simple bold shapes" for the jungle side (the jungle set's own wording).
 - `jdune`: a thin yellow rim where the sand meets the jungle floor.
 - `sea`: the deep water came out indigo rather than navy; shift its hue toward the lake water's.
 
-## Wiring (not done; proposed to the user)
+## Wiring (done, 2026-11-24)
 
-1. **The engine.** A wang terrain has one `over` (`src/ui/game/tilemap.js` planTiles), so sand can sit over sea, lake
-   or swamp water but not all three at once. The beach needs a per-neighbour choice of sheet (sand's sheet picked by
-   the water below it), or the generator must keep sea, lake and swamp coasts apart.
-2. **The generator.** New classes in `assets/world/w1-layout.yaml` and `tools/worldgen.js`: beach (sand behind every
-   coast), savanna, marsh, jungle hill and jungle mountain, sea apart from lake.
-3. **The tilesets.** Each sheet as a terrain in `w1_wild` or `w1_jungle` (`data/tilesets.yaml`), its class in the
-   family's `chars`; then `node tools/worldgen.js assets/world/w1-layout.yaml` to recount `assets/world/w1-gaps.md`.
+All of the open world's places draw from one tileset, `w1` (`data/tilesets.yaml`), with copies of these sheets (and their
+`-cut` sheets, `python3 tools/cutsheet.py`) in `art/worldtiles/w1/`. A terrain may have `also` sheets, one a lower
+ground, chosen per corner (`src/ui/game/tilemap.js`), so the beach sits over sea, lake or swamp water and grass over
+water, a river, sand, the jungle floor, bog or moss. The generator (`tools/worldgen.js`) gives each square its region's
+letters, so grassland and jungle run into each other inside a place and across its edges. `redrock` is not used: the
+labyrinth and the desert's outcrops are `redcliff` (a 2x2-block cliff over sand), made in the same pass.
+
+## The art pass of 2026-11-24 (budget 1000 generations; spent 161 by the balance)
+
+| What | Id | Generations |
+|---|---|---|
+| `redcliff`: beach sand -> red sandstone cliff (tall, 25 tiles) | 8936ed17 | 25 |
+| `moss`: jungle floor -> shady mossy grass, the band between the jungle and the grassland | 58e04ddd | 25 |
+| `grassmoss`: mossy grass -> the lake-country grass | 609b31f9 | 25 |
+| Map objects (`objects/`, cut into `art/worldtiles/w1/props.png`): oak, pine, thicket, meadow clump, broad tree, thorn tree (and a first try), ferns, bones, grass tuft, flowering shrub, wildflowers (and a first try) | see `ids.txt` | 11 |
+| `gslope`: grass -> rough weathered granite, a craggy bank (the grassland's mountain, `#`; it replaces the vale's flagstone `orc-slope`, which read as paving across the south) | 8e2537c8 | 25 |
+| `gledge`: granite -> a higher crag of pale boulders (`(`; replaces `ring1`) | 7659b4cb | 25 |
+| `gsummit`: crag -> a summit of pale rock and old snow (`?`; replaces `ring2`) | 9788cee6 | 25 |
+
+Free pixel edits in the same pass: `savanna` toned from saturated gold to olive-gold (see its row above).
+
+The moss band: brown floor -> moss -> bright grass, two squares of moss on the jungle's side and one on the grass's.

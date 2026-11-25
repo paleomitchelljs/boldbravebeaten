@@ -9,17 +9,16 @@ All tiles are 64×64 px to match the existing PixelLab pipeline.
 
 ## W1 open world (2026-11-24): what the generated places need first
 
-The outdoor places are now generated from the world raster (`tools/worldgen.js`, `assets/world/w1-layout.yaml`) and
-drawn by three composite tilesets made only of existing sheets: `w1_wild` (lake-country water, grass, road and soil;
-the vale's forest, scree and granite; the orc castle's wall), `w1_jungle` (the jungle set) and `w1_desert` (the desert
-set with the vale's mountains). `assets/world/w1-gaps.md` counts every square drawn with a stand-in and lists the
-known kludges; regenerate it after new art with `node tools/worldgen.js assets/world/w1-layout.yaml`. To use a new
-sheet: add its terrain to the family's tileset and its class to the family's `chars` in the layout.
+The outdoor places are generated from the world raster (`tools/worldgen.js`, `assets/world/w1-layout.yaml`) and all
+drawn by one tileset, `w1` (`data/tilesets.yaml`). `assets/world/w1-gaps.md` lists what is still drawn badly; regenerate
+it after new art with `node tools/worldgen.js assets/world/w1-layout.yaml`. To use a new sheet: add its terrain to
+`w1` (or an `also` sheet to an existing terrain) and its letter to a region's `chars` in the layout.
 
-**Generated 2026-11-24, not yet wired:** items 1-6 and 8 (seventeen sets: beach, sea, jungle shore, dunes, jungle
-canopy over grass and grass over jungle floor, forest over jungle floor, jungle hill, slope and ring, ford, reedy bank,
-savanna, marsh, red rock, basalt). Ids, faults and the wiring plan (an engine change for sand over three waters, new
-generator classes, tileset entries): `assets/wip/w1/README.md`.
+**Wired 2026-11-24:** items 1-6 and 8 (the seventeen sets of `assets/wip/w1/README.md`, less `redrock` and `sea`),
+plus three made in the art pass: `redcliff` (the labyrinth and the desert's rock), `moss` and `grassmoss` (a band of
+mossy grass between the jungle floor and the grassland), `gslope`, `gledge` and `gsummit` (the grassland's mountains:
+granite, crags, a snowy summit), and grassland props. **Still wanted:** the sea told from the lakes (the `sea` set is
+fetched; its hue wants fixing and the lake water is animated, so a sea-to-lake edge needs thought), dune variety.
 
 **Item 7 done** (2026-11-24): the five cities seen from outside, one 256-px PixelLab picture each, wired as the C
 prop of every city stamp (`art/worldtiles/cities.png`; sources `assets/wip/w1/cities/`). **Item 9 needs no
@@ -45,7 +44,7 @@ In order of how much of the map each would fix:
 7. ~~**City exteriors**~~ (done 2026-11-24: one picture per city, see above). Section 2 below (streets and
    buildings to walk) is still open.
 8. **Rock colours** (LOW): red sandstone over grass for the labyrinth, black volcanic rock for Exeomo's rim, desert-toned
-   mountains. All are the vale's grey granite now.
+   mountains. All are the vale's grey granite now. (Done 2026-11-24: `gslope`/`gledge`/`gsummit`.)
 9. **Temple exterior** (LOW): the lizardfolk temple's pyramids as walkable terrain rather than props.
 
 What exists that the old notes below miss: a forest over lake-country grass (`art/worldtiles/vale/forest.png`), used by
